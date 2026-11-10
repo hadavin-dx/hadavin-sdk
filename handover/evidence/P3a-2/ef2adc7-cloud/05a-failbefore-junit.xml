@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="3" failures="0" skipped="0" tests="3" time="1.076" timestamp="2026-11-10T21:03:19.763620+00:00" hostname="vm"><testcase classname="" name="tests.test_migration_numbers_guards" time="0.000"><error message="collection failure">tests/test_migration_numbers_guards.py:27: in &lt;module&gt;
+    mn_module.RELEASED_MANIFEST
+E   AttributeError: module 'hadavin_sdk.store.migration_numbers' has no attribute 'RELEASED_MANIFEST'</error></testcase><testcase classname="" name="tests.test_migration_postgres" time="0.000"><error message="collection failure">ImportError while importing test module '/home/user/build/EV-P73-ef2adc7/base/tests/test_migration_postgres.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_postgres.py:20: in &lt;module&gt;
+    from tests.fixtures import runbook as rb
+tests/fixtures/runbook.py:12: in &lt;module&gt;
+    from hadavin_sdk.store.migration_numbers import RECIPE_TIMEOUTS
+E   ImportError: cannot import name 'RECIPE_TIMEOUTS' from 'hadavin_sdk.store.migration_numbers' (/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migration_numbers.py)</error></testcase><testcase classname="" name="tests.test_migration_rules" time="0.000"><error message="collection failure">ImportError while importing test module '/home/user/build/EV-P73-ef2adc7/base/tests/test_migration_rules.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_rules.py:375: in &lt;module&gt;
+    from tests.fixtures import runbook as rb
+tests/fixtures/runbook.py:12: in &lt;module&gt;
+    from hadavin_sdk.store.migration_numbers import RECIPE_TIMEOUTS
+E   ImportError: cannot import name 'RECIPE_TIMEOUTS' from 'hadavin_sdk.store.migration_numbers' (/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migration_numbers.py)</error></testcase></testsuite></testsuites>

@@ -293,7 +293,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ ERROR at setup of test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[SUPERUSER] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d0e39dbb1515'", 'p3a_d0e39dbb1515')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_d0e39dbb1515'", 'p3a_d0e39dbb1515')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -337,7 +337,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.13/lib/python3.13/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[CREATEROLE] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_c86ccb6b3842'", 'p3a_c86ccb6b3842')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_c86ccb6b3842'", 'p3a_c86ccb6b3842')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -381,7 +381,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.13/lib/python3.13/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[CREATEDB] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_085d58581eb5'", 'p3a_085d58581eb5')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_085d58581eb5'", 'p3a_085d58581eb5')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -425,7 +425,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.13/lib/python3.13/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[BYPASSRLS] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_9661e9812a41'", 'p3a_9661e9812a41')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_9661e9812a41'", 'p3a_9661e9812a41')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -469,7 +469,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.13/lib/python3.13/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[TRUE] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_010c5f92292b'", 'p3a_010c5f92292b')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_010c5f92292b'", 'p3a_010c5f92292b')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -513,7 +513,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.13/lib/python3.13/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[FALSE] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_edb7816b0bd8'", 'p3a_edb7816b0bd8')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_edb7816b0bd8'", 'p3a_edb7816b0bd8')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -557,7 +557,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.13/lib/python3.13/site-packages/psycopg/sql.py:390: TypeError
 ___ ERROR at setup of test_a_plain_migration_role_runs_with_the_real_connect ___
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_c8286625b1ef'", 'p3a_c8286625b1ef')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_c8286625b1ef'", 'p3a_c8286625b1ef')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -601,7 +601,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.13/lib/python3.13/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_fdc1e0a0980a'", 'p3a_fdc1e0a0980a')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_fdc1e0a0980a'", 'p3a_fdc1e0a0980a')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -645,7 +645,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.13/lib/python3.13/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_one_table_owned_by_another_role_is_enough_to_refuse_and_a_function_is_named _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_f3eaebf04b72'", 'p3a_f3eaebf04b72')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_f3eaebf04b72'", 'p3a_f3eaebf04b72')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -792,7 +792,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________________________ test_late_number_is_refused __________________________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d721e59cbd56'", 'p3a_d721e59cbd56')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_d721e59cbd56'", 'p3a_d721e59cbd56')
 
     @needs_pg
     def test_late_number_is_refused(scratch):
@@ -825,7 +825,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________________________ test_newer_database_message __________________________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_3ed0e83a49de'", 'p3a_3ed0e83a49de')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_3ed0e83a49de'", 'p3a_3ed0e83a49de')
 
     @needs_pg
     def test_newer_database_message(scratch):
@@ -857,7 +857,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________ test_a_normal_run_applies_every_file_once_and_is_repeatable __________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_bd61173143f6'", 'p3a_bd61173143f6')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_bd61173143f6'", 'p3a_bd61173143f6')
 
     @needs_pg
     def test_a_normal_run_applies_every_file_once_and_is_repeatable(scratch):
@@ -889,7 +889,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ________ test_h11_the_read_back_refuses_a_planted_file[backslash_quote] ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_a23875a6ce97'", 'p3a_a23875a6ce97')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_a23875a6ce97'", 'p3a_a23875a6ce97')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172bf6e430>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses0')
 plant = 'backslash_quote'
@@ -925,7 +925,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ________ test_h11_the_read_back_refuses_a_planted_file[disable_trigger] ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_3e67c16446a4'", 'p3a_3e67c16446a4')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_3e67c16446a4'", 'p3a_3e67c16446a4')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172bf6faf0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses1')
 plant = 'disable_trigger'
@@ -961,7 +961,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________ test_h11_the_read_back_refuses_a_planted_file[drop_trigger] __________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_404a0fcca025'", 'p3a_404a0fcca025')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_404a0fcca025'", 'p3a_404a0fcca025')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172cb7ba80>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses2')
 plant = 'drop_trigger'
@@ -997,7 +997,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ___________ test_h11_the_read_back_refuses_a_planted_file[encoding] ____________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_6bd89dc4a0d0'", 'p3a_6bd89dc4a0d0')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_6bd89dc4a0d0'", 'p3a_6bd89dc4a0d0')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172bf2bd20>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses3')
 plant = 'encoding'
@@ -1033,7 +1033,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________ test_h11_the_read_back_refuses_a_planted_file[function_body] _________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_4cfbb309557b'", 'p3a_4cfbb309557b')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_4cfbb309557b'", 'p3a_4cfbb309557b')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172bf6f700>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses4')
 plant = 'function_body'
@@ -1069,7 +1069,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ____ test_h11_the_read_back_refuses_a_planted_file[function_security_mode] _____
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_06146d423405'", 'p3a_06146d423405')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_06146d423405'", 'p3a_06146d423405')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f401860>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses5')
 plant = 'function_security_mode'
@@ -1105,7 +1105,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _______ test_h11_the_read_back_refuses_a_planted_file[function_settings] _______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_89120ec5f3d2'", 'p3a_89120ec5f3d2')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_89120ec5f3d2'", 'p3a_89120ec5f3d2')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f401d30>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses6')
 plant = 'function_settings'
@@ -1141,7 +1141,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ________ test_h11_the_read_back_refuses_a_planted_file[replica_trigger] ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_9e807bb3c903'", 'p3a_9e807bb3c903')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_9e807bb3c903'", 'p3a_9e807bb3c903')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f400b40>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses7')
 plant = 'replica_trigger'
@@ -1177,7 +1177,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _______ test_h11_the_read_back_refuses_a_planted_file[replication_role] ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_c856f4f04867'", 'p3a_c856f4f04867')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_c856f4f04867'", 'p3a_c856f4f04867')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f564980>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses8')
 plant = 'replication_role'
@@ -1213,7 +1213,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ______________ test_h11_the_read_back_refuses_a_planted_file[scs] ______________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d3301e7cbde5'", 'p3a_d3301e7cbde5')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_d3301e7cbde5'", 'p3a_d3301e7cbde5')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f564280>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses9')
 plant = 'scs'
@@ -1249,7 +1249,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 __________ test_h11_the_read_back_refuses_a_planted_file[search_path] __________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_ae99fc4d2570'", 'p3a_ae99fc4d2570')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_ae99fc4d2570'", 'p3a_ae99fc4d2570')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f564360>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses10')
 plant = 'search_path'
@@ -1285,7 +1285,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________ test_h11_the_read_back_refuses_a_planted_file[table_renamed] _________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_72cffcbcc6cd'", 'p3a_72cffcbcc6cd')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_72cffcbcc6cd'", 'p3a_72cffcbcc6cd')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f559b70>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses11')
 plant = 'table_renamed'
@@ -1321,7 +1321,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ________ test_h11_the_read_back_refuses_a_planted_file[trigger_always] _________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_45168e70766b'", 'p3a_45168e70766b')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_45168e70766b'", 'p3a_45168e70766b')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f5827b0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses12')
 plant = 'trigger_always'
@@ -1357,7 +1357,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ______ test_h11_the_read_back_refuses_a_planted_file[trigger_definition] _______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_bcbd7418db19'", 'p3a_bcbd7418db19')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_bcbd7418db19'", 'p3a_bcbd7418db19')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f55ba80>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_the_read_back_refuses13')
 plant = 'trigger_definition'
@@ -1393,7 +1393,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________________ test_h11_a_function_owner_change_is_refused __________________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_dca93a4b1ce6'", 'p3a_dca93a4b1ce6')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_dca93a4b1ce6'", 'p3a_dca93a4b1ce6')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f55ac10>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_a_function_owner_chan0')
 
@@ -1440,7 +1440,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ____ test_h11_a_listed_trigger_change_passes_for_that_file_and_trigger_only ____
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_0d48d68b2f15'", 'p3a_0d48d68b2f15')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_0d48d68b2f15'", 'p3a_0d48d68b2f15')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f4019b0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_a_listed_trigger_chan0')
 
@@ -1478,7 +1478,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ______________ test_h11_a_role_switched_inside_a_file_is_refused _______________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_f32012c43e65'", 'p3a_f32012c43e65')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_f32012c43e65'", 'p3a_f32012c43e65')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172bf6f620>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_a_role_switched_insid0')
 
@@ -1519,7 +1519,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 __ test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body] ___
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_b5eae103b103'", 'p3a_b5eae103b103')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_b5eae103b103'", 'p3a_b5eae103b103')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172bf6f700>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_a_role_grant_hidden_i0')
 how = 'function_body'
@@ -1566,7 +1566,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body_with_admin_option] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_2880032a9b69'", 'p3a_2880032a9b69')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_2880032a9b69'", 'p3a_2880032a9b69')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f50d2b0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_a_role_grant_hidden_i1')
 how = 'function_body_with_admin_option'
@@ -1613,7 +1613,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_h11_a_changed_grant_option_of_an_existing_membership_is_refused[the_plain_role] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_ce9db2b3bfe1'", 'p3a_ce9db2b3bfe1')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_ce9db2b3bfe1'", 'p3a_ce9db2b3bfe1')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f50d320>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_a_changed_grant_optio0')
 granted_before_by = 'the_plain_role'
@@ -1667,7 +1667,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_h11_a_changed_grant_option_of_an_existing_membership_is_refused[the_login_superuser] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_274311cbd6f9'", 'p3a_274311cbd6f9')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_274311cbd6f9'", 'p3a_274311cbd6f9')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f50cfa0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_a_changed_grant_optio1')
 granted_before_by = 'the_login_superuser'
@@ -1721,7 +1721,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____ test_h11_a_grant_of_a_role_that_was_a_member_before_is_not_a_refusal _____
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_cb2c2fcf0c11'", 'p3a_cb2c2fcf0c11')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_cb2c2fcf0c11'", 'p3a_cb2c2fcf0c11')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f564a60>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_a_grant_of_a_role_tha0')
 
@@ -1764,7 +1764,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_migrate_as_a_login_role_that_is_not_a_superuser_runs_and_refuses_the_plants _
 
-owner_dsn = ("user=p3a_own_c17f8f6b dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_55314c72aaf2' password=pw-4e6130ad13574984b813270a7bee5ce4", 'p3a_oth_901822ab')
+owner_dsn = ("user=p3a_own_c17f8f6b dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_55314c72aaf2' password=pw-4e6130ad13574984b813270a7bee5ce4", 'p3a_oth_901822ab')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f6e0ec0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_migrate_as_a_login_role_t0')
 
@@ -1787,7 +1787,7 @@ E             Use -v to get more diff
 tests/test_migration_postgres.py:502: AssertionError
 __________ test_h11_same_run_a_drop_in_the_first_run_leaves_no_ledger __________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_24da5acb99ae'", 'p3a_24da5acb99ae')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_24da5acb99ae'", 'p3a_24da5acb99ae')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f55aeb0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h11_same_run_a_drop_in_th0')
 
@@ -1827,7 +1827,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 __________ test_a_hidden_commit_is_found_by_the_transaction_backstop ___________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_27059e974b6c'", 'p3a_27059e974b6c')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_27059e974b6c'", 'p3a_27059e974b6c')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f565e80>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_a_hidden_commit_is_found_0')
 
@@ -1865,7 +1865,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ___ test_a_session_that_reads_strings_the_old_way_is_refused_before_any_file ___
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_8802b307eeef'", 'p3a_8802b307eeef')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_8802b307eeef'", 'p3a_8802b307eeef')
 
     @needs_pg
     def test_a_session_that_reads_strings_the_old_way_is_refused_before_any_file(scratch):
@@ -1898,7 +1898,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________________ test_triggers_of_another_schema_are_not_read _________________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_443730e6f621'", 'p3a_443730e6f621')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_443730e6f621'", 'p3a_443730e6f621')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172bf6f700>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_triggers_of_another_schem0')
 
@@ -1960,7 +1960,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _______ test_the_previous_release_columns_survive_the_newest_migrations ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_01838a068ce8'", 'p3a_01838a068ce8')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_01838a068ce8'", 'p3a_01838a068ce8')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f50ec10>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_the_previous_release_colu0')
 
@@ -2007,7 +2007,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_the_comparison_catches_a_dropped_or_retyped_old_column[ALTER TABLE audit_checkpoints DROP COLUMN signature;\n-lost_key0-None] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_7eb5664f6fb7'", 'p3a_7eb5664f6fb7')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_7eb5664f6fb7'", 'p3a_7eb5664f6fb7')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f58ad60>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_the_comparison_catches_a_0')
 planted = 'ALTER TABLE audit_checkpoints DROP COLUMN signature;\n'
@@ -2064,7 +2064,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_the_comparison_catches_a_dropped_or_retyped_old_column[ALTER TABLE audit_checkpoints ALTER COLUMN signature TYPE BYTEA USING signature::bytea;\n-None-changed_key1] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_101384516325'", 'p3a_101384516325')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_101384516325'", 'p3a_101384516325')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f50f620>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_the_comparison_catches_a_1')
 planted = 'ALTER TABLE audit_checkpoints ALTER COLUMN signature TYPE BYTEA USING signature::bytea;\n'
@@ -2121,7 +2121,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 __ test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it ___
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_f013b7b1421e'", 'p3a_f013b7b1421e')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_f013b7b1421e'", 'p3a_f013b7b1421e')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_runbook_case_b_renames_th0')
 
     @needs_pg
@@ -2155,7 +2155,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _______ test_runbook_case_b_also_repairs_an_early_table_in_the_same_file _______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_ca486fd3f865'", 'p3a_ca486fd3f865')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_ca486fd3f865'", 'p3a_ca486fd3f865')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_runbook_case_b_also_repai0')
 
     @needs_pg
@@ -2189,7 +2189,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____ test_runbook_case_b_keeps_nothing_when_an_evidence_table_is_missing ______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_32c6cd2ef80c'", 'p3a_32c6cd2ef80c')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_32c6cd2ef80c'", 'p3a_32c6cd2ef80c')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_runbook_case_b_keeps_noth0')
 
     @needs_pg
@@ -2221,7 +2221,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ____ test_runbook_case_g_adds_the_missing_error_column_and_keeps_every_row _____
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_c41d1896f290'", 'p3a_c41d1896f290')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_c41d1896f290'", 'p3a_c41d1896f290')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_runbook_case_g_adds_the_m0')
 
     @needs_pg
@@ -2255,7 +2255,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_runbook_case_g_keeps_nothing_when_the_tables_differ_in_more_than_error __
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_c64b8b80b991'", 'p3a_c64b8b80b991')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_c64b8b80b991'", 'p3a_c64b8b80b991')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_runbook_case_g_keeps_noth0')
 
     @needs_pg
@@ -2287,7 +2287,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 __________________________ test_h1_hand_recipe_works ___________________________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_00cb7f450807'", 'p3a_00cb7f450807')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_00cb7f450807'", 'p3a_00cb7f450807')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h1_hand_recipe_works0')
 
     @needs_pg
@@ -2325,7 +2325,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 __________ test_h4_a_second_run_of_the_recipe_fails_and_keeps_nothing __________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_36c9161c9fd0'", 'p3a_36c9161c9fd0')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_36c9161c9fd0'", 'p3a_36c9161c9fd0')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h4_a_second_run_of_the_re0')
 
     @needs_pg
@@ -2362,7 +2362,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____________ test_h4_a_recipe_that_fails_half_way_leaves_nothing ______________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_54a8a96a3633'", 'p3a_54a8a96a3633')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_54a8a96a3633'", 'p3a_54a8a96a3633')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f5f2430>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_h4_a_recipe_that_fails_ha0')
 
@@ -2397,7 +2397,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____ test_the_recipe_stops_at_the_first_error_even_without_the_stop_flag ______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_999b1f6ffbd8'", 'p3a_999b1f6ffbd8')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_999b1f6ffbd8'", 'p3a_999b1f6ffbd8')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f55a0b0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_the_recipe_stops_at_the_f0')
 
@@ -2435,7 +2435,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ________ test_the_recipe_and_the_runbook_header_start_with_the_timeouts ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d140848ab8c6'", 'p3a_d140848ab8c6')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_d140848ab8c6'", 'p3a_d140848ab8c6')
 
     @needs_pg
     def test_the_recipe_and_the_runbook_header_start_with_the_timeouts(scratch):
@@ -2471,7 +2471,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ____ test_a_hand_file_waiting_for_a_table_lock_stops_after_the_lock_timeout ____
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_e4eca4c82239'", 'p3a_e4eca4c82239')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_e4eca4c82239'", 'p3a_e4eca4c82239')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_a_hand_file_waiting_for_a0')
 
     @needs_pg
@@ -2505,7 +2505,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____ test_case_a_current_user_assertion_stops_the_file_for_the_wrong_role _____
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_0c6b294b82da'", 'p3a_0c6b294b82da')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_0c6b294b82da'", 'p3a_0c6b294b82da')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_case_a_current_user_asser0')
 
     @needs_pg
@@ -2524,7 +2524,7 @@ E       TypeError: replace() argument 2 must be str, not bytes
 tests/test_migration_postgres.py:1040: TypeError
 _ test_case_e_e1_the_evidence_row_has_another_number_and_both_tables_exist[tables_whole] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_3328ed5001cd'", 'p3a_3328ed5001cd')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_3328ed5001cd'", 'p3a_3328ed5001cd')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f55bbd0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_case_e_e1_the_evidence_ro0')
 error_column = True
@@ -2565,7 +2565,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_case_e_e1_the_evidence_row_has_another_number_and_both_tables_exist[error_missing] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_a1e3be9e9810'", 'p3a_a1e3be9e9810')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_a1e3be9e9810'", 'p3a_a1e3be9e9810')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f55bcb0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_case_e_e1_the_evidence_ro1')
 error_column = False
@@ -2606,7 +2606,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________________ test_case_e_e2_no_evidence_row_and_no_tables _________________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_e0647eea26a8'", 'p3a_e0647eea26a8')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_e0647eea26a8'", 'p3a_e0647eea26a8')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f55b5b0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_case_e_e2_no_evidence_row0')
 
@@ -2642,7 +2642,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ______ test_case_e_e3_no_evidence_row_but_both_tables_exist[tables_whole] ______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_a04f910d0018'", 'p3a_a04f910d0018')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_a04f910d0018'", 'p3a_a04f910d0018')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f55be70>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_case_e_e3_no_evidence_row0')
 error_column = True
@@ -2682,7 +2682,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____ test_case_e_e3_no_evidence_row_but_both_tables_exist[error_missing] ______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d53cb416a970'", 'p3a_d53cb416a970')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_d53cb416a970'", 'p3a_d53cb416a970')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f402040>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_case_e_e3_no_evidence_row1')
 error_column = False
@@ -2722,7 +2722,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____________ test_case_e_e1_with_one_table_missing_keeps_nothing ______________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_abc9b8520755'", 'p3a_abc9b8520755')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_abc9b8520755'", 'p3a_abc9b8520755')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f6e32a0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_case_e_e1_with_one_table_0')
 
@@ -2759,7 +2759,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _______ test_migrate_gives_up_waiting_for_a_table_lock_and_keeps_nothing _______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_ca63ea176d6d'", 'p3a_ca63ea176d6d')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_ca63ea176d6d'", 'p3a_ca63ea176d6d')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172f5f20b0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_migrate_gives_up_waiting_0')
 
@@ -2796,7 +2796,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________ test_migrate_stops_a_file_that_runs_past_the_statement_limit _________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_bc6f0a455d81'", 'p3a_bc6f0a455d81')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_bc6f0a455d81'", 'p3a_bc6f0a455d81')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172bec11d0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_migrate_stops_a_file_that0')
 
@@ -2831,7 +2831,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ________ test_the_limits_migrate_runs_with_are_the_ones_in_the_constant ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_f38dc9f420ec'", 'p3a_f38dc9f420ec')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_f38dc9f420ec'", 'p3a_f38dc9f420ec')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172bec39a0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_the_limits_migrate_runs_w0')
 
@@ -2883,7 +2883,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ___ test_the_limits_also_cover_the_grant_phase_of_a_run_with_no_pending_file ___
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_1bbb8dc74f47'", 'p3a_1bbb8dc74f47')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_1bbb8dc74f47'", 'p3a_1bbb8dc74f47')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172bec32a0>
 
     @needs_pg
@@ -2917,7 +2917,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____ test_a_file_that_changes_a_limit_itself_is_refused_by_the_read_back ______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_31d961961ff6'", 'p3a_31d961961ff6')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_31d961961ff6'", 'p3a_31d961961ff6')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f172bec34d0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5408/test_a_file_that_changes_a_lim0')
 
@@ -2999,7 +2999,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________________ test_two_concurrent_migrate_runs_apply_once __________________
 
-fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=t_edebddf5ae0d'"
+fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=t_edebddf5ae0d'"
 
     def test_two_concurrent_migrate_runs_apply_once(fresh_dsn):
         applied = []
@@ -3022,7 +3022,7 @@ E         Use -v to get more diff
 tests/test_p2_postgres.py:169: AssertionError
 __________________ test_runtime_role_can_write_but_not_delete __________________
 
-fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=t_9035d823cf76'"
+fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=t_9035d823cf76'"
 
     def test_runtime_role_can_write_but_not_delete(fresh_dsn):
         import psycopg
@@ -3092,7 +3092,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_defaults _
 
-fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=t_39cc9c60ce46'"
+fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=t_39cc9c60ce46'"
 
     def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_defaults(fresh_dsn):
         """Apply 0001-0003 only, insert a pre-upgrade checkpoint row, then migrate: the row loads with NULL (not recorded)."""

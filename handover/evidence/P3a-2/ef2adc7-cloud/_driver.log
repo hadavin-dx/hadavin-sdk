@@ -20,3 +20,14 @@
 2026-11-10T20:39:20Z end 04-migtests-py3.13-dsn-random-seed7311 rc=0
 2026-11-10T20:39:20Z DRIVER-DONE-A
 2026-11-10T20:39:32Z start 05-failbefore-base-py313-dsn
+2026-11-10T21:03:21Z end 05-failbefore-base-py313-dsn rc=2
+2026-11-10T21:03:21Z start 02a-single-askdata-dblink-test-py313
+2026-11-10T21:03:47Z end 02a-single-askdata-dblink-test-py313 rc=1
+2026-11-10T21:03:47Z start 02b-rerun1-full-py312-dsn
+2026-11-10T21:09:14Z end 02b-rerun1-full-py312-dsn rc=1
+2026-11-10T21:09:14Z DRIVER-DONE-B
+2026-11-10T21:09:26Z start 05b-failbefore-base-py313-dsn
+2026-11-10T21:13:36Z end 05b-failbefore-base-py313-dsn rc=1
+2026-11-10T21:13:36Z start 02a-single-askdata-dblink-server-env-py313
+2026-11-10T21:14:00Z end 02a-single-askdata-dblink-server-env-py313 rc=0
+2026-11-10T21:14:00Z DRIVER-DONE-C

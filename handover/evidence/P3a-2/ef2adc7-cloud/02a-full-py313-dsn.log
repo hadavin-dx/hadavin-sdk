@@ -10701,7 +10701,7 @@ tests/warden_port/test_redaction_review9.py::test_a_secret_inside_a_compound_val
 _ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] _
 
 attack = Attack(name='dblink-connect', sql="SELECT dblink_connect('dbname=postgres')", rule='V06', category='public-functions', harm='exec')
-shared = 'user=postgres dbname=askdata_h_b6cd4649 host=127.0.0.1 port=54737'
+shared = 'user=postgres dbname=askdata_h_b6cd4649 host=127.0.0.1 port=<port>'
 
     @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
     def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):

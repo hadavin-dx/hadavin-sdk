@@ -1548,7 +1548,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ ERROR at setup of test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[SUPERUSER] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_f414202e6f30'", 'p3a_f414202e6f30')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_f414202e6f30'", 'p3a_f414202e6f30')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -1592,7 +1592,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[CREATEROLE] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d63de87b4458'", 'p3a_d63de87b4458')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_d63de87b4458'", 'p3a_d63de87b4458')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -1636,7 +1636,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[CREATEDB] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_bc7a96589baa'", 'p3a_bc7a96589baa')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_bc7a96589baa'", 'p3a_bc7a96589baa')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -1680,7 +1680,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[BYPASSRLS] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_2999d0497876'", 'p3a_2999d0497876')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_2999d0497876'", 'p3a_2999d0497876')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -1724,7 +1724,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[TRUE] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_bccd54db90a3'", 'p3a_bccd54db90a3')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_bccd54db90a3'", 'p3a_bccd54db90a3')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -1768,7 +1768,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[FALSE] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_5efdda6fb99f'", 'p3a_5efdda6fb99f')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_5efdda6fb99f'", 'p3a_5efdda6fb99f')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -1812,7 +1812,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
 ___ ERROR at setup of test_a_plain_migration_role_runs_with_the_real_connect ___
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_2065481a68a3'", 'p3a_2065481a68a3')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_2065481a68a3'", 'p3a_2065481a68a3')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -1856,7 +1856,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_b86de40f4752'", 'p3a_b86de40f4752')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_b86de40f4752'", 'p3a_b86de40f4752')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -1900,7 +1900,7 @@ E               TypeError: SQL identifier parts must be strings, got b'postgres'
 ../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
 _ ERROR at setup of test_one_table_owned_by_another_role_is_enough_to_refuse_and_a_function_is_named _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_b481033a3bb8'", 'p3a_b481033a3bb8')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_b481033a3bb8'", 'p3a_b481033a3bb8')
 
     @pytest.fixture
     def plain_role(scratch):
@@ -2204,7 +2204,7 @@ E       assert 4 == 0
 tests/demo_askdata/test_cli.py:74: AssertionError
 ___________ test_ask_refuses_to_start_when_a_read_only_check_is_red ____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa69a013a0>
 capsys = <_pytest.capture.CaptureFixture object at 0x7faa69a02150>
 
@@ -2219,7 +2219,7 @@ E       AssertionError: assert ('refusing to run' in 'startup: cannot run the re
 tests/demo_askdata/test_cli.py:89: AssertionError
 _______________ test_benign_corpus_runs_on_the_ci_server[count] ________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'count', sql = 'SELECT count(*) FROM analytics.orders_v'
 
     @pytest.mark.parametrize(("name", "sql"), BENIGN, ids=[b[0] for b in BENIGN])
@@ -2248,7 +2248,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 __________ test_benign_corpus_runs_on_the_ci_server[join-on-subquery] __________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'join-on-subquery'
 sql = 'SELECT s.n FROM analytics.customers_v c JOIN (SELECT customer_id, count(*) AS n FROM analytics.orders_v GROUP BY customer_id) s ON s.customer_id = c.customer_id'
 
@@ -2278,7 +2278,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ____________ test_benign_corpus_runs_on_the_ci_server[join-on-cte] _____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'join-on-cte'
 sql = 'WITH t AS (SELECT customer_id FROM analytics.orders_v) SELECT count(*) FROM analytics.customers_v c JOIN t ON t.customer_id = c.customer_id'
 
@@ -2308,7 +2308,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 __________ test_benign_corpus_runs_on_the_ci_server[join-on-compound] __________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'join-on-compound'
 sql = "SELECT count(*) FROM analytics.orders_v o JOIN analytics.customers_v c ON c.customer_id = o.customer_id AND o.status = 'paid'"
 
@@ -2338,7 +2338,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ___________ test_benign_corpus_runs_on_the_ci_server[count-distinct] ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'count-distinct'
 sql = 'SELECT count(DISTINCT customer_id) FROM analytics.orders_v'
 
@@ -2368,7 +2368,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _______ test_benign_corpus_runs_on_the_ci_server[cte-later-uses-earlier] _______
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'cte-later-uses-earlier'
 sql = 'WITH a AS (SELECT customer_id FROM analytics.orders_v), b AS (SELECT customer_id FROM a) SELECT count(*) FROM b'
 
@@ -2398,7 +2398,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ________ test_benign_corpus_runs_on_the_ci_server[cte-nested-own-scope] ________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'cte-nested-own-scope'
 sql = 'SELECT * FROM (WITH t AS (SELECT 1 AS x) SELECT x FROM t) s'
 
@@ -2428,7 +2428,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 __________ test_benign_corpus_runs_on_the_ci_server[cte-column-list] ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'cte-column-list'
 sql = 'WITH t(a, b) AS (SELECT order_id, status FROM analytics.orders_v) SELECT a, b FROM t'
 
@@ -2458,7 +2458,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _____ test_benign_corpus_runs_on_the_ci_server[cte-named-like-base-table] ______
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'cte-named-like-base-table'
 sql = 'WITH orders AS (SELECT * FROM analytics.orders_v) SELECT count(*) FROM orders'
 
@@ -2488,7 +2488,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ________ test_benign_corpus_runs_on_the_ci_server[cte-used-in-subquery] ________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'cte-used-in-subquery'
 sql = 'WITH t AS (SELECT order_id FROM analytics.orders_v) SELECT * FROM analytics.orders_v WHERE order_id IN (SELECT order_id FROM t)'
 
@@ -2518,7 +2518,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ______________ test_benign_corpus_runs_on_the_ci_server[group-by] ______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'group-by'
 sql = 'SELECT category, count(*) AS n FROM analytics.products_v GROUP BY 1 ORDER BY n DESC LIMIT 5'
 
@@ -2548,7 +2548,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 __________ test_benign_corpus_runs_on_the_ci_server[group-by-having] ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'group-by-having'
 sql = 'SELECT customer_id, sum(total_amount) AS s FROM analytics.orders_v GROUP BY customer_id HAVING sum(total_amount) > 100'
 
@@ -2578,7 +2578,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ____________ test_benign_corpus_runs_on_the_ci_server[limit-offset] ____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'limit-offset'
 sql = 'SELECT order_id FROM analytics.orders_v ORDER BY order_id LIMIT 10 OFFSET 20'
 
@@ -2608,7 +2608,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ________________ test_benign_corpus_runs_on_the_ci_server[join] ________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'join'
 sql = 'SELECT c.country, count(*) AS orders FROM analytics.orders_v o JOIN analytics.customers_v c ON c.customer_id = o.customer_id GROUP BY c.country ORDER BY orders DESC'
 
@@ -2638,7 +2638,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _____________ test_benign_corpus_runs_on_the_ci_server[join-using] _____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'join-using'
 sql = 'SELECT count(*) FROM analytics.orders_v JOIN analytics.customers_v USING (customer_id)'
 
@@ -2668,7 +2668,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _____________ test_benign_corpus_runs_on_the_ci_server[left-join] ______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'left-join'
 sql = 'SELECT c.full_name, count(o.order_id) FROM analytics.customers_v c LEFT JOIN analytics.orders_v o ON o.customer_id = c.customer_id GROUP BY c.full_name'
 
@@ -2698,7 +2698,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ___________ test_benign_corpus_runs_on_the_ci_server[three-way-join] ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'three-way-join'
 sql = "SELECT p.category, sum(i.line_amount) FROM analytics.order_items_v i JOIN analytics.products_v p ON p.product_id = i.product_id JOIN analytics.orders_v o ON o.order_id = i.order_id WHERE o.status = 'paid' GROUP BY p.category"
 
@@ -2728,7 +2728,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ________________ test_benign_corpus_runs_on_the_ci_server[cte] _________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'cte'
 sql = 'WITH t AS (SELECT customer_id, sum(total_amount) AS s FROM analytics.orders_v GROUP BY customer_id) SELECT avg(s) FROM t'
 
@@ -2758,7 +2758,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ____________ test_benign_corpus_runs_on_the_ci_server[window-rank] _____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'window-rank'
 sql = 'SELECT customer_id, rank() OVER (ORDER BY total_amount DESC) AS r FROM analytics.orders_v'
 
@@ -2788,7 +2788,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 __________ test_benign_corpus_runs_on_the_ci_server[window-partition] __________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'window-partition'
 sql = 'SELECT order_id, row_number() OVER (PARTITION BY customer_id ORDER BY order_date) AS n FROM analytics.orders_v'
 
@@ -2818,7 +2818,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _____________ test_benign_corpus_runs_on_the_ci_server[window-lag] _____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'window-lag'
 sql = 'SELECT order_id, lag(total_amount) OVER (PARTITION BY customer_id ORDER BY order_date) FROM analytics.orders_v'
 
@@ -2848,7 +2848,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _____________ test_benign_corpus_runs_on_the_ci_server[date-trunc] _____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'date-trunc'
 sql = "SELECT date_trunc('month', order_date) AS m, sum(total_amount) FROM analytics.orders_v GROUP BY 1"
 
@@ -2878,7 +2878,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ____________ test_benign_corpus_runs_on_the_ci_server[extract-year] ____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'extract-year'
 sql = 'SELECT extract(year FROM order_date) AS y, count(*) FROM analytics.orders_v GROUP BY 1'
 
@@ -2908,7 +2908,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _____________ test_benign_corpus_runs_on_the_ci_server[date-part] ______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'date-part'
 sql = "SELECT date_part('month', order_date) FROM analytics.orders_v"
 
@@ -2938,7 +2938,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _____________ test_benign_corpus_runs_on_the_ci_server[percentile] _____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'percentile'
 sql = 'SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY total_amount) FROM analytics.orders_v'
 
@@ -2968,7 +2968,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _______________ test_benign_corpus_runs_on_the_ci_server[filter] _______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'filter'
 sql = "SELECT count(*) FILTER (WHERE status = 'paid') FROM analytics.orders_v"
 
@@ -2998,7 +2998,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ________________ test_benign_corpus_runs_on_the_ci_server[case] ________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'case'
 sql = "SELECT CASE WHEN total_amount > 100 THEN 'big' ELSE 'small' END AS size, count(*) FROM analytics.orders_v GROUP BY 1"
 
@@ -3028,7 +3028,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 __________ test_benign_corpus_runs_on_the_ci_server[coalesce-nullif] ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'coalesce-nullif'
 sql = "SELECT coalesce(nullif(status, ''), 'none') FROM analytics.orders_v"
 
@@ -3058,7 +3058,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ___________ test_benign_corpus_runs_on_the_ci_server[round-numeric] ____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'round-numeric'
 sql = 'SELECT round(avg(total_amount), 2) FROM analytics.orders_v'
 
@@ -3088,7 +3088,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ___________ test_benign_corpus_runs_on_the_ci_server[greatest-least] ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'greatest-least'
 sql = 'SELECT greatest(total_amount, 0), least(total_amount, 1000) FROM analytics.orders_v'
 
@@ -3118,7 +3118,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 __________ test_benign_corpus_runs_on_the_ci_server[string-functions] __________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'string-functions'
 sql = 'SELECT upper(full_name), lower(country), length(full_name) FROM analytics.customers_v'
 
@@ -3148,7 +3148,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 __________ test_benign_corpus_runs_on_the_ci_server[concat-operator] ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'concat-operator'
 sql = "SELECT full_name || ' (' || country || ')' FROM analytics.customers_v"
 
@@ -3178,7 +3178,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _____________ test_benign_corpus_runs_on_the_ci_server[time-zone] ______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'time-zone'
 sql = "SELECT order_date AT TIME ZONE 'UTC' FROM analytics.orders_v"
 
@@ -3208,7 +3208,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ___ test_benign_corpus_runs_on_the_ci_server[literals-with-comment-markers] ____
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'literals-with-comment-markers'
 sql = "SELECT 'a--b', 'c/*d*/' FROM analytics.orders_v -- real comment"
 
@@ -3238,7 +3238,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 __ test_benign_corpus_runs_on_the_ci_server[literal-with-semicolon-and-quote] __
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'literal-with-semicolon-and-quote'
 sql = "SELECT 'x'';DELETE FROM shop.order_items;--' FROM analytics.orders_v"
 
@@ -3268,7 +3268,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ___ test_benign_corpus_runs_on_the_ci_server[literal-with-percent-and-colon] ___
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'literal-with-percent-and-colon'
 sql = "SELECT 'a%s:b?c' FROM analytics.orders_v LIMIT 1"
 
@@ -3298,7 +3298,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _________ test_benign_corpus_runs_on_the_ci_server[literal-non-ascii] __________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'literal-non-ascii'
 sql = "SELECT 1 FROM analytics.customers_v WHERE full_name = 'Zoé'"
 
@@ -3328,7 +3328,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ____ test_benign_corpus_runs_on_the_ci_server[line-comment-hides-statement] ____
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'line-comment-hides-statement'
 sql = 'SELECT 1 FROM analytics.orders_v -- ; DELETE FROM shop.order_items'
 
@@ -3358,7 +3358,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ___ test_benign_corpus_runs_on_the_ci_server[nested-comment-hides-statement] ___
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'nested-comment-hides-statement'
 sql = 'SELECT 1 /* a /* ; DELETE FROM shop.order_items */ b */ FROM analytics.orders_v'
 
@@ -3388,7 +3388,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _________ test_benign_corpus_runs_on_the_ci_server[trailing-semicolon] _________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'trailing-semicolon', sql = 'SELECT 1 FROM analytics.orders_v;'
 
     @pytest.mark.parametrize(("name", "sql"), BENIGN, ids=[b[0] for b in BENIGN])
@@ -3417,7 +3417,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ______ test_benign_corpus_runs_on_the_ci_server[quoted-plain-identifiers] ______
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'quoted-plain-identifiers'
 sql = 'SELECT "order_id" FROM analytics."orders_v"'
 
@@ -3447,7 +3447,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ________ test_benign_corpus_runs_on_the_ci_server[unquoted-upper-folds] ________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'unquoted-upper-folds', sql = 'SELECT ORDER_ID FROM ANALYTICS.ORDERS_V'
 
     @pytest.mark.parametrize(("name", "sql"), BENIGN, ids=[b[0] for b in BENIGN])
@@ -3476,7 +3476,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ________________ test_benign_corpus_runs_on_the_ci_server[star] ________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'star', sql = 'SELECT * FROM analytics.customers_v'
 
     @pytest.mark.parametrize(("name", "sql"), BENIGN, ids=[b[0] for b in BENIGN])
@@ -3505,7 +3505,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ___________ test_benign_corpus_runs_on_the_ci_server[star-qualified] ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'star-qualified', sql = 'SELECT o.* FROM analytics.orders_v o'
 
     @pytest.mark.parametrize(("name", "sql"), BENIGN, ids=[b[0] for b in BENIGN])
@@ -3534,7 +3534,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ___________ test_benign_corpus_runs_on_the_ci_server[star-in-count] ____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'star-in-count'
 sql = 'SELECT count(*) FROM (SELECT * FROM analytics.orders_v) s'
 
@@ -3564,7 +3564,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _______________ test_benign_corpus_runs_on_the_ci_server[union] ________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'union', sql = 'SELECT 1 AS a UNION ALL SELECT 2'
 
     @pytest.mark.parametrize(("name", "sql"), BENIGN, ids=[b[0] for b in BENIGN])
@@ -3593,7 +3593,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _____________ test_benign_corpus_runs_on_the_ci_server[intersect] ______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'intersect'
 sql = 'SELECT customer_id FROM analytics.orders_v INTERSECT SELECT customer_id FROM analytics.customers_v'
 
@@ -3623,7 +3623,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _______________ test_benign_corpus_runs_on_the_ci_server[except] _______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'except'
 sql = 'SELECT customer_id FROM analytics.customers_v EXCEPT SELECT customer_id FROM analytics.orders_v'
 
@@ -3653,7 +3653,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ______________ test_benign_corpus_runs_on_the_ci_server[interval] ______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'interval'
 sql = "SELECT order_date + INTERVAL '7 days' FROM analytics.orders_v"
 
@@ -3683,7 +3683,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 __________ test_benign_corpus_runs_on_the_ci_server[interval-months] ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'interval-months'
 sql = "SELECT order_date - INTERVAL '3 months' FROM analytics.orders_v"
 
@@ -3713,7 +3713,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ________________ test_benign_corpus_runs_on_the_ci_server[age] _________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'age'
 sql = "SELECT age(order_date, DATE '2026-01-01') FROM analytics.orders_v"
 
@@ -3743,7 +3743,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _______________ test_benign_corpus_runs_on_the_ci_server[exists] _______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'exists'
 sql = 'SELECT 1 FROM analytics.orders_v o WHERE EXISTS (SELECT 1 FROM analytics.customers_v c WHERE c.customer_id = o.customer_id)'
 
@@ -3773,7 +3773,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _____________ test_benign_corpus_runs_on_the_ci_server[not-exists] _____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'not-exists'
 sql = 'SELECT count(*) FROM analytics.customers_v c WHERE NOT EXISTS (SELECT 1 FROM analytics.orders_v o WHERE o.customer_id = c.customer_id)'
 
@@ -3803,7 +3803,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ______________ test_benign_corpus_runs_on_the_ci_server[in-list] _______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'in-list'
 sql = "SELECT count(*) FROM analytics.orders_v WHERE status IN ('paid', 'shipped')"
 
@@ -3833,7 +3833,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ______________ test_benign_corpus_runs_on_the_ci_server[between] _______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'between'
 sql = "SELECT count(*) FROM analytics.orders_v WHERE order_date BETWEEN DATE '2026-01-01' AND DATE '2026-03-31'"
 
@@ -3863,7 +3863,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ______________ test_benign_corpus_runs_on_the_ci_server[is-null] _______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'is-null'
 sql = 'SELECT count(*) FROM analytics.orders_v WHERE status IS NOT NULL'
 
@@ -3893,7 +3893,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _______________ test_benign_corpus_runs_on_the_ci_server[ilike] ________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'ilike'
 sql = "SELECT full_name FROM analytics.customers_v WHERE full_name ILIKE 'a%'"
 
@@ -3923,7 +3923,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 __________ test_benign_corpus_runs_on_the_ci_server[scalar-subquery] ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'scalar-subquery'
 sql = 'SELECT order_id, total_amount - (SELECT avg(total_amount) FROM analytics.orders_v) FROM analytics.orders_v'
 
@@ -3953,7 +3953,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ________________ test_benign_corpus_runs_on_the_ci_server[cast] ________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'cast'
 sql = 'SELECT CAST(total_amount AS NUMERIC(10, 2)), order_date::text FROM analytics.orders_v'
 
@@ -3983,7 +3983,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ______________ test_benign_corpus_runs_on_the_ci_server[cast-int] ______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'cast-int'
 sql = 'SELECT order_id::bigint, total_amount::double precision FROM analytics.orders_v'
 
@@ -4013,7 +4013,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ____________ test_benign_corpus_runs_on_the_ci_server[like-percent] ____________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'like-percent'
 sql = "SELECT full_name FROM analytics.customers_v WHERE full_name LIKE 'A%'"
 
@@ -4043,7 +4043,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _______________ test_benign_corpus_runs_on_the_ci_server[modulo] _______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'modulo', sql = 'SELECT order_id % 2 FROM analytics.orders_v'
 
     @pytest.mark.parametrize(("name", "sql"), BENIGN, ids=[b[0] for b in BENIGN])
@@ -4072,7 +4072,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ______________ test_benign_corpus_runs_on_the_ci_server[distinct] ______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'distinct', sql = 'SELECT DISTINCT status FROM analytics.orders_v'
 
     @pytest.mark.parametrize(("name", "sql"), BENIGN, ids=[b[0] for b in BENIGN])
@@ -4101,7 +4101,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ________ test_benign_corpus_runs_on_the_ci_server[order-by-expression] _________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'order-by-expression'
 sql = 'SELECT status FROM analytics.orders_v ORDER BY length(status) DESC, status'
 
@@ -4131,7 +4131,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _________ test_benign_corpus_runs_on_the_ci_server[boolean-aggregate] __________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'boolean-aggregate'
 sql = 'SELECT bool_and(total_amount > 0) FROM analytics.orders_v'
 
@@ -4161,7 +4161,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _______________ test_benign_corpus_runs_on_the_ci_server[stddev] _______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 name = 'stddev'
 sql = 'SELECT stddev(total_amount), variance(total_amount) FROM analytics.orders_v'
 
@@ -4191,8 +4191,8 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ___________ test_c3b_stacked_statement_is_refused_and_writes_nothing ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 
     def test_c3b_stacked_statement_is_refused_and_writes_nothing(db, rw_login):
         dsn, _ = rw_login
@@ -4209,8 +4209,8 @@ E         + 25006
 tests/demo_askdata/test_pgsource_layers.py:29: AssertionError
 __ test_variants_sent_after_the_guard_never_write[SET TRANSACTION READ WRITE] __
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 variant = 'SET TRANSACTION READ WRITE'
 
     @pytest.mark.parametrize("variant", VARIANTS)
@@ -4235,8 +4235,8 @@ E             + 25006
 tests/demo_askdata/test_pgsource_layers.py:82: AssertionError
 _______ test_variants_sent_after_the_guard_never_write[BEGIN READ WRITE] _______
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 variant = 'BEGIN READ WRITE'
 
     @pytest.mark.parametrize("variant", VARIANTS)
@@ -4261,8 +4261,8 @@ E             + 25006
 tests/demo_askdata/test_pgsource_layers.py:82: AssertionError
 _ test_variants_sent_after_the_guard_never_write[SET default_transaction_read_only = off] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 variant = 'SET default_transaction_read_only = off'
 
     @pytest.mark.parametrize("variant", VARIANTS)
@@ -4287,8 +4287,8 @@ E             + 25006
 tests/demo_askdata/test_pgsource_layers.py:82: AssertionError
 __________ test_variants_sent_after_the_guard_never_write[RESET ALL] ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 variant = 'RESET ALL'
 
     @pytest.mark.parametrize("variant", VARIANTS)
@@ -4313,8 +4313,8 @@ E             + 25006
 tests/demo_askdata/test_pgsource_layers.py:82: AssertionError
 _ test_variants_sent_after_the_guard_never_write[SELECT set_config('transaction_read_only', 'off', false)] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 variant = "SELECT set_config('transaction_read_only', 'off', false)"
 
     @pytest.mark.parametrize("variant", VARIANTS)
@@ -4347,8 +4347,8 @@ demos/ask-your-data/askdata/pgsource.py:140: PgError
 
 During handling of the above exception, another exception occurred:
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 variant = "SELECT set_config('transaction_read_only', 'off', false)"
 
     @pytest.mark.parametrize("variant", VARIANTS)
@@ -4372,8 +4372,8 @@ E                 ?     ^
 tests/demo_askdata/test_pgsource_layers.py:78: AssertionError
 _ test_variants_sent_after_the_guard_never_write[SELECT set_config('default_transaction_read_only', 'off', false)] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 variant = "SELECT set_config('default_transaction_read_only', 'off', false)"
 
     @pytest.mark.parametrize("variant", VARIANTS)
@@ -4406,8 +4406,8 @@ demos/ask-your-data/askdata/pgsource.py:140: PgError
 
 During handling of the above exception, another exception occurred:
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 variant = "SELECT set_config('default_transaction_read_only', 'off', false)"
 
     @pytest.mark.parametrize("variant", VARIANTS)
@@ -4431,8 +4431,8 @@ E                 ?     ^
 tests/demo_askdata/test_pgsource_layers.py:78: AssertionError
 _ test_variants_sent_after_the_guard_never_write[SELECT set_config('statement_timeout', '0', false)] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 variant = "SELECT set_config('statement_timeout', '0', false)"
 
     @pytest.mark.parametrize("variant", VARIANTS)
@@ -4465,8 +4465,8 @@ demos/ask-your-data/askdata/pgsource.py:140: PgError
 
 During handling of the above exception, another exception occurred:
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 variant = "SELECT set_config('statement_timeout', '0', false)"
 
     @pytest.mark.parametrize("variant", VARIANTS)
@@ -4490,8 +4490,8 @@ E                 ?     ^
 tests/demo_askdata/test_pgsource_layers.py:78: AssertionError
 _________ test_variants_set_config_of_read_write_fails_after_the_guard _________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 
     def test_variants_set_config_of_read_write_fails_after_the_guard(db, rw_login):
         dsn, _ = rw_login
@@ -4508,8 +4508,8 @@ E         ?     ^
 tests/demo_askdata/test_pgsource_layers.py:93: AssertionError
 _ test_variants_sent_first_would_flip_the_transaction__which_is_why_the_guard_is_first _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
-rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=54737 user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+rw_login = ('dbname=askdata_t_cf034b6e host=127.0.0.1 port=<port> user=askdata_t_cf034b6e_rw password=AbaO0mBe6Yf_zAPrnxUYwhIN', 'askdata_t_cf034b6e_rw')
 
     def test_variants_sent_first_would_flip_the_transaction__which_is_why_the_guard_is_first(
         db, rw_login
@@ -4526,7 +4526,7 @@ E           AssertionError: assert b'off' == 'off'
 tests/demo_askdata/test_pgsource_layers.py:105: AssertionError
 _________________ test_percent_signs_in_canonical_sql_are_safe _________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 
     def test_percent_signs_in_canonical_sql_are_safe(db):
 >       result = PgSource(db.ro_dsn).run("SELECT 7 % 4 AS m, 'a%' LIKE 'a%' AS lk")
@@ -4552,7 +4552,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _____________________ test_errors_carry_only_the_sqlstate ______________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 
     def test_errors_carry_only_the_sqlstate(db):
         with pytest.raises(PgError) as caught:
@@ -4566,7 +4566,7 @@ E         + 25006
 tests/demo_askdata/test_pgsource_layers.py:124: AssertionError
 __________________ test_caps_row_cap_returns_exactly_max_rows __________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 
     def test_caps_row_cap_returns_exactly_max_rows(db):
 >       result = PgSource(db.ro_dsn).run(
@@ -4593,7 +4593,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ______________________ test_caps_byte_cap_stops_wide_rows ______________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 
     def test_caps_byte_cap_stops_wide_rows(db):
 >       result = PgSource(db.ro_dsn).run(
@@ -4624,7 +4624,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ______________ test_caps_timer_thread_is_dead_after_a_normal_run _______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 
     def test_caps_timer_thread_is_dead_after_a_normal_run(db):
 >       PgSource(db.ro_dsn).run("SELECT 1")
@@ -4649,7 +4649,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 __________ test_result_hash_is_over_raw_values_and_cells_are_cleaned ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 
     def test_result_hash_is_over_raw_values_and_cells_are_cleaned(db):
         esc = chr(27)
@@ -4677,7 +4677,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _ test_a_transient_connect_failure_is_retried_once_and_a_second_failure_is_reported _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa699162d0>
 
     def test_a_transient_connect_failure_is_retried_once_and_a_second_failure_is_reported(
@@ -4715,7 +4715,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ________________ test_deadline_is_checked_per_row_not_per_batch ________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa69917680>
 
     def test_deadline_is_checked_per_row_not_per_batch(db, monkeypatch):
@@ -4744,7 +4744,7 @@ E         + 25006)
 tests/demo_askdata/test_pgsource_layers.py:228: AssertionError
 _______________ test_role_defaults_are_set_but_are_only_defaults _______________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 
     def test_role_defaults_are_set_but_are_only_defaults(db):
         with psycopg.connect(db.ro_dsn, autocommit=True) as conn:
@@ -4754,7 +4754,7 @@ E           AssertionError: assert b'on' == 'on'
 tests/demo_askdata/test_roles.py:53: AssertionError
 ______________ test_database_round_trip_reproduces_the_hashes[a] _______________
 
-admin_dsn = 'postgresql://postgres@127.0.0.1:54737/postgres'
+admin_dsn = 'postgresql://postgres@127.0.0.1:<port>/postgres'
 builds = {'a': <askdata_db_lumen.Dataset object at 0x7faa69987a10>, 'b': <askdata_db_lumen.Dataset object at 0x7faa68f87ef0>, 'clean': <askdata_db_lumen.Dataset object at 0x7faa68913fb0>}
 name = 'a'
 
@@ -4824,7 +4824,7 @@ E       TypeError: Object of type bytes is not JSON serializable
 /usr/lib/python3.12/json/encoder.py:180: TypeError
 ____________ test_database_round_trip_reproduces_the_hashes[clean] _____________
 
-admin_dsn = 'postgresql://postgres@127.0.0.1:54737/postgres'
+admin_dsn = 'postgresql://postgres@127.0.0.1:<port>/postgres'
 builds = {'a': <askdata_db_lumen.Dataset object at 0x7faa69987a10>, 'b': <askdata_db_lumen.Dataset object at 0x7faa68f87ef0>, 'clean': <askdata_db_lumen.Dataset object at 0x7faa68913fb0>}
 name = 'clean'
 
@@ -4895,7 +4895,7 @@ E       TypeError: Object of type bytes is not JSON serializable
 _ test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[for-update] _
 
 attack = Attack(name='for-update', sql='SELECT * FROM analytics.orders_v FOR UPDATE', rule='V03', category='locking', harm='lock')
-clone = 'user=postgres dbname=askdata_h_4252ecfa host=127.0.0.1 port=54737'
+clone = 'user=postgres dbname=askdata_h_4252ecfa host=127.0.0.1 port=<port>'
 
     @pytest.mark.parametrize("attack", WRITERS, ids=[a.name for a in WRITERS])
     def test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, clone):
@@ -4906,7 +4906,7 @@ tests/demo_askdata/test_validate_harm.py:173:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 attack = Attack(name='for-update', sql='SELECT * FROM analytics.orders_v FOR UPDATE', rule='V03', category='locking', harm='lock')
-dsn = 'user=postgres dbname=askdata_h_4252ecfa host=127.0.0.1 port=54737'
+dsn = 'user=postgres dbname=askdata_h_4252ecfa host=127.0.0.1 port=<port>'
 
     def prove_harm(attack: Attack, dsn: str) -> str:
         """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
@@ -4937,7 +4937,7 @@ tests/demo_askdata/test_validate_harm.py:123: AssertionError
 _ test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[for-share] _
 
 attack = Attack(name='for-share', sql='SELECT * FROM analytics.orders_v FOR SHARE', rule='V03', category='locking', harm='lock')
-clone = 'user=postgres dbname=askdata_h_149bd4c7 host=127.0.0.1 port=54737'
+clone = 'user=postgres dbname=askdata_h_149bd4c7 host=127.0.0.1 port=<port>'
 
     @pytest.mark.parametrize("attack", WRITERS, ids=[a.name for a in WRITERS])
     def test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, clone):
@@ -4948,7 +4948,7 @@ tests/demo_askdata/test_validate_harm.py:173:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 attack = Attack(name='for-share', sql='SELECT * FROM analytics.orders_v FOR SHARE', rule='V03', category='locking', harm='lock')
-dsn = 'user=postgres dbname=askdata_h_149bd4c7 host=127.0.0.1 port=54737'
+dsn = 'user=postgres dbname=askdata_h_149bd4c7 host=127.0.0.1 port=<port>'
 
     def prove_harm(attack: Attack, dsn: str) -> str:
         """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
@@ -4979,7 +4979,7 @@ tests/demo_askdata/test_validate_harm.py:123: AssertionError
 _ test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[for-no-key-update-nowait] _
 
 attack = Attack(name='for-no-key-update-nowait', sql='SELECT * FROM analytics.orders_v FOR NO KEY UPDATE NOWAIT', rule='V03', category='locking', harm='lock')
-clone = 'user=postgres dbname=askdata_h_b7118be8 host=127.0.0.1 port=54737'
+clone = 'user=postgres dbname=askdata_h_b7118be8 host=127.0.0.1 port=<port>'
 
     @pytest.mark.parametrize("attack", WRITERS, ids=[a.name for a in WRITERS])
     def test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, clone):
@@ -4990,7 +4990,7 @@ tests/demo_askdata/test_validate_harm.py:173:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 attack = Attack(name='for-no-key-update-nowait', sql='SELECT * FROM analytics.orders_v FOR NO KEY UPDATE NOWAIT', rule='V03', category='locking', harm='lock')
-dsn = 'user=postgres dbname=askdata_h_b7118be8 host=127.0.0.1 port=54737'
+dsn = 'user=postgres dbname=askdata_h_b7118be8 host=127.0.0.1 port=<port>'
 
     def prove_harm(attack: Attack, dsn: str) -> str:
         """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
@@ -5021,7 +5021,7 @@ tests/demo_askdata/test_validate_harm.py:123: AssertionError
 _ test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[for-update-skip-locked] _
 
 attack = Attack(name='for-update-skip-locked', sql='SELECT * FROM analytics.orders_v o FOR UPDATE OF o SKIP LOCKED', rule='V03', category='locking', harm='lock')
-clone = 'user=postgres dbname=askdata_h_a6c036b2 host=127.0.0.1 port=54737'
+clone = 'user=postgres dbname=askdata_h_a6c036b2 host=127.0.0.1 port=<port>'
 
     @pytest.mark.parametrize("attack", WRITERS, ids=[a.name for a in WRITERS])
     def test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, clone):
@@ -5032,7 +5032,7 @@ tests/demo_askdata/test_validate_harm.py:173:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 attack = Attack(name='for-update-skip-locked', sql='SELECT * FROM analytics.orders_v o FOR UPDATE OF o SKIP LOCKED', rule='V03', category='locking', harm='lock')
-dsn = 'user=postgres dbname=askdata_h_a6c036b2 host=127.0.0.1 port=54737'
+dsn = 'user=postgres dbname=askdata_h_a6c036b2 host=127.0.0.1 port=<port>'
 
     def prove_harm(attack: Attack, dsn: str) -> str:
         """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
@@ -5063,7 +5063,7 @@ tests/demo_askdata/test_validate_harm.py:123: AssertionError
 _ test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated[for-update-in-subquery] _
 
 attack = Attack(name='for-update-in-subquery', sql='SELECT * FROM (SELECT * FROM analytics.orders_v FOR UPDATE) s', rule='V03', category='locking', harm='lock')
-clone = 'user=postgres dbname=askdata_h_6856e59d host=127.0.0.1 port=54737'
+clone = 'user=postgres dbname=askdata_h_6856e59d host=127.0.0.1 port=<port>'
 
     @pytest.mark.parametrize("attack", WRITERS, ids=[a.name for a in WRITERS])
     def test_writing_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, clone):
@@ -5074,7 +5074,7 @@ tests/demo_askdata/test_validate_harm.py:173:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
 attack = Attack(name='for-update-in-subquery', sql='SELECT * FROM (SELECT * FROM analytics.orders_v FOR UPDATE) s', rule='V03', category='locking', harm='lock')
-dsn = 'user=postgres dbname=askdata_h_6856e59d host=127.0.0.1 port=54737'
+dsn = 'user=postgres dbname=askdata_h_6856e59d host=127.0.0.1 port=<port>'
 
     def prove_harm(attack: Attack, dsn: str) -> str:
         """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
@@ -5105,7 +5105,7 @@ tests/demo_askdata/test_validate_harm.py:123: AssertionError
 _ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] _
 
 attack = Attack(name='dblink-connect', sql="SELECT dblink_connect('dbname=postgres')", rule='V06', category='public-functions', harm='exec')
-shared = 'user=postgres dbname=askdata_h_7e00c0f4 host=127.0.0.1 port=54737'
+shared = 'user=postgres dbname=askdata_h_7e00c0f4 host=127.0.0.1 port=<port>'
 
     @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
     def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
@@ -5155,7 +5155,7 @@ E           	Is the server running locally and accepting connections on that soc
 _ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[c1-control-in-literal] _
 
 attack = Attack(name='c1-control-in-literal', sql="SELECT '\x85' FROM analytics.orders_v", rule='V09', category='control-characters', harm='exec')
-shared = 'user=postgres dbname=askdata_h_7e00c0f4 host=127.0.0.1 port=54737'
+shared = 'user=postgres dbname=askdata_h_7e00c0f4 host=127.0.0.1 port=<port>'
 
     @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
     def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
@@ -5199,7 +5199,7 @@ E           UnicodeEncodeError: 'ascii' codec can't encode character '\x85' in p
 _ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unicode-bidi-override] _
 
 attack = Attack(name='unicode-bidi-override', sql='SELECT 1 \u202e', rule='V09', category='unicode-lookalikes', harm='exec')
-shared = 'user=postgres dbname=askdata_h_7e00c0f4 host=127.0.0.1 port=54737'
+shared = 'user=postgres dbname=askdata_h_7e00c0f4 host=127.0.0.1 port=<port>'
 
     @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
     def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
@@ -5243,7 +5243,7 @@ E           UnicodeEncodeError: 'ascii' codec can't encode character '\u202e' in
 _ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[unicode-in-quoted-identifier] _
 
 attack = Attack(name='unicode-in-quoted-identifier', sql='SELECT 1 AS "café"', rule='V09', category='unicode-lookalikes', harm='exec')
-shared = 'user=postgres dbname=askdata_h_7e00c0f4 host=127.0.0.1 port=54737'
+shared = 'user=postgres dbname=askdata_h_7e00c0f4 host=127.0.0.1 port=<port>'
 
     @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
     def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
@@ -5286,7 +5286,7 @@ E           UnicodeEncodeError: 'ascii' codec can't encode character '\xe9' in p
 ../venv3.12/lib/python3.12/site-packages/psycopg/_queries.py:167: UnicodeEncodeError
 ______________________ test_psql_rows_equal_pgsource_rows ______________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 
     def test_psql_rows_equal_pgsource_rows(db):
         psql_rows = _rows(_psql_verify(db, db.ro_role, db.ro_password).stdout)
@@ -5315,7 +5315,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _______________ test_over_privileged_login_turns_the_script_red ________________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 
     def test_over_privileged_login_turns_the_script_red(db):
         role, pw = db.name + "_scratch", secrets.token_urlsafe(18)
@@ -5358,7 +5358,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _ test_column_sequence_and_function_grants_turn_the_script_red[UPDATE (total_amount) ON analytics.orders_v] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 grant = 'UPDATE (total_amount) ON analytics.orders_v'
 
     @pytest.mark.parametrize("grant", GRANTS)
@@ -5396,7 +5396,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _ test_column_sequence_and_function_grants_turn_the_script_red[INSERT (status) ON analytics.orders_v] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 grant = 'INSERT (status) ON analytics.orders_v'
 
     @pytest.mark.parametrize("grant", GRANTS)
@@ -5434,7 +5434,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _ test_column_sequence_and_function_grants_turn_the_script_red[SELECT (customer_id) ON shop.customers] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 grant = 'SELECT (customer_id) ON shop.customers'
 
     @pytest.mark.parametrize("grant", GRANTS)
@@ -5472,7 +5472,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _ test_column_sequence_and_function_grants_turn_the_script_red[UPDATE ON SEQUENCE scratch.sq] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 grant = 'UPDATE ON SEQUENCE scratch.sq'
 
     @pytest.mark.parametrize("grant", GRANTS)
@@ -5510,7 +5510,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _ test_column_sequence_and_function_grants_turn_the_script_red[EXECUTE ON FUNCTION scratch.fn()] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 grant = 'EXECUTE ON FUNCTION scratch.fn()'
 
     @pytest.mark.parametrize("grant", GRANTS)
@@ -5548,7 +5548,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _ test_column_sequence_and_function_grants_turn_the_script_red[EXECUTE ON FUNCTION pg_read_file(text)] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 grant = 'EXECUTE ON FUNCTION pg_read_file(text)'
 
     @pytest.mark.parametrize("grant", GRANTS)
@@ -5586,7 +5586,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _ test_column_sequence_and_function_grants_turn_the_script_red[EXECUTE ON FUNCTION pg_ls_dir(text)] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 grant = 'EXECUTE ON FUNCTION pg_ls_dir(text)'
 
     @pytest.mark.parametrize("grant", GRANTS)
@@ -5624,7 +5624,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _ test_column_sequence_and_function_grants_turn_the_script_red[EXECUTE ON FUNCTION lo_import(text)] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 grant = 'EXECUTE ON FUNCTION lo_import(text)'
 
     @pytest.mark.parametrize("grant", GRANTS)
@@ -5662,7 +5662,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 _ test_column_sequence_and_function_grants_turn_the_script_red[EXECUTE ON FUNCTION lo_export(oid, text)] _
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 grant = 'EXECUTE ON FUNCTION lo_export(oid, text)'
 
     @pytest.mark.parametrize("grant", GRANTS)
@@ -5731,7 +5731,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ___________ test_default_transaction_read_only_is_informational_only ___________
 
-db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=54737', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
+db = Db(name='askdata_t_cf034b6e', base='dbname=postgres host=127.0.0.1 port=<port>', admin_user='postgres', admin_pw=None, ro_role='askdata_t_cf034b6e_ro', ro_password='RfpDnRqOTEY0V6icHnQKJLHW', psql='/usr/bin/psql')
 
     def test_default_transaction_read_only_is_informational_only(db):
 >       rows = {c.check: c for c in PgSource(db.ro_dsn).verify_readonly()}
@@ -5757,7 +5757,7 @@ E           askdata.pgsource.PgError: transaction is not read-only (SQLSTATE 250
 demos/ask-your-data/askdata/pgsource.py:140: PgError
 ________ test_a_run_reports_a_wire_hash_that_differs_from_the_sql_hash _________
 
-admin_dsn = 'postgresql://postgres@127.0.0.1:54737/postgres'
+admin_dsn = 'postgresql://postgres@127.0.0.1:<port>/postgres'
 
     def test_a_run_reports_a_wire_hash_that_differs_from_the_sql_hash(admin_dsn):
 >       res = PgSource(admin_dsn).run("SELECT 1 AS one")
@@ -6153,7 +6153,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________________________ test_late_number_is_refused __________________________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_1a995e170854'", 'p3a_1a995e170854')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_1a995e170854'", 'p3a_1a995e170854')
 
     @needs_pg
     def test_late_number_is_refused(scratch):
@@ -6186,7 +6186,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________________________ test_newer_database_message __________________________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_dc472c62deb5'", 'p3a_dc472c62deb5')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_dc472c62deb5'", 'p3a_dc472c62deb5')
 
     @needs_pg
     def test_newer_database_message(scratch):
@@ -6218,7 +6218,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________ test_a_normal_run_applies_every_file_once_and_is_repeatable __________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_c8255a76c3cf'", 'p3a_c8255a76c3cf')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_c8255a76c3cf'", 'p3a_c8255a76c3cf')
 
     @needs_pg
     def test_a_normal_run_applies_every_file_once_and_is_repeatable(scratch):
@@ -6250,7 +6250,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ________ test_h11_the_read_back_refuses_a_planted_file[backslash_quote] ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d925c95fa258'", 'p3a_d925c95fa258')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_d925c95fa258'", 'p3a_d925c95fa258')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa55a40c50>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses0')
 plant = 'backslash_quote'
@@ -6286,7 +6286,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ________ test_h11_the_read_back_refuses_a_planted_file[disable_trigger] ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d69cf70280fe'", 'p3a_d69cf70280fe')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_d69cf70280fe'", 'p3a_d69cf70280fe')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa55a41b20>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses1')
 plant = 'disable_trigger'
@@ -6322,7 +6322,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________ test_h11_the_read_back_refuses_a_planted_file[drop_trigger] __________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_c4d0e1a57443'", 'p3a_c4d0e1a57443')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_c4d0e1a57443'", 'p3a_c4d0e1a57443')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa55a439b0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses2')
 plant = 'drop_trigger'
@@ -6358,7 +6358,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ___________ test_h11_the_read_back_refuses_a_planted_file[encoding] ____________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_b8214a6f4ef9'", 'p3a_b8214a6f4ef9')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_b8214a6f4ef9'", 'p3a_b8214a6f4ef9')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa55a41a30>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses3')
 plant = 'encoding'
@@ -6394,7 +6394,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________ test_h11_the_read_back_refuses_a_planted_file[function_body] _________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_44c5bcbd04e5'", 'p3a_44c5bcbd04e5')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_44c5bcbd04e5'", 'p3a_44c5bcbd04e5')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa73293cb0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses4')
 plant = 'function_body'
@@ -6430,7 +6430,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ____ test_h11_the_read_back_refuses_a_planted_file[function_security_mode] _____
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_836fb1eee0dd'", 'p3a_836fb1eee0dd')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_836fb1eee0dd'", 'p3a_836fb1eee0dd')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa68614680>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses5')
 plant = 'function_security_mode'
@@ -6466,7 +6466,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _______ test_h11_the_read_back_refuses_a_planted_file[function_settings] _______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_02fc19645b64'", 'p3a_02fc19645b64')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_02fc19645b64'", 'p3a_02fc19645b64')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686d7830>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses6')
 plant = 'function_settings'
@@ -6502,7 +6502,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ________ test_h11_the_read_back_refuses_a_planted_file[replica_trigger] ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_7f98d0acdf3a'", 'p3a_7f98d0acdf3a')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_7f98d0acdf3a'", 'p3a_7f98d0acdf3a')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686d6120>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses7')
 plant = 'replica_trigger'
@@ -6538,7 +6538,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _______ test_h11_the_read_back_refuses_a_planted_file[replication_role] ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_0de5756a6122'", 'p3a_0de5756a6122')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_0de5756a6122'", 'p3a_0de5756a6122')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa68c20770>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses8')
 plant = 'replication_role'
@@ -6574,7 +6574,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ______________ test_h11_the_read_back_refuses_a_planted_file[scs] ______________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_4860e2dec04b'", 'p3a_4860e2dec04b')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_4860e2dec04b'", 'p3a_4860e2dec04b')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa6867b650>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses9')
 plant = 'scs'
@@ -6610,7 +6610,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 __________ test_h11_the_read_back_refuses_a_planted_file[search_path] __________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_ca75263a8486'", 'p3a_ca75263a8486')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_ca75263a8486'", 'p3a_ca75263a8486')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa68c20260>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses10')
 plant = 'search_path'
@@ -6646,7 +6646,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________ test_h11_the_read_back_refuses_a_planted_file[table_renamed] _________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_ee39d399ab2c'", 'p3a_ee39d399ab2c')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_ee39d399ab2c'", 'p3a_ee39d399ab2c')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686d5250>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses11')
 plant = 'table_renamed'
@@ -6682,7 +6682,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ________ test_h11_the_read_back_refuses_a_planted_file[trigger_always] _________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_5b3405341fa5'", 'p3a_5b3405341fa5')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_5b3405341fa5'", 'p3a_5b3405341fa5')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa784f23f0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses12')
 plant = 'trigger_always'
@@ -6718,7 +6718,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ______ test_h11_the_read_back_refuses_a_planted_file[trigger_definition] _______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_de96649713d0'", 'p3a_de96649713d0')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_de96649713d0'", 'p3a_de96649713d0')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa68615640>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_the_read_back_refuses13')
 plant = 'trigger_definition'
@@ -6754,7 +6754,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________________ test_h11_a_function_owner_change_is_refused __________________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_729600a5db5e'", 'p3a_729600a5db5e')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_729600a5db5e'", 'p3a_729600a5db5e')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa68679f10>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_a_function_owner_chan0')
 
@@ -6801,7 +6801,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ____ test_h11_a_listed_trigger_change_passes_for_that_file_and_trigger_only ____
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_346e4c160a5f'", 'p3a_346e4c160a5f')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_346e4c160a5f'", 'p3a_346e4c160a5f')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686e08c0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_a_listed_trigger_chan0')
 
@@ -6839,7 +6839,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ______________ test_h11_a_role_switched_inside_a_file_is_refused _______________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_72d5cd3dcc3f'", 'p3a_72d5cd3dcc3f')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_72d5cd3dcc3f'", 'p3a_72d5cd3dcc3f')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686783e0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_a_role_switched_insid0')
 
@@ -6880,7 +6880,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 __ test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body] ___
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_fa46d322d6a7'", 'p3a_fa46d322d6a7')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_fa46d322d6a7'", 'p3a_fa46d322d6a7')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa68614aa0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_a_role_grant_hidden_i0')
 how = 'function_body'
@@ -6927,7 +6927,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body_with_admin_option] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_ef6f11ce6a84'", 'p3a_ef6f11ce6a84')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_ef6f11ce6a84'", 'p3a_ef6f11ce6a84')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686d4b00>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_a_role_grant_hidden_i1')
 how = 'function_body_with_admin_option'
@@ -6974,7 +6974,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_h11_a_changed_grant_option_of_an_existing_membership_is_refused[the_plain_role] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_240270b239b7'", 'p3a_240270b239b7')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_240270b239b7'", 'p3a_240270b239b7')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686d5dc0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_a_changed_grant_optio0')
 granted_before_by = 'the_plain_role'
@@ -7028,7 +7028,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_h11_a_changed_grant_option_of_an_existing_membership_is_refused[the_login_superuser] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_a1003046b24f'", 'p3a_a1003046b24f')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_a1003046b24f'", 'p3a_a1003046b24f')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686e17c0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_a_changed_grant_optio1')
 granted_before_by = 'the_login_superuser'
@@ -7082,7 +7082,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____ test_h11_a_grant_of_a_role_that_was_a_member_before_is_not_a_refusal _____
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_42e3f9b74629'", 'p3a_42e3f9b74629')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_42e3f9b74629'", 'p3a_42e3f9b74629')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686e88f0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_a_grant_of_a_role_tha0')
 
@@ -7125,7 +7125,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_migrate_as_a_login_role_that_is_not_a_superuser_runs_and_refuses_the_plants _
 
-owner_dsn = ("user=p3a_own_f56de017 dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_9c47a1a0c36a' password=pw-c4ce5a94bbc84058b0881d4f4c4e36be", 'p3a_oth_c53f86b4')
+owner_dsn = ("user=p3a_own_f56de017 dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_9c47a1a0c36a' password=pw-c4ce5a94bbc84058b0881d4f4c4e36be", 'p3a_oth_c53f86b4')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686e3860>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_migrate_as_a_login_role_t0')
 
@@ -7148,7 +7148,7 @@ E             Use -v to get more diff
 tests/test_migration_postgres.py:502: AssertionError
 __________ test_h11_same_run_a_drop_in_the_first_run_leaves_no_ledger __________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_942962924ea4'", 'p3a_942962924ea4')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_942962924ea4'", 'p3a_942962924ea4')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686e0ad0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h11_same_run_a_drop_in_th0')
 
@@ -7188,7 +7188,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 __________ test_a_hidden_commit_is_found_by_the_transaction_backstop ___________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_e1a70f60c192'", 'p3a_e1a70f60c192')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_e1a70f60c192'", 'p3a_e1a70f60c192')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686d7410>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_a_hidden_commit_is_found_0')
 
@@ -7226,7 +7226,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ___ test_a_session_that_reads_strings_the_old_way_is_refused_before_any_file ___
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_88f4f7e3f7af'", 'p3a_88f4f7e3f7af')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_88f4f7e3f7af'", 'p3a_88f4f7e3f7af')
 
     @needs_pg
     def test_a_session_that_reads_strings_the_old_way_is_refused_before_any_file(scratch):
@@ -7259,7 +7259,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________________ test_triggers_of_another_schema_are_not_read _________________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_7166ab9d86a4'", 'p3a_7166ab9d86a4')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_7166ab9d86a4'", 'p3a_7166ab9d86a4')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa68679550>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_triggers_of_another_schem0')
 
@@ -7321,7 +7321,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _______ test_the_previous_release_columns_survive_the_newest_migrations ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_5848a88a1ba1'", 'p3a_5848a88a1ba1')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_5848a88a1ba1'", 'p3a_5848a88a1ba1')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa55a413d0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_the_previous_release_colu0')
 
@@ -7368,7 +7368,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_the_comparison_catches_a_dropped_or_retyped_old_column[ALTER TABLE audit_checkpoints DROP COLUMN signature;\n-lost_key0-None] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_f51e25f0bb32'", 'p3a_f51e25f0bb32')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_f51e25f0bb32'", 'p3a_f51e25f0bb32')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa55a43c80>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_the_comparison_catches_a_0')
 planted = 'ALTER TABLE audit_checkpoints DROP COLUMN signature;\n'
@@ -7425,7 +7425,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_the_comparison_catches_a_dropped_or_retyped_old_column[ALTER TABLE audit_checkpoints ALTER COLUMN signature TYPE BYTEA USING signature::bytea;\n-None-changed_key1] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d0da1dd81498'", 'p3a_d0da1dd81498')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_d0da1dd81498'", 'p3a_d0da1dd81498')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa55a40680>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_the_comparison_catches_a_1')
 planted = 'ALTER TABLE audit_checkpoints ALTER COLUMN signature TYPE BYTEA USING signature::bytea;\n'
@@ -7482,7 +7482,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 __ test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it ___
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_7529dcca2d20'", 'p3a_7529dcca2d20')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_7529dcca2d20'", 'p3a_7529dcca2d20')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_runbook_case_b_renames_th0')
 
     @needs_pg
@@ -7516,7 +7516,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _______ test_runbook_case_b_also_repairs_an_early_table_in_the_same_file _______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d53c8fedc798'", 'p3a_d53c8fedc798')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_d53c8fedc798'", 'p3a_d53c8fedc798')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_runbook_case_b_also_repai0')
 
     @needs_pg
@@ -7550,7 +7550,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____ test_runbook_case_b_keeps_nothing_when_an_evidence_table_is_missing ______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_0b1389ebde1a'", 'p3a_0b1389ebde1a')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_0b1389ebde1a'", 'p3a_0b1389ebde1a')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_runbook_case_b_keeps_noth0')
 
     @needs_pg
@@ -7582,7 +7582,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ____ test_runbook_case_g_adds_the_missing_error_column_and_keeps_every_row _____
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_5a43d2975d9e'", 'p3a_5a43d2975d9e')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_5a43d2975d9e'", 'p3a_5a43d2975d9e')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_runbook_case_g_adds_the_m0')
 
     @needs_pg
@@ -7616,7 +7616,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_runbook_case_g_keeps_nothing_when_the_tables_differ_in_more_than_error __
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_6f3c1947b720'", 'p3a_6f3c1947b720')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_6f3c1947b720'", 'p3a_6f3c1947b720')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_runbook_case_g_keeps_noth0')
 
     @needs_pg
@@ -7648,7 +7648,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 __________________________ test_h1_hand_recipe_works ___________________________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_f0f2bde2d30a'", 'p3a_f0f2bde2d30a')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_f0f2bde2d30a'", 'p3a_f0f2bde2d30a')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h1_hand_recipe_works0')
 
     @needs_pg
@@ -7686,7 +7686,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 __________ test_h4_a_second_run_of_the_recipe_fails_and_keeps_nothing __________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_2523751ef827'", 'p3a_2523751ef827')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_2523751ef827'", 'p3a_2523751ef827')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h4_a_second_run_of_the_re0')
 
     @needs_pg
@@ -7723,7 +7723,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____________ test_h4_a_recipe_that_fails_half_way_leaves_nothing ______________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_3ed85cb7707a'", 'p3a_3ed85cb7707a')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_3ed85cb7707a'", 'p3a_3ed85cb7707a')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa55a3a960>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_h4_a_recipe_that_fails_ha0')
 
@@ -7758,7 +7758,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____ test_the_recipe_stops_at_the_first_error_even_without_the_stop_flag ______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_3fce7ad14c99'", 'p3a_3fce7ad14c99')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_3fce7ad14c99'", 'p3a_3fce7ad14c99')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa69ef3590>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_the_recipe_stops_at_the_f0')
 
@@ -7796,7 +7796,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ________ test_the_recipe_and_the_runbook_header_start_with_the_timeouts ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_2b424327669e'", 'p3a_2b424327669e')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_2b424327669e'", 'p3a_2b424327669e')
 
     @needs_pg
     def test_the_recipe_and_the_runbook_header_start_with_the_timeouts(scratch):
@@ -7832,7 +7832,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ____ test_a_hand_file_waiting_for_a_table_lock_stops_after_the_lock_timeout ____
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_e89ce1be9f05'", 'p3a_e89ce1be9f05')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_e89ce1be9f05'", 'p3a_e89ce1be9f05')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_a_hand_file_waiting_for_a0')
 
     @needs_pg
@@ -7866,7 +7866,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____ test_case_a_current_user_assertion_stops_the_file_for_the_wrong_role _____
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_6403ef4c18ff'", 'p3a_6403ef4c18ff')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_6403ef4c18ff'", 'p3a_6403ef4c18ff')
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_case_a_current_user_asser0')
 
     @needs_pg
@@ -7885,7 +7885,7 @@ E       TypeError: replace() argument 2 must be str, not bytes
 tests/test_migration_postgres.py:1040: TypeError
 _ test_case_e_e1_the_evidence_row_has_another_number_and_both_tables_exist[tables_whole] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_2ae44e311b07'", 'p3a_2ae44e311b07')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_2ae44e311b07'", 'p3a_2ae44e311b07')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa55a431d0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_case_e_e1_the_evidence_ro0')
 error_column = True
@@ -7926,7 +7926,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_case_e_e1_the_evidence_row_has_another_number_and_both_tables_exist[error_missing] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_0938b7b4a816'", 'p3a_0938b7b4a816')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_0938b7b4a816'", 'p3a_0938b7b4a816')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa55a41ee0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_case_e_e1_the_evidence_ro1')
 error_column = False
@@ -7967,7 +7967,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________________ test_case_e_e2_no_evidence_row_and_no_tables _________________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_fb3c57a2b4ab'", 'p3a_fb3c57a2b4ab')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_fb3c57a2b4ab'", 'p3a_fb3c57a2b4ab')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa69ef6bd0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_case_e_e2_no_evidence_row0')
 
@@ -8003,7 +8003,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ______ test_case_e_e3_no_evidence_row_but_both_tables_exist[tables_whole] ______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_eadbf46434b0'", 'p3a_eadbf46434b0')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_eadbf46434b0'", 'p3a_eadbf46434b0')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa69ef4fb0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_case_e_e3_no_evidence_row0')
 error_column = True
@@ -8043,7 +8043,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____ test_case_e_e3_no_evidence_row_but_both_tables_exist[error_missing] ______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_70a29e986310'", 'p3a_70a29e986310')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_70a29e986310'", 'p3a_70a29e986310')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa684e5f70>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_case_e_e3_no_evidence_row1')
 error_column = False
@@ -8083,7 +8083,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____________ test_case_e_e1_with_one_table_missing_keeps_nothing ______________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_385102f84568'", 'p3a_385102f84568')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_385102f84568'", 'p3a_385102f84568')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa684e7a40>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_case_e_e1_with_one_table_0')
 
@@ -8120,7 +8120,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _______ test_migrate_gives_up_waiting_for_a_table_lock_and_keeps_nothing _______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_b099c66b7e79'", 'p3a_b099c66b7e79')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_b099c66b7e79'", 'p3a_b099c66b7e79')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa69ef6750>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_migrate_gives_up_waiting_0')
 
@@ -8157,7 +8157,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________ test_migrate_stops_a_file_that_runs_past_the_statement_limit _________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_4e93edc99eec'", 'p3a_4e93edc99eec')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_4e93edc99eec'", 'p3a_4e93edc99eec')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa69ef7e60>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_migrate_stops_a_file_that0')
 
@@ -8192,7 +8192,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ________ test_the_limits_migrate_runs_with_are_the_ones_in_the_constant ________
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_a866a58457bf'", 'p3a_a866a58457bf')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_a866a58457bf'", 'p3a_a866a58457bf')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa686e2cf0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_the_limits_migrate_runs_w0')
 
@@ -8244,7 +8244,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ___ test_the_limits_also_cover_the_grant_phase_of_a_run_with_no_pending_file ___
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_0f3473f5dad9'", 'p3a_0f3473f5dad9')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_0f3473f5dad9'", 'p3a_0f3473f5dad9')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa55a39c40>
 
     @needs_pg
@@ -8278,7 +8278,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _____ test_a_file_that_changes_a_limit_itself_is_refused_by_the_read_back ______
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_806bbc0a09a0'", 'p3a_806bbc0a09a0')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_806bbc0a09a0'", 'p3a_806bbc0a09a0')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faa684e5cd0>
 tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5358/test_a_file_that_changes_a_lim0')
 
@@ -8360,7 +8360,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _________________ test_two_concurrent_migrate_runs_apply_once __________________
 
-fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=t_9a96e1c4f945'"
+fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=t_9a96e1c4f945'"
 
     def test_two_concurrent_migrate_runs_apply_once(fresh_dsn):
         applied = []
@@ -8383,7 +8383,7 @@ E         Use -v to get more diff
 tests/test_p2_postgres.py:169: AssertionError
 __________________ test_runtime_role_can_write_but_not_delete __________________
 
-fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=t_295e163e0e72'"
+fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=t_295e163e0e72'"
 
     def test_runtime_role_can_write_but_not_delete(fresh_dsn):
         import psycopg
@@ -8452,7 +8452,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 _ test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_defaults _
 
-fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=t_2a8e29016635'"
+fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=t_2a8e29016635'"
 
     def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_defaults(fresh_dsn):
         """Apply 0001-0003 only, insert a pre-upgrade checkpoint row, then migrate: the row loads with NULL (not recorded)."""
@@ -8487,7 +8487,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ____________________ test_append_only_tables_get_no_update _____________________
 
-fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=t_44e8b58bb1ab'"
+fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=t_44e8b58bb1ab'"
 
     def test_append_only_tables_get_no_update(fresh_dsn):
         import psycopg
@@ -8522,7 +8522,7 @@ E       TypeError: startswith first arg must be bytes or a tuple of bytes, not s
 tests/fixtures/migration_role.py:34: TypeError
 ______________ test_month_spend_is_exact_under_concurrent_writers ______________
 
-fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=t_9f891e1c7fc5'"
+fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=t_9f891e1c7fc5'"
 
     def test_month_spend_is_exact_under_concurrent_writers(fresh_dsn):
 >       migrate(fresh_dsn)

@@ -7,7 +7,7 @@ BASELINE rc=1 5 passed, 1 error in 6.68s (8.1s, 75 killer ids)
 ==================================== ERRORS ====================================
 _ ERROR at setup of test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[TRUE] _
 
-scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_375f4274691e'", 'p3a_375f4274691e')
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=p3a_375f4274691e'", 'p3a_375f4274691e')
 
     @pytest.fixture
     def plain_role(scratch):

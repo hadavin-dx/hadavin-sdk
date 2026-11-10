@@ -1,0 +1,30 @@
+HEAD 3c13cf7bb4a8c873d8c47d334d76c142f363361e
+baseline rc=0 :: 98 passed, 98 deselected in 20.42s
+ok  P1 day counter replaced instead of added
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_5jh2lcab/tests/contracts/test_store_time_rules.py:91: AssertionError: the day total of two charges on one day did not add up: 0.70
+ok  P2 month counter replaced instead of added
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut__3zwfjw9/tests/contracts/test_store_time_rules.py:92: AssertionError: the month total of two charges did not add up: 0.70
+ok  P3 add_spend books the month one month early (a valid first-of-month date, so the CHECK passes)
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_39l365fc/tests/contracts/test_store_time_rules.py:60: AssertionError: 6min: read at 2026-03-10 12:00:00+00:00
+ok  P3b add_spend keys the month counter by the day (killed by the schema CHECK, an error, not an assertion)
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] n3.12/site-packages/psycopg/cursor.py:117: psycopg.errors.CheckViolation: new row for relation "spend_month" violates check constraint "spend_month_month_check"
+ok  P4 spend_totals reads the month counter by the day
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_nqi5swi8/tests/contracts/test_store_time_rules.py:60: AssertionError: 6min: read at 2026-03-10 12:00:00+00:00
+ok  P5 spend_totals reads the day counter of any agent
+      [test_one_agent_never_sees_another_agents_spend[postgres]] /tmp/pgmut_cfgh6x54/tests/contracts/test_store_time_rules.py:313: AssertionError: spend_totals showed this agent's spend to another agent
+ok  P6 spend_totals reads the month counter of any agent
+      [test_one_agent_never_sees_another_agents_spend[postgres]] /tmp/pgmut_01wdgrth/tests/contracts/test_store_time_rules.py:313: AssertionError: spend_totals showed this agent's spend to another agent
+ok  P7 the day counter ignores every charge after the first
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_y1cqy10l/tests/contracts/test_store_time_rules.py:91: AssertionError: the day total of two charges on one day did not add up: 0.30
+ok  P8 the month counter ignores every charge after the first
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_jcjhs7w_/tests/contracts/test_store_time_rules.py:92: AssertionError: the month total of two charges did not add up: 0.30
+ok  P9 the year is dropped from the month key (add_spend and spend_totals)
+      [test_the_same_month_of_another_year_is_a_different_month[postgres]] edm462g/tests/contracts/test_store_time_rules.py:158: AssertionError: a March of another year was added to the March of 2026: (Decimal('0.10'), Decimal('0.20'))
+ok  P10 the day is taken from the database server's clock, not from the caller
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_1v8hgsjw/tests/contracts/test_store_time_rules.py:173: AssertionError: a charge on a past date is not on that date
+ok  P11 the day counter rounds a charge to cents
+      [test_a_charge_smaller_than_a_cent_is_neither_rounded_nor_lost[postgres]] /tmp/pgmut_plitxoez/tests/contracts/test_store_time_rules.py:183: AssertionError: the first tiny charge was rounded
+BAD P12 the month counter is never written (every charge adds 0 to it)
+      no AssertionError line holds 'the month total of two charges did not add up'; first failing lines: ['/tmp/pgmut_ul9p0sl1/tests/contracts/test_store_time_rules.py:56: AssertionError: 6min: charge 0 at 2026-03-10 12:00:00+00:00', '/tmp/pgmut_ul9p0sl1/tests/contracts/test_store_time_rules.py:56: AssertionError: 6min: charge 0 at 2026-03-10 23:57:00+00:00']
+12 of 13 mutants killed as described; PROBLEMS
+exit=1
