@@ -27,7 +27,7 @@ Which mutants need what on Windows (this list is run on Linux and on Windows; th
 - Every other killer runs on both systems (the tree-kill killers use ``taskkill /T`` on Windows; the Windows branch after a normal
   exit is run on any system with the Windows flag faked).
 
-Keyword tests (``tests/test_mutation_runner_keywords.py``): 99 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
+Keyword tests (``tests/test_mutation_runner_keywords.py``): 103 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
 fixture errors). Tests of that file with no mutant: the guard test of the database address (it protects the tests, not the runner),
 the check that the old text is gone, the default-call tests (a default call passes no plugin and no name), the percent-encoded password
 case (an equivalent mutant: ``unquote`` of a value with no ``%`` is the value), and the narrowing test for a failing body plus a failing
@@ -420,6 +420,10 @@ M = [
     kmutant('runner: a JUnit symbolic link is followed', MR, '        info = junit.lstat()\n', '        info = junit.stat()\n', 'test_a_junit_path_that_is_not_a_regular_file_is_refused_and_does_not_hang', ' as the JUnit file was read'),
     kmutant('runner: the JUnit size ceiling is not checked', MR, '    if info.st_size > MAX_JUNIT_CHARS:  # looked at BEFORE the file is read\n        raise ValueError("junit file over the ceiling")\n', '', 'test_an_over_sized_junit_file_is_refused_before_it_is_read', 'the file was read before its size was looked at'),
     kmutant('runner: only one layer of printing is built', MR, '    for _ in range(2):  # the fixed depth: two prints\n', '    for _ in range(1):  # the fixed depth: two prints\n', 'test_a_value_printed_in_two_layers_is_masked_whatever_quotes_it_holds', 'two-layer forms survived the masking'),
+    kmutant('runner: the both-quote-kinds print is not built', MR, '        if both.endswith(suffix):\n', '        if False:\n', 'test_a_value_printed_in_two_layers_is_masked_whatever_quotes_it_holds', 'two-layer forms survived the masking'),
+    kmutant('runner: the ascii whole-text encoder is not built', MR, '    lambda s: ascii(s)[1:-1],\n', '', 'test_a_value_printed_in_two_layers_is_masked_whatever_quotes_it_holds', 'two-layer forms survived the masking'),
+    kmutant('runner: a single quote is never escaped in a layer-0 form', MR, '        for single in (False, True)\n', '        for single in (False,)\n', 'test_a_value_with_one_quote_kind_is_masked_inside_a_text_that_holds_the_other_kind', 'a form with both quote marks escaped survived the masking'),
+    kmutant('runner: a bare password is not masked in two layers', MR, '        for double in (False, True)\n', '        for double in (True,)\n', 'test_a_bare_password_printed_in_two_layers_is_masked_whatever_quotes_it_holds', 'bare-password two-layer forms survived the masking'),
 ]  # fmt: skip
 
 

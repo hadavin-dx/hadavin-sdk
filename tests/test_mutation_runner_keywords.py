@@ -1746,6 +1746,37 @@ def test_a_value_printed_in_two_layers_is_masked_whatever_quotes_it_holds(monkey
     assert not leaked, f"{len(leaked)} two-layer forms survived the masking, first: {leaked[0]}"
 
 
+def test_a_bare_password_printed_in_two_layers_is_masked_whatever_quotes_it_holds(monkeypatch):
+    rng = _Det(11)
+    leaked: list[str] = []
+    for _ in range(120):
+        body = "".join(rng.choice(TWO_LAYER_ALPHABET) for _ in range(rng.randint(1, 5)))
+        tail = "".join(rng.choice(TWO_LAYER_ALPHABET) for _ in range(rng.randint(1, 5)))
+        password = (
+            "pw" + body + MARKER + tail
+        )  # a leading quote would make a libpq reader treat it as a quoted password
+        monkeypatch.setenv(DSN_NAME, "host=db.invalid user=svc password=" + password)
+        secrets = mr._secret_values((DSN_NAME,))
+        for text in _two_layers(password):
+            if MARKER in mr._masked("E   " + text, secrets):
+                leaked.append(text)
+    assert not leaked, (
+        f"{len(leaked)} bare-password two-layer forms survived the masking, first: {leaked[0]}"
+    )
+
+
+def test_a_value_written_with_a_backslash_before_its_quote_is_masked_when_printed(monkeypatch):
+    value = "host=db.invalid password=" + "it's" + MARKER + " user=svc"
+    monkeypatch.setenv(DSN_NAME, value)
+    secrets = mr._secret_values((DSN_NAME,))
+    escaped = value.replace("'", chr(92) + "'")  # the way a libpq text or a shell writes it
+    for name, text in (("repr", repr(escaped)), ("json", json.dumps(escaped))):
+        out = mr._masked("E   " + text, secrets)
+        assert MARKER not in out, (
+            f"the backslash-escaped form printed by {name} survived the masking: {out}"
+        )
+
+
 def test_a_value_with_both_quote_kinds_is_masked_as_repr_of_repr_and_json_of_repr(monkeypatch):
     value = "host=db.invalid password=" + "it's" + chr(34) + "Xy9Zq1" + " user=svc"
     monkeypatch.setenv(DSN_NAME, value)
