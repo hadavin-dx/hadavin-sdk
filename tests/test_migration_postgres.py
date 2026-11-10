@@ -21,7 +21,7 @@ from hadavin_sdk.errors import ConfigError
 from tests.fixtures import migration_role as helper
 from tests.fixtures import runbook as rb
 from tests.fixtures.dsn_skip import require_module
-from tests.fixtures.migration_role import PLAIN_ROLE, ensure_plain_role
+from tests.fixtures.migration_role import PLAIN_ROLE, create_login_role, ensure_plain_role
 
 psycopg = require_module("psycopg")  # with the DSN set a missing driver FAILS (never a skip)
 from psycopg import sql
@@ -367,11 +367,7 @@ def _create_roles(*roles: str, login_password: str | None = None) -> None:
     with psycopg.connect(DSN, autocommit=True) as db:
         for role in roles:
             if login_password and role == roles[0]:
-                db.execute(
-                    sql.SQL("CREATE ROLE {} LOGIN NOSUPERUSER PASSWORD {}").format(
-                        sql.Identifier(role), sql.Literal(login_password)
-                    )
-                )
+                create_login_role(db, role, login_password)
             else:
                 db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
 
@@ -467,7 +463,8 @@ def test_h11_a_changed_grant_option_of_an_existing_membership_is_refused(
             mig.migrate(dsn)
         msg = str(e.value)
         assert "0006_option.sql" in msg and f"role {a}" in msg and b in msg, msg
-        assert "admin_option" in msg, msg  # the changed column is named
+        assert "with grant option" in msg, msg  # the changed column, in words
+        assert "{" not in msg and "admin_option" not in msg, msg  # no raw JSON
         assert not msg.startswith("migrations are inconsistent"), "the read-back, not the scan"
         assert _ledger(dsn) == REAL
         with psycopg.connect(DSN, autocommit=True) as db:
@@ -1334,7 +1331,7 @@ def plain_role(scratch):
     dsn, schema = scratch
     role = f"mig_{uuid.uuid4().hex[:10]}"
     with psycopg.connect(DSN, autocommit=True) as db:
-        db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+        password = create_login_role(db, role)
         db.execute(
             sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
                 sql.Identifier(schema), sql.Identifier(role)
@@ -1347,7 +1344,7 @@ def plain_role(scratch):
             )
         )
     try:
-        yield make_conninfo(dsn, user=role), role
+        yield make_conninfo(dsn, user=role, password=password), role
     finally:
         with psycopg.connect(DSN, autocommit=True) as db:
             db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
@@ -1567,11 +1564,18 @@ def test_the_session_user_is_checked_for_membership_too(scratch, plain_role):
     """The login is a member of a built-in server role and switched to a plain role it may switch to: the current user
     holds nothing, the session user does. Killed by: mutant SU2."""
     _dsn, role = plain_role
-    super_dsn, _ = scratch
+    super_dsn, schema = scratch
     other = role + "_b"
     with psycopg.connect(DSN, autocommit=True) as db:
         db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(other)))
         try:
+            # the switched-to role can use the scratch schema, so a run that is NOT refused would go on to apply the files
+            # (and the test would fail on "DID NOT RAISE"), not stop on a missing schema
+            db.execute(
+                sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(other)
+                )
+            )
             db.execute(
                 sql.SQL("GRANT {} TO {}").format(sql.Identifier(other), sql.Identifier(role))
             )
@@ -1984,8 +1988,7 @@ def test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not(scr
     stale, live, held = (f"hadavin_test_migrator_{uuid.uuid4().hex[:8]}" for _ in range(3))
     schema = conninfo_to_dict(scratch[0])["options"].rsplit("search_path=", 1)[1]
     with psycopg.connect(DSN, autocommit=True) as db:
-        for r in (stale, live, held):
-            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
+        passwords = {r: create_login_role(db, r) for r in (stale, live, held)}
         db.execute(
             sql.SQL("CREATE TABLE {}.{} (a int)").format(
                 sql.Identifier(schema), sql.Identifier("hadavin_test_stale_tbl")
@@ -1999,7 +2002,9 @@ def test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not(scr
             )
         )
     with (
-        psycopg.connect(make_conninfo(DSN, user=live), autocommit=True) as session,
+        psycopg.connect(
+            make_conninfo(DSN, user=live, password=passwords[live]), autocommit=True
+        ) as session,
         psycopg.connect(DSN, autocommit=True) as holder,
     ):
         holder.execute("SELECT pg_advisory_lock(%s)", (helper._hold_key(held.rsplit("_", 1)[1]),))
@@ -2018,6 +2023,11 @@ def test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not(scr
 # --- role changes made by ANOTHER session while a file runs ---------------------------------------------------------
 
 
+_SLOW_START_LIMIT = (
+    3.0  # seconds; the run's own lock_timeout is 5 s (see `migrate`), this leaves a margin
+)
+
+
 def _after_the_file_starts(marker: str, key: int, statements: list[str]):
     """The file waits on an advisory lock (`_slow_file`) that this call takes first, on a connection of its own. A second
     session (the superuser login) waits until a backend running the file is really blocked on that lock, runs
@@ -2026,6 +2036,7 @@ def _after_the_file_starts(marker: str, key: int, statements: list[str]):
     gate = psycopg.connect(DSN, autocommit=True)
     gate.execute("SELECT pg_advisory_lock(%s)", (key,))
     done, errors, order = threading.Event(), [], []
+    started = time.monotonic()
 
     def work():
         try:
@@ -2040,6 +2051,13 @@ def _after_the_file_starts(marker: str, key: int, statements: list[str]):
                     time.sleep(0.05)
                 else:
                     raise AssertionError("the file never started waiting")
+                waited = time.monotonic() - started
+                if waited > _SLOW_START_LIMIT:
+                    raise AssertionError(
+                        f"TIMING FLAKE, not a defect: the file started waiting after {waited:.1f} s and the run's own "
+                        f"lock_timeout is 5 s, so the run may stop on that before this test changes anything; run the "
+                        "test again on a quiet machine"
+                    )
                 order.append("file_is_waiting")
                 for statement in statements:
                     db.execute(statement)
@@ -2147,7 +2165,7 @@ def test_another_session_changing_the_migration_users_own_roles_stops_the_run(
             ), msg
             assert f"role {a} has a new member {PLAIN_ROLE}" in msg, msg
         else:
-            assert f"saved setting for database  role {PLAIN_ROLE} is new" in msg, msg
+            assert f"saved setting in every database for role {PLAIN_ROLE} is new" in msg, msg
         assert _ledger(dsn) == REAL, "nothing of the run was kept"
     finally:
         thread.join(10)
@@ -2196,6 +2214,99 @@ def test_another_session_changing_a_role_that_a_named_role_belongs_to_stops_the_
         _drop_roles(*[r for r in (y, n, p_) if _role_exists(r)])
 
 
+@needs_pg
+def test_a_new_member_of_a_named_role_stops_the_run(scratch, monkeypatch, tmp_path):
+    """The runtime role N belongs to nobody the migration user belongs to. While the file runs, a second session makes
+    another role Z a member of N: Z can now do what N can, so the run is refused. Killed by: mutant NM1 (the named
+    roles are not `own` in the members read-back)."""
+    dsn, _ = scratch
+    n, z = (f"hadavin_test_{t}_" + uuid.uuid4().hex[:8] for t in ("nm", "zz"))
+    _create_roles(n, z)
+    mig.migrate(dsn)
+    marker, key = _slow_file(monkeypatch, tmp_path)
+    thread, done, errors, order, gate = _after_the_file_starts(
+        marker, key, [f'GRANT "{n}" TO "{z}"']
+    )
+    try:
+        with pytest.raises(ConfigError) as e:
+            mig.migrate(dsn, runtime_role=n)
+        assert done.wait(10) and not errors, errors
+        assert order == _ORDER, order
+        assert "has a new member" in str(e.value) and z in str(e.value), str(e.value)
+        assert _ledger(dsn) == REAL, "nothing of the run was kept"
+    finally:
+        thread.join(10)
+        gate.close()
+        _drop_roles(*[r for r in (z, n) if _role_exists(r)])
+
+
+@needs_pg
+@pytest.mark.parametrize("sql_text", ["members", "settings"])
+def test_a_superuser_among_the_named_roles_does_not_widen_the_read_back(sql_text):
+    """A superuser is a member of every role, so a superuser in the list of named roles would put the whole server in the
+    compared set and an unrelated change would stop the run. The named set leaves superusers out. Killed by: mutant NS1
+    (members read-back; the settings read-back has the same line and is covered by the same test)."""
+    boss, me, x, y = (f"hadavin_test_{t}_" + uuid.uuid4().hex[:8] for t in ("bs", "me", "ux", "uy"))
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE ROLE {} SUPERUSER").format(sql.Identifier(boss)))
+        password = create_login_role(
+            db, me
+        )  # the session is a plain login, as the migration user is
+        _create_roles(x, y)
+        db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(x), sql.Identifier(y)))
+        db.execute(sql.SQL("ALTER ROLE {} SET work_mem = '5MB'").format(sql.Identifier(x)))
+    try:
+        query = mig._READBACK_MEMBERS_SQL if sql_text == "members" else mig._READBACK_SETTINGS_SQL
+        with psycopg.connect(make_conninfo(DSN, user=me, password=password)) as db:
+            rows = db.execute(query, ([boss],)).fetchall()
+        text = " ".join(str(c) for row in rows for c in row)
+        assert x not in text and y not in text, rows
+    finally:
+        _drop_roles(*[r for r in (boss, me, y, x) if _role_exists(r)])
+
+
+@needs_pg
+@pytest.mark.parametrize(
+    "how, expected",
+    [
+        ("column_update_via_group", "can UPDATE runs.state"),
+        ("select_on_the_ledger", "can SELECT schema_migrations"),
+        ("create_in_the_schema", "can CREATE in schema"),
+    ],
+)
+def test_the_portal_role_is_refused_what_the_other_roles_are_refused(scratch, how, expected):
+    """The portal role gets the same scan as the runtime and purge roles (`effective_problems`): a right on one column
+    that comes through a group role, SELECT on the migration ledger (not in the portal map), and CREATE on the schema.
+    The old check read table rights only. Killed by: mutants PC1 (no check) and PT1 (checked against the runtime map for
+    the tables; the three cases here are outside both maps)."""
+    dsn, schema = scratch
+    pt, group = (f"hadavin_test_{t}_" + uuid.uuid4().hex[:8] for t in ("pt", "gr"))
+    _create_roles(pt, group)
+    mig.migrate(dsn)
+    q = sql.Identifier(schema)
+    with psycopg.connect(DSN, autocommit=True) as db:
+        if how == "column_update_via_group":
+            db.execute(
+                sql.SQL("GRANT UPDATE (state) ON {}.runs TO {}").format(q, sql.Identifier(group))
+            )
+            db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(group), sql.Identifier(pt)))
+        elif how == "select_on_the_ledger":
+            db.execute(
+                sql.SQL("GRANT SELECT ON {}.schema_migrations TO {}").format(q, sql.Identifier(pt))
+            )
+        else:
+            db.execute(sql.SQL("GRANT CREATE ON SCHEMA {} TO {}").format(q, sql.Identifier(pt)))
+    try:
+        with pytest.raises(ConfigError) as e:
+            mig.migrate(dsn, portal_role=pt)
+        msg = str(e.value)
+        assert "the portal role holds privileges outside the portal grant map" in msg, msg
+        assert expected in msg, msg
+        assert _ledger(dsn) == REAL, "nothing was kept"
+    finally:
+        _drop_roles(*[r for r in (pt, group) if _role_exists(r)])
+
+
 # --- parameter grants held through a role the migration user belongs to ----------------------------------------------
 
 
@@ -2210,7 +2321,7 @@ def test_a_parameter_grant_is_refused_however_the_migration_user_holds_it(
     belongs to and inherits, or on a role it belongs to WITHOUT inheriting (it can still `SET ROLE` to it). Killed by:
     mutants PA2 (the ALTER SYSTEM half is gone), PA3 (the session user is not asked) and PA4 (only the user itself)."""
     dsn, role = plain_role
-    super_dsn, _ = scratch
+    super_dsn, schema = scratch
     holder = role
     other = role + "_g"
     with psycopg.connect(DSN, autocommit=True) as db:
@@ -2225,6 +2336,11 @@ def test_a_parameter_grant_is_refused_however_the_migration_user_holds_it(
         if via == "session_user":
             db.execute(
                 sql.SQL("GRANT {} TO {}").format(sql.Identifier(other), sql.Identifier(role))
+            )
+            db.execute(  # see test_the_session_user_is_checked_for_membership_too: a run that is not refused must go on
+                sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(other)
+                )
             )
             dsn = make_conninfo(
                 super_dsn,
@@ -2264,14 +2380,14 @@ def test_the_owner_of_a_database_belongs_to_pg_database_owner_and_is_not_refused
     suffix = uuid.uuid4().hex[:8]
     role, database = f"hadavin_test_dbo_{suffix}", f"hadavin_test_db_{suffix}"
     with psycopg.connect(DSN, autocommit=True) as db:
-        db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+        password = create_login_role(db, role)
         db.execute(
             sql.SQL("CREATE DATABASE {} OWNER {}").format(
                 sql.Identifier(database), sql.Identifier(role)
             )
         )
     try:
-        dsn = make_conninfo(super_dsn, user=role, dbname=database, options="")
+        dsn = make_conninfo(super_dsn, user=role, password=password, dbname=database, options="")
         assert mig.migrate(dsn) == REAL
     finally:
         with psycopg.connect(DSN, autocommit=True) as db:

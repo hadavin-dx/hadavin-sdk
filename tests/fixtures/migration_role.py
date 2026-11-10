@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import atexit
 import os
+import re
 import secrets
 from collections.abc import Callable
 
@@ -26,7 +27,9 @@ _ROLE_PREFIX = "hadavin_test_migrator_"
 _HOLD_BASE = (
     7_302_612_000_000_000  # advisory lock keys of live test processes: this plus the role's token
 )
-_HOLDS: list = []  # the connection that holds that lock; kept open until the process ends
+_HOLDS: dict[
+    str, object
+] = {}  # per server: the connection that holds that lock; kept open until the process ends
 _TOKEN = secrets.token_hex(4)
 PLAIN_ROLE = _ROLE_PREFIX + _TOKEN  # one per test process: a role and its grants belong to the
 # whole server, so two test processes at once on one server (two Python versions, a mutant run) must not share one
@@ -55,21 +58,27 @@ def _server_key(dsn: str) -> str:
 
 
 def _hold_key(token: str) -> int:
+    """The lock key of a token. Only exactly eight lower-case hex digits are a token this helper made (`int(x, 16)`
+    alone also reads signs, spaces and underscores)."""
+    if not re.fullmatch(r"[0-9a-f]{8}", token):
+        raise ValueError("not a token of this helper")
     return _HOLD_BASE + int(token, 16)
 
 
-def _hold_the_role() -> None:
+def _hold_the_role(db) -> None:
     """Hold an advisory lock, on a connection kept open until the process ends, that says "the test process of this
-    role is alive". The sweep of stale roles (`sweep_stale_roles`) never touches a role whose lock is held, and it
-    cannot be mistaken for a role that is between two short connections."""
+    role is alive". The lock is taken on the server of `db`, the connection that creates the role (the sweep of stale
+    roles looks on that server, and nowhere else), so it does not depend on `HADAVIN_TEST_PG_DSN`. The sweep never
+    touches a role whose lock is held, and the lock cannot be mistaken for a role that is between two short
+    connections. One lock per server."""
     import psycopg
 
-    env_dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
-    if not env_dsn or _HOLDS:
+    server = _server_key(make_conninfo(db.info.dsn, password=db.info.password or None))
+    if server in _HOLDS:
         return
-    hold = psycopg.connect(_server_key(env_dsn), autocommit=True)
+    hold = psycopg.connect(server, autocommit=True)
     hold.execute("SELECT pg_advisory_lock(%s)", (_hold_key(_TOKEN),))
-    _HOLDS.append(hold)
+    _HOLDS[server] = hold
 
 
 def sweep_stale_roles(db) -> list[str]:
@@ -130,7 +139,7 @@ def _drop_the_role_at_exit() -> None:
 
 
 def _close_the_hold() -> None:
-    for hold in _HOLDS:
+    for hold in _HOLDS.values():
         hold.close()
     _HOLDS.clear()
 
@@ -145,6 +154,25 @@ def _is_scratch(schema) -> bool:
     return bool(schema) and schema.startswith(SCRATCH_PREFIXES)
 
 
+def scram_hash(db, role: str, password: str) -> str:
+    """The SCRAM-SHA-256 verifier of `password` for `role`, made on this side, so a statement carries the hash and never
+    the password (and the server log never holds it)."""
+    return db.pgconn.encrypt_password(password.encode(), role.encode(), b"scram-sha-256").decode()
+
+
+def create_login_role(db, role: str, password: str | None = None) -> str:
+    """Make a plain login role (none of the five flags) whose password is a SCRAM hash, so it also logs in on a server
+    that asks for a password; on a server that trusts the connection (the CI service) the password is not asked. Returns
+    the password (new for each call unless one is given)."""
+    password = password or secrets.token_hex(16)
+    db.execute(
+        sql.SQL(
+            "CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS NOREPLICATION PASSWORD {}"
+        ).format(sql.Identifier(role), sql.Literal(scram_hash(db, role, password)))
+    )
+    return password
+
+
 def ensure_plain_role(db) -> None:
     """Make the login role once: look in `pg_roles` first, and only create it when it is missing (a role belongs to the
     whole server, so an earlier test of this process may have made it). The password is sent as a SCRAM hash made on
@@ -153,16 +181,9 @@ def ensure_plain_role(db) -> None:
     statement). Before the first creation, the roles that killed test processes left are swept."""
     if db.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (PLAIN_ROLE,)).fetchone():
         return
-    _hold_the_role()
+    _hold_the_role(db)
     sweep_stale_roles(db)
-    hashed = db.pgconn.encrypt_password(
-        _PASSWORD.encode(), PLAIN_ROLE.encode(), b"scram-sha-256"
-    ).decode()
-    db.execute(
-        sql.SQL(
-            "CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS PASSWORD {}"
-        ).format(sql.Identifier(PLAIN_ROLE), sql.Literal(hashed))
-    )
+    create_login_role(db, PLAIN_ROLE, _PASSWORD)
 
 
 def plain_role_connect(real_connect: Callable) -> Callable:

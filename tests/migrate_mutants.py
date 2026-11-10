@@ -44,6 +44,7 @@ DSN_SKIP = "tests/fixtures/dsn_skip.py"
 T_WIRING = "tests/test_migration_wiring.py"
 T_PG = "tests/test_migration_postgres.py"
 T_RULES = "tests/test_migration_rules.py"
+T_K2 = "tests/test_k2_migrations.py"
 T_NUM = "tests/test_migration_numbers.py"
 T_GUARDS = "tests/test_migration_numbers_guards.py"
 T_NAMES = "tests/test_migration_names.py"
@@ -1212,14 +1213,6 @@ M: list[Mutant] = [
         k(T_WIRING, "test_the_maintain_privilege_is_asked_about_from_postgresql_17_only"),
     ),
     Mutant(
-        "MT3",
-        "the portal role check does not ask about MAINTAIN",
-        MIG,
-        "            privs = table_privs\n",
-        '            privs = tuple(p for p in table_privs if p != "MAINTAIN")\n',
-        k(T_WIRING, "test_a_maintain_grant_is_a_problem_on_postgresql_17"),
-    ),
-    Mutant(
         "PA2",
         "the ALTER SYSTEM parameter right is not asked about",
         MIG,
@@ -1306,8 +1299,8 @@ M: list[Mutant] = [
         "TR3",
         "the raw test-role password is sent to the server",
         "tests/fixtures/migration_role.py",
-        "sql.Literal(hashed)",
-        "sql.Literal(_PASSWORD)",
+        "sql.Literal(scram_hash(db, role, password))",
+        "sql.Literal(password)",
         k(T_WIRING, "test_the_test_role_password_is_sent_only_as_a_hash"),
     ),
     Mutant(
@@ -1330,7 +1323,7 @@ M: list[Mutant] = [
         "RN2",
         "the mutant runner counts a NameError as a kill",
         "tests/migrate_mutants.py",
-        "and not _BROKEN.search(out):\n",
+        "and only_test_failures(out):\n",
         "and True:\n",
         k(T_RULES, "test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill"),
     ),
@@ -1372,8 +1365,8 @@ M: list[Mutant] = [
         "MN1",
         "a plain function name is not folded to lower case",
         MIG,
-        "else m.group(2).lower())",
-        "else m.group(2))",
+        "else _fold(m.group(2))",
+        "else m.group(2)",
         (
             k(
                 T_WIRING,
@@ -1386,25 +1379,14 @@ M: list[Mutant] = [
         "MN2",
         "a quoted function name is cut at its first space",
         MIG,
-        '_QUOTED = r\'"((?:[^"]|"")+)"\'',
-        '_QUOTED = r\'"([^" ]+)"\'',
+        '_QUOTED_NAME_BODY = r\'"((?:[^"]|"")+)"\'',
+        '_QUOTED_NAME_BODY = r\'"([^" ]+)"\'',
         (
             k(
                 T_WIRING,
                 "test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole",
             ),
             k(T_PG, "test_functions_with_capitals_or_a_space_in_the_name_count_as_managed"),
-        ),
-    ),
-    Mutant(
-        "PT1",
-        "the portal check asks a shorter list of table rights than the runtime check",
-        MIG,
-        "            privs = table_privs\n",
-        '            privs = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE")\n',
-        k(
-            T_WIRING,
-            "test_the_portal_role_is_asked_about_every_table_privilege_the_other_roles_are",
         ),
     ),
     Mutant(
@@ -1419,8 +1401,8 @@ M: list[Mutant] = [
         "SW1",
         "the stale roles are not swept when the test role is made",
         "tests/fixtures/migration_role.py",
-        "    _hold_the_role()\n    sweep_stale_roles(db)\n",
-        "    _hold_the_role()\n",
+        "    _hold_the_role(db)\n    sweep_stale_roles(db)\n",
+        "    _hold_the_role(db)\n",
         k(
             T_WIRING,
             "test_making_the_test_role_first_sweeps_the_stale_roles_of_killed_processes",
@@ -1444,11 +1426,122 @@ M: list[Mutant] = [
     ),
     Mutant(
         "RN3",
-        "the mutant runner counts an AttributeError or a TypeError as a kill",
+        "the mutant runner's allow list takes any exception as a kill",
         "tests/migrate_mutants.py",
-        'r"^E\\s+(?:NameError|UnboundLocalError|AttributeError|TypeError|KeyError|ValueError|SyntaxError"',
-        'r"^E\\s+(?:NameError|SyntaxError"',
+        "    return bool(heads) and all(_KILL_HEAD.match(h) for h in heads)\n",
+        "    return bool(heads)\n",
         k(T_RULES, "test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill"),
+    ),
+    Mutant(
+        "RN4",
+        "the mutant runner's allow list takes any dotted name, so a server error counts as a kill",
+        "tests/migrate_mutants.py",
+        'r"^(?:assert\\b|AssertionError\\b|Failed:|',
+        'r"^(?:[\\w.]+|assert\\b|AssertionError\\b|Failed:|',
+        k(T_RULES, "test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill"),
+    ),
+    Mutant(
+        "PC1",
+        "the portal role is not checked after its grants",
+        MIG,
+        '                    extra := effective_problems(\n                        db, portal_role, lambda g: "SELECT" if (g and g.portal) else ""\n                    )\n',
+        "                    extra := []\n",
+        (
+            k(T_PG, "test_the_portal_role_is_refused_what_the_other_roles_are_refused"),
+            k(T_K2, "test_migrate_refuses_a_portal_role_that_inherits_write_rights"),
+        ),
+    ),
+    Mutant(
+        "PT1",
+        "the portal role is checked against the runtime grant map, so it may hold what the runtime role holds",
+        MIG,
+        '                    extra := effective_problems(\n                        db, portal_role, lambda g: "SELECT" if (g and g.portal) else ""\n                    )\n',
+        '                    extra := effective_problems(\n                        db, portal_role, lambda g: g.runtime if g else ""\n                    )\n',
+        (
+            k(T_PG, "test_the_portal_role_is_refused_what_the_other_roles_are_refused"),
+            k(T_K2, "test_migrate_refuses_a_portal_role_that_inherits_write_rights"),
+        ),
+    ),
+    Mutant(
+        "FQ1",
+        "a plain function name is folded with Python's lower(), which also changes capitals of other scripts",
+        MIG,
+        'c.lower() if "A" <= c <= "Z" else c',
+        "c.lower()",
+        k(
+            T_WIRING,
+            "test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement",
+        ),
+    ),
+    Mutant(
+        "PL1",
+        "a dollar sign ends a plain function name",
+        MIG,
+        '_PLAIN_NAME = r"\\w[\\w$]*"',
+        '_PLAIN_NAME = r"\\w+"',
+        k(
+            T_WIRING,
+            "test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement",
+        ),
+    ),
+    Mutant(
+        "ST1",
+        "a function is read from anywhere in a statement, not only at its start",
+        MIG,
+        "(?:\\A|;)\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?FUNCTION",
+        "CREATE\\s+(?:OR\\s+REPLACE\\s+)?FUNCTION",
+        k(
+            T_WIRING,
+            "test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement",
+        ),
+    ),
+    Mutant(
+        "NM1",
+        "the named roles are not 'own' in the members read-back, so a new member of one is not seen",
+        MIG,
+        'OR r.oid IN (SELECT oid FROM named)) AS own, "\n    "(pg_has_role(current_user, r.oid, \'MEMBER\') OR pg_has_role(session_user, r.oid, \'MEMBER\') "\n    "OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, \'MEMBER\'))) AS closure "\n    "FROM pg_roles r) "\n    "SELECT m.roleid',
+        'OR false) AS own, "\n    "(pg_has_role(current_user, r.oid, \'MEMBER\') OR pg_has_role(session_user, r.oid, \'MEMBER\') "\n    "OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, \'MEMBER\'))) AS closure "\n    "FROM pg_roles r) "\n    "SELECT m.roleid',
+        k(T_PG, "test_a_new_member_of_a_named_role_stops_the_run"),
+    ),
+    Mutant(
+        "NS1",
+        "a superuser among the named roles is not left out of the compared set (members read-back)",
+        MIG,
+        'rolname = ANY(%s::text[]) AND NOT rolsuper), "\n    "scope AS (SELECT r.oid, (r.rolname IN (current_user, session_user) OR r.oid IN (SELECT oid FROM named)) AS own, "\n    "(pg_has_role(current_user, r.oid, \'MEMBER\') OR pg_has_role(session_user, r.oid, \'MEMBER\') "\n    "OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, \'MEMBER\'))) AS closure "\n    "FROM pg_roles r) "\n    "SELECT m.roleid',
+        'rolname = ANY(%s::text[])), "\n    "scope AS (SELECT r.oid, (r.rolname IN (current_user, session_user) OR r.oid IN (SELECT oid FROM named)) AS own, "\n    "(pg_has_role(current_user, r.oid, \'MEMBER\') OR pg_has_role(session_user, r.oid, \'MEMBER\') "\n    "OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, \'MEMBER\'))) AS closure "\n    "FROM pg_roles r) "\n    "SELECT m.roleid',
+        k(T_PG, "test_a_superuser_among_the_named_roles_does_not_widen_the_read_back"),
+    ),
+    Mutant(
+        "SW4",
+        "the live-process lock is never taken when the test role is made",
+        "tests/fixtures/migration_role.py",
+        "    _hold_the_role(db)\n",
+        "",
+        k(T_WIRING, "test_the_live_process_lock_is_taken_on_the_server_that_makes_the_role"),
+    ),
+    Mutant(
+        "SW5",
+        "the live-process lock is taken on a fixed local server, not on the server that makes the role",
+        "tests/fixtures/migration_role.py",
+        "    server = _server_key(make_conninfo(db.info.dsn, password=db.info.password or None))\n",
+        '    server = "host=localhost"\n',
+        k(T_WIRING, "test_the_live_process_lock_is_taken_on_the_server_that_makes_the_role"),
+    ),
+    Mutant(
+        "SW6",
+        "a test-role token is read by int(x, 16) alone, so signs and spaces pass",
+        "tests/fixtures/migration_role.py",
+        '    if not re.fullmatch(r"[0-9a-f]{8}", token):\n',
+        "    if False:\n",
+        k(T_WIRING, "test_only_eight_lower_case_hex_digits_are_a_token"),
+    ),
+    Mutant(
+        "RP1",
+        "the test role is made without NOREPLICATION",
+        "tests/fixtures/migration_role.py",
+        "NOBYPASSRLS NOREPLICATION PASSWORD",
+        "NOBYPASSRLS PASSWORD",
+        k(T_WIRING, "test_the_test_role_is_made_without_the_replication_flag"),
     ),
 ]
 
@@ -1492,11 +1585,32 @@ def killers_of(m: Mutant) -> list[str]:
     return [m.killer] if isinstance(m.killer, str) else list(m.killer)
 
 
-_BROKEN = re.compile(
-    r"^E\s+(?:NameError|UnboundLocalError|AttributeError|TypeError|KeyError|ValueError|SyntaxError"
-    r"|IndentationError|ImportError|ModuleNotFoundError)\b",
-    re.MULTILINE,
+# An allow list, not a list of known crashes: a failure counts as a kill only when the FIRST `E` line of its block in the
+# pytest output (the exception that ended the test) is one a test raises on purpose: a failed `assert`, an
+# `AssertionError` (which also covers "Regex pattern did not match"), `Failed:` (also "DID NOT RAISE") or a `ConfigError`
+# (the refusal that a test did not expect). Anything else (a NameError, a KeyError, a server error such as
+# `psycopg.errors.UndefinedTable`, an error that is not named yet) is a mutant that only broke the code.
+_BLOCK = re.compile(r"^_+ \S.* _+$", re.MULTILINE)  # pytest pads the title with one or more "_"
+_FIRST_E = re.compile(r"^E\s+(.*)$", re.MULTILINE)
+_KILL_HEAD = re.compile(
+    r"^(?:assert\b|AssertionError\b|Failed:|(?:[A-Za-z_][\w]*\.)*ConfigError\b)",
 )
+
+
+def failure_heads(out: str) -> list[str]:
+    """The first `E` line of each failure block of the pytest output (the head of the exception)."""
+    blocks = _BLOCK.split(out)[1:]
+    heads = []
+    for block in blocks:
+        first = _FIRST_E.search(block)
+        heads.append(first.group(1) if first else "")
+    return heads
+
+
+def only_test_failures(out: str) -> bool:
+    """True when there is at least one failure block and every block ends in an exception a test raises on purpose."""
+    heads = failure_heads(out)
+    return bool(heads) and all(_KILL_HEAD.match(h) for h in heads)
 
 
 def unknown_ids(only: str) -> list[str]:
@@ -1507,9 +1621,9 @@ def unknown_ids(only: str) -> list[str]:
 
 def status_of(m: Mutant, runs: list[tuple[object, str]]) -> str:
     """`runs` = (exit code, pytest output) of each killer of `m`, each run on its own with the mutant planted.
-    KILLED: some killer failed with exit code 1, a test of that very killer is in its FAILED lines, and the output shows no
-    NameError, UnboundLocalError, AttributeError, TypeError, KeyError, ValueError, SyntaxError, IndentationError or
-    ImportError line (a mutant that only broke the file proves nothing). BROKEN: it
+    KILLED: some killer failed with exit code 1, a test of that very killer is in its FAILED lines, and every failure
+    ended in an exception a test raises on purpose (`only_test_failures`: an allow list; a mutant that only broke the
+    code proves nothing). BROKEN: it
     failed but only like that. SURVIVED: every killer passed. ERROR: any other exit code."""
     codes = [rc for rc, _ in runs]
     if all(rc == 0 for rc in codes):
@@ -1519,7 +1633,7 @@ def status_of(m: Mutant, runs: list[tuple[object, str]]) -> str:
     for killer, (rc, out) in zip(killers_of(m), runs, strict=True):
         named = killer.split("[")[0]
         failed = [f.split("[")[0] for f in re.findall(r"^FAILED (\S+)", out, re.MULTILINE)]
-        if rc == 1 and named in failed and not _BROKEN.search(out):
+        if rc == 1 and named in failed and only_test_failures(out):
             return "KILLED"
     return "BROKEN"
 
@@ -1605,6 +1719,9 @@ def _run_all(only: str, work: Path) -> int:
         print(out[-3000:])
         print("STOP: baseline not green")
         return 2
+    raw_dir = os.environ.get("MIGRATE_MUTANTS_RAW_DIR")
+    if raw_dir:
+        Path(raw_dir).mkdir(parents=True, exist_ok=True)
     print(
         "name | kind | description | result | failing killers (only the ones that fail) | seconds"
     )
@@ -1626,6 +1743,16 @@ def _run_all(only: str, work: Path) -> int:
             path.write_bytes(original)
         status = status_of(m, runs)
         results.append((m, status))
+        if (
+            raw_dir
+        ):  # the whole pytest output of each killer, to read afterwards (what each kill really was)
+            Path(raw_dir, f"{m.name}.txt").write_text(
+                "".join(
+                    f"### {k} rc={rc}\n{out}\n"
+                    for k, (rc, out) in zip(killers_of(m), runs, strict=True)
+                ),
+                encoding="utf-8",
+            )
         print(
             f"{m.name} | {kind_of(m)} | {m.desc} | {status} | {', '.join(failing) or '-'} | {spent:.1f}s",
             flush=True,
