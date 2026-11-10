@@ -1,0 +1,4 @@
+runner under test: /tmp/claude-0/main89/tools/mutation_runner.py
+row: [('flip', <Verdict.ERROR: 'ERROR'>, '::tests.test_core', False)]
+first_lines: {'flip': 'E   AssertionError: at import'}
+pytest exit codes (file, rc): [('base.xml', 0), ('r.xml', 2)]

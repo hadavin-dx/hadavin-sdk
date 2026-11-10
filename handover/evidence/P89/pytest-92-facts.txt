@@ -1,0 +1,48 @@
+### pytest -q t/test_a.py (value 69 chars)
+E       AssertionError: assert 'host=h.examp...Tw7LpR2vB8nCd' == 'other'
+E         
+E         - other
+### pytest -q -vv t/test_a.py (value 69 chars)
+E       AssertionError: assert 'host=h.examp...Tw7LpR2vB8nCd' == 'other'
+E         
+E         - other
+### pytest -vv t/test_a.py (value 69 chars)
+E       AssertionError: assert 'host=h.example dbname=scratch user=svc_user password=Zq9xK4mTw7LpR2vB8nCd' == 'other'
+E         
+E         - other
+### pytest -q -o verbosity_assertions=2 t/test_a.py (value 69 chars)
+E       AssertionError: assert 'host=h.example dbname=scratch user=svc_user password=Zq9xK4mTw7LpR2vB8nCd' == 'other'
+E         
+E         - other
+### pytest -v -o verbosity_assertions=2 t/test_a.py (value 69 chars)
+E       AssertionError: assert 'host=h.example dbname=scratch user=svc_user password=Zq9xK4mTw7LpR2vB8nCd' == 'other'
+E         
+E         - other
+### pytest  t/test_a.py (value 69 chars)
+E       AssertionError: assert 'host=h.examp...Tw7LpR2vB8nCd' == 'other'
+E         
+E         - other
+### 300 x chars, -q
+E       AssertionError: assert 'xxxxxxxxxxxx...xxxxxxxxxxxxx' == 'other'
+### pytest version
+pytest 9.2.0
+### body failure plus teardown error, junit (pytest 9.2)
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="1" skipped="0" tests="2" time="0.020" timestamp="2026-11-10T20:53:35.859864+00:00" hostname="vm"><testcase classname="t.test_b" name="test_x" time="0.000"><failure message="AssertionError: body&#10;assert False">fx = 1
+
+    def test_x(fx):
+&gt;       assert False, "body"
+E       AssertionError: body
+E       assert False
+
+t/test_b.py:7: AssertionError</failure></testcase><testcase classname="t.test_b" name="test_x" time="0.000"><error message="failed on teardown with &quot;RuntimeError: teardown boom&quot;">@pytest.fixture
+    def fx():
+        yield 1
+&gt;       raise RuntimeError("teardown boom")
+E       RuntimeError: teardown boom
+
+t/test_b.py:5: RuntimeError</error></testcase></testsuite></testsuites>
+### collection error junit
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.072" timestamp="2026-11-10T20:53:36.142849+00:00" hostname="vm"><testcase classname="" name="t.test_c" time="0.000"><error message="collection failure">t/test_c.py:1: in &lt;module&gt;
+    assert False, "import time"
+E   AssertionError: import time
+E   assert False</error></testcase></testsuite></testsuites>
