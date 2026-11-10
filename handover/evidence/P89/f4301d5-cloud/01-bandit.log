@@ -1,0 +1,4 @@
+HEAD f4301d55443b60c216581fa2c3026c086d5e5fa0
+$ 
+[tester]	WARNING	nosec encountered (B608), but no failed test on file demos/ask-your-data/db/lumen.py:723
+[tester]	WARNING	nosec encountered (B608), but no failed test on file demos/ask-your-data/db/lumen.py:723
