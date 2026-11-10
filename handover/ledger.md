@@ -2314,3 +2314,5 @@
 | BL-core-a5-w2-r3-04..11 | same, m1,m2b,m3a-d,m4,m5,m6,m7a-d,m8 | MINOR | PR73 | Minors listed in the review file | OPEN | | | 2026-11-10 |
 | BL-core-a5-w2-r3-12 | handover/reviews/P3a-2-round3/round3-codebase.md M1 | MAJOR | PR73 | Private ids still in public files (o100: mutant prefixes, "ticket way" test name, CHANGELOG:390/410, pyproject P3b/P4b) | OPEN | | | 2026-11-10 |
 | BL-core-a5-w2-r3-13..20 | same, m1-m9 + other | MINOR | PR73 | Test-role password in server log, role-drop unproven, t_ prefix, mutant-runner unknown id and weak kill judgement, PG17 MAINTAIN, types/domains ownership, GRANT OPTION breadth, weak pins | OPEN | | | 2026-11-10 |
+| BL-core-a14-w2-r3-01 | handover/reviews/P6a/round-w2-r3-codebase.md M1 | MAJOR | PR72 | Mutant tool exit code accepts KILLED-OTHER as killed (docstring says only the named test counts) | OPEN (round-4 fix dispatched) | | | 2026-11-10 |
+| BL-core-a14-w2-r3-02..05 | same, m2-m5 | MINOR | PR72 | Killer regexes not end-anchored; HOME exposes cloud credential files; dense CHANGELOG entry; no cli rows for gate/replay/score | OPEN | | | 2026-11-10 |
