@@ -2212,3 +2212,4 @@
 | BL-core-a10a-w2-06 | PR76 7f32349 | MAJOR | missing least-privilege behavioural tests (credential refs requested once, 53300, 40P01, S33, B9, INCONCLUSIVE) | OPEN | round-w2.md M5 | UNCAPPED |
 | BL-core-a10a-w2-07 | PR76 7f32349 | MAJOR | connection/timeouts limits hard-coded, not in config | OPEN | round-w2.md M6 | UNCAPPED |
 | BL-core-a10a-w2-08 | PR76 7f32349 | MAJOR | runbook lacks bootstrap, HD003 steps, lock key, exit 8 | OPEN | round-w2.md M7 | UNCAPPED |
+| BL-core-a22-w2-04 | PR71 945bfd6 | MINOR | `os.walk` without onerror fails open on an unreadable directory; `.venv`/`node_modules` pruned at any depth; no symlink test; `_code` ast.parse without error handling; vendoring name gaps (pglast.py, pglast.libs, .pyc/.dll) | OPEN | reviews/P0a/round-w2-design.md round 2 | same-push fix, no new review (round cap 2) |
