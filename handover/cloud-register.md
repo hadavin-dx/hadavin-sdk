@@ -1007,3 +1007,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | ac672989f9, a4bf163eda | A21a round-3 reviewers | CLOSED 21:17 UTC: 0 blockers, 0 majors by codebase; design 1 major (CI proof); minors saved | - | done |
 | a591cfffd8 | A21a evidence runner 9881b21 | STOPPED by cloud (builder r4 changes the head; runner restarts on the final head, builder runs no full suites) | - | closed |
 | af4a57cbb8 | A21a fix builder r4 (minors, wording, L12, PR body) | resumed 21:17 UTC | +60 min | check +30 min |
+| af4a57cbb8 | A21a fix builder r4 | CLOSED 21:24 UTC, pushed 1a7d202 (22/22 memory and 13/13 Postgres mutants, lint, contract files; full suites NOT run by design) | - | done |
+| a69be70301 | A21a evidence runner 1a7d202 (final head, full suites, flaky check) | started 21:24 UTC | ~60-90 min | check +30 min |
+| cleanup | stale leftovers of stopped evidence runners | killed chain2.sh (pid 4857, EV-A21a-98a3ed9), stopped Postgres clusters p89-45f2374-312/313 | - | done |
