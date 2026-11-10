@@ -1,0 +1,3171 @@
+HEAD ef2adc75c1a8086c0cd3fd0f389c0676f10d5cdd
+python Python 3.12.3
+PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+DSN set: yes; UNIDATA pin required: unset
+....................EEEEF............EEE....E....................F...... [ 12%]
+........................................................................ [ 25%]
+........................................................................ [ 37%]
+........................................................................ [ 50%]
+............................................................FFFFFFFFFFFF [ 62%]
+FFFFFFFFFFFFFFFFFFFFF..FFFFFFFFFFFFFFFFFFFFFFFEEEEEEFEEE................ [ 75%]
+........................................................................ [ 87%]
+..................................................................FFF.EF [100%]
+==================================== ERRORS ====================================
+_____ ERROR at setup of test_the_runtime_role_holds_exactly_the_merged_map _____
+
+    @pytest.fixture
+    def roles():
+        """A migrated schema and two fresh login roles, runtime and portal; dropped afterwards."""
+        import psycopg
+        from psycopg import sql
+    
+>       for dsn in pg_schema():
+
+tests/test_k2_migrations.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:36: in pg_schema
+    migrate(scoped)
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_fe9271698a5a'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ ERROR at setup of test_the_runtime_role_cannot_update_or_delete_the_audit_log _
+
+    @pytest.fixture
+    def roles():
+        """A migrated schema and two fresh login roles, runtime and portal; dropped afterwards."""
+        import psycopg
+        from psycopg import sql
+    
+>       for dsn in pg_schema():
+
+tests/test_k2_migrations.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:36: in pg_schema
+    migrate(scoped)
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_c47b90ec6154'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+____ ERROR at setup of test_the_portal_role_reads_only_the_portal_relations ____
+
+    @pytest.fixture
+    def roles():
+        """A migrated schema and two fresh login roles, runtime and portal; dropped afterwards."""
+        import psycopg
+        from psycopg import sql
+    
+>       for dsn in pg_schema():
+
+tests/test_k2_migrations.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:36: in pg_schema
+    migrate(scoped)
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_724471d0976c'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ ERROR at setup of test_running_migrate_again_resets_a_portal_role_to_the_map _
+
+    @pytest.fixture
+    def roles():
+        """A migrated schema and two fresh login roles, runtime and portal; dropped afterwards."""
+        import psycopg
+        from psycopg import sql
+    
+>       for dsn in pg_schema():
+
+tests/test_k2_migrations.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:36: in pg_schema
+    migrate(scoped)
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_35a5b0f63801'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+__ ERROR at setup of test_the_database_holds_exactly_the_relations_in_the_map __
+
+    @pytest.fixture
+    def roles():
+        """A migrated schema and two fresh login roles, runtime and portal; dropped afterwards."""
+        import psycopg
+        from psycopg import sql
+    
+>       for dsn in pg_schema():
+
+tests/test_k2_migrations.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:36: in pg_schema
+    migrate(scoped)
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_5168e610098f'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ ERROR at setup of test_migrate_refuses_roles_that_are_members_of_each_other __
+
+    @pytest.fixture
+    def roles():
+        """A migrated schema and two fresh login roles, runtime and portal; dropped afterwards."""
+        import psycopg
+        from psycopg import sql
+    
+>       for dsn in pg_schema():
+
+tests/test_k2_migrations.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:36: in pg_schema
+    migrate(scoped)
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_66f84f7572bd'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ ERROR at setup of test_migrate_refuses_when_an_applied_migration_has_no_file _
+
+    @pytest.fixture
+    def roles():
+        """A migrated schema and two fresh login roles, runtime and portal; dropped afterwards."""
+        import psycopg
+        from psycopg import sql
+    
+>       for dsn in pg_schema():
+
+tests/test_k2_migrations.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:36: in pg_schema
+    migrate(scoped)
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_fd53621465f1'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ ERROR at setup of test_migrate_refuses_a_portal_role_that_inherits_write_rights _
+
+    @pytest.fixture
+    def roles():
+        """A migrated schema and two fresh login roles, runtime and portal; dropped afterwards."""
+        import psycopg
+        from psycopg import sql
+    
+>       for dsn in pg_schema():
+
+tests/test_k2_migrations.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:36: in pg_schema
+    migrate(scoped)
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_91c6bfc95afd'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ ERROR at setup of test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[SUPERUSER] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_1eb48f54200f'", 'p3a_1eb48f54200f')
+
+    @pytest.fixture
+    def plain_role(scratch):
+        """(dsn of a login role with none of the four flags, schema); the role is dropped afterwards."""
+        dsn, schema = scratch
+        role = f"mig_{uuid.uuid4().hex[:10]}"
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            db.execute(
+                sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(role)
+                )
+            )
+            db.execute(
+                sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+>                   sql.Identifier(db.execute("SELECT current_database()").fetchone()[0]),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    sql.Identifier(role),
+                )
+            )
+
+tests/test_migration_postgres.py:1309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Identifier(b'postgres'), strings = (b'postgres',)
+
+    def __init__(self, *strings: str):
+        # init super() now to make the __repr__ not explode in case of error
+        super().__init__(strings)
+    
+        if not strings:
+            raise TypeError("Identifier cannot be empty")
+    
+        for s in strings:
+            if not isinstance(s, str):
+>               raise TypeError(
+                    f"SQL identifier parts must be strings, got {s!r} instead"
+                )
+E               TypeError: SQL identifier parts must be strings, got b'postgres' instead
+
+../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
+_ ERROR at setup of test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[CREATEROLE] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_b680094ef5a8'", 'p3a_b680094ef5a8')
+
+    @pytest.fixture
+    def plain_role(scratch):
+        """(dsn of a login role with none of the four flags, schema); the role is dropped afterwards."""
+        dsn, schema = scratch
+        role = f"mig_{uuid.uuid4().hex[:10]}"
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            db.execute(
+                sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(role)
+                )
+            )
+            db.execute(
+                sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+>                   sql.Identifier(db.execute("SELECT current_database()").fetchone()[0]),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    sql.Identifier(role),
+                )
+            )
+
+tests/test_migration_postgres.py:1309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Identifier(b'postgres'), strings = (b'postgres',)
+
+    def __init__(self, *strings: str):
+        # init super() now to make the __repr__ not explode in case of error
+        super().__init__(strings)
+    
+        if not strings:
+            raise TypeError("Identifier cannot be empty")
+    
+        for s in strings:
+            if not isinstance(s, str):
+>               raise TypeError(
+                    f"SQL identifier parts must be strings, got {s!r} instead"
+                )
+E               TypeError: SQL identifier parts must be strings, got b'postgres' instead
+
+../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
+_ ERROR at setup of test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[CREATEDB] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_4ad6a508844b'", 'p3a_4ad6a508844b')
+
+    @pytest.fixture
+    def plain_role(scratch):
+        """(dsn of a login role with none of the four flags, schema); the role is dropped afterwards."""
+        dsn, schema = scratch
+        role = f"mig_{uuid.uuid4().hex[:10]}"
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            db.execute(
+                sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(role)
+                )
+            )
+            db.execute(
+                sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+>                   sql.Identifier(db.execute("SELECT current_database()").fetchone()[0]),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    sql.Identifier(role),
+                )
+            )
+
+tests/test_migration_postgres.py:1309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Identifier(b'postgres'), strings = (b'postgres',)
+
+    def __init__(self, *strings: str):
+        # init super() now to make the __repr__ not explode in case of error
+        super().__init__(strings)
+    
+        if not strings:
+            raise TypeError("Identifier cannot be empty")
+    
+        for s in strings:
+            if not isinstance(s, str):
+>               raise TypeError(
+                    f"SQL identifier parts must be strings, got {s!r} instead"
+                )
+E               TypeError: SQL identifier parts must be strings, got b'postgres' instead
+
+../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
+_ ERROR at setup of test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[BYPASSRLS] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_546b50ea0947'", 'p3a_546b50ea0947')
+
+    @pytest.fixture
+    def plain_role(scratch):
+        """(dsn of a login role with none of the four flags, schema); the role is dropped afterwards."""
+        dsn, schema = scratch
+        role = f"mig_{uuid.uuid4().hex[:10]}"
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            db.execute(
+                sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(role)
+                )
+            )
+            db.execute(
+                sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+>                   sql.Identifier(db.execute("SELECT current_database()").fetchone()[0]),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    sql.Identifier(role),
+                )
+            )
+
+tests/test_migration_postgres.py:1309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Identifier(b'postgres'), strings = (b'postgres',)
+
+    def __init__(self, *strings: str):
+        # init super() now to make the __repr__ not explode in case of error
+        super().__init__(strings)
+    
+        if not strings:
+            raise TypeError("Identifier cannot be empty")
+    
+        for s in strings:
+            if not isinstance(s, str):
+>               raise TypeError(
+                    f"SQL identifier parts must be strings, got {s!r} instead"
+                )
+E               TypeError: SQL identifier parts must be strings, got b'postgres' instead
+
+../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
+_ ERROR at setup of test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[TRUE] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_bf4dd3e6faf7'", 'p3a_bf4dd3e6faf7')
+
+    @pytest.fixture
+    def plain_role(scratch):
+        """(dsn of a login role with none of the four flags, schema); the role is dropped afterwards."""
+        dsn, schema = scratch
+        role = f"mig_{uuid.uuid4().hex[:10]}"
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            db.execute(
+                sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(role)
+                )
+            )
+            db.execute(
+                sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+>                   sql.Identifier(db.execute("SELECT current_database()").fetchone()[0]),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    sql.Identifier(role),
+                )
+            )
+
+tests/test_migration_postgres.py:1309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Identifier(b'postgres'), strings = (b'postgres',)
+
+    def __init__(self, *strings: str):
+        # init super() now to make the __repr__ not explode in case of error
+        super().__init__(strings)
+    
+        if not strings:
+            raise TypeError("Identifier cannot be empty")
+    
+        for s in strings:
+            if not isinstance(s, str):
+>               raise TypeError(
+                    f"SQL identifier parts must be strings, got {s!r} instead"
+                )
+E               TypeError: SQL identifier parts must be strings, got b'postgres' instead
+
+../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
+_ ERROR at setup of test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[FALSE] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_5d74826776c3'", 'p3a_5d74826776c3')
+
+    @pytest.fixture
+    def plain_role(scratch):
+        """(dsn of a login role with none of the four flags, schema); the role is dropped afterwards."""
+        dsn, schema = scratch
+        role = f"mig_{uuid.uuid4().hex[:10]}"
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            db.execute(
+                sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(role)
+                )
+            )
+            db.execute(
+                sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+>                   sql.Identifier(db.execute("SELECT current_database()").fetchone()[0]),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    sql.Identifier(role),
+                )
+            )
+
+tests/test_migration_postgres.py:1309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Identifier(b'postgres'), strings = (b'postgres',)
+
+    def __init__(self, *strings: str):
+        # init super() now to make the __repr__ not explode in case of error
+        super().__init__(strings)
+    
+        if not strings:
+            raise TypeError("Identifier cannot be empty")
+    
+        for s in strings:
+            if not isinstance(s, str):
+>               raise TypeError(
+                    f"SQL identifier parts must be strings, got {s!r} instead"
+                )
+E               TypeError: SQL identifier parts must be strings, got b'postgres' instead
+
+../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
+___ ERROR at setup of test_a_plain_migration_role_runs_with_the_real_connect ___
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_991548262fc0'", 'p3a_991548262fc0')
+
+    @pytest.fixture
+    def plain_role(scratch):
+        """(dsn of a login role with none of the four flags, schema); the role is dropped afterwards."""
+        dsn, schema = scratch
+        role = f"mig_{uuid.uuid4().hex[:10]}"
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            db.execute(
+                sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(role)
+                )
+            )
+            db.execute(
+                sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+>                   sql.Identifier(db.execute("SELECT current_database()").fetchone()[0]),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    sql.Identifier(role),
+                )
+            )
+
+tests/test_migration_postgres.py:1309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Identifier(b'postgres'), strings = (b'postgres',)
+
+    def __init__(self, *strings: str):
+        # init super() now to make the __repr__ not explode in case of error
+        super().__init__(strings)
+    
+        if not strings:
+            raise TypeError("Identifier cannot be empty")
+    
+        for s in strings:
+            if not isinstance(s, str):
+>               raise TypeError(
+                    f"SQL identifier parts must be strings, got {s!r} instead"
+                )
+E               TypeError: SQL identifier parts must be strings, got b'postgres' instead
+
+../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
+_ ERROR at setup of test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_498463a49af6'", 'p3a_498463a49af6')
+
+    @pytest.fixture
+    def plain_role(scratch):
+        """(dsn of a login role with none of the four flags, schema); the role is dropped afterwards."""
+        dsn, schema = scratch
+        role = f"mig_{uuid.uuid4().hex[:10]}"
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            db.execute(
+                sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(role)
+                )
+            )
+            db.execute(
+                sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+>                   sql.Identifier(db.execute("SELECT current_database()").fetchone()[0]),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    sql.Identifier(role),
+                )
+            )
+
+tests/test_migration_postgres.py:1309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Identifier(b'postgres'), strings = (b'postgres',)
+
+    def __init__(self, *strings: str):
+        # init super() now to make the __repr__ not explode in case of error
+        super().__init__(strings)
+    
+        if not strings:
+            raise TypeError("Identifier cannot be empty")
+    
+        for s in strings:
+            if not isinstance(s, str):
+>               raise TypeError(
+                    f"SQL identifier parts must be strings, got {s!r} instead"
+                )
+E               TypeError: SQL identifier parts must be strings, got b'postgres' instead
+
+../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
+_ ERROR at setup of test_one_table_owned_by_another_role_is_enough_to_refuse_and_a_function_is_named _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_a2c0b4056b65'", 'p3a_a2c0b4056b65')
+
+    @pytest.fixture
+    def plain_role(scratch):
+        """(dsn of a login role with none of the four flags, schema); the role is dropped afterwards."""
+        dsn, schema = scratch
+        role = f"mig_{uuid.uuid4().hex[:10]}"
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            db.execute(
+                sql.SQL("GRANT ALL ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(role)
+                )
+            )
+            db.execute(
+                sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+>                   sql.Identifier(db.execute("SELECT current_database()").fetchone()[0]),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    sql.Identifier(role),
+                )
+            )
+
+tests/test_migration_postgres.py:1309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Identifier(b'postgres'), strings = (b'postgres',)
+
+    def __init__(self, *strings: str):
+        # init super() now to make the __repr__ not explode in case of error
+        super().__init__(strings)
+    
+        if not strings:
+            raise TypeError("Identifier cannot be empty")
+    
+        for s in strings:
+            if not isinstance(s, str):
+>               raise TypeError(
+                    f"SQL identifier parts must be strings, got {s!r} instead"
+                )
+E               TypeError: SQL identifier parts must be strings, got b'postgres' instead
+
+../venv3.12/lib/python3.12/site-packages/psycopg/sql.py:390: TypeError
+____ ERROR at setup of test_cas_race_across_two_connections_has_one_winner _____
+
+    @pytest.fixture
+    def migrated_dsn():
+>       yield from pg_schema()
+
+tests/test_p2_postgres.py:154: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:36: in pg_schema
+    migrate(scoped)
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_e4804c62ebbc'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+=================================== FAILURES ===================================
+____________ test_the_store_contract_suite_runs_as_a_non_owner_role ____________
+
+    def test_the_store_contract_suite_runs_as_a_non_owner_role():
+        import psycopg
+    
+>       for dsn in pg_schema(runtime=True):
+
+tests/test_k2_migrations.py:298: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:36: in pg_schema
+    migrate(scoped)
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_422792f804f3'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_a_database_that_applied_t0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab987d6ed0>
+
+    def test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied(
+        tmp_path, monkeypatch
+    ):
+        pytest.importorskip("psycopg")
+        from tests.contracts.kinds.store_postgres import pg_schema
+    
+        files = _folder(tmp_path, RENAMED)
+        gen = pg_schema(migrated=False)
+        dsn = next(gen)
+        try:
+            import psycopg
+    
+>           with mig.connect(dsn) as db:  # as the plain role migrate() runs as
+                 ^^^^^^^^^^^^^^^^
+
+tests/test_k5_fixes2.py:294: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_a1c2d379e42c'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_________________________ test_late_number_is_refused __________________________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_e36985134d2d'", 'p3a_e36985134d2d')
+
+    @needs_pg
+    def test_late_number_is_refused(scratch):
+        """FAIL-BEFORE 1: 0001-0003 and 0005 are applied, 0004 is new for this database: refused, 0004 does not run."""
+        dsn, _ = scratch
+>       _apply_by_hand(dsn, [s for s in REAL if s != "0004_audit_checkpoint_meta"])
+
+tests/test_migration_postgres.py:118: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_e36985134d2d'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_________________________ test_newer_database_message __________________________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_e4e3a84e54b8'", 'p3a_e4e3a84e54b8')
+
+    @needs_pg
+    def test_newer_database_message(scratch):
+        """FAIL-BEFORE 6: the ledger holds a name above every file: this database is newer than the release."""
+        dsn, _ = scratch
+>       mig.migrate(dsn)
+
+tests/test_migration_postgres.py:129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_e4e3a84e54b8'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_________ test_a_normal_run_applies_every_file_once_and_is_repeatable __________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_3975dd102bd1'", 'p3a_3975dd102bd1')
+
+    @needs_pg
+    def test_a_normal_run_applies_every_file_once_and_is_repeatable(scratch):
+        dsn, _ = scratch
+>       assert mig.migrate(dsn) == REAL
+               ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:143: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_3975dd102bd1'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+________ test_h11_the_read_back_refuses_a_planted_file[backslash_quote] ________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_19d4f492f92a'", 'p3a_19d4f492f92a')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b9be0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses0')
+plant = 'backslash_quote'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_19d4f492f92a'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+________ test_h11_the_read_back_refuses_a_planted_file[disable_trigger] ________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_078ec759c664'", 'p3a_078ec759c664')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab9875bb60>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses1')
+plant = 'disable_trigger'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_078ec759c664'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_________ test_h11_the_read_back_refuses_a_planted_file[drop_trigger] __________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_78dd3b5624c2'", 'p3a_78dd3b5624c2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b9070>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses2')
+plant = 'drop_trigger'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_78dd3b5624c2'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+___________ test_h11_the_read_back_refuses_a_planted_file[encoding] ____________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_5c48c31367a7'", 'p3a_5c48c31367a7')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b8380>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses3')
+plant = 'encoding'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_5c48c31367a7'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_________ test_h11_the_read_back_refuses_a_planted_file[function_body] _________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_16982bf386d2'", 'p3a_16982bf386d2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b1ca0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses4')
+plant = 'function_body'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_16982bf386d2'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+____ test_h11_the_read_back_refuses_a_planted_file[function_security_mode] _____
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_12c2220a205b'", 'p3a_12c2220a205b')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b1880>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses5')
+plant = 'function_security_mode'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_12c2220a205b'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_______ test_h11_the_read_back_refuses_a_planted_file[function_settings] _______
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_3ad704954893'", 'p3a_3ad704954893')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b31a0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses6')
+plant = 'function_settings'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_3ad704954893'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+________ test_h11_the_read_back_refuses_a_planted_file[replica_trigger] ________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_e19a1c01c128'", 'p3a_e19a1c01c128')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b05f0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses7')
+plant = 'replica_trigger'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_e19a1c01c128'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_______ test_h11_the_read_back_refuses_a_planted_file[replication_role] ________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_0cc28353b36a'", 'p3a_0cc28353b36a')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b2510>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses8')
+plant = 'replication_role'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_0cc28353b36a'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+______________ test_h11_the_read_back_refuses_a_planted_file[scs] ______________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_1dab8e2e01a1'", 'p3a_1dab8e2e01a1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985bb9b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses9')
+plant = 'scs'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_1dab8e2e01a1'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+__________ test_h11_the_read_back_refuses_a_planted_file[search_path] __________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_884ddbe7f1f1'", 'p3a_884ddbe7f1f1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab9875bb60>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses10')
+plant = 'search_path'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_884ddbe7f1f1'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_________ test_h11_the_read_back_refuses_a_planted_file[table_renamed] _________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_76fbb1bbd3ae'", 'p3a_76fbb1bbd3ae')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab98555790>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses11')
+plant = 'table_renamed'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_76fbb1bbd3ae'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+________ test_h11_the_read_back_refuses_a_planted_file[trigger_always] _________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_e42f6358ecf7'", 'p3a_e42f6358ecf7')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab98557d40>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses12')
+plant = 'trigger_always'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_e42f6358ecf7'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+______ test_h11_the_read_back_refuses_a_planted_file[trigger_definition] _______
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d7099b3901f3'", 'p3a_d7099b3901f3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab993c2360>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_the_read_back_refuses13')
+plant = 'trigger_definition'
+
+    @needs_pg
+    @pytest.mark.parametrize("plant", sorted(PLANTS))
+    def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path, plant):
+        dsn, _ = scratch
+>       mig.migrate(dsn)  # call 1: the real folder
+        ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:234: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_d7099b3901f3'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_________________ test_h11_a_function_owner_change_is_refused __________________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_09f4bf91ad6f'", 'p3a_09f4bf91ad6f')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b1af0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_a_function_owner_chan0')
+
+    @needs_pg
+    def test_h11_a_function_owner_change_is_refused(scratch, monkeypatch, tmp_path):
+        """The owner of the trigger function is read back: handing it to another role is a trigger change. Killed by: mutant T7
+        (function owner not compared) of tests/migrate_mutants.py."""
+        dsn, schema = scratch
+        other = "p3a_fo_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(
+                sql.SQL("GRANT CREATE ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(other)
+                )
+            )
+        _let_the_plain_role_grant(
+            other
+        )  # the plain role may give an object to a role it is a member of
+        try:
+>           mig.migrate(dsn)
+
+tests/test_migration_postgres.py:277: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_09f4bf91ad6f'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+____ test_h11_a_listed_trigger_change_passes_for_that_file_and_trigger_only ____
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_34bb8f2d0f8b'", 'p3a_34bb8f2d0f8b')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b11f0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_a_listed_trigger_chan0')
+
+    @needs_pg
+    def test_h11_a_listed_trigger_change_passes_for_that_file_and_trigger_only(
+        scratch, monkeypatch, tmp_path
+    ):
+        """The reviewed list (`migrations_trigger_changes.json`) is the only way to change a trigger. Here a fake list names
+        the file and the trigger: the replaced definition is kept, and the same text under another file name is refused.
+        Killed by: mutants T10 and T11 (wiring tests) and T13 (the list is not passed to the read-back)."""
+        dsn, _ = scratch
+>       mig.migrate(dsn)
+
+tests/test_migration_postgres.py:297: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_34bb8f2d0f8b'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+______________ test_h11_a_role_switched_inside_a_file_is_refused _______________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_b0e4bf9c0ad1'", 'p3a_b0e4bf9c0ad1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab98557e30>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_a_role_switched_insid0')
+
+    @needs_pg
+    def test_h11_a_role_switched_inside_a_file_is_refused(scratch, monkeypatch, tmp_path):
+        dsn, _ = scratch
+        role = "p3a_r_" + uuid.uuid4().hex[:8]
+        body = (
+            "CREATE OR REPLACE FUNCTION p3a_switch() RETURNS void LANGUAGE plpgsql AS $$\n"
+            f"BEGIN EXECUTE 'SET LOCAL ROLE {role}'; END $$;\nSELECT p3a_switch();\n"
+        )
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
+        try:
+>           mig.migrate(dsn)
+
+tests/test_migration_postgres.py:339: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_b0e4bf9c0ad1'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+__ test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body] ___
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_a47b574e42aa'", 'p3a_a47b574e42aa')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b4f80>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_a_role_grant_hidden_i0')
+how = 'function_body'
+
+    @needs_pg
+    @pytest.mark.parametrize("how", ["function_body", "function_body_with_admin_option"])
+    def test_h11_a_role_grant_hidden_in_a_function_body_is_refused(scratch, monkeypatch, tmp_path, how):
+        """the statement rule reads `GRANT r TO s` only at the start of a statement; here it sits in a `$$` body
+        and the file then calls the function. The read-back of `pg_auth_members` refuses it and nothing is kept.
+        Killed by: mutant R1 (membership not compared) and mutant R2 (membership not read after the file)."""
+        dsn, _ = scratch
+        a, b = "p3a_ga_" + uuid.uuid4().hex[:8], "p3a_gb_" + uuid.uuid4().hex[:8]
+        option = " WITH ADMIN OPTION" if how.endswith("admin_option") else ""
+        body = (
+            "CREATE OR REPLACE FUNCTION p3a_grant() RETURNS void LANGUAGE plpgsql AS $$\n"
+            f"BEGIN GRANT {a} TO {b}{option}; END $$;\nSELECT p3a_grant();\n"
+        )
+        _create_roles(a, b)
+        _let_the_plain_role_grant(a)
+        try:
+>           mig.migrate(dsn)
+
+tests/test_migration_postgres.py:398: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_a47b574e42aa'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body_with_admin_option] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_75fda62be46b'", 'p3a_75fda62be46b')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b5010>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_a_role_grant_hidden_i1')
+how = 'function_body_with_admin_option'
+
+    @needs_pg
+    @pytest.mark.parametrize("how", ["function_body", "function_body_with_admin_option"])
+    def test_h11_a_role_grant_hidden_in_a_function_body_is_refused(scratch, monkeypatch, tmp_path, how):
+        """the statement rule reads `GRANT r TO s` only at the start of a statement; here it sits in a `$$` body
+        and the file then calls the function. The read-back of `pg_auth_members` refuses it and nothing is kept.
+        Killed by: mutant R1 (membership not compared) and mutant R2 (membership not read after the file)."""
+        dsn, _ = scratch
+        a, b = "p3a_ga_" + uuid.uuid4().hex[:8], "p3a_gb_" + uuid.uuid4().hex[:8]
+        option = " WITH ADMIN OPTION" if how.endswith("admin_option") else ""
+        body = (
+            "CREATE OR REPLACE FUNCTION p3a_grant() RETURNS void LANGUAGE plpgsql AS $$\n"
+            f"BEGIN GRANT {a} TO {b}{option}; END $$;\nSELECT p3a_grant();\n"
+        )
+        _create_roles(a, b)
+        _let_the_plain_role_grant(a)
+        try:
+>           mig.migrate(dsn)
+
+tests/test_migration_postgres.py:398: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_75fda62be46b'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ test_h11_a_changed_grant_option_of_an_existing_membership_is_refused[the_plain_role] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_768a1789a884'", 'p3a_768a1789a884')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab98557440>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_a_changed_grant_optio0')
+granted_before_by = 'the_plain_role'
+
+    @needs_pg
+    @pytest.mark.parametrize("granted_before_by", ["the_plain_role", "the_login_superuser"])
+    def test_h11_a_changed_grant_option_of_an_existing_membership_is_refused(
+        scratch, monkeypatch, tmp_path, granted_before_by
+    ):
+        """The membership `a` -> `b` exists BEFORE migrate starts, without the admin option. A `$$` body then runs
+        `GRANT a TO b WITH ADMIN OPTION` (the same membership, one more right) and the file calls it. The read-back compares
+        every column of `pg_auth_members`, not only the two names, so it refuses and nothing is kept. With
+        `the_plain_role` as the first grantor the same catalog row is changed in place; with `the_login_superuser` a second
+        row (another grantor) is added. Killed by: mutant R4 (the other columns are not read)."""
+        dsn, _ = scratch
+        a, b = "p3a_oa_" + uuid.uuid4().hex[:8], "p3a_ob_" + uuid.uuid4().hex[:8]
+        _create_roles(a, b)
+        _let_the_plain_role_grant(a)
+        try:
+            with psycopg.connect(DSN, autocommit=True) as db:
+                if granted_before_by == "the_plain_role":
+                    db.execute(sql.SQL("SET ROLE {}").format(sql.Identifier(PLAIN_ROLE)))
+                db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(a), sql.Identifier(b)))
+            body = (
+                "CREATE OR REPLACE FUNCTION p3a_grant() RETURNS void LANGUAGE plpgsql AS $$\n"
+                f"BEGIN GRANT {a} TO {b} WITH ADMIN OPTION; END $$;\nSELECT p3a_grant();\n"
+            )
+>           mig.migrate(dsn)
+
+tests/test_migration_postgres.py:435: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_768a1789a884'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ test_h11_a_changed_grant_option_of_an_existing_membership_is_refused[the_login_superuser] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_8609f7cc02ac'", 'p3a_8609f7cc02ac')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b3320>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_a_changed_grant_optio1')
+granted_before_by = 'the_login_superuser'
+
+    @needs_pg
+    @pytest.mark.parametrize("granted_before_by", ["the_plain_role", "the_login_superuser"])
+    def test_h11_a_changed_grant_option_of_an_existing_membership_is_refused(
+        scratch, monkeypatch, tmp_path, granted_before_by
+    ):
+        """The membership `a` -> `b` exists BEFORE migrate starts, without the admin option. A `$$` body then runs
+        `GRANT a TO b WITH ADMIN OPTION` (the same membership, one more right) and the file calls it. The read-back compares
+        every column of `pg_auth_members`, not only the two names, so it refuses and nothing is kept. With
+        `the_plain_role` as the first grantor the same catalog row is changed in place; with `the_login_superuser` a second
+        row (another grantor) is added. Killed by: mutant R4 (the other columns are not read)."""
+        dsn, _ = scratch
+        a, b = "p3a_oa_" + uuid.uuid4().hex[:8], "p3a_ob_" + uuid.uuid4().hex[:8]
+        _create_roles(a, b)
+        _let_the_plain_role_grant(a)
+        try:
+            with psycopg.connect(DSN, autocommit=True) as db:
+                if granted_before_by == "the_plain_role":
+                    db.execute(sql.SQL("SET ROLE {}").format(sql.Identifier(PLAIN_ROLE)))
+                db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(a), sql.Identifier(b)))
+            body = (
+                "CREATE OR REPLACE FUNCTION p3a_grant() RETURNS void LANGUAGE plpgsql AS $$\n"
+                f"BEGIN GRANT {a} TO {b} WITH ADMIN OPTION; END $$;\nSELECT p3a_grant();\n"
+            )
+>           mig.migrate(dsn)
+
+tests/test_migration_postgres.py:435: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_8609f7cc02ac'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_____ test_h11_a_grant_of_a_role_that_was_a_member_before_is_not_a_refusal _____
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_45cf65e6d41b'", 'p3a_45cf65e6d41b')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985ba660>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_a_grant_of_a_role_tha0')
+
+    @needs_pg
+    def test_h11_a_grant_of_a_role_that_was_a_member_before_is_not_a_refusal(
+        scratch, monkeypatch, tmp_path
+    ):
+        """The baseline is the membership at the start: a file that changes nothing about it passes."""
+        dsn, _ = scratch
+        a, b = "p3a_ma_" + uuid.uuid4().hex[:8], "p3a_mb_" + uuid.uuid4().hex[:8]
+        _create_roles(a, b)
+        try:
+            with psycopg.connect(DSN, autocommit=True) as db:
+                db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(a), sql.Identifier(b)))
+            _with_files(monkeypatch, tmp_path, {"0006_p3a_ok.sql": "SELECT 1;\n"})
+>           assert mig.migrate(dsn) == [*REAL, "0006_p3a_ok"]
+                   ^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:466: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_45cf65e6d41b'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ test_migrate_as_a_login_role_that_is_not_a_superuser_runs_and_refuses_the_plants _
+
+owner_dsn = ("user=p3a_own_2a5e2378 dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_20dda155242b' password=pw-d36a4f7380be4210a954b0925bec6b6d", 'p3a_oth_12834234')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b63f0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_migrate_as_a_login_role_t0')
+
+    @needs_pg
+    def test_migrate_as_a_login_role_that_is_not_a_superuser_runs_and_refuses_the_plants(
+        owner_dsn, monkeypatch, tmp_path
+    ):
+        """the docs say run migrate with a role that is not a superuser; every other test connects as the superuser.
+        Here the migration role is a plain LOGIN owner: the real files apply, a DISABLE TRIGGER and a SET LOCAL ROLE are
+        refused with the same read-back messages as for a superuser, and a second run with the real files is clean.
+        Killed by: mutant M61 (read-back removed from migrate()), as for the superuser plants this test repeats."""
+        dsn, other = owner_dsn
+        with psycopg.connect(dsn, autocommit=True) as db:
+>           assert db.execute("SELECT current_setting('is_superuser')").fetchone() == ("off",)
+E           AssertionError: assert (b'off',) == ('off',)
+E             
+E             At index 0 diff: b'off' != 'off'
+E             Use -v to get more diff
+
+tests/test_migration_postgres.py:502: AssertionError
+__________ test_h11_same_run_a_drop_in_the_first_run_leaves_no_ledger __________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_4e36ae20bbea'", 'p3a_4e36ae20bbea')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b6090>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h11_same_run_a_drop_in_th0')
+
+    @needs_pg
+    def test_h11_same_run_a_drop_in_the_first_run_leaves_no_ledger(scratch, monkeypatch, tmp_path):
+        """ONE migrate() call on the real files plus a planted file: refused, and nothing of the run is kept."""
+        dsn, _ = scratch
+        _with_files(
+            monkeypatch,
+            tmp_path,
+            {"0006_p3a_drop.sql": "DROP TRIGGER audit_entries_no_truncate ON audit_entries;\n"},
+        )
+        with pytest.raises(ConfigError) as e:
+>           mig.migrate(dsn)
+
+tests/test_migration_postgres.py:538: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_4e36ae20bbea'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+__________ test_a_hidden_commit_is_found_by_the_transaction_backstop ___________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_4fe6f5539b94'", 'p3a_4fe6f5539b94')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b7590>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_a_hidden_commit_is_found_0')
+
+    @needs_pg
+    def test_a_hidden_commit_is_found_by_the_transaction_backstop(scratch, monkeypatch, tmp_path):
+        """The text rule refuses COMMIT; with that rule switched off in the test, the clock and id read-back still
+        sees the new transaction after the file (the backstop for a COMMIT the text rules cannot see)."""
+        dsn, _ = scratch
+        monkeypatch.setattr(mig, "refused_statements", lambda text: [])
+        _with_files(monkeypatch, tmp_path, {"0006_p3a_commit.sql": "SELECT 1;\nCOMMIT;\n"})
+        with pytest.raises(ConfigError) as e:
+>           mig.migrate(dsn)
+
+tests/test_migration_postgres.py:551: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_4fe6f5539b94'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+___ test_a_session_that_reads_strings_the_old_way_is_refused_before_any_file ___
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_7bb896a1cc11'", 'p3a_7bb896a1cc11')
+
+    @needs_pg
+    def test_a_session_that_reads_strings_the_old_way_is_refused_before_any_file(scratch):
+        dsn, _ = scratch
+        off = make_conninfo(dsn, options=dsn_options(dsn) + " -c standard_conforming_strings=off")
+        with pytest.raises(ConfigError, match="standard_conforming_strings"):
+>           mig.migrate(off)
+
+tests/test_migration_postgres.py:564: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_7bb896a1cc11'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_________________ test_triggers_of_another_schema_are_not_read _________________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_868f5040b8ed'", 'p3a_868f5040b8ed')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b7710>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_triggers_of_another_schem0')
+
+    @needs_pg
+    def test_triggers_of_another_schema_are_not_read(scratch, monkeypatch, tmp_path):
+        """Case (xvi): a trigger in a schema other than the migration schema may change without a refusal."""
+        dsn, _ = scratch
+        other = "p3a_o_" + uuid.uuid4().hex[:8]
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(other)))
+            db.execute(sql.SQL("CREATE TABLE {}.t (x int)").format(sql.Identifier(other)))
+            db.execute(
+                sql.SQL(
+                    "CREATE FUNCTION {0}.f() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$"
+                ).format(sql.Identifier(other))
+            )
+            db.execute(
+                sql.SQL(
+                    "CREATE TRIGGER trg BEFORE INSERT ON {0}.t FOR EACH ROW EXECUTE FUNCTION {0}.f()"
+                ).format(sql.Identifier(other))
+            )
+            ensure_plain_role(
+                db
+            )  # the plain role `migrate()` runs as may use and own the other schema's table
+            db.execute(
+                sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(
+                    sql.Identifier(other), sql.Identifier(PLAIN_ROLE)
+                )
+            )
+            db.execute(
+                sql.SQL("ALTER TABLE {}.t OWNER TO {}").format(
+                    sql.Identifier(other), sql.Identifier(PLAIN_ROLE)
+                )
+            )
+        try:
+>           mig.migrate(dsn)
+
+tests/test_migration_postgres.py:606: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_868f5040b8ed'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_______ test_the_previous_release_columns_survive_the_newest_migrations ________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_83dee97641a7'", 'p3a_83dee97641a7')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b49e0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_the_previous_release_colu0')
+
+    @needs_pg
+    def test_the_previous_release_columns_survive_the_newest_migrations(scratch, monkeypatch, tmp_path):
+        """Build the previous release's schema (files up to PREVIOUS_RELEASE_LAST), record every column, apply the files
+        after it (the real ones, and one planted additive file, so the test is never empty): every old column is still
+        there with the same type and nullability, and the old code's reads still run (a new column may be added; an old
+        one may not go, change type or become NOT NULL without a named exception).
+    
+        Honest limit: today no real migration follows `PREVIOUS_RELEASE_LAST`, so this test compares the
+        previous release's columns with themselves plus the one planted file. It is tautological for the real files until
+        the first real migration after the release lands; the comparison itself is proven by
+        `test_the_comparison_catches_a_dropped_or_retyped_old_column`."""
+        dsn, _ = scratch
+>       old, new = _old_and_new_columns(
+            dsn, monkeypatch, tmp_path, "ALTER TABLE audit_checkpoints ADD COLUMN p3a_note TEXT;\n"
+        )
+
+tests/test_migration_postgres.py:675: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:631: in _old_and_new_columns
+    _apply_by_hand(dsn, REAL[:upto])
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_83dee97641a7'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ test_the_comparison_catches_a_dropped_or_retyped_old_column[ALTER TABLE audit_checkpoints DROP COLUMN signature;\n-lost_key0-None] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_416138a6edc0'", 'p3a_416138a6edc0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b3b90>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_the_comparison_catches_a_0')
+planted = 'ALTER TABLE audit_checkpoints DROP COLUMN signature;\n'
+lost_key = ('audit_checkpoints', 'signature'), changed_key = None
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "planted, lost_key, changed_key",
+        [
+            (
+                "ALTER TABLE audit_checkpoints DROP COLUMN signature;\n",
+                ("audit_checkpoints", "signature"),
+                None,
+            ),
+            (
+                "ALTER TABLE audit_checkpoints ALTER COLUMN signature TYPE BYTEA USING signature::bytea;\n",
+                None,
+                ("audit_checkpoints", "signature"),
+            ),
+        ],
+    )
+    def test_the_comparison_catches_a_dropped_or_retyped_old_column(
+        scratch, monkeypatch, tmp_path, planted, lost_key, changed_key
+    ):
+        """The comparison above is a real check: a newer file that drops or retypes an old column is reported."""
+        dsn, _ = scratch
+>       old, new = _old_and_new_columns(dsn, monkeypatch, tmp_path, planted)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:706: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:631: in _old_and_new_columns
+    _apply_by_hand(dsn, REAL[:upto])
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_416138a6edc0'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ test_the_comparison_catches_a_dropped_or_retyped_old_column[ALTER TABLE audit_checkpoints ALTER COLUMN signature TYPE BYTEA USING signature::bytea;\n-None-changed_key1] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_640f05380205'", 'p3a_640f05380205')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b0b60>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_the_comparison_catches_a_1')
+planted = 'ALTER TABLE audit_checkpoints ALTER COLUMN signature TYPE BYTEA USING signature::bytea;\n'
+lost_key = None, changed_key = ('audit_checkpoints', 'signature')
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "planted, lost_key, changed_key",
+        [
+            (
+                "ALTER TABLE audit_checkpoints DROP COLUMN signature;\n",
+                ("audit_checkpoints", "signature"),
+                None,
+            ),
+            (
+                "ALTER TABLE audit_checkpoints ALTER COLUMN signature TYPE BYTEA USING signature::bytea;\n",
+                None,
+                ("audit_checkpoints", "signature"),
+            ),
+        ],
+    )
+    def test_the_comparison_catches_a_dropped_or_retyped_old_column(
+        scratch, monkeypatch, tmp_path, planted, lost_key, changed_key
+    ):
+        """The comparison above is a real check: a newer file that drops or retypes an old column is reported."""
+        dsn, _ = scratch
+>       old, new = _old_and_new_columns(dsn, monkeypatch, tmp_path, planted)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:706: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:631: in _old_and_new_columns
+    _apply_by_hand(dsn, REAL[:upto])
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_640f05380205'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+__ test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it ___
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_25512d14e354'", 'p3a_25512d14e354')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_runbook_case_b_renames_th0')
+
+    @needs_pg
+    def test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it(scratch, tmp_path):
+        """A database that followed the older note (ledger row 0006 evidence): refused with a pointer to case (b); the
+        hand file of case (b) (the UPDATE, its DO check, the evidence tables block) puts the row back; migrate accepts."""
+        dsn, schema = scratch
+>       mig.migrate(dsn)
+
+tests/test_migration_postgres.py:827: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_25512d14e354'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_______ test_runbook_case_b_also_repairs_an_early_table_in_the_same_file _______
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_fa949ee1d3c3'", 'p3a_fa949ee1d3c3')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_runbook_case_b_also_repai0')
+
+    @needs_pg
+    def test_runbook_case_b_also_repairs_an_early_table_in_the_same_file(scratch, tmp_path):
+        """Row 0006 AND a tool_calls without `error` (both of the old note's victims at once): the rename alone would
+        accept the broken table for good; with the evidence block of case (g) in the file the column comes back."""
+        dsn, schema = scratch
+>       mig.migrate(dsn)
+
+tests/test_migration_postgres.py:850: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_fa949ee1d3c3'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_____ test_runbook_case_b_keeps_nothing_when_an_evidence_table_is_missing ______
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_a249272d4f81'", 'p3a_a249272d4f81')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_runbook_case_b_keeps_noth0')
+
+    @needs_pg
+    def test_runbook_case_b_keeps_nothing_when_an_evidence_table_is_missing(scratch, tmp_path):
+        dsn, schema = scratch
+>       mig.migrate(dsn)
+
+tests/test_migration_postgres.py:872: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_a249272d4f81'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+____ test_runbook_case_g_adds_the_missing_error_column_and_keeps_every_row _____
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_e6a13f439fe1'", 'p3a_e6a13f439fe1')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_runbook_case_g_adds_the_m0')
+
+    @needs_pg
+    def test_runbook_case_g_adds_the_missing_error_column_and_keeps_every_row(scratch, tmp_path):
+        """Ledger row 0005 evidence over an early tool_calls (no `error`): migrate does not notice; the check query of
+        case (g) does; the repair file adds the column, keeps the rows, changes no ledger row; it can be run twice."""
+        dsn, schema = scratch
+>       mig.migrate(dsn)
+
+tests/test_migration_postgres.py:891: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_e6a13f439fe1'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ test_runbook_case_g_keeps_nothing_when_the_tables_differ_in_more_than_error __
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_c9beef331be7'", 'p3a_c9beef331be7')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_runbook_case_g_keeps_noth0')
+
+    @needs_pg
+    def test_runbook_case_g_keeps_nothing_when_the_tables_differ_in_more_than_error(scratch, tmp_path):
+        dsn, schema = scratch
+>       mig.migrate(dsn)
+
+tests/test_migration_postgres.py:911: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_c9beef331be7'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+__________________________ test_h1_hand_recipe_works ___________________________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_1d8809ddb79f'", 'p3a_1d8809ddb79f')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h1_hand_recipe_works0')
+
+    @needs_pg
+    def test_h1_hand_recipe_works(scratch, tmp_path):
+        """the lines between the two RECIPE lines of the refusal message, saved to a file and run with
+        `psql -X -v ON_ERROR_STOP=1 -f`, apply the late file and its ledger row; `migrate()` then has nothing to do."""
+        dsn, _ = scratch
+>       message = _late_0004_message(dsn)
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:941: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:924: in _late_0004_message
+    _apply_by_hand(dsn, [s for s in REAL if s != "0004_audit_checkpoint_meta"])
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_1d8809ddb79f'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+__________ test_h4_a_second_run_of_the_recipe_fails_and_keeps_nothing __________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_e6bdb8fc1924'", 'p3a_e6bdb8fc1924')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h4_a_second_run_of_the_re0')
+
+    @needs_pg
+    def test_h4_a_second_run_of_the_recipe_fails_and_keeps_nothing(scratch, tmp_path):
+        """Case (a): 'running the same recipe twice is safe: the second run fails, and keeps nothing'."""
+        dsn, _ = scratch
+>       recipe = _recipe_of(_late_0004_message(dsn))
+                            ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:955: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:924: in _late_0004_message
+    _apply_by_hand(dsn, [s for s in REAL if s != "0004_audit_checkpoint_meta"])
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_e6bdb8fc1924'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_____________ test_h4_a_recipe_that_fails_half_way_leaves_nothing ______________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_6286802da036'", 'p3a_6286802da036')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985004d0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_h4_a_recipe_that_fails_ha0')
+
+    @needs_pg
+    def test_h4_a_recipe_that_fails_half_way_leaves_nothing(scratch, monkeypatch, tmp_path):
+        """a late file whose second statement fails: the first statement, the ledger row and the lock are all undone."""
+        dsn, _ = scratch
+>       _apply_by_hand(dsn, [s for s in REAL if s != "0004_audit_checkpoint_meta"])
+
+tests/test_migration_postgres.py:967: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_6286802da036'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_____ test_the_recipe_stops_at_the_first_error_even_without_the_stop_flag ______
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_513440c872d9'", 'p3a_513440c872d9')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985005c0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_the_recipe_stops_at_the_f0')
+
+    @needs_pg
+    def test_the_recipe_stops_at_the_first_error_even_without_the_stop_flag(
+        scratch, monkeypatch, tmp_path
+    ):
+        """The recipe's own first line `\\set ON_ERROR_STOP on` does the stopping when the person forgets `-v`: psql exits
+        with an error code instead of 0 (without the line it carries on and exits 0 although a statement failed)."""
+        dsn, _ = scratch
+>       _apply_by_hand(dsn, [s for s in REAL if s != "0004_audit_checkpoint_meta"])
+
+tests/test_migration_postgres.py:992: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_513440c872d9'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+________ test_the_recipe_and_the_runbook_header_start_with_the_timeouts ________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_22f2fbeaaa08'", 'p3a_22f2fbeaaa08')
+
+    @needs_pg
+    def test_the_recipe_and_the_runbook_header_start_with_the_timeouts(scratch):
+        """both headers carry the two SET LOCAL lines right after BEGIN and before the lock."""
+        dsn, _ = scratch
+>       lines = _recipe_of(_late_0004_message(dsn)).splitlines()
+                           ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_postgres.py:1012: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:924: in _late_0004_message
+    _apply_by_hand(dsn, [s for s in REAL if s != "0004_audit_checkpoint_meta"])
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_22f2fbeaaa08'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+____ test_a_hand_file_waiting_for_a_table_lock_stops_after_the_lock_timeout ____
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d485c2ee8a73'", 'p3a_d485c2ee8a73')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_a_hand_file_waiting_for_a0')
+
+    @needs_pg
+    def test_a_hand_file_waiting_for_a_table_lock_stops_after_the_lock_timeout(scratch, tmp_path):
+        """Run: another session holds ACCESS EXCLUSIVE on `tool_calls`; the hand file does not queue behind it for
+        ever (and so does not stop every reader of a live table): it fails when the lock limit of `RECIPE_TIMEOUTS` runs out and keeps nothing."""
+        dsn, schema = scratch
+>       mig.migrate(dsn)
+
+tests/test_migration_postgres.py:1023: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_d485c2ee8a73'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_____ test_case_a_current_user_assertion_stops_the_file_for_the_wrong_role _____
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_1ef5db306172'", 'p3a_1ef5db306172')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_case_a_current_user_asser0')
+
+    @needs_pg
+    def test_case_a_current_user_assertion_stops_the_file_for_the_wrong_role(scratch, tmp_path):
+        """the DO block of case (a) raises unless current_user is the named migration role."""
+        dsn, schema = scratch
+        block = rb.block_with("<MIGRATION ROLE>")
+        with psycopg.connect(dsn) as db:
+            me = db.execute("SELECT current_user").fetchone()[0]
+        wrong = _psql(schema, tmp_path, block.replace("<MIGRATION ROLE>", "somebody_else"))
+        assert wrong.returncode != 0 and "must be run by the migration role" in wrong.stderr
+>       right = _psql(schema, tmp_path, block.replace("<MIGRATION ROLE>", me))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: replace() argument 2 must be str, not bytes
+
+tests/test_migration_postgres.py:1040: TypeError
+_ test_case_e_e1_the_evidence_row_has_another_number_and_both_tables_exist[tables_whole] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_b37a6942fa4a'", 'p3a_b37a6942fa4a')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab98501be0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_case_e_e1_the_evidence_ro0')
+error_column = True
+
+    @needs_pg
+    @pytest.mark.parametrize("error_column", [True, False], ids=["tables_whole", "error_missing"])
+    def test_case_e_e1_the_evidence_row_has_another_number_and_both_tables_exist(
+        scratch, monkeypatch, tmp_path, error_column
+    ):
+        """E1."""
+        dsn, schema = scratch
+>       _branch_database(dsn, evidence_row=FALSE_ROW, tables=True, error_column=error_column)
+
+tests/test_migration_postgres.py:1116: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:1053: in _branch_database
+    _apply_by_hand(dsn, REAL[:4])
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_b37a6942fa4a'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ test_case_e_e1_the_evidence_row_has_another_number_and_both_tables_exist[error_missing] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_e5b3d761ef6d'", 'p3a_e5b3d761ef6d')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab98501850>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_case_e_e1_the_evidence_ro1')
+error_column = False
+
+    @needs_pg
+    @pytest.mark.parametrize("error_column", [True, False], ids=["tables_whole", "error_missing"])
+    def test_case_e_e1_the_evidence_row_has_another_number_and_both_tables_exist(
+        scratch, monkeypatch, tmp_path, error_column
+    ):
+        """E1."""
+        dsn, schema = scratch
+>       _branch_database(dsn, evidence_row=FALSE_ROW, tables=True, error_column=error_column)
+
+tests/test_migration_postgres.py:1116: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:1053: in _branch_database
+    _apply_by_hand(dsn, REAL[:4])
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_e5b3d761ef6d'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_________________ test_case_e_e2_no_evidence_row_and_no_tables _________________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_42bd05ee8c1f'", 'p3a_42bd05ee8c1f')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab98503740>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_case_e_e2_no_evidence_row0')
+
+    @needs_pg
+    def test_case_e_e2_no_evidence_row_and_no_tables(scratch, monkeypatch, tmp_path):
+        dsn, schema = scratch
+>       _branch_database(dsn, evidence_row=None, tables=False)
+
+tests/test_migration_postgres.py:1123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:1053: in _branch_database
+    _apply_by_hand(dsn, REAL[:4])
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_42bd05ee8c1f'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+______ test_case_e_e3_no_evidence_row_but_both_tables_exist[tables_whole] ______
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_8893503f9b77'", 'p3a_8893503f9b77')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985b6330>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_case_e_e3_no_evidence_row0')
+error_column = True
+
+    @needs_pg
+    @pytest.mark.parametrize("error_column", [True, False], ids=["tables_whole", "error_missing"])
+    def test_case_e_e3_no_evidence_row_but_both_tables_exist(
+        scratch, monkeypatch, tmp_path, error_column
+    ):
+        dsn, schema = scratch
+>       _branch_database(dsn, evidence_row=None, tables=True, error_column=error_column)
+
+tests/test_migration_postgres.py:1133: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:1053: in _branch_database
+    _apply_by_hand(dsn, REAL[:4])
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_8893503f9b77'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_____ test_case_e_e3_no_evidence_row_but_both_tables_exist[error_missing] ______
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_ee05062858d8'", 'p3a_ee05062858d8')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab98556de0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_case_e_e3_no_evidence_row1')
+error_column = False
+
+    @needs_pg
+    @pytest.mark.parametrize("error_column", [True, False], ids=["tables_whole", "error_missing"])
+    def test_case_e_e3_no_evidence_row_but_both_tables_exist(
+        scratch, monkeypatch, tmp_path, error_column
+    ):
+        dsn, schema = scratch
+>       _branch_database(dsn, evidence_row=None, tables=True, error_column=error_column)
+
+tests/test_migration_postgres.py:1133: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:1053: in _branch_database
+    _apply_by_hand(dsn, REAL[:4])
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_ee05062858d8'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_____________ test_case_e_e1_with_one_table_missing_keeps_nothing ______________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_b31376887d58'", 'p3a_b31376887d58')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab985c81a0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_case_e_e1_with_one_table_0')
+
+    @needs_pg
+    def test_case_e_e1_with_one_table_missing_keeps_nothing(scratch, monkeypatch, tmp_path):
+        """'If only one table exists, stop': the block of case (g) inside E1 stops the file and the renames are undone."""
+        dsn, schema = scratch
+>       _branch_database(dsn, evidence_row=FALSE_ROW, tables=True)
+
+tests/test_migration_postgres.py:1141: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_migration_postgres.py:1053: in _branch_database
+    _apply_by_hand(dsn, REAL[:4])
+tests/test_migration_postgres.py:105: in _apply_by_hand
+    with mig.connect(dsn) as db:
+         ^^^^^^^^^^^^^^^^
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_b31376887d58'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_______ test_migrate_gives_up_waiting_for_a_table_lock_and_keeps_nothing _______
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_c4a8b12a694f'", 'p3a_c4a8b12a694f')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab973d0a10>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_migrate_gives_up_waiting_0')
+
+    @needs_pg
+    def test_migrate_gives_up_waiting_for_a_table_lock_and_keeps_nothing(
+        scratch, monkeypatch, tmp_path
+    ):
+        """another session holds ACCESS EXCLUSIVE on `tool_calls`; `migrate` does not queue behind it for ever: the
+        limit of `mig.RECIPE_TIMEOUTS` (patched short here) ends the run, nothing is kept, no ledger row."""
+        dsn, _ = scratch
+>       mig.migrate(dsn)
+
+tests/test_migration_postgres.py:1165: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_c4a8b12a694f'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_________ test_migrate_stops_a_file_that_runs_past_the_statement_limit _________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_51cd2a9248b4'", 'p3a_51cd2a9248b4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab973d06b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_migrate_stops_a_file_that0')
+
+    @needs_pg
+    def test_migrate_stops_a_file_that_runs_past_the_statement_limit(scratch, monkeypatch, tmp_path):
+        """a file whose statement runs longer than the statement limit of `mig.RECIPE_TIMEOUTS` (patched short here)
+        fails the run and keeps nothing."""
+        dsn, _ = scratch
+>       mig.migrate(dsn)
+
+tests/test_migration_postgres.py:1194: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_51cd2a9248b4'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+________ test_the_limits_migrate_runs_with_are_the_ones_in_the_constant ________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_041fcca9dbbf'", 'p3a_041fcca9dbbf')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab973d1610>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_the_limits_migrate_runs_w0')
+
+    @needs_pg
+    def test_the_limits_migrate_runs_with_are_the_ones_in_the_constant(scratch, monkeypatch, tmp_path):
+        """a planted file reads the two settings from the server inside the run (`1/0` when one differs): they are the
+        values of `mig.RECIPE_TIMEOUTS` (patched to values that print back unchanged), and a wrong expectation fails, so
+        the probe can fail."""
+        dsn, _ = scratch
+        monkeypatch.setattr(
+            mig,
+            "RECIPE_TIMEOUTS",
+            ("SET LOCAL lock_timeout = '7s';", "SET LOCAL statement_timeout = '9s';"),
+        )
+        lock_t, stmt_t = (line.split("= ")[1].strip("';") for line in mig.RECIPE_TIMEOUTS)
+    
+        def probe(lock_expected: str) -> str:
+            return (
+                f"SELECT 1 / ((current_setting('lock_timeout') = '{lock_expected}' "
+                f"AND current_setting('statement_timeout') = '{stmt_t}')::int);\n"
+            )
+    
+        real_files = mig._migration_files
+        _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: probe("99s")})
+        with pytest.raises(psycopg.errors.DivisionByZero):
+>           mig.migrate(dsn)
+
+tests/test_migration_postgres.py:1225: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_041fcca9dbbf'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+___ test_the_limits_also_cover_the_grant_phase_of_a_run_with_no_pending_file ___
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_87e7aa890b98'", 'p3a_87e7aa890b98')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab973d3c20>
+
+    @needs_pg
+    def test_the_limits_also_cover_the_grant_phase_of_a_run_with_no_pending_file(scratch, monkeypatch):
+        """nothing is pending, but a role grant waits for another session's uncommitted change of the rights of a table: the run stops
+        after the lock limit, in plain words naming the step and the setting, and keeps nothing."""
+        dsn, _ = scratch
+>       mig.migrate(dsn)
+
+tests/test_migration_postgres.py:1237: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_87e7aa890b98'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_____ test_a_file_that_changes_a_limit_itself_is_refused_by_the_read_back ______
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=p3a_d0b05b94fdd9'", 'p3a_d0b05b94fdd9')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab9873f1d0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5406/test_a_file_that_changes_a_lim0')
+
+    @needs_pg
+    def test_a_file_that_changes_a_limit_itself_is_refused_by_the_read_back(
+        scratch, monkeypatch, tmp_path
+    ):
+        """a migration file that `SET LOCAL`s a limit is refused after that file (the limits are a guarantee for
+        every file), and nothing of the run is kept. Killed by: mutant L1 (the limits are not in the read-back)."""
+        dsn, _ = scratch
+        monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", SHORT_LOCK)  # statement limit 20s, lock limit 1s
+        # the text scan refuses a `SET LOCAL` of a limit (test_migration_numbers); a function can still change it, so the
+        # read-back is the guard that this test exercises
+        _with_files(
+            monkeypatch,
+            tmp_path,
+            {PLANTED_NEXT: _FLIP + "SELECT p3a_flip('statement_timeout', '11s');\n"},
+        )
+        with pytest.raises(
+            ConfigError, match=r"0006_p3a_next\.sql.*statement_timeout was '20s' and is now '11s'"
+        ):
+>           mig.migrate(dsn)
+
+tests/test_migration_postgres.py:1288: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'p3a_d0b05b94fdd9'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ test_the_test_helper_refuses_to_take_over_a_schema_that_is_not_a_scratch_one _
+
+    @needs_pg
+    @pytest.mark.real_connect
+    def test_the_test_helper_refuses_to_take_over_a_schema_that_is_not_a_scratch_one():
+        """The helper changes the owner of the schema in use: on `public` it must refuse and change nothing."""
+        from tests.fixtures.migration_role import NotAScratchSchema, plain_role_connect
+    
+        owner_sql = "SELECT nspowner::regrole::text FROM pg_namespace WHERE nspname = 'public'"
+        with psycopg.connect(DSN, autocommit=True) as db:
+            before = db.execute(owner_sql).fetchone()
+        with pytest.raises(NotAScratchSchema):
+>           plain_role_connect(psycopg.connect)(DSN, autocommit=True)
+
+tests/test_migration_postgres.py:1378: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b'public'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_________________ test_two_concurrent_migrate_runs_apply_once __________________
+
+fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=t_038181e5f889'"
+
+    def test_two_concurrent_migrate_runs_apply_once(fresh_dsn):
+        applied = []
+    
+        def run():
+            applied.append(migrate(fresh_dsn))
+    
+        threads = [threading.Thread(target=run) for _ in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        every = sorted(p.stem for p in MIGRATIONS.glob("*.sql"))  # new migrations never break this test
+>       assert sorted(applied, key=len) == [[], every]
+E       AssertionError: assert [] == [[], ['0001_c...05_evidence']]
+E         
+E         Right contains 2 more items, first extra item: []
+E         Use -v to get more diff
+
+tests/test_p2_postgres.py:169: AssertionError
+__________________ test_runtime_role_can_write_but_not_delete __________________
+
+fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=t_b0ea5c55c2cf'"
+
+    def test_runtime_role_can_write_but_not_delete(fresh_dsn):
+        import psycopg
+        from psycopg import sql
+    
+        role = "rt_" + fresh_dsn.rsplit("search_path=t_", 1)[1][:8]
+        with psycopg.connect(fresh_dsn, autocommit=True) as db:
+            db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
+        try:
+>           migrate(fresh_dsn, runtime_role=role)
+
+tests/test_p2_postgres.py:181: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_b0ea5c55c2cf'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+__________________ test_cli_kill_switch_reaches_every_process __________________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-5406/test_cli_kill_switch_reaches_e0/config')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fab97314b30>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fab973165a0>
+
+    def test_cli_kill_switch_reaches_every_process(cfg_dir, monkeypatch, capsys):
+>       for dsn in pg_schema():
+
+tests/test_p2_postgres.py:200: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:36: in pg_schema
+    migrate(scoped)
+src/hadavin_sdk/store/migrate.py:810: in migrate
+    connect(
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_b3333f6c5702'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+_ test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_defaults _
+
+fresh_dsn = "user=postgres dbname=postgres host=127.0.0.1 port=54737 options='-c search_path=t_9703ed77b165'"
+
+    def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_defaults(fresh_dsn):
+        """Apply 0001-0003 only, insert a pre-upgrade checkpoint row, then migrate: the row loads with NULL (not recorded)."""
+        import psycopg
+    
+        from hadavin_sdk.store import migrate as migrate_module
+    
+        old = [p for p in sorted(MIGRATIONS.glob("*.sql")) if p.stem < "0004"]
+        # the same plain role `migrate()` runs as makes the old schema, so it owns what it later changes
+>       with migrate_module.connect(fresh_dsn) as db:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_p2_postgres.py:284: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/migration_role.py:66: in connect
+    if not _is_scratch(schema):
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+schema = b't_9703ed77b165'
+
+    def _is_scratch(schema) -> bool:
+        return (
+            bool(schema)
+            and schema != "public"
+>           and not schema.startswith("pg_")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+            and schema != "information_schema"
+        )
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+tests/fixtures/migration_role.py:34: TypeError
+=============================== warnings summary ===============================
+tests/test_p2_postgres.py::test_two_concurrent_migrate_runs_apply_once
+  /home/user/build/EV-P73-ef2adc7/venv3.12/lib/python3.12/site-packages/_pytest/threadexception.py:54: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-3 (run)
+  
+  Traceback (most recent call last):
+    File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+      self.run()
+    File "/usr/lib/python3.12/threading.py", line 1010, in run
+      self._target(*self._args, **self._kwargs)
+    File "/home/user/build/EV-P73-ef2adc7/wt/tests/test_p2_postgres.py", line 161, in run
+      applied.append(migrate(fresh_dsn))
+                     ^^^^^^^^^^^^^^^^^^
+    File "/home/user/build/EV-P73-ef2adc7/wt/src/hadavin_sdk/store/migrate.py", line 810, in migrate
+      connect(
+    File "/home/user/build/EV-P73-ef2adc7/wt/tests/fixtures/migration_role.py", line 66, in connect
+      if not _is_scratch(schema):
+             ^^^^^^^^^^^^^^^^^^^
+    File "/home/user/build/EV-P73-ef2adc7/wt/tests/fixtures/migration_role.py", line 34, in _is_scratch
+      and not schema.startswith("pg_")
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+tests/test_p2_postgres.py::test_two_concurrent_migrate_runs_apply_once
+  /home/user/build/EV-P73-ef2adc7/venv3.12/lib/python3.12/site-packages/_pytest/threadexception.py:54: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-4 (run)
+  
+  Traceback (most recent call last):
+    File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+      self.run()
+    File "/usr/lib/python3.12/threading.py", line 1010, in run
+      self._target(*self._args, **self._kwargs)
+    File "/home/user/build/EV-P73-ef2adc7/wt/tests/test_p2_postgres.py", line 161, in run
+      applied.append(migrate(fresh_dsn))
+                     ^^^^^^^^^^^^^^^^^^
+    File "/home/user/build/EV-P73-ef2adc7/wt/src/hadavin_sdk/store/migrate.py", line 810, in migrate
+      connect(
+    File "/home/user/build/EV-P73-ef2adc7/wt/tests/fixtures/migration_role.py", line 66, in connect
+      if not _is_scratch(schema):
+             ^^^^^^^^^^^^^^^^^^^
+    File "/home/user/build/EV-P73-ef2adc7/wt/tests/fixtures/migration_role.py", line 34, in _is_scratch
+      and not schema.startswith("pg_")
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+63 failed, 495 passed, 3 deselected, 2 warnings, 18 errors in 7.87s
+exit=1

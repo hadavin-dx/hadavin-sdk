@@ -121,4 +121,5 @@ tests/test_mutation_runner.py::test_a_junit_text_over_the_ceiling_is_refused PAS
 tests/test_mutation_runner.py::test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one PASSED [ 27%]
 tests/test_mutation_runner.py::test_the_leading_class_of_an_error_line_is_parsed_not_searched PASSED [ 28%]
 tests/test_mutation_runner.py::test_allow_crash_without_a_crash_type_is_refused PASSED [ 28%]
-tests/test_mutation_runner.py::test_a_truncated_junit_marks_the_mutant_error_and_the_run_goes_on 
+tests/test_mutation_runner.py::test_a_truncated_junit_marks_the_mutant_error_and_the_run_goes_on exit=1
+end=2026-11-10T20:09:55Z

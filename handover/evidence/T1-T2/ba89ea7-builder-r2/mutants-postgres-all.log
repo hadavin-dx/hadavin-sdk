@@ -1,0 +1,5 @@
+HEAD 98a3ed95bca4acac88d77b29d4f26846f7f9ce9b
+CMD env -u CI -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_CA_BUNDLE -u ANTHROPIC_BASE_URL -u GH_TOKEN -u GITHUB_TOKEN -u HADAVIN_TEST_PG_DSN HADAVIN_TEST_PG_DSN=postgresql://postgres@127.0.0.1:56300/postgres /home/user/build/venv-a21a-313/bin/python tests/postgres_mutants.py
+baseline rc=0 :: 92 passed, 92 deselected in 14.14s
+ok  P1 day counter replaced instead of added
+      /tmp/pgmut_1_1b0hrt/tests/contracts/test_store_time_rules.py:88: AssertionError: the day total of two charges on one day did not add up: 0.70
