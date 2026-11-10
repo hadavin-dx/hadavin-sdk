@@ -785,7 +785,10 @@ m(
 m(
     "runner: the tests get the real HOME",
     TOOL,
-    rep('    env["HOME"] = empty_home()\n', '    env["HOME"] = os.environ.get("HOME", "")\n'),
+    rep(
+        '    env["HOME"] = env["USERPROFILE"] = empty_home()\n',
+        '    env["HOME"] = env["USERPROFILE"] = os.environ.get("HOME", "")\n',
+    ),
     [CP],
     "tests/test_client_profile.py::test_the_mutant_runner_gives_the_tests_an_empty_home$",
 )
@@ -864,8 +867,9 @@ for prefix, sample in (
 m(
     "runner: DATABASE_URL and KUBECONFIG are not cloud names",
     TOOL,
-    rep('CLOUD_NAMES = ("DATABASE_URL", "KUBECONFIG")', "CLOUD_NAMES = ()"),
-    [CP],
+    rep(
+        "CLOUD_NAMES = " + '("DATABASE_URL", "KUBECONFIG")', "CLOUD_NAMES = ()"
+    )[CP],  # split: one copy of the text,
     r"tests/test_client_profile.py::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting\[DATABASE_URL\]",
 )
 
