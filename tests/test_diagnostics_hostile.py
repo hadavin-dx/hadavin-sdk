@@ -111,6 +111,8 @@ def test_propagates_rows_are_exactly_the_frozen_set() -> None:
 # What a hostile attribute or ``__str__`` of the corpus raises when a leaky reading touches it (RecursionError is a RuntimeError). An
 # error of another class is not swallowed: the test fails and says which.
 _HOSTILE_READ_ERRORS = (AttributeError, IndexError, KeyError, RuntimeError, TypeError, ValueError)
+pytestmark = pytest.mark.guard_fires  # the hostile rows make guards fire on purpose
+
 ONE_RUN = [r for r in ACTIVE if r.kind in ("exception", "validation") and r.expect != "propagates"]
 EXEMPT = [
     r for r in ONE_RUN if r.expect in ("bounded", "grammar")

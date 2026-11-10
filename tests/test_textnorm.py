@@ -857,8 +857,10 @@ def test_check_pinned_unidata_raises_when_strict_and_warns_otherwise(monkeypatch
 def test_require_pinned_unidata_is_the_guard_and_fails_closed(monkeypatch):
     monkeypatch.setattr(defaults, "TEXTNORM_PINNED_UNIDATA", "15.1.0")
     monkeypatch.setattr(unicodedata, "unidata_version", "15.0.0")
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")  # it must RAISE UnidataMismatch, never warn
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter(
+            "always"
+        )  # it must RAISE UnidataMismatch, never warn; recorded, so a warning cannot hide the message below
         refused(
             UnidataMismatch,
             "require_pinned_unidata accepted another Unicode version",
@@ -875,6 +877,7 @@ def test_require_pinned_unidata_is_the_guard_and_fails_closed(monkeypatch):
             require_pinned_unidata,
             "15.0.0",
         )
+    assert not caught, f"it warned instead of raising only: {[str(w.message) for w in caught]}"
     assert not issubclass(UnidataMismatch, (ValueError, TypeError)), (
         "a DENY caller's except clause would swallow it"
     )

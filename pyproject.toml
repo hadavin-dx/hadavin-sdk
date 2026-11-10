@@ -84,5 +84,6 @@ testpaths = ["tests"]
 pythonpath = ["."]
 markers = [
     "live: calls a real paid or cloud service; CI deselects it, run only on the owner's yes",
+    "guard_fires: the test makes a never-raise guard fire on purpose (hostile input); every other test must leave the guard counters unchanged",
     "perf: timing tests (redaction patterns, end to end with views); CI runs them in their own step, which blocks a merge",
 ]

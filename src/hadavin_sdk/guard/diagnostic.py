@@ -91,7 +91,12 @@ class SafeToken:
 
     @staticmethod
     def of(value: object, allowed: frozenset[str]) -> SafeToken | None:
-        """The member of ``allowed`` that equals ``value`` (exact ``str`` only), if it fits the token pattern."""
+        """The member of ``allowed`` that equals ``value`` (exact ``str`` only), if it fits the token pattern.
+
+        Contract: ``allowed`` is TRUSTED. It must be a ``frozenset`` of constants this package (or a closed list in ``codes.py``) defines;
+        it is never built from an exception, a document, a library reply or any other text a program outside this package controls.
+        This method checks only that ``value`` is one member and that the member is a short safe word; it cannot tell whether a
+        caller's set is itself safe. Returns None for a non-``frozenset`` ``allowed`` or a ``value`` that is not an exact ``str``."""
         if type(value) is not str or type(allowed) is not frozenset:
             return None
         for member in allowed:
@@ -397,6 +402,8 @@ def _classify(
     if issubclass(tp, BaseExceptionGroup):
         if nested:
             return Code.foreign_exception, {}
+        # Only the FIRST member of the group is classified (a group is one line, one code): the other members are not read, and a
+        # group whose first member is a foreign error gives foreign_exception even if a later member is an error of this package.
         try:
             first_member = exc.exceptions[0]  # type: ignore[attr-defined]
             member_code, _ = _classify(
@@ -492,7 +499,9 @@ def _fact_text(key: object, value: object) -> str | None:
 
 
 def render(d: Diagnostic) -> str:
-    """Grammar A, plain ASCII, at most ``DIAG_LINE_CHARS`` characters; trailing facts are dropped first."""
+    """Grammar A, plain ASCII. Only the FACTS are capped: trailing facts are dropped until the line holds at most ``DIAG_LINE_CHARS``
+    characters. The other parts (kind, code, step, locator, fingerprint) are not cut: each must match a pattern with its own fixed
+    maximum length or it is replaced by a fixed word, so the head of the line is bounded by those patterns and not by this cap."""
     try:
         kind = d.kind if type(d.kind) is str and _KIND_RE.fullmatch(d.kind) else "foreign_class"
         code = d.code.value if type(d.code) is Code else Code.foreign_exception.value

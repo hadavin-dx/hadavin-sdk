@@ -9,7 +9,7 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-53 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 13 are new, 9 are the mutants of fold2 (order 44; the tenth, "no case fold before the marks are dropped", is gone with that case fold, which fix2 showed to be redundant) and 3 are the mutants of fold3 (order 49, U+0345). Tests with no
+75 mutants at the last run (the 53 of P1a, the P1b scan-key mutants, and 4 scan-budget mutants added in A15 fix2). The 53 of P1a were: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 13 are new, 9 are the mutants of fold2 (order 44; the tenth, "no case fold before the marks are dropped", is gone with that case fold, which fix2 showed to be redundant) and 3 are the mutants of fold3 (order 49, U+0345). Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -57,6 +57,7 @@ SQUEEZE = "test_squeeze_keeps_upper_case_letters_and_digits_only"
 TABLE = "test_the_table_is_generated_from_the_unicode_data_and_every_value_is_ascii"
 GENERATOR = "test_the_generator_refuses_an_unpinned_file_and_is_deterministic"
 OFFLINE = "test_the_generator_reproduces_the_checked_in_table_offline"
+BUDGET = "test_scan_keyset_refuses_when_its_time_budget_is_spent"
 VERSION = "test_the_version_string_names_the_algorithm_the_table_and_both_unicode_versions"
 READONLY = "test_the_tables_are_read_only_and_a_later_change_of_the_source_does_not_reach_fold"
 SUBCLASS = "test_a_str_subclass_is_refused_by_exact_type_not_by_isinstance"
@@ -271,6 +272,14 @@ M = [
         '    raw = "".join(ch for ch in raw if unicodedata.category(ch) != "Lm")', "    raw = raw", LMRAW, "hides the value", test_file=SC),
     mutant("scan: the modifier-letter test removed from the key drop", TN, ' and unicodedata.category(ch) != "Lm"', "",
         LMFOLD, "survives in the key", test_file=SC),
+    mutant("scan budget: the deadline check is a no-op", TN, "    if deadline is not None and time.monotonic() > deadline:",
+        "    if False:", BUDGET, "DID NOT RAISE", test_file=SC),
+    mutant("scan budget: the deadline is not given to the key build", TN, "        _scan_key(text, step, deadline)\n",
+        "        _scan_key(text, step, None)\n", BUDGET, "DID NOT RAISE", test_file=SC),
+    mutant("scan budget: the key build does not pass the deadline on", TN, "    s = _converge(text, step, deadline).translate(_CLASS_MAP)",
+        "    s = _converge(text, step).translate(_CLASS_MAP)", BUDGET, "DID NOT RAISE", test_file=SC),
+    mutant("scan budget: the clock is read once, before the budget starts", TN, "    deadline = time.monotonic() + defaults.REDACT_BUDGET_S",
+        "    deadline = time.monotonic() + defaults.REDACT_BUDGET_S + 3600.0", BUDGET, "DID NOT RAISE", test_file=SC),
 ]  # fmt: skip
 
 

@@ -61,6 +61,7 @@ def test_cap_drops_trailing_facts_and_keeps_the_head() -> None:
     assert out.count("=c") < 5
 
 
+@pytest.mark.guard_fires
 def test_diagnose_never_raises_on_exception() -> None:
     for row in (
         r
@@ -91,6 +92,7 @@ def _hostile_errno(exc_type: type[BaseException]) -> OSError:
     return E(2, "x")
 
 
+@pytest.mark.guard_fires
 def test_baseexception_from_hostile_attribute_propagates() -> None:
     """BN-3: a ``BaseException`` raised by the ``errno`` property of an ``OSError`` subclass leaves ``diagnose``; an ``Exception`` from the
     same place gives the fixed fallback. Every row in ``PROPAGATES_ROWS`` goes through the same check."""
@@ -117,6 +119,7 @@ def test_non_exception_baseexception_passed_in_is_foreign() -> None:
     assert out.startswith("KeyboardInterrupt: ") and "code=foreign_exception" in out
 
 
+@pytest.mark.guard_fires
 def test_fallback_fp_is_pinned() -> None:
     assert FALLBACK_FP == "2a1e659d"
     out = render(
@@ -214,6 +217,7 @@ def test_facts_read_from_exc_only() -> None:
     assert "code=config_invalid" in out and "errno" not in out
 
 
+@pytest.mark.guard_fires
 def test_exception_group_takes_first_member_code() -> None:
     for kind, code in (
         ("timeout_first", "timeout"),
@@ -363,6 +367,7 @@ def test_frame_rule_c_filename_must_be_the_module_file() -> None:
     _golden(_row("locator_frames", 6))
 
 
+@pytest.mark.guard_fires
 def test_frame_check_that_raises_means_not_counted() -> None:
     _golden(_row("locator_frames", 10))
     _golden(_row("locator_frames", 9))
@@ -463,6 +468,32 @@ def test_safe_token_mint_is_private_to_the_module() -> None:
     assert tok.value == "forged"
 
 
+def test_safe_token_can_be_made_only_by_the_two_named_constructors() -> None:
+    """The mint: a construction with no mint, or with any object that is not the module's own mint, is refused; the class cannot be
+    subclassed; ``of`` refuses a ``set`` or a ``frozenset`` subclass as ``allowed`` (the contract is a plain ``frozenset`` of trusted
+    constants), a value that is not in the set, a member that fails the token pattern, and a value that is not an exact ``str``."""
+    for bad_mint in (None, object(), True, 1, "mint"):
+        with pytest.raises(TypeError):
+            SafeToken("type", bad_mint)  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+
+        class Sub(SafeToken):
+            pass
+
+    class FrozenSub(frozenset):  # type: ignore[type-arg]
+        pass
+
+    assert SafeToken.of("type", {"type"}) is None  # type: ignore[arg-type]
+    assert SafeToken.of("type", FrozenSub({"type"})) is None
+    assert SafeToken.of("other", frozenset({"type"})) is None
+    assert SafeToken.of("a b", frozenset({"a b"})) is None
+    assert SafeToken.of("x" * 500, frozenset({"x" * 500})) is None
+    assert SafeToken.of(b"type", frozenset({"type"})) is None
+    assert SafeToken.of("type", frozenset({"type"})) is not None
+    assert SafeToken.sqlstate("28P01") is not None
+    assert SafeToken.sqlstate("28p01") is None and SafeToken.sqlstate("28P01\n") is None
+
+
 def test_group_message_and_str_are_never_read() -> None:
     """The message of an exception group is text the group's author wrote; ``diagnose`` never reads it (nor ``str`` or ``repr``)."""
     reads: list[str] = []
@@ -496,6 +527,49 @@ def test_a_non_str_module_is_refused_without_a_guard_failure() -> None:
     assert diagnostic.guard_failures() == before, (
         "the type check was skipped and a guard caught the TypeError instead"
     )
+
+
+def test_a_hostile_module_object_is_never_turned_into_text() -> None:
+    """A class whose ``__module__`` is a hostile object (or a ``str`` subclass with its own ``__str__``/``__format__``) is skipped by the
+    exact-type check in ``_own_code``. Without that check the f-string that builds the table key would call the object's ``__str__``
+    or ``__format__``: the test records every such read and the guard counters."""
+    from hadavin_sdk.guard import diagnostic
+
+    reads: list[str] = []
+
+    class Spy:
+        def __str__(self) -> str:
+            reads.append("str")
+            raise RuntimeError("hostile __str__")
+
+        def __format__(self, spec: str) -> str:
+            reads.append("format")
+            raise RuntimeError("hostile __format__")
+
+        def __repr__(self) -> str:
+            reads.append("repr")
+            raise RuntimeError("hostile __repr__")
+
+    class SpyStr(str):
+        __slots__ = ()
+
+        def __str__(self) -> str:
+            reads.append("substr")
+            raise RuntimeError("hostile str subclass")
+
+        def __format__(self, spec: str) -> str:
+            reads.append("subformat")
+            raise RuntimeError("hostile str subclass format")
+
+    for hostile in (Spy(), SpyStr("hadavin_sdk.errors")):
+        cls = type("Odd", (OSError,), {"__module__": hostile})
+        before = diagnostic.guard_failures()
+        out = line_of(cls(2, "x"))
+        assert "code=os_error " in out and out.startswith("dynamic_class: "), out
+        assert reads == [], reads
+        assert diagnostic.guard_failures() == before, (
+            "the exact-type check was skipped and a guard caught the hostile read"
+        )
 
 
 def test_safe_token_holds_the_member_not_the_callers_object() -> None:

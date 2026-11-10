@@ -852,26 +852,29 @@ def test_scan_keyset_refuses_when_its_time_budget_is_spent(monkeypatch):
     assert defaults.REDACT_BUDGET_S > 0
     scan_keyset("bank12345")  # the real budget: no refusal for a short text
     monkeypatch.setattr(defaults, "REDACT_BUDGET_S", -1.0)
-    with pytest.raises(TextTooLong):
+    with pytest.raises(TextTooLong, match="time budget"):
         scan_keyset("bank12345")
-    with pytest.raises(TextTooLong):
+    with pytest.raises(TextTooLong, match="time budget"):
         scan_keyset(_eight_key_text())
 
 
-def test_the_widest_scan_ends_inside_the_budget_or_refuses():
-    """262,144 characters, up to eight keys: the call returns keys or raises ``TextTooLong``, and it does not run past the budget by more
-    than one pass (the clock is checked before every pass). The ceiling is twice the budget, so a slow machine refuses rather than fails."""
+def test_the_widest_scan_ends_inside_the_budget_or_refuses(monkeypatch):
+    """262,144 characters, up to eight keys, a budget of 0.2 s (the real call takes about 1 s here, so it normally refuses): the call
+    returns keys or raises ``TextTooLong`` about the time budget, and it does not run past the budget by more than a few passes (the clock
+    is checked before every pass). The ceiling is the budget plus 2 s, so a slow machine refuses rather than fails. The real 6 s budget is
+    exercised by the perf rows (``test_textnorm_perf.py``)."""
     import time
 
+    budget = 0.2
+    monkeypatch.setattr(defaults, "REDACT_BUDGET_S", budget)
     text = _eight_key_text()
     assert len(text) <= CAP
     start = time.monotonic()
     try:
         keys = scan_keyset(text)
-    except TextTooLong:
+    except TextTooLong as exc:
+        assert "time budget" in str(exc), "a size refusal where a time refusal was expected"
         keys = None
     took = time.monotonic() - start
     assert keys is None or len(keys) >= 2
-    assert took < 2 * defaults.REDACT_BUDGET_S, (
-        f"the scan took {took:.1f} s, budget {defaults.REDACT_BUDGET_S} s"
-    )
+    assert took < budget + 2.0, f"the scan took {took:.1f} s, budget {budget} s"

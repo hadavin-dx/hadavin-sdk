@@ -7,10 +7,10 @@ exact copies of the formatted source. Not collected by pytest. Run from the repo
     uv run python tests/diagnostic_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/diagnostic_mutants.py frame      # only mutants whose name contains the text
 
-Equivalent, stated and not run: removing ``type(mod) is not str or type(qual) is not str`` from ``_own_code`` (the f-string takes any
-object and the table lookup then misses, so nothing else changes; the test ``test_a_non_str_module_is_refused_without_a_guard_failure``
-pins the behaviour, no mutant can). Also: removing ``type(frame.f_code.co_filename) is str`` from frame rule (c): no frame with a non-``str``
-``co_filename`` can be built (``code.replace`` raises ``TypeError``), so the check stays as cheap defence.
+Equivalent, stated and not run: removing ``type(frame.f_code.co_filename) is str`` from frame rule (c): no frame with a non-``str``
+``co_filename`` can be built (``code.replace`` raises ``TypeError``), so the check stays as cheap defence. (The earlier claim that removing
+``type(mod) is not str or type(qual) is not str`` from ``_own_code`` is equivalent was wrong: the f-string calls the object's ``__str__``;
+it now has a real mutant below. Also equivalent today: removing ``- {"__main__"}`` from ``FOREIGN_PACKAGES_OK`` in ``codes.py``, because ``sys.stdlib_module_names`` does not hold ``__main__`` on Python 3.12 and 3.13 (checked: ``'__main__' in sys.stdlib_module_names`` is False); the subtraction is kept as a guard against a later Python that lists it, and the mutant that turns it into a union is killed.)
 """
 
 import sys
@@ -428,13 +428,49 @@ M = [
         "assert",
     ),
     mutant(
+        "own_code: the exact-type check on module and qualname is removed",
+        D,
+        "            if type(mod) is not str or type(qual) is not str:\n                continue\n            code = OWN_CODES",
+        "            code = OWN_CODES",
+        TD,
+        "test_a_hostile_module_object_is_never_turned_into_text",
+        "AssertionError",
+    ),
+    mutant(
+        "the render facts slice is removed",
+        D,
+        "        for key, value in tuple(d.facts)[: defaults.DIAG_MAX_FACTS]:",
+        "        for key, value in tuple(d.facts):",
+        TD,
+        "test_render_keeps_at_most_the_max_facts_of_a_hand_built_diagnostic",
+        "assert 18 == 12",
+    ),
+    mutant(
+        "__main__ is added to the allowed library names",
+        C,
+        ') - {"__main__"}  # the entry script\'s own name is never a library name',
+        ') | {"__main__"}  # the entry script\'s own name is never a library name',
+        TD,
+        "test_main_is_never_an_allowed_library_name",
+        "assert",
+    ),
+    mutant(
+        "the traceback is walked a second time by the classifier",
+        D,
+        "    code, derived = _classify(exc, tp, read_facts=True, walked=walked)",
+        "    code, derived = _classify(exc, tp, read_facts=True)",
+        TD,
+        "test_the_traceback_is_walked_once_per_diagnose",
+        "assert 2 == 1",
+    ),
+    mutant(
         "oracle: leaks() is blind",
         "tests/data/c18a_oracle.py",
         "            if any(w in k for w in wanted for k in keys):",
         "            if False:",
         TH,
         "test_reverse_check_fails_90_percent",
-        "0 of 124; not caught",
+        "not caught: ['HC-ansi_c1-01', 'HC-ansi_c1-02', 'HC-ansi_c1-03', 'HC-ansi_c1-04', 'HC-ansi_c1-05'",
     ),
     mutant(
         "oracle: the canary keys are not folded",
@@ -443,7 +479,7 @@ M = [
         "        wanted = list(canaries)",
         TH,
         "test_reverse_check_fails_90_percent",
-        "3 of 124; not caught",
+        "'HC-ansi_c1-03', 'HC-ansi_c1-05'",
     ),
     mutant(
         "corpus: the ledger range grows by one id",

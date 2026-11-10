@@ -70,6 +70,25 @@ def qualify(
     )
 
 
+@pytest.fixture(autouse=True)
+def _a_guard_that_fires_is_declared(request: pytest.FixtureRequest):
+    """The never-raise guards in ``guard/diagnostic.py`` turn any ``Exception`` into a safe fallback, which would also hide a bug in the
+    classifier itself. A test that does not mark itself ``guard_fires`` (hostile inputs on purpose) must leave every guard counter
+    unchanged: a counter that grew means a guard caught something nobody planned."""
+    from hadavin_sdk.guard import diagnostic
+
+    before = diagnostic.guard_failures()
+    yield
+    if request.node.get_closest_marker("guard_fires") is None:
+        after = diagnostic.guard_failures()
+        grown = {
+            k: after.get(k, 0) - before.get(k, 0)
+            for k in after
+            if after.get(k, 0) != before.get(k, 0)
+        }
+        assert not grown, f"a never-raise guard fired in a test not marked guard_fires: {grown}"
+
+
 @pytest.fixture
 def cfg_dir(tmp_path: Path) -> Path:
     return make_cfg(tmp_path)

@@ -7,6 +7,8 @@ for the site; nothing about the exception), and a ``KeyboardInterrupt`` or ``Sys
 from __future__ import annotations
 
 import re
+import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -18,6 +20,8 @@ from hadavin_sdk.guard import diagnostic as dg
 CANARY = "canary-p5a-guard-text"
 SOURCE = Path(dg.__file__)
 SITES_FILE = Path(__file__).parent / "noqa_sites.txt"
+
+pytestmark = pytest.mark.guard_fires  # every test here makes a guard fire, or reads the guard table
 
 
 def _boom(exc_cls: type[BaseException]):
@@ -181,6 +185,14 @@ def test_every_blind_except_is_one_listed_guard_with_its_reason_on_its_line() ->
         "noqa_sites.txt lists exactly the guard sites"
     )
     assert all(len(r[1]) >= 20 for r in rows), "every site has a reason"
+    inline = {}
+    for n, name in sites:
+        inline[name] = re.fullmatch(
+            r"\s*except Exception:  # noqa: BLE001 - (\S.*)", lines[n - 1]
+        ).group(1)  # type: ignore[union-attr]
+    assert {r[0]: r[1] for r in rows} == inline, (
+        "the reason in noqa_sites.txt is not the reason written on the noqa line"
+    )
     assert sorted(r[2] for r in rows) == sorted(
         f"test_guard_catches_and_records[{s}]" for s in SITES
     )
@@ -192,32 +204,42 @@ def test_every_blind_except_is_one_listed_guard_with_its_reason_on_its_line() ->
     )
 
 
-def test_guard_counters_are_read_and_written_under_one_lock() -> None:
-    """A reader never sees a half-written count: 8 threads each record 500 failures while another thread copies the table."""
-    import threading
+class _SlowGetDict(dict):  # type: ignore[type-arg]
+    """A counter table whose ``get`` gives up the interpreter between the read and the write of an increment, so a missing lock loses counts
+    on every interpreter (with the GIL as well as free-threaded builds)."""
 
-    base = dg.guard_failures().get("render", 0)
-    stop = threading.Event()
-    seen: list[int] = []
+    def get(self, key, default=None):  # type: ignore[no-untyped-def]
+        value = dict.get(self, key, default)
+        time.sleep(0)
+        return value
 
-    def writer() -> None:
-        for _ in range(500):
-            dg._guard_failed("render")
 
-    def reader() -> None:
-        while not stop.is_set():
-            seen.append(dg.guard_failures().get("render", 0))
-
-    threads = [threading.Thread(target=writer) for _ in range(8)]
-    watcher = threading.Thread(target=reader)
-    watcher.start()
+def _hammer(table: _SlowGetDict) -> int:
+    """8 threads record 50 failures each on the local table; returns the final count."""
+    threads = [
+        threading.Thread(target=lambda: [dg._guard_failed("render") for _ in range(50)])
+        for _ in range(8)
+    ]
     for t in threads:
         t.start()
     for t in threads:
         t.join(timeout=30)
-    stop.set()
-    watcher.join(timeout=30)
-    assert dg.guard_failures()["render"] == base + 4000, (
-        "a count was lost: the increment is not atomic"
-    )
-    assert seen == sorted(seen), "a reader saw the count go backwards"
+    return table.get("render", 0)
+
+
+def test_guard_counters_are_written_under_one_lock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """No increment is lost. The test works on a LOCAL table and lock (the global counters are not touched). Each increment is a read, a
+    ``time.sleep(0)`` and a write, so without the lock counts are lost on any interpreter; the second half proves that by patching the
+    lock out (a no-op lock) and requiring a loss. Proof recorded in the CHANGELOG: with the lock patched out the loss shows in every run."""
+    import contextlib
+
+    table = _SlowGetDict()
+    monkeypatch.setattr(dg, "_GUARD_FAILURES", table)
+    monkeypatch.setattr(dg, "_GUARD_LOCK", threading.Lock())
+    final = _hammer(table)
+    assert final == 400, "a count was lost: the increment is not atomic under the real lock"
+
+    table.clear()
+    monkeypatch.setattr(dg, "_GUARD_LOCK", contextlib.nullcontext())
+    lost = _hammer(table)
+    assert lost < 400, "the test cannot see a missing lock: it would pass with the lock removed"
