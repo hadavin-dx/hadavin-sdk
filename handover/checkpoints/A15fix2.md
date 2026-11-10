@@ -1,4 +1,4 @@
-# A15fix2 checkpoint 1 (2026-11-10, ~18:10 UTC)
-done: B1 (CHANGELOG line 6), M1 (test + mutant), M2 (test rewritten, proved 10/10 fail with lock patched out), N1, M4 (4 scan-budget mutants killed)
-next: N2-N9 (diagnostic.py docstrings, tests, mutants), M3 (ticket in handover worktree), CHANGELOG, gates
+# A15fix2 checkpoint 2 (2026-11-10, 18:01 UTC)
+done: B1, M1, M2, M3 (ticket line edited), M4, N1-N9 coded; ruff check/format, bandit, scan_repo green; full pytest + both mutant files running (logs in /home/user/build/logs/a15f2-*)
+next: read logs, commit and push core/P5a-fix1, report
 blockers: none; commit SHA: none yet (head 8aaaea5)
