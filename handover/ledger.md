@@ -2256,3 +2256,8 @@
 | BL-core-a2-w2-07 | PR89 6706e67 | MAJOR | "exactly as before" claim false (FIXTURE ERROR and judge empty-id always on); `broken` scans every testcase; no runner-level teardown test | OPEN | round-w2-codebase.md M2 (same decision as -03) | fix builder wording; lead decides opt-in |
 | BL-core-a2-w2-08 | PR89 6706e67 | MAJOR | no per-test fail-before; no mutants for the new keywords (62 mutants unchanged) | OPEN | round-w2-codebase.md M3 | fix builder + evidence |
 | BL-core-a2-w2-09 | PR89 6706e67 | MINOR | docstring drift, id-helper duplication, private order id, test name, fmt: skip, first_lines for new rows, partial-secret masking | OPEN | round-w2-codebase.md N1-N7 | fix builder |
+| BL-core-a21a-w2-06 | A21a ba89ea7 | BLOCKER | `# fmt: skip` suppression in tests/test_t1_meter_parallel.py:28 | OPEN | reviews/A21a/round-w2-codebase.md B1 | A21a fix builder |
+| BL-core-a21a-w2-07 | A21a ba89ea7 | MAJOR | contract test imports oracle/helpers from a sibling test module; move to tests/meter_support.py | OPEN | round-w2-codebase.md M1 | A21a fix builder |
+| BL-core-a21a-w2-08 | A21a ba89ea7 | MAJOR | duplicated test bodies between T2 replay file and contract file; mutant only_test ids depend on them | OPEN | round-w2-codebase.md M2 | A21a fix builder |
+| BL-core-a21a-w2-09 | A21a ba89ea7 | MAJOR | stale or private wording in three test docstrings ("lead report", "STANDING ORDERS 6d") | OPEN | round-w2-codebase.md M3 | A21a fix builder |
+| BL-core-a21a-w2-10 | A21a ba89ea7 | MINOR | FakeClock reason, SimpleNamespace cast, NoAudit cast, brittle expect strings, no postgres upsert mutant | OPEN | round-w2-codebase.md m1-m5 | A21a fix builder |
