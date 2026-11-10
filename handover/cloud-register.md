@@ -949,3 +949,16 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a87edd0dc27527a10 | egm-design (sonnet) | P1d-a plan pass 6 (rev 9) | started 18:20Z, expected 18:45Z | RUNNING |
 | a38b2c903abf7cfa8 | egm-codebase-details (sonnet) | A19 PR83 r3, snapshot egm/A19/snapshot-f1e9e9d | started 18:24Z, expected 18:50Z | RUNNING |
 | a38b2c903abf7cfa8 | egm-codebase-details | A19 PR83 r3 | REPORTED 0B/0M/3N, CLOSED; saved egm/A19/r3-codebase.md |
+
+## Wave 2 start (ORDER 234, 18:46Z UTC). Model/role table (ORDER 232): Opus only egm-brainstorm/draft/resolve via Skill; Sonnet builders, evidence runners, egm:* reviewers; Haiku lookups.
+| agent | purpose | model | started | expected end | state | next action |
+|---|---|---|---|---|---|---|
+| ab540937f5 | A22 PR71 egm-design review (head 151d3e1) | sonnet | 18:46Z | +30 min | running | save report, ledger |
+| a87d6682bf | A10a PR76 egm-design review (7f32349) | sonnet | 18:46Z | +40 min | running | save report, ledger |
+| a6e77d8bfb | A10a PR76 egm-codebase-details review | sonnet | 18:46Z | +40 min | running | save report, ledger |
+| a6b9d65b8c | A2 PR89 evidence runner (6706e67) | sonnet | 18:46Z | +60 min | running | reviewers when evidence lands |
+| acc975796c | A5 PR73 evidence runner (c727453) | sonnet | 18:46Z | +60 min | running | reviewers when evidence lands |
+| a1450f6001 | A14 PR72 evidence runner (0ae044b) | sonnet | 18:46Z | +60 min | running | reviewers when evidence lands |
+| a2940af583 | A11a PR77 evidence runner (8b2b716) | sonnet | 18:46Z | +60 min | running | reviewers when evidence lands |
+| afae33facc | A21a T2 builder (core/T1-T2-tests) | sonnet | 18:46Z | +60 min | running | evidence runner then reviewers |
+Plan P1d-a: FROZEN at rev 10 (no round 8); build A4 waits for A1, A2, A3 (ORDER 230).
