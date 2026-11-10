@@ -984,3 +984,5 @@ Closed: aeeb9c0a49 and abd25e70fe (PR73 round-2 reviewers, saved). ad0d22391c (e
 Closed: a290aa955c (PR89 fix builder, pushed 0e4f6d5). For lead: FIXTURE ERROR always-on vs opt-in (q-wave2-open decision 1).
 | a290aa955c | A2 PR89 fix builder round 2, LAST batch (resumed; RB89; BL-core-a2-w2-r2-01..05) | sonnet | 21:25Z | +60 min | running | evidence runner on the new head; one short check review (blockers/majors only) |
 Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (evidence on 0e4f6d5) still running: baseline only.
+
+| a290aa955c | PR89 fix builder r2 | resumed 20:24 UTC, hand-back was NOT FINISHED (nothing pushed); told to finish mutants, fail-before, lint, full pytest 3.12/3.13, push | next check in 30 min |

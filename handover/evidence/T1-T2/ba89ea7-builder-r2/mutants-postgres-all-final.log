@@ -1,0 +1,17 @@
+HEAD 98a3ed95bca4acac88d77b29d4f26846f7f9ce9b
+CMD env -u CI -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_CA_BUNDLE -u ANTHROPIC_BASE_URL -u GH_TOKEN -u GITHUB_TOKEN -u HADAVIN_TEST_PG_DSN HADAVIN_TEST_PG_DSN=postgresql://postgres@127.0.0.1:56300/postgres /home/user/build/venv-a21a-313/bin/python tests/postgres_mutants.py
+baseline rc=0 :: 92 passed, 92 deselected in 14.74s
+ok  P1 day counter replaced instead of added
+      /tmp/pgmut_5bg8samz/tests/contracts/test_store_time_rules.py:88: AssertionError: the day total of two charges on one day did not add up: 0.70
+ok  P2 month counter replaced instead of added
+      /tmp/pgmut__6h3xq5n/tests/contracts/test_store_time_rules.py:89: AssertionError: the month total of two charges did not add up: 0.70
+ok  P3 add_spend books the month one month early (a valid first-of-month date, so the CHECK passes)
+      /tmp/pgmut_ewj2zyln/tests/contracts/test_store_time_rules.py:57: AssertionError: 6min: read at 2026-03-10 12:00:00+00:00
+ok  P3b add_spend keys the month counter by the day (killed by the schema CHECK, an error, not an assertion)
+      n3.13/site-packages/psycopg/cursor.py:117: psycopg.errors.CheckViolation: new row for relation "spend_month" violates check constraint "spend_month_month_check"
+ok  P4 spend_totals reads the month counter by the day
+      /tmp/pgmut_0cfjcee1/tests/contracts/test_store_time_rules.py:57: AssertionError: 6min: read at 2026-03-10 12:00:00+00:00
+ok  P5 spend_totals reads the day counter of any agent
+      /tmp/pgmut_qi31qop2/tests/contracts/test_store_time_rules.py:310: AssertionError: spend_totals showed this agent's spend to another agent
+ok  P6 spend_totals reads the month counter of any agent
+      /tmp/pgmut__sdztwcj/tests/contracts/test_store_time_rules.py:310: AssertionError: spend_totals showed this agent's spend to another agent
