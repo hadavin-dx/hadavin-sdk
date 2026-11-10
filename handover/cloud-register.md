@@ -1004,3 +1004,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a8b076e860 | A21a evidence runner 98a3ed9 | STOPPED by cloud (head superseded) | - | closed |
 | a591cfffd8 | A21a evidence runner 9881b21 | started 21:15 UTC | ~60-90 min | check +30 min |
 | ac672989f9, a4bf163eda | A21a round-3 reviewers (codebase, design), snapshot /tmp/snap/core_T1-T2-9881b21 | started 21:15 UTC | ~20 min | check +20 min |
+| ac672989f9, a4bf163eda | A21a round-3 reviewers | CLOSED 21:17 UTC: 0 blockers, 0 majors by codebase; design 1 major (CI proof); minors saved | - | done |
+| a591cfffd8 | A21a evidence runner 9881b21 | STOPPED by cloud (builder r4 changes the head; runner restarts on the final head, builder runs no full suites) | - | closed |
+| af4a57cbb8 | A21a fix builder r4 (minors, wording, L12, PR body) | resumed 21:17 UTC | +60 min | check +30 min |
