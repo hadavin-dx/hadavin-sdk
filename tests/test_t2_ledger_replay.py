@@ -13,12 +13,19 @@ same totals.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
 
-from tests.meter_support import AGENT, build_limits, utc
+from hadavin_sdk.store.memory import MemoryStore
+from tests.meter_support import (
+    AGENT,
+    build_limits,
+    check_a_charge_returns_the_total_of_its_own_month_only,
+    check_real_now_buckets_by_utc_date_on_a_machine_in_ist,
+    utc,
+)
 
 USD = Decimal("0.10")
 MINUTES6 = timedelta(minutes=6)
@@ -36,14 +43,28 @@ STARTS = [
     utc(2026, 2, 28, 23, 30),  # February, 25 h reaches 1 March
     utc(2024, 2, 28, 23, 30),  # leap year: 29 February exists
     utc(2026, 1, 1, 0, 0),  # 31 days lands on exactly 1 February 00:00
+    utc(2024, 2, 29, 23, 57),  # the leap day itself: 6 minutes reach 1 March
+    utc(2026, 4, 30, 23, 57),  # a 30-day month end: 6 minutes reach 1 May
+    utc(2026, 1, 31, 23, 57),  # 6 minutes reach 1 February
+    utc(
+        2026, 2, 1, 0, 0
+    ),  # 31 days over a 28-day month lands on 4 March (no 1 March bucket in between)
+    utc(2026, 2, 20, 8, 0),  # 31 days from a short month land on 23 March
+    utc(
+        2026, 3, 10, 23, 59, 59, 999999
+    ),  # one microsecond before midnight: every later event is the 11th
 ]
 WINDOWS = [("6min", MINUTES6), ("25h", HOURS25), ("31d", DAYS31)]
 
 
 def oracle(events: list[tuple[datetime, Decimal]], now: datetime) -> tuple[Decimal, Decimal]:
     """(day total, month total) of the events, bucketed by their own UTC date and (year, month)."""
-    day = sum((u for t, u in events if t.date() == now.date()), Decimal(0))
-    month = sum((u for t, u in events if (t.year, t.month) == (now.year, now.month)), Decimal(0))
+    here = now.astimezone(UTC)  # an aware time in any zone is bucketed by its UTC calendar date
+    utc_events = [(t.astimezone(UTC), u) for t, u in events]
+    day = sum((u for t, u in utc_events if t.date() == here.date()), Decimal(0))
+    month = sum(
+        (u for t, u in utc_events if (t.year, t.month) == (here.year, here.month)), Decimal(0)
+    )
     return day, month
 
 
@@ -57,7 +78,7 @@ def replay(events, monkeypatch, daily="1000", monthly="1000"):
 
 
 def event_times(start: datetime, window: timedelta) -> list[datetime]:
-    """Before, at the start; one tick before, at, and one tick after the window end; and the window midpoint."""
+    """Five instants: the start, the window midpoint, and one second before, exactly at and one second after the window end."""
     tick = timedelta(seconds=1)
     return [
         start,
@@ -112,8 +133,12 @@ def test_a_month_total_does_not_carry_over_31_days(monkeypatch):
     events = [(t0, Decimal("0.40")), (t0 + DAYS31, Decimal("0.60"))]  # 1 February 00:00
     _, store, _, _ = replay(events, monkeypatch)
     assert (t0 + DAYS31).date().isoformat() == "2026-02-01"
-    assert store.spend_totals(AGENT, t0.date()) == (Decimal("0.40"), Decimal("0.40"))
-    assert store.spend_totals(AGENT, (t0 + DAYS31).date()) == (Decimal("0.60"), Decimal("0.60"))
+    assert store.spend_totals(AGENT, t0.date()) == (Decimal("0.40"), Decimal("0.40")), (
+        "January's month total changed"
+    )
+    assert store.spend_totals(AGENT, (t0 + DAYS31).date()) == (Decimal("0.60"), Decimal("0.60")), (
+        "January's spend carried into February's month total"
+    )
 
 
 def test_31_days_from_a_31_day_month_start_is_the_next_month_but_31_days_inside_march_is_not(
@@ -171,15 +196,39 @@ def test_a_charge_at_exactly_the_cap_blocks_the_next_call_and_one_cent_under_doe
 def test_one_agent_never_sees_another_agents_spend(monkeypatch):
     t = utc(2026, 3, 10, 12, 0)
     _, store, _, _ = replay([(t, USD)], monkeypatch)
-    assert store.spend_totals("someone-else", t.date()) == (Decimal(0), Decimal(0))
+    assert store.spend_totals("someone-else", t.date()) == (Decimal(0), Decimal(0)), (
+        "spend_totals showed this agent's spend to another agent"
+    )
 
 
 def test_a_charge_returns_only_its_own_agents_month_total(monkeypatch):
     t = utc(2026, 3, 10, 12, 0)
     _, store, _, _ = replay([(t, USD)], monkeypatch)
     store.add_spend("someone-else", t.date(), Decimal(7))
-    assert store.add_spend(AGENT, t.date(), USD) == (2 * USD, 2 * USD)
-    assert store.add_spend(AGENT, (t + DAYS31).date(), USD) == (
-        USD,
-        USD,
-    )  # a new month starts empty
+    got = store.add_spend(AGENT, t.date(), USD)
+    assert got == (2 * USD, 2 * USD), f"add_spend returned another agent's spend: {got}"
+    got = store.add_spend(AGENT, (t + DAYS31).date(), USD)
+    assert got == (USD, USD), f"a new month did not start empty: {got}"
+
+
+def test_a_charge_returns_the_total_of_its_own_month_only(monkeypatch):
+    check_a_charge_returns_the_total_of_its_own_month_only(MemoryStore(), monkeypatch)
+
+
+def test_the_real_now_is_aware_utc_and_books_23_00_utc_on_the_10th_on_a_machine_in_ist(monkeypatch):
+    check_real_now_buckets_by_utc_date_on_a_machine_in_ist(MemoryStore(), monkeypatch)
+
+
+def test_one_microsecond_decides_the_day_and_a_leap_february_has_a_29th(monkeypatch):
+    last = utc(2026, 3, 10, 23, 59, 59, 999999)
+    first = last + timedelta(microseconds=1)
+    leap = [(utc(2024, 2, 29, 23, 59, 59, 999999), USD), (utc(2024, 3, 1, 0, 0), USD)]
+    events = [(last, USD), (first, USD), *leap]
+    assert first == utc(2026, 3, 11, 0, 0) and leap[0][0] + timedelta(microseconds=1) == utc(
+        2024, 3, 1
+    )
+    _, store, _, _ = replay(events, monkeypatch)
+    assert store.spend_totals(AGENT, last.date()) == (USD, 2 * USD), "23:59:59.999999 left the 10th"
+    assert store.spend_totals(AGENT, first.date()) == (USD, 2 * USD), "00:00:00 is not the 11th"
+    assert store.spend_totals(AGENT, leap[0][0].date()) == (USD, USD), "29 Feb 2024 lost its charge"
+    assert store.spend_totals(AGENT, leap[1][0].date()) == (USD, USD), "1 March 2024 shared 29 Feb"

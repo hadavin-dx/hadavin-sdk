@@ -24,6 +24,7 @@ CAP = "tests/test_t1_meter_cap.py"
 LED = "tests/test_t2_ledger_replay.py"
 LIM = "src/hadavin_sdk/limits.py"
 MEM = "src/hadavin_sdk/store/memory.py"
+MOD = "src/hadavin_sdk/models.py"
 ADD_SPEND_FILTER = "for (a, d), v in self._spend.items()\n                if a == agent_id and (d.year, d.month) == (day.year, day.month)"  # only add_spend
 SPEND_TOTALS_FILTER = "                    if a == agent_id and (d.year, d.month) == (day.year, day.month)"  # 20 spaces: only spend_totals
 
@@ -98,6 +99,15 @@ M = [
         "assert [] == ['daily_budget']",
     ),
     m(
+        "L8 now() reads the machine's local wall clock, not UTC",
+        MOD,
+        "return datetime.now(UTC)",
+        "return datetime.now()",
+        LED,
+        "test_the_real_now_is_aware_utc_and_books_23_00_utc_on_the_10th_on_a_machine_in_ist",
+        "now() is not aware UTC",
+    ),
+    m(
         "S1 the ledger double counts a day",
         MEM,
         "self._spend[(agent_id, day)] += usd",
@@ -113,7 +123,7 @@ M = [
         "                    if a == agent_id",
         LED,
         "test_a_month_total_does_not_carry_over_31_days",
-        "assert",
+        "January's month total changed",
     ),
     m(
         "S3 the month total sums every agent (spend_totals)",
@@ -122,7 +132,7 @@ M = [
         "                    if (d.year, d.month) == (day.year, day.month)",
         LED,
         "test_one_agent_never_sees_another_agents_spend",
-        "assert",
+        "showed this agent's spend to another agent",
     ),
     m(
         "S4 the month total a charge returns sums every month (add_spend)",
@@ -130,8 +140,8 @@ M = [
         ADD_SPEND_FILTER,
         "for (a, d), v in self._spend.items()\n                if a == agent_id",
         LED,
-        "test_every_charge_lands_in_its_own_day_and_month_exactly_once",
-        "charge",
+        "test_a_charge_returns_the_total_of_its_own_month_only",
+        "charge 1 at 2026-02-01",
     ),
     m(
         "S5 the month total a charge returns sums every agent (add_spend)",
@@ -140,7 +150,7 @@ M = [
         "for (a, d), v in self._spend.items()\n                if (d.year, d.month) == (day.year, day.month)",
         LED,
         "test_a_charge_returns_only_its_own_agents_month_total",
-        "assert",
+        "add_spend returned another agent's spend",
     ),
     m(
         "S6 a charge replaces the day total instead of adding to it",
@@ -170,9 +180,14 @@ if __name__ == "__main__":
             print("      first line:", first_lines.get(name, "")[:150], flush=True)
 
     res = run_mutants(
-        ROOT, M, [CAP, LED], extra_dirs=("tests", "tools", "demos", "docs"),
-        only=only, on_result=show, first_lines=first_lines,
-    )  # fmt: skip
+        ROOT,
+        M,
+        [CAP, LED],
+        extra_dirs=("tests", "tools", "demos", "docs"),
+        only=only,
+        on_result=show,
+        first_lines=first_lines,
+    )
     bad = [n for n, _, _, g in res if not g]
     print(f"{len(res) - len(bad)} of {len(res)} good; problems: {bad}")
     sys.exit(1 if bad else 0)

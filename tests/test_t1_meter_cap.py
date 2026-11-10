@@ -18,15 +18,7 @@ from decimal import Decimal
 import pytest
 
 from hadavin_sdk.limits import Limits
-from tests.meter_support import (
-    AGENT,
-    CALLERS,
-    HUGE,
-    START,
-    W,
-    build_limits,
-    run_parallel,
-)  # fmt: skip
+from tests.meter_support import AGENT, CALLERS, HUGE, START, W, build_limits, run_parallel
 
 # --- sequential: the design the code really has (passes) ------------------------------------------------------------
 
