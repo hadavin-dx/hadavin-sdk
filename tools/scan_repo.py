@@ -6,8 +6,10 @@ False positives: add `path:rule:reason` (one per line, `#` comments ok) to tools
 rule on that file (rule `*` skips all rules; avoid it). An entry whose file is no longer tracked, or without a reason, is itself a hit.
 Suppressions: a comment that switches a scanner off (nosec, nosemgrep, the gitleaks allow marker, trivy ignore, a noqa that is blanket or names a
 ruff `S` security code) and every scanner-config file (.gitleaksignore, .gitleaks.toml, .semgrepignore, .trivyignore, ...) is a hit unless
-tools/scan_suppressions.txt lists it: `path:rule:value:reason`, value = the exact number of markers in that file, or the sha256 of the
-config file. A stale, wrong-count, wrong-hash, reasonless or unknown-rule line is itself a hit. The list is the one place a reviewer reads.
+tools/scan_suppressions.txt lists it: `path:rule:value:reason`, value = `count@sha256` (the number of markers in that file and the sha256 of
+their sorted line texts, so a widened, replaced or moved-to-other-code marker is a change), or the sha256 of the config file. The two list
+files tools/scan_allowlist.txt and tools/scan_banned_extra.txt are pinned the same way. `python tools/scan_repo.py --print-list` writes a
+fresh list (reasons of existing lines are kept) for a reviewer to read and commit. A stale, wrong-count, wrong-hash, reasonless or unknown-rule line is itself a hit. The list is the one place a reviewer reads.
 Banned names: the BANNED tuple in tests/test_no_reference_material.py (read, not copied) plus tools/scan_banned_extra.txt.
 If BANNED cannot be found or is empty the scan fails (it never silently turns the check off).
 """
@@ -42,11 +44,19 @@ PATTERNS = {
 _C = r"(?:#|//|--|/\*)\s*"
 SUPPRESSIONS = {
     "suppress-nosec": re.compile(_C + r"nosec\b"),
-    "suppress-nosemgrep": re.compile(_C + r"nosemgrep\b"),
+    "suppress-nosemgrep": re.compile(_C + r"nosem(?:grep)?\b"),
     "suppress-gitleaks-allow": re.compile(r"gitleaks:" r"allow\b"),
     "suppress-trivy-ignore": re.compile(_C + r"trivy:ignore\b"),
     # blanket noqa, or a noqa naming a ruff security (S) code; style codes (BLE001, F401, ...) are not scanner suppressions
-    "suppress-noqa-security": re.compile(_C + r"noqa\b(?!\s*:)|" + _C + r"noqa\s*:[^#]*\bS\d{3}\b"),
+    # a file-level `ruff: noqa` / `flake8: noqa` switches rules off for the whole file, so it is always a hit
+    "suppress-noqa-security": re.compile(
+        _C
+        + r"noqa\b(?!\s*:)|"
+        + _C
+        + r"noqa\s*:[^#]*\bS\d{3}\b|"
+        + _C
+        + r"(?:ruff|flake8)\s*:\s*noqa\b"
+    ),
 }
 SCANNER_CONFIG_NAMES = {
     ".gitleaksignore",
@@ -60,7 +70,20 @@ SCANNER_CONFIG_NAMES = {
     ".zizmor.yml",
     ".zizmor.yaml",
     "zizmor.yml",
+    "ruff.toml",
+    ".ruff.toml",
+    "trivy-secret.yaml",
+    "bandit.yaml",
+    "bandit.yml",
+    "setup.cfg",
+    "tox.ini",
 }
+# Files that steer this scan itself: pinned by hash like a scanner config, found by exact path.
+SCANNER_CONFIG_PATHS = {"tools/scan_allowlist.txt", "tools/scan_banned_extra.txt"}
+# A tracked file with one of these extensions that holds a NUL byte is refused (a NUL would otherwise hide it as "binary").
+TEXT_EXTENSIONS = {
+    ".py", ".toml", ".yml", ".yaml", ".cfg", ".ini", ".json", ".sh", ".txt", ".md", ".js", ".ts", ".sql", ".tf",
+}  # fmt: skip
 SCANNER_CONFIG_RULE = "scanner-config-file"
 LIST_RULES = set(SUPPRESSIONS) | {SCANNER_CONFIG_RULE}
 
@@ -95,6 +118,11 @@ def _allowed(allowlist: Path) -> tuple[dict[str, set[str]], list[str]]:
         if len(parts) < 3 or not parts[0] or not parts[1] or not parts[2]:
             problems.append(f"{allowlist.name}:{n}: allowlist-entry needs path:rule:reason")
             continue
+        if any(ch in parts[0] for ch in "*?["):
+            problems.append(
+                f"{allowlist.name}:{n}: allowlist-entry path must be one exact file, no glob"
+            )
+            continue
         out.setdefault(parts[0], set()).add(parts[1])
     return out, problems
 
@@ -116,37 +144,93 @@ def _suppressions(path: Path | None) -> tuple[dict[tuple[str, str], str], list[s
             problems.append(f"{where}: suppression-list duplicate entry")
         elif parts[1] == SCANNER_CONFIG_RULE and not re.fullmatch(r"[0-9a-f]{64}", parts[2]):
             problems.append(f"{where}: suppression-list value must be a sha256")
-        elif parts[1] != SCANNER_CONFIG_RULE and not re.fullmatch(r"[1-9][0-9]*", parts[2]):
-            problems.append(f"{where}: suppression-list value must be a positive count")
+        elif parts[1] != SCANNER_CONFIG_RULE and not re.fullmatch(
+            r"[1-9][0-9]*@[0-9a-f]{64}", parts[2]
+        ):
+            problems.append(f"{where}: suppression-list value must be a positive count@sha256")
         else:
             out[(parts[0], parts[1])] = parts[2]
     return out, problems
+
+
+def marker_value(lines: list[str]) -> str:
+    """`count@sha256` of the sorted marker line texts (the text pins the marker, not only the number)."""
+    digest = hashlib.sha256(
+        "\n".join(sorted(ln.rstrip() for ln in lines)).encode("utf-8")
+    ).hexdigest()
+    return f"{len(lines)}@{digest}"
+
+
+def _marker_lines(text: str) -> dict[str, tuple[list[int], list[str]]]:
+    """{rule: (line numbers, line texts)} for every suppression marker in `text`."""
+    out: dict[str, tuple[list[int], list[str]]] = {}
+    for n, line in enumerate(text.splitlines(), 1):
+        for rule, rx in SUPPRESSIONS.items():
+            if rx.search(line):
+                nums, texts = out.setdefault(rule, ([], []))
+                nums.append(n)
+                texts.append(line)
+    return out
+
+
+def _is_config(rel: str) -> bool:
+    return rel in SCANNER_CONFIG_PATHS or rel.rsplit("/", 1)[-1] in SCANNER_CONFIG_NAMES
 
 
 def _check_suppressions(
     rel: str, text: str, data: bytes, listed: dict[tuple[str, str], str], seen: set[tuple[str, str]]
 ) -> list[str]:
     hits = []
-    if rel.rsplit("/", 1)[-1] in SCANNER_CONFIG_NAMES:
+    if _is_config(rel):
         key = (rel, SCANNER_CONFIG_RULE)
         seen.add(key)
         if key not in listed:
             hits.append(f"{rel}:1: {SCANNER_CONFIG_RULE}")
         elif listed[key] != hashlib.sha256(data).hexdigest():
             hits.append(f"{rel}:1: suppression-list hash differs for {SCANNER_CONFIG_RULE}")
-    for rule, rx in SUPPRESSIONS.items():
-        found = [n for n, line in enumerate(text.splitlines(), 1) if rx.search(line)]
-        if not found:
-            continue
+    for rule, (nums, texts) in _marker_lines(text).items():
         key = (rel, rule)
         seen.add(key)
+        value = marker_value(texts)
         if key not in listed:
-            hits += [f"{rel}:{n}: {rule}" for n in found]
-        elif int(listed[key]) != len(found):
-            hits.append(
-                f"{rel}:{found[0]}: suppression-list count is {len(found)}, list says {listed[key]} ({rule})"
-            )
+            hits += [f"{rel}:{n}: {rule}" for n in nums]
+        elif listed[key] != value:
+            if int(listed[key].split("@")[0]) != len(nums):
+                hits.append(
+                    f"{rel}:{nums[0]}: suppression-list count is {len(nums)}, list says "
+                    f"{listed[key].split('@')[0]} ({rule})"
+                )
+            else:
+                hits.append(f"{rel}:{nums[0]}: suppression-list text hash differs ({rule})")
     return hits
+
+
+def print_list(repo: Path, suppressions: Path) -> str:
+    """A fresh suppression list for the tracked files; the header and the reasons of lines that still exist are kept."""
+    old = _lines(suppressions)
+    header = [ln for ln in old if ln.startswith("#")]
+    reasons = {}
+    for ln in old:
+        parts = [p.strip() for p in ln.split(":", 3)]
+        if len(parts) == 4 and not ln.startswith("#"):
+            reasons[(parts[0], parts[1])] = parts[3]
+    cmd = ["git", "-C", str(repo), "ls-files", "-z"]
+    listing = subprocess.run(cmd, capture_output=True, check=True).stdout  # noqa: S603
+    rows = []
+    for rel in sorted(r for r in listing.decode("utf-8").split("\0") if r):
+        path = repo / rel
+        if not path.is_file():
+            continue
+        data = path.read_bytes()
+        text = data.decode("utf-8", errors="replace")
+        if _is_config(rel):
+            key = (rel, SCANNER_CONFIG_RULE)
+            reason = reasons.get(key, "NEW, needs a reviewed reason")
+            rows.append(f"{rel}:{SCANNER_CONFIG_RULE}:{hashlib.sha256(data).hexdigest()}:{reason}")
+        for rule, (_, texts) in _marker_lines(text).items():
+            reason = reasons.get((rel, rule), "NEW, needs a reviewed reason")
+            rows.append(f"{rel}:{rule}:{marker_value(texts)}:{reason}")
+    return "\n".join(header + rows) + "\n"
 
 
 def scan(
@@ -170,12 +254,13 @@ def scan(
             continue
         skip = allowed.get(rel, set())
         data = path.read_bytes()
-        if b"\0" in data[:8000]:
-            continue  # binary
         text = data.decode("utf-8", errors="replace")
-        hits += _check_suppressions(
-            rel, text, data, listed, seen
-        )  # even for a file the allowlist skips
+        # config-name and marker checks run before the binary skip and even for a file the allowlist skips
+        hits += _check_suppressions(rel, text, data, listed, seen)
+        if b"\0" in data[:8000]:
+            if Path(rel).suffix.lower() in TEXT_EXTENSIONS:
+                hits.append(f"{rel}:1: nul-in-text-file")  # a source or config file is never binary
+            continue  # binary
         if "*" in skip:
             continue
         for n, line in enumerate(text.splitlines(), 1):
@@ -201,9 +286,15 @@ if __name__ == "__main__":
     ap.add_argument("--extra", default=str(HERE / "scan_banned_extra.txt"))
     ap.add_argument("--suppressions", default=str(HERE / "scan_suppressions.txt"))
     ap.add_argument(
+        "--print-list", action="store_true", help="print a fresh suppression list and exit"
+    )
+    ap.add_argument(
         "--banned-src", default=str(HERE.parent / "tests" / "test_no_reference_material.py")
     )
     a = ap.parse_args()
+    if a.print_list:
+        sys.stdout.write(print_list(Path(a.root), Path(a.suppressions)))
+        sys.exit(0)
     found = scan(
         Path(a.root), Path(a.allowlist), Path(a.extra), Path(a.banned_src), Path(a.suppressions)
     )

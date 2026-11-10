@@ -20,6 +20,13 @@ SYSTEM = [
 ]
 VENV = ["python3", "uv", "uvx"]
 BASH = shutil.which("bash")
+GIT = shutil.which("git")  # an absolute path, so the calls below are not partial-path calls
+
+
+def _run(argv, *, check=False, **kw):
+    """The one place this file starts a program; every argument list is fixed by the test (no input from outside)."""
+    return subprocess.run(argv, check=check, **kw)  # noqa: S603
+
 
 pytestmark = pytest.mark.skipif(
     not sys.platform.startswith("linux") or BASH is None or shutil.which("git") is None,
@@ -47,7 +54,7 @@ class Tree:
         self.out.mkdir(parents=True)
         self.ws = tmp_path / "ws"
         self.ws.mkdir()
-        subprocess.run(["git", "init", "-q", str(self.ws)], check=True)  # noqa: S603, S607
+        _run([GIT, "init", "-q", str(self.ws)], check=True)
         for name in SYSTEM:
             real = shutil.which(name)
             assert real, name
@@ -71,7 +78,7 @@ class Tree:
             "GITHUB_WORKSPACE": str(workspace or self.ws),
             "HOME": str(self.tmp),
         }
-        r = subprocess.run(  # noqa: S603
+        r = _run(
             [BASH, "-e", "-c", _step_text()],
             cwd=self.ws,
             env=env,
@@ -179,7 +186,7 @@ def test_a_missing_tool_fails(tree):
 def test_a_non_absolute_command_fails(tree):
     step = _step_text().replace("for c in $sys_tools", "alias_ok=1; for c in $sys_tools", 1)
     # a shell function named like a tool is not a file
-    r = subprocess.run(  # noqa: S603
+    r = _run(
         [BASH, "-e", "-c", "curl() { :; }\n" + step],
         cwd=tree.ws,
         env={"PATH": str(tree.out), "GITHUB_WORKSPACE": str(tree.ws)},
@@ -193,13 +200,13 @@ def test_a_non_absolute_command_fails(tree):
 def test_tracked_files_under_dot_venv_fail(tree):
     (tree.ws / ".venv").mkdir()
     (tree.ws / ".venv" / "marker").write_text("x")
-    subprocess.run(["git", "-C", str(tree.ws), "add", "-f", ".venv/marker"], check=True)  # noqa: S603, S607
+    _run([GIT, "-C", str(tree.ws), "add", "-f", ".venv/marker"], check=True)
     rc, out = tree.run()
     assert rc == 1 and "files under .venv are tracked" in out
 
 
 def test_an_empty_workspace_variable_fails(tree):
-    r = subprocess.run(  # noqa: S603
+    r = _run(
         [BASH, "-e", "-c", _step_text()],
         cwd=tree.ws,
         env={"PATH": str(tree.out), "GITHUB_WORKSPACE": ""},
@@ -210,16 +217,44 @@ def test_an_empty_workspace_variable_fails(tree):
     assert r.returncode == 1 and "GITHUB_WORKSPACE is empty" in r.stdout + r.stderr
 
 
-def test_the_old_step_text_misses_a_link_into_the_workspace(tree):
-    """Fail-before proof kept as a test: the PR90 step (command -v only) accepts a link whose target is in the workspace."""
-    old = (
+OLD_STEP_COMMIT = (
+    "2742c1b"  # the PR90 merge: the step text below is frozen from that commit's ci.yml
+)
+
+
+def test_the_frozen_old_step_text_is_the_one_stored_in_git_history():
+    """Guards the frozen text against drift. Skipped only when the commit is not in this clone (a shallow CI checkout)."""
+    show = _run(
+        [GIT, "show", f"{OLD_STEP_COMMIT}:.github/workflows/ci.yml"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if show.returncode != 0:
+        pytest.skip(f"{OLD_STEP_COMMIT} is not in this clone")
+    old_wf = yaml.safe_load(show.stdout)
+    steps = [
+        s
+        for s in old_wf["jobs"]["security"]["steps"]
+        if s.get("name", "").startswith("System tools")
+    ]
+    assert len(steps) == 1 and steps[0]["run"].strip() == _old_step().strip()
+
+
+def _old_step():
+    return (
         'for c in sha256sum tar curl git grep date tr cut sort head mktemp rm touch; do p=$(command -v "$c") || exit 1; '
         'case "$p" in /*) ;; *) echo "$c is not a file: $p"; exit 1;; esac; '
         'case "$p" in "$GITHUB_WORKSPACE"/*) echo "$c resolves inside the workspace: $p"; exit 1;; esac; done'
     )
+
+
+def test_the_old_step_text_misses_a_link_into_the_workspace(tree):
+    """Fail-before proof kept as a test: the PR90 step (command -v only) accepts a link whose target is in the workspace."""
+    old = _old_step()
     (tree.out / "curl").unlink()
     (tree.out / "curl").symlink_to(tree.evil())
     env = {"PATH": str(tree.out), "GITHUB_WORKSPACE": str(tree.ws)}
-    old_run = subprocess.run([BASH, "-e", "-c", old], env=env, cwd=tree.ws, check=False)  # noqa: S603
+    old_run = _run([BASH, "-e", "-c", old], env=env, cwd=tree.ws, check=False)
     assert old_run.returncode == 0
     assert tree.run()[0] == 1

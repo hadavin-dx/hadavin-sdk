@@ -174,6 +174,8 @@ jobs:
         # .venv/bin comes first on PATH (activate-environment), and a locked package can ship a program with a system tool's name.
         # Pass 1 uses only shell builtins (nothing from PATH runs before it is checked). Pass 2 follows every link with the
         # now-checked readlink. python3, uv and uvx may sit in .venv/bin by design, but then must be links to a file outside the workspace.
+        # Limit: bash and sh are started by the runner before this step, so the step cannot vouch for them. That is covered by the
+        # locked scan group (uv sync --locked --only-group scan) and --no-build, which stop a package from running code at install time.
         run: |
           sys_tools="readlink sha256sum tar curl git grep date tr cut sort head mktemp rm touch"
           venv_tools="python3 uv uvx"

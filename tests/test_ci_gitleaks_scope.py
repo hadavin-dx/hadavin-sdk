@@ -727,15 +727,43 @@ def test_the_word_level_list_names_real_cases():
 PYPROJECT = CI.parents[2] / "pyproject.toml"
 
 
+# The whole [tool.ruff] table is pinned: every key that exists must be listed here with its exact value. One constant, so a new key
+# (extend-ignore, exclude, extend-exclude, select, ignore, per-file-ignores, ...) cannot slip in unreviewed.
+RUFF_PINNED = {
+    "line-length": 100,
+    "src": ["src", "tests", "demos"],
+}
+RUFF_LINT_PINNED = {
+    "extend-select": ["B", "DTZ", "I", "S", "TID", "UP"],
+    "flake8-tidy-imports": {"ban-relative-imports": "all"},
+    "per-file-ignores": {"tests/**": ["S101"]},
+}
+# Keys that switch rules or files off or change what is checked; each is refused at the top level and under lint unless pinned above.
+RUFF_SWITCH_KEYS = (
+    "per-file-ignores",
+    "extend-per-file-ignores",
+    "extend-ignore",
+    "ignore",
+    "exclude",
+    "extend-exclude",
+    "select",
+    "extend-select",
+)
+
+
+def check_ruff_table(ruff):
+    ruff = dict(ruff)
+    lint = ruff.pop("lint", {})
+    assert ruff == RUFF_PINNED, (
+        f"[tool.ruff] changed: {sorted(set(ruff) ^ set(RUFF_PINNED)) or 'a value'}"
+    )
+    assert lint == RUFF_LINT_PINNED, "[tool.ruff.lint] changed"
+    assert "S" in lint["extend-select"], "ruff security rules (S) must stay selected"
+
+
 def check_pyproject_suppressions(text):
     tool = tomllib.loads(text).get("tool", {})
-    lint = tool.get("ruff", {}).get("lint", {})
-    assert set(lint) <= {"extend-select", "flake8-tidy-imports", "per-file-ignores"}, (
-        f"unexpected ruff lint keys: {sorted(lint)}"
-    )
-    assert lint.get("per-file-ignores") == {"tests/**": ["S101"]}, "ruff per-file-ignores changed"
-    assert "ignore" not in tool.get("ruff", {}), "ruff top-level ignore"
-    assert "S" in lint.get("extend-select", []), "ruff security rules (S) must stay selected"
+    check_ruff_table(tool.get("ruff", {}))
     assert "bandit" not in tool, "a bandit section can skip tests"
     assert "semgrep" not in tool
 
@@ -760,6 +788,26 @@ def test_pyproject_carries_no_new_scanner_suppression():
 def test_pyproject_pin_rejects_a_new_suppression(edit):
     with pytest.raises(AssertionError):
         check_pyproject_suppressions(edit(PYPROJECT.read_text()))
+
+
+@pytest.mark.parametrize("key", RUFF_SWITCH_KEYS)
+@pytest.mark.parametrize("where", ["top", "lint"])
+def test_pyproject_pin_rejects_each_switch_key_at_top_level_and_under_lint(key, where):
+    ruff = copy.deepcopy(tomllib.loads(PYPROJECT.read_text())["tool"]["ruff"])
+    check_ruff_table(
+        copy.deepcopy(ruff)
+    )  # the real table passes, so the failure below comes from the change only
+    target = ruff if where == "top" else ruff["lint"]
+    target[key] = ["S"] if key != "per-file-ignores" else {"src/**": ["S"]}
+    with pytest.raises(AssertionError):
+        check_ruff_table(ruff)
+
+
+def test_pyproject_pin_rejects_a_changed_pinned_value():
+    ruff = copy.deepcopy(tomllib.loads(PYPROJECT.read_text())["tool"]["ruff"])
+    ruff["lint"]["per-file-ignores"]["tests/**"].append("S603")
+    with pytest.raises(AssertionError):
+        check_ruff_table(ruff)
 
 
 if __name__ == "__main__":

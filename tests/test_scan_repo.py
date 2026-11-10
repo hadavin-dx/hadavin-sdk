@@ -146,6 +146,7 @@ def test_allowlist_skips_only_the_listed_rule_on_the_listed_file(tmp_path):
 def test_allowlist_entry_without_a_reason_or_for_a_missing_file_fails(tmp_path):
     repo = _repo(tmp_path, {"a.txt": "x = 1\n"})
     assert "needs path:rule:reason" in _scan(repo, allow="a.txt:sk-api-key\n")[1]
+    assert _scan(repo, allow="a.txt:llm-id-sk:ok\n")[0] == 0
     rc, out = _scan(repo, allow="gone.txt:llm-id-sk:was needed once\n")
     assert rc == 1 and "stale entry, gone.txt is not tracked" in out
 
@@ -155,7 +156,8 @@ def test_extra_banned_list_is_read_and_the_list_file_does_not_flag_itself(tmp_pa
         tmp_path,
         {"x.txt": "contains zzfakename here\n", "tools/scan_banned_extra.txt": "zzfakename\n"},
     )
-    rc, out = _scan(repo, extra="zzfakename\n")
+    pin = _supp_line("tools/scan_banned_extra.txt", "scanner-config-file", _sha("zzfakename\n"))
+    rc, out = _scan(repo, extra="zzfakename\n", suppress=pin)
     assert rc == 1 and "x.txt:1: banned-name" in out
     assert "tools/scan_banned_extra.txt" not in out
 
@@ -199,7 +201,12 @@ MARKERS = {
 }
 MORE_MARKERS = {
     "suppress-nosec": ["x = f(1)  //nos" + "ec", "x = 1 -- nos" + "ec"],
+    "suppress-nosemgrep": ["x = 1  " + H + "nosem", "x = 1  " + H + "nosem: some.rule"],
     "suppress-noqa-security": [
+        "x = 1  " + H + "ruff: no" + "qa",
+        "x = 1  " + H + "ruff: no" + "qa: S101",
+        "x = 1  " + H + "ruff:no" + "qa: F401",
+        "x = 1  " + H + "flake8: no" + "qa",
         "x = 1  " + H + "no" + "qa",
         "x = 1  " + H + "no" + "qa: BLE001, S112",
         "x = 1  " + H + "no" + "qa:S603 reason",
@@ -213,7 +220,22 @@ NOT_MARKERS = [
     "x = 1  " + H + "no" + "qa: F401, E501",
     "x = 1  " + H + "noqafoo",
     "x = 'S603'  " + H + "plain comment",
+    "we mention ruff: no" + "qa and nosem in prose",
+    "x = 1  " + H + "nosemantic note",
 ]
+
+
+def _val(*texts):
+    """The list value of a marker rule: count@sha256 of the sorted line texts (written out here, apart from the script)."""
+    digest = hashlib.sha256("\n".join(sorted(texts)).encode()).hexdigest()
+    return f"{len(texts)}@{digest}"
+
+
+ONE = "1@" + "0" * 64  # well-formed value for list-format tests
+
+
+def _sha(text):
+    return hashlib.sha256(text.encode()).hexdigest()
 
 
 def _supp_line(path, rule, value, reason="reviewed for the test"):
@@ -240,25 +262,24 @@ def test_prose_and_style_codes_are_not_suppression_hits(tmp_path, line):
 @pytest.mark.parametrize("rule", MARKERS)
 def test_a_listed_marker_with_the_exact_count_passes(tmp_path, rule):
     repo = _repo(tmp_path, {"a.py": MARKERS[rule] + "\nx = 2\n" + MARKERS[rule] + "\n"})
-    assert _scan(repo, suppress=_supp_line("a.py", rule, 2)) == (0, "\n")
+    assert _scan(repo, suppress=_supp_line("a.py", rule, _val(*[MARKERS[rule]] * 2))) == (0, "\n")
 
 
 @pytest.mark.parametrize("rule", MARKERS)
 @pytest.mark.parametrize("listed", [1, 3])
 def test_a_count_that_differs_from_the_list_fails_both_ways(tmp_path, rule, listed):
     repo = _repo(tmp_path, {"a.py": MARKERS[rule] + "\n" + MARKERS[rule] + "\n"})
-    rc, out = _scan(repo, suppress=_supp_line("a.py", rule, listed))
+    rc, out = _scan(repo, suppress=_supp_line("a.py", rule, _val(*[MARKERS[rule]] * listed)))
     assert rc == 1 and "suppression-list count is 2" in out
 
 
 def test_a_list_entry_covers_only_its_own_file_and_rule(tmp_path):
     files = {"a.py": MARKERS["suppress-nosec"], "b.py": MARKERS["suppress-nosec"]}
-    rc, out = _scan(_repo(tmp_path, files), suppress=_supp_line("a.py", "suppress-nosec", 1))
+    one = _supp_line("a.py", "suppress-nosec", _val(MARKERS["suppress-nosec"]))
+    rc, out = _scan(_repo(tmp_path, files), suppress=one)
     assert rc == 1 and "b.py:1: suppress-nosec" in out and "a.py" not in out
     both = MARKERS["suppress-nosec"] + "\n" + MARKERS["suppress-noqa-security"]
-    rc, out = _scan(
-        _repo(tmp_path / "r2", {"a.py": both}), suppress=_supp_line("a.py", "suppress-nosec", 1)
-    )
+    rc, out = _scan(_repo(tmp_path / "r2", {"a.py": both}), suppress=one)
     assert rc == 1 and "a.py:2: suppress-noqa-security" in out
 
 
@@ -271,15 +292,22 @@ def test_a_file_the_allowlist_skips_is_still_checked_for_markers(tmp_path):
 @pytest.mark.parametrize(
     ("entry", "message"),
     [
-        ("gone.py:suppress-nosec:1:reason\n", "stale entry, gone.py suppress-nosec not tracked"),
-        ("a.py:suppress-nosec:1:reason\n", "stale entry, a.py suppress-nosec has no such marker"),
-        ("a.py:suppress-nosec:1:\n", "malformed"),
-        ("a.py:suppress-nosec:1\n", "malformed"),
-        ("a.py:suppress-everything:1:reason\n", "unknown rule"),
+        (
+            "gone.py:suppress-nosec:" + ONE + ":reason\n",
+            "stale entry, gone.py suppress-nosec not tracked",
+        ),
+        (
+            "a.py:suppress-nosec:" + ONE + ":reason\n",
+            "stale entry, a.py suppress-nosec has no such marker",
+        ),
+        ("a.py:suppress-nosec:" + ONE + ":\n", "malformed"),
+        ("a.py:suppress-nosec:" + ONE + "\n", "malformed"),
+        ("a.py:suppress-everything:" + ONE + ":reason\n", "unknown rule"),
         ("a.py:suppress-nosec:many:reason\n", "positive count"),
         ("a.py:suppress-nosec:0:reason\n", "positive count"),
+        ("a.py:suppress-nosec:1:reason\n", "count@sha256"),
         ("a.py:scanner-config-file:abc:reason\n", "sha256"),
-        ("a.py:suppress-nosec:1:r\na.py:suppress-nosec:1:again\n", "duplicate"),
+        ("a.py:suppress-nosec:" + ONE + ":r\na.py:suppress-nosec:" + ONE + ":again\n", "duplicate"),
     ],
 )
 def test_a_bad_list_line_is_itself_a_hit(tmp_path, entry, message):
@@ -297,6 +325,13 @@ def test_a_bad_list_line_is_itself_a_hit(tmp_path, entry, message):
         ".trivyignore",
         "sub/dir/.trivyignore",
         "zizmor.yml",
+        "ruff.toml",
+        ".ruff.toml",
+        "trivy-secret.yaml",
+        "bandit.yaml",
+        "bandit.yml",
+        "setup.cfg",
+        "sub/tox.ini",
     ],
 )
 def test_a_scanner_config_file_hits_unless_listed_with_its_hash(tmp_path, name):
@@ -330,3 +365,119 @@ def test_the_real_repo_passes_with_its_own_list():
 def test_the_real_list_says_the_baseline_was_not_reviewed_line_by_line():
     text = (SCRIPT.parent / "scan_suppressions.txt").read_text()
     assert "NOT reviewed one" in text and "CODEOWNERS" in text
+
+
+# ---- round 1 fixes (A24 PR91): marker text pin, NUL files, broader markers, glob allowlist, pinned list files ----
+NOSEC = MARKERS["suppress-nosec"]
+NOQA = MARKERS["suppress-noqa-security"]
+
+
+def test_a_marker_widened_on_the_same_line_fails_even_with_the_same_count(tmp_path):
+    repo = _repo(tmp_path, {"a.py": NOQA + "\n"})
+    supp = _supp_line("a.py", "suppress-noqa-security", _val(NOQA))
+    assert _scan(repo, suppress=supp) == (0, "\n")
+    wide = _repo(tmp_path / "w", {"a.py": NOQA + ", S101\n"})
+    rc, out = _scan(wide, suppress=supp)
+    assert rc == 1 and "text hash differs" in out
+
+
+def test_one_marker_replaced_by_a_different_one_in_the_same_file_fails(tmp_path):
+    other = "y = g(2)  " + H + "no" + "qa: S607"
+    supp = _supp_line("a.py", "suppress-noqa-security", _val(NOQA, NOQA))
+    assert _scan(_repo(tmp_path, {"a.py": NOQA + "\n" + NOQA + "\n"}), suppress=supp)[0] == 0
+    rc, out = _scan(_repo(tmp_path / "r", {"a.py": NOQA + "\n" + other + "\n"}), suppress=supp)
+    assert rc == 1 and "text hash differs" in out
+
+
+def test_a_marker_moved_to_another_line_with_identical_text_still_passes(tmp_path):
+    """Documented: the pin is the set of marker line texts, not their positions; identical text on another line is the same marker."""
+    supp = _supp_line("a.py", "suppress-noqa-security", _val(NOQA))
+    assert _scan(_repo(tmp_path, {"a.py": NOQA + "\nx = 1\n"}), suppress=supp)[0] == 0
+    assert _scan(_repo(tmp_path / "m", {"a.py": "x = 1\n\n" + NOQA + "\n"}), suppress=supp)[0] == 0
+
+
+@pytest.mark.parametrize("name", [".trivyignore", ".semgrepignore", ".gitleaksignore", "a/.bandit"])
+def test_a_scanner_config_with_a_nul_byte_still_hits(tmp_path, name):
+    repo = _repo(tmp_path, {name: b"line\0line\n"})
+    rc, out = _scan(repo)
+    assert rc == 1 and f"{name}:1: scanner-config-file" in out
+    sha = hashlib.sha256(b"line\0line\n").hexdigest()
+    assert _scan(repo, suppress=_supp_line(name, "scanner-config-file", sha))[0] == 0
+    rc, out = _scan(repo, suppress=_supp_line(name, "scanner-config-file", "1" * 64))
+    assert rc == 1 and "hash differs" in out
+
+
+@pytest.mark.parametrize("name", ["a.py", "pyproject.toml", "ci.yml", "x.sh"])
+def test_a_source_file_with_a_nul_byte_is_refused_not_skipped(tmp_path, name):
+    rc, out = _scan(_repo(tmp_path, {name: b"x = 1\0\n"}))
+    assert rc == 1 and f"{name}:1: nul-in-text-file" in out
+
+
+def test_a_marker_in_a_nul_file_is_not_hidden(tmp_path):
+    rc, out = _scan(_repo(tmp_path, {"a.py": b"\0\n" + NOSEC.encode() + b"\n"}))
+    assert rc == 1 and "a.py:2: suppress-nosec" in out
+
+
+def test_an_allowlist_path_that_is_a_glob_is_refused(tmp_path):
+    repo = _repo(tmp_path, {"a.txt": CASES["llm-id-sk"]})
+    for glob in ("*", "*.txt", "a.t?t", "[a].txt"):
+        rc, out = _scan(repo, allow=f"{glob}:*:disable everything\n")
+        assert rc == 1 and "no glob" in out and "a.txt:1: llm-id-sk" in out
+
+
+@pytest.mark.parametrize("path", ["tools/scan_allowlist.txt", "tools/scan_banned_extra.txt"])
+def test_the_scan_list_files_are_pinned_like_a_scanner_config(tmp_path, path):
+    repo = _repo(tmp_path, {path: "one\n"})
+    rc, out = _scan(repo)
+    assert rc == 1 and f"{path}:1: scanner-config-file" in out
+    assert _scan(repo, suppress=_supp_line(path, "scanner-config-file", _sha("one\n")))[0] == 0
+    (repo / path).write_text("one\ntwo\n")
+    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)  # noqa: S603, S607
+    rc, out = _scan(repo, suppress=_supp_line(path, "scanner-config-file", _sha("one\n")))
+    assert rc == 1 and "hash differs" in out
+
+
+def test_print_list_writes_a_list_the_scan_accepts_and_keeps_reasons(tmp_path):
+    repo = _repo(tmp_path, {"a.py": NOSEC + "\n" + NOQA + "\n", ".trivyignore": "x\n"})
+    old = _supp_line("a.py", "suppress-nosec", ONE, "kept reason")
+    work = tmp_path.parent / (tmp_path.name + "-lists")
+    work.mkdir(exist_ok=True)
+    (work / "old.txt").write_text("# header\n" + old)
+    cmd = [
+        sys.executable,
+        str(SCRIPT),
+        "--root",
+        str(repo),
+        "--suppressions",
+        str(work / "old.txt"),
+    ]
+    r = subprocess.run([*cmd, "--print-list"], capture_output=True, text=True, check=False)  # noqa: S603
+    assert r.returncode == 0 and r.stdout.startswith("# header\n")
+    assert ":kept reason" in r.stdout and "NEW, needs a reviewed reason" in r.stdout
+    assert _scan(repo, suppress=r.stdout) == (0, "\n")
+
+
+REAL_LIST = SCRIPT.parent / "scan_suppressions.txt"
+
+
+def test_a_weakened_copy_of_the_real_list_fails_the_scan(tmp_path):
+    """The guard is only as strong as the list it reads: remove an entry, or change a count or a hash, and the real repo fails."""
+    root = SCRIPT.parents[1]
+    lines = REAL_LIST.read_text().splitlines(keepends=True)
+    entries = [i for i, ln in enumerate(lines) if ln.strip() and not ln.startswith("#")]
+    marker_entry = next(i for i in entries if "@" in lines[i])
+    variants = {
+        "entry removed": [ln for i, ln in enumerate(lines) if i != marker_entry],
+        "hash changed": [_flip(ln) if i == marker_entry else ln for i, ln in enumerate(lines)],
+    }
+    for name, new in variants.items():
+        f = tmp_path / (name.replace(" ", "_") + ".txt")
+        f.write_text("".join(new))
+        cmd = [sys.executable, str(SCRIPT), "--root", str(root), "--suppressions", str(f)]
+        r = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
+        assert r.returncode == 1, name
+
+
+def _flip(line):
+    head, sep, rest = line.partition("@")
+    return head + sep + ("1" if rest[0] != "1" else "2") + rest[1:]
