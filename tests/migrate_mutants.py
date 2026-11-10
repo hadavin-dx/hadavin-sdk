@@ -12,9 +12,9 @@ Run from the repository root (needs the Postgres tests' variable HADAVIN_TEST_PG
 login may create schemas and roles; about 10 minutes):
 
     HADAVIN_TEST_PG_DSN=postgresql://... uv run python tests/migrate_mutants.py            # all; exit 1 if any is not killed
-    HADAVIN_TEST_PG_DSN=postgresql://... uv run python tests/migrate_mutants.py M88         # only names that hold the text
+    HADAVIN_TEST_PG_DSN=postgresql://... uv run python tests/migrate_mutants.py M88,R4      # only these ids (comma-separated)
 
-The last line is `N of N killed`. A cheap check that runs with the ordinary tests,
+Each killer id runs on its own (no -x) so a killer that does not fail shows; only the failing ones are printed. The last line is `N of N killed`; the lines before it count the three kinds. A cheap check that runs with the ordinary tests,
 `test_every_migrate_mutant_still_applies_to_the_source` (tests/test_migration_rules.py), fails when a mutant's `old`
 text is no longer in its file exactly once, so the list cannot rot between two runs.
 """
@@ -63,7 +63,7 @@ def k(test_file: str, test: str) -> str:
 WIRING_VAL = k(T_WIRING, "test_each_value_is_compared_with_its_own_saved_value")
 READS_BEFORE = k(T_WIRING, "test_clean_run_reads_before_each_file_insert")
 FORM = k(T_RULES, "test_every_caller_in_the_package_uses_the_right_form")
-SKIPS = k(T_RULES, "test_no_p3a2_test_skips_silently")
+SKIPS = k(T_RULES, "test_no_migration_test_skips_silently")
 MEMBER = k(T_RULES, "test_role_membership_is_refused_whatever_the_comments_and_names_hold") + "[-]"
 BLOCK_PG = k(T_PG, "test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it")
 RUNBOOK = k(T_RULES, "test_the_runbook_carries_the_real_lock_the_command_and_every_case")
@@ -446,8 +446,8 @@ M: list[Mutant] = [
         "N9",
         "C2: scratch fixture skips whatever the DSN is",
         T_PG,
-        '    if not DSN:\n        pytest.skip("HADAVIN_TEST_PG_DSN not set")\n    schema = f"p3a_',
-        '    if True:\n        pytest.skip("HADAVIN_TEST_PG_DSN not set")\n    schema = f"p3a_',
+        '    if not DSN:\n        pytest.skip("HADAVIN_TEST_PG_DSN not set")\n    schema = f"hadavin_test_',
+        '    if True:\n        pytest.skip("HADAVIN_TEST_PG_DSN not set")\n    schema = f"hadavin_test_',
         SKIPS + "[tests/test_migration_postgres.py]",
     ),
     Mutant(
@@ -647,7 +647,14 @@ M: list[Mutant] = [
         "'', ",
         TRIG_CHANGED,
     ),
-    Mutant("T3", "function text not compared", MIG, "md5(p.prosrc)", "''", TRIG_CHANGED),
+    Mutant(
+        "T3",
+        "function text not compared",
+        MIG,
+        '"p.prosrc, p.prosecdef,',
+        "\"'', p.prosecdef,",
+        TRIG_CHANGED,
+    ),
     Mutant(
         "T4", "function security mode not compared", MIG, "p.prosecdef,", "false,", TRIG_CHANGED
     ),
@@ -720,7 +727,7 @@ M: list[Mutant] = [
         "T14",
         "a listed trigger may be left disabled or replica-only",
         MIG,
-        '        elif after != before and after[0] in ("D", "R") and after[0] != entry.state:\n',
+        '        elif after[0] != before[0] and after[0] in ("D", "R") and after[0] != entry.state:\n',
         "        elif False:\n",
         STATE_LISTED,
     ),
@@ -744,8 +751,8 @@ M: list[Mutant] = [
         "T17",
         "a listed trigger left replica-only passes (only D is refused)",
         MIG,
-        '        elif after != before and after[0] in ("D", "R") and after[0] != entry.state:\n',
-        '        elif after != before and after[0] == "D" and after[0] != entry.state:\n',
+        '        elif after[0] != before[0] and after[0] in ("D", "R") and after[0] != entry.state:\n',
+        '        elif after[0] != before[0] and after[0] == "D" and after[0] != entry.state:\n',
         STATE_LISTED,
     ),
     # --- role memberships and saved settings ---
@@ -814,32 +821,32 @@ M: list[Mutant] = [
         "S2",
         "the flag rolsuper is not read",
         MIG,
-        "held = [flag for flag, value in zip(_ROLE_FLAGS, row, strict=True) if value]",
-        'held = [flag for flag, value in zip(_ROLE_FLAGS, row, strict=True) if value and flag != "rolsuper"]',
+        "held = [flag for i, flag in enumerate(_ROLE_FLAGS) if any(row[i] for row in rows)]",
+        'held = [flag for i, flag in enumerate(_ROLE_FLAGS) if any(row[i] for row in rows) and flag != "rolsuper"]',
         ROLE_REFUSED,
     ),
     Mutant(
         "S3",
         "the flag rolcreaterole is not read",
         MIG,
-        "held = [flag for flag, value in zip(_ROLE_FLAGS, row, strict=True) if value]",
-        'held = [flag for flag, value in zip(_ROLE_FLAGS, row, strict=True) if value and flag != "rolcreaterole"]',
+        "held = [flag for i, flag in enumerate(_ROLE_FLAGS) if any(row[i] for row in rows)]",
+        'held = [flag for i, flag in enumerate(_ROLE_FLAGS) if any(row[i] for row in rows) and flag != "rolcreaterole"]',
         ROLE_REFUSED,
     ),
     Mutant(
         "S4",
         "the flag rolcreatedb is not read",
         MIG,
-        "held = [flag for flag, value in zip(_ROLE_FLAGS, row, strict=True) if value]",
-        'held = [flag for flag, value in zip(_ROLE_FLAGS, row, strict=True) if value and flag != "rolcreatedb"]',
+        "held = [flag for i, flag in enumerate(_ROLE_FLAGS) if any(row[i] for row in rows)]",
+        'held = [flag for i, flag in enumerate(_ROLE_FLAGS) if any(row[i] for row in rows) and flag != "rolcreatedb"]',
         ROLE_REFUSED,
     ),
     Mutant(
         "S5",
         "the flag rolbypassrls is not read",
         MIG,
-        "held = [flag for flag, value in zip(_ROLE_FLAGS, row, strict=True) if value]",
-        'held = [flag for flag, value in zip(_ROLE_FLAGS, row, strict=True) if value and flag != "rolbypassrls"]',
+        "held = [flag for i, flag in enumerate(_ROLE_FLAGS) if any(row[i] for row in rows)]",
+        'held = [flag for i, flag in enumerate(_ROLE_FLAGS) if any(row[i] for row in rows) and flag != "rolbypassrls"]',
         ROLE_REFUSED,
     ),
     Mutant(
@@ -863,22 +870,25 @@ M: list[Mutant] = [
         "B2",
         "the membership query matches no role",
         MIG,
-        "AND r.rolname <> current_user AND pg_has_role(current_user, r.oid, 'MEMBER') ORDER BY r.rolname",
-        "AND false ORDER BY r.rolname",
+        "AND r.rolname NOT IN (current_user, session_user) \"\n    \"AND (pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER')) \"",
+        'AND r.rolname NOT IN (current_user, session_user) "\n    "AND false "',
         (
             k(
                 T_PG,
                 "test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server",
             ),
-            k(T_WIRING, "test_the_membership_check_reads_the_current_user_and_all_four_flags"),
+            k(
+                T_WIRING,
+                "test_the_membership_check_reads_both_user_names_all_four_flags_and_the_built_in_roles",
+            ),
         ),
     ),
     Mutant(
         "B3",
         "the test helper takes over any schema, public included",
         "tests/fixtures/migration_role.py",
-        "                    if not _is_scratch(schema):\n",
-        "                    if False:\n",
+        "                if not _is_scratch(schema):\n",
+        "                if False:\n",
         k(T_PG, "test_the_test_helper_refuses_to_take_over_a_schema_that_is_not_a_scratch_one"),
     ),
     Mutant(
@@ -930,6 +940,143 @@ M: list[Mutant] = [
         "refuses a released file",
         k(T_RULES, "test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim"),
     ),
+    # --- round 2: session user, built-in roles, parameter grants, grant option, ownership refusal ---
+    Mutant(
+        "SU1",
+        "the flags are read for the current user only, not the session user",
+        MIG,
+        '"WHERE rolname IN (current_user, session_user)"',
+        '"WHERE rolname IN (current_user)"',
+        (
+            k(T_PG, "test_a_superuser_login_that_switches_to_a_plain_role_is_refused"),
+            k(T_WIRING, "test_the_role_flags_are_read_for_the_current_user_and_the_session_user"),
+            k(
+                T_WIRING,
+                "test_a_privileged_session_user_is_refused_even_when_the_current_user_is_plain",
+            ),
+        ),
+    ),
+    Mutant(
+        "SU2",
+        "membership of a privileged role is checked for the current user only",
+        MIG,
+        "OR pg_has_role(session_user, r.oid, 'MEMBER')) ",
+        "OR false) ",
+        k(T_PG, "test_the_session_user_is_checked_for_membership_too"),
+    ),
+    Mutant(
+        "PD1",
+        "built-in server roles are not treated as privileged",
+        MIG,
+        "OR (left(r.rolname, 3) = 'pg_' AND r.rolname <> 'pg_database_owner')) ",
+        "OR false) ",
+        k(T_PG, "test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server"),
+    ),
+    Mutant(
+        "PA1",
+        "a grant on a server setting is not looked for",
+        MIG,
+        "    if row and row[0] and (params := [",
+        "    if False and (params := [",
+        (
+            k(T_PG, "test_a_parameter_grant_is_refused_by_a_real_server"),
+            k(T_WIRING, "test_a_parameter_grant_is_refused_before_any_file_runs"),
+        ),
+    ),
+    Mutant(
+        "GO1",
+        "the printed role SQL leaves out the grant option",
+        MIG,
+        "TO migration_role WITH GRANT OPTION;",
+        "TO migration_role;",
+        k(
+            T_PG,
+            "test_a_role_made_with_the_printed_sql_only_can_pass_usage_on_to_the_runtime_and_portal_roles",
+        ),
+    ),
+    Mutant(
+        "GO2",
+        "the schema usage of the named roles is not checked after the grants",
+        MIG,
+        "                if not got or not got[0]:\n",
+        "                if False:\n",
+        k(
+            T_PG,
+            "test_a_role_without_the_grant_option_is_refused_when_its_grants_would_do_nothing",
+        ),
+    ),
+    Mutant(
+        "FO1",
+        "a procedure or an aggregate is printed as a function",
+        MIG,
+        "{_FUNCTION_WORD.get(kind, 'FUNCTION')}",
+        "FUNCTION",
+        k(T_PG, "test_a_procedure_and_an_aggregate_get_their_own_words_and_the_printed_lines_run"),
+    ),
+    Mutant(
+        "FO2",
+        "a partition (its parent is in the way) owned by another role is not listed",
+        MIG,
+        "AND (c.relkind <> 'S' OR NOT EXISTS",
+        "AND (false OR NOT EXISTS",
+        k(T_PG, "test_a_partition_owned_by_another_role_is_listed"),
+    ),
+    Mutant(
+        "FO3",
+        "a name with a control character is copied into a printed statement",
+        MIG,
+        "        plain = all(escape_name(x) == x for x in (name, args, schema, me))\n",
+        "        plain = True\n",
+        k(T_PG, "test_a_name_with_a_newline_is_never_copied_into_a_printed_statement"),
+    ),
+    Mutant(
+        "FO4",
+        "only the shown names get a printed statement",
+        MIG,
+        "    for what, kind, name, owner, args in rows:\n",
+        "    for what, kind, name, owner, args in rows[:_FOREIGN_OWNED_SHOWN]:\n",
+        k(T_PG, "test_every_statement_is_printed_when_more_than_the_shown_names_are_foreign"),
+    ),
+    Mutant(
+        "OW1",
+        "an owner the role belongs to counts as safe without inheriting its rights",
+        MIG,
+        "c.relowner, 'USAGE') ",
+        "c.relowner, 'MEMBER') ",
+        k(T_PG, "test_an_owner_the_migration_role_belongs_to_is_safe_only_when_it_inherits"),
+    ),
+    Mutant(
+        "OW2",
+        "functions that another role owns are not looked for",
+        MIG,
+        "AND NOT pg_has_role(current_user, p.proowner, 'USAGE') ",
+        "AND false ",
+        k(T_PG, "test_the_function_half_of_the_ownership_check_finds_a_function_alone"),
+    ),
+    Mutant(
+        "EX1",
+        "functions of an installed extension are listed",
+        MIG,
+        "AND d.deptype = 'e') ORDER BY 1, 3, 5",
+        "AND false) ORDER BY 1, 3, 5",
+        k(T_PG, "test_objects_of_an_installed_extension_are_not_listed"),
+    ),
+    Mutant(
+        "EX2",
+        "tables and views of an installed extension are listed",
+        MIG,
+        '"AND d.deptype = \'e\') "\n    "AND (c.relkind',
+        '"AND false) "\n    "AND (c.relkind',
+        k(T_PG, "test_objects_of_an_installed_extension_are_not_listed"),
+    ),
+    Mutant(
+        "TN1",
+        "a trigger name with a control character is accepted in the allow list",
+        MIG,
+        '        if escape_name(entry["trigger"]) != entry["trigger"]:\n',
+        "        if False:\n",
+        k(T_WIRING, "test_a_trigger_name_that_is_not_plain_is_refused_in_the_list"),
+    ),
 ]
 
 
@@ -961,6 +1108,11 @@ def summary_line(out: str) -> str:
         if re.search(r"\b(passed|failed|error|errors|no tests ran)\b", line):
             return line.strip(" =")
     return out.strip().splitlines()[-1][:120] if out.strip() else ""
+
+
+def kind_of(m: Mutant) -> str:
+    """behaviour (a line of the package), prose (the CHANGELOG runbook) or test-helper (a line of the tests)."""
+    return "behaviour" if m.file.startswith("src/") else "prose" if m.file == CL else "test-helper"
 
 
 def killers_of(m: Mutant) -> list[str]:
@@ -1029,34 +1181,53 @@ def _run_all(only: str, work: Path) -> int:
     if not chk.startswith(str(copy)):
         print("STOP: hadavin_sdk is not imported from the copy under test")
         return 2
-    base = ["-p", "no:cacheprovider", "-q", "-x", "--no-header"]
-    selected = [m for m in M if not only or m.name == only]
+    base = ["-p", "no:cacheprovider", "-q", "--no-header"]
+    wanted = {n for n in only.split(",") if n}
+    selected = [m for m in M if not wanted or m.name in wanted]
     if not selected:
-        print(f"STOP: no mutant has the id {only!r}")
+        print(f"STOP: no mutant has the id {only!r} (several: comma-separated)")
         return 2
     killers = sorted({kid for m in selected for kid in killers_of(m)})
-    rc, out, dt = run([py, "-m", "pytest", *base, *killers], copy, env, timeout)
+    rc, out, dt = run([py, "-m", "pytest", *base, "-x", *killers], copy, env, timeout)
     print(f"BASELINE rc={rc} {summary_line(out)} ({dt:.1f}s, {len(killers)} killer ids)")
     if rc != 0:
         print(out[-3000:])
         print("STOP: baseline not green")
         return 2
-    print("name | description | result | pytest summary | seconds | killers")
+    print(
+        "name | kind | description | result | failing killers (only the ones that fail) | seconds"
+    )
     results = []
     for m in selected:
         path = copy / m.file
         original = path.read_bytes()
+        failing, codes, spent = [], [], 0.0
         try:
             path.write_bytes(original.decode("utf-8").replace(m.old, m.new, 1).encode("utf-8"))
-            rc, out, dt = run([py, "-m", "pytest", *base, *killers_of(m)], copy, env, timeout)
+            for killer in killers_of(
+                m
+            ):  # each killer on its own, without -x, so a silent one shows
+                rc, out, dt = run([py, "-m", "pytest", *base, "-rf", killer], copy, env, timeout)
+                spent += dt
+                codes.append(rc)
+                failing += re.findall(r"^FAILED (\S+)", out, re.MULTILINE)
         finally:
             path.write_bytes(original)
-        status = "KILLED" if rc == 1 else "SURVIVED" if rc == 0 else f"ERROR(rc={rc})"
+        status = (
+            "KILLED"
+            if 1 in codes and all(c in (0, 1) for c in codes)
+            else "SURVIVED"
+            if all(c == 0 for c in codes)
+            else f"ERROR(rc={codes})"
+        )
         results.append((m, status))
         print(
-            f"{m.name} | {m.desc} | {status} | {summary_line(out)} | {dt:.1f}s | {', '.join(killers_of(m))}",
+            f"{m.name} | {kind_of(m)} | {m.desc} | {status} | {', '.join(failing) or '-'} | {spent:.1f}s",
             flush=True,
         )
+    for kind in ("behaviour", "prose", "test-helper"):
+        part = [(m, s) for m, s in results if kind_of(m) == kind]
+        print(f"{kind}: {sum(1 for _, s in part if s == 'KILLED')} of {len(part)} killed")
     killed = sum(1 for _, s in results if s == "KILLED")
     bad = [f"{m.name}:{s}" for m, s in results if s != "KILLED"]
     print(f"not killed: {bad}")

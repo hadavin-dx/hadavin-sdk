@@ -2,9 +2,9 @@
 timing rule `tests/fixtures/timing.py`. Not collected by pytest.
 
 Each mutant reverts ONE guard in a temp copy; the test in `killer` must be the one that fails first, with a failing line
-that holds `expect`. The first 17 are the lexer mutants of the ticket (M26 a-h, M74, M50, M51, M52, M72, M73, M96, M97,
+that holds `expect`. The first 17 are the lexer mutants of the first change (M26 a-h, M74, M50, M51, M52, M72, M73, M96, M97,
 M98; the "strings before comments" mutant of M26(i) cannot be written as a one-line revert and M86 is the timing
-stand-in, which lives in the `perf` tests); the rest are the guards added in fix 1 and order 100. Run from the repo
+stand-in, which lives in the `perf` tests); the rest are the guards added in the two fixes after it. Run from the repo
 root (CI-ready: needs only the ordinary test environment, no database, no network, under a minute; exit 0 only when every
 mutant is good, and the last line is `N of N good; problems: []`):
 
@@ -308,7 +308,7 @@ M = [
         allow_crash=True,
         crash_type="KeyError",
     ),
-    # --- order 100
+    # --- the second fix
     mutant(
         "o100: statement_text returns the bare text, not the pair",
         "    return lex(text, keep_quoted)\n",

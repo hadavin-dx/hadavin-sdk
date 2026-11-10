@@ -7,6 +7,7 @@ other statement an empty answer. Planted names and SQL are made up."""
 from __future__ import annotations
 
 import contextlib
+import json
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,7 @@ require_module("psycopg")
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store import migrate as mig
 from hadavin_sdk.store import migration_numbers as mn
+from tests.fixtures.released_stub import made_up_files_are_not_released
 
 T0, T1 = "2026-11-06T00:00:00+00:00", "2026-11-06T00:00:01+00:00"
 START = (
@@ -73,9 +75,20 @@ class _Db:
     statement."""
 
     def __init__(
-        self, values, triggers, applied=(), members=None, flags=None, settings=None, borrowed=()
+        self,
+        values,
+        triggers,
+        applied=(),
+        members=None,
+        flags=None,
+        settings=None,
+        borrowed=(),
+        parameters=None,
+        schema_usage=True,
     ):
+        self.parameters, self.schema_usage = parameters, schema_usage
         self.borrowed = [(r,) for r in borrowed]
+        self.more_flags = []  # the flags of a second user name (the session user)
         self.values, self.triggers = list(values), list(triggers)
         self.flags = (False, False, False, False) if flags is None else flags  # the role flags
         self.settings = None if settings is None else list(settings)  # one answer per read
@@ -106,9 +119,15 @@ class _Db:
         if text == mig._READBACK_MEMBERS_SQL:
             return _Result([] if self.members is None else self.members.pop(0))
         if text == mig._ROLE_FLAGS_SQL:
-            return _Result([self.flags])
+            return _Result([self.flags, *self.more_flags])
         if text == mig._BORROWED_ROLES_SQL:
             return _Result(self.borrowed)
+        if text == mig._PARAMETER_TABLE_SQL:
+            return _Result([(self.parameters is not None,)])
+        if text == mig._PARAMETER_GRANTS_SQL:
+            return _Result([(x,) for x in (self.parameters or [])])
+        if text == mig._SCHEMA_USAGE_SQL:
+            return _Result([(self.schema_usage,)])
         if text == mig._READBACK_SETTINGS_SQL:
             return _Result([] if self.settings is None else self.settings.pop(0))
         if text == "SELECT current_schema()":
@@ -134,11 +153,11 @@ def _run(
     db = _Db(values, triggers, applied, members, settings=settings)
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
     monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
-    monkeypatch.setattr(
-        mig, "released_problems", lambda *a, **k: []
+    made_up_files_are_not_released(
+        monkeypatch
     )  # these made-up file names are not the released ones
-    monkeypatch.setattr(
-        mig, "released_problems", lambda *a, **k: []
+    made_up_files_are_not_released(
+        monkeypatch
     )  # these made-up file names are not the released ones
     monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
     try:
@@ -249,7 +268,7 @@ def test_directory_named_like_a_migration_is_refused(monkeypatch, tmp_path):
 def test_commit_in_a_file_is_refused_before_connecting(monkeypatch, tmp_path):
     """FAIL-BEFORE 5: the real files plus one that ends the transaction."""
     planted = tmp_path / "0006_commit.sql"
-    planted.write_text("ALTER TABLE runs ADD COLUMN IF NOT EXISTS p3a_c TEXT;\nCOMMIT;\n")
+    planted.write_text("ALTER TABLE runs ADD COLUMN IF NOT EXISTS hadavin_test_c TEXT;\nCOMMIT;\n")
     files = mig._migration_files() + [planted]
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
 
@@ -275,7 +294,7 @@ def test_migrate_executes_the_text_it_scanned(monkeypatch, tmp_path):
 
     db = _Db([START, START, START], [[], [], []])
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
-    monkeypatch.setattr(mig, "released_problems", lambda *a, **k: [])  # made-up file names
+    made_up_files_are_not_released(monkeypatch)  # made-up file names
     monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
     monkeypatch.setattr(Path, "read_text", counting)
     real_scan = mig.check_grants
@@ -456,7 +475,7 @@ def test_a_trigger_created_disabled_is_refused_and_one_created_enabled_is_not(
 
 def test_a_trigger_recreated_with_another_definition_or_function_is_refused(monkeypatch, tmp_path):
     """the trigger keeps its name, enabled state and table but not what it does.
-    Killed by: mutants T1..T5 and T7 of tests/migrate_mutants.py (one part of the saved trigger not compared)."""
+    Killed by: mutants T1, T2, T3, T4, T5 and T7 of tests/migrate_mutants.py (one part of the saved trigger not compared)."""
     changes = {
         "definition": {
             "definition": "CREATE TRIGGER trg AFTER INSERT ON s.t EXECUTE FUNCTION s.g()"
@@ -477,7 +496,12 @@ def test_a_trigger_recreated_with_another_definition_or_function_is_refused(monk
 
 def test_the_trigger_query_reads_definition_function_text_and_security_mode():
     q = mig._READBACK_TRIGGERS_SQL
-    assert "pg_get_triggerdef(t.oid)" in q and "md5(p.prosrc)" in q and "p.prosecdef" in q
+    assert (
+        "pg_get_triggerdef(t.oid)" in q
+        and "p.prosrc" in q
+        and "md5" not in q
+        and "p.prosecdef" in q
+    )
     assert "pg_get_userbyid(p.proowner)" in q and "p.proconfig" in q
     assert "pg_proc" in q
 
@@ -801,8 +825,8 @@ def test_a_privileged_migration_role_is_refused_before_any_file_runs(monkeypatch
     db = _Db([START] * 3, [[], [], []], flags=flags)
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
     monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
-    monkeypatch.setattr(
-        mig, "released_problems", lambda *a, **k: []
+    made_up_files_are_not_released(
+        monkeypatch
     )  # these made-up file names are not the released ones
     monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
     with pytest.raises(ConfigError, match=f"it holds: {flag}"):
@@ -818,7 +842,7 @@ def test_a_role_that_is_a_member_of_a_privileged_role_is_refused_before_any_file
     db = _Db([START], [[]], borrowed=("boss_role", "other_boss"))
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
     monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
-    monkeypatch.setattr(mig, "released_problems", lambda *a, **k: [])
+    made_up_files_are_not_released(monkeypatch)
     monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
     with pytest.raises(ConfigError, match="member of a role that is a superuser") as e:
         mig.migrate("postgresql://unused")
@@ -827,17 +851,74 @@ def test_a_role_that_is_a_member_of_a_privileged_role_is_refused_before_any_file
     assert not any(s.startswith("CREATE TABLE IF NOT EXISTS schema_migrations") for s in db.log)
 
 
-def test_the_membership_check_reads_the_current_user_and_all_four_flags():
+def test_the_membership_check_reads_both_user_names_all_four_flags_and_the_built_in_roles():
+    """A pin on the query text; the real-server tests show the behaviour."""
     q = mig._BORROWED_ROLES_SQL
-    assert "current_user" in q and "'MEMBER'" in q
+    assert "current_user" in q and "session_user" in q and "'MEMBER'" in q and "'pg_'" in q
     for flag in ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls"):
         assert flag in q
 
 
-def test_the_role_flags_are_read_from_the_current_user():
-    assert "current_user" in mig._ROLE_FLAGS_SQL and "pg_roles" in mig._ROLE_FLAGS_SQL
+def test_the_role_flags_are_read_for_the_current_user_and_the_session_user():
+    """A pin on the query text. Killed by: mutant SU1 together with the real-server test."""
+    assert "current_user" in mig._ROLE_FLAGS_SQL and "session_user" in mig._ROLE_FLAGS_SQL
+    assert "pg_roles" in mig._ROLE_FLAGS_SQL
     for flag in ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls"):
         assert flag in mig._ROLE_FLAGS_SQL
+
+
+def _refused_by(monkeypatch, tmp_path, **db_args):
+    files = _files(tmp_path, 1)
+    db = _Db([START], [[]], **db_args)
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    made_up_files_are_not_released(monkeypatch)
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    return db
+
+
+def test_a_privileged_session_user_is_refused_even_when_the_current_user_is_plain(
+    monkeypatch, tmp_path
+):
+    """Killed by: mutants SU1 and SU2 (the second row of flags is not read)."""
+    db = _refused_by(monkeypatch, tmp_path)
+    db.more_flags = [(True, False, False, False)]
+    with pytest.raises(ConfigError, match="it holds: rolsuper"):
+        mig.migrate("postgresql://unused")
+    assert "SELECT 1;\n" not in db.log
+
+
+def test_a_parameter_grant_is_refused_before_any_file_runs(monkeypatch, tmp_path):
+    """Killed by: mutant PA1."""
+    db = _refused_by(monkeypatch, tmp_path, parameters=["session_replication_role"])
+    with pytest.raises(ConfigError, match="may change server settings it must not change") as e:
+        mig.migrate("postgresql://unused")
+    assert "session_replication_role" in str(e.value)
+    assert "SELECT 1;\n" not in db.log
+
+
+def test_a_server_without_parameter_grants_is_not_asked_about_them(monkeypatch, tmp_path):
+    files = _files(tmp_path, 2)
+    db = _Db([START] * 3, [[], [], []], parameters=None)
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    made_up_files_are_not_released(monkeypatch)
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    mig.migrate("postgresql://unused")
+    assert mig._PARAMETER_TABLE_SQL in db.log and mig._PARAMETER_GRANTS_SQL not in db.log
+
+
+@pytest.mark.parametrize("name", ["bad\nname", "tab\there"])
+def test_a_trigger_name_that_is_not_plain_is_refused_in_the_list(monkeypatch, tmp_path, name):
+    """Killed by: mutant TN1 (the name check is gone)."""
+    f = tmp_path / "list.json"
+    f.write_text(
+        json.dumps([{"migration": "0001_x", "table": "a", "trigger": name, "reason": "r"}]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(mig, "TRIGGER_CHANGES", f)
+    with pytest.raises(ConfigError, match="trigger name with a control or unusual character"):
+        mig._trigger_changes()
 
 
 def test_there_is_no_switch_that_turns_the_role_check_off():
@@ -855,8 +936,8 @@ def test_the_refusal_says_how_to_make_a_plain_migration_role(monkeypatch, tmp_pa
     db = _Db([START], [[]], flags=(True, False, False, False))
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
     monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
-    monkeypatch.setattr(
-        mig, "released_problems", lambda *a, **k: []
+    made_up_files_are_not_released(
+        monkeypatch
     )  # these made-up file names are not the released ones
     monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
     with pytest.raises(ConfigError) as e:
@@ -932,10 +1013,17 @@ def test_migrate_refuses_when_the_released_list_is_unreadable_or_wrong(monkeypat
         mig.migrate("postgresql://unused")
 
 
-def test_the_released_list_ships_inside_the_package_and_covers_every_real_file():
+def test_the_released_list_ships_inside_the_package_and_the_real_folder_passes_it():
     assert mig.RELEASED_MANIFEST.parent == mn.MIGRATIONS.parent
     assert mig.RELEASED_MANIFEST.is_file()
     assert mn.released_problems(mn.MIGRATIONS, mig._released_manifest()) == []
+
+
+def test_every_entry_of_the_trigger_list_names_a_file_that_is_in_the_folder():
+    """A stale entry (its file was renamed or removed) would allow nothing and hide that; the shipped list is checked
+    against the real folder (it is empty today, so this holds trivially until the first entry)."""
+    stems = {p.stem for p in mig._migration_files()}
+    assert {c.migration for c in mig._trigger_changes()} <= stems
 
 
 def test_the_released_check_looks_at_the_files_migrate_runs_not_at_the_folder(
@@ -1008,11 +1096,11 @@ def _run_raising(monkeypatch, tmp_path, error):
     db = _Raises(error, "SELECT 2;\n", [START] * 3, [[], [], []])
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
     monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
-    monkeypatch.setattr(
-        mig, "released_problems", lambda *a, **k: []
+    made_up_files_are_not_released(
+        monkeypatch
     )  # these made-up file names are not the released ones
-    monkeypatch.setattr(
-        mig, "released_problems", lambda *a, **k: []
+    made_up_files_are_not_released(
+        monkeypatch
     )  # these made-up file names are not the released ones
     monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
     mig.migrate("postgresql://unused")

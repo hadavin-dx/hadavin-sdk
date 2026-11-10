@@ -279,7 +279,7 @@ def test_late_files_are_sorted_by_number(mn):
 # --- the recipe ---------------------------------------------------------------------------------------------------
 
 
-def _recipe(mn, entries=(("0004_x", "SELECT 1;"),), schema="p3a_s"):
+def _recipe(mn, entries=(("0004_x", "SELECT 1;"),), schema="hadavin_test_s"):
     return mn.hand_recipe(list(entries), schema)
 
 
@@ -289,7 +289,7 @@ def test_recipe_order_and_command(mn):
         {"0009_z"},
         _paths("0004_a.sql", "0005_b.sql", "0006_c.sql"),
         {Path(f"{s}.sql"): t for s, t in entries},
-        "p3a_s",
+        "hadavin_test_s",
     )
     assert len(got) == 1, "one problem, one recipe, however many files are late"
     msg = got[0]
@@ -298,7 +298,7 @@ def test_recipe_order_and_command(mn):
     lines = recipe.split("\n")
     assert lines[0] == "-- RECIPE begins" and lines[-1] == "-- RECIPE ends"
     order = [
-        lines.index('SET search_path TO "p3a_s";'),
+        lines.index('SET search_path TO "hadavin_test_s";'),
         lines.index("BEGIN;"),
         *[lines.index(limit) for limit in mn.RECIPE_TIMEOUTS],
         lines.index(f"SELECT pg_advisory_xact_lock({mn.MIGRATE_LOCK});"),
@@ -324,7 +324,7 @@ def test_recipe_first_line(mn):
 
 def test_recipe_has_no_include_command(mn):
     msg = mn.order_problems(
-        {"0009_z"}, _paths("0004_x.sql"), {Path("0004_x.sql"): "SELECT 1;"}, "p3a_s"
+        {"0009_z"}, _paths("0004_x.sql"), {Path("0004_x.sql"): "SELECT 1;"}, "hadavin_test_s"
     )[0]
     assert msg.count("\\") == 1, "the only backslash is the generated first line"
     assert msg.index("\\") == msg.index("\\set ON_ERROR_STOP on")
@@ -423,7 +423,7 @@ def test_recipe_unterminated_last_statement(mn):
 
 def test_recipe_schema_quoted(mn):
     assert 'SET search_path TO "default";' in _recipe(mn, schema="default")
-    assert 'SET search_path TO "p3a_s";' in _recipe(mn)
+    assert 'SET search_path TO "hadavin_test_s";' in _recipe(mn)
 
 
 def test_schema_name_plain(mn):
@@ -436,7 +436,7 @@ def test_schema_name_plain(mn):
 
 def test_order_problems_turns_a_refused_file_into_a_message(mn):
     msg = mn.order_problems(
-        {"0009_z"}, _paths("0004_x.sql"), {Path("0004_x.sql"): "\\! echo hi"}, "p3a_s"
+        {"0009_z"}, _paths("0004_x.sql"), {Path("0004_x.sql"): "\\! echo hi"}, "hadavin_test_s"
     )[0]
     assert "-- RECIPE begins" not in msg and "0004_x" in msg and "by hand" in msg
 
@@ -803,7 +803,7 @@ def test_the_real_files_read_clean(mn):
         assert problem == "", p.name
         assert mn.refused_statements(text) == [], p.name
         counts.append(len([s for s in cleaned.split(";") if s.strip()]))
-    # the first five files are the released ones (34 statements, the ticket's counts); a new file may follow
+    # the first five files are the released ones (34 statements, the agreed counts); a new file may follow
     assert len(counts) >= 5 and counts[:5] == [12, 9, 8, 2, 3]
 
 

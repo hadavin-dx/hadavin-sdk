@@ -8,7 +8,7 @@ through `check_grants`). `released_problems` is called by `migrate` with the tex
 `check_migration_numbers`, `released_problems` (directory listings and one read per released file, none when the text
 is passed in) and `read_files`.
 
-Why a lexer of our own (R448 rung decision, 2026-11-06). The text rules do exactly two jobs the database cannot do for us:
+Why a lexer of our own (decided 2026-11-06). The text rules do exactly two jobs the database cannot do for us:
 (a) hand `migrate._scan` a view of the file without comments, so it can refuse a `CREATE TABLE` that has no exact grants;
 (b) refuse transaction control (`COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT` ...) before the run, because a hidden `COMMIT`
 ends the one migration transaction. The other refusals (`SET`, `RESET`, `ALTER ROLE`, `DO`, `EXECUTE` ...) are a tripwire
@@ -23,7 +23,7 @@ test-only: `tests/test_migration_numbers_guards.py` compares it with this lexer 
 lexer reads a file LONGER than the server does, a `COMMIT` can hide inside a string (the dangerous direction); if it ends
 a string EARLIER, the file is refused although it is fine (the safe direction).
 
-Which function to call. `statement_text(text, keep_quoted=False)` returns the pair `(text, problem)` (the ticket's
+Which function to call. `statement_text(text, keep_quoted=False)` returns the pair `(text, problem)` (the agreed
 signature); `problem` is "" when the file was read to its end, and when it is not the returned text stops at the problem
 and must not be used. A caller that wants no pair and no half text uses `checked_statement_text`, which returns the text
 alone or raises `SqlReadError`. `lex` is the same as `statement_text`.
@@ -31,10 +31,9 @@ alone or raises `SqlReadError`. `lex` is the same as `statement_text`.
 The lexer follows the PostgreSQL scanner rules that matter for where a string, comment or body starts and ends, with
 `standard_conforming_strings = on`. Preconditions: the migration role is NOT a superuser (statements such as
 `CREATE EXTENSION`, `COPY ... PROGRAM` and `LOAD` are refused here as a tripwire, not as the guard), the server is
-PostgreSQL 15 or later, and the files are UTF-8 text without hidden characters. The scanner rules were compared with
-pglast 8.7 (the PostgreSQL 17 scanner) and probed on 16.15; that PostgreSQL 15 scans the same way is an
-ASSUMPTION nobody has tested here. `refused_statements` refuses `CREATE EXTENSION` outright: no extension is allowed
-today, because no planned migration creates one (grep of the tickets, in the pull request text). If one is wanted, add
+PostgreSQL 16 or later, and the files are UTF-8 text without hidden characters. The scanner rules were compared with
+pglast 8.7 (the PostgreSQL 17 scanner) and probed on 16.15; an older server is not supported (the role checks need 16). `refused_statements` refuses `CREATE EXTENSION` outright: no extension is allowed
+today, because no planned migration creates one (checked in the pull request text). If one is wanted, add
 its name to a named allow-list constant here and test it; never a bypass.
 """
 
@@ -481,7 +480,7 @@ class SqlReadError(ValueError):
 def checked_statement_text(text: str, keep_quoted: bool = False) -> str:
     """The text `lex` returns, or `SqlReadError`: a caller that wants the view of the file gets a complete view or no
     view at all, never a text that stops at the first problem (fail closed). It returns a `str`, not a pair; the
-    ticket's name `statement_text` returns the pair."""
+    the agreed name `statement_text` returns the pair."""
     cleaned, problem = lex(text, keep_quoted)
     if problem:
         raise SqlReadError(problem)
@@ -489,7 +488,7 @@ def checked_statement_text(text: str, keep_quoted: bool = False) -> str:
 
 
 def statement_text(text: str, keep_quoted: bool = False) -> tuple[str, str]:
-    """The ticket's function: `(text, problem)`, see `lex`. Write `cleaned, problem = statement_text(...)`. It never
+    """The agreed function: `(text, problem)`, see `lex`. Write `cleaned, problem = statement_text(...)`. It never
     raises and never returns a bare `str`, so `statement_text(...)[0]` is the whole text and not its first character."""
     return lex(text, keep_quoted)
 

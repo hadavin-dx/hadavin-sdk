@@ -1,4 +1,4 @@
-"""P3a-1 fix 1: tests for the findings of review round 1 on PR 68 (hidden characters, the dollar rule, a lexer that
+"""Tests for the findings of the first review of the lexer change (hidden characters, the dollar rule, a lexer that
 fails closed, plain-words messages, the lock key, a refusal list that covers more, the released-file manifest) and the
 differential test against the PostgreSQL scanner (pglast, test-only: GPL-3.0, never imported by the product)."""
 
@@ -146,15 +146,15 @@ def test_checked_statement_text_raises_instead_of_returning_a_cut_text(mn):
 
 
 def test_statement_text_called_the_ticket_way_returns_the_pair(mn):
-    """Ticket P3a: `statement_text(text, keep_quoted=False) -> tuple[str, str]`. P3a-2 builds `_scan` from the ticket,
-    so these are the calls it will write. A function that returned a bare `str` would make `[0]` one character and
+    """`statement_text(text, keep_quoted=False) -> tuple[str, str]`. `migrate` builds `_scan` from it,
+    so these are the calls it writes. A function that returned a bare `str` would make `[0]` one character and
     the unpacking either fail or split a two-character text: both are tested."""
     sql = "SELECT 'a' /* c */;"
     cleaned, problem = mn.statement_text(sql)
     assert (cleaned, problem) == ("SELECT ''  ;", "")
     kept, problem = mn.statement_text(
         sql, True
-    )  # keep_quoted by position, as the ticket's `_scan` call
+    )  # keep_quoted by position, as the agreed `_scan` call
     assert (kept, problem) == ("SELECT 'a'  ;", "")
     result = mn.statement_text(sql, keep_quoted=True)
     assert isinstance(result, tuple) and len(result) == 2

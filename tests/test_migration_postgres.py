@@ -27,6 +27,7 @@ from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
 from hadavin_sdk.store import migrate as mig
 from hadavin_sdk.store.migration_numbers import MigrationNumberError
+from tests.fixtures.released_stub import made_up_files_are_not_released
 
 DSN = os.environ.get("HADAVIN_TEST_PG_DSN")
 needs_pg = pytest.mark.skipif(
@@ -38,7 +39,7 @@ needs_pg = pytest.mark.skipif(
 # constant when the first tag exists.
 PREVIOUS_RELEASE_LAST = "0005_evidence"
 # Nothing in the real folder follows it today, so the test below also plants a newer file of its own (it is never empty).
-PLANTED_NEXT = "0006_p3a_next.sql"
+PLANTED_NEXT = "0006_next.sql"
 REAL = [p.stem for p in mig._migration_files()]
 
 
@@ -72,7 +73,7 @@ def scratch():
     """(dsn scoped to a fresh empty schema, schema name); the schema is dropped afterwards."""
     if not DSN:
         pytest.skip("HADAVIN_TEST_PG_DSN not set")
-    schema = f"p3a_{uuid.uuid4().hex[:12]}"
+    schema = f"hadavin_test_{uuid.uuid4().hex[:12]}"
     with psycopg.connect(DSN, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
     try:
@@ -148,7 +149,7 @@ def test_a_normal_run_applies_every_file_once_and_is_repeatable(scratch):
 # --- what a file leaves changed is found by the read-back and the whole run is rolled back ---------------------
 
 _FLIP = (
-    "CREATE OR REPLACE FUNCTION p3a_flip(item TEXT, val TEXT) RETURNS void LANGUAGE plpgsql AS $$\n"
+    "CREATE OR REPLACE FUNCTION hadavin_test_flip(item TEXT, val TEXT) RETURNS void LANGUAGE plpgsql AS $$\n"
     "BEGIN PERFORM set_config(item, val, true); END $$;\n"
 )
 PLANTS = {
@@ -195,16 +196,22 @@ PLANTS = {
         "its table was renamed from audit_entries to audit_entries_moved",
     ),
     "replication_role": (
-        _FLIP + "SELECT p3a_flip('session_replication_role', 'replica');\n",
+        _FLIP + "SELECT hadavin_test_flip('session_replication_role', 'replica');\n",
         "session_replication_role",
     ),
-    "search_path": (_FLIP + "SELECT p3a_flip('search_path', 'public');\n", "search_path"),
+    "search_path": (_FLIP + "SELECT hadavin_test_flip('search_path', 'public');\n", "search_path"),
     "scs": (
-        _FLIP + "SELECT p3a_flip('standard_conforming_strings', 'off');\n",
+        _FLIP + "SELECT hadavin_test_flip('standard_conforming_strings', 'off');\n",
         "standard_conforming_strings",
     ),
-    "backslash_quote": (_FLIP + "SELECT p3a_flip('backslash_quote', 'on');\n", "backslash_quote"),
-    "encoding": (_FLIP + "SELECT p3a_flip('client_encoding', 'LATIN1');\n", "client_encoding"),
+    "backslash_quote": (
+        _FLIP + "SELECT hadavin_test_flip('backslash_quote', 'on');\n",
+        "backslash_quote",
+    ),
+    "encoding": (
+        _FLIP + "SELECT hadavin_test_flip('client_encoding', 'LATIN1');\n",
+        "client_encoding",
+    ),
 }
 
 
@@ -234,14 +241,19 @@ def test_h11_the_read_back_refuses_a_planted_file(scratch, monkeypatch, tmp_path
     mig.migrate(dsn)  # call 1: the real folder
     body, item = PLANTS[plant]
     with _plain_role_may_set("session_replication_role" if plant == "replication_role" else None):
+        if plant == "replication_role":
+            # `migrate` refuses a role with a parameter grant before any file runs (see
+            # test_a_parameter_grant_is_refused_by_a_real_server); here that first refusal is switched off to prove the
+            # read-back is a second line that finds the changed setting too.
+            monkeypatch.setattr(mig, "_PARAMETER_TABLE_SQL", "SELECT false")
         _run_plant(dsn, monkeypatch, tmp_path, body, item)
 
 
 def _run_plant(dsn, monkeypatch, tmp_path, body, item):
-    _with_files(monkeypatch, tmp_path, {"0006_p3a_plant.sql": body})
+    _with_files(monkeypatch, tmp_path, {"0006_plant.sql": body})
     with pytest.raises(ConfigError) as e:  # call 2: real folder plus the planted file
         mig.migrate(dsn)
-    assert "0006_p3a_plant.sql" in str(e.value) and item in str(e.value), str(e.value)
+    assert "0006_plant.sql" in str(e.value) and item in str(e.value), str(e.value)
     assert not str(e.value).startswith("migrations are inconsistent"), (
         "it is the read-back, not the scan"
     )
@@ -262,7 +274,7 @@ def test_h11_a_function_owner_change_is_refused(scratch, monkeypatch, tmp_path):
     """The owner of the trigger function is read back: handing it to another role is a trigger change. Killed by: mutant T7
     (function owner not compared) of tests/migrate_mutants.py."""
     dsn, schema = scratch
-    other = "p3a_fo_" + uuid.uuid4().hex[:8]
+    other = "hadavin_test_fo_" + uuid.uuid4().hex[:8]
     _create_roles(other)
     with psycopg.connect(DSN, autocommit=True) as db:
         db.execute(
@@ -276,7 +288,7 @@ def test_h11_a_function_owner_change_is_refused(scratch, monkeypatch, tmp_path):
     try:
         mig.migrate(dsn)
         body = f"ALTER FUNCTION hadavin_audit_append_only() OWNER TO {other};\n"
-        _with_files(monkeypatch, tmp_path, {"0006_p3a_owner.sql": body})
+        _with_files(monkeypatch, tmp_path, {"0006_owner.sql": body})
         with pytest.raises(
             ConfigError, match="audit_entries_no_truncate changed: function owner"
         ) as e:
@@ -301,22 +313,18 @@ def test_h11_a_listed_trigger_change_passes_for_that_file_and_trigger_only(
         mig,
         "_trigger_changes",
         lambda: frozenset(
-            {
-                mig.TriggerChange(
-                    "0006_p3a_listed", None, "audit_entries", "audit_entries_no_truncate"
-                )
-            }
+            {mig.TriggerChange("0006_listed", None, "audit_entries", "audit_entries_no_truncate")}
         ),
     )
-    _with_files(monkeypatch, tmp_path, {"0006_p3a_other.sql": body})
+    _with_files(monkeypatch, tmp_path, {"0006_other.sql": body})
     with pytest.raises(ConfigError, match="changed a trigger"):
         mig.migrate(dsn)
     assert _ledger(dsn) == REAL
     monkeypatch.setattr(
         mig, "_migration_files", real_files
     )  # (not `monkeypatch.undo()`: it undoes the plain-role connect)
-    _with_files(monkeypatch, tmp_path, {"0006_p3a_listed.sql": body})
-    assert mig.migrate(dsn) == ["0006_p3a_listed"]
+    _with_files(monkeypatch, tmp_path, {"0006_listed.sql": body})
+    assert mig.migrate(dsn) == ["0006_listed"]
     with psycopg.connect(dsn, autocommit=True) as db:
         (definition,) = db.execute(
             "SELECT pg_get_triggerdef(oid) FROM pg_trigger WHERE tgname = 'audit_entries_no_truncate' "
@@ -328,19 +336,25 @@ def test_h11_a_listed_trigger_change_passes_for_that_file_and_trigger_only(
 @needs_pg
 def test_h11_a_role_switched_inside_a_file_is_refused(scratch, monkeypatch, tmp_path):
     dsn, _ = scratch
-    role = "p3a_r_" + uuid.uuid4().hex[:8]
+    role = "hadavin_test_r_" + uuid.uuid4().hex[:8]
     body = (
-        "CREATE OR REPLACE FUNCTION p3a_switch() RETURNS void LANGUAGE plpgsql AS $$\n"
-        f"BEGIN EXECUTE 'SET LOCAL ROLE {role}'; END $$;\nSELECT p3a_switch();\n"
+        "CREATE OR REPLACE FUNCTION hadavin_test_switch() RETURNS void LANGUAGE plpgsql AS $$\n"
+        f"BEGIN EXECUTE 'SET LOCAL ROLE {role}'; END $$;\nSELECT hadavin_test_switch();\n"
     )
     with psycopg.connect(DSN, autocommit=True) as db:
         db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
     try:
         mig.migrate(dsn)
-        _with_files(monkeypatch, tmp_path, {"0006_p3a_role.sql": body})
+        with psycopg.connect(
+            DSN, autocommit=True
+        ) as db:  # a plain role the migration role may switch to
+            db.execute(
+                sql.SQL("GRANT {} TO {}").format(sql.Identifier(role), sql.Identifier(PLAIN_ROLE))
+            )
+        _with_files(monkeypatch, tmp_path, {"0006_role.sql": body})
         with pytest.raises(ConfigError) as e:
             mig.migrate(dsn)
-        assert "current_user" in str(e.value) and "0006_p3a_role.sql" in str(e.value)
+        assert "current_user" in str(e.value) and "0006_role.sql" in str(e.value)
         assert _ledger(dsn) == REAL
     finally:
         with psycopg.connect(DSN, autocommit=True) as db:
@@ -386,21 +400,21 @@ def test_h11_a_role_grant_hidden_in_a_function_body_is_refused(scratch, monkeypa
     and the file then calls the function. The read-back of `pg_auth_members` refuses it and nothing is kept.
     Killed by: mutant R1 (membership not compared) and mutant R2 (membership not read after the file)."""
     dsn, _ = scratch
-    a, b = "p3a_ga_" + uuid.uuid4().hex[:8], "p3a_gb_" + uuid.uuid4().hex[:8]
+    a, b = "hadavin_test_ga_" + uuid.uuid4().hex[:8], "hadavin_test_gb_" + uuid.uuid4().hex[:8]
     option = " WITH ADMIN OPTION" if how.endswith("admin_option") else ""
     body = (
-        "CREATE OR REPLACE FUNCTION p3a_grant() RETURNS void LANGUAGE plpgsql AS $$\n"
-        f"BEGIN GRANT {a} TO {b}{option}; END $$;\nSELECT p3a_grant();\n"
+        "CREATE OR REPLACE FUNCTION hadavin_test_grant() RETURNS void LANGUAGE plpgsql AS $$\n"
+        f"BEGIN GRANT {a} TO {b}{option}; END $$;\nSELECT hadavin_test_grant();\n"
     )
     _create_roles(a, b)
     _let_the_plain_role_grant(a)
     try:
         mig.migrate(dsn)
-        _with_files(monkeypatch, tmp_path, {"0006_p3a_grant.sql": body})
+        _with_files(monkeypatch, tmp_path, {"0006_grant.sql": body})
         with pytest.raises(ConfigError) as e:
             mig.migrate(dsn)
         msg = str(e.value)
-        assert "0006_p3a_grant.sql" in msg and f"role {a} has a new member {b}" in msg, msg
+        assert "0006_grant.sql" in msg and f"role {a} has a new member {b}" in msg, msg
         assert not msg.startswith("migrations are inconsistent"), "the read-back, not the scan"
         assert _ledger(dsn) == REAL
         with psycopg.connect(DSN, autocommit=True) as db:
@@ -420,7 +434,7 @@ def test_h11_a_changed_grant_option_of_an_existing_membership_is_refused(
     `the_plain_role` as the first grantor the same catalog row is changed in place; with `the_login_superuser` a second
     row (another grantor) is added. Killed by: mutant R4 (the other columns are not read)."""
     dsn, _ = scratch
-    a, b = "p3a_oa_" + uuid.uuid4().hex[:8], "p3a_ob_" + uuid.uuid4().hex[:8]
+    a, b = "hadavin_test_oa_" + uuid.uuid4().hex[:8], "hadavin_test_ob_" + uuid.uuid4().hex[:8]
     _create_roles(a, b)
     _let_the_plain_role_grant(a)
     try:
@@ -429,15 +443,15 @@ def test_h11_a_changed_grant_option_of_an_existing_membership_is_refused(
                 db.execute(sql.SQL("SET ROLE {}").format(sql.Identifier(PLAIN_ROLE)))
             db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(a), sql.Identifier(b)))
         body = (
-            "CREATE OR REPLACE FUNCTION p3a_grant() RETURNS void LANGUAGE plpgsql AS $$\n"
-            f"BEGIN GRANT {a} TO {b} WITH ADMIN OPTION; END $$;\nSELECT p3a_grant();\n"
+            "CREATE OR REPLACE FUNCTION hadavin_test_grant() RETURNS void LANGUAGE plpgsql AS $$\n"
+            f"BEGIN GRANT {a} TO {b} WITH ADMIN OPTION; END $$;\nSELECT hadavin_test_grant();\n"
         )
         mig.migrate(dsn)
-        _with_files(monkeypatch, tmp_path, {"0006_p3a_option.sql": body})
+        _with_files(monkeypatch, tmp_path, {"0006_option.sql": body})
         with pytest.raises(ConfigError) as e:
             mig.migrate(dsn)
         msg = str(e.value)
-        assert "0006_p3a_option.sql" in msg and f"role {a}" in msg and b in msg, msg
+        assert "0006_option.sql" in msg and f"role {a}" in msg and b in msg, msg
         assert "admin_option" in msg, msg  # the changed column is named
         assert not msg.startswith("migrations are inconsistent"), "the read-back, not the scan"
         assert _ledger(dsn) == REAL
@@ -457,13 +471,13 @@ def test_h11_a_grant_of_a_role_that_was_a_member_before_is_not_a_refusal(
 ):
     """The baseline is the membership at the start: a file that changes nothing about it passes."""
     dsn, _ = scratch
-    a, b = "p3a_ma_" + uuid.uuid4().hex[:8], "p3a_mb_" + uuid.uuid4().hex[:8]
+    a, b = "hadavin_test_ma_" + uuid.uuid4().hex[:8], "hadavin_test_mb_" + uuid.uuid4().hex[:8]
     _create_roles(a, b)
     try:
         with psycopg.connect(DSN, autocommit=True) as db:
             db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(a), sql.Identifier(b)))
-        _with_files(monkeypatch, tmp_path, {"0006_p3a_ok.sql": "SELECT 1;\n"})
-        assert mig.migrate(dsn) == [*REAL, "0006_p3a_ok"]
+        _with_files(monkeypatch, tmp_path, {"0006_ok.sql": "SELECT 1;\n"})
+        assert mig.migrate(dsn) == [*REAL, "0006_ok"]
     finally:
         _drop_roles(a, b)
 
@@ -473,7 +487,10 @@ def owner_dsn(scratch):
     """(dsn, other role) for a LOGIN role that is NOT a superuser, owns what it creates in the scratch schema and may
     switch to `other` (a membership that exists BEFORE migrate starts, so it is part of the baseline)."""
     dsn, schema = scratch
-    owner, other = "p3a_own_" + uuid.uuid4().hex[:8], "p3a_oth_" + uuid.uuid4().hex[:8]
+    owner, other = (
+        "hadavin_test_own_" + uuid.uuid4().hex[:8],
+        "hadavin_test_oth_" + uuid.uuid4().hex[:8],
+    )
     password = f"pw-{uuid.uuid4().hex}"
     _create_roles(owner, other, login_password=password)
     with psycopg.connect(DSN, autocommit=True) as db:
@@ -503,14 +520,14 @@ def test_migrate_as_a_login_role_that_is_not_a_superuser_runs_and_refuses_the_pl
     assert mig.migrate(dsn) == REAL
     assert mig.migrate(dsn) == []
     plants = {
-        "0006_p3a_dis.sql": (
+        "0006_dis.sql": (
             "ALTER TABLE audit_entries DISABLE TRIGGER audit_entries_no_truncate;\n",
             "audit_entries_no_truncate",
         ),
-        "0006_p3a_role.sql": (
+        "0006_role.sql": (
             (
-                "CREATE OR REPLACE FUNCTION p3a_switch() RETURNS void LANGUAGE plpgsql AS $$\n"
-                f"BEGIN EXECUTE 'SET LOCAL ROLE {other}'; END $$;\nSELECT p3a_switch();\n"
+                "CREATE OR REPLACE FUNCTION hadavin_test_switch() RETURNS void LANGUAGE plpgsql AS $$\n"
+                f"BEGIN EXECUTE 'SET LOCAL ROLE {other}'; END $$;\nSELECT hadavin_test_switch();\n"
             ),
             "current_user",
         ),
@@ -532,11 +549,11 @@ def test_h11_same_run_a_drop_in_the_first_run_leaves_no_ledger(scratch, monkeypa
     _with_files(
         monkeypatch,
         tmp_path,
-        {"0006_p3a_drop.sql": "DROP TRIGGER audit_entries_no_truncate ON audit_entries;\n"},
+        {"0006_drop.sql": "DROP TRIGGER audit_entries_no_truncate ON audit_entries;\n"},
     )
     with pytest.raises(ConfigError) as e:
         mig.migrate(dsn)
-    assert "0006_p3a_drop.sql" in str(e.value) and "audit_entries_no_truncate" in str(e.value)
+    assert "0006_drop.sql" in str(e.value) and "audit_entries_no_truncate" in str(e.value)
     assert not _ledger(dsn), "the ledger does not exist or holds no row"
 
 
@@ -546,14 +563,14 @@ def test_a_hidden_commit_is_found_by_the_transaction_backstop(scratch, monkeypat
     sees the new transaction after the file (the backstop for a COMMIT the text rules cannot see)."""
     dsn, _ = scratch
     monkeypatch.setattr(mig, "refused_statements", lambda text: [])
-    _with_files(monkeypatch, tmp_path, {"0006_p3a_commit.sql": "SELECT 1;\nCOMMIT;\n"})
+    _with_files(monkeypatch, tmp_path, {"0006_commit.sql": "SELECT 1;\nCOMMIT;\n"})
     with pytest.raises(ConfigError) as e:
         mig.migrate(dsn)
     msg = str(e.value)
-    assert (
-        "0006_p3a_commit.sql" in msg and "transaction_timestamp" in msg and "txid_current" in msg
-    ), msg
-    assert "0006_p3a_commit" not in (_ledger(dsn) or [])
+    assert "0006_commit.sql" in msg and "transaction_timestamp" in msg and "txid_current" in msg, (
+        msg
+    )
+    assert "0006_commit" not in (_ledger(dsn) or [])
 
 
 @needs_pg
@@ -575,7 +592,7 @@ def dsn_options(dsn: str) -> str:
 def test_triggers_of_another_schema_are_not_read(scratch, monkeypatch, tmp_path):
     """Case (xvi): a trigger in a schema other than the migration schema may change without a refusal."""
     dsn, _ = scratch
-    other = "p3a_o_" + uuid.uuid4().hex[:8]
+    other = "hadavin_test_o_" + uuid.uuid4().hex[:8]
     with psycopg.connect(DSN, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(other)))
         db.execute(sql.SQL("CREATE TABLE {}.t (x int)").format(sql.Identifier(other)))
@@ -605,8 +622,8 @@ def test_triggers_of_another_schema_are_not_read(scratch, monkeypatch, tmp_path)
     try:
         mig.migrate(dsn)
         body = f'ALTER TABLE "{other}".t DISABLE TRIGGER trg;\n'
-        _with_files(monkeypatch, tmp_path, {"0006_p3a_other.sql": body})
-        assert mig.migrate(dsn) == ["0006_p3a_other"]
+        _with_files(monkeypatch, tmp_path, {"0006_other.sql": body})
+        assert mig.migrate(dsn) == ["0006_other"]
     finally:
         with psycopg.connect(DSN, autocommit=True) as db:
             db.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(other)))
@@ -673,9 +690,12 @@ def test_the_previous_release_columns_survive_the_newest_migrations(scratch, mon
     `test_the_comparison_catches_a_dropped_or_retyped_old_column`."""
     dsn, _ = scratch
     old, new = _old_and_new_columns(
-        dsn, monkeypatch, tmp_path, "ALTER TABLE audit_checkpoints ADD COLUMN p3a_note TEXT;\n"
+        dsn,
+        monkeypatch,
+        tmp_path,
+        "ALTER TABLE audit_checkpoints ADD COLUMN hadavin_test_note TEXT;\n",
     )
-    assert ("audit_checkpoints", "p3a_note") in new, "the planted newer file ran"
+    assert ("audit_checkpoints", "hadavin_test_note") in new, "the planted newer file ran"
     lost, changed = _problems(old, new)
     assert not lost, f"columns of the previous release are gone: {lost}"
     assert not changed, f"columns of the previous release changed type or nullability: {changed}"
@@ -966,14 +986,14 @@ def test_h4_a_recipe_that_fails_half_way_leaves_nothing(scratch, monkeypatch, tm
     dsn, _ = scratch
     _apply_by_hand(dsn, [s for s in REAL if s != "0004_audit_checkpoint_meta"])
     body = "INSERT INTO audit_checkpoints (seq, hash, signature) VALUES (7, 'a', 'b');\nSELECT 1 / 0;\n"
-    planted = tmp_path / "0004_p3a_late_fail.sql"  # takes the place of the real 0004
+    planted = tmp_path / "0004_late_fail.sql"  # takes the place of the real 0004
     planted.write_text(body, encoding="utf-8")
     files = [p for p in mig._migration_files() if p.stem != "0004_audit_checkpoint_meta"] + [
         planted
     ]
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
     # the planted file is not a released one: this test is about the recipe, not about the released-files check
-    monkeypatch.setattr(mig, "released_problems", lambda *a, **k: [])
+    made_up_files_are_not_released(monkeypatch)
     with pytest.raises(MigrationNumberError) as e:
         mig.migrate(dsn)
     done = _psql_text(tmp_path, _recipe_of(str(e.value)))
@@ -990,19 +1010,19 @@ def test_the_recipe_stops_at_the_first_error_even_without_the_stop_flag(
     with an error code instead of 0 (without the line it carries on and exits 0 although a statement failed)."""
     dsn, _ = scratch
     _apply_by_hand(dsn, [s for s in REAL if s != "0004_audit_checkpoint_meta"])
-    planted = tmp_path / "0004_p3a_late_fail.sql"
+    planted = tmp_path / "0004_late_fail.sql"
     planted.write_text("SELECT 1 / 0;\n", encoding="utf-8")
     files = [p for p in mig._migration_files() if p.stem != "0004_audit_checkpoint_meta"] + [
         planted
     ]
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
     # the planted file is not a released one: this test is about the recipe, not about the released-files check
-    monkeypatch.setattr(mig, "released_problems", lambda *a, **k: [])
+    made_up_files_are_not_released(monkeypatch)
     with pytest.raises(MigrationNumberError) as e:
         mig.migrate(dsn)
     done = _psql_text(tmp_path, _recipe_of(str(e.value)), stop_flag=False)
     assert done.returncode != 0 and "division by zero" in done.stderr, done.stderr
-    assert "0004_p3a_late_fail" not in _ledger(dsn)
+    assert "0004_late_fail" not in _ledger(dsn)
 
 
 @needs_pg
@@ -1023,9 +1043,9 @@ def test_a_hand_file_waiting_for_a_table_lock_stops_after_the_lock_timeout(scrat
     mig.migrate(dsn)
     with psycopg.connect(dsn) as holder:
         holder.execute("LOCK TABLE tool_calls IN ACCESS EXCLUSIVE MODE")
-        done = _psql(schema, tmp_path, "ALTER TABLE tool_calls ADD COLUMN p3a_wait TEXT;")
+        done = _psql(schema, tmp_path, "ALTER TABLE tool_calls ADD COLUMN hadavin_test_wait TEXT;")
     assert done.returncode != 0 and "lock timeout" in done.stderr, done.stderr
-    assert ("tool_calls", "p3a_wait") not in _columns(dsn)
+    assert ("tool_calls", "hadavin_test_wait") not in _columns(dsn)
 
 
 @needs_pg
@@ -1166,7 +1186,9 @@ def test_migrate_gives_up_waiting_for_a_table_lock_and_keeps_nothing(
     before = _ledger(dsn)
     monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", SHORT_LOCK)
     _with_files(
-        monkeypatch, tmp_path, {PLANTED_NEXT: "ALTER TABLE tool_calls ADD COLUMN p3a_wait TEXT;\n"}
+        monkeypatch,
+        tmp_path,
+        {PLANTED_NEXT: "ALTER TABLE tool_calls ADD COLUMN hadavin_test_wait TEXT;\n"},
     )
     with psycopg.connect(dsn) as holder:
         holder.execute("LOCK TABLE tool_calls IN ACCESS EXCLUSIVE MODE")
@@ -1175,15 +1197,13 @@ def test_migrate_gives_up_waiting_for_a_table_lock_and_keeps_nothing(
         let_go = threading.Timer(WAIT_LIMIT_S, holder.rollback)
         let_go.start()
         try:
-            with pytest.raises(
-                ConfigError, match=r"applying 0006_p3a_next\.sql.*lock_timeout"
-            ) as got:
+            with pytest.raises(ConfigError, match=r"applying 0006_next\.sql.*lock_timeout") as got:
                 mig.migrate(dsn)
             assert isinstance(got.value.__cause__, psycopg.errors.LockNotAvailable)
         finally:
             let_go.cancel()
     assert _ledger(dsn) == before
-    assert ("tool_calls", "p3a_wait") not in _columns(dsn)
+    assert ("tool_calls", "hadavin_test_wait") not in _columns(dsn)
 
 
 @needs_pg
@@ -1195,7 +1215,7 @@ def test_migrate_stops_a_file_that_runs_past_the_statement_limit(scratch, monkey
     before = _ledger(dsn)
     monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", SHORT_STATEMENT)
     _with_files(monkeypatch, tmp_path, {PLANTED_NEXT: "SELECT pg_sleep(30);\n"})
-    with pytest.raises(ConfigError, match=r"applying 0006_p3a_next\.sql.*statement_timeout"):
+    with pytest.raises(ConfigError, match=r"applying 0006_next\.sql.*statement_timeout"):
         mig.migrate(dsn)
     assert _ledger(dsn) == before
 
@@ -1236,7 +1256,7 @@ def test_the_limits_also_cover_the_grant_phase_of_a_run_with_no_pending_file(scr
     dsn, _ = scratch
     mig.migrate(dsn)
     before = _ledger(dsn)
-    role = "p3a_rt_" + uuid.uuid4().hex[:8]
+    role = "hadavin_test_rt_" + uuid.uuid4().hex[:8]
     with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
     monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", SHORT_LOCK)
@@ -1280,10 +1300,10 @@ def test_a_file_that_changes_a_limit_itself_is_refused_by_the_read_back(
     _with_files(
         monkeypatch,
         tmp_path,
-        {PLANTED_NEXT: _FLIP + "SELECT p3a_flip('statement_timeout', '11s');\n"},
+        {PLANTED_NEXT: _FLIP + "SELECT hadavin_test_flip('statement_timeout', '11s');\n"},
     )
     with pytest.raises(
-        ConfigError, match=r"0006_p3a_next\.sql.*statement_timeout was '20s' and is now '11s'"
+        ConfigError, match=r"0006_next\.sql.*statement_timeout was '20s' and is now '11s'"
     ):
         mig.migrate(dsn)
     assert _ledger(dsn) in (None, [])
@@ -1419,14 +1439,16 @@ def test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_o
     _with_files(
         monkeypatch,
         tmp_path,
-        {"0006_p3a_alter.sql": "ALTER TABLE spend ADD COLUMN note_after_handover TEXT;\n"},
+        {"0006_alter.sql": "ALTER TABLE spend ADD COLUMN note_after_handover TEXT;\n"},
     )
     with pytest.raises(ConfigError) as e:
         mig.migrate(dsn)
     msg = str(e.value)
     assert "cannot change" in msg and "another role owns" in msg, msg
     assert "case (h)" in msg and f'OWNER TO "{role}";' in msg, msg
-    assert "ALTER TABLE" in msg and "audit_entries" in msg and "owner postgres" in msg, msg
+    with psycopg.connect(DSN, autocommit=True) as db:
+        login = db.execute("SELECT current_user").fetchone()[0]
+    assert "ALTER TABLE" in msg and "audit_entries" in msg and f"owner {login}" in msg, msg
     assert _ledger(super_dsn) == REAL, "nothing was changed"
     # the administrator runs the printed lines (as the superuser login, in one transaction)
     statements = [
@@ -1438,7 +1460,7 @@ def test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_o
         schema, tmp_path, *[s.strip() + ";" for s in statements]
     )  # the hand file of case (h)
     assert done.returncode == 0, done.stderr
-    assert mig.migrate(dsn) == ["0006_p3a_alter"]
+    assert mig.migrate(dsn) == ["0006_alter"]
     with psycopg.connect(dsn, autocommit=True) as db:
         assert db.execute(
             "SELECT count(*) FROM information_schema.columns WHERE table_schema = current_schema() "
@@ -1457,11 +1479,357 @@ def test_one_table_owned_by_another_role_is_enough_to_refuse_and_a_function_is_n
     super_dsn, _ = scratch
     assert mig.migrate(dsn) == REAL
     with psycopg.connect(super_dsn, autocommit=True) as db:
-        db.execute("CREATE TABLE p3a_foreign (id INT)")
-        db.execute("CREATE FUNCTION p3a_foreign_fn(a int) RETURNS int LANGUAGE sql AS 'SELECT 1'")
+        db.execute("CREATE TABLE hadavin_test_foreign (id INT)")
+        db.execute(
+            "CREATE FUNCTION hadavin_test_foreign_fn(a int) RETURNS int LANGUAGE sql AS 'SELECT 1'"
+        )
     with pytest.raises(ConfigError) as e:
         mig.migrate(dsn)
     msg = str(e.value)
     assert "cannot change 2 object(s)" in msg, msg
-    assert 'ALTER TABLE "' in msg and "p3a_foreign" in msg and "ALTER FUNCTION" in msg, msg
+    assert 'ALTER TABLE "' in msg and "hadavin_test_foreign" in msg and "ALTER FUNCTION" in msg, msg
     assert "audit_entries" not in msg and "tool_calls" not in msg, msg
+
+
+# --- the migration role: session user, built-in server roles, parameter grants ----------------------------------------
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_a_superuser_login_that_switches_to_a_plain_role_is_refused(scratch, plain_role):
+    """The login (session user) is a superuser; `-c role=` switched the current user to a plain role. A file could undo
+    the switch inside a function body, so the session user is checked too. Killed by: mutant SU1."""
+    _dsn, role = plain_role
+    super_dsn, _ = scratch
+    options = conninfo_to_dict(super_dsn)["options"] + f" -c role={role}"
+    switched = make_conninfo(super_dsn, options=options)
+    with pytest.raises(ConfigError, match="must not be a superuser"):
+        mig.migrate(switched)
+    assert _ledger(super_dsn) is None, "nothing was created"
+
+
+BUILT_IN_ROLES = [
+    "pg_execute_server_program",
+    "pg_write_server_files",
+    "pg_read_server_files",
+    "pg_write_all_data",
+    "pg_signal_backend",
+    "pg_monitor",
+]
+
+
+@needs_pg
+@pytest.mark.real_connect
+@pytest.mark.parametrize("built_in", BUILT_IN_ROLES)
+def test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server(plain_role, built_in):
+    """These roles run programs, write files or read all data on the server. Killed by: mutant PD1."""
+    dsn, role = plain_role
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(sql.SQL(f"GRANT {built_in} TO {{}}").format(sql.Identifier(role)))
+    with pytest.raises(ConfigError, match="built-in server role") as e:
+        mig.migrate(dsn)
+    assert built_in in str(e.value)
+    assert _ledger(dsn) is None, "nothing was created"
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_the_session_user_is_checked_for_membership_too(scratch, plain_role):
+    """The login is a member of a built-in server role and switched to a plain role it may switch to: the current user
+    holds nothing, the session user does. Killed by: mutant SU2."""
+    _dsn, role = plain_role
+    super_dsn, _ = scratch
+    other = role + "_b"
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(other)))
+        try:
+            db.execute(
+                sql.SQL("GRANT {} TO {}").format(sql.Identifier(other), sql.Identifier(role))
+            )
+            db.execute(sql.SQL("GRANT pg_signal_backend TO {}").format(sql.Identifier(role)))
+            login = make_conninfo(
+                super_dsn,
+                user=role,
+                options=conninfo_to_dict(super_dsn)["options"] + f" -c role={other}",
+            )
+            with pytest.raises(ConfigError, match="built-in server role"):
+                mig.migrate(login)
+        finally:
+            db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(other)))
+            db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(other)))
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_a_parameter_grant_is_refused_by_a_real_server(plain_role):
+    """A grant on a server setting lets a file change what the checks rely on. Killed by: mutant PA1."""
+    dsn, role = plain_role
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(
+            sql.SQL("GRANT SET ON PARAMETER session_replication_role TO {}").format(
+                sql.Identifier(role)
+            )
+        )
+    try:
+        with pytest.raises(ConfigError, match="server settings it must not change") as e:
+            mig.migrate(dsn)
+        assert "session_replication_role" in str(e.value)
+        assert _ledger(dsn) is None, "nothing was created"
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(
+                sql.SQL("REVOKE SET ON PARAMETER session_replication_role FROM {}").format(
+                    sql.Identifier(role)
+                )
+            )
+
+
+# --- the plain-role SQL that the refusal prints ------------------------------------------------------------------------
+
+
+def _role_from_the_printed_sql(schema: str, grant_option: bool) -> tuple[str, str, str]:
+    """Make a login role, a runtime role and a portal role; the migration role gets ONLY what `PLAIN_MIGRATION_ROLE_SQL`
+    prints (with or without its grant option)."""
+    suffix = uuid.uuid4().hex[:8]
+    role, rt, pt = (
+        f"hadavin_test_pm_{suffix}",
+        f"hadavin_test_rt_{suffix}",
+        f"hadavin_test_pt_{suffix}",
+    )
+    printed = mig.PLAIN_MIGRATION_ROLE_SQL.replace("migration_role", role).replace(
+        "<schema>", sql.Identifier(schema).as_string()
+    )
+    if not grant_option:
+        printed = printed.replace(" WITH GRANT OPTION", "")
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(printed)
+        for other in (rt, pt):
+            db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(other)))
+        db.execute(
+            sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+                sql.Identifier(db.execute("SELECT current_database()").fetchone()[0]),
+                sql.Identifier(role),
+            )
+        )
+    return role, rt, pt
+
+
+def _drop_all(*roles: str) -> None:
+    with psycopg.connect(DSN, autocommit=True) as db:
+        for r in roles:
+            db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(r)))
+            db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(r)))
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_a_role_made_with_the_printed_sql_only_can_pass_usage_on_to_the_runtime_and_portal_roles(
+    scratch,
+):
+    """The printed SQL carries the grant option, so `migrate` with a runtime and a portal role works for a role that
+    is not the owner of the schema. Killed by: mutant GO1 (the grant option is left out of the printed SQL)."""
+    super_dsn, schema = scratch
+    role, rt, pt = _role_from_the_printed_sql(schema, grant_option=True)
+    try:
+        assert (
+            mig.migrate(make_conninfo(super_dsn, user=role), runtime_role=rt, portal_role=pt)
+            == REAL
+        )
+        with psycopg.connect(DSN, autocommit=True) as db:
+            assert db.execute(
+                "SELECT has_schema_privilege(%s, %s, 'USAGE')", (rt, schema)
+            ).fetchone() == (True,)
+    finally:
+        _drop_all(role, rt, pt)
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_a_role_without_the_grant_option_is_refused_when_its_grants_would_do_nothing(scratch):
+    """Without the grant option `GRANT USAGE ON SCHEMA ... TO runtime_role` only warns; `migrate` checks that the role
+    really can use the schema afterwards and refuses. Killed by: mutant GO2 (the check is gone)."""
+    super_dsn, schema = scratch
+    role, rt, pt = _role_from_the_printed_sql(schema, grant_option=False)
+    try:
+        with pytest.raises(ConfigError, match="cannot use the schema"):
+            mig.migrate(make_conninfo(super_dsn, user=role), runtime_role=rt)
+        assert _ledger(super_dsn) is None, "the refusal rolled everything back"
+    finally:
+        _drop_all(role, rt, pt)
+
+
+# --- objects another role owns: kinds, partitions, names, cap, safe owners, extensions -----------------------------------
+
+
+def _hand_over(super_dsn, tmp_path, msg: str):
+    """Run the printed statements as the administrator (the superuser login) and return the finished psql process."""
+    statements = [
+        m.strip() + ";"
+        for m in msg[msg.index("case (h): ") + len("case (h): ") :].split(";")
+        if m.strip().startswith("ALTER ")
+    ]
+    schema = conninfo_to_dict(super_dsn)["options"].rsplit("search_path=", 1)[1].split(" ")[0]
+    return statements, _psql(schema, tmp_path, *statements)
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_a_procedure_and_an_aggregate_get_their_own_words_and_the_printed_lines_run(
+    scratch, plain_role, tmp_path
+):
+    """`ALTER FUNCTION` fails on a procedure or an aggregate; the line says PROCEDURE or AGGREGATE, and a function that
+    takes arguments keeps them. Killed by: mutant FO1 (every routine is printed as FUNCTION)."""
+    dsn, _role = plain_role
+    super_dsn, _ = scratch
+    assert mig.migrate(dsn) == REAL
+    with psycopg.connect(super_dsn, autocommit=True) as db:
+        db.execute("CREATE PROCEDURE hadavin_test_proc(a int) LANGUAGE sql AS 'SELECT 1'")
+        db.execute("CREATE AGGREGATE hadavin_test_agg(int) (sfunc = int4pl, stype = int)")
+        db.execute(
+            "CREATE FUNCTION hadavin_test_fn(a int, b text) RETURNS int LANGUAGE sql AS 'SELECT 1'"
+        )
+    with pytest.raises(ConfigError) as e:
+        mig.migrate(dsn)
+    msg = str(e.value)
+    assert "cannot change 3 object(s)" in msg, msg
+    statements, done = _hand_over(super_dsn, tmp_path, msg)
+    assert any(s.startswith("ALTER PROCEDURE") for s in statements), statements
+    assert any(s.startswith("ALTER AGGREGATE") for s in statements), statements
+    assert any(s.startswith("ALTER FUNCTION") and "(a integer, b text)" in s for s in statements), (
+        statements
+    )
+    assert done.returncode == 0, done.stderr
+    assert mig.migrate(dsn) == []
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_a_partition_owned_by_another_role_is_listed(scratch, plain_role):
+    """A partition has an automatic dependency on its parent, but it is a table of its own that the plain role cannot
+    change. Killed by: mutant FO2 (the dependency test hides it)."""
+    dsn, role = plain_role
+    super_dsn, _ = scratch
+    assert mig.migrate(dsn) == REAL
+    with psycopg.connect(super_dsn, autocommit=True) as db:
+        db.execute("CREATE TABLE hadavin_test_parent (id int) PARTITION BY RANGE (id)")
+        db.execute(
+            "CREATE TABLE hadavin_test_part PARTITION OF hadavin_test_parent FOR VALUES FROM (0) TO (10)"
+        )
+        db.execute(
+            sql.SQL("ALTER TABLE hadavin_test_parent OWNER TO {}").format(sql.Identifier(role))
+        )
+    with pytest.raises(ConfigError) as e:
+        mig.migrate(dsn)
+    msg = str(e.value)
+    assert "cannot change 1 object(s)" in msg and "hadavin_test_part" in msg, msg
+    assert "hadavin_test_parent" not in msg, msg
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_a_name_with_a_newline_is_never_copied_into_a_printed_statement(scratch, plain_role):
+    """The other role chose the table's name. The list shows it escaped; no statement is printed for it, and the message
+    says a person must write that one by hand. Killed by: mutant FO3 (every name is printed)."""
+    dsn, _role = plain_role
+    super_dsn, _ = scratch
+    assert mig.migrate(dsn) == REAL
+    with psycopg.connect(super_dsn, autocommit=True) as db:
+        db.execute('CREATE TABLE "hadavin_test_bad\nname" (id int)')
+        db.execute("CREATE TABLE hadavin_test_fine (id int)")
+    with pytest.raises(ConfigError) as e:
+        mig.migrate(dsn)
+    msg = str(e.value)
+    assert mig._label("hadavin_test_bad\nname") in msg and "bad\nname" not in msg, msg
+    assert "by hand" in msg, msg
+    assert msg.count("ALTER TABLE") == 1 and "hadavin_test_fine" in msg, msg
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_every_statement_is_printed_when_more_than_the_shown_names_are_foreign(
+    scratch, plain_role, tmp_path
+):
+    """The cap is for the names in the list only; a person needs every `ALTER` line. Killed by: mutant FO4."""
+    dsn, _role = plain_role
+    super_dsn, _ = scratch
+    assert mig.migrate(dsn) == REAL
+    with psycopg.connect(super_dsn, autocommit=True) as db:
+        for i in range(25):
+            db.execute(f"CREATE TABLE hadavin_test_many_{i:02d} (id int)")
+    with pytest.raises(ConfigError) as e:
+        mig.migrate(dsn)
+    msg = str(e.value)
+    assert "cannot change 25 object(s)" in msg and "and 5 more" in msg, msg
+    statements, done = _hand_over(super_dsn, tmp_path, msg)
+    assert len(statements) == 25, len(statements)
+    assert done.returncode == 0, done.stderr
+    assert mig.migrate(dsn) == []
+
+
+@needs_pg
+@pytest.mark.real_connect
+@pytest.mark.parametrize("inherit", ["TRUE", "FALSE"])
+def test_an_owner_the_migration_role_belongs_to_is_safe_only_when_it_inherits(
+    plain_role, scratch, inherit
+):
+    """Owner = a role the migration role is a member of. With INHERIT TRUE the migration role has the owner's rights
+    (it may alter the table): no refusal. With INHERIT FALSE it must first `SET ROLE`: refused. Killed by: mutant
+    OW1 (USAGE becomes MEMBER, which is true for both)."""
+    dsn, role = plain_role
+    super_dsn, _ = scratch
+    assert mig.migrate(dsn) == REAL
+    boss = role + "_boss"
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(boss)))
+        try:
+            with psycopg.connect(super_dsn, autocommit=True) as sdb:
+                sdb.execute(sql.SQL("ALTER TABLE spend OWNER TO {}").format(sql.Identifier(boss)))
+            db.execute(
+                sql.SQL(f"GRANT {{}} TO {{}} WITH INHERIT {inherit}").format(
+                    sql.Identifier(boss), sql.Identifier(role)
+                )
+            )
+            if inherit == "TRUE":
+                assert mig.migrate(dsn) == []
+            else:
+                with pytest.raises(ConfigError, match="cannot change 1 object"):
+                    mig.migrate(dsn)
+        finally:
+            db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(boss)))
+            db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(boss)))
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_objects_of_an_installed_extension_are_not_listed(scratch, plain_role):
+    """An extension installed by the superuser puts functions and types of its own into the schema; they belong to the
+    extension, and one that puts a view into the schema covers the table half. Killed by: mutants EX1 (the extension
+    test is gone from the function half) and EX2 (gone from the table half)."""
+    dsn, _role = plain_role
+    super_dsn, _ = scratch
+    assert mig.migrate(dsn) == REAL
+    with psycopg.connect(super_dsn, autocommit=True) as db:
+        db.execute(
+            sql.SQL("CREATE EXTENSION citext SCHEMA {}").format(
+                sql.Identifier(conninfo_to_dict(super_dsn)["options"].rsplit("search_path=", 1)[1])
+            )
+        )
+        db.execute(
+            sql.SQL("CREATE EXTENSION pg_stat_statements SCHEMA {}").format(
+                sql.Identifier(conninfo_to_dict(super_dsn)["options"].rsplit("search_path=", 1)[1])
+            )
+        )
+    assert mig.migrate(dsn) == []
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_the_function_half_of_the_ownership_check_finds_a_function_alone(scratch, plain_role):
+    """Only a function is foreign (no table). Killed by: mutant OW2 (the function half finds nothing)."""
+    dsn, _role = plain_role
+    super_dsn, _ = scratch
+    assert mig.migrate(dsn) == REAL
+    with psycopg.connect(super_dsn, autocommit=True) as db:
+        db.execute("CREATE FUNCTION hadavin_test_only_fn() RETURNS int LANGUAGE sql AS 'SELECT 1'")
+    with pytest.raises(ConfigError, match=r"cannot change 1 object"):
+        mig.migrate(dsn)

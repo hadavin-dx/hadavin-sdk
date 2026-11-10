@@ -19,6 +19,7 @@ from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import RunState as S
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.store import migrate as mig
+from tests.fixtures.released_stub import made_up_files_are_not_released
 from tests.k5_support import BigNormalises, ScriptLLM, build_runtime, handle, k5_cfg
 
 BS = chr(92)
@@ -300,7 +301,7 @@ def test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied(
         monkeypatch.setattr(mig, "_migration_files", lambda: files)
         # this test is about the ledger row with no file, not about the released-files list (it would refuse the
         # renamed folder first, before the connection)
-        monkeypatch.setattr(mig, "released_problems", lambda *a, **k: [])
+        made_up_files_are_not_released(monkeypatch)
         with pytest.raises(ConfigError, match="0005_evidence") as err:
             mig.migrate(dsn)
         assert "by hand" in str(err.value)  # the repair path is in the message
