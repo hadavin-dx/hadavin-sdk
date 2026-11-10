@@ -987,3 +987,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 
 | a290aa955c | PR89 fix builder r2 | resumed 20:24 UTC, hand-back was NOT FINISHED (nothing pushed); told to finish mutants, fail-before, lint, full pytest 3.12/3.13, push | next check in 30 min |
 | ace5bb6bb7 | PR72 fix builder r3 (BL-core-a14-w2-09..14, strict-bool sweep split per DEFAULT) | started 20:43 UTC | expected end +90 min | next check +30 min |
+| af4a57cbb8 | A21a fix builder r1 | CLOSED 20:44 UTC, pushed 98a3ed9 | - | done |
+| a8b076e860 | A21a evidence runner 98a3ed9 | started 20:44 UTC | ~60-90 min | check +30 min |
+| af66d66e34 | A21a result reviewer (codebase) r2, snapshot /tmp/snap/core_T1-T2-98a3ed9 | started 20:44 UTC | ~20 min | check +20 min |
+| a7506071ca | A21a result reviewer (design) r2 | started 20:44 UTC | ~20 min | check +20 min |
