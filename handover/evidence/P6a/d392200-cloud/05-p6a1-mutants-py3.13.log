@@ -1,0 +1,6 @@
+HEAD=d3922003925722275704b84f580152d35dd90c9c
+python=Python 3.13.18
+cmd=python tools/p6a1_mutants.py
+start=2026-11-10T19:31:40Z
+head d3922003925722275704b84f580152d35dd90c9c  copy /tmp/p6a1-mutants-uz2h6xbj/wt  python /home/user/build/EV-P6a-d392200/venv3.13/bin/python
+baseline (unmutated) PASS: 270 passed in 11.03s
