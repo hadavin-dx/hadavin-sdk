@@ -1,5 +1,4 @@
-"""An id may not be spelled like a stage word or be a common word the redactor does not sweep (order 126 and order 132,
-q269 item b and F4). Refused where ids are validated: `stages.check_id`, and the `config` types `TenantId`, `OrgId`,
+"""An id may not be spelled like a stage word or be a common word the redactor does not sweep. Refused where ids are validated: `stages.check_id`, and the `config` types `TenantId`, `OrgId`,
 `CustomerId`, `AccountId` and `UserId` that call it.
 
 Why, in plain words. The redactor's labelled rule (`tenant_id=...`, also org, organisation, organization, customer,
@@ -29,9 +28,10 @@ import pytest
 from pydantic import BaseModel, ValidationError
 
 from hadavin_sdk import commonwords
+from hadavin_sdk.commonwords import SWEEP_MIN_DIGITS, SWEEP_MIN_LENGTH
 from hadavin_sdk.config import AccountId, CustomerId, OrgId, TenantId, UserId, _Strict
 from hadavin_sdk.guard.redact import redact
-from hadavin_sdk.guard.runmap import canonical
+from hadavin_sdk.guard.runmap import canonical, redact_text
 from hadavin_sdk.stages import (
     REFUSED_ID_WORDS,
     STAGE_WORDS,
@@ -39,9 +39,8 @@ from hadavin_sdk.stages import (
     check_id,
     check_tenant_id,
     fold_name,
-    is_stage_name,
 )
-from tests.test_stage_names import NEW_WORDS
+from tests.fixtures.stage_words import NEW_WORDS, is_stage_name
 
 redact_mod = importlib.import_module(
     "hadavin_sdk.guard.redact"
@@ -102,9 +101,10 @@ ACCEPTED = [
     "tester",
     "testing",
     "devops",
-    "p",
-    "Ünïcode-Tenant",
+    "abc",
+    "acme-7_b",
     fullwidth("acme"),
+    "123456",
 ]
 
 
@@ -574,23 +574,50 @@ def test_the_walk_accepts_checked_ids_and_leaves_flags_and_other_names_alone():
     assert unchecked_id_fields(config_src, "config.py", defines_types=True) == []
 
 
-def test_every_id_field_in_the_package_goes_through_the_check():
-    """Kills T14 (a tenant field planted in src escapes the walk). Walks src, demos and tools."""
+WALKED = ("src", "demos", "tools")
+
+
+def walk_tree(root: Path) -> list[str]:
+    """Every unchecked id field, attribute or parameter in the Python files below `root`/src, demos and tools.
+    What the walk skips, stated: a local variable assigned inside a function (it comes from a parameter or field that
+    is checked); a parameter or field annotated plain `bool` or `int` (a switch or a count); a dict key or `setattr`;
+    a dataclass or TypedDict field (only pydantic models validate at run time)."""
     problems = []
     files = sorted(
         p
-        for folder in ("src", "demos", "tools")
-        for p in (ROOT / folder).rglob("*.py")
+        for folder in WALKED
+        for p in (root / folder).rglob("*.py")
         if "__pycache__" not in p.parts
     )
-    assert any(f.is_relative_to(SRC) for f in files), "no source files found"
     for path in files:
         problems += unchecked_id_fields(
             path.read_text(encoding="utf-8"),
-            str(path.relative_to(ROOT)),
-            defines_types=path == SRC / "config.py",
+            str(path.relative_to(root)),
+            defines_types=path == root / "src" / "hadavin_sdk" / "config.py",
         )
+    return problems
+
+
+def test_every_id_field_in_the_package_goes_through_the_check():
+    """Walks src, demos and tools of this repository. No field uses the id types yet (the trigger is named in the
+    docstring of config.py), so the walk also fails any id-named field typed as a plain str."""
+    assert any((ROOT / "src" / "hadavin_sdk").rglob("*.py")), "no source files found"
+    problems = walk_tree(ROOT)
     assert not problems, "\n".join(problems)
+
+
+def test_a_tenant_field_planted_in_a_fixture_tree_is_found_in_each_walked_folder(tmp_path):
+    """Kills T14 (a walked folder is dropped, or the walk of a tree finds nothing). The planted source is a string
+    written here, so the test depends on no file of the package."""
+    planted = "class Holder(_Strict):\n    tenant_id: str = ''\n"
+    for folder in WALKED:
+        tree = tmp_path / folder
+        tree.mkdir()
+        (tree / "plant.py").write_text(planted, encoding="utf-8")
+    found = walk_tree(tmp_path)
+    assert len(found) == len(WALKED), f"the walk found {found}"
+    for folder in WALKED:
+        assert any(f.startswith(f"{folder}/plant.py") for f in found), f"{folder} was not walked"
 
 
 def test_the_refused_words_are_exactly_these_twenty_nine():
@@ -606,3 +633,107 @@ def test_the_refused_words_are_exactly_these_twenty_nine():
     assert set(REFUSED_ID_WORDS) == expected, (
         f"the refused words differ from the expected list: {sorted(set(REFUSED_ID_WORDS) ^ expected)}"
     )
+
+
+# --- G1: an id the redactor cannot sweep is refused where it enters ------------------------------------------------
+# The redactor's label rule reads `[a-z0-9_-]{3,}` after tenant_id, org_id, ... and its sweep copies only values of 3 or
+# more characters, and all-digit values of 6 or more (guard/redact.py, `_sweep`). An id outside that is masked in part
+# or not at all, and its other copies stay in clear. These tests run the candidates through the redactor itself.
+
+
+TOO_SHORT = ["", "a", "xy", "p", "7", "42", " ab ", "a" + chr(0x200B) + "b", fullwidth("ab")]
+ODD_IDS = [
+    "ac\x00me",  # NUL
+    "ac\x07me",  # bell
+    "ac\tme",  # tab
+    "ac me",  # a space inside
+    "ac" + chr(0xA0) + "me",  # no-break space
+    "ac.me",  # a dot
+    "acme" + chr(0x2028) + "x",  # line separator
+    "\u0430cme",  # Cyrillic a that looks Latin
+    "acm" + chr(0x0435),  # Cyrillic ie that looks Latin
+    "Ünïcode-Tenant",  # accented letters: the label rule reads only ASCII letters
+    chr(0x131) + "d123",  # dotless i
+]
+
+
+def _leaks(value: str) -> bool:
+    """True when a copy of `value` (or its invisible-character-free form) survives redact_text next to a label."""
+    out = redact_text(f"customer_id={value} then {value} later", {})
+    plain = "".join(c for c in value if c.isprintable())
+    return value in out or (len(plain) > 0 and plain in out)
+
+
+def test_an_id_shorter_than_the_redactors_minimum_is_refused():
+    """Kills T30 (the length refusal is off)."""
+    for value in TOO_SHORT:
+        message = _refusal(check_id, value)
+        assert message is not None, f"{value!a} was accepted as an id"
+        assert "too short" in message, f"{value!a}: another sentence: {message}"
+        assert _refusal(check_tenant_id, value) is not None
+
+
+@pytest.mark.parametrize("n", [SWEEP_MIN_LENGTH - 1, SWEEP_MIN_LENGTH, SWEEP_MIN_LENGTH + 1])
+def test_the_length_limit_is_the_redactors_own_number(n):
+    value = "q" * n
+    refused = _refusal(check_id, value) is not None
+    assert refused == (n < SWEEP_MIN_LENGTH), f"length {n}: refused={refused}"
+    if not refused:
+        assert not _leaks(value), f"{value!a} is accepted and leaks"
+
+
+def test_all_digit_ids_are_refused_below_the_redactors_digit_minimum():
+    """Kills T31 (the digit refusal is off)."""
+    for n in (SWEEP_MIN_DIGITS - 1, SWEEP_MIN_DIGITS, SWEEP_MIN_DIGITS + 1):
+        value = "7" * n
+        refused = _refusal(check_id, value) is not None
+        assert refused == (n < SWEEP_MIN_DIGITS), f"{n} digits: refused={refused}"
+        if not refused:
+            assert not _leaks(value), f"{value!a} is accepted and leaks"
+        full = _refusal(check_id, fullwidth(value)) is not None
+        assert full == (n < SWEEP_MIN_DIGITS), f"{n} full-width digits: refused={full}"
+
+
+def test_the_redactor_really_leaks_a_short_digit_id_the_control():
+    """The reason for the limit: a bare 5-digit id next to its label stays readable elsewhere."""
+    assert _leaks("1" * (SWEEP_MIN_DIGITS - 1)), (
+        "the redactor no longer leaks it: the limit is void"
+    )
+
+
+@pytest.mark.parametrize("value", ODD_IDS)
+def test_a_control_character_or_look_alike_id_is_refused_or_swept(value):
+    """Either check_id refuses the id, or the redactor masks every copy of it. Never accepted and leaking."""
+    refused = _refusal(check_id, value) is not None
+    assert refused or not _leaks(value), f"{value!a} is accepted and a copy stays in clear"
+
+
+def test_the_odd_ids_are_in_fact_refused():
+    """Kills T32 (the character refusal is off)."""
+    for value in ODD_IDS:
+        message = _refusal(check_id, value)
+        assert message is not None, f"{value!a} was accepted"
+        assert value not in message, "the refusal echoes the value"
+
+
+@pytest.mark.parametrize("value", ACCEPTED)
+def test_every_accepted_id_is_swept_in_every_copy(value):
+    assert not _leaks(value), f"{value!a} is accepted by check_id and still leaks"
+
+
+def test_the_label_rule_class_is_the_one_the_check_allows():
+    """The characters check_id allows are the class of the redactor's TENANT rule."""
+    rule = next(rx for name, rx in redact_mod.PATTERNS if name == "TENANT")
+    assert "[a-z0-9_\\-]{" + str(SWEEP_MIN_LENGTH) + ",}" in rule.pattern
+
+
+def test_the_redactor_sweep_uses_the_shared_limits():
+    import inspect
+
+    source = inspect.getsource(redact_mod._sweep)
+    for name in ("SWEEP_MIN_LENGTH", "SWEEP_MIN_DIGITS"):
+        assert name in source, f"_sweep does not read {name}: a second copy of the limit"
+    assert redact_mod._sweep("<TENANT_1>", "q" * (SWEEP_MIN_LENGTH - 1)) is None
+    assert redact_mod._sweep("<TENANT_1>", "q" * SWEEP_MIN_LENGTH) is not None
+    assert redact_mod._sweep("<TENANT_1>", "7" * (SWEEP_MIN_DIGITS - 1)) is None
+    assert redact_mod._sweep("<TENANT_1>", "7" * SWEEP_MIN_DIGITS) is not None

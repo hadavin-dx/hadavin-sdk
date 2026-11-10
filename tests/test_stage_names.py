@@ -26,8 +26,9 @@ from hadavin_sdk.app import build
 from hadavin_sdk.backends import table
 from hadavin_sdk.config import Config, ConfigError, _anchor_refusals, load_config, parse_backends
 from hadavin_sdk.registry import _module_pin_problems, load_registry
-from hadavin_sdk.stages import STAGES, is_live, is_prod
+from hadavin_sdk.stages import STAGE_WORDS, STAGES, is_live, is_prod
 from tests.conftest import make_cfg, qualify
+from tests.fixtures.stage_words import NEW_WORDS
 
 # The old word is built from parts in this file: the class test never scans this file, but a grep for it should find
 # only the places that matter.
@@ -406,17 +407,20 @@ def test_both_spellings_of_the_stage_together_refuse_start(cfg_dir):
 
 _W = r"(?<![A-Za-z0-9])" + OLD + r"(?![A-Za-z0-9])"  # the old word as a whole word
 _ANY = r"(?<![A-Za-z0-9])(?:" + OLD + r"|staging|stage)(?![A-Za-z0-9])"  # the old word or a sibling
-_STAGE = r"(?:pilot|prod|production|demo)"
+_FURTHER = STAGE_WORDS[len(STAGES) :]  # the words after the three stages: the product's own list
+_STAGE = r"(?:" + "|".join((*STAGES, _FURTHER[-1])) + ")"
 # Three more words that name a stage somewhere else (test, development, production). Why they are scanned although the
-# stages are demo, pilot and prod (order 132, design review F8): they are the usual names of a stage in other projects'
+# stages are demo, pilot and prod (a design review question): they are the usual names of a stage in other projects'
 # configs, so a config, doc or CLI flag that says `environment: test` or `--env production` would bring back a second
 # stage vocabulary beside the three; `stages.STAGE_WORDS` lists the same six words and an id may not be spelled like
 # any of them (tests/test_tenant_ids.py pins that the two lists agree). Many tests depend on them (NEW_WORDS shapes,
 # pairs and negative cases below), so the scan was not narrowed to production and development. "test" and "production"
 # are common words, so they count only in the value forms below, never as a bare quoted word (`"test"` is pytest's own);
 # the data-split lines of the demo repos that say `"test"` are listed one by one in tests/stage_exemptions.tsv.
-_NEW = r"(?:test|development|production)"
-_NEWQ = r"(?:development|production)"  # the two that are rare enough to count as a quoted literal
+_NEW = r"(?:" + "|".join(_FURTHER) + ")"
+_NEWQ = (
+    r"(?:" + "|".join(_FURTHER[1:]) + ")"
+)  # all but the first (pytest's own word): the two that are rare enough to count as a quoted literal
 _Q = r"[`'\"]?"  # a quote or backtick around the word
 _NAME = r"(?<![A-Za-z0-9])(?:env(?:ironment)?|stage|tier|profile|mode)(?![A-Za-z0-9])"
 _BEFORE = r"(?:in|for|outside|than|kept in|refused in)"
@@ -471,8 +475,8 @@ _NAMES = r"(?<![A-Za-z0-9])(?:env(?:ironment)?|stage|tier|profile|mode)s?(?![A-Z
 # Between a stage name and its value: spaces, a colon, an equals sign, a quote, a bracket. Never a full stop (a
 # sentence boundary: "the next stage. Test the config") and never an underscore (an identifier: `env_test_dir`).
 _SEP = r"[\s:=\"'`\[\](){}]{1,6}"
-_STAGE_ITEM = r"(?:pilot|prod|demo|test|development|production)"  # a member of a stage list
-_STAGE_OLD = r"(?:pilot|prod|demo)"
+_STAGE_ITEM = r"(?:" + "|".join((*STAGES, *_FURTHER)) + ")"  # a member of a stage list
+_STAGE_OLD = r"(?:" + "|".join(STAGES) + ")"
 # The separator of two list members, a quote or backtick allowed on either side of it.
 _BETWEEN = _Q + r"\s*[,|/;]\s*" + _Q
 NEW_POSITIONS = {
@@ -627,6 +631,35 @@ def test_the_exemptions_have_no_stale_entry():
         assert why.strip() and (ROOT / rel).is_file(), rel
 
 
+EXEMPTION_ROWS = (
+    47  # change this number only together with a row added or removed, and say why in the commit
+)
+
+
+def _src_rows(lines: list[str]) -> list[str]:
+    """The files of the rows that name product code (a path under src/)."""
+    return [ln.split("\t")[0] for ln in lines if ln.startswith("src/")]
+
+
+def test_the_exemption_file_has_the_pinned_number_of_rows_and_none_for_src():
+    """A row is one exact line of one file with its reason (never a whole file). The number is pinned, so a row added
+    to quieten the scan shows in the diff of this number. No row for a file under src/ (product code is written so the
+    scan does not take it for a stage value); no row names a folder or a glob."""
+    lines = [ln for ln in EXEMPT_FILE.read_text(encoding="utf-8").splitlines() if ln]
+    assert len(lines) == EXEMPTION_ROWS, f"{len(lines)} rows, {EXEMPTION_ROWS} pinned"
+    assert not _src_rows(lines), f"a row for product code: {_src_rows(lines)}"
+    for rel, line, why in (ln.split("\t") for ln in lines):
+        assert "*" not in rel and not rel.endswith("/"), f"a row for more than one file: {rel}"
+        assert line.strip() and line == line.strip(), f"{rel}: the row's line is empty or not cut"
+        assert len(why.split()) >= 3, f"{rel}: the reason is too short to say anything"
+
+
+def test_the_src_row_check_sees_a_planted_src_row():
+    """Sensitivity control for the test above."""
+    assert _src_rows(["src/x.py\tline\ta reason here"]) == ["src/x.py"]
+    assert _src_rows(["demos/x.py\tline\ta reason here"]) == []
+
+
 def test_the_stale_check_sees_a_spare_duplicate_row_and_a_missing_row():
     """Kills T27b (the comparison looks at the entries, not the counts). A set comparison cannot see a second row for a
     line that occurs once."""
@@ -728,7 +761,6 @@ def test_the_scanner_finds_each_old_word_only_shape(shape):
 
 
 # The three further words as a stage value: {w} is each of test, development, production in turn.
-NEW_WORDS = ("test", "development", "production")
 NEW_SHAPES = [
     "environment: {w}",  # YAML / config
     'environment = "{w}"',
@@ -856,28 +888,31 @@ def test_known_prose_collisions_are_hits_that_need_an_exact_line_exemption(line)
     assert _hits(line), f"expected a hit (see the docstring): {line}"
 
 
+EXEMPT_REL = "demos/ask-your-data/askdata/evalset.py"
+EXEMPT_LINE = 'split: Literal["dev", "test"]'
+
+
 def test_a_new_word_stage_value_in_a_scanned_file_fails_unless_its_exact_line_is_exempt():
-    rel = "src/hadavin_sdk/commonwords.py"
-    text = (ROOT / rel).read_text(encoding="utf-8")
-    assert _scan_text(rel, text)[0] == [], "the file as it is should be clean"
-    assert (rel, '"production",') in _scan_text(rel, text)[1], "the exempt line was not read"
-    found, _ = _scan_text(rel, text + "\nenvironment: production\n")
-    assert len(found) == 1 and "environment: production" in found[0]
+    text = (ROOT / EXEMPT_REL).read_text(encoding="utf-8")
+    assert _scan_text(EXEMPT_REL, text)[0] == [], "the file as it is should be clean"
+    assert (EXEMPT_REL, EXEMPT_LINE) in _scan_text(EXEMPT_REL, text)[1], (
+        "the exempt line was not read"
+    )
+    word = NEW_WORDS[2]
+    found, _ = _scan_text(EXEMPT_REL, text + f"\nenvironment: {word}\n")
+    assert len(found) == 1 and f"environment: {word}" in found[0]
     # the exemption is the exact line, not the word: the same word in a stage position elsewhere in the file fails
-    found, _ = _scan_text(rel, text + '\n    "production", 1\n')
+    found, _ = _scan_text(EXEMPT_REL, text + f'\n    "{word}", 1\n')
     assert len(found) == 1
 
 
 def test_an_exemption_covers_one_occurrence_not_every_identical_line():
     """A row of the tsv excuses ONE occurrence of its exact line. A second identical line (a copy added later in the same
     file) is a hit, and a second row for the same line excuses exactly two."""
-    rel = "src/hadavin_sdk/commonwords.py"
-    text = (ROOT / rel).read_text(encoding="utf-8")
-    assert _scan_text(rel, text)[0] == [], "the file as it is should be clean"
-    found, _ = _scan_text(rel, text + '\n    "production",\n')
-    assert len(found) == 1 and '"production",' in found[0], (
-        "a second identical exempt line was excused"
-    )
+    text = (ROOT / EXEMPT_REL).read_text(encoding="utf-8")
+    assert _scan_text(EXEMPT_REL, text)[0] == [], "the file as it is should be clean"
+    found, _ = _scan_text(EXEMPT_REL, text + "\n    " + EXEMPT_LINE + "\n")
+    assert len(found) == 1 and EXEMPT_LINE in found[0], "a second identical exempt line was excused"
 
 
 def test_two_rows_for_the_same_line_excuse_two_occurrences_and_no_more(tmp_path, monkeypatch):

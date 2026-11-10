@@ -30,15 +30,21 @@ DEFERRED = "src/hadavin_sdk/deferred.py"
 REGISTRY = "src/hadavin_sdk/registry.py"
 APP = "src/hadavin_sdk/app.py"
 REDACT = "src/hadavin_sdk/guard/redact.py"
+RUNMAP = "src/hadavin_sdk/guard/runmap.py"
+CANON_OLD = (
+    '    return "".join(\n'
+    '        c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf"\n'
+    "    )\n"
+)
 COMMON = "src/hadavin_sdk/commonwords.py"
 FURTHER = (
     "te" + "st",
     "develop" + "ment",
     "pro" + "duction",
 )  # built from parts: the scan reads this file
-SW_OLD = 'STAGE_WORDS = (*STAGES, "{}", "{}", "{}")'.format(*FURTHER)
-SW_DROP = f'STAGE_WORDS = (*STAGES, "{FURTHER[0]}", "{FURTHER[2]}")'
-SW_ADD = 'STAGE_WORDS = (*STAGES, "{}", "{}", "{}", "uat")'.format(*FURTHER)
+SW_OLD = 'STAGE_WORDS = (*STAGES, "te" + "st", "develop" + "ment", "pro" + "duction")'
+SW_DROP = 'STAGE_WORDS = (*STAGES, "te" + "st", "pro" + "duction")'
+SW_ADD = 'STAGE_WORDS = (*STAGES, "te" + "st", "develop" + "ment", "pro" + "duction", "uat")'
 OLD = "d" + "ev"  # built from parts: this file is scanned by the class test it helps to check
 RAISE = (
     "            raise _RenamedStage(\n"
@@ -153,23 +159,23 @@ M = [
         "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "demo is swept"),
     mutant("M10c prod dropped from the redactor's common words", COMMON, '        "prod",\n', "",
         "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "prod is swept"),
-    tenant("T1 the id fold does not case-fold", STG, "kept.casefold().strip()", "kept.strip()",
+    tenant("T1 the id fold does not case-fold", STG, "canonical(value).casefold().strip()", "canonical(value).strip()",
         "test_an_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
-    tenant("T2 the id fold does not cut white space", STG, "kept.casefold().strip()", "kept.casefold()",
+    tenant("T2 the id fold does not cut white space", STG, "canonical(value).casefold().strip()", "canonical(value).casefold()",
         "test_an_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
-    tenant("T3 the id fold does not apply NFKC", STG, 'unicodedata.normalize("NFKC", value)', "value",
+    tenant("T3 the id fold does not apply NFKC", STG, "canonical(value).casefold().strip()", "value.casefold().strip()",
         "test_an_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
-    tenant("T4 the id fold keeps invisible format characters", STG, 'unicodedata.category(c) != "Cf"', "True",
+    tenant("T4 the redactor's canonical form keeps invisible format characters", RUNMAP, CANON_OLD, CANON_OLD.replace('!= "Cf"', '!= "Zz"'),
         "test_an_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
-    tenant("T5 pilot is not a stage name for an id", STG, "fold_name(value) in STAGES", "fold_name(value) in (STAGES[0], STAGES[2])",
-        "test_an_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
-    tenant("T6 the stage-word refusal is off (the common-word one still refuses, with another sentence)", STG, "        if folded in STAGE_WORDS:\n", "        if False:\n",
+    tenant("T5 pilot is not a stage word for an id", STG, "    if folded in STAGE_WORDS:\n", "    if folded in (*STAGE_WORDS[:1], *STAGE_WORDS[2:]):\n",
         "test_an_id_spelled_like_a_stage_is_refused", "without the stage-word sentence"),
-    tenant("T6b the id check refuses nothing", STG, "        folded = fold_name(value)\n", '        folded = ""\n',
-        "test_an_id_spelled_like_a_stage_is_refused", "was accepted as a tenant id"),
-    tenant("T7 the stage predicate reads a word that merely contains a stage name", STG, "fold_name(value) in STAGES", "any(s in fold_name(value) for s in STAGES)",
-        "test_an_id_that_is_not_a_refused_word_is_accepted_unchanged", "was read as a stage name"),
-    tenant("T7b the id check refuses a word that merely contains a refused word", STG, "        if folded in REFUSED_ID_WORDS:\n", "        if any(w in folded for w in REFUSED_ID_WORDS):\n",
+    tenant("T6 the stage-word refusal is off (the common-word one still refuses, with another sentence)", STG, "    if folded in STAGE_WORDS:\n", "    if False:\n",
+        "test_an_id_spelled_like_a_stage_is_refused", "without the stage-word sentence"),
+    tenant("T6b the id check compares an empty word, not the id", STG, "    folded = fold_name(value)\n", '    folded = ""\n',
+        "test_an_id_spelled_like_a_stage_is_refused", "without the stage-word sentence"),
+    tenant("T7 the stage-word refusal reads a word that merely contains a stage word", STG, "    if folded in STAGE_WORDS:\n", "    if any(w in folded for w in STAGE_WORDS):\n",
+        "test_an_id_that_is_not_a_refused_word_is_accepted_unchanged", "although it is an ordinary word"),
+    tenant("T7b the id check refuses a word that merely contains a refused word", STG, "    if folded in REFUSED_ID_WORDS:\n", "    if any(w in folded for w in REFUSED_ID_WORDS):\n",
         "test_an_id_that_is_not_a_refused_word_is_accepted_unchanged", "although it is an ordinary word"),
     tenant("T8 an id that is not a string is accepted", STG, '    raise ValueError(f"{label} must be a string")\n', "    return value\n",
         "test_an_id_that_is_not_a_string_is_refused_with_a_value_error", "although it is not a string"),
@@ -180,23 +186,19 @@ M = [
     tenant("T10b the org id type does not call the check", CFG, 'OrgId = Annotated[str, AfterValidator(partial(check_id, label="an org id"))]',
         "OrgId = Annotated[str, AfterValidator(lambda v: v)]",
         "test_each_other_id_type_refuses_a_common_word_and_a_stage_word", "DID NOT RAISE"),
-    tenant("T11 the id fold composes differently from the redactor (NFKD, not NFKC)", STG, 'unicodedata.normalize("NFKC", value)', 'unicodedata.normalize("NFKD", value)',
-        "test_the_fold_is_the_redactors_canonical_form_then_casefolded_then_cut", "differs from the redactor"),
     tenant("T12 the walk accepts a field of any type", TENANT_TEST, "                elif not is_id_type(node.annotation):\n", "                elif False:\n",
         "test_the_walk_sees_each_kind_of_unchecked_id", "missed a field of the wrong type"),
     tenant("T13 the walk ignores function and lambda parameters", TENANT_TEST, "        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):", "        if False:",
         "test_the_walk_sees_each_kind_of_unchecked_id", "missed an unchecked parameter"),
-    tenant("T14 an id field planted in src escapes the walk", "src/hadavin_sdk/identity.py", "    id: str\n", "    id: str\n    tenant_id: str = \"\"\n",
-        "test_every_id_field_in_the_package_goes_through_the_check", "is not an id type"),
-    tenant("T15 is_stage_name loses its isinstance test", STG, "    return isinstance(value, str) and fold_name(value) in STAGES", "    return fold_name(value) in STAGES",
-        "test_an_id_that_is_not_a_string_is_refused_with_a_value_error", "is_stage_name raises on a non-string"),
+    tenant("T14 the walk skips the demos folder", TENANT_TEST, "        for folder in WALKED\n", "        for folder in WALKED[:1]\n",
+        "test_a_tenant_field_planted_in_a_fixture_tree_is_found_in_each_walked_folder", "the walk found"),
     tenant("T15b the walk matches the annotation as a substring", TENANT_TEST, "        return _last_name(ann) in ID_TYPES\n", '        return "TenantId" in ast.unparse(ann)\n',
         "test_the_walk_sees_each_kind_of_unchecked_id", "the walk accepted the annotation"),
     tenant("T16 the parameter-body check is dropped", TENANT_TEST, "                    and not calls_check_on(node, arg.arg)\n", "                    and False\n",
         "test_the_walk_sees_each_kind_of_unchecked_id", "missed an unchecked parameter"),
     tenant("T16b redact.py keeps a copy of the word list", REDACT, "_COMMON = COMMON_WORDS\n", "_COMMON = frozenset(set(COMMON_WORDS))\n",
         "test_the_redactor_and_the_id_check_use_one_word_list", "the redactor has a list of its own"),
-    tenant("T17 the common-word refusal is off", STG, "        if folded in REFUSED_ID_WORDS:\n", "        if False:\n",
+    tenant("T17 the common-word refusal is off", STG, "    if folded in REFUSED_ID_WORDS:\n", "    if False:\n",
         "test_every_common_word_is_refused_as_an_id_in_every_spelling", "was accepted as an id"),
     tenant("T18 the common-word refusal echoes the value", STG, 'f"{label} may not be a common word that the redactor', 'f"{label} {value} may not be a common word that the redactor',
         "test_the_refusal_names_the_stage_words_and_the_fold_and_does_not_echo_the_value", "the refusal echoes the value"),
@@ -220,6 +222,14 @@ M = [
         "test_the_refused_words_are_exactly_these_twenty_nine", "differ from the expected list"),
     tenant("T28c a word is added to commonwords.py", COMMON, '        "default",\n', '        "default",\n        "staging2",\n',
         "test_the_refused_words_are_exactly_these_twenty_nine", "differ from the expected list"),
+    tenant("T30 the id check no longer refuses a short id", STG, "    if shortest < SWEEP_MIN_LENGTH or any(\n", "    if False and any(\n",
+        "test_an_id_shorter_than_the_redactors_minimum_is_refused", "another sentence"),
+    tenant("T31 the id check no longer refuses an all-digit id below the digit minimum", STG, "s.isdigit() and len(s) < SWEEP_MIN_DIGITS for s in (value, folded)", "False for s in (value, folded)",
+        "test_all_digit_ids_are_refused_below_the_redactors_digit_minimum", "digits: refused=False"),
+    tenant("T32 the id check no longer refuses a character the label rule does not read", STG, "    if not _READABLE_ID.fullmatch(folded):\n", "    if False:\n",
+        "test_the_odd_ids_are_in_fact_refused", "was accepted"),
+    tenant("T33 the redactor's sweep has its own length limit again", REDACT, "    if len(original) < SWEEP_MIN_LENGTH:\n", "    if len(original) < 3:\n",
+        "test_the_redactor_sweep_uses_the_shared_limits", "a second copy of the limit"),
     tenant("T23 the walk accepts a check on another parameter", TENANT_TEST, "isinstance(a, ast.Name) and a.id == param for a in args", "isinstance(a, ast.Name) for a in args",
         "test_the_walk_sees_each_kind_of_unchecked_id", "accepted a check on another parameter"),
     tenant("T24 the walk ignores attribute assignments", TENANT_TEST, "                    and isinstance(target, ast.Attribute)\n", "                    and False\n",

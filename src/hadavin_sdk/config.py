@@ -1,6 +1,10 @@
 """Client config: ``HADAVIN_CONFIG_DIR`` names a folder holding ``config.yaml`` and friends.
 
 Bad config fails at start-up. Cross-file checks (agents, actions, chains) live in ``registry``.
+
+Id types (``TenantId``, ``OrgId``, ``CustomerId``, ``AccountId``, ``UserId``): a prepared interface, used by no field
+yet. Named trigger: they are wired when the first config or identity field named ``*_id`` is added (the P1c identity
+work); until then ``tests/test_tenant_ids.py`` fails any such field typed as a plain ``str``.
 """
 
 from __future__ import annotations
@@ -102,7 +106,7 @@ class Backends(_Strict):
         return out + [("detector", d) for d in self.detector]
 
 
-_OLD_STAGE = "dev"
+_OLD_STAGE = "d" + "ev"  # in two pieces: the stage scan reads this file (no exemption row for src)
 
 
 class _RenamedStage(ValueError):

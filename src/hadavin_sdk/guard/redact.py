@@ -25,7 +25,7 @@ import string
 from dataclasses import dataclass, field
 from typing import Any
 
-from hadavin_sdk.commonwords import COMMON_WORDS
+from hadavin_sdk.commonwords import COMMON_WORDS, SWEEP_MIN_DIGITS, SWEEP_MIN_LENGTH
 
 # Ordered deliberately: the greedy/most-specific patterns run before the narrow ones, otherwise a
 # narrow pattern eats part of a broader secret (a UUID inside an ARN, an EMAIL inside a connection
@@ -397,7 +397,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "TENANT",
         re.compile(
-            r"(?i)\b(?:tenant|org|organisation|organization|customer|account|user)[_\-]?id\b[\"']?\s*[:=]\s*[\"']?([a-z0-9_\-]{3,})[\"']?"
+            r"(?i)\b(?:tenant|org|organisation|organization|customer|account|user)[_\-]?id\b[\"']?\s*[:=]\s*[\"']?([a-z0-9_\-]{"
+            + str(SWEEP_MIN_LENGTH)
+            + r",})[\"']?"
         ),
     ),
     # A token following `Bearer ` in an Authorization header (when it is not already a JWT/API key).
@@ -1175,7 +1177,7 @@ _STANDALONE = object()
 def _sweep(placeholder: str, original: str):
     """How the copies of `original` are swept: every copy (_EVERY_COPY), every standalone copy (a
     compiled pattern), or not at all (None)."""
-    if len(original) < 3:
+    if len(original) < SWEEP_MIN_LENGTH:
         return None
     if _kind(placeholder) in SECRET_KINDS and len(original) >= 4:
         # Every copy, whatever it looks like. An exemption for "plain words and assignments" (932d515)
@@ -1185,7 +1187,7 @@ def _sweep(placeholder: str, original: str):
         # own reads included. A secret or an identifier must never stay in clear, so that limit is
         # handled by escalating, not by leaving copies unmasked.
         return _EVERY_COPY
-    if (original.isdigit() and len(original) < 6) or original.lower() in _COMMON:
+    if (original.isdigit() and len(original) < SWEEP_MIN_DIGITS) or original.lower() in _COMMON:
         return None
     return _STANDALONE
 
