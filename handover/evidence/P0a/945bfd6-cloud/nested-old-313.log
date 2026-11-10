@@ -1,0 +1,25 @@
+HEAD 945bfd6d21ddc7361b80d1976b159764ec195edd
+$ old 151d3e1 file, nested checkout
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/build/EV-P71-945bfd6/wt-nested
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 21 items / 20 deselected / 1 selected
+
+tests/test_old_full_tmp.py F                                             [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_repository_ships_no_pglast ________________________
+
+    def test_repository_ships_no_pglast():
+>       assert violations(ROOT) == []
+E       AssertionError: assert ['src: .venv/...ports pglast'] == []
+E         
+E         Left contains 4 more items, first extra item: 'src: .venv/lib/x.py imports pglast'
+E         Use -v to get more diff
+
+tests/test_old_full_tmp.py:104: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_old_full_tmp.py::test_repository_ships_no_pglast - Assertio...
+======================= 1 failed, 20 deselected in 0.34s =======================
