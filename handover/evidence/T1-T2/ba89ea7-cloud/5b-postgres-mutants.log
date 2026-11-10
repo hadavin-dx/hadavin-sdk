@@ -13,3 +13,4 @@ KILLED P3 add_spend keys the month counter by the day :: FAILED tests/contracts/
       /home/user/build/venv-t1t2-313/lib/python3.13/site-packages/psycopg/cursor.py:117: psycopg.errors.CheckViolation: new row for relation "spend_month" violates check constraint "spend_month_month_check"
       /home/user/build/venv-t1t2-313/lib/python3.13/site-packages/psycopg/cursor.py:117: psycopg.errors.CheckViolation: new row for relation "spend_month" violates check constraint "spend_month_month_check"
       /home/user/build/venv-t1t2-313/lib/python3.13/site-packages/psycopg/cursor.py:117: psycopg.errors.CheckViolation: new row for relation "spend_month" violates check constraint "spend_month_month_check"
+exit=0
