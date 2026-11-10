@@ -96,6 +96,10 @@ def cloud_variables() -> list[str]:
 def clean_env(**extra: str) -> dict[str, str]:
     """The environment a test run gets: PLAIN_ENV from this process, plus `extra`."""
     env = {k: os.environ[k] for k in PLAIN_ENV if k in os.environ}
+    # One copy of the repository serves every mutant. Python keeps a compiled file when the source's size and
+    # modification second are unchanged, so two same-size mutants planted in the same second could run the first
+    # one's code. No compiled files are written, so there is nothing stale to read.
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
     env.update(extra)
     return env
 
@@ -636,6 +640,40 @@ m(
     ),
     [CP],
     "::test_the_vendor_detector_in_demo_needs_the_field",
+)
+
+TOOL = "tools/client_profile_mutants.py"
+# The runner's own rules (the tests run in the copy and read the copy's runner file).
+m(
+    "runner: compiled files are written again",
+    TOOL,
+    rep('    env["PYTHONDONTWRITEBYTECODE"] = "1"\n', ""),
+    [CP],
+    "::test_two_same_size_mutants_in_one_second_do_not_run_each_others_code",
+)
+m(
+    "runner: the tests get the whole environment",
+    TOOL,
+    rep(
+        "    env = {k: os.environ[k] for k in PLAIN_ENV if k in os.environ}\n",
+        "    env = dict(os.environ)\n",
+    ),
+    [CP],
+    "::test_the_mutant_runner_gives_the_tests_only_plain_variables",
+)
+m(
+    "runner: AWS_ is not a cloud prefix",
+    TOOL,
+    rep('    "AWS_",\n', ""),
+    [CP],
+    r"::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting\[AWS_ACCESS_KEY_ID\]",
+)
+m(
+    "runner: numbers leave a gap",
+    TOOL,
+    rep("DEF.append((len(DEF) + 1,", "DEF.append((len(DEF) + 2,"),
+    [CP],
+    "::test_the_mutant_numbers_are_one_to_n_without_gaps_or_repeats",
 )
 
 

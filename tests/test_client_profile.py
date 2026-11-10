@@ -15,6 +15,8 @@ from __future__ import annotations
 import ast
 import importlib.util
 import inspect
+import os
+import sys
 from itertools import product
 from pathlib import Path
 from types import SimpleNamespace
@@ -697,10 +699,30 @@ def test_the_mutant_runner_gives_the_tests_only_plain_variables(monkeypatch):
     for name in ["AWS_SECRET_ACCESS_KEY", "HTTPS_PROXY", "HADAVIN_TEST_PG_DSN", "PATH"]:
         monkeypatch.setenv(name, "made-up")
     env = runner.clean_env(PYTHONPATH="/x")
-    assert set(env) <= {*runner.PLAIN_ENV, "PYTHONPATH"}
+    assert set(env) <= {*runner.PLAIN_ENV, "PYTHONPATH", "PYTHONDONTWRITEBYTECODE"}
     assert env["PATH"] == "made-up" and env["PYTHONPATH"] == "/x"
 
 
 def test_the_mutant_numbers_are_one_to_n_without_gaps_or_repeats():
     numbers = [row[0] for row in _runner().DEF]
     assert numbers == list(range(1, len(numbers) + 1))
+
+
+def test_two_same_size_mutants_in_one_second_do_not_run_each_others_code(tmp_path):
+    """Python reuses a compiled file when the source has the same size and the same modification second. The runner
+    plants every mutant into one copy, so it must leave no compiled files behind."""
+    runner = _runner()
+    mod = tmp_path / "planted.py"
+    seen = []
+    for value in ("1", "2"):  # same size, same modification time on purpose
+        mod.write_text(f"VALUE = {value}\n", encoding="utf-8")
+        os.utime(mod, (1_700_000_000, 1_700_000_000))
+        run = runner._sh(
+            [sys.executable, "-c", "import planted; print(planted.VALUE)"],
+            timeout=60,
+            cwd=tmp_path,
+            env=runner.clean_env(PYTHONPATH=str(tmp_path)),
+        )
+        seen.append(run.stdout.strip())
+    assert seen == ["1", "2"]
+    assert list(tmp_path.rglob("*.pyc")) == []
