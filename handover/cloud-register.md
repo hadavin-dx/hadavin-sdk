@@ -970,3 +970,5 @@ Closed: a10f5f650a (PR72 fix builder, pushed d392200), a17e8eff8a and a99c6a3d18
 | a83e36fd22 | A21a result review egm-design (ba89ea7, money, uncapped) | sonnet | 19:50Z | +30 min | running | save report, ledger |
 | a596423e5b | A21a result review egm-codebase-details (ba89ea7) | sonnet | 19:50Z | +30 min | running | save report, ledger |
 Closed: ac25206877 (A21a evidence runner; evidence committed: 4 known failures in test_t1_meter_parallel.py, all else green on 3.12/3.13, DSN set and unset).
+| af4a57cbb8 | A21a fix builder r1 (B-A21a-r2, ba89ea7; BL-core-a21a-w2-06..17, money, uncapped) | sonnet | 20:05Z | +60 min | running | evidence runner on new head, fresh reviewers |
+Closed: a596423e5b and a83e36fd22 (A21a reviewers, saved to handover/reviews/A21a/).
