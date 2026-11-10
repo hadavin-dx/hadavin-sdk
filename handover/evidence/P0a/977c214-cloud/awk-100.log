@@ -1,0 +1,3 @@
+HEAD 977c214fd0c78284249e03c7f914ec0eb090487d
+$ awk 'length>100' tests/test_no_pglast_in_runtime.py
+lines_over_100=0
