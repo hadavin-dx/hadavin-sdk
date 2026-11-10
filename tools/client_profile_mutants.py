@@ -727,7 +727,7 @@ m(
     "runner: a kill by another test counts as a kill",
     TOOL,
     rep(
-        'r[4] not in ("KILLED", "KILLED-NAMED")]',
+        'r[4] not in ("KILLED", ' + '"KILLED-NAMED")]',  # split, so this file holds the text once
         'r[4] not in ("KILLED", "KILLED-NAMED", "KILLED-OTHER")]',
     ),
     [CP],
