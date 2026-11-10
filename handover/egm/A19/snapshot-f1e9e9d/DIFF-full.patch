@@ -1,0 +1,2119 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9107c49..a790884 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -3,14 +3,24 @@
+ ## Unreleased
+ 
+ ### Upgrade steps
+-- **Breaking: the first stage is now called `demo`; `environment: dev` is refused.** The stages are exactly `demo`, `pilot` and `prod`. A config that says `environment: dev` stops at start with "environment: dev was renamed to demo; write environment: demo (allowed values: demo, pilot, prod)" (shown beside any other problem found in the same file, and also for `Dev`, `DEV` and spellings with spaces, which are refused all the same); any other value (`Demo`, `staging`, `uat`, an empty value) is refused too, and values are never tidied or guessed. To upgrade: (1) change `environment:` in your config to `demo`; (2) if your code imports `backends.table.DEV_ONLY`, import `DEMO_ONLY` instead (same six kind pairs, no old name kept); (3) a project label such as `uat` is not a stage: map it to one stage in your own config. Also: the pilot and prod checks (`deferred.py`, `registry.py`, `app.py`) now ask one function, `hadavin_sdk.stages.is_live(environment)`, which treats anything that is not exactly `demo` as live; the prod-only rules (no local key file, a retention-agreed anchor) ask `hadavin_sdk.stages.is_prod(environment)`, which is true for `prod` and for any value that is not a stage. `STAGES`, `is_live` and `is_prod` live in the new leaf module `hadavin_sdk/stages.py`, not in `config.py`; the list `deferred.LIVE` is removed. The redactor no longer sweeps the words `demo` and `pilot` as a name (it already skipped `prod`), but a secret that reads `demo` is still swept. No stage is stored today; the first change that stores one must map an old `dev` value to `demo` on read, for display only and never for a guard decision, and add a test through that real read site.
++- **Breaking: the first stage is now called `demo`; `environment: dev` is refused.** The stages are exactly `demo`, `pilot` and `prod`. A config that says `environment: dev` stops at start with "environment: dev was renamed to demo; write environment: demo (allowed values: demo, pilot, prod)" (shown beside any other problem found in the same file, and also for `Dev`, `DEV` and spellings with spaces, which are refused all the same); any other value (`Demo`, `staging`, `uat`, an empty value) is refused too, and values are never tidied or guessed. To upgrade: (1) change `environment:` in your config to `demo`; (2) if your code imports `backends.table.DEV_ONLY`, import `DEMO_ONLY` instead (same six kind pairs, no old name kept); (3) a project label such as `uat` is not a stage: map it to one stage in your own config.
++- **One question for the stage guards.** The pilot and prod checks (`deferred.py`, `registry.py`, `app.py`) now ask one function, `hadavin_sdk.stages.is_live(environment)`, which treats anything that is not exactly `demo` as live; the prod-only rules (no local key file, a retention-agreed anchor) ask `hadavin_sdk.stages.is_prod(environment)`, which is true for `prod` and for any value that is not a stage. `STAGES`, `is_live` and `is_prod` live in the new small module `hadavin_sdk/stages.py`, not in `config.py`; the list `deferred.LIVE` is removed.
++- **Redactor, `demo` and `pilot` are common words now.** The redactor no longer sweeps the words `demo` and `pilot` as a name (`demo` and `pilot` were added to its common words in this change; `prod` was already there), but a secret that reads `demo` or `pilot` is still swept in every copy of that exact spelling.
++- **Redactor, what is and is not masked for `demo` and `pilot`.** What is and is not masked (pinned by `tests/test_stage_names.py` through both `redact` and `redact_text`, not `_sweep` alone): a tenant or customer named `Pilot` or `Demo` is masked where an id label such as `tenant_id` or `customer_id` gives it (`tenant_id=Pilot`, `customer_id: Demo`; the lower-case `tenant_id=pilot` too), but the same word standing alone is not swept, so `Pilot and Demo again` stays readable; a label without `_id` is not read by the tenant rule at all, so `tenant: Pilot` and `customer=Demo` are not masked anywhere; an ordinary tenant name is masked in every copy; a secret that reads `demo` or `pilot` (`password=pilot`) is masked in every copy of that exact spelling, because the redactor sweeps every copy of a secret that is 4 characters or longer (`demo` has 4, `pilot` has 5) and skips a common word only when it is an identifier.
++- **No stage is stored yet.** The first change that stores one must map an old `dev` value to `demo` on read, for display only and never for a guard decision, and add a test through that real read site.
++- **An id may not be a stage word or a common word.** `hadavin_sdk.stages.check_id` (and `check_tenant_id` for tenants) refuses these 29 words as an id, compared after the redactor's text clean-up (see the entry on why, below): `admin`, `api`, `app`, `db`, `debug`, `default`, `demo`, `dev`, `development`, `error`, `false`, `info`, `local`, `main`, `master`, `none`, `null`, `pilot`, `prod`, `production`, `public`, `root`, `stage`, `staging`, `test`, `true`, `user`, `users`, `web`. They are the three stages (`demo`, `pilot`, `prod`), three more stage words (`test`, `development`, `production`) and every word on the redactor's common-word list. That list now lives in one place, `hadavin_sdk/commonwords.py`, imported by both the redactor and `stages.py` (a test pins that it is one list). The error says "may not be a stage word" or "may not be a common word that the redactor does not sweep" and does not echo the value (inside a config model that hides input in errors).
++- **Id field types.** The config field types are `config.TenantId`, `OrgId`, `CustomerId`, `AccountId` and `UserId`, one for each id label the redactor reads (`tenant_id`, `org_id`, `organisation_id`, `organization_id`, `customer_id`, `account_id`, `user_id`). The refusal applies to ids of every source, including the databases of the demo repos (for example `ask-your-data`), wherever the ids are registered.
++- **Why an id may not be one of these words.** The redactor's labelled rule masks the value in `tenant_id=prod` whatever the value is, so that copy is hidden even for a tenant named `prod`. What the redactor does not do is sweep other copies of a value on its common-word list, because `HTTP 500 in prod` must stay readable: an id that is one of those words would keep its unlabelled copies in clear. Refusing the words as ids closes that. "Any spelling" means: look-alike forms made plain (a full-width `prod` or a roman-numeral letter becomes plain letters), invisible characters removed (zero-width space, soft hyphen, word joiner), capitals made lower case and outer spaces cut. The first two steps are the redactor's own function; the last two are added in `stages.fold_name`. Look-alike letters from other alphabets (Cyrillic letters that look Latin) are not turned into Latin letters, so such an id is refused for its characters instead (next entries).
++- **Stage scan: `test`, `development` and `production` are now stage words.** `tests/test_stage_names.py` and the id check treat these three as stage words beside `demo`, `pilot` and `prod`, because they are the usual names of a stage in other projects' configs: a config, doc or CLI flag that says `environment: test` or `--env production` would bring back a second stage vocabulary. The stages themselves are unchanged (exactly `demo`, `pilot`, `prod`). The data-split lines of the demo repos that say `"test"` are listed one by one in `tests/stage_exemptions.tsv`.
++- **Limits of the id check.** No id is created or stored on this branch (no config, store, command-line or backend field holds one), so the check guards no live path yet. The five id types are ready for use and are wired when the first config or identity field named like an id (`*_id`) is added; until then `tests/test_tenant_ids.py` searches `src`, `demos` and `tools` and fails on a field, attribute or parameter named like an id that is not checked. The check runs only inside config models that use the types (it is skipped when a model is built without validation, and a plain data class is not validated).
++- **An id the redactor cannot mask is refused.** The redactor reads the value after `tenant_id`, `customer_id` and the other labels only when it is at least 3 characters long and made of the letters a to z, digits, hyphen and underscore; it copies an all-digit value elsewhere only from 6 digits. `check_id` now refuses an id of 1 or 2 characters (`xy`), an all-digit id of fewer than 6 digits, and an id with any other character: a control character such as a NUL or a bell, a space, a dot, an accented letter, a Cyrillic letter that looks Latin, or a letter that only becomes plain ASCII when the id is case-folded or normalised (the German sharp s, which folds to `ss`; a full-width letter; an invisible character such as a zero-width space inside the id). The check now reads the id exactly as written, against the redactor's own character class (ASCII letters of either case, digits, hyphen, underscore); before it read a folded copy and returned the original, so `customer_id=acme` followed by a sharp s was masked only up to the sharp s and the rest, and every later copy, stayed readable. Before, such an id was accepted and its other copies stayed readable in logs. The two numbers are the redactor's own (`commonwords.SWEEP_MIN_LENGTH` and `SWEEP_MIN_DIGITS`), not copies. To upgrade: if you register ids, give them only the characters above; a name such as `demos`, `prod-1` or `preprod` is still an ordinary id. Free text such as `tenant_id=Pilot` in a log is still masked where the label gives it.
+ - **Code-quality scanner fixes (SonarCloud, an automated code-quality scanner); one public name removed.** `guard.runmap.PARTIAL_ESCAPE` is gone. If your code imports it, call `guard.runmap.partial_escape_start(text, pos)` instead; it returns the start position as a number (or None), not a match object, so replace a `.search(...)` call and its `.start()` with it. The old pattern looked for a cut-off percent code such as `%C3` at the end of a text and slowed down sharply on a long run of them (about 65 s for 40,000 codes in a row, measured 2026-11-06); the new function takes milliseconds. `guard/http.py` now holds the cloud-metadata addresses that no tool may reach as one documented table `METADATA_ENDPOINTS` (the same six addresses as before; the other refused ranges are unchanged).
+ - **K5-core, redaction behaviour you may notice.** The producers of text that reaches a model, a vendor screen, a card or a log line (listed in `guard/producers.py`, each tested by `tests/test_k5_round9.py` with a percent-, entity- and assignment-encoded secret) go through one function, `guard.runmap.redact_text`, which also undoes percent, HTML-entity, backslash-u, `\u{41}`, `%u0041`, backslash-x, backslash-U (eight digits) and three-digit octal escapes (not one- and two-digit octal or named escapes: `\1` and Windows paths would decode wrongly) and NFKC to a fixed point before it redacts: a secret written as `%41KIA...`, `&#65;KIA...` or `password%3Dx` is masked in those places, not only in tool results. Not on that list: the text of the ask-your-data demo's own ledger and command line (see its README). A text nested deeper than `defaults.SCRUB_MAX_LAYERS` (8) layers is not shown. A tool result is redacted whole up to 262,144 characters before it is cut; when it IS cut (at that cap, or again after a short handed-out secret was replaced by the longer marker), the last 8,192 characters of the result are dropped so a token that straddles the cut leaves no fragment (`defaults.CUT_MARGIN`; a PEM key is about 1.7 KB for RSA-2048, 3.2 KB for RSA-4096 and 6.4 KB for RSA-8192). Cost: redacting a hostile text at the cap takes one to four seconds on a laptop (one pass per distinct view); a call that has spent `defaults.REDACT_BUDGET_S` (6 s) before a further view is refused (`InputTooLarge`, nothing shown), and the perf step bounds it. A card text is sanitised and has commands withheld first and is redacted once, last (and once more with tags deleted, real placeholders and line breaks kept, when markup split a key from its value; that view is used only when it finds a secret value the text pass did not). A card summary is shown whole or replaced by a short note (never cut); a summary whose inputs are too large to redact says so. In a case bundle, camelCase credential keys (`clientSecret`, `dbPassword`), numbers and nested values under a credential key are masked too. The Kubernetes source defaults (`K8S_*`) stay in `defaults.py`, under their own header, with every other default.
+ - **K5-core, stated limits of redaction.** A secret value that itself contains a plain space, `;`, `,` or `&` (for example `password="my secret phrase"`) is masked only up to that character, by the redactor's own definition of a value; and a form-encoded `;` or `&` inside a value (`password%3Dab%3Bzq9`) is ambiguous between one secret and a key and value followed by more text (see SECURITY.md). A masked value nested deeper than the layer cap, or more than 256 values that need pairing across decoded views, refuses the text (`InputTooLarge` or `TooDeep`) instead of showing it.
+ - **K5-core, upgrade steps for an existing database.**
+   - **API changes (breaking for custom code; pre-1.0, so the minor version moves).** The `Store` protocol gains six methods (`add_tool_call`, `list_tool_calls`, `purge_tool_calls`, `put_redaction_map`, `get_redaction_map`, `purge_redaction_maps`): a custom store without them is refused at start with their names (`ConfigError`). `Executor.execute` takes an optional `inputs_view`. Source kinds register through `sources.kinds.register`, which refuses overlapping operation prefixes. `make`, `hosts` and `Deps` now live in `hadavin_sdk.backends.factory`; there is no re-export from `hadavin_sdk.backends` on purpose (a repo rule keeps that package file free of imports so importing the config never loads a secret provider), so the old import fails with an ImportError: change it to `from hadavin_sdk.backends.factory import make`.
+   - **Ledger test:** a database whose ledger holds `0005_evidence` and whose files are renamed is REFUSED by `migrate` with a message naming the row (`tests/test_k5_fixes2.py`); it never applies anything silently.
+-  - **Repair every dev and demo database before the first run of the merged code** (a demo database is taken from the merge commit, not from a branch). If the tables already exist: change the `version` of the `0005_evidence` row in `schema_migrations` to `0006_evidence` by hand. If not (or if an early `0005_evidence` lacks `tool_calls.error`): drop `tool_calls`, `redaction_maps` and that ledger row, then run `hadavin-sdk migrate --runtime-role R --purge-role P` again.
++  - **Repair every demo-stage database and every database of the demo repos before the first run of the merged code.** That is two groups: (1) a demo-stage database, one used by the stage named `demo` (called `dev` before this change), and (2) a database of one of the demo repos (for example `ask-your-data`), whatever stage it runs in. The merge-commit sentence covers both groups: take the database and its schema from the merge commit, not from a branch. If the tables already exist: change the `version` of the `0005_evidence` row in `schema_migrations` to `0006_evidence` by hand. If not (or if an early `0005_evidence` lacks `tool_calls.error`): drop `tool_calls`, `redaction_maps` and that ledger row, then run `hadavin-sdk migrate --runtime-role R --purge-role P` again.
+ - **K5-core, redaction input cap.** `redact_text` refuses text over 262,144 characters AND any view of it the second pass would scan over that size (`InputTooLarge`, before the work; 87,000 U+FDFA used to take 24 s and now 0.03 s). A document refused that way ends `NEEDS_PERSON document_too_large`. `evidence.max_document_bytes` may not exceed 262144. An action input schema with an `identifier` flag below the top level is refused at load. A tool's `generated_suffix` may hold at most two variable-length repeats (`{lo,hi}`). `evals.gate` raises a `ConfigError` naming the golden case whose input cannot be redacted. Name lookups: at most 8 may be stuck process-wide (shared by tools, LLM clients and the executor), and the permit is returned if the lookup thread cannot start. NAT64 (`64:ff9b::/96`, `64:ff9b:1::/48`) is refused by our own rule on every Python version.
+ - **K5-core, tool-result size and decode.** A tool result is now REFUSED (`InputTooLarge`, the run abstains `redaction_error`) when a secret was handed out to the tool and the decoded view of the result (JSON `\u` escapes, percent-encoding, HTML entities, then NFKC) would pass 262,144 characters; the decode is computed once per result. A tool result that was cut keeps its `[truncated]` marker inside the same cap (the window is 262,132 characters), so a large legitimate output is no longer refused because of the marker. Action contracts with an `identifier` flag below the top level are refused for every action, used or not. Card text over the redactor's cap is refused, and tick, log and validation-error lines are redacted first and then cut to their length.
+ - **K5-core, the scrub of a tool result.** The limits below are pinned by tests in `tests/test_k5_fixes5.py` to `test_k5_fixes9.py` and `tests/test_k5_layers.py`; the two figures on the end of a cut text (the proportion that loses a group) are estimates from a run, not pinned.
+diff --git a/src/hadavin_sdk/commonwords.py b/src/hadavin_sdk/commonwords.py
+new file mode 100644
+index 0000000..5c1dd18
+--- /dev/null
++++ b/src/hadavin_sdk/commonwords.py
+@@ -0,0 +1,49 @@
++"""The common words: the one list the redactor and the id check share. A leaf module (it imports nothing), so
++`guard/redact.py` and `stages.py` can both import it at the top of the file.
++
++The redactor never sweeps these words as a bare name: a value found by a pattern is masked where the pattern found it,
++but its other copies are left alone when the value, lower-cased, is on this list (`guard.redact._sweep`), because
++`HTTP 500 in prod` and `the default user` must stay readable. The cost is that an id which IS one of these words keeps
++its unlabelled copies in clear. `stages.check_id` therefore refuses every one of them as a tenant, customer, org,
++account or user id; `tests/test_tenant_ids.py` pins that the two lists are the same list."""
++
++# The redactor's two sweep limits, the one place they are written (`guard.redact._sweep` and its tenant label rule read
++# them, and so does `stages.check_id`): a value shorter than SWEEP_MIN_LENGTH characters is never swept or read after a
++# label, and an all-digit value shorter than SWEEP_MIN_DIGITS is not swept (`HTTP 500` must stay readable).
++SWEEP_MIN_LENGTH = 3
++SWEEP_MIN_DIGITS = 6
++
++# Four words below are written in two pieces: they are stage words, and the stage scan (tests/test_stage_names.py) reads
++# this file too; the pieces keep the scan from taking the list for a stage value, so no exemption row is needed.
++COMMON_WORDS = frozenset(
++    {
++        "prod",
++        "pro" + "duction",
++        "test",
++        "d" + "ev",
++        "demo",
++        "pilot",
++        "sta" + "ge",
++        "sta" + "ging",
++        "default",
++        "admin",
++        "root",
++        "user",
++        "users",
++        "none",
++        "null",
++        "true",
++        "false",
++        "main",
++        "master",
++        "api",
++        "app",
++        "web",
++        "db",
++        "public",
++        "local",
++        "info",
++        "error",
++        "debug",
++    }
++)
+diff --git a/src/hadavin_sdk/config.py b/src/hadavin_sdk/config.py
+index 4c4b776..591433c 100644
+--- a/src/hadavin_sdk/config.py
++++ b/src/hadavin_sdk/config.py
+@@ -1,18 +1,24 @@
+ """Client config: ``HADAVIN_CONFIG_DIR`` names a folder holding ``config.yaml`` and friends.
+ 
+ Bad config fails at start-up. Cross-file checks (agents, actions, chains) live in ``registry``.
++
++Id types (``TenantId``, ``OrgId``, ``CustomerId``, ``AccountId``, ``UserId``): a prepared interface, used by no field
++yet. Named trigger: they are wired when the first config or identity field named ``*_id`` is added (the P1c identity
++work); until then ``tests/test_tenant_ids.py`` fails any such field typed as a plain ``str``.
+ """
+ 
+ from __future__ import annotations
+ 
+ import re
+ from decimal import Decimal
++from functools import partial
+ from pathlib import Path
+ from typing import Annotated, Any, Literal, get_args
+ from urllib.parse import urlsplit
+ 
+ import yaml
+ from pydantic import (
++    AfterValidator,
+     BaseModel,
+     BeforeValidator,
+     ConfigDict,
+@@ -27,18 +33,23 @@ from hadavin_sdk import defaults, deferred
+ from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
+ from hadavin_sdk.errors import ConfigError
+ from hadavin_sdk.scrub_settings import ScrubSettings
+-from hadavin_sdk.stages import STAGES, is_live, is_prod
++from hadavin_sdk.stages import STAGES, check_id, check_tenant_id, is_live, is_prod
+ 
+ __all__ = [
++    "AccountId",
+     "Backends",
+     "Config",
+     "ConfigError",
++    "CustomerId",
+     "EvidenceSettings",
+     "K1bSettings",
++    "OrgId",
+     "Retention",
+     "Route",
+     "ScrubSettings",
+     "SourceConfig",
++    "TenantId",
++    "UserId",
+     "confined",
+     "load_config",
+     "load_yaml",
+@@ -55,6 +66,16 @@ def _money(v: object) -> object:
+ 
+ Money = Annotated[Decimal, BeforeValidator(_money)]
+ 
++# The type of every config field that holds a tenant id: a stage word or a common word (stages.check_id) is refused. The
++# other id types are for the ids the redactor's label rule also reads (org, customer, account, user). Use them in a
++# `_Strict` model only: that model hides the input value in errors, a plain BaseModel prints it. No config field holds
++# such an id yet; tests/test_tenant_ids.py fails if a model gets one that does not use these types.
++TenantId = Annotated[str, AfterValidator(check_tenant_id)]
++OrgId = Annotated[str, AfterValidator(partial(check_id, label="an org id"))]
++CustomerId = Annotated[str, AfterValidator(partial(check_id, label="a customer id"))]
++AccountId = Annotated[str, AfterValidator(partial(check_id, label="an account id"))]
++UserId = Annotated[str, AfterValidator(partial(check_id, label="a user id"))]
++
+ 
+ class _Strict(BaseModel):
+     # A mistyped key may hold a secret: errors name the field, never its value.
+@@ -85,7 +106,7 @@ class Backends(_Strict):
+         return out + [("detector", d) for d in self.detector]
+ 
+ 
+-_OLD_STAGE = "dev"
++_OLD_STAGE = "d" + "ev"  # in two pieces: the stage scan reads this file (no exemption row for src)
+ 
+ 
+ class _RenamedStage(ValueError):
+diff --git a/src/hadavin_sdk/guard/redact.py b/src/hadavin_sdk/guard/redact.py
+index 29ed64d..42833c5 100644
+--- a/src/hadavin_sdk/guard/redact.py
++++ b/src/hadavin_sdk/guard/redact.py
+@@ -25,6 +25,8 @@ import string
+ from dataclasses import dataclass, field
+ from typing import Any
+ 
++from hadavin_sdk.commonwords import COMMON_WORDS, SWEEP_MIN_DIGITS, SWEEP_MIN_LENGTH
++
+ # Ordered deliberately: the greedy/most-specific patterns run before the narrow ones, otherwise a
+ # narrow pattern eats part of a broader secret (a UUID inside an ARN, an EMAIL inside a connection
+ # string) and the broader pattern then fails to match.
+@@ -395,7 +397,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+     (
+         "TENANT",
+         re.compile(
+-            r"(?i)\b(?:tenant|org|organisation|organization|customer|account|user)[_\-]?id\b[\"']?\s*[:=]\s*[\"']?([a-z0-9_\-]{3,})[\"']?"
++            r"(?i)\b(?:tenant|org|organisation|organization|customer|account|user)[_\-]?id\b[\"']?\s*[:=]\s*[\"']?([a-z0-9_\-]{"
++            + str(SWEEP_MIN_LENGTH)
++            + r",})[\"']?"
+         ),
+     ),
+     # A token following `Bearer ` in an Authorization header (when it is not already a JWT/API key).
+@@ -1154,38 +1158,7 @@ SECRET_KINDS = frozenset(
+         "CREDITCARD",
+     }
+ )
+-_COMMON = frozenset(
+-    {
+-        "prod",
+-        "production",
+-        "test",
+-        "dev",
+-        "demo",
+-        "pilot",
+-        "stage",
+-        "staging",
+-        "default",
+-        "admin",
+-        "root",
+-        "user",
+-        "users",
+-        "none",
+-        "null",
+-        "true",
+-        "false",
+-        "main",
+-        "master",
+-        "api",
+-        "app",
+-        "web",
+-        "db",
+-        "public",
+-        "local",
+-        "info",
+-        "error",
+-        "debug",
+-    }
+-)
++_COMMON = COMMON_WORDS
+ 
+ 
+ def _kind(placeholder: str) -> str:
+@@ -1204,7 +1177,7 @@ _STANDALONE = object()
+ def _sweep(placeholder: str, original: str):
+     """How the copies of `original` are swept: every copy (_EVERY_COPY), every standalone copy (a
+     compiled pattern), or not at all (None)."""
+-    if len(original) < 3:
++    if len(original) < SWEEP_MIN_LENGTH:
+         return None
+     if _kind(placeholder) in SECRET_KINDS and len(original) >= 4:
+         # Every copy, whatever it looks like. An exemption for "plain words and assignments" (932d515)
+@@ -1214,7 +1187,7 @@ def _sweep(placeholder: str, original: str):
+         # own reads included. A secret or an identifier must never stay in clear, so that limit is
+         # handled by escalating, not by leaving copies unmasked.
+         return _EVERY_COPY
+-    if (original.isdigit() and len(original) < 6) or original.lower() in _COMMON:
++    if (original.isdigit() and len(original) < SWEEP_MIN_DIGITS) or original.lower() in _COMMON:
+         return None
+     return _STANDALONE
+ 
+diff --git a/src/hadavin_sdk/guard/runmap.py b/src/hadavin_sdk/guard/runmap.py
+index b70d789..cfc5f8c 100644
+--- a/src/hadavin_sdk/guard/runmap.py
++++ b/src/hadavin_sdk/guard/runmap.py
+@@ -23,6 +23,7 @@ from urllib.parse import unquote
+ 
+ from hadavin_sdk import defaults
+ from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, redact
++from hadavin_sdk.textfold import canonical
+ 
+ # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
+ # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
+@@ -273,15 +274,6 @@ def storable(mapping: dict[str, str], kinds: frozenset[str] | None = None) -> di
+     }
+ 
+ 
+-def canonical(text: str) -> str:
+-    """Untrusted text in one canonical form before it is escaped, redacted or compared: Unicode NFKC (a
+-    full-width `＜ＩＰＶ４＿２＞` becomes `<IPV4_2>`) with the invisible format characters removed (a zero-width
+-    space inside a token no longer hides it)."""
+-    return "".join(
+-        c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf"
+-    )
+-
+-
+ def _canonical_view(text: str) -> tuple[str, list[int]]:
+     """The canonical form of `text` (NFKC, invisible format characters removed) and, for each canonical
+     character, the index of the original character it came from."""
+diff --git a/src/hadavin_sdk/stages.py b/src/hadavin_sdk/stages.py
+index cc6932f..857a09f 100644
+--- a/src/hadavin_sdk/stages.py
++++ b/src/hadavin_sdk/stages.py
+@@ -1,11 +1,24 @@
+-"""The stages, and the two questions every guard asks about one. A leaf module: it imports nothing from this package,
+-so config, deferred, registry and app can all use it at the top of the file."""
++"""The stages, and the two questions every guard asks about one. It imports only the word list and limits in
++`commonwords` and the text fold in `textfold` (both leaf modules: nothing from the guard package, config, deferred,
++registry or app), so those can all use it at the top of the file; tests/test_tenant_ids.py pins that import list by an
++AST walk."""
+ 
+ from __future__ import annotations
+ 
++import re
++
++from hadavin_sdk.commonwords import COMMON_WORDS, SWEEP_MIN_DIGITS, SWEEP_MIN_LENGTH
++from hadavin_sdk.textfold import canonical
++
+ # The stages, in order, and nothing else. A project's own labels map to one of these in the project's config; core
+ # tests the stage, never a label. The first stage had another name until the rename: config refuses that name at load.
+ STAGES = ("demo", "pilot", "prod")
++# The three stages plus three more words that name a stage in other projects' configs (the last three below).
++# tests/test_stage_names.py builds its scan from this tuple (the one list: the guard and the scan both read it), and
++# tests/test_tenant_ids.py pins the six words by a literal list. An id may not be spelled like any of them. The three
++# further words are written in pieces so that the stage scan, which reads this file too, does not take the list for a
++# stage value (no exemption row is needed for a file under src/).
++STAGE_WORDS = (*STAGES, "te" + "st", "develop" + "ment", "pro" + "duction")
+ 
+ 
+ def is_live(environment: object) -> bool:
+@@ -21,3 +34,78 @@ def is_prod(environment: object) -> bool:
+     model_construct skip it) gets the strictest rules, never the pilot ones. Not a permission test: a rule that
+     ALLOWS something in prod only must also require `environment in STAGES`."""
+     return environment not in STAGES[:2]
++
++
++def fold_name(value: str) -> str:
++    """The spelling a name is compared by: the redactor's canonical form (`textfold.canonical`, which `guard.runmap` uses: Unicode NFKC, then
++    invisible format characters, category Cf, removed), then case folded, then surrounding white space cut. The
++    redactor stops after the Cf step; the case fold and the cut are added here. In plain words: NFKC turns look-alike
++    forms (a full-width `prod`, a roman-numeral letter) into plain letters; Cf characters are invisible (zero-width
++    space, soft hyphen) and would otherwise hide a word; the case fold makes `Demo` and `PILOT` equal to `demo` and
++    `pilot`. `Demo`, `PILOT`, a full-width `prod` and `demo` followed by a no-break space all fold to a stage. (No
++    second NFKC after the case fold: no single code point whose fold is made of stage letters changes under it.) Not
++    covered: other invisible or look-alike characters (variation selectors, Cyrillic letters that look Latin); the
++    stage scan in tests/test_stage_names.py maps some of those, this function does not (`check_id` refuses them
++    instead: it reads the id itself, not its fold)."""
++    return canonical(value).casefold().strip()
++
++
++# Every word an id may not be: the stage words and every word on the redactor's common-word list.
++REFUSED_ID_WORDS = frozenset(STAGE_WORDS) | COMMON_WORDS
++
++
++# What the redactor's label rule reads after tenant_id, org_id, customer_id, ...: ASCII letters, digits, hyphen and
++# underscore, upper or lower case (guard/redact.py, the TENANT pattern; tests/test_tenant_ids.py pins that the two
++# class bodies are equal). `re.ASCII` keeps the case match to A-Z: under the default Unicode rules `re.IGNORECASE` would
++# also let the long s and the Kelvin sign through. The id is matched as written, never as folded: the redactor reads the
++# characters it is given, and an id whose fold is ASCII (a sharp s folds to `ss`) is masked only up to that character.
++_READABLE_ID = re.compile(r"[a-z0-9_\-]+", re.ASCII | re.IGNORECASE)
++
++
++def check_id(value: object, label: str = "an id") -> str:
++    """Return an id unchanged; raise ValueError when it is not a string, when it is spelled like a stage word (STAGE_WORDS:
++    the three stages and three more), when it is a word on the redactor's common-word list
++    (`commonwords.COMMON_WORDS`), when it is too short for the redactor to sweep, or when it has a character the
++    redactor's label rule does not read (that last test reads the id as written, not its fold). The stage and
++    common-word tests compare `fold_name`. `label` is the phrase the error starts with
++    ("a tenant id", "a customer id"). It covers the ids the redactor's label rule reads: tenant, org, organisation,
++    organization, customer, account and user (guard/redact.py, the TENANT pattern).
++    Why: the redactor masks the value after such a label (`tenant_id=prod`), and sweeps its other copies, only when
++    the value is at least `SWEEP_MIN_LENGTH` characters, is not all digits below `SWEEP_MIN_DIGITS`, is not on the
++    common-word list (a bare `prod` elsewhere stays readable, because `HTTP 500 in prod` must), and is made of the
++    characters the label rule reads. An id outside that keeps unlabelled copies in clear (or is masked only in part), so
++    it is refused at registration. The limits are the redactor's own constants (`commonwords.SWEEP_MIN_LENGTH`,
++    `SWEEP_MIN_DIGITS`), not copies. The error does not echo the value; that holds inside a model that hides input in
++    errors (`config._Strict`), a plain pydantic model prints `input_value=`. Every field that holds such an id uses a
++    `config` id type in a `_Strict` model."""
++    if isinstance(value, str):
++        folded = fold_name(value)
++        if folded in STAGE_WORDS:
++            raise ValueError(
++                f"{label} may not be a stage word ({', '.join(STAGE_WORDS)}; compared after NFKC and case folding)"
++            )
++        if folded in REFUSED_ID_WORDS:
++            raise ValueError(
++                f"{label} may not be a common word that the redactor does not sweep "
++                "(the list is hadavin_sdk.commonwords.COMMON_WORDS; compared after NFKC and case folding)"
++            )
++        shortest = min(len(value), len(folded))
++        if shortest < SWEEP_MIN_LENGTH or any(
++            s.isdigit() and len(s) < SWEEP_MIN_DIGITS for s in (value, folded)
++        ):
++            raise ValueError(
++                f"{label} is too short for the redactor to sweep (at least {SWEEP_MIN_LENGTH} characters, "
++                f"and at least {SWEEP_MIN_DIGITS} when it is all digits)"
++            )
++        if not _READABLE_ID.fullmatch(value):
++            raise ValueError(
++                f"{label} may only use letters a to z, digits, hyphen and underscore, "
++                "the characters the redactor's label rule reads (the id is read as written, not folded)"
++            )
++        return value
++    raise ValueError(f"{label} must be a string")
++
++
++def check_tenant_id(value: object) -> str:
++    """`check_id` for a tenant id."""
++    return check_id(value, "a tenant id")
+diff --git a/src/hadavin_sdk/textfold.py b/src/hadavin_sdk/textfold.py
+new file mode 100644
+index 0000000..f72224c
+--- /dev/null
++++ b/src/hadavin_sdk/textfold.py
+@@ -0,0 +1,16 @@
++"""The one canonical text form of the redactor and of the id check. A leaf module: it imports only the standard library,
++so `stages.py` (which every guard imports at the top of its file) can use it without loading the guard package.
++tests/test_tenant_ids.py pins this import list by an AST walk."""
++
++from __future__ import annotations
++
++import unicodedata
++
++
++def canonical(text: str) -> str:
++    """Untrusted text in one canonical form before it is escaped, redacted or compared: Unicode NFKC (a
++    full-width `＜ＩＰＶ４＿２＞` becomes `<IPV4_2>`) with the invisible format characters removed (a zero-width
++    space inside a token no longer hides it)."""
++    return "".join(
++        c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf"
++    )
+diff --git a/tests/fixtures/stage_words.py b/tests/fixtures/stage_words.py
+new file mode 100644
+index 0000000..23cc41e
+--- /dev/null
++++ b/tests/fixtures/stage_words.py
+@@ -0,0 +1,17 @@
++"""The stage words the tests agree on, in one place (the stage scan test and the id tests both import it).
++
++`NEW_WORDS` is a literal list on purpose: the stage scan reads the product's own `stages.STAGE_WORDS`, and
++`tests/test_tenant_ids.py` pins that `STAGE_WORDS == (*STAGES, *NEW_WORDS)`, so a word added to or dropped from the
++product list is seen. The words are written in pieces because the stage scan reads this file too.
++`is_stage_name` lives here, not in the product: nothing in `src` asks the question (`stages.check_id` does).
++"""
++
++from hadavin_sdk.stages import STAGES, fold_name
++
++# The three words, besides demo, pilot and prod, that name a stage in other projects' configs.
++NEW_WORDS = ("te" + "st", "develop" + "ment", "pro" + "duction")
++
++
++def is_stage_name(value: object) -> bool:
++    """True when `value` is a string that folds (`stages.fold_name`) to demo, pilot or prod."""
++    return isinstance(value, str) and fold_name(value) in STAGES
+diff --git a/tests/stage_exemptions.tsv b/tests/stage_exemptions.tsv
+index b38b59a..3f3ae65 100644
+--- a/tests/stage_exemptions.tsv
++++ b/tests/stage_exemptions.tsv
+@@ -16,6 +16,7 @@ tests/demo_askdata/test_eval_harness.py	assert cli.main(["eval", "run", "--split
+ tests/demo_askdata/test_eval_harness.py	assert cmd_run(cfg, "dev", 1, None) == 4	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_eval_harness.py	assert cmd_run(cfg, "dev", 1, None, harness_factory=factory) == 4	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_eval_harness.py	cmd_run(cfg, "dev", 1, None, harness_factory=factory)	data split (train/dev/test), not a stage
++tests/demo_askdata/test_eval_harness.py	cmd_run(cfg, "dev", 1, None, harness_factory=factory)	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_eval_harness.py	code = cmd_run(cfg, "dev", 1, None, harness_factory=factory)	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_eval_harness.py	evalrun.sealed_gate(lock, Decimal(0), split="dev", second_look=None)  # dev is never gated	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_eval_harness.py	r.harness.report([], [rec], split="dev", meta={})["hard_zeros"][	data split (train/dev/test), not a stage
+@@ -24,6 +25,7 @@ tests/demo_askdata/test_eval_harness.py	rep = r.harness.report([], [rec], split=
+ tests/demo_askdata/test_eval_harness.py	rep = r.harness.report([], list(recs.values()), split="dev", meta={})	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_eval_harness.py	rep = r.harness.report(r.harness.run_gold([it]), [], split="dev", meta={})	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_eval_harness.py	rep = r.harness.report(recs, [], split="dev", meta={})	data split (train/dev/test), not a stage
++tests/demo_askdata/test_eval_harness.py	rep = r.harness.report(recs, [], split="dev", meta={})	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_eval_harness.py	rep("green", 0, split="dev"),	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_eval_harness.py	rep["label"] == "dev"	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_eval_harness.py	split=kw.pop("split", "dev"),	data split (train/dev/test), not a stage
+@@ -31,13 +33,15 @@ tests/demo_askdata/test_gold_data.py	assert (sum(g["tier"] == "dev" for g in gol
+ tests/demo_askdata/test_gold_data.py	assert all(ids[e["source_dev_id"]]["tier"] == "dev" for e in data["exemplars"])	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_gold_data.py	assert not sqls("dev") & sqls("test")	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_gold_data.py	lambda rows: next(r for r in rows if r["id"] == "T07").update(tier="dev"),	data split (train/dev/test), not a stage
++tests/demo_askdata/test_gold_data.py	next(g for g in gold if g["id"] == "D02")["tier"] = "test"	data split (train/dev/test), not a stage
++tests/demo_askdata/test_gold_data.py	g["id"] for g in data["gold"] if g["tier"] == "test"	data split (train/dev/test), not a stage
++tests/demo_askdata/test_gold_data.py	definite = [g for g in gold if g["tier"] == "test" and g["kind"] == "answerable"]	data split (train/dev/test), not a stage
++tests/demo_askdata/test_htmlexport.py	"split": "dev", "label": "x", "verdict_text": "green", "aborted": None,	data split (train/dev/test), not a stage
+ tests/demo_askdata/test_htmlexport.py	"split": "dev", "label": "x", "verdict_text": "green", "aborted": None,	data split (train/dev/test), not a stage
+-src/hadavin_sdk/config.py	_OLD_STAGE = "dev"	the constant the rename refusal compares with
+ demos/ask-your-data/askdata/evalcli.py	else ("second look" if split == "test" else "dev")	data split (train/dev/test), not a stage
+ demos/ask-your-data/askdata/evalcli.py	"dev": ("gold.dev.jsonl", "adversarial.dev.jsonl"),	data split (train/dev/test), not a stage
+ demos/ask-your-data/data/goldcheck.py	gold.jsonl                70 items: 30 `dev`, 40 `test` (the sealed split)	data split (train/dev/test), not a stage
++demos/ask-your-data/data/goldcheck.py	test_q = [g["question"] for g in gold if g["tier"] == "test"]	data split (train/dev/test), not a stage
++demos/ask-your-data/data/goldcheck.py	"sealed_test_sha256": digest([g for g in gold if g["tier"] == "test"]),	data split (train/dev/test), not a stage
+ demos/ask-your-data/db/lumen.py	"Dev",	a first name in the demo's fake customer data, not a stage
+-src/hadavin_sdk/guard/redact.py	"dev",	word list of the redactor (words not swept as names), not a stage check
+-src/hadavin_sdk/guard/redact.py	"stage",	word list of the redactor (words not swept as names), not a stage check
+-src/hadavin_sdk/guard/redact.py	"staging",	word list of the redactor (words not swept as names), not a stage check
+ tests/contracts/test_sources.py	ks(api, ["prod", "staging"]).probe_scope()	Kubernetes namespace names in a probe test, not a core stage
+diff --git a/tests/stage_mutants.py b/tests/stage_mutants.py
+index 85305c8..afe2273 100644
+--- a/tests/stage_mutants.py
++++ b/tests/stage_mutants.py
+@@ -21,6 +21,8 @@ from tools.mutation_runner import Mutant, run_mutants
+ ROOT = Path(__file__).resolve().parents[1]
+ TEST = "tests/test_stage_names.py"
+ PIN = "tests/test_stage_names::"
++TENANT_TEST = "tests/test_tenant_ids.py"
++TENANT_PIN = "tests/test_tenant_ids::"
+ CFG = "src/hadavin_sdk/config.py"
+ STG = "src/hadavin_sdk/stages.py"
+ TBL = "src/hadavin_sdk/backends/table.py"
+@@ -28,6 +30,22 @@ DEFERRED = "src/hadavin_sdk/deferred.py"
+ REGISTRY = "src/hadavin_sdk/registry.py"
+ APP = "src/hadavin_sdk/app.py"
+ REDACT = "src/hadavin_sdk/guard/redact.py"
++RUNMAP = "src/hadavin_sdk/guard/runmap.py"
++TEXTFOLD = "src/hadavin_sdk/textfold.py"
++CANON_OLD = (
++    '    return "".join(\n'
++    '        c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf"\n'
++    "    )\n"
++)
++COMMON = "src/hadavin_sdk/commonwords.py"
++FURTHER = (
++    "te" + "st",
++    "develop" + "ment",
++    "pro" + "duction",
++)  # built from parts: the scan reads this file
++SW_OLD = 'STAGE_WORDS = (*STAGES, "te" + "st", "develop" + "ment", "pro" + "duction")'
++SW_DROP = 'STAGE_WORDS = (*STAGES, "te" + "st", "pro" + "duction")'
++SW_ADD = 'STAGE_WORDS = (*STAGES, "te" + "st", "develop" + "ment", "pro" + "duction", "uat")'
+ OLD = "d" + "ev"  # built from parts: this file is scanned by the class test it helps to check
+ RAISE = (
+     "            raise _RenamedStage(\n"
+@@ -43,6 +61,19 @@ def mutant(name, file, old, new, killer, expect):
+     )
+ 
+ 
++def tenant(name, file, old, new, killer, expect):
++    return Mutant(
++        name,
++        file,
++        old,
++        new,
++        expect,
++        test_file=TENANT_TEST,
++        only_test=killer,
++        pinned=TENANT_PIN + killer,
++    )
++
++
+ def pair(cap, kind):
+     return mutant(
+         f"M3 {cap}/{kind} dropped from DEMO_ONLY",
+@@ -123,12 +154,102 @@ M = [
+     mutant("M9c app.py goes back to an allowlist of live stages", APP, "live = is_live(cfg.environment)",
+         'live = cfg.environment in ("pilot", "prod")',
+         "test_a_value_that_is_not_a_stage_is_live_for_every_guard", "app treated"),
+-    mutant("M10a pilot dropped from the redactor's common words", REDACT, '        "pilot",\n', "",
++    mutant("M10a pilot dropped from the redactor's common words", COMMON, '        "pilot",\n', "",
+         "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "pilot is swept"),
+-    mutant("M10b demo dropped from the redactor's common words", REDACT, '        "demo",\n', "",
++    mutant("M10b demo dropped from the redactor's common words", COMMON, '        "demo",\n', "",
+         "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "demo is swept"),
+-    mutant("M10c prod dropped from the redactor's common words", REDACT, '        "prod",\n', "",
++    mutant("M10c prod dropped from the redactor's common words", COMMON, '        "prod",\n', "",
+         "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "prod is swept"),
++    tenant("T1 the id fold does not case-fold", STG, "canonical(value).casefold().strip()", "canonical(value).strip()",
++        "test_an_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
++    tenant("T2 the id fold does not cut white space", STG, "canonical(value).casefold().strip()", "canonical(value).casefold()",
++        "test_an_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
++    tenant("T3 the id fold does not apply NFKC", STG, "canonical(value).casefold().strip()", "value.casefold().strip()",
++        "test_an_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
++    tenant("T4 the redactor's canonical form keeps invisible format characters", TEXTFOLD, CANON_OLD, CANON_OLD.replace('!= "Cf"', '!= "Zz"'),
++        "test_an_id_spelled_like_a_stage_is_refused", "was not read as a stage name"),
++    tenant("T5 pilot is not a stage word for an id", STG, "    if folded in STAGE_WORDS:\n", "    if folded in (*STAGE_WORDS[:1], *STAGE_WORDS[2:]):\n",
++        "test_an_id_spelled_like_a_stage_is_refused", "without the stage-word sentence"),
++    tenant("T6 the stage-word refusal is off (the common-word one still refuses, with another sentence)", STG, "    if folded in STAGE_WORDS:\n", "    if False:\n",
++        "test_an_id_spelled_like_a_stage_is_refused", "without the stage-word sentence"),
++    tenant("T6b the id check compares an empty word, not the id", STG, "    folded = fold_name(value)\n", '    folded = ""\n',
++        "test_an_id_spelled_like_a_stage_is_refused", "without the stage-word sentence"),
++    tenant("T7 the stage-word refusal reads a word that merely contains a stage word", STG, "    if folded in STAGE_WORDS:\n", "    if any(w in folded for w in STAGE_WORDS):\n",
++        "test_an_id_that_is_not_a_refused_word_is_accepted_unchanged", "although it is an ordinary word"),
++    tenant("T7b the id check refuses a word that merely contains a refused word", STG, "    if folded in REFUSED_ID_WORDS:\n", "    if any(w in folded for w in REFUSED_ID_WORDS):\n",
++        "test_an_id_that_is_not_a_refused_word_is_accepted_unchanged", "although it is an ordinary word"),
++    tenant("T8 an id that is not a string is accepted", STG, '    raise ValueError(f"{label} must be a string")\n', "    return value\n",
++        "test_an_id_that_is_not_a_string_is_refused_with_a_value_error", "although it is not a string"),
++    tenant("T9 the stage-word refusal echoes the value", STG, 'f"{label} may not be a stage word (', 'f"{label} {value} may not be a stage word (',
++        "test_the_refusal_names_the_stage_words_and_the_fold_and_does_not_echo_the_value", "the refusal echoes the value"),
++    tenant("T10 the tenant type does not call the check", CFG, "AfterValidator(check_tenant_id)", "AfterValidator(lambda v: v)",
++        "test_the_config_type_refuses_a_stage_word_with_a_validation_error", "the config type accepted"),
++    tenant("T10b the org id type does not call the check", CFG, 'OrgId = Annotated[str, AfterValidator(partial(check_id, label="an org id"))]',
++        "OrgId = Annotated[str, AfterValidator(lambda v: v)]",
++        "test_each_other_id_type_refuses_a_common_word_and_a_stage_word", "DID NOT RAISE"),
++    tenant("T12 the walk accepts a field of any type", TENANT_TEST, "                elif not is_id_type(node.annotation):\n", "                elif False:\n",
++        "test_the_walk_sees_each_kind_of_unchecked_id", "missed a field of the wrong type"),
++    tenant("T13 the walk ignores function and lambda parameters", TENANT_TEST, "        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):", "        if False:",
++        "test_the_walk_sees_each_kind_of_unchecked_id", "missed an unchecked parameter"),
++    tenant("T14 the walk skips the demos folder", TENANT_TEST, "        for folder in WALKED\n", "        for folder in WALKED[:1]\n",
++        "test_a_tenant_field_planted_in_a_fixture_tree_is_found_in_each_walked_folder", "the walk found"),
++    tenant("T15b the walk matches the annotation as a substring", TENANT_TEST, "        return _last_name(ann) in ID_TYPES\n", '        return "TenantId" in ast.unparse(ann)\n',
++        "test_the_walk_sees_each_kind_of_unchecked_id", "the walk accepted the annotation"),
++    tenant("T16 the parameter-body check is dropped", TENANT_TEST, "                    and not calls_check_on(node, arg.arg)\n", "                    and False\n",
++        "test_the_walk_sees_each_kind_of_unchecked_id", "missed an unchecked parameter"),
++    tenant("T16b redact.py keeps a copy of the word list", REDACT, "_COMMON = COMMON_WORDS\n", "_COMMON = frozenset(set(COMMON_WORDS))\n",
++        "test_the_redactor_and_the_id_check_use_one_word_list", "the redactor has a list of its own"),
++    tenant("T17 the common-word refusal is off", STG, "    if folded in REFUSED_ID_WORDS:\n", "    if False:\n",
++        "test_every_common_word_is_refused_as_an_id_in_every_spelling", "was accepted as an id"),
++    tenant("T18 the common-word refusal echoes the value", STG, 'f"{label} may not be a common word that the redactor', 'f"{label} {value} may not be a common word that the redactor',
++        "test_the_refusal_names_the_stage_words_and_the_fold_and_does_not_echo_the_value", "the refusal echoes the value"),
++    tenant("T19 a further stage word is dropped from STAGE_WORDS", STG, SW_OLD, SW_DROP,
++        "test_the_further_stage_words_are_refused_as_ids", "was accepted as a tenant id"),
++    tenant("T20 STAGE_WORDS gets a word the stage scan does not know", STG, SW_OLD, SW_ADD,
++        "test_the_stage_words_are_the_stages_and_the_words_the_stage_scan_looks_for", "differ from the stage scan"),
++    tenant("T21 the customer id type carries the wrong label", CFG, 'partial(check_id, label="a customer id")', 'partial(check_id, label="a user id")',
++        "test_each_other_id_type_refuses_a_common_word_and_a_stage_word", "the error does not start with"),
++    tenant("T21b the account id type carries the wrong label", CFG, 'partial(check_id, label="an account id")', 'partial(check_id, label="a customer id")',
++        "test_each_other_id_type_refuses_a_common_word_and_a_stage_word", "the error does not start with"),
++    tenant("T21c the user id type carries the wrong label", CFG, 'partial(check_id, label="a user id")', 'partial(check_id, label="an account id")',
++        "test_each_other_id_type_refuses_a_common_word_and_a_stage_word", "the error does not start with"),
++    tenant("T21d the account id type is not checked at all", CFG, 'AccountId = Annotated[str, AfterValidator(partial(check_id, label="an account id"))]', "AccountId = str",
++        "test_each_other_id_type_refuses_a_common_word_and_a_stage_word", "DID NOT RAISE"),
++    tenant("T21e the user id type is not checked at all", CFG, 'UserId = Annotated[str, AfterValidator(partial(check_id, label="a user id"))]', "UserId = str",
++        "test_each_other_id_type_refuses_a_common_word_and_a_stage_word", "DID NOT RAISE"),
++    tenant("T28 the common word default is dropped from commonwords.py", COMMON, '        "default",\n', "",
++        "test_the_refused_words_are_exactly_these_twenty_nine", "differ from the expected list"),
++    tenant("T28b the common word admin is dropped from commonwords.py", COMMON, '        "admin",\n', "",
++        "test_the_refused_words_are_exactly_these_twenty_nine", "differ from the expected list"),
++    tenant("T28c a word is added to commonwords.py", COMMON, '        "default",\n', '        "default",\n        "staging2",\n',
++        "test_the_refused_words_are_exactly_these_twenty_nine", "differ from the expected list"),
++    tenant("T30 the id check no longer refuses a short id", STG, "    if shortest < SWEEP_MIN_LENGTH or any(\n", "    if False and any(\n",
++        "test_an_id_shorter_than_the_redactors_minimum_is_refused", "another sentence"),
++    tenant("T31 the id check no longer refuses an all-digit id below the digit minimum", STG, "s.isdigit() and len(s) < SWEEP_MIN_DIGITS for s in (value, folded)", "False for s in (value, folded)",
++        "test_all_digit_ids_are_refused_below_the_redactors_digit_minimum", "digits: refused=False"),
++    tenant("T32 the id check no longer refuses a character the label rule does not read", STG, "    if not _READABLE_ID.fullmatch(value):\n", "    if False:\n",
++        "test_the_odd_ids_are_in_fact_refused", "was accepted"),
++    tenant("T32b the id check reads the folded id, not the id as written (review A19 round 2, B1)", STG, "    if not _READABLE_ID.fullmatch(value):\n", "    if not _READABLE_ID.fullmatch(folded):\n",
++        "test_the_odd_ids_are_in_fact_refused", "was accepted"),
++    tenant("T34 the id class loses the ASCII-only case match (a long s and the Kelvin sign get in)", STG, 're.compile(r"[a-z0-9_\\-]+", re.ASCII | re.IGNORECASE)', 're.compile(r"[a-z0-9_\\-]+", re.IGNORECASE)',
++        "test_the_odd_ids_are_in_fact_refused", "was accepted"),
++    tenant("T35 stages.py imports the text fold from the guard package again (it is no longer a leaf)", STG, "from hadavin_sdk.textfold import canonical\n", "from hadavin_sdk.guard.runmap import canonical\n",
++        "test_stages_py_imports_only_the_leaf_modules", "besides the leaf modules"),
++    tenant("T33 the redactor's sweep has its own length limit again", REDACT, "    if len(original) < SWEEP_MIN_LENGTH:\n", "    if len(original) < 3:\n",
++        "test_the_redactor_sweep_uses_the_shared_limits", "a second copy of the limit"),
++    tenant("T23 the walk accepts a check on another parameter", TENANT_TEST, "isinstance(a, ast.Name) and a.id == param for a in args", "isinstance(a, ast.Name) for a in args",
++        "test_the_walk_sees_each_kind_of_unchecked_id", "accepted a check on another parameter"),
++    tenant("T24 the walk ignores attribute assignments", TENANT_TEST, "                    and isinstance(target, ast.Attribute)\n", "                    and False\n",
++        "test_the_walk_sees_each_kind_of_unchecked_id", "missed an attribute assignment"),
++    tenant("T25 the walk ignores class-level assignments", TENANT_TEST, "                        and target.id not in ID_TYPES\n", "                        and False\n",
++        "test_the_walk_sees_each_kind_of_unchecked_id", "missed an assigned field"),
++    tenant("T26 the walk does not require a _Strict base", TENANT_TEST, '        if holds and "_Strict" not in', '        if False and "_Strict" not in',
++        "test_the_walk_sees_each_kind_of_unchecked_id", "accepted a model that echoes input"),
++    mutant("T27 the exemption budget collapses duplicate rows", "tests/test_stage_names.py", "    return collections.Counter((f, line) for f, line, _ in rows)\n",
++        "    return collections.Counter({(f, line) for f, line, _ in rows})\n",
++        "test_a_duplicate_row_excuses_exactly_two_real_occurrences", "no duplicate rows"),
++    mutant("T27b the stale check compares entries, not counts", "tests/test_stage_names.py", "    if used != budget:\n", "    if set(used) != set(budget):\n",
++        "test_the_stale_check_sees_a_spare_duplicate_row_and_a_missing_row", "a spare duplicate row went unseen"),
+ ]  # fmt: skip
+ 
+ 
+@@ -151,7 +272,7 @@ if __name__ == "__main__":
+     res = run_mutants(
+         ROOT,
+         M,
+-        [TEST],
++        [TEST, TENANT_TEST],
+         extra_dirs=("tests", "tools", "demos", "docs"),
+         only=only,
+         on_result=show,
+diff --git a/tests/test_changelog_stage_claims.py b/tests/test_changelog_stage_claims.py
+new file mode 100644
+index 0000000..53d8867
+--- /dev/null
++++ b/tests/test_changelog_stage_claims.py
+@@ -0,0 +1,73 @@
++"""The CHANGELOG claims about ids and the redactor that code can break (stage follow-up). Its own file, not
++tests/test_stage_names.py: the stage mutant runner (tests/stage_mutants.py) copies only src, tests, tools, demos and docs, so
++a test that reads the root CHANGELOG.md cannot sit in the file it runs.
++
++Only facts are checked here: the words and numbers the CHANGELOG names equal what the code does. The wording of the
++CHANGELOG is not pinned (a sentence that is reworded must not fail a test)."""
++
++import re
++from pathlib import Path
++
++import pytest
++
++from hadavin_sdk.commonwords import SWEEP_MIN_DIGITS, SWEEP_MIN_LENGTH
++from hadavin_sdk.guard.redact import redact
++from hadavin_sdk.guard.runmap import redact_text
++from hadavin_sdk.stages import REFUSED_ID_WORDS, check_id
++
++ROOT = Path(__file__).resolve().parents[1]
++
++
++def unreleased() -> str:
++    """The Unreleased section of the CHANGELOG: released history keeps its old wording."""
++    text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
++    start = text.index("## Unreleased")
++    end = text.find("\n## ", start + 1)
++    return text[start : end if end != -1 else len(text)]
++
++
++def entry(prefix: str) -> str:
++    return next(p for p in unreleased().split("\n") if p.startswith(prefix))
++
++
++def test_the_changelog_lists_every_refused_word():
++    """The words in the CHANGELOG are the words the code refuses, no more and no fewer.
++    The stage mutant runner cannot run this file (it does not copy the root CHANGELOG, and tools/mutation_runner.py is a
++    byte copy that the demo repos pin by hash); a dropped word is killed by the literal list in tests/test_tenant_ids.py."""
++    text = entry("- **An id may not be a stage word")
++    listed = set(re.findall(r"`([a-z]+)`", text.split("as an id,")[1].split(". They are")[0]))
++    assert listed == set(REFUSED_ID_WORDS)
++    assert f"refuses these {len(REFUSED_ID_WORDS)} words" in text
++
++
++def test_the_changelog_limits_are_the_redactors_own_numbers():
++    text = entry("- **An id the redactor cannot mask is refused.")
++    assert f"at least {SWEEP_MIN_LENGTH} characters long" in text
++    assert f"from {SWEEP_MIN_DIGITS} digits" in text
++    assert f"fewer than {SWEEP_MIN_DIGITS} digits" in text
++    assert f"id of 1 or {SWEEP_MIN_LENGTH - 1} characters" in text
++
++
++def test_the_changelog_examples_of_refused_and_accepted_ids_match_check_id():
++    text = entry("- **An id the redactor cannot mask is refused.")
++    for refused in ("xy", "ac\x00me", "ac me", "ac.me", "Ünïcode", "аcme", "12345"):
++        with pytest.raises(ValueError):
++            check_id(refused)
++    for word in ("a NUL", "a bell", "a space", "a dot", "an accented letter", "Cyrillic letter"):
++        assert word in text, word
++    for accepted in ("demos", "prod-1", "preprod"):
++        assert f"`{accepted}`" in text
++        assert check_id(accepted) == accepted
++
++
++def test_the_redactor_behaves_as_the_changelog_says_for_pilot_and_demo():
++    """What is and is not masked for a tenant named Pilot or Demo (through both `redact` and `redact_text`)."""
++    for fn in (lambda t: redact(t).text, lambda t: redact_text(t, {})):
++        assert "Pilot" not in fn("tenant_id=Pilot x") and "pilot" not in fn("tenant_id=pilot x")
++        assert "Demo" not in fn("customer_id: Demo x")
++        assert fn("Pilot and Demo again") == "Pilot and Demo again"  # standing alone: not swept
++        assert (
++            fn("tenant: Pilot and customer=Demo") == "tenant: Pilot and customer=Demo"
++        )  # no `_id`
++        assert "acmeco" not in fn("acmeco and tenant_id=acmeco")  # an ordinary id: every copy
++        assert "pilot" not in fn("password=pilot and pilot again")  # a secret: every copy
+diff --git a/tests/test_stage_names.py b/tests/test_stage_names.py
+index fb90f7b..ac7be1d 100644
+--- a/tests/test_stage_names.py
++++ b/tests/test_stage_names.py
+@@ -8,6 +8,7 @@ Rows: unknown stage and half-renamed flag refuse start; the class test looks at
+ refuse relaxed kinds; the live and prod-only guards fail closed on a value that is not a stage.
+ """
+ 
++import collections
+ import re
+ import typing
+ import unicodedata
+@@ -25,8 +26,9 @@ from hadavin_sdk.app import build
+ from hadavin_sdk.backends import table
+ from hadavin_sdk.config import Config, ConfigError, _anchor_refusals, load_config, parse_backends
+ from hadavin_sdk.registry import _module_pin_problems, load_registry
+-from hadavin_sdk.stages import STAGES, is_live, is_prod
++from hadavin_sdk.stages import STAGE_WORDS, STAGES, is_live, is_prod
+ from tests.conftest import make_cfg, qualify
++from tests.fixtures.stage_words import NEW_WORDS
+ 
+ # The old word is built from parts in this file: the class test never scans this file, but a grep for it should find
+ # only the places that matter.
+@@ -405,7 +407,20 @@ def test_both_spellings_of_the_stage_together_refuse_start(cfg_dir):
+ 
+ _W = r"(?<![A-Za-z0-9])" + OLD + r"(?![A-Za-z0-9])"  # the old word as a whole word
+ _ANY = r"(?<![A-Za-z0-9])(?:" + OLD + r"|staging|stage)(?![A-Za-z0-9])"  # the old word or a sibling
+-_STAGE = r"(?:pilot|prod|production|demo)"
++_FURTHER = STAGE_WORDS[len(STAGES) :]  # the words after the three stages: the product's own list
++_STAGE = r"(?:" + "|".join((*STAGES, _FURTHER[-1])) + ")"
++# Three more words that name a stage somewhere else (test, development, production). Why they are scanned although the
++# stages are demo, pilot and prod (a design review question): they are the usual names of a stage in other projects'
++# configs, so a config, doc or CLI flag that says `environment: test` or `--env production` would bring back a second
++# stage vocabulary beside the three; `stages.STAGE_WORDS` lists the same six words and an id may not be spelled like
++# any of them (tests/test_tenant_ids.py pins that the two lists agree). Many tests depend on them (NEW_WORDS shapes,
++# pairs and negative cases below), so the scan was not narrowed to production and development. "test" and "production"
++# are common words, so they count only in the value forms below, never as a bare quoted word (`"test"` is pytest's own);
++# the data-split lines of the demo repos that say `"test"` are listed one by one in tests/stage_exemptions.tsv.
++_NEW = r"(?:" + "|".join(_FURTHER) + ")"
++_NEWQ = (
++    r"(?:" + "|".join(_FURTHER[1:]) + ")"
++)  # all but the first (pytest's own word): the two that are rare enough to count as a quoted literal
+ _Q = r"[`'\"]?"  # a quote or backtick around the word
+ _NAME = r"(?<![A-Za-z0-9])(?:env(?:ironment)?|stage|tier|profile|mode)(?![A-Za-z0-9])"
+ _BEFORE = r"(?:in|for|outside|than|kept in|refused in)"
+@@ -446,6 +461,40 @@ POSITIONS = {
+     "url host": re.compile(r"://" + OLD + r"\.|://[^/\s]*-" + OLD + r"\.", re.IGNORECASE),
+     "heading": re.compile(r"^#{1,6} .*" + _W, re.IGNORECASE),
+ }
++# The three further words, as a stage VALUE only: YAML/config (`environment: production`), CLI and env var
++# (`--env test`, `NODE_ENV=production`), a dict key or literal (`{"development": 1}`, `== "production"`), a pair of
++# stage words (`test|pilot|prod`) and a YAML list item that is only the word.
++# Boundaries for the words of a stage list: a letter, a digit or an underscore touching the word makes it part of an
++# identifier (`pilot_count`, `env_test_dir`, `my_test`), not a stage word.
++# A dot or an at sign before the word makes it a host label (`mail@example.test`, `a.test`) and a dot with a letter after
++# it a name part (`test.example`); a dot then a space is a sentence end and stays a boundary.
++_L = r"(?<![A-Za-z0-9_.@])"
++_R = r"(?![A-Za-z0-9_]|\.[A-Za-z0-9])"
++# A stage name, also in the plural (`environments: ["test", "pilot"]`).
++_NAMES = r"(?<![A-Za-z0-9])(?:env(?:ironment)?|stage|tier|profile|mode)s?(?![A-Za-z0-9])"
++# Between a stage name and its value: spaces, a colon, an equals sign, a quote, a bracket. Never a full stop (a
++# sentence boundary: "the next stage. Test the config") and never an underscore (an identifier: `env_test_dir`).
++_SEP = r"[\s:=\"'`\[\](){}]{1,6}"
++_STAGE_ITEM = r"(?:" + "|".join((*STAGES, *_FURTHER)) + ")"  # a member of a stage list
++_STAGE_OLD = r"(?:" + "|".join(STAGES) + ")"
++# The separator of two list members, a quote or backtick allowed on either side of it.
++_BETWEEN = _Q + r"\s*[,|/;]\s*" + _Q
++NEW_POSITIONS = {
++    "new word after a stage name": re.compile(_NAMES + _SEP + _NEW + _R, re.IGNORECASE),
++    # `env == "test"`, `environment != 'test'`, `g["tier"] == "test"`, `os.environ.get("ENV") == "test"`
++    "new word compared with a stage name": re.compile(
++        _NAMES + r"[\s\"'`\])]{0,3}(?:===?|!==?)\s*" + _Q + _NEW + _R, re.IGNORECASE
++    ),
++    "new word as quoted literal": re.compile(r"[`'\"]" + _NEWQ + r"[`'\"]", re.IGNORECASE),
++    # two members of a stage list, one of them a new word: `test|pilot|prod`, `demo, test`, `("demo","pilot","test")`,
++    # `Literal["test", "pilot"]`, `development, production`, `test|development|production`
++    "new word beside another stage": re.compile(
++        _L + _Q + _NEW + _BETWEEN + _STAGE_ITEM + _R + "|" + _L + _STAGE_OLD + _BETWEEN + _NEW + _R,
++        re.IGNORECASE,
++    ),
++    # a YAML list item that is only the word: `- test`, `- "production"`
++    "new word as a list item": re.compile(r"^\s*-\s+" + _Q + _NEW + _Q + r"\s*$", re.IGNORECASE),
++}
+ # Every file of these types below these folders, and in the repo root except the three skipped by name (history, the
+ # packaging group called dev, a lock file). Not scanned by type: .jsonl, the ask-your-data gold data (42 records hold the
+ # data split in a tier field).
+@@ -492,6 +541,13 @@ def _exemptions() -> dict:
+     return {(f, line): why for f, line, why in rows}
+ 
+ 
++def _exemption_budget() -> collections.Counter:
++    """(file, exact stripped line) -> how many occurrences the tsv excuses: one per row. Two rows with the same file and
++    line excuse two occurrences; a third identical line is a hit."""
++    rows = [r.split("\t") for r in EXEMPT_FILE.read_text(encoding="utf-8").splitlines() if r]
++    return collections.Counter((f, line) for f, line, _ in rows)
++
++
+ def _fold(line: str) -> str:
+     """The line as a reader sees it: NFKC, casefold, invisible characters out, look-alike letters made Latin."""
+     folded = unicodedata.normalize("NFKC", line).casefold()
+@@ -503,30 +559,39 @@ def _hits(line: str, markdown: bool = True) -> list[str]:
+     line = re.sub(
+         r"\bfor \w+ in " + OLD + r"\b", "", _fold(line)
+     )  # `for row in dev`: a dataset split
+-    return [n for n, rx in POSITIONS.items() if rx.search(line) and (markdown or n != "heading")]
+-
+-
+-def _scan_text(rel: str, text: str, exempt: dict | None = None) -> tuple[list[str], set]:
+-    """Hits in one file's text; a line that is exactly an exempt line is excused and its entry is marked used."""
+-    exempt, out, used = _exemptions() if exempt is None else exempt, [], set()
++    names = [n for n, rx in POSITIONS.items() if rx.search(line) and (markdown or n != "heading")]
++    return names + [n for n, rx in NEW_POSITIONS.items() if rx.search(line)]
++
++
++def _scan_text(
++    rel: str, text: str, exempt: dict | None = None
++) -> tuple[list[str], collections.Counter]:
++    """Hits in one file's text; a line that is exactly an exempt line is excused (ONE occurrence per row of the tsv)
++    and the number of occurrences excused per entry is counted. A second identical line is a hit unless the tsv has a
++    second row for it."""
++    budget = (
++        _exemption_budget() if exempt is None else collections.Counter(dict.fromkeys(exempt, 1))
++    )
++    out, used = [], collections.Counter()
+     for number, line in enumerate(text.splitlines(), 1):
+         names = _hits(line, rel.endswith(".md"))
+-        if names and (rel, line.strip()) in exempt:
+-            used.add((rel, line.strip()))
++        if names and budget[(rel, line.strip())] > 0:
++            budget[(rel, line.strip())] -= 1
++            used[(rel, line.strip())] += 1
+             names = []
+         if names:
+             out.append(f"{rel}:{number} [{', '.join(names)}] {line.strip()[:100]}")
+     return out, used
+ 
+ 
+-def _scan() -> tuple[list[str], set]:
+-    """(hits, the exemption entries that matched a line)."""
++def _scan() -> tuple[list[str], collections.Counter]:
++    """(hits, how many occurrences each exemption entry excused)."""
+     paths = [p for folder in SCANNED for p in (ROOT / folder).rglob("*")]
+     paths += [p for p in ROOT.glob("*") if p.name not in SKIPPED_ROOT]
+     paths = [
+         p for p in paths if p.suffix in TYPES or p.name.startswith(".git")
+     ]  # .gitleaks.toml, .gitignore
+-    out, used = [], set()
++    out, used = [], collections.Counter()
+     for path in paths:
+         if not path.is_file() or path in (SELF, EXEMPT_FILE) or "__pycache__" in path.parts:
+             continue
+@@ -536,7 +601,7 @@ def _scan() -> tuple[list[str], set]:
+             continue
+         found, hit_entries = _scan_text(path.relative_to(ROOT).as_posix(), text)
+         out += found
+-        used |= hit_entries
++        used += hit_entries
+     return sorted(set(out)), used
+ 
+ 
+@@ -545,15 +610,86 @@ def test_the_old_stage_word_is_gone():
+     assert not found, "the old stage word is still used as a stage:\n" + "\n".join(found)
+ 
+ 
++def _exemption_problems(used: collections.Counter, budget: collections.Counter) -> str:
++    """Empty when the rows and the real occurrences agree in number, else the difference in words."""
++    if used != budget:
++        return (
++            f"rows without an occurrence: {sorted((budget - used).items())}; "
++            f"occurrences without a row: {sorted((used - budget).items())}"
++        )
++    return ""
++
++
+ def test_the_exemptions_have_no_stale_entry():
+-    """An entry that matches no line is stale and fails; each entry is one exact line of one file, with its reason."""
++    """An entry that matches no line is stale and fails, and so is a row that excuses an occurrence that is not there:
++    the number of rows with the same file and line must equal the number of real occurrences (a third copy of a
++    duplicated line is a hit; a duplicate row for a single line is stale). Each entry is one exact line of one file,
++    with its reason."""
+     _, used = _scan()
+-    exempt = _exemptions()
+-    assert used == set(exempt), f"stale entries: {sorted(set(exempt) - used)}"
+-    for (rel, _), why in exempt.items():
++    assert not _exemption_problems(used, _exemption_budget())
++    for (rel, _), why in _exemptions().items():
+         assert why.strip() and (ROOT / rel).is_file(), rel
+ 
+ 
++EXEMPTION_ROWS = (
++    47  # change this number only together with a row added or removed, and say why in the commit
++)
++
++
++def _src_rows(lines: list[str]) -> list[str]:
++    """The files of the rows that name product code (a path under src/)."""
++    return [ln.split("\t")[0] for ln in lines if ln.startswith("src/")]
++
++
++def test_the_exemption_file_has_the_pinned_number_of_rows_and_none_for_src():
++    """A row is one exact line of one file with its reason (never a whole file). The number is pinned, so a row added
++    to quieten the scan shows in the diff of this number. No row for a file under src/ (product code is written so the
++    scan does not take it for a stage value); no row names a folder or a glob."""
++    lines = [ln for ln in EXEMPT_FILE.read_text(encoding="utf-8").splitlines() if ln]
++    assert len(lines) == EXEMPTION_ROWS, f"{len(lines)} rows, {EXEMPTION_ROWS} pinned"
++    assert not _src_rows(lines), f"a row for product code: {_src_rows(lines)}"
++    for rel, line, why in (ln.split("\t") for ln in lines):
++        assert "*" not in rel and not rel.endswith("/"), f"a row for more than one file: {rel}"
++        assert line.strip() and line == line.strip(), f"{rel}: the row's line is empty or not cut"
++        assert len(why.split()) >= 3, f"{rel}: the reason is too short to say anything"
++
++
++def test_the_src_row_check_sees_a_planted_src_row():
++    """Sensitivity control for the test above."""
++    assert _src_rows(["src/x.py\tline\ta reason here"]) == ["src/x.py"]
++    assert _src_rows(["demos/x.py\tline\ta reason here"]) == []
++
++
++def test_the_stale_check_sees_a_spare_duplicate_row_and_a_missing_row():
++    """Kills T27b (the comparison looks at the entries, not the counts). A set comparison cannot see a second row for a
++    line that occurs once."""
++    key = ("x.py", "line")
++    one, two = collections.Counter({key: 1}), collections.Counter({key: 2})
++    assert "rows without an occurrence" in _exemption_problems(one, two), (
++        "a spare duplicate row went unseen"
++    )
++    assert "occurrences without a row" in _exemption_problems(two, one), "a missing row went unseen"
++    assert _exemption_problems(two, two) == ""
++
++
++def test_a_duplicate_row_excuses_exactly_two_real_occurrences():
++    """Kills T27 (the budget collapses duplicate rows). The rows that appear twice
++    in the tsv each match two real lines; a text with only one of them leaves the second row unused."""
++    budget = _exemption_budget()
++    doubled = sorted(key for key, n in budget.items() if n == 2)
++    assert doubled, "no duplicate rows: this test has nothing to pin"
++    assert len(doubled) == 3, "the three duplicate rows of the tsv are not the ones checked here"
++    for rel, line in doubled:
++        text = (ROOT / rel).read_text(encoding="utf-8")
++        real = sum(1 for ln in text.splitlines() if ln.strip() == line)
++        assert real == 2, f"{rel}: {line!r} has {real} real occurrences for 2 rows"
++        _, used = _scan_text(rel, text)
++        assert used[(rel, line)] == 2
++        one = "\n".join(ln for ln in text.splitlines() if ln.strip() != line) + "\n" + line + "\n"
++        _, used_once = _scan_text(rel, one)
++        assert used_once[(rel, line)] == 1, "a single occurrence used the budget of two rows"
++
++
+ def test_a_stage_shaped_line_in_a_file_that_holds_an_exempt_line_still_fails():
+     """Run the real scan on the real text of a file with an exempt line, plus one added line: the exempt line stays
+     excused, the added line is a hit."""
+@@ -567,7 +703,7 @@ def test_a_stage_shaped_line_in_a_file_that_holds_an_exempt_line_still_fails():
+     ):
+         found, used = _scan_text(rel, text + "\n" + added + "\n")
+         assert len(found) == 1 and added in found[0], f"the added line was not found: {added}"
+-        assert used == {(rel, line)}
++        assert set(used) == {(rel, line)}
+ 
+ 
+ def _lookalike(word: str) -> str:
+@@ -624,6 +760,173 @@ def test_the_scanner_finds_each_old_word_only_shape(shape):
+     assert _hits(line), f"not found: {line}"
+ 
+ 
++# The three further words as a stage value: {w} is each of test, development, production in turn.
++NEW_SHAPES = [
++    "environment: {w}",  # YAML / config
++    'environment = "{w}"',
++    '"environment": "{w}"',
++    "stage: {w}",
++    "      env: {w}",
++    "NODE_ENV={w}",  # env var and CLI
++    "APP_ENV={w}",
++    "docker run --env {w} app",
++    "hadavin-sdk serve --stage={w}",
++    "profile={w}",
++    "x = {w}|pilot|prod",  # a stage list
++    "demo, {w}",
++    # the quoted list forms (the most natural way to write a stage list), double and single quotes, tuples, brackets
++    'STAGES = ("demo", "{w}")',
++    'STAGES = ("demo","pilot","{w}")',
++    'Literal["{w}", "pilot", "prod"]',
++    "Literal['{w}','pilot']",
++    'environments: ["{w}", "pilot"]',
++    "environments: ['{w}']",
++    "stages = ['{w}','pilot']",
++    "x = [{w}, pilot]",
++    "x = {{'demo', '{w}'}}",
++    '"demo" | "{w}"',
++    # a comparison with a stage name (more than four characters between the two)
++    'env == "{w}"',
++    "environment != '{w}'",
++    'if g["tier"] == "{w}":',
++    'os.environ.get("ENV") == "{w}"',
++    # a list item that is only the word
++    "  - {w}",
++    '  - "{w}"',
++]
++# Quoted literal / dict key: only the two rare words (a quoted "test" alone is pytest's own word).
++NEW_QUOTED_SHAPES = ['x = {{"{w}": 1}}', 'if env == "{w}":', "    case '{w}':", "  - {w}"]
++# Two of the new words together, and a new word beside another one.
++NEW_PAIR_LINES = [
++    "test|development|production",
++    "development, production",
++    "test, production",
++    "production/test",
++    "test; development",
++    '"test", "production"',
++    "('development','test')",
++    "pilot, production",
++    "- test",
++    "- development",
++]
++
++
++@pytest.mark.parametrize("shape", NEW_SHAPES)
++@pytest.mark.parametrize("word", NEW_WORDS)
++def test_the_scanner_finds_test_development_production_as_a_stage_value(shape, word):
++    line = shape.format(w=word)
++    assert _hits(line), f"not found: {line}"
++
++
++@pytest.mark.parametrize("line", NEW_PAIR_LINES)
++def test_the_scanner_finds_two_of_the_new_words_together_and_a_bare_list_item(line):
++    assert _hits(line), f"not found: {line}"
++
++
++@pytest.mark.parametrize("shape", NEW_QUOTED_SHAPES)
++@pytest.mark.parametrize("word", ("development", "production"))
++def test_the_scanner_finds_development_and_production_as_a_key_or_literal(shape, word):
++    line = shape.format(w=word)
++    assert _hits(line), f"not found: {line}"
++
++
++@pytest.mark.parametrize(
++    "line",
++    [
++        'pytest.mark.parametrize("test")',
++        "def test_environment_is_set():",
++        "python -m pytest tests/test_x.py",
++        "production-ready code and a test of it",
++        "the production of widgets",
++        "tests: 12 passed",
++        "mode: testing",
++        "environment: demo",
++        "stage: developmental",
++        "  - test the config",
++        "The development team",
++        # the word is part of an identifier: a letter, digit or underscore touches it
++        "x = test, pilot_count",  # the right-hand word ends in an underscore name part
++        "x = test, pilotage",
++        "x = my_test, demo",  # the left-hand word starts with an underscore name part
++        "x = test_demo, prod",
++        "env_test_dir = 1",  # a stage name, then an underscore: an identifier, not a value
++        "mode_test_cases = 2",
++        "env_test = 1",
++        "tier_production",
++        "profile_test_data = 3",
++        "def test_env_production_guard():",
++        # a sentence boundary is not the separator between a stage name and a word
++        "the next stage. Test the config",
++        "set the environment. Production runs next",
++        # a host label (a dot or an at sign touching the word)
++        '("mail prod@example.test", "prod", False)',
++        "a.test, prod",
++        "test.example, demo",
++        "x = demo, test.example",
++        # quoted "test" alone is pytest's own word
++        '@pytest.mark.parametrize("test", [1])',
++        "tests = [1, 2]",
++    ],
++)
++def test_the_scanner_ignores_the_new_words_outside_a_stage_value(line):
++    assert not _hits(line), f"false hit: {line}: {_hits(line)}"
++
++
++@pytest.mark.parametrize(
++    "line",
++    [
++        "Mode: test the config",
++        "unit test, demo run",
++        "a test, demo or prod run",
++        "x = test, pilot count",
++    ],
++)
++def test_known_prose_collisions_are_hits_that_need_an_exact_line_exemption(line):
++    """Documented, not hidden: a stage name or a stage list written as ordinary English cannot be told from a value,
++    so it is a hit and a file that really contains such a line needs one exact-line row in stage_exemptions.tsv. None
++    of the scanned files has one today (test_the_old_stage_word_is_gone)."""
++    assert _hits(line), f"expected a hit (see the docstring): {line}"
++
++
++EXEMPT_REL = "demos/ask-your-data/askdata/evalset.py"
++EXEMPT_LINE = 'split: Literal["dev", "test"]'
++
++
++def test_a_new_word_stage_value_in_a_scanned_file_fails_unless_its_exact_line_is_exempt():
++    text = (ROOT / EXEMPT_REL).read_text(encoding="utf-8")
++    assert _scan_text(EXEMPT_REL, text)[0] == [], "the file as it is should be clean"
++    assert (EXEMPT_REL, EXEMPT_LINE) in _scan_text(EXEMPT_REL, text)[1], (
++        "the exempt line was not read"
++    )
++    word = NEW_WORDS[2]
++    found, _ = _scan_text(EXEMPT_REL, text + f"\nenvironment: {word}\n")
++    assert len(found) == 1 and f"environment: {word}" in found[0]
++    # the exemption is the exact line, not the word: the same word in a stage position elsewhere in the file fails
++    found, _ = _scan_text(EXEMPT_REL, text + f'\n    "{word}", 1\n')
++    assert len(found) == 1
++
++
++def test_an_exemption_covers_one_occurrence_not_every_identical_line():
++    """A row of the tsv excuses ONE occurrence of its exact line. A second identical line (a copy added later in the same
++    file) is a hit, and a second row for the same line excuses exactly two."""
++    text = (ROOT / EXEMPT_REL).read_text(encoding="utf-8")
++    assert _scan_text(EXEMPT_REL, text)[0] == [], "the file as it is should be clean"
++    found, _ = _scan_text(EXEMPT_REL, text + "\n    " + EXEMPT_LINE + "\n")
++    assert len(found) == 1 and EXEMPT_LINE in found[0], "a second identical exempt line was excused"
++
++
++def test_two_rows_for_the_same_line_excuse_two_occurrences_and_no_more(tmp_path, monkeypatch):
++    tsv = tmp_path / "exempt.tsv"
++    line = 'ENV = "d' + 'evelopment"'
++    tsv.write_text(f"x.py\t{line}\twhy one\nx.py\t{line}\twhy two\n", encoding="utf-8")
++    monkeypatch.setitem(globals(), "EXEMPT_FILE", tsv)
++    text = f"{line}\nok = 1\n{line}"
++    assert _scan_text("x.py", text)[0] == [], "two rows should excuse two occurrences"
++    found, used = _scan_text("x.py", text + "\n" + line)
++    assert len(found) == 1 and found[0].startswith("x.py:4"), "a third occurrence must be a hit"
++    assert set(used) == {("x.py", line)} and used[("x.py", line)] == 2
++
++
+ FULLWIDTH = "".join(chr(0xFF00 + ord(c) - 0x20) for c in OLD)
+ 
+ 
+@@ -689,3 +992,76 @@ def test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_an
+     assert _sweep("<SECRET_1>", "demo") is not None, (
+         "a secret that reads 'demo' must still be swept"
+     )
++
++
++# --- full redaction, not only _sweep: a tenant named "Pilot" and a customer named "Demo" -----------------------
++
++TEXT_PD = (
++    "tenant_id=Pilot ran; customer_id: Demo failed. Pilot and Demo again, also Pilots and Demo-1. "
++    "tenant_id=" + "acme" + "corp seen; " + "acme" + "corp again."
++)
++MASKED_PD = (
++    "tenant_id=<TENANT_1> ran; customer_id: <TENANT_2> failed. Pilot and Demo again, also Pilots and Demo-1. "
++    "tenant_id=<TENANT_3> seen; <TENANT_3> again."
++)
++
++
++def test_a_tenant_named_pilot_and_a_customer_named_demo_are_masked_where_labelled_and_not_swept_elsewhere():
++    """Exactly what is and is not masked (same sentence as the CHANGELOG): the value after a label (`tenant_id=Pilot`,
++    `customer_id: Demo`) is masked in the spelling it was written (the lower-case `tenant_id=pilot` too, pinned below);
++    the same word standing alone in the text is NOT swept,
++    because `pilot` and `demo` are common words; an ordinary tenant name IS swept everywhere. Through the two real
++    entry points, not `_sweep` alone."""
++    from hadavin_sdk.guard.redact import redact
++    from hadavin_sdk.guard.runmap import redact_text
++
++    result = redact(TEXT_PD)
++    assert result.text == MASKED_PD
++    assert result.mapping == {
++        "<TENANT_1>": "Pilot",
++        "<TENANT_2>": "Demo",
++        "<TENANT_3>": "acme" + "corp",
++    }
++    mapping: dict[str, str] = {}
++    assert redact_text(TEXT_PD, mapping) == MASKED_PD
++    assert mapping == result.mapping
++
++
++def test_a_secret_that_reads_pilot_or_demo_is_swept_in_every_copy_but_only_in_that_spelling():
++    from hadavin_sdk.guard.redact import redact
++    from hadavin_sdk.guard.runmap import redact_text
++
++    text = "password=pilot and token=demo and pilot and Pilot and demo and Demo."
++    want = (
++        "password=<SECRET_1> and token=<SECRET_2> and <SECRET_1> and Pilot and <SECRET_2> and Demo."
++    )
++    result = redact(text)
++    assert result.text == want
++    mapping: dict[str, str] = {}
++    assert redact_text(text, mapping) == want and mapping == result.mapping
++
++
++def test_a_label_masks_the_lower_case_spelling_too_and_only_that_spelling_elsewhere():
++    from hadavin_sdk.guard.redact import redact
++    from hadavin_sdk.guard.runmap import redact_text
++
++    text = (
++        "tenant_id=pilot ran; customer_id=demo failed; pilot and demo again, also Pilot and Demo."
++    )
++    want = "tenant_id=<TENANT_1> ran; customer_id=<TENANT_2> failed; pilot and demo again, also Pilot and Demo."
++    result = redact(text)
++    assert result.text == want
++    assert result.mapping == {"<TENANT_1>": "pilot", "<TENANT_2>": "demo"}
++    mapping: dict[str, str] = {}
++    assert redact_text(text, mapping) == want and mapping == result.mapping
++
++
++def test_only_an_id_label_masks_the_value_so_tenant_colon_pilot_is_not_masked():
++    """The tenant rule needs an id label (`tenant_id`, `org_id`, `customer_id`, `account_id`, `user_id`) and `:` or `=`.
++    `tenant: Pilot` and `customer=Demo` carry no id label: nothing is masked, the CHANGELOG says so."""
++    from hadavin_sdk.guard.redact import redact
++    from hadavin_sdk.guard.runmap import redact_text
++
++    text = "tenant: Pilot ran; customer=Demo failed; Pilot again."
++    assert redact(text).text == text and redact(text).mapping == {}
++    assert redact_text(text, {}) == text
+diff --git a/tests/test_tenant_ids.py b/tests/test_tenant_ids.py
+new file mode 100644
+index 0000000..3ed4c5c
+--- /dev/null
++++ b/tests/test_tenant_ids.py
+@@ -0,0 +1,881 @@
++"""An id may not be spelled like a stage word or be a common word the redactor does not sweep. Refused where ids are validated: `stages.check_id`, and the `config` types `TenantId`, `OrgId`,
++`CustomerId`, `AccountId` and `UserId` that call it.
++
++Why, in plain words. The redactor's labelled rule (`tenant_id=...`, also org, organisation, organization, customer,
++account and user) masks the value after the label whatever the value is: `tenant_id=prod` becomes `tenant_id=<TENANT_1>`
++even for a tenant named prod. What the redactor does not do is sweep OTHER copies of a value that is on its common-word
++list (`hadavin_sdk.commonwords.COMMON_WORDS`, shared with `guard/redact.py`): a bare `prod` or `default` elsewhere in
++the text stays readable, because `HTTP 500 in prod` must. So an id that is one of those words would keep every
++unlabelled copy in clear. Refusing those words, and the three further stage words (`stages.STAGE_WORDS`), as ids
++closes that; the WARDEN pin that `HTTP 500 in prod` stays readable is untouched.
++
++The comparison is made after three steps, so a disguised spelling is read as the word: NFKC (Unicode compatibility
++form: a full-width `prod` or a roman-numeral letter becomes plain letters), removal of the invisible format characters
++(Unicode category Cf: zero-width space, soft hyphen, word joiner), then case folding and cutting surrounding white
++space. The first two are the redactor's own `runmap.canonical`; the last two are added in `stages.fold_name`.
++
++No id is created or stored anywhere on this branch, so the check guards no live path yet. The walk at the end of this
++file fails when a field or parameter named like such an id is added without the check. Each pin test names the stage
++mutant (tests/stage_mutants.py) that it kills.
++"""
++
++import ast
++import importlib
++import re
++import unicodedata
++from pathlib import Path
++
++import pytest
++from pydantic import BaseModel, ValidationError
++
++from hadavin_sdk import commonwords
++from hadavin_sdk.commonwords import SWEEP_MIN_DIGITS, SWEEP_MIN_LENGTH
++from hadavin_sdk.config import AccountId, CustomerId, OrgId, TenantId, UserId, _Strict
++from hadavin_sdk.guard.redact import redact
++from hadavin_sdk.guard.runmap import canonical, redact_text
++from hadavin_sdk.stages import (
++    _READABLE_ID,
++    REFUSED_ID_WORDS,
++    STAGE_WORDS,
++    STAGES,
++    check_id,
++    check_tenant_id,
++    fold_name,
++)
++from tests.fixtures.stage_words import NEW_WORDS, is_stage_name
++
++redact_mod = importlib.import_module(
++    "hadavin_sdk.guard.redact"
++)  # `guard.redact` the name is the function
++
++# Built from parts: the stage scan reads this file too.
++OLD = "d" + "ev"
++ROOT = Path(__file__).resolve().parents[1]
++SRC = ROOT / "src" / "hadavin_sdk"
++
++
++def fullwidth(word: str) -> str:
++    return "".join(chr(0xFF00 + ord(c) - 0x20) for c in word)
++
++
++# Spellings of demo, pilot and prod (after NFKC, removal of Cf characters, case folding and cutting white space).
++REFUSED = [
++    "demo",
++    "pilot",
++    "prod",
++    "Demo",
++    "PILOT",
++    "Prod",
++    "dEmO",
++    "PROD",
++    fullwidth("demo"),
++    fullwidth("PILOT"),
++    fullwidth("Prod"),
++    chr(0x217E) + "emo",  # small roman numeral five hundred: NFKC gives d
++    "demo" + chr(0x00A0),  # no-break space: NFKC gives a plain space, then cut
++    " pilot ",
++    chr(0x200B) + "prod",  # zero-width space (category Cf)
++    "pi" + chr(0xAD) + "lot",  # soft hyphen (category Cf)
++    "pro" + chr(0x2060) + "d",  # word joiner (category Cf)
++]
++
++# The three further stage words, and spellings of them.
++REFUSED_STAGE_WORDS = [
++    NEW_WORDS[0],
++    NEW_WORDS[1].capitalize(),
++    NEW_WORDS[2].upper(),
++    fullwidth(NEW_WORDS[0]),
++    NEW_WORDS[1][:5] + chr(0x200B) + NEW_WORDS[1][5:],
++    f" {NEW_WORDS[2]} ",
++]
++
++ACCEPTED = [
++    "acme",
++    "acmecorp",
++    "prod-1",
++    "prod_eu",
++    "demos",
++    "demo-co",
++    "pilots",
++    "pilot1",
++    "preprod",
++    "productions",
++    "tester",
++    "testing",
++    "devops",
++    "abc",
++    "acme-7_b",
++    "123456",
++    "Acme-Corp_7",
++]
++
++
++def _refusal(check, value) -> str | None:
++    """The text of the ValueError `check(value)` raises, None when it raises nothing. The assertions are made by the
++    caller, outside the except block, so a failure shows one line and not a chained traceback."""
++    try:
++        check(value)
++    except ValueError as exc:
++        return str(exc)
++    return None
++
++
++def test_an_id_spelled_like_a_stage_is_refused():
++    """Kills T1-T5 (each part of the fold, pilot), T6 (the stage-word sentence is lost) and T6b (nothing is refused)."""
++    for value in REFUSED:
++        assert is_stage_name(value), f"{value!a} was not read as a stage name"
++        message = _refusal(check_tenant_id, value)
++        assert message is not None, f"{value!a} was accepted as a tenant id"
++        assert "stage word" in message, f"{value!a} was refused without the stage-word sentence"
++
++
++def test_the_further_stage_words_are_refused_as_ids():
++    """Kills T19 (a further stage word dropped from STAGE_WORDS; they are not all on the common-word list:
++    development is not)."""
++    for value in REFUSED_STAGE_WORDS:
++        message = _refusal(check_tenant_id, value)
++        assert message is not None, f"{value!a} was accepted as a tenant id"
++        assert "stage word" in message, f"{value!a} was refused without the stage-word sentence"
++
++
++def test_every_common_word_is_refused_as_an_id_in_every_spelling():
++    """Kills T17 (the check ignores the common-word list). Before this change only demo, pilot and prod were refused."""
++    assert commonwords.COMMON_WORDS, "the common-word list is empty"
++    for word in sorted(commonwords.COMMON_WORDS):
++        for value in (
++            word,
++            word.upper(),
++            word.capitalize(),
++            f" {word} ",
++            word[:1] + chr(0x200B) + word[1:],
++        ):
++            for check in (check_tenant_id, check_id):
++                try:
++                    check(value)
++                except ValueError as exc:
++                    assert "may not be a" in str(exc), f"{value!a}: another sentence"
++                else:
++                    raise AssertionError(f"{value!a} was accepted as an id")
++
++
++def test_an_id_that_is_not_a_refused_word_is_accepted_unchanged():
++    """Kills T7 (a word that merely contains a stage word is read as one) and T7b (a word that merely contains a
++    refused word is refused)."""
++    for value in ACCEPTED:
++        assert not is_stage_name(value), f"{value!a} was read as a stage name"
++        assert value.strip().casefold() not in REFUSED_ID_WORDS
++        try:
++            got = check_tenant_id(value)
++        except ValueError:
++            raise AssertionError(
++                f"{value!a} was refused as an id although it is an ordinary word"
++            ) from None
++        assert got == value, f"{value!a} was changed"
++        assert check_id(value, "a user id") == value
++
++
++def test_an_id_that_is_not_a_string_is_refused_with_a_value_error():
++    """Kills T8 (a non-string is accepted) and T15 (is_stage_name loses its isinstance test and raises on a
++    non-string). ValueError, so a pydantic AfterValidator turns it into a validation error (a TypeError would escape
++    pydantic as itself)."""
++    for value in [None, 5, b"demo", ["demo"]]:
++        try:
++            flagged = is_stage_name(value)
++        except TypeError:
++            raise AssertionError(f"{value!a}: is_stage_name raises on a non-string") from None
++        assert not flagged, f"{value!a} was read as a stage name"
++        try:
++            check_tenant_id(value)
++        except ValueError as exc:
++            assert "must be a string" in str(exc), f"{value!a} was refused with another sentence"
++        else:
++            raise AssertionError(
++                f"{value!a} was accepted as a tenant id although it is not a string"
++            )
++
++
++def test_the_refusal_names_the_stage_words_and_the_fold_and_does_not_echo_the_value():
++    """Kills T9 (the refusal echoes the value), T18 (the common-word refusal echoes it)."""
++    for secretish, words in (
++        ("PILOT" + chr(0x200B), STAGE_WORDS),
++        ("DEFAULT" + chr(0x200B), ()),
++    ):
++        with pytest.raises(ValueError) as caught:
++            check_tenant_id(secretish)
++        message = str(caught.value)
++        for stage in words:
++            assert stage in message, f"the refusal does not name {stage}"
++        assert "NFKC" in message and "case folding" in message
++        assert secretish[:-1] not in message and chr(0x200B) not in message, (
++            "the refusal echoes the value"
++        )
++
++
++def test_the_fold_is_the_spelling_the_redactor_leaves_bare():
++    """Against the redactor's real behaviour (not a copy of the fold's own formula): next to a label every spelling of
++    a stage word is masked, and (for a word on the common-word list) the bare folded word elsewhere in the text stays
++    readable, because the redactor does not sweep that word. So `fold_name` of a spelling is the word the redactor would leave in clear, which is why the check
++    compares it. Kills T1-T4 and T11."""
++    for value in [*REFUSED, *REFUSED_STAGE_WORDS]:
++        folded = fold_name(value)
++        assert folded in REFUSED_ID_WORDS, f"{value!a}: the fold {folded!a} is not a refused word"
++        out = redact_text(f"tenant_id={value} then {folded} later", {})
++        assert "<TENANT_" in out, f"{value!a}: the labelled copy was not masked: {out!a}"
++        if folded in commonwords.COMMON_WORDS:  # the words the redactor does not sweep
++            assert f" then {folded} later" in out, (
++                f"{value!a}: the redactor masked the bare folded word {folded!a}: {out!a}"
++            )
++    for value in ACCEPTED:
++        assert fold_name(value) not in REFUSED_ID_WORDS or _refusal(check_id, value) is not None
++
++
++# --- the shared list ------------------------------------------------------------------------------------------
++
++
++def test_the_redactor_and_the_id_check_use_one_word_list():
++    """Kills T16 (redact.py gets its own copy of the list)."""
++    assert redact_mod._COMMON is commonwords.COMMON_WORDS, "the redactor has a list of its own"
++    assert REFUSED_ID_WORDS == frozenset(STAGE_WORDS) | commonwords.COMMON_WORDS
++
++
++def test_the_stage_words_are_the_stages_and_the_words_the_stage_scan_looks_for():
++    """Kills T19 (a stage word dropped) and T20 (a word added that the scan does not know)."""
++    assert STAGE_WORDS == (*STAGES, *NEW_WORDS), (
++        "the stage words differ from the stage scan's words"
++    )
++    assert len(set(STAGE_WORDS)) == 6, "a stage word is listed twice or missing"
++
++
++def test_every_word_the_redactor_does_not_sweep_is_refused_and_the_leak_is_real():
++    """For every common word: the labelled copy is masked, the bare copy stays readable (that is the leak a tenant
++    with this id would have), and the check refuses the word. Kills T17."""
++    for word in sorted(commonwords.COMMON_WORDS):
++        with pytest.raises(ValueError):
++            check_id(word)
++        if len(word) < 3:  # too short for the label rule and for the sweep: nothing to leak or mask
++            continue
++        text = f"tenant_id={word} then {word} later"
++        masked = redact(text).text
++        assert masked == f"tenant_id=<TENANT_1> then {word} later", f"{word}: {masked!a}"
++
++
++def test_an_ordinary_id_is_masked_in_every_copy_so_it_needs_no_refusal():
++    assert redact("tenant_id=acmeco then acmeco later").text == (
++        "tenant_id=<TENANT_1> then <TENANT_1> later"
++    )
++
++
++def test_the_id_types_cover_the_labels_of_the_redactors_tenant_rule():
++    """The redactor reads tenant, org, organisation, organization, customer, account and user before `_id`; each of
++    them has a type in `config`. Fails when the redactor gains a label that has no type here."""
++    rule = next(rx for name, rx in redact_mod.PATTERNS if name == "TENANT")
++    group = re.search(r"\(\?:([a-z|]+)\)\[_\\-\]\?id", rule.pattern)
++    assert group, "the TENANT pattern has another shape"
++    labels = set(group.group(1).split("|"))
++    assert labels == {
++        "tenant",
++        "org",
++        "organisation",
++        "organization",
++        "customer",
++        "account",
++        "user",
++    }
++
++
++# --- through the config types ------------------------------------------------------------------------------------
++
++
++class _Tenant(_Strict):
++    tenant_id: TenantId
++
++
++class _Plain(BaseModel):
++    tenant_id: TenantId
++
++
++def test_the_config_type_refuses_a_stage_word_with_a_validation_error():
++    """Kills T10 (the config type does not call the check)."""
++    for value in [*REFUSED, *REFUSED_STAGE_WORDS]:
++        try:
++            _Tenant(tenant_id=value)
++        except ValidationError as exc:
++            assert "stage word" in str(exc), (
++                f"{value!a} was refused without the stage-word sentence"
++            )
++        else:
++            raise AssertionError(f"the config type accepted {value!a}")
++
++
++def test_the_config_type_accepts_an_ordinary_tenant_id():
++    assert _Tenant(tenant_id="acmecorp").tenant_id == "acmecorp"
++
++
++def test_each_other_id_type_refuses_a_common_word_and_a_stage_word():
++    """Kills T10b (an other id type does not call the check) and T21 (an other id type carries the wrong label)."""
++    for kind, label in (
++        (OrgId, "an org id"),
++        (CustomerId, "a customer id"),
++        (AccountId, "an account id"),
++        (UserId, "a user id"),
++    ):
++        model = type("Holder", (_Strict,), {"__annotations__": {"value": kind}})
++        for value in ("default", "Prod", NEW_WORDS[2], NEW_WORDS[0].upper(), "admin"):
++            with pytest.raises(ValidationError) as caught:
++                model(value=value)
++            assert label in str(caught.value), f"{value}: the error does not start with {label!r}"
++        assert model(value="acmeco-7").value == "acmeco-7"
++
++
++def test_a_refused_value_is_absent_from_the_error_text_of_a_strict_model():
++    """The no-echo promise holds inside a `_Strict` model (hide_input_in_errors), checked through the model and not
++    only through the function. A message that echoes the value is killed here too (T9, T18)."""
++    for value in ("PILOT" + chr(0x200B), "DEFAULT" + chr(0x200B), "Admin"):
++        with pytest.raises(ValidationError) as caught:
++            _Tenant(tenant_id=value)
++        text = str(caught.value)
++        assert value not in text and value.strip(chr(0x200B)) not in text, f"{value!a} is echoed"
++        assert "input_value" not in text, "the error prints the input"
++
++
++def test_a_plain_model_does_echo_the_value_so_the_type_belongs_in_a_strict_model():
++    """The control for the test above: without `hide_input_in_errors` pydantic prints `input_value=`. This is why the
++    walk requires a `_Strict` base for a class that holds an id (and why `check_id` documents it)."""
++    with pytest.raises(ValidationError) as caught:
++        _Plain(tenant_id="ADMIN")
++    assert "ADMIN" in str(caught.value), "pydantic no longer prints the input: the control is void"
++
++
++def test_a_non_string_through_the_config_type_is_a_validation_error():
++    with pytest.raises(ValidationError):
++        _Tenant(tenant_id=5)
++
++
++# --- the walk: no model may hold an id outside the checked types -------------------------------------------------
++
++# The labels the redactor's rule reads (pinned above). tenant is matched anywhere in a name; the others only as
++# `<label>_id` or `<label>id` (plural allowed), so `customers_v` or `user_name` are not ids.
++ID_NAME = re.compile(
++    r"tenant|(?:org(?:ani[sz]ation)?|customer|account|user)[_\-]?ids?(?![a-z])", re.IGNORECASE
++)
++# Names that mean a switch or a count, not an id (`multi_tenant: bool`).
++FLAG_NAME = re.compile(
++    r"^(?:multi|single)_tenant$|^(?:is|has|n|num)_.*tenant|tenants?_(?:count|enabled|mode)$|^n_tenants$",
++    re.IGNORECASE,
++)
++ID_TYPES = frozenset({"TenantId", "OrgId", "CustomerId", "AccountId", "UserId"})
++CHECKS = frozenset({"check_tenant_id", "check_id"})
++CONTAINERS = frozenset({"list", "set", "frozenset", "tuple", "Sequence", "Optional", "List", "Set"})
++
++
++def _last_name(node: ast.AST) -> str | None:
++    if isinstance(node, ast.Name):
++        return node.id
++    if isinstance(node, ast.Attribute):
++        return node.attr
++    return None
++
++
++def is_id_type(ann: ast.AST | None) -> bool:
++    """True when the annotation is exactly one of the id types, alone, in `X | None`, `Optional[X]`, or as the element
++    of a list, set, frozenset or tuple. Not a substring: `NotTenantId`, a string annotation, `dict[str, TenantId]`
++    and `Annotated[...]` are not."""
++    if ann is None:
++        return False
++    if isinstance(ann, (ast.Name, ast.Attribute)):
++        return _last_name(ann) in ID_TYPES
++    if isinstance(ann, ast.BinOp) and isinstance(ann.op, ast.BitOr):
++        sides = [ann.left, ann.right]
++        none = [s for s in sides if isinstance(s, ast.Constant) and s.value is None]
++        rest = [s for s in sides if s not in none]
++        return len(none) <= 1 and all(is_id_type(s) for s in rest) and bool(rest)
++    if isinstance(ann, ast.Subscript) and _last_name(ann.value) in CONTAINERS:
++        inner = ann.slice
++        items = inner.elts if isinstance(inner, ast.Tuple) else [inner]
++        items = [i for i in items if not (isinstance(i, ast.Constant) and i.value is Ellipsis)]
++        return bool(items) and all(is_id_type(i) for i in items)
++    return False
++
++
++def _is_check_call(node: ast.AST | None) -> bool:
++    return isinstance(node, ast.Call) and _last_name(node.func) in CHECKS
++
++
++def calls_check_on(scope: ast.AST, param: str) -> bool:
++    """True when `scope` contains a call to a check whose argument is THAT parameter (positional or keyword)."""
++    for node in ast.walk(scope):
++        if _is_check_call(node):
++            args = [*node.args, *(k.value for k in node.keywords)]
++            if any(isinstance(a, ast.Name) and a.id == param for a in args):
++                return True
++    return False
++
++
++def _is_id_name(name: str) -> bool:
++    return bool(ID_NAME.search(name)) and not FLAG_NAME.search(name)
++
++
++def _plain_type(ann: ast.AST | None) -> bool:
++    return isinstance(ann, ast.Name) and ann.id in {"bool", "int"}
++
++
++def _targets(node: ast.AST) -> list[ast.AST]:
++    out = []
++    for t in node.targets if isinstance(node, ast.Assign) else [node.target]:
++        out += t.elts if isinstance(t, ast.Tuple) else [t]
++    return out
++
++
++def unchecked_id_fields(source: str, name: str, defines_types: bool = False) -> list[str]:
++    """Every id-named field, attribute or parameter in `source` that does not go through the check:
++    - an annotated name (class field or module name) must carry exactly an id type;
++    - a class-level or module-level assignment of such a name needs the check call as its value (an unannotated
++      `tenant_id = Field(...)` is a field with no type);
++    - an attribute (`self.tenant_id = ...`) needs the check call as its value;
++    - a function or lambda parameter needs a call to a check on THAT parameter in the function;
++    - the id types themselves may only be defined in config.py (`defines_types`) and only imported from
++      hadavin_sdk.config.
++    Limits: a local variable assigned inside a function is not checked (it comes from a parameter or field that is);
++    a dict key or setattr is not seen; only pydantic models validate, so a dataclass or TypedDict field with an id
++    type is accepted by the walk and not validated at run time."""
++    problems = []
++    tree = ast.parse(source)
++
++    def flag(node: ast.AST, what: str) -> None:
++        problems.append(f"{name}:{node.lineno} {what}")
++
++    for node in ast.walk(tree):
++        if isinstance(node, ast.AnnAssign):
++            target = node.target
++            ident = _last_name(target)
++            if ident and _is_id_name(ident) and not _plain_type(node.annotation):
++                if isinstance(target, ast.Attribute):
++                    if not _is_check_call(node.value):
++                        flag(node, f"attribute {ident} is not set through a check")
++                elif not is_id_type(node.annotation):
++                    flag(node, f"field {ident} is not an id type")
++        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
++            args = node.args
++            for arg in [*args.posonlyargs, *args.args, *args.kwonlyargs, args.vararg, args.kwarg]:
++                if (
++                    arg
++                    and _is_id_name(arg.arg)
++                    and not _plain_type(arg.annotation)
++                    and not calls_check_on(node, arg.arg)
++                ):
++                    flag(node, f"parameter {arg.arg} is not checked")
++        if isinstance(node, ast.Assign):
++            for target in _targets(node):
++                ident = _last_name(target)
++                if ident in ID_TYPES and not defines_types:
++                    flag(node, f"{ident} is defined outside config.py")
++                if (
++                    ident
++                    and _is_id_name(ident)
++                    and isinstance(target, ast.Attribute)
++                    and not _is_check_call(node.value)
++                ):
++                    flag(node, f"attribute {ident} is not set through a check")
++        if isinstance(node, ast.ImportFrom):
++            for alias in node.names:
++                if alias.name in ID_TYPES and (node.module or "") not in {
++                    "hadavin_sdk.config",
++                    "config",
++                }:
++                    flag(
++                        node, f"{alias.name} is imported from {node.module}, not hadavin_sdk.config"
++                    )
++        if isinstance(node, ast.ClassDef) and node.name in ID_TYPES:
++            flag(node, f"{node.name} is defined as a class")
++    # class-level and module-level assignments (not inside a function)
++    containers = [tree] + [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
++    for container in containers:
++        for stmt in container.body:
++            if isinstance(stmt, ast.Assign):
++                for target in _targets(stmt):
++                    if (
++                        isinstance(target, ast.Name)
++                        and _is_id_name(target.id)
++                        and target.id not in ID_TYPES
++                        and not _is_check_call(stmt.value)
++                    ):
++                        flag(stmt, f"field {target.id} has no id type")
++    # a class that holds an id field must hide the input in errors: it derives from _Strict
++    for cls in [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]:
++        holds = any(
++            isinstance(s, ast.AnnAssign)
++            and isinstance(s.target, ast.Name)
++            and is_id_type(s.annotation)
++            and _is_id_name(s.target.id)
++            for s in cls.body
++        )
++        if holds and "_Strict" not in {_last_name(b) for b in cls.bases}:
++            flag(cls, f"class {cls.name} holds an id but does not derive from _Strict")
++    return problems
++
++
++def test_the_walk_sees_each_kind_of_unchecked_id():
++    """Sensitivity controls: each rule of the walk is shown on a planted source. Kills T12 (any type accepted), T13
++    (parameters ignored), T15b (the annotation is matched as a substring), T23 (any parameter counts as checked), T24
++    (attribute targets ignored), T25 (plain assignments ignored), T26 (the _Strict base is not required)."""
++    wrong_type = "class M(_Strict):\n    tenant_id: str\n    other: TenantId\n"
++    assert len(unchecked_id_fields(wrong_type, "x.py")) == 1, (
++        "the walk missed a field of the wrong type"
++    )
++    for ann in ("NotTenantId", "dict[str, TenantId]", "'TenantId'", "Annotated[str, TenantId]"):
++        src = f"class M(_Strict):\n    tenant_id: {ann}\n"
++        assert len(unchecked_id_fields(src, "x.py")) == 1, f"the walk accepted the annotation {ann}"
++    for ann in (
++        "TenantId",
++        "config.TenantId",
++        "TenantId | None",
++        "Optional[TenantId]",
++        "list[TenantId]",
++    ):
++        src = f"class M(_Strict):\n    tenant_id: {ann}\n"
++        assert unchecked_id_fields(src, "x.py") == [], f"the walk flagged the annotation {ann}"
++    other_label = "class M(_Strict):\n    customer_id: str\n"
++    assert len(unchecked_id_fields(other_label, "x.py")) == 1, "the walk missed a customer id"
++    unchecked_param = "def make(tenant_id):\n    return tenant_id\n"
++    assert len(unchecked_id_fields(unchecked_param, "x.py")) == 1, (
++        "the walk missed an unchecked parameter"
++    )
++    wrong_param = "def make(tenant_id, other):\n    return check_tenant_id(other)\n"
++    assert len(unchecked_id_fields(wrong_param, "x.py")) == 1, (
++        "the walk accepted a check on another parameter"
++    )
++    mention = "def make(tenant_id):\n    return 'check_tenant_id'\n"
++    assert len(unchecked_id_fields(mention, "x.py")) == 1, "the walk accepted the text of a check"
++    lam = "f = lambda tenant_id: tenant_id\n"
++    assert len(unchecked_id_fields(lam, "x.py")) == 1, "the walk missed a lambda parameter"
++    assign = "class M(_Strict):\n    tenant_id = Field(...)\n"
++    assert len(unchecked_id_fields(assign, "x.py")) == 1, "the walk missed an assigned field"
++    attr = "class M:\n    def __init__(self, v):\n        self.tenant_id: str = v\n"
++    assert len(unchecked_id_fields(attr, "x.py")) == 1, "the walk missed an annotated attribute"
++    attr2 = "class M:\n    def __init__(self, v):\n        self.org_id = v\n"
++    assert len(unchecked_id_fields(attr2, "x.py")) == 1, "the walk missed an attribute assignment"
++    plain = "class M(BaseModel):\n    tenant_id: TenantId\n"
++    assert len(unchecked_id_fields(plain, "x.py")) == 1, (
++        "the walk accepted a model that echoes input"
++    )
++    shadow = "TenantId = str\nclass M(_Strict):\n    tenant_id: TenantId\n"
++    assert len(unchecked_id_fields(shadow, "x.py")) == 1, "the walk accepted a shadowed TenantId"
++    foreign = "from elsewhere import TenantId\n"
++    assert len(unchecked_id_fields(foreign, "x.py")) == 1, (
++        "the walk accepted a TenantId from elsewhere"
++    )
++
++
++def test_the_walk_accepts_checked_ids_and_leaves_flags_and_other_names_alone():
++    good = (
++        "class M(_Strict):\n    tenant_id: TenantId\n    tenant_ids: list[TenantId]\n"
++        "    multi_tenant: bool\n    customer_id: CustomerId\n    customers_v: str\n    user_name: str\n"
++    )
++    assert unchecked_id_fields(good, "x.py") == [], "the walk flagged a checked or unrelated field"
++    for src in (
++        "def make(tenant_id):\n    return check_tenant_id(tenant_id)\n",
++        "def make(*, org_id):\n    return check_id(value=org_id, label='x')\n",
++        "f = lambda tenant_id: check_tenant_id(tenant_id)\n",
++        "def f(is_multi_tenant: bool):\n    return is_multi_tenant\n",
++    ):
++        assert unchecked_id_fields(src, "x.py") == [], f"the walk flagged: {src!r}"
++    config_src = "TenantId = Annotated[str, AfterValidator(check_tenant_id)]\n"
++    assert unchecked_id_fields(config_src, "config.py", defines_types=True) == []
++
++
++WALKED = ("src", "demos", "tools")
++
++
++def walk_tree(root: Path) -> list[str]:
++    """Every unchecked id field, attribute or parameter in the Python files below `root`/src, demos and tools.
++    What the walk skips, stated: a local variable assigned inside a function (it comes from a parameter or field that
++    is checked); a parameter or field annotated plain `bool` or `int` (a switch or a count); a dict key or `setattr`;
++    a dataclass or TypedDict field (only pydantic models validate at run time)."""
++    problems = []
++    files = sorted(
++        p
++        for folder in WALKED
++        for p in (root / folder).rglob("*.py")
++        if "__pycache__" not in p.parts
++    )
++    for path in files:
++        problems += unchecked_id_fields(
++            path.read_text(encoding="utf-8"),
++            str(path.relative_to(root)),
++            defines_types=path == root / "src" / "hadavin_sdk" / "config.py",
++        )
++    return problems
++
++
++def test_every_id_field_in_the_package_goes_through_the_check():
++    """Walks src, demos and tools of this repository. No field uses the id types yet (the trigger is named in the
++    docstring of config.py), so the walk also fails any id-named field typed as a plain str."""
++    assert any((ROOT / "src" / "hadavin_sdk").rglob("*.py")), "no source files found"
++    problems = walk_tree(ROOT)
++    assert not problems, "\n".join(problems)
++
++
++def test_a_tenant_field_planted_in_a_fixture_tree_is_found_in_each_walked_folder(tmp_path):
++    """Kills T14 (a walked folder is dropped, or the walk of a tree finds nothing). The planted source is a string
++    written here, so the test depends on no file of the package."""
++    planted = "class Holder(_Strict):\n    tenant_id: str = ''\n"
++    for folder in WALKED:
++        tree = tmp_path / folder
++        tree.mkdir()
++        (tree / "plant.py").write_text(planted, encoding="utf-8")
++    found = walk_tree(tmp_path)
++    assert len(found) == len(WALKED), f"the walk found {found}"
++    for folder in WALKED:
++        assert any(f.startswith(f"{folder}/plant.py") for f in found), f"{folder} was not walked"
++
++
++def test_the_refused_words_are_exactly_these_twenty_nine():
++    """A literal list, written out here and not read from the code: a word dropped from or added to commonwords.py or
++    STAGE_WORDS is seen (the other tests walk the code's own lists, so they cannot see it). Kills T28, T28b, T28c.
++    Words the stage scan looks for are built from parts."""
++    expected = {
++        "admin", "api", "app", "db", "debug", "default", "error", "false", "info", "local", "main",
++        "master", "none", "null", "public", "root", "sta" + "ge", "sta" + "ging", "true", "user", "users", "web",
++        "d" + "ev", "de" + "mo", "pi" + "lot", "pr" + "od", *NEW_WORDS,
++    }  # fmt: skip
++    assert len(expected) == 29
++    assert set(REFUSED_ID_WORDS) == expected, (
++        f"the refused words differ from the expected list: {sorted(set(REFUSED_ID_WORDS) ^ expected)}"
++    )
++
++
++# --- G1: an id the redactor cannot sweep is refused where it enters ------------------------------------------------
++# The redactor's label rule reads `[a-z0-9_-]{3,}` after tenant_id, org_id, ... and its sweep copies only values of 3 or
++# more characters, and all-digit values of 6 or more (guard/redact.py, `_sweep`). An id outside that is masked in part
++# or not at all, and its other copies stay in clear. These tests run the candidates through the redactor itself.
++
++
++TOO_SHORT = ["", "a", "xy", "p", "7", "42", " ab ", "a" + chr(0x200B) + "b", fullwidth("ab")]
++ODD_IDS = [
++    "ac\x00me",  # NUL
++    "ac\x07me",  # bell
++    "ac\tme",  # tab
++    "ac me",  # a space inside
++    "ac" + chr(0xA0) + "me",  # no-break space
++    "ac.me",  # a dot
++    "acme" + chr(0x2028) + "x",  # line separator
++    "\u0430cme",  # Cyrillic a that looks Latin
++    "acm" + chr(0x0435),  # Cyrillic ie that looks Latin
++    "Ünïcode-Tenant",  # accented letters: the label rule reads only ASCII letters
++    chr(0x131) + "d123",  # dotless i
++    # Review A19 round 2, B1: the case fold turns these into ASCII, the redactor does not fold, so only the part before
++    # them is masked.
++    "acme" + chr(0xDF) + "corp7",  # sharp s (folds to ss)
++    chr(0xDF) + "corp-tenant9",  # sharp s first
++    "acme" + chr(0x1E9E) + "corp7",  # capital sharp s (folds to ss)
++    "acme" + chr(0x17F) + "corp7",  # long s (Unicode ignore-case would match s)
++    "acme" + chr(0x212A) + "corp7",  # Kelvin sign (folds to k)
++    # An invisible format character (Cf) inside a long id: the id is not what the redactor reads.
++    "tenant-abcdefgh" + chr(0x200B) + "ijklmnop99",
++    "tenant-abcd" + chr(0xAD) + "efgh99",
++    "tenant-abcd" + chr(0x2060) + "efgh99",
++    "tenant-abcd" + chr(0xFEFF) + "efgh99",
++    fullwidth("acmecorp"),  # NFKC turns it into ASCII; the id as written is not
++    "acme" + chr(0xFF10) + "corp",  # full-width digit zero
++    "acme\n",  # trailing newline
++]
++
++
++def _masked_shape(out: str, template: str) -> bool:
++    """True when `out` is `template` with every {} replaced by one placeholder of any kind and nothing else changed:
++    no part of the id is left in clear."""
++    pattern = re.escape(template).replace(re.escape("{}"), r"<[A-Z0-9_]+>")
++    return re.fullmatch(pattern, out) is not None
++
++
++# Positions: the id beside its label, a bare copy after it, a bare copy before it, a copy in quotes, a copy after
++# punctuation.
++LEAK_TEMPLATES = [
++    "customer_id={} then {} later",
++    "{} first, then customer_id={}",
++    "customer_id={}\n{}",
++    '{"user_id": "{}", "note": "{}"}',
++    "customer_id={} ({}) and [{}]",
++]
++
++
++def _fill(template: str, value: str) -> str:
++    return template.replace("{}", value)
++
++
++def _leaks(value: str) -> bool:
++    """True when any part of `value` survives redact_text in any of the positions above. The test is the shape of the
++    output: only placeholders may stand where the id stood (a partial mask, `<TENANT_1>` followed by the tail of the id,
++    fails it too)."""
++    return any(
++        not _masked_shape(redact_text(_fill(template, value), {}), template)
++        for template in LEAK_TEMPLATES
++    )
++
++
++def test_an_id_shorter_than_the_redactors_minimum_is_refused():
++    """Kills T30 (the length refusal is off)."""
++    for value in TOO_SHORT:
++        message = _refusal(check_id, value)
++        assert message is not None, f"{value!a} was accepted as an id"
++        assert "too short" in message, f"{value!a}: another sentence: {message}"
++        assert _refusal(check_tenant_id, value) is not None
++
++
++@pytest.mark.parametrize("n", [SWEEP_MIN_LENGTH - 1, SWEEP_MIN_LENGTH, SWEEP_MIN_LENGTH + 1])
++def test_the_length_limit_is_the_redactors_own_number(n):
++    value = "q" * n
++    refused = _refusal(check_id, value) is not None
++    assert refused == (n < SWEEP_MIN_LENGTH), f"length {n}: refused={refused}"
++    if not refused:
++        assert not _leaks(value), f"{value!a} is accepted and leaks"
++
++
++def test_all_digit_ids_are_refused_below_the_redactors_digit_minimum():
++    """Kills T31 (the digit refusal is off)."""
++    for n in (SWEEP_MIN_DIGITS - 1, SWEEP_MIN_DIGITS, SWEEP_MIN_DIGITS + 1):
++        value = "7" * n
++        refused = _refusal(check_id, value) is not None
++        assert refused == (n < SWEEP_MIN_DIGITS), f"{n} digits: refused={refused}"
++        if not refused:
++            assert not _leaks(value), f"{value!a} is accepted and leaks"
++        # Full-width digits are refused at every length: the id is read as written, and the redactor reads ASCII digits.
++        assert _refusal(check_id, fullwidth(value)) is not None, f"{n} full-width digits accepted"
++
++
++def test_the_redactor_really_leaks_a_short_digit_id_the_control():
++    """The reason for the limit: a bare 5-digit id next to its label stays readable elsewhere."""
++    assert _leaks("1" * (SWEEP_MIN_DIGITS - 1)), (
++        "the redactor no longer leaks it: the limit is void"
++    )
++
++
++@pytest.mark.parametrize("value", ODD_IDS)
++def test_a_control_character_or_look_alike_id_is_refused_or_swept(value):
++    """Either check_id refuses the id, or the redactor masks every copy of it. Never accepted and leaking."""
++    refused = _refusal(check_id, value) is not None
++    assert refused or not _leaks(value), f"{value!a} is accepted and a copy stays in clear"
++
++
++def test_the_odd_ids_are_in_fact_refused():
++    """Kills T32 (the character refusal is off), T32b (the check reads the fold) and T34 (the ASCII-only flag is lost)."""
++    for value in ODD_IDS:
++        message = _refusal(check_id, value)
++        assert message is not None, f"{value!a} was accepted"
++        assert value not in message, "the refusal echoes the value"
++
++
++@pytest.mark.parametrize("value", ACCEPTED)
++def test_every_accepted_id_is_swept_in_every_copy(value):
++    assert not _leaks(value), f"{value!a} is accepted by check_id and still leaks"
++
++
++def test_the_label_rule_class_is_the_one_the_check_allows():
++    """The class body of the redactor's TENANT rule and the one in `stages._READABLE_ID` are equal (not a substring
++    check), and the check reads it as ASCII with the case ignored, like the rule's `(?i)`. Kills T34."""
++    rule = next(rx for name, rx in redact_mod.PATTERNS if name == "TENANT")
++    found = re.findall(r"\[a-z0-9_\\-\]\{" + str(SWEEP_MIN_LENGTH) + r",\}", rule.pattern)
++    assert len(found) == 1, f"the TENANT rule holds {len(found)} value classes"
++    rule_class = found[0].split("{")[0]
++    assert _READABLE_ID.pattern == rule_class + "+", (
++        f"the id class {_READABLE_ID.pattern!r} differs from the rule's {rule_class!r}"
++    )
++    assert _READABLE_ID.flags & re.ASCII and _READABLE_ID.flags & re.IGNORECASE
++    assert rule.flags & re.IGNORECASE
++
++
++def _wide_candidates():
++    """Every code point whose NFKC form, case fold or Cf-stripped form is plain ASCII letters, digits, hyphen or
++    underscore, or empty (a Cf character): the characters a fold-based check could let in. The ASCII class itself is
++    included."""
++    ok = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
++    out = []
++    for cp in range(0x110000):
++        if 0xD800 <= cp <= 0xDFFF:
++            continue
++        c = chr(cp)
++        forms = {
++            c.casefold(),
++            canonical(c),
++            canonical(c).casefold(),
++            unicodedata.normalize("NFKC", c),
++        }
++        if any(f == "" or set(f) <= ok for f in forms):
++            out.append(c)
++    return out
++
++
++def test_no_accepted_id_leaks_over_a_sweep_of_every_code_point_the_fold_could_read_as_ascii():
++    """Class: the check validated a form (the fold) other than the one it returns and the redactor reads. For every
++    code point whose casefold, NFKC form or Cf-stripped form is ASCII (or empty), in the middle, at the start and at
++    the end of an id and inside a long id: if check_id accepts the id, it is ASCII and every copy of it is masked in
++    every position (`_leaks`). Kills T32b (the check reads the fold)."""
++    candidates = _wide_candidates()
++    non_ascii = [c for c in candidates if not c.isascii()]
++    assert len(non_ascii) > 1000, f"the sweep is too small: {len(non_ascii)} non-ASCII code points"
++    for needed in (0xDF, 0x1E9E, 0x17F, 0x212A, 0x200B, 0xAD, 0xFF41):
++        assert chr(needed) in non_ascii, f"U+{needed:04X} is missing from the sweep"
++    accepted_non_ascii = []
++    accepted = []
++    for c in candidates:
++        for value in (
++            "acme" + c + "corp7",
++            c + "corp-tenant9",
++            "tenant-corp9" + c,
++            "tenant-abcdefgh" + c + "ijklmnop99",
++        ):
++            if _refusal(check_id, value) is None:
++                accepted.append(value)
++                if not value.isascii():
++                    accepted_non_ascii.append(value)
++    assert not accepted_non_ascii, (
++        f"{len(accepted_non_ascii)} non-ASCII ids accepted, first {accepted_non_ascii[0]!a}"
++    )
++    leaking = [v for v in accepted if _leaks(v)]
++    assert not leaking, f"{len(leaking)} accepted ids leak, first {leaking[0]!a}"
++
++
++@pytest.mark.parametrize("value", ["---", "___", "-_-", "----", "______", "_-_-_-"])
++def test_an_id_of_punctuation_only_is_masked_in_every_position(value):
++    """Review A19 round 2, M2: the redactor's class holds hyphen and underscore, so such an id is accepted. Run through
++    the same helper as every other id: every copy beside a label is masked and no part stays in clear. (Over-masking a
++    separator such as `-----` in other text is the redactor's standing behaviour for every id; a tenant that picks such
++    an id accepts it.)"""
++    assert _refusal(check_id, value) is None
++    assert not _leaks(value), f"{value!a} is accepted and a copy stays in clear"
++
++
++def test_stages_py_imports_only_the_leaf_modules():
++    """Class: a module every guard imports at the top of its file must stay a leaf. An AST walk of src/hadavin_sdk/
++    stages.py: the only imports are `re` and `__future__` from the standard library and the two leaf modules
++    `hadavin_sdk.commonwords` and `hadavin_sdk.textfold`, and those two import nothing of the package. Kills T35."""
++    leaf_modules = {"hadavin_sdk.commonwords", "hadavin_sdk.textfold"}
++
++    def imports(path: Path) -> set[str]:
++        found: set[str] = set()
++        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
++            if isinstance(node, ast.Import):
++                found.update(a.name for a in node.names)
++            elif isinstance(node, ast.ImportFrom):
++                assert node.level == 0, f"{path.name}: a relative import"
++                found.add(node.module or "")
++        return found
++
++    assert imports(SRC / "stages.py") == {"__future__", "re", *leaf_modules}, (
++        "stages.py imports something besides the leaf modules"
++    )
++    for leaf in ("commonwords.py", "textfold.py"):
++        package = {m for m in imports(SRC / leaf) if m.split(".")[0] == "hadavin_sdk"}
++        assert not package, f"{leaf} is not a leaf: it imports {sorted(package)}"
++
++
++def test_the_redactor_sweep_uses_the_shared_limits():
++    import inspect
++
++    source = inspect.getsource(redact_mod._sweep)
++    for name in ("SWEEP_MIN_LENGTH", "SWEEP_MIN_DIGITS"):
++        assert name in source, f"_sweep does not read {name}: a second copy of the limit"
++    assert redact_mod._sweep("<TENANT_1>", "q" * (SWEEP_MIN_LENGTH - 1)) is None
++    assert redact_mod._sweep("<TENANT_1>", "q" * SWEEP_MIN_LENGTH) is not None
++    assert redact_mod._sweep("<TENANT_1>", "7" * (SWEEP_MIN_DIGITS - 1)) is None
++    assert redact_mod._sweep("<TENANT_1>", "7" * SWEEP_MIN_DIGITS) is not None

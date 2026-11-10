@@ -941,3 +941,10 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | ad526db1c49879884 | investigator (general-purpose, sonnet) | silent pytest exit (no summary line) cause | started 17:40Z, expected 18:25Z (45-min box); output handover/evidence/silent-exit/FINDINGS.md | RUNNING |
 | afe15e63a73166368 | builder (general-purpose, sonnet) | A24 PR91 fix batch 3 (r3 findings) | started 17:41Z, expected 18:41Z | RUNNING |
 | a997c39722443ee17 | builder | A19 fix2 | REPORTED INTERIM 17:40Z, CLOSED; full pytest (/tmp/claude-0/a19fix2-full.log, pid 11009) still at 81%; stage mutants not run; changes uncommitted in WT-A19fix | CLOSED, follow-up mine |
+| ad526db1c49879884 | investigator | silent pytest exit | REPORTED 17:55Z, CLOSED; FINDINGS.md: `git pull --rebase` recreates logs under handover/ |
+| a621dcb9b3aacb063 | builder | A15 fix1 | REPORTED, CLOSED |
+| abeea452 | egm reviewer | A15 r2 | REPORTED 1B/4M/9N, CLOSED; saved egm/A15/r2-codebase.md |
+| a520cd7b6d55eae7b | builder (general-purpose, sonnet) | A15 PR74 fix batch 2, branch core/P5a-fix1 | started 18:15Z, expected 19:15Z | RUNNING |
+| a5b069d23c0f3e877 | egm-implementation-readiness (sonnet) | P1d-a plan pass 6 (rev 9) | started 18:20Z, expected 18:45Z | RUNNING |
+| a87edd0dc27527a10 | egm-design (sonnet) | P1d-a plan pass 6 (rev 9) | started 18:20Z, expected 18:45Z | RUNNING |
+| a38b2c903abf7cfa8 | egm-codebase-details (sonnet) | A19 PR83 r3, snapshot egm/A19/snapshot-f1e9e9d | started 18:24Z, expected 18:50Z | RUNNING |
