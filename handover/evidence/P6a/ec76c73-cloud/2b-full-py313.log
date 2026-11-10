@@ -1,10 +1,6 @@
 HEAD ec76c73900fafcec7fc2715fbc29cf565aaa95ee
 CMD: uv run --all-extras --group test --python 3.13 pytest -m not live and not perf -p no:cacheprovider
 warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
-Using CPython 3.13.18 interpreter at: /usr/local/bin/python3.13
-Removed virtual environment at: .venv
-Creating virtual environment at: .venv
-Installed 76 packages in 86ms
 ============================= test session starts ==============================
 platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0
 rootdir: /home/user/build/EV-P6a-ec76c73/wt
@@ -238,4 +234,37 @@ tests/test_p7_tick.py .........................................          [ 91%]
 tests/test_repo_rules.py ........................................        [ 92%]
 tests/test_review_fixes.py .................................             [ 92%]
 tests/test_review_pr3_round2.py .....................................    [ 92%]
-tests/test_runmap_partial_escape.py .exit=0
+tests/test_runmap_partial_escape.py .................................... [ 93%]
+............                                                             [ 93%]
+tests/test_s1_foundation.py .....................................        [ 93%]
+tests/test_s2_audit.py .....                                             [ 93%]
+tests/test_s3_gate.py ........................                           [ 93%]
+tests/test_s4_llm_guard.py ..................................            [ 94%]
+tests/test_s5_runtime.py ............                                    [ 94%]
+tests/test_s6_approvals.py ............                                  [ 94%]
+tests/test_scan_repo.py ...............................                  [ 94%]
+tests/test_stage_names.py .............................................. [ 95%]
+...................................................                      [ 95%]
+tests/test_timing_fixture.py ..........                                  [ 95%]
+tests/warden_port/test_audit_chain.py .................................. [ 96%]
+...........                                                              [ 96%]
+tests/warden_port/test_bedrock_provider_r16.py ..............            [ 96%]
+tests/warden_port/test_gate.py ..............                            [ 96%]
+tests/warden_port/test_gate_render.py .                                  [ 96%]
+tests/warden_port/test_gate_review2.py ................................. [ 96%]
+.                                                                        [ 96%]
+tests/warden_port/test_gate_review3.py ..                                [ 96%]
+tests/warden_port/test_providers.py ..........................           [ 97%]
+tests/warden_port/test_redaction.py .................................... [ 97%]
+..........................                                               [ 97%]
+tests/warden_port/test_redaction_bank.py ............................... [ 97%]
+........................................................................ [ 98%]
+.......                                                                  [ 98%]
+tests/warden_port/test_redaction_classes.py ............................ [ 98%]
+...................................                                      [ 99%]
+tests/warden_port/test_redaction_review.py ............................  [ 99%]
+tests/warden_port/test_redaction_review2.py ..........................   [ 99%]
+tests/warden_port/test_redaction_review9.py ......................       [100%]
+
+========= 10500 passed, 1 skipped, 28 deselected in 271.17s (0:04:31) ==========
+exit=0
