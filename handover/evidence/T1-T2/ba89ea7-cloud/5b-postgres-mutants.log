@@ -1,0 +1,15 @@
+HEAD ba89ea751e0197ff64bd20143cd606eaa6529d01
+CMD /home/user/build/venv-t1t2-313/bin/python -u /home/user/hadavin-sdk/handover/evidence/T1-T2/postgres_mutants.py /home/user/build/EV-T1T2-ba89ea7/wt
+baseline rc=0 :: ........................................................                 [100%]
+KILLED P1 day counter replaced instead of added :: FAILED tests/contracts/test_store_time_rules.py::test_a_charge_returns_only_its_own_agents_month_total[postgres]
+      /tmp/pgmut_ffr4nz9n/tests/contracts/test_store_time_rules.py:38: AssertionError: 6min: charge 1 at 2026-03-10 12:03:00+00:00
+      /tmp/pgmut_ffr4nz9n/tests/contracts/test_store_time_rules.py:38: AssertionError: 6min: charge 2 at 2026-03-11 00:02:59+00:00
+      /tmp/pgmut_ffr4nz9n/tests/contracts/test_store_time_rules.py:38: AssertionError: 6min: charge 2 at 2026-03-11 00:05:58+00:00
+KILLED P2 month counter replaced instead of added :: FAILED tests/contracts/test_store_time_rules.py::test_one_microsecond_decides_the_day_and_a_leap_february_has_a_29th[postgres]
+      /tmp/pgmut_ckftujx2/tests/contracts/test_store_time_rules.py:38: AssertionError: 6min: charge 1 at 2026-03-10 12:03:00+00:00
+      /tmp/pgmut_ckftujx2/tests/contracts/test_store_time_rules.py:38: AssertionError: 6min: charge 1 at 2026-03-11 00:00:00+00:00
+      /tmp/pgmut_ckftujx2/tests/contracts/test_store_time_rules.py:38: AssertionError: 6min: charge 1 at 2026-03-11 00:02:59+00:00
+KILLED P3 add_spend keys the month counter by the day :: FAILED tests/contracts/test_store_time_rules.py::test_one_microsecond_decides_the_day_and_a_leap_february_has_a_29th[postgres]
+      /home/user/build/venv-t1t2-313/lib/python3.13/site-packages/psycopg/cursor.py:117: psycopg.errors.CheckViolation: new row for relation "spend_month" violates check constraint "spend_month_month_check"
+      /home/user/build/venv-t1t2-313/lib/python3.13/site-packages/psycopg/cursor.py:117: psycopg.errors.CheckViolation: new row for relation "spend_month" violates check constraint "spend_month_month_check"
+      /home/user/build/venv-t1t2-313/lib/python3.13/site-packages/psycopg/cursor.py:117: psycopg.errors.CheckViolation: new row for relation "spend_month" violates check constraint "spend_month_month_check"

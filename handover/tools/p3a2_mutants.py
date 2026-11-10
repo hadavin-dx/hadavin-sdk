@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# SUPERSEDED (builder round 1, head c727453 + fixes): do NOT use this script as the source of any mutant count. The checked-in
+# runner `tests/migrate_mutants.py` on branch core/P3a-2 is the one list (90 mutants after this round); it plants into
+# a COPY of the repository, this script plants into the live tree. Of the 66 mutants here, 64 are in the checked-in
+# list (M65 was re-added); M88b and P9 are dropped with a reason in handover/evidence/P3a-2/*-builder-r2/TABLE.md.
 """P3a-2 mutant runner: 66 mutants of the wiring PR (PR 73, branch core/P3a-2, head 2b0941b).
 
 RECONSTRUCTED. The original runner (`mutants.py`, last seen in run ea40242, log
