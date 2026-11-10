@@ -1,4 +1,4 @@
-"""Names that hold `$` or non-ASCII characters (order 112). A name in PostgreSQL may hold `$` (`app$on`, `on$x`), so the regex
+"""Names that hold `$` or non-ASCII characters. A name in PostgreSQL may hold `$` (`app$on`, `on$x`), so the regex
 word boundary, which breaks at `$`, shows a standalone `on` inside one name and a role grant would pass as a grant on an
 object. The refusal reads names the way the lexer does (`migration_numbers._NAME_CHAR`). Needs no database and no CHANGELOG, so the
 mutant run of `tests/migration_numbers_mutants.py` can copy this file alone."""

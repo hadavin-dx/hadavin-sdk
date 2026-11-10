@@ -32,7 +32,7 @@ The lexer follows the PostgreSQL scanner rules that matter for where a string, c
 `standard_conforming_strings = on`. Preconditions: the migration role is NOT a superuser (statements such as
 `CREATE EXTENSION`, `COPY ... PROGRAM` and `LOAD` are refused here as a tripwire, not as the guard), the server is
 PostgreSQL 15 or later, and the files are UTF-8 text without hidden characters. The scanner rules were compared with
-pglast 8.7 (the PostgreSQL 17 scanner) and probed on 16.15 (ticket P3a); that PostgreSQL 15 scans the same way is an
+pglast 8.7 (the PostgreSQL 17 scanner) and probed on 16.15; that PostgreSQL 15 scans the same way is an
 ASSUMPTION nobody has tested here. `refused_statements` refuses `CREATE EXTENSION` outright: no extension is allowed
 today, because no planned migration creates one (grep of the tickets, in the pull request text). If one is wanted, add
 its name to a named allow-list constant here and test it; never a bypass.
@@ -104,7 +104,7 @@ class MigrationNumberError(ConfigError):
         return (type(self), (self.problems,))
 
 
-def _esc(name: str) -> str:
+def escape_name(name: str) -> str:
     """A name for a message: control characters, ANSI escapes and lone surrogates are written as escapes. The slice
     removes the outer quotes that `ascii()` adds, so the old messages keep their exact text."""
     return ascii(name)[1:-1]
@@ -125,7 +125,7 @@ def check_ledger(paths: Sequence[Path]) -> list[str]:
     problems: list[str] = []
     numbers: list[int] = []
     for p in paths:
-        name = _esc(p.name)
+        name = escape_name(p.name)
         if not NAME.fullmatch(p.name):
             problems.append(f"{name}: not named NNNN_<name>.sql")
         elif int(p.name[:4]) == 0:
@@ -161,9 +161,13 @@ def check_migration_numbers(folder: Path = MIGRATIONS) -> None:
     with os.scandir(folder) as it:
         for e in sorted(it, key=lambda e: e.name):
             if e.is_symlink():
-                problems.append(f"{_esc(e.name)}: is a symbolic link; CI wants the file itself")
+                problems.append(
+                    f"{escape_name(e.name)}: is a symbolic link; CI wants the file itself"
+                )
             elif not e.name.lower().endswith(".sql"):
-                problems.append(f"{_esc(e.name)}: not a migration file (stray entry in the folder)")
+                problems.append(
+                    f"{escape_name(e.name)}: not a migration file (stray entry in the folder)"
+                )
     if problems:
         raise MigrationNumberError(problems)
 
@@ -255,7 +259,7 @@ def hand_recipe(entries: Sequence[tuple[str, str]], schema: str, lock: int = MIG
         raise ValueError("the schema name has unusual characters")
     for stem, text in entries:
         if (why := _refuse_entry(stem, text)) is not None:
-            raise ValueError(f"{_esc(stem)}: {why}")
+            raise ValueError(f"{escape_name(stem)}: {why}")
     lines = [
         "-- RECIPE begins",
         RECIPE_FIRST_LINE,
@@ -288,7 +292,7 @@ def order_problems(
     names = _names([p.name for p in late])
     verb = "would be" if len(late) == 1 else "would all be"
     head = (
-        f"{names} {verb} applied out of order: the number is at or below '{_esc(highest)}', which this database "
+        f"{names} {verb} applied out of order: the number is at or below '{escape_name(highest)}', which this database "
         "has already applied. Do not rename the file. What to do: a database administrator applies it by hand, as "
         "the database user that runs migrations, while no migrate command is running. "
     )
@@ -316,7 +320,7 @@ def order_problems(
 
 def _names(names: Sequence[str]) -> str:
     """At most `MAX_PROBLEMS_SHOWN` names, then "and N more": one hostile ledger once meant thousands of names."""
-    shown = [_esc(n) for n in names[:MAX_PROBLEMS_SHOWN]]
+    shown = [escape_name(n) for n in names[:MAX_PROBLEMS_SHOWN]]
     if len(names) > MAX_PROBLEMS_SHOWN:
         shown.append(f"and {len(names) - MAX_PROBLEMS_SHOWN} more")
     return ", ".join(shown)
@@ -332,25 +336,30 @@ def _digest(p: Path, texts: Mapping[Path, str] | None) -> str:
 
 
 def released_problems(
-    folder: Path, manifest: Mapping[str, str], texts: Mapping[Path, str] | None = None
+    folder: Path,
+    manifest: Mapping[str, str],
+    texts: Mapping[Path, str] | None = None,
+    files: Sequence[Path] | None = None,
 ) -> list[str]:
     """Forward-only: `manifest` maps the stem of every RELEASED file to the SHA-256 of its text (line endings read as
     Unix ones). With `texts` (the result of `read_files`), a file in it is hashed from that text, so the text that is
     hashed is the text that is executed; any other file is read from disk. A released file that is missing or changed is a problem, and so is a file that is not in the
-    manifest but is numbered at or below the highest released one. Add a row to the manifest when a release is cut."""
-    files = {p.name[:-4]: p for p in list_migration_files(folder) if NAME.fullmatch(p.name)}
+    manifest but is numbered at or below the highest released one. Add a row to the manifest when a release is cut. With
+    `files` (the list `migrate` runs) the check looks at exactly those files; without it, at the folder."""
+    listed = list_migration_files(folder) if files is None else files
+    files = {p.name[:-4]: p for p in listed if NAME.fullmatch(p.name)}
     problems: list[str] = []
     for stem in sorted(manifest):
         p = files.get(stem)
         if p is None or not p.is_file():
-            problems.append(f"{_esc(stem)}: a released file is missing")
+            problems.append(f"{escape_name(stem)}: a released file is missing")
         elif _digest(p, texts) != manifest[stem]:
-            problems.append(f"{_esc(stem)}: a released file was changed")
+            problems.append(f"{escape_name(stem)}: a released file was changed")
     released = [s for s in manifest if STEM.fullmatch(s)]
     if released:
         top = max(released, key=lambda s: (int(s[:4]), s))
         problems += [
-            f"{_esc(stem)}: a new migration is numbered at or below the highest released one ({_esc(top)})"
+            f"{escape_name(stem)}: a new migration is numbered at or below the highest released one ({escape_name(top)})"
             for stem in sorted(files)
             if stem not in manifest and int(stem[:4]) <= int(top[:4])
         ]

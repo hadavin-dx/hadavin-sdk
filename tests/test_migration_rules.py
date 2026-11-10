@@ -1,4 +1,4 @@
-"""Rules about the P3a-2 wiring that are not a database test (ledger rows BL-p3a2-001..003 and the order 103 caller rule):
+"""Rules about the migrate wiring that are not a database test:
 
 1. a test of `migrate()` never skips silently: no skip when `HADAVIN_TEST_PG_DSN` is set, a reason when it is not;
 2. every caller of `lex` / `statement_text` unpacks the PAIR and every caller of `checked_statement_text` takes a `str`;
@@ -473,7 +473,7 @@ def test_the_migrate_docstring_counts_what_it_reads_back():
     assert "three session settings" not in doc
     assert "current user and the session user" in doc and "search path" in doc
     assert "three settings that change how SQL text is read" in doc
-    assert "cases (a) to (g)" in doc
+    assert "cases (a) to (h)" in doc
     assert "eleven values" in _words(mig._check_read_back.__doc__ or "")
     assert len(mig._READBACK_VALUES) == 11
 
@@ -487,22 +487,22 @@ def test_the_runbook_carries_the_real_lock_the_command_and_every_case():
         rb.PSQL_ARGS == mn.RECIPE_COMMAND.split()[:5]
         or " ".join(rb.PSQL_ARGS) == (mn.RECIPE_COMMAND.rsplit(" ", 2)[0])
     )
-    for letter in "abcdefg":
+    for letter in "abcdefgh":
         assert f"**({letter}) " in runbook, letter
     assert "current_user <> '<MIGRATION ROLE>'" in rb.block_with(
         "<MIGRATION ROLE>"
-    )  # case (a) assertion (F7)
+    )  # the assertion of case (a)
     assert "://" not in runbook  # no connection string in a hand step
     assert "recipe" in " ".join((mig.__doc__ or "").split()) and "Migration repair steps" in (
         mig.__doc__ or ""
     )
 
 
-# --- round 2 of PR 73 (order 132): what the CHANGELOG and the docstrings now say ------------------------------------------
+# --- what the CHANGELOG and the docstrings now say ------------------------------------------
 
 
 def test_the_hand_file_header_in_the_runbook_has_the_timeouts_and_a_quoted_schema():
-    """F2, F6."""
+    """The hand-file header in the runbook holds the two time limits (read from the constant) and a quoted schema."""
     rule = _words(rb.RUNBOOK[: rb.RUNBOOK.index("- **(a) ")])
     for line in mn.RECIPE_TIMEOUTS:
         assert f"`{line}`" in rule, line
@@ -518,7 +518,7 @@ def test_the_hand_file_header_in_the_runbook_has_the_timeouts_and_a_quoted_schem
 
 
 def test_case_e_puts_the_evidence_block_into_e1_and_e3_always():
-    """F3."""
+    """Case (e) puts the evidence block into steps E1 and E3 and not into E2."""
     e = _words(rb.case("e"))
     assert "In **E1** and **E3** always put the block of case (g)" in e
     assert "**E2** does not need it" in e
@@ -527,14 +527,14 @@ def test_case_e_puts_the_evidence_block_into_e1_and_e3_always():
 
 
 def test_case_g_says_what_its_last_check_does_not_look_at():
-    """F4."""
+    """Case (g) says what its last check does not look at."""
     g = _words(rb.case("g"))
     assert "compares columns only" in g and "tool_calls_by_run" in g and "primary keys" in g
     assert "the columns of the evidence tables differ" in rb.evidence_block()
 
 
 def test_case_b_uses_a_plain_placeholder_and_points_at_the_released_list():
-    """F5, F8."""
+    """Case (b) uses a plain placeholder and points at the released list."""
     b = _words(rb.case("b"))
     assert "'<file_stem>'" in b and "that file's name without" in b
     assert "'<that file" not in b
@@ -550,10 +550,14 @@ def _upgrade_bullet() -> str:
 
 
 def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
-    """M-4 (wired), F1. Killed by: mutants R6 (the call removed; the wiring test) and R23 (the CHANGELOG sentence goes)."""
+    """migrate() calls the released-file check. Killed by: mutants R6 (the call removed; the wiring test) and R23 (the CHANGELOG sentence goes)."""
     first = _words(_upgrade_bullet())
     assert "refuses, before it connects, a released file that was edited or deleted" in first
-    assert "PostgreSQL 17: not run on the build machine" in first
+    assert (
+        "Tested against PostgreSQL 16.15 on the build machine; the CI run on 17.10 is recorded in the pull request"
+        in first
+    )
+    assert "TO FILL IN" not in first, "no placeholder is left in the changelog"
     assert "the tests read the same file" in first
     assert "the role memberships" in first and "inside a function body" in first
     assert "pg_auth_members" in _words(mig.__doc__ or "") and "pg_auth_members" in _words(
@@ -565,7 +569,7 @@ _TIMEOUT = re.compile(r"\w+_timeout = '[^']*'")
 
 
 def test_every_timeout_value_written_in_the_docs_is_the_constants():
-    """F2 (no hardcoding): the CHANGELOG and both docstrings may write a timeout setting, but only the constant's own."""
+    """the CHANGELOG and both docstrings may write a timeout setting, but only the constant's own."""
     allowed = {m for line in mn.RECIPE_TIMEOUTS for m in _TIMEOUT.findall(line)}
     assert len(allowed) == 2
     for name, text in (
@@ -581,7 +585,7 @@ def test_every_timeout_value_written_in_the_docs_is_the_constants():
 
 
 def test_no_source_or_test_file_writes_the_timeout_values_a_second_time():
-    """F2 (no hardcoding): the values of the constant (read from it) appear as a quoted literal nowhere else in the
+    """the values of the constant (read from it) appear as a quoted literal nowhere else in the
     store code or the migration tests."""
     values = [v for line in mn.RECIPE_TIMEOUTS for v in re.findall(r"= '([^']*)'", line)]
     assert values and all(values)
@@ -600,7 +604,7 @@ def test_no_source_or_test_file_writes_the_timeout_values_a_second_time():
 
 
 def test_case_f_says_migrate_has_the_same_limits_as_the_hand_file():
-    """F2 (drift): CHANGELOG case (f) must not say `migrate` has no timeout while it sets them."""
+    """CHANGELOG case (f) must not say `migrate` has no timeout while it sets them."""
     f = _words(rb.case("f"))
     assert "`migrate` sets the same lock and statement limits as the hand file" in f
     assert "has no timeout in `migrate`" not in f
@@ -612,7 +616,7 @@ def test_case_f_says_migrate_has_the_same_limits_as_the_hand_file():
 
 
 def test_the_scope_the_order_and_the_file_own_limits_are_written_down():
-    """Review A, B, nit A, nit B."""
+    """The upgrade bullet says what migrate checks, in what order, and which limits each file has."""
     first = _words(_upgrade_bullet())
     assert (
         "also the role checks and grants, so a normal run with no new file is covered too" in first
@@ -632,7 +636,7 @@ def test_the_scope_the_order_and_the_file_own_limits_are_written_down():
     assert "A migration file may not change either limit" in doc
 
 
-# --- 6. both JSON lists are inside the built package (order 186, G73-4) -------------------------------------------------
+# --- 6. both JSON lists are inside the built package -------------------------------------------------
 
 PACKAGED_JSON = ("migrations_released.json", "migrations_trigger_changes.json")
 
@@ -641,21 +645,30 @@ def test_the_built_wheel_holds_both_migration_lists(tmp_path):
     """`migrate()` reads both lists at run time from the folder of the package, so an installed copy must have them.
     The wheel is built into a temporary folder (`uv build`) and its file list is read; each file in it must equal the
     file in the source tree."""
+    import asyncio
     import shutil
-    import subprocess
     import zipfile
 
     uv = shutil.which("uv")
     assert uv is not None, "uv is needed to build the wheel (it runs the whole test suite)"
     out = tmp_path / "wheel"
-    done = subprocess.run(  # noqa: S603 - fixed argument list, no shell
-        [uv, "build", "--wheel", "--out-dir", str(out), str(ROOT)],
-        capture_output=True,
-        text=True,
-        timeout=300,
-        check=False,
-    )
-    assert done.returncode == 0, done.stderr[-2000:]
+
+    async def build() -> tuple[int | None, bytes]:
+        proc = await asyncio.create_subprocess_exec(
+            uv,
+            "build",
+            "--wheel",
+            "--out-dir",
+            str(out),
+            str(ROOT),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+        text, _ = await asyncio.wait_for(proc.communicate(), 300)
+        return proc.returncode, text
+
+    code, text = asyncio.run(build())
+    assert code == 0, text.decode("utf-8", "replace")[-2000:]
     (wheel,) = out.glob("*.whl")
     with zipfile.ZipFile(wheel) as z:
         names = set(z.namelist())

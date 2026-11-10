@@ -1,11 +1,11 @@
-"""Mutants of the migrate wiring (PR 73): `store/migrate.py`, `store/migration_numbers.py`, the CHANGELOG runbook and
+"""Mutants of the migrate wiring: `store/migrate.py`, `store/migration_numbers.py`, the CHANGELOG runbook and
 two test helpers. Not collected by pytest.
 
 Each mutant plants ONE wrong line in a COPY of the repository (the working tree is never touched) and runs the tests
 named in `killer`; the mutant is KILLED when pytest exits with code 1 (a test failed). Exit code 0 means SURVIVED; any
 other code (collection error, timeout) is ERROR and counts as not killed, so a syntax error cannot pass as a kill. A
-baseline run of every killer on the untouched copy must pass first. The mutants started as a reconstruction of the lost
-runner of PR 73 (what is known of that runner: names, one-line descriptions and killers; the planted text was
+baseline run of every killer on the untouched copy must pass first. The mutants started as a reconstruction of an earlier
+runner that was lost (what was known of it: names, one-line descriptions and killers; the planted text was
 rewritten and proven by running) and were extended for the trigger read-back, the role check and the allow list.
 
 Run from the repository root (needs the Postgres tests' variable HADAVIN_TEST_PG_DSN pointing at a scratch server whose
@@ -21,10 +21,10 @@ text is no longer in its file exactly once, so the list cannot rot between two r
 
 from __future__ import annotations
 
+import asyncio
 import os
 import re
 import shutil
-import subprocess
 import sys
 import tempfile
 import time
@@ -82,7 +82,7 @@ RECIPE_CLEAN = (
     "cleaned = checked_statement_text(text)  # cannot raise: _refuse_entry read this text above"
 )
 ROLE_RX = 'rf"(grant|revoke)\\b(?!.*?{_NAME_START}on{_NAME_END})"'
-RELEASE_ONE = '        if p is None or not p.is_file():\n            problems.append(f"{_esc(stem)}: a released file is missing")\n'
+RELEASE_ONE = '        if p is None or not p.is_file():\n            problems.append(f"{escape_name(stem)}: a released file is missing")\n'
 GUARDS_KILL = k(T_GUARDS, "test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number")
 DROP_ADVICE = k(
     T_RULES,
@@ -96,7 +96,12 @@ TRIG_CHANGED = (
     k(T_PG, "test_h11_the_read_back_refuses_a_planted_file"),
     k(T_PG, "test_h11_a_function_owner_change_is_refused"),
 )
-ALLOWED = k(T_WIRING, "test_an_allowed_trigger_change_passes_only_for_that_trigger_and_file")
+ALLOWED = k(T_WIRING, "test_an_allowed_trigger_change_passes_only_for_that_file_table_and_trigger")
+STATE_LISTED = k(
+    T_WIRING,
+    "test_a_listed_trigger_may_not_be_left_disabled_or_replica_only_unless_the_entry_says_so",
+)
+SCHEMA_LISTED = k(T_WIRING, "test_an_entry_that_names_another_schema_does_not_allow_the_change")
 ALLOWED_PG = k(T_PG, "test_h11_a_listed_trigger_change_passes_for_that_file_and_trigger_only")
 MEMBERS = (
     k(T_WIRING, "test_a_new_role_membership_after_a_file_is_refused"),
@@ -112,7 +117,7 @@ CALL = (
     "                    db,\n"
     "                    saved,\n"
     "                    path.name,\n"
-    "                    frozenset(t for stem, t in allowed_changes if stem == path.stem),\n"
+    "                    frozenset(c for c in allowed_changes if c.migration == path.stem),\n"
     "                )\n"
 )
 INSERT = '                db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))\n'
@@ -164,6 +169,16 @@ M: list[Mutant] = [
         "session_replication_role",
     ),
     cmp_mutant("M71", "current_user", "current_user not compared", "current_user"),
+    Mutant(
+        "M65",
+        "the saved current_user is compared with the new session_user",
+        MIG,
+        "for item, old, new in zip(_READBACK_VALUES, saved.values, now.values, strict=True)",
+        "for item, old, new in zip(\n"
+        "            _READBACK_VALUES, saved.values, (now.values[1], *now.values[1:]), strict=True\n"
+        "        )",
+        k(T_WIRING, "test_saved_users_that_differ_are_not_a_refusal"),
+    ),
     cmp_mutant("M94", "session_user", "session_user not compared", "session_user"),
     cmp_mutant(
         "M91",
@@ -186,7 +201,7 @@ M: list[Mutant] = [
         MIG,
         'if key not in saved.triggers and enabled in ("D", "R"):',
         "if False:",
-        k(T_WIRING, "test_a_disabled_trigger_is_refused"),
+        k(T_WIRING, "test_a_trigger_created_disabled_is_refused_and_one_created_enabled_is_not"),
     ),
     Mutant(
         "M90",
@@ -584,7 +599,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "P10",
-        "R: a name character without the dollar sign (order 112)",
+        "R: a name character without the dollar sign",
         MN,
         '_NAME_CHAR = "[A-Za-z0-9_$\\u0080-\\U0010ffff]"',
         '_NAME_CHAR = "[A-Za-z0-9_\\u0080-\\U0010ffff]"',
@@ -603,7 +618,7 @@ M: list[Mutant] = [
         "M66",
         "the refusal does not name the file",
         MIG,
-        'raise ConfigError(f"migration {ascii(file_name)[1:-1]} " + ". It also ".join(parts))',
+        'raise ConfigError(f"migration {escape_name(file_name)} " + ". It also ".join(parts))',
         'raise ConfigError("migration " + ". It also ".join(parts))',
         f"{WIRING_VAL}[current_user]",
     ),
@@ -645,7 +660,12 @@ M: list[Mutant] = [
         TRIG_CHANGED,
     ),
     Mutant(
-        "T7", "function owner not compared", MIG, "pg_get_userbyid(p.proowner)", "''", TRIG_CHANGED
+        "T7",
+        "function owner not compared",
+        MIG,
+        "p.prosecdef, pg_get_userbyid(p.proowner)",
+        "p.prosecdef, ''",
+        TRIG_CHANGED,
     ),
     Mutant(
         "T8",
@@ -667,8 +687,8 @@ M: list[Mutant] = [
         "T10",
         "any trigger is allowed once any entry exists",
         MIG,
-        "        allowed = key[2] in allowed_triggers\n",
-        "        allowed = bool(allowed_triggers)\n",
+        "        entry = _listed(allowed_triggers, key)\n        allowed = entry is not None\n",
+        "        entry = next(iter(allowed_triggers), None)\n        allowed = entry is not None\n",
         ALLOWED,
     ),
     Mutant(
@@ -683,17 +703,50 @@ M: list[Mutant] = [
         "T12",
         "the list of allowed changes ignores a bad shape",
         MIG,
-        'if not isinstance(entry, dict) or set(entry) != {"migration", "trigger", "reason"}:',
-        "if False:",
+        "            not isinstance(entry, dict)\n            or not required <= set(entry)\n"
+        '            or set(entry) - required - {"enabled_state"}\n',
+        "            False\n",
         k(T_WIRING, "test_the_list_of_allowed_trigger_changes_is_empty_today_and_strictly_read"),
     ),
     Mutant(
         "T13",
         "the allowed list is not passed to the read-back",
         MIG,
-        "                    frozenset(t for stem, t in allowed_changes if stem == path.stem),\n",
+        "                    frozenset(c for c in allowed_changes if c.migration == path.stem),\n",
         "                    frozenset(),\n",
         ALLOWED_PG,
+    ),
+    Mutant(
+        "T14",
+        "a listed trigger may be left disabled or replica-only",
+        MIG,
+        '        elif after != before and after[0] in ("D", "R") and after[0] != entry.state:\n',
+        "        elif False:\n",
+        STATE_LISTED,
+    ),
+    Mutant(
+        "T15",
+        "the table is not part of the key of a list entry",
+        MIG,
+        "            if c.table == key[1] and c.trigger == key[2] and c.schema in (None, key[0])\n",
+        "            if c.trigger == key[2] and c.schema in (None, key[0])\n",
+        ALLOWED,
+    ),
+    Mutant(
+        "T16",
+        "the schema of a list entry is not compared",
+        MIG,
+        "c.table == key[1] and c.trigger == key[2] and c.schema in (None, key[0])\n",
+        "c.table == key[1] and c.trigger == key[2]\n",
+        SCHEMA_LISTED,
+    ),
+    Mutant(
+        "T17",
+        "a listed trigger left replica-only passes (only D is refused)",
+        MIG,
+        '        elif after != before and after[0] in ("D", "R") and after[0] != entry.state:\n',
+        '        elif after != before and after[0] == "D" and after[0] != entry.state:\n',
+        STATE_LISTED,
     ),
     # --- role memberships and saved settings ---
     Mutant(
@@ -726,7 +779,11 @@ M: list[Mutant] = [
         MIG,
         "(to_jsonb(m) - 'oid' - 'roleid' - 'member')::text FROM pg_auth_members m",
         "''::text FROM pg_auth_members m",
-        k(T_WIRING, "test_a_changed_grant_option_of_a_membership_is_refused"),
+        (
+            k(T_WIRING, "test_a_changed_grant_option_of_a_membership_is_refused"),
+            k(T_WIRING, "test_the_membership_query_reads_names_and_every_other_column"),
+            k(T_PG, "test_h11_a_changed_grant_option_of_an_existing_membership_is_refused"),
+        ),
     ),
     Mutant(
         "PS1",
@@ -786,12 +843,84 @@ M: list[Mutant] = [
         ROLE_REFUSED,
     ),
     Mutant(
+        "B1",
+        "a membership in a privileged role is not checked",
+        MIG,
+        "    if borrowed := [r[0] for r in db.execute(_BORROWED_ROLES_SQL).fetchall()]:\n",
+        "    if False:\n",
+        (
+            k(
+                T_WIRING,
+                "test_a_role_that_is_a_member_of_a_privileged_role_is_refused_before_any_file_runs",
+            ),
+            k(
+                T_PG,
+                "test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server",
+            ),
+        ),
+    ),
+    Mutant(
+        "B2",
+        "the membership query matches no role",
+        MIG,
+        "AND r.rolname <> current_user AND pg_has_role(current_user, r.oid, 'MEMBER') ORDER BY r.rolname",
+        "AND false ORDER BY r.rolname",
+        (
+            k(
+                T_PG,
+                "test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server",
+            ),
+            k(T_WIRING, "test_the_membership_check_reads_the_current_user_and_all_four_flags"),
+        ),
+    ),
+    Mutant(
+        "B3",
+        "the test helper takes over any schema, public included",
+        "tests/fixtures/migration_role.py",
+        "                    if not _is_scratch(schema):\n",
+        "                    if False:\n",
+        k(T_PG, "test_the_test_helper_refuses_to_take_over_a_schema_that_is_not_a_scratch_one"),
+    ),
+    Mutant(
+        "O1",
+        "the check for objects another role owns is not called",
+        MIG,
+        "            _refuse_foreign_owned(db)\n",
+        "            pass\n",
+        (
+            k(
+                T_PG,
+                "test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over",
+            ),
+            k(
+                T_PG,
+                "test_one_table_owned_by_another_role_is_enough_to_refuse_and_a_function_is_named",
+            ),
+        ),
+    ),
+    Mutant(
+        "O2",
+        "an object that another role owns is not looked for",
+        MIG,
+        "AND NOT pg_has_role(current_user, c.relowner, 'USAGE') ",
+        "AND false ",
+        k(T_PG, "test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over"),
+    ),
+    Mutant(
         "R6",
         "released_problems is not called by migrate()",
         MIG,
-        "    if problems := released_problems(MIGRATIONS, _released_manifest(), texts):\n",
+        "    if problems := released_problems(MIGRATIONS, _released_manifest(), texts, files):\n",
         "    if False:\n",
         k(T_WIRING, "test_migrate_refuses_a_changed_released_file_before_it_connects"),
+    ),
+    Mutant(
+        "R7",
+        "the released check lists the folder, not the files migrate runs",
+        MN,
+        "    listed = list_migration_files(folder) if files is None else files\n",
+        "    listed = list_migration_files(folder)\n",
+        k(T_WIRING, "test_the_released_check_looks_at_the_files_migrate_runs_not_at_the_folder"),
     ),
     Mutant(
         "R23",
@@ -804,17 +933,27 @@ M: list[Mutant] = [
 ]
 
 
-def run(cmd, cwd, env, timeout):
+async def _run_async(cmd, cwd, env, timeout):
+    """Start one child process (no shell), wait at most `timeout` seconds, kill it on timeout."""
     t0 = time.monotonic()
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        cwd=cwd,
+        env=env,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
     try:
-        p = subprocess.run(  # noqa: S603 (a list of arguments, no shell; the command is built here)
-            cmd, check=False, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout
-        )
-        return p.returncode, (p.stdout or "") + (p.stderr or ""), time.monotonic() - t0
-    except subprocess.TimeoutExpired as e:
-        out = e.stdout or b""
-        out = out.decode("utf-8", "replace") if isinstance(out, bytes) else out
-        return "TIMEOUT", out, time.monotonic() - t0
+        out, _ = await asyncio.wait_for(proc.communicate(), timeout)
+    except TimeoutError:
+        proc.kill()
+        out, _ = await proc.communicate()
+        return "TIMEOUT", out.decode("utf-8", "replace"), time.monotonic() - t0
+    return proc.returncode, out.decode("utf-8", "replace"), time.monotonic() - t0
+
+
+def run(cmd, cwd, env, timeout):
+    return asyncio.run(_run_async(cmd, cwd, env, timeout))
 
 
 def summary_line(out: str) -> str:
@@ -852,7 +991,6 @@ def problems_with_the_list(root: Path = ROOT) -> list[str]:
 
 def main(argv: list[str]) -> int:
     only = argv[0] if argv else ""
-    timeout = 900
     if not os.environ.get("HADAVIN_TEST_PG_DSN"):
         print("STOP: HADAVIN_TEST_PG_DSN is not set (the Postgres killers need a scratch server)")
         return 2
@@ -860,12 +998,20 @@ def main(argv: list[str]) -> int:
         print("STOP: the list of mutants is out of date:\n  " + "\n  ".join(problems))
         return 2
     work = Path(tempfile.mkdtemp(prefix="migrate-mutants-"))
+    try:
+        return _run_all(only, work)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
+def _run_all(only: str, work: Path) -> int:
+    timeout = 900
     copy = work / "repo"
     shutil.copytree(
         ROOT,
         copy,
         ignore=shutil.ignore_patterns(
-            ".venv", ".git", "__pycache__", ".pytest_cache", "handover", "dist"
+            ".venv", ".git", "__pycache__", ".pytest_cache", "handover", "dist", ".env*"
         ),
     )
     env = dict(
@@ -884,7 +1030,10 @@ def main(argv: list[str]) -> int:
         print("STOP: hadavin_sdk is not imported from the copy under test")
         return 2
     base = ["-p", "no:cacheprovider", "-q", "-x", "--no-header"]
-    selected = [m for m in M if only in m.name]
+    selected = [m for m in M if not only or m.name == only]
+    if not selected:
+        print(f"STOP: no mutant has the id {only!r}")
+        return 2
     killers = sorted({kid for m in selected for kid in killers_of(m)})
     rc, out, dt = run([py, "-m", "pytest", *base, *killers], copy, env, timeout)
     print(f"BASELINE rc={rc} {summary_line(out)} ({dt:.1f}s, {len(killers)} killer ids)")
@@ -910,7 +1059,6 @@ def main(argv: list[str]) -> int:
         )
     killed = sum(1 for _, s in results if s == "KILLED")
     bad = [f"{m.name}:{s}" for m, s in results if s != "KILLED"]
-    shutil.rmtree(work, ignore_errors=True)
     print(f"not killed: {bad}")
     print(f"{killed} of {len(results)} killed")
     return 0 if not bad else 1
