@@ -2151,3 +2151,5 @@
 | BL-core-p1da-r3-08 | P1d-a plan rev5 | MAJOR | row T1 is pb but its after-form calls defang_text | FIXED-UNVERIFIED | round3-readiness.md M3; rev 6 hasattr selector | 3 |
 | BL-core-p1da-r3-09 | P1d-a plan rev5 | MAJOR | INFO-K41 password leak (41-char prefix) left as expected survivor A15 | FIXED-UNVERIFIED | round3-readiness.md M4; rev 6 row K41, A15 killer | 3 |
 | BL-core-p1da-r3-10 | P1d-a plan rev5 | MAJOR | build step has no phases | FIXED-UNVERIFIED | round3-readiness.md M5; rev 6 four phases | 3 |
+| BL-core-a15-r1-resolve | PR74 21ca680 | MAJOR | 12 Majors resolved into G1-G9 | OPEN (fix builder a621dcb9b3aacb063) | egm/A15/r1-resolve.md | 1 |
+| BL-core-a19-r1-resolve | PR83 7f24178 | MAJOR | 3 Majors resolved into G1-G3 (+ nits G4-G7) | OPEN (fix batch 1 to start) | egm/A19/r1-resolve.md | 1 |

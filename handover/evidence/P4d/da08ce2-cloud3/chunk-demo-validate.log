@@ -345,3 +345,4 @@ tests/demo_askdata/test_validate.py::test_an_unexpected_exception_inside_the_che
 tests/demo_askdata/test_validate.py::test_node_limit_is_2000_and_rejects_with_v10 PASSED [100%]
 
 ============================= 338 passed in 0.81s ==============================
+exit=0
