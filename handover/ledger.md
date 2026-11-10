@@ -2146,3 +2146,8 @@
 | BL-core-p1da-r3-03 | P1d-a plan rev 5 | MAJOR | G4 exact differential overclaimed; add base clean(x) freeze | OPEN | egm/P1d-a-plan/round3-design.md M3 | r3 |
 | BL-core-p1da-r3-04 | P1d-a plan rev 5 | MAJOR | literal fake credentials in fixtures against repo rule | OPEN | egm/P1d-a-plan/round3-design.md M4 | r3 |
 | BL-core-p1da-r3-05 | P1d-a plan rev 5 | MAJOR | no rebase protocol vs A7/A8 ordering; base pin 0dabf1f | OPEN | egm/P1d-a-plan/round3-design.md M5 | r3 |
+| BL-core-p1da-r3-06 | P1d-a plan rev5 | MAJOR | S5x named-entity samples fail "exact; hidden 0" | FIXED-UNVERIFIED | egm/P1d-a-plan/round3-readiness.md M1; rev 6 html.unescape rule + OVERMASK ceiling | 3 |
+| BL-core-p1da-r3-07 | P1d-a plan rev5 | MAJOR | plan vs ticket base and order conflict, no base-moved rule | FIXED-UNVERIFIED | round3-readiness.md M2; rev 6 rebase protocol | 3 |
+| BL-core-p1da-r3-08 | P1d-a plan rev5 | MAJOR | row T1 is pb but its after-form calls defang_text | FIXED-UNVERIFIED | round3-readiness.md M3; rev 6 hasattr selector | 3 |
+| BL-core-p1da-r3-09 | P1d-a plan rev5 | MAJOR | INFO-K41 password leak (41-char prefix) left as expected survivor A15 | FIXED-UNVERIFIED | round3-readiness.md M4; rev 6 row K41, A15 killer | 3 |
+| BL-core-p1da-r3-10 | P1d-a plan rev5 | MAJOR | build step has no phases | FIXED-UNVERIFIED | round3-readiness.md M5; rev 6 four phases | 3 |
