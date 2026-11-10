@@ -1502,3 +1502,13 @@ CHECKED BY ME: GitHub list_pull_requests at 16:28Z. Open PR heads: 91 61cf2be (c
 NOT RUN: nothing yet on core this session. Demo tree: no edits (order 227/230). The A4r9 campaign on this machine keeps dying because the sandbox restarts (7 restarts since 22:43Z); a campaign run started at 06:55Z may be dead again, I check at the first pulse.
 DECISIONS FOR LEAD: none. DEFAULT: continue as ORDER 231 says.
 NEXT: write handover/PARALLEL-PLAN-2026-11-10.md (graph of the whole open queue from branch/PR reads), egm-review-loop on it (implementation_readiness + zoom_out), egm-resolve, then start every READY-NOW item as its own builder. First item planned: PR84 red head fix, in parallel with #89 check list, PR75 round 3, P1d-a build.
+
+## q417 (16:29Z) REPORT ORDER 231/232: plan written, EGM plan review running; MODEL PROOF table
+CHECKED BY ME: handover/PARALLEL-PLAN-2026-11-10.md written (24 rows, MODEL map section 3, critical path, first batch, risks). Plan facts come from GitHub PR heads read today plus newest handover reports; I did NOT re-open each branch (section 2 of the plan says so).
+NOT RUN: no builder started yet (waits for plan review + resolve per order 231). The A4r9 demo campaign is not restarted (order 230: demo frozen; the machine restart kills it anyway).
+PROOF TABLE (agent id | role | subagent_type | model | package | EGM step):
+| ab6b98e1f67bbe453 | plan reviewer, implementation readiness | egm:egm-implementation-readiness | sonnet (claude-sonnet-5-5) | parallel-plan | plan review round 1 |
+| a78ededfc2df48e1a | plan reviewer, zoom out | egm:egm-zoom-out | sonnet (claude-sonnet-5-5) | parallel-plan | plan review round 1 |
+No agent runs on a wrong model. Earlier agents (S1k builder, round 1-9 reviewers) are finished; none is running. egm-resolve will run through the Skill tool (Opus 5.5 by the plugin patch).
+DECISIONS FOR LEAD: none. DEFAULT: after resolve, start the first batch of the plan (A1 A2 A3 A4 A5 A6 A7 A8 A9 A11 A14 A15 A19 A20 A21 A22 A24) in two waves for RAM.
+NEXT: collect both reviews, run egm-resolve, freeze plan, start wave 1.

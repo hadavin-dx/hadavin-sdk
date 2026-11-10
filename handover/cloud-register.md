@@ -910,3 +910,9 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 - 07:54:15 a1cb4f56 PR75 builder pass 3 registered/started
 - 07:54:51 ac36fa89 (PR84 r5 codebase) saved 0B/4M; af553813 askdata builder REPORTED/CLOSED: PR #88 head 7456e696 (old line 8/40 fail, new 0/60); PR84 fix batch to follow
 - 07:55:02 a0729b50 (PR76) REPORTED/CLOSED head 7f323491f91910ed3af03d6fae0cbabd1e23f6bc; evid.sh 76 started; ab6c7e80 resumed for PR84 fix batch (r5)
+
+## 2026-11-10 order 231/232 register (MODEL column added per ORDER 232)
+| agent id | role | subagent_type | model | package | EGM step | started | expected end | state |
+|---|---|---|---|---|---|---|---|---|
+| ab6b98e1f67bbe453 | plan reviewer (implementation readiness) | egm:egm-implementation-readiness | sonnet (claude-sonnet-5-5) | parallel-plan | plan review round 1 | 16:29:51 | +20 min | RUNNING |
+| a78ededfc2df48e1a | plan reviewer (zoom out) | egm:egm-zoom-out | sonnet (claude-sonnet-5-5) | parallel-plan | plan review round 1 | 16:29:51 | +20 min | RUNNING |
