@@ -1042,3 +1042,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a290aa955ce105a74 | PR89 builder round 5 | | | closed | reported head f4301d5 (gitleaks history leak remains on 386875c) | q-P89-gitleaks-history |
 | acf276f0fbff87f4e | PR89 evidence runner, head 14879da (156 mutants, root and non-root) | 2026-11-10 | on report | running |
 | a66ee3947892154f1 | PR89 redaction reviewer round 7, snapshot /tmp/snap/core_P89-14879da | 2026-11-10 | on report | running |
+| acf276f0fbff87f4e | PR89 evidence runner 14879da | 2026-11-10 | - | STOPPED (head superseded by round 7); processes, clusters ev89a312/313 and partial evidence deleted |
+| a66ee3947892154f1 | PR89 reviewer round 7 | 2026-11-10 | - | CLOSED: 0B/2M/4m, saved round-w2-r7-codebase.md |
+| a290aa955ce105a74 | PR89 builder round 7 (resumed) | 2026-11-10 | +90 min | running |
