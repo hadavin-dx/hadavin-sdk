@@ -1000,3 +1000,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | acf7523afd | PR89 round-3 check reviewer | CLOSED 20:53 UTC: 0 blockers, 1 major, 10 minors saved | - | done |
 | a7708eeaf9 | PR89 evidence runner 45f2374 | STOPPED by cloud 20:53 UTC (head will change with round-3 fix; slots freed for the builder); new runner starts on the final head | - | closed |
 | a290aa955c | PR89 fix builder r3 (BL-core-a2-w2-r3-01/02) | resumed 20:53 UTC | +90 min | check +30 min |
+| af4a57cbb8 | A21a fix builder r3 | CLOSED 21:15 UTC, pushed 9881b21 (parent 3c13cf7 carried the evidence) | - | done |
+| a8b076e860 | A21a evidence runner 98a3ed9 | STOPPED by cloud (head superseded) | - | closed |
+| a591cfffd8 | A21a evidence runner 9881b21 | started 21:15 UTC | ~60-90 min | check +30 min |
+| ac672989f9, a4bf163eda | A21a round-3 reviewers (codebase, design), snapshot /tmp/snap/core_T1-T2-9881b21 | started 21:15 UTC | ~20 min | check +20 min |
