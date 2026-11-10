@@ -2185,3 +2185,7 @@
 | BL-core-a19-r2-01 | PR83 fix1 85e0801 | BLOCKER | check_id validates casefolded id but returns raw; sharp-s and long Cf ids accepted yet not masked by redactor (read-only finding, unverified) | OPEN | egm/A19/r2-codebase.md B1 | UNCAPPED |
 | BL-core-a19-r2-02 | PR83 fix1 85e0801 | MAJOR | stages.py imports guard.runmap (no longer a leaf); docstring claims a pin that does not exist | OPEN | egm/A19/r2-codebase.md M1 | UNCAPPED |
 | BL-core-a19-r2-03 | PR83 fix1 85e0801 | MAJOR | pure-punctuation ids (---, ___) accepted, may leak on sweep | OPEN | egm/A19/r2-codebase.md M2 | UNCAPPED |
+| BL-core-a24-r3-01 | PR91 db0e0ce | MAJOR | known-binary extension with NUL skips all secret patterns; test pins it | OPEN | egm/A24/r3-design.md M1 | UNCAPPED |
+| BL-core-a24-r3-02 | PR91 db0e0ce | MAJOR | nested pyproject rule bypassable by TOML spelling | OPEN | egm/A24/r3-design.md M2 | UNCAPPED |
+| BL-core-a24-r3-03 | PR91 db0e0ce | MAJOR | guard tests can be disabled via conftest/pytest.ini/pyproject pytest keys, not code-owned or pinned | OPEN | egm/A24/r3-design.md M3 | UNCAPPED |
+| BL-core-a24-r3-04 | PR91 db0e0ce | MAJOR | .gitattributes -diff/binary may blind gitleaks history scan (unprobed) | OPEN | egm/A24/r3-design.md M4 | UNCAPPED |
