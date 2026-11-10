@@ -1,8 +1,11 @@
-"""Harness for the money-meter tests T1 and T2: a fake clock for ``hadavin_sdk.limits.now`` and a Limits built over
-a MemoryStore with a stub registry. No network, no model call, no real time.
+"""Harness for the money-meter tests T1 (the cap) and T2 (the ledger's time rules): a fake clock for
+``hadavin_sdk.limits.now``, a Limits built over any store kind, a money oracle, and a parallel-caller schedule.
+No network, no model call, no real time.
 
-The code under test is the real ``Limits`` (``charge`` = spend after, ``blocked`` = check before) and the real
-``MemoryStore`` spend ledger (``add_spend`` / ``spend_totals``). Nothing here is a second meter.
+The code under test is the real ``Limits`` (``charge`` = spend after, ``blocked`` = check before) and the real spend
+ledger of each store kind (``add_spend`` / ``spend_totals``). Nothing here is a second meter.
+
+Plan: handover/PARALLEL-PLAN-2026-11-10.md, rows A21a (these tests) and A21b (the 50-parallel run on the Meter).
 """
 
 from __future__ import annotations
@@ -10,7 +13,7 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta, timezone, tzinfo
+from datetime import UTC, datetime, timedelta, timezone, tzinfo
 from decimal import Decimal
 from types import SimpleNamespace
 from typing import Self, cast
@@ -20,7 +23,7 @@ import pytest
 from hadavin_sdk.audit.protocol import AuditSink
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import AuditEvent
-from hadavin_sdk.registry import Budget, Registry
+from hadavin_sdk.registry import AgentRecord, Budget, Registry
 from hadavin_sdk.store.memory import MemoryStore
 from hadavin_sdk.store.protocol import Store
 
@@ -30,6 +33,7 @@ W = Decimal("1.00")  # worst-case cost of one call
 START = datetime(2026, 3, 10, 12, 0, tzinfo=UTC)
 HUGE = "100000"  # the monthly budget, out of the way
 WAIT_S = 10.0  # a bound on every wait: a broken schedule fails, it never hangs
+USD = Decimal("0.10")  # a small charge for the time-rule replays
 
 
 class NoAudit:
@@ -54,6 +58,10 @@ class NoAudit:
 
 @dataclass
 class FakeClock:
+    """Stands in for ``hadavin_sdk.limits.now`` and can be set or advanced. The small ``Clock`` classes in
+    tests/test_cuj.py and tests/test_s6_approvals.py only return a fixed time; the meter tests move time, so this
+    one has ``set`` and ``advance`` (a superset)."""
+
     t: datetime
 
     def __call__(self) -> datetime:
@@ -71,10 +79,23 @@ def utc(*args: int) -> datetime:
 
 
 def make_limits(daily: str, monthly: str, store: Store) -> Limits:
-    """The real Limits over ``store`` and a one-agent stub registry (only ``agents[AGENT].budget_usd`` is read)."""
-    agent = SimpleNamespace(budget_usd=Budget(daily=Decimal(daily), monthly=Decimal(monthly)))
+    """The real Limits over ``store``. ``Limits`` reads one thing from the registry, ``agents[AGENT].budget_usd``.
+    A real ``Registry`` is built only by ``registry.load`` from a whole config folder (config file, principals,
+    chains, contracts, prompt files), which has nothing to do with money, so the registry here is a minimal
+    stand-in that holds one real ``AgentRecord``; the ``cast`` says exactly that and nothing else is faked."""
+    agent = AgentRecord(
+        id=AGENT,
+        status="live",
+        data_class="internal",
+        model_route="unused",
+        prompt_file="unused",
+        scope_allowed=[],
+        max_steps=1,
+        budget_usd=Budget(daily=Decimal(daily), monthly=Decimal(monthly)),
+    )
     registry = cast(Registry, SimpleNamespace(agents={AGENT: agent}))
-    return Limits(store, cast(AuditSink, NoAudit()), registry)
+    audit: AuditSink = NoAudit()
+    return Limits(store, audit, registry)
 
 
 def build_limits(
@@ -84,20 +105,35 @@ def build_limits(
     monkeypatch: pytest.MonkeyPatch,
     store: Store | None = None,
 ) -> tuple[Limits, Store, FakeClock]:
-    """``store`` is any Store kind (the contract suite passes each registered one); the default is a MemoryStore."""
+    """``store`` is any Store kind (the contract suite passes each registered one); the default is a MemoryStore.
+    The clock is fake: the Postgres server's own ``NOW()`` is never asked (the store takes the date from the
+    caller), and a test pins that by charging on a date long past."""
     clock = FakeClock(start)
     monkeypatch.setattr("hadavin_sdk.limits.now", clock)
     store = MemoryStore() if store is None else store
     return make_limits(daily, monthly, store), store, clock
 
 
-def admit_check_then_charge(limits: Limits) -> bool:
-    """The way agent_loop uses the meter: ask ``blocked``, make the call, ``charge`` the cost."""
-    return not limits.blocked(AGENT)
+# --- the parallel schedule: a caller is a (reserve, settle) pair ----------------------------------------------------
+
+Reserve = Callable[[], bool]  # before the provider call: may this call go ahead? True = admitted
+Settle = Callable[[], None]  # after the provider answered: book the real cost of an admitted call
+
+
+def check_then_charge(limits: Limits) -> tuple[Reserve, Settle]:
+    """The way agent_loop uses the meter today: reserve = ask ``blocked``; settle = ``charge`` the cost W."""
+
+    def reserve() -> bool:
+        return not limits.blocked(AGENT)
+
+    def settle() -> None:
+        limits.charge(AGENT, W)
+
+    return reserve, settle
 
 
 class Schedule:
-    """Forces the worst interleaving: no caller charges until every caller has been through the check."""
+    """Forces the worst interleaving: no caller settles until every caller has been through ``reserve``."""
 
     def __init__(self, n: int) -> None:
         self.n, self.decided = n, 0
@@ -110,8 +146,10 @@ class Schedule:
             self.cond.wait_for(lambda: self.decided >= self.n, timeout=WAIT_S)
 
 
-def run_parallel(limits: Limits, admit: Callable[[Limits], bool], n: int = CALLERS) -> int:
-    """n threads: admit? -> (decide) -> provider call -> charge W. Returns how many were admitted."""
+def run_parallel(reserve: Reserve, settle: Settle, n: int = CALLERS) -> int:
+    """n threads: reserve? -> (every caller has decided) -> stub provider call -> settle. Returns how many were
+    admitted. ``run_parallel`` itself never charges: a meter that books at reserve time (a choke-point fix) is
+    therefore not charged twice, and a meter that books only at settle time shows its race."""
     sched = Schedule(n)
     start = threading.Barrier(n, timeout=WAIT_S)
     admitted: list[bool] = []
@@ -119,10 +157,10 @@ def run_parallel(limits: Limits, admit: Callable[[Limits], bool], n: int = CALLE
 
     def caller() -> None:
         start.wait()
-        ok = admit(limits)
+        ok = reserve()
         sched.decided_and_wait()  # the stub provider answers only after every check is done
         if ok:
-            limits.charge(AGENT, W)
+            settle()
         with lock:
             admitted.append(ok)
 
@@ -136,7 +174,7 @@ def run_parallel(limits: Limits, admit: Callable[[Limits], bool], n: int = CALLE
     return sum(admitted)
 
 
-# --- the real ``now()`` over a fake machine clock, and scenarios shared by the memory and every-store tests -------------
+# --- the real ``now()`` over a fake machine clock ---------------------------------------------------------------------
 
 IST = timezone(timedelta(hours=5, minutes=30))  # a machine whose local zone is NOT UTC
 
@@ -163,50 +201,56 @@ def set_machine_clock(monkeypatch: pytest.MonkeyPatch, instant: datetime) -> Non
     monkeypatch.setattr("hadavin_sdk.models.datetime", MachineClock)
 
 
-def check_real_now_buckets_by_utc_date_on_a_machine_in_ist(
-    store: Store, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """The real ``now()`` is aware UTC; a charge at 23:00 UTC on 10 March (04:30 on the 11th in IST) is booked on the
-    10th, and the first instant of the 11th UTC (05:30 IST) on the 11th. Expected dates are written out by hand."""
-    from hadavin_sdk.models import now
+# --- the money oracle and the time-rule scenarios (T2) ------------------------------------------------------------------
 
-    limits = make_limits(
-        "1000", "1000", store
-    )  # the real ``hadavin_sdk.limits.now``: nothing patched there
-    unit = Decimal("0.25")
-    set_machine_clock(monkeypatch, datetime(2026, 3, 11, 4, 30, tzinfo=IST))  # = 10 March 23:00 UTC
-    got = now()
-    assert got.tzinfo is not None and got.utcoffset() == timedelta(0), (
-        f"now() is not aware UTC: {got!r}"
-    )
-    assert got == utc(2026, 3, 10, 23, 0), f"now() is the wrong instant: {got!r}"
-    assert limits.charge(AGENT, unit) == (unit, unit)
-    assert store.spend_totals(AGENT, date(2026, 3, 10)) == (unit, unit), (
-        "23:00 UTC is not on the 10th"
-    )
-    assert store.spend_totals(AGENT, date(2026, 3, 11)) == (Decimal(0), unit), (
-        "23:00 UTC landed on the 11th"
-    )
-    set_machine_clock(monkeypatch, datetime(2026, 3, 11, 5, 30, tzinfo=IST))  # = 11 March 00:00 UTC
-    assert limits.charge(AGENT, unit) == (unit, 2 * unit)
-    assert store.spend_totals(AGENT, date(2026, 3, 11)) == (unit, 2 * unit), (
-        "00:00 UTC is not on the 11th"
-    )
+MINUTES6 = timedelta(minutes=6)
+HOURS25 = timedelta(hours=25)
+DAYS31 = timedelta(days=31)
+
+# Start points chosen so each window length is tried inside a bucket, just before a boundary and exactly on one.
+STARTS = [
+    utc(2026, 3, 10, 12, 0),  # mid-day, mid-month
+    utc(2026, 3, 10, 23, 57),  # 6 min window crosses UTC midnight
+    utc(2026, 3, 10, 23, 59, 59),  # last second of the day
+    utc(2026, 3, 10, 0, 0),  # first instant of the day
+    utc(2026, 3, 31, 23, 57),  # crosses a month end
+    utc(2026, 12, 31, 23, 57),  # crosses a year end
+    utc(2026, 2, 28, 23, 30),  # February, 25 h reaches 1 March
+    utc(2024, 2, 28, 23, 30),  # leap year: 29 February exists
+    utc(2026, 1, 1, 0, 0),  # 31 days lands on exactly 1 February 00:00
+    utc(2024, 2, 29, 23, 57),  # the leap day itself: 6 minutes reach 1 March
+    utc(2026, 4, 30, 23, 57),  # a 30-day month end: 6 minutes reach 1 May
+    utc(2026, 1, 31, 23, 57),  # 6 minutes reach 1 February
+    utc(
+        2026, 2, 1, 0, 0
+    ),  # 31 days over a 28-day month lands on 4 March (no 1 March bucket in between)
+    utc(2026, 2, 20, 8, 0),  # 31 days from a short month land on 23 March
+    utc(
+        2026, 3, 10, 23, 59, 59, 999999
+    ),  # one microsecond before midnight: every later event is the 11th
+]
+WINDOWS = [("6min", MINUTES6), ("25h", HOURS25), ("31d", DAYS31)]
 
 
-def check_a_charge_returns_the_total_of_its_own_month_only(
-    store: Store, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Charges on 31 January and 1 February: the one on 1 February returns a month total of that month alone."""
-    t0 = utc(2026, 1, 31, 12, 0)
-    limits, _, clock = build_limits("1000", "1000", t0, monkeypatch, store=store)
-    unit = Decimal("0.10")
-    for k, t in enumerate(
-        [t0, t0 + timedelta(days=1), t0 + timedelta(days=2)]
-    ):  # 31 Jan, 1 Feb, 2 Feb
-        clock.set(t)
-        got = limits.charge(AGENT, unit)
-        want = [(unit, unit), (unit, unit), (unit, 2 * unit)][
-            k
-        ]  # day, month: the month restarts on 1 Feb
-        assert got == want, f"charge {k} at {t.date().isoformat()} returned {got}, not {want}"
+def oracle(events: list[tuple[datetime, Decimal]], now: datetime) -> tuple[Decimal, Decimal]:
+    """(day total, month total) of the events, bucketed by their own UTC date and (year, month). Never the code
+    under test."""
+    here = now.astimezone(UTC)  # an aware time in any zone is bucketed by its UTC calendar date
+    utc_events = [(t.astimezone(UTC), u) for t, u in events]
+    day = sum((u for t, u in utc_events if t.date() == here.date()), Decimal(0))
+    month = sum(
+        (u for t, u in utc_events if (t.year, t.month) == (here.year, here.month)), Decimal(0)
+    )
+    return day, month
+
+
+def event_times(start: datetime, window: timedelta) -> list[datetime]:
+    """Five instants: the start, the window midpoint, and one second before, exactly at and one second after the window end."""
+    tick = timedelta(seconds=1)
+    return [
+        start,
+        start + window / 2,
+        start + window - tick,
+        start + window,
+        start + window + tick,
+    ]

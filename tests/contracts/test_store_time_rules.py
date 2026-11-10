@@ -1,29 +1,44 @@
 """T2 on every store kind: the spend ledger's time rules by replay with a fake clock (no sleeping, no real time).
 
-``tests/test_t2_ledger_replay.py`` proves the rules on the memory store. The production ledger is the postgres store,
-which keeps its day and month totals a different way (two upsert counters, not a sum over days), so the same replay
-runs here against every registered store kind (postgres is skipped without HADAVIN_TEST_PG_DSN, like the rest of the
-store contract). Expected totals come from the oracle in the T2 file (each event bucketed by its own UTC date), never
-from the code under test.
+What the ledger is (read, not assumed): UTC calendar buckets, one per (agent, day) and per (agent, month), keyed by
+``now().date()`` at charge time. It is NOT a rolling window: a charge 6 minutes after another lands in the same
+bucket only if no UTC midnight lies between them. The memory store sums over days; the production ledger, the
+postgres store, keeps two upsert counters (day and month) instead, so every scenario runs against every registered
+store kind (postgres is skipped without HADAVIN_TEST_PG_DSN; in CI a missing DSN is a failure, see
+``tests/contracts/kinds/store_postgres.py``).
+
+Expected totals come from ``oracle`` in ``tests/meter_support.py``, which buckets each (time, usd) event by its own
+UTC date and (year, month), never by the code under test. "No double count" means: each charge appears once in its
+day total and once in its month total, and reading (``blocked``, ``spend_totals``) never changes a total.
+
+Each scenario is written once, here. The memory-store mutants (``tests/meter_mutants.py``) reach these tests through
+``tests/meter_memory_killers.py``; the postgres mutants run them through ``tests/postgres_mutants.py``.
 """
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 import pytest
 
+from hadavin_sdk.models import now
 from tests.meter_support import (
     AGENT,
+    DAYS31,
+    HOURS25,
+    IST,
+    START,
+    STARTS,
+    USD,
+    WINDOWS,
     build_limits,
-    check_a_charge_returns_the_total_of_its_own_month_only,
-    check_real_now_buckets_by_utc_date_on_a_machine_in_ist,
+    event_times,
+    make_limits,
+    oracle,
+    set_machine_clock,
     utc,
 )
-from tests.test_t2_ledger_replay import DAYS31, HOURS25, STARTS, WINDOWS, event_times, oracle
-
-USD = Decimal("0.10")
 
 
 @pytest.mark.parametrize("start", STARTS, ids=lambda s: s.isoformat())
@@ -43,6 +58,131 @@ def test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle(
         assert store.spend_totals(AGENT, t.date()) == oracle(events, t), (
             f"{name}: second read at {t}"
         )
+
+
+@pytest.mark.parametrize("start", STARTS, ids=lambda s: s.isoformat())
+def test_reads_never_change_a_total(start, store, monkeypatch):
+    events = [(t, USD) for t in event_times(start, DAYS31)]
+    limits, _, clock = build_limits("1000", "1000", events[0][0], monkeypatch, store=store)
+    for t, usd in events:
+        clock.set(t)
+        limits.charge(AGENT, usd)
+    before = {t.date(): store.spend_totals(AGENT, t.date()) for t, _ in events}
+    for t, _ in events:
+        clock.set(t)
+        for _ in range(3):
+            limits.blocked(AGENT)
+            store.spend_totals(AGENT, t.date())
+    after = {t.date(): store.spend_totals(AGENT, t.date()) for t, _ in events}
+    assert after == before, "reads changed a total"
+
+
+def test_two_charges_on_one_day_add_up(store, monkeypatch):
+    limits, _, clock = build_limits("1000", "1000", START, monkeypatch, store=store)
+    first = limits.charge(AGENT, Decimal("0.30"))
+    assert first == (Decimal("0.30"), Decimal("0.30")), (
+        f"the first charge of a day was not booked once: {first}"
+    )
+    clock.advance(timedelta(minutes=6))
+    day, month = limits.charge(AGENT, Decimal("0.70"))
+    assert day == Decimal("1.00"), f"the day total of two charges on one day did not add up: {day}"
+    assert month == Decimal("1.00"), f"the month total of two charges did not add up: {month}"
+    assert store.spend_totals(AGENT, START.date()) == (Decimal("1.00"), Decimal("1.00")), (
+        "the stored totals are not the sum of both charges"
+    )
+
+
+def test_a_charge_at_23_30_utc_is_booked_on_its_own_day(store, monkeypatch):
+    t = utc(2026, 3, 10, 23, 30)
+    limits, _, _ = build_limits("1000", "1000", t, monkeypatch, store=store)
+    limits.charge(AGENT, USD)
+    assert store.spend_totals(AGENT, date(2026, 3, 10)) == (USD, USD), (
+        "a charge at 23:30 UTC is not on its own UTC day"
+    )
+    assert store.spend_totals(AGENT, date(2026, 3, 11)) == (Decimal(0), USD), (
+        "a charge at 23:30 UTC leaked into the next day"
+    )
+
+
+def test_a_day_total_is_the_sum_of_its_own_charges_only_across_25_hours(store, monkeypatch):
+    t0 = utc(2026, 3, 10, 0, 30)
+    limits, _, clock = build_limits("1000", "1000", t0, monkeypatch, store=store)
+    limits.charge(AGENT, Decimal("0.30"))
+    clock.set(t0 + HOURS25)  # 11 March 01:30
+    limits.charge(AGENT, Decimal("0.70"))
+    assert store.spend_totals(AGENT, t0.date()) == (Decimal("0.30"), Decimal("1.00"))
+    assert store.spend_totals(AGENT, (t0 + HOURS25).date()) == (Decimal("0.70"), Decimal("1.00"))
+
+
+def test_a_month_total_does_not_carry_over_31_days(store, monkeypatch):
+    t0 = utc(2026, 1, 1, 0, 0)
+    limits, _, clock = build_limits("1000", "1000", t0, monkeypatch, store=store)
+    limits.charge(AGENT, Decimal("0.40"))
+    clock.set(t0 + DAYS31)  # 1 February 00:00
+    limits.charge(AGENT, Decimal("0.60"))
+    assert (t0 + DAYS31).date().isoformat() == "2026-02-01"
+    assert store.spend_totals(AGENT, t0.date()) == (Decimal("0.40"), Decimal("0.40")), (
+        "January's month total changed"
+    )
+    assert store.spend_totals(AGENT, (t0 + DAYS31).date()) == (Decimal("0.60"), Decimal("0.60")), (
+        "January's spend carried into February's month total"
+    )
+
+
+def test_31_days_from_the_start_of_a_31_day_month_is_the_next_month_but_30_days_is_not(
+    store, monkeypatch
+):
+    # 1 March + 30 d = 31 March (same month); + 31 d = 1 April (new month).
+    t0 = utc(2026, 3, 1, 0, 0)
+    limits, _, clock = build_limits("1000", "1000", t0, monkeypatch, store=store)
+    for t in (t0, t0 + timedelta(days=30), t0 + DAYS31):
+        clock.set(t)
+        limits.charge(AGENT, USD)
+    assert store.spend_totals(AGENT, t0.date()) == (USD, 2 * USD)
+    assert store.spend_totals(AGENT, (t0 + DAYS31).date()) == (USD, USD)
+
+
+def test_the_same_month_of_another_year_is_a_different_month(store, monkeypatch):
+    """One year plus one minute, and 24 months, after the first charge: March 2025, March 2026, March 2027. A month
+    key without the year would add all three March totals together."""
+    t0 = utc(2025, 3, 10, 12, 0)
+    later = [utc(2026, 3, 10, 12, 1), utc(2027, 3, 10, 12, 0)]
+    limits, _, clock = build_limits("1000", "1000", t0, monkeypatch, store=store)
+    assert limits.charge(AGENT, USD) == (USD, USD)
+    for t in later:
+        clock.set(t)
+        got = limits.charge(AGENT, USD)
+        assert got == (USD, USD), (
+            f"a March of another year was added to the March of {t.year}: {got}"
+        )
+    for t in (t0, *later):
+        assert store.spend_totals(AGENT, t.date()) == (USD, USD), (
+            f"the March totals of other years leaked into {t.year}"
+        )
+
+
+def test_a_charge_on_a_past_date_is_booked_on_that_date(store, monkeypatch):
+    """The store takes the date from the caller: nothing is read from the database server's own clock
+    (``CURRENT_DATE``, ``NOW()``), which the fake clock cannot move. A date long past proves it."""
+    t = utc(2001, 9, 9, 1, 46, 40)
+    limits, _, _ = build_limits("1000", "1000", t, monkeypatch, store=store)
+    assert limits.charge(AGENT, USD) == (USD, USD)
+    assert store.spend_totals(AGENT, date(2001, 9, 9)) == (USD, USD), (
+        "a charge on a past date is not on that date"
+    )
+    assert store.spend_totals(AGENT, date(2001, 9, 10)) == (Decimal(0), USD)
+
+
+def test_a_charge_smaller_than_a_cent_is_neither_rounded_nor_lost(store, monkeypatch):
+    """The ledger keeps exact decimals (numeric, no fixed scale): 0.0000001 is held as 0.0000001, not 0.00."""
+    tiny = Decimal("0.0000001")
+    limits, _, _ = build_limits("1000", "1000", START, monkeypatch, store=store)
+    assert limits.charge(AGENT, tiny) == (tiny, tiny), "the first tiny charge was rounded"
+    got = limits.charge(AGENT, tiny)
+    assert got == (2 * tiny, 2 * tiny), f"tiny charges were rounded when added: {got}"
+    assert store.spend_totals(AGENT, START.date()) == (2 * tiny, 2 * tiny), (
+        "the stored total of tiny charges was rounded"
+    )
 
 
 def test_the_order_the_events_arrive_in_does_not_change_the_totals(store, monkeypatch):
@@ -97,6 +237,9 @@ def test_31_days_of_daily_charges_never_leak_across_the_month_boundary(store, mo
     assert store.spend_totals(AGENT, utc(2026, 5, 1).date()) == (Decimal(0), Decimal(0))
 
 
+# --- the budgets follow the buckets: rollover at the boundary --------------------------------------------------------
+
+
 def test_the_daily_budget_frees_at_utc_midnight_and_is_not_a_rolling_25_hour_window(
     store, monkeypatch
 ):
@@ -138,6 +281,28 @@ def test_the_monthly_budget_frees_on_1_march_after_a_28_day_february(store, monk
         assert limits.blocked(AGENT) == blocked, f"at {t}"
 
 
+def test_a_charge_at_exactly_the_cap_blocks_the_next_call_and_one_cent_under_does_not(
+    store, monkeypatch
+):
+    limits, _, _ = build_limits("1.00", "100", START, monkeypatch, store=store)
+    limits.charge(AGENT, Decimal("0.99"))
+    assert limits.blocked(AGENT) == []
+    limits.charge(AGENT, Decimal("0.01"))
+    assert limits.blocked(AGENT) == ["daily_budget"]
+
+
+def test_the_daily_budget_is_read_for_today_not_yesterday(store, monkeypatch):
+    t = utc(2026, 3, 10, 23, 54)
+    limits, _, clock = build_limits("1.00", "100", t, monkeypatch, store=store)
+    limits.charge(AGENT, Decimal("1.00"))
+    assert limits.blocked(AGENT) == ["daily_budget"], "today's full budget was not read"
+    clock.set(utc(2026, 3, 11, 0, 0, 0))
+    assert limits.blocked(AGENT) == [], "yesterday's full budget was read as today's"
+
+
+# --- agents are separate ledgers -----------------------------------------------------------------------------------
+
+
 def test_one_agent_never_sees_another_agents_spend(store, monkeypatch):
     t = utc(2026, 3, 10, 12, 0)
     limits, _, _ = build_limits("1000", "1000", t, monkeypatch, store=store)
@@ -162,13 +327,47 @@ def test_a_charge_returns_only_its_own_agents_month_total(store, monkeypatch):
 
 
 def test_a_charge_returns_the_total_of_its_own_month_only(store, monkeypatch):
-    check_a_charge_returns_the_total_of_its_own_month_only(store, monkeypatch)
+    """Charges on 31 January, 1 February and 2 February: the ones in February return a month total of February alone."""
+    t0 = utc(2026, 1, 31, 12, 0)
+    limits, _, clock = build_limits("1000", "1000", t0, monkeypatch, store=store)
+    unit = Decimal("0.10")
+    want = [(unit, unit), (unit, unit), (unit, 2 * unit)]  # day, month: the month restarts on 1 Feb
+    for k, t in enumerate([t0, t0 + timedelta(days=1), t0 + timedelta(days=2)]):
+        clock.set(t)
+        got = limits.charge(AGENT, unit)
+        assert got == want[k], f"charge {k} at {t.date().isoformat()} returned {got}, not {want[k]}"
+
+
+# --- the real now() and the instants on either side of midnight ---------------------------------------------------------
 
 
 def test_the_real_now_is_aware_utc_and_books_23_00_utc_on_the_10th_on_a_machine_in_ist(
     store, monkeypatch
 ):
-    check_real_now_buckets_by_utc_date_on_a_machine_in_ist(store, monkeypatch)
+    """The real ``now()`` is aware UTC; a charge at 23:00 UTC on 10 March (04:30 on the 11th in IST) is booked on the
+    10th, and the first instant of the 11th UTC (05:30 IST) on the 11th. Expected dates are written out by hand."""
+    limits = make_limits(
+        "1000", "1000", store
+    )  # the real ``hadavin_sdk.limits.now``: nothing patched there
+    unit = Decimal("0.25")
+    set_machine_clock(monkeypatch, datetime(2026, 3, 11, 4, 30, tzinfo=IST))  # = 10 March 23:00 UTC
+    got = now()
+    assert got.tzinfo is not None and got.utcoffset() == timedelta(0), (
+        f"now() is not aware UTC: {got!r}"
+    )
+    assert got == utc(2026, 3, 10, 23, 0), f"now() is the wrong instant: {got!r}"
+    assert limits.charge(AGENT, unit) == (unit, unit)
+    assert store.spend_totals(AGENT, date(2026, 3, 10)) == (unit, unit), (
+        "23:00 UTC is not on the 10th"
+    )
+    assert store.spend_totals(AGENT, date(2026, 3, 11)) == (Decimal(0), unit), (
+        "23:00 UTC landed on the 11th"
+    )
+    set_machine_clock(monkeypatch, datetime(2026, 3, 11, 5, 30, tzinfo=IST))  # = 11 March 00:00 UTC
+    assert limits.charge(AGENT, unit) == (unit, 2 * unit)
+    assert store.spend_totals(AGENT, date(2026, 3, 11)) == (unit, 2 * unit), (
+        "00:00 UTC is not on the 11th"
+    )
 
 
 def test_one_microsecond_decides_the_day_and_a_leap_february_has_a_29th(store, monkeypatch):

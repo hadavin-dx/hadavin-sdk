@@ -1,13 +1,14 @@
-"""Mutants of the money meter and its spend ledger, for tests T1 (``tests/test_t1_meter_cap.py``) and T2
-(``tests/test_t2_ledger_replay.py``). Same runner and judge as ``tests/stage_mutants.py`` (``tools/mutation_runner.py``);
-each mutant changes ONE thing in a temp copy of the package and a named test must fail with a message holding ``expect``.
-Not collected by pytest. Run from the repo root:
+"""Mutants of the money meter and its memory spend ledger, for the contract tests T1 (``tests/contracts/test_t1_meter_cap.py``)
+and T2 (``tests/contracts/test_store_time_rules.py``). Same runner and judge as ``tests/stage_mutants.py``
+(``tools/mutation_runner.py``): each mutant changes ONE thing in a temp copy of the package and a named test must fail
+with an assertion message holding ``expect``. The tests run through ``tests/meter_memory_killers.py`` (the runner has no
+conftest, so that file supplies the memory ``store`` fixture). Not collected by pytest. Run from the repo root:
 
     python tests/meter_mutants.py             # all mutants; exit 1 if any is not good
     python tests/meter_mutants.py L3          # only mutants whose name contains the text
 
-The 50-parallel tests (``tests/test_t1_meter_parallel.py``) are NOT in this run: they fail on the unmutated code (a
-real finding, see the T1 docstring), and the runner refuses a baseline that fails.
+The same tests run against the postgres store in ``tests/postgres_mutants.py`` (needs HADAVIN_TEST_PG_DSN).
+The 50-parallel tests are not here: they are plan row A21b in handover/PARALLEL-PLAN-2026-11-10.md.
 """
 
 import sys
@@ -20,17 +21,18 @@ sys.path.insert(
 from tools.mutation_runner import Mutant, run_mutants
 
 ROOT = Path(__file__).resolve().parents[1]
-CAP = "tests/test_t1_meter_cap.py"
-LED = "tests/test_t2_ledger_replay.py"
+KILLERS = "tests/meter_memory_killers.py"
 LIM = "src/hadavin_sdk/limits.py"
 MEM = "src/hadavin_sdk/store/memory.py"
 MOD = "src/hadavin_sdk/models.py"
 ADD_SPEND_FILTER = "for (a, d), v in self._spend.items()\n                if a == agent_id and (d.year, d.month) == (day.year, day.month)"  # only add_spend
 SPEND_TOTALS_FILTER = "                    if a == agent_id and (d.year, d.month) == (day.year, day.month)"  # 20 spaces: only spend_totals
+BLOCKED_READ = "day, month = self.store.spend_totals(agent_id, now().date())  # a read, no write"
+CHARGE = "return self.store.add_spend(agent_id, now().date(), usd)"
 
 
-def m(name, file, old, new, test_file, killer, expect):
-    return Mutant(name, file, old, new, expect, test_file=test_file, only_test=killer)
+def m(name, file, old, new, killer, expect):
+    return Mutant(name, file, old, new, expect, test_file=KILLERS, only_test=killer)
 
 
 M = [
@@ -39,89 +41,95 @@ M = [
         LIM,
         "if day >= budget.daily:",
         "if day > budget.daily:",
-        CAP,
         "test_a_cap_that_is_a_multiple_of_the_cost_is_never_overshot_when_one_at_a_time",
-        "assert 4 == 3",
+        "the call at the exact cap was let through",
     ),
     m(
         "L2 the daily check is gone",
         LIM,
         "if day >= budget.daily:",
         "if False:",
-        CAP,
         "test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call",
-        "admitted 50",
+        "admitted 50 calls for cap",
     ),
     m(
         "L3 monthly check is > instead of >= (one extra call at the exact cap)",
         LIM,
         "if month >= budget.monthly:",
         "if month > budget.monthly:",
-        CAP,
         "test_the_monthly_cap_binds_when_it_is_lower_than_the_daily_cap",
-        "assert 3 == 2",
+        "monthly cap 2.00: admitted 3",
     ),
     m(
         "L4 charge returns totals but records nothing",
         LIM,
-        "return self.store.add_spend(agent_id, now().date(), usd)",
+        CHARGE,
         "return (usd, usd)",
-        CAP,
-        "test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call",
-        "admitted 50",
+        "test_a_charge_is_recorded_in_the_ledger",
+        "charge returned totals but the ledger holds nothing",
     ),
     m(
         "L5 blocked also writes (a read adds spend)",
         LIM,
-        "day, month = self.store.spend_totals(agent_id, now().date())  # a read, no write",
+        BLOCKED_READ,
         "day, month = self.store.spend_totals(agent_id, now().date())\n"
         "        self.store.add_spend(agent_id, now().date(), Decimal('0.01'))",
-        LED,
-        "test_reads_never_change_a_total_and_a_replay_gives_the_same_totals",
-        "assert {",
+        "test_reads_never_change_a_total",
+        "reads changed a total",
     ),
     m(
         "L6 charge books the day one hour late",
         LIM,
-        "return self.store.add_spend(agent_id, now().date(), usd)",
+        CHARGE,
         "return self.store.add_spend(agent_id, (now() + __import__('datetime').timedelta(hours=1)).date(), usd)",
-        LED,
-        "test_every_charge_lands_in_its_own_day_and_month_exactly_once",
-        "read at",
+        "test_a_charge_at_23_30_utc_is_booked_on_its_own_day",
+        "a charge at 23:30 UTC is not on its own UTC day",
     ),
     m(
         "L7 blocked reads yesterday's bucket",
         LIM,
-        "day, month = self.store.spend_totals(agent_id, now().date())  # a read, no write",
+        BLOCKED_READ,
         "day, month = self.store.spend_totals(agent_id, (now() - __import__('datetime').timedelta(days=1)).date())",
-        LED,
-        "test_the_daily_budget_stops_at_the_cap_and_frees_at_utc_midnight",
-        "assert [] == ['daily_budget']",
+        "test_the_daily_budget_is_read_for_today_not_yesterday",
+        "today's full budget was not read",
     ),
     m(
         "L8 now() reads the machine's local wall clock, not UTC",
         MOD,
         "return datetime.now(UTC)",
         "return datetime.now()",
-        LED,
         "test_the_real_now_is_aware_utc_and_books_23_00_utc_on_the_10th_on_a_machine_in_ist",
         "now() is not aware UTC",
+    ),
+    m(
+        "L10 the daily check fires half a dollar early (a cost that is not W is cut short)",
+        LIM,
+        "if day >= budget.daily:",
+        "if day + __import__('decimal').Decimal('0.50') >= budget.daily:",
+        "test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call",
+        "calls for cap",
+    ),
+    m(
+        "L9 a caller over both caps is told about the daily one only",
+        LIM,
+        "        if month >= budget.monthly:",
+        "        elif month >= budget.monthly:",
+        "test_both_budgets_over_their_caps_are_both_named",
+        "a caller over both caps must see both reasons",
     ),
     m(
         "S1 the ledger double counts a day",
         MEM,
         "self._spend[(agent_id, day)] += usd",
         "self._spend[(agent_id, day)] += usd + usd",
-        LED,
-        "test_every_charge_lands_in_its_own_day_and_month_exactly_once",
-        "charge 0",
+        "test_two_charges_on_one_day_add_up",
+        "the first charge of a day was not booked once",
     ),
     m(
         "S2 the month total sums every month (spend_totals)",
         MEM,
         SPEND_TOTALS_FILTER,
         "                    if a == agent_id",
-        LED,
         "test_a_month_total_does_not_carry_over_31_days",
         "January's month total changed",
     ),
@@ -130,25 +138,22 @@ M = [
         MEM,
         SPEND_TOTALS_FILTER,
         "                    if (d.year, d.month) == (day.year, day.month)",
-        LED,
         "test_one_agent_never_sees_another_agents_spend",
-        "showed this agent's spend to another agent",
+        "spend_totals showed this agent's spend to another agent",
     ),
     m(
         "S4 the month total a charge returns sums every month (add_spend)",
         MEM,
         ADD_SPEND_FILTER,
         "for (a, d), v in self._spend.items()\n                if a == agent_id",
-        LED,
         "test_a_charge_returns_the_total_of_its_own_month_only",
-        "charge 1 at 2026-02-01",
+        "charge 1 at 2026-02-01 returned",
     ),
     m(
         "S5 the month total a charge returns sums every agent (add_spend)",
         MEM,
         ADD_SPEND_FILTER,
         "for (a, d), v in self._spend.items()\n                if (d.year, d.month) == (day.year, day.month)",
-        LED,
         "test_a_charge_returns_only_its_own_agents_month_total",
         "add_spend returned another agent's spend",
     ),
@@ -157,9 +162,24 @@ M = [
         MEM,
         "self._spend[(agent_id, day)] += usd",
         "self._spend[(agent_id, day)] = usd",
-        LED,
-        "test_every_charge_lands_in_its_own_day_and_month_exactly_once",
-        "read at",
+        "test_two_charges_on_one_day_add_up",
+        "the day total of two charges on one day did not add up",
+    ),
+    m(
+        "S7 the year is dropped from the month a charge returns (add_spend)",
+        MEM,
+        ADD_SPEND_FILTER,
+        "for (a, d), v in self._spend.items()\n                if a == agent_id and d.month == day.month",
+        "test_the_same_month_of_another_year_is_a_different_month",
+        "a March of another year was added to the March of 2026",
+    ),
+    m(
+        "S8 the year is dropped from the month a read returns (spend_totals)",
+        MEM,
+        SPEND_TOTALS_FILTER,
+        "                    if a == agent_id and d.month == day.month",
+        "test_the_same_month_of_another_year_is_a_different_month",
+        "the March totals of other years leaked into",
     ),
 ]
 
@@ -182,7 +202,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [CAP, LED],
+        [KILLERS],
         extra_dirs=("tests", "tools", "demos", "docs"),
         only=only,
         on_result=show,

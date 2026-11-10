@@ -21,7 +21,10 @@ def pg_schema(migrated=True, runtime=False):
     suite must pass with only those rights); the role is dropped afterwards."""
     dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
     if not dsn:
-        pytest.skip("HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)")
+        reason = "HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)"
+        if os.environ.get("CI") == "true":  # the same test as tests/demo_askdata/conftest.py
+            pytest.fail(reason, pytrace=False)  # a silent skip in CI would hide every database test
+        pytest.skip(reason)
     psycopg = pytest.importorskip("psycopg")
     from psycopg import sql
     from psycopg.conninfo import make_conninfo
