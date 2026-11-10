@@ -152,7 +152,7 @@ M = [
     PgMutant(
         "P12 the month counter is never written (every charge adds 0 to it)",
         (("(agent_id, month, usd),", "(agent_id, month, 0),"),),
-        "the month total of two charges did not add up",
+        "6min: charge 0 at 2026-03-10",
     ),
 ]
 
