@@ -1021,3 +1021,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | PR72 evidence runner a7babeb373 (c325db8) | started 22:01 UTC, expected end ~23:30 UTC | running |
 | PR72 reviewer af18b5e778 (codebase, round 3) | started 22:01 UTC, expected ~22:20 UTC | running |
 | PR73 reviewers a133672f7e and aa5d50b676 | done 22:08 UTC: 0 Blocker, 4 Major total (design M1 ownership scope, M2 server-wide diff, M3 evidence; codebase M1 private ids), minors listed; reports in handover/reviews/P3a-2-round3/ | closed |
+| PR73 evidence runner aade658247 | stopped 22:10 UTC: head ffe896e superseded by round-4 fix; no leftover process (cluster p73r2 on port 56073 belongs to the builder) | closed |
+| PR73 builder aea5c3b208 | resumed 22:10 UTC for round-4 batch (4 Majors + minors), no full suites; then runner on final head | running |
