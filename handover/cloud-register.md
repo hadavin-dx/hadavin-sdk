@@ -1031,3 +1031,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | PR89 reviewer aba78fad35 (round 4, redaction path) | started 22:21 UTC, expected ~22:40 UTC | running |
 | PR89 evidence runner ab0f55975a | stopped 22:12 UTC: CI security failure forces a new head; leftover processes killed | closed |
 | PR89 builder a290aa955c | resumed 22:12 UTC to fix the gitleaks finding (test literal), push new head; reviewer aba78fad35 continues on 386875c (src unchanged by the fix) | running |
+| ad8b6e47785ac162a | PR72 evidence runner at a3d7eb0 (EVIDENCE RUNNER) | 2026-11-10 | ~2h | started | running | collect TABLE.md in evidence/P6a/a3d7eb0-cloud |
+| a4a4bff5622077662 | PR72 round-4 egm-codebase-details review at a3d7eb0 | 2026-11-10 | ~30m | started | running | save report to reviews/P6a/round-w2-r4-codebase.md, ledger rows |
+| ace5bb6bb78f23f55 | PR72 builder round 4 | | | closed | reported head a3d7eb0 | evidence and review running |
+| aba78fad35d597d3c | PR89 round-5 reviewer | | | closed | report saved | follow-up batch sent to builder a290aa955c |

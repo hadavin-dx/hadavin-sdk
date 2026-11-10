@@ -4,3 +4,4 @@ r3 checkpoint 21:08 UTC: head f046286 local; ruff/format/bandit/scan green, muta
 r3 checkpoint 21:26 UTC: found+fixed pyc staleness in mutant runner; new head 0c01b4f (pushed f046286 earlier, now re-running all gates before the push)
 r3 checkpoint 21:41 UTC: head c325db8 final candidate; ruff/format/bandit/scan green; waiting for slots for mutants, stage mutants, full 3.12/3.13, seed
 21:59Z final: c325db8 pushed, TABLE.md written, all gates green
+22:11Z r4 final a3d7eb0 pushed
