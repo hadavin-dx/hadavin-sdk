@@ -1,0 +1,4 @@
+6706e6728483b67e549101b1680111a4c2b89471
+$ /home/user/build/venv-p89-6706e67-313/bin/ruff check src tests demos tools
+All checks passed!
+exit=0

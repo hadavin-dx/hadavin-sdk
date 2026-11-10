@@ -1,0 +1,10 @@
+6706e6728483b67e549101b1680111a4c2b89471
+$ pytest -q -rs tests/test_mutation_runner_keywords.py::test_masked_replaces_the_value_and_the_url_password tests/test_p7_store.py
+..................ssss                                                   [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_p7_store.py:136: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p7_store.py:161: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p7_store.py:166: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p7_store.py:174: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+18 passed, 4 skipped in 0.83s
+exit=0

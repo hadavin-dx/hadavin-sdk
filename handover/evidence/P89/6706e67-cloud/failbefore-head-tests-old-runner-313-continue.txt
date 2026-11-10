@@ -1,0 +1,167 @@
+6706e6728483b67e549101b1680111a4c2b89471 /home/user/build/EV-P89-6706e67/fb
+$ /home/user/build/venv-p89-6706e67-313/bin/python -m pytest -q -rA --tb=line -p no:cacheprovider --continue-on-collection-errors tests/test_mutation_runner.py tests/test_mutation_runner_meta.py tests/test_mutation_runner_helpers.py tests/test_mutation_runner_keywords.py
+..........................................................F............. [ 94%]
+....                                                                     [100%]
+==================================== ERRORS ====================================
+___________ ERROR collecting tests/test_mutation_runner_keywords.py ____________
+ImportError while importing test module '/home/user/build/EV-P89-6706e67/fb/tests/test_mutation_runner_keywords.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_mutation_runner_keywords.py:13: in <module>
+    from tools.mutation_runner import PASS_ENV_ALLOWED, Mutant, run_mutants
+E   ImportError: cannot import name 'PASS_ENV_ALLOWED' from 'tools.mutation_runner' (/home/user/build/EV-P89-6706e67/fb/tools/mutation_runner.py)
+=================================== FAILURES ===================================
+E   AssertionError: ('src/hadavin_sdk/testing/mutation.py', 'changed: re-sync the demos and update the manifest and the CHANGELOG')
+    assert '75c32a4e501f...ce0761eaee03e' == 'c29245e203fa...49fef3fac8aa5'
+      
+      - c29245e203faf78366869bdbfd9ed6ea5c1008834ccd6af450549fef3fac8aa5
+      + 75c32a4e501f5c3a4edcd6f1fd8a58603ebb2ef6fd43842e558ce0761eaee03e
+/home/user/build/EV-P89-6706e67/fb/tests/test_mutation_runner.py:1539: AssertionError: ('src/hadavin_sdk/testing/mutation.py', 'changed: re-sync the demos and update the manifest and the CHANGELOG')
+==================================== PASSES ====================================
+____ test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets _____
+----------------------------- Captured stdout call -----------------------------
+judge: an exception line counts as a kill: occurs once in src/hadavin_sdk/testing/mutation.py
+judge: crash markers ignored: occurs once in src/hadavin_sdk/testing/mutation.py
+judge: short expect accepted: occurs once in src/hadavin_sdk/testing/mutation.py
+runner: crash counts as good: occurs once in tools/mutation_runner.py
+runner: an absolute path is accepted: occurs once in tools/mutation_runner.py
+runner: a dotdot part is accepted: occurs once in tools/mutation_runner.py
+runner: a link out of the tree is accepted: occurs once in tools/mutation_runner.py
+runner: the mutant file is not checked again: occurs once in tools/mutation_runner.py
+runner: the tree itself is accepted as a file: occurs once in tools/mutation_runner.py
+runner: a short expect is accepted: occurs once in tools/mutation_runner.py
+runner: a timeout is reported as an exit code: occurs once in tools/mutation_runner.py
+runner: a dash path reaches the pytest argv: occurs once in tools/mutation_runner.py
+runner: a dash path is accepted as a relative path: occurs once in tools/mutation_runner.py
+runner: an at-sign path is accepted: occurs once in tools/mutation_runner.py
+runner: a leader reaped by someone else stays unknown: occurs once in tools/mutation_runner.py
+runner: a child reaped by someone else is read as exit code 0: occurs once in tools/mutation_runner.py
+runner: a reaped mutant run is not an error row: occurs once in tools/mutation_runner.py
+runner: a junction under src is copied: occurs once in tools/mutation_runner.py
+runner: the folder itself is not asked about junctions: occurs once in tools/mutation_runner.py
+runner: only the last part of a path is asked about junctions: occurs once in tools/mutation_runner.py
+runner: a reaped baseline is reported as a failing baseline: occurs once in tools/mutation_runner.py
+runner: a junction in a fixture folder is copied: occurs once in tools/mutation_runner.py
+runner: the colon refusal gives the old message: occurs once in tools/mutation_runner.py
+runner: a nested run_mutants call is accepted: occurs once in tools/mutation_runner.py
+runner: a relative link out of the tree is copied: occurs once in tools/mutation_runner.py
+runner: a link out of the tree is listed: occurs once in tools/mutation_runner.py
+runner: a timeout leaves the grandchildren running: occurs once in tools/mutation_runner.py
+runner: a failing tree kill is not caught: occurs once in tools/mutation_runner.py
+runner: the baseline timeout is ignored: occurs once in tools/mutation_runner.py
+judge: an expect found in the test id is accepted: occurs once in src/hadavin_sdk/testing/mutation.py
+fix: junit with a DOCTYPE is parsed: occurs once in src/hadavin_sdk/testing/mutation.py
+fix: the runner drops pinned: occurs once in tools/mutation_runner.py
+b2: a refused junit stops the run: occurs once in tools/mutation_runner.py
+b2: the junit has no size ceiling: occurs once in src/hadavin_sdk/testing/mutation.py
+b3: a crash row is good whatever the exception: occurs once in tools/mutation_runner.py
+runner: the child inherits the whole environment: occurs once in tools/mutation_runner.py
+runner: a later mutant is built from the live tree: occurs once in tools/mutation_runner.py
+runner: the mutation is not applied: occurs once in tools/mutation_runner.py
+runner: a timeout code equals SIGKILL: occurs once in tools/mutation_runner.py
+runner: a setup failure is not retried: occurs once in tools/mutation_runner.py
+runner: a symlink is copied as a file: occurs once in tools/mutation_runner.py
+runner: a test_file outside the copied tests is accepted: occurs once in tools/mutation_runner.py
+runner: allow_crash without a crash_type is accepted: occurs once in tools/mutation_runner.py
+runner: a truncated junit stops the run: occurs once in tools/mutation_runner.py
+runner: taskkill is not taken from System32: occurs once in tools/mutation_runner.py
+runner: an interrupt leaves the run going: occurs once in tools/mutation_runner.py
+runner: a finished run's background process lives on: occurs once in tools/mutation_runner.py
+runner: a finished run's tree is killed on Windows too: occurs once in tools/mutation_runner.py
+runner: a termination signal does not clean up: occurs once in tools/mutation_runner.py
+runner: the first lines of an earlier run are kept: occurs once in tools/mutation_runner.py
+runner: the E marker is cut as a letter: occurs once in tools/mutation_runner.py
+runner: a planted pytest.ini is picked up: occurs once in tools/mutation_runner.py
+runner: a baseline timeout of 0 is unset: occurs once in tools/mutation_runner.py
+runner: a crash class is matched as a substring: occurs once in tools/mutation_runner.py
+runner: a stream name is accepted: occurs once in tools/mutation_runner.py
+runner: the group is killed after its leader was reaped: occurs once in tools/mutation_runner.py
+runner: a signal during the cleanup cuts it short: occurs once in tools/mutation_runner.py
+runner: a second signal cuts the cleanup of the first short: occurs once in tools/mutation_runner.py
+runner: a signal while the child starts orphans it: occurs once in tools/mutation_runner.py
+runner: a signal while the temp folders go leaves one: occurs once in tools/mutation_runner.py
+runner: the ini file is written into the working folder: occurs once in tools/mutation_runner.py
+runner: the folder of the ini file is left behind: occurs once in tools/mutation_runner.py
+=========================== short test summary info ============================
+PASSED tests/test_mutation_runner.py::test_mutation_judge_verdicts
+PASSED tests/test_mutation_runner.py::test_the_runner_kills_a_mutant_of_a_tiny_package
+PASSED tests/test_mutation_runner.py::test_a_mutant_path_that_is_absolute_or_names_a_drive_is_refused
+PASSED tests/test_mutation_runner.py::test_a_mutant_path_with_a_dotdot_part_is_refused
+PASSED tests/test_mutation_runner.py::test_a_mutant_path_with_a_stream_name_is_refused
+PASSED tests/test_mutation_runner.py::test_a_mutant_with_a_short_expect_is_refused
+PASSED tests/test_mutation_runner.py::test_inside_refuses_a_path_through_a_link_out_of_the_tree
+PASSED tests/test_mutation_runner.py::test_inside_refuses_the_tree_itself
+PASSED tests/test_mutation_runner.py::test_locate_does_not_list_a_file_link_out_of_the_tree
+PASSED tests/test_mutation_runner.py::test_locate_does_not_list_a_file_through_a_folder_link_out_of_the_tree
+PASSED tests/test_mutation_runner.py::test_the_runner_checks_a_forged_mutant_path_again
+PASSED tests/test_mutation_runner.py::test_run_mutants_refuses_test_and_fixture_paths_that_leave_the_tree
+PASSED tests/test_mutation_runner.py::test_the_runner_children_see_an_allowlisted_environment_only
+PASSED tests/test_mutation_runner.py::test_an_edit_of_the_tree_during_the_run_does_not_leak_into_a_later_mutant
+PASSED tests/test_mutation_runner.py::test_a_mutant_that_loops_forever_times_out_instead_of_hanging_the_run
+PASSED tests/test_mutation_runner.py::test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option
+PASSED tests/test_mutation_runner.py::test_a_path_that_starts_with_a_dash_is_refused_in_both_grammars_and_dot_slash_is_the_way_out
+PASSED tests/test_mutation_runner.py::test_a_path_that_starts_with_an_at_sign_is_refused_because_pytest_reads_it_as_an_argument_file
+PASSED tests/test_mutation_runner.py::test_a_failing_tree_kill_still_kills_the_child
+PASSED tests/test_mutation_runner.py::test_the_baseline_run_gets_its_own_timeout
+PASSED tests/test_mutation_runner.py::test_a_baseline_timeout_of_zero_is_not_unset
+PASSED tests/test_mutation_runner.py::test_the_runner_streams_each_result_and_keeps_a_sigkill_apart_from_a_timeout
+PASSED tests/test_mutation_runner.py::test_a_timeout_kills_the_whole_process_tree_not_only_pytest
+PASSED tests/test_mutation_runner.py::test_an_interrupt_while_waiting_kills_the_run_and_is_not_swallowed
+PASSED tests/test_mutation_runner.py::test_a_background_process_left_by_a_finished_run_is_killed_too
+PASSED tests/test_mutation_runner.py::test_a_pytest_ini_planted_in_a_parent_folder_is_not_picked_up
+PASSED tests/test_mutation_runner.py::test_a_setup_failure_for_one_mutant_is_a_result_row_and_a_blip_is_retried
+PASSED tests/test_mutation_runner.py::test_the_runner_keeps_a_symlink_a_link
+PASSED tests/test_mutation_runner.py::test_a_test_file_that_is_not_among_the_copied_tests_fails_before_any_mutant_runs
+PASSED tests/test_mutation_runner.py::test_junit_with_a_doctype_or_entity_is_refused_not_parsed
+PASSED tests/test_mutation_runner.py::test_the_runner_wires_pinned_so_another_failing_test_is_other_test
+PASSED tests/test_mutation_runner.py::test_a_refused_junit_marks_that_mutant_error_and_the_run_goes_on
+PASSED tests/test_mutation_runner.py::test_a_junit_text_over_the_ceiling_is_refused
+PASSED tests/test_mutation_runner.py::test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one
+PASSED tests/test_mutation_runner.py::test_the_leading_class_of_an_error_line_is_parsed_not_searched
+PASSED tests/test_mutation_runner.py::test_allow_crash_without_a_crash_type_is_refused
+PASSED tests/test_mutation_runner.py::test_a_truncated_junit_marks_the_mutant_error_and_the_run_goes_on
+PASSED tests/test_mutation_runner.py::test_taskkill_is_resolved_under_system_root
+PASSED tests/test_mutation_runner.py::test_a_termination_signal_cleans_up_the_run
+PASSED tests/test_mutation_runner.py::test_the_signal_handlers_are_restored_and_an_ignored_sighup_stays_ignored
+PASSED tests/test_mutation_runner.py::test_a_signal_during_the_cleanup_does_not_cut_the_cleanup_short
+PASSED tests/test_mutation_runner.py::test_a_second_signal_cannot_cut_short_the_cleanup_of_the_first
+PASSED tests/test_mutation_runner.py::test_a_signal_while_the_child_is_being_started_still_kills_the_child
+PASSED tests/test_mutation_runner.py::test_a_signal_while_the_temp_folders_are_removed_leaves_none
+PASSED tests/test_mutation_runner.py::test_the_process_group_is_killed_while_its_leader_is_not_yet_reaped
+PASSED tests/test_mutation_runner.py::test_the_pytest_run_writes_no_file_into_its_working_folder_and_leaves_no_temp_folder
+PASSED tests/test_mutation_runner.py::test_a_refused_run_leaves_no_temp_folder
+PASSED tests/test_mutation_runner.py::test_the_first_lines_of_an_earlier_run_do_not_leak_into_the_next
+PASSED tests/test_mutation_runner.py::test_a_finished_run_does_not_kill_the_tree_on_windows
+PASSED tests/test_mutation_runner.py::test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_signalled
+PASSED tests/test_mutation_runner.py::test_run_mutants_is_not_re_entrant_and_a_nested_call_leaves_the_outer_one_alone
+PASSED tests/test_mutation_runner.py::test_a_relative_link_that_points_out_of_the_tree_is_refused_at_snapshot_time
+PASSED tests/test_mutation_runner.py::test_a_junction_under_src_or_a_fixture_folder_is_refused_before_the_copy
+PASSED tests/test_mutation_runner.py::test_the_colon_refusal_says_a_path_may_not_contain_a_colon_and_the_docstring_states_it
+PASSED tests/test_mutation_runner.py::test_a_child_reaped_by_someone_else_is_an_error_result_not_exit_code_zero
+PASSED tests/test_mutation_runner.py::test_a_reaped_child_is_an_error_row_for_a_mutant
+PASSED tests/test_mutation_runner.py::test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline
+PASSED tests/test_mutation_runner.py::test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused
+PASSED tests/test_mutation_runner_meta.py::test_a_the_test_file_holds_the_moved_tests_and_the_manifest_test_once_each
+PASSED tests/test_mutation_runner_meta.py::test_a_there_are_the_listed_number_of_mutants_with_unique_names
+PASSED tests/test_mutation_runner_meta.py::test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists
+PASSED tests/test_mutation_runner_meta.py::test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not
+PASSED tests/test_mutation_runner_meta.py::test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets
+PASSED tests/test_mutation_runner_meta.py::test_the_mutants_script_exits_2_when_the_filter_selects_no_mutant
+PASSED tests/test_mutation_runner_helpers.py::test_windows_probe_reports_a_running_process_and_closes_the_handle
+PASSED tests/test_mutation_runner_helpers.py::test_windows_probe_reports_an_ended_process_dead_and_closes_the_handle
+PASSED tests/test_mutation_runner_helpers.py::test_windows_probe_no_such_process_is_dead_and_access_denied_is_alive
+PASSED tests/test_mutation_runner_helpers.py::test_windows_probe_a_failed_exit_code_read_falls_back_to_tasklist
+PASSED tests/test_mutation_runner_helpers.py::test_windows_probe_without_the_system_library_falls_back_to_tasklist
+PASSED tests/test_mutation_runner_helpers.py::test_pid_alive_uses_the_windows_probe_only_on_windows
+PASSED tests/test_mutation_runner_helpers.py::test_pid_alive_on_posix_sees_itself_and_a_gone_process
+PASSED tests/test_mutation_runner_helpers.py::test_pid_alive_counts_a_zombie_as_dead
+PASSED tests/test_mutation_runner_helpers.py::test_symlink_helper_skips_only_on_windows_without_the_privilege
+PASSED tests/test_mutation_runner_helpers.py::test_dir_link_makes_a_junction_on_windows_and_a_symlink_elsewhere
+PASSED tests/test_mutation_runner_helpers.py::test_symlink_helper_makes_the_link_where_it_can
+ERROR tests/test_mutation_runner_keywords.py
+FAILED tests/test_mutation_runner.py::test_the_manifest_pins_the_files_a_demo_copies
+1 failed, 75 passed, 1 error in 23.58s
+exit=1

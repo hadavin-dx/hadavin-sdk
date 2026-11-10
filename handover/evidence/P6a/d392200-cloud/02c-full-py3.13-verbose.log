@@ -1,0 +1,4 @@
+HEAD=d3922003925722275704b84f580152d35dd90c9c
+python=Python 3.13.18
+cmd=pytest -v -rfE -m not live and not perf -p no:cacheprovider
+start=2026-11-10T19:33:41Z
