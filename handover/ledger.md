@@ -2193,3 +2193,8 @@
 | BL-core-a24-r3-06 | PR91 db0e0ce | MAJOR | secret prefixes use \b, missed after escape letter or underscore | OPEN | egm/A24/r3-codebase.md M4 | UNCAPPED |
 | BL-core-a24-r3-07 | PR91 db0e0ce | MAJOR | 51 of 71 list lines have boilerplate unreviewed reason; reason gate nominal | OPEN | egm/A24/r3-codebase.md M5 | UNCAPPED |
 | BL-core-a24-r3-08 | PR91 db0e0ce | MAJOR | codeql-config.yml/zizmor.yaml/checkov/hadolint not scanner config; CODEOWNERS lacks test_no_reference_material.py | OPEN | egm/A24/r3-codebase.md M6,M7 | UNCAPPED |
+| BL-core-a15-r2-01 | PR74 8aaaea5 | BLOCKER | CHANGELOG says "Python 3.13 or later"; code refuses any interpreter not on Unicode 15.1.0 | OPEN | egm/A15/r2-codebase.md B1 | UNCAPPED |
+| BL-core-a15-r2-02 | PR74 8aaaea5 | MAJOR | `_own_code` type check wrongly called equivalent; no test with a hostile __str__ | OPEN | egm/A15/r2-codebase.md M1 | UNCAPPED |
+| BL-core-a15-r2-03 | PR74 8aaaea5 | MAJOR | guard-counter lock test cannot fail on old code | OPEN | egm/A15/r2-codebase.md M2 | UNCAPPED |
+| BL-core-a15-r2-04 | PR74 8aaaea5 | MAJOR | ticket P5a.md:360 says ten noqa sites / function-symbol keys; nine / guard strings | OPEN | egm/A15/r2-codebase.md M3 | UNCAPPED |
+| BL-core-a15-r2-05 | PR74 8aaaea5 | MAJOR | scan time budget in textnorm.py has no mutant and the mutant file was not re-run | OPEN | egm/A15/r2-codebase.md M4 | UNCAPPED |

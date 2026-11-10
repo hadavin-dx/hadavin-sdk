@@ -1,0 +1,18 @@
+== /tmp/p7/orig
+'x session_timeout: 30d y' -> 'x session_timeout: 30d y'
+'x session: 30d y' -> 'x session: <SECRET_1> y'
+'x db.token.example.com:5432 y' -> 'x db.token.example.com:<SECRET_1> y'
+'x token-service:8080 y' -> 'x token-service:<SECRET_1> y'
+'x session_store_backend_name_long_enough: redis y' -> 'x session_store_backend_name_long_enough: redis y'
+'x password: 30d y' -> 'x password: <SECRET_1> y'
+'x secret_manager_region_setting=eu y' -> 'x secret_manager_region_setting=eu y'
+'x api.session.local:443/path y' -> 'x <HOSTNAME_1>:443/path y'
+== /tmp/p9
+'x session_timeout: 30d y' -> 'x session_timeout: 30d y'
+'x session: 30d y' -> 'x session: <SECRET_1> y'
+'x db.token.example.com:5432 y' -> 'x db.token.example.com:<SECRET_1> y'
+'x token-service:8080 y' -> 'x token-service:<SECRET_1> y'
+'x session_store_backend_name_long_enough: redis y' -> 'x session_store_backend_name_long_enough: redis y'
+'x password: 30d y' -> 'x password: <SECRET_1> y'
+'x secret_manager_region_setting=eu y' -> 'x secret_manager_region_setting=<SECRET_1> y'
+'x api.session.local:443/path y' -> 'x <HOSTNAME_1>:443/path y'

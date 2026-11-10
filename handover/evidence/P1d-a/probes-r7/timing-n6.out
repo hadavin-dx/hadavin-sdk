@@ -1,0 +1,26 @@
+== /tmp/p7/orig
+?password=&a*N           median   0.70 s  (runs 0.69, 0.70, 0.70)
+&amp;*N                  median   0.60 s  (runs 0.66, 0.60, 0.59)
+password=&a=*N           median   0.58 s  (runs 0.57, 0.60, 0.58)
+?password=&amp;a=*N      median   0.75 s  (runs 0.80, 0.74, 0.75)
+password="*N             median   0.41 s  (runs 0.42, 0.41, 0.41)
+password: *N             median   0.41 s  (runs 0.42, 0.41, 0.41)
+tok.en.*N                median   0.47 s  (runs 0.47, 0.48, 0.45)
+a.a.-*N                  median   0.50 s  (runs 0.51, 0.50, 0.50)
+password*N               median   0.83 s  (runs 0.83, 0.84, 0.78)
+== /tmp/p9
+?password=&a*N           median   1.06 s  (runs 1.06, 1.05, 1.11)
+&amp;*N                  median   0.87 s  (runs 0.88, 0.87, 0.82)
+password=&a=*N           median   0.98 s  (runs 0.93, 0.98, 1.00)
+?password=&amp;a=*N      median   0.79 s  (runs 0.80, 0.79, 0.78)
+password="*N             median   0.35 s  (runs 0.33, 0.35, 0.41)
+password: *N             median   0.39 s  (runs 0.39, 0.38, 0.39)
+tok.en.*N                median   0.38 s  (runs 0.37, 0.38, 0.45)
+a.a.-*N                  median   0.53 s  (runs 0.58, 0.53, 0.51)
+password*N               median   0.64 s  (runs 0.55, 0.64, 0.65)
+== /tmp/p7/orig
+pass+spaces              median   0.41 s  (runs 0.41, 0.41, 0.40)
+keyword at end           median   0.67 s  (runs 0.69, 0.66, 0.67)
+== /tmp/p9
+pass+spaces              median   0.43 s  (runs 0.43, 0.43, 0.44)
+keyword at end           median   0.81 s  (runs 0.84, 0.78, 0.81)

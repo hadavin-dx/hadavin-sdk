@@ -1,0 +1,27 @@
+lines with a key word and = or : 16262 {'src': 567, 'tests': 1160, '.github': 7, 'demos': 60, 'docs': 1, 'handover': 14467}
+flips base->new: 78 {'tests': 14, 'handover': 64}
+tests | '        lambda settings, deps: FakeSecretProvider({"fixture-token": "t"}),' 
+   base '        lambda settings, deps: FakeSecretProvider({"fixture-<SECRET_1>oken": "<SECRET_1>"}),' 
+   new  '        lambda settings, deps: FakeSecretProvider({"fix<SECRET_1>ure-<SECRET_1>oken": "<SECRET_1>"}),'
+tests | '        lambda settings, deps: FakeSecretProvider({"pg-dsn": closed, "fixture-token": "t"}),' 
+   base '        lambda settings, deps: FakeSecretProvider({"pg-dsn": closed, "fixture-<SECRET_1>oken": "<SECRET_1>"}),' 
+   new  '        lambda settings, deps: FakeSecretProvider({"pg-dsn": closed, "fix<SECRET_1>ure-<SECRET_1>oken": "<SECR'
+tests | '        PostgresSettings(kind="postgres", dsn_secret_name="d", iam_auth=True)  # noqa: S106 - a name' 
+   base '        PostgresSettings(kind="postgres", dsn_secret_name="<SECRET_1>", iam_auth=True)  # noqa: S106 - a name' 
+   new  '        PostgresSettings(kind="postgres", <SECRET_1>sn_secret_name="<SECRET_1>", iam_auth=True)  # noqa: S106 '
+handover | '635 samples. Exact: all shapes except S5x (266 of 268 on each path). LEAK 0 everywhere. The 2 over-masks: `pas' 
+   base '635 samples. Exact: all shapes except S5x (266 of 268 on each path). LEAK 0 everywhere. The 2 over-masks: `pas' 
+   new  '635 samples. Exact: all shapes except S5x (266 of 268 on each path). LEAK 0 everywhere. The 2 over-masks: `pas'
+handover | '| S9 | `guard/redact.py` SECRET (assignment) pattern | `password=<value>` masks the value up to `&` | n/a (gra' 
+   base '| S9 | `guard/redact.py` SECRET (assignment) pattern | `password=<SECRET_1> masks the value up to `&` | n/a (g' 
+   new  '| S9 | `guard/redact.py` SECRET (assignment) pattern | `password=<SECRET_1> masks the value up to `&` | n/a (g'
+handover | 'Before a person sees an approval card, two steps run on its text: a cleaning step (the "gate") and a redactor ' 
+   base 'Before a person sees an approval card, two steps run on its text: a cleaning step (the "gate") and a redactor ' 
+   new  'Before a person sees an approval card, two steps run on its text: a cleaning step (the "gate") and a redactor '
+flips with more placeholders in new: 38 | same count: 38 | FEWER placeholders in new (possible exposure): 2
+  line 'Valid (ORDER 165: ceilings set before the build; ORDER 166: over-mask reported apart). **Decision (n' 
+   base 'Valid (ORDER 165: ceilings set before the build; ORDER 166: over-mask reported apart). **Decision (n' 
+   new  'Valid (ORDER 165: ceilings set before the build; ORDER 166: over-mask reported apart). **Decision (n'
+  line "Valid. Chain: the gate's `_ENTITY` rewrites `&cd34ef56;` to `&amp;cd34ef56;`; the plain value now ad" 
+   base "Valid. Chain: the gate's `_ENTITY` rewrites `&cd34ef56;` to `&amp;cd34ef56;`; the plain value now ad" 
+   new  "Valid. Chain: the gate's `_ENTITY` rewrites `&cd34ef56;` to `&amp;cd34ef56;`; the plain value now ad"

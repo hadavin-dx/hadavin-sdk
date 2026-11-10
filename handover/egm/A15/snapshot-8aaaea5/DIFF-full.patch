@@ -1,0 +1,1539 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d0c7f90..67d3f8c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -3,7 +3,8 @@
+ ## Unreleased
+ 
+ ### Upgrade steps
+-- **P5a, diagnostics step R1 (new, nothing wired yet).** Adds `hadavin_sdk.codes` (closed lists: 21 failure codes, steps, fact keys and bounds, and a table of this package's own exception classes) and `hadavin_sdk.guard.diagnostic` (`diagnose`, `render`, `validation_text`). A diagnostic holds a code from the closed list, a step, a `file.py:line` locator and a few closed facts; it never holds text taken from an exception, a document or a library. No existing writer (`run_tick`, `extract.extract`, the CLI) uses it yet: that is P5b3. Nine `DIAG_*` constants are added to `defaults.py`. Tests: `tests/test_diagnostic*.py`, the hostile corpus `tests/data/c18a_hostile_corpus.py`, and the mutants `tests/diagnostic_mutants.py`. `tests/test_diagnostics_old_writers.py` records which rows today's writers still leak (strict expected failures until P5b3).
++- **Breaking for pilot and prod on Python 3.12 (from P1b, listed here because it needs an action).** `app.build` now refuses to start a `pilot` or `prod` config when the interpreter's Unicode data is not version 15.1.0 (it raises `UnidataMismatch` before any secrets provider is made). Python 3.12 carries Unicode 15.0.0, and `requires-python` still allows 3.12, so an operator who runs pilot or prod on 3.12 must move that process to Python 3.13 or later before upgrading; `demo` builds are not affected. In this repository's own tests, `tests/conftest.py` switches the guard off for every test file whose name does not start with `test_textnorm`, but only when the interpreter's data is not the pin (that is, on 3.12), because those tests build pilot apps for other reasons; the `test_textnorm*` tests, which test the guard itself, never switch it off, and an extra test (`tests/test_textnorm_app.py`) checks the guard runs before the secrets provider is made.
++- **P5a, diagnostics step R1 (new, nothing wired yet).** Adds `hadavin_sdk.codes` (closed lists: 21 failure codes, steps, fact keys and bounds, and a table of this package's own exception classes) and `hadavin_sdk.guard.diagnostic` (`diagnose`, `render`, `validation_text`). A diagnostic holds a code from the closed list, a step, a `file.py:line` locator and a few closed facts; it never holds text taken from an exception, a document or a library. No existing writer (`run_tick`, `extract.extract`, the CLI) uses it yet: that is P5b3. Nine `DIAG_*` constants are added to `defaults.py`. Tests: `tests/test_diagnostic*.py`, the hostile corpus `tests/data/c18a_hostile_corpus.py`, and the mutants `tests/diagnostic_mutants.py` (46, all killed on the final head). `tests/test_diagnostics_old_writers.py` records which rows today's writers still leak (strict expected failures until P5b3).
+ - **Breaking: the first stage is now called `demo`; `environment: dev` is refused.** The stages are exactly `demo`, `pilot` and `prod`. A config that says `environment: dev` stops at start with "environment: dev was renamed to demo; write environment: demo (allowed values: demo, pilot, prod)" (shown beside any other problem found in the same file, and also for `Dev`, `DEV` and spellings with spaces, which are refused all the same); any other value (`Demo`, `staging`, `uat`, an empty value) is refused too, and values are never tidied or guessed. To upgrade: (1) change `environment:` in your config to `demo`; (2) if your code imports `backends.table.DEV_ONLY`, import `DEMO_ONLY` instead (same six kind pairs, no old name kept); (3) a project label such as `uat` is not a stage: map it to one stage in your own config. Also: the pilot and prod checks (`deferred.py`, `registry.py`, `app.py`) now ask one function, `hadavin_sdk.stages.is_live(environment)`, which treats anything that is not exactly `demo` as live; the prod-only rules (no local key file, a retention-agreed anchor) ask `hadavin_sdk.stages.is_prod(environment)`, which is true for `prod` and for any value that is not a stage. `STAGES`, `is_live` and `is_prod` live in the new leaf module `hadavin_sdk/stages.py`, not in `config.py`; the list `deferred.LIVE` is removed. The redactor no longer sweeps the words `demo` and `pilot` as a name (it already skipped `prod`), but a secret that reads `demo` is still swept. No stage is stored today; the first change that stores one must map an old `dev` value to `demo` on read, for display only and never for a guard decision, and add a test through that real read site.
+ - **Code-quality scanner fixes (SonarCloud, an automated code-quality scanner); one public name removed.** `guard.runmap.PARTIAL_ESCAPE` is gone. If your code imports it, call `guard.runmap.partial_escape_start(text, pos)` instead; it returns the start position as a number (or None), not a match object, so replace a `.search(...)` call and its `.start()` with it. The old pattern looked for a cut-off percent code such as `%C3` at the end of a text and slowed down sharply on a long run of them (about 65 s for 40,000 codes in a row, measured 2026-11-06); the new function takes milliseconds. `guard/http.py` now holds the cloud-metadata addresses that no tool may reach as one documented table `METADATA_ENDPOINTS` (the same six addresses as before; the other refused ranges are unchanged).
+ - **K5-core, redaction behaviour you may notice.** The producers of text that reaches a model, a vendor screen, a card or a log line (listed in `guard/producers.py`, each tested by `tests/test_k5_round9.py` with a percent-, entity- and assignment-encoded secret) go through one function, `guard.runmap.redact_text`, which also undoes percent, HTML-entity, backslash-u, `\u{41}`, `%u0041`, backslash-x, backslash-U (eight digits) and three-digit octal escapes (not one- and two-digit octal or named escapes: `\1` and Windows paths would decode wrongly) and NFKC to a fixed point before it redacts: a secret written as `%41KIA...`, `&#65;KIA...` or `password%3Dx` is masked in those places, not only in tool results. Not on that list: the text of the ask-your-data demo's own ledger and command line (see its README). A text nested deeper than `defaults.SCRUB_MAX_LAYERS` (8) layers is not shown. A tool result is redacted whole up to 262,144 characters before it is cut; when it IS cut (at that cap, or again after a short handed-out secret was replaced by the longer marker), the last 8,192 characters of the result are dropped so a token that straddles the cut leaves no fragment (`defaults.CUT_MARGIN`; a PEM key is about 1.7 KB for RSA-2048, 3.2 KB for RSA-4096 and 6.4 KB for RSA-8192). Cost: redacting a hostile text at the cap takes one to four seconds on a laptop (one pass per distinct view); a call that has spent `defaults.REDACT_BUDGET_S` (6 s) before a further view is refused (`InputTooLarge`, nothing shown), and the perf step bounds it. A card text is sanitised and has commands withheld first and is redacted once, last (and once more with tags deleted, real placeholders and line breaks kept, when markup split a key from its value; that view is used only when it finds a secret value the text pass did not). A card summary is shown whole or replaced by a short note (never cut); a summary whose inputs are too large to redact says so. In a case bundle, camelCase credential keys (`clientSecret`, `dbPassword`), numbers and nested values under a credential key are masked too. The Kubernetes source defaults (`K8S_*`) stay in `defaults.py`, under their own header, with every other default.
+@@ -394,7 +395,7 @@
+   - `tools/__init__.py`: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+   - `tools/mutation_runner.py`: `489517fb224f0598e14244ded1b37fe2a68be69e2396e56e450be0d8b1c0a1a7`
+ 
+-### Added (P1a, text folding: `guard/textnorm.py` and its look-alike table)
++### Added (P1a, text folding: `guard/textnorm.py` and its look-alike table; the digests, test counts and Unicode version below are superseded by the P1b block where it says so)
+ - `hadavin_sdk.guard.textnorm` (19 public names) is the one place that folds text for comparison: `fold`, `squeeze`, `identity_key`
+   (`fold_key` is the same function under its old name), `same_person`, `allow_equal` with `AllowVerdict` (EQUAL, VARIANT, LOOKALIKE,
+   DIFFERENT; a verdict has no truth value), `names_equal`, `has_mixed_script`, `has_hidden_channel`, `check_pinned_unidata`, the
+@@ -480,7 +481,7 @@
+   the P1a test files. 18 new mutants (71 in `tests/textnorm_mutants.py`). Golden test: about 27 s per interpreter.
+ - Every repository that keeps a byte copy of these files re-copies the five of them in one commit and updates its pins to the
+   sha256 values below (also pinned in `tests/fixtures/textnorm_manifest.json`):
+-  - `src/hadavin_sdk/guard/textnorm.py`: `6ed476df74ddd152380ba4ffc9478ade076be3499daaca8e0dd74bb6588ec296`
++  - `src/hadavin_sdk/guard/textnorm.py`: `c24e100d7707dd0f4c91bd7e5ef61eeed5f0e4e544fc888ea60e8d514e5b324c`
+   - `src/hadavin_sdk/guard/_confusables.py`: `506a6a02ac51ad9f60e8164ac6693dfe7f3610204b75a822ea01fa9c5274754a`
+   - `src/hadavin_sdk/guard/_scripts.py`: `5c59f80ddfeea13b7cabc6b41e09dc12a1954045c944d65f4e62cbd51b06cc67`
+   - `tests/fixtures/textnorm_vectors.json`: `1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349`
+diff --git a/src/hadavin_sdk/app.py b/src/hadavin_sdk/app.py
+index 76b8cb1..bc98991 100644
+--- a/src/hadavin_sdk/app.py
++++ b/src/hadavin_sdk/app.py
+@@ -80,11 +80,12 @@ def build(
+     cfg = load_config(config_dir)
+     reg = load_registry(cfg)
+     b = cfg.backends
+-    secrets = secrets or make("secrets", b.secrets)
+     live = is_live(cfg.environment)
+     if live:
+         # The same text must fold the same way on every run: pilot and prod start only on the pinned Unicode data (raises UnidataMismatch).
++        # This runs before the secrets provider is made, so nothing is contacted on an interpreter that is refused.
+         textnorm.require_pinned_unidata()
++    secrets = secrets or make("secrets", b.secrets)
+     if live and not cfg.evidence.restored_hash_key_secret_name:
+         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
+     if live and getattr(b.store, "kind", "") == "postgres" and not b.store.purge_dsn_secret_name:
+diff --git a/src/hadavin_sdk/codes.py b/src/hadavin_sdk/codes.py
+index f5145e1..d10f0e5 100644
+--- a/src/hadavin_sdk/codes.py
++++ b/src/hadavin_sdk/codes.py
+@@ -220,9 +220,12 @@ VALIDATION_TYPES: Final = frozenset(
+ VALIDATION_OTHER: Final = "other"
+ 
+ # Top-level packages whose exception class names may be printed as ``module.qualname`` (no cloud or model vendor name).
+-FOREIGN_PACKAGES_OK: Final = frozenset(sys.stdlib_module_names) | frozenset(
+-    {"pydantic", "pydantic_core", "pydantic_settings", "psycopg", "yaml", "markdown_it"}
+-)
++FOREIGN_PACKAGES_OK: Final = (
++    frozenset(sys.stdlib_module_names)
++    | frozenset(
++        {"pydantic", "pydantic_core", "pydantic_settings", "psycopg", "yaml", "markdown_it"}
++    )
++) - {"__main__"}  # the entry script's own name is never a library name
+ 
+ _P = "hadavin_sdk."
+ # ``"module:Qualname"`` -> code. A subclass not listed takes its nearest listed base (method resolution order).
+diff --git a/src/hadavin_sdk/guard/diagnostic.py b/src/hadavin_sdk/guard/diagnostic.py
+index 7d40bce..7528aa8 100644
+--- a/src/hadavin_sdk/guard/diagnostic.py
++++ b/src/hadavin_sdk/guard/diagnostic.py
+@@ -21,6 +21,7 @@ import os
+ import re
+ import socket
+ import sys
++import threading
+ from collections import deque
+ from collections.abc import Mapping
+ from dataclasses import dataclass
+@@ -67,19 +68,21 @@ _pkg_file = getattr(sys.modules.get(_OWN_PACKAGE), "__file__", None)
+ _PKG_DIR: Final = os.path.dirname(_pkg_file) if type(_pkg_file) is str else ""
+ 
+ 
++_MINT: Final = object()  # private: only this module can make a ``SafeToken``
++
++
+ class SafeToken:
+     """A short word that passed an exact check. Made only by ``SafeToken.of`` and ``SafeToken.sqlstate``; holds a member of the
+     caller's frozen set (never the caller's own object)."""
+ 
+     __slots__ = ("value",)
+     value: str
+-    _MINT: Final = object()
+ 
+     def __init_subclass__(cls, **kw: object) -> None:
+         raise TypeError("SafeToken is final")
+ 
+     def __init__(self, value: str, _mint: object = None) -> None:
+-        if _mint is not SafeToken._MINT:
++        if _mint is not _MINT:
+             raise TypeError("use SafeToken.of or SafeToken.sqlstate")
+         object.__setattr__(self, "value", value)
+ 
+@@ -95,7 +98,7 @@ class SafeToken:
+             if type(member) is str and member == value:
+                 if _TOKEN_RE.fullmatch(member) is None:
+                     return None
+-                return SafeToken(member, SafeToken._MINT)
++                return SafeToken(member, _MINT)
+         return None
+ 
+     @staticmethod
+@@ -103,7 +106,7 @@ class SafeToken:
+         """A five-character database state (``28P01``). ``re.fullmatch``: ``"28P01\\n"`` is refused."""
+         if type(value) is not str or _SQLSTATE_RE.fullmatch(value) is None:
+             return None
+-        return SafeToken(value, SafeToken._MINT)
++        return SafeToken(value, _MINT)
+ 
+ 
+ Fact = int | bool | ProviderErrorType | Phase | SafeToken
+@@ -124,16 +127,19 @@ class Diagnostic:
+ 
+ # How often each guard below fired, by site name. A count only: nothing about the exception (no text, no type) is kept.
+ _GUARD_FAILURES: dict[str, int] = {}
++_GUARD_LOCK = threading.Lock()
+ 
+ 
+ def _guard_failed(site: str) -> None:
+     """Record that the guard at ``site`` caught an ``Exception``. A fixed site name and a count; never the exception."""
+-    _GUARD_FAILURES[site] = _GUARD_FAILURES.get(site, 0) + 1
++    with _GUARD_LOCK:
++        _GUARD_FAILURES[site] = _GUARD_FAILURES.get(site, 0) + 1
+ 
+ 
+ def guard_failures() -> dict[str, int]:
+-    """A copy of the guard counters (site name -> times caught)."""
+-    return dict(_GUARD_FAILURES)
++    """A copy of the guard counters (site name -> times caught), read under the same lock as the writes."""
++    with _GUARD_LOCK:
++        return dict(_GUARD_FAILURES)
+ 
+ 
+ def _is_the_named_class(tp: type) -> bool:
+@@ -302,8 +308,11 @@ def validation_text(exc: BaseException) -> str:
+         names = [_closed_type(t) for t in types] or [VALIDATION_OTHER]
+         lo, hi = FACT_BOUNDS[FactKey.count]
+         text = "; ".join(names)
+-        if type(count) is int and lo <= count <= hi and count > defaults.DIAG_MAX_ERRORS:
+-            text += f"; +{count - defaults.DIAG_MAX_ERRORS} more"
++        if type(count) is int and count >= lo:
++            # a count over the bound is written as the bound (the tail is noted, not dropped): at least that many more
++            shown = min(count, hi)
++            if shown > defaults.DIAG_MAX_ERRORS:
++                text += f"; +{shown - defaults.DIAG_MAX_ERRORS} more"
+         return text
+     except Exception:  # noqa: BLE001 - a hostile pydantic error object may raise any Exception: other
+         _guard_failed("validation_text")
+@@ -342,7 +351,12 @@ def _phase_of(sqlstate: SafeToken | None) -> Phase:
+ 
+ 
+ def _classify(
+-    exc: object, tp: type, *, read_facts: bool, nested: bool = False
++    exc: object,
++    tp: type,
++    *,
++    read_facts: bool,
++    nested: bool = False,
++    walked: tuple[list[tuple[object, int]], bool] | None = None,
+ ) -> tuple[Code, dict[FactKey, object]]:
+     if not issubclass(tp, Exception):
+         return Code.foreign_exception, {}
+@@ -392,7 +406,7 @@ def _classify(
+         except Exception:  # noqa: BLE001 - a hostile group object may raise any Exception: foreign_exception
+             _guard_failed("group_member")
+             return Code.foreign_exception, {}
+-    links, too_long = _links(exc)
++    links, too_long = walked if walked is not None else _links(exc)
+     if _raised_in_own_code(exc, tp, links, too_long):
+         return Code.internal_bug, {}
+     return Code.foreign_exception, {}
+@@ -424,8 +438,11 @@ def _merge_facts(
+ def _diagnose(exc: object, step: str, facts: object) -> Diagnostic:
+     tp = type(exc)
+     kind = class_name_of(tp)
+-    code, derived = _classify(exc, tp, read_facts=True)
+-    links, _ = _links(exc)
++    walked = _links(
++        exc
++    )  # the traceback is walked once; the classifier and the locator share the result
++    code, derived = _classify(exc, tp, read_facts=True, walked=walked)
++    links, _ = walked
+     locator, function, relpath = _locate(links)
+     return Diagnostic(
+         kind=kind,
+@@ -487,7 +504,7 @@ def render(d: Diagnostic) -> str:
+         )
+         fp = d.fp if type(d.fp) is str and _FP_RE.fullmatch(d.fp) else FALLBACK_FP
+         line = f"{kind}: diag_v={defaults.DIAG_VERSION} code={code} step={step} at={at} fp={fp}"
+-        for key, value in d.facts:
++        for key, value in tuple(d.facts)[: defaults.DIAG_MAX_FACTS]:
+             part = _fact_text(key, value)
+             if part is None:
+                 continue
+diff --git a/src/hadavin_sdk/guard/textnorm.py b/src/hadavin_sdk/guard/textnorm.py
+index 3b94b2c..85b2fe0 100644
+--- a/src/hadavin_sdk/guard/textnorm.py
++++ b/src/hadavin_sdk/guard/textnorm.py
+@@ -32,9 +32,7 @@ sha256, version and date in the generator and in ``guard/_confusables.py``; Unic
+ explicit overrides, supplementary letters and a Unicode-name rule for small capitals,
+ both listed in the generator. Runtime is stdlib only; the data file is not shipped. ``FOLD_VERSION`` names the fold that made a key.
+ 
+-IDEMPOTENT AND CASE-SYMMETRIC BY CONSTRUCTION (``identity_key``, ``same_person``, ``squeeze``; alg ``fold4``). The first order (table, then
+-casefold, with a table keyed by lower-case letters; alg ``fold1``) was neither: ``identity_key("\u00d8")`` kept the capital and ``identity_key("\u00f8")``
+-gave ``o``, so ``same_person("B\u00d8B", "bob")`` was False, a DENY bypass. Now, with P = NFKC after the drops after the U+0345 step after
++IDEMPOTENT AND CASE-SYMMETRIC BY CONSTRUCTION (``identity_key``, ``same_person``, ``squeeze``; alg ``fold4``). With P = NFKC after the drops after the U+0345 step after
+ NFKD, D = the digit table and C = ``casefold``: ``key(x) = tag + collapse(E(C(D(P(x)))))`` where E is the look-alike table MOVED ONTO THE CASEFOLD IMAGE
+ (``_CF_TABLE``): for every table entry whose source ``s`` has ``casefold(s)`` a single character, ``E[casefold(s)] = value.casefold()``;
+ when two sources reach one casefolded letter the entry of the letter that is its own case-fold wins over the entry of its capital
+@@ -48,17 +46,14 @@ remaining steps (P, D, the drops) leave such characters alone is again a fact ab
+ form is therefore a fixed point of the whole function; a mutant that restores the old order is killed by those tests. ``fold`` WITHOUT
+ ``casefold`` keeps case and uses the raw table (no symmetry is promised for it); ``squeeze`` casefolds first.
+ 
+-U+0345 (COMBINING GREEK YPOGEGRAMMENI; decision of P1a fix2, review 2 of this package). Every other mark is dropped, and dropping is what
++U+0345 (COMBINING GREEK YPOGEGRAMMENI). Every other mark is dropped, and dropping is what
+ makes ``identity_key(x + mark) == identity_key(x)``. U+0345 is the one mark that cannot simply be dropped: its upper case and its case fold
+ are the letter iota, and a Greek letter with the mark (U+1FB3, alpha with ypogegrammeni) upper-cases to two letters (alpha, iota). Two
+ needs conflict: case symmetry (the key of U+1FB3 must be the key of its upper case, alpha iota) and mark insertion (the key of
+ "admin" + U+0345 must be the key of "admin"). The rule: U+0345 is read as an iota (U+03B9, then the table: ``i``) when the last kept
+ character before it is a Greek letter (an alphabetic character whose Unicode name starts with GREEK; characters the fold drops, such as other
+ marks or a zero-width space, are skipped when looking) and is REMOVED everywhere else (after a Latin or any other letter, after a space,
+-at the start). It happens on the NFKD text, so the precomposed U+1FB3 and alpha + U+0345 get one key (``ai``). ``fold2`` (the first
+-order-fixed fold) case-folded the raw text before the drop step, which turned U+0345 into an iota everywhere ("admin" + U+0345 gave ``admini``, a DENY
+-bypass); ``fold3`` has no early case fold (it is redundant once U+0345 is handled by name: 600,000 random strings gave the same key with and
+-without it). Chosen over "always drop" because always dropping breaks case symmetry for the precomposed Greek letters with
++at the start). It happens on the NFKD text, so the precomposed U+1FB3 and alpha + U+0345 get one key (``ai``). The fold has no early case fold (it is redundant once U+0345 is handled by name). Chosen over "always drop" because always dropping breaks case symmetry for the precomposed Greek letters with
+ ypogegrammeni and for Greek text in capitals (U+1FB3 against alpha, iota in capitals), while this rule breaks nothing on them. What the
+ rule does NOT promise, both stated and tested: (1) after a Greek letter the mark is an iota, so ``identity_key(alpha + U+0345)`` is
+ not ``identity_key(alpha)`` (the one "base + mark" pair that differs; the mark is a visible subscript there); (2) a text that holds U+0345
+@@ -77,7 +72,7 @@ maps ``z`` to ``3`` (Cyrillic Ze) and ``l`` to ``i``, modifier letters (Lm) remo
+ 
+ UNICODE DATA VERSION: the fold depends on the interpreter's Unicode data (which characters are unassigned). The pinned version is
+ ``defaults.TEXTNORM_PINNED_UNIDATA``. ``require_pinned_unidata()`` is the guard entry point: it raises ``UnidataMismatch`` (fail closed)
+-when the interpreter's version is not the pin; ``app.build`` calls it in pilot and prod before anything else. On another
++when the interpreter's version is not the pin; ``app.build`` calls it in pilot and prod before the secrets provider is made. On another
+ interpreter (development, tests; Python 3.12 has Unicode 15.0.0) the functions still run, and ``identity_key`` then returns a key that
+ starts with ``key_tag()``: U+E000, ``alg=fold4|ud=<this interpreter's version>``, U+E000. U+E000 is private use, which the fold
+ always drops, so no key made on the pinned version can ever start with it: a key made on another version never equals one made on the
+@@ -108,6 +103,7 @@ import bisect
+ import hashlib
+ import re
+ import sys
++import time
+ import types
+ import unicodedata
+ import warnings
+@@ -149,7 +145,8 @@ class TextnormError(Exception):
+ 
+ 
+ class TextTooLong(TextnormError):
+-    """The weight of a text is over ``defaults.TEXTNORM_MAX_CHARS`` (see the module docstring)."""
++    """The weight of a text is over ``defaults.TEXTNORM_MAX_CHARS`` (see the module docstring), or a ``scan_keyset`` call went over its
++    time budget ``defaults.REDACT_BUDGET_S``. Either way the text is refused."""
+ 
+ 
+ class NotText(TextnormError):
+@@ -460,10 +457,18 @@ def _tag_texts(raw: str) -> list[str]:
+     return [text0, "".join(t1), text0 + "".join(decoded), "".join(decoded)]
+ 
+ 
+-def _converge(text: str, step) -> str:
++def _over_budget(deadline: float | None) -> None:
++    """Refuse (``TextTooLong``, a DENY path means REFUSE) when the scan deadline has passed. The message holds a constant only."""
++    if deadline is not None and time.monotonic() > deadline:
++        raise TextTooLong("the scan went over its time budget (defaults.REDACT_BUDGET_S)")
++
++
++def _converge(text: str, step, deadline: float | None = None) -> str:
+     """Repeat ``step`` until its output equals its input, for at most ``defaults.TEXTNORM_MAX_PASSES`` passes (the confirming pass
+-    included); a text still changing after that raises ``FoldNotConverged``."""
++    included); a text still changing after that raises ``FoldNotConverged``. With a ``deadline`` (a ``time.monotonic()`` value) the
++    check runs before every pass."""
+     for _ in range(defaults.TEXTNORM_MAX_PASSES):
++        _over_budget(deadline)
+         out = step(text)
+         if out == text:
+             return out
+@@ -487,10 +492,10 @@ def _pass_b(text: str) -> str:
+ _CLASS_MAP = str.maketrans("zl", "3i")
+ 
+ 
+-def _scan_key(text: str, step) -> str:
++def _scan_key(text: str, step, deadline: float | None = None) -> str:
+     """One key of one reading of one tag text: the reading to its fixed point, the class maps ``z`` to ``3`` and ``l`` to ``i``, then only
+     letters and digits (every character for which ``str.isalnum()`` is False, and every modifier letter (category Lm), is removed)."""
+-    s = _converge(text, step).translate(_CLASS_MAP)
++    s = _converge(text, step, deadline).translate(_CLASS_MAP)
+     return "".join(ch for ch in s if ch.isalnum() and unicodedata.category(ch) != "Lm")
+ 
+ 
+@@ -498,7 +503,7 @@ def scan_keyset(raw: str) -> frozenset[str]:
+     """The DENY keys of a text: a small set of strings, two texts match when their key-sets share a key (or, for a scan, when a key of
+     the needle is inside a key of the text). Contract SK-1 to SK-6: the one parameter is ``raw``; at most 2 readings x 4 tag texts = 8
+     keys, by construction, each at most as long as the weight of ``raw``; a text over the size rule raises ``TextTooLong``, a non-``str``
+-    ``NotText``; over-matching is the safe side; there is no clock or deadline; the keys hold letters and digits only (spaces, punctuation,
++    ``NotText``; over-matching is the safe side; the whole call has a time budget, ``defaults.REDACT_BUDGET_S``, checked before every pass, and a call over it raises ``TextTooLong`` (REFUSE); the keys hold letters and digits only (spaces, punctuation,
+     ``#``, ``~``, ``@``, ``|`` and U+FFFD are dropped). Invisible-only text gives ``frozenset()``.
+ 
+     Order: the size rule on the raw text; every modifier letter (Lm) is removed from the raw text; the tag texts T0 to T3 (a text with no tag
+@@ -508,8 +513,9 @@ def scan_keyset(raw: str) -> frozenset[str]:
+     decoded view). Scan keys carry no ``key_tag()``: they are compared at once, never stored."""
+     _checked(raw)
+     raw = "".join(ch for ch in raw if unicodedata.category(ch) != "Lm")
++    deadline = time.monotonic() + defaults.REDACT_BUDGET_S
+     keys = {
+-        _scan_key(text, step)
++        _scan_key(text, step, deadline)
+         for text in dict.fromkeys(_tag_texts(raw))
+         for step in (_pass_a, _pass_b)
+     }
+diff --git a/tests/data/c18a_hostile_corpus.py b/tests/data/c18a_hostile_corpus.py
+index 29ac47e..bd53310 100644
+--- a/tests/data/c18a_hostile_corpus.py
++++ b/tests/data/c18a_hostile_corpus.py
+@@ -1389,6 +1389,3 @@ for _n in (7, 18):
+ 
+ ROWS: Final[tuple[Row, ...]] = tuple(_ROWS)
+ PROPAGATES_ROWS: Final = tuple(r.id for r in ROWS if r.expect == "propagates")
+-NO_OLD_WRITER_PATH: Final = frozenset[
+-    str
+-]()  # validation rows the real extraction model accepts (filled by the evidence run)
+diff --git a/tests/diagnostic_mutants.py b/tests/diagnostic_mutants.py
+index fde5d2b..3750e71 100644
+--- a/tests/diagnostic_mutants.py
++++ b/tests/diagnostic_mutants.py
+@@ -7,7 +7,9 @@ exact copies of the formatted source. Not collected by pytest. Run from the repo
+     uv run python tests/diagnostic_mutants.py            # all mutants; exit 1 if any is not good
+     uv run python tests/diagnostic_mutants.py frame      # only mutants whose name contains the text
+ 
+-Equivalent, stated and not run: removing ``type(frame.f_code.co_filename) is str`` from frame rule (c): no frame with a non-``str``
++Equivalent, stated and not run: removing ``type(mod) is not str or type(qual) is not str`` from ``_own_code`` (the f-string takes any
++object and the table lookup then misses, so nothing else changes; the test ``test_a_non_str_module_is_refused_without_a_guard_failure``
++pins the behaviour, no mutant can). Also: removing ``type(frame.f_code.co_filename) is str`` from frame rule (c): no frame with a non-``str``
+ ``co_filename`` can be built (``code.replace`` raises ``TypeError``), so the check stays as cheap defence.
+ """
+ 
+@@ -28,7 +30,8 @@ TD, TC, TV = (
+     "tests/test_diagnostic_codes.py",
+     "tests/test_diagnostic_validation.py",
+ )
+-TESTS = [TD, TC, TV]
++TH = "tests/test_diagnostics_hostile.py"
++TESTS = [TD, TC, TV, TH]
+ 
+ 
+ def mutant(name, file, old, new, test_file, killer, expect, **kw):
+@@ -210,7 +213,7 @@ M = [
+         "    except Exception:  # noqa: BLE001 - a hostile exception object may raise any Exception: the fixed fallback",
+         "    except BaseException:  # noqa: BLE001",
+         TD,
+-        "test_baseexception_from_hostile_getattr_propagates",
++        "test_baseexception_from_hostile_attribute_propagates",
+         "DID NOT RAISE",
+     ),
+     mutant(
+@@ -328,7 +331,7 @@ M = [
+     mutant(
+         "the +N more tail is wrong",
+         D,
+-        'text += f"; +{count - defaults.DIAG_MAX_ERRORS} more"',
++        'text += f"; +{shown - defaults.DIAG_MAX_ERRORS} more"',
+         'text += f"; +{count} more"',
+         TV,
+         "test_more_than_5_errors_gives_plus_n_more",
+@@ -343,6 +346,123 @@ M = [
+         "test_a_type_outside_the_closed_list_prints_other",
+         "outside the closed list",
+     ),
++    mutant(
++        "a reserved code loses its package row",
++        C,
++        '        "session_closed": "P5c",\n',
++        "",
++        TC,
++        "test_every_code_member_is_reachable_or_reserved",
++        "AssertionError: session_closed",
++    ),
++    mutant(
++        "two fact keys swap places in the priority list",
++        C,
++        "    FactKey.type,\n    FactKey.key,\n    FactKey.http_status,",
++        "    FactKey.key,\n    FactKey.type,\n    FactKey.http_status,",
++        TC,
++        "test_fact_priority_order_is_the_d9_literal",
++        "assert",
++    ),
++    mutant(
++        "a safe token keeps the caller's object",
++        D,
++        "                return SafeToken(member, _MINT)",
++        "                return SafeToken(value, _MINT)",
++        TD,
++        "test_safe_token_holds_the_member_not_the_callers_object",
++        "assert",
++    ),
++    mutant(
++        "table: ProviderExhausted row removed",
++        C,
++        '        _P + "llm.protocol:ProviderExhausted": Code.provider_exhausted,\n',
++        "",
++        TC,
++        "test_pinned_code_per_class",
++        "differs from the pinned rows",
++    ),
++    mutant(
++        "the fingerprint takes the line",
++        D,
++        "fp=_fingerprint(kind, code.value, function, relpath),",
++        "fp=_fingerprint(kind, code.value, function, locator),",
++        TD,
++        "test_locator_and_fp",
++        "assert",
++    ),
++    mutant(
++        "the group message is read",
++        D,
++        "            first_member = exc.exceptions[0]  # type: ignore[attr-defined]",
++        "            _ = exc.message  # type: ignore[attr-defined]\n            first_member = exc.exceptions[0]  # type: ignore[attr-defined]",
++        TD,
++        "test_group_message_and_str_are_never_read",
++        "AssertionError: ['message']",
++    ),
++    mutant(
++        "the kind identity check is removed",
++        D,
++        '        if not _is_the_named_class(tp):\n            return "dynamic_class"\n        mod, qual',
++        "        mod, qual",
++        TD,
++        "test_kind_identity_rule",
++        "assert",
++    ),
++    mutant(
++        "pydantic errors are read outside the helper",
++        D,
++        "            count, types = _error_types(exc)  # type: ignore[arg-type]",
++        "            _ = exc.errors()  # type: ignore[attr-defined]\n            count, types = _error_types(exc)  # type: ignore[arg-type]",
++        TV,
++        "test_pydantic_error_reads_are_closed_ast",
++        "assert",
++    ),
++    mutant(
++        "a KeyboardInterrupt gets internal_bug",
++        D,
++        "    if not issubclass(tp, Exception):\n        return Code.foreign_exception, {}",
++        "    if not issubclass(tp, Exception):\n        return Code.internal_bug, {}",
++        TD,
++        "test_non_exception_baseexception_passed_in_is_foreign",
++        "assert",
++    ),
++    mutant(
++        "oracle: leaks() is blind",
++        "tests/data/c18a_oracle.py",
++        "            if any(w in k for w in wanted for k in keys):",
++        "            if False:",
++        TH,
++        "test_reverse_check_fails_90_percent",
++        "0 of 124; not caught",
++    ),
++    mutant(
++        "oracle: the canary keys are not folded",
++        "tests/data/c18a_oracle.py",
++        "        wanted = [k for c in canaries for k in scan_keyset(c)]",
++        "        wanted = list(canaries)",
++        TH,
++        "test_reverse_check_fails_90_percent",
++        "3 of 124; not caught",
++    ),
++    mutant(
++        "corpus: the ledger range grows by one id",
++        "tests/data/c18a_hostile_corpus.py",
++        "for n in range(1, 52))",
++        "for n in range(1, 53))",
++        TH,
++        "test_every_ledger_id_is_covered",
++        "BL-core-c18a-052",
++    ),
++    mutant(
++        "corpus: the step moves past a later row",
++        "tests/data/c18a_hostile_corpus.py",
++        'CORPUS_STEP: Final = "R1"',
++        'CORPUS_STEP: Final = "R5"',
++        TH,
++        "test_later_rows_are_not_overdue",
++        "AssertionError: HC-ast_taint-01",
++    ),
+ ]
+ 
+ if __name__ == "__main__":
+diff --git a/tests/fixtures/textnorm_manifest.json b/tests/fixtures/textnorm_manifest.json
+index 85b2795..35b5ab2 100644
+--- a/tests/fixtures/textnorm_manifest.json
++++ b/tests/fixtures/textnorm_manifest.json
+@@ -1,7 +1,7 @@
+ {
+  "note": "sha256 of the files a demo copies (line endings read as LF). Recompute after the last edit of any of them, and add the hashes to the CHANGELOG re-copy list.",
+  "files": {
+-  "src/hadavin_sdk/guard/textnorm.py": "6ed476df74ddd152380ba4ffc9478ade076be3499daaca8e0dd74bb6588ec296",
++  "src/hadavin_sdk/guard/textnorm.py": "c24e100d7707dd0f4c91bd7e5ef61eeed5f0e4e544fc888ea60e8d514e5b324c",
+   "src/hadavin_sdk/guard/_confusables.py": "506a6a02ac51ad9f60e8164ac6693dfe7f3610204b75a822ea01fa9c5274754a",
+   "src/hadavin_sdk/guard/_scripts.py": "5c59f80ddfeea13b7cabc6b41e09dc12a1954045c944d65f4e62cbd51b06cc67",
+   "tests/fixtures/textnorm_vectors.json": "1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349",
+diff --git a/tests/noqa_sites.txt b/tests/noqa_sites.txt
+index 62895ee..941c878 100644
+--- a/tests/noqa_sites.txt
++++ b/tests/noqa_sites.txt
+@@ -1,10 +1,10 @@
+-# line	why it cannot be narrowed	test name
+-160	reads __module__, __qualname__ and vars() of a class a hostile program built; a property or metaclass there may raise any Exception (named_class)	test_guard_catches_and_records[named_class]
+-182	calls the check above on an object the caller supplied; any Exception from its attributes must give dynamic_class (class_name)	test_guard_catches_and_records[class_name]
+-196	walks the class chain of a hostile exception; one class with a raising attribute must not hide the rest (own_code)	test_guard_catches_and_records[own_code]
+-219	reads f_globals, co_filename of a frame object taken from a traceback a hostile program can build (counted_module)	test_guard_catches_and_records[counted_module]
+-259	reads f_code of the same hostile frame objects (locator)	test_guard_catches_and_records[locator]
+-308	calls pydantic error methods on an object that only claims to be a ValidationError (validation_text)	test_guard_catches_and_records[validation_text]
+-392	reads .exceptions of an exception group subclass; a property there may raise any Exception (group_member)	test_guard_catches_and_records[group_member]
+-448	the last net around the whole classifier: a diagnostic must come back whatever the exception object does (diagnose)	test_guard_catches_and_records[diagnose]
+-498	reads fields of a Diagnostic that a caller may have forged; the line must come back (render)	test_guard_catches_and_records[render]
++# site	why it cannot be narrowed	test name
++named_class	reads __module__, __qualname__ and vars() of a class a hostile program built; a property or metaclass there may raise any Exception (named_class)	test_guard_catches_and_records[named_class]
++class_name	calls the check above on an object the caller supplied; any Exception from its attributes must give dynamic_class (class_name)	test_guard_catches_and_records[class_name]
++own_code	walks the class chain of a hostile exception; one class with a raising attribute must not hide the rest (own_code)	test_guard_catches_and_records[own_code]
++counted_module	reads f_globals, co_filename of a frame object taken from a traceback a hostile program can build (counted_module)	test_guard_catches_and_records[counted_module]
++locator	reads f_code of the same hostile frame objects (locator)	test_guard_catches_and_records[locator]
++validation_text	calls pydantic error methods on an object that only claims to be a ValidationError (validation_text)	test_guard_catches_and_records[validation_text]
++group_member	reads .exceptions of an exception group subclass; a property there may raise any Exception (group_member)	test_guard_catches_and_records[group_member]
++diagnose	the last net around the whole classifier: a diagnostic must come back whatever the exception object does (diagnose)	test_guard_catches_and_records[diagnose]
++render	reads fields of a Diagnostic that a caller may have forged; the line must come back (render)	test_guard_catches_and_records[render]
+diff --git a/tests/test_diagnostic.py b/tests/test_diagnostic.py
+index 5fff234..df9365c 100644
+--- a/tests/test_diagnostic.py
++++ b/tests/test_diagnostic.py
+@@ -91,7 +91,9 @@ def _hostile_errno(exc_type: type[BaseException]) -> OSError:
+     return E(2, "x")
+ 
+ 
+-def test_baseexception_from_hostile_getattr_propagates() -> None:
++def test_baseexception_from_hostile_attribute_propagates() -> None:
++    """BN-3: a ``BaseException`` raised by the ``errno`` property of an ``OSError`` subclass leaves ``diagnose``; an ``Exception`` from the
++    same place gives the fixed fallback. Every row in ``PROPAGATES_ROWS`` goes through the same check."""
+     for exc_type in (asyncio.CancelledError, GeneratorExit, KeyboardInterrupt):
+         with pytest.raises(exc_type):
+             diagnose(_hostile_errno(exc_type), step=STEP)
+@@ -102,6 +104,12 @@ def test_baseexception_from_hostile_getattr_propagates() -> None:
+             raise RuntimeError("x")
+ 
+     assert diagnose(F(2, "x"), step=STEP).fp == FALLBACK_FP
++    by_id = {r.id: r for r in corpus.ROWS}
++    assert corpus.PROPAGATES_ROWS
++    for row_id in corpus.PROPAGATES_ROWS:
++        with pytest.raises(BaseException) as info:
++            diagnose(corpus.build_exception(by_id[row_id].spec), step=STEP)
++        assert not isinstance(info.value, Exception), row_id
+ 
+ 
+ def test_non_exception_baseexception_passed_in_is_foreign() -> None:
+@@ -388,3 +396,111 @@ def test_off_list_foreign_class_prints_foreign_class() -> None:
+     row = _row("foreign_name", 1)
+     with corpus.CONTEXTS["vendor_module"]():
+         assert class_name_of(corpus.build_exception(row.spec)) == "foreign_class"
++
++
++# --- A15 round 1: nits taken -----------------------------------------------------------------------------------------------------
++def test_the_traceback_is_walked_once_per_diagnose(monkeypatch: pytest.MonkeyPatch) -> None:
++    from hadavin_sdk.guard import diagnostic
++
++    calls = []
++    real = diagnostic._links
++
++    def counting(exc: object):  # type: ignore[no-untyped-def]
++        calls.append(1)
++        return real(exc)
++
++    monkeypatch.setattr(diagnostic, "_links", counting)
++    try:
++        raise ValueError("x")
++    except ValueError as e:
++        diagnose(e, step=STEP)
++    assert len(calls) == 1
++
++
++def test_render_keeps_at_most_the_max_facts_of_a_hand_built_diagnostic() -> None:
++    facts = tuple((FactKey.attempt, n) for n in range(defaults.DIAG_MAX_FACTS + 6))
++    d = Diagnostic(
++        kind="ValueError",
++        code=diagnose(ValueError("x"), step=STEP).code,
++        step="extract",
++        locator="-",
++        facts=facts,
++        fp="0" * 8,
++    )
++    assert render(d).count("attempt=") == defaults.DIAG_MAX_FACTS
++
++
++def test_main_is_never_an_allowed_library_name() -> None:
++    import sys
++    import types
++
++    from hadavin_sdk.codes import FOREIGN_PACKAGES_OK
++
++    assert "__main__" not in FOREIGN_PACKAGES_OK
++    cls = type("EntryError", (Exception,), {"__module__": "__main__"})
++    holder = types.ModuleType("__main__")
++    holder.EntryError = cls  # type: ignore[attr-defined]
++    old = sys.modules.get("__main__")
++    sys.modules["__main__"] = holder
++    try:
++        assert class_name_of(cls("x")) == "foreign_class"
++    finally:
++        if old is not None:
++            sys.modules["__main__"] = old
++
++
++def test_safe_token_mint_is_private_to_the_module() -> None:
++    """Python cannot stop ``object.__setattr__`` or a read of the module's private name, so this is documented, not prevented: the
++    class carries no public mint, and a plain construction or attribute write is refused."""
++    assert not hasattr(SafeToken, "_MINT")
++    tok = SafeToken.of("type", frozenset({"type"}))
++    assert tok is not None
++    with pytest.raises(AttributeError):
++        tok.value = "other"  # type: ignore[misc]
++    object.__setattr__(
++        tok, "value", "forged"
++    )  # the documented bypass of a determined caller in the same process
++    assert tok.value == "forged"
++
++
++def test_group_message_and_str_are_never_read() -> None:
++    """The message of an exception group is text the group's author wrote; ``diagnose`` never reads it (nor ``str`` or ``repr``)."""
++    reads: list[str] = []
++
++    class Spy(ExceptionGroup):
++        @property
++        def message(self) -> str:  # type: ignore[override]
++            reads.append("message")
++            return "Quentin"
++
++        def __str__(self) -> str:
++            reads.append("__str__")
++            return "Quentin"
++
++        def __repr__(self) -> str:
++            reads.append("__repr__")
++            return "Quentin"
++
++    diagnose(Spy("m", [TimeoutError("y")]), step=STEP)
++    assert reads == [], reads
++
++
++def test_a_non_str_module_is_refused_without_a_guard_failure() -> None:
++    """A class whose ``__module__`` is not a ``str`` is refused by the type check itself, not by the net under it: no guard fires."""
++    from hadavin_sdk.guard import diagnostic
++
++    cls = type("Odd", (OSError,), {"__module__": []})
++    before = diagnostic.guard_failures()
++    out = line_of(cls(2, "x"))
++    assert "code=os_error " in out and out.startswith("dynamic_class: "), out
++    assert diagnostic.guard_failures() == before, (
++        "the type check was skipped and a guard caught the TypeError instead"
++    )
++
++
++def test_safe_token_holds_the_member_not_the_callers_object() -> None:
++    member = b"abcdef".decode()
++    caller = b"abcdef".decode()
++    assert member == caller and member is not caller
++    tok = SafeToken.of(caller, frozenset({member}))
++    assert tok is not None and tok.value is member
+diff --git a/tests/test_diagnostic_codes.py b/tests/test_diagnostic_codes.py
+index 0395d90..601cdb2 100644
+--- a/tests/test_diagnostic_codes.py
++++ b/tests/test_diagnostic_codes.py
+@@ -233,3 +233,81 @@ def test_step_token_is_closed_and_final() -> None:
+     assert codes.StepToken.of(Sub("sweep")) is codes.Where.other
+     with pytest.raises(TypeError):
+         type("X", (codes.StepToken,), {})
++
++
++# --- added in A15 round 1 (findings D-M3, D-M3b of the design review) -----------------------------------------------------------
++D9_ORDER = (
++    "type", "key", "http_status", "sqlstate", "phase", "cause_kind", "provider_error_type", "request_id",
++    "retryable", "errno", "winerror", "gai", "count", "position", "line", "column", "field",
++    "retry_count", "attempt", "duration_ms",
++)  # fmt: skip
++
++
++def test_fact_priority_order_is_the_d9_literal() -> None:
++    """The order facts are printed in, as one literal (design D9). Changed only by P5b3 or P5c, when one of them adds ``reason`` (D8)."""
++    assert tuple(k.value for k in codes.FACT_PRIORITY) == D9_ORDER
++
++
++def test_phase_is_the_frozen_list() -> None:
++    assert [p.value for p in codes.Phase] == ["auth", "connect", "query", "unknown"]
++
++
++def test_validation_types_are_the_frozen_list() -> None:
++    assert codes.VALIDATION_OTHER == "other"
++    assert sorted(codes.VALIDATION_TYPES) == sorted(
++        [
++            "missing", "extra_forbidden", "literal_error", "int_parsing", "float_parsing", "bool_parsing",
++            "string_type", "int_type", "dict_type", "list_type", "too_short", "too_long", "greater_than",
++            "less_than", "string_too_short", "string_too_long", "decimal_parsing", "date_parsing",
++            "datetime_parsing", "enum", "url_parsing", "json_invalid", "model_type", "union_tag_invalid",
++            "value_error", "assertion_error",
++        ]
++    )  # fmt: skip
++    assert len(codes.VALIDATION_TYPES) == 26
++
++
++# Classes the AST scan cannot find (built by ``type()`` or imported under another name), each with a runtime row in ``PINNED``.
++NOT_SCANNABLE: frozenset[str] = frozenset()
++
++
++def test_every_row_key_is_found_by_the_scan() -> None:
++    """A rename or a move of an own class without its row fails here loudly; it never silently becomes ``foreign_exception``."""
++    scanned = set(_exception_classes())
++    missing = sorted(k for k in OWN_CODES if k not in scanned and k not in NOT_SCANNABLE)
++    assert not missing, f"rows whose class the scan does not find: {missing}"
++
++
++def test_not_scannable_list_has_runtime_rows() -> None:
++    scanned = set(_exception_classes())
++    for key in NOT_SCANNABLE:
++        assert key in PINNED, f"{key} is not scannable and has no runtime row in PINNED"
++        assert key not in scanned, f"{key} is found by the scan: take it off NOT_SCANNABLE"
++
++
++def test_builtin_ancestry_never_beats_the_row() -> None:
++    """A class with a keyed row gets that row's code although it also derives from a built-in that has a code of its own."""
++    from hadavin_sdk.guard.egress import EgressRefused
++    from hadavin_sdk.llm.fake import UnknownRecording
++    from hadavin_sdk.store.protocol import NotFound
++
++    assert issubclass(EgressRefused, PermissionError)
++    assert issubclass(NotFound, KeyError) and issubclass(UnknownRecording, KeyError)
++    for cls, code in (
++        (EgressRefused, "egress_refused"),
++        (NotFound, "store_conflict"),
++        (UnknownRecording, "config_invalid"),
++    ):
++        line = render(diagnose(cls.__new__(cls), step=codes.Where.other))
++        assert f"code={code} " in line, line
++
++
++def test_reserved_codes_name_their_package() -> None:
++    assert dict(RESERVED_FOR) == {
++        "session_closed": "P5c",
++        "provider_rate_limit": "P5b1",
++        "provider_auth": "P5b1",
++        "provider_invalid_request": "P5b1",
++        "provider_timeout": "P5b1",
++    }
++    assert len(RESERVED_FOR) == 5
++    assert set(RESERVED_FOR) <= {c.value for c in Code}
+diff --git a/tests/test_diagnostic_guards.py b/tests/test_diagnostic_guards.py
+index c5639e0..e5c8ba3 100644
+--- a/tests/test_diagnostic_guards.py
++++ b/tests/test_diagnostic_guards.py
+@@ -150,18 +150,24 @@ def test_guard_failures_is_a_copy_of_fixed_site_names() -> None:
+     assert set(dg.guard_failures()) <= set(SITES)
+ 
+ 
+-def _noqa_lines() -> list[tuple[int, str]]:
+-    return [
+-        (i, t)
+-        for i, t in enumerate(SOURCE.read_text(encoding="utf-8").splitlines(), 1)
+-        if "noqa" in t
+-    ]
++def _noqa_sites() -> list[tuple[int, str]]:
++    """(line number, site name) of every guard: the ``noqa`` line, and the site named by the ``_guard_failed("...")`` call right under it."""
++    text = SOURCE.read_text(encoding="utf-8").splitlines()
++    found = []
++    for i, line in enumerate(text):
++        if "noqa" in line:
++            m = re.fullmatch(r'\s*_guard_failed\("(\w+)"\)', text[i + 1])
++            assert m, f"line {i + 1}: a guard records its site on the next line"
++            found.append((i + 1, m.group(1)))
++    return found
+ 
+ 
+ def test_every_blind_except_is_one_listed_guard_with_its_reason_on_its_line() -> None:
+-    lines = _noqa_lines()
+-    for n, text in lines:
+-        m = re.fullmatch(r"\s*except Exception:  # noqa: BLE001 - \S.*", text)
++    """Keyed by the site name (the symbol), not by a line number: moving code does not break the list."""
++    lines = SOURCE.read_text(encoding="utf-8").splitlines()
++    sites = _noqa_sites()
++    for n, _ in sites:
++        m = re.fullmatch(r"\s*except Exception:  # noqa: BLE001 - \S.*", lines[n - 1])
+         assert m, (
+             f"line {n}: a guard is `except Exception:  # noqa: BLE001 - <reason>` and nothing else"
+         )
+@@ -171,9 +177,10 @@ def test_every_blind_except_is_one_listed_guard_with_its_reason_on_its_line() ->
+         if ln and not ln.startswith("#")
+     ]
+     rows = [ln.split("\t") for ln in listed]
+-    assert sorted(int(r[0]) for r in rows) == [n for n, _ in lines], (
+-        "noqa_sites.txt lists exactly the guard lines"
++    assert sorted(r[0] for r in rows) == sorted(name for _, name in sites), (
++        "noqa_sites.txt lists exactly the guard sites"
+     )
++    assert all(len(r[1]) >= 20 for r in rows), "every site has a reason"
+     assert sorted(r[2] for r in rows) == sorted(
+         f"test_guard_catches_and_records[{s}]" for s in SITES
+     )
+@@ -183,3 +190,34 @@ def test_every_blind_except_is_one_listed_guard_with_its_reason_on_its_line() ->
+     assert "diagnostic" not in pyproject and "codes.py" not in pyproject, (
+         "no per-file ignore for these files"
+     )
++
++
++def test_guard_counters_are_read_and_written_under_one_lock() -> None:
++    """A reader never sees a half-written count: 8 threads each record 500 failures while another thread copies the table."""
++    import threading
++
++    base = dg.guard_failures().get("render", 0)
++    stop = threading.Event()
++    seen: list[int] = []
++
++    def writer() -> None:
++        for _ in range(500):
++            dg._guard_failed("render")
++
++    def reader() -> None:
++        while not stop.is_set():
++            seen.append(dg.guard_failures().get("render", 0))
++
++    threads = [threading.Thread(target=writer) for _ in range(8)]
++    watcher = threading.Thread(target=reader)
++    watcher.start()
++    for t in threads:
++        t.start()
++    for t in threads:
++        t.join(timeout=30)
++    stop.set()
++    watcher.join(timeout=30)
++    assert dg.guard_failures()["render"] == base + 4000, (
++        "a count was lost: the increment is not atomic"
++    )
++    assert seen == sorted(seen), "a reader saw the count go backwards"
+diff --git a/tests/test_diagnostic_hostile.py b/tests/test_diagnostic_hostile.py
+deleted file mode 100644
+index 3e23459..0000000
+--- a/tests/test_diagnostic_hostile.py
++++ /dev/null
+@@ -1,143 +0,0 @@
+-"""Every active row of the hostile corpus: the rendered line obeys the grammar and carries no canary."""
+-
+-from __future__ import annotations
+-
+-import contextlib
+-import re
+-import time
+-
+-import pytest
+-
+-from hadavin_sdk.codes import Where
+-from hadavin_sdk.guard.diagnostic import diagnose, render, validation_text
+-from tests.data import c18a_hostile_corpus as corpus
+-from tests.data.c18a_oracle import grammar_ok, leaks
+-
+-ACTIVE = [r for r in corpus.ROWS if r.status == "active"]
+-
+-
+-def _ctx(row: corpus.Row) -> contextlib.AbstractContextManager[None]:
+-    name = row.spec.get("ctx")
+-    return corpus.CONTEXTS[name]() if name else contextlib.nullcontext()  # type: ignore[index]
+-
+-
+-def _step(row: corpus.Row) -> object:
+-    name = row.spec["step"]
+-    return Where(name) if name in Where._value2member_map_ else name
+-
+-
+-def _line(row: corpus.Row) -> str:
+-    with _ctx(row):
+-        if row.kind == "validation":
+-            return validation_text(corpus.build_validation_error(row.spec))
+-        exc = corpus.build_exception(row.spec)
+-        return render(diagnose(exc, step=_step(row)))  # type: ignore[arg-type]
+-
+-
+-def test_corpus_shape() -> None:
+-    assert len(corpus.ROWS) == 161
+-    assert len({r.id for r in corpus.ROWS}) == 161
+-    assert sum(r.status == "active" for r in corpus.ROWS) == 135
+-    assert {r.cls for r in corpus.ROWS} == set(corpus.CLASSES)
+-    for cls, minimum in corpus.MINIMUMS.items():
+-        assert sum(r.cls == cls for r in corpus.ROWS) >= minimum, cls
+-
+-
+-@pytest.mark.parametrize("row", ACTIVE, ids=[r.id for r in ACTIVE])
+-def test_row(row: corpus.Row) -> None:
+-    if row.expect == "propagates":
+-        with pytest.raises(BaseException) as info, _ctx(row):
+-            diagnose(corpus.build_exception(row.spec), step=_step(row))  # type: ignore[arg-type]
+-        assert not isinstance(info.value, Exception)
+-        return
+-    started = time.monotonic()
+-    out = _line(row)
+-    elapsed = time.monotonic() - started
+-    assert grammar_ok(out, "V" if row.kind == "validation" else "A"), out
+-    assert not leaks(out, row.canaries), out
+-    if row.expect == "golden":
+-        assert re.fullmatch(str(row.spec["golden"]), out), out
+-    if row.expect_code is not None:
+-        assert f"code={row.expect_code.value} " in out, out
+-    if row.expect == "bounded":
+-        assert len(out) <= 400
+-        assert elapsed < 5
+-
+-
+-# --- meta tests of the corpus and the oracle ----------------------------------------------------------------------------
+-def test_corpus_file_is_ascii() -> None:
+-    from pathlib import Path
+-
+-    for name in ("c18a_hostile_corpus.py", "c18a_oracle.py"):
+-        raw = (Path(corpus.__file__).parent / name).read_bytes()
+-        assert all(b < 128 for b in raw), name
+-
+-
+-def test_every_ledger_id_is_covered() -> None:
+-    covered = {x for r in corpus.ROWS for x in r.ledger}
+-    assert covered == set(corpus.LEDGER_IDS), sorted(set(corpus.LEDGER_IDS) ^ covered)
+-
+-
+-def test_later_rows_are_not_overdue() -> None:
+-    now = corpus.STEPS.index(corpus.CORPUS_STEP)
+-    for r in corpus.ROWS:
+-        if r.status == "later":
+-            assert corpus.STEPS.index(r.owner_step) > now, r.id
+-
+-
+-def test_old_writer_marks_follow_their_later_row() -> None:
+-    from tests.test_diagnostics_old_writers import OLD_WRITER_CRASHES, OLD_WRITER_LEAKS
+-
+-    ids = {r.id for r in corpus.ROWS}
+-    assert set(OLD_WRITER_LEAKS) | set(OLD_WRITER_CRASHES) <= ids
+-    assert not set(OLD_WRITER_LEAKS) & set(OLD_WRITER_CRASHES)
+-    wiring = [r for r in corpus.ROWS if r.cls == "writer_wiring"]
+-    assert wiring and all(r.status == "later" for r in wiring)
+-
+-
+-def test_canaries_are_long_enough() -> None:
+-    for r in corpus.ROWS:
+-        for c in r.canaries:
+-            assert len(c) >= 8, (r.id, c)
+-
+-
+-def test_every_active_row_has_teeth() -> None:
+-    """Each row with canaries leaks through a deliberately leaky subject: the oracle can see the canary."""
+-    exempt = [
+-        r for r in ACTIVE if r.expect in ("bounded", "propagates", "golden") or not r.canaries
+-    ]
+-    assert len(exempt) <= 40
+-    for r in ACTIVE:
+-        if r.kind != "exception" or r.expect in ("propagates",) or not r.canaries:
+-            continue
+-        if r.spec.get("ctx") or r.spec["factory"] in ("meta_module", "meta_name", "meta_eq", "meta_mro", "str_raises", "repr_raises",
+-                                                      "str_recursion", "getattr_raises", "errno_keyboard_interrupt", "chain"):  # fmt: skip
+-            continue
+-        e = corpus.build_exception(r.spec)
+-        leaky = f"{type(e).__name__}: {e} {getattr(e, 'doc', '')} {getattr(e, 'msg', '')}"
+-        if (
+-            r.canaries
+-            and r.expect == "no_canary"
+-            and r.spec["factory"] not in ("dynamic", "dynamic_module")
+-        ):
+-            assert leaks(leaky, r.canaries), (
+-                f"{r.id}: the oracle cannot see the canary in {leaky[:80]!r}"
+-            )
+-
+-
+-def test_strict_oracle_is_a_superset() -> None:
+-    from tests.data.c18a_oracle import leaks_literal
+-
+-    for r in ACTIVE:
+-        for c in r.canaries:
+-            for text in (c, "x " + c + " y"):
+-                if leaks_literal(text, (c,)):
+-                    assert leaks(text, (c,))
+-
+-
+-def test_oracle_and_grammar_are_independent() -> None:
+-    assert not grammar_ok("ValueError: diag_v=1 code=x step=y at=- fp=zzzzzzzz")
+-    assert not leaks(
+-        "ValueError: diag_v=1 code=foreign_exception step=extract at=- fp=00000000", (corpus.NAME,)
+-    )
+-    assert leaks("x " + corpus.NAME + " y", (corpus.NAME,))
+diff --git a/tests/test_diagnostic_validation.py b/tests/test_diagnostic_validation.py
+index 3a66a78..2333f68 100644
+--- a/tests/test_diagnostic_validation.py
++++ b/tests/test_diagnostic_validation.py
+@@ -40,7 +40,7 @@ def test_validation_text_length_bound() -> None:
+         err("many", {"a": CAN, "b": CAN, "c": CAN, "d": CAN, "e": CAN, "f": CAN, "g": CAN})
+     )
+     assert len(out) <= 108 and grammar_ok(out, "V")
+-    assert re.fullmatch(r"[a-z_; ]+", out.replace("+", "").replace("more", "")) or "more" in out
++    assert re.fullmatch(r"[a-z_]+(?:; [a-z_]+){4}; \+[0-9]+ more", out), out
+ 
+ 
+ def test_uuid_parsing_char_is_never_printed() -> None:
+@@ -140,3 +140,17 @@ def test_t6_real_config_typo(n: int) -> None:
+         assert grammar_ok(validation_text(e), "V")
+     else:
+         raise AssertionError("validated")
++
++
++def test_a_count_over_the_bound_is_noted_as_the_bound(monkeypatch: pytest.MonkeyPatch) -> None:
++    """A count above ``FACT_BOUNDS[count]`` is not dropped silently: the tail reads as the bound (at least that many more)."""
++    from hadavin_sdk.codes import FACT_BOUNDS, FactKey
++    from hadavin_sdk.guard import diagnostic
++
++    hi = FACT_BOUNDS[FactKey.count][1]
++    monkeypatch.setattr(diagnostic, "_error_types", lambda exc: (hi * 2, ("missing",)))
++    out = validation_text(err("many", {"a": CAN}))
++    assert out == f"missing; +{hi - 5} more", out
++    assert grammar_ok(out, "V")
++    monkeypatch.setattr(diagnostic, "_error_types", lambda exc: (-3, ("missing",)))
++    assert validation_text(err("many", {"a": CAN})) == "missing"
+diff --git a/tests/test_diagnostics_hostile.py b/tests/test_diagnostics_hostile.py
+new file mode 100644
+index 0000000..3a24423
+--- /dev/null
++++ b/tests/test_diagnostics_hostile.py
+@@ -0,0 +1,231 @@
++"""Every active row of the hostile corpus: the rendered line obeys the grammar and carries no canary."""
++
++from __future__ import annotations
++
++import contextlib
++import re
++import traceback
++
++import pytest
++
++from hadavin_sdk.codes import Where
++from hadavin_sdk.guard.diagnostic import diagnose, render, validation_text
++from hadavin_sdk.guard.runmap import safe_head
++from tests.data import c18a_hostile_corpus as corpus
++from tests.data.c18a_oracle import grammar_ok, leaks
++
++ACTIVE = [r for r in corpus.ROWS if r.status == "active"]
++
++
++def _ctx(row: corpus.Row) -> contextlib.AbstractContextManager[None]:
++    name = row.spec.get("ctx")
++    return corpus.CONTEXTS[name]() if name else contextlib.nullcontext()  # type: ignore[index]
++
++
++def _step(row: corpus.Row) -> object:
++    name = row.spec["step"]
++    return Where(name) if name in Where._value2member_map_ else name
++
++
++def _line(row: corpus.Row) -> str:
++    with _ctx(row):
++        if row.kind == "validation":
++            return validation_text(corpus.build_validation_error(row.spec))
++        exc = corpus.build_exception(row.spec)
++        return render(diagnose(exc, step=_step(row)))  # type: ignore[arg-type]
++
++
++def test_corpus_shape() -> None:
++    """Counts come from the data, never from a literal here (a later package appends rows): ids are unique, every row has a known
++    status, there are active rows, every class has rows, and the minimum of each class holds."""
++    assert len({r.id for r in corpus.ROWS}) == len(corpus.ROWS)
++    assert {r.status for r in corpus.ROWS} <= {"active", "later", "not_applicable"}
++    assert len(ACTIVE) == sum(r.status == "active" for r in corpus.ROWS) > 0
++    assert {r.cls for r in corpus.ROWS} == set(corpus.CLASSES)
++    for cls, minimum in corpus.MINIMUMS.items():
++        assert sum(r.cls == cls for r in corpus.ROWS) >= minimum, cls
++
++
++@pytest.mark.parametrize("row", ACTIVE, ids=[r.id for r in ACTIVE])
++def test_row(row: corpus.Row) -> None:
++    if row.expect == "propagates":
++        with pytest.raises(BaseException) as info, _ctx(row):
++            diagnose(corpus.build_exception(row.spec), step=_step(row))  # type: ignore[arg-type]
++        assert not isinstance(info.value, Exception)
++        return
++    out = _line(row)
++    assert grammar_ok(out, "V" if row.kind == "validation" else "A"), out
++    assert not leaks(out, row.canaries), out
++    if row.kind == "validation":
++        # the same error also goes through ``diagnose`` and ``render`` (a rendered line, Grammar A), not only through ``validation_text``
++        with _ctx(row):
++            line = render(diagnose(corpus.build_validation_error(row.spec), step=Where.extract))
++        assert grammar_ok(line, "A"), line
++        assert not leaks(line, row.canaries), line
++    if row.expect == "golden":
++        assert re.fullmatch(str(row.spec["golden"]), out), out
++    if row.expect_code is not None:
++        assert f"code={row.expect_code.value} " in out, out
++    if row.expect == "bounded":
++        assert len(out) <= 400  # an algorithmic bound; no wall clock
++
++
++# --- meta tests of the corpus and the oracle ----------------------------------------------------------------------------
++def test_corpus_file_is_ascii() -> None:
++    from pathlib import Path
++
++    for name in ("c18a_hostile_corpus.py", "c18a_oracle.py"):
++        raw = (Path(corpus.__file__).parent / name).read_bytes()
++        assert all(b < 128 for b in raw), name
++
++
++def test_every_ledger_id_is_covered() -> None:
++    covered = {x for r in corpus.ROWS for x in r.ledger}
++    assert covered == set(corpus.LEDGER_IDS), sorted(set(corpus.LEDGER_IDS) ^ covered)
++
++
++def test_later_rows_are_not_overdue() -> None:
++    now = corpus.STEPS.index(corpus.CORPUS_STEP)
++    for r in corpus.ROWS:
++        if r.status == "later":
++            assert corpus.STEPS.index(r.owner_step) > now, r.id
++
++
++def test_canaries_are_long_enough() -> None:
++    """Every canary has at least 8 characters and every key of ``scan_keyset(canary)`` at least 6 (P1's digit-only needle minimum)."""
++    from hadavin_sdk.guard.textnorm import scan_keyset
++
++    for r in corpus.ROWS:
++        for c in r.canaries:
++            assert len(c) >= 8, (r.id, c)
++            for key in scan_keyset(c):
++                assert len(key) >= 6, (r.id, c, key)
++
++
++def test_propagates_rows_are_exactly_the_frozen_set() -> None:
++    assert {r.id for r in corpus.ROWS if r.expect == "propagates"} == set(corpus.PROPAGATES_ROWS)
++    assert len(corpus.PROPAGATES_ROWS) == 1, "the frozen set has one member (BN-3)"
++
++
++# --- the teeth of the corpus: the oracle must be able to see a canary in a deliberately leaky output ----------------------------
++# What a hostile attribute or ``__str__`` of the corpus raises when a leaky reading touches it (RecursionError is a RuntimeError). An
++# error of another class is not swallowed: the test fails and says which.
++_HOSTILE_READ_ERRORS = (AttributeError, IndexError, KeyError, RuntimeError, TypeError, ValueError)
++ONE_RUN = [r for r in ACTIVE if r.kind in ("exception", "validation") and r.expect != "propagates"]
++EXEMPT = [
++    r for r in ONE_RUN if r.expect in ("bounded", "grammar")
++]  # by the field, never by text in ``why``
++EXEMPT_CAP = 15  # author choice (P5a rev 3), UNVERIFIED as the right cap
++
++
++def _teeth_subjects(row: corpus.Row, e: BaseException) -> list[str]:
++    """The ten leaky readings of an exception (and two more for a validation row). A reading that raises gives an empty text."""
++    readings = [
++        lambda: f"{type(e).__name__}: {e}",
++        lambda: repr(e),
++        lambda: safe_head(str(e), 300),
++        lambda: e.args[0],
++        lambda: "".join(getattr(e, "__notes__", ())),
++        lambda: getattr(e, "filename", ""),
++        lambda: getattr(e, "doc", ""),
++        lambda: getattr(e, "msg", ""),
++        lambda: repr(e.args),
++        lambda: "".join(traceback.format_exception(e)),
++    ]
++    if row.kind == "validation":
++        readings += [lambda: f"{e}", lambda: str(e.errors())]  # type: ignore[attr-defined]
++    out = []
++    for read in readings:
++        try:
++            value = read()
++        except (
++            _HOSTILE_READ_ERRORS
++        ):  # a subject that raises gives "" (BN-3); no helper catches BaseException
++            value = ""
++        out.append(value if type(value) is str else "")
++    return out
++
++
++def _built(row: corpus.Row) -> BaseException:
++    return (
++        corpus.build_validation_error(row.spec)
++        if row.kind == "validation"
++        else corpus.build_exception(row.spec)
++    )
++
++
++def test_every_active_row_has_teeth() -> None:
++    """Each active row of kind exception or validation (a row that expects a propagating ``BaseException`` excepted) makes ``leaks()``
++    alone True through at least one leaky reading, unless the row is exempt by its ``expect`` field. The exempt ids are printed."""
++    print("exempt from the teeth test:", [r.id for r in EXEMPT])
++    assert len(EXEMPT) <= EXEMPT_CAP, f"{len(EXEMPT)} rows are exempt; the cap is {EXEMPT_CAP}"
++    blind = []
++    for r in ONE_RUN:
++        if r in EXEMPT:
++            continue
++        with _ctx(r):
++            subjects = _teeth_subjects(r, _built(r))
++        if not any(leaks(text, r.canaries) for text in subjects):
++            blind.append(r.id)
++    assert not blind, (
++        f"the oracle cannot see the canary of these rows in any leaky reading: {blind}"
++    )
++
++
++def test_reverse_check_fails_90_percent() -> None:
++    """A HARD GATE. A deliberately leaky ``diagnose`` (``f"{type(exc).__name__}: {exc}"``) must make ``leaks()`` True for at least 90 percent
++    of the rows that are not exempt. The numerator and the denominator come from the same set, so the denominator is exact."""
++    rows = [r for r in ONE_RUN if r not in EXEMPT]
++    assert rows, "the set is empty: the gate would pass for nothing"
++    caught = []
++    for r in rows:
++        with _ctx(r):
++            e = _built(r)
++            try:
++                out = f"{type(e).__name__}: {e}"
++            except (
++                _HOSTILE_READ_ERRORS
++            ):  # a hostile ``__str__`` raising: that leaky function produced no output for this row
++                out = ""
++        if leaks(out, r.canaries):
++            caught.append(r.id)
++    share = 100 * len(caught) / len(rows)
++    print(f"reverse check: {len(caught)} of {len(rows)} rows caught ({share:.1f} percent)")
++    missed = sorted({r.id for r in rows} - set(caught))
++    assert len(caught) * 10 >= len(rows) * 9, f"{len(caught)} of {len(rows)}; not caught: {missed}"
++
++
++def test_locator_rows_leave_no_trace() -> None:
++    """BN-12: the rows that run code in a real own module's namespace define only ``_p5a_probe_`` names and delete them, and restore the
++    temporary ``__name__`` swap: ``vars(hadavin_sdk.stats)`` is equal before and after."""
++    from hadavin_sdk import stats
++
++    before = dict(vars(stats))
++    ran = 0
++    for r in corpus.ROWS:
++        if r.cls == "locator_frames" and r.status == "active" and r.kind == "exception":
++            with _ctx(r):
++                render(diagnose(corpus.build_exception(r.spec), step=Where.other))
++            ran += 1
++    assert ran > 0
++    after = dict(vars(stats))
++    assert set(before) == set(after), sorted(set(before) ^ set(after))
++    assert before == after
++
++
++def test_strict_oracle_is_a_superset() -> None:
++    from tests.data.c18a_oracle import leaks_literal
++
++    for r in ACTIVE:
++        for c in r.canaries:
++            for text in (c, "x " + c + " y"):
++                if leaks_literal(text, (c,)):
++                    assert leaks(text, (c,))
++
++
++def test_oracle_and_grammar_are_independent() -> None:
++    assert not grammar_ok("ValueError: diag_v=1 code=x step=y at=- fp=zzzzzzzz")
++    assert not leaks(
++        "ValueError: diag_v=1 code=foreign_exception step=extract at=- fp=00000000", (corpus.NAME,)
++    )
++    assert leaks("x " + corpus.NAME + " y", (corpus.NAME,))
+diff --git a/tests/test_diagnostics_old_writers.py b/tests/test_diagnostics_old_writers.py
+index dfd267f..0b608bc 100644
+--- a/tests/test_diagnostics_old_writers.py
++++ b/tests/test_diagnostics_old_writers.py
+@@ -1,14 +1,18 @@
+-"""The FAIL-BEFORE run: the hostile rows through today's writers (``run_tick`` and ``extract.extract``).
+-
+-Nothing here tests the new code. It records, per row, whether today's writers leak the row's canaries (``leaked``), crash on the row
+-(``crashed``) or are clean. Rows that leak or crash are strict xfails that name the later row of the package that wires the writers
+-(R3c, P5b3), which turns each into a plain assert. The results on the P5a head equal the results on the branch base: P5a changes no writer.
++"""A STATUS LEDGER, not a test of the new code: what today's writers (``run_tick`` and ``extract.extract``) do with the hostile rows.
++
++It records, per row, whether today's writers leak the row's canaries (``leaked``), crash on the row (``crashed``) or are clean. Rows that
++leak or crash are strict xfails whose reason names the ``writer_wiring`` row of the corpus (the later package R3c / P5b3 wires the
++writers; that row turns each xfail into a plain assert). The two frozen id lists below come from one evidence run of the P5a ticket
++(73 leaking rows, 8 crashing rows, 53 clean, 0 without a path, on the branch base and on the P5a head alike: P5a changes no writer);
++the pull request text names the evidence file. The lists are data from that run, not something this file derives: if a writer changes,
++the strict xfail flips to a failure and the lists are updated from a new run, in the same change. P5b3 deletes the lists.
+ """
+ 
+ from __future__ import annotations
+ 
+ import contextlib
+ import logging
++import re
+ 
+ import pytest
+ 
+@@ -29,7 +33,7 @@ class AdapterError(RuntimeError):
+     """The writer did not run, so no verdict may be drawn."""
+ 
+ 
+-# Frozen from the evidence run (see evidence.md): row id -> outcome.
++# Frozen from the evidence run named in the docstring: the ids of the rows whose canary today's writers leak.
+ OLD_WRITER_LEAKS: tuple[str, ...] = (
+     "HC-builtin_text-01",
+     "HC-builtin_text-02",
+@@ -115,7 +119,6 @@ OLD_WRITER_CRASHES: dict[str, str] = {
+     "HC-hostile_class-15": "AttributeError",
+     "HC-own_class_spoof-02": "AttributeError",
+ }
+-NO_OLD_WRITER_PATH: frozenset[str] = frozenset()
+ 
+ ROWS = [
+     r for r in corpus.ROWS
+@@ -184,17 +187,34 @@ def outcome(row: corpus.Row, app, caplog) -> tuple[str, str]:
+     return ("leaked" if leaks(text, row.canaries) else "clean"), ""
+ 
+ 
++# The ledger ids of the corpus's ``writer_wiring`` rows that stand for each writer: ``run_tick`` (exception rows) and ``extract`` (validation rows).
++_WIRING_LEDGER = {"exception": "BL-core-c18a-006", "validation": "BL-core-c18a-009"}
++
++
++def wiring_row_id(row: corpus.Row) -> str:
++    """The id of the ``writer_wiring`` row of the later package that wires the writer this row goes through."""
++    found = [
++        w.id
++        for w in corpus.ROWS
++        if w.cls == "writer_wiring" and _WIRING_LEDGER[row.kind] in w.ledger
++    ]
++    assert len(found) == 1, (row.id, found)
++    return found[0]
++
++
++def marked_reasons() -> dict[str, str]:
++    """Row id -> the xfail reason of every row that today's writers fail on."""
++    out: dict[str, str] = {}
++    for row in ROWS:
++        if row.id in OLD_WRITER_LEAKS or row.id in OLD_WRITER_CRASHES:
++            kind = "crashed" if row.id in OLD_WRITER_CRASHES else "leaked"
++            out[row.id] = f"later: {wiring_row_id(row)} wires the writer; outcome={kind}"
++    return out
++
++
+ def _param(row: corpus.Row) -> pytest.param:
+-    marks = []
+-    if row.id in OLD_WRITER_LEAKS or row.id in OLD_WRITER_CRASHES:
+-        kind = "crashed" if row.id in OLD_WRITER_CRASHES else "leaked"
+-        marks.append(
+-            pytest.mark.xfail(
+-                strict=True,
+-                raises=AssertionError,
+-                reason=f"later: R3c (P5b3) wires the writers; outcome={kind}",
+-            )
+-        )
++    reason = marked_reasons().get(row.id)
++    marks = [pytest.mark.xfail(strict=True, raises=AssertionError, reason=reason)] if reason else []
+     return pytest.param(row, id=row.id, marks=marks)
+ 
+ 
+@@ -204,6 +224,20 @@ def test_old_writers(row: corpus.Row, app, caplog) -> None:
+     if row.id in OLD_WRITER_CRASHES and got == "crashed":
+         assert crash_type == OLD_WRITER_CRASHES[row.id], crash_type
+     if got == "no_path":
+-        assert row.id in NO_OLD_WRITER_PATH, row.id
+-        return
++        pytest.fail(f"{row.id}: no path through today's writers; the row or the adapter is wrong")
+     assert got == "clean", f"{row.id}: today's writers: {got} {crash_type}"
++
++
++def test_old_writer_marks_follow_their_later_row() -> None:
++    """Equality, not a subset: the ids listed in the old-writer ledger are exactly the rows that carry an xfail mark, each mark names a
++    ``later`` ``writer_wiring`` row of the corpus, and the lists neither repeat an id nor share one."""
++    assert len(set(OLD_WRITER_LEAKS)) == len(OLD_WRITER_LEAKS)
++    assert not set(OLD_WRITER_LEAKS) & set(OLD_WRITER_CRASHES)
++    listed = set(OLD_WRITER_LEAKS) | set(OLD_WRITER_CRASHES)
++    reasons = marked_reasons()
++    assert set(reasons) == listed, sorted(set(reasons) ^ listed)
++    wiring = {r.id: r for r in corpus.ROWS if r.cls == "writer_wiring"}
++    assert wiring and all(r.status == "later" for r in wiring.values())
++    for row_id, reason in reasons.items():
++        named = re.fullmatch(r"later: (\S+) wires the writer; outcome=(leaked|crashed)", reason)
++        assert named is not None and named.group(1) in wiring, (row_id, reason)
+diff --git a/tests/test_textnorm_app.py b/tests/test_textnorm_app.py
+index a152bff..2e5eaed 100644
+--- a/tests/test_textnorm_app.py
++++ b/tests/test_textnorm_app.py
+@@ -56,3 +56,19 @@ def test_a_non_live_build_runs_on_another_unicode_version(tmp_path, monkeypatch)
+     qualify(app_mod.load_registry(app_mod.load_config(cfg)))
+     built = app_mod.build(cfg, ["test-agent"], secrets=SECRETS)
+     assert built.runtime is not None
++
++
++def test_the_guard_runs_before_the_secrets_provider_is_made(tmp_path, monkeypatch):
++    """C-M2: no ``secrets`` object is handed in, so ``app.build`` would make one. The refusal must come first (nothing is contacted)."""
++    monkeypatch.setattr(unicodedata, "unidata_version", OTHER)
++    made: list[str] = []
++
++    def spy(kind, *args, **kwargs):
++        made.append(kind)
++        raise AssertionError("a backend was made before the Unicode guard ran")
++
++    monkeypatch.setattr(app_mod, "make", spy)
++    cfg = pilot_cfg(tmp_path)
++    with pytest.raises(UnidataMismatch):
++        app_mod.build(cfg, ["ito-agent"])
++    assert made == []
+diff --git a/tests/test_textnorm_callers.py b/tests/test_textnorm_callers.py
+index 7e3ad59..229858e 100644
+--- a/tests/test_textnorm_callers.py
++++ b/tests/test_textnorm_callers.py
+@@ -23,15 +23,11 @@ from hadavin_sdk.guard import textnorm
+ 
+ ROOT = Path(__file__).resolve().parents[1]
+ SRC = ROOT / "src" / "hadavin_sdk"
+-# ``path-below-hadavin_sdk::function``. UNVERIFIED names: the P2d-2 withhold function and the P5a closed-code mapper are named by the
+-# authors of those packages; this list is edited when they land.
+-REFUSAL_HANDLERS = frozenset(
+-    {
+-        "guard/redact.py::check_lookalike",
+-        "guard/redact.py::_withhold",
+-        "runtime/closed_codes.py::textnorm_code",
+-    }
+-)
++# ``path-below-hadavin_sdk::function``. Empty: no function in ``src`` handles a textnorm refusal by name today (A15 round 1, C-M5: three
++# names that did not exist were removed). A package that adds such a function adds its exact ``path::function`` here in the same change.
++REFUSAL_HANDLERS: frozenset[str] = frozenset()
++# The listing mechanism is tested with a made-up entry that is NOT in ``REFUSAL_HANDLERS``.
++_FIXTURE_HANDLERS = frozenset({"fixture/listed.py::listed_refusal"})
+ BROAD = frozenset({"Exception", "BaseException", "ValueError", "TypeError", "AttributeError"})
+ BANNED = frozenset(
+     {"TextnormError"}
+@@ -191,7 +187,7 @@ ROWS = [
+     ),
+     (
+         "9 listed function",
+-        "from hadavin_sdk.guard.textnorm import TextnormError, fold\ndef check_lookalike(x):\n    try:\n        fold(x)\n    except TextnormError:\n        return 1\n",
++        "from hadavin_sdk.guard.textnorm import TextnormError, fold\ndef listed_refusal(x):\n    try:\n        fold(x)\n    except TextnormError:\n        return 1\n",
+         False,
+     ),
+ ]
+@@ -199,7 +195,12 @@ ROWS = [
+ 
+ @pytest.mark.parametrize(("name", "source", "reported"), ROWS, ids=[r[0] for r in ROWS])
+ def test_fixture_row(name, source, reported):
+-    findings = lint_source(source, rel="guard/redact.py" if "listed" in name else "x.py")
++    listed = "listed" in name
++    findings = lint_source(
++        source,
++        rel="fixture/listed.py" if listed else "x.py",
++        handlers=_FIXTURE_HANDLERS if listed else REFUSAL_HANDLERS,
++    )
+     assert bool(findings) is reported, f"{name}: {findings}"
+ 
+ 
+@@ -207,8 +208,15 @@ def test_the_nine_rows_are_eight_reported_and_one_allowed():
+     assert len(ROWS) == 9 and sum(r[2] for r in ROWS) == 8
+ 
+ 
+-def test_refusal_handlers_has_three_entries_and_the_banned_names_follow_textnorm():
+-    assert len(REFUSAL_HANDLERS) == 3
++def test_refusal_handlers_names_only_functions_that_exist_and_the_banned_names_follow_textnorm():
++    for entry in REFUSAL_HANDLERS:
++        rel, function = entry.split("::")
++        source = (SRC / rel).read_text(encoding="utf-8")
++        assert any(
++            isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == function
++            for n in ast.walk(ast.parse(source))
++        ), f"{entry} names a function that does not exist"
++    assert not _FIXTURE_HANDLERS & REFUSAL_HANDLERS
+     assert BANNED == {
+         "TextnormError",
+         "TextTooLong",
+diff --git a/tests/test_textnorm_perf.py b/tests/test_textnorm_perf.py
+index f73824f..ffd10cc 100644
+--- a/tests/test_textnorm_perf.py
++++ b/tests/test_textnorm_perf.py
+@@ -54,7 +54,9 @@ def test_s_call_the_worst_scan_keyset_call_at_the_size_rule():
+     for name, text in texts.items():
+         took = _seconds(scan_keyset, text)
+         print(f"S_call {name}: {took:.3f} s")
+-        assert took < 60.0, f"S_call {name} took {took:.1f} s"
++        assert took < 2 * defaults.REDACT_BUDGET_S, (
++            f"S_call {name} took {took:.1f} s"
++        )  # the scan refuses past its budget (C-M4)
+ 
+ 
+ def test_sk5_a_thousand_calls_on_twenty_character_texts():
+diff --git a/tests/test_textnorm_scan.py b/tests/test_textnorm_scan.py
+index fdfd9fb..6d2e28a 100644
+--- a/tests/test_textnorm_scan.py
++++ b/tests/test_textnorm_scan.py
+@@ -1,7 +1,7 @@
+ """P1b: the DENY keys of the text fold (``scan_keyset``, ``same_person``), the gaps it closes, and the script check.
+ 
+ Look-alikes are built with ``chr()``. Facts of one Unicode version are never written here: the tests state properties that hold on every
+-interpreter, or read the live table (the digit decisions, the modifier letters). No wall-clock assertions: the perf rows (S_call, SK-5) live
++interpreter, or read the live table (the digit decisions, the modifier letters). The one wall-clock row here is the scan budget (ceiling = twice defaults.REDACT_BUDGET_S); the perf rows (S_call, SK-5) live
+ in ``tests/test_textnorm_perf.py`` (marker ``perf``), which no mutation run lists. The assertions a mutant must trip carry a message; the
+ mutant list (``tests/textnorm_mutants.py``) names a fragment of that message.
+ 
+@@ -839,3 +839,39 @@ def test_on_another_unicode_version_identity_keys_are_tagged_and_scan_keys_are_n
+         "same_person is unusable on another Unicode version"
+     )
+     assert not same_person("bob", "bobby")
++
++
++# ---- the time budget of scan_keyset (A15 round 1, C-M4) --------------------------------------------------------------------------------
++def _eight_key_text() -> str:
++    """The widest scan: capital Eta (two readings differ) and tag characters (four tag texts); one-third of the cap in each part."""
++    return ("a" + chr(0xE0062) + chr(0x397)) * (CAP // 3)
++
++
++def test_scan_keyset_refuses_when_its_time_budget_is_spent(monkeypatch):
++    """The budget is ``defaults.REDACT_BUDGET_S``; a spent budget refuses (``TextTooLong``) instead of running on. Deterministic: the budget is set below zero."""
++    assert defaults.REDACT_BUDGET_S > 0
++    scan_keyset("bank12345")  # the real budget: no refusal for a short text
++    monkeypatch.setattr(defaults, "REDACT_BUDGET_S", -1.0)
++    with pytest.raises(TextTooLong):
++        scan_keyset("bank12345")
++    with pytest.raises(TextTooLong):
++        scan_keyset(_eight_key_text())
++
++
++def test_the_widest_scan_ends_inside_the_budget_or_refuses():
++    """262,144 characters, up to eight keys: the call returns keys or raises ``TextTooLong``, and it does not run past the budget by more
++    than one pass (the clock is checked before every pass). The ceiling is twice the budget, so a slow machine refuses rather than fails."""
++    import time
++
++    text = _eight_key_text()
++    assert len(text) <= CAP
++    start = time.monotonic()
++    try:
++        keys = scan_keyset(text)
++    except TextTooLong:
++        keys = None
++    took = time.monotonic() - start
++    assert keys is None or len(keys) >= 2
++    assert took < 2 * defaults.REDACT_BUDGET_S, (
++        f"the scan took {took:.1f} s, budget {defaults.REDACT_BUDGET_S} s"
++    )
