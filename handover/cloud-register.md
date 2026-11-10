@@ -962,3 +962,8 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a2940af583 | A11a PR77 evidence runner (8b2b716) | sonnet | 18:46Z | +60 min | running | reviewers when evidence lands |
 | afae33facc | A21a T2 builder (core/T1-T2-tests) | sonnet | 18:46Z | +60 min | running | evidence runner then reviewers |
 Plan P1d-a: FROZEN at rev 10 (no round 8); build A4 waits for A1, A2, A3 (ORDER 230).
+| a290aa955c | A2 PR89 fix builder r1 (RB89, 6706e67; BL-core-a2-w2-01..09) | sonnet | 19:40Z | +60 min | running | evidence runner (DSN set, no deselect, 3.12+3.13), then fresh reviewers |
+| acb4e972f6 | A14 PR72 evidence runner (d392200) | sonnet | ~19:00Z | +50 min | running | save TABLE, reviewers |
+| ac25206877 | A21a evidence runner (ba89ea7, money path) | sonnet | ~19:00Z | +50 min | running | save evidence, reviewers (uncapped) |
+| aea5c3b208 | A5 PR73 fix builder r1 (B-P73r2) | sonnet | ~19:00Z | +60 min | running | evidence then reviewers (security, uncapped) |
+Closed: a10f5f650a (PR72 fix builder, pushed d392200), a17e8eff8a and a99c6a3d18 (PR89 reviewers, saved), PR72 and PR73 round-w2 reviewers.

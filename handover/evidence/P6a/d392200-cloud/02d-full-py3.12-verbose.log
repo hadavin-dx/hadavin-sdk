@@ -1237,4 +1237,5 @@ tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalida
 tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[function-in-filter-clause] PASSED [ 11%]
 tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[function-in-order-by] PASSED [ 11%]
 tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[function-in-join-on] PASSED [ 11%]
-tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[function-in-case] 
+tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[function-in-case] PASSED [ 11%]
+tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[function-in-window-order] 
