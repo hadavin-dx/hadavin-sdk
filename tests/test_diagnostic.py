@@ -499,8 +499,8 @@ def test_a_non_str_module_is_refused_without_a_guard_failure() -> None:
 
 
 def test_safe_token_holds_the_member_not_the_callers_object() -> None:
-    member = "".join(["ab", "cd", "ef"])
-    caller = "".join(["ab", "cd", "ef"])
+    member = b"abcdef".decode()
+    caller = b"abcdef".decode()
     assert member == caller and member is not caller
     tok = SafeToken.of(caller, frozenset({member}))
     assert tok is not None and tok.value is member
