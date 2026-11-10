@@ -25,3 +25,5 @@ ok  KILLED       M5 the stage is compared by label (case and spaces tidied)  [te
 ok  KILLED       M5b the stage is tidied with NFKC, casefold and strip  [test_values_are_compared_exactly_never_normalised]
 ok  KILLED       M5c Dev and DEV get no rename sentence  [test_values_are_compared_exactly_never_normalised]
 ok  KILLED       M5d the rename sentence hides the other problems in the file  [test_dev_is_refused_with_the_rename]
+ok  KILLED       M6 the old word comes back in src  [test_the_old_stage_word_is_gone]
+exit=0

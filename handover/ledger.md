@@ -2141,3 +2141,8 @@
 | BL-core-a15-r2-04 | A15 PR74 21ca680 | MAJOR | mutation plan lacks many Appendix B mutants | OPEN | egm/A15/r1-design.md M4 | r1 |
 | BL-core-a15-r2-05 | A15 PR74 21ca680 | MAJOR | PR stacks P1a/P1b (~24k lines), behaviour change vs ticket; rebase or declare order | OPEN | egm/A15/r1-design.md M5 | r1 |
 | BL-core-a15-r2-06 | A15 PR74 21ca680 | MAJOR | test file name differs from ticket gate command | OPEN | egm/A15/r1-design.md M6 | r1 |
+| BL-core-p1da-r3-01 | P1d-a plan rev 5 | MAJOR | no Alternatives/Risks tables; three alternatives unweighed (undefang inside _neutralise, finalise step, parse_qsl) | OPEN | egm/P1d-a-plan/round3-design.md M1 | r3 |
+| BL-core-p1da-r3-02 | P1d-a plan rev 5 | MAJOR | link-safety step at two call sites not the choke point; third caller unsafe | OPEN | egm/P1d-a-plan/round3-design.md M2 | r3 |
+| BL-core-p1da-r3-03 | P1d-a plan rev 5 | MAJOR | G4 exact differential overclaimed; add base clean(x) freeze | OPEN | egm/P1d-a-plan/round3-design.md M3 | r3 |
+| BL-core-p1da-r3-04 | P1d-a plan rev 5 | MAJOR | literal fake credentials in fixtures against repo rule | OPEN | egm/P1d-a-plan/round3-design.md M4 | r3 |
+| BL-core-p1da-r3-05 | P1d-a plan rev 5 | MAJOR | no rebase protocol vs A7/A8 ordering; base pin 0dabf1f | OPEN | egm/P1d-a-plan/round3-design.md M5 | r3 |
