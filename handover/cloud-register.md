@@ -993,3 +993,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a7506071ca | A21a result reviewer (design) r2 | started 20:44 UTC | ~20 min | check +20 min |
 | af66d66e34, a7506071ca | A21a r2 reviewers | CLOSED 20:46 UTC, reports saved, 0 blockers, 3 majors | - | done |
 | af4a57cbb8 | A21a fix builder r3 (BL-core-a21a-w2-r2-01..06) | resumed 20:46 UTC | +90 min | check +30 min |
+| a290aa955c | PR89 fix builder r2 | CLOSED 20:48 UTC, pushed 45f2374 (113 mutants, full 3.12/3.13 pass per builder log) | - | done |
+| a4f0c2881c | PR89 evidence runner 0e4f6d5 | STOPPED by cloud (head superseded; its heavy.sh jobs killed; evidence at 0e4f6d5 void) | - | closed |
+| a7708eeaf9 | PR89 evidence runner 45f2374 | started 20:48 UTC | ~60-90 min | check +30 min |
+| acf7523afd | PR89 round-3 check reviewer (blockers/majors only) | started 20:48 UTC | ~20 min | check +20 min |

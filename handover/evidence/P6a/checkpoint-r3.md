@@ -1,0 +1,1 @@
+r3 checkpoint 20:47 UTC: strict sweep reverted (seed saved), S2 log line + position test + tests added, tool renamed client_profile_mutants.py + env scrub; todo: tighten killers via diagnostic run, seed mutants, CHANGELOG done, final runs
