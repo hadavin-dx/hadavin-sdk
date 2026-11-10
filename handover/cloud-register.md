@@ -1035,3 +1035,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a4a4bff5622077662 | PR72 round-4 egm-codebase-details review at a3d7eb0 | 2026-11-10 | ~30m | started | running | save report to reviews/P6a/round-w2-r4-codebase.md, ledger rows |
 | ace5bb6bb78f23f55 | PR72 builder round 4 | | | closed | reported head a3d7eb0 | evidence and review running |
 | aba78fad35d597d3c | PR89 round-5 reviewer | | | closed | report saved | follow-up batch sent to builder a290aa955c |
+| (see agent list) | PR72 evidence runner at ec76c73 (EVIDENCE RUNNER) | 2026-11-10 | ~2h | started | running | collect TABLE.md in evidence/P6a/ec76c73-cloud; then close PR72 (minors-only push, no new review) |
+| ace5bb6bb78f23f55 | PR72 builder round 5 (minors) | | | closed | reported head ec76c73 | evidence runner running |

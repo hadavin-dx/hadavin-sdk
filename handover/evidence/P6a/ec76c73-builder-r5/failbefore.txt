@@ -1,0 +1,10 @@
+$ new test file on a3d7eb0
+FAILED tests/test_client_profile.py::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[SLACK_BOT_TOKEN]
+FAILED tests/test_client_profile.py::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[CLOUDFLARE_API_TOKEN]
+FAILED tests/test_client_profile.py::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[PGPASSWORD]
+FAILED tests/test_client_profile.py::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[DATABASE_URL]
+FAILED tests/test_client_profile.py::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[KUBECONFIG]
+FAILED tests/test_client_profile.py::test_the_mutant_runner_gives_the_tests_an_empty_home
+FAILED tests/test_client_profile.py::test_a_killer_must_name_its_file_and_end_at_the_test_name
+FAILED tests/test_client_profile.py::test_a_run_of_only_some_mutants_is_never_a_pass
+8 failed, 95 passed in 1.59s

@@ -1,0 +1,6 @@
+$ MUTANT_ONLY=1 python tools/client_profile_mutants.py
+1 | yes | cp::test_a_demo_anchor_only_failure_does_not_advise_the_field (+named cp::test_demo_only_is_exactly_the_six_pairs) | KILLED-NAMED
+
+TOTAL mutants 1  planted 1  KILLED by the named test 1 (named 1, no named killer 0)  killed only by another test 0  SURVIVED 0  other problems 0  (4s)  PARTIAL RUN: 1 of 90, exit 1
+final git status: ''
+exit=1

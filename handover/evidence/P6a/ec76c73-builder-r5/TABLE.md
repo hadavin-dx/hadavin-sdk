@@ -1,0 +1,3 @@
+# P6a round 5 (review round-4 minors) builder evidence, head ec76c73, pushed to origin core/P6a
+NOT RUN: full pytest suites; stage mutants; perf, Vault, live tests; CI services not seen; no EGM review by this builder; ticket P6a.md left stale on purpose.
+Files here: lint.txt (exact commands), touched.txt (3.13 and 3.12: 105 passed each (103 in test_client_profile.py plus the 2 named tests)), failbefore.txt (8 new tests fail on a3d7eb0), mutants.txt (TOTAL 90, planted 90, killed by the named test 90, survived 0, exit 0), mutants-first-0cf1ffa.txt (first run: 2 self-mutants not located, fixed), partial.txt (MUTANT_ONLY=1 gives PARTIAL RUN, exit 1).
