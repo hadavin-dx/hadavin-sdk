@@ -1,1 +1,1 @@
-00:32Z | agents: RUNNING shell run9.sh campaign A4r9 (restarted 00:29Z); pulse watchdog | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 02:42Z); detail in HEARTBEAT.md
+01:09Z | agents: RUNNING shell run9.sh campaign A4r9 (restarted 00:29Z); pulse watchdog | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 03:19Z); detail in HEARTBEAT.md
