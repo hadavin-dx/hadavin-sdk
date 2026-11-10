@@ -1,29 +1,6 @@
-
-tests/test_tenant_ids.py:685: AssertionError
-_______________ test_the_odd_ids_are_in_fact_refused[\u0131d123] _______________
-
-value = 'ıd123'
-
-    @pytest.mark.parametrize("value", ODD_IDS)
-    def test_the_odd_ids_are_in_fact_refused(value):
-        message = _refusal(check_id, value)
->       assert message is not None, f"{value!a} was accepted"
-E       AssertionError: '\u0131d123' was accepted
-E       assert None is not None
-
-tests/test_tenant_ids.py:685: AssertionError
-=========================== short test summary info ============================
-FAILED tests/test_tenant_ids.py::test_an_id_shorter_than_the_redactors_minimum_is_refused[]
-FAILED tests/test_tenant_ids.py::test_an_id_shorter_than_the_redactors_minimum_is_refused[a]
-FAILED tests/test_tenant_ids.py::test_an_id_shorter_than_the_redactors_minimum_is_refused[xy]
-FAILED tests/test_tenant_ids.py::test_an_id_shorter_than_the_redactors_minimum_is_refused[p]
-FAILED tests/test_tenant_ids.py::test_an_id_shorter_than_the_redactors_minimum_is_refused[7]
-FAILED tests/test_tenant_ids.py::test_an_id_shorter_than_the_redactors_minimum_is_refused[42]
-FAILED tests/test_tenant_ids.py::test_an_id_shorter_than_the_redactors_minimum_is_refused[ ab ]
-FAILED tests/test_tenant_ids.py::test_an_id_shorter_than_the_redactors_minimum_is_refused[a\u200bb]
-FAILED tests/test_tenant_ids.py::test_an_id_shorter_than_the_redactors_minimum_is_refused[\uff41\uff42]
+FAILED tests/test_tenant_ids.py::test_an_id_shorter_than_the_redactors_minimum_is_refused
 FAILED tests/test_tenant_ids.py::test_the_length_limit_is_the_redactors_own_number[2]
-FAILED tests/test_tenant_ids.py::test_all_digit_ids_are_refused_below_the_redactors_digit_minimum[5]
+FAILED tests/test_tenant_ids.py::test_all_digit_ids_are_refused_below_the_redactors_digit_minimum
 FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[ac\x07me]
 FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[ac\tme]
 FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[ac me]
@@ -31,15 +8,6 @@ FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_re
 FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[ac.me]
 FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[\u0430cme]
 FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[\xdcn\xefcode-Tenant]
-FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused[ac\x00me]
-FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused[ac\x07me]
-FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused[ac\tme]
-FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused[ac me]
-FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused[ac\xa0me]
-FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused[ac.me]
-FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused[acme\u2028x]
-FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused[\u0430cme]
-FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused[acm\u0435]
-FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused[\xdcn\xefcode-Tenant]
-FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused[\u0131d123]
-29 failed, 50 passed in 1.31s
+FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused - Asser...
+FAILED tests/test_tenant_ids.py::test_the_redactor_sweep_uses_the_shared_limits
+12 failed, 23 passed, 25 deselected in 0.37s
