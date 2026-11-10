@@ -1,0 +1,52 @@
+H1 65536 clean 0.20
+H1 65536 blocks 0.22
+H1 262144 clean 0.96
+H1 262144 blocks 0.90
+H6 65536 clean 0.21
+H6 65536 blocks 0.22
+H6 262144 clean 1.33
+H6 262144 blocks 1.45
+H10 65536 clean 0.28
+H10 65536 blocks 0.27
+H10 262144 clean 1.61
+H10 262144 blocks 1.68
+[ 65536 clean 98.60
+[ 65536 blocks 99.42
+[ 262144 clean TIMEOUT>120
+[ 262144 blocks TIMEOUT>120
+> 65536 clean 0.12
+> 65536 blocks 0.14
+> 262144 clean 0.48
+> 262144 blocks 0.49
+bt1 65536 clean 0.93
+bt1 65536 blocks 0.95
+bt1 262144 clean InputTooLarge 0.91
+bt1 262144 blocks InputTooLarge 1.08
+bt3 65536 clean 0.72
+bt3 65536 blocks 0.72
+bt3 262144 clean InputTooLarge 0.89
+bt3 262144 blocks InputTooLarge 0.91
+bt2 65536 clean 0.21
+bt2 65536 blocks 0.29
+bt2 262144 clean 0.85
+bt2 262144 blocks 0.86
+ph. 65536 clean 0.61
+ph. 65536 blocks 0.54
+ph. 262144 clean 3.19
+ph. 262144 blocks 3.22
+[.] 65536 clean 0.43
+[.] 65536 blocks 0.38
+[.] 262144 clean 3.02
+[.] 262144 blocks 3.04
+&amp; 65536 clean 0.38
+&amp; 65536 blocks 0.37
+&amp; 262144 clean 1.81
+&amp; 262144 blocks 1.80
+dom 65536 clean 0.27
+dom 65536 blocks 0.26
+dom 262144 clean InputTooLarge 0.97
+dom 262144 blocks InputTooLarge 0.99
+nl 65536 clean 0.62
+nl 65536 blocks 0.62
+nl 262144 clean 2.50
+nl 262144 blocks 2.44

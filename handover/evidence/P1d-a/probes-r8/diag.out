@@ -1,0 +1,5 @@
+['DOMAIN'] 'w-?v例z6ydb01[.]corp[.]example.com' | code spans real: ['\u200b', 'lk4xKp2Vb9Lr3NcW8dYh6uJss8beb?', '\u200b']
+['NONASCII'] ':‹24m><EMAIL_1>ney<HOSTNAME_1>?>www[.]evil[.]digitalg‹.2.~\u200b~\u200b~..<PRIVKEY_1>' | code spans real: ['\u200b']
+['DOMAIN'] 'db01.<HOSTNAME_2>[.]example[.]com<EMAIL_1>#devil.comc' | code spans real: []
+['NONASCII'] '-ut.~\u200b~\u200b~ypd~\u200b~\u200b~r8/<EMAIL_1>@wdwww[.]evil[.]digital‹63.-f=n6>password=<SECRET_1> w0' | code spans real: ['\u200b', '9]r']
+['NONASCII'] ']evil[.]com‹w.-..gwww.evil.digitalr_~\u200b~\u200b~<HOSTNAME_2>[.]example.com5bl>g/9z&例:e' | code spans real: ['\u200b', '@:t@k4xKp2Vb9Lr3NcW8dYh6uJs[', '\u200b']

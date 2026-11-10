@@ -1,0 +1,14 @@
+== /tmp/p7/orig
+'com.example.service.token.refresh: connection lost' -> 'com[.]example[.]service[.]token[.]refresh: connection lost'
+'db.password.rotation.internal.example.com:5432 ready' -> 'db[.]password[.]rotation[.]internal[.]example[.]com:5432 ready'
+'credential-sync.corp.example.com:8443 up' -> 'credential-sync[.]corp[.]example[.]com:8443 up'
+'secret-store-prod-eu.example.com: timeout after 3 s' -> 'secret-store-prod-eu[.]example[.]com: timeout after 3 s'
+'app.auth.token.TokenRefreshWorker: retry 2 of 5' -> 'app[.]auth[.]token[.]TokenRefreshWorker: <SECRET_1> 2 of 5'
+'password=abc123Xyz9 then db01.corp.example.com:5432' -> 'password=<SECRET_1> then db01[.]corp[.]example[.]com:5432'
+== /tmp/p10
+'com.example.service.token.refresh: connection lost' -> 'com[.]example[.]service[.]token[.]refresh: <SECRET_1> lost'
+'db.password.rotation.internal.example.com:5432 ready' -> 'db[.]password[.]rotation[.]internal[.]example[.]com:<SECRET_1> ready'
+'credential-sync.corp.example.com:8443 up' -> '<HOSTNAME_1>[.]example[.]com:8443 up'
+'secret-store-prod-eu.example.com: timeout after 3 s' -> 'secret-store-prod-eu[.]example[.]com: <SECRET_1> after 3 s'
+'app.auth.token.TokenRefreshWorker: retry 2 of 5' -> 'app[.]auth[.]token[.]TokenRefreshWorker: <SECRET_1> 2 of 5'
+'password=abc123Xyz9 then db01.corp.example.com:5432' -> 'password=<SECRET_1> then <HOSTNAME_1>[.]example[.]com:5432'

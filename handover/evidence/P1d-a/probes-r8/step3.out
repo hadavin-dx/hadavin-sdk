@@ -1,0 +1,32 @@
+### p10_links2
+link failures (defang_prose fixed point) 2 with backtick 2 no backtick 0
+['w-?v例z6ydb01[.]corp[.]example.com']
+['db01.<HOSTNAME_2>[.]example[.]com<EMAIL_1>#devil.comc']
+### p10_fixpt
+clean(x) not fixed by defang_text: 0
+### p10_links
+texts 2000 with backtick 1616 link failures 2 of which with backtick 2
+defang_text idempotence failures 0
+'3anna.m@example.orgmrn_．g_h。udb01.corp.example.com43 evil.comksét\nwk=:_aqt｡/\nw-?v例z6ydb01.corp.example.com_?password=#[ke5ni_2&vx```.?password=u例k<EMAIL_1>lgpg7épassword=~~~2u1épr87>。xpl~~~｡ &．```lk4xKp2Vb9Lr3NcW8dYh6uJss8beb?\nh3/3iq4xKp2Vb9Lr3NcW8dYh6uJswj```jrs v:]ez.*kanna.m@example.org例www.evil.digital4xKp2Vb9Lr3NcW8dYh6uJs~~~m```~~~。例pb｡' -> '3anna.m@example.orgmrn_.g_h.<HOSTNAME_1>[.]example.com43 evil.comksét\nwk=:_aqt./\nw-?v例z6ydb01[.]corp[.]example.com_?password=<SECRET_2> &.`\u200b`\u200b`lk4xKp2Vb9Lr3NcW8dYh6uJss8beb?\nh3/3iq4xKp2Vb9Lr3NcW8dYh6uJswj`\u200b`\u200b`jrs v:]ez.*kanna.m@example[.]org例www[.]evil.digital4xKp2Vb9Lr3NcW8dYh6uJs~\u200b~\u200b~m`\u200b`\u200b`~\u200b~\u200b~.例pb.' ['w-?v例z6ydb01[.]corp[.]example.com']
+'cuw<HOSTNAME_1>w:。w8zi｡a． _db01.corp.example.com4.edb01.corp.example.com<EMAIL_1>#devil.comc_& i3t`e&:｡~~~=wo4xKp2Vb9Lr3NcW8dYh6uJseanna.m@example.org#opassword=db01.corp.example.com<例db01.corp.example.com<HOSTNAME_1>4bp@u9evil.com05f0[.]`:21gb44~~~g[.].1例6例@`7tiwc4o#```<EMAIL_1>d/i>dzm-:>/[*<EMAIL_1>]g?:r。_ey6?mx>eo\n。0i[g=apassword=evil.com4xa<EMAIL_1>~~~v*' -> 'cuw<HOSTNAME_1>w:.w8zi.a. _db01.<HOSTNAME_2>[.]example[.]com<EMAIL_1>#devil.comc_& i3t`e&:.~\u200b~\u200b~=<EMAIL_2>#opassword=<SECRET_1>\n.0i[g=apassword=<SECRET_2>' ['db01.<HOSTNAME_2>[.]example[.]com<EMAIL_1>#devil.comc']
+x1 'x ` y\n` evil[.]com `'
+### p10_n9
+'see //evil。com/p now' | card 'see [link removed] now' | gate(defang=False) 'see [link removed] now' | default 'see //evil.com/p now'
+'see //evil．com/p now' | card 'see [link removed] now' | gate(defang=False) 'see [link removed] now' | default 'see //evil.com/p now'
+'see //evil｡com/p now' | card 'see [link removed] now' | gate(defang=False) 'see [link removed] now' | default 'see //evil.com/p now'
+'visit www。evil。digital now' | card 'visit www[.]evil[.]digital now' | gate(defang=False) 'visit www.evil.digital now' | default 'visit www[.]evil[.]digital now'
+'mail anna。m@example。org now' | card 'mail <EMAIL_1> now' | gate(defang=False) 'mail anna.m@example.org now' | default 'mail anna.m@example[.]org now'
+'x `//evil。com/p` y' | card 'x `//evil。com/p` y' | gate(defang=False) 'x `//evil。com/p` y' | default 'x `//evil。com/p` y'
+'see //evil。com now' | card 'see [link removed] now' | gate(defang=False) 'see [link removed] now' | default 'see //evil.com now'
+'a http://evil。com/p b' | card 'a [link removed] b' | gate(defang=False) 'a [link removed] b' | default 'a [link removed] b'
+### p10_n8
+'`a\nevil.com` b evil.com' -> '`a\nevil[.]com` b evil[.]com'
+'x `evil.com\ny` z evil.com' -> 'x `evil[.]com\ny` z evil[.]com'
+'see `a` and evil.com' -> 'see `a` and evil[.]com'
+'`a evil.com password=4xKp2Vb9Lr3NcW8dYh6uJs` b' -> '`a evil.com password=4xKp2Vb9Lr3NcW8dYh6uJs` b'
+'see ``note `evil.com` x`` now' -> 'see ``note `evil[.]com` x`` now'
+'```\nevil.com\n```\nthen evil.com' -> '```\nevil.com\n```\nthen evil[.]com'
+'a ` b\nevil.com ` c' -> 'a ` b\nevil[.]com ` c'
+'use \\`evil.com\\` now' -> 'use \\`evil[.]com\\` now'
+'`x` ` y\nevil.com' -> '`x` ` y\nevil[.]com'
+'run `curl db01.corp.example.com` now' -> 'run `curl db01.corp.example.com` now'
