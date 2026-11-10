@@ -714,6 +714,11 @@ def _runner():
         "GCLOUD_PROJECT",
         "OCI_CLI_PROFILE",
         "VAULT_TOKEN",
+        "SLACK_BOT_TOKEN",
+        "CLOUDFLARE_API_TOKEN",
+        "PGPASSWORD",
+        "DATABASE_URL",
+        "KUBECONFIG",
     ],
 )
 def test_the_mutant_runner_refuses_to_start_with_a_cloud_setting(monkeypatch, capsys, name):
@@ -732,7 +737,13 @@ def test_the_mutant_runner_gives_the_tests_only_plain_variables(monkeypatch):
     for name in ["AWS_SECRET_ACCESS_KEY", "HTTPS_PROXY", "HADAVIN_TEST_PG_DSN", "PATH"]:
         monkeypatch.setenv(name, "made-up")
     env = runner.clean_env(PYTHONPATH="/x")
-    assert set(env) <= {*runner.PLAIN_ENV, "HOME", "PYTHONPATH", "PYTHONDONTWRITEBYTECODE"}
+    assert set(env) <= {
+        *runner.PLAIN_ENV,
+        "HOME",
+        "USERPROFILE",
+        "PYTHONPATH",
+        "PYTHONDONTWRITEBYTECODE",
+    }
     assert env["PATH"] == "made-up" and env["PYTHONPATH"] == "/x"
 
 
@@ -742,25 +753,49 @@ def test_the_mutant_runner_gives_the_tests_an_empty_home(monkeypatch, tmp_path):
     (tmp_path / ".aws").mkdir()
     (tmp_path / ".aws" / "credentials").write_text("made up\n", encoding="utf-8")
     monkeypatch.setenv("HOME", str(tmp_path))
-    home = Path(runner.clean_env()["HOME"])
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))  # Windows reads this one and ignores HOME
+    env = runner.clean_env()
+    home = Path(env["HOME"])
     assert home != tmp_path and home.is_dir()
+    assert env["USERPROFILE"] == env["HOME"]
     assert list(home.iterdir()) == []
 
 
-def test_a_killer_must_be_anchored_at_the_end():
-    """A killer is searched in the failing test's id: a bare `::test_x` would also match `::test_x_and_more`."""
+def _row(killer: str) -> tuple:
+    """A mutant row as the runner holds it: (number, description, file, mutation, tests, killer)."""
+    number, description, path, mutation, tests = 1, "made up", "path", None, []
+    return (number, description, path, mutation, tests, killer)
+
+
+def test_a_killer_must_name_its_file_and_end_at_the_test_name():
+    """A killer is matched against a failing test's id: a bare `::test_x` would also match `a.py::test_x_and_more`
+    and `other.py::test_x`, and a second branch (`|`) would match anything."""
     runner = _runner()
-    row = (1, "made up", "path", None, [], "")
-    for bad in ("::test_x", "::test_x.*", "test_x$"):
-        assert runner.killer_problems([(*row[:5], bad)]), bad
-    for good in ("", "::test_x$", "::test_x\\[", "tests/a.py::test_x\\[a-b\\]"):
-        assert runner.killer_problems([(*row[:5], good)]) == [], good
+    bad = [
+        "::test_x$",  # no file
+        "tests/a.py::test_x",  # no end
+        "tests/a.py::test_x.*",
+        "tests/a.py::test_x$|tests/b.py::test_y$",  # a second branch
+        "tests/a.py::test_x\\[a|b",  # a second branch in the parameter part
+        "test_x$",
+    ]
+    for killer in bad:
+        assert runner.killer_problems([_row(killer)]), killer
+    good = [
+        "",
+        "tests/a.py::test_x$",
+        "tests/a.py::test_x\\[",
+        "tests/a.py::test_x\\[(a|b)-",  # a branch inside a group is fine
+        "tests/a.py::test_x\\[a-b\\]",
+    ]
+    for killer in good:
+        assert runner.killer_problems([_row(killer)]) == [], killer
     assert runner.killer_problems() == []  # every killer of this tool
 
 
 def test_the_mutant_runner_refuses_to_start_with_an_unanchored_killer(monkeypatch, capsys):
     runner = _runner()
-    monkeypatch.setattr(runner, "DEF", [*runner.DEF, (999, "made up", "p", None, [], "::test_x")])
+    monkeypatch.setattr(runner, "DEF", [*runner.DEF, _row("::test_x")])
 
     def started(*_a):
         raise AssertionError("the runner went on to make its copy")
@@ -780,6 +815,14 @@ def test_only_a_kill_by_the_named_test_makes_the_run_pass(status):
     ok, not_clean = runner.verdict([clean, (2, "made up", "yes", "cp::test_y", status, "")])
     assert ok is False and [r[0] for r in not_clean] == [2]
     assert runner.verdict([])[0] is False
+
+
+def test_a_run_of_only_some_mutants_is_never_a_pass():
+    """MUTANT_ONLY picks mutants: even when every picked one is killed, the run did not cover the list."""
+    runner = _runner()
+    clean = (1, "made up", "yes", "cp::test_x", "KILLED-NAMED", "")
+    assert runner.verdict([clean], expected=1)[0] is True
+    assert runner.verdict([clean], expected=2)[0] is False
 
 
 def test_the_mutant_numbers_are_one_to_n_without_gaps_or_repeats():
