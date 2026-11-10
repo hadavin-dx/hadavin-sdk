@@ -2,3 +2,8 @@
 17:52 UTC (11 min): scan_repo.py reworked (NUL/binary latin-1 scan, tomllib nested pyproject, config-named link/non-file hit, secret prefix guard, config names, gitattributes, empty noqa, bare lgtm, reason checks, allowlist validation, ruff-skipped-dir). 51 baseline reasons rewritten after reading each marker line. gitleaks 8.30.1 probe: -diff and binary BLIND it (handover/reports/A24-PR91-fix3-gitleaks-probe.txt). Finding: ISC004 in the corpus.py marker was NOT dead (5 live ISC004 errors without it); fixed the 5 sites by parenthesising (AST identical), marker now S608 only. tests/test_scan_repo.py: 468 passed. (An earlier version of this note had wrong invented times; corrected.)
 Next: fail-before proof on db0e0ce, CODEOWNERS + pytest guard tests, more mutants, toolpath test, CHANGELOG, final gates.
 17:55 UTC: CODEOWNERS extended; test_ci_gitleaks_scope.py: pytest/coverage pin, conftest/ini check, collection check (folder arg, like CI), CODEOWNERS coverage check. Next: mutants, toolpath test, CHANGELOG, list refresh, final gates.
+
+## 17:59 UTC checkpoint
+Done: all code and tests; 24 mutants written (running); suppression list refreshed (scan rc=0); CHANGELOG updated.
+Next: mutation run result, fail-before log copy, final gates via heavy.sh, commit, push, report.
+Blockers: none. Head still db0e0ce (uncommitted work).
