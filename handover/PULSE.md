@@ -1,1 +1,1 @@
-16:28Z | agents: none yet (plan being written) | queue: none | last: READY q416 | unpushed: none | next: parallel plan + EGM review
+16:30Z | agents: RUNNING ab6b98e1f plan reviewer readiness (egm-implementation-readiness, sonnet); a78ededf plan reviewer zoom-out (egm-zoom-out, sonnet); run9s campaign dead (machine restarts), not restarted: demo frozen order 230 | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 18:40Z); detail in HEARTBEAT.md
