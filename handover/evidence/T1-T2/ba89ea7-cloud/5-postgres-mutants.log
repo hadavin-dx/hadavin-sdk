@@ -1,2 +1,3 @@
 HEAD ba89ea751e0197ff64bd20143cd606eaa6529d01
 CMD /home/user/build/venv-t1t2-313/bin/python /home/user/hadavin-sdk/handover/evidence/T1-T2/postgres_mutants.py /home/user/build/EV-T1T2-ba89ea7/wt
+exit=0
