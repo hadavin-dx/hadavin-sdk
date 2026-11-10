@@ -1,1 +1,1 @@
-00:27Z | agents: RUNNING shell run9.sh campaign A4r9 (restarted 23:48Z; container restarted twice, each loses the run); pulse watchdog restarted 23:48Z | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 02:37Z); detail in HEARTBEAT.md
+00:28Z | agents: RUNNING shell run9.sh campaign A4r9 (restarted 00:29Z); pulse watchdog | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 02:38Z); detail in HEARTBEAT.md
