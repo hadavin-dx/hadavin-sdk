@@ -2198,3 +2198,4 @@
 | BL-core-a15-r2-03 | PR74 8aaaea5 | MAJOR | guard-counter lock test cannot fail on old code | OPEN | egm/A15/r2-codebase.md M2 | UNCAPPED |
 | BL-core-a15-r2-04 | PR74 8aaaea5 | MAJOR | ticket P5a.md:360 says ten noqa sites / function-symbol keys; nine / guard strings | OPEN | egm/A15/r2-codebase.md M3 | UNCAPPED |
 | BL-core-a15-r2-05 | PR74 8aaaea5 | MAJOR | scan time budget in textnorm.py has no mutant and the mutant file was not re-run | OPEN | egm/A15/r2-codebase.md M4 | UNCAPPED |
+| BL-core-a19-r3-01 | PR83 f1e9e9d | MAJOR | redactor `_replace_standalone` is case-sensitive: later copy of a registered id in another case stays in clear (pre-existing; fix: sweep case-insensitively or refuse upper case, else say in CHANGELOG) | OPEN | egm/A19/r3-codebase.md N3 | UNCAPPED |

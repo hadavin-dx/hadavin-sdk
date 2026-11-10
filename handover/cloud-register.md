@@ -948,3 +948,4 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a5b069d23c0f3e877 | egm-implementation-readiness (sonnet) | P1d-a plan pass 6 (rev 9) | started 18:20Z, expected 18:45Z | RUNNING |
 | a87edd0dc27527a10 | egm-design (sonnet) | P1d-a plan pass 6 (rev 9) | started 18:20Z, expected 18:45Z | RUNNING |
 | a38b2c903abf7cfa8 | egm-codebase-details (sonnet) | A19 PR83 r3, snapshot egm/A19/snapshot-f1e9e9d | started 18:24Z, expected 18:50Z | RUNNING |
+| a38b2c903abf7cfa8 | egm-codebase-details | A19 PR83 r3 | REPORTED 0B/0M/3N, CLOSED; saved egm/A19/r3-codebase.md |
