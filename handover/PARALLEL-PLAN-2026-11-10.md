@@ -80,3 +80,19 @@ Critical path: A9 -> A3 -> A10b -> A12 -> A18; A3 -> A13 -> A21b; redaction: A8 
 3. Voided evidence on stacked bases and moved heads: marked "void if base changes"; A9 goes first.
 4. Missing scripts: NOT RUN, asked again with a default.
 5. Shared files: serialisation rule 9.
+
+## Wave 2 start check (ORDER 234, 18:50Z UTC; 00:20 IST on 2026-11-11)
+Rule: agents are not core-limited; only heavy test runs wait for the 3 slots (queue `qsubmit.sh`, builders and runners read the log). Reviews and ticket/plan work start NOW on a frozen snapshot of the head.
+| id | files touched | depends-on (real) | heavy slot | start |
+|---|---|---|---|---|
+| A22 PR71 review | none (read-only) | none | no | NOW (reviewer a) |
+| A10a PR76 review | none | none ("void if PR75 head changes": reviewers note the head) | no | NOW (2 reviewers) |
+| A21a T2 tests | tests only, own worktree | none | small (own tests) | NOW (builder) |
+| A2 PR89 evidence | none (evidence files) | none | yes | NOW (runner queues) |
+| A5 PR73 evidence | none | none | yes | NOW (runner queues) |
+| A14 PR72 evidence | none | none | yes | NOW (runner queues) |
+| A11a PR77 evidence | none | none ("void if PR63 head changes") | yes | NOW (runner queues) |
+| A15 PR74 evidence | none | A15 fix builder (in flight) pushes a new head | yes | WAIT-FOR A15-fix head |
+| A20 ci-lint batch 2 | ci.yml, pyproject | A24 fix lands (same file ci.yml) | yes | WAIT-FOR A24-fix |
+| A4 P1d-a build | approvals + text folding | ORDER 230: after PR84, #89, PR75; plan FROZEN at rev 10 (ORDER 234 item 3) | yes | WAIT-FOR A1 (PR84), A2 (PR89), A3 (PR75) |
+Queued as before: A11b (A8), A21b (A13), A10b (A3), A12 (A10b, A6), A13 (A3), A16 (A15), A17 (A16), A18 (A12).
