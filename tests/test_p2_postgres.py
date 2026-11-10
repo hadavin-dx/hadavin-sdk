@@ -1,4 +1,4 @@
-"""Slice 2 P2: postgres store, `hadavin-sdk migrate`, and the CLI kill switch on a shared store.
+"""The postgres store, `hadavin-sdk migrate`, and the CLI kill switch on a shared store.
 
 Tests that need a database skip without HADAVIN_TEST_PG_DSN (CI runs the postgres service)."""
 
@@ -111,9 +111,7 @@ def test_migrate_needs_the_migration_dsn(cfg_dir, monkeypatch, capsys):
 
 
 def test_cli_limits_without_a_readable_dsn_is_a_config_error(cfg_dir, capsys):
-    _use_postgres(
-        cfg_dir
-    )  # configured `fake` secrets are empty: a real secrets kind (P4) holds the DSN
+    _use_postgres(cfg_dir)  # configured `fake` secrets are empty: a real secrets kind holds the DSN
     # main maps a ConfigError to exit 2 (never Python's crash code 1) and names the problem on stderr
     assert cli.main(["--config", str(cfg_dir), "limits", "stop", "--by", "user:a"]) == 2
     assert "'pg-dsn' cannot be read" in capsys.readouterr().err

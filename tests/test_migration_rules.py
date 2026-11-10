@@ -25,7 +25,7 @@ from hadavin_sdk.store import migration_numbers as mn
 from tests.fixtures.dsn_skip import DSN_NAME, require_module
 
 ROOT = Path(__file__).resolve().parents[1]
-P3A2_TEST_FILES = [
+MIGRATION_TEST_FILES = [
     "tests/test_migration_wiring.py",
     "tests/test_migration_postgres.py",
     "tests/test_migration_rules.py",
@@ -153,8 +153,8 @@ def test_the_skip_rule_allows_the_two_guarded_forms(source):
     assert skip_violations(source) == []
 
 
-@pytest.mark.parametrize("name", P3A2_TEST_FILES)
-def test_no_p3a2_test_skips_silently(name):
+@pytest.mark.parametrize("name", MIGRATION_TEST_FILES)
+def test_no_migration_test_skips_silently(name):
     assert skip_violations((ROOT / name).read_text(encoding="utf-8")) == []
 
 
@@ -554,9 +554,12 @@ def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
     first = _words(_upgrade_bullet())
     assert "refuses, before it connects, a released file that was edited or deleted" in first
     assert (
-        "Tested against PostgreSQL 16.15 on the build machine; the CI run on 17.10 is recorded in the pull request"
+        "Not yet run on PostgreSQL 17.10, the CI version. The pull request records that run when it exists."
         in first
     )
+    assert "Tested on:** PostgreSQL 16.15, on the build machine" in first
+    assert "session_user" in first and "WITH GRANT OPTION" in first and "pg_parameter_acl" in first
+    assert "PostgreSQL 16 is the lowest version" in first
     assert "TO FILL IN" not in first, "no placeholder is left in the changelog"
     assert "the tests read the same file" in first
     assert "the role memberships" in first and "inside a function body" in first
@@ -644,7 +647,8 @@ PACKAGED_JSON = ("migrations_released.json", "migrations_trigger_changes.json")
 def test_the_built_wheel_holds_both_migration_lists(tmp_path):
     """`migrate()` reads both lists at run time from the folder of the package, so an installed copy must have them.
     The wheel is built into a temporary folder (`uv build`) and its file list is read; each file in it must equal the
-    file in the source tree."""
+    file in the source tree. `uv build` fetches the build backend on a first run (then it is cached), so with an empty
+    cache and no network this test fails with uv's own message; it is not skipped."""
     import asyncio
     import shutil
     import zipfile

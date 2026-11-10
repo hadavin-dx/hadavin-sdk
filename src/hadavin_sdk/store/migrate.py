@@ -387,12 +387,18 @@ _READBACK_VALUES_SQL = (
 )
 # The four flags that make a migration role too powerful (a superuser can change what the read-back does not read).
 _ROLE_FLAGS = ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls")
-_ROLE_FLAGS_SQL = "SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls FROM pg_roles WHERE rolname = current_user"
+# `session_user` too: a login that is a superuser and then runs `SET ROLE` to a plain role is still a superuser (a file can
+# undo the switch inside a function body).
+_ROLE_FLAGS_SQL = (
+    "SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls FROM pg_roles "
+    "WHERE rolname IN (current_user, session_user)"
+)
 # Settings saved per database or per role (`ALTER ROLE ... SET`, `ALTER DATABASE ... SET`): they apply to NEW sessions,
 # so a file that changes them changes what the next connection runs with.
 _READBACK_SETTINGS_SQL = (
     "SELECT coalesce(d.datname, ''), coalesce(r.rolname, ''), s.setconfig::text FROM pg_db_role_setting s "
-    "LEFT JOIN pg_database d ON d.oid = s.setdatabase LEFT JOIN pg_roles r ON r.oid = s.setrole"
+    "LEFT JOIN pg_database d ON d.oid = s.setdatabase LEFT JOIN pg_roles r ON r.oid = s.setrole "
+    "WHERE s.setdatabase IN (0, (SELECT oid FROM pg_database WHERE datname = current_database()))"
 )
 # Role memberships (who is a member of whom, with the grant options): the one thing a `$$` function body can change
 # that no statement-start rule sees (`GRANT r TO s` inside a function, then `SELECT f();`). Names, not OIDs.
@@ -402,11 +408,11 @@ _READBACK_MEMBERS_SQL = (
 )
 # Triggers of the migration schema only (the schema `current_schema()` names now); internal ones are skipped. Per
 # trigger: its table's id (only to tell a renamed table from a new one), its enabled state, its full definition and
-# the md5 of its function's source text, the function's security mode, owner and saved settings (a function replaced
+# its function's source text, the function's security mode, owner and saved settings (a function replaced
 # under the same name keeps the trigger name but not what it does).
 _READBACK_TRIGGERS_SQL = (
     "SELECT t.tgname, t.tgenabled, c.relname, n.nspname, t.tgrelid::bigint, pg_get_triggerdef(t.oid), "
-    "md5(p.prosrc), p.prosecdef, pg_get_userbyid(p.proowner), p.proconfig::text FROM pg_trigger t "
+    "p.prosrc, p.prosecdef, pg_get_userbyid(p.proowner), p.proconfig::text FROM pg_trigger t "
     "JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace "
     "LEFT JOIN pg_proc p ON p.oid = t.tgfoid "
     "WHERE NOT t.tgisinternal AND n.nspname = current_schema()"
@@ -443,7 +449,8 @@ class TriggerChange:
 def _trigger_changes() -> frozenset[TriggerChange]:
     """The reviewed list of triggers a migration file may change. The file is a JSON list of objects with the keys
     `migration`, `table` (`name` or `schema.name`), `trigger` and `reason` (one line of plain words), and optionally
-    `enabled_state` (`D` or `R`: the one disabled or replica-only state this file may leave the trigger in). It is empty
+    `enabled_state` (`D` or `R`: the one disabled or replica-only state this file may change an EXISTING trigger to; a
+    trigger the file creates is never allowed to be disabled or replica-only). It is empty
     today. Anything else (a bad shape, a second entry for the same file, table and trigger, an empty or multi-line
     reason) is a `ConfigError`: a malformed list must never mean "allow"."""
     try:
@@ -471,6 +478,8 @@ def _trigger_changes() -> frozenset[TriggerChange]:
         table = _TRIGGER_TABLE.fullmatch(entry["table"])
         if table is None:
             raise ConfigError(f"{where}, has a table that is not `name` or `schema.name`")
+        if escape_name(entry["trigger"]) != entry["trigger"]:
+            raise ConfigError(f"{where}, has a trigger name with a control or unusual character")
         if "\n" in entry["reason"] or "\r" in entry["reason"]:
             raise ConfigError(f"{where}, has a reason of more than one line")
         state = entry.get("enabled_state", "")
@@ -528,25 +537,39 @@ def _read_back(db) -> _Saved:
 # fits the database). `<schema>` is the schema `migrate` works in.
 PLAIN_MIGRATION_ROLE_SQL = (
     "CREATE ROLE migration_role LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS; "
-    "GRANT USAGE, CREATE ON SCHEMA <schema> TO migration_role;"
+    "GRANT USAGE, CREATE ON SCHEMA <schema> TO migration_role WITH GRANT OPTION;"
 )
 
 
-# A plain role can still borrow the four flags by being a member of a role that holds one (the member can `SET ROLE` to
-# it, or uses its rights at once when it inherits). `pg_has_role(..., 'MEMBER')` is true for either way, direct or through
-# other roles, and for any server version that has the check.
+# A plain role can still borrow rights by being a member of a role that holds one of the four flags or is a built-in
+# server role (every role whose name starts with `pg_`, for example `pg_execute_server_program`, which runs programs
+# on the server, and `pg_write_server_files`; only `pg_database_owner` is allowed). The member can `SET ROLE` to it, or
+# uses its rights at once when it inherits. `pg_has_role(..., 'MEMBER')` is true for either way, direct or through other
+# roles. Checked for `current_user` and `session_user`.
 _BORROWED_ROLES_SQL = (
-    "SELECT r.rolname FROM pg_roles r WHERE (r.rolsuper OR r.rolcreaterole OR r.rolcreatedb OR r.rolbypassrls) "
-    "AND r.rolname <> current_user AND pg_has_role(current_user, r.oid, 'MEMBER') ORDER BY r.rolname"
+    "SELECT r.rolname FROM pg_roles r WHERE (r.rolsuper OR r.rolcreaterole OR r.rolcreatedb OR r.rolbypassrls "
+    "OR (left(r.rolname, 3) = 'pg_' AND r.rolname <> 'pg_database_owner')) "
+    "AND r.rolname NOT IN (current_user, session_user) "
+    "AND (pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER')) "
+    "ORDER BY r.rolname"
+)
+# Rights to change server settings (PostgreSQL 15 and later keep them in `pg_parameter_acl`): a grant such as
+# `GRANT SET ON PARAMETER session_replication_role` lets a file change what the checks rely on.
+_PARAMETER_TABLE_SQL = "SELECT to_regclass('pg_parameter_acl') IS NOT NULL"
+_PARAMETER_GRANTS_SQL = (
+    "SELECT parname FROM pg_parameter_acl WHERE has_parameter_privilege(current_user, parname, 'SET') "
+    "OR has_parameter_privilege(current_user, parname, 'ALTER SYSTEM') "
+    "OR has_parameter_privilege(session_user, parname, 'SET') "
+    "OR has_parameter_privilege(session_user, parname, 'ALTER SYSTEM') ORDER BY parname"
 )
 
 
 def _refuse_privileged_role(db) -> None:
     """The migration role must hold none of the four flags of `_ROLE_FLAGS` (checked with the live flags of the current user)."""
-    row = db.execute(_ROLE_FLAGS_SQL).fetchone()
-    if row is None:
+    rows = db.execute(_ROLE_FLAGS_SQL).fetchall()
+    if not rows:
         raise ConfigError("migrate cannot read the flags of its own database role")
-    held = [flag for flag, value in zip(_ROLE_FLAGS, row, strict=True) if value]
+    held = [flag for i, flag in enumerate(_ROLE_FLAGS) if any(row[i] for row in rows)]
     if held:
         raise ConfigError(
             "the migration role must not be a superuser and must not hold CREATEROLE, CREATEDB or BYPASSRLS, "
@@ -556,29 +579,42 @@ def _refuse_privileged_role(db) -> None:
         )
     if borrowed := [r[0] for r in db.execute(_BORROWED_ROLES_SQL).fetchall()]:
         raise ConfigError(
-            "the migration role is a member of a role that is a superuser or holds CREATEROLE, CREATEDB or BYPASSRLS "
-            f"({', '.join(borrowed[:20])}), so it could use those rights. Remove the membership (REVOKE <that role> "
-            "FROM <the migration role>) or run migrate with a plain role that is a member of none of them."
+            "the migration role is a member of a role that is a superuser, holds CREATEROLE, CREATEDB or BYPASSRLS, "
+            f"or is a built-in server role ({', '.join(_label(b) for b in borrowed[:20])}), so it could use those rights. "
+            "Remove the membership (REVOKE <that role> FROM <the migration role>) or run migrate with a plain role "
+            "that is a member of none of them."
+        )
+    row = db.execute(_PARAMETER_TABLE_SQL).fetchone()
+    if row and row[0] and (params := [r[0] for r in db.execute(_PARAMETER_GRANTS_SQL).fetchall()]):
+        raise ConfigError(
+            "the migration role may change server settings it must not change "
+            f"({', '.join(_label(x) for x in params[:20])}): a grant on a parameter lets a file change what the checks "
+            "rely on. Remove the grant (REVOKE SET, ALTER SYSTEM ON PARAMETER <name> FROM <the migration role>)."
         )
 
 
 # Objects of the migration schema that the migration role cannot change because another role owns them (it is not that
-# role and holds none of its rights). Such an object makes a later `ALTER TABLE` or `CREATE OR REPLACE FUNCTION` fail with
-# "must be owner of ...", and makes the `GRANT` and `REVOKE` of `migrate` do nothing without an error. A database
-# first built by a superuser login (the usual start of a demo) is in this state. Objects that belong to an installed
-# extension are skipped (the owner of those is the extension's business); a sequence that belongs to a column goes
-# with its table, so only the table is listed.
+# role and is not a member of it that inherits its rights: `pg_has_role(..., 'USAGE')`). Such an object makes a later
+# `ALTER TABLE` or `CREATE OR REPLACE FUNCTION` fail with "must be owner of ...", and makes the `GRANT` and `REVOKE` of
+# `migrate` do nothing without an error. A database first built by a superuser login (the usual start of a demo) is in
+# this state. Objects that belong to an installed extension are skipped (the owner of those is the extension's
+# business). A sequence that belongs to a column or is an identity sequence goes with its table, so only the table is
+# listed; a partition has an automatic dependency on its parent too, but it is a table of its own and is listed.
+# Columns: what ('r' relation, 'f' function), kind (relkind or prokind), name, owner, argument list of a function.
 _FOREIGN_OWNED_SQL = (
-    "SELECT 'r', c.relkind::text, c.relname, pg_get_userbyid(c.relowner) FROM pg_class c "
+    "SELECT 'r', c.relkind::text, c.relname, pg_get_userbyid(c.relowner), '' FROM pg_class c "
     "JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = current_schema() "
     "AND c.relkind IN ('r','p','v','m','S','f') AND NOT pg_has_role(current_user, c.relowner, 'USAGE') "
     "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid "
-    "AND d.deptype IN ('e','a','i')) "
-    "UNION ALL SELECT 'f', 'f', p.oid::regprocedure::text, pg_get_userbyid(p.proowner) FROM pg_proc p "
+    "AND d.deptype = 'e') "
+    "AND (c.relkind <> 'S' OR NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass "
+    "AND d.objid = c.oid AND d.deptype IN ('a','i'))) "
+    "UNION ALL SELECT 'f', p.prokind::text, p.proname, pg_get_userbyid(p.proowner), "
+    "pg_get_function_identity_arguments(p.oid) FROM pg_proc p "
     "JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = current_schema() "
     "AND NOT pg_has_role(current_user, p.proowner, 'USAGE') "
     "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_proc'::regclass AND d.objid = p.oid "
-    "AND d.deptype = 'e') ORDER BY 1, 3"
+    "AND d.deptype = 'e') ORDER BY 1, 3, 5"
 )
 _OWNER_WORD = {
     "r": "TABLE",
@@ -588,28 +624,46 @@ _OWNER_WORD = {
     "S": "SEQUENCE",
     "f": "FOREIGN TABLE",
 }
-_FOREIGN_OWNED_SHOWN = 20
+_FUNCTION_WORD = {"f": "FUNCTION", "p": "PROCEDURE", "a": "AGGREGATE", "w": "FUNCTION"}
+_SCHEMA_USAGE_SQL = "SELECT has_schema_privilege(%s, current_schema(), 'USAGE')"
+_FOREIGN_OWNED_SHOWN = 20  # names in the message; every statement is printed
 
 
 def _refuse_foreign_owned(db) -> None:
     """Refuse a run whose migration role cannot change what is already in the schema (see `_FOREIGN_OWNED_SQL`). The
-    message names the objects, their owners and the SQL that hands them to the migration role."""
+    message names the objects (at most `_FOREIGN_OWNED_SHOWN`), their owners, and prints the SQL that hands every one
+    of them to the migration role. A statement is printed only when every name in it is plain: another role owns the
+    object and chose its name, so a name with a control or unusual character is not copied into a line that a person
+    runs; for such an object the message says a person must write the statement by hand."""
     rows = db.execute(_FOREIGN_OWNED_SQL).fetchall()
     if not rows:
         return
     schema = db.execute("SELECT current_schema()").fetchone()[0]
     me = db.execute("SELECT current_user").fetchone()[0]
-    names, statements = [], []
-    for what, kind, name, owner in rows[:_FOREIGN_OWNED_SHOWN]:
-        names.append(f"{_label(name)} (owner {_label(owner)})")
-        if what == "f":  # `name` is already the quoted, schema-qualified signature (regprocedure)
-            statements.append(f"ALTER FUNCTION {name} OWNER TO {sql.Identifier(me).as_string(db)};")
-        else:
+    names, statements, by_hand = [], [], []
+    for what, kind, name, owner, args in rows:
+        if len(names) < _FOREIGN_OWNED_SHOWN:
+            names.append(f"{_label(name)} (owner {_label(owner)})")
+        plain = all(escape_name(x) == x for x in (name, args, schema, me))
+        if not plain:
+            by_hand.append(_label(name))
+            continue
+        ident = sql.Identifier(schema, name).as_string(db)
+        to = sql.Identifier(me).as_string(db)
+        if what == "f":
+            signature = args if args or kind != "a" else "*"
             statements.append(
-                f"ALTER {_OWNER_WORD[kind]} {sql.Identifier(schema, name).as_string(db)} "
-                f"OWNER TO {sql.Identifier(me).as_string(db)};"
+                f"ALTER {_FUNCTION_WORD.get(kind, 'FUNCTION')} {ident}({signature}) OWNER TO {to};"
             )
+        else:
+            statements.append(f"ALTER {_OWNER_WORD[kind]} {ident} OWNER TO {to};")
     more = len(rows) - len(names)
+    hand = (
+        f" A person must write the statement for {', '.join(by_hand[:20])} by hand (its name holds a character "
+        "that is not copied into a printed line)."
+        if by_hand
+        else ""
+    )
     raise ConfigError(
         f"the migration role {_label(me)} cannot change {len(rows)} object(s) in schema {_label(schema)} that "
         f"another role owns: {'; '.join(names)}{f'; and {more} more' if more > 0 else ''}. A later migration "
@@ -618,6 +672,7 @@ def _refuse_foreign_owned(db) -> None:
         "connected as a superuser or as a role that is a member of both the old owner and the migration role, "
         "with a file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): "
         + " ".join(statements)
+        + hand
     )
 
 
@@ -683,7 +738,7 @@ def _check_read_back(
         elif after != before and not allowed:
             changed = [n for n, o, a in zip(_TRIGGER_PARTS, before, after, strict=True) if o != a]
             triggers.append(f"trigger {label} changed: {', '.join(changed)}")
-        elif after != before and after[0] in ("D", "R") and after[0] != entry.state:
+        elif after[0] != before[0] and after[0] in ("D", "R") and after[0] != entry.state:
             triggers.append(
                 f"trigger {label} is left {'disabled' if after[0] == 'D' else 'replica-only'}, "
                 "which its list entry does not name (enabled_state)"
@@ -877,6 +932,15 @@ def migrate(
                 if extra := _excess_privileges(db, portal_role):
                     raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
                         f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
+                    )
+            for role in named:
+                got = db.execute(_SCHEMA_USAGE_SQL, (role,)).fetchone()
+                if not got or not got[0]:
+                    raise ConfigError(
+                        f"the role {_label(role)} cannot use the schema {_label(schema)} after the grants: the migration "
+                        "role may not pass USAGE on the schema on. Give it the grant option "
+                        f"(GRANT USAGE, CREATE ON SCHEMA <schema> TO <the migration role> WITH GRANT OPTION), "
+                        "or make it the owner of the schema."
                     )
     except (pg_errors.LockNotAvailable, pg_errors.QueryCanceled) as e:
         if (plain := _limit_error(e, step[0])) is None:

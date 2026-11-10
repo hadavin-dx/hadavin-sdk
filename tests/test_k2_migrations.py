@@ -13,6 +13,7 @@ from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import Plan
 from hadavin_sdk.store import migrate as mig
 from tests.contracts.kinds.store_postgres import pg_schema
+from tests.fixtures.released_stub import made_up_files_are_not_released
 
 FIXTURE = Path(__file__).parent / "fixtures" / "plan_v1.json"
 
@@ -106,8 +107,8 @@ def test_the_portal_relations_exclude_the_never_list():
 def test_migrate_refuses_an_inconsistent_ledger_before_connecting(monkeypatch, tmp_path):
     files = _dir(tmp_path, {"0001_a.sql": "CREATE TABLE brand_new (\n    id TEXT\n);\n"})
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
-    monkeypatch.setattr(
-        mig, "released_problems", lambda *a, **k: []
+    made_up_files_are_not_released(
+        monkeypatch
     )  # made-up or missing files: only the grant or ledger refusal is under test
 
     def no_db(*a, **k):
@@ -393,14 +394,14 @@ def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatc
     monkeypatch.setattr(mig, "_migration_files", lambda: files[:-1])
     # The grant map still names the removed file's tables; only the applied-without-file refusal is under test.
     monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
-    monkeypatch.setattr(
-        mig, "released_problems", lambda *a, **k: []
+    made_up_files_are_not_released(
+        monkeypatch
     )  # made-up or missing files: only the grant or ledger refusal is under test
     with pytest.raises(ConfigError, match="no file in this release"):
         mig.migrate(dsn)
 
 
-# --- CodeRabbit round 1 ------------------------------------------------------------------------------
+# --- a first code review ------------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
