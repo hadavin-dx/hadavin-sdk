@@ -21,14 +21,15 @@ located and killed.
 
 from __future__ import annotations
 
+import asyncio
 import os
 import re
 import shutil
-import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 HERE = Path(__file__).resolve().parent.parent
 PY = os.environ.get("P6A1_PY", sys.executable)
@@ -653,19 +654,35 @@ def BASELINE_TARGETS() -> list[str]:
     return seen
 
 
-def git(*a: str) -> subprocess.CompletedProcess:
+def git(*a: str) -> SimpleNamespace:
     return _git_in(WT, *a)
+
+
+async def _exec(argv: list[str], cwd: Path | None, env: dict | None, timeout: int):
+    proc = await asyncio.create_subprocess_exec(
+        *argv, cwd=cwd, env=env, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+    )
+    try:
+        out, err = await asyncio.wait_for(proc.communicate(), timeout)
+    except TimeoutError:
+        proc.kill()
+        await proc.wait()
+        raise
+    return SimpleNamespace(
+        returncode=proc.returncode,
+        stdout=out.decode("utf-8", "replace"),
+        stderr=err.decode("utf-8", "replace"),
+    )
 
 
 def _sh(argv: list[str], timeout: int, cwd: Path | None = None, env: dict | None = None):
     """The one place this file starts a program. The program is git (found once, absolute) or this runner's own
-    Python; every argument is this file's own text or a test path from the mutant list. No shell is used."""
-    return subprocess.run(  # noqa: S603  (fixed argv, no shell; ruff cannot see through the list)
-        argv, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout, check=False
-    )
+    Python; every argument is this file's own text or a test path from the mutant list. No shell is used.
+    Raises TimeoutError when the program runs longer than `timeout` seconds (it is killed first)."""
+    return asyncio.run(_exec(argv, cwd, env, timeout))
 
 
-def _git_in(folder: Path, *a: str) -> subprocess.CompletedProcess:
+def _git_in(folder: Path, *a: str) -> SimpleNamespace:
     if GIT is None:
         raise RuntimeError("git is not on PATH: this runner needs it to make the throw-away copy")
     return _sh([GIT, "-C", str(folder), *a], timeout=60)
@@ -680,7 +697,7 @@ def run_tests(targets: list[str], x: bool) -> tuple[str, list[str], list[str], s
         cmd.append("-x")
     try:
         p = _sh(cmd, timeout=TIMEOUT_S, cwd=WT, env=env)
-    except subprocess.TimeoutExpired:
+    except TimeoutError:
         return "TIMEOUT", [], [], ""
     out = p.stdout + p.stderr
     failed = re.findall(r"^FAILED (\S+)", out, re.MULTILINE)
