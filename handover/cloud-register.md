@@ -927,3 +927,4 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | ad946e6c0b1d37bab | egm reviewer | egm:egm-design | sonnet | A24 PR91 61cf2be | result review r1 | 16:36 | +25m | REPORTED 1B/6M/5N, CLOSED; saved handover/egm/A24/r1-design.md |
 | af2e53d2b1ad9a459 | egm reviewer | egm:egm-implementation-readiness | sonnet | P1d-a-plan (tickets/P1d-a.md) | plan review r3 | 16:36 | +25m | RUNNING; saved egm/P1d-a-plan/round3-readiness.md |
 | a4338b8f235b7416f | egm reviewer | egm:egm-design | sonnet | P1d-a-plan | plan review r3 | 16:36 | +25m | RUNNING; saved egm/P1d-a-plan/round3-design.md |
+| a1033ae1f57cff1ac | BUILDER | general-purpose | sonnet (claude-sonnet-5-5) | A24 PR91 fix batch (G1-G7), branch core/ci-scan-config-guard-fix1 in WT-A24 | fix batch (step 6) | 16:40 | +60 min | RUNNING; report handover/reports/A24-PR91-fix1-builder-report.md; checkpoint checkpoints/A24fix.md |
