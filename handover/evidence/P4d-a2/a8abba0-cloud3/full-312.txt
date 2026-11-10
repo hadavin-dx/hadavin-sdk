@@ -519,4 +519,4 @@ tests/contracts/test_store_reserve.py::test_r1_to_r4_a_release_with_a_damaged_co
 tests/contracts/test_store_reserve.py::test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[postgres-missing-month-row-open] PASSED [  4%]
 tests/contracts/test_store_reserve.py::test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[postgres-missing-month-row-expired] PASSED [  4%]
 tests/contracts/test_store_reserve.py::test_b5_ten_thousand_reserve_settle_pairs_equal_the_exact_decimal_sum[memory] PASSED [  4%]
-tests/contracts/test_store_reserve.py::test_b5_ten_thousand_reserve_settle_pairs_equal_the_exact_decimal_sum[postgres] 
+tests/contracts/test_store_reserve.py::test_b5_ten_thousand_reserve_settle_pairs_equal_the_exact_decimal_sum[postgres] exit=1
