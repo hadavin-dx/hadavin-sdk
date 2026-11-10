@@ -1,0 +1,3 @@
+HEAD=c325db812593266be9e5d979056c9f7b94d14f45
+Tue Nov 10 22:00:57 UTC 2026
+CMD: /home/user/build/EV-P6a-c325db8/venv313/bin/bandit -q -r src demos tools -ll

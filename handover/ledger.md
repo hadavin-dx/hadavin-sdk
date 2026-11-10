@@ -2312,3 +2312,5 @@
 | BL-core-a5-w2-r3-02 | same, M2 | MAJOR | PR73 | Server-wide role-membership and settings diff refuses falsely under other sessions' role changes (DoS lever, misleading message) | OPEN | | | 2026-11-10 |
 | BL-core-a5-w2-r3-03 | same, M3 | MAJOR | PR73 | Evidence at ffe896e not clean (3.13 full suite never clean, silent exit 0 unexplained) | OPEN (independent runner aade658247 running) | | | 2026-11-10 |
 | BL-core-a5-w2-r3-04..11 | same, m1,m2b,m3a-d,m4,m5,m6,m7a-d,m8 | MINOR | PR73 | Minors listed in the review file | OPEN | | | 2026-11-10 |
+| BL-core-a5-w2-r3-12 | handover/reviews/P3a-2-round3/round3-codebase.md M1 | MAJOR | PR73 | Private ids still in public files (o100: mutant prefixes, "ticket way" test name, CHANGELOG:390/410, pyproject P3b/P4b) | OPEN | | | 2026-11-10 |
+| BL-core-a5-w2-r3-13..20 | same, m1-m9 + other | MINOR | PR73 | Test-role password in server log, role-drop unproven, t_ prefix, mutant-runner unknown id and weak kill judgement, PG17 MAINTAIN, types/domains ownership, GRANT OPTION breadth, weak pins | OPEN | | | 2026-11-10 |
