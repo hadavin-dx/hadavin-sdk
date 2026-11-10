@@ -1,10 +1,23 @@
-"""Guard: pglast is GPL-3.0-or-later, so it stays in the `test` dependency group (the CI oracle) and never
-reaches shipped code (src/, demos/, tools/) or a runtime dependency (owner decision 2026-11-01).
+"""Guard: pglast is GPL-3.0-or-later, so it stays in the `test` dependency group (the CI oracle)
+and never reaches shipped code (src/, demos/, tools/) or a runtime dependency (owner decision
+2026-11-01).
 
-Best effort, not a proof: the code scan reads import statements and string literals that are exactly a
-pglast module name. An import whose name is built at run time (for example `"pg" + "last"` passed to
-`importlib.import_module` or `__import__`) is not caught, and neither is a copy of the code under another
-name. Nested `.venv` and `node_modules` folders are skipped, because they hold other people's code."""
+Best effort, not a proof. The code scan reads import statements and string literals that are
+exactly a pglast module name. Not caught:
+- an import whose name is built at run time (for example `"pg" + "last"` passed to
+  `importlib.import_module` or `__import__`);
+- a copy of the pglast code under another name;
+- a single-file `pglast.py` or `pglast.pyi` is scanned only as source (an import inside it is
+  not an import of pglast), and a `pglast.libs` folder is flagged only by its name;
+- compiled `.pyc` files and Cython `.pyx` source (not scanned, not flagged).
+Binary suffixes (.so, .pyd, .dylib, .dll) are matched in any letter case.
+
+Folders: `.venv` and `node_modules` directly under src, demos or tools are skipped, because they
+hold other people's code; the same names deeper down ARE scanned (they may be shipped code).
+Symbolic links: a linked folder is listed by its own name (so a link called `pglast` is flagged)
+but is NOT entered, so pglast code behind a link with another name is not scanned (recorded by
+the test `test_symlinked_dir_is_not_entered`). An unreadable folder raises; a .py or .pyi file
+that cannot be parsed is reported as a violation ("cannot parse")."""
 
 import ast
 import os
@@ -16,7 +29,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 TREES = ("src", "demos", "tools")
-BINARY = (".so", ".pyd", ".dylib")  # compiled extension modules on Linux, Windows and macOS
+BINARY = (".so", ".pyd", ".dylib", ".dll")  # compiled modules on Linux, Windows and macOS
 SKIP_DIRS = {".venv", "node_modules"}  # other people's code, never shipped from here
 
 
@@ -45,30 +58,41 @@ def _hit(deps):  # an include-group dict has no `name` (a cyclic group is yielde
     return any(_is(d.get("name") if isinstance(d, dict) else d) for d in deps)
 
 
-def _walk(base):  # (files, dirs) under base, not descending into SKIP_DIRS
+def _fail(err):  # an unreadable folder must stop the scan, never be skipped silently
+    raise err
+
+
+def _walk(base):  # (files, dirs) under base; SKIP_DIRS are skipped only directly under base
     files, dirs = [], []
-    for here, names, leaves in os.walk(base):
-        names[:] = [n for n in names if n not in SKIP_DIRS]
+    for here, names, leaves in os.walk(base, onerror=_fail):
+        if Path(here) == base:
+            names[:] = [n for n in names if n not in SKIP_DIRS]
         dirs += [Path(here) / n for n in names]
         files += [Path(here) / n for n in leaves]
     return files, dirs
 
 
 def _code(root, tree):
-    files, dirs = _walk(root / tree)
-    bad = [f"{tree}: vendored {p.name}" for p in files if p.suffix in BINARY]
+    files, dirs = _walk(root / tree) if (root / tree).is_dir() else ([], [])  # absent: no files
+    bad = [f"{tree}: vendored {p.name}" for p in files if p.suffix.lower() in BINARY]
     bad += [f"{tree}: vendored dir" for p in dirs if _is(p.name)]
     py = [p for p in files if p.suffix in (".py", ".pyi")]
     if not py:
         bad.append(f"{tree}: no python file scanned")
     for p in py:
-        for n in ast.walk(ast.parse(p.read_text("utf-8"))):
+        rel = p.relative_to(root / tree).as_posix()
+        try:
+            nodes = list(ast.walk(ast.parse(p.read_text("utf-8"))))
+        except (SyntaxError, ValueError, UnicodeDecodeError):
+            bad.append(f"{tree}: {rel} cannot parse")
+            continue
+        for n in nodes:
             mods = [a.name for a in n.names] if isinstance(n, ast.Import) else []
             mods += [n.module or ""] if isinstance(n, ast.ImportFrom) else []
             if isinstance(n, ast.Constant) and isinstance(n.value, str):
                 mods += [n.value] if re.fullmatch(r"(?i)pglast(\.\w+)*", n.value) else []
             if any(_norm(m.split(".")[0]) == "pglast" for m in mods):
-                bad.append(f"{tree}: {p.relative_to(root / tree).as_posix()} imports pglast")
+                bad.append(f"{tree}: {rel} imports pglast")
     return bad
 
 
@@ -194,15 +218,31 @@ MUTANTS = {
         },
         ["group a", "group b"],
     ),
-    "nested .venv import is skipped": ({"src/.venv/lib/m.py": "import pglast\n"}, []),
-    "nested node_modules vendored is skipped": (
+    "top-level .venv import is skipped": ({"src/.venv/lib/m.py": "import pglast\n"}, []),
+    "top-level node_modules vendored is skipped": (
         {"demos/node_modules/pglast/x.py": "", "demos/node_modules/_p.so": ""},
         [],
     ),
-    "nested .venv alone is not a scanned file": (
+    "top-level .venv alone is not a scanned file": (
         {"src/m.py": None, "src/.venv/m.py": "x = 1\n"},
         ["src: no python file scanned"],
     ),
+    "nested .venv import is scanned": (
+        {"src/pkg/.venv/m.py": "import pglast\n"},
+        ["src: pkg/.venv/m.py imports pglast"],
+    ),
+    "nested node_modules vendored is scanned": (
+        {"demos/pkg/node_modules/pglast/x.py": "", "demos/pkg/node_modules/_p.so": ""},
+        ["demos: vendored _p.so", "demos: vendored dir"],
+    ),
+    "nested .venv under tools is scanned": (
+        {"tools/a/b/.venv/_pglast.dll": ""},
+        ["tools: vendored _pglast.dll"],
+    ),
+    "unparsable python file": ({"src/bad.py": "def (:\n"}, ["src: bad.py cannot parse"]),
+    "unparsable stub file": ({"tools/bad.pyi": "class :\n"}, ["tools: bad.pyi cannot parse"]),
+    "null byte in python file": ({"src/nul.py": "x = 1\0\n"}, ["src: nul.py cannot parse"]),
+    "upper-case binary suffix": ({"src/_pglast.SO": ""}, ["src: vendored _pglast.SO"]),
     "venv-like name outside the skip list is scanned": (
         {"src/venv/m.py": "import pglast\n"},
         ["src: venv/m.py imports pglast"],
@@ -219,3 +259,35 @@ def test_guard_catches(tmp_path, case):
             (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
             (tmp_path / rel).write_text(text, "utf-8")
     assert violations(tmp_path) == MUTANTS[case][1]
+
+
+def test_unreadable_directory_raises(tmp_path, monkeypatch):
+    (tmp_path / "src" / "sub").mkdir(parents=True)
+    real = os.scandir
+
+    def deny(path="."):
+        if Path(path).name == "sub":
+            raise PermissionError(13, "denied", str(path))
+        return real(path)
+
+    monkeypatch.setattr(os, "scandir", deny)
+    with pytest.raises(PermissionError):
+        _walk(tmp_path / "src")
+
+
+def test_missing_tree_raises(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        _walk(tmp_path / "nope")
+
+
+def test_symlinked_dir_is_not_entered(tmp_path):
+    # Recorded behaviour: a link is listed by name but not entered, so code behind a link with
+    # another name is not scanned; a link named pglast is flagged as a vendored dir.
+    (tmp_path / "ext").mkdir()
+    (tmp_path / "ext" / "m.py").write_text("import pglast\n", "utf-8")
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "m.py").write_text("x = 1\n", "utf-8")
+    (tmp_path / "src" / "other").symlink_to(tmp_path / "ext", target_is_directory=True)
+    assert _code(tmp_path, "src") == []
+    (tmp_path / "src" / "pglast").symlink_to(tmp_path / "ext", target_is_directory=True)
+    assert _code(tmp_path, "src") == ["src: vendored dir"]
