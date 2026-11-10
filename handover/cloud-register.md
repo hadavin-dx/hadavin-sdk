@@ -967,3 +967,6 @@ Plan P1d-a: FROZEN at rev 10 (no round 8); build A4 waits for A1, A2, A3 (ORDER 
 | ac25206877 | A21a evidence runner (ba89ea7, money path) | sonnet | ~19:00Z | +50 min | running | save evidence, reviewers (uncapped) |
 | aea5c3b208 | A5 PR73 fix builder r1 (B-P73r2) | sonnet | ~19:00Z | +60 min | running | evidence then reviewers (security, uncapped) |
 Closed: a10f5f650a (PR72 fix builder, pushed d392200), a17e8eff8a and a99c6a3d18 (PR89 reviewers, saved), PR72 and PR73 round-w2 reviewers.
+| a83e36fd22 | A21a result review egm-design (ba89ea7, money, uncapped) | sonnet | 19:50Z | +30 min | running | save report, ledger |
+| a596423e5b | A21a result review egm-codebase-details (ba89ea7) | sonnet | 19:50Z | +30 min | running | save report, ledger |
+Closed: ac25206877 (A21a evidence runner; evidence committed: 4 known failures in test_t1_meter_parallel.py, all else green on 3.12/3.13, DSN set and unset).
