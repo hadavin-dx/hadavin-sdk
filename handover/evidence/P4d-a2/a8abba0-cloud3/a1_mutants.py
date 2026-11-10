@@ -34,10 +34,7 @@ for name, f, old, new, sel in M:
     if src.count(old) != 1:
         print(f"== {name}: PLANT FAILED (old text occurs {src.count(old)}x)", flush=True); continue
     if sel == [None]:
-        sel = [REG, "-k", "connect_runtime or current_user or identity or runtime"]
-        # find the killer by name: any test naming connect_runtime
-        g = subprocess.run(["grep", "-rln", "connect_runtime", "tests"], cwd=R, capture_output=True, text=True).stdout.split()
-        sel = g + ["-k", "current_user or runtime or identity or role"] if g else sel
+        sel = ['tests/contracts/test_store_reserve_pg.py', 'tests/contracts/test_store_reserve_proofs_pg.py', '-k', 'current_user or runtime or role or identity or privilege']
     try:
         p.write_text(src.replace(old, new))
         rc, tail = run(sel, name)
