@@ -1,1 +1,1 @@
-07:00Z | agents: RUNNING run9s.sh (model-slow first; started 06:56Z); pulse watchdog | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 09:10Z); detail in HEARTBEAT.md
+16:28Z | agents: none yet (plan being written) | queue: none | last: READY q416 | unpushed: none | next: parallel plan + EGM review
