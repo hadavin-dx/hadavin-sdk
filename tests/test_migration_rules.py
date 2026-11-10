@@ -710,31 +710,64 @@ def test_the_mutant_runner_refuses_an_unknown_id():
     assert mm.main(["M88,TYPO"]) == 2
 
 
+def _failure(test: str, head: str, name: str = "tests/test_x.py") -> str:
+    """The part of a `pytest --tb=short -rf` output that belongs to one failed test whose exception reads `head`."""
+    return (
+        f"=== FAILURES ===\n_______ {test} _______\n{name}:12: in {test}\n    code()\nE   {head}\n"
+        f"=== short test summary info ===\nFAILED {name}::{test} - {head}\n"
+    )
+
+
 def test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill():
-    """A planted line that only breaks the file (a NameError, a syntax error) makes a test fail but proves nothing about
-    the named killer. Killed by: mutant RN2."""
+    """A planted line that only breaks the code (a NameError, a syntax error, a server error, an error nobody has named
+    yet) makes a test fail but proves nothing about the named killer: only the exceptions a test raises on purpose count.
+    Killed by: mutants RN2 (status_of does not look), RN3 (the allow list takes everything), RN4 (any dotted name is
+    allowed)."""
     from tests import migrate_mutants as mm
 
     m = next(x for x in mm.M if x.name == "R4")
     names = mm.killers_of(m)
-    real = f"FAILED {names[0]} - AssertionError\n"
-    name_error = f"FAILED {names[0]} - NameError\nE   NameError: name 'x' is not defined\n"
-    other = "FAILED tests/test_other.py::test_other - AssertionError\n"
+    path, _, test = names[0].partition("::")
 
     def runs(out):
         return [(1, out)] + [(0, "")] * (len(names) - 1)
 
-    assert mm.status_of(m, runs(real)) == "KILLED"
-    assert mm.status_of(m, runs(name_error)) == "BROKEN"
-    for error in (
+    def one(head):
+        return mm.status_of(m, runs(_failure(test, head, path)))
+
+    for head in (
+        "AssertionError: assert 1 == 2",
+        "assert ['a'] == ['b']",
+        "Failed: DID NOT RAISE <class 'hadavin_sdk.errors.ConfigError'>",
+        "AssertionError: Regex pattern did not match.",
+        "hadavin_sdk.errors.ConfigError: the roles changed",
+    ):
+        assert one(head) == "KILLED", head
+    for head in (
+        "NameError: name 'x' is not defined",
         "AttributeError: module has no attribute 'x'",
         "TypeError: 'NoneType' object is not subscriptable",
         "KeyError: 'x'",
         "UnboundLocalError: cannot access local variable 'x'",
         "ValueError: not enough values to unpack",
+        "IndexError: list index out of range",
+        "ZeroDivisionError: division by zero",
+        "RuntimeError: the loop is not running",
+        'psycopg.errors.UndefinedTable: relation "x" does not exist',
+        "errors.InsufficientPrivilege: permission denied",
+        "DeadlockDetected: deadlock detected",
+        "SomeErrorNobodyHasNamedYet: x",
     ):
-        broken = f"FAILED {names[0]} - {error}\nE   {error}\n"
-        assert mm.status_of(m, runs(broken)) == "BROKEN", error
+        assert one(head) == "BROKEN", head
+    two = _failure(test, "AssertionError: x", path) + _failure("test_other", "KeyError: 'x'", path)
+    assert mm.status_of(m, runs(two)) == "BROKEN", "one broken failure among the failures"
+    other = _failure("test_other", "AssertionError: x", "tests/test_other.py")
     assert mm.status_of(m, runs(other)) == "BROKEN", "another test failed, not the named killer"
+    assert mm.failure_heads(_failure(test, "KeyError: 'x'")) == ["KeyError: 'x'"]
+    long = "test_" + "a_very_long_name_" * 5
+    assert mm.failure_heads(f"=== FAILURES ===\n_ {long} _\nt.py:1: in f\nE   KeyError: 'x'\n") == [
+        "KeyError: 'x'"
+    ], "pytest pads a long title with a single underscore on each side"
+    assert not mm.only_test_failures("no failures here")
     assert mm.status_of(m, [(0, "")] * len(names)) == "SURVIVED"
     assert mm.status_of(m, [(2, "")] + [(0, "")] * (len(names) - 1)).startswith("ERROR")

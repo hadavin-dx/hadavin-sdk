@@ -228,7 +228,9 @@ def _apply_grants(db, role_name: str, privileges, columns=None) -> None:
         what = sql.SQL(
             "SEQUENCE" if grant.kind == "sequence" else "TABLE"
         )  # a view is granted as a table
-        rel = sql.Identifier(name)
+        rel = sql.Identifier(
+            schema, name
+        )  # qualified: the search path cannot point it at another relation
         db.execute(sql.SQL("REVOKE ALL ON {} {} FROM {}").format(what, rel, role))
         if wanted := privileges(grant):
             db.execute(sql.SQL("GRANT {} ON {} {} TO {}").format(sql.SQL(wanted), what, rel, role))
@@ -325,25 +327,6 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
     return problems
 
 
-def _excess_privileges(db, role: str) -> list[str]:
-    """Effective privileges (inherited ones too) the role holds beyond SELECT on the `portal` relations."""
-    extra = []
-    table_privs = _table_privs(db)
-    for name, grant in GRANTS.items():
-        if grant.kind == "sequence":
-            privs, q = ("USAGE", "SELECT", "UPDATE"), "SELECT has_sequence_privilege(%s, %s, %s)"
-        else:
-            privs = table_privs
-            q = "SELECT has_table_privilege(%s, %s, %s)"
-        allowed = {"SELECT"} if grant.portal else set()
-        extra += [
-            f"{name}:{p}"
-            for p in privs
-            if p not in allowed and db.execute(q, (role, name, p)).fetchone()[0]
-        ]
-    return extra
-
-
 # SHA-256 of every released migration file (forward-only: a released file is never edited, renumbered or deleted).
 # It ships with the package, so `migrate` itself can refuse a changed file; add a row when a release is cut.
 _SHA256 = re.compile(r"[0-9a-f]{64}")
@@ -418,7 +401,7 @@ _ROLE_FLAGS_SQL = (
 # Settings saved per database or per role (`ALTER ROLE ... SET`, `ALTER DATABASE ... SET`): they apply to NEW sessions,
 # so a file that changes them changes what the next connection runs with.
 _READBACK_SETTINGS_SQL = (
-    "WITH named AS (SELECT oid FROM pg_roles WHERE rolname = ANY(%s::text[])), "
+    "WITH named AS (SELECT oid FROM pg_roles WHERE rolname = ANY(%s::text[]) AND NOT rolsuper), "
     "scope AS (SELECT r.oid, (r.rolname IN (current_user, session_user) OR r.oid IN (SELECT oid FROM named)) AS own, "
     "(pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER') "
     "OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, 'MEMBER'))) AS closure "
@@ -432,7 +415,7 @@ _READBACK_SETTINGS_SQL = (
 # that no statement-start rule sees (`GRANT r TO s` inside a function, then `SELECT f();`). Names, not OIDs. Only the
 # memberships of the roles in scope (what each of them is a member of) and the members of the `own` roles.
 _READBACK_MEMBERS_SQL = (
-    "WITH named AS (SELECT oid FROM pg_roles WHERE rolname = ANY(%s::text[])), "
+    "WITH named AS (SELECT oid FROM pg_roles WHERE rolname = ANY(%s::text[]) AND NOT rolsuper), "
     "scope AS (SELECT r.oid, (r.rolname IN (current_user, session_user) OR r.oid IN (SELECT oid FROM named)) AS own, "
     "(pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER') "
     "OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, 'MEMBER'))) AS closure "
@@ -572,7 +555,7 @@ def _read_back(db, named=()) -> _Saved:
 # The one example of a plain migration role (no password, no secret: the administrator adds the login method that
 # fits the database). `<schema>` is the schema `migrate` works in.
 PLAIN_MIGRATION_ROLE_SQL = (
-    "CREATE ROLE migration_role LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS; "
+    "CREATE ROLE migration_role LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS NOREPLICATION; "
     "GRANT CREATE ON SCHEMA <schema> TO migration_role; "
     "GRANT USAGE ON SCHEMA <schema> TO migration_role WITH GRANT OPTION;"
 )
@@ -672,11 +655,24 @@ _SCHEMA_USAGE_SQL = "SELECT has_schema_privilege(%s, current_schema(), 'USAGE')"
 _FOREIGN_OWNED_SHOWN = 20  # names in the message; every statement is printed
 
 
-_QUOTED = r'"((?:[^"]|"")+)"'
+# The parts of a `CREATE FUNCTION` name, as PostgreSQL reads them: a quoted name (`""` inside is one quote) or a plain
+# name (letters, digits, `_` and `$`; it does not start with a digit). A schema before the dot is skipped.
+_QUOTED_NAME = r'"(?:[^"]|"")+"'
+_QUOTED_NAME_BODY = r'"((?:[^"]|"")+)"'
+_PLAIN_NAME = r"\w[\w$]*"
+_SCHEMA_DOT = rf"(?:(?:{_QUOTED_NAME}|{_PLAIN_NAME})\s*\.\s*)?"
+# Only at the start of a statement (the text has no comments, and a string is not a statement), so a
+# `CREATE FUNCTION` that is only written inside a string is not read as a name.
 _FUNCTION_CREATE = re.compile(
-    r"CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:(?:" + _QUOTED.replace("(", "(?:", 1) + r"|\w+)\s*\.\s*)?(?:" + _QUOTED + r"|(\w+))",
+    rf"(?:\A|;)\s*CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+{_SCHEMA_DOT}(?:{_QUOTED_NAME_BODY}|({_PLAIN_NAME}))",
     re.IGNORECASE,
 )
+
+
+def _fold(name: str) -> str:
+    """How PostgreSQL folds a plain name: only the letters A to Z become lower case (not the letters of other scripts
+    that Python's `lower` also changes)."""
+    return "".join(c.lower() if "A" <= c <= "Z" else c for c in name)
 
 
 def _managed_names(texts) -> list[str]:
@@ -689,7 +685,9 @@ def _managed_names(texts) -> list[str]:
         text, _problem = lex(raw, keep_quoted=True)
         for m in _FUNCTION_CREATE.finditer(text):
             # a quoted name keeps its case and its characters (`""` is one quote); a plain one is folded to lower case
-            names.add(m.group(1).replace('""', '"') if m.group(1) is not None else m.group(2).lower())
+            names.add(
+                m.group(1).replace('""', '"') if m.group(1) is not None else _fold(m.group(2))
+            )
     return sorted(names)
 
 
@@ -737,7 +735,9 @@ def _refuse_foreign_owned(db, managed) -> None:
         "connected as a superuser or as a role that is a member of both the old owner and the migration role (objects of "
         "other applications in the schema are not listed and need no change; but a table of ANOTHER application that "
         "has the same name as one of this package's tables, for example spend or runs, looks the same here: do not "
-        "hand that one over, point migrate at another schema instead), "
+        "hand that one over, point migrate at another schema instead; the same goes for a function: it is matched by "
+        "name, so read the text of each listed function first and hand it over only when it is this package's own "
+        "code, because the migration role would then own, and run, it), "
         "with a file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): "
         + " ".join(statements)
         + hand
@@ -752,6 +752,32 @@ def _refuse_unusual_strings(saved: _Saved) -> None:
             f"standard_conforming_strings is {value!r} for this session; migrate needs 'on' "
             "(the file checks read strings the way 'on' does)"
         )
+
+
+def _where(db_name: str) -> str:
+    """The database part of a saved setting: an empty name means the setting holds in every database."""
+    return f"database {_label(db_name)}" if db_name else "every database"
+
+
+def _membership_words(rest: str) -> str:
+    """The columns of a membership row (the JSON of `pg_auth_members` without the role and member) in words: whether the
+    member may pass the role on, uses its rights at once and may `SET ROLE` to it. A column this server does not have
+    (the last two are new in PostgreSQL 16) is left out; a text that is not JSON is shown as a label."""
+    try:
+        cols = json.loads(rest)
+    except ValueError:
+        return _label(rest)
+    if not isinstance(cols, dict):
+        return _label(rest)
+    words = []
+    for key, yes, no in (
+        ("admin_option", "with grant option", "without grant option"),
+        ("inherit_option", "uses its rights at once", "does not use its rights unless it switches"),
+        ("set_option", "may switch to it", "may not switch to it"),
+    ):
+        if key in cols:
+            words.append(yes if cols[key] else no)
+    return ", ".join(words) or "no further columns"
 
 
 def _label(*names: str) -> str:
@@ -826,19 +852,19 @@ def _check_read_back(
     # Only the memberships in scope (the `scope` part of the two queries) are compared. One of them changed by another session while the
     # file runs is still reported here (a false refusal; run migrate again), hence the wording.
     members = [
-        f"role {_label(role)} has a new member {_label(member)} ({_label(rest)})"
+        f"role {_label(role)} has a new member {_label(member)} ({_membership_words(rest)})"
         for role, member, rest in sorted(now.members - saved.members)
     ]
     members += [
-        f"role {_label(role)} lost the member {_label(member)} ({_label(rest)})"
+        f"role {_label(role)} lost the member {_label(member)} ({_membership_words(rest)})"
         for role, member, rest in sorted(saved.members - now.members)
     ]
     session += [
-        f"saved setting for database {_label(db_name)} role {_label(role)} is new ({_label(conf)})"
+        f"saved setting in {_where(db_name)} for role {_label(role)} is new ({_label(conf)})"
         for db_name, role, conf in sorted(now.settings - saved.settings)
     ]
     session += [
-        f"saved setting for database {_label(db_name)} role {_label(role)} is gone ({_label(conf)})"
+        f"saved setting in {_where(db_name)} for role {_label(role)} is gone ({_label(conf)})"
         for db_name, role, conf in sorted(saved.settings - now.settings)
     ]
     if session or triggers or members:
@@ -1029,9 +1055,14 @@ def migrate(
                     )
             if portal_role:
                 _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
-                if extra := _excess_privileges(db, portal_role):
+                if (
+                    extra := effective_problems(
+                        db, portal_role, lambda g: "SELECT" if (g and g.portal) else ""
+                    )
+                ):  # the same check as the runtime and purge roles (what it can really do, however it got it)
                     raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
-                        f"the portal role holds privileges outside the portal grant map: {', '.join(extra)}"
+                        "the portal role holds privileges outside the portal grant map: "
+                        + "; ".join(extra[:20])
                     )
             for role in named:
                 got = db.execute(_SCHEMA_USAGE_SQL, (role,)).fetchone()

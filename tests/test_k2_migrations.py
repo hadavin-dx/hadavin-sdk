@@ -13,6 +13,7 @@ from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import Plan
 from hadavin_sdk.store import migrate as mig
 from tests.contracts.kinds.store_postgres import pg_schema
+from tests.fixtures.migration_role import create_login_role
 from tests.fixtures.released_stub import made_up_files_are_not_released
 
 FIXTURE = Path(__file__).parent / "fixtures" / "plan_v1.json"
@@ -205,7 +206,7 @@ def roles():
         names = ("rt_" + uuid.uuid4().hex[:10], "pt_" + uuid.uuid4().hex[:10])
         with psycopg.connect(dsn, autocommit=True) as db:
             for n in names:
-                db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(n)))
+                create_login_role(db, n)
         try:
             yield dsn, *names
         finally:
@@ -444,5 +445,5 @@ def test_migrate_refuses_a_portal_role_that_inherits_write_rights(roles):
     with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(sql.SQL("GRANT UPDATE, DELETE ON runs TO {}").format(sql.Identifier(other)))
         db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(other), sql.Identifier(portal)))
-    with pytest.raises(ConfigError, match="runs:UPDATE"):
+    with pytest.raises(ConfigError, match="can UPDATE runs"):
         mig.migrate(dsn, portal_role=portal)

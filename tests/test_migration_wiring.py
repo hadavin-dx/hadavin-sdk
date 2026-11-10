@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import types
 from pathlib import Path
 
 import pytest
@@ -108,16 +109,25 @@ class _Db:
     def transaction(self):
         return contextlib.nullcontext()
 
+    @staticmethod
+    def _next(script: list, what: str):
+        """The next scripted answer. A run that asks for more answers than the test scripted did not stop where the test
+        expects, so that is a failed assertion of the test, never an incidental crash (the mutant runner must not count
+        a crash as a kill)."""
+        if not script:
+            raise AssertionError(f"the run read the {what} more often than this test scripted")
+        return script.pop(0)
+
     def execute(self, query, params=None):
         text = str(query)
         self.log.append(text)
         self.params.append((text, params))
         if text == mig._READBACK_VALUES_SQL:
-            return _Result([self.values.pop(0)])
+            return _Result([self._next(self.values, "settings")])
         if text == mig._READBACK_TRIGGERS_SQL:
-            return _Result(self.triggers.pop(0))
+            return _Result(self._next(self.triggers, "triggers"))
         if text == mig._READBACK_MEMBERS_SQL:
-            return _Result([] if self.members is None else self.members.pop(0))
+            return _Result([] if self.members is None else self._next(self.members, "memberships"))
         if text == mig._ROLE_FLAGS_SQL:
             return _Result([self.flags, *self.more_flags])
         if text == mig._BORROWED_ROLES_SQL:
@@ -129,7 +139,9 @@ class _Db:
         if text == mig._SCHEMA_USAGE_SQL:
             return _Result([(self.schema_usage,)])
         if text == mig._READBACK_SETTINGS_SQL:
-            return _Result([] if self.settings is None else self.settings.pop(0))
+            return _Result(
+                [] if self.settings is None else self._next(self.settings, "saved settings")
+            )
         if text == "SELECT current_schema()":
             return _Result([("s",)])
         if text.startswith("SELECT pg_has_role("):  # no named role is a member of another
@@ -956,7 +968,7 @@ def test_a_new_saved_setting_for_a_role_is_refused(monkeypatch, tmp_path):
     saved = ("mydb", "app_rw", "{search_path=evil}")
     err, _db, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], settings=[[], [saved]])
     assert isinstance(err, ConfigError) and "0001_f1.sql" in str(err), err
-    assert "saved setting for database mydb role app_rw is new" in str(err)
+    assert "saved setting in database mydb for role app_rw is new" in str(err)
     err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], settings=[[saved], []])
     assert isinstance(err, ConfigError) and "is gone" in str(err), err
     err, _, applied = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], settings=[[saved]] * 3)
@@ -1040,6 +1052,27 @@ def test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_
     assert not {"Mixed_Case", "a", "Other_Schema", "Sch"} & names
 
 
+def test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement():
+    """PostgreSQL folds only the letters A to Z (not the capitals of other scripts), a plain name may hold `$` after its
+    first character, and text that only looks like a statement (in a comment, or in the middle of a statement) is not a function this
+    package creates. Killed by: mutants FQ1 (every capital is folded), PL1 (`$` ends a plain name) and ST1 (a statement
+    start is not needed)."""
+    texts = [
+        "CREATE FUNCTION Cost$Fn() RETURNS int LANGUAGE sql AS 'SELECT 1';",
+        "CREATE FUNCTION \u00c4rger_\u00dc() RETURNS int LANGUAGE sql AS 'SELECT 1';",
+        "SELECT 1; -- CREATE FUNCTION Hidden_In_Comment()\n",
+        "SELECT 1 CREATE FUNCTION Hidden_Mid_Statement() RETURNS int;",
+    ]
+    names = set(mig._managed_names(texts))
+    assert {"cost$fn", "\u00c4rger_\u00dc"} <= names, names
+    assert not {"\u00e4rger_\u00fc", "cost"} & names, names
+    assert not {n for n in names if n.startswith("hidden")}, names
+    # Not handled (and safe): the text of a string that holds `; CREATE FUNCTION name` is read as a function too. That
+    # only adds a name that no object has (or a same-named function of another owner, which is refused), so a run is
+    # refused that need not be, never the other way round.
+    assert "in_string" in set(mig._managed_names(["SELECT 'x; CREATE FUNCTION In_String() y';"]))
+
+
 def test_the_roles_are_asked_again_after_every_file(monkeypatch, tmp_path):
     """The flags, the borrowed roles and the parameter grants are asked at the start and again after each file; a file
     that left the migration user a member of a powerful role is refused by name of the file. Killed by: mutant RC1 (the
@@ -1065,8 +1098,13 @@ def test_the_roles_are_asked_again_after_every_file(monkeypatch, tmp_path):
     assert not any(s.startswith("INSERT INTO schema_migrations") for s in db.log)
 
 
+def _PORTAL(g):
+    """What the portal role may hold on a table: SELECT where the map says so, nothing else."""
+    return "SELECT" if (g and g.portal) else ""
+
+
 class _Privileges:
-    """A connection for `effective_problems` and `_excess_privileges`: a server of one version, one table in the map, and
+    """A connection for `effective_problems` (runtime and portal role checks): a server of one version, one table in the map, and
     a record of every privilege name it is asked about."""
 
     def __init__(self, version: int):
@@ -1094,13 +1132,13 @@ class _Privileges:
 
 @pytest.mark.parametrize("version, asked", [(160015, False), (170010, True)])
 def test_the_maintain_privilege_is_asked_about_from_postgresql_17_only(version, asked):
-    """PostgreSQL 17 added the table privilege MAINTAIN and 16 refuses the name. Killed by: mutants MT1 (never asked), MT2
-    (always asked) and MT3 (`_excess_privileges` does not ask)."""
+    """PostgreSQL 17 added the table privilege MAINTAIN and 16 refuses the name. Killed by: mutants MT1 (never asked) and MT2
+    (always asked)."""
     db = _Privileges(version)
     assert mig.effective_problems(db, "rt_role", lambda g: g.runtime if g else "") == []
     assert ("MAINTAIN" in db.asked) is asked, db.asked
     db = _Privileges(version)
-    assert mig._excess_privileges(db, "pt_role") == []
+    assert mig.effective_problems(db, "pt_role", _PORTAL) == []
     assert ("MAINTAIN" in db.asked) is asked, db.asked
 
 
@@ -1117,14 +1155,17 @@ def test_a_maintain_grant_is_a_problem_on_postgresql_17():
         "can MAINTAIN spend" in p
         for p in mig.effective_problems(db, "rt_role", lambda g: g.runtime if g else "")
     )
-    assert "spend:MAINTAIN" in mig._excess_privileges(_Maintains(170010), "pt_role")
+    assert any(
+        "can MAINTAIN spend" in p
+        for p in mig.effective_problems(_Maintains(170010), "pt_role", _PORTAL)
+    )
 
 
 def test_the_portal_role_is_asked_about_every_table_privilege_the_other_roles_are():
-    """The portal check asks the same list as the runtime check (`_table_privs`), so REFERENCES and TRIGGER are counted
-    too. Killed by: mutant PT1 (the portal list is written out again without them)."""
+    """The portal check is the same `effective_problems` scan as the runtime check, so REFERENCES and TRIGGER are
+    counted too. Killed by: mutant PT1 (the portal check goes back to a shorter list of its own)."""
     db = _Privileges(160015)
-    assert mig._excess_privileges(db, "pt_role") == []
+    assert mig.effective_problems(db, "pt_role", _PORTAL) == []
     assert set(mig._TABLE_PRIVS) <= set(db.asked), db.asked
 
     class _Triggers(_Privileges):
@@ -1133,8 +1174,10 @@ def test_the_portal_role_is_asked_about_every_table_privilege_the_other_roles_ar
                 return _Result([(True,)])
             return super().execute(query, params)
 
-    extra = mig._excess_privileges(_Triggers(160015), "pt_role")
-    assert "spend:REFERENCES" in extra and "spend:TRIGGER" in extra, extra
+    extra = mig.effective_problems(_Triggers(160015), "pt_role", _PORTAL)
+    assert any("can REFERENCES spend" in p for p in extra) and any(
+        "can TRIGGER spend" in p for p in extra
+    ), extra
 
 
 # --- the released-file list is checked by migrate() itself ---------------------------------------------
@@ -1307,6 +1350,9 @@ class _Roles:
     def __init__(self, exists: bool):
         self.exists, self.log = exists, []
         self.pgconn = self
+        self.info = types.SimpleNamespace(
+            dsn="host=made-up-host port=5999 dbname=made_up", password=""
+        )
 
     def encrypt_password(self, password, user, algorithm):
         self.encrypted = (password, user, algorithm)
@@ -1320,7 +1366,72 @@ class _Roles:
         return _Result([(1,)] if "FROM pg_roles WHERE rolname = %s" in text and self.exists else [])
 
 
-def test_the_test_role_is_looked_up_first_and_not_made_a_second_time():
+class _Hold:
+    """The long-lived connection that holds the live-process lock: records what it is asked and that it is closed."""
+
+    def __init__(self, server):
+        self.server, self.log, self.closed = server, [], False
+
+    def execute(self, query, params=None):
+        self.log.append((query, params))
+
+    def close(self):
+        self.closed = True
+
+
+@pytest.fixture
+def holds(monkeypatch):
+    """Every `psycopg.connect` of the helper goes to a recorder, and the helper's own table of held locks starts empty."""
+    from tests.fixtures import migration_role as mr
+
+    made = []
+    monkeypatch.setattr(mr, "_HOLDS", {})
+    monkeypatch.setattr(
+        "psycopg.connect", lambda server, **k: made.append(_Hold(server)) or made[-1]
+    )
+    return made
+
+
+def test_the_live_process_lock_is_taken_on_the_server_that_makes_the_role(holds):
+    """The lock of "this test process is alive" sits on the server of the connection that creates the role, not on a
+    server named by an environment variable, and it is taken once per server. Killed by: mutants SW4
+    (`_hold_the_role` is not called) and SW5 (the lock is taken on a fixed local server)."""
+    from tests.fixtures import migration_role as mr
+
+    mr.ensure_plain_role(_Roles(exists=False))
+    assert len(holds) == 1, [h.server for h in holds]
+    assert "made-up-host" in holds[0].server and "5999" in holds[0].server
+    ((query, params),) = holds[0].log
+    assert "pg_advisory_lock" in query and params == (mr._hold_key(mr._TOKEN),)
+    mr.ensure_plain_role(_Roles(exists=False))
+    assert len(holds) == 1, "a second role creation on the same server takes no second lock"
+
+
+def test_a_role_that_exists_takes_no_lock_and_a_missing_environment_variable_changes_nothing(
+    holds, monkeypatch
+):
+    from tests.fixtures import migration_role as mr
+
+    monkeypatch.delenv("HADAVIN_TEST_PG_DSN", raising=False)
+    mr.ensure_plain_role(_Roles(exists=True))
+    assert holds == []
+    mr.ensure_plain_role(_Roles(exists=False))
+    assert len(holds) == 1, "the lock does not depend on HADAVIN_TEST_PG_DSN"
+
+
+@pytest.mark.parametrize(
+    "token", ["+1234567", " 1234567", "1_234567", "ABCDEF12", "1234567", "123456789", ""]
+)
+def test_only_eight_lower_case_hex_digits_are_a_token(token):
+    """`int(x, 16)` alone reads signs, spaces and underscores. Killed by: mutant SW6 (the strict check is removed)."""
+    from tests.fixtures import migration_role as mr
+
+    with pytest.raises(ValueError):
+        mr._hold_key(token)
+    assert mr._hold_key("0123abcd") == mr._HOLD_BASE + 0x0123ABCD
+
+
+def test_the_test_role_is_looked_up_first_and_not_made_a_second_time(holds):
     """A repeated `CREATE ROLE ... PASSWORD` fails on the server and the server logs the failed statement. Killed by:
     mutant TR2 (the role is created without the look-up)."""
     from tests.fixtures import migration_role as mr
@@ -1330,7 +1441,17 @@ def test_the_test_role_is_looked_up_first_and_not_made_a_second_time():
     assert len(db.log) == 1 and "FROM pg_roles" in db.log[0], db.log
 
 
-def test_the_test_role_password_is_sent_only_as_a_hash():
+def test_the_test_role_is_made_without_the_replication_flag(holds):
+    """Killed by: mutant RP1 (NOREPLICATION is left out of the statement)."""
+    from tests.fixtures import migration_role as mr
+
+    db = _Roles(exists=False)
+    mr.ensure_plain_role(db)
+    created = [s for s in db.log if s.startswith("CREATE ROLE")]
+    assert "NOREPLICATION" in created[0], created
+
+
+def test_the_test_role_password_is_sent_only_as_a_hash(holds):
     """The raw password is in no statement: the statement holds the SCRAM hash made on this side. Killed by: mutant TR3."""
     from tests.fixtures import migration_role as mr
 
@@ -1343,7 +1464,7 @@ def test_the_test_role_password_is_sent_only_as_a_hash():
     assert db.encrypted[2] == b"scram-sha-256"
 
 
-def test_making_the_test_role_first_sweeps_the_stale_roles_of_killed_processes():
+def test_making_the_test_role_first_sweeps_the_stale_roles_of_killed_processes(holds):
     """Killed by: mutant SW1 (the sweep is not called before the role is made)."""
     from tests.fixtures import migration_role as mr
 
