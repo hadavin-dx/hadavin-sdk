@@ -2,3 +2,29 @@ runner under test: /tmp/claude-0/main89/tools/mutation_runner.py
 row: [('flip', <Verdict.ERROR: 'ERROR'>, '::tests.test_core', False)]
 first_lines: {'flip': 'E   AssertionError: at import'}
 pytest exit codes (file, rc): [('base.xml', 0), ('r.xml', 2)]
+
+## Round 4 addition (M1): what "the unchanged main runner" was
+runner under test: tools/mutation_runner.py of origin/main commit 2a8c2aac89f83dd0a45af0412563b59ff4fe5632 (a git worktree of that commit)
+sha256 of that file (git show 2a8c2aa:tools/mutation_runner.py | sha256sum): 489517fb224f0598e14244ded1b37fe2a68be69e2396e56e450be0d8b1c0a1a7
+sha256 of src/hadavin_sdk/testing/mutation.py at that commit: 75c32a4e501f5c3a4edcd6f1fd8a58603ebb2ef6fd43842e558ce0761eaee03e
+command (run with sys.path[:0] = [<worktree>/src, <worktree>], python 3.13, pytest 9.2.0): the script below, saved as /tmp/claude-0/c3/old_row.py
+--- script ---
+import sys
+from pathlib import Path
+sys.path[:0] = ["/tmp/claude-0/main89/src", "/tmp/claude-0/main89"]
+from tools import mutation_runner as mr
+from tools.mutation_runner import Mutant, run_mutants
+root = Path("/tmp/claude-0/c3/tree"); (root / "src/pk").mkdir(parents=True, exist_ok=True); (root / "tests").mkdir(exist_ok=True)
+(root / "src/pk/__init__.py").write_text(""); (root / "src/pk/core.py").write_text("def go(flag):\n    return flag\n")
+(root / "tests/test_core.py").write_text("from pk.core import go\n\nassert go(True) is True, 'at import'\n\ndef test_a():\n    assert True\n")
+rcs = []; real = mr._pytest
+def spy(*a, **k):
+    rc = real(*a, **k); rcs.append((a[2].name, rc)); return rc
+mr._pytest = spy
+lines = {}
+FLIP = Mutant("flip", "src/pk/core.py", "return flag", "return not flag", "assert")
+rows = run_mutants(root, [FLIP], ["tests/test_core.py"], extra_dirs=(), timeout=120, first_lines=lines)
+print("runner under test:", mr.__file__)
+print("row:", rows)
+print("first_lines:", lines)
+print("pytest exit codes (file, rc):", rcs)
