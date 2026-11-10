@@ -1,7 +1,13 @@
 """Guard: pglast is GPL-3.0-or-later, so it stays in the `test` dependency group (the CI oracle) and never
-reaches shipped code (src/, demos/, tools/) or a runtime dependency (owner decision 2026-11-01)."""
+reaches shipped code (src/, demos/, tools/) or a runtime dependency (owner decision 2026-11-01).
+
+Best effort, not a proof: the code scan reads import statements and string literals that are exactly a
+pglast module name. An import whose name is built at run time (for example `"pg" + "last"` passed to
+`importlib.import_module` or `__import__`) is not caught, and neither is a copy of the code under another
+name. Nested `.venv` and `node_modules` folders are skipped, because they hold other people's code."""
 
 import ast
+import os
 import re
 import tomllib
 from pathlib import Path
@@ -10,6 +16,8 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 TREES = ("src", "demos", "tools")
+BINARY = (".so", ".pyd", ".dylib")  # compiled extension modules on Linux, Windows and macOS
+SKIP_DIRS = {".venv", "node_modules"}  # other people's code, never shipped from here
 
 
 def _norm(name):
@@ -33,14 +41,23 @@ def _flat(groups, name, seen=()):  # entries of a group with include-group resol
             yield d
 
 
-def _hit(deps):
-    return any(_is(d["name"] if isinstance(d, dict) else d) for d in deps)
+def _hit(deps):  # an include-group dict has no `name` (a cyclic group is yielded as is): skip it
+    return any(_is(d.get("name") if isinstance(d, dict) else d) for d in deps)
+
+
+def _walk(base):  # (files, dirs) under base, not descending into SKIP_DIRS
+    files, dirs = [], []
+    for here, names, leaves in os.walk(base):
+        names[:] = [n for n in names if n not in SKIP_DIRS]
+        dirs += [Path(here) / n for n in names]
+        files += [Path(here) / n for n in leaves]
+    return files, dirs
 
 
 def _code(root, tree):
-    files = [p for p in (root / tree).rglob("*") if p.is_file()] if (root / tree).is_dir() else []
-    bad = [f"{tree}: vendored {p.name}" for p in files if p.suffix in (".so", ".pyd")]
-    bad += [f"{tree}: vendored dir" for p in (root / tree).rglob("*") if p.is_dir() and _is(p.name)]
+    files, dirs = _walk(root / tree)
+    bad = [f"{tree}: vendored {p.name}" for p in files if p.suffix in BINARY]
+    bad += [f"{tree}: vendored dir" for p in dirs if _is(p.name)]
     py = [p for p in files if p.suffix in (".py", ".pyi")]
     if not py:
         bad.append(f"{tree}: no python file scanned")
@@ -104,7 +121,10 @@ def test_repository_ships_no_pglast():
     assert violations(ROOT) == []
 
 
-PYPROJECT = '[project]\nname="x"\ndependencies=[]\n[dependency-groups]\ntest=["pglast==8.7"]\ndev=["pytest"]\n'
+PYPROJECT = (
+    '[project]\nname="x"\ndependencies=[]\n'
+    '[dependency-groups]\ntest=["pglast==8.7"]\ndev=["pytest"]\n'
+)
 LOCK = (
     '[[package]]\nname="x"\n[package.dev-dependencies]\ntest=[{name="pglast"}]\n'
     '[[package]]\nname="pglast"\n[[package]]\nname="other"\ndependencies=[{name="requests"}]\n'
@@ -161,6 +181,32 @@ MUTANTS = {
     "missing src": ({"src/m.py": None}, ["src: no python file scanned"]),
     "vendored dir": ({"src/pglast/__init__.py": ""}, ["src: vendored dir"]),
     "vendored binary": ({"src/_pglast.so": ""}, ["src: vendored _pglast.so"]),
+    "vendored macOS binary": ({"src/_pglast.dylib": ""}, ["src: vendored _pglast.dylib"]),
+    "vendored Windows binary": ({"tools/_pglast.pyd": ""}, ["tools: vendored _pglast.pyd"]),
+    "cyclic include-group has no name": (
+        {"pyproject.toml": PYPROJECT + 'ci=[{include-group="ci"}]\n'},
+        [],
+    ),
+    "cyclic pair still finds pglast": (
+        {
+            "pyproject.toml": PYPROJECT
+            + 'a=[{include-group="b"},"pglast"]\nb=[{include-group="a"}]\n'
+        },
+        ["group a", "group b"],
+    ),
+    "nested .venv import is skipped": ({"src/.venv/lib/m.py": "import pglast\n"}, []),
+    "nested node_modules vendored is skipped": (
+        {"demos/node_modules/pglast/x.py": "", "demos/node_modules/_p.so": ""},
+        [],
+    ),
+    "nested .venv alone is not a scanned file": (
+        {"src/m.py": None, "src/.venv/m.py": "x = 1\n"},
+        ["src: no python file scanned"],
+    ),
+    "venv-like name outside the skip list is scanned": (
+        {"src/venv/m.py": "import pglast\n"},
+        ["src: venv/m.py imports pglast"],
+    ),
 }
 
 
