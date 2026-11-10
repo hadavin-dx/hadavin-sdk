@@ -936,5 +936,5 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a163ed7f2d034d9cc | builder (general-purpose, sonnet) | A19 PR83 fix batch, head 85e0801 on core/P0t-followup-fix1 | CLOSED 17:30Z; 10635 passed 1 skipped, ruff/bandit/scan_repo rc 0, 78/78 mutants; decisions for lead in q-entry |
 | a56510b27072e6cee | egm-codebase-details (sonnet) | A19 PR83 fix1 result review r2, snapshot handover/egm/A19/snapshot-85e0801/ | REPORTED 1B/2M/4N, CLOSED 17:42Z; saved egm/A19/r2-codebase.md |
 | a233a9a24ca3aaf48 | egm-design (sonnet) | A24 PR91 r3 | REPORTED 0B/4M/5N, CLOSED; egm/A24/r3-design.md |
-| a6376aa2e418eaf11 | egm-codebase-details (sonnet) | A24 PR91 db0e0ce result review r3 | started 17:47Z, expected 18:12Z | RUNNING |
+| a6376aa2e418eaf11 | egm-codebase-details (sonnet) | A24 PR91 r3 | REPORTED 0B/7M/10N, CLOSED; egm/A24/r3-codebase.md |
 | a997c39722443ee17 | builder (general-purpose, sonnet) | A19 PR83 fix batch 2 (r2 B1/M1/M2), WT-A19fix, branch core/P0t-followup-fix1 | started 17:50Z, expected 18:50Z, checkpoint checkpoints/A19fix2.md | INTERIM 17:58Z: fixes+tests written, lint gates rc 0, tenant tests 80 passed (9 fail on old src); full pytest (heavy.sh, log /tmp/claude-0/a19fix2-full.log, at 17%) and 82-mutant run pending; NOT committed; M2 decision for lead (require a letter or digit; DEFAULT yes) |

@@ -2189,3 +2189,7 @@
 | BL-core-a24-r3-02 | PR91 db0e0ce | MAJOR | nested pyproject rule bypassable by TOML spelling | OPEN | egm/A24/r3-design.md M2 | UNCAPPED |
 | BL-core-a24-r3-03 | PR91 db0e0ce | MAJOR | guard tests can be disabled via conftest/pytest.ini/pyproject pytest keys, not code-owned or pinned | OPEN | egm/A24/r3-design.md M3 | UNCAPPED |
 | BL-core-a24-r3-04 | PR91 db0e0ce | MAJOR | .gitattributes -diff/binary may blind gitleaks history scan (unprobed) | OPEN | egm/A24/r3-design.md M4 | UNCAPPED |
+| BL-core-a24-r3-05 | PR91 db0e0ce | MAJOR | symlink/non-regular config file skips the name check (is_file before check) | OPEN | egm/A24/r3-codebase.md M1 | UNCAPPED |
+| BL-core-a24-r3-06 | PR91 db0e0ce | MAJOR | secret prefixes use \b, missed after escape letter or underscore | OPEN | egm/A24/r3-codebase.md M4 | UNCAPPED |
+| BL-core-a24-r3-07 | PR91 db0e0ce | MAJOR | 51 of 71 list lines have boilerplate unreviewed reason; reason gate nominal | OPEN | egm/A24/r3-codebase.md M5 | UNCAPPED |
+| BL-core-a24-r3-08 | PR91 db0e0ce | MAJOR | codeql-config.yml/zizmor.yaml/checkov/hadolint not scanner config; CODEOWNERS lacks test_no_reference_material.py | OPEN | egm/A24/r3-codebase.md M6,M7 | UNCAPPED |
