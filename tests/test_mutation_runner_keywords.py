@@ -672,10 +672,10 @@ def test_masking_removes_a_random_value_in_every_printed_form_whole_or_shortened
 
 def test_a_short_secret_inside_a_shortened_long_one_does_not_hide_the_long_one():
     # found by the property test: cutting the short secret out first changed the text, and the tail of the long one no longer matched
-    secret = "Hq4Zr8Wm2Tx5Lb" + "ZZZZZ" + "Kd7tavnQe3Rj9"
+    secret = "north-river-stone-bridge-glacier-delta"  # readable words: 38 characters, more than the 12 + 13 shown
     shown = f"E   assert '{secret[:12]}...{secret[-13:]}' == 'other'"
     out = mr._masked(shown, (secret, "ta"))
-    assert "vnQe3Rj9" not in out and "Hq4Zr8" not in out, (
+    assert "glacier" not in out and "north-" not in out, (
         f"a short secret inside the tail hid the shortened long secret: {out}"
     )
 
