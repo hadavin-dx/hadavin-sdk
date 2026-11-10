@@ -1512,3 +1512,23 @@ PROOF TABLE (agent id | role | subagent_type | model | package | EGM step):
 No agent runs on a wrong model. Earlier agents (S1k builder, round 1-9 reviewers) are finished; none is running. egm-resolve will run through the Skill tool (Opus 5.5 by the plugin patch).
 DECISIONS FOR LEAD: none. DEFAULT: after resolve, start the first batch of the plan (A1 A2 A3 A4 A5 A6 A7 A8 A9 A11 A14 A15 A19 A20 A21 A22 A24) in two waves for RAM.
 NEXT: collect both reviews, run egm-resolve, freeze plan, start wave 1.
+
+## q4xx ORDERS 231-233: parallel plan frozen, wave 1 running (16:36 Z)
+CHECKED BY ME: plan handover/PARALLEL-PLAN-2026-11-10.md rev 2 FROZEN. EGM verdict round 1: implementation_readiness 0B/9M/7N, zoom_out 0B/6M/5N; egm-resolve (Opus Skill): 25 PROPOSE FIX applied, 2 ESCALATE, 0 CONTEST (handover/egm/parallel-plan/round1-resolve.md). Step 0 done (shared Postgres 55400, worktrees, checkpoints).
+FIRST BATCH, 9 agents RUNNING (PROOF table; all model sonnet, MODEL column in cloud-register.md):
+| agent id | role | subagent_type | package | EGM step |
+|---|---|---|---|---|
+| a923d5f0766cf30f5 | EVIDENCE RUNNER | general-purpose | A9 PR66 da08ce2 | evidence |
+| ab34f773d845328c0 | EVIDENCE RUNNER | general-purpose | A7 P1b-fixwip 4bf610e | evidence |
+| af1006c8ab4d3f70f | EVIDENCE RUNNER | general-purpose | A8 PR63 + PR70 | evidence |
+| a4b4163fc7913b875 | EVIDENCE RUNNER | general-purpose | A3 PR75 a8abba0 (void if PR66 head moves) | evidence |
+| acc6e0bb31a761940 | BUILDER | general-purpose | A1 PR84 fix | build |
+| a35a326d25d2b834b | reviewer | egm:egm-design | A15 PR74 | result review |
+| a41b8bd2afc5f0697 | reviewer | egm:egm-codebase-details | A15 PR74 | result review |
+| a27e011a22ad67147 | reviewer | egm:egm-design | A19 PR83 | result review |
+| ad946e6c0b1d37bab | reviewer | egm:egm-design | A24 PR91 | result review |
+Next (this turn): A6 P4a plan review, P1d-a-plan review, P8 egm-draft. Queued: A4 (behind P1d-a-plan and A7), A10b/A13 (behind A3), wave 2 rows.
+NOT RUN: nothing counted as pass yet; no evidence has landed.
+DECISIONS FOR LEAD: (1) where are the P6a-1 62 hand-mutant script, P3a-2 66-mutant script and gen_evidence (q365/q367)? (2) A1: one noqa S603, owner decision.
+DEFAULT: (1) NOT RUN, never counted as pass; (2) noqa refused, code fixed instead.
+NEXT: land evidence, run result reviewers, resolve, drift report per row.
