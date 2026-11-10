@@ -2164,3 +2164,12 @@
 | BL-core-a24-r2-06 | PR91 92412fd | MAJOR | CODEOWNERS misses the enforcing tests, pyproject.toml and uv.lock | OPEN | r2-codebase M4 | 2 |
 | BL-core-a24-r2-07 | PR91 92412fd | MAJOR | CHANGELOG entry stale against the code and the list header | OPEN | r2-codebase M5 | 2 |
 | BL-core-a24-r2-08 | PR91 92412fd | MAJOR | 3 file-level `ruff: noqa` entries (demo_askdata corpus.py, fuzzgen.py, test_validate_harm.py): codes unconfirmed; narrow to per-line | OWNER-ONLY (lead decides) | r2-design | 2 |
+| BL-core-p1da-r4-01 | P1d-a plan rev 7 | BLOCKER | K41 key prefix fix not written out; A15/A44 unreconciled | FIXED-UNVERIFIED (rev 7; probe P7; fresh pass follows) | round4-readiness | UNCAPPED |
+| BL-core-p1da-r4-02 | P1d-a plan rev 7 | BLOCKER | AST choke-point test and A44 not defined on data flow | FIXED-UNVERIFIED (rev 7) | round4-readiness | UNCAPPED |
+| BL-core-p1da-r4-03 | P1d-a plan rev 7 | BLOCKER | rebase/Depends contradicted ORDER 230; mutant name clash A7 | FIXED-UNVERIFIED (rev 7) | round4-readiness | UNCAPPED |
+| BL-core-p1da-r4-04 | P1d-a plan rev 7 | BLOCKER | phases and differential under-specified | FIXED-UNVERIFIED (rev 7) | round4-readiness | UNCAPPED |
+| BL-core-p1da-r4-05 | P1d-a plan rev 7 | BLOCKER | backtick swallow leaves a link (BTK1) | FIXED-UNVERIFIED (rev 7; N7 and NEEDS LEAD 5 for scheme recompute) | round4-design | UNCAPPED |
+| BL-core-p1da-r4-06 | P1d-a plan rev 7 | BLOCKER | wide-dot hosts leak on the card path | FIXED-UNVERIFIED (rev 7, D4; model path NEEDS LEAD 2) | round4-design | UNCAPPED |
+| BL-core-p1da-r4-07 | P1d-a plan rev 7 | MAJOR | `=` in a query value ends a secret (Q18, S7b) | FIXED-UNVERIFIED (rev 7, IDF) | round4-design | UNCAPPED |
+| BL-core-p1da-r4-08 | P1d-a plan rev 7 | MAJOR | ReDoS of the key grammar unproven | FIXED-UNVERIFIED (rev 7; HL1, P7 timings) | round4-design | UNCAPPED |
+| BL-core-p1da-r4-09 | P1d-a plan rev 7 | MAJOR | fixture literals not built from parts; Alternatives/Risks gaps | FIXED-UNVERIFIED (rev 7) | both | UNCAPPED |

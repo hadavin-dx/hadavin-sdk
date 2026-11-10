@@ -1,0 +1,10 @@
+== NEW (0dabf1f + the rev-7 redact.py entries)
+K42a 233 '<HIGHENTROPY_1><SECRET_1> x' False
+K42c 288 '<HIGHENTROPY_1><SECRET_1> x' False
+K42d 289 'passwordk*30k*30k*30k*30k*30k*30k*30k*30kkkkkkkkkkkkkkkk=4xKp2Vb9Lr3NcW8dYh6uJs x' True
+K42q 64 '?passwordk*30=<SECRET_1> x' False
+== BASE 0dabf1f
+K42a 233 'passwordk*30k*30k*30k*30k*30k*30kkkkkkkkkkkkkkkkkkkk=4xKp2Vb9Lr3NcW8dYh6uJs x' True
+K42c 288 'passwordk*30k*30k*30k*30k*30k*30k*30k*30kkkkkkkkkkkkkkk=4xKp2Vb9Lr3NcW8dYh6uJs x' True
+K42d 289 'passwordk*30k*30k*30k*30k*30k*30k*30k*30kkkkkkkkkkkkkkkk=4xKp2Vb9Lr3NcW8dYh6uJs x' True
+K42q 64 '?passwordk*30=4xKp2Vb9Lr3NcW8dYh6uJs x' True

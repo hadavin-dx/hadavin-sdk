@@ -1,0 +1,8 @@
+=========================== short test summary info ============================
+FAILED tests/contracts/test_store_reserve_proofs_pg.py::test_the_runtime_login_cannot_switch_a_trigger_off
+ERROR tests/contracts/test_store_reserve_pg.py::test_a_legal_transition_cannot_carry_a_change_of_an_identity_field[reserved_usd]
+ERROR tests/contracts/test_store_reserve_pg.py::test_a_legal_transition_cannot_carry_a_change_of_an_identity_field[agent_id]
+ERROR tests/contracts/test_store_reserve_pg.py::test_a_legal_transition_cannot_carry_a_change_of_an_identity_field[day]
+ERROR tests/contracts/test_store_reserve_pg.py::test_a_legal_transition_cannot_carry_a_change_of_an_identity_field[meta]
+ERROR tests/contracts/test_store_reserve_pg.py::test_a_legal_transition_cannot_carry_a_change_of_an_identity_field[schema_version]
+1 failed, 111 deselected, 5 errors in 1.05s
