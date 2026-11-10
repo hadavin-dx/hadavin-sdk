@@ -2135,3 +2135,9 @@
 | BL-core-a15-r1-04 | A15 PR74 21ca680 | MAJOR | scan_keyset has no deadline (up to 8x3x262144 chars); reuse budget | OPEN | egm/A15/r1-codebase.md M4 | r1 |
 | BL-core-a15-r1-05 | A15 PR74 21ca680 | MAJOR | REFUSAL_HANDLERS names functions that do not exist (loose lint exemption) | OPEN | egm/A15/r1-codebase.md M5 | r1 |
 | BL-core-a15-r1-06 | A15 PR74 21ca680 | MAJOR | old-writers test is a status ledger, evidence.md missing, dead no_path branch | OPEN | egm/A15/r1-codebase.md M6 | r1 |
+| BL-core-a15-r2-01 | A15 PR74 21ca680 | MAJOR | hard gate test_reverse_check_fails_90_percent missing (oracle blindness unproven) | OPEN | egm/A15/r1-design.md M1 | r1 |
+| BL-core-a15-r2-02 | A15 PR74 21ca680 | MAJOR | test_every_active_row_has_teeth weaker than ticket (cap 40 vs 15, partial subjects) | OPEN | egm/A15/r1-design.md M2 | r1 |
+| BL-core-a15-r2-03 | A15 PR74 21ca680 | MAJOR | ticket-required tests missing; test_row validation path partial; literal counts; old-writer reasons | OPEN | egm/A15/r1-design.md M3 | r1 |
+| BL-core-a15-r2-04 | A15 PR74 21ca680 | MAJOR | mutation plan lacks many Appendix B mutants | OPEN | egm/A15/r1-design.md M4 | r1 |
+| BL-core-a15-r2-05 | A15 PR74 21ca680 | MAJOR | PR stacks P1a/P1b (~24k lines), behaviour change vs ticket; rebase or declare order | OPEN | egm/A15/r1-design.md M5 | r1 |
+| BL-core-a15-r2-06 | A15 PR74 21ca680 | MAJOR | test file name differs from ticket gate command | OPEN | egm/A15/r1-design.md M6 | r1 |
