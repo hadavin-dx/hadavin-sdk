@@ -1,0 +1,7 @@
+HEAD=d3922003925722275704b84f580152d35dd90c9c
+python=Python 3.13.18
+cmd=bandit -q -r src demos tools -ll
+start=2026-11-10T19:19:46Z
+/home/user/build/EV-P6a-d392200/../heavy.sh: line 6: bandit: command not found
+exit=127
+end=2026-11-10T19:19:46Z
