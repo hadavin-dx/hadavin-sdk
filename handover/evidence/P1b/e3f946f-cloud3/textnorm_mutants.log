@@ -42,3 +42,5 @@ ok  KILLED       order: the look-alike table runs before the case fold (the old 
 ok  KILLED       order: the case fold table is the raw table  [test_the_case_fold_table_is_on_the_case_fold_image_and_its_c]
 ok  KILLED       order: a capital wins over its own small letter  [test_the_case_fold_table_is_on_the_case_fold_image_and_its_c]
 ok  KILLED       squeeze: no case fold before the look-alike table  [test_squeeze_is_case_symmetric_for_every_code_point]
+ok  KILLED       pin: require_pinned_unidata only warns  [test_require_pinned_unidata_is_the_guard_and_fails_closed]
+exit=0
