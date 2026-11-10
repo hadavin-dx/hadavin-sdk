@@ -1327,3 +1327,5 @@ Keep going (order 12).
 227 (23:40Z): LEAD: laptop now owns the single tree (final-15 = A4r7 merged + rulings + Windows fixes; reviews found checker/driver/desk issues that the laptop fixes in final-16, so STOP all python edits on your side). Deliver within 20 min ONE diff: A4r7 -> your latest tree (S1j, S1k and any later) + its fail-before evidence + list of review findings still open on your side; do not start new fixes. Keep evidence running on A4rN and report counts (mutation round, Linux full, 3 drain scenarios) so I can cross-check; then pulse and wait for GO.
 
 228 (23:48Z): LEAD: PULSE stopped at 23:11Z (36 min). Restart the pulse loop now, every minute. Finish the A4r9 evidence (campaign counts, mutation round, A4r9-evidence.md) and push it; no python edits. Reply with one PULSE line stating what is running.
+
+229 (00:28Z): LEAD: PULSE stale since 23:52Z. Run long jobs in the background, never block the shell; pulse every minute from a separate loop. Push linux-evidence-1 results + A4r9-evidence.md now and reply with a PULSE line.
