@@ -91,7 +91,9 @@ def _hostile_errno(exc_type: type[BaseException]) -> OSError:
     return E(2, "x")
 
 
-def test_baseexception_from_hostile_getattr_propagates() -> None:
+def test_baseexception_from_hostile_attribute_propagates() -> None:
+    """BN-3: a ``BaseException`` raised by the ``errno`` property of an ``OSError`` subclass leaves ``diagnose``; an ``Exception`` from the
+    same place gives the fixed fallback. Every row in ``PROPAGATES_ROWS`` goes through the same check."""
     for exc_type in (asyncio.CancelledError, GeneratorExit, KeyboardInterrupt):
         with pytest.raises(exc_type):
             diagnose(_hostile_errno(exc_type), step=STEP)
@@ -102,6 +104,12 @@ def test_baseexception_from_hostile_getattr_propagates() -> None:
             raise RuntimeError("x")
 
     assert diagnose(F(2, "x"), step=STEP).fp == FALLBACK_FP
+    by_id = {r.id: r for r in corpus.ROWS}
+    assert corpus.PROPAGATES_ROWS
+    for row_id in corpus.PROPAGATES_ROWS:
+        with pytest.raises(BaseException) as info:
+            diagnose(corpus.build_exception(by_id[row_id].spec), step=STEP)
+        assert not isinstance(info.value, Exception), row_id
 
 
 def test_non_exception_baseexception_passed_in_is_foreign() -> None:

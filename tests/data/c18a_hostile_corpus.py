@@ -1389,6 +1389,3 @@ for _n in (7, 18):
 
 ROWS: Final[tuple[Row, ...]] = tuple(_ROWS)
 PROPAGATES_ROWS: Final = tuple(r.id for r in ROWS if r.expect == "propagates")
-NO_OLD_WRITER_PATH: Final = frozenset[
-    str
-]()  # validation rows the real extraction model accepts (filled by the evidence run)

@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import contextlib
 import re
-import time
+import traceback
 
 import pytest
 
 from hadavin_sdk.codes import Where
 from hadavin_sdk.guard.diagnostic import diagnose, render, validation_text
+from hadavin_sdk.guard.runmap import safe_head
 from tests.data import c18a_hostile_corpus as corpus
 from tests.data.c18a_oracle import grammar_ok, leaks
 
@@ -35,9 +36,11 @@ def _line(row: corpus.Row) -> str:
 
 
 def test_corpus_shape() -> None:
-    assert len(corpus.ROWS) == 161
-    assert len({r.id for r in corpus.ROWS}) == 161
-    assert sum(r.status == "active" for r in corpus.ROWS) == 135
+    """Counts come from the data, never from a literal here (a later package appends rows): ids are unique, every row has a known
+    status, there are active rows, every class has rows, and the minimum of each class holds."""
+    assert len({r.id for r in corpus.ROWS}) == len(corpus.ROWS)
+    assert {r.status for r in corpus.ROWS} <= {"active", "later", "not_applicable"}
+    assert len(ACTIVE) == sum(r.status == "active" for r in corpus.ROWS) > 0
     assert {r.cls for r in corpus.ROWS} == set(corpus.CLASSES)
     for cls, minimum in corpus.MINIMUMS.items():
         assert sum(r.cls == cls for r in corpus.ROWS) >= minimum, cls
@@ -50,18 +53,21 @@ def test_row(row: corpus.Row) -> None:
             diagnose(corpus.build_exception(row.spec), step=_step(row))  # type: ignore[arg-type]
         assert not isinstance(info.value, Exception)
         return
-    started = time.monotonic()
     out = _line(row)
-    elapsed = time.monotonic() - started
     assert grammar_ok(out, "V" if row.kind == "validation" else "A"), out
     assert not leaks(out, row.canaries), out
+    if row.kind == "validation":
+        # the same error also goes through ``diagnose`` and ``render`` (a rendered line, Grammar A), not only through ``validation_text``
+        with _ctx(row):
+            line = render(diagnose(corpus.build_validation_error(row.spec), step=Where.extract))
+        assert grammar_ok(line, "A"), line
+        assert not leaks(line, row.canaries), line
     if row.expect == "golden":
         assert re.fullmatch(str(row.spec["golden"]), out), out
     if row.expect_code is not None:
         assert f"code={row.expect_code.value} " in out, out
     if row.expect == "bounded":
-        assert len(out) <= 400
-        assert elapsed < 5
+        assert len(out) <= 400  # an algorithmic bound; no wall clock
 
 
 # --- meta tests of the corpus and the oracle ----------------------------------------------------------------------------
@@ -86,43 +92,141 @@ def test_later_rows_are_not_overdue() -> None:
 
 
 def test_old_writer_marks_follow_their_later_row() -> None:
-    from tests.test_diagnostics_old_writers import OLD_WRITER_CRASHES, OLD_WRITER_LEAKS
+    """Equality, not a subset: the ids listed in the old-writer ledger are exactly the rows that carry an xfail mark, each mark names a
+    ``later`` ``writer_wiring`` row of the corpus, and the lists neither repeat an id nor share one."""
+    from tests.test_diagnostics_old_writers import (
+        OLD_WRITER_CRASHES,
+        OLD_WRITER_LEAKS,
+        marked_reasons,
+    )
 
-    ids = {r.id for r in corpus.ROWS}
-    assert set(OLD_WRITER_LEAKS) | set(OLD_WRITER_CRASHES) <= ids
+    assert len(set(OLD_WRITER_LEAKS)) == len(OLD_WRITER_LEAKS)
     assert not set(OLD_WRITER_LEAKS) & set(OLD_WRITER_CRASHES)
-    wiring = [r for r in corpus.ROWS if r.cls == "writer_wiring"]
-    assert wiring and all(r.status == "later" for r in wiring)
+    listed = set(OLD_WRITER_LEAKS) | set(OLD_WRITER_CRASHES)
+    reasons = marked_reasons()
+    assert set(reasons) == listed, sorted(set(reasons) ^ listed)
+    wiring = {r.id: r for r in corpus.ROWS if r.cls == "writer_wiring"}
+    assert wiring and all(r.status == "later" for r in wiring.values())
+    for row_id, reason in reasons.items():
+        named = re.fullmatch(r"later: (\S+) wires the writer; outcome=(leaked|crashed)", reason)
+        assert named is not None and named.group(1) in wiring, (row_id, reason)
 
 
 def test_canaries_are_long_enough() -> None:
+    """Every canary has at least 8 characters and every key of ``scan_keyset(canary)`` at least 6 (P1's digit-only needle minimum)."""
+    from hadavin_sdk.guard.textnorm import scan_keyset
+
     for r in corpus.ROWS:
         for c in r.canaries:
             assert len(c) >= 8, (r.id, c)
+            for key in scan_keyset(c):
+                assert len(key) >= 6, (r.id, c, key)
+
+
+def test_propagates_rows_are_exactly_the_frozen_set() -> None:
+    assert {r.id for r in corpus.ROWS if r.expect == "propagates"} == set(corpus.PROPAGATES_ROWS)
+    assert len(corpus.PROPAGATES_ROWS) == 1, "the frozen set has one member (BN-3)"
+
+
+# --- the teeth of the corpus: the oracle must be able to see a canary in a deliberately leaky output ----------------------------
+ONE_RUN = [r for r in ACTIVE if r.kind in ("exception", "validation") and r.expect != "propagates"]
+EXEMPT = [
+    r for r in ONE_RUN if r.expect in ("bounded", "grammar")
+]  # by the field, never by text in ``why``
+EXEMPT_CAP = 15  # author choice (P5a rev 3), UNVERIFIED as the right cap
+
+
+def _teeth_subjects(row: corpus.Row, e: BaseException) -> list[str]:
+    """The ten leaky readings of an exception (and two more for a validation row). A reading that raises gives an empty text."""
+    readings = [
+        lambda: f"{type(e).__name__}: {e}",
+        lambda: repr(e),
+        lambda: safe_head(str(e), 300),
+        lambda: e.args[0],
+        lambda: "".join(getattr(e, "__notes__", ())),
+        lambda: getattr(e, "filename", ""),
+        lambda: getattr(e, "doc", ""),
+        lambda: getattr(e, "msg", ""),
+        lambda: repr(e.args),
+        lambda: "".join(traceback.format_exception(e)),
+    ]
+    if row.kind == "validation":
+        readings += [lambda: f"{e}", lambda: str(e.errors())]  # type: ignore[attr-defined]
+    out = []
+    for read in readings:
+        try:
+            value = read()
+        except Exception:  # a subject that raises gives "" (BN-3); no helper catches BaseException
+            value = ""
+        out.append(value if type(value) is str else "")
+    return out
+
+
+def _built(row: corpus.Row) -> BaseException:
+    return (
+        corpus.build_validation_error(row.spec)
+        if row.kind == "validation"
+        else corpus.build_exception(row.spec)
+    )
 
 
 def test_every_active_row_has_teeth() -> None:
-    """Each row with canaries leaks through a deliberately leaky subject: the oracle can see the canary."""
-    exempt = [
-        r for r in ACTIVE if r.expect in ("bounded", "propagates", "golden") or not r.canaries
-    ]
-    assert len(exempt) <= 40
-    for r in ACTIVE:
-        if r.kind != "exception" or r.expect in ("propagates",) or not r.canaries:
+    """Each active row of kind exception or validation (a row that expects a propagating ``BaseException`` excepted) makes ``leaks()``
+    alone True through at least one leaky reading, unless the row is exempt by its ``expect`` field. The exempt ids are printed."""
+    print("exempt from the teeth test:", [r.id for r in EXEMPT])
+    assert len(EXEMPT) <= EXEMPT_CAP, f"{len(EXEMPT)} rows are exempt; the cap is {EXEMPT_CAP}"
+    blind = []
+    for r in ONE_RUN:
+        if r in EXEMPT:
             continue
-        if r.spec.get("ctx") or r.spec["factory"] in ("meta_module", "meta_name", "meta_eq", "meta_mro", "str_raises", "repr_raises",
-                                                      "str_recursion", "getattr_raises", "errno_keyboard_interrupt", "chain"):  # fmt: skip
-            continue
-        e = corpus.build_exception(r.spec)
-        leaky = f"{type(e).__name__}: {e} {getattr(e, 'doc', '')} {getattr(e, 'msg', '')}"
-        if (
-            r.canaries
-            and r.expect == "no_canary"
-            and r.spec["factory"] not in ("dynamic", "dynamic_module")
-        ):
-            assert leaks(leaky, r.canaries), (
-                f"{r.id}: the oracle cannot see the canary in {leaky[:80]!r}"
-            )
+        with _ctx(r):
+            subjects = _teeth_subjects(r, _built(r))
+        if not any(leaks(text, r.canaries) for text in subjects):
+            blind.append(r.id)
+    assert not blind, (
+        f"the oracle cannot see the canary of these rows in any leaky reading: {blind}"
+    )
+
+
+def test_reverse_check_fails_90_percent() -> None:
+    """A HARD GATE. A deliberately leaky ``diagnose`` (``f"{type(exc).__name__}: {exc}"``) must make ``leaks()`` True for at least 90 percent
+    of the rows that are not exempt. The numerator and the denominator come from the same set, so the denominator is exact."""
+    rows = [r for r in ONE_RUN if r not in EXEMPT]
+    assert rows, "the set is empty: the gate would pass for nothing"
+    caught = []
+    for r in rows:
+        with _ctx(r):
+            e = _built(r)
+            try:
+                out = f"{type(e).__name__}: {e}"
+            except (
+                Exception
+            ):  # a hostile ``__str__`` raising: that leaky function produced no output for this row
+                out = ""
+        if leaks(out, r.canaries):
+            caught.append(r.id)
+    share = 100 * len(caught) / len(rows)
+    print(f"reverse check: {len(caught)} of {len(rows)} rows caught ({share:.1f} percent)")
+    missed = sorted({r.id for r in rows} - set(caught))
+    assert len(caught) * 10 >= len(rows) * 9, f"{len(caught)} of {len(rows)}; not caught: {missed}"
+
+
+def test_locator_rows_leave_no_trace() -> None:
+    """BN-12: the rows that run code in a real own module's namespace define only ``_p5a_probe_`` names and delete them, and restore the
+    temporary ``__name__`` swap: ``vars(hadavin_sdk.stats)`` is equal before and after."""
+    from hadavin_sdk import stats
+
+    before = dict(vars(stats))
+    ran = 0
+    for r in corpus.ROWS:
+        if r.cls == "locator_frames" and r.status == "active" and r.kind == "exception":
+            with _ctx(r):
+                render(diagnose(corpus.build_exception(r.spec), step=Where.other))
+            ran += 1
+    assert ran > 0
+    after = dict(vars(stats))
+    assert set(before) == set(after), sorted(set(before) ^ set(after))
+    assert before == after
 
 
 def test_strict_oracle_is_a_superset() -> None:

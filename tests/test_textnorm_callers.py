@@ -23,15 +23,11 @@ from hadavin_sdk.guard import textnorm
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src" / "hadavin_sdk"
-# ``path-below-hadavin_sdk::function``. UNVERIFIED names: the P2d-2 withhold function and the P5a closed-code mapper are named by the
-# authors of those packages; this list is edited when they land.
-REFUSAL_HANDLERS = frozenset(
-    {
-        "guard/redact.py::check_lookalike",
-        "guard/redact.py::_withhold",
-        "runtime/closed_codes.py::textnorm_code",
-    }
-)
+# ``path-below-hadavin_sdk::function``. Empty: no function in ``src`` handles a textnorm refusal by name today (A15 round 1, C-M5: three
+# names that did not exist were removed). A package that adds such a function adds its exact ``path::function`` here in the same change.
+REFUSAL_HANDLERS: frozenset[str] = frozenset()
+# The listing mechanism is tested with a made-up entry that is NOT in ``REFUSAL_HANDLERS``.
+_FIXTURE_HANDLERS = frozenset({"fixture/listed.py::listed_refusal"})
 BROAD = frozenset({"Exception", "BaseException", "ValueError", "TypeError", "AttributeError"})
 BANNED = frozenset(
     {"TextnormError"}
@@ -191,7 +187,7 @@ ROWS = [
     ),
     (
         "9 listed function",
-        "from hadavin_sdk.guard.textnorm import TextnormError, fold\ndef check_lookalike(x):\n    try:\n        fold(x)\n    except TextnormError:\n        return 1\n",
+        "from hadavin_sdk.guard.textnorm import TextnormError, fold\ndef listed_refusal(x):\n    try:\n        fold(x)\n    except TextnormError:\n        return 1\n",
         False,
     ),
 ]
@@ -199,7 +195,12 @@ ROWS = [
 
 @pytest.mark.parametrize(("name", "source", "reported"), ROWS, ids=[r[0] for r in ROWS])
 def test_fixture_row(name, source, reported):
-    findings = lint_source(source, rel="guard/redact.py" if "listed" in name else "x.py")
+    listed = "listed" in name
+    findings = lint_source(
+        source,
+        rel="fixture/listed.py" if listed else "x.py",
+        handlers=_FIXTURE_HANDLERS if listed else REFUSAL_HANDLERS,
+    )
     assert bool(findings) is reported, f"{name}: {findings}"
 
 
@@ -207,8 +208,15 @@ def test_the_nine_rows_are_eight_reported_and_one_allowed():
     assert len(ROWS) == 9 and sum(r[2] for r in ROWS) == 8
 
 
-def test_refusal_handlers_has_three_entries_and_the_banned_names_follow_textnorm():
-    assert len(REFUSAL_HANDLERS) == 3
+def test_refusal_handlers_names_only_functions_that_exist_and_the_banned_names_follow_textnorm():
+    for entry in REFUSAL_HANDLERS:
+        rel, function = entry.split("::")
+        source = (SRC / rel).read_text(encoding="utf-8")
+        assert any(
+            isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == function
+            for n in ast.walk(ast.parse(source))
+        ), f"{entry} names a function that does not exist"
+    assert not _FIXTURE_HANDLERS & REFUSAL_HANDLERS
     assert BANNED == {
         "TextnormError",
         "TextTooLong",

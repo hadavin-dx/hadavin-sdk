@@ -233,3 +233,81 @@ def test_step_token_is_closed_and_final() -> None:
     assert codes.StepToken.of(Sub("sweep")) is codes.Where.other
     with pytest.raises(TypeError):
         type("X", (codes.StepToken,), {})
+
+
+# --- added in A15 round 1 (findings D-M3, D-M3b of the design review) -----------------------------------------------------------
+D9_ORDER = (
+    "type", "key", "http_status", "sqlstate", "phase", "cause_kind", "provider_error_type", "request_id",
+    "retryable", "errno", "winerror", "gai", "count", "position", "line", "column", "field",
+    "retry_count", "attempt", "duration_ms",
+)  # fmt: skip
+
+
+def test_fact_priority_order_is_the_d9_literal() -> None:
+    """The order facts are printed in, as one literal (design D9). Changed only by P5b3 or P5c, when one of them adds ``reason`` (D8)."""
+    assert tuple(k.value for k in codes.FACT_PRIORITY) == D9_ORDER
+
+
+def test_phase_is_the_frozen_list() -> None:
+    assert [p.value for p in codes.Phase] == ["auth", "connect", "query", "unknown"]
+
+
+def test_validation_types_are_the_frozen_list() -> None:
+    assert codes.VALIDATION_OTHER == "other"
+    assert sorted(codes.VALIDATION_TYPES) == sorted(
+        [
+            "missing", "extra_forbidden", "literal_error", "int_parsing", "float_parsing", "bool_parsing",
+            "string_type", "int_type", "dict_type", "list_type", "too_short", "too_long", "greater_than",
+            "less_than", "string_too_short", "string_too_long", "decimal_parsing", "date_parsing",
+            "datetime_parsing", "enum", "url_parsing", "json_invalid", "model_type", "union_tag_invalid",
+            "value_error", "assertion_error",
+        ]
+    )  # fmt: skip
+    assert len(codes.VALIDATION_TYPES) == 26
+
+
+# Classes the AST scan cannot find (built by ``type()`` or imported under another name), each with a runtime row in ``PINNED``.
+NOT_SCANNABLE: frozenset[str] = frozenset()
+
+
+def test_every_row_key_is_found_by_the_scan() -> None:
+    """A rename or a move of an own class without its row fails here loudly; it never silently becomes ``foreign_exception``."""
+    scanned = set(_exception_classes())
+    missing = sorted(k for k in OWN_CODES if k not in scanned and k not in NOT_SCANNABLE)
+    assert not missing, f"rows whose class the scan does not find: {missing}"
+
+
+def test_not_scannable_list_has_runtime_rows() -> None:
+    scanned = set(_exception_classes())
+    for key in NOT_SCANNABLE:
+        assert key in PINNED, f"{key} is not scannable and has no runtime row in PINNED"
+        assert key not in scanned, f"{key} is found by the scan: take it off NOT_SCANNABLE"
+
+
+def test_builtin_ancestry_never_beats_the_row() -> None:
+    """A class with a keyed row gets that row's code although it also derives from a built-in that has a code of its own."""
+    from hadavin_sdk.guard.egress import EgressRefused
+    from hadavin_sdk.llm.fake import UnknownRecording
+    from hadavin_sdk.store.protocol import NotFound
+
+    assert issubclass(EgressRefused, PermissionError)
+    assert issubclass(NotFound, KeyError) and issubclass(UnknownRecording, KeyError)
+    for cls, code in (
+        (EgressRefused, "egress_refused"),
+        (NotFound, "store_conflict"),
+        (UnknownRecording, "config_invalid"),
+    ):
+        line = render(diagnose(cls.__new__(cls), step=codes.Where.other))
+        assert f"code={code} " in line, line
+
+
+def test_reserved_codes_name_their_package() -> None:
+    assert dict(RESERVED_FOR) == {
+        "session_closed": "P5c",
+        "provider_rate_limit": "P5b1",
+        "provider_auth": "P5b1",
+        "provider_invalid_request": "P5b1",
+        "provider_timeout": "P5b1",
+    }
+    assert len(RESERVED_FOR) == 5
+    assert set(RESERVED_FOR) <= {c.value for c in Code}

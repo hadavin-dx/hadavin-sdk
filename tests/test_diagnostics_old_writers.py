@@ -1,8 +1,11 @@
-"""The FAIL-BEFORE run: the hostile rows through today's writers (``run_tick`` and ``extract.extract``).
+"""A STATUS LEDGER, not a test of the new code: what today's writers (``run_tick`` and ``extract.extract``) do with the hostile rows.
 
-Nothing here tests the new code. It records, per row, whether today's writers leak the row's canaries (``leaked``), crash on the row
-(``crashed``) or are clean. Rows that leak or crash are strict xfails that name the later row of the package that wires the writers
-(R3c, P5b3), which turns each into a plain assert. The results on the P5a head equal the results on the branch base: P5a changes no writer.
+It records, per row, whether today's writers leak the row's canaries (``leaked``), crash on the row (``crashed``) or are clean. Rows that
+leak or crash are strict xfails whose reason names the ``writer_wiring`` row of the corpus (the later package R3c / P5b3 wires the
+writers; that row turns each xfail into a plain assert). The two frozen id lists below come from one evidence run of the P5a ticket
+(73 leaking rows, 8 crashing rows, 53 clean, 0 without a path, on the branch base and on the P5a head alike: P5a changes no writer);
+the pull request text names the evidence file. The lists are data from that run, not something this file derives: if a writer changes,
+the strict xfail flips to a failure and the lists are updated from a new run, in the same change. P5b3 deletes the lists.
 """
 
 from __future__ import annotations
@@ -29,7 +32,7 @@ class AdapterError(RuntimeError):
     """The writer did not run, so no verdict may be drawn."""
 
 
-# Frozen from the evidence run (see evidence.md): row id -> outcome.
+# Frozen from the evidence run named in the docstring: the ids of the rows whose canary today's writers leak.
 OLD_WRITER_LEAKS: tuple[str, ...] = (
     "HC-builtin_text-01",
     "HC-builtin_text-02",
@@ -115,7 +118,6 @@ OLD_WRITER_CRASHES: dict[str, str] = {
     "HC-hostile_class-15": "AttributeError",
     "HC-own_class_spoof-02": "AttributeError",
 }
-NO_OLD_WRITER_PATH: frozenset[str] = frozenset()
 
 ROWS = [
     r for r in corpus.ROWS
@@ -184,17 +186,34 @@ def outcome(row: corpus.Row, app, caplog) -> tuple[str, str]:
     return ("leaked" if leaks(text, row.canaries) else "clean"), ""
 
 
+# The ledger ids of the corpus's ``writer_wiring`` rows that stand for each writer: ``run_tick`` (exception rows) and ``extract`` (validation rows).
+_WIRING_LEDGER = {"exception": "BL-core-c18a-006", "validation": "BL-core-c18a-009"}
+
+
+def wiring_row_id(row: corpus.Row) -> str:
+    """The id of the ``writer_wiring`` row of the later package that wires the writer this row goes through."""
+    found = [
+        w.id
+        for w in corpus.ROWS
+        if w.cls == "writer_wiring" and _WIRING_LEDGER[row.kind] in w.ledger
+    ]
+    assert len(found) == 1, (row.id, found)
+    return found[0]
+
+
+def marked_reasons() -> dict[str, str]:
+    """Row id -> the xfail reason of every row that today's writers fail on."""
+    out: dict[str, str] = {}
+    for row in ROWS:
+        if row.id in OLD_WRITER_LEAKS or row.id in OLD_WRITER_CRASHES:
+            kind = "crashed" if row.id in OLD_WRITER_CRASHES else "leaked"
+            out[row.id] = f"later: {wiring_row_id(row)} wires the writer; outcome={kind}"
+    return out
+
+
 def _param(row: corpus.Row) -> pytest.param:
-    marks = []
-    if row.id in OLD_WRITER_LEAKS or row.id in OLD_WRITER_CRASHES:
-        kind = "crashed" if row.id in OLD_WRITER_CRASHES else "leaked"
-        marks.append(
-            pytest.mark.xfail(
-                strict=True,
-                raises=AssertionError,
-                reason=f"later: R3c (P5b3) wires the writers; outcome={kind}",
-            )
-        )
+    reason = marked_reasons().get(row.id)
+    marks = [pytest.mark.xfail(strict=True, raises=AssertionError, reason=reason)] if reason else []
     return pytest.param(row, id=row.id, marks=marks)
 
 
@@ -204,6 +223,5 @@ def test_old_writers(row: corpus.Row, app, caplog) -> None:
     if row.id in OLD_WRITER_CRASHES and got == "crashed":
         assert crash_type == OLD_WRITER_CRASHES[row.id], crash_type
     if got == "no_path":
-        assert row.id in NO_OLD_WRITER_PATH, row.id
-        return
+        pytest.fail(f"{row.id}: no path through today's writers; the row or the adapter is wrong")
     assert got == "clean", f"{row.id}: today's writers: {got} {crash_type}"
