@@ -80,11 +80,12 @@ def build(
     cfg = load_config(config_dir)
     reg = load_registry(cfg)
     b = cfg.backends
-    secrets = secrets or make("secrets", b.secrets)
     live = is_live(cfg.environment)
     if live:
         # The same text must fold the same way on every run: pilot and prod start only on the pinned Unicode data (raises UnidataMismatch).
+        # This runs before the secrets provider is made, so nothing is contacted on an interpreter that is refused.
         textnorm.require_pinned_unidata()
+    secrets = secrets or make("secrets", b.secrets)
     if live and not cfg.evidence.restored_hash_key_secret_name:
         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
     if live and getattr(b.store, "kind", "") == "postgres" and not b.store.purge_dsn_secret_name:

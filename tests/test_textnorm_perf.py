@@ -54,7 +54,9 @@ def test_s_call_the_worst_scan_keyset_call_at_the_size_rule():
     for name, text in texts.items():
         took = _seconds(scan_keyset, text)
         print(f"S_call {name}: {took:.3f} s")
-        assert took < 60.0, f"S_call {name} took {took:.1f} s"
+        assert took < 2 * defaults.REDACT_BUDGET_S, (
+            f"S_call {name} took {took:.1f} s"
+        )  # the scan refuses past its budget (C-M4)
 
 
 def test_sk5_a_thousand_calls_on_twenty_character_texts():

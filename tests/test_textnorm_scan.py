@@ -1,7 +1,7 @@
 """P1b: the DENY keys of the text fold (``scan_keyset``, ``same_person``), the gaps it closes, and the script check.
 
 Look-alikes are built with ``chr()``. Facts of one Unicode version are never written here: the tests state properties that hold on every
-interpreter, or read the live table (the digit decisions, the modifier letters). No wall-clock assertions: the perf rows (S_call, SK-5) live
+interpreter, or read the live table (the digit decisions, the modifier letters). The one wall-clock row here is the scan budget (ceiling = twice defaults.REDACT_BUDGET_S); the perf rows (S_call, SK-5) live
 in ``tests/test_textnorm_perf.py`` (marker ``perf``), which no mutation run lists. The assertions a mutant must trip carry a message; the
 mutant list (``tests/textnorm_mutants.py``) names a fragment of that message.
 
@@ -839,3 +839,39 @@ def test_on_another_unicode_version_identity_keys_are_tagged_and_scan_keys_are_n
         "same_person is unusable on another Unicode version"
     )
     assert not same_person("bob", "bobby")
+
+
+# ---- the time budget of scan_keyset (A15 round 1, C-M4) --------------------------------------------------------------------------------
+def _eight_key_text() -> str:
+    """The widest scan: capital Eta (two readings differ) and tag characters (four tag texts); one-third of the cap in each part."""
+    return ("a" + chr(0xE0062) + chr(0x397)) * (CAP // 3)
+
+
+def test_scan_keyset_refuses_when_its_time_budget_is_spent(monkeypatch):
+    """The budget is ``defaults.REDACT_BUDGET_S``; a spent budget refuses (``TextTooLong``) instead of running on. Deterministic: the budget is set below zero."""
+    assert defaults.REDACT_BUDGET_S > 0
+    scan_keyset("bank12345")  # the real budget: no refusal for a short text
+    monkeypatch.setattr(defaults, "REDACT_BUDGET_S", -1.0)
+    with pytest.raises(TextTooLong):
+        scan_keyset("bank12345")
+    with pytest.raises(TextTooLong):
+        scan_keyset(_eight_key_text())
+
+
+def test_the_widest_scan_ends_inside_the_budget_or_refuses():
+    """262,144 characters, up to eight keys: the call returns keys or raises ``TextTooLong``, and it does not run past the budget by more
+    than one pass (the clock is checked before every pass). The ceiling is twice the budget, so a slow machine refuses rather than fails."""
+    import time
+
+    text = _eight_key_text()
+    assert len(text) <= CAP
+    start = time.monotonic()
+    try:
+        keys = scan_keyset(text)
+    except TextTooLong:
+        keys = None
+    took = time.monotonic() - start
+    assert keys is None or len(keys) >= 2
+    assert took < 2 * defaults.REDACT_BUDGET_S, (
+        f"the scan took {took:.1f} s, budget {defaults.REDACT_BUDGET_S} s"
+    )

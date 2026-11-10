@@ -56,3 +56,19 @@ def test_a_non_live_build_runs_on_another_unicode_version(tmp_path, monkeypatch)
     qualify(app_mod.load_registry(app_mod.load_config(cfg)))
     built = app_mod.build(cfg, ["test-agent"], secrets=SECRETS)
     assert built.runtime is not None
+
+
+def test_the_guard_runs_before_the_secrets_provider_is_made(tmp_path, monkeypatch):
+    """C-M2: no ``secrets`` object is handed in, so ``app.build`` would make one. The refusal must come first (nothing is contacted)."""
+    monkeypatch.setattr(unicodedata, "unidata_version", OTHER)
+    made: list[str] = []
+
+    def spy(kind, *args, **kwargs):
+        made.append(kind)
+        raise AssertionError("a backend was made before the Unicode guard ran")
+
+    monkeypatch.setattr(app_mod, "make", spy)
+    cfg = pilot_cfg(tmp_path)
+    with pytest.raises(UnidataMismatch):
+        app_mod.build(cfg, ["ito-agent"])
+    assert made == []
