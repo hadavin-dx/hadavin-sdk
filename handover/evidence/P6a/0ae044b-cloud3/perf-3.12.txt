@@ -1,0 +1,7 @@
+0ae044b25a3113244777cd078fc9a784647af924
+$ <build>/venv-p72-312/bin/python -m pytest -q -m perf -rs
+
+T-E8 watchdog: pg_sleep(30) cancelled after 2.01s (watchdog 2.0s; the assertion allows 3.0s: the timer, the cancel round trip to the server and the connection close)
+............................                                             [100%]
+28 passed, 10514 deselected in 64.29s (0:01:04)
+exit=0

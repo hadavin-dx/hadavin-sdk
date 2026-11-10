@@ -1,0 +1,4 @@
+HEAD 0ae044b25a3113244777cd078fc9a784647af924
+$ ruff check src tests demos   (ci.yml scope)
+All checks passed!
+exit=0
