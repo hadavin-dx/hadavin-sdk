@@ -30,4 +30,4 @@ tests/test_executor.py::test_timeout_then_lookup_exactly_one_record PASSED [  1%
 tests/test_executor.py::test_timeout_and_lookup_fails_is_unknown PASSED  [  1%]
 tests/test_executor.py::test_changed_stored_plan_refused PASSED          [  1%]
 tests/test_executor.py::test_needs_approval_without_approval_refused PASSED [  1%]
-tests/test_executor.py::test_verify_mismatch_detected PASSED             [  1%]
+tests/test_executor.py::test_verify_mismatch_detected PASSED             [  1%]exit=0

@@ -2156,3 +2156,11 @@
 | BL-core-p1da-r4-01..04 | P1d-a plan rev6 | BLOCKER x4 | K41 unbuildable and unspecified; A15 contradictory; A44/AST test unspecified; rebase protocol conflicts | OPEN | egm/P1d-a-plan/round4-readiness.md B1-B4, round4-design.md B1-B2 | 4 |
 | BL-core-p1da-r4-05..09 | P1d-a plan rev6 | MAJOR x5+ | build phases not green; differential defined twice; row count; fixture parts; K41 probe; backtick swallow; `=` in query value; wide dots; thin alternatives | OPEN | round4-readiness.md M1-M5, round4-design.md M1-M5 | 4 |
 | BL-core-a24-r1-fix1 | PR91 fix1 92412fd | BLOCKER+MAJOR | r1 B1,M2-M6 reported fixed by builder; unverified until a fresh pass | FIXED-UNVERIFIED | reports/A24-PR91-fix1-builder-report.md (builder's own words) | 1 |
+| BL-core-a24-r2-01 | PR91 92412fd | BLOCKER | marker regexes are case-sensitive: `# NOQA`, `# NOSEC`, `# NOSEMGREP` are not hits | OPEN | egm/A24/r2-design.md B1; r2-codebase.md M1 | 2 |
+| BL-core-a24-r2-02 | PR91 92412fd | MAJOR | marker set misses NOSONAR, lgtm, codeql, zizmor ignore, allowlist secret, NOPMD, checkov, tfsec, ruff disable/ignore ranges; marker shape (nosem/nosec prefix, \b) | OPEN | r2-design M1,M2 | 2 |
+| BL-core-a24-r2-03 | PR91 92412fd | MAJOR | nested non-root pyproject.toml with [tool.ruff]/[tool.bandit] not guarded; more scanner config names missing (sonar, codeql, semgrep, coderabbit, trivy, pre-commit, secrets.baseline, snyk, .flake8, mypy.ini) | OPEN | r2-design M3,M4; r2-codebase M2 | 2 |
+| BL-core-a24-r2-04 | PR91 92412fd | MAJOR | NUL skip is an extension allowlist: .env, Dockerfile, .html and others escape secret scanning | OPEN | r2-design M5; r2-codebase M3 | 2 |
+| BL-core-a24-r2-05 | PR91 92412fd | MAJOR | generator placeholder "NEW, needs a reviewed reason" is accepted by the scan | OPEN | r2-design M6 | 2 |
+| BL-core-a24-r2-06 | PR91 92412fd | MAJOR | CODEOWNERS misses the enforcing tests, pyproject.toml and uv.lock | OPEN | r2-codebase M4 | 2 |
+| BL-core-a24-r2-07 | PR91 92412fd | MAJOR | CHANGELOG entry stale against the code and the list header | OPEN | r2-codebase M5 | 2 |
+| BL-core-a24-r2-08 | PR91 92412fd | MAJOR | 3 file-level `ruff: noqa` entries (demo_askdata corpus.py, fuzzgen.py, test_validate_harm.py): codes unconfirmed; narrow to per-line | OWNER-ONLY (lead decides) | r2-design | 2 |
