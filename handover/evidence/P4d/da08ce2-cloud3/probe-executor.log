@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/EV-A9/.venv313/bin/python3
+rootdir: /home/user/build/EV-A9
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 10 items
+
+tests/test_executor.py::test_create_verify_ok PASSED                     [ 10%]
+tests/test_executor.py::test_timeout_then_lookup_exactly_one_record PASSED [ 20%]
+tests/test_executor.py::test_timeout_and_lookup_fails_is_unknown PASSED  [ 30%]
+tests/test_executor.py::test_changed_stored_plan_refused PASSED          [ 40%]
+tests/test_executor.py::test_needs_approval_without_approval_refused PASSED [ 50%]
+tests/test_executor.py::test_verify_mismatch_detected PASSED             [ 60%]
+tests/test_executor.py::test_rollback_delete_draft_record PASSED         [ 70%]
+tests/test_executor.py::test_read_only_lookup PASSED                     [ 80%]
+tests/test_executor.py::test_wrong_token_is_refused_by_the_system PASSED [ 90%]
+tests/test_executor.py::test_unknown_host_refused_before_any_call PASSED [100%]
+
+============================== 10 passed in 6.34s ==============================
