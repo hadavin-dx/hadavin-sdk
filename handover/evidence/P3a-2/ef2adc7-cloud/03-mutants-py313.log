@@ -80,3 +80,7 @@ ok  KILLED       fix1: a late file skips the refusal list  [test_a_late_file_wit
 ok  KILLED       fix1: a $ after a $ in a name opens a tag  [test_a_dollar_right_after_a_dollar_inside_a_name]
 ok  KILLED       fix1: a $ after a number is part of a name  [test_dollar_tag_right_after_a_number]
 ok  KILLED       fix1: checked_statement_text returns a cut text  [test_checked_statement_text_raises_instead_of_returning_a_cut_text]
+ok  KILLED       fix1: gone_message names are not capped  [test_gone_message_caps_the_names_and_stays_fast]
+ok  KILLED       fix1: GRANT without ON is not refused  [test_more_blind_statements_are_refused[GRANT r TO s]]
+ok  KILLED       the role rule looks for a standalone ON with the word boundary again (app$on hides a grant)  [test_every_short_name_over_the_dollar_alphabet_is_refused_in_a_role_gr]
+exit=2

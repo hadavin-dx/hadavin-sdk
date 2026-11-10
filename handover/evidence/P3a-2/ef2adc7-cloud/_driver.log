@@ -7,3 +7,5 @@
 2026-11-10T20:05:03Z start 02c-full-py313-nodsn
 2026-11-10T20:09:12Z end 02c-full-py313-nodsn rc=0
 2026-11-10T20:09:12Z start 03-mutants-py313
+2026-11-10T20:09:48Z end 03-mutants-py313 rc=0
+2026-11-10T20:09:48Z start 04-migtests-py3.12-dsn-run1
