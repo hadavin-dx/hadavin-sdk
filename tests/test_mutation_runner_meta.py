@@ -78,7 +78,7 @@ MOVED = (
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 97
+EXPECTED_MUTANTS = 113
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
@@ -110,8 +110,8 @@ def test_a_there_are_the_listed_number_of_mutants_with_unique_names():
     names = [m.name for m in mm.M]
     assert len(names) == EXPECTED_MUTANTS and len(set(names)) == EXPECTED_MUTANTS, names
     assert {m.file for m in mm.M} == {mm.MU, mm.MR}
-    assert sum(m.file == mm.MU for m in mm.M) == 10
-    assert sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 10
+    assert sum(m.file == mm.MU for m in mm.M) == 12
+    assert sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 12
 
 
 def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists():

@@ -60,7 +60,7 @@ def judge(
         return Verdict.NO_TESTS
     if rc != 1:
         return Verdict.ERROR
-    if not test_id:  # a failing run with no failing test id (empty or unreadable JUnit, a collection error) names no test that killed
+    if not test_id:  # a failing run with no failing test id (an empty or unreadable JUnit file) names no test that killed
         return Verdict.ERROR
     if expect and expect not in first_line:
         return Verdict.WRONG_REASON
@@ -106,8 +106,13 @@ _FIXTURE_ERROR_STARTS = (
 )  # how pytest words the ``error`` of a fixture that failed
 
 
-def _first_failure(root: ET.Element) -> tuple[str, str, bool]:
-    """(id, first ``E`` line, is it a fixture error) of the first test case that holds a ``failure`` or an ``error``."""
+_COLLECTION_ERROR_START = "collection failure"  # how pytest words the ``error`` of a test file that could not be imported or collected
+
+
+def _first_failure(root: ET.Element) -> tuple[str, str, str]:
+    """(id, first ``E`` line, kind) of the first test case that holds a ``failure`` or an ``error``. ``kind`` is ``"fixture"`` for a setup or
+    teardown error of a fixture, ``"collection"`` for a test file that could not be imported or collected (pytest gives that case a
+    NON-empty id, ``::<dotted module>``, and runs no test), and ``""`` for a test body that failed."""
     for case in root.iter("testcase"):
         bad = case.find("failure")
         if bad is None:
@@ -119,11 +124,14 @@ def _first_failure(root: ET.Element) -> tuple[str, str, bool]:
             (ln.strip() for ln in body if ln.lstrip().startswith("E ")),
             (bad.get("message") or "").splitlines()[0] if bad.get("message") else "",
         )
-        fixture = bad.tag == "error" and (bad.get("message") or "").startswith(
-            _FIXTURE_ERROR_STARTS
-        )
-        return _case_id(case), e_line, fixture
-    return "", "", False
+        message = bad.get("message") or ""
+        kind = ""
+        if bad.tag == "error" and message.startswith(_FIXTURE_ERROR_STARTS):
+            kind = "fixture"
+        elif bad.tag == "error" and message.startswith(_COLLECTION_ERROR_START):
+            kind = "collection"
+        return _case_id(case), e_line, kind
+    return "", "", ""
 
 
 def _skipped(root: ET.Element) -> list[str]:
@@ -142,21 +150,31 @@ def _fixture_errors(root: ET.Element) -> list[str]:
 class JunitReport(NamedTuple):
     """What one pass over a JUnit file found: the first failing case (``test_id``, ``first_line``), the skipped cases, every case with a
     fixture error (``fixture_errors``), and ``fixture_failed``: True when the FIRST failing case is itself a fixture error. A test body
-    that failed and whose teardown then failed is NOT ``fixture_failed``: pytest writes the failure first, so the test ran as written."""
+    that failed and whose teardown then failed is NOT ``fixture_failed``: pytest writes the failure first, so the test ran as written.
+    ``collection_failed``: True when the FIRST failing case is a test file that could not be imported or collected (an ``assert`` at import time
+    is a plain ``AssertionError`` there), so no test ran."""
 
     test_id: str
     first_line: str
     skipped: list[str]
     fixture_errors: list[str]
     fixture_failed: bool
+    collection_failed: bool = False
 
 
 def read_junit(xml_text: str) -> JunitReport:
     """One parse of a pytest JUnit file for ``first_failure_junit``, ``skipped_tests`` and ``fixture_errors`` together (same refusals:
     ``ValueError`` for a DOCTYPE, an ENTITY or a text over ``MAX_JUNIT_CHARS``; a truncated file is a ``SyntaxError``)."""
     root = _parse_junit(xml_text)
-    test_id, first, fixture = _first_failure(root)
-    return JunitReport(test_id, first, _skipped(root), _fixture_errors(root), fixture)
+    test_id, first, kind = _first_failure(root)
+    return JunitReport(
+        test_id,
+        first,
+        _skipped(root),
+        _fixture_errors(root),
+        kind == "fixture",
+        kind == "collection",
+    )
 
 
 def first_failure_junit(xml_text: str) -> tuple[str, str]:
@@ -176,7 +194,7 @@ def skipped_tests(xml_text: str) -> list[str]:
 def fixture_errors(xml_text: str) -> list[str]:
     """The ids (same form as ``first_failure_junit``) of the test cases whose ``error`` record is a setup or teardown failure of a fixture
     (pytest writes ``failed on setup with ...`` / ``failed on teardown with ...``). Such a test never ran as written, so a runner counts the
-    mutant run as an error and not as a kill, even when the fixture failed with an ``AssertionError``. Note: when a test body fails and its
-    teardown fails too, pytest writes two cases of the same id (the failure first, then the teardown error), so that id is listed here as
+    mutant run as an error and not as a kill, even when the fixture failed with an ``AssertionError``. Note (confirmed by a real pytest 9.2 run): when a test body fails and its
+    teardown fails too, pytest writes TWO ``testcase`` elements of the same classname and name (the ``failure`` first, then the teardown ``error``), so that id is listed here as
     well; ``read_junit(...).fixture_failed`` tells whether the FIRST failing case is the fixture error. Same refusals as ``first_failure_junit``."""
     return _fixture_errors(_parse_junit(xml_text))

@@ -1,9 +1,10 @@
 """Tests of the three opt-in keywords of ``tools.mutation_runner.run_mutants`` (``conftest``, ``pass_env``, ``forbid_skips``) and of the
-two changes that are always on (the ``FIXTURE ERROR`` row and the judge's ERROR for a failing run that names no test).
+three changes that are always on (the ``FIXTURE ERROR`` row, the ``COLLECTION ERROR`` row, and the judge's ERROR for a failing run that
+names no test).
 
 Class: a mutant that "dies" because the tests could not run (skipped, or no database address, or a missing fixture file, or a fixture that
 failed) is a FALSE kill. The fix sits at the runner (one choke point for every caller). Without a keyword the arguments of a run are the
-old ones, and the only changed results are the two always-on ones, each tested below.
+old ones, and the only changed results are the three always-on ones, each tested below.
 
 Most killer tests give their assertion a message that names the guard (``_must_refuse`` and ``_must_raise`` write one too), so the
 mutants in ``tests/mutation_runner_mutants.py`` can tell which guard was removed from the first line of the failure.
@@ -55,6 +56,14 @@ def _guard_the_database_address():
     # set up before the test's own ``monkeypatch`` and checked after it has undone its changes: only a direct os.environ write is caught
     with _dsn_left_as_found():
         yield
+
+
+@pytest.fixture(autouse=True)
+def _own_lock_folder(_guard_the_database_address, tmp_path, monkeypatch):
+    # asks for the guard first, so the guard is set up before this ``monkeypatch`` and checked after it is undone
+    monkeypatch.setattr(
+        mr, "_lock_dir", lambda: tmp_path
+    )  # each test its own lock folder: two test processes never share a lock
 
 
 def test_the_guard_fails_a_test_that_deletes_the_database_address_and_puts_nothing_back():
@@ -314,14 +323,13 @@ def test_the_pytest_step_refuses_an_unlisted_env_name_by_itself(tmp_path):
 
 def test_a_bare_string_for_pass_env_is_refused_not_read_letter_by_letter(tmp_path):
     root = _tree(tmp_path, {CORE_TEST: PASSES})
-    _must_raise(
-        "a bare string was read as names",
-        TypeError,
-        _run,
-        root,
-        pass_env=DSN_NAME,
-        match="not one string",
-    )
+    caught = None
+    try:
+        _run(root, pass_env=DSN_NAME)
+    except (TypeError, ValueError) as exc:
+        caught = exc
+    assert isinstance(caught, TypeError), f"a bare string was read as names: {caught!r}"
+    assert "not one string" in str(caught), f"another refusal: {caught}"
 
 
 def test_property_no_name_outside_the_allowlist_is_ever_accepted():
@@ -379,23 +387,6 @@ def test_pass_env_values_never_reach_the_failing_test_id_of_a_row(tmp_path, monk
     assert "[REDACTED]" in rows[0][2], f"the test id was not shown with a marker: {rows[0][2]}"
 
 
-def test_the_baseline_error_never_holds_the_passed_value(tmp_path, monkeypatch):
-    dsn, word = _secret_dsn()
-    monkeypatch.setenv(DSN_NAME, dsn)
-    body = (
-        "import os\nimport pytest\n\n"
-        f"@pytest.mark.parametrize('v', [{dsn!r}])\n"
-        f"def test_a(v):\n    assert os.environ[{DSN_NAME!r}] == 'other'\n"
-    )
-    root = _tree(tmp_path, {CORE_TEST: body})
-    try:
-        _run(root, [FLIP], pass_env=(DSN_NAME,))
-    except RuntimeError as exc:
-        assert dsn not in str(exc) and word not in str(exc), "the baseline error held the value"
-    else:
-        raise AssertionError("a failing baseline was accepted")
-
-
 def test_the_baseline_skip_message_never_holds_the_passed_value(tmp_path, monkeypatch):
     dsn, word = _secret_dsn()
     monkeypatch.setenv(DSN_NAME, dsn)
@@ -450,33 +441,77 @@ def _long_value() -> str:
     return "".join(f"{hashlib.sha256(str(i).encode()).hexdigest()[:10]}-" for i in range(27))[:300]
 
 
-def test_a_long_value_is_masked_piece_by_piece(monkeypatch):
-    value = _long_value()
-    assert len(value) > mr.LONG_VALUE
-    monkeypatch.setenv(DSN_NAME, value)
-    secrets = mr._secret_values((DSN_NAME,))
-    # what pytest shows of a long value: the start and the end, with dots between
-    shown = f"E   AssertionError: assert '{value[:110]}...{value[-110:]}' == 'x'"
-    out = mr._masked(shown, secrets)
-    pieces = {value[i : i + mr.PIECE] for i in range(len(value) - mr.PIECE + 1)}
-    assert not any(p in out for p in pieces), "a piece of the long value survived the masking"
-    assert "[REDACTED]" in out and "AssertionError" in out, (
-        f"the line was not kept around the marker: {out}"
+def _key_value_value() -> tuple[str, str]:
+    """A 60-character key=value address (no URL) with the password at the tail, and that password; built from parts."""
+    head = "host=db.invalid dbname=scratch user=svc password="
+    word = hashlib.sha256(b"fragment").hexdigest()[: 60 - len(head)]
+    return head + word, word
+
+
+def _windows(secret: str, size: int = 6) -> set[str]:
+    return {secret[i : i + size] for i in range(len(secret) - size + 1)}
+
+
+def test_a_shortened_value_is_masked_by_its_fragments(monkeypatch):
+    for value in (_key_value_value()[0], _long_value()):
+        monkeypatch.setenv(DSN_NAME, value)
+        secrets = mr._secret_values((DSN_NAME,))
+        shown = f"E   AssertionError: assert '{value[:12]}...{value[-12:]}' == 'other'"
+        out = mr._masked(shown, secrets)
+        assert not any(w in out for w in _windows(value)), (
+            f"a fragment of the shortened value survived the masking: {out}"
+        )
+        assert "AssertionError: assert" in out and "== 'other'" in out, (
+            f"the line was not kept around the markers: {out}"
+        )
+    assert mr._masked("E   x == 'abc...def'", ("abcdefghijkl",)) == "E   x == 'abc...def'", (
+        "a fragment shorter than the minimum was masked"
     )
 
 
-def test_pass_env_long_values_never_reach_first_lines_as_shortened_by_pytest(tmp_path, monkeypatch):
-    value = _long_value()
-    monkeypatch.setenv(DSN_NAME, value)
+def _plain_compare_tree(tmp_path, value):
+    # the plainest failing line there is: no message of the test's own, so what shows is what pytest prints
     body = (
         "import os\nfrom pk.core import go\n\n"
-        f"def test_a():\n    v = os.environ[{DSN_NAME!r}]\n    assert (v if go(True) else 'x') == v\n"
+        f"def test_a():\n    v = os.environ[{DSN_NAME!r}]\n    if go(True) is not True:\n        assert v == 'other'\n"
     )
-    lines: dict[str, str] = {}
-    _run(_tree(tmp_path, {CORE_TEST: body}), [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
-    pieces = {value[i : i + mr.PIECE] for i in range(len(value) - mr.PIECE + 1)}
-    assert not any(p in lines["flip"] for p in pieces), (
-        "a piece of the long value reached first_lines"
+    return _tree(tmp_path, {CORE_TEST: body})
+
+
+def test_pass_env_values_shortened_by_pytest_never_reach_first_lines(tmp_path, monkeypatch):
+    for n, value in enumerate((_key_value_value()[0], _long_value())):
+        monkeypatch.setenv(DSN_NAME, value)
+        root = _plain_compare_tree(tmp_path / str(n), value)
+        # positive control: with the masking off, the line really holds a fragment (so the check below can fail)
+        with monkeypatch.context() as m:
+            m.setattr(mr, "_masked", lambda text, secrets: text)
+            seen: dict[str, str] = {}
+            _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=seen)
+        assert any(w in seen["flip"] for w in _windows(value)), (
+            f"the positive control failed: pytest printed no fragment of the value: {seen}"
+        )
+        lines: dict[str, str] = {}
+        _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
+        assert not any(w in lines["flip"] for w in _windows(value)), (
+            f"a fragment of the shortened value reached first_lines: {lines}"
+        )
+
+
+def test_a_password_after_a_password_word_or_in_a_url_query_is_a_secret(monkeypatch):
+    value, word = _key_value_value()
+    monkeypatch.setenv(DSN_NAME, value)
+    assert word in mr._secret_values((DSN_NAME,)), (
+        "the password of a key=value address was not a secret"
+    )
+    query = "postgresql://db.invalid/scratch?sslmode=require&password=" + "Tk8" + "%2F" + "Vq2&x=1"
+    monkeypatch.setenv(DSN_NAME, query)
+    secrets = mr._secret_values((DSN_NAME,))
+    assert "Tk8%2FVq2" in secrets and "Tk8/Vq2" in secrets, (
+        f"the password of a URL query was not a secret: {secrets}"
+    )
+    monkeypatch.setenv(DSN_NAME, "host=db.invalid user=svc")
+    assert mr._secret_values((DSN_NAME,)) == ("host=db.invalid user=svc",), (
+        "a value with no password word gave another secret"
     )
 
 
@@ -498,10 +533,12 @@ def test_a_database_that_a_mutant_left_dirty_stops_the_run_after_that_mutant(tmp
     seen = []
     try:
         _run(root, [FLIP, other], pass_env=(DSN_NAME,), on_result=seen.append)
-    except RuntimeError as exc:
+    except mr.CanaryFailed as exc:
         assert "'flip'" in str(exc), f"the message does not name the mutant: {exc}"
         assert "no longer passes" in str(exc), f"another refusal: {exc}"
-        assert str(tmp_path / "state.flag") not in str(exc), "the message held the passed value"
+        assert [r[0] for r in exc.rows] == ["flip"], (
+            f"the failure did not carry the rows so far: {exc.rows}"
+        )
     else:
         raise AssertionError("a dirty database did not stop the run")
     assert [r[0] for r in seen] == ["flip"], f"the second mutant ran on a dirty database: {seen}"
@@ -530,6 +567,111 @@ def test_without_a_passed_value_there_is_no_extra_run(tmp_path, monkeypatch):
     _run(root, [FLIP])
     assert count == ["base.xml", "r.xml", "base.xml", "r.xml"], (
         f"a run with no passed value made an extra run: {count}"
+    )
+
+
+def test_the_canary_runs_the_unmutated_copy(tmp_path, monkeypatch):
+    monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    try:
+        rows = _run(root, [FLIP], pass_env=(DSN_NAME,))
+    except RuntimeError as exc:
+        raise AssertionError(f"the canary ran the mutated copy: {exc}") from None
+    assert _short(rows) == [("flip", Verdict.KILLED, True)], rows
+
+
+def test_a_passed_name_set_to_an_empty_text_still_gets_the_canary(tmp_path, monkeypatch):
+    monkeypatch.setenv(DSN_NAME, "")
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    count = []
+    real = mr._pytest
+    monkeypatch.setattr(mr, "_pytest", lambda *a, **k: count.append(a[2].name) or real(*a, **k))
+    _run(root, [FLIP], pass_env=(DSN_NAME,))
+    assert count == ["base.xml", "r.xml", "again.xml"], (
+        f"an empty passed value got no canary run: {count}"
+    )
+
+
+SKIPS_WHEN_THE_DATABASE_IS_GONE = (
+    "import os\nimport pytest\nfrom pathlib import Path\nfrom pk.core import go\n\n"
+    f"def test_a():\n    state = Path(os.environ[{DSN_NAME!r}])\n    if state.exists():\n        pytest.skip('no database')\n"
+    "    if go(True) is not True:\n        state.write_text('x')\n    assert go(True) is True\n"
+)
+
+
+def test_a_canary_run_that_skips_is_refused_under_forbid_skips(tmp_path, monkeypatch):
+    monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
+    root = _tree(tmp_path, {CORE_TEST: SKIPS_WHEN_THE_DATABASE_IS_GONE})
+    _must_raise(
+        "a canary run that skipped was accepted under forbid_skips",
+        RuntimeError,
+        _run,
+        root,
+        [FLIP],
+        pass_env=(DSN_NAME,),
+        forbid_skips=True,
+        match="skipped",
+    )
+
+
+def test_a_canary_run_that_skips_passes_without_forbid_skips(tmp_path, monkeypatch):
+    # the control of the test above: the skip is what the refusal is about
+    monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
+    root = _tree(tmp_path, {CORE_TEST: SKIPS_WHEN_THE_DATABASE_IS_GONE})
+    assert _short(_run(root, [FLIP], pass_env=(DSN_NAME,))) == [("flip", Verdict.KILLED, True)]
+
+
+def test_a_copy_that_cannot_be_rebuilt_for_the_canary_is_a_clear_refusal(tmp_path, monkeypatch):
+    monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    real, real_copy = mr._pytest, mr.shutil.copytree
+    broken = []
+
+    def after_the_mutant_run(*a, **k):
+        rc = real(*a, **k)
+        if a[2].name == "r.xml":
+            broken.append(1)
+        return rc
+
+    def copytree(*a, **k):
+        if broken:
+            raise OSError("disk full")
+        return real_copy(*a, **k)
+
+    monkeypatch.setattr(mr, "_pytest", after_the_mutant_run)
+    monkeypatch.setattr(mr.shutil, "copytree", copytree)
+    monkeypatch.setattr(mr, "SETUP_WAIT", 0)
+    caught = None
+    try:
+        _run(root, [FLIP], pass_env=(DSN_NAME,))
+    except (RuntimeError, OSError) as exc:
+        caught = exc
+    assert isinstance(caught, RuntimeError), (
+        f"the canary copy failure was not a clear refusal: {caught!r}"
+    )
+    assert "could not be rebuilt for the canary" in str(caught), f"another refusal: {caught}"
+
+
+def test_a_second_runner_with_the_same_passed_value_is_refused(tmp_path, monkeypatch):
+    value = str(tmp_path / "state.flag")
+    monkeypatch.setenv(DSN_NAME, value)
+    monkeypatch.setattr(mr, "_lock_dir", lambda: tmp_path)
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    with mr._one_run_per_database([value]):
+        _must_raise(
+            "a second runner on the same passed value was accepted",
+            RuntimeError,
+            _run,
+            root,
+            [FLIP],
+            pass_env=(DSN_NAME,),
+            match="another mutation run",
+        )
+    assert _short(_run(root, [FLIP], pass_env=(DSN_NAME,))) == [("flip", Verdict.KILLED, True)], (
+        "the lock was not given back after a run"
+    )
+    assert not [f for f in tmp_path.glob("hadavin_mutation_*.lock") if value in f.name], (
+        "the lock file name held the passed value"
     )
 
 
@@ -687,8 +829,59 @@ def test_a_run_that_fails_with_no_junit_file_is_never_a_kill_even_without_forbid
         ),
     )
     rows = _run(root, [FLIP])
-    assert rows == [("flip", Verdict.ERROR, "", False)], (
+    assert rows == [("flip", Verdict.ERROR, "NO FAILING TEST NAMED", False)], (
         f"a failing run with no JUNIT file was not the plain empty ERROR row: {rows}"
+    )
+
+
+def test_a_baseline_that_left_no_usable_junit_file_is_refused_under_forbid_skips(
+    tmp_path, monkeypatch
+):
+    root = _tree(tmp_path, {CORE_TEST: PASSES})
+    real = mr._pytest
+
+    def without_the_file(cwd, tests, junit, timeout, **kw):
+        rc = real(cwd, tests, junit, timeout, **kw)
+        if junit.name == "base.xml":
+            junit.unlink()
+        return rc
+
+    monkeypatch.setattr(mr, "_pytest", without_the_file)
+    caught = None
+    try:
+        _run(root, [FLIP], forbid_skips=True)
+    except (RuntimeError, OSError) as exc:
+        caught = exc
+    assert isinstance(caught, RuntimeError), (
+        f"no refusal for a baseline without a JUnit file: {caught!r}"
+    )
+    assert "no usable JUnit file" in str(caught), f"another refusal: {caught}"
+
+
+COLLECTION_ASSERTS = "from pk.core import go\n\nassert go(True) is True, 'at import'\n\ndef test_a():\n    assert True\n"
+
+
+def test_a_test_file_that_cannot_be_imported_is_an_error_row_never_a_kill(tmp_path):
+    root = _tree(tmp_path, {CORE_TEST: COLLECTION_ASSERTS})
+    lines: dict[str, str] = {}
+    rows = _run(root, [FLIP], first_lines=lines)
+    assert rows == [("flip", Verdict.ERROR, "COLLECTION ERROR", False)], (
+        f"an assert at import time was counted as a kill: {rows}"
+    )
+    assert "at import" in lines["flip"], f"the COLLECTION ERROR row kept no message: {lines}"
+
+
+def test_read_junit_marks_a_collection_error_of_a_real_pytest_run(tmp_path):
+    # the shape was read from a real pytest 9.2 run: an empty classname, the dotted module as the name, message "collection failure"
+    root = _tree(tmp_path, {CORE_TEST: COLLECTION_ASSERTS.replace("go(True) is True", "go(False)")})
+    out = tmp_path / "c.xml"
+    rc = mr._pytest(root, [CORE_TEST], out, 60)
+    report = read_junit(out.read_text(encoding="utf-8"))
+    assert rc != 0 and report.collection_failed and not report.fixture_failed, (
+        f"a real collection error was not read as one: rc={rc} {report}"
+    )
+    assert report.test_id, (
+        "pytest named the collection error (a non-empty id), so only the message tells it apart"
     )
 
 
