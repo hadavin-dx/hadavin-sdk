@@ -530,6 +530,32 @@ def test_a_real_llm_kind_in_demo_needs_the_field(cfg_dir, kind):
     assert f"llm: {kind}" in str(err.value)
 
 
+COMMANDS = {
+    "gate": ["gate", "madeup-agent"],
+    "replay": [
+        *("replay", "madeup-agent", "--bundles", "b", "--cause-list", "c"),
+        *("--max-usd", "1", "--out", "o"),
+    ],
+    "score": [
+        *("score", "--outputs", "o", "--answers", "a", "--cause-list", "c", "--bundles", "b"),
+    ],
+}
+
+
+@pytest.mark.parametrize("command", COMMANDS)
+def test_the_command_line_refuses_a_demo_config_that_sends_text_out(cfg_dir, command, capsys):
+    """`gate`, `replay` and `score` read the same config, so a demo config naming a real model is refused for each."""
+    from hadavin_sdk import cli
+
+    _edit(
+        cfg_dir,
+        lambda d: d["backends"].update(llm={"kind": "anthropic", **LLM_SETTINGS["anthropic"]}),
+    )
+    code = cli.main(["--config", str(cfg_dir), *COMMANDS[command]])
+    err = capsys.readouterr().err
+    assert code == 2 and "made_up_data_only" in err, err
+
+
 def test_the_vendor_detector_in_demo_needs_the_field(cfg_dir):
     _edit(cfg_dir, lambda d: d["backends"].update(detector=[GUARDRAIL]))
     with pytest.raises(ConfigError, match="made_up_data_only") as err:
@@ -681,6 +707,13 @@ def _runner():
         "azure_client_id",
         "GOOGLE_APPLICATION_CREDENTIALS",
         "ANTHROPIC_BASE_URL",
+        "ARM_CLIENT_ID",  # Terraform azurerm provider
+        "MSI_ENDPOINT",  # Azure App Service managed identity, older names
+        "IDENTITY_ENDPOINT",  # Azure App Service and Functions managed identity
+        "BOTO_CONFIG",
+        "GCLOUD_PROJECT",
+        "OCI_CLI_PROFILE",
+        "VAULT_TOKEN",
     ],
 )
 def test_the_mutant_runner_refuses_to_start_with_a_cloud_setting(monkeypatch, capsys, name):
@@ -699,8 +732,54 @@ def test_the_mutant_runner_gives_the_tests_only_plain_variables(monkeypatch):
     for name in ["AWS_SECRET_ACCESS_KEY", "HTTPS_PROXY", "HADAVIN_TEST_PG_DSN", "PATH"]:
         monkeypatch.setenv(name, "made-up")
     env = runner.clean_env(PYTHONPATH="/x")
-    assert set(env) <= {*runner.PLAIN_ENV, "PYTHONPATH", "PYTHONDONTWRITEBYTECODE"}
+    assert set(env) <= {*runner.PLAIN_ENV, "HOME", "PYTHONPATH", "PYTHONDONTWRITEBYTECODE"}
     assert env["PATH"] == "made-up" and env["PYTHONPATH"] == "/x"
+
+
+def test_the_mutant_runner_gives_the_tests_an_empty_home(monkeypatch, tmp_path):
+    """The cloud SDKs read credential files under HOME (~/.aws, ~/.azure, ~/.config/gcloud)."""
+    runner = _runner()
+    (tmp_path / ".aws").mkdir()
+    (tmp_path / ".aws" / "credentials").write_text("made up\n", encoding="utf-8")
+    monkeypatch.setenv("HOME", str(tmp_path))
+    home = Path(runner.clean_env()["HOME"])
+    assert home != tmp_path and home.is_dir()
+    assert list(home.iterdir()) == []
+
+
+def test_a_killer_must_be_anchored_at_the_end():
+    """A killer is searched in the failing test's id: a bare `::test_x` would also match `::test_x_and_more`."""
+    runner = _runner()
+    row = (1, "made up", "path", None, [], "")
+    for bad in ("::test_x", "::test_x.*", "test_x$"):
+        assert runner.killer_problems([(*row[:5], bad)]), bad
+    for good in ("", "::test_x$", "::test_x\\[", "tests/a.py::test_x\\[a-b\\]"):
+        assert runner.killer_problems([(*row[:5], good)]) == [], good
+    assert runner.killer_problems() == []  # every killer of this tool
+
+
+def test_the_mutant_runner_refuses_to_start_with_an_unanchored_killer(monkeypatch, capsys):
+    runner = _runner()
+    monkeypatch.setattr(runner, "DEF", [*runner.DEF, (999, "made up", "p", None, [], "::test_x")])
+
+    def started(*_a):
+        raise AssertionError("the runner went on to make its copy")
+
+    monkeypatch.setattr(runner, "_git_in", started)
+    assert runner.main() == 3
+    assert "not anchored" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("status", ["KILLED-OTHER", "SURVIVED", "ERROR", "NOT-LOCATED", "TIMEOUT"])
+def test_only_a_kill_by_the_named_test_makes_the_run_pass(status):
+    """The docstring of the tool: a mutant killed only by some other test is a failure, not a kill."""
+    runner = _runner()
+    clean = (1, "made up", "yes", "cp::test_x", "KILLED-NAMED", "")
+    assert runner.verdict([clean])[0] is True
+    assert runner.verdict([clean, (2, "made up", "yes", "cp::test_y", "KILLED", "")])[0] is True
+    ok, not_clean = runner.verdict([clean, (2, "made up", "yes", "cp::test_y", status, "")])
+    assert ok is False and [r[0] for r in not_clean] == [2]
+    assert runner.verdict([])[0] is False
 
 
 def test_the_mutant_numbers_are_one_to_n_without_gaps_or_repeats():
