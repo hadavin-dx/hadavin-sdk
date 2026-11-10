@@ -938,3 +938,6 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a233a9a24ca3aaf48 | egm-design (sonnet) | A24 PR91 r3 | REPORTED 0B/4M/5N, CLOSED; egm/A24/r3-design.md |
 | a6376aa2e418eaf11 | egm-codebase-details (sonnet) | A24 PR91 r3 | REPORTED 0B/7M/10N, CLOSED; egm/A24/r3-codebase.md |
 | a997c39722443ee17 | builder (general-purpose, sonnet) | A19 PR83 fix batch 2 (r2 B1/M1/M2), WT-A19fix, branch core/P0t-followup-fix1 | started 17:50Z, expected 18:50Z, checkpoint checkpoints/A19fix2.md | INTERIM 17:58Z: fixes+tests written, lint gates rc 0, tenant tests 80 passed (9 fail on old src); full pytest (heavy.sh, log /tmp/claude-0/a19fix2-full.log, at 17%) and 82-mutant run pending; NOT committed; M2 decision for lead (require a letter or digit; DEFAULT yes) |
+| ad526db1c49879884 | investigator (general-purpose, sonnet) | silent pytest exit (no summary line) cause | started 17:40Z, expected 18:25Z (45-min box); output handover/evidence/silent-exit/FINDINGS.md | RUNNING |
+| afe15e63a73166368 | builder (general-purpose, sonnet) | A24 PR91 fix batch 3 (r3 findings) | started 17:41Z, expected 18:41Z | RUNNING |
+| a997c39722443ee17 | builder | A19 fix2 | REPORTED INTERIM 17:40Z, CLOSED; full pytest (/tmp/claude-0/a19fix2-full.log, pid 11009) still at 81%; stage mutants not run; changes uncommitted in WT-A19fix | CLOSED, follow-up mine |
