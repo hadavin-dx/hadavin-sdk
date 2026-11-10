@@ -150,18 +150,24 @@ def test_guard_failures_is_a_copy_of_fixed_site_names() -> None:
     assert set(dg.guard_failures()) <= set(SITES)
 
 
-def _noqa_lines() -> list[tuple[int, str]]:
-    return [
-        (i, t)
-        for i, t in enumerate(SOURCE.read_text(encoding="utf-8").splitlines(), 1)
-        if "noqa" in t
-    ]
+def _noqa_sites() -> list[tuple[int, str]]:
+    """(line number, site name) of every guard: the ``noqa`` line, and the site named by the ``_guard_failed("...")`` call right under it."""
+    text = SOURCE.read_text(encoding="utf-8").splitlines()
+    found = []
+    for i, line in enumerate(text):
+        if "noqa" in line:
+            m = re.fullmatch(r'\s*_guard_failed\("(\w+)"\)', text[i + 1])
+            assert m, f"line {i + 1}: a guard records its site on the next line"
+            found.append((i + 1, m.group(1)))
+    return found
 
 
 def test_every_blind_except_is_one_listed_guard_with_its_reason_on_its_line() -> None:
-    lines = _noqa_lines()
-    for n, text in lines:
-        m = re.fullmatch(r"\s*except Exception:  # noqa: BLE001 - \S.*", text)
+    """Keyed by the site name (the symbol), not by a line number: moving code does not break the list."""
+    lines = SOURCE.read_text(encoding="utf-8").splitlines()
+    sites = _noqa_sites()
+    for n, _ in sites:
+        m = re.fullmatch(r"\s*except Exception:  # noqa: BLE001 - \S.*", lines[n - 1])
         assert m, (
             f"line {n}: a guard is `except Exception:  # noqa: BLE001 - <reason>` and nothing else"
         )
@@ -171,9 +177,10 @@ def test_every_blind_except_is_one_listed_guard_with_its_reason_on_its_line() ->
         if ln and not ln.startswith("#")
     ]
     rows = [ln.split("\t") for ln in listed]
-    assert sorted(int(r[0]) for r in rows) == [n for n, _ in lines], (
-        "noqa_sites.txt lists exactly the guard lines"
+    assert sorted(r[0] for r in rows) == sorted(name for _, name in sites), (
+        "noqa_sites.txt lists exactly the guard sites"
     )
+    assert all(len(r[1]) >= 20 for r in rows), "every site has a reason"
     assert sorted(r[2] for r in rows) == sorted(
         f"test_guard_catches_and_records[{s}]" for s in SITES
     )
@@ -183,3 +190,34 @@ def test_every_blind_except_is_one_listed_guard_with_its_reason_on_its_line() ->
     assert "diagnostic" not in pyproject and "codes.py" not in pyproject, (
         "no per-file ignore for these files"
     )
+
+
+def test_guard_counters_are_read_and_written_under_one_lock() -> None:
+    """A reader never sees a half-written count: 8 threads each record 500 failures while another thread copies the table."""
+    import threading
+
+    base = dg.guard_failures().get("render", 0)
+    stop = threading.Event()
+    seen: list[int] = []
+
+    def writer() -> None:
+        for _ in range(500):
+            dg._guard_failed("render")
+
+    def reader() -> None:
+        while not stop.is_set():
+            seen.append(dg.guard_failures().get("render", 0))
+
+    threads = [threading.Thread(target=writer) for _ in range(8)]
+    watcher = threading.Thread(target=reader)
+    watcher.start()
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=30)
+    stop.set()
+    watcher.join(timeout=30)
+    assert dg.guard_failures()["render"] == base + 4000, (
+        "a count was lost: the increment is not atomic"
+    )
+    assert seen == sorted(seen), "a reader saw the count go backwards"

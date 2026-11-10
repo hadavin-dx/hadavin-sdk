@@ -220,9 +220,12 @@ VALIDATION_TYPES: Final = frozenset(
 VALIDATION_OTHER: Final = "other"
 
 # Top-level packages whose exception class names may be printed as ``module.qualname`` (no cloud or model vendor name).
-FOREIGN_PACKAGES_OK: Final = frozenset(sys.stdlib_module_names) | frozenset(
-    {"pydantic", "pydantic_core", "pydantic_settings", "psycopg", "yaml", "markdown_it"}
-)
+FOREIGN_PACKAGES_OK: Final = (
+    frozenset(sys.stdlib_module_names)
+    | frozenset(
+        {"pydantic", "pydantic_core", "pydantic_settings", "psycopg", "yaml", "markdown_it"}
+    )
+) - {"__main__"}  # the entry script's own name is never a library name
 
 _P = "hadavin_sdk."
 # ``"module:Qualname"`` -> code. A subclass not listed takes its nearest listed base (method resolution order).

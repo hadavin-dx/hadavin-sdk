@@ -396,3 +396,68 @@ def test_off_list_foreign_class_prints_foreign_class() -> None:
     row = _row("foreign_name", 1)
     with corpus.CONTEXTS["vendor_module"]():
         assert class_name_of(corpus.build_exception(row.spec)) == "foreign_class"
+
+
+# --- A15 round 1: nits taken -----------------------------------------------------------------------------------------------------
+def test_the_traceback_is_walked_once_per_diagnose(monkeypatch: pytest.MonkeyPatch) -> None:
+    from hadavin_sdk.guard import diagnostic
+
+    calls = []
+    real = diagnostic._links
+
+    def counting(exc: object):  # type: ignore[no-untyped-def]
+        calls.append(1)
+        return real(exc)
+
+    monkeypatch.setattr(diagnostic, "_links", counting)
+    try:
+        raise ValueError("x")
+    except ValueError as e:
+        diagnose(e, step=STEP)
+    assert len(calls) == 1
+
+
+def test_render_keeps_at_most_the_max_facts_of_a_hand_built_diagnostic() -> None:
+    facts = tuple((FactKey.attempt, n) for n in range(defaults.DIAG_MAX_FACTS + 6))
+    d = Diagnostic(
+        kind="ValueError",
+        code=diagnose(ValueError("x"), step=STEP).code,
+        step="extract",
+        locator="-",
+        facts=facts,
+        fp="0" * 8,
+    )
+    assert render(d).count("attempt=") == defaults.DIAG_MAX_FACTS
+
+
+def test_main_is_never_an_allowed_library_name() -> None:
+    import sys
+    import types
+
+    from hadavin_sdk.codes import FOREIGN_PACKAGES_OK
+
+    assert "__main__" not in FOREIGN_PACKAGES_OK
+    cls = type("EntryError", (Exception,), {"__module__": "__main__"})
+    holder = types.ModuleType("__main__")
+    holder.EntryError = cls  # type: ignore[attr-defined]
+    old = sys.modules.get("__main__")
+    sys.modules["__main__"] = holder
+    try:
+        assert class_name_of(cls("x")) == "foreign_class"
+    finally:
+        if old is not None:
+            sys.modules["__main__"] = old
+
+
+def test_safe_token_mint_is_private_to_the_module() -> None:
+    """Python cannot stop ``object.__setattr__`` or a read of the module's private name, so this is documented, not prevented: the
+    class carries no public mint, and a plain construction or attribute write is refused."""
+    assert not hasattr(SafeToken, "_MINT")
+    tok = SafeToken.of("type", frozenset({"type"}))
+    assert tok is not None
+    with pytest.raises(AttributeError):
+        tok.value = "other"  # type: ignore[misc]
+    object.__setattr__(
+        tok, "value", "forged"
+    )  # the documented bypass of a determined caller in the same process
+    assert tok.value == "forged"

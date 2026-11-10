@@ -40,7 +40,7 @@ def test_validation_text_length_bound() -> None:
         err("many", {"a": CAN, "b": CAN, "c": CAN, "d": CAN, "e": CAN, "f": CAN, "g": CAN})
     )
     assert len(out) <= 108 and grammar_ok(out, "V")
-    assert re.fullmatch(r"[a-z_; ]+", out.replace("+", "").replace("more", "")) or "more" in out
+    assert re.fullmatch(r"[a-z_]+(?:; [a-z_]+){4}; \+[0-9]+ more", out), out
 
 
 def test_uuid_parsing_char_is_never_printed() -> None:
@@ -140,3 +140,17 @@ def test_t6_real_config_typo(n: int) -> None:
         assert grammar_ok(validation_text(e), "V")
     else:
         raise AssertionError("validated")
+
+
+def test_a_count_over_the_bound_is_noted_as_the_bound(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A count above ``FACT_BOUNDS[count]`` is not dropped silently: the tail reads as the bound (at least that many more)."""
+    from hadavin_sdk.codes import FACT_BOUNDS, FactKey
+    from hadavin_sdk.guard import diagnostic
+
+    hi = FACT_BOUNDS[FactKey.count][1]
+    monkeypatch.setattr(diagnostic, "_error_types", lambda exc: (hi * 2, ("missing",)))
+    out = validation_text(err("many", {"a": CAN}))
+    assert out == f"missing; +{hi - 5} more", out
+    assert grammar_ok(out, "V")
+    monkeypatch.setattr(diagnostic, "_error_types", lambda exc: (-3, ("missing",)))
+    assert validation_text(err("many", {"a": CAN})) == "missing"

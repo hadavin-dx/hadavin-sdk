@@ -21,6 +21,7 @@ import os
 import re
 import socket
 import sys
+import threading
 from collections import deque
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -67,19 +68,21 @@ _pkg_file = getattr(sys.modules.get(_OWN_PACKAGE), "__file__", None)
 _PKG_DIR: Final = os.path.dirname(_pkg_file) if type(_pkg_file) is str else ""
 
 
+_MINT: Final = object()  # private: only this module can make a ``SafeToken``
+
+
 class SafeToken:
     """A short word that passed an exact check. Made only by ``SafeToken.of`` and ``SafeToken.sqlstate``; holds a member of the
     caller's frozen set (never the caller's own object)."""
 
     __slots__ = ("value",)
     value: str
-    _MINT: Final = object()
 
     def __init_subclass__(cls, **kw: object) -> None:
         raise TypeError("SafeToken is final")
 
     def __init__(self, value: str, _mint: object = None) -> None:
-        if _mint is not SafeToken._MINT:
+        if _mint is not _MINT:
             raise TypeError("use SafeToken.of or SafeToken.sqlstate")
         object.__setattr__(self, "value", value)
 
@@ -95,7 +98,7 @@ class SafeToken:
             if type(member) is str and member == value:
                 if _TOKEN_RE.fullmatch(member) is None:
                     return None
-                return SafeToken(member, SafeToken._MINT)
+                return SafeToken(member, _MINT)
         return None
 
     @staticmethod
@@ -103,7 +106,7 @@ class SafeToken:
         """A five-character database state (``28P01``). ``re.fullmatch``: ``"28P01\\n"`` is refused."""
         if type(value) is not str or _SQLSTATE_RE.fullmatch(value) is None:
             return None
-        return SafeToken(value, SafeToken._MINT)
+        return SafeToken(value, _MINT)
 
 
 Fact = int | bool | ProviderErrorType | Phase | SafeToken
@@ -124,16 +127,19 @@ class Diagnostic:
 
 # How often each guard below fired, by site name. A count only: nothing about the exception (no text, no type) is kept.
 _GUARD_FAILURES: dict[str, int] = {}
+_GUARD_LOCK = threading.Lock()
 
 
 def _guard_failed(site: str) -> None:
     """Record that the guard at ``site`` caught an ``Exception``. A fixed site name and a count; never the exception."""
-    _GUARD_FAILURES[site] = _GUARD_FAILURES.get(site, 0) + 1
+    with _GUARD_LOCK:
+        _GUARD_FAILURES[site] = _GUARD_FAILURES.get(site, 0) + 1
 
 
 def guard_failures() -> dict[str, int]:
-    """A copy of the guard counters (site name -> times caught)."""
-    return dict(_GUARD_FAILURES)
+    """A copy of the guard counters (site name -> times caught), read under the same lock as the writes."""
+    with _GUARD_LOCK:
+        return dict(_GUARD_FAILURES)
 
 
 def _is_the_named_class(tp: type) -> bool:
@@ -302,8 +308,11 @@ def validation_text(exc: BaseException) -> str:
         names = [_closed_type(t) for t in types] or [VALIDATION_OTHER]
         lo, hi = FACT_BOUNDS[FactKey.count]
         text = "; ".join(names)
-        if type(count) is int and lo <= count <= hi and count > defaults.DIAG_MAX_ERRORS:
-            text += f"; +{count - defaults.DIAG_MAX_ERRORS} more"
+        if type(count) is int and count >= lo:
+            # a count over the bound is written as the bound (the tail is noted, not dropped): at least that many more
+            shown = min(count, hi)
+            if shown > defaults.DIAG_MAX_ERRORS:
+                text += f"; +{shown - defaults.DIAG_MAX_ERRORS} more"
         return text
     except Exception:  # noqa: BLE001 - a hostile pydantic error object may raise any Exception: other
         _guard_failed("validation_text")
@@ -342,7 +351,12 @@ def _phase_of(sqlstate: SafeToken | None) -> Phase:
 
 
 def _classify(
-    exc: object, tp: type, *, read_facts: bool, nested: bool = False
+    exc: object,
+    tp: type,
+    *,
+    read_facts: bool,
+    nested: bool = False,
+    walked: tuple[list[tuple[object, int]], bool] | None = None,
 ) -> tuple[Code, dict[FactKey, object]]:
     if not issubclass(tp, Exception):
         return Code.foreign_exception, {}
@@ -392,7 +406,7 @@ def _classify(
         except Exception:  # noqa: BLE001 - a hostile group object may raise any Exception: foreign_exception
             _guard_failed("group_member")
             return Code.foreign_exception, {}
-    links, too_long = _links(exc)
+    links, too_long = walked if walked is not None else _links(exc)
     if _raised_in_own_code(exc, tp, links, too_long):
         return Code.internal_bug, {}
     return Code.foreign_exception, {}
@@ -424,8 +438,11 @@ def _merge_facts(
 def _diagnose(exc: object, step: str, facts: object) -> Diagnostic:
     tp = type(exc)
     kind = class_name_of(tp)
-    code, derived = _classify(exc, tp, read_facts=True)
-    links, _ = _links(exc)
+    walked = _links(
+        exc
+    )  # the traceback is walked once; the classifier and the locator share the result
+    code, derived = _classify(exc, tp, read_facts=True, walked=walked)
+    links, _ = walked
     locator, function, relpath = _locate(links)
     return Diagnostic(
         kind=kind,
@@ -487,7 +504,7 @@ def render(d: Diagnostic) -> str:
         )
         fp = d.fp if type(d.fp) is str and _FP_RE.fullmatch(d.fp) else FALLBACK_FP
         line = f"{kind}: diag_v={defaults.DIAG_VERSION} code={code} step={step} at={at} fp={fp}"
-        for key, value in d.facts:
+        for key, value in tuple(d.facts)[: defaults.DIAG_MAX_FACTS]:
             part = _fact_text(key, value)
             if part is None:
                 continue

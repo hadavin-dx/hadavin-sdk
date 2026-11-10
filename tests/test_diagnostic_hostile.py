@@ -129,6 +129,9 @@ def test_propagates_rows_are_exactly_the_frozen_set() -> None:
 
 
 # --- the teeth of the corpus: the oracle must be able to see a canary in a deliberately leaky output ----------------------------
+# What a hostile attribute or ``__str__`` of the corpus raises when a leaky reading touches it (RecursionError is a RuntimeError). An
+# error of another class is not swallowed: the test fails and says which.
+_HOSTILE_READ_ERRORS = (AttributeError, IndexError, KeyError, RuntimeError, TypeError, ValueError)
 ONE_RUN = [r for r in ACTIVE if r.kind in ("exception", "validation") and r.expect != "propagates"]
 EXEMPT = [
     r for r in ONE_RUN if r.expect in ("bounded", "grammar")
@@ -156,7 +159,9 @@ def _teeth_subjects(row: corpus.Row, e: BaseException) -> list[str]:
     for read in readings:
         try:
             value = read()
-        except Exception:  # a subject that raises gives "" (BN-3); no helper catches BaseException
+        except (
+            _HOSTILE_READ_ERRORS
+        ):  # a subject that raises gives "" (BN-3); no helper catches BaseException
             value = ""
         out.append(value if type(value) is str else "")
     return out
@@ -200,7 +205,7 @@ def test_reverse_check_fails_90_percent() -> None:
             try:
                 out = f"{type(e).__name__}: {e}"
             except (
-                Exception
+                _HOSTILE_READ_ERRORS
             ):  # a hostile ``__str__`` raising: that leaky function produced no output for this row
                 out = ""
         if leaks(out, r.canaries):
