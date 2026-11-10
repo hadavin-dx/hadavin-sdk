@@ -1,1 +1,1 @@
-16:37Z | agents: agents 11: A9/A7/A8/A3 evidence runners, A1 builder, A15 x2/A19/A24 reviewers, P1d-a-plan x2 reviewers | queue: A4, A6, P8 | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 18:47Z); detail in HEARTBEAT.md
+16:38Z | agents: agents 11: A9/A7/A8/A3 evidence runners, A1 builder, A15 x2/A19/A24 reviewers, P1d-a-plan x2 reviewers | queue: A4, A6, P8 | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 18:48Z); detail in HEARTBEAT.md
