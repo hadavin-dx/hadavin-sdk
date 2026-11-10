@@ -1,0 +1,24 @@
+HEAD=d3922003925722275704b84f580152d35dd90c9c
+python=Python 3.13.18
+cmd=python -X faulthandler -m pytest -v -rfEs -m not live and not perf -p no:cacheprovider tests/test_k5_fixes3.py tests/test_k5_fixes4.py tests/test_k5_fixes5.py tests/test_k5_fixes6.py tests/test_k5_fixes7.py tests/test_k5_fixes8.py tests/test_k5_fixes9.py tests/test_k5_layers.py tests/test_k5_perf.py tests/test_k5_postgres.py tests/test_k5_producers.py tests/test_k5_review.py tests/test_k5_round10.py tests/test_k5_round10_postgres.py
+start=2026-11-10T20:07:20Z
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/EV-P6a-d392200/venv3.13/bin/python
+rootdir: /home/user/build/EV-P6a-d392200/wt
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2464 items / 14 deselected / 2450 selected
+
+tests/test_k5_fixes3.py::test_a_tool_result_with_a_secret_and_an_expanding_text_is_refused_before_the_work PASSED [  0%]
+tests/test_k5_fixes3.py::test_percent_encoded_expanding_text_is_refused_after_the_decode PASSED [  0%]
+tests/test_k5_fixes3.py::test_the_decoded_view_is_computed_once_not_once_per_secret_form PASSED [  0%]
+tests/test_k5_fixes3.py::test_a_secret_behind_an_encoding_layer_is_still_scrubbed PASSED [  0%]
+tests/test_k5_fixes3.py::test_a_nested_identifier_flag_on_an_untooled_agents_action_is_refused PASSED [  0%]
+tests/test_k5_fixes3.py::test_a_nested_identifier_flag_on_an_action_no_agent_uses_is_refused PASSED [  0%]
+tests/test_k5_fixes3.py::test_redact_value_counts_the_expansion_of_all_strings_together PASSED [  0%]
+tests/test_k5_fixes3.py::test_a_card_text_over_the_cap_is_refused_not_cut PASSED [  0%]
+tests/test_k5_fixes3.py::test_a_tick_error_message_is_redacted_then_cut_and_the_work_is_bounded PASSED [  0%]
+tests/test_k5_fixes4.py::test_a_large_output_cut_at_the_window_is_not_refused_for_its_marker PASSED [  0%]
+tests/test_k5_fixes4.py::test_a_spaced_300k_output_with_a_200k_cap_is_not_refused PASSED [  0%]
+tests/test_k5_fixes4.py::test_lengths_around_the_window_are_all_accepted[262131] PASSED [  0%]
+tests/test_k5_fixes4.py::test_lengths_around_the_window_are_all_accepted[262132] 

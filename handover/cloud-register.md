@@ -978,3 +978,7 @@ Closed: a596423e5b and a83e36fd22 (A21a reviewers, saved to handover/reviews/A21
 Closed: aea5c3b208 (PR73 fix builder, pushed ef2adc7). Open for lead: per-file timeout override, scope split, shared stub helper, CI 17.10 result (also in q-wave2-open).
 | aea5c3b208 | A5 PR73 fix builder round 2 (resumed; B-P73r2; BL-core-a5-w2-r2-01..11, security, uncapped) | sonnet | 20:40Z | +60 min | running | evidence runner on new head, fresh round-3 reviewers |
 Closed: aeeb9c0a49 and abd25e70fe (PR73 round-2 reviewers, saved). ad0d22391c (evidence on ef2adc7) still running: its result is a baseline only, the new head needs its own run.
+| a4f0c2881c | A2 PR89 evidence runner (0e4f6d5; 3.12+3.13, DSN set, no deselect) | sonnet | 20:55Z | +60 min | running | save TABLE |
+| aa9ad5da2e | A2 PR89 round-2 egm-design review (last full round) | sonnet | 20:55Z | +30 min | running | save, ledger |
+| a22357c6e0 | A2 PR89 round-2 egm-codebase-details review | sonnet | 20:55Z | +30 min | running | save, ledger |
+Closed: a290aa955c (PR89 fix builder, pushed 0e4f6d5). For lead: FIXTURE ERROR always-on vs opt-in (q-wave2-open decision 1).

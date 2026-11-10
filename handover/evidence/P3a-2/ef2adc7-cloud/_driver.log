@@ -1,3 +1,7 @@
 2026-11-10T19:54:54Z start 01-lint-bandit
 2026-11-10T19:54:56Z end 01-lint-bandit rc=0
 2026-11-10T19:54:56Z start 02a-full-py313-dsn
+2026-11-10T19:59:47Z end 02a-full-py313-dsn rc=0
+2026-11-10T19:59:47Z start 02b-full-py312-dsn
+2026-11-10T20:05:02Z end 02b-full-py312-dsn rc=0
+2026-11-10T20:05:03Z start 02c-full-py313-nodsn
