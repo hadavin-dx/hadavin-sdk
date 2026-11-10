@@ -136,7 +136,7 @@ def store():
 def test_append_only_tables_get_no_update(fresh_dsn):
     import psycopg
 
-    role = "rt_" + fresh_dsn.rsplit("search_path=t_", 1)[1][:8]
+    role = "rt_" + fresh_dsn.rsplit("search_path=hadavin_test_", 1)[1][:8]
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
     try:

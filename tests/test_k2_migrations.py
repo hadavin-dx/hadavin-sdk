@@ -1,4 +1,4 @@
-"""K2 Upgrade safety and audit integrity: the migration ledger, the one grant map, the portal role, and the
+"""Upgrade safety and audit integrity: the migration ledger, the one grant map, the portal role, and the
 stored-plan hash. The database tests need HADAVIN_TEST_PG_DSN (CI: the postgres service) and skip without it."""
 
 import json
@@ -305,7 +305,7 @@ def test_the_store_contract_suite_runs_as_a_non_owner_role():
         assert user.startswith("rt_") and user != owner
 
 
-# --- review round: the guard fails closed ------------------------------------------------------------
+# --- the guard fails closed ------------------------------------------------------------
 
 
 @pytest.mark.parametrize(

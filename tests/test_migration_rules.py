@@ -554,9 +554,13 @@ def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
     first = _words(_upgrade_bullet())
     assert "refuses, before it connects, a released file that was edited or deleted" in first
     assert (
-        "Not yet run on PostgreSQL 17.10, the CI version. The pull request records that run when it exists."
+        "Not yet run on PostgreSQL 17.10, the CI version, so the `MAINTAIN` check is covered only by tests that fake the server version, until that run exists."
         in first
     )
+    assert "asks for `MAINTAIN` only from 17, because 16 rejects that name" in first
+    assert "`REPLICATION` flag is not checked" in first
+    assert "CREATE has no grant option" in first
+    assert "an existing trigger left disabled" in first
     assert "Tested on:** PostgreSQL 16.15, on the build machine" in first
     assert "session_user" in first and "WITH GRANT OPTION" in first and "pg_parameter_acl" in first
     assert "PostgreSQL 16 is the lowest version" in first
@@ -691,3 +695,33 @@ def test_every_migrate_mutant_still_applies_to_the_source():
 
     assert migrate_mutants.problems_with_the_list() == []
     assert len(migrate_mutants.M) >= 80
+
+
+def test_the_mutant_runner_refuses_an_unknown_id():
+    """`M88,TYPO` used to run one mutant and exit 0. Killed by: mutant RN1."""
+    from tests import migrate_mutants as mm
+
+    assert mm.unknown_ids("M88,TYPO") == ["TYPO"]
+    assert mm.unknown_ids("M88,R4") == [] and mm.unknown_ids("") == []
+    assert mm.main(["M88,TYPO"]) == 2
+
+
+def test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill():
+    """A planted line that only breaks the file (a NameError, a syntax error) makes a test fail but proves nothing about
+    the named killer. Killed by: mutant RN2."""
+    from tests import migrate_mutants as mm
+
+    m = next(x for x in mm.M if x.name == "R4")
+    names = mm.killers_of(m)
+    real = f"FAILED {names[0]} - AssertionError\n"
+    name_error = f"FAILED {names[0]} - NameError\nE   NameError: name 'x' is not defined\n"
+    other = "FAILED tests/test_other.py::test_other - AssertionError\n"
+
+    def runs(out):
+        return [(1, out)] + [(0, "")] * (len(names) - 1)
+
+    assert mm.status_of(m, runs(real)) == "KILLED"
+    assert mm.status_of(m, runs(name_error)) == "BROKEN"
+    assert mm.status_of(m, runs(other)) == "BROKEN", "another test failed, not the named killer"
+    assert mm.status_of(m, [(0, "")] * len(names)) == "SURVIVED"
+    assert mm.status_of(m, [(2, "")] + [(0, "")] * (len(names) - 1)).startswith("ERROR")

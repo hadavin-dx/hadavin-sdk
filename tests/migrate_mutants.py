@@ -2,8 +2,11 @@
 two test helpers. Not collected by pytest.
 
 Each mutant plants ONE wrong line in a COPY of the repository (the working tree is never touched) and runs the tests
-named in `killer`; the mutant is KILLED when pytest exits with code 1 (a test failed). Exit code 0 means SURVIVED; any
-other code (collection error, timeout) is ERROR and counts as not killed, so a syntax error cannot pass as a kill. A
+named in `killer`; the mutant is KILLED when pytest exits with code 1 AND a test of a named killer is among the failures
+AND no output line shows that the planted line was simply broken (`NameError`, `SyntaxError`, `IndentationError`,
+`ImportError`: that is BROKEN, not a kill). Exit code 0 means SURVIVED; any other code (collection error, timeout) is
+ERROR and counts as not killed, so a syntax error cannot pass as a kill. An id on the command line that no mutant has is
+refused (the run stops with exit code 2 and starts nothing). A
 baseline run of every killer on the untouched copy must pass first. The mutants started as a reconstruction of an earlier
 runner that was lost (what was known of it: names, one-line descriptions and killers; the planted text was
 rewritten and proven by running) and were extended for the trigger read-back, the role check and the allow list.
@@ -72,7 +75,7 @@ PAIR_FUNC = "def _table_body(text: str, start: int) -> str:"
 LEX_CALL = "        text, lexer_problem = lex(raw, keep_quoted=True)\n"
 SAVE_READ = (
     "            if pending:\n"
-    "                saved = _read_back(db)\n"
+    "                saved = _read_back(db, named)\n"
     "                _refuse_unusual_strings(saved)\n"
     "            for path in pending:\n"
     '                step[0] = f"applying {path.name}"\n'
@@ -118,8 +121,10 @@ CALL = (
     "                    saved,\n"
     "                    path.name,\n"
     "                    frozenset(c for c in allowed_changes if c.migration == path.stem),\n"
+    "                    named,\n"
     "                )\n"
 )
+RECHECK = "                _recheck_roles(db, named, path.name)\n"
 INSERT = '                db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))\n'
 
 
@@ -149,8 +154,8 @@ M: list[Mutant] = [
         "M64",
         "read-back after the ledger INSERT",
         MIG,
-        CALL + INSERT,
-        INSERT + CALL,
+        CALL + RECHECK + INSERT,
+        INSERT + CALL + RECHECK,
         READS_BEFORE,
     ),
     Mutant(
@@ -221,7 +226,7 @@ M: list[Mutant] = [
         '                step[0] = f"applying {path.name}"\n'
         "                db.execute(texts[path])  # the text that was scanned, never a second read\n"
         "                if saved is None:\n"
-        "                    saved = _read_back(db)\n"
+        "                    saved = _read_back(db, named)\n"
         "                    _refuse_unusual_strings(saved)\n",
         READS_BEFORE,
     ),
@@ -768,7 +773,7 @@ M: list[Mutant] = [
         "R2",
         "the memberships are not read",
         MIG,
-        "members = frozenset(tuple(r) for r in db.execute(_READBACK_MEMBERS_SQL).fetchall())",
+        "members = frozenset(tuple(r) for r in db.execute(_READBACK_MEMBERS_SQL, scope).fetchall())",
         "members = frozenset()",
         MEMBERS,
     ),
@@ -796,7 +801,7 @@ M: list[Mutant] = [
         "PS1",
         "the saved per-role settings are not read",
         MIG,
-        "settings = frozenset(tuple(r) for r in db.execute(_READBACK_SETTINGS_SQL).fetchall())",
+        "settings = frozenset(tuple(r) for r in db.execute(_READBACK_SETTINGS_SQL, scope).fetchall())",
         "settings = frozenset()",
         SETTINGS,
     ),
@@ -895,7 +900,7 @@ M: list[Mutant] = [
         "O1",
         "the check for objects another role owns is not called",
         MIG,
-        "            _refuse_foreign_owned(db)\n",
+        "            _refuse_foreign_owned(db, _managed_names(texts.values()))\n",
         "            pass\n",
         (
             k(
@@ -940,7 +945,7 @@ M: list[Mutant] = [
         "refuses a released file",
         k(T_RULES, "test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim"),
     ),
-    # --- round 2: session user, built-in roles, parameter grants, grant option, ownership refusal ---
+    # --- session user, built-in roles, parameter grants, grant option, ownership refusal ---
     Mutant(
         "SU1",
         "the flags are read for the current user only, not the session user",
@@ -960,8 +965,8 @@ M: list[Mutant] = [
         "SU2",
         "membership of a privileged role is checked for the current user only",
         MIG,
-        "OR pg_has_role(session_user, r.oid, 'MEMBER')) ",
-        "OR false) ",
+        "AND (pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER')) ",
+        "AND (pg_has_role(current_user, r.oid, 'MEMBER') OR false) ",
         k(T_PG, "test_the_session_user_is_checked_for_membership_too"),
     ),
     Mutant(
@@ -1069,6 +1074,273 @@ M: list[Mutant] = [
         '"AND false) "\n    "AND (c.relkind',
         k(T_PG, "test_objects_of_an_installed_extension_are_not_listed"),
     ),
+    # --- scoped read-back, managed names, parameter grants through memberships, test helper ---
+    Mutant(
+        "SC1",
+        "the members query reads every role of the server",
+        MIG,
+        "WHERE m.member IN (SELECT oid FROM scope WHERE own OR closure) OR m.roleid IN (SELECT oid FROM scope WHERE own)",
+        "WHERE true",
+        k(T_PG, "test_another_session_changing_unrelated_roles_does_not_stop_the_run"),
+    ),
+    Mutant(
+        "SC2",
+        "the saved-settings query reads every role of the server",
+        MIG,
+        "AND (s.setrole = 0 OR s.setrole IN (SELECT oid FROM scope WHERE own OR closure))",
+        "AND true",
+        k(T_PG, "test_another_session_changing_unrelated_roles_does_not_stop_the_run"),
+    ),
+    Mutant(
+        "SC3",
+        "the migration user's own memberships are not compared",
+        MIG,
+        "WHERE m.member IN (SELECT oid FROM scope WHERE own OR closure)",
+        "WHERE m.member IN (SELECT oid FROM scope WHERE false)",
+        k(T_PG, "test_another_session_changing_the_migration_users_own_roles_stops_the_run"),
+    ),
+    Mutant(
+        "SC3b",
+        "the roles the migration user belongs to are not in the compared set",
+        MIG,
+        "\"(pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER')) AS closure \"\n"
+        '    "FROM pg_roles r) "\n'
+        '    "SELECT m.roleid',
+        '"false AS closure "\n    "FROM pg_roles r) "\n    "SELECT m.roleid',
+        MEMBERS,
+    ),
+    Mutant(
+        "SC4",
+        "a membership change is reported with the old wording",
+        MIG,
+        '"a role membership changed while the file ran (it may be another session; run migrate again): "',
+        '"left the database session changed: "',
+        k(T_WIRING, "test_the_membership_message_says_it_may_be_another_session"),
+    ),
+    Mutant(
+        "SC5",
+        "the named roles are not passed to the scoped queries",
+        MIG,
+        "    scope = (list(named),)\n",
+        "    scope = ([],)\n",
+        k(T_WIRING, "test_the_named_roles_reach_the_two_scoped_read_back_queries"),
+    ),
+    Mutant(
+        "RC1",
+        "the role questions are not asked again after a file",
+        MIG,
+        RECHECK,
+        "                pass\n",
+        k(T_WIRING, "test_the_roles_are_asked_again_after_every_file"),
+    ),
+    Mutant(
+        "RC2",
+        "the named roles are not checked against each other after a file",
+        MIG,
+        "        _refuse_privileged_role(db)\n        if _members_of_each_other(db, named):\n",
+        "        _refuse_privileged_role(db)\n        if False:\n",
+        k(T_WIRING, "test_the_named_roles_are_checked_against_each_other_after_every_file"),
+    ),
+    Mutant(
+        "OA1",
+        "the table half of the ownership check lists every relation of the schema",
+        MIG,
+        "AND c.relname = ANY(%s::text[]) ",
+        "AND (c.relname = ANY(%s::text[]) OR true) ",
+        k(
+            T_PG,
+            "test_tables_and_functions_of_another_application_in_the_schema_are_never_refused_or_listed",
+        ),
+    ),
+    Mutant(
+        "OA2",
+        "the function half of the ownership check lists every function of the schema",
+        MIG,
+        "AND p.proname = ANY(%s::text[]) ",
+        "AND (p.proname = ANY(%s::text[]) OR true) ",
+        k(
+            T_PG,
+            "test_tables_and_functions_of_another_application_in_the_schema_are_never_refused_or_listed",
+        ),
+    ),
+    Mutant(
+        "OA3",
+        "the functions the files create are not managed names",
+        MIG,
+        "        names.update(m.group(1) for m in _FUNCTION_CREATE.finditer(text))\n",
+        "        pass\n",
+        (
+            k(
+                T_WIRING,
+                "test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_files_create",
+            ),
+            k(T_PG, "test_a_function_a_migration_file_creates_counts_as_managed"),
+        ),
+    ),
+    Mutant(
+        "OA4",
+        "the managed names are not given to the function half of the query",
+        MIG,
+        "db.execute(_FOREIGN_OWNED_SQL, (list(managed), list(managed)))",
+        "db.execute(_FOREIGN_OWNED_SQL, (list(managed), []))",
+        k(T_WIRING, "test_the_ownership_query_gets_the_managed_names"),
+    ),
+    Mutant(
+        "OA5",
+        "the ledger table is not a managed name",
+        MIG,
+        'names = set(GRANTS) | {"schema_migrations"}',
+        "names = set(GRANTS)",
+        (
+            k(
+                T_WIRING,
+                "test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_files_create",
+            ),
+            k(
+                T_PG,
+                "test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over",
+            ),
+        ),
+    ),
+    Mutant(
+        "MT1",
+        "the MAINTAIN privilege is never asked about",
+        MIG,
+        '+ (("MAINTAIN",) if row and row[0] >= _MAINTAIN_FROM else ())',
+        "+ ()",
+        k(T_WIRING, "test_the_maintain_privilege_is_asked_about_from_postgresql_17_only"),
+    ),
+    Mutant(
+        "MT2",
+        "the MAINTAIN privilege is asked about on every version",
+        MIG,
+        "_MAINTAIN_FROM = 170000",
+        "_MAINTAIN_FROM = 0",
+        k(T_WIRING, "test_the_maintain_privilege_is_asked_about_from_postgresql_17_only"),
+    ),
+    Mutant(
+        "MT3",
+        "the portal role check does not ask about MAINTAIN",
+        MIG,
+        '("MAINTAIN",) if "MAINTAIN" in table_privs else ()',
+        "()",
+        k(T_WIRING, "test_a_maintain_grant_is_a_problem_on_postgresql_17"),
+    ),
+    Mutant(
+        "PA2",
+        "the ALTER SYSTEM parameter right is not asked about",
+        MIG,
+        "OR has_parameter_privilege(r.oid, a.parname, 'ALTER SYSTEM')) ",
+        "OR false) ",
+        k(T_PG, "test_a_parameter_grant_is_refused_however_the_migration_user_holds_it"),
+    ),
+    Mutant(
+        "PA3",
+        "the session user is not asked about parameter rights",
+        MIG,
+        "\"WHERE (r.rolname IN (current_user, session_user) OR pg_has_role(current_user, r.oid, 'MEMBER') \"\n"
+        "    \"OR pg_has_role(session_user, r.oid, 'MEMBER')) \"",
+        "\"WHERE (r.rolname IN (current_user) OR pg_has_role(current_user, r.oid, 'MEMBER') \"\n"
+        '    "OR false) "',
+        k(T_PG, "test_a_parameter_grant_is_refused_however_the_migration_user_holds_it"),
+    ),
+    Mutant(
+        "PA4",
+        "parameter rights are asked about for the user itself only, not the roles it belongs to",
+        MIG,
+        "\"WHERE (r.rolname IN (current_user, session_user) OR pg_has_role(current_user, r.oid, 'MEMBER') \"\n"
+        "    \"OR pg_has_role(session_user, r.oid, 'MEMBER')) \"",
+        '"WHERE (r.rolname IN (current_user, session_user) "\n    "OR false) "',
+        k(T_PG, "test_a_parameter_grant_is_refused_however_the_migration_user_holds_it"),
+    ),
+    Mutant(
+        "DO1",
+        "the owner of the database (pg_database_owner) is refused like any built-in role",
+        MIG,
+        "AND r.rolname <> 'pg_database_owner'",
+        "AND true",
+        k(T_PG, "test_the_owner_of_a_database_belongs_to_pg_database_owner_and_is_not_refused"),
+    ),
+    Mutant(
+        "FO5",
+        "an aggregate with no arguments is printed with empty brackets",
+        MIG,
+        'signature = args if args or kind != "a" else "*"',
+        "signature = args",
+        k(T_PG, "test_an_aggregate_with_no_arguments_is_printed_with_a_star"),
+    ),
+    Mutant(
+        "OS1",
+        "a sequence that belongs to a table column is listed on its own",
+        MIG,
+        "AND d.deptype IN ('a','i'))) ",
+        "AND false)) ",
+        k(T_PG, "test_a_sequence_that_belongs_to_a_table_column_is_not_listed_on_its_own"),
+    ),
+    Mutant(
+        "PR1",
+        "the printed role SQL gives CREATE with the grant option",
+        MIG,
+        '"GRANT CREATE ON SCHEMA <schema> TO migration_role; "',
+        '"GRANT CREATE ON SCHEMA <schema> TO migration_role WITH GRANT OPTION; "',
+        k(T_PG, "test_the_printed_role_may_pass_usage_on_but_not_create"),
+    ),
+    Mutant(
+        "TR1",
+        "the exit hook does not drop the test role",
+        "tests/fixtures/migration_role.py",
+        'db.execute(sql.SQL("DROP ROLE IF EXISTS {}").format(sql.Identifier(PLAIN_ROLE)))',
+        "pass",
+        k(T_PG, "test_the_plain_test_role_and_what_it_owns_are_dropped_when_the_process_exits"),
+    ),
+    Mutant(
+        "TR1b",
+        "the exit hook drops what the role owns without CASCADE",
+        "tests/fixtures/migration_role.py",
+        '"DROP OWNED BY {} CASCADE"',
+        '"DROP OWNED BY {}"',
+        k(T_PG, "test_the_plain_test_role_and_what_it_owns_are_dropped_when_the_process_exits"),
+    ),
+    Mutant(
+        "TR2",
+        "the test role is created without looking in pg_roles first",
+        "tests/fixtures/migration_role.py",
+        'if db.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (PLAIN_ROLE,)).fetchone():\n        return\n',
+        "if False:\n        return\n",
+        k(T_WIRING, "test_the_test_role_is_looked_up_first_and_not_made_a_second_time"),
+    ),
+    Mutant(
+        "TR3",
+        "the raw test-role password is sent to the server",
+        "tests/fixtures/migration_role.py",
+        "sql.Literal(hashed)",
+        "sql.Literal(_PASSWORD)",
+        k(T_WIRING, "test_the_test_role_password_is_sent_only_as_a_hash"),
+    ),
+    Mutant(
+        "TR4",
+        "a schema named t_... counts as a scratch schema",
+        "tests/fixtures/migration_role.py",
+        'SCRATCH_PREFIXES = (\n    "hadavin_test_",\n)',
+        'SCRATCH_PREFIXES = (\n    "hadavin_test_",\n    "t_",\n)',
+        k(T_WIRING, "test_only_a_schema_with_the_test_prefix_is_a_scratch_schema"),
+    ),
+    Mutant(
+        "RN1",
+        "the mutant runner accepts an id that no mutant has",
+        "tests/migrate_mutants.py",
+        '    return [n for n in only.split(",") if n and n not in known]\n',
+        "    return []\n",
+        k(T_RULES, "test_the_mutant_runner_refuses_an_unknown_id"),
+    ),
+    Mutant(
+        "RN2",
+        "the mutant runner counts a NameError as a kill",
+        "tests/migrate_mutants.py",
+        "and not _BROKEN.search(out):\n",
+        "and True:\n",
+        k(T_RULES, "test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill"),
+    ),
     Mutant(
         "TN1",
         "a trigger name with a control character is accepted in the allow list",
@@ -1119,6 +1391,36 @@ def killers_of(m: Mutant) -> list[str]:
     return [m.killer] if isinstance(m.killer, str) else list(m.killer)
 
 
+_BROKEN = re.compile(
+    r"^E\s+(?:NameError|SyntaxError|IndentationError|ImportError|ModuleNotFoundError)\b",
+    re.MULTILINE,
+)
+
+
+def unknown_ids(only: str) -> list[str]:
+    """The ids in the comma list that no mutant has (an empty list: all are known)."""
+    known = {m.name for m in M}
+    return [n for n in only.split(",") if n and n not in known]
+
+
+def status_of(m: Mutant, runs: list[tuple[object, str]]) -> str:
+    """`runs` = (exit code, pytest output) of each killer of `m`, each run on its own with the mutant planted.
+    KILLED: some killer failed with exit code 1, a test of that very killer is in its FAILED lines, and the output shows no
+    NameError, SyntaxError, IndentationError or ImportError (a mutant that only broke the file proves nothing). BROKEN: it
+    failed but only like that. SURVIVED: every killer passed. ERROR: any other exit code."""
+    codes = [rc for rc, _ in runs]
+    if all(rc == 0 for rc in codes):
+        return "SURVIVED"
+    if not all(rc in (0, 1) for rc in codes):
+        return f"ERROR(rc={codes})"
+    for killer, (rc, out) in zip(killers_of(m), runs, strict=True):
+        named = killer.split("[")[0]
+        failed = [f.split("[")[0] for f in re.findall(r"^FAILED (\S+)", out, re.MULTILINE)]
+        if rc == 1 and named in failed and not _BROKEN.search(out):
+            return "KILLED"
+    return "BROKEN"
+
+
 def problems_with_the_list(root: Path = ROOT) -> list[str]:
     """Cheap check (no database): every `old` text is in its file exactly once, every killer file and test exists, and
     the names are unique."""
@@ -1143,6 +1445,9 @@ def problems_with_the_list(root: Path = ROOT) -> list[str]:
 
 def main(argv: list[str]) -> int:
     only = argv[0] if argv else ""
+    if unknown := unknown_ids(only):
+        print(f"STOP: no mutant has the id {', '.join(unknown)} (several: comma-separated)")
+        return 2
     if not os.environ.get("HADAVIN_TEST_PG_DSN"):
         print("STOP: HADAVIN_TEST_PG_DSN is not set (the Postgres killers need a scratch server)")
         return 2
@@ -1182,6 +1487,9 @@ def _run_all(only: str, work: Path) -> int:
         print("STOP: hadavin_sdk is not imported from the copy under test")
         return 2
     base = ["-p", "no:cacheprovider", "-q", "--no-header"]
+    if unknown := unknown_ids(only):
+        print(f"STOP: no mutant has the id {', '.join(unknown)} (several: comma-separated)")
+        return 2
     wanted = {n for n in only.split(",") if n}
     selected = [m for m in M if not wanted or m.name in wanted]
     if not selected:
@@ -1201,7 +1509,7 @@ def _run_all(only: str, work: Path) -> int:
     for m in selected:
         path = copy / m.file
         original = path.read_bytes()
-        failing, codes, spent = [], [], 0.0
+        failing, runs, spent = [], [], 0.0
         try:
             path.write_bytes(original.decode("utf-8").replace(m.old, m.new, 1).encode("utf-8"))
             for killer in killers_of(
@@ -1209,17 +1517,11 @@ def _run_all(only: str, work: Path) -> int:
             ):  # each killer on its own, without -x, so a silent one shows
                 rc, out, dt = run([py, "-m", "pytest", *base, "-rf", killer], copy, env, timeout)
                 spent += dt
-                codes.append(rc)
+                runs.append((rc, out))
                 failing += re.findall(r"^FAILED (\S+)", out, re.MULTILINE)
         finally:
             path.write_bytes(original)
-        status = (
-            "KILLED"
-            if 1 in codes and all(c in (0, 1) for c in codes)
-            else "SURVIVED"
-            if all(c == 0 for c in codes)
-            else f"ERROR(rc={codes})"
-        )
+        status = status_of(m, runs)
         results.append((m, status))
         print(
             f"{m.name} | {kind_of(m)} | {m.desc} | {status} | {', '.join(failing) or '-'} | {spent:.1f}s",

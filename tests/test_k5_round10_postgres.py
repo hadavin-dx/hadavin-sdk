@@ -93,7 +93,7 @@ def _prepared():
     from hadavin_sdk.store.migrate import migrate
 
     dsn = os.environ["HADAVIN_TEST_PG_DSN"]
-    schema, rt, pu = (f"{p}_{uuid.uuid4().hex[:10]}" for p in ("t", "rt", "pu"))
+    schema, rt, pu = (f"{p}_{uuid.uuid4().hex[:10]}" for p in ("hadavin_test", "rt", "pu"))
     with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
         for role in (rt, pu):

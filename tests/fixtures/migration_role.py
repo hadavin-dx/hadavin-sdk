@@ -19,7 +19,6 @@ import os
 import secrets
 from collections.abc import Callable
 
-from psycopg import errors as pg_errors
 from psycopg import sql
 from psycopg.conninfo import make_conninfo
 
@@ -30,7 +29,6 @@ PLAIN_ROLE = "hadavin_test_migrator_" + secrets.token_hex(
 _USED_DSNS: set[str] = set()
 SCRATCH_PREFIXES = (
     "hadavin_test_",
-    "t_",
 )  # schemas made by the test fixtures; the helper works on no other
 _SETUP_LOCK = 7_302_611_944  # a key of its own: not the one of `migrate()`
 _PASSWORD = secrets.token_hex(
@@ -43,7 +41,8 @@ class NotAScratchSchema(RuntimeError):
 
 
 def _drop_the_role_at_exit() -> None:
-    """Best effort: take the role of this process off every server it was made on (its grants go with it)."""
+    """Take the role of this process off every server it was made on (what it owns and its grants go with it). A server
+    that is gone or a role in use is reported in one line and does not fail the test run."""
     import psycopg
 
     env_dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
@@ -54,7 +53,9 @@ def _drop_the_role_at_exit() -> None:
                     "SELECT 1 FROM pg_roles WHERE rolname = %s", (PLAIN_ROLE,)
                 ).fetchone():
                     continue  # this server never saw the role
-                db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(PLAIN_ROLE)))
+                # CASCADE: a table another login (the test superuser) made inside a schema this role owns depends on
+                # that schema, and a plain DROP OWNED BY refuses to drop the schema then
+                db.execute(sql.SQL("DROP OWNED BY {} CASCADE").format(sql.Identifier(PLAIN_ROLE)))
                 db.execute(sql.SQL("DROP ROLE IF EXISTS {}").format(sql.Identifier(PLAIN_ROLE)))
         except (
             psycopg.Error
@@ -70,21 +71,21 @@ def _is_scratch(schema) -> bool:
 
 
 def ensure_plain_role(db) -> None:
-    """Make the login role if it is not there, and give it this run's password (a role belongs to the whole server, so an
-    earlier test may have made it)."""
-    try:
-        with db.transaction():  # a savepoint when the caller is already in a transaction
-            db.execute(
-                sql.SQL(
-                    "CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS PASSWORD {}"
-                ).format(sql.Identifier(PLAIN_ROLE), sql.Literal(_PASSWORD))
-            )
-    except (pg_errors.DuplicateObject, pg_errors.UniqueViolation):
-        db.execute(
-            sql.SQL("ALTER ROLE {} LOGIN PASSWORD {}").format(
-                sql.Identifier(PLAIN_ROLE), sql.Literal(_PASSWORD)
-            )
-        )
+    """Make the login role once: look in `pg_roles` first, and only create it when it is missing (a role belongs to the
+    whole server, so an earlier test of this process may have made it). The password is sent as a SCRAM hash made on
+    this side, so the password itself is in no statement and never reaches the server log, and the role is never
+    created or changed a second time (a repeated `CREATE ROLE` fails on the server, and the server logs the failed
+    statement)."""
+    if db.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (PLAIN_ROLE,)).fetchone():
+        return
+    hashed = db.pgconn.encrypt_password(
+        _PASSWORD.encode(), PLAIN_ROLE.encode(), b"scram-sha-256"
+    ).decode()
+    db.execute(
+        sql.SQL(
+            "CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS PASSWORD {}"
+        ).format(sql.Identifier(PLAIN_ROLE), sql.Literal(hashed))
+    )
 
 
 def plain_role_connect(real_connect: Callable) -> Callable:

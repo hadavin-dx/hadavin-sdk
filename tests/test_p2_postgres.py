@@ -172,7 +172,7 @@ def test_runtime_role_can_write_but_not_delete(fresh_dsn):
     import psycopg
     from psycopg import sql
 
-    role = "rt_" + fresh_dsn.rsplit("search_path=t_", 1)[1][:8]
+    role = "rt_" + fresh_dsn.rsplit("search_path=hadavin_test_", 1)[1][:8]
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
     try:
