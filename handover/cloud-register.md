@@ -1026,3 +1026,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | PR72 evidence runner a7babeb373 | stopped 22:14 UTC: head c325db8 superseded by round-4 fix | closed |
 | PR72 reviewer af18b5e778 | done 22:14 UTC: 0B/1M/4m, review in handover/reviews/P6a/round-w2-r3-codebase.md | closed |
 | PR72 builder ace5bb6bb7 | resumed 22:14 UTC for round-4 batch (1 Major, 4 minors); no full suites | running |
+| PR89 builder a290aa955c | done 22:20 UTC: head 386875c pushed (round 4 minors); closed |
+| PR89 evidence runner ab0f55975a (386875c) | started 22:21 UTC, expected ~23:30 UTC | running |
+| PR89 reviewer aba78fad35 (round 4, redaction path) | started 22:21 UTC, expected ~22:40 UTC | running |
