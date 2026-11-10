@@ -561,6 +561,10 @@ def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
     assert "`REPLICATION` flag is not checked" in first
     assert "CREATE has no grant option" in first
     assert "an existing trigger left disabled" in first
+    assert "that this package manages in the migration schema" in first
+    assert "every role the two users or those named roles are a member of" in first
+    assert "do not hand it over: point `migrate` at another schema" in first
+    assert "on a normal exit of the test process" in first
     assert "Tested on:** PostgreSQL 16.15, on the build machine" in first
     assert "session_user" in first and "WITH GRANT OPTION" in first and "pg_parameter_acl" in first
     assert "PostgreSQL 16 is the lowest version" in first
@@ -722,6 +726,15 @@ def test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill():
 
     assert mm.status_of(m, runs(real)) == "KILLED"
     assert mm.status_of(m, runs(name_error)) == "BROKEN"
+    for error in (
+        "AttributeError: module has no attribute 'x'",
+        "TypeError: 'NoneType' object is not subscriptable",
+        "KeyError: 'x'",
+        "UnboundLocalError: cannot access local variable 'x'",
+        "ValueError: not enough values to unpack",
+    ):
+        broken = f"FAILED {names[0]} - {error}\nE   {error}\n"
+        assert mm.status_of(m, runs(broken)) == "BROKEN", error
     assert mm.status_of(m, runs(other)) == "BROKEN", "another test failed, not the named killer"
     assert mm.status_of(m, [(0, "")] * len(names)) == "SURVIVED"
     assert mm.status_of(m, [(2, "")] + [(0, "")] * (len(names) - 1)).startswith("ERROR")

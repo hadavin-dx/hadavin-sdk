@@ -399,14 +399,6 @@ M: list[Mutant] = [
         FORM,
     ),
     Mutant(
-        "N3b",
-        "B: same mutant N3 against the whole old+new migration test set (is the pair type error caught anywhere else?)",
-        MN,
-        RECIPE_CLEAN,
-        "cleaned = statement_text(text)",
-        k(T_WIRING, "test_late_file_is_refused_and_nothing_runs"),
-    ),
-    Mutant(
         "N4",
         "B: hand_recipe unpacks the str into two names",
         MN,
@@ -1103,7 +1095,8 @@ M: list[Mutant] = [
         "SC3b",
         "the roles the migration user belongs to are not in the compared set",
         MIG,
-        "\"(pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER')) AS closure \"\n"
+        "\"(pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER') \"\n"
+        "    \"OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, 'MEMBER'))) AS closure \"\n"
         '    "FROM pg_roles r) "\n'
         '    "SELECT m.roleid',
         '"false AS closure "\n    "FROM pg_roles r) "\n    "SELECT m.roleid',
@@ -1167,8 +1160,8 @@ M: list[Mutant] = [
         "OA3",
         "the functions the files create are not managed names",
         MIG,
-        "        names.update(m.group(1) for m in _FUNCTION_CREATE.finditer(text))\n",
-        "        pass\n",
+        "        for m in _FUNCTION_CREATE.finditer(text):\n",
+        "        for m in ():\n",
         (
             k(
                 T_WIRING,
@@ -1222,8 +1215,8 @@ M: list[Mutant] = [
         "MT3",
         "the portal role check does not ask about MAINTAIN",
         MIG,
-        '("MAINTAIN",) if "MAINTAIN" in table_privs else ()',
-        "()",
+        "            privs = table_privs\n",
+        '            privs = tuple(p for p in table_privs if p != "MAINTAIN")\n',
         k(T_WIRING, "test_a_maintain_grant_is_a_problem_on_postgresql_17"),
     ),
     Mutant(
@@ -1297,8 +1290,8 @@ M: list[Mutant] = [
         "TR1b",
         "the exit hook drops what the role owns without CASCADE",
         "tests/fixtures/migration_role.py",
-        '"DROP OWNED BY {} CASCADE"',
-        '"DROP OWNED BY {}"',
+        'DROP OWNED BY {} CASCADE").format(sql.Identifier(PLAIN_ROLE))',
+        'DROP OWNED BY {}").format(sql.Identifier(PLAIN_ROLE))',
         k(T_PG, "test_the_plain_test_role_and_what_it_owns_are_dropped_when_the_process_exits"),
     ),
     Mutant(
@@ -1349,6 +1342,114 @@ M: list[Mutant] = [
         "        if False:\n",
         k(T_WIRING, "test_a_trigger_name_that_is_not_plain_is_refused_in_the_list"),
     ),
+    Mutant(
+        "NR1",
+        "the roles a named role belongs to are not in the compared memberships",
+        MIG,
+        "\"OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, 'MEMBER'))) AS closure \"\n"
+        '    "FROM pg_roles r) "\n'
+        '    "SELECT m.roleid',
+        '"OR false) AS closure "\n    "FROM pg_roles r) "\n    "SELECT m.roleid',
+        k(
+            T_PG,
+            "test_another_session_changing_a_role_that_a_named_role_belongs_to_stops_the_run",
+        ),
+    ),
+    Mutant(
+        "NR2",
+        "the roles a named role belongs to are not in the compared saved settings",
+        MIG,
+        "\"OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, 'MEMBER'))) AS closure \"\n"
+        '    "FROM pg_roles r) "\n'
+        '    "SELECT coalesce',
+        '"OR false) AS closure "\n    "FROM pg_roles r) "\n    "SELECT coalesce',
+        k(
+            T_PG,
+            "test_another_session_changing_a_role_that_a_named_role_belongs_to_stops_the_run",
+        ),
+    ),
+    Mutant(
+        "MN1",
+        "a plain function name is not folded to lower case",
+        MIG,
+        "else m.group(2).lower())",
+        "else m.group(2))",
+        (
+            k(
+                T_WIRING,
+                "test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole",
+            ),
+            k(T_PG, "test_functions_with_capitals_or_a_space_in_the_name_count_as_managed"),
+        ),
+    ),
+    Mutant(
+        "MN2",
+        "a quoted function name is cut at its first space",
+        MIG,
+        '_QUOTED = r\'"((?:[^"]|"")+)"\'',
+        '_QUOTED = r\'"([^" ]+)"\'',
+        (
+            k(
+                T_WIRING,
+                "test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole",
+            ),
+            k(T_PG, "test_functions_with_capitals_or_a_space_in_the_name_count_as_managed"),
+        ),
+    ),
+    Mutant(
+        "PT1",
+        "the portal check asks a shorter list of table rights than the runtime check",
+        MIG,
+        "            privs = table_privs\n",
+        '            privs = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE")\n',
+        k(
+            T_WIRING,
+            "test_the_portal_role_is_asked_about_every_table_privilege_the_other_roles_are",
+        ),
+    ),
+    Mutant(
+        "DD1",
+        "the search path stays in the server entry, so each scratch schema is one more entry",
+        "tests/fixtures/migration_role.py",
+        '    parts.pop("options", None)\n',
+        "    pass\n",
+        k(T_PG, "test_one_server_is_one_entry_whatever_the_search_path"),
+    ),
+    Mutant(
+        "SW1",
+        "the stale roles are not swept when the test role is made",
+        "tests/fixtures/migration_role.py",
+        "    _hold_the_role()\n    sweep_stale_roles(db)\n",
+        "    _hold_the_role()\n",
+        k(
+            T_WIRING,
+            "test_making_the_test_role_first_sweeps_the_stale_roles_of_killed_processes",
+        ),
+    ),
+    Mutant(
+        "SW2",
+        "a stale test role with an open session is dropped",
+        "tests/fixtures/migration_role.py",
+        "AND NOT EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.usename = r.rolname)",
+        "",
+        k(T_PG, "test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not"),
+    ),
+    Mutant(
+        "SW3",
+        "a test role whose process lock is held is dropped",
+        "tests/fixtures/migration_role.py",
+        '        if not db.execute("SELECT pg_try_advisory_lock(%s)", (key,)).fetchone()[0]:\n',
+        "        if False:\n",
+        k(T_PG, "test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not"),
+    ),
+    Mutant(
+        "RN3",
+        "the mutant runner counts an AttributeError or a TypeError as a kill",
+        "tests/migrate_mutants.py",
+        'r"^E\\s+(?:NameError|UnboundLocalError|AttributeError|TypeError|KeyError|ValueError|SyntaxError"',
+        'r"^E\\s+(?:NameError|SyntaxError"',
+        k(T_RULES, "test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill"),
+    ),
 ]
 
 
@@ -1392,7 +1493,8 @@ def killers_of(m: Mutant) -> list[str]:
 
 
 _BROKEN = re.compile(
-    r"^E\s+(?:NameError|SyntaxError|IndentationError|ImportError|ModuleNotFoundError)\b",
+    r"^E\s+(?:NameError|UnboundLocalError|AttributeError|TypeError|KeyError|ValueError|SyntaxError"
+    r"|IndentationError|ImportError|ModuleNotFoundError)\b",
     re.MULTILINE,
 )
 
@@ -1406,7 +1508,8 @@ def unknown_ids(only: str) -> list[str]:
 def status_of(m: Mutant, runs: list[tuple[object, str]]) -> str:
     """`runs` = (exit code, pytest output) of each killer of `m`, each run on its own with the mutant planted.
     KILLED: some killer failed with exit code 1, a test of that very killer is in its FAILED lines, and the output shows no
-    NameError, SyntaxError, IndentationError or ImportError (a mutant that only broke the file proves nothing). BROKEN: it
+    NameError, UnboundLocalError, AttributeError, TypeError, KeyError, ValueError, SyntaxError, IndentationError or
+    ImportError line (a mutant that only broke the file proves nothing). BROKEN: it
     failed but only like that. SURVIVED: every killer passed. ERROR: any other exit code."""
     codes = [rc for rc, _ in runs]
     if all(rc == 0 for rc in codes):
@@ -1486,7 +1589,7 @@ def _run_all(only: str, work: Path) -> int:
     if not chk.startswith(str(copy)):
         print("STOP: hadavin_sdk is not imported from the copy under test")
         return 2
-    base = ["-p", "no:cacheprovider", "-q", "--no-header"]
+    base = ["-p", "no:cacheprovider", "-q", "--no-header", "--tb=short"]
     if unknown := unknown_ids(only):
         print(f"STOP: no mutant has the id {', '.join(unknown)} (several: comma-separated)")
         return 2

@@ -20,13 +20,19 @@ import secrets
 from collections.abc import Callable
 
 from psycopg import sql
-from psycopg.conninfo import make_conninfo
+from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
-PLAIN_ROLE = "hadavin_test_migrator_" + secrets.token_hex(
-    4
-)  # one per test process: a role and its grants belong to the
+_ROLE_PREFIX = "hadavin_test_migrator_"
+_HOLD_BASE = (
+    7_302_612_000_000_000  # advisory lock keys of live test processes: this plus the role's token
+)
+_HOLDS: list = []  # the connection that holds that lock; kept open until the process ends
+_TOKEN = secrets.token_hex(4)
+PLAIN_ROLE = _ROLE_PREFIX + _TOKEN  # one per test process: a role and its grants belong to the
 # whole server, so two test processes at once on one server (two Python versions, a mutant run) must not share one
-_USED_DSNS: set[str] = set()
+_USED_DSNS: set[str] = (
+    set()
+)  # one entry per server (the search path is left out), not per scratch schema
 SCRATCH_PREFIXES = (
     "hadavin_test_",
 )  # schemas made by the test fixtures; the helper works on no other
@@ -40,13 +46,73 @@ class NotAScratchSchema(RuntimeError):
     """The test connection would take over a schema that is not a scratch schema of a test."""
 
 
-def _drop_the_role_at_exit() -> None:
-    """Take the role of this process off every server it was made on (what it owns and its grants go with it). A server
-    that is gone or a role in use is reported in one line and does not fail the test run."""
+def _server_key(dsn: str) -> str:
+    """The server and database of a connection string, without its search path, so every scratch schema of one server
+    is one entry."""
+    parts = conninfo_to_dict(dsn)
+    parts.pop("options", None)
+    return make_conninfo(**parts)
+
+
+def _hold_key(token: str) -> int:
+    return _HOLD_BASE + int(token, 16)
+
+
+def _hold_the_role() -> None:
+    """Hold an advisory lock, on a connection kept open until the process ends, that says "the test process of this
+    role is alive". The sweep of stale roles (`sweep_stale_roles`) never touches a role whose lock is held, and it
+    cannot be mistaken for a role that is between two short connections."""
     import psycopg
 
     env_dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
-    for dsn in _USED_DSNS | ({env_dsn} if env_dsn else set()):
+    if not env_dsn or _HOLDS:
+        return
+    hold = psycopg.connect(_server_key(env_dsn), autocommit=True)
+    hold.execute("SELECT pg_advisory_lock(%s)", (_hold_key(_TOKEN),))
+    _HOLDS.append(hold)
+
+
+def sweep_stale_roles(db) -> list[str]:
+    """Drop the test roles of earlier test processes that were killed before their exit hook ran: a role named
+    `hadavin_test_migrator_<token>` that is not ours, has no session on the server, and whose live-process lock nobody
+    holds. What it owns goes with it. Returns the names dropped. A role that cannot be dropped is left and reported in
+    one line."""
+    import psycopg
+
+    dropped = []
+    rows = db.execute(
+        "SELECT r.rolname FROM pg_roles r WHERE r.rolname LIKE %s AND r.rolname <> %s "
+        "AND NOT EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.usename = r.rolname)",
+        (_ROLE_PREFIX.replace("_", "\\_") + "%", PLAIN_ROLE),
+    ).fetchall()
+    for (name,) in rows:
+        token = name[len(_ROLE_PREFIX) :]
+        try:
+            key = _hold_key(token)
+        except ValueError:
+            continue  # not made by this helper
+        if not db.execute("SELECT pg_try_advisory_lock(%s)", (key,)).fetchone()[0]:
+            continue  # its process is alive
+        try:
+            with db.transaction():
+                db.execute(sql.SQL("DROP OWNED BY {} CASCADE").format(sql.Identifier(name)))
+                db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(name)))
+            dropped.append(name)
+        except psycopg.Error as e:
+            print(f"stale test role {name} was not dropped: {type(e).__name__}")
+        finally:
+            db.execute("SELECT pg_advisory_unlock(%s)", (key,))
+    return dropped
+
+
+def _drop_the_role_at_exit() -> None:
+    """On a normal exit (also an exception or a `sys.exit`, not a kill: no hook runs then, and `sweep_stale_roles` of a
+    later run takes care of it), take the role of this process off every server it was made on (what it owns and its
+    grants go with it). A server that is gone or a role in use is reported in one line and does not fail the test run."""
+    import psycopg
+
+    env_dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
+    for dsn in _USED_DSNS | ({_server_key(env_dsn)} if env_dsn else set()):
         try:
             with psycopg.connect(dsn, autocommit=True) as db:
                 if not db.execute(
@@ -63,6 +129,15 @@ def _drop_the_role_at_exit() -> None:
             print(f"test role {PLAIN_ROLE} was not dropped: {type(e).__name__}")
 
 
+def _close_the_hold() -> None:
+    for hold in _HOLDS:
+        hold.close()
+    _HOLDS.clear()
+
+
+atexit.register(
+    _close_the_hold
+)  # runs after the drop below (atexit runs the last registered first)
 atexit.register(_drop_the_role_at_exit)
 
 
@@ -75,9 +150,11 @@ def ensure_plain_role(db) -> None:
     whole server, so an earlier test of this process may have made it). The password is sent as a SCRAM hash made on
     this side, so the password itself is in no statement and never reaches the server log, and the role is never
     created or changed a second time (a repeated `CREATE ROLE` fails on the server, and the server logs the failed
-    statement)."""
+    statement). Before the first creation, the roles that killed test processes left are swept."""
     if db.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (PLAIN_ROLE,)).fetchone():
         return
+    _hold_the_role()
+    sweep_stale_roles(db)
     hashed = db.pgconn.encrypt_password(
         _PASSWORD.encode(), PLAIN_ROLE.encode(), b"scram-sha-256"
     ).decode()
@@ -111,7 +188,7 @@ def plain_role_connect(real_connect: Callable) -> Callable:
                         f"so it only runs on a scratch schema of a test (its name starts with one of {SCRATCH_PREFIXES!r})"
                     )
                 ensure_plain_role(db)
-                _USED_DSNS.add(dsn)
+                _USED_DSNS.add(_server_key(dsn))
                 db.execute(
                     sql.SQL("ALTER SCHEMA {} OWNER TO {}").format(
                         sql.Identifier(schema), sql.Identifier(PLAIN_ROLE)
