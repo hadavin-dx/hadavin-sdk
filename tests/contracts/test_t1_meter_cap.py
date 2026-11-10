@@ -5,16 +5,18 @@ file; renaming a test or rewording an assertion message here means changing the 
 
 What the code does (read, not assumed): ``Limits.blocked`` CHECKS the day and month totals BEFORE a call;
 ``Limits.charge`` ADDS the real cost AFTER it. There is no reserve step. So one caller at a time admits
-ceil(cap / cost) calls: the overshoot is at most one call, by design.
+ceil(cap / cost) calls: the overshoot is at most one call (as the code behaves today; no design note was found
+that promises it).
 
 Not here: 50 callers at the same time. All 50 pass the check before any of them charges, so the cap does not hold
 there; the failing proof, the fix (a reserve step before the call) and the tests that show it green are a later
-change (the failing proof is kept in handover/seeds/ on the handover branch). What IS here for them: the harness
+change (the failing proof is kept outside this branch: see the pull request description). What IS here for it: the harness
 (``tests/meter_support.py``) and its controls, which show that the schedule can tell a meter that reserves from one
 that does not.
 
 Every test takes the ``store`` fixture, so each runs on the memory store and, with HADAVIN_TEST_PG_DSN set, on the
 postgres store (the production ledger). Amounts are ``Decimal`` dollars because the source ``Budget`` is Decimal.
+``Limits.stop`` and ``Limits.reset`` (the kill switch writers) are not covered by these tests.
 """
 
 from __future__ import annotations
@@ -114,11 +116,11 @@ def test_a_budget_of_zero_blocks_the_first_call(which, store, monkeypatch):
     )
 
 
-# --- PIN of today's behaviour, to be flipped by the later fix that rejects bad charges ---------------------------------
-# Ledger rows BL-core-a21b-seed-01 (the meter accepts NaN, negative and infinite charges), BL-core-p4d-r1-adv-A7 and
-# BL-core-p4d-r1-adv-C5 (the same class at the store's ``add_spend``). The entry point pinned here is ``Limits.charge``,
-# the one place every real charge goes through; the fix belongs there (and in the store). When that fix lands these
-# expectations flip to "the charge is refused and nothing is booked"; until then they record what the code does.
+# --- PIN of today's behaviour -----------------------------------------------------------------------------------------
+# Pin of today's behaviour: ``Limits.charge`` (the one place every real charge goes through) books NaN, negative and
+# infinite costs as they are. A later change makes the charge refuse them and these tests flip to "refused, nothing
+# booked". When that change lands, delete the two pin tests below and use the tests of that change (see the pull
+# request description).
 
 
 @pytest.mark.parametrize(

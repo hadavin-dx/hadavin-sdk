@@ -1,7 +1,7 @@
-"""The postgres test schema helper (``pg_schema``, used by the store contract and every database test) must FAIL in
-CI when HADAVIN_TEST_PG_DSN is missing and may skip only on a developer machine. CI sets ``CI=true`` and exports the
-DSN of its postgres service in every pytest step (.github/workflows/ci.yml), so a missing DSN there is a broken job,
-not a reason to skip the money-ledger tests unseen.
+"""The two database test helpers that share ``tests/pg_dsn.py`` (``pg_schema`` of the store contract and the
+ask-your-data conftest) must FAIL in CI when HADAVIN_TEST_PG_DSN is missing and may skip only on a developer machine.
+CI sets ``CI=true`` and exports the DSN of its postgres service in each of its three pytest steps
+(.github/workflows/ci.yml), so a missing DSN there is a broken job, not a reason to skip the money-ledger tests unseen.
 """
 
 from __future__ import annotations
@@ -47,3 +47,14 @@ def test_the_shared_helper_fails_in_ci_and_skips_elsewhere(monkeypatch):
     monkeypatch.setenv("CI", "false")
     with pytest.raises(pytest.skip.Exception):
         need_dsn_or_skip("no dsn")
+
+
+def test_the_ask_your_data_helper_fails_in_ci_and_skips_elsewhere(monkeypatch):
+    from tests.demo_askdata.conftest import _need
+
+    monkeypatch.setenv("CI", "true")
+    with pytest.raises(pytest.fail.Exception):
+        _need("no dsn")
+    monkeypatch.delenv("CI")
+    with pytest.raises(pytest.skip.Exception):
+        _need("no dsn")

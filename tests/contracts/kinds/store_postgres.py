@@ -1,5 +1,6 @@
-"""The `postgres` store kind. Needs HADAVIN_TEST_PG_DSN (CI: the postgres service); skipped without it, so the
-laptop needs no Docker. Each test gets its own schema, migrated fresh and dropped afterwards."""
+"""The `postgres` store kind. Needs HADAVIN_TEST_PG_DSN (CI: the postgres service). Without it the tests are skipped
+on a laptop (no Docker needed) and FAIL when CI=true (tests/pg_dsn.py). Each test gets its own schema, migrated fresh
+and dropped afterwards."""
 
 import os
 import uuid

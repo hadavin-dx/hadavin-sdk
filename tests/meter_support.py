@@ -5,8 +5,7 @@ No network, no model call, no real time.
 The code under test is the real ``Limits`` (``charge`` = spend after, ``blocked`` = check before) and the real spend
 ledger of each store kind (``add_spend`` / ``spend_totals``). Nothing here is a second meter.
 
-The 50-callers-at-once proof is not here; it is a later change (its failing seed is kept in handover/seeds/ on the
-handover branch).
+The 50-callers-at-once proof is not here; it is a later change (see the pull request description).
 """
 
 from __future__ import annotations
