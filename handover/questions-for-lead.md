@@ -1574,3 +1574,10 @@ NOT RUN: CI on f4301d5 (it will still fail the security job until 386875c is rew
 DECISIONS FOR LEAD: may the PR89 branch be rewritten (drop the literal from commit 386875c with a fixup, then force-with-lease push)? The final tree stays byte-identical, so the independent evidence now running on f4301d5 stays valid for the new head (checked by tree sha). Only commits of ours are on the branch.
 DEFAULT: the cloud does NOT force-push; the lead (or you, by saying yes) rewrites; the evidence is tied to tree 0af1b26 so a rewrite does not need a re-run.
 NEXT: evidence runner and redaction reviewer are running on f4301d5; fix any finding in one push; wait for your answer on the rewrite.
+
+## q-P89-gitleaks-history (update 2026-11-10 UTC): ORDER 235 done
+CHECKED BY ME: rewrote only core/mutation-runner-keywords (fd63421 folded into 386875c), tree sha equal to 0af1b26e8873dc54fcc597afc8a3cdfa632ded5b before pushing, force-with-lease pinned to f4301d5, new head 73d6b99441982b18099b1a94b2198c2b74dbb307; gitleaks 8.30.1 --log-opts=HEAD: no leaks (60 commits); old head: 1 leak.
+NOT RUN: CI security job on the new head not yet seen. The builder's unpushed round-6 commit (on the old head) must be rebased onto 73d6b99 (told it, no force push). Evidence runs at f4301d5 had been stopped already; the round-6 fixes change the tree, so evidence will be on the next head.
+DECISIONS FOR LEAD: none.
+DEFAULT: none.
+NEXT: builder rebases and pushes round 6; then independent evidence plus a fresh redaction review on that head.
