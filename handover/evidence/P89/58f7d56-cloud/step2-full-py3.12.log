@@ -4,3 +4,10 @@ warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be remo
 Using CPython 3.12.3 interpreter at: /usr/bin/python3.12
 Creating virtual environment at: /home/user/build/EV-P89-58f7d56/venv3.12
 Installed 76 packages in 93ms
+.......E..E............................................................. [  0%]
+..............s......................................................... [  1%]
+.....................E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E [  2%]
+........................................................................ [  2%]
+................................................................EEEEEEEE [  3%]
+.E....EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE [  4%]
+.....................................................
