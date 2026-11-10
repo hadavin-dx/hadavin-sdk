@@ -7705,4 +7705,5 @@ tests/test_k5_fixes9.py::test_a_cut_at_every_offset_of_a_layered_percent_spellin
 tests/test_k5_fixes9.py::test_a_cut_at_every_offset_of_a_layered_percent_spelling_leaves_no_front[percent3-110-alone] PASSED [ 73%]
 tests/test_k5_fixes9.py::test_a_cut_at_every_offset_of_a_layered_percent_spelling_leaves_no_front[percent3-110-other] PASSED [ 73%]
 tests/test_k5_fixes9.py::test_a_cut_at_every_offset_of_a_layered_percent_spelling_leaves_no_front[percent3-111-alone] PASSED [ 73%]
-tests/test_k5_fixes9.py::test_a_cut_at_every_offset_of_a_layered_percent_spelling_leaves_no_front[percent3-111-other] 
+tests/test_k5_fixes9.py::test_a_cut_at_every_offset_of_a_layered_percent_spelling_leaves_no_front[percent3-111-other] exit=1
+end=2026-11-10T19:45:16Z
