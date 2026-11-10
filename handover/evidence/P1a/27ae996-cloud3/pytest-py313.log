@@ -8281,4 +8281,4 @@ tests/test_k5_layers.py::test_error_reason_redacts_a_jwt_before_the_160_characte
 tests/test_k5_layers.py::test_error_reason_with_an_expanding_message_and_a_handed_out_secret_is_refused PASSED [ 74%]
 tests/test_k5_layers.py::test_a_mime_wrapped_base64_of_a_handed_out_secret_is_masked PASSED [ 74%]
 tests/test_k5_layers.py::test_a_base64_of_a_quoted_or_hex_spelling_of_a_handed_out_secret_is_masked PASSED [ 74%]
-tests/test_k5_postgres.py::test_a_whole_tooled_run_on_postgres 
+tests/test_k5_postgres.py::test_a_whole_tooled_run_on_postgres exit=1

@@ -2173,3 +2173,8 @@
 | BL-core-p1da-r4-07 | P1d-a plan rev 7 | MAJOR | `=` in a query value ends a secret (Q18, S7b) | FIXED-UNVERIFIED (rev 7, IDF) | round4-design | UNCAPPED |
 | BL-core-p1da-r4-08 | P1d-a plan rev 7 | MAJOR | ReDoS of the key grammar unproven | FIXED-UNVERIFIED (rev 7; HL1, P7 timings) | round4-design | UNCAPPED |
 | BL-core-p1da-r4-09 | P1d-a plan rev 7 | MAJOR | fixture literals not built from parts; Alternatives/Risks gaps | FIXED-UNVERIFIED (rev 7) | both | UNCAPPED |
+| BL-core-p1da-r5-01 | P1d-a plan rev 7 | MAJOR | P7 timing claim wrong (NEW 0.85-0.9 s vs base 0.29 s); ReDoS evidence below repo sizing | OPEN | round5-design M1 | UNCAPPED |
+| BL-core-p1da-r5-02 | P1d-a plan rev 7 | MAJOR | suffix {0,255} over-masks benign long key names, unmeasured | OPEN | round5-design M2 | UNCAPPED |
+| BL-core-p1da-r5-03 | P1d-a plan rev 7 | MAJOR | N8/K42d pin a leak; linear unbounded form not probed | OPEN | round5-design M3 | UNCAPPED |
+| BL-core-p1da-r5-04 | P1d-a plan rev 7 | MAJOR | BTK1/N7: un-paired code span makes mentions/links live; mrkdwn notify exit | OPEN | round5-design M4 | UNCAPPED |
+| BL-core-p1da-r5-05 | P1d-a plan rev 7 | MAJOR | card-exit safety by enumeration, not one helper; hook renamed | OPEN | round5-design M5 | UNCAPPED |
