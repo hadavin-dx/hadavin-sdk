@@ -1045,3 +1045,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | acf276f0fbff87f4e | PR89 evidence runner 14879da | 2026-11-10 | - | STOPPED (head superseded by round 7); processes, clusters ev89a312/313 and partial evidence deleted |
 | a66ee3947892154f1 | PR89 reviewer round 7 | 2026-11-10 | - | CLOSED: 0B/2M/4m, saved round-w2-r7-codebase.md |
 | a290aa955ce105a74 | PR89 builder round 7 (resumed) | 2026-11-10 | +90 min | running |
+| a0f1bb342d69a67c6 | PR73 evidence runner, head acc5bfc (154+40 mutants, PG 16 only) | 2026-11-10 | on report | running |
+| a2950211991880877 | PR73 design/security reviewer round 5, snapshot /tmp/snap/core_P3a-2-acc5bfc | 2026-11-10 | on report | running |
+| af82164d5056b156c | PR73 codebase reviewer round 5 | 2026-11-10 | on report | running |
+| aea5c3b20851d826d | PR73 builder round 5 | 2026-11-10 | - | CLOSED: acc5bfc pushed |
