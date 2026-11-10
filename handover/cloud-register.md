@@ -986,3 +986,4 @@ Closed: a290aa955c (PR89 fix builder, pushed 0e4f6d5). For lead: FIXTURE ERROR a
 Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (evidence on 0e4f6d5) still running: baseline only.
 
 | a290aa955c | PR89 fix builder r2 | resumed 20:24 UTC, hand-back was NOT FINISHED (nothing pushed); told to finish mutants, fail-before, lint, full pytest 3.12/3.13, push | next check in 30 min |
+| ace5bb6bb7 | PR72 fix builder r3 (BL-core-a14-w2-09..14, strict-bool sweep split per DEFAULT) | started 20:43 UTC | expected end +90 min | next check +30 min |
