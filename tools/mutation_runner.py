@@ -54,9 +54,11 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   ``PASS_ENV_ALLOWED``, re-copy the file and update its pin (see the CHANGELOG); do that only for the ADDRESS of a throwaway test resource
   that a demo's tests need (a second database, for example), never for a token or a key.
   Masking: the value of a passed name (and the password inside it: the one of a URL, the one after ``password=``, ``passwd=`` or ``pwd=`` in a
-  key=value text or a URL query; each also percent-decoded) is replaced by ``[REDACTED]`` in ``first_lines``, in the failing test id of a row,
+  key=value text or a URL query, a quoted one included; each also percent-decoded, and each also as ``repr`` and ``unicode_escape`` show it, so a backslash or a quote in a value is covered) is replaced by ``[REDACTED]`` in ``first_lines``, in the failing test id of a row,
   in the ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` messages and in the baseline skip message. Checked with a real run: pytest
-  shortens a long text in the first ``E`` line of a comparison to its first and last 12 characters around ``...`` (``-vv`` does not change that),
+  shortens a long text in the first ``E`` line of a comparison to about its first 12 and last 13 characters around ``...`` (also with ``-q -vv``,
+  which nets to verbosity 1; only ``-vv`` without ``-q``, or ``-o verbosity_assertions=2``, prints the full text; the runner keeps ``-q`` and
+  does not add that option, so the ``first_lines`` of every caller stay as they were; saved run: ``handover/evidence/P89/pytest-92-facts.txt``),
   so every start of a secret that ends right before ``...`` and every end that starts right after ``...`` of ``FRAGMENT_MIN`` characters or more is masked too.
   What stays open, stated plainly: a test that prints a changed form of the value (only the host, only the user name, a re-encoded copy, a
   piece cut out of the middle, a fragment shorter than ``FRAGMENT_MIN`` characters) is not masked; a password that has no ``password=`` word
@@ -67,24 +69,24 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   anything. Two runs at once that share one database collide (the same tables and rows), so give each parallel run its own database.
   The runner checks one thing in code: after EVERY mutant run it runs the unmutated copy again on that same database (the canary run), and
   when that no longer passes it stops with ``RuntimeError`` naming the mutant, because what the mutant left behind would make the verdicts
-  of the later mutants unreliable (a false kill). The cost is one extra pytest run (and one extra copy of the tree) per mutant while a ``pass_env`` name is set; the second copy is kept on purpose: the canary run leaves bytecode that could hide the next mutation. The canary proves only that the full unmutated tests still pass; it does not prove the database is clean, and under ``forbid_skips`` a canary run with a skipped test is refused too. A failed canary raises ``CanaryFailed`` (a ``RuntimeError``; its ``rows`` hold the rows judged so far). A second runner on the same machine with the same passed value is refused by an exclusive lock in the temp folder named by a hash of the value; a runner on another machine is not seen (give each run a database of its own).
+  of the later mutants unreliable (a false kill). The cost is one extra pytest run (and one extra copy of the tree) per mutant while a ``pass_env`` name is set; the second copy is kept on purpose: the canary run leaves bytecode that could hide the next mutation. The canary proves only that the full unmutated tests still pass; it does not prove the database is clean, and under ``forbid_skips`` a canary run with a skipped test is refused too (also ``CanaryFailed``). A failed canary raises ``CanaryFailed`` (a ``RuntimeError``; its ``rows`` hold the rows judged so far). A second runner that uses the same temp folder (in practice the same machine and the same account, or the same ``TMPDIR``) with the same passed value is refused by an exclusive lock file there, named by the first 16 hex digits of a SHA-256 of the value (a hash is not the value, but the file name is readable by other users of that folder and a guessable value could be tested against it: use a database address with a random password); a runner with another temp folder or on another machine is not seen (give each run a database of its own). A lock file that cannot be opened or locked for another reason (no permission, no lock space) is refused with its own message.
 - ``forbid_skips=True``: a run in which any selected test is skipped (or an expected failure) proves nothing, so it is an ERROR row
   ``SKIPPED TESTS`` (never a kill), and an unmutated baseline with a skipped test raises ``RuntimeError``. This closes the false kill where
   a mutant "dies" because the tests could not run (for example no database was reachable). A mutant run with no JUnit file or an empty one
   is the ERROR row ``JUNIT MISSING`` under this keyword.
 
-Always on (no keyword), three changes of behaviour: (1) a run whose FIRST failing test case failed in a fixture, at setup or at teardown
+Always on (no keyword), two changes of result and one new label: (1) a run whose FIRST failing test case failed in a fixture, at setup or at teardown
 (``testing.mutation.fixture_errors``), is the ERROR row ``FIXTURE ERROR`` and never a kill; before, such a run was a kill when the fixture
 failed with an ``AssertionError`` and a crash otherwise. A test whose body failed and whose teardown failed afterwards is judged by the failure
 (the test ran as written). (2) ``testing.mutation.judge`` returns ``ERROR`` when the run failed (exit 1) and no failing test id is known (an empty or
-unreadable JUnit file), where it used to return ``CRASH`` or ``KILLED``; (3) a run whose FIRST failing case is a test file that could not be imported or collected (pytest word: ``collection failure``; an ``assert`` at import time included) is the ERROR row ``COLLECTION ERROR``, where it used to be a kill when the first line was an ``AssertionError``. So a mutant can no longer count as killed when its tests could not run as written.
+unreadable JUnit file), where it used to return ``CRASH`` or ``KILLED``; (3) a run whose FIRST failing case is a test file that could not be imported or collected (pytest word: ``collection failure``; an ``assert`` at import time included) is the ERROR row ``COLLECTION ERROR`` with pytest's message. This is only a new label: pytest exits 2 for it and the judge already returned ERROR for every exit code other than 1, so the old row was an ERROR row with the module name as its test id (run saved in ``handover/evidence/P89/collection-error-old-row.txt``), never a kill. A mutant counts as killed only when a test ran as written and failed: that part of the rule is not changed by item 3.
 
 Result rows. A row is ``(name, verdict, test id, good)``. The test id column holds the failing test id, or one of these texts for an ERROR row
 that has no verdict from the judge: ``SETUP FAILED: <error class>``, ``SNIPPET NOT FOUND``, ``TIMEOUT``, ``REAPED ELSEWHERE``, ``JUNIT REFUSED``,
 ``JUNIT MISSING`` (``forbid_skips``), ``COLLECTION ERROR``, ``FIXTURE ERROR``, ``SKIPPED TESTS`` (``forbid_skips``) and ``NO FAILING TEST NAMED`` (the run failed, the JUnit file names no failing test). ``first_lines`` holds the first ``E`` line (masked)
 of the rows that have one, and for ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` the masked message that says why.
 
-Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
+Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``PASS_ENV_ALLOWED``, ``MASK``, ``FRAGMENT_MIN``, ``NO_TEST_NAMED``, ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
 ``TIMED_OUT``, ``REAPED_ELSEWHERE``, ``CHILD_ENV``, ``CHILD_FIXED_ENV``, ``JUNIT_REFUSED`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
 the no-hardcoding rule is about product behaviour (names, regions, prices, thresholds a deployment tunes), and this is a developer tool
 that ships in no wheel, has no config surface and is copied byte for byte into demos. A caller changes the timeouts by argument.
@@ -93,6 +95,7 @@ that ships in no wheel, has no config surface and is copied byte for byte into d
 from __future__ import annotations
 
 import contextlib
+import errno
 import hashlib
 import keyword
 import os
@@ -282,25 +285,35 @@ def _checked_env_names(names: Iterable[str]) -> tuple[str, ...]:
 
 
 _PASSWORD_WORD = re.compile(
-    r"(?i)(?<![A-Za-z0-9])(?:password|passwd|pwd)\s*=\s*([^\s&;'\"]+)"
-)  # ``password=...`` of a key=value DSN or a URL query
+    r"(?i)(?<![A-Za-z0-9])(?:password|passwd|pwd)\s*=\s*(?:'([^']*)'|\"([^\"]*)\"|([^\s&;'\"]+))"
+)  # ``password=...`` of a key=value DSN or a URL query; a quoted value may hold spaces
+
+
+def _written_forms(text: str) -> set[str]:
+    """``text`` and the ways a test or pytest may print it: as ``repr`` shows it inside quotes and as ``unicode_escape`` writes it (a backslash
+    or a quote in the value shows up doubled or escaped in an assertion line). Empty forms are dropped."""
+    forms = {text, repr(text)[1:-1], text.encode("unicode_escape").decode("ascii")}
+    return {f for f in forms if f}
 
 
 def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
     """The values of the passed environment variables, and the password inside them (the one of a URL, the one after ``password=`` in a
-    key=value text or a URL query; each as written and percent-decoded), longest first: text that may show them is run through ``_masked``."""
+    key=value text or a URL query; each as written, percent-decoded, and as ``repr`` / ``unicode_escape`` print it), longest first: text that may show them is run through ``_masked``."""
     found: set[str] = set()
     for name in names:
         value = os.environ.get(name, "")
         if not value:
             continue
-        found.add(value)
-        passwords = [m.group(1) for m in _PASSWORD_WORD.finditer(value)]
+        found.update(_written_forms(value))
+        passwords = [
+            next(g for g in m.groups() if g is not None) for m in _PASSWORD_WORD.finditer(value)
+        ]
         with contextlib.suppress(ValueError):  # not URL-shaped: only the key=value scan applies
             passwords.append(urlsplit(value).password or "")
         for password in passwords:
             if password:
-                found.update((password, unquote(password)))
+                for form in (password, unquote(password)):
+                    found.update(_written_forms(form))
     return tuple(sorted(found, key=len, reverse=True))
 
 
@@ -349,18 +362,34 @@ class CanaryFailed(RuntimeError):
     rows: tuple[tuple[str, Verdict, str, bool], ...] = ()
 
 
+_LOCK_HELD = (
+    errno.EAGAIN,
+    errno.EACCES,
+    errno.EDEADLK,
+)  # what a non-blocking lock reports when another holder has it (EWOULDBLOCK equals EAGAIN)
+
+
 def _lock_dir() -> Path:
     return Path(tempfile.gettempdir())
 
 
 @contextlib.contextmanager
 def _one_run_per_database(values: Sequence[str]) -> Iterator[None]:
-    """Hold an exclusive lock named by a hash of the passed values (never the values) in the temp folder for the whole run: a second runner on
-    this machine with the same passed value is refused (``RuntimeError``) instead of sharing the database and its tables. It does not see a
-    runner on another machine; that stays the caller's job (a database of its own per run)."""
+    """Hold an exclusive lock named by a hash of the passed values (never the values) in the temp folder for the whole run: a second runner that
+    uses the same temp folder (same machine and account, or the same ``TMPDIR``) with the same passed value is refused (``RuntimeError``) instead
+    of sharing the database and its tables. It does not see a runner with another temp folder or on another machine; that stays the caller's
+    job (a database of its own per run). The file name holds the first 16 hex digits of a SHA-256 of the values: not the values, but readable by
+    other users of the temp folder. A lock file that cannot be opened (another user's file) or locked for a reason other than "held by another
+    run" is a ``RuntimeError`` with its own message."""
     digest = hashlib.sha256("\0".join(sorted(values)).encode()).hexdigest()[:16]
     path = _lock_dir() / f"hadavin_mutation_{digest}.lock"
-    with path.open("a+b") as handle:
+    try:
+        handle = path.open("a+b")
+    except OSError as exc:
+        raise RuntimeError(
+            f"the lock file of this run could not be opened ({type(exc).__name__}): it may belong to another user of the temp folder, so the run cannot be proven alone on its database"
+        ) from None
+    with handle:
         try:
             if _IS_WINDOWS:
                 import msvcrt
@@ -371,9 +400,13 @@ def _one_run_per_database(values: Sequence[str]) -> Iterator[None]:
                 import fcntl
 
                 fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except OSError:
+        except OSError as exc:
+            if exc.errno in _LOCK_HELD:
+                raise RuntimeError(
+                    "another mutation run that uses the same temp folder has the same passed database address: give each run a database of its own"
+                ) from None
             raise RuntimeError(
-                "another mutation run on this machine uses the same passed database address: give each run a database of its own"
+                f"the lock file of this run could not be locked ({type(exc).__name__}, errno {exc.errno}), so the run cannot be proven alone on its database"
             ) from None
         yield  # the lock goes with the closed file
 
@@ -582,7 +615,7 @@ def run_mutants(
     must name a file inside its tree (``ValueError``). ``first_lines``, if given, is emptied at the start and then filled with the first ``E`` line
     of each judged kill (mutant name -> line; diagnostics, and what ``crash_type`` is checked against): it belongs to this call, so two
     runs in two threads never share it. ``conftest``, ``pass_env`` and ``forbid_skips`` are opt-in (see the module docstring; by default no plugin, no environment name and no skip check
-    are added; the three always-on changes in the module docstring still apply): a plugin file of the tree, allowlisted environment names for the child, and "a skipped test is an
+    are added; the always-on changes in the module docstring still apply): a plugin file of the tree, allowlisted environment names for the child, and "a skipped test is an
     error, not a kill". A bad value, or a ``conftest`` that is not a file of the tree, is a ``ValueError`` before any temp folder exists. A SIGTERM or SIGHUP during the call ends it like Ctrl-C (see the module docstring).
     NOT re-entrant: the signal state is one module-level record, so on POSIX in the main thread a ``run_mutants`` call made while another is
     running in the same thread (from ``on_result``, say) raises ``RuntimeError`` and leaves the outer call untouched. Calls in other threads do not
@@ -861,15 +894,21 @@ def _run_mutants(
                     plugin=conftest,
                     env_names=env_names,
                 )
+                reason = ""
                 if again == 0 and forbid_skips:
-                    _refuse_skips_in_baseline(
-                        tmp / "again.xml", secrets
-                    )  # a database that is gone makes the tests skip, not fail
+                    try:
+                        _refuse_skips_in_baseline(
+                            tmp / "again.xml", secrets
+                        )  # a database that is gone makes the tests skip, not fail
+                    except RuntimeError as exc:
+                        reason = f"after mutant {m.name!r}: {exc}"
                 if again != 0:
-                    failure = CanaryFailed(
+                    reason = (
                         f"the unmutated copy no longer passes its tests after mutant {m.name!r} (exit code {again}): the shared test database holds what the"
                         " mutant left behind, so the verdicts of the later mutants would not be reliable"
                     )
+                if reason:
+                    failure = CanaryFailed(reason)
                     failure.rows = tuple(out)
                     raise failure
     finally:

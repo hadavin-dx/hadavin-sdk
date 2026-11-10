@@ -1,16 +1,17 @@
 """Tests of the three opt-in keywords of ``tools.mutation_runner.run_mutants`` (``conftest``, ``pass_env``, ``forbid_skips``) and of the
-three changes that are always on (the ``FIXTURE ERROR`` row, the ``COLLECTION ERROR`` row, and the judge's ERROR for a failing run that
-names no test).
+changes that are always on (the ``FIXTURE ERROR`` row and the judge's ERROR for a failing run that names no test: two changes of
+result; plus the ``COLLECTION ERROR`` label, which only renames a row that was already ERROR).
 
 Class: a mutant that "dies" because the tests could not run (skipped, or no database address, or a missing fixture file, or a fixture that
 failed) is a FALSE kill. The fix sits at the runner (one choke point for every caller). Without a keyword the arguments of a run are the
-old ones, and the only changed results are the three always-on ones, each tested below.
+old ones, and the only changed results are the always-on ones, each tested below.
 
 Most killer tests give their assertion a message that names the guard (``_must_refuse`` and ``_must_raise`` write one too), so the
 mutants in ``tests/mutation_runner_mutants.py`` can tell which guard was removed from the first line of the failure.
 """
 
 import contextlib
+import errno
 import hashlib
 import os
 from pathlib import Path
@@ -515,6 +516,67 @@ def test_a_password_after_a_password_word_or_in_a_url_query_is_a_secret(monkeypa
     )
 
 
+def test_a_value_with_a_backslash_is_masked_as_repr_prints_it(monkeypatch):
+    word = "Ab3" + "\\" + "Xy9Zq1"  # one backslash: repr and many log formats print it doubled
+    monkeypatch.setenv(DSN_NAME, "host=db.invalid user=svc password=" + word)
+    secrets = mr._secret_values((DSN_NAME,))
+    assert "\\\\" in repr(word)  # the positive control: the doubled form is really a different text
+    out = mr._masked(f"E {word!r}", secrets)
+    assert "Xy9Zq1" not in out, (
+        f"the repr form of a value with a backslash survived the masking: {out}"
+    )
+    assert word in mr._masked(f"E {word}", ()), (
+        "the control is wrong: nothing masks without secrets"
+    )
+    assert "Xy9Zq1" not in mr._masked(f"E {word}", secrets), "the plain form survived the masking"
+
+
+def test_a_value_with_a_non_ascii_letter_is_masked_as_unicode_escape_prints_it(monkeypatch):
+    word = "Ab3" + chr(233) + "Xy9Zq1"  # unicode_escape prints the letter as a backslash and x e 9
+    monkeypatch.setenv(DSN_NAME, "host=db.invalid user=svc password=" + word)
+    secrets = mr._secret_values((DSN_NAME,))
+    shown = word.encode("unicode_escape").decode("ascii")
+    assert shown != word
+    out = mr._masked(f"E {shown}", secrets)
+    assert "Xy9Zq1" not in out, (
+        f"the unicode_escape form of a non-ASCII value survived the masking: {out}"
+    )
+
+
+def _secrets_of(value: str, monkeypatch) -> tuple[str, ...]:
+    monkeypatch.setenv(DSN_NAME, value)
+    return mr._secret_values((DSN_NAME,))
+
+
+def test_passwd_and_pwd_words_and_a_quoted_password_are_secrets(monkeypatch):
+    base = "host=db.invalid user=svc "
+    assert "Hk4Lm8Pq2" in _secrets_of(base + "passwd=Hk4Lm8Pq2", monkeypatch), (
+        "the password after passwd= was not a secret"
+    )
+    assert "Hk4Lm8Pq2" in _secrets_of(base + "pwd=Hk4Lm8Pq2", monkeypatch), (
+        "the password after pwd= was not a secret"
+    )
+    assert "Hk4Lm8Pq2" in _secrets_of(base + "PWD=Hk4Lm8Pq2", monkeypatch), (
+        "the password after PWD= was not a secret"
+    )
+    assert "Hk4 Lm8 Pq2" in _secrets_of(base + "password='Hk4 Lm8 Pq2'", monkeypatch), (
+        "a quoted password with spaces was not a secret"
+    )
+    assert "Hk4 Lm8 Pq2" in _secrets_of(base + 'password="Hk4 Lm8 Pq2"', monkeypatch), (
+        "a double-quoted password with spaces was not a secret"
+    )
+
+
+def test_a_fragment_of_exactly_the_minimum_length_is_masked_and_a_shorter_one_is_not():
+    secret = "Qw7xK2mTp9" + "Zr4Vb8Nc3L"  # built from parts
+    head6 = mr._masked(f"E x == '{secret[:6]}...zzz'", (secret,))
+    assert secret[:6] not in head6, f"a 6-character head next to the dots was not masked: {head6}"
+    tail6 = mr._masked(f"E x == 'zzz...{secret[-6:]}'", (secret,))
+    assert secret[-6:] not in tail6, f"a 6-character tail next to the dots was not masked: {tail6}"
+    short = mr._masked(f"E x == '{secret[:5]}...zzz'", (secret,))
+    assert secret[:5] in short, f"a 5-character head was masked, below the minimum: {short}"
+
+
 # ---- pass_env: the shared database ------------------------------------------------------------------------------------------
 
 
@@ -603,15 +665,18 @@ SKIPS_WHEN_THE_DATABASE_IS_GONE = (
 def test_a_canary_run_that_skips_is_refused_under_forbid_skips(tmp_path, monkeypatch):
     monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
     root = _tree(tmp_path, {CORE_TEST: SKIPS_WHEN_THE_DATABASE_IS_GONE})
-    _must_raise(
-        "a canary run that skipped was accepted under forbid_skips",
-        RuntimeError,
-        _run,
-        root,
-        [FLIP],
-        pass_env=(DSN_NAME,),
-        forbid_skips=True,
-        match="skipped",
+    caught = None
+    try:
+        _run(root, [FLIP], pass_env=(DSN_NAME,), forbid_skips=True)
+    except RuntimeError as exc:
+        caught = exc
+    assert caught is not None, "a canary run that skipped was accepted under forbid_skips"
+    assert isinstance(caught, mr.CanaryFailed), (
+        f"a canary run that skipped was not a CanaryFailed: {caught!r}"
+    )
+    assert "skipped" in str(caught), f"the canary skip message does not say why: {caught}"
+    assert [r[:2] for r in caught.rows] == [("flip", Verdict.KILLED)], (
+        f"the canary skip carried no rows of the mutants judged so far: {caught.rows}"
     )
 
 
@@ -653,10 +718,13 @@ def test_a_copy_that_cannot_be_rebuilt_for_the_canary_is_a_clear_refusal(tmp_pat
     assert "could not be rebuilt for the canary" in str(caught), f"another refusal: {caught}"
 
 
+def _lock_name(value: str) -> str:
+    return f"hadavin_mutation_{hashlib.sha256(value.encode()).hexdigest()[:16]}.lock"
+
+
 def test_a_second_runner_with_the_same_passed_value_is_refused(tmp_path, monkeypatch):
     value = str(tmp_path / "state.flag")
     monkeypatch.setenv(DSN_NAME, value)
-    monkeypatch.setattr(mr, "_lock_dir", lambda: tmp_path)
     root = _tree(tmp_path, {CORE_TEST: USES_GO})
     with mr._one_run_per_database([value]):
         _must_raise(
@@ -671,9 +739,63 @@ def test_a_second_runner_with_the_same_passed_value_is_refused(tmp_path, monkeyp
     assert _short(_run(root, [FLIP], pass_env=(DSN_NAME,))) == [("flip", Verdict.KILLED, True)], (
         "the lock was not given back after a run"
     )
-    assert not [f for f in tmp_path.glob("hadavin_mutation_*.lock") if value in f.name], (
-        "the lock file name held the passed value"
+    assert [f.name for f in tmp_path.glob("hadavin_mutation_*.lock")] == [_lock_name(value)], (
+        "the lock file was not named by the first 16 hex digits of the SHA-256 of the value (and by nothing else)"
     )
+
+
+def test_the_lock_is_still_held_while_the_mutants_run(tmp_path, monkeypatch):
+    value = str(tmp_path / "state.flag")
+    monkeypatch.setenv(DSN_NAME, value)
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    seen: list[object] = []
+
+    def look(_row):
+        try:
+            with mr._one_run_per_database([value]):
+                seen.append("taken")
+        except RuntimeError as exc:
+            seen.append(str(exc))
+
+    _run(root, [FLIP], pass_env=(DSN_NAME,), on_result=look)
+    assert len(seen) == 1 and "another mutation run" in str(seen[0]), (
+        f"the lock was not held while a mutant result came in: {seen}"
+    )
+
+
+def test_a_lock_that_fails_for_another_reason_is_not_called_another_run(tmp_path, monkeypatch):
+    if os.name == "nt":
+        pytest.skip("flock is POSIX")
+    import fcntl
+
+    def no_space(*_a):
+        raise OSError(errno.ENOLCK, "no locks available")
+
+    monkeypatch.setattr(fcntl, "flock", no_space)
+    caught = None
+    try:
+        with mr._one_run_per_database(["x"]):
+            pass
+    except RuntimeError as exc:
+        caught = exc
+    assert caught is not None, "a lock that failed for another reason was not refused"
+    assert "another mutation run" not in str(caught) and "could not be locked" in str(caught), (
+        f"a lock failure that is not a second run was called one: {caught}"
+    )
+
+
+def test_a_lock_file_that_cannot_be_opened_is_a_clear_refusal(tmp_path):
+    (
+        tmp_path / _lock_name("x")
+    ).mkdir()  # a folder in the place of the file: the open fails like a file of another user does
+    caught = None
+    try:
+        with mr._one_run_per_database(["x"]):
+            pass
+    except (RuntimeError, OSError) as exc:
+        caught = exc
+    assert isinstance(caught, RuntimeError), f"the open failure was not a clear refusal: {caught!r}"
+    assert "could not be opened" in str(caught), f"another refusal: {caught}"
 
 
 # ---- forbid_skips -----------------------------------------------------------------------------------------------------------
@@ -873,12 +995,14 @@ def test_a_test_file_that_cannot_be_imported_is_an_error_row_never_a_kill(tmp_pa
 
 
 def test_read_junit_marks_a_collection_error_of_a_real_pytest_run(tmp_path):
-    # the shape was read from a real pytest 9.2 run: an empty classname, the dotted module as the name, message "collection failure"
+    # the shape was read from a real pytest 9.2 run (handover/evidence/P89/pytest-92-facts.txt): an empty classname, the dotted module as
+    # the name, message "collection failure"; pytest exits 2 for it, and the judge turns every exit code other than 1 into ERROR, so the
+    # row was an ERROR row before the label existed (handover/evidence/P89/collection-error-old-row.txt)
     root = _tree(tmp_path, {CORE_TEST: COLLECTION_ASSERTS.replace("go(True) is True", "go(False)")})
     out = tmp_path / "c.xml"
     rc = mr._pytest(root, [CORE_TEST], out, 60)
     report = read_junit(out.read_text(encoding="utf-8"))
-    assert rc != 0 and report.collection_failed and not report.fixture_failed, (
+    assert rc == 2 and report.collection_failed and not report.fixture_failed, (
         f"a real collection error was not read as one: rc={rc} {report}"
     )
     assert report.test_id, (
