@@ -529,6 +529,14 @@ def test_a_value_with_a_backslash_is_masked_as_repr_prints_it(monkeypatch):
         "the control is wrong: nothing masks without secrets"
     )
     assert "Xy9Zq1" not in mr._masked(f"E {word}", secrets), "the plain form survived the masking"
+    # a value with both quote marks: repr writes a backslash before the single quote, which unicode_escape does not
+    both = "host=db.invalid user=svc password=Ab3'Xy9" + '"' + "Zq1"
+    assert "\\'" in repr(both)
+    monkeypatch.setenv(DSN_NAME, both)
+    out = mr._masked(f"E {both!r}", mr._secret_values((DSN_NAME,)))
+    assert "Xy9" not in out, (
+        f"the repr form of a value with both quote marks survived the masking: {out}"
+    )
 
 
 def test_a_value_with_a_non_ascii_letter_is_masked_as_unicode_escape_prints_it(monkeypatch):
