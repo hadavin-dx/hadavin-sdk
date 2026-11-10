@@ -2153,3 +2153,6 @@
 | BL-core-p1da-r3-10 | P1d-a plan rev5 | MAJOR | build step has no phases | FIXED-UNVERIFIED | round3-readiness.md M5; rev 6 four phases | 3 |
 | BL-core-a15-r1-resolve | PR74 21ca680 | MAJOR | 12 Majors resolved into G1-G9 | OPEN (fix builder a621dcb9b3aacb063) | egm/A15/r1-resolve.md | 1 |
 | BL-core-a19-r1-resolve | PR83 7f24178 | MAJOR | 3 Majors resolved into G1-G3 (+ nits G4-G7) | OPEN (fix batch 1 to start) | egm/A19/r1-resolve.md | 1 |
+| BL-core-p1da-r4-01..04 | P1d-a plan rev6 | BLOCKER x4 | K41 unbuildable and unspecified; A15 contradictory; A44/AST test unspecified; rebase protocol conflicts | OPEN | egm/P1d-a-plan/round4-readiness.md B1-B4, round4-design.md B1-B2 | 4 |
+| BL-core-p1da-r4-05..09 | P1d-a plan rev6 | MAJOR x5+ | build phases not green; differential defined twice; row count; fixture parts; K41 probe; backtick swallow; `=` in query value; wide dots; thin alternatives | OPEN | round4-readiness.md M1-M5, round4-design.md M1-M5 | 4 |
+| BL-core-a24-r1-fix1 | PR91 fix1 92412fd | BLOCKER+MAJOR | r1 B1,M2-M6 reported fixed by builder; unverified until a fresh pass | FIXED-UNVERIFIED | reports/A24-PR91-fix1-builder-report.md (builder's own words) | 1 |
