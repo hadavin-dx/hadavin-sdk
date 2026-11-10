@@ -36,6 +36,7 @@ name of a GitHub commits endpoint, see API_WORDS); a runner is tests/<lowercase_
 from __future__ import annotations
 
 import ast
+import asyncio
 import functools
 import json
 import os
@@ -83,11 +84,62 @@ def _checked_argv(argv: Sequence[str]) -> list[str]:
     return list(argv)
 
 
-def start_fixed(argv: Sequence[str], **options: object) -> subprocess.Popen[str]:
-    """Start a process from an argument list. This is the only place in the repository that starts one for a list
-    that is not written out in full at the call: the list is checked here (never a shell string, no NUL, a program
-    name), and no shell is involved. The one suppression below stands for every caller; a test counts it."""
-    return subprocess.Popen(_checked_argv(argv), text=True, **options)  # noqa: S603  # checked list, no shell: see the docstring
+# A process is started in this one place (two functions below), through asyncio, which hands the argument list to the
+# operating system without a shell. The list is checked first (never a shell string, no NUL, a program name).
+# There is no lint suppression: ruff's rule for the subprocess module (S603) is about that module, and a started
+# process that reads this list is the whole job of `run`, so the module is not used at all (a test checks both).
+CHUNK = 1 << 16  # bytes read at a time from a child's output
+# A line longer than this many bytes is passed on in pieces, so one huge line cannot fill memory.
+MAX_PENDING_LINE = 1 << 20
+
+
+async def _stream_fixed(
+    argv: Sequence[str],
+    on_text: Callable[[str], None],
+    *,
+    cwd: str | os.PathLike[str] | None = None,
+    env: dict[str, str] | None = None,
+) -> int:
+    """Start argv (stderr joined to stdout), pass its output to on_text one complete line at a time (a piece of a
+    line only when the line is longer than MAX_PENDING_LINE) and return its exit code. A command that cannot be
+    started raises OSError (FileNotFoundError when it does not exist)."""
+    proc = await asyncio.create_subprocess_exec(
+        *_checked_argv(argv),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+        cwd=cwd,
+        env=env,
+    )
+    if proc.stdout is None:  # cannot happen with PIPE; keeps the type checker and a reader sure
+        raise RuntimeError("no output pipe")
+    pending = b""
+    while chunk := await proc.stdout.read(CHUNK):
+        pending += chunk
+        *lines, pending = pending.split(b"\n")
+        for line in lines:
+            on_text(line.decode("utf-8", errors="replace") + "\n")
+        if len(pending) > MAX_PENDING_LINE:
+            on_text(pending.decode("utf-8", errors="replace"))
+            pending = b""
+    if pending:
+        on_text(pending.decode("utf-8", errors="replace"))
+    return await proc.wait()
+
+
+async def _run_fixed(
+    argv: Sequence[str],
+    cwd: str | os.PathLike[str] | None,
+    env: dict[str, str] | None,
+) -> tuple[int, bytes, bytes]:
+    proc = await asyncio.create_subprocess_exec(
+        *_checked_argv(argv),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        cwd=cwd,
+        env=env,
+    )
+    out, err = await proc.communicate()
+    return proc.returncode if proc.returncode is not None else 1, out, err
 
 
 def run_fixed(
@@ -97,11 +149,14 @@ def run_fixed(
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run a command to its end and return its exit code and its captured output (text)."""
-    with start_fixed(
-        argv, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    ) as proc:
-        out, err = proc.communicate()
-    return subprocess.CompletedProcess(list(argv), proc.returncode, out, err)
+    _checked_argv(argv)  # refuse a bad list before any event loop exists
+    code, out, err = asyncio.run(_run_fixed(argv, cwd, env))
+    return subprocess.CompletedProcess(
+        list(argv),
+        code,
+        out.decode("utf-8", errors="replace"),
+        err.decode("utf-8", errors="replace"),
+    )
 
 
 SECRET_ENV = (
@@ -294,9 +349,13 @@ def cmd_run(name: str, command: list[str]) -> int:
     log = _open_step(name)
     code = 127  # a command that does not exist (a shell says 127)
     with log.open("w", encoding="utf-8") as fh:
+        # A child that prints no final newline must not get "exit=" glued to its last line.
+        ended_line = [True]
 
         def emit(text: str) -> None:
             text = mask(text)
+            if text:
+                ended_line[0] = text.endswith("\n")
             fh.write(text)
             fh.flush()
             sys.stdout.write(text)
@@ -304,20 +363,15 @@ def cmd_run(name: str, command: list[str]) -> int:
 
         emit(f"{_head()}\n{provenance()}\n{env_facts()}\n")
         try:
-            proc = start_fixed(
-                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, errors="replace"
-            )
+            code = asyncio.run(_stream_fixed(command, emit))
         except OSError as exc:
             if not isinstance(exc, FileNotFoundError):
                 code = 126  # found but cannot be started: not executable, wrong format (a shell says 126)
             emit(f"cannot start {command[0]!r}: {exc}\n")
         else:
-            for line in proc.stdout or ():
-                emit(line)
-            code = proc.wait()
             if code < 0:  # killed by a signal: shells show 128 + signal
                 code = 128 - code
-        emit(f"exit={code}\n")
+        emit(("" if ended_line[0] else "\n") + f"exit={code}\n")
     _record(name, f"exit={code}")
     return code
 
@@ -467,7 +521,7 @@ ALLOWED_SKIPS: tuple[tuple[str, str, Callable[[], bool], int], ...] = (
 # fewer (a changed addopts, a --deselect, a marker edit, a deleted test) fails. The numbers are the count at the head
 # the workflow was last checked at (`pytest --collect-only -q` with the step's own -m); raise them when tests are
 # added, lower them only for tests that were deliberately removed. This is the only place that holds them.
-FLOORS = {"pytest": 10907, "perf": 28}
+FLOORS = {"pytest": 10910, "perf": 28}
 SUMMARY_RE = re.compile(r"^(?:=+ )?((?:\d+ [a-z]+(?:, )?)+) in \d+(?:\.\d+)?s\b")
 COUNT_NAMES = {"error": "errors", "warning": "warnings"}
 SKIP_FAIL = "skipped for a reason that is not on the allowed list"

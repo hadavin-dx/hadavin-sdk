@@ -2787,25 +2787,70 @@ def test_run_fixed_returns_exit_code_and_both_streams():
     assert (done.returncode, done.stdout.strip(), done.stderr.strip()) == (4, "o", "e")
 
 
-def test_the_helper_and_this_file_hold_exactly_one_s603_suppression():
-    """Five were reduced to the one in start_fixed. A new one in these two files is a new way past the rule and fails
-    here. (Other files of the repository have their own, from before; this test does not touch them.)"""
-    needle = "no" + "qa: S603"
-    counts = {
-        name: (ROOT / name).read_text(encoding="utf-8").count(needle)
-        for name in ("tools/evidence_step.py", "tests/test_evidence_workflow_guard.py")
-    }
-    assert counts == {"tools/evidence_step.py": 1, "tests/test_evidence_workflow_guard.py": 0}, (
-        counts
-    )
+def test_the_helper_and_this_file_hold_no_lint_suppression_and_pyproject_has_no_exception():
+    """The one suppression that was left in start_fixed is gone: the helper starts its processes through asyncio and
+    no file here carries a lint suppression comment. A new one, or a per-file exception for S603, fails here. (Other
+    files of the repository have their own, from before; this test does not touch them.)"""
+    import tomllib
+
+    needle = "#" + "no" + "qa"
+    for name in ("tools/evidence_step.py", "tests/test_evidence_workflow_guard.py"):
+        text = (ROOT / name).read_text(encoding="utf-8")
+        found = [
+            n
+            for n, line in enumerate(text.splitlines(), 1)
+            if needle in line.replace(" ", "").lower()
+        ]
+        assert found == [], (name, found)
+    lint = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["ruff"][
+        "lint"
+    ]
+    assert "S603" not in " ".join(lint.get("ignore") or [])
+    for key in ("per-file-ignores", "extend-per-file-ignores"):
+        for path, codes in (lint.get(key) or {}).items():
+            if (
+                "evidence_step" in path
+                or "evidence_workflow_guard" in path
+                or path.startswith(("tools", "*"))
+            ):
+                assert "S603" not in codes, (key, path)
 
 
-def test_only_start_fixed_starts_a_process_in_the_helper_and_this_file_starts_none():
+def test_the_helper_does_not_use_the_subprocess_module_to_start_anything_and_this_file_starts_none():
     pattern = re.compile(r"\bsubprocess\.(?:run|Popen|call|check_output|check_call)\(")
-    assert (
-        len(pattern.findall((ROOT / "tools" / "evidence_step.py").read_text(encoding="utf-8"))) == 1
-    )
+    helper_text = (ROOT / "tools" / "evidence_step.py").read_text(encoding="utf-8")
+    assert pattern.findall(helper_text) == []
     assert pattern.findall(Path(__file__).read_text(encoding="utf-8")) == []
+    assert (
+        helper_text.count("asyncio.create_subprocess_exec(") == 2
+    )  # the only two places a process starts
+
+
+def test_run_passes_a_line_longer_than_the_pending_limit_on_in_pieces_without_losing_a_byte(
+    tmp_path,
+):
+    size = es.MAX_PENDING_LINE * 2 + 5
+    code = f"import sys; sys.stdout.write('Q' * {size}); sys.stdout.write('\\nlast\\n')"
+    done = helper(tmp_path, "run", "long", "--", sys.executable, "-c", code)
+    assert done.returncode == 0
+    log = (tmp_path / "evidence-logs" / "long.txt").read_text(encoding="utf-8")
+    assert log.count("Q") == size and "\nlast\n" in log and log.endswith("exit=0\n")
+
+
+def test_run_keeps_output_without_a_final_newline_and_text_that_is_not_utf8(tmp_path):
+    code = "import sys; sys.stdout.buffer.write(b'a\\xffb\\nno-newline')"
+    done = helper(tmp_path, "run", "raw", "--", sys.executable, "-c", code)
+    assert done.returncode == 0
+    log = (tmp_path / "evidence-logs" / "raw.txt").read_text(encoding="utf-8")
+    assert "a\ufffdb\nno-newline" in log and "no-newlineexit=0" not in log
+
+
+def test_run_joins_the_errors_stream_to_the_output_in_order(tmp_path):
+    code = "import sys; print('one', flush=True); print('two', file=sys.stderr, flush=True); print('three')"
+    done = helper(tmp_path, "run", "both", "--", sys.executable, "-c", code)
+    assert done.returncode == 0
+    log = (tmp_path / "evidence-logs" / "both.txt").read_text(encoding="utf-8")
+    assert log.index("one") < log.index("two") < log.index("three")
 
 
 def test_the_lowest_allowed_python_is_the_lowest_the_project_supports():
