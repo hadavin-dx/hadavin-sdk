@@ -100,7 +100,9 @@ def _migrate_runs_as_a_plain_role(request, monkeypatch):
         from hadavin_sdk.store import migrate as mig
     except ImportError:  # the pg extra is not installed: no migrate, nothing to swap
         return
-    if request.node.get_closest_marker("real_connect") is None:
+    if request.node.get_closest_marker("real_connect") is None and os.environ.get(
+        "HADAVIN_TEST_PG_DSN"
+    ):
         from tests.fixtures.migration_role import plain_role_connect
 
         monkeypatch.setattr(mig, "connect", plain_role_connect(mig.connect))

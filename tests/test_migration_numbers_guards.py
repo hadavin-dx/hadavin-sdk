@@ -363,7 +363,7 @@ def test_the_real_folder_matches_the_released_manifest(mn):
     assert list(manifest)[: len(FIRST_FIVE)] == list(FIRST_FIVE), "the first five stay, in order"
 
 
-# The SHA-256 of the five files that were on main when the list was made (order 89), typed here by hand from
+# The SHA-256 of the five files that were on main when the list was made, typed here by hand from
 # `git show origin/main:<file> | sha256sum`, on purpose NOT read from the json: a person who edits a released file AND
 # recomputes the json must also edit this table, in plain sight of a reviewer. Rows are added after these, never changed.
 FIRST_FIVE = {
@@ -376,7 +376,7 @@ FIRST_FIVE = {
 
 
 def test_the_first_five_released_files_have_the_pinned_hashes(mn):
-    """M-4."""
+    """The hashes of the first five released files are typed in this test, not read from the list."""
     for stem, digest in FIRST_FIVE.items():
         assert _sha(mn.MIGRATIONS / f"{stem}.sql") == digest, f"{stem}.sql was edited"
 
@@ -589,7 +589,7 @@ def test_every_mutant_still_applies_to_the_source():
 
 
 def test_released_problems_hashes_the_text_that_is_executed_not_a_second_read(mn, tmp_path):
-    """Round-1 M4: with `texts`, the hash is of `texts[p]`. A file changed on disk after `read_files` is not the text that
+    """with `texts`, the hash is of `texts[p]`. A file changed on disk after `read_files` is not the text that
     runs, so a changed disk copy must not fail the check and a changed text must."""
     f = tmp_path / "0001_a.sql"
     f.write_bytes(b"SELECT 1;\r\nSELECT 2;\n")
@@ -613,7 +613,7 @@ def test_a_lone_carriage_return_hashes_like_the_text_that_runs(mn, tmp_path):
 
 
 def test_a_missing_test_only_module_is_a_failure_in_ci_and_a_skip_elsewhere():
-    """Round-1 N9."""
+    """A test-only module that is missing fails the CI run and only skips a run on a laptop."""
     with pytest.raises(pytest.fail.Exception, match="CI is set"):
         require_test_module("no_such_module_xyz", {"CI": "true"})
     with pytest.raises(pytest.skip.Exception, match="not installed"):

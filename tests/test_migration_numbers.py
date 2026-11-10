@@ -447,7 +447,7 @@ def test_order_problems_empty_when_nothing_is_late(mn):
 
 def test_a_hostile_name_never_reaches_the_order_message(mn):
     """The names in the order message are file names that passed `NAME` and a highest applied name that passed `STEM`,
-    both ASCII letters, digits and underscores, so the escape (`_esc`) in that message cannot be reached by a hostile
+    both ASCII letters, digits and underscores, so the escape (`escape_name`) in that message cannot be reached by a hostile
     name: the name is not late at all. This test fails if `NAME` or `STEM` ever lets such a name through unescaped
     into a message that this function builds."""
     hostile = [
@@ -748,7 +748,7 @@ def test_each_set_form_is_refused(mn, stmt):
 
 
 def test_the_two_time_limits_are_refused_in_the_text_scan_not_only_by_the_read_back(mn):
-    """Round 1 nit: the scan and the read-back must agree. The read-back refuses a file that changes either limit, so
+    """the scan and the read-back must agree. The read-back refuses a file that changes either limit, so
     the scan refuses the `SET LOCAL` text too, with a message that names the limits. Killed by: the mutant "SET LOCAL
     lock_timeout/statement_timeout is allowed in the text scan again" of tests/migration_numbers_mutants.py."""
     for name in ("lock_timeout", "statement_timeout"):
@@ -902,7 +902,7 @@ def test_ledger_property_only_the_named_error_and_agreement(mn, tmp_path):
     assert mn.late_files({"0001_a", "0002_b"}, mn.list_migration_files(sub)) == []
 
 
-# --- the grant scan reads through the lexer (P3a-2 wiring; `store.migrate` is imported inside each test) -------------
+# --- the grant scan reads through the lexer (wiring; `store.migrate` is imported inside each test) -------------
 
 
 def _scan_file(tmp_path: Path, text: str) -> list[str]:

@@ -298,6 +298,9 @@ def test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied(
             )
             db.execute("INSERT INTO schema_migrations (version) VALUES ('0005_evidence')")
         monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        # this test is about the ledger row with no file, not about the released-files list (it would refuse the
+        # renamed folder first, before the connection)
+        monkeypatch.setattr(mig, "released_problems", lambda *a, **k: [])
         with pytest.raises(ConfigError, match="0005_evidence") as err:
             mig.migrate(dsn)
         assert "by hand" in str(err.value)  # the repair path is in the message

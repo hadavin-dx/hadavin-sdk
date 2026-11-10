@@ -16,8 +16,12 @@ and refuses if anything is LEFT changed (it cannot see a change that a file make
 migration role must NOT be a superuser and must not hold `CREATEROLE`, `CREATEDB` or `BYPASSRLS`: `migrate` reads these four
 flags of the current user right after it takes its lock and refuses the run if any is set (a superuser can change what
 the read-back does not read). There is no switch to turn this check off.
+Right after that, `migrate` refuses a schema that holds a table, view, sequence or function owned by a role the migration
+role cannot act as (a database first built with a superuser login): it names the objects and prints the `ALTER ... OWNER TO`
+lines that hand them over (runbook case (h)). Without that, a later `ALTER TABLE` fails with "must be owner" and the
+`GRANT` lines do nothing without an error.
 
-When `migrate` refuses, a database administrator repairs by hand (the full runbook, cases (a) to (g), is the section
+When `migrate` refuses, a database administrator repairs by hand (the full runbook, cases (a) to (h), is the section
 "Migration repair steps" of CHANGELOG.md). Every hand step is a FILE of SQL run with `psql -X -v ON_ERROR_STOP=1 -f <file>`
 and your own connection settings (never typed line by line, never a connection string in a text). The file starts with
 `\\set ON_ERROR_STOP on`, then `SET search_path TO "<the schema migrate uses>";`, `BEGIN;`, the two `SET LOCAL` lines of
@@ -47,9 +51,11 @@ from hadavin_sdk.store.migration_numbers import (
     MIGRATIONS,
     RECIPE_TIMEOUTS,
     RELEASED_MANIFEST,
+    STEM,
     TRIGGER_CHANGES,
     MigrationNumberError,
     check_ledger,
+    escape_name,
     gone_message,
     lex,
     list_migration_files,
@@ -417,34 +423,81 @@ _TRIGGER_PARTS = (
 
 # Trigger changes a reviewed list allows (see `_trigger_changes`). It ships next to the released-files list.
 
+_TRIGGER_NAME = r"[A-Za-z_][A-Za-z0-9_$]*"
+_TRIGGER_TABLE = re.compile(rf"(?:({_TRIGGER_NAME})\.)?({_TRIGGER_NAME})")
 
-def _trigger_changes() -> frozenset[tuple[str, str]]:
-    """The reviewed list of (migration file name without `.sql`, trigger name) pairs whose file may change that
-    trigger. The file is a JSON list of objects with exactly the keys `migration`, `trigger` and `reason` (one line of
-    plain words). It is empty today. Anything else (a bad shape, a second entry for the same pair, an empty or
-    multi-line reason) is a `ConfigError`: a malformed list must never mean "allow"."""
+
+@dataclass(frozen=True)
+class TriggerChange:
+    """One reviewed entry: the migration file (name without `.sql`), the table (and the schema, when the entry names
+    one; an entry with no schema means the schema `migrate` works in), the trigger, and the disabled or replica-only
+    state (`D` or `R`) the entry allows (empty: none; such a state is refused)."""
+
+    migration: str
+    schema: str | None
+    table: str
+    trigger: str
+    state: str = ""
+
+
+def _trigger_changes() -> frozenset[TriggerChange]:
+    """The reviewed list of triggers a migration file may change. The file is a JSON list of objects with the keys
+    `migration`, `table` (`name` or `schema.name`), `trigger` and `reason` (one line of plain words), and optionally
+    `enabled_state` (`D` or `R`: the one disabled or replica-only state this file may leave the trigger in). It is empty
+    today. Anything else (a bad shape, a second entry for the same file, table and trigger, an empty or multi-line
+    reason) is a `ConfigError`: a malformed list must never mean "allow"."""
     try:
         data = json.loads(TRIGGER_CHANGES.read_text(encoding="utf-8"))
     except (OSError, ValueError) as e:
         raise ConfigError(f"the list of allowed trigger changes cannot be read: {e}") from e
     if not isinstance(data, list):
         raise ConfigError("the list of allowed trigger changes must be a JSON list")
-    pairs: set[tuple[str, str]] = set()
+    required = {"migration", "table", "trigger", "reason"}
+    found: dict[tuple, TriggerChange] = {}
     for i, entry in enumerate(data):
         where = f"the list of allowed trigger changes, entry {i}"
-        if not isinstance(entry, dict) or set(entry) != {"migration", "trigger", "reason"}:
-            raise ConfigError(f"{where}, must have exactly the keys migration, trigger and reason")
+        if (
+            not isinstance(entry, dict)
+            or not required <= set(entry)
+            or set(entry) - required - {"enabled_state"}
+        ):
+            raise ConfigError(
+                f"{where}, must have the keys migration, table, trigger and reason (and may have enabled_state)"
+            )
         if not all(isinstance(v, str) and v.strip() for v in entry.values()):
             raise ConfigError(f"{where}, has an empty or non-text value")
-        if not re.fullmatch(r"\d{4}_[a-z0-9_]+", entry["migration"]):
+        if not STEM.fullmatch(entry["migration"]):
             raise ConfigError(f"{where}, names a migration that is not a file name without .sql")
+        table = _TRIGGER_TABLE.fullmatch(entry["table"])
+        if table is None:
+            raise ConfigError(f"{where}, has a table that is not `name` or `schema.name`")
         if "\n" in entry["reason"] or "\r" in entry["reason"]:
             raise ConfigError(f"{where}, has a reason of more than one line")
-        pair = (entry["migration"], entry["trigger"])
-        if pair in pairs:
-            raise ConfigError(f"{where}, repeats {pair[0]} / {pair[1]}")
-        pairs.add(pair)
-    return frozenset(pairs)
+        state = entry.get("enabled_state", "")
+        if state not in ("", "D", "R"):
+            raise ConfigError(f"{where}, has an enabled_state that is not D or R")
+        change = TriggerChange(
+            entry["migration"], table.group(1), table.group(2), entry["trigger"], state
+        )
+        identity = (change.migration, change.schema, change.table, change.trigger)
+        if identity in found:
+            raise ConfigError(
+                f"{where}, repeats {change.migration} / {entry['table']} / {change.trigger}"
+            )
+        found[identity] = change
+    return frozenset(found.values())
+
+
+def _listed(changes: frozenset[TriggerChange], key: tuple[str, str, str]) -> TriggerChange | None:
+    """The reviewed entry for the trigger `key` = (schema, table, trigger name), if there is one."""
+    return next(
+        (
+            c
+            for c in changes
+            if c.table == key[1] and c.trigger == key[2] and c.schema in (None, key[0])
+        ),
+        None,
+    )
 
 
 @dataclass(frozen=True)
@@ -479,6 +532,15 @@ PLAIN_MIGRATION_ROLE_SQL = (
 )
 
 
+# A plain role can still borrow the four flags by being a member of a role that holds one (the member can `SET ROLE` to
+# it, or uses its rights at once when it inherits). `pg_has_role(..., 'MEMBER')` is true for either way, direct or through
+# other roles, and for any server version that has the check.
+_BORROWED_ROLES_SQL = (
+    "SELECT r.rolname FROM pg_roles r WHERE (r.rolsuper OR r.rolcreaterole OR r.rolcreatedb OR r.rolbypassrls) "
+    "AND r.rolname <> current_user AND pg_has_role(current_user, r.oid, 'MEMBER') ORDER BY r.rolname"
+)
+
+
 def _refuse_privileged_role(db) -> None:
     """The migration role must hold none of the four flags of `_ROLE_FLAGS` (checked with the live flags of the current user)."""
     row = db.execute(_ROLE_FLAGS_SQL).fetchone()
@@ -492,6 +554,71 @@ def _refuse_privileged_role(db) -> None:
             "administrator creates one once, with SQL such as: "
             f"{PLAIN_MIGRATION_ROLE_SQL}"
         )
+    if borrowed := [r[0] for r in db.execute(_BORROWED_ROLES_SQL).fetchall()]:
+        raise ConfigError(
+            "the migration role is a member of a role that is a superuser or holds CREATEROLE, CREATEDB or BYPASSRLS "
+            f"({', '.join(borrowed[:20])}), so it could use those rights. Remove the membership (REVOKE <that role> "
+            "FROM <the migration role>) or run migrate with a plain role that is a member of none of them."
+        )
+
+
+# Objects of the migration schema that the migration role cannot change because another role owns them (it is not that
+# role and holds none of its rights). Such an object makes a later `ALTER TABLE` or `CREATE OR REPLACE FUNCTION` fail with
+# "must be owner of ...", and makes the `GRANT` and `REVOKE` of `migrate` do nothing without an error. A database
+# first built by a superuser login (the usual start of a demo) is in this state. Objects that belong to an installed
+# extension are skipped (the owner of those is the extension's business); a sequence that belongs to a column goes
+# with its table, so only the table is listed.
+_FOREIGN_OWNED_SQL = (
+    "SELECT 'r', c.relkind::text, c.relname, pg_get_userbyid(c.relowner) FROM pg_class c "
+    "JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = current_schema() "
+    "AND c.relkind IN ('r','p','v','m','S','f') AND NOT pg_has_role(current_user, c.relowner, 'USAGE') "
+    "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid "
+    "AND d.deptype IN ('e','a','i')) "
+    "UNION ALL SELECT 'f', 'f', p.oid::regprocedure::text, pg_get_userbyid(p.proowner) FROM pg_proc p "
+    "JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = current_schema() "
+    "AND NOT pg_has_role(current_user, p.proowner, 'USAGE') "
+    "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_proc'::regclass AND d.objid = p.oid "
+    "AND d.deptype = 'e') ORDER BY 1, 3"
+)
+_OWNER_WORD = {
+    "r": "TABLE",
+    "p": "TABLE",
+    "v": "VIEW",
+    "m": "MATERIALIZED VIEW",
+    "S": "SEQUENCE",
+    "f": "FOREIGN TABLE",
+}
+_FOREIGN_OWNED_SHOWN = 20
+
+
+def _refuse_foreign_owned(db) -> None:
+    """Refuse a run whose migration role cannot change what is already in the schema (see `_FOREIGN_OWNED_SQL`). The
+    message names the objects, their owners and the SQL that hands them to the migration role."""
+    rows = db.execute(_FOREIGN_OWNED_SQL).fetchall()
+    if not rows:
+        return
+    schema = db.execute("SELECT current_schema()").fetchone()[0]
+    me = db.execute("SELECT current_user").fetchone()[0]
+    names, statements = [], []
+    for what, kind, name, owner in rows[:_FOREIGN_OWNED_SHOWN]:
+        names.append(f"{_label(name)} (owner {_label(owner)})")
+        if what == "f":  # `name` is already the quoted, schema-qualified signature (regprocedure)
+            statements.append(f"ALTER FUNCTION {name} OWNER TO {sql.Identifier(me).as_string(db)};")
+        else:
+            statements.append(
+                f"ALTER {_OWNER_WORD[kind]} {sql.Identifier(schema, name).as_string(db)} "
+                f"OWNER TO {sql.Identifier(me).as_string(db)};"
+            )
+    more = len(rows) - len(names)
+    raise ConfigError(
+        f"the migration role {_label(me)} cannot change {len(rows)} object(s) in schema {_label(schema)} that "
+        f"another role owns: {'; '.join(names)}{f'; and {more} more' if more > 0 else ''}. A later migration "
+        "that alters one of them would fail with 'must be owner', and the grants of migrate would do nothing without "
+        "an error. Nothing was changed. A database administrator hands the objects to the migration role once, "
+        "connected as a superuser or as a role that is a member of both the old owner and the migration role, "
+        "with a file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): "
+        + " ".join(statements)
+    )
 
 
 def _refuse_unusual_strings(saved: _Saved) -> None:
@@ -506,18 +633,19 @@ def _refuse_unusual_strings(saved: _Saved) -> None:
 
 def _label(*names: str) -> str:
     """Names of database objects for a message: control characters are written as escapes."""
-    return ".".join(ascii(n)[1:-1] for n in names)
+    return ".".join(escape_name(n) for n in names)
 
 
 def _check_read_back(
-    db, saved: _Saved, file_name: str, allowed_triggers: frozenset[str] = frozenset()
+    db, saved: _Saved, file_name: str, allowed_triggers: frozenset[TriggerChange] = frozenset()
 ) -> _Saved:
     """Read again after `file_name` and compare. The eleven values in `_READBACK_VALUES` (the user names and settings,
     the two time limits, then the transaction clock and id) must equal the values saved before the first file. A trigger
     that existed before the file must be unchanged in every part of `_TRIGGER_PARTS` (enabled state, definition,
     function text, security mode, owner, settings): `O` to `A` is a change too, and so is a renamed table. A trigger
-    the file creates must not be disabled (`D`) or replica-only (`R`). A trigger whose name is in `allowed_triggers` (the
-    reviewed list `migrations_trigger_changes.json`, for this file) may change; it may still not disappear. The set of
+    the file creates must not be disabled (`D`) or replica-only (`R`). A trigger with an entry in `allowed_triggers` (the reviewed
+    list `migrations_trigger_changes.json`, an entry for this file, this table and this trigger) may change; it may still
+    not disappear, and it may not be left disabled (`D`) or replica-only (`R`) unless the entry names that state. The set of
     role memberships and the saved per-database and per-role settings must equal the saved ones. Refuses with every
     difference named: a trigger change is reported as a trigger change, not as a changed session. Returns the trigger
     state just read (the base for the next file); the saved values stay those of the start."""
@@ -531,7 +659,8 @@ def _check_read_back(
     for key, before in sorted(saved.triggers.items(), key=lambda kv: str(kv[0])):
         after = now.triggers.get(key)
         label = _label(key[0], key[1], key[2])
-        allowed = key[2] in allowed_triggers
+        entry = _listed(allowed_triggers, key)
+        allowed = entry is not None
         if after is None:
             relid = saved.relids.get(key)
             new_home = next(  # the same trigger on the same table id under another table name: a renamed table
@@ -554,6 +683,11 @@ def _check_read_back(
         elif after != before and not allowed:
             changed = [n for n, o, a in zip(_TRIGGER_PARTS, before, after, strict=True) if o != a]
             triggers.append(f"trigger {label} changed: {', '.join(changed)}")
+        elif after != before and after[0] in ("D", "R") and after[0] != entry.state:
+            triggers.append(
+                f"trigger {label} is left {'disabled' if after[0] == 'D' else 'replica-only'}, "
+                "which its list entry does not name (enabled_state)"
+            )
     for key, (enabled, *_rest) in sorted(now.triggers.items(), key=lambda kv: str(kv[0])):
         if key not in saved.triggers and enabled in ("D", "R"):
             triggers.append(
@@ -586,10 +720,10 @@ def _check_read_back(
             parts.append(
                 "changed a trigger: "
                 + "; ".join(triggers)
-                + ". A trigger change is refused unless this file and this trigger are named, with a reason, in "
+                + ". A trigger change is refused unless this file, this table and this trigger are named, with a reason, in "
                 "migrations_trigger_changes.json next to the released-files list (a reviewed change of the package)"
             )
-        raise ConfigError(f"migration {ascii(file_name)[1:-1]} " + ". It also ".join(parts))
+        raise ConfigError(f"migration {escape_name(file_name)} " + ". It also ".join(parts))
     return _Saved(saved.values, now.triggers, saved.members, saved.settings, now.relids)
 
 
@@ -664,7 +798,7 @@ def migrate(
         raise MigrationNumberError(problems)
     allowed_changes = _trigger_changes()  # the reviewed list; empty today
     texts = read_files(files)  # the only read of each file: the text scanned is the text executed
-    if problems := released_problems(MIGRATIONS, _released_manifest(), texts):
+    if problems := released_problems(MIGRATIONS, _released_manifest(), texts, files):
         # a released file edited, deleted, or a new file numbered below it; hashed from the text that will run
         raise MigrationNumberError(problems)
     if problems := check_grants(files, texts=texts):
@@ -686,6 +820,7 @@ def migrate(
                 db.execute(limit)
             step[0] = "checking the migration role"
             _refuse_privileged_role(db)
+            _refuse_foreign_owned(db)
             db.execute(
                 "CREATE TABLE IF NOT EXISTS schema_migrations "
                 "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
@@ -708,7 +843,7 @@ def migrate(
                     db,
                     saved,
                     path.name,
-                    frozenset(t for stem, t in allowed_changes if stem == path.stem),
+                    frozenset(c for c in allowed_changes if c.migration == path.stem),
                 )
                 db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
                 applied.append(path.stem)

@@ -236,8 +236,8 @@ M = [
     ),
     mutant(
         "fix1: gone_message names are not capped",
-        "shown = [_esc(n) for n in names[:MAX_PROBLEMS_SHOWN]]",
-        "shown = [_esc(n) for n in names]",
+        "shown = [escape_name(n) for n in names[:MAX_PROBLEMS_SHOWN]]",
+        "shown = [escape_name(n) for n in names]",
         T2,
         "test_gone_message_caps_the_names_and_stays_fast",
         "names not capped",
@@ -251,7 +251,7 @@ M = [
         "('GRANT r TO s', [])",
     ),
     mutant(
-        "order 112: the role rule looks for a standalone ON with the word boundary again (app$on hides a grant)",
+        "the role rule looks for a standalone ON with the word boundary again (app$on hides a grant)",
         "(?!.*?{_NAME_START}on{_NAME_END})",
         r"(?!.*?\bon\b)",
         T4,
@@ -259,7 +259,7 @@ M = [
         "GRANT r TO",
     ),
     mutant(
-        "order 112: a name character no longer includes the dollar sign",
+        "a name character no longer includes the dollar sign",
         '_NAME_CHAR = "[A-Za-z0-9_$',
         '_NAME_CHAR = "[A-Za-z0-9_',
         T4,
@@ -267,7 +267,7 @@ M = [
         "AssertionError: $",
     ),
     mutant(
-        "order 112: a name character no longer includes non-ASCII characters",
+        "a name character no longer includes non-ASCII characters",
         '_NAME_CHAR = "[A-Za-z0-9_$\\u0080-\\U0010ffff]"',
         '_NAME_CHAR = "[A-Za-z0-9_$]"',
         T4,
@@ -333,7 +333,7 @@ M = [
         'MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 2',
         T2,
         "test_the_lock_key_and_the_folder_are_the_ones_migrate_uses",
-        "== (7521403312507021671 >> 1)",  # P3a-2: migrate.py imports the key, so the last assertion of the test fires
+        "== (7521403312507021671 >> 1)",  # migrate.py imports the key, so the last assertion of the test fires
     ),
     mutant(
         "o100: MIGRATIONS names another folder than migrate does",
@@ -341,7 +341,7 @@ M = [
         'MIGRATIONS = Path(__file__).parent / "migration"',
         T2,
         "test_the_lock_key_and_the_folder_are_the_ones_migrate_uses",
-        "/ 'migrations')",  # P3a-2: migrate.py imports the folder, so the last assertion of the test fires
+        "/ 'migrations')",  # migrate.py imports the folder, so the last assertion of the test fires
     ),
     mutant(
         "o100: NAME lets any character into a file name",
