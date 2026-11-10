@@ -997,3 +997,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a4f0c2881c | PR89 evidence runner 0e4f6d5 | STOPPED by cloud (head superseded; its heavy.sh jobs killed; evidence at 0e4f6d5 void) | - | closed |
 | a7708eeaf9 | PR89 evidence runner 45f2374 | started 20:48 UTC | ~60-90 min | check +30 min |
 | acf7523afd | PR89 round-3 check reviewer (blockers/majors only) | started 20:48 UTC | ~20 min | check +20 min |
+| acf7523afd | PR89 round-3 check reviewer | CLOSED 20:53 UTC: 0 blockers, 1 major, 10 minors saved | - | done |
+| a7708eeaf9 | PR89 evidence runner 45f2374 | STOPPED by cloud 20:53 UTC (head will change with round-3 fix; slots freed for the builder); new runner starts on the final head | - | closed |
+| a290aa955c | PR89 fix builder r3 (BL-core-a2-w2-r3-01/02) | resumed 20:53 UTC | +90 min | check +30 min |
