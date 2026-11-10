@@ -1,0 +1,13 @@
+HEAD=58f7d56cfed21c14594ff1f2f7797921421b3c7e py=3.13 DSN=postgresql://postgres@127.0.0.1:55891/postgres
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Installed 22 packages in 52ms
+[tester]	WARNING	nosec encountered (B608), but no failed test on file demos/ask-your-data/db/lumen.py:723
+[tester]	WARNING	nosec encountered (B608), but no failed test on file demos/ask-your-data/db/lumen.py:723
+[manager]	WARNING	Test in comment: SafeLoader is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: subclass is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: the is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: pinned is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: bytes is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+rc_bandit=0
