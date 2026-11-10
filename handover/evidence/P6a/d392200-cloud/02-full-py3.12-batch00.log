@@ -56,4 +56,5 @@ tests/contracts/test_capabilities.py::test_channel_send_update_notify[fake] PASS
 tests/contracts/test_capabilities.py::test_channel_send_update_notify[slack] PASSED [  8%]
 tests/contracts/test_capabilities.py::test_channel_parse_decision_verifies_the_callback[fake] PASSED [  9%]
 tests/contracts/test_capabilities.py::test_channel_parse_decision_verifies_the_callback[slack] PASSED [  9%]
-tests/contracts/test_llm.py::test_a_tool_call_becomes_a_toolcall_priced_from_the_route[anthropic.api] 
+tests/contracts/test_llm.py::test_a_tool_call_becomes_a_toolcall_priced_from_the_route[anthropic.api] exit=0
+end=2026-11-10T20:24:56Z

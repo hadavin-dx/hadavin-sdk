@@ -1,0 +1,10 @@
+HEAD=d3922003925722275704b84f580152d35dd90c9c
+python=Python 3.12.3
+cmd=python -X faulthandler -m pytest -v -rfEs -m not live and not perf -p no:cacheprovider tests/demo_askdata/test_validate_harm.py tests/demo_askdata/test_validate_mutation.py tests/demo_askdata/test_validate_oracle.py tests/demo_askdata/test_verify_readonly.py tests/demo_askdata/test_wire.py tests/test_client_profile.py tests/test_cuj.py tests/test_executor.py tests/test_g4_parity.py tests/test_http_metadata.py tests/test_k1a_pass_k.py tests/test_k1b_bundle.py tests/test_k1b_causelist_containment.py tests/test_k1b_cli.py
+start=2026-11-10T20:25:10Z
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/EV-P6a-d392200/venv3.12/bin/python
+rootdir: /home/user/build/EV-P6a-d392200/wt
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... 
