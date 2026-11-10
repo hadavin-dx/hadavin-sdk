@@ -2129,3 +2129,9 @@
 | BL-core-a24-r1-05 | A24 PR91 61cf2be | MAJOR | marker regexes miss ruff: noqa, flake8: noqa, nosem | OPEN | egm/A24/r1-design.md M4 | r1 |
 | BL-core-a24-r1-06 | A24 PR91 61cf2be | MAJOR | scanner config names incomplete (ruff.toml, trivy-secret.yaml, bandit.yaml...), tool.ruff keys unchecked | OPEN | egm/A24/r1-design.md M5 | r1 |
 | BL-core-a24-r1-07 | A24 PR91 61cf2be | MAJOR | scan_allowlist.txt / scan_banned_extra.txt unguarded, "*" disables secret rules | OPEN | egm/A24/r1-design.md M6 | r1 |
+| BL-core-a15-r1-01 | A15 PR74 21ca680 | MAJOR | PR titled P5a carries textnorm/confusables/1.3 MB data/CHANGELOG P1a-P1b; moved-vs-duplicate unclear; split or state | OPEN | egm/A15/r1-codebase.md M1 | r1 |
+| BL-core-a15-r1-02 | A15 PR74 21ca680 | MAJOR | require_pinned_unidata runs after secrets make() in app.build; doc says first; test hides it | OPEN | egm/A15/r1-codebase.md M2 | r1 |
+| BL-core-a15-r1-03 | A15 PR74 21ca680 | MAJOR | pilot/prod refused on py3.12 not in Upgrade steps; guard stubbed in tests on 3.12 | OPEN | egm/A15/r1-codebase.md M3 | r1 |
+| BL-core-a15-r1-04 | A15 PR74 21ca680 | MAJOR | scan_keyset has no deadline (up to 8x3x262144 chars); reuse budget | OPEN | egm/A15/r1-codebase.md M4 | r1 |
+| BL-core-a15-r1-05 | A15 PR74 21ca680 | MAJOR | REFUSAL_HANDLERS names functions that do not exist (loose lint exemption) | OPEN | egm/A15/r1-codebase.md M5 | r1 |
+| BL-core-a15-r1-06 | A15 PR74 21ca680 | MAJOR | old-writers test is a status ledger, evidence.md missing, dead no_path branch | OPEN | egm/A15/r1-codebase.md M6 | r1 |

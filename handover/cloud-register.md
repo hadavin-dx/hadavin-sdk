@@ -922,7 +922,7 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a4b4163fc7913b875 | EVIDENCE RUNNER | general-purpose | sonnet (claude-sonnet-5-5) | A3 PR75 a8abba0 (void if PR66 head changes) | evidence (step 4) | 16:34 | +60 min | RUNNING; output handover/evidence/P4d-a2/a8abba0-cloud3/; checkpoint checkpoints/A3.md |
 | acc6e0bb31a761940 | BUILDER | general-purpose | sonnet (claude-sonnet-5-5) | A1 PR84 fix, branch core/ci-evidence-fix3 | build (step 3) | 16:34 | +60 min | RUNNING; report handover/reports/A1-PR84-fix3-builder-report.md; checkpoint checkpoints/A1.md |
 | a35a326d25d2b834b | egm reviewer | egm:egm-design | sonnet | A15 PR74 21ca680 | result review r1 | 16:36 | +25m | RUNNING; purpose: design/redaction review; output inline, saved handover/egm/A15/r1-design.md |
-| a41b8bd2afc5f0697 | egm reviewer | egm:egm-codebase-details | sonnet | A15 PR74 21ca680 | result review r1 | 16:36 | +25m | RUNNING; saved handover/egm/A15/r1-codebase.md |
+| a41b8bd2afc5f0697 | egm reviewer | egm:egm-codebase-details | sonnet | A15 PR74 21ca680 | result review r1 | 16:36 | +25m | REPORTED 0B/6M/nits, CLOSED; saved handover/egm/A15/r1-codebase.md |
 | a27e011a22ad67147 | egm reviewer | egm:egm-design | sonnet | A19 PR83 7f24178 | result review r1 | 16:36 | +25m | REPORTED 0B/3M/4N, CLOSED; saved handover/egm/A19/r1-design.md |
 | ad946e6c0b1d37bab | egm reviewer | egm:egm-design | sonnet | A24 PR91 61cf2be | result review r1 | 16:36 | +25m | REPORTED 1B/6M/5N, CLOSED; saved handover/egm/A24/r1-design.md |
 | af2e53d2b1ad9a459 | egm reviewer | egm:egm-implementation-readiness | sonnet | P1d-a-plan (tickets/P1d-a.md) | plan review r3 | 16:36 | +25m | RUNNING; saved egm/P1d-a-plan/round3-readiness.md |
