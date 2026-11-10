@@ -1532,3 +1532,10 @@ NOT RUN: nothing counted as pass yet; no evidence has landed.
 DECISIONS FOR LEAD: (1) where are the P6a-1 62 hand-mutant script, P3a-2 66-mutant script and gen_evidence (q365/q367)? (2) A1: one noqa S603, owner decision.
 DEFAULT: (1) NOT RUN, never counted as pass; (2) noqa refused, code fixed instead.
 NEXT: land evidence, run result reviewers, resolve, drift report per row.
+
+## q-A9-interim (2026-11-10T17:10Z UTC; IST 22:40): A9 evidence is NOT a full pass yet
+CHECKED BY ME: the A9 runner reports 7 py3.13 chunks green (6254 passed, 1 skipped, 21 deselected; each has a summary line). ruff check, ruff format --check, bandit -ll and scan_repo exit 0 per its report (TABLE.md); I did not re-run them.
+NOT RUN / NOT A PASS: chunk top-nonk5 (52 top-level files) has no summary line (log ends after test_executor.py::test_verify_mismatch_detected, 26 passed, cause unknown; the two files alone pass); the earlier full py3.13, py3.12 and perf runs have no summary line; py3.12 and perf are queued behind heavy slots (chunks2.sh); the Vault and dblink-connect tests were not looked at for skips.
+DECISIONS FOR LEAD: none yet.
+DEFAULT: A9 stays "evidence incomplete"; no review verdict is built on it until chunks2 finishes with a summary line per chunk.
+NEXT: read c2-313-top*.log, c2-312-*.log, c2-313-perf.log and the .done/.nosummary files; then snapshot and run the reviewers.
