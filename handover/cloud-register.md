@@ -928,3 +928,6 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | af2e53d2b1ad9a459 | egm reviewer | egm:egm-implementation-readiness | sonnet | P1d-a-plan (tickets/P1d-a.md) | plan review r3 | 16:36 | +25m | REPORTED 0B/5M/5N, CLOSED; saved egm/P1d-a-plan/round3-readiness.md |
 | a4338b8f235b7416f | egm reviewer | egm:egm-design | sonnet | P1d-a-plan | plan review r3 | 16:36 | +25m | REPORTED 0B/5M/8N, CLOSED; saved egm/P1d-a-plan/round3-design.md |
 | a1033ae1f57cff1ac | BUILDER | general-purpose | sonnet (claude-sonnet-5-5) | A24 PR91 fix batch (G1-G7), branch core/ci-scan-config-guard-fix1 in WT-A24 | fix batch (step 6) | 16:40 | +60 min | RUNNING; report handover/reports/A24-PR91-fix1-builder-report.md; checkpoint checkpoints/A24fix.md |
+| a5e84e1d79580c078 | egm-implementation-readiness (sonnet) | P1d-a plan pass 4 (rev 6) | started 16:58Z, expected 17:20Z | RUNNING |
+| a5f2a451528d3c70d | egm-design (sonnet) | P1d-a plan pass 4 (rev 6) | started 16:58Z, expected 17:20Z | RUNNING |
+| a621dcb9b3aacb063 | builder (general-purpose, sonnet) | A15 PR74 fix batch, branch core/P5a-fix1, WT-A15fix | started 17:02Z, expected 18:02Z, checkpoint checkpoints/A15fix.md | RUNNING |
