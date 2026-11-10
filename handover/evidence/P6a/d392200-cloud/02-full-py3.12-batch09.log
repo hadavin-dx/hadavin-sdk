@@ -1,0 +1,63 @@
+HEAD=d3922003925722275704b84f580152d35dd90c9c
+python=Python 3.12.3
+cmd=python -X faulthandler -m pytest -v -rfEs -m not live and not perf -p no:cacheprovider tests/warden_port/test_redaction_review2.py tests/warden_port/test_redaction_review9.py
+start=2026-11-10T20:29:52Z
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/EV-P6a-d392200/venv3.12/bin/python
+rootdir: /home/user/build/EV-P6a-d392200/wt
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 49 items / 1 deselected / 48 selected
+
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[whsec_FakeTokenA1b2C3d4E] PASSED [  2%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[Webhook-Secret: whsec_Fa] PASSED [  4%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[["--db-password", "Dbpw5] PASSED [  6%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[["--client-secret","Cl5e] PASSED [  8%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[kubectl create secret do] PASSED [ 10%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[wget --http-password Wg5] PASSED [ 12%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[az login -u ci -p Az5ecr] PASSED [ 14%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[sqlcmd -S db -U sa -P Sq] PASSED [ 16%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[mariadb -u root -pMaria5] PASSED [ 18%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[curl -uadmin:Curl5ecret ] PASSED [ 20%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[curl --user=admin:Curl5e] PASSED [ 22%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[redis-cli --pass Redis5e] PASSED [ 25%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[REDISCLI_AUTH=Redis5ecre] PASSED [ 27%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[ldapsearch -D cn=admin -] PASSED [ 29%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[mongosh -u admin -p Mong] PASSED [ 31%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[htpasswd -b users admin ] PASSED [ 33%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[openssl enc -pass pass:O] PASSED [ 35%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[vault login s.Vt5ecretTo] PASSED [ 37%]
+tests/warden_port/test_redaction_review2.py::test_every_reviewed_credential_shape_is_masked[--password\xa0Nbsp5ecret] PASSED [ 39%]
+tests/warden_port/test_redaction_review2.py::test_words_after_a_credential_flag_are_not_taken_for_its_value[error: --token not set; user not found, service not ready] PASSED [ 41%]
+tests/warden_port/test_redaction_review2.py::test_words_after_a_credential_flag_are_not_taken_for_its_value[the --secret flag is deprecated; use feature flag instead] PASSED [ 43%]
+tests/warden_port/test_redaction_review2.py::test_words_after_a_credential_flag_are_not_taken_for_its_value[Missing --password argument (argument list too short)] PASSED [ 45%]
+tests/warden_port/test_redaction_review2.py::test_words_after_a_credential_flag_are_not_taken_for_its_value[docker build --secret id=npmrc,src=.npmrc .] PASSED [ 47%]
+tests/warden_port/test_redaction_review2.py::test_words_after_a_credential_flag_are_not_taken_for_its_value[usage: app --password PASSWORD --token TOKEN] PASSED [ 50%]
+tests/warden_port/test_redaction_review2.py::test_a_credential_is_still_masked_in_every_line PASSED [ 52%]
+tests/warden_port/test_redaction_review2.py::test_a_shorter_secret_starting_where_a_longer_value_starts_is_still_masked PASSED [ 54%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[headers=map[Accept:[*/*] Cookie:[_gh_sess=%s; theme=dark] User-Agent:[curl/8.4.0]]] PASSED [ 56%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[Set-Cookie:[_gh_sess=%s; Path=/; HttpOnly]] PASSED [ 58%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[X-Auth-Cookie: _gh_sess=%s] PASSED [ 60%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[x-original-cookie: _gh_sess=%s] PASSED [ 62%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[Cookie: '_gh_sess=%s; a=b] PASSED [ 64%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[{"http_cookie":"sid=%s; theme=dark"}] PASSED [ 66%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[HTTP_COOKIE=sid=%s] PASSED [ 68%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored['HTTP_COOKIE' => '_gh_sess=%s'] PASSED [ 70%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[{"cookie":"ab=\\"x\\"; _gh_sess=%s"}] PASSED [ 72%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[{'cookie': "ab='x'; _gh_sess=%s"}] PASSED [ 75%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored["set-cookie":["id=abcd; Path=/", "_gh_sess=%s; Path=/"]] PASSED [ 77%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[{"name":"Cookie","value":"_gh_sess=%s"}] PASSED [ 79%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[curl --cookie "_gh_sess=%s" https://x.example] PASSED [ 81%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[curl -b '_gh_sess=%s' https://x.example] PASSED [ 83%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[cookies={'_gh_sess': '%s'}] PASSED [ 85%]
+tests/warden_port/test_redaction_review9.py::test_a_cookie_in_any_written_form_is_masked_and_restored[<RequestsCookieJar[<Cookie _gh_sess=%s for x.example/>]>] PASSED [ 87%]
+tests/warden_port/test_redaction_review9.py::test_a_token_whose_start_was_masked_is_masked_whole[{"authorization": "Bearer 1234567890-Zq8wPx2mLkVb7YtR3nQs"}] PASSED [ 89%]
+tests/warden_port/test_redaction_review9.py::test_a_token_whose_start_was_masked_is_masked_whole[{"Authorization":"Bearer 1f2e3d4c-5b6a-4789-a0b1-c2d3e4f5a6b7.Zq8wPx2mLkVb7YtR3nQs"}] PASSED [ 91%]
+tests/warden_port/test_redaction_review9.py::test_a_token_whose_start_was_masked_is_masked_whole[upstream sent Bearer 123456789012.Zq8wPx2mLkVb7YtR3nQs] PASSED [ 93%]
+tests/warden_port/test_redaction_review9.py::test_a_token_whose_start_was_masked_is_masked_whole[{"authorization":"Basic AKIAQWERTYUI+Zq8wPx2mLkVb7YtR3nQs=="}] PASSED [ 95%]
+tests/warden_port/test_redaction_review9.py::test_a_secret_inside_a_compound_value_is_swept_alone_too[GET /cart Cookie: _gh_sess=Zq8wPx2mLkVb7YtR3nQs; theme=dark] PASSED [ 97%]
+tests/warden_port/test_redaction_review9.py::test_a_secret_inside_a_compound_value_is_swept_alone_too[password=1f2e3d4c-5b6a-4789-a0b1-c2d3e4f5a6b7.Zq8wPx2mLkVb7YtR3nQs] PASSED [100%]
+
+======================= 48 passed, 1 deselected in 0.09s =======================
+exit=0
+end=2026-11-10T20:29:53Z

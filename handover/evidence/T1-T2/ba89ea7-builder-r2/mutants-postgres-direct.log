@@ -1,0 +1,27 @@
+baseline rc=0 :: 92 passed, 92 deselected in 15.80s
+ok  P1 day counter replaced instead of added
+      /tmp/pgmut_wpamnkv5/tests/contracts/test_store_time_rules.py:88: AssertionError: the day total of two charges on one day did not add up: 0.70
+ok  P2 month counter replaced instead of added
+      /tmp/pgmut_t_lvrqod/tests/contracts/test_store_time_rules.py:89: AssertionError: the month total of two charges did not add up: 0.70
+ok  P3 add_spend books the month one month early (a valid first-of-month date, so the CHECK passes)
+      /tmp/pgmut_oyye63eb/tests/contracts/test_store_time_rules.py:57: AssertionError: 6min: read at 2026-03-10 12:00:00+00:00
+ok  P3b add_spend keys the month counter by the day (killed by the schema CHECK, an error, not an assertion)
+      n3.13/site-packages/psycopg/cursor.py:117: psycopg.errors.CheckViolation: new row for relation "spend_month" violates check constraint "spend_month_month_check"
+ok  P4 spend_totals reads the month counter by the day
+      /tmp/pgmut_ypdu5tuj/tests/contracts/test_store_time_rules.py:57: AssertionError: 6min: read at 2026-03-10 12:00:00+00:00
+ok  P5 spend_totals reads the day counter of any agent
+      /tmp/pgmut_wffczjy3/tests/contracts/test_store_time_rules.py:310: AssertionError: spend_totals showed this agent's spend to another agent
+ok  P6 spend_totals reads the month counter of any agent
+      /tmp/pgmut_ybvnzosi/tests/contracts/test_store_time_rules.py:310: AssertionError: spend_totals showed this agent's spend to another agent
+ok  P7 the day counter ignores every charge after the first
+      /tmp/pgmut_qe7ctd9r/tests/contracts/test_store_time_rules.py:88: AssertionError: the day total of two charges on one day did not add up: 0.30
+ok  P8 the month counter ignores every charge after the first
+      /tmp/pgmut_uoda10ok/tests/contracts/test_store_time_rules.py:89: AssertionError: the month total of two charges did not add up: 0.30
+ok  P9 the year is dropped from the month key (add_spend and spend_totals)
+      kroweq3/tests/contracts/test_store_time_rules.py:155: AssertionError: a March of another year was added to the March of 2026: (Decimal('0.10'), Decimal('0.20'))
+ok  P10 the day is taken from the database server's clock, not from the caller
+      /tmp/pgmut_ykcdrpor/tests/contracts/test_store_time_rules.py:170: AssertionError: a charge on a past date is not on that date
+ok  P11 the day counter rounds a charge to cents
+      /tmp/pgmut_no_j4o7s/tests/contracts/test_store_time_rules.py:180: AssertionError: the first tiny charge was rounded
+12 of 12 mutants killed as described; no problems
+exit=0

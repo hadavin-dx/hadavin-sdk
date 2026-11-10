@@ -1,3 +1,22 @@
 2026-11-10T20:10:59Z start 02a-full-py313-dsn
 2026-11-10T20:23:34Z end 02a-full-py313-dsn rc=1
 2026-11-10T20:23:34Z start 02b-full-py312-dsn
+2026-11-10T20:28:55Z end 02b-full-py312-dsn rc=1
+2026-11-10T20:28:55Z start 02c-full-py313-nodsn
+2026-11-10T20:33:03Z end 02c-full-py313-nodsn rc=0
+2026-11-10T20:33:03Z start 03-mutants-py313
+2026-11-10T20:37:01Z end 03-mutants-py313 rc=0
+2026-11-10T20:37:01Z start 04-migtests-py3.12-dsn-run1
+2026-11-10T20:37:24Z end 04-migtests-py3.12-dsn-run1 rc=0
+2026-11-10T20:37:24Z start 04-migtests-py3.12-dsn-run2
+2026-11-10T20:37:47Z end 04-migtests-py3.12-dsn-run2 rc=0
+2026-11-10T20:37:47Z start 04-migtests-py3.12-dsn-random-seed7311
+2026-11-10T20:38:11Z end 04-migtests-py3.12-dsn-random-seed7311 rc=0
+2026-11-10T20:38:11Z start 04-migtests-py3.13-dsn-run1
+2026-11-10T20:38:33Z end 04-migtests-py3.13-dsn-run1 rc=0
+2026-11-10T20:38:33Z start 04-migtests-py3.13-dsn-run2
+2026-11-10T20:38:55Z end 04-migtests-py3.13-dsn-run2 rc=0
+2026-11-10T20:38:55Z start 04-migtests-py3.13-dsn-random-seed7311
+2026-11-10T20:39:20Z end 04-migtests-py3.13-dsn-random-seed7311 rc=0
+2026-11-10T20:39:20Z DRIVER-DONE-A
+2026-11-10T20:39:32Z start 05-failbefore-base-py313-dsn

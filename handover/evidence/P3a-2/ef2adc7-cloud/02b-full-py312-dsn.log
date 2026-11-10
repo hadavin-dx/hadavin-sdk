@@ -1450,4 +1450,4 @@ tests/test_cuj.py::test_cuj5_outcome_write_fails_then_reconcile PASSED   [ 13%]
 tests/test_cuj.py::test_cuj6_timeout_then_lookup_continues PASSED        [ 13%]
 tests/test_cuj.py::test_cuj6_lookup_fails_needs_a_person PASSED          [ 13%]
 tests/test_cuj.py::test_verify_fails_rolls_back PASSED                   [ 13%]
-tests/test_cuj.py::test_sign_off_denied_and_read_only_runs_without_approval PASSED [ 13%]
+tests/test_cuj.py::test_sign_off_denied_and_read_only_runs_without_approval PASSED [ 13%]exit=1

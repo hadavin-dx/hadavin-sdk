@@ -15,3 +15,4 @@ ok  P5 spend_totals reads the day counter of any agent
       /tmp/pgmut_qi31qop2/tests/contracts/test_store_time_rules.py:310: AssertionError: spend_totals showed this agent's spend to another agent
 ok  P6 spend_totals reads the month counter of any agent
       /tmp/pgmut__sdztwcj/tests/contracts/test_store_time_rules.py:310: AssertionError: spend_totals showed this agent's spend to another agent
+exit=0

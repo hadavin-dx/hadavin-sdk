@@ -1,7 +1,7 @@
 HEAD=d3922003925722275704b84f580152d35dd90c9c
 python=Python 3.13.18
 cmd=python -X faulthandler -m pytest -v -rfEs -m not live and not perf -p no:cacheprovider tests/demo_askdata/test_validate_harm.py tests/demo_askdata/test_validate_mutation.py tests/demo_askdata/test_validate_oracle.py tests/demo_askdata/test_verify_readonly.py tests/demo_askdata/test_wire.py tests/test_client_profile.py tests/test_cuj.py tests/test_executor.py tests/test_g4_parity.py tests/test_http_metadata.py tests/test_k1a_pass_k.py tests/test_k1b_bundle.py tests/test_k1b_causelist_containment.py tests/test_k1b_cli.py
-start=2026-11-10T20:17:51Z
+start=2026-11-10T20:31:10Z
 ============================= test session starts ==============================
 platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/EV-P6a-d392200/venv3.13/bin/python
 rootdir: /home/user/build/EV-P6a-d392200/wt
@@ -155,7 +155,7 @@ tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalida
 tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[set-config] PASSED [ 17%]
 tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[query-to-xml] PASSED [ 17%]
 tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[table-to-xml] PASSED [ 17%]
-tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] FAILED [ 17%]
+tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] PASSED [ 17%]
 tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-ls-dir] PASSED [ 17%]
 tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-read-file] PASSED [ 17%]
 tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[pg-terminate-backend] PASSED [ 17%]
@@ -855,59 +855,6 @@ tests/test_k1b_cli.py::test_score_and_replay_reports_name_the_cases_to_inspect P
 tests/test_k1b_cli.py::test_score_refuses_a_run_json_whose_issue_cases_disagree_with_the_files PASSED [ 99%]
 tests/test_k1b_cli.py::test_cli_refuses_redact_false_without_the_flag_and_records_it_with PASSED [100%]
 
-=================================== FAILURES ===================================
-_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] _
-
-attack = Attack(name='dblink-connect', sql="SELECT dblink_connect('dbname=postgres')", rule='V06', category='public-functions', harm='exec')
-shared = 'user=postgres dbname=askdata_h_4505a10c host=127.0.0.1 port=5432'
-
-    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
-    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
->       assert prove_harm(attack, shared)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-tests/demo_askdata/test_validate_harm.py:179: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-tests/demo_askdata/test_validate_harm.py:133: in prove_harm
-    cur = c.execute(attack.sql)
-          ^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <psycopg.Connection [BAD] at 0x7f7fb029c7d0>
-query = "SELECT dblink_connect('dbname=postgres')", params = None
-prepare = None, binary = False
-
-    def execute(
-        self,
-        query: Query,
-        params: Params | None = None,
-        *,
-        prepare: bool | None = None,
-        binary: bool = False,
-    ) -> Cursor[Row]:
-        """Execute a query and return a cursor to read its results."""
-        try:
-            cur = self.cursor()
-            if binary:
-                cur.format = BINARY
-    
-            if isinstance(query, Template):
-                if params is not None:
-                    raise TypeError(
-                        "'execute()' with string template query doesn't support parameters"
-                    )
-                return cur.execute(query, prepare=prepare)
-            else:
-                return cur.execute(query, params, prepare=prepare)
-        except e._NO_TRACEBACK as ex:
->           raise ex.with_traceback(None)
-E           psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection
-E           DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
-E           	Is the server running locally and accepting connections on that socket?
-
-../venv3.13/lib/python3.13/site-packages/psycopg/connection.py:304: SqlclientUnableToEstablishSqlconnection
-=========================== short test summary info ============================
-FAILED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]
-================= 1 failed, 844 passed, 1 deselected in 50.99s =================
-exit=1
-end=2026-11-10T20:18:43Z
+====================== 845 passed, 1 deselected in 49.38s ======================
+exit=0
+end=2026-11-10T20:33:50Z
