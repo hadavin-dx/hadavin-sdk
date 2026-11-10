@@ -991,3 +991,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a8b076e860 | A21a evidence runner 98a3ed9 | started 20:44 UTC | ~60-90 min | check +30 min |
 | af66d66e34 | A21a result reviewer (codebase) r2, snapshot /tmp/snap/core_T1-T2-98a3ed9 | started 20:44 UTC | ~20 min | check +20 min |
 | a7506071ca | A21a result reviewer (design) r2 | started 20:44 UTC | ~20 min | check +20 min |
+| af66d66e34, a7506071ca | A21a r2 reviewers | CLOSED 20:46 UTC, reports saved, 0 blockers, 3 majors | - | done |
+| af4a57cbb8 | A21a fix builder r3 (BL-core-a21a-w2-r2-01..06) | resumed 20:46 UTC | +90 min | check +30 min |
