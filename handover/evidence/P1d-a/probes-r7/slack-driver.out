@@ -1,0 +1,12 @@
+== /tmp/p7/orig
+tree /tmp/p7/orig/src/hadavin_sdk/__init__.py
+assignment ok ph a password=<SECRET_1> b
+entity ok ph a <APIKEY_1> b
+percent ok ph a <APIKEY_1> b
+bad 0 of 3
+== /tmp/p9
+tree /tmp/p9/src/hadavin_sdk/__init__.py
+assignment ok ph a password=<SECRET_1> b
+entity ok ph a <APIKEY_1> b
+percent ok ph a <APIKEY_1> b
+bad 0 of 3
