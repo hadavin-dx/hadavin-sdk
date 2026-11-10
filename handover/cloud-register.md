@@ -1029,3 +1029,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | PR89 builder a290aa955c | done 22:20 UTC: head 386875c pushed (round 4 minors); closed |
 | PR89 evidence runner ab0f55975a (386875c) | started 22:21 UTC, expected ~23:30 UTC | running |
 | PR89 reviewer aba78fad35 (round 4, redaction path) | started 22:21 UTC, expected ~22:40 UTC | running |
+| PR89 evidence runner ab0f55975a | stopped 22:12 UTC: CI security failure forces a new head; leftover processes killed | closed |
+| PR89 builder a290aa955c | resumed 22:12 UTC to fix the gitleaks finding (test literal), push new head; reviewer aba78fad35 continues on 386875c (src unchanged by the fix) | running |
