@@ -934,4 +934,4 @@ PR72 0ae044b: builder done; evidence run waits for evid.sh fix (inv-trunc-66), t
 | a5290a88533b03045 | egm-implementation-readiness (sonnet) | P1d-a plan pass 5 (rev 8) | started 17:36Z, expected 17:58Z | RUNNING |
 | a67dfa211343d3509 | egm-design (sonnet) | P1d-a plan pass 5 (rev 8) | started 17:36Z, expected 17:58Z | RUNNING |
 | a163ed7f2d034d9cc | builder (general-purpose, sonnet) | A19 PR83 fix batch, head 85e0801 on core/P0t-followup-fix1 | CLOSED 17:30Z; 10635 passed 1 skipped, ruff/bandit/scan_repo rc 0, 78/78 mutants; decisions for lead in q-entry |
-| a56510b27072e6cee | egm-codebase-details (sonnet) | A19 PR83 fix1 result review r2, snapshot handover/egm/A19/snapshot-85e0801/ | started 17:40Z, expected 18:05Z | RUNNING |
+| a56510b27072e6cee | egm-codebase-details (sonnet) | A19 PR83 fix1 result review r2, snapshot handover/egm/A19/snapshot-85e0801/ | REPORTED 1B/2M/4N, CLOSED 17:42Z; saved egm/A19/r2-codebase.md |

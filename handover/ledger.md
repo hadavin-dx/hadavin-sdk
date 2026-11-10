@@ -2182,3 +2182,6 @@
 | BL-core-p1da-r5-07 | P1d-a plan rev 7 | BLOCKER | BTK1 card expected string wrong (base turns the link into [link removed]) | FIXED-UNVERIFIED | round5-readiness B2 | UNCAPPED | fixed in P1d-a rev 8 (round5-resolve.md, probe P8) |
 | BL-core-p1da-r5-08 | P1d-a plan rev 7 | MAJOR | mutants A13 killer, A29 old text, nine non-literal olds; HL1/A15/A52 timeout mechanism; cilint-001 and A4 order not reconciled | FIXED-UNVERIFIED | round5-readiness M3-M7 | UNCAPPED | fixed in P1d-a rev 8 (round5-resolve.md, probe P8) |
 | BL-hadavin-sdk-cilint-001 | alias of BL-core-p1d-002 and BL-core-p1d-007 (P1d-a) | BLOCKER | named in ORDER 230 item 2; had no ledger row | OPEN | P1d-a ticket NEEDS LEAD 6 | UNCAPPED |
+| BL-core-a19-r2-01 | PR83 fix1 85e0801 | BLOCKER | check_id validates casefolded id but returns raw; sharp-s and long Cf ids accepted yet not masked by redactor (read-only finding, unverified) | OPEN | egm/A19/r2-codebase.md B1 | UNCAPPED |
+| BL-core-a19-r2-02 | PR83 fix1 85e0801 | MAJOR | stages.py imports guard.runmap (no longer a leaf); docstring claims a pin that does not exist | OPEN | egm/A19/r2-codebase.md M1 | UNCAPPED |
+| BL-core-a19-r2-03 | PR83 fix1 85e0801 | MAJOR | pure-punctuation ids (---, ___) accepted, may leak on sweep | OPEN | egm/A19/r2-codebase.md M2 | UNCAPPED |
