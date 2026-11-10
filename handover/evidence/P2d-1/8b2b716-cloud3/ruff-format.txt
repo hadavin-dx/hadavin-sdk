@@ -1,0 +1,24 @@
+HEAD 8b2b71685c4a83d6e1d4abc8e93b90998dce36d1
+$ /home/user/build/venv-p77-313/bin/ruff format --check src tests demos tools
+unformatted: File would be reformatted
+   --> tests/test_redact_fold.py:473:19
+    |
+472 |     text = (
+    -         "before\n" + "-----BEGIN " + "PRIVATE KEY-----" + "\n"
+473 +         "before\n"
+474 +         + "-----BEGIN "
+475 +         + "PRIVATE KEY-----"
+476 +         + "\n"
+477 |         + body
+--------------------------------------------------------------------------------
+483 |         + body
+    -         + "\n" + "-----END " + "PRIVATE KEY-----" + "\nafter"
+484 +         + "\n"
+485 +         + "-----END "
+486 +         + "PRIVATE KEY-----"
+487 +         + "\nafter"
+488 |     )
+    |
+
+1 file would be reformatted, 323 files already formatted
+exit=1

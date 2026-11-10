@@ -1,0 +1,4 @@
+HEAD 8b2b71685c4a83d6e1d4abc8e93b90998dce36d1
+$ /home/user/build/venv-p77-313/bin/bandit -q -r src demos tools -ll
+/home/user/build/heavy.sh: line 6: /home/user/build/venv-p77-313/bin/bandit: No such file or directory
+exit=127

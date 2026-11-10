@@ -2268,3 +2268,4 @@
 | BL-core-a21a-w2-15 | A21a ba89ea7 | MAJOR | no harness negative control with a stub meter | OPEN | round-w2-design.md M5 | A21a fix builder |
 | BL-core-a21a-w2-16 | A21a ba89ea7 | MAJOR | mutants miss year-in-month-key, Postgres agent filter and counters, both budgets over cap, NaN/negative/Infinity charges | OPEN | round-w2-design.md M6 | A21a fix builder |
 | BL-core-a21a-w2-17 | A21a ba89ea7 | MINOR | weak kill messages, Decimal scale test, clock comment, CI must fail not skip without DSN, cost != W case, isolation run twice, evidence env clear | OPEN | round-w2-design.md N7-N12 | A21a fix builder |
+| BL-core-a11a-w2-01 | PR77 8b2b716 | MAJOR | evidence ran on a head that does not contain current core/P1a (27ae996); P2d-1 merges 2572847; ruff format --check fails (tests/test_redact_fold.py:473) | OPEN | evidence/P2d-1/8b2b716-cloud3/TABLE.md | builder re-merges P1a, formats, new head, evidence re-run |

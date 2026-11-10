@@ -1,0 +1,6 @@
+HEAD 8b2b71685c4a83d6e1d4abc8e93b90998dce36d1
+$ /tmp/gl/gitleaks git --redact --no-banner --exit-code 1 --config .gitleaks.toml .
+[90m7:02PM[0m [32mINF[0m [1m3299 commits scanned.[0m
+[90m7:02PM[0m [32mINF[0m [1mscanned ~222344230 bytes (222.34 MB) in 44.2s[0m
+[90m7:02PM[0m [33mWRN[0m [1mleaks found: 720[0m
+exit=1
