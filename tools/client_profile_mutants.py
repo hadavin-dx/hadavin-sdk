@@ -867,9 +867,9 @@ for prefix, sample in (
 m(
     "runner: DATABASE_URL and KUBECONFIG are not cloud names",
     TOOL,
-    rep(
-        "CLOUD_NAMES = " + '("DATABASE_URL", "KUBECONFIG")', "CLOUD_NAMES = ()"
-    )[CP],  # split: one copy of the text,
+    # the text is split so that this file holds it once
+    rep("CLOUD_NAMES = " + '("DATABASE_URL", "KUBECONFIG")', "CLOUD_NAMES = ()"),
+    [CP],
     r"tests/test_client_profile.py::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting\[DATABASE_URL\]",
 )
 
