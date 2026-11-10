@@ -893,7 +893,7 @@ M: list[Mutant] = [
         "O1",
         "the check for objects another role owns is not called",
         MIG,
-        "            _refuse_foreign_owned(db, _managed_names(texts.values()))\n",
+        "            _refuse_foreign_owned(db, texts.values())\n",
         "            pass\n",
         (
             k(
@@ -1365,8 +1365,8 @@ M: list[Mutant] = [
         "MN1",
         "a plain function name is not folded to lower case",
         MIG,
-        "else _fold(m.group(2))",
-        "else m.group(2)",
+        "return _fold(plain) if plain is not None else None",
+        "return plain",
         (
             k(
                 T_WIRING,
@@ -1412,8 +1412,8 @@ M: list[Mutant] = [
         "SW2",
         "a stale test role with an open session is dropped",
         "tests/fixtures/migration_role.py",
-        "AND NOT EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.usename = r.rolname)",
-        "",
+        'WHERE a.usename = r.rolname "\n        "OR a.application_name = r.rolname)',
+        "WHERE a.application_name = r.rolname)",
         k(T_PG, "test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not"),
     ),
     Mutant(
@@ -1523,8 +1523,8 @@ M: list[Mutant] = [
         "SW5",
         "the live-process lock is taken on a fixed local server, not on the server that makes the role",
         "tests/fixtures/migration_role.py",
-        "    server = _server_key(make_conninfo(db.info.dsn, password=db.info.password or None))\n",
-        '    server = "host=localhost"\n',
+        "    hold = psycopg.connect(\n        make_conninfo(db.info.dsn, password=db.info.password or None, application_name=PLAIN_ROLE),\n        autocommit=True,\n    )\n",
+        '    hold = psycopg.connect("host=localhost", autocommit=True)\n',
         k(T_WIRING, "test_the_live_process_lock_is_taken_on_the_server_that_makes_the_role"),
     ),
     Mutant(
@@ -1534,6 +1534,64 @@ M: list[Mutant] = [
         '    if not re.fullmatch(r"[0-9a-f]{8}", token):\n',
         "    if False:\n",
         k(T_WIRING, "test_only_eight_lower_case_hex_digits_are_a_token"),
+    ),
+    Mutant(
+        "SW7",
+        "the sweep does not look at the name of the connections, so a role held from another database is dropped",
+        "tests/fixtures/migration_role.py",
+        'AND NOT EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.usename = r.rolname "\n        "OR a.application_name = r.rolname)",',
+        'AND NOT EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.usename = r.rolname)",',
+        k(
+            T_PG,
+            "test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server",
+        ),
+    ),
+    Mutant(
+        "SW8",
+        "the hold connection is not named like the role",
+        "tests/fixtures/migration_role.py",
+        "password=db.info.password or None, application_name=PLAIN_ROLE),",
+        "password=db.info.password or None),",
+        (
+            k(T_WIRING, "test_the_live_process_lock_is_taken_on_the_server_that_makes_the_role"),
+            k(
+                T_PG,
+                "test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server",
+            ),
+        ),
+    ),
+    Mutant(
+        "SW9",
+        "the hold connection is left open when the lock cannot be taken",
+        "tests/fixtures/migration_role.py",
+        "    except BaseException:\n        hold.close()\n        raise\n",
+        "    except BaseException:\n        raise\n",
+        k(T_WIRING, "test_the_hold_connection_is_closed_when_the_lock_cannot_be_taken"),
+    ),
+    Mutant(
+        "NS2",
+        "a superuser among the named roles is not left out of the compared set (settings read-back)",
+        MIG,
+        'rolname = ANY(%s::text[]) AND NOT rolsuper), "\n    "scope AS (SELECT r.oid, (r.rolname IN (current_user, session_user) OR r.oid IN (SELECT oid FROM named)) AS own, "\n    "(pg_has_role(current_user, r.oid, \'MEMBER\') OR pg_has_role(session_user, r.oid, \'MEMBER\') "\n    "OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, \'MEMBER\'))) AS closure "\n    "FROM pg_roles r) "\n    "SELECT coalesce(d.datname',
+        'rolname = ANY(%s::text[])), "\n    "scope AS (SELECT r.oid, (r.rolname IN (current_user, session_user) OR r.oid IN (SELECT oid FROM named)) AS own, "\n    "(pg_has_role(current_user, r.oid, \'MEMBER\') OR pg_has_role(session_user, r.oid, \'MEMBER\') "\n    "OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, \'MEMBER\'))) AS closure "\n    "FROM pg_roles r) "\n    "SELECT coalesce(d.datname',
+        k(T_PG, "test_a_superuser_among_the_named_roles_does_not_widen_the_read_back")
+        + "[settings]",
+    ),
+    Mutant(
+        "SQ1",
+        "a function written with another schema before the dot is read as a managed name of this schema",
+        MIG,
+        "if where is None or where == schema:",
+        "if True:",
+        k(T_WIRING, "test_a_function_of_another_schema_is_not_a_managed_name"),
+    ),
+    Mutant(
+        "SQ2",
+        "a function written with this schema before the dot is not read as a managed name",
+        MIG,
+        "if where is None or where == schema:",
+        "if where is None:",
+        k(T_WIRING, "test_a_function_of_another_schema_is_not_a_managed_name"),
     ),
     Mutant(
         "RP1",
