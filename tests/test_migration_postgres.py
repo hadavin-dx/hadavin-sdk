@@ -18,6 +18,7 @@ from pathlib import Path
 import pytest
 
 from hadavin_sdk.errors import ConfigError
+from tests.fixtures import migration_role as helper
 from tests.fixtures import runbook as rb
 from tests.fixtures.dsn_skip import require_module
 from tests.fixtures.migration_role import PLAIN_ROLE, ensure_plain_role
@@ -1403,16 +1404,25 @@ def test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real
 @needs_pg
 @pytest.mark.real_connect
 def test_the_test_helper_refuses_to_take_over_a_schema_that_is_not_a_scratch_one():
-    """The helper changes the owner of the schema in use: on `public` it must refuse and change nothing."""
+    """The helper changes the owner of the schema in use: on a schema whose name has no test prefix (made here, so the
+    test does not depend on `public`) it must refuse and change nothing. Killed by: mutant B3."""
     from tests.fixtures.migration_role import NotAScratchSchema, plain_role_connect
 
-    owner_sql = "SELECT nspowner::regrole::text FROM pg_namespace WHERE nspname = 'public'"
+    other = "other_app_" + uuid.uuid4().hex[:8]
+    owner_sql = "SELECT nspowner::regrole::text FROM pg_namespace WHERE nspname = %s"
     with psycopg.connect(DSN, autocommit=True) as db:
-        before = db.execute(owner_sql).fetchone()
-    with pytest.raises(NotAScratchSchema):
-        plain_role_connect(psycopg.connect)(DSN, autocommit=True)
-    with psycopg.connect(DSN, autocommit=True) as db:
-        assert db.execute(owner_sql).fetchone() == before
+        db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(other)))
+        before = db.execute(owner_sql, (other,)).fetchone()
+    try:
+        with pytest.raises(NotAScratchSchema):
+            plain_role_connect(psycopg.connect)(
+                make_conninfo(DSN, options=f"-c search_path={other}"), autocommit=True
+            )
+        with psycopg.connect(DSN, autocommit=True) as db:
+            assert db.execute(owner_sql, (other,)).fetchone() == before
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(other)))
 
 
 @needs_pg
@@ -1931,43 +1941,134 @@ def test_a_function_a_migration_file_creates_counts_as_managed(scratch, plain_ro
         mig.migrate(dsn)
 
 
+@needs_pg
+@pytest.mark.real_connect
+def test_functions_with_capitals_or_a_space_in_the_name_count_as_managed(
+    scratch, plain_role, monkeypatch, tmp_path
+):
+    """A file creates `Mixed_Case_Fn()` (stored as `mixed_case_fn`) and `"Odd Name Fn"()`; the superuser login then takes
+    them over. The next run is refused and names both. Killed by: mutants MN1 and MN2."""
+    dsn, _role = plain_role
+    super_dsn, _ = scratch
+    body = (
+        "CREATE OR REPLACE FUNCTION Mixed_Case_Fn() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;\n"
+        'CREATE OR REPLACE FUNCTION "Odd Name Fn"() RETURNS int LANGUAGE sql AS $$ SELECT 2 $$;\n'
+    )
+    _with_files(monkeypatch, tmp_path, {"0006_names.sql": body})
+    assert mig.migrate(dsn) == REAL + ["0006_names"]
+    with psycopg.connect(super_dsn, autocommit=True) as db:
+        db.execute("ALTER FUNCTION mixed_case_fn() OWNER TO CURRENT_USER")
+        db.execute('ALTER FUNCTION "Odd Name Fn"() OWNER TO CURRENT_USER')
+    with pytest.raises(ConfigError) as e:
+        mig.migrate(dsn)
+    assert "mixed_case_fn" in str(e.value) and "Odd Name Fn" in str(e.value), str(e.value)
+
+
+def test_one_server_is_one_entry_whatever_the_search_path():
+    """Killed by: mutant DD1 (the whole connection string, with its search path, is the entry)."""
+    a = "host=h port=1 dbname=d user=u options='-c search_path=hadavin_test_a'"
+    b = "host=h port=1 dbname=d user=u options='-c search_path=hadavin_test_b'"
+    assert (
+        helper._server_key(a)
+        == helper._server_key(b)
+        != helper._server_key("host=h port=2 dbname=d user=u")
+    )
+
+
+@needs_pg
+def test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not(scratch):
+    """Three roles named like the helper's: one stale (nobody holds its process lock, no session), one with a live
+    session, one whose process lock is held. Only the stale one, and what it owns, is dropped. Killed by: mutants SW1
+    (the sweep is not called when the role is made), SW2 (a role with a session is dropped) and SW3 (a role whose lock is
+    held is dropped)."""
+    stale, live, held = (f"hadavin_test_migrator_{uuid.uuid4().hex[:8]}" for _ in range(3))
+    schema = conninfo_to_dict(scratch[0])["options"].rsplit("search_path=", 1)[1]
+    with psycopg.connect(DSN, autocommit=True) as db:
+        for r in (stale, live, held):
+            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
+        db.execute(
+            sql.SQL("CREATE TABLE {}.{} (a int)").format(
+                sql.Identifier(schema), sql.Identifier("hadavin_test_stale_tbl")
+            )
+        )
+        db.execute(
+            sql.SQL("ALTER TABLE {}.{} OWNER TO {}").format(
+                sql.Identifier(schema),
+                sql.Identifier("hadavin_test_stale_tbl"),
+                sql.Identifier(stale),
+            )
+        )
+    with (
+        psycopg.connect(make_conninfo(DSN, user=live), autocommit=True) as session,
+        psycopg.connect(DSN, autocommit=True) as holder,
+    ):
+        holder.execute("SELECT pg_advisory_lock(%s)", (helper._hold_key(held.rsplit("_", 1)[1]),))
+        session.execute("SELECT 1")
+        with psycopg.connect(DSN, autocommit=True) as db:
+            dropped = helper.sweep_stale_roles(db)
+            assert stale in dropped and live not in dropped and held not in dropped, dropped
+            assert PLAIN_ROLE not in dropped
+            assert not _role_exists(stale) and _role_exists(live) and _role_exists(held)
+            assert not db.execute(
+                "SELECT 1 FROM pg_class WHERE relname = 'hadavin_test_stale_tbl'"
+            ).fetchone(), "what the stale role owned went with it"
+    _drop_roles(*[r for r in (live, held, stale) if _role_exists(r)])
+
+
 # --- role changes made by ANOTHER session while a file runs ---------------------------------------------------------
 
 
-def _after_the_file_starts(marker: str, statements: list[str]):
-    """A second session (the superuser login) that waits until a backend is running a statement with `marker`, then runs
-    `statements`. Returns (thread, done event, errors)."""
-    done, errors = threading.Event(), []
+def _after_the_file_starts(marker: str, key: int, statements: list[str]):
+    """The file waits on an advisory lock (`_slow_file`) that this call takes first, on a connection of its own. A second
+    session (the superuser login) waits until a backend running the file is really blocked on that lock, runs
+    `statements`, and only then releases the lock, so the file ends after the changes (the order is recorded in `order`
+    and the tests assert it). Returns (thread, done event, errors, order, gate connection to close)."""
+    gate = psycopg.connect(DSN, autocommit=True)
+    gate.execute("SELECT pg_advisory_lock(%s)", (key,))
+    done, errors, order = threading.Event(), [], []
 
     def work():
         try:
             with psycopg.connect(DSN, autocommit=True) as db:
-                for _ in range(300):
+                for _ in range(600):
                     if db.execute(
-                        "SELECT count(*) FROM pg_stat_activity WHERE state = 'active' AND query LIKE %s "
-                        "AND pid <> pg_backend_pid()",
+                        "SELECT count(*) FROM pg_stat_activity WHERE query LIKE %s AND wait_event_type = 'Lock' "
+                        "AND wait_event = 'advisory' AND pid <> pg_backend_pid()",
                         (f"%{marker}%",),
                     ).fetchone()[0]:
                         break
                     time.sleep(0.05)
                 else:
-                    raise AssertionError("the file never started")
+                    raise AssertionError("the file never started waiting")
+                order.append("file_is_waiting")
                 for statement in statements:
                     db.execute(statement)
+                order.append("roles_changed")
+            gate.execute("SELECT pg_advisory_unlock(%s)", (key,))
+            order.append("file_released")
         except (psycopg.Error, AssertionError) as e:  # reported by the test
             errors.append(e)
+            gate.close()  # never leave the file waiting
         finally:
             done.set()
 
     thread = threading.Thread(target=work, daemon=True)
     thread.start()
-    return thread, done, errors
+    return thread, done, errors, order, gate
 
 
-def _slow_file(monkeypatch, tmp_path) -> str:
+def _slow_file(monkeypatch, tmp_path) -> tuple[str, int]:
     marker = "marker_" + uuid.uuid4().hex
-    _with_files(monkeypatch, tmp_path, {"0006_slow.sql": f"SELECT pg_sleep(2); -- {marker}\n"})
-    return marker
+    key = uuid.uuid4().int % (2**62)
+    _with_files(
+        monkeypatch,
+        tmp_path,
+        {"0006_slow.sql": f"SELECT pg_advisory_xact_lock({key}); -- {marker}\n"},
+    )
+    return marker, key
+
+
+_ORDER = ["file_is_waiting", "roles_changed", "file_released"]
 
 
 @needs_pg
@@ -1981,9 +2082,10 @@ def test_another_session_changing_unrelated_roles_does_not_stop_the_run(
     dsn, _ = scratch
     x, y = "hadavin_test_ux_" + uuid.uuid4().hex[:8], "hadavin_test_uy_" + uuid.uuid4().hex[:8]
     mig.migrate(dsn)
-    marker = _slow_file(monkeypatch, tmp_path)
-    thread, done, errors = _after_the_file_starts(
+    marker, key = _slow_file(monkeypatch, tmp_path)
+    thread, done, errors, order, gate = _after_the_file_starts(
         marker,
+        key,
         [
             f'CREATE ROLE "{x}"',
             f'CREATE ROLE "{y}"',
@@ -1994,12 +2096,14 @@ def test_another_session_changing_unrelated_roles_does_not_stop_the_run(
     try:
         assert mig.migrate(dsn) == ["0006_slow"]
         assert done.wait(10) and not errors, errors
+        assert order == _ORDER, order
         with psycopg.connect(
             DSN, autocommit=True
         ) as db:  # the other session really did change the roles
             assert db.execute("SELECT pg_has_role(%s, %s, 'MEMBER')", (y, x)).fetchone() == (True,)
     finally:
         thread.join(10)
+        gate.close()
         _drop_roles(*[r for r in (y, x) if _role_exists(r)])
 
 
@@ -2022,18 +2126,19 @@ def test_another_session_changing_the_migration_users_own_roles_stops_the_run(
     a = "hadavin_test_sa_" + uuid.uuid4().hex[:8]
     _create_roles(a)
     mig.migrate(dsn)
-    marker = _slow_file(monkeypatch, tmp_path)
+    marker, key = _slow_file(monkeypatch, tmp_path)
     statement = (
         f'GRANT "{a}" TO "{PLAIN_ROLE}"'
         if what == "membership"
         else f"ALTER ROLE \"{PLAIN_ROLE}\" SET work_mem = '5MB'"
     )
-    thread, done, errors = _after_the_file_starts(marker, [statement])
+    thread, done, errors, order, gate = _after_the_file_starts(marker, key, [statement])
     try:
         with pytest.raises(ConfigError) as e:
             mig.migrate(dsn)
         msg = str(e.value)
         assert done.wait(10) and not errors, errors
+        assert order == _ORDER, order
         assert "0006_slow.sql" in msg, msg
         if what == "membership":
             assert (
@@ -2046,9 +2151,49 @@ def test_another_session_changing_the_migration_users_own_roles_stops_the_run(
         assert _ledger(dsn) == REAL, "nothing of the run was kept"
     finally:
         thread.join(10)
+        gate.close()
         with psycopg.connect(DSN, autocommit=True) as db:
             db.execute(sql.SQL("ALTER ROLE {} RESET work_mem").format(sql.Identifier(PLAIN_ROLE)))
         _drop_roles(a)
+
+
+@needs_pg
+@pytest.mark.parametrize("what", ["membership", "saved_setting"])
+def test_another_session_changing_a_role_that_a_named_role_belongs_to_stops_the_run(
+    scratch, monkeypatch, tmp_path, what
+):
+    """The runtime role N is a member of role Y, and the migration user has nothing to do with Y. While the file runs,
+    a second session gives Y another role (or saves a setting for Y): N can now use that, so the run is refused.
+    Killed by: mutant NR1 (the roles a named role belongs to are left out of the scope)."""
+    dsn, _ = scratch
+    n, y, p_ = (f"hadavin_test_{t}_" + uuid.uuid4().hex[:8] for t in ("nn", "yy", "pp"))
+    _create_roles(n, y, p_)
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(y), sql.Identifier(n)))
+    mig.migrate(dsn)
+    marker, key = _slow_file(monkeypatch, tmp_path)
+    statement = (
+        f'GRANT "{p_}" TO "{y}"'
+        if what == "membership"
+        else f"ALTER ROLE \"{y}\" SET work_mem = '5MB'"
+    )
+    thread, done, errors, order, gate = _after_the_file_starts(marker, key, [statement])
+    try:
+        with pytest.raises(ConfigError) as e:
+            mig.migrate(dsn, runtime_role=n)
+        msg = str(e.value)
+        assert done.wait(10) and not errors, errors
+        assert order == _ORDER, order
+        assert "0006_slow.sql" in msg, msg
+        if what == "membership":
+            assert "a role membership changed while the file ran" in msg and y in msg, msg
+        else:
+            assert f"role {y} is new" in msg, msg
+        assert _ledger(dsn) == REAL, "nothing of the run was kept"
+    finally:
+        thread.join(10)
+        gate.close()
+        _drop_roles(*[r for r in (y, n, p_) if _role_exists(r)])
 
 
 # --- parameter grants held through a role the migration user belongs to ----------------------------------------------

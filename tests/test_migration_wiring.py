@@ -1026,6 +1026,20 @@ def test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_fi
     assert "in_a_comment" not in names and "some_schema" not in names
 
 
+def test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole():
+    """PostgreSQL stores `Mixed_Case` as `mixed_case`, and a quoted name keeps its case, spaces and doubled quotes.
+    Killed by: mutants MN1 (a plain name is not folded) and MN2 (a quoted name is cut at the first space)."""
+    texts = [
+        "CREATE FUNCTION Mixed_Case() RETURNS int LANGUAGE sql AS 'SELECT 1';",
+        "create or replace function \"a b\"(x int) returns int language sql as 'select 1';",
+        'CREATE FUNCTION "Sch"."Q""x"() RETURNS int LANGUAGE sql AS \'SELECT 1\';',
+        "CREATE FUNCTION Other_Schema.Folded_Too() RETURNS int LANGUAGE sql AS 'SELECT 1';",
+    ]
+    names = set(mig._managed_names(texts))
+    assert {"mixed_case", "a b", 'Q"x', "folded_too"} <= names
+    assert not {"Mixed_Case", "a", "Other_Schema", "Sch"} & names
+
+
 def test_the_roles_are_asked_again_after_every_file(monkeypatch, tmp_path):
     """The flags, the borrowed roles and the parameter grants are asked at the start and again after each file; a file
     that left the migration user a member of a powerful role is refused by name of the file. Killed by: mutant RC1 (the
@@ -1104,6 +1118,23 @@ def test_a_maintain_grant_is_a_problem_on_postgresql_17():
         for p in mig.effective_problems(db, "rt_role", lambda g: g.runtime if g else "")
     )
     assert "spend:MAINTAIN" in mig._excess_privileges(_Maintains(170010), "pt_role")
+
+
+def test_the_portal_role_is_asked_about_every_table_privilege_the_other_roles_are():
+    """The portal check asks the same list as the runtime check (`_table_privs`), so REFERENCES and TRIGGER are counted
+    too. Killed by: mutant PT1 (the portal list is written out again without them)."""
+    db = _Privileges(160015)
+    assert mig._excess_privileges(db, "pt_role") == []
+    assert set(mig._TABLE_PRIVS) <= set(db.asked), db.asked
+
+    class _Triggers(_Privileges):
+        def execute(self, query, params=None):
+            if "has_table_privilege" in str(query) and params[2] in ("REFERENCES", "TRIGGER"):
+                return _Result([(True,)])
+            return super().execute(query, params)
+
+    extra = mig._excess_privileges(_Triggers(160015), "pt_role")
+    assert "spend:REFERENCES" in extra and "spend:TRIGGER" in extra, extra
 
 
 # --- the released-file list is checked by migrate() itself ---------------------------------------------
@@ -1284,7 +1315,9 @@ class _Roles:
     def execute(self, query, params=None):
         text = query if isinstance(query, str) else query.as_string()
         self.log.append(text)
-        return _Result([(1,)] if "FROM pg_roles" in text and self.exists else [])
+        if "pg_stat_activity" in text:
+            return _Result([])  # no stale roles to sweep
+        return _Result([(1,)] if "FROM pg_roles WHERE rolname = %s" in text and self.exists else [])
 
 
 def test_the_test_role_is_looked_up_first_and_not_made_a_second_time():
@@ -1308,6 +1341,20 @@ def test_the_test_role_password_is_sent_only_as_a_hash():
     assert mr._PASSWORD not in " ".join(db.log)
     assert "SCRAM-SHA-256$4096:made-up-salt" in created[0] and "ALTER ROLE" not in " ".join(db.log)
     assert db.encrypted[2] == b"scram-sha-256"
+
+
+def test_making_the_test_role_first_sweeps_the_stale_roles_of_killed_processes():
+    """Killed by: mutant SW1 (the sweep is not called before the role is made)."""
+    from tests.fixtures import migration_role as mr
+
+    db = _Roles(exists=False)
+    mr.ensure_plain_role(db)
+    swept = [i for i, s in enumerate(db.log) if "pg_stat_activity" in s and "LIKE" in s]
+    created = [i for i, s in enumerate(db.log) if s.startswith("CREATE ROLE")]
+    assert swept and created and swept[0] < created[0], db.log
+    db = _Roles(exists=True)
+    mr.ensure_plain_role(db)
+    assert not any("pg_stat_activity" in s for s in db.log), "a role that exists is not swept for"
 
 
 def test_only_a_schema_with_the_test_prefix_is_a_scratch_schema():

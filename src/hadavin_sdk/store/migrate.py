@@ -14,7 +14,7 @@ the settings saved per database or per role (`pg_db_role_setting`) and every tri
 enabled state, its definition and the text of its function), and refuses if anything is LEFT changed (it cannot see a
 change that a file makes and undoes before it ends, and it cannot undo what a hidden `COMMIT` or a second connection
 (`dblink_exec` runs outside this transaction) already kept). The memberships and saved settings it compares are those
-of the current user, the session user, the runtime, portal and purge roles and every role the two users are a member
+of the current user, the session user, the runtime, portal and purge roles and every role any of them is a member
 of; a change to any other role (for example by another session on the same server) is not compared. Then it asks the
 role questions below again, so a file cannot leave the migration role holding what the first check refused.
 The migration role must NOT be a superuser and must not hold `CREATEROLE`, `CREATEDB` or `BYPASSRLS`: `migrate` reads
@@ -333,9 +333,7 @@ def _excess_privileges(db, role: str) -> list[str]:
         if grant.kind == "sequence":
             privs, q = ("USAGE", "SELECT", "UPDATE"), "SELECT has_sequence_privilege(%s, %s, %s)"
         else:
-            privs = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE") + (
-                ("MAINTAIN",) if "MAINTAIN" in table_privs else ()
-            )
+            privs = table_privs
             q = "SELECT has_table_privilege(%s, %s, %s)"
         allowed = {"SELECT"} if grant.portal else set()
         extra += [
@@ -413,15 +411,17 @@ _ROLE_FLAGS_SQL = (
     "WHERE rolname IN (current_user, session_user)"
 )
 # The roles whose memberships and saved settings the read-back compares: `own` = the current user, the session user and
-# the named runtime, portal and purge roles (parameter 1: their names); `closure` = every role the current user or the
-# session user is a member of, directly or through other roles (`pg_has_role ... 'MEMBER'`). The query list is
+# the named runtime, portal and purge roles (parameter 1: their names); `closure` = every role the current user, the
+# session user or a named role is a member of, directly or through other roles (`pg_has_role ... 'MEMBER'`). The query list is
 # server-wide (`pg_auth_members` and `pg_db_role_setting` hold every role of the server), so rows about other roles are
 # left out: another session changing an unrelated role while a file runs must not stop the run.
 # Settings saved per database or per role (`ALTER ROLE ... SET`, `ALTER DATABASE ... SET`): they apply to NEW sessions,
 # so a file that changes them changes what the next connection runs with.
 _READBACK_SETTINGS_SQL = (
-    "WITH scope AS (SELECT r.oid, (r.rolname IN (current_user, session_user) OR r.rolname = ANY(%s::text[])) AS own, "
-    "(pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER')) AS closure "
+    "WITH named AS (SELECT oid FROM pg_roles WHERE rolname = ANY(%s::text[])), "
+    "scope AS (SELECT r.oid, (r.rolname IN (current_user, session_user) OR r.oid IN (SELECT oid FROM named)) AS own, "
+    "(pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER') "
+    "OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, 'MEMBER'))) AS closure "
     "FROM pg_roles r) "
     "SELECT coalesce(d.datname, ''), coalesce(r.rolname, ''), s.setconfig::text FROM pg_db_role_setting s "
     "LEFT JOIN pg_database d ON d.oid = s.setdatabase LEFT JOIN pg_roles r ON r.oid = s.setrole "
@@ -432,8 +432,10 @@ _READBACK_SETTINGS_SQL = (
 # that no statement-start rule sees (`GRANT r TO s` inside a function, then `SELECT f();`). Names, not OIDs. Only the
 # memberships of the roles in scope (what each of them is a member of) and the members of the `own` roles.
 _READBACK_MEMBERS_SQL = (
-    "WITH scope AS (SELECT r.oid, (r.rolname IN (current_user, session_user) OR r.rolname = ANY(%s::text[])) AS own, "
-    "(pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER')) AS closure "
+    "WITH named AS (SELECT oid FROM pg_roles WHERE rolname = ANY(%s::text[])), "
+    "scope AS (SELECT r.oid, (r.rolname IN (current_user, session_user) OR r.oid IN (SELECT oid FROM named)) AS own, "
+    "(pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER') "
+    "OR EXISTS (SELECT 1 FROM named n WHERE pg_has_role(n.oid, r.oid, 'MEMBER'))) AS closure "
     "FROM pg_roles r) "
     "SELECT m.roleid::regrole::text, m.member::regrole::text, "
     "(to_jsonb(m) - 'oid' - 'roleid' - 'member')::text FROM pg_auth_members m "
@@ -670,8 +672,10 @@ _SCHEMA_USAGE_SQL = "SELECT has_schema_privilege(%s, current_schema(), 'USAGE')"
 _FOREIGN_OWNED_SHOWN = 20  # names in the message; every statement is printed
 
 
+_QUOTED = r'"((?:[^"]|"")+)"'
 _FUNCTION_CREATE = re.compile(
-    r"CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:\"?\w+\"?\s*\.\s*)?\"?(\w+)\"?", re.IGNORECASE
+    r"CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:(?:" + _QUOTED.replace("(", "(?:", 1) + r"|\w+)\s*\.\s*)?(?:" + _QUOTED + r"|(\w+))",
+    re.IGNORECASE,
 )
 
 
@@ -683,7 +687,9 @@ def _managed_names(texts) -> list[str]:
     names = set(GRANTS) | {"schema_migrations"}
     for raw in texts:
         text, _problem = lex(raw, keep_quoted=True)
-        names.update(m.group(1) for m in _FUNCTION_CREATE.finditer(text))
+        for m in _FUNCTION_CREATE.finditer(text):
+            # a quoted name keeps its case and its characters (`""` is one quote); a plain one is folded to lower case
+            names.add(m.group(1).replace('""', '"') if m.group(1) is not None else m.group(2).lower())
     return sorted(names)
 
 
@@ -729,7 +735,9 @@ def _refuse_foreign_owned(db, managed) -> None:
         "that alters one of them would fail with 'must be owner', and the grants of migrate would do nothing without "
         "an error. Nothing was changed. A database administrator hands the objects to the migration role once, "
         "connected as a superuser or as a role that is a member of both the old owner and the migration role (objects of "
-        "other applications in the schema are not listed and need no change), "
+        "other applications in the schema are not listed and need no change; but a table of ANOTHER application that "
+        "has the same name as one of this package's tables, for example spend or runs, looks the same here: do not "
+        "hand that one over, point migrate at another schema instead), "
         "with a file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): "
         + " ".join(statements)
         + hand

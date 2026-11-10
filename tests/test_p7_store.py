@@ -1,4 +1,4 @@
-"""Slice 2 P7 store hardening: TLS rules, append-only grants, fail-closed kill switch, exact month spend.
+"""Store hardening: TLS rules, append-only grants, fail-closed kill switch, exact month spend.
 
 Database tests skip without HADAVIN_TEST_PG_DSN (CI runs the postgres service)."""
 

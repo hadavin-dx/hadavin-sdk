@@ -1,4 +1,4 @@
-"""K5-core round 10, M2 (least privilege of the runtime and purge roles), on a real Postgres. Needs
+"""Least privilege of the runtime and purge roles, on a real Postgres. Needs
 HADAVIN_TEST_PG_DSN (CI: the postgres service); skipped without it."""
 
 from __future__ import annotations

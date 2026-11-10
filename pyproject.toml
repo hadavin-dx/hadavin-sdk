@@ -82,7 +82,7 @@ testpaths = ["tests"]
 # Repo root on sys.path so fixture check modules (tests.fixtures.checks) resolve by name.
 pythonpath = ["."]
 markers = [
-    "real_connect: migrate() keeps its real connect (no test-only SET ROLE to a plain role), to prove the privileged-role refusal",
+    "real_connect: migrate() keeps its real connect (the test helper does not swap in a plain login role), to prove the privileged-role refusal",
     "live: calls a real paid or cloud service; CI deselects it, run only on the owner's yes",
     "perf: timing tests (redaction patterns, end to end with views); CI runs them in their own step, which blocks a merge",
 ]
