@@ -1,13 +1,17 @@
-"""T1 on every store kind (the part that passes on the current code): the own-meter cap, one caller at a time.
+"""The cap, one caller at a time, on every store kind.
+
+Coupling: the mutant scripts (tests/meter_mutants.py, tests/postgres_mutants.py) name tests and message texts in this
+file; renaming a test or rewording an assertion message here means changing the mutant that expects it.
 
 What the code does (read, not assumed): ``Limits.blocked`` CHECKS the day and month totals BEFORE a call;
 ``Limits.charge`` ADDS the real cost AFTER it. There is no reserve step. So one caller at a time admits
 ceil(cap / cost) calls: the overshoot is at most one call, by design.
 
-Not here: 50 callers at the same time. All 50 pass the check before any of them charges, so the cap does not hold;
-that run, the fix (a reserve step before the call) and the tests that prove it are plan rows A13 and A21b in
-handover/PARALLEL-PLAN-2026-11-10.md. What IS here for them: the harness (``tests/meter_support.py``) and its
-controls, which show that the schedule can tell a meter that reserves from one that does not.
+Not here: 50 callers at the same time. All 50 pass the check before any of them charges, so the cap does not hold
+there; the failing proof, the fix (a reserve step before the call) and the tests that show it green are a later
+change (the failing proof is kept in handover/seeds/ on the handover branch). What IS here for them: the harness
+(``tests/meter_support.py``) and its controls, which show that the schedule can tell a meter that reserves from one
+that does not.
 
 Every test takes the ``store`` fixture, so each runs on the memory store and, with HADAVIN_TEST_PG_DSN set, on the
 postgres store (the production ledger). Amounts are ``Decimal`` dollars because the source ``Budget`` is Decimal.
@@ -17,7 +21,7 @@ from __future__ import annotations
 
 import math
 import threading
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 import pytest
 
@@ -101,7 +105,54 @@ def test_both_budgets_over_their_caps_are_both_named(store, monkeypatch):
     )
 
 
-# --- the schedule that the parallel tests (A21b) will use: controls on the harness itself ---------------------------
+@pytest.mark.parametrize("which", ["daily", "monthly"])
+def test_a_budget_of_zero_blocks_the_first_call(which, store, monkeypatch):
+    daily, monthly = ("0", HUGE) if which == "daily" else (HUGE, "0")
+    limits, _, _ = build_limits(daily, monthly, START, monkeypatch, store=store)
+    assert limits.blocked(AGENT) == [f"{which}_budget"], (
+        f"a {which} budget of 0 let the first call through"
+    )
+
+
+# --- PIN of today's behaviour, to be flipped by the later fix that rejects bad charges ---------------------------------
+# Ledger rows BL-core-a21b-seed-01 (the meter accepts NaN, negative and infinite charges), BL-core-p4d-r1-adv-A7 and
+# BL-core-p4d-r1-adv-C5 (the same class at the store's ``add_spend``). The entry point pinned here is ``Limits.charge``,
+# the one place every real charge goes through; the fix belongs there (and in the store). When that fix lands these
+# expectations flip to "the charge is refused and nothing is booked"; until then they record what the code does.
+
+
+@pytest.mark.parametrize(
+    "bad,totals,blocked",
+    [
+        (
+            "-1",
+            (Decimal(-1), Decimal(-1)),
+            [],
+        ),  # a negative charge LOWERS the spend: the cap is out of reach
+        ("Infinity", (Decimal("Infinity"),) * 2, ["daily_budget", "monthly_budget"]),
+        ("-Infinity", (Decimal("-Infinity"),) * 2, []),
+    ],
+)
+def test_pin_today_a_negative_or_infinite_charge_is_booked_as_it_is(
+    bad, totals, blocked, store, monkeypatch
+):
+    limits, _, _ = build_limits("5.00", HUGE, START, monkeypatch, store=store)
+    assert limits.charge(AGENT, Decimal(bad)) == totals, (
+        f"PIN: the charge {bad} was not booked as it is"
+    )
+    assert store.spend_totals(AGENT, START.date()) == totals, f"PIN: the ledger does not hold {bad}"
+    assert limits.blocked(AGENT) == blocked, f"PIN: the check after a charge of {bad} changed"
+
+
+def test_pin_today_a_nan_charge_is_booked_and_then_every_check_raises(store, monkeypatch):
+    limits, _, _ = build_limits("5.00", HUGE, START, monkeypatch, store=store)
+    day, month = limits.charge(AGENT, Decimal("NaN"))
+    assert day.is_nan() and month.is_nan(), "PIN: a NaN charge was not booked"
+    with pytest.raises(InvalidOperation):
+        limits.blocked(AGENT)  # the meter can no longer say yes or no for this agent
+
+
+# --- the schedule that the later parallel tests will use: controls on the harness itself ---------------------------
 
 
 def test_the_harness_passes_a_meter_that_reserves_before_the_call(store, monkeypatch):

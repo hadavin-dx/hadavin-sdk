@@ -22,6 +22,8 @@ import pytest
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
+from tests.pg_dsn import need_dsn_or_skip
+
 DEMO = Path(__file__).resolve().parents[2] / "demos" / "ask-your-data"
 sys.path.insert(0, str(DEMO))
 
@@ -35,9 +37,7 @@ def load_script(name: str):
 
 
 def _need(reason: str) -> None:
-    if os.environ.get("CI") == "true":
-        pytest.fail(reason, pytrace=False)
-    pytest.skip(reason)
+    need_dsn_or_skip(reason)  # the one rule for every database test helper: tests/pg_dsn.py
 
 
 @pytest.fixture(scope="session")

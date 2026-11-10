@@ -1,5 +1,5 @@
-"""Mutants of the money meter and its memory spend ledger, for the contract tests T1 (``tests/contracts/test_t1_meter_cap.py``)
-and T2 (``tests/contracts/test_store_time_rules.py``). Same runner and judge as ``tests/stage_mutants.py``
+"""Mutants of the money meter and its memory spend ledger, for the contract tests ``tests/contracts/test_t1_meter_cap.py``
+and ``tests/contracts/test_store_time_rules.py``. Same runner and judge as ``tests/stage_mutants.py``
 (``tools/mutation_runner.py``): each mutant changes ONE thing in a temp copy of the package and a named test must fail
 with an assertion message holding ``expect``. The tests run through ``tests/meter_memory_killers.py`` (the runner has no
 conftest, so that file supplies the memory ``store`` fixture). Not collected by pytest. Run from the repo root:
@@ -8,7 +8,7 @@ conftest, so that file supplies the memory ``store`` fixture). Not collected by 
     python tests/meter_mutants.py L3          # only mutants whose name contains the text
 
 The same tests run against the postgres store in ``tests/postgres_mutants.py`` (needs HADAVIN_TEST_PG_DSN).
-The 50-parallel tests are not here: they are plan row A21b in handover/PARALLEL-PLAN-2026-11-10.md.
+The 50-callers-at-once tests are not here; they are a later change (see tests/contracts/test_t1_meter_cap.py).
 """
 
 import sys
@@ -102,6 +102,14 @@ M = [
         "now() is not aware UTC",
     ),
     m(
+        "L9 a caller over both caps is told about the daily one only",
+        LIM,
+        "        if month >= budget.monthly:",
+        "        elif month >= budget.monthly:",
+        "test_both_budgets_over_their_caps_are_both_named",
+        "a caller over both caps must see both reasons",
+    ),
+    m(
         "L10 the daily check fires half a dollar early (a cost that is not W is cut short)",
         LIM,
         "if day >= budget.daily:",
@@ -110,12 +118,12 @@ M = [
         "calls for cap",
     ),
     m(
-        "L9 a caller over both caps is told about the daily one only",
+        "L11 charge turns a negative cost into 0 (the flip the pin test must notice)",
         LIM,
-        "        if month >= budget.monthly:",
-        "        elif month >= budget.monthly:",
-        "test_both_budgets_over_their_caps_are_both_named",
-        "a caller over both caps must see both reasons",
+        CHARGE,
+        "return self.store.add_spend(agent_id, now().date(), max(usd, __import__('decimal').Decimal(0)))",
+        "test_pin_today_a_negative_or_infinite_charge_is_booked_as_it_is",
+        "the charge -1 was not booked as it is",
     ),
     m(
         "S1 the ledger double counts a day",

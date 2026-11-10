@@ -1,11 +1,12 @@
-"""Harness for the money-meter tests T1 (the cap) and T2 (the ledger's time rules): a fake clock for
+"""Harness for the money-meter tests (the cap, and the spend ledger's time rules): a fake clock for
 ``hadavin_sdk.limits.now``, a Limits built over any store kind, a money oracle, and a parallel-caller schedule.
 No network, no model call, no real time.
 
 The code under test is the real ``Limits`` (``charge`` = spend after, ``blocked`` = check before) and the real spend
 ledger of each store kind (``add_spend`` / ``spend_totals``). Nothing here is a second meter.
 
-Plan: handover/PARALLEL-PLAN-2026-11-10.md, rows A21a (these tests) and A21b (the 50-parallel run on the Meter).
+The 50-callers-at-once proof is not here; it is a later change (its failing seed is kept in handover/seeds/ on the
+handover branch).
 """
 
 from __future__ import annotations
@@ -80,7 +81,7 @@ def utc(*args: int) -> datetime:
 
 def make_limits(daily: str, monthly: str, store: Store) -> Limits:
     """The real Limits over ``store``. ``Limits`` reads one thing from the registry, ``agents[AGENT].budget_usd``.
-    A real ``Registry`` is built only by ``registry.load`` from a whole config folder (config file, principals,
+    A real ``Registry`` is built only by ``load_registry(config)`` from a whole config folder (config file, principals,
     chains, contracts, prompt files), which has nothing to do with money, so the registry here is a minimal
     stand-in that holds one real ``AgentRecord``; the ``cast`` says exactly that and nothing else is faked."""
     agent = AgentRecord(
@@ -143,7 +144,8 @@ class Schedule:
         with self.cond:
             self.decided += 1
             self.cond.notify_all()
-            self.cond.wait_for(lambda: self.decided >= self.n, timeout=WAIT_S)
+            reached = self.cond.wait_for(lambda: self.decided >= self.n, timeout=WAIT_S)
+            assert reached, "not every caller reached the decision point"
 
 
 def run_parallel(reserve: Reserve, settle: Settle, n: int = CALLERS) -> int:
@@ -201,7 +203,7 @@ def set_machine_clock(monkeypatch: pytest.MonkeyPatch, instant: datetime) -> Non
     monkeypatch.setattr("hadavin_sdk.models.datetime", MachineClock)
 
 
-# --- the money oracle and the time-rule scenarios (T2) ------------------------------------------------------------------
+# --- the money oracle and the time-rule scenarios ------------------------------------------------------------------
 
 MINUTES6 = timedelta(minutes=6)
 HOURS25 = timedelta(hours=25)

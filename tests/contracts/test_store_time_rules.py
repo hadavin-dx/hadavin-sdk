@@ -1,4 +1,7 @@
-"""T2 on every store kind: the spend ledger's time rules by replay with a fake clock (no sleeping, no real time).
+"""The spend ledger's time rules on every store kind, by replay with a fake clock (no sleeping, no real time).
+
+Coupling: the mutant scripts (tests/meter_mutants.py, tests/postgres_mutants.py) name tests and message texts in this
+file; renaming a test or rewording an assertion message here means changing the mutant that expects it.
 
 What the ledger is (read, not assumed): UTC calendar buckets, one per (agent, day) and per (agent, month), keyed by
 ``now().date()`` at charge time. It is NOT a rolling window: a charge 6 minutes after another lands in the same

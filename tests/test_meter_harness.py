@@ -9,7 +9,10 @@ from __future__ import annotations
 
 import threading
 
-from tests.meter_support import CALLERS, run_parallel
+import pytest
+
+import tests.meter_support as support
+from tests.meter_support import CALLERS, Schedule, run_parallel
 
 CAP_CALLS = 3  # the stub meter admits this many calls
 
@@ -58,3 +61,9 @@ def test_run_parallel_never_books_for_the_meter():
     meter = StubMeter()
     run_parallel(meter.check, lambda: None)
     assert meter.booked == 0, "run_parallel booked a charge itself"
+
+
+def test_a_schedule_that_never_fills_fails_loudly_instead_of_passing_unseen(monkeypatch):
+    monkeypatch.setattr(support, "WAIT_S", 0.05)
+    with pytest.raises(AssertionError, match="not every caller reached the decision point"):
+        Schedule(2).decided_and_wait()  # a second caller never arrives

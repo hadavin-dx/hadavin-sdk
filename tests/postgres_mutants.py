@@ -149,6 +149,11 @@ M = [
         (("(agent_id, day, usd),", "(agent_id, day, round(usd, 2)),"),),
         "the first tiny charge was rounded",
     ),
+    PgMutant(
+        "P12 the month counter is never written (every charge adds 0 to it)",
+        (("(agent_id, month, usd),", "(agent_id, month, 0),"),),
+        "the month total of two charges did not add up",
+    ),
 ]
 
 
@@ -199,6 +204,7 @@ def run(root: Path, mutant: PgMutant | None) -> tuple[int, str]:
             "-p",
             "no:randomly",
             "--tb=line",
+            "-rf",
         ]
         return asyncio.run(_run_pytest(cmd, tmp, env))
     finally:
@@ -218,7 +224,10 @@ def judge(mutant: PgMutant, rc: int, stdout: str) -> tuple[bool, str]:
     hit = [ln for ln in failing if kind in ln and mutant.expect in ln]
     if not hit:
         return False, f"no {kind} line holds {mutant.expect!r}; first failing lines: {failing[:2]}"
-    return True, hit[0].strip()[-160:]
+    fails = [ln for ln in stdout.splitlines() if ln.startswith("FAILED ")]
+    pick = next((ln for ln in fails if mutant.expect in ln), fails[0] if fails else "")
+    test = pick.split("::")[-1].split(" ")[0] if pick else ""
+    return True, (f"[{test}] " if test else "") + hit[0].strip()[-160:]
 
 
 def main(argv: list[str]) -> int:
@@ -233,12 +242,33 @@ def main(argv: list[str]) -> int:
     if not chosen:
         print(f"no mutant name contains any of {only}; nothing was run", file=sys.stderr)
         return 2
-    rc, out = run(ROOT, None)
-    print(f"baseline rc={rc} :: {out.strip().splitlines()[-1] if out.strip() else ''}", flush=True)
-    bad = rc != 0 or "skipped" in out.splitlines()[-1]  # a skipped postgres case is not a pass
+    try:
+        rc, out = run(ROOT, None)
+    except TimeoutError:
+        print(f"baseline: pytest ran longer than {TIMEOUT_S:.0f} s and was killed", file=sys.stderr)
+        return 1
+    last = out.strip().splitlines()[-1] if out.strip() else "(no output)"
+    print(f"baseline rc={rc} :: {last}", flush=True)
+    if (
+        rc != 0 or "skipped" in last
+    ):  # a failing or skipped baseline proves nothing about any mutant
+        print(
+            "the unmutated copy must pass with no skipped case; no mutant was run", file=sys.stderr
+        )
+        return 1
+    bad = False
     killed = 0
     for x in chosen:
-        good, why = judge(x, *run(ROOT, x))
+        try:
+            result = run(ROOT, x)
+        except TimeoutError:
+            print(
+                f"BAD {x.name}\n      pytest ran longer than {TIMEOUT_S:.0f} s and was killed",
+                flush=True,
+            )
+            bad = True
+            continue
+        good, why = judge(x, *result)
         print(f"{'ok ' if good else 'BAD'} {x.name}\n      {why}", flush=True)
         killed += good
         bad |= not good

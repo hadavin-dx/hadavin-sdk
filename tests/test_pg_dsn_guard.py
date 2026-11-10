@@ -35,3 +35,15 @@ def test_a_missing_dsn_skips_outside_ci(monkeypatch):
         pytest.fail("a missing DSN on a developer machine must skip, not fail")
     else:
         pytest.fail("the schema helper yielded without a DSN")
+
+
+def test_the_shared_helper_fails_in_ci_and_skips_elsewhere(monkeypatch):
+    """The one rule both database conftests use (tests/pg_dsn.py)."""
+    from tests.pg_dsn import need_dsn_or_skip
+
+    monkeypatch.setenv("CI", "true")
+    with pytest.raises(pytest.fail.Exception):
+        need_dsn_or_skip("no dsn")
+    monkeypatch.setenv("CI", "false")
+    with pytest.raises(pytest.skip.Exception):
+        need_dsn_or_skip("no dsn")

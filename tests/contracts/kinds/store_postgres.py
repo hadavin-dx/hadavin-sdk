@@ -10,6 +10,7 @@ from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import PostgresSettings
 from tests.contracts.kinds import kind
+from tests.pg_dsn import need_dsn_or_skip
 
 # runtime DSN -> the DSN of the purge role of the same schema (only for `pg_schema(runtime=True)`)
 PURGE_DSN: dict[str, str] = {}
@@ -21,10 +22,7 @@ def pg_schema(migrated=True, runtime=False):
     suite must pass with only those rights); the role is dropped afterwards."""
     dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
     if not dsn:
-        reason = "HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)"
-        if os.environ.get("CI") == "true":  # the same test as tests/demo_askdata/conftest.py
-            pytest.fail(reason, pytrace=False)  # a silent skip in CI would hide every database test
-        pytest.skip(reason)
+        need_dsn_or_skip("HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)")
     psycopg = pytest.importorskip("psycopg")
     from psycopg import sql
     from psycopg.conninfo import make_conninfo
