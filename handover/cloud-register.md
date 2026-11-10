@@ -1053,3 +1053,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a2950211991880877 / af82164d5056b156c | PR73 design/security and codebase reviewers r5 | 2026-11-10 | - | CLOSED: 1 Blocker, 3 Major (+portal), minors; saved in handover/reviews/P3a-2-round5/ |
 | aea5c3b20851d826d | PR73 builder round 6 (resumed) | 2026-11-10 | +90 min | running |
 | a290aa955ce105a74 | PR89 builder round 7 | 2026-11-10 | - | CLOSED: 3586dcc pushed |
+| ab495747efcc92abd | PR89 evidence runner, head 3586dcc (162 mutants, root and non-root) | 2026-11-10 | on report | running |
+| ac9a58959262b4b47 | PR89 redaction reviewer round 8, snapshot /tmp/snap/core_P89-3586dcc | 2026-11-10 | on report | running |
