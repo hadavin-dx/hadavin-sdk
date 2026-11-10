@@ -1031,7 +1031,7 @@ def test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_fi
         "CREATE FUNCTION some_schema.qualified_fn() RETURNS int LANGUAGE sql AS 'SELECT 1';",
         "-- CREATE FUNCTION in_a_comment() RETURNS int\nSELECT 1;",
     ]
-    names = mig._managed_names(texts)
+    names = mig._managed_names(texts, "some_schema")
     assert names == sorted(set(names))
     assert set(mig.GRANTS) <= set(names) and "schema_migrations" in names
     assert {"audit_guard", "Quoted_Fn", "qualified_fn"} <= set(names)
@@ -1044,12 +1044,30 @@ def test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_
     texts = [
         "CREATE FUNCTION Mixed_Case() RETURNS int LANGUAGE sql AS 'SELECT 1';",
         "create or replace function \"a b\"(x int) returns int language sql as 'select 1';",
-        'CREATE FUNCTION "Sch"."Q""x"() RETURNS int LANGUAGE sql AS \'SELECT 1\';',
+        'CREATE FUNCTION "other_schema"."Q""x"() RETURNS int LANGUAGE sql AS \'SELECT 1\';',
         "CREATE FUNCTION Other_Schema.Folded_Too() RETURNS int LANGUAGE sql AS 'SELECT 1';",
     ]
-    names = set(mig._managed_names(texts))
+    names = set(mig._managed_names(texts, "other_schema"))
     assert {"mixed_case", "a b", 'Q"x', "folded_too"} <= names
     assert not {"Mixed_Case", "a", "Other_Schema", "Sch"} & names
+
+
+def test_a_function_of_another_schema_is_not_a_managed_name():
+    """`CREATE FUNCTION other.audit()` makes no function in the schema of the run, so an unrelated `audit` there that
+    another role owns is no reason to refuse the run. The schema is read as the server reads it (a plain one is
+    folded, a quoted one keeps its case). Killed by: mutants SQ1 (the schema before the dot is ignored) and SQ2 (a
+    name written with the schema of the run is not read)."""
+    texts = [
+        "CREATE OR REPLACE FUNCTION other_schema.audit_other() RETURNS int LANGUAGE sql AS 'SELECT 1';",
+        "CREATE FUNCTION \"Mixed\".quoted_other() RETURNS int LANGUAGE sql AS 'SELECT 1';",
+        "CREATE FUNCTION my_schema.audit_mine() RETURNS int LANGUAGE sql AS 'SELECT 1';",
+        "CREATE FUNCTION \"My_Schema\".audit_quoted_mine() RETURNS int LANGUAGE sql AS 'SELECT 1';",
+        "CREATE FUNCTION audit_bare() RETURNS int LANGUAGE sql AS 'SELECT 1';",
+    ]
+    names = set(mig._managed_names(texts, "my_schema"))
+    assert {"audit_mine", "audit_bare"} <= names, names
+    assert not {"audit_other", "quoted_other", "audit_quoted_mine"} & names, names
+    assert "audit_quoted_mine" in set(mig._managed_names(texts, "My_Schema"))
 
 
 def test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement():
@@ -1063,14 +1081,16 @@ def test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_o
         "SELECT 1; -- CREATE FUNCTION Hidden_In_Comment()\n",
         "SELECT 1 CREATE FUNCTION Hidden_Mid_Statement() RETURNS int;",
     ]
-    names = set(mig._managed_names(texts))
+    names = set(mig._managed_names(texts, "public"))
     assert {"cost$fn", "\u00c4rger_\u00dc"} <= names, names
     assert not {"\u00e4rger_\u00fc", "cost"} & names, names
     assert not {n for n in names if n.startswith("hidden")}, names
     # Not handled (and safe): the text of a string that holds `; CREATE FUNCTION name` is read as a function too. That
     # only adds a name that no object has (or a same-named function of another owner, which is refused), so a run is
     # refused that need not be, never the other way round.
-    assert "in_string" in set(mig._managed_names(["SELECT 'x; CREATE FUNCTION In_String() y';"]))
+    assert "in_string" in set(
+        mig._managed_names(["SELECT 'x; CREATE FUNCTION In_String() y';"], "public")
+    )
 
 
 def test_the_roles_are_asked_again_after_every_file(monkeypatch, tmp_path):
@@ -1401,10 +1421,31 @@ def test_the_live_process_lock_is_taken_on_the_server_that_makes_the_role(holds)
     mr.ensure_plain_role(_Roles(exists=False))
     assert len(holds) == 1, [h.server for h in holds]
     assert "made-up-host" in holds[0].server and "5999" in holds[0].server
+    assert f"application_name={mr.PLAIN_ROLE}" in holds[0].server, holds[0].server
+    assert "password" not in "".join(mr._HOLDS), "the table of held connections keeps no password"
     ((query, params),) = holds[0].log
     assert "pg_advisory_lock" in query and params == (mr._hold_key(mr._TOKEN),)
     mr.ensure_plain_role(_Roles(exists=False))
     assert len(holds) == 1, "a second role creation on the same server takes no second lock"
+
+
+def test_the_hold_connection_is_closed_when_the_lock_cannot_be_taken(holds):
+    """Killed by: mutant SW9 (the new connection is left open when the lock statement raises)."""
+    from tests.fixtures import migration_role as mr
+
+    class Boom(Exception):
+        pass
+
+    def fail(self, query, params=None):
+        raise Boom
+
+    _Hold.execute, saved = fail, _Hold.execute
+    try:
+        with pytest.raises(Boom):
+            mr._hold_the_role(_Roles(exists=False))
+    finally:
+        _Hold.execute = saved
+    assert len(holds) == 1 and holds[0].closed and mr._HOLDS == {}
 
 
 def test_a_role_that_exists_takes_no_lock_and_a_missing_environment_variable_changes_nothing(

@@ -650,15 +650,16 @@ def test_the_runtime_role_writes_and_reads_the_chain_but_cannot_rewrite_it(key):
 
     from hadavin_sdk.backends.table import PostgresSettings
     from hadavin_sdk.store.migrate import migrate
+    from tests.fixtures.migration_role import create_login_role
 
     for dsn in pg_schema(migrated=False):
         role = "rt_" + uuid.uuid4().hex[:10]
         with psycopg.connect(dsn, autocommit=True) as db:
-            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            password = create_login_role(db, role)
         try:
             migrate(dsn, runtime_role=role)
             options = conninfo_to_dict(dsn).get("options")
-            runtime_dsn = make_conninfo(dsn, user=role, options=options)
+            runtime_dsn = make_conninfo(dsn, user=role, password=password, options=options)
             settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
             store = make("store", settings, FakeSecretProvider({"pg-dsn": runtime_dsn}))
             try:

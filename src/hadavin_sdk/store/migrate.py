@@ -656,11 +656,12 @@ _FOREIGN_OWNED_SHOWN = 20  # names in the message; every statement is printed
 
 
 # The parts of a `CREATE FUNCTION` name, as PostgreSQL reads them: a quoted name (`""` inside is one quote) or a plain
-# name (letters, digits, `_` and `$`; it does not start with a digit). A schema before the dot is skipped.
+# name (letters, digits, `_` and `$`; the pattern also lets a digit start it, which only adds a name no object has: a
+# false refusal at most, never a missed one). The schema before the dot is captured (groups 1 and 2).
 _QUOTED_NAME = r'"(?:[^"]|"")+"'
 _QUOTED_NAME_BODY = r'"((?:[^"]|"")+)"'
 _PLAIN_NAME = r"\w[\w$]*"
-_SCHEMA_DOT = rf"(?:(?:{_QUOTED_NAME}|{_PLAIN_NAME})\s*\.\s*)?"
+_SCHEMA_DOT = rf"(?:(?:{_QUOTED_NAME_BODY}|({_PLAIN_NAME}))\s*\.\s*)?"
 # Only at the start of a statement (the text has no comments, and a string is not a statement), so a
 # `CREATE FUNCTION` that is only written inside a string is not read as a name.
 _FUNCTION_CREATE = re.compile(
@@ -675,33 +676,48 @@ def _fold(name: str) -> str:
     return "".join(c.lower() if "A" <= c <= "Z" else c for c in name)
 
 
-def _managed_names(texts) -> list[str]:
+_GRANT_MAP_WORDS = (
+    " (the grant map is the list in the code of the tables each of the roles of this package may use, and the one "
+    "right it may have on each)"
+)
+
+
+def _name_of(quoted: str | None, plain: str | None) -> str | None:
+    """A name as the server stores it: a quoted one keeps its case (`""` is one quote), a plain one is folded."""
+    if quoted is not None:
+        return quoted.replace('""', '"')
+    return _fold(plain) if plain is not None else None
+
+
+def _managed_names(texts, schema: str) -> list[str]:
     """The names this package manages in its schema: every relation in `GRANTS` (`check_grants` makes these exactly the
     relations the migration files create), `schema_migrations`, and every function a migration file creates or
     replaces (a file can create no type or domain: the guard refuses `CREATE TYPE` and `CREATE DOMAIN`). `texts` are the
-    file texts `migrate` executes. Sorted, lower case where the server folds the name."""
+    file texts `migrate` executes; `schema` is the schema of the run (a function written with another schema before the
+    dot is not in this schema, so it is not listed). Sorted, lower case where the server folds the name."""
     names = set(GRANTS) | {"schema_migrations"}
     for raw in texts:
         text, _problem = lex(raw, keep_quoted=True)
         for m in _FUNCTION_CREATE.finditer(text):
-            # a quoted name keeps its case and its characters (`""` is one quote); a plain one is folded to lower case
-            names.add(
-                m.group(1).replace('""', '"') if m.group(1) is not None else _fold(m.group(2))
-            )
+            where = _name_of(m.group(1), m.group(2))
+            # no schema written (the search path decides) or the schema of the run
+            if where is None or where == schema:
+                names.add(_name_of(m.group(3), m.group(4)))
     return sorted(names)
 
 
-def _refuse_foreign_owned(db, managed) -> None:
-    """Refuse a run whose migration role cannot change what this package manages in the schema (`managed`, see
+def _refuse_foreign_owned(db, texts) -> None:
+    """Refuse a run whose migration role cannot change what this package manages in the schema (the names, see
     `_managed_names`; the objects of another application in the schema are not looked at; see `_FOREIGN_OWNED_SQL`). The
     message names the objects (at most `_FOREIGN_OWNED_SHOWN`), their owners, and prints the SQL that hands every one
     of them to the migration role. A statement is printed only when every name in it is plain: another role owns the
     object and chose its name, so a name with a control or unusual character is not copied into a line that a person
     runs; for such an object the message says a person must write the statement by hand."""
+    schema = db.execute("SELECT current_schema()").fetchone()[0]
+    managed = _managed_names(texts, schema)
     rows = db.execute(_FOREIGN_OWNED_SQL, (list(managed), list(managed))).fetchall()
     if not rows:
         return
-    schema = db.execute("SELECT current_schema()").fetchone()[0]
     me = db.execute("SELECT current_user").fetchone()[0]
     names, statements, by_hand = [], [], []
     for what, kind, name, owner, args in rows:
@@ -737,7 +753,8 @@ def _refuse_foreign_owned(db, managed) -> None:
         "has the same name as one of this package's tables, for example spend or runs, looks the same here: do not "
         "hand that one over, point migrate at another schema instead; the same goes for a function: it is matched by "
         "name, so read the text of each listed function first and hand it over only when it is this package's own "
-        "code, because the migration role would then own, and run, it), "
+        "code, because the migration role would then own, and run, it; a function made SECURITY DEFINER runs with its "
+        "owner's rights, so handing it over also hands over what it can do), "
         "with a file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): "
         + " ".join(statements)
         + hand
@@ -1002,7 +1019,7 @@ def migrate(
                 db.execute(limit)
             step[0] = "checking the migration role"
             _refuse_privileged_role(db)
-            _refuse_foreign_owned(db, _managed_names(texts.values()))
+            _refuse_foreign_owned(db, texts.values())
             db.execute(
                 "CREATE TABLE IF NOT EXISTS schema_migrations "
                 "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
@@ -1040,7 +1057,9 @@ def migrate(
                 _apply_grants(db, runtime_role, lambda g: g.runtime)
                 if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
                     raise ConfigError(
-                        "the runtime role holds more than the grant map: " + "; ".join(bad[:20])
+                        "the runtime role holds more than the grant map: "
+                        + "; ".join(bad[:20])
+                        + _GRANT_MAP_WORDS
                     )
             if purge_role:
                 _apply_grants(db, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
@@ -1051,7 +1070,9 @@ def migrate(
                     lambda g: g.purge_cols if g else (),
                 ):
                     raise ConfigError(
-                        "the purge role holds more than the grant map: " + "; ".join(bad[:20])
+                        "the purge role holds more than the grant map: "
+                        + "; ".join(bad[:20])
+                        + _GRANT_MAP_WORDS
                     )
             if portal_role:
                 _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
@@ -1063,6 +1084,7 @@ def migrate(
                     raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
                         "the portal role holds privileges outside the portal grant map: "
                         + "; ".join(extra[:20])
+                        + _GRANT_MAP_WORDS
                     )
             for role in named:
                 got = db.execute(_SCHEMA_USAGE_SQL, (role,)).fetchone()

@@ -1698,7 +1698,9 @@ def _manage(monkeypatch, *names: str) -> None:
     """Make the package also manage these made-up names: the ownership check looks only at what the package manages
     (`_managed_names`), and these tests make foreign objects with names the package never uses."""
     real = mig._managed_names
-    monkeypatch.setattr(mig, "_managed_names", lambda texts: sorted({*real(texts), *names}))
+    monkeypatch.setattr(
+        mig, "_managed_names", lambda texts, schema: sorted({*real(texts, schema), *names})
+    )
 
 
 def _hand_over(super_dsn, tmp_path, msg: str):
@@ -2018,6 +2020,52 @@ def test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not(scr
                 "SELECT 1 FROM pg_class WHERE relname = 'hadavin_test_stale_tbl'"
             ).fetchone(), "what the stale role owned went with it"
     _drop_roles(*[r for r in (live, held, stale) if _role_exists(r)])
+
+
+@needs_pg
+def test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server(
+    scratch, monkeypatch
+):
+    """A role belongs to the whole server, an advisory lock to one database. The live process holds its mark from
+    database X; a second test process sweeps from database Y of the same server: its try-lock on Y succeeds, so only
+    the connection named like the role keeps the role. Killed by: mutant SW7 (the sweep does not look at the name of
+    the connections)."""
+    name = f"hadavin_test_migrator_{uuid.uuid4().hex[:8]}"
+    db_x, db_y = (f"hadavin_test_db_{uuid.uuid4().hex[:8]}" for _ in range(2))
+    monkeypatch.setattr(helper, "_HOLDS", {})
+    with psycopg.connect(DSN, autocommit=True) as admin:
+        create_login_role(admin, name)
+        for d in (db_x, db_y):
+            admin.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(d)))
+    try:
+        with (
+            psycopg.connect(make_conninfo(DSN, dbname=db_x), autocommit=True) as in_x,
+            psycopg.connect(make_conninfo(DSN, dbname=db_y), autocommit=True) as in_y,
+        ):
+            with (
+                monkeypatch.context() as as_that_process
+            ):  # only the hold is made as the other process
+                as_that_process.setattr(helper, "_TOKEN", name.rsplit("_", 1)[1])
+                as_that_process.setattr(helper, "PLAIN_ROLE", name)
+                helper._hold_the_role(in_x)
+            try:
+                assert name not in helper.sweep_stale_roles(in_y), (
+                    "a live process's role was dropped"
+                )
+                assert _role_exists(name)
+            finally:
+                helper._close_the_hold()
+            for _ in range(100):  # the server ends the closed session a moment later
+                if name in helper.sweep_stale_roles(in_y):
+                    break
+                time.sleep(0.05)
+            else:
+                raise AssertionError("after the hold is closed the role is stale and is dropped")
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            for d in (db_x, db_y):
+                admin.execute(sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(d)))
+        _drop_roles(*[r for r in (name,) if _role_exists(r)])
 
 
 # --- role changes made by ANOTHER session while a file runs ---------------------------------------------------------

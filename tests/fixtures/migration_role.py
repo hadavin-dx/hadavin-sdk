@@ -66,32 +66,42 @@ def _hold_key(token: str) -> int:
 
 
 def _hold_the_role(db) -> None:
-    """Hold an advisory lock, on a connection kept open until the process ends, that says "the test process of this
-    role is alive". The lock is taken on the server of `db`, the connection that creates the role (the sweep of stale
-    roles looks on that server, and nowhere else), so it does not depend on `HADAVIN_TEST_PG_DSN`. The sweep never
-    touches a role whose lock is held, and the lock cannot be mistaken for a role that is between two short
-    connections. One lock per server."""
+    """Hold a connection, open until the process ends, that says "the test process of this role is alive". A role
+    belongs to the whole server, but an advisory lock belongs to one database, so the mark is two things: the
+    connection is named (`application_name`) like the role, and `pg_stat_activity` shows every connection of the server
+    (the sweep of stale roles reads that, whichever database it runs in), and an advisory lock is held on top (a second
+    proof inside this database). The sweep never touches a role whose mark is there. One connection per server (a
+    server is one host, port and database; a second database of the same host gets a connection of its own, which is
+    harmless)."""
     import psycopg
 
-    server = _server_key(make_conninfo(db.info.dsn, password=db.info.password or None))
-    if server in _HOLDS:
+    key = _server_key(db.info.dsn)  # no password in the key
+    if key in _HOLDS:
         return
-    hold = psycopg.connect(server, autocommit=True)
-    hold.execute("SELECT pg_advisory_lock(%s)", (_hold_key(_TOKEN),))
-    _HOLDS[server] = hold
+    hold = psycopg.connect(
+        make_conninfo(db.info.dsn, password=db.info.password or None, application_name=PLAIN_ROLE),
+        autocommit=True,
+    )
+    try:
+        hold.execute("SELECT pg_advisory_lock(%s)", (_hold_key(_TOKEN),))
+    except BaseException:
+        hold.close()
+        raise
+    _HOLDS[key] = hold
 
 
 def sweep_stale_roles(db) -> list[str]:
     """Drop the test roles of earlier test processes that were killed before their exit hook ran: a role named
-    `hadavin_test_migrator_<token>` that is not ours, has no session on the server, and whose live-process lock nobody
-    holds. What it owns goes with it. Returns the names dropped. A role that cannot be dropped is left and reported in
+    `hadavin_test_migrator_<token>` that is not ours, has no session on the server (also none named like it: the mark of a live
+    test process in any database of the server), and whose live-process lock nobody holds. What it owns goes with it. Returns the names dropped. A role that cannot be dropped is left and reported in
     one line."""
     import psycopg
 
     dropped = []
     rows = db.execute(
         "SELECT r.rolname FROM pg_roles r WHERE r.rolname LIKE %s AND r.rolname <> %s "
-        "AND NOT EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.usename = r.rolname)",
+        "AND NOT EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.usename = r.rolname "
+        "OR a.application_name = r.rolname)",
         (_ROLE_PREFIX.replace("_", "\\_") + "%", PLAIN_ROLE),
     ).fetchall()
     for (name,) in rows:
