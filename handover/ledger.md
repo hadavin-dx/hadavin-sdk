@@ -2261,3 +2261,10 @@
 | BL-core-a21a-w2-08 | A21a ba89ea7 | MAJOR | duplicated test bodies between T2 replay file and contract file; mutant only_test ids depend on them | OPEN | round-w2-codebase.md M2 | A21a fix builder |
 | BL-core-a21a-w2-09 | A21a ba89ea7 | MAJOR | stale or private wording in three test docstrings ("lead report", "STANDING ORDERS 6d") | OPEN | round-w2-codebase.md M3 | A21a fix builder |
 | BL-core-a21a-w2-10 | A21a ba89ea7 | MINOR | FakeClock reason, SimpleNamespace cast, NoAudit cast, brittle expect strings, no postgres upsert mutant | OPEN | round-w2-codebase.md m1-m5 | A21a fix builder |
+| BL-core-a21a-w2-11 | A21a ba89ea7 | BLOCKER | tests/test_t1_meter_parallel.py (4 failing tests) fails the full suite; must move to A21b branch; reword docstrings | OPEN | reviews/A21a/round-w2-design.md B1 (same as BL-core-a21a-w2-03) | lead decision; builder moves it |
+| BL-core-a21a-w2-12 | A21a ba89ea7 | BLOCKER | Postgres kill proof not reproducible: postgres_mutants.py not in the diff; P3 killed by a CHECK constraint, not a time-rule assertion | OPEN | round-w2-design.md B2 | A21a fix builder |
+| BL-core-a21a-w2-13 | A21a ba89ea7 | MAJOR | T1 cap tested only on MemoryStore, not Postgres | OPEN | round-w2-design.md M3 | A21a fix builder |
+| BL-core-a21a-w2-14 | A21a ba89ea7 | MAJOR | parallel harness cannot pass a choke-point fix (double charge); needs (reserve, settle) pair | OPEN | round-w2-design.md M4 | A21a fix builder / A21b |
+| BL-core-a21a-w2-15 | A21a ba89ea7 | MAJOR | no harness negative control with a stub meter | OPEN | round-w2-design.md M5 | A21a fix builder |
+| BL-core-a21a-w2-16 | A21a ba89ea7 | MAJOR | mutants miss year-in-month-key, Postgres agent filter and counters, both budgets over cap, NaN/negative/Infinity charges | OPEN | round-w2-design.md M6 | A21a fix builder |
+| BL-core-a21a-w2-17 | A21a ba89ea7 | MINOR | weak kill messages, Decimal scale test, clock comment, CI must fail not skip without DSN, cost != W case, isolation run twice, evidence env clear | OPEN | round-w2-design.md N7-N12 | A21a fix builder |
