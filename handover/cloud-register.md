@@ -1261,3 +1261,13 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-Q8c1 adaef824 | EVIDENCE RUNNER (Fable) Q8c-1 head 7af13809 (no outside program; engine tests recorded as not run), heavy.sh, pg 56180 | 15:20Z | +60m | 15:20Z | running (queues) | read RESULTS.md |
 | R-Q8c1-res a1693872, a176d628 | egm design + codebase (Fable) RESULT review r1 of Q8c-1 (snapshot q8c1-7af1380) | 15:20Z | +30m | 15:20Z | running | save reviews/Q8c/result-r1-*-full.md |
 | B-Q8a1 (resumed 3) a0c5bd99 | Q8a-1 fix batch 3 (Minors only: STEPS check, config timeout bound, seam identities, wording) + PR-body draft | 15:22Z | +45m | 15:22Z | running | final head -> evidence on that head + one fresh delta reviewer -> READY candidate |
+
+### Long-running check 15:23Z
+| agent | age | doing now | verdict |
+|---|---|---|---|
+| B-P3a2 a73e15b4 | 78 min | whole mutant list 31 min in (15 min idle; load 13), fresh child every few seconds; checkpoint written 15:23Z: then restart its Postgres with server variables, rerun one demo test, push | progressing; limit 120 min (16:05Z) |
+| B-flaky fix a6e5db57 | 52 min | its under-load proof: 8 busy loops of its own for 4.5 min (the load-10 measurement I ordered); 5 files changed, not committed | progressing; this is the main cause of load 13 right now and ends with its 200 runs |
+| B-PR89-r20 a7b9ddc4 | 48 min | resumed with the evidence facts (merge main, exact negative tests) | on track |
+| EV-P77 ab49c9d1 | 17 min | full suite through heavy.sh 15 min in; 9 probe/fail-before files already written | on track |
+| B-Q8a2 fix 1 a0472549 | 22 min | full suite 8.5 min in | on track |
+| EV-Q8a1-r3, EV-Q8c1, B-Q8a1 fix 3, R-P77 codebase, R-Q8c1 x2 | 3-15 min | queued or reading | on track |
