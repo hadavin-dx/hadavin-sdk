@@ -28,7 +28,10 @@ TD, TC, TV = (
     "tests/test_diagnostic_codes.py",
     "tests/test_diagnostic_validation.py",
 )
-TESTS = [TD, TC, TV]
+TH = "tests/test_diagnostics_hostile.py"
+ORACLE = "tests/data/c18a_oracle.py"
+CORPUS = "tests/data/c18a_hostile_corpus.py"
+TESTS = [TD, TC, TV, TH]
 
 
 def mutant(name, file, old, new, test_file, killer, expect, **kw):
@@ -79,7 +82,7 @@ M = [
     mutant(
         "identity check removed from the own-class lookup",
         D,
-        "            if code is not None and _is_the_named_class(cls):",
+        "            if code is not None and _is_the_named_class(cls, (mod, qual)):",
         "            if code is not None:",
         TC,
         "test_spoofed_class_gets_no_own_code",
@@ -226,7 +229,7 @@ M = [
     mutant(
         "kind identity check removed",
         D,
-        '        if not _is_the_named_class(tp):\n            return "dynamic_class"',
+        '        if not _is_the_named_class(tp, (mod, qual)):\n            return "dynamic_class"',
         '        if False:\n            return "dynamic_class"',
         TD,
         "test_kind_identity_rule",
@@ -342,6 +345,90 @@ M = [
         TV,
         "test_a_type_outside_the_closed_list_prints_other",
         "outside the closed list",
+    ),
+    # fix batch w3: reserved codes, step names, table lookup, tokens, order of facts, the reverse check and the teeth test
+    mutant(
+        "a reserved code is removed from RESERVED_FOR",
+        C,
+        '        "provider_timeout": "P5b1",\n',
+        "",
+        TC,
+        "test_every_code_member_is_reachable_or_reserved",
+        "provider_timeout",
+    ),
+    mutant(
+        "TICK_STEPS gains a name",
+        C,
+        '{"sweep", "reconcile", "stuck", "checkpoint", "purge_evidence", "reprobe_sources"}',
+        '{"sweep", "reconcile", "stuck", "checkpoint", "purge_evidence", "reprobe_sources", "zzz_step"}',
+        TC,
+        "test_tick_steps_match_tick_module",
+        "AssertionError: assert {'checkpoint'",
+    ),
+    mutant(
+        "the own code is read from a class attribute named code",
+        D,
+        "def _own_code(tp: type) -> Code | None:\n    for cls in tp.__mro__:",
+        "def _own_code(tp: type) -> Code | None:\n    _c = getattr(tp, 'code', None)\n    if isinstance(_c, str) and _c in Code._value2member_map_:\n        return Code(_c)\n    for cls in tp.__mro__:",
+        TC,
+        "test_instance_and_class_attribute_named_code_is_ignored",
+        "foreign_exception",
+    ),
+    mutant(
+        "SafeToken.of stores the caller's object",
+        D,
+        "                return SafeToken(member, SafeToken._MINT)",
+        "                return SafeToken(value, SafeToken._MINT)",
+        TD,
+        "test_safe_token_holds_the_member_of_the_allowed_set_not_the_callers_object",
+        "the caller's object",
+    ),
+    mutant(
+        "the fp ignores the function name",
+        D,
+        '    text = f"{kind}|{code}|{function}|{relpath}"',
+        '    text = f"{kind}|{code}|{relpath}"',
+        TD,
+        "test_locator_and_fp",
+        "fp=ed342ffb",
+    ),
+    mutant(
+        "two adjacent fact names are swapped in FACT_PRIORITY",
+        C,
+        "    FactKey.http_status,\n    FactKey.sqlstate,\n    FactKey.phase,",
+        "    FactKey.sqlstate,\n    FactKey.http_status,\n    FactKey.phase,",
+        TC,
+        "test_fact_priority_order_is_the_d9_literal",
+        "differs from the D9 literal order",
+    ),
+    mutant(
+        "the oracle sees only whole keys (half blind)",
+        ORACLE,
+        "            if any(w in k for w in wanted for k in keys):",
+        "            if any(w == k for w in wanted for k in keys):",
+        TH,
+        "test_reverse_check_fails_90_percent",
+        "AssertionError: (0, 124",
+    ),
+    Mutant(
+        "a validation row names a canary that is not in its document",
+        CORPUS,
+        'val("pydantic_input", "lit", json.dumps({"pick": EMAIL}), E_, "literal_error quoting the input")',
+        'val("pydantic_input", "lit", json.dumps({"pick": EMAIL}), (IBAN,), "literal_error quoting the input")',
+        "none of",
+        test_file=TH,
+        only_test="test_every_active_row_has_teeth",
+        pinned=TH.removesuffix(".py")
+        + "::test_every_active_row_has_teeth[HC-pydantic_input-03]",  # the one row that is changed
+    ),
+    mutant(
+        "every exception row is exempt from the teeth test (the cap of 15 is exceeded)",
+        CORPUS,
+        'expect: str = "no_canary", code: Code | None = None, step: str = "extract", golden: str | None = None,',
+        'expect: str = "grammar", code: Code | None = None, step: str = "extract", golden: str | None = None,',
+        TH,
+        "test_exempt_rows_are_chosen_by_the_field_and_capped",
+        "rows are exempt from the teeth test, the cap is 15",
     ),
 ]
 

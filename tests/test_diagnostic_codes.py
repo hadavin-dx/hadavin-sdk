@@ -49,6 +49,40 @@ def test_fact_priority_equals_fact_key_members() -> None:
     assert len(set(codes.FACT_PRIORITY)) == len(FactKey) == 20
 
 
+D9_FACT_ORDER = (
+    "type",
+    "key",
+    "http_status",
+    "sqlstate",
+    "phase",
+    "cause_kind",
+    "provider_error_type",
+    "request_id",
+    "retryable",
+    "errno",
+    "winerror",
+    "gai",
+    "count",
+    "position",
+    "line",
+    "column",
+    "field",
+    "retry_count",
+    "attempt",
+    "duration_ms",
+)
+
+
+def test_fact_priority_order_is_the_d9_literal() -> None:
+    """The 20 names of design D9, in order, written out here as one literal. The test above compares ``FACT_PRIORITY`` with ``FactKey``,
+    so swapping two names in both would pass it; this one pins the order itself (BN-17)."""
+    assert len(D9_FACT_ORDER) == 20 and len(set(D9_FACT_ORDER)) == 20
+    assert tuple(k.value for k in codes.FACT_PRIORITY) == D9_FACT_ORDER, (
+        "FACT_PRIORITY differs from the D9 literal order"
+    )
+    assert tuple(k.value for k in FactKey) == D9_FACT_ORDER, "FactKey differs from the D9 literal"
+
+
 def test_fact_bounds_cover_the_number_keys() -> None:
     numbers = {
         "http_status",
@@ -233,3 +267,77 @@ def test_step_token_is_closed_and_final() -> None:
     assert codes.StepToken.of(Sub("sweep")) is codes.Where.other
     with pytest.raises(TypeError):
         type("X", (codes.StepToken,), {})
+
+
+# --- tests the ticket lists (BN-9, BN-10 cut one) ------------------------------------------------------------------------------
+NOT_SCANNABLE: dict[
+    str, str
+] = {}  # table keys of classes that exist only at run time (none today): key -> why the scan cannot see it
+
+
+def test_every_row_key_is_found_by_the_scan() -> None:
+    """A rename of a class without a change of its row fails loudly: every row key is a class the AST scan finds, or is listed as not
+    scannable."""
+    found = set(_exception_classes())
+    lost = [key for key in OWN_CODES if key not in found and key not in NOT_SCANNABLE]
+    assert not lost, f"rows whose class the scan does not find: {lost}"
+
+
+def test_not_scannable_list_has_runtime_rows() -> None:
+    """Each not-scannable key is a row of the table, is NOT found by the scan (else it would not need the list) and imports to a class."""
+    found = set(_exception_classes())
+    for key, why in NOT_SCANNABLE.items():
+        assert key in OWN_CODES and key not in found and len(why) >= 20, key
+        module, qual = key.split(":")
+        assert isinstance(getattr(importlib.import_module(module), qual), type), key
+
+
+def test_phase_is_the_frozen_list() -> None:
+    assert [p.value for p in codes.Phase] == ["auth", "connect", "query", "unknown"]
+
+
+FROZEN_VALIDATION_TYPES = frozenset(
+    {
+        "missing", "extra_forbidden", "literal_error", "int_parsing", "float_parsing", "bool_parsing", "string_type", "int_type",
+        "dict_type", "list_type", "too_short", "too_long", "greater_than", "less_than", "string_too_short", "string_too_long",
+        "decimal_parsing", "date_parsing", "datetime_parsing", "enum", "url_parsing", "json_invalid", "model_type",
+        "union_tag_invalid", "value_error", "assertion_error",
+    }
+)  # fmt: skip
+
+
+def test_validation_types_are_the_frozen_list() -> None:
+    assert len(FROZEN_VALIDATION_TYPES) == 26
+    assert codes.VALIDATION_TYPES == FROZEN_VALIDATION_TYPES
+    assert (
+        codes.VALIDATION_OTHER == "other" and codes.VALIDATION_OTHER not in codes.VALIDATION_TYPES
+    )
+
+
+def test_reserved_codes_name_their_package() -> None:
+    assert dict(RESERVED_FOR) == {
+        "session_closed": "P5c",
+        "provider_rate_limit": "P5b1",
+        "provider_auth": "P5b1",
+        "provider_invalid_request": "P5b1",
+        "provider_timeout": "P5b1",
+    }
+    for name in RESERVED_FOR:
+        assert Code(name).value == name
+
+
+def test_builtin_ancestry_never_beats_the_row() -> None:
+    """A class with a row gets its row's code even when its built-in base (``PermissionError``, ``KeyError``) would give another."""
+    from hadavin_sdk.guard.egress import EgressRefused
+    from hadavin_sdk.llm.fake import UnknownRecording
+    from hadavin_sdk.store.protocol import NotFound
+
+    assert issubclass(EgressRefused, PermissionError)
+    assert issubclass(NotFound, KeyError) and issubclass(UnknownRecording, KeyError)
+    for cls, code in (
+        (EgressRefused, "egress_refused"),
+        (NotFound, "store_conflict"),
+        (UnknownRecording, "config_invalid"),
+    ):
+        line = render(diagnose(cls.__new__(cls), step=codes.Where.other))
+        assert f"code={code} " in line, line

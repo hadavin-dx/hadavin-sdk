@@ -20,6 +20,7 @@ from hadavin_sdk.models import Reply
 from hadavin_sdk.runtime.tick import TickStep, run_tick
 from tests.conftest import qualify
 from tests.data import c18a_hostile_corpus as corpus
+from tests.data.c18a_old_writer_marks import OLD_WRITER_CRASHES, OLD_WRITER_LEAKS
 from tests.data.c18a_oracle import leaks
 
 SIG = "sig" + "-p5a-test"  # built from parts
@@ -29,92 +30,6 @@ class AdapterError(RuntimeError):
     """The writer did not run, so no verdict may be drawn."""
 
 
-# Frozen from the evidence run (see evidence.md): row id -> outcome.
-OLD_WRITER_LEAKS: tuple[str, ...] = (
-    "HC-builtin_text-01",
-    "HC-builtin_text-02",
-    "HC-builtin_text-03",
-    "HC-builtin_text-04",
-    "HC-builtin_text-05",
-    "HC-builtin_text-07",
-    "HC-builtin_text-08",
-    "HC-config_detail-01",
-    "HC-config_detail-03",
-    "HC-config_detail-04",
-    "HC-email_unicode-02",
-    "HC-email_unicode-03",
-    "HC-email_unicode-06",
-    "HC-field_forging-01",
-    "HC-field_forging-02",
-    "HC-field_forging-03",
-    "HC-field_forging-04",
-    "HC-field_forging-05",
-    "HC-field_forging-06",
-    "HC-field_forging-07",
-    "HC-field_forging-08",
-    "HC-field_forging-09",
-    "HC-foreign_driver-02",
-    "HC-foreign_driver-04",
-    "HC-foreign_driver-05",
-    "HC-foreign_driver-06",
-    "HC-foreign_driver-07",
-    "HC-foreign_driver-08",
-    "HC-foreign_name-01",
-    "HC-foreign_name-02",
-    "HC-foreign_name-03",
-    "HC-group-01",
-    "HC-group-02",
-    "HC-group-03",
-    "HC-hostile_class-01",
-    "HC-hostile_class-05",
-    "HC-hostile_class-06",
-    "HC-hostile_class-08",
-    "HC-hostile_class-09",
-    "HC-hostile_class-10",
-    "HC-locator_frames-01",
-    "HC-locator_frames-02",
-    "HC-locator_frames-03",
-    "HC-locator_frames-04",
-    "HC-locator_frames-05",
-    "HC-locator_frames-06",
-    "HC-locator_frames-07",
-    "HC-locator_frames-08",
-    "HC-locator_frames-09",
-    "HC-locator_frames-10",
-    "HC-own_class_spoof-01",
-    "HC-own_class_spoof-04",
-    "HC-own_class_spoof-05",
-    "HC-own_class_spoof-06",
-    "HC-own_class_spoof-07",
-    "HC-pii_encoded-08",
-    "HC-pii_obfuscated-04",
-    "HC-pii_obfuscated-06",
-    "HC-pii_obfuscated-07",
-    "HC-pii_obfuscated-09",
-    "HC-pii_obfuscated-10",
-    "HC-pii_plain-04",
-    "HC-pydantic_input-01",
-    "HC-pydantic_input-02",
-    "HC-pydantic_input-04",
-    "HC-pydantic_input-05",
-    "HC-pydantic_input-06",
-    "HC-pydantic_input-07",
-    "HC-pydantic_input-08",
-    "HC-pydantic_input-09",
-    "HC-pydantic_input-11",
-    "HC-size_time-02",
-    "HC-size_time-05",
-)
-OLD_WRITER_CRASHES: dict[str, str] = {
-    "HC-builtin_text-10": "SystemExit",
-    "HC-hostile_class-02": "RuntimeError",
-    "HC-hostile_class-03": "RuntimeError",
-    "HC-hostile_class-04": "RuntimeError",
-    "HC-hostile_class-11": "RecursionError",
-    "HC-hostile_class-14": "AttributeError",
-    "HC-hostile_class-15": "AttributeError",
-    "HC-own_class_spoof-02": "AttributeError",
-}
 NO_OLD_WRITER_PATH: frozenset[str] = frozenset()
 
 ROWS = [
@@ -184,6 +99,27 @@ def outcome(row: corpus.Row, app, caplog) -> tuple[str, str]:
     return ("leaked" if leaks(text, row.canaries) else "clean"), ""
 
 
+def check_crash_type(row_id: str, got: str, crash_type: str) -> None:
+    """The pinned crash type of a row must be the type that escaped. A mismatch is an ``AdapterError``, NOT an ``AssertionError``: the
+    strict xfail of the row is ``raises=AssertionError``, so an assertion here would be swallowed as the expected failure."""
+    if (
+        row_id in OLD_WRITER_CRASHES
+        and got == "crashed"
+        and crash_type != OLD_WRITER_CRASHES[row_id]
+    ):
+        raise AdapterError(
+            f"{row_id}: the escaping type is {crash_type}, the pin says {OLD_WRITER_CRASHES[row_id]}"
+        )
+
+
+def test_a_wrong_crash_type_is_an_adapter_error_the_xfail_does_not_swallow() -> None:
+    row_id = next(iter(OLD_WRITER_CRASHES))
+    check_crash_type(row_id, "crashed", OLD_WRITER_CRASHES[row_id])
+    check_crash_type(row_id, "leaked", "")
+    with pytest.raises(AdapterError):
+        check_crash_type(row_id, "crashed", "ZeroDivisionError")
+
+
 def _param(row: corpus.Row) -> pytest.param:
     marks = []
     if row.id in OLD_WRITER_LEAKS or row.id in OLD_WRITER_CRASHES:
@@ -201,8 +137,7 @@ def _param(row: corpus.Row) -> pytest.param:
 @pytest.mark.parametrize("row", [_param(r) for r in ROWS])
 def test_old_writers(row: corpus.Row, app, caplog) -> None:
     got, crash_type = outcome(row, app, caplog)
-    if row.id in OLD_WRITER_CRASHES and got == "crashed":
-        assert crash_type == OLD_WRITER_CRASHES[row.id], crash_type
+    check_crash_type(row.id, got, crash_type)
     if got == "no_path":
         assert row.id in NO_OLD_WRITER_PATH, row.id
         return

@@ -111,6 +111,10 @@ def build(
     given = dict(locals())
     cfg = load_config(config_dir)
     live = is_live(cfg.environment)
+    if live:
+        # First, before the registry is read or any secret store is built: the same text must fold the same way on every run, so pilot and
+        # prod start only on the pinned Unicode data (raises UnidataMismatch).
+        textnorm.require_pinned_unidata()
     # Before any backend is built, so a refusal reads no secret, opens no connection and no folder. Only the
     # value True is the switch (a string or a number is not).
     live_doubles = _test_doubles_given(_BUILD_PARAMS, given) if live else []
@@ -129,9 +133,6 @@ def build(
     reg = load_registry(cfg)
     b = cfg.backends
     secrets = secrets or make("secrets", b.secrets)
-    if live:
-        # The same text must fold the same way on every run: pilot and prod start only on the pinned Unicode data (raises UnidataMismatch).
-        textnorm.require_pinned_unidata()
     if live and not cfg.evidence.restored_hash_key_secret_name:
         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
     if live and getattr(b.store, "kind", "") == "postgres" and not b.store.purge_dsn_secret_name:

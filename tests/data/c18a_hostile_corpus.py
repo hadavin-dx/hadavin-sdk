@@ -1174,7 +1174,14 @@ exc(
     "a step with a newline and a forged fp",
     step="sweep\nfp=00000000",
 )
-exc("field_forging", "value_error", (NAME,), N_, "a step in the wrong case", step="Sweep")
+exc(
+    "field_forging",
+    "value_error",
+    (NAME,),
+    N_,
+    "a step in the wrong case (variant_of=HC-field_forging-05)",
+    step="Sweep",
+)
 exc(
     "field_forging",
     "dynamic",
