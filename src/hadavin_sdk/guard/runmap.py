@@ -550,6 +550,11 @@ def _gap_pattern(value: str) -> re.Pattern[str]:
     return re.compile(body if len(value) >= 4 else r"(?<!\w)" + body + r"(?!\w)")
 
 
+gap_pattern = (
+    _gap_pattern  # the name other guard modules use (tools: the scrub of handed-out secrets)
+)
+
+
 def _held_placeholders(found_text: str, joined: str, mapping: dict[str, str]) -> list[str]:
     """The placeholders this find pass put into `found_text` (one that stands in the text as written does not count)."""
     out: list[str] = []
@@ -654,26 +659,50 @@ def redact_text(
         e_spaced = e_joined if spaced is joined else esc(spaced)
         _check_budget(started)
         out, current = _redact_stripped(e_joined, e_spaced, mapping, cache, started)
-        scan = not e_text.isascii() or any(c in e_text for c in "\\%&")
-        views = [v for v in (_views(e_text) if scan else []) if v not in (e_joined, e_spaced)]
-        pairs: list[tuple[str, str]] = []
-        if views:
-            for base in dict.fromkeys((e_spaced, e_joined)):
-                pairs += [p for p in _decoded_masks(current, base) if p not in pairs]
-        if (
-            neutralise is not None
-        ):  # the view is neutralised before it is redacted: pair the neutralised spelling too
-            pairs += [
-                (ph, n)
-                for ph, d in pairs
-                if (n := esc(d)) != d and len(n) >= 4 and (ph, n) not in pairs
+        # The decoded readings are built from the text with its hidden items already taken out (joined reading), never
+        # from the original: a decoder reads across a run of hidden items, so the backslash that ends a string
+        # terminator (ESC then backslash) followed by `n` became a newline, or by digits an octal escape, and cut the value.
+        base = e_text if joined is text else e_joined
+        scan = not base.isascii() or any(c in base for c in "\\%&")
+        views = [v for v in (_views(base) if scan else []) if v not in (e_joined, e_spaced)]
+        # What the caller's own cleaning leaves of a reading (the approval card deletes control characters before any
+        # value is looked for, which main relied on) is a reading too, when it is not the one already read. They go
+        # last, so every other reading keeps its masks; the cleaning must not create a shape either.
+        cleaned: list[str] = []
+        if joined is not text and hidden.strip(e_text)[0] not in (e_joined, e_spaced):
+            cleaned.append(_no_created_shapes(text, e_text))
+        if neutralise is not None:
+            for v in views:
+                if (
+                    hidden.ANY.search(v)
+                    and (c := esc(v)) != v
+                    and hidden.strip(c)[0] not in hidden.strip(v)
+                ):
+                    cleaned.append(_no_created_shapes(v, c))
+        views += [c for c in dict.fromkeys(cleaned) if c not in views]
+
+        def make_pairs(cur: dict[str, str], bases: tuple[str, ...]) -> list[tuple[str, str]]:
+            made: list[tuple[str, str]] = []
+            for base in dict.fromkeys(bases):
+                made += [p for p in _decoded_masks(cur, base) if p not in made]
+            if (
+                neutralise is not None
+            ):  # the view is neutralised before it is redacted: pair the neutralised spelling too
+                made += [
+                    (ph, n)
+                    for ph, d in made
+                    if (n := esc(d)) != d and len(n) >= 4 and (ph, n) not in made
+                ]
+            # a decoded spelling that holds hidden items is looked for without them too (the view has none)
+            made += [
+                (ph, sj)
+                for ph, d in made
+                if (sj := hidden.strip(d)[0]) != d and len(sj) >= 4 and (ph, sj) not in made
             ]
-        # a decoded spelling that holds hidden items is looked for without them too (the view has none)
-        pairs += [
-            (ph, sj)
-            for ph, d in pairs
-            if (sj := hidden.strip(d)[0]) != d and len(sj) >= 4 and (ph, sj) not in pairs
-        ]
+            return made
+
+        base_texts = (e_spaced, e_joined)
+        pairs = make_pairs(current, base_texts) if views else []
         for view in views:
             _check_budget(started)  # a hostile text: fail closed, nothing shown
             vj, vs = hidden.strip(view)
@@ -690,6 +719,10 @@ def redact_text(
             # a new value, or a known one only the view spells in a way pass one could not read
             if again_map != current or _held(again) > _held(out):
                 out, current = again, again_map
+                # the values this reading found are carried into the readings still to come, so a later reading that
+                # finds less does not replace the output with one that has lost them
+                base_texts += (vj, vs)
+                pairs = make_pairs(current, base_texts)
         out = _clean(out)
         if neutralise is neutralise_untrusted:
             _refuse_forgery(out, current)

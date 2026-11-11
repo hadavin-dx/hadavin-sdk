@@ -98,3 +98,54 @@ def test_mf_card_m5a():
     out = channel_mod.clean("<" + ESC + "[0mIPV4_1> and 10.0.0.5")
     assert out.count("<IPV4_1>") == 1, out
     assert out.count("‹IPV4_1›") == 1, out
+
+
+# a string sequence ends with ESC and a backslash; the backslash must not be read as the start of an escape of its own
+# (`\n`, `\t`, `\r` or three octal digits) by the decoded readings, which would cut the value that follows
+_ST = ESC + chr(92)
+_STRING_OPENERS = {
+    "osc": ESC + "]0;t",
+    "dcs": ESC + "Pq",
+    "sos": ESC + "Xq",
+    "pm": ESC + "^q",
+    "apc": ESC + "_q",
+}
+_CUT_VALUES = {
+    "password": "pass" + "word=" + "hunter" + "2secretXYZ",
+    "mail": "to " + "bob.smith" + "@" + "example.com",
+    "uuid": "request_id " + "123e4567-e89b-12d3" + "-a456-426614174000",
+}
+
+
+@pytest.mark.parametrize("opener", sorted(_STRING_OPENERS))
+@pytest.mark.parametrize("kind", sorted(_CUT_VALUES))
+@pytest.mark.parametrize("path", ["untrusted", "tool", "error", "head"])
+def test_mf_string_terminator_backslash_does_not_cut_the_value(path, kind, opener):
+    plain = _CUT_VALUES[kind]
+    value = plain.split("=")[-1] if kind == "password" else plain.split(" ", 1)[1]
+    for cut in (3, 5, 7):
+        text = (
+            plain[: len(plain) - len(value) + cut]
+            + _STRING_OPENERS[opener]
+            + _ST
+            + plain[len(plain) - len(value) + cut :]
+        )
+        out = _paths()[path](text)
+        assert not any(value[i : i + 5] in out for i in range(len(value) - 4)), (
+            path,
+            kind,
+            opener,
+            cut,
+            out,
+        )
+
+
+@pytest.mark.parametrize("cut", [chr(0x0B), chr(0x0C), chr(0x85)])
+def test_card_masks_a_value_cut_by_a_character_the_card_deletes(cut):
+    """The card's own cleaning deletes control characters before any value is looked for, so main masked a password
+    cut by one (main passes this test; it is a step-back guard for the card)."""
+    value = "hunter" + "2secretXYZ"
+    for at in (1, 3, 5):
+        text = "password=" + value[:at] + cut + value[at:] + " end"
+        out = channel_mod.clean(text)
+        assert not any(value[i : i + 5] in out for i in range(len(value) - 4)), (at, out)

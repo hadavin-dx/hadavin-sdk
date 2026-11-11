@@ -41,8 +41,8 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from hadavin_sdk import defaults
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.guard import hidden, runmap
 from hadavin_sdk.guard import http as http_guard
-from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
 from hadavin_sdk.scrub_settings import ScrubSettings
 
@@ -724,12 +724,16 @@ def _derived(text: str, secrets: list[str]) -> str:
 
 
 def _decoded(text: str) -> str:
-    return undo(text)
+    """The layers undone with the hidden items removed (joined reading), so a handed-out secret cut by a percent-encoded
+    escape, or by an escape that cuts a percent token, is found."""
+    return hidden.strip(undo(text, strip_hidden=True))[0]
 
 
 def _sanitise(text: str) -> str:
-    """NUL and lone surrogates (a JSON `\\ud800` a tool parsed) cannot be encoded, sent or stored."""
-    return text.replace("\x00", "\ufffd").encode("utf-8", "replace").decode("utf-8")
+    """Lone surrogates (a JSON `\\ud800` a tool parsed) cannot be encoded, sent or stored. NUL is left as it is: the
+    choke point (`runmap.redact_text`) removes it with the glue rule, one rule for NUL (the digest of a tool result that
+    holds NUL is therefore the hash of what the tool returned)."""
+    return text.encode("utf-8", "replace").decode("utf-8")
 
 
 def _cut(text: str, limit: int, tail: int = TAIL_WINDOW) -> str:
@@ -786,7 +790,9 @@ _HEXLIKE = re.compile(r"[0-9a-fA-F]{12,}")
 def _first_decoded(char: str) -> str:
     """What one character reads as once the layers and NFKC are undone (a full-width Z reads Z)."""
     try:
-        return _decoded(char)[:1]
+        return runmap.undo(char)[
+            :1
+        ]  # the plain decode: a control character reads as itself, and the skip guard skips
     except runmap.RedactionError:
         return char
 
@@ -896,9 +902,35 @@ def _sub_form(text: str, form: str) -> str:
 
 
 def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCRUB) -> str:
-    """See `_scrub_layers`. A text nested deeper than the layer cap cannot be read: it is not shown at all."""
+    """See `_scrub_layers`. A text nested deeper than the layer cap cannot be read: it is not shown at all.
+
+    A text with hidden items (control characters, escape sequences) is searched in its joined reading, where a secret
+    they cut is whole again. When nothing is found the text is returned as written, so the choke point still sees the
+    hidden items and keeps the word boundaries they made. When a secret is found, it is replaced in the spaced reading
+    (a space stands where a run of hidden items stood between two word characters) with the gap pattern, never in the
+    joined text: a key glued to the text before it by a hidden item stays separated. A result that still holds a
+    spelling of a handed-out secret is withheld."""
     try:
-        return _scrub_layers(raw, long_enough, scrub)
+        joined, spaced = hidden.strip(raw)
+        if joined is raw:
+            return _scrub_layers(raw, long_enough, scrub)
+        found = _scrub_layers(joined, long_enough, scrub)
+        if found == joined:
+            return raw
+        forms = sorted({f for x in long_enough for f in _secret_forms(x)}, key=len, reverse=True)
+        plain_markers = spaced.count(MARKER)
+        for form in forms:
+            spaced = runmap.gap_pattern(form).sub(MARKER, spaced)
+        result = _scrub_layers(spaced, long_enough, scrub)
+        left = hidden.strip(result)[0]
+        decoded = _decoded(left)
+        if any(_has_form(left, f) or _has_form(decoded, f) for f in forms):
+            return MARKER + TRUNCATED
+        # a secret found in the joined reading that left no mark in the spaced one (a percent token a hidden item cut:
+        # the spaced copy reads `%7 8`, which no spelling matches) is withheld too, never shown
+        if result.count(MARKER) - plain_markers < found.count(MARKER) - joined.count(MARKER):
+            return MARKER + TRUNCATED
+        return result
     except runmap.TooDeep:
         return MARKER + TRUNCATED
 
