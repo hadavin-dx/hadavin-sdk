@@ -1,12 +1,13 @@
 """EVIDENCE RUNNER probe (own script, typed from the ticket tables and the coordinator add-on). Records only.
 Usage: python ev_probe_keys.py <label>  (PYTHONPATH selects head or main). Prints JSON."""
 import json, re, sys
+import hadavin_sdk; print("MODULE", hadavin_sdk.__file__, file=sys.stderr)
 from datetime import UTC, datetime
 from hadavin_sdk.approvals.channel import clean
 from hadavin_sdk.tools import redact_layered
 from hadavin_sdk.k1b.bundle import Bundle
 from hadavin_sdk.k1b.redaction import redact_bundle
-from hadavin_sdk.guard import redact as R
+import importlib; R = importlib.import_module("hadavin_sdk.guard.redact")
 
 P1, P2, P3 = "Zq7" + "xV", "Kp9" + "wT", "Hn4" + "bL"  # made-up pieces, built from parts
 VALUES = {  # name -> (text after the key sign, raw value for the record walk)
