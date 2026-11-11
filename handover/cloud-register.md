@@ -1407,3 +1407,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | B-PR89-r22b a309e5a8 | Sonnet | 3b2dc9c1 | finish round 22 | 16:45Z | running | |
 | TA-PRH-errata a02f43ab | Opus | PR H ticket rev 2 | errata + probes | 16:40Z | running | then plan review round 2 |
 | TA-P3a2-errata ab2d8714 | Opus | P3a-2 ticket rev 2 | errata + PG probes | 16:50Z | running | then plan review round 2 |
+| B-Q8a1-b4 ae9691ed | Q8a-1 fix batch 4 builder (sonnet) | 16:28 | +60 min | RUNNING | check checkpoint B-Q8a1-b4.md |

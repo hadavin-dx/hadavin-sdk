@@ -2671,3 +2671,6 @@
 | Q8c-1-r2-M1 | reviews/Q8c-1/result-r2-design-full.md | Major | Q8c-1 | 12 Vault server tests have no run on record at a77fab72 | OPEN | CI run at final head with -rs | - | 2026-11-11 |
 | Q8c-1-r2-M2 | same | Major | Q8c-1 | R17 + claim shown as verified; only builder read sources; set claims_unverified until evidence runner re-reads | OPEN | - | - | 2026-11-11 |
 | Q8a-1-r4-M1 | reviews/Q8a/result-r4-0b97d55.md | Major | Q8a-1 | isinstance check on TickContext (Mock/subclass bypass) | OPEN | fix batch 4 | - | 2026-11-11 |
+| Q8a-2-r3-M1 | reviews/Q8a-2/result-r3-codebase-full.md | Major | Q8a-2 | Server.handle_error untested (log levels, no request text) though CHANGELOG states it | OPEN | fix batch | - | 2026-11-11 |
+| Q8b-r1-M1 | reviews/Q8b/result-r1-design-full.md | Major | Q8b | card path: key glued to e-mail/host leaves assignment value readable (87 vs 38 of 3000 on main) | OPEN | fix batch | - | 2026-11-11 |
+| Q8b-r1-M2 | same | Major | Q8b | approver cannot read target host on card (owner question open) | OWNER-ONLY | questions-for-lead | - | 2026-11-11 |
