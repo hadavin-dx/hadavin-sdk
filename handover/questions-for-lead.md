@@ -1744,3 +1744,6 @@ Held back by gitleaks in this pass: none. Still unpushed from the earlier pass: 
 
 ## Q-2026-11-11-vault-engine-here
 - The Q8c-1 refusal tests (does a Vault token that holds only the rendered policy get refused everything else?) need a real Vault-compatible server. None is installed in this cloud session and downloading one (OpenBao, open source) was refused by the session's permission rules. Safe default taken: not worked around; tests are written, skipped here with a visible reason, and required in CI by a variable in the two jobs that have the Vault service. Next step for the human: either nothing (CI will run them once a pull request for core/q8c-1-policy-vault-kubernetes exists), or allow an OpenBao binary in this environment so the evidence can be produced before a pull request.
+
+## 15:34Z UTC Redaction: is a tab inside a key something we must mask? (default taken: no, same as a space)
+A tab inside a secret key (for example the first half of a key, a tab, the second half) is treated like a space inside a key: not masked, and stated as a limit. The stricter choice (ignore tabs when matching) made ordinary tab-separated tool output unreadable in round 7. If you want the stricter rule for vendor-prefixed keys only, say so: it is a contained later change. Decision record: D-018.

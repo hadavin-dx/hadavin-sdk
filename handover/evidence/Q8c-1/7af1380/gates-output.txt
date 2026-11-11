@@ -1,0 +1,38 @@
+### ruff-check
+All checks passed!
+
+### ruff-format
+327 files already formatted
+
+### scan-repo
+
+
+### policy-page-check
+
+### bandit (tail)
+Run started:2026-11-11 15:21:36.226090+00:00
+
+Test results:
+	No issues identified.
+
+Code scanned:
+	Total lines of code: 17115
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 3
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 12
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 2
+		High: 10
+Files skipped (0):
+### gitleaks git
+3:30PM INF 1 commits scanned.
+3:30PM INF scanned ~138424 bytes (138.42 KB) in 266ms
+3:30PM INF no leaks found

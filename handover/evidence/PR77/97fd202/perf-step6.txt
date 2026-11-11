@@ -10,3 +10,13 @@ exit code 0
 0.34s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[password]
 8 passed in 36.98s
 == core (/home/user/build/EV-P77-base-core, its own tests/test_k5_perf.py) start 15:33:28  15:33:28 up  2:05,  0 user,  load average: 5.38, 7.68, 10.05
+exit code 0
+20.40s call     tests/test_k5_perf.py::test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated
+8.71s call     tests/test_k5_perf.py::test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one
+3.54s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[fullwidth]
+3.03s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[zero-width]
+2.39s call     tests/test_k5_perf.py::test_the_slowest_measured_shape_at_the_cap_stays_under_a_ceiling
+2.05s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[curl-u]
+0.70s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[json-escape]
+0.50s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[password]
+8 passed in 41.37s

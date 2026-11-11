@@ -1293,3 +1293,10 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-P77 ab49c9d1 | 35 min | probes written; perf and cost steps | on track |
 | EV-Q8c1 adaef824 | 22 min | full suite running, mutants 14 of 14 done | on track |
 | B-Q8c1-fix1 a9b15053, EV-Q8a2-r2 a30418d4, R-Q8a2-r2 x2, R-P77-design ac9534ea | under 10 min | reading / building / full suite running | on track |
+
+### 15:34Z PR H (new) and Q8b build
+| id | purpose | started | expected end | last check | state | next action |
+|---|---|---|---|---|---|---|
+| R-P77-design ac9534ea | zoom-out design review | 15:26Z | | 15:34Z | CLOSED: saved reviews/PR77/round8-design-zoomout-full.md; D-018 | ticket |
+| A-PRH | TICKET AUTHOR (Fable): ticket for the small redaction fix off main (strip controls and escape sequences once at the choke point) | 15:34Z | +35m | 15:34Z | starting | plan review (design + readiness), then ONE builder |
+| B-Q8b | BUILDER (Fable): Q8b ticket rev 3 (frozen) on main, worktree /home/user/build/B-Q8b, pg 56160 | 15:34Z | +75m | 15:34Z | starting | evidence + fresh reviewers |

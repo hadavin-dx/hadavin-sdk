@@ -2632,3 +2632,7 @@
 | BL-core-q8c1-r1-c02 | Minor(sec) | Q8c-1 | reviews/Q8c/result-r1-codebase-full.md m2 | OPEN | | | 2026-11-11 |
 | BL-core-q8c1-r1-c07 | Minor(sec) | Q8c-1 | reviews/Q8c/result-r1-codebase-full.md m7 | OPEN | | | 2026-11-11 |
 | BL-core-q8c1-r1-c11 | Minor(sec) | Q8c-1 | reviews/Q8c/result-r1-codebase-full.md m11 | OPEN | | | 2026-11-11 |
+| BL-core-p77-split-f712912 | Major | redaction | D-018 split ticket: F7 scrub compares in two domains | OPEN | | | 2026-11-11 |
+| BL-core-p77-split-design16229 | Major | redaction | D-018 split ticket: design M6 cover rule (which text wins) | OPEN | | | 2026-11-11 |
+| BL-core-p77-split-vendor10255 | Major | redaction | D-018 split ticket: vendor key glued to a word in plain ASCII | OPEN | | | 2026-11-11 |
+| BL-core-p77-split-f1026044 | Major | redaction | D-018 split ticket: F10 fragment map entries | OPEN | | | 2026-11-11 |
