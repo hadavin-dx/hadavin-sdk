@@ -48,7 +48,7 @@ def make(
         ) from exc
     label = f"backend {capability} {settings.kind!r}"
     deps = Deps(
-        resolve=bound(provider or FakeSecretProvider({}), settings, label),
+        resolve=bound(FakeSecretProvider({}) if provider is None else provider, settings, label),
         **{k: v for k, v in available.items() if k in ALLOWED[capability]},
     )
     built = getattr(module, func)(settings, deps)

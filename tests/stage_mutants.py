@@ -1,4 +1,4 @@
-"""The mutants of the stage rename (named M1 to M10 with letter variants; there is no M7 or M11), run by the P1m runner (``tools/mutation_runner.py``).
+"""The mutants of the stage rename (named M1 to M12 with letter variants; there is no M7 or M11), run by the P1m runner (``tools/mutation_runner.py``).
 
 They are NOT in ``tests/mutation_runner_mutants.py``: the meta-tests of that file pin its own mutants (the runner's and the
 judge's) by count and by target file. Same runner, same judge, a separate list. Each mutant reverts ONE guard in a temp copy
@@ -123,6 +123,11 @@ M = [
     mutant("M9c app.py goes back to an allowlist of live stages", APP, "live = is_live(cfg.environment)",
         'live = cfg.environment in ("pilot", "prod")',
         "test_a_value_that_is_not_a_stage_is_live_for_every_guard", "app treated"),
+    mutant("M12a a live build takes a test object (app.py: the override refusal is switched off)", APP, "if live and given:", "if False:",
+        "test_pilot_and_prod_refuse_a_test_object_handed_to_build", "a live build took a test object"),
+    mutant("M12b a static Vault token is allowed in pilot and prod (config.py: the rule never matches)", CFG,
+        'getattr(s, "auth", None) == "token"', "False",
+        "test_pilot_and_prod_refuse_a_static_vault_token", "a static Vault token was accepted"),
     mutant("M10a pilot dropped from the redactor's common words", REDACT, '        "pilot",\n', "",
         "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "pilot is swept"),
     mutant("M10b demo dropped from the redactor's common words", REDACT, '        "demo",\n', "",

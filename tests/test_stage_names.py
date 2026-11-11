@@ -22,11 +22,13 @@ from hadavin_sdk import config as config_mod
 from hadavin_sdk import deferred
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.app import build
+from hadavin_sdk.approvals.channel import FakeChannel
 from hadavin_sdk.backends import table
 from hadavin_sdk.config import Config, ConfigError, _anchor_refusals, load_config, parse_backends
 from hadavin_sdk.registry import _module_pin_problems, load_registry
 from hadavin_sdk.stages import STAGES, is_live, is_prod
 from tests.conftest import make_cfg, qualify
+from tests.test_k3_pilot_env import pilot_cfg
 
 # The old word is built from parts in this file: the class test never scans this file, but a grep for it should find
 # only the places that matter.
@@ -328,6 +330,86 @@ def test_a_value_that_is_not_a_stage_is_live_for_every_guard(tmp_path):
         got = _live_by_site(tmp_path / str(n), bad)
         for site, live in got.items():
             assert live, f"{site} treated {bad!r} as not live (an allowlist of live stages)"
+
+
+def _build_refusal(tmp_path, stage, **given):
+    """What `app.build` says when a config whose stage is `stage` (the pilot config, real kinds only; for another stage
+    an unvalidated copy with the stage changed) is built with the keyword arguments `given`. '' when it builds or fails
+    in another way than a refusal."""
+    root = pilot_cfg(tmp_path)
+    (
+        root / "secrets"
+    ).mkdir()  # the mounted-file secrets kind reads nothing until a secret is asked for
+    cfg = load_config(root)
+    reg = load_registry(cfg)
+    copy = cfg.model_copy(update={"environment": stage})
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(app_mod, "load_config", lambda _d: copy)
+        mp.setattr(app_mod, "load_registry", lambda _c: reg)
+        try:
+            app_mod.build(root, ["ito-agent"], **given)
+        except ConfigError as exc:
+            return str(exc)
+        except Exception:  # noqa: BLE001 - past the refusal: a real backend was asked for something
+            return ""
+    return ""
+
+
+def test_pilot_and_prod_refuse_a_test_object_handed_to_build(tmp_path):
+    """`channel=` (like `secrets=`, `detector=`, `llm=`, `clock=` and `timeout_s=`) hands `build` an object in place of
+    a configured backend. That is for tests: only exactly demo accepts it. Each keyword and each stage has its own
+    test in tests/test_q8a_live_overrides.py; this one needs no database and no conftest fixture."""
+    want = "channel= is for tests; configure backends.channel in pilot and prod"
+    for n, stage in enumerate(["pilot", "prod", "stag" + "ing", "Demo", "", None]):
+        got = _build_refusal(tmp_path / str(n), stage, channel=FakeChannel())
+        assert got == want, f"a live build took a test object ({stage!r}): {got[:80]!r}"
+
+
+VAULT_KINDS = {
+    "secrets": {"kind": "vault", "address": "https://vault.example"},
+    "signer": {
+        "kind": "vault_transit",
+        "address": "https://vault.example",
+        "key_name": "k",
+        "key_version": 1,
+    },
+}
+
+
+def test_pilot_and_prod_refuse_a_static_vault_token(tmp_path):
+    """The Vault kinds sign in with a static token unless the config says otherwise (`auth: token` is the default).
+    A static token in the environment of a live process is refused, written or left out; demo keeps it."""
+    n = 0
+    for cap, settings in VAULT_KINDS.items():
+        for stage in ("pilot", "prod"):
+            for extra in ({}, {"auth": "token"}):
+                n += 1
+                root = pilot_cfg(tmp_path / str(n), env=stage)
+
+                def use(data, cap=cap, settings=settings, extra=extra, stage=stage):
+                    if (
+                        stage == "prod"
+                    ):  # what prod needs for other reasons, so the token is the only refusal
+                        data["backends"]["anchor"] = ANCHOR | {"retention_ack": True}
+                        data["backends"]["signer"] = KEY_SECRET
+                    data["backends"][cap] = settings | extra
+
+                _edit(root, use)
+                want = (
+                    f"environment {stage}: refused: {cap}: {settings['kind']} auth token "
+                    "(the default; set auth: kubernetes or auth: approle)"
+                )
+                try:
+                    load_config(root)
+                    got = ""
+                except ConfigError as exc:
+                    got = str(exc)
+                assert want in got, (
+                    f"a static Vault token was accepted ({stage}, {cap}, {extra}): {got[:80]!r}"
+                )
+    demo = make_cfg(tmp_path / "demo")
+    _edit(demo, lambda d: d["backends"].update(secrets=VAULT_KINDS["secrets"]))
+    assert load_config(demo).backends.secrets.auth == "token", "demo refused a static Vault token"
 
 
 ANCHOR = {"kind": "s3_object_lock", "bucket": "b", "region": "r"}

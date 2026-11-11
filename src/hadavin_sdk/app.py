@@ -70,16 +70,40 @@ def build(
     tools: dict[str, Callable[[dict], str]] | None = None,
     sources: Mapping[str, Source] | None = None,
     hold_run_ids: Callable[[], set[str] | frozenset[str]] | None = None,
-    clock: Callable[[], datetime] = now,
+    clock: Callable[[], datetime] | None = None,
     timeout_s: float | None = None,
 ) -> App:
-    """Build every backend from the config's table entries, in the design 4.2 order. The keyword overrides
-    replace one configured backend (tests); `secrets` replaces the configured provider for both the executor
-    and the backends' own secrets. Missing or shared secret names fail here, before the first run."""
+    """Build every backend from the config's table entries, in the design 4.2 order. Missing or shared secret
+    names fail here, before the first run.
+
+    `secrets=`, `channel=`, `detector=`, `llm=`, `clock=` and `timeout_s=` are for tests and are accepted in demo
+    only: each replaces one configured part with an object the caller hands in (`secrets` replaces the configured
+    provider for both the executor and the backends' own secrets). In pilot and prod (any stage that is not exactly
+    demo) a build that is given one of them is refused with a ConfigError, after the `sources=` and `tools=`
+    refusals and before any backend other than secrets is built. An object counts as given when it is not None, so
+    an object that is falsy is refused too. With several given, only the first in the order secrets, channel,
+    detector, llm, clock, timeout_s is named. `hold_run_ids=` stays allowed in pilot and prod: it is a production
+    hook (the caller's list of runs whose evidence the purge must keep), not a test object.
+
+    Limit of this refusal: it stops a test object that reaches a pilot or prod process by ACCIDENT. It does not stop
+    hostile code in the same process, which could replace the table of kinds itself."""
     cfg = load_config(config_dir)
     reg = load_registry(cfg)
     b = cfg.backends
-    secrets = secrets or make("secrets", b.secrets)
+    given = [
+        name
+        for name, value in (
+            ("secrets", secrets),
+            ("channel", channel),
+            ("detector", detector),
+            ("llm", llm),
+            ("clock", clock),
+            ("timeout_s", timeout_s),
+        )
+        if value is not None
+    ]
+    if secrets is None:
+        secrets = make("secrets", b.secrets)
     live = is_live(cfg.environment)
     if live and not cfg.evidence.restored_hash_key_secret_name:
         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
@@ -96,6 +120,17 @@ def build(
         raise ConfigError(
             "tools= (plain callables) is for replay and tests; use tools/<agent>.yaml in pilot and prod"
         )
+    if live and given:
+        # An object handed in would replace a configured backend (or the clock, or the executor's timeout) in a live
+        # process. Only the first given name is reported.
+        name = given[0]
+        fix = (
+            "it is refused in pilot and prod"
+            if name in ("clock", "timeout_s")
+            else f"configure backends.{name} in pilot and prod"
+        )
+        raise ConfigError(f"{name}= is for tests; {fix}")
+    clock = now if clock is None else clock
     # Only http contracts hold a client-system secret; pilot and prod have none (http is refused there).
     executor_names = {
         c.executor.secret_name for c in reg.contracts.values() if c.executor.kind == "http"
@@ -159,7 +194,8 @@ def build(
             secrets,
         )
     audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
-    llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+    if llm is None:
+        llm = make("llm", b.llm, secrets, routes=cfg.routes)
     summary_detector = detector
     if detector is None:
         members = [make("detector", d, secrets, llm=llm) for d in b.detector]
@@ -167,11 +203,12 @@ def build(
         # The approval summary screen has no agent to charge, so it runs the unmetered members only; the judge
         # screens the document and tool output, where untrusted text enters (config refuses a judge alone).
         summary_detector = combine([m for m in members if m.backend != "llm_judge"])
-    channel = channel or make("channel", b.channel, secrets, store=store)
+    if channel is None:
+        channel = make("channel", b.channel, secrets, store=store)
     limits = Limits(store, audit, reg)
-    executor = (
-        None if live else Executor(reg, secrets, timeout_s=timeout_s or cfg.executor_timeout_s)
-    )
+    if timeout_s is None:
+        timeout_s = cfg.executor_timeout_s
+    executor = None if live else Executor(reg, secrets, timeout_s=timeout_s)
     holder: dict[str, Runtime] = {}
     approvals = Approvals(
         store,

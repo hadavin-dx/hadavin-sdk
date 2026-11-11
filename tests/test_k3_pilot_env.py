@@ -11,6 +11,7 @@ from hadavin_sdk import app as app_mod
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.approvals.channel import FakeChannel
 from hadavin_sdk.audit import signer as signer_mod
+from hadavin_sdk.backends import factory as factory_mod
 from hadavin_sdk.config import ConfigError, load_config
 from hadavin_sdk.models import RunState
 from hadavin_sdk.registry import load_registry
@@ -171,7 +172,21 @@ def _spy(dsn: str, resolved: list[str]) -> FakeSecretProvider:
     return Spy(values)
 
 
-def test_k3_pilot_app_has_no_executor(tmp_path):
+def plant_test_backends(monkeypatch, *, secrets, channel, llm) -> None:
+    """Make the real pilot build path use three test objects, without `build(secrets=, channel=, llm=)` (refused in
+    pilot and prod). `app.make` is wrapped: for the capabilities secrets, channel and llm it returns the test object;
+    every other capability goes to the real factory. The config keeps its real kinds (slack, openai_compat)."""
+    planted = {"secrets": secrets, "channel": channel, "llm": llm}
+
+    def wrapper(capability, settings, *args, **kwargs):
+        if capability in planted:
+            return planted[capability]
+        return factory_mod.make(capability, settings, *args, **kwargs)
+
+    monkeypatch.setattr(app_mod, "make", wrapper)
+
+
+def test_k3_pilot_app_has_no_executor(tmp_path, monkeypatch):
     """A pilot App has no Executor and resolves no client-system secret; shadow and abstain cards are posted."""
     from tests.contracts.kinds.store_postgres import pg_schema
 
@@ -182,13 +197,11 @@ def test_k3_pilot_app_has_no_executor(tmp_path):
         spy = _spy(dsn, resolved)
 
         channel = FakeChannel()
-        app = app_mod.build(
-            cfg,
-            ["ito-agent"],
-            secrets=spy,
-            channel=channel,
-            llm=ScriptedLLM(reply(PROPOSE), reply()),
+        plant_test_backends(
+            monkeypatch, secrets=spy, channel=channel, llm=ScriptedLLM(reply(PROPOSE), reply())
         )
+        # hold_run_ids= is a production hook: a pilot build accepts it
+        app = app_mod.build(cfg, ["ito-agent"], hold_run_ids=lambda: frozenset())
         assert app.executor is None
         assert app.runtime.hooks.execute is None and app.runtime.hooks.verify is None
         assert sorted(set(resolved)) == [

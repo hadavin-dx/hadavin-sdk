@@ -14,7 +14,7 @@ from hadavin_sdk.store.memory import MemoryStore
 
 
 def fake_secrets(settings, deps) -> FakeSecretProvider:
-    # Empty on purpose: secrets never live in config. Tests pass their own provider to app.build(secrets=).
+    # Empty on purpose: secrets never live in config. Tests pass their own provider to app.build(secrets=) (demo only).
     return FakeSecretProvider({})
 
 

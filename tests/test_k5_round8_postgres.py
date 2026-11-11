@@ -15,10 +15,10 @@ from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import tick as tick_mod
 from tests.conftest import qualify
 from tests.contracts.kinds.store_postgres import PURGE_DSN, pg_schema
-from tests.test_k3_pilot_env import FakeChannel, ScriptedLLM, pilot_cfg
+from tests.test_k3_pilot_env import FakeChannel, ScriptedLLM, pilot_cfg, plant_test_backends
 
 
-def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path):
+def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path, monkeypatch):
     if not os.environ.get("HADAVIN_TEST_PG_DSN"):
         pytest.skip("HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)")
     for dsn in pg_schema(runtime=True):
@@ -37,9 +37,8 @@ def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path):
                 "restored-key": "r" * 16,
             }
         )
-        app = app_mod.build(
-            cfg, ["ito-agent"], secrets=secrets, channel=FakeChannel(), llm=ScriptedLLM()
-        )
+        plant_test_backends(monkeypatch, secrets=secrets, channel=FakeChannel(), llm=ScriptedLLM())
+        app = app_mod.build(cfg, ["ito-agent"])
         assert app.purge_store is not app.store
         with pytest.raises(Exception, match="rivilege|ermission|denied|navailable"):
             app.store.purge_tool_calls(datetime.now(UTC), keep_run_ids=frozenset())
