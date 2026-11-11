@@ -106,6 +106,25 @@ PENDING_NAMES: dict[tuple[str, str], Pending] = {
 }
 
 
+# (kind, grant id) -> a statement about how the vendor's server or API behaves that nobody but the builder of a
+# fix has read, or that nobody has checked. Every grant with a `claims_unverified` needs one; the suite goes red
+# on the review date if the claim is still unread (fixture header: what a later evidence runner must re-read).
+_CLAIM_PENDING = Pending(
+    "the statement about server or API behaviour is not checked by an evidence runner",
+    "an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and "
+    "delete this entry",
+    DECIDED,
+    date(2026, 12, 11),
+)
+PENDING_CLAIMS: dict[tuple[str, str], Pending] = {
+    ("secrets/vault", "R17"): _CLAIM_PENDING,
+    ("signer/vault_transit", "R18"): _CLAIM_PENDING,
+    ("source/kubernetes", "R20"): _CLAIM_PENDING,
+    ("source/kubernetes", "R21"): _CLAIM_PENDING,
+    ("source/kubernetes", "R22"): _CLAIM_PENDING,
+}
+
+
 def all_kinds() -> set[str]:
     out = {f"{family}/{name}" for family, entries in table.TABLE.items() for name in entries}
     return out | {f"source/{name}" for name in source_kinds.KINDS}
@@ -903,7 +922,8 @@ def extract(
         else:
             problems.append(
                 f"{rel}:{call.lineno}: allowlisted call to `.{sink}` in `{key[0]}` does not pass on a "
-                "parameter of that function"
+                "parameter of that function. What to do: the code at that line changed; move or remove "
+                "the entry in SHAPES (`wrappers`) of tests/test_policy_guard.py"
             )
     problems += [
         f"{rel}: stale allowlist entry ({func}, line {line}, .{sink}): no call to `.{sink}` that passes "
@@ -1135,8 +1155,9 @@ def test_plant_an_allowlisted_line_that_stops_passing_its_parameter_is_caught():
         'self._vault.authed(method, f"{self.mount}/keys/x", body)',
     )
     assert (
-        f"{TRANSIT}:40: allowlisted call to `.authed` in `_call` does not pass on a parameter of that function"
-        in problems
+        f"{TRANSIT}:40: allowlisted call to `.authed` in `_call` does not pass on a parameter of that function. "
+        "What to do: the code at that line changed; move or remove the entry in SHAPES (`wrappers`) of "
+        "tests/test_policy_guard.py" in problems
     )
 
 
@@ -1484,24 +1505,65 @@ def test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves():
     assert name_problems(_policies(), PENDING_NAMES, set(source_ids()), TODAY) == []
 
 
+def _claimed(policies: dict[str, pp.Policy]) -> set[tuple[str, str]]:
+    return {(k, g.id) for k, p in policies.items() for g in p.grants if g.claims_unverified}
+
+
+def claim_problems(
+    policies: dict[str, pp.Policy], pending: dict[tuple[str, str], Pending], today: date
+) -> list[str]:
+    """ONE rule: a grant with an unchecked claim (`claims_unverified`) fails unless its (kind, grant id) has a
+    dated PENDING_CLAIMS entry; an entry for a grant with no such claim is stale."""
+    claimed = _claimed(policies)
+    out = [
+        f"{kind} {gid}: has an unchecked claim (claims_unverified) and no PENDING_CLAIMS entry"
+        for kind, gid in sorted(claimed - set(pending))
+    ]
+    return out + _pending_problems("PENDING_CLAIMS", pending, claimed, today)
+
+
+def test_every_unchecked_claim_has_a_dated_entry_and_the_suite_goes_red_when_it_is_overdue():
+    assert claim_problems(_policies(), PENDING_CLAIMS, TODAY) == []
+    overdue = claim_problems(_policies(), PENDING_CLAIMS, date(2026, 12, 12))
+    assert len(overdue) == len(PENDING_CLAIMS) and all("is overdue" in p for p in overdue)
+
+
+def test_plant_an_unchecked_claim_with_no_pending_entry_is_caught():
+    same(
+        claim_problems(_policies(), {}, DECIDED),
+        [
+            f"{kind} {gid}: has an unchecked claim (claims_unverified) and no PENDING_CLAIMS entry"
+            for kind, gid in sorted(PENDING_CLAIMS)
+        ],
+    )
+    stale = {**PENDING_CLAIMS, ("secrets/vault", "R99"): PENDING_CLAIMS[("secrets/vault", "R17")]}
+    same(
+        claim_problems(_policies(), stale, DECIDED),
+        ["PENDING_CLAIMS ('secrets/vault', 'R99') is fixed or gone: delete the entry"],
+    )
+
+
 R17_CLAIM = ("the + matches exactly one whole path part, nothing deeper",)
+CLAIMED_GRANTS = {"R17", "R18", "R20", "R21", "R22"}
 
 
-def test_pr1_grants_are_all_named_in_a_source_and_only_r17_has_an_unchecked_claim():
+def test_pr1_grants_are_all_named_in_a_source_and_the_grants_with_an_unchecked_claim_are_listed():
     grants = {g.id: g for p in _policies().values() for g in p.grants}
     same(sorted(grants), ["R17", "R18", "R19", "R20", "R21", "R22"])
     for g in grants.values():
         assert g.verified is not None and g.verified[0] == "2026-11-11", g.id
         assert g.confirmed_live is None, g.id
-        same(g.claims_unverified, R17_CLAIM if g.id == "R17" else ())
+        assert bool(g.claims_unverified) == (g.id in CLAIMED_GRANTS), g.id
+    same(grants["R17"].claims_unverified, R17_CLAIM)
 
 
-def test_the_builder_only_claims_are_not_shown_as_checked_and_r17_has_no_copy_ready_text():
-    """Fix batch 2: the `+` claim and three never-list paths were read by the builder only (fixture header)."""
+def test_the_builder_only_claims_are_not_shown_as_checked_and_no_kind_has_copy_ready_text():
+    """Fix batches 2 and 3: the claims in `claims_unverified` and three never-list paths were read by the
+    builder only or by nobody (fixture header), so no kind offers copy-ready text."""
     policies = _policies()
     same(
         {k: pp.copy_ready(p) for k, p in policies.items()},
-        {"secrets/vault": False, "signer/vault_transit": True, "source/kubernetes": True},
+        {"secrets/vault": False, "signer/vault_transit": False, "source/kubernetes": False},
     )
     text = pp.page()
     section = text[text.index("## vault (secrets)") : text.index("## vault_transit (signer)")]
@@ -1516,6 +1578,20 @@ def test_the_builder_only_claims_are_not_shown_as_checked_and_r17_has_no_copy_re
         assert entry.verified is None, name
         assert (kind, f"never:{name}") in PENDING_NAMES, name
         assert f"| `{name}` | " in text and "not yet checked |" in text
+
+
+def test_a_builder_only_source_is_marked_wherever_the_page_lists_it():
+    assert set(pp.BUILDER_ONLY_SOURCES) <= set(source_ids())
+    text = pp.page()
+    for sid in pp.BUILDER_ONLY_SOURCES:
+        assert sid in text, sid
+        unmarked = re.findall(rf"\b{sid}\b(?! \(builder only\))", text)
+        assert unmarked == [], f"the page lists {sid} without the mark (builder only)"
+    cell = pp._checked_cell(("2026-11-11", "V-KV", "V-ACL", "B-ACL"))
+    assert cell == "2026-11-11, sources V-KV, V-ACL (builder only), B-ACL (builder only)", (
+        "a builder-only source id is not marked in the checked cell"
+    )
+    assert pp._checked_cell(("2026-11-11", "V-KV")) == "2026-11-11, sources V-KV"
 
 
 def _with_grant(kind: str, **changes) -> dict[str, pp.Policy]:
@@ -1565,8 +1641,8 @@ def test_plant_a_url_or_host_in_verified_is_refused(source):
 
 
 def test_plant_no_copy_ready_text_for_a_kind_with_an_unverified_grant_or_claim():
-    policy = _policies()["signer/vault_transit"]
-    assert pp.copy_ready(policy)
+    base = _with_grant("signer/vault_transit", claims_unverified=())["signer/vault_transit"]
+    assert pp.copy_ready(base) and not pp.copy_ready(_policies()["signer/vault_transit"])
     for changes in ({"verified": None}, {"claims_unverified": ("the bound",)}):
         changed = _with_grant("signer/vault_transit", **changes)["signer/vault_transit"]
         assert not pp.copy_ready(changed), (
@@ -1698,8 +1774,9 @@ def test_the_committed_page_equals_what_the_data_gives():
 
 def test_the_page_states_its_limits_and_offers_text_for_the_three_kinds():
     text = pp.page(ROOT)
-    # the Vault secrets kind has no copy-ready text while its `+` claim is unchecked (fix batch 2)
-    assert text.count("```hcl") == 1 and text.count("```yaml") == 1
+    # no kind has copy-ready text while a claim of it is unchecked (fix batches 2 and 3)
+    assert text.count("```hcl") == 0 and text.count("```yaml") == 0
+    assert text.count("No copy-ready text: at least one permission or claim") == 3
     for words in (
         "No test shows that a permission NAME is right",
         "No policy on this page has been confirmed on a real account",
@@ -2663,7 +2740,17 @@ def test_plant_a_source_row_that_names_a_branch_is_refused(tmp_path):
 
 def test_every_source_row_is_pinned_and_is_used():
     rows = source_ids()
-    assert len(rows) == 19
+    listed = [
+        line.split(" | ")[0].strip()
+        for line in (ROOT / pp.SOURCES).read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.startswith("#")
+    ]
+    same(sorted(rows), sorted(listed))
+    assert len(listed) == len(set(listed))
+    header = re.search(r"(\d+) rows\.", (ROOT / pp.SOURCES).read_text(encoding="utf-8"))
+    assert header and int(header.group(1)) == len(listed), (
+        "the fixture header names a different row count"
+    )
     for key, (url, commit, _digest, _note) in rows.items():
         assert f"/blob/{commit}/" in url, key
     used = {
@@ -2679,6 +2766,19 @@ def test_every_source_row_is_pinned_and_is_used():
     engine_text = (ROOT / "tests/test_policy_engine.py").read_text(encoding="utf-8")
     unused = sorted(k for k in rows if k not in used and f"source id {k} " not in engine_text)
     same(unused, [])
+
+
+def test_the_page_and_the_fixture_agree_on_which_rows_are_abbreviated_and_what_is_unpinned():
+    rows = source_ids()
+    short = sorted(k for k, (_u, commit, _d, _n) in rows.items() if len(commit) < 40)
+    same(short, sorted(["V-API", "V-APPROLE", "V-K8S", "V-KV", "V-POL", "V-TOK", "V-TR"]))
+    head = " ".join(pp.head().split())
+    assert (
+        "Seven of the rows (the Vault documentation) carry a 7-character abbreviated commit id"
+        in head
+    )
+    assert len(short) == 7 and all(k.startswith("V-") and rows[k][1] == "82e7167" for k in short)
+    assert "OpenBao claims are not tied to one release" in head
 
 
 # -------------------------------------------------------------------- m5, m16: dated entries, what to do
@@ -2731,6 +2831,212 @@ def test_plant_m16_an_unverified_never_list_name_needs_a_dated_entry():
         ],
     )
     assert sorted(_unverified(_policies())) == sorted(PENDING_NAMES)
+
+
+# ------------------------------------------------ a never-list line must not cover a grant (fix batch 3)
+
+
+def _with_never(kind: str, **entry) -> dict[str, pp.Policy]:
+    policies = _policies()
+    raw = _raw(kind)
+    raw["never"] = (
+        *raw["never"],
+        {"type": "path", "reason": "planted", "verified": None, **entry},
+    )
+    policies[kind] = pp.parse(f"POLICY = {raw!r}")
+    return policies
+
+
+def _covers_problems(policies: dict[str, pp.Policy]) -> list[str]:
+    return [p for p in pp.cross_problems(policies) if "covers the resource and capability" in p]
+
+
+def test_no_never_list_line_of_the_three_kinds_covers_a_grant():
+    for kind, policy in _policies().items():
+        assert pp.never_covers_grant_problems(kind, policy) == [], kind
+
+
+def test_plant_a_vault_never_path_over_a_grant_is_caught_and_a_capability_that_differs_is_not():
+    vault, transit = "secrets/vault", "signer/vault_transit"
+    caught = [
+        (vault, {"name": "{mount}/data/*", "capabilities": ("read",)}, "R17"),
+        (vault, {"name": "{mount}/data/*"}, "R17"),  # no capabilities: all of them
+        (vault, {"name": "{mount}/data/{path_prefix}+", "capabilities": ("read", "list")}, "R17"),
+        (
+            vault,
+            {"name": "{mount}/data/{path_prefix}secret1"},
+            "R17",
+        ),  # narrower: the grant covers it
+        (transit, {"name": "{transit_mount}/sign/{key_name}"}, "R18"),
+        (transit, {"name": "{transit_mount}/sign/*", "capabilities": ("update",)}, "R18"),
+        (transit, {"name": "{transit_mount}/keys/{key_name}", "capabilities": ("read",)}, "R19"),
+    ]
+    for kind, entry, grant in caught:
+        found = _covers_problems(_with_never(kind, **entry))
+        assert len(found) == 1 and f"grant {grant} " in found[0], (
+            f"a never path {entry} that covers grant {grant} is not reported: {found}"
+        )
+    clean = [
+        (vault, {"name": "{mount}/data/*", "capabilities": ("create", "update")}),
+        (vault, {"name": "{mount}/metadata/*"}),
+        (vault, {"name": "other/data/*"}),
+        (transit, {"name": "{transit_mount}/keys/{key_name}", "capabilities": ("delete",)}),
+        (transit, {"name": "{transit_mount}/sign/{key_name}/sha2-256"}),
+    ]
+    for kind, entry in clean:
+        found = _covers_problems(_with_never(kind, **entry))
+        assert found == [], f"a never path {entry} that covers no grant is reported: {found}"
+
+
+def test_a_never_path_over_a_grant_is_also_refused_by_the_check_command(tmp_path, monkeypatch):
+    policies = _with_never("secrets/vault", name="{mount}/data/*")
+    assert any(
+        "covers the resource and capability of grant R17" in p for p in pp.cross_problems(policies)
+    )
+    raw = _raw("secrets/vault")
+    raw["never"] = (
+        *raw["never"],
+        {"type": "path", "name": "{mount}/data/*", "reason": "x", "verified": None},
+    )
+    for kind, rel in pp.KIND_MODULES.items():
+        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+        body = raw if kind == "secrets/vault" else _raw(kind)
+        (tmp_path / rel).write_text(f"POLICY = {body!r}\n", encoding="utf-8")
+    (tmp_path / pp.SOURCES).parent.mkdir(parents=True, exist_ok=True)
+    (tmp_path / pp.SOURCES).write_text(
+        (ROOT / pp.SOURCES).read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    assert any("covers the resource and capability" in p for p in pp.data_problems(tmp_path))
+
+
+def test_plant_a_kubernetes_never_resource_that_a_grant_names_is_caught():
+    kube = "source/kubernetes"
+    for name, grant in (("pods/log", "R22"), ("events", "R21"), ("deployments", "R20")):
+        found = _covers_problems(_with_never(kube, type="resource", name=name))
+        assert len(found) == 1 and f"grant {grant} " in found[0], (
+            f"a never resource {name!r} that a grant names is not reported: {found}"
+        )
+    found = _covers_problems(_with_never(kube, type="resource", name="pods/exec"))
+    assert found == [], f"a never resource that no grant names is reported: {found}"
+
+
+def test_plant_the_check_across_kinds_calls_the_cover_rule():
+    problems = pp.cross_problems(_with_never("secrets/vault", name="{mount}/data/*"))
+    assert problems, "cross_problems does not call the never-list cover rule"
+
+
+# --------------------------------- every behaviour claim in a note has a source or an unchecked-claim entry
+# A person classes each note of a kind (and each free-request note) once: "code" (says what THIS code does), "sources" (a
+# statement about the vendor's server or API, with the source ids that were read) or "claim" (such a statement
+# nobody has checked: a fragment of the `claims_unverified` text that lists it). A note with no class fails.
+NOTE_CLASSES: dict[tuple[str, str], tuple] = {
+    ("secrets/vault", "Create the token or the sign-in role"): (
+        "sources",
+        ("V-TOK", "V-APPROLE", "V-K8S"),
+    ),
+    ("secrets/vault", "In the call column"): ("code",),
+    ("signer/vault_transit", "The sign-in request of this kind"): ("code",),
+    ("signer/vault_transit", "In the call column"): ("code",),
+    ("signer/vault_transit", "Vault's sign path has"): (
+        "claim",
+        "the exact path R18 does not also allow",
+    ),
+    ("signer/vault_transit", "In plain words: Vault calls signing"): ("sources", ("V-TR", "B-TR")),
+    ("signer/vault_transit", "The signer signs a test message"): ("code",),
+    ("signer/vault_transit", "Create the token or the sign-in role"): (
+        "sources",
+        ("V-TOK", "V-APPROLE", "V-K8S"),
+    ),
+    ("source/kubernetes", "One Role and one RoleBinding"): ("code",),
+    ("source/kubernetes", "At every start-up the kind asks"): ("code",),
+    ("source/kubernetes", "The requests carry these query parameters"): (
+        "claim",
+        "do not change the verb",
+    ),
+    ("source/kubernetes", "free:a default cluster gives every"): (
+        "sources",
+        ("K-RBAC", "K-SRC", "K-SSRR"),
+    ),
+}
+
+
+def _note_texts(kind: str, policy: pp.Policy) -> list[str]:
+    return list(policy.notes) + [f"free:{f.note}" for f in policy.free if f.note]
+
+
+def note_problems(
+    policies: dict[str, pp.Policy], classes: dict[tuple[str, str], tuple], known: set[str]
+) -> list[str]:
+    out, used = [], set()
+    for kind, policy in policies.items():
+        claims = " ".join(c for g in policy.grants for c in g.claims_unverified)
+        for text in _note_texts(kind, policy):
+            keys = [k for k in classes if k[0] == kind and text.startswith(k[1])]
+            if len(keys) != 1:
+                out.append(
+                    f"{kind}: note {text[:50]!r} has {len(keys)} classes in NOTE_CLASSES, needs one"
+                )
+                continue
+            used.add(keys[0])
+            how, *rest = classes[keys[0]]
+            if how == "claim" and rest[0] not in claims:
+                out.append(
+                    f"{kind}: note {text[:50]!r} is a claim, but no claims_unverified holds {rest[0]!r}"
+                )
+            elif how == "sources":
+                out += [
+                    f"{kind}: note {text[:50]!r} names source {s}, which is not in the sources file"
+                    for s in rest[0]
+                    if s not in known
+                ]
+                if not rest[0]:
+                    out.append(f"{kind}: note {text[:50]!r} is class sources with no source id")
+            elif how not in ("code", "claim", "sources"):
+                out.append(f"{kind}: note {text[:50]!r} has an unknown class {how!r}")
+    return out + [
+        f"NOTE_CLASSES entry {k} matches no note: delete it" for k in sorted(set(classes) - used)
+    ]
+
+
+def test_every_note_of_a_kind_is_classed_and_every_claim_has_a_source_or_an_unchecked_entry():
+    same(note_problems(_policies(), NOTE_CLASSES, set(source_ids())), [])
+
+
+def _with_note(kind: str, note: str) -> dict[str, pp.Policy]:
+    policies = _policies()
+    raw = _raw(kind)
+    raw["notes"] = (*raw["notes"], note)
+    policies[kind] = pp.parse(f"POLICY = {raw!r}")
+    return policies
+
+
+def test_plant_a_new_note_with_no_class_a_claim_that_is_not_listed_and_an_unknown_source_are_caught():
+    known = set(source_ids())
+    found = note_problems(
+        _with_note("source/kubernetes", "The server never retries."), NOTE_CLASSES, known
+    )
+    assert any("has 0 classes" in p for p in found), "a note with no class is not reported"
+    claimless = {
+        **NOTE_CLASSES,
+        ("source/kubernetes", "The server never"): ("claim", "no such claim text"),
+    }
+    found = note_problems(
+        _with_note("source/kubernetes", "The server never retries."), claimless, known
+    )
+    assert any("is a claim, but no claims_unverified holds" in p for p in found), (
+        "a claim note whose text is in no claims_unverified is not reported"
+    )
+    badsrc = {**NOTE_CLASSES, ("source/kubernetes", "The server never"): ("sources", ("K-NOPE",))}
+    found = note_problems(
+        _with_note("source/kubernetes", "The server never retries."), badsrc, known
+    )
+    assert any("K-NOPE, which is not in the sources file" in p for p in found), (
+        "a note that names an unknown source id is not reported"
+    )
+    stale = {**NOTE_CLASSES, ("secrets/vault", "No such note"): ("code",)}
+    assert any("matches no note" in p for p in note_problems(_policies(), stale, known)), (
+        "a stale class entry is not reported"
+    )
 
 
 # ------------------------------------------------------------- M1 and the page: no claim without a run

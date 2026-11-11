@@ -60,7 +60,7 @@ def test_the_page_title_notes_and_engine_image_are_true():
         "the wildcard verb `*`",
         "`create` on the self-review resources",
         "the namespaced Role on this page cannot grant it",
-        "without it, so that longer form is not allowed by this policy",
+        "the code never sends the longer form. That the exact path does not also allow the longer form is a claim nobody has checked",
     ):
         assert words in " ".join(text.split()), words
     never = {(k, n.name) for k, p in _policies().items() for n in p.never}
@@ -89,3 +89,9 @@ def test_m14_ci_runs_the_policy_mutants_next_to_the_stage_mutants():
         runs.index("python tests/policy_mutants.py")
         == runs.index("python tests/stage_mutants.py") + 1
     )
+
+
+def test_the_changelog_says_seven_rows_are_abbreviated_and_the_openbao_release_is_not_pinned():
+    flat = " ".join(_changelog_entry().split())
+    assert "seven rows carry a 7-character abbreviated id" in flat
+    assert "OpenBao claims are not tied to one release" in flat

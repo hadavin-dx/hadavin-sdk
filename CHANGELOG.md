@@ -233,7 +233,16 @@
     matches exactly one whole path part (nothing deeper) was read in the vendors' source files by the builder of a
     fix only: no evidence runner has re-read it and no server has run the test of it. The page lists it under
     "claims not checked" and gives no copy-ready text for the Vault secrets kind until that is done. The never-list
-    lines `undelete`, `subkeys` and `byok-export` were read the same way and show "not yet checked". The 12
+    lines `undelete`, `subkeys` and `byok-export` were read the same way and show "not yet checked". Two more
+    statements about server behaviour are unchecked and listed the same way: that the exact signing path R18 does
+    not also allow Vault's longer sign path that ends in a hash algorithm name, and that the query parameters the
+    Kubernetes code sends do not change the verb a request needs (R20 to R22). So the page now gives no copy-ready
+    text for any of the three kinds. Each unchecked claim has a dated test entry (review by 2026-12-11); a source
+    id read by the builder of a fix only is marked "(builder only)" wherever the page lists it. Two new checks: no
+    never-list line may cover a grant of its own kind (same path or resource and a capability the line forbids;
+    Vault paths are compared as patterns both ways, Kubernetes resources by name), and every note of a kind is
+    classed once by a person as "code", "sources" or "claim", so a new statement about server behaviour cannot be
+    added without a source id or an unchecked-claim entry. The 12
     Vault server tests still need one CI run with `HADAVIN_REQUIRE_VAULT_ENGINE=1` that shows 12 passed and 0
     skipped; until then the page says "not run yet".
   - The page also gained a plain-words legend for its column heads, a sentence that Vault calls signing `update`
@@ -242,7 +251,9 @@
     map through `build`, and every `.call` outside the three modules.
   - What is not shown: no test shows that a permission name is right. The names and path forms were found in the
     vendors' documentation and source files on 2026-11-11 (`tests/fixtures/policy_sources_2026-11-11.txt`, every
-    row pinned to a commit); the rendered vendor pages could not be reached. No policy has been confirmed on a
+    row pinned to a commit id written in its URL; seven rows carry a 7-character abbreviated id, and the OpenBao
+    documentation rows sit at a commit whose release was not looked up, so the OpenBao claims are not tied to one
+    release); the rendered vendor pages could not be reached. No policy has been confirmed on a
     real account or a real cluster. Sign-in through an AppRole or Kubernetes role is not exercised, and there
     the role and identity groups can add policies.
   - No behaviour change: no kind sends a different request. The other 16 kinds that sign in to an outside system

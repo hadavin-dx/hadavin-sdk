@@ -116,7 +116,8 @@ POLICY = {
         ),
         (
             "Vault's sign path has an optional last part naming a hash algorithm. R18 is the exact path "
-            "without it, so that longer form is not allowed by this policy, and the code never sends it."
+            "without it, and the code never sends the longer form. That the exact path does not also allow "
+            "the longer form is a claim nobody has checked (see the claims column of R18)."
         ),
         (
             "In plain words: Vault calls signing `update`, but signing stores nothing; the permission lets "
@@ -143,7 +144,12 @@ POLICY = {
             "reason": "signs each audit checkpoint and the start-up test message",
             "verified": ("2026-11-11", "V-TR", "B-TR", "V-POL"),
             "confirmed_live": None,
-            "claims_unverified": (),
+            "claims_unverified": (
+                (
+                    "the exact path R18 does not also allow Vault's longer sign path that ends in a hash "
+                    "algorithm name"
+                ),
+            ),
         },
         {
             "id": "R19",

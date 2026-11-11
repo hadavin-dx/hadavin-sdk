@@ -690,7 +690,62 @@ def cross_problems(policies: dict[str, Policy]) -> list[str]:
                     f"{kind}: never-list action {n.name!r} is a permission that "
                     f"{names[(policy.platform, n.name)]} needs"
                 )
+        out += never_covers_grant_problems(kind, policy)
     return out
+
+
+def _vault_regex(path: str) -> re.Pattern[str]:
+    """A Vault policy path as a pattern: `+` is one path part, a last `*` is any ending, the rest is literal."""
+    body = re.escape(path.removesuffix("*")).replace(r"\+", "[^/]+")
+    return re.compile(body + (".*" if path.endswith("*") else ""))
+
+
+def _vault_sample(path: str) -> str:
+    """One concrete path the pattern allows: `+` and a last `*` each become the part `X`."""
+    return path.replace("+", "X").removesuffix("*") + ("X" if path.endswith("*") else "")
+
+
+def _vault_form(resource: str) -> str:
+    """A grant or never-list path in the form the page writes: every `{field}` and `<NAME>` is replaced by one
+    fixed token (the field's own name), the same way in both lists, so equal placeholders stay equal."""
+    return _OPERATOR.sub(lambda m: m.group(1), _FIELD.sub(lambda m: m.group(1), resource))
+
+
+def never_covers_grant_problems(kind: str, policy: Policy) -> list[str]:
+    """No never-list line may cover a grant of its own kind: the same resource AND a capability the line
+    forbids (a line with no capabilities forbids all). Vault: the path patterns overlap (checked both ways with
+    one sample path each). Kubernetes: a `resource` line names the grant's resource. (A `action` line against
+    a grant verb is checked above, across kinds and within one.)"""
+    out = []
+    for n in policy.never:
+        if policy.platform == "vault" and n.type == "path":
+            never_re, never_path = (
+                _vault_regex(_vault_form(n.name)),
+                _vault_sample(_vault_form(n.name)),
+            )
+            for g in policy.grants:
+                if n.capabilities and g.name not in n.capabilities:
+                    continue
+                grant_path = _vault_form(g.resource)
+                if never_re.fullmatch(_vault_sample(grant_path)) or _vault_regex(
+                    grant_path
+                ).fullmatch(never_path):
+                    out.append(_covers(kind, n, g))
+        elif policy.platform == "kubernetes_rbac" and n.type == "resource":
+            out += [
+                _covers(kind, n, g)
+                for g in policy.grants
+                if (m := _K8S_RESOURCE.fullmatch(g.resource)) and m.group(2) == n.name
+            ]
+    return out
+
+
+def _covers(kind: str, n: Never, g: Grant) -> str:
+    caps = f" with {', '.join(n.capabilities)}" if n.capabilities else ""
+    return (
+        f"{kind}: never-list {n.type} {n.name!r}{caps} covers the resource and capability of grant {g.id} "
+        f"({g.name} on {g.resource!r}): the page would give and forbid the same right"
+    )
 
 
 # ---------------------------------------------------------------------------------------------- render
@@ -862,10 +917,18 @@ def _cell(text: str) -> str:
     return text.replace("|", "\\|").replace("\n", " ")
 
 
+# Sources that only the builder of a fix has read (no evidence runner has re-read them). Wherever the page lists
+# one of these ids it says so: a reader must not take the id for a checked source.
+BUILDER_ONLY_SOURCES: tuple[str, ...] = ("V-ACL", "V-PARSE", "B-ACL")
+
+
 def _checked_cell(verified: tuple[str, ...] | None) -> str:
     if verified is None:
         return "not yet checked"
-    return f"{verified[0]}, sources {', '.join(verified[1:])}"
+    ids = ", ".join(
+        s + (" (builder only)" if s in BUILDER_ONLY_SOURCES else "") for s in verified[1:]
+    )
+    return f"{verified[0]}, sources {ids}"
 
 
 def _operation(op: tuple[str, ...]) -> str:
@@ -935,7 +998,7 @@ def _kind_section(kind: str, rel: str, policy: Policy) -> list[str]:
     else:
         out += [
             (
-                "No copy-ready text: at least one permission of this kind is not yet checked against the "
+                "No copy-ready text: at least one permission or claim of this kind is not yet checked against the "
                 "vendor's own sources."
             ),
             "",
@@ -979,13 +1042,21 @@ code needs (one reason each), the requests that need no permission, and what the
   listed rules, not by proof: a way to send a request that no rule lists is not seen.
 - No test shows that a permission NAME is right. That comes from a separate check of the vendor's own
   documentation and source files on the date shown per row (`tests/fixtures/policy_sources_2026-11-11.txt`
-  lists them, each pinned to a commit). The rendered vendor pages were not reachable; the files they are
-  built from were read.
-- One claim is weaker than that. In the Vault secrets permission R17, the `+` stands for exactly one whole path
-  part and nothing deeper. Only the builder of a fix read the vendor source files behind that claim; no
-  evidence runner has re-read them and no server has run the test of it. The page therefore lists it under
-  "claims not checked" and gives no copy-ready text for that kind. The same builder-only reading stands behind
-  the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked".
+  lists them, each pinned to a commit id written in its URL). Seven of the rows (the Vault documentation)
+  carry a 7-character abbreviated commit id, not the full 40 characters, and the OpenBao documentation rows
+  sit at a commit whose OpenBao release was not looked up, so the OpenBao claims are not tied to one release.
+  The rendered vendor pages were not reachable; the files they are built from were read.
+- Some claims are weaker than that. They are statements about how the vendor's server or API behaves that only
+  the builder of a fix has read, or that nobody has checked: in the Vault secrets permission R17, the `+`
+  stands for exactly one whole path part and nothing deeper (only the builder of a fix read the vendor source
+  files behind it; no evidence runner has re-read them and no server has run the test of it); in the signer
+  permission R18, that the exact path does not also allow Vault's longer sign path that ends in a hash
+  algorithm name (nobody has checked it); in the Kubernetes permissions R20 to R22, that the query parameters
+  the code sends do not change the verb the request needs (nobody has checked it). The page lists each under
+  "claims not checked" and, for that reason, gives no copy-ready text for any of the three kinds. A source id
+  marked "(builder only)" was read by the builder of a fix only. The same builder-only reading stands behind
+  the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked". Each of these has a
+  dated entry in the tests (review by 2026-12-11) that turns the suite red if nobody re-reads it by then.
 - Two links the call check does not follow. First, the map from an object attribute to the setting it holds
   (`self.mount` holds the setting `mount`) is written by hand in the test; a test reads each `build` function
   and checks that the setting is stored in that attribute, but nothing follows the value beyond that. Second,

@@ -23,16 +23,23 @@
 # tests run against (hashicorp/vault:2.2.0). OpenBao source code (B-ACL) is the commit the tag v2.4.0 pointed
 # to. The OpenBao documentation rows (B-POL, B-KV, B-TR, B-API) are at commit 0d706a0c...; which OpenBao release
 # that commit belongs to was not looked up, so the OpenBao claims are not tied to one release.
-# WHAT A LATER EVIDENCE RUNNER MUST RE-READ (fix batch 2, 2026-11-11): nothing below has been checked by anyone
-# but the builder of a fix.
+# WHAT A LATER EVIDENCE RUNNER MUST RE-READ (2026-11-11): only the items listed below were read by the builder
+# of a fix alone (the other readings are the evidence runner's, named above). Each has a dated entry in
+# tests/test_policy_guard.py (review by 2026-12-11).
 # - V-POL and B-POL: the passage that says `+` matches exactly one path segment in a policy path.
 # - V-ACL and B-ACL: the code that matches a policy path with `+` (a whole path part, nothing deeper, and what
 #   a `+` does to the longest-prefix choice).
 # - V-PARSE: the code that reads a policy path and refuses `+*`.
 # - B-ACL: the same matching rule in OpenBao.
 # - V-KV and B-KV: the paths `undelete`, `subkeys` (and `byok-export` in V-TR and B-TR).
-# After that run, set `claims_unverified` of R17 back to () and `verified` of the three never-list paths in the
-# kind modules, and delete their PENDING_NAMES entries in tests/test_policy_guard.py. The hashes of V-ACL,
+# - V-TR and B-TR: that the exact signing path (`sign/<key>`) does not also allow the longer path that ends in a
+#   hash algorithm name (grant R18). Nobody has read this yet.
+# - K-AUTHZ and K-RBAC: that the query parameters the Kubernetes code sends (`limit`, `continue`, `timestamps`,
+#   `sinceTime`, `limitBytes`) do not change the verb a request needs (grants R20 to R22). Nobody has read this
+#   yet.
+# After that run: set `claims_unverified` of R17, R18 and R20 to R22 back to () and delete their PENDING_CLAIMS
+# entries; set `verified` of the three never-list paths in the kind modules and delete their PENDING_NAMES
+# entries (both dictionaries are in tests/test_policy_guard.py). The hashes of V-ACL,
 # V-PARSE and B-ACL must be fetched again at the same time (nobody has re-fetched them).
 # No test fetches anything or compares a hash: the hashes are a record for a person to re-check.
 # Columns: id | url | commit | sha256 of the raw file | note

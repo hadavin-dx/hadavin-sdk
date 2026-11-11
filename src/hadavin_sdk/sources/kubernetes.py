@@ -361,7 +361,9 @@ POLICY = {
     "platform": "kubernetes_rbac",
     "credential": {
         "how": (
-            "The ServiceAccount token that the tool's fetch attaches to each request. This module holds no "
+            "The secret named by the source's `token_secret_name` setting: the fetch in `app.py` sends it as "
+            "a bearer token, and only when that setting is set. Nothing in this code says it is a "
+            "ServiceAccount token. Without it the request is sent unauthenticated. This module holds no "
             "credential."
         ),
         "lifetime": "long",
@@ -383,9 +385,10 @@ POLICY = {
         ),
         (
             "The requests carry these query parameters and no others: `limit` and `continue` on the two "
-            "list requests, `timestamps`, `sinceTime` and `limitBytes` on the log request. None of them "
-            "changes the verb the request needs; `watch` and `follow` are never sent, and a test refuses "
-            "any other parameter written in this module."
+            "list requests, `timestamps`, `sinceTime` and `limitBytes` on the log request. `watch` and "
+            "`follow` are never sent, and a test refuses any other parameter written in this module. That "
+            "none of these parameters changes the verb the request needs is a claim nobody has checked "
+            "(see the claims column of R20 to R22)."
         ),
     ),
     "grants": (
@@ -399,7 +402,9 @@ POLICY = {
             "reason": "reads deployments, their rollout revision and images",
             "verified": ("2026-11-11", "K-AUTHZ", "K-SRC"),
             "confirmed_live": None,
-            "claims_unverified": (),
+            "claims_unverified": (
+                "the query parameters `limit` and `continue` do not change the verb the request needs",
+            ),
         },
         {
             "id": "R21",
@@ -411,7 +416,9 @@ POLICY = {
             "reason": "reads events in the time window",
             "verified": ("2026-11-11", "K-AUTHZ", "K-SRC"),
             "confirmed_live": None,
-            "claims_unverified": (),
+            "claims_unverified": (
+                "the query parameters `limit` and `continue` do not change the verb the request needs",
+            ),
         },
         {
             "id": "R22",
@@ -423,7 +430,9 @@ POLICY = {
             "reason": "reads one pod's log lines",
             "verified": ("2026-11-11", "K-RBAC", "K-SRC"),
             "confirmed_live": None,
-            "claims_unverified": (),
+            "claims_unverified": (
+                "the query parameters `timestamps`, `sinceTime` and `limitBytes` do not change the verb the request needs",
+            ),
         },
     ),
     "free": (
@@ -465,7 +474,9 @@ POLICY = {
             "reason": (
                 "a write verb: this source only reads. One exception, the same one the start-up check "
                 "makes: `create` on the self-review resources (`selfsubjectrulesreviews`, "
-                "`selfsubjectaccessreviews`, `selfsubjectreviews`) writes nothing"
+                "`selfsubjectaccessreviews`, `selfsubjectreviews`). That these three requests write nothing "
+                "was not found in a vendor source: the one source listed for the resource (K-SSRR) describes "
+                "only the first and does not mention the verb"
             ),
             "verified": ("2026-11-11", "K-AUTHZ"),
         },

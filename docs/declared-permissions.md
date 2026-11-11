@@ -29,13 +29,21 @@ code needs (one reason each), the requests that need no permission, and what the
   listed rules, not by proof: a way to send a request that no rule lists is not seen.
 - No test shows that a permission NAME is right. That comes from a separate check of the vendor's own
   documentation and source files on the date shown per row (`tests/fixtures/policy_sources_2026-11-11.txt`
-  lists them, each pinned to a commit). The rendered vendor pages were not reachable; the files they are
-  built from were read.
-- One claim is weaker than that. In the Vault secrets permission R17, the `+` stands for exactly one whole path
-  part and nothing deeper. Only the builder of a fix read the vendor source files behind that claim; no
-  evidence runner has re-read them and no server has run the test of it. The page therefore lists it under
-  "claims not checked" and gives no copy-ready text for that kind. The same builder-only reading stands behind
-  the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked".
+  lists them, each pinned to a commit id written in its URL). Seven of the rows (the Vault documentation)
+  carry a 7-character abbreviated commit id, not the full 40 characters, and the OpenBao documentation rows
+  sit at a commit whose OpenBao release was not looked up, so the OpenBao claims are not tied to one release.
+  The rendered vendor pages were not reachable; the files they are built from were read.
+- Some claims are weaker than that. They are statements about how the vendor's server or API behaves that only
+  the builder of a fix has read, or that nobody has checked: in the Vault secrets permission R17, the `+`
+  stands for exactly one whole path part and nothing deeper (only the builder of a fix read the vendor source
+  files behind it; no evidence runner has re-read them and no server has run the test of it); in the signer
+  permission R18, that the exact path does not also allow Vault's longer sign path that ends in a hash
+  algorithm name (nobody has checked it); in the Kubernetes permissions R20 to R22, that the query parameters
+  the code sends do not change the verb the request needs (nobody has checked it). The page lists each under
+  "claims not checked" and, for that reason, gives no copy-ready text for any of the three kinds. A source id
+  marked "(builder only)" was read by the builder of a fix only. The same builder-only reading stands behind
+  the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked". Each of these has a
+  dated entry in the tests (review by 2026-12-11) that turns the suite red if nobody re-reads it by then.
 - Two links the call check does not follow. First, the map from an object attribute to the setting it holds
   (`self.mount` holds the setting `mount`) is written by hand in the test; a test reads each `build` function
   and checks that the setting is stored in that attribute, but nothing follows the value beyond that. Second,
@@ -77,7 +85,7 @@ Declared in `src/hadavin_sdk/actions/secrets_vault.py`.
 
 | id | permission | on what | what limits a wildcard | the call it serves | why | when | name and form found in a vendor source | accepted by a real account | claims not checked |
 |---|---|---|---|---|---|---|---|---|---|
-| R17 | `read` | `{mount}/data/{path_prefix}+` | the `+` stands for exactly one path part, the secret's name, directly under this deployment's `path_prefix` setting (which must not be empty); nothing deeper is covered | `GET {self.mount}/data/{self.path_prefix}{name}` | reads one named secret | always | 2026-11-11, sources V-KV, V-POL, V-ACL, V-PARSE, B-KV, B-POL, B-ACL | no | the + matches exactly one whole path part, nothing deeper |
+| R17 | `read` | `{mount}/data/{path_prefix}+` | the `+` stands for exactly one path part, the secret's name, directly under this deployment's `path_prefix` setting (which must not be empty); nothing deeper is covered | `GET {self.mount}/data/{self.path_prefix}{name}` | reads one named secret | always | 2026-11-11, sources V-KV, V-POL, V-ACL (builder only), V-PARSE (builder only), B-KV, B-POL, B-ACL (builder only) | no | the + matches exactly one whole path part, nothing deeper |
 
 Requests that need no permission:
 
@@ -102,7 +110,7 @@ Exception for the long-lived case: With auth `token` the operator supplies the t
 Tested: declared calls equal the calls written in the module: yes. Engine: checked by tests that run against a real Vault server in CI only (image `hashicorp/vault:2.2.0`). These tests have not run yet: no run of them is on record. What those tests check: a token that holds only the generated policy text can make the kind's own requests; with one grant removed, the request that grant serves is answered 403 (refused); and each of these requests is answered 403: read two levels below the prefix; read outside the prefix; write under the prefix; delete under the prefix; read the metadata path; destroy a version; read the server's mounts.
 Not covered by any test: the open alternative OpenBao (not yet run); sign-in through AppRole or Kubernetes roles, where the role and identity groups can add policies; any never-list line that is not among the requests named above; a real deployment's own mounts.
 
-No copy-ready text: at least one permission of this kind is not yet checked against the vendor's own sources.
+No copy-ready text: at least one permission or claim of this kind is not yet checked against the vendor's own sources.
 
 ## vault_transit (signer)
 
@@ -110,14 +118,14 @@ Declared in `src/hadavin_sdk/audit/signer_vault.py`.
 
 - The sign-in request of this kind is written in the imported module `actions/secrets_vault.py` and is declared there, not here.
 - In the call column, `{self.mount}` is the `transit_mount` setting and `{self.key_name}` the `key_name` setting, as the signer object holds them; the permission is written with the setting's name.
-- Vault's sign path has an optional last part naming a hash algorithm. R18 is the exact path without it, so that longer form is not allowed by this policy, and the code never sends it.
+- Vault's sign path has an optional last part naming a hash algorithm. R18 is the exact path without it, and the code never sends the longer form. That the exact path does not also allow the longer form is a claim nobody has checked (see the claims column of R18).
 - In plain words: Vault calls signing `update`, but signing stores nothing; the permission lets the identity ask for a signature, not change any key or secret.
 - The signer signs a test message when it is built, and verifying the audit trail builds the signer, so a process that only verifies needs R18 too.
 - Create the token or the sign-in role so that it holds this policy only. Vault adds its `default` policy to every token unless told not to (`no_default_policy` when a token is created, `token_no_default_policy` on an AppRole or Kubernetes role).
 
 | id | permission | on what | what limits a wildcard | the call it serves | why | when | name and form found in a vendor source | accepted by a real account | claims not checked |
 |---|---|---|---|---|---|---|---|---|---|
-| R18 | `update` | `{transit_mount}/sign/{key_name}` | no wildcard | `POST {self.mount}/sign/{self.key_name}` | signs each audit checkpoint and the start-up test message | always | 2026-11-11, sources V-TR, B-TR, V-POL | no | none |
+| R18 | `update` | `{transit_mount}/sign/{key_name}` | no wildcard | `POST {self.mount}/sign/{self.key_name}` | signs each audit checkpoint and the start-up test message | always | 2026-11-11, sources V-TR, B-TR, V-POL | no | the exact path R18 does not also allow Vault's longer sign path that ends in a hash algorithm name |
 | R19 | `read` | `{transit_mount}/keys/{key_name}` | no wildcard | `GET {self.mount}/keys/{self.key_name}` | reads the pinned version's public key and the key type | always | 2026-11-11, sources V-TR, B-TR | no | none |
 
 Requests that need no permission:
@@ -146,19 +154,7 @@ Exception for the long-lived case: With auth `token` the operator supplies the t
 Tested: declared calls equal the calls written in the module: yes. Engine: checked by tests that run against a real Vault server in CI only (image `hashicorp/vault:2.2.0`). These tests have not run yet: no run of them is on record. What those tests check: a token that holds only the generated policy text can make the kind's own requests; with one grant removed, the request that grant serves is answered 403 (refused); and each of these requests is answered 403: sign with another key; change the key's settings; export the key; back the key up; read the server's mounts; delete the key.
 Not covered by any test: the open alternative OpenBao (not yet run); sign-in through AppRole or Kubernetes roles, where the role and identity groups can add policies; any never-list line that is not among the requests named above.
 
-Copy-ready text (replace every `{setting}` with this deployment's setting and every `<NAME>` with your own name):
-
-```hcl
-# R18: signs each audit checkpoint and the start-up test message
-path "{transit_mount}/sign/{key_name}" {
-  capabilities = ["update"]
-}
-
-# R19: reads the pinned version's public key and the key type
-path "{transit_mount}/keys/{key_name}" {
-  capabilities = ["read"]
-}
-```
+No copy-ready text: at least one permission or claim of this kind is not yet checked against the vendor's own sources.
 
 ## kubernetes (source)
 
@@ -166,13 +162,13 @@ Declared in `src/hadavin_sdk/sources/kubernetes.py`.
 
 - One Role and one RoleBinding per namespace in `namespaces`. Never a ClusterRole or a ClusterRoleBinding.
 - At every start-up the kind asks the cluster what this identity may do and reports write verbs, the wildcard verb `*`, shell subresources and any read of `secrets`. It does not report the verb `watch`.
-- The requests carry these query parameters and no others: `limit` and `continue` on the two list requests, `timestamps`, `sinceTime` and `limitBytes` on the log request. None of them changes the verb the request needs; `watch` and `follow` are never sent, and a test refuses any other parameter written in this module.
+- The requests carry these query parameters and no others: `limit` and `continue` on the two list requests, `timestamps`, `sinceTime` and `limitBytes` on the log request. `watch` and `follow` are never sent, and a test refuses any other parameter written in this module. That none of these parameters changes the verb the request needs is a claim nobody has checked (see the claims column of R20 to R22).
 
 | id | permission | on what | what limits a wildcard | the call it serves | why | when | name and form found in a vendor source | accepted by a real account | claims not checked |
 |---|---|---|---|---|---|---|---|---|---|
-| R20 | `list` | `apps/deployments in {namespaces}` | no wildcard | `k8s.list_deployments` | reads deployments, their rollout revision and images | always | 2026-11-11, sources K-AUTHZ, K-SRC | no | none |
-| R21 | `list` | `core/events in {namespaces}` | no wildcard | `k8s.list_events` | reads events in the time window | always | 2026-11-11, sources K-AUTHZ, K-SRC | no | none |
-| R22 | `get` | `core/pods/log in {namespaces}` | no wildcard | `k8s.pod_log` | reads one pod's log lines | always | 2026-11-11, sources K-RBAC, K-SRC | no | none |
+| R20 | `list` | `apps/deployments in {namespaces}` | no wildcard | `k8s.list_deployments` | reads deployments, their rollout revision and images | always | 2026-11-11, sources K-AUTHZ, K-SRC | no | the query parameters `limit` and `continue` do not change the verb the request needs |
+| R21 | `list` | `core/events in {namespaces}` | no wildcard | `k8s.list_events` | reads events in the time window | always | 2026-11-11, sources K-AUTHZ, K-SRC | no | the query parameters `limit` and `continue` do not change the verb the request needs |
+| R22 | `get` | `core/pods/log in {namespaces}` | no wildcard | `k8s.pod_log` | reads one pod's log lines | always | 2026-11-11, sources K-RBAC, K-SRC | no | the query parameters `timestamps`, `sinceTime` and `limitBytes` do not change the verb the request needs |
 
 Requests that need no permission:
 
@@ -185,7 +181,7 @@ Never give this identity (each line would undo what the kind promises):
 | role | `cluster-admin` | a built-in role that may write | not yet checked |
 | role | `admin` | a built-in role that may write | not yet checked |
 | role | `edit` | a built-in role that may write | not yet checked |
-| action | `create` | a write verb: this source only reads. One exception, the same one the start-up check makes: `create` on the self-review resources (`selfsubjectrulesreviews`, `selfsubjectaccessreviews`, `selfsubjectreviews`) writes nothing | 2026-11-11, sources K-AUTHZ |
+| action | `create` | a write verb: this source only reads. One exception, the same one the start-up check makes: `create` on the self-review resources (`selfsubjectrulesreviews`, `selfsubjectaccessreviews`, `selfsubjectreviews`). That these three requests write nothing was not found in a vendor source: the one source listed for the resource (K-SSRR) describes only the first and does not mention the verb | 2026-11-11, sources K-AUTHZ |
 | action | `update` | a write verb: this source only reads | 2026-11-11, sources K-AUTHZ |
 | action | `patch` | a write verb: this source only reads | 2026-11-11, sources K-AUTHZ |
 | action | `delete` | a write verb: this source only reads | 2026-11-11, sources K-AUTHZ |
@@ -201,48 +197,13 @@ Never give this identity (each line would undo what the kind promises):
 | resource | `services/proxy` | opens a shell or a tunnel into a workload | 2026-11-11, sources K-SRC |
 | resource | `secrets` | reading a secret reveals its value | 2026-11-11, sources K-AUTHZ |
 
-Credential: The ServiceAccount token that the tool's fetch attaches to each request. This module holds no credential. Lifetime: long.
+Credential: The secret named by the source's `token_secret_name` setting: the fetch in `app.py` sends it as a bearer token, and only when that setting is set. Nothing in this code says it is a ServiceAccount token. Without it the request is sent unauthenticated. This module holds no credential. Lifetime: long.
 Exception for the long-lived case: Whether the token expires is decided by the cluster and the operator; this code cannot tell and does not shorten it. Use a token that expires. No ticket removes a long-lived token yet: ledger row BL-core-q8c1-lifetime tracks it.
 
 Tested: declared calls equal the calls written in the module: yes. Engine: no cluster in any test. The generated Role is given to the kind's own read-only rule (the function that judges a real cluster's answer at every start-up), which finds no problem in it and does find one when a write verb, `pods/exec` or a read of `secrets` is added.
 Not covered by any test: whether the three rules are enough on a real cluster; clusters that changed the default right of every signed-in identity to ask what it may do.
 
-Copy-ready text (replace every `{setting}` with this deployment's setting and every `<NAME>` with your own name):
-
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: "<ROLE_NAME>"
-  namespace: "{namespaces}"
-rules:
-  # R20: reads deployments, their rollout revision and images
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["list"]
-  # R21: reads events in the time window
-  - apiGroups: [""]
-    resources: ["events"]
-    verbs: ["list"]
-  # R22: reads one pod's log lines
-  - apiGroups: [""]
-    resources: ["pods/log"]
-    verbs: ["get"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: "<ROLE_NAME>"
-  namespace: "{namespaces}"
-subjects:
-  - kind: ServiceAccount
-    name: "<SERVICE_ACCOUNT>"
-    namespace: "<SERVICE_ACCOUNT_NAMESPACE>"
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: "<ROLE_NAME>"
-```
+No copy-ready text: at least one permission or claim of this kind is not yet checked against the vendor's own sources.
 
 ## Kinds with no declared policy yet
 
