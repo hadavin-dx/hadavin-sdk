@@ -17,3 +17,8 @@ Head: f468bde0 plus uncommitted edits in worktree /home/user/build/B-P3a2-b2 (br
 ## Next
 - Mutants E1-E27 running (log /home/user/build/B2-mut-E.log), then a 60-mutant sample, then full run alone on the final head.
 - Fail-before proof, scan_repo, bandit, one full suite, commit, push.
+
+## Checkpoint 3 (23:10 UTC)
+- Done: E1-E27 run: 22 of 27 first; fixed E11/E14/E16 (harness reports escaping errors as assertions), E25 (new killer), E5 retired (dead branch removed from step 4; server writes no `*`). Fail-before proof in /home/user/build/B-P3a2-fail-before-c3b.txt (103 failed on c150b5ff). ruff, scan_repo, bandit, gitleaks clean. Local commit 811fddf7 (not pushed).
+- Running: full mutant run alone (B2-mut-full.log). Next: full suite, push wip then core/P3a-2-clean if green.
+- Blockers: none. Open for lead: ticket 5.3 dead-code deletion, commit-4 tests.
