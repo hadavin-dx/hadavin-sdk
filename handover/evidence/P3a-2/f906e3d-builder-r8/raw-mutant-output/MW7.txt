@@ -1,0 +1,15 @@
+### tests/test_migration_wiring.py::test_uppercase_extension_is_refused rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________________ test_uppercase_extension_is_refused ______________________
+tests/test_migration_wiring.py:245: in test_uppercase_extension_is_refused
+    assert mig.check_ledger(mig._migration_files(tmp_path)) != []
+E   AssertionError: assert [] != []
+E    +  where [] = <function check_ledger at 0x7f0313bee840>([PosixPath('/tmp/pytest-of-root/pytest-10466/test_uppercase_extension_is_re0/0001_a.sql')])
+E    +    where <function check_ledger at 0x7f0313bee840> = mig.check_ledger
+E    +    and   [PosixPath('/tmp/pytest-of-root/pytest-10466/test_uppercase_extension_is_re0/0001_a.sql')] = <function _migration_files at 0x7f0313bede40>(PosixPath('/tmp/pytest-of-root/pytest-10466/test_uppercase_extension_is_re0'))
+E    +      where <function _migration_files at 0x7f0313bede40> = mig._migration_files
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_uppercase_extension_is_refused - ...
+1 failed in 0.39s
+

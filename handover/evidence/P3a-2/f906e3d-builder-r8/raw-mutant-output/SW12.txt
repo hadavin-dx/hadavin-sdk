@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_a_failed_unlock_does_not_fail_the_setup rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________ test_a_failed_unlock_does_not_fail_the_setup _________________
+tests/test_migration_wiring.py:1580: in test_a_failed_unlock_does_not_fail_the_setup
+    assert raised is None, f"the error of the unlock was raised out of the sweep: {raised}"
+E   AssertionError: the error of the unlock was raised out of the sweep: connection lost
+E   assert 'connection lost' is None
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_failed_unlock_does_not_fail_the_setup
+1 failed in 0.51s
+

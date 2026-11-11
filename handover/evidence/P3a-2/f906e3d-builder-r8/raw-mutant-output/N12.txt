@@ -1,0 +1,12 @@
+### tests/test_migration_rules.py::test_role_membership_is_refused_whatever_the_comments_and_names_hold[-] rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_role_membership_is_refused_whatever_the_comments_and_names_hold[-] ____
+tests/test_migration_rules.py:341: in test_role_membership_is_refused_whatever_the_comments_and_names_hold
+    assert not wrong, wrong[:5]
+E   AssertionError: [('slipped past the refusal', 'GRANT "on" TO s'), ('slipped past the refusal', 'GRANT "on" TO s WITH ADMIN OPTION'), (...T "on" TO s WITH SET FALSE'), ('slipped past the refusal', 'GRANT "on" TO s WITH ADMIN TRUE, INHERIT FALSE, SET TRUE')]
+E   assert not [('slipped past the refusal', 'GRANT "on" TO s'), ('slipped past the refusal', 'GRANT "on" TO s WITH ADMIN OPTION'), (...on" TO s WITH ADMIN TRUE, INHERIT FALSE, SET TRUE'), ('slipped past the refusal', 'GRANT "on" TO s GRANTED BY g'), ...]
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_role_membership_is_refused_whatever_the_comments_and_names_hold[-]
+1 failed in 0.41s
+

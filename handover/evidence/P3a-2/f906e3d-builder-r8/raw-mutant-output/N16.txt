@@ -1,0 +1,14 @@
+### tests/test_migration_rules.py::test_no_advice_tells_anyone_to_rename_a_row_to_the_false_name rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________ test_no_advice_tells_anyone_to_rename_a_row_to_the_false_name _________
+tests/test_migration_rules.py:398: in test_no_advice_tells_anyone_to_rename_a_row_to_the_false_name
+    assert not re.search(rf"\b(?:to|as|=)\s*['`]?{FALSE_NAME}", s), s
+E   AssertionError: the file is `0005_evidence.sql`, the ledger row is `0005_evidence`, and two kinds of database need a repair.** Rename the row to `0006_evidence`.
+E   assert not <re.Match object; span=(126, 143), match='to `0006_evidence'>
+E    +  where <re.Match object; span=(126, 143), match='to `0006_evidence'> = <function search at 0x7f3e648ca8e0>("\\b(?:to|as|=)\\s*['`]?0006_evidence", 'the file is `0005_evidence.sql`, the ledger row is `0005_evidence`, and two kinds of database need a repair.** Rename the row to `0006_evidence`.')
+E    +    where <function search at 0x7f3e648ca8e0> = re.search
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_no_advice_tells_anyone_to_rename_a_row_to_the_false_name
+1 failed in 0.37s
+

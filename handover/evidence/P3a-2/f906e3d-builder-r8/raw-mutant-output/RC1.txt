@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_the_roles_are_asked_again_after_every_file rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_the_roles_are_asked_again_after_every_file ________________
+tests/test_migration_wiring.py:1120: in test_the_roles_are_asked_again_after_every_file
+    with pytest.raises(ConfigError, match=r"migration 0001_f1\.sql left the roles changed") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_roles_are_asked_again_after_every_file
+1 failed in 0.41s
+

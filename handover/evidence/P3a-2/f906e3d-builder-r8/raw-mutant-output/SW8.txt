@@ -1,0 +1,27 @@
+### tests/test_migration_wiring.py::test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role _
+tests/test_migration_wiring.py:1434: in test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role
+    assert f"application_name={mr.PLAIN_ROLE}" in holds[0].server, holds[0].server
+E   AssertionError: dbname=made_up host=made-up-host port=5999
+E   assert 'application_name=hadavin_test_migrator_e0f03c17' in 'dbname=made_up host=made-up-host port=5999'
+E    +  where 'dbname=made_up host=made-up-host port=5999' = <tests.test_migration_wiring._Hold object at 0x7ffb57c2d940>.server
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role
+1 failed in 0.41s
+
+### tests/test_migration_postgres.py::test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server _
+tests/test_migration_postgres.py:2085: in test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server
+    assert name not in helper.sweep_stale_roles(in_y), "a live process's role was dropped"
+E   AssertionError: a live process's role was dropped
+E   assert 'hadavin_test_migrator_a996e902' not in ['hadavin_test_migrator_a996e902']
+E    +  where ['hadavin_test_migrator_a996e902'] = <function sweep_stale_roles at 0x7f6424846840>(<psycopg.Connection [IDLE] (host=127.0.0.1 port=56073 user=postgres database=hadavin_test_db_1a46d384) at 0x7f64248ef610>)
+E    +    where <function sweep_stale_roles at 0x7f6424846840> = helper.sweep_stale_roles
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server
+1 failed in 0.56s
+

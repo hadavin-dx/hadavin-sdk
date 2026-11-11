@@ -1,0 +1,12 @@
+### tests/test_migration_postgres.py::test_an_aggregate_with_no_arguments_is_printed_with_a_star rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__________ test_an_aggregate_with_no_arguments_is_printed_with_a_star __________
+tests/test_migration_postgres.py:2572: in test_an_aggregate_with_no_arguments_is_printed_with_a_star
+    assert "(*)" in statements[0], statements
+E   AssertionError: ['ALTER AGGREGATE "hadavin_test_8207be158b1f"."hadavin_test_zero_agg"() OWNER TO "mig_f8b67eac5a";']
+E   assert '(*)' in 'ALTER AGGREGATE "hadavin_test_8207be158b1f"."hadavin_test_zero_agg"() OWNER TO "mig_f8b67eac5a";'
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_an_aggregate_with_no_arguments_is_printed_with_a_star
+1 failed in 0.68s
+

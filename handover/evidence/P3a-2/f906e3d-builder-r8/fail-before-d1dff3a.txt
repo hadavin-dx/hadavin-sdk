@@ -1,0 +1,18 @@
+new tests at adef142; src from d1dff3a; in tests/fixtures/migration_role.py only the hold, sweep and exit-hook code from d1dff3a (new helpers kept so the tests import); python 3.13.18 postgres 16.15
+_________________ test_a_failed_unlock_does_not_fail_the_setup _________________
+    def test_a_failed_unlock_does_not_fail_the_setup(monkeypatch):
+self = <tests.test_migration_wiring.test_a_failed_unlock_does_not_fail_the_setup.<locals>.Db object at 0x7f615d1b9d30>
+    def test_a_failed_unlock_does_not_fail_the_setup(monkeypatch):
+FAILED tests/test_migration_wiring.py::test_a_function_of_another_schema_is_not_a_managed_name
+FAILED tests/test_migration_wiring.py::test_a_login_that_cannot_see_other_sessions_sweeps_nothing
+FAILED tests/test_migration_wiring.py::test_a_failed_unlock_does_not_fail_the_setup
+FAILED tests/test_migration_postgres.py::test_a_stale_role_that_owns_objects_in_another_database_is_left_and_the_databases_are_named
+FAILED tests/test_migration_postgres.py::test_a_role_that_owns_a_schema_that_is_not_a_scratch_schema_is_not_swept
+FAILED tests/test_migration_postgres.py::test_the_exit_hook_drops_what_the_role_owns_in_every_used_database_and_then_the_role
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[column_update_via_group-can UPDATE runs.state]
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[select_on_the_ledger-can SELECT schema_migrations]
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[create_in_the_schema-can CREATE in schema]
+9 failed, 7 passed, 290 deselected in 2.26s
+E       AssertionError: a login without its password: demo_askdata/conftest.py:91, test_k2_migrations.py:242, test_k2_migrations.py:272, test_migration_postgres.py:1583, test_migration_postgres.py:2393, test_migration_postgres.py:1668, test_migration_postgres.py:1688
+E       assert not ['demo_askdata/conftest.py:91', 'test_k2_migrations.py:242', 'test_k2_migrations.py:272', 'test_migration_postgres.py:1583', 'test_migration_postgres.py:2393', 'test_migration_postgres.py:1668', ...]
+1 failed, 73 deselected in 0.72s

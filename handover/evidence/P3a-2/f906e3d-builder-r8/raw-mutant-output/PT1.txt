@@ -1,0 +1,26 @@
+### tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused rc=1
+F..                                                                      [100%]
+=================================== FAILURES ===================================
+_ test_the_portal_role_is_refused_what_the_other_roles_are_refused[column_update_via_group-can UPDATE runs.state] _
+tests/test_migration_postgres.py:2455: in test_the_portal_role_is_refused_what_the_other_roles_are_refused
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[column_update_via_group-can UPDATE runs.state]
+1 failed, 2 passed in 0.94s
+
+### tests/test_k2_migrations.py::test_migrate_refuses_a_portal_role_that_inherits_write_rights rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________ test_migrate_refuses_a_portal_role_that_inherits_write_rights _________
+tests/test_k2_migrations.py:444: in test_migrate_refuses_a_portal_role_that_inherits_write_rights
+    with pytest.raises(ConfigError, match="can UPDATE runs"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'can UPDATE runs'
+E     Actual message: 'the portal role holds privileges outside the portal grant map: pt_b71e608aa1: can DELETE runs (the grant map is the list in the code of the tables each role of this package may use, and the rights each may have on each: for the portal role SELECT only)'
+=========================== short test summary info ============================
+FAILED tests/test_k2_migrations.py::test_migrate_refuses_a_portal_role_that_inherits_write_rights
+1 failed in 0.71s
+
