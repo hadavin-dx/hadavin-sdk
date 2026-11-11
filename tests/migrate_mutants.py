@@ -50,6 +50,7 @@ T_GUARDS = "tests/test_migration_numbers_guards.py"
 T_NAMES = "tests/test_migration_names.py"
 T_CMP = "tests/test_migration_compare.py"
 T_VERIFY = "tests/test_migration_verify.py"
+T_STEPS = "tests/test_migration_steps.py"
 
 
 @dataclass(frozen=True)
@@ -77,12 +78,12 @@ CMP_OLD = "        if old != new\n"
 PAIR_FUNC = "def _table_body(text: str, start: int) -> str:"
 LEX_CALL = "        text, lexer_problem = lex(raw, keep_quoted=True)\n"
 SAVE_READ = (
-    "            if pending:\n"
-    "                saved = _read_back(db, schema, named)\n"
-    "                _refuse_unusual_strings(saved)\n"
-    "            for path in pending:\n"
-    '                step[0] = f"applying {path.name}"\n'
-    "                db.execute(texts[path])  # the text that was scanned, never a second read\n"
+    "                    if pending:\n"
+    "                        saved = _read_back(db, schema, named)\n"
+    "                        _refuse_unusual_strings(saved)\n"
+    "                    for path in pending:  # step 3\n"
+    '                        step[0] = f"applying {path.name}"\n'
+    "                        db.execute(texts[path])  # the text that was scanned, never a second read\n"
 )
 RECIPE_CLEAN = (
     "cleaned = checked_statement_text(text)  # cannot raise: _refuse_entry read this text above"
@@ -119,17 +120,24 @@ ROLE_REFUSED = k(T_WIRING, "test_a_privileged_migration_role_is_refused_before_a
 
 
 CALL = (
-    "                saved = _check_read_back(\n"
-    "                    db,\n"
-    "                    saved,\n"
-    "                    path.name,\n"
-    "                    frozenset(c for c in allowed_changes if c.migration == path.stem),\n"
-    "                    named,\n"
-    "                    schema=schema,\n"
-    "                )\n"
+    "                        saved = _check_read_back(\n"
+    "                            db,\n"
+    "                            saved,\n"
+    "                            path.name,\n"
+    "                            frozenset(c for c in allowed_changes if c.migration == path.stem),\n"
+    "                            named,\n"
+    "                            schema=schema,\n"
+    "                        )\n"
 )
-RECHECK = "                _recheck_roles(db, named, path.name)\n"
-INSERT = '                db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))\n'
+RECHECK = (
+    "                        with pinned_read(db, RECIPE_TIMEOUTS):\n"
+    "                            _recheck_roles(db, named, path.name)\n"
+)
+INSERT = (
+    "                        db.execute(\n"
+    '                            "INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,)\n'
+    "                        )\n"
+)
 
 
 # Batch 2 of the four mutant batches (ticket P3a-2, 5.5 and 7.10): the mutants re-pointed, re-checked or newly checked
@@ -153,10 +161,8 @@ BATCH_2_IDS: frozenset[str] = frozenset(
             "OW9",
             "MC2",
             "PDO2",
-            "PC1",
-            "PT1",
         ),
-        *("GO2", "R23", "SH1"),
+        *("R23", "SH1"),
         # re-checked, killer changes (the mutant text stays)
         *(
             "MW1",
@@ -195,6 +201,266 @@ def cmp_mutant(name: str, item: str, desc: str, killer_item: str) -> Mutant:
     )
 
 
+FILTER2 = '                        if not p.repaired_by_run and p.kind != "missing_schema_usage"\n'
+STEP6_CALL = (
+    "                        schema_owner=schema_owner,\n"
+    "                    ):\n"
+    "                        raise ConfigError(\n"
+    '                            "after the migration files and the grants'
+)
+STEP8_TAIL = "                schema_owner=schema_owner,\n            )\n    except Exception as e:"
+
+
+def S_(name: str) -> str:
+    return k(T_STEPS, name)
+
+
+S2_REFUSES = S_("test_a_right_found_at_step_2_refuses_the_run_before_any_file")
+S2_EXCUSES = S_("test_step_2_does_not_refuse_what_step_4_repairs")
+S4_REVOKE = S_("test_step_4_takes_everyones_execute_off_the_functions_the_files_name")
+S6_REFUSES = S_("test_a_right_found_at_step_6_refuses_the_run_and_keeps_nothing")
+S7_REFUSED = S_("test_a_commit_the_server_refuses_is_a_refusal_and_step_8_does_not_run")
+S7_UNKNOWN = S_("test_a_commit_that_may_or_may_not_have_happened_is_applied_not_verified")
+S8_SNAPSHOT = S_("test_step_8_reads_on_a_new_connection_in_one_snapshot_that_cannot_write")
+S8_FOUND = S_("test_a_right_found_after_the_commit_is_applied_not_verified_with_the_statements")
+PINNED = k(T_VERIFY, "test_every_runner_catalog_read_is_pinned")
+OWNER_SAME = S_("test_a_schema_owned_by_the_same_role_as_at_the_start_is_not_a_problem")
+OWNER_MOVED = S_("test_a_schema_that_changed_owner_during_the_run_is_still_a_problem")
+OWNER_ONLY = k(
+    T_STEPS, "test_only_the_schema_of_the_run_is_excused_not_another_object_with_the_same_owner"
+)
+
+# The eight steps of `migrate()` (ticket P3a-2, 3b): planted text inside the new body, each killed by a test of
+# `tests/test_migration_steps.py` (or a real-server test).
+STEP_MUTANTS: list[Mutant] = [
+    Mutant(
+        "E1",
+        "step 2 refuses nothing",
+        MIG,
+        FILTER2,
+        "                        if False\n",
+        S2_REFUSES,
+    ),
+    Mutant(
+        "E2",
+        "step 2 also refuses what step 4 repairs itself",
+        MIG,
+        FILTER2,
+        '                        if p.kind != "missing_schema_usage"\n',
+        S2_EXCUSES,
+    ),
+    Mutant(
+        "E3",
+        "step 2 also refuses a missing USAGE that step 4 gives",
+        MIG,
+        FILTER2,
+        "                        if not p.repaired_by_run\n",
+        S2_EXCUSES,
+    ),
+    Mutant(
+        "E4",
+        "step 4 does not take everyone's EXECUTE off the new functions",
+        MIG,
+        "                    _revoke_default_execute(db, schema, me, login, texts.values())\n",
+        "                    pass\n",
+        S4_REVOKE,
+    ),
+    Mutant(
+        "E5",
+        "step 4 writes an aggregate with no arguments with empty brackets",
+        MIG,
+        'signature = args if args or kind != "a" else "*"\n        db.execute(',
+        "signature = args\n        db.execute(",
+        S4_REVOKE,
+    ),
+    Mutant(
+        "E6",
+        "step 4 revokes from the migration role instead of everyone",
+        MIG,
+        '"REVOKE ALL ON ROUTINE {}({}) FROM PUBLIC"',
+        '"REVOKE ALL ON ROUTINE {}({}) FROM CURRENT_USER"',
+        S4_REVOKE,
+    ),
+    Mutant(
+        "E7",
+        "step 5 does not run the deferred checks",
+        MIG,
+        '                        db.execute("SET CONSTRAINTS ALL IMMEDIATE")\n',
+        "                        pass\n",
+        (
+            S_("test_step_5_runs_the_deferred_checks_before_the_commit"),
+            S_("test_a_deferred_check_that_fails_at_step_5_is_a_refusal_with_its_reason"),
+        ),
+    ),
+    Mutant(
+        "E8",
+        "step 6 never refuses for what the state check finds",
+        MIG,
+        STEP6_CALL,
+        STEP6_CALL.replace("                    ):\n", "                    ) and False:\n", 1),
+        S6_REFUSES,
+    ),
+    Mutant(
+        "E9",
+        "step 6 does not compare the session values once more",
+        MIG,
+        "                        _check_read_back(db, saved, END_OF_RUN, frozenset(), named, schema=schema)\n",
+        "                        pass\n",
+        S_("test_a_value_that_changed_only_after_the_grants_is_refused_at_step_6"),
+    ),
+    Mutant(
+        "E10",
+        "step 6 does not ask the role questions once more",
+        MIG,
+        "                            _recheck_roles(db, named, END_OF_RUN)\n",
+        "                            pass\n",
+        S_("test_a_role_that_became_privileged_after_the_grants_is_refused_at_step_6"),
+    ),
+    Mutant(
+        "E11",
+        "a refused commit is raised as the driver's own error",
+        MIG,
+        "                    reached_commit = True\n",
+        "                    reached_commit = False\n",
+        S7_REFUSED,
+    ),
+    Mutant(
+        "E12",
+        "every commit error is taken as unknown",
+        MIG,
+        '                if _commit_outcome(e, db) == "refused":\n',
+        "                if False:\n",
+        S7_REFUSED,
+    ),
+    Mutant(
+        "E13",
+        "an unknown commit is not marked unknown",
+        MIG,
+        "raise _after_commit(applied, [], commit_unknown=True) from e",
+        "raise _after_commit(applied, [], commit_unknown=False) from e",
+        S7_UNKNOWN,
+    ),
+    Mutant(
+        "E14",
+        "step 8 may write",
+        MIG,
+        "            after.read_only = True\n",
+        "            pass\n",
+        S8_SNAPSHOT,
+    ),
+    Mutant(
+        "E15",
+        "step 8 reads in more than one snapshot",
+        MIG,
+        "after.isolation_level = psycopg.IsolationLevel.REPEATABLE_READ",
+        "after.isolation_level = psycopg.IsolationLevel.READ_COMMITTED",
+        S8_SNAPSHOT,
+    ),
+    Mutant(
+        "E16",
+        "an error of step 8 other than a driver error is raised as it is",
+        MIG,
+        "    except Exception as e:  # any error at all: the commit happened and the check did not finish\n",
+        "    except psycopg.OperationalError as e:  # any error at all: the commit happened and the check did not finish\n",
+        S_("test_a_check_that_cannot_run_after_the_commit_is_applied_not_verified") + "[verify]",
+    ),
+    Mutant(
+        "E17",
+        "step 8 does not report what it finds",
+        MIG,
+        "    if problems:\n        raise _after_commit(applied, problems)\n",
+        "    if False:\n        raise _after_commit(applied, problems)\n",
+        S8_FOUND,
+    ),
+    Mutant(
+        "E18",
+        "step 8 does not get the schema owner of step 1",
+        MIG,
+        STEP8_TAIL,
+        STEP8_TAIL.replace("schema_owner=schema_owner", 'schema_owner=""'),
+        S_("test_every_step_reads_the_same_names_and_the_schema_owner_read_at_step_1"),
+    ),
+    Mutant(
+        "E19",
+        "the schema owner is not read at step 1",
+        MIG,
+        '                    schema_owner = owner_row[0] if owner_row else ""\n',
+        '                    schema_owner = ""\n',
+        S_("test_every_step_reads_the_same_names_and_the_schema_owner_read_at_step_1"),
+    ),
+    Mutant(
+        "E20",
+        "a schema owned by a database administrator is a problem again",
+        MIG,
+        '            p.kind == "foreign_owner"\n',
+        '            False and p.kind == "foreign_owner"\n',
+        OWNER_SAME,
+    ),
+    Mutant(
+        "E21",
+        "a schema that changed owner is excused too",
+        MIG,
+        "            and p.owner == schema_owner\n",
+        "            and True\n",
+        OWNER_MOVED,
+    ),
+    Mutant(
+        "E22",
+        "every owner problem of the kind schema is excused, whatever the schema",
+        MIG,
+        "            and p.obj == schema\n",
+        "            and True\n",
+        OWNER_ONLY + "[other2]",
+    ),
+    Mutant(
+        "E24",
+        "the ownership read of step 1 runs outside pinned_read",
+        MIG,
+        "                    with pinned_read(db, RECIPE_TIMEOUTS):\n                        _refuse_foreign_owned(db, schema, texts.values())\n",
+        "                    if True:\n                        _refuse_foreign_owned(db, schema, texts.values())\n",
+        PINNED,
+    ),
+    Mutant(
+        "E25",
+        "the step-4 read runs outside pinned_read",
+        MIG,
+        "    with pinned_read(db, RECIPE_TIMEOUTS):\n        rows = db.execute(\n            STEP4_SQL",
+        "    if True:\n        rows = db.execute(\n            STEP4_SQL",
+        PINNED,
+    ),
+    Mutant(
+        "E26",
+        "the catalog reads of the read-back run outside pinned_read",
+        MIG,
+        "    with pinned_read(db, RECIPE_TIMEOUTS):\n        trigger_rows = db.execute(",
+        "    if True:\n        trigger_rows = db.execute(",
+        PINNED,
+    ),
+    Mutant(
+        "E27",
+        "a read after a file ended the transaction is still pinned (the driver asserts)",
+        MIG,
+        "    if if_ended is not None and db.info.transaction_status == TransactionStatus.IDLE:\n",
+        "    if False:\n",
+        (
+            k(
+                T_STEPS,
+                "test_a_read_after_a_file_ended_the_transaction_is_not_pinned_and_keeps_the_saved_catalog_parts",
+            ),
+            k(T_PG, "test_a_hidden_commit_is_found_by_the_transaction_backstop"),
+        ),
+    ),
+    Mutant(
+        "E23",
+        "every owner problem is excused, whatever the object kind",
+        MIG,
+        '            and p.word == "schema"\n',
+        "            and True\n",
+        OWNER_ONLY + "[other1]",
+    ),
+]
+
+
 FX_ = "tests/fixtures/migration_role.py"
 R = "test_a_right_for_a_role_the_run_does_not_name_is_refused"
 M: list[Mutant] = [
@@ -221,7 +487,7 @@ M: list[Mutant] = [
         "read-back only after the last file",
         MIG,
         CALL,
-        "                if path is pending[-1]:\n"
+        "                        if path is pending[-1]:\n"
         + "".join("    " + line for line in CALL.splitlines(True)),
         READS_BEFORE,
     ),
@@ -279,13 +545,13 @@ M: list[Mutant] = [
         "saved values read after the first file",
         MIG,
         SAVE_READ,
-        "            saved = None\n"
-        "            for path in pending:\n"
-        '                step[0] = f"applying {path.name}"\n'
-        "                db.execute(texts[path])  # the text that was scanned, never a second read\n"
-        "                if saved is None:\n"
-        "                    saved = _read_back(db, schema, named)\n"
-        "                    _refuse_unusual_strings(saved)\n",
+        "                    saved = None\n"
+        "                    for path in pending:  # step 3\n"
+        '                        step[0] = f"applying {path.name}"\n'
+        "                        db.execute(texts[path])  # the text that was scanned, never a second read\n"
+        "                        if saved is None:\n"
+        "                            saved = _read_back(db, schema, named)\n"
+        "                            _refuse_unusual_strings(saved)\n",
         READS_BEFORE,
     ),
     Mutant(
@@ -867,7 +1133,7 @@ M: list[Mutant] = [
         "R2",
         "the memberships are not read",
         MIG,
-        "members = frozenset(tuple(r) for r in db.execute(_READBACK_MEMBERS_SQL, scope).fetchall())",
+        "members = frozenset(tuple(r) for r in member_rows)",
         "members = frozenset()",
         MEMBERS,
     ),
@@ -895,7 +1161,7 @@ M: list[Mutant] = [
         "PS1",
         "the saved per-role settings are not read",
         MIG,
-        "settings = frozenset(tuple(r) for r in db.execute(_READBACK_SETTINGS_SQL, scope).fetchall())",
+        "settings = frozenset(tuple(r) for r in setting_rows)",
         "settings = frozenset()",
         SETTINGS,
     ),
@@ -1094,17 +1360,6 @@ M: list[Mutant] = [
         ),
     ),
     Mutant(
-        "GO2",
-        "the schema usage of the named roles is not checked after the grants",
-        MIG,
-        "                if not got or not got[0]:\n",
-        "                if False:\n",
-        k(
-            T_PG,
-            "test_a_role_without_the_grant_option_is_refused_when_its_grants_would_do_nothing",
-        ),
-    ),
-    Mutant(
         "FO1",
         "a procedure or an aggregate is printed as a function",
         MIG,
@@ -1225,7 +1480,7 @@ M: list[Mutant] = [
         "the role questions are not asked again after a file",
         MIG,
         RECHECK,
-        "                pass\n",
+        "                        pass\n",
         k(T_WIRING, "test_the_roles_are_asked_again_after_every_file"),
     ),
     Mutant(
@@ -1353,11 +1608,11 @@ M: list[Mutant] = [
     ),
     Mutant(
         "FO5",
-        "an aggregate with no arguments is printed with empty brackets",
-        MIG,
-        'signature = args if args or kind != "a" else "*"',
-        "signature = args",
-        k(T_PG, "test_an_aggregate_with_no_arguments_is_printed_with_a_star"),
+        "an aggregate with no arguments is printed with the star of ALTER AGGREGATE",
+        "src/hadavin_sdk/store/migration_verify.py",
+        'args = "" if sub == "*" else sub',
+        "args = sub",
+        k(T_PG, "test_an_aggregate_with_no_arguments_is_revoked_with_empty_brackets"),
     ),
     Mutant(
         "OS1",
@@ -1551,28 +1806,6 @@ M: list[Mutant] = [
         "(?!.*TEST SETUP PROBLEM)(?:assert\\b",
         "(?:assert\\b",
         k(T_RULES, "test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill"),
-    ),
-    Mutant(
-        "PC1",
-        "the portal role is not checked after its grants",
-        MIG,
-        '                    extra := effective_problems(\n                        db, portal_role, lambda g: "SELECT" if (g and g.portal) else ""\n                    )\n',
-        "                    extra := []\n",
-        (
-            k(T_PG, "test_the_portal_role_is_refused_what_the_other_roles_are_refused"),
-            k(T_K2, "test_migrate_refuses_a_portal_role_that_inherits_write_rights"),
-        ),
-    ),
-    Mutant(
-        "PT1",
-        "the portal role is checked against the runtime grant map, so it may hold what the runtime role holds",
-        MIG,
-        '                    extra := effective_problems(\n                        db, portal_role, lambda g: "SELECT" if (g and g.portal) else ""\n                    )\n',
-        '                    extra := effective_problems(\n                        db, portal_role, lambda g: g.runtime if g else ""\n                    )\n',
-        (
-            k(T_PG, "test_the_portal_role_is_refused_what_the_other_roles_are_refused"),
-            k(T_K2, "test_migrate_refuses_a_portal_role_that_inherits_write_rights"),
-        ),
     ),
     Mutant(
         "FQ1",
@@ -1875,14 +2108,6 @@ M: list[Mutant] = [
         "name not in REVIEWED_DEFINER_FUNCTIONS:",
         "name not in ():",
         k(T_PG, "test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it"),
-    ),
-    Mutant(
-        "SD3",
-        "only the function names in the file text are looked at, not what changed in the database",
-        MIG,
-        "            changed = _changed_since(objects_before, _objects(db))",
-        "            changed = _Changed()\n            _unused = (objects_before, _objects(db))",
-        k(T_PG, "test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new"),
     ),
     Mutant(
         "LW1",
@@ -2990,6 +3215,7 @@ M: list[Mutant] = [
         ),
     ),
 ]
+M.extend(STEP_MUTANTS)
 
 
 async def _run_async(cmd, cwd, env, timeout):

@@ -200,7 +200,9 @@ SELECT d.defaclobjtype::text AS kind, n.nspname AS schema, pg_catalog.pg_get_use
  ORDER BY 1, 2, 3, 5, 7;
 """
 
-# The functions whose default EXECUTE for everyone the run removes (step 4 of `migrate`).
+# The functions whose default EXECUTE for everyone the run removes (step 4 of `migrate`): the functions the files name
+# in the schema of the run, and the ones a file wrote with another schema before the dot (`other_schemas`, `other_names`
+# are two lists of the same length).
 STEP4_SQL = """
 WITH RECURSIVE fam(role) AS (
   SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = ANY(%(family)s::text[])
@@ -209,7 +211,9 @@ WITH RECURSIVE fam(role) AS (
 SELECT p.oid::pg_catalog.regprocedure::text AS shown, n.nspname, p.proname,
        pg_catalog.pg_get_function_identity_arguments(p.oid) AS args, p.prokind::text
   FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
- WHERE n.nspname = %(schema)s AND p.proowner IN (SELECT role FROM fam) AND p.proname = ANY(%(managed)s::text[])
+ WHERE p.proowner IN (SELECT role FROM fam)
+   AND ((n.nspname = %(schema)s AND p.proname = ANY(%(managed)s::text[]))
+        OR (n.nspname, p.proname) IN (SELECT * FROM ROWS FROM (pg_catalog.unnest(%(other_schemas)s::text[]), pg_catalog.unnest(%(other_names)s::text[]))))
    AND EXISTS (SELECT 1 FROM pg_catalog.aclexplode(coalesce(p.proacl, pg_catalog.acldefault('f', p.proowner))) a
                 WHERE a.grantee = 0 AND a.privilege_type = 'EXECUTE')
  ORDER BY 2, 3, 4;
@@ -666,8 +670,11 @@ def _object_sql(kind: str, schema: str, name: str, sub: str) -> sql.Composable |
     ):
         return _ident(schema, name) if _plain(schema, name) else None
     if kind in _FUNCTION_KINDS:
+        # the server prints the arguments of an aggregate with none as `*`; GRANT, REVOKE and ALTER ROUTINE take `()`
+        # for it (`(*)` is a syntax error there: it is the form of `ALTER AGGREGATE` only)
+        args = "" if sub == "*" else sub
         return (
-            sql.SQL("{}({})").format(_ident(schema, name), sql.SQL(sub))
+            sql.SQL("{}({})").format(_ident(schema, name), sql.SQL(args))
             if _plain(schema, name, sub)
             else None
         )

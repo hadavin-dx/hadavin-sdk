@@ -85,11 +85,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
+import psycopg
 from psycopg import errors as pg_errors
 from psycopg import sql
 from psycopg.pq import TransactionStatus
 
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import AppliedNotVerifiedError, ConfigError
 from hadavin_sdk.store.migration_numbers import (
     MIGRATE_LOCK,
     MIGRATE_LOCK_WAIT_SECONDS,
@@ -109,6 +110,15 @@ from hadavin_sdk.store.migration_numbers import (
     read_files,
     refused_statements,
     released_problems,
+)
+from hadavin_sdk.store.migration_verify import (
+    STEP4_SQL,
+    V2_SQL,
+    Problem,
+    check_version,
+    pinned_read,
+    statement_blocks,
+    verify,
 )
 from hadavin_sdk.store.postgres import connect
 
@@ -445,11 +455,11 @@ _READBACK_VALUES = (
     "txid_current",
 )
 _READBACK_VALUES_SQL = (
-    "SELECT current_user, session_user, current_setting('session_replication_role'), "
-    "current_setting('search_path'), current_setting('standard_conforming_strings'), "
-    "current_setting('backslash_quote'), current_setting('client_encoding'), "
-    "current_setting('lock_timeout'), current_setting('statement_timeout'), "
-    "transaction_timestamp(), txid_current()"
+    "SELECT current_user, session_user, pg_catalog.current_setting('session_replication_role'), "
+    "pg_catalog.current_setting('search_path'), pg_catalog.current_setting('standard_conforming_strings'), "
+    "pg_catalog.current_setting('backslash_quote'), pg_catalog.current_setting('client_encoding'), "
+    "pg_catalog.current_setting('lock_timeout'), pg_catalog.current_setting('statement_timeout'), "
+    "pg_catalog.transaction_timestamp(), pg_catalog.txid_current()"
 )
 # The five flags that make a migration role too powerful (a superuser can change what the read-back does not read; a role
 # with `REPLICATION` can read every change made on the whole server).
@@ -605,17 +615,30 @@ class _Saved:
     )  # the same keys -> the table's id (tells a renamed table from a new one)
 
 
-def _read_back(db, schema: str, named=()) -> _Saved:
+def _read_back(db, schema: str, named=(), *, if_ended: _Saved | None = None) -> _Saved:
+    """The eleven session values are read as the session has them now (a file may have changed the search path or a
+    limit, and the read must see that, so they are read OUTSIDE `pinned_read`; every name in that statement is a
+    keyword or written `pg_catalog.`, so a function a file made cannot answer in its place). The three reads of the
+    catalog run inside `pinned_read`, so an unqualified catalog name cannot be captured by a temporary table."""
     values = tuple(db.execute(_READBACK_VALUES_SQL).fetchone())
+    if if_ended is not None and db.info.transaction_status == TransactionStatus.IDLE:
+        # a file ended the transaction (COMMIT): a statement now runs on its own and nothing can be pinned. The clock and
+        # id just read already differ from the saved ones, so the caller refuses on them; the catalog parts stay as saved
+        # (they are not read, and must not be reported as changed).
+        return _Saved(
+            values, if_ended.triggers, if_ended.members, if_ended.settings, if_ended.relids
+        )
     triggers, relids = {}, {}
-    for name, enabled, table, trigger_schema, relid, *detail in db.execute(
-        _READBACK_TRIGGERS_SQL, (schema,)
-    ).fetchall():
+    with pinned_read(db, RECIPE_TIMEOUTS):
+        trigger_rows = db.execute(_READBACK_TRIGGERS_SQL, (schema,)).fetchall()
+        scope = (list(named),)
+        member_rows = db.execute(_READBACK_MEMBERS_SQL, scope).fetchall()
+        setting_rows = db.execute(_READBACK_SETTINGS_SQL, scope).fetchall()
+    for name, enabled, table, trigger_schema, relid, *detail in trigger_rows:
         triggers[(trigger_schema, table, name)] = (enabled, *detail)
         relids[(trigger_schema, table, name)] = relid
-    scope = (list(named),)
-    members = frozenset(tuple(r) for r in db.execute(_READBACK_MEMBERS_SQL, scope).fetchall())
-    settings = frozenset(tuple(r) for r in db.execute(_READBACK_SETTINGS_SQL, scope).fetchall())
+    members = frozenset(tuple(r) for r in member_rows)
+    settings = frozenset(tuple(r) for r in setting_rows)
     return _Saved(values, triggers, members, settings, relids)
 
 
@@ -787,6 +810,20 @@ def _managed_names(texts, schema: str) -> tuple[list[str], list[str]]:
     return sorted(relations), sorted(names)
 
 
+def _functions_in_other_schemas(texts, schema: str) -> tuple[list[str], list[str]]:
+    """The functions a file creates or replaces with another schema written before the dot, as two lists of the same
+    length (the schemas, the names): `_managed_names` lists only the schema of the run."""
+    homes: set[tuple[str, str]] = set()
+    for raw in texts:
+        text, _problem = lex(raw, keep_quoted=True)
+        for m in _FUNCTION_CREATE.finditer(text):
+            where = _name_of(m.group(1), m.group(2))
+            if where is not None and where != schema:
+                homes.add((where, _name_of(m.group(3), m.group(4))))
+    ordered = sorted(homes)
+    return [w for w, _n in ordered], [n for _w, n in ordered]
+
+
 def _refuse_foreign_owned(db, schema: str, texts) -> None:
     """Refuse a run whose migration role cannot change what this package manages in the schema (the names, see
     `_managed_names`; the objects of another application in the schema are not looked at; see `_FOREIGN_OWNED_SQL`). The
@@ -847,7 +884,11 @@ def _refuse_foreign_owned(db, schema: str, texts) -> None:
 # SECURITY DEFINER functions a migration file may create: the reviewed list, like `TRIGGER_CHANGES`. Empty today: such a
 # function runs with the rights of its owner (the migration role), so a role that may call it gets everything the
 # migration role can do. Adding a name here is a code change that a reviewer reads.
-REVIEWED_DEFINER_FUNCTIONS: frozenset[str] = frozenset()
+REVIEWED_DEFINER_FUNCTIONS: frozenset[tuple[str, str, str]] = frozenset()
+# The key of an entry is (schema, name, identity arguments as the server prints them). `RUN_SCHEMA` in the first place
+# stands for "the schema of the run", which only the run knows; `migrate` turns it into the real name before `verify` is
+# called, so `verify` never sees this word.
+RUN_SCHEMA = "(the schema of the run)"
 
 # The objects of the whole database that a run is compared on: not the system schemas, not what an installed extension
 # owns (`pg_depend`, type `e`: the extension's, not this package's).
@@ -1408,7 +1449,7 @@ def _check_read_back(
     the roles they are members of they are the only roles whose memberships and saved settings are compared (the server
     holds every role, and another session may change an unrelated one while the file runs). Returns the trigger
     state just read (the base for the next file); the saved values stay those of the start."""
-    now = _read_back(db, schema, named)
+    now = _read_back(db, schema, named, if_ended=saved)
     session = [
         f"{item} was {old!a} and is now {new!a}"
         for item, old, new in zip(_READBACK_VALUES, saved.values, now.values, strict=True)
@@ -1532,6 +1573,178 @@ def _limit_error(e: Exception, step: str) -> ConfigError | None:
     )
 
 
+def _fetch_version(db) -> int:
+    """The server version number (`V2_SQL`, every name qualified), read before the first query that needs PostgreSQL 16."""
+    return db.execute(V2_SQL).fetchone()[0]
+
+
+def _revoke_default_execute(db, schema: str, me: str, login: str, texts) -> None:
+    """Step 4, second part: everyone may call a new function by default; remove that for the functions this package's
+    files name (in the schema of the run, or written with another schema before the dot), when the migration role (or a
+    role it belongs to) owns them. The read runs in
+    `pinned_read`; the writes are outside it, with the schema read at step 1."""
+    _relations, functions = _managed_names(texts, schema)
+    other_schemas, other_names = _functions_in_other_schemas(texts, schema)
+    family = [me] + ([login] if login != me else [])
+    with pinned_read(db, RECIPE_TIMEOUTS):
+        rows = db.execute(
+            STEP4_SQL,
+            {
+                "family": family,
+                "schema": schema,
+                "managed": functions,
+                "other_schemas": other_schemas,
+                "other_names": other_names,
+            },
+        ).fetchall()
+    for _shown_name, where, name, args, _kind in rows:
+        signature = (
+            "" if args == "*" else args
+        )  # `(*)` is the form of ALTER AGGREGATE only; REVOKE takes `()`
+        db.execute(
+            sql.SQL("REVOKE ALL ON ROUTINE {}({}) FROM PUBLIC").format(
+                sql.Identifier(where, name), sql.SQL(signature)
+            )
+        )
+
+
+END_OF_RUN = "(after the last file and the grants)"  # in the place of a file name at the last read-back (step 6)
+
+_RUN_IDENTITY_SQL = "SELECT current_schema(), current_user, session_user"
+# Who owns the schema of the run when the run starts. A schema that a database administrator owns and in which the
+# migration role may create (the setup `PLAIN_MIGRATION_ROLE_SQL` prints) is a normal setup, so `verify`'s refusal of a
+# schema that the migration role family does not own is applied only to a schema whose owner CHANGED during the run
+# (a file or another session handed it to someone else).
+_SCHEMA_OWNER_SQL = "SELECT pg_catalog.pg_get_userbyid(n.nspowner) FROM pg_catalog.pg_namespace n WHERE n.nspname = %s"
+
+
+def _reviewed_definers(schema: str) -> frozenset[tuple[str, str, str]]:
+    """`REVIEWED_DEFINER_FUNCTIONS` (read now, so a test can replace it) with the schema of the run filled in."""
+    return frozenset(
+        (schema if where == RUN_SCHEMA else where, name, args)
+        for where, name, args in REVIEWED_DEFINER_FUNCTIONS
+    )
+
+
+def _state_problems(
+    db,
+    *,
+    me: str,
+    login: str,
+    named_roles: dict[str, str],
+    schema: str,
+    texts,
+    schema_owner: str,
+) -> list[Problem]:
+    """Every right in the database that the grant map does not give, read from the state of the database now (`verify`).
+    `schema_owner` is who owned the schema of the run when the run started (see `_SCHEMA_OWNER_SQL`)."""
+    managed_relations, managed_functions = _managed_names(texts, schema)
+    found = verify(
+        db,
+        migration_role=me,
+        login_role=login,
+        named_roles=named_roles,
+        grant_map=GRANTS,
+        schema=schema,
+        managed_relations=managed_relations,
+        managed_functions=managed_functions,
+        reviewed_definers=_reviewed_definers(schema),
+        limits=RECIPE_TIMEOUTS,
+    )
+    return [
+        p
+        for p in found
+        if not (
+            p.kind == "foreign_owner"
+            and p.word == "schema"
+            and p.schema == schema
+            and not p.obj
+            and p.owner == schema_owner
+        )
+    ]
+
+
+def _problem_lines(problems: list[Problem]) -> str:
+    """The first `_PROBLEMS_SHOWN` problem lines, one per line, and a count of the rest (never a silent cut)."""
+    lines = [f"  - {p.line()}" for p in problems]
+    text = "\n".join(lines[:_PROBLEMS_SHOWN])
+    more = len(lines) - _PROBLEMS_SHOWN
+    if more > 0:
+        text += f"\n  - and {more} more lines; run the statements above, then run migrate again to see the rest"
+    return text
+
+
+def _after_commit(
+    applied: list[str],
+    problems: list[Problem],
+    *,
+    could_not_run: str = "",
+    commit_unknown: bool = False,
+) -> AppliedNotVerifiedError:
+    """The error of ticket P3a-2, 4.2: the files are committed (or may be) and nobody has confirmed the rights. The first
+    sentence of each form is fixed; `cli` prints this text to standard error and the statements to standard output."""
+    own, outside = statement_blocks(problems)
+    versions = ", ".join(applied) if applied else "no file (nothing was pending)"
+    if commit_unknown:
+        head = (
+            "The connection was lost while the files were being committed, so the commit may or may not have "
+            "happened, and nothing was checked afterwards; run migrate again: it applies the files that are not in "
+            "the ledger and checks the database either way."
+        )
+        body = f"Tried to commit: {versions}."
+    elif could_not_run:
+        head = (
+            "The files are applied and committed, but the check after the commit could not run "
+            f"({_label(could_not_run)}), so nobody has confirmed that the roles hold only what the grant map gives; "
+            "run migrate again to check."
+        )
+        body = f"Applied in this run: {versions}."
+    else:
+        head = (
+            "The files are applied and committed; the database is over-privileged now; run these statements; run "
+            "migrate again to re-check."
+        )
+        body = f"Applied in this run: {versions}.\nWhat is wrong ({len(problems)} things):\n{_problem_lines(problems)}"
+        total = len(own) + len(outside)
+        body += (
+            f"\nThe {total} statements that remove them are printed on standard output, in the order to run them "
+            f"(all of them, not only the first {_PROBLEMS_SHOWN}): {len(own)} on this package's objects and "
+            f"{len(outside)} in a second block marked NOT THIS PACKAGE'S OBJECTS."
+        )
+        by_name = sum(1 for p in problems if not p.fix and p.by_hand == "name")
+        by_system = sum(1 for p in problems if not p.fix and p.by_hand == "system")
+        other = sum(1 for p in problems if not p.fix) - by_name - by_system
+        if by_name or by_system or other:
+            parts = []
+            if by_name:
+                parts.append(
+                    f"{by_name} because a name holds a character that is not copied into a printed line"
+                )
+            if by_system:
+                parts.append(f"{by_system} because the object belongs to the server itself")
+            if other:
+                parts.append(f"{other} for the reason its line gives")
+            body += (
+                f"\nFor {by_name + by_system + other} of them no statement is printed: {', '.join(parts)}; "
+                "a person decides those by hand."
+            )
+        body += (
+            "\nmigrate did not remove anything itself. Until a person has run the statements, the roles named above "
+            "can do more than the grant map allows."
+            "\nThis check ran after the commit, on a new connection, as the migration role; what it found was made by "
+            "this run or by another session since the commit. A file written to do harm can also cheat this check; "
+            'see "What migrate promises" in CHANGELOG.md.'
+        )
+    return AppliedNotVerifiedError(
+        f"{head}\n{body}",
+        applied=applied,
+        problems=problems,
+        statements=[*own, *outside],
+        could_not_run=could_not_run,
+        commit_unknown=commit_unknown,
+    )
+
+
 def migrate(
     dsn: str,
     *,
@@ -1599,105 +1812,172 @@ def migrate(
         raise MigrationNumberError(problems)
     if problems := check_grants(files, texts=texts):
         raise ConfigError("migrations are inconsistent: " + "; ".join(problems))
-    applied = []
+    applied: list[str] = []
     step = ["taking the migration lock"]  # what the run is doing, for the error of a limit
+    named_roles = {
+        role: kind
+        for role, kind in (
+            (runtime_role, "runtime"),
+            (portal_role, "portal"),
+            (purge_role, "purge"),
+        )
+        if role is not None
+    }
     try:
-        with (
-            connect(
-                dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
-            ) as db,
-            db.transaction(),
-        ):
-            _take_the_lock(db, lock_wait_seconds)
-            # the hand recipe's two limits (one constant); `SET LOCAL` ends with this transaction
-            for limit in RECIPE_TIMEOUTS:
-                db.execute(limit)
-            step[0] = "checking the migration role"
-            schema = (
-                db.execute("SELECT current_schema()").fetchone()[0] or ""
-            )  # read once; passed on
-            _refuse_privileged_role(db)
-            _refuse_foreign_owned(db, schema, texts.values())
-            db.execute(
-                "CREATE TABLE IF NOT EXISTS schema_migrations "
-                "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
-            )
-            step[0] = "reading the ledger"
-            done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
-            if gone := gone_message(done, files):
-                raise MigrationNumberError([gone])
-            if late := order_problems(done, files, texts, schema):
-                raise MigrationNumberError(late)
-            pending = [p for p in files if p.stem not in done]
-            objects_before = _objects(db)
-            if pending:
-                saved = _read_back(db, schema, named)
-                _refuse_unusual_strings(saved)
-            for path in pending:
-                step[0] = f"applying {path.name}"
-                db.execute(texts[path])  # the text that was scanned, never a second read
-                saved = _check_read_back(
-                    db,
-                    saved,
-                    path.name,
-                    frozenset(c for c in allowed_changes if c.migration == path.stem),
-                    named,
-                    schema=schema,
-                )
-                _recheck_roles(db, named, path.name)
-                db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
-                applied.append(path.stem)
-            step[0] = "checking and granting the roles"
-            if _members_of_each_other(db, named):
-                raise ConfigError(
-                    "the runtime, portal and purge roles must not be members of each other"
-                )
-            if runtime_role:
-                _apply_grants(db, schema, runtime_role, lambda g: g.runtime)
-                if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
+        with connect(
+            dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
+        ) as db:
+            reached_commit = False
+            try:
+                with db.transaction():
+                    _take_the_lock(db, lock_wait_seconds)
+                    # the hand recipe's two limits (one constant); `SET LOCAL` ends with this transaction
+                    for limit in RECIPE_TIMEOUTS:
+                        db.execute(limit)
+                    step[0] = "checking the migration role"
+                    check_version(_fetch_version(db))
+                    schema, me, login = db.execute(_RUN_IDENTITY_SQL).fetchone()
+                    schema = schema or ""  # read once; passed on
+                    with pinned_read(db, RECIPE_TIMEOUTS):
+                        _refuse_privileged_role(db)
+                        owner_row = db.execute(_SCHEMA_OWNER_SQL, (schema,)).fetchone()
+                    schema_owner = owner_row[0] if owner_row else ""
+                    with pinned_read(db, RECIPE_TIMEOUTS):
+                        _refuse_foreign_owned(db, schema, texts.values())
+                    db.execute(
+                        "CREATE TABLE IF NOT EXISTS schema_migrations "
+                        "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+                    )
+                    step[0] = "reading the ledger"
+                    done = {
+                        r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()
+                    }
+                    if gone := gone_message(done, files):
+                        raise MigrationNumberError([gone])
+                    if late := order_problems(done, files, texts, schema):
+                        raise MigrationNumberError(late)
+                    pending = [p for p in files if p.stem not in done]
+                    # step 2: what the database already holds, before any file runs. Two kinds are repaired by step 4
+                    # and so are not refused here; the named roles' USAGE on the schema is given by step 4 too, so a
+                    # missing USAGE is judged at step 6 only.
+                    step[0] = "checking the rights the database already holds"
+                    before = [
+                        p
+                        for p in _state_problems(
+                            db,
+                            me=me,
+                            login=login,
+                            named_roles=named_roles,
+                            schema=schema,
+                            texts=texts.values(),
+                            schema_owner=schema_owner,
+                        )
+                        if not p.repaired_by_run and p.kind != "missing_schema_usage"
+                    ]
+                    if before:
+                        raise ConfigError(
+                            "before any migration file ran, this database already holds rights that the grant map "
+                            f"does not give:\n{_problem_lines(before)}\nNothing was changed. No file ran. What to "
+                            "do: a database administrator runs the statements printed with each line (or removes "
+                            "the cause named there), then run migrate again."
+                        )
+                    if pending:
+                        saved = _read_back(db, schema, named)
+                        _refuse_unusual_strings(saved)
+                    for path in pending:  # step 3
+                        step[0] = f"applying {path.name}"
+                        db.execute(texts[path])  # the text that was scanned, never a second read
+                        saved = _check_read_back(
+                            db,
+                            saved,
+                            path.name,
+                            frozenset(c for c in allowed_changes if c.migration == path.stem),
+                            named,
+                            schema=schema,
+                        )
+                        with pinned_read(db, RECIPE_TIMEOUTS):
+                            _recheck_roles(db, named, path.name)
+                        db.execute(
+                            "INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,)
+                        )
+                        applied.append(path.stem)
+                    step[0] = "granting the roles"  # step 4: every write of the runner itself
+                    if runtime_role:
+                        _apply_grants(db, schema, runtime_role, lambda g: g.runtime)
+                    if purge_role:
+                        _apply_grants(
+                            db, schema, purge_role, lambda g: g.purge, lambda g: g.purge_cols
+                        )
+                    if portal_role:
+                        _apply_grants(
+                            db, schema, portal_role, lambda g: "SELECT" if g.portal else ""
+                        )
+                    _revoke_default_execute(db, schema, me, login, texts.values())
+                    step[0] = "running the deferred checks and triggers early"  # step 5
+                    try:
+                        db.execute("SET CONSTRAINTS ALL IMMEDIATE")
+                    except psycopg.Error as e:
+                        if (plain := _limit_error(e, step[0])) is not None:
+                            raise plain from e
+                        raise ConfigError(
+                            "a deferred check or trigger failed when migrate ran it before the commit: "
+                            f"{_label(str(e.diag.message_primary or e))}. Nothing was kept."
+                        ) from e
+                    step[0] = "checking the database once more before the commit"  # step 6
+                    if pending:
+                        _check_read_back(db, saved, END_OF_RUN, frozenset(), named, schema=schema)
+                        with pinned_read(db, RECIPE_TIMEOUTS):
+                            _recheck_roles(db, named, END_OF_RUN)
+                    if problems := _state_problems(
+                        db,
+                        me=me,
+                        login=login,
+                        named_roles=named_roles,
+                        schema=schema,
+                        texts=texts.values(),
+                        schema_owner=schema_owner,
+                    ):
+                        raise ConfigError(
+                            "after the migration files and the grants, rights that the grant map does not give are "
+                            f"in place:\n{_problem_lines(problems)}\nThe whole run is rolled back; the database is as "
+                            "it was before this run, unless a file ended the transaction itself (that is reported "
+                            "separately above). What to do: (1) if a migration file made it, remove that statement "
+                            "from the file; (2) if no file did, a database administrator runs the statement printed "
+                            "with the line; (3) run migrate again."
+                        )
+                    reached_commit = True
+                # leaving `db.transaction()` is the COMMIT (step 7)
+            except psycopg.Error as e:
+                if not reached_commit:
+                    raise
+                if _commit_outcome(e, db) == "refused":
                     raise ConfigError(
-                        f"the runtime role has more than the grant map, in schema {_label(schema)}: "
-                        + _shown(bad)
-                        + _GRANT_MAP_WORDS
-                    )
-            if purge_role:
-                _apply_grants(db, schema, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
-                if bad := effective_problems(
-                    db,
-                    purge_role,
-                    lambda g: g.purge if g else "",
-                    lambda g: g.purge_cols if g else (),
-                ):
-                    raise ConfigError(
-                        f"the purge role has more than the grant map, in schema {_label(schema)}: "
-                        + _shown(bad)
-                        + _GRANT_MAP_WORDS
-                    )
-            if portal_role:
-                _apply_grants(db, schema, portal_role, lambda g: "SELECT" if g.portal else "")
-                if (
-                    extra := effective_problems(
-                        db, portal_role, lambda g: "SELECT" if (g and g.portal) else ""
-                    )
-                ):  # the same check as the runtime and purge roles (what it can really do, however it got it)
-                    raise ConfigError(  # e.g. inherited from another role: REVOKE cannot take those away
-                        f"the portal role has privileges outside the portal grant map, in schema {_label(schema)}: "
-                        + _shown(extra)
-                        + _GRANT_MAP_WORDS
-                    )
-            changed = _changed_since(objects_before, _objects(db))
-            _refuse_unlisted_grantees(db, texts.values(), named, changed)
-            for role in named:
-                got = db.execute(_SCHEMA_USAGE_SQL, (role,)).fetchone()
-                if not got or not got[0]:
-                    raise ConfigError(
-                        f"the role {_label(role)} cannot use the schema {_label(schema)} after the grants: the migration "
-                        "role may not pass USAGE on the schema on. Give it the grant option "
-                        f"(GRANT USAGE ON SCHEMA <schema> TO <the migration role> WITH GRANT OPTION; CREATE needs no grant option), "
-                        "or make it the owner of the schema."
-                    )
+                        f"the database server refused the commit ({getattr(e, 'sqlstate', None)}: "
+                        f"{_label(str(e.diag.message_primary or e))}). Nothing was kept; run migrate again."
+                    ) from e
+                raise _after_commit(applied, [], commit_unknown=True) from e
     except (pg_errors.LockNotAvailable, pg_errors.QueryCanceled) as e:
         if (plain := _limit_error(e, step[0])) is None:
             raise
         raise plain from e
+    # step 8: a new connection, one snapshot, no lock. Any failure here is "applied but not verified", never "refused".
+    try:
+        with connect(
+            dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
+        ) as after:
+            after.isolation_level = psycopg.IsolationLevel.REPEATABLE_READ
+            after.read_only = True
+            problems = _state_problems(
+                after,
+                me=me,
+                login=login,
+                named_roles=named_roles,
+                schema=schema,
+                texts=texts.values(),
+                schema_owner=schema_owner,
+            )
+    except Exception as e:  # any error at all: the commit happened and the check did not finish
+        raise _after_commit(applied, [], could_not_run=str(e) or type(e).__name__) from e
+    if problems:
+        raise _after_commit(applied, problems)
     return applied

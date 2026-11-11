@@ -495,5 +495,10 @@ def test_migrate_refuses_a_portal_role_that_inherits_write_rights(roles):
     with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(sql.SQL("GRANT UPDATE, DELETE ON runs TO {}").format(sql.Identifier(other)))
         db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(other), sql.Identifier(portal)))
-    with pytest.raises(ConfigError, match="can UPDATE runs"):
+    with pytest.raises(ConfigError) as refused:
         mig.migrate(dsn, portal_role=portal)
+    text = str(refused.value)
+    # step 2 of `migrate` names the table, the portal role, the role the rights come through, and each right
+    assert f"{portal} can use it through the role {other}, UPDATE" in text, text
+    assert f"{portal} can use it through the role {other}, DELETE" in text, text
+    assert "No file ran" in text
