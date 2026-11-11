@@ -2637,3 +2637,4 @@
 | BL-core-p77-split-vendor10255 | Major | redaction | D-018 split ticket: vendor key glued to a word in plain ASCII | OPEN | | | 2026-11-11 |
 | BL-core-p77-split-f1026044 | Major | redaction | D-018 split ticket: F10 fragment map entries | OPEN | | | 2026-11-11 |
 | BL-core-q8c1-r1-ev1 | Major | Q8c-1 | evidence/Q8c-1/7af1380 renderer accepts privileged or reserved values | OPEN | | | 2026-11-11 |
+| BL-core-q8a2-r2-d01 | Major | Q8a-2 | reviews/Q8a-2/result-r2-design-full.md M1 string-scan boundary set | OPEN | | | 2026-11-11 |
