@@ -1376,5 +1376,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | id | purpose | started | expected end | last check | state | next action |
 |---|---|---|---|---|---|---|
 | B-flaky a6e5db57 | fix batch 1 of 2 | 14:30Z | | 16:05Z | CLOSED (95 min, past its box). Its account: design changed to processor time; 200 of 200 runs pass without own load, 127 of 127 with 4 busy loops (200 planned, stopped on my order), 8 loops NOT run as pytest; Windows path not run; full suite 10625 passed on the commit before the final text-only commit; 54 of 54 mutants | evidence + 2 fresh reviewers |
-| EV-flaky-r2 | EVIDENCE RUNNER (Fable) a8c269c8, pg 56191; overload proof bounded to 4 min inside a heavy slot | 16:05Z | +45m | 16:05Z | starting | RESULTS.md |
-| R-flaky-r2 design + codebase | fresh egm reviewers (Fable), snapshot /home/user/build/snap/flaky-a8c269c | 16:05Z | +15m | 16:05Z | starting | save reports |
+| EV-flaky-r2 a9c2eba4 | EVIDENCE RUNNER (Fable) a8c269c8, pg 56191; overload proof bounded to 4 min inside a heavy slot | 16:05Z | +45m | 16:05Z | running | RESULTS.md |
+| R-flaky-r2 design ac12b987, codebase a1db18a8 | fresh egm reviewers (Fable), snapshot /home/user/build/snap/flaky-a8c269c | 16:05Z | +15m | 16:05Z | running | save reports |
