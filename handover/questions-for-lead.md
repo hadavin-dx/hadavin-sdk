@@ -1704,3 +1704,7 @@ Held back by gitleaks in this pass: none. Still unpushed from the earlier pass: 
 - What: step "Stale gitleaks ignore entries" runs `git log ... HEAD --all --not origin/core/cloud-handover` and fails if any fetched ref other than core/cloud-handover holds handover/(reviews|tickets|evidence)/ paths. Offending refs (memo agent reproduced): core/P3a-2 (213 paths), wip/cloud-B-P73r2 (213), wip/cloud-B-cilint-b3 (14), wip/cloud-245-B-cilint-b3 (14), wip/cloud-B-peel (5), wip/cloud-245-B-peel (5). The earlier resume note ("fails any PR whose history holds handover paths") was wrong: PR89 has none and still fails.
 - Why it blocks: no PR can get a green `security` check, so nothing is READY by the definition.
 - Safe default taken: nothing deleted or changed (deleting remote branches / changing CI are owner-only). Next step for the human: back up the six refs with a bundle, then delete them (or change the CI rule); details in handover/decisions/P3a2-history-memo.md section 4. After that, rerun the checks on PR89.
+
+## Q-2026-11-11-approver-stepup and pilot signer (from reviews/Q8/deps-audit.md F4, F9)
+- F4: approver identity is "the verified Slack user" with no second factor (passkey); step-up is deferred to "Phase 3". F9: pilot allows signer none / anchor none / key file on disk.
+- Why owner: both change the product promise and client onboarding. Safe default taken: no change; ledger rows BL-core-q8deps-F4 open. Next step: owner says enforce now or records a dated exception.
