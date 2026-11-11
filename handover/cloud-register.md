@@ -1395,3 +1395,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | R-Q8a1-r4 delta a9678c99 | | | | 16:15Z | CLOSED: NOT CLEAN (1 Major, 6 Minor), saved; ticket errata rev 6 written by the lead | wait for evidence a55ad3b3, then fix batch 4 (one builder, Sonnet) |
 | R-P3a2r13-plan readiness a4014d7c | | | | 16:25Z | CLOSED: NOT READY (2 Blocker, 9 Major, 11 Minor), saved; B2 confirmed by lead reading | wait for design plan review a5a5ac6b, then errata rev 2 (answers B1-B2, M1-M9) and ONE builder in work packages A/B/C |
 | R-P3a2r13-plan design a5a5ac6b | | | | 16:35Z | CLOSED: NOT READY (0 Blocker, 8 Major, 12 Minor), saved | errata rev 2 together with readiness findings; probes first (grantor, sequence row type, options) |
+| R-PRH-plan design a6a4d892 | | | | 16:42Z | CLOSED: NOT READY (1 Blocker, 7 Major, 12 Minor), saved; none reproduced yet | PR H ticket author: errata rev 2 (answer both plan reviews, diagnose case 790, reproduce M1-M3), then plan review round 2 |
