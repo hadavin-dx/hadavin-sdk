@@ -2435,3 +2435,7 @@
 | BL-core-a2-w2-r15-08 | all five r15 reports | Nit | PR89 | nits listed in the reports (comments, literals, dead \t, term definitions, flake bounds) | OPEN | 2026-11-11 |
 | BL-core-a15-w3-01 | handover/reviews/PR74/round-w3-design-src.md | Major | PR74 (A15) | M1 scan_keyset has no clock; fix1 note G7 says REDACT_BUDGET_S refusal; redaction path | OPEN | 2026-11-11 |
 | BL-core-a15-w3-02 | handover/reviews/PR74/round-w3-design-src.md | Minor | PR74 (A15) | M2-M6: unlocked counter, closed-list call-site pointer, double read, app.py order + behaviour change confirm, psycopg-only | OPEN | 2026-11-11 |
+| BL-core-a18-w3-01 | handover/reviews/PR86/round-w3-cost-slice.md | Major (conditional) | PR86 stack / P4b1,P4c | R1 no reserve-before/reconcile-after in any call path; cap is post-hoc; owner = P4b1/P4c; lead to confirm | OPEN | 2026-11-11 |
+| BL-core-a18-w3-02 | handover/reviews/PR86/round-w3-cost-slice.md | Major | PR78/P4c-2 stack | R2 agent_loop books nothing for unpriced/missing-usage/exhausted provider replies (money regression vs main); P4c-2 owns | OPEN | 2026-11-11 |
+| BL-core-a18-w3-03 | handover/reviews/PR86/round-w3-cost-slice.md | Minor | PR86 stack | R3-R6 max_tokens cap at load, 6 vs 8 decimals, stop race, fake usage | OPEN | 2026-11-11 |
+| BL-core-a18-w3-04 | cloud note | Major | PR86 (A18) | P6b1 no-training statement check itself not yet reviewed (reviewer got wrong slice from cloud) | OPEN | 2026-11-11 |
