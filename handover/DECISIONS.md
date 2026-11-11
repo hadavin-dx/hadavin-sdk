@@ -445,3 +445,9 @@ Slip to admit: the four fix builders launched at ~21:00Z (Q8b b2, Q8a-1 b6, PR89
 D-027a: 3 heavy slots, 7 agents running, load 2.05/4 at 21:15Z: no change.
 D-027b: Q8a-2 has only Nits: fix the Nits in one push with no new review (round cap rule), then the drift report. Reversible yes. Confidence medium.
 D-027c: timing round 2 had no Blocker/Major; Nits go in one push after the evidence runner reports; no round 3 unless the evidence shows a failure.
+
+## 2026-11-11 22:08Z D-028: Q8b n1 (record-walk key names like dbpass) not widened in batch 2
+What: the Q8b batch-2 builder found key names such as dbpass that the shared key list does not match on the record-walk path; widening the list over-masks ordinary words (bypass, compass, oauth). Options: widen now; do not widen and record; widen with an allow-list of the three words. Chosen: do not widen in this batch; the builder lists the exact words and the over-mask risk; reviewers judge it in round 3. Why: a false mask costs readability, a missed key leaks a secret; this needs a measured list (false-abstain split), not a guess. This is a real readable-secret gap on a redaction path, so it is NOT closed: it stays an open ledger row until measured and decided. Confidence: low-medium. Reversible: yes.
+## 2026-11-11 22:08Z D-029: PR H builder deviated from D-026 wording (accepted for review, not yet judged)
+What: PR H WP2c: nF alnum final byte removes only ESC (D-026 would have consumed a UUID dash); Fp/Fe/Fs also changed; CSI in ECMA-48 order; 517 step-back pairs -> 0 against main, 92 "accidental" pairs pinned in a test. Why accepted: each deviation reduces text loss and the redaction path gets uncapped independent review. Risk: a wrong grammar in a security parser. Confidence: medium. Reversible: yes (code on the branch, not merged).
+Slip noted: the Q8b builder told me gitleaks was not installed; it is at /home/user/build/bin/gitleaks (not on PATH). I told it where.
