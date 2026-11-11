@@ -1,0 +1,1653 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [  9%]
+...................................................FFFFFFFFFFFF.......F. [ 19%]
+FFFFFFFFFFFFFFFF..F..........F.......................................... [ 29%]
+........................................................F............... [ 39%]
+......F................................................................. [ 49%]
+.......................FFFFFFFFFFFFFFFFFFFFFFFFFFFF................F.... [ 59%]
+........................................................................ [ 69%]
+........................................................................ [ 79%]
+........................................................................ [ 89%]
+........................................................................ [ 99%]
+.....                                                                    [100%]
+=================================== FAILURES ===================================
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT ON audit_entries TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_3185ba0c98cb'", 'hadavin_test_3185ba0c98cb')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9af0238ad0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_right_for_a_role_the_ru0')
+grant = 'GRANT SELECT ON audit_entries TO {other};', with_roles = False
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights that this package does not give") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'rights that this package does not give'
+E                 Actual message: "after the migration files ran, rights in schema hadavin_test_3185ba0c98cb that this package does not give are in place: hadavin_test_ac_11728e48 holds SELECT on audit_entries. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:2726: AssertionError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT ON audit_entries TO PUBLIC;] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_f82255849339'", 'hadavin_test_f82255849339')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9aecca1a20>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_right_for_a_role_the_ru1')
+grant = 'GRANT SELECT ON audit_entries TO PUBLIC;', with_roles = False
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights that this package does not give") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'rights that this package does not give'
+E                 Actual message: "after the migration files ran, rights in schema hadavin_test_f82255849339 that this package does not give are in place: PUBLIC holds SELECT on audit_entries. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:2726: AssertionError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT (seq) ON audit_entries TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_4a94f87177f3'", 'hadavin_test_4a94f87177f3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9aecd63000>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_right_for_a_role_the_ru2')
+grant = 'GRANT SELECT (seq) ON audit_entries TO {other};', with_roles = False
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights that this package does not give") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'rights that this package does not give'
+E                 Actual message: "after the migration files ran, rights in schema hadavin_test_4a94f87177f3 that this package does not give are in place: hadavin_test_ac_bd3299bf holds SELECT on audit_entries.seq. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:2726: AssertionError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_a8e276317804'", 'hadavin_test_a8e276317804')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9af0357d20>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_right_for_a_role_the_ru3')
+grant = 'GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};'
+with_roles = False
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights that this package does not give") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'rights that this package does not give'
+E                 Actual message: "after the migration files ran, rights in schema hadavin_test_a8e276317804 that this package does not give are in place: hadavin_test_ac_dfd69ecc holds USAGE on approval_decisions_seq_seq. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:2726: AssertionError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_d9342f3ef372'", 'hadavin_test_d9342f3ef372')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9aecca1f60>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_right_for_a_role_the_ru4')
+grant = 'GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};'
+with_roles = False
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights that this package does not give") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'rights that this package does not give'
+E                 Actual message: "after the migration files ran, rights in schema hadavin_test_d9342f3ef372 that this package does not give are in place: PUBLIC holds EXECUTE on the function hadavin_audit_append_only; hadavin_test_ac_253da35e holds EXECUTE on the function hadavin_audit_append_only. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:2726: AssertionError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_309ae2db6103'", 'hadavin_test_309ae2db6103')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9aeccc00c0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_right_for_a_role_the_ru5')
+grant = 'GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;'
+with_roles = False
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights that this package does not give") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'rights that this package does not give'
+E                 Actual message: "after the migration files ran, rights in schema hadavin_test_309ae2db6103 that this package does not give are in place: PUBLIC holds EXECUTE on the function hadavin_audit_append_only. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:2726: AssertionError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT ON audit_entries TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_c3714dbf467d'", 'hadavin_test_c3714dbf467d')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9aecca2d60>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_right_for_a_role_the_ru6')
+grant = 'GRANT SELECT ON audit_entries TO {other};', with_roles = True
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights that this package does not give") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'rights that this package does not give'
+E                 Actual message: "after the migration files ran, rights in schema hadavin_test_c3714dbf467d that this package does not give are in place: hadavin_test_ac_6f1702ba holds SELECT on audit_entries. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:2726: AssertionError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT ON audit_entries TO PUBLIC;] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_60626b40694c'", 'hadavin_test_60626b40694c')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9af020bb60>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_right_for_a_role_the_ru7')
+grant = 'GRANT SELECT ON audit_entries TO PUBLIC;', with_roles = True
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights that this package does not give") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'rights that this package does not give'
+E                 Actual message: "after the migration files ran, rights in schema hadavin_test_60626b40694c that this package does not give are in place: PUBLIC holds SELECT on audit_entries. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:2726: AssertionError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT (seq) ON audit_entries TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_12598cdb44de'", 'hadavin_test_12598cdb44de')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9af0238ad0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_right_for_a_role_the_ru8')
+grant = 'GRANT SELECT (seq) ON audit_entries TO {other};', with_roles = True
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights that this package does not give") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'rights that this package does not give'
+E                 Actual message: "after the migration files ran, rights in schema hadavin_test_12598cdb44de that this package does not give are in place: hadavin_test_ac_5d4dc984 holds SELECT on audit_entries.seq. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:2726: AssertionError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_86e12e74d6c6'", 'hadavin_test_86e12e74d6c6')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9af0000750>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_right_for_a_role_the_ru9')
+grant = 'GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};'
+with_roles = True
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights that this package does not give") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'rights that this package does not give'
+E                 Actual message: "after the migration files ran, rights in schema hadavin_test_86e12e74d6c6 that this package does not give are in place: hadavin_test_ac_c426306f holds USAGE on approval_decisions_seq_seq. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:2726: AssertionError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_74cd2fa08108'", 'hadavin_test_74cd2fa08108')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9af0209b00>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_right_for_a_role_the_ru10')
+grant = 'GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};'
+with_roles = True
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights that this package does not give") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'rights that this package does not give'
+E                 Actual message: "after the migration files ran, rights in schema hadavin_test_74cd2fa08108 that this package does not give are in place: PUBLIC holds EXECUTE on the function hadavin_audit_append_only; hadavin_test_ac_0e95ffb6 holds EXECUTE on the function hadavin_audit_append_only. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:2726: AssertionError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_59c97d633c4b'", 'hadavin_test_59c97d633c4b')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9af03eae40>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_right_for_a_role_the_ru11')
+grant = 'GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;'
+with_roles = True
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights that this package does not give") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'rights that this package does not give'
+E                 Actual message: "after the migration files ran, rights in schema hadavin_test_59c97d633c4b that this package does not give are in place: PUBLIC holds EXECUTE on the function hadavin_audit_append_only. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:2726: AssertionError
+_ test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_423e3ca426cb'", 'hadavin_test_423e3ca426cb')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9af0002d60>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_security_definer_functi1')
+second_schema = 'hadavin_test_o_4b1a3da85e'
+
+    @needs_pg
+    def test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new(
+        scratch, monkeypatch, tmp_path, second_schema
+    ):
+        """The text rules read only a `CREATE FUNCTION` at the start of a statement; here a function body makes the
+        function by `EXECUTE`, in a second schema (so no list of the run's own schema finds it). What is new in the database
+        after the files is looked at too. Killed by: mutant SD3 (only the names in the file text are looked at)."""
+        dsn, _schema = scratch
+        body = (
+            "CREATE OR REPLACE FUNCTION hadavin_test_maker() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+            f"EXECUTE 'CREATE OR REPLACE FUNCTION \"{second_schema}\".hadavin_test_hidden() RETURNS int LANGUAGE sql SECURITY DEFINER AS $q$ SELECT 1 $q$'; "
+            "END $$;\nSELECT hadavin_test_maker();\n"
+        )
+        _with_files(monkeypatch, tmp_path, {"0006_dynamic.sql": body})
+>       with pytest.raises(ConfigError, match="SECURITY DEFINER") as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2887: Failed
+___ test_a_security_definer_function_written_with_another_schema_is_refused ____
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_bebb2068bee3'", 'hadavin_test_bebb2068bee3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9af03574d0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_security_definer_functi2')
+second_schema = 'hadavin_test_o_0de678d110'
+
+    @needs_pg
+    def test_a_security_definer_function_written_with_another_schema_is_refused(
+        scratch, monkeypatch, tmp_path, second_schema
+    ):
+        """The first version looked only at the schema of the run: `CREATE OR REPLACE FUNCTION other.f() ... SECURITY DEFINER`
+        escaped (it keeps the default right for everyone to call it and runs with the rights of the migration role). Now every
+        function that is new or changed anywhere in the database is read. Class: a read-back limited to one schema.
+        Killed by: mutant SD4 (only the schema of the run is read)."""
+        dsn, _schema = scratch
+        body = (
+            f'CREATE OR REPLACE FUNCTION "{second_schema}".hadavin_test_f() RETURNS int LANGUAGE sql SECURITY DEFINER '
+            "AS $$ SELECT 1 $$;\n"
+        )
+        _with_files(monkeypatch, tmp_path, {"0006_other_schema.sql": body})
+>       with pytest.raises(ConfigError, match="SECURITY DEFINER") as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2952: Failed
+_ test_a_plain_function_in_another_schema_loses_the_default_right_for_everyone _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_501b73e9f867'", 'hadavin_test_501b73e9f867')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9ae7ee8130>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_plain_function_in_anoth0')
+second_schema = 'hadavin_test_o_b2fad78a61'
+
+    @needs_pg
+    def test_a_plain_function_in_another_schema_loses_the_default_right_for_everyone(
+        scratch, monkeypatch, tmp_path, second_schema
+    ):
+        """A function that a file makes in another schema is not SECURITY DEFINER here, but it still has the default
+        'everyone may call it': that default is removed, as for the functions of the run's schema. Killed by: mutant SD4."""
+        dsn, _schema = scratch
+        body = f'CREATE OR REPLACE FUNCTION "{second_schema}".hadavin_test_g() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;\n'
+        _with_files(monkeypatch, tmp_path, {"0006_other_schema.sql": body})
+        assert mig.migrate(dsn) == REAL + ["0006_other_schema"]
+        with psycopg.connect(DSN, autocommit=True) as db:
+            grantees = db.execute(
+                "SELECT (aclexplode(p.proacl)).grantee FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace "
+                "WHERE n.nspname = %s AND p.proname = 'hadavin_test_g'",
+                (second_schema,),
+            ).fetchall()
+>       assert grantees and all(g != 0 for (g,) in grantees)
+E       assert ([])
+
+tests/test_migration_postgres.py:2974: AssertionError
+_ test_a_function_replaced_with_the_same_id_and_made_security_definer_is_found _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_0f310c3b9aa7'", 'hadavin_test_0f310c3b9aa7')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9aeccc27b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_function_replaced_with_0')
+second_schema = 'hadavin_test_o_f28f218f89'
+
+    @needs_pg
+    def test_a_function_replaced_with_the_same_id_and_made_security_definer_is_found(
+        scratch, monkeypatch, tmp_path, second_schema
+    ):
+        """A function made by an earlier run (named in no file) keeps its id when a later file replaces it by dynamic SQL;
+        what is compared is its state, not whether its id is new. Killed by: mutant SD5 (only new ids are looked at)."""
+        dsn, _schema = scratch
+        maker = (
+            "CREATE OR REPLACE FUNCTION hadavin_test_maker2() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+            f"EXECUTE 'CREATE OR REPLACE FUNCTION \"{second_schema}\".hadavin_test_dyn() RETURNS int LANGUAGE sql AS $q$ SELECT 1 $q$'; "
+            "END $$;\nSELECT hadavin_test_maker2();\n"
+        )
+        _with_files(monkeypatch, tmp_path, {"0006_first.sql": maker})
+        assert mig.migrate(dsn) == REAL + ["0006_first"]
+        again = (
+            "CREATE OR REPLACE FUNCTION hadavin_test_maker3() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+            f"EXECUTE 'CREATE OR REPLACE FUNCTION \"{second_schema}\".hadavin_test_dyn() RETURNS int LANGUAGE sql SECURITY DEFINER AS $q$ SELECT 1 $q$'; "
+            "END $$;\nSELECT hadavin_test_maker3();\n"
+        )
+        _with_files(monkeypatch, tmp_path, {"0007_second.sql": again})
+>       with pytest.raises(ConfigError, match="SECURITY DEFINER") as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2997: Failed
+______ test_a_table_made_by_dynamic_sql_and_opened_to_everyone_is_refused ______
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_5930efedf0c5'", 'hadavin_test_5930efedf0c5')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9ae7e84130>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_table_made_by_dynamic_s0')
+
+    @needs_pg
+    def test_a_table_made_by_dynamic_sql_and_opened_to_everyone_is_refused(
+        scratch, monkeypatch, tmp_path
+    ):
+        """The text rules and the names in `GRANTS` do not see a table that a function body makes. What is new in the
+        database after the files is read. Killed by: mutant RN6 (new relations are not read)."""
+        dsn, _schema = scratch
+        body = (
+            "CREATE OR REPLACE FUNCTION hadavin_test_mk() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+            "EXECUTE 'CRE' || 'ATE TABLE hadavin_test_open (a int)'; "
+            "EXECUTE 'GRANT SELECT ON hadavin_test_open TO PUBLIC'; END $$;\nSELECT hadavin_test_mk();\n"
+        )
+        _with_files(monkeypatch, tmp_path, {"0006_dyn_table.sql": body})
+>       with pytest.raises(ConfigError, match="PUBLIC holds SELECT on hadavin_test_open") as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:3015: Failed
+_ test_a_default_right_that_an_administrator_set_is_refused_and_the_message_says_so[schema] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_9843ae433083'", 'hadavin_test_9843ae433083')
+scope = 'schema'
+
+    @needs_pg
+    @pytest.mark.parametrize("scope", ["schema", "database"])
+    def test_a_default_right_that_an_administrator_set_is_refused_and_the_message_says_so(
+        scratch, scope
+    ):
+        """`ALTER DEFAULT PRIVILEGES` of the migration role (for the schema, or for every schema) decides the rights of the
+        tables made later, also outside `migrate`. A file cannot set it (refused by text), an administrator can; the
+        read-back finds it and does not blame a file. Class: a right that is not on an existing object. Killed by:
+        mutant DP1 (the default rights are not read)."""
+        dsn, schema = scratch
+        where = (
+            sql.SQL("IN SCHEMA {} ").format(sql.Identifier(schema))
+            if scope == "schema"
+            else sql.SQL("")
+        )
+        role = sql.Identifier(PLAIN_ROLE)
+        admin_sets = sql.SQL(
+            "ALTER DEFAULT PRIVILEGES FOR ROLE {} {}GRANT SELECT ON TABLES TO PUBLIC"
+        ).format(role, where)
+        admin_undoes = sql.SQL(
+            "ALTER DEFAULT PRIVILEGES FOR ROLE {} {}REVOKE SELECT ON TABLES FROM PUBLIC"
+        ).format(role, where)
+        with psycopg.connect(DSN, autocommit=True) as db:
+            ensure_plain_role(db)  # the role exists also when this test runs alone
+            db.execute(admin_sets)
+        try:
+>           with pytest.raises(ConfigError, match="a default right") as e:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'a default right'
+E             Actual message: "after the migration files ran, rights in schema hadavin_test_9843ae433083 that this package does not give are in place: PUBLIC holds SELECT on approval_decisions; PUBLIC holds SELECT on approval_requests; PUBLIC holds SELECT on audit_checkpoints; PUBLIC holds SELECT on audit_entries; PUBLIC holds SELECT on audit_outbox; PUBLIC holds SELECT on dead_letters; PUBLIC holds SELECT on gate_decisions; PUBLIC holds SELECT on kill_switch; PUBLIC holds SELECT on plans; PUBLIC holds SELECT on redaction_maps; PUBLIC holds SELECT on runs; PUBLIC holds SELECT on schema_migrations; PUBLIC holds SELECT on spend; PUBLIC holds SELECT on spend_month; PUBLIC holds SELECT on tick_state; PUBLIC holds SELECT on tool_calls. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:3047: AssertionError
+_ test_a_default_right_that_an_administrator_set_is_refused_and_the_message_says_so[database] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_cce4d111078a'", 'hadavin_test_cce4d111078a')
+scope = 'database'
+
+    @needs_pg
+    @pytest.mark.parametrize("scope", ["schema", "database"])
+    def test_a_default_right_that_an_administrator_set_is_refused_and_the_message_says_so(
+        scratch, scope
+    ):
+        """`ALTER DEFAULT PRIVILEGES` of the migration role (for the schema, or for every schema) decides the rights of the
+        tables made later, also outside `migrate`. A file cannot set it (refused by text), an administrator can; the
+        read-back finds it and does not blame a file. Class: a right that is not on an existing object. Killed by:
+        mutant DP1 (the default rights are not read)."""
+        dsn, schema = scratch
+        where = (
+            sql.SQL("IN SCHEMA {} ").format(sql.Identifier(schema))
+            if scope == "schema"
+            else sql.SQL("")
+        )
+        role = sql.Identifier(PLAIN_ROLE)
+        admin_sets = sql.SQL(
+            "ALTER DEFAULT PRIVILEGES FOR ROLE {} {}GRANT SELECT ON TABLES TO PUBLIC"
+        ).format(role, where)
+        admin_undoes = sql.SQL(
+            "ALTER DEFAULT PRIVILEGES FOR ROLE {} {}REVOKE SELECT ON TABLES FROM PUBLIC"
+        ).format(role, where)
+        with psycopg.connect(DSN, autocommit=True) as db:
+            ensure_plain_role(db)  # the role exists also when this test runs alone
+            db.execute(admin_sets)
+        try:
+>           with pytest.raises(ConfigError, match="a default right") as e:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'a default right'
+E             Actual message: "after the migration files ran, rights in schema hadavin_test_cce4d111078a that this package does not give are in place: PUBLIC holds SELECT on approval_decisions; PUBLIC holds SELECT on approval_requests; PUBLIC holds SELECT on audit_checkpoints; PUBLIC holds SELECT on audit_entries; PUBLIC holds SELECT on audit_outbox; PUBLIC holds SELECT on dead_letters; PUBLIC holds SELECT on gate_decisions; PUBLIC holds SELECT on kill_switch; PUBLIC holds SELECT on plans; PUBLIC holds SELECT on redaction_maps; PUBLIC holds SELECT on runs; PUBLIC holds SELECT on schema_migrations; PUBLIC holds SELECT on spend; PUBLIC holds SELECT on spend_month; PUBLIC holds SELECT on tick_state; PUBLIC holds SELECT on tool_calls. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:3047: AssertionError
+_ test_a_file_that_sets_default_rights_or_changes_a_publication_is_refused_by_text _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_5150662c3490'", 'hadavin_test_5150662c3490')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9aecd632a0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_file_that_sets_default_0')
+
+    @needs_pg
+    def test_a_file_that_sets_default_rights_or_changes_a_publication_is_refused_by_text(
+        scratch, monkeypatch, tmp_path
+    ):
+        dsn, schema = scratch
+        for name, body in {
+            "0006_default.sql": f"ALTER DEFAULT PRIVILEGES IN SCHEMA {schema} GRANT SELECT ON TABLES TO PUBLIC;\n",
+            "0006_publication.sql": "ALTER PUBLICATION hadavin_pub ADD TABLE audit_entries;\n",
+        }.items():
+            with monkeypatch.context() as m:
+                _with_files(m, tmp_path, {name: body})
+>               with pytest.raises(Exception, match="guard cannot read"):
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE Exception
+
+tests/test_migration_postgres.py:3073: Failed
+_ test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_look_is_not[CREATE] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_f6938e88489c'", 'hadavin_test_f6938e88489c')
+right = 'CREATE'
+
+    @needs_pg
+    @pytest.mark.parametrize("right", ["CREATE", "USAGE"])
+    def test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_look_is_not(
+        scratch, right
+    ):
+        """CREATE in the package schema lets a role plant a function that a role of this package then calls; the rights on
+        the schema were never read. USAGE only lets a role look a name up, so it is not refused (the rights on the objects
+        are read). Killed by: mutant SC1 (the schema rights are not read)."""
+        dsn, schema = scratch
+        other = "hadavin_test_sc_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            with psycopg.connect(DSN, autocommit=True) as db:
+                db.execute(
+                    sql.SQL(f"GRANT {right} ON SCHEMA {{}} TO {{}}").format(
+                        sql.Identifier(schema), sql.Identifier(other)
+                    )
+                )
+            if right == "CREATE":
+>               with pytest.raises(ConfigError, match=f"{other} holds CREATE on the schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:3096: Failed
+_ test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_look_is_not[USAGE] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_a68f166a47f4'", 'hadavin_test_a68f166a47f4')
+right = 'USAGE'
+
+    @needs_pg
+    @pytest.mark.parametrize("right", ["CREATE", "USAGE"])
+    def test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_look_is_not(
+        scratch, right
+    ):
+        """CREATE in the package schema lets a role plant a function that a role of this package then calls; the rights on
+        the schema were never read. USAGE only lets a role look a name up, so it is not refused (the rights on the objects
+        are read). Killed by: mutant SC1 (the schema rights are not read)."""
+        dsn, schema = scratch
+        other = "hadavin_test_sc_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            with psycopg.connect(DSN, autocommit=True) as db:
+                db.execute(
+                    sql.SQL(f"GRANT {right} ON SCHEMA {{}} TO {{}}").format(
+                        sql.Identifier(schema), sql.Identifier(other)
+                    )
+                )
+            if right == "CREATE":
+                with pytest.raises(ConfigError, match=f"{other} holds CREATE on the schema") as e:
+                    mig.migrate(dsn)
+                assert "Nothing was changed." in str(e.value) and _ledger(dsn) is None
+            else:
+                assert mig.migrate(dsn) == REAL
+        finally:
+            _drop_roles(other)
+        with psycopg.connect(DSN, autocommit=True) as db:  # PUBLIC may not create either
+            db.execute(sql.SQL("GRANT CREATE ON SCHEMA {} TO PUBLIC").format(sql.Identifier(schema)))
+>       with pytest.raises(ConfigError, match="PUBLIC holds CREATE on the schema"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:3105: Failed
+_ test_an_owner_a_file_handed_an_object_to_is_refused_even_when_the_migration_role_belongs_to_it _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_3b31139feeb2'", 'hadavin_test_3b31139feeb2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9aecd62f20>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_an_owner_a_file_handed_an0')
+
+    @needs_pg
+    def test_an_owner_a_file_handed_an_object_to_is_refused_even_when_the_migration_role_belongs_to_it(
+        scratch, monkeypatch, tmp_path
+    ):
+        """An owner is accepted only when the object had it before the files. `ALTER TABLE audit_entries OWNER TO other`
+        (the migration role is a member of `other`) made `other` the owner with every right, and the read-back treated an
+        owner as normal. Killed by: mutant OW2 (any owner is accepted)."""
+        dsn, schema = scratch
+        other = "hadavin_test_ow_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            assert mig.migrate(dsn) == REAL
+            with psycopg.connect(DSN, autocommit=True) as db:
+                db.execute(
+                    sql.SQL("GRANT CREATE ON SCHEMA {} TO {}").format(
+                        sql.Identifier(schema), sql.Identifier(other)
+                    )
+                )
+            _let_the_plain_role_grant(other)
+            _with_files(
+                monkeypatch,
+                tmp_path,
+                {"0006_hand_over.sql": f"ALTER TABLE approval_decisions OWNER TO {other};\n"},
+            )
+>           with pytest.raises(ConfigError, match="was handed to") as e:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:3133: Failed
+____ test_a_right_that_an_earlier_run_gave_is_named_as_such_in_the_refusal _____
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_48b95f8ea536'", 'hadavin_test_48b95f8ea536')
+
+    @needs_pg
+    def test_a_right_that_an_earlier_run_gave_is_named_as_such_in_the_refusal(scratch):
+        """A later run that names no role finds the rights an earlier run gave to the runtime role; the refusal said 'remove
+        the statement from the migration file' although no file was at fault. Killed by: mutant WD1 (old wording)."""
+        dsn, _schema = scratch
+        run_as = "hadavin_test_er_" + uuid.uuid4().hex[:8]
+        _create_roles(run_as)
+        try:
+            assert mig.migrate(dsn, runtime_role=run_as) == REAL
+>           with pytest.raises(ConfigError, match="an earlier run or a database administrator") as e:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'an earlier run or a database administrator'
+E             Actual message: "after the migration files ran, rights in schema hadavin_test_48b95f8ea536 that this package does not give are in place: hadavin_test_er_d9bf3799 holds DELETE on audit_outbox; hadavin_test_er_d9bf3799 holds INSERT on approval_decisions; hadavin_test_er_d9bf3799 holds INSERT on approval_requests; hadavin_test_er_d9bf3799 holds INSERT on audit_checkpoints; hadavin_test_er_d9bf3799 holds INSERT on audit_entries; hadavin_test_er_d9bf3799 holds INSERT on audit_outbox; hadavin_test_er_d9bf3799 holds INSERT on dead_letters; hadavin_test_er_d9bf3799 holds INSERT on gate_decisions; hadavin_test_er_d9bf3799 holds INSERT on kill_switch; hadavin_test_er_d9bf3799 holds INSERT on plans; hadavin_test_er_d9bf3799 holds INSERT on redaction_maps; hadavin_test_er_d9bf3799 holds INSERT on runs; hadavin_test_er_d9bf3799 holds INSERT on spend; hadavin_test_er_d9bf3799 holds INSERT on spend_month; hadavin_test_er_d9bf3799 holds INSERT on tick_state; hadavin_test_er_d9bf3799 holds INSERT on tool_calls; hadavin_test_er_d9bf3799 holds SELECT on approval_decisions; hadavin_test_er_d9bf3799 holds SELECT on approval_requests; hadavin_test_er_d9bf3799 holds SELECT on audit_checkpoints; hadavin_test_er_d9bf3799 holds SELECT on audit_entries. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:3149: AssertionError
+______________ test_a_named_role_may_not_pass_a_function_right_on ______________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_22d728292612'", 'hadavin_test_22d728292612')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9ae7eea350>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_a_named_role_may_not_pass0')
+
+    @needs_pg
+    def test_a_named_role_may_not_pass_a_function_right_on(scratch, monkeypatch, tmp_path):
+        """`WITH GRANT OPTION` on a function lets the runtime role hand EXECUTE to anyone later; the ACL of a function is not
+        reset by the grant map, so it is read. Killed by: mutant GO1 (the grant option is not read)."""
+        dsn, _schema = scratch
+        run_as = "hadavin_test_go_" + uuid.uuid4().hex[:8]
+        _create_roles(run_as)
+        try:
+            _with_files(
+                monkeypatch,
+                tmp_path,
+                {
+                    "0006_option.sql": f"GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {run_as} WITH GRANT OPTION;\n"
+                },
+            )
+>           with pytest.raises(ConfigError, match="WITH GRANT OPTION") as e:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'WITH GRANT OPTION'
+E             Actual message: "after the migration files ran, rights in schema hadavin_test_22d728292612 that this package does not give are in place: PUBLIC holds EXECUTE on the function hadavin_audit_append_only. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+
+tests/test_migration_postgres.py:3171: AssertionError
+________ test_the_lock_wait_has_an_upper_bound_that_the_server_accepts _________
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_1909c6f8f27f'", 'hadavin_test_1909c6f8f27f')
+
+    @needs_pg
+    def test_the_lock_wait_has_an_upper_bound_that_the_server_accepts(scratch):
+        """`lock_timeout` is a whole number of milliseconds in 32 bits; above 2147483 seconds the server answered with a raw
+        driver error. Now a `ConfigError` before anything runs. Killed by: mutant LW4 (no upper bound)."""
+        dsn, _schema = scratch
+        refused = driver_error = None
+        try:
+>           mig.migrate(dsn, lock_wait_seconds=mig.MAX_LOCK_WAIT_SECONDS + 1)
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'hadavin_sdk.store.migrate' has no attribute 'MAX_LOCK_WAIT_SECONDS'. Did you mean: 'MIGRATE_LOCK_WAIT_SECONDS'?
+
+tests/test_migration_postgres.py:3185: AttributeError
+_ test_a_lock_holder_that_this_login_cannot_look_into_is_named_in_plain_words __
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_31fdc7ca03a6'", 'hadavin_test_31fdc7ca03a6')
+
+    @needs_pg
+    def test_a_lock_holder_that_this_login_cannot_look_into_is_named_in_plain_words(scratch):
+        """For the session of another user the server shows NULL in some columns of `pg_stat_activity`; the message said
+        'state None, connected since None'. Killed by: mutant LW5 (NULL is printed as None)."""
+        dsn, _schema = scratch
+        with psycopg.connect(DSN, autocommit=True) as holder:
+            holder.execute("SELECT pg_advisory_lock(%s)", (mig.MIGRATE_LOCK,))
+            with pytest.raises(ConfigError, match="waited 1 seconds") as e:
+                mig.migrate(dsn, lock_wait_seconds=1)
+        text = str(e.value)
+>       assert "None" not in text, text
+E       AssertionError: migrate waited 1 seconds for the migration lock and gave up: the session of postgres (process 14344, application , state None, connected since None) holds it. Nothing was changed. Wait until that run ends and run migrate again; if it is stuck, a database administrator ends that session (pg_terminate_backend with the process number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.
+E       assert 'None' not in 'migrate wai...g migration.'
+E         
+E         'None' is contained here:
+E           n , state None, connected since None) holds it. Nothing was changed. Wait until that run ends and run migrate again; if it is stuck, a database administrator ends that session (pg_terminate_backend with the process number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.
+E         ?           ++++
+
+tests/test_migration_postgres.py:3205: AssertionError
+________ test_a_null_column_of_the_activity_view_is_worded_for_a_reader ________
+
+    def test_a_null_column_of_the_activity_view_is_worded_for_a_reader():
+>       assert mig._seen(None) == "not visible to this login"
+               ^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_seen'. Did you mean: '_scan'?
+
+tests/test_migration_postgres.py:3210: AttributeError
+_ test_a_statement_limit_saved_for_the_migration_role_does_not_end_the_lock_wait _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_e67573d0e44a'", 'hadavin_test_e67573d0e44a')
+
+    @needs_pg
+    def test_a_statement_limit_saved_for_the_migration_role_does_not_end_the_lock_wait(scratch):
+        """The wait for the migration lock is a statement too, so a `statement_timeout` saved for the login ended it early
+        (error code 57014) and the message named the wrong limit. Now the wait has the lock limit only. Killed by: mutant
+        LW6 (the statement limit is not switched off for the wait)."""
+        dsn, _schema = scratch
+        assert mig.migrate(dsn) == REAL  # also makes the plain role of the test run
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            admin.execute(
+                sql.SQL("ALTER ROLE {} SET statement_timeout = '300ms'").format(
+                    sql.Identifier(PLAIN_ROLE)
+                )
+            )
+        try:
+            with psycopg.connect(DSN, autocommit=True) as holder:
+                holder.execute("SELECT pg_advisory_lock(%s)", (mig.MIGRATE_LOCK,))
+>               with pytest.raises(ConfigError, match="waited 2 seconds for the migration lock") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError: Regex pattern did not match.
+E                 Expected regex: 'waited 2 seconds for the migration lock'
+E                 Actual message: 'migrate stopped and kept nothing: while taking the migration lock, a statement ran more than 60s (statement_timeout), or was cancelled by another session. Another session holds a lock on a table, or the statement is too slow for a live database. Run migrate again when nothing holds the table; a migration file that really needs longer is applied by hand with a raised number (CHANGELOG.md, Migration repair steps).'
+
+tests/test_migration_postgres.py:3230: AssertionError
+_ test_the_holder_named_is_the_one_that_holds_the_real_lock_not_one_with_the_same_two_words _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56082 options='-c search_path=hadavin_test_3d7ff85a5c50'", 'hadavin_test_3d7ff85a5c50')
+
+    @needs_pg
+    def test_the_holder_named_is_the_one_that_holds_the_real_lock_not_one_with_the_same_two_words(
+        scratch,
+    ):
+        """An advisory lock made of two whole numbers (`pg_advisory_lock(int, int)`) whose halves equal the two halves of
+        the migration lock's number has the same `classid` and `objid` in `pg_locks`; only `objsubid` tells them apart
+        (1 for one 64-bit number, 2 for two). Without it, an older session with the look-alike lock was named as the holder.
+        Killed by: mutant LW7 (`objsubid` is not compared)."""
+        dsn, _schema = scratch
+        high = mig.MIGRATE_LOCK >> 32
+        low = mig.MIGRATE_LOCK & 0xFFFFFFFF
+        low = low - (1 << 32) if low >= (1 << 31) else low
+        decoy_name = "hadavin_test_decoy_" + uuid.uuid4().hex[:6]
+        real_name = "hadavin_test_real_" + uuid.uuid4().hex[:6]
+        with (
+            psycopg.connect(make_conninfo(DSN, application_name=decoy_name), autocommit=True) as decoy,
+            psycopg.connect(make_conninfo(DSN, application_name=real_name), autocommit=True) as real,
+        ):
+            decoy.execute("SELECT pg_advisory_lock(%s::int, %s::int)", (high, low))
+            real.execute("SELECT pg_advisory_lock(%s)", (mig.MIGRATE_LOCK,))
+            with pytest.raises(ConfigError, match="waited 1 seconds") as e:
+                mig.migrate(dsn, lock_wait_seconds=1)
+>       assert real_name in str(e.value) and decoy_name not in str(e.value), str(e.value)
+E       AssertionError: migrate waited 1 seconds for the migration lock and gave up: the session of postgres (process 14435, application hadavin_test_decoy_9ef282, state None, connected since None) holds it. Nothing was changed. Wait until that run ends and run migrate again; if it is stuck, a database administrator ends that session (pg_terminate_backend with the process number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.
+E       assert ('hadavin_test_real_197af0' in 'migrate waited 1 seconds for the migration lock and gave up: the session of postgres (process 14435, application hada... the process number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.')
+E        +  where 'migrate waited 1 seconds for the migration lock and gave up: the session of postgres (process 14435, application hada... the process number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.' = str(ConfigError('migrate waited 1 seconds for the migration lock and gave up: the session of postgres (process 14435, appl...the process number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.'))
+E        +    where ConfigError('migrate waited 1 seconds for the migration lock and gave up: the session of postgres (process 14435, appl...the process number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.') = <ExceptionInfo ConfigError('migrate waited 1 seconds for the migration lock and gave up: the session of postgres (proc...ss number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.') tblen=3>.value
+
+tests/test_migration_postgres.py:3317: AssertionError
+______________ test_migrate_takes_the_one_advisory_lock_key_first ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9ae7e87d20>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_migrate_takes_the_one_adv0')
+
+    def test_migrate_takes_the_one_advisory_lock_key_first(monkeypatch, tmp_path):
+        """The lock `migrate` takes is the key of `migration_numbers` (the key a hand recipe takes too), before anything else."""
+        err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+        assert err is None
+>       assert db.params[0][0] == (
+            f"SET LOCAL lock_timeout = '{mn.MIGRATE_LOCK_WAIT_SECONDS * 1000}ms'; SET LOCAL statement_timeout = 0;"
+        )
+E       assert "SET LOCAL lo...= '600000ms';" == 'SET LOCAL lo..._timeout = 0;'
+E         
+E         - SET LOCAL lock_timeout = '600000ms'; SET LOCAL statement_timeout = 0;
+E         + SET LOCAL lock_timeout = '600000ms';
+
+tests/test_migration_wiring.py:350: AssertionError
+____________ test_the_wait_for_the_lock_is_limited_by_the_argument _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9aeeb36c10>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11989/test_the_wait_for_the_lock_is_0')
+
+    def test_the_wait_for_the_lock_is_limited_by_the_argument(monkeypatch, tmp_path):
+        """The number of seconds is the argument's (milliseconds in the setting), before the lock is asked for. Killed by:
+        mutants LW1 (no limit is set) and LW3 (the constant is used, not the argument)."""
+        err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], lock_wait_seconds=7)
+        assert err is None
+>       assert db.params[0][0] == "SET LOCAL lock_timeout = '7000ms'; SET LOCAL statement_timeout = 0;"
+E       assert "SET LOCAL lo...t = '7000ms';" == 'SET LOCAL lo..._timeout = 0;'
+E         
+E         - SET LOCAL lock_timeout = '7000ms'; SET LOCAL statement_timeout = 0;
+E         + SET LOCAL lock_timeout = '7000ms';
+
+tests/test_migration_wiring.py:1629: AssertionError
+___________________ test_cli_migrate_passes_the_portal_role ____________________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-11989/test_cli_migrate_passes_the_po0/config')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9ae7eea200>
+
+    def test_cli_migrate_passes_the_portal_role(cfg_dir, monkeypatch):
+        import yaml
+    
+        path = cfg_dir / "config.yaml"
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        data["backends"]["store"] = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}
+        path.write_text(yaml.safe_dump(data), encoding="utf-8")
+        monkeypatch.setenv("HADAVIN_MIGRATE_DSN", "postgresql://unused")
+        seen = {}
+    
+        def fake(dsn, **kw):
+            seen.update(kw)
+            return []
+    
+        monkeypatch.setattr("hadavin_sdk.store.migrate.migrate", fake)
+        args = ["--config", str(cfg_dir), "migrate", "--runtime-role", "rt", "--portal-role", "pt"]
+        assert cli.main(args) == 0
+        assert (seen["runtime_role"], seen["portal_role"]) == ("rt", "pt")
+        assert "lock_wait_seconds" not in seen, "the default wait is the one of `migrate`"
+        seen.clear()
+>       assert cli.main([*args, "--lock-wait-seconds", "1800"]) == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_k2_migrations.py:153: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../r10-old/src/hadavin_sdk/cli.py:73: in main
+    return _main(argv)
+           ^^^^^^^^^^^
+../r10-old/src/hadavin_sdk/cli.py:131: in _main
+    args = p.parse_args(argv)
+           ^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/argparse.py:1930: in parse_args
+    self.error(msg)
+/usr/local/lib/python3.13/argparse.py:2686: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ArgumentParser(prog='hadavin-sdk', usage=None, description=None, formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'hadavin-sdk: error: unrecognized arguments: --lock-wait-seconds 1800\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/local/lib/python3.13/argparse.py:2673: SystemExit
+----------------------------- Captured stdout call -----------------------------
+applied: nothing (up to date)
+----------------------------- Captured stderr call -----------------------------
+usage: hadavin-sdk [-h] [--config CONFIG]
+                   {gate,limits,tick,migrate,audit,replay,score} ...
+hadavin-sdk: error: unrecognized arguments: --lock-wait-seconds 1800
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON SCHEMA s TO r] _
+
+form = 'GRANT USAGE ON SCHEMA s TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT USAGE ON SCHEMA s TO r
+E       assert []
+E        +  where [] = _reasons('GRANT USAGE ON SCHEMA s TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT CREATE ON SCHEMA s TO PUBLIC] _
+
+form = 'GRANT CREATE ON SCHEMA s TO PUBLIC'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT CREATE ON SCHEMA s TO PUBLIC
+E       assert []
+E        +  where [] = _reasons('GRANT CREATE ON SCHEMA s TO PUBLIC')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[REVOKE ALL ON SCHEMA s FROM r] _
+
+form = 'REVOKE ALL ON SCHEMA s FROM r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: REVOKE ALL ON SCHEMA s FROM r
+E       assert []
+E        +  where [] = _reasons('REVOKE ALL ON SCHEMA s FROM r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s TO r] _
+
+form = 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s TO r
+E       assert []
+E        +  where [] = _reasons('GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r] _
+
+form = 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r
+E       assert []
+E        +  where [] = _reasons('GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT CREATE ON DATABASE d TO r] _
+
+form = 'GRANT CREATE ON DATABASE d TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT CREATE ON DATABASE d TO r
+E       assert []
+E        +  where [] = _reasons('GRANT CREATE ON DATABASE d TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON TYPE ty TO r] _
+
+form = 'GRANT USAGE ON TYPE ty TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT USAGE ON TYPE ty TO r
+E       assert []
+E        +  where [] = _reasons('GRANT USAGE ON TYPE ty TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON DOMAIN dm TO r] _
+
+form = 'GRANT USAGE ON DOMAIN dm TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT USAGE ON DOMAIN dm TO r
+E       assert []
+E        +  where [] = _reasons('GRANT USAGE ON DOMAIN dm TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON LANGUAGE plpgsql TO r] _
+
+form = 'GRANT USAGE ON LANGUAGE plpgsql TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT USAGE ON LANGUAGE plpgsql TO r
+E       assert []
+E        +  where [] = _reasons('GRANT USAGE ON LANGUAGE plpgsql TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT SELECT ON LARGE OBJECT 1 TO r] _
+
+form = 'GRANT SELECT ON LARGE OBJECT 1 TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT SELECT ON LARGE OBJECT 1 TO r
+E       assert []
+E        +  where [] = _reasons('GRANT SELECT ON LARGE OBJECT 1 TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON FOREIGN SERVER fs TO r] _
+
+form = 'GRANT USAGE ON FOREIGN SERVER fs TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT USAGE ON FOREIGN SERVER fs TO r
+E       assert []
+E        +  where [] = _reasons('GRANT USAGE ON FOREIGN SERVER fs TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT CREATE ON TABLESPACE ts TO r] _
+
+form = 'GRANT CREATE ON TABLESPACE ts TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT CREATE ON TABLESPACE ts TO r
+E       assert []
+E        +  where [] = _reasons('GRANT CREATE ON TABLESPACE ts TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT SET ON PARAMETER work_mem TO r] _
+
+form = 'GRANT SET ON PARAMETER work_mem TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT SET ON PARAMETER work_mem TO r
+E       assert []
+E        +  where [] = _reasons('GRANT SET ON PARAMETER work_mem TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT EXECUTE ON PROCEDURE p() TO r] _
+
+form = 'GRANT EXECUTE ON PROCEDURE p() TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT EXECUTE ON PROCEDURE p() TO r
+E       assert []
+E        +  where [] = _reasons('GRANT EXECUTE ON PROCEDURE p() TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT SELECT ON t TO r; GRANT USAGE ON SCHEMA s TO r] _
+
+form = 'GRANT SELECT ON t TO r; GRANT USAGE ON SCHEMA s TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT SELECT ON t TO r; GRANT USAGE ON SCHEMA s TO r
+E       assert []
+E        +  where [] = _reasons('GRANT SELECT ON t TO r; GRANT USAGE ON SCHEMA s TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[/* on */ GRANT USAGE -- on\n ON SCHEMA s TO r] _
+
+form = '/* on */ GRANT USAGE -- on\n ON SCHEMA s TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: /* on */ GRANT USAGE -- on
+E          ON SCHEMA s TO r
+E       assert []
+E        +  where [] = _reasons('/* on */ GRANT USAGE -- on\n ON SCHEMA s TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON\nSCHEMA s TO r] _
+
+form = 'GRANT USAGE ON\nSCHEMA s TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT USAGE ON
+E         SCHEMA s TO r
+E       assert []
+E        +  where [] = _reasons('GRANT USAGE ON\nSCHEMA s TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON SCHEMA "s" TO "on schema"] _
+
+form = 'GRANT USAGE ON SCHEMA "s" TO "on schema"'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: GRANT USAGE ON SCHEMA "s" TO "on schema"
+E       assert []
+E        +  where [] = _reasons('GRANT USAGE ON SCHEMA "s" TO "on schema"')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[ALTER DEFAULT PRIVILEGES IN SCHEMA s GRANT SELECT ON TABLES TO r] _
+
+form = 'ALTER DEFAULT PRIVILEGES IN SCHEMA s GRANT SELECT ON TABLES TO r'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: ALTER DEFAULT PRIVILEGES IN SCHEMA s GRANT SELECT ON TABLES TO r
+E       assert []
+E        +  where [] = _reasons('ALTER DEFAULT PRIVILEGES IN SCHEMA s GRANT SELECT ON TABLES TO r')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[ALTER DEFAULT PRIVILEGES GRANT SELECT ON TABLES TO PUBLIC] _
+
+form = 'ALTER DEFAULT PRIVILEGES GRANT SELECT ON TABLES TO PUBLIC'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: ALTER DEFAULT PRIVILEGES GRANT SELECT ON TABLES TO PUBLIC
+E       assert []
+E        +  where [] = _reasons('ALTER DEFAULT PRIVILEGES GRANT SELECT ON TABLES TO PUBLIC')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[alter   default\tprivileges FOR ROLE m REVOKE ALL ON FUNCTIONS FROM PUBLIC] _
+
+form = 'alter   default\tprivileges FOR ROLE m REVOKE ALL ON FUNCTIONS FROM PUBLIC'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: alter   default	privileges FOR ROLE m REVOKE ALL ON FUNCTIONS FROM PUBLIC
+E       assert []
+E        +  where [] = _reasons('alter   default\tprivileges FOR ROLE m REVOKE ALL ON FUNCTIONS FROM PUBLIC')
+
+tests/test_migration_rules.py:410: AssertionError
+_ test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[ALTER PUBLICATION p ADD TABLE audit_entries] _
+
+form = 'ALTER PUBLICATION p ADD TABLE audit_entries'
+
+    @pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+    def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+        """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+        and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+        type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+        comments, line breaks, case or quotes around it."""
+>       assert _reasons(form), form
+E       AssertionError: ALTER PUBLICATION p ADD TABLE audit_entries
+E       assert []
+E        +  where [] = _reasons('ALTER PUBLICATION p ADD TABLE audit_entries')
+
+tests/test_migration_rules.py:410: AssertionError
+__________ test_the_refusal_of_a_right_elsewhere_holds_under_noise[-] __________
+
+before = '', after = ''
+
+    @pytest.mark.parametrize("before,after", NOISE)
+    def test_the_refusal_of_a_right_elsewhere_holds_under_noise(before, after):
+        missed = [f for f in REFUSED_TARGET_FORMS + DEFAULT_FORMS if not _reasons(before + f + after)]
+>       assert not missed, missed[:5]
+E       AssertionError: ['GRANT USAGE ON SCHEMA s TO r', 'GRANT CREATE ON SCHEMA s TO PUBLIC', 'REVOKE ALL ON SCHEMA s FROM r', 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s TO r', 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r']
+E       assert not ['GRANT USAGE ON SCHEMA s TO r', 'GRANT CREATE ON SCHEMA s TO PUBLIC', 'REVOKE ALL ON SCHEMA s FROM r', 'GRANT ALL PRI...LL TABLES IN SCHEMA s TO r', 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r', 'GRANT CREATE ON DATABASE d TO r', ...]
+
+tests/test_migration_rules.py:416: AssertionError
+______ test_the_refusal_of_a_right_elsewhere_holds_under_noise[-- on\n-] _______
+
+before = '-- on\n', after = ''
+
+    @pytest.mark.parametrize("before,after", NOISE)
+    def test_the_refusal_of_a_right_elsewhere_holds_under_noise(before, after):
+        missed = [f for f in REFUSED_TARGET_FORMS + DEFAULT_FORMS if not _reasons(before + f + after)]
+>       assert not missed, missed[:5]
+E       AssertionError: ['GRANT USAGE ON SCHEMA s TO r', 'GRANT CREATE ON SCHEMA s TO PUBLIC', 'REVOKE ALL ON SCHEMA s FROM r', 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s TO r', 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r']
+E       assert not ['GRANT USAGE ON SCHEMA s TO r', 'GRANT CREATE ON SCHEMA s TO PUBLIC', 'REVOKE ALL ON SCHEMA s FROM r', 'GRANT ALL PRI...LL TABLES IN SCHEMA s TO r', 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r', 'GRANT CREATE ON DATABASE d TO r', ...]
+
+tests/test_migration_rules.py:416: AssertionError
+_____ test_the_refusal_of_a_right_elsewhere_holds_under_noise[/* on */ -] ______
+
+before = '/* on */ ', after = ''
+
+    @pytest.mark.parametrize("before,after", NOISE)
+    def test_the_refusal_of_a_right_elsewhere_holds_under_noise(before, after):
+        missed = [f for f in REFUSED_TARGET_FORMS + DEFAULT_FORMS if not _reasons(before + f + after)]
+>       assert not missed, missed[:5]
+E       AssertionError: ['GRANT USAGE ON SCHEMA s TO r', 'GRANT CREATE ON SCHEMA s TO PUBLIC', 'REVOKE ALL ON SCHEMA s FROM r', 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s TO r', 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r']
+E       assert not ['GRANT USAGE ON SCHEMA s TO r', 'GRANT CREATE ON SCHEMA s TO PUBLIC', 'REVOKE ALL ON SCHEMA s FROM r', 'GRANT ALL PRI...LL TABLES IN SCHEMA s TO r', 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r', 'GRANT CREATE ON DATABASE d TO r', ...]
+
+tests/test_migration_rules.py:416: AssertionError
+_______ test_the_refusal_of_a_right_elsewhere_holds_under_noise[- -- on] _______
+
+before = '', after = ' -- on'
+
+    @pytest.mark.parametrize("before,after", NOISE)
+    def test_the_refusal_of_a_right_elsewhere_holds_under_noise(before, after):
+        missed = [f for f in REFUSED_TARGET_FORMS + DEFAULT_FORMS if not _reasons(before + f + after)]
+>       assert not missed, missed[:5]
+E       AssertionError: ['GRANT USAGE ON SCHEMA s TO r', 'GRANT CREATE ON SCHEMA s TO PUBLIC', 'REVOKE ALL ON SCHEMA s FROM r', 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s TO r', 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r']
+E       assert not ['GRANT USAGE ON SCHEMA s TO r', 'GRANT CREATE ON SCHEMA s TO PUBLIC', 'REVOKE ALL ON SCHEMA s FROM r', 'GRANT ALL PRI...LL TABLES IN SCHEMA s TO r', 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r', 'GRANT CREATE ON DATABASE d TO r', ...]
+
+tests/test_migration_rules.py:416: AssertionError
+_____ test_the_refusal_of_a_right_elsewhere_holds_under_noise[- /* on */] ______
+
+before = '', after = ' /* on */'
+
+    @pytest.mark.parametrize("before,after", NOISE)
+    def test_the_refusal_of_a_right_elsewhere_holds_under_noise(before, after):
+        missed = [f for f in REFUSED_TARGET_FORMS + DEFAULT_FORMS if not _reasons(before + f + after)]
+>       assert not missed, missed[:5]
+E       AssertionError: ['GRANT USAGE ON SCHEMA s TO r', 'GRANT CREATE ON SCHEMA s TO PUBLIC', 'REVOKE ALL ON SCHEMA s FROM r', 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s TO r', 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r']
+E       assert not ['GRANT USAGE ON SCHEMA s TO r', 'GRANT CREATE ON SCHEMA s TO PUBLIC', 'REVOKE ALL ON SCHEMA s FROM r', 'GRANT ALL PRI...LL TABLES IN SCHEMA s TO r', 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r', 'GRANT CREATE ON DATABASE d TO r', ...]
+
+tests/test_migration_rules.py:416: AssertionError
+_ test_the_refusal_of_a_right_elsewhere_holds_under_noise[/* on */ - -- on\n] __
+
+before = '/* on */ ', after = ' -- on\n'
+
+    @pytest.mark.parametrize("before,after", NOISE)
+    def test_the_refusal_of_a_right_elsewhere_holds_under_noise(before, after):
+        missed = [f for f in REFUSED_TARGET_FORMS + DEFAULT_FORMS if not _reasons(before + f + after)]
+>       assert not missed, missed[:5]
+E       AssertionError: ['GRANT USAGE ON SCHEMA s TO r', 'GRANT CREATE ON SCHEMA s TO PUBLIC', 'REVOKE ALL ON SCHEMA s FROM r', 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s TO r', 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r']
+E       assert not ['GRANT USAGE ON SCHEMA s TO r', 'GRANT CREATE ON SCHEMA s TO PUBLIC', 'REVOKE ALL ON SCHEMA s FROM r', 'GRANT ALL PRI...LL TABLES IN SCHEMA s TO r', 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r', 'GRANT CREATE ON DATABASE d TO r', ...]
+
+tests/test_migration_rules.py:416: AssertionError
+_____ test_no_source_or_test_file_writes_the_timeout_values_a_second_time ______
+
+    def test_no_source_or_test_file_writes_the_timeout_values_a_second_time():
+        """the values of the constant (read from it) appear as a quoted literal nowhere else in the
+        store code or the migration tests."""
+        values = [v for line in mn.RECIPE_TIMEOUTS for v in re.findall(r"= '([^']*)'", line)]
+        assert values and all(values)
+        root = Path(__file__).resolve().parent
+        files = [
+            *sorted((root.parent / "src" / "hadavin_sdk" / "store").glob("*.py")),
+            *sorted(root.glob("test_migration*.py")),
+            *sorted((root / "fixtures").glob("*.py")),
+        ]
+>       assert Path(mn.__file__) in files
+E       AssertionError: assert PosixPath('/home/user/build/r10-old/src/hadavin_sdk/store/migration_numbers.py') in [PosixPath('/home/user/build/B-P73r2/src/hadavin_sdk/store/__init__.py'), PosixPath('/home/user/build/B-P73r2/src/hada...hadavin_sdk/store/migration_numbers.py'), PosixPath('/home/user/build/B-P73r2/src/hadavin_sdk/store/postgres.py'), ...]
+E        +  where PosixPath('/home/user/build/r10-old/src/hadavin_sdk/store/migration_numbers.py') = Path('/home/user/build/r10-old/src/hadavin_sdk/store/migration_numbers.py')
+E        +    where '/home/user/build/r10-old/src/hadavin_sdk/store/migration_numbers.py' = mn.__file__
+
+tests/test_migration_rules.py:684: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT ON audit_entries TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT ON audit_entries TO PUBLIC;]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT (seq) ON audit_entries TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT ON audit_entries TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT ON audit_entries TO PUBLIC;]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT (seq) ON audit_entries TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;]
+FAILED tests/test_migration_postgres.py::test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new
+FAILED tests/test_migration_postgres.py::test_a_security_definer_function_written_with_another_schema_is_refused
+FAILED tests/test_migration_postgres.py::test_a_plain_function_in_another_schema_loses_the_default_right_for_everyone
+FAILED tests/test_migration_postgres.py::test_a_function_replaced_with_the_same_id_and_made_security_definer_is_found
+FAILED tests/test_migration_postgres.py::test_a_table_made_by_dynamic_sql_and_opened_to_everyone_is_refused
+FAILED tests/test_migration_postgres.py::test_a_default_right_that_an_administrator_set_is_refused_and_the_message_says_so[schema]
+FAILED tests/test_migration_postgres.py::test_a_default_right_that_an_administrator_set_is_refused_and_the_message_says_so[database]
+FAILED tests/test_migration_postgres.py::test_a_file_that_sets_default_rights_or_changes_a_publication_is_refused_by_text
+FAILED tests/test_migration_postgres.py::test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_look_is_not[CREATE]
+FAILED tests/test_migration_postgres.py::test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_look_is_not[USAGE]
+FAILED tests/test_migration_postgres.py::test_an_owner_a_file_handed_an_object_to_is_refused_even_when_the_migration_role_belongs_to_it
+FAILED tests/test_migration_postgres.py::test_a_right_that_an_earlier_run_gave_is_named_as_such_in_the_refusal
+FAILED tests/test_migration_postgres.py::test_a_named_role_may_not_pass_a_function_right_on
+FAILED tests/test_migration_postgres.py::test_the_lock_wait_has_an_upper_bound_that_the_server_accepts
+FAILED tests/test_migration_postgres.py::test_a_lock_holder_that_this_login_cannot_look_into_is_named_in_plain_words
+FAILED tests/test_migration_postgres.py::test_a_null_column_of_the_activity_view_is_worded_for_a_reader
+FAILED tests/test_migration_postgres.py::test_a_statement_limit_saved_for_the_migration_role_does_not_end_the_lock_wait
+FAILED tests/test_migration_postgres.py::test_the_holder_named_is_the_one_that_holds_the_real_lock_not_one_with_the_same_two_words
+FAILED tests/test_migration_wiring.py::test_migrate_takes_the_one_advisory_lock_key_first
+FAILED tests/test_migration_wiring.py::test_the_wait_for_the_lock_is_limited_by_the_argument
+FAILED tests/test_k2_migrations.py::test_cli_migrate_passes_the_portal_role
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON SCHEMA s TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT CREATE ON SCHEMA s TO PUBLIC]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[REVOKE ALL ON SCHEMA s FROM r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT CREATE ON DATABASE d TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON TYPE ty TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON DOMAIN dm TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON LANGUAGE plpgsql TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT SELECT ON LARGE OBJECT 1 TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON FOREIGN SERVER fs TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT CREATE ON TABLESPACE ts TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT SET ON PARAMETER work_mem TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT EXECUTE ON PROCEDURE p() TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT SELECT ON t TO r; GRANT USAGE ON SCHEMA s TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[/* on */ GRANT USAGE -- on\n ON SCHEMA s TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON\nSCHEMA s TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[GRANT USAGE ON SCHEMA "s" TO "on schema"]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[ALTER DEFAULT PRIVILEGES IN SCHEMA s GRANT SELECT ON TABLES TO r]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[ALTER DEFAULT PRIVILEGES GRANT SELECT ON TABLES TO PUBLIC]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[alter   default\tprivileges FOR ROLE m REVOKE ALL ON FUNCTIONS FROM PUBLIC]
+FAILED tests/test_migration_rules.py::test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused[ALTER PUBLICATION p ADD TABLE audit_entries]
+FAILED tests/test_migration_rules.py::test_the_refusal_of_a_right_elsewhere_holds_under_noise[-]
+FAILED tests/test_migration_rules.py::test_the_refusal_of_a_right_elsewhere_holds_under_noise[-- on\n-]
+FAILED tests/test_migration_rules.py::test_the_refusal_of_a_right_elsewhere_holds_under_noise[/* on */ -]
+FAILED tests/test_migration_rules.py::test_the_refusal_of_a_right_elsewhere_holds_under_noise[- -- on]
+FAILED tests/test_migration_rules.py::test_the_refusal_of_a_right_elsewhere_holds_under_noise[- /* on */]
+FAILED tests/test_migration_rules.py::test_the_refusal_of_a_right_elsewhere_holds_under_noise[/* on */ - -- on\n]
+FAILED tests/test_migration_rules.py::test_no_source_or_test_file_writes_the_timeout_values_a_second_time
+62 failed, 663 passed in 45.29s
+exit=1

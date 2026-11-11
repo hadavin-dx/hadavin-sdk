@@ -1,0 +1,6 @@
+PR73 round 10, head ac94d18 (code commits cdf1c17, ac94d18 on d41a0c0). Raw logs in this folder.
+full13.log/final13.log: 10896 passed, 1 skipped (3.13). final12.log: 10896 passed, 1 skipped (3.12).
+mutfinal.log: 220 of 220 killed. failbefore3.log: 62 failed, 663 passed on d41a0c0 source (one failure is an artifact of the PYTHONPATH method).
+bandit.log rc=0 at cdf1c17. ruff check/format passed at ac94d18.
+Not done: part of wording pass (header step 4, closure, scratch schema, hold). EGM steps are the lead's.
+Open lead decision: REPLICATION flag unchanged.
