@@ -6,3 +6,4 @@ start 15:30:15  15:30:15 up  2:02,  0 user,  load average: 4.92, 10.04, 11.22
 (ii) 131,072 characters of Devanagari text | input 131072 chars | run 1 | wall 3.503 s | thread CPU 3.279 s | load 4.94 9.71 11.08 | returned 131072 characters, 0 mapping entries
 (ii) 131,072 characters of Devanagari text | input 131072 chars | run 2 | wall 3.145 s | thread CPU 3.107 s | load 5.11 9.67 11.06 | returned 131072 characters, 0 mapping entries
 (ii) 131,072 characters of Devanagari text | input 131072 chars | run 3 | wall 3.292 s | thread CPU 3.200 s | load 5.02 9.57 11.02 | returned 131072 characters, 0 mapping entries
+(iii) 65,536 characters; every line holds a tab, U+200B, ESC[0m, a vowel sign and a backtick | input 65536 chars | run 1 | wall 2.553 s | thread CPU 2.430 s | load 5.02 9.57 11.02 | returned 60076 characters, 0 mapping entries
