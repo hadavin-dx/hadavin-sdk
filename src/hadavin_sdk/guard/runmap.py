@@ -22,7 +22,7 @@ from typing import Any
 from urllib.parse import unquote
 
 from hadavin_sdk import defaults
-from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, redact
+from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, mask_spans, redact
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
 # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
@@ -452,13 +452,21 @@ def _decoded_masks(current: dict[str, str], text: str) -> list[tuple[str, str]]:
     return out
 
 
-def _keep_earlier_masks(view: str, pairs: list[tuple[str, str]]) -> str:
+def _keep_earlier_masks(view: str, pairs: list[tuple[str, str]], mapping: dict[str, str]) -> str:
     """Before a decoded VIEW is redacted, the decoded spelling of every value pass one masked is replaced by its
-    placeholder: if the view then replaces the text, the part of the value its pattern would not reach is not shown."""
+    placeholder: if the view then replaces the text, the part of the value its pattern would not reach is not shown.
+    Every copy of every spelling is a span on the view as it stands and one rule puts the placeholders in
+    (`redact.mask_spans`): values that overlap partially come back as ONE new placeholder for the merged text, issued
+    into `mapping` (the map the view is then redacted with), so no piece of either value stays readable."""
+    spans: list[tuple[int, int, str]] = []
     for ph, decoded in pairs:
-        if decoded in view:
-            view = view.replace(decoded, ph)
-    return view
+        if not decoded:
+            continue
+        at = view.find(decoded)
+        while at >= 0:
+            spans.append((at, at + len(decoded), ph))
+            at = view.find(decoded, at + 1)
+    return mask_spans(view, spans, mapping) if spans else view
 
 
 def redact_text(
@@ -511,8 +519,10 @@ def redact_text(
                 raise InputTooLarge("InputTooLarge")
             if neutralise is not None:
                 view = fits_after_nfkc(neutralise(view))
-            view = _keep_earlier_masks(view, pairs)
-            again = redact(view, mapping=current, _cache=cache)
+            # a merged placeholder (W0) is issued into this copy, not into the finished map
+            work = dict(current)
+            view = _keep_earlier_masks(view, pairs, work)
+            again = redact(view, mapping=work, _cache=cache)
             # a new value, or a known one only the view spells in a way pass one could not read
             if again.mapping != current or _held(again.text) > _held(out):
                 out, current = again.text, again.mapping

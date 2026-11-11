@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import re
 import string
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -1039,14 +1040,14 @@ class _Redactor:
                 present |= found.union(*(prefixes.get(w, ()) for w in found))
             todo = sorted((self._rules[o] for o in present if o in self._rules), key=lambda r: r[0])
             todo = [(self._ordered[n][1], ph, rule) for n, ph, rule in todo]
+            # Every copy of every value is a span on the segment AS IT STANDS; one pass then puts the placeholders
+            # in (`mask_spans`). Replacing one value after another let the first replacement cut the second value and
+            # left a piece of it readable when two values overlapped (PR H, W0).
+            spans: list[tuple[int, int, str]] = []
             for original, placeholder, rule in todo:
-                if original not in segment:
-                    continue
-                if rule is _EVERY_COPY:
-                    segment = segment.replace(original, placeholder)
-                else:
-                    segment = _replace_standalone(segment, original, placeholder)
-            parts[i] = segment
+                spans.extend(_occurrences(segment, original, placeholder, rule is _EVERY_COPY))
+            if spans:
+                parts[i] = mask_spans(segment, spans, self.mapping, _redactor=self)
         return "".join(parts)
 
 
@@ -1222,24 +1223,83 @@ def _sweep(placeholder: str, original: str):
 _ALNUM = frozenset(string.ascii_letters + string.digits)
 
 
-def _replace_standalone(segment: str, original: str, placeholder: str) -> str:
-    """Replace `original` where no ASCII letter or digit touches it. A plain scan: a compiled pattern (or an
-    lru_cache of one) keyed by the identifier would keep one client's values in process memory, shared with every
-    other client (R371), and `re` caches compiled patterns itself."""
-    out: list[str] = []
-    i, n = 0, len(original)
-    while n:
-        j = segment.find(original, i)
-        if j < 0:
-            break
-        before, after = segment[j - 1 : j], segment[j + n : j + n + 1]
-        if before in _ALNUM or after in _ALNUM:
-            out.append(segment[i : j + 1])
-            i = j + 1
+def _occurrences(
+    segment: str, original: str, placeholder: str, every_copy: bool
+) -> list[tuple[int, int, str]]:
+    """Every span of `segment` that holds `original` (overlapping copies included): anywhere for a secret, only where
+    no ASCII letter or digit touches it for an identifier. Judged on `segment` as it stands. A plain scan: a compiled
+    pattern (or an lru_cache of one) keyed by the identifier would keep one client's values in process memory, shared
+    with every other client (R371), and `re` caches compiled patterns itself."""
+    out: list[tuple[int, int, str]] = []
+    n = len(original)
+    if not n:
+        return out
+    j = segment.find(original)
+    while j >= 0:
+        if every_copy or not (segment[j - 1 : j] in _ALNUM or segment[j + n : j + n + 1] in _ALNUM):
+            out.append((j, j + n, placeholder))
+        j = segment.find(original, j + 1)
+    return out
+
+
+def mask_spans(
+    text: str,
+    spans: Iterable[tuple[int, int, str]],
+    mapping: dict[str, str],
+    *,
+    _redactor: _Redactor | None = None,
+) -> str:
+    """One rule for every place that puts known values back as placeholders (the redactor's sweep, the decoded views of
+    `runmap`, the gap patterns of the stripped reading): `spans` are `(start, end, placeholder)` found on `text` as it
+    stands, in priority order (the earlier one wins a tie).
+
+    1. A span that lies inside another kept span is dropped (a nested value: the longer one wins).
+    2. A chain of spans that partially overlap (each starts before the previous ends) is ONE merged span.
+    3. A merged span of one span gets that span's placeholder; of two or more, ONE placeholder issued for the merged text
+       through the redactor's own numbering (kind of the longest member, the leftmost on a tie), or the placeholder the
+       map already holds for that exact text, so `restore` gives back exactly the text that was there. Issued entries are
+       written into `mapping`.
+
+    Class fixed: values replaced one after another, so the first replacement broke the second value and a piece of it
+    stayed readable (partial overlap, equal length, mixed spelling domains)."""
+    ordered = sorted(enumerate(spans), key=lambda t: (t[1][0], -t[1][1], t[0]))
+    groups: list[list[tuple[int, int, str]]] = []
+    reach = -1
+    for _, span in ordered:
+        start, end, _ph = span
+        if groups and start < reach:
+            if end > reach:  # not inside the furthest-reaching kept span: it extends the chain
+                groups[-1].append(span)
+                reach = end
             continue
-        out += [segment[i:j], placeholder]
-        i = j + n
-    out.append(segment[i:])
+        groups.append([span])
+        reach = end
+    if not groups:
+        return text
+    out: list[str] = []
+    pos = 0
+    redactor = _redactor
+    for members in groups:
+        start, end = members[0][0], max(m[1] for m in members)
+        out.append(text[pos:start])
+        if len(members) == 1:
+            out.append(members[0][2])
+        else:
+            merged = text[start:end]
+            if redactor is None:
+                redactor = _Redactor(mapping)
+            held = redactor.reverse.get(merged)
+            if held is None:
+                longest = max(members, key=lambda m: (m[1] - m[0], -m[0]))
+                label = _kind(longest[2])
+                if label not in redactor.counters:
+                    label = "SECRET"
+                held = redactor._place(label, merged, merged)
+            out.append(held)
+        pos = end
+    out.append(text[pos:])
+    if redactor is not None and redactor.mapping is not mapping:
+        mapping.update(redactor.mapping)
     return "".join(out)
 
 
