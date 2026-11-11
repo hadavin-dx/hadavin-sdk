@@ -1088,3 +1088,9 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a5e99379c12314596 | PR89 evidence runner on 9ed5217, output /home/user/build/EVOUT-P89-9ed5217 (outside repo) | 01:40Z 2026-11-11 | +75 min | running |
 | af26dd74903bfa896 | PR89 design reviewer round 10 on 9ed5217 snapshot | 01:40Z 2026-11-11 | +30 min | running |
 | a171fd751a7582652 | PR89 codebase reviewer round 10 on 9ed5217 snapshot | 01:40Z 2026-11-11 | +30 min | running |
+| aea5c3b20851d826d | PR73 builder round 9 | 2026-11-11 | - | CLOSED: d41a0c0 pushed (code head ce3ade7; 198/198 mutants, suites 3.12/3.13 10839 passed, scram 1868 passed; REPLICATION etc. left open for the lead) |
+| ac49d88ccb5b948e2 | PR73 evidence runner on d41a0c0, output /home/user/build/EVOUT-P73-d41a0c0 (outside repo) | 01:50Z 2026-11-11 | +75 min | running |
+| a4f039af3760a1ac3 | PR73 design/least-privilege reviewer round 9 on d41a0c0 snapshot | 01:50Z 2026-11-11 | +30 min | running |
+| a9e1d9f186d7a0a92 | PR73 codebase reviewer round 9 on d41a0c0 snapshot | 01:50Z 2026-11-11 | +30 min | running |
+| af26dd74903bfa896 | PR89 design reviewer round 10 | 2026-11-11 | - | CLOSED: 0 Blocker, 1 Major saved |
+| a5e99379c12314596 | PR89 evidence runner on 9ed5217 | 2026-11-11 | - | STOPPED (Major found, head will change); driver, cluster killed, output deleted |
