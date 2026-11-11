@@ -1176,7 +1176,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-Q8a2 a795f178 | EVIDENCE RUNNER (Fable) dry run of guard pattern on main | 13:51Z | +20m | 13:51Z | CLOSED evidence/Q8a-2/dryrun-2026-11-11.md | write ticket Q8a-2 from the hit list |
 | A-Q8b a123e38f | ticket author (Fable) Q8b partial-mask + card redaction (F5, F6) | 13:51Z | +25m | 13:51Z | CLOSED ticket draft tickets/Q8b | plan review, then builder |
 | A-Q8c a2a53d4b | ticket author (Fable) Q8c policy per kind (F3) | 13:51Z | +30m | 13:51Z | CLOSED ticket draft tickets/Q8c (209 permission names UNVERIFIED) | plan review |
-| B-Q8a1 a0c5bd99 | ONE builder (Fable) ticket Q8a-1, branch core/q8a-1-live-override-refusals, pg 56050 | 13:54Z | +90m | 13:54Z | running | checkpoint 30m; then evidence runner + egm reviewers |
+| B-Q8a1 a0c5bd99 | ONE builder (Fable) ticket Q8a-1, branch core/q8a-1-live-override-refusals, pg 56050 | 13:54Z | +90m | 13:54Z | CLOSED head 464dee14 pushed (lead checked: 1 commit, 10 files, gitleaks no leaks) | checkpoint 30m; then evidence runner + egm reviewers |
 | A-Q8a2 a2718ca8 | ticket author (Fable) Q8a-2 neutral callback + guard | 13:54Z | +25m | 13:54Z | CLOSED ticket draft tickets/Q8a-2 | plan review |
 | EV-P3a2 a9c85255 | EVIDENCE RUNNER (Fable) core/P3a-2-rewritten 8382bdd: full suite, fail-before on HEAD~4, mutants, probes; pg 56060 | 14:00Z | +60m | 14:00Z | running | read RESULTS.md; then ONE fix builder for round 11 findings |
 | R-Q8c-plan aac974fb, ae5f9e8d | egm zoom-out + design (Fable) plan review r1 of tickets/Q8c | 14:00Z | +20m | 14:00Z | CLOSED both saved reviews/Q8c/ | resolve; live check of permission names before any build |
@@ -1187,3 +1187,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-Q8a2 a0472549 | ONE builder (Fable) ticket Q8a-2, branch core/q8a-2-neutral-callback-and-guard, pg 56080 | 14:11Z | +90m | 14:11Z | running | checkpoint 30m; then evidence + egm reviewers |
 | R-Q8b-plan ace02d78, a517cf42 | egm design + impl-readiness (Fable) plan review r1 tickets/Q8b | 14:13Z | +20m | 14:13Z | running | resolve, builder after PR77 scope settles |
 | R-Q8c-r2 ac13fdc7 | egm impl-readiness (Fable) plan review r2 of tickets/Q8c rev 2 | 14:18Z | +20m | | running | errata; build only after live verification |
+| EV-Q8a1 a6f9eb55 | EVIDENCE RUNNER (Fable) Q8a-1 head 464dee14: full suite, fail-before, mutants, hostile probes; pg 56090 | 14:20Z | +45m | 14:20Z | running | read RESULTS.md |
+| R-Q8a1-res a2a30519, a06b79ad | egm design + codebase (Fable) RESULT review r1 of Q8a-1 (snapshot q8a1-464dee1) | 14:20Z | +20m | 14:20Z | running | save reviews/Q8a/, ledger, fix batch if needed |
