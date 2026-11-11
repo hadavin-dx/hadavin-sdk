@@ -1,0 +1,1023 @@
+2026-11-11 02:45:38.548 UTC [31193] LOG:  starting PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+2026-11-11 02:45:38.549 UTC [31193] LOG:  listening on IPv4 address "127.0.0.1", port 55773
+2026-11-11 02:45:38.549 UTC [31193] LOG:  listening on Unix socket "/tmp/ev73ac94/.s.PGSQL.55773"
+2026-11-11 02:45:38.550 UTC [31196] LOG:  database system was shut down at 2026-11-11 02:45:38 UTC
+2026-11-11 02:45:38.554 UTC [31193] LOG:  database system is ready to accept connections
+2026-11-11 02:46:14.509 UTC [32102] ERROR:  duplicate key value violates unique constraint "approval_decisions_one_per_step"
+2026-11-11 02:46:14.509 UTC [32102] DETAIL:  Key (approval_id, step)=(apr-x, 1) already exists.
+2026-11-11 02:46:14.509 UTC [32102] STATEMENT:  INSERT INTO "approval_decisions" ("schema_version", "approval_id", "plan_hash", "step", "decision", "approver_id", "channel", "reason", "decided_at") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+2026-11-11 02:46:14.720 UTC [32111] ERROR:  duplicate key value violates unique constraint "gate_decisions_pkey"
+2026-11-11 02:46:14.720 UTC [32111] DETAIL:  Key (run_id)=(run-g) already exists.
+2026-11-11 02:46:14.720 UTC [32111] STATEMENT:  INSERT INTO "gate_decisions" ("schema_version", "run_id", "plan_hash", "outcome", "rule_id", "ts") VALUES ($1, $2, $3, $4, $5, $6)
+2026-11-11 02:46:16.576 UTC [32229] ERROR:  duplicate key value violates unique constraint "approval_decisions_one_per_step"
+2026-11-11 02:46:16.576 UTC [32229] DETAIL:  Key (approval_id, step)=(apr-4b44d5b764cb4362bc58fd0399c0d48a, 0) already exists.
+2026-11-11 02:46:16.576 UTC [32229] STATEMENT:  INSERT INTO approval_decisions ("schema_version", "approval_id", "plan_hash", "step", "decision", "approver_id", "channel", "reason", "decided_at") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+2026-11-11 02:46:16.789 UTC [32238] ERROR:  duplicate key value violates unique constraint "tool_calls_pkey"
+2026-11-11 02:46:16.789 UTC [32238] DETAIL:  Key (call_id)=(run-a:1) already exists.
+2026-11-11 02:46:16.789 UTC [32238] STATEMENT:  INSERT INTO "tool_calls" ("call_id", "run_id", "tool", "inputs", "output", "output_sha256", "created_at", "duration_ms", "attempt", "error") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+2026-11-11 02:46:21.415 UTC [32445] ERROR:  division by zero
+2026-11-11 02:46:21.415 UTC [32445] STATEMENT:  DECLARE "askdata_83c8d3fc3740" CURSOR FOR SELECT 1 / 0 FROM analytics.orders_v
+2026-11-11 02:46:25.157 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:25.180 UTC [31194] LOG:  checkpoint complete: wrote 2702 buffers (16.5%); 0 WAL file(s) added, 0 removed, 2 recycled; write=0.014 s, sync=0.001 s, total=0.023 s; sync files=0, longest=0.000 s, average=0.000 s; distance=28290 kB, estimate=28290 kB; lsn=0/308FE20, redo lsn=0/308FDE8
+2026-11-11 02:46:25.184 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:25.185 UTC [31194] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=1 kB, estimate=25461 kB; lsn=0/3090538, redo lsn=0/3090500
+2026-11-11 02:46:25.995 UTC [32624] ERROR:  syntax error at or near "COMMIT" at character 43
+2026-11-11 02:46:25.995 UTC [32624] STATEMENT:  DECLARE "askdata_0f31c9b80703" CURSOR FOR COMMIT; BEGIN READ WRITE; INSERT INTO scratch.marker VALUES (71); COMMIT
+2026-11-11 02:46:26.003 UTC [32627] ERROR:  cannot insert multiple commands into a prepared statement
+2026-11-11 02:46:26.003 UTC [32627] STATEMENT:  COMMIT; BEGIN READ WRITE; INSERT INTO scratch.marker VALUES (72); COMMIT
+2026-11-11 02:46:26.023 UTC [32632] ERROR:  syntax error at or near "SET" at character 43
+2026-11-11 02:46:26.023 UTC [32632] STATEMENT:  DECLARE "askdata_a3a9fd96a884" CURSOR FOR SET TRANSACTION READ WRITE
+2026-11-11 02:46:26.028 UTC [32634] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:46:26.028 UTC [32634] STATEMENT:  DECLARE "askdata_ebf4b3578e67" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:46:26.037 UTC [32637] ERROR:  syntax error at or near "BEGIN" at character 43
+2026-11-11 02:46:26.037 UTC [32637] STATEMENT:  DECLARE "askdata_21c6a71f510e" CURSOR FOR BEGIN READ WRITE
+2026-11-11 02:46:26.042 UTC [32639] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:46:26.042 UTC [32639] STATEMENT:  DECLARE "askdata_97b9dcd05128" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:46:26.050 UTC [32642] ERROR:  syntax error at or near "SET" at character 43
+2026-11-11 02:46:26.050 UTC [32642] STATEMENT:  DECLARE "askdata_46368927fc1a" CURSOR FOR SET default_transaction_read_only = off
+2026-11-11 02:46:26.055 UTC [32644] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:46:26.055 UTC [32644] STATEMENT:  DECLARE "askdata_8ef3b1895a0d" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:46:26.064 UTC [32647] ERROR:  syntax error at or near "RESET" at character 43
+2026-11-11 02:46:26.064 UTC [32647] STATEMENT:  DECLARE "askdata_3ac9a61776d7" CURSOR FOR RESET ALL
+2026-11-11 02:46:26.068 UTC [32649] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:46:26.068 UTC [32649] STATEMENT:  DECLARE "askdata_0e34125bed7e" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:46:26.076 UTC [32652] ERROR:  transaction read-write mode must be set before any query
+2026-11-11 02:46:26.076 UTC [32652] STATEMENT:  FETCH FORWARD 200 FROM "askdata_71c3de34aad5"
+2026-11-11 02:46:26.080 UTC [32654] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:46:26.080 UTC [32654] STATEMENT:  DECLARE "askdata_d374a328ecb7" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:46:26.093 UTC [32659] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:46:26.093 UTC [32659] STATEMENT:  DECLARE "askdata_f1b1bf9a3897" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:46:26.105 UTC [32664] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:46:26.105 UTC [32664] STATEMENT:  DECLARE "askdata_ac7e42bc2621" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:46:26.114 UTC [32667] ERROR:  transaction read-write mode must be set before any query
+2026-11-11 02:46:26.114 UTC [32667] STATEMENT:  FETCH FORWARD 200 FROM "askdata_873ca693547d"
+2026-11-11 02:46:26.133 UTC [32673] ERROR:  permission denied for schema shop at character 57
+2026-11-11 02:46:26.133 UTC [32673] STATEMENT:  DECLARE "askdata_d6e5ab2e0f74" CURSOR FOR SELECT * FROM shop.customers
+2026-11-11 02:46:27.306 UTC [32689] ERROR:  permission denied for schema shop at character 13
+2026-11-11 02:46:27.306 UTC [32689] STATEMENT:  INSERT INTO shop.orders VALUES (9999, 1, DATE '2026-01-01', 'paid', 1)
+2026-11-11 02:46:27.310 UTC [32690] ERROR:  permission denied for schema shop at character 8
+2026-11-11 02:46:27.310 UTC [32690] STATEMENT:  UPDATE shop.orders SET status = 'x'
+2026-11-11 02:46:27.315 UTC [32691] ERROR:  permission denied for schema shop at character 13
+2026-11-11 02:46:27.315 UTC [32691] STATEMENT:  DELETE FROM shop.orders
+2026-11-11 02:46:27.319 UTC [32692] ERROR:  permission denied for schema shop
+2026-11-11 02:46:27.319 UTC [32692] STATEMENT:  TRUNCATE shop.orders
+2026-11-11 02:46:27.323 UTC [32693] ERROR:  permission denied for schema shop
+2026-11-11 02:46:27.323 UTC [32693] STATEMENT:  DROP TABLE shop.orders
+2026-11-11 02:46:27.328 UTC [32694] ERROR:  permission denied for schema analytics at character 14
+2026-11-11 02:46:27.328 UTC [32694] STATEMENT:  CREATE TABLE analytics.t (x integer)
+2026-11-11 02:46:27.333 UTC [32695] ERROR:  permission denied for schema public at character 14
+2026-11-11 02:46:27.333 UTC [32695] STATEMENT:  CREATE TABLE public.t (x integer)
+2026-11-11 02:46:27.336 UTC [32696] ERROR:  permission denied to create temporary tables in database "askdata_t_b13a44ff" at character 19
+2026-11-11 02:46:27.336 UTC [32696] STATEMENT:  CREATE TEMP TABLE t (x integer)
+2026-11-11 02:46:27.341 UTC [32697] ERROR:  permission denied for schema shop at character 15
+2026-11-11 02:46:27.341 UTC [32697] STATEMENT:  SELECT * FROM shop.customers
+2026-11-11 02:46:27.345 UTC [32698] ERROR:  permission denied for schema shop at character 19
+2026-11-11 02:46:27.345 UTC [32698] STATEMENT:  SELECT email FROM shop.customers
+2026-11-11 02:46:27.350 UTC [32699] ERROR:  permission denied for view pg_shadow
+2026-11-11 02:46:27.350 UTC [32699] STATEMENT:  SELECT * FROM pg_shadow
+2026-11-11 02:46:27.354 UTC [32700] ERROR:  permission denied for function pg_read_file
+2026-11-11 02:46:27.354 UTC [32700] STATEMENT:  SELECT pg_read_file('postgresql.conf')
+2026-11-11 02:46:27.358 UTC [32701] ERROR:  permission denied to COPY to or from an external program
+2026-11-11 02:46:27.358 UTC [32701] DETAIL:  Only roles with privileges of the "pg_execute_server_program" role may COPY to or from an external program.
+2026-11-11 02:46:27.358 UTC [32701] HINT:  Anyone can COPY to stdout or from stdin. psql's \copy command also works for anyone.
+2026-11-11 02:46:27.358 UTC [32701] STATEMENT:  COPY (SELECT 1) TO PROGRAM 'echo x'
+2026-11-11 02:46:27.362 UTC [32702] ERROR:  permission denied for view orders_v
+2026-11-11 02:46:27.362 UTC [32702] STATEMENT:  INSERT INTO analytics.orders_v VALUES (9999, 1, DATE '2026-01-01', 'paid', 1)
+2026-11-11 02:46:27.366 UTC [32703] ERROR:  permission denied for view orders_v
+2026-11-11 02:46:27.366 UTC [32703] STATEMENT:  UPDATE analytics.orders_v SET status = 'x'
+2026-11-11 02:46:27.370 UTC [32704] ERROR:  must be owner of view orders_v
+2026-11-11 02:46:27.370 UTC [32704] STATEMENT:  DROP VIEW analytics.orders_v
+2026-11-11 02:46:27.463 UTC [32714] ERROR:  invalid input syntax for type integer: "refusing: pass -v confirm_dedicated=yes (dedicated database or replica only)" at character 8
+2026-11-11 02:46:27.463 UTC [32714] STATEMENT:  SELECT 'refusing: pass -v confirm_dedicated=yes (dedicated database or replica only)'::int;
+2026-11-11 02:46:27.541 UTC [32719] ERROR:  invalid input syntax for type integer: "refusing: other logins would lose access (listed above); review, then pass -v accept_loss=yes" at character 8
+2026-11-11 02:46:27.541 UTC [32719] STATEMENT:  SELECT 'refusing: other logins would lose access (listed above); review, then pass -v accept_loss=yes'::int;
+2026-11-11 02:46:32.669 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:32.680 UTC [31194] LOG:  checkpoint complete: wrote 1916 buffers (11.7%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.011 s, sync=0.001 s, total=0.012 s; sync files=0, longest=0.000 s, average=0.000 s; distance=19297 kB, estimate=24845 kB; lsn=0/4368A68, redo lsn=0/4368A30
+2026-11-11 02:46:33.408 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:33.409 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=10253 kB, estimate=23386 kB; lsn=0/4D6BEF0, redo lsn=0/4D6BEB8
+2026-11-11 02:46:34.377 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:34.383 UTC [31194] LOG:  checkpoint complete: wrote 960 buffers (5.9%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.005 s, sync=0.001 s, total=0.006 s; sync files=0, longest=0.000 s, average=0.000 s; distance=9013 kB, estimate=21948 kB; lsn=0/5639428, redo lsn=0/56393F0
+2026-11-11 02:46:34.443 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:34.444 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4457 kB, estimate=20199 kB; lsn=0/5A93A18, redo lsn=0/5A939E0
+2026-11-11 02:46:34.512 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:34.513 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4457 kB, estimate=18625 kB; lsn=0/5EEE0E0, redo lsn=0/5EEE0A8
+2026-11-11 02:46:34.590 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:34.591 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4457 kB, estimate=17208 kB; lsn=0/6348868, redo lsn=0/6348830
+2026-11-11 02:46:34.634 UTC [329] WARNING:  there is no transaction in progress
+2026-11-11 02:46:34.650 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:34.651 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4458 kB, estimate=15933 kB; lsn=0/67A30A0, redo lsn=0/67A3068
+2026-11-11 02:46:34.707 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:34.708 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4458 kB, estimate=14786 kB; lsn=0/6BFD9A0, redo lsn=0/6BFD968
+2026-11-11 02:46:34.765 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:34.766 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4458 kB, estimate=13753 kB; lsn=0/7058388, redo lsn=0/7058350
+2026-11-11 02:46:34.825 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:34.826 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4430 kB, estimate=12821 kB; lsn=0/74ABF38, redo lsn=0/74ABF00
+2026-11-11 02:46:34.887 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:34.889 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4473 kB, estimate=11986 kB; lsn=0/790A650, redo lsn=0/790A618
+2026-11-11 02:46:34.950 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:34.951 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4459 kB, estimate=11233 kB; lsn=0/7D65260, redo lsn=0/7D65228
+2026-11-11 02:46:35.010 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.012 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4459 kB, estimate=10556 kB; lsn=0/81BFF40, redo lsn=0/81BFF08
+2026-11-11 02:46:35.073 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.074 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4438 kB, estimate=9944 kB; lsn=0/8615990, redo lsn=0/8615958
+2026-11-11 02:46:35.139 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.140 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4435 kB, estimate=9393 kB; lsn=0/8A6A5B8, redo lsn=0/8A6A580
+2026-11-11 02:46:35.204 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.205 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4436 kB, estimate=8897 kB; lsn=0/8EBF5E0, redo lsn=0/8EBF5A8
+2026-11-11 02:46:35.271 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.272 UTC [31194] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4442 kB, estimate=8452 kB; lsn=0/9315F80, redo lsn=0/9315F48
+2026-11-11 02:46:35.335 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.336 UTC [31194] LOG:  checkpoint complete: wrote 6 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4439 kB, estimate=8050 kB; lsn=0/976BCF0, redo lsn=0/976BCB8
+2026-11-11 02:46:35.399 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.400 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4433 kB, estimate=7689 kB; lsn=0/9BC01D8, redo lsn=0/9BC01A0
+2026-11-11 02:46:35.460 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.461 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4460 kB, estimate=7366 kB; lsn=0/A01B418, redo lsn=0/A01B3E0
+2026-11-11 02:46:35.523 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.524 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4460 kB, estimate=7075 kB; lsn=0/A476720, redo lsn=0/A4766E8
+2026-11-11 02:46:35.589 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.590 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4460 kB, estimate=6814 kB; lsn=0/A8D1AD8, redo lsn=0/A8D1AA0
+2026-11-11 02:46:35.659 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.661 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4437 kB, estimate=6576 kB; lsn=0/AD27090, redo lsn=0/AD27058
+2026-11-11 02:46:35.732 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.733 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4450 kB, estimate=6363 kB; lsn=0/B17F918, redo lsn=0/B17F8E0
+2026-11-11 02:46:35.780 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.781 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4444 kB, estimate=6171 kB; lsn=0/B5D6B40, redo lsn=0/B5D6B08
+2026-11-11 02:46:35.827 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.828 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4444 kB, estimate=5999 kB; lsn=0/BA2DE18, redo lsn=0/BA2DDE0
+2026-11-11 02:46:35.869 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.870 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4444 kB, estimate=5843 kB; lsn=0/BE851C8, redo lsn=0/BE85190
+2026-11-11 02:46:35.908 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.909 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4445 kB, estimate=5703 kB; lsn=0/C2DC650, redo lsn=0/C2DC618
+2026-11-11 02:46:35.950 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:35.951 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4445 kB, estimate=5578 kB; lsn=0/C733B70, redo lsn=0/C733B38
+2026-11-11 02:46:36.011 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:36.012 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4462 kB, estimate=5466 kB; lsn=0/CB8F560, redo lsn=0/CB8F528
+2026-11-11 02:46:36.075 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:36.076 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4434 kB, estimate=5363 kB; lsn=0/CFE4150, redo lsn=0/CFE4118
+2026-11-11 02:46:36.140 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:36.141 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4477 kB, estimate=5274 kB; lsn=0/D443878, redo lsn=0/D443840
+2026-11-11 02:46:36.209 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:36.210 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4435 kB, estimate=5190 kB; lsn=0/D8985F0, redo lsn=0/D8985B8
+2026-11-11 02:46:36.270 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:36.271 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4437 kB, estimate=5115 kB; lsn=0/DCEDDC8, redo lsn=0/DCEDD90
+2026-11-11 02:46:36.333 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:36.334 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4436 kB, estimate=5047 kB; lsn=0/E142DD8, redo lsn=0/E142DA0
+2026-11-11 02:46:36.394 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:36.395 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4463 kB, estimate=4989 kB; lsn=0/E59ECF0, redo lsn=0/E59ECB8
+2026-11-11 02:46:36.453 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:36.454 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4458 kB, estimate=4936 kB; lsn=0/E9F9540, redo lsn=0/E9F9508
+2026-11-11 02:46:36.514 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:36.515 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4458 kB, estimate=4888 kB; lsn=0/EE53E58, redo lsn=0/EE53E20
+2026-11-11 02:46:36.572 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:36.573 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4458 kB, estimate=4845 kB; lsn=0/F2AE850, redo lsn=0/F2AE818
+2026-11-11 02:46:36.629 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:36.630 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4458 kB, estimate=4806 kB; lsn=0/F7092F0, redo lsn=0/F7092B8
+2026-11-11 02:46:36.666 UTC [548] ERROR:  unterminated /* comment at or near "/* a /* b */ ; DELETE FROM shop.order_items" at character 10
+2026-11-11 02:46:36.666 UTC [548] STATEMENT:  SELECT 1 /* a /* b */ ; DELETE FROM shop.order_items
+2026-11-11 02:46:36.670 UTC [549] ERROR:  unterminated /* comment at or near "/* never closed" at character 10
+2026-11-11 02:46:36.670 UTC [549] STATEMENT:  SELECT 1 /* never closed
+2026-11-11 02:46:36.674 UTC [550] ERROR:  unterminated quoted string at or near "'never closed FROM analytics.orders_v" at character 8
+2026-11-11 02:46:36.674 UTC [550] STATEMENT:  SELECT 'never closed FROM analytics.orders_v
+2026-11-11 02:46:36.678 UTC [551] ERROR:  unterminated quoted identifier at or near ""never closed FROM analytics.orders_v" at character 8
+2026-11-11 02:46:36.678 UTC [551] STATEMENT:  SELECT "never closed FROM analytics.orders_v
+2026-11-11 02:46:36.682 UTC [552] ERROR:  syntax error at or near "SELEC" at character 11
+2026-11-11 02:46:36.682 UTC [552] STATEMENT:  SELECT 1; SELEC
+x
+2026-11-11 02:46:36.708 UTC [559] WARNING:  there is no transaction in progress
+2026-11-11 02:46:36.748 UTC [568] ERROR:  WITH clause containing a data-modifying statement must be at the top level at character 21
+2026-11-11 02:46:36.748 UTC [568] STATEMENT:  SELECT * FROM (WITH d AS (DELETE FROM shop.order_items RETURNING *) SELECT * FROM d) s
+2026-11-11 02:46:36.799 UTC [575] ERROR:  cross-database references are not implemented: "postgres.analytics.orders_v" at character 15
+2026-11-11 02:46:36.799 UTC [575] STATEMENT:  SELECT * FROM postgres.analytics.orders_v
+2026-11-11 02:46:36.804 UTC [576] ERROR:  relation "orders_v" does not exist at character 15
+2026-11-11 02:46:36.804 UTC [576] STATEMENT:  SELECT * FROM orders_v
+2026-11-11 02:46:38.033 UTC [585] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:38.033 UTC [585] STATEMENT:  SELECT count(*) FROM generate_series(1, 100000000000)
+2026-11-11 02:46:38.106 UTC [595] ERROR:  TABLESAMPLE clause can only be applied to tables and materialized views at character 15
+2026-11-11 02:46:38.106 UTC [595] STATEMENT:  SELECT * FROM analytics.orders_v TABLESAMPLE SYSTEM (10)
+2026-11-11 02:46:38.127 UTC [599] ERROR:  relation "b" does not exist at character 26
+2026-11-11 02:46:38.127 UTC [599] DETAIL:  There is a WITH item named "b", but it cannot be referenced from this part of the query.
+2026-11-11 02:46:38.127 UTC [599] HINT:  Use WITH RECURSIVE, or re-order the WITH items to remove forward references.
+2026-11-11 02:46:38.127 UTC [599] STATEMENT:  WITH a AS (SELECT * FROM b), b AS (SELECT 1 AS x) SELECT * FROM a
+2026-11-11 02:46:38.132 UTC [600] ERROR:  relation "t" does not exist at character 66
+2026-11-11 02:46:38.132 UTC [600] STATEMENT:  SELECT * FROM (WITH t AS (SELECT 1 AS x) SELECT x FROM t) s JOIN t ON s.x = t.x
+2026-11-11 02:46:38.142 UTC [602] ERROR:  relation "x" does not exist at character 26
+2026-11-11 02:46:38.142 UTC [602] DETAIL:  There is a WITH item named "x", but it cannot be referenced from this part of the query.
+2026-11-11 02:46:38.142 UTC [602] HINT:  Use WITH RECURSIVE, or re-order the WITH items to remove forward references.
+2026-11-11 02:46:38.142 UTC [602] STATEMENT:  WITH x AS (SELECT * FROM x) SELECT * FROM x
+2026-11-11 02:46:38.155 UTC [605] ERROR:  relation "later" does not exist at character 30
+2026-11-11 02:46:38.155 UTC [605] STATEMENT:  SELECT * FROM (SELECT * FROM later) q WHERE EXISTS (SELECT 1 FROM analytics.orders_v)
+2026-11-11 02:46:38.160 UTC [606] ERROR:  relation "t" does not exist at character 159
+2026-11-11 02:46:38.160 UTC [606] STATEMENT:  SELECT * FROM analytics.orders_v o WHERE o.order_id IN (WITH t AS (SELECT order_id FROM analytics.orders_v) SELECT order_id FROM t) AND EXISTS (SELECT 1 FROM t)
+2026-11-11 02:46:38.165 UTC [607] ERROR:  relation "later_cte" does not exist at character 72
+2026-11-11 02:46:38.165 UTC [607] STATEMENT:  SELECT order_id FROM analytics.orders_v UNION ALL SELECT order_id FROM later_cte
+2026-11-11 02:46:38.170 UTC [608] ERROR:  column "email" does not exist at character 8
+2026-11-11 02:46:38.170 UTC [608] STATEMENT:  SELECT email FROM analytics.customers_v
+2026-11-11 02:46:38.176 UTC [609] ERROR:  column "email" does not exist at character 8
+2026-11-11 02:46:38.176 UTC [609] STATEMENT:  SELECT EMAIL FROM analytics.customers_v
+2026-11-11 02:46:38.181 UTC [610] ERROR:  column c.email does not exist at character 8
+2026-11-11 02:46:38.181 UTC [610] STATEMENT:  SELECT c.email FROM analytics.customers_v c
+2026-11-11 02:46:38.187 UTC [611] ERROR:  column customers_v.email does not exist at character 8
+2026-11-11 02:46:38.187 UTC [611] STATEMENT:  SELECT analytics.customers_v.email FROM analytics.customers_v
+2026-11-11 02:46:38.193 UTC [612] ERROR:  column "email" does not exist at character 43
+2026-11-11 02:46:38.193 UTC [612] STATEMENT:  SELECT 1 FROM analytics.customers_v WHERE email LIKE '%@%'
+2026-11-11 02:46:38.201 UTC [613] ERROR:  column "email" does not exist at character 56
+2026-11-11 02:46:38.201 UTC [613] STATEMENT:  SELECT customer_id FROM analytics.customers_v ORDER BY email
+2026-11-11 02:46:38.208 UTC [614] ERROR:  column "email" does not exist at character 20
+2026-11-11 02:46:38.208 UTC [614] STATEMENT:  SELECT (SELECT max(email) FROM analytics.customers_v)
+2026-11-11 02:46:38.216 UTC [615] ERROR:  column "email" does not exist at character 71
+2026-11-11 02:46:38.216 UTC [615] STATEMENT:  SELECT country FROM analytics.customers_v GROUP BY country HAVING max(email) > 'a'
+2026-11-11 02:46:38.224 UTC [616] ERROR:  column "email" does not exist at character 67
+2026-11-11 02:46:38.224 UTC [616] STATEMENT:  SELECT country FROM analytics.customers_v GROUP BY country HAVING email = 'x'
+2026-11-11 02:46:38.231 UTC [617] ERROR:  column "interval" does not exist at character 82
+2026-11-11 02:46:38.231 UTC [617] STATEMENT:  SELECT country FROM analytics.customers_v GROUP BY country HAVING max(country) - INTERVAL > 1
+2026-11-11 02:46:38.238 UTC [618] ERROR:  column "email" does not exist at character 94
+2026-11-11 02:46:38.238 UTC [618] STATEMENT:  SELECT order_id FROM analytics.orders_v ORDER BY (SELECT 1 FROM analytics.customers_v HAVING email IS NULL)
+2026-11-11 02:46:38.279 UTC [624] ERROR:  function count(integer, integer) does not exist at character 8
+2026-11-11 02:46:38.279 UTC [624] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:38.279 UTC [624] STATEMENT:  SELECT count(1, 2) FROM analytics.orders_v
+2026-11-11 02:46:38.285 UTC [625] ERROR:  function age() does not exist at character 8
+2026-11-11 02:46:38.285 UTC [625] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:38.285 UTC [625] STATEMENT:  SELECT age() FROM analytics.orders_v
+2026-11-11 02:46:38.290 UTC [626] ERROR:  function length(text, integer) does not exist at character 8
+2026-11-11 02:46:38.290 UTC [626] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:38.290 UTC [626] STATEMENT:  SELECT length(status, 3) FROM analytics.orders_v
+2026-11-11 02:46:38.296 UTC [627] ERROR:  function ceil(integer, integer) does not exist at character 8
+2026-11-11 02:46:38.296 UTC [627] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:38.296 UTC [627] STATEMENT:  SELECT ceil(1, 2) FROM analytics.orders_v
+2026-11-11 02:46:38.301 UTC [628] ERROR:  function row_number(integer) does not exist at character 8
+2026-11-11 02:46:38.301 UTC [628] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:38.301 UTC [628] STATEMENT:  SELECT row_number(5) OVER () FROM analytics.orders_v
+2026-11-11 02:46:38.305 UTC [629] ERROR:  function ntile() does not exist at character 8
+2026-11-11 02:46:38.305 UTC [629] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:38.305 UTC [629] STATEMENT:  SELECT ntile() OVER () FROM analytics.orders_v
+2026-11-11 02:46:38.309 UTC [630] ERROR:  function make_date(integer, integer) does not exist at character 8
+2026-11-11 02:46:38.309 UTC [630] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:38.309 UTC [630] STATEMENT:  SELECT make_date(1, 2) FROM analytics.orders_v
+2026-11-11 02:46:38.313 UTC [631] ERROR:  function replace(text, unknown) does not exist at character 8
+2026-11-11 02:46:38.313 UTC [631] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:38.313 UTC [631] STATEMENT:  SELECT replace(status, 'a') FROM analytics.orders_v
+2026-11-11 02:46:38.318 UTC [632] ERROR:  function percentile_cont(numeric, numeric, numeric) does not exist at character 8
+2026-11-11 02:46:38.318 UTC [632] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:38.318 UTC [632] STATEMENT:  SELECT percentile_cont(0.5, 0.6) WITHIN GROUP (ORDER BY total_amount) FROM analytics.orders_v
+2026-11-11 02:46:38.329 UTC [634] ERROR:  column o.email does not exist at character 8
+2026-11-11 02:46:38.329 UTC [634] STATEMENT:  SELECT o.email FROM analytics.orders_v o
+2026-11-11 02:46:39.579 UTC [644] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:39.579 UTC [644] STATEMENT:  SELECT pg_sleep(10)
+2026-11-11 02:46:40.787 UTC [670] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:40.787 UTC [670] STATEMENT:  SELECT pg_catalog.pg_sleep(10)
+2026-11-11 02:46:41.995 UTC [676] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:41.995 UTC [676] STATEMENT:  SELECT PG_SLEEP(10)
+2026-11-11 02:46:43.201 UTC [718] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:43.201 UTC [718] STATEMENT:  SELECT "pg_sleep"(10)
+2026-11-11 02:46:43.207 UTC [816] ERROR:  function PG_SLEEP(integer) does not exist at character 8
+2026-11-11 02:46:43.207 UTC [816] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:43.207 UTC [816] STATEMENT:  SELECT "PG_SLEEP"(10)
+2026-11-11 02:46:44.412 UTC [818] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:44.412 UTC [818] STATEMENT:  SELECT 1 FROM analytics.orders_v WHERE pg_sleep(10) IS NOT NULL
+2026-11-11 02:46:45.619 UTC [861] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:45.619 UTC [861] STATEMENT:  SELECT (SELECT pg_sleep(10)) FROM analytics.orders_v
+2026-11-11 02:46:46.826 UTC [882] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:46.826 UTC [882] STATEMENT:  SELECT pg_sleep_for(INTERVAL '10 seconds')
+2026-11-11 02:46:48.032 UTC [906] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:48.032 UTC [906] STATEMENT:  SELECT sum(g) FROM (SELECT generate_series(1, 100000000000) AS g) s
+2026-11-11 02:46:48.590 UTC [940] ERROR:  could not establish connection
+2026-11-11 02:46:48.590 UTC [940] DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+		Is the server running locally and accepting connections on that socket?
+2026-11-11 02:46:48.590 UTC [940] STATEMENT:  SELECT dblink_connect('dbname=postgres')
+2026-11-11 02:46:48.762 UTC [943] WARNING:  PID 0 is not a PostgreSQL backend process
+2026-11-11 02:46:48.771 UTC [945] ERROR:  relation "shop.nothing_seq" does not exist at character 16
+2026-11-11 02:46:48.771 UTC [945] STATEMENT:  SELECT nextval('shop.nothing_seq')
+2026-11-11 02:46:48.822 UTC [956] ERROR:  function public.my_func(integer) does not exist at character 8
+2026-11-11 02:46:48.822 UTC [956] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:48.822 UTC [956] STATEMENT:  SELECT public.my_func(order_id) FROM analytics.orders_v
+2026-11-11 02:46:50.027 UTC [957] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:50.027 UTC [957] STATEMENT:  SELECT count(*) FILTER (WHERE pg_sleep(10) IS NOT NULL) FROM analytics.orders_v
+2026-11-11 02:46:51.234 UTC [958] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:51.234 UTC [958] STATEMENT:  SELECT 1 FROM analytics.orders_v ORDER BY (pg_sleep(10) IS NULL)
+2026-11-11 02:46:52.442 UTC [959] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:52.442 UTC [959] STATEMENT:  SELECT 1 FROM analytics.orders_v a JOIN analytics.orders_v b ON a.order_id = b.order_id AND pg_sleep(10) IS NOT NULL
+2026-11-11 02:46:53.649 UTC [960] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:53.649 UTC [960] STATEMENT:  SELECT CASE WHEN true THEN pg_sleep(10) END FROM analytics.orders_v
+2026-11-11 02:46:54.856 UTC [961] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:54.856 UTC [961] STATEMENT:  SELECT row_number() OVER (ORDER BY (pg_sleep(10) IS NULL)) FROM analytics.orders_v
+2026-11-11 02:46:54.917 UTC [975] ERROR:  invalid input syntax for type integer: "email" at character 28
+2026-11-11 02:46:54.917 UTC [975] STATEMENT:  SELECT CAST(customer_id AS DECIMAL(email, 2)) FROM analytics.customers_v
+2026-11-11 02:46:54.928 UTC [977] ERROR:  relation "delivered" does not exist
+2026-11-11 02:46:54.928 UTC [977] STATEMENT:  SELECT status::regclass FROM analytics.orders_v
+2026-11-11 02:46:56.132 UTC [978] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:46:56.132 UTC [978] STATEMENT:  WITH RECURSIVE r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r) SELECT count(*) FROM r
+2026-11-11 02:46:56.182 UTC [985] ERROR:  syntax error at end of input at character 13
+2026-11-11 02:46:56.182 UTC [985] STATEMENT:  SELECT 1 AS 
+2026-11-11 02:46:56.186 UTC [986] ERROR:  syntax error at or near "" at character 10
+2026-11-11 02:46:56.186 UTC [986] STATEMENT:  SELECT 1 [2K
+2026-11-11 02:46:56.211 UTC [992] ERROR:  syntax error at or near "$" at character 13
+2026-11-11 02:46:56.211 UTC [992] STATEMENT:  SELECT 1 AS $x
+2026-11-11 02:46:56.246 UTC [1001] ERROR:  there is no parameter $1 at character 51
+2026-11-11 02:46:56.246 UTC [1001] STATEMENT:  SELECT * FROM analytics.orders_v WHERE order_id = $1
+2026-11-11 02:46:56.250 UTC [1002] ERROR:  there is no parameter $1 at character 51
+2026-11-11 02:46:56.250 UTC [1002] STATEMENT:  SELECT * FROM analytics.orders_v WHERE order_id = $1::int
+2026-11-11 02:46:56.254 UTC [1003] ERROR:  syntax error at or near "%" at character 51
+2026-11-11 02:46:56.254 UTC [1003] STATEMENT:  SELECT * FROM analytics.orders_v WHERE order_id = %s
+2026-11-11 02:46:56.259 UTC [1004] ERROR:  syntax error at or near "%" at character 51
+2026-11-11 02:46:56.259 UTC [1004] STATEMENT:  SELECT * FROM analytics.orders_v WHERE order_id = %(id)s
+2026-11-11 02:46:56.264 UTC [1005] ERROR:  syntax error at or near ":" at character 51
+2026-11-11 02:46:56.264 UTC [1005] STATEMENT:  SELECT * FROM analytics.orders_v WHERE order_id = :id
+2026-11-11 02:46:56.269 UTC [1006] ERROR:  syntax error at end of input at character 52
+2026-11-11 02:46:56.269 UTC [1006] STATEMENT:  SELECT * FROM analytics.orders_v WHERE order_id = ?
+2026-11-11 02:46:56.274 UTC [1007] ERROR:  column "customer_іd" does not exist at character 8
+2026-11-11 02:46:56.274 UTC [1007] HINT:  Perhaps you meant to reference the column "orders_v.customer_id".
+2026-11-11 02:46:56.274 UTC [1007] STATEMENT:  SELECT customer_іd FROM analytics.orders_v
+2026-11-11 02:46:56.278 UTC [1008] ERROR:  trailing junk after numeric literal at or near "1;" at character 8
+2026-11-11 02:46:56.278 UTC [1008] STATEMENT:  SELECT 1; DELETE FROM shop.order_items
+2026-11-11 02:46:56.281 UTC [1009] ERROR:  syntax error at or near "ＳELECT" at character 1
+2026-11-11 02:46:56.281 UTC [1009] STATEMENT:  ＳELECT 1
+2026-11-11 02:46:56.285 UTC [1010] ERROR:  syntax error at or near "SELECT 1" at character 1
+2026-11-11 02:46:56.285 UTC [1010] STATEMENT:  SELECT 1
+2026-11-11 02:46:56.290 UTC [1011] ERROR:  column "customer_​id" does not exist at character 8
+2026-11-11 02:46:56.290 UTC [1011] HINT:  Perhaps you meant to reference the column "orders_v.customer_id".
+2026-11-11 02:46:56.290 UTC [1011] STATEMENT:  SELECT customer_​id FROM analytics.orders_v
+2026-11-11 02:46:56.298 UTC [1013] ERROR:  syntax error at or near "﻿SELECT" at character 1
+2026-11-11 02:46:56.298 UTC [1013] STATEMENT:  ﻿SELECT 1
+2026-11-11 02:46:56.342 UTC [1021] ERROR:  operator does not exist: text @> unknown at character 54
+2026-11-11 02:46:56.342 UTC [1021] HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:56.342 UTC [1021] STATEMENT:  SELECT 1 FROM analytics.orders_v WHERE LOWER(status) @> 'a'
+2026-11-11 02:46:56.348 UTC [1022] ERROR:  operator does not exist: text -> unknown at character 15
+2026-11-11 02:46:56.348 UTC [1022] HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:56.348 UTC [1022] STATEMENT:  SELECT status -> 'a' FROM analytics.orders_v
+2026-11-11 02:46:56.353 UTC [1023] ERROR:  operator does not exist: text ->> unknown at character 15
+2026-11-11 02:46:56.353 UTC [1023] HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:46:56.353 UTC [1023] STATEMENT:  SELECT status ->> 'a' FROM analytics.orders_v
+2026-11-11 02:46:56.384 UTC [1029] ERROR:  time zone "delivered" not recognized
+2026-11-11 02:46:56.384 UTC [1029] STATEMENT:  SELECT order_date AT TIME ZONE status FROM analytics.orders_v
+2026-11-11 02:46:56.398 UTC [1032] ERROR:  FILTER specified, but lower is not an aggregate function at character 8
+2026-11-11 02:46:56.398 UTC [1032] STATEMENT:  SELECT lower(status) FILTER (WHERE true) FROM analytics.orders_v
+2026-11-11 02:46:56.498 UTC [1040] ERROR:  relation "analytics.Orders_V" does not exist at character 15
+2026-11-11 02:46:56.498 UTC [1040] STATEMENT:  SELECT * FROM analytics."Orders_V"
+2026-11-11 02:46:56.503 UTC [1041] ERROR:  relation "ANALYTICS.orders_v" does not exist at character 15
+2026-11-11 02:46:56.503 UTC [1041] STATEMENT:  SELECT * FROM "ANALYTICS".orders_v
+2026-11-11 02:46:56.507 UTC [1042] ERROR:  column "Order_Id" does not exist at character 8
+2026-11-11 02:46:56.507 UTC [1042] HINT:  Perhaps you meant to reference the column "orders_v.order_id".
+2026-11-11 02:46:56.507 UTC [1042] STATEMENT:  SELECT "Order_Id" FROM analytics.orders_v
+2026-11-11 02:46:56.518 UTC [1044] ERROR:  column "order_id " does not exist at character 8
+2026-11-11 02:46:56.518 UTC [1044] HINT:  Perhaps you meant to reference the column "orders_v.order_id".
+2026-11-11 02:46:56.518 UTC [1044] STATEMENT:  SELECT "order_id " FROM analytics.orders_v
+2026-11-11 02:46:56.537 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:46:56.541 UTC [31194] LOG:  checkpoint complete: wrote 354 buffers (2.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.002 s, sync=0.001 s, total=0.004 s; sync files=0, longest=0.000 s, average=0.000 s; distance=6143 kB, estimate=6143 kB; lsn=0/FD09000, redo lsn=0/FD08FC8
+2026-11-11 02:46:59.799 UTC [1082] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:46:59.799 UTC [1082] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:47:00.165 UTC [1089] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:47:00.165 UTC [1089] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:47:00.257 UTC [1095] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:47:00.257 UTC [1095] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:47:00.348 UTC [1101] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:47:00.348 UTC [1101] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:47:00.436 UTC [1107] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:47:00.436 UTC [1107] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:47:00.529 UTC [1113] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:47:00.529 UTC [1113] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:47:00.625 UTC [1119] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:47:00.625 UTC [1119] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:47:00.713 UTC [1125] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:47:00.713 UTC [1125] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:47:00.812 UTC [1131] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:47:00.812 UTC [1131] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:47:00.908 UTC [1137] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:47:00.908 UTC [1137] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:47:21.916 UTC [1630] ERROR:  permission denied for table audit_entries
+2026-11-11 02:47:21.916 UTC [1630] STATEMENT:  UPDATE audit_entries SET body = '{}'
+2026-11-11 02:47:21.917 UTC [1630] ERROR:  permission denied for table audit_entries
+2026-11-11 02:47:21.917 UTC [1630] STATEMENT:  DELETE FROM audit_entries
+2026-11-11 02:47:21.917 UTC [1630] ERROR:  permission denied for table audit_checkpoints
+2026-11-11 02:47:21.917 UTC [1630] STATEMENT:  UPDATE audit_checkpoints SET hash = 'x'
+2026-11-11 02:47:21.917 UTC [1630] ERROR:  permission denied for table audit_entries
+2026-11-11 02:47:21.917 UTC [1630] STATEMENT:  TRUNCATE audit_entries
+2026-11-11 02:47:22.126 UTC [1640] ERROR:  permission denied for table kill_switch
+2026-11-11 02:47:22.126 UTC [1640] STATEMENT:  SELECT count(*) FROM kill_switch
+2026-11-11 02:47:22.126 UTC [1640] ERROR:  permission denied for table runs
+2026-11-11 02:47:22.126 UTC [1640] STATEMENT:  DELETE FROM runs
+2026-11-11 02:48:54.227 UTC [3098] ERROR:  permission denied for table redaction_maps
+2026-11-11 02:48:54.227 UTC [3098] STATEMENT:  SELECT mapping FROM redaction_maps
+2026-11-11 02:48:54.230 UTC [3099] ERROR:  permission denied for table tool_calls
+2026-11-11 02:48:54.230 UTC [3099] STATEMENT:  SELECT output FROM tool_calls
+2026-11-11 02:48:54.233 UTC [3100] ERROR:  permission denied for table runs
+2026-11-11 02:48:54.233 UTC [3100] STATEMENT:  SELECT * FROM runs
+2026-11-11 02:48:54.237 UTC [3101] ERROR:  permission denied for table plans
+2026-11-11 02:48:54.237 UTC [3101] STATEMENT:  SELECT * FROM plans
+2026-11-11 02:48:54.241 UTC [3102] ERROR:  permission denied for table audit_entries
+2026-11-11 02:48:54.241 UTC [3102] STATEMENT:  SELECT * FROM audit_entries
+2026-11-11 02:48:54.244 UTC [3103] ERROR:  permission denied for table approval_decisions
+2026-11-11 02:48:54.244 UTC [3103] STATEMENT:  SELECT * FROM approval_decisions
+2026-11-11 02:48:54.247 UTC [3104] ERROR:  permission denied for table gate_decisions
+2026-11-11 02:48:54.247 UTC [3104] STATEMENT:  SELECT * FROM gate_decisions
+2026-11-11 02:48:54.449 UTC [3112] ERROR:  permission denied for table runs
+2026-11-11 02:48:54.449 UTC [3112] STATEMENT:  UPDATE runs SET state = 'x'
+2026-11-11 02:48:54.453 UTC [3113] ERROR:  permission denied for table runs
+2026-11-11 02:48:54.453 UTC [3113] STATEMENT:  DELETE FROM runs
+2026-11-11 02:48:54.457 UTC [3114] ERROR:  permission denied for table plans
+2026-11-11 02:48:54.457 UTC [3114] STATEMENT:  DELETE FROM plans
+2026-11-11 02:48:54.460 UTC [3115] ERROR:  permission denied for table approval_requests
+2026-11-11 02:48:54.460 UTC [3115] STATEMENT:  DELETE FROM approval_requests
+2026-11-11 02:48:54.464 UTC [3116] ERROR:  permission denied for table kill_switch
+2026-11-11 02:48:54.464 UTC [3116] STATEMENT:  DELETE FROM kill_switch
+2026-11-11 02:48:54.467 UTC [3117] ERROR:  permission denied for table tool_calls
+2026-11-11 02:48:54.467 UTC [3117] STATEMENT:  INSERT INTO tool_calls (call_id) VALUES ('x')
+2026-11-11 02:48:54.470 UTC [3118] ERROR:  permission denied for table redaction_maps
+2026-11-11 02:48:54.470 UTC [3118] STATEMENT:  UPDATE redaction_maps SET updated_at = now()
+2026-11-11 02:48:54.473 UTC [3119] ERROR:  permission denied for table tool_calls
+2026-11-11 02:48:54.473 UTC [3119] STATEMENT:  TRUNCATE tool_calls
+2026-11-11 02:48:54.476 UTC [3120] ERROR:  permission denied for table redaction_maps
+2026-11-11 02:48:54.476 UTC [3120] STATEMENT:  TRUNCATE redaction_maps
+2026-11-11 02:48:54.689 UTC [3129] ERROR:  permission denied for table redaction_maps
+2026-11-11 02:48:54.689 UTC [3129] STATEMENT:  DELETE FROM redaction_maps
+2026-11-11 02:48:54.693 UTC [3130] ERROR:  permission denied for table tool_calls
+2026-11-11 02:48:54.693 UTC [3130] STATEMENT:  DELETE FROM tool_calls
+2026-11-11 02:48:54.697 UTC [3131] ERROR:  permission denied for table redaction_maps
+2026-11-11 02:48:54.697 UTC [3131] STATEMENT:  TRUNCATE redaction_maps
+2026-11-11 02:48:54.700 UTC [3132] ERROR:  permission denied for table tool_calls
+2026-11-11 02:48:54.700 UTC [3132] STATEMENT:  TRUNCATE tool_calls
+2026-11-11 02:49:35.321 UTC [5414] ERROR:  permission denied for table tool_calls
+2026-11-11 02:49:35.321 UTC [5414] STATEMENT:  DELETE FROM "tool_calls" WHERE "created_at" < $1 AND NOT (run_id = ANY($2))
+2026-11-11 02:49:52.894 UTC [6052] WARNING:  there is no transaction in progress
+2026-11-11 02:49:54.059 UTC [6311] ERROR:  tool_calls or redaction_maps is missing: stop, a person must look
+2026-11-11 02:49:54.059 UTC [6311] CONTEXT:  PL/pgSQL function inline_code_block line 3 at RAISE
+2026-11-11 02:49:54.059 UTC [6311] STATEMENT:  DO $$ BEGIN
+	  IF to_regclass('tool_calls') IS NULL OR to_regclass('redaction_maps') IS NULL THEN
+	    RAISE EXCEPTION 'tool_calls or redaction_maps is missing: stop, a person must look';
+	  END IF;
+	END $$;
+2026-11-11 02:49:54.563 UTC [6433] ERROR:  the columns of the evidence tables differ from 0005_evidence.sql in more than the error column: stop, a person must look
+2026-11-11 02:49:54.563 UTC [6433] CONTEXT:  PL/pgSQL function inline_code_block line 8 at RAISE
+2026-11-11 02:49:54.563 UTC [6433] STATEMENT:  DO $$ BEGIN
+	  IF (SELECT string_agg(column_name::text || ' ' || data_type || ' ' || is_nullable, ', ' ORDER BY column_name::text COLLATE "C")
+	        FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'tool_calls')
+	     IS DISTINCT FROM 'attempt integer YES, call_id text NO, created_at timestamp with time zone NO, duration_ms integer YES, error boolean NO, inputs jsonb NO, output text NO, output_sha256 text NO, run_id text NO, tool text NO'
+	  OR (SELECT string_agg(column_name::text || ' ' || data_type || ' ' || is_nullable, ', ' ORDER BY column_name::text COLLATE "C")
+	        FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'redaction_maps')
+	     IS DISTINCT FROM 'mapping jsonb NO, run_id text NO, updated_at timestamp with time zone NO' THEN
+	    RAISE EXCEPTION 'the columns of the evidence tables differ from 0005_evidence.sql in more than the error column: stop, a person must look';
+	  END IF;
+	END $$;
+2026-11-11 02:49:54.908 UTC [6470] ERROR:  duplicate key value violates unique constraint "schema_migrations_pkey"
+2026-11-11 02:49:54.908 UTC [6470] DETAIL:  Key (version)=(0004_audit_checkpoint_meta) already exists.
+2026-11-11 02:49:54.908 UTC [6470] STATEMENT:  INSERT INTO schema_migrations (version) VALUES ('0004_audit_checkpoint_meta');
+2026-11-11 02:49:55.017 UTC [6480] ERROR:  division by zero
+2026-11-11 02:49:55.017 UTC [6480] STATEMENT:  SELECT 1 / 0;
+2026-11-11 02:49:55.118 UTC [6490] ERROR:  division by zero
+2026-11-11 02:49:55.118 UTC [6490] STATEMENT:  SELECT 1 / 0;
+2026-11-11 02:50:00.301 UTC [6504] ERROR:  canceling statement due to lock timeout
+2026-11-11 02:50:00.301 UTC [6504] STATEMENT:  ALTER TABLE tool_calls ADD COLUMN hadavin_test_wait TEXT;
+2026-11-11 02:50:00.382 UTC [6551] ERROR:  this file must be run by the migration role
+2026-11-11 02:50:00.382 UTC [6551] CONTEXT:  PL/pgSQL function inline_code_block line 3 at RAISE
+2026-11-11 02:50:00.382 UTC [6551] STATEMENT:  DO $$ BEGIN
+	  IF current_user <> 'somebody_else' THEN
+	    RAISE EXCEPTION 'this file must be run by the migration role';
+	  END IF;
+	END $$;
+2026-11-11 02:50:01.390 UTC [6732] ERROR:  tool_calls or redaction_maps is missing: stop, a person must look
+2026-11-11 02:50:01.390 UTC [6732] CONTEXT:  PL/pgSQL function inline_code_block line 3 at RAISE
+2026-11-11 02:50:01.390 UTC [6732] STATEMENT:  DO $$ BEGIN
+	  IF to_regclass('tool_calls') IS NULL OR to_regclass('redaction_maps') IS NULL THEN
+	    RAISE EXCEPTION 'tool_calls or redaction_maps is missing: stop, a person must look';
+	  END IF;
+	END $$;
+2026-11-11 02:50:02.522 UTC [6746] ERROR:  canceling statement due to lock timeout
+2026-11-11 02:50:02.522 UTC [6746] STATEMENT:  ALTER TABLE tool_calls ADD COLUMN hadavin_test_wait TEXT;
+	
+2026-11-11 02:50:03.657 UTC [6836] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:50:03.657 UTC [6836] STATEMENT:  SELECT pg_sleep(30);
+	
+2026-11-11 02:50:03.734 UTC [6855] ERROR:  division by zero
+2026-11-11 02:50:03.734 UTC [6855] STATEMENT:  SELECT 1 / ((current_setting('lock_timeout') = '99s' AND current_setting('statement_timeout') = '9s')::int);
+	
+2026-11-11 02:50:04.937 UTC [6867] ERROR:  canceling statement due to lock timeout
+2026-11-11 02:50:04.937 UTC [6867] CONTEXT:  while updating tuple (110,8) in relation "pg_class"
+2026-11-11 02:50:04.937 UTC [6867] STATEMENT:  REVOKE ALL ON TABLE "hadavin_test_aa3da880d20c"."tool_calls" FROM "hadavin_test_rt_8f649d11"
+2026-11-11 02:50:06.270 UTC [7071] WARNING:  no privileges were granted for "hadavin_test_4f28ae46e417"
+2026-11-11 02:50:08.036 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:08.077 UTC [31194] LOG:  checkpoint complete: wrote 3764 buffers (23.0%); 0 WAL file(s) added, 0 removed, 3 recycled; write=0.019 s, sync=0.001 s, total=0.042 s; sync files=0, longest=0.000 s, average=0.000 s; distance=51807 kB, estimate=51807 kB; lsn=0/12FA0EF0, redo lsn=0/12FA0EB8
+2026-11-11 02:50:08.090 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:08.091 UTC [31194] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=3 kB, estimate=46627 kB; lsn=0/12FA1DC8, redo lsn=0/12FA1D90
+2026-11-11 02:50:08.099 UTC [7196] ERROR:  role "hadavin_test_migrator_4239ea79" does not exist
+2026-11-11 02:50:08.099 UTC [7196] STATEMENT:  DROP OWNED BY "hadavin_test_migrator_4239ea79"
+2026-11-11 02:50:08.182 UTC [7210] ERROR:  role "hadavin_test_migrator_b0019e6b" cannot be dropped because some objects depend on it
+2026-11-11 02:50:08.182 UTC [7210] DETAIL:  1 object in database hadavin_test_db_5939ceea
+2026-11-11 02:50:08.182 UTC [7210] STATEMENT:  DROP ROLE "hadavin_test_migrator_b0019e6b"
+2026-11-11 02:50:08.192 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:08.198 UTC [31194] LOG:  checkpoint complete: wrote 937 buffers (5.7%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.006 s, sync=0.001 s, total=0.007 s; sync files=0, longest=0.000 s, average=0.000 s; distance=8585 kB, estimate=42823 kB; lsn=0/13804550, redo lsn=0/13804518
+2026-11-11 02:50:08.205 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:08.207 UTC [31194] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=3 kB, estimate=38541 kB; lsn=0/13805548, redo lsn=0/13805510
+2026-11-11 02:50:08.274 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:08.276 UTC [31194] LOG:  checkpoint complete: wrote 11 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4305 kB, estimate=35117 kB; lsn=0/13C39B08, redo lsn=0/13C39AD0
+2026-11-11 02:50:08.281 UTC [7220] ERROR:  role "hadavin_test_migrator_abfe4817" does not exist
+2026-11-11 02:50:08.281 UTC [7220] STATEMENT:  DROP OWNED BY "hadavin_test_migrator_abfe4817"
+2026-11-11 02:50:08.341 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:08.342 UTC [31194] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4297 kB, estimate=32035 kB; lsn=0/1406C2D8, redo lsn=0/1406C2A0
+2026-11-11 02:50:08.425 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:08.430 UTC [31194] LOG:  checkpoint complete: wrote 937 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.001 s, total=0.006 s; sync files=0, longest=0.000 s, average=0.000 s; distance=8594 kB, estimate=29691 kB; lsn=0/148D0DA0, redo lsn=0/148D0D68
+2026-11-11 02:50:08.438 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:08.439 UTC [31194] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4 kB, estimate=26722 kB; lsn=0/148D1FA8, redo lsn=0/148D1F70
+2026-11-11 02:50:08.446 UTC [7239] ERROR:  role "hadavin_test_migrator_80c87b3f" does not exist
+2026-11-11 02:50:08.446 UTC [7239] STATEMENT:  DROP OWNED BY "hadavin_test_migrator_80c87b3f"
+2026-11-11 02:50:10.736 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:10.741 UTC [31194] LOG:  checkpoint complete: wrote 325 buffers (2.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.002 s, sync=0.001 s, total=0.006 s; sync files=0, longest=0.000 s, average=0.000 s; distance=8942 kB, estimate=24944 kB; lsn=0/1518DB78, redo lsn=0/1518DB40
+2026-11-11 02:50:13.460 UTC [31739] FATAL:  terminating connection due to administrator command
+2026-11-11 02:50:13.549 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:13.556 UTC [31194] LOG:  checkpoint complete: wrote 553 buffers (3.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.001 s, total=0.008 s; sync files=0, longest=0.000 s, average=0.000 s; distance=10685 kB, estimate=23518 kB; lsn=0/15BFD130, redo lsn=0/15BFD0F8
+2026-11-11 02:50:13.565 UTC [8145] ERROR:  role "hadavin_test_migrator_ec7c1ce8" does not exist
+2026-11-11 02:50:13.565 UTC [8145] STATEMENT:  DROP OWNED BY "hadavin_test_migrator_ec7c1ce8"
+2026-11-11 02:50:13.616 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:13.618 UTC [31194] LOG:  checkpoint complete: wrote 10 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4304 kB, estimate=21597 kB; lsn=0/16031170, redo lsn=0/16031138
+2026-11-11 02:50:13.624 UTC [8151] ERROR:  role "hadavin_test_migrator_08a85969" does not exist
+2026-11-11 02:50:13.624 UTC [8151] STATEMENT:  DROP OWNED BY "hadavin_test_migrator_08a85969"
+2026-11-11 02:50:13.677 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:13.678 UTC [31194] LOG:  checkpoint complete: wrote 10 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4305 kB, estimate=19868 kB; lsn=0/16465738, redo lsn=0/16465700
+2026-11-11 02:50:13.684 UTC [8157] ERROR:  role "hadavin_test_migrator_138c1d53" does not exist
+2026-11-11 02:50:13.684 UTC [8157] STATEMENT:  DROP OWNED BY "hadavin_test_migrator_138c1d53"
+2026-11-11 02:50:13.737 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:13.739 UTC [31194] LOG:  checkpoint complete: wrote 10 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4302 kB, estimate=18311 kB; lsn=0/168992B0, redo lsn=0/16899278
+2026-11-11 02:50:13.745 UTC [8169] ERROR:  role "hadavin_test_migrator_10334827" does not exist
+2026-11-11 02:50:13.745 UTC [8169] STATEMENT:  DROP OWNED BY "hadavin_test_migrator_10334827"
+2026-11-11 02:50:14.866 UTC [8197] ERROR:  canceling statement due to lock timeout
+2026-11-11 02:50:14.866 UTC [8197] STATEMENT:  SELECT pg_advisory_xact_lock($1)
+2026-11-11 02:50:18.143 UTC [8611] ERROR:  canceling statement due to lock timeout
+2026-11-11 02:50:18.143 UTC [8611] STATEMENT:  SELECT pg_advisory_xact_lock($1)
+2026-11-11 02:50:20.325 UTC [8652] ERROR:  canceling statement due to lock timeout
+2026-11-11 02:50:20.325 UTC [8652] STATEMENT:  SELECT pg_advisory_xact_lock($1)
+2026-11-11 02:50:20.416 UTC [8693] ERROR:  role "hadavin_test_migrator_51fff82c" cannot be dropped because some objects depend on it
+2026-11-11 02:50:20.416 UTC [8693] DETAIL:  1 object in database hadavin_test_db_86a16fa6
+2026-11-11 02:50:20.416 UTC [8693] STATEMENT:  DROP ROLE "hadavin_test_migrator_51fff82c"
+2026-11-11 02:50:20.425 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:20.435 UTC [31194] LOG:  checkpoint complete: wrote 1442 buffers (8.8%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.006 s, sync=0.001 s, total=0.011 s; sync files=0, longest=0.000 s, average=0.000 s; distance=15263 kB, estimate=18006 kB; lsn=0/17781150, redo lsn=0/17781118
+2026-11-11 02:50:20.442 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:50:20.443 UTC [31194] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4 kB, estimate=16206 kB; lsn=0/177822F8, redo lsn=0/177822C0
+2026-11-11 02:50:22.500 UTC [8736] ERROR:  canceling statement due to lock timeout
+2026-11-11 02:50:22.500 UTC [8736] STATEMENT:  SELECT pg_advisory_xact_lock($1)
+2026-11-11 02:51:34.301 UTC [9808] ERROR:  the audit log is append-only
+2026-11-11 02:51:34.301 UTC [9808] CONTEXT:  PL/pgSQL function hadavin_audit_append_only() line 1 at RAISE
+2026-11-11 02:51:34.301 UTC [9808] STATEMENT:  UPDATE audit_entries SET body = '{}' WHERE seq = 2
+2026-11-11 02:51:34.301 UTC [9808] ERROR:  the audit log is append-only
+2026-11-11 02:51:34.301 UTC [9808] CONTEXT:  PL/pgSQL function hadavin_audit_append_only() line 1 at RAISE
+2026-11-11 02:51:34.301 UTC [9808] STATEMENT:  DELETE FROM audit_entries WHERE seq = 2
+2026-11-11 02:51:34.301 UTC [9808] ERROR:  the audit log is append-only
+2026-11-11 02:51:34.301 UTC [9808] CONTEXT:  PL/pgSQL function hadavin_audit_append_only() line 1 at RAISE
+2026-11-11 02:51:34.301 UTC [9808] STATEMENT:  TRUNCATE audit_entries
+2026-11-11 02:51:34.302 UTC [9808] ERROR:  the audit log is append-only
+2026-11-11 02:51:34.302 UTC [9808] CONTEXT:  PL/pgSQL function hadavin_audit_append_only() line 1 at RAISE
+2026-11-11 02:51:34.302 UTC [9808] STATEMENT:  DELETE FROM audit_checkpoints
+2026-11-11 02:51:34.584 UTC [9823] ERROR:  permission denied for table audit_entries
+2026-11-11 02:51:34.584 UTC [9823] STATEMENT:  UPDATE audit_entries SET body = '{}'
+2026-11-11 02:51:34.584 UTC [9823] ERROR:  permission denied for table audit_entries
+2026-11-11 02:51:34.584 UTC [9823] STATEMENT:  DELETE FROM audit_entries
+2026-11-11 02:51:35.538 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:51:35.547 UTC [31194] LOG:  checkpoint complete: wrote 1183 buffers (7.2%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.005 s, sync=0.001 s, total=0.009 s; sync files=0, longest=0.000 s, average=0.000 s; distance=10799 kB, estimate=15665 kB; lsn=0/1820E228, redo lsn=0/1820E1F0
+2026-11-11 02:51:35.577 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:51:35.578 UTC [31194] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=11 kB, estimate=14100 kB; lsn=0/182111B8, redo lsn=0/18211180
+2026-11-11 02:51:35.610 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:51:35.611 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=9 kB, estimate=12691 kB; lsn=0/182136C0, redo lsn=0/18213688
+2026-11-11 02:51:35.637 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:51:35.638 UTC [31194] LOG:  checkpoint complete: wrote 6 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=11 kB, estimate=11423 kB; lsn=0/18216548, redo lsn=0/18216510
+2026-11-11 02:51:35.667 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:51:35.668 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=8 kB, estimate=10281 kB; lsn=0/18218720, redo lsn=0/182186E8
+2026-11-11 02:51:54.101 UTC [10372] ERROR:  duplicate key value violates unique constraint "approval_decisions_one_per_step"
+2026-11-11 02:51:54.101 UTC [10372] DETAIL:  Key (approval_id, step)=(apr-x, 1) already exists.
+2026-11-11 02:51:54.101 UTC [10372] STATEMENT:  INSERT INTO "approval_decisions" ("schema_version", "approval_id", "plan_hash", "step", "decision", "approver_id", "channel", "reason", "decided_at") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+2026-11-11 02:51:54.319 UTC [10381] ERROR:  duplicate key value violates unique constraint "gate_decisions_pkey"
+2026-11-11 02:51:54.319 UTC [10381] DETAIL:  Key (run_id)=(run-g) already exists.
+2026-11-11 02:51:54.319 UTC [10381] STATEMENT:  INSERT INTO "gate_decisions" ("schema_version", "run_id", "plan_hash", "outcome", "rule_id", "ts") VALUES ($1, $2, $3, $4, $5, $6)
+2026-11-11 02:51:56.110 UTC [10463] ERROR:  duplicate key value violates unique constraint "approval_decisions_one_per_step"
+2026-11-11 02:51:56.110 UTC [10463] DETAIL:  Key (approval_id, step)=(apr-2b29987b95184a96b7ce96a567ff3bd1, 0) already exists.
+2026-11-11 02:51:56.110 UTC [10463] STATEMENT:  INSERT INTO approval_decisions ("schema_version", "approval_id", "plan_hash", "step", "decision", "approver_id", "channel", "reason", "decided_at") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+2026-11-11 02:51:56.370 UTC [10472] ERROR:  duplicate key value violates unique constraint "tool_calls_pkey"
+2026-11-11 02:51:56.370 UTC [10472] DETAIL:  Key (call_id)=(run-a:1) already exists.
+2026-11-11 02:51:56.370 UTC [10472] STATEMENT:  INSERT INTO "tool_calls" ("call_id", "run_id", "tool", "inputs", "output", "output_sha256", "created_at", "duration_ms", "attempt", "error") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+2026-11-11 02:52:00.642 UTC [10668] ERROR:  division by zero
+2026-11-11 02:52:00.642 UTC [10668] STATEMENT:  DECLARE "askdata_716bb7ba8af0" CURSOR FOR SELECT 1 / 0 FROM analytics.orders_v
+2026-11-11 02:52:04.247 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:04.278 UTC [31194] LOG:  checkpoint complete: wrote 2663 buffers (16.3%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.024 s, sync=0.001 s, total=0.031 s; sync files=0, longest=0.000 s, average=0.000 s; distance=28073 kB, estimate=28073 kB; lsn=0/19D82DE0, redo lsn=0/19D82DA8
+2026-11-11 02:52:04.282 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:04.283 UTC [31194] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=5 kB, estimate=25266 kB; lsn=0/19D84280, redo lsn=0/19D84248
+2026-11-11 02:52:05.397 UTC [10848] ERROR:  syntax error at or near "COMMIT" at character 43
+2026-11-11 02:52:05.397 UTC [10848] STATEMENT:  DECLARE "askdata_46d173926a4e" CURSOR FOR COMMIT; BEGIN READ WRITE; INSERT INTO scratch.marker VALUES (71); COMMIT
+2026-11-11 02:52:05.405 UTC [10851] ERROR:  cannot insert multiple commands into a prepared statement
+2026-11-11 02:52:05.405 UTC [10851] STATEMENT:  COMMIT; BEGIN READ WRITE; INSERT INTO scratch.marker VALUES (72); COMMIT
+2026-11-11 02:52:05.427 UTC [10856] ERROR:  syntax error at or near "SET" at character 43
+2026-11-11 02:52:05.427 UTC [10856] STATEMENT:  DECLARE "askdata_c10787d50956" CURSOR FOR SET TRANSACTION READ WRITE
+2026-11-11 02:52:05.432 UTC [10858] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:52:05.432 UTC [10858] STATEMENT:  DECLARE "askdata_56632f5029bc" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:52:05.440 UTC [10861] ERROR:  syntax error at or near "BEGIN" at character 43
+2026-11-11 02:52:05.440 UTC [10861] STATEMENT:  DECLARE "askdata_399f0ac2d488" CURSOR FOR BEGIN READ WRITE
+2026-11-11 02:52:05.445 UTC [10863] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:52:05.445 UTC [10863] STATEMENT:  DECLARE "askdata_03036e10e51c" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:52:05.454 UTC [10866] ERROR:  syntax error at or near "SET" at character 43
+2026-11-11 02:52:05.454 UTC [10866] STATEMENT:  DECLARE "askdata_2d806acfb099" CURSOR FOR SET default_transaction_read_only = off
+2026-11-11 02:52:05.458 UTC [10868] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:52:05.458 UTC [10868] STATEMENT:  DECLARE "askdata_1b0bdfc35dea" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:52:05.467 UTC [10871] ERROR:  syntax error at or near "RESET" at character 43
+2026-11-11 02:52:05.467 UTC [10871] STATEMENT:  DECLARE "askdata_eff7630a445b" CURSOR FOR RESET ALL
+2026-11-11 02:52:05.472 UTC [10873] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:52:05.472 UTC [10873] STATEMENT:  DECLARE "askdata_776ec80fcdfd" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:52:05.481 UTC [10876] ERROR:  transaction read-write mode must be set before any query
+2026-11-11 02:52:05.481 UTC [10876] STATEMENT:  FETCH FORWARD 200 FROM "askdata_f2d9cbc5cf11"
+2026-11-11 02:52:05.485 UTC [10878] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:52:05.485 UTC [10878] STATEMENT:  DECLARE "askdata_eb3eeae973f0" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:52:05.497 UTC [10883] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:52:05.497 UTC [10883] STATEMENT:  DECLARE "askdata_b366f94eeaa0" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:52:05.512 UTC [10888] ERROR:  syntax error at or near "INSERT" at character 43
+2026-11-11 02:52:05.512 UTC [10888] STATEMENT:  DECLARE "askdata_00c880a8e45c" CURSOR FOR INSERT INTO scratch.marker VALUES (74)
+2026-11-11 02:52:05.521 UTC [10891] ERROR:  transaction read-write mode must be set before any query
+2026-11-11 02:52:05.521 UTC [10891] STATEMENT:  FETCH FORWARD 200 FROM "askdata_3613dff7e753"
+2026-11-11 02:52:05.541 UTC [10897] ERROR:  permission denied for schema shop at character 57
+2026-11-11 02:52:05.541 UTC [10897] STATEMENT:  DECLARE "askdata_0fef4393a764" CURSOR FOR SELECT * FROM shop.customers
+2026-11-11 02:52:06.805 UTC [10913] ERROR:  permission denied for schema shop at character 13
+2026-11-11 02:52:06.805 UTC [10913] STATEMENT:  INSERT INTO shop.orders VALUES (9999, 1, DATE '2026-01-01', 'paid', 1)
+2026-11-11 02:52:06.809 UTC [10914] ERROR:  permission denied for schema shop at character 8
+2026-11-11 02:52:06.809 UTC [10914] STATEMENT:  UPDATE shop.orders SET status = 'x'
+2026-11-11 02:52:06.813 UTC [10915] ERROR:  permission denied for schema shop at character 13
+2026-11-11 02:52:06.813 UTC [10915] STATEMENT:  DELETE FROM shop.orders
+2026-11-11 02:52:06.817 UTC [10916] ERROR:  permission denied for schema shop
+2026-11-11 02:52:06.817 UTC [10916] STATEMENT:  TRUNCATE shop.orders
+2026-11-11 02:52:06.821 UTC [10917] ERROR:  permission denied for schema shop
+2026-11-11 02:52:06.821 UTC [10917] STATEMENT:  DROP TABLE shop.orders
+2026-11-11 02:52:06.825 UTC [10918] ERROR:  permission denied for schema analytics at character 14
+2026-11-11 02:52:06.825 UTC [10918] STATEMENT:  CREATE TABLE analytics.t (x integer)
+2026-11-11 02:52:06.828 UTC [10919] ERROR:  permission denied for schema public at character 14
+2026-11-11 02:52:06.828 UTC [10919] STATEMENT:  CREATE TABLE public.t (x integer)
+2026-11-11 02:52:06.832 UTC [10920] ERROR:  permission denied to create temporary tables in database "askdata_t_f4ae8cda" at character 19
+2026-11-11 02:52:06.832 UTC [10920] STATEMENT:  CREATE TEMP TABLE t (x integer)
+2026-11-11 02:52:06.835 UTC [10921] ERROR:  permission denied for schema shop at character 15
+2026-11-11 02:52:06.835 UTC [10921] STATEMENT:  SELECT * FROM shop.customers
+2026-11-11 02:52:06.838 UTC [10922] ERROR:  permission denied for schema shop at character 19
+2026-11-11 02:52:06.838 UTC [10922] STATEMENT:  SELECT email FROM shop.customers
+2026-11-11 02:52:06.842 UTC [10923] ERROR:  permission denied for view pg_shadow
+2026-11-11 02:52:06.842 UTC [10923] STATEMENT:  SELECT * FROM pg_shadow
+2026-11-11 02:52:06.847 UTC [10924] ERROR:  permission denied for function pg_read_file
+2026-11-11 02:52:06.847 UTC [10924] STATEMENT:  SELECT pg_read_file('postgresql.conf')
+2026-11-11 02:52:06.851 UTC [10925] ERROR:  permission denied to COPY to or from an external program
+2026-11-11 02:52:06.851 UTC [10925] DETAIL:  Only roles with privileges of the "pg_execute_server_program" role may COPY to or from an external program.
+2026-11-11 02:52:06.851 UTC [10925] HINT:  Anyone can COPY to stdout or from stdin. psql's \copy command also works for anyone.
+2026-11-11 02:52:06.851 UTC [10925] STATEMENT:  COPY (SELECT 1) TO PROGRAM 'echo x'
+2026-11-11 02:52:06.855 UTC [10926] ERROR:  permission denied for view orders_v
+2026-11-11 02:52:06.855 UTC [10926] STATEMENT:  INSERT INTO analytics.orders_v VALUES (9999, 1, DATE '2026-01-01', 'paid', 1)
+2026-11-11 02:52:06.859 UTC [10927] ERROR:  permission denied for view orders_v
+2026-11-11 02:52:06.859 UTC [10927] STATEMENT:  UPDATE analytics.orders_v SET status = 'x'
+2026-11-11 02:52:06.864 UTC [10928] ERROR:  must be owner of view orders_v
+2026-11-11 02:52:06.864 UTC [10928] STATEMENT:  DROP VIEW analytics.orders_v
+2026-11-11 02:52:06.972 UTC [10938] ERROR:  invalid input syntax for type integer: "refusing: pass -v confirm_dedicated=yes (dedicated database or replica only)" at character 8
+2026-11-11 02:52:06.972 UTC [10938] STATEMENT:  SELECT 'refusing: pass -v confirm_dedicated=yes (dedicated database or replica only)'::int;
+2026-11-11 02:52:07.061 UTC [10943] ERROR:  invalid input syntax for type integer: "refusing: other logins would lose access (listed above); review, then pass -v accept_loss=yes" at character 8
+2026-11-11 02:52:07.061 UTC [10943] STATEMENT:  SELECT 'refusing: other logins would lose access (listed above); review, then pass -v accept_loss=yes'::int;
+2026-11-11 02:52:12.786 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:12.796 UTC [31194] LOG:  checkpoint complete: wrote 1962 buffers (12.0%); 0 WAL file(s) added, 0 removed, 2 recycled; write=0.010 s, sync=0.001 s, total=0.011 s; sync files=0, longest=0.000 s, average=0.000 s; distance=19433 kB, estimate=24683 kB; lsn=0/1B07E990, redo lsn=0/1B07E958
+2026-11-11 02:52:13.525 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:13.526 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=10269 kB, estimate=23242 kB; lsn=0/1BA85E80, redo lsn=0/1BA85E48
+2026-11-11 02:52:14.429 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:14.434 UTC [31194] LOG:  checkpoint complete: wrote 968 buffers (5.9%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.005 s, sync=0.001 s, total=0.006 s; sync files=0, longest=0.000 s, average=0.000 s; distance=9041 kB, estimate=21821 kB; lsn=0/1C35A2C8, redo lsn=0/1C35A290
+2026-11-11 02:52:14.487 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:14.488 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4473 kB, estimate=20087 kB; lsn=0/1C7B8998, redo lsn=0/1C7B8960
+2026-11-11 02:52:14.539 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:14.540 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4473 kB, estimate=18525 kB; lsn=0/1CC17120, redo lsn=0/1CC170E8
+2026-11-11 02:52:14.589 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:14.590 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4474 kB, estimate=17120 kB; lsn=0/1D075980, redo lsn=0/1D075948
+2026-11-11 02:52:14.629 UTC [11060] WARNING:  there is no transaction in progress
+2026-11-11 02:52:14.642 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:14.643 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4474 kB, estimate=15856 kB; lsn=0/1D4D42A0, redo lsn=0/1D4D4268
+2026-11-11 02:52:14.691 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:14.692 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4474 kB, estimate=14717 kB; lsn=0/1D932C70, redo lsn=0/1D932C38
+2026-11-11 02:52:14.741 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:14.742 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4474 kB, estimate=13693 kB; lsn=0/1DD916F8, redo lsn=0/1DD916C0
+2026-11-11 02:52:14.804 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:14.805 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4447 kB, estimate=12768 kB; lsn=0/1E1E9398, redo lsn=0/1E1E9360
+2026-11-11 02:52:14.865 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:14.871 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.007 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4489 kB, estimate=11941 kB; lsn=0/1E64BB58, redo lsn=0/1E64BB20
+2026-11-11 02:52:14.926 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:14.927 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4475 kB, estimate=11194 kB; lsn=0/1EAAA8D0, redo lsn=0/1EAAA898
+2026-11-11 02:52:14.981 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:14.983 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4469 kB, estimate=10521 kB; lsn=0/1EF07FB8, redo lsn=0/1EF07F80
+2026-11-11 02:52:15.042 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.043 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4449 kB, estimate=9914 kB; lsn=0/1F360448, redo lsn=0/1F360410
+2026-11-11 02:52:15.106 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.107 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4445 kB, estimate=9367 kB; lsn=0/1F7B7A68, redo lsn=0/1F7B7A30
+2026-11-11 02:52:15.185 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.186 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4446 kB, estimate=8875 kB; lsn=0/1FC0F4B8, redo lsn=0/1FC0F480
+2026-11-11 02:52:15.245 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.246 UTC [31194] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4450 kB, estimate=8433 kB; lsn=0/20067CC0, redo lsn=0/20067C88
+2026-11-11 02:52:15.299 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.300 UTC [31194] LOG:  checkpoint complete: wrote 6 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4448 kB, estimate=8034 kB; lsn=0/204C0070, redo lsn=0/204C0038
+2026-11-11 02:52:15.356 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.357 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4443 kB, estimate=7675 kB; lsn=0/20916F40, redo lsn=0/20916F08
+2026-11-11 02:52:15.413 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.414 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4471 kB, estimate=7355 kB; lsn=0/20D74B88, redo lsn=0/20D74B50
+2026-11-11 02:52:15.468 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.469 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4471 kB, estimate=7066 kB; lsn=0/211D2898, redo lsn=0/211D2860
+2026-11-11 02:52:15.521 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.522 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4471 kB, estimate=6807 kB; lsn=0/21630660, redo lsn=0/21630628
+2026-11-11 02:52:15.574 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.575 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4447 kB, estimate=6571 kB; lsn=0/21A88608, redo lsn=0/21A885D0
+2026-11-11 02:52:15.631 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.632 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4460 kB, estimate=6360 kB; lsn=0/21EE3870, redo lsn=0/21EE3838
+2026-11-11 02:52:15.667 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.668 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4454 kB, estimate=6169 kB; lsn=0/2233D410, redo lsn=0/2233D3D8
+2026-11-11 02:52:15.701 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.702 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4455 kB, estimate=5998 kB; lsn=0/22797068, redo lsn=0/22797030
+2026-11-11 02:52:15.736 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.737 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4455 kB, estimate=5843 kB; lsn=0/22BF0D78, redo lsn=0/22BF0D40
+2026-11-11 02:52:15.771 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.772 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4455 kB, estimate=5705 kB; lsn=0/2304AB60, redo lsn=0/2304AB28
+2026-11-11 02:52:15.806 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.807 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4455 kB, estimate=5580 kB; lsn=0/234A49F0, redo lsn=0/234A49B8
+2026-11-11 02:52:15.860 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.861 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4472 kB, estimate=5469 kB; lsn=0/23902DB8, redo lsn=0/23902D80
+2026-11-11 02:52:15.917 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.918 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4445 kB, estimate=5367 kB; lsn=0/23D5A378, redo lsn=0/23D5A340
+2026-11-11 02:52:15.972 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:15.973 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4488 kB, estimate=5279 kB; lsn=0/241BC488, redo lsn=0/241BC450
+2026-11-11 02:52:16.027 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:16.028 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4445 kB, estimate=5195 kB; lsn=0/24613BB8, redo lsn=0/24613B80
+2026-11-11 02:52:16.082 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:16.083 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4448 kB, estimate=5121 kB; lsn=0/24A6BD78, redo lsn=0/24A6BD40
+2026-11-11 02:52:16.133 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:16.134 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4446 kB, estimate=5053 kB; lsn=0/24EC3748, redo lsn=0/24EC3710
+2026-11-11 02:52:16.191 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:16.192 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4474 kB, estimate=4995 kB; lsn=0/25321FB0, redo lsn=0/25321F78
+2026-11-11 02:52:16.255 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:16.256 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4474 kB, estimate=4943 kB; lsn=0/257808E0, redo lsn=0/257808A8
+2026-11-11 02:52:16.313 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:16.314 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4474 kB, estimate=4896 kB; lsn=0/25BDF2C0, redo lsn=0/25BDF288
+2026-11-11 02:52:16.363 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:16.364 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4474 kB, estimate=4854 kB; lsn=0/2603DD70, redo lsn=0/2603DD38
+2026-11-11 02:52:16.416 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:16.417 UTC [31194] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4474 kB, estimate=4816 kB; lsn=0/2649C8F0, redo lsn=0/2649C8B8
+2026-11-11 02:52:16.450 UTC [11229] ERROR:  unterminated /* comment at or near "/* a /* b */ ; DELETE FROM shop.order_items" at character 10
+2026-11-11 02:52:16.450 UTC [11229] STATEMENT:  SELECT 1 /* a /* b */ ; DELETE FROM shop.order_items
+2026-11-11 02:52:16.454 UTC [11230] ERROR:  unterminated /* comment at or near "/* never closed" at character 10
+2026-11-11 02:52:16.454 UTC [11230] STATEMENT:  SELECT 1 /* never closed
+2026-11-11 02:52:16.457 UTC [11231] ERROR:  unterminated quoted string at or near "'never closed FROM analytics.orders_v" at character 8
+2026-11-11 02:52:16.457 UTC [11231] STATEMENT:  SELECT 'never closed FROM analytics.orders_v
+2026-11-11 02:52:16.461 UTC [11232] ERROR:  unterminated quoted identifier at or near ""never closed FROM analytics.orders_v" at character 8
+2026-11-11 02:52:16.461 UTC [11232] STATEMENT:  SELECT "never closed FROM analytics.orders_v
+2026-11-11 02:52:16.464 UTC [11233] ERROR:  syntax error at or near "SELEC" at character 11
+2026-11-11 02:52:16.464 UTC [11233] STATEMENT:  SELECT 1; SELEC
+x
+2026-11-11 02:52:16.498 UTC [11240] WARNING:  there is no transaction in progress
+2026-11-11 02:52:16.542 UTC [11249] ERROR:  WITH clause containing a data-modifying statement must be at the top level at character 21
+2026-11-11 02:52:16.542 UTC [11249] STATEMENT:  SELECT * FROM (WITH d AS (DELETE FROM shop.order_items RETURNING *) SELECT * FROM d) s
+2026-11-11 02:52:16.590 UTC [11256] ERROR:  cross-database references are not implemented: "postgres.analytics.orders_v" at character 15
+2026-11-11 02:52:16.590 UTC [11256] STATEMENT:  SELECT * FROM postgres.analytics.orders_v
+2026-11-11 02:52:16.594 UTC [11257] ERROR:  relation "orders_v" does not exist at character 15
+2026-11-11 02:52:16.594 UTC [11257] STATEMENT:  SELECT * FROM orders_v
+2026-11-11 02:52:17.427 UTC [11263] ERROR:  could not write to file "base/pgsql_tmp/pgsql_tmp11263.0": No space left on device
+2026-11-11 02:52:17.427 UTC [11263] STATEMENT:  SELECT count(*) FROM generate_series(1, 100000000000)
+2026-11-11 02:52:17.611 UTC [11271] ERROR:  TABLESAMPLE clause can only be applied to tables and materialized views at character 15
+2026-11-11 02:52:17.611 UTC [11271] STATEMENT:  SELECT * FROM analytics.orders_v TABLESAMPLE SYSTEM (10)
+2026-11-11 02:52:17.633 UTC [11275] ERROR:  relation "b" does not exist at character 26
+2026-11-11 02:52:17.633 UTC [11275] DETAIL:  There is a WITH item named "b", but it cannot be referenced from this part of the query.
+2026-11-11 02:52:17.633 UTC [11275] HINT:  Use WITH RECURSIVE, or re-order the WITH items to remove forward references.
+2026-11-11 02:52:17.633 UTC [11275] STATEMENT:  WITH a AS (SELECT * FROM b), b AS (SELECT 1 AS x) SELECT * FROM a
+2026-11-11 02:52:17.638 UTC [11276] ERROR:  relation "t" does not exist at character 66
+2026-11-11 02:52:17.638 UTC [11276] STATEMENT:  SELECT * FROM (WITH t AS (SELECT 1 AS x) SELECT x FROM t) s JOIN t ON s.x = t.x
+2026-11-11 02:52:17.647 UTC [11278] ERROR:  relation "x" does not exist at character 26
+2026-11-11 02:52:17.647 UTC [11278] DETAIL:  There is a WITH item named "x", but it cannot be referenced from this part of the query.
+2026-11-11 02:52:17.647 UTC [11278] HINT:  Use WITH RECURSIVE, or re-order the WITH items to remove forward references.
+2026-11-11 02:52:17.647 UTC [11278] STATEMENT:  WITH x AS (SELECT * FROM x) SELECT * FROM x
+2026-11-11 02:52:17.660 UTC [11281] ERROR:  relation "later" does not exist at character 30
+2026-11-11 02:52:17.660 UTC [11281] STATEMENT:  SELECT * FROM (SELECT * FROM later) q WHERE EXISTS (SELECT 1 FROM analytics.orders_v)
+2026-11-11 02:52:17.665 UTC [11282] ERROR:  relation "t" does not exist at character 159
+2026-11-11 02:52:17.665 UTC [11282] STATEMENT:  SELECT * FROM analytics.orders_v o WHERE o.order_id IN (WITH t AS (SELECT order_id FROM analytics.orders_v) SELECT order_id FROM t) AND EXISTS (SELECT 1 FROM t)
+2026-11-11 02:52:17.671 UTC [11283] ERROR:  relation "later_cte" does not exist at character 72
+2026-11-11 02:52:17.671 UTC [11283] STATEMENT:  SELECT order_id FROM analytics.orders_v UNION ALL SELECT order_id FROM later_cte
+2026-11-11 02:52:17.676 UTC [11284] ERROR:  column "email" does not exist at character 8
+2026-11-11 02:52:17.676 UTC [11284] STATEMENT:  SELECT email FROM analytics.customers_v
+2026-11-11 02:52:17.682 UTC [11285] ERROR:  column "email" does not exist at character 8
+2026-11-11 02:52:17.682 UTC [11285] STATEMENT:  SELECT EMAIL FROM analytics.customers_v
+2026-11-11 02:52:17.687 UTC [11286] ERROR:  column c.email does not exist at character 8
+2026-11-11 02:52:17.687 UTC [11286] STATEMENT:  SELECT c.email FROM analytics.customers_v c
+2026-11-11 02:52:17.692 UTC [11287] ERROR:  column customers_v.email does not exist at character 8
+2026-11-11 02:52:17.692 UTC [11287] STATEMENT:  SELECT analytics.customers_v.email FROM analytics.customers_v
+2026-11-11 02:52:17.697 UTC [11288] ERROR:  column "email" does not exist at character 43
+2026-11-11 02:52:17.697 UTC [11288] STATEMENT:  SELECT 1 FROM analytics.customers_v WHERE email LIKE '%@%'
+2026-11-11 02:52:17.703 UTC [11289] ERROR:  column "email" does not exist at character 56
+2026-11-11 02:52:17.703 UTC [11289] STATEMENT:  SELECT customer_id FROM analytics.customers_v ORDER BY email
+2026-11-11 02:52:17.709 UTC [11290] ERROR:  column "email" does not exist at character 20
+2026-11-11 02:52:17.709 UTC [11290] STATEMENT:  SELECT (SELECT max(email) FROM analytics.customers_v)
+2026-11-11 02:52:17.716 UTC [11291] ERROR:  column "email" does not exist at character 71
+2026-11-11 02:52:17.716 UTC [11291] STATEMENT:  SELECT country FROM analytics.customers_v GROUP BY country HAVING max(email) > 'a'
+2026-11-11 02:52:17.722 UTC [11292] ERROR:  column "email" does not exist at character 67
+2026-11-11 02:52:17.722 UTC [11292] STATEMENT:  SELECT country FROM analytics.customers_v GROUP BY country HAVING email = 'x'
+2026-11-11 02:52:17.728 UTC [11293] ERROR:  column "interval" does not exist at character 82
+2026-11-11 02:52:17.728 UTC [11293] STATEMENT:  SELECT country FROM analytics.customers_v GROUP BY country HAVING max(country) - INTERVAL > 1
+2026-11-11 02:52:17.735 UTC [11294] ERROR:  column "email" does not exist at character 94
+2026-11-11 02:52:17.735 UTC [11294] STATEMENT:  SELECT order_id FROM analytics.orders_v ORDER BY (SELECT 1 FROM analytics.customers_v HAVING email IS NULL)
+2026-11-11 02:52:17.777 UTC [11300] ERROR:  function count(integer, integer) does not exist at character 8
+2026-11-11 02:52:17.777 UTC [11300] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:17.777 UTC [11300] STATEMENT:  SELECT count(1, 2) FROM analytics.orders_v
+2026-11-11 02:52:17.781 UTC [11301] ERROR:  function age() does not exist at character 8
+2026-11-11 02:52:17.781 UTC [11301] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:17.781 UTC [11301] STATEMENT:  SELECT age() FROM analytics.orders_v
+2026-11-11 02:52:17.786 UTC [11302] ERROR:  function length(text, integer) does not exist at character 8
+2026-11-11 02:52:17.786 UTC [11302] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:17.786 UTC [11302] STATEMENT:  SELECT length(status, 3) FROM analytics.orders_v
+2026-11-11 02:52:17.791 UTC [11303] ERROR:  function ceil(integer, integer) does not exist at character 8
+2026-11-11 02:52:17.791 UTC [11303] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:17.791 UTC [11303] STATEMENT:  SELECT ceil(1, 2) FROM analytics.orders_v
+2026-11-11 02:52:17.796 UTC [11304] ERROR:  function row_number(integer) does not exist at character 8
+2026-11-11 02:52:17.796 UTC [11304] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:17.796 UTC [11304] STATEMENT:  SELECT row_number(5) OVER () FROM analytics.orders_v
+2026-11-11 02:52:17.801 UTC [11305] ERROR:  function ntile() does not exist at character 8
+2026-11-11 02:52:17.801 UTC [11305] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:17.801 UTC [11305] STATEMENT:  SELECT ntile() OVER () FROM analytics.orders_v
+2026-11-11 02:52:17.806 UTC [11306] ERROR:  function make_date(integer, integer) does not exist at character 8
+2026-11-11 02:52:17.806 UTC [11306] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:17.806 UTC [11306] STATEMENT:  SELECT make_date(1, 2) FROM analytics.orders_v
+2026-11-11 02:52:17.811 UTC [11307] ERROR:  function replace(text, unknown) does not exist at character 8
+2026-11-11 02:52:17.811 UTC [11307] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:17.811 UTC [11307] STATEMENT:  SELECT replace(status, 'a') FROM analytics.orders_v
+2026-11-11 02:52:17.816 UTC [11308] ERROR:  function percentile_cont(numeric, numeric, numeric) does not exist at character 8
+2026-11-11 02:52:17.816 UTC [11308] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:17.816 UTC [11308] STATEMENT:  SELECT percentile_cont(0.5, 0.6) WITHIN GROUP (ORDER BY total_amount) FROM analytics.orders_v
+2026-11-11 02:52:17.826 UTC [11310] ERROR:  column o.email does not exist at character 8
+2026-11-11 02:52:17.826 UTC [11310] STATEMENT:  SELECT o.email FROM analytics.orders_v o
+2026-11-11 02:52:19.079 UTC [11321] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:19.079 UTC [11321] STATEMENT:  SELECT pg_sleep(10)
+2026-11-11 02:52:20.288 UTC [11324] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:20.288 UTC [11324] STATEMENT:  SELECT pg_catalog.pg_sleep(10)
+2026-11-11 02:52:21.496 UTC [11357] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:21.496 UTC [11357] STATEMENT:  SELECT PG_SLEEP(10)
+2026-11-11 02:52:22.703 UTC [11359] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:22.703 UTC [11359] STATEMENT:  SELECT "pg_sleep"(10)
+2026-11-11 02:52:22.709 UTC [11360] ERROR:  function PG_SLEEP(integer) does not exist at character 8
+2026-11-11 02:52:22.709 UTC [11360] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:22.709 UTC [11360] STATEMENT:  SELECT "PG_SLEEP"(10)
+2026-11-11 02:52:23.915 UTC [11361] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:23.915 UTC [11361] STATEMENT:  SELECT 1 FROM analytics.orders_v WHERE pg_sleep(10) IS NOT NULL
+2026-11-11 02:52:25.121 UTC [11363] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:25.121 UTC [11363] STATEMENT:  SELECT (SELECT pg_sleep(10)) FROM analytics.orders_v
+2026-11-11 02:52:26.331 UTC [11368] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:26.331 UTC [11368] STATEMENT:  SELECT pg_sleep_for(INTERVAL '10 seconds')
+2026-11-11 02:52:27.537 UTC [11371] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:27.537 UTC [11371] STATEMENT:  SELECT sum(g) FROM (SELECT generate_series(1, 100000000000) AS g) s
+2026-11-11 02:52:28.139 UTC [11423] ERROR:  could not establish connection
+2026-11-11 02:52:28.139 UTC [11423] DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+		Is the server running locally and accepting connections on that socket?
+2026-11-11 02:52:28.139 UTC [11423] STATEMENT:  SELECT dblink_connect('dbname=postgres')
+2026-11-11 02:52:28.163 UTC [11426] WARNING:  PID 0 is not a PostgreSQL backend process
+2026-11-11 02:52:28.172 UTC [11428] ERROR:  relation "shop.nothing_seq" does not exist at character 16
+2026-11-11 02:52:28.172 UTC [11428] STATEMENT:  SELECT nextval('shop.nothing_seq')
+2026-11-11 02:52:28.223 UTC [11439] ERROR:  function public.my_func(integer) does not exist at character 8
+2026-11-11 02:52:28.223 UTC [11439] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:28.223 UTC [11439] STATEMENT:  SELECT public.my_func(order_id) FROM analytics.orders_v
+2026-11-11 02:52:29.429 UTC [11440] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:29.429 UTC [11440] STATEMENT:  SELECT count(*) FILTER (WHERE pg_sleep(10) IS NOT NULL) FROM analytics.orders_v
+2026-11-11 02:52:30.637 UTC [11454] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:30.637 UTC [11454] STATEMENT:  SELECT 1 FROM analytics.orders_v ORDER BY (pg_sleep(10) IS NULL)
+2026-11-11 02:52:31.846 UTC [11468] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:31.846 UTC [11468] STATEMENT:  SELECT 1 FROM analytics.orders_v a JOIN analytics.orders_v b ON a.order_id = b.order_id AND pg_sleep(10) IS NOT NULL
+2026-11-11 02:52:33.053 UTC [11480] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:33.053 UTC [11480] STATEMENT:  SELECT CASE WHEN true THEN pg_sleep(10) END FROM analytics.orders_v
+2026-11-11 02:52:34.259 UTC [11488] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:34.259 UTC [11488] STATEMENT:  SELECT row_number() OVER (ORDER BY (pg_sleep(10) IS NULL)) FROM analytics.orders_v
+2026-11-11 02:52:34.341 UTC [11515] ERROR:  invalid input syntax for type integer: "email" at character 28
+2026-11-11 02:52:34.341 UTC [11515] STATEMENT:  SELECT CAST(customer_id AS DECIMAL(email, 2)) FROM analytics.customers_v
+2026-11-11 02:52:34.360 UTC [11518] ERROR:  relation "delivered" does not exist
+2026-11-11 02:52:34.360 UTC [11518] STATEMENT:  SELECT status::regclass FROM analytics.orders_v
+2026-11-11 02:52:35.566 UTC [11519] ERROR:  canceling statement due to statement timeout
+2026-11-11 02:52:35.566 UTC [11519] STATEMENT:  WITH RECURSIVE r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r) SELECT count(*) FROM r
+2026-11-11 02:52:35.613 UTC [11600] ERROR:  syntax error at end of input at character 13
+2026-11-11 02:52:35.613 UTC [11600] STATEMENT:  SELECT 1 AS 
+2026-11-11 02:52:35.617 UTC [11601] ERROR:  syntax error at or near "" at character 10
+2026-11-11 02:52:35.617 UTC [11601] STATEMENT:  SELECT 1 [2K
+2026-11-11 02:52:35.641 UTC [11607] ERROR:  syntax error at or near "$" at character 13
+2026-11-11 02:52:35.641 UTC [11607] STATEMENT:  SELECT 1 AS $x
+2026-11-11 02:52:35.676 UTC [11620] ERROR:  there is no parameter $1 at character 51
+2026-11-11 02:52:35.676 UTC [11620] STATEMENT:  SELECT * FROM analytics.orders_v WHERE order_id = $1
+2026-11-11 02:52:35.681 UTC [11621] ERROR:  there is no parameter $1 at character 51
+2026-11-11 02:52:35.681 UTC [11621] STATEMENT:  SELECT * FROM analytics.orders_v WHERE order_id = $1::int
+2026-11-11 02:52:35.685 UTC [11622] ERROR:  syntax error at or near "%" at character 51
+2026-11-11 02:52:35.685 UTC [11622] STATEMENT:  SELECT * FROM analytics.orders_v WHERE order_id = %s
+2026-11-11 02:52:35.689 UTC [11623] ERROR:  syntax error at or near "%" at character 51
+2026-11-11 02:52:35.689 UTC [11623] STATEMENT:  SELECT * FROM analytics.orders_v WHERE order_id = %(id)s
+2026-11-11 02:52:35.693 UTC [11624] ERROR:  syntax error at or near ":" at character 51
+2026-11-11 02:52:35.693 UTC [11624] STATEMENT:  SELECT * FROM analytics.orders_v WHERE order_id = :id
+2026-11-11 02:52:35.697 UTC [11625] ERROR:  syntax error at end of input at character 52
+2026-11-11 02:52:35.697 UTC [11625] STATEMENT:  SELECT * FROM analytics.orders_v WHERE order_id = ?
+2026-11-11 02:52:35.701 UTC [11626] ERROR:  column "customer_іd" does not exist at character 8
+2026-11-11 02:52:35.701 UTC [11626] HINT:  Perhaps you meant to reference the column "orders_v.customer_id".
+2026-11-11 02:52:35.701 UTC [11626] STATEMENT:  SELECT customer_іd FROM analytics.orders_v
+2026-11-11 02:52:35.706 UTC [11627] ERROR:  trailing junk after numeric literal at or near "1;" at character 8
+2026-11-11 02:52:35.706 UTC [11627] STATEMENT:  SELECT 1; DELETE FROM shop.order_items
+2026-11-11 02:52:35.709 UTC [11628] ERROR:  syntax error at or near "ＳELECT" at character 1
+2026-11-11 02:52:35.709 UTC [11628] STATEMENT:  ＳELECT 1
+2026-11-11 02:52:35.712 UTC [11629] ERROR:  syntax error at or near "SELECT 1" at character 1
+2026-11-11 02:52:35.712 UTC [11629] STATEMENT:  SELECT 1
+2026-11-11 02:52:35.716 UTC [11630] ERROR:  column "customer_​id" does not exist at character 8
+2026-11-11 02:52:35.716 UTC [11630] HINT:  Perhaps you meant to reference the column "orders_v.customer_id".
+2026-11-11 02:52:35.716 UTC [11630] STATEMENT:  SELECT customer_​id FROM analytics.orders_v
+2026-11-11 02:52:35.723 UTC [11632] ERROR:  syntax error at or near "﻿SELECT" at character 1
+2026-11-11 02:52:35.723 UTC [11632] STATEMENT:  ﻿SELECT 1
+2026-11-11 02:52:35.761 UTC [11640] ERROR:  operator does not exist: text @> unknown at character 54
+2026-11-11 02:52:35.761 UTC [11640] HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:35.761 UTC [11640] STATEMENT:  SELECT 1 FROM analytics.orders_v WHERE LOWER(status) @> 'a'
+2026-11-11 02:52:35.765 UTC [11641] ERROR:  operator does not exist: text -> unknown at character 15
+2026-11-11 02:52:35.765 UTC [11641] HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:35.765 UTC [11641] STATEMENT:  SELECT status -> 'a' FROM analytics.orders_v
+2026-11-11 02:52:35.769 UTC [11642] ERROR:  operator does not exist: text ->> unknown at character 15
+2026-11-11 02:52:35.769 UTC [11642] HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+2026-11-11 02:52:35.769 UTC [11642] STATEMENT:  SELECT status ->> 'a' FROM analytics.orders_v
+2026-11-11 02:52:35.800 UTC [11648] ERROR:  time zone "delivered" not recognized
+2026-11-11 02:52:35.800 UTC [11648] STATEMENT:  SELECT order_date AT TIME ZONE status FROM analytics.orders_v
+2026-11-11 02:52:35.813 UTC [11651] ERROR:  FILTER specified, but lower is not an aggregate function at character 8
+2026-11-11 02:52:35.813 UTC [11651] STATEMENT:  SELECT lower(status) FILTER (WHERE true) FROM analytics.orders_v
+2026-11-11 02:52:35.914 UTC [11662] ERROR:  relation "analytics.Orders_V" does not exist at character 15
+2026-11-11 02:52:35.914 UTC [11662] STATEMENT:  SELECT * FROM analytics."Orders_V"
+2026-11-11 02:52:35.918 UTC [11663] ERROR:  relation "ANALYTICS.orders_v" does not exist at character 15
+2026-11-11 02:52:35.918 UTC [11663] STATEMENT:  SELECT * FROM "ANALYTICS".orders_v
+2026-11-11 02:52:35.922 UTC [11664] ERROR:  column "Order_Id" does not exist at character 8
+2026-11-11 02:52:35.922 UTC [11664] HINT:  Perhaps you meant to reference the column "orders_v.order_id".
+2026-11-11 02:52:35.922 UTC [11664] STATEMENT:  SELECT "Order_Id" FROM analytics.orders_v
+2026-11-11 02:52:35.931 UTC [11666] ERROR:  column "order_id " does not exist at character 8
+2026-11-11 02:52:35.931 UTC [11666] HINT:  Perhaps you meant to reference the column "orders_v.order_id".
+2026-11-11 02:52:35.931 UTC [11666] STATEMENT:  SELECT "order_id " FROM analytics.orders_v
+2026-11-11 02:52:35.953 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:52:35.954 UTC [31194] LOG:  checkpoint complete: wrote 36 buffers (0.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.002 s; sync files=0, longest=0.000 s, average=0.000 s; distance=4539 kB, estimate=4788 kB; lsn=0/2690B7F8, redo lsn=0/2690B7C0
+2026-11-11 02:52:38.867 UTC [11777] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:52:38.867 UTC [11777] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:52:39.236 UTC [11788] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:52:39.236 UTC [11788] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:52:39.336 UTC [11794] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:52:39.336 UTC [11794] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:52:39.420 UTC [11800] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:52:39.420 UTC [11800] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:52:39.504 UTC [11806] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:52:39.504 UTC [11806] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:52:39.585 UTC [11812] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:52:39.585 UTC [11812] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:52:39.668 UTC [11819] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:52:39.668 UTC [11819] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:52:39.747 UTC [11825] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:52:39.747 UTC [11825] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:52:39.833 UTC [11831] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:52:39.833 UTC [11831] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:52:39.918 UTC [11837] ERROR:  invalid input syntax for type integer: "verify_readonly: RED" at character 8
+2026-11-11 02:52:39.918 UTC [11837] STATEMENT:  SELECT 'verify_readonly: RED'::int;
+2026-11-11 02:53:00.340 UTC [12441] ERROR:  permission denied for table audit_entries
+2026-11-11 02:53:00.340 UTC [12441] STATEMENT:  UPDATE audit_entries SET body = '{}'
+2026-11-11 02:53:00.340 UTC [12441] ERROR:  permission denied for table audit_entries
+2026-11-11 02:53:00.340 UTC [12441] STATEMENT:  DELETE FROM audit_entries
+2026-11-11 02:53:00.341 UTC [12441] ERROR:  permission denied for table audit_checkpoints
+2026-11-11 02:53:00.341 UTC [12441] STATEMENT:  UPDATE audit_checkpoints SET hash = 'x'
+2026-11-11 02:53:00.341 UTC [12441] ERROR:  permission denied for table audit_entries
+2026-11-11 02:53:00.341 UTC [12441] STATEMENT:  TRUNCATE audit_entries
+2026-11-11 02:53:00.574 UTC [12452] ERROR:  permission denied for table kill_switch
+2026-11-11 02:53:00.574 UTC [12452] STATEMENT:  SELECT count(*) FROM kill_switch
+2026-11-11 02:53:00.574 UTC [12452] ERROR:  permission denied for table runs
+2026-11-11 02:53:00.574 UTC [12452] STATEMENT:  DELETE FROM runs
+2026-11-11 02:53:03.383 UTC [12632] ERROR:  could not extend file "base/5/49830": No space left on device
+2026-11-11 02:53:03.383 UTC [12632] HINT:  Check free disk space.
+2026-11-11 02:53:03.383 UTC [12632] STATEMENT:  -- The `chain` audit's tables in the store's database (slice 2 P3). Ported from WARDEN audit.py `_PG_SCHEMA`
+	-- (main c78d7709): rows and checkpoints are append-only even to a role that could UPDATE, DELETE or TRUNCATE.
+	-- The outbox is not: reconcile deletes a queued outcome once it is in the chain.
+	CREATE TABLE IF NOT EXISTS audit_entries (
+	    seq BIGINT PRIMARY KEY,
+	    at TEXT NOT NULL,
+	    run_id TEXT NOT NULL,
+	    kind TEXT NOT NULL,
+	    body TEXT NOT NULL,
+	    prev TEXT NOT NULL,
+	    hash TEXT NOT NULL,
+	    event_id TEXT NOT NULL UNIQUE
+	);
+	CREATE TABLE IF NOT EXISTS audit_checkpoints (
+	    seq BIGINT PRIMARY KEY,
+	    hash TEXT NOT NULL,
+	    signature TEXT NOT NULL
+	);
+	CREATE TABLE IF NOT EXISTS audit_outbox (
+	    event_id TEXT PRIMARY KEY,
+	    body TEXT NOT NULL
+	);
+	CREATE INDEX IF NOT EXISTS audit_entries_by_run ON audit_entries (run_id, seq);
+	
+	CREATE OR REPLACE FUNCTION hadavin_audit_append_only() RETURNS trigger LANGUAGE plpgsql AS
+	$f$ BEGIN RAISE EXCEPTION 'the audit log is append-only'; END $f$;
+	
+	CREATE OR REPLACE TRIGGER audit_entries_append_only BEFORE UPDATE OR DELETE ON audit_entries
+	    FOR EACH ROW EXECUTE FUNCTION hadavin_audit_append_only();
+	CREATE OR REPLACE TRIGGER audit_checkpoints_append_only BEFORE UPDATE OR DELETE ON audit_checkpoints
+	    FOR EACH ROW EXECUTE FUNCTION hadavin_audit_append_only();
+	CREATE OR REPLACE TRIGGER audit_entries_no_truncate BEFORE TRUNCATE ON audit_entries
+	    FOR EACH STATEMENT EXECUTE FUNCTION hadavin_audit_append_only();
+	CREATE OR REPLACE TRIGGER audit_checkpoints_no_truncate BEFORE TRUNCATE ON audit_checkpoints
+	    FOR EACH STATEMENT EXECUTE FUNCTION hadavin_audit_append_only();
+	
+2026-11-11 02:53:05.759 UTC [31194] LOG:  checkpoint starting: immediate force wait
+2026-11-11 02:53:05.760 UTC [31194] ERROR:  could not write block 0 in file "base/48280/1247": No space left on device
+2026-11-11 02:53:05.760 UTC [31194] CONTEXT:  writing block 0 of relation base/48280/1247
+2026-11-11 02:53:05.760 UTC [12649] ERROR:  checkpoint request failed
+2026-11-11 02:53:05.760 UTC [12649] HINT:  Consult recent messages in the server log for details.
+2026-11-11 02:53:05.760 UTC [12649] STATEMENT:  DROP DATABASE IF EXISTS "askdata_t_f4ae8cda" WITH (FORCE)
+2026-11-11 02:54:32.200 UTC [31193] LOG:  received fast shutdown request
+2026-11-11 02:54:32.200 UTC [31193] LOG:  aborting any active transactions
+2026-11-11 02:54:32.202 UTC [31193] LOG:  background worker "logical replication launcher" (PID 31199) exited with exit code 1
+2026-11-11 02:54:32.204 UTC [31194] LOG:  shutting down
+2026-11-11 02:54:32.204 UTC [31194] LOG:  checkpoint starting: shutdown immediate
+2026-11-11 02:54:32.222 UTC [31194] LOG:  checkpoint complete: wrote 1550 buffers (9.5%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.011 s, sync=0.001 s, total=0.019 s; sync files=0, longest=0.000 s, average=0.000 s; distance=11361 kB, estimate=11361 kB; lsn=0/27423E68, redo lsn=0/27423E68
+2026-11-11 02:54:32.237 UTC [31193] LOG:  database system is shut down
