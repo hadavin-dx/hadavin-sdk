@@ -1,4 +1,4 @@
-"""Slice 2 P7 store hardening: TLS rules, append-only grants, fail-closed kill switch, exact month spend.
+"""Store hardening: TLS rules, append-only grants, fail-closed kill switch, exact month spend.
 
 Database tests skip without HADAVIN_TEST_PG_DSN (CI runs the postgres service)."""
 
@@ -136,7 +136,7 @@ def store():
 def test_append_only_tables_get_no_update(fresh_dsn):
     import psycopg
 
-    role = "rt_" + fresh_dsn.rsplit("search_path=t_", 1)[1][:8]
+    role = "rt_" + fresh_dsn.rsplit("search_path=hadavin_test_", 1)[1][:8]
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
     try:
