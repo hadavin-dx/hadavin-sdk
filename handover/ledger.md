@@ -2705,3 +2705,6 @@
 | P3a2-r2-D-F11 | same | Major | P3a-2 | printed REVOKE on other applications' objects lacks warning in message | OPEN | rev 3 | - | 2026-11-11 |
 | P3a2-r2-D-F12 | same | Major | P3a-2 | extension-owned public objects (pg_stat_statements, PostGIS) falsely refused; owner decision missing | OPEN | rev 3 + questions-for-lead | - | 2026-11-11 |
 | P3a2-r2-D-minor | same | minor | P3a-2 | F3 commit 3 size, F6 retired tests refusal-dropped column, F7 limits first + transaction_timeout PG17, F8 6.4 vs 10.1, F9 pg_database_owner fix/grant option SET ROLE, F10 cluster-wide leftover | OPEN | rev 3 | - | 2026-11-11 |
+| Q8a-2-r4-m1 | reviews/Q8a-2/result-r4-codebase-full.md | minor | Q8a-2 | handler failure that is a builtin ConnectionError logged only at DEBUG (receiver.py:198) | OPEN | batch 4 | - | 2026-11-11 |
+| Q8a-2-r4-m2 | same | minor | Q8a-2 | write timeout in _answer after handler failure loses the ERROR line | OPEN | batch 4 | - | 2026-11-11 |
+| Q8a-2-r4-m3m4 | same | minor | Q8a-2 | _plain tests miss \x7f, U+2029, bidi, U+200B; error-kind chain unbounded (cycle) | OPEN | batch 4 | - | 2026-11-11 |
