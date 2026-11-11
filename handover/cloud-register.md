@@ -1194,7 +1194,8 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-flaky a67f662c | EVIDENCE RUNNER (Fable) timing-harness fix fa3f8c1b; pg 56100 | 14:27Z | +60m | 14:27Z | running | read RESULTS.md |
 | R-flaky a6bff613 | egm codebase (Fable) RESULT review of timing-harness fix | 14:27Z | +20m | 14:27Z | CLOSED saved reviews/timing-harness/result-r1-fa3f8c1.md (3 Major) | save reviews/timing-harness/ |
 | B-Q8a1 (resumed) a0c5bd99 | Q8a-1 fix batch after result review r1 (D-012) | 14:27Z | +60m | 14:27Z | running | new head -> evidence + fresh reviewers r2 |
-| A-Q8b (resumed) a123e38f | Q8b ticket revision 2 (D-011) | 14:27Z | +40m | 14:27Z | running | plan review r2 |
+| A-Q8b (resumed) a123e38f | Q8b ticket revision 2 (D-011) | 14:27Z | +40m | 14:27Z | CLOSED ticket rev 2 written (65 measured rows; replay scores NOT run) | plan review r2 |
 | B-Q8c1 a56207cb | ONE builder (Fable) Q8c PR 1 (Vault x2 + Kubernetes + mechanism), branch core/q8c-1-policy-vault-kubernetes, pg 56120 | 14:28Z | +120m | 14:28Z | running | checkpoint 30m; evidence + reviewers |
 | B-flaky (resumed) a6e5db57 | timing-harness fix batch after result review r1 (interleave, 5 repeats, pinned constants, mutants) | 14:30Z | +60m | | running | new head -> fresh evidence + reviewer |
 | B-PR89-r20 a7b9ddc4 | ONE builder (Fable) PR89 round 20 (allowlist projection, strict sockets, test switch removed, wording), pg 56130, heavy.sh for full runs | 14:35Z | +120m | 14:35Z | running | checkpoint 30m; then evidence + fresh reviewers r21 |
+| R-Q8b-r2 a865e68c | egm impl-readiness (Fable) plan review r2 of tickets/Q8b rev 2 | 14:38Z | +20m | 14:38Z | running | errata, freeze, builder after PR77 scope settles |
