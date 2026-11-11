@@ -1068,3 +1068,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a605a0c0b43320cb2 | PR73 design/security reviewer r7 | 2026-11-11 | - | CLOSED: 0 Blocker, 0 Major, 4 Minor saved; ledger r7-01 |
 | aa1db3a77c2507a90 | PR73 codebase reviewer r7 | 2026-11-11 | - | CLOSED: 0 Blocker, 1 Major, 6 Minor saved; ledger r7-02, r7-03 |
 | aea5c3b20851d826d | PR73 builder round 8 (password-less logins Major, 6 codebase minors, 4 design minors) | resumed 2026-11-11 | +90 min | running |
+| a290aa955ce105a74 | PR89 builder round 8 | 2026-11-11 | - | CLOSED: ef4c572 pushed (plain commit, gitleaks clean, 166/166 mutants) |
+| a65ea831ec30561b9 | PR89 evidence runner, head ef4c572 (166 mutants, root and non-root, WITH Postgres) | 2026-11-11 | on report | running; model sonnet |
+| ab78cc6897a0feb5a | PR89 design/security reviewer r9, snapshot /tmp/snap/core_P89-ef4c572 | 2026-11-11 | on report | running; model sonnet |
+| a15efb43802a648cc | PR89 codebase reviewer r9, same snapshot | 2026-11-11 | on report | running; model sonnet |
