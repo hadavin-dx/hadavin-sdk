@@ -2553,3 +2553,10 @@
 | BL-core-q8deps-F4 | Major | core-main | see reviews/Q8/deps-audit.md F4 | OPEN | | | 2026-11-11 |
 | BL-core-q8deps-F5 | Major | core-main | see reviews/Q8/deps-audit.md F5 | OPEN | | | 2026-11-11 |
 | BL-core-q8deps-F6 | Major | core-main | see reviews/Q8/deps-audit.md F6 | OPEN | | | 2026-11-11 |
+| BL-core-q8red-F1 | Blocker | redaction-main | see reviews/Q8/redaction-sweep.md F1 (reproduced with neutralise=None only) | OPEN | | | 2026-11-11 |
+| BL-core-q8red-F2 | Major | redaction-main | see reviews/Q8/redaction-sweep.md F2 | OPEN | | | 2026-11-11 |
+| BL-core-q8red-F3 | Major | redaction-main | see reviews/Q8/redaction-sweep.md F3 | OPEN | | | 2026-11-11 |
+| BL-core-q8red-F4 | Major | redaction-main | see reviews/Q8/redaction-sweep.md F4 | OPEN | | | 2026-11-11 |
+| BL-core-q8red-F5 | Major | redaction-main | see reviews/Q8/redaction-sweep.md F5 | OPEN | | | 2026-11-11 |
+| BL-core-q8red-F6 | Major | redaction-main | see reviews/Q8/redaction-sweep.md F6 | OPEN | | | 2026-11-11 |
+| BL-core-q8red-F7 | Major | redaction-main | see reviews/Q8/redaction-sweep.md F7 | OPEN | | | 2026-11-11 |

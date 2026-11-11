@@ -1708,3 +1708,6 @@ Held back by gitleaks in this pass: none. Still unpushed from the earlier pass: 
 ## Q-2026-11-11-approver-stepup and pilot signer (from reviews/Q8/deps-audit.md F4, F9)
 - F4: approver identity is "the verified Slack user" with no second factor (passkey); step-up is deferred to "Phase 3". F9: pilot allows signer none / anchor none / key file on disk.
 - Why owner: both change the product promise and client onboarding. Safe default taken: no change; ledger rows BL-core-q8deps-F4 open. Next step: owner says enforce now or records a dated exception.
+
+## Q-2026-11-11-vault-approle (from Q8a plan review)
+- Vault `approle` reads its secret id from the environment (static unless Vault expires it); only `kubernetes` auth is truly short-lived, so a client on plain VMs has no short-lived mode. Owner decision: allow approle in prod, or require a JWT/OIDC or certificate mode first. Safe default taken: approle stays allowed; only the static token is refused in pilot and prod (ticket Q8a-1).

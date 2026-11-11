@@ -1,0 +1,2 @@
+failure	tests.demo_askdata.test_validate_harm::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]	psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection
+failure	tests.test_migration_numbers::test_the_timing_harness_flags_a_quadratic_stand_in	AssertionError: a quadratic function must be flagged
