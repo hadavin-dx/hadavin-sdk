@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="6" time="1.357" timestamp="2026-11-10T23:38:02.056146+00:00" hostname="vm"><testcase classname="tests.test_mutation_runner_meta" name="test_a_the_test_file_holds_the_moved_tests_and_the_manifest_test_once_each" time="0.012" /><testcase classname="tests.test_mutation_runner_meta" name="test_a_there_are_the_listed_number_of_mutants_with_unique_names" time="0.001"><failure message="AssertionError: ['judge: an exception line counts as a kill', 'judge: crash markers ignored', 'judge: short expect accepted', 'runner: crash counts as good', 'runner: an absolute path is accepted', 'runner: a dotdot part is accepted', ...]&#10;assert (62 == 162)&#10;[+1 more line; full report in element text]">def test_a_there_are_the_listed_number_of_mutants_with_unique_names():
+        names = [m.name for m in mm.M]
+&gt;       assert len(names) == EXPECTED_MUTANTS and len(set(names)) == EXPECTED_MUTANTS, names
+E       AssertionError: ['judge: an exception line counts as a kill', 'judge: crash markers ignored', 'judge: short expect accepted', 'runner: crash counts as good', 'runner: an absolute path is accepted', 'runner: a dotdot part is accepted', ...]
+E       assert (62 == 162)
+E        +  where 62 = len(['judge: an exception line counts as a kill', 'judge: crash markers ignored', 'judge: short expect accepted', 'runner: crash counts as good', 'runner: an absolute path is accepted', 'runner: a dotdot part is accepted', ...])
+
+tests/test_mutation_runner_meta.py:111: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_meta" name="test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists" time="1.224" /><testcase classname="tests.test_mutation_runner_meta" name="test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not" time="0.000"><failure message="assert 59 == (162 - 3)&#10; +  where 59 = sum(&lt;generator object test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not.&lt;locals&gt;.&lt;genexpr&gt; at 0x7f9967ece740&gt;)">def test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not():
+        crash = {m.name: m.crash_type for m in mm.M if m.allow_crash}
+        assert crash == {
+            "runner: a failing tree kill is not caught": "PermissionError",
+            "b2: a refused junit stops the run": "ValueError",
+            "runner: a truncated junit stops the run": "ParseError",
+        }
+&gt;       assert sum(not m.allow_crash and not m.crash_type for m in mm.M) == EXPECTED_MUTANTS - 3
+E       assert 59 == (162 - 3)
+E        +  where 59 = sum(&lt;generator object test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not.&lt;locals&gt;.&lt;genexpr&gt; at 0x7f9967ece740&gt;)
+
+tests/test_mutation_runner_meta.py:161: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_meta" name="test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets" time="0.002"><failure message="AssertionError: assert 62 == 162&#10; +  where 62 = len(['judge: an exception line counts as a kill: occurs once in src/hadavin_sdk/testing/mutation.py', 'judge: crash marker...s once in tools/mutation_runner.py', 'runner: a dotdot part is accepted: occurs once in tools/mutation_runner.py', ...])">def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():
+        lines = []
+        for m in mm.M:
+            text = (ROOT / m.file).read_text(encoding="utf-8")
+            count = text.count(m.old)
+            assert count == 1, f"{m.name}: the search string occurs {count} times in {m.file}"
+            assert m.new != m.old, m.name
+            lines.append(f"{m.name}: occurs once in {m.file}")
+&gt;       assert len(lines) == EXPECTED_MUTANTS
+E       AssertionError: assert 62 == 162
+E        +  where 62 = len(['judge: an exception line counts as a kill: occurs once in src/hadavin_sdk/testing/mutation.py', 'judge: crash marker...s once in tools/mutation_runner.py', 'runner: a dotdot part is accepted: occurs once in tools/mutation_runner.py', ...])
+
+tests/test_mutation_runner_meta.py:172: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_meta" name="test_the_mutants_script_exits_2_when_the_filter_selects_no_mutant" time="0.074" /></testsuite></testsuites>

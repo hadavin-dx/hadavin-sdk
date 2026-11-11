@@ -1,0 +1,2036 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="97" skipped="0" tests="105" time="8.379" timestamp="2026-11-10T23:38:33.373018+00:00" hostname="vm"><testcase classname="tests.test_mutation_runner_keywords" name="test_the_guard_fails_a_test_that_deletes_the_database_address_and_puts_nothing_back" time="0.003" /><testcase classname="tests.test_mutation_runner_keywords" name="test_conftest_loads_the_given_file_as_a_plugin_and_without_it_nothing_is_loaded" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'conftest'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_conftest_loads_the_given_0')
+
+    def test_conftest_loads_the_given_file_as_a_plugin_and_without_it_nothing_is_loaded(tmp_path):
+        root = _tree(tmp_path, {"tests/conftest.py": CONFTEST_FIXTURE, CORE_TEST: USES_FIXTURE})
+        try:
+&gt;           rows = _run(root, conftest="tests/conftest.py")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:154: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_conftest_loads_the_given_0/pkg')
+mutants = (), kw = {'conftest': 'tests/conftest.py'}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'conftest'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_mutant_is_judged_with_the_conftest_loaded" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'conftest'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_mutant_is_judged_with_t0')
+
+    def test_a_mutant_is_judged_with_the_conftest_loaded(tmp_path):
+        body = "from pk.core import go\n\ndef test_a(answer):\n    assert answer == 42\n    assert go(True) is True\n"
+        root = _tree(tmp_path, {"tests/conftest.py": CONFTEST_FIXTURE, CORE_TEST: body})
+&gt;       rows = _run(root, [FLIP], conftest="tests/conftest.py")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:167: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_mutant_is_judged_with_t0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'conftest': 'tests/conftest.py'}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'conftest'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_conftest_that_is_not_a_plain_python_path_is_refused_before_anything_runs" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'conftest'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_conftest_that_is_not_a_0')
+
+    def test_a_conftest_that_is_not_a_plain_python_path_is_refused_before_anything_runs(tmp_path):
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        for bad in (
+            "tests/my-conf.py",
+            "tests/no:conf.py",
+            "../conftest.py",
+            "/abs/conftest.py",
+            "-p.py",
+            "@x.py",
+            "tests/1x.py",
+            "tésts/conftest.py",
+            "tests/",
+        ):
+&gt;           _must_refuse(f"conftest {bad!r}", _run, root, conftest=bad)
+
+tests/test_mutation_runner_keywords.py:186: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:87: in _must_refuse
+    call(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_conftest_that_is_not_a_0/pkg')
+mutants = (), kw = {'conftest': 'tests/my-conf.py'}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'conftest'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_conftest_with_a_python_keyword_part_is_refused" time="0.001"><failure message="NotImplementedError: _plugin_module">def test_a_conftest_with_a_python_keyword_part_is_refused():
+        for bad in ("tests/class.py", "tests/import.py", "class/conftest.py"):
+&gt;           _must_refuse(f"a keyword part in {bad!r}", mr._plugin_module, bad)
+
+tests/test_mutation_runner_keywords.py:192: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:87: in _must_refuse
+    call(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('tests/class.py',), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _plugin_module
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_conftest_with_a_non_ascii_part_is_refused" time="0.001"><failure message="NotImplementedError: _plugin_module">def test_a_conftest_with_a_non_ascii_part_is_refused():
+        for bad in ("tests/café.py", "tests/ä.py"):  # identifiers for Python, but not plain ASCII
+&gt;           _must_refuse(f"a non-ascii part in {bad!r}", mr._plugin_module, bad)
+
+tests/test_mutation_runner_keywords.py:197: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:87: in _must_refuse
+    call(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('tests/café.py',), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _plugin_module
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_conftest_that_does_not_end_in_py_is_refused" time="0.001"><failure message="NotImplementedError: _plugin_module">def test_a_conftest_that_does_not_end_in_py_is_refused():
+        for bad in ("tests/conftest.txt", "tests/conftest", "tests/conftest.pyx"):
+&gt;           _must_refuse(f"a conftest without the .py ending: {bad!r}", mr._plugin_module, bad)
+
+tests/test_mutation_runner_keywords.py:202: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:87: in _must_refuse
+    call(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('tests/conftest.txt',), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _plugin_module
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_conftest_must_be_called_conftest_or_lie_in_a_tests_folder" time="0.001"><failure message="NotImplementedError: _plugin_module">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_conftest_must_be_called0')
+
+    def test_a_conftest_must_be_called_conftest_or_lie_in_a_tests_folder(tmp_path):
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        (root / "src" / "pk" / "conftest.py").write_text("", encoding="utf-8")
+        (root / "tests" / "plugin.py").write_text("", encoding="utf-8")
+        for bad in ("src/pk/core.py", "src/pk/__init__.py", "plugin.py"):
+&gt;           _must_refuse(
+                f"a tree file that is no conftest and no test helper: {bad!r}", mr._plugin_module, bad
+            )
+
+tests/test_mutation_runner_keywords.py:210: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:87: in _must_refuse
+    call(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('src/pk/core.py',), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _plugin_module
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_conftest_path_that_is_valid_but_missing_is_a_value_error_before_any_temp_folder" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'conftest'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_conftest_path_that_is_v0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9748464e0&gt;
+
+    def test_a_conftest_path_that_is_valid_but_missing_is_a_value_error_before_any_temp_folder(
+        tmp_path, monkeypatch
+    ):
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        made = []
+        real = mr.tempfile.mkdtemp
+        monkeypatch.setattr(mr.tempfile, "mkdtemp", lambda *a, **k: made.append(1) or real(*a, **k))
+        caught: ValueError | OSError | None = None
+        try:
+&gt;           _run(root, conftest="tests/conftest.py")
+
+tests/test_mutation_runner_keywords.py:229: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_conftest_path_that_is_v0/pkg')
+mutants = (), kw = {'conftest': 'tests/conftest.py'}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'conftest'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_pass_env_hands_the_listed_variable_to_the_child_and_default_does_not" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_pass_env_hands_the_listed0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974942c10&gt;
+
+    def test_pass_env_hands_the_listed_variable_to_the_child_and_default_does_not(
+        tmp_path, monkeypatch
+    ):
+        monkeypatch.setenv(DSN_NAME, _fake_dsn())
+        root = _tree(tmp_path, {CORE_TEST: READS_DSN})
+&gt;       assert _run(root, pass_env=(DSN_NAME,)) == [], "the listed variable did not reach the child"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:253: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_pass_env_hands_the_listed0/pkg')
+mutants = (), kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_mutant_run_sees_the_passed_variable" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_mutant_run_sees_the_pas0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9749435b0&gt;
+
+    def test_a_mutant_run_sees_the_passed_variable(tmp_path, monkeypatch):
+        monkeypatch.setenv(DSN_NAME, _fake_dsn())
+        body = (
+            f"import os\nfrom pk.core import go\n\ndef test_a():\n    assert os.environ.get({DSN_NAME!r}) == {_fake_dsn()!r}, 'the variable is missing'\n"
+            "    assert go(True) is True, 'the flip was seen'\n"
+        )
+        root = _tree(tmp_path, {CORE_TEST: body})
+        lines: dict[str, str] = {}
+        flip_seen = Mutant(
+            "flip", "src/pk/core.py", "return flag", "return not flag", "the flip was seen"
+        )
+&gt;       rows = _run(root, [flip_seen], pass_env=(DSN_NAME,), first_lines=lines)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:270: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_mutant_run_sees_the_pas0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='the flip was seen', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',), 'first_lines': {}}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_pass_env_never_widens_to_other_variables" time="0.002"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_pass_env_never_widens_to_0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9749a9980&gt;
+
+    def test_pass_env_never_widens_to_other_variables(tmp_path, monkeypatch):
+        monkeypatch.setenv(DSN_NAME, _fake_dsn())
+        monkeypatch.setenv("SOME_API_TOKEN", "tok")
+        body = "import os\n\ndef test_a():\n    assert 'SOME_API_TOKEN' not in os.environ\n"
+        root = _tree(tmp_path, {CORE_TEST: body})
+&gt;       assert _run(root, pass_env=(DSN_NAME,)) == [], "another variable reached the child"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:284: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_pass_env_never_widens_to_0/pkg')
+mutants = (), kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_pass_env_with_an_unset_variable_passes_nothing" time="0.002"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_pass_env_with_an_unset_va0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974806d50&gt;
+
+    def test_pass_env_with_an_unset_variable_passes_nothing(tmp_path, monkeypatch):
+        monkeypatch.delenv(DSN_NAME, raising=False)
+        body = f"import os\n\ndef test_a():\n    assert {DSN_NAME!r} not in os.environ\n"
+        root = _tree(tmp_path, {CORE_TEST: body})
+&gt;       assert _run(root, pass_env=(DSN_NAME,)) == [], "an unset variable was passed"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:291: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_pass_env_with_an_unset_va0/pkg')
+mutants = (), kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_an_unlisted_env_name_is_refused_before_anything_runs" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_an_unlisted_env_name_is_r0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974806510&gt;
+
+    def test_an_unlisted_env_name_is_refused_before_anything_runs(tmp_path, monkeypatch):
+        monkeypatch.setenv("SOME_API_TOKEN", "tok")
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        seen = []
+        monkeypatch.setattr(mr, "_pytest", lambda *a, **k: seen.append(a) or 0)
+        for names in UNLISTED_NAMES:
+&gt;           _must_refuse("an unlisted pass_env name was accepted", _run, root, pass_env=names)
+
+tests/test_mutation_runner_keywords.py:311: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:87: in _must_refuse
+    call(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_an_unlisted_env_name_is_r0/pkg')
+mutants = (), kw = {'pass_env': ('SOME_API_TOKEN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_the_pytest_step_refuses_an_unlisted_env_name_by_itself" time="0.001"><failure message="TypeError: _pytest() got an unexpected keyword argument 'env_names'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_the_pytest_step_refuses_a0')
+
+    def test_the_pytest_step_refuses_an_unlisted_env_name_by_itself(tmp_path):
+        (tmp_path / "t.py").write_text(PASSES, encoding="utf-8")
+&gt;       _must_refuse(
+            "the pytest step passed an unlisted name",
+            mr._pytest,
+            tmp_path,
+            ["t.py"],
+            tmp_path / "r.xml",
+            60,
+            env_names=("SOME_API_TOKEN",),
+        )
+
+tests/test_mutation_runner_keywords.py:317: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'the pytest step passed an unlisted name'
+call = &lt;function _pytest at 0x7fe975554400&gt;
+args = (PosixPath('/tmp/pytest-of-root/pytest-9590/test_the_pytest_step_refuses_a0'), ['t.py'], PosixPath('/tmp/pytest-of-root/pytest-9590/test_the_pytest_step_refuses_a0/r.xml'), 60)
+kwargs = {'env_names': ('SOME_API_TOKEN',)}
+
+    def _must_refuse(label, call, *args, **kwargs):
+        """``call`` must raise ``ValueError``; otherwise the first assertion line is ``&lt;label&gt;: was not refused`` (another error, a ``TypeError`` from a missing keyword for example, is a failure of its own)."""
+        try:
+&gt;           call(*args, **kwargs)
+E           TypeError: _pytest() got an unexpected keyword argument 'env_names'
+
+tests/test_mutation_runner_keywords.py:87: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_bare_string_for_pass_env_is_refused_not_read_letter_by_letter" time="0.001"><failure message="AssertionError: another refusal: run_mutants() got an unexpected keyword argument 'pass_env'&#10;assert 'not one string' in &quot;run_mutants() got an unexpected keyword argument 'pass_env'&quot;&#10; +  where &quot;run_mutants() got an unexpected keyword argument 'pass_env'&quot; = str(TypeError(&quot;run_mutants() got an unexpected keyword argument 'pass_env'&quot;))">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_bare_string_for_pass_en0')
+
+    def test_a_bare_string_for_pass_env_is_refused_not_read_letter_by_letter(tmp_path):
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        caught = None
+        try:
+            _run(root, pass_env=DSN_NAME)
+        except (TypeError, ValueError) as exc:
+            caught = exc
+        assert isinstance(caught, TypeError), f"a bare string was read as names: {caught!r}"
+&gt;       assert "not one string" in str(caught), f"another refusal: {caught}"
+E       AssertionError: another refusal: run_mutants() got an unexpected keyword argument 'pass_env'
+E       assert 'not one string' in "run_mutants() got an unexpected keyword argument 'pass_env'"
+E        +  where "run_mutants() got an unexpected keyword argument 'pass_env'" = str(TypeError("run_mutants() got an unexpected keyword argument 'pass_env'"))
+
+tests/test_mutation_runner_keywords.py:337: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_property_no_name_outside_the_allowlist_is_ever_accepted" time="0.001"><failure message="NotImplementedError: _checked_env_names">def test_property_no_name_outside_the_allowlist_is_ever_accepted():
+        # 500 fixed pseudo-random names (hash prefixes of 0..499, lengths 0..39), the same every run
+        names = [hashlib.sha256(str(i).encode()).hexdigest()[: i % 40] for i in range(500)]
+        names += [n + suffix for n in PASS_ENV_ALLOWED for suffix in ("_", "2", " ", "\n", "\x00")]
+        for name in names:
+            if name in PASS_ENV_ALLOWED:
+                continue
+&gt;           _must_refuse(f"the name {name!r} was accepted", mr._checked_env_names, (name,))
+
+tests/test_mutation_runner_keywords.py:347: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:87: in _must_refuse
+    call(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _checked_env_names
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_property_the_allowlist_holds_only_the_test_database_address" time="0.001"><failure message="AssertionError: assert frozenset() == ('HADAVIN_TEST_PG_DSN',)&#10;  &#10;  Use -v to get more diff">def test_property_the_allowlist_holds_only_the_test_database_address():
+&gt;       assert PASS_ENV_ALLOWED == (DSN_NAME,)
+E       AssertionError: assert frozenset() == ('HADAVIN_TEST_PG_DSN',)
+E         
+E         Use -v to get more diff
+
+tests/test_mutation_runner_keywords.py:352: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_pass_env_values_never_reach_first_lines" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_pass_env_values_never_rea0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97482bf50&gt;
+
+    def test_pass_env_values_never_reach_first_lines(tmp_path, monkeypatch):
+        dsn, word = _secret_dsn()
+        monkeypatch.setenv(DSN_NAME, dsn)
+        lines: dict[str, str] = {}
+&gt;       _run(_showing_value_tree(tmp_path, dsn), [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
+
+tests/test_mutation_runner_keywords.py:376: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_pass_env_values_never_rea0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',), 'first_lines': {}}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_pass_env_values_never_reach_the_failing_test_id_of_a_row" time="0.002"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_pass_env_values_never_rea1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9749354d0&gt;
+
+    def test_pass_env_values_never_reach_the_failing_test_id_of_a_row(tmp_path, monkeypatch):
+        dsn, word = _secret_dsn()
+        monkeypatch.setenv(DSN_NAME, dsn)
+        shows_value = Mutant("flip", "src/pk/core.py", "return flag", "return not flag", "postgresql")
+&gt;       rows = _run(_showing_value_tree(tmp_path, dsn), [shows_value], pass_env=(DSN_NAME,))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:387: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_pass_env_values_never_rea1/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='postgresql', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_the_baseline_skip_message_never_holds_the_passed_value" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_the_baseline_skip_message0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974553650&gt;
+
+    def test_the_baseline_skip_message_never_holds_the_passed_value(tmp_path, monkeypatch):
+        dsn, word = _secret_dsn()
+        monkeypatch.setenv(DSN_NAME, dsn)
+        body = (
+            "import pytest\n\n"
+            f"@pytest.mark.parametrize('v', [{dsn!r}])\n"
+            "def test_a(v):\n    pytest.skip('no database')\n"
+        )
+        root = _tree(tmp_path, {CORE_TEST: body})
+        refusal = ""
+        try:
+&gt;           _run(root, [FLIP], pass_env=(DSN_NAME,), forbid_skips=True)
+
+tests/test_mutation_runner_keywords.py:406: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_the_baseline_skip_message0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',), 'forbid_skips': True}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_masked_replaces_the_value_and_the_url_password" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974950130&gt;
+
+    def test_masked_replaces_the_value_and_the_url_password(monkeypatch):
+        dsn, word = _secret_dsn()
+&gt;       assert mr._secret_values(()) == (), "no names must give no secrets"
+               ^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:419: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ((),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_percent_encoded_password_is_masked_in_both_forms" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974950910&gt;
+
+    def test_a_percent_encoded_password_is_masked_in_both_forms(monkeypatch):
+        first, second = "Qw7", "Rt5"
+        raw = (
+            first + "%40" + second
+        )  # the URL carries the encoded form; a test may print the decoded one
+        decoded = first + "@" + second
+        monkeypatch.setenv(DSN_NAME, f"postgresql://svc:{raw}@db.invalid/scratch")
+&gt;       secrets = mr._secret_values((DSN_NAME,))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:436: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_shortened_value_is_masked_by_its_fragments" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974951160&gt;
+
+    def test_a_shortened_value_is_masked_by_its_fragments(monkeypatch):
+        for value in (_key_value_value()[0], _long_value()):
+            monkeypatch.setenv(DSN_NAME, value)
+&gt;           secrets = mr._secret_values((DSN_NAME,))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_pass_env_values_shortened_by_pytest_never_reach_first_lines" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_pass_env_values_shortened0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974950600&gt;
+
+    def test_pass_env_values_shortened_by_pytest_never_reach_first_lines(tmp_path, monkeypatch):
+        for n, value in enumerate((_key_value_value()[0], _long_value())):
+            monkeypatch.setenv(DSN_NAME, value)
+            root = _plain_compare_tree(tmp_path / str(n), value)
+            # positive control: with the masking off, the line really holds a fragment (so the check below can fail)
+            with monkeypatch.context() as m:
+                m.setattr(mr, "_masked", lambda text, secrets: text)
+                seen: dict[str, str] = {}
+&gt;               _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=seen)
+
+tests/test_mutation_runner_keywords.py:494: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_pass_env_values_shortened0/0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',), 'first_lines': {}}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_password_after_a_password_word_or_in_a_url_query_is_a_secret" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9749517f0&gt;
+
+    def test_a_password_after_a_password_word_or_in_a_url_query_is_a_secret(monkeypatch):
+        value, word = _key_value_value()
+        monkeypatch.setenv(DSN_NAME, value)
+&gt;       assert word in mr._secret_values((DSN_NAME,)), (
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "the password of a key=value address was not a secret"
+        )
+
+tests/test_mutation_runner_keywords.py:508: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_value_with_a_backslash_is_masked_as_repr_prints_it" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974952d60&gt;
+
+    def test_a_value_with_a_backslash_is_masked_as_repr_prints_it(monkeypatch):
+        word = "Ab3" + "\\" + "Xy9Zq1"  # one backslash: repr and many log formats print it doubled
+        monkeypatch.setenv(DSN_NAME, "host=db.invalid user=svc password=" + word)
+&gt;       secrets = mr._secret_values((DSN_NAME,))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:526: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_value_with_a_non_ascii_letter_is_masked_as_unicode_escape_prints_it" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974848e50&gt;
+
+    def test_a_value_with_a_non_ascii_letter_is_masked_as_unicode_escape_prints_it(monkeypatch):
+        word = "Ab3" + chr(233) + "Xy9Zq1"  # unicode_escape prints the letter as a backslash and x e 9
+        monkeypatch.setenv(DSN_NAME, "host=db.invalid user=svc password=" + word)
+&gt;       secrets = mr._secret_values((DSN_NAME,))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:551: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_passwd_and_pwd_words_and_a_quoted_password_are_secrets" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97484a9e0&gt;
+
+    def test_passwd_and_pwd_words_and_a_quoted_password_are_secrets(monkeypatch):
+        base = "host=db.invalid user=svc "
+&gt;       assert "Hk4Lm8Pq2" in _secrets_of(base + "passwd=Hk4Lm8Pq2", monkeypatch), (
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "the password after passwd= was not a secret"
+        )
+
+tests/test_mutation_runner_keywords.py:567: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:562: in _secrets_of
+    return mr._secret_values((DSN_NAME,))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_fragment_of_exactly_the_minimum_length_is_masked_and_a_shorter_one_is_not" time="0.001"><failure message="NotImplementedError: _masked">def test_a_fragment_of_exactly_the_minimum_length_is_masked_and_a_shorter_one_is_not():
+        secret = "Qw7xK2mTp9" + "Zr4Vb8Nc3L"  # built from parts
+&gt;       head6 = mr._masked(f"E x == '{secret[:6]}...zzz'", (secret,))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:586: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ("E x == 'Qw7xK2...zzz'", ('Qw7xK2mTp9Zr4Vb8Nc3L',)), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _masked
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_value_is_masked_as_json_writes_it" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9748498d0&gt;
+
+    def test_a_value_is_masked_as_json_writes_it(monkeypatch):
+        monkeypatch.setenv(DSN_NAME, JSON_VALUE)
+&gt;       secrets = mr._secret_values((DSN_NAME,))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:628: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_value_is_masked_as_the_repr_of_its_bytes_prints_it" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97484b4d0&gt;
+
+    def test_a_value_is_masked_as_the_repr_of_its_bytes_prints_it(monkeypatch):
+        monkeypatch.setenv(DSN_NAME, JSON_VALUE)
+&gt;       secrets = mr._secret_values((DSN_NAME,))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:637: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_masking_removes_a_random_value_in_every_printed_form_whole_or_shortened" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97484b620&gt;
+
+    def test_masking_removes_a_random_value_in_every_printed_form_whole_or_shortened(monkeypatch):
+        """Property test (seeded, no extra library): for random values with quotes, backslashes, non-ASCII letters and control characters,
+        no printed form of the value survives ``_masked``, and neither does a head or tail piece of 6 or more characters next to ``...``
+        (what pytest prints for a long text). A piece is searched as a window of the printed form, so the check is stricter than the rule."""
+        rng = _Det(20261110)
+        alphabet = (
+            "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+            + "'\""
+            + "\\"
+            + chr(233)
+            + chr(252)
+            + "\t\n%+;&amp;"
+        )
+        for n in range(150):
+            core = "".join(rng.choice(alphabet[:56]) for _ in range(rng.randint(8, 16)))
+            pad = "".join(rng.choice(alphabet) for _ in range(rng.randint(0, 6)))
+            value = f"host=db.invalid user=svc password={pad}{core}"
+            monkeypatch.setenv(DSN_NAME, value)
+&gt;           secrets = mr._secret_values((DSN_NAME,))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:660: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_short_secret_inside_a_shortened_long_one_does_not_hide_the_long_one" time="0.001"><failure message="NotImplementedError: _masked">def test_a_short_secret_inside_a_shortened_long_one_does_not_hide_the_long_one():
+        # found by the property test: cutting the short long_value out first changed the text, and the tail of the long one no longer matched
+        long_value = "north-river-stone-bridge-glacier-delta"  # readable words: 38 characters, more than the 12 + 13 shown
+        shown = f"E   assert '{long_value[:12]}...{long_value[-13:]}' == 'other'"
+&gt;       out = mr._masked(shown, (long_value, "ta"))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:703: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ("E   assert 'north-river-...glacier-delta' == 'other'", ('north-river-stone-bridge-glacier-delta', 'ta'))
+k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _masked
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_line_with_a_hostile_number_of_dots_is_replaced_fast" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97484bf50&gt;
+
+    def test_a_line_with_a_hostile_number_of_dots_is_replaced_fast(monkeypatch):
+        value, _word = _key_value_value()
+        monkeypatch.setenv(DSN_NAME, value)
+&gt;       secrets = mr._secret_values((DSN_NAME,))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:712: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_the_fragment_scan_agrees_with_the_plain_definition" time="0.001"><failure message="NotImplementedError: _fragment_spans">def test_the_fragment_scan_agrees_with_the_plain_definition():
+        """The scan was rewritten to be fast; it must still return the spans of the plain definition (every length from the largest down)."""
+        rng = _Det(7)
+        for _ in range(300):
+            secret = "".join(rng.choice("abcd") for _ in range(rng.randint(7, 20)))
+            text = "".join(rng.choice("abcd.") for _ in range(rng.randint(0, 60)))
+            plain: list[tuple[int, int]] = []
+            for at in range(len(text) - 2):
+                if text[at : at + 3] != "...":
+                    continue
+                start, end, top = at, at + 3, len(secret) - 1
+                for k in range(min(top, start), 5, -1):
+                    if text[start - k : start] == secret[:k]:
+                        plain.append((start - k, start))
+                        break
+                for k in range(min(top, len(text) - end), 5, -1):
+                    if text[end : end + k] == secret[-k:]:
+                        plain.append((end, end + k))
+                        break
+&gt;           assert sorted(mr._fragment_spans(text, secret)) == sorted(plain), (
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                f"the fast scan found other spans than the plain definition: {text!r} {secret!r}"
+            )
+
+tests/test_mutation_runner_keywords.py:746: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('bcbaccbadbc.dda.a.acbac..c.bcbdbddbbc.dbbbabbdababd.cb.aac.', 'adddccba')
+k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _fragment_spans
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_database_that_a_mutant_left_dirty_stops_the_run_after_that_mutant" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_database_that_a_mutant_0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974848d00&gt;
+
+    def test_a_database_that_a_mutant_left_dirty_stops_the_run_after_that_mutant(tmp_path, monkeypatch):
+        monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
+        root = _tree(tmp_path, {CORE_TEST: DIRTY_AFTER_FLIP})
+        other = Mutant("second", "src/pk/core.py", "return flag", "return not flag", "assert")
+        seen = []
+        failure = None
+        try:
+&gt;           _run(root, [FLIP, other], pass_env=(DSN_NAME,), on_result=seen.append)
+
+tests/test_mutation_runner_keywords.py:777: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_database_that_a_mutant_0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=Fal...not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',), 'on_result': &lt;built-in method append of list object at 0x7fe9747d4c00&gt;}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_clean_database_costs_one_extra_run_per_mutant_and_changes_no_row" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_clean_database_costs_on0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974953700&gt;
+
+    def test_a_clean_database_costs_one_extra_run_per_mutant_and_changes_no_row(tmp_path, monkeypatch):
+        monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
+        root = _tree(tmp_path, {CORE_TEST: USES_GO})
+        count = []
+        real = mr._pytest
+        monkeypatch.setattr(mr, "_pytest", lambda *a, **k: count.append(a[2].name) or real(*a, **k))
+&gt;       rows = _run(root, [FLIP], pass_env=(DSN_NAME,))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:795: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_clean_database_costs_on0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_without_a_passed_value_there_is_no_extra_run" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_without_a_passed_value_th0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974952350&gt;
+
+    def test_without_a_passed_value_there_is_no_extra_run(tmp_path, monkeypatch):
+        monkeypatch.delenv(DSN_NAME, raising=False)
+        root = _tree(tmp_path, {CORE_TEST: USES_GO})
+        count = []
+        real = mr._pytest
+        monkeypatch.setattr(mr, "_pytest", lambda *a, **k: count.append(a[2].name) or real(*a, **k))
+&gt;       _run(root, [FLIP], pass_env=(DSN_NAME,))
+
+tests/test_mutation_runner_keywords.py:808: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_without_a_passed_value_th0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_the_canary_runs_the_unmutated_copy" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_the_canary_runs_the_unmut0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97494aa50&gt;
+
+    def test_the_canary_runs_the_unmutated_copy(tmp_path, monkeypatch):
+        monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
+        root = _tree(tmp_path, {CORE_TEST: USES_GO})
+        try:
+&gt;           rows = _run(root, [FLIP], pass_env=(DSN_NAME,))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:819: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_the_canary_runs_the_unmut0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_passed_name_set_to_an_empty_text_still_gets_the_canary" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_passed_name_set_to_an_e0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974948050&gt;
+
+    def test_a_passed_name_set_to_an_empty_text_still_gets_the_canary(tmp_path, monkeypatch):
+        monkeypatch.setenv(DSN_NAME, "")
+        root = _tree(tmp_path, {CORE_TEST: USES_GO})
+        count = []
+        real = mr._pytest
+        monkeypatch.setattr(mr, "_pytest", lambda *a, **k: count.append(a[2].name) or real(*a, **k))
+&gt;       _run(root, [FLIP], pass_env=(DSN_NAME,))
+
+tests/test_mutation_runner_keywords.py:831: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_passed_name_set_to_an_e0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_canary_run_that_skips_is_refused_under_forbid_skips" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_canary_run_that_skips_i0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974948910&gt;
+
+    def test_a_canary_run_that_skips_is_refused_under_forbid_skips(tmp_path, monkeypatch):
+        monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
+        root = _tree(tmp_path, {CORE_TEST: SKIPS_WHEN_THE_DATABASE_IS_GONE})
+        caught = None
+        try:
+&gt;           _run(root, [FLIP], pass_env=(DSN_NAME,), forbid_skips=True)
+
+tests/test_mutation_runner_keywords.py:849: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_canary_run_that_skips_i0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',), 'forbid_skips': True}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_canary_run_that_skips_passes_without_forbid_skips" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_canary_run_that_skips_p0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974948280&gt;
+
+    def test_a_canary_run_that_skips_passes_without_forbid_skips(tmp_path, monkeypatch):
+        # the control of the test above: the skip is what the refusal is about
+        monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
+        root = _tree(tmp_path, {CORE_TEST: SKIPS_WHEN_THE_DATABASE_IS_GONE})
+&gt;       assert _short(_run(root, [FLIP], pass_env=(DSN_NAME,))) == [("flip", Verdict.KILLED, True)]
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:866: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_canary_run_that_skips_p0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_copy_that_cannot_be_rebuilt_for_the_canary_is_a_clear_refusal" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_copy_that_cannot_be_reb0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974949be0&gt;
+
+    def test_a_copy_that_cannot_be_rebuilt_for_the_canary_is_a_clear_refusal(tmp_path, monkeypatch):
+        monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
+        root = _tree(tmp_path, {CORE_TEST: USES_GO})
+        real, real_copy = mr._pytest, mr.shutil.copytree
+        broken = []
+    
+        def after_the_mutant_run(*a, **k):
+            rc = real(*a, **k)
+            if a[2].name == "r.xml":
+                broken.append(1)
+            return rc
+    
+        def copytree(*a, **k):
+            if broken:
+                raise OSError("disk full")
+            return real_copy(*a, **k)
+    
+        monkeypatch.setattr(mr, "_pytest", after_the_mutant_run)
+        monkeypatch.setattr(mr.shutil, "copytree", copytree)
+        monkeypatch.setattr(mr, "SETUP_WAIT", 0)
+        caught = None
+        try:
+&gt;           _run(root, [FLIP], pass_env=(DSN_NAME,))
+
+tests/test_mutation_runner_keywords.py:891: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_copy_that_cannot_be_reb0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_second_runner_with_the_same_passed_value_is_refused" time="0.001"><failure message="NotImplementedError: _one_run_per_database">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_second_runner_with_the_0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9749496a0&gt;
+
+    def test_a_second_runner_with_the_same_passed_value_is_refused(tmp_path, monkeypatch):
+        value = str(tmp_path / "state.flag")
+        monkeypatch.setenv(DSN_NAME, value)
+        root = _tree(tmp_path, {CORE_TEST: USES_GO})
+&gt;       with mr._one_run_per_database([value]):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:908: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (['/tmp/pytest-of-root/pytest-9590/test_a_second_runner_with_the_0/state.flag'],)
+k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _one_run_per_database
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_the_lock_is_still_held_while_the_mutants_run" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_the_lock_is_still_held_wh0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974948c20&gt;
+
+    def test_the_lock_is_still_held_while_the_mutants_run(tmp_path, monkeypatch):
+        value = str(tmp_path / "state.flag")
+        monkeypatch.setenv(DSN_NAME, value)
+        root = _tree(tmp_path, {CORE_TEST: USES_GO})
+        seen: list[object] = []
+    
+        def look(_row):
+            try:
+                with mr._one_run_per_database([value]):
+                    seen.append("taken")
+            except RuntimeError as exc:
+                seen.append(str(exc))
+    
+&gt;       _run(root, [FLIP], pass_env=(DSN_NAME,), on_result=look)
+
+tests/test_mutation_runner_keywords.py:939: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_the_lock_is_still_held_wh0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',), 'on_result': &lt;function test_the_lock_is_still_held_while_the_mutants_run.&lt;locals&gt;.look at 0x7fe97448cea0&gt;}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_lock_that_fails_for_another_reason_is_not_called_another_run" time="0.001"><failure message="AssertionError: a lock failure that is not a second run was called one: _one_run_per_database&#10;assert ('another mutation run' not in '_one_run_per_database'&#10;  &#10;  'another mutation run' is contained here:&#10;  ?                     -&#10;    _one_run_per_database and 'could not be locked' in '_one_run_per_database')&#10; +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_lock_that_fails_for_ano0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974948bb0&gt;
+
+    def test_a_lock_that_fails_for_another_reason_is_not_called_another_run(tmp_path, monkeypatch):
+        if os.name == "nt":
+            pytest.skip("flock is POSIX")
+        import fcntl
+    
+        def no_space(*_a):
+            raise OSError(errno.ENOLCK, "no locks available")
+    
+        monkeypatch.setattr(fcntl, "flock", no_space)
+        caught = None
+        try:
+            with mr._one_run_per_database(["x"]):
+                pass
+        except RuntimeError as exc:
+            caught = exc
+        assert caught is not None, "a lock that failed for another reason was not refused"
+&gt;       assert "another mutation run" not in str(caught) and "could not be locked" in str(caught), (
+            f"a lock failure that is not a second run was called one: {caught}"
+        )
+E       AssertionError: a lock failure that is not a second run was called one: _one_run_per_database
+E       assert ('another mutation run' not in '_one_run_per_database'
+E         
+E         'another mutation run' is contained here:
+E         ?                     -
+E           _one_run_per_database and 'could not be locked' in '_one_run_per_database')
+E        +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))
+
+tests/test_mutation_runner_keywords.py:961: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_lock_file_that_cannot_be_opened_is_a_clear_refusal" time="0.001"><failure message="AssertionError: another refusal: _one_run_per_database&#10;assert 'could not be opened' in '_one_run_per_database'&#10; +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_lock_file_that_cannot_b0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974948520&gt;
+
+    def test_a_lock_file_that_cannot_be_opened_is_a_clear_refusal(tmp_path, monkeypatch):
+        def refuse(*a, **k):
+            raise PermissionError(errno.EACCES, "refused")
+    
+        monkeypatch.setattr(os, "open", refuse)
+        caught = None
+        try:
+            with mr._one_run_per_database(["x"]):
+                pass
+        except (RuntimeError, OSError) as exc:
+            caught = exc
+        assert isinstance(caught, RuntimeError), f"the open failure was not a clear refusal: {caught!r}"
+&gt;       assert "could not be opened" in str(caught), f"another refusal: {caught}"
+E       AssertionError: another refusal: _one_run_per_database
+E       assert 'could not be opened' in '_one_run_per_database'
+E        +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))
+
+tests/test_mutation_runner_keywords.py:978: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_lock_file_that_is_a_symbolic_link_is_refused_and_the_file_has_mode_0600" time="0.001"><failure message="AssertionError: a planted symbolic link was followed or refused otherwise: NotImplementedError('_one_run_per_database')&#10;assert (True and 'symbolic link' in '_one_run_per_database')&#10; +  where True = isinstance(NotImplementedError('_one_run_per_database'), RuntimeError)&#10; +  and   '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_lock_file_that_is_a_sym0')
+
+    def test_a_lock_file_that_is_a_symbolic_link_is_refused_and_the_file_has_mode_0600(tmp_path):
+        if os.name == "nt":
+            pytest.skip("symbolic links and file modes are POSIX here")
+        target = tmp_path / "target"
+        target.write_text("x")
+        (tmp_path / _lock_name("x")).symlink_to(target)
+        caught = None
+        try:
+            with mr._one_run_per_database(["x"]):
+                pass
+        except (RuntimeError, OSError) as exc:
+            caught = exc
+&gt;       assert isinstance(caught, RuntimeError) and "symbolic link" in str(caught), (
+            f"a planted symbolic link was followed or refused otherwise: {caught!r}"
+        )
+E       AssertionError: a planted symbolic link was followed or refused otherwise: NotImplementedError('_one_run_per_database')
+E       assert (True and 'symbolic link' in '_one_run_per_database')
+E        +  where True = isinstance(NotImplementedError('_one_run_per_database'), RuntimeError)
+E        +  and   '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))
+
+tests/test_mutation_runner_keywords.py:993: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_canary_run_that_timed_out_says_so" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_canary_run_that_timed_o0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97494bc40&gt;
+
+    def test_a_canary_run_that_timed_out_says_so(tmp_path, monkeypatch):
+&gt;       text = _canary_ends_with(tmp_path, monkeypatch, mr.TIMED_OUT)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1022: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:1015: in _canary_ends_with
+    _run(root, [FLIP], pass_env=(DSN_NAME,))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_canary_run_that_timed_o0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_canary_run_that_was_reaped_says_so" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_canary_run_that_was_rea0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974953150&gt;
+
+    def test_a_canary_run_that_was_reaped_says_so(tmp_path, monkeypatch):
+&gt;       text = _canary_ends_with(tmp_path, monkeypatch, mr.REAPED_ELSEWHERE)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1029: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:1015: in _canary_ends_with
+    _run(root, [FLIP], pass_env=(DSN_NAME,))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_canary_run_that_was_rea0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_canary_run_with_an_exit_code_shows_the_code" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_canary_run_with_an_exit0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97484a200&gt;
+
+    def test_a_canary_run_with_an_exit_code_shows_the_code(tmp_path, monkeypatch):
+&gt;       text = _canary_ends_with(tmp_path, monkeypatch, 3)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1034: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:1015: in _canary_ends_with
+    _run(root, [FLIP], pass_env=(DSN_NAME,))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_canary_run_with_an_exit0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',)}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_default_counts_a_run_with_a_skipped_test_as_before" time="0.664" /><testcase classname="tests.test_mutation_runner_keywords" name="test_forbid_skips_makes_a_mutant_run_with_a_skipped_test_an_error_not_a_kill" time="0.002"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_forbid_skips_makes_a_muta0')
+
+    def test_forbid_skips_makes_a_mutant_run_with_a_skipped_test_an_error_not_a_kill(tmp_path):
+        root = _tree(tmp_path, {CORE_TEST: SKIP_FIRST})
+&gt;       rows = _run(root, [FLIP], forbid_skips=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1051: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_forbid_skips_makes_a_muta0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'forbid_skips': True}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_forbid_skips_refuses_a_baseline_that_skips" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_forbid_skips_refuses_a_ba0')
+
+    def test_forbid_skips_refuses_a_baseline_that_skips(tmp_path):
+        body = "import pytest\n\ndef test_a():\n    pytest.skip('no database')\n"
+        root = _tree(tmp_path, {CORE_TEST: body})
+&gt;       _must_raise(
+            "a baseline that skips was accepted",
+            RuntimeError,
+            _run,
+            root,
+            [FLIP],
+            forbid_skips=True,
+            match="skipped",
+        )
+
+tests/test_mutation_runner_keywords.py:1060: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:96: in _must_raise
+    call(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_forbid_skips_refuses_a_ba0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'forbid_skips': True}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_forbid_skips_counts_an_expected_failure_as_a_skip" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_forbid_skips_counts_an_ex0')
+
+    def test_forbid_skips_counts_an_expected_failure_as_a_skip(tmp_path):
+        body = "import pytest\n\n@pytest.mark.xfail\ndef test_a():\n    assert False\n"
+        root = _tree(tmp_path, {CORE_TEST: body})
+&gt;       _must_raise(
+            "an expected failure was not counted as a skip",
+            RuntimeError,
+            _run,
+            root,
+            forbid_skips=True,
+            match="skipped",
+        )
+
+tests/test_mutation_runner_keywords.py:1074: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:96: in _must_raise
+    call(*args, **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_forbid_skips_counts_an_ex0/pkg')
+mutants = (), kw = {'forbid_skips': True}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_forbid_skips_leaves_a_clean_run_alone" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_forbid_skips_leaves_a_cle0')
+
+    def test_forbid_skips_leaves_a_clean_run_alone(tmp_path):
+        root = _tree(tmp_path, {CORE_TEST: USES_GO})
+&gt;       rows = _run(root, [FLIP], forbid_skips=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1086: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_forbid_skips_leaves_a_cle0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'forbid_skips': True}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_skipped_tests_reads_skips_and_refuses_doctype" time="0.001"><failure message="NotImplementedError: skipped_tests">def test_skipped_tests_reads_skips_and_refuses_doctype():
+        xml = (
+            '&lt;testsuites&gt;&lt;testsuite&gt;&lt;testcase classname="tests.test_x" name="test_a"&gt;&lt;skipped message="s"/&gt;&lt;/testcase&gt;'
+            '&lt;testcase classname="tests.test_x" name="test_b"/&gt;&lt;/testsuite&gt;&lt;/testsuites&gt;'
+        )
+&gt;       assert skipped_tests(xml) == ["tests/test_x::test_a"]
+               ^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1097: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('&lt;testsuites&gt;&lt;testsuite&gt;&lt;testcase classname="tests.test_x" name="test_a"&gt;&lt;skipped message="s"/&gt;&lt;/testcase&gt;&lt;testcase classname="tests.test_x" name="test_b"/&gt;&lt;/testsuite&gt;&lt;/testsuites&gt;',)
+k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: skipped_tests
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_forbid_skips_with_a_missing_or_empty_junit_file_is_an_error_row_never_judged" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_forbid_skips_with_a_missi0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974920ad0&gt;
+
+    def test_forbid_skips_with_a_missing_or_empty_junit_file_is_an_error_row_never_judged(
+        tmp_path, monkeypatch
+    ):
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        real = mr._pytest
+    
+        def fake(cwd, tests, junit, timeout, **kw):
+            if junit.name == "base.xml":
+                return real(cwd, tests, junit, timeout, **kw)
+            return 1  # a failing exit code and NO junit file
+    
+        monkeypatch.setattr(mr, "_pytest", fake)
+&gt;       rows = _run(root, [FLIP], forbid_skips=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1115: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_forbid_skips_with_a_missi0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'forbid_skips': True}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_default_call_passes_pytest_no_plugin_and_no_env_names" time="0.005"><failure message="AssertionError: assert [(4, {})] == [(4, {'plugin..._names': ()})]&#10;  &#10;  At index 0 diff: (4, {}) != (4, {'plugin': '', 'env_names': ()})&#10;  Use -v to get more diff">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_default_call_passes_pyt0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974908910&gt;
+
+    def test_a_default_call_passes_pytest_no_plugin_and_no_env_names(tmp_path, monkeypatch):
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        calls = []
+    
+        def fake(*args, **kwargs):
+            calls.append((len(args), kwargs))
+            return 0
+    
+        monkeypatch.setattr(mr, "_pytest", fake)
+        _run(root)
+&gt;       assert calls == [(4, {"plugin": "", "env_names": ()})]
+E       AssertionError: assert [(4, {})] == [(4, {'plugin..._names': ()})]
+E         
+E         At index 0 diff: (4, {}) != (4, {'plugin': '', 'env_names': ()})
+E         Use -v to get more diff
+
+tests/test_mutation_runner_keywords.py:1146: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_the_default_child_environment_has_no_database_address" time="0.354" /><testcase classname="tests.test_mutation_runner_keywords" name="test_judge_never_returns_killed_for_an_empty_failing_test_id" time="0.001"><failure message="AssertionError: an empty failing test id was judged as a kill&#10;assert &lt;Verdict.KILLED: 'KILLED'&gt; is &lt;Verdict.ERROR: 'ERROR'&gt;&#10; +  where &lt;Verdict.KILLED: 'KILLED'&gt; = judge(1, '', 'E   AssertionError: assert 1 == 2')&#10; +  and   &lt;Verdict.ERROR: 'ERROR'&gt; = Verdict.ERROR">def test_judge_never_returns_killed_for_an_empty_failing_test_id():
+        line = "E   AssertionError: assert 1 == 2"
+&gt;       assert judge(1, "", line) is Verdict.ERROR, "an empty failing test id was judged as a kill"
+E       AssertionError: an empty failing test id was judged as a kill
+E       assert &lt;Verdict.KILLED: 'KILLED'&gt; is &lt;Verdict.ERROR: 'ERROR'&gt;
+E        +  where &lt;Verdict.KILLED: 'KILLED'&gt; = judge(1, '', 'E   AssertionError: assert 1 == 2')
+E        +  and   &lt;Verdict.ERROR: 'ERROR'&gt; = Verdict.ERROR
+
+tests/test_mutation_runner_keywords.py:1172: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_run_that_fails_with_no_junit_file_is_never_a_kill_even_without_forbid_skips" time="0.308"><failure message="AssertionError: a failing run with no JUNIT file was not the plain empty ERROR row: [('flip', &lt;Verdict.WRONG_REASON: 'WRONG_REASON'&gt;, '', False)]&#10;assert [('flip', &lt;Ve...&gt;, '', False)] == [('flip', &lt;Ve...AMED', False)]&#10;  &#10;  At index 0 diff: ('flip', &lt;Verdict.WRONG_REASON: 'WRONG_REASON'&gt;, '', False) != ('flip', &lt;Verdict.ERROR: 'ERROR'&gt;, 'NO FAILING TEST NAMED', False)&#10;  Use -v to get more diff">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_run_that_fails_with_no_0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97490b0e0&gt;
+
+    def test_a_run_that_fails_with_no_junit_file_is_never_a_kill_even_without_forbid_skips(
+        tmp_path, monkeypatch
+    ):
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        real = mr._pytest
+        monkeypatch.setattr(
+            mr,
+            "_pytest",
+            lambda cwd, tests, junit, timeout, **kw: (
+                real(cwd, tests, junit, timeout, **kw) if junit.name == "base.xml" else 1
+            ),
+        )
+        rows = _run(root, [FLIP])
+&gt;       assert rows == [("flip", Verdict.ERROR, "NO FAILING TEST NAMED", False)], (
+            f"a failing run with no JUNIT file was not the plain empty ERROR row: {rows}"
+        )
+E       AssertionError: a failing run with no JUNIT file was not the plain empty ERROR row: [('flip', &lt;Verdict.WRONG_REASON: 'WRONG_REASON'&gt;, '', False)]
+E       assert [('flip', &lt;Ve...&gt;, '', False)] == [('flip', &lt;Ve...AMED', False)]
+E         
+E         At index 0 diff: ('flip', &lt;Verdict.WRONG_REASON: 'WRONG_REASON'&gt;, '', False) != ('flip', &lt;Verdict.ERROR: 'ERROR'&gt;, 'NO FAILING TEST NAMED', False)
+E         Use -v to get more diff
+
+tests/test_mutation_runner_keywords.py:1192: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_baseline_that_left_no_usable_junit_file_is_refused_under_forbid_skips" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_baseline_that_left_no_u0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974a47c40&gt;
+
+    def test_a_baseline_that_left_no_usable_junit_file_is_refused_under_forbid_skips(
+        tmp_path, monkeypatch
+    ):
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        real = mr._pytest
+    
+        def without_the_file(cwd, tests, junit, timeout, **kw):
+            rc = real(cwd, tests, junit, timeout, **kw)
+            if junit.name == "base.xml":
+                junit.unlink()
+            return rc
+    
+        monkeypatch.setattr(mr, "_pytest", without_the_file)
+        caught = None
+        try:
+&gt;           _run(root, [FLIP], forbid_skips=True)
+
+tests/test_mutation_runner_keywords.py:1212: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_baseline_that_left_no_u0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'forbid_skips': True}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_test_file_that_cannot_be_imported_is_an_error_row_never_a_kill" time="0.713"><failure message="AssertionError: an assert at import time was counted as a kill: [('flip', &lt;Verdict.ERROR: 'ERROR'&gt;, '::tests.test_core', False)]&#10;assert [('flip', &lt;Ve...core', False)] == [('flip', &lt;Ve...RROR', False)]&#10;  &#10;  At index 0 diff: ('flip', &lt;Verdict.ERROR: 'ERROR'&gt;, '::tests.test_core', False) != ('flip', &lt;Verdict.ERROR: 'ERROR'&gt;, 'COLLECTION ERROR', False)&#10;  Use -v to get more diff">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_test_file_that_cannot_b0')
+
+    def test_a_test_file_that_cannot_be_imported_is_an_error_row_never_a_kill(tmp_path):
+        root = _tree(tmp_path, {CORE_TEST: COLLECTION_ASSERTS})
+        lines: dict[str, str] = {}
+        rows = _run(root, [FLIP], first_lines=lines)
+&gt;       assert rows == [("flip", Verdict.ERROR, "COLLECTION ERROR", False)], (
+            f"an assert at import time was counted as a kill: {rows}"
+        )
+E       AssertionError: an assert at import time was counted as a kill: [('flip', &lt;Verdict.ERROR: 'ERROR'&gt;, '::tests.test_core', False)]
+E       assert [('flip', &lt;Ve...core', False)] == [('flip', &lt;Ve...RROR', False)]
+E         
+E         At index 0 diff: ('flip', &lt;Verdict.ERROR: 'ERROR'&gt;, '::tests.test_core', False) != ('flip', &lt;Verdict.ERROR: 'ERROR'&gt;, 'COLLECTION ERROR', False)
+E         Use -v to get more diff
+
+tests/test_mutation_runner_keywords.py:1228: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_read_junit_marks_a_collection_error_of_a_real_pytest_run" time="0.354"><failure message="NotImplementedError: read_junit">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_read_junit_marks_a_collec0')
+
+    def test_read_junit_marks_a_collection_error_of_a_real_pytest_run(tmp_path):
+        # the shape was read from a real pytest 9.2 run: an empty classname, the dotted module as
+        # the name, message "collection failure"; pytest exits 2 for it, and the judge turns every exit code other than 1 into ERROR, so the
+        # row was an ERROR row before the label existed (observed with the unchanged runner of main, see the module docstring of the runner)
+        root = _tree(tmp_path, {CORE_TEST: COLLECTION_ASSERTS.replace("go(True) is True", "go(False)")})
+        out = tmp_path / "c.xml"
+        rc = mr._pytest(root, [CORE_TEST], out, 60)
+&gt;       report = read_junit(out.read_text(encoding="utf-8"))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1241: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('&lt;?xml version="1.0" encoding="utf-8"?&gt;&lt;testsuites name="pytest tests"&gt;&lt;testsuite name="pytest" errors="1" failures="...alse\nE    +  where False = &amp;lt;function go at 0x7f3c6c230400&amp;gt;(False)&lt;/error&gt;&lt;/testcase&gt;&lt;/testsuite&gt;&lt;/testsuites&gt;',)
+k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: read_junit
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_fixture_error_in_the_mutant_run_is_an_error_row_not_a_kill" time="0.616"><failure message="AssertionError: a fixture that failed at setup was not the FIXTURE ERROR row: [('flip', &lt;Verdict.KILLED: 'KILLED'&gt;, 'tests/test_core::test_a', True)]&#10;assert [('flip', &lt;Ve...est_a', True)] == [('flip', &lt;Ve...RROR', False)]&#10;  &#10;  At index 0 diff: ('flip', &lt;Verdict.KILLED: 'KILLED'&gt;, 'tests/test_core::test_a', True) != ('flip', &lt;Verdict.ERROR: 'ERROR'&gt;, 'FIXTURE ERROR', False)&#10;  Use -v to get more diff">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_fixture_error_in_the_mu0')
+
+    def test_a_fixture_error_in_the_mutant_run_is_an_error_row_not_a_kill(tmp_path):
+        # the mutant makes the FIXTURE assert; the first line is an AssertionError, which the judge alone reads as a kill
+        root = _tree(tmp_path, {CORE_TEST: FIXTURE_ASSERTS})
+        lines: dict[str, str] = {}
+        rows = _run(root, [FLIP], first_lines=lines)
+&gt;       assert rows == [("flip", Verdict.ERROR, "FIXTURE ERROR", False)], (
+            f"a fixture that failed at setup was not the FIXTURE ERROR row: {rows}"
+        )
+E       AssertionError: a fixture that failed at setup was not the FIXTURE ERROR row: [('flip', &lt;Verdict.KILLED: 'KILLED'&gt;, 'tests/test_core::test_a', True)]
+E       assert [('flip', &lt;Ve...est_a', True)] == [('flip', &lt;Ve...RROR', False)]
+E         
+E         At index 0 diff: ('flip', &lt;Verdict.KILLED: 'KILLED'&gt;, 'tests/test_core::test_a', True) != ('flip', &lt;Verdict.ERROR: 'ERROR'&gt;, 'FIXTURE ERROR', False)
+E         Use -v to get more diff
+
+tests/test_mutation_runner_keywords.py:1272: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_teardown_error_of_a_fixture_is_an_error_row_not_a_kill" time="0.612"><failure message="AssertionError: a fixture that failed at teardown was not the FIXTURE ERROR row: [('flip', &lt;Verdict.KILLED: 'KILLED'&gt;, 'tests/test_core::test_a', True)]&#10;assert [('flip', &lt;Ve...est_a', True)] == [('flip', &lt;Ve...RROR', False)]&#10;  &#10;  At index 0 diff: ('flip', &lt;Verdict.KILLED: 'KILLED'&gt;, 'tests/test_core::test_a', True) != ('flip', &lt;Verdict.ERROR: 'ERROR'&gt;, 'FIXTURE ERROR', False)&#10;  Use -v to get more diff">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_teardown_error_of_a_fix0')
+
+    def test_a_teardown_error_of_a_fixture_is_an_error_row_not_a_kill(tmp_path):
+        # the test body passes; the mutant makes the fixture's teardown assert
+        root = _tree(tmp_path, {CORE_TEST: TEARDOWN_ASSERTS})
+        rows = _run(root, [FLIP])
+&gt;       assert rows == [("flip", Verdict.ERROR, "FIXTURE ERROR", False)], (
+            f"a fixture that failed at teardown was not the FIXTURE ERROR row: {rows}"
+        )
+E       AssertionError: a fixture that failed at teardown was not the FIXTURE ERROR row: [('flip', &lt;Verdict.KILLED: 'KILLED'&gt;, 'tests/test_core::test_a', True)]
+E       assert [('flip', &lt;Ve...est_a', True)] == [('flip', &lt;Ve...RROR', False)]
+E         
+E         At index 0 diff: ('flip', &lt;Verdict.KILLED: 'KILLED'&gt;, 'tests/test_core::test_a', True) != ('flip', &lt;Verdict.ERROR: 'ERROR'&gt;, 'FIXTURE ERROR', False)
+E         Use -v to get more diff
+
+tests/test_mutation_runner_keywords.py:1282: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_failing_body_and_a_failing_teardown_are_judged_by_the_failure" time="0.612" /><testcase classname="tests.test_mutation_runner_keywords" name="test_a_fixture_error_and_a_skipped_test_in_one_run_are_a_fixture_error" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_fixture_error_and_a_ski0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974948910&gt;
+
+    def test_a_fixture_error_and_a_skipped_test_in_one_run_are_a_fixture_error(tmp_path, monkeypatch):
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        real = mr._pytest
+    
+        def fake(cwd, tests, junit, timeout, **kw):
+            if junit.name != "r.xml":
+                return real(cwd, tests, junit, timeout, **kw)
+            junit.write_text(FIXTURE_AND_SKIP_JUNIT, encoding="utf-8")
+            return 1
+    
+        monkeypatch.setattr(mr, "_pytest", fake)
+&gt;       rows = _run(root, [FLIP], forbid_skips=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1319: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_fixture_error_and_a_ski0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'forbid_skips': True}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_the_skipped_tests_row_keeps_a_masked_message" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'pass_env'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_the_skipped_tests_row_kee0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97494be70&gt;
+
+    def test_the_skipped_tests_row_keeps_a_masked_message(tmp_path, monkeypatch):
+        dsn, word = _secret_dsn()
+        monkeypatch.setenv(DSN_NAME, dsn)
+        # the flip makes the test skip itself (rc 0); its id carries the passed value
+        body = (
+            "import pytest\nfrom pk.core import go\n\n"
+            f"@pytest.mark.parametrize('v', [{dsn!r}])\n"
+            "def test_a(v):\n    if go(False) is not False:\n        pytest.skip('x')\n    assert go(True) is True\n"
+        )
+        root = _tree(tmp_path, {CORE_TEST: body})
+        lines: dict[str, str] = {}
+&gt;       rows = _run(root, [FLIP], pass_env=(DSN_NAME,), forbid_skips=True, first_lines=lines)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1336: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_the_skipped_tests_row_kee0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'pass_env': ('HADAVIN_TEST_PG_DSN',), 'forbid_skips': True, 'first_lines': {}}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'pass_env'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_skipped_tests_row_without_a_failure_says_which_tests_were_skipped" time="0.001"><failure message="TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_skipped_tests_row_witho0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974951470&gt;
+
+    def test_a_skipped_tests_row_without_a_failure_says_which_tests_were_skipped(tmp_path, monkeypatch):
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        real = mr._pytest
+        xml = '&lt;testsuites&gt;&lt;testsuite&gt;&lt;testcase classname="tests.test_core" name="test_a"&gt;&lt;skipped message="s"/&gt;&lt;/testcase&gt;&lt;/testsuite&gt;&lt;/testsuites&gt;'
+    
+        def fake(cwd, tests, junit, timeout, **kw):
+            if junit.name != "r.xml":
+                return real(cwd, tests, junit, timeout, **kw)
+            junit.write_text(xml, encoding="utf-8")
+            return 0
+    
+        monkeypatch.setattr(mr, "_pytest", fake)
+        lines: dict[str, str] = {}
+&gt;       rows = _run(root, [FLIP], forbid_skips=True, first_lines=lines)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1357: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+root = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_skipped_tests_row_witho0/pkg')
+mutants = [Mutant(name='flip', file='src/pk/core.py', old='return flag', new='return not flag', expect='assert', allow_crash=False, crash_type='', crash_markers=(), test_file='', pinned='', only_test='')]
+kw = {'forbid_skips': True, 'first_lines': {}}
+
+    def _run(root: Path, mutants=(), **kw):
+&gt;       return run_mutants(root, list(mutants), [CORE_TEST], extra_dirs=(), timeout=120, **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_mutants() got an unexpected keyword argument 'forbid_skips'
+
+tests/test_mutation_runner_keywords.py:117: TypeError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_fixture_errors_reads_setup_and_teardown_errors_only" time="0.001"><failure message="NotImplementedError: fixture_errors">def test_fixture_errors_reads_setup_and_teardown_errors_only():
+        xml = (
+            "&lt;testsuites&gt;&lt;testsuite&gt;"
+            '&lt;testcase classname="tests.test_x" name="test_a"&gt;&lt;error message="failed on setup with &amp;quot;AssertionError&amp;quot;"&gt;E x&lt;/error&gt;&lt;/testcase&gt;'
+            '&lt;testcase classname="tests.test_x" name="test_b"&gt;&lt;error message="failed on teardown with &amp;quot;KeyError&amp;quot;"&gt;E x&lt;/error&gt;&lt;/testcase&gt;'
+            '&lt;testcase classname="" name="tests.test_y"&gt;&lt;error message="collection failure"&gt;E x&lt;/error&gt;&lt;/testcase&gt;'
+            '&lt;testcase classname="tests.test_x" name="test_c"&gt;&lt;failure message="assert 1 == 2"&gt;E assert 1 == 2&lt;/failure&gt;&lt;/testcase&gt;'
+            "&lt;/testsuite&gt;&lt;/testsuites&gt;"
+        )
+&gt;       assert fixture_errors(xml) == ["tests/test_x::test_a", "tests/test_x::test_b"]
+               ^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1373: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('&lt;testsuites&gt;&lt;testsuite&gt;&lt;testcase classname="tests.test_x" name="test_a"&gt;&lt;error message="failed on setup with &amp;quot;A...test_x" name="test_c"&gt;&lt;failure message="assert 1 == 2"&gt;E assert 1 == 2&lt;/failure&gt;&lt;/testcase&gt;&lt;/testsuite&gt;&lt;/testsuites&gt;',)
+k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: fixture_errors
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_read_junit_gives_the_same_answers_as_the_three_single_readers_in_one_parse" time="0.001"><failure message="NotImplementedError: read_junit">def test_read_junit_gives_the_same_answers_as_the_three_single_readers_in_one_parse():
+        xml = (
+            "&lt;testsuites&gt;&lt;testsuite&gt;"
+            '&lt;testcase classname="tests.test_x" name="test_s"&gt;&lt;skipped message="s"/&gt;&lt;/testcase&gt;'
+            '&lt;testcase classname="tests.test_x" name="test_a"&gt;&lt;error message="failed on setup with &amp;quot;X&amp;quot;"&gt;E   X: boom&lt;/error&gt;&lt;/testcase&gt;'
+            '&lt;testcase classname="tests.test_x" name="test_c"&gt;&lt;failure message="m"&gt;E   AssertionError: later&lt;/failure&gt;&lt;/testcase&gt;'
+            "&lt;/testsuite&gt;&lt;/testsuites&gt;"
+        )
+&gt;       report = read_junit(xml)
+                 ^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1387: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('&lt;testsuites&gt;&lt;testsuite&gt;&lt;testcase classname="tests.test_x" name="test_s"&gt;&lt;skipped message="s"/&gt;&lt;/testcase&gt;&lt;testcase c...s.test_x" name="test_c"&gt;&lt;failure message="m"&gt;E   AssertionError: later&lt;/failure&gt;&lt;/testcase&gt;&lt;/testsuite&gt;&lt;/testsuites&gt;',)
+k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: read_junit
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_mutant_whose_old_text_is_absent_is_an_error_not_a_kill" time="0.311" /><testcase classname="tests.test_mutation_runner_keywords" name="test_a_value_with_one_quote_kind_is_masked_inside_a_text_that_holds_the_other_kind" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974950360&gt;
+
+    def test_a_value_with_one_quote_kind_is_masked_inside_a_text_that_holds_the_other_kind(monkeypatch):
+        # repr of the larger text uses single quotes and escapes the single quote of the value: a form that repr of the value alone never writes
+        value = "host=db.invalid user=svc password=Ab3'Xy9Zq1"
+        monkeypatch.setenv(DSN_NAME, value)
+&gt;       secrets = mr._secret_values((DSN_NAME,))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1415: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_libpq_backslash_escapes_in_a_password_are_read" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974a47ee0&gt;
+
+    def test_libpq_backslash_escapes_in_a_password_are_read(monkeypatch):
+        monkeypatch.setenv(DSN_NAME, "host=db.invalid password='Ab3\\'Xy9Zq1' user=svc")
+&gt;       assert "Xy9Zq1" not in mr._masked("E   Ab3'Xy9Zq1", mr._secret_values((DSN_NAME,))), (
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "the unescaped password of a quoted libpq value survived the masking"
+        )
+
+tests/test_mutation_runner_keywords.py:1435: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_url_password_with_unencoded_separators_is_masked" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974a47cb0&gt;
+
+    def test_a_url_password_with_unencoded_separators_is_masked(monkeypatch):
+        monkeypatch.setenv(DSN_NAME, "postgresql://svc:Ab3/Xy9@Zq1#Wm2@db.invalid/app")
+&gt;       secrets = mr._secret_values((DSN_NAME,))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1446: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_one_character_secret_on_a_huge_line_is_replaced_fast_and_a_normal_line_is_not" time="0.006"><failure message="NotImplementedError: _masked">def test_a_one_character_secret_on_a_huge_line_is_replaced_fast_and_a_normal_line_is_not():
+        start = time.monotonic()
+&gt;       out = mr._masked("E   " + "a" * 3_000_000 + "b", ("a", "ta"))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1458: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('E   aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab', ('a', 'ta'))
+k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _masked
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_nothing_is_rebuilt_when_no_secret_is_set" time="0.001"><failure message="NotImplementedError: _masked">def test_nothing_is_rebuilt_when_no_secret_is_set():
+        text = "E   assert 1 == 2"
+&gt;       assert mr._masked(text, ()) is text and mr._masked(text, ("",)) is text, (
+               ^^^^^^^^^^^^^^^^^^^^
+            "a text with no secret was rebuilt"
+        )
+
+tests/test_mutation_runner_keywords.py:1472: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('E   assert 1 == 2', ()), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _masked
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_lock_file_with_a_wider_mode_is_refused" time="0.001"><failure message="AssertionError: a lock file with a wide mode was accepted: NotImplementedError('_one_run_per_database')&#10;assert (NotImplementedError('_one_run_per_database') is not None and 'mode 0600 or narrower' in '_one_run_per_database')&#10; +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_lock_file_with_a_wider_0')
+
+    def test_a_lock_file_with_a_wider_mode_is_refused(tmp_path):
+        if os.name == "nt":
+            pytest.skip("file modes are POSIX here")
+        path = _own_lock_file(tmp_path, "wide")
+        path.chmod(0o666)
+        caught = _refusal("wide")
+&gt;       assert caught is not None and "mode 0600 or narrower" in str(caught), (
+            f"a lock file with a wide mode was accepted: {caught!r}"
+        )
+E       AssertionError: a lock file with a wide mode was accepted: NotImplementedError('_one_run_per_database')
+E       assert (NotImplementedError('_one_run_per_database') is not None and 'mode 0600 or narrower' in '_one_run_per_database')
+E        +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))
+
+tests/test_mutation_runner_keywords.py:1498: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_lock_file_of_another_user_is_refused" time="0.001"><failure message="AssertionError: a lock file of another user was accepted: NotImplementedError('_one_run_per_database')&#10;assert (NotImplementedError('_one_run_per_database') is not None and 'regular file of this user' in '_one_run_per_database')&#10; +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_lock_file_of_another_us0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97484ae40&gt;
+
+    def test_a_lock_file_of_another_user_is_refused(tmp_path, monkeypatch):
+        if os.name == "nt":
+            pytest.skip("file owners are POSIX here")
+        _own_lock_file(tmp_path, "other").chmod(
+            0o600
+        )  # only the owner differs, so the owner check alone must refuse it
+        _fstat_with(monkeypatch, st_uid=os.getuid() + 1)
+        caught = _refusal("other")
+&gt;       assert caught is not None and "regular file of this user" in str(caught), (
+            f"a lock file of another user was accepted: {caught!r}"
+        )
+E       AssertionError: a lock file of another user was accepted: NotImplementedError('_one_run_per_database')
+E       assert (NotImplementedError('_one_run_per_database') is not None and 'regular file of this user' in '_one_run_per_database')
+E        +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))
+
+tests/test_mutation_runner_keywords.py:1536: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_lock_file_with_two_hard_links_is_refused" time="0.001"><failure message="AssertionError: a lock file with two hard links was accepted: NotImplementedError('_one_run_per_database')&#10;assert (NotImplementedError('_one_run_per_database') is not None and 'one name' in '_one_run_per_database')&#10; +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_lock_file_with_two_hard0')
+
+    def test_a_lock_file_with_two_hard_links_is_refused(tmp_path):
+        if os.name == "nt":
+            pytest.skip("hard link counts are POSIX here")
+        path = _own_lock_file(tmp_path, "linked")
+        path.chmod(0o600)
+        os.link(path, tmp_path / "second-name")
+        caught = _refusal("linked")
+&gt;       assert caught is not None and "one name" in str(caught), (
+            f"a lock file with two hard links was accepted: {caught!r}"
+        )
+E       AssertionError: a lock file with two hard links was accepted: NotImplementedError('_one_run_per_database')
+E       assert (NotImplementedError('_one_run_per_database') is not None and 'one name' in '_one_run_per_database')
+E        +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))
+
+tests/test_mutation_runner_keywords.py:1548: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_lock_file_that_cannot_be_opened_names_the_cause" time="0.002"><failure message="AssertionError: the open failure with errno 40 did not name its cause (symbolic link): NotImplementedError('_one_run_per_database')&#10;assert (NotImplementedError('_one_run_per_database') is not None and 'could not be opened' in '_one_run_per_database')&#10; +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974a47a10&gt;
+
+    def test_a_lock_file_that_cannot_be_opened_names_the_cause(monkeypatch):
+        cases = (
+            (errno.ELOOP, "symbolic link"),
+            (errno.EACCES, "may not open it"),
+            (errno.EPERM, "may not open it"),
+            (errno.EISDIR, "it is a folder"),
+            (errno.ENOTDIR, "is not a folder"),
+            (errno.EIO, "errno 5"),
+        )
+        for code, words in cases:
+    
+            def refuse(*a, _code=code, **k):
+                raise OSError(_code, "refused")
+    
+            monkeypatch.setattr(os, "open", refuse)
+            caught = _refusal("cause")
+&gt;           assert (
+                caught is not None and "could not be opened" in str(caught) and words in str(caught)
+            ), f"the open failure with errno {code} did not name its cause ({words}): {caught!r}"
+E           AssertionError: the open failure with errno 40 did not name its cause (symbolic link): NotImplementedError('_one_run_per_database')
+E           assert (NotImplementedError('_one_run_per_database') is not None and 'could not be opened' in '_one_run_per_database')
+E            +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))
+
+tests/test_mutation_runner_keywords.py:1569: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_lock_file_that_is_not_a_regular_file_is_refused" time="0.001"><failure message="AssertionError: a lock file that is not a regular file was accepted: NotImplementedError('_one_run_per_database')&#10;assert (NotImplementedError('_one_run_per_database') is not None and 'regular file of this user' in '_one_run_per_database')&#10; +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_lock_file_that_is_not_a0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974952890&gt;
+
+    def test_a_lock_file_that_is_not_a_regular_file_is_refused(tmp_path, monkeypatch):
+        if os.name == "nt":
+            pytest.skip("file modes are POSIX here")
+        real = os.fstat
+    
+        def a_directory(fd):
+            info = real(fd)
+            return os.stat_result((stat.S_IFDIR | 0o600, *tuple(info)[1:]))
+    
+        monkeypatch.setattr(os, "fstat", a_directory)
+        caught = _refusal("pipe")
+&gt;       assert caught is not None and "regular file of this user" in str(caught), (
+            f"a lock file that is not a regular file was accepted: {caught!r}"
+        )
+E       AssertionError: a lock file that is not a regular file was accepted: NotImplementedError('_one_run_per_database')
+E       assert (NotImplementedError('_one_run_per_database') is not None and 'regular file of this user' in '_one_run_per_database')
+E        +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))
+
+tests/test_mutation_runner_keywords.py:1585: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_the_descriptor_is_closed_when_no_file_object_can_take_it" time="0.001"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'could not be opened'&#10;  Actual message: '_one_run_per_database'">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_the_descriptor_is_closed_0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974952040&gt;
+
+    def test_the_descriptor_is_closed_when_no_file_object_can_take_it(tmp_path, monkeypatch):
+        opened: list[int] = []
+        real_open = os.open
+    
+        def spy(*a, **k):
+            fd = real_open(*a, **k)
+            opened.append(fd)
+            return fd
+    
+        def refuse(*a, **k):
+            raise OSError(errno.EMFILE, "no file object")
+    
+        monkeypatch.setattr(os, "open", spy)
+        monkeypatch.setattr(os, "fdopen", refuse)
+        with (
+&gt;           pytest.raises(RuntimeError, match="could not be opened"),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            mr._one_run_per_database(["leak"]),
+        ):
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'could not be opened'
+E         Actual message: '_one_run_per_database'
+
+tests/test_mutation_runner_keywords.py:1605: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_value_with_a_non_ascii_letter_and_a_quote_is_masked_as_ascii_and_bytes_print_it_in_a_larger_text" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9749499b0&gt;
+
+    def test_a_value_with_a_non_ascii_letter_and_a_quote_is_masked_as_ascii_and_bytes_print_it_in_a_larger_text(
+        monkeypatch,
+    ):
+        value = "host=db.invalid user=svc password=Ab3" + chr(233) + "'Xy9Zq1"
+        monkeypatch.setenv(DSN_NAME, value)
+&gt;       secrets = mr._secret_values((DSN_NAME,))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1623: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_value_with_a_control_character_and_a_non_ascii_letter_is_masked_as_repr_prints_it" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97494b000&gt;
+
+    def test_a_value_with_a_control_character_and_a_non_ascii_letter_is_masked_as_repr_prints_it(
+        monkeypatch,
+    ):
+        value = "host=db.invalid user=svc password=Ab3" + chr(1) + chr(233) + "Xy9Zq1"
+        monkeypatch.setenv(DSN_NAME, value)
+        shown = repr(value)[1:-1]
+        assert "\\x01" in shown and chr(233) in shown, (
+            "the control is wrong: repr writes the control character as x01 and keeps the letter"
+        )
+&gt;       out = mr._masked(f"E   assert '{shown}' == 1", mr._secret_values((DSN_NAME,)))
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1649: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_an_unquoted_password_with_a_quote_a_semicolon_or_an_ampersand_is_masked_in_full_when_printed_alone" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe97494bc40&gt;
+
+    def test_an_unquoted_password_with_a_quote_a_semicolon_or_an_ampersand_is_masked_in_full_when_printed_alone(
+        monkeypatch,
+    ):
+        for odd in ("'", ";", "&amp;"):
+            monkeypatch.setenv(DSN_NAME, f"host=db.invalid password=Ab3{odd}Xy9Zq1 user=svc")
+&gt;           out = mr._masked(f"E   assert 'Ab3{odd}Xy9Zq1' == 1", mr._secret_values((DSN_NAME,)))
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1660: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_backslash_and_a_newline_in_a_quoted_libpq_password_are_read" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9744a8440&gt;
+
+    def test_a_backslash_and_a_newline_in_a_quoted_libpq_password_are_read(monkeypatch):
+        monkeypatch.setenv(
+            DSN_NAME, "host=db.invalid password='Ab3" + chr(92) + chr(10) + "Xy9Zq1' user=svc"
+        )
+&gt;       out = mr._masked("E   assert 'Ab3" + chr(10) + "Xy9Zq1' == 1", mr._secret_values((DSN_NAME,)))
+                                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1670: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_repr_of_a_json_text_and_a_doubled_backslash_form_are_masked" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9744a8590&gt;
+
+    def test_a_repr_of_a_json_text_and_a_doubled_backslash_form_are_masked(monkeypatch):
+        value = "host=db.invalid user=svc password=Ab3" + chr(34) + chr(92) + chr(233) + "Xy9Zq1"
+        monkeypatch.setenv(DSN_NAME, value)
+&gt;       secrets = mr._secret_values((DSN_NAME,))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1679: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_the_lock_file_is_opened_read_only_on_posix" time="0.001"><failure message="AssertionError: assert NotImplementedError('_one_run_per_database') is None&#10; +  where NotImplementedError('_one_run_per_database') = _refusal('readonly')">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9744a8980&gt;
+
+    def test_the_lock_file_is_opened_read_only_on_posix(monkeypatch):
+        if os.name == "nt":
+            pytest.skip("Windows locks a byte and needs write access")
+        seen: list[int] = []
+        real = os.open
+    
+        def spy(path, flags, *a, **k):
+            seen.append(flags)
+            return real(path, flags, *a, **k)
+    
+        monkeypatch.setattr(os, "open", spy)
+&gt;       assert _refusal("readonly") is None
+E       AssertionError: assert NotImplementedError('_one_run_per_database') is None
+E        +  where NotImplementedError('_one_run_per_database') = _refusal('readonly')
+
+tests/test_mutation_runner_keywords.py:1707: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_value_printed_in_two_layers_is_masked_whatever_quotes_it_holds" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974933930&gt;
+
+    def test_a_value_printed_in_two_layers_is_masked_whatever_quotes_it_holds(monkeypatch):
+        rng = _Det(7)
+        leaked: list[str] = []
+        for _ in range(120):
+            body = "".join(rng.choice(TWO_LAYER_ALPHABET) for _ in range(rng.randint(1, 5)))
+            tail = "".join(rng.choice(TWO_LAYER_ALPHABET) for _ in range(rng.randint(1, 5)))
+            value = "host=db.invalid user=svc password=" + body + MARKER + tail
+            monkeypatch.setenv(DSN_NAME, value)
+&gt;           secrets = mr._secret_values((DSN_NAME,))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1742: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_value_with_both_quote_kinds_is_masked_as_repr_of_repr_and_json_of_repr" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9744a8c20&gt;
+
+    def test_a_value_with_both_quote_kinds_is_masked_as_repr_of_repr_and_json_of_repr(monkeypatch):
+        value = "host=db.invalid password=" + "it's" + chr(34) + "Xy9Zq1" + " user=svc"
+        monkeypatch.setenv(DSN_NAME, value)
+&gt;       secrets = mr._secret_values((DSN_NAME,))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1752: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_plus_in_a_url_password_is_also_read_as_a_space" time="0.001"><failure message="NotImplementedError: _secret_values">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9744a91d0&gt;
+
+    def test_a_plus_in_a_url_password_is_also_read_as_a_space(monkeypatch):
+        value = "postgresql://svc:" + "Open+Sesame9" + "@db.invalid/app"
+        monkeypatch.setenv(DSN_NAME, value)
+&gt;       secrets = mr._secret_values((DSN_NAME,))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1765: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (('HADAVIN_TEST_PG_DSN',),), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _secret_values
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_lock_file_that_is_a_fifo_is_refused_and_does_not_hang" time="0.002"><failure message="AssertionError: the refusal did not name the cause: _one_run_per_database&#10;assert 'regular file of this user' in '_one_run_per_database'&#10; +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_lock_file_that_is_a_fif0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe9744a94e0&gt;
+
+    def test_a_lock_file_that_is_a_fifo_is_refused_and_does_not_hang(tmp_path, monkeypatch):
+        if not hasattr(os, "mkfifo"):
+            pytest.skip("this system has no named pipes")
+        path = tmp_path / _lock_name("fifo")
+        os.mkfifo(path, 0o600)
+        result: dict[str, object] = {}
+    
+        def attempt():
+            result["exc"] = _refusal("fifo")
+    
+        worker = threading.Thread(target=attempt, daemon=True)
+        worker.start()
+        worker.join(10)
+        hung = worker.is_alive()
+        if hung:  # free the blocked open so the test run itself does not hang
+            release = os.open(path, os.O_WRONLY | getattr(os, "O_NONBLOCK", 0))
+            os.close(release)
+            worker.join(5)
+        assert not hung, "a FIFO under the lock file name hung the runner (the open blocked)"
+        exc = result.get("exc")
+        assert exc is not None, "a FIFO as the lock file was accepted"
+&gt;       assert "regular file of this user" in str(exc), f"the refusal did not name the cause: {exc}"
+E       AssertionError: the refusal did not name the cause: _one_run_per_database
+E       assert 'regular file of this user' in '_one_run_per_database'
+E        +  where '_one_run_per_database' = str(NotImplementedError('_one_run_per_database'))
+
+tests/test_mutation_runner_keywords.py:1797: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_permission_refusal_of_the_lock_file_names_the_temp_folder_way_out" time="0.001"><failure message="NotImplementedError: _why_not_opened">def test_a_permission_refusal_of_the_lock_file_names_the_temp_folder_way_out():
+        for code in (errno.EACCES, errno.EPERM):
+&gt;           text = mr._why_not_opened(code)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1802: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (13,), k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _why_not_opened
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_a_junit_path_that_is_not_a_regular_file_is_refused_and_does_not_hang" time="0.006"><failure message="AssertionError: a folder as the JUnit file was read: {}&#10;assert 'exc' in {}">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_a_junit_path_that_is_not_0')
+
+    def test_a_junit_path_that_is_not_a_regular_file_is_refused_and_does_not_hang(tmp_path):
+        kinds = ["folder"]
+        if hasattr(os, "mkfifo"):
+            kinds.append("fifo")
+        if hasattr(os, "symlink") and os.name != "nt":
+            kinds.append("symlink")
+        for kind in kinds:
+            junit = tmp_path / f"{kind}.xml"
+            if kind == "fifo":
+                os.mkfifo(junit, 0o600)
+            elif kind == "symlink":
+                real = tmp_path / "real.xml"
+                real.write_text("&lt;testsuites/&gt;", encoding="utf-8")
+                junit.symlink_to(real)
+            else:
+                junit.mkdir()
+            out = _junit_refusal(junit)
+&gt;           assert "exc" in out, f"a {kind} as the JUnit file was read: {out}"
+E           AssertionError: a folder as the JUnit file was read: {}
+E           assert 'exc' in {}
+
+tests/test_mutation_runner_keywords.py:1845: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_keywords" name="test_an_over_sized_junit_file_is_refused_before_it_is_read" time="0.001"><failure message="NotImplementedError: _junit_text">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9590/test_an_over_sized_junit_file_0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe974493070&gt;
+
+    def test_an_over_sized_junit_file_is_refused_before_it_is_read(tmp_path, monkeypatch):
+        junit = tmp_path / "junit.xml"
+        junit.write_text("&lt;testsuites&gt;" + " " * 50 + "&lt;/testsuites&gt;", encoding="utf-8")
+        monkeypatch.setattr(mr, "MAX_JUNIT_CHARS", 10)
+    
+        def never(*_a, **_k):
+            raise AssertionError("the file was read before its size was looked at")
+    
+        monkeypatch.setattr(Path, "read_text", never)
+        with pytest.raises(ValueError, match="over the ceiling"):
+&gt;           mr._junit_text(junit)
+
+tests/test_mutation_runner_keywords.py:1860: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (PosixPath('/tmp/pytest-of-root/pytest-9590/test_an_over_sized_junit_file_0/junit.xml'),)
+k = {}
+
+    def f(*a, **k):
+&gt;       raise NotImplementedError(name)
+E       NotImplementedError: _junit_text
+
+tests/conftest_shim_plugin.py:7: NotImplementedError</failure></testcase><testcase classname="tests.test_mutation_runner_meta" name="test_a_the_test_file_holds_the_moved_tests_and_the_manifest_test_once_each" time="0.010" /><testcase classname="tests.test_mutation_runner_meta" name="test_a_there_are_the_listed_number_of_mutants_with_unique_names" time="0.000"><failure message="AssertionError: ['judge: an exception line counts as a kill', 'judge: crash markers ignored', 'judge: short expect accepted', 'runner: crash counts as good', 'runner: an absolute path is accepted', 'runner: a dotdot part is accepted', ...]&#10;assert (62 == 162)&#10;[+1 more line; full report in element text]">def test_a_there_are_the_listed_number_of_mutants_with_unique_names():
+        names = [m.name for m in mm.M]
+&gt;       assert len(names) == EXPECTED_MUTANTS and len(set(names)) == EXPECTED_MUTANTS, names
+E       AssertionError: ['judge: an exception line counts as a kill', 'judge: crash markers ignored', 'judge: short expect accepted', 'runner: crash counts as good', 'runner: an absolute path is accepted', 'runner: a dotdot part is accepted', ...]
+E       assert (62 == 162)
+E        +  where 62 = len(['judge: an exception line counts as a kill', 'judge: crash markers ignored', 'judge: short expect accepted', 'runner: crash counts as good', 'runner: an absolute path is accepted', 'runner: a dotdot part is accepted', ...])
+
+tests/test_mutation_runner_meta.py:111: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_meta" name="test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists" time="1.160" /><testcase classname="tests.test_mutation_runner_meta" name="test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not" time="0.000"><failure message="assert 59 == (162 - 3)&#10; +  where 59 = sum(&lt;generator object test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not.&lt;locals&gt;.&lt;genexpr&gt; at 0x7fe97468e0c0&gt;)">def test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not():
+        crash = {m.name: m.crash_type for m in mm.M if m.allow_crash}
+        assert crash == {
+            "runner: a failing tree kill is not caught": "PermissionError",
+            "b2: a refused junit stops the run": "ValueError",
+            "runner: a truncated junit stops the run": "ParseError",
+        }
+&gt;       assert sum(not m.allow_crash and not m.crash_type for m in mm.M) == EXPECTED_MUTANTS - 3
+E       assert 59 == (162 - 3)
+E        +  where 59 = sum(&lt;generator object test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not.&lt;locals&gt;.&lt;genexpr&gt; at 0x7fe97468e0c0&gt;)
+
+tests/test_mutation_runner_meta.py:161: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_meta" name="test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets" time="0.002"><failure message="AssertionError: assert 62 == 162&#10; +  where 62 = len(['judge: an exception line counts as a kill: occurs once in src/hadavin_sdk/testing/mutation.py', 'judge: crash marker...s once in tools/mutation_runner.py', 'runner: a dotdot part is accepted: occurs once in tools/mutation_runner.py', ...])">def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():
+        lines = []
+        for m in mm.M:
+            text = (ROOT / m.file).read_text(encoding="utf-8")
+            count = text.count(m.old)
+            assert count == 1, f"{m.name}: the search string occurs {count} times in {m.file}"
+            assert m.new != m.old, m.name
+            lines.append(f"{m.name}: occurs once in {m.file}")
+&gt;       assert len(lines) == EXPECTED_MUTANTS
+E       AssertionError: assert 62 == 162
+E        +  where 62 = len(['judge: an exception line counts as a kill: occurs once in src/hadavin_sdk/testing/mutation.py', 'judge: crash marker...s once in tools/mutation_runner.py', 'runner: a dotdot part is accepted: occurs once in tools/mutation_runner.py', ...])
+
+tests/test_mutation_runner_meta.py:172: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_meta" name="test_the_mutants_script_exits_2_when_the_filter_selects_no_mutant" time="0.053" /></testsuite></testsuites>

@@ -1,0 +1,19 @@
+HEAD 3586dcc34647fa66dded9a4250be6b52e845c5ba
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building hadavin-sdk @ file:///home/user/build/EV-P89-3586dcc/wt
+      Built hadavin-sdk @ file:///home/user/build/EV-P89-3586dcc/wt
+Installed 76 packages in 206ms
+All checks passed!
+exit=0
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+318 files already formatted
+exit=0
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+error: Failed to spawn: `bandit`
+  Caused by: No such file or directory (os error 2)
+exit=2
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+
+exit=0

@@ -1,0 +1,20 @@
+HEAD 3586dcc34647fa66dded9a4250be6b52e845c5ba py3.13 (root)
+ok  KILLED       runner: the rest of an unquoted password is not a secret  [test_an_unquoted_password_with_a_quote_a_semicolon_or_an_amp]
+ok  KILLED       runner: a backslash and a newline end a quoted password  [test_a_backslash_and_a_newline_in_a_quoted_libpq_password_ar]
+ok  KILLED       runner: a lock file with two names is accepted  [test_a_lock_file_with_two_hard_links_is_refused]
+ok  KILLED       runner: a folder is not named as the cause  [test_a_lock_file_that_cannot_be_opened_names_the_cause]
+ok  KILLED       runner: a not-a-folder path is not named as the cause  [test_a_lock_file_that_cannot_be_opened_names_the_cause]
+ok  KILLED       runner: a refused permission is not named as the cause  [test_a_lock_file_that_cannot_be_opened_names_the_cause]
+ok  KILLED       runner: the lock file is opened for writing on POSIX  [test_the_lock_file_is_opened_read_only_on_posix]
+ok  KILLED       runner: a plus in a URL password is not read as a space  [test_a_plus_in_a_url_password_is_also_read_as_a_space]
+ok  KILLED       runner: a percent code is read only with the plus rule  [test_a_plus_in_a_url_password_is_also_read_as_a_space]
+ok  KILLED       runner: a FIFO lock file blocks the open  [test_a_lock_file_that_is_a_fifo_is_refused_and_does_not_hang]
+ok  KILLED       runner: a JUnit path that is no regular file is read  [test_a_junit_path_that_is_not_a_regular_file_is_refused_and_]
+ok  KILLED       runner: a JUnit symbolic link is followed  [test_a_junit_path_that_is_not_a_regular_file_is_refused_and_]
+ok  KILLED       runner: the JUnit size ceiling is not checked  [test_an_over_sized_junit_file_is_refused_before_it_is_read]
+ok  KILLED       runner: only one layer of printing is built  [test_a_value_printed_in_two_layers_is_masked_whatever_quotes]
+162 of 162 good; problems: []
+mutants_rc=0
+git status after:
+(end git status)
+exit=0
