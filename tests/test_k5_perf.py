@@ -2,17 +2,17 @@
 blocking step, and the harness itself is tested with a deliberately quadratic pattern so a pass means something.
 
 What is measured: wall seconds (perf_counter: process_time ticks at 15.6 ms on Windows and read 0 for the small run,
-which made a linear pattern look like a jump), the median of three runs, on 64 KiB and 256 KiB of one pattern's own
-keyword repeated. A linear pattern takes about 4x as long on 4x the text; a quadratic one 16x; the limit is
-3x per size ratio (12x for 4x the text) of the small run (never less than 4 ms), with no fixed seconds floor on the big
-run (`tests/fixtures/timing.py`). The BANKCODE transit pattern
+which made a linear pattern look like a jump) of one scan, on 64 KiB and 256 KiB of one pattern's own keyword repeated.
+The shared rule (`tests/fixtures/timing.py`) does the timing: it repeats the scan until a batch takes at least 20 ms and
+takes the fastest of three batches, so a fast small run is timed properly and never rounded up. A linear pattern takes
+about 4x as long on 4x the text; a quadratic one 16x; the limit is 3x per size ratio (12x for 4x the text) of the small
+run, with no fixed seconds figure on either run. The BANKCODE transit pattern
 measured alone: 16 KiB 3 ms, 64 KiB 19 ms, 256 KiB 75 ms, 1 MiB 333 ms: linear (4x per 4x), about 0.3 us per char."""
 
 from __future__ import annotations
 
 import importlib
 import re
-import statistics
 import sys
 import time
 
@@ -29,22 +29,13 @@ def _redact_module():
     return sys.modules["hadavin_sdk.guard.redact"]
 
 
-def _cpu(pattern: re.Pattern[str], text: str) -> float:
-    runs = []
-    for _ in range(3):
-        t0 = time.perf_counter()
-        for _match in pattern.finditer(text):
-            pass
-        runs.append(time.perf_counter() - t0)
-    return statistics.median(runs)
-
-
-def _is_superlinear(measure, unit: str, small: int, big: int) -> bool:
-    return timing.is_superlinear(measure, unit, small, big)
+def _scan(pattern: re.Pattern[str], text: str) -> None:
+    for _match in pattern.finditer(text):
+        pass
 
 
 def is_superlinear(pattern: re.Pattern[str], unit: str, small: int = SMALL, big: int = BIG) -> bool:
-    return _is_superlinear(lambda t: _cpu(pattern, t), unit, small, big)
+    return timing.is_superlinear(lambda t: _scan(pattern, t), unit, small, big)
 
 
 def _keywords(source: str) -> list[str]:
@@ -92,15 +83,10 @@ E2E_UNITS = [
 ]
 
 
-def _e2e(text: str) -> float:
+def _e2e(text: str) -> None:
     from hadavin_sdk.guard import runmap
 
-    runs = []
-    for _ in range(3):
-        t0 = time.perf_counter()
-        runmap.redact_untrusted(text, {})
-        runs.append(time.perf_counter() - t0)
-    return statistics.median(runs)
+    runmap.redact_untrusted(text, {})
 
 
 @pytest.mark.perf
@@ -108,7 +94,7 @@ def _e2e(text: str) -> float:
     "unit", E2E_UNITS, ids=["curl-u", "password", "fullwidth", "json-escape", "zero-width"]
 )
 def test_redact_untrusted_end_to_end_is_not_super_linear_with_views(unit):
-    assert not _is_superlinear(_e2e, unit, 16 * 1024, 64 * 1024)
+    assert not timing.is_superlinear(_e2e, unit, 16 * 1024, 64 * 1024)
 
 
 @pytest.mark.perf

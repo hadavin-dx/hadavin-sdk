@@ -7,9 +7,7 @@ and not a collection error. Planted names and SQL are made up. Postgres-side tes
 from __future__ import annotations
 
 import os
-import statistics
 import sys
-import time
 from pathlib import Path
 
 import pytest
@@ -806,15 +804,6 @@ def test_a_million_characters_finish(mn):
     assert mn.lex(text)[1] == ""
 
 
-def _median_time(fn, text: str) -> float:
-    runs = []
-    for _ in range(3):
-        t0 = time.perf_counter()
-        fn(text)
-        runs.append(time.perf_counter() - t0)
-    return statistics.median(runs)
-
-
 @pytest.mark.perf
 def test_lexer_is_linear(mn):
     small, big = 16 * 1024, 256 * 1024
@@ -823,18 +812,57 @@ def test_lexer_is_linear(mn):
         (fn.__name__, unit)
         for fn in (mn.lex, mn.refused_statements)
         for unit in units
-        if timing.is_superlinear(lambda t, f=fn: _median_time(f, t), unit, small, big)
+        if timing.is_superlinear(fn, unit, small, big)
     ]
     assert not slow, slow
 
 
+# Three stand-ins with a known cost, timed with the real clock, so a pass of the test above means something. `_scan` is
+# one pass over the text in 64-character steps; the sizes are the ones the lexer test uses (16x apart: a linear cost
+# grows about 16x, the limit is 48x, a quadratic cost about 256x).
+
+
+def _scan(text: str) -> int:
+    return sum(text.count("a", i, i + 64) for i in range(0, len(text), 64))
+
+
+def _linear(text: str) -> None:
+    _scan(text)
+
+
+def _n_log_n(text: str) -> None:
+    for _ in range(
+        len(text).bit_length()
+    ):  # 15 passes at 16 KiB, 19 at 256 KiB: about 20x for 16x the text
+        _scan(text)
+
+
+def _quadratic(text: str) -> None:
+    sum(
+        text.count("a", 0, i) for i in range(0, len(text), 64)
+    )  # every step re-reads the text from its start
+
+
 @pytest.mark.perf
 def test_the_timing_harness_flags_a_quadratic_stand_in():
-    def quadratic(t: str) -> float:
-        return _median_time(lambda s: sum(s.count("a", 0, i) for i in range(0, len(s), 64)), t)
-
-    assert timing.is_superlinear(quadratic, "a", 16 * 1024, 256 * 1024), (
+    assert timing.is_superlinear(_quadratic, "a", 16 * 1024, 256 * 1024), (
         "a quadratic function must be flagged"
+    )
+
+
+@pytest.mark.perf
+@pytest.mark.parametrize("stand_in", [_linear, _n_log_n], ids=["linear", "n-log-n"])
+def test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in(stand_in):
+    assert not timing.is_superlinear(stand_in, "a", 16 * 1024, 256 * 1024), (
+        f"{stand_in.__name__} is linear enough and must not be flagged"
+    )
+
+
+@pytest.mark.perf
+def test_the_timing_harness_flags_a_quadratic_stand_in_that_is_fast_on_the_small_input():
+    # 4 KiB takes well under a millisecond: the earlier 4 ms floor on the small run hid every quadratic cost this small
+    assert timing.is_superlinear(_quadratic, "a", 4 * 1024, 64 * 1024), (
+        "a quadratic function must be flagged however fast its small run is"
     )
 
 
