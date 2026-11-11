@@ -469,7 +469,7 @@ M = [
         '        s + (" (builder only)" if s in BUILDER_ONLY_SOURCES else "") for s in verified[1:]\n',
         '        s + ("" if s in BUILDER_ONLY_SOURCES else "") for s in verified[1:]\n',
         "test_a_builder_only_source_is_marked_wherever_the_page_lists_it",
-        "is not marked in the checked cell",
+        "without the mark (builder only)",
     ),
     mutant(
         "B3 a grant with an unchecked claim needs no dated entry",

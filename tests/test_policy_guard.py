@@ -1642,7 +1642,10 @@ def test_plant_a_url_or_host_in_verified_is_refused(source):
 
 def test_plant_no_copy_ready_text_for_a_kind_with_an_unverified_grant_or_claim():
     base = _with_grant("signer/vault_transit", claims_unverified=())["signer/vault_transit"]
-    assert pp.copy_ready(base) and not pp.copy_ready(_policies()["signer/vault_transit"])
+    assert pp.copy_ready(base), "a transit policy with no unchecked claim is not copy-ready"
+    assert not pp.copy_ready(_policies()["signer/vault_transit"]), (
+        "copy-ready text is offered for a kind with an unchecked grant"
+    )
     for changes in ({"verified": None}, {"claims_unverified": ("the bound",)}):
         changed = _with_grant("signer/vault_transit", **changes)["signer/vault_transit"]
         assert not pp.copy_ready(changed), (
@@ -2873,9 +2876,10 @@ def test_plant_a_vault_never_path_over_a_grant_is_caught_and_a_capability_that_d
     ]
     for kind, entry, grant in caught:
         found = _covers_problems(_with_never(kind, **entry))
-        assert len(found) == 1 and f"grant {grant} " in found[0], (
-            f"a never path {entry} that covers grant {grant} is not reported: {found}"
-        )
+        assert any(
+            f"never-list path {entry['name']!r}" in f and f"grant {grant} " in f for f in found
+        ), f"a never path {entry} that covers grant {grant} is not reported: {found}"
+        assert len(found) == 1, f"a never path {entry} is reported more than once: {found}"
     clean = [
         (vault, {"name": "{mount}/data/*", "capabilities": ("create", "update")}),
         (vault, {"name": "{mount}/metadata/*"}),
