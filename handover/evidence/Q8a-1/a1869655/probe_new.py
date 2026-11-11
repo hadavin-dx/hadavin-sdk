@@ -66,6 +66,23 @@ for fld, mk in URLFIELDS.items():
     for sn, sh in SHAPES.items():
         new.append((f"URLFIELD {fld} | {sn}", mk(sh(PATHS.get(fld.split(' ')[-1], "/x") if fld.split(' ')[-1] in PATHS else "/x"))))
 
+
+# B2b: configured read source (sources:, kubernetes kind) api_url, the real path through SourceConfig
+def srcset(u, name="k8s-main", extra=None):
+    def f(d):
+        st = {"api_url": u, "namespaces": ["a"]}
+        if extra: st.update(extra)
+        d["sources"] = {name: {"kind": "kubernetes", "settings": st}}; return d
+    return edit_yaml("config.yaml", f)
+for sn, sh in SHAPES.items():
+    new.append((f"SOURCE kubernetes.api_url | {sn}", srcset(sh(""))))
+new.append(("SOURCE name=marker (plain id shape), clean url", srcset("https://host.example", name=MARK)))
+new.append(("SOURCE unknown settings key marker", srcset("https://host.example", extra={MARK: 1})))
+new.append(("SOURCE bad kind value marker", edit_yaml("config.yaml", lambda d: (d.__setitem__("sources", {"s": {"kind": MARK, "settings": {}}}), d)[1])))
+new.append(("SOURCE settings not a mapping (marker)", edit_yaml("config.yaml", lambda d: (d.__setitem__("sources", {"s": {"kind": "kubernetes", "settings": MARK}}), d)[1])))
+new.append(("SOURCE api_url with path marker (pattern mismatch)", srcset(f"https://host.example/{MARK}")))
+new.append(("SOURCE namespaces value marker int field page_size=marker", srcset("https://host.example", extra={"page_size": MARK})))
+
 # B3: egress.yaml extra key (no marker) and non-bare hosts
 new.append(("EGRESS extra key (plain word, no marker)", edit_yaml("egress.yaml", lambda d: (d.__setitem__("extra_thing", 1), d)[1])))
 new.append(("EGRESS extra key marker", edit_yaml("egress.yaml", lambda d: (d.__setitem__(MARK, 1), d)[1])))
