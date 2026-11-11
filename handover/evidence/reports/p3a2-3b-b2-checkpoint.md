@@ -1,18 +1,19 @@
-# P3a-2 commit 3b, builder 2, checkpoint 1 (2026-11-11 22:30 UTC)
+# P3a-2 commit 3b, builder 2, checkpoint 2 (2026-11-11 22:46 UTC)
 
-Head: f468bde0 (worktree /home/user/build/B-P3a2-b2, branch wip/b2-p3a2-3b). Nothing committed by builder 2 yet.
+Head: f468bde0 plus uncommitted edits in worktree /home/user/build/B-P3a2-b2 (branch wip/b2-p3a2-3b). Nothing committed or pushed yet by builder 2.
 
 ## Done
-- Own worktree, venv and Postgres 16 set up.
-- 19 failing tests in tests/test_migration_postgres.py re-pointed (uncommitted edits). Each passes in a targeted run.
+- 19 failing tests in tests/test_migration_postgres.py re-pointed. Full file: 214 passed (/home/user/build/B2-tpg-b.log).
+- New real-server tests in tests/test_migration_verify_pg.py: after-commit exit 5, step 8 cannot connect, any error inside step 8 (3 cases), saved statement timeout, role switch in the DSN, one snapshot, commit refused (exit 2), lost connection at commit (exit 5), upgrade from main's state, public schema (pass and CREATE-for-everyone refused), pg_monitor at step 2, grant-option holder not dropped at step 2, ledger trigger that disables audit triggers, reviewed definer, third-role owner of a managed name (3 kinds), verify cost on a large catalog (perf).
+- Unit test test_the_rights_table_equals_what_apply_grants_is_called_with (tests/test_migration_verify.py).
+- Mutant list: 11 retired (SD4 SD5 OW7 OW8 FB1 FB2 FB3 SO1 SO2 SO3 CS2) plus OW9; E5, E22, OA3 text fixed; OW5 OW6 SD7 SD8 re-planted in live code. test_migration_rules.py: 159 passed. ruff check and format clean.
+- gitleaks on the staged diff: no leaks.
 
-## Not yet confirmed
-- Full tests/test_migration_postgres.py run (log /home/user/build/B2-tpg-b.log): at 67 percent, no failure so far, not finished.
+## Not done / found
+- The comparison code ticket 5.3 says to delete (effective_problems, _refuse_unlisted_grantees, _Objects, _Changed, _changed_since and their SQL, plus the TCMP tests of test_migration_compare.py) is STILL in migrate.py (dead, not called). The previous builder did not delete it. Not done by me yet; needs the lead's decision (time box).
+- Section 6 tests (unreadable lock view, duplicate CREATE) belong to commit 4 and are not written; the code for 6.1/6.2 is not in migrate.py.
+- Ticket text said one problem line for pg_monitor; the code gives four lines (membership plus three implied built-in roles) and one distinct statement. Test pins that.
 
 ## Next
-- 17 real-server tests (ticket 7.6) plus the rights-table test.
-- Mutants E1-E27 (sample first), re-point WD1 and the 11 broken ones.
-- Fail-before proof, gates, one full suite, commit, fast-forward push.
-
-## Blockers
-- None. Items needing lead sign-off: dropped refusal (group-owner handover, rule O5), retired WD1 rule, PUBLIC-function grant now undone by step 4.
+- Mutants E1-E27 running (log /home/user/build/B2-mut-E.log), then a 60-mutant sample, then full run alone on the final head.
+- Fail-before proof, scan_repo, bandit, one full suite, commit, push.
