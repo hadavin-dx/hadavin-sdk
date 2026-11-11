@@ -203,7 +203,9 @@ def sweep_stale_roles(db) -> list[str]:
                 dropped.append(name)
             except psycopg.Error as e:
                 try:
-                    where = ", ".join(_databases_that_still_hold(db, name)) or "none found"
+                    # in a savepoint: on a connection inside a transaction, a refused read must not abort the caller's
+                    with db.transaction():
+                        where = ", ".join(_databases_that_still_hold(db, name)) or "none found"
                 # a login that may not read `pg_shdepend` must not fail the setup
                 except psycopg.Error:
                     where = "not known (this login cannot read pg_shdepend)"

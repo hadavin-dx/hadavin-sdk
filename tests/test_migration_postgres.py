@@ -98,6 +98,16 @@ def _ledger(dsn) -> list[str] | None:
         return [r[0] for r in db.execute("SELECT version FROM schema_migrations ORDER BY 1")]
 
 
+def _dynamic(*statements: str) -> str:
+    """A migration file whose statements run inside a function body (`EXECUTE`): the text rules read only the start of a
+    statement, so this is what a file does to reach the read-back with statements the text rules refuse."""
+    runs = " ".join(f"EXECUTE '{st.replace(chr(39), chr(39) * 2)}';" for st in statements)
+    return (
+        "CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+        f"{runs} END $$;\nSELECT hadavin_test_dyn_runner();\n"
+    )
+
+
 def _with_files(monkeypatch, tmp_path: Path, planted: dict[str, str]):
     """`migrate()` sees the real files plus the planted ones."""
     paths = []
@@ -297,7 +307,7 @@ def test_h11_a_function_owner_change_is_refused(scratch, monkeypatch, tmp_path):
         _let_the_plain_role_grant(
             other
         )  # the plain role may give an object to a role it is a member of
-        body = f"ALTER FUNCTION hadavin_audit_append_only() OWNER TO {other};\n"
+        body = _dynamic(f"ALTER FUNCTION hadavin_audit_append_only() OWNER TO {other}")
         _with_files(monkeypatch, tmp_path, {"0006_owner.sql": body})
         with pytest.raises(
             ConfigError, match="audit_entries_no_truncate changed: function owner"
@@ -2482,7 +2492,7 @@ def test_the_portal_role_is_refused_what_the_other_roles_are_refused(scratch, ho
         with pytest.raises(ConfigError) as e:
             mig.migrate(dsn, portal_role=pt)
         msg = str(e.value)
-        assert "the portal role holds privileges outside the portal grant map" in msg, msg
+        assert "the portal role has privileges outside the portal grant map" in msg, msg
         assert "for the portal role SELECT only" in msg, msg
         assert expected in msg, msg
         assert _ledger(dsn) == REAL, "nothing was kept"
@@ -2727,8 +2737,8 @@ def test_a_right_for_a_role_the_run_does_not_name_is_refused(
                 mig.migrate(dsn, **roles)
             text = str(e.value)
             assert "Nothing was changed." in text
-            assert ("PUBLIC holds" in text) == ("PUBLIC" in grant or "FUNCTION" in grant)
-            assert (f"{other} holds" in text) == ("{other}" in grant)
+            assert ("PUBLIC has" in text) == ("PUBLIC" in grant or "FUNCTION" in grant)
+            assert (f"{other} has" in text) == ("{other}" in grant)
             assert "0006_grant" not in (_ledger(dsn) or [])
         finally:
             if with_roles:
@@ -3012,7 +3022,7 @@ def test_a_table_made_by_dynamic_sql_and_opened_to_everyone_is_refused(
         "EXECUTE 'GRANT SELECT ON hadavin_test_open TO PUBLIC'; END $$;\nSELECT hadavin_test_mk();\n"
     )
     _with_files(monkeypatch, tmp_path, {"0006_dyn_table.sql": body})
-    with pytest.raises(ConfigError, match="PUBLIC holds SELECT on hadavin_test_open") as e:
+    with pytest.raises(ConfigError, match="PUBLIC has SELECT on hadavin_test_open") as e:
         mig.migrate(dsn)
     assert "Nothing was changed." in str(e.value)
     assert _ledger(dsn) is None
@@ -3047,10 +3057,7 @@ def test_a_default_right_that_an_administrator_set_is_refused_and_the_message_sa
         with pytest.raises(ConfigError, match="a default right") as e:
             mig.migrate(dsn)
         text = str(e.value)
-        assert (
-            "PUBLIC gets SELECT on every new tables" in text
-            or "PUBLIC gets SELECT on every new" in text
-        )
+        assert "PUBLIC gets SELECT on every new table that" in text
         assert "a database administrator" in text and "Nothing was changed." in text
         assert _ledger(dsn) is None
     finally:
@@ -3093,7 +3100,7 @@ def test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_l
                 )
             )
         if right == "CREATE":
-            with pytest.raises(ConfigError, match=f"{other} holds CREATE on the schema") as e:
+            with pytest.raises(ConfigError, match=f"{other} has CREATE on the schema") as e:
                 mig.migrate(dsn)
             assert "Nothing was changed." in str(e.value) and _ledger(dsn) is None
         else:
@@ -3102,7 +3109,7 @@ def test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_l
         _drop_roles(other)
     with psycopg.connect(DSN, autocommit=True) as db:  # PUBLIC may not create either
         db.execute(sql.SQL("GRANT CREATE ON SCHEMA {} TO PUBLIC").format(sql.Identifier(schema)))
-    with pytest.raises(ConfigError, match="PUBLIC holds CREATE on the schema"):
+    with pytest.raises(ConfigError, match="PUBLIC has CREATE on the schema"):
         mig.migrate(dsn)
 
 
@@ -3128,7 +3135,7 @@ def test_an_owner_a_file_handed_an_object_to_is_refused_even_when_the_migration_
         _with_files(
             monkeypatch,
             tmp_path,
-            {"0006_hand_over.sql": f"ALTER TABLE approval_decisions OWNER TO {other};\n"},
+            {"0006_hand_over.sql": _dynamic(f"ALTER TABLE approval_decisions OWNER TO {other}")},
         )
         with pytest.raises(ConfigError, match="was handed to") as e:
             mig.migrate(dsn)
@@ -3148,7 +3155,7 @@ def test_a_right_that_an_earlier_run_gave_is_named_as_such_in_the_refusal(scratc
         assert mig.migrate(dsn, runtime_role=run_as) == REAL
         with pytest.raises(ConfigError, match="an earlier run or a database administrator") as e:
             mig.migrate(dsn)
-        assert f"{run_as} holds" in str(e.value) and "name it in this run" in str(e.value)
+        assert f"{run_as} has" in str(e.value) and "name it in this run" in str(e.value)
     finally:
         _drop_roles(run_as)
 
@@ -3195,12 +3202,19 @@ def test_the_lock_wait_has_an_upper_bound_that_the_server_accepts(scratch):
 @needs_pg
 def test_a_lock_holder_that_this_login_cannot_look_into_is_named_in_plain_words(scratch):
     """For the session of another user the server shows NULL in some columns of `pg_stat_activity`; the message said
-    'state None, connected since None'. Killed by: mutant LW5 (NULL is printed as None)."""
+    'state None, connected since None'. Killed by: mutant LW5 (NULL is printed as None). The holder logs in as a plain
+    role of its own, so the migration (as the plain role of the helper, or as a login that is not a superuser) is another
+    user and the server hides those columns, whatever login the test database was given."""
     dsn, _schema = scratch
-    with psycopg.connect(DSN, autocommit=True) as holder:
-        holder.execute("SELECT pg_advisory_lock(%s)", (mig.MIGRATE_LOCK,))
-        with pytest.raises(ConfigError, match="waited 1 seconds") as e:
-            mig.migrate(dsn, lock_wait_seconds=1)
+    holder_role = "hadavin_test_lh_" + uuid.uuid4().hex[:8]
+    _create_roles(holder_role, login_password="made-up-" + uuid.uuid4().hex)
+    try:
+        with psycopg.connect(login_dsn(DSN, holder_role), autocommit=True) as holder:
+            holder.execute("SELECT pg_advisory_lock(%s)", (mig.MIGRATE_LOCK,))
+            with pytest.raises(ConfigError, match="waited 1 seconds") as e:
+                mig.migrate(dsn, lock_wait_seconds=1)
+    finally:
+        _drop_roles(holder_role)
     text = str(e.value)
     assert "None" not in text, text
     assert "not visible to this login" in text, text
@@ -3268,6 +3282,38 @@ def test_a_login_that_cannot_read_which_databases_hold_a_role_does_not_fail_the_
 
 
 @needs_pg
+def test_a_refused_read_in_the_sweep_does_not_abort_the_transaction_of_the_caller(
+    capsys, monkeypatch
+):
+    """`plain_role_connect` runs the sweep on a connection that is inside a transaction. A read the server refuses (a real
+    server error, not one raised by Python) put that whole transaction in the failed state, so the next statement failed
+    and the lock of the setup stayed taken. The read is now in a savepoint. Killed by: mutant SW20 (no savepoint)."""
+    with _databases_and_a_stale_role() as (name, (db_x, db_y)):
+        with psycopg.connect(make_conninfo(DSN, dbname=db_x), autocommit=True) as in_x:
+            in_x.execute(
+                sql.SQL("CREATE SCHEMA hadavin_test_owned AUTHORIZATION {}").format(
+                    sql.Identifier(name)
+                )
+            )
+
+        def refused(db, role):
+            db.execute(
+                "SELECT 1 / 0"
+            )  # the server refuses: the transaction is now failed unless a savepoint holds it
+
+        monkeypatch.setattr(helper, "_databases_that_still_hold", refused)
+        with psycopg.connect(
+            make_conninfo(DSN, dbname=db_y)
+        ) as in_y:  # not autocommit: inside a transaction
+            in_y.execute("SELECT 1")
+            helper.sweep_stale_roles(in_y)
+            assert in_y.execute("SELECT 2").fetchone() == (2,), (
+                "the caller's transaction is still usable"
+            )
+    assert name in capsys.readouterr().out
+
+
+@needs_pg
 def test_a_marking_connection_that_cannot_get_its_lock_ends_with_a_plain_error_not_a_hang(
     monkeypatch,
 ):
@@ -3315,3 +3361,498 @@ def test_the_holder_named_is_the_one_that_holds_the_real_lock_not_one_with_the_s
         with pytest.raises(ConfigError, match="waited 1 seconds") as e:
             mig.migrate(dsn, lock_wait_seconds=1)
     assert real_name in str(e.value) and decoy_name not in str(e.value), str(e.value)
+
+
+# --- rights and owners of objects that existed before the run (round 11) -------------------------------------------------
+
+X = "hadavin_test_x"
+
+
+def _admin(*statements):
+    with psycopg.connect(DSN, autocommit=True) as db:
+        ensure_plain_role(db)
+        for st in statements:
+            db.execute(st)
+
+
+def _pre_existing(schema, kind, name, *, in_schema=None):
+    """An object that exists before the run, owned by the migration role, that no list names. (A migration file cannot
+    make one: the text scan lists every table, view and sequence a file creates and refuses one missing from the grant
+    map. So an object like this comes from an earlier release, another application or a person.)"""
+    where = sql.Identifier(in_schema or schema)
+    made = {
+        "table": "CREATE TABLE {}.{} (a int)",
+        "sequence": "CREATE SEQUENCE {}.{}",
+        "view": "CREATE VIEW {}.{} AS SELECT 1 AS a",
+    }[kind]
+    _admin(
+        sql.SQL(made).format(where, sql.Identifier(name)),
+        sql.SQL(f"ALTER {kind.upper()} {{}}.{{}} OWNER TO {{}}").format(
+            where, sql.Identifier(name), sql.Identifier(PLAIN_ROLE)
+        ),
+    )
+
+
+@needs_pg
+@pytest.mark.parametrize(
+    "later",
+    [f"GRANT SELECT ON {X} TO PUBLIC;\n", f"GRANT SELECT (a) ON {X} TO PUBLIC;\n"],
+    ids=["table", "column"],
+)
+def test_a_right_given_on_a_table_that_existed_before_the_run_is_refused(
+    scratch, monkeypatch, tmp_path, later
+):
+    """The table `x` existed before the run (owned by the migration role, in no list). The file holds a plain
+    `GRANT ... ON x TO PUBLIC`, a statement the text rules allow. `x` is neither in the grant map nor new, so nothing read
+    its rights. Class: a right or an owner changes on an object that existed before the run. Killed by: mutant RA1 (the
+    rights of a relation are not part of its state)."""
+    dsn, schema = scratch
+    _pre_existing(schema, "table", X)
+    _with_files(monkeypatch, tmp_path, {"0006_open.sql": later})
+    with pytest.raises(ConfigError, match=f"PUBLIC has SELECT on {X}") as e:
+        mig.migrate(dsn)
+    assert "Nothing was changed." in str(e.value)
+    assert _ledger(dsn) is None
+
+
+@needs_pg
+def test_a_right_given_on_a_table_of_another_schema_is_refused(
+    scratch, monkeypatch, tmp_path, second_schema
+):
+    """Same class, a table of another schema that the migration role owns. Killed by: mutants RA1 and RA2 (only the schema
+    of the run is read)."""
+    dsn, schema = scratch
+    _pre_existing(schema, "table", X, in_schema=second_schema)
+    _with_files(
+        monkeypatch,
+        tmp_path,
+        {"0006_open.sql": f'GRANT SELECT ON "{second_schema}".{X} TO PUBLIC;\n'},
+    )
+    with pytest.raises(ConfigError, match=f"PUBLIC has SELECT on {second_schema}.{X}"):
+        mig.migrate(dsn)
+
+
+@needs_pg
+@pytest.mark.parametrize(
+    ("kind", "word"),
+    [
+        ("table", "table or sequence"),
+        ("sequence", "table or sequence"),
+        ("view", "table or sequence"),
+        ("function", "function"),
+    ],
+)
+def test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind(
+    scratch, monkeypatch, tmp_path, second_schema, kind, word
+):
+    """The text rules refuse `ALTER ... OWNER TO` at the start of a statement; inside a function body it reaches the
+    read-back, which looks at tables, sequences, views and functions that existed before the run, in the run schema and in
+    another one. Killed by: mutants OW5 (a function's owner is not read), OW6 (a view or a sequence is skipped), RA3 (an
+    object counts as changed only when it is new)."""
+    dsn, schema = scratch
+    other = "hadavin_test_ow_" + uuid.uuid4().hex[:8]
+    _create_roles(other)
+    try:
+        _let_the_plain_role_belong_to(other)
+        _admin(
+            sql.SQL("GRANT CREATE ON SCHEMA {} TO {}").format(
+                sql.Identifier(second_schema), sql.Identifier(other)
+            )
+        )
+        if kind == "function":
+            _admin(
+                sql.SQL(
+                    "CREATE FUNCTION {}.hadavin_test_o() RETURNS int LANGUAGE sql AS $q$ SELECT 1 $q$"
+                ).format(sql.Identifier(second_schema)),
+                sql.SQL("ALTER FUNCTION {}.hadavin_test_o() OWNER TO {}").format(
+                    sql.Identifier(second_schema), sql.Identifier(PLAIN_ROLE)
+                ),
+            )
+            hand = f'ALTER FUNCTION "{second_schema}".hadavin_test_o() OWNER TO {other}'
+        else:
+            _pre_existing(schema, kind, "hadavin_test_o", in_schema=second_schema)
+            hand = f'ALTER {kind.upper()} "{second_schema}".hadavin_test_o OWNER TO {other}'
+        _with_files(monkeypatch, tmp_path, {"0006_hand_over.sql": _dynamic(hand)})
+        with pytest.raises(ConfigError, match="was handed to") as e:
+            mig.migrate(dsn)
+        assert f"the {word} " in str(e.value) and other in str(e.value)
+        assert _ledger(dsn) is None
+    finally:
+        _drop_roles(other)
+
+
+@needs_pg
+def test_an_owner_handed_over_in_the_run_schema_is_refused(scratch, monkeypatch, tmp_path):
+    """Same, for a table of the run schema. Killed by: mutant RA3."""
+    dsn, schema = scratch
+    other = "hadavin_test_ow_" + uuid.uuid4().hex[:8]
+    _create_roles(other)
+    try:
+        _pre_existing(schema, "table", X)
+        _let_the_plain_role_belong_to(other)
+        _admin(
+            sql.SQL("GRANT CREATE ON SCHEMA {} TO {}").format(
+                sql.Identifier(schema), sql.Identifier(other)
+            )
+        )
+        _with_files(
+            monkeypatch, tmp_path, {"0006_hand.sql": _dynamic(f"ALTER TABLE {X} OWNER TO {other}")}
+        )
+        with pytest.raises(ConfigError, match="was handed to"):
+            mig.migrate(dsn)
+    finally:
+        _drop_roles(other)
+
+
+@needs_pg
+def test_a_function_that_kept_a_foreign_owner_is_not_refused_for_that_owner(
+    scratch, monkeypatch, tmp_path, second_schema
+):
+    """A function that another role owned before the run (the migration role belongs to it) and that a file replaces keeps
+    that owner: only an owner that a FILE handed over is refused. Killed by: mutant OW5 (the owner a function had before
+    is not remembered)."""
+    dsn, _schema = scratch
+    other = "hadavin_test_ow_" + uuid.uuid4().hex[:8]
+    _create_roles(other)
+    try:
+        _admin(
+            sql.SQL("GRANT CREATE ON SCHEMA {} TO {}").format(
+                sql.Identifier(second_schema), sql.Identifier(other)
+            ),
+            sql.SQL(
+                "CREATE FUNCTION {}.hadavin_test_pre() RETURNS int LANGUAGE sql AS $q$ SELECT 1 $q$"
+            ).format(sql.Identifier(second_schema)),
+            sql.SQL("ALTER FUNCTION {}.hadavin_test_pre() OWNER TO {}").format(
+                sql.Identifier(second_schema), sql.Identifier(other)
+            ),
+        )
+        _let_the_plain_role_belong_to(other)
+        _with_files(
+            monkeypatch,
+            tmp_path,
+            {
+                "0006_replace.sql": _dynamic(
+                    f'CREATE OR REPLACE FUNCTION "{second_schema}".hadavin_test_pre() RETURNS int LANGUAGE sql AS $q$ SELECT 2 $q$'
+                )
+            },
+        )
+        assert mig.migrate(dsn)[-1] == "0006_replace"
+    finally:
+        _drop_roles(other)
+
+
+@needs_pg
+@pytest.mark.parametrize("change", ["acl", "owner"])
+def test_a_schema_that_a_file_changed_is_read_back_whatever_schema_it_is(
+    scratch, monkeypatch, tmp_path, second_schema, change
+):
+    """`GRANT CREATE ON SCHEMA other TO PUBLIC` and `ALTER SCHEMA other OWNER TO r` inside a function body changed a
+    schema that the run does not live in; only the schema of the run was read. Killed by: mutants SC10 (changed schemas
+    are not read) and SC11 (a schema owner is not read)."""
+    dsn, _schema = scratch
+    other = "hadavin_test_sw_" + uuid.uuid4().hex[:8]
+    _create_roles(other)
+    try:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            name = db.execute("SELECT current_database()").fetchone()[0]
+        _admin(
+            sql.SQL("ALTER SCHEMA {} OWNER TO {}").format(
+                sql.Identifier(second_schema), sql.Identifier(PLAIN_ROLE)
+            ),
+            sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+                sql.Identifier(name), sql.Identifier(other)
+            ),
+        )
+        _let_the_plain_role_grant(other)
+        statement = (
+            f'GRANT ALL ON SCHEMA "{second_schema}" TO PUBLIC'
+            if change == "acl"
+            else f'ALTER SCHEMA "{second_schema}" OWNER TO {other}'
+        )
+        _with_files(monkeypatch, tmp_path, {"0006_schema.sql": _dynamic(statement)})
+        expect = (
+            f"PUBLIC has CREATE on the schema {second_schema}"
+            if change == "acl"
+            else f"the schema {second_schema} was handed to {other}"
+        )
+        with pytest.raises(ConfigError, match=expect):
+            mig.migrate(dsn)
+    finally:
+        _drop_roles(other)
+
+
+@needs_pg
+def test_a_foreign_table_that_a_file_opens_to_everyone_is_refused(scratch, monkeypatch, tmp_path):
+    """A foreign table is a relation of its own kind ('f'); the read-back looked at r, p, v, m and S only. Killed by:
+    mutant RK1 (the kind 'f' is left out)."""
+    dsn, schema = scratch
+    suffix = uuid.uuid4().hex[:8]
+    wrapper, server = f"hadavin_test_w_{suffix}", f"hadavin_test_sv_{suffix}"
+    try:
+        _admin(
+            sql.SQL("CREATE FOREIGN DATA WRAPPER {}").format(sql.Identifier(wrapper)),
+            sql.SQL("CREATE SERVER {} FOREIGN DATA WRAPPER {}").format(
+                sql.Identifier(server), sql.Identifier(wrapper)
+            ),
+            sql.SQL("GRANT USAGE ON FOREIGN SERVER {} TO {}").format(
+                sql.Identifier(server), sql.Identifier(PLAIN_ROLE)
+            ),
+            sql.SQL("CREATE FOREIGN TABLE {}.hadavin_test_ft (a int) SERVER {}").format(
+                sql.Identifier(schema), sql.Identifier(server)
+            ),
+            sql.SQL("ALTER FOREIGN TABLE {}.hadavin_test_ft OWNER TO {}").format(
+                sql.Identifier(schema), sql.Identifier(PLAIN_ROLE)
+            ),
+        )
+        _with_files(
+            monkeypatch,
+            tmp_path,
+            {"0006_foreign.sql": _dynamic("GRANT SELECT ON hadavin_test_ft TO PUBLIC")},
+        )
+        with pytest.raises(ConfigError, match="PUBLIC has SELECT on hadavin_test_ft"):
+            mig.migrate(dsn)
+    finally:
+        _admin(
+            sql.SQL("DROP SERVER IF EXISTS {} CASCADE").format(sql.Identifier(server)),
+            sql.SQL("DROP FOREIGN DATA WRAPPER IF EXISTS {} CASCADE").format(
+                sql.Identifier(wrapper)
+            ),
+        )
+
+
+@pytest.fixture
+def named_role():
+    """A role that a run names as the runtime role."""
+    role = "hadavin_test_nr_" + uuid.uuid4().hex[:8]
+    _create_roles(role)
+    try:
+        yield role
+    finally:
+        _drop_roles(role)
+
+
+@needs_pg
+@pytest.mark.parametrize(
+    "grant",
+    [
+        f"GRANT SELECT ON {X} TO {{r}} WITH GRANT OPTION;\n",
+        f"GRANT SELECT (a) ON {X} TO {{r}} WITH GRANT OPTION;\n",
+    ],
+    ids=["table", "column"],
+)
+def test_a_right_that_may_be_passed_on_is_refused_on_a_table_outside_the_grant_map(
+    scratch, monkeypatch, tmp_path, named_role, second_schema, grant
+):
+    """`WITH GRANT OPTION` lets the named role give the right to anyone later (the flag was read and never used). Killed
+    by: mutant GO5 (the grant option of a relation is not read)."""
+    dsn, schema = scratch
+    _pre_existing(schema, "table", X, in_schema=second_schema)
+    _with_files(
+        monkeypatch,
+        tmp_path,
+        {"0006_option.sql": grant.format(r=named_role).replace(X, f'"{second_schema}".{X}', 1)},
+    )
+    with pytest.raises(ConfigError, match="on to others \\(WITH GRANT OPTION\\)") as e:
+        mig.migrate(dsn, runtime_role=named_role)
+    assert X in str(e.value) and "Nothing was changed." in str(e.value)
+
+
+@needs_pg
+def test_a_named_role_that_may_pass_the_schema_right_on_is_refused(scratch, named_role):
+    """The grant option on the schema was read into a variable and dropped. Killed by: mutant GO6 (the grant option of a
+    schema right is ignored)."""
+    dsn, schema = scratch
+    _admin(
+        sql.SQL("GRANT USAGE ON SCHEMA {} TO {} WITH GRANT OPTION").format(
+            sql.Identifier(schema), sql.Identifier(named_role)
+        )
+    )
+    with pytest.raises(ConfigError, match="may pass USAGE on the schema") as e:
+        mig.migrate(dsn, runtime_role=named_role)
+    assert "Nothing was changed." in str(e.value)
+
+
+@needs_pg
+@pytest.mark.parametrize(
+    ("kind", "grant", "refused"),
+    [
+        ("table", f"GRANT SELECT ON {X} TO {{r}};\n", False),
+        ("table", f"GRANT INSERT ON {X} TO {{r}};\n", True),
+        ("table", f"GRANT DELETE ON {X} TO {{r}};\n", True),
+        ("sequence", f"GRANT USAGE ON SEQUENCE {X} TO {{r}};\n", False),
+        ("sequence", f"GRANT UPDATE ON SEQUENCE {X} TO {{r}};\n", True),
+    ],
+    ids=["select_ok", "insert", "delete", "sequence_usage_ok", "sequence_update"],
+)
+def test_a_named_role_may_only_read_what_is_not_in_the_grant_map(
+    scratch, monkeypatch, tmp_path, named_role, second_schema, kind, grant, refused
+):
+    """Outside the grant map a named role may read (SELECT, and USAGE or SELECT on a sequence), nothing more; the check
+    of the three roles covers only the tables of the grant map. Killed by: mutant RO1 (any right of a named role is
+    accepted outside the grant map) and RO2 (a sequence may be used only if it is not read-only)."""
+    dsn, schema = scratch
+    _pre_existing(schema, kind, X, in_schema=second_schema)
+    _with_files(
+        monkeypatch,
+        tmp_path,
+        {"0006_grant.sql": grant.format(r=named_role).replace(X, f'"{second_schema}".{X}', 1)},
+    )
+    if refused:
+        with pytest.raises(ConfigError, match="which is not in the grant map"):
+            mig.migrate(dsn, runtime_role=named_role)
+    else:
+        assert mig.migrate(dsn, runtime_role=named_role)[-1] == "0006_grant"
+
+
+@needs_pg
+@pytest.mark.parametrize("grant_to", [None, "other"])
+def test_a_function_of_another_application_owned_by_the_migration_role_is_left_alone(
+    scratch, grant_to
+):
+    """A function that no file made, that the migration role happens to own in the schema of the run, is not this
+    package's: it keeps its default right for everyone to call it, and a right somebody gave on it is not refused (the
+    read-back used to list every function the migration role owns). Killed by: mutants PO1 and PO2 (the owner clause is
+    back in the rights query and in the owner query)."""
+    dsn, schema = scratch
+    other = "hadavin_test_fa_" + uuid.uuid4().hex[:8]
+    _create_roles(other)
+    try:
+        statements = [
+            sql.SQL(
+                "CREATE FUNCTION {}.hadavin_test_foreign() RETURNS int LANGUAGE sql AS $q$ SELECT 1 $q$"
+            ).format(sql.Identifier(schema)),
+            sql.SQL("ALTER FUNCTION {}.hadavin_test_foreign() OWNER TO {}").format(
+                sql.Identifier(schema), sql.Identifier(PLAIN_ROLE)
+            ),
+        ]
+        if grant_to:
+            statements.append(
+                sql.SQL("GRANT EXECUTE ON FUNCTION {}.hadavin_test_foreign() TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(other)
+                )
+            )
+        _admin(*statements)
+        assert mig.migrate(dsn) == REAL
+        with psycopg.connect(DSN, autocommit=True) as db:
+            row = db.execute(
+                "SELECT has_function_privilege('public', p.oid, 'EXECUTE'), p.proacl IS NULL FROM pg_proc p "
+                "JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = %s AND p.proname = 'hadavin_test_foreign'",
+                (schema,),
+            ).fetchone()
+        assert row[0] is True, "the default right of everyone to call it was taken away"
+        assert (row[1] is True) == (grant_to is None)
+    finally:
+        _drop_roles(other)
+
+
+@needs_pg
+def test_a_function_whose_body_a_file_replaced_is_treated_as_changed(
+    scratch, monkeypatch, tmp_path
+):
+    """A function that existed before, with the same flag, rights and owner, but a new body, is a changed function: it
+    loses the default right of everyone to call it. Killed by: mutant FB1 (the body is not part of the state)."""
+    dsn, schema = scratch
+    _admin(
+        sql.SQL(
+            "CREATE FUNCTION {}.hadavin_test_pre() RETURNS int LANGUAGE sql AS $q$ SELECT 1 $q$"
+        ).format(sql.Identifier(schema)),
+        sql.SQL("ALTER FUNCTION {}.hadavin_test_pre() OWNER TO {}").format(
+            sql.Identifier(schema), sql.Identifier(PLAIN_ROLE)
+        ),
+    )
+    _with_files(
+        monkeypatch,
+        tmp_path,
+        {
+            "0006_replace.sql": _dynamic(
+                "CREATE OR REPLACE FUNCTION hadavin_test_pre() RETURNS int LANGUAGE sql AS $q$ SELECT 2 $q$"
+            )
+        },
+    )
+    assert mig.migrate(dsn)[-1] == "0006_replace"
+    with psycopg.connect(DSN, autocommit=True) as db:
+        got = db.execute(
+            "SELECT has_function_privilege('public', p.oid, 'EXECUTE') FROM pg_proc p "
+            "JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = %s AND p.proname = 'hadavin_test_pre'",
+            (schema,),
+        ).fetchone()[0]
+    assert got is False
+
+
+@needs_pg
+@pytest.mark.parametrize(
+    "case",
+    ["other_schema", "member_role", "named_delete", "named_select"],
+)
+def test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migration_role_belongs_to(
+    scratch, second_schema, named_role, case
+):
+    """`ALTER DEFAULT PRIVILEGES IN SCHEMA other ...` and `... FOR ROLE <a role the migration role belongs to> ...` set
+    rights of objects made later; only the migration role itself, in the run schema or everywhere, was read. A named role
+    may have a default right to read, nothing more. Killed by: mutants DP2 (only the run schema), DP3 (only the
+    migration role itself), DP4 (a named role may have any default right), DP5 (the owner's own row is not left out)."""
+    dsn, schema = scratch
+    other = "hadavin_test_dr_" + uuid.uuid4().hex[:8]
+    _create_roles(other)
+    try:
+        _let_the_plain_role_belong_to(other)
+        who, scope, grantee, right = {
+            "other_schema": (PLAIN_ROLE, f'IN SCHEMA "{second_schema}"', "PUBLIC", "SELECT"),
+            "member_role": (other, f'IN SCHEMA "{schema}"', "PUBLIC", "SELECT"),
+            "named_delete": (PLAIN_ROLE, f'IN SCHEMA "{second_schema}"', named_role, "DELETE"),
+            "named_select": (PLAIN_ROLE, f'IN SCHEMA "{second_schema}"', named_role, "SELECT"),
+        }[case]
+        _admin(
+            sql.SQL(
+                f"ALTER DEFAULT PRIVILEGES FOR ROLE {{}} {scope} GRANT {right} ON TABLES TO {{}}"
+            ).format(
+                sql.Identifier(who),
+                sql.SQL("PUBLIC") if grantee == "PUBLIC" else sql.Identifier(grantee),
+            )
+        )
+        if case == "named_select":
+            assert mig.migrate(dsn, runtime_role=named_role) == REAL
+        else:
+            with pytest.raises(ConfigError, match="a default right") as e:
+                mig.migrate(dsn, runtime_role=named_role)
+            assert f"that {who} makes" in str(e.value) and "Nothing was changed." in str(e.value)
+    finally:
+        _drop_roles(other)
+
+
+@needs_pg
+def test_a_named_role_that_may_pass_a_function_right_on_is_refused(
+    scratch, monkeypatch, tmp_path, named_role, second_schema
+):
+    """`GRANT EXECUTE ON FUNCTION ... TO <named role> WITH GRANT OPTION` lets that role pass the right on. Killed by:
+    mutant GO7 (the grant option of a function right is ignored)."""
+    dsn, schema = scratch
+    _admin(
+        sql.SQL(
+            "CREATE FUNCTION {}.hadavin_test_gf() RETURNS int LANGUAGE sql AS $q$ SELECT 1 $q$"
+        ).format(sql.Identifier(second_schema)),
+        sql.SQL("ALTER FUNCTION {}.hadavin_test_gf() OWNER TO {}").format(
+            sql.Identifier(second_schema), sql.Identifier(PLAIN_ROLE)
+        ),
+    )
+    _with_files(
+        monkeypatch,
+        tmp_path,
+        {
+            "0006_option.sql": _dynamic(
+                f'GRANT EXECUTE ON FUNCTION "{second_schema}".hadavin_test_gf() TO {named_role} WITH GRANT OPTION'
+            )
+        },
+    )
+    with pytest.raises(ConfigError, match="may pass EXECUTE on the function") as e:
+        mig.migrate(dsn, runtime_role=named_role)
+    assert "hadavin_test_gf" in str(e.value) and schema
+
+
+@needs_pg
+def test_the_database_owner_pseudo_role_may_have_rights_on_a_schema(scratch):
+    """On a schema the built-in `pg_database_owner` is the owner of the database in effect; a right it has is not a right
+    for a stranger. Killed by: mutant PDO1 (it is refused like any other role)."""
+    dsn, schema = scratch
+    _admin(sql.SQL("GRANT ALL ON SCHEMA {} TO pg_database_owner").format(sql.Identifier(schema)))
+    assert mig.migrate(dsn) == REAL
