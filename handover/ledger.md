@@ -2560,3 +2560,7 @@
 | BL-core-q8red-F5 | Major | redaction-main | see reviews/Q8/redaction-sweep.md F5 | OPEN | | | 2026-11-11 |
 | BL-core-q8red-F6 | Major | redaction-main | see reviews/Q8/redaction-sweep.md F6 | OPEN | | | 2026-11-11 |
 | BL-core-q8red-F7 | Major | redaction-main | see reviews/Q8/redaction-sweep.md F7 | OPEN | | | 2026-11-11 |
+| BL-core-q8a-plan-r1-B1 | Blocker | Q8a-plan | reviews/Q8a/plan-r1-summary.md | FIXED-VERIFIED | ticket rev 2 + errata rev 3 | plan r2 (facts checked true) | 2026-11-11 |
+| BL-core-q8a-plan-r1-B2 | Blocker | Q8a-plan | reviews/Q8a/plan-r1-summary.md | FIXED-VERIFIED | ticket rev 2 + errata rev 3 | plan r2 (facts checked true) | 2026-11-11 |
+| BL-core-q8a-plan-r1-B3 | Blocker | Q8a-plan | reviews/Q8a/plan-r1-summary.md | FIXED-VERIFIED | ticket rev 2 + errata rev 3 | plan r2 (facts checked true) | 2026-11-11 |
+| BL-core-q8a-plan-r2-B1 | Blocker | Q8a-plan | reviews/Q8a/plan-r2.md clock default | FIXED-UNVERIFIED | errata E1 | result review | 2026-11-11 |
