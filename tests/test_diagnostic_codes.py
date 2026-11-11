@@ -105,7 +105,8 @@ def test_fact_bounds_cover_the_number_keys() -> None:
 def test_tick_steps_match_tick_module() -> None:
     from hadavin_sdk.runtime import tick
 
-    assert {s.name for s in tick.STEPS} == set(codes.TICK_STEPS)
+    in_tick, in_codes = sorted(s.name for s in tick.STEPS), sorted(codes.TICK_STEPS)
+    assert in_tick == in_codes, f"TICK_STEPS differ: tick has {in_tick}, codes has {in_codes}"
 
 
 def test_codes_module_imports_only_the_standard_library() -> None:
@@ -270,26 +271,11 @@ def test_step_token_is_closed_and_final() -> None:
 
 
 # --- tests the ticket lists (BN-9, BN-10 cut one) ------------------------------------------------------------------------------
-NOT_SCANNABLE: dict[
-    str, str
-] = {}  # table keys of classes that exist only at run time (none today): key -> why the scan cannot see it
-
-
 def test_every_row_key_is_found_by_the_scan() -> None:
-    """A rename of a class without a change of its row fails loudly: every row key is a class the AST scan finds, or is listed as not
-    scannable."""
+    """A rename of a class without a change of its row fails loudly: every row key is a class the AST scan finds (no exemption list)."""
     found = set(_exception_classes())
-    lost = [key for key in OWN_CODES if key not in found and key not in NOT_SCANNABLE]
+    lost = [key for key in OWN_CODES if key not in found]
     assert not lost, f"rows whose class the scan does not find: {lost}"
-
-
-def test_not_scannable_list_has_runtime_rows() -> None:
-    """Each not-scannable key is a row of the table, is NOT found by the scan (else it would not need the list) and imports to a class."""
-    found = set(_exception_classes())
-    for key, why in NOT_SCANNABLE.items():
-        assert key in OWN_CODES and key not in found and len(why) >= 20, key
-        module, qual = key.split(":")
-        assert isinstance(getattr(importlib.import_module(module), qual), type), key
 
 
 def test_phase_is_the_frozen_list() -> None:

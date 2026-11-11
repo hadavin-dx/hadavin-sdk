@@ -233,9 +233,18 @@ def _header_field(text: str, pattern: str) -> str:
 
 
 def main(argv: list[str]) -> int:
+    if len(argv) == 2 and argv[1] in ("-h", "--help"):
+        print(__doc__)
+        return 0
     if len(argv) > 2:
         print(__doc__)
         return 2
+    if unicodedata.unidata_version != PINNED_VERSION:
+        print(
+            f"refused: this interpreter has Unicode data {unicodedata.unidata_version}, the pin is {PINNED_VERSION}; "
+            "regenerate only on an interpreter with the pinned data (the small-capital rule reads this interpreter's character names)"
+        )
+        return 1
     raw = Path(argv[1] if len(argv) == 2 else DEFAULT_INPUT).read_bytes()
     problem = check_input(
         raw,

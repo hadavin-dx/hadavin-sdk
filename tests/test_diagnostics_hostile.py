@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import contextlib
 import re
-import time
 import traceback
 
 import pytest
@@ -59,18 +58,23 @@ def test_active_rows_hold_on_new_code(row: corpus.Row) -> None:
             diagnose(corpus.build_exception(row.spec), step=_step(row))  # type: ignore[arg-type]
         assert not isinstance(info.value, Exception)
         return
-    started = time.monotonic()
     out = _line(row)
-    elapsed = time.monotonic() - started
     assert grammar_ok(out, "V" if row.kind == "validation" else "A"), out
     assert not leaks(out, row.canaries), out
+    if (
+        row.kind == "validation"
+    ):  # the same error through the line writer, the way a caller prints it
+        with _ctx(row):
+            line = render(diagnose(corpus.build_validation_error(row.spec), step=Where.config_load))
+        assert grammar_ok(line, "A") and not leaks(line, row.canaries), line
     if row.expect == "golden":
         assert re.fullmatch(str(row.spec["golden"]), out), out
     if row.expect_code is not None:
         assert f"code={row.expect_code.value} " in out, out
     if row.expect == "bounded":
-        assert len(out) <= 400
-        assert elapsed < 5
+        assert (
+            len(out) <= 400
+        )  # a size bound only: no clock is read (the bounds are algorithmic, see test_links_*)
 
 
 # --- meta tests of the corpus and the oracle ----------------------------------------------------------------------------

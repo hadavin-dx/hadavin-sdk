@@ -10,7 +10,8 @@ from pathlib import Path
 import pytest
 from pydantic_core import ValidationError, core_schema
 
-from hadavin_sdk.codes import VALIDATION_OTHER, VALIDATION_TYPES, Where
+from hadavin_sdk import defaults
+from hadavin_sdk.codes import FACT_BOUNDS, VALIDATION_OTHER, VALIDATION_TYPES, FactKey, Where
 from hadavin_sdk.guard.diagnostic import diagnose, render, validation_text
 from tests.data import c18a_hostile_corpus as corpus
 from tests.data.c18a_oracle import grammar_ok
@@ -38,11 +39,19 @@ def test_grammar_v_and_plain_cases() -> None:
 
 
 def test_validation_text_length_bound() -> None:
+    """The bound is computed from the closed list and the defaults, not typed in: at most ``DIAG_MAX_ERRORS`` closed names joined by
+    ``"; "``, then ``"; +N more"`` with N at most the count bound. The 7-error input must match that shape exactly."""
+    names = VALIDATION_TYPES | {VALIDATION_OTHER}
+    longest = max(len(n) for n in names)
+    n_max = defaults.DIAG_MAX_ERRORS
+    hi = FACT_BOUNDS[FactKey.count][1]
+    bound = n_max * longest + (n_max - 1) * len("; ") + len("; +") + len(str(hi)) + len(" more")
     out = validation_text(
         err("many", {"a": CAN, "b": CAN, "c": CAN, "d": CAN, "e": CAN, "f": CAN, "g": CAN})
     )
-    assert len(out) <= 108 and grammar_ok(out, "V")
-    assert re.fullmatch(r"[a-z_; ]+", out.replace("+", "").replace("more", "")) or "more" in out
+    alt = "|".join(sorted(map(re.escape, names)))
+    assert re.fullmatch(rf"(?:{alt})(?:; (?:{alt})){{{n_max - 1}}}; \+2 more", out), out
+    assert len(out) <= bound and grammar_ok(out, "V"), (len(out), bound)
 
 
 def test_uuid_parsing_char_is_never_printed() -> None:
@@ -206,7 +215,7 @@ def test_t6_through_the_loader_the_error_is_a_config_error_with_no_type_fact(
 
 def test_t6_five_thousand_links_of_a_cause_chain_read_zero_hostile_names() -> None:
     """The row that chains 5000 links: no link is asked for ``args``, ``__cause__``, ``__context__`` or ``__notes__`` (zero reads), and the
-    only read of any counted name is the head's own ``__traceback__`` (the locator needs it): at most 2 reads in all, not one per link."""
+    only read of any counted name is the head's own ``__traceback__`` (the locator needs it): at most 1 read in all (the traceback is walked once per diagnosis), not one per link."""
     rows = [r for r in corpus.ROWS if r.spec.get("reads_zero")]
     assert [r.id for r in rows] == ["HC-size_time-05"]
     for r in rows:
@@ -215,4 +224,53 @@ def test_t6_five_thousand_links_of_a_cause_chain_read_zero_hostile_names() -> No
         render(diagnose(exc, step=Where.extract))
         reads = list(corpus._Counting.reads)
         assert {n for n in reads if n != "__traceback__"} == set(), reads[:5]
-        assert len(reads) <= 2, f"{len(reads)} reads: the chain was walked"
+        assert len(reads) <= 1, f"{len(reads)} reads: the chain was walked"
+
+
+def test_error_count_is_called_only_in_the_one_helper_and_no_input_is_read_by_name() -> None:
+    """BN-4: ``error_count()`` is called in ``_error_types`` and nowhere else, and nothing in the module reads an ``"input"``,
+    ``"msg"``, ``"ctx"`` or ``"loc"`` entry of an error (by ``.get(...)`` or by subscript)."""
+    import ast
+
+    src = Path(__file__).resolve().parents[1] / "src/hadavin_sdk/guard/diagnostic.py"
+    tree = ast.parse(src.read_text(encoding="utf-8"))
+    banned = {"input", "msg", "ctx", "loc", "url"}
+    helper = next(
+        n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == "_error_types"
+    )
+    inside = {id(n) for n in ast.walk(helper)}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            if node.func.attr == "error_count":
+                assert id(node) in inside, f"line {node.lineno}: error_count() outside _error_types"
+            if node.func.attr in ("get", "pop", "setdefault") and node.args:
+                first = node.args[0]
+                assert not (isinstance(first, ast.Constant) and first.value in banned), node.lineno
+        if isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Constant):
+            assert node.slice.value not in banned, (
+                f"line {node.lineno}: reads a {node.slice.value!r} entry"
+            )
+
+
+def test_a_custom_error_with_free_text_never_reaches_the_text() -> None:
+    """BN-23: a ``PydanticCustomError`` carries a free message and a context; neither appears in the closed text or the line."""
+    from pydantic_core import PydanticCustomError
+
+    secret = "free-" + "text-quentin-abernathy"  # made up
+
+    def check(value: str) -> str:
+        raise PydanticCustomError("my_own_type", "bad {thing}: " + secret, {"thing": secret})
+
+    schema = core_schema.no_info_after_validator_function(check, core_schema.str_schema())
+    from pydantic_core import SchemaValidator
+
+    try:
+        SchemaValidator(schema).validate_python("x")
+    except ValidationError as exc:
+        out = render(diagnose(exc, step=Where.config_load))
+        assert (
+            validation_text(exc) == "other"
+        )  # a type that is not in the closed list is printed as "other"
+        assert secret not in out and "my_own_type" not in out and grammar_ok(out, "A"), out
+    else:
+        raise AssertionError("the validator did not fail")

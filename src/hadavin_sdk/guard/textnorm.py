@@ -1,7 +1,7 @@
 """The shared text fold, for any place that compares or scans text for a protected value.
 
 A kind or demo that needs a comparison key imports ``fold`` / ``squeeze`` / ``identity_key`` from here instead of keeping its own table.
-Do not use ``fold`` to display or store text: it drops legitimate marks (Hindi and Thai vowel signs, the breve of Cyrillic short i) and so
+Do not use ``fold`` to display or store text: it drops legitimate marks (Thai vowel signs written above or below a letter, the breve of Cyrillic short i) and so
 over-collides, which is the safe side for a DENY. Nothing in v1 stores a key: a package that must keep a person or an id for a later
 comparison stores the RAW text under its own access rules and folds it again with the current ``identity_key``.
 
@@ -98,8 +98,10 @@ Any ``TextnormError`` on a DENY or ALLOW path means REFUSE.
 Honest limits: a letter in neither the data nor the supplement is not folded. Dropping unassigned code points (Cn) depends on the
 Python build's Unicode version (``require_pinned_unidata``). ``has_mixed_script`` is the fail-closed backstop: a word that mixes Latin
 with Cyrillic, Greek, Armenian, Cherokee, Coptic, Georgian, Hebrew, Lisu, Runic, Tamil or any other non-East-Asian script is a deny signal whatever the
-table knows (every script in the Unicode data except Common, Inherited and the East Asian scripts counts). Property: ``fold(x + mark) == fold(x) == fold(mark + x)`` for any combining mark, format, control, private-use or unassigned character,
-with the one exception above (U+0345 after a Greek letter).
+table knows (every script in the Unicode data except Common, Inherited and the East Asian scripts counts). Property: ``fold(x + mark) == fold(x) == fold(mark + x)`` for any non-spacing or enclosing mark (Mn, Me), format, control, private-use or unassigned character,
+with the one exception above (U+0345 after a Greek letter). The property does NOT hold for a spacing combining mark (Mc, for example
+the Devanagari vowel sign aa U+093E), a modifier letter (Lm) or a modifier symbol (Sk): ``fold`` keeps them, so ``fold("admin" + U+093E)`` differs from
+``fold("admin")``. ``tests/test_textnorm.py`` pins Mc as a tested exemption. (``scan_keyset`` keeps only letters and digits, so it is not affected.)
 """
 
 from __future__ import annotations
@@ -281,6 +283,11 @@ def _checked(*texts: str) -> None:
     for text in texts:
         if type(text) is not str:
             raise NotText("a text must be a plain str (a subclass or an enum member is refused)")
+        # every character weighs at least 1, so a text longer than the cap is refused before the linear count of _weight
+        if len(text) > defaults.TEXTNORM_MAX_CHARS:
+            raise TextTooLong(
+                f"text length {len(text)} is over the limit {defaults.TEXTNORM_MAX_CHARS}"
+            )
         weight = _weight(text)
         if weight > defaults.TEXTNORM_MAX_CHARS:
             raise TextTooLong(
@@ -508,7 +515,7 @@ def scan_keyset(raw: str) -> frozenset[str]:
     """The DENY keys of a text: a small set of strings, two texts match when their key-sets share a key (or, for a scan, when a key of
     the needle is inside a key of the text). Contract SK-1 to SK-6: the one parameter is ``raw``; at most 2 readings x 4 tag texts = 8
     keys, by construction, each at most as long as the weight of ``raw``; a text over the size rule raises ``TextTooLong``, a non-``str``
-    ``NotText``; over-matching is the safe side; a call that has run longer than ``defaults.REDACT_BUDGET_S`` seconds (wall clock, checked before each pass of each reading, never inside a pass) raises ``TextTooLong`` and returns no keys, so a hostile text cannot hold the caller for long (the budget is a parameter of the module, not of the call: SK-1); the keys hold letters and digits only (spaces, punctuation,
+    ``NotText``; over-matching is the safe side; a call that has run longer than ``defaults.REDACT_BUDGET_S`` seconds (monotonic clock, checked before each pass of each reading, never inside a pass) raises ``TextTooLong`` and returns no keys, so a hostile text cannot hold the caller for long (the budget is a parameter of the module, not of the call: SK-1); the keys hold letters and digits only (spaces, punctuation,
     ``#``, ``~``, ``@``, ``|`` and U+FFFD are dropped). Invisible-only text gives ``frozenset()``.
 
     Order: the size rule on the raw text; every modifier letter (Lm) is removed from the raw text; the tag texts T0 to T3 (a text with no tag

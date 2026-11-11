@@ -130,7 +130,9 @@ class Diagnostic:
 
 # How often each guard below fired, by site name. A count only: nothing about the exception (no text, no type) is kept.
 _GUARD_FAILURES: dict[str, int] = {}
-_GUARD_LOCK = threading.Lock()  # a count read-then-written by two threads at once would lose one
+# one lock: a count read-then-written by two threads at once would lose one. Re-entrant (RLock), so a signal handler that runs on the same
+# thread while the lock is held cannot deadlock it.
+_GUARD_LOCK = threading.RLock()
 
 
 def _guard_failed(site: str) -> None:
@@ -356,7 +358,12 @@ def _phase_of(sqlstate: SafeToken | None) -> Phase:
 
 
 def _classify(
-    exc: object, tp: type, *, read_facts: bool, nested: bool = False
+    exc: object,
+    tp: type,
+    *,
+    read_facts: bool,
+    nested: bool = False,
+    walked: tuple[list[tuple[object, int]], bool] | None = None,
 ) -> tuple[Code, dict[FactKey, object]]:
     if not issubclass(tp, Exception):
         return Code.foreign_exception, {}
@@ -406,7 +413,7 @@ def _classify(
         except Exception:  # noqa: BLE001 - a hostile group object may raise any Exception: foreign_exception
             _guard_failed("group_member")
             return Code.foreign_exception, {}
-    links, too_long = _links(exc)
+    links, too_long = walked if walked is not None else _links(exc)
     if _raised_in_own_code(exc, tp, links, too_long):
         return Code.internal_bug, {}
     return Code.foreign_exception, {}
@@ -438,9 +445,10 @@ def _merge_facts(
 def _diagnose(exc: object, step: str, facts: object) -> Diagnostic:
     tp = type(exc)
     kind = class_name_of(tp)
-    code, derived = _classify(exc, tp, read_facts=True)
-    links, _ = _links(exc)
-    locator, function, relpath = _locate(links)
+    # the traceback is walked once per diagnosis; the classifier and the locator share the result
+    walked = _links(exc)
+    code, derived = _classify(exc, tp, read_facts=True, walked=walked)
+    locator, function, relpath = _locate(walked[0])
     return Diagnostic(
         kind=kind,
         code=code,

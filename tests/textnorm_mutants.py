@@ -9,7 +9,7 @@ pytest. Run from the repo root:
     uv run python tests/textnorm_mutants.py            # all mutants; exit 1 if any is not good
     uv run python tests/textnorm_mutants.py squeeze    # only mutants whose name contains the text
 
-53 mutants: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 13 are new, 9 are the mutants of fold2 (order 44; the tenth, "no case fold before the marks are dropped", is gone with that case fold, which fix2 showed to be redundant) and 3 are the mutants of fold3 (order 49, U+0345). Tests with no
+78 mutants. The first 53 are P1a's: 28 are the re-pointed mutants of the earlier text-fold list (the killers moved with their tests), 13 are new, 9 are the mutants of fold2 (order 44; the tenth, "no case fold before the marks are dropped", is gone with that case fold, which fix2 showed to be redundant) and 3 are the mutants of fold3 (order 49, U+0345). The next 18 are P1b's (the scan keys); the last 7 are P5a's (the scan time budget: 4, the wrong clock: 1, the Mc exemption: 1, the length check before the weight: 1). Tests with no
 mutant: the golden test, the differential rows, the manifest test, the notices test, the perf rows (they are outside every test list below:
 the runner copies no ``pyproject.toml`` or notices file) and the meta-tests.
 
@@ -93,6 +93,8 @@ LMRAW = "test_r12_lm_inserting_any_modifier_letter_still_finds_the_value"
 LMFOLD = "test_r12_lm_fold_a_modifier_letter_that_nfkd_turns_into_a_letter_still_matches"
 G7A = "test_g7_a_scan_that_ran_over_the_budget_is_refused_with_text_too_long"
 G7B = "test_g7_the_budget_is_the_defaults_value_read_at_the_call"
+MCX = "test_a_spacing_combining_mark_is_the_tested_exemption_of_the_mark_property"
+LENF = "test_the_size_rule_refuses_by_length_before_it_counts_weights"
 G7C = "test_g7_the_budget_is_over_only_when_the_clock_is_past_it_not_at_it"
 CFTABLE = (
     "test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_conflicts"
@@ -282,6 +284,14 @@ M = [
         "    deadline = _clock() + 6.0", G7B, "DID NOT RAISE", test_file=SC),
     mutant("scan: a call exactly at the budget is refused", TN, "        if deadline is not None and _clock() > deadline:",
         "        if deadline is not None and _clock() >= deadline:", G7C, "exactly at the budget", test_file=SC),
+    mutant("scan: the clock is time.time, not time.monotonic", TN, "    return time.monotonic()", "    return time.time()",
+        G7A, "DID NOT RAISE", test_file=SC),
+    mutant("fold: spacing combining marks (Mc) dropped", TN,
+        '{"Cc", "Cf", "Mn", "Me", "Zl", "Zp", "Co", "Cs", "Cn"}', '{"Cc", "Cf", "Mn", "Mc", "Me", "Zl", "Zp", "Co", "Cs", "Cn"}',
+        MCX, "'Mc' not in", test_file=T),
+    mutant("size rule: the length check before the weight removed", TN,
+        "        # every character weighs at least 1, so a text longer than the cap is refused before the linear count of _weight\n        if len(text) > defaults.TEXTNORM_MAX_CHARS:\n            raise TextTooLong(\n                f\"text length {len(text)} is over the limit {defaults.TEXTNORM_MAX_CHARS}\"\n            )\n",
+        "", LENF, "the weight was counted", test_file=T),
 ]  # fmt: skip
 
 

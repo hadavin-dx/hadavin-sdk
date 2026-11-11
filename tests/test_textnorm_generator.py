@@ -227,3 +227,14 @@ def test_the_runic_and_tamil_letters_are_in_the_generated_script_data():
 
     assert script(0x16A0) == "Runic" and script(0x0B85) == "Tamil" and script(0x61) == "Latin"
     assert script(0x20) is None and script(0x301) is None, "Common or Inherited has an entry"
+
+
+def test_the_generator_refuses_an_interpreter_with_other_unicode_data_and_answers_help(
+    monkeypatch, capsys
+):
+    gen = _load("gen_confusables")
+    monkeypatch.setattr(unicodedata, "unidata_version", "0.0.1")
+    assert gen.main(["gen"]) == 1
+    assert "refused" in capsys.readouterr().out
+    assert gen.main(["gen", "-h"]) == 0
+    assert "Why the version is checked" in capsys.readouterr().out
