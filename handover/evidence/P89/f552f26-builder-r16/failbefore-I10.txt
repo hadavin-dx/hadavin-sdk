@@ -1,0 +1,9 @@
+I10 the text after a password word is not read as a whole
+replaced: '    decoded = [m.group(2) for m in matches if not m.group(1)]\n'
+by: '    decoded = []\n'
+summary: FAILED tests/test_mutation_runner_keywords.py::test_the_pieces_of_an_unquoted_password_that_holds_a_semicolon_or_an_ampersand_are_secrets
+exit=1
+FAILED kept tests:
+test_a_password_after_a_password_word_or_in_a_url_query_is_a_secret
+test_a_password_that_decodes_to_an_odd_character_is_refused_and_the_message_names_no_secret
+test_the_pieces_of_an_unquoted_password_that_holds_a_semicolon_or_an_ampersand_are_secrets
