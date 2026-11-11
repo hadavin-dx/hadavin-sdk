@@ -102,7 +102,7 @@ SELECT i.kind, i.relkind, i.schema, i.system, i.name, i.sub, pg_catalog.pg_get_u
     OR (NOT i.system AND i.grantee = 0
         AND (i.kind NOT IN ('function', 'procedure', 'aggregate', 'type', 'domain', 'language')
              OR i.owner IN (SELECT role FROM fam) OR i.definer))
-    OR (NOT i.system AND i.schema = %(schema)s AND (i.owner IN (SELECT role FROM fam) OR i.kind = 'schema'))
+    OR (NOT i.system AND i.schema = %(schema)s)
  ORDER BY 1, 3, 5, 6, 14, 18"""
 
 Q3 = """WITH RECURSIVE """ + SUBJ_CTE + """
