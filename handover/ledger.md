@@ -2693,3 +2693,7 @@
 | Q8c-1-r3-d-m2 | same | minor | Q8c-1 | R17 claims_unverified has no dated pending entry; fixture header contradicts itself | OPEN | batch 3 | - | 2026-11-11 |
 | Q8c-1-r3-d-m3 | same | minor | Q8c-1 | no automated Vault never-path vs grant cross-check (manual check consistent) | OPEN | batch 3 | - | 2026-11-11 |
 | Q8c-1-r3-d-OPEN | same | Major(evidence) | Q8c-1 | 12 Vault engine tests never run; R17 + reading needs re-read/re-fetch (needs CI run / third party) | OWNER-ONLY | CI run with HADAVIN_REQUIRE_VAULT_ENGINE=1 | - | 2026-11-11 |
+| Q8c-1-r3-cb-m1 | reviews/Q8c-1/result-r3-codebase-full.md | minor | Q8c-1 | R18 hash-suffix non-match claim and Kubernetes query-param claim shown in copy-ready rows without claims_unverified/source | OPEN | batch 3 | - | 2026-11-11 |
+| Q8c-1-r3-cb-m2 | same | minor | Q8c-1 | Kubernetes credential text says ServiceAccount token; code attaches any named secret, only if token_secret_name set; fetch is in app.py | OPEN | batch 3 | - | 2026-11-11 |
+| Q8c-1-r3-cb-m3 | same | minor | Q8c-1 | page head/CHANGELOG say every row pinned; 7-char ids and unpinned OpenBao not mentioned; len(rows)==19 brittle | OPEN | batch 3 | - | 2026-11-11 |
+| Q8c-1-r3-cb-m4 | same | minor | Q8c-1 | allowlist hint, partial E2 revert not a mutant, K create self-review cites K-AUTHZ only, tautology pins | OPEN | batch 3 | - | 2026-11-11 |

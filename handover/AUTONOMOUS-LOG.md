@@ -75,3 +75,4 @@ Each line: UTC | IST | item | running agents | next 3 steps | blockers
 16:54 launched (earlier register rows were written before launch; hook failed on wrong cwd, relaunched): Q8c-1 evidence ab2e588a + reviewers aec2bc5f/a052087c; PR H rev 3 author a2df9258. 10 agents now running.
 16:54 CHECKPOINT: 11 agents running, none older than 32 min, load 3.5. Waiting for hand-backs (Q8b/Q8a-1 evidence, Q8a-2 b3, PR89 r22, timing fix, P3a-2 plan r2, Q8c-1 r3, PR H rev 3).
 16:56 Q8c-1 r3 design review saved: READY on delta, 0 Blocker 0 Major, 5 minor; Vault engine run + R17 plus re-read still open (needs CI/third party). Codebase reviewer + evidence pending.
+16:56 Q8c-1 r3 codebase review saved: READY at review level, 0 Blocker 0 new Major, 8 minor (R18/K claims unflagged, credential wording). Plan: ONE minor batch 3 after evidence runner ab2e588a lands (non-security cap: minors fixed in same push, no new review).
