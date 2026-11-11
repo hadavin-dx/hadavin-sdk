@@ -1,0 +1,56 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+## import /home/user/build/EV-Q8b-13ea6b75/fb_old/src/hadavin_sdk/__init__.py
+## walk: {'texts': 3000, 'not_idempotent': 194, 'assignment_readable': 38, 'repeat_only_readable': 1}
+   assignment-readable by prefix: {'bearer': 38}
+    NONIDEM 'Authorization: Bearer bob.smith@example.com Token\t=\t<A>, next' -> '{"message": "Authorization: Bearer <EMAIL_1> Token\\t=\\t<SECRET_1> next"}'
+    ASSIGN 'Authorization: Bearer db_password\t=\t<A>\nmore' -> '{"message": "Authorization: Bearer <SECRET_1>\\t=\\t<A>\\nmore"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com client_secret=<A>.' -> '{"message": "Authorization: Bearer <EMAIL_1> client_secret=<SECRET_1>"}'
+    NONIDEM "Authorization: Bearer bob.smith@example.com passwd\t=\t<A>'" -> '{"message": "Authorization: Bearer <EMAIL_1> passwd\\t=\\t<SECRET_1>\'"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com passwd: <A> and more words' -> '{"message": "Authorization: Bearer <EMAIL_1> passwd: <SECRET_1> and more words"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com password=\'<A>"' -> '{"message": "Authorization: Bearer <EMAIL_1> password=\'<SECRET_1>\\""}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com db_password":"<A> and more words' -> '{"message": "Authorization: Bearer <EMAIL_1> db_password\\":\\"<SECRET_1> and more words"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com access_token":"<A>\'' -> '{"message": "Authorization: Bearer <EMAIL_1> access_token\\":\\"<SECRET_1>\'"}'
+    ASSIGN 'Authorization: Bearer db_password: <A>, next' -> '{"message": "Authorization: Bearer <SECRET_1> <A>, next"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com auth_token":"<A> ok' -> '{"message": "Authorization: Bearer <EMAIL_1> auth_token\\":\\"<SECRET_1> ok"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com token":"<A>, next' -> '{"message": "Authorization: Bearer <EMAIL_1> token\\":\\"<SECRET_1> next"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com private_key=\'<A>"' -> '{"message": "Authorization: Bearer <EMAIL_1> private_key=\'<SECRET_1>\\""}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com pwd = <A>.' -> '{"message": "Authorization: Bearer <EMAIL_1> pwd = <SECRET_1>"}'
+    NONIDEM "Authorization: Bearer bob.smith@example.com secret='<A>." -> '{"message": "Authorization: Bearer <EMAIL_1> secret=\'<SECRET_1>"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com passwd:<A>\nmore' -> '{"message": "Authorization: Bearer <EMAIL_1> passwd:<SECRET_1>\\nmore"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com access_token:<A>.' -> '{"message": "Authorization: Bearer <EMAIL_1> access_token:<SECRET_1>"}'
+    ASSIGN 'Authorization: Bearer client_secret":"<A>"' -> '{"message": "Authorization: Bearer <BEARER_1>\\":\\"<A>\\""}'
+    NONIDEM 'Authorization: Bearer client_secret":"<A>"' -> '{"message": "Authorization: Bearer <BEARER_1>\\":\\"<A>\\""}'
+    NONIDEM "Authorization: Bearer bob.smith@example.com access_token='<A>'" -> '{"message": "Authorization: Bearer <EMAIL_1> access_token=\'<SECRET_1>\'"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com passwd":"<A>' -> '{"message": "Authorization: Bearer <EMAIL_1> passwd\\":\\"<SECRET_1>"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com passwd = <A>"' -> '{"message": "Authorization: Bearer <EMAIL_1> passwd = <SECRET_1>\\""}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com secret%3D<A>"' -> '{"message": "Authorization: Bearer <EMAIL_1> secret%3D<SECRET_1>\\""}'
+    NONIDEM "Authorization: Bearer bob.smith@example.com auth_token%3D<A>'" -> '{"message": "Authorization: Bearer <EMAIL_1> auth_token%3D<SECRET_1>\'"}'
+    NONIDEM "Authorization: Bearer bob.smith@example.com Token:<A>'" -> '{"message": "Authorization: Bearer <EMAIL_1> Token:<SECRET_1>\'"}'
+    NONIDEM "Authorization: Bearer bob.smith@example.com token='<A>, next" -> '{"message": "Authorization: Bearer <EMAIL_1> token=\'<SECRET_1> next"}'
+## card: {'texts': 3000, 'repeat_only_readable': 1524, 'assignment_readable': 38}
+   assignment-readable by prefix: {'bearer': 38}
+    ASSIGN 'Authorization: Bearer db_password\t=\t<A>\nmore' -> 'Authorization: Bearer <SECRET_1>\t=\t<A>\nmore'
+    ASSIGN 'Authorization: Bearer db_password: <A>, next' -> 'Authorization: Bearer <SECRET_1> <A>, next'
+    ASSIGN 'Authorization: Bearer client_secret":"<A>"' -> 'Authorization: Bearer <BEARER_1>":"<A>"'
+    ASSIGN "Authorization: Bearer client_secret='<A>'" -> "Authorization: Bearer <BEARER_1>'<A>'"
+    ASSIGN 'Authorization: Bearer client_secret: <A>.' -> 'Authorization: Bearer <BEARER_1>: <A>.'
+    ASSIGN 'Authorization: Bearer client_secret\t=\t<A>, next' -> 'Authorization: Bearer <BEARER_1>\t=\t<A>, next'
+    ASSIGN 'Authorization: Bearer client_secret":"<A>.' -> 'Authorization: Bearer <BEARER_1>":"<A>.'
+    ASSIGN "Authorization: Bearer private_key='<A>, next" -> "Authorization: Bearer <SECRET_1>'<A>, next"
+    ASSIGN "Authorization: Bearer access_token = <A>'" -> "Authorization: Bearer <BEARER_1> = <A>'"
+    ASSIGN 'Authorization: Bearer client_secret: <A> and more words' -> 'Authorization: Bearer <BEARER_1>: <A> and more words'
+    ASSIGN "Authorization: Bearer api_key='<A> and more words" -> "Authorization: Bearer <SECRET_1>'<A> and more words"
+    ASSIGN 'Authorization: Bearer access_token="<A>, next' -> 'Authorization: Bearer <BEARER_1>"<A>, next'
+    ASSIGN 'Authorization: Bearer access_token\t=\t<A>' -> 'Authorization: Bearer <BEARER_1>\t=\t<A>'
+    ASSIGN 'Authorization: Bearer db_password = <A>, next' -> 'Authorization: Bearer <SECRET_1> = <A>, next'
+    ASSIGN 'Authorization: Bearer private_key: <A>' -> 'Authorization: Bearer <SECRET_1> <A>'
+    ASSIGN 'Authorization: Bearer db_password\t=\t<A>.' -> 'Authorization: Bearer <SECRET_1>\t=\t<A>.'
+    ASSIGN 'Authorization: Bearer auth_token":"<A> ok' -> 'Authorization: Bearer <SECRET_1>":"<A> ok'
+    ASSIGN 'Authorization: Bearer client_secret\t=\t<A>, next' -> 'Authorization: Bearer <BEARER_1>\t=\t<A>, next'
+    ASSIGN "Authorization: Bearer PASSWORD='<A> and more words" -> "Authorization: Bearer <SECRET_1>'<A> and more words"
+    ASSIGN 'Authorization: Bearer access_token="<A> ok' -> 'Authorization: Bearer <BEARER_1>"<A> ok'
+    ASSIGN "Authorization: Bearer db_password='<A>, next" -> "Authorization: Bearer <SECRET_1>'<A>, next"
+    ASSIGN 'Authorization: Bearer private_key: <A>, next' -> 'Authorization: Bearer <SECRET_1> <A>, next'
+    ASSIGN "Authorization: Bearer PASSWORD='<A>, next" -> "Authorization: Bearer <SECRET_1>'<A>, next"
+    ASSIGN "Authorization: Bearer auth_token='<A>, next" -> "Authorization: Bearer <SECRET_1>'<A>, next"
+    ASSIGN "Authorization: Bearer auth_token = <A>'" -> "Authorization: Bearer <SECRET_1> = <A>'"

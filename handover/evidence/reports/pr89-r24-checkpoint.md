@@ -1,5 +1,5 @@
-# PR89 r24 checkpoint 21:56Z
-Commit: 68830b21 (pushed fast-forward to wip/cloud-PR89-r20).
-Done: Issues 1-6 coded (src, tests, 21 new mutants = 320 total, CHANGELOG, pins updated); meta tests 8 passed; ruff check and format clean; gitleaks staged clean; mypy win32 measured 13 on 3.12 and 3.13.
-Next: mutant subset (the first run failed only because the pins were stale; rerun), fail-before run on 4cc427b5 src, 498-case probe, bandit, scan_repo, stage_mutants, own Postgres + full pytest, full mutant run.
-Blockers: heavy slots were full for ~25 min (my job queued). Over the 60 min box; evidence not complete.
+# PR89 r24 checkpoint 22:18Z
+Pushed head: 68830b21 (fast-forward to wip/cloud-PR89-r20). Local, uncommitted since: one existing test adjusted (a password equal to a class name now hides it), 3 mutant expect-texts fixed, 1 new test (password that holds a whole class name).
+Done: Issues 1-6 coded; meta 8 passed; ruff check/format clean; bandit rc0; scan_repo rc0; stage_mutants 37 of 37 good; mutant subset 46 of 49 good before the fix (3 bad were wrong expect texts / one missing test, now fixed, rerun running as busfncx6w).
+Next: confirm rerun, fail-before run on 4cc427b5 src, 498-case probe, own Postgres + full pytest (heavy.sh), full mutant run, commit + gitleaks + push, report.
+Blockers: heavy slots busy (other builders), queue waits of 10-25 min.

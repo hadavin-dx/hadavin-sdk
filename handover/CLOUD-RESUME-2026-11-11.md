@@ -241,3 +241,14 @@ Which worktree each WIP branch copies (ref, kind, cloud folder):
 - ORDER 244: owner says the cloud is for the demo, not core. Token check answered in q-gh-token-hadavin-dx (admin on the two scoped repos; other hadavin-dx repos not visible).
 - ORDER 245 snapshots: 24 more worktree snapshots pushed as `wip/cloud-245-*` (SHAs in questions-for-lead.md under STOPPED 245). Gitleaks held back none of them. Every local branch is contained in a remote ref (checked).
 - Machine state: no agents, no pytest/postgres/pulse processes; the 10-minute PULSE reminder is disabled; disk 9.4 GB free.
+
+## Update 22:18Z (after ORDER 247, core lane)
+Heads (origin): see the branch table at the top of handover/PULSE.md. State per package (all numbers are agent claims unless an evidence file is named):
+- Q8c-1 (policy, Vault, Kubernetes): evidence fbc837b4 in handover/evidence/Q8c-1/fbc837b4/RESULTS.md (full 10845 passed, 13 skipped; 70/70 + 37/37 mutants). Round-5 resolve: reviews/Q8c-1/goldfish_review_report-r5.md. Fix builder ae11c03a running. Gate open: 12 Vault engine tests need one CI run (IMPOSSIBLE-NOW here).
+- Q8b (partial mask, card redaction), head 13ea6b75: round 3 design+codebase reviews in (3 Major design: F1 not-set sweep, F2 hand key list, F3 walk-path key names; 1 Major codebase: M22 dropped); evidence a6a7b621 pending; then egm-resolve r3 (reports in /home/user/build/reports/q8bb2-*-r3.md).
+- Q8a-1 b6 builder a5471dc9 and PR89 r24 builder a28ab4ea running (checkpoints requested).
+- PR H (core/prh-strip-hidden-controls f09c6825): WP2c done; resume builder a2a2c707 (92 accidental pairs per D-030, T5, WP3, WP4).
+- P3a-2 3b: not green; WIP wip/cloud-p3a2-3b f468bde0; resume builder a19633e6 (D-031).
+- Timing fix (core/fix-timing-harness-flake ef83cd86): evidence handover/evidence/timing/ef83cd86/RESULTS.md (full 10624 passed, 65/65 mutants, perf 0/42 failed x6 under load); nits builder a15f9690 running.
+- Q8a-2: nits only; one-push fix and drift report still queued.
+Nothing merged, nothing spent, no live call, no PR state change. Owner-needed items: handover/RECOMMENDATIONS.md and questions-for-lead.md.

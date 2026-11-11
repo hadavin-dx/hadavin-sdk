@@ -1,0 +1,31 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+## import /home/user/build/EV-Q8b-13ea6b75/wt/src/hadavin_sdk/__init__.py
+## walk: {'texts': 3000, 'not_idempotent': 304, 'repeat_only_readable': 1}
+   assignment-readable by prefix: {}
+    NONIDEM 'Authorization: Bearer bob.smith@example.com Token\t=\t<A>, next' -> '{"message": "Authorization: Bearer <EMAIL_1> Token\\t=\\t<SECRET_1>"}'
+    NONIDEM 'Authorization: Bearer db_password\t=\t<A>\nmore' -> '{"message": "Authorization: Bearer <BEARER_1>\\nmore"}'
+    NONIDEM "Authorization: Bearer api_key=<A>'" -> '{"message": "Authorization: Bearer <BEARER_1>\'"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com client_secret=<A>.' -> '{"message": "Authorization: Bearer <EMAIL_1> client_secret=<SECRET_1>"}'
+    NONIDEM "Authorization: Bearer bob.smith@example.com passwd\t=\t<A>'" -> '{"message": "Authorization: Bearer <EMAIL_1> passwd\\t=\\t<SECRET_1>\'"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com passwd: <A> and more words' -> '{"message": "Authorization: Bearer <EMAIL_1> passwd: <SECRET_1>"}'
+    NONIDEM 'Authorization: Bearer password":"<A> ok' -> '{"message": "Authorization: Bearer <BEARER_1>"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com password=\'<A>"' -> '{"message": "Authorization: Bearer <EMAIL_1> password=\'<SECRET_1>\\""}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com db_password":"<A> and more words' -> '{"message": "Authorization: Bearer <EMAIL_1> db_password\\":\\"<SECRET_1>"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com access_token":"<A>\'' -> '{"message": "Authorization: Bearer <EMAIL_1> access_token\\":\\"<SECRET_1>\'"}'
+    NONIDEM 'Authorization: Bearer db_password: <A>, next' -> '{"message": "Authorization: Bearer <BEARER_1>"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com auth_token":"<A> ok' -> '{"message": "Authorization: Bearer <EMAIL_1> auth_token\\":\\"<SECRET_1>"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com token":"<A>, next' -> '{"message": "Authorization: Bearer <EMAIL_1> token\\":\\"<SECRET_1>"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com private_key=\'<A>"' -> '{"message": "Authorization: Bearer <EMAIL_1> private_key=\'<SECRET_1>\\""}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com pwd = <A>.' -> '{"message": "Authorization: Bearer <EMAIL_1> pwd = <SECRET_1>"}'
+    NONIDEM 'Authorization: Bearer Token = <A> and more words' -> '{"message": "Authorization: Bearer <BEARER_1>"}'
+    NONIDEM "Authorization: Bearer bob.smith@example.com secret='<A>." -> '{"message": "Authorization: Bearer <EMAIL_1> secret=\'<SECRET_1>"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com passwd:<A>\nmore' -> '{"message": "Authorization: Bearer <EMAIL_1> passwd:<SECRET_1>\\nmore"}'
+    NONIDEM "Authorization: Bearer passwd='<A>" -> '{"message": "Authorization: Bearer <BEARER_1>"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com access_token:<A>.' -> '{"message": "Authorization: Bearer <EMAIL_1> access_token:<SECRET_1>"}'
+    NONIDEM 'Authorization: Bearer client_secret":"<A>"' -> '{"message": "Authorization: Bearer <BEARER_1>\\""}'
+    NONIDEM "Authorization: Bearer bob.smith@example.com access_token='<A>'" -> '{"message": "Authorization: Bearer <EMAIL_1> access_token=\'<SECRET_1>\'"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com passwd":"<A>' -> '{"message": "Authorization: Bearer <EMAIL_1> passwd\\":\\"<SECRET_1>"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com passwd = <A>"' -> '{"message": "Authorization: Bearer <EMAIL_1> passwd = <SECRET_1>\\""}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com secret%3D<A>"' -> '{"message": "Authorization: Bearer <EMAIL_1> secret%3D<SECRET_1>\\""}'
+## card: {'texts': 3000, 'repeat_only_readable': 1545}
+   assignment-readable by prefix: {}

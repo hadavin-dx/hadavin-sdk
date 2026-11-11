@@ -1,0 +1,30 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+## import /home/user/build/EV-Q8b-13ea6b75/fb_main/src/hadavin_sdk/__init__.py
+cases 640 readable walk/card/slack: 15 8 8
+READABLE bob.smith@example.com | glued | password= | ['walk'] | {"walk": {"message": "<EMAIL_1>=<A>"}}
+READABLE bob.smith@example.com | glued | token= | ['walk'] | {"walk": {"message": "<EMAIL_1>=<A>"}}
+READABLE bob.smith@example.com | glued | secret= | ['walk'] | {"walk": {"message": "<EMAIL_1>=<A>"}}
+READABLE bob.smith@example.com | glued | password:  | ['walk'] | {"walk": {"message": "<EMAIL_1>: <A>"}}
+READABLE bob.smith@example.com | glued | passwd= | ['walk'] | {"walk": {"message": "<EMAIL_1>=<A>"}}
+READABLE https://example.com/x | glued | password:  | ['card', 'slack'] | {"card": "[link removed] <A>", "slack": "[link removed] <A>"}
+READABLE https://example.com/x | zwsp U+200B | password:  | ['card', 'slack'] | {"card": "[link removed] <A>", "slack": "[link removed] <A>"}
+READABLE https://example.com/x | zwj U+200D | password:  | ['card', 'slack'] | {"card": "[link removed] <A>", "slack": "[link removed] <A>"}
+READABLE https://example.com/x | bom U+FEFF | password:  | ['card', 'slack'] | {"card": "[link removed] <A>", "slack": "[link removed] <A>"}
+READABLE https://example.com/x | word-joiner U+2060 | password:  | ['card', 'slack'] | {"card": "[link removed] <A>", "slack": "[link removed] <A>"}
+READABLE https://example.com/x | soft-hyphen | password:  | ['card', 'slack'] | {"card": "[link removed] <A>", "slack": "[link removed] <A>"}
+READABLE https://example.com/x | comma | password:  | ['card', 'slack'] | {"card": "[link removed] <A>", "slack": "[link removed] <A>"}
+READABLE https://example.com/x | semicolon | password:  | ['card', 'slack'] | {"card": "[link removed] <A>", "slack": "[link removed] <A>"}
+READABLE bob@example.com. | glued | password= | ['walk'] | {"walk": {"message": "<EMAIL_1>=<A>"}}
+READABLE bob@example.com. | glued | token= | ['walk'] | {"walk": {"message": "<EMAIL_1>=<A>"}}
+READABLE bob@example.com. | glued | secret= | ['walk'] | {"walk": {"message": "<EMAIL_1>=<A>"}}
+READABLE bob@example.com. | glued | password:  | ['walk'] | {"walk": {"message": "<EMAIL_1>: <A>"}}
+READABLE bob@example.com. | glued | passwd= | ['walk'] | {"walk": {"message": "<EMAIL_1>=<A>"}}
+READABLE a@b.io | glued | password= | ['walk'] | {"walk": {"message": "<EMAIL_1>=<A>"}}
+READABLE a@b.io | glued | token= | ['walk'] | {"walk": {"message": "<EMAIL_1>=<A>"}}
+READABLE a@b.io | glued | secret= | ['walk'] | {"walk": {"message": "<EMAIL_1>=<A>"}}
+READABLE a@b.io | glued | password:  | ['walk'] | {"walk": {"message": "<EMAIL_1>: <A>"}}
+READABLE a@b.io | glued | passwd= | ['walk'] | {"walk": {"message": "<EMAIL_1>=<A>"}}
+NAMED glued password= walk= {"message": "<EMAIL_1>=<A>"} card= 'bob.smith@example[.]compassword=<SECRET_1>'
+NAMED glued token= walk= {"message": "<EMAIL_1>=<A>"} card= 'bob.smith@example[.]comtoken=<SECRET_1>'
+NAMED zwsp U+200B password= walk= {"message": "<EMAIL_1>\u200bpassword=<SECRET_1>"} card= 'bob.smith@example[.]compassword=<SECRET_1>'
+NAMED zwsp U+200B token= walk= {"message": "<EMAIL_1>\u200btoken=<SECRET_1>"} card= 'bob.smith@example[.]comtoken=<SECRET_1>'
