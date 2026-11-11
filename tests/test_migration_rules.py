@@ -29,6 +29,7 @@ MIGRATION_TEST_FILES = [
     "tests/test_migration_wiring.py",
     "tests/test_migration_postgres.py",
     "tests/test_migration_rules.py",
+    "tests/test_migration_compare.py",
 ]
 
 
@@ -407,11 +408,24 @@ OWNER_FORMS = [
     "alter   table\tonly t\nowner\n  to  r",
     'ALTER TABLE "t" OWNER TO "r"',
     "ALTER TABLE t OWNER TO CURRENT_USER",
+    # the word `rename` as a NAME does not switch the rule off (round 12; these three passed the rule on 8382bdd)
+    "ALTER TABLE t ADD COLUMN rename int, OWNER TO r",
+    "ALTER TYPE rename OWNER TO r",
+    "ALTER TABLE a$rename OWNER TO r",
+    "ALTER TABLE t RENAME owner TO boss, OWNER TO r",
+    'ALTER TABLE "rename" OWNER TO r',
+    "ALTER SEQUENCE rename OWNER TO r",
 ]
 NOT_OWNER_FORMS = [
     "ALTER TABLE t ADD COLUMN owner_id int",
     "ALTER TABLE t ADD COLUMN owner text",
     "ALTER TABLE t RENAME COLUMN owner TO owner_name",
+    "ALTER TABLE t RENAME owner TO boss",
+    "ALTER TABLE s.t RENAME CONSTRAINT owner TO owner_fk",
+    'alter  table if exists only "s"."t" * rename\tcolumn owner\nto x',
+    "ALTER TYPE t RENAME ATTRIBUTE owner TO x",
+    "ALTER TABLE rename RENAME COLUMN owner TO x",
+    "ALTER TABLE a$owner RENAME TO b",
     "ALTER TABLE t ADD COLUMN note text DEFAULT 'owner to nobody'",
     "COMMENT ON TABLE t IS 'owner to be set'",
 ]
@@ -420,7 +434,10 @@ NOT_OWNER_FORMS = [
 @pytest.mark.parametrize("form", OWNER_FORMS)
 def test_handing_an_object_to_another_role_is_refused_by_the_text_rule(form):
     """`ALTER <anything> OWNER TO` is refused where the statement starts (no real migration file uses it; a function body
-    that does it is found by the read-back). Killed by: mutant OT1 (the rule is off)."""
+    that does it is found by the read-back). The only form with the words `owner to` that passes is the rename of a
+    column, attribute or constraint CALLED `owner`, read from the start of the statement; a table, type or column that
+    is called `rename` does not make an owner change pass. Killed by: mutants OT1 (the rule is off) and OT3 (any
+    `rename` before `owner` lets the statement pass, the rule of 8382bdd)."""
     assert any("OWNER TO" in r for r in _reasons(form)), (form, _reasons(form))
 
 
@@ -434,7 +451,8 @@ def test_the_owner_refusal_holds_under_noise(before, after):
 
 @pytest.mark.parametrize("form", NOT_OWNER_FORMS)
 def test_a_column_or_a_text_that_says_owner_is_not_taken_for_an_owner_change(form):
-    """Killed by: mutant OT2 (any statement that holds the word `owner` is refused)."""
+    """Killed by: mutants OT2 (any statement that holds the word `owner` is refused) and OT4 (the rename of a column
+    called `owner` is not let through)."""
     assert not any("OWNER TO" in r for r in _reasons(form)), (form, _reasons(form))
 
 

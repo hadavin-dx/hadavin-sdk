@@ -1018,12 +1018,16 @@ def test_the_named_roles_reach_the_two_scoped_read_back_queries(monkeypatch, tmp
 
 
 def test_the_ownership_query_gets_the_managed_names(monkeypatch, tmp_path):
-    """Killed by: mutant OA4 (the managed names are not passed to the query)."""
+    """In a whole run the ownership check gets the names this package manages: the relations for the relation half of
+    the query. (That the function half gets the function names and not the relation names is shown, with a file that
+    creates a function, by tests/test_migration_compare.py.) Killed by: mutant OA6 (the relation half gets no names)."""
     err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
     assert err is None, err
     given = [p for t, p in db.params if t == mig._FOREIGN_OWNED_SQL]
-    assert len(given) == 1 and given[0][0] == given[0][1], given
-    assert "spend" in given[0][0] and "schema_migrations" in given[0][0], given
+    assert len(given) == 1, given
+    relations, functions = given[0]
+    assert "spend" in relations and "schema_migrations" in relations, given
+    assert functions == [], "the made-up files of this test create no function"
 
 
 def test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_files_create():
@@ -1034,10 +1038,10 @@ def test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_fi
         "CREATE FUNCTION some_schema.qualified_fn() RETURNS int LANGUAGE sql AS 'SELECT 1';",
         "-- CREATE FUNCTION in_a_comment() RETURNS int\nSELECT 1;",
     ]
-    names = mig._managed_names(texts, "some_schema")
-    assert names == sorted(set(names))
-    assert set(mig.GRANTS) <= set(names) and "schema_migrations" in names
-    assert {"audit_guard", "Quoted_Fn", "qualified_fn"} <= set(names)
+    relations, names = mig._managed_names(texts, "some_schema")
+    assert names == sorted(set(names)) and relations == sorted(set(relations))
+    assert set(relations) == set(mig.GRANTS) | {"schema_migrations"}
+    assert set(names) == {"audit_guard", "Quoted_Fn", "qualified_fn"}
     assert "in_a_comment" not in names and "some_schema" not in names
 
 
@@ -1050,7 +1054,7 @@ def test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_
         'CREATE FUNCTION "other_schema"."Q""x"() RETURNS int LANGUAGE sql AS \'SELECT 1\';',
         "CREATE FUNCTION Other_Schema.Folded_Too() RETURNS int LANGUAGE sql AS 'SELECT 1';",
     ]
-    names = set(mig._managed_names(texts, "other_schema"))
+    names = set(mig._managed_names(texts, "other_schema")[1])
     assert {"mixed_case", "a b", 'Q"x', "folded_too"} <= names
     assert not {"Mixed_Case", "a"} & names
 
@@ -1070,12 +1074,12 @@ def test_a_function_of_another_schema_is_not_a_managed_name():
         "CREATE FUNCTION some_db.my_schema.audit_three() RETURNS int LANGUAGE sql AS 'SELECT 1';",
         "CREATE FUNCTION \"Some Db\".other_schema.audit_three_other() RETURNS int LANGUAGE sql AS 'SELECT 1';",
     ]
-    names = set(mig._managed_names(texts, "my_schema"))
+    names = set(mig._managed_names(texts, "my_schema")[1])
     assert {"audit_mine", "audit_bare", "audit_three"} <= names, names
     assert not {"audit_other", "quoted_other", "audit_quoted_mine", "audit_three_other"} & names, (
         names
     )
-    assert "audit_quoted_mine" in set(mig._managed_names(texts, "My_Schema"))
+    assert "audit_quoted_mine" in set(mig._managed_names(texts, "My_Schema")[1])
 
 
 def test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement():
@@ -1089,7 +1093,7 @@ def test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_o
         "SELECT 1; -- CREATE FUNCTION Hidden_In_Comment()\n",
         "SELECT 1 CREATE FUNCTION Hidden_Mid_Statement() RETURNS int;",
     ]
-    names = set(mig._managed_names(texts, "public"))
+    names = set(mig._managed_names(texts, "public")[1])
     assert {"cost$fn", "\u00c4rger_\u00dc"} <= names, names
     assert not {"\u00e4rger_\u00fc", "cost"} & names, names
     assert not {n for n in names if n.startswith("hidden")}, names
@@ -1098,7 +1102,7 @@ def test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_o
     # A function made by `EXECUTE format('CREATE FUNCTION ...')` in a body is not read by name here; the check of rights
     # finds it by what is new in the schema (test_a_security_definer_function_made_by_dynamic_sql_...).
     assert "in_string" in set(
-        mig._managed_names(["SELECT 'x; CREATE FUNCTION In_String() y';"], "public")
+        mig._managed_names(["SELECT 'x; CREATE FUNCTION In_String() y';"], "public")[1]
     )
 
 

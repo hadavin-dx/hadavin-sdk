@@ -684,10 +684,32 @@ _GRANT_TARGET = re.compile(
 )
 # `ALTER <anything> OWNER TO <role>` hands an object to another role. No migration file of this package does that (the
 # migration role owns what it makes), so it is refused whatever the object is. (The read-back after the file also finds a
-# relation, function or schema that a function body handed over.)
-_ALTER_OWNER = re.compile(
-    rf"alter\b(?:(?!\brename\b).)*?{_NAME_START}owner{_W}to{_NAME_END}", re.IGNORECASE | re.DOTALL
+# relation, function or schema that a function body handed over.) The rule: the statement starts with `ALTER` and holds
+# the two words `owner to` (`_OWNER_TO`, with the name boundaries of the lexer, so `a$owner` is not the word `owner`).
+_ALTER_OWNER = re.compile(r"alter\b", re.IGNORECASE)
+_OWNER_TO = re.compile(rf"{_NAME_START}owner{_W}to{_NAME_END}", re.IGNORECASE)
+# The ONE form that holds `owner to` and is let through: renaming a column, an attribute or a constraint that is CALLED
+# `owner` (`ALTER TABLE t RENAME [COLUMN|CONSTRAINT] owner TO x`, `ALTER TYPE t RENAME ATTRIBUTE owner TO x`). It is read
+# from the start of the statement: the kind of object, then ONE object name (a quoted name is `""` in the emptied text),
+# then the keyword `RENAME` directly before `owner`. So the word `rename` is not enough: an object or a column that is
+# called `rename` (`ALTER TYPE rename OWNER TO r`, `ALTER TABLE t ADD COLUMN rename int, OWNER TO r`) and a name that
+# ends in it (`a$rename`) do not switch the rule off. A match here LETS A STATEMENT PASS, so it has no `\\b`.
+_BLANKS = f"[{_WS}]*"
+_NAME_PART = rf'(?:""|{_NAME_CHAR}+)'
+_RENAME_OWNER = re.compile(
+    rf"alter{_W}(?:table|view|materialized{_W}view|foreign{_W}table|type|domain){_W}"
+    rf"(?:if{_W}exists{_W})?(?:only{_W})?{_NAME_PART}(?:{_BLANKS}\.{_BLANKS}{_NAME_PART})*(?:{_BLANKS}\*)?{_W}"
+    rf"rename{_W}(?:(?:column|attribute|constraint){_W})?owner{_W}to{_NAME_END}",
+    re.IGNORECASE,
 )
+
+
+def _hands_over(statement: str) -> bool:
+    """True for an `ALTER` statement that holds `owner to` anywhere but in the one rename form of `_RENAME_OWNER`."""
+    if not _ALTER_OWNER.match(statement):
+        return False
+    exempt = _RENAME_OWNER.match(statement)
+    return any(exempt is None or m.end() != exempt.end() for m in _OWNER_TO.finditer(statement))
 
 
 def refused_statements(text: str) -> list[str]:
@@ -738,7 +760,7 @@ def refused_statements(text: str) -> list[str]:
                 f"{m.group(1).upper()} on a place other than a table, view, sequence, column or function "
                 f"({m.group(2).upper()}): the guard does not read rights there"
             )
-        elif _ALTER_OWNER.match(s):
+        elif _hands_over(s):
             reasons.append(
                 "ALTER ... OWNER TO: an object may not be handed to another role by a migration file"
             )
