@@ -1,0 +1,15 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+copy of the repository: /tmp/migrate-mutants-lkehvlud/repo
+import path: /tmp/migrate-mutants-lkehvlud/repo/src/hadavin_sdk/__init__.py
+BASELINE rc=0 5 passed in 0.97s (2.3s, 5 killer ids)
+name | kind | description | result | failing killers (only the ones that fail) | seconds
+DP5 | behaviour | the default rights of the owning role itself are read as rights of a stranger | KILLED | tests/test_migration_postgres.py::test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migration_role_belongs_to[member_role_select] | 2.1s
+LV1 | behaviour | a lock wait of 0 seconds is accepted | KILLED | tests/test_k2_migrations.py::test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_before_anything_is_done[0] | 1.8s
+LV2 | behaviour | a bool is accepted as a number of seconds | KILLED | tests/test_k2_migrations.py::test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_before_anything_is_done[True] | 1.9s
+LV3 | behaviour | a string or a fraction is accepted as a number of seconds | KILLED | tests/test_k2_migrations.py::test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_before_anything_is_done[1.5] | 1.9s
+LV4 | behaviour | one above the largest wait is accepted | KILLED | tests/test_k2_migrations.py::test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_before_anything_is_done[2147484] | 1.9s
+behaviour: 5 of 5 killed
+prose: 0 of 0 killed
+test-helper: 0 of 0 killed
+not killed: []
+5 of 5 killed
