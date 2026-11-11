@@ -75,6 +75,15 @@ The same trick works the other way round. Untrusted text (a document, a tool's a
 
 **Bug class:** the text is changed (hidden items removed) AFTER the safety checks have read it, and different places read escape sequences by different rules. In the common catalogue of software weaknesses this is "validate before canonicalize" (CWE-180) and "improper neutralization of escape, meta or control sequences" (CWE-150); both names from memory.
 
+**Words used in this ticket, in plain words** (D10; each keeps this one meaning):
+- *choke point*: the one function every producer path goes through before text reaches a model, a log or the audit trail: `runmap.redact_text`. Fixing a bug there fixes it for every caller at once.
+- *known value*: a value the run's map already holds (masked earlier in this run). The *sweep* is the redactor's last step that masks every copy of a known value.
+- *held* placeholder: one that stands in the find pass's output and is a key of its map. *needed* value: a held value that does not stand as written in the spaced reading (so the mask pass cannot find it without help). *seed entry*: a map entry whose original starts with `"\0seed"` (the approval card's numbering seeds); never a real value.
+- *glue rule*: where hidden items stood between two word characters, one space is left, so the two words stay two words (section 4.1).
+- *oracle*: a second, deliberately simple implementation used only by the tests, written from this ticket and not from the code, that says what the right answer is.
+- *mutant*: a copy of the code with one guard reverted on purpose; a test suite that does not fail on it does not test that guard. Its *killer* is the test that must fail.
+- *span*: the stretch of a text one occurrence of a known value covers (start and end position).
+
 **Names of character groups used in this ticket, in plain words** (from ECMA-48, the standard for control characters, the same text as ISO/IEC 6429; from memory):
 - *control character*: a character that is an instruction to a terminal or printer, not a letter. *C0* = the 32 control characters U+0000 to U+001F (backspace, bell, tab, line feed, escape ...). *DEL* = U+007F. *C1* = the 32 control characters U+0080 to U+009F (rarely used on purpose; they also appear when Windows-1252 text is decoded wrongly).
 - *ESC* = the escape character U+001B, which starts an escape sequence. *BEL* = bell U+0007. *NUL* = U+0000. *CAN* (cancel, U+0018) and *SUB* (substitute, U+001A) abort a sequence that has started.
