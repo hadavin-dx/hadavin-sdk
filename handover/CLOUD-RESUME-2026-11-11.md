@@ -233,3 +233,11 @@ Which worktree each WIP branch copies (ref, kind, cloud folder):
 - A builder used a bare `git stash` (popped at once, nothing lost).
 - Pushes were rejected several times (fetch first / 403 RPC); `git pull --rebase` then push fixed it.
 - The class bug in PR77 shows the wrong approach in rounds 3-5: each round fixed single hiding techniques. The rewrite as one gap-tolerant match is the class fix.
+
+## Update after ORDER 245 (STOP), 12:05Z UTC / 17:35 IST (changes since 10:46Z)
+- ORDER 243 (GO core) ran about 10 minutes. I deleted my 87 old Postgres cluster folders (7.3 GB; free disk 2.2 -> 9.4 GB). Nothing else deleted.
+- PR77 builder (branch `fix/P2d-1-w7`) ran about 6 minutes, then was stopped by ORDER 245. **It made no source changes.** Pushed head f25ed5f5 is an empty "WIP:" commit on top of b6f3b8dd (`wip/P2d-1-w6`). Everything in the "Not done" list for PR77 is still open: clock checks (BL a03), 8 stale mutants and the once-only test (t02), Minors a04/t03, CHANGELOG/textnorm docs and manifest (c01..c04), proof that new tests fail on 249a0a59, ruff/bandit/full pytest. Its focused test run was killed before a result, so nothing is verified. One repro result: 9 of 10 repro inputs mask; `id: \x9bpassword=Hunter2abc` gives `id: assword=<SECRET_1>` (the secret is masked, the letter p is eaten as a control-sequence final byte). Repro script and logs: /home/user/build/EVOUT-PR77-w7/ (cloud only); checkpoint /home/user/build/B-PR77-w7-checkpoint.md (cloud only, not pushed: outside the repo).
+- PR74 still waits for PR77. PR89: independent evidence on db0d9eb already exists (handover/evidence/P89/db0d9eb-indep); the two held-back PR89 evidence heads are still unpushed (gitleaks hit), unchanged.
+- ORDER 244: owner says the cloud is for the demo, not core. Token check answered in q-gh-token-hadavin-dx (admin on the two scoped repos; other hadavin-dx repos not visible).
+- ORDER 245 snapshots: 24 more worktree snapshots pushed as `wip/cloud-245-*` (SHAs in questions-for-lead.md under STOPPED 245). Gitleaks held back none of them. Every local branch is contained in a remote ref (checked).
+- Machine state: no agents, no pytest/postgres/pulse processes; the 10-minute PULSE reminder is disabled; disk 9.4 GB free.

@@ -1660,3 +1660,32 @@ Disk: removed only my Postgres cluster folders (/home/user/build/pg/*, 87 folder
 
 ## q-gh-token-hadavin-dx (answer to ORDER 244) — 12:01Z UTC
 Read-only check, nothing created. `gh repo list` fails (GraphQL is blocked in cloud sessions; use REST). Via REST: repos hadavin-sdk and hadavin-portal-kit report permissions admin/maintain/push/pull/triage = true for this session's token. Both repos are the only ones this session's scope names (the system scope lists exactly those two); a NEW demo repo in hadavin-dx will need to be attached with add_repo before I can branch from it, and add_repo checks authorisation. I have not tested creating a branch in a new repo, and the token's permission to create a repo is not needed (the lead creates it). Core: no new agent or branch started. PR77 builder (a30482da, fix/P2d-1-w7) finishes its box ~13:28Z, then core is parked. Preparing: reading handover/demo/*.
+
+## STOPPED 245 — 12:05Z UTC / 17:35 IST
+Cloud stopped. PR77 builder wrote no code (empty WIP commit). Pushed heads (new refs; no force, no delete):
+- fix/P2d-1-w7 f25ed5f5
+- wip/cloud-245-B-P4da2 e7463f7ba325e31cc22857cce7f8c3c8ebd72b7c
+- wip/cloud-245-B-R84 4b60e5935f5f834f85c30c7ac8c156d0be37e874
+- wip/cloud-245-B-cilint-b3 1d7676aaec0f5cf8cd4829e48d5d9bcc9742ffce
+- wip/cloud-245-B-peel 3b56d980bd8d82c7dffe13d3b8d013d1cfd0029e
+- wip/cloud-245-EV-A21a-1a7d202-wtfb f68f243c242d523798b9b570e6be70f4344318a5
+- wip/cloud-245-EV-A21a-1a7d202-wtflakyhead f47ce227024bf2102ebcf69fdb5ff73b6cee9ff4
+- wip/cloud-245-EV-A21a-1a7d202-wtflakymain 020e9d0c8031f3cfd98bdf2ecb69764516daf317
+- wip/cloud-245-EV-P6a-d392200-base 917512363efad497600885401cfc0c92c79f3045
+- wip/cloud-245-EV-P6a-ec76c73-base d9c407690d21b9937937648a12ea78ae056bf820
+- wip/cloud-245-EV-P73-0c52491-wtbase 2e76eabc820d035e0b718c88d36dea6dcdeb9561
+- wip/cloud-245-EV-P73-d1dff3a-base 39b93756767d7d6951e412574c3c6e6fe9b10321
+- wip/cloud-245-EV-P73-ef2adc7-base 39953eef44fbc81a90a6d0135989ce92cba0c7cf
+- wip/cloud-245-EV-P77-8b2b716-old c29168af6f5aac82daba49bf69d31cad896eaec4
+- wip/cloud-245-EV-P89-025ec61-fb a2bb4e2a6ac09ef5826964a85703244e842624a0
+- wip/cloud-245-EV-P89-0e4f6d5-base ef4127b46e6e63a10eba362cb30e3c13d98aa858
+- wip/cloud-245-EV-P89-14879da-wt-old 718d2e752229e890a825af9e8cfed0bf76ef72a4
+- wip/cloud-245-EV-P89-3586dcc-wt-base 0cf82cee8f1e0bc2913a2cf10c3a90de58383012
+- wip/cloud-245-EV-P89-58f7d56-wt-base 6a1e5c032b61bca54de72210a9626bf2d4ab0d06
+- wip/cloud-245-EV-P89-6706e67-fb 5135f1ffe8fc01e629cd5a1f697ff7298166eabb
+- wip/cloud-245-EV-P89-9ed5217-fb 208b1895a057d0d02066ed588a1b501d7d8c9bf2
+- wip/cloud-245-EV-P89-ef4c572-wt-base 663a9a6af78c522a9389a9a33fcbc02450f0a700
+- wip/cloud-245-EV-P89-f4301d5-wt-base 02ef8003f18ca943240154e155b7699b978a0021
+- wip/cloud-245-FB87 6b1d38f952cbaf8e83134f95366f12f191bc05f4
+- wip/cloud-245-WT-R1 92bf601358063325eb525ebfa0011b8e2f2d2762
+Held back by gitleaks in this pass: none. Still unpushed from the earlier pass: the two PR89 evidence heads (386875c4a034, f4301d55443b).
