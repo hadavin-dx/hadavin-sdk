@@ -8,11 +8,11 @@ import re
 from pathlib import Path
 
 from hadavin_sdk.approvals.cards import render_shadow
-from hadavin_sdk.approvals.channel import FakeChannel, clean
+from hadavin_sdk.approvals.channel import clean
 from hadavin_sdk.approvals.requests import summary
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.k1b import redaction as R
-from tests.q8b_helpers import shown_records
+from tests.q8b_helpers import key_spellings, shown_records, slack_notice
 from tests.test_q8b_card_text import plan as _plan
 
 redact = importlib.import_module(
@@ -27,39 +27,21 @@ def _readable(out: str) -> list[str]:
     return [w for w in WORDS.split() if w in out]
 
 
-def _expand(fragment: str) -> list[str]:
-    """Every spelling of a fragment of the key list: `[_\\-]?` written three ways, `(?:ificate)?` two."""
-    outs = [fragment]
-    for pat, subs in (("[_\\-]?", ["", "_", "-"]),):
-        outs = [o.replace(pat, s) for o in outs for s in subs]
-    more = []
-    for o in outs:
-        m = re.search(r"\(\?:([a-z]+)\)\?", o)
-        if m:
-            more += [o.replace(m.group(0), ""), o.replace(m.group(0), m.group(1))]
-        else:
-            more.append(o)
-    return more
-
-
 def _all_keys() -> list[str]:
-    keys: list[str] = []
-    for frag in redact.KEY_ALTERNATIVES:
-        keys += [k for k in _expand(frag) if re.fullmatch(r"[A-Za-z_\-]+", k)]
-    assert len(keys) > 20, keys
-    return sorted(set(keys))
+    return key_spellings()
 
 
 # ---- Issue 1: the glue guard is not bounded by a length -----------------------------------------------------------------
 
 
-def test_the_prefix_bound_is_one_shared_name():
-    assert (
-        isinstance(redact.KEY_PREFIX_MAX, int) and redact.KEY_PREFIX_MAX > 0
-    )  # the ARN look-ahead, one name
-    assert redact._MASKED_KINDS and frozenset(redact._MASKED_KINDS) == redact.SECRET_KINDS, (
-        "the placeholder kinds the tail rule skips differ from SECRET_KINDS"
-    )
+def test_the_value_tail_rule_skips_exactly_the_secret_kinds():
+    """The value rule leaves a value that is only placeholders of a secret kind alone (a second cleaning changes nothing).
+    The kinds come from `SECRET_KINDS`, the one list: each of them is skipped, and a kind that is not a secret is not."""
+    for kind in sorted(redact.SECRET_KINDS):
+        text = f"{PW}=<{kind}_1> tail"
+        assert redact.redact(text).text == text, f"a placeholder of kind {kind} was masked again"
+    assert redact.redact(f"{PW}=<EMAIL_1> tail").text != f"{PW}=<EMAIL_1> tail"
+    assert not hasattr(redact, "_MASKED_KINDS"), "a second hand copy of the secret kinds"
 
 
 def test_a_key_glued_to_an_address_of_any_length_keeps_its_value_masked():
@@ -96,18 +78,35 @@ def test_every_spelling_of_every_key_masks_a_value_with_spaces_on_every_path():
     for key in _all_keys():
         text = f"x {key}={WORDS}"
         walked = shown_records({"note": text})[0]["note"]
-        slack = FakeChannel()
-        slack.notify("p", text)
-        for path, out in (("card", clean(text)), ("walk", walked), ("notice", slack.notices[0][1])):
+        for path, out in (("card", clean(text)), ("walk", walked), ("notice", slack_notice(text))):
             if _readable(out):
                 bad.append((key, path))
     assert not bad, f"a word of the value is readable: {bad[:5]}"
 
 
-def test_there_is_no_second_key_list_in_the_card_code():
-    src = Path(__file__).resolve().parents[1] / "src/hadavin_sdk/approvals/channel.py"
-    text = src.read_text(encoding="utf-8")
-    assert "whole_assignment_values" not in text and "_ASSIGNED" not in text
+def test_no_file_of_the_redaction_code_keeps_its_own_list_of_credential_keys():
+    """A hand-kept key list is a line of the code that names both `password` and `passwd` as alternatives of a key=value
+    rule. The only lines allowed to: the key list itself, the two command-line flag rules (`--password` is a flag name, not a
+    key), `htpasswd`, and the lists of WORDS (`_NOT_A_VALUE`, the case rule's `CREDENTIAL_WORDS`, one per line). Fails on the
+    code before batch 3, where the quoted-value rules carried a third list."""
+    root = Path(__file__).resolve().parents[1] / "src/hadavin_sdk"
+    allowed = (
+        "KEY_ALTERNATIVES",
+        'r"password", r"passwd"',  # the list itself
+        "htpasswd",
+        "api-?key",  # the command-line flag rule: a flag NAME
+        "-(?:password|passwd)",  # its second line
+        '"password", "passwd", "pwd", "passphrase"',  # the case rule's endings, compared with the list by test_r7
+    )
+    bad = []
+    for rel in ("guard/redact.py", "approvals/channel.py", "approvals/gate.py", "k1b/redaction.py"):
+        for n, line in enumerate((root / rel).read_text(encoding="utf-8").splitlines(), 1):
+            code = line.split("  #")[0]
+            if code.lstrip().startswith("#"):
+                continue
+            if "password" in code and "passwd" in code and not any(a in code for a in allowed):
+                bad.append(f"{rel}:{n}: {line.strip()[:90]}")
+    assert not bad, f"a second list of credential keys: {bad}"
 
 
 def test_a_card_keeps_flags_and_words_after_a_masked_value():
@@ -166,9 +165,7 @@ def test_a_link_glued_to_a_credential_key_keeps_the_value_masked():
     for link in LINKS:
         for sep in (": ", "=", " = "):
             text = f"{link}{PW}{sep}{WORDS}"
-            slack = FakeChannel()
-            slack.notify("p", text)
-            for path, out in (("card", clean(text)), ("notice", slack.notices[0][1])):
+            for path, out in (("card", clean(text)), ("notice", slack_notice(text))):
                 if _readable(out):
                     bad.append(f"{path}: {out!r}")
     assert not bad, f"{len(bad)} cases leak, first {bad[:2]}"
@@ -177,7 +174,7 @@ def test_a_link_glued_to_a_credential_key_keeps_the_value_masked():
 def test_an_address_link_glued_to_a_credential_key_keeps_the_value_masked():
     out = clean(f"10.0.0.1/a{PW}: {WORDS}")
     assert not _readable(out), out
-    assert "[link removed]" in out or "<" in out
+    assert out.startswith("[link removed]"), f"the link is not removed: {out!r}"
 
 
 def test_a_link_alone_is_still_removed_whole():

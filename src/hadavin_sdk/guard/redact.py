@@ -154,15 +154,19 @@ KEY_ALTERNATIVES = (
     r"shared[_\-]?access[_\-]?key", r"private[_\-]?key", r"api[_\-]?key", r"apikey", r"auth[_\-]?token",
     r"access[_\-]?token", r"sas[_\-]?token", r"key[_\-]?data", r"cert(?:ificate)?[_\-]?data",
     r"session[_\-]?id", r"jsessionid", r"phpsessid", r"sessid", r"connect\.sid", r"client[_\-]?secret",
-    r"credential", r"token", r"pass(?=[\"']?\s*[:=])", r"auth(?=[\"']?\s*[:=])", r"session(?=[\"']?\s*[:=])",
+    r"credential", r"token", r"signing[_\-]?key", r"encryption[_\-]?key", r"pass(?=[\"']?\s*[:=])",
+    r"auth(?=[\"']?\s*[:=])", r"session(?=[\"']?\s*[:=])", r"bearer(?=[\"']?\s*[:=])",
 )  # fmt: skip
+# The same list as ONE regex fragment: the generic key rule and both quoted-value rules are built from it (a hand-kept copy
+# in the quoted rules left `access_key="abc;def ghi"` half readable).
+KEY_WORDS = "|".join(KEY_ALTERNATIVES)
 # How far the ARN rule looks ahead for a key it must not swallow. The generic key rule has no prefix bound (it starts at
 # the key word), so any distance works for the guard; one named number keeps the look-ahead short.
 KEY_PREFIX_MAX = 40
 # What the redactor FINDS: the same characters, but never through a `key=` that begins a credential. `*`, `+` and `@`
 # are legal ARN characters, so `...:function:billing*token=V` is ambiguous; the identifier stops before the key and
 # the key=value rule masks V. Over-redaction (an ARN segment that looks like `...token=`) is the accepted price.
-_KV_WORD = r"(?:auth|authorization|" + "|".join(KEY_ALTERNATIVES) + ")"
+_KV_WORD = r"(?:auth|authorization|" + KEY_WORDS + ")"
 # Any letter case (`TOKEN=`, `Authorization=`); the key may end in a quote and `:` (`..bucketpassword":"V"`, JSON).
 ARN_CHAR = (
     r"(?:(?i:(?![\w.\-*+@]{0,"
@@ -182,7 +186,7 @@ ARN_CHAR = (
 # (`GLUED_KEY`); the address ends right in front of such a key, so the key=value rule sees the key whatever the length of
 # the domain (`<EMAIL_1>password=<SECRET_1>`). The address patterns appended at the end of this list (`_EMAIL_DOMAIN`
 # without the guard) still mask an address the guarded one declined.
-_GLUED_KEY_WORD = r"(?:authorization|" + "|".join(KEY_ALTERNATIVES) + ")"
+_GLUED_KEY_WORD = r"(?:authorization|" + KEY_WORDS + ")"
 # A credential key word with what the generic key rule needs after it: at most 20 key characters, a quote, `=` or `:`.
 GLUED_KEY = r"(?i:" + _GLUED_KEY_WORD + r"[\w.\-]{0,20}[\"']?\s*[:=])"
 _NOT_GLUED_KEY = r"(?!" + GLUED_KEY + ")"
@@ -198,32 +202,47 @@ _GUARDED_DOMAIN = (
 )
 # What a value is: one character of it (a numeric HTML entity is ONE character, not the `&` of a query separator; a comma
 # that does not begin a new `key=value` pair belongs to the value), and the words that follow it after spaces or tabs.
-# An unquoted value that holds spaces (`password=correct horse battery staple`) is masked whole: words go on until the
-# end of the line, a flag (`--force`, `-f`), the next `key=` / `key:` word, a quote, `;`, `,` or `&`. The flags and the
-# next key stay readable, so a card still shows `--force --target prod`. Cost: prose right after an unquoted credential
-# value on the same line (`token=abc12345 failed for bob`) is masked with it.
+# An unquoted value that holds spaces (`password=correct horse battery staple`) is masked whole. The words go on until the
+# end of the line or one of these stops, and the stop itself stays readable:
+#   - a flag: `--` and a letter (`--force`, `--target`), or `-` and ONE letter (`-f`, `-y`);
+#   - the next key: a word that starts with a letter or `_` and ends in `:` or `=` (`user=bob`, `port:`, `http://`);
+#   - a quote, `;`, `,` (when a new `key=value` follows) or `&`.
+# So `--force --target prod` after a value is kept, and a word with a dash or a colon INSIDE a value is part of it:
+# `password=correct -horse battery staple` (a dash and several letters is no flag: it may be a word of a passphrase, and a
+# leaked passphrase word is worse than a lost option) and `password=correct 12:30 horse` (a word that starts with a digit
+# is no key) are masked whole. Cost, named: a short option with its value glued on (`-uroot`, `-p3306`) and prose right
+# after an unquoted credential value on the same line (`token=abc12345 failed for bob`, `token=<A> on the primary`) are
+# masked with it. Pinned by tests and written in `CHANGELOG.md`.
 _VALUE_CHAR = r"(?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|[^\s\"';,&]|,(?!\s*[\w.\-]+\s*[:=]))"
-_VALUE_TAIL = r"(?:[ \t]+(?!--?[A-Za-z]|[\w.\-]+[\"']?\s*[:=])" + _VALUE_CHAR + "+)*"
+_FLAG_STOP = (
+    r"--[A-Za-z]|-[A-Za-z](?![A-Za-z0-9])"  # `--force`, or one letter such as `-f` (not `-horse`)
+)
+_KEY_STOP = r"[A-Za-z_][\w.\-]*[\"']?\s*[:=]"  # a word that starts with a letter or `_`, then `:` or `=` (not `12:30`)
+_VALUE_TAIL = r"(?:[ \t]+(?!" + _FLAG_STOP + "|" + _KEY_STOP + ")" + _VALUE_CHAR + "+)*"
+# The kinds whose value is a secret (see the sweep rules further down, where `_sweep` reads this set). Defined here, before
+# the patterns, because the next rule is built from it: ONE list, no hand copy.
+SECRET_KINDS = frozenset(
+    {
+        "PRIVKEY",
+        "JWT",
+        "APIKEY",
+        "GCPTOKEN",
+        "AZURESAS",
+        "WEBHOOK",
+        "URLCRED",
+        "BEARER",
+        "BASIC",
+        "SECRET",
+        "HIGHENTROPY",
+        "IBAN",
+        "CREDITCARD",
+    }
+)
 # A value that is only placeholders of secret kinds is masked already (`password=<SECRET_1>`): no word after it is taken
 # in (a second cleaning of the same text must change nothing: the first one may have rewritten the text after it).
-_MASKED_KINDS = (
-    "PRIVKEY",
-    "JWT",
-    "APIKEY",
-    "GCPTOKEN",
-    "AZURESAS",
-    "WEBHOOK",
-    "URLCRED",
-    "BEARER",
-    "BASIC",
-    "SECRET",
-    "HIGHENTROPY",
-    "IBAN",
-    "CREDITCARD",
-)  # fmt: skip  (the same names as `SECRET_KINDS` below, which a test compares)
 _VALUE_WITH_TAIL = (
     r"(?:(?:<(?:"
-    + "|".join(_MASKED_KINDS)
+    + "|".join(sorted(SECRET_KINDS))
     + r")_\d+>)+(?![^\s\"';,&])|"
     + _VALUE_CHAR
     + "+"
@@ -678,14 +697,14 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "SECRET",
         re.compile(
-            r"(?i)(?:password|passwd|pwd|pass|secret|token|api[_\-]?key|apikey|credential|session)"
+            r"(?i)(?:" + KEY_WORDS + r")"
             r"[\w.\-]{0,20}[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""
         ),
     ),
     (
         "SECRET",
         re.compile(
-            r"(?i)(?:password|passwd|pwd|pass|secret|token|api[_\-]?key|apikey|credential|session)"
+            r"(?i)(?:" + KEY_WORDS + r")"
             r"[\w.\-]{0,20}[\"']?\s*[:=]\s*'([^'][^']{0,255})'"
         ),
     ),
@@ -697,7 +716,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             # The rule starts AT the key word, whatever stands in front of it: a prefix bound (it was 40 characters, behind
             # a "previous character is not a key character" test) left the value readable behind a longer identifier
             # (`<41 letters>password=V`). The prefix is not part of the match, so the output is the same.
-            r"(?i)(?:" + "|".join(KEY_ALTERNATIVES) + r")[\w.\-]{0,20}"
+            r"(?i)(?:" + KEY_WORDS + r")[\w.\-]{0,20}"
             # optional closing quote after the key so a JSON credential ("password": "x") is matched too
             r"[\"']?\s*[:=]\s*[\"']?"
             # The value: any non-separator char, OR a comma that does NOT begin a new key=value pair
@@ -892,6 +911,26 @@ _NOT_A_VALUE = frozenset(
 # A value written as a word in angle brackets is a tool saying there is none: Go's `<nil>`, kubectl's `<none>` and
 # `<set to the key ...>` (ninth review: since values may hold `<`, each was a secret swept from every line).
 _SAYS_NONE = re.compile(r"<[a-z][a-z -]*>?")
+# Words that may join the words of `_NOT_A_VALUE` in a phrase ("token: has expired", "password: not set yet"). They are read
+# only when the value holds several words: a lone `will` or `never` stays a value (a short word is a poor password, but
+# it is still masked; only a phrase made wholly of these words and `_NOT_A_VALUE` is prose).
+_PROSE_WORDS = frozenset(
+    {"has", "have", "had", "will", "can", "cannot", "does", "did", "never", "yet"}
+)
+
+
+def _says_no_value(original: str) -> bool:
+    """A captured credential value that is a tool's words, not a value: one word of `_NOT_A_VALUE`, or a phrase every word
+    of which is in `_NOT_A_VALUE` or `_PROSE_WORDS` (`password: not set`, `--token not set`, `token: field required`,
+    `secret: has expired`). One unknown word makes it a value: `password=correct horse battery staple` and
+    `password=key lime pie` are masked whole. (The first word alone is not enough: a passphrase may start with `key`
+    or `no`, and `not set` as a whole would then be swept from every other line.)"""
+    words = [w for w in (x.strip(".,;:)(<>").lower() for x in original.split()) if w]
+    if not words:
+        return False
+    if len(words) == 1:
+        return words[0] in _NOT_A_VALUE
+    return all(w in _NOT_A_VALUE or w in _PROSE_WORDS for w in words)
 
 
 # The pieces of a compound value (`_gh_sess=...; theme=dark`, `<uuid>.<secret>`): one with a letter and a digit is
@@ -917,6 +956,9 @@ _PIECE = re.compile(r"[^\s;,&=.:\"'\[\]{}<>]{8,}")
 # A placeholder token, captured so `re.split` keeps it as its own segment: `<LABEL_123>`.
 _LABELS = tuple(dict.fromkeys(label for label, _ in PATTERNS))
 _PLACEHOLDER = re.compile(r"(<[A-Z][A-Z0-9]*_\d+>)")
+_SHOWN_PLACEHOLDER = re.compile(
+    r"<[A-Z][A-Z0-9]*_\d+>|\u2039[A-Za-z][A-Za-z0-9]*_\d+\u203a"
+)  # as issued, or as escaped
 # A terminal escape sequence (colour, cursor, title): not text, and glued to a key it hid the key from every pattern
 # that needs a word boundary - `ESC[1mAKIA...` read as `mAKIA...` (ninth review, 2026-10-01).
 _ANSI = re.compile(
@@ -1029,9 +1071,7 @@ class _Redactor:
         # group(1) exists for TENANT, where only the value is sensitive, not the key name.
         # The first group that took part: a pattern may offer the value in several written forms.
         original = next((g for g in m.groups() if g is not None), m.group(0))
-        if label == "SECRET" and (
-            original.lower().strip(".,;:)(<>") in _NOT_A_VALUE or _SAYS_NONE.fullmatch(original)
-        ):
+        if label == "SECRET" and (_says_no_value(original) or _SAYS_NONE.fullmatch(original)):
             return m.group(0)
         if label == "HOSTNAME" and _KEPT_HOST.search(
             original
@@ -1048,8 +1088,11 @@ class _Redactor:
         full = _PLACEHOLDER.sub(lambda p: self.mapping.get(p.group(1), p.group(1)), original)
         # By its shape, not the map: the gate re-scans with a fresh one, and took `Cookie: <SECRET_1>` for a
         # new secret - every report quoting a masked cookie was withheld (eighth review, 2026-10-01).
-        if _PLACEHOLDER.search(original) and not re.search(
-            r"[A-Za-z0-9]", _PLACEHOLDER.sub("", original)
+        # The same for a placeholder that `runmap.escape_placeholders` wrote as a look-alike (`<EMAIL_1>` in text from outside
+        # becomes `\u2039EMAIL_1\u203a`): a second cleaning of an output must not read it as a token after `Bearer` and turn it
+        # into another kind of placeholder.
+        if _SHOWN_PLACEHOLDER.search(original) and not re.search(
+            r"[A-Za-z0-9]", _SHOWN_PLACEHOLDER.sub("", original)
         ):
             return m.group(0)
         placeholder = (
@@ -1239,23 +1282,6 @@ def _trie_regex(root: dict[str, dict]) -> str:
 #     All-digit values under 6 characters ("500") and common words ("prod", "admin") are not swept:
 #     the pattern still masks every occurrence it matches, and a bare "500" elsewhere is a status
 #     code far more often than the tenant.
-SECRET_KINDS = frozenset(
-    {
-        "PRIVKEY",
-        "JWT",
-        "APIKEY",
-        "GCPTOKEN",
-        "AZURESAS",
-        "WEBHOOK",
-        "URLCRED",
-        "BEARER",
-        "BASIC",
-        "SECRET",
-        "HIGHENTROPY",
-        "IBAN",
-        "CREDITCARD",
-    }
-)
 _COMMON = frozenset(
     {
         "prod",

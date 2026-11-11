@@ -59,6 +59,11 @@ LIMITS = (
     "characters (a copy of such a value may be shown partly masked).\n"
     "- A setting about a credential (a key that ends in enabled, policy, count, expiry and the like) is shown only "
     "when its value is a yes or no word, a number or a time.\n"
+    "- A record key that ends in `pass`, `auth` or `session` is masked only when the word in front of it is one of the "
+    "listed ones (for example `db`, `user`, `admin`, `root`, `api`, `mysql`); an unlisted word in front (`zzzpass`) leaves the "
+    "value readable in a record, although the same name written as text (`zzzpass=value`) is masked. The record rule also "
+    "masks some keys that hold no credential (`session_duration`, `auth_method`, `pass_rate`, `tokenCount`, `tokenType`); the "
+    "full measured lists are in decision D-032.\n"
     "Masking is a first filter, not proof that no client data reached the model."
 )
 KINDS_NOTE = "Counts are distinct values masked per class (EMAIL, IPV4, ARN, ...), summed over the cases; no values."
@@ -135,24 +140,23 @@ CREDENTIAL_WORDS = frozenset(
 GLUED_ENDINGS = (
     "password", "passwd", "pwd", "passphrase", "secret", "token", "apikey", "secretkey", "accesskey",
     "privatekey", "sessionid", "sessid", "accountkey", "keydata", "certdata", "certificatedata",
+    "credential", "credentials", "signingkey", "encryptionkey",
 )  # fmt: skip
-# (word before, word): `api_key`, `client-key-data`, `connect.sid`
+# `pass`, `auth` and `session` are ordinary word endings (`bypass`, `compass`, `trespass`, `oauth`, `author`), so they end a
+# credential key only after one of these words written in front of them with no separator: `dbpass`, `userauth`,
+# `mysession`. (After `_`, `-` or a capital letter they are a word of their own, which `CREDENTIAL_WORDS` already lists.)
+# A measured list (decision D-032, `tests/q8b_key_corpus.py`): no benign key of the corpus ends with one of the joined
+# endings, and a prefix not listed here (`zzzpass`) is not recognised on this path (`LIMITS`).
+GLUED_PREFIXES = (
+    "db", "user", "admin", "root", "app", "api", "login", "my", "mysql", "pg", "sql", "ftp", "smtp", "redis", "ssh",
+    "mongo", "ldap", "git", "svc", "service", "client", "server", "master", "super", "mail", "vpn", "wifi", "sys",
+)  # fmt: skip
+PREFIXED_ENDINGS = tuple(p + e for p in GLUED_PREFIXES for e in ("pass", "auth", "session"))
+# The words in front of `key` or `keys` that make a credential: `api_key`, `dbaccess_key` (the word BEFORE ends with one of
+# them), and the exact pairs (word before, word) `client-key-data`, `connect.sid`.
+KEY_QUALIFIERS = ("api", "private", "access", "secret", "signing", "encryption", "account")
 WORD_PAIRS = frozenset(
-    {
-        (q, k)
-        for q in [
-            "api",
-            "private",
-            "access",
-            "secret",
-            "signing",
-            "encryption",
-            "account",
-            "sharedaccess",
-        ]
-        for k in ("key", "keys")
-    }
-    | {("key", "data"), ("cert", "data"), ("certificate", "data"), ("connect", "sid")}
+    {("key", "data"), ("cert", "data"), ("certificate", "data"), ("connect", "sid")}
 )
 COUNT_WORDS_BEFORE_TOKENS = frozenset(
     [
@@ -204,8 +208,10 @@ def sensitive(key: object) -> bool:
     """Does a key (or the name of a named entry) say its value is a credential?
 
     The key is cut into words (at camelCase, `_`, `.`, `-` and white space; lower case; digits at the end of a word
-    dropped). It is a credential key when a word is in `CREDENTIAL_WORDS`, ends with one of `GLUED_ENDINGS`, forms a
-    pair of `WORD_PAIRS` with the word before it, or is `tokens` (unless it is a count: `max_tokens`, `reasoning_tokens`,
+    dropped). It is a credential key when a word is in `CREDENTIAL_WORDS`, ends with one of `GLUED_ENDINGS`, ends with
+    `pass`, `auth` or `session` joined to one of `GLUED_PREFIXES` (`dbpass`, `userauth`, `mysession`; `bypass`, `compass`
+    and `oauth` are not keys), is `key` or `keys` after a word that ends with one of `KEY_QUALIFIERS` (`dbaccess_key`),
+    forms a pair of `WORD_PAIRS` with the word before it, or is `tokens` (unless it is a count: `max_tokens`, `reasoning_tokens`,
     `tokens_used`, `tokens_per_second`; the words are `COUNT_WORDS_BEFORE_TOKENS` and `COUNT_WORDS_AFTER_TOKENS`).
     There is no exception by the last word: a key the older rule accepted is still accepted. Cost, accepted on purpose,
     so a key that holds no login secret is masked: `auth_method`, `session_duration`, `sessionAffinity` (the word
@@ -218,7 +224,13 @@ def sensitive(key: object) -> bool:
     for i, w in enumerate(words):
         before = words[i - 1] if i else ""
         after = words[i + 1] if i + 1 < len(words) else ""
-        if w in CREDENTIAL_WORDS or w.endswith(GLUED_ENDINGS) or (before, w) in WORD_PAIRS:
+        if (
+            w in CREDENTIAL_WORDS
+            or w.endswith(GLUED_ENDINGS)
+            or w.endswith(PREFIXED_ENDINGS)
+            or (w in ("key", "keys") and before.endswith(KEY_QUALIFIERS))
+            or (before, w) in WORD_PAIRS
+        ):
             return True
         if (
             w == "tokens"

@@ -115,3 +115,46 @@ def shown_records(*records):
         manifest_sha256="0" * 64,
     )
     return list(redact_bundle(bundle)[0].deploys)
+
+
+def _spellings(fragment: str) -> list[str]:
+    """Every way a fragment of `redact.KEY_ALTERNATIVES` can be written: `[_\\-]?` as nothing, `_` and `-`, `(?:ificate)?` with
+    and without its letters, `\\.` as a dot, and a look-ahead (`pass(?=["']?\\s*[:=])`) as the word before it."""
+    out = [re.sub(r"\(\?=[^()]*\)", "", fragment).replace("\\.", ".")]
+    for pat, subs in (("[_\\-]?", ["", "_", "-"]),):
+        out = [o.replace(pat, s) for o in out for s in subs]
+    more = []
+    for o in out:
+        m = re.search(r"\(\?:([a-z]+)\)\?", o)
+        if m:
+            more += [o.replace(m.group(0), ""), o.replace(m.group(0), m.group(1))]
+        else:
+            more.append(o)
+    return more
+
+
+def key_spellings() -> list[str]:
+    """Every spelling of every key of `redact.KEY_ALTERNATIVES`, derived from the regex fragments (so a key added there is
+    tested without a second list here)."""
+    import importlib
+
+    redact = importlib.import_module(
+        "hadavin_sdk.guard.redact"
+    )  # the module (the package exports a function of that name)
+    keys = {k for frag in redact.KEY_ALTERNATIVES for k in _spellings(frag)}
+    bad = [k for k in keys if not re.fullmatch(r"[A-Za-z_.\-]+", k)]
+    assert not bad, f"a fragment of KEY_ALTERNATIVES was not expanded: {bad}"
+    assert len(keys) > 30, keys
+    return sorted(keys)
+
+
+def slack_notice(text: str) -> str:
+    """What the REAL Slack channel would post for `notify(principal, text)` (its HTTP call replaced by a recorder)."""
+    from hadavin_sdk.approvals.slack_channel import SlackChannel
+
+    posted: list[dict] = []
+    ch = SlackChannel.__new__(SlackChannel)
+    ch.channel_id = "C0000000"
+    ch._call = lambda method, body: posted.append(body) or {}  # type: ignore[method-assign]
+    ch.notify("U0000000", text)
+    return posted[0]["text"]

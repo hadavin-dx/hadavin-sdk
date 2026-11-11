@@ -20,13 +20,16 @@ def clean(text: str) -> str:
     markdown structure survives in text a person acts on; then G4 (`gate.withhold_commands`): no command a person could
     paste to change a system, on any platform; then one redaction; last, dots of domains outside code are bracketed and a
     mention word is neutralised."""
-    # The neutralising hook (sanitise, then withhold commands) runs on the text AND on every decoded view the redactor
-    # tries (`redact_text(..., neutralise=)`): a view that replaces the text (because it found a secret only the decoding
-    # shows) is sanitised too, so `%72m -rf /`, `%3Cimg%3E`, `&lt;!channel&gt;` cannot come back as a command, an image
-    # or a mention. After the final redaction brackets are added, wide dots are written as dots and `@here`-style words are
-    # rewritten; nothing is removed or joined (an unquoted credential value that holds spaces is masked whole by the
-    # redactor's own key rule, `guard.redact._VALUE_TAIL`, flags and the words after the next key stay). Placeholders already in the text (`<IPV4_1>`) survive sanitising (tested) and are
-    # seeded into the map so a new one never reuses their number.
+    # Order of the cleaning, and why:
+    # 1. The neutralising hook (sanitise, then withhold commands) runs on the text AND on every decoded view the redactor
+    #    tries (`redact_text(..., neutralise=)`). A view that replaces the text (the decoding shows a secret only there) is
+    #    sanitised too, so `%72m -rf /`, `%3Cimg%3E` and `&lt;!channel&gt;` cannot come back as a command, an image or a
+    #    mention.
+    # 2. After the final redaction, brackets are added to domains and wide dots are written as dots; `@here`-style words
+    #    are rewritten. Nothing is removed or joined: an unquoted credential value that holds spaces is masked whole by the
+    #    redactor's own key rule (`guard.redact._VALUE_TAIL`); flags and the words after the next key stay.
+    # 3. Placeholders already in the text (`<IPV4_1>`) survive sanitising (tested) and are seeded into the map, so a new
+    #    one never reuses their number.
     text = text.replace("\x00", "")
     mapping = _seeded(text)
     out = redact_for_people(text, mapping)
@@ -37,14 +40,13 @@ def clean(text: str) -> str:
     if joined != text:
         joined_map = runmap.RunMap({**_seeded(joined), **mapping})
         alt = redact_for_people(joined, joined_map)
-        if _assignment_originals(joined_map) - _assignment_originals(mapping):
+        if _secret_originals(joined_map) - _secret_originals(mapping):
             return alt
     return out
 
 
 # A tag, but never a real placeholder (`<IPV4_1>`), and only the spaces and tabs after it (never a line break).
 _TAGS = re.compile(r"(?:<(?![A-Z][A-Z0-9]*_\d+>)[^<>]{0,200}>[ \t]*)+")
-_ASSIGNMENT_KINDS = {"SECRET", "APIKEY", "BEARER", "BASIC", "URLCRED"}
 
 
 def _neutralise(text: str) -> str:
@@ -66,14 +68,15 @@ def _seeded(text: str) -> runmap.RunMap:
     )
 
 
-def _assignment_originals(mapping: dict[str, str]) -> set[str]:
-    """The originals of the assignment-kind secrets a map holds (seed entries excluded), spaces ignored."""
+def _secret_originals(mapping: dict[str, str]) -> set[str]:
+    """The originals of the secrets a map holds (every kind of `runmap.SECRET_KINDS`, the one list; seed entries
+    excluded), spaces ignored."""
     return {
         "".join(original.split())
         for ph, original in mapping.items()
         if not original.startswith("\0seed")
         and (m := runmap.PLACEHOLDER.fullmatch(ph))
-        and m.group(1) in _ASSIGNMENT_KINDS
+        and m.group(1) in runmap.SECRET_KINDS
     }
 
 

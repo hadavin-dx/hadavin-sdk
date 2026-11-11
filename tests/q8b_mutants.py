@@ -31,7 +31,12 @@ REQUESTS = "approvals/requests.py"
 GLUED_TESTS = "test_q8b_glued_and_whole_values.py"
 SLACK = "approvals/slack_channel.py"
 BATCH = "test_q8b_batch2.py"
+BATCH3 = "test_q8b_batch3.py"
+# What the mutation copy holds besides src: a test reads CHANGELOG.md from the repo root (tests/test_q8b_batch3.py checks this list).
+EXTRA_DIRS = ("tests", "tools", "demos", "docs")
+EXTRA_FILES = ("CHANGELOG.md",)
 CARDS = "approvals/cards.py"
+RUNMAP = "guard/runmap.py"
 
 
 def mutant(name, file, old, new, test_file, killer, expect):
@@ -145,9 +150,9 @@ M = [
     mutant("M29 ARN guard ignores a quote", REDACT, '[\\w.\\-]{0,20}(?:=|[\\"\']\\s*[:=])))"', '[\\w.\\-]{0,20}(?:=)))"',
         GLUED_TESTS, "test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote", "glued to a credential key is readable"),
     mutant("M30 words after a value not masked", REDACT,
-        '_VALUE_TAIL = r"(?:[ \\t]+(?!--?[A-Za-z]|', '_VALUE_TAIL = r"(?:(?!)[ \\t]+(?!--?[A-Za-z]|',
+        'r"(?:[ \\t]+(?!"', 'r"(?:(?!)[ \\t]+(?!"',
         GLUED_TESTS, "test_r2_a_value_with_spaces_is_masked_whole_on_a_card", "a value with spaces is readable"),
-    mutant("M31 words after the value ignore the next key", REDACT, '|[\\w.\\-]+[\\"\']?\\s*[:=])" + _VALUE_CHAR', ')" + _VALUE_CHAR',
+    mutant("M31 words after the value ignore the next key", REDACT, '"|" + _KEY_STOP + ")"', '")"',
         BATCH, "test_a_card_keeps_flags_and_words_after_a_masked_value", "user=bob"),
     mutant("M32 only name is a name", RED, 'k.lower() in ("name", "key")]', 'k.lower() == "name"]',
         GLUED_TESTS, "test_r3_an_entry_with_a_name_and_a_key_is_named_by_either", "shows its value"),
@@ -165,8 +170,6 @@ M = [
         GLUED_TESTS, "test_r9_a_host_name_target_is_masked_and_a_label_is_shown", "label is not shown"),
     mutant("M39 label not passed to the card", REQUESTS, "summary(plan, self.detector, self.target_labels)", "summary(plan, self.detector)",
         GLUED_TESTS, "test_r9_the_label_reaches_the_request_card", "label does not reach"),
-    mutant("M40 sharedaccess pair removed", RED, '            "sharedaccess",\n', '',
-        GLUED_TESTS, "test_r7_every_key_of_the_redactor_is_a_key_of_the_case_rule", "differs from the redactor"),
     mutant("M41 all-digit texts registered", RED, "text.isdigit() or _ONE_LOWER_WORD", "_ONE_LOWER_WORD",
         GLUED_TESTS, "test_r4_a_number_or_one_word_in_a_secret_is_not_registered", "was registered"),
     mutant("M42 one lower-case word registered", RED, " or _ONE_LOWER_WORD.fullmatch(text)", "",
@@ -175,7 +178,7 @@ M = [
         CARD_TESTS, "test_n6_a_domain_after_a_placeholder", "bare domain is outside code"),
     mutant("M45 wide dots not folded", GATE, "    return _WIDE_DOTS.sub(\".\", part)", "    return part",
         CARD_TESTS, "test_n6_f6b_a_domain_outside_code_is_bracketed", "bare domain is outside code"),
-    mutant('M46 key rule bounded by a prefix again', REDACT, 'r"(?i)(?:" + "|".join(KEY_ALTERNATIVES) + r")[\\w.\\-]{0,20}"', 'r"(?i)(?<![\\w.\\-])[\\w.\\-]{0,40}(?:" + "|".join(KEY_ALTERNATIVES) + r")[\\w.\\-]{0,20}"',
+    mutant('M46 key rule bounded by a prefix again', REDACT, 'r"(?i)(?:" + KEY_WORDS + r")[\\w.\\-]{0,20}"', 'r"(?i)(?<![\\w.\\-])[\\w.\\-]{0,40}(?:" + KEY_WORDS + r")[\\w.\\-]{0,20}"',
         BATCH, 'test_a_key_glued_to_a_long_identifier_keeps_its_value_masked', 'behind a'),
     mutant('M47 link not stopped at a key', GATE, '(?:(?!" + GLUED_KEY + r")[^\\s)>\\]\'\\"`])*",', '(?:[^\\s)>\\]\'\\"`])*",',
         BATCH, 'test_a_link_glued_to_a_credential_key_keeps_the_value_masked', 'card:'),
@@ -189,6 +192,30 @@ M = [
         BATCH, "test_the_shadow_card_shows_the_target_label", "does not show the label"),
     mutant("M52 flag value without its words", REDACT, 'rf"(?:=(?![-\\"\'])([^\\s\\"\']{{3,}}{_VALUE_TAIL})|', 'rf"(?:=(?![-\\"\'])([^\\s\\"\']{{3,}})|',
         BATCH, "test_a_flag_with_a_value_that_has_spaces_is_masked_whole", "a word of a flag value"),
+    mutant('M22 joined pass starts empty', CHANNEL, '        joined_map = runmap.RunMap({**_seeded(joined), **mapping})', '        joined_map = _seeded(joined)',
+        BATCH3, 'test_i4_the_tag_stripped_view_starts_from_the_first_views_masks', 'readable in the returned text'),
+    mutant('M53 decoded value keeps the seed mark', RUNMAP, '        original = original.replace("\\0seed", "")\n', '',
+        BATCH3, 'test_i4_a_decoded_value_that_holds_a_shown_placeholder_is_one_masked_value', 'stayed readable'),
+    mutant('M54 double-quote rule has its own key list', REDACT, '(?:" + KEY_WORDS + r")"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\\"([^\\"]', '(?:password|token)"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\\"([^\\"]',
+        BATCH3, 'test_i2_every_key_spelling_masks_a_quoted_value_with_a_separator', 'stayed readable'),
+    mutant('M55 single-quote rule has its own key list', REDACT, '(?:" + KEY_WORDS + r")"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\'([^\']', '(?:password|token)"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\'([^\']',
+        BATCH3, 'test_i2_every_key_spelling_masks_a_quoted_value_with_a_separator', 'stayed readable'),
+    mutant('M56 tool phrase not recognised', REDACT, '(_says_no_value(original) or _SAYS_NONE.fullmatch(original))', '(_SAYS_NONE.fullmatch(original))',
+        BATCH3, 'test_i1_a_tool_phrase_after_a_key_is_kept_on_every_path', 'a tool phrase was masked'),
+    mutant('M57 one known word makes a phrase a tool phrase', REDACT, 'return all(w in _NOT_A_VALUE or w in _PROSE_WORDS for w in words)', 'return any(w in _NOT_A_VALUE or w in _PROSE_WORDS for w in words)',
+        BATCH3, 'test_i1_one_unknown_word_makes_the_phrase_a_value', 'stayed readable'),
+    mutant('M58 listed prefixes dropped', RED, '            or w.endswith(PREFIXED_ENDINGS)\n', '',
+        BATCH3, 'test_i3_every_credential_key_is_masked_on_the_walk_card_and_log_paths', 'left readable in a record'),
+    mutant('M59 qualifier must be the whole word', RED, 'before.endswith(KEY_QUALIFIERS)', 'before in KEY_QUALIFIERS',
+        BATCH3, 'test_i3_every_credential_key_is_masked_on_the_walk_card_and_log_paths', 'left readable in a record'),
+    mutant('M60 bare pass ending added', RED, 'PREFIXED_ENDINGS = tuple(p + e for p in GLUED_PREFIXES for e in ("pass", "auth", "session"))', 'PREFIXED_ENDINGS = ("pass", "auth", "session")',
+        BATCH3, 'test_i3_the_walk_masks_exactly_the_named_cost_among_benign_keys', 'benign false-mask set changed'),
+    mutant('M61 shown placeholder read as a token', REDACT, 'if _SHOWN_PLACEHOLDER.search(original) and not re.search(', 'if False and not re.search(',
+        BATCH3, 'test_i6_a_second_pass_changes_nothing_but_the_escape_of_shown_placeholders', 'changed the output'),
+    mutant('M62 single-letter flag does not stop a value', REDACT, '|-[A-Za-z](?![A-Za-z0-9])', '',
+        BATCH3, 'test_i7_a_flag_or_a_key_ends_the_value', 'expected'),
+    mutant('M63 a time counts as a key', REDACT, '_KEY_STOP = r"[A-Za-z_][\\w.\\-]*[', '_KEY_STOP = r"[\\w.\\-]+[',
+        BATCH3, 'test_i7_later_words_of_a_value_are_masked_with_it', 'stayed readable'),
 ]  # fmt: skip
 
 
@@ -217,8 +244,10 @@ if __name__ == "__main__":
             "tests/" + RANDOM_TESTS,
             "tests/" + GLUED_TESTS,
             "tests/" + BATCH,
+            "tests/" + BATCH3,
         ],
-        extra_dirs=("tests", "tools", "demos", "docs"),
+        extra_dirs=EXTRA_DIRS,
+        extra_files=EXTRA_FILES,
         only=only,
         on_result=show,
         first_lines=first_lines,
