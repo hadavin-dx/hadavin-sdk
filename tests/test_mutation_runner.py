@@ -1551,3 +1551,30 @@ def test_the_manifest_pins_the_files_a_demo_copies():
         text = log.read_text(encoding="utf-8")
         for rel, sha in manifest["files"].items():
             assert sha in text, rel  # the CHANGELOG re-copy list names every pinned hash
+
+
+def test_a_snippet_that_stands_twice_is_an_error_row_unless_the_mutant_says_so(tmp_path):
+    """The runner replaces EVERY occurrence of a snippet: a snippet that stands twice (a refactor copied the line) is an ERROR row, not a
+    mutant that changes two places and is judged as one."""
+    (tmp_path / "src" / "pkg").mkdir(parents=True)
+    (tmp_path / "src" / "pkg" / "__init__.py").write_text(
+        "def a(x):\n    if x < 0:\n        raise ValueError('a')\n    return x\n\n\n"
+        "def b(x):\n    if x < 0:\n        raise ValueError('b')\n    return x\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_g.py").write_text(
+        "import pytest\nfrom pkg import a, b\n\n\ndef test_both():\n    for f in (a, b):\n        with pytest.raises(ValueError):\n            f(-1)\n",
+        encoding="utf-8",
+    )
+    res = run_mutants(
+        tmp_path,
+        [Mutant("twice", "src/pkg/__init__.py", "if x < 0:", "if False:", "DID NOT RAISE"),
+         Mutant("twice, said so", "src/pkg/__init__.py", "if x < 0:", "if False:", "DID NOT RAISE", occurrences=2)],
+        ["tests/test_g.py"],
+    )  # fmt: skip
+    by = {n: (v, good) for n, v, _, good in res}
+    assert by["twice"] == (Verdict.ERROR, False), by
+    assert by["twice, said so"] == (Verdict.KILLED, True), by
+    with pytest.raises(ValueError):
+        Mutant("zero", "src/pkg/__init__.py", "x", "y", "DID NOT RAISE", occurrences=0)

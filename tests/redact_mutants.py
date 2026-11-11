@@ -5,6 +5,13 @@
 ``_deadline=started + defaults.REDACT_BUDGET_S`` arguments of ``runmap.redact_text`` (the first pass and the loop over the views), which is
 what its name says ("the views get no shared deadline"); its killer fails on either one alone.
 
+Round 6 and 7 (the gap-tolerant view, one definition of the hidden characters): W22 to W43 and H1 to H4, H6 to H8. Three older mutants were
+removed as EQUIVALENT after a differential run of 95,432 inputs (every hiding item at every offset of a key and a token, Greek letters with
+U+0345, random combinations) found no output that differs: W3 (the iota-dropped view: U+0345 is a gap in every gap view), W5 (the order of two
+views in the in-place round), W33 (runmap's own view without white-space controls: the redactor's gap view already reads through them), and W39
+(``part if n & 1 else strip_ansi(part)``: the split by placeholders already keeps a placeholder away from the remover; the condition was removed
+from the code).
+
 Each mutant reverts ONE guard in a temp copy of the package (``tools.mutation_runner``) and the named test must fail first, for the
 reason in ``expect``. Not collected by pytest. Run from the repo root:
 
@@ -34,8 +41,10 @@ FS = "tests/test_redact_fold_seams.py"
 FP = "tests/test_redact_fold_property.py"
 FZ = "tests/test_k5_round12_fuzz.py"
 FM = "tests/test_redact_marks.py"
+FH = "tests/test_redact_hidden_forms.py"
 PREFIX = {
     FM: "tests/test_redact_marks::",
+    FH: "tests/test_redact_hidden_forms::",
     F1: "tests/test_redact_fold::",
     FB: "tests/test_redact_fold_budget::",
     FS: "tests/test_redact_fold_seams::",
@@ -171,11 +180,7 @@ M = [
       "test_marks_1_the_four_review_inputs_leave_no_key", "ssert"),
     m("W2 _view_specs never offers the marks-dropped views", RD, "    real_marks = any(f[0] and c not in _JOIN_CTLS for c, f in flags.items())\n", "    real_marks = False\n", FM,
       "test_marks_1_the_four_review_inputs_leave_no_key", "ssert"),
-    m("W3 _view_specs never offers the iota-dropped view", RD, "    has_iota = any(f[1] for f in flags.values())\n", "    has_iota = False\n", FM,
-      "test_marks_4_a_greek_letter_with_the_subscript_iota_does_not_hide_a_key", "ssert"),
     m("W4 the in-place rounds read the primary view only", RD, "*_view_specs(cur),\n                    _PRIMARY_VIEW,\n", "_PRIMARY_VIEW,\n", FM,
-      "test_marks_1_the_four_review_inputs_leave_no_key", "ssert"),
-    m("W5 the primary view masks before the marks-dropped ones", RD, "*_view_specs(cur),\n                    _PRIMARY_VIEW,\n", "_PRIMARY_VIEW,\n                    *_view_specs(cur),\n", FM,
       "test_marks_1_the_four_review_inputs_leave_no_key", "ssert"),
     m("W6 the withhold check reads the primary view only", RD, "        for f in folded:\n            self._over_budget(self._scan_deadline)\n", "        for f in folded[:1]:\n            self._over_budget(self._scan_deadline)\n", FM,
       "test_marks_4_a_greek_letter_with_the_subscript_iota_does_not_hide_a_key", "ssert"),
@@ -210,12 +215,9 @@ M = [
       "test_marks_19_a_look_alike_letter_with_a_subscript_iota_does_not_withhold_the_line_beside_an_address", "ssert"),
     m("W21 the clock is not read before each view", RD, "                    self._over_budget(self._scan_deadline)\n                    aligned =", "                    aligned =", "tests/test_redact_fold_budget.py",
       "test_view_1_the_clock_is_read_before_each_view_of_a_line", "ssert"),
-    m("W22 the marks-dropped views keep the white-space-like controls", RD, 'fold_view(JOIN_RE.sub("", text) if marks else text,', "fold_view(text,", FM,
-      "test_marks_18_a_control_character_inside_a_key_or_a_value_leaves_no_piece_in_clear", "ssert"),
-    m("W23 the white-space-like controls are not flagged as marks", RD, "in SPACING_CATEGORIES or ch in _JOIN_CTLS,", "in SPACING_CATEGORIES,", FM,
-      "test_marks_18_a_control_character_inside_a_key_or_a_value_leaves_no_piece_in_clear", "ssert"),
-    m("W24 lines are cut by splitlines", RD, "lines = _LINES.findall(", "lines = (lambda t: t.splitlines(True))(", FM,
-      "test_marks_18_a_control_character_inside_a_key_or_a_value_leaves_no_piece_in_clear", "ssert"),
+    m("W22 the marks-dropped views keep the white-space-like controls", RD, 'fold_view(JOIN_RE.sub("", text) if marks else text,', "fold_view(text,", FM, "test_marks_30_the_marks_dropped_view_as_written_drops_the_white_space_controls_and_flags_them_like_marks", "ssert"),
+    m("W23 the white-space-like controls are not flagged as marks", RD, "in SPACING_CATEGORIES or ch in _JOIN_CTLS,", "in SPACING_CATEGORIES,", FM, "test_marks_30_the_marks_dropped_view_as_written_drops_the_white_space_controls_and_flags_them_like_marks", "ssert"),
+    m("W24 lines are cut by splitlines", RD, "lines = _LINES.findall(", "lines = (lambda t: t.splitlines(True))(", FM, "test_marks_31_a_line_ends_at_new_line_or_carriage_return_only_so_a_withheld_line_takes_the_rest_of_its_text", "ssert"),
     m("W25 a two-byte escape is cut with the letter after it", RD, "if glued and e - s == 2 and text[s + 1].isalpha():", "if False:", FM,
       "test_marks_25_strip_ansi_keeps_one_letter_after_an_escape_between_word_characters_and_removes_a_sequence", "ssert"),
     m("W26 a control is plain unless between two letters or digits", RD, '|[\\t\\x0b\\x0c\\x1c-\\x1f]"', '|(?<=[A-Za-z0-9])[\\t\\x0b\\x0c\\x1c-\\x1f](?=[A-Za-z0-9])"', FM,
@@ -228,25 +230,29 @@ M = [
       "test_marks_23_a_masked_value_keeps_the_white_space_control_beside_it_and_a_sequence_in_front_is_read_as_a_space", "ssert"),
     m("W32 a view that is not an ordinary fold withholds the line at once", RD, "                if odd and not changed:\n", "                if odd:\n", FM,
       "test_marks_1_the_four_review_inputs_leave_no_key", "ssert"),
-    m("W33 runmap keeps the white-space controls in its views", GM, 'canonical(without_spacing_marks(JOIN_RE.sub("", text))),', "canonical(without_spacing_marks(text)),", FM,
-      "test_marks_23_a_masked_value_keeps_the_white_space_control_beside_it_and_a_sequence_in_front_is_read_as_a_space", "ssert"),
     m("W34 the left edge takes in the controls too", RD, "while start > 0 and _is_edge_mark(body[start - 1]):", "while start > 0 and _is_spacing(body[start - 1]):", FM,
       "test_marks_23_a_masked_value_keeps_the_white_space_control_beside_it_and_a_sequence_in_front_is_read_as_a_space", "ssert"),
     m("W35 the right edge takes in the controls too", RD, "while stop < len(body) and _is_edge_mark(body[stop]):", "while stop < len(body) and _is_spacing(body[stop]):", FM,
       "test_marks_23_a_masked_value_keeps_the_white_space_control_beside_it_and_a_sequence_in_front_is_read_as_a_space", "ssert"),
-    m("W36 a gap is no skippable item of the patterns", RD, "                                (c.MAX_REPEAT, (0, c.MAXREPEAT, sub([gap]))),\n", "", FM, "test_marks_29_the_reproduced_inputs_of_round_6_are_masked", "ssert"),
-    m("W37 a gap the match took in at its end is part of the value", RD, "                    while hi > s and folded[hi - 1] == GAP:\n                        hi -= 1\n", "", FM, "test_marks_23_a_masked_value_keeps_the_white_space_control_beside_it_and_a_sequence_in_front_is_read_as_a_space", "ssert"),
+    m("W36 a gap is no skippable item of the patterns", RD, "(op, av), (c.MAX_REPEAT, (0, c.MAXREPEAT, sub([gap])))]", "(op, av)]", FM, "test_marks_33_a_gap_is_skipped_after_every_item_a_pattern_reads_and_is_never_read_as_an_item", "ssert"),
+    m("W37 a gap the match took in at its end is part of the value", RD, "                    while hi > s and folded[hi - 1] == GAP:\n                        hi -= 1\n", "", FM, "test_marks_32_a_hidden_item_beside_a_value_stays_in_the_text_and_counts_as_the_space_it_may_stand_for", "ssert"),
     m("W38 a gap is a word character", RD, 'GAP = "\\ue000"', 'GAP = "q"', FM, "test_marks_29_the_reproduced_inputs_of_round_6_are_masked", "ssert"),
-    m("W39 a placeholder is cut by the sequence remover", RD, "part if n & 1 else strip_ansi(part)", "strip_ansi(part)", FM, "test_marks_29_the_reproduced_inputs_of_round_6_are_masked", "ssert"),
-    m("W40 a character the fold drops is no gap", RD, '    return not (" " <= ch <= "~") and ch not in _JOIN_CTLS and _fold_char(ch) == ""', "    return False", FM, "test_marks_27b_the_other_shapes_beside_a_tab_at_any_two_positions_leave_no_three_character_piece", "ssert"),
-    m("W41 a spacing mark is no gap in a marks view", RD, "(marks and unicodedata.category(ch) in SPACING_CATEGORIES)", "False", FM, "test_marks_27_two_hiding_techniques_at_any_two_positions_leave_no_three_character_piece", "ssert"),
-    m("W42 a line with a tab-like control and nothing else has no gap view", RD, "    has_gap = ansi or any(c in _JOIN_CTLS or _is_dropped(c) for c in chars)\n", "    has_gap = ansi\n", FM, "test_marks_28_a_key_after_any_number_of_tab_separated_columns_with_hidden_items_inside_is_masked", "ssert"),
-    m("W43 the mid-gap guard is gone: a gap is not an item the pattern never reads", RD, "                                (c.ASSERT_NOT, (1, sub([gap]))),\n", "", FM, "test_marks_29_the_reproduced_inputs_of_round_6_are_masked", "ssert"),
+    m("W40 a character the fold drops is no gap", RD, '    return not (" " <= ch <= "~") and ch not in _JOIN_CTLS and _fold_char(ch) == ""', "    return False", FM, "test_marks_32_a_hidden_item_beside_a_value_stays_in_the_text_and_counts_as_the_space_it_may_stand_for", "ssert"),
+    m("W41 a spacing mark is no gap in a marks view", RD, "(marks and unicodedata.category(ch) in SPACING_CATEGORIES)", "False", FM, "test_marks_32_a_hidden_item_beside_a_value_stays_in_the_text_and_counts_as_the_space_it_may_stand_for", "ssert"),
+    m("W42 a line with a tab-like control and nothing else has no gap view", RD, "    has_gap = ansi or any(c in _JOIN_CTLS or _is_dropped(c) for c in chars)\n", "    has_gap = ansi\n", FM, "test_marks_32_a_hidden_item_beside_a_value_stays_in_the_text_and_counts_as_the_space_it_may_stand_for", "ssert"),
+    m("W43 the mid-gap guard is gone: a gap is not an item the pattern never reads", RD, "guard = [(c.ASSERT_NOT, (1, sub([gap])))] if _reads_gap(op, av, state) else []", "guard = []", FM, "test_marks_33_a_gap_is_skipped_after_every_item_a_pattern_reads_and_is_never_read_as_an_item", "ssert"),
     m("C1 the mask looks at the clock never", RD, "            self._over_budget(self._scan_deadline)\n            for m in pattern.finditer(folded):", "            for m in pattern.finditer(folded):", FB, "test_clock_1_mask_in_place_looks_at_the_clock_once_per_pattern", "ssert"),
     m("C2 the withhold pass looks at the clock never", RD, "                self._over_budget(self._scan_deadline)\n                cur = pattern.sub(", "                cur = pattern.sub(", FB, "test_clock_2_withhold_looks_at_the_clock_once_per_pattern_and_view", "ssert"),
     m("C3 the alias keys are built without a look at the clock", RD, "                self._over_budget(self._scan_deadline)\n                if key and key != full and key not in self.alias:", "                if key and key != full and key not in self.alias:", FB, "test_clock_3_registering_a_written_value_looks_at_the_clock_once_per_alias_key", "ssert"),
     m("C4 the views of a withheld line are tried without a look at the clock", RD, "        for f in folded:\n            self._over_budget(self._scan_deadline)\n", "        for f in folded:\n", FB, "test_clock_4_a_line_that_is_withheld_looks_at_the_clock_before_each_view", "ssert"),
     m("C5 no look at the clock after the last pattern pass", RD, "        self._over_budget(started)\n        return per, reach, which", "        return per, reach, which", FB, "test_line_hits_asks_for_the_budget_once_per_pattern_and_once_after_the_last_pass", "ssert"),
+    m("H1 canonical keeps the escape sequences", GM, '        text = _ANSI.sub("", text)\n', "        pass\n", FH, "test_hidden_2_canonical_removes_hidden_characters_and_whole_escape_sequences_only", "ssert"),
+    m("H2 a control character is not hidden", GM, 'if cat == "Cf" or (cat == "Cc" and char not in "\\t\\n\\r"):', 'if cat == "Cf":', FH, "test_hidden_1_every_default_ignorable_and_every_control_character_is_hidden_and_a_mark_or_letter_is_not", "ssert"),
+    m("H3 a default-ignorable character is not hidden", GM, "    return any(lo <= cp <= hi for lo, hi in _DEFAULT_IGNORABLE)", "    return False", FH, "test_hidden_1_every_default_ignorable_and_every_control_character_is_hidden_and_a_mark_or_letter_is_not", "ssert"),
+    m("H4 the last check of an untrusted text is gone", GM, "            _refuse_forgery(out, current)\n", "            pass\n", FH, "test_hidden_4_the_last_check_refuses_a_forged_shape_that_a_later_step_assembled", "Failed"),
+    m("H6 ASCII text with a control character takes the fast path", GM, "not _HIDDEN_ASCII.search(text)", "True", FH, "test_hidden_5_a_handed_out_secret_with_a_hidden_item_at_any_offset_is_scrubbed", "ssert", occurrences=2),
+    m("H7 a host full stop of UTS 46 is no dot in any view", GM, "        canonical(text.translate(_DOTS)),\n", "", FH, "test_hidden_14_an_address_with_any_host_full_stop_or_a_non_ascii_host_label_is_masked", "ssert"),
+    m("H8 a view wins although it drops a mask the text has", GM, "    return sum(have.values()) > sum(want.values()) and all(have[k] >= n for k, n in want.items())", "    return sum(have.values()) > sum(want.values())", FH, "test_hidden_16_a_view_wins_only_if_it_keeps_every_mask_the_text_has", "ssert"),
 ]  # fmt: skip
 
 if __name__ == "__main__":
@@ -268,7 +274,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [F1, FB, FS, FP, FZ, FM],
+        [F1, FB, FS, FP, FZ, FM, FH],
         extra_dirs=("tests/fixtures", "tools"),
         only=only,
         on_result=show,

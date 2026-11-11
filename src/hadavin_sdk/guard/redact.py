@@ -1092,6 +1092,15 @@ def _alias_keys(value: str) -> tuple[str, ...]:
     return tuple(dict.fromkeys(keys))
 
 
+def _reads_gap(op: Any, av: Any, state: Any) -> bool:
+    """True when the single parse item ``(op, av)`` would match the ``GAP`` character (compiled and tried once, so the answer is the regex
+    engine's own, flags included)."""
+    from re import _compiler as comp
+    from re import _parser as sp
+
+    return comp.compile(sp.SubPattern(state, [(op, av)]), state.flags).match(GAP) is not None  # type: ignore[arg-type]
+
+
 def _tolerate(items: Any, state: Any) -> list[Any]:
     """The parse of a pattern with every item it reads made to accept any number of ``GAP`` after it. An item never takes a GAP itself (a
     guard in front of it), so a GAP is read in exactly one way and the match stays linear. Boundary assertions (``\\b``, ``^``, look-behinds)
@@ -1106,6 +1115,9 @@ def _tolerate(items: Any, state: Any) -> list[Any]:
     out: list[Any] = []
     for op, av in items:
         if op in (c.LITERAL, c.NOT_LITERAL, c.IN, c.ANY):
+            # The guard is only needed where the item itself could read a GAP (``.``, ``[^x]``, ``\\W``); a literal or a plain set cannot, and
+            # without a guard the compiled pattern keeps its literal prefix, which is what lets the scan skip along a long text.
+            guard = [(c.ASSERT_NOT, (1, sub([gap])))] if _reads_gap(op, av, state) else []
             out.append(
                 (
                     c.SUBPATTERN,
@@ -1113,19 +1125,44 @@ def _tolerate(items: Any, state: Any) -> list[Any]:
                         None,
                         0,
                         0,
-                        sub(
-                            [
-                                (c.ASSERT_NOT, (1, sub([gap]))),
-                                (op, av),
-                                (c.MAX_REPEAT, (0, c.MAXREPEAT, sub([gap]))),
-                            ]
-                        ),
+                        sub([*guard, (op, av), (c.MAX_REPEAT, (0, c.MAXREPEAT, sub([gap])))]),
                     ),
                 )
             )
         elif op in (c.MAX_REPEAT, c.MIN_REPEAT, c.POSSESSIVE_REPEAT):
             lo, hi, body = av
-            out.append((op, (lo, hi, sub(_tolerate(body, state)))))
+            one = list(body)
+            if (
+                op == c.MAX_REPEAT
+                and lo <= 1
+                and hi == c.MAXREPEAT
+                and len(one) == 1
+                and one[0][0] in (c.LITERAL, c.IN)
+                and not _reads_gap(one[0][0], one[0][1], state)
+            ):
+                # ``X+`` / ``X*`` with a GAP allowed after each X, written so the engine keeps its fast loop over X: ``X+(?:GAP+X+)*GAP*``
+                # (the same strings; every GAP-run starts with a GAP, so no string can be read two ways and the match stays linear)
+                run = sub([(c.MAX_REPEAT, (1, c.MAXREPEAT, sub(one)))])
+                more = sub(
+                    [
+                        (
+                            c.MAX_REPEAT,
+                            (
+                                0,
+                                c.MAXREPEAT,
+                                sub([(c.MAX_REPEAT, (1, c.MAXREPEAT, sub([gap]))), *run]),
+                            ),
+                        )
+                    ]
+                )
+                whole = [*run, *more, (c.MAX_REPEAT, (0, c.MAXREPEAT, sub([gap])))]
+                out.append(
+                    (c.SUBPATTERN, (None, 0, 0, sub(whole)))
+                    if lo == 1
+                    else (c.MAX_REPEAT, (0, 1, sub([(c.SUBPATTERN, (None, 0, 0, sub(whole)))])))
+                )
+            else:
+                out.append((op, (lo, hi, sub(_tolerate(body, state)))))
         elif op == c.SUBPATTERN:
             group, add, delete, body = av
             out.append((op, (group, add, delete, sub(_tolerate(body, state)))))
@@ -1217,10 +1254,7 @@ class _Redactor:
         # the ones left removed, so the direct patterns see a word boundary where one stood. A placeholder is never cut: ``ESC`` or U+009B in
         # front of ``<APIKEY_1>`` would otherwise take its first letters for the rest of a sequence.
         if "\x1b" in out or "\x9b" in out:
-            out = "".join(
-                part if n & 1 else strip_ansi(part)
-                for n, part in enumerate(_PLACEHOLDER.split(out))
-            )
+            out = "".join(strip_ansi(part) for part in _PLACEHOLDER.split(out))
         for label, pattern in PATTERNS:
             out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
         return out

@@ -430,9 +430,10 @@ def test_clock_4_a_line_that_is_withheld_looks_at_the_clock_before_each_view(mon
     )  # a Cyrillic capital A for the first letter of an access key id: withheld whole
     out = _Redactor(None)._folded_line(line)
     assert out.startswith(redact_mod.FOLD_NOTE), out
-    assert len(seen) >= 2 * len(redact_mod.PATTERNS) + 3, len(
-        seen
-    )  # the withhold pass, and one look before each view and each round
+    views = 1 + len(redact_mod._view_specs(line))  # the fold and every other view of the line
+    assert len(seen) >= 2 * len(redact_mod.PATTERNS) + 3 + views, (
+        len(seen)
+    )  # the withhold pass, one look before each view of the check that a view finds something new, and one before each round
 
 
 def test_clock_5_a_tab_table_near_the_limit_is_refused_never_finished_late(monkeypatch):

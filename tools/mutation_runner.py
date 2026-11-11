@@ -542,7 +542,14 @@ def _run_mutants(
                 emit((m.name, Verdict.ERROR, "SNIPPET NOT FOUND", False))
                 continue
             if text.count(m.old) != m.occurrences:
-                emit((m.name, Verdict.ERROR, f"SNIPPET FOUND {text.count(m.old)} TIMES, expected {m.occurrences}", False))
+                emit(
+                    (
+                        m.name,
+                        Verdict.ERROR,
+                        f"SNIPPET FOUND {text.count(m.old)} TIMES, expected {m.occurrences}",
+                        False,
+                    )
+                )
                 continue
             p.write_text(text.replace(m.old, m.new), encoding="utf-8", newline="\n")
             junit = tmp / "r.xml"

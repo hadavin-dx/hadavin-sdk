@@ -236,6 +236,10 @@ def test_marks_14_the_alignment_of_every_view_agrees_with_that_view_of_the_fold_
                 got = redact_mod._Redactor._aligned_fold(s, float("inf"), (marks, iota, 0))
                 want = textnorm.fold_view(s, marks_dropped=marks, iota=iota).replace("\u2044", "/")
                 assert got is None or got[0] == want, (hex(ord(mark)), marks, iota)
+                if (
+                    marks and s == "e" + mark + "x"
+                ):  # a marks-dropped view of a plain letter pair with a mark: aligned, never stepped aside
+                    assert got is not None and got[0] == "ex", (hex(ord(mark)), got)
 
 
 def test_marks_15_a_hangul_line_is_refused_at_the_same_size_by_the_redactor_and_the_fold():
@@ -581,3 +585,71 @@ def test_marks_29_the_reproduced_inputs_of_round_6_are_masked():
     assert (
         redact("id: \x9b" + k).text == "id: \x9b<APIKEY_1>"
     )  # the placeholder is not eaten by the sequence remover
+
+
+def test_marks_30_the_marks_dropped_view_as_written_drops_the_white_space_controls_and_flags_them_like_marks():
+    """The view with no gap (``read`` 0) is what ``fold_views`` calls a marks-dropped view: it drops the spacing marks AND the white-space-like
+    controls; ``_mark_flags`` flags a tab-like control as a mark, ``_is_edge_mark`` does not (a control is not a mark beside a value)."""
+    assert redact_mod._view("a\tb\u093ec\x1fd", True, True) == "abcd"
+    assert redact_mod._view("a\tb", False, True) == "a b"
+    assert redact_mod._mark_flags("\t")[0] and redact_mod._mark_flags("\u093e")[0]
+    assert not redact_mod._mark_flags("a")[0]
+    assert not redact_mod._is_edge_mark("\t") and redact_mod._is_edge_mark("\u093e")
+
+
+def test_marks_31_a_line_ends_at_new_line_or_carriage_return_only_so_a_withheld_line_takes_the_rest_of_its_text():
+    """A vertical tab, form feed, U+001C, NEL or U+2028 is not a line end for the redactor: the line stays whole, so the note replaces all of it."""
+    for sep in ("\x0b", "\x0c", "\x1c", "\x85", " "):
+        out = redact("АKIA" + KEY_TAIL + sep + "tail words").text
+        assert "tail" not in out and out.startswith("[line withheld"), (hex(ord(sep)), out)
+
+
+def test_marks_32_a_hidden_item_beside_a_value_stays_in_the_text_and_counts_as_the_space_it_may_stand_for():
+    """Exact outputs, one per way the gap view can go wrong: a hidden item at the END of a match is not part of the value (the item stays);
+    a character the fold drops, a spacing mark, an escape sequence or a tab in front of a key is the space before it (the key is masked
+    although a word is glued to it); a key cut by a tab on a line with no other hidden item is found."""
+    assert redact("ok " + KEY + "\u200b e").text == "ok <APIKEY_1>\u200b e"
+    assert redact("user\u200b" + KEY + " e").text == "user\u200b<APIKEY_1> e"
+    assert (
+        redact("user\u200b" + KEY[:6] + "\u200b" + KEY[6:] + " e").text == "user\u200b<APIKEY_1> e"
+    )
+    assert redact("user\u093e" + KEY + " e").text == "user<APIKEY_1> e"
+    assert redact("user\x1b[0m" + KEY + " e").text == "user<APIKEY_1> e"
+    assert redact("user\t" + KEY[:8] + "\t" + KEY[8:] + " e").text == "user\t<APIKEY_1> e"
+    assert redact("a\u200b" + KEY + "\x1b[1m e").text == "a\u200b<APIKEY_1> e"
+    assert (
+        redact("caf\u00e9 password=\ufe0fHunter2abc\u0301 \u093e").text
+        == "caf\u00e9 password=\ufe0f<SECRET_1>\u0301 \u093e"
+    )  # a hidden item and a mark beside a value stay
+
+
+def test_marks_33_a_gap_is_skipped_after_every_item_a_pattern_reads_and_is_never_read_as_an_item():
+    """``_tolerant``: ``a[^z]b`` must not take the gap for its middle character (the guard), ``ab+c`` takes a gap after each item, and a gap
+    stands for nothing at the front of a match."""
+    gap = redact_mod.GAP
+    p = redact_mod._tolerant(re.compile("a[^z]b"))
+    assert (
+        p.fullmatch("a" + gap + "b") is None
+        and p.fullmatch("axb")
+        and p.fullmatch("ax" + gap + "b")
+    )
+    q = redact_mod._tolerant(re.compile("ab+c"))
+    assert (
+        q.fullmatch("a" + gap + "b" + gap + "b" + gap + "c")
+        and q.fullmatch("a" + gap + "c") is None
+    )
+    assert q.search(gap + "abc").start() == 1
+    assert redact_mod._reads_gap(*_parse_one("[^z]")) and not redact_mod._reads_gap(
+        *_parse_one("a")
+    )
+    assert not redact_mod._reads_gap(*_parse_one("[a-z]")) and redact_mod._reads_gap(
+        *_parse_one(r"\W")
+    )
+
+
+def _parse_one(src: str):
+    from re import _parser
+
+    parsed = _parser.parse(src)
+    op, av = parsed.data[0]
+    return op, av, parsed.state
