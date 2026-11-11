@@ -1,5 +1,5 @@
-10:09Z | agents: Agents running: 5 of floor 8 (floor NOT met; 10:12Z).
-- PR77 fresh reviewers (redaction, round 6) on local head 249a0a59: afe1b0cd (redact.py), a369d2a3 (tests, mutants), a6057235 (CHANGELOG, textnorm), started 10:10Z, expected 10:35Z. Builder's own run EVOUT-P2d1-w5d is still running (builder evidence, not independent); independent runner WAITS FOR clean reviews, then push, then runner on the pushed head.
-- PR85 independent EVIDENCE RUNNER a19696e2 on bd33cc9 (started 10:20Z, box 50 min, expected ~11:10Z). Builder finished.
+10:10Z | agents: Agents running: 2 of floor 8 (floor NOT met; 10:10Z).
+- PR77 builder a15af6a6: round 6 had 6 Majors (5 reproduced), one class (hiding techniques not combined). Told to replace view enumeration by one gap-tolerant match, 90-min box (ends in 90 min). Then fresh reviewers (redaction uncapped) -> independent runner. WAITS FOR its push.
+- PR85 independent EVIDENCE RUNNER a19696e2 on bd33cc9, expected within about 45 min.
 - PR74: WAITS FOR PR77 merge (ORDER 240).
-WAITS FOR lead: core/P3a-2 push approval; q-A11a-sep-keep default set. | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 11:49Z); detail in HEARTBEAT.md
+WAITS FOR lead: core/P3a-2 push approval; q-A11a-sep-keep (now moot if the gap-tolerant match lands). | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 11:50Z); detail in HEARTBEAT.md
