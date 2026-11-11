@@ -1281,3 +1281,15 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | R-Q8a2-r2 design a5696921, codebase afdf0ff5 | fresh egm reviewers (Fable), snapshot /home/user/build/snap/q8a2-5f94f59 | 15:30Z | +15m | 15:30Z | running | save full reports |
 | B-PR89-r20 a7b9ddc4, EV-Q8a1-r3 af8c6f12 | both stopped their turn while their full suites wait for a heavy slot (local PR89 head 351fa07a, not pushed) | | | 15:30Z | waiting on own background jobs | resume by message if a job ends and the agent stays idle |
 | B-Q8c1-fix1 a9b15053 | BUILDER (Fable, fresh: the first builder a56207cb is no longer reachable) Q8c-1 fix batch 1: 3 Majors + Minors of result review r1, worktree /home/user/build/B-Q8c1 | 15:32Z | +60m | 15:32Z | running | evidence + fresh reviewers round 2 |
+
+### 15:33Z Long-running check (heartbeat)
+| item | age | what it is doing now (checked: process list, checkpoint notes) | verdict |
+|---|---|---|---|
+| B-P3a2 a73e15b4 | 75 min | full suite at 6cfe82d9: 11041 passed, 1 failed (its own Postgres lacked PGPORT in the server environment: setup); finishing mutants, then rerun, push | on track; limit 16:05Z |
+| B-flaky a6e5db57 | 65 min | timing test runs under its bounded load test | on track; check at 15:50Z |
+| B-PR89-r20 a7b9ddc4 | 60 min | agent ended its turn; its mutant list is running and its full suite is queued (local head 351fa07a, not pushed) | resume by message when both jobs end |
+| EV-Q8a1-r3 af8c6f12 | agent ended | its full-suite job waited 15 min in the slot queue (the queue is not first-come); head fcd77a68 is superseded by fix batch 3, so the lead stopped the QUEUED job (pid 4445, never started; started by the lead's own agent) to free the slot; partial evidence stays as a previous-head record | closed, partial |
+| B-Q8a1 a0c5bd99 | 20 min | fix batch 3: fail-before shown (22 failed on fcd77a68), full suite next | on track |
+| EV-P77 ab49c9d1 | 35 min | probes written; perf and cost steps | on track |
+| EV-Q8c1 adaef824 | 22 min | full suite running, mutants 14 of 14 done | on track |
+| B-Q8c1-fix1 a9b15053, EV-Q8a2-r2 a30418d4, R-Q8a2-r2 x2, R-P77-design ac9534ea | under 10 min | reading / building / full suite running | on track |

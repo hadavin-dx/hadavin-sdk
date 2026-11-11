@@ -1,1 +1,12 @@
 == head (/home/user/build/EV-P77-97fd202, its own tests/test_k5_perf.py) start 15:32:50  15:32:50 up  2:05,  0 user,  load average: 4.73, 7.92, 10.23
+exit code 0
+17.06s call     tests/test_k5_perf.py::test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated
+5.98s call     tests/test_k5_perf.py::test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one
+5.68s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[zero-width]
+2.80s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[fullwidth]
+2.53s call     tests/test_k5_perf.py::test_the_slowest_measured_shape_at_the_cap_stays_under_a_ceiling
+1.78s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[curl-u]
+0.78s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[json-escape]
+0.34s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[password]
+8 passed in 36.98s
+== core (/home/user/build/EV-P77-base-core, its own tests/test_k5_perf.py) start 15:33:28  15:33:28 up  2:05,  0 user,  load average: 5.38, 7.68, 10.05
