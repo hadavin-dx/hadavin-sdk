@@ -1735,3 +1735,6 @@ Held back by gitleaks in this pass: none. Still unpushed from the earlier pass: 
 
 ## Q-2026-11-11-operator-vault-signin (from Q8a-1 result review M1)
 - One-off operator commands (stop/reset = kill switch, audit verify, gate, migrate, replay) read the same config as the service. If the static-Vault-token refusal lived in the config loader, an operator outside the cluster with a short-lived personal Vault token could no longer run the kill switch. Safe default taken (D-012): the refusal applies to the long-running service build only; operator commands still accept auth: token. Owner decision: is that right, or should operator commands get their own sign-in (for example a token read from a prompt or file, never the environment)?
+
+## Q-2026-11-11-pr89-password-shapes
+- With the strict address grammar in PR89, a test-database address written as key=value pairs with a password, or a URL whose password contains @ / ? #, is refused by the mutation runner. Safe default taken: keep refusing and document it. Owner decision: is that acceptable for demo repositories, or must the grammar read those shapes?

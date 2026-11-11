@@ -2533,10 +2533,10 @@
 | BL-PR89-r18-i05 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 5 | OPEN | | | 2026-11-11 |
 | BL-PR89-r18-i06 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 6 | OPEN | | | 2026-11-11 |
 | BL-PR89-r18-i07 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 7 | OPEN | | | 2026-11-11 |
-| BL-PR89-r18-d01 | Major | PR89 | see reviews/PR89/r18-design.md M1 | OPEN | | | 2026-11-11 |
-| BL-PR89-r18-d02 | Major | PR89 | see reviews/PR89/r18-design.md M2 | OPEN | | | 2026-11-11 |
-| BL-PR89-r18-d03 | Major | PR89 | see reviews/PR89/r18-design.md M3 | OPEN | | | 2026-11-11 |
-| BL-PR89-r18-d04 | Major | PR89 | see reviews/PR89/r18-design.md M4 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-d01 | Major | PR89 | see reviews/PR89/r18-design.md M1 | FIXED-UNVERIFIED (superseded by r19 rows) | | | 2026-11-11 |
+| BL-PR89-r18-d02 | Major | PR89 | see reviews/PR89/r18-design.md M2 | FIXED-UNVERIFIED (superseded by r19 rows) | | | 2026-11-11 |
+| BL-PR89-r18-d03 | Major | PR89 | see reviews/PR89/r18-design.md M3 | FIXED-UNVERIFIED (superseded by r19 rows) | | | 2026-11-11 |
+| BL-PR89-r18-d04 | Major | PR89 | see reviews/PR89/r18-design.md M4 | FIXED-UNVERIFIED (superseded by r19 rows) | | | 2026-11-11 |
 | BL-PR89-r18-d05 | Minor | PR89 | see reviews/PR89/r18-design.md m5 | OPEN | | | 2026-11-11 |
 | BL-PR89-r18-d06 | Minor | PR89 | see reviews/PR89/r18-design.md m6 | OPEN | | | 2026-11-11 |
 | BL-PR89-r18-d07 | Minor | PR89 | see reviews/PR89/r18-design.md m7 | OPEN | | | 2026-11-11 |
@@ -2598,3 +2598,7 @@
 | BL-core-timing-r1-M1 | Major | timing-harness | reviews/timing-harness/result-r1-fa3f8c1.md M1 | OPEN | | | 2026-11-11 |
 | BL-core-timing-r1-M2 | Major | timing-harness | reviews/timing-harness/result-r1-fa3f8c1.md M2 | OPEN | | | 2026-11-11 |
 | BL-core-timing-r1-M3 | Major | timing-harness | reviews/timing-harness/result-r1-fa3f8c1.md M3 | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-d01 | Major | PR89 | reviews/PR89/r19-design.md M1 (M1-M3 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-d02 | Major | PR89 | reviews/PR89/r19-design.md M2 (M1-M3 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-d03 | Major | PR89 | reviews/PR89/r19-design.md M3 (M1-M3 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-d04 | Major | PR89 | reviews/PR89/r19-design.md M4 (M1-M3 reproduced by lead) | OPEN | | | 2026-11-11 |

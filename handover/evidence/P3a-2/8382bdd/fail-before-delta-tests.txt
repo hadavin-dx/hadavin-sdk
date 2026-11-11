@@ -1,0 +1,58 @@
+Mechanical classification of each test FUNCTION in the six test files the delta touches (HEAD~4 42fc2597 -> HEAD 8382bdd):
+  NEW = function name absent at HEAD~4; CHANGED = same name, different text (decorators + body); UNCHANGED = same text.
+  A helper or fixture outside the function may also have changed; that is not visible in this column.
+Result = that test's cases on the OLD source (HEAD~4 src + CHANGELOG.md) with the HEAD tests/ folder. All listed tests passed at HEAD in the full run.
+Line: class | cases passed on old source | cases failed on old source | file::function
+
+NEW | 8 | 0 | tests/test_k2_migrations.py::test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_before_anything_is_done
+NEW | 2 | 0 | tests/test_k2_migrations.py::test_the_smallest_and_the_largest_lock_wait_pass_the_check
+CHANGED | 0 | 1 | tests/test_k5_round10_postgres.py::test_a_privilege_inherited_from_another_role_is_refused
+CHANGED | 1 | 0 | tests/test_migration_postgres.py::test_h11_a_function_owner_change_is_refused
+CHANGED | 4 | 1 | tests/test_migration_postgres.py::test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server
+CHANGED | 2 | 2 | tests/test_migration_postgres.py::test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server
+CHANGED | 0 | 3 | tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused
+CHANGED | 0 | 12 | tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused
+CHANGED | 0 | 1 | tests/test_migration_postgres.py::test_a_table_made_by_dynamic_sql_and_opened_to_everyone_is_refused
+CHANGED | 0 | 2 | tests/test_migration_postgres.py::test_a_default_right_that_an_administrator_set_is_refused_and_the_message_says_so
+CHANGED | 0 | 2 | tests/test_migration_postgres.py::test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_look_is_not
+CHANGED | 1 | 0 | tests/test_migration_postgres.py::test_an_owner_a_file_handed_an_object_to_is_refused_even_when_the_migration_role_belongs_to_it
+CHANGED | 0 | 1 | tests/test_migration_postgres.py::test_a_right_that_an_earlier_run_gave_is_named_as_such_in_the_refusal
+CHANGED | 1 | 0 | tests/test_migration_postgres.py::test_a_lock_holder_that_this_login_cannot_look_into_is_named_in_plain_words
+NEW | 1 | 0 | tests/test_migration_postgres.py::test_a_refused_read_in_the_sweep_does_not_abort_the_transaction_of_the_caller
+NEW | 0 | 2 | tests/test_migration_postgres.py::test_a_right_given_on_a_table_that_existed_before_the_run_is_refused
+NEW | 0 | 1 | tests/test_migration_postgres.py::test_a_second_right_on_a_column_that_already_had_one_is_refused
+NEW | 0 | 1 | tests/test_migration_postgres.py::test_a_right_given_on_a_table_of_another_schema_is_refused
+NEW | 1 | 3 | tests/test_migration_postgres.py::test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind
+NEW | 0 | 1 | tests/test_migration_postgres.py::test_an_owner_handed_over_in_the_run_schema_is_refused
+NEW | 1 | 0 | tests/test_migration_postgres.py::test_a_function_that_kept_a_foreign_owner_is_not_refused_for_that_owner
+NEW | 0 | 2 | tests/test_migration_postgres.py::test_a_schema_that_a_file_changed_is_read_back_whatever_schema_it_is
+NEW | 0 | 1 | tests/test_migration_postgres.py::test_a_foreign_table_that_a_file_opens_to_everyone_is_refused
+NEW | 0 | 2 | tests/test_migration_postgres.py::test_a_right_that_may_be_passed_on_is_refused_on_a_table_outside_the_grant_map
+NEW | 0 | 1 | tests/test_migration_postgres.py::test_a_named_role_that_may_pass_the_schema_right_on_is_refused
+NEW | 2 | 3 | tests/test_migration_postgres.py::test_a_named_role_may_only_read_what_is_not_in_the_grant_map
+NEW | 0 | 2 | tests/test_migration_postgres.py::test_a_function_of_another_application_owned_by_the_migration_role_is_left_alone
+NEW | 1 | 0 | tests/test_migration_postgres.py::test_a_function_whose_body_a_file_replaced_is_treated_as_changed
+NEW | 2 | 3 | tests/test_migration_postgres.py::test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migration_role_belongs_to
+NEW | 1 | 0 | tests/test_migration_postgres.py::test_a_named_role_that_may_pass_a_function_right_on_is_refused
+NEW | 1 | 0 | tests/test_migration_postgres.py::test_the_database_owner_pseudo_role_may_have_rights_on_a_schema
+NEW | 0 | 1 | tests/test_migration_postgres.py::test_a_named_role_with_the_replication_flag_is_refused
+NEW | 0 | 10 | tests/test_migration_rules.py::test_handing_an_object_to_another_role_is_refused_by_the_text_rule
+NEW | 0 | 6 | tests/test_migration_rules.py::test_the_owner_refusal_holds_under_noise
+NEW | 5 | 0 | tests/test_migration_rules.py::test_a_column_or_a_text_that_says_owner_is_not_taken_for_an_owner_change
+CHANGED | 0 | 1 | tests/test_migration_rules.py::test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim
+UNCHANGED | 0 | 1 | tests/test_migration_rules.py::test_every_migrate_mutant_still_applies_to_the_source
+UNCHANGED | 4 | 1 | tests/test_migration_wiring.py::test_a_privileged_migration_role_is_refused_before_any_file_runs
+NEW | 0 | 1 | tests/test_migration_wiring.py::test_the_membership_check_reads_both_user_names_all_five_flags_and_the_built_in_roles
+CHANGED | 0 | 1 | tests/test_migration_wiring.py::test_the_role_flags_are_read_for_the_current_user_and_the_session_user
+CHANGED | 1 | 0 | tests/test_migration_wiring.py::test_a_privileged_session_user_is_refused_even_when_the_current_user_is_plain
+CHANGED | 1 | 0 | tests/test_migration_wiring.py::test_the_refusal_says_how_to_make_a_plain_migration_role
+NEW | 0 | 1 | tests/test_migration_wiring.py::test_the_replication_flag_is_read_again_after_every_file
+REMOVED at HEAD (present at HEAD~4) in tests/test_migration_wiring.py: test_the_membership_check_reads_both_user_names_all_four_flags_and_the_built_in_roles
+
+SUMMARY (test functions):
+  CHANGED / fails on old source: 11
+  CHANGED / passes on old source: 5
+  NEW / fails on old source: 17
+  NEW / passes on old source: 8
+  UNCHANGED / fails on old source: 2
+  UNCHANGED / passes on old source: 271
