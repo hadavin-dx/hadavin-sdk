@@ -1161,11 +1161,18 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | R-P89 af950fd4,a2a4d816,a384da9c | egm reviewers PR89 snapshot p89-db0d9eb | 13:28Z | +30m | 13:28Z | CLOSED reports saved reviews/PR89 | save to handover/reviews/PR89 |
 | B-PR77 a23fcc26 | builder PR77 from wip/P2d-1-w6 | 13:28Z | +60m | 13:28Z | running | checkpoint 30m |
 | M-P3a2 a5853cac | memo P3a-2 history | 13:28Z | +30m | 13:28Z | running | read memo |
-| B-PR85 a758870b | retarget branch core/P5b2-main | 13:28Z | +45m | 13:28Z | running | check checks |
+| B-PR85 a758870b | retarget branch core/P5b2-main | 13:28Z | +45m | 13:28Z | CLOSED branch core/P5b2-main 3b9617e4 pushed; 1 flaky timing test | check checks |
 | B-PR89-r18 ada68aaa | PR89 r18 fix batch (worktree /home/user/build/B-PR89) | 13:31Z | +90m | 13:31Z | running | checkpoint 30m; then fresh reviewers r19 on new head |
 | S-bulk aa442830 | bulk package status table (read-only) | 13:33Z | +20m | 13:33Z | running | read reports/bulk-status-2026-11-11.md, plan Q7 |
 | M-P3a2 a5853cac | | | | | CLOSED memo saved | |
 | R-P89-zoom a30d9a6c | egm:egm-zoom-out (Fable 5.2) plan review of D-002 PR89 fix approach | 13:39Z | +15m | 13:39Z | CLOSED report saved; builder ada68aaa redirected to D-002 REVISED | save to reviews/PR89/r18-zoomout-plan.md; steer builder ada68aaa if plan changes |
 | Q8-deps a35f933f | egm:egm-design (Fable) kind-module single-dependency audit of main | 13:40Z | +20m | 13:40Z | CLOSED report saved reviews/Q8/deps-audit.md | save handover/reviews/Q8/deps-audit.md, ledger |
-| Q8-redact a608409c | egm:egm-codebase-details (Fable) hostile sibling sweep of masking choke points on main | 13:40Z | +20m | 13:40Z | running | save handover/reviews/Q8/redaction-sweep.md, reproduce Majors |
-| R-Q8a-plan a126a1f8, a5ec89be | egm design + implementation-readiness (Fable) plan review r1 of tickets/Q8a | 13:44Z | +15m | 13:44Z | running | save reviews/Q8a/, resolve, then ONE builder |
+| Q8-redact a608409c | egm:egm-codebase-details (Fable) hostile sibling sweep of masking choke points on main | 13:40Z | +20m | 13:40Z | CLOSED saved reviews/Q8/redaction-sweep.md | save handover/reviews/Q8/redaction-sweep.md, reproduce Majors |
+| R-Q8a-plan a126a1f8, a5ec89be | egm design + implementation-readiness (Fable) plan review r1 of tickets/Q8a | 13:44Z | +15m | 13:44Z | CLOSED saved reviews/Q8a/plan-r1-summary.md | save reviews/Q8a/, resolve, then ONE builder |
+| R-Q8a1-r2 a62ab99a | egm impl-readiness (Fable) plan review r2 ticket Q8a-1 | 13:51Z | +15m | 13:51Z | running | if READY start ONE builder |
+| B-flaky a6e5db57 | builder (Fable) flaky timing harness test on main, branch core/fix-timing-harness-flake, pg 56040 | 13:51Z | +60m | 13:51Z | running | evidence + review |
+| R-P3a2-r11 a2b6f315, a573bc87 | egm design + codebase (Fable) result review round 11 of core/P3a-2-rewritten 8382bdd (snapshot p3a2-r11-8382bdd) | 13:51Z | +25m | 13:51Z | running | save reviews/P3a-2/, ledger; evidence run still needed |
+| R-P85main a470bfd9 | egm codebase (Fable) review of InvalidRunId code mapping on core/P5b2-main 3b9617e4 | 13:51Z | +10m | 13:51Z | running | save reviews/PR85/ |
+| EV-Q8a2 a795f178 | EVIDENCE RUNNER (Fable) dry run of guard pattern on main | 13:51Z | +20m | 13:51Z | running | write ticket Q8a-2 from the hit list |
+| A-Q8b a123e38f | ticket author (Fable) Q8b partial-mask + card redaction (F5, F6) | 13:51Z | +25m | 13:51Z | running | plan review, then builder |
+| A-Q8c a2a53d4b | ticket author (Fable) Q8c policy per kind (F3) | 13:51Z | +30m | 13:51Z | running | plan review |

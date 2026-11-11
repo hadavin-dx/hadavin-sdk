@@ -45,3 +45,9 @@ Owner switched the session to claude-fable-5-2 and said "use fable 5.2 for all a
 - Question: what to do with the 6 Majors of reviews/Q8/deps-audit.md (merged core). Options: (a) log only; (b) one small package for the clear code fixes (F1 override objects not refused when live, F5 Vault static token when live, F6 Slack-named neutral receiver, F8/F11 guard gaps), separate tickets later for F2/F3, owner questions for F4/F9; (c) one big package for all.
 - Chosen: (b). F1 and F6 premises verified by me in the code. New branch from main, draft PR, security path uncapped. Reversible (new branch).
 - Order note: this is Q8 work started while Q2-Q5 agents run; it takes no heavy slot until its builder's final suite.
+
+## D-007 2026-11-11 13:51Z UTC: PR85 retarget result (Q5)
+- Fact (verified by lead): core/P5b2-main 3b9617e4 = P5b2 head + merge of main + one fix; against main it carries 44 commits, 87 files, 33,047 added lines, because P1a, P1b, P5a and P5b1 are not in main. Full suite on it: 12088 passed, 1 failed (a timing test that is flaky on main itself), ruff/format/bandit clean.
+- Options: (a) open a draft PR from it now for real checks (a 33k-line bundle of five packages; P5a inside it depends on the unclean PR77; the security check fails for every PR anyway); (b) keep the branch, open no PR until its base packages are merged or the owner asks for a bundle PR; (c) squash.
+- Chosen: (b). PR85 cannot be READY alone; honest status = "branch prepared, local gates green except one flaky main test, no real GitHub checks". The flaky test gets its own fix branch (B-flaky). Reversible.
+## D-008 2026-11-11 13:51Z UTC: owner order "use as many agents as possible": 11 agents now run; work without a heavy test slot is started at once (reviews, ticket authors, dry runs); heavy runs stay capped at 3.
