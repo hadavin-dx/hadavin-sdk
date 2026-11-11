@@ -1438,4 +1438,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a122c19a | timing-fix codebase review r1 | 17:12 | +20m | - | running | save, egm-resolve |
 | a2386eb2 | PR89 r23 fix builder (c2f98f49 -> new head) | 17:14 | +60m | - | running | EV + fresh reviewers r23 |
 | a12db528 | P3a-2 builder (rev 3 frozen) | 17:17 | +60m | - | running | EV + reviewers |
-| (see launch) | Q8a-1 fix batch 5 builder | 17:19 | +60m | - | running | one push |
+| ab671b67 | Q8a-1 fix batch 5 builder | 17:19 | +60m | - | running | one push |
+| a20e064e | Q8b fix batch 1 builder (be53718c) | 17:20 | +60m | - | running | EV + fresh reviewers |
