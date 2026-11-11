@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol
 
 from hadavin_sdk.approvals import hmac_v0
-from hadavin_sdk.approvals.gate import sanitise_text, withhold_commands
+from hadavin_sdk.approvals.gate import defang_domains, sanitise_text, withhold_commands
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import ApprovalDecision, ApprovalRequest
 
@@ -18,22 +18,24 @@ if TYPE_CHECKING:
 def clean(text: str) -> str:
     """WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control character or forged
     markdown structure survives in text a person acts on; then G4 (`gate.withhold_commands`): no command a person could
-    paste to change a system, on any platform; then ONE redaction, last."""
+    paste to change a system, on any platform; then one redaction; last, dots of domains outside code are bracketed and a
+    mention word after a masked value is neutralised."""
     # The neutralising hook (sanitise, then withhold commands) runs on the text AND on every decoded view the redactor
     # tries (`redact_text(..., neutralise=)`): a view that replaces the text (because it found a secret only the decoding
     # shows) is sanitised too, so `%72m -rf /`, `%3Cimg%3E`, `&lt;!channel&gt;` cannot come back as a command, an image
-    # or a mention. Nothing transforms the text after its final redaction. Placeholders already in the text
+    # or a mention. After the final redaction only brackets are added, wide dots are written as dots and `@here`-style words are
+    # rewritten; nothing is removed or joined. Placeholders already in the text
     # (`<IPV4_1>`) survive sanitising (tested) and are seeded into the map so a new one never reuses their number.
     text = text.replace("\x00", "")
     mapping = _seeded(text)
-    out = runmap.redact_text(text, mapping, neutralise=_neutralise)
+    out = redact_for_people(text, mapping)
     # A key and a value split by markup (`password%<i></i>3Dx`) read as one only when the tags are DELETED, not turned
     # into spaces: that joined view (real placeholders and line breaks kept) is used when it finds a secret value the
     # text pass did not (compared by the originals, spaces ignored), not by count or kind.
     joined = _TAGS.sub("", text)
     if joined != text:
-        joined_map = _seeded(joined)
-        alt = runmap.redact_text(joined, joined_map, neutralise=_neutralise)
+        joined_map = runmap.RunMap({**_seeded(joined), **mapping})
+        alt = redact_for_people(joined, joined_map)
         if _assignment_originals(joined_map) - _assignment_originals(mapping):
             return alt
     return out
@@ -45,7 +47,15 @@ _ASSIGNMENT_KINDS = {"SECRET", "APIKEY", "BEARER", "BASIC", "URLCRED"}
 
 
 def _neutralise(text: str) -> str:
-    return withhold_commands(sanitise_text(text))
+    return withhold_commands(sanitise_text(text, defang=False))
+
+
+def redact_for_people(text: str, mapping: dict[str, str]) -> str:
+    """The one function that turns text into what a person reads on a card: sanitise and withhold commands (on the
+    text and on every decoded view the redactor tries), ONE redaction, then `gate.defang_domains` on the masked text.
+    Bracketing dots before the redaction would hide an address from the redactor (`bob@example[.]com` is no address
+    to it), so the brackets are written last."""
+    return defang_domains(runmap.redact_text(text, mapping, neutralise=_neutralise))
 
 
 def _seeded(text: str) -> runmap.RunMap:

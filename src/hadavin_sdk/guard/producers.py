@@ -35,7 +35,7 @@ PRODUCERS: tuple[tuple[str, str, str, frozenset[str]], ...] = (
     ),
     ("extract validation errors", "extract.py", "extract", frozenset({"safe_head"})),
     ("tick error message", "runtime/tick.py", "_message", frozenset({"safe_head"})),
-    ("approval card text", "approvals/channel.py", "clean", frozenset({"redact_text"})),
+    ("approval card text", "approvals/channel.py", "clean", frozenset({"redact_for_people"})),
     ("approval summary", "approvals/requests.py", "summary", frozenset({"clean"})),
     ("eval case document", "evals.py", "gate", frozenset({"redact_untrusted"})),
 )
@@ -48,6 +48,7 @@ CHOKE_FAMILY = {
     "redact_value": "guard/runmap.py",
     "redact_layered": "tools.py",
     "clean": "approvals/channel.py",
+    "redact_for_people": "approvals/channel.py",
 }
 CHOKE_POINT = "redact_text"
 

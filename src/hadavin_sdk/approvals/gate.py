@@ -68,6 +68,7 @@ from __future__ import annotations
 
 import html
 import re
+from collections.abc import Callable
 
 from markdown_it import MarkdownIt
 
@@ -226,19 +227,58 @@ def _rendered(views: set[str]) -> set[str]:
     return {_RENDERED_MARKUP.sub("", html.unescape(v)) for v in views}
 
 
-def _defang_outside_code(line: str) -> str:
-    """Domains are defanged except inside inline code, where no renderer makes a link. Only when the
-    line's backticks are unambiguous (no double run) - otherwise everything is defanged."""
+def _outside_code(line: str, fn: Callable[[str], str]) -> str:
+    """`fn` on the parts of a line outside inline code, where no renderer makes a link. Only when the line's
+    backticks are unambiguous (no double run) - otherwise `fn` is applied to the whole line."""
     parts = [line] if "``" in line else _INLINE_CODE.split(line)
-    return "".join(
-        part
-        if i % 2
-        else _DOMAIN.sub(_defang, _NON_ASCII_HOST.sub(_defang, _WIDE_DOTS.sub(".", part)))
-        for i, part in enumerate(parts)
+    return "".join(part if i % 2 else fn(part) for i, part in enumerate(parts))
+
+
+def _fold_dots(part: str) -> str:
+    return _WIDE_DOTS.sub(".", part)
+
+
+# The last step's own rule, on top of the two domain patterns: outside code, EVERY dot that has a letter, a digit or
+# the `>` of a placeholder before it and two or more letters after it is bracketed. It covers what the look-behind of
+# `_DOMAIN` leaves (`<IPV4_1>.evil.com`, `<HOSTNAME_1>/evil.com/p`, `a/evil.com`, `.evil.com`).
+_ANY_NAME_DOT = re.compile(r"(?<=[^\W_]|>)\.(?=[^\W\d_]{2})")
+
+
+def _bracket_dots(part: str) -> str:
+    part = _DOMAIN.sub(_defang, _NON_ASCII_HOST.sub(_defang, part))
+    return _ANY_NAME_DOT.sub("[.]", part)
+
+
+def _last_step_line(line: str) -> str:
+    line = _outside_code(line, lambda p: _bracket_dots(_fold_dots(p)))
+    # A mention word right after a masked value (`<HOSTNAME_1>@here`) was no mention before the redaction. On the WHOLE
+    # line, inline code included, as `_clean_line` does for every mention: cleaning the result again changes nothing.
+    return _MENTION.sub(r"at-\1", line)
+
+
+def _defang_outside_code(line: str) -> str:
+    """Domains are defanged except inside inline code."""
+    return _outside_code(
+        line, lambda p: _DOMAIN.sub(_defang, _NON_ASCII_HOST.sub(_defang, _fold_dots(p)))
     )
 
 
-def _clean_line(line: str) -> str:
+def defang_domains(text: str) -> str:
+    """The LAST step of a card text, after the redaction. Outside code (not the body of a closed backtick fence of
+    this text, not inline code) wide dots are written as `.` and the dots of every domain are bracketed
+    (`evil[.]com`). On every line that is not the body of a closed backtick fence, inline code included, `@here`,
+    `@channel`, `@everyone` are written `at-here` ... (masking can leave such a word right after a placeholder). It
+    adds brackets or rewrites single characters; it removes nothing and cannot join two pieces, so nothing a redaction
+    masked can come back."""
+    lines = text.split("\n")
+    code: set[int] = set()
+    for start, last, char in _closed_fences(text):
+        if char == "`":
+            code.update(range(start + 1, last))
+    return "\n".join(line if i in code else _last_step_line(line) for i, line in enumerate(lines))
+
+
+def _clean_line(line: str, defang: bool = True) -> str:
     # ⛔ Nothing here decodes: the gate writes out exactly the text it checked (second review,
     # 2026-09-30). A reference is neutralised below instead, so `h&#116;tps://` is never a link and
     # `&#96;&#96;&#96;` never a fence, in any renderer.
@@ -261,15 +301,15 @@ def _clean_line(line: str) -> str:
     line = _ENTITY.sub(r"&amp;\1", line)
     line = _break_runs(line.replace("]:", "]\u200b:"))
     line = _MENTION.sub(r"at-\1", line)  # not `(at)`: after `[link removed]` that is a link
-    return _defang_outside_code(line)
+    return _defang_outside_code(line) if defang else _outside_code(line, _fold_dots)
 
 
-def _clean_prose(lines: list[str]) -> list[str]:
+def _clean_prose(lines: list[str], defang: bool = True) -> list[str]:
     """One run of non-code lines: tags that span lines go first, then each line."""
     if not lines:
         return []
     joined = _HTML.sub("", "\n".join(lines)).split("\n")
-    out = [_clean_line(line) for line in joined]
+    out = [_clean_line(line, defang) for line in joined]
     # A line cleaning changed starts no block: the gate did not write that structure, the input did not
     # have it. (A tag across lines shifts the lines: then every line counts as changed.)
     same = len(joined) == len(lines)
@@ -305,15 +345,19 @@ def _closed_fences(text: str) -> list[tuple[int, int, str]]:
     return spans
 
 
-def _all_prose(lines: list[str]) -> str:
-    return "\n".join(_clean_prose(lines))
+def _all_prose(lines: list[str], defang: bool = True) -> str:
+    return "\n".join(_clean_prose(lines, defang))
 
 
-def sanitise_text(text: str) -> str:
+def sanitise_text(text: str, *, defang: bool = True) -> str:
     """G3 over markdown. Only the body of a CLOSED backtick fence stays verbatim - CommonMark shows it
     as code and Slack toggles code on its ``` lines. A closed `~~~` fence stays a fence with its body
     cleaned (Slack has no `~~~`); everything else, indented code included, is cleaned as prose. The code regions come from a CommonMark parser, and the output is
-    parsed again: if its fences are not exactly the ones kept, everything is cleaned as prose."""
+    parsed again: if its fences are not exactly the ones kept, everything is cleaned as prose.
+
+    `defang=False` leaves the dots of domains as they are (wide dots are still written as `.`): the card path cleans
+    with it BEFORE the redaction, so the redactor still reads an address or a host name, and brackets the dots
+    afterwards with `defang_domains`. Every other caller keeps the default and gets the brackets here."""
     # CR is a line ending to CommonMark. The parser reads the text as a renderer gets it, controls
     # included: a control before ``` makes that line prose, which is cleaned - and cleaning strips the
     # control, breaks the run, and counts the line as changed, so it starts no block.
@@ -324,30 +368,30 @@ def sanitise_text(text: str) -> str:
     for start, last, char in _closed_fences("\n".join(lines)):
         opener, closer = _FENCE_LINE.match(lines[start]), _FENCE_LINE.match(lines[last])
         if not opener or not closer:
-            return _all_prose(lines)
-        out += _clean_prose(lines[pos:start])
+            return _all_prose(lines, defang)
+        out += _clean_prose(lines[pos:start], defang)
         begin = len(out)
         # Markers normalised to three: the body holds no run, so three close it as the original marker
         # did. The info string is cleaned (Slack shows it).
-        out.append(opener.group(1) + char * 3 + _clean_line(opener.group(3)))
+        out.append(opener.group(1) + char * 3 + _clean_line(opener.group(3), defang))
         body = lines[start + 1 : last]
         # A backtick body is code in both readers (Slack closes code at ``` anywhere, so runs are broken;
         # a control could hide one). Slack has no ~~~: that body is prose to it and is cleaned.
         out += (
             [_break_runs(strip_controls(line)) for line in body]
             if char == "`"
-            else [_clean_line(line) for line in body]
+            else [_clean_line(line, defang) for line in body]
         )
         out.append(closer.group(1) + char * 3)
         kept.append((begin, len(out) - 1, char))
         pos = last + 1
-    out += _clean_prose(lines[pos:])
+    out += _clean_prose(lines[pos:], defang)
     result = "\n".join(out)
     markers = {i for k in kept for i in k[:2]}
     if _closed_fences(result) != kept or _RUN.search(
         "\n".join(line for i, line in enumerate(out) if i not in markers)
     ):
-        return _all_prose(lines)
+        return _all_prose(lines, defang)
     return result
 
 
