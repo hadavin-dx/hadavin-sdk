@@ -1,0 +1,3 @@
+# Q8b batch 2 checkpoint (builder, Sonnet 5.5)
+Start: 2026-11-11, worktree /home/user/build/B-Q8b-b2, base bcb2bfec.
+Checkpoint 1 (~30 min): done: probes confirm the 12 items on bcb2bfec; redact.py changed (guarded address pattern without a length bound, value tail words, passphrase, Bearer/Authorization keyed values, shared KEY_PREFIX_MAX), gate.py link patterns stop before a glued key, channel.py whole_assignment_values removed, requests.py plan suffix appended after cleaning, shadow card label. Next: update pinned tests, write new tests + mutants, fail-before run on bcb2bfec src, CHANGELOG test, lint, full pytest via heavy.sh, commit and push. Blockers: none. Commit: not yet.

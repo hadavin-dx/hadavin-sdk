@@ -437,3 +437,11 @@ What: set draft=true on stacked PR 80 (base core/P5a) per order 91. Options: lea
 What: /home/user/build/heavy.sh now has 5 slots (was 3), swapped in as a new file so running instances were not corrupted. Options: stay 3; 4; 5. Why: owner asked why builders wait for hours; the 3 cap was for the owner's laptop.
 FACT THE ORDER DID NOT KNOW: nproc = 4 on this cloud machine (not 6). "Cores minus one" would be 3, the old value; 5 slots can oversubscribe 4 cores. I followed the order's number (it was explicit and owner-approved) and its back-off rule: if 1-min load stays above 4 for 10 minutes, or any run times out or fails from pressure, drop to 4.
 Confidence: medium. Reversible: yes (one-number edit). Risk: timing tests and 40-min heavy-wait timeouts under oversubscription.
+
+## 2026-11-12 Standing order adopted; briefs carry CODE-LAST v1; decisions log stays here (D-027)
+What: owner standing order of 2026-11-12 (run the core lane on my own until an order starting with STOP). Decisions are now recorded in this file (earlier ones D-001..D-026 are in AUTONOMOUS-DECISIONS.md; not moved).
+Options: keep AUTONOMOUS-DECISIONS.md; move all; split by date. Chosen: new entries here, old file untouched (no rewriting history). Confidence: high. Reversible: yes.
+Slip to admit: the four fix builders launched at ~21:00Z (Q8b b2, Q8a-1 b6, PR89 r24, Q8c-1 b4) carry STUDIO-PREAMBLE v1 and EGM-GATE v1 but their briefs do not name CODE-LAST v1 (BRIEF-PREAMBLE.md contains it, and the briefs say to read it in full and obey it, so it applies; the line is just not repeated). Every later brief names all three.
+D-027a: 3 heavy slots, 7 agents running, load 2.05/4 at 21:15Z: no change.
+D-027b: Q8a-2 has only Nits: fix the Nits in one push with no new review (round cap rule), then the drift report. Reversible yes. Confidence medium.
+D-027c: timing round 2 had no Blocker/Major; Nits go in one push after the evidence runner reports; no round 3 unless the evidence shows a failure.
