@@ -884,7 +884,7 @@ M: list[Mutant] = [
             ),
             k(
                 T_WIRING,
-                "test_the_membership_check_reads_both_user_names_all_four_flags_and_the_built_in_roles",
+                "test_the_membership_check_reads_both_user_names_all_five_flags_and_the_built_in_roles",
             ),
         ),
     ),
@@ -2382,6 +2382,57 @@ M: list[Mutant] = [
         'rf"alter\\b.*?owner"',
         k(T_RULES, "test_a_column_or_a_text_that_says_owner_is_not_taken_for_an_owner_change")
         + "[ALTER TABLE t ADD COLUMN owner_id int]",
+    ),
+    Mutant(
+        "RF1",
+        "the flag rolreplication is not one of the flags that are refused",
+        MIG,
+        '_ROLE_FLAGS = ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls", "rolreplication")',
+        '_ROLE_FLAGS = ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls")',
+        (
+            k(T_WIRING, "test_a_privileged_migration_role_is_refused_before_any_file_runs")
+            + "[rolreplication]",
+            k(T_WIRING, "test_the_replication_flag_is_read_again_after_every_file"),
+        ),
+    ),
+    Mutant(
+        "RF2",
+        "the flag rolreplication is not read from the server",
+        MIG,
+        '"SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls, rolreplication FROM pg_roles "\n    "WHERE rolname IN',
+        '"SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls, false FROM pg_roles "\n    "WHERE rolname IN',
+        (
+            k(T_PG, "test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server")
+            + "[REPLICATION]",
+            k(T_WIRING, "test_the_role_flags_are_read_for_the_current_user_and_the_session_user"),
+        ),
+    ),
+    Mutant(
+        "RF3",
+        "a member of a role with the replication flag is not refused",
+        MIG,
+        'OR r.rolbypassrls OR r.rolreplication "',
+        'OR r.rolbypassrls "',
+        (
+            k(
+                T_PG,
+                "test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server",
+            )
+            + "[TRUE-REPLICATION]",
+            k(
+                T_PG,
+                "test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server",
+            )
+            + "[FALSE-REPLICATION]",
+        ),
+    ),
+    Mutant(
+        "RF5",
+        "the replication flag of a named role is not read",
+        MIG,
+        '"SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls, rolreplication FROM pg_roles WHERE rolname = %s",',
+        '"SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls, false FROM pg_roles WHERE rolname = %s",',
+        k(T_PG, "test_a_named_role_with_the_replication_flag_is_refused"),
     ),
     Mutant(
         "GD3",

@@ -91,7 +91,7 @@ class _Db:
         self.borrowed = [(r,) for r in borrowed]
         self.more_flags = []  # the flags of a second user name (the session user)
         self.values, self.triggers = list(values), list(triggers)
-        self.flags = (False, False, False, False) if flags is None else flags  # the role flags
+        self.flags = (False,) * 5 if flags is None else flags  # the role flags
         self.settings = None if settings is None else list(settings)  # one answer per read
         self.members = (
             None if members is None else list(members)
@@ -828,7 +828,7 @@ def test_a_trigger_on_another_table_with_the_same_name_is_another_trigger(monkey
 # --- the migration role is not a superuser ----------------------------------------------------------------
 
 
-FLAGS = ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls")
+FLAGS = ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls", "rolreplication")
 
 
 @pytest.mark.parametrize("flag", FLAGS)
@@ -865,11 +865,11 @@ def test_a_role_that_is_a_member_of_a_privileged_role_is_refused_before_any_file
     assert not any(s.startswith("CREATE TABLE IF NOT EXISTS schema_migrations") for s in db.log)
 
 
-def test_the_membership_check_reads_both_user_names_all_four_flags_and_the_built_in_roles():
+def test_the_membership_check_reads_both_user_names_all_five_flags_and_the_built_in_roles():
     """A pin on the query text; the real-server tests show the behaviour."""
     q = mig._BORROWED_ROLES_SQL
     assert "current_user" in q and "session_user" in q and "'MEMBER'" in q and "'pg_'" in q
-    for flag in ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls"):
+    for flag in FLAGS:
         assert flag in q
 
 
@@ -877,7 +877,7 @@ def test_the_role_flags_are_read_for_the_current_user_and_the_session_user():
     """A pin on the query text. Killed by: mutant SU1 (the query then no longer names `session_user`), alone."""
     assert "current_user" in mig._ROLE_FLAGS_SQL and "session_user" in mig._ROLE_FLAGS_SQL
     assert "pg_roles" in mig._ROLE_FLAGS_SQL
-    for flag in ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls"):
+    for flag in FLAGS:
         assert flag in mig._ROLE_FLAGS_SQL
 
 
@@ -896,7 +896,7 @@ def test_a_privileged_session_user_is_refused_even_when_the_current_user_is_plai
 ):
     """Killed by: mutants SU1 and SU2 (the second row of flags is not read)."""
     db = _refused_by(monkeypatch, tmp_path)
-    db.more_flags = [(True, False, False, False)]
+    db.more_flags = [(True, False, False, False, False)]
     with pytest.raises(ConfigError, match="it holds: rolsuper"):
         mig.migrate("postgresql://unused")
     assert "SELECT 1;\n" not in db.log
@@ -947,7 +947,7 @@ def test_there_is_no_switch_that_turns_the_role_check_off():
 def test_the_refusal_says_how_to_make_a_plain_migration_role(monkeypatch, tmp_path):
     """The message names the flags held and gives one SQL example with no password or other secret."""
     files = _files(tmp_path, 1)
-    db = _Db([START], [[]], flags=(True, False, False, False))
+    db = _Db([START], [[]], flags=(True, False, False, False, False))
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
     monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
     made_up_files_are_not_released(
@@ -1124,6 +1124,31 @@ def test_the_roles_are_asked_again_after_every_file(monkeypatch, tmp_path):
     with pytest.raises(ConfigError, match=r"migration 0001_f1\.sql left the roles changed") as e:
         mig.migrate("postgresql://unused")
     assert "boss_role" in str(e.value)
+    assert not any(s.startswith("INSERT INTO schema_migrations") for s in db.log)
+
+
+def test_the_replication_flag_is_read_again_after_every_file(monkeypatch, tmp_path):
+    """A file that gave the migration role the `REPLICATION` flag is refused by name of the file (the flags are asked at
+    the start and again after each file). Killed by: mutants RC1 (the questions are not asked again) and RF1 (the flag is
+    not one of the flags)."""
+
+    class _Flips(_Db):
+        def execute(self, query, params=None):
+            if str(query) == mig._ROLE_FLAGS_SQL:
+                self.log.append(str(query))
+                asked = self.log.count(mig._ROLE_FLAGS_SQL)
+                return _Result([(False, False, False, False, asked >= 2)])
+            return super().execute(query, params)
+
+    files = _files(tmp_path, 1)
+    db = _Flips([START] * 2, [[], []])
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    made_up_files_are_not_released(monkeypatch)
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    with pytest.raises(ConfigError, match=r"migration 0001_f1\.sql left the roles changed") as e:
+        mig.migrate("postgresql://unused")
+    assert "rolreplication" in str(e.value)
     assert not any(s.startswith("INSERT INTO schema_migrations") for s in db.log)
 
 

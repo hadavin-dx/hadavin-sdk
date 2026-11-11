@@ -13,8 +13,8 @@ What `migrate` does, in order:
 1. It takes the lock (waiting at most `lock_wait_seconds`) and sets the two time limits of `RECIPE_TIMEOUTS`
    (`migration_numbers`: a lock limit and a statement limit; the hand recipe sets the same two lines).
 2. It reads the flags of the migration role (the current user and the session user) and refuses a superuser or a role
-   that holds `CREATEROLE`, `CREATEDB` or `BYPASSRLS`. There is no switch to turn this check off. The `REPLICATION`
-   attribute is not checked.
+   that holds `CREATEROLE`, `CREATEDB`, `BYPASSRLS` or `REPLICATION` (a role with `REPLICATION` can read every change
+   made on the whole server). There is no switch to turn this check off.
 3. It refuses a schema in which a table, view, sequence or function THIS PACKAGE manages (a relation in `GRANTS`,
    `schema_migrations`, or a function a migration file creates) is owned by a role the migration role cannot act as (a
    database first built with a superuser login). It names the objects and prints the `ALTER ... OWNER TO` lines that
@@ -293,14 +293,14 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
     problem too. The grants above are made first and this runs in the same transaction, so a problem rolls them back."""
     problems: list[str] = []
     row = db.execute(
-        "SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls FROM pg_roles WHERE rolname = %s",
+        "SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls, rolreplication FROM pg_roles WHERE rolname = %s",
         (role,),
     ).fetchone()
     if row is None:
         return [f"{role}: the role does not exist"]
     if any(row):
         problems.append(
-            f"{role}: is a superuser or can create roles or databases or bypass row security"
+            f"{role}: is a superuser or can create roles or databases, bypass row security or replicate"
         )
     schema = db.execute("SELECT current_schema()").fetchone()[0]
     table_privs = _table_privs(db)
@@ -416,12 +416,13 @@ _READBACK_VALUES_SQL = (
     "current_setting('lock_timeout'), current_setting('statement_timeout'), "
     "transaction_timestamp(), txid_current()"
 )
-# The four flags that make a migration role too powerful (a superuser can change what the read-back does not read).
-_ROLE_FLAGS = ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls")
+# The five flags that make a migration role too powerful (a superuser can change what the read-back does not read; a role
+# with `REPLICATION` can read every change made on the whole server).
+_ROLE_FLAGS = ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls", "rolreplication")
 # `session_user` too: a login that is a superuser and then runs `SET ROLE` to a plain role is still a superuser (a file can
 # undo the switch inside a function body).
 _ROLE_FLAGS_SQL = (
-    "SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls FROM pg_roles "
+    "SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls, rolreplication FROM pg_roles "
     "WHERE rolname IN (current_user, session_user)"
 )
 # The roles whose memberships and saved settings the read-back compares: `own` = the current user, the session user and
@@ -592,13 +593,13 @@ PLAIN_MIGRATION_ROLE_SQL = (
 )
 
 
-# A plain role can still borrow rights by being a member of a role that holds one of the four flags or is a built-in
+# A plain role can still borrow rights by being a member of a role that holds one of the five flags or is a built-in
 # server role (every role whose name starts with `pg_`, for example `pg_execute_server_program`, which runs programs
 # on the server, and `pg_write_server_files`; only `pg_database_owner` is allowed). The member can `SET ROLE` to it, or
 # uses its rights at once when it inherits. `pg_has_role(..., 'MEMBER')` is true for either way, direct or through other
 # roles. Checked for `current_user` and `session_user`.
 _BORROWED_ROLES_SQL = (
-    "SELECT r.rolname FROM pg_roles r WHERE (r.rolsuper OR r.rolcreaterole OR r.rolcreatedb OR r.rolbypassrls "
+    "SELECT r.rolname FROM pg_roles r WHERE (r.rolsuper OR r.rolcreaterole OR r.rolcreatedb OR r.rolbypassrls OR r.rolreplication "
     "OR (left(r.rolname, 3) = 'pg_' AND r.rolname <> 'pg_database_owner')) "
     "AND r.rolname NOT IN (current_user, session_user) "
     "AND (pg_has_role(current_user, r.oid, 'MEMBER') OR pg_has_role(session_user, r.oid, 'MEMBER')) "
@@ -619,21 +620,21 @@ _PARAMETER_GRANTS_SQL = (
 
 
 def _refuse_privileged_role(db) -> None:
-    """The migration role must hold none of the four flags of `_ROLE_FLAGS` (checked with the live flags of the current user)."""
+    """The migration role must hold none of the five flags of `_ROLE_FLAGS` (checked with the live flags of the current user)."""
     rows = db.execute(_ROLE_FLAGS_SQL).fetchall()
     if not rows:
         raise ConfigError("migrate cannot read the flags of its own database role")
     held = [flag for i, flag in enumerate(_ROLE_FLAGS) if any(row[i] for row in rows)]
     if held:
         raise ConfigError(
-            "the migration role must not be a superuser and must not hold CREATEROLE, CREATEDB or BYPASSRLS, "
+            "the migration role must not be a superuser and must not hold CREATEROLE, CREATEDB, BYPASSRLS or REPLICATION, "
             f"but it holds: {', '.join(held)}. Run migrate with a plain role that holds none of them. A database "
             "administrator creates one once, with SQL such as: "
             f"{PLAIN_MIGRATION_ROLE_SQL}"
         )
     if borrowed := [r[0] for r in db.execute(_BORROWED_ROLES_SQL).fetchall()]:
         raise ConfigError(
-            "the migration role is a member of a role that is a superuser, holds CREATEROLE, CREATEDB or BYPASSRLS, "
+            "the migration role is a member of a role that is a superuser, holds CREATEROLE, CREATEDB, BYPASSRLS or REPLICATION, "
             f"or is a built-in server role ({', '.join(_label(b) for b in borrowed[:20])}), so it could use those rights. "
             "Remove the membership (REVOKE <that role> FROM <the migration role>) or run migrate with a plain role "
             "that is a member of none of them."
@@ -1355,9 +1356,9 @@ def migrate(
     the server accepts); then it gives up, changes nothing and names the session that holds the lock. A migration file may not change either limit: the read-back after each file refuses the run
     if `lock_timeout` or `statement_timeout` differs from the value the run set.
 
-    The migration role must not be a superuser and must not hold CREATEROLE, CREATEDB or BYPASSRLS: the run reads these
-    flags of the current user and of the session user right after the limits and refuses if any is set (the
-    `REPLICATION` attribute is not checked). There is no argument or setting that
+    The migration role must not be a superuser and must not hold CREATEROLE, CREATEDB, BYPASSRLS or REPLICATION: the run reads these
+    flags of the current user and of the session user right after the limits and refuses if any is set (a role with
+    `REPLICATION` can read every change made on the whole server). There is no argument or setting that
     switches the check off: a database administrator who only has a superuser login creates a plain migration role
     once (the refusal message gives the SQL) and runs `migrate` as that role.
 

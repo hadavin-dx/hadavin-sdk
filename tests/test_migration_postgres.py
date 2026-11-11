@@ -1371,7 +1371,9 @@ def plain_role(scratch):
 
 @needs_pg
 @pytest.mark.real_connect
-@pytest.mark.parametrize("flag", ["SUPERUSER", "CREATEROLE", "CREATEDB", "BYPASSRLS"])
+@pytest.mark.parametrize(
+    "flag", ["SUPERUSER", "CREATEROLE", "CREATEDB", "BYPASSRLS", "REPLICATION"]
+)
 def test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server(plain_role, flag):
     """Killed by: mutants S1..S5 (no check, or one flag not read), on a real server."""
     dsn, role = plain_role
@@ -1384,6 +1386,7 @@ def test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server(plai
         "CREATEROLE": "rolcreaterole",
         "CREATEDB": "rolcreatedb",
         "BYPASSRLS": "rolbypassrls",
+        "REPLICATION": "rolreplication",
     }[flag] in str(e.value)
     assert "CREATE ROLE migration_role LOGIN NOSUPERUSER" in str(e.value), (
         "the message says how to make a plain role"
@@ -1393,15 +1396,23 @@ def test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server(plai
 
 @needs_pg
 @pytest.mark.real_connect
-@pytest.mark.parametrize("inherit", ["TRUE", "FALSE"])
+@pytest.mark.parametrize(
+    ("inherit", "flag"),
+    [
+        ("TRUE", "CREATEROLE"),
+        ("FALSE", "CREATEROLE"),
+        ("TRUE", "REPLICATION"),
+        ("FALSE", "REPLICATION"),
+    ],
+)
 def test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server(
-    plain_role, inherit
+    plain_role, inherit, flag
 ):
     """A member of a role with CREATEROLE can use or `SET ROLE` to it, so the plain login alone is not enough."""
     dsn, role = plain_role
     boss = role + "_boss"
     with psycopg.connect(DSN, autocommit=True) as db:
-        db.execute(sql.SQL("CREATE ROLE {} NOLOGIN CREATEROLE").format(sql.Identifier(boss)))
+        db.execute(sql.SQL(f"CREATE ROLE {{}} NOLOGIN {flag}").format(sql.Identifier(boss)))
         try:
             db.execute(
                 sql.SQL(f"GRANT {{}} TO {{}} WITH INHERIT {inherit}").format(
@@ -3856,3 +3867,19 @@ def test_the_database_owner_pseudo_role_may_have_rights_on_a_schema(scratch):
     dsn, schema = scratch
     _admin(sql.SQL("GRANT ALL ON SCHEMA {} TO pg_database_owner").format(sql.Identifier(schema)))
     assert mig.migrate(dsn) == REAL
+
+
+@needs_pg
+def test_a_named_role_with_the_replication_flag_is_refused(scratch):
+    """The runtime, portal and purge roles are checked for the powerful flags too: a role that can replicate can read
+    every change made on the whole server. Killed by: mutant RF5 (the flag is not read for a named role)."""
+    dsn, _schema = scratch
+    role = "hadavin_test_rp_" + uuid.uuid4().hex[:8]
+    _create_roles(role)
+    try:
+        _admin(sql.SQL("ALTER ROLE {} REPLICATION").format(sql.Identifier(role)))
+        with pytest.raises(ConfigError, match="bypass row security or replicate") as e:
+            mig.migrate(dsn, runtime_role=role)
+        assert role in str(e.value) and _ledger(dsn) is None
+    finally:
+        _drop_roles(role)
