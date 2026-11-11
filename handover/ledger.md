@@ -2708,3 +2708,4 @@
 | Q8a-2-r4-m1 | reviews/Q8a-2/result-r4-codebase-full.md | minor | Q8a-2 | handler failure that is a builtin ConnectionError logged only at DEBUG (receiver.py:198) | OPEN | batch 4 | - | 2026-11-11 |
 | Q8a-2-r4-m2 | same | minor | Q8a-2 | write timeout in _answer after handler failure loses the ERROR line | OPEN | batch 4 | - | 2026-11-11 |
 | Q8a-2-r4-m3m4 | same | minor | Q8a-2 | _plain tests miss \x7f, U+2029, bidi, U+200B; error-kind chain unbounded (cycle) | OPEN | batch 4 | - | 2026-11-11 |
+| Q8c-1-r3-resolve | reviews/Q8c-1/goldfish_review_report-r3.md | minor x7 | Q8c-1 | 7 valid minors PROPOSE FIX (batch 3), 1 ESCALATE engine run, 1 DECLINE | OPEN | batch 3 | - | 2026-11-11 |

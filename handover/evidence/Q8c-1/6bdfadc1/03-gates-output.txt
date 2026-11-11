@@ -1,0 +1,64 @@
+### env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_CA_BUNDLE -u ANTHROPIC_BASE_URL -u GH_TOKEN -u GITHUB_TOKEN -u CLOUDSDK_AUTH_ACCESS_TOKEN -u VAULT_TOKEN -u VAULT_SECRET_ID uv run --all-extras --group test ruff check
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+All checks passed!
+exit=0
+
+### env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_CA_BUNDLE -u ANTHROPIC_BASE_URL -u GH_TOKEN -u GITHUB_TOKEN -u CLOUDSDK_AUTH_ACCESS_TOKEN -u VAULT_TOKEN -u VAULT_SECRET_ID uv run --all-extras --group test ruff format --check
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+328 files already formatted
+exit=0
+
+### env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_CA_BUNDLE -u ANTHROPIC_BASE_URL -u GH_TOKEN -u GITHUB_TOKEN -u CLOUDSDK_AUTH_ACCESS_TOKEN -u VAULT_TOKEN -u VAULT_SECRET_ID uv run --with bandit bandit -ll -r src tools
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+[main]	INFO	profile include tests: None
+[main]	INFO	profile exclude tests: None
+[main]	INFO	cli include tests: None
+[main]	INFO	cli exclude tests: None
+[main]	INFO	running on Python 3.13.18
+[manager]	WARNING	Test in comment: SafeLoader is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: subclass is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: the is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: pinned is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: bytes is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+Working... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:01
+Run started:2026-11-11 16:54:39.246154+00:00
+
+Test results:
+	No issues identified.
+
+Code scanned:
+	Total lines of code: 17509
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 3
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 12
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 2
+		High: 10
+Files skipped (0):
+exit=0
+
+### env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_CA_BUNDLE -u ANTHROPIC_BASE_URL -u GH_TOKEN -u GITHUB_TOKEN -u CLOUDSDK_AUTH_ACCESS_TOKEN -u VAULT_TOKEN -u VAULT_SECRET_ID uv run --all-extras --group test python tools/scan_repo.py
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+
+exit=0
+
+### env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_CA_BUNDLE -u ANTHROPIC_BASE_URL -u GH_TOKEN -u GITHUB_TOKEN -u CLOUDSDK_AUTH_ACCESS_TOKEN -u VAULT_TOKEN -u VAULT_SECRET_ID uv run --all-extras --group test python tools/policy_page.py --check
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+exit=0
+
+### /home/user/build/bin/gitleaks detect --source . --log-opts=origin/main..HEAD --no-banner --redact
+[90m4:54PM[0m [32mINF[0m [1m3 commits scanned.[0m
+[90m4:54PM[0m [32mINF[0m [1mscanned ~294807 bytes (294.81 KB) in 253ms[0m
+[90m4:54PM[0m [32mINF[0m [1mno leaks found[0m
+exit=0
+

@@ -1,0 +1,11 @@
+
+==================================== ERRORS ====================================
+_________________ ERROR collecting tests/test_q8a2_callback.py _________________
+tests/test_q8a2_callback.py:824: in <module>
+    @pytest.mark.parametrize("good", [1e-3, 0.5, 1, 10, 3600, 3600.0, defaults.RECEIVER_READ_TIMEOUT_S])
+                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'hadavin_sdk.defaults' has no attribute 'RECEIVER_READ_TIMEOUT_S'
+=========================== short test summary info ============================
+ERROR tests/test_q8a2_callback.py - AttributeError: module 'hadavin_sdk.defau...
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.38s

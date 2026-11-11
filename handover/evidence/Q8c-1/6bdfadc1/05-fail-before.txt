@@ -1,0 +1,3 @@
+test functions new OR changed (AST differs) in head vs a77fab72: 26
+a77fab72 tree (+head tests +head tools/policy_page.py) | exit 1 | 8 failed, 285 passed, 12 skipped in 6.45s | all collected: {'passed': 285, 'failed': 8, 'skipped': 12} | among new test functions' cases (55): {'passed': 51, 'failed': 4, 'skipped': 0}
+origin/main (+head tests +head tools/policy_page.py) | exit 1 | 187 failed, 106 passed, 12 skipped in 11.94s | all collected: {'passed': 106, 'failed': 187, 'skipped': 12} | among new test functions' cases (55): {'passed': 44, 'failed': 11, 'skipped': 0}

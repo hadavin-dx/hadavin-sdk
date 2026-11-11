@@ -1,0 +1,9 @@
+worktree EV-Q8b-main at 2a8c2aac89f83dd0a45af0412563b59ff4fe5632; src diff vs 2a8c2aac: 0 lines; test files copied from be53718c: tests/test_q8b_card_text.py tests/test_q8b_credential_keys.py tests/test_q8b_random.py tests/test_k5_producers.py tests/test_k5_round11.py
+git status:
+ M tests/test_k5_producers.py
+ M tests/test_k5_round11.py
+?? tests/test_q8b_card_text.py
+?? tests/test_q8b_credential_keys.py
+?? tests/test_q8b_random.py
+hadavin_sdk imported from: /home/user/build/EV-Q8b-main/src/hadavin_sdk/__init__.py
+## ON CLEAN MAIN SRC

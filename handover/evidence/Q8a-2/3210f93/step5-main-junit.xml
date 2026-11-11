@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.382" timestamp="2026-11-11T17:07:20.100796+00:00" hostname="vm"><testcase classname="" name="tests.test_q8a2_callback" time="0.000"><error message="collection failure">tests/test_q8a2_callback.py:824: in &lt;module&gt;
+    @pytest.mark.parametrize("good", [1e-3, 0.5, 1, 10, 3600, 3600.0, defaults.RECEIVER_READ_TIMEOUT_S])
+                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'hadavin_sdk.defaults' has no attribute 'RECEIVER_READ_TIMEOUT_S'</error></testcase></testsuite></testsuites>

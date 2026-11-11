@@ -1,0 +1,7 @@
+rev2 counts 29 47 16
+affected (line overlap): 107 + CHANGELOG outside rewritten lines: 10
+affected and in NO rev-2 list (retired/re-pointed/re-checked): ['LV1', 'LV2', 'LV3', 'LV4', 'LW1', 'LW2', 'LW3', 'LW4', 'LW5', 'LW6', 'LW7', 'LW8', 'M102', 'M61', 'M64', 'M67', 'M95', 'MW2', 'MW3', 'MW4', 'MW5', 'MW6', 'MW8', 'N15', 'O1', 'P8', 'R6', 'RC1', 'S1', 'T13', 'by']
+  of these, named only in rev-2 'unchanged' text: ['LV1', 'LV2', 'LV3', 'LV4', 'LW1', 'LW2', 'LW3', 'LW4', 'LW5', 'LW6', 'LW7', 'LW8', 'M61', 'M64', 'M67', 'M95', 'MW2', 'MW3', 'MW4', 'MW5', 'MW6', 'MW8', 'N15', 'O1', 'R6', 'RC1', 'S1', 'T13']
+  of these, named nowhere in rev 2: ['M102', 'P8', 'by']
+CHANGELOG-planted outside the rewrite, in no rev-2 list: ['N16', 'N17', 'N18', 'N19', 'P1', 'P2', 'P3', 'P5', 'P6', 'P7']
+rev-2 re-pointed/re-checked ids NOT hit by a planned line edit (kept by rev 2 for a killer change): ['B1', 'CL1', 'GM1', 'MC1', 'MW1', 'OA4', 'PA1', 'R7', 'RC2', 'RF1', 'S2', 'S3', 'S4', 'S5', 'SH1', 'SU1']
