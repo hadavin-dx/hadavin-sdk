@@ -12,7 +12,6 @@ from __future__ import annotations
 import base64
 import contextlib
 import random
-import time
 import urllib.parse as up
 
 import pytest
@@ -23,6 +22,7 @@ from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.runmap import RedactionError
 from hadavin_sdk.scrub_settings import ScrubSettings
 from hadavin_sdk.tools import MARKER, TRUNCATED, prepare_output
+from tests.fixtures import timing
 
 SECRET = "Zk3#9qWd" + "Xv7/pL2m" + "Qa5@Rt8$" + "Yu4%Bn6^" + "Hc1~Jd0*"  # fake, built from parts
 SHORT = "Zk3#9qWd" + "Xv7/"  # 12 characters: layers of it stay small
@@ -209,9 +209,9 @@ def test_100kb_adversarial_layered_input_is_bounded(names):
     big = (enc + " ") * (100_000 // (len(enc) + 1))
     soup = "%26%2310" * 12_500
     for text in (big, soup, "%25" * 33_000 + "41"):
-        t = time.perf_counter()
+        t = timing.CLOCK()
         prepare_output(text, {}, 2000, [SHORT])
-        assert time.perf_counter() - t < 20
+        assert timing.CLOCK() - t < 20
 
 
 def test_ascii_shortcut_in_nfkc_equals_the_full_canonical_form_for_every_ascii_character():

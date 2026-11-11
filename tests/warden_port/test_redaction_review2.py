@@ -11,6 +11,7 @@ from __future__ import annotations
 import pytest
 
 from hadavin_sdk.guard.redact import redact
+from tests.fixtures import timing
 
 S = "5ecret"
 LEAKS = [
@@ -76,7 +77,6 @@ def test_a_credential_is_still_masked_in_every_line():
 def test_redacting_many_lines_stays_fast():
     """Third review (2026-09-30): 300 log lines took 68 s (122 s measured here) once there were more
     found values than Python's regex cache holds; the same lines now take under a second."""
-    import time
 
     from hadavin_sdk.guard.redact import redact_many
 
@@ -94,9 +94,9 @@ def test_redacting_many_lines_stays_fast():
             + "q9Z" * 8
             + " status=500"
         )
-    start = time.perf_counter()
+    start = timing.CLOCK()
     out, mapping = redact_many(lines)
-    assert time.perf_counter() - start < 15, "redaction cost regressed"
+    assert timing.CLOCK() - start < 15, "redaction cost regressed"
     assert len(mapping) > 512
     assert not any("q9Zq9Z" in line for line in out)
 
@@ -121,19 +121,6 @@ def _lines(n, k):
         " ".join(f"from {ip(i, j)} req={uid(i, j)} pass" + f"word=s3cr{i}x{j}Q" for j in range(k))
         for i in range(n)
     ]
-
-
-def _best_time(lines, runs=2):
-    import time
-
-    from hadavin_sdk.guard.redact import redact_many
-
-    best = float("inf")
-    for _ in range(runs):
-        start = time.perf_counter()
-        redact_many(lines)
-        best = min(best, time.perf_counter() - start)
-    return best
 
 
 def test_a_shorter_secret_starting_where_a_longer_value_starts_is_still_masked():

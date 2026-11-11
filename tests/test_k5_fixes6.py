@@ -4,13 +4,12 @@ the secret, in every spelling the scrub undoes, with `max_bytes` equal to the ca
 
 from __future__ import annotations
 
-import time
-
 import pytest
 
 from hadavin_sdk import defaults
 from hadavin_sdk import tools as tools_mod
 from hadavin_sdk.config import EvidenceSettings
+from tests.fixtures import timing
 
 CAP = defaults.MAX_REDACT_CHARS
 WINDOW = CAP - len(tools_mod.TRUNCATED)
@@ -131,9 +130,9 @@ def test_fifty_handed_out_secrets_behind_an_encoding_layer_stay_within_a_bound()
     secrets (one percent-encoded copy of each) is the shape that exposes it."""
     secrets = [f"Sec{i:03d}" + "Kq7#Zx" for i in range(50)]
     raw = " ".join(_percent(s) for s in secrets) * 20 + " " + "y" * 5000
-    t0 = time.perf_counter()
+    t0 = timing.CLOCK()
     out = tools_mod.prepare_output(raw, {}, 200_000, secrets)
-    took = time.perf_counter() - t0
+    took = timing.CLOCK() - t0
     assert not any(s in out for s in secrets)
     assert took < 30, (
         took

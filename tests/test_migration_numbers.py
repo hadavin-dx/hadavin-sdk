@@ -812,9 +812,10 @@ def test_lexer_is_linear(mn):
     assert timing.problems(cases, small, big) == []
 
 
-# Three stand-ins with a known cost, timed with the real clock, so a pass of the test above means something. `_scan` is
-# one pass over the text in 64-character steps; the sizes are the ones the lexer test and the redaction pattern sweep
-# (`tests/test_k5_perf.py`) use (16x apart: a linear cost grows about 16x, the limit is 48x, a quadratic cost about 256x).
+# Three stand-ins, timed with the real clock, so a pass of the test above means something. A stand-in is a small test
+# function whose growth is known: a straight line, "n log n" and a quadratic one. `_scan` is one pass over the text in
+# 64-character steps; the sizes are the ones the lexer test and the redaction pattern sweep (`tests/test_k5_perf.py`)
+# use (16x apart: a linear cost grows about 16x, the limit is 48x, a quadratic cost about 256x).
 
 
 def _scan(text: str) -> int:
@@ -840,24 +841,25 @@ def _quadratic(text: str) -> None:
 
 @pytest.mark.perf
 def test_the_timing_harness_flags_a_quadratic_stand_in():
-    assert timing.is_superlinear(_quadratic, "a", 16 * 1024, 256 * 1024), (
-        "a quadratic function must be flagged"
-    )
+    measured = timing.growth(_quadratic, "a", 16 * 1024, 256 * 1024)
+    assert measured.flagged, f"a quadratic function must be flagged: {measured}"
 
 
 @pytest.mark.perf
 @pytest.mark.parametrize("stand_in", [_linear, _n_log_n], ids=["linear", "n-log-n"])
 def test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in(stand_in):
-    assert not timing.is_superlinear(stand_in, "a", 16 * 1024, 256 * 1024), (
-        f"{stand_in.__name__} is linear enough and must not be flagged"
+    measured = timing.growth(stand_in, "a", 16 * 1024, 256 * 1024)
+    assert not measured.flagged, (
+        f"{stand_in.__name__} is linear enough and must not be flagged: {measured}"
     )
 
 
 @pytest.mark.perf
 def test_the_timing_harness_flags_a_quadratic_stand_in_that_is_fast_on_the_small_input():
     # 4 KiB takes well under a millisecond: the earlier 4 ms floor on the small run hid every quadratic cost this small
-    assert timing.is_superlinear(_quadratic, "a", 4 * 1024, 64 * 1024), (
-        "a quadratic function must be flagged however fast its small run is"
+    measured = timing.growth(_quadratic, "a", 4 * 1024, 64 * 1024)
+    assert measured.flagged, (
+        f"a quadratic function must be flagged however fast its small run is: {measured}"
     )
 
 

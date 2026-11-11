@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import ipaddress
 import threading
-import time
 
 import pytest
 from pydantic import ValidationError
@@ -19,6 +18,7 @@ from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import RunState as S
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.store import migrate as mig
+from tests.fixtures import timing
 from tests.k5_support import BigNormalises, ScriptLLM, build_runtime, handle, k5_cfg
 
 BS = chr(92)
@@ -189,10 +189,10 @@ def test_the_worst_allowed_suffix_is_fast_on_a_hostile_name():
 
     suffix = "[a]{1,64}[a]{1,64}-"
     assert tools_mod.suffix_problem(suffix) is None
-    t0 = time.perf_counter()
+    t0 = timing.CLOCK()
     for _ in range(20):
         evidence.contains("pod-" + "a" * 5000, "pod", suffix=suffix)
-    assert time.perf_counter() - t0 < 5.0
+    assert timing.CLOCK() - t0 < 5.0
 
 
 # --- m-8: an identifier flag below the top level would be silently ignored ----------------------------------------------------------

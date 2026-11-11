@@ -11,12 +11,12 @@ import json
 import multiprocessing
 import pickle
 import re
-import time
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 import pytest
 
+from tests.fixtures import timing
 from tests.fixtures.seeded import Seeded
 
 SEED = 20261106
@@ -337,9 +337,9 @@ def test_gone_message_caps_the_names_and_stays_fast(mn):
     applied = {f"{n % 9000 + 100:04d}_same" for n in range(5000)} | {
         f"0100_x{n}" for n in range(5000)
     }
-    t0 = time.perf_counter()
+    t0 = timing.CLOCK()
     got = mn.gone_message(applied, [Path("0001_a.sql")])
-    assert time.perf_counter() - t0 < 5
+    assert timing.CLOCK() - t0 < 5
     assert len(got) < 6000, f"names not capped: {len(got)}"
     assert re.search(r"and \d+ more", got)
 

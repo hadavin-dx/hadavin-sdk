@@ -6,13 +6,13 @@ below with their names; the two WARDEN "kept" stories that are now withheld are 
 """
 
 import json
-import time
 from pathlib import Path
 
 import pytest
 
 from hadavin_sdk.approvals.channel import clean
 from hadavin_sdk.approvals.gate import WITHHELD, sanitise_text, withhold_commands
+from tests.fixtures import timing
 
 PLATFORMS = (
     "aws",
@@ -260,10 +260,10 @@ def test_g4_reads_hostile_text_in_linear_time():
         "kubectl.exe " * 290,
         "git x " * 580,
     ]
-    started = time.perf_counter()
+    started = timing.CLOCK()
     for text in hostile:
         withhold_commands(text[:3500])
-    assert time.perf_counter() - started < 1.0
+    assert timing.CLOCK() - started < 1.0
 
 
 # --- the false-positive corpus: every recorded model reply in this repository ---------------------------

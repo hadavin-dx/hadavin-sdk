@@ -8,12 +8,14 @@ import itertools
 import math
 import sys
 import time
+import timeit
+from concurrent.futures import ProcessPoolExecutor
 
 import pytest
 
 from tests.fixtures import timing
 
-SMALL, BIG, FAR = 1000, 4000, 16000  # a gap of 4 (the smallest allowed) and a gap of 16
+SMALL, BIG, FAR = 1000, 8000, 16000  # a gap of 8 (the smallest allowed) and a gap of 16
 
 
 class Model:
@@ -71,20 +73,20 @@ BATCH_CALLS = 20_000  # literal: this many calls of 1 microsecond are one batch 
 # --- the rule: what passes and what is flagged ------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("sizes", GAPS, ids=["gap4", "gap16"])
+@pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
 @pytest.mark.parametrize("scale", SPEEDS)
 def test_a_linear_cost_passes_at_any_speed(scale, sizes):
     assert not Model(power(1), scale).is_superlinear(*sizes), "a linear cost was flagged"
 
 
-@pytest.mark.parametrize("sizes", GAPS, ids=["gap4", "gap16"])
+@pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
 @pytest.mark.parametrize("scale", [1e-10, 1e-9, 1e-7, 1e-5])
 def test_an_n_log_n_cost_passes_at_any_speed(scale, sizes):
-    # 4x the text: 4 * log(4000)/log(1000) = 4.8x (limit 12x); 16x the text: 22.4x (limit 48x)
+    # 8x the text: 8 * log(8000)/log(1000) = 10.4x (limit 24x); 16x the text: 22.4x (limit 48x)
     assert not Model(n_log_n, scale).is_superlinear(*sizes), "an n log n cost was flagged"
 
 
-@pytest.mark.parametrize("sizes", GAPS, ids=["gap4", "gap16"])
+@pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
 @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
 def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
     # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
@@ -94,11 +96,11 @@ def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
 
 @pytest.mark.parametrize(
     ("sizes", "passes", "flagged"),
-    [((1000, 4000), 1.75, 1.85), ((1000, 8000), 1.48, 1.58), ((1000, 16000), 1.35, 1.45)],
-    ids=["gap4", "gap8", "gap16"],
+    [((1000, 8000), 1.48, 1.58), ((1000, 16000), 1.35, 1.45), ((1000, 64000), 1.2, 1.3)],
+    ids=["gap8", "gap16", "gap64"],
 )
 def test_the_smallest_exponent_a_gap_flags(sizes, passes, flagged):
-    # 1 + log(3) / log(gap): 1.79 for 4, 1.53 for 8, 1.40 for 16. A wider gap sees a gentler growth.
+    # 1 + log(3) / log(gap): 1.53 for 8, 1.40 for 16, 1.26 for 64. A wider gap sees a gentler growth.
     assert passes < timing.smallest_exponent_flagged(*sizes) < flagged, (
         "the stated exponent is wrong"
     )
@@ -111,12 +113,12 @@ def test_the_smallest_exponent_a_gap_flags(sizes, passes, flagged):
 
 
 def test_the_limit_is_three_times_the_size_ratio():
-    # literal numbers: 4x the size allows 12x the time, 16x allows 48x; nothing else moves the limit
-    assert not timing.grows_faster_than_size(1.0, 11.9, 1000, 4000), (
-        "11.9x for 4x the size is within the limit"
+    # literal numbers: 8x the size allows 24x the time, 16x allows 48x; nothing else moves the limit
+    assert not timing.grows_faster_than_size(1.0, 23.9, 1000, 8000), (
+        "23.9x for 8x the size is within the limit"
     )
-    assert timing.grows_faster_than_size(1.0, 12.1, 1000, 4000), (
-        "12.1x for 4x the size is over the limit"
+    assert timing.grows_faster_than_size(1.0, 24.1, 1000, 8000), (
+        "24.1x for 8x the size is over the limit"
     )
     assert not timing.grows_faster_than_size(1.0, 47.9, 1000, 16000), (
         "47.9x for 16x the size is within the limit"
@@ -126,16 +128,48 @@ def test_the_limit_is_three_times_the_size_ratio():
     )
 
 
+def test_exactly_the_limit_passes_and_a_hair_over_is_flagged():
+    # 3.0 * 8.0 * 1.0 and 3.0 * 16.0 * 1.0 are exact in floating point: "more than the limit" is strict
+    assert not timing.grows_faster_than_size(1.0, 24.0, 1000, 8000), "exactly the limit must pass"
+    assert not timing.grows_faster_than_size(1.0, 48.0, 1000, 16000), "exactly the limit must pass"
+    assert timing.grows_faster_than_size(1.0, math.nextafter(24.0, 25.0), 1000, 8000), (
+        "a hair over the limit must be flagged"
+    )
+
+
 def test_a_fast_small_run_is_not_raised_to_a_floor():
-    # 1 ms then 16 ms for 4x the size is quadratic. An earlier version raised the 1 ms to 4 ms and said "linear".
-    assert timing.grows_faster_than_size(0.001, 0.016, SMALL, BIG), (
+    # 1 ms then 64 ms for 8x the size is quadratic. An earlier version raised the 1 ms to 4 ms and said "linear".
+    assert timing.grows_faster_than_size(0.001, 0.064, SMALL, BIG), (
         "a 1 ms small run was raised to a floor"
     )
-    assert timing.grows_faster_than_size(1e-7, 16e-7, SMALL, BIG), (
+    assert timing.grows_faster_than_size(1e-7, 64e-7, SMALL, BIG), (
         "a 100 ns small run was raised to a floor"
     )
     assert timing.grows_faster_than_size(0.01, 0.5, SMALL, BIG), (
         "a fast big run was excused by a seconds figure"
+    )
+
+
+def test_what_passes_is_a_small_quadratic_part_and_no_more():
+    # the docstring's plain words: at a gap of 16 a quadratic part of about 15 percent of the straight-line part of
+    # the small run passes (limit 48x); 17 percent is flagged
+    def with_square(q: float):
+        return lambda n: n + q * n * n / SMALL
+
+    assert not Model(with_square(0.14), 1e-9).is_superlinear(SMALL, FAR), "14 percent must pass"
+    assert Model(with_square(0.17), 1e-9).is_superlinear(SMALL, FAR), "17 percent must be flagged"
+
+
+def test_a_fixed_cost_per_call_hides_even_a_quadratic_cost_at_a_gap_of_16():
+    # the blind spot (a) of the docstring: a fixed cost of 5 times the small run's own work gives 43.5x, under 48x
+    small_work = SMALL * SMALL
+
+    def fixed_plus_square(n: int) -> float:
+        return 5 * small_work + n * n
+
+    assert not Model(fixed_plus_square, 1e-9).is_superlinear(SMALL, FAR), "the stated blind spot"
+    assert Model(lambda n: n * n, 1e-9).is_superlinear(SMALL, FAR), (
+        "without the fixed cost it is flagged"
     )
 
 
@@ -156,19 +190,19 @@ def test_a_big_run_that_is_not_a_time_is_refused_not_passed(t_big):
         timing.grows_faster_than_size(0.001, t_big, SMALL, BIG)
 
 
-BAD_SIZES = [(4000, 1000), (1000, 1000), (-5, 1000), (0, 1000), (1000, 3999), (1000, 2000)]
+BAD_SIZES = [(8000, 1000), (1000, 1000), (-5, 1000), (0, 1000), (1000, 7999), (1000, 4000)]
 
 
 @pytest.mark.parametrize(
-    "sizes", BAD_SIZES, ids=["swapped", "equal", "negative", "zero", "just-under-4x", "2x"]
+    "sizes", BAD_SIZES, ids=["swapped", "equal", "negative", "zero", "just-under-8x", "4x"]
 )
 def test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work(sizes):
-    with pytest.raises(ValueError, match="sizes must be|at least 4 times"):
+    with pytest.raises(ValueError, match="sizes must be|at least 8 times"):
         timing.time_limit(0.1, *sizes)
-    with pytest.raises(ValueError, match="sizes must be|at least 4 times"):
+    with pytest.raises(ValueError, match="sizes must be|at least 8 times"):
         timing.smallest_exponent_flagged(*sizes)
     model = Model(power(1), 1e-7)
-    with pytest.raises(ValueError, match="sizes must be|at least 4 times"):
+    with pytest.raises(ValueError, match="sizes must be|at least 8 times"):
         model.is_superlinear(*sizes)
     assert model.calls == 0, "the work was run before the sizes were checked"
     assert timing.problems([("case", model.fn, "a")], *sizes, clock=model.clock)[0].startswith(
@@ -176,10 +210,10 @@ def test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work(siz
     )
 
 
-def test_a_gap_of_exactly_four_is_the_smallest_allowed():
-    timing.check_sizes(1000, 4000)
-    with pytest.raises(ValueError, match="at least 4 times"):
-        timing.check_sizes(1000, 3999)
+def test_a_gap_of_exactly_eight_is_the_smallest_allowed():
+    timing.check_sizes(1000, 8000)
+    with pytest.raises(timing.Untimeable, match="at least 8 times"):
+        timing.check_sizes(1000, 7999)
 
 
 def test_an_empty_unit_is_refused_before_any_work():
@@ -269,8 +303,8 @@ def test_a_coarse_clock_cannot_turn_a_fast_call_into_zero(tick):
     assert got == pytest.approx(3e-7 * SMALL, rel=tick / timing.MIN_BATCH_S), (
         "a coarse clock changed the time"
     )
-    assert not Model(power(1), 3e-7, tick=0.001).is_superlinear(SMALL, FAR), "linear, coarse clock"
-    assert Model(power(2), 3e-10, tick=0.001).is_superlinear(SMALL, FAR), "quadratic, coarse clock"
+    assert not Model(power(1), 3e-7, tick=tick).is_superlinear(SMALL, FAR), "linear, coarse clock"
+    assert Model(power(2), 3e-10, tick=tick).is_superlinear(SMALL, FAR), "quadratic, coarse clock"
 
 
 @pytest.mark.parametrize("pause", [0.007, 0.5, 30.0])
@@ -300,23 +334,52 @@ def test_a_slow_spell_over_several_batches_in_a_row_changes_nothing(spell, pause
         assert quadratic.is_superlinear(SMALL, FAR), "quadratic, with a slow spell"
 
 
+def test_timeit_reads_the_clock_exactly_twice_per_batch():
+    # the made-up `Model` clock counts two reads per batch (one before, one after): a Python change to `timeit` that
+    # breaks that fails here, with this name, and not as a confusing failure in a dozen other tests
+    reads = []
+
+    def clock() -> float:
+        reads.append(1)
+        return 0.0
+
+    timeit.Timer(lambda: None, timer=clock).timeit(3)
+    assert len(reads) == 2, "timeit no longer reads the clock exactly twice per batch"
+
+
 def test_the_collector_is_off_while_the_clock_runs_and_back_on_after():
-    seen = []
-    assert gc.isenabled()
-    timing.seconds_per_call(
-        lambda _text: seen.append(gc.isenabled()), "a", itertools.count().__next__
-    )
-    assert len(seen) == 6, "one sizing call and five repeats"
-    assert not any(seen), "the collector must be off while the clock runs"
-    assert gc.isenabled(), "the collector must be back on after"
+    was_on = gc.isenabled()
+    gc.enable()  # the test sets its own start state: the suite may run with the collector off
+    try:
+        seen = []
+        timing.seconds_per_call(
+            lambda _text: seen.append(gc.isenabled()), "a", itertools.count().__next__
+        )
+        assert len(seen) == 6, "one sizing call and five repeats"
+        assert not any(seen), "the collector must be off while the clock runs"
+        assert gc.isenabled(), "the collector must be back on after"
+    finally:
+        if not was_on:
+            gc.disable()
 
 
-def test_the_clock_is_processor_time_except_on_windows(monkeypatch):
-    # processor time does not count the time another program had the processor; on Windows it moves in 15.6 ms steps
-    wanted = time.perf_counter if sys.platform == "win32" else time.process_time
-    assert timing.CLOCK is wanted, (
-        "the rule must time processor time (the wall clock only on Windows)"
+@pytest.mark.parametrize("platform", ["linux", "darwin", "cygwin", "freebsd"])
+def test_the_clock_is_processor_time_off_windows(platform):
+    # processor time does not count the time another program had the processor
+    assert timing.pick_clock(platform) is time.process_time, (
+        "off Windows the rule must time processor time"
     )
+
+
+def test_the_clock_is_the_wall_clock_on_windows():
+    # on Windows processor time moves in 15.6 ms steps: too coarse for batches of 20 ms
+    assert timing.pick_clock("win32") is time.perf_counter, (
+        "on Windows the rule must use the wall clock"
+    )
+
+
+def test_the_rules_clock_is_the_one_picked_for_this_platform(monkeypatch):
+    assert timing.CLOCK is timing.pick_clock(sys.platform)
     model = Model(power(1), 1e-7)
     monkeypatch.setattr(timing, "CLOCK", model.clock)
     got = timing.seconds_per_call(model.fn, "a" * SMALL)
@@ -330,9 +393,9 @@ def test_the_work_gets_the_unit_repeated_to_exactly_the_two_sizes():
     seen = set()
     model = Model(power(1), 1e-3)
     timing.is_superlinear(
-        lambda text: (seen.add(text), model.fn(text)), "abc", 5, 20, clock=model.clock
+        lambda text: (seen.add(text), model.fn(text)), "abc", 5, 40, clock=model.clock
     )
-    assert seen == {"abcab", "abcabcabcabcabcabcab"}
+    assert seen == {"abcab", "abcabcabcabcabcabcabcabcabcabcabcabcabca"}
 
 
 # --- a sweep: every problem named, none lost ----------------------------------------------------------------------------
@@ -354,10 +417,119 @@ def test_a_sweep_names_each_slow_case_and_each_case_it_could_not_time(monkeypatc
     cases += [("late", late.fn, "d"), ("empty", fine.fn, "")]
     got = timing.problems(cases, SMALL, BIG, clock=clock)
     assert len(got) == 4, got
-    assert got[0] == "slow on 'a': grows faster than its input"
+    assert got[0].startswith("slow on 'a': grows faster than its input: "), got[0]
+    assert "limit 24 times" in got[0], "the line must show the measured ratio and the limit"
     assert (
         got[1].startswith("stopped on 'c': could not be timed: ") and "too fast to time" in got[1]
     )
-    assert got[2] == "late on 'd': grows faster than its input", "a case after a refusal was lost"
+    assert got[2].startswith("late on 'd': grows faster than its input: "), (
+        "a case after a refusal was lost"
+    )
     assert got[3] == "empty on '': could not be timed: the unit to repeat is empty"
     assert timing.problems([("fine", fine.fn, "b")], SMALL, BIG, clock=fine.clock) == []
+
+
+def test_a_failing_line_shows_both_times_the_ratio_and_the_limit():
+    # 1 ms at 1000 characters, 64 ms at 8000: 64 times as long for 8 times the text, limit 24 times
+    line = str(timing.Growth(0.001, 0.064, SMALL, BIG))
+    assert line == (
+        "0.001 s at 1000 characters, 0.064 s at 8000: 64.0 times as long for 8 times the text, limit 24 times"
+    )
+    model = Model(power(2), 1e-9)
+    grown = timing.growth(model.fn, "a", SMALL, BIG, clock=model.clock)
+    assert grown.ratio > grown.limit, "the measured growth is a quadratic one"
+
+
+def test_a_case_that_raises_keeps_its_type_and_is_named_with_the_problems_found_before_it():
+    slow = Model(power(2), 1e-9)
+
+    def broken(text: str) -> None:
+        raise UnicodeEncodeError("ascii", text[:1], 0, 1, "made-up")
+
+    cases = [("slow", slow.fn, "a"), ("broken", broken, "b")]
+    with pytest.raises(UnicodeEncodeError) as caught:
+        timing.problems(cases, SMALL, BIG, clock=slow.clock)
+    notes = "".join(getattr(caught.value, "__notes__", []))
+    assert "'broken' on 'b'" in notes, "the note does not name the case that raised"
+    assert "slow on 'a': grows faster than its input" in notes, (
+        "the note lost the problems found before"
+    )
+
+
+def test_a_case_that_raises_a_value_error_is_not_called_untimeable():
+    def broken(text: str) -> None:
+        raise ValueError("the case's own error")
+
+    with pytest.raises(ValueError, match="the case's own error") as caught:
+        timing.problems([("broken", broken, "b")], SMALL, BIG, clock=Model(power(1), 1e-7).clock)
+    assert not isinstance(caught.value, timing.Untimeable)
+
+
+# --- clocks that are not clocks: a refusal, never a crash with another type or a made-up number ---------------------------------
+
+
+@pytest.mark.parametrize("took", [5e-324, 1e-300])
+def test_a_clock_difference_of_almost_nothing_is_refused_not_an_overflow(took):
+    # calls * 1.2 * 0.02 / 5e-324 is infinity: math.ceil(infinity) used to raise OverflowError
+    ticks = itertools.cycle([0.0, took])
+    with pytest.raises(timing.Untimeable, match="too fast to time"):
+        timing.seconds_per_call(lambda _text: None, "a", lambda: next(ticks))
+
+
+def test_a_clock_that_gives_not_a_number_is_refused_not_returned_as_a_time():
+    reads = itertools.cycle([0.0, float("nan")])
+    with pytest.raises(timing.Untimeable):
+        timing.seconds_per_call(lambda _text: None, "a", lambda: next(reads))
+
+
+def test_the_sizing_loops_end_by_construction_even_without_the_calls_cap(monkeypatch):
+    # defence in depth: a clock stuck at zero and no cap on the calls still ends in a refusal, not a loop
+    monkeypatch.setattr(timing, "MAX_CALLS", 10**30)
+    monkeypatch.setattr(timing, "MAX_ROUNDS", 5)
+    stopped = Model(power(1), 0.0)
+    with pytest.raises(timing.Untimeable, match="5 batches in a row stayed under"):
+        stopped.is_superlinear()
+
+
+# --- work that waits: refused, because processor time does not count it -------------------------------------------------------
+
+
+def test_work_that_sleeps_is_refused_not_timed_from_a_few_microseconds_of_processor_time(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        timing, "MAX_CALLS", 2
+    )  # without the check the run would end at the cap, not after minutes
+    started = time.perf_counter()
+    with pytest.raises(timing.Untimeable, match="mostly waits"):
+        timing.seconds_per_call(lambda _text: time.sleep(0.02), "a")
+    assert time.perf_counter() - started < 5, "the refusal came only after a long run"
+
+
+def _burn_in_the_child(_text: str) -> None:
+    started = time.perf_counter()
+    while time.perf_counter() - started < 0.4:
+        pass
+
+
+def test_work_done_in_a_child_process_is_refused_because_processor_time_does_not_count_it(
+    monkeypatch,
+):
+    monkeypatch.setattr(timing, "MAX_CALLS", 2)
+    with (
+        ProcessPoolExecutor(max_workers=1) as pool,
+        pytest.raises(timing.Untimeable, match="child process"),
+    ):
+        timing.seconds_per_call(lambda text: pool.submit(_burn_in_the_child, text).result(), "a")
+
+
+def test_ordinary_computing_is_not_taken_for_waiting():
+    got = timing.seconds_per_call(lambda text: sum(map(ord, text)), "a" * 2000)
+    assert 0 < got < 0.01, "a few thousand additions are not waiting"
+
+
+def test_the_waiting_check_is_for_the_real_clock_only(monkeypatch):
+    # with a made-up clock the wall time says nothing about the made-up seconds: no refusal for waiting
+    monkeypatch.setattr(timing, "MAX_CALLS", 10)
+    with pytest.raises(timing.Untimeable, match="too fast to time"):
+        timing.seconds_per_call(lambda _text: time.sleep(0.006), "a", lambda: 0.0)

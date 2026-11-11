@@ -6,12 +6,12 @@ from __future__ import annotations
 import itertools
 import random
 import re
-import time
 
 import pytest
 
 from hadavin_sdk import tools as tools_mod
 from hadavin_sdk.guard import runmap
+from tests.fixtures import timing
 
 # The pattern as it was before (a repeated group before an end anchor: time grows with the square of a `%XX` run).
 _OLD = re.compile(
@@ -34,9 +34,9 @@ def _fastest(job, repeats: int = 3) -> float:
     """The fastest of a few runs: one slow run on a busy machine does not decide the result."""
     best = float("inf")
     for _ in range(repeats):
-        started = time.perf_counter()
+        started = timing.CLOCK()
         job()
-        best = min(best, time.perf_counter() - started)
+        best = min(best, timing.CLOCK() - started)
     return best
 
 
@@ -116,10 +116,16 @@ def test_a_very_long_run_of_percent_bytes_takes_linear_time():
     assert first < 60.0, (
         first
     )  # generous: a busy runner or a coverage run is slower, a quadratic pattern is hours
-    second = _fastest(
-        run([t * 2 for t in hostile])
-    )  # twice the input: about twice the time, never four times
-    assert second < max(4 * first, 1.0), (first, second)
+
+
+@pytest.mark.perf
+@pytest.mark.parametrize("unit", ["%C3", "%C3%A", "&#", "&#x4", "\\u", "%", "&a"])
+def test_the_time_of_a_long_run_grows_no_faster_than_its_length(unit):
+    # the shared rule (`tests/fixtures/timing.py`) instead of "twice the input, under four times the time", which a
+    # quadratic cost (exactly four times) could pass: 8x the text may take at most 24x the time. The old pattern took about
+    # 0.2 s at 2000 groups and 10 s at 16000 groups here (a ratio of about 64).
+    measured = timing.growth(runmap.partial_escape_start, unit, 6_000, 48_000)
+    assert not measured.flagged, f"partial_escape_start on {unit!r}: {measured}"
 
 
 def test_other_long_runs_are_linear_too():
