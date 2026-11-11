@@ -1,25 +1,41 @@
 # Vendor-owned sources behind the `verified` field of the POLICY literals (ticket Q8c, PR 1).
 # A kind module names a source by its id only; this file resolves the id. No URL is written in src/.
-# Who read what: a separate evidence runner read these files on 2026-11-11 between 14:02 and 14:20 UTC and
-# recorded which permission names and path forms it found in them. The rendered vendor pages were not
-# reachable; these are the documentation source files the pages are built from, and three source-code files.
-# The sha256 column: the builder fetched each file again on 2026-11-11 at 14:30 UTC from the raw form of the
-# URL at the commit shown and hashed the bytes. The evidence runner saved no text and no hash, so for a row
-# marked "branch" the hash proves only what the branch held at 14:30 UTC, at the commit the builder resolved.
-# Columns: id | url | commit or version | sha256 of the raw file | note
+# What the files are: documentation source files (the files the vendors' pages are built from; the rendered
+# pages were not reachable) and four source-code files (K-SRC, V-ACL, V-PARSE, B-ACL). 19 rows.
+# Who read what:
+# - Rows V-POL to K-SRC (16 rows): a separate evidence runner read them on 2026-11-11 between 14:02 and
+#   14:20 UTC and recorded which permission names and path forms it found (it saved no text and no hash).
+# - The one-part wildcard `+` of grant R17 (V-POL, B-POL, V-ACL, V-PARSE, B-ACL) and the paths `undelete`,
+#   `subkeys` and `byok-export` were read by the builder of fix batch 1 on 2026-11-11 about 15:35 UTC, not by
+#   the evidence runner. Nobody else has re-read them yet.
+# Who produced each sha256:
+# - The 16 rows V-POL to K-SRC: the first builder fetched each file at 14:30 UTC and hashed the bytes. The
+#   evidence runner fetched all 16 again about 15:30 UTC and got the same hashes (handover evidence
+#   Q8c-1/7af1380/source-hashes.txt). The Kubernetes rows named a branch then; the same bytes are at the
+#   commits now written here (checked by the second builder at 15:38 UTC).
+# - V-ACL, V-PARSE, B-ACL: fetched and hashed by the second builder only, at 15:35 UTC. Not re-fetched by
+#   anyone else yet.
+# Every row is pinned: the commit column is a commit id and it is written in the URL. The Vault documentation
+# rows carry a 7-character id (the full id could not be looked up from this machine); the others are full.
+# The Vault and OpenBao source-code commits are the ids that the tags v2.2.0 and v2.4.0 pointed to.
+# No test fetches anything or compares a hash: the hashes are a record for a person to re-check.
+# Columns: id | url | commit | sha256 of the raw file | note
 V-POL | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/docs/concepts/policies.mdx | 82e7167 | beac497452411caa6ed293876e3ddf5e29228db17bc26365cd707b095abc75d4 | Vault v2.x: policies
-V-TOK | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/auth/token.mdx | 82e7167 | 03b51d9467d20ec64ff7c145d3abe7e904a3261692cd083ee957b04421fb8eed | Vault v2.x: token API (no_default_policy)
+V-TOK | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/auth/token.mdx | 82e7167 | 03b51d9467d20ec64ff7c145d3abe7e904a3261692cd083ee957b04421fb8eed | Vault v2.x: token API (no_default_policy); named by tests/test_policy_engine.py, by no POLICY literal
 V-KV | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/secret/kv/kv-v2.mdx | 82e7167 | 911ad99c444198cc0505e1622b9bf23f2abe7a280cfd163f61c98752db5f9da4 | Vault v2.x: KV version 2 API
 V-TR | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/secret/transit.mdx | 82e7167 | f767de0be9cb973797ac0c8d82541728d8a2ee46fe7fd034210eef0e870db863 | Vault v2.x: Transit API
 V-API | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/index.mdx | 82e7167 | b9b4e92ebc727abbc0ef928e1bd6106d1af32221f3f972a860685968dec48af2 | Vault v2.x: API index (sign-in endpoints need no token)
 V-APPROLE | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/auth/approle.mdx | 82e7167 | 500e5a3941f01727f59d055535f70365ca2a5cc72ece0734d53e19fa82dff0b3 | Vault v2.x: AppRole API
 V-K8S | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/auth/kubernetes.mdx | 82e7167 | 8a03df23fb2bfc6b259144011701430ca5551239795edda472f54dbb963a54b3 | Vault v2.x: Kubernetes sign-in API
-B-POL | https://github.com/openbao/openbao/blob/0d706a0/website/content/docs/concepts/policies.mdx | 0d706a0 | dec63d61627b3ee85775ff368a7d0842477eafaa016e740ae4eaaff7d099ebeb | OpenBao: policies
-B-KV | https://github.com/openbao/openbao/blob/0d706a0/website/content/docs/api/secret/kv/kv-v2.mdx | 0d706a0 | 3f6d4634f3d472745a97b647551c19308e27212797b90605cdc0ac29ba30d68a | OpenBao: KV version 2 API
-B-TR | https://github.com/openbao/openbao/blob/0d706a0/website/content/docs/api/secret/transit.mdx | 0d706a0 | 61cf47fcd8a42c5308571acc2165adf4644c7ae6e19388eb258a48238e365f6f | OpenBao: Transit API
-B-API | https://github.com/openbao/openbao/blob/0d706a0/website/content/docs/api/index.mdx | 0d706a0 | f45f108dd9e43df463bc522d5cb733907341da5e854dd23a3e97076331176649 | OpenBao: API index
-K-RBAC | https://raw.githubusercontent.com/kubernetes/website/main/content/en/docs/reference/access-authn-authz/rbac.md | branch main at 18f8e9f | b120961b770f1cf2a5bd234a415b88c3676eae5a9ee21f4d3eaa62687fd7e88d | Kubernetes: RBAC (same bytes at commit 18f8e9f and on main at 14:30 UTC)
-K-AUTHZ | https://raw.githubusercontent.com/kubernetes/website/main/content/en/docs/reference/access-authn-authz/authorization.md | branch main at 18f8e9f | ee14ff64beb73246c8909325abbdd069f882713dfd4d47d2daed258b08c3217c | Kubernetes: authorization, request verbs (same bytes at commit 18f8e9f and on main at 14:30 UTC)
-K-SSRR | https://github.com/kubernetes/website/blob/18f8e9f/content/en/docs/reference/kubernetes-api/definitions/self-subject-rules-review-v1-authorization.md | 18f8e9f | bb10e3bc868003190f2e8682c3829b31ccad112f7970d4b0eda604fd1cd99b7c | Kubernetes: SelfSubjectRulesReview
-K-KUBELET | https://github.com/kubernetes/website/blob/18f8e9f/content/en/docs/reference/access-authn-authz/kubelet-authn-authz.md | 18f8e9f | 3c322401fd5976e52b459f87f8c7ec581936e3a4bb816712067380dc83201f7f | Kubernetes: kubelet authorization (nodes/proxy)
-K-SRC | https://raw.githubusercontent.com/kubernetes/kubernetes/master/plugin/pkg/auth/authorizer/rbac/bootstrappolicy/policy.go | branch master at dd21ea9 | 80ff03d8755d067b10bff95851b53d0a09fb1b37c12b43f59d42169743aa6bc8 | Kubernetes source: built-in roles (branch; commit resolved by the builder at 14:30 UTC)
+B-POL | https://github.com/openbao/openbao/blob/0d706a0c474ebf26265d0d1e4d9060320cd8ae13/website/content/docs/concepts/policies.mdx | 0d706a0c474ebf26265d0d1e4d9060320cd8ae13 | dec63d61627b3ee85775ff368a7d0842477eafaa016e740ae4eaaff7d099ebeb | OpenBao: policies
+B-KV | https://github.com/openbao/openbao/blob/0d706a0c474ebf26265d0d1e4d9060320cd8ae13/website/content/docs/api/secret/kv/kv-v2.mdx | 0d706a0c474ebf26265d0d1e4d9060320cd8ae13 | 3f6d4634f3d472745a97b647551c19308e27212797b90605cdc0ac29ba30d68a | OpenBao: KV version 2 API
+B-TR | https://github.com/openbao/openbao/blob/0d706a0c474ebf26265d0d1e4d9060320cd8ae13/website/content/docs/api/secret/transit.mdx | 0d706a0c474ebf26265d0d1e4d9060320cd8ae13 | 61cf47fcd8a42c5308571acc2165adf4644c7ae6e19388eb258a48238e365f6f | OpenBao: Transit API
+B-API | https://github.com/openbao/openbao/blob/0d706a0c474ebf26265d0d1e4d9060320cd8ae13/website/content/docs/api/index.mdx | 0d706a0c474ebf26265d0d1e4d9060320cd8ae13 | f45f108dd9e43df463bc522d5cb733907341da5e854dd23a3e97076331176649 | OpenBao: API index
+K-RBAC | https://github.com/kubernetes/website/blob/18f8e9f6d2b0bc9d33e82ceac8abcfffdf8c1ca8/content/en/docs/reference/access-authn-authz/rbac.md | 18f8e9f6d2b0bc9d33e82ceac8abcfffdf8c1ca8 | b120961b770f1cf2a5bd234a415b88c3676eae5a9ee21f4d3eaa62687fd7e88d | Kubernetes: RBAC
+K-AUTHZ | https://github.com/kubernetes/website/blob/18f8e9f6d2b0bc9d33e82ceac8abcfffdf8c1ca8/content/en/docs/reference/access-authn-authz/authorization.md | 18f8e9f6d2b0bc9d33e82ceac8abcfffdf8c1ca8 | ee14ff64beb73246c8909325abbdd069f882713dfd4d47d2daed258b08c3217c | Kubernetes: authorization, request verbs
+K-SSRR | https://github.com/kubernetes/website/blob/18f8e9f6d2b0bc9d33e82ceac8abcfffdf8c1ca8/content/en/docs/reference/kubernetes-api/definitions/self-subject-rules-review-v1-authorization.md | 18f8e9f6d2b0bc9d33e82ceac8abcfffdf8c1ca8 | bb10e3bc868003190f2e8682c3829b31ccad112f7970d4b0eda604fd1cd99b7c | Kubernetes: SelfSubjectRulesReview
+K-KUBELET | https://github.com/kubernetes/website/blob/18f8e9f6d2b0bc9d33e82ceac8abcfffdf8c1ca8/content/en/docs/reference/access-authn-authz/kubelet-authn-authz.md | 18f8e9f6d2b0bc9d33e82ceac8abcfffdf8c1ca8 | 3c322401fd5976e52b459f87f8c7ec581936e3a4bb816712067380dc83201f7f | Kubernetes: kubelet authorization (nodes/proxy)
+K-SRC | https://github.com/kubernetes/kubernetes/blob/dd21ea95bc597663b263c040dc7abf43c037a7d0/plugin/pkg/auth/authorizer/rbac/bootstrappolicy/policy.go | dd21ea95bc597663b263c040dc7abf43c037a7d0 | 80ff03d8755d067b10bff95851b53d0a09fb1b37c12b43f59d42169743aa6bc8 | Kubernetes source code: built-in roles
+V-ACL | https://github.com/hashicorp/vault/blob/2891bfd23893ebd302307050edaf03d871ea8351/vault/acl.go | 2891bfd23893ebd302307050edaf03d871ea8351 | fb2891b1b4c777cc59da3b2f241b0cd3e4418a23b69f4089084dd8d196666299 | Vault source code at tag v2.2.0: how a policy path is matched (`+` is one whole path part)
+V-PARSE | https://github.com/hashicorp/vault/blob/2891bfd23893ebd302307050edaf03d871ea8351/vault/policy.go | 2891bfd23893ebd302307050edaf03d871ea8351 | 2ee08c4011975070ae2c72e0e52e357a2f765cbdd83d6635ed15ef40219ab1b4 | Vault source code at tag v2.2.0: how a policy path is read (`+*` is refused)
+B-ACL | https://github.com/openbao/openbao/blob/f9407a27fbee45f62ba521bba2bf1e2360c61031/vault/acl.go | f9407a27fbee45f62ba521bba2bf1e2360c61031 | 4add738cfdecbaf790099a95e2420e94465fe869c847ae6b9d78d5d107797b78 | OpenBao source code at tag v2.4.0: how a policy path is matched

@@ -34,8 +34,10 @@ from hadavin_sdk.sources import kubernetes as k8s
 from tests.test_lockin_guard import TODAY, Pending
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCES = ROOT / "tests" / "fixtures" / "policy_sources_2026-11-11.txt"
 DECIDED = date(2026, 11, 11)
+# The longest time a dated entry may stand before it is looked at again. An entry can only be kept alive
+# by a new decision (a new `decided` day) with a new `review_by` at most this many days after it.
+MAX_PENDING_DAYS = 92
 
 # ------------------------------------------------------------------------------------- kinds: who is covered
 
@@ -78,8 +80,20 @@ NO_IDENTITY: dict[str, str] = {
     "detector/llm_judge": "calls through the llm kind; holds no credential of its own",
     "channel/fake": "in-memory test kind",
 }
-# (kind, grant id) -> a grant whose name is not yet found in a vendor source. Empty: all six are found.
-PENDING_NAMES: dict[tuple[str, str], Pending] = {}
+# (kind, entry) -> a name not yet found in a vendor source by the evidence runner. The entry is a grant id,
+# `free:<n>` or `never:<name>`. All six grants are found; three built-in role names of the Kubernetes
+# never-list are not yet.
+_ROLE_NAMES = Pending(
+    "the built-in role name was not among the names the evidence runner looked for",
+    "an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry",
+    DECIDED,
+    date(2026, 12, 11),
+)
+PENDING_NAMES: dict[tuple[str, str], Pending] = {
+    ("source/kubernetes", "never:cluster-admin"): _ROLE_NAMES,
+    ("source/kubernetes", "never:admin"): _ROLE_NAMES,
+    ("source/kubernetes", "never:edit"): _ROLE_NAMES,
+}
 
 
 def all_kinds() -> set[str]:
@@ -91,10 +105,23 @@ def _pending_problems(label: str, pending: dict, live: set, today: date) -> list
     out = [
         f"{label} {key} is fixed or gone: delete the entry" for key in pending if key not in live
     ]
-    return out + [
-        f"{label} {key} is overdue (review_by {p.review_by}): {p.fix_ref}"
+    out += [
+        f"{label} {key} is overdue (review_by {p.review_by}): {p.fix_ref}. What to do: finish that work "
+        "and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day "
+        f"of the new decision and `review_by` to at most {MAX_PENDING_DAYS} days after it"
         for key, p in pending.items()
         if key in live and today > p.review_by
+    ]
+    out += [
+        f"{label} {key}: review_by {p.review_by} is more than {MAX_PENDING_DAYS} days after the decision "
+        f"of {p.decided}: a date may not be moved further than that"
+        for key, p in pending.items()
+        if (p.review_by - p.decided).days > MAX_PENDING_DAYS
+    ]
+    return out + [
+        f"{label} {key}: decided {p.decided} is in the future"
+        for key, p in pending.items()
+        if p.decided > today
     ]
 
 
@@ -189,41 +216,146 @@ class Shape:
     `wrappers`: (enclosing function, line, sink called there). Each asserts that at that line, inside that
     function, there is a call to that sink whose operation argument is a parameter of the enclosing function
     (the function passes on what it was given). An entry with no such call there is stale and fails.
-    `raw_http`: the only functions that may build a raw HTTP request.
+    `raw_http`: the only functions that may build a raw HTTP request or touch the HTTP opener.
+    `imports`: every import the module may hold (`module` or `module:name`). A new import (another HTTP
+    library, `operator`, `functools`, `importlib`) fails until a person adds it here.
+    `getattr_ok`: the only literal names that may be read with `getattr`.
+    `settings`: Vault only. The object attribute a request path is built from -> the setting it holds. Written
+    by hand from the kind's `build` function; no test follows the value from the setting to the attribute.
     """
 
     platform: str
     sinks: dict[str, int | None]
     wrappers: frozenset[tuple[str, int, str]]
     raw_http: frozenset[str] = frozenset()
+    imports: frozenset[str] = frozenset()
+    getattr_ok: frozenset[str] = frozenset()
+    settings: tuple[tuple[str, str], ...] = ()
 
 
+_SDK = "hadavin_sdk"
 SHAPES: dict[str, Shape] = {
     "src/hadavin_sdk/actions/secrets_vault.py": Shape(
         "vault",
         {"call": 1, "authed": 1},
         frozenset({("authed", 101, "call"), ("authed", 104, "call")}),
         frozenset({"__init__", "call"}),
+        frozenset(
+            {
+                "__future__:annotations",
+                "json",
+                "os",
+                "re",
+                "ssl",
+                "time",
+                "urllib.error",
+                "urllib.parse",
+                "urllib.request",
+                "collections.abc:Callable",
+                "pathlib:Path",
+                "typing:Any",
+                f"{_SDK}.actions.secrets_cache:CachedSecrets",
+                f"{_SDK}.errors:ConfigError",
+                f"{_SDK}.guard.http:NoRedirect",
+            }
+        ),
+        settings=(("self.mount", "mount"), ("self.path_prefix", "path_prefix")),
     ),
     # The sign-in call of this kind lives in the imported module actions/secrets_vault.py and is declared there.
     "src/hadavin_sdk/audit/signer_vault.py": Shape(
-        "vault", {"call": 1, "authed": 1, "_call": 1}, frozenset({("_call", 40, "authed")})
+        "vault",
+        {"call": 1, "authed": 1, "_call": 1},
+        frozenset({("_call", 40, "authed")}),
+        imports=frozenset(
+            {
+                "__future__:annotations",
+                "base64",
+                "threading",
+                "typing:Any",
+                "typing:Literal",
+                f"{_SDK}.actions.secrets_vault:VaultError",
+                f"{_SDK}.actions.secrets_vault:connect",
+                f"{_SDK}.audit.signer:probe",
+                f"{_SDK}.errors:ConfigError",
+            }
+        ),
+        settings=(("self.mount", "transit_mount"), ("self.key_name", "key_name")),
     ),
     "src/hadavin_sdk/sources/kubernetes.py": Shape(
         "kubernetes_rbac",
         {"_fetch": None, "_call": 1, "_get": 1, "_items": 1},
         frozenset({("_call", 168, "_fetch"), ("_get", 184, "_call"), ("_items", 203, "_get")}),
+        imports=frozenset(
+            {
+                "__future__:annotations",
+                "json",
+                "collections.abc:Callable",
+                "datetime:UTC",
+                "datetime:datetime",
+                "typing:Any",
+                "urllib.parse:quote",
+                "pydantic:BaseModel",
+                "pydantic:ConfigDict",
+                "pydantic:Field",
+                f"{_SDK}:defaults",
+                f"{_SDK}.sources:Record",
+                f"{_SDK}.sources:SourceError",
+            }
+        ),
+        getattr_ok=frozenset({"too_large"}),
     ),
 }
-BANNED_NAMES = {"_make_api_call", "get_waiter", "methodcaller", "__getattribute__"}
-RAW_HTTP = {"Request", "urlopen", "build_opener", "HTTPConnection", "HTTPSConnection"}
+# Names that reach a method or a module without writing its name as a plain call. Refused wherever they
+# appear in a declared module: as a name, an attribute, an imported name or an alias.
+BANNED_NAMES = {
+    "_make_api_call",
+    "get_waiter",
+    "methodcaller",
+    "attrgetter",
+    "__getattribute__",
+    "__getattr__",
+    "__dict__",
+    "__import__",
+    "import_module",
+    "eval",
+    "exec",
+    "globals",
+    "locals",
+    "vars",
+    "setattr",
+    "partial",
+    "partialmethod",
+}
+RAW_HTTP = {
+    "Request",
+    "urlopen",
+    "urlretrieve",
+    "build_opener",
+    "open",
+    "HTTPConnection",
+    "HTTPSConnection",
+    "create_connection",
+    "socket",
+    "getresponse",
+}
+OPENER = "_opener"  # the attribute that holds the HTTP opener of the Vault client
 _HOLE = "\x00"  # stands for the wrapper's own path parameter inside its template
+# Kubernetes: the query parameters a request written in the module may carry, per operation id. None of them
+# changes the verb the request needs (`watch=true` would need the verb `watch`; it is refused, like any name
+# not listed). PAGING is what the list wrapper `_items` adds to both list requests.
+QUERY_OK: dict[str, frozenset[str]] = {
+    "k8s.pod_log": frozenset({"timestamps", "sinceTime", "limitBytes"})
+}
+PAGING = frozenset({"limit", "continue"})
+# Vault: the capability each HTTP verb of a declared request needs (source V-POL).
+VERB_CAPABILITY = {"GET": "read", "POST": "update"}
 
 
 def _template(node: ast.AST | None) -> str | None:
     """A path written as a literal or an f-string, folded to a template: a formatted `self.X` / `obj.X` gives
-    `{X}`, a formatted bare name gives `{name}`. Anything else (a call, a conversion, a format spec, a literal
-    brace) is not foldable: None."""
+    `{self.X}` / `{obj.X}` (the object's name is kept, so a local variable named like a setting is not taken
+    for the setting), a formatted bare name gives `{name}`. Anything else (a call, a conversion, a format
+    spec, a literal brace) is not foldable: None."""
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
         return None if "{" in node.value or "}" in node.value else node.value
     if not isinstance(node, ast.JoinedStr):
@@ -243,7 +375,7 @@ def _template(node: ast.AST | None) -> str | None:
             if isinstance(value, ast.Name):
                 out += "{" + value.id + "}"
             elif isinstance(value, ast.Attribute) and isinstance(value.value, ast.Name):
-                out += "{" + value.attr + "}"
+                out += "{" + value.value.id + "." + value.attr + "}"
             else:
                 return None
         else:
@@ -312,6 +444,21 @@ def _banned(rel: str, shape: Shape, tree: ast.AST, walk: _Walk) -> list[str]:
         name = node.attr if isinstance(node, ast.Attribute) else getattr(node, "id", None)
         if name in BANNED_NAMES:
             out.append(f"{rel}:{line}: banned indirect call `{name}`")
+        if isinstance(node, ast.alias):
+            for part in (*node.name.split("."), node.asname):
+                if part in BANNED_NAMES:
+                    out.append(f"{rel}:{line}: banned indirect call `{part}` (imported)")
+        if isinstance(node, ast.Import | ast.ImportFrom):
+            module = "." * getattr(node, "level", 0) + (getattr(node, "module", None) or "")
+            for alias in node.names:
+                entry = f"{module}:{alias.name}" if isinstance(node, ast.ImportFrom) else alias.name
+                if entry not in shape.imports:
+                    out.append(
+                        f"{rel}:{line}: import `{entry}` is not on this module's import list: a new way "
+                        "to send a request must be looked at by a person first"
+                    )
+                elif alias.asname is not None:
+                    out.append(f"{rel}:{line}: import `{entry}` is renamed to `{alias.asname}`")
         if (
             isinstance(node, ast.Attribute)
             and node.attr == "client"
@@ -327,11 +474,21 @@ def _banned(rel: str, shape: Shape, tree: ast.AST, walk: _Walk) -> list[str]:
             literal = len(node.args) > 1 and isinstance(node.args[1], ast.Constant)
             if not literal:
                 out.append(f"{rel}:{line}: banned `getattr` with a name that is not a literal")
-    for _func, node in walk.loads:
+            elif node.args[1].value not in shape.getattr_ok:
+                out.append(
+                    f"{rel}:{line}: banned `getattr` of `{node.args[1].value}`: only "
+                    f"{sorted(shape.getattr_ok) or 'no name'} may be read this way in this module"
+                )
+    for func, node in walk.loads:
         if node.attr in shape.sinks and id(node) not in walk.called:
             out.append(
                 f"{rel}:{node.lineno}: `.{node.attr}` is taken as a value, not called: the request it "
                 "would send cannot be read"
+            )
+        if node.attr == OPENER and _name_of(func) not in shape.raw_http:
+            out.append(
+                f"{rel}:{node.lineno}: the HTTP opener `.{OPENER}` is used outside "
+                f"{sorted(shape.raw_http) or 'any allowed function'}"
             )
     for func, call in walk.calls:
         f = call.func
@@ -340,6 +497,149 @@ def _banned(rel: str, shape: Shape, tree: ast.AST, walk: _Walk) -> list[str]:
             out.append(
                 f"{rel}:{call.lineno}: raw HTTP call `{name}` outside "
                 f"{sorted(shape.raw_http) or 'any allowed function'}"
+            )
+    return out
+
+
+def _bound_once(func: ast.AST | None, node: ast.AST | None) -> ast.AST | None:
+    """`node` itself, or, when it is a local name bound exactly once in `func` by a plain assignment, the
+    value it was given. None when the name is bound in any other way or more than once."""
+    if not isinstance(node, ast.Name):
+        return node
+    if func is None:
+        return None
+    stores = [
+        n
+        for n in ast.walk(func)
+        if isinstance(n, ast.Name) and n.id == node.id and isinstance(n.ctx, ast.Store)
+    ]
+    values = [
+        n.value
+        for n in ast.walk(func)
+        if isinstance(n, ast.Assign)
+        and len(n.targets) == 1
+        and isinstance(n.targets[0], ast.Name)
+        and n.targets[0].id == node.id
+    ]
+    return values[0] if len(stores) == 1 and len(values) == 1 else None
+
+
+def _quoted_or_setting(func: ast.AST | None, value: ast.AST) -> bool:
+    """May this formatted value stand in a Kubernetes request path? Only `quote(<name>, safe="")` (so it can
+    add no `/`, `?` or `&`), a local name bound once to such a call, or a setting `self._cfg.<field>`."""
+    value = _bound_once(func, value)
+    if (
+        isinstance(value, ast.Call)
+        and isinstance(value.func, ast.Name)
+        and value.func.id == "quote"
+        and len(value.args) == 1
+        and isinstance(value.args[0], ast.Name)
+        and [(k.arg, getattr(k.value, "value", None)) for k in value.keywords] == [("safe", "")]
+    ):
+        return True
+    return (
+        isinstance(value, ast.Attribute)
+        and isinstance(value.value, ast.Attribute)
+        and value.value.attr == "_cfg"
+        and isinstance(value.value.value, ast.Name)
+        and value.value.value.id == "self"
+    )
+
+
+def kubernetes_path_problems(
+    rel: str, func: ast.AST | None, call: ast.Call, operation: str
+) -> list[str]:
+    """The path a Kubernetes request is written with must fit the path bound to its operation id, and its
+    query string may hold only the parameter names listed for that id. This is what ties the declared verb
+    to the request: `?watch=true` on a list path needs the verb `watch`, which no grant declares."""
+    where = f"{rel}:{call.lineno}"
+    if operation not in k8s.READ_OPERATIONS:
+        return []  # reported as a request with no grant
+    node = _bound_once(func, _argument(call, 0, "path"))
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        parts: list[ast.AST] = [node]
+    elif isinstance(node, ast.JoinedStr):
+        parts = list(node.values)
+    else:
+        return [f"{where}: the path of `{operation}` is not a literal, so its query cannot be read"]
+    text = ""
+    for part in parts:
+        if isinstance(part, ast.Constant) and isinstance(part.value, str):
+            text += part.value
+        elif (
+            isinstance(part, ast.FormattedValue)
+            and part.conversion == -1
+            and part.format_spec is None
+            and _quoted_or_setting(func, part.value)
+        ):
+            text += _HOLE
+        else:
+            return [
+                (
+                    f"{where}: the path of `{operation}` holds a value that is neither `quote(name, safe='')` "
+                    "nor a setting, so what it adds to the request cannot be read"
+                )
+            ]
+    path, mark, query = text.partition("?")
+    out = []
+    if any(_HOLE in s and s != _HOLE for s in path.split("/")) or not re.fullmatch(
+        k8s.READ_OPERATIONS[operation][1], path.replace(_HOLE, "x")
+    ):
+        out.append(f"{where}: the path does not fit the one bound to `{operation}`")
+    allowed = QUERY_OK.get(operation, frozenset())
+    for pair in query.split("&") if mark else []:
+        name, equals, value = pair.partition("=")
+        if not equals or name not in allowed or (_HOLE in value and value != _HOLE):
+            out.append(
+                f"{where}: query parameter `{name.replace(_HOLE, '?')}` is not one that `{operation}` may "
+                f"carry ({sorted(allowed) or 'none'}): it could change the verb the request needs"
+            )
+    return out
+
+
+def query_name_problems(rel: str, tree: ast.AST) -> list[str]:
+    """Kubernetes, module-wide: every query parameter name written in any text of the module is on a list."""
+    allowed = PAGING.union(*QUERY_OK.values())
+    out = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            for name in re.findall(r"[?&]([A-Za-z_]\w*)=", node.value):
+                if name not in allowed:
+                    out.append(
+                        f"{rel}:{node.lineno}: query parameter `{name}` is written in the module and is "
+                        f"not on the list {sorted(allowed)}"
+                    )
+    return out
+
+
+def binding_problems(rel: str, shape: Shape, policy: pp.Policy) -> list[str]:
+    """Vault: each grant IS its one request. The resource must equal the request's path with every object
+    attribute replaced by its setting and every bare parameter (one caller-chosen path part) replaced by
+    the one-part wildcard `+`; the capability must be the one the request's verb needs."""
+    settings, out = dict(shape.settings), []
+    for g in policy.grants:
+        if len(g.operations) != 1:
+            out.append(f"{rel} {g.id}: a Vault grant serves exactly one request")
+            continue
+        verb, template = g.operations[0]
+        names = re.findall(r"\{([^{}]*)\}", template)
+        unknown = sorted(n for n in names if "." in n and n not in settings)
+        if unknown:
+            out.append(f"{rel} {g.id}: `{unknown[0]}` in the request path is not a known setting")
+            continue
+        want = re.sub(
+            r"\{([^{}]*)\}",
+            lambda m: "{" + settings[m.group(1)] + "}" if "." in m.group(1) else "+",
+            template,
+        )
+        if g.resource != want:
+            out.append(
+                f"{rel} {g.id}: resource {g.resource!r} is not the path of the request it serves ({want!r})"
+            )
+        if g.name != VERB_CAPABILITY.get(verb):
+            out.append(
+                f"{rel} {g.id}: capability {g.name!r} is not the one a {verb} request needs "
+                f"({VERB_CAPABILITY.get(verb)!r})"
             )
     return out
 
@@ -354,6 +654,8 @@ def extract(
     walk.visit(tree)
     problems = _banned(rel, shape, tree, walk)
     vault = shape.platform == "vault"
+    if not vault:
+        problems += query_name_problems(rel, tree)
     sink_calls = [
         (func, call, call.func.attr)
         for func, call in walk.calls
@@ -403,7 +705,7 @@ def extract(
         for func, line, sink in sorted(shape.wrappers - seen)
     ]
     found: dict[tuple[str, ...], list[int]] = {}
-    for _func, call, sink in literal_calls:
+    for func, call, sink in literal_calls:
         position = shape.sinks[sink]
         operation = _argument(call, position, "path" if vault else "operation")
         pair: tuple[str, ...] | None = None
@@ -418,6 +720,7 @@ def extract(
                 pair = (verb.value, templates.get(sink, _HOLE).replace(_HOLE, folded))
         elif isinstance(operation, ast.Constant) and isinstance(operation.value, str):
             pair = (operation.value,)
+            problems += kubernetes_path_problems(rel, func, call, operation.value)
         if pair is None:
             problems.append(
                 f"{rel}:{call.lineno}: call to `.{sink}` whose request is not a literal, outside the "
@@ -435,6 +738,8 @@ def call_problems(rel: str, text: str, shape: Shape) -> list[str]:
     if policy is None:
         return [*problems, f"no POLICY in {rel}"]
     declared = policy.operations()
+    if shape.platform == "vault":
+        problems += binding_problems(rel, shape, policy)
     for pair in sorted(set(found) - declared):
         lines = ", ".join(str(n) for n in found[pair])
         problems.append(f"{rel}:{lines}: request {pair} has no grant and no free entry in POLICY")
@@ -461,12 +766,12 @@ def test_the_extracted_requests_are_the_ones_the_ticket_lists():
     found = {rel: set(extract(rel, _text(rel), SHAPES[rel])[0]) for rel in SHAPES}
     assert found == {
         "src/hadavin_sdk/actions/secrets_vault.py": {
-            ("GET", "{mount}/data/{path_prefix}{name}"),
+            ("GET", "{self.mount}/data/{self.path_prefix}{name}"),
             ("POST", "auth/{auth_mount}/login"),
         },
         "src/hadavin_sdk/audit/signer_vault.py": {
-            ("POST", "{mount}/sign/{key_name}"),
-            ("GET", "{mount}/keys/{key_name}"),
+            ("POST", "{self.mount}/sign/{self.key_name}"),
+            ("GET", "{self.mount}/keys/{self.key_name}"),
         },
         "src/hadavin_sdk/sources/kubernetes.py": {
             ("k8s.list_deployments",),
@@ -504,8 +809,8 @@ def test_plant_a_new_request_with_no_grant_is_caught():
         call_problems(VAULT, text, SHAPES[VAULT]),
         [
             (
-                f"{VAULT}:{line}: request ('LIST', '{{mount}}/metadata/{{path_prefix}}') has no grant and no "
-                "free entry in POLICY"
+                f"{VAULT}:{line}: request ('LIST', '{{provider.mount}}/metadata/{{provider.path_prefix}}') "
+                "has no grant and no free entry in POLICY"
             )
         ],
     )
@@ -517,8 +822,8 @@ def test_plant_a_grant_whose_request_was_deleted_is_caught():
         problems,
         [
             (
-                f"{TRANSIT}: POLICY declares request ('GET', '{{mount}}/keys/{{key_name}}') but the module "
-                "makes no such call"
+                f"{TRANSIT}: POLICY declares request ('GET', '{{self.mount}}/keys/{{self.key_name}}') but "
+                "the module makes no such call"
             )
         ],
     )
@@ -595,7 +900,7 @@ def test_plant_a_raw_http_request_outside_the_one_sender_is_caught():
 def test_plant_a_stale_allowlist_line_is_caught():
     """One line added above the wrapper moves it: the entry no longer points at a call that passes its
     parameter on, and the moved call is read as a request that is not a literal."""
-    problems = _planted(TRANSIT, "import base64\n", "import base64\nimport binascii\n")
+    problems = _planted(TRANSIT, "import base64\n", "import base64\n\n")
     same(
         problems[:2],
         [
@@ -610,7 +915,9 @@ def test_plant_a_stale_allowlist_line_is_caught():
         ],
     )
     # with the wrapper no longer recognised, its `{mount}/` is not added, so no request matches either
-    assert len(problems) == 6 and all("('POST', 'sign/{key_name}')" not in p for p in problems[:2])
+    assert len(problems) == 6 and all(
+        "('POST', 'sign/{self.key_name}')" not in p for p in problems[:2]
+    )
 
 
 def test_plant_an_allowlisted_line_that_stops_passing_its_parameter_is_caught():
@@ -647,7 +954,8 @@ def test_template_folds_only_names_and_attributes():
         return _template(ast.parse(code, mode="eval").body)
 
     assert (
-        fold('f"{self.mount}/data/{self.path_prefix}{name}"') == "{mount}/data/{path_prefix}{name}"
+        fold('f"{self.mount}/data/{self.path_prefix}{name}"')
+        == "{self.mount}/data/{self.path_prefix}{name}"
     )
     assert fold('"sys/mounts"') == "sys/mounts"
     for code in (
@@ -802,7 +1110,7 @@ def test_plant_d1_a_wildcard_resource_with_no_bound_is_caught():
         _grant_changed("secrets/vault", bound=" "),
         [
             (
-                "grant R17: resource '{mount}/data/{path_prefix}*' holds a wildcard, so `bound` must say what "
+                "grant R17: resource '{mount}/data/{path_prefix}+' holds a wildcard, so `bound` must say what "
                 "limits it"
             )
         ],
@@ -934,23 +1242,16 @@ def test_a_module_with_no_policy_loads_as_none(tmp_path):
 
 
 def source_ids() -> dict[str, tuple[str, str, str, str]]:
-    out = {}
-    for line in SOURCES.read_text(encoding="utf-8").splitlines():
-        if line.startswith("#") or not line.strip():
-            continue
-        parts = [p.strip() for p in line.split(" | ")]
-        assert len(parts) == 5, line
-        assert parts[0] not in out, parts[0]
-        assert parts[1].startswith("https://") and re.fullmatch(r"[0-9a-f]{64}", parts[3]), line
-        assert parts[2], line
-        out[parts[0]] = (parts[1], parts[2], parts[3], parts[4])
+    return pp.source_ids(ROOT)
+
+
+def _unverified(policies: dict[str, pp.Policy]) -> set[tuple[str, str]]:
+    out: set[tuple[str, str]] = set()
+    for kind, p in policies.items():
+        out |= {(kind, g.id) for g in p.grants if g.verified is None}
+        out |= {(kind, f"free:{i}") for i, f in enumerate(p.free) if f.verified is None}
+        out |= {(kind, f"never:{n.name}") for n in p.never if n.verified is None}
     return out
-
-
-def _all_verified(policy: pp.Policy):
-    yield from ((f"grant {g.id}", g.verified) for g in policy.grants)
-    yield from ((f"free entry {i}", f.verified) for i, f in enumerate(policy.free))
-    yield from ((f"never {n.name}", n.verified) for n in policy.never)
 
 
 def name_problems(
@@ -959,23 +1260,16 @@ def name_problems(
     known: set[str],
     today: date,
 ) -> list[str]:
-    """ONE rule, no time dimension: a grant with `verified = None` fails unless its (kind, id) is pending.
-    Every source id must resolve in the sources file."""
-    unverified = {(k, g.id) for k, p in policies.items() for g in p.grants if g.verified is None}
+    """ONE rule: an entry (a grant, a free request, a never-list line) with `verified = None` fails unless
+    its (kind, entry) has a dated PENDING_NAMES entry. Every source id must resolve in the sources file."""
+    unverified = _unverified(policies)
     out = [
         f"{kind} {gid}: the name is not found in a vendor source (verified is None) and has no "
         "PENDING_NAMES entry"
         for kind, gid in sorted(unverified - set(pending))
     ]
     out += _pending_problems("PENDING_NAMES", pending, unverified, today)
-    for kind, policy in policies.items():
-        for where, verified in _all_verified(policy):
-            out += [
-                f"{kind} {where}: source id {s} is not in the sources file"
-                for s in (verified or ())[1:]
-                if s not in known
-            ]
-    return out
+    return out + pp.source_problems(policies, known)
 
 
 def test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves():
@@ -1001,7 +1295,7 @@ def _with_grant(kind: str, **changes) -> dict[str, pp.Policy]:
 def test_plant_an_unverified_grant_with_no_pending_entry_is_caught():
     policies = _with_grant("secrets/vault", verified=None)
     same(
-        name_problems(policies, {}, set(source_ids()), DECIDED),
+        name_problems(policies, PENDING_NAMES, set(source_ids()), DECIDED),
         [
             (
                 "secrets/vault R17: the name is not found in a vendor source (verified is None) and has no "
@@ -1009,9 +1303,12 @@ def test_plant_an_unverified_grant_with_no_pending_entry_is_caught():
             )
         ],
     )
-    entry = {("secrets/vault", "R17"): Pending("r", "t", DECIDED, date(2026, 12, 11))}
+    entry = {
+        **PENDING_NAMES,
+        ("secrets/vault", "R17"): Pending("r", "t", DECIDED, date(2026, 12, 10)),
+    }
     assert name_problems(policies, entry, set(source_ids()), DECIDED) == []
-    overdue = name_problems(policies, entry, set(source_ids()), date(2026, 12, 12))
+    overdue = name_problems(policies, entry, set(source_ids()), date(2026, 12, 11))
     assert len(overdue) == 1 and "is overdue" in overdue[0]
     stale = name_problems(_policies(), entry, set(source_ids()), DECIDED)
     same(stale, ["PENDING_NAMES ('secrets/vault', 'R17') is fixed or gone: delete the entry"])
@@ -1020,7 +1317,7 @@ def test_plant_an_unverified_grant_with_no_pending_entry_is_caught():
 def test_plant_a_source_id_that_does_not_resolve_is_caught():
     policies = _with_grant("secrets/vault", verified=("2026-11-11", "V-NOPE"))
     same(
-        name_problems(policies, {}, set(source_ids()), DECIDED),
+        name_problems(policies, PENDING_NAMES, set(source_ids()), DECIDED),
         ["secrets/vault grant R17: source id V-NOPE is not in the sources file"],
     )
 
@@ -1080,11 +1377,11 @@ def test_vault_text_in_page_mode_and_with_values():
     policies = _policies()
     assert pp.render_vault(policies["secrets/vault"]) == (
         "# R17: reads one named secret\n"
-        'path "{mount}/data/{path_prefix}*" {\n  capabilities = ["read"]\n}\n'
+        'path "{mount}/data/{path_prefix}+" {\n  capabilities = ["read"]\n}\n'
     )
     assert pp.render_vault(policies["secrets/vault"], VAULT_VALUES) == (
         "# R17: reads one named secret\n"
-        'path "secret/data/hadavin/acme/*" {\n  capabilities = ["read"]\n}\n'
+        'path "secret/data/hadavin/acme/+" {\n  capabilities = ["read"]\n}\n'
     )
     text = pp.render_vault(policies["signer/vault_transit"], TRANSIT_VALUES)
     same(
@@ -1104,7 +1401,8 @@ def test_an_empty_vault_prefix_is_refused_and_the_page_says_so_first():
     ):
         pp.render_vault(policy, {**VAULT_VALUES, "path_prefix": ""})
     section = pp._kind_section("secrets/vault", VAULT, policy)
-    assert section[2] == pp.WHOLE_MOUNT and "every secret in the mount" in pp.WHOLE_MOUNT
+    assert section[2] == pp.WHOLE_MOUNT
+    assert "every secret at the top level of the mount" in pp.WHOLE_MOUNT
 
 
 @pytest.mark.parametrize(
@@ -1168,9 +1466,11 @@ def test_the_page_states_its_limits_and_offers_text_for_the_three_kinds():
     for words in (
         "No test shows that a permission NAME is right",
         "No policy on this page has been confirmed on a real account",
-        "a real Vault server, in CI only",
+        "a real Vault server in CI only",
+        "These tests have not run yet",
         "no cluster in any test",
-        "OpenBao was never run",
+        "OpenBao (not yet run)",
+        "does not represent sign-in through an",
         "These 16 kinds sign in to an outside system and have no declared permission",
     ):
         assert words in text, words
@@ -1186,3 +1486,906 @@ def test_plant_a_page_that_differs_from_the_data_fails_the_check(tmp_path, monke
     assert pp.main(["--check"]) == 1
     assert "differs from the data" in capsys.readouterr().err
     assert pp.main(["--write"]) == 0 and pp.main(["--check"]) == 0
+
+
+# ============================================================ fix batch 1 (result review round 1 of 7af13809)
+
+# ------------------------------------------- M3: indirect or renamed access to a request sink (class plants)
+
+_FETCH_LINE = (
+    '        status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")\n'
+)
+_EVENTS_LINE = (
+    '        events, more_e = self._items(f"/api/v1/namespaces/{ns}/events", "k8s.list_events")\n'
+)
+
+
+def test_plant_p04b_an_added_request_through_getattr_with_a_literal_name_is_caught():
+    """The independent plant P04b, exactly: an ADDED Vault LIST request sent through `getattr(self, "authed")`."""
+    planted = (
+        '        getattr(self, "authed")("LIST", f"{self.mount}/metadata/{self.path_prefix}")\n'
+        + _FETCH_LINE
+    )
+    problems = _planted(VAULT, _FETCH_LINE, planted)
+    same(
+        problems,
+        [
+            f"{VAULT}:115: banned `getattr` of `authed`: only no name may be read this way in this module"
+        ],
+    )
+
+
+def test_plant_p09a_a_kubernetes_request_with_watch_in_its_query_is_caught():
+    """The independent plant P09a, exactly: `?watch=true` sent under the declared id `k8s.list_events`."""
+    planted = (
+        '        self._get(f"/api/v1/namespaces/{ns}/events?watch=true", "k8s.list_events")\n'
+        + _EVENTS_LINE
+    )
+    problems = _planted(KUBE, _EVENTS_LINE, planted)
+    same(
+        problems,
+        [
+            (
+                f"{KUBE}:247: query parameter `watch` is not one that `k8s.list_events` may carry (none): it "
+                "could change the verb the request needs"
+            ),
+            (
+                f"{KUBE}:247: query parameter `watch` is written in the module and is not on the list "
+                "['continue', 'limit', 'limitBytes', 'sinceTime', 'timestamps']"
+            ),
+        ],
+    )
+
+
+@pytest.mark.parametrize(
+    ("code", "message"),
+    [
+        ("getattr(p, 'authed')('GET', 'sys/mounts')", "banned `getattr` of `authed`"),
+        ("getattr(p, '_opener').open('https://x')", "banned `getattr` of `_opener`"),
+        (
+            "__import__('operator').methodcaller('authed', 'GET', 'sys/mounts')(p)",
+            "banned indirect call `__import__`",
+        ),
+        (
+            "operator.attrgetter('authed')(p)('GET', 'sys/mounts')",
+            "banned indirect call `attrgetter`",
+        ),
+        ("functools.partial(p.authed, 'GET')('sys/mounts')", "banned indirect call `partial`"),
+        ("vars(p)['authed']('GET', 'sys/mounts')", "banned indirect call `vars`"),
+        ("p.__dict__['_opener']", "banned indirect call `__dict__`"),
+        ("p._opener.open('https://x/v1/sys/mounts')", "raw HTTP call `open` outside"),
+        ("p._opener", "the HTTP opener `._opener` is used outside"),
+        ("urllib.request.urlretrieve('https://x')", "raw HTTP call `urlretrieve` outside"),
+    ],
+)
+def test_plant_each_indirect_way_to_a_request_is_caught(code, message):
+    text = _text(VAULT) + f"\n\ndef _planted(p, name):\n    return {code}\n"
+    line = text.count("\n")
+    problems = call_problems(VAULT, text, SHAPES[VAULT])
+    assert any(p.startswith(f"{VAULT}:{line}: {message}") for p in problems), problems
+
+
+@pytest.mark.parametrize(
+    ("statement", "message"),
+    [
+        (
+            "from operator import methodcaller as mc",
+            "banned indirect call `methodcaller` (imported)",
+        ),
+        ("from operator import attrgetter", "banned indirect call `attrgetter` (imported)"),
+        ("import httpx", "import `httpx` is not on this module's import list"),
+        ("import socket", "import `socket` is not on this module's import list"),
+        ("from http import client", "import `http:client` is not on this module's import list"),
+        ("from typing import Any as A", "import `typing:Any` is renamed to `A`"),
+    ],
+)
+@pytest.mark.parametrize("rel", sorted(SHAPES))
+def test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught(rel, statement, message):
+    """A new HTTP library, or a name that arrives only through an import alias, in any declared module."""
+    text = _text(rel) + f"\n\ndef _planted():\n    {statement}\n"
+    line = text.count("\n")
+    problems = call_problems(rel, text, SHAPES[rel])
+    assert any(p.startswith(f"{rel}:{line}: {message}") for p in problems), problems
+
+
+def test_every_import_of_a_declared_module_is_on_its_list_and_no_entry_is_stale():
+    for rel, shape in SHAPES.items():
+        found = set()
+        for node in ast.walk(ast.parse(_text(rel))):
+            if isinstance(node, ast.Import):
+                found |= {a.name for a in node.names}
+            if isinstance(node, ast.ImportFrom):
+                found |= {f"{node.module}:{a.name}" for a in node.names}
+        same(sorted(found), sorted(shape.imports))
+
+
+def test_plant_a_local_variable_named_like_a_setting_is_not_taken_for_the_setting():
+    """`self.` is kept when a path is folded: a path built from local names does not equal the declared one."""
+    code = (
+        "\n\ndef _planted(p, name):\n    mount, path_prefix = 'sys', ''\n"
+        "    return p.authed('GET', f'{mount}/data/{path_prefix}{name}')\n"
+    )
+    text = _text(VAULT) + code
+    line = text.count("\n")
+    same(
+        call_problems(VAULT, text, SHAPES[VAULT]),
+        [
+            (
+                f"{VAULT}:{line}: request ('GET', '{{mount}}/data/{{path_prefix}}{{name}}') has no grant and "
+                "no free entry in POLICY"
+            )
+        ],
+    )
+
+
+# Who may use the Vault client outside its own module: module -> the names it may import from it.
+VAULT_CLIENT = "hadavin_sdk.actions.secrets_vault"
+VAULT_CLIENT_USERS = {TRANSIT: {"VaultError", "connect"}}
+# The one place that names the module in a text (the kinds table loads `build` by name).
+VAULT_CLIENT_NAMED_IN_TEXT = {"src/hadavin_sdk/backends/table.py"}
+VAULT_CLASSES = {"VaultProvider", "VaultTransitSigner"}
+
+
+def client_user_problems(files: dict[str, str]) -> list[str]:
+    """Class: another module, or a subclass, sends requests with the Vault client, where rule A1 does not
+    look. Outside the declared modules nothing may import the client (beyond the listed names), name its
+    module in a text, subclass its classes or use `.authed`."""
+    out = []
+    for rel, text in sorted(files.items()):
+        if rel == VAULT:
+            continue
+        allowed = VAULT_CLIENT_USERS.get(rel, set())
+        for node in ast.walk(ast.parse(text)):
+            line = getattr(node, "lineno", 0)
+            names: set[str] = set()
+            if isinstance(node, ast.ImportFrom) and node.module == VAULT_CLIENT:
+                names = {a.name for a in node.names}
+            elif (
+                isinstance(node, ast.ImportFrom) and node.module == VAULT_CLIENT.rpartition(".")[0]
+            ):
+                names = (
+                    {"<the module>"}
+                    if any(a.name == "secrets_vault" for a in node.names)
+                    else set()
+                )
+            elif isinstance(node, ast.Import):
+                names = (
+                    {"<the module>"} if any(a.name == VAULT_CLIENT for a in node.names) else set()
+                )
+            if names - allowed:
+                out.append(
+                    f"{rel}:{line}: imports {sorted(names - allowed)} from the Vault client module; only "
+                    "the declared kind modules may, with the listed names"
+                )
+            if (
+                isinstance(node, ast.Constant)
+                and isinstance(node.value, str)
+                and "secrets_vault" in node.value
+                and "\n" not in node.value
+                and " " not in node.value
+                and rel not in VAULT_CLIENT_NAMED_IN_TEXT
+            ):
+                out.append(
+                    f"{rel}:{line}: names the Vault client module in a text (a load by name)"
+                )
+            if isinstance(node, ast.ClassDef) and rel not in SHAPES:
+                bases = {getattr(b, "attr", getattr(b, "id", None)) for b in node.bases}
+                if bases & VAULT_CLASSES:
+                    out.append(f"{rel}:{line}: class {node.name} extends a Vault client class")
+            if isinstance(node, ast.Attribute) and node.attr == "authed" and rel not in SHAPES:
+                out.append(
+                    f"{rel}:{line}: uses `.authed` of the Vault client outside a declared module"
+                )
+    return out
+
+
+def _src_files() -> dict[str, str]:
+    return {
+        p.relative_to(ROOT).as_posix(): p.read_text(encoding="utf-8")
+        for p in sorted((ROOT / "src").rglob("*.py"))
+    }
+
+
+def test_only_the_declared_modules_use_the_vault_client():
+    assert client_user_problems(_src_files()) == []
+
+
+@pytest.mark.parametrize(
+    ("code", "message"),
+    [
+        (
+            "from hadavin_sdk.actions.secrets_vault import connect\n",
+            "imports ['connect'] from the Vault client module",
+        ),
+        (
+            "from hadavin_sdk.actions import secrets_vault\n",
+            "imports ['<the module>'] from the Vault client module",
+        ),
+        (
+            "import hadavin_sdk.actions.secrets_vault\n",
+            "imports ['<the module>'] from the Vault client module",
+        ),
+        (
+            "import importlib\nm = importlib.import_module('hadavin_sdk.actions.secrets_vault')\n",
+            "names the Vault client module in a text",
+        ),
+        ("class Wide(VaultProvider):\n    pass\n", "class Wide extends a Vault client class"),
+        (
+            "def f(c):\n    return c.authed('LIST', 'sys/mounts')\n",
+            "uses `.authed` of the Vault client outside a declared module",
+        ),
+    ],
+)
+def test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught(code, message):
+    files = {**_src_files(), "src/hadavin_sdk/planted.py": code}
+    problems = client_user_problems(files)
+    assert len(problems) == 1 and problems[0].startswith("src/hadavin_sdk/planted.py:"), problems
+    assert message in problems[0]
+    widened = {
+        **_src_files(),
+        TRANSIT: _text(TRANSIT).replace(
+            "VaultError, connect", "VaultError, connect, VaultProvider"
+        ),
+    }
+    same(
+        client_user_problems(widened),
+        [
+            (
+                f"{TRANSIT}:21: imports ['VaultProvider'] from the Vault client module; only the declared kind "
+                "modules may, with the listed names"
+            )
+        ],
+    )
+
+
+@pytest.mark.parametrize(
+    ("call", "message"),
+    [
+        (
+            'self._call(f"/api/v1/namespaces/{ns}/pods/{ns}/log?follow=true", "k8s.pod_log")',
+            "query parameter `follow` is not one that `k8s.pod_log` may carry",
+        ),
+        (
+            'self._get(f"/api/v1/namespaces/{ns}/events?limit=5", "k8s.list_events")',
+            "query parameter `limit` is not one that `k8s.list_events` may carry",
+        ),
+        (
+            'self._get(f"/api/v1/namespaces/{ns}/events?", "k8s.list_events")',
+            "query parameter `` is not one that `k8s.list_events` may carry",
+        ),
+        (
+            'self._get(f"/api/v1/namespaces/{ns}/events" + "?watch=1", "k8s.list_events")',
+            "the path of `k8s.list_events` is not a literal",
+        ),
+        (
+            'self._get(f"/api/v1/namespaces/{scope}/events", "k8s.list_events")',
+            "holds a value that is neither `quote(name, safe='')` nor a setting",
+        ),
+        (
+            'self._get(f"/api/v1/namespaces/{ns}/secrets", "k8s.list_events")',
+            "the path does not fit the one bound to `k8s.list_events`",
+        ),
+        (
+            'self._get(f"/api/v1/namespaces/{ns}x/events", "k8s.list_events")',
+            "the path does not fit the one bound to `k8s.list_events`",
+        ),
+    ],
+)
+def test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught(call, message):
+    problems = _planted(KUBE, _EVENTS_LINE, f"        {call}\n" + _EVENTS_LINE)
+    assert any(p.startswith(f"{KUBE}:247: ") and message in p for p in problems), problems
+
+
+def test_the_query_parameters_the_kubernetes_module_writes_are_exactly_the_listed_ones():
+    """What the code can send today: paging on the two lists (the wrapper `_items`), three log parameters."""
+    tree = ast.parse(_text(KUBE))
+    by_function: dict[str, set[str]] = {}
+    for func in ast.walk(tree):
+        if isinstance(func, ast.FunctionDef):
+            for node in ast.walk(func):
+                if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    names = set(re.findall(r"[?&]([A-Za-z_]\w*)=", node.value))
+                    if names:
+                        by_function.setdefault(func.name, set()).update(names)
+    same(by_function, {"_items": set(PAGING), "query_logs": set(QUERY_OK["k8s.pod_log"])})
+    assert query_name_problems(KUBE, tree) == []
+
+
+# ------------------------------- M2 and the Vault binding: the grant is the request, no wider and no other
+
+
+def test_each_vault_grant_is_the_path_and_capability_of_its_one_request():
+    for rel in (VAULT, TRANSIT):
+        policy = pp.parse(_text(rel), rel)
+        assert binding_problems(rel, SHAPES[rel], policy) == []
+    r17 = _policies()["secrets/vault"].grants[0]
+    # the code reads exactly one path part below the prefix, and the grant covers exactly one
+    assert r17.resource == "{mount}/data/{path_prefix}+" and "*" not in r17.resource
+
+
+@pytest.mark.parametrize(
+    ("rel", "kind", "changes", "message"),
+    [
+        (
+            VAULT,
+            "secrets/vault",
+            {"resource": "{mount}/data/{path_prefix}*"},
+            (
+                "R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves "
+                "('{mount}/data/{path_prefix}+')"
+            ),
+        ),
+        (
+            TRANSIT,
+            "signer/vault_transit",
+            {"resource": "{transit_mount}/sign/*", "bound": "every key of the mount"},
+            (
+                "R18: resource '{transit_mount}/sign/*' is not the path of the request it serves "
+                "('{transit_mount}/sign/{key_name}')"
+            ),
+        ),
+        (
+            TRANSIT,
+            "signer/vault_transit",
+            {"name": "read"},
+            "R18: capability 'read' is not the one a POST request needs ('update')",
+        ),
+        (
+            TRANSIT,
+            "signer/vault_transit",
+            {"operations": (("POST", "{self.mount}/sign/{self.other}"),)},
+            "R18: `self.other` in the request path is not a known setting",
+        ),
+    ],
+)
+def test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught(
+    rel, kind, changes, message
+):
+    raw = _raw(kind)
+    raw["grants"] = ({**raw["grants"][0], **changes}, *raw["grants"][1:])
+    policy = pp.parse(f"POLICY = {raw!r}")
+    same(binding_problems(rel, SHAPES[rel], policy), [f"{rel} {message}"])
+
+
+def test_the_secret_name_is_one_path_part_checked_before_any_request():
+    """The grant's `+` stands for the secret name. The code refuses a name with a `/` before it sends."""
+    from hadavin_sdk.actions.secrets_vault import VaultProvider
+    from hadavin_sdk.errors import ConfigError
+
+    sent = []
+    provider = VaultProvider("http://127.0.0.1:9", lambda p: sent.append("login") or "t")
+    for name in ("a/b", "a/b/c", "..", ""):
+        with pytest.raises(ConfigError, match="Vault names here are"):
+            provider._fetch(name)
+    assert sent == []
+
+
+@pytest.mark.parametrize(
+    ("resource", "message"),
+    [
+        ("{mount}/data/x+", "`+` must be one whole path segment"),
+        ("{mount}/data/+x/y", "`+` must be one whole path segment"),
+        ("{mount}/{key_name}+", "`+` must be one whole path segment"),
+        ("{mount}/da*ta/x", "`*` is a Vault wildcard only as the last character"),
+        ("{mount}/data/+*", "Vault refuses `+*`"),
+    ],
+)
+def test_plant_a_vault_wildcard_in_a_form_the_server_does_not_read_is_caught(resource, message):
+    problems = _grant_changed("secrets/vault", resource=resource)
+    assert any(message in p for p in problems), problems
+
+
+def test_plant_d1_a_plus_wildcard_with_no_bound_is_caught():
+    same(
+        _grant_changed("signer/vault_transit", resource="{transit_mount}/sign/+"),
+        [
+            "grant R18: resource '{transit_mount}/sign/+' holds a wildcard, so `bound` must say what limits it"
+        ],
+    )
+    # for Kubernetes `+` is no wildcard and a plain resource needs no bound
+    assert _grant_changed("source/kubernetes", bound="") == []
+
+
+def test_a_filled_vault_path_with_a_misplaced_wildcard_is_refused():
+    policy = _policies()["secrets/vault"]
+    import dataclasses
+
+    grant = dataclasses.replace(policy.grants[0], resource="{mount}/data/{path_prefix}x+")
+    with pytest.raises(
+        ValueError, match="holds a wildcard in a place where Vault does not read one"
+    ):
+        pp.render_vault(dataclasses.replace(policy, grants=(grant,)), VAULT_VALUES)
+
+
+# ------------------------------------------------------- data rules added in fix batch 1 (m6, m7, m9, m15)
+
+
+def test_plant_m6_a_key_written_twice_in_the_policy_literal_is_refused():
+    text = _text(VAULT).replace(
+        '            "resource": "{mount}/data/{path_prefix}+",\n',
+        '            "resource": "{mount}/data/{path_prefix}+",\n            "resource": "{mount}/data/*",\n',
+    )
+    with pytest.raises(
+        pp.PolicyError, match="key 'resource' is written twice in one dict of POLICY"
+    ):
+        pp.parse(text, "planted.py")
+
+
+@pytest.mark.parametrize("key", ["id", "name", "resource", "reason", "bound", "applies_when"])
+@pytest.mark.parametrize("bad", ["\n", "\r", "\t", "\x00", "\x1b", "\x7f", " ", "\x85"])
+def test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused(key, bad):
+    value = "x" + bad + 'path "sys/*" {'
+    same(
+        _grant_changed("secrets/vault", **{key: value}),
+        [
+            (
+                f"POLICY.grants[0].{key}: holds a control or other non-printing character (a newline, a tab); "
+                "it would be copied into the rendered policy text"
+            )
+        ],
+    )
+
+
+def test_plant_m7_a_control_character_anywhere_else_in_the_literal_is_refused():
+    raw = _raw("secrets/vault")
+    raw["never"] = ({**raw["never"][0], "name": "sys/*\n"}, *raw["never"][1:])
+    raw["notes"] = ("a\nb",)
+    raw["credential"] = {**raw["credential"], "how": "x\ty"}
+    problems = pp.problems(raw)
+    assert len(problems) == 3 and all("non-printing character" in p for p in problems), problems
+
+
+@pytest.mark.parametrize(
+    "resource", ["{mount}/data/{prefix2}x", "{mount}/data/<name>", "{mount}/}"]
+)
+def test_plant_m9_a_brace_that_is_no_placeholder_is_refused_in_the_literal(resource):
+    problems = _grant_changed("signer/vault_transit", resource=resource)
+    assert len(problems) == 1 and "would stay in the rendered text unfilled" in problems[0], (
+        problems
+    )
+
+
+def test_plant_m9_a_placeholder_left_after_filling_is_refused():
+    import dataclasses
+
+    policy = _policies()["signer/vault_transit"]
+    grant = dataclasses.replace(policy.grants[0], resource="{transit_mount}/sign/{key_name}{Odd9}")
+    with pytest.raises(ValueError, match="a placeholder is left unfilled"):
+        pp.render_vault(
+            dataclasses.replace(policy, grants=(grant, policy.grants[1])), TRANSIT_VALUES
+        )
+    same(
+        _grant_changed("signer/vault_transit", resource="{transit_mount}/sign/{nosuch}"),
+        ["grant R18: placeholder 'nosuch' in the resource has no grammar, so it is refused"],
+    )
+
+
+def test_plant_m15_small_validation_gaps_are_closed():
+    problems = _grant_changed("secrets/vault", verified=("9999-99-99", "V-KV"))
+    same(problems, ["grant R17: verified must start with a real date such as 2026-11-11"])
+    raw = _raw("secrets/vault")
+    never = next(n for n in raw["never"] if n.get("capabilities"))
+    raw["never"] = ({**never, "capabilities": ("create", "wipe")},)
+    same(pp.problems(raw), ["never entry 0: 'wipe' is not a Vault capability"])
+    policies = _policies()
+    with pytest.raises(ValueError, match="'namespaces' names the same namespace twice"):
+        pp.render_kubernetes(
+            policies["source/kubernetes"], {**K8S_VALUES, "namespaces": "shop,shop"}
+        )
+    with pytest.raises(ValueError, match="'path_prefix' does not match its grammar"):
+        pp.render_vault(policies["secrets/vault"], {**VAULT_VALUES, "path_prefix": 7})
+    raw = _raw("signer/vault_transit")
+    raw["grants"] = (
+        raw["grants"][0],
+        {**raw["grants"][1], "operations": raw["grants"][0]["operations"]},
+    )
+    assert any("is claimed twice" in p for p in pp.problems(raw))
+
+
+# -------------------------------- evidence item (b): a well-formed value that names a reserved thing
+
+
+@pytest.mark.parametrize(
+    ("kind", "key", "value", "message"),
+    [
+        ("secrets/vault", "mount", "sys", "starts with Vault's own path 'sys'"),
+        ("secrets/vault", "mount", "auth", "starts with Vault's own path 'auth'"),
+        ("secrets/vault", "mount", "identity", "starts with Vault's own path 'identity'"),
+        ("secrets/vault", "mount", "cubbyhole", "starts with Vault's own path 'cubbyhole'"),
+        ("secrets/vault", "mount", "sys/kv", "starts with Vault's own path 'sys'"),
+        ("signer/vault_transit", "transit_mount", "sys", "starts with Vault's own path 'sys'"),
+        ("signer/vault_transit", "transit_mount", "auth/t", "starts with Vault's own path 'auth'"),
+        ("source/kubernetes", "namespaces", "kube-system", "one of the cluster's own namespaces"),
+        (
+            "source/kubernetes",
+            "namespaces",
+            "shop,kube-public",
+            "one of the cluster's own namespaces",
+        ),
+        (
+            "source/kubernetes",
+            "namespaces",
+            "kube-node-lease",
+            "one of the cluster's own namespaces",
+        ),
+        (
+            "source/kubernetes",
+            "SERVICE_ACCOUNT_NAMESPACE",
+            "kube-system",
+            "the cluster's own namespaces",
+        ),
+        ("source/kubernetes", "ROLE_NAME", "cluster-admin", "a built-in role name"),
+        ("source/kubernetes", "ROLE_NAME", "admin", "a built-in role name"),
+        ("source/kubernetes", "ROLE_NAME", "edit", "a built-in role name"),
+        ("source/kubernetes", "ROLE_NAME", "view", "a built-in role name"),
+        ("source/kubernetes", "ROLE_NAME", "system-node", "a built-in role name"),
+        ("source/kubernetes", "ROLE_NAME", "system.basic-user", "a built-in role name"),
+        ("source/kubernetes", "SERVICE_ACCOUNT", "default", "every pod gets by default"),
+    ],
+)
+def test_a_well_formed_value_that_names_a_reserved_thing_is_refused(kind, key, value, message):
+    policy = _policies()[kind]
+    base = {"secrets/vault": VAULT_VALUES, "signer/vault_transit": TRANSIT_VALUES}.get(
+        kind, K8S_VALUES
+    )
+    render = pp.RENDERERS[policy.platform][1]
+    with pytest.raises(ValueError, match=f"'{key}' is refused") as caught:
+        render(policy, {**base, key: value})
+    assert message in str(caught.value)
+
+
+def test_a_nested_mount_is_accepted_and_a_role_name_with_a_colon_never_passes_the_grammar():
+    policies = _policies()
+    text = pp.render_vault(policies["secrets/vault"], {**VAULT_VALUES, "mount": "team/kv"})
+    assert 'path "team/kv/data/hadavin/acme/+"' in text
+    with pytest.raises(ValueError, match="'ROLE_NAME' does not match its grammar"):
+        pp.render_kubernetes(
+            policies["source/kubernetes"], {**K8S_VALUES, "ROLE_NAME": "system:node"}
+        )
+
+
+@pytest.mark.parametrize(
+    ("kind", "key"),
+    [
+        ("secrets/vault", "mount"),
+        ("secrets/vault", "path_prefix"),
+        ("signer/vault_transit", "transit_mount"),
+        ("signer/vault_transit", "key_name"),
+        ("source/kubernetes", "namespaces"),
+        ("source/kubernetes", "ROLE_NAME"),
+        ("source/kubernetes", "SERVICE_ACCOUNT"),
+        ("source/kubernetes", "SERVICE_ACCOUNT_NAMESPACE"),
+    ],
+)
+def test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not(kind, key):
+    policy = _policies()[kind]
+    base = {"secrets/vault": VAULT_VALUES, "signer/vault_transit": TRANSIT_VALUES}.get(
+        kind, K8S_VALUES
+    )
+    render = pp.RENDERERS[policy.platform][1]
+    limit = pp.MAX_LENGTH[key]
+    tail = "/" if key == "path_prefix" else ""
+    assert render(policy, {**base, key: "a" * (limit - len(tail)) + tail})
+    with pytest.raises(ValueError, match=f"'{key}' is longer than {limit} characters"):
+        render(policy, {**base, key: "a" * (limit + 1 - len(tail)) + tail})
+    assert set(pp.MAX_LENGTH) == set(pp.GRAMMAR)
+
+
+# ---------------------------------------------- m10: the command line runs the data checks, one line each
+
+
+def _tree(tmp_path: Path) -> Path:
+    for rel in (*pp.KIND_MODULES.values(), pp.SOURCES):
+        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / rel).write_text(_text(rel), encoding="utf-8")
+    return tmp_path
+
+
+def _check(monkeypatch, capsys, root: Path) -> tuple[int, list[str]]:
+    monkeypatch.setattr(pp, "DATA_ROOT", root)
+    code = pp.main(["--check"])
+    return code, capsys.readouterr().err.splitlines()
+
+
+def test_the_data_of_this_repository_breaks_no_rule_the_command_line_checks():
+    assert pp.data_problems(ROOT) == []
+
+
+def test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1(
+    tmp_path, monkeypatch, capsys
+):
+    root = _tree(tmp_path)
+    assert pp.data_problems(root) == []
+    transit = root / TRANSIT
+    transit.write_text(_text(TRANSIT).replace('"id": "R18"', '"id": "R17"'), encoding="utf-8")
+    code, lines = _check(monkeypatch, capsys, root)
+    same(
+        (code, lines),
+        (1, ["policy page: grant id R17 is used by secrets/vault and by signer/vault_transit"]),
+    )
+    transit.write_text("def broken(:\n", encoding="utf-8")
+    same(
+        _check(monkeypatch, capsys, root),
+        (1, ["policy page: signer_vault.py: is not valid Python (line 1)"]),
+    )
+    transit.write_text("POLICY = None\n", encoding="utf-8")
+    same(
+        _check(monkeypatch, capsys, root),
+        (1, ["policy page: signer_vault.py: POLICY must be a dict (found NoneType)"]),
+    )
+    transit.unlink()
+    same(
+        _check(monkeypatch, capsys, root),
+        (1, ["policy page: signer_vault.py: cannot be read (FileNotFoundError)"]),
+    )
+    transit.write_text(_text(TRANSIT), encoding="utf-8")
+    stray = root / "src/hadavin_sdk/actions/secrets_new.py"
+    stray.write_text('POLICY = {"platform": "vault"}\n', encoding="utf-8")
+    same(
+        _check(monkeypatch, capsys, root),
+        (
+            1,
+            [
+                (
+                    "policy page: src/hadavin_sdk/actions/secrets_new.py: holds a POLICY but is not in "
+                    "KIND_MODULES, so no check reads it"
+                )
+            ],
+        ),
+    )
+    stray.unlink()
+    (root / VAULT).write_text(_text(VAULT).replace('"V-PARSE"', '"V-NOPE"'), encoding="utf-8")
+    code, lines = _check(monkeypatch, capsys, root)
+    same(
+        (code, lines),
+        (1, ["policy page: secrets/vault grant R17: source id V-NOPE is not in the sources file"]),
+    )
+
+
+def test_m10_write_makes_a_missing_docs_folder_and_check_then_passes(tmp_path, monkeypatch):
+    monkeypatch.setattr(pp, "ROOT", tmp_path)
+    real = pp.page
+    monkeypatch.setattr(pp, "page", lambda: real(ROOT))
+    assert not (tmp_path / "docs").exists()
+    assert pp.main(["--write"]) == 0 and pp.main(["--check"]) == 0
+
+
+# ------------------------------------------------------------------------- m12: sources are pinned and used
+
+
+def test_plant_a_source_row_that_names_a_branch_is_refused(tmp_path):
+    (tmp_path / pp.SOURCES).parent.mkdir(parents=True)
+    row = (
+        "K-X | https://raw.githubusercontent.com/kubernetes/website/main/a.md | {} | "
+        + "0" * 64
+        + " | n\n"
+    )
+    for commit in ("main", "branch main at 18f8e9f", "18f8e9f"):
+        (tmp_path / pp.SOURCES).write_text(row.format(commit), encoding="utf-8")
+        with pytest.raises(pp.PolicyError, match="K-X is not pinned"):
+            pp.source_ids(tmp_path)
+
+
+def test_every_source_row_is_pinned_and_is_used():
+    rows = source_ids()
+    assert len(rows) == 19
+    for key, (url, commit, _digest, _note) in rows.items():
+        assert f"/blob/{commit}/" in url, key
+    used = {
+        s
+        for p in _policies().values()
+        for _w, v in (
+            [(g.id, g.verified) for g in p.grants]
+            + [("free", f.verified) for f in p.free]
+            + [(n.name, n.verified) for n in p.never]
+        )
+        for s in (v or ())[1:]
+    }
+    engine_text = (ROOT / "tests/test_policy_engine.py").read_text(encoding="utf-8")
+    unused = sorted(k for k in rows if k not in used and f"source id {k} " not in engine_text)
+    same(unused, [])
+
+
+# -------------------------------------------------------------------- m5, m16: dated entries, what to do
+
+
+def test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far():
+    problems = kind_problems(
+        all_kinds(), set(pp.KIND_MODULES), PENDING_KINDS, NO_IDENTITY, date(2026, 12, 12)
+    )
+    assert problems, "no overdue entry is reported"
+    assert all("What to do: finish that work and delete the entry; or" in p for p in problems)
+    assert all("decide again" in p and "at most 92 days" in p for p in problems)
+    moved = {
+        **PENDING_KINDS,
+        "channel/slack": Pending("r", "t", DECIDED, date(2027, 2, 12)),
+    }
+    same(
+        kind_problems(all_kinds(), set(pp.KIND_MODULES), moved, NO_IDENTITY, DECIDED),
+        [
+            (
+                "PENDING_KINDS channel/slack: review_by 2027-02-12 is more than 92 days after the decision of "
+                "2026-11-11: a date may not be moved further than that"
+            )
+        ],
+    )
+    ahead = {
+        **PENDING_KINDS,
+        "channel/slack": Pending("r", "t", date(2027, 6, 1), date(2027, 7, 1)),
+    }
+    same(
+        kind_problems(all_kinds(), set(pp.KIND_MODULES), ahead, NO_IDENTITY, DECIDED),
+        ["PENDING_KINDS channel/slack: decided 2027-06-01 is in the future"],
+    )
+
+
+def test_plant_m16_an_unverified_never_list_name_needs_a_dated_entry():
+    same(
+        name_problems(_policies(), {}, set(source_ids()), DECIDED),
+        [
+            f"source/kubernetes never:{name}: the name is not found in a vendor source (verified is None) "
+            "and has no PENDING_NAMES entry"
+            for name in ("admin", "cluster-admin", "edit")
+        ],
+    )
+    assert sorted(_unverified(_policies())) == sorted(PENDING_NAMES)
+
+
+# ------------------------------------------------------------- M1 and the page: no claim without a run
+
+
+def test_m1_the_page_names_the_run_once_one_is_on_record(monkeypatch):
+    monkeypatch.setattr(pp, "ENGINE_RUN", ("2026-11-12", "CI run 1 of pull request 91"))
+    text = pp.page(ROOT)
+    assert "have not run yet" not in text
+    assert text.count("Last recorded run: 2026-11-12, CI run 1 of pull request 91.") == 3
+
+
+# ------------------------------------- one plain plant per rule, named by tests/policy_mutants.py as killer
+
+
+def _appended(rel: str, body: str) -> tuple[list[str], int]:
+    text = _text(rel) + f"\n\ndef _planted(p, name):\n    {body}\n"
+    return call_problems(rel, text, SHAPES[rel]), text.count("\n")
+
+
+def test_plant_an_import_of_another_http_library_is_caught():
+    problems, line = _appended(TRANSIT, "import httpx")
+    same(
+        problems,
+        [
+            (
+                f"{TRANSIT}:{line}: import `httpx` is not on this module's import list: a new way to send a "
+                "request must be looked at by a person first"
+            )
+        ],
+    )
+
+
+def test_plant_a_banned_name_that_arrives_through_an_import_alias_is_caught():
+    problems, line = _appended(VAULT, "from operator import methodcaller as mc")
+    same(
+        problems,
+        [
+            f"{VAULT}:{line}: banned indirect call `methodcaller` (imported)",
+            (
+                f"{VAULT}:{line}: import `operator:methodcaller` is not on this module's import list: a new "
+                "way to send a request must be looked at by a person first"
+            ),
+        ],
+    )
+
+
+def test_plant_attrgetter_on_a_sink_is_caught():
+    problems, line = _appended(VAULT, "return json.attrgetter('authed')(p)('GET', 'sys/mounts')")
+    same(problems, [f"{VAULT}:{line}: banned indirect call `attrgetter`"])
+
+
+def test_plant_the_http_opener_used_outside_the_one_sender_is_caught():
+    problems, line = _appended(VAULT, "return p._opener")
+    same(
+        problems,
+        [f"{VAULT}:{line}: the HTTP opener `._opener` is used outside ['__init__', 'call']"],
+    )
+
+
+def test_plant_the_old_star_form_of_the_vault_secrets_grant_is_caught():
+    """Result review Major 2 on head 7af13809: `<prefix>*` covers more than the one path part the code reads."""
+    text = _text(VAULT).replace(
+        '"resource": "{mount}/data/{path_prefix}+"', '"resource": "{mount}/data/{path_prefix}*"'
+    )
+    assert text != _text(VAULT)
+    same(
+        call_problems(VAULT, text, SHAPES[VAULT]),
+        [
+            (
+                f"{VAULT} R17: resource '{{mount}}/data/{{path_prefix}}*' is not the path of the request it "
+                "serves ('{mount}/data/{path_prefix}+')"
+            )
+        ],
+    )
+
+
+def test_plant_a_vault_capability_that_is_not_the_verbs_own_is_caught():
+    text = _text(TRANSIT).replace('"name": "update"', '"name": "read"')
+    assert text != _text(TRANSIT)
+    same(
+        call_problems(TRANSIT, text, SHAPES[TRANSIT]),
+        [f"{TRANSIT} R18: capability 'read' is not the one a POST request needs ('update')"],
+    )
+
+
+def test_plant_a_kubernetes_path_that_is_not_the_bound_one_is_caught():
+    planted = (
+        '        self._get(f"/api/v1/namespaces/{ns}/secrets", "k8s.list_events")\n' + _EVENTS_LINE
+    )
+    same(
+        _planted(KUBE, _EVENTS_LINE, planted),
+        [f"{KUBE}:247: the path does not fit the one bound to `k8s.list_events`"],
+    )
+
+
+def test_plant_a_newline_in_a_reason_is_caught():
+    same(
+        _grant_changed("secrets/vault", reason='reads one named secret\npath "sys/*" {'),
+        [
+            (
+                "POLICY.grants[0].reason: holds a control or other non-printing character (a newline, a tab); "
+                "it would be copied into the rendered policy text"
+            )
+        ],
+    )
+
+
+def test_plant_a_grant_that_names_no_call_is_caught_with_its_message():
+    same(
+        _grant_changed("signer/vault_transit", operations=()),
+        [
+            (
+                "grant R18: operations must be a non-empty tuple of 2-part tuples of text: every grant names "
+                "the call it serves"
+            )
+        ],
+    )
+
+
+def test_plant_a_url_in_verified_is_caught_with_its_message():
+    same(
+        _grant_changed(
+            "secrets/vault", verified=("2026-11-11", "https://developer.hashicorp.com/vault")
+        ),
+        [
+            (
+                "grant R17: verified source 'https://developer.hashicorp.com/vault' is not a source id (a URL "
+                "or host is never written here)"
+            )
+        ],
+    )
+
+
+def test_plant_the_mount_sys_is_refused():
+    with pytest.raises(ValueError, match="'mount' is refused: 'sys' starts with Vault's own path"):
+        pp.render_vault(_policies()["secrets/vault"], {**VAULT_VALUES, "mount": "sys"})
+
+
+def test_plant_a_300_character_value_is_refused():
+    with pytest.raises(ValueError, match="'key_name' is longer than 255 characters"):
+        pp.render_vault(
+            _policies()["signer/vault_transit"], {**TRANSIT_VALUES, "key_name": "k" * 300}
+        )
+
+
+def test_plant_another_module_importing_the_vault_client_is_caught():
+    files = {
+        **_src_files(),
+        "src/hadavin_sdk/planted.py": "from hadavin_sdk.actions.secrets_vault import connect\n",
+    }
+    same(
+        client_user_problems(files),
+        [
+            (
+                "src/hadavin_sdk/planted.py:1: imports ['connect'] from the Vault client module; only the "
+                "declared kind modules may, with the listed names"
+            )
+        ],
+    )

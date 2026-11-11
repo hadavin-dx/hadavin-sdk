@@ -196,7 +196,8 @@ def connect(settings, **kw: Any) -> VaultProvider:
 
 
 # The permissions this kind needs. Data only: nothing here is run. `tools/policy_page.py` reads this literal
-# from the source text, and `tests/test_policy_guard.py` fails when it differs from the calls written above.
+# from the source text. `tests/test_policy_guard.py` fails when it differs from the requests written above in
+# the call shapes that test lists; a request sent in a way no rule of that test lists is not seen.
 # `verified` = (date, source ids): the name and the path form were found, spelled so, in those vendor sources
 # (the ids resolve in tests/fixtures/policy_sources_2026-11-11.txt). `confirmed_live` = accepted by a real
 # account; None everywhere so far.
@@ -205,13 +206,16 @@ POLICY = {
     "credential": {
         "how": (
             "A Vault token: read from an environment variable (auth `token`), or issued at sign-in through "
-            "AppRole or through the pod's Kubernetes service account."
+            "AppRole (the role's secret id is read from an environment variable) or through the pod's "
+            "Kubernetes service account."
         ),
         "lifetime": "long",
         "exception": (
             "With auth `token` the operator supplies the token, so how long it lives is the operator's choice "
-            "and this kind cannot shorten it. A token issued through AppRole or Kubernetes sign-in lives as "
-            "long as the Vault role says. Ticket Q8a-1 covers the token from the environment."
+            "and this kind cannot shorten it. With auth `approle` the secret id in the environment is itself "
+            "a long-lived credential unless the operator gives it an expiry in Vault. A token issued through "
+            "AppRole or Kubernetes sign-in lives as long as the Vault role says. Ticket Q8a-1 covers the "
+            "credentials read from the environment."
         ),
     },
     "notes": (
@@ -220,20 +224,34 @@ POLICY = {
             "policy to every token unless told not to (`no_default_policy` when a token is created, "
             "`token_no_default_policy` on an AppRole or Kubernetes role)."
         ),
+        (
+            "In the call column, `{self.mount}` and `{self.path_prefix}` are the settings `mount` and "
+            "`path_prefix` as the object holds them, and `{name}` is the secret's name: one path part, "
+            "checked by the code before the request is sent."
+        ),
     ),
     "grants": (
         {
             "id": "R17",
             "name": "read",
-            "resource": "{mount}/data/{path_prefix}*",
+            "resource": "{mount}/data/{path_prefix}+",
             "bound": (
-                "the prefix is this deployment's `path_prefix` setting and must not be empty; the `*` then "
-                "covers only what lies under that prefix"
+                "the `+` stands for exactly one path part, the secret's name, directly under this "
+                "deployment's `path_prefix` setting (which must not be empty); nothing deeper is covered"
             ),
-            "operations": (("GET", "{mount}/data/{path_prefix}{name}"),),
+            "operations": (("GET", "{self.mount}/data/{self.path_prefix}{name}"),),
             "applies_when": "",
             "reason": "reads one named secret",
-            "verified": ("2026-11-11", "V-KV", "V-POL", "B-KV", "B-POL"),
+            "verified": (
+                "2026-11-11",
+                "V-KV",
+                "V-POL",
+                "V-ACL",
+                "V-PARSE",
+                "B-KV",
+                "B-POL",
+                "B-ACL",
+            ),
             "confirmed_live": None,
             "claims_unverified": (),
         },
@@ -265,9 +283,27 @@ POLICY = {
         {
             "type": "path",
             "name": "{mount}/data/*",
-            "capabilities": ("create", "update", "delete"),
-            "reason": "the reader could replace or remove what it reads",
+            "capabilities": ("create", "update", "patch", "delete"),
+            "reason": "the reader could replace, change or remove what it reads",
             "verified": ("2026-11-11", "V-POL", "V-KV"),
+        },
+        {
+            "type": "path",
+            "name": "{mount}/delete/*",
+            "reason": "marks versions of a secret as deleted",
+            "verified": ("2026-11-11", "V-KV", "B-KV"),
+        },
+        {
+            "type": "path",
+            "name": "{mount}/undelete/*",
+            "reason": "brings deleted versions of a secret back",
+            "verified": ("2026-11-11", "V-KV", "B-KV"),
+        },
+        {
+            "type": "path",
+            "name": "{mount}/subkeys/*",
+            "reason": "shows the field names inside secrets this kind was not asked to read",
+            "verified": ("2026-11-11", "V-KV", "B-KV"),
         },
         {
             "type": "path",

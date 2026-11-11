@@ -40,7 +40,7 @@ What this release does and does not promise, in one place.
 - A hold on a run is not retroactive, and no hold outlives 400 days. The purge step is due 60 s early by design (`TICK_SLACK_S`).
 - Every read is an audit event (principal, tool, `inputs_hash`, `output_hash`, `rows`) and a `tool_calls` row a client can review. Nothing of one client is kept in a process-global cache.
 - Kubernetes is the only built read-source kind; a second one is an SDK edit (trigger K5-ITO).
-- **Declared permissions.** [docs/least-privilege-policies.md](docs/least-privilege-policies.md) lists, for three backend kinds (`vault` secrets, `vault_transit` signer, `kubernetes` source), the permissions their code needs and what each test does and does not show. The other 16 kinds that sign in to an outside system have no declared permission set yet; the page names them.
+- **Declared permissions.** [docs/declared-permissions.md](docs/declared-permissions.md) lists, for three backend kinds (`vault` secrets, `vault_transit` signer, `kubernetes` source), the permissions their code needs and what each test does and does not show. The other 16 kinds that sign in to an outside system have no declared permission set yet; the page names them.
 
 ## Licence
 

@@ -11,11 +11,16 @@ What this file does:
 * `render_vault` and `render_kubernetes` turn a policy into text for the platform (Vault policy text; one
   Kubernetes Role and RoleBinding per namespace). A value put into a template must fully match its grammar,
   else the renderer refuses; it never escapes.
-* `python tools/policy_page.py --write` writes `docs/least-privilege-policies.md`; `--check` fails when the
-  committed page differs from what the data gives.
+* `python tools/policy_page.py --write` writes `docs/declared-permissions.md`; `--check` fails, with one line
+  per problem and exit code 1, when a data rule is broken or the committed page differs from what the data
+  gives. `--check` runs every check of the DATA that the tests run (`data_problems`): the rules of each
+  literal, the rules across kinds, every source id resolves in the sources file, and no module outside
+  `KIND_MODULES` holds a `POLICY`.
 
-What it does not do: it does not prove that a permission name is right, and it never contacts a server.
-Standard library only.
+What it does not do: it does not prove that a permission name is right, and it never contacts a server. Three
+checks need this package imported or today's date and so live only in tests/test_policy_guard.py: the requests
+written in a module equal the declared ones, every kind is declared or on a dated list, and every placeholder
+is a real setting of the kind. Standard library only.
 """
 
 from __future__ import annotations
@@ -25,11 +30,44 @@ import ast
 import json
 import re
 import sys
+from collections.abc import Iterator
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PAGE = "docs/least-privilege-policies.md"
+DATA_ROOT = ROOT  # where the kind modules and the sources file are read from
+PAGE = "docs/declared-permissions.md"
+SOURCES = "tests/fixtures/policy_sources_2026-11-11.txt"
+# The Vault server tests (tests/test_policy_engine.py) run only where a real server is given: the CI service.
+# None: no run of them is on record, and the page says so. Set to (date, where the run can be read) only
+# after a CI run showed them as passed, not skipped.
+ENGINE_RUN: tuple[str, str] | None = None
+# The one server image those tests run against (.github/workflows/ci.yml; a test compares) and its licence
+# as noted in src/hadavin_sdk/actions/secrets_vault.py.
+ENGINE_IMAGE = "hashicorp/vault:2.2.0"
+ENGINE_LICENCE = "Business Source License 1.1 (source-available, not open source)"
+# Per Vault kind: the requests the server tests send with the runtime token and expect to be refused (403).
+# tests/test_policy_engine.py fails when its request lists differ from these, so the page states what is sent.
+REFUSALS: dict[str, tuple[str, ...]] = {
+    "secrets/vault": (
+        "read two levels below the prefix",
+        "read outside the prefix",
+        "write under the prefix",
+        "delete under the prefix",
+        "read the metadata path",
+        "destroy a version",
+        "read the server's mounts",
+    ),
+    "signer/vault_transit": (
+        "sign with another key",
+        "change the key's settings",
+        "export the key",
+        "back the key up",
+        "read the server's mounts",
+        "delete the key",
+    ),
+}
 
 # kind ("family/name") -> the module that holds its POLICY literal.
 KIND_MODULES: dict[str, str] = {
@@ -57,26 +95,15 @@ NOT_YET_DECLARED: tuple[str, ...] = (
     "detector/bedrock_guardrail",
     "channel/slack",
 )
-# Per kind: what a test does, and what no test covers. Printed on the page as written here.
+# Per kind: (do the declared calls equal the written ones, what the engine check is, what no test covers).
+# For the two Vault kinds the engine text is built by `engine_text` from REFUSALS and ENGINE_RUN.
+_VAULT_GAP = (
+    "the open alternative OpenBao (not yet run); sign-in through AppRole or Kubernetes roles, where the role "
+    "and identity groups can add policies; any never-list line that is not among the requests named above"
+)
 COVERAGE: dict[str, tuple[str, str, str]] = {
-    "secrets/vault": (
-        "yes",
-        (
-            "a real Vault server, in CI only: the generated policy text is given to a token that holds nothing "
-            "else; the read works; with the grant removed the read is refused; a read outside the prefix, a "
-            "write, the metadata and destroy paths and `sys/mounts` are refused"
-        ),
-        "OpenBao was never run; sign-in through AppRole or Kubernetes roles; a real deployment's own mounts",
-    ),
-    "signer/vault_transit": (
-        "yes",
-        (
-            "a real Vault server, in CI only: signing and reading the public key work; with either grant removed "
-            "that request is refused; signing with another key, changing the key's settings, exporting it, "
-            "backing it up and deleting it are refused"
-        ),
-        "OpenBao was never run; sign-in through AppRole or Kubernetes roles",
-    ),
+    "secrets/vault": ("yes", "", _VAULT_GAP + "; a real deployment's own mounts"),
+    "signer/vault_transit": ("yes", "", _VAULT_GAP),
     "source/kubernetes": (
         "yes",
         (
@@ -91,9 +118,34 @@ COVERAGE: dict[str, tuple[str, str, str]] = {
     ),
 }
 
+
+def engine_state() -> str:
+    """One sentence: have the Vault server tests run? Never claims a run that is not on record."""
+    if ENGINE_RUN is None:
+        return "These tests have not run yet: no run of them is on record."
+    return f"Last recorded run: {ENGINE_RUN[0]}, {ENGINE_RUN[1]}."
+
+
+def engine_text(kind: str) -> str:
+    if kind not in REFUSALS:
+        return COVERAGE[kind][1]
+    return (
+        f"checked by tests that run against a real Vault server in CI only (image `{ENGINE_IMAGE}`). "
+        f"{engine_state()} What those tests check: a token that holds only the generated policy text can "
+        "make the kind's own requests; with one grant removed, the request that grant serves is answered "
+        "403 (refused); and each of these requests is answered 403: " + "; ".join(REFUSALS[kind])
+    )
+
+
 PLATFORMS = ("vault", "kubernetes_rbac")
 NEVER_TYPES = ("action", "role", "path", "resource", "prose")
 VAULT_CAPABILITIES = ("create", "read", "update", "patch", "delete", "list")
+VAULT_NEVER_CAPABILITIES = (*VAULT_CAPABILITIES, "sudo")
+# Vault policy paths (sources V-POL, V-ACL, V-PARSE): `*` is a wildcard only as the LAST character (it then
+# matches everything below, any depth); `+` stands for exactly ONE whole path segment; `+*` is refused by the
+# server. A setting whose value always ends in `/` may stand right before a `+`.
+VAULT_WILDCARDS = ("*", "+")
+ENDS_IN_SLASH = ("path_prefix",)
 _TOP = {"platform", "credential", "grants", "free", "never", "notes"}
 _GRANT = {
     "id",
@@ -133,9 +185,55 @@ GRAMMAR: dict[str, str] = {
     "SERVICE_ACCOUNT_NAMESPACE": _LABEL,
 }
 KUBERNETES_OPERATOR_VALUES = ("ROLE_NAME", "SERVICE_ACCOUNT", "SERVICE_ACCOUNT_NAMESPACE")
+# A value can pass its character grammar and still name a privileged or reserved thing. Such a value can
+# never be right for this identity, so no text is produced for it (refused, not warned about).
+# Vault: a mount whose first part is one of the server's own top-level paths.
+RESERVED_MOUNTS = ("sys", "auth", "identity", "cubbyhole")
+# Kubernetes: the cluster's own namespaces (`kube-` prefix); role names that are, or look like, the built-in
+# roles; the ServiceAccount `default`, which every pod of a namespace gets when none is named, so it is not
+# one identity per function.
+RESERVED_NAMESPACE_PREFIX = "kube-"
+RESERVED_ROLE_NAMES = ("cluster-admin", "admin", "edit", "view")
+RESERVED_ROLE_PREFIX = "system"
+RESERVED_SERVICE_ACCOUNTS = ("default",)
+# Longest value per placeholder. Kubernetes: 63 for a namespace name and 253 for the other names, FROM
+# MEMORY (the names page is not among the pinned sources). Vault: no limit was found in the pinned sources;
+# 255 is this file's own bound.
+MAX_LENGTH: dict[str, int] = {
+    "mount": 255,
+    "transit_mount": 255,
+    "path_prefix": 255,
+    "key_name": 255,
+    "namespaces": 63,
+    "ROLE_NAME": 253,
+    "SERVICE_ACCOUNT": 253,
+    "SERVICE_ACCOUNT_NAMESPACE": 63,
+}
+
+
+def reserved_problem(key: str, part: str) -> str | None:
+    """Why this value, though well-formed, is refused; None when it is not reserved."""
+    if key in ("mount", "transit_mount") and part.split("/")[0] in RESERVED_MOUNTS:
+        return (
+            f"starts with Vault's own path {part.split('/')[0]!r}, which is never a secrets mount"
+        )
+    if key in ("namespaces", "SERVICE_ACCOUNT_NAMESPACE") and part.startswith(
+        RESERVED_NAMESPACE_PREFIX
+    ):
+        return "is one of the cluster's own namespaces (`kube-` prefix)"
+    if key == "ROLE_NAME" and (
+        part in RESERVED_ROLE_NAMES or part.startswith(RESERVED_ROLE_PREFIX)
+    ):
+        return "is, or looks like, a built-in role name"
+    if key == "SERVICE_ACCOUNT" and part in RESERVED_SERVICE_ACCOUNTS:
+        return "is the ServiceAccount every pod gets by default, not an identity of its own"
+    return None
+
+
 WHOLE_MOUNT = (
-    "Read first: the `path_prefix` setting is empty by default, and with an empty prefix this kind reads "
-    "every secret in the mount. Set a prefix. No copy-ready text is produced for an empty prefix."
+    "Read first: the `path_prefix` setting is empty by default, and with an empty prefix this kind can read "
+    "every secret at the top level of the mount. Set a prefix. No copy-ready text is produced for an empty "
+    "prefix."
 )
 
 
@@ -210,14 +308,64 @@ def _keys(where: str, raw: object, allowed: set[str], required: set[str]) -> lis
     return out + [f"{where}: missing key {k!r}" for k in sorted(required - set(raw))]
 
 
+def _is_date(text: str) -> bool:
+    """A real calendar date written YYYY-MM-DD (9999-99-99 is not one)."""
+    if not _DATE.fullmatch(text):
+        return False
+    try:
+        date.fromisoformat(text)
+    except ValueError:
+        return False
+    return True
+
+
+def _unprintable(where: str, value: object) -> Iterator[str]:
+    """Where a text anywhere in the literal holds a control or other non-printing character (a newline, a
+    tab, a line separator). Such a character would end a comment in the rendered text, and what follows it
+    would be read by the platform as policy that no rule here ever saw."""
+    if isinstance(value, str):
+        if not value.isprintable():
+            yield where
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            yield from _unprintable(f"{where}.{key}" if isinstance(key, str) else where, key)
+            yield from _unprintable(f"{where}.{key}", item)
+    elif isinstance(value, tuple | list):
+        for i, item in enumerate(value):
+            yield from _unprintable(f"{where}[{i}]", item)
+
+
+def _vault_path_problems(where: str, resource: str) -> list[str]:
+    """The wildcard forms the Vault server itself accepts (see VAULT_WILDCARDS)."""
+    out = []
+    if "*" in resource[:-1]:
+        out.append(
+            f"{where}: resource {resource!r}: `*` is a Vault wildcard only as the last character"
+        )
+    if "+*" in resource:
+        out.append(f"{where}: resource {resource!r}: Vault refuses `+*`")
+    for found in re.finditer(r"\+", resource):
+        before, after = resource[: found.start()], resource[found.end() :]
+        field = re.search(r"\{([a-z_]+)\}$", before)
+        whole = (
+            before == "" or before.endswith("/") or (field and field.group(1) in ENDS_IN_SLASH)
+        ) and (after == "" or after.startswith("/"))
+        if not whole:
+            out.append(
+                f"{where}: resource {resource!r}: `+` must be one whole path segment (Vault matches it "
+                "only so)"
+            )
+    return out
+
+
 def _verified(where: str, value: object) -> list[str]:
     """None, or (date, source id, ...). A source id is a key of the sources file: never a URL or a host."""
     if value is None:
         return []
     if not isinstance(value, tuple) or not _texts(value) or len(value) < 2:
         return [f"{where}: verified must be None or (date, source id, ...)"]
-    if not _DATE.fullmatch(value[0]):
-        return [f"{where}: verified must start with a date such as 2026-11-11"]
+    if not _is_date(value[0]):
+        return [f"{where}: verified must start with a real date such as 2026-11-11"]
     return [
         f"{where}: verified source {s!r} is not a source id (a URL or host is never written here)"
         for s in value[1:]
@@ -252,15 +400,28 @@ def _grant_problems(where: str, g: dict, platform: str) -> list[str]:
         out.append(f"{where}: name {g['name']!r} must be one permission name with no * or ?")
     if not g["resource"]:
         out.append(f"{where}: resource is empty")
-    if ("*" in g["resource"] or "?" in g["resource"]) and not g["bound"].strip():
+    wildcards = ("*", "?", "+") if platform == "vault" else ("*", "?")
+    if any(w in g["resource"] for w in wildcards) and not g["bound"].strip():
         out.append(
             f"{where}: resource {g['resource']!r} holds a wildcard, so `bound` must say what limits it"
+        )
+    if platform == "vault":
+        out += _vault_path_problems(where, g["resource"])
+    for name in _FIELD.findall(g["resource"]) + _OPERATOR.findall(g["resource"]):
+        if name not in GRAMMAR:
+            out.append(
+                f"{where}: placeholder {name!r} in the resource has no grammar, so it is refused"
+            )
+    if re.search(r"[{}<>]", _OPERATOR.sub("", _FIELD.sub("", g["resource"]))):
+        out.append(
+            f"{where}: resource {g['resource']!r} holds a brace or an angle bracket that is not a "
+            "`{setting}` or `<NAME>` placeholder; it would stay in the rendered text unfilled"
         )
     if not g["reason"].strip():
         out.append(f"{where}: reason is empty")
     out += _verified(where, g["verified"])
     live = g["confirmed_live"]
-    if live is not None and not (_texts(live) and len(live) == 2 and _DATE.fullmatch(live[0])):
+    if live is not None and not (_texts(live) and len(live) == 2 and _is_date(live[0])):
         out.append(f"{where}: confirmed_live must be None or (date, masked account)")
     if not _texts(g["claims_unverified"]):
         out.append(f"{where}: claims_unverified must be a tuple of text")
@@ -285,6 +446,8 @@ def _never_problems(where: str, n: dict) -> list[str]:
     caps = n.get("capabilities", ())
     if not _texts(caps) or (caps and n["type"] != "path"):
         out.append(f"{where}: capabilities is a tuple of text, on a `path` entry only")
+    elif unknown := sorted(set(caps) - set(VAULT_NEVER_CAPABILITIES)):
+        out.append(f"{where}: {unknown[0]!r} is not a Vault capability")
     return out + _verified(where, n["verified"])
 
 
@@ -293,6 +456,12 @@ def problems(raw: object) -> list[str]:
     out = _keys("POLICY", raw, _TOP, _TOP - {"notes"})
     if out or not isinstance(raw, dict):
         return out
+    if bad := sorted(set(_unprintable("POLICY", raw))):
+        return [
+            f"{where}: holds a control or other non-printing character (a newline, a tab); it would be "
+            "copied into the rendered policy text"
+            for where in bad
+        ]
     platform = raw["platform"]
     if platform not in PLATFORMS:
         return [f"POLICY: unknown platform {platform!r}"]
@@ -337,14 +506,23 @@ def problems(raw: object) -> list[str]:
                 f"resource {r!r} is on two grants: one Vault path takes one grant"
                 for r in sorted({r for r in seen if seen.count(r) > 1})
             ]
+        claimed = [op for entry in (*raw["grants"], *raw["free"]) for op in entry["operations"]]
+        out += [
+            f"request {op!r} is claimed twice: one request is served by one grant or one free entry"
+            for op in sorted({op for op in claimed if claimed.count(op) > 1})
+        ]
     return out
 
 
 def literal(text: str, where: str = "module") -> object | None:
     """The evaluated `POLICY` literal of one module's source text, or None when the module has none."""
+    try:
+        body = ast.parse(text).body
+    except SyntaxError as exc:
+        raise PolicyError(f"{where}: is not valid Python (line {exc.lineno})") from None
     found = [
         node
-        for node in ast.parse(text).body
+        for node in body
         if isinstance(node, ast.Assign | ast.AnnAssign)
         and any(
             isinstance(t, ast.Name) and t.id == "POLICY"
@@ -355,12 +533,23 @@ def literal(text: str, where: str = "module") -> object | None:
         return None
     if len(found) > 1 or found[0].value is None:
         raise PolicyError(f"{where}: POLICY must be assigned exactly once")
+    for node in ast.walk(found[0].value):
+        if isinstance(node, ast.Dict):
+            keys = [k.value for k in node.keys if isinstance(k, ast.Constant)]
+            if twice := sorted({str(k) for k in keys if keys.count(k) > 1}):
+                raise PolicyError(
+                    f"{where}: key {twice[0]!r} is written twice in one dict of POLICY (line {node.lineno}); "
+                    "Python would silently keep the later one"
+                )
     try:
-        return ast.literal_eval(found[0].value)
+        value = ast.literal_eval(found[0].value)
     except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
         raise PolicyError(
             f"{where}: POLICY is not a pure literal (a call, a name or an expression is never run)"
         ) from None
+    if not isinstance(value, dict):
+        raise PolicyError(f"{where}: POLICY must be a dict (found {type(value).__name__})")
+    return value
 
 
 def parse(text: str, where: str = "module") -> Policy | None:
@@ -385,11 +574,102 @@ def parse(text: str, where: str = "module") -> Policy | None:
 
 def load(path: Path) -> Policy | None:
     """The POLICY of the module at `path`, read from its source text. None: the module declares none."""
-    return parse(Path(path).read_text(encoding="utf-8"), Path(path).name)
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise PolicyError(f"{Path(path).name}: cannot be read ({type(exc).__name__})") from None
+    return parse(text, Path(path).name)
 
 
 def load_all(root: Path = ROOT) -> dict[str, Policy | None]:
     return {kind: load(root / rel) for kind, rel in KIND_MODULES.items()}
+
+
+def stray_modules(root: Path) -> list[str]:
+    """A `POLICY` in a module that KIND_MODULES does not name is read by nothing: report it."""
+    known, out = set(KIND_MODULES.values()), []
+    for path in sorted((root / "src").rglob("*.py")):
+        rel = path.relative_to(root).as_posix()
+        if rel in known:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+            holds = "POLICY" in text and literal(text, rel) is not None
+        except PolicyError:
+            holds = True
+        except (OSError, UnicodeDecodeError):
+            holds = False
+        if holds:
+            out.append(f"{rel}: holds a POLICY but is not in KIND_MODULES, so no check reads it")
+    return out
+
+
+def source_ids(root: Path) -> dict[str, tuple[str, str, str, str]]:
+    """id -> (url, commit, sha256, note) from the sources file. Every row is pinned: the commit is written
+    in the URL, never a branch name. PolicyError names the first bad row."""
+    try:
+        lines = (root / SOURCES).read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise PolicyError(f"{SOURCES}: cannot be read ({type(exc).__name__})") from None
+    out: dict[str, tuple[str, str, str, str]] = {}
+    for n, line in enumerate(lines, 1):
+        if line.startswith("#") or not line.strip():
+            continue
+        parts = [p.strip() for p in line.split(" | ")]
+        where = f"{SOURCES}:{n}"
+        if len(parts) != 5:
+            raise PolicyError(f"{where}: a row has five columns: id | url | commit | sha256 | note")
+        key, url, commit, digest, note = parts
+        if not _SOURCE_ID.fullmatch(key) or key in out:
+            raise PolicyError(f"{where}: id {key!r} is not a source id or is used twice")
+        if not re.fullmatch(r"[0-9a-f]{7,40}", commit) or f"/{commit}/" not in url:
+            raise PolicyError(
+                f"{where}: {key} is not pinned: the commit column must be a commit id that is written in "
+                "the URL (a branch name moves)"
+            )
+        if not url.startswith("https://") or not re.fullmatch(r"[0-9a-f]{64}", digest) or not note:
+            raise PolicyError(f"{where}: {key} needs an https URL, a sha256 and a note")
+        out[key] = (url, commit, digest, note)
+    return out
+
+
+def source_problems(policies: dict[str, Policy], known: set[str]) -> list[str]:
+    """Every source id named in a `verified` field resolves in the sources file."""
+    out = []
+    for kind, policy in policies.items():
+        entries = [(f"grant {g.id}", g.verified) for g in policy.grants]
+        entries += [(f"free entry {i}", f.verified) for i, f in enumerate(policy.free)]
+        entries += [(f"never {n.name}", n.verified) for n in policy.never]
+        for where, verified in entries:
+            out += [
+                f"{kind} {where}: source id {s} is not in the sources file"
+                for s in (verified or ())[1:]
+                if s not in known
+            ]
+    return out
+
+
+def data_problems(root: Path | None = None) -> list[str]:
+    """Every data problem `--check` reports, one line each (empty: the page may be written): each literal's
+    own rules, the rules across kinds, modules that hold a POLICY nobody reads, and source ids."""
+    root = DATA_ROOT if root is None else root
+    out, policies = [], {}
+    for kind, rel in KIND_MODULES.items():
+        try:
+            policy = load(root / rel)
+        except PolicyError as exc:
+            out.append(str(exc))
+            continue
+        if policy is None:
+            out.append(f"no POLICY in {rel}")
+        else:
+            policies[kind] = policy
+    out += cross_problems(policies) + stray_modules(root)
+    try:
+        out += source_problems(policies, set(source_ids(root)))
+    except PolicyError as exc:
+        out.append(str(exc))
+    return out
 
 
 def cross_problems(policies: dict[str, Policy]) -> list[str]:
@@ -444,14 +724,22 @@ def _checked(policy: Policy, values: dict[str, str]) -> dict[str, str]:
             value if isinstance(value, str) else ""
         )  # anything that is not text fails the grammar
         parts = text.split(",") if key == "namespaces" else [text]
+        if len(set(parts)) != len(parts):
+            raise ValueError(f"policy value {key!r} names the same namespace twice")
         for part in parts:
             if not re.fullmatch(grammar, part) or {".", ".."} & set(part.split("/")):
-                if key == "path_prefix" and part == "":
+                if key == "path_prefix" and value == "":
                     raise ValueError(
                         "policy value 'path_prefix' is empty: an empty prefix means the whole mount, and "
                         "no policy text is produced for that"
                     )
                 raise ValueError(f"policy value {key!r} does not match its grammar: {part!r}")
+            if len(part) > MAX_LENGTH[key]:
+                raise ValueError(
+                    f"policy value {key!r} is longer than {MAX_LENGTH[key]} characters"
+                )
+            if why := reserved_problem(key, part):
+                raise ValueError(f"policy value {key!r} is refused: {part!r} {why}")
     return values
 
 
@@ -459,7 +747,10 @@ def _fill(template: str, values: dict[str, str] | None) -> str:
     if values is None:
         return template
     filled = _FIELD.sub(lambda m: values[m.group(1)], template)
-    return _OPERATOR.sub(lambda m: values[m.group(1)], filled)
+    filled = _OPERATOR.sub(lambda m: values[m.group(1)], filled)
+    if re.search(r"[{}<>]", filled):
+        raise ValueError(f"a placeholder is left unfilled in {filled!r}: no text is produced")
+    return filled
 
 
 def render_vault(policy: Policy, values: dict[str, str] | None = None) -> str:
@@ -474,6 +765,12 @@ def render_vault(policy: Policy, values: dict[str, str] | None = None) -> str:
         if g.name not in VAULT_CAPABILITIES:
             raise ValueError(f"{g.id}: {g.name!r} is not a Vault capability")
         path = _fill(g.resource, values)
+        if values is not None and (
+            "*" in path[:-1] or any("+" in part and part != "+" for part in path.split("/"))
+        ):
+            raise ValueError(
+                f"{g.id}: {path!r} holds a wildcard in a place where Vault does not read one"
+            )
         blocks.append(
             f"# {g.id}: {g.reason}\npath {json.dumps(path)} {{\n  capabilities = [{json.dumps(g.name)}]\n}}\n"
         )
@@ -614,10 +911,10 @@ def _kind_section(kind: str, rel: str, policy: Policy) -> list[str]:
     out += ["", f"Credential: {policy.how} Lifetime: {policy.lifetime}."]
     if policy.exception:
         out.append(f"Exception for the long-lived case: {policy.exception}")
-    code, engine, gap = COVERAGE[kind]
+    code, _, gap = COVERAGE[kind]
     out += [
         "",
-        f"Tested: declared calls equal the calls written in the module: {code}. Engine: {engine}.",
+        f"Tested: declared calls equal the calls written in the module: {code}. Engine: {engine_text(kind)}.",
         f"Not covered by any test: {gap}.",
         "",
     ]
@@ -645,8 +942,12 @@ def _kind_section(kind: str, rel: str, policy: Policy) -> list[str]:
     return out
 
 
-HEAD = """\
-# Least-privilege policies per backend kind
+def head() -> str:
+    return _HEAD.replace("ENGINE_STATE", engine_state())
+
+
+_HEAD = f"""\
+# Declared permissions per backend kind
 
 Generated by `python tools/policy_page.py --write` from the `POLICY` literal in each kind module. Do not edit by
 hand: a test regenerates this page and fails when it differs.
@@ -659,15 +960,32 @@ code needs (one reason each), the requests that need no permission, and what the
 - Three backend kinds ship a declared permission set tied to the calls their code makes: `vault` (secrets),
   `vault_transit` (signer) and `kubernetes` (source). A test reads each module and fails when a request written
   there by the listed call shapes is not declared, or when a declared request is no longer made.
-- The two Vault kinds are also refused by a real Vault server, in CI only: the generated policy text is the only
-  thing the test token holds, and the requests on the never-list are refused. Kubernetes is checked against the
-  code's own read-only rule, not against a cluster.
+- For the two Vault kinds there are also tests that give the generated policy text to a real Vault server and
+  check that it refuses the requests named per kind below. They run in CI only. ENGINE_STATE Until a run is
+  on record, read every "refused" on this page as what those tests check, not as something already seen.
+  Kubernetes is checked against the code's own read-only rule, not against a cluster.
+- Those server tests run against one server image only: `{ENGINE_IMAGE}`, licence: {ENGINE_LICENCE}.
+  The open alternative OpenBao (licence MPL-2.0) serves the same API by its own statement; it has not yet been
+  run by these tests.
+- The test token holds the generated policy and nothing else. That does not represent sign-in through an
+  AppRole or a Kubernetes role: there the role's own settings and the identity groups of the signed-in entity
+  can add further policies, and the token then may do more than this page lists. Check the role.
 - The call check is name-based. It sees requests written in the kind module in these shapes: `.call(...)`,
   `.authed(...)` and the Transit signer's `._call(...)` for Vault; `._fetch`, `._call`, `._get` and `._items`
-  with a constant operation id for Kubernetes. It does not see a client object handed to another module.
+  with a constant operation id for Kubernetes. Indirect ways to reach those calls (`getattr`, a new import, a
+  raw HTTP call outside the one sending function, another module importing the Vault client) are refused by
+  listed rules, not by proof: a way to send a request that no rule lists is not seen.
 - No test shows that a permission NAME is right. That comes from a separate check of the vendor's own
-  documentation sources on the date shown per row (`tests/fixtures/policy_sources_2026-11-11.txt` lists them).
-  The rendered vendor pages were not reachable; the documentation source files they are built from were read.
+  documentation and source files on the date shown per row (`tests/fixtures/policy_sources_2026-11-11.txt`
+  lists them, each pinned to a commit). The rendered vendor pages were not reachable; the files they are
+  built from were read.
+- When values are filled into the text, a value that names a reserved thing is refused, not warned about: a
+  Vault mount that starts with `sys`, `auth`, `identity` or `cubbyhole`; a namespace that starts with `kube-`;
+  a role name `cluster-admin`, `admin`, `edit`, `view` or one that starts with `system`; the ServiceAccount
+  `default`; the same namespace twice. A mount with a slash in it (a nested mount) is accepted. Length limits:
+  63 characters for a namespace and 253 for the other Kubernetes names, from memory (not found in the pinned
+  sources); 255 for the Vault values, this tool's own bound. The page itself is not filled in by a command:
+  an operator who replaces the placeholders by hand gets none of these refusals.
 - No policy on this page has been confirmed on a real account or a real cluster ("accepted by a real account"
   says `no` everywhere).
 - One process uses one identity. Give that identity the text of every kind the process runs.
@@ -677,7 +995,7 @@ code needs (one reason each), the requests that need no permission, and what the
 
 
 def page(root: Path = ROOT) -> str:
-    out = [HEAD]
+    out = [head()]
     for kind, rel in KIND_MODULES.items():
         policy = load(root / rel)
         if policy is None:
@@ -706,18 +1024,24 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     try:
-        text = page()
-    except PolicyError as exc:
-        print(f"policy page: {exc}", file=sys.stderr)
-        return 1
+        bad = data_problems()
+        text = "" if bad else page()
+    except (PolicyError, ValueError, OSError) as exc:
+        bad = [f"{type(exc).__name__}: {exc}"]
     target = ROOT / PAGE
-    if args.write:
-        target.write_text(text, encoding="utf-8", newline="\n")
-        return 0
-    if not target.is_file() or target.read_text(encoding="utf-8") != text:
-        print(f"policy page: {PAGE} differs from the data; run --write and commit", file=sys.stderr)
-        return 1
-    return 0
+    try:
+        if bad:
+            pass  # nothing is written or compared while the data breaks a rule
+        elif args.write:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(text, encoding="utf-8", newline="\n")
+        elif not target.is_file() or target.read_text(encoding="utf-8") != text:
+            bad = [f"{PAGE} differs from the data; run --write and commit"]
+    except (OSError, UnicodeDecodeError) as exc:
+        bad = [f"{PAGE}: {type(exc).__name__}"]
+    for line in bad:
+        print("policy page: " + " ".join(str(line).split()), file=sys.stderr)
+    return 1 if bad else 0
 
 
 if __name__ == "__main__":

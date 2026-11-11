@@ -6,10 +6,14 @@ holds only that policy, and the kind's own code runs with that token:
   B1 the allowed requests work;
   B2 with one grant removed, the request that grant serves is refused, seen in the kind's own error;
   B3 the requests on the never-list are refused (403);
-  B4 control: the same requests with the admin token get any status other than 403, so each refusal is the
-     policy's doing and not a broken request.
-Two plants must make the refusal check fail: a policy widened to the whole mount, and the admin token used in
-place of the runtime token.
+  B4 control: the same requests with the admin token are answered 200 or 204, so each refusal is the policy's
+     doing and not a mistyped path or a broken request.
+Plants that must make the refusal check fail: a policy widened to the whole mount, a policy with the old
+"everything below the prefix" form, and the admin token used in place of the runtime token.
+
+NOT RUN YET: no machine that built this file had a Vault server. Until a CI run shows these tests as passed
+(not skipped), nothing here is evidence; `ENGINE_RUN` in tools/policy_page.py is None and the page says so.
+The status codes expected from the admin controls were written from the vendor documentation, not seen.
 
 These tests need a real server: they run when HADAVIN_TEST_VAULT_ADDR is set (the CI service container). The
 local fake (tests/contracts/vault_fake.py) enforces no policy, so on a machine without a server they are
@@ -19,6 +23,10 @@ What this does not show: a server that denies by default shows that the generate
 intended; it is not proof that the never-list is complete. OpenBao is not run. The token is created directly
 (`no_default_policy`, source id V-TOK in tests/fixtures/policy_sources_2026-11-11.txt); sign-in through an
 AppRole or Kubernetes role is not exercised.
+
+Clean-up: each test removes what it made (the policies, the tokens, the secrets, both Transit keys), best
+effort, when it ends. The Transit mount that the shared fixture enables stays enabled, as on main. A test
+that is killed leaves its objects behind, so point HADAVIN_TEST_VAULT_ADDR only at a throwaway server.
 """
 
 from __future__ import annotations
@@ -97,7 +105,21 @@ class Engine:
     """The admin side (set-up, controls) and a way to make a runtime token that holds one policy only."""
 
     address: str
-    admin_token: str
+    admin_token: str = dataclasses.field(repr=False)  # never printed by a failing assertion
+    # requests that undo what a test made, sent with the admin token when the test ends
+    undo: list[tuple[str, str, dict | None]] = dataclasses.field(
+        default_factory=list, repr=False, compare=False
+    )
+
+    def clean_up(self) -> None:
+        """Best effort: a clean-up request that fails must not hide the test's own result."""
+        admin = self.admin()
+        while self.undo:
+            method, path, body = self.undo.pop()
+            try:
+                admin.authed(method, path, body)
+            except (VaultError, OSError):
+                continue
 
     def client(self, token: str, **kw) -> VaultProvider:
         return VaultProvider(self.address, lambda p: token, ttl_s=0, renewable=False, **kw)
@@ -112,22 +134,30 @@ class Engine:
         admin = self.admin()
         status, _ = admin.authed("PUT", f"sys/policies/acl/{name}", {"policy": policy_text})
         assert status in (200, 204), f"writing the policy answered {status}"
+        self.undo.append(("DELETE", f"sys/policies/acl/{name}", None))
         body = {"policies": [name], "no_default_policy": True, "ttl": LIFETIME, "renewable": False}
         status, answer = admin.authed("POST", "auth/token/create", body)
         assert status == 200, f"creating the runtime token answered {status}"
-        auth = answer["auth"]
-        assert auth["policies"] == [name], auth["policies"]  # nothing else, not even `default`
-        return auth["client_token"]
+        del body
+        policies = list(answer["auth"]["policies"])
+        token = answer["auth"]["client_token"]
+        del answer  # the answer holds the token: keep it out of any assertion message below
+        self.undo.append(("POST", "auth/token/revoke", {"token": token}))
+        held_only_the_policy = policies == [name]  # nothing else, not even `default`
+        assert held_only_the_policy, policies
+        return token
 
 
 @pytest.fixture
-def engine() -> Engine:
+def engine():
     mode, reason = engine_mode(os.environ)
     if mode == "fail":
         pytest.fail(reason)
     if mode == "skip":
         pytest.skip(reason)
-    return Engine(*vault_target())
+    made = Engine(*vault_target())
+    yield made
+    made.clean_up()
 
 
 def policy_of(kind: str) -> pp.Policy:
@@ -157,12 +187,13 @@ def refused(engine: Engine, token: str, requests: list[Request]) -> None:
 
 
 def not_refused_for_admin(engine: Engine, requests: list[Request]) -> None:
-    """Control: the same requests with the admin token get any status other than 403."""
+    """Control: the same requests with the admin token are answered 200 or 204. A 404 (a mistyped path)
+    or any other answer fails: it would show nothing about the request the refusal was meant for."""
     admin = engine.admin()
     for what, method, path, body in requests:
-        status, _ = admin.call(method, path, body, token=engine.admin_token)
-        assert status != 403, (
-            f"control, {what}: {method} {path} is refused even for the admin token"
+        status, _ = admin.authed(method, path, body)
+        assert status in (200, 204), (
+            f"control, {what}: {method} {path} answered {status} for the admin token, expected 200 or 204"
         )
 
 
@@ -183,6 +214,7 @@ class SecretsCase:
     def never_requests(self) -> list[Request]:
         mount, here = self.values["mount"], self.prefix
         return [
+            ("read two levels below the prefix", "GET", f"{mount}/data/{here}deep/alpha", None),
             ("read outside the prefix", "GET", f"{mount}/data/{self.other}alpha", None),
             (
                 "write under the prefix",
@@ -201,9 +233,10 @@ class SecretsCase:
 def secrets_case(engine: Engine) -> SecretsCase:
     prefix, other = f"q{uuid.uuid4().hex[:12]}/", f"o{uuid.uuid4().hex[:12]}/"
     admin = engine.admin()
-    for p in (prefix, other):
+    for p in (prefix, other, prefix + "deep/"):
         status, _ = admin.authed("POST", f"secret/data/{p}alpha", {"data": {"value": "v-" + p}})
         assert status in (200, 204), status
+        engine.undo.append(("DELETE", f"secret/metadata/{p}alpha", None))
     values = {"mount": "secret", "path_prefix": prefix}
     return SecretsCase(engine, policy_of("secrets/vault"), values, prefix, other)
 
@@ -211,7 +244,9 @@ def secrets_case(engine: Engine) -> SecretsCase:
 def test_vault_secrets_the_allowed_read_works_with_only_the_generated_policy(secrets_case):
     case = secrets_case
     token = case.engine.runtime_token(pp.render_vault(case.policy, case.values))
-    assert case.provider(token, case.prefix).get("alpha") == "v-" + case.prefix
+    value = case.provider(token, case.prefix).get("alpha")
+    del token
+    assert value == "v-" + case.prefix
 
 
 def test_vault_secrets_the_read_is_refused_when_its_grant_is_removed(secrets_case):
@@ -230,20 +265,33 @@ def test_vault_secrets_the_never_list_requests_are_refused_and_the_admin_control
     with pytest.raises(VaultError, match="secret 'alpha': Vault answered 403"):
         case.provider(token, case.other).get("alpha")  # the kind's own code, outside the prefix
     refused(case.engine, token, case.never_requests())
-    assert (
-        case.provider(token, case.prefix).get("alpha") == "v-" + case.prefix
-    )  # the token is valid
+    value = case.provider(token, case.prefix).get("alpha")  # the token is valid
+    del token
+    assert value == "v-" + case.prefix
     not_refused_for_admin(case.engine, case.never_requests())
 
 
 def test_plant_a_vault_policy_widened_to_the_whole_mount_fails_the_refusal_check(secrets_case):
     case = secrets_case
     text = pp.render_vault(case.policy, case.values)
-    widened = text.replace(f'"secret/data/{case.prefix}*"', '"secret/data/*"')
+    widened = text.replace(f'"secret/data/{case.prefix}+"', '"secret/data/*"')
     assert widened != text
     token = case.engine.runtime_token(widened)
     with pytest.raises(
         AssertionError, match="read outside the prefix: .* answered 200, expected 403"
+    ):
+        refused(case.engine, token, case.never_requests()[1:])
+
+
+def test_plant_the_old_everything_below_the_prefix_form_fails_the_refusal_check(secrets_case):
+    """Result review Major 2: `<prefix>*` also lets the token read below the one path part the code reads."""
+    case = secrets_case
+    text = pp.render_vault(case.policy, case.values)
+    old_form = text.replace(f'"secret/data/{case.prefix}+"', f'"secret/data/{case.prefix}*"')
+    assert old_form != text
+    token = case.engine.runtime_token(old_form)
+    with pytest.raises(
+        AssertionError, match="read two levels below the prefix: .* answered 200, expected 403"
     ):
         refused(case.engine, token, case.never_requests())
 
@@ -300,6 +348,9 @@ def transit_case(engine: Engine) -> TransitCase:
     assert status in (200, 204), status
     status, _ = admin.authed("POST", f"transit/keys/{spare}/config", {"deletion_allowed": True})
     assert status in (200, 204), status
+    for name in (key, spare):  # undone last-in first-out: allow deletion, then delete
+        engine.undo.append(("DELETE", f"transit/keys/{name}", None))
+        engine.undo.append(("POST", f"transit/keys/{name}/config", {"deletion_allowed": True}))
     values = {"transit_mount": "transit", "key_name": key}
     return TransitCase(engine, policy_of("signer/vault_transit"), values, key, spare)
 
@@ -362,3 +413,76 @@ def test_plant_the_admin_token_in_place_of_the_transit_runtime_token_fails_the_r
     case = transit_case
     with pytest.raises(AssertionError, match="expected 403"):
         refused(case.engine, case.engine.admin_token, case.never_requests(case.spare))
+
+
+# ------------------------------------------------------------- checks of this file itself (no server needed)
+
+
+def test_the_refused_requests_are_the_ones_the_page_names():
+    """The page prints `REFUSALS` as what these tests send; this keeps the two lists equal."""
+    secrets = SecretsCase(None, None, {"mount": "secret"}, "here/", "other/")
+    transit = TransitCase(None, None, {"transit_mount": "transit"}, "key", "spare")
+    assert [r[0] for r in secrets.never_requests()] == list(pp.REFUSALS["secrets/vault"])
+    assert [r[0] for r in transit.never_requests("key")] == list(
+        pp.REFUSALS["signer/vault_transit"]
+    )
+    assert set(pp.REFUSALS) == {
+        k for k, p in pp.load_all(ROOT_DIR).items() if p.platform == "vault"
+    }
+    deep = secrets.never_requests()[0]
+    assert deep[1:3] == ("GET", "secret/data/here/deep/alpha")  # two path parts below the prefix
+
+
+def test_a_failing_assertion_cannot_print_a_token():
+    made_up = f"made-up-{uuid.uuid4().hex}"
+    engine = Engine("http://127.0.0.1:8200", made_up)
+    engine.undo.append(("POST", "auth/token/revoke", {"token": made_up}))
+    secrets = SecretsCase(engine, None, {"mount": "secret"}, "here/", "other/")
+    transit = TransitCase(engine, None, {"transit_mount": "transit"}, "key", "spare")
+    for thing in (engine, secrets, transit):
+        assert made_up not in repr(thing) and made_up not in str(thing)
+    assert "admin_token" not in repr(engine)
+
+
+def test_the_admin_control_fails_on_an_answer_that_is_not_200_or_204():
+    """A mistyped path answers 404 for the admin token: the control must not accept that."""
+
+    class Answers:
+        def __init__(self, status: int) -> None:
+            self.status = status
+
+        def admin(self):
+            return self
+
+        def authed(self, method, path, body=None):
+            return self.status, {}
+
+    request = [("read a path that does not exist", "GET", "secret/data/nope", None)]
+    for status in (200, 204):
+        not_refused_for_admin(Answers(status), request)
+    for status in (403, 404, 405, 500):
+        with pytest.raises(AssertionError, match=f"answered {status} for the admin token"):
+            not_refused_for_admin(Answers(status), request)
+
+
+def test_clean_up_sends_every_undo_request_and_survives_a_failure():
+    sent = []
+
+    class Recorder(Engine):
+        def admin(self):
+            outer = self
+
+            class Admin:
+                def authed(self, method, path, body=None):
+                    sent.append((method, path))
+                    if path == "boom":
+                        raise VaultError("made-up failure")
+                    return 204, {}
+
+            del outer
+            return Admin()
+
+    engine = Recorder("http://127.0.0.1:8200", "unused")
+    engine.undo.extend([("DELETE", "a", None), ("DELETE", "boom", None), ("POST", "c", {})])
+    engine.clean_up()
+    assert sent == [("POST", "c"), ("DELETE", "boom"), ("DELETE", "a")] and engine.undo == []

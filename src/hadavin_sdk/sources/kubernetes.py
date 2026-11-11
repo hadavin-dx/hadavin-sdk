@@ -352,7 +352,8 @@ class KubernetesSource:
 
 
 # The permissions this kind needs. Data only: nothing here is run. `tools/policy_page.py` reads this literal
-# from the source text, and `tests/test_policy_guard.py` fails when it differs from the calls written above.
+# from the source text. `tests/test_policy_guard.py` fails when it differs from the requests written above in
+# the call shapes that test lists; a request sent in a way no rule of that test lists is not seen.
 # `verified` = (date, source ids): the name and the path form were found, spelled so, in those vendor sources
 # (the ids resolve in tests/fixtures/policy_sources_2026-11-11.txt). `confirmed_live` = accepted by a real
 # account; None everywhere so far.
@@ -365,10 +366,9 @@ POLICY = {
         ),
         "lifetime": "long",
         "exception": (
-            "Whether the token expires is decided by the cluster and the operator, and this code cannot tell. "
-            "From the builder's memory, not checked against the Kubernetes pages: a token projected into the "
-            "pod expires and is renewed, a token stored in a Secret does not expire. Use a projected token. "
-            "No ticket removes this yet."
+            "Whether the token expires is decided by the cluster and the operator; this code cannot tell and "
+            "does not shorten it. Use a token that expires. Ticket Q8a-1 covers credentials that this "
+            "package reads but does not issue."
         ),
     },
     "notes": (
@@ -378,7 +378,14 @@ POLICY = {
         ),
         (
             "At every start-up the kind asks the cluster what this identity may do and reports write verbs, "
-            "shell subresources and any read of `secrets`. It does not report the verb `watch`."
+            "the wildcard verb `*`, shell subresources and any read of `secrets`. It does not report the "
+            "verb `watch`."
+        ),
+        (
+            "The requests carry these query parameters and no others: `limit` and `continue` on the two "
+            "list requests, `timestamps`, `sinceTime` and `limitBytes` on the log request. None of them "
+            "changes the verb the request needs; `watch` and `follow` are never sent, and a test refuses "
+            "any other parameter written in this module."
         ),
     ),
     "grants": (
@@ -424,8 +431,11 @@ POLICY = {
             "operations": (("k8s.rules_review",),),
             "reason": "asks the cluster what this identity may do; it creates nothing",
             "note": (
-                "default clusters only: a cluster that took this right away from signed-in identities must "
-                "grant `create` on `selfsubjectrulesreviews`"
+                "a default cluster gives every signed-in identity this right. The request path names no "
+                "namespace, so the namespaced Role on this page cannot grant it: in a cluster that took the "
+                "right away, an administrator must grant `create` on `selfsubjectrulesreviews` with a "
+                "cluster-wide role and binding of their own; this page produces no text for that and no test "
+                "covers such a cluster"
             ),
             "verified": ("2026-11-11", "K-RBAC", "K-SRC", "K-SSRR"),
         },
@@ -452,7 +462,11 @@ POLICY = {
         {
             "type": "action",
             "name": "create",
-            "reason": "a write verb: this source only reads",
+            "reason": (
+                "a write verb: this source only reads. One exception, the same one the start-up check "
+                "makes: `create` on the self-review resources (`selfsubjectrulesreviews`, "
+                "`selfsubjectaccessreviews`, `selfsubjectreviews`) writes nothing"
+            ),
             "verified": ("2026-11-11", "K-AUTHZ"),
         },
         {
