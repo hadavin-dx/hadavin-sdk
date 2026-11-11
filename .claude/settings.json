@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh .claude/hooks/egm-gate.sh",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/egm-gate.sh\" || true",
             "timeout": 5
           }
         ]
@@ -37,7 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh .claude/hooks/block-planmode.sh"
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-planmode.sh\""
           }
         ]
       },
@@ -46,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .claude/hooks/agent_preamble_gate.py",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/agent_preamble_gate.py\"",
             "timeout": 5
           }
         ]
