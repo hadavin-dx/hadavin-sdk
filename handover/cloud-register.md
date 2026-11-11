@@ -1101,3 +1101,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a4f039af | PR73 design reviewer round 9 | closed: report saved (round9-design-security.md) | |
 | a9e1d9f1 | PR73 codebase reviewer round 9 | closed: report saved (round9-codebase.md) | |
 | ac49d88c | PR73 runner (second) | closed: stopped, processes and clusters killed, output deleted | |
+| a290aa95 / aea5c3b2 | PR89 / PR73 builders round 10 | 2026-11-11 | - | LOST at container restart ~01:50Z; uncommitted edits survived (RB89, B-P73r2) |
+| a8904ec1 | PR89 builder round 10 resumed (r10-01..04) | 2026-11-11 ~01:55Z | +90 min | running |
+| aed5770d | PR73 builder round 10 resumed (r9-01..03) | 2026-11-11 ~01:55Z | +90 min | running |
