@@ -1180,3 +1180,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | A-Q8a2 a2718ca8 | ticket author (Fable) Q8a-2 neutral callback + guard | 13:54Z | +25m | 13:54Z | running | plan review |
 | EV-P3a2 a9c85255 | EVIDENCE RUNNER (Fable) core/P3a-2-rewritten 8382bdd: full suite, fail-before on HEAD~4, mutants, probes; pg 56060 | 14:00Z | +60m | 14:00Z | running | read RESULTS.md; then ONE fix builder for round 11 findings |
 | R-Q8c-plan aac974fb, ae5f9e8d | egm zoom-out + design (Fable) plan review r1 of tickets/Q8c | 14:00Z | +20m | 14:00Z | running | resolve; live check of permission names before any build |
+| B-P3a2 a73e15b4 | ONE builder (Fable) P3a-2 round 12 fixes, NEW branch core/P3a-2-clean from 8382bdd, pg 56070 | 14:02Z | +120m | 14:02Z | running | checkpoint 30m; then evidence + fresh reviewers r12 |
