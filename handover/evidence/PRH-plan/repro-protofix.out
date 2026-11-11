@@ -1,0 +1,40 @@
+MODE protofix
+M1a user+BEL+KEY + 300 addresses | untrusted : LEAKED
+M1a user+BEL+KEY + 300 addresses | tool : LEAKED
+M1b user+BEL+KEY + 300 addresses + x ESC[0m y | untrusted : LEAKED
+M1b user+BEL+KEY + 300 addresses + x ESC[0m y | tool : LEAKED
+M1c control: user+BEL+KEY alone | untrusted : MASKED
+M1c control: user+BEL+KEY alone | tool : MASKED
+M2a %4%1b[0m1KIA... | untrusted : LEAKED
+M2a %4%1b[0m1KIA... | tool : LEAKED
+M2b %4\x1b[0m1KIA... | untrusted : LEAKED
+M2b %4\x1b[0m1KIA... | tool : LEAKED
+M2c &#6&#27;[0m5;KIA... | untrusted : LEAKED
+M2c &#6&#27;[0m5;KIA... | tool : LEAKED
+M2d control %41KIA... | untrusted : MASKED
+M2d control %41KIA... | tool : MASKED
+M3a user+BEL+BEL+KEY | untrusted : MASKED
+M3a user+BEL+BEL+KEY | head : MASKED
+M3b user+ESC[0m+ESC[1m+KEY | untrusted : MASKED
+M3b user+ESC[0m+ESC[1m+KEY | head : MASKED
+M3c user+BEL+ZWSP+BEL+KEY | untrusted : MASKED
+M3c user+BEL+ZWSP+BEL+KEY | head : MASKED
+M3d user+BEL+FF+KEY | untrusted : MASKED
+M3d user+BEL+FF+KEY | head : MASKED
+M3 strip table 'ab\x07\x07cd' -> joined 'abcd' spaced 'ab cd'
+M3 strip table 'ab\x1b[0m\x1b[1mcd' -> joined 'abcd' spaced 'ab cd'
+M3 strip table 'ab\x07\u200b\x07cd' -> joined 'ab\u200bcd' spaced 'ab\u200bcd'
+M3 strip table 'ab\x07-cd' -> joined 'ab-cd' spaced 'ab-cd'
+M3 strip table 'ab\x07 cd' -> joined 'ab cd' spaced 'ab cd'
+M3 strip table 'ab\x0c\x07cd' -> joined 'ab cd' spaced 'ab cd'
+M4 count of inputs (of 3000) where the clean-up changes a later text's verdict: 0
+M5a card clean: '<IPV4_1> and <IPV4_1>' | <IPV4_1> count 2
+M5b control plain card clean: '<IPV4_1> and <IPV4_2>' | <IPV4_1> count 1
+M6a id with U+FE0F | canonical(value)==value: False | contains: True
+M6b evidence po+U+034F+d-1 grounds pod-1 | canonical(value)==value: True | contains: True
+M6c id with ZWSP (Cf, unchanged) | canonical(value)==value: False | contains: True
+_first_decoded '\x07' -> '' | skip guard skips: False
+_first_decoded '\x1b' -> '' | skip guard skips: False
+_first_decoded 'a' -> 'a' | skip guard skips: True
+_first_decoded '%' -> '%' | skip guard skips: False
+OSC+U+009C strip_ansi: 'a '

@@ -1,0 +1,42 @@
+F....                                                                    [100%]
+=================================== FAILURES ===================================
+______ test_no_fragment_of_an_encoded_secret_value_survives_any_producer _______
+
+    def test_no_fragment_of_an_encoded_secret_value_survives_any_producer():
+        rng = random.Random(SEED)  # noqa: S311 - a seeded test generator
+        failures = []
+        names = sorted(PRODUCERS)
+        done = 0
+        for i in range(CASES):
+            text, parts, strict, tagged, base = _case(rng)
+            frags = _fragments(parts, base)
+            pool = [n for n in names if n in {"clean", "slack"}] if tagged else names
+            for name in rng.sample(pool, 1) + ["clean"]:
+                try:
+                    out = PRODUCERS[name](text)
+                except runmap.RedactionError:
+                    continue  # refused: nothing shown (fail closed)
+                leaked = [f for f in frags if f in out]
+                if leaked and not strict:
+                    # an encoded `=`: pass one cannot read the key, so the protection is that of the PLAIN spelling of the same
+                    # text (the decoded text, tags deleted): an encoding must not leave more than the plain form leaves
+                    plain = PRODUCERS[name](runmap.undo(_TAGS.sub("", text)))
+                    leaked = [f for f in leaked if f not in plain]
+                if leaked:
+                    failures.append(
+                        (
+                            i,
+                            name,
+                            max(leaked, key=len)[:12],
+                            text[:160].encode("unicode_escape").decode(),
+                        )
+                    )
+            done += 1
+>       assert not failures, f"{len(failures)} leaks, first: {failures[:6]}"
+E       AssertionError: 2 leaks, first: [(790, 'clean', '.311x9/7qk38', 'note , <IPV4_150> , <IPV4_159> , <IPV4_270> , <IPV4_33> , <IPV4_264> , <IPV4_234> , <IPV4_52> , <IPV4_344> , <IPV4_334> , <IPV4_84> , <IPV4_2> , <IPV4_276> , <I'), (790, 'clean', '.311x9/7qk38', 'note , <IPV4_150> , <IPV4_159> , <IPV4_270> , <IPV4_33> , <IPV4_264> , <IPV4_234> , <IPV4_52> , <IPV4_344> , <IPV4_334> , <IPV4_84> , <IPV4_2> , <IPV4_276> , <I')]
+E       assert not [(790, 'clean', '.311x9/7qk38', 'note , <IPV4_150> , <IPV4_159> , <IPV4_270> , <IPV4_33> , <IPV4_264> , <IPV4_234> , <..., <IPV4_33> , <IPV4_264> , <IPV4_234> , <IPV4_52> , <IPV4_344> , <IPV4_334> , <IPV4_84> , <IPV4_2> , <IPV4_276> , <I')]
+
+tests/test_k5_round12_fuzz.py:167: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_k5_round12_fuzz.py::test_no_fragment_of_an_encoded_secret_value_survives_any_producer
+1 failed, 4 passed in 22.38s
