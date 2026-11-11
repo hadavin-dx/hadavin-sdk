@@ -423,15 +423,22 @@ _ENCODED_MARKS = ("%", chr(92), "&")
 MAX_DECODED_MASKS = 256
 
 
-def _decoded_masks(current: dict[str, str], text: str) -> list[tuple[str, str]]:
+def _decoded_masks(
+    current: dict[str, str], text: str, deadline: float | None = None
+) -> list[tuple[str, str]]:
     """(placeholder, decoded original) for the values pass one masked WHOLE whose decoded spelling would stop a value
     pattern early (the decoded text holds white space of any kind, or `;`, `&`, `,` or a quote): `password=ab%3Bzq9` is
     one value in pass one and `password=ab;zq9` in the decoded view, which would mask only `ab`. Only entries whose
     original occurs in THIS text and holds an encoding character are considered (so earlier junk in the run's map cannot
     use up the slots); more than `MAX_DECODED_MASKS` of them, or one that cannot be decoded (nested too deep), cannot be
-    paired and the text is refused (`InputTooLarge`, nothing shown), never skipped. Computed once per call."""
+    paired and the text is refused (`InputTooLarge`, nothing shown), never skipped. Computed once per call.
+    `deadline` (a `time.thread_time()` value, shared with stage 1 and every view) is checked once per stored original, before
+    any skip; a spent deadline raises `InputTooLarge`.
+    """
     out = []
     for ph, original in current.items():
+        if deadline is not None and time.thread_time() > deadline:
+            raise InputTooLarge("InputTooLarge")  # one check per stored original, before any skip
         if original.startswith("\0seed") or not (
             any(c in original for c in _ENCODED_MARKS) or not original.isascii()
         ):
@@ -483,7 +490,7 @@ def redact_text(
     vendor guardrail input); the registry (`guard/producers.py`) lists them. No bare `redact()` call remains outside
     this module: the second pass of `approvals/channel.py` `clean` is this function too."""
     _within_cap(text)
-    started = time.monotonic()
+    started = time.thread_time()
     try:
         text = fits_after_nfkc(_clean(text))
         if neutralise is not None:
@@ -491,11 +498,13 @@ def redact_text(
         scan = not text.isascii() or any(c in text for c in "\\%&")
         views = _views(text) if scan else []  # _views refuses a view that would pass the cap
         cache = getattr(mapping, "redact_cache", None)
-        result = redact(text, mapping=mapping, _cache=cache)
+        result = redact(
+            text, mapping=mapping, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
+        )
         out, current = result.text, result.mapping
-        if views and time.monotonic() - started > defaults.REDACT_BUDGET_S:
+        if views and time.thread_time() - started > defaults.REDACT_BUDGET_S:
             raise InputTooLarge("InputTooLarge")
-        pairs = _decoded_masks(current, text) if views else []
+        pairs = _decoded_masks(current, text, started + defaults.REDACT_BUDGET_S) if views else []
         if (
             neutralise is not None
         ):  # the view is neutralised before it is redacted: pair the neutralised spelling too
@@ -506,13 +515,15 @@ def redact_text(
             ]
         for view in views:
             if (
-                time.monotonic() - started > defaults.REDACT_BUDGET_S
+                time.thread_time() - started > defaults.REDACT_BUDGET_S
             ):  # a hostile text: fail closed, nothing shown
                 raise InputTooLarge("InputTooLarge")
             if neutralise is not None:
                 view = fits_after_nfkc(neutralise(view))
             view = _keep_earlier_masks(view, pairs)
-            again = redact(view, mapping=current, _cache=cache)
+            again = redact(
+                view, mapping=current, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
+            )
             # a new value, or a known one only the view spells in a way pass one could not read
             if again.mapping != current or _held(again.text) > _held(out):
                 out, current = again.text, again.mapping
