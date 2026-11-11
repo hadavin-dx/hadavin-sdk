@@ -1416,3 +1416,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | EV-Q8a1-r5 + REV-Q8a1-r5 | evidence runner + one delta reviewer on ecd5dba1 | 16:44 | +40 min | RUNNING |
 | A-PRH-errata a02f43ab | closed, ticket rev 2 written | | | CLOSED |
 | REV-PRH-plan-r2 (2 reviewers) | PR H plan review round 2 | 16:46 | +30 min | RUNNING |
+| A-P3a2-errata ab2d8714 | closed, ticket rev 2 written (1115 lines) | | | CLOSED |
+| REV-P3a2-plan-r2 (2 reviewers) | P3a-2 plan review round 2 | 16:50 | +30 min | RUNNING |
