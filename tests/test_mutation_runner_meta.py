@@ -80,7 +80,7 @@ MOVED = (
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 320
+EXPECTED_MUTANTS = 326
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
@@ -189,10 +189,15 @@ def _dotted(node: ast.expr) -> str:
     return ".".join(reversed(parts))
 
 
-def _true_on_windows(node: ast.expr) -> bool | None:
-    """Whether the condition ``node`` of a ``skipif`` is true when ``sys.platform`` is ``"win32"`` and ``os.name`` is ``"nt"``: ``True``,
-    ``False``, or ``None`` when it names anything else (a file of the repository, ``hasattr``): that says nothing about Windows. Only
-    comparisons of those two values with a text, ``or``, ``and`` and ``not`` are read."""
+# the functions of ``os`` that Windows does not have: ``hasattr(os, name)`` is false there
+WINDOWS_LACKS = frozenset({"waitid"})
+
+
+def _true_on_windows(node: ast.expr) -> bool:
+    """Whether the condition ``node`` of a ``skipif`` is true when ``sys.platform`` is ``"win32"`` and ``os.name`` is ``"nt"``. Only these are
+    read: a comparison of ``sys.platform`` or ``os.name`` with a text, ``hasattr(os, "<name>")`` for a name of ``WINDOWS_LACKS``, ``or``, ``and`` and
+    ``not``. Any other condition is a ``ValueError`` (it is NOT read as "no skip": a condition this reader cannot evaluate would otherwise hide a
+    killer that Windows skips)."""
     if (
         isinstance(node, ast.Compare)
         and len(node.ops) == 1
@@ -201,50 +206,194 @@ def _true_on_windows(node: ast.expr) -> bool | None:
         known = {"sys.platform": "win32", "os.name": "nt"}.get(_dotted(node.left))
         if known is not None and isinstance(node.ops[0], (ast.Eq, ast.NotEq)):
             return (known == node.comparators[0].value) == isinstance(node.ops[0], ast.Eq)
-        return None
-    if isinstance(node, ast.BoolOp):
+    elif isinstance(node, ast.BoolOp):
         values = [_true_on_windows(v) for v in node.values]
-        if isinstance(node.op, ast.Or):
-            return True if any(v is True for v in values) else (None if None in values else False)
-        return False if any(v is False for v in values) else (None if None in values else True)
-    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
-        inner = _true_on_windows(node.operand)
-        return None if inner is None else not inner
-    return None
+        return any(values) if isinstance(node.op, ast.Or) else all(values)
+    elif isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        return not _true_on_windows(node.operand)
+    elif (
+        isinstance(node, ast.Call)
+        and _dotted(node.func) == "hasattr"
+        and len(node.args) == 2
+        and _dotted(node.args[0]) == "os"
+        and isinstance(node.args[1], ast.Constant)
+        and node.args[1].value in WINDOWS_LACKS
+    ):
+        return False
+    raise ValueError(
+        f"a skipif condition that cannot be evaluated for Windows: {ast.unparse(node)}"
+    )
 
 
-def _windows_skip_mark(function: ast.FunctionDef) -> bool:
-    """True when a decorator of ``function`` makes pytest skip it on Windows: the ``posix_only`` mark of the keyword tests, or a
-    ``pytest.mark.skipif(<condition>, ...)`` whose condition is true on Windows (``_true_on_windows``)."""
-    for decorator in function.decorator_list:
-        if isinstance(decorator, ast.Name) and decorator.id == "posix_only":
-            return True
-        if (
-            isinstance(decorator, ast.Call)
-            and _dotted(decorator.func) == "pytest.mark.skipif"
-            and _true_on_windows(decorator.args[0]) is True
+def _mark_true_on_windows(node: ast.expr, marks: dict[str, bool]) -> bool:
+    """Whether the mark expression ``node`` (a decorator or a part of ``pytestmark``) makes pytest skip on Windows. A name of ``marks`` is a
+    module-level ``NAME = pytest.mark.skipif(...)``; ``pytest.mark.skip`` skips everywhere; the other pytest marks (``parametrize``, ``usefixtures``)
+    skip nothing; ``pytest.mark.skipif`` is read by ``_true_on_windows``; any other expression is a ``ValueError``."""
+    if isinstance(node, ast.Name) and node.id in marks:
+        return marks[node.id]
+    target = node.func if isinstance(node, ast.Call) else node
+    name = _dotted(target)
+    if name == "pytest.mark.skip":
+        return True
+    if name == "pytest.mark.skipif" and isinstance(node, ast.Call):
+        condition = (
+            node.args[0]
+            if node.args
+            else next(k.value for k in node.keywords if k.arg == "condition")
+        )
+        return _true_on_windows(condition)
+    if name in ("pytest.mark.parametrize", "pytest.mark.usefixtures"):
+        return False
+    raise ValueError(f"a decorator or mark that cannot be read for Windows: {ast.unparse(node)}")
+
+
+def _module_marks(tree: ast.Module) -> tuple[dict[str, bool], bool]:
+    """``(marks, whole)``: ``marks`` maps the name of each module-level ``NAME = pytest.mark.skipif(...)`` (like ``posix_only``) to whether it skips
+    on Windows; ``whole`` is true when the module-level ``pytestmark`` skips every test of the file on Windows."""
+    marks: dict[str, bool] = {}
+    whole = False
+    for node in tree.body:
+        if not (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
         ):
-            return True
-    return False
+            continue
+        name = node.targets[0].id
+        value = node.value
+        if name == "pytestmark":
+            parts = value.elts if isinstance(value, (ast.List, ast.Tuple)) else [value]
+            whole = any(_mark_true_on_windows(part, marks) for part in parts)
+        elif isinstance(value, ast.Call) and _dotted(value.func).startswith("pytest.mark."):
+            marks[name] = _mark_true_on_windows(value, marks)
+    return marks, whole
+
+
+def _windows_skip_mark(function: ast.FunctionDef, marks: dict[str, bool], whole: bool) -> bool:
+    """True when the module's ``pytestmark`` (``whole``) or a decorator of ``function`` makes pytest skip it on Windows."""
+    return whole or any(_mark_true_on_windows(d, marks) for d in function.decorator_list)
+
+
+def _functions_of(path: Path) -> tuple[dict[str, ast.FunctionDef], dict[str, bool], bool]:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    marks, whole = _module_marks(tree)
+    return {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}, marks, whole
 
 
 def _windows_skip_killers() -> list[str]:
-    """The names of the mutants whose killer carries a Windows skip mark (derived from the decorators of the killers, not typed)."""
-    functions: dict[str, dict[str, ast.FunctionDef]] = {}
-    for file, path in ((mm.TEST, RUNNER_TESTS), (mm.KW, KEYWORD_TESTS)):
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        functions[file] = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
-    return [m.name for m in mm.M if _windows_skip_mark(functions[m.test_file][m.only_test])]
+    """The names of the mutants whose killer is skipped on Windows by a mark (read from the decorators and the module-level ``pytestmark``, not typed)."""
+    found: dict[str, tuple[dict[str, ast.FunctionDef], dict[str, bool], bool]] = {
+        file: _functions_of(path)
+        for file, path in ((mm.TEST, RUNNER_TESTS), (mm.KW, KEYWORD_TESTS))
+    }
+    return [
+        m.name
+        for m in mm.M
+        if _windows_skip_mark(found[m.test_file][0][m.only_test], *found[m.test_file][1:])
+    ]
+
+
+def _calls_skip(
+    name: str, functions: dict[str, ast.FunctionDef], seen: frozenset[str] = frozenset()
+) -> bool:
+    """Whether the function ``name`` calls ``pytest.skip``, directly or through a function of the same file that it calls."""
+    for node in ast.walk(functions[name]):
+        if isinstance(node, ast.Call):
+            called = _dotted(node.func)
+            if called == "pytest.skip":
+                return True
+            if (
+                called in functions
+                and called != name
+                and called not in seen
+                and _calls_skip(called, functions, seen | {name})
+            ):
+                return True
+    return False
+
+
+def _body_skip_killers() -> list[str]:
+    """The names of the mutants whose killer calls ``pytest.skip`` in its body (or in a helper of its file): no mark shows it."""
+    found = {
+        file: _functions_of(path)[0]
+        for file, path in ((mm.TEST, RUNNER_TESTS), (mm.KW, KEYWORD_TESTS))
+    }
+    return [m.name for m in mm.M if _calls_skip(m.only_test, found[m.test_file])]
+
+
+def _named_between(begin: str, end: str) -> list[str]:
+    lines = (mm.__doc__ or "").splitlines()
+    return [line.strip() for line in lines[lines.index(begin) + 1 : lines.index(end)]]
+
+
+def test_a_skipif_condition_the_reader_cannot_evaluate_is_an_error_not_no_skip():
+    def parse(text):
+        return ast.parse(text, mode="eval").body
+
+    assert _true_on_windows(parse('sys.platform == "win32"')) is True
+    assert _true_on_windows(parse('os.name == "nt"')) is True
+    assert _true_on_windows(parse('sys.platform != "win32"')) is False
+    assert _true_on_windows(parse('sys.platform == "win32" or not hasattr(os, "waitid")')) is True
+    assert _true_on_windows(parse('hasattr(os, "waitid")')) is False
+    for text in (
+        'sys.platform.startswith("win")',
+        "not _CI_FILE.is_file()",
+        'platform.system() == "Windows"',
+        'sys.platform == "win32" or something_else',
+        'hasattr(os, "fork")',
+        "True",
+        'sys.platform in ("win32", "cygwin")',
+    ):
+        try:
+            got = _true_on_windows(parse(text))
+        except ValueError as exc:
+            assert "cannot be evaluated for Windows" in str(exc)
+        else:
+            raise AssertionError(f"the condition {text!r} was read without an error: {got}")
+
+
+def test_a_module_level_pytestmark_and_a_named_mark_are_read_and_an_unknown_decorator_is_an_error():
+    tree = ast.parse(
+        "import pytest\nposix_only = pytest.mark.skipif(sys.platform == 'win32', reason='x')\n"
+        "pytestmark = [pytest.mark.parametrize('a', [1]), posix_only]\n"
+        "@some.decorator\ndef test_a(): pass\n@posix_only\ndef test_b(): pass\n"
+    )
+    marks, whole = _module_marks(tree)
+    assert marks == {"posix_only": True} and whole is True, (marks, whole)
+    plain = ast.parse("pytestmark = pytest.mark.skipif(sys.platform == 'linux', reason='x')\n")
+    assert _module_marks(plain) == ({}, False)
+    function = ast.parse("@some.decorator\ndef test_a(): pass\n").body[0]
+    try:
+        _windows_skip_mark(function, {}, False)
+    except ValueError as exc:
+        assert "cannot be read for Windows" in str(exc)
+    else:
+        raise AssertionError("a decorator that cannot be read was taken as no skip")
+    assert _windows_skip_mark(function, {}, True) is True, (
+        "the module-level pytestmark was not applied to a test"
+    )
+
+
+def test_the_header_names_every_mutant_whose_killer_skips_inside_its_body_and_each_skip_is_there():
+    """A killer that calls ``pytest.skip`` in its body (or in a helper of its file) has no mark. The header names those mutants between its second pair of
+    marker lines, and this test compares that list with the killers it reads, in both directions: a named killer with no ``pytest.skip`` call, or a
+    killer with one that the header does not name, fails."""
+    named = _named_between("BODY-SKIP-MUTANTS-BEGIN", "BODY-SKIP-MUTANTS-END")
+    derived = _body_skip_killers()
+    assert len(derived) >= 10, f"the body skips of the killers were not read: {len(derived)} found"
+    assert sorted(named) == sorted(derived), (
+        f"header only: {sorted(set(named) - set(derived))}; calls pytest.skip only: {sorted(set(derived) - set(named))}"
+    )
+    assert len(set(named)) == len(named), (
+        "a mutant is named twice in the body-skip list of the header"
+    )
 
 
 def test_the_header_names_every_mutant_whose_killer_is_skipped_on_windows_derived_from_the_skip_marks():
     """The header of the mutant list says which mutants survive on Windows. The list between its two marker lines is compared with the one read
     from the decorators of the killers, so a killer that gets (or loses) a Windows skip mark makes this test fail until the header agrees.
-    A killer that skips INSIDE its body (``pytest.skip(...)``) has no mark: those are named in the prose of the header by hand."""
-    lines = (mm.__doc__ or "").splitlines()
-    begin = lines.index("POSIX-ONLY-MUTANTS-BEGIN")
-    end = lines.index("POSIX-ONLY-MUTANTS-END")
-    named = [line.strip() for line in lines[begin + 1 : end]]
+    A killer that skips INSIDE its body (``pytest.skip(...)``) has no mark: those are in the second list of the header (compared by the test below)."""
+    named = _named_between("POSIX-ONLY-MUTANTS-BEGIN", "POSIX-ONLY-MUTANTS-END")
     derived = _windows_skip_killers()
     assert len(derived) > 40, f"the skip marks of the killers were not read: {len(derived)} found"
     assert sorted(named) == sorted(derived), (

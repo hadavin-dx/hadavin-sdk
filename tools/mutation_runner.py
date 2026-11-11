@@ -47,7 +47,10 @@ and macOS is written from reading the code, not from a run. ``mypy --platform wi
 3.13): 12 are POSIX-only functions and constants (``getuid``, ``O_DIRECTORY``, ``O_NOFOLLOW``, the ``waitid`` constants, ``killpg``,
 ``SIGKILL``) and 1 is the missing type information of ``hadavin_sdk.testing.mutation`` (the one error that Linux shows too; where the package
 is not installed it reads "cannot find"). The file does not call ``os.fchmod``: mypy does not know it on Windows before Python 3.13, so the
-count would be 14 on 3.12. A test of the keyword test file runs mypy itself and compares (it is skipped, with its reason, where mypy is not installed).
+count would be 14 on 3.12. CI does not run the mypy count: mypy is not in the locked test environment (adding it to the lock file is left to the lead: a
+plain ``uv lock`` of this tool chain also rewrites the format revision and the platform markers of ``uv.lock``, so it is not a plain addition). What CI does run is the table test of the keyword
+test file, which counts the places of the POSIX-only names in this file (12 places, plus the one import error). A test of the same file runs mypy itself and compares
+(it is skipped, with its reason, where mypy is not installed; on a developer machine, install mypy 2.4.1 and run it).
 
 Limits, stated plainly. Stopping the process tree reaches the processes that stay in the run's process group (POSIX) or the parent chain
 (Windows ``taskkill /T``). A test or mutant that starts a process in a NEW session (``setsid``, ``start_new_session=True``) or, on
@@ -145,6 +148,9 @@ cover tests that need more. ``forbid_skips`` switches itself on when you list a 
       What to do: FIRST make sure that the database on that host is disposable and that its login can touch nothing else. The runner cannot
       check this. Only then pass ``throwaway_hosts=("the-exact-name",)``. The list you pass REPLACES the default list, so also write
       ``localhost`` in it when you still need it.
+      Also refused at this step, after the host check: a password that is the same, in any letter case, as the name of an exception class that
+      the runner may show (a name of Python itself, a ``crash_type`` of a mutant of the call, an entry of ``shown_classes``). Hiding such a name
+      would tell the reader that the password equals it. What to do: choose another password.
   12. A mutant whose ``test_file`` is not one of ``tests``. What to do: add the file to ``tests``.
   13. Lock held: a second runner on the same database address in the same lock folder (the lock, below). What to do: wait for the other
       run, or give this run a database of its own. The lock folder is refused when it lies inside the tree under test (the temp folder that
@@ -174,8 +180,11 @@ cover tests that need more. ``forbid_skips`` switches itself on when you list a 
     ==================================  ====================================================================================================
     the exception class name            Shown when it is a built-in Python exception name or pytest's ``Failed``. Also shown when it is a
                                         ``crash_type`` of a mutant of this call or a name in the caller's ``shown_classes``. For a line that
-                                        starts with a bare ``assert`` the fixed word ``assert`` is shown. Else: ``[class not shown]``. A name that is EQUAL to a
-                                        secret value (any letter case; a password that is ``TimeoutError``) is ``[class not shown]`` too.
+                                        starts with a bare ``assert`` the fixed word ``assert`` is shown. Else: ``[class not shown]``. A shown name that is EQUAL to a
+                                        secret value in any letter case (one rule for every name: a built-in one, a ``crash_type``, a
+                                        ``shown_classes`` entry; a password that is ``TimeoutError`` or ``timeouterror``) is ``[class not shown]`` too.
+                                        A password that is only a PIECE of a name of Python does not hide it; a piece of a name of the caller
+                                        hides it (the caller's names are caller text, see the second layer below): this difference is on purpose.
     the rest of the failing line        Never shown. In its place: the fixed words ``[expect found]`` or ``[expect not found]``, then the
                                         caller's ``expect`` text.
     a test id                           The file part is shown when it equals one of the caller's ``tests`` entries. The caller's text is
@@ -224,13 +233,19 @@ cover tests that need more. ``forbid_skips`` switches itself on when you list a 
     true), and the snapshot folder and ``base.xml`` of the run. The folders and files of the run are private to the user, not to the tests.
   - A test can choose which allowed name it shows (one of about 70 exception class names of Python, one of the caller's function names).
     A hostile test could pass a few bits per row that way. The counts and the exit code are numbers the child chooses, too.
-  - The JUnit files hold the child's real text. Every folder the runner makes is created with mode 0700 whatever the umask and is checked (a real
+  - The JUnit files hold the child's real text. Every folder the runner makes, the folders between the temp folder and a copied test file included
+    (a part that was already there is left as it is), is created with mode 0700 whatever the umask and is checked (a real
     folder of this user with no access for group or others, ``lstat``) when it is made and checked again after every rebuild of the temp copy:
     the temp folder of the run, its ``tests`` folder, its snapshot folder (next to it in the temp folder), the folder of the pytest settings file and the lock folder.
     The temp folder is emptied and kept, never removed and made again with the default mode. The settings file and every result file are made by
     the runner with mode 0600 before the child gets their path, and checked on the open descriptor (a regular file of this user with one name and no access for
-    group or others, ``_file_problem``). The folders below these (the copies of ``src`` and of the tests) keep the modes of the
-    caller's tree and can be reached only through the private folder. On Windows nothing is checked: mode bits mean nothing there. The runner removes the folders at the end. After SIGKILL, which cannot be
+    group or others, ``_file_problem``), and an old file is emptied only after that check (a file with a second name keeps its content when it is
+    refused). The folders below these (the copies of ``src`` and of the tests) keep the modes of the
+    caller's tree and can be reached only through the private folder. On purpose these copy sites are NOT helpers: ``shutil.copytree`` and ``shutil.copy``
+    of the snapshot and of every rebuild copy the caller's tree and keep its modes, and ``write_text`` replaces the text of one file of the copy with the mutant. A test pins
+    every creation site of the listed spellings (``tempfile.mkdtemp``, ``mkstemp``, ``NamedTemporaryFile``, ``TemporaryFile``, ``SpooledTemporaryFile``, ``TemporaryDirectory``,
+    ``os.mkdir``, ``makedirs``, ``open``, ``rename``, ``replace``, ``symlink``, ``link``, ``mkfifo``, ``shutil.copytree``, ``copy``, ``copy2``, ``copyfile``, ``move``, ``open``, and the methods
+    ``mkdir``, ``touch``, ``write_text``, ``write_bytes``, ``open``), also under an alias and in module-level code; a spelling that is not listed is not found. On Windows nothing is checked: mode bits mean nothing there. The runner removes the folders at the end. After SIGKILL, which cannot be
     caught, they stay on disk (``mutants_*`` in the temp folder): delete it by hand.
   - A traceback of an error the runner raises holds the address in its local variables. A tool that prints local variables (pytest
     ``--showlocals``, an error tracker) prints the address with its password. The messages of the errors never hold it.
@@ -785,11 +800,19 @@ def _checked_throwaway_hosts(hosts: Iterable[str]) -> tuple[str, ...]:
     return tuple(chosen)
 
 
-def _refuse_unsafe_address(env_name: str, value: str, throwaway_hosts: Sequence[str]) -> None:
+def _refuse_unsafe_address(
+    env_name: str,
+    value: str,
+    throwaway_hosts: Sequence[str],
+    class_names: Iterable[str] = (),
+) -> None:
     """``ValueError`` (before anything runs; the message names the variable and the reason, never the value) unless ``value`` is inside the strict
     grammar (``_address_fields``), names a ``host`` or a ``hostaddr``, and EACH of the two that is written is an exact member of ``throwaway_hosts``.
     A unix socket folder is a host like any other: it must be listed. Least privilege: the tests of every mutant write to this database. What this
-    does NOT prove: that the database is disposable (a tunnel or a proxy can point a local name at a shared database), or what its login may do."""
+    does NOT prove: that the database is disposable (a tunnel or a proxy can point a local name at a shared database), or what its login may do.
+    Also refused: a password that is equal, in any letter case, to the name of an exception class that the runner may show (every name of
+    Python itself and ``Failed``, and the ``class_names`` the caller gives: the ``crash_type`` of its mutants and its ``shown_classes``). Hiding such
+    a name would tell the reader that the password equals it (the hiding of ``_shown_class`` is the second layer for the same case)."""
     allowed = _checked_throwaway_hosts(
         throwaway_hosts
     )  # first: a host list that is not exact is refused whatever the address is
@@ -815,6 +838,25 @@ def _refuse_unsafe_address(env_name: str, value: str, throwaway_hosts: Sequence[
                 f"{env_name} is refused: its {part} is not one of throwaway_hosts {allowed}. The tests of every mutant write to that database. Add"
                 " the exact host (or socket folder) with throwaway_hosts=(...) only when you know the database is disposable: the runner cannot check it"
             )
+    names = {n.casefold() for n in (*_BUILT_IN_CLASSES, *class_names)}
+    if any(text.casefold() in names for text in _password_forms(env_name, value)):
+        raise ValueError(CLASS_NAME_REFUSAL.format(env_name=env_name))
+
+
+CLASS_NAME_REFUSAL = (
+    "{env_name} is refused: its password is the same, in any letter case, as the name of an exception class that the runner may show (a name of"
+    " Python itself, a crash_type of a mutant or an entry of shown_classes). Choose another password."
+)
+
+
+def _password_forms(env_name: str, value: str) -> list[str]:
+    """Every text of ``value`` that is, or may be, a password, as ``_secret_values`` reads it (as written and percent-decoded), for the check of
+    ``_refuse_unsafe_address``. The value is already inside the strict grammar when this is called, so ``_refuse_odd`` cannot refuse here."""
+    decoded, plain = _password_texts(value)
+    forms = set(plain)
+    for password in decoded:
+        forms |= _decoded_forms(env_name, password)
+    return sorted(forms)
 
 
 def _env_snapshot(names: Iterable[str]) -> dict[str, str]:
@@ -1043,20 +1085,24 @@ def _shown_for(
 def _shown_class(raw: str, shown: _Shown) -> str:
     """What stands for the exception class of the ``E`` line ``raw``. A line that starts with a bare ``assert`` gives the fixed word
     ``ASSERT_SHOWN``. Otherwise the leading exception class name is given when it is on the allowlist of this call (``shown.classes``), else
-    ``CLASS_HIDDEN``. A name of Python itself is given as it is, EXCEPT when it is equal to a secret value (in any letter case): a password that
-    is ``TimeoutError`` must not come back as the class of a failing line. A password that is only a PIECE of such a name (``Err``) does not
-    hide it: the name is public text that tells nothing of the password, and hiding every name that holds a short password would blank all of
-    them. A name the caller owns (a ``crash_type``, an entry of ``shown_classes``) goes through the second layer (``_own_text``): when it holds
-    a secret, ``CLASS_HIDDEN`` is given, never a part of the name."""
+    ``CLASS_HIDDEN``. ONE equality rule for every name of ``shown.classes`` (a name of Python, a ``crash_type``, an entry of ``shown_classes``): a name
+    that is equal to a secret value in any letter case (``casefold``) is ``CLASS_HIDDEN``: a password that is ``TimeoutError`` or ``timeouterror``
+    must not come back as the class of a failing line. (``_refuse_unsafe_address`` refuses such a password before any run, so this rule is the
+    second layer.) A password that is only a PIECE of a name of Python (``Err``) does not hide it: the name is public text that tells nothing of
+    the password, and hiding every name that holds a short password would blank all of them. A name the caller owns also goes through the
+    second layer (``_own_text``): when it HOLDS a secret (a piece of the name does too), ``CLASS_HIDDEN`` is given, never a part of the name. So
+    a piece of a name hides a caller's name and does not hide a name of Python: that difference is on purpose (the caller's names are the caller's
+    own text, which the second layer treats like every other caller text)."""
     if _BARE_ASSERT.match(raw.strip()):
         return ASSERT_SHOWN
     head = _leading_class(raw) if raw else ""
     if head not in shown.classes:
         return CLASS_HIDDEN
+    folded = head.casefold()  # ONE rule for every name of ``shown.classes``: equal to a secret up to letter case hides the name
+    if any(secret.casefold() == folded for secret in shown.secrets):
+        return CLASS_HIDDEN
     if head in _BUILT_IN_CLASSES:
-        folded = head.casefold()
-        equal = any(secret.casefold() == folded for secret in shown.secrets)
-        return CLASS_HIDDEN if equal else head
+        return head
     return _own_text(head, CLASS_HIDDEN, shown.secrets)
 
 
@@ -1200,13 +1246,15 @@ def _make_private_temp_dir(prefix: str, what: str) -> Path:
 
 
 def _make_dirs(top: Path, path: Path) -> None:
-    """Make ``path`` (inside ``top``) and every missing folder between them, each with mode 0700 (``mkdir(parents=True)`` would make the ones
-    in between with the default mode). A part that exists and is not a folder is ``FileExistsError``."""
+    """Make ``path`` (inside ``top``) and every missing folder between them, each by ``_make_private_dir``: mode 0700 whatever the umask, and checked
+    (``mkdir(parents=True)`` would make the ones in between with the default mode). A part that exists already is left as it is, not checked
+    (it was made by this runner earlier in the same call, or it is a folder of the caller's own tree that a test path runs through); a part
+    that exists and is not a folder is ``FileExistsError``."""
     here = top.resolve()
     for part in path.relative_to(here).parts:
         here = here / part
         try:
-            os.mkdir(here, 0o700)
+            _make_private_dir(here, "folder of the copy")
         except FileExistsError:
             if not here.is_dir():
                 raise
@@ -1244,10 +1292,11 @@ def _file_problem(info: os.stat_result) -> str:
 
 def _make_private_file(path: Path, what: str = "private file") -> None:
     """Make (or empty) the file ``path`` (``what`` of this run) with mode 0600 whatever the umask, without following a link, then check it
-    (``_file_problem``, on the open descriptor, so the file that was checked is the file that was made). A result file or a settings file that the
-    runner names is made here before the child gets its path."""
+    (``_file_problem``, on the open descriptor, so the file that was checked is the file that was made), and only THEN empty it (``ftruncate``): a
+    file that fails the check (a second name, another owner) keeps its content. A result file or a settings file that the runner names is
+    made here before the child gets its path."""
     problem = ""
-    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+    flags = os.O_WRONLY | os.O_CREAT
     # a link under the name is refused (``ELOOP``), not followed
     flags |= getattr(os, "O_NOFOLLOW", 0)
     fd = os.open(path, flags, 0o600)
@@ -1256,6 +1305,8 @@ def _make_private_file(path: Path, what: str = "private file") -> None:
             # ``chmod`` on the descriptor: ``os.fchmod`` is unknown to mypy on Windows before Python 3.13
             os.chmod(fd, 0o600)
             problem = _file_problem(os.fstat(fd))
+        if not problem:
+            os.ftruncate(fd, 0)
     finally:
         os.close(fd)
     # raised outside the ``try``: the error keeps no other exception in its chain
@@ -1883,7 +1934,12 @@ def _run_mutants(
     secrets = _secret_values(env_names, environ)
     for env_name in env_names:  # a variable that is present, also with an empty text, must hold an address the check accepts
         if env_name in environ:
-            _refuse_unsafe_address(env_name, environ[env_name], hosts)
+            _refuse_unsafe_address(
+                env_name,
+                environ[env_name],
+                hosts,
+                (*classes, *(m.crash_type for m in mutants if m.crash_type)),
+            )
     if (
         forbid_skips is None
     ):  # on when a name is LISTED in pass_env, whether or not the variable is present

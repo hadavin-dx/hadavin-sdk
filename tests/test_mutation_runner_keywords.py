@@ -5418,6 +5418,55 @@ def test_the_parts_between_are_made_private_too_and_a_file_in_the_way_is_refused
 
 
 @posix_only
+def test_the_parts_between_are_made_by_the_private_helper_also_under_umask_0277(
+    tmp_path, monkeypatch
+):
+    top = tmp_path / "top"
+    os.mkdir(top, 0o700)
+    with _umask(
+        0o277
+    ):  # a mask that takes owner bits away: ``os.mkdir(path, 0o700)`` alone gives 0400
+        mr._make_dirs(top, top.resolve() / "a" / "b" / "c")
+    for part in ("a", "a/b", "a/b/c"):
+        assert _mode(top / part) == 0o700, (
+            f"under umask 0277 the part {part} had mode {_mode(top / part):o}"
+        )
+    whats: list[str] = []
+    real = mr._make_private_dir
+    monkeypatch.setattr(
+        mr, "_make_private_dir", lambda path, what: (whats.append(what), real(path, what))[1]
+    )
+    mr._make_dirs(top, top.resolve() / "a" / "x" / "y")
+    assert whats == ["folder of the copy"] * 3, f"the parts were not made by the helper: {whats}"
+    assert "the folders between the temp folder and a copied test file included" in _doc()
+
+
+@posix_only
+def test_a_file_with_a_second_name_keeps_its_content_when_it_is_refused(tmp_path):
+    made = tmp_path / "result.xml"
+    made.write_text("old text of the file", encoding="utf-8")
+    os.chmod(made, 0o600)
+    other_name = tmp_path / "other_name.xml"
+    os.link(made, other_name)
+    _must_raise(
+        "a file with a second name was accepted",
+        RuntimeError,
+        mr._make_private_file,
+        made,
+        "result file",
+        match="has more than one name",
+    )
+    assert made.read_text(encoding="utf-8") == "old text of the file", (
+        "a file with a second name was emptied before it was refused"
+    )
+    assert other_name.read_text(encoding="utf-8") == "old text of the file"
+    other_name.unlink()
+    mr._make_private_file(made, "result file")
+    assert made.read_text(encoding="utf-8") == "", "an accepted old file was not emptied"
+    assert "only after that check" in _doc()
+
+
+@posix_only
 def test_emptying_a_folder_keeps_the_folder_and_its_mode_and_follows_no_link(tmp_path):
     outside = tmp_path / "outside"
     outside.mkdir()
@@ -5820,6 +5869,7 @@ OTHER_NAMES = frozenset(
         "os.environ",
         "os.fdopen",
         "os.fstat",
+        "os.ftruncate",
         "os.lseek",
         "os.lstat",
         "os.mkdir",
@@ -5870,8 +5920,20 @@ def test_a_new_os_or_signal_name_is_noticed_so_the_win32_error_count_in_the_text
 
 # ---- round 24: the win32 count is measured, files are checked like folders, the creation sites are the helpers, class names -------
 
+# one error line of mypy with the fixed flags below: ``file:line: error: text  [code]`` (a column number is allowed, a ``note:`` line is not an error)
 MYPY_ERROR = re.compile(
-    r"^(?P<file>[^:]+):(?P<line>\d+): error: (?P<text>.*?)\s+\[(?P<code>[a-z-]+)\]$"
+    r"^(?P<file>[^:\n]+):(?P<line>\d+)(?::\d+)?: error: (?P<text>.*?)\s+\[(?P<code>[a-z0-9-]+)\]$"
+)
+MYPY_FLAGS = (
+    "--platform",
+    "win32",
+    "--no-incremental",
+    "--no-error-summary",
+    "--no-color-output",
+    "--no-pretty",
+    "--hide-error-context",
+    "--show-error-codes",
+    "--config-file=",  # no settings file of the repository or the user changes the count
 )
 
 
@@ -5883,13 +5945,14 @@ MYPY_ERROR = re.compile(
 def test_mypy_for_win32_reports_the_errors_the_texts_count(python_version, tmp_path):
     """RUNS mypy (the two Python versions the package supports) and compares: 12 errors are the POSIX-only names of the table, and one is the
     import of ``hadavin_sdk.testing.mutation`` (untyped, or not found where the package is not installed). The count of the texts is the
-    measured one, on both versions: ``os.fchmod`` would make it 14 on 3.12."""
+    measured one, on both versions: ``os.fchmod`` would make it 14 on 3.12. CI does NOT run this test (mypy is not in the locked test
+    environment), so the count is not checked there: ``test_a_new_os_or_signal_name_is_noticed...`` counts the places in CI. The output is read
+    by fixed flags (``MYPY_FLAGS``: no summary line, no colour, no settings file) and every line that says ``: error:`` must be one the pattern reads."""
     command = [
         sys.executable,
         "-m",
         "mypy",
-        "--platform",
-        "win32",
+        *MYPY_FLAGS,
         "--python-version",
         python_version,
         "--cache-dir",
@@ -5899,6 +5962,15 @@ def test_mypy_for_win32_reports_the_errors_the_texts_count(python_version, tmp_p
     run = subprocess.run(  # noqa: S603  # our own interpreter running mypy on a file of this repository, no shell
         command, capture_output=True, text=True, timeout=600, check=False
     )
+    assert run.returncode == 1 and not run.stderr.strip(), (
+        f"mypy ended with code {run.returncode} (1 is 'errors found'), stderr: {run.stderr[:200]!r}"
+    )
+    unread = [
+        line
+        for line in run.stdout.splitlines()
+        if ": error:" in line and not MYPY_ERROR.match(line)
+    ]
+    assert not unread, f"mypy error lines the pattern cannot read: {unread[:3]}"
     errors = [m for m in map(MYPY_ERROR.match, run.stdout.splitlines()) if m]
     attribute = [m for m in errors if m["code"] == "attr-defined"]
     other = [m for m in errors if m["code"] != "attr-defined"]
@@ -5912,10 +5984,23 @@ def test_mypy_for_win32_reports_the_errors_the_texts_count(python_version, tmp_p
     assert len(other) == 1 and other[0]["code"] in ("import-untyped", "import-not-found"), (
         f"mypy reports something else than the one import error: {[m['text'] for m in other]}"
     )
-    assert f"Found {len(errors)} errors" in run.stdout and len(errors) == 13, (
+    assert len(errors) == 13, (
         f"mypy --platform win32 gives {len(errors)} errors, the texts say 13 (python {python_version})"
     )
     assert "measured with mypy" in _doc() and "13 errors" in _doc()
+    assert "CI does not run the mypy count" in _doc(), (
+        "the docstring does not say that CI does not run mypy"
+    )
+
+
+def test_the_mypy_error_pattern_reads_the_lines_mypy_writes_and_not_the_notes():
+    ok = 'tools/x.py:12: error: Module has no attribute "getuid"; maybe "getpid"?  [attr-defined]'
+    assert MYPY_ERROR.match(ok) and MYPY_ERROR.match(ok)["code"] == "attr-defined"
+    assert MYPY_ERROR.match(ok.replace("12:", "12:5:"))["line"] == "12", (
+        "a column number was not allowed"
+    )
+    assert not MYPY_ERROR.match("tools/x.py:12: note: See https://example.invalid")
+    assert not MYPY_ERROR.match("Found 13 errors in 1 file (checked 1 source file)")
 
 
 def test_the_runner_does_not_call_os_fchmod_which_mypy_does_not_know_on_windows_before_python_3_13():
@@ -6015,21 +6100,48 @@ def test_a_temp_folder_is_made_by_the_one_helper_and_checked_and_a_refused_one_i
     assert list(tmp_path.iterdir()) == [], "a refused temp folder was left behind"
 
 
-def test_every_folder_and_file_the_runner_creates_is_made_by_one_of_the_helpers():
-    """The class: a creation site that is not one of the private helpers makes a folder or file with the mode of the umask and no check. Every
-    call of a creating function of the standard library is found in the source (outermost function that holds it) and pinned."""
-    tree = ast.parse(Path(mr.__file__).read_text(encoding="utf-8"))
-    creating = {
+CREATING_CALLS = frozenset(
+    {
         "tempfile.mkdtemp",
         "tempfile.mkstemp",
         "tempfile.NamedTemporaryFile",
+        "tempfile.TemporaryFile",
+        "tempfile.SpooledTemporaryFile",
+        "tempfile.TemporaryDirectory",
         "os.mkdir",
         "os.makedirs",
         "os.open",
+        "os.rename",
+        "os.replace",
+        "os.symlink",
+        "os.link",
+        "os.mkfifo",
+        "shutil.copytree",
+        "shutil.copy",
+        "shutil.copy2",
+        "shutil.copyfile",
+        "shutil.move",
         "open",
     }
-    creating_methods = {"mkdir", "touch", "write_text", "write_bytes", "open"}
-    sites: dict[str, set[str]] = {}
+)
+CREATING_METHODS = frozenset({"mkdir", "touch", "write_text", "write_bytes", "open"})
+
+
+def creation_sites(source: str) -> dict[str, set[str]]:
+    """``{spelling: {the outermost function, class or "<module>" that holds the call}}`` for every call of a creating function of the list above
+    (``CREATING_CALLS``, a method of ``CREATING_METHODS`` on anything). The walk covers the whole module (code outside any function included),
+    and a name imported with an alias (``import os as o``, ``from shutil import copytree as ct``) is read as the name it stands for."""
+    tree = ast.parse(source)
+    alias: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for item in node.names:
+                alias[item.asname or item.name.split(".")[0]] = (
+                    item.name if item.asname else item.name.split(".")[0]
+                )
+        elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
+            for item in node.names:
+                alias[item.asname or item.name] = f"{node.module}.{item.name}"
 
     def dotted(node):
         parts = []
@@ -6037,24 +6149,58 @@ def test_every_folder_and_file_the_runner_creates_is_made_by_one_of_the_helpers(
             parts.append(node.attr)
             node = node.value
         if isinstance(node, ast.Name):
-            parts.append(node.id)
+            parts.append(alias.get(node.id, node.id))
         return ".".join(reversed(parts))
 
+    sites: dict[str, set[str]] = {}
     for top in tree.body:
-        if not isinstance(top, (ast.FunctionDef, ast.ClassDef)):
-            continue
+        owner = top.name if isinstance(top, (ast.FunctionDef, ast.ClassDef)) else "<module>"
         for node in ast.walk(top):
-            if isinstance(node, ast.Call):
-                name = dotted(node.func)
-                method = node.func.attr if isinstance(node.func, ast.Attribute) else ""
-                if name in creating or (method in creating_methods and name not in ("os.open",)):
-                    sites.setdefault(name or method, set()).add(top.name)
+            if not isinstance(node, ast.Call):
+                continue
+            name = dotted(node.func)
+            method = node.func.attr if isinstance(node.func, ast.Attribute) else ""
+            if name in CREATING_CALLS or (method in CREATING_METHODS and name != "os.open"):
+                sites.setdefault(name or method, set()).add(owner)
+    return sites
+
+
+def test_every_folder_and_file_the_runner_creates_is_made_by_one_of_the_helpers():
+    """The class: a creation site that is not one of the private helpers makes a folder or file with the mode of the umask and no check. Every
+    call of a function in ``CREATING_CALLS`` (and of a method in ``CREATING_METHODS``) is found in the whole module, aliased imports included,
+    and pinned: the spellings of those lists, not every way to make a file. The sites that are NOT helpers, and why each is on purpose:
+    ``shutil.copytree`` and ``shutil.copy`` of ``_run_mutants`` copy the CALLER's tree (``src``, the listed tests, the listed folders) into the
+    private folders of the run and keep the caller's modes (the module docstring says so: only the private folder protects them); making them
+    0700 or 0600 would change what the tests see. ``p.write_text`` of ``_run_mutants`` replaces the text of one file of that copy (it exists,
+    and keeps its mode: the mutant is the point)."""
+    sites = creation_sites(Path(mr.__file__).read_text(encoding="utf-8"))
     assert sites == {
         "tempfile.mkdtemp": {"_make_private_temp_dir"},
-        "os.mkdir": {"_make_private_dir", "_make_dirs", "_open_lock_dir"},
+        "os.mkdir": {"_make_private_dir", "_open_lock_dir"},
         "os.open": {"_make_private_file", "_open_lock_dir", "_one_run_per_database"},
+        "shutil.copytree": {"_run_mutants"},
+        "shutil.copy": {"_run_mutants"},
         "p.write_text": {"_run_mutants"},
     }, f"a creation site that is not a private helper (or a helper that moved): {sites}"
+
+
+def test_the_creation_site_walk_sees_aliases_module_level_code_and_the_other_creating_spellings():
+    source = (
+        "import os as o\nimport shutil\nimport tempfile as t\nfrom shutil import copytree as ct\nfrom os import mkfifo\n"
+        "o.rename('a', 'b')\n"
+        "def f():\n    shutil.copy2('a', 'b'); o.symlink('a', 'b'); t.TemporaryDirectory(); ct('a', 'b')\n"
+        "class C:\n    def m(self):\n        o.link('a', 'b'); o.replace('a', 'b'); mkfifo('x'); shutil.copytree('a', 'b')\n"
+    )
+    assert creation_sites(source) == {
+        "os.rename": {"<module>"},
+        "shutil.copy2": {"f"},
+        "os.symlink": {"f"},
+        "tempfile.TemporaryDirectory": {"f"},
+        "shutil.copytree": {"f", "C"},
+        "os.link": {"C"},
+        "os.replace": {"C"},
+        "os.mkfifo": {"C"},
+    }, creation_sites(source)
 
 
 def test_the_temp_folder_the_tests_folder_and_the_settings_folder_are_made_by_the_helpers(
@@ -6133,16 +6279,24 @@ RAISES_TIMEOUT = (
 )
 
 
-def test_a_password_equal_to_the_class_the_child_raises_is_not_in_first_lines(
+def test_a_password_equal_to_the_class_the_child_raises_is_refused_before_any_run(
     tmp_path, monkeypatch
 ):
-    monkeypatch.setenv(DSN_NAME, _url("svc", "Timeout", "Error", rest=f"{FAKE_HOST}/app"))
     root = _tree(tmp_path, {CORE_TEST: RAISES_TIMEOUT})
-    lines: dict[str, str] = {}
-    _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
-    assert lines["flip"].startswith(mr.CLASS_HIDDEN) and "TimeoutError" not in lines["flip"], (
-        f"the password was shown as the class of the failing line: {lines['flip']!r}"
-    )
+    for password in (("Timeout", "Error"), ("timeout", "error"), ("TIMEOUTERROR",)):
+        monkeypatch.setenv(DSN_NAME, _url("svc", *password, rest=f"{FAKE_HOST}/app"))
+        lines: dict[str, str] = {}
+        _must_raise(
+            "a password equal to a built-in class name was accepted",
+            ValueError,
+            _run,
+            root,
+            [FLIP],
+            pass_env=(DSN_NAME,),
+            first_lines=lines,
+            match=mr.CLASS_NAME_REFUSAL.format(env_name=DSN_NAME),
+        )
+        assert lines == {}, "a mutant was run for an address that is refused"
     monkeypatch.setenv(DSN_NAME, _url("svc", "Other", "Word", rest=f"{FAKE_HOST}/app"))
     lines.clear()
     _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
@@ -6151,9 +6305,99 @@ def test_a_password_equal_to_the_class_the_child_raises_is_not_in_first_lines(
     )
 
 
-def test_the_module_docstring_says_a_class_equal_to_a_secret_is_not_shown():
-    assert "is ``[class not shown]`` too" in _doc() or "``[class not shown]`` too" in _doc()
-    assert "EQUAL to a secret value" in _doc()
+def test_a_password_equal_to_a_name_the_caller_owns_is_refused_in_any_letter_case(tmp_path):
+    crash = Mutant("c", "src/pk/core.py", "a", "b", "boom", allow_crash=True, crash_type="OwnCrash")
+    for password, classes, mutants, refused in (
+        ("owncrash", (), [crash], True),
+        ("OWNCRASH", (), [crash], True),
+        ("owncrash", (), [], False),  # the name is no name of this call
+        ("postgreserror", ("PostgresError",), [], True),
+        ("PostgresError", ("PostgresError",), [], True),
+        ("postgreserror", (), [], False),
+        ("OwnCrashes", ("PostgresError",), [crash], False),  # longer than the name
+    ):
+        address = _url("svc", password, rest=f"{FAKE_HOST}/app")
+        extra = (*classes, *(m.crash_type for m in mutants if m.crash_type))
+        if refused:
+            _must_raise(
+                f"a password {password!r} equal to a name of the call was accepted",
+                ValueError,
+                mr._refuse_unsafe_address,
+                DSN_NAME,
+                address,
+                FAKE_HOSTS,
+                extra,
+                match=mr.CLASS_NAME_REFUSAL.format(env_name=DSN_NAME),
+            )
+        else:
+            mr._refuse_unsafe_address(DSN_NAME, address, FAKE_HOSTS, extra)
+
+
+def test_run_mutants_gives_its_crash_types_and_shown_classes_to_the_address_check(
+    tmp_path, monkeypatch
+):
+    root = _tree(tmp_path, {CORE_TEST: PASSES})
+    crash = Mutant(
+        "c",
+        "src/pk/core.py",
+        "return flag",
+        "return not flag",
+        "boom",
+        allow_crash=True,
+        crash_type="OwnCrash",
+    )
+    for password, mutants, extra in (
+        ("owncrash", [crash], {}),
+        ("postgreserror", [FLIP], {"shown_classes": ("PostgresError",)}),
+    ):
+        monkeypatch.setenv(DSN_NAME, _url("svc", password, rest=f"{FAKE_HOST}/app"))
+        _must_raise(
+            f"run_mutants accepted a password equal to a name of the call ({password})",
+            ValueError,
+            _run,
+            root,
+            mutants,
+            pass_env=(DSN_NAME,),
+            match=mr.CLASS_NAME_REFUSAL.format(env_name=DSN_NAME),
+            **extra,
+        )
+
+
+def test_the_refusal_of_a_password_that_is_a_class_name_does_not_show_the_password_and_the_docstring_says_it():
+    text = mr.CLASS_NAME_REFUSAL.format(env_name=DSN_NAME)
+    assert DSN_NAME in text and "Error" not in text.replace("exception class", "")
+    doc = _doc()
+    assert (
+        "a password that is the same, in any letter case, as the name of an exception class" in doc
+    )
+    assert "this difference is on purpose" in doc, "the piece-of-name asymmetry is not stated"
+    assert "``[class not shown]`` too" in doc
+    assert "EQUAL to a secret value in any letter case (one rule for every name" in doc
+
+
+def test_every_name_of_shown_classes_is_hidden_when_equal_to_a_secret_in_any_letter_case(tmp_path):
+    """The second layer for the same case (the address check refuses such a password first): built-in names, ``crash_type`` and ``shown_classes``
+    follow ONE rule."""
+    crash = Mutant("c", "src/pk/core.py", "a", "b", "boom", allow_crash=True, crash_type="OwnCrash")
+    for name in ("OwnCrash", "PostgresError", "KeyError"):
+        for password in (name, name.lower(), name.upper(), name.swapcase()):
+            shown = _shown(
+                tmp_path,
+                mutants=[crash],
+                classes=("PostgresError",),
+                url=_url("svc", password, rest=f"{FAKE_HOST}/app"),
+            )
+            got = mr._shown_line(f"E   {name}: boom", shown)
+            assert got == mr.CLASS_HIDDEN, (
+                f"the name {name} equal to the password {password!r} was shown as the class: {got!r}"
+            )
+            other = "AssertionError"
+            assert mr._shown_line(f"E   {other}: boom", shown) == other
+    shown = _shown(tmp_path, mutants=[crash], classes=("PostgresError",))
+    for name in ("OwnCrash", "PostgresError", "KeyError"):
+        assert mr._shown_line(f"E   {name}: boom", shown) == name, (
+            f"{name} was hidden for another password"
+        )
 
 
 # ---- the sibling cases of the round-23 nits --------------------------------------------------------------------------------------
