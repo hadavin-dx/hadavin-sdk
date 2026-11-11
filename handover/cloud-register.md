@@ -1199,3 +1199,17 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-flaky (resumed) a6e5db57 | timing-harness fix batch after result review r1 (interleave, 5 repeats, pinned constants, mutants) | 14:30Z | +60m | | running | new head -> fresh evidence + reviewer |
 | B-PR89-r20 a7b9ddc4 | ONE builder (Fable) PR89 round 20 (allowlist projection, strict sockets, test switch removed, wording), pg 56130, heavy.sh for full runs | 14:35Z | +120m | 14:35Z | running | checkpoint 30m; then evidence + fresh reviewers r21 |
 | R-Q8b-r2 a865e68c | egm impl-readiness (Fable) plan review r2 of tickets/Q8b rev 2 | 14:38Z | +20m | 14:38Z | running | errata, freeze, builder after PR77 scope settles |
+
+## Long-running agent watch (owner order 14:46Z: check every agent, especially those over 1 hour, at each heartbeat: what process it runs, how long, last checkpoint)
+| agent | running since | age at 14:46Z | what it is doing now (from the process list and its checkpoint) | verdict |
+|---|---|---|---|---|
+| B-PR77 a23fcc26 | 13:28Z | 78 min | final full pytest in venv-pr77 (started 4 min ago, 72 percent CPU); branch wip/cloud-P2d-1-w7 a8de3c34 already pushed | on track; brief said stop at 90 min; next check 14:56Z |
+| B-P3a2 a73e15b4 | 14:05Z | 41 min | final full pytest through heavy.sh (3 min in), then whole mutant list (about 15 min); local head 6cfe82d9 | on track |
+| B-Q8a2 a0472549 | 14:11Z | 35 min | its one full pytest (5 min in); 3 commits, head 02068ebe not pushed yet | on track |
+| EV-P89-r19 a3767c91 | 14:27Z | 19 min | full pytest (1.5 min in) and a mutant run in parallel | on track; heavy |
+| EV-flaky a67f662c | 14:27Z | 19 min | repeated short pytest runs (100x loop), own Postgres up 13 min | on track |
+| B-Q8a1 fix a0c5bd99 | 14:29Z | 17 min | stage mutant list running | on track |
+| B-flaky fix a6e5db57 | 14:31Z | 15 min | measuring batch lengths | on track |
+| B-Q8c1 a56207cb | 14:28Z | 18 min | building the tool and guard tests, nothing committed | on track |
+| B-PR89-r20 a7b9ddc4 | 14:35Z | 11 min | reading runner and tests | on track |
+| R-Q8b-r2 a865e68c | 14:38Z | 8 min | read-only review | on track |
