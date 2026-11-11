@@ -3,16 +3,20 @@
 `app.build` takes six keyword arguments that exist for tests (`secrets=`, `channel=`, `detector=`, `llm=`, `clock=`,
 `timeout_s=`). In demo each replaces one configured part. In pilot and prod (any stage that is not exactly demo) a build
 that is given one of them is refused. `hold_run_ids=` is a production hook and stays allowed. `run_tick` refuses its
-`now=` in the same way.
+`now=` and its `steps=` in the same way.
 
 The Vault kinds (`vault` for secrets, `vault_transit` for the audit signer, and any kind built on the same settings
 class) sign in with a static token by default (`auth: token`). A pilot or prod BUILD refuses that, written or left out.
 The config still loads, so the one-off commands that only load the config (limits stop and reset, audit verify, gate,
 migrate, replay, score) keep working with a person's own short-lived token.
 
-What these refusals do not cover: they refuse the six keywords of build and now= of run_tick; any route that does not
-pass through them is not covered (constructing App, Runtime or Approvals directly, assigning attributes after build, a
-kind added to the table).
+What these refusals do not cover: they refuse the six keywords of build and now= and steps= of run_tick; any route
+that does not pass through them is not covered (constructing App, Runtime or Approvals directly, assigning attributes
+after build, a kind added to the table, a direct call of the factory, a leftover patch of app.make or app.now, a tick
+step called by hand with a time of the caller's choice, the time parameters of Approvals.sweep and resend_unsent).
+
+No test here can read a real Vault credential: the two environment variables a Vault sign-in reads are removed for
+every test of this module, so a broken check fails at once and never reaches the network.
 
 No test here needs a database. The stage words that are not stages are built from parts (a class test scans this folder).
 """
@@ -21,6 +25,8 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
+from fractions import Fraction
 from types import SimpleNamespace
 
 import pytest
@@ -36,11 +42,17 @@ from hadavin_sdk.config import ConfigError, load_config
 from hadavin_sdk.guard.injection import RegexDetector
 from hadavin_sdk.models import now
 from hadavin_sdk.registry import load_registry
-from hadavin_sdk.runtime.tick import run_tick
+from hadavin_sdk.runtime.tick import STEPS, TickStep, run_tick
 from hadavin_sdk.store.memory import MemoryStore
 from tests.conftest import make_cfg, qualify
 from tests.test_k3_pilot import ScriptedLLM
-from tests.test_k3_pilot_env import PILOT_KINDS, asked, pilot_cfg, plant_test_backends
+from tests.test_k3_pilot_env import (
+    PILOT_KINDS,
+    asked,
+    assert_asked_as_configured,
+    pilot_cfg,
+    plant_test_backends,
+)
 
 NAMES = ("secrets", "channel", "detector", "llm", "clock", "timeout_s")
 NOT_A_STAGE = ["stag" + "ing", "Demo", "demo ", "", None]
@@ -53,6 +65,14 @@ PILOT_SECRETS = {
     "restored-key": "r" * 16,
     "audit-key": "unused",
 }
+
+
+@pytest.fixture(autouse=True)
+def _no_vault_credentials(monkeypatch):
+    """A Vault sign-in reads these two variables. Without them a broken check stops at 'variable not set' and never
+    sends a real credential anywhere."""
+    monkeypatch.delenv("VAULT_TOKEN", raising=False)
+    monkeypatch.delenv("VAULT_SECRET_ID", raising=False)
 
 
 def _fixed_clock() -> datetime:
@@ -207,6 +227,7 @@ def test_a_live_build_with_no_test_keyword_is_not_refused(tmp_path, monkeypatch,
         )
         app = app_mod.build(root, ["ito-agent"], **kwargs)
         assert asked(calls, secrets) == PILOT_KINDS
+        assert_asked_as_configured(calls, app.config)
         assert app.config.environment == where
         assert app.executor is None
         assert app.approvals.channel is channel
@@ -292,19 +313,41 @@ def test_demo_uses_a_falsy_sources_or_tools_mapping_instead_of_dropping_it(demo_
     assert app.runtime.hooks.tools == {"echo": echo}, "a falsy tools= mapping was dropped"
 
 
-@pytest.mark.parametrize(
-    "value", [0, 0.0, -1, -0.5, True, False, float("nan"), float("inf"), "5", [5]]
-)
-def test_demo_refuses_a_timeout_that_is_not_a_number_greater_than_0(demo_dir, value):
-    """0 would make every executor call fail at once (a socket that never waits), so it is refused, not passed on."""
-    with pytest.raises(ConfigError, match=exactly("timeout_s= must be greater than 0")):
+TIMEOUT_MESSAGE = "timeout_s= must be an int or float between 0 (not included) and 3600"
+TIMEOUT_REFUSED = [
+    0,
+    0.0,
+    -1,
+    -0.5,
+    True,
+    False,
+    float("nan"),
+    float("inf"),
+    "5",
+    [5],
+    Decimal("2.5"),
+    Fraction(5, 2),
+    10**400,
+    3601,
+    3600.1,
+]
+
+
+@pytest.mark.parametrize("value", TIMEOUT_REFUSED, ids=[repr(v)[:12] for v in TIMEOUT_REFUSED])
+def test_demo_refuses_a_timeout_outside_the_range_or_of_another_type(demo_dir, value):
+    """0 would make every executor call fail at once (a socket that never waits), so it is refused, not passed on.
+    Only int and float count as a number here: True and False, Decimal and Fraction are refused, and so is a
+    number over 3600 (ten to the power 400 would overflow at the socket)."""
+    with pytest.raises(ConfigError, match=exactly(TIMEOUT_MESSAGE)):
         app_mod.build(
             demo_dir, ["test-agent"], secrets=FakeSecretProvider(DEMO_SECRETS), timeout_s=value
         )
 
 
-@pytest.mark.parametrize("value", [3, 0.001, 2.5])
-def test_demo_uses_a_timeout_greater_than_0_as_given(demo_dir, value):
+@pytest.mark.parametrize("value", [3, 0.001, 2.5, 3600, 3600.0, 1e-9, 5e-324])
+def test_demo_uses_a_timeout_in_the_range_as_given(demo_dir, value):
+    """There is no lower bound above 0: a very small timeout makes every call time out at once, which is what a
+    test of the timeout path asks for."""
     app = app_mod.build(
         demo_dir, ["test-agent"], secrets=FakeSecretProvider(DEMO_SECRETS), timeout_s=value
     )
@@ -363,6 +406,45 @@ def test_run_tick_accepts_a_given_time_in_demo(demo_dir):
     at = datetime(2026, 11, 11, 12, 0, tzinfo=UTC)
     assert run_tick(app, now=at) == 0
     assert app.store.get_tick_state("purge_evidence").last_run_at == at
+
+
+def _recording_step(ran: list[str]) -> TickStep:
+    return TickStep("recorded", 0, lambda _ctx: ran.append("recorded"))
+
+
+@pytest.mark.parametrize("empty", [False, True], ids=["one-step", "empty-list"])
+@pytest.mark.parametrize("where", ["pilot", "prod", *NOT_A_STAGE])
+def test_run_tick_refuses_a_given_step_list_outside_demo(demo_dir, where, empty):
+    """A tick with a step list of the caller's choice could return 0 without the sweep or the purge ever running."""
+    app = _demo_app_at(demo_dir, where)
+    ran: list[str] = []
+    steps = [] if empty else [_recording_step(ran)]
+    with pytest.raises(
+        ConfigError, match=exactly("steps= is for tests; it is refused in pilot and prod")
+    ):
+        run_tick(app, steps=steps)
+    assert ran == [], "a given step ran before the refusal"
+    assert all(app.store.get_tick_state(s.name) is None for s in STEPS), "a step ran"
+    assert run_tick(app) == 0
+    assert all(app.store.get_tick_state(s.name) is not None for s in STEPS), (
+        "a tick with no steps= must run every step of STEPS outside demo"
+    )
+
+
+def test_run_tick_names_now_first_when_both_are_given_outside_demo(demo_dir):
+    app = _demo_app_at(demo_dir, "pilot")
+    with pytest.raises(
+        ConfigError, match=exactly("now= is for tests; it is refused in pilot and prod")
+    ):
+        run_tick(app, now=datetime.now(UTC), steps=[])
+
+
+def test_run_tick_accepts_a_given_step_list_in_demo(demo_dir):
+    app = _demo_app_at(demo_dir, "demo")
+    ran: list[str] = []
+    assert run_tick(app, steps=[_recording_step(ran)]) == 0
+    assert ran == ["recorded"]
+    assert run_tick(app, steps=[]) == 0
 
 
 # --- behaviour 2: a static Vault token is refused by a pilot or prod build ------------------------------------------------
@@ -440,10 +522,13 @@ def test_a_build_refuses_a_static_vault_token_for_a_value_that_is_not_a_stage(
 def test_both_static_vault_tokens_are_named_in_one_refusal(tmp_path):
     root = vault_dir(tmp_path, "pilot", "secrets", VAULT)
     edit(root, lambda d: d["backends"].update(signer=TRANSIT))
-    with pytest.raises(ConfigError) as err:
+    fix = "(the default; set auth: kubernetes (recommended) or auth: approle)"
+    want = (
+        "environment pilot: refused: "
+        f"secrets: vault auth token {fix}, signer: vault_transit auth token {fix}"
+    )
+    with pytest.raises(ConfigError, match=exactly(want)):
         app_mod.build(root, ["ito-agent"])
-    for capability, kind in (("secrets", "vault"), ("signer", "vault_transit")):
-        assert f"{capability}: {kind} auth token" in str(err.value)
 
 
 class _VaultBuilt(VaultConnection):
@@ -468,6 +553,48 @@ def test_a_new_kind_built_on_the_vault_settings_class_is_refused_too(tmp_path, m
         ConfigError, match=exactly(vault_message("pilot", "channel", "q8a_vault_built"))
     ):
         app_mod.build(root, ["ito-agent"])
+
+
+SIGN_IN_FIELDS = {"auth", "token_env"}
+
+
+def vault_like_kinds_outside_the_class() -> list[str]:
+    """The kinds in the table whose settings have a sign-in field of the Vault settings (`auth` or `token_env`) and
+    are NOT built on `VaultConnection`: `app.build` would not see their static token."""
+    return sorted(
+        f"{capability}: {kind}"
+        for capability, kinds in TABLE.items()
+        for kind, entry in kinds.items()
+        if SIGN_IN_FIELDS & set(entry.settings.model_fields)
+        and not issubclass(entry.settings, VaultConnection)
+    )
+
+
+class _SignsInByItself(KindSettings):
+    """A kind with its own `auth` and `token_env` fields, not built on the shared class."""
+
+    kind: str = "q8a_signs_in_by_itself"
+    auth: str = "token"
+    token_env: str | None = None
+
+
+def test_every_kind_with_a_vault_sign_in_field_is_built_on_the_vault_settings_class(monkeypatch):
+    """`app.build` finds a static Vault token by the settings TYPE. A kind that brings its own `auth` or `token_env`
+    field without that type would pass in pilot and prod, so the table may hold none; a planted one is reported."""
+    assert vault_like_kinds_outside_the_class() == []
+    held = {
+        f"{c}: {k}"
+        for c, kinds in TABLE.items()
+        for k, e in kinds.items()
+        if issubclass(e.settings, VaultConnection)
+    }
+    assert held == {"secrets: vault", "signer: vault_transit"}, "the guard looked at no Vault kind"
+    monkeypatch.setitem(
+        TABLE["channel"],
+        "q8a_signs_in_by_itself",
+        Entry(_SignsInByItself, f"{__name__}:_reading_channel"),
+    )
+    assert vault_like_kinds_outside_the_class() == ["channel: q8a_signs_in_by_itself"]
 
 
 @pytest.mark.parametrize(
@@ -537,7 +664,8 @@ def test_the_kill_switch_command_is_not_refused_for_a_static_vault_token(
         monkeypatch, module=cli_mod, secrets=secrets, store=lambda: store, signer=None, anchor=None
     )
     assert cli_mod._main(["limits", action, "--by", "ops"]) == 0
-    assert ("secrets", "vault", None) in calls
+    first = calls[0]
+    assert (first.capability, first.kind, first.provider) == ("secrets", "vault", None)
     assert f"kill switch {'ON' if action == 'stop' else 'OFF'}" in capsys.readouterr().out
     # the long-running process with the same config is refused
     with pytest.raises(ConfigError, match=exactly(vault_message(where, "secrets", "vault"))):

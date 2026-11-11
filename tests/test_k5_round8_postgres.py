@@ -20,6 +20,7 @@ from tests.test_k3_pilot_env import (
     FakeChannel,
     ScriptedLLM,
     asked,
+    assert_asked_as_configured,
     pilot_cfg,
     plant_test_backends,
 )
@@ -49,9 +50,15 @@ def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path, monk
         )
         app = app_mod.build(cfg, ["ito-agent"])
         assert asked(calls, secrets) == PILOT_KINDS
-        assert [c for c, _, _ in calls].count("store") == 2, (
-            "the purge store is a second connection"
+        configured = load_config(cfg).backends.store
+        assert_asked_as_configured(calls, load_config(cfg))
+        first, second = [c.settings for c in calls if c.capability == "store"]
+        assert first.dsn_secret_name == configured.dsn_secret_name, (
+            "the runtime store uses the runtime DSN"
         )
+        assert (
+            second.dsn_secret_name == configured.purge_dsn_secret_name != first.dsn_secret_name
+        ), "the purge store is a second connection under the purge DSN"
         assert app.purge_store is not app.store
         with pytest.raises(Exception, match="rivilege|ermission|denied|navailable"):
             app.store.purge_tool_calls(datetime.now(UTC), keep_run_ids=frozenset())

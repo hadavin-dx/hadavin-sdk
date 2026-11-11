@@ -26,7 +26,8 @@ from hadavin_sdk.audit import AuditSink
 from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import VaultConnection
-from hadavin_sdk.config import Config, ConfigError, confined, load_config
+from hadavin_sdk.config import Backends, Config, ConfigError, confined, load_config
+from hadavin_sdk.defaults import EXECUTOR_TIMEOUT_MAX_S
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM
@@ -84,7 +85,9 @@ def build(
     None, so an object that is falsy is refused too. With several given, only the first in the order secrets,
     channel, detector, llm, clock, timeout_s is named. `hold_run_ids=` stays allowed in pilot and prod: it is a
     production hook (the caller's list of runs whose evidence the purge must keep), not a test object. In demo a
-    given `timeout_s=` must be a number greater than 0.
+    given `timeout_s=` must be an int or float (not True or False) between 0 (not included) and 3600. `sources=` and
+    `tools=` take a mapping (name to object); the code copies them with `dict()`, so a list of pairs also works in
+    demo, but that is an accident of the copy and not part of the contract.
 
     Five checks run before that refusal in pilot and prod, in this order, each with its own message: the static
     Vault token (below), the missing restored-hash key, the missing purge DSN of a Postgres store, `sources=`, and
@@ -93,15 +96,18 @@ def build(
 
     Static Vault token: a pilot or prod build refuses a backend whose settings are a Vault sign-in
     (`backends.table.VaultConnection`: the `vault` secrets kind, the `vault_transit` signer, any kind built on that
-    class) with `auth: token`, written or left out (it is the default). This covers the long-running process only:
-    every start that goes through `build`, which for the command line is `tick`. It does not cover the one-off
-    commands that load the config without `build` (limits stop and reset, audit verify, gate, migrate, replay,
-    score): a person may run those with a short-lived token of their own.
+    class) with `auth: token`, written or left out (it is the default). This covers every process that calls
+    `app.build`, which for the command line is `tick`. It does not cover the one-off commands that load the config
+    without `build` (limits stop and reset, audit verify, gate, migrate, replay, score): a person may run those
+    with a short-lived token of their own. Nothing checks how long that token lives.
 
-    Limit of these refusals: `build` refuses the six keywords above and `run_tick` refuses its `now=`. Any route
-    that does not pass through them is not covered: constructing App, Runtime or Approvals directly, assigning
-    attributes after build, a kind added to the table. They stop a test object that reaches a pilot or prod process
-    by ACCIDENT, not hostile code in the same process."""
+    Limit of these refusals: `build` refuses the six keywords above and `run_tick` refuses its `now=` and `steps=`.
+    Any route that does not pass through them is not covered: constructing App, Runtime or Approvals directly (a
+    hand-built `Approvals(clock=...)` among them), assigning attributes after build, a kind added to the table, a
+    direct call of `backends.factory.make`, a leftover patch of `app.make` or `app.now`, a tick step called by
+    hand with a time of the caller's choice (`purge_evidence(TickContext(app, <time>))`), and the time parameters
+    of `Approvals.sweep(at=)` and `Approvals.resend_unsent(at=)`. The refusals stop a test object that reaches a
+    pilot or prod process by ACCIDENT, not hostile code in the same process."""
     cfg = load_config(config_dir)
     reg = load_registry(cfg)
     b = cfg.backends
@@ -148,9 +154,12 @@ def build(
             else f"configure backends.{name} in pilot and prod"
         )
         raise ConfigError(f"{name}= is for tests; {fix}")
-    if timeout_s is not None and not _positive_number(timeout_s):
+    if timeout_s is not None and not _timeout_in_range(timeout_s):
         # 0 would make every executor call fail at once (a socket that never waits); the config field is > 0 too.
-        raise ConfigError("timeout_s= must be greater than 0")
+        raise ConfigError(
+            "timeout_s= must be an int or float between 0 (not included) and "
+            f"{EXECUTOR_TIMEOUT_MAX_S}"
+        )
     clock = now if clock is None else clock
     given_sources = {} if sources is None else dict(sources)
     # Only http contracts hold a client-system secret; pilot and prod have none (http is refused there).
@@ -310,7 +319,7 @@ def build(
     )
 
 
-def _static_vault_tokens(backends) -> list[str]:
+def _static_vault_tokens(backends: Backends) -> list[str]:
     """The backends that sign in to Vault with a static token, one refusal item each. `auth: token` is the default,
     so a config that leaves `auth` out is found too. The match is by settings type, not by kind name, so a new kind
     built on `VaultConnection` is covered. `auth: approle` is allowed: its secret id is also read from the
@@ -322,11 +331,15 @@ def _static_vault_tokens(backends) -> list[str]:
     ]
 
 
-def _positive_number(value: object) -> bool:
-    """A real number greater than 0 (True and False are not numbers here; not a number and infinity are refused)."""
+def _timeout_in_range(value: object) -> bool:
+    """An int or a float (True and False are not numbers here; Decimal, Fraction and other number types are
+    refused) that is greater than 0 and at most `defaults.EXECUTOR_TIMEOUT_MAX_S` (3600). Not-a-number and infinity
+    fail the comparison.
+    There is no lower bound above 0: a very small value makes every call time out at once, which is what a test of
+    the timeout path asks for."""
     if isinstance(value, bool) or not isinstance(value, int | float):
         return False
-    return 0 < value < float("inf")
+    return 0 < value <= EXECUTOR_TIMEOUT_MAX_S
 
 
 def _own_secrets(secrets: SecretProvider, spec: tools_mod.ToolSpec) -> Callable[[str], str]:

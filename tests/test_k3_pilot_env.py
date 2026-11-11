@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, NamedTuple
 
 import pytest
 import yaml
@@ -185,19 +186,35 @@ def _spy(dsn: str, resolved: list[str]) -> FakeSecretProvider:
     return Spy(values)
 
 
-def plant_test_backends(monkeypatch, *, module=app_mod, store=None, **objects) -> list[tuple]:
+class Call(NamedTuple):
+    """One call of the factory function `make`, as the seam below saw it."""
+
+    capability: str
+    settings: Any  # the settings object the caller handed to the factory
+    provider: Any  # the secret provider handed on (None for the secrets backend itself)
+    available: tuple[
+        str, ...
+    ]  # the names of the other objects handed on (store, signer, routes, ...), sorted
+
+    @property
+    def kind(self) -> str:
+        return self.settings.kind
+
+
+def plant_test_backends(monkeypatch, *, module=app_mod, store=None, **objects) -> list[Call]:
     """The ONE seam for a test that needs test objects on the real pilot or prod build path, where
     `build(secrets=, channel=, llm=, ...)` is refused. The factory function `make` of `module` (the app, or the
-    command line) is wrapped: for a capability named in `objects` it returns that object; for the store, when
-    `store` is given, it returns `store()` (a new one per call: the app asks twice when a purge DSN is configured);
-    every other capability goes to the real factory. The config keeps its real kinds.
+    command line) is wrapped: for a capability named in `objects` it returns that object (None is an object: it
+    plants "no signer"); for the store, when the factory `store` is given, it returns `store()` (a new one per call:
+    the app asks twice when a purge DSN is configured); every other capability goes to the real factory. The config
+    keeps its real kinds.
 
-    Returns the list of calls the build made, one `(capability, kind, provider)` per call, where `provider` is the
-    secret provider the build handed on (None for the secrets backend itself), so a test can assert what was asked."""
-    calls: list[tuple] = []
+    Returns the list of calls the build made (`Call`), so a test can assert what was asked: which settings, which
+    secret provider, and which other objects by name."""
+    calls: list[Call] = []
 
     def wrapper(capability, settings, provider=None, **available):
-        calls.append((capability, settings.kind, provider))
+        calls.append(Call(capability, settings, provider, tuple(sorted(available))))
         if capability in objects:
             return objects[capability]
         if capability == "store" and store is not None:
@@ -208,16 +225,60 @@ def plant_test_backends(monkeypatch, *, module=app_mod, store=None, **objects) -
     return calls
 
 
-def asked(calls: list[tuple], provider) -> dict[str, set[str]]:
+def asked(calls: list[Call], provider) -> dict[str, set[str]]:
     """capability -> the kinds the build asked the factory for; every call after the secrets backend must hand on
     `provider`."""
-    for capability, kind, handed in calls:
-        if capability != "secrets":
-            assert handed is provider, f"{capability} {kind}: built with another secret provider"
+    for call in calls:
+        if call.capability != "secrets":
+            assert call.provider is provider, (
+                f"{call.capability} {call.kind}: built with another secret provider"
+            )
     out: dict[str, set[str]] = {}
-    for capability, kind, _ in calls:
-        out.setdefault(capability, set()).add(kind)
+    for call in calls:
+        out.setdefault(call.capability, set()).add(call.kind)
     return out
+
+
+# What `app.build` hands the factory beside the settings and the secret provider (capability -> names).
+HANDED_ON = {
+    "secrets": (),
+    "signer": (),
+    "anchor": (),
+    "store": (),
+    "audit": ("anchor", "signer", "store"),
+    "llm": ("routes",),
+    "detector": ("llm",),
+    "channel": ("store",),
+}
+
+
+def assert_asked_as_configured(calls: list[Call], cfg) -> None:
+    """Every call carried the settings object of the loaded config `cfg` for its capability (the second store call:
+    the same settings with the purge DSN in place of the runtime DSN), and the other objects `HANDED_ON` names."""
+    b = cfg.backends
+    stores = 0
+    for call in calls:
+        assert call.available == HANDED_ON[call.capability], (
+            f"{call.capability}: handed on {call.available}"
+        )
+        if call.capability == "detector":
+            assert call.settings in b.detector
+        elif call.capability == "store":
+            stores += 1
+            want = b.store
+            if stores == 2:
+                want = b.store.model_copy(
+                    update={
+                        "dsn_secret_name": b.store.purge_dsn_secret_name,
+                        "purge_dsn_secret_name": None,
+                    }
+                )
+            assert call.settings == want, f"store call {stores}: {call.settings}"
+        else:
+            assert call.settings == getattr(b, call.capability), (
+                f"{call.capability}: other settings"
+            )
+    assert calls[0].capability == "secrets" and calls[0].provider is None
 
 
 def test_k3_pilot_app_has_no_executor(tmp_path, monkeypatch):
@@ -238,7 +299,7 @@ def test_k3_pilot_app_has_no_executor(tmp_path, monkeypatch):
         app = app_mod.build(cfg, ["ito-agent"], hold_run_ids=lambda: frozenset())
         # the build asked the factory for the configured real kinds, with the one provider
         assert asked(calls, spy) == PILOT_KINDS
-        assert calls[0] == ("secrets", "mounted_file", None)
+        assert_asked_as_configured(calls, load_config(cfg))
         assert app.executor is None
         assert app.runtime.hooks.execute is None and app.runtime.hooks.verify is None
         assert sorted(set(resolved)) == [

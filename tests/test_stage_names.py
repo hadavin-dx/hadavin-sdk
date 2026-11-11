@@ -332,19 +332,38 @@ def test_a_value_that_is_not_a_stage_is_live_for_every_guard(tmp_path):
             assert live, f"{site} treated {bad!r} as not live (an allowlist of live stages)"
 
 
-def _build_refusal(tmp_path, stage, edit=None, **given):
+def _build_refusal(tmp_path, stage, edit=None, made=None, plant=None, **given):
     """What `app.build` says when a config whose stage is `stage` (the pilot config, real kinds only, changed by
     `edit`; for a stage other than pilot an unvalidated copy with the stage changed) is built with the keyword
-    arguments `given`. '' when it builds. (Past the refusals this config stops at the empty secrets folder, also a ConfigError.)"""
+    arguments `given`. '' when it builds. (Past the refusals this config stops at the empty secrets folder, also a
+    ConfigError.) `made` collects the capabilities the build asked the factory for. `plant` is one extra kind for
+    the table: (capability, kind, entry).
+
+    No real Vault credential can be read or sent from here: the two environment variables a Vault sign-in reads are
+    removed, and a backend whose settings are a Vault sign-in is never built (an empty test provider stands in)."""
     root = pilot_cfg(tmp_path)
     # the mounted-file secrets kind reads nothing until a secret is asked for
     (root / "secrets").mkdir()
     if edit:
         _edit(root, edit)
-    cfg = load_config(root)
-    reg = load_registry(cfg)
-    copy = cfg.model_copy(update={"environment": stage})
     with pytest.MonkeyPatch.context() as mp:
+        mp.delenv("VAULT_TOKEN", raising=False)
+        mp.delenv("VAULT_SECRET_ID", raising=False)
+        if plant:
+            mp.setitem(table.TABLE[plant[0]], plant[1], plant[2])
+        cfg = load_config(root)
+        reg = load_registry(cfg)
+        copy = cfg.model_copy(update={"environment": stage})
+        real_make = app_mod.make
+
+        def recording(capability, settings, *args, **kwargs):
+            if made is not None:
+                made.append(capability)
+            if hasattr(settings, "token_env"):
+                return FakeSecretProvider({})
+            return real_make(capability, settings, *args, **kwargs)
+
+        mp.setattr(app_mod, "make", recording)
         mp.setattr(app_mod, "load_config", lambda _d: copy)
         mp.setattr(app_mod, "load_registry", lambda _c: reg)
         try:
@@ -359,8 +378,17 @@ class _FalsyChannel(FakeChannel):
         return False
 
 
+class _FalsyDict(dict):
+    def __bool__(self) -> bool:
+        return False
+
+
 def _fixed_clock():
     return None
+
+
+def _echo(_args):
+    return "x"
 
 
 def test_pilot_and_prod_refuse_a_test_object_handed_to_build(tmp_path):
@@ -393,6 +421,44 @@ def test_pilot_and_prod_refuse_a_test_object_handed_to_build(tmp_path):
     )
 
 
+def test_pilot_and_prod_refuse_sources_and_tools_handed_to_build(tmp_path):
+    """`sources=` and `tools=` hand `build` objects that no config names. They count as given when they are not None:
+    a mapping that is falsy, and an empty mapping, are refused like any other."""
+    cases = {
+        "sources": ("sources= is for tests", {"s": object()}),
+        "tools": ("tools= (plain callables) is for replay and tests", {"echo": _echo}),
+    }
+    n = 0
+    for stage in ("pilot", "prod", "stag" + "ing"):
+        for name, (want, entries) in cases.items():
+            for value in (entries, _FalsyDict(entries), {}):
+                n += 1
+                got = _build_refusal(tmp_path / str(n), stage, **{name: value})
+                assert got.startswith(want), (
+                    f"a live build took {name}= ({stage!r}, {type(value).__name__} of "
+                    f"{len(value)}): {got[:80]!r}"
+                )
+
+
+def test_demo_refuses_a_timeout_that_is_out_of_range(tmp_path):
+    """A given `timeout_s=` (demo only: pilot and prod refuse the keyword itself) must be an int or float, not True or
+    False, greater than 0 and at most 3600."""
+    cfg_dir = make_cfg(tmp_path)
+    qualify(load_registry(load_config(cfg_dir)))
+    secrets = FakeSecretProvider({"fixture-token": "tok" + "-timeout"})
+    want = "timeout_s= must be an int or float between 0 (not included) and 3600"
+    for value in (0, -1, float("inf"), 3601, True):
+        try:
+            build(cfg_dir, ["test-agent"], secrets=secrets, timeout_s=value)
+            got = ""
+        except ConfigError as exc:
+            got = str(exc)
+        assert got == want, f"demo took timeout_s={value!r}: {got[:80]!r}"
+    assert (
+        build(cfg_dir, ["test-agent"], secrets=secrets, timeout_s=3600).executor.timeout_s == 3600
+    )
+
+
 VAULT_KINDS = {
     "secrets": {"kind": "vault", "address": "https://vault.example"},
     "signer": {
@@ -402,12 +468,18 @@ VAULT_KINDS = {
         "key_version": 1,
     },
 }
+VAULT_FIX = "(the default; set auth: kubernetes (recommended) or auth: approle)"
+
+
+def _never_built(settings, deps):
+    raise AssertionError("the planted kind must be refused before it is built")
 
 
 def test_pilot_and_prod_refuse_a_static_vault_token(tmp_path):
     """The Vault kinds sign in with a static token unless the config says otherwise (`auth: token` is the default).
-    A pilot or prod BUILD refuses that, written or left out. The config itself loads (the one-off commands that only
-    load it, such as the kill switch, keep working), and demo keeps the token."""
+    A pilot or prod BUILD refuses that, written or left out, before any backend is made, for the two kinds and for
+    any new kind built on the same settings class; the other sign-ins are not refused. The config itself loads (the
+    one-off commands that only load it, such as the kill switch, keep working), and demo keeps the token."""
     n = 0
     for stage in ("pilot", "prod", "stag" + "ing"):
         for cap, settings in VAULT_KINDS.items():
@@ -417,24 +489,50 @@ def test_pilot_and_prod_refuse_a_static_vault_token(tmp_path):
                 def use(data, cap=cap, settings=settings, extra=extra):
                     data["backends"][cap] = settings | extra
 
-                want = (
-                    f"environment {stage}: refused: {cap}: {settings['kind']} auth token "
-                    "(the default; set auth: kubernetes (recommended) or auth: approle)"
-                )
+                want = f"environment {stage}: refused: {cap}: {settings['kind']} auth token {VAULT_FIX}"
+                made: list[str] = []
                 # _build_refusal loads the config first: a loader that refuses the token fails there
-                got = _build_refusal(tmp_path / str(n), stage, use)
+                got = _build_refusal(tmp_path / str(n), stage, use, made)
                 assert got == want, (
                     f"a static Vault token was accepted for {cap} ({stage}, {extra}): {got[:80]!r}"
                 )
+                assert made == [], f"a backend was made before the Vault refusal: {made}"
+
+    # a third kind built on the shared settings class, under a name the check has never seen
+    class ThirdKind(table.VaultConnection):
+        kind: str = "third_vault_kind"
+
+    entry = table.Entry(ThirdKind, f"{__name__}:_never_built")
+    third = {"kind": "third_vault_kind", "address": "https://vault.example"}
+    got = _build_refusal(
+        tmp_path / "third",
+        "pilot",
+        lambda d: d["backends"].update(channel=third),
+        plant=("channel", "third_vault_kind", entry),
+    )
+    assert got == f"environment pilot: refused: channel: third_vault_kind auth token {VAULT_FIX}", (
+        f"a static Vault token was accepted for a new kind built on the Vault settings: {got[:80]!r}"
+    )
+    # the other two sign-ins are not a static token
+    for extra in ({"auth": "kubernetes", "role": "r"}, {"auth": "approle", "role_id": "r-1"}):
+        got = _build_refusal(
+            tmp_path / extra["auth"],
+            "pilot",
+            lambda d, extra=extra: d["backends"].update(secrets=VAULT_KINDS["secrets"] | extra),
+        )
+        assert "auth token" not in got, (
+            f"a Vault sign-in that is not a static token was refused ({extra['auth']}): {got[:80]!r}"
+        )
     demo = make_cfg(tmp_path / "demo")
     _edit(demo, lambda d: d["backends"].update(secrets=VAULT_KINDS["secrets"]))
     assert load_config(demo).backends.secrets.auth == "token", "demo refused a static Vault token"
 
 
-def test_pilot_and_prod_refuse_a_time_handed_to_the_tick(tmp_path):
-    """`run_tick(app, now=...)` sets the time of the approval sweep, the stuck-run check and the evidence purge. That is
-    for tests: only exactly demo accepts it."""
-    from hadavin_sdk.runtime.tick import run_tick
+def test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick(tmp_path):
+    """`run_tick(app, now=...)` sets the time of the approval sweep, the stuck-run check and the evidence purge;
+    `run_tick(app, steps=...)` replaces the steps, so a tick could return 0 with no sweep and no purge. Both are for
+    tests: only exactly demo accepts them, and an empty step list counts as given."""
+    from hadavin_sdk.runtime.tick import STEPS, TickStep, run_tick
 
     cfg_dir = make_cfg(tmp_path)
     qualify(load_registry(load_config(cfg_dir)))
@@ -442,21 +540,44 @@ def test_pilot_and_prod_refuse_a_time_handed_to_the_tick(tmp_path):
         cfg_dir, ["test-agent"], secrets=FakeSecretProvider({"fixture-token": "tok" + "-tick"})
     )
     at = app.approvals.clock()
-    try:
-        assert run_tick(app, now=at) == 0
-    except ConfigError as exc:
-        raise AssertionError(f"demo refused a time handed to the tick: {exc}") from None
-    for stage in ("pilot", "prod", "stag" + "ing", "Demo", "", None):
-        app.config = app.config.model_copy(update={"environment": stage})
+    ran: list[str] = []
+    step = TickStep("recorded", 0, lambda _ctx: ran.append("recorded"))
+
+    def refusal(**given) -> str:
         try:
-            run_tick(app, now=at)
-            got = ""
+            run_tick(app, **given)
         except ConfigError as exc:
-            got = str(exc)
-        assert got == "now= is for tests; it is refused in pilot and prod", (
-            f"a live tick took a time handed to it ({stage!r}): {got[:80]!r}"
+            return str(exc)
+        return ""
+
+    assert refusal(now=at) == "", "demo refused a time handed to the tick"
+    assert refusal(steps=[step]) == "" and ran == ["recorded"], (
+        "demo refused a step list handed to the tick"
+    )
+    ran.clear()
+    no_time = "now= is for tests; it is refused in pilot and prod"
+    no_steps = "steps= is for tests; it is refused in pilot and prod"
+    for stage in ("pilot", "prod"):
+        app.config = app.config.model_copy(update={"environment": stage})
+        got = refusal(now=at)
+        assert got == no_time, f"a live tick took a time handed to it ({stage!r}): {got[:80]!r}"
+        got = refusal(steps=[step])
+        assert got == no_steps and ran == [], (
+            f"a live tick took a step list handed to it ({stage!r}): {got[:80]!r}, ran {ran}"
         )
-        assert run_tick(app) == 0, "a live tick with no time handed to it must run"
+        got = refusal(steps=[])
+        assert got == no_steps, f"a live tick took an empty step list ({stage!r}): {got[:80]!r}"
+        assert refusal(now=at, steps=[]) == no_time, "with both given, now= is the one named"
+    for stage in ("stag" + "ing", "Demo", "", None):
+        app.config = app.config.model_copy(update={"environment": stage})
+        got = [refusal(now=at), refusal(steps=[step])]
+        assert got == [no_time, no_steps] and ran == [], (
+            f"the tick treated {stage!r} as not live (an allowlist of live stages): {got}"
+        )
+    before = {s.name: app.store.get_tick_state(s.name) for s in STEPS}
+    assert run_tick(app) == 0, "a live tick with nothing handed to it must run"
+    after = {s.name: app.store.get_tick_state(s.name) for s in STEPS}
+    assert all(after.values()) and after != before, "a live tick did not run the steps of STEPS"
 
 
 ANCHOR = {"kind": "s3_object_lock", "bucket": "b", "region": "r"}

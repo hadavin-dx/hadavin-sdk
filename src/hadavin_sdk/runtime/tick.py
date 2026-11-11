@@ -13,6 +13,10 @@ Contract (design v5 kernel, section 4):
   not ready (missing table or grant: run ``migrate``); 4 store unreachable (connection refused, dropped or
   timed out), before any step or when it stops answering during the steps; 3 is the CLI wrapper's code for any
   other uncaught error.
+* Two refusals do NOT come back as an exit code: ``run_tick`` RAISES ``ConfigError`` when it is given ``now=`` or
+  ``steps=`` for an app whose stage is not exactly demo (both are for tests). The command line never passes them. A
+  caller that does must catch the error; an uncaught one ends a Python process with exit code 1, which this list
+  reads as "a step failed".
 
 Concurrent ticks are safe: every state change is a compare-and-set, and a loser (``StaleState``) skips.
 """
@@ -338,11 +342,19 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
     """One tick. Returns the exit code: 0 ok, 1 a step failed, 4 the store is unreachable, 2 the store answers but
     is not ready (STORE_NOT_READY). A config that does not load is the caller's, before this runs.
 
-    `now=` is for tests: it sets the time every step works with (the approval sweep, the stuck-run check, the
-    evidence purge), so a time in the future would delete evidence early. In pilot and prod (any stage that is not
-    exactly demo) a tick that is given one is refused with a ConfigError, and the time comes from the app's clock."""
-    if now is not None and is_live(app.config.environment):
-        raise ConfigError("now= is for tests; it is refused in pilot and prod")
+    `now=` and `steps=` are for tests. `now=` sets the time every step works with (the approval sweep, the stuck-run
+    check, the evidence purge), so a time in the future would delete evidence early. `steps=` replaces the list of
+    steps, so a tick could return 0 without the sweep or the purge ever running. Outside demo (pilot, prod and any
+    stage value that is not exactly demo) a tick that is given either one (not None; an empty list counts as given)
+    RAISES a ConfigError before anything runs: the time then comes from the app's clock and the steps are `STEPS`.
+    With both given, `now=` is the one named. `app` must carry its config (`app.config.environment`): an object
+    without one fails with an AttributeError when `now=` or `steps=` is given.
+
+    Not covered by these two refusals: a step function called by hand with a time of the caller's choice, for
+    example `purge_evidence(TickContext(app, <time>))`."""
+    given = [name for name, value in (("now", now), ("steps", steps)) if value is not None]
+    if given and is_live(app.config.environment):
+        raise ConfigError(f"{given[0]}= is for tests; it is refused in pilot and prod")
     ctx = TickContext(app, app.approvals.clock() if now is None else now)
     try:
         app.store.get_tick_state(_PROBE)  # the store answers, or nothing runs

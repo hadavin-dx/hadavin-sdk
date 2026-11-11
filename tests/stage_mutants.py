@@ -44,6 +44,29 @@ def mutant(name, file, old, new, killer, expect):
     )
 
 
+OBJECT = "test_pilot_and_prod_refuse_a_test_object_handed_to_build"
+VAULT = "test_pilot_and_prod_refuse_a_static_vault_token"
+TICK_TEST = "test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick"
+RAISE_VAULT = (
+    "    if live and (static := _static_vault_tokens(b)):\n"
+    "        # Before any backend is built: the token is never read from the environment of this process.\n"
+    "        raise ConfigError(f\"environment {cfg.environment}: refused: {', '.join(static)}\")\n"
+)
+MAKE_SECRETS = '    if secrets is None:\n        secrets = make("secrets", b.secrets)\n'
+VAULT_FIRST, SECRETS_FIRST = RAISE_VAULT + MAKE_SECRETS, MAKE_SECRETS + RAISE_VAULT
+
+
+def dropped(name, expect):
+    return mutant(
+        f"M12d {name} dropped from the six keywords (app.py)",
+        APP,
+        f'            ("{name}", {name}),\n',
+        "",
+        OBJECT,
+        expect,
+    )
+
+
 def pair(cap, kind):
     return mutant(
         f"M3 {cap}/{kind} dropped from DEMO_ONLY",
@@ -125,28 +148,56 @@ M = [
         'live = cfg.environment in ("pilot", "prod")',
         "test_a_value_that_is_not_a_stage_is_live_for_every_guard", "app treated"),
     mutant("M12a a live build takes a test object (app.py: the refusal of the six keywords is switched off)", APP, "if live and given:", "if False:",
-        "test_pilot_and_prod_refuse_a_test_object_handed_to_build", "a live build took a test object"),
+        OBJECT, "a live build took a test object"),
     mutant("M12b a static Vault token is allowed in pilot and prod (app.py: the check never matches)", APP,
         'isinstance(s, VaultConnection) and s.auth == "token"', "False",
-        "test_pilot_and_prod_refuse_a_static_vault_token", "a static Vault token was accepted"),
+        VAULT, "a static Vault token was accepted"),
     mutant("M12c the six keywords are tested for truth, not for being given (app.py)", APP, "if value is not None\n", "if value\n",
-        "test_pilot_and_prod_refuse_a_test_object_handed_to_build", "a live build took a falsy test object"),
-    mutant("M12d clock dropped from the six keywords (app.py)", APP, '            ("clock", clock),\n', "",
-        "test_pilot_and_prod_refuse_a_test_object_handed_to_build", "a live build took the keyword clock="),
-    mutant("M12e timeout_s dropped from the six keywords (app.py)", APP, '            ("timeout_s", timeout_s),\n', "",
-        "test_pilot_and_prod_refuse_a_test_object_handed_to_build", "a live build took the keyword timeout_s="),
+        OBJECT, "a live build took a falsy test object"),
+    dropped("secrets", "a live build took the keyword secrets="), dropped("channel", "a live build took a test object"),
+    dropped("detector", "a live build took the keyword detector="), dropped("llm", "a live build took the keyword llm="),
+    dropped("clock", "a live build took the keyword clock="), dropped("timeout_s", "a live build took the keyword timeout_s="),
     mutant("M12f the Vault check is narrowed to the secrets kind (app.py)", APP,
         "isinstance(s, VaultConnection) and", 'type(s).__name__ == "VaultSettings" and',
-        "test_pilot_and_prod_refuse_a_static_vault_token", "a static Vault token was accepted for signer"),
+        VAULT, "a static Vault token was accepted for signer"),
     mutant("M12g the Vault check runs in prod only (app.py)", APP, "if live and (static := _static_vault_tokens(b)):",
         'if cfg.environment == "prod" and (static := _static_vault_tokens(b)):',
-        "test_pilot_and_prod_refuse_a_static_vault_token", "a static Vault token was accepted for secrets (pilot"),
-    mutant("M13a a live tick takes a time handed to it (tick.py: the refusal is switched off)", TICK,
-        "if now is not None and is_live(app.config.environment):", "if False:",
-        "test_pilot_and_prod_refuse_a_time_handed_to_the_tick", "a live tick took a time handed to it"),
+        VAULT, "a static Vault token was accepted for secrets (pilot"),
+    mutant("M12h the Vault check goes back to the two kind names (app.py)", APP,
+        "isinstance(s, VaultConnection)", 's.kind in ("vault", "vault_transit")',
+        VAULT, "a static Vault token was accepted for a new kind built on the Vault settings"),
+    mutant("M12i the Vault check is widened to every sign-in but kubernetes (app.py)", APP,
+        's.auth == "token"', 's.auth != "kubernetes"',
+        VAULT, "a Vault sign-in that is not a static token was refused (approle)"),
+    mutant("M12j the Vault check runs after the secrets backend is made (app.py)", APP, VAULT_FIRST, SECRETS_FIRST,
+        VAULT, "a backend was made before the Vault refusal"),
+    mutant("M12k sources= is tested for truth, not for being given (app.py)", APP, "if sources is not None and live:", "if sources and live:",
+        "test_pilot_and_prod_refuse_sources_and_tools_handed_to_build", "a live build took sources= ('pilot', _FalsyDict"),
+    mutant("M12l tools= is tested for truth, not for being given (app.py)", APP, "if tools is not None and live:", "if tools and live:",
+        "test_pilot_and_prod_refuse_sources_and_tools_handed_to_build", "a live build took tools= ('pilot', _FalsyDict"),
+    mutant("M12m the timeout_s range check is switched off (app.py)", APP,
+        "if timeout_s is not None and not _timeout_in_range(timeout_s):", "if False:",
+        "test_demo_refuses_a_timeout_that_is_out_of_range", "demo took timeout_s=0"),
+    mutant("M12n timeout_s has no upper bound (app.py)", APP, "return 0 < value <= EXECUTOR_TIMEOUT_MAX_S", "return 0 < value",
+        "test_demo_refuses_a_timeout_that_is_out_of_range", "demo took timeout_s=inf"),
+    mutant("M12o True and False count as a timeout_s number (app.py)", APP,
+        "if isinstance(value, bool) or not isinstance(value, int | float):", "if not isinstance(value, int | float):",
+        "test_demo_refuses_a_timeout_that_is_out_of_range", "demo took timeout_s=True"),
+    mutant("M13a a live tick takes what it is handed (tick.py: the refusal is switched off)", TICK,
+        "if given and is_live(app.config.environment):", "if False:",
+        TICK_TEST, "a live tick took a time handed to it"),
     mutant("M13b the tick refuses a handed time in demo too (tick.py)", TICK,
-        "if now is not None and is_live(app.config.environment):", "if now is not None:",
-        "test_pilot_and_prod_refuse_a_time_handed_to_the_tick", "demo refused a time handed to the tick"),
+        "if given and is_live(app.config.environment):", "if given:",
+        TICK_TEST, "demo refused a time handed to the tick"),
+    mutant("M13c steps dropped from the two keywords of the tick (tick.py)", TICK,
+        '(("now", now), ("steps", steps))', '(("now", now),)',
+        TICK_TEST, "a live tick took a step list handed to it"),
+    mutant("M13d the two keywords of the tick are tested for truth (tick.py)", TICK,
+        '(("now", now), ("steps", steps)) if value is not None', '(("now", now), ("steps", steps)) if value',
+        TICK_TEST, "a live tick took an empty step list"),
+    mutant("M9d tick.py goes back to an allowlist of live stages", TICK, "is_live(app.config.environment)",
+        'app.config.environment in ("pilot", "prod")',
+        TICK_TEST, "the tick treated"),
     mutant("M10a pilot dropped from the redactor's common words", REDACT, '        "pilot",\n', "",
         "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "pilot is swept"),
     mutant("M10b demo dropped from the redactor's common words", REDACT, '        "demo",\n', "",
