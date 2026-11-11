@@ -28,3 +28,6 @@ Entry format: `D-NNN | date UTC / IST | question | options (cost, risk) | RECOMM
 - Options: A keep old core/P3a-2 (never mergeable, 208 handover files in tree); B open a NEW draft PR from core/P3a-2-rewritten (additive, old PR73 untouched); C rewrite/force existing branch (owner-only, forbidden).
 - Chosen: B as the recommendation only; opening the PR is deferred until the security-CI question is settled (it would fail for the same reason). Round-11 commits on the rewritten branch (4 commits, 11 non-handover files) have no review/evidence: schedule fresh review + evidence when PR is opened.
 - Evidence: handover/decisions/P3a2-history-memo.md; lead verified CI rule in main ci.yml.
+
+## D-004 2026-11-11 13:36Z UTC: EGM model = Fable 5.2 (owner order, not my decision)
+Owner said: use Fable 5.2 for all EGM skills/agents instead of Opus/Sonnet/Haiku. Done by patching egm_model_patch.py (OPUS=SONNET=FABLE) and running it. Scope: EGM only; builders/evidence runners unchanged (ambiguous in the order; revisit if the owner means all agents). Reversible: restore the two constants. Cost goes up (Fable pricing not verified here).

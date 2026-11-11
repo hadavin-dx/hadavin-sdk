@@ -35,3 +35,6 @@ Expected: `claude-opus-5-5` only on egm-brainstorm, egm-draft and egm-resolve (3
 
 ## Why the EGM skills may be refused (found 2026-11-05)
 Upstream sets `disable-model-invocation: true` on all seven EGM skills. A skill with that flag can only be started by a person typing the slash command; when the model calls the Skill tool it is refused. The patch script now removes that flag as well. After running it, START A NEW SESSION: the list of skills is read when a session starts.
+
+## OVERRIDE 2026-11-11 (owner's direct order in the cloud session): Fable 5.2 for ALL of EGM
+Every EGM skill and every egm:* reviewer agent runs on `claude-fable-5-2` (the table above is superseded for EGM). `handover/tools/egm_model_patch.py` now writes that id everywhere. Builders and evidence runners stay on Sonnet 5.5 until the owner says otherwise. Start a NEW session after patching.
