@@ -808,18 +808,13 @@ def test_a_million_characters_finish(mn):
 def test_lexer_is_linear(mn):
     small, big = 16 * 1024, 256 * 1024
     units = ["'", '"', "$a$", "/*", "--", "E'\\", ";", "$a$ x ", "a$"]
-    slow = [
-        (fn.__name__, unit)
-        for fn in (mn.lex, mn.refused_statements)
-        for unit in units
-        if timing.is_superlinear(fn, unit, small, big)
-    ]
-    assert not slow, slow
+    cases = [(fn.__name__, fn, unit) for fn in (mn.lex, mn.refused_statements) for unit in units]
+    assert timing.problems(cases, small, big) == []
 
 
 # Three stand-ins with a known cost, timed with the real clock, so a pass of the test above means something. `_scan` is
-# one pass over the text in 64-character steps; the sizes are the ones the lexer test uses (16x apart: a linear cost
-# grows about 16x, the limit is 48x, a quadratic cost about 256x).
+# one pass over the text in 64-character steps; the sizes are the ones the lexer test and the redaction pattern sweep
+# (`tests/test_k5_perf.py`) use (16x apart: a linear cost grows about 16x, the limit is 48x, a quadratic cost about 256x).
 
 
 def _scan(text: str) -> int:

@@ -1,12 +1,19 @@
 """Redaction cost (R370-style numbers, K5-core). The sweep over every pattern is marked `perf`: CI runs it in its own
 blocking step, and the harness itself is tested with a deliberately quadratic pattern so a pass means something.
 
-What is measured: wall seconds (perf_counter: process_time ticks at 15.6 ms on Windows and read 0 for the small run,
-which made a linear pattern look like a jump) of one scan, on 64 KiB and 256 KiB of one pattern's own keyword repeated.
-The shared rule (`tests/fixtures/timing.py`) does the timing: it repeats the scan until a batch takes at least 20 ms and
-takes the fastest of three batches, so a fast small run is timed properly and never rounded up. A linear pattern takes
-about 4x as long on 4x the text; a quadratic one 16x; the limit is 3x per size ratio (12x for 4x the text) of the small
-run, with no fixed seconds figure on either run. The BANKCODE transit pattern
+What is measured: the processor time of this process (on Windows the wall clock: process_time ticks at 15.6 ms there
+and read 0 for the small run, which made a linear pattern look like a jump) of one scan, on 16 KiB and 256 KiB of one pattern's own keyword repeated
+(256 KiB is the redaction input cap). The shared rule (`tests/fixtures/timing.py`) does the timing: it repeats the scan
+until a batch is long enough to time, lets the two sizes take turns and takes each size's fastest of five batches, so a
+fast small run is timed properly and never rounded up. The limit is 3x the size ratio, with no fixed seconds figure on
+either run. What each test can flag (a cost growing as size ** e is flagged when e is above 1 + log 3 / log gap):
+  * the pattern sweep, 16 KiB to 256 KiB, gap 16: linear grows 16x, the limit is 48x, quadratic 256x; e above 1.40;
+  * the end-to-end tests, 4 KiB to 64 KiB, gap 16: the same; e above 1.40;
+  * the harness check with a real quadratic pattern, 4 KiB to 32 KiB, gap 8: limit 24x, quadratic 64x; e above 1.53
+    (256 KiB of that pattern would take minutes). A quadratic stand-in at exactly the sweep's two sizes is flagged, and
+    a linear and an "n log n" one pass, in `tests/test_migration_numbers.py` (`test_the_timing_harness_*`).
+Until 2026-11-11 the sweep ran 64 KiB to 256 KiB (gap 4: only e above 1.79, a quadratic cost 1.33x over the limit) and
+the end-to-end tests 16 KiB to 64 KiB. The BANKCODE transit pattern
 measured alone: 16 KiB 3 ms, 64 KiB 19 ms, 256 KiB 75 ms, 1 MiB 333 ms: linear (4x per 4x), about 0.3 us per char."""
 
 from __future__ import annotations
@@ -20,7 +27,7 @@ import pytest
 
 from tests.fixtures import timing
 
-SMALL, BIG = 64 * 1024, 256 * 1024
+SMALL, BIG = 16 * 1024, 256 * 1024
 
 
 def _redact_module():
@@ -59,13 +66,14 @@ def test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one():
 
 @pytest.mark.perf
 def test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated():
-    slow = [
-        (name, unit)
+    cases = [
+        (name, lambda t, p=pat: _scan(p, t), unit)
         for name, pat in _redact_module().PATTERNS
         for unit in _units(pat)
-        if is_superlinear(pat, unit)
     ]
-    assert not slow, slow
+    assert len(cases) >= 150, "the sweep would look at too little"
+    # every slow pattern AND every pattern that could not be timed, each by name (a refusal does not stop the sweep)
+    assert timing.problems(cases, SMALL, BIG) == []
 
 
 # --- end to end: redact_untrusted with its views, not one pattern -------------------------------------------------------------------
@@ -94,7 +102,7 @@ def _e2e(text: str) -> None:
     "unit", E2E_UNITS, ids=["curl-u", "password", "fullwidth", "json-escape", "zero-width"]
 )
 def test_redact_untrusted_end_to_end_is_not_super_linear_with_views(unit):
-    assert not timing.is_superlinear(_e2e, unit, 16 * 1024, 64 * 1024)
+    assert not timing.is_superlinear(_e2e, unit, 4 * 1024, 64 * 1024)
 
 
 @pytest.mark.perf
