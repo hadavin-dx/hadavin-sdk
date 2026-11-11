@@ -1,0 +1,50 @@
+src/hadavin_sdk/actions/executor.py:16:from urllib.parse import quote
+src/hadavin_sdk/actions/secrets_vault.py:32:from hadavin_sdk.safe_url import safe_urlsplit
+src/hadavin_sdk/actions/secrets_vault.py:67:        if safe_urlsplit(self.address).hostname in {"127.0.0.1", "localhost", "::1"}:
+src/hadavin_sdk/config.py:34:    config_urlsplit,
+src/hadavin_sdk/config.py:35:    safe_urlsplit,
+src/hadavin_sdk/config.py:193:    parts = safe_urlsplit(url)
+src/hadavin_sdk/config.py:202:        parts = safe_urlsplit(url)
+src/hadavin_sdk/config.py:429:                config_urlsplit(system.base_url)
+src/hadavin_sdk/llm/common.py:21:from hadavin_sdk.safe_url import safe_urlsplit
+src/hadavin_sdk/llm/common.py:263:    opener = _LOCAL_OPENER if safe_urlsplit(url).hostname in _LOOPBACK else _OPENER
+src/hadavin_sdk/llm/gemini.py:15:from urllib.parse import quote
+src/hadavin_sdk/llm/openai_compat.py:31:from hadavin_sdk.safe_url import safe_urlsplit
+src/hadavin_sdk/llm/openai_compat.py:49:    return safe_urlsplit(base_url).hostname in _LOOPBACK and ":" not in model_id
+src/hadavin_sdk/approvals/hmac_v0.py:15:from urllib.parse import parse_qs
+src/hadavin_sdk/approvals/hmac_v0.py:68:        payload = json.loads(parse_qs(body.decode("utf-8"))["payload"][0])
+src/hadavin_sdk/config_url.py:13:from hadavin_sdk.safe_url import NOT_A_URL, InvalidUrl, UrlHasLogin, config_urlsplit
+src/hadavin_sdk/config_url.py:19:        config_urlsplit(value)
+src/hadavin_sdk/sources/kubernetes.py:17:from urllib.parse import quote
+src/hadavin_sdk/safe_url.py:4:Why it exists. `urllib.parse.urlsplit` raises a `ValueError` whose text holds the value it was given (for a host
+src/hadavin_sdk/safe_url.py:7:terminal. `safe_urlsplit` turns every such error into the same fixed sentence and drops the cause. It also reads the
+src/hadavin_sdk/safe_url.py:13:from urllib.parse import SplitResult, urlsplit
+src/hadavin_sdk/safe_url.py:29:def safe_urlsplit(value: str) -> SplitResult:
+src/hadavin_sdk/safe_url.py:30:    """`urlsplit(value)`, or `InvalidUrl` (a `ValueError` with a fixed sentence and no cause) when it cannot be read."""
+src/hadavin_sdk/safe_url.py:32:        parts = urlsplit(value)
+src/hadavin_sdk/safe_url.py:39:def config_urlsplit(value: str) -> SplitResult:
+src/hadavin_sdk/safe_url.py:40:    """`safe_urlsplit` for a URL that a configuration file holds. Also refused, with a fixed sentence and no cause:
+src/hadavin_sdk/safe_url.py:44:    parts = safe_urlsplit(value)
+src/hadavin_sdk/backends/table.py:20:from hadavin_sdk.safe_url import safe_urlsplit
+src/hadavin_sdk/backends/table.py:82:        url = safe_urlsplit(self.base_url)
+src/hadavin_sdk/backends/table.py:173:            url = safe_urlsplit(self.endpoint_url)
+src/hadavin_sdk/backends/table.py:282:        url = safe_urlsplit(self.address)
+src/hadavin_sdk/backends/table.py:387:        return [safe_urlsplit(s.endpoint_url).hostname or ""]
+src/hadavin_sdk/backends/table.py:415:            hosts=lambda s: [safe_urlsplit(s.address).hostname or ""],
+src/hadavin_sdk/backends/table.py:424:                safe_urlsplit(s.vault_url).hostname or "",
+src/hadavin_sdk/backends/table.py:463:            hosts=lambda s: [safe_urlsplit(s.key_id).hostname or "", "login.microsoftonline.com"],
+src/hadavin_sdk/backends/table.py:477:            hosts=lambda s: [safe_urlsplit(s.address).hostname or ""],
+src/hadavin_sdk/backends/table.py:498:                safe_urlsplit(s.account_url).hostname or "",
+src/hadavin_sdk/backends/table.py:551:            hosts=lambda s: [safe_urlsplit(s.base_url).hostname or ""],
+src/hadavin_sdk/backends/table.py:582:            hosts=lambda s: [safe_urlsplit(s.api_base).hostname or ""],
+src/hadavin_sdk/app.py:45:from hadavin_sdk.safe_url import safe_urlsplit
+src/hadavin_sdk/app.py:398:    parts = safe_urlsplit(kind.endpoint(settings))
+src/hadavin_sdk/app.py:449:    return (safe_urlsplit(kind.endpoint(kind.settings(**sc.settings))).hostname or "").lower()
+src/hadavin_sdk/tools.py:38:from urllib.parse import quote, quote_plus, urlunsplit
+src/hadavin_sdk/tools.py:47:from hadavin_sdk.safe_url import InvalidUrl, safe_urlsplit
+src/hadavin_sdk/tools.py:540:        )  # `safe_urlsplit` already read the port
+src/hadavin_sdk/tools.py:577:            parts = safe_urlsplit(url)
+src/hadavin_sdk/tools.py:611:        url = urlunsplit((parts.scheme, netloc, parts.path, parts.query, ""))
+src/hadavin_sdk/guard/runmap.py:22:from urllib.parse import unquote
+src/hadavin_sdk/guard/egress.py:7:from hadavin_sdk.safe_url import InvalidUrl, safe_urlsplit
+src/hadavin_sdk/guard/egress.py:28:        host = safe_urlsplit(host_or_url).hostname if "://" in host_or_url else host_or_url
