@@ -1,0 +1,4 @@
+ok  KILLED       runner: a single quote is never escaped in a layer-0 form  [test_a_value_with_one_quote_kind_is_masked_inside_a_text_tha]
+ok  KILLED       runner: a bare password is not masked in two layers  [test_a_bare_password_printed_in_two_layers_is_masked_whateve]
+2 of 2 good; problems: []
+exit=0
