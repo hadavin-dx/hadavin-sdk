@@ -2640,3 +2640,4 @@
 | BL-core-q8a2-r2-d01 | Major | Q8a-2 | reviews/Q8a-2/result-r2-design-full.md M1 string-scan boundary set | OPEN | | | 2026-11-11 |
 | BL-core-q8a2-r2-c01 | Major | Q8a-2 | reviews/Q8a-2/result-r2-codebase-full.md F1 aliased from-import (lead reproduced) | OPEN | | | 2026-11-11 |
 | BL-core-q8a2-r2-c02 | Minor(sec, on main) | Q8a-2 | result-r2-codebase-full.md F2 Content-Length digits before the path check | OPEN | | | 2026-11-11 |
+| BL-core-q8a2-r2-ev1 | Major(sec, on main) | Q8a-2 | evidence/Q8a-2/5f94f59: no read timeout in the approval receiver; traceback on a closed connection | OPEN | | | 2026-11-11 |
