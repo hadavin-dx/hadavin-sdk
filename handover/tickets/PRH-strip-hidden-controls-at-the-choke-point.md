@@ -469,25 +469,35 @@ mapping.clear(); mapping.update(current)                                        
 - Changing the judge, the vendor screen or `safe_head` to the untrusted variant (open question 1). Collapsing line ends in `safe_head` (open question 3).
 - Base64, hex or quoted-printable decoding for pattern-shaped secrets.
 
-### 4.4 Cost: bound and measurement
+### 4.4 Cost: bound, measurement and gates (rev 3: D3, D4, M5)
 
-Bound: `strip` is one pass; the passes are counted in section 3 (at most 18); the gap replacement is at most 256 linear substitutions per reading; the 6-second budget stays the hard wall and is checked before every pass. Measurement (acceptance 9): the shapes of the table below at 131,072 and 262,144 characters, median of three, with no other heavy job running (section 6.2). Author numbers, single runs under machine load (rev 1: slow prototype reader; rev 2 column: prototype plus the rev-2 changes, `handover/evidence/PRH-plan/cost-protofixes.out`):
+**Bound.** `strip` is one pass and returns at once on text with no removed or space-like item (one compiled search); at most 10 passes (section 3); the span rule is one pass over the matches; the 6-second budget stays the hard wall and is checked before every pass.
 
-| Shape at 262,144 chars | main, wall / CPU (1 run) | rev-1 prototype, wall / CPU | rev-2 prototype, wall / CPU | passes |
-|---|---|---|---|---|
-| plain ASCII log | 0.39 / 0.39 s (rev 2 session: 0.42 / 0.38) | 0.72 / 0.50 s | 0.51 / 0.51 s | 1 |
-| tab table | 0.40 / 0.40 s (0.47 / 0.43) | 0.74 / 0.51 s | 0.48 / 0.46 s | 1 |
-| JSON | 0.42 / 0.40 s (0.44 / 0.40) | 0.66 / 0.53 s | 0.49 / 0.47 s | 1 |
-| coloured output | 0.24 / 0.24 s (0.34 / 0.24) | 0.42 / 0.32 s | 0.42 / 0.39 s | 1 |
-| colour change inside a word | (0.34 / 0.32) | 1.16 / 0.69 s | 0.81 / 0.77 s | 2 |
-| shell with line continuations | (0.50 / 0.44) | 1.21 / 0.92 s (with the continuation reading) | 0.60 / 0.57 s (no continuation reading) | 1 |
-| Hindi | 0.86 / 0.80 s (0.96 / 0.85) | 1.46 / 1.10 s | 1.30 / 1.27 s | 1 |
-| Persian with emoji | 1.56 / 1.43 s (1.79 / 1.47) | 2.63 / 1.81 s | 1.92 / 1.88 s | 2 |
-| hostile: 400 distinct e-mail addresses and a bell inside a word, repeated | (0.42 / 0.36) | not measured | 0.82 / 0.82 s, finished (no value needed the gap, so no `InputTooLarge`) | 2 per reading |
+**Shapes** (each is ONE line repeated to the size by `(line * (n // len(line) + 1))[:n]`; the exact lines are in `r3/scripts/cost_r3.py`, dictionary `SHAPES`, and T9 copies them):
+- hidden-free (the ratio gate): **S1** plain ASCII log line; **S2** tab-separated table row; **S3** JSON line; **S4** Hindi sentence; **S5** Persian sentence with a zero-width non-joiner, an emoji with U+FE0F and a joiner sequence;
+- with hidden items (time limit only): **H1** coloured test output (four colour codes per line, at word edges); **H2** a colour change inside a word; **W** the worst shape: Persian + a colour change inside a word + `50%25` on every line (reaches the 10-pass bound).
 
-Reading of the rev-2 column (single runs, `cost-main.out` and `cost-protofixes.out`, same session, load average about 4 on 4 cores): every shape is under 3.0 s CPU; the plain shapes are 1.1 to 1.6 times main's CPU (plain ASCII 0.51 vs 0.38 s = 1.34 times) because the prototype's reader takes its slow per-character loop for any text with a line feed; the design's compiled fast-path search (4.1) is meant to bring them to at most 1.25 times, which is NOT shown by any run yet.
+**Measured in rev 3** (`r3/cost-r3-main.out`; main 2a8c2aac, Python 3.13.18; CPU by `time.process_time`, median of 5; main and each variant interleaved in ONE process; load average 4.6 to 5.7 with all three heavy slots busy). "rev-3 estimate" = main with `canonical` using the one compiled class of 4.1, plus the measured cost of rev 3's added checks on hidden-free text (`ANY.search` on the text and, as an upper bound, on a full `undo(text)`). It is composed from measured parts, not a run of the built design.
 
-Limits for the build: every shape at the cap finishes in under 3.0 s CPU (half the budget) or, for the hostile shape only, raises `InputTooLarge`; doubling the size costs at most 2.5 times the time (linear), by the existing rule in `tests/fixtures/timing.py`. These two are asserted by the `perf` test T9. The third limit, the four shapes with no hidden item at most 1.25 times main's CPU time, is checked ONLY in the evidence table of acceptance 9 (it compares two worktrees; it is not a test assertion).
+| Shape | chars | main CPU s | rev-2 per-character `canonical` | rev-3 compiled class | rev-3 estimate | estimate / main |
+|---|---|---|---|---|---|---|
+| S1 plain ASCII | 262,144 | 0.393 | 0.395 | 0.392 | 0.393 | 1.00 |
+| S2 tab table | 262,144 | 0.403 | 0.406 | 0.404 | 0.405 | 1.01 |
+| S3 JSON | 262,144 | 0.392 | 0.397 | 0.392 | 0.393 | 1.00 |
+| S4 Hindi | 262,144 | 0.786 | 0.814 | 0.741 | 0.782 | 0.99 |
+| S5 Persian | 262,144 | 1.417 | 1.438 | 1.313 | 1.446 | 1.02 |
+| S1 to S5 | 65,536 | 0.098 to 0.341 | | | | 0.88 to 1.04 |
+
+Reading: the rev-2 Hindi figure of 1.59 times main came from the prototype's slow per-character reader (rev-2 text, 4.4), NOT from `canonical`: the per-character rule costs 1.04 times main on Hindi and the compiled class 0.94 times (0.741 / 0.786). The added checks cost 0.0007 s on S1 to S3 and at most 0.13 s on S5 (a full second `undo`, which rev 3 does not compute: `_views` reuses its own). H1: 0.24 s, H2: 0.32 s on main; rev 3 adds one pass for H2 (estimate under 0.7 s).
+
+**Worst case W (D4)**, same file: one pass 0.410 s, the views 0.118 s, main end-to-end 1.566 s. Rev-2 bound (18 passes, two view sets): 7.61 s, over the budget, so refused above about 206,700 characters. Rev-3 bound (10 passes, one view set): **4.21 s**, under the 6-second budget at the cap on this machine under this load; a machine about 1.4 times slower refuses it (section 3, "not promised").
+
+**Gates** (what the build must show; who checks it):
+- **G1, pass count (test assertion, T9):** for S1 to S5 at the cap, the branch makes exactly as many `redact` calls per `redact_text` call as main does (counting stand-in on `runmap.redact`; main's counts recorded in `prh_main_corpus.json` by `record_prh_main.py`). H2: main's count plus at most 1 per reading. W: at most 10.
+- **G2, no extra decode (test assertion, T9):** for S1 to S5, the branch makes exactly as many `runmap.undo` calls as main (counting stand-in).
+- **G3, seconds and growth (test assertion, T9, `perf` marker):** every S and H shape at the cap under 3.0 s CPU (`time.process_time`, median of 5); W finishes OR raises `InputTooLarge`, never running past the budget by more than one pass; growth by `tests/fixtures/timing.py` `is_superlinear(measure, line, 65_536, 262_144)` is False (the rule on main: `PER_SIZE = 3.0`, so 4 times the text may cost at most 12 times the time; rev 2 wrongly wrote "2.5 times for doubling").
+- **G4, ratio to main (evidence only, acceptance 9):** S1 to S5 at the cap, branch median CPU at most **1.25** times main's, both measured in ONE process with the same file (`tests/test_prh_perf.py` `__main__ --compare-main PATH`, which imports main's source from PATH under a second module name is NOT possible for a package with absolute imports, so it runs two child processes alternately, five times each). The limit stays 1.25 although the estimate is 1.00 to 1.04: the estimate is composed, and 1.25 leaves room for the real `strip` and `_no_created_shapes` identity checks without hiding a slow reader.
+- **Remedy when a gate fails:** G1 or G2 fail = a design error: the builder stops and reports to the lead (never edits the gate). G3 or G4 fail = the builder profiles the failing shape (`python -m cProfile -s cumtime`, top 15 lines saved to the checkpoint note), fixes the hot spot inside the design (for example a per-character loop where a compiled class fits), and re-measures once; a second failure goes to the lead with the profile. The limits are never raised by the builder.
 
 ## 5. Test design
 

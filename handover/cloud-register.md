@@ -1436,3 +1436,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | ad18b1b5 | EV timing-fix 2f94c2b2 (evidence) | 17:12 | +45m | 17:12 | running | collect, then resolve |
 | aed6d80b | timing-fix design review r1 | 17:12 | +20m | - | running | save, egm-resolve |
 | a122c19a | timing-fix codebase review r1 | 17:12 | +20m | - | running | save, egm-resolve |
+| a2386eb2 | PR89 r23 fix builder (c2f98f49 -> new head) | 17:14 | +60m | - | running | EV + fresh reviewers r23 |
