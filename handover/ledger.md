@@ -2686,3 +2686,6 @@
 | PRH-r2-D3 | same | Major | PRH | 1.25x cost limit unproven and not a gate; use pass counts + process time | OPEN | ticket rev 3 | - | 2026-11-11 |
 | PRH-r2-D4 | same | Major | PRH | worst case 18 passes unmeasured and becomes refusal of legit large logs | OPEN | ticket rev 3 | - | 2026-11-11 |
 | PRH-r2-D7 | same | Major | PRH | rung table library row UNVERIFIED, no evidence | OPEN | ticket rev 3 | - | 2026-11-11 |
+| PRH-r2-R-M1 | reviews/PRH/plan-r2-readiness-full.md | Major | PRH | W3 says _first_decoded NO change but main calls _decoded (regression) | OPEN | ticket rev 3 | - | 2026-11-11 |
+| PRH-r2-R-M2 | same | Major | PRH | reader grammar 4.1: string sequence end rule, ESC inside string, strip_sequences scope, oracle | OPEN | ticket rev 3 | - | 2026-11-11 |
+| PRH-r2-R-M3..M9 | same | Major | PRH | T5 sources not in ticket; tests not mapped to files/killers (35,36,31 unkillable?); cost gate four shapes undefined (Hindi 1.59x); env setup/uv offline/heavy.sh form; 60-min box vs green-per-commit; invisible chars as escapes + scan_repo early; oracle Other_Default_Ignorable ranges not in ticket | OPEN | ticket rev 3 | - | 2026-11-11 |
