@@ -1,4 +1,4 @@
-"""The mutants of the fold scan (P2d-1): 21 redactor mutants of core PR #50 (748849c), re-pointed, 21 new ones, the 16 of review round w3 and the 5 of round w4
+"""The mutants of the fold scan (P2d-1): 21 redactor mutants of core PR #50 (748849c), re-pointed, 21 new ones, the 16 of review round w3, the 5 of round w4, the 5 of the controls batch and those of round w5
 (the views that drop spacing marks, the control-character gate, the block that grows over a second block, the line end of a withheld block).
 
 ``tools.mutation_runner`` replaces EVERY occurrence of a mutant's ``old`` text. Mutant 21 therefore removes both
@@ -217,9 +217,27 @@ M = [
     m("W24 lines are cut by splitlines", RD, "lines = _LINES.findall(", "lines = (lambda t: t.splitlines(True))(", FM,
       "test_marks_18_a_control_character_inside_a_key_or_a_value_leaves_no_piece_in_clear", "ssert"),
     m("W25 a two-byte escape is cut with the letter after it", RD, "if glued and e - s == 2 and text[s + 1].isalpha():", "if False:", FM,
-      "test_marks_18d_an_escape_character_keeps_the_letter_after_it_between_two_word_characters", "ssert"),
-    m("W26 a control between two word characters is not hidden", RD, "|(?<=[A-Za-z0-9])[\\t\\x0b\\x0c\\x1c-\\x1f](?=[A-Za-z0-9])", "", FM,
+      "test_marks_25_strip_ansi_keeps_one_letter_after_an_escape_between_word_characters_and_removes_a_sequence", "ssert"),
+    m("W26 a control is plain unless between two letters or digits", RD, '|[\\t\\x0b\\x0c\\x1c-\\x1f]"', '|(?<=[A-Za-z0-9])[\\t\\x0b\\x0c\\x1c-\\x1f](?=[A-Za-z0-9])"', FM,
+      "test_marks_21_a_white_space_control_beside_a_non_letter_character_of_a_secret_is_read_like_any_other", "ssert"),
+    m("W27 the whole-sequence reading is missing", RD, "_ANSI_MODES = (1, 2, 3)", "_ANSI_MODES = (2, 3)", FM, "test_marks_20_an_escape_sequence_inside_a_key_or_a_value_leaves_no_piece_in_clear_and_loses_no_real_character", "ssert"),
+    m("W28 the keep-the-last-character reading is missing", RD, "_ANSI_MODES = (1, 2, 3)", "_ANSI_MODES = (1, 3)", FM, "test_marks_20_an_escape_sequence_inside_a_key_or_a_value_leaves_no_piece_in_clear_and_loses_no_real_character", "ssert"),
+    m("W29 the sequence-as-a-space reading is missing", RD, "_ANSI_MODES = (1, 2, 3)", "_ANSI_MODES = (1, 2)", FM,
+      "test_marks_23_a_masked_value_keeps_the_white_space_control_beside_it_and_a_sequence_in_front_is_read_as_a_space", "ssert"),
+    m("W30 no run of control characters stays a separator", RD, "            if n in read:\n", "            if False:\n", FM,
       "test_marks_18_a_control_character_inside_a_key_or_a_value_leaves_no_piece_in_clear", "ssert"),
+    m("W31 spans found in two views are not one value", RD, "            if merged and start < merged[-1][1]:\n", "            if False:\n", FM,
+      "test_marks_23_a_masked_value_keeps_the_white_space_control_beside_it_and_a_sequence_in_front_is_read_as_a_space", "ssert"),
+    m("W32 a view that is not an ordinary fold withholds the line at once", RD, "                if odd and not changed:\n", "                if odd:\n", FM,
+      "test_marks_1_the_four_review_inputs_leave_no_key", "ssert"),
+    m("W33 runmap keeps the white-space controls in its views", GM, 'canonical(without_spacing_marks(JOIN_RE.sub("", text))),', "canonical(without_spacing_marks(text)),", FM,
+      "test_marks_23_a_masked_value_keeps_the_white_space_control_beside_it_and_a_sequence_in_front_is_read_as_a_space", "ssert"),
+    m("W34 the left edge takes in the controls too", RD, "while start > 0 and _is_edge_mark(body[start - 1]):", "while start > 0 and _is_spacing(body[start - 1]):", FM,
+      "test_marks_23_a_masked_value_keeps_the_white_space_control_beside_it_and_a_sequence_in_front_is_read_as_a_space", "ssert"),
+    m("W35 the right edge takes in the controls too", RD, "while stop < len(body) and _is_edge_mark(body[stop]):", "while stop < len(body) and _is_spacing(body[stop]):", FM,
+      "test_marks_23_a_masked_value_keeps_the_white_space_control_beside_it_and_a_sequence_in_front_is_read_as_a_space", "ssert"),
+    m("W36 a kept run of controls is dropped like the rest", RD, 'lambda m: " " if next(runs) in read else "", text', 'lambda m: "", text', FM,
+      "test_marks_26_a_key_glued_to_a_word_by_one_tab_and_cut_by_another_leaves_no_piece_in_clear", "ssert"),
 ]  # fmt: skip
 
 if __name__ == "__main__":

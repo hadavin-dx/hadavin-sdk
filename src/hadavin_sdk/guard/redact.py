@@ -21,6 +21,7 @@ it was removed - second review, 2026-09-30.)
 from __future__ import annotations
 
 import functools
+import itertools
 import re
 import string
 import time
@@ -945,8 +946,8 @@ def _char_class(ch: str) -> tuple[str, int] | None:
 
 
 _HIDDEN_ASCII = re.compile(
-    "[\x00-\x08\x0e-\x1b\x7f]|(?<=[A-Za-z0-9])[\t\x0b\x0c\x1c-\x1f](?=[A-Za-z0-9])"
-)  # ASCII control characters the fold drops, and a white-space-like one (see _JOIN_CTLS) between two letters or digits
+    "[\x00-\x08\x0e-\x1b\x7f]|[\t\x0b\x0c\x1c-\x1f]"
+)  # ASCII control characters the fold drops, and a white-space-like one (see _JOIN_CTLS) ANYWHERE: whatever stands beside it, a secret may be cut by it
 # The white-space-like control characters the fold reads as a space: tab, vertical tab, form feed, U+001C to U+001F and NEL (U+0085). A reader sees
 # a separator, so a key cut by one is two words; but a key in the text is a key whatever a character inside it looks like, so the views that
 # drop spacing marks drop these too, and a fixed-shape value found that way is masked whole, with the control characters inside it. (A new line
@@ -956,8 +957,60 @@ JOIN_RE = re.compile("[" + _JOIN_CTLS + "]")
 _LINES = re.compile(r"[^\r\n]*(?:\r\n|\r|\n)|[^\r\n]+")
 
 
-def _view(text: str, marks: bool, iota: bool) -> str:
-    """One view of ``text`` (``fold_view``); the views that drop the spacing marks drop the white-space-like control characters first."""
+# How the characters of an escape sequence (``_ANSI``) are read in a view: 0 as written (the fold drops the ESC or U+009B itself, nothing
+# else), 1 the whole sequence is dropped, 2 everything but its last character is dropped (the last one may be a real letter of a key:
+# ``ESC [ F`` inside ``AKIAIOS<ESC>[FODNN7EXAMPLE``), 3 the whole sequence is a space. A scan looks through all four: it cannot know
+# which characters of a sequence inside a key are the key's own.
+_ANSI_MODES = (1, 2, 3)
+
+
+_JOIN_RUN = re.compile("[" + _JOIN_CTLS + "]+")
+_SEP_KEEP = 3  # a line with white-space-like control characters is also read with one or two of its first three runs kept as separators
+
+
+def _reads(text: str, read: int | tuple[int, ...]) -> dict[int, str]:
+    """For a view: the index of every character of ``text`` that the view reads in another way, and what it is read as (an empty string:
+    dropped). ``read`` is a mode 1 to 3 for the escape sequences (``_ANSI_MODES``), or a tuple of the numbers of the runs of white-space-like
+    control characters (tab, VT, FF, U+001C to U+001F, NEL) that stay a separator, a space, while every other run is dropped: a secret cut by
+    a tab and glued to a word by another (``user<TAB>AKIA<TAB>IOSF...``) is read whole in the view that keeps only the tab before it."""
+    reads: dict[int, str] = {}
+    if isinstance(read, tuple):
+        for n, m in enumerate(_JOIN_RUN.finditer(text)):
+            reads.update(dict.fromkeys(range(m.start(), m.end()), ""))
+            if n in read:
+                reads[m.start()] = " "
+        return reads
+    mode = read
+    for m in _ANSI.finditer(text):
+        s, e = m.span()
+        if mode == 1:
+            reads.update(dict.fromkeys(range(s, e), ""))
+        elif mode == 2:
+            if (
+                text[s] == "\x1b" and text[s + 1 : s + 2] == "]"
+            ):  # a title string: only its frame goes, its text is read
+                reads.update(
+                    dict.fromkeys((s, s + 1, e - 1) if text[e - 1] == "\x07" else (s, s + 1), "")
+                )
+            else:
+                reads.update(dict.fromkeys(range(s, e - 1), ""))
+        else:
+            reads.update(dict.fromkeys(range(s, e), ""))
+            reads[s] = " "
+    return reads
+
+
+def _view(text: str, marks: bool, iota: bool, read: int | tuple[int, ...] = 0) -> str:
+    """One view of ``text`` (``fold_view``); the views that drop the spacing marks drop the white-space-like control characters first, and a
+    view with a ``read`` reads the escape sequences or the runs of control characters as ``_reads`` says."""
+    if isinstance(
+        read, tuple
+    ):  # runs of control characters: one substitution per run, not one lookup per character
+        runs = iter(range(len(text) + 1))
+        text = _JOIN_RUN.sub(lambda m: " " if next(runs) in read else "", text)
+    elif read:
+        reads = _reads(text, read)
+        text = "".join(reads.get(i, ch) for i, ch in enumerate(text))
     return fold_view(JOIN_RE.sub("", text) if marks else text, marks_dropped=marks, iota=iota)
 
 
@@ -967,7 +1020,11 @@ def _plain(text: str) -> bool:
     return text.isascii() and _HIDDEN_ASCII.search(text) is None
 
 
-_PRIMARY_VIEW = (False, True)  # (marks dropped, U+0345 read as an iota): what ``fold`` returns
+_PRIMARY_VIEW = (
+    False,
+    True,
+    0,
+)  # (marks dropped, U+0345 read as an iota, how escape sequences are read): what ``fold`` returns
 _IOTA_MARK = "\u0345"
 
 
@@ -989,7 +1046,7 @@ def _is_spacing(ch: str) -> bool:
     return _mark_flags(ch)[0]
 
 
-def _view_specs(line: str) -> tuple[tuple[bool, bool], ...]:
+def _view_specs(line: str) -> tuple[tuple[bool, bool, int], ...]:
     """The views of ``line`` that can differ from the primary one (``fold``), as (marks dropped, iota) pairs: with a U+0345 (also one that NFKD
     makes from U+037A) the view that drops it, with a spacing mark, modifier letter or modifier symbol the views of the text without them.
     A scan MUST look through all of them (textnorm, "MARKS AND SCANS"): a mark inserted into a protected value hides it from ``fold`` alone.
@@ -999,18 +1056,37 @@ def _view_specs(line: str) -> tuple[tuple[bool, bool], ...]:
     flags = [_mark_flags(c) for c in set(line)]
     has_marks = any(f[0] for f in flags)
     has_iota = any(f[1] for f in flags)
-    specs = [(False, False)] if has_iota else []
+    specs = [(False, False, 0)] if has_iota else []
     if has_marks:
-        specs.append((True, True))
+        specs.append((True, True, 0))
         if has_iota:
-            specs.append((True, False))
-    return tuple(specs)
+            specs.append((True, False, 0))
+    if _ANSI.search(line):  # every way of reading the sequences, beside every other view
+        specs += [
+            (m, i, a)
+            for a in _ANSI_MODES
+            for m, i in ((False, True), *((x[0], x[1]) for x in specs))
+        ]
+    runs = min(len(_JOIN_RUN.findall(line)), _SEP_KEEP)
+    # With white-space-like controls a word may be glued to a secret through one of them: the views that keep one or two runs as a separator.
+    # With a spacing mark, modifier letter or modifier symbol on the line too, the same views also drop those; then the view that keeps every
+    # run is one more (without marks it is the primary view).
+    real_marks = any(f[0] and c not in _JOIN_CTLS for c, f in zip(set(line), flags, strict=True))
+    keeps = [(n,) for n in range(runs)] + list(itertools.combinations(range(runs), 2))
+    if real_marks and runs:
+        keeps.append(tuple(range(runs)))
+    for k in dict.fromkeys(keeps):
+        if len(k) < runs:
+            specs.append((False, True, k))
+        if real_marks:
+            specs.append((True, True, k))
+    return tuple(dict.fromkeys(specs))
 
 
 def _alias_keys(value: str) -> tuple[str, ...]:
     """The folded spellings that key the alias index: every view of the value (a clear copy of a value written with a mark inside must be masked)."""
     keys = [fold(value)]
-    keys += [_view(value, m, i) for m, i in _view_specs(value)]
+    keys += [_view(value, *spec) for spec in _view_specs(value)]
     return tuple(dict.fromkeys(keys))
 
 
@@ -1058,13 +1134,16 @@ class _Redactor:
             self._built_for = len(self.mapping)
 
     def find(self, text: str) -> str:
-        out = strip_ansi(text)
+        out = text
         if type(out) is not str:
             out = str.__add__(out, "")  # an exact str: `fold` refuses a subclass as NotText
         if not _plain(out):
             # The folded scan runs FIRST, on the text as written: a direct pass first could mask only the ASCII tail of a value hidden behind
             # look-alike letters (``al<look-alike>ce@example.com`` -> ``al<look-alike><EMAIL_1>``) and leave its head in the text.
             out = self._fold_scan(out)
+        # An escape sequence is read by the folded scan above, in every way (``_ANSI_MODES``), as it stands in the text; only then are the
+        # ones left removed, so the direct patterns see a word boundary where one stood.
+        out = strip_ansi(out)
         for label, pattern in PATTERNS:
             out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
         return out
@@ -1127,7 +1206,7 @@ class _Redactor:
         )  # lines end at \n, \r\n or \r only: ``splitlines`` also cuts at a vertical tab, form feed, U+001C to U+001E and NEL, inside a key
         specs_of = [_view_specs(ln) for ln in lines]
         all_specs = list(dict.fromkeys(sp for one in specs_of for sp in one))
-        views: dict[tuple[bool, bool], list[str]] = {_PRIMARY_VIEW: []}
+        views: dict[tuple[bool, bool, int], list[str]] = {_PRIMARY_VIEW: []}
         for ln in lines:
             if _plain(ln):
                 views[_PRIMARY_VIEW].append(ln)
@@ -1138,9 +1217,9 @@ class _Redactor:
             spec
         ) in all_specs:  # a line without this view's characters reads the same in the primary view
             views[spec] = [
-                (_view(ln.rstrip("\r\n"), spec[0], spec[1]) + ln[len(ln.rstrip("\r\n")) :])
+                (_view(ln.rstrip("\r\n"), *spec) + ln[len(ln.rstrip("\r\n")) :])
                 if spec in one
-                else views[_PRIMARY_VIEW][n]
+                else ("" if isinstance(spec[2], tuple) else views[_PRIMARY_VIEW][n])
                 for n, (ln, one) in enumerate(zip(lines, specs_of, strict=True))
             ]
         self._over_budget(started)
@@ -1203,7 +1282,7 @@ class _Redactor:
 
     @staticmethod
     def _aligned_fold(
-        body: str, deadline: float, spec: tuple[bool, bool] = _PRIMARY_VIEW
+        body: str, deadline: float, spec: tuple[bool, bool, int | tuple[int, ...]] = _PRIMARY_VIEW
     ) -> tuple[str, list[int], bytearray] | None:
         """``fold(body)``, the index in ``body`` of every character it keeps, and a flag per kept character that marks a LOOK-ALIKE LETTER
         (a letter of another script that the fold turns into an ASCII letter, as in ordinary Cyrillic or Arabic words). Returned when the fold
@@ -1211,11 +1290,18 @@ class _Redactor:
         ...), an accented Latin letter to its base letter, a Unicode space to a space, a look-alike letter (flagged), and dropping of marks,
         format and control characters. ``None`` when any character is folded in another way (a full-width or compatibility letter or
         punctuation mark that becomes live ASCII, a symbol): such a line is an attack signal and ``_folded_line`` withholds it whole."""
-        marks, iota = spec
+        marks, iota, ansi = spec
+        reads = _reads(body, ansi) if ansi else {}
         parts, where, alike = [], [], bytearray()
         for i, ch in enumerate(body):
             if not i & 4095:
                 _Redactor._over_budget(deadline)
+            if i in reads:
+                if reads[i]:  # an escape sequence read as a space (mode 3)
+                    parts.append(reads[i])
+                    where.append(i)
+                    alike.append(0)
+                continue
             if marks and _is_spacing(ch):
                 continue  # this view is the text without its spacing marks, modifier letters and modifier symbols
             if " " <= ch <= "~":
@@ -1236,7 +1322,7 @@ class _Redactor:
                 where.extend([i] * len(f))
                 alike.extend([flag] * len(f))
         text = "".join(parts)
-        whole = _view(body, marks, iota).replace("\u2044", "/")
+        whole = _view(body, marks, iota, ansi).replace("\u2044", "/")
         return (text, where, alike) if text == whole else None
 
     def _mask_in_place(
@@ -1247,10 +1333,10 @@ class _Redactor:
         alike: bytearray,
         only: set[int] | None = None,
         marks: bool = False,
-    ) -> str | None:
-        """Mask the matches found in ``folded`` inside ``body`` itself: the output is ``body`` with each matched value replaced by its
-        placeholder; every other character stays as written, and no folded text is ever emitted. ``None`` when a masked value contains a
-        look-alike letter: that is a value HIDDEN behind look-alikes (an attack), not an ordinary word of another script next to it."""
+    ) -> list[tuple[int, int, str, bool]]:
+        """The matches found in ``folded`` as (start, stop, label, hidden) in ``body`` itself (the characters the view dropped inside a value
+        are inside its span); nothing is registered. ``hidden`` is true when the matched value contains a look-alike letter: that is a value
+        HIDDEN behind look-alikes (an attack), not an ordinary word of another script next to it, unless another view finds the whole of it."""
         taken = bytearray(len(folded))
         claims: list[tuple[int, int, str, str]] = []
         for n, (label, pattern) in enumerate(PATTERNS):
@@ -1269,22 +1355,36 @@ class _Redactor:
                     claims.append((s, s + len(original), label, original))
                     taken[s : s + len(original)] = b"\x01" * len(original)
                     i = group.find(original, i + len(original))
-        if any(any(alike[s:e]) for s, e, _, _ in claims):
-            return None  # discarded before anything is registered: no orphan placeholder
-        out, prev = [], 0
+        spans = []
         for s, e, label, _ in sorted(claims):
+            hidden = any(alike[s:e])
             start, stop = where[s], where[e - 1] + 1
             if marks:
                 # This view has no spacing marks, modifier letters or modifier symbols, so a value that begins or ends beside some would be cut short
-                # and the mark left in clear. Take in the run of them on both sides (never into a value already replaced).
-                while start > prev and _is_edge_mark(body[start - 1]):
+                # and the mark left in clear. Take in the run of them on both sides.
+                while start > 0 and _is_edge_mark(body[start - 1]):
                     start -= 1
                 while stop < len(body) and _is_edge_mark(body[stop]):
                     stop += 1
-            written = body[start:stop]  # the value as it stands in the line
-            out += [body[prev:start], self._register_written(label, written)]
+            spans.append((start, stop, label, hidden))
+        return spans
+
+    def _apply_claims(self, body: str, spans: list[tuple[int, int, str, bool]]) -> str:
+        """``body`` with every span replaced by its placeholder. Spans that touch or overlap (the same value found in two views, or a piece
+        of it found in one view and the whole of it in another) are ONE value: the union, under the label of the longest of them."""
+        merged: list[list[Any]] = []
+        for start, stop, label, _ in sorted(spans):
+            if merged and start < merged[-1][1]:
+                if stop - start > merged[-1][3]:
+                    merged[-1][2], merged[-1][3] = label, stop - start
+                merged[-1][1] = max(merged[-1][1], stop)
+            else:
+                merged.append([start, stop, label, stop - start])
+        out, prev = [], 0
+        for start, stop, label, _ in merged:
+            out += [body[prev:start], self._register_written(label, body[start:stop])]
             prev = stop
-        return "".join(out) + body[prev:] if claims else body
+        return "".join(out) + body[prev:] if merged else body
 
     def _register_written(self, label: str, written: str) -> str:
         """The placeholder of a value masked in place: found by its WRITTEN spelling (two spellings of one folded value get two
@@ -1330,26 +1430,30 @@ class _Redactor:
             # each round is ONE sweep of the patterns over the folded text; a round that changes nothing ends the loop
             for _ in range(MAX_FOLD_ROUNDS):
                 self._over_budget(self._scan_deadline)
-                changed = failed = False
+                odd = False
+                spans: list[tuple[int, int, str, bool]] = []
                 for spec in (
-                    *reversed(_view_specs(cur)),
+                    *_view_specs(cur),
                     _PRIMARY_VIEW,
-                ):  # every view; the marks-dropped ones first, so a value split by a mark is cut whole, not at the mark
+                ):  # every view finds its matches in the SAME text; they are applied together below (a piece found in one view and the whole of the value in another are one value)
                     # one view of a long line can take a large share of the budget: look at the clock per view
                     self._over_budget(self._scan_deadline)
                     aligned = self._aligned_fold(cur, self._scan_deadline, spec)
-                    new = (
-                        None
-                        if aligned is None
-                        else self._mask_in_place(cur, *aligned, only=only, marks=spec[0])
-                    )
-                    if new is None:
-                        failed = True  # not an ordinary fold, or a value hidden behind look-alikes: withhold below
-                        break
-                    if new != cur:
-                        cur, changed = new, True
-                if failed:
-                    break
+                    if aligned is None:
+                        odd = True  # not an ordinary fold: judged again after this round's masks (the value may be cut out whole by another view)
+                        continue
+                    spans += self._mask_in_place(cur, *aligned, only=only, marks=spec[0])
+                whole = [(a, b) for a, b, _, hidden in spans if not hidden]
+                if any(
+                    hidden and not any(c <= a and b <= d for c, d in whole)
+                    for a, b, _, hidden in spans
+                ):
+                    break  # a value hidden behind look-alikes that no other view reads whole: withhold below
+                new = self._apply_claims(cur, [x for x in spans if not x[3]])
+                changed = new != cur
+                cur = new
+                if odd and not changed:
+                    break  # a view that is not an ordinary fold and no mask to make it one: withhold below
                 if not changed:
                     self._journal = None  # the in-place masks stand: keep their registrations
                     return cur + eol if cur != body else line  # nothing (more) to mask in place
@@ -1360,7 +1464,7 @@ class _Redactor:
         self._rollback(counters)
         folded = [
             fold(body),
-            *(_view(body, m, i) for m, i in _view_specs(body)),
+            *(_view(body, *spec) for spec in _view_specs(body)),
         ]
         direct = self._dry_hits(body)
         if not any(self._dry_hits(f) - direct for f in folded):

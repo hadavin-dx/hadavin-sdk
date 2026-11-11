@@ -96,15 +96,27 @@ def test_fold_is_stable_under_combining_marks_format_unassigned_and_tag_characte
     )
 
 
-def test_a_white_space_control_or_separator_becomes_a_space_and_the_identity_functions_ignore_it():
-    """The stability property above does NOT cover them: step 5 turns each into a space. identity_key, squeeze and could_be_same_person are unaffected."""
-    for cp in (0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x1C, 0x1D, 0x1E, 0x1F, 0x85, 0x2028, 0x2029):
+def test_a_white_space_control_or_separator_becomes_a_space_and_every_other_control_is_dropped():
+    """Derived from ``str.isspace`` over every control character and every line or paragraph separator, not from a list: step 5 turns a white-space
+    one into a space (``fold("admin\\n") == "admin "``), every other one is dropped (``fold(x + c) == fold(x) == fold(c + x)``). identity_key,
+    squeeze and could_be_same_person ignore them."""
+    import unicodedata
+
+    seen = 0
+    for cp in range(0x110000):
         c = chr(cp)
-        assert fold("admin" + c) == "admin " != fold("admin"), f"U+{cp:04X}"
-        assert fold(c + "admin") == " admin"
-        assert identity_key("admin" + c) == identity_key("admin")
-        assert squeeze("admin" + c) == squeeze("admin")
-        assert could_be_same_person("admin" + c, "admin")
+        if unicodedata.category(c) not in ("Cc", "Zl", "Zp"):
+            continue
+        seen += 1
+        if c.isspace():
+            assert fold("admin" + c) == "admin " != fold("admin"), f"U+{cp:04X}"
+            assert fold(c + "admin") == " admin", f"U+{cp:04X}"
+            assert identity_key("admin" + c) == identity_key("admin")
+            assert squeeze("admin" + c) == squeeze("admin")
+            assert could_be_same_person("admin" + c, "admin")
+        else:
+            assert fold("admin" + c) == fold("admin") == fold(c + "admin"), f"U+{cp:04X}"
+    assert seen == 65 + 2, seen  # 65 control characters (C0, DEL, C1) and U+2028, U+2029
 
 
 def test_fold_covers_the_listed_look_alikes_and_all_map_to_ascii():

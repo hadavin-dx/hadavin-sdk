@@ -233,7 +233,7 @@ def test_marks_14_the_alignment_of_every_view_agrees_with_that_view_of_the_fold_
     for mark in MARKS + [chr(0x0345), "^", "`"]:
         for s in ("e" + mark + "x", chr(0x0391) + mark + "k", "A" + mark + chr(0x0345) + "B"):
             for marks, iota in views:
-                got = redact_mod._Redactor._aligned_fold(s, float("inf"), (marks, iota))
+                got = redact_mod._Redactor._aligned_fold(s, float("inf"), (marks, iota, 0))
                 want = textnorm.fold_view(s, marks_dropped=marks, iota=iota).replace("\u2044", "/")
                 assert got is None or got[0] == want, (hex(ord(mark)), marks, iota)
 
@@ -303,40 +303,101 @@ def test_marks_17_an_ascii_circumflex_or_backtick_is_a_mark_only_on_a_line_with_
 
 CONTROLS = [chr(cp) for cp in (*range(0x20), 0x7F, *range(0x80, 0xA0)) if cp not in (0x0A, 0x0D)]
 PW = "Hunter2" + "abcdef"
+PREFIXES = ["k ", "user\t", "id: ", "", "k\t"]  # a space, a word and a tab, a label, nothing, a tab
+SUFFIXES = [" e", "", "\tok", "\t"]
 
 
 def _windows(value: str, size: int = 4) -> list[str]:
     return [value[i : i + size] for i in range(len(value) - size + 1)]
 
 
+def _leaks_of(secret: str, text: str) -> bool:
+    out = redact(text).text
+    return any(w in out for w in _windows(secret))
+
+
 def test_marks_18_a_control_character_inside_a_key_or_a_value_leaves_no_piece_in_clear():
-    """Review w4, supervisor round: the class "a control character inside a secret splits it so a piece stays visible". Every C0 and C1
-    control character except the two line ends, at positions across the parts of an AWS access key id and inside an open-ended value. White
-    space-like ones (tab, VT, FF, U+001C to U+001F, NEL) are read as the separator they look like AND the views that drop spacing marks join
-    across them; the rest are dropped by the fold; ESC and U+009B no longer swallow the letter after them."""
+    """Round w5. The class "a control character inside a secret splits it so a piece stays visible", over EVERY position of the key and of the
+    password value, every C0 and C1 control character except the two line ends, five prefixes and four suffixes. Escape and U+009B are
+    alone here (a whole sequence is test 20)."""
     leaks = []
     for ctl in CONTROLS:
-        for at in (1, 3, 4, 5, 9, 10, 16, 19):
-            out = redact("k " + KEY[:at] + ctl + KEY[at:] + " e").text
-            if any(w in out for w in _windows(KEY)):
-                leaks.append(("key", hex(ord(ctl)), at, out))
-        for at in (1, 3, 7, 12):
-            out = redact("password=" + PW[:at] + ctl + PW[at:] + " e").text
-            if any(w in out for w in _windows(PW)):
-                leaks.append(("pw", hex(ord(ctl)), at, out))
+        for at in range(1, len(KEY)):
+            for pre, suf in zip(PREFIXES, SUFFIXES * 2, strict=False):
+                if _leaks_of(KEY, pre + KEY[:at] + ctl + KEY[at:] + suf):
+                    leaks.append(("key", hex(ord(ctl)), at, pre, suf))
+        for at in range(1, len(PW)):
+            if _leaks_of(PW, "password=" + PW[:at] + ctl + PW[at:] + " e"):
+                leaks.append(("pw", hex(ord(ctl)), at))
     assert not leaks, (len(leaks), leaks[:4])
 
 
+def test_marks_20_an_escape_sequence_inside_a_key_or_a_value_leaves_no_piece_in_clear_and_loses_no_real_character():
+    """Round w5, majors 1 and 2: a sequence (ESC [ parameters final, ESC and a letter, U+009B parameters final) at ANY position, and in front of
+    a key at the start of a line or after a label. Which characters of a sequence are the key's own cannot be known, so every reading is
+    scanned: the whole sequence dropped, all but its last character dropped, the sequence read as a space, only the ESC dropped."""
+    shapes = [
+        "\x1b[0m",
+        "\x1b[1;31m",
+        "\x1b[F",
+        "\x1b[",
+        "\x1bA",
+        "\x9b1I",
+        "\x9b2a",
+        "\x9b7E",
+        "\x9bp",
+        "\x9b",
+    ]
+    leaks = []
+    for seq in shapes:
+        for at in range(len(KEY) + 1):
+            for pre in PREFIXES:
+                if _leaks_of(KEY, pre + KEY[:at] + seq + KEY[at:] + " e"):
+                    leaks.append(("key", seq, at, pre))
+        for at in range(len(PW) + 1):
+            if _leaks_of(PW, "password=" + PW[:at] + seq + PW[at:] + " e"):
+                leaks.append(("pw", seq, at))
+    assert not leaks, (len(leaks), leaks[:6])
+    for text in ("k AKIA\x1b[0m" + KEY[4:] + " e", "AKIAIOS\x1b[F" + KEY[7:], "AKIA\x9b1" + KEY[4:], "id: \x9b" + "password=" + PW,
+                 "id: \x1b" + KEY, "k " + KEY[:14] + "\x9b" + KEY[14:] + " e"):  # fmt: skip
+        out = redact(text).text
+        assert "<APIKEY_1>" in out or "<SECRET_1>" in out, (text, out)
+    assert (
+        redact("foo\x1b[1mbar").text == "foo bar"
+    )  # a sequence that hides nothing is still removed, with a boundary
+
+
+def test_marks_21_a_white_space_control_beside_a_non_letter_character_of_a_secret_is_read_like_any_other():
+    """Round w5, major 3: the all-ASCII line must not behave differently from the line with one non-ASCII letter on it, whatever stands beside
+    the tab (a letter, a digit or one of ``_ - . + / =``)."""
+    for ctl in "\t\x0b\x0c\x1c":
+        for left, right in (("ghp_", "IOSFODNN7EXAMPLE" * 2), ("sk-", "abcdefghijklmnopqrstuvwxyz"), ("sk_live_", "abcdefghij" * 2),
+                            ("password=", "Hunter2abc-" + "def"), ("password=", "Hunter2abc_def"), ("password=", "Hunter2abc.def"),
+                            ("password=", "Hunter2abc+def"), ("password=", "Hunter2abc/def"), ("password=", "Hunter2abc=def")):  # fmt: skip
+            secret = right
+            for at in range(len(right)):
+                plain = "x " + left + right[:at] + ctl + right[at:] + " e"
+                assert not _leaks_of(secret, plain), repr(plain)
+                assert not _leaks_of(secret, plain + "\u00e9"), repr(
+                    plain
+                )  # the same line with one non-ASCII letter
+
+
 def test_marks_18b_a_new_line_or_carriage_return_is_a_line_end_and_cuts_a_key_in_two():
-    """The boundary that stays: a line end is not read as a separator inside a value (CHANGELOG, P2d-1). A key cut by one is two lines."""
+    """The boundary that stays: a line end is not read as a separator inside a value (CHANGELOG, P2d-1). A key cut by one is two lines. Also with
+    a non-ASCII word on the line and with a spacing mark in the key (the fold scan runs there, the line ends must hold there too)."""
     for end in ("\n", "\r", "\r\n"):
-        text = "k " + KEY[:4] + end + KEY[4:] + " e"
-        assert redact(text).text == text
+        for pre, mid in (("k ", ""), ("caf\u00e9 ", ""), ("k ", "\u093e")):
+            text = pre + KEY[:4] + mid + end + KEY[4:] + " e"
+            assert redact(text).text == text, (pre, mid, end)
 
 
 def test_marks_18c_a_tab_between_fields_is_kept_and_only_a_secret_and_the_field_joined_to_it_are_masked():
     assert redact("a\tb\tc\n1\t2\t3").text == "a\tb\tc\n1\t2\t3"
-    assert redact("user\t" + KEY + "\tok").text == "user\t<APIKEY_1>\tok"
+    out = redact("user\t" + KEY + "\tok").text
+    assert out.startswith("user\t<APIKEY_1>") and KEY not in out, (
+        out
+    )  # stated: the field after a masked key may go with it
     out = redact("id\tpassword=abc\tstatus=ok").text
     assert out == "id\tpassword=<SECRET_1>", (
         out
@@ -346,13 +407,73 @@ def test_marks_18c_a_tab_between_fields_is_kept_and_only_a_secret_and_the_field_
 def test_marks_18d_an_escape_character_keeps_the_letter_after_it_between_two_word_characters():
     out = redact("k " + KEY[:1] + "\x1b" + KEY[1:] + " e").text
     assert KEY_TAIL not in out and "<APIKEY_1>" in out, out
-    assert (
-        redact("foo\x1b[1mAKIA bar").text == "foo AKIA bar"
-        or "\x1b" not in redact("foo\x1b[1mbar").text
-    )
+    seq = redact(
+        "foo\x1b[1mbar"
+    ).text  # a real sequence is still removed, and a boundary stays where it stood
+    assert seq == "foo bar", seq
+    assert "\x1b" not in seq and "[1m" not in seq
 
 
 def test_marks_19_a_look_alike_letter_with_a_subscript_iota_does_not_withhold_the_line_beside_an_address():
     for text in ("\u1fb3 jos\u00e9@example.com", "jos\u00e9@example.com \u1fb3"):
         out = redact(text).text
         assert redact_mod.FOLD_NOTE not in out and "<EMAIL_" in out and "\u1fb3" in out, out
+
+
+def test_marks_22_a_stored_value_with_a_tab_beside_a_non_letter_gets_its_alias_so_a_clear_copy_is_masked():
+    """Round w5, minor 6: the alias index learns the spellings of a masked value; a tab beside ``-`` made the value look plain and it got none."""
+    out = redact("password=Hunter2abc-\tdef and later Hunter2abc-def").text
+    assert "Hunter2abc" not in out and "def" not in out.replace("<", ""), out
+
+
+def test_marks_23_a_masked_value_keeps_the_white_space_control_beside_it_and_a_sequence_in_front_is_read_as_a_space():
+    """Round w5, minor 3 and mutants: the run of marks a masked value takes with it is spacing marks, modifier letters and modifier symbols
+    (``_is_edge_mark``), not the white-space-like controls (``_is_spacing`` counts those, to join across them)."""
+    mc = (
+        KEY[:4] + "\u093e" + KEY[4:]
+    )  # a spacing mark inside: only the views that drop it read the key, and the line is treated per view
+    assert redact("a\t" + mc + " b c").text == "a\t<APIKEY_1> b c"
+    assert redact("a " + mc + "\t b c").text == "a <APIKEY_1>\t b c"
+    assert (
+        redact("ok " + KEY + "\u02b0 e").text == "ok <APIKEY_1> e"
+    )  # a modifier letter beside the value goes with it
+    assert (
+        redact("foo\x1b[1m" + KEY).text == "foo<APIKEY_1>"
+    )  # glued in front: the sequence is read as a space, found, and removed
+    assert (
+        redact("k " + KEY[:14] + "\x9b" + KEY[14:] + " e").text == "k <APIKEY_1> e"
+    )  # a piece found in one view and the whole in another: ONE value
+    m: dict[str, str] = {}
+    assert (
+        runmap.redact_text("k A\x85" + KEY[1:] + " e", m) == "k <APIKEY_2> e"
+    )  # runmap's second pass reads it without the NEL (the number shows it)
+
+
+def test_marks_24_a_mark_inside_a_key_and_a_tab_glued_to_a_word_beside_it_leave_no_piece_in_clear():
+    """Found while fixing round w5: the views that drop the marks also dropped the tab that stood between the key and the word before it."""
+    leaks = []
+    for mark in ("\u093e", "\u02b0", "\u0903", "\u02c6"):
+        for at in range(1, len(KEY)):
+            for pre, suf in (("a\t", " b c"), ("a\t", "\tb c"), ("a ", "\tb"), ("user\t", "\tok")):
+                if _leaks_of(KEY, pre + KEY[:at] + mark + KEY[at:] + suf):
+                    leaks.append((hex(ord(mark)), at, pre, suf))
+    assert not leaks, (len(leaks), leaks[:4])
+
+
+def test_marks_25_strip_ansi_keeps_one_letter_after_an_escape_between_word_characters_and_removes_a_sequence():
+    assert redact_mod.strip_ansi("a\x1bXb") == "a\x1bXb"  # the letter may be a key's own
+    assert redact_mod.strip_ansi("a\x1b[0mb") == "a b"
+    assert redact_mod.strip_ansi("a\x9b1Ib") == "a b"
+
+
+def test_marks_26_a_key_glued_to_a_word_by_one_tab_and_cut_by_another_leaves_no_piece_in_clear():
+    """Found in round 5: ``user<TAB>AKIAIOSF<TAB>ODNN7EXAMPLE`` read with all tabs dropped glues the word to the key; with all tabs kept
+    the key is cut. Only the view that keeps the tab in front and drops the one inside finds it."""
+    leaks = []
+    for ctl in ("\t", "\x0b", "\x0c", "\x1f"):
+        for at in range(1, len(KEY)):
+            for pre, suf in (("user" + ctl, ""), ("user" + ctl, ctl + "ok"), ("", ctl + "ok")):
+                if _leaks_of(KEY, pre + KEY[:at] + ctl + KEY[at:] + suf):
+                    leaks.append((hex(ord(ctl)), at, pre, suf))
+    assert not leaks, (len(leaks), leaks[:4])
+    assert "<APIKEY_1>" in runmap.redact_text("user\t" + KEY[:8] + "\t" + KEY[8:], {})

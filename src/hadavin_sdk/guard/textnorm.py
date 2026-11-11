@@ -4,7 +4,7 @@ A kind or demo that needs a check name or a scan imports ``identity_keys`` / ``c
 here instead of keeping its own table.
 Do not use ``fold`` to display or store text: it drops the non-spacing marks (category Mn: the breve of Cyrillic short i, accents, the
 Hindi and Thai vowel signs that sit above or below a letter) and so over-collides, which is the safe side for a DENY. It KEEPS the spacing
-marks (Mc: the Hindi vowel signs aa and i, visarga), the modifier letters (Lm) and the modifier symbols (Sk); see "MARKS AND SCANS" below.
+marks (Mc: the Hindi vowel signs aa and i, visarga), the modifier letters (Lm, kept or read as the letter they look like) and the modifier symbols (Sk); see "MARKS AND SCANS" below.
 
 WORDS (one word, one meaning). A SPELLING VARIANT is one of the at most three ways one text is read (see "SPELLING VARIANTS" below). A CHECK
 NAME is the comparison text made from one spelling variant; the function names say "key" (``identity_key``, ``key_tag``) and mean the
@@ -29,8 +29,8 @@ address equals the verified address", an allowlist): folding there lets a look-a
 
 ``fold`` (stdlib only, linear):
   1. NFKD, so a base letter and its combining mark separate; 2. U+0345 becomes an iota after a Greek letter and is removed anywhere
-  else (spelling variant (b) only; the other spelling variants always remove it, see SPELLING VARIANTS and U+0345 below); 3. drop control, format, non-spacing and enclosing mark (Mn, Me), line and paragraph separator, private-use, surrogate and UNASSIGNED (Cn) characters and the
-  invisible filler letters; 4. NFKC; 5. every Unicode whitespace character (``str.isspace``) becomes a space so words are never
+  else (spelling variant (b) only; the other spelling variants always remove it, see SPELLING VARIANTS and U+0345 below); 3. drop control characters that are not white space, format, non-spacing and enclosing marks (Mn, Me), private-use, surrogate and UNASSIGNED (Cn) characters and the
+  invisible filler letters (a white-space control and the line and paragraph separators are not dropped: step 5 makes them a space); 4. NFKC; 5. every Unicode whitespace character (``str.isspace``) becomes a space so words are never
   joined; 6. every Unicode decimal digit becomes an ASCII digit; 7. look-alike letters become the Latin letter or digit. Case is kept
   unless ``casefold`` is set (then ``casefold`` runs just BEFORE step 7, see below); ``collapse_ws`` squeezes runs of whitespace.
 
@@ -123,7 +123,8 @@ MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``
     changes a name, so the spelling variants keep it. "ad" + U+0903 + "min" is NOT the check name of "admin", and the spelling-variant views of
     ``fold_views`` of "pass" + U+093E + "word" do NOT hold "password".
   * Lm (modifier letters): a look-alike of the letter (superscript h reads as h), kept or read as that letter.
-  * Sk (modifier symbols): they become a space in the spelling-variant views and vanish in ``squeeze_views``.
+  * Sk (modifier symbols): kept, or read as the space or letters NFKD makes of them (a spacing accent becomes a space); ASCII ``^`` and the backtick have no such
+    reading and stay as they are. They vanish in ``squeeze_views``.
   So that a mark inserted into a protected value cannot hide it, ``fold_views`` and ``squeeze_views`` return, besides the spelling-variant
   views, the same views built from the text with every Mc, Lm and Sk character REMOVED BEFORE the first normalisation and before the
   look-alike table (so an Lm or Mc that the table or NFKC would read as a letter is gone too: "pass" + U+0C02 + "word" holds "PASSWORD"). Every

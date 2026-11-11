@@ -238,14 +238,14 @@ def test_the_cases_that_fall_back_to_withholding_leak_nothing():
 
 
 def test_four_rounds_that_never_converge_fall_through_to_the_withhold(monkeypatch):
-    assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+    assert hasattr(_Redactor, "_apply_claims"), "hook missing on this head"
     calls = []
 
-    def never_done(self, body, folded, where, alike, only=None, marks=False):
+    def never_done(self, body, spans):
         calls.append(body)
         return body + " "
 
-    monkeypatch.setattr(_Redactor, "_mask_in_place", never_done)
+    monkeypatch.setattr(_Redactor, "_apply_claims", never_done)
     out = redact("mail josé@example.com now").text
     assert len(calls) == 4  # FAIL-BEFORE (mutant): a loop that is not capped at four rounds
     assert out.startswith(FOLD_NOTE) and "jose@example.com" not in _fold(out)
@@ -308,7 +308,7 @@ PH = re.compile(r"<[A-Z][A-Z0-9]*_[0-9]+>")
 
 
 def _old_tree_guard() -> None:
-    assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+    assert hasattr(_Redactor, "_apply_claims"), "hook missing on this head"
 
 
 def _single_letter_entries(allowed: str) -> list[tuple[str, str]]:
@@ -763,13 +763,12 @@ def test_reg_1a_a_discarded_round_leaves_no_orphan_placeholder():
 
 def test_reg_1b_non_converging_rounds_leave_no_orphan_placeholder(monkeypatch):
     _old_tree_guard()
-    real = _Redactor._mask_in_place
+    real = _Redactor._apply_claims
 
-    def wrapper(self, body, folded, where, alike, only=None, marks=False):
-        out = real(self, body, folded, where, alike, only=only, marks=marks)
-        return (body if out is None else out) + "x"
+    def wrapper(self, body, spans):
+        return real(self, body, spans) + "x"
 
-    monkeypatch.setattr(_Redactor, "_mask_in_place", wrapper)
+    monkeypatch.setattr(_Redactor, "_apply_claims", wrapper)
     line = "mail josé@exemple.fr end"
     r = redact(line)
     assert r.text.startswith(FOLD_NOTE)
