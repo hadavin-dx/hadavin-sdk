@@ -2667,3 +2667,4 @@
 | BL-core-flaky-r2-d02 | Major | timing fix | sibling wall-clock ceilings not fixed or named (test_k5_perf 30 s; test_k5_layers) | OPEN | | | 2026-11-11 |
 | BL-core-prh-plan-r1-b01 | Blocker(plan) | PR H | reviews/PRH/plan-r1-readiness-full.md B1 | OPEN | | | 2026-11-11 |
 | BL-core-prh-plan-r1-b02 | Blocker(plan) | PR H | reviews/PRH/plan-r1-readiness-full.md B2 | OPEN | | | 2026-11-11 |
+| BL-core-q8a1-r4-d01 | Major(sec) | Q8a-1 | reviews/Q8a/result-r4-delta-full.md M1 isinstance lets Mock(spec) or a subclass hand a made-up time to the purge (language fact verified by the lead) | OPEN | | | 2026-11-11 |

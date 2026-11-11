@@ -1392,3 +1392,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | R-flaky-r2 design ac12b987 | | | | 16:14Z | CLOSED: NOT CLEAN (gate + 2 Major + 9 Minor), saved | evidence addendum sent; ONE fix batch after evidence |
 | R-PRH-plan readiness adaafa73 | | | | 16:15Z | CLOSED: NOT READY (2 Blocker, 9 Major), saved | wait for the design plan review a6a4d892, then errata rev 2 and ONE builder |
 | EV-P3a2-r12 a10b6577 | | | | 16:15Z | CLOSED: RESULTS.md final: full suite exit 0 (11015), whole mutant list 288 of 288 killed (exit 0), 69 new tests fail on the old source; routes F1 F2 F4 F5 F7 reproduced; F3 sentence wrong (see correction). Transcript also shows 53 requests to model claude-opus-4-8 that I did not choose | closed |
+| R-Q8a1-r4 delta a9678c99 | | | | 16:15Z | CLOSED: NOT CLEAN (1 Major, 6 Minor), saved; ticket errata rev 6 written by the lead | wait for evidence a55ad3b3, then fix batch 4 (one builder, Sonnet) |
