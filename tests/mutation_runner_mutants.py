@@ -116,7 +116,7 @@ BODY-SKIP-MUTANTS-END
 - Every killer that is in neither of the two lists above carries no skip on Windows (a mark or a ``pytest.skip`` call). The tree-kill killers use ``taskkill /T`` on Windows; the
   Windows branch after a normal exit is run on any system with the Windows flag faked.
 
-Keyword tests (``tests/test_mutation_runner_keywords.py``): 264 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
+Keyword tests (``tests/test_mutation_runner_keywords.py``): 265 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
 fixture errors, the snapshot of the environment, the lock name). Many tests of that file have no mutant of their own, and this header does NOT
 list them all: a test either guards the test code itself (the guard test of the database address), an old behaviour that no replacement
 can bring back (the check that the old text is gone), a place that one replacement cannot move ("a missing conftest is noticed only at the
@@ -134,7 +134,7 @@ replace several lines at once, so a block can be moved. Tests with no mutant of 
 (the text is the guard), the table test of the ``os.`` and ``signal.`` names (the mypy test and the ``os.fchmod`` test have mutants), and the
 two runs of mypy themselves (skipped where mypy is not installed, so no mutant could depend on them).
 
-Round 26 (6 mutants added: a name the caller owns equal to a secret in another letter case, the address check for a password equal to a class name (three: refusal off, case-sensitive, caller names not given), the folders between made without the helper, a file emptied before the check; 5 re-pointed because the text they search for moved: "a name of Python itself goes through the second layer", "a built-in class name equal to a secret is shown", "a private file is not emptied", "the parts between are made with the default mode", "the run does not call the address check"). Tests with no mutant of their own: the walk test of the creation-site pin (it guards the test code), the three tests of the skip reader (they guard the meta-test), the mypy pattern test (it guards the mypy test), and the mypy test itself (skipped where mypy is not installed, which is the CI case).
+Round 26 (7 mutants added: a built-in class name hidden for a password that is a piece of it (the control test that passed on the old code now has its mutant), a name the caller owns equal to a secret in another letter case, the address check for a password equal to a class name (three: refusal off, case-sensitive, caller names not given), the folders between made without the helper, a file emptied before the check; 5 re-pointed because the text they search for moved: "a name of Python itself goes through the second layer", "a built-in class name equal to a secret is shown", "a private file is not emptied", "the parts between are made with the default mode", "the run does not call the address check"). Tests with no mutant of their own: the walk test of the creation-site pin (it guards the test code), the three tests of the skip reader (they guard the meta-test), the mypy pattern test (it guards the mypy test), and the mypy test itself (skipped where mypy is not installed, which is the CI case).
 
 Masking (the refusal of odd characters, the plain match, the head and tail beside ``...``): the refusal has one mutant per guard (a quote
 mark, a backslash, a control character below the space, DEL, a non-ASCII character, its first value 128, the whole value, the percent-decoded
@@ -707,6 +707,7 @@ M = [
     kmutant('runner: the address check gets no class name of the caller', MR, '                (*classes, *(m.crash_type for m in mutants if m.crash_type)),\n', '                (),\n', 'test_run_mutants_gives_its_crash_types_and_shown_classes_to_the_address_check', 'accepted a password equal to a name of the call'),
     kmutant('runner: the folders between are made without the private helper', MR, '            _make_private_dir(here, "folder of the copy")\n', '            os.mkdir(here, 0o700)\n', 'test_the_parts_between_are_made_by_the_private_helper_also_under_umask_0277', 'under umask 0277 the part'),
     kmutant('runner: a private file is emptied before it is checked', MR, '    flags = os.O_WRONLY | os.O_CREAT\n', '    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC\n', 'test_a_file_with_a_second_name_keeps_its_content_when_it_is_refused', 'was emptied before it was refused'),
+    kmutant('runner: a built-in class name is hidden for a password that is a piece of it', MR, 'secret.casefold() == folded for secret in shown.secrets', 'secret.casefold() in folded for secret in shown.secrets', 'test_a_password_that_is_only_a_piece_of_a_class_name_does_not_hide_the_class', 'was hidden for a password that is a piece of it'),
 ]  # fmt: skip
 
 
