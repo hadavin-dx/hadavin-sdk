@@ -1072,3 +1072,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a65ea831ec30561b9 | PR89 evidence runner, head ef4c572 (166 mutants, root and non-root, WITH Postgres) | 2026-11-11 | on report | running; model sonnet |
 | ab78cc6897a0feb5a | PR89 design/security reviewer r9, snapshot /tmp/snap/core_P89-ef4c572 | 2026-11-11 | on report | running; model sonnet |
 | a15efb43802a648cc | PR89 codebase reviewer r9, same snapshot | 2026-11-11 | on report | running; model sonnet |
+| a65ea831ec30561b9 | PR89 evidence runner ef4c572 | 2026-11-11 | - | STOPPED unfinished (round 9 will replace the head): driver, jobs, clusters p89-ef4c572-312/313 stopped, partial evidence deleted |
+| ab78cc6897a0feb5a / a15efb43802a648cc | PR89 design/security and codebase reviewers r9 | 2026-11-11 | - | CLOSED: 0 Blocker, 0 Major, 5 + 7 Minor saved; ledger r9-01, r9-02 |
