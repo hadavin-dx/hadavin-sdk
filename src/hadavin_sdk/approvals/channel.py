@@ -70,14 +70,24 @@ DEFAULT_CALLBACK_PATH = "/channel/actions"  # the path of a kind whose vendor fi
 # A callback path: lower-case segments of letters and digits joined by `/` or `-` (a subset of the path characters
 # of RFC 3986 section 3.3: no query, no dot segment, no empty segment). `fullmatch` only: `$` would pass "/a\n".
 CALLBACK_PATH = re.compile(r"/[a-z0-9]+(?:[/-][a-z0-9]+)*")
+CALLBACK_PATH_MAX_CHARS = 64
+
+
+def valid_callback_path(value: object) -> bool:
+    """The one check of a kind's `callback_path` (the receiver and the channel contract test both call it): a str
+    of the grammar above, whole, and at most `CALLBACK_PATH_MAX_CHARS` characters."""
+    return (
+        isinstance(value, str)
+        and len(value) <= CALLBACK_PATH_MAX_CHARS
+        and CALLBACK_PATH.fullmatch(value) is not None
+    )
 
 
 class Channel(Protocol):
     name: str
     max_card_chars: int  # the longest card text this channel posts; longer is `card_too_long`
-    callback_path: (
-        str  # the URL path this kind's callbacks are posted to; the receiver answers this path only
-    )
+    # The URL path this kind's callbacks are posted to (`valid_callback_path`); `receiver.serve` answers it only.
+    callback_path: str
 
     def send(self, req: ApprovalRequest, approver_ids: list[str]) -> str: ...
     def update(self, req: ApprovalRequest) -> None: ...

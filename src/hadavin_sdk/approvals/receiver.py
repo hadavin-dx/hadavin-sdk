@@ -12,13 +12,12 @@ import logging
 from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from hadavin_sdk.approvals.channel import CALLBACK_PATH
+from hadavin_sdk.approvals.channel import valid_callback_path
 from hadavin_sdk.approvals.requests import Approvals
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store.protocol import NotFound
 
 MAX_BODY = 64 * 1024  # interactive callback payloads are a few KB
-MAX_PATH_CHARS = 64
 _LOG = logging.getLogger("hadavin_sdk.receiver")
 
 
@@ -27,9 +26,12 @@ def callback_path(approvals: Approvals) -> str:
     channel = approvals.channel
     # `getattr` only so that a missing attribute gives this message; it never supplies a path.
     path = getattr(channel, "callback_path", None)
-    if not isinstance(path, str) or len(path) > MAX_PATH_CHARS or not CALLBACK_PATH.fullmatch(path):
+    if not valid_callback_path(path):
         name = getattr(channel, "name", None)
-        name = name if isinstance(name, str) else type(channel).__name__
+        if not (isinstance(name, str) and name and name.isprintable()):
+            name = type(
+                channel
+            ).__name__  # never an empty, multi-line or non-text name in the message
         raise ConfigError(f"channel {name}: callback_path must be a path such as /channel/actions")
     return path
 
@@ -61,7 +63,10 @@ def serve(approvals: Approvals, host: str = "127.0.0.1", port: int = 8080) -> Th
         def do_POST(self) -> None:
             raw = self.headers.get("Content-Length") or "0"
             length = int(raw) if raw.isascii() and raw.isdigit() else -1
-            if self.path != path:
+            # The request target exactly as it was sent. `self.path` is not used: the standard library rewrites
+            # a target that starts with `//` to a single `/` before this method runs.
+            target = self.requestline.split()[1:2]
+            if target != [path]:
                 status, out = 404, b""
             elif length < 0:
                 status, out = 400, b""
