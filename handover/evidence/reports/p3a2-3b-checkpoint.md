@@ -1,7 +1,14 @@
-# P3a-2 commit 3b checkpoint (builder, UTC 2026-11-11 22:05)
-State: NOT green, NOT pushed. Branch core/P3a-2-clean at c150b5ff on origin; 3b is uncommitted in /home/user/build/B-P3a2.
-Done: eight-step migrate() (ruff clean); wiring 120, k2 55, new test_migration_steps.py 28 pass; pinned-read AST test; 10 TPG tests retired; ~25 TPG tests re-pointed (wording, step-2 places); mutants E1-E27 written (not yet run, heavy.sh slot queue).
-Found and fixed in this block: (1) schema-owner filter matched wrong fields (schema items carry the name in `schema`, `obj` empty); (2) a file's hidden COMMIT made psycopg assert inside pinned_read (fix: _read_back(if_ended=) keeps saved parts, caller refuses on the clock); (3) `(*)` printed for a zero-argument aggregate in REVOKE/GRANT is a syntax error (verify._object_sql and step 4), now `()`; (4) step 4 now also revokes default EXECUTE for functions a file wrote with another schema before the dot.
-Open: TPG about 15 tests still to re-point (security definer reviewed-list key is now a 3-tuple, earlier-run wording, pass-on lines, foreign table lines, "called like a table" test, no-right-on-function split text); 17 real-server tests of ticket 7.6 not written; mutants not run; fail-before proof, full suite, bandit, gitleaks not run.
-Decisions for the lead: schema-owner filter (plan O8 vs documented recipe); step 4 widened to other-schema functions (ticket says "not promised"; kept the old protection).
-Next: finish TPG, write the 17 tests, queue mutants via heavy.sh, gates, commit, push.
+# P3a-2 commit 3b checkpoint (22:05Z)
+
+State: NOT green, NOT committed, NOT pushed. Branch core/P3a-2-clean still at c150b5ff.
+
+Done (uncommitted, in worktree /home/user/build/B-P3a2; patch copy /home/user/build/B-P3a2-c3b-wip.patch):
+- migrate() switched to the eight steps (migrate.py, migration_verify.py).
+- New tests/test_migration_steps.py (28 pass). Wiring, steps, verify, k2 files: 282 passed (/home/user/build/B-P3a2-c3b-quick.log). ruff check clean.
+- Mutants file edited (E1-E27 added, some re-pointed, four retired); none run yet.
+
+Not done:
+- test_migration_postgres.py: 19 failed, 195 passed (/home/user/build/B-P3a2-c3b-tpg8.log; names in /home/user/build/B-P3a2-c3b-failing.txt). Wording and behaviour re-points still to do.
+- The 17 real-server tests of ticket 7.6 and test_the_rights_table_equals_what_apply_grants_is_called_with: not written.
+- Mutant runs, fail-before proof, scan_repo, gitleaks, bandit, full suite: not run.
+Next: fix the 19, write the 17, run mutants via heavy.sh, gates, commit, push.
