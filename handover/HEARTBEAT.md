@@ -856,3 +856,8 @@ ORDER 234 floor: 1 running, 8 NOT met. Waiting: PR73 runner+reviewers need your 
 - Builder correction to our brief: "always one lock name" cannot hold with a strict allowlist; a password with @ / ? # or space gives name `unparsed`. Stated and tested; I accept it unless a reviewer shows a leak.
 - Now running: 5 fresh round-15 reviewers on 13b7124 (file-sliced over the whole diff, coverage lines required). Independent runner waits for them (ORDER 236). ORDER 234 floor 8 not met: 5 running; the rest wait on the lead answer to q-P3a2-rewrite-tree (PR73) and green CI (A21a).
 - Pulse loop restarted 05:45Z.
+
+## 06:02Z (IST 11:32) cloud answer
+- PR89 round 15 done on 13b7124: 5 fresh file-sliced reviewers (runner whole twice, tests whole in two halves, mutants/meta/manifest), all with coverage lines, NO Blocker or Major; ~25 minors/nits, ledger BL-core-a2-w2-r15-01..08 (OPEN). Reviewers read only, ran nothing. One clean round under the definition; two are needed.
+- Builder resumed for round 16 to fix all minors in one push (incl. env read once, fragment loop cost, CHANGELOG wording, test gaps). Fresh r16 reviewers and the independent runner go on that final head (runner on 13b7124 would be void after the push).
+- Still red: `security` (core/P3a-2 history), waiting for your answer to q-P3a2-rewrite-tree. ORDER 234 floor 8 not met (1 running); names in PULSE.
