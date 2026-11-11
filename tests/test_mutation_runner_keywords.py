@@ -5547,9 +5547,10 @@ def test_a_bare_string_for_only_is_a_type_error_not_letters(tmp_path):
     _bare_string_is_refused(
         "only", tmp_path, "a bare string for only was read letter by letter", only="flip"
     )
+    # an empty string would select no mutant at all
     _bare_string_is_refused(
-        "only", tmp_path, only=""
-    )  # an empty string would select no mutant at all
+        "only", tmp_path, "a bare string for only was read letter by letter", only=""
+    )
 
 
 def test_a_bare_string_for_throwaway_hosts_is_a_type_error_not_letters(tmp_path):
