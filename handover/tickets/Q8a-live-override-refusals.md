@@ -41,3 +41,7 @@ R3 `run_tick(app, now=...)` is refused outside demo ("now= is for tests; it is r
 R4 `sources=` and `tools=` count as given when they are not None; an empty mapping is refused outside demo (accepted by review).
 R5 `timeout_s=` when given must be a finite number greater than 0, not a bool, in every stage.
 R6 Accepted deviations: backends/factory.py asks `is None` for the secrets provider; `clock` default is None; `VaultConnection` is a public name.
+
+## ERRATA rev 5 (lead, 2026-11-11, after result review round 3: both reviewers CLEAN by reading, Minors only)
+R5 (replaces rev 4's R5) `timeout_s=` when given must be an int or float (not a bool), greater than 0 and at most 3600 (`defaults.EXECUTOR_TIMEOUT_MAX_S`); message "timeout_s= must be an int or float between 0 (not included) and 3600". The value check is reached in demo only (outside demo the keyword itself is refused first). The config field `executor_timeout_s` gets the same upper bound and refuses infinity and NaN (fix batch 3).
+R7 `runtime.tick.STEPS` (the module-level list a deployment appends to) is the supported way to add a step. Outside demo, `run_tick` refuses to run when a built-in step is missing from that list ("a built-in tick step is missing: <name>"); an appended step runs. The limit texts name "a changed or patched runtime.tick.STEPS" for what is still not covered (reordering, replacing a step's function).

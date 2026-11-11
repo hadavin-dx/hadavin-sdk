@@ -1257,6 +1257,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-P77 ab49c9d1 | 7 min | full suite through heavy.sh 5 min in | on track |
 | B-Q8a2 fix 1, B-flaky fix, A-Q8b rev 3, R-P77-r7 x2 | 7-40 min | building / writing / reading | on track |
 | EV-Q8a1-r3 af8c6f12 | EVIDENCE RUNNER (Fable) Q8a-1 head fcd77a68, heavy.sh, pg 56170 | 15:17Z | +60m | 15:17Z | running (queues) | read RESULTS.md |
-| R-Q8a1-r3 a5f0e2c7 (design CLOSED: CLEAN by reading, 5 Minor), a3703391 | egm design + codebase (Fable) RESULT review round 3 of Q8a-1 (snapshot q8a1-fcd77a6) | 15:17Z | +25m | 15:17Z | codebase reviewer still running | save reviews/Q8a/result-r3-*-full.md; CLEAN + evidence = READY candidate |
+| R-Q8a1-r3 a5f0e2c7, a3703391 | both CLOSED: CLEAN by reading (Minors only), saved reviews/Q8a/result-r3-*-full.md | | | | closed | |
 | EV-Q8c1 adaef824 | EVIDENCE RUNNER (Fable) Q8c-1 head 7af13809 (no outside program; engine tests recorded as not run), heavy.sh, pg 56180 | 15:20Z | +60m | 15:20Z | running (queues) | read RESULTS.md |
 | R-Q8c1-res a1693872, a176d628 | egm design + codebase (Fable) RESULT review r1 of Q8c-1 (snapshot q8c1-7af1380) | 15:20Z | +30m | 15:20Z | running | save reviews/Q8c/result-r1-*-full.md |
