@@ -830,7 +830,7 @@ def test_a_copy_that_cannot_be_rebuilt_for_the_canary_is_a_clear_refusal(tmp_pat
 
 
 def _lock_name(value: str) -> str:
-    return f"hadavin_mutation_{hashlib.sha256(value.encode()).hexdigest()[:16]}.lock"
+    return f"hadavin_mutation_{hashlib.sha256(mr._address_parts(value).encode()).hexdigest()[:16]}.lock"
 
 
 def test_a_second_runner_with_the_same_passed_value_is_refused(tmp_path, monkeypatch):
@@ -851,7 +851,7 @@ def test_a_second_runner_with_the_same_passed_value_is_refused(tmp_path, monkeyp
         "the lock was not given back after a run"
     )
     assert [f.name for f in tmp_path.glob("hadavin_mutation_*.lock")] == [_lock_name(value)], (
-        "the lock file was not named by the first 16 hex digits of the SHA-256 of the value (and by nothing else)"
+        "the lock file was not named by the first 16 hex digits of the SHA-256 of the address parts (and by nothing else)"
     )
 
 
@@ -926,11 +926,11 @@ def test_a_lock_file_that_is_a_symbolic_link_is_refused_and_the_file_has_mode_06
         f"a planted symbolic link was followed or refused otherwise: {caught!r}"
     )
     try:
-        with mr._one_run_per_database(["y"]):
+        with mr._one_run_per_database(["host=y"]):
             pass
     except RuntimeError as exc:
         raise AssertionError(f"the lock file was not private: {exc}") from None
-    mode = (tmp_path / _lock_name("y")).stat().st_mode & 0o777
+    mode = (tmp_path / _lock_name("host=y")).stat().st_mode & 0o777
     assert mode == 0o600, f"the lock file was not private: {oct(mode)}"
 
 
@@ -2269,13 +2269,24 @@ def test_the_lock_file_name_does_not_depend_on_the_password(tmp_path, monkeypatc
     assert _lock_file_name(tmp_path, monkeypatch, kv_one) == _lock_file_name(
         tmp_path, monkeypatch, kv_two
     ), "two key=value addresses that differ only in the password got two lock file names"
-    # no offline guess: the name is not the hash of the whole address, whatever password is tried
+    # the name is not the hash of the whole address, whatever password is tried (no offline guess)
     guesses = {
-        _lock_name(_url("svc", p, rest="db.invalid/scratch")) for p in ("Zq9xK4mTw", "Pw3tHb8Nc")
+        f"hadavin_mutation_{hashlib.sha256(_url('svc', p, rest='db.invalid/scratch').encode()).hexdigest()[:16]}.lock"
+        for p in ("Zq9xK4mTw", "Pw3tHb8Nc")
     }
-    assert name not in guesses and name != _lock_name(first), (
+    assert name not in guesses, (
         "the lock file name is the hash of a whole address with a password in it"
     )
+    # same host, other port or database: another name; a value that is no address: one shared name
+    assert name != _lock_file_name(
+        tmp_path, monkeypatch, _url("svc", "Zq9x", rest="db.invalid:6543/scratch")
+    ), "two addresses with another port got one lock file name"
+    assert name != _lock_file_name(
+        tmp_path, monkeypatch, _url("svc", "Zq9x", rest="db.invalid/other")
+    ), "two addresses with another database got one lock file name"
+    assert _lock_file_name(tmp_path, monkeypatch, "state-a") == _lock_file_name(
+        tmp_path, monkeypatch, "state-b"
+    ), "two values that are no address got two names (the secret-free fallback must be one name)"
 
 
 def test_a_piece_beside_a_unicode_ellipsis_is_masked_like_one_beside_three_dots():

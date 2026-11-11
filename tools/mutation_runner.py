@@ -426,11 +426,29 @@ def _encoded_forms(text: str) -> set[str]:
     return forms
 
 
-def _without_passwords(value: str) -> str:
-    """``value`` with every ``_password_texts`` text cut out (longest first): the part of an address that does not hold the password."""
-    for password in sorted(set(_password_texts(value)), key=len, reverse=True):
-        value = value.replace(password, "")
-    return value
+_ADDRESS_KEYS = ("host", "hostaddr", "port", "dbname")
+_KEY_VALUE = re.compile(
+    r"(?:^|\s)(host|hostaddr|port|dbname)\s*=\s*(?:'([^']*)'|(\S+))", re.IGNORECASE
+)
+
+
+def _address_parts(value: str) -> str:
+    """Where ``value`` points, and nothing else: the host, port and database name of a URL (``urlsplit``) or of a ``key=value`` address (only the keys
+    ``host``, ``hostaddr``, ``port`` and ``dbname``), joined by a line break. No other part of ``value`` is read, so nothing that depends on a password
+    is in the result. A value that is neither gives ``"unparsed"``: all such values share one name (a second run is refused more often, never less)."""
+    parts: list[str] = []
+    if "://" in value:
+        try:
+            split = urlsplit(value)
+            parts = [split.hostname or "", str(split.port or ""), split.path]
+        except ValueError:
+            return "unparsed"
+    else:
+        found = {
+            m.group(1).lower(): m.group(2) or m.group(3) or "" for m in _KEY_VALUE.finditer(value)
+        }
+        parts = [found.get(key, "") for key in _ADDRESS_KEYS]
+    return "\n".join(parts) if any(parts) else "unparsed"
 
 
 def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
@@ -586,7 +604,7 @@ def _check_lock_file(fd: int) -> None:
 
 @contextlib.contextmanager
 def _one_run_per_database(values: Sequence[str]) -> Iterator[None]:
-    """Hold an exclusive lock named by a hash of the passed values with every password text cut out (never the values) in the temp folder for the whole run. A second runner that
+    """Hold an exclusive lock named by a hash of where the passed values point (host, port and database name; never the values) in the temp folder for the whole run. A second runner that
     uses the same temp folder (same machine and account, or the same ``TMPDIR``) with the same passed value is refused (``RuntimeError``) instead
     of sharing the database and its tables. It does not see a runner with another temp folder or on another machine; that stays the caller's
     job (a database of its own per run).
@@ -596,12 +614,12 @@ def _one_run_per_database(values: Sequence[str]) -> Iterator[None]:
     message that names the cause when it belongs to another user, has a wider mode, is not a regular file, or has more than one hard link. A temp
     folder on a network file system whose ``flock`` fails is refused as "could not be locked": use a local ``TMPDIR``.
 
-    The file name holds the first 16 hex digits of a SHA-256 of the values with every password text cut out (``_without_passwords``): two addresses that
-    differ only in the password give one name, and the name holds no byte that depends on a password that the runner can read. The name is readable by
-    other users of the temp folder; a password in a form the runner does not read (see "Not covered") would still be inside that hash. A lock
+    The file name holds the first 16 hex digits of a SHA-256 of the host, port and database name read from the values (``_address_parts``; the rest of a
+    value is never read, so no secret is hashed): two addresses that differ only in the password (or any other part) give one name. A value that is
+    not a URL or a ``key=value`` address with one of those keys shares one name with all such values, so the lock may refuse a run that could have gone on. A lock
     file that cannot be opened (another user's file) or locked for a reason other than "held by another run" is a ``RuntimeError`` with its own message."""
     digest = hashlib.sha256(
-        "\0".join(sorted(_without_passwords(v) for v in values)).encode()
+        "\0".join(sorted(_address_parts(v) for v in values)).encode()
     ).hexdigest()[:16]
     path = _lock_dir() / f"hadavin_mutation_{digest}.lock"
     # O_NONBLOCK: a FIFO planted under the name would block an open for reading for ever (it is then refused by the fstat check)
