@@ -2433,3 +2433,5 @@
 | BL-core-a2-w2-r15-06 | handover/reviews/P89/round-w2-r15-tests-a.md | Minor | PR89 | K-01 conftest loop passes for wrong reason; K-02 absence-only masking asserts | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r15-07 | handover/reviews/P89/round-w2-r15-mutants.md | Minor | PR89 | M-01..03 stale header lines; mutant 0o666 survives under umask 077 | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r15-08 | all five r15 reports | Nit | PR89 | nits listed in the reports (comments, literals, dead \t, term definitions, flake bounds) | OPEN | 2026-11-11 |
+| BL-core-a15-w3-01 | handover/reviews/PR74/round-w3-design-src.md | Major | PR74 (A15) | M1 scan_keyset has no clock; fix1 note G7 says REDACT_BUDGET_S refusal; redaction path | OPEN | 2026-11-11 |
+| BL-core-a15-w3-02 | handover/reviews/PR74/round-w3-design-src.md | Minor | PR74 (A15) | M2-M6: unlocked counter, closed-list call-site pointer, double read, app.py order + behaviour change confirm, psycopg-only | OPEN | 2026-11-11 |
