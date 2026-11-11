@@ -682,13 +682,19 @@ _GRANT_TARGET = re.compile(
     rf"(schema|database|type|domain|language|large|foreign|tablespace|parameter|all|procedure){_NAME_END}",
     re.IGNORECASE | re.DOTALL,
 )
+# `ALTER <anything> OWNER TO <role>` hands an object to another role. No migration file of this package does that (the
+# migration role owns what it makes), so it is refused whatever the object is. (The read-back after the file also finds a
+# relation, function or schema that a function body handed over.)
+_ALTER_OWNER = re.compile(
+    rf"alter\b(?:(?!\brename\b).)*?{_NAME_START}owner{_W}to{_NAME_END}", re.IGNORECASE | re.DOTALL
+)
 
 
 def refused_statements(text: str) -> list[str]:
     """Reasons a file must be refused, from `lex` (the emptied view) and the list: a lexer problem;
     transaction control; every `SET` and `RESET`, with no exception (`SET LOCAL lock_timeout` and `SET LOCAL statement_timeout` included: `migrate` sets
     the two limits itself and the read-back would refuse a file that changes them, so the text scan says so first);
-    `DO`, `EXECUTE`, `LOAD`, `DISCARD`, `COPY ... PROGRAM`, `ALTER ROLE|USER|GROUP|SYSTEM|DATABASE`,
+    `DO`, `EXECUTE`, `LOAD`, `DISCARD`, `COPY ... PROGRAM`, `ALTER ROLE|USER|GROUP|SYSTEM|DATABASE`, `ALTER ... OWNER TO`,
     `CREATE ROLE|USER|GROUP|EXTENSION`, `ALTER DEFAULT PRIVILEGES`, `ALTER PUBLICATION`, `GRANT` and `REVOKE` without `ON` (role membership) or on anything but a table, view, sequence, column or function, `DROP OWNED`,
     `REASSIGN OWNED`; hidden characters (`hidden_character`) come first. A rule matches at the START of a
     statement (the cleaned text split at `;`, leading whitespace removed). A quick check that catches accidents, not a
@@ -731,5 +737,9 @@ def refused_statements(text: str) -> list[str]:
             reasons.append(
                 f"{m.group(1).upper()} on a place other than a table, view, sequence, column or function "
                 f"({m.group(2).upper()}): the guard does not read rights there"
+            )
+        elif _ALTER_OWNER.match(s):
+            reasons.append(
+                "ALTER ... OWNER TO: an object may not be handed to another role by a migration file"
             )
     return reasons

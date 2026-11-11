@@ -128,7 +128,7 @@ def test_a_privilege_inherited_from_another_role_is_refused():
             db.execute(f'GRANT "{extra}" TO "{rt}"')
         try:
             with pytest.raises(
-                ConfigError, match=r"runtime role holds more than the grant map.*DELETE tool_calls"
+                ConfigError, match=r"runtime role has more than the grant map.*DELETE tool_calls"
             ):
                 run()
         finally:

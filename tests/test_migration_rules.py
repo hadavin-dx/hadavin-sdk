@@ -396,6 +396,48 @@ DEFAULT_FORMS = [
 ]
 
 
+OWNER_FORMS = [
+    "ALTER TABLE t OWNER TO r",
+    "ALTER SEQUENCE s OWNER TO r",
+    "ALTER VIEW v OWNER TO r",
+    "ALTER MATERIALIZED VIEW v OWNER TO r",
+    "ALTER FUNCTION f(int) OWNER TO r",
+    "ALTER SCHEMA s OWNER TO r",
+    "ALTER TYPE t OWNER TO r",
+    "alter   table\tonly t\nowner\n  to  r",
+    'ALTER TABLE "t" OWNER TO "r"',
+    "ALTER TABLE t OWNER TO CURRENT_USER",
+]
+NOT_OWNER_FORMS = [
+    "ALTER TABLE t ADD COLUMN owner_id int",
+    "ALTER TABLE t ADD COLUMN owner text",
+    "ALTER TABLE t RENAME COLUMN owner TO owner_name",
+    "ALTER TABLE t ADD COLUMN note text DEFAULT 'owner to nobody'",
+    "COMMENT ON TABLE t IS 'owner to be set'",
+]
+
+
+@pytest.mark.parametrize("form", OWNER_FORMS)
+def test_handing_an_object_to_another_role_is_refused_by_the_text_rule(form):
+    """`ALTER <anything> OWNER TO` is refused where the statement starts (no real migration file uses it; a function body
+    that does it is found by the read-back). Killed by: mutant OT1 (the rule is off)."""
+    assert any("OWNER TO" in r for r in _reasons(form)), (form, _reasons(form))
+
+
+@pytest.mark.parametrize("before,after", NOISE)
+def test_the_owner_refusal_holds_under_noise(before, after):
+    missed = [
+        f for f in OWNER_FORMS if not any("OWNER TO" in r for r in _reasons(before + f + after))
+    ]
+    assert not missed, missed[:5]
+
+
+@pytest.mark.parametrize("form", NOT_OWNER_FORMS)
+def test_a_column_or_a_text_that_says_owner_is_not_taken_for_an_owner_change(form):
+    """Killed by: mutant OT2 (any statement that holds the word `owner` is refused)."""
+    assert not any("OWNER TO" in r for r in _reasons(form)), (form, _reasons(form))
+
+
 @pytest.mark.parametrize("form", ALLOWED_TARGET_FORMS)
 def test_a_right_on_a_table_column_sequence_or_function_is_not_refused(form):
     assert _reasons(form) == [], _reasons(form)
