@@ -192,9 +192,10 @@ class Call(NamedTuple):
     capability: str
     settings: Any  # the settings object the caller handed to the factory
     provider: Any  # the secret provider handed on (None for the secrets backend itself)
-    available: tuple[
-        str, ...
-    ]  # the names of the other objects handed on (store, signer, routes, ...), sorted
+    available: dict[
+        str, Any
+    ]  # the other objects handed on, by name (store, signer, anchor, routes, llm)
+    result: Any  # what the call returned to the build
 
     @property
     def kind(self) -> str:
@@ -210,16 +211,18 @@ def plant_test_backends(monkeypatch, *, module=app_mod, store=None, **objects) -
     keeps its real kinds.
 
     Returns the list of calls the build made (`Call`), so a test can assert what was asked: which settings, which
-    secret provider, and which other objects by name."""
+    secret provider, which other objects (the objects themselves, by name), and what each call returned."""
     calls: list[Call] = []
 
     def wrapper(capability, settings, provider=None, **available):
-        calls.append(Call(capability, settings, provider, tuple(sorted(available))))
         if capability in objects:
-            return objects[capability]
-        if capability == "store" and store is not None:
-            return store()
-        return factory_mod.make(capability, settings, provider, **available)
+            result = objects[capability]
+        elif capability == "store" and store is not None:
+            result = store()
+        else:
+            result = factory_mod.make(capability, settings, provider, **available)
+        calls.append(Call(capability, settings, provider, dict(available), result))
+        return result
 
     monkeypatch.setattr(module, "make", wrapper)
     return calls
@@ -254,13 +257,24 @@ HANDED_ON = {
 
 def assert_asked_as_configured(calls: list[Call], cfg) -> None:
     """Every call carried the settings object of the loaded config `cfg` for its capability (the second store call:
-    the same settings with the purge DSN in place of the runtime DSN), and the other objects `HANDED_ON` names."""
+    the same settings with the purge DSN in place of the runtime DSN) and the other objects `HANDED_ON` names. Each
+    object handed on IS the one an earlier call returned: the store handed to the audit and to the channel is what
+    the FIRST store call returned (the runtime store, never the purge store), and likewise the signer, the anchor
+    and the model client; `routes` is the config's own."""
     b = cfg.backends
+    first: dict[str, Any] = {}
     stores = 0
     for call in calls:
-        assert call.available == HANDED_ON[call.capability], (
-            f"{call.capability}: handed on {call.available}"
+        assert tuple(sorted(call.available)) == HANDED_ON[call.capability], (
+            f"{call.capability}: handed on {sorted(call.available)}"
         )
+        for name, handed in call.available.items():
+            if name == "routes":
+                assert handed == cfg.routes, "the model client got other routes"
+            else:
+                assert name in first and handed is first[name], (
+                    f"{call.capability}: the {name} handed on is not the one the first {name} call returned"
+                )
         if call.capability == "detector":
             assert call.settings in b.detector
         elif call.capability == "store":
@@ -278,6 +292,7 @@ def assert_asked_as_configured(calls: list[Call], cfg) -> None:
             assert call.settings == getattr(b, call.capability), (
                 f"{call.capability}: other settings"
             )
+        first.setdefault(call.capability, call.result)
     assert calls[0].capability == "secrets" and calls[0].provider is None
 
 
@@ -300,6 +315,11 @@ def test_k3_pilot_app_has_no_executor(tmp_path, monkeypatch):
         # the build asked the factory for the configured real kinds, with the one provider
         assert asked(calls, spy) == PILOT_KINDS
         assert_asked_as_configured(calls, load_config(cfg))
+        runtime_store = next(c.result for c in calls if c.capability == "store")
+        assert app.store is runtime_store
+        for capability in ("audit", "channel"):
+            (call,) = [c for c in calls if c.capability == capability]
+            assert call.available["store"] is runtime_store, f"{capability} got another store"
         assert app.executor is None
         assert app.runtime.hooks.execute is None and app.runtime.hooks.verify is None
         assert sorted(set(resolved)) == [

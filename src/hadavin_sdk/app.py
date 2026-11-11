@@ -26,8 +26,15 @@ from hadavin_sdk.audit import AuditSink
 from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import VaultConnection
-from hadavin_sdk.config import Backends, Config, ConfigError, confined, load_config
-from hadavin_sdk.defaults import EXECUTOR_TIMEOUT_MAX_S
+from hadavin_sdk.config import (
+    EXECUTOR_TIMEOUT_RULE,
+    Backends,
+    Config,
+    ConfigError,
+    confined,
+    executor_timeout_ok,
+    load_config,
+)
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM
@@ -85,7 +92,9 @@ def build(
     None, so an object that is falsy is refused too. With several given, only the first in the order secrets,
     channel, detector, llm, clock, timeout_s is named. `hold_run_ids=` stays allowed in pilot and prod: it is a
     production hook (the caller's list of runs whose evidence the purge must keep), not a test object. In demo a
-    given `timeout_s=` must be an int or float (not True or False) between 0 (not included) and 3600. `sources=` and
+    given `timeout_s=` must be an int or float (not True or False) from `defaults.EXECUTOR_TIMEOUT_MIN_S` to
+    `defaults.EXECUTOR_TIMEOUT_MAX_S` seconds (one rule, `config.executor_timeout_ok`, shared with the config field
+    `executor_timeout_s`). `sources=` and
     `tools=` take a mapping (name to object); the code copies them with `dict()`, so a list of pairs also works in
     demo, but that is an accident of the copy and not part of the contract.
 
@@ -99,13 +108,18 @@ def build(
     class) with `auth: token`, written or left out (it is the default). This covers every process that calls
     `app.build`, which for the command line is `tick`. It does not cover the one-off commands that load the config
     without `build` (limits stop and reset, audit verify, gate, migrate, replay, score): a person may run those
-    with a short-lived token of their own. Nothing checks how long that token lives.
+    with a short-lived token of their own. Nothing checks how long that token lives, and a scheduled job that runs
+    one of these commands with a static token in its environment is not refused either.
 
-    Limit of these refusals: `build` refuses the six keywords above and `run_tick` refuses its `now=` and `steps=`.
+    Limit of these refusals: `build` refuses the six keywords above; `run_tick` refuses its `now=` and `steps=`
+    and a `runtime.tick.STEPS` that lacks a built-in step; a `TickContext` refuses a time handed to it (so a tick
+    step called by hand cannot work with a time of the caller's choice).
     Any route that does not pass through them is not covered: constructing App, Runtime or Approvals directly (a
     hand-built `Approvals(clock=...)` among them), assigning attributes after build, a kind added to the table, a
-    direct call of `backends.factory.make`, a leftover patch of `app.make` or `app.now`, a tick step called by
-    hand with a time of the caller's choice (`purge_evidence(TickContext(app, <time>))`), and the time parameters
+    direct call of `backends.factory.make`, a leftover patch of `app.make` or `app.now`, a changed or patched
+    `runtime.tick.STEPS` (reordering, or replacing a step's function), a clock replaced after build, and the
+    methods below the tick that take a time or a cut-off date directly: the store's `purge_tool_calls(before)` and
+    `purge_redaction_maps(before)`, and the time parameters
     of `Approvals.sweep(at=)` and `Approvals.resend_unsent(at=)`. The refusals stop a test object that reaches a
     pilot or prod process by ACCIDENT, not hostile code in the same process."""
     cfg = load_config(config_dir)
@@ -154,12 +168,10 @@ def build(
             else f"configure backends.{name} in pilot and prod"
         )
         raise ConfigError(f"{name}= is for tests; {fix}")
-    if timeout_s is not None and not _timeout_in_range(timeout_s):
-        # 0 would make every executor call fail at once (a socket that never waits); the config field is > 0 too.
-        raise ConfigError(
-            "timeout_s= must be an int or float between 0 (not included) and "
-            f"{EXECUTOR_TIMEOUT_MAX_S}"
-        )
+    if timeout_s is not None and not executor_timeout_ok(timeout_s):
+        # 0 (and anything under a millisecond) would make every executor call fail at once. The config field
+        # `executor_timeout_s` is checked by the same function, so the two routes cannot disagree.
+        raise ConfigError(f"timeout_s= {EXECUTOR_TIMEOUT_RULE}")
     clock = now if clock is None else clock
     given_sources = {} if sources is None else dict(sources)
     # Only http contracts hold a client-system secret; pilot and prod have none (http is refused there).
@@ -329,17 +341,6 @@ def _static_vault_tokens(backends: Backends) -> list[str]:
         for c, s in backends.entries()
         if isinstance(s, VaultConnection) and s.auth == "token"
     ]
-
-
-def _timeout_in_range(value: object) -> bool:
-    """An int or a float (True and False are not numbers here; Decimal, Fraction and other number types are
-    refused) that is greater than 0 and at most `defaults.EXECUTOR_TIMEOUT_MAX_S` (3600). Not-a-number and infinity
-    fail the comparison.
-    There is no lower bound above 0: a very small value makes every call time out at once, which is what a test of
-    the timeout path asks for."""
-    if isinstance(value, bool) or not isinstance(value, int | float):
-        return False
-    return 0 < value <= EXECUTOR_TIMEOUT_MAX_S
 
 
 def _own_secrets(secrets: SecretProvider, spec: tools_mod.ToolSpec) -> Callable[[str], str]:

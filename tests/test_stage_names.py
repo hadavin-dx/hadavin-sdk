@@ -441,21 +441,42 @@ def test_pilot_and_prod_refuse_sources_and_tools_handed_to_build(tmp_path):
 
 
 def test_demo_refuses_a_timeout_that_is_out_of_range(tmp_path):
-    """A given `timeout_s=` (demo only: pilot and prod refuse the keyword itself) must be an int or float, not True or
-    False, greater than 0 and at most 3600."""
-    cfg_dir = make_cfg(tmp_path)
+    """The demo executor's timeout has ONE rule on both routes, the `timeout_s=` keyword of `build` (demo only: pilot
+    and prod refuse the keyword itself) and the config field `executor_timeout_s`: an int or float, not True or False,
+    from one millisecond to one hour."""
+    least, most = 0.001, 3600
+    rule = "must be an int or float between 0.001 and 3600"
+    cfg_dir = make_cfg(tmp_path / "keyword")
     qualify(load_registry(load_config(cfg_dir)))
     secrets = FakeSecretProvider({"fixture-token": "tok" + "-timeout"})
-    want = "timeout_s= must be an int or float between 0 (not included) and 3600"
-    for value in (0, -1, float("inf"), 3601, True):
+    for value in (0, -1, float("inf"), most + 1, True, 1e-9):
         try:
             build(cfg_dir, ["test-agent"], secrets=secrets, timeout_s=value)
             got = ""
         except ConfigError as exc:
             got = str(exc)
-        assert got == want, f"demo took timeout_s={value!r}: {got[:80]!r}"
-    assert (
-        build(cfg_dir, ["test-agent"], secrets=secrets, timeout_s=3600).executor.timeout_s == 3600
+        assert got == "timeout_s= " + rule, f"demo took timeout_s={value!r}: {got[:80]!r}"
+    for value in (least, most):
+        app = build(cfg_dir, ["test-agent"], secrets=secrets, timeout_s=value)
+        assert app.executor.timeout_s == value
+    # the same rule in the config file, written as a config file holds the value
+    for n, text in enumerate([f"{most}.1", ".inf", "0", "true", "'5'", "1.0e-9"]):
+        in_file = make_cfg(tmp_path / f"file{n}")
+        path = in_file / "config.yaml"
+        path.write_text(
+            path.read_text(encoding="utf-8") + f"\nexecutor_timeout_s: {text}\n", encoding="utf-8"
+        )
+        try:
+            got = f"loaded as {load_config(in_file).executor_timeout_s}"
+        except ConfigError as exc:
+            got = str(exc)
+        assert "executor_timeout_s" in got and rule in got, (
+            f"the config took executor_timeout_s: {text} ({got[:60]!r})"
+        )
+    from hadavin_sdk import defaults
+
+    assert (defaults.EXECUTOR_TIMEOUT_MIN_S, defaults.EXECUTOR_TIMEOUT_MAX_S) == (least, most), (
+        "a bound changed: the rule sentence above and the CHANGELOG name them"
     )
 
 
@@ -574,10 +595,105 @@ def test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick(tmp_path
         assert got == [no_time, no_steps] and ran == [], (
             f"the tick treated {stage!r} as not live (an allowlist of live stages): {got}"
         )
-    before = {s.name: app.store.get_tick_state(s.name) for s in STEPS}
-    assert run_tick(app) == 0, "a live tick with nothing handed to it must run"
-    after = {s.name: app.store.get_tick_state(s.name) for s in STEPS}
-    assert all(after.values()) and after != before, "a live tick did not run the steps of STEPS"
+    # one level down: the context that carries the time into the steps, and a stand-in object in its place
+    from datetime import timedelta
+
+    from hadavin_sdk.runtime import tick as tick_mod
+
+    ahead = at + timedelta(days=500)
+    purged: list[str] = []
+    real_purge = app.store.purge_tool_calls
+    app.store.purge_tool_calls = lambda *a, **k: purged.append("tool calls") or real_purge(*a, **k)
+
+    def by_hand(ctx_of) -> str:
+        try:
+            tick_mod.purge_evidence(ctx_of())
+        except ConfigError as exc:
+            return str(exc)
+        return ""
+
+    app.config = app.config.model_copy(update={"environment": "demo"})
+    assert by_hand(lambda: tick_mod.TickContext(app, at)) == "" and purged, (
+        "demo refused a tick context with a time handed to it"
+    )
+    purged.clear()
+    for stage in ("pilot", "prod"):
+        app.config = app.config.model_copy(update={"environment": stage})
+        got = by_hand(lambda: tick_mod.TickContext(app, ahead))
+        assert got == no_time and purged == [], (
+            f"a live tick step took a time handed to its context ({stage!r}): {got[:60]!r}, {purged}"
+        )
+        got = by_hand(lambda: SimpleNamespace(app=app, now=ahead, results={}))
+        assert got == no_time and purged == [], (
+            f"a live tick step took a stand-in context with a time ({stage!r}): {got[:60]!r}, {purged}"
+        )
+    for stage in ("stag" + "ing", "Demo", "", None):
+        app.config = app.config.model_copy(update={"environment": stage})
+        got = by_hand(lambda: tick_mod.TickContext(app, ahead))
+        assert got == no_time and purged == [], (
+            f"the tick context treated {stage!r} as not live (an allowlist of live stages): {got[:60]!r}"
+        )
+        got = by_hand(lambda: SimpleNamespace(app=app, now=ahead, results={}))
+        assert got == no_time and purged == [], (
+            f"the tick step treated {stage!r} as not live for a stand-in context: {got[:60]!r}"
+        )
+    app.config = app.config.model_copy(update={"environment": "pilot"})
+    assert by_hand(lambda: tick_mod.TickContext(app)) == "" and purged, (
+        "a live tick context with no time handed to it (the app's clock) must work"
+    )
+    # a tick with nothing handed to it runs every step of STEPS: asked of a fresh app, so each step must be new
+    fresh = build(
+        cfg_dir, ["test-agent"], secrets=FakeSecretProvider({"fixture-token": "tok" + "-tick"})
+    )
+    fresh.config = fresh.config.model_copy(update={"environment": "pilot"})
+    assert not any(fresh.store.get_tick_state(s.name) for s in STEPS)
+    assert run_tick(fresh) == 0, "a live tick with nothing handed to it must run"
+    not_run = [s.name for s in STEPS if fresh.store.get_tick_state(s.name) is None]
+    assert not_run == [], f"a live tick did not run these steps of STEPS: {not_run}"
+
+
+def test_pilot_and_prod_refuse_a_tick_whose_step_list_lacks_a_built_in_step(tmp_path):
+    """`runtime.tick.STEPS` is the list a deployment appends a step to. Outside demo a tick refuses to run when a
+    built-in step is no longer in it (a cut or emptied list would return 0 with no sweep and no purge); an appended
+    step runs; demo runs the list as it is."""
+    from hadavin_sdk.runtime import tick as tick_mod
+
+    cfg_dir = make_cfg(tmp_path)
+    qualify(load_registry(load_config(cfg_dir)))
+    built_in = list(tick_mod.STEPS)
+
+    def tick_with(steps, stage):
+        """(what the tick said or returned, the built-in steps that ran) for a fresh app whose stage is `stage`."""
+        app = build(
+            cfg_dir, ["test-agent"], secrets=FakeSecretProvider({"fixture-token": "tok" + "-steps"})
+        )
+        app.config = app.config.model_copy(update={"environment": stage})
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(tick_mod, "STEPS", steps)
+            try:
+                said = tick_mod.run_tick(app)
+            except ConfigError as exc:
+                said = str(exc)
+        return said, [s.name for s in built_in if app.store.get_tick_state(s.name) is not None]
+
+    without_purge = [s for s in built_in if s.name != "purge_evidence"]
+    for stage in ("pilot", "prod", "stag" + "ing", None):
+        got = tick_with(without_purge, stage)
+        assert got == ("a built-in tick step is missing: purge_evidence", []), (
+            f"a live tick ran without a built-in step ({stage!r}): {got}"
+        )
+        got = tick_with([], stage)
+        assert got[0].startswith("a built-in tick step is missing: sweep, ") and got[1] == [], (
+            f"a live tick ran an emptied step list ({stage!r}): {got}"
+        )
+    ran: list[str] = []
+    extra = tick_mod.TickStep("extra_step", 0, lambda _ctx: ran.append("extra_step"))
+    got = tick_with([*built_in, extra], "pilot")
+    assert got == (0, [s.name for s in built_in]) and ran == ["extra_step"], (
+        f"a live tick did not run an appended step with every built-in step: {got}, {ran}"
+    )
+    got = tick_with(without_purge, "demo")
+    assert got == (0, [s.name for s in without_purge]), f"demo did not run the list as it is: {got}"
 
 
 ANCHOR = {"kind": "s3_object_lock", "bucket": "b", "region": "r"}

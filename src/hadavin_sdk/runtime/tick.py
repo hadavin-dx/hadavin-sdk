@@ -2,7 +2,7 @@
 
 Contract (design v5 kernel, section 4):
 * ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily). Later PRs only
-  **append** a ``TickStep``.
+  **append** a ``TickStep``; a deployment that needs another step appends one to this list too.
 * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
 * A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
@@ -13,10 +13,16 @@ Contract (design v5 kernel, section 4):
   not ready (missing table or grant: run ``migrate``); 4 store unreachable (connection refused, dropped or
   timed out), before any step or when it stops answering during the steps; 3 is the CLI wrapper's code for any
   other uncaught error.
-* Two refusals do NOT come back as an exit code: ``run_tick`` RAISES ``ConfigError`` when it is given ``now=`` or
-  ``steps=`` for an app whose stage is not exactly demo (both are for tests). The command line never passes them. A
-  caller that does must catch the error; an uncaught one ends a Python process with exit code 1, which this list
-  reads as "a step failed".
+* Three refusals do NOT come back as an exit code. For an app whose stage is not exactly demo, ``run_tick`` RAISES
+  ``ConfigError`` when it is given ``now=`` or ``steps=`` (both are for tests; the command line never passes them),
+  and when a built-in step is missing from ``STEPS``. A caller must catch the error; an uncaught one ends a Python
+  process with exit code 1, which this list reads as "a step failed" (the command line reports it as a config
+  error, exit code 2).
+* The time enters the steps through ``TickContext``. Outside demo a context that is given a time is refused
+  (``ConfigError``), so a step called by hand cannot work with a time of the caller's choice:
+  ``purge_evidence(TickContext(app, <time>))`` raises there. ``purge_evidence(TickContext(app))`` (the app's clock)
+  is not refused; calling one step by hand is not a supported entry point (no supported way exists today to run
+  only some steps outside demo).
 
 Concurrent ticks are safe: every state change is a compare-and-set, and a loser (``StaleState``) skips.
 """
@@ -46,11 +52,37 @@ _LOG = logging.getLogger("hadavin_sdk.tick")
 OK, FAILED, SKIPPED = "ok", "failed", "skipped"
 
 
-@dataclass
+NO_GIVEN_TIME = "now= is for tests; it is refused in pilot and prod"
+
+
+@dataclass(frozen=True)
 class TickContext:
+    """What a tick hands to every step: the app, the ONE time all steps work with, and the results so far.
+
+    This is where the time enters the steps (the approval sweep, the stuck-run check, the evidence purge delete by
+    age from it). `TickContext(app)` takes the time from the app's clock. `TickContext(app, <time>)` is for tests:
+    outside demo (pilot, prod and any stage value that is not exactly demo) a context that is given a time is refused
+    with a ConfigError, whoever builds it (`run_tick`, or a caller that runs one step by hand). The time cannot be
+    changed afterwards (the object is frozen); `results` is filled in as the steps run. `app` must carry its config
+    (`app.config.environment`)."""
+
     app: App
-    now: datetime
+    now: datetime | None = None  # None: the app's clock. Always a time once the object exists.
     results: dict[str, str] = field(default_factory=dict)  # step name -> ok / failed / skipped
+
+    def __post_init__(self) -> None:
+        if self.now is None:
+            object.__setattr__(self, "now", self.app.approvals.clock())
+        elif is_live(self.app.config.environment):
+            raise ConfigError(NO_GIVEN_TIME)
+
+
+def _now(ctx: TickContext) -> datetime:
+    """The time of this tick, for a step. Outside demo only a real `TickContext` is taken (its time came from the
+    clock): a stand-in object that merely has a `now` is refused, so a hand-made time cannot reach a step that way."""
+    if not isinstance(ctx, TickContext) and is_live(ctx.app.config.environment):
+        raise ConfigError(NO_GIVEN_TIME)
+    return ctx.now
 
 
 @dataclass(frozen=True)
@@ -84,8 +116,8 @@ def _each(items: list[Any], fn: Callable[[Any], None], what: str) -> None:
 
 def sweep(ctx: TickContext) -> None:
     """Escalate or expire due approvals; resend requests whose channel send failed."""
-    ctx.app.approvals.sweep(ctx.now)
-    ctx.app.approvals.resend_unsent(ctx.now)
+    ctx.app.approvals.sweep(_now(ctx))
+    ctx.app.approvals.resend_unsent(_now(ctx))
 
 
 def reconcile(ctx: TickContext) -> None:
@@ -130,10 +162,10 @@ def stuck(ctx: TickContext) -> None:
     app = ctx.app
     floor = min((stuck_after_s(app, a) for a in app.registry.agents), default=60)
     for state, reason in STUCK.items():
-        candidates = app.store.list_runs(state, ctx.now - timedelta(seconds=floor))
+        candidates = app.store.list_runs(state, _now(ctx) - timedelta(seconds=floor))
 
         def one(run, state=state, reason=reason) -> None:
-            if run.updated_at >= ctx.now - timedelta(seconds=stuck_after_s(app, run.agent_id)):
+            if run.updated_at >= _now(ctx) - timedelta(seconds=stuck_after_s(app, run.agent_id)):
                 return
             advance(app.store, run.run_id, state, S.NEEDS_PERSON, reason)
             app.audit.write_outcome(
@@ -151,7 +183,7 @@ def stuck(ctx: TickContext) -> None:
         _each(candidates, one, f"stuck {state.value}")
 
     # A crash between WAITING_FOR_APPROVAL and saving the request leaves a wait nobody can answer.
-    waiting = app.store.list_runs(S.WAITING_FOR_APPROVAL, ctx.now - timedelta(seconds=floor))
+    waiting = app.store.list_runs(S.WAITING_FOR_APPROVAL, _now(ctx) - timedelta(seconds=floor))
     if waiting:
         asked = {
             r.run_id
@@ -201,10 +233,12 @@ def purge_evidence(ctx: TickContext) -> None:
     keep = app.config.retention
     store = app.purge_store or app.store  # the deleting identity, when one is configured
     maps = store.purge_redaction_maps(
-        ctx.now - timedelta(days=keep.held_maps_max_days), keep_run_ids=frozenset(), keep_open=False
+        _now(ctx) - timedelta(days=keep.held_maps_max_days),
+        keep_run_ids=frozenset(),
+        keep_open=False,
     )
     calls = store.purge_tool_calls(
-        ctx.now - timedelta(days=keep.held_tool_calls_max_days), keep_run_ids=frozenset()
+        _now(ctx) - timedelta(days=keep.held_tool_calls_max_days), keep_run_ids=frozenset()
     )
     hook = app.runtime.hooks.hold_run_ids
     try:
@@ -216,10 +250,10 @@ def purge_evidence(ctx: TickContext) -> None:
         )
         raise
     calls += store.purge_tool_calls(
-        ctx.now - timedelta(days=keep.tool_calls_days), keep_run_ids=held
+        _now(ctx) - timedelta(days=keep.tool_calls_days), keep_run_ids=held
     )
     maps += store.purge_redaction_maps(
-        ctx.now - timedelta(days=keep.redaction_maps_days), keep_run_ids=held
+        _now(ctx) - timedelta(days=keep.redaction_maps_days), keep_run_ids=held
     )
     _LOG.info("purge_evidence tool_calls=%d redaction_maps=%d held_runs=%d", calls, maps, len(held))
 
@@ -270,6 +304,17 @@ STEPS: list[TickStep] = [
         interval=lambda ctx: ctx.app.config.evidence.source_reprobe_s,
     ),
 ]
+# The names of the steps above, remembered when the module is loaded. Outside demo a tick refuses to run when one of
+# them is no longer in `STEPS` (see `run_tick`). A deployment adds a step by appending to `STEPS`.
+_BUILT_IN: tuple[str, ...] = tuple(step.name for step in STEPS)
+
+
+def _missing_built_in_steps() -> list[str]:
+    """The built-in steps that are not in `STEPS` right now (by name), in their built-in order."""
+    present = {step.name for step in STEPS}
+    return [name for name in _BUILT_IN if name not in present]
+
+
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (
     2  # the store answers but a table or grant is missing: same code as a config error
@@ -314,7 +359,7 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
             every
             and prev
             and prev.last_error is None
-            and (ctx.now - prev.last_run_at).total_seconds() < every
+            and (_now(ctx) - prev.last_run_at).total_seconds() < every
         ):
             return SKIPPED
         step.fn(ctx)
@@ -325,8 +370,8 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
         store.save_tick_state(
             TickState(
                 step=step.name,
-                last_run_at=ctx.now,
-                last_ok_at=ctx.now if error is None else (prev.last_ok_at if prev else None),
+                last_run_at=_now(ctx),
+                last_ok_at=_now(ctx) if error is None else (prev.last_ok_at if prev else None),
                 last_error=error,
             )
         )
@@ -346,16 +391,31 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
     check, the evidence purge), so a time in the future would delete evidence early. `steps=` replaces the list of
     steps, so a tick could return 0 without the sweep or the purge ever running. Outside demo (pilot, prod and any
     stage value that is not exactly demo) a tick that is given either one (not None; an empty list counts as given)
-    RAISES a ConfigError before anything runs: the time then comes from the app's clock and the steps are `STEPS`.
-    With both given, `now=` is the one named. `app` must carry its config (`app.config.environment`): an object
-    without one fails with an AttributeError when `now=` or `steps=` is given.
+    RAISES a ConfigError before anything runs. With both given, `now=` is the one named. A tick called with neither
+    keyword takes the time from the app's clock and runs `STEPS`.
 
-    Not covered by these two refusals: a step function called by hand with a time of the caller's choice, for
-    example `purge_evidence(TickContext(app, <time>))`."""
+    `STEPS` (the module's list) is where a step is added: append a `TickStep`. Outside demo a tick also RAISES a
+    ConfigError ("a built-in tick step is missing: <names>") before anything runs when one of the steps this module
+    defines is no longer in `STEPS` by name, so an emptied or cut list cannot return 0 with no sweep and no purge.
+    An appended step runs after the built-in ones. In demo the list is run as it is.
+
+    `app` must carry its config: `app.config.environment` is read on every call.
+
+    The same rule holds one level down, where the time enters the steps: a `TickContext` that is given a time is
+    refused outside demo, so `purge_evidence(TickContext(app, <time>))` raises too (see `TickContext`).
+
+    Not covered by these refusals: a changed or patched `runtime.tick.STEPS` that still holds every built-in name
+    (reordering, or replacing a step's function); a clock that tells the wrong time (`app.approvals.clock` replaced
+    after build, or a hand-built `Approvals(clock=...)`); and the methods that take a time or a cut-off date
+    directly, below the tick: `Approvals.sweep(at=)`, `Approvals.resend_unsent(at=)`, and the store's
+    `purge_tool_calls(before)` and `purge_redaction_maps(before)` (the store knows no stage)."""
     given = [name for name, value in (("now", now), ("steps", steps)) if value is not None]
-    if given and is_live(app.config.environment):
+    live = is_live(app.config.environment)
+    if given and live:
         raise ConfigError(f"{given[0]}= is for tests; it is refused in pilot and prod")
-    ctx = TickContext(app, app.approvals.clock() if now is None else now)
+    if live and (missing := _missing_built_in_steps()):
+        raise ConfigError(f"a built-in tick step is missing: {', '.join(missing)}")
+    ctx = TickContext(app, now)
     try:
         app.store.get_tick_state(_PROBE)  # the store answers, or nothing runs
     except Exception as exc:  # noqa: BLE001 - any store failure: change nothing

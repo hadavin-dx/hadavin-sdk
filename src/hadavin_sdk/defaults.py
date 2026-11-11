@@ -1,9 +1,11 @@
 """The default numbers of the K5 read path, in one place.
 
 Nothing here is a secret, an account id, a region or a host name. Every value is either validated config
-(`Config.evidence`, `Config.retention`, `Config.tool_timeout_s`, the per-agent `max_run_usd`), a validated manifest
+(`Config.evidence`, `Config.retention`, `Config.tool_timeout_s`, `Config.executor_timeout_s` and its two bounds, the
+per-agent `max_run_usd`), a validated manifest
 field (`max_output_bytes`, `ports`, `options`), or a validated source setting (`KubernetesSettings`); this file only
-names the defaults those fields start from, so a number is never written twice. tests/test_no_hardcoded_values.py
+names the defaults those fields start from (and, for the executor timeout, the bounds the field and the `timeout_s=`
+test keyword of `app.build` share), so a number is never written twice. tests/test_no_hardcoded_values.py
 keeps host names, account ids, ARNs and key-shaped strings out of `src/`.
 """
 
@@ -97,13 +99,18 @@ PRIVATE_SUFFIX_LABELS = frozenset(
         "invalid",
     }
 )
-EXECUTOR_TIMEOUT_S = 10.0  # the demo executor's per-call timeout (Config.executor_timeout_s)
-# the largest `timeout_s=` a demo `app.build` takes (seconds): one hour, far above any real executor call
-EXECUTOR_TIMEOUT_MAX_S = 3600
 HTTPS_PORTS = (443,)  # ports a tool may reach over https unless its manifest lists `ports`
 CLUSTER_PORTS = (80, 8080, 9090, 9093, 3100)  # the same for plain http to in-cluster hosts
 
 PURGE_EVERY_S = 86400  # how often the `purge_evidence` tick step does its work (Config.retention)
+
+# --- demo executor (Config.executor_timeout_s; pilot and prod build no executor) -----------------------------------------
+EXECUTOR_TIMEOUT_S = 10.0  # the demo executor's per-call timeout in seconds (the default of Config.executor_timeout_s)
+# The bounds of Config.executor_timeout_s, and of the `timeout_s=` keyword of `app.build` (a test keyword, demo only),
+# in seconds. Lower: one millisecond; below that no network call can finish, so the value would act like 0 (every
+# call fails at once). Upper: one hour, far above any real executor call.
+EXECUTOR_TIMEOUT_MIN_S = 0.001
+EXECUTOR_TIMEOUT_MAX_S = 3600
 
 # --- redaction (Config.evidence.stored_kinds may narrow this, never widen it) -------------------------------------------
 # Identifier kinds a fix or a read may need back (M14). Secret and regulated kinds are never stored.

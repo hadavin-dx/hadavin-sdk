@@ -165,6 +165,19 @@ def parse_backends(raw: Any, root: Path) -> Backends:
 
 _LOOPBACK = {"127.0.0.1", "localhost", "::1"}
 
+# The one rule for the demo executor's per-call timeout in seconds, used by the config field `executor_timeout_s`
+# and by the `timeout_s=` keyword of `app.build`. The sentence is the tail of both refusal messages.
+EXECUTOR_TIMEOUT_RULE = f"must be an int or float between {defaults.EXECUTOR_TIMEOUT_MIN_S} and {defaults.EXECUTOR_TIMEOUT_MAX_S}"
+
+
+def executor_timeout_ok(value: object) -> bool:
+    """An int or a float (True and False are not numbers here; text, Decimal, Fraction and other number types are
+    refused) from `defaults.EXECUTOR_TIMEOUT_MIN_S` to `defaults.EXECUTOR_TIMEOUT_MAX_S`, both included.
+    Not-a-number and infinity fail the comparison."""
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return False
+    return defaults.EXECUTOR_TIMEOUT_MIN_S <= value <= defaults.EXECUTOR_TIMEOUT_MAX_S
+
 
 def url_allowed(url: str, allow_insecure_loopback: bool) -> bool:
     """The bearer token travels with every call: https only. Plain http only to this machine, and only when
@@ -357,10 +370,18 @@ class Config(_Strict):
     sources: dict[str, SourceConfig] = {}
     # SHA-256 of each tool module's source file; required in pilot and prod, checked when listed.
     tool_module_hashes: dict[str, str] = {}
-    executor_timeout_s: float = Field(
-        default=defaults.EXECUTOR_TIMEOUT_S, gt=0
-    )  # demo executor only
+    # Demo executor only (pilot and prod build no executor). ONE rule, `executor_timeout_ok`, for this field and for
+    # the `timeout_s=` keyword of `app.build` (the validator below runs before pydantic turns `true` or '5' into a
+    # number).
+    executor_timeout_s: float = defaults.EXECUTOR_TIMEOUT_S
     root: Path
+
+    @field_validator("executor_timeout_s", mode="before")
+    @classmethod
+    def _executor_timeout(cls, value: object) -> object:
+        if not executor_timeout_ok(value):
+            raise ValueError(EXECUTOR_TIMEOUT_RULE)
+        return value
 
     @field_validator("environment", mode="before")
     @classmethod

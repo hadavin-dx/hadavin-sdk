@@ -12,8 +12,12 @@ migrate, replay, score) keep working with a person's own short-lived token.
 
 What these refusals do not cover: they refuse the six keywords of build and now= and steps= of run_tick; any route
 that does not pass through them is not covered (constructing App, Runtime or Approvals directly, assigning attributes
-after build, a kind added to the table, a direct call of the factory, a leftover patch of app.make or app.now, a tick
-step called by hand with a time of the caller's choice, the time parameters of Approvals.sweep and resend_unsent).
+after build, a kind added to the table, a direct call of the factory, a leftover patch of app.make or app.now, a
+changed or patched runtime.tick.STEPS that still holds every built-in step name (reordering, or replacing a step's
+function), a clock replaced after build, the time parameters of Approvals.sweep and resend_unsent, the store's
+purge_tool_calls(before) and purge_redaction_maps(before)). A runtime.tick.STEPS that lacks a built-in step IS refused
+outside demo, and so is a tick context (TickContext) that is handed a time: a tick step called by hand cannot work with
+a time of the caller's choice.
 
 No test here can read a real Vault credential: the two environment variables a Vault sign-in reads are removed for
 every test of this module, so a broken check fails at once and never reaches the network.
@@ -34,6 +38,7 @@ import yaml
 
 from hadavin_sdk import app as app_mod
 from hadavin_sdk import cli as cli_mod
+from hadavin_sdk import defaults
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.approvals.channel import FakeChannel
 from hadavin_sdk.backends import factory as factory_mod
@@ -42,6 +47,7 @@ from hadavin_sdk.config import ConfigError, load_config
 from hadavin_sdk.guard.injection import RegexDetector
 from hadavin_sdk.models import now
 from hadavin_sdk.registry import load_registry
+from hadavin_sdk.runtime import tick as tick_mod
 from hadavin_sdk.runtime.tick import STEPS, TickStep, run_tick
 from hadavin_sdk.store.memory import MemoryStore
 from tests.conftest import make_cfg, qualify
@@ -313,7 +319,11 @@ def test_demo_uses_a_falsy_sources_or_tools_mapping_instead_of_dropping_it(demo_
     assert app.runtime.hooks.tools == {"echo": echo}, "a falsy tools= mapping was dropped"
 
 
-TIMEOUT_MESSAGE = "timeout_s= must be an int or float between 0 (not included) and 3600"
+# The two bounds, written out here once as the pin (a test below holds them against `defaults`); every other place
+# in this file uses these two names.
+MIN_S, MAX_S = 0.001, 3600
+TIMEOUT_RULE = f"must be an int or float between {MIN_S} and {MAX_S}"
+TIMEOUT_MESSAGE = f"timeout_s= {TIMEOUT_RULE}"
 TIMEOUT_REFUSED = [
     0,
     0.0,
@@ -328,8 +338,12 @@ TIMEOUT_REFUSED = [
     Decimal("2.5"),
     Fraction(5, 2),
     10**400,
-    3601,
-    3600.1,
+    MAX_S + 1,
+    MAX_S + 0.1,
+    MAX_S + 0.0000001,
+    MIN_S / 2,
+    1e-9,
+    5e-324,
 ]
 
 
@@ -337,17 +351,16 @@ TIMEOUT_REFUSED = [
 def test_demo_refuses_a_timeout_outside_the_range_or_of_another_type(demo_dir, value):
     """0 would make every executor call fail at once (a socket that never waits), so it is refused, not passed on.
     Only int and float count as a number here: True and False, Decimal and Fraction are refused, and so is a
-    number over 3600 (ten to the power 400 would overflow at the socket)."""
+    number over one hour (ten to the power 400 would overflow at the socket) or under one millisecond (no network
+    call can finish in less; such a value would act like 0)."""
     with pytest.raises(ConfigError, match=exactly(TIMEOUT_MESSAGE)):
         app_mod.build(
             demo_dir, ["test-agent"], secrets=FakeSecretProvider(DEMO_SECRETS), timeout_s=value
         )
 
 
-@pytest.mark.parametrize("value", [3, 0.001, 2.5, 3600, 3600.0, 1e-9, 5e-324])
+@pytest.mark.parametrize("value", [3, MIN_S, 2.5, MAX_S, float(MAX_S)])
 def test_demo_uses_a_timeout_in_the_range_as_given(demo_dir, value):
-    """There is no lower bound above 0: a very small timeout makes every call time out at once, which is what a
-    test of the timeout path asks for."""
     app = app_mod.build(
         demo_dir, ["test-agent"], secrets=FakeSecretProvider(DEMO_SECRETS), timeout_s=value
     )
@@ -445,6 +458,263 @@ def test_run_tick_accepts_a_given_step_list_in_demo(demo_dir):
     assert run_tick(app, steps=[_recording_step(ran)]) == 0
     assert ran == ["recorded"]
     assert run_tick(app, steps=[]) == 0
+
+
+# --- the built-in steps of the tick may not go missing outside demo ----------------------------------------------------
+
+
+@pytest.mark.parametrize("gone", ["sweep", "purge_evidence"])
+@pytest.mark.parametrize("where", ["pilot", "prod", *NOT_A_STAGE])
+def test_run_tick_refuses_a_step_list_that_lacks_a_built_in_step_outside_demo(
+    demo_dir, monkeypatch, where, gone
+):
+    """`runtime.tick.STEPS` is where a deployment adds a step. With a built-in step taken out, a tick would return 0
+    without that step ever running; outside demo it is refused before anything runs."""
+    app = _demo_app_at(demo_dir, where)
+    monkeypatch.setattr(tick_mod, "STEPS", [s for s in STEPS if s.name != gone])
+    with pytest.raises(ConfigError, match=exactly(f"a built-in tick step is missing: {gone}")):
+        run_tick(app)
+    assert all(app.store.get_tick_state(s.name) is None for s in STEPS), "a step ran"
+
+
+def test_run_tick_refuses_an_emptied_step_list_outside_demo(demo_dir, monkeypatch):
+    app = _demo_app_at(demo_dir, "pilot")
+    names = ", ".join(s.name for s in STEPS)
+    monkeypatch.setattr(tick_mod, "STEPS", list(STEPS))
+    tick_mod.STEPS.clear()
+    with pytest.raises(ConfigError, match=exactly(f"a built-in tick step is missing: {names}")):
+        run_tick(app)
+    assert all(app.store.get_tick_state(s.name) is None for s in STEPS), "a step ran"
+
+
+@pytest.mark.parametrize("where", ["pilot", "prod"])
+def test_an_appended_step_runs_outside_demo_after_every_built_in_step(demo_dir, monkeypatch, where):
+    """The supported way to add a step: append a TickStep to `runtime.tick.STEPS`."""
+    app = _demo_app_at(demo_dir, where)
+    seen: list[list[str]] = []
+    extra = TickStep("extra_step", 0, lambda ctx: seen.append(sorted(ctx.results)))
+    monkeypatch.setattr(tick_mod, "STEPS", [*STEPS, extra])
+    assert run_tick(app) == 0
+    assert seen == [sorted(s.name for s in STEPS)], (
+        "the appended step did not run after the built-in steps"
+    )
+    assert all(app.store.get_tick_state(s.name) is not None for s in [*STEPS, extra])
+
+
+def test_demo_runs_a_step_list_that_lacks_a_built_in_step(demo_dir, monkeypatch):
+    """Demo is unchanged: the list is run as it is."""
+    app = _demo_app_at(demo_dir, "demo")
+    monkeypatch.setattr(tick_mod, "STEPS", [s for s in STEPS if s.name != "purge_evidence"])
+    assert run_tick(app) == 0
+    assert app.store.get_tick_state("purge_evidence") is None
+    assert app.store.get_tick_state("sweep") is not None
+
+
+# --- the approvals object: a time handed to it is used as given -----------------------------------------------------------
+
+
+class FalsyTime(datetime):
+    """A time that is falsy (no real datetime is; this pins 'given means not None' for the two methods below)."""
+
+    def __bool__(self) -> bool:
+        return False
+
+
+@pytest.mark.parametrize("method", ["sweep", "resend_unsent"])
+def test_the_approvals_object_uses_a_time_that_is_falsy_as_given(demo_dir, method):
+    """`at=` is the tick's own parameter. A given time is used, never swapped for the clock because it is falsy."""
+    app = _demo_app_at(demo_dir, "demo")
+    at = FalsyTime(2026, 11, 11, tzinfo=UTC)
+    assert not at
+
+    def clock_must_not_be_asked():
+        raise AssertionError("the clock was asked although a time was given")
+
+    app.approvals.clock = clock_must_not_be_asked
+    assert getattr(app.approvals, method)(at) == []
+
+
+# --- one rule for the executor timeout, on both routes (the keyword of build, the field of the config file) ---------------
+
+# (the text in a config file, the same value handed to the keyword). YAML has no Decimal or Fraction.
+BOTH_ROUTES_REFUSE = [
+    ("0", 0),
+    ("-1", -1),
+    ("true", True),
+    ("false", False),
+    ("'5'", "5"),
+    (".inf", float("inf")),
+    (".nan", float("nan")),
+    (f"{MAX_S}.0000001", MAX_S + 0.0000001),
+    (f"{MAX_S + 1}", MAX_S + 1),
+    ("1" + "0" * 400, 10**400),
+    ("1.0e-9", 1e-9),
+    ("5.0e-324", 5e-324),
+    ("[5]", [5]),
+    ("5/2", "5/2"),
+]
+BOTH_ROUTES_ACCEPT = [
+    (f"{MIN_S}", MIN_S),
+    ("0.5", 0.5),
+    ("3", 3),
+    ("3.5", 3.5),
+    (f"{MAX_S}", MAX_S),
+]
+
+
+def _config_with_timeout(tmp_path, text):
+    cfg_dir = make_cfg(tmp_path)
+    path = cfg_dir / "config.yaml"
+    path.write_text(
+        path.read_text(encoding="utf-8") + f"\nexecutor_timeout_s: {text}\n", encoding="utf-8"
+    )
+    return cfg_dir
+
+
+@pytest.mark.parametrize(
+    ("text", "value"), BOTH_ROUTES_REFUSE, ids=[t[:10] for t, _ in BOTH_ROUTES_REFUSE]
+)
+def test_the_config_file_and_the_keyword_refuse_the_same_executor_timeouts(
+    demo_dir, tmp_path, text, value
+):
+    """One rule in one place (`config.executor_timeout_ok`) for both routes: what `timeout_s=` refuses, the config
+    field `executor_timeout_s` refuses too, with the same sentence. `true` and '5' are refused before they could
+    be read as 1.0 and 5.0."""
+    with pytest.raises(ConfigError, match=exactly(TIMEOUT_MESSAGE)):
+        app_mod.build(
+            demo_dir, ["test-agent"], secrets=FakeSecretProvider(DEMO_SECRETS), timeout_s=value
+        )
+    with pytest.raises(ConfigError, match="executor_timeout_s") as err:
+        load_config(_config_with_timeout(tmp_path / "file", text))
+    assert TIMEOUT_RULE in str(err.value), "the config file gives another reason than the keyword"
+
+
+@pytest.mark.parametrize(
+    ("text", "value"), BOTH_ROUTES_ACCEPT, ids=[t for t, _ in BOTH_ROUTES_ACCEPT]
+)
+def test_the_config_file_and_the_keyword_accept_the_same_executor_timeouts(
+    demo_dir, tmp_path, text, value
+):
+    by_keyword = app_mod.build(
+        demo_dir, ["test-agent"], secrets=FakeSecretProvider(DEMO_SECRETS), timeout_s=value
+    )
+    cfg_dir = _config_with_timeout(tmp_path / "file", text)
+    assert load_config(cfg_dir).executor_timeout_s == value
+    qualify(load_registry(load_config(cfg_dir)))
+    by_file = app_mod.build(cfg_dir, ["test-agent"], secrets=FakeSecretProvider(DEMO_SECRETS))
+    assert by_keyword.executor.timeout_s == by_file.executor.timeout_s == value
+
+
+def test_the_default_executor_timeout_passes_the_rule():
+    from hadavin_sdk.config import executor_timeout_ok
+
+    assert executor_timeout_ok(defaults.EXECUTOR_TIMEOUT_S)
+    assert (defaults.EXECUTOR_TIMEOUT_MIN_S, defaults.EXECUTOR_TIMEOUT_MAX_S) == (MIN_S, MAX_S)
+    assert 0 < MIN_S < defaults.EXECUTOR_TIMEOUT_S < MAX_S
+
+
+# --- the tick context: where the time enters the steps -------------------------------------------------------------------
+
+
+def _purge_spy(app, monkeypatch) -> list[str]:
+    """Record every purge call that reaches the store the purge uses (nothing is deleted through the spy's eyes
+    unless the real method is reached, which is what the tests below rule out)."""
+    reached: list[str] = []
+    store = app.purge_store or app.store
+    for name in ("purge_tool_calls", "purge_redaction_maps"):
+        real = getattr(store, name)
+
+        def spy(*args, _real=real, _name=name, **kwargs):
+            reached.append(_name)
+            return _real(*args, **kwargs)
+
+        monkeypatch.setattr(store, name, spy)
+    return reached
+
+
+FAR_AHEAD = timedelta(days=500)
+
+
+@pytest.mark.parametrize("where", ["pilot", "prod", *NOT_A_STAGE])
+def test_a_tick_context_refuses_a_time_handed_to_it_outside_demo(demo_dir, monkeypatch, where):
+    """The evidence purge deletes by age from the context's time. With a time 500 days ahead handed in by hand,
+    `purge_evidence(TickContext(app, <time>))` deleted every stored tool call and redaction map of a pilot app. The
+    context is where the time enters every step, so the refusal sits there: no purge call reaches the store."""
+    app = _demo_app_at(demo_dir, where)
+    reached = _purge_spy(app, monkeypatch)
+    ahead = datetime.now(UTC) + FAR_AHEAD
+    with pytest.raises(
+        ConfigError, match=exactly("now= is for tests; it is refused in pilot and prod")
+    ):
+        tick_mod.purge_evidence(tick_mod.TickContext(app, ahead))
+    with pytest.raises(
+        ConfigError, match=exactly("now= is for tests; it is refused in pilot and prod")
+    ):
+        tick_mod.TickContext(app, now=datetime.now(UTC))
+    assert reached == [], "a purge reached the store with a time handed in by hand"
+
+
+STEP_FUNCTIONS = ["sweep", "reconcile", "stuck", "checkpoint", "purge_evidence", "reprobe_sources"]
+
+
+def test_the_step_functions_checked_here_are_the_built_in_steps():
+    assert [s.name for s in STEPS] == STEP_FUNCTIONS
+    assert all(getattr(tick_mod, s.name) is s.fn for s in STEPS)
+
+
+@pytest.mark.parametrize("step", ["sweep", "stuck", "purge_evidence"])
+@pytest.mark.parametrize("where", ["pilot", "prod", *NOT_A_STAGE])
+def test_a_step_refuses_a_stand_in_context_with_a_time_outside_demo(
+    demo_dir, monkeypatch, where, step
+):
+    """An object that merely looks like a context (it has `app`, `now`, `results`) is the other way a hand-made time
+    could reach a step. Every step that reads the time (the approval sweep, the stuck-run check, the evidence purge)
+    takes it through one function, which outside demo takes a real TickContext only."""
+    app = _demo_app_at(demo_dir, where)
+    reached = _purge_spy(app, monkeypatch)
+    stand_in = SimpleNamespace(app=app, now=datetime.now(UTC) + FAR_AHEAD, results={})
+    with pytest.raises(
+        ConfigError, match=exactly("now= is for tests; it is refused in pilot and prod")
+    ):
+        getattr(tick_mod, step)(stand_in)
+    assert reached == []
+
+
+def test_the_time_of_a_tick_context_cannot_be_changed_afterwards(demo_dir):
+    import dataclasses
+
+    app = _demo_app_at(demo_dir, "pilot")
+    ctx = tick_mod.TickContext(app)
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        ctx.now = datetime.now(UTC) + FAR_AHEAD
+    with pytest.raises(ConfigError, match="now= is for tests"):
+        dataclasses.replace(ctx, now=datetime.now(UTC) + FAR_AHEAD)
+
+
+@pytest.mark.parametrize("where", ["pilot", "prod"])
+def test_a_tick_context_without_a_given_time_takes_the_apps_clock_outside_demo(
+    demo_dir, monkeypatch, where
+):
+    """Not refused: one step called by hand with the clock's time (not a supported entry point, but it cannot delete
+    early)."""
+    app = _demo_app_at(demo_dir, where)
+    at = datetime(2026, 11, 11, 9, 0, tzinfo=UTC)
+    app.approvals.clock = lambda: at
+    reached = _purge_spy(app, monkeypatch)
+    ctx = tick_mod.TickContext(app)
+    assert ctx.now == at
+    tick_mod.purge_evidence(ctx)
+    assert sorted(set(reached)) == ["purge_redaction_maps", "purge_tool_calls"]
+
+
+def test_demo_keeps_a_tick_context_with_a_given_time_and_a_stand_in_context(demo_dir, monkeypatch):
+    app = _demo_app_at(demo_dir, "demo")
+    reached = _purge_spy(app, monkeypatch)
+    at = datetime(2026, 11, 11, 9, 0, tzinfo=UTC)
+    assert tick_mod.TickContext(app, at).now == at
+    tick_mod.purge_evidence(tick_mod.TickContext(app, at))
+    tick_mod.purge_evidence(SimpleNamespace(app=app, now=at, results={}))
+    assert len(reached) >= 4
 
 
 # --- behaviour 2: a static Vault token is refused by a pilot or prod build ------------------------------------------------
@@ -555,12 +825,14 @@ def test_a_new_kind_built_on_the_vault_settings_class_is_refused_too(tmp_path, m
         app_mod.build(root, ["ito-agent"])
 
 
-SIGN_IN_FIELDS = {"auth", "token_env"}
+# Every field of the Vault settings that says how to sign in. Looked up 2026-11-11: in the table only the two Vault
+# kinds have any of them.
+SIGN_IN_FIELDS = {"auth", "token_env", "secret_id_env", "role_id", "jwt_path"}
 
 
 def vault_like_kinds_outside_the_class() -> list[str]:
-    """The kinds in the table whose settings have a sign-in field of the Vault settings (`auth` or `token_env`) and
-    are NOT built on `VaultConnection`: `app.build` would not see their static token."""
+    """The kinds in the table whose settings have a sign-in field of the Vault settings (`SIGN_IN_FIELDS`) and are
+    NOT built on `VaultConnection`: `app.build` would not see their static token."""
     return sorted(
         f"{capability}: {kind}"
         for capability, kinds in TABLE.items()

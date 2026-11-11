@@ -52,6 +52,13 @@ def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path, monk
         assert asked(calls, secrets) == PILOT_KINDS
         configured = load_config(cfg).backends.store
         assert_asked_as_configured(calls, load_config(cfg))
+        runtime_store, purge_store = [c.result for c in calls if c.capability == "store"]
+        assert app.store is runtime_store and app.purge_store is purge_store
+        for capability in ("audit", "channel"):
+            (call,) = [c for c in calls if c.capability == capability]
+            assert call.available["store"] is runtime_store is not purge_store, (
+                f"{capability} got the purge store (the deleting identity)"
+            )
         first, second = [c.settings for c in calls if c.capability == "store"]
         assert first.dsn_secret_name == configured.dsn_secret_name, (
             "the runtime store uses the runtime DSN"
@@ -62,8 +69,7 @@ def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path, monk
         assert app.purge_store is not app.store
         with pytest.raises(Exception, match="rivilege|ermission|denied|navailable"):
             app.store.purge_tool_calls(datetime.now(UTC), keep_run_ids=frozenset())
-        tick_mod.purge_evidence(
-            tick_mod.TickContext(app, datetime.now(UTC))
-        )  # the purge identity can
+        # the purge identity can (a pilot app: the tick context takes its time from the app's clock)
+        tick_mod.purge_evidence(tick_mod.TickContext(app))
         app.store._db.close()
         app.purge_store._db.close()

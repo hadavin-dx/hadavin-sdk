@@ -302,7 +302,10 @@ def test_a_failed_reprobe_switches_the_source_off_until_a_probe_passes():
 
     src = Src()
     app = SimpleNamespace(
-        sources={"c": src}, disabled_sources=set(), config=SimpleNamespace(scope_inventory={})
+        sources={"c": src},
+        disabled_sources=set(),
+        # a tick context that is handed a time asks the app for its stage: this stand-in is a demo app
+        config=SimpleNamespace(scope_inventory={}, environment="demo"),
     )
     ctx = tick_mod.TickContext(app, datetime.now(UTC))
     src.found = ["namespace prod: write verb patch on ['deployments']"]

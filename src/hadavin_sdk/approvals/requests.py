@@ -130,8 +130,11 @@ class Approvals:
 
     def resend_unsent(self, at: datetime | None = None) -> list[str]:
         """PENDING requests whose send failed (`sent_at` empty) for at least RESEND_AFTER since their step
-        began (a send still in flight is left alone): send them again. Returns approval ids."""
-        at = at or self.clock()
+        began (a send still in flight is left alone): send them again. Returns approval ids.
+
+        `at=` is the tick's own parameter (the tick hands its time on) and is not refused in any stage: a caller that
+        hands a time of its own choice decides which requests count as old enough. None: this object's clock."""
+        at = self.clock() if at is None else at
         sent = []
         for req in self.store.list_approvals({"PENDING"}):
             step = req.steps[req.current_step]
@@ -189,8 +192,11 @@ class Approvals:
             )
 
     def sweep(self, at: datetime | None = None) -> list[str]:
-        """Escalate each due request one step; after the last step it expires. Returns approval ids touched."""
-        at = at or self.clock()
+        """Escalate each due request one step; after the last step it expires. Returns approval ids touched.
+
+        `at=` is the tick's own parameter (the tick hands its time on) and is not refused in any stage: a caller that
+        hands a time in the future escalates or expires requests early. None: this object's clock."""
+        at = self.clock() if at is None else at
         touched = []
         for req in self.store.list_due_approvals(at):
             nxt = req.current_step + 1
