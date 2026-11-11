@@ -1059,3 +1059,8 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a9e4af013ff2c246c | PR73 codebase review r6 (0c52491) | done 2026-11-10 | report saved: 1 Major, 5 Minor | closed |
 | aea5c3b20851d826d | PR73 builder round 7 (N1 cluster-wide liveness + minors) | resumed 2026-11-10 ~23:50 UTC | expected end <= 90 min | running; runner aa4c9d02bcc6c3765 on 0c52491 will be stopped when new head lands |
 | a290aa955ce105a74 | PR89 builder round 8 (4 Minors: pins, mutants, property test, docstring) | 23:48Z 2026-11-10 | +90 min | running; runner ab495747efcc92abd on 3586dcc stopped when new head lands |
+| aea5c3b20851d826d | PR73 builder round 7 | 2026-11-11 | - | CLOSED: d1dff3a pushed (170/170 mutants, 10796 passed on 3.12 and 3.13, PG16 only) |
+| aa4c9d02bcc6c3765 | PR73 evidence runner on 0c52491 | 2026-11-11 | - | STOPPED (head superseded); driver 26625, job 29459, clusters ev73a/b/c stopped; partial evidence folder deleted |
+| ade34d837cfd4dc3f | PR73 evidence runner, head d1dff3a (170+40 mutants) | 2026-11-11 00:05Z | on report | running; model sonnet |
+| a605a0c0b43320cb2 | PR73 design/security reviewer r7, snapshot /tmp/snap/core_P3a-2-d1dff3a | 2026-11-11 00:05Z | on report | running; model sonnet |
+| aa1db3a77c2507a90 | PR73 codebase reviewer r7, same snapshot | 2026-11-11 00:05Z | on report | running; model sonnet |
