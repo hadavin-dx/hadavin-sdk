@@ -18,3 +18,4 @@ F7 Major tools.py:744-759,906-933: secret forms not undo()-normalised; base64 sc
 F8 Minor homoglyph keys, tab runs in grouped numbers, line splits, base64/hex/QP of pattern secrets. F9 Minor log-line forging via \r / U+2028 in safe_head (runtime/tick.py:292, guard/injection.py:92-96). F10 Minor raw ConfigError/yaml text printed by cli.py:75,205,301,304; config.py:502.
 Shared fix proposed: ONE pre-normalisation in runmap.redact_text before neutralise and before any scrub: strip escape sequences (keep joined AND spaced forms as views), drop Cc (except tab/LF/CR) and the Unicode Default_Ignorable set; redact.find no longer mutates text; tools._scrub and channel.clean call the same step.
 Not read by reviewer: listed in its report (llm/, actions/, store/, most tests).
+- Q8/redaction-sweep-full.md is kept on the cloud machine only (/home/user/build/reports-raw/): gitleaks flags one made-up example string in it; the summary file redaction-sweep.md holds the findings.
