@@ -31,7 +31,7 @@ Status: written by ticket authors (rev 1 and rev 2). Nothing is built. Fresh pla
 ## Read first: what is not established
 
 1. Every PostgreSQL fact below was run on PostgreSQL 16.15 only. Versions 17 (the version CI uses) and 18 were not run by anyone. The design has one built-in guard for that (the self-check in section 3.6), and the acceptance list makes the CI run on 17 a required evidence item.
-2. The SQL in section 3 ran on the author's throwaway cluster against a small made-up setup (5 tables, 4 functions, 6 roles). It was not run on a large catalog. Its cost on a database with tens of thousands of objects is not measured (acceptance item 21 measures it).
+2. The SQL in section 3 ran on the author's throwaway cluster against a small made-up setup (5 tables, 4 functions, 6 roles). It was not run on a large catalog. Its cost on a database with tens of thousands of objects is not measured (acceptance item 21 measures it). Rev 2's final texts ran on a slightly larger setup (fact 40), still small.
 3. Three things in this ticket go beyond the words of D-020 or correct the design review. They are marked AUTHOR ADDITION or CORRECTION where they appear and are collected in section 10.3 so the lead can accept or strike each one.
 4. Facts taken from memory and not run by anyone are marked "from memory, unverified" in section 2. None of them carries the design alone.
 5. SETTLED in rev 2 (was an open conflict between two runs). A plain role with CREATE on the database that installs the trusted extension `citext` OWNS the extension (`citext | xmig`, run with `current_user = session_user = xmig`, `rolsuper = f`), and the 47 functions inside it are owned by `postgres` (handover/evidence/P3a-2/plan-r2/x-extension-owner.out). Rev 1's run was right; the evidence runner's sentence in RESULTS.md Step 9 row F3 ("is owned by `postgres`", no raw output) is wrong for the extension and right only for its member functions. The design never depended on it: rule O6 has no condition (section 3.3).
@@ -453,7 +453,7 @@ A view of the map is granted with `GRANT ... ON TABLE` (MIG:268) and its access 
 - O3 no grant option for anyone but the owner and the migration role (the migration role may hold `USAGE ... WITH GRANT OPTION` on a schema it does not own; that is how the printed role of MIG:597-601 works).
 - O4 SECURITY DEFINER only on the reviewed list. `REVIEWED_DEFINER_FUNCTIONS` becomes `frozenset[tuple[str, str, str]]` of (schema, name, identity arguments as `pg_get_function_identity_arguments` prints them); an entry whose schema is the constant `RUN_SCHEMA = ""` means the schema of the run. It stays empty. A unit test pins the key, and a real-server test (C-F9) shows that the same name in another schema, and an overload, are not excused.
 - O5 STRUCK in rev 2 (D-M7). Rev 1 refused every other member of a group that owns a package object. That refuses a normal setup (`CREATE ROLE app_owner; CREATE ROLE mig LOGIN IN ROLE app_owner; CREATE ROLE alice IN ROLE app_owner;`) with no way out but removing colleagues from the group, and a named role in that group is already refused by S3. Other members of an owning group are not judged; 1.4 says so.
-- O6 extension membership is no excuse: an object the family owns is judged the same whether or not it is a member of an extension. The rule has no condition in the code (there is simply no extension filter on family-owned objects), so it holds whoever is right in the open conflict of "Read first" item 5. It matters in practice only for a migration role that owns an extension; fact 14 says how such a role can exist (CREATE on the database plus a trusted extension), and an administrator can also create the situation by installing an extension while switched to the migration role.
+- O6 extension membership is no excuse: an object the family owns is judged the same whether or not it is a member of an extension. The rule has no condition in the code (there is simply no extension filter on family-owned objects), so it held whoever was right in the conflict of "Read first" item 5, which rev 2 settled (the installing role owns the extension). It matters in practice only for a migration role that owns an extension; fact 14 says how such a role can exist (CREATE on the database plus a trusted extension), and an administrator can also create the situation by installing an extension while switched to the migration role.
 - O7 schema of the run: any right other than USAGE for a role that is not the owner and not the migration role is a problem, and "role" includes everyone (`CREATE` for everyone on `public`, the PostgreSQL 14 default, is refused). Same meaning as today's rule (MIG:1217-1225).
 
 **Default rights (Q4):**
@@ -604,7 +604,7 @@ Rewritten against `_judge` (pure function, made-up rows; they pin the words of a
 
 `TPG`, retired (they pin the comparison or a gap of it):
 - `test_a_function_of_another_application_owned_by_the_migration_role_is_left_alone` (pins the gap of design finding 6; under 3.4 line 3 such a function is refused until everyone's EXECUTE is revoked)
-- `test_a_function_that_kept_a_foreign_owner_is_not_refused_for_that_owner` (replaced by a test of rule O5: a group with one member passes, a group with a second member is refused)
+- `test_a_function_that_kept_a_foreign_owner_is_not_refused_for_that_owner` (replaced by two clean controls of 7.4: a group-owned database where the migration role is the only member, and E27, a group with a second member; both must end in (iii), because rule O5 is struck in rev 2)
 - `test_a_schema_that_a_file_changed_and_that_kept_its_owner_is_not_taken_for_handed_over` (same)
 - `test_a_function_whose_body_a_file_replaced_is_treated_as_changed`
 - `test_every_part_of_a_function_that_a_file_can_change_makes_it_a_changed_function`
@@ -754,6 +754,7 @@ Forbidden, and the reason the suite exists: `migrate` returned and the oracle fi
 | E01, E08, E09 SELECT on a table, view, materialized view, foreign table | `SELECT * FROM s.t LIMIT 0`, and per column `SELECT <col> FROM s.t LIMIT 0` | E09: the foreign table uses `file_fdw` (PostgreSQL contrib) with `filename '/dev/null'`, made by the superuser; a server without `file_fdw` makes E09 "not buildable here", with the error text |
 | E02 INSERT, UPDATE, DELETE beyond the map | per column `INSERT INTO s.t (<col>) SELECT NULL WHERE false`; per column `UPDATE s.t SET <col> = NULL WHERE false` (no column on the right, so SELECT is not needed, D-M1); `DELETE FROM s.t WHERE false` | - |
 | E03 TRUNCATE, REFERENCES, TRIGGER | `TRUNCATE s.t`; per primary-key column `CREATE TEMP TABLE <u> (c <type> REFERENCES s.t (<col>))` (on a column without a unique index PostgreSQL answers 42830 first, so REFERENCES is tried on unique columns only and the generator places E03-REFERENCES there); `CREATE TRIGGER <u> BEFORE UPDATE ON s.t FOR EACH ROW EXECUTE FUNCTION pg_catalog.suppress_redundant_updates_trigger()` | - |
+| MAINTAIN (17) and owner-only upkeep on every relation (direction 2 of 7.7) | `REINDEX TABLE s.t` (owner only on 16; owner or MAINTAIN on 17); a materialized view also `REFRESH MATERIALIZED VIEW s.m` | - |
 | E04, E05 column SELECT, column UPDATE | the per-column attempts of E01 and E02, on every column | - |
 | E06, E07 sequence USAGE, UPDATE | `SELECT pg_catalog.nextval('s.q')` (USAGE or UPDATE), `SELECT pg_catalog.setval('s.q', 1)` (UPDATE), `SELECT last_value FROM s.q` (SELECT) | - |
 | E10, E11, E12, E13 EXECUTE on a function (explicit, left to everyone, SECURITY DEFINER of the family, SECURITY DEFINER of another owner) | `EXPLAIN SELECT s.f(<typed NULLs>)` (refused with 42501 without running the body, fact 19); aggregates: `EXPLAIN SELECT s.a(<typed NULL>) FROM (VALUES (1)) v(x)`; whether it is SECURITY DEFINER comes from `prosecdef` | - |
@@ -1044,3 +1045,61 @@ More text rules or spellings; a SQL parser used for security; detectors per rout
 - TICKET-P3a.md and BUILDER-ticket-notes.md were not read by either author.
 - No test, lint or mutant of the repository was run by the rev 2 author. The rev 2 author ran PostgreSQL and psycopg probes only.
 
+
+## 11. Every plan-review finding of round 1, with its answer (rev 2)
+
+Prefix R = implementation-readiness review (plan-r1-readiness-full.md), D = design review (plan-r1-design-full.md). "Fixed" means the ticket text now says it; nothing is built.
+
+| finding id | answer | where in the ticket |
+|---|---|---|
+| R-B1 commit order not buildable | Rebuilt: verify beside the old code, oracle, then ONE switch commit (deletion + new order + test and mutant changes together), extras, matrix, texts; per-commit green command includes `test_every_migrate_mutant_still_applies_to_the_source`; mutants change in the same commit as their code | 9.3 |
+| R-B2 O2 refuses the `public` default | Everyone's USAGE on the schema of the run allowed; O7 covers everyone (CREATE for everyone refused); `public` test plus sensitivity control (fact 34) | 3.3 O2, O7; 7.6; 9.1 item 23 |
+| R-M1 step-8 option breaks fixtures; wrap step 8 | Option dropped (also not accepted by `connect`, fact 35); all of step 8 in one `try`, any exception -> exit 5 | 4.1 step 8; 4.2; fact 35 |
+| R-M2 oracle environment | Superuser required (failure, not skip); one database per case (24 ms, measured); variants P, O, C, T defined; `CALL` for procedures; typed NULLs; `RESET SESSION AUTHORIZATION`; unknown codes INCONCLUSIVE; whole-word ban list | 7.2 |
+| R-M3 tests and mutants outside the lists | Named: fake-db wiring tests, test_k2_migrations.py, CHANGELOG and docstring pins, phrases that must survive, nesting for `_upgrade_bullet()`, MT1/MT2, R23, SH1, 16 re-checked | 5.4b, 5.5, 9.5 |
+| R-M4 acceptance commands | Every item names a test id or command; `--include='*.py'`; item 3 covers comments; DSN and batching in item 12; `migration_numbers_mutants.py` command; builder-notes table is Blocker-level | 9.1 |
+| R-M5 run time, heavy jobs, time box | Four mutant batches with `--list-batch`, `timeout 3000`, heavy_slot where it exists (it does not in this repository), time-out procedure; work packages A1, B1, A2, C1, B2, C2 of at most 60-minute sessions | 7.10, 9.4 |
+| R-M6 circular import, default binding | New module never imports `migrate`; `_label` moves to `migration_numbers`; reviewed list passed at call time with no default; TPG:2804 patch value updated | 3.1 |
+| R-M7 missing definitions | Rights per role kind table; schema-USAGE rule without `has_*`; step-4 query; `PROBLEM_KINDS`; full Q2 with changes (a)-(d) and the temp/toast filter, run as a plain role | 3.2, 3.3; fact 40 |
+| R-M8 old-head proof | Adapter defined; only the "applied with excess:" assertion counts; no module-level import of the new module; version/self-check/message tests removed from the proof | 7.9 |
+| R-M9 upgrade-from-main test | Emulates main's state (files, ledger, map grants, PUBLIC EXECUTE on the trigger function); claims exactly that | 7.6 |
+| R-Mn1 `effective_problems` | Removed | 5.2, 10.3 item 9 |
+| R-Mn2 other stale CL:34/CL:15 MAINTAIN sentences | Deleted, one new sentence | 1.5 |
+| R-Mn3 `_scan` data shape | `found` dict unchanged; second dict for the first file | 6.4 |
+| R-Mn4 CI route | First: `docker exec ... ALTER SYSTEM` + `docker restart` + bounded `pg_isready`; second: `docker run` step | 6.3 |
+| R-Mn5 row-type key | `typtype='c' AND typrelid<>0 AND relkind<>'c'` (fact 33) | 3.4 line 3, Q2 |
+| R-Mn6 `file_name` at step 6 | Constant `END_OF_RUN` | 4.1 step 6 |
+| R-Mn7 step 5 versus `_limit_error` | `_limit_error` wins for 55P03/57014 with its own step name; other errors wrapped | 4.1 step 5 |
+| R-Mn8 cli docstring | One `migrate` line with exit codes 0, 2, 3, 5 | 4.2 |
+| R-Mn9 promise-table marker | `[promise table]` ... `[end of promise table]` in both texts | 9.1 item 6, 9.5 |
+| R-Mn10 mutant count | 288 - 29 + 54 = 313 (rev 1's 7.5 list counted 42; O5 struck gives 41; 13 new) | 5.5, 7.5 |
+| R-Mn11 docstring rewrite vague | Module list "What migrate does, in order" rewritten to the eight steps; phrases that must survive listed | 9.3 commit 6, 5.4b item 3 |
+| R-A1..A8 stale citations | CL:12->CL:11; MN:680-683->677-679; TPG:242 is a context manager exit (7.8 exempts functions with `yield`); TW:192/208 claim struck; TW:1244 needs no re-point; MIG:283-366->283-372/295-372; MUT time 30+ min; 280/288 resolved (279+9) | 1.5, 5.2, 5.4, 6.3, 7.8, 7.10, Read first 5c |
+| R-B list (deleted names, callers) | `_TABLE_PRIVS`, `_SERVER_VERSION_SQL`, `_MAINTAIN_FROM`, `_table_privs`, `_SCHEMA_USAGE_SQL` added to the delete list; MT1/MT2 retired; R23 re-pointed; `REVIEWED_DEFINER_FUNCTIONS` type change handled | 5.3, 5.5, 3.1 |
+| D-M1 oracle cannot see half the effects | Effect -> attempt table for all 37 plus E38/E39; default rights via fresh objects created as the migration role and every case role; every column; UPDATE without SELECT | 7.2 |
+| D-M2 step-8 failures become exit 2 | All of step 8 wrapped (exit 5); limits set inside `verify`; test with a role-level `statement_timeout` (fact 36) | 3.1, 4.1, 7.6 |
+| D-M3 COMMIT outcome | Server-refused (SQLSTATE, connection open) -> exit 2; anything else -> exit 5 "may or may not" (fact 37); two tests | 4.1 step 7, 4.2, 7.6 |
+| D-M4 fix against built-in role damages the server | Rights through `pg_*` roles are one S2 membership line; never a statement against a system object; test prints exactly one statement (fact 38) | 3.1, 3.3 S2/S5, 3.4 line 1, 7.6 |
+| D-M5 grantor ignored | `Problem.grantor`; `SET ROLE <grantor>` form for objects (GRANTED BY refused for objects, fact 30); `GRANTED BY` for memberships (fact 32); order dependents first; generator cells E38, E39 | 3.1, 3.3, 4.2, 7.2 |
+| D-M6 object side limited to the run schema | Option (b), stated as AUTHOR ADDITION narrowing D-020; C10 third-role cells "not promised"; CHANGELOG sentence; option (a) cost and its blocker (owner question) written | 3.3, 7.4, 9.5, 10.3 items 5 and 11 |
+| D-M7 rule O5 false refusal | O5 struck; non-promise in 1.4; E27 becomes a control | 1.4, 3.3, 7.2, 10.3 item 3 |
+| D-M8 `options` at step 8 | Dropped; test with a role switch in the DSN (fact 35) | 4.1 step 8, 7.6 |
+| D-m1 operator capture | Fact 26 corrected; every runner catalog read pinned through `pinned_read`; AST test | facts 26; 3.1; 7.6 |
+| D-m2 exponential closure | `UNION` closures; 25-level diamond: 1.9 ms against a cancelled old shape (fact 40); cost cell and mutant | 3.2, 7.5, 7.6 |
+| D-m3 uncapped statement printing | Statements on standard output (redirectable), problem lines capped at 20 on standard error | 4.2, 10.3 item 12 |
+| D-m4 step 5 wording | "a deferred check or trigger" | 4.1 step 5 |
+| D-m5 `repaired_by_run` and grantor | Only when the migration role is the grantor (fact 31); test and cell E38 | 4.1 step 2, 7.6 |
+| D-m6 upgrade note "schema of its own" | Reworded: a database of its own or unshared roles; "a schema of its own is not enough" | 9.5 |
+| D-m7 promise table and hidden COMMIT | "unless a file ended the transaction itself" in 1.3 and step 6 | 1.3, 4.1 step 6 |
+| D-m8 oracle expectation for everyone | Expected set holds the baseline; controls include another application's function and type | 7.2, 7.4 |
+| D-m9 row-type carve-out | Exact key; six relation kinds plus standalone composite; sequences have none (fact 33); test after the GRANT materialises the list | 3.4 line 3, 7.6 |
+| D-m10 cost fixture, limits, snapshots | Larger fixture (functions, column grants, large objects, roles, diamond); statement limit is 60 s per statement (the reviewer's "30 s above the limit" was a misreading: `RECIPE_TIMEOUTS` says 60 s); one snapshot at step 8 (REPEATABLE READ), stated in the CHANGELOG | 3.1, 7.6, 9.5 |
+| D-m11 coverage gaps | F2 audit-trigger test; C-F9 real-server test; exact counts with empty-by-logic table; problem kind per effect for outcome (ii) | 5.6, 7.3, 7.4, 7.6 |
+| D-m12 step 8 has no lock | Kept without a lock; message says "this run or another session since the commit"; non-promise in 1.4 | 1.4, 4.1 step 8, 4.2 |
+| D small point: argument names in fixes | The "plain" test covers the whole argument list; message-safety test has an argument name | 3.1, 7.6 |
+| D small point: S2 refuses benign `pg_*` roles | Stated in the CHANGELOG | 3.3 S2, 9.5 |
+| D small point: 288 versus 280 | Resolved: 279 + 9 | Read first 5c |
+| D question (4) item 3: family SECURITY DEFINER in another schema only its owner may call | Passes now; CHANGELOG sentence | 3.3 S7, 9.5 |
+| D question (5): expected table must know MAINTAIN on 17 | MAINTAIN is in no `Grant`, so it is never expected; the oracle tries `REINDEX TABLE` on every relation (MAINTAIN on 17) and it must be refused for every named role and everyone | 3.2 (last line), 7.2 |
+| D-020 points the design review called incomplete | Object-side scope (D-M6), row 2 up to the commit and hidden COMMIT (D-m7), failing check after commit (D-M2/M3): each answered above | 1.3, 3.3, 4.1 |
+| Rev 1 open conflict: extension owner | Settled by a rev 2 run: the installing role owns it | Read first 5, fact 14 |
