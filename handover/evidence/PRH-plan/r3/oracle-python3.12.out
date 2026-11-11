@@ -15,6 +15,8 @@ glue PASS '\x1b[0mab' 'ab' 'ab'
 glue PASS 'ab\\\ncd' 'ab\\\ncd' 'ab\\\ncd'
 grammar PASS csi 'a\x1b[1;31mb' -> 'ab'
 grammar PASS csi c1 'a\x9b0mb' -> 'ab'
+grammar PASS csi final 0x7E 'a\x1b[2~b' -> 'ab'
+grammar PASS csi final 0x40 'a\x1b[2@b' -> 'ab'
 grammar PASS csi private+intermediate 'a\x1b[?25l\x1b[1 qb' -> 'ab'
 grammar PASS csi c0 inside dropped 'a\x1b[0\x07mb' -> 'ab'
 grammar PASS csi del inside dropped 'a\x1b[0\x7fmb' -> 'ab'
@@ -50,8 +52,8 @@ grammar PASS lone ESC before LF 'a\x1b\nb' -> 'a\nb'
 grammar PASS ESC ESC [0m 'a\x1b\x1b[0mb' -> 'ab'
 grammar PASS stray ST C1 'a\x9cb' -> 'ab'
 random 20000: property failures 0
-linear '\x1b]' 50k 0.010s 200k 0.033s ratio 3.43
-linear '\x1b[' 50k 0.011s 200k 0.046s ratio 4.20
-linear '\x1b(' 50k 0.011s 200k 0.048s ratio 4.19
-linear '\x9d' 50k 0.005s 200k 0.021s ratio 4.01
+linear '\x1b]' 50k 0.009s 200k 0.032s ratio 3.46
+linear '\x1b[' 50k 0.011s 200k 0.048s ratio 4.31
+linear '\x1b(' 50k 0.011s 200k 0.047s ratio 4.12
+linear '\x9d' 50k 0.005s 200k 0.021s ratio 4.05
 SELFCHECK PASS

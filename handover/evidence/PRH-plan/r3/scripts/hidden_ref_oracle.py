@@ -240,6 +240,8 @@ GLUE_TABLE = [  # (input, joined, spaced) - section 4.1 glue table
 GRAMMAR_ROWS = [  # (name, input, joined) - section 4.1 grammar table, one row per terminator and state
     ("csi", "a" + ESC + "[1;31mb", "ab"),
     ("csi c1", "a" + C1_CSI + "0mb", "ab"),
+    ("csi final 0x7E", "a" + ESC + "[2~b", "ab"),
+    ("csi final 0x40", "a" + ESC + "[2@b", "ab"),
     ("csi private+intermediate", "a" + ESC + "[?25l" + ESC + "[1 qb", "ab"),
     ("csi c0 inside dropped", "a" + ESC + "[0" + BEL + "mb", "ab"),
     ("csi del inside dropped", "a" + ESC + "[0\x7fmb", "ab"),
