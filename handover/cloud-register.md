@@ -1096,3 +1096,8 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a5e99379c12314596 | PR89 evidence runner on 9ed5217 | 2026-11-11 | - | STOPPED (Major found, head will change); driver, cluster killed, output deleted |
 | a171fd751a7582652 | PR89 codebase reviewer round 10 | 2026-11-11 | - | CLOSED: 0 Blocker, 1 Major, 8 Minor, 3 Nit saved |
 | a290aa955ce105a74 | PR89 builder round 10 (r10-01..04) | 02:00Z 2026-11-11 | +90 min | running |
+| aea5c3b2 | PR73 builder round 10 (r9-01 three Majors, r9-02, r9-03) | 2026-11-11 01:40Z | running | on new head: snapshot + runner + 2 reviewers |
+| ad02e6d4 | PR73 runner on d41a0c0 | closed: stopped, head superseded | |
+| a4f039af | PR73 design reviewer round 9 | closed: report saved (round9-design-security.md) | |
+| a9e1d9f1 | PR73 codebase reviewer round 9 | closed: report saved (round9-codebase.md) | |
+| ac49d88c | PR73 runner (second) | closed: stopped, processes and clusters killed, output deleted | |
