@@ -1,9 +1,22 @@
-start 15:30:15  15:30:15 up  2:02,  0 user,  load average: 4.92, 10.04, 11.22
+start 15:31:35  15:31:35 up  2:03,  0 user,  load average: 4.78, 8.82, 10.69
 == head 97fd202: hadavin_sdk from /home/user/build/EV-P77-97fd202/src/hadavin_sdk/__init__.py
-(i) 262,144 characters of Devanagari text | input 262144 chars | run 1 | wall 7.324 s | thread CPU 6.007 s | load 4.92 10.04 11.22 | RAISED InputTooLarge: InputTooLarge
-(i) 262,144 characters of Devanagari text | input 262144 chars | run 2 | wall 7.300 s | thread CPU 6.532 s | load 4.93 9.87 11.15 | returned 262144 characters, 0 mapping entries
-(i) 262,144 characters of Devanagari text | input 262144 chars | run 3 | wall 7.285 s | thread CPU 6.530 s | load 4.94 9.79 11.12 | returned 262144 characters, 0 mapping entries
-(ii) 131,072 characters of Devanagari text | input 131072 chars | run 1 | wall 3.503 s | thread CPU 3.279 s | load 4.94 9.71 11.08 | returned 131072 characters, 0 mapping entries
-(ii) 131,072 characters of Devanagari text | input 131072 chars | run 2 | wall 3.145 s | thread CPU 3.107 s | load 5.11 9.67 11.06 | returned 131072 characters, 0 mapping entries
-(ii) 131,072 characters of Devanagari text | input 131072 chars | run 3 | wall 3.292 s | thread CPU 3.200 s | load 5.02 9.57 11.02 | returned 131072 characters, 0 mapping entries
-(iii) 65,536 characters; every line holds a tab, U+200B, ESC[0m, a vowel sign and a backtick | input 65536 chars | run 1 | wall 2.553 s | thread CPU 2.430 s | load 5.02 9.57 11.02 | returned 60076 characters, 0 mapping entries
+(i) 262,144 characters of Devanagari text | input 262144 chars | run 1 | wall 6.297 s | thread CPU 6.245 s | load 4.78 8.82 10.69 | returned 262144 characters, 0 mapping entries
+(i) 262,144 characters of Devanagari text | input 262144 chars | run 2 | wall 6.124 s | thread CPU 6.068 s | load 4.64 8.72 10.65 | RAISED InputTooLarge: InputTooLarge
+(i) 262,144 characters of Devanagari text | input 262144 chars | run 3 | wall 6.692 s | thread CPU 6.382 s | load 4.62 8.58 10.58 | returned 262144 characters, 0 mapping entries
+(ii) 131,072 characters of Devanagari text | input 131072 chars | run 1 | wall 3.472 s | thread CPU 3.132 s | load 4.97 8.59 10.57 | returned 131072 characters, 0 mapping entries
+(ii) 131,072 characters of Devanagari text | input 131072 chars | run 2 | wall 3.519 s | thread CPU 3.129 s | load 4.97 8.53 10.54 | returned 131072 characters, 0 mapping entries
+(ii) 131,072 characters of Devanagari text | input 131072 chars | run 3 | wall 3.269 s | thread CPU 3.201 s | load 4.97 8.53 10.54 | returned 131072 characters, 0 mapping entries
+(iii) 65,536 characters; every line holds a tab, U+200B, ESC[0m, a vowel sign and a backtick | input 65536 chars | run 1 | wall 2.539 s | thread CPU 2.491 s | load 4.82 8.44 10.50 | returned 60076 characters, 0 mapping entries
+(iii) 65,536 characters; every line holds a tab, U+200B, ESC[0m, a vowel sign and a backtick | input 65536 chars | run 2 | wall 2.572 s | thread CPU 2.534 s | load 4.83 8.38 10.47 | returned 60076 characters, 0 mapping entries
+(iii) 65,536 characters; every line holds a tab, U+200B, ESC[0m, a vowel sign and a backtick | input 65536 chars | run 3 | wall 2.787 s | thread CPU 2.464 s | load 4.83 8.38 10.47 | returned 60076 characters, 0 mapping entries
+(iv) 262,144 characters of ASCII prose with 200 e-mail addresses | input 262144 chars | run 1 | wall 0.441 s | thread CPU 0.422 s | load 4.92 8.34 10.45 | returned 260436 characters, 200 mapping entries
+(iv) 262,144 characters of ASCII prose with 200 e-mail addresses | input 262144 chars | run 2 | wall 0.528 s | thread CPU 0.456 s | load 4.92 8.34 10.45 | returned 260436 characters, 200 mapping entries
+(iv) 262,144 characters of ASCII prose with 200 e-mail addresses | input 262144 chars | run 3 | wall 0.793 s | thread CPU 0.447 s | load 4.92 8.34 10.45 | returned 260436 characters, 200 mapping entries
+rc=0
+between 15:32:15  15:32:15 up  2:04,  0 user,  load average: 4.92, 8.34, 10.45
+== origin/core/P2d-1 76adadb: hadavin_sdk from /home/user/build/EV-P77-base-core/src/hadavin_sdk/__init__.py
+(i) 262,144 characters of Devanagari text | input 262144 chars | run 1 | wall 4.978 s | thread CPU 4.242 s | load 4.92 8.34 10.45 | returned 262144 characters, 0 mapping entries
+(i) 262,144 characters of Devanagari text | input 262144 chars | run 2 | wall 4.063 s | thread CPU 3.976 s | load 5.01 8.30 10.42 | returned 262144 characters, 0 mapping entries
+(i) 262,144 characters of Devanagari text | input 262144 chars | run 3 | wall 4.084 s | thread CPU 3.929 s | load 4.93 8.23 10.39 | returned 262144 characters, 0 mapping entries
+(ii) 131,072 characters of Devanagari text | input 131072 chars | run 1 | wall 2.321 s | thread CPU 2.007 s | load 4.86 8.16 10.35 | returned 131072 characters, 0 mapping entries
+(ii) 131,072 characters of Devanagari text | input 131072 chars | run 2 | wall 2.225 s | thread CPU 2.056 s | load 4.86 8.16 10.35 | returned 131072 characters, 0 mapping entries
