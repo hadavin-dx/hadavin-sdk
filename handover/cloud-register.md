@@ -1386,5 +1386,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | id | purpose | started | expected end | last check | state | next action |
 |---|---|---|---|---|---|---|
 | B-Q8a1 a0c5bd99 | fix batch 3 | 15:22Z | | 16:12Z | CLOSED. Builder's account: full suite exit 1 (1 failed = the known timing test; rerun alone 1 of 3 passed; not touched); 71 of 71 stage mutants; fail-before 85 failed on fcd77a68; timeout lower bound 0.001 s chosen (errata line needed); TickContext now frozen with optional time (API change); NOT covered and named: the store's own purge methods take a cut-off date directly | evidence + ONE delta reviewer |
-| EV-Q8a1-r4 | EVIDENCE RUNNER (Sonnet) 0b97d55a, pg 56192 | 16:12Z | +50m | 16:12Z | starting | RESULTS.md |
-| R-Q8a1-r4 delta | fresh egm reviewer (Sonnet) on the delta fcd77a68..0b97d55a, snapshot /home/user/build/snap/q8a1-0b97d55 | 16:12Z | +15m | 16:12Z | starting | save report |
+| EV-Q8a1-r4 a55ad3b3 | EVIDENCE RUNNER (Sonnet) 0b97d55a, pg 56192 | 16:12Z | +50m | 16:12Z | running | RESULTS.md |
+| R-Q8a1-r4 delta a9678c99 | fresh egm reviewer (Sonnet) on the delta fcd77a68..0b97d55a, snapshot /home/user/build/snap/q8a1-0b97d55 | 16:12Z | +15m | 16:12Z | running | save report |

@@ -9,8 +9,8 @@ Env guard on every test/probe command: `env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_A
 
 ## FAILURES AND NOT-RUN FIRST
 - **No failures in any run on the head.** Full suite, lint, format, bandit, scan_repo, stage-mutants, step-5 lock/prepared subsets, gitleaks: all exit 0.
-- **Whole mutant list (`tests/migrate_mutants.py`, step 3): still running at report time.** 280 mutants total; at the last poll (16:00Z, ~8 min in) **66/280 processed, every one KILLED, 0 SURVIVED / BROKEN / ERROR**. The full run exceeded the time I could hold the turn; see "Step 3" below for the final line if it finished. This is the one item not carried to completion inside the box.
-- **Not run:** nothing else was dropped. The split-word dynamic-SQL second pass of probe 6c that I began earlier was interrupted by a safety classifier and not retried; its substance is covered by the step-9 F1/F2 route probes (which use exactly that `'CRE' || 'ATE ...'` split) and by the `_dynamic` wrapper rows already in probe 6c.
+- **Whole mutant list (`tests/migrate_mutants.py`, step 3): finished, rc=0.** Final line **`288 of 288 killed`**, printed counter line **`not killed: []`** — **0 SURVIVED / BROKEN / ERROR**. Duration ~20 min (15:52Z→16:12Z) through heavy.sh.
+- **Not run:** nothing of the assigned work was dropped. The split-word dynamic-SQL second pass of probe 6c that I began earlier was interrupted by a safety classifier and not retried; its substance is covered by the step-9 F1/F2 route probes (which use exactly that `'CRE' || 'ATE ...'` split) and by the `_dynamic` wrapper rows already in probe 6c.
 
 ## Step 1 — full suite once on the head (through heavy.sh)
 CI marker selection copied from `.github/workflows/ci.yml` line 92: `pytest -q -m "not live and not perf" -rs`. My command: `pytest -q -p no:cacheprovider -m "not live and not perf" --junitxml=... -rfEs`.
@@ -28,7 +28,7 @@ CI marker selection copied from `.github/workflows/ci.yml` line 92: `pytest -q -
 - **Suppressions added in the diff** (`git diff origin/main...4d328e3d | grep -nE '^\+.*(noqa|nosec|type: ignore|pragma: no cover|pytest.mark.skip|xfail)'`): **8 hits, none are a suppression of a check.** All 8 are in the test that *forbids* skips (`test_migration_rules.py`): a `pytest.mark.skipif(not DSN...)` guard added for the postgres tests, plus the literal strings `importorskip`/`xfail`/`skip` inside that guard-test's own data. Full list: `suppressions.txt`. No `# noqa`, `# nosec`, `# type: ignore` or `pragma: no cover` was added to product code.
 
 ## Step 3 — whole mutant list (`tests/migrate_mutants.py`, heavy.sh)
-Command: `uv run --all-extras --group test python tests/migrate_mutants.py`. 280 mutants defined. Baseline killer run passes first (the script requires it). Progress at report hand-off: 66/280 reported, **all KILLED, no SURVIVED/BROKEN/ERROR line seen**. Raw (grows to completion): `migrate-mutants.log`, `migrate-mutants-times.txt`. Took > 8 min for the first 66; the script's own last line is `N of N killed`.
+Command: `uv run --all-extras --group test python tests/migrate_mutants.py` (heavy.sh). Baseline killer run passes first (the script requires it). **288 mutants, all KILLED; final line `288 of 288 killed`, counter line `not killed: []`, rc=0.** No SURVIVED/BROKEN/ERROR. Duration ~20 min. Raw: `migrate-mutants.log`, `migrate-mutants-times.txt`.
 
 ## Step 4 — fail-before (head tests vs old source 8382bdd)
 Clean worktree of `8382bdd`; overlaid ONLY the six head test files (`test_migration_postgres.py`, `test_migration_rules.py`, `test_migration_wiring.py`, `test_k2_migrations.py`, `test_migration_compare.py`, `migrate_mutants.py`). `hadavin_sdk` imported from the **8382bdd** source (`PYTHONPATH=<8382bdd>/src`, `uv run --project <head> --no-sync`). No extra conftest/helper overlay was needed (conftest and `tests/fixtures/*` already resolve from 8382bdd; the fixtures the new tests use exist there).
