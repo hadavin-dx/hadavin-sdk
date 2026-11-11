@@ -80,3 +80,4 @@ Each line: UTC | IST | item | running agents | next 3 steps | blockers
 16:57 P3a-2 plan r2 readiness saved: NOT READY 0 Blocker 9 Major 14 minor. Design reviewer a061e753 still pending; then rev 3 author (Opus, round 3 = last). Also launched Q8a-2 evidence a21ecf6d + codebase reviewer a4b5e2ea for 3210f93a.
 16:58 P3a-2 plan r2 design saved: NOT READY 6 Major (F1 oracle, F2 commit order, F4 rung rows, F5 COMMIT class, F11 printed fix warning, F12 extension objects) + readiness 9 Major. Launching rev 3 author (Opus, last round).
 16:59 Q8a-2 r4 codebase review saved: READY by reading, 0 Blocker 0 Major, 4 minor 3 nit (no evidence yet; runner a4b5e2ea pending). P3a-2 rev 3 author a80b0727 launched. Plan: Q8a-2 minors fixed in one push after evidence lands (cap reached: no new review for minors).
+16:59 D-022: user wants the EGM skills themselves used in sequence. Starting with egm:egm-resolve on Q8a-2 r4 reports.
