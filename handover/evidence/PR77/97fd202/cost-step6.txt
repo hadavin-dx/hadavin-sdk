@@ -20,3 +20,12 @@ between 15:32:15  15:32:15 up  2:04,  0 user,  load average: 4.92, 8.34, 10.45
 (i) 262,144 characters of Devanagari text | input 262144 chars | run 3 | wall 4.084 s | thread CPU 3.929 s | load 4.93 8.23 10.39 | returned 262144 characters, 0 mapping entries
 (ii) 131,072 characters of Devanagari text | input 131072 chars | run 1 | wall 2.321 s | thread CPU 2.007 s | load 4.86 8.16 10.35 | returned 131072 characters, 0 mapping entries
 (ii) 131,072 characters of Devanagari text | input 131072 chars | run 2 | wall 2.225 s | thread CPU 2.056 s | load 4.86 8.16 10.35 | returned 131072 characters, 0 mapping entries
+(ii) 131,072 characters of Devanagari text | input 131072 chars | run 3 | wall 2.571 s | thread CPU 2.044 s | load 4.95 8.12 10.33 | returned 131072 characters, 0 mapping entries
+(iii) 65,536 characters; every line holds a tab, U+200B, ESC[0m, a vowel sign and a backtick | input 65536 chars | run 1 | wall 1.759 s | thread CPU 1.525 s | load 4.95 8.12 10.33 | returned 60076 characters, 0 mapping entries
+(iii) 65,536 characters; every line holds a tab, U+200B, ESC[0m, a vowel sign and a backtick | input 65536 chars | run 2 | wall 1.753 s | thread CPU 1.521 s | load 4.95 8.12 10.33 | returned 60076 characters, 0 mapping entries
+(iii) 65,536 characters; every line holds a tab, U+200B, ESC[0m, a vowel sign and a backtick | input 65536 chars | run 3 | wall 1.785 s | thread CPU 1.604 s | load 4.95 8.07 10.30 | returned 60076 characters, 0 mapping entries
+(iv) 262,144 characters of ASCII prose with 200 e-mail addresses | input 262144 chars | run 1 | wall 0.414 s | thread CPU 0.414 s | load 4.95 8.07 10.30 | returned 260436 characters, 200 mapping entries
+(iv) 262,144 characters of ASCII prose with 200 e-mail addresses | input 262144 chars | run 2 | wall 0.441 s | thread CPU 0.402 s | load 4.95 8.07 10.30 | returned 260436 characters, 200 mapping entries
+(iv) 262,144 characters of ASCII prose with 200 e-mail addresses | input 262144 chars | run 3 | wall 0.419 s | thread CPU 0.400 s | load 4.95 8.07 10.30 | returned 260436 characters, 200 mapping entries
+rc=0
+end 15:32:42  15:32:42 up  2:04,  0 user,  load average: 4.95, 8.07, 10.30
