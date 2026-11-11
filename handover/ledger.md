@@ -2450,3 +2450,4 @@
 | BL-core-a11a-w3-04 | reviews/PR77/round-w3-src.md F1 | Major | PR77 | redactor scans fold only, not fold_views/squeeze_views; Mc/Lm/Sk and Greek+U+0345 split a key (redaction, uncapped) | OPEN | 2026-11-11 |
 | BL-core-a11a-w3-05 | reviews/PR77/round-w3-src.md F2-F4 | Minor | PR77 | unclocked weight work on distinct text; Hangul line refused at 90000; overlapping multi-line block tail | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r16-s1 | reviews/P89/round-w2-r16-src-a.md s1 | Minor | PR89 | MAX_FRAGMENT_WORK counts pairs not characters; slow worst case, not a leak | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r16-t1 | reviews/P89/round-w2-r16-tests-a.md R16-T1 | Minor | PR89 | one-ellipsis search-count test passes for any implementation (retarget/delete) | OPEN | 2026-11-11 |
