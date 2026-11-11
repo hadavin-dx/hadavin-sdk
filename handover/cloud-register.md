@@ -1159,7 +1159,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | (none running) | Step 0 done; PR89 partial evidence run inline, worktree /home/user/build/EV-P89-db0d9eb | | | idle | see AUTONOMOUS-LOG |
 | EV-P89 a092be0f | EVIDENCE RUNNER PR89 db0d9eb full suite | 13:28Z | +60m | 13:28Z | CLOSED evidence/PR89/db0d9eb/RESULTS.md (10648 tests, 2 failed, both also on main; mutation sample 60/60) | read report |
 | R-P89 af950fd4,a2a4d816,a384da9c | egm reviewers PR89 snapshot p89-db0d9eb | 13:28Z | +30m | 13:28Z | CLOSED reports saved reviews/PR89 | save to handover/reviews/PR89 |
-| B-PR77 a23fcc26 | builder PR77 from wip/P2d-1-w6 | 13:28Z | +60m | 13:28Z | running | checkpoint 30m |
+| B-PR77 a23fcc26 | builder PR77 from wip/P2d-1-w6 | 13:28Z | +60m | 13:28Z | CLOSED after 97 min: head 97fd2028 on wip/cloud-P2d-1-w7 (lead: gitleaks no leaks on its 2 commits; 9 leak inputs re-run by lead are masked; forged marker still returned by plain redact_text without the neutralise hook); builder says NOT fully verified (no full suite on final head, no Postgres tests, F7 not done, cost regression) | checkpoint 30m |
 | M-P3a2 a5853cac | memo P3a-2 history | 13:28Z | +30m | 13:28Z | running | read memo |
 | B-PR85 a758870b | retarget branch core/P5b2-main | 13:28Z | +45m | 13:28Z | CLOSED branch core/P5b2-main 3b9617e4 pushed; 1 flaky timing test | check checks |
 | B-PR89-r18 ada68aaa | PR89 r18 fix batch (worktree /home/user/build/B-PR89) | 13:31Z | +90m | 13:31Z | CLOSED head b95b0ca7 fast-forwarded on core/mutation-runner-keywords (lead: FF ok, 3 commits, gitleaks no leaks) | checkpoint 30m; then fresh reviewers r19 on new head |
@@ -1243,3 +1243,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-Q8a2-res a96bf331 | 13 min | full suite through heavy.sh, 11 min in | on track, slow |
 | EV-flaky, EV-Q8a1-r2 | 36 / 16 min | writing results (17 files across the four evidence folders) | on track |
 | B-PR89-r20, B-Q8c1, B-flaky fix, B-Q8a1 fix 2, B-Q8a2 fix 1, A-Q8b rev 3 | 6-35 min | building / writing | on track |
+| EV-P77 ab49c9d1 | EVIDENCE RUNNER (Fable) PR77 work head 97fd2028: full suite with Postgres, 93 mutants, fail-before on 3 bases, hostile probes, cost; heavy.sh, pg 56160 | 15:07Z | +90m | 15:07Z | running (queues for a slot) | read RESULTS.md |
+| R-P77-r7 a6a27c37, a1068d0f | egm design + codebase (Fable) RESULT review round 7 of PR77 (snapshot p77-97fd202) | 15:07Z | +30m | 15:07Z | running | save reviews/PR77/round7-*-full.md, ledger |
