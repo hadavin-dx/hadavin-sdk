@@ -25,11 +25,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, NamedTuple
 
-import psycopg
-from psycopg import sql
-from psycopg.rows import namedtuple_row, tuple_row
-
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.store import postgres as pg  # the only door to the database driver (lock-in rule)
 from hadavin_sdk.store.migration_numbers import _label, escape_name
 
 if TYPE_CHECKING:
@@ -564,7 +561,7 @@ def pinned_read(db, limits: Sequence[str]) -> Iterator[None]:
             db.execute(line)
         db.execute("SET LOCAL search_path = pg_catalog, pg_temp")
         yield
-        raise psycopg.Rollback
+        raise pg.Rollback
 
 
 def check_version(version: int, shown: str | None = None) -> None:
@@ -607,7 +604,7 @@ def check_acl_columns(columns: Sequence[str]) -> None:
 
 
 def _fetch(db, text: str, params: Mapping | None = None, *, named: bool = True) -> tuple:
-    cur = db.cursor(row_factory=namedtuple_row if named else tuple_row)
+    cur = db.cursor(row_factory=pg.named_rows if named else pg.tuple_rows)
     cur.execute(text, params or {})
     return tuple(cur.fetchall())
 
@@ -648,15 +645,15 @@ def _plain(*texts: str) -> bool:
     return all(isinstance(t, str) and escape_name(t) == t for t in texts)
 
 
-def _ident(*parts: str) -> sql.Composable:
-    return sql.Identifier(*parts)
+def _ident(*parts: str) -> pg.SqlPart:
+    return pg.quote_identifier(*parts)
 
 
-def _s(text: sql.Composable) -> str:
-    return text.as_string(None)
+def _s(text: pg.SqlPart) -> str:
+    return pg.sql_string(text)
 
 
-def _object_sql(kind: str, schema: str, name: str, sub: str) -> sql.Composable | None:
+def _object_sql(kind: str, schema: str, name: str, sub: str) -> pg.SqlPart | None:
     """The object as it is written after ON, or None when the texts are not plain."""
     if kind in (
         "table",
@@ -674,7 +671,7 @@ def _object_sql(kind: str, schema: str, name: str, sub: str) -> sql.Composable |
         # (`(*)` is a syntax error in GRANT, REVOKE and ALTER ROUTINE)
         args = sub
         return (
-            sql.SQL("{}({})").format(_ident(schema, name), sql.SQL(args))
+            pg.sql_template("{}({})", _ident(schema, name), pg.sql_words(args))
             if _plain(schema, name, sub)
             else None
         )
@@ -690,7 +687,7 @@ def _object_sql(kind: str, schema: str, name: str, sub: str) -> sql.Composable |
     ):
         return _ident(name) if _plain(name) else None
     if kind == "large object":
-        return sql.SQL(name) if name.isdigit() else None
+        return pg.sql_words(name) if name.isdigit() else None
     return None
 
 
@@ -715,14 +712,16 @@ def _revoke(
         return ""
     if not grantor_is_owner and not _plain(grantor):
         return ""
-    who = sql.SQL("PUBLIC") if grantee is None else _ident(grantee)
-    right_sql = sql.SQL(right)
+    who = pg.sql_words("PUBLIC") if grantee is None else _ident(grantee)
+    right_sql = pg.sql_words(right)
     if item_kind == "column":
-        right_sql = sql.SQL("{} ({})").format(sql.SQL(right), _ident(sub)) if _plain(sub) else None
+        right_sql = (
+            pg.sql_template("{} ({})", pg.sql_words(right), _ident(sub)) if _plain(sub) else None
+        )
         if right_sql is None:
             return ""
     head = "REVOKE GRANT OPTION FOR {} ON {} {} FROM {}" if option else "REVOKE {} ON {} {} FROM {}"
-    stmt = sql.SQL(head).format(right_sql, sql.SQL(word), target, who)
+    stmt = pg.sql_template(head, right_sql, pg.sql_words(word), target, who)
     text = _s(stmt) + (" CASCADE;" if option else ";")
     if not grantor_is_owner:
         text = f"SET ROLE {_s(_ident(grantor))}; {text} RESET ROLE;"

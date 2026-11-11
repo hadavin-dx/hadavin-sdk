@@ -1406,7 +1406,10 @@ M: list[Mutant] = [
         MIG,
         "AND d.deptype = 'e') ORDER BY 1, 3, 5",
         "AND false) ORDER BY 1, 3, 5",
-        k(T_PG, "test_objects_of_an_installed_extension_are_not_listed"),
+        k(
+            T_PG,
+            "test_the_owner_check_leaves_a_managed_function_of_an_extension_to_the_state_check",
+        ),
     ),
     Mutant(
         "EX2",
@@ -1414,7 +1417,7 @@ M: list[Mutant] = [
         MIG,
         '"AND d.deptype = \'e\') "\n    "AND (c.relkind',
         '"AND false) "\n    "AND (c.relkind',
-        k(T_PG, "test_objects_of_an_installed_extension_are_not_listed"),
+        k(T_PG, "test_the_owner_check_leaves_a_managed_table_of_an_extension_to_the_state_check"),
     ),
     # --- scoped read-back, managed names, parameter grants through memberships, test helper ---
     Mutant(

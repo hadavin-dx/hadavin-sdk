@@ -1927,6 +1927,67 @@ def test_objects_of_an_installed_extension_are_not_listed(scratch, plain_role):
     assert mig.migrate(dsn) == []
 
 
+def _extension_owns(super_dsn: str, statements: list[str]) -> None:
+    """Install `citext` in the schema of the run, then run each statement as the superuser login."""
+    schema = conninfo_to_dict(super_dsn)["options"].rsplit("search_path=", 1)[1]
+    with psycopg.connect(super_dsn, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE EXTENSION citext SCHEMA {}").format(sql.Identifier(schema)))
+        for statement in statements:
+            db.execute(statement)
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_the_owner_check_leaves_a_managed_function_of_an_extension_to_the_state_check(
+    scratch, plain_role, monkeypatch
+):
+    """The same name as a function of the files, owned by the superuser login and made a member of an installed
+    extension. The early owner check (`_FOREIGN_OWNED_SQL`, step 1, "cannot change N object") skips it, as it skips
+    what an extension owns; the state check of step 2 still refuses it ("before any migration file ran"), because an
+    object that the family does not own is wrong whoever made it (ticket P3a-2, rule E1). Without the extension the
+    early check refuses it (`test_the_function_half_of_the_ownership_check_finds_a_function_alone`). Killed by:
+    mutant EX1 (the extension test is gone from the function half: the early message appears instead)."""
+    dsn, _role = plain_role
+    super_dsn, _ = scratch
+    _manage(monkeypatch, "hadavin_test_ext_fn")
+    assert mig.migrate(dsn) == REAL
+    _extension_owns(
+        super_dsn,
+        [
+            "CREATE FUNCTION hadavin_test_ext_fn() RETURNS int LANGUAGE sql AS 'SELECT 1'",
+            "ALTER EXTENSION citext ADD FUNCTION hadavin_test_ext_fn()",
+        ],
+    )
+    with pytest.raises(
+        ConfigError, match=r"(?s)before any migration file ran.*hadavin_test_ext_fn"
+    ) as e:
+        mig.migrate(dsn)
+    assert "cannot change" not in str(e.value)
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_the_owner_check_leaves_a_managed_table_of_an_extension_to_the_state_check(
+    scratch, plain_role
+):
+    """A table of the grant map, owned by the superuser login and made a member of an installed extension: the early
+    owner check skips it and the state check of step 2 refuses it, as for the function above. Killed by: mutant EX2
+    (the extension test is gone from the table half: the early message appears instead)."""
+    dsn, _role = plain_role
+    super_dsn, _ = scratch
+    assert mig.migrate(dsn) == REAL
+    _extension_owns(
+        super_dsn,
+        [
+            "ALTER TABLE dead_letters OWNER TO CURRENT_USER",
+            "ALTER EXTENSION citext ADD TABLE dead_letters",
+        ],
+    )
+    with pytest.raises(ConfigError, match=r"(?s)before any migration file ran.*dead_letters") as e:
+        mig.migrate(dsn)
+    assert "cannot change" not in str(e.value)
+
+
 @needs_pg
 @pytest.mark.real_connect
 def test_an_extension_view_readable_by_everyone_is_refused_without_a_statement(scratch, plain_role):

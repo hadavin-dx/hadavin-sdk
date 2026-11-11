@@ -4,6 +4,7 @@ HADAVIN_TEST_PG_DSN (CI: the postgres service); skipped without it."""
 from __future__ import annotations
 
 import os
+import re
 import uuid
 
 import pytest
@@ -128,7 +129,13 @@ def test_a_privilege_inherited_from_another_role_is_refused():
             db.execute(f'GRANT "{extra}" TO "{rt}"')
         try:
             with pytest.raises(
-                ConfigError, match=r"runtime role has more than the grant map.*DELETE tool_calls"
+                ConfigError,
+                match=(
+                    r"(?s)before any migration file ran.*"
+                    r"table \S+\.tool_calls: \S+ can use it through the role "
+                    + re.escape(extra)
+                    + r", DELETE\."
+                ),
             ):
                 run()
         finally:
@@ -149,7 +156,12 @@ def test_create_on_the_schema_is_refused_for_the_purge_role():
     for dsn, schema, _rt, pu, run in _prepared():
         with _connect(dsn) as db:
             db.execute(f'GRANT CREATE ON SCHEMA "{schema}" TO "{pu}"')
-        with pytest.raises(ConfigError, match="can CREATE in schema"):
+        with pytest.raises(
+            ConfigError,
+            match=r"(?s)before any migration file ran.*schema \S+: "
+            + re.escape(pu)
+            + r" has CREATE\.",
+        ):
             run()
 
 
@@ -157,5 +169,10 @@ def test_a_superuser_as_the_purge_role_is_refused():
     for dsn, _schema, _rt, pu, run in _prepared():
         with _connect(dsn) as db:
             db.execute(f'ALTER ROLE "{pu}" SUPERUSER')
-        with pytest.raises(ConfigError, match="superuser|members of each other"):
+        with pytest.raises(
+            ConfigError,
+            match=r"(?s)before any migration file ran.*role "
+            + re.escape(pu)
+            + r": has the flag SUPERUSER \(directly\)\.",
+        ):
             run()

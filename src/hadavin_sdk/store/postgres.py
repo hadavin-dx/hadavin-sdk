@@ -23,7 +23,7 @@ from typing import Any
 import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
-from psycopg.rows import dict_row
+from psycopg.rows import dict_row, namedtuple_row, tuple_row
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel
 
@@ -147,6 +147,38 @@ def connect(
     # Plan hashes include created_at: datetimes must come back in UTC whatever the server's TimeZone is.
     conn.execute("SET TIME ZONE 'UTC'")
     return conn
+
+
+# --- what the migration checker (`store/migration_verify.py`) needs from the driver -----------------------------------
+# Bug class: a vendor library imported outside its kind module (lock-in; the guard is
+# `tests/test_lockin_guard.py::test_vendor_sdks_stay_inside_their_kind_modules`). The checker builds its statements
+# and reads its rows only through these names, so a second database kind replaces this block and nothing else.
+SqlPart = sql.Composable
+Rollback = (
+    psycopg.Rollback
+)  # raised inside `with db.transaction()` to end the block with a rollback
+named_rows = namedtuple_row  # row factory: a row is a named tuple
+tuple_rows = tuple_row  # row factory: a row is a plain tuple
+
+
+def quote_identifier(*parts: str) -> SqlPart:
+    """One or more names, each quoted the way the server needs (`schema.name` when two are given)."""
+    return sql.Identifier(*parts)
+
+
+def sql_words(text: str) -> SqlPart:
+    """Fixed SQL words written in our own code (never text from a database or a file)."""
+    return sql.SQL(text)
+
+
+def sql_template(template: str, *parts: SqlPart) -> SqlPart:
+    """`template` with each `{}` replaced by the matching part (fixed words or a quoted name)."""
+    return sql.SQL(template).format(*parts)
+
+
+def sql_string(part: SqlPart) -> str:
+    """The text of a statement built from the parts above; needs no connection."""
+    return part.as_string(None)
 
 
 def build(settings, deps) -> PostgresStore:
