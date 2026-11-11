@@ -515,16 +515,16 @@ def _traceback_of(n: int) -> types.TracebackType:
     return tb  # type: ignore[return-value]
 
 
-@pytest.mark.parametrize("links", [1, 32, 33, 500, 2000])
-def test_links_keep_the_innermost_frames_only_up_to_the_step_cap(links: int) -> None:
+def test_links_keep_the_innermost_frames_only_up_to_the_step_cap() -> None:
     """BN-18: a hand-built traceback of 1 to ``DIAG_TB_STEPS`` links keeps at most ``DIAG_MAX_FRAMES`` of them and is not too long."""
     from hadavin_sdk.guard import diagnostic as dg
 
-    exc = ValueError("x").with_traceback(_traceback_of(links))
-    kept, too_long = dg._links(exc)
-    assert not too_long and len(kept) == min(links, defaults.DIAG_MAX_FRAMES), (
-        f"{links} links: kept {len(kept)}, the frame cap is {defaults.DIAG_MAX_FRAMES}"
-    )
+    for links in (1, 32, 33, 500, 2000):
+        exc = ValueError("x").with_traceback(_traceback_of(links))
+        kept, too_long = dg._links(exc)
+        assert not too_long and len(kept) == min(links, defaults.DIAG_MAX_FRAMES), (
+            f"{links} links: kept {len(kept)}, the frame cap is {defaults.DIAG_MAX_FRAMES}"
+        )
 
 
 def test_links_flag_a_traceback_over_the_step_cap_and_keep_nothing() -> None:

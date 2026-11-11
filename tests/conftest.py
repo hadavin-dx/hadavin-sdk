@@ -90,19 +90,27 @@ def live_cfg_dir(tmp_path: Path, fake_system) -> Path:
     return make_cfg(tmp_path, port=fake_system.port)
 
 
+# The test files that build a pilot or prod app and are about something else than the Unicode guard (a frozen list: a new file that needs
+# the switch must be added here on purpose; every other file runs with the real guard on every interpreter).
+_BUILDS_A_LIVE_APP = frozenset(
+    {"test_k5_round10", "test_k5_round5", "test_k5_round9b", "test_stage_names"}
+)
+
+
 @pytest.fixture(autouse=True)
 def _pilot_builds_on_an_interpreter_with_other_unicode_data(request, monkeypatch):
     """Pilot and prod refuse to start on Unicode data other than the pin (``textnorm.require_pinned_unidata``). The oldest supported
     Python (3.12) carries older data, so a test of anything else that builds a pilot app would stop at that guard. Only the test
-    files whose name says pilot or prod get the guard switched off here (every other test file, the textnorm ones included, runs with the
+    files in ``_BUILDS_A_LIVE_APP`` get the guard switched off here (every other test file, the textnorm ones included, runs with the
     real guard); the guard's own tests run on both interpreters."""
     import unicodedata
 
     from hadavin_sdk import defaults
     from hadavin_sdk.guard import textnorm
 
-    if unicodedata.unidata_version != defaults.TEXTNORM_PINNED_UNIDATA and any(
-        word in request.module.__name__.rsplit(".", 1)[-1] for word in ("pilot", "prod")
+    if (
+        unicodedata.unidata_version != defaults.TEXTNORM_PINNED_UNIDATA
+        and request.module.__name__.rsplit(".", 1)[-1] in _BUILDS_A_LIVE_APP
     ):
         monkeypatch.setattr(textnorm, "require_pinned_unidata", lambda *a, **k: None)
     yield
