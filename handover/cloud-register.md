@@ -1427,3 +1427,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | B-Q8a2-b3 acecc94a | closed, pushed 3210f93a | | | CLOSED |
 | A-P3a2-rev3 (pending design reviewer a061e753) | P3a-2 ticket rev 3 | - | - | WAITING |
 | A-P3a2-rev3 (Opus) | P3a-2 ticket rev 3 = last plan round | 16:58 | +60 min | RUNNING |
+| B-Q8a2-b4 (Sonnet) | Q8a-2 batch 4: resolve report fixes m1-m4,n1,n2 | 16:59 | +45 min | RUNNING |

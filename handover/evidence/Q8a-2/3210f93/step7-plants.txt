@@ -1,5 +1,5 @@
 guard file: /home/user/build/EV-Q8a2-r4/tests/test_lockin_guard.py
-copied /home/user/build/EV-Q8a2-r4/src -> /tmp/pgr4/work/evq8a2f-plants-jkd_j76h/src
+copied /home/user/build/EV-Q8a2-r4/src -> /tmp/pgr4/work/evq8a2f-plants-zrssjaac/src
 
 == baseline (unchanged copy)
     import_problems -> []
@@ -24,52 +24,3 @@ neutral module used for plants: hadavin_sdk.runtime.tick (369 lines; each plant 
     receiver-only whole-word pattern (_WHOLE_WORD.findall on the planted text alone) -> ['slack']
 
 == plant 3: appended text 'import boto3 as awsclient'  (file still compiles: yes)
-    import_problems -> ['hadavin_sdk.runtime.tick: imports boto3 (vendor SDK) outside its allowed modules']
-    vendor_module_problems -> []
-    literal_problems -> []
-    identifier_problems -> []
-    receiver-only whole-word pattern (_WHOLE_WORD.findall on the planted text alone) -> []
-
-== plant 4: appended text 'pager_duty_key = 1'  (file still compiles: yes)
-    import_problems -> []
-    vendor_module_problems -> []
-    literal_problems -> []
-    identifier_problems -> ["hadavin_sdk.runtime.tick:371: vendor word 'pagerduty' in the name 'pager_duty_key'"]
-    receiver-only whole-word pattern (_WHOLE_WORD.findall on the planted text alone) -> ['pager_duty']
-
-== plant 5: appended text 'x = "slack,teams"'  (file still compiles: yes)
-    import_problems -> []
-    vendor_module_problems -> []
-    literal_problems -> ["hadavin_sdk.runtime.tick:371: vendor word in a string in 'slack,teams'"]
-    identifier_problems -> []
-    receiver-only whole-word pattern (_WHOLE_WORD.findall on the planted text alone) -> ['slack', 'teams']
-
-== plant 6: appended text 'x = "slack|teams"'  (file still compiles: yes)
-    import_problems -> []
-    vendor_module_problems -> []
-    literal_problems -> ["hadavin_sdk.runtime.tick:371: vendor word in a string in 'slack|teams'"]
-    identifier_problems -> []
-    receiver-only whole-word pattern (_WHOLE_WORD.findall on the planted text alone) -> ['slack', 'teams']
-
-== plant 7: appended text 'x = "slack teams"'  (file still compiles: yes)
-    import_problems -> []
-    vendor_module_problems -> []
-    literal_problems -> ["hadavin_sdk.runtime.tick:371: vendor word in a string in 'slack teams'"]
-    identifier_problems -> []
-    receiver-only whole-word pattern (_WHOLE_WORD.findall on the planted text alone) -> ['slack', 'teams']
-
-== plant 8: appended text 'x = "/pager-duty/hook"'  (file still compiles: yes)
-    import_problems -> []
-    vendor_module_problems -> []
-    literal_problems -> ["hadavin_sdk.runtime.tick:371: vendor word in a string in '/pager-duty/hook'"]
-    identifier_problems -> []
-    receiver-only whole-word pattern (_WHOLE_WORD.findall on the planted text alone) -> ['pager-duty']
-
-== plant 9: appended text 'x = f"/sl{\'ack\'}/hook"'  (file still compiles: yes)
-    import_problems -> []
-    vendor_module_problems -> []
-    literal_problems -> ["hadavin_sdk.runtime.tick:371: vendor word in a string in '/slack/hook'"]
-    identifier_problems -> []
-    receiver-only whole-word pattern (_WHOLE_WORD.findall on the planted text alone) -> []
-
-== plant 10: appended text 'x = "/sl" "ack/hook"'  (file still compiles: yes)
