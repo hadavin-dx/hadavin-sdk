@@ -2953,7 +2953,7 @@ def second_schema():
         yield name
     finally:
         with psycopg.connect(DSN, autocommit=True) as db:
-            db.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(name)))
+            db.execute(sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(name)))
 
 
 @needs_pg
@@ -3318,9 +3318,11 @@ def test_a_refused_read_in_the_sweep_does_not_abort_the_transaction_of_the_calle
         ) as in_y:  # not autocommit: inside a transaction
             in_y.execute("SELECT 1")
             helper.sweep_stale_roles(in_y)
-            assert in_y.execute("SELECT 2").fetchone() == (2,), (
-                "the caller's transaction is still usable"
-            )
+            try:
+                got = in_y.execute("SELECT 2").fetchone()
+            except psycopg.errors.InFailedSqlTransaction:
+                got = None
+            assert got == (2,), "the caller's transaction is still usable"
     assert name in capsys.readouterr().out
 
 
@@ -3424,6 +3426,31 @@ def test_a_right_given_on_a_table_that_existed_before_the_run_is_refused(
         mig.migrate(dsn)
     assert "Nothing was changed." in str(e.value)
     assert _ledger(dsn) is None
+
+
+@needs_pg
+def test_a_second_right_on_a_column_that_already_had_one_is_refused(
+    scratch, monkeypatch, tmp_path, named_role, second_schema
+):
+    """The column `a` already holds a right (an administrator gave it to a named role) before the run. The file adds a
+    right for PUBLIC on the same column. The set of columns that hold a right does not change, only what the right says,
+    so the table counts as changed only when the text of the rights is part of its state. Killed by: mutant RA1b (the
+    rights of a column are not part of its state; a first right on a column still changes the set, so only this case
+    shows it)."""
+    dsn, schema = scratch
+    _pre_existing(schema, "table", X, in_schema=second_schema)
+    _admin(
+        sql.SQL("GRANT SELECT (a) ON {}.{} TO {}").format(
+            sql.Identifier(second_schema), sql.Identifier(X), sql.Identifier(named_role)
+        )
+    )
+    _with_files(
+        monkeypatch,
+        tmp_path,
+        {"0006_open.sql": f'GRANT SELECT (a) ON "{second_schema}".{X} TO PUBLIC;\n'},
+    )
+    with pytest.raises(ConfigError, match=f"PUBLIC has SELECT on {second_schema}.{X}"):
+        mig.migrate(dsn, runtime_role=named_role)
 
 
 @needs_pg
@@ -3793,7 +3820,7 @@ def test_a_function_whose_body_a_file_replaced_is_treated_as_changed(
 @needs_pg
 @pytest.mark.parametrize(
     "case",
-    ["other_schema", "member_role", "named_delete", "named_select"],
+    ["other_schema", "member_role", "named_delete", "named_select", "member_role_select"],
 )
 def test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migration_role_belongs_to(
     scratch, second_schema, named_role, case
@@ -3801,7 +3828,7 @@ def test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migratio
     """`ALTER DEFAULT PRIVILEGES IN SCHEMA other ...` and `... FOR ROLE <a role the migration role belongs to> ...` set
     rights of objects made later; only the migration role itself, in the run schema or everywhere, was read. A named role
     may have a default right to read, nothing more. Killed by: mutants DP2 (only the run schema), DP3 (only the
-    migration role itself), DP4 (a named role may have any default right), DP5 (the owner's own row is not left out)."""
+    migration role itself), DP4 (a named role may have any default right), DP5 (the owner's own row is not left out: only the case `member_role_select` shows it, because the migration role is allowed anyway)."""
     dsn, schema = scratch
     other = "hadavin_test_dr_" + uuid.uuid4().hex[:8]
     _create_roles(other)
@@ -3812,6 +3839,7 @@ def test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migratio
             "member_role": (other, f'IN SCHEMA "{schema}"', "PUBLIC", "SELECT"),
             "named_delete": (PLAIN_ROLE, f'IN SCHEMA "{second_schema}"', named_role, "DELETE"),
             "named_select": (PLAIN_ROLE, f'IN SCHEMA "{second_schema}"', named_role, "SELECT"),
+            "member_role_select": (other, "", named_role, "SELECT"),
         }[case]
         _admin(
             sql.SQL(
@@ -3821,7 +3849,9 @@ def test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migratio
                 sql.SQL("PUBLIC") if grantee == "PUBLIC" else sql.Identifier(grantee),
             )
         )
-        if case == "named_select":
+        if case in ("named_select", "member_role_select"):
+            # `member_role_select` is for every schema: PostgreSQL then keeps the role's own default right in the list
+            # next to the one for the named role, and that own row is the owner's, not a right of a stranger
             assert mig.migrate(dsn, runtime_role=named_role) == REAL
         else:
             with pytest.raises(ConfigError, match="a default right") as e:

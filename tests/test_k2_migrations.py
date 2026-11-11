@@ -162,8 +162,18 @@ def test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_
 ):
     """Killed by: mutants LV1 (0 is accepted), LV2 (True is accepted: it is a bool, not a number of seconds), LV3 (a string
     or a fraction is accepted), LV4 (one above the largest wait is accepted)."""
-    with pytest.raises(ConfigError, match="whole number of seconds"):
+    import psycopg
+
+    accepted = False
+    try:
         mig.migrate("postgresql://postgres@127.0.0.1:1/none", lock_wait_seconds=bad)
+    except ConfigError as e:
+        assert "whole number of seconds" in str(e)
+    except psycopg.Error:  # the check let it through and the run went on to connect
+        accepted = True
+    else:
+        accepted = True
+    assert not accepted, f"a wait of {bad!r} was accepted"
 
 
 @pytest.mark.parametrize("fine", [1, mig.MAX_LOCK_WAIT_SECONDS])
