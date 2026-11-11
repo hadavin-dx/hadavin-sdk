@@ -31,7 +31,8 @@ and by its rules (read in the `timeit` module of Python 3.13 on 2026-11-11):
 MEASURED on 2026-11-11 (4 processors, Linux, other test runs on the machine; ratio big/small of a linear, an "n log n"
 and a quadratic stand-in at a gap of 16, limit 48, 100 samples each, batch length 20 ms; full tables in the changelog):
   * processor time, beside four busy processes of our own (load 7 to 13): linear 14.6 to 16.8, n log n 18.1 to 23.0,
-    quadratic 212 to 254. Batches of 20 ms were enough; longer ones were not needed.
+    quadratic 212 to 254; beside eight (load 11 to 13): 15.2 to 16.0, 17.1 to 20.6, 229 to 256. Batches of 20 ms were
+    enough; longer ones were not needed.
   * wall clock, same load: linear 2.5 to 26.3, n log n 5.3 to 56.7 (one sample over the limit: a false alarm),
     quadratic 73 to 676. Batches of 50 ms and 100 ms were no steadier on a machine without our own load.
 
