@@ -659,7 +659,10 @@ def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
         in first
     )
     assert "asks for `MAINTAIN` only from 17, because 16 rejects that name" in first
-    assert "`REPLICATION` flag is not checked" in first
+    assert (
+        "A role that holds `REPLICATION`, or is a member of a role that holds it, is refused"
+        in first
+    )
     assert "CREATE has no grant option" in first
     assert "an existing trigger left disabled" in first
     assert "that this package manages in the migration schema" in first
