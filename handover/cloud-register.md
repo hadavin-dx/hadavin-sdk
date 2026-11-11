@@ -1066,3 +1066,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | aa1db3a77c2507a90 | PR73 codebase reviewer r7, same snapshot | 2026-11-11 00:05Z | on report | running; model sonnet |
 | ab495747efcc92abd | PR89 evidence runner 3586dcc | 2026-11-11 | - | CLOSED: all green (10584 passed, 162/162 mutants root and non-root); evidence committed (junit xml of full runs left out: key-shaped strings); r7 rows FIXED-VERIFIED |
 | a605a0c0b43320cb2 | PR73 design/security reviewer r7 | 2026-11-11 | - | CLOSED: 0 Blocker, 0 Major, 4 Minor saved; ledger r7-01 |
+| aa1db3a77c2507a90 | PR73 codebase reviewer r7 | 2026-11-11 | - | CLOSED: 0 Blocker, 1 Major, 6 Minor saved; ledger r7-02, r7-03 |
+| aea5c3b20851d826d | PR73 builder round 8 (password-less logins Major, 6 codebase minors, 4 design minors) | resumed 2026-11-11 | +90 min | running |
