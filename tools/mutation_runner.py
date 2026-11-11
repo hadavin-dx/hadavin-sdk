@@ -96,7 +96,8 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
      ``host``, ``hostaddr``, ``port``, ``dbname``, ``user``, ``sslmode``, ``connect_timeout``. An IPv6 host is written ``[::1]`` in a URL and
      ``host=::1`` in words. Any other key is refused, a password key included, because it can change where the connection goes or name a file.
      What to do: write the address in one of the two shapes; use a database whose login needs no password in the address, or put the password
-     in the login part of the URL (without ``@``, ``/``, ``?`` or ``#`` in it).
+     in the login part of the URL. There the four characters ``@``, ``/``, ``?`` and ``#`` must be percent-encoded (``%40`` for ``@``); the
+     password is then also searched for in its decoded form.
   10. No host: an address with no host and no ``hostaddr``. It would use the default local socket of the machine. What to do: write the host.
   11. Host not listed: a host that is not listed. ``host`` and ``hostaddr``, each when written, must be an exact member of ``throwaway_hosts``.
       The default list is ``localhost``, ``127.0.0.1`` and ``::1``. A unix socket folder (``host=/var/run/postgresql``) is a host like any other:
@@ -138,8 +139,9 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   - Second layer: what is left is searched for the address, its password and the percent-encoded forms of the password, and each is replaced
     by ``[REDACTED]``. This layer finds known texts only; the allowlist is what keeps other forms out.
 
-  Not covered: the caller's own ``expect`` text and mutant names are shown as given. A test that itself writes the address to a file or to the
-  network is out of reach of this tool. The JUnit files hold the child's real text. They lie in the temp folders of the run, which the runner
+  Not covered: the runner prints the caller's own ``expect`` text and mutant names as given, so never put a secret in ``expect`` or in a
+  mutant name (a piece of a password written there is shown). A test that itself writes the address to a file or to the network is out of reach
+  of this tool. The JUnit files hold the child's real text. They lie in the temp folders of the run, which the runner
   removes at the end; after a kill that cannot be caught (SIGKILL) those folders stay on disk (``mutants_*`` in the temp folder).
   ``pinned`` is compared with the child's real test id inside the runner, parameters included. ``first_lines`` and ``crash_type``: the judge and the ``crash_type`` check read the child's real line
   inside the runner; ``first_lines`` gets what the table above shows. With no passed variable that has a value, nothing is replaced: the line

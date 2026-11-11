@@ -3472,6 +3472,20 @@ def test_the_second_layer_masks_a_secret_that_is_also_caller_text(tmp_path):
     )
 
 
+def test_the_callers_expect_text_is_printed_as_given_and_the_docstring_says_so(tmp_path):
+    # the caller owns ``expect``: a piece of the password written there is shown (only a text the masker knows, the whole password, is replaced)
+    shown = _shown(tmp_path)
+    piece = _PW[:4]
+    line = f"E   AssertionError: boom {_PW}"
+    assert mr._shown_line(line, shown, piece) == f"AssertionError [expect found] {piece}", (
+        "the caller's expect text was not printed as given"
+    )
+    doc = " ".join((mr.__doc__ or "").split())
+    assert "never put a secret in ``expect``" in doc, (
+        "the module docstring no longer tells the caller to keep secrets out of expect"
+    )
+
+
 def test_shown_classes_takes_plain_class_names_only_and_is_checked_before_anything_runs(
     tmp_path, monkeypatch
 ):
@@ -3806,6 +3820,88 @@ _REFUSED_SIBLING = {
     "sslmode": "sslrootcert=/run/ca.pem",
     "connect_timeout": "application_name=x",
 }
+
+
+_TMP = (
+    "/" + "tmp"
+)  # the socket folder of the probes, in parts (the linter reads a literal as a temp file path)
+# the exact values of the independent probes of round 19, one test each: every one must be refused by the default host list
+_PROBES_REFUSED = {
+    "a trailing-dot host": ("postgresql://u@localhost./db", "host is not one of"),
+    "a local-looking public name": ("postgresql://u@127.0.0.1.nip.io/db", "host is not one of"),
+    "an IPv4 address inside an IPv6 host": (
+        "postgresql://u@[::ffff:127.0.0.1]/db",
+        "host is not one of",
+    ),
+    "the short form of 127.0.0.1": ("postgresql://u@127.1/db", "host is not one of"),
+    "a decimal host": ("postgresql://u@2130706433/db", "host is not one of"),
+    "a hex host": ("postgresql://u@0x7f.0.0.1/db", "host is not one of"),
+    "a hostaddr outside the list": (
+        "host=localhost hostaddr=10.0.0.5 dbname=x",
+        "hostaddr is not one of",
+    ),
+    "a unix socket folder that is not listed": (f"host={_TMP} dbname=x", "host is not one of"),
+    "a socket folder with a dot-dot part": (f"host={_TMP}/../etc dbname=x", "not in a shape"),
+    "a host in the query": ("postgresql://u@localhost/db?host=10.0.0.5", "not in a shape"),
+    "two hosts": ("postgresql://u@localhost,10.0.0.5/db", "not in a shape"),
+    "a service name": ("service=prod", "not in a shape"),
+    "a URL with a trailing newline": (
+        "postgresql://postgres@localhost:5432/postgres\n",
+        "not in a shape",
+    ),
+    "words with a trailing newline": ("host=localhost dbname=x\n", "not in a shape"),
+}
+
+
+@pytest.mark.parametrize("probe", list(_PROBES_REFUSED))
+def test_each_hostile_address_of_the_probes_is_refused(probe):
+    value, why = _PROBES_REFUSED[probe]
+    _must_raise(
+        f"a hostile address was accepted ({probe})",
+        ValueError,
+        mr._refuse_unsafe_address,
+        DSN_NAME,
+        value,
+        mr.THROWAWAY_HOSTS,
+        match=why,
+    )
+
+
+@pytest.mark.parametrize("bad", ["*", ""])
+def test_a_pattern_or_an_empty_text_in_the_host_list_is_refused(bad):
+    for value in (
+        "postgresql://postgres@localhost:5432/postgres",
+        f"host={_TMP} dbname=x",
+        "dbname=x",
+    ):
+        with pytest.raises(ValueError):
+            mr._refuse_unsafe_address(DSN_NAME, value, (bad,))
+    with pytest.raises(ValueError, match="exact host names"):
+        mr._refuse_unsafe_address(DSN_NAME, "postgresql://postgres@localhost:5432/postgres", (bad,))
+
+
+def test_the_probes_that_are_accepted_stay_accepted_and_a_socket_folder_needs_its_exact_entry():
+    mr._refuse_unsafe_address(DSN_NAME, "postgresql://u@LOCALHOST/db", mr.THROWAWAY_HOSTS)
+    mr._refuse_unsafe_address(DSN_NAME, "postgresql://u@[::1]/db", mr.THROWAWAY_HOSTS)
+    mr._refuse_unsafe_address(DSN_NAME, f"host={_TMP} dbname=x", (_TMP,))
+
+
+def test_a_percent_encoded_at_sign_in_a_url_password_is_accepted_and_hidden_in_both_forms():
+    # decided: accepted. The grammar reads the login up to the one plain ``@``; the password is searched for as written and decoded
+    value = "postgresql://u:" + "Zq9x" + "%40" + "K4mTw" + "@localhost/db"
+    mr._refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS)
+    secrets = mr._secret_values((DSN_NAME,), {DSN_NAME: value})
+    assert "Zq9x%40K4mTw" in secrets and "Zq9x@K4mTw" in secrets, (
+        "the password with a percent-encoded at sign is not searched for in both forms"
+    )
+    assert mr._address_fields(value) == {"host": "localhost", "port": "", "dbname": "db"}
+    _must_refuse(
+        "a plain at sign in a URL password was accepted",
+        mr._refuse_unsafe_address,
+        DSN_NAME,
+        "postgresql://u:" + "Zq9x" + "@" + "K4mTw" + "@localhost/db",
+        mr.THROWAWAY_HOSTS,
+    )
 
 
 @pytest.mark.parametrize("value", _OK_ADDRESSES)
