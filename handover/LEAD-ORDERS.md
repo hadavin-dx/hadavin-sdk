@@ -1368,3 +1368,9 @@ ORDER 235 (lead, 2026-11-10 22:50Z): answer to q-entry PR89 gitleaks history. YE
 3. Start the evidence runner only on a head whose fresh reviews are done, or run it at once in parallel only if the builder is not going to change the head; never stop a runner for a Major found later without saving its partial output.
 4. Pin the DEFINITION OF CLEAN up front in the PR file: a reviewer may only raise a Major with a concrete failing input plus the file:line; polish items go to Minor/Nit and are batched, not a new round.
 Reply in PULSE with the plan; no merge, no settings, no spend, no live calls.
+
+## ORDER 237 (lead, 2026-11-11 03:07Z): answers to the three open lead decisions.
+1. q-P3a2-evidence-history: YES, rewrite ONLY core/P3a-2 (never main, no other branch). Same recipe as ORDER 235: wait until the PR73 round-11 builder has pushed its code head (do not rewrite under a running builder), make a backup branch first (backup/P3a-2-pre-rewrite pushed), drop the handover/evidence paths from the history (ce3ade7, d41a0c0 and anything newer), push with --force-with-lease pinned to the sha you saw. Before pushing prove the new head TREE sha equals the old head tree sha (git rev-parse HEAD^{tree}); if it differs, stop and ask. Then run gitleaks --log-opts=HEAD (expect 0), re-check the CI security job on the new head, tie the evidence to the new head sha, and keep all builder evidence on core/cloud-handover from now on. No allowlist entry.
+2. REPLICATION flag (PR73): YES, add it, as both reviewers say. Fresh runner and both reviewers on the r11 head after.
+3. PR89 refuse-vs-mask: the ORDER 236 zoom-out reviewer decides with a rung table and a failing input; lead preference when both hold: the simpler rule (drop the whole line), because less machinery means fewer rounds. Do not start another builder round for masking before that review is back.
+No merge, no settings, no spend, no live calls, no secrets.
