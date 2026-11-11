@@ -1,0 +1,11 @@
+### tests/test_migration_rules.py::test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim ____
+tests/test_migration_rules.py:555: in test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim
+    assert "refuses, before it connects, a released file that was edited or deleted" in first
+E   AssertionError: assert 'refuses, before it connects, a released file that was edited or deleted' in '- **Migrations: stricter checks, and a check after every file.** `hadavin-sdk migrate` (the command that applies the ...row id). `migrate` reads the server version itself and asks for `MAINTAIN` only from 17, because 16 rejects that name.'
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim
+1 failed in 0.38s
+

@@ -1,0 +1,18 @@
+### tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused rc=1
+..F.....F...                                                             [100%]
+=================================== FAILURES ===================================
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT (seq) ON audit_entries TO {other};] _
+tests/test_migration_postgres.py:2724: in test_a_right_for_a_role_the_run_does_not_name_is_refused
+    with pytest.raises(ConfigError, match="rights in schema") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT (seq) ON audit_entries TO {other};] _
+tests/test_migration_postgres.py:2724: in test_a_right_for_a_role_the_run_does_not_name_is_refused
+    with pytest.raises(ConfigError, match="rights in schema") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT (seq) ON audit_entries TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT (seq) ON audit_entries TO {other};]
+2 failed, 10 passed in 1.78s
+

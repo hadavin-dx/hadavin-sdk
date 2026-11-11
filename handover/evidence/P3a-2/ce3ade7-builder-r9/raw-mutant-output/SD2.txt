@@ -1,0 +1,16 @@
+### tests/test_migration_postgres.py::test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it ____
+tests/test_migration_postgres.py:2778: in test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it
+    assert mig.migrate(dsn) == REAL + ["0006_definer"]
+           ^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:1249: in migrate
+    _refuse_unlisted_grantees(
+src/hadavin_sdk/store/migrate.py:870: in _refuse_unlisted_grantees
+    raise ConfigError(
+E   hadavin_sdk.errors.ConfigError: after the migration files ran, rights in schema hadavin_test_ea84b449046f that this package does not give are in place: the function hadavin_test_definer is SECURITY DEFINER (it runs with the rights of its owner). Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package.
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it
+1 failed in 0.62s
+

@@ -1,0 +1,15 @@
+### tests/test_migration_rules.py::test_a_missing_driver_with_the_dsn_set_is_a_failure rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________ test_a_missing_driver_with_the_dsn_set_is_a_failure ______________
+tests/test_migration_rules.py:57: in test_a_missing_driver_with_the_dsn_set_is_a_failure
+    assert kind == "fail", (kind, text)
+E   AssertionError: ('returned', '')
+E   assert 'returned' == 'fail'
+E     
+E     - fail
+E     + returned
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_a_missing_driver_with_the_dsn_set_is_a_failure
+1 failed in 0.40s
+

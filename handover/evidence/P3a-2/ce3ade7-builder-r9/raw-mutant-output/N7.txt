@@ -1,0 +1,11 @@
+### tests/test_migration_rules.py::test_a_missing_driver_without_the_dsn_is_a_skip_with_a_reason[environ0] rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_a_missing_driver_without_the_dsn_is_a_skip_with_a_reason[environ0] ____
+tests/test_migration_rules.py:65: in test_a_missing_driver_without_the_dsn_is_a_skip_with_a_reason
+    assert "psycopg is not installed" in text and DSN_NAME in text
+E   AssertionError: assert ('psycopg is not installed' in '')
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_a_missing_driver_without_the_dsn_is_a_skip_with_a_reason[environ0]
+1 failed in 0.41s
+

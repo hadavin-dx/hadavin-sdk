@@ -1,0 +1,42 @@
+### tests/test_migration_postgres.py::test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server rc=1
+FFFFFF                                                                   [100%]
+=================================== FAILURES ===================================
+_ test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_execute_server_program] _
+tests/test_migration_postgres.py:1567: in test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server
+    with pytest.raises(ConfigError, match="built-in server role") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_write_server_files] _
+tests/test_migration_postgres.py:1567: in test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server
+    with pytest.raises(ConfigError, match="built-in server role") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_read_server_files] _
+tests/test_migration_postgres.py:1567: in test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server
+    with pytest.raises(ConfigError, match="built-in server role") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_write_all_data] _
+tests/test_migration_postgres.py:1567: in test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server
+    with pytest.raises(ConfigError, match="built-in server role") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_signal_backend] _
+tests/test_migration_postgres.py:1567: in test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server
+    with pytest.raises(ConfigError, match="built-in server role") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_monitor] _
+tests/test_migration_postgres.py:1567: in test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server
+    with pytest.raises(ConfigError, match="built-in server role") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_execute_server_program]
+FAILED tests/test_migration_postgres.py::test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_write_server_files]
+FAILED tests/test_migration_postgres.py::test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_read_server_files]
+FAILED tests/test_migration_postgres.py::test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_write_all_data]
+FAILED tests/test_migration_postgres.py::test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_signal_backend]
+FAILED tests/test_migration_postgres.py::test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_monitor]
+6 failed in 1.17s
+

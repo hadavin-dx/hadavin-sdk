@@ -1,0 +1,16 @@
+### tests/test_migration_postgres.py::test_tables_and_functions_of_another_application_in_the_schema_are_never_refused_or_listed rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_tables_and_functions_of_another_application_in_the_schema_are_never_refused_or_listed _
+tests/test_migration_postgres.py:1919: in test_tables_and_functions_of_another_application_in_the_schema_are_never_refused_or_listed
+    assert mig.migrate(dsn) == [], "another application's objects must not stop the run"
+           ^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:1181: in migrate
+    _refuse_foreign_owned(db, texts.values())
+src/hadavin_sdk/store/migrate.py:791: in _refuse_foreign_owned
+    raise ConfigError(f"{wrong} {unchanged} {to_do}")
+E   hadavin_sdk.errors.ConfigError: the migration role mig_5a948b5a52 cannot change 2 object(s) of this package in schema hadavin_test_b72491b17b34 that another role owns: hadavin_test_other_app (owner postgres); hadavin_test_other_view (owner postgres). A later migration that alters one of them would fail with 'must be owner', and the grants of migrate would do nothing without an error. Nothing was changed. What to do, in three steps. (1) Check the tables. Objects of other applications in the schema are not listed and need no change, but a table of ANOTHER application with the same name as one of this package's tables (for example spend or runs) looks the same here: do not hand that one over, point migrate at another schema instead. (2) Check the functions. A function is matched by name only, so read the text of each listed function and hand it over only when it is this package's own code: the migration role would then own it and run it, and a function made SECURITY DEFINER runs with its owner's rights, so handing it over also hands over what it can do. (3) Hand the objects over. A database administrator, connected as a superuser or as a role that is a member of both the old owner and the migration role, runs a file of SQL as described in CHANGELOG.md, Migration repair steps, case (h): ALTER TABLE "hadavin_test_b72491b17b34"."hadavin_test_other_app" OWNER TO "mig_5a948b5a52"; ALTER VIEW "hadavin_test_b72491b17b34"."hadavin_test_other_view" OWNER TO "mig_5a948b5a52";
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_tables_and_functions_of_another_application_in_the_schema_are_never_refused_or_listed
+1 failed in 0.58s
+

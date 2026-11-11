@@ -1,0 +1,29 @@
+### tests/test_migration_wiring.py::test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole _
+tests/test_migration_wiring.py:1052: in test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole
+    assert {"mixed_case", "a b", 'Q"x', "folded_too"} <= names
+E   assert {'Q"x', 'a b'... 'mixed_case'} <= {'Mixed_Case'...equests', ...}
+E     
+E     Extra items in the left set:
+E     'folded_too'
+E     'mixed_case'
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole
+1 failed in 0.39s
+
+### tests/test_migration_postgres.py::test_functions_with_capitals_or_a_space_in_the_name_count_as_managed rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_functions_with_capitals_or_a_space_in_the_name_count_as_managed _____
+tests/test_migration_postgres.py:1982: in test_functions_with_capitals_or_a_space_in_the_name_count_as_managed
+    assert "mixed_case_fn" in str(e.value) and "Odd Name Fn" in str(e.value), str(e.value)
+E   AssertionError: the migration role mig_a36d7a895b cannot change 1 object(s) of this package in schema hadavin_test_a9b993b7ce5d that another role owns: Odd Name Fn (owner postgres). A later migration that alters one of them would fail with 'must be owner', and the grants of migrate would do nothing without an error. Nothing was changed. What to do, in three steps. (1) Check the tables. Objects of other applications in the schema are not listed and need no change, but a table of ANOTHER application with the same name as one of this package's tables (for example spend or runs) looks the same here: do not hand that one over, point migrate at another schema instead. (2) Check the functions. A function is matched by name only, so read the text of each listed function and hand it over only when it is this package's own code: the migration role would then own it and run it, and a function made SECURITY DEFINER runs with its owner's rights, so handing it over also hands over what it can do. (3) Hand the objects over. A database administrator, connected as a superuser or as a role that is a member of both the old owner and the migration role, runs a file of SQL as described in CHANGELOG.md, Migration repair steps, case (h): ALTER FUNCTION "hadavin_test_a9b993b7ce5d"."Odd Name Fn"() OWNER TO "mig_a36d7a895b";
+E   assert ('mixed_case_fn' in 'the migration role mig_a36d7a895b cannot change 1 object(s) of this package in schema hadavin_test_a9b993b7ce5d that ...igration repair steps, case (h): ALTER FUNCTION "hadavin_test_a9b993b7ce5d"."Odd Name Fn"() OWNER TO "mig_a36d7a895b";')
+E    +  where 'the migration role mig_a36d7a895b cannot change 1 object(s) of this package in schema hadavin_test_a9b993b7ce5d that ...igration repair steps, case (h): ALTER FUNCTION "hadavin_test_a9b993b7ce5d"."Odd Name Fn"() OWNER TO "mig_a36d7a895b";' = str(ConfigError('the migration role mig_a36d7a895b cannot change 1 object(s) of this package in schema hadavin_test_a9b993...gration repair steps, case (h): ALTER FUNCTION "hadavin_test_a9b993b7ce5d"."Odd Name Fn"() OWNER TO "mig_a36d7a895b";'))
+E    +    where ConfigError('the migration role mig_a36d7a895b cannot change 1 object(s) of this package in schema hadavin_test_a9b993...gration repair steps, case (h): ALTER FUNCTION "hadavin_test_a9b993b7ce5d"."Odd Name Fn"() OWNER TO "mig_a36d7a895b";') = <ExceptionInfo ConfigError('the migration role mig_a36d7a895b cannot change 1 object(s) of this package in schema hada...epair steps, case (h): ALTER FUNCTION "hadavin_test_a9b993b7ce5d"."Odd Name Fn"() OWNER TO "mig_a36d7a895b";') tblen=3>.value
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_functions_with_capitals_or_a_space_in_the_name_count_as_managed
+1 failed in 0.58s
+

@@ -1,0 +1,38 @@
+### tests/test_migration_wiring.py::test_a_trigger_recreated_with_another_definition_or_function_is_refused rc=0
+.                                                                        [100%]
+1 passed in 0.39s
+
+### tests/test_migration_wiring.py::test_the_trigger_query_reads_definition_function_text_and_security_mode rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_the_trigger_query_reads_definition_function_text_and_security_mode ____
+tests/test_migration_wiring.py:511: in test_the_trigger_query_reads_definition_function_text_and_security_mode
+    assert (
+E   AssertionError: assert ('pg_get_triggerdef(t.oid)' in 'SELECT t.tgname, t.tgenabled, c.relname, n.nspname, t.tgrelid::bigint, pg_get_triggerdef(t.oid), p.prosrc, false, pg_...oid = c.relnamespace LEFT JOIN pg_proc p ON p.oid = t.tgfoid WHERE NOT t.tgisinternal AND n.nspname = current_schema()' and 'p.prosrc' in 'SELECT t.tgname, t.tgenabled, c.relname, n.nspname, t.tgrelid::bigint, pg_get_triggerdef(t.oid), p.prosrc, false, pg_...oid = c.relnamespace LEFT JOIN pg_proc p ON p.oid = t.tgfoid WHERE NOT t.tgisinternal AND n.nspname = current_schema()' and 'md5' not in 'SELECT t.tg...ent_schema()'
+E     
+E     'md5' is contained here:
+E       nt_schema() and 'p.prosecdef' in 'SELECT t.tgname, t.tgenabled, c.relname, n.nspname, t.tgrelid::bigint, pg_get_triggerdef(t.oid), p.prosrc, false, pg_...oid = c.relnamespace LEFT JOIN pg_proc p ON p.oid = t.tgfoid WHERE NOT t.tgisinternal AND n.nspname = current_schema()')
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_trigger_query_reads_definition_function_text_and_security_mode
+1 failed in 0.38s
+
+### tests/test_migration_postgres.py::test_h11_the_read_back_refuses_a_planted_file rc=1
+.....F........                                                           [100%]
+=================================== FAILURES ===================================
+____ test_h11_the_read_back_refuses_a_planted_file[function_security_mode] _____
+tests/test_migration_postgres.py:257: in test_h11_the_read_back_refuses_a_planted_file
+    _run_plant(dsn, monkeypatch, tmp_path, body, item)
+tests/test_migration_postgres.py:264: in _run_plant
+    assert "0006_plant.sql" in str(e.value) and item in str(e.value), str(e.value)
+E   AssertionError: after the migration files ran, rights in schema hadavin_test_a25369774159 that this package does not give are in place: the function hadavin_audit_append_only is SECURITY DEFINER (it runs with the rights of its owner). Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package.
+E   assert ('0006_plant.sql' in 'after the migration files ran, rights in schema hadavin_test_a25369774159 that this package does not give are in plac...e or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package.')
+E    +  where 'after the migration files ran, rights in schema hadavin_test_a25369774159 that this package does not give are in plac...e or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package.' = str(ConfigError("after the migration files ran, rights in schema hadavin_test_a25369774159 that this package does not give... or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."))
+E    +    where ConfigError("after the migration files ran, rights in schema hadavin_test_a25369774159 that this package does not give... or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package.") = <ExceptionInfo ConfigError("after the migration files ran, rights in schema hadavin_test_a25369774159 that this packag...BLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package.") tblen=3>.value
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_h11_the_read_back_refuses_a_planted_file[function_security_mode]
+1 failed, 13 passed in 2.12s
+
+### tests/test_migration_postgres.py::test_h11_a_function_owner_change_is_refused rc=0
+.                                                                        [100%]
+1 passed in 0.57s
+

@@ -1,0 +1,13 @@
+### tests/test_migration_wiring.py::test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role _
+tests/test_migration_wiring.py:1434: in test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role
+    assert len(holds) == 1, [h.server for h in holds]
+E   AssertionError: []
+E   assert 0 == 1
+E    +  where 0 = len([])
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role
+1 failed in 0.44s
+

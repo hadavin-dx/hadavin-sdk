@@ -1,0 +1,12 @@
+### tests/test_migration_postgres.py::test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it ____
+tests/test_migration_postgres.py:2773: in test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it
+    with pytest.raises(ConfigError, match="SECURITY DEFINER") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it
+1 failed in 0.54s
+

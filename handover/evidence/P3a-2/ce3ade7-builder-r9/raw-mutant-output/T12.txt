@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_the_list_of_allowed_trigger_changes_is_empty_today_and_strictly_read rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_the_list_of_allowed_trigger_changes_is_empty_today_and_strictly_read ___
+tests/test_migration_wiring.py:730: in test_the_list_of_allowed_trigger_changes_is_empty_today_and_strictly_read
+    with pytest.raises(ConfigError, match="allowed trigger changes"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_list_of_allowed_trigger_changes_is_empty_today_and_strictly_read
+1 failed in 0.41s
+

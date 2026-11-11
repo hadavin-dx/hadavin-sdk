@@ -1,0 +1,15 @@
+### tests/test_migration_wiring.py::test_a_login_that_cannot_see_other_sessions_sweeps_nothing rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__________ test_a_login_that_cannot_see_other_sessions_sweeps_nothing __________
+tests/test_migration_wiring.py:1543: in test_a_login_that_cannot_see_other_sessions_sweeps_nothing
+    assert len(said) == 1 and said[0].startswith("stale test roles were not looked for"), said
+E   AssertionError: ['x so it cannot see the sessions of other test runs']
+E   assert (1 == 1 and False)
+E    +  where 1 = len(['x so it cannot see the sessions of other test runs'])
+E    +  and   False = <built-in method startswith of str object at 0x7ff7988ad4d0>('stale test roles were not looked for')
+E    +    where <built-in method startswith of str object at 0x7ff7988ad4d0> = 'x so it cannot see the sessions of other test runs'.startswith
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_login_that_cannot_see_other_sessions_sweeps_nothing
+1 failed in 0.37s
+

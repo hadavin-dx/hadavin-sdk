@@ -1,0 +1,42 @@
+### tests/test_migration_wiring.py::test_only_eight_lower_case_hex_digits_are_a_token rc=1
+FFFFFF.                                                                  [100%]
+=================================== FAILURES ===================================
+_________ test_only_eight_lower_case_hex_digits_are_a_token[+1234567] __________
+tests/test_migration_wiring.py:1482: in test_only_eight_lower_case_hex_digits_are_a_token
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+_________ test_only_eight_lower_case_hex_digits_are_a_token[ 1234567] __________
+tests/test_migration_wiring.py:1482: in test_only_eight_lower_case_hex_digits_are_a_token
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+_________ test_only_eight_lower_case_hex_digits_are_a_token[1_234567] __________
+tests/test_migration_wiring.py:1482: in test_only_eight_lower_case_hex_digits_are_a_token
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+_________ test_only_eight_lower_case_hex_digits_are_a_token[ABCDEF12] __________
+tests/test_migration_wiring.py:1482: in test_only_eight_lower_case_hex_digits_are_a_token
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+__________ test_only_eight_lower_case_hex_digits_are_a_token[1234567] __________
+tests/test_migration_wiring.py:1482: in test_only_eight_lower_case_hex_digits_are_a_token
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+_________ test_only_eight_lower_case_hex_digits_are_a_token[123456789] _________
+tests/test_migration_wiring.py:1482: in test_only_eight_lower_case_hex_digits_are_a_token
+    with pytest.raises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_only_eight_lower_case_hex_digits_are_a_token[+1234567]
+FAILED tests/test_migration_wiring.py::test_only_eight_lower_case_hex_digits_are_a_token[ 1234567]
+FAILED tests/test_migration_wiring.py::test_only_eight_lower_case_hex_digits_are_a_token[1_234567]
+FAILED tests/test_migration_wiring.py::test_only_eight_lower_case_hex_digits_are_a_token[ABCDEF12]
+FAILED tests/test_migration_wiring.py::test_only_eight_lower_case_hex_digits_are_a_token[1234567]
+FAILED tests/test_migration_wiring.py::test_only_eight_lower_case_hex_digits_are_a_token[123456789]
+6 failed, 1 passed in 0.63s
+

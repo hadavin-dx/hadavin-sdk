@@ -1,0 +1,26 @@
+### tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused rc=1
+F..                                                                      [100%]
+=================================== FAILURES ===================================
+_ test_the_portal_role_is_refused_what_the_other_roles_are_refused[column_update_via_group-can UPDATE runs.state] _
+tests/test_migration_postgres.py:2483: in test_the_portal_role_is_refused_what_the_other_roles_are_refused
+    assert "the portal role holds privileges outside the portal grant map" in msg, msg
+E   AssertionError: after the migration files ran, rights in schema hadavin_test_3a532e1baebf that this package does not give are in place: hadavin_test_gr_b13cd303 holds UPDATE on runs.state. Only the owner and the runtime, portal and purge roles named in this run may hold rights on this package's tables, views, sequences and functions, and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package.
+E   assert 'the portal role holds privileges outside the portal grant map' in 'after the migration files ran, rights in schema hadavin_test_3a532e1baebf that this package does not give are in plac...e or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package.'
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[column_update_via_group-can UPDATE runs.state]
+1 failed, 2 passed in 0.95s
+
+### tests/test_k2_migrations.py::test_migrate_refuses_a_portal_role_that_inherits_write_rights rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________ test_migrate_refuses_a_portal_role_that_inherits_write_rights _________
+tests/test_k2_migrations.py:444: in test_migrate_refuses_a_portal_role_that_inherits_write_rights
+    with pytest.raises(ConfigError, match="can UPDATE runs"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'can UPDATE runs'
+E     Actual message: 'the portal role holds privileges outside the portal grant map: pt_e21f8ef091: can DELETE runs (the grant map is the list in the code of the tables each role of this package may use, and the rights each may have on each: for the portal role SELECT only)'
+=========================== short test summary info ============================
+FAILED tests/test_k2_migrations.py::test_migrate_refuses_a_portal_role_that_inherits_write_rights
+1 failed in 0.73s
+

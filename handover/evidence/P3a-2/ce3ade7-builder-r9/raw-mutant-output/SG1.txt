@@ -1,0 +1,15 @@
+### tests/test_migration_postgres.py::test_a_role_that_owns_a_table_function_or_type_outside_a_scratch_schema_is_not_swept rc=1
+.F..                                                                     [100%]
+=================================== FAILURES ===================================
+_ test_a_role_that_owns_a_table_function_or_type_outside_a_scratch_schema_is_not_swept[sequence] _
+tests/test_migration_postgres.py:2856: in test_a_role_that_owns_a_table_function_or_type_outside_a_scratch_schema_is_not_swept
+    assert name not in helper.sweep_stale_roles(in_x)
+E   AssertionError: assert 'hadavin_test_migrator_ae4dfc56' not in ['hadavin_test_migrator_ae4dfc56']
+E    +  where ['hadavin_test_migrator_ae4dfc56'] = <function sweep_stale_roles at 0x7f23d502a840>(<psycopg.Connection [IDLE] (host=127.0.0.1 port=56073 user=postgres database=hadavin_test_db_68781d70) at 0x7f23d50739b0>)
+E    +    where <function sweep_stale_roles at 0x7f23d502a840> = helper.sweep_stale_roles
+----------------------------- Captured stdout call -----------------------------
+cleanup of a test failed in 1 statement(s): UndefinedObject
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_role_that_owns_a_table_function_or_type_outside_a_scratch_schema_is_not_swept[sequence]
+1 failed, 3 passed in 0.84s
+

@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_gone_name_is_refused_with_the_old_phrase rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________________ test_gone_name_is_refused_with_the_old_phrase _________________
+tests/test_migration_wiring.py:338: in test_gone_name_is_refused_with_the_old_phrase
+    assert "applied migrations have no file in this release" in str(err)
+E   assert 'applied migrations have no file in this release' in "migrations are inconsistent: 0002_f2.sql would be applied out of order: the number is at or below '0007_z', which thi...701656253510835);\nSELECT 2;\n\nINSERT INTO schema_migrations (version) VALUES ('0002_f2');\n\nCOMMIT;\n-- RECIPE ends"
+E    +  where "migrations are inconsistent: 0002_f2.sql would be applied out of order: the number is at or below '0007_z', which thi...701656253510835);\nSELECT 2;\n\nINSERT INTO schema_migrations (version) VALUES ('0002_f2');\n\nCOMMIT;\n-- RECIPE ends" = str(MigrationNumberError('migrations are inconsistent: 0002_f2.sql would be applied out of order: the number is at or belo...656253510835);\nSELECT 2;\n\nINSERT INTO schema_migrations (version) VALUES (\'0002_f2\');\n\nCOMMIT;\n-- RECIPE ends'))
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_gone_name_is_refused_with_the_old_phrase
+1 failed in 0.41s
+

@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_trigger_query_reads_only_the_migration_schema rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_trigger_query_reads_only_the_migration_schema ______________
+tests/test_migration_wiring.py:739: in test_trigger_query_reads_only_the_migration_schema
+    assert "current_schema()" in mig._READBACK_TRIGGERS_SQL
+E   AssertionError: assert 'current_schema()' in 'SELECT t.tgname, t.tgenabled, c.relname, n.nspname, t.tgrelid::bigint, pg_get_triggerdef(t.oid), p.prosrc, p.prosecde...tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace LEFT JOIN pg_proc p ON p.oid = t.tgfoid WHERE NOT t.tgisinternal'
+E    +  where 'SELECT t.tgname, t.tgenabled, c.relname, n.nspname, t.tgrelid::bigint, pg_get_triggerdef(t.oid), p.prosrc, p.prosecde...tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace LEFT JOIN pg_proc p ON p.oid = t.tgfoid WHERE NOT t.tgisinternal' = mig._READBACK_TRIGGERS_SQL
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_trigger_query_reads_only_the_migration_schema
+1 failed in 0.37s
+

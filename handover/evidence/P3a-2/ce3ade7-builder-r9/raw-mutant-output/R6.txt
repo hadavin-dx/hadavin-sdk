@@ -1,0 +1,15 @@
+### tests/test_migration_wiring.py::test_migrate_refuses_a_changed_released_file_before_it_connects rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_migrate_refuses_a_changed_released_file_before_it_connects ________
+tests/test_migration_wiring.py:1229: in test_migrate_refuses_a_changed_released_file_before_it_connects
+    mig.migrate("postgresql://unused")
+src/hadavin_sdk/store/migrate.py:1170: in migrate
+    connect(
+tests/test_migration_wiring.py:1225: in no_connect
+    raise AssertionError("migrate connected although a released file changed")
+E   AssertionError: migrate connected although a released file changed
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_migrate_refuses_a_changed_released_file_before_it_connects
+1 failed in 0.43s
+

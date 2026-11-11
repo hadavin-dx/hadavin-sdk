@@ -1,0 +1,40 @@
+### tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused rc=1
+.F..FF.F..FF                                                             [100%]
+=================================== FAILURES ===================================
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT ON audit_entries TO PUBLIC;] _
+tests/test_migration_postgres.py:2724: in test_a_right_for_a_role_the_run_does_not_name_is_refused
+    with pytest.raises(ConfigError, match="rights in schema") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};] _
+tests/test_migration_postgres.py:2728: in test_a_right_for_a_role_the_run_does_not_name_is_refused
+    assert ("PUBLIC holds" in text) == ("PUBLIC" in grant or "FUNCTION" in grant)
+E   AssertionError: assert ('PUBLIC holds' in 'after the migration files ran, rights in schema hadavin_test_b19249e4d672 that this package does not give are in plac...e or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package.') == (('PUBLIC' in 'GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};' or 'FUNCTION' in 'GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};'))
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;] _
+tests/test_migration_postgres.py:2724: in test_a_right_for_a_role_the_run_does_not_name_is_refused
+    with pytest.raises(ConfigError, match="rights in schema") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT ON audit_entries TO PUBLIC;] _
+tests/test_migration_postgres.py:2724: in test_a_right_for_a_role_the_run_does_not_name_is_refused
+    with pytest.raises(ConfigError, match="rights in schema") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};] _
+tests/test_migration_postgres.py:2728: in test_a_right_for_a_role_the_run_does_not_name_is_refused
+    assert ("PUBLIC holds" in text) == ("PUBLIC" in grant or "FUNCTION" in grant)
+E   AssertionError: assert ('PUBLIC holds' in 'after the migration files ran, rights in schema hadavin_test_05c92998f4d2 that this package does not give are in plac...e or to PUBLIC, or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package.') == (('PUBLIC' in 'GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};' or 'FUNCTION' in 'GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};'))
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;] _
+tests/test_migration_postgres.py:2724: in test_a_right_for_a_role_the_run_does_not_name_is_refused
+    with pytest.raises(ConfigError, match="rights in schema") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT ON audit_entries TO PUBLIC;]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT ON audit_entries TO PUBLIC;]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;]
+6 failed, 6 passed in 1.82s
+

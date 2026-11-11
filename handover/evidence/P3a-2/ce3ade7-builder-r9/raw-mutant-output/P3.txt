@@ -1,0 +1,11 @@
+### tests/test_migration_rules.py::test_case_c_says_a_released_file_cannot_be_renumbered rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_case_c_says_a_released_file_cannot_be_renumbered _____________
+tests/test_migration_rules.py:442: in test_case_c_says_a_released_file_cannot_be_renumbered
+    assert "can never be renumbered" in c
+E   assert 'can never be renumbered' in "- **(c) A collision between a release branch and main** (two files with one number): renumber the file that is NOT li... those databases' ledger rows to its new name with case (b). If both files are listed there, stop: a person must look."
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_case_c_says_a_released_file_cannot_be_renumbered
+1 failed in 0.40s
+
