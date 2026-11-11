@@ -1732,3 +1732,6 @@ Held back by gitleaks in this pass: none. Still unpushed from the earlier pass: 
 
 ## Q-2026-11-11-card-shows-masked-target (from Q8b plan review M7)
 - After the card redaction fix, a target system whose name looks like a host or e-mail (for example billing-db.prod.corp) shows on the approval card as a placeholder such as <HOSTNAME_1>; today it shows with bracketed dots. The approver then approves a target they cannot read. Safe default taken in ticket Q8b: mask (least privilege), stated in the CHANGELOG and pinned by a test. Owner decision: should names that come from the registry (not from model text) be shown in clear on cards?
+
+## Q-2026-11-11-operator-vault-signin (from Q8a-1 result review M1)
+- One-off operator commands (stop/reset = kill switch, audit verify, gate, migrate, replay) read the same config as the service. If the static-Vault-token refusal lived in the config loader, an operator outside the cluster with a short-lived personal Vault token could no longer run the kill switch. Safe default taken (D-012): the refusal applies to the long-running service build only; operator commands still accept auth: token. Owner decision: is that right, or should operator commands get their own sign-in (for example a token read from a prompt or file, never the environment)?
