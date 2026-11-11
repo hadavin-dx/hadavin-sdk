@@ -2547,3 +2547,9 @@
 | BL-PR89-r18-c03 | Minor | PR89 | see reviews/PR89/r18-codebase.md item 3 | OPEN | | | 2026-11-11 |
 | BL-PR89-r18-c04 | Minor | PR89 | see reviews/PR89/r18-codebase.md item 4 | OPEN | | | 2026-11-11 |
 | BL-PR89-r18-c05 | Minor | PR89 | see reviews/PR89/r18-codebase.md item 5 | OPEN | | | 2026-11-11 |
+| BL-core-q8deps-F1 | Major | core-main | see reviews/Q8/deps-audit.md F1 | OPEN | | | 2026-11-11 |
+| BL-core-q8deps-F2 | Major | core-main | see reviews/Q8/deps-audit.md F2 | OPEN | | | 2026-11-11 |
+| BL-core-q8deps-F3 | Major | core-main | see reviews/Q8/deps-audit.md F3 | OPEN | | | 2026-11-11 |
+| BL-core-q8deps-F4 | Major | core-main | see reviews/Q8/deps-audit.md F4 | OPEN | | | 2026-11-11 |
+| BL-core-q8deps-F5 | Major | core-main | see reviews/Q8/deps-audit.md F5 | OPEN | | | 2026-11-11 |
+| BL-core-q8deps-F6 | Major | core-main | see reviews/Q8/deps-audit.md F6 | OPEN | | | 2026-11-11 |
