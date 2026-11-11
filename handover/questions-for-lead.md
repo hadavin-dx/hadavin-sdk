@@ -1741,3 +1741,6 @@ Held back by gitleaks in this pass: none. Still unpushed from the earlier pass: 
 
 ## Note 2026-11-11: older evidence folder also flagged by gitleaks
 - handover/evidence/P3a-2/ef2adc7-cloud/ (committed by an EARLIER session, commit fbca253c) holds 135 strings gitleaks flags (test-made credentials in raw logs). Same class as my own slip above; not touched (existing history; owner decision together with the handover-branch question).
+
+## Q-2026-11-11-vault-engine-here
+- The Q8c-1 refusal tests (does a Vault token that holds only the rendered policy get refused everything else?) need a real Vault-compatible server. None is installed in this cloud session and downloading one (OpenBao, open source) was refused by the session's permission rules. Safe default taken: not worked around; tests are written, skipped here with a visible reason, and required in CI by a variable in the two jobs that have the Vault service. Next step for the human: either nothing (CI will run them once a pull request for core/q8c-1-policy-vault-kubernetes exists), or allow an OpenBao binary in this environment so the evidence can be produced before a pull request.

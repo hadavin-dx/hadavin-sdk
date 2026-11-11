@@ -1,190 +1,190 @@
-Fail-before (c): head's three test files on origin/wip/P2d-1-w6 b6f3b8dd src (exit code 1)
+Fail-before (c): head's three test files on origin/wip/P2d-1-w6 b6f3b8dd src (exit code 1). Test names keep their parameter text with token-like, address-like and long strings hidden; in the first error line every quoted string is shown only as its length. Full text: raw folder.
 source: /home/user/build/evidence-raw/P77-97fd202/failbefore-w6.xml
 counts from the XML: tests=247 failures=31 errors=0 skipped=0 passed=216 time=396.1s
 failures and errors by kind: behaviour assertion=28; missing name (AttributeError / ImportError / TypeError on a signature)=3
 
 FAILED: 31
-  tests.test_redact_hidden_forms::test_hidden_1_every_default_ignorable_and_every_control_character_is_hidden_and_a_mark_or_letter_is_not | [missing name (AttributeError / ImportError / TypeError on a signature)] AttributeError: AttributeError: module 'hadavin_sdk.guard.runmap' has no attribute '_DEFAULT_IGNORABLE'
-  tests.test_redact_hidden_forms::test_hidden_2_canonical_removes_hidden_characters_and_whole_escape_sequences_only | [behaviour assertion] AssertionError: AssertionError: assert 'a\\x1b[0mb\\x9...\\x1b]0;t\\x07g' == 'abcdefg'
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\x1b[0m] | [behaviour assertion] AssertionError: AssertionError: ('peer <\\x1b[0mIPV4_2> refused, seen from 10.0.0.5', 'peer <IPV4_2> refused, seen from <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\x1b[1;31m] | [behaviour assertion] AssertionError: AssertionError: ('peer <\\x1b[1;31mIPV4_2> refused, seen from 10.0.0.5', 'peer <IPV4_2> refused, seen from <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\x9b2K] | [behaviour assertion] AssertionError: AssertionError: ('peer <\\x9b2KIPV4_2> refused, seen from 10.0.0.5', 'peer <IPV4_2> refused, seen from <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\x1b]0;t\x07] | [behaviour assertion] AssertionError: AssertionError: ('peer <\\x1b]0;t\\x07IPV4_2> refused, seen from 10.0.0.5', 'peer <IPV4_2> refused, seen from <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\x1b[1 q] | [behaviour assertion] AssertionError: AssertionError: ('peer <\\x1b[1 qIPV4_2> refused, seen from 10.0.0.5', 'peer <IPV4_2> refused, seen from <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\x1bM] | [behaviour assertion] AssertionError: AssertionError: ('peer <\\x1bMIPV4_2> refused, seen from 10.0.0.5', 'peer <IPV4_2> refused, seen from <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\x1b[0m] | [behaviour assertion] AssertionError: AssertionError: ('log <\\x1b[0m<END TOOL RESULT>> more', 'log <<END TOOL RESULT>> more')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\x1b[1;31m] | [behaviour assertion] AssertionError: AssertionError: ('log <\\x1b[1;31m<END TOOL RESULT>> more', 'log <<END TOOL RESULT>> more')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\x9b2K] | [behaviour assertion] AssertionError: AssertionError: ('log <\\x9b2K<END TOOL RESULT>> more', 'log <<END TOOL RESULT>> more')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\x1b]0;t\x07] | [behaviour assertion] AssertionError: AssertionError: ('log <\\x1b]0;t\\x07<END TOOL RESULT>> more', 'log <<END TOOL RESULT>> more')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\x1b[1 q] | [behaviour assertion] AssertionError: AssertionError: ('log <\\x1b[1 q<END TOOL RESULT>> more', 'log <<END TOOL RESULT>> more')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\x1bM] | [behaviour assertion] AssertionError: AssertionError: ('log <\\x1bM<END TOOL RESULT>> more', 'log <<END TOOL RESULT>> more')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\x1b[0m] | [behaviour assertion] AssertionError: AssertionError: ('a<\\x1b[0m<\\x1b[0mEND TOOL RESULT>> b 10.0.0.5', 'a<<END TOOL RESULT>> b <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\x1b[1;31m] | [behaviour assertion] AssertionError: AssertionError: ('a<\\x1b[1;31m<\\x1b[1;31mEND TOOL RESULT>> b 10.0.0.5', 'a<<END TOOL RESULT>> b <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\x9b2K] | [behaviour assertion] AssertionError: AssertionError: ('a<\\x9b2K<\\x9b2KEND TOOL RESULT>> b 10.0.0.5', 'a<<END TOOL RESULT>> b <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\x1b]0;t\x07] | [behaviour assertion] AssertionError: AssertionError: ('a<\\x1b]0;t\\x07<\\x1b]0;t\\x07END TOOL RESULT>> b 10.0.0.5', 'a<<END TOOL RESULT>> b <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\x1b[1 q] | [behaviour assertion] AssertionError: AssertionError: ('a<\\x1b[1 q<\\x1b[1 qEND TOOL RESULT>> b 10.0.0.5', 'a<<END TOOL RESULT>> b <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\x1bM] | [behaviour assertion] AssertionError: AssertionError: ('a<\\x1bM<\\x1bMEND TOOL RESULT>> b 10.0.0.5', 'a<<END TOOL RESULT>> b <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\x1b[0m] | [behaviour assertion] AssertionError: AssertionError: ('x <\\x1b[0mSECRET_1> y 10.0.0.5', 'x <SECRET_1> y <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\x1b[1;31m] | [behaviour assertion] AssertionError: AssertionError: ('x <\\x1b[1;31mSECRET_1> y 10.0.0.5', 'x <SECRET_1> y <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\x9b2K] | [behaviour assertion] AssertionError: AssertionError: ('x <\\x9b2KSECRET_1> y 10.0.0.5', 'x <SECRET_1> y <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\x1b]0;t\x07] | [behaviour assertion] AssertionError: AssertionError: ('x <\\x1b]0;t\\x07SECRET_1> y 10.0.0.5', 'x <SECRET_1> y <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\x1b[1 q] | [behaviour assertion] AssertionError: AssertionError: ('x <\\x1b[1 qSECRET_1> y 10.0.0.5', 'x <SECRET_1> y <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\x1bM] | [behaviour assertion] AssertionError: AssertionError: ('x <\\x1bMSECRET_1> y 10.0.0.5', 'x <SECRET_1> y <IPV4_1>')
-  tests.test_redact_hidden_forms::test_hidden_4_the_last_check_refuses_a_forged_shape_that_a_later_step_assembled | [behaviour assertion] Failed: Failed: DID NOT RAISE RedactionError
-  tests.test_redact_hidden_forms::test_hidden_5_a_handed_out_secret_with_a_hidden_item_at_any_offset_is_scrubbed | [behaviour assertion] AssertionError: AssertionError: [('\\x1b[0m', 1, 'echo T r0ub4dor-3xyzQ end'), ('\\x1b[0m', 2, 'echo Tr 0ub4dor-3xyzQ end')]
-  tests.test_redact_hidden_forms::test_hidden_14_an_address_with_any_host_full_stop_or_a_non_ascii_host_label_is_masked | [behaviour assertion] AssertionError: AssertionError: ('mail bob.smith@example\u3002com now', 'mail bob.smith@example\u3002com now')
-  tests.test_redact_hidden_forms::test_hidden_16_a_view_wins_only_if_it_keeps_every_mask_the_text_has | [missing name (AttributeError / ImportError / TypeError on a signature)] AttributeError: AttributeError: module 'hadavin_sdk.guard.runmap' has no attribute '_view_covers'
-  tests.test_redact_marks::test_marks_33_a_gap_is_skipped_after_every_item_a_pattern_reads_and_is_never_read_as_an_item | [missing name (AttributeError / ImportError / TypeError on a signature)] AttributeError: AttributeError: module 'hadavin_sdk.guard.redact' has no attribute '_reads_gap'
+  tests.test_redact_hidden_forms::test_hidden_1_every_default_ignorable_and_every_control_character_is_hidden_and_a_mark_or_letter_is_not | [missing name (AttributeError / ImportError / TypeError on a signature)] AttributeError: module <str 24 chars> has no attribute <str 18 chars>
+  tests.test_redact_hidden_forms::test_hidden_2_canonical_removes_hidden_characters_and_whole_escape_sequences_only | [behaviour assertion] AssertionError: assert <str 28 chars> == <str 7 chars>
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\x1b[0m] | [behaviour assertion] AssertionError: (<str 48 chars>, <str 41 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\x1b[1;31m] | [behaviour assertion] AssertionError: (<str 51 chars>, <str 41 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\x9b2K] | [behaviour assertion] AssertionError: (<str 47 chars>, <str 41 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\x1b]0;t\\x07] | [behaviour assertion] AssertionError: (<str 53 chars>, <str 41 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\x1b[1 q] | [behaviour assertion] AssertionError: (<str 49 chars>, <str 41 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\x1bM] | [behaviour assertion] AssertionError: (<str 46 chars>, <str 41 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\x1b[0m] | [behaviour assertion] AssertionError: (<str 35 chars>, <str 28 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\x1b[1;31m] | [behaviour assertion] AssertionError: (<str 38 chars>, <str 28 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\x9b2K] | [behaviour assertion] AssertionError: (<str 34 chars>, <str 28 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\x1b]0;t\\x07] | [behaviour assertion] AssertionError: (<str 40 chars>, <str 28 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\x1b[1 q] | [behaviour assertion] AssertionError: (<str 36 chars>, <str 28 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\x1bM] | [behaviour assertion] AssertionError: (<str 33 chars>, <str 28 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\x1b[0m] | [behaviour assertion] AssertionError: (<str 45 chars>, <str 31 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\x1b[1;31m] | [behaviour assertion] AssertionError: (<str 51 chars>, <str 31 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\x9b2K] | [behaviour assertion] AssertionError: (<str 43 chars>, <str 31 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\x1b]0;t\\x07] | [behaviour assertion] AssertionError: (<str 55 chars>, <str 31 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\x1b[1 q] | [behaviour assertion] AssertionError: (<str 47 chars>, <str 31 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\x1bM] | [behaviour assertion] AssertionError: (<str 41 chars>, <str 31 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\x1b[0m] | [behaviour assertion] AssertionError: (<str 30 chars>, <str 23 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\x1b[1;31m] | [behaviour assertion] AssertionError: (<str 33 chars>, <str 23 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\x9b2K] | [behaviour assertion] AssertionError: (<str 29 chars>, <str 23 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\x1b]0;t\\x07] | [behaviour assertion] AssertionError: (<str 35 chars>, <str 23 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\x1b[1 q] | [behaviour assertion] AssertionError: (<str 31 chars>, <str 23 chars>)
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\x1bM] | [behaviour assertion] AssertionError: (<str 28 chars>, <str 23 chars>)
+  tests.test_redact_hidden_forms::test_hidden_4_the_last_check_refuses_a_forged_shape_that_a_later_step_assembled | [behaviour assertion] Failed: DID NOT RAISE RedactionError
+  tests.test_redact_hidden_forms::test_hidden_5_a_handed_out_secret_with_a_hidden_item_at_any_offset_is_scrubbed | [behaviour assertion] AssertionError: [(<str 7 chars>, 1, <str 25 chars>), (<str 7 chars>, 2, <str 25 chars>)]
+  tests.test_redact_hidden_forms::test_hidden_14_an_address_with_any_host_full_stop_or_a_non_ascii_host_label_is_masked | [behaviour assertion] AssertionError: (<str 30 chars>, <str 30 chars>)
+  tests.test_redact_hidden_forms::test_hidden_16_a_view_wins_only_if_it_keeps_every_mask_the_text_has | [missing name (AttributeError / ImportError / TypeError on a signature)] AttributeError: module <str 24 chars> has no attribute <str 12 chars>
+  tests.test_redact_marks::test_marks_33_a_gap_is_skipped_after_every_item_a_pattern_reads_and_is_never_read_as_an_item | [missing name (AttributeError / ImportError / TypeError on a signature)] AttributeError: module <str 24 chars> has no attribute <str 10 chars>
 
 ERROR: 0
 
 SKIPPED: 0
 
 passed: 216
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\x08]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\x7f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\ufe0f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\u034f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\u3164]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\u200b]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\u115f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\x08]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\x7f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\ufe0f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\u034f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\u3164]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\u200b]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\u115f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\x08]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\x7f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\ufe0f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\u034f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\u3164]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\u200b]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\u115f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\x08]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\x7f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\ufe0f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\u034f]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\u3164]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\u200b]
-  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\u115f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\x08]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\x7f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\ufe0f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\u034f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\u3164]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\u200b]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[peer <{h}IPV4_2> refused, seen from 10.0.0.5-\\u115f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\x08]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\x7f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\ufe0f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\u034f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\u3164]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\u200b]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[log <{h}<END TOOL RESULT>> more-\\u115f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\x08]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\x7f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\ufe0f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\u034f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\u3164]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\u200b]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[a<{h}<{h}END TOOL RESULT>> b 10.0.0.5-\\u115f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\x08]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\x7f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\ufe0f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\u034f]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\u3164]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\u200b]
+  tests.test_redact_hidden_forms::test_hidden_3_a_forged_placeholder_or_marker_is_not_assembled_on_the_untrusted_path[x <{h}SECRET_1> y 10.0.0.5-\\u115f]
   tests.test_redact_hidden_forms::test_hidden_6_percent_written_escape_sequence_inside_a_value_is_masked_at_every_offset
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\xad]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u034f]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u061c]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u115f]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u1160]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u17b4]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u17b5]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u180b]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u180c]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u180d]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u180f]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u200b]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u200c]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u200d]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u200f]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u202a]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u202b]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u202c]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u202e]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u2060]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u2061]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u2067]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u206f]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\u3164]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\ufe00]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\ufe01]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\ufe07]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\ufe0f]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\ufeff]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\uffa0]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\ufff0]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\ufff1]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\ufff4]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\ufff8]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\U0001bca0]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\U0001bca1]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\U0001bca3]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\U0001d173]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\U0001d174]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\U0001d176]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\U0001d17a]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\U000e0000]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\U000e0001]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\U000e07ff]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\U000e0fff]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x00]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x01]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x02]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x03]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x04]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x05]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x06]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x07]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x08]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x0b]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x0c]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x0e]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x0f]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x10]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x11]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x12]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x13]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x14]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x15]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x16]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x17]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x18]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x19]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x1a]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x1b]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x1c]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x1d]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x1e]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x1f]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x7f]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x80]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x81]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x82]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x83]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x84]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x85]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x86]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x87]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x88]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x89]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x8a]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x8b]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x8c]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x8d]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x8e]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x8f]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x90]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x91]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x92]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x93]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x94]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x95]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x96]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x97]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x98]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x99]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x9a]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x9b]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x9c]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x9d]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x9e]
-  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\x9f]
-  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\u034f]
-  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\u3164]
-  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\u115f]
-  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\u1160]
-  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\uffa0]
-  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\x7f]
-  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\x08]
-  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\ufe0f]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\xad]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u034f]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u061c]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u115f]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u1160]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u17b4]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u17b5]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u180b]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u180c]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u180d]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u180f]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u200b]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u200c]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u200d]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u200f]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u202a]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u202b]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u202c]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u202e]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u2060]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u2061]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u2067]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u206f]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\u3164]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\ufe00]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\ufe01]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\ufe07]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\ufe0f]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\ufeff]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\uffa0]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\ufff0]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\ufff1]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\ufff4]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\ufff8]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\U0001bca0]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\U0001bca1]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\U0001bca3]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\U0001d173]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\U0001d174]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\U0001d176]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\U0001d17a]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\U000e0000]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\U000e0001]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\U000e07ff]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\U000e0fff]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x00]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x01]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x02]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x03]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x04]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x05]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x06]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x07]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x08]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x0b]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x0c]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x0e]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x0f]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x10]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x11]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x12]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x13]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x14]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x15]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x16]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x17]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x18]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x19]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x1a]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x1b]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x1c]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x1d]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x1e]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x1f]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x7f]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x80]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x81]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x82]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x83]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x84]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x85]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x86]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x87]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x88]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x89]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x8a]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x8b]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x8c]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x8d]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x8e]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x8f]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x90]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x91]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x92]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x93]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x94]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x95]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x96]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x97]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x98]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x99]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x9a]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x9b]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x9c]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x9d]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x9e]
+  tests.test_redact_hidden_forms::test_hidden_7_every_default_ignorable_character_and_control_inside_a_key_or_an_address_is_masked[\\x9f]
+  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\\u034f]
+  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\\u3164]
+  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\\u115f]
+  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\\u1160]
+  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\\uffa0]
+  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\\x7f]
+  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\\x08]
+  tests.test_redact_hidden_forms::test_hidden_8_a_hidden_character_inside_a_fence_body_leaves_no_key_in_a_card[\\ufe0f]
   tests.test_redact_hidden_forms::test_hidden_10_a_card_keeps_a_placeholder_already_in_the_text_and_numbers_the_next_one_after_it
   tests.test_redact_hidden_forms::test_hidden_11_random_combinations_of_hiding_techniques_around_a_secret_leave_no_three_character_piece
   tests.test_redact_hidden_forms::test_hidden_12_the_lead_sweep_inputs_at_every_offset_and_with_a_second_technique

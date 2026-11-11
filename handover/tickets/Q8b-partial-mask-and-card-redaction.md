@@ -138,7 +138,7 @@ Under "### Changed":
 `uv run --all-extras --group test ruff check`, `ruff format --check`, full `pytest` WITH `HADAVIN_TEST_PG_DSN` on the Postgres version CI pins (17.10; non-skipped output pasted), `bandit -ll`, the repo guard tests, `python tests/q8b_mutants.py`, `python tests/stage_mutants.py`, `python tools/scan_repo.py`, the CI redaction-performance step unchanged. Gate on pytest's own exit code. Then a separate EVIDENCE RUNNER (raw output; fail-on-base proofs; appendix A re-run on the merge base) and egm:* result reviewers on a snapshot; rounds uncapped; ledger rows; drift report before "done".
 
 ## Could not establish / runs (author)
-- Full suite on the final prototype (all behaviour of this ticket and the exact `LIMITS` text; the private copy made a git checkout of its own so the two `git ls-files` tests run): FULL-RUN LINE.
+- Full suite on the final prototype (all behaviour of this ticket and the exact `LIMITS` text; the private copy made a git checkout of its own so the two `git ls-files` tests run): `10194 passed, 455 skipped in 615.02s`, exit code 0 (log `full_proto_r3_final.log`; main: `10193 passed, 455 skipped`; the one extra test is the new `CHOKE_FAMILY` entry of `guard/producers.py`, which adds a parametrised case). Single process, no Postgres.
 - Standards numbers (CWE-212, -636, -696) and the Kubernetes "data is base64" sentence: from memory, both sites blocked.
 - Whether a chat program links `a/evil.com`, a name after a leading dot, or `<IPV4_1>..evil.com`: not verified; the ticket brackets all of them rather than decide.
 - Which COMBINATIONS of special characters make X9 fail: only the single groups were bisected (A5).
