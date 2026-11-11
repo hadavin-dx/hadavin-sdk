@@ -37,11 +37,19 @@
 # - K-AUTHZ and K-RBAC: that the query parameters the Kubernetes code sends (`limit`, `continue`, `timestamps`,
 #   `sinceTime`, `limitBytes`) do not change the verb a request needs (grants R20 to R22). Nobody has read this
 #   yet.
+# - K-SSRR and K-AUTHZ: that `create` on the three self-review resources (`selfsubjectrulesreviews`,
+#   `selfsubjectaccessreviews`, `selfsubjectreviews`) writes nothing (the Kubernetes free request
+#   `k8s.rules_review` and the never-list line `create`). K-SSRR describes only the first resource and does not
+#   mention the verb. Nobody has read this yet.
 # After that run: set `claims_unverified` of R17, R18 and R20 to R22 back to () and delete their PENDING_CLAIMS
-# entries; set `verified` of the three never-list paths in the kind modules and delete their PENDING_NAMES
+# entries; do the same for the Kubernetes free request and the never-list line `create`; set `verified` of the three never-list paths in the kind modules and delete their PENDING_NAMES
 # entries (both dictionaries are in tests/test_policy_guard.py). The hashes of V-ACL,
 # V-PARSE and B-ACL must be fetched again at the same time (nobody has re-fetched them).
 # No test fetches anything or compares a hash: the hashes are a record for a person to re-check.
+# The two lines below are read by tools/policy_page.py: the page marks these ids. A test checks that every id named
+# in the list above (V-... B-... K-...) is on one of them.
+# BUILDER-ONLY: V-ACL, V-PARSE, B-ACL
+# PARTLY-BUILDER-ONLY: V-POL, B-POL, V-KV, B-KV, V-TR, B-TR, K-AUTHZ, K-RBAC, K-SSRR
 # Columns: id | url | commit | sha256 of the raw file | note
 V-POL | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/docs/concepts/policies.mdx | 82e7167 | beac497452411caa6ed293876e3ddf5e29228db17bc26365cd707b095abc75d4 | Vault v2.x: policies
 V-TOK | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/auth/token.mdx | 82e7167 | 03b51d9467d20ec64ff7c145d3abe7e904a3261692cd083ee957b04421fb8eed | Vault v2.x: token API (no_default_policy); named by tests/test_policy_engine.py, by no POLICY literal

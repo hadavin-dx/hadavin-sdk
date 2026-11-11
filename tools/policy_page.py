@@ -61,6 +61,7 @@ REFUSALS: dict[str, tuple[str, ...]] = {
     ),
     "signer/vault_transit": (
         "sign with another key",
+        "sign through the longer path that ends in a hash name",
         "change the key's settings",
         "export the key",
         "back the key up",
@@ -139,6 +140,21 @@ def engine_text(kind: str) -> str:
 
 PLATFORMS = ("vault", "kubernetes_rbac")
 NEVER_TYPES = ("action", "role", "path", "resource", "prose")
+# The never-list types each platform may use. A line typed for the other platform would be rendered on the page
+# and read by no cover rule, so it is refused.
+NEVER_TYPES_BY_PLATFORM = {
+    "vault": ("role", "path"),
+    "kubernetes_rbac": ("role", "action", "resource"),
+}
+# The longest time a dated entry (a pending name, claim or kind) may stand before a person decides again. The
+# tests read it from here, so there is one number.
+MAX_PENDING_DAYS = 92
+# Words that say a statement of fact has no vendor source or was never checked. A `reason` or `note` that holds
+# one of them must also list the statement under `claims_unverified`, which the page shows and the tests date.
+UNCHECKED_WORDING = re.compile(
+    r"not found in a vendor source|nobody has checked|not been checked|not yet checked|unchecked|unverified",
+    re.IGNORECASE,
+)
 VAULT_CAPABILITIES = ("create", "read", "update", "patch", "delete", "list")
 VAULT_NEVER_CAPABILITIES = (*VAULT_CAPABILITIES, "sudo")
 # Vault policy paths (sources V-POL, V-ACL, V-PARSE): `*` is a wildcard only as the LAST character (it then
@@ -159,8 +175,8 @@ _GRANT = {
     "confirmed_live",
     "claims_unverified",
 }
-_FREE = {"operations", "reason", "note", "verified"}
-_NEVER = {"type", "name", "capabilities", "reason", "verified"}
+_FREE = {"operations", "reason", "note", "verified", "claims_unverified"}
+_NEVER = {"type", "name", "capabilities", "reason", "verified", "claims_unverified"}
 _CREDENTIAL = {"how", "lifetime", "exception"}
 _DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 _SOURCE_ID = re.compile(r"[A-Z][A-Z0-9]*(-[A-Z0-9]+)*")  # a key of the sources file, never a URL
@@ -263,6 +279,7 @@ class Free:
     reason: str
     note: str
     verified: tuple[str, ...] | None
+    claims_unverified: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -272,6 +289,7 @@ class Never:
     capabilities: tuple[str, ...]
     reason: str
     verified: tuple[str, ...] | None
+    claims_unverified: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -435,10 +453,37 @@ def _grant_problems(where: str, g: dict, platform: str) -> list[str]:
     return out
 
 
-def _never_problems(where: str, n: dict) -> list[str]:
-    out = []
+def _claims_problems(where: str, entry: dict) -> list[str]:
+    """`claims_unverified` of a free or never entry (optional) and the wording rule: a reason or note that says a
+    statement is unchecked must list that statement there."""
+    claims = entry.get("claims_unverified", ())
+    if not _texts(claims) or not all(c.strip() for c in claims):
+        return [f"{where}: claims_unverified must be a tuple of non-empty text"]
+    said = [
+        k
+        for k in ("reason", "note")
+        if _is_text(entry.get(k)) and UNCHECKED_WORDING.search(entry[k])
+    ]
+    if said and not claims:
+        return [
+            (
+                f"{where}: {said[0]} says a statement is not checked or has no vendor source, so that "
+                "statement must be listed in claims_unverified (the page shows it and a dated entry in the "
+                "tests watches it)"
+            )
+        ]
+    return []
+
+
+def _never_problems(where: str, n: dict, platform: str) -> list[str]:
+    out = _claims_problems(where, n)
     if n["type"] not in NEVER_TYPES:
         out.append(f"{where}: unknown never type {n['type']!r}")
+    elif n["type"] not in NEVER_TYPES_BY_PLATFORM[platform]:
+        out.append(
+            f"{where}: never type {n['type']!r} does not fit platform {platform!r} (allowed: "
+            f"{', '.join(NEVER_TYPES_BY_PLATFORM[platform])}); no cover rule would read it"
+        )
     if not _is_text(n["name"]) or not n["name"]:
         out.append(f"{where}: name must be non-empty text")
     if not _is_text(n["reason"]) or not n["reason"].strip():
@@ -488,15 +533,18 @@ def problems(raw: object) -> list[str]:
         out += _keys(where, g, _GRANT, _GRANT) or _grant_problems(where, g, platform)
     for i, f in enumerate(raw["free"]):
         where = f"free entry {i}"
-        bad = _keys(where, f, _FREE, _FREE)
+        bad = _keys(where, f, _FREE, _FREE - {"claims_unverified"})
         if not bad:
             bad = _operations(where, f["operations"], platform) + _verified(where, f["verified"])
             if not (_is_text(f["reason"]) and f["reason"].strip() and _is_text(f["note"])):
                 bad.append(f"{where}: reason must be non-empty text and note text")
+            bad += _claims_problems(where, f)
         out += bad
     for i, n in enumerate(raw["never"]):
         where = f"never entry {i}"
-        out += _keys(where, n, _NEVER, _NEVER - {"capabilities"}) or _never_problems(where, n)
+        out += _keys(
+            where, n, _NEVER, _NEVER - {"capabilities", "claims_unverified"}
+        ) or _never_problems(where, n, platform)
     if not out:
         ids = [g["id"] for g in raw["grants"]]
         out += [f"grant id {i} is used twice" for i in sorted({i for i in ids if ids.count(i) > 1})]
@@ -694,42 +742,100 @@ def cross_problems(policies: dict[str, Policy]) -> list[str]:
     return out
 
 
-def _vault_regex(path: str) -> re.Pattern[str]:
-    """A Vault policy path as a pattern: `+` is one path part, a last `*` is any ending, the rest is literal."""
-    body = re.escape(path.removesuffix("*")).replace(r"\+", "[^/]+")
-    return re.compile(body + (".*" if path.endswith("*") else ""))
-
-
-def _vault_sample(path: str) -> str:
-    """One concrete path the pattern allows: `+` and a last `*` each become the part `X`."""
-    return path.replace("+", "X").removesuffix("*") + ("X" if path.endswith("*") else "")
+# A Vault policy path as a small automaton, so that two paths are compared by whether ONE concrete path fits
+# both (a real overlap), not by one sample string each. Characters: a literal, `+` (one or more characters that
+# are not `/`), a last `*` (any characters, also none), and the setting `{path_prefix}` (one or more parts, each
+# ending in `/`; the setting's own grammar, GRAMMAR["path_prefix"]). Every other `{setting}` and `<NAME>` stays
+# one fixed word (its own name) the same way in both paths, so equal placeholders stay equal. Source: V-POL,
+# V-ACL (the matching rule); the automaton is this file's own reading of it.
+_ANY, _NOT_SLASH = "any", "not-slash"
 
 
 def _vault_form(resource: str) -> str:
-    """A grant or never-list path in the form the page writes: every `{field}` and `<NAME>` is replaced by one
-    fixed token (the field's own name), the same way in both lists, so equal placeholders stay equal."""
-    return _OPERATOR.sub(lambda m: m.group(1), _FIELD.sub(lambda m: m.group(1), resource))
+    """A grant or never-list path with every `{field}` (but `{path_prefix}`) and `<NAME>` replaced by one fixed
+    word, the field's own name, the same way in both lists."""
+    return _OPERATOR.sub(
+        lambda m: m.group(1),
+        re.sub(r"\{(?!path_prefix\})([a-z_]+)\}", lambda m: m.group(1), resource),
+    )
+
+
+def _vault_automaton(path: str) -> tuple[dict[int, list[tuple[str, int]]], int]:
+    """(moves per state, final state) of one policy path in `_vault_form`."""
+    moves: dict[int, list[tuple[str, int]]] = {}
+    count = 0
+
+    def new() -> int:
+        nonlocal count
+        count += 1
+        return count
+
+    def edge(src: int, cls: str, dst: int) -> None:
+        moves.setdefault(src, []).append((cls, dst))
+
+    cur, i = 0, 0
+    while i < len(path):
+        if path.startswith("{path_prefix}", i):
+            part, after = new(), new()
+            edge(cur, _NOT_SLASH, part)
+            edge(part, _NOT_SLASH, part)
+            edge(part, "/", after)
+            edge(after, _NOT_SLASH, part)  # a further part
+            cur, i = after, i + len("{path_prefix}")
+        elif path[i] == "+":
+            nxt = new()
+            edge(cur, _NOT_SLASH, nxt)
+            edge(nxt, _NOT_SLASH, nxt)
+            cur, i = nxt, i + 1
+        elif path[i] == "*" and i == len(path) - 1:
+            edge(cur, _ANY, cur)
+            i += 1
+        else:
+            nxt = new()
+            edge(cur, path[i], nxt)
+            cur, i = nxt, i + 1
+    return moves, cur
+
+
+def _both_take(a: str, b: str) -> bool:
+    """Can one character be read by both edge classes (a literal, `not-slash` or `any`)?"""
+    if _ANY in (a, b):
+        return True
+    if a == _NOT_SLASH:
+        return b != "/"
+    return a == b or (b == _NOT_SLASH and a != "/")
+
+
+def vault_paths_overlap(first: str, second: str) -> bool:
+    """True when some concrete path is allowed by both policy paths (each given in `_vault_form`)."""
+    one, end_one = _vault_automaton(first)
+    two, end_two = _vault_automaton(second)
+    seen, todo = {(0, 0)}, [(0, 0)]
+    while todo:
+        p, q = todo.pop()
+        if (p, q) == (end_one, end_two):
+            return True
+        for cls_one, nxt_one in one.get(p, ()):
+            for cls_two, nxt_two in two.get(q, ()):
+                if _both_take(cls_one, cls_two) and (nxt_one, nxt_two) not in seen:
+                    seen.add((nxt_one, nxt_two))
+                    todo.append((nxt_one, nxt_two))
+    return False
 
 
 def never_covers_grant_problems(kind: str, policy: Policy) -> list[str]:
     """No never-list line may cover a grant of its own kind: the same resource AND a capability the line
-    forbids (a line with no capabilities forbids all). Vault: the path patterns overlap (checked both ways with
-    one sample path each). Kubernetes: a `resource` line names the grant's resource. (A `action` line against
-    a grant verb is checked above, across kinds and within one.)"""
+    forbids (a line with no capabilities forbids all). Vault: the two path patterns overlap (a real overlap of
+    the two patterns, `vault_paths_overlap`; two kinds are never compared with each other, as each kind has its
+    own identity). Kubernetes: a `resource` line names the grant's resource. (A `action` line against a grant
+    verb is checked above, across kinds and within one.)"""
     out = []
     for n in policy.never:
         if policy.platform == "vault" and n.type == "path":
-            never_re, never_path = (
-                _vault_regex(_vault_form(n.name)),
-                _vault_sample(_vault_form(n.name)),
-            )
             for g in policy.grants:
                 if n.capabilities and g.name not in n.capabilities:
                     continue
-                grant_path = _vault_form(g.resource)
-                if never_re.fullmatch(_vault_sample(grant_path)) or _vault_regex(
-                    grant_path
-                ).fullmatch(never_path):
+                if vault_paths_overlap(_vault_form(n.name), _vault_form(g.resource)):
                     out.append(_covers(kind, n, g))
         elif policy.platform == "kubernetes_rbac" and n.type == "resource":
             out += [
@@ -917,18 +1023,102 @@ def _cell(text: str) -> str:
     return text.replace("|", "\\|").replace("\n", " ")
 
 
+def builder_marks(root: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """(sources only the builder of a fix has read, sources of which only a passage was read by the builder),
+    from the two lines `# BUILDER-ONLY:` and `# PARTLY-BUILDER-ONLY:` in the head of the sources file. That head
+    is the one place the page takes them from; a test compares the lines with the head's list of what a later
+    evidence runner must re-read. Every id must be a row of the file."""
+    try:
+        lines = (root / SOURCES).read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise PolicyError(f"{SOURCES}: cannot be read ({type(exc).__name__})") from None
+    found: dict[str, tuple[str, ...]] = {}
+    for tag in ("BUILDER-ONLY", "PARTLY-BUILDER-ONLY"):
+        rows = [ln for ln in lines if ln.startswith(f"# {tag}:")]
+        if len(rows) != 1:
+            raise PolicyError(f"{SOURCES}: needs exactly one line starting `# {tag}:`")
+        ids = tuple(x.strip() for x in rows[0].split(":", 1)[1].split(","))
+        if not all(_SOURCE_ID.fullmatch(x) for x in ids):
+            raise PolicyError(f"{SOURCES}: the `# {tag}:` line must list source ids")
+        found[tag] = ids
+    known = set(source_ids(root))
+    if unknown := sorted((set(found["BUILDER-ONLY"]) | set(found["PARTLY-BUILDER-ONLY"])) - known):
+        raise PolicyError(f"{SOURCES}: builder-only id {unknown[0]} is not a row of the file")
+    return found["BUILDER-ONLY"], found["PARTLY-BUILDER-ONLY"]
+
+
 # Sources that only the builder of a fix has read (no evidence runner has re-read them). Wherever the page lists
 # one of these ids it says so: a reader must not take the id for a checked source.
-BUILDER_ONLY_SOURCES: tuple[str, ...] = ("V-ACL", "V-PARSE", "B-ACL")
+BUILDER_ONLY_SOURCES, PARTLY_BUILDER_ONLY_SOURCES = builder_marks(DATA_ROOT)
 
 
-def _checked_cell(verified: tuple[str, ...] | None) -> str:
+def _checked_cell(verified: tuple[str, ...] | None, claim: bool = False) -> str:
+    """`claim`: the entry carries an unchecked claim, so a source of which only a passage was read by the builder
+    says so too."""
     if verified is None:
         return "not yet checked"
     ids = ", ".join(
-        s + (" (builder only)" if s in BUILDER_ONLY_SOURCES else "") for s in verified[1:]
+        s
+        + (
+            " (builder only)"
+            if s in BUILDER_ONLY_SOURCES
+            else " (partly builder only: see claims)"
+            if claim and s in PARTLY_BUILDER_ONLY_SOURCES
+            else ""
+        )
+        for s in verified[1:]
     )
     return f"{verified[0]}, sources {ids}"
+
+
+# One class per note of a kind (and per note of a free request, written `free:<start of the note>`): `code` says
+# what THIS code does; `sources` states something about the vendor's server or API and names the source ids that
+# were read (the page prints them after the note); `claim` states something nobody has checked, as a fragment of
+# a `claims_unverified` text. The class is a label a person chooses: the tests cannot know that a `sources`
+# note is true, only that its ids exist and are printed.
+NOTE_CLASSES: dict[tuple[str, str], tuple] = {
+    ("secrets/vault", "Create the token or the sign-in role"): (
+        "sources",
+        ("V-TOK", "V-APPROLE", "V-K8S"),
+    ),
+    ("secrets/vault", "In the call column"): ("code",),
+    ("signer/vault_transit", "The sign-in request of this kind"): ("code",),
+    ("signer/vault_transit", "In the call column"): ("code",),
+    ("signer/vault_transit", "Vault's sign path has"): (
+        "claim",
+        "the exact path R18 does not also allow",
+    ),
+    ("signer/vault_transit", "In plain words: Vault calls signing"): ("sources", ("V-TR", "B-TR")),
+    ("signer/vault_transit", "The signer signs a test message"): ("code",),
+    ("signer/vault_transit", "Create the token or the sign-in role"): (
+        "sources",
+        ("V-TOK", "V-APPROLE", "V-K8S"),
+    ),
+    ("source/kubernetes", "One Role and one RoleBinding"): ("code",),
+    ("source/kubernetes", "At every start-up the kind asks"): ("code",),
+    ("source/kubernetes", "The requests carry these query parameters"): (
+        "claim",
+        "do not change the verb",
+    ),
+    ("source/kubernetes", "free:a default cluster gives every"): (
+        "sources",
+        ("K-RBAC", "K-SRC", "K-SSRR"),
+    ),
+}
+
+
+def note_class(kind: str, text: str) -> tuple | None:
+    """The one class of a note, or None when it has none (or more than one)."""
+    keys = [k for k in NOTE_CLASSES if k[0] == kind and text.startswith(k[1])]
+    return NOTE_CLASSES[keys[0]] if len(keys) == 1 else None
+
+
+def _sources_suffix(kind: str, text: str) -> str:
+    cls = note_class(kind, text)
+    if not cls or cls[0] != "sources":
+        return ""
+    ids = ", ".join(s + (" (builder only)" if s in BUILDER_ONLY_SOURCES else "") for s in cls[1])
+    return f" (sources: {ids})"
 
 
 def _operation(op: tuple[str, ...]) -> str:
@@ -940,7 +1130,9 @@ def _kind_section(kind: str, rel: str, policy: Policy) -> list[str]:
     if any("{path_prefix}" in g.resource for g in policy.grants):
         out += [WHOLE_MOUNT, ""]
     out += [f"Declared in `{rel}`.", ""]
-    out += [f"- {note}" for note in policy.notes] + ([""] if policy.notes else [])
+    out += [f"- {note}{_sources_suffix(kind, note)}" for note in policy.notes] + (
+        [""] if policy.notes else []
+    )
     out += [
         "| id | permission | on what | what limits a wildcard | the call it serves | why | when | name and form found in a vendor source | accepted by a real account | claims not checked |",
         "|---|---|---|---|---|---|---|---|---|---|",
@@ -950,27 +1142,29 @@ def _kind_section(kind: str, rel: str, policy: Policy) -> list[str]:
         out.append(
             f"| {g.id} | `{g.name}` | `{_cell(g.resource)}` | {_cell(g.bound) or 'no wildcard'} | "
             f"{', '.join(_operation(op) for op in g.operations)} | {_cell(g.reason)} | "
-            f"{_cell(g.applies_when) or 'always'} | {_checked_cell(g.verified)} | {live} | "
+            f"{_cell(g.applies_when) or 'always'} | {_checked_cell(g.verified, bool(g.claims_unverified))} | {live} | "
             f"{_cell('; '.join(g.claims_unverified)) or 'none'} |"
         )
     out += ["", "Requests that need no permission:", ""]
     out += [
         f"- {', '.join(_operation(op) for op in f.operations)}: {f.reason}."
-        + (f" Note: {f.note}." if f.note else "")
+        + (f" Note: {f.note}{_sources_suffix(kind, 'free:' + f.note)}." if f.note else "")
         + f" Checked: {_checked_cell(f.verified)}."
+        + (f" Claims not checked: {'; '.join(f.claims_unverified)}." if f.claims_unverified else "")
         for f in policy.free
     ] or ["- none"]
     out += [
         "",
         "Never give this identity (each line would undo what the kind promises):",
         "",
-        "| type | name | why | name found in a vendor source |",
-        "|---|---|---|---|",
+        "| type | name | why | name found in a vendor source | claims not checked |",
+        "|---|---|---|---|---|",
     ]
     for n in policy.never:
         caps = f" with {', '.join(n.capabilities)}" if n.capabilities else ""
         out.append(
-            f"| {n.type} | `{_cell(n.name)}`{caps} | {_cell(n.reason)} | {_checked_cell(n.verified)} |"
+            f"| {n.type} | `{_cell(n.name)}`{caps} | {_cell(n.reason)} | {_checked_cell(n.verified)} | "
+            f"{_cell('; '.join(n.claims_unverified)) or 'none'} |"
         )
     out += ["", f"Credential: {policy.how} Lifetime: {policy.lifetime}."]
     if policy.exception:
@@ -1040,6 +1234,21 @@ code needs (one reason each), the requests that need no permission, and what the
   with a constant operation id for Kubernetes. Indirect ways to reach those calls (`getattr`, a new import, a
   raw HTTP call outside the one sending function, another module importing the Vault client) are refused by
   listed rules, not by proof: a way to send a request that no rule lists is not seen.
+- Some permissions allow more than their reason says. Reading the reason alone would understate them: R17 also reads
+  every older version of the one secret it names; R20 returns whole Deployment objects (including any setting
+  values in them); R21 returns all events of a namespace, not a time window; R22 reads the log of every pod in a
+  configured namespace. The "what limits a wildcard" cell of each says so and why the right cannot be narrower:
+  Kubernetes rights cannot be limited by time or by a query, and a pod name list cannot be written in advance.
+  What the code asks for is narrower than what the identity is allowed; the difference is in the cluster's or
+  Vault's rules, not in this kind.
+- A never-list line is compared with the grants of its own kind: a Vault path with each grant path by whether one
+  concrete path fits both (a real overlap, including `+` and a last `*` on both sides and a `{{path_prefix}}` of any
+  number of parts), a Kubernetes resource by name. Two limits: kinds are not compared with each other, because
+  each kind has its own identity (a deployment that runs two Vault kinds on one mount name gets two identities);
+  and the values of the settings are not known here, so `{{path_prefix}}` is taken as every value its pattern
+  allows, but any other setting (the mount, the key name) is taken as one fixed word: a never line that writes
+  a literal word where a grant has such a setting, for example `other/data/*` against `{{mount}}/data/...`, is
+  not compared by value.
 - No test shows that a permission NAME is right. That comes from a separate check of the vendor's own
   documentation and source files on the date shown per row (`tests/fixtures/policy_sources_2026-11-11.txt`
   lists them, each pinned to a commit id written in its URL). Seven of the rows (the Vault documentation)
@@ -1054,9 +1263,13 @@ code needs (one reason each), the requests that need no permission, and what the
   algorithm name (nobody has checked it); in the Kubernetes permissions R20 to R22, that the query parameters
   the code sends do not change the verb the request needs (nobody has checked it). The page lists each under
   "claims not checked" and, for that reason, gives no copy-ready text for any of the three kinds. A source id
-  marked "(builder only)" was read by the builder of a fix only. The same builder-only reading stands behind
-  the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked". Each of these has a
-  dated entry in the tests (review by 2026-12-11) that turns the suite red if nobody re-reads it by then.
+  marked "(builder only)" was read by the builder of a fix only; one marked "(partly builder only: see claims)"
+  was read by an evidence runner for the permission name, while the passage behind the claim in that row was
+  read by the builder only. The same builder-only reading stands behind the never-list lines `undelete`,
+  `subkeys` and `byok-export`; they show "not yet checked", as do the three Kubernetes role names `cluster-admin`,
+  `admin` and `edit` (no evidence runner looked for those names in the Kubernetes source). Each of these has a
+  dated entry in the tests (review by 2026-12-11) that turns the suite red if nobody re-reads it by then. The
+  lists of marked ids are read from the head of the sources file, not written in this tool.
 - Two links the call check does not follow. First, the map from an object attribute to the setting it holds
   (`self.mount` holds the setting `mount`) is written by hand in the test; a test reads each `build` function
   and checks that the setting is stored in that attribute, but nothing follows the value beyond that. Second,
@@ -1089,14 +1302,42 @@ code needs (one reason each), the requests that need no permission, and what the
 """
 
 
+def named_source_ids(kind: str, policy: Policy) -> set[str]:
+    """Every source id the page prints for one kind: in a `verified` field or after a `sources` note."""
+    ids = {s for e in (*policy.grants, *policy.free, *policy.never) for s in (e.verified or ())[1:]}
+    for text in (*policy.notes, *(f"free:{f.note}" for f in policy.free if f.note)):
+        cls = note_class(kind, text)
+        if cls and cls[0] == "sources":
+            ids |= set(cls[1])
+    return ids
+
+
 def page(root: Path | None = None) -> str:
     root = DATA_ROOT if root is None else root
     out = [head()]
+    named: set[str] = set()
     for kind, rel in KIND_MODULES.items():
         policy = load(root / rel)
         if policy is None:
             raise PolicyError(f"no POLICY in {rel}")
         out += _kind_section(kind, rel, policy)
+        named |= named_source_ids(kind, policy)
+    sources = source_ids(root)
+    out += [
+        "## Sources named on this page",
+        "",
+        (
+            "Each id below is a row of `tests/fixtures/policy_sources_2026-11-11.txt` (the file lists the full "
+            "link, the commit and a hash of the file for each):"
+        ),
+        "",
+        *[
+            f"- {sid}{' (builder only)' if sid in BUILDER_ONLY_SOURCES else ''}: {sources[sid][3]} "
+            f"(commit {sources[sid][1][:7]})"
+            for sid in sorted(named)
+        ],
+        "",
+    ]
     out += [
         "## Kinds with no declared policy yet",
         "",

@@ -240,11 +240,21 @@
     text for any of the three kinds. Each unchecked claim has a dated test entry (review by 2026-12-11); a source
     id read by the builder of a fix only is marked "(builder only)" wherever the page lists it. Two new checks: no
     never-list line may cover a grant of its own kind (same path or resource and a capability the line forbids;
-    Vault paths are compared as patterns both ways, Kubernetes resources by name), and every note of a kind is
+    Vault paths are compared by whether one concrete path fits both patterns, Kubernetes resources by name), and every note of a kind is
     classed once by a person as "code", "sources" or "claim", so a new statement about server behaviour cannot be
     added without a source id or an unchecked-claim entry. The 12
     Vault server tests still need one CI run with `HADAVIN_REQUIRE_VAULT_ENGINE=1` that shows 12 passed and 0
     skipped; until then the page says "not run yet".
+  - Round-4 review fixes: a free request and a never-list line can now carry an unchecked claim like a grant (the
+    Kubernetes `rules_review` request and the `create` never-list line no longer say the self-review requests
+    "create nothing" as a checked fact; each has a dated entry), a never-list type must fit its platform, the
+    never-versus-grant check compares real overlap of two Vault paths (including a `{path_prefix}` of any number of
+    parts, and `+` or a last `*` on both sides), the builder-only source marks are read from the head of the
+    sources file, notes of class "sources" print their source ids and the page ends with the list of sources it
+    names, the four grants that allow more than their reason says (R17, R20 to R22) say so in the "what limits a
+    wildcard" cell, the 92-day limit is one number in `tools/policy_page.py`, and the Transit server test sends
+    the longer sign path that ends in a hash name for the signing key and expects a refusal (not yet run: needs
+    a Vault server).
   - The page also gained a plain-words legend for its column heads, a sentence that Vault calls signing `update`
     although signing stores nothing, and the two links the call check does not follow. New checks: the paging
     query of the Kubernetes list wrapper, the one sending function of the Vault client, the setting-to-attribute

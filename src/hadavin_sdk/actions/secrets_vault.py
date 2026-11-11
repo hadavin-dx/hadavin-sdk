@@ -237,7 +237,11 @@ POLICY = {
             "resource": "{mount}/data/{path_prefix}+",
             "bound": (
                 "the `+` stands for exactly one path part, the secret's name, directly under this "
-                "deployment's `path_prefix` setting (which must not be empty); nothing deeper is covered"
+                "deployment's `path_prefix` setting (which must not be empty); nothing deeper is covered. "
+                "Allows more than the reason says: the right covers every secret directly under the prefix, "
+                "not only the one the code asks for, and every older version of each (a `read` on the path "
+                "also serves a request for an older version); the right cannot name one secret because the "
+                "secret's name is not known when the policy is written"
             ),
             "operations": (("GET", "{self.mount}/data/{self.path_prefix}{name}"),),
             "applies_when": "",

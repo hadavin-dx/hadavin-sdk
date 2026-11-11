@@ -186,14 +186,25 @@ def refused(engine: Engine, token: str, requests: list[Request]) -> None:
         assert status == 403, f"{what}: {method} {path} answered {status}, expected 403 (refused)"
 
 
+# The one request whose control may also be answered 400 for the admin token: a hash algorithm name on the path
+# of a key type that signs without one (ed25519) can be refused by the server as a bad request. 400 still shows
+# the path was routed and the policy check passed for the admin; 403 (the policy's refusal) and 404 (a mistyped
+# path) never count.
+HASH_PATH_REQUEST = "sign through the longer path that ends in a hash name"
+CONTROL_STATUSES: dict[str, tuple[int, ...]] = {HASH_PATH_REQUEST: (200, 204, 400)}
+
+
 def not_refused_for_admin(engine: Engine, requests: list[Request]) -> None:
-    """Control: the same requests with the admin token are answered 200 or 204. A 404 (a mistyped path)
-    or any other answer fails: it would show nothing about the request the refusal was meant for."""
+    """Control: the same requests with the admin token are answered 200 or 204 (the one named in
+    CONTROL_STATUSES also 400). A 404 (a mistyped path) or any other answer fails: it would show nothing about
+    the request the refusal was meant for."""
     admin = engine.admin()
     for what, method, path, body in requests:
         status, _ = admin.authed(method, path, body)
-        assert status in (200, 204), (
-            f"control, {what}: {method} {path} answered {status} for the admin token, expected 200 or 204"
+        allowed = CONTROL_STATUSES.get(what, (200, 204))
+        assert status in allowed, (
+            f"control, {what}: {method} {path} answered {status} for the admin token, expected one of "
+            f"{allowed}"
         )
 
 
@@ -325,6 +336,10 @@ class TransitCase:
         message = {"input": base64.b64encode(b"q8c").decode()}
         return [
             ("sign with another key", "POST", f"{mount}/sign/{self.spare}", message),
+            # R18 names the exact path `sign/<key>`; whether Vault also lets it reach the longer path that
+            # ends in a hash algorithm name is the claim in `claims_unverified` of R18 (nobody has checked it).
+            # The runtime token must be refused here (403).
+            (HASH_PATH_REQUEST, "POST", f"{mount}/sign/{key}/sha2-256", message),
             (
                 "change the key's settings",
                 "POST",
@@ -463,6 +478,40 @@ def test_the_admin_control_fails_on_an_answer_that_is_not_200_or_204():
     for status in (403, 404, 405, 500):
         with pytest.raises(AssertionError, match=f"answered {status} for the admin token"):
             not_refused_for_admin(Answers(status), request)
+
+
+def test_the_hash_path_control_also_accepts_400_but_never_403_or_404_and_no_other_request_accepts_400():
+    class Answers:
+        def __init__(self, status: int) -> None:
+            self.status = status
+
+        def admin(self):
+            return self
+
+        def authed(self, method, path, body=None):
+            return self.status, {}
+
+    hashed = [(HASH_PATH_REQUEST, "POST", "transit/sign/key/sha2-256", None)]
+    other = [("sign with another key", "POST", "transit/sign/spare", None)]
+    for status in (200, 204, 400):
+        not_refused_for_admin(Answers(status), hashed)
+    for status in (403, 404, 500):
+        with pytest.raises(AssertionError, match=f"answered {status} for the admin token"):
+            not_refused_for_admin(Answers(status), hashed)
+    with pytest.raises(AssertionError, match="answered 400 for the admin token"):
+        not_refused_for_admin(Answers(400), other)
+
+
+def test_the_longer_sign_path_is_sent_for_the_signing_key_and_listed_on_the_page():
+    transit = TransitCase(None, None, {"transit_mount": "transit"}, "key", "spare")
+    sent = {r[0]: r for r in transit.never_requests("key")}
+    assert HASH_PATH_REQUEST in sent, "the longer sign path is not sent for the signing key"
+    assert sent[HASH_PATH_REQUEST][1:3] == ("POST", "transit/sign/key/sha2-256"), (
+        "the longer sign path request is not a POST to sign/<key>/sha2-256"
+    )
+    assert HASH_PATH_REQUEST in pp.REFUSALS["signer/vault_transit"], (
+        "the page does not list the longer sign path among the refused requests"
+    )
 
 
 def test_clean_up_sends_every_undo_request_and_survives_a_failure():

@@ -396,7 +396,11 @@ POLICY = {
             "id": "R20",
             "name": "list",
             "resource": "apps/deployments in {namespaces}",
-            "bound": "",
+            "bound": (
+                "Allows more than the reason says: `list` returns the whole Deployment objects, with every "
+                "setting written in them (including any value set in the pod template), not only the "
+                "revision and the images. A right cannot be limited to some fields of an object"
+            ),
             "operations": (("k8s.list_deployments",),),
             "applies_when": "",
             "reason": "reads deployments, their rollout revision and images",
@@ -410,7 +414,10 @@ POLICY = {
             "id": "R21",
             "name": "list",
             "resource": "core/events in {namespaces}",
-            "bound": "",
+            "bound": (
+                "Allows more than the reason says: Kubernetes rights cannot be limited by time, so the right "
+                "covers every event of each configured namespace, not only the time window the code asks for"
+            ),
             "operations": (("k8s.list_events",),),
             "applies_when": "",
             "reason": "reads events in the time window",
@@ -424,7 +431,11 @@ POLICY = {
             "id": "R22",
             "name": "get",
             "resource": "core/pods/log in {namespaces}",
-            "bound": "",
+            "bound": (
+                "Allows more than the reason says: the right covers the log of every pod in each configured "
+                "namespace, not one pod; a pod name list cannot be written in advance. Log lines can hold "
+                "secrets, and what a log holds is outside this kind's control"
+            ),
             "operations": (("k8s.pod_log",),),
             "applies_when": "",
             "reason": "reads one pod's log lines",
@@ -438,7 +449,10 @@ POLICY = {
     "free": (
         {
             "operations": (("k8s.rules_review",),),
-            "reason": "asks the cluster what this identity may do; it creates nothing",
+            "reason": (
+                "asks the cluster what this identity may do; the start-up check treats it as harmless "
+                "(that it changes nothing in the cluster was not found in a vendor source)"
+            ),
             "note": (
                 "a default cluster gives every signed-in identity this right. The request path names no "
                 "namespace, so the namespaced Role on this page cannot grant it: in a cluster that took the "
@@ -447,6 +461,12 @@ POLICY = {
                 "covers such a cluster"
             ),
             "verified": ("2026-11-11", "K-RBAC", "K-SRC", "K-SSRR"),
+            "claims_unverified": (
+                (
+                    "a `create` on `selfsubjectrulesreviews` changes nothing in the cluster (the one source "
+                    "for the resource, K-SSRR, does not say so)"
+                ),
+            ),
         },
     ),
     "never": (
@@ -474,11 +494,17 @@ POLICY = {
             "reason": (
                 "a write verb: this source only reads. One exception, the same one the start-up check "
                 "makes: `create` on the self-review resources (`selfsubjectrulesreviews`, "
-                "`selfsubjectaccessreviews`, `selfsubjectreviews`). That these three requests write nothing "
-                "was not found in a vendor source: the one source listed for the resource (K-SSRR) describes "
-                "only the first and does not mention the verb"
+                "`selfsubjectaccessreviews`, `selfsubjectreviews`), which the start-up check treats as "
+                "harmless; that these three requests write nothing was not found in a vendor source"
             ),
             "verified": ("2026-11-11", "K-AUTHZ"),
+            "claims_unverified": (
+                (
+                    "`create` on `selfsubjectrulesreviews`, `selfsubjectaccessreviews` and "
+                    "`selfsubjectreviews` writes nothing (the source for the first, K-SSRR, does not mention "
+                    "the verb; none was found for the other two)"
+                ),
+            ),
         },
         {
             "type": "action",
