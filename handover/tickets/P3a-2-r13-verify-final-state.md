@@ -801,9 +801,22 @@ Re-checked, no edit to the mutant (its killer is a test whose scripted answers o
 
 Unchanged: the rev 1 list (M61, M64, M67, M95, MW2-MW6, N15, T13, S1, O1, R6, RC1, LV1-LV4, LW4; the lock mutants MW8, LW1-LW3, LW5-LW8, where LW7 and LW8 get the new join as planted text) and every other id. Rule for the builder: every mutant whose planted text sits inside `migrate()` (MIG:1512-1677) is checked by `problems_with_the_list()` at every commit (it is part of the per-commit green command); one whose text no longer exists exactly once is re-pointed with the same intent in that commit and added to the builder notes table.
 
-`problems_with_the_list()` (MUT:2997-3016) is changed to check the parametrised id of a killer as well (today it strips it at `split("[")[0]`).
+`problems_with_the_list()` (MUT:2997-3016) is changed to check the parametrised id of a killer as well (today it strips it at `split("[")[0]`). Commit 5 (rev 3, M1/m11).
 
-Count after this ticket: 288 - 29 retired + 55 new (7.5) = 314.
+**Rev 3 closure of the lists (M7, fact 50).** The script handover/evidence/P3a-2/plan-r3/scripts/affected_mutants.py read both mutant lists of the 4d328e3d tree (288 + 40, every `old` text exactly once) and intersected each planted text's line span with the line ranges rev 3 plans to edit (the ranges are written in the script, one per row of 5.2, 5.3, 6.1-6.2, 1.5 and the cli change, each with its commit). Result (affected_mutants.out): 106 overlap; the per-commit list is in that file. Classification, closed:
+- Retired: the 29 of rev 2 (all 29 are in the overlap; unchanged).
+- Re-pointed: the 47 of rev 2.
+- Re-checked, rev 2: the 16 (they overlap nothing; their killers change).
+- Re-checked, NEW in rev 3 (in the overlap, in no rev 2 list): at commit 3a M102 (MIG:476, `current_schema()` becomes a parameter); at commit 3b LV1, LV2, LV3, LV4, LW4, N15, MW2, MW3, MW4, MW5, MW6, M61, M64, M67, M95, T13, RC1, S1, O1, R6 (all inside `migrate()`, MIG:1550-1621); at commit 4 LW1, LW2, LW3, LW5, LW6, MW8, and LW7, LW8 re-planted on the new join; at commit 6 P8 (MIG:26, module docstring). 30 ids. For each: if its `old` text still occurs exactly once after the commit, it is run and must be KILLED in that commit; if not, it is re-pointed with the same intent in that commit and listed in the builder notes.
+- Re-checked at commit 6 because the CHANGELOG is rewritten around them (planted outside the rewritten lines, but the new nested text could repeat a planted text): N16, N17, N18, N19, P1, P2, P3, P5, P6, P7 (10 ids, plus R23 re-pointed).
+- `tests/migration_numbers_mutants.py` (40): none overlaps the two comment edits of 1.5 (MN:677-679, 722-723); `_label` is inserted, not edited. Rule below still applies.
+- The `pg_catalog.` prefix edit of kept MIG queries is dropped (3.1), so M102's neighbours T2-T5, R4, SC1, SC2, NR2, NS1, NS2, NM1, R2, PS1, SC5, PA2-PA4 and the FO/OW mutants of MIG:669-684 do not move, except where a range above covers them.
+
+**Rule that closes the list for edits the plan did not foresee (per commit, part of G).** Before each commit the builder runs `affected_mutants.py` adapted to `git diff -U0 <parent>` (the script takes ranges; the builder notes paste the ranges from the diff hunks of every changed file under `src/`, `CHANGELOG.md` and `tests/` files named in `MUT` or `migration_numbers_mutants.py`). Every id it lists that is not retired is run in that commit (`python tests/migrate_mutants.py <ids>` or `python tests/migration_numbers_mutants.py <ids>`) and must be KILLED; `test_every_migrate_mutant_still_applies_to_the_source` covers "old text exactly once" for all ids.
+
+**Where batch 2 lives (M7).** From commit 3a: a constant `BATCH_2_IDS: frozenset[str]` in `tests/migrate_mutants.py` = the 47 re-pointed + the 16 + the 30 rev 3 re-checked (minus retired) + LW7, LW8 (as they exist at each commit; ids not yet re-planted are skipped by the runner with a printed line, never silently). `--list-batch` (commit 5) uses it; a unit test asserts the four batches are disjoint and cover the list.
+
+Count after this ticket: 288 - 29 retired + 54 new (7.5; the duplicate-CREATE mutant left with 6.4, rev 3) = 313.
 
 ### 5.6 What happens to each round-12 finding
 
