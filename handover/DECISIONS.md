@@ -451,3 +451,7 @@ What: the Q8b batch-2 builder found key names such as dbpass that the shared key
 ## 2026-11-11 22:08Z D-029: PR H builder deviated from D-026 wording (accepted for review, not yet judged)
 What: PR H WP2c: nF alnum final byte removes only ESC (D-026 would have consumed a UUID dash); Fp/Fe/Fs also changed; CSI in ECMA-48 order; 517 step-back pairs -> 0 against main, 92 "accidental" pairs pinned in a test. Why accepted: each deviation reduces text loss and the redaction path gets uncapped independent review. Risk: a wrong grammar in a security parser. Confidence: medium. Reversible: yes (code on the branch, not merged).
 Slip noted: the Q8b builder told me gitleaks was not installed; it is at /home/user/build/bin/gitleaks (not on PATH). I told it where.
+
+## D-030 (2026-11-12) PR H: 92 accidental pairs are not left pinned
+What: builder a5d8945a stopped at its box with WP2c done and 92 (case,path) pairs where main masked and the branch does not, pinned by a count. Options: (a) accept the pin; (b) fix the 6 classes; (c) review first. Chosen: (b) in the resume builder, before WP3/WP4; each class is either fixed or shown (per case) to mask a plain reading elsewhere; a pinned count alone is not accepted (fix-dont-defer, redaction path). Confidence: medium. Reversible: yes.
+Also: the resume builder must produce a real fail-before for WP2c (contract rows against main).

@@ -1450,3 +1450,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | 2026-11-11 21:50Z | a583250269591a15b EV Q8c-1 fbc837b4; accdac40c3671cb4a design reviewer; a3a8fcfb62793b8a0 codebase reviewer | round 5 of Q8c-1 (builder b4 abab3ba2 CLOSED: pushed fbc837b4; its own Postgres on port 56444 may still be shutting down: runner/lead check) | launched | EV +50 min, reviewers +40 min | RUNNING | collect, resolve r5 |
 | 2026-11-11 22:12Z | ad257cb3 Q8b b2 builder CLOSED (pushed 13ea6b75); a6a7b621 EV Q8b 13ea6b75; a8e74630 design reviewer; a807a0f4 codebase reviewer | Q8b round 3 | launched | EV +50 min, reviewers +40 min | RUNNING | collect, resolve r3 |
 | 2026-11-11 22:12Z | accdac40 design reviewer Q8c-1 CLOSED (no Blocker/Major, 3 Minor 2 Nit) | | | | CLOSED | codebase reviewer a3a8fcfb and EV a5832502 still running |
+| a5d8945a | PR H builder | 90-min box | CLOSED (WP2c done, T5/WP3/WP4 pending, 92 pairs open) | resume builder queued, waits for load<=4 |

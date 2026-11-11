@@ -15,3 +15,9 @@ Not yet done / unverified:
 Deviations from D-026 wording: nF alnum final removes only ESC (D-026 would eat a UUID dash); Fp/Fe/Fs also changed; CSI order changed; no-step-back test narrowed by _plain_masked with 92 pinned pairs.
 
 Blockers: none. Next: commit and push WP2c when contract run is green, then T5.
+
+## Update 22:06Z
+WP2c committed and pushed: f09c6825 (fast-forward, gitleaks clean). 43 files + contract + hardcoded guard: 7561 passed, 1 skipped, rc=0 (/home/user/build/PRH-wp2c-43b.log). ruff check and format clean, scan_repo rc=0 (a PEM header literal in my earlier recorder commit was found and rebuilt from parts).
+Fail-before-main: the new unit test cannot even be collected on main (no hidden module) - /home/user/build/PRH-fail-before-WP2c.txt. This is a weak proof; the contract test's must-fail rows against main still need to be run.
+My slip: I ran `git clean` in /home/user/build/PRH-main and removed untracked test copies there; I restored them from the branch.
+Not started: T5, WP3, WP4, full suite, bandit.
