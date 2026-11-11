@@ -1183,7 +1183,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-P3a2 a73e15b4 | ONE builder (Fable) P3a-2 round 12 fixes, NEW branch core/P3a-2-clean from 8382bdd, pg 56070 | 14:02Z | +120m | 14:02Z | running | checkpoint 30m; then evidence + fresh reviewers r12 |
 | R-Q8a2-plan a28e17be, a0759fb8 | egm design + impl-readiness (Fable) plan review r1 tickets/Q8a-2 | 14:05Z | +20m | | CLOSED both saved reviews/Q8a-2/; errata rev 2 | resolve, builder |
 | A-Q8c-r2 aba593de | ticket author (Fable) Q8c revision 2 (slice 1) | 14:08Z | +30m | 14:08Z | CLOSED ticket rev 2 written (22 names all unverified until EV-Q8c-live lands) | plan review round 2 |
-| EV-Q8c-live a9225128 | EVIDENCE RUNNER (Fable, network) live check of slice-1 permission names against vendor pages | 14:08Z | +40m | 14:08Z | running | fold verified/wrong into ticket data |
+| EV-Q8c-live a9225128 | EVIDENCE RUNNER (Fable, network) live check of slice-1 permission names against vendor pages | 14:08Z | +40m | 14:08Z | CLOSED evidence/Q8c/live-verification-2026-11-11.md (162 items: 138 verified, 0 wrong, 3 not found, 21 page not reachable; Slack 0 verified) | fold verified/wrong into ticket data |
 | B-Q8a2 a0472549 | ONE builder (Fable) ticket Q8a-2, branch core/q8a-2-neutral-callback-and-guard, pg 56080 | 14:11Z | +90m | 14:11Z | running | checkpoint 30m; then evidence + egm reviewers |
 | R-Q8b-plan ace02d78, a517cf42 | egm design + impl-readiness (Fable) plan review r1 tickets/Q8b | 14:13Z | +20m | 14:13Z | running | resolve, builder after PR77 scope settles |
 | R-Q8c-r2 ac13fdc7 | egm impl-readiness (Fable) plan review r2 of tickets/Q8c rev 2 | 14:18Z | +20m | | running | errata; build only after live verification |
