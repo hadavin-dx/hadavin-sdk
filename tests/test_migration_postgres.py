@@ -3225,7 +3225,8 @@ def test_a_lock_holder_that_this_login_cannot_look_into_is_named_in_plain_words(
     user and the server hides those columns, whatever login the test database was given."""
     dsn, _schema = scratch
     holder_role = "hadavin_test_lh_" + uuid.uuid4().hex[:8]
-    _create_roles(holder_role, login_password="made-up-" + uuid.uuid4().hex)
+    made_up = "made-up-" + uuid.uuid4().hex  # new for each run; never a written value
+    _create_roles(holder_role, login_password=made_up)
     try:
         with psycopg.connect(login_dsn(DSN, holder_role), autocommit=True) as holder:
             holder.execute("SELECT pg_advisory_lock(%s)", (mig.MIGRATE_LOCK,))
