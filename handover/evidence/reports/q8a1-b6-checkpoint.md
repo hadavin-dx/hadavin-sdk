@@ -1,5 +1,6 @@
-# Q8a-1 fix batch 6 checkpoint (21:30 UTC)
-Worktree /home/user/build/B-Q8a1-b6, branch core/q8a-1-b6 (from 3f3d4b6c). Own Postgres on 127.0.0.1:56971 (data /home/user/build/pg-q8a1b6), stop at the end.
-Done (uncommitted): safe_url leaf + every urlsplit routed through it; load_yaml and registry._yaml value-free; errors.shown_name/error_where; library ValueError type-only; tick sentence reworded; tests added to tests/test_stage_names.py, shared helper in tests/conftest.py (Issue 5); mutants M16a-s; CHANGELOG and docstrings.
-Waiting: heavy slots are all busy with other agents; stage mutants M16 queued.
-Next: mutants result, fail-before (done once on 3f3d4b6c: 40 failed), full pytest at final head, gate, gitleaks, commit, push.
+# Q8a-1 fix batch 6 checkpoint (21:45 UTC, started 21:11 UTC)
+Worktree /home/user/build/B-Q8a1-b6, branch core/q8a-1-b6, local commit 4aa15efd on top of 3f3d4b6c (not pushed yet).
+Done: all five issues coded and committed; ruff check, ruff format --check, bandit -ll rc 0; gitleaks staged clean; fail-before run on 3f3d4b6c recorded (42 failed in the two test files; the head test files also collect on origin/main now).
+Waiting: one heavy slot for the final full pytest plus all stage mutants (script evidence-raw/q8a1-b6/final.sh); all 3 slots held by other agents since 21:18.
+Next: read results, fix anything red, push fast-forward, final report. Own Postgres 127.0.0.1:56971 to be stopped at the end.
+Stop time: 22:11 UTC.

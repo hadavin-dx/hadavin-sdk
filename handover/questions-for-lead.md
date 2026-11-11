@@ -1806,3 +1806,4 @@ WAITS (dependency queue):
 - Q8c-1 clean (and its Vault engine gate stays OPEN, needs a CI run) -> Q8c PR 2 (AWS, Slack)
 - Q8a-2: nits only -> drift report; PR85 variant after Q8b/Q8c settle
 Items for you (not blocking): Q8b card-target label meaning; PR77 vs Q8b `redact.py` conflict order; Vault engine tests need one CI run.
+Q8b batch 2 (2026-11-11): (1) PR77 and Q8b both change `guard/redact.py`; Q8b should merge first and PR77 rebase (Q8b edits: key rule, glue guard, value tail, Bearer/Authorization). (2) Record-walk key rule: `dbpass`, `usersession`, `userauth`, `mycredential` are not credential keys there; adding `pass`/`auth`/`session` endings also masks `bypass`, `compass`, `oauth` (test_t1 pins them as plain). Your choice: accept the over-masking, or a word-split rule.
