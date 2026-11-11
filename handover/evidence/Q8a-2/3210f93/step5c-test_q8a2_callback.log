@@ -8,4 +8,4 @@ E   AttributeError: module 'hadavin_sdk.defaults' has no attribute 'RECEIVER_REA
 =========================== short test summary info ============================
 ERROR tests/test_q8a2_callback.py - AttributeError: module 'hadavin_sdk.defau...
 !!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
-1 error in 0.38s
+1 error in 0.41s

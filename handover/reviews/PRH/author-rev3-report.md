@@ -1,4 +1,4 @@
-# PR H ticket rev 3: author report (2026-11-11, 16:54 to about 17:30 UTC = 22:24 to 23:00 IST)
+# PR H ticket rev 3: author report (2026-11-11, 16:54 to 17:22 UTC = 22:24 to 22:52 IST)
 
 Author of the ticket (egm draft step). This is not a review; fresh reviewers judge rev 3. Nothing was committed or pushed by me (the lead's "state: sync" commits picked up my files while I worked).
 
@@ -9,7 +9,7 @@ Author of the ticket (egm draft step). This is not a review; fresh reviewers jud
 3. **Cost numbers are composed estimates** measured on main with the cost-relevant pieces swapped in, under load 4.6 to 5.7 with all three heavy slots busy. There is no end-to-end timing of the rev-3 design.
 4. **Worst shape W:** estimated 4.21 s CPU at the cap (budget 6 s). A machine about 1.4 times slower refuses it. This is stated as an availability change and is not fixed (lead question 4).
 5. **`stransi` 0.3.0 was not judged:** my adapter called a wrong method and raised AttributeError on every row (my slip). pyte and ansi2txt were judged on metadata only. The rung verdict does not rest on them.
-6. **The 43-file run under the rev-3 prototype:** RUN2_LINE
+6. **The 43-file run under the rev-3 prototype is INCOMPLETE, and I did not find why.** Both tries stopped early with exit code 0 and no pytest summary. Run 1 stopped after 6,978 results with 0 failed. Run 2 stopped after 4,918 passed with 0 failed, inside a test that passes alone in 0.21 s. Step-6 firings among the tests that reported: 0. Next step: the builder's WP2a run of the 43 files with the real code; the ticket says to stop and report if this repeats.
 7. **Mutant 37's killer is named but not proven.** Section 5.2 says what the builder does if it survives.
 8. **Not run at all:** the full suite, ruff, bandit, the mutation runner, the Python 3.12 suite.
 9. **My own slips this round:** the first oracle version was quadratic on an unended OSC (I fixed it before the recorded run); my checkpoint line stamped "17:10" was written at 17:01 (corrected in the note); the stransi adapter (item 5).
@@ -18,7 +18,7 @@ Author of the ticket (egm draft step). This is not a review; fresh reviewers jud
 
 | Id | Answer in rev 3 | Ticket section | Evidence |
 |---|---|---|---|
-| D1 | `_scrub` finds on the joined copy and returns the SPACED copy with the gap-pattern mask, plus a backstop that withholds the result. Step 6 raises `RedactionError` and never returns the joined text. Promise 2 has no designed exception. | 3 (promise 2), W2 step 6, W3 `_scrub`, T12 D1 rows, mutants 23, 31, 42 | `r3/d1-scrub-{main,proto,rev3}.out` (the rev-2 prototype LEAKS the key in D1a and D1b; rev 3 masks all 8 rows); step-6 firings 0 in `check-nojoinedviews.out` and `repro-nojoinedviews.out` |
+| D1 | `_scrub` finds on the joined copy and returns the SPACED copy with the gap-pattern mask, plus a backstop that withholds the result. Step 6 raises `RedactionError` and never returns the joined text. Promise 2 has no designed exception. | 3 (promise 2), W2 step 6, W3 `_scrub`, T12 D1 rows, mutants 23, 31, 42 | `r3/d1-scrub-{main,proto,rev3}.out` (the rev-2 prototype LEAKS the key in D1a and D1b; rev 3 masks all 8 rows); step-6 firings 0 in `check-nojoinedviews.out` and `repro-nojoinedviews.out`; the 43-file probe was incomplete (item 6 above) |
 | D2 | New W0: one span rule in the sweep, `_keep_earlier_masks` and step 5. Contained spans are dropped; a partial-overlap chain gets ONE merged placeholder, so restore is exact. Main itself leaks. The PR H-c stub is updated, so it is no longer a prerequisite. | W0, T4, 5.2 mutants 27, 38-41, 7.8, 8.1 note | `r3/d2-overlap-main.out` |
 | D3 | Measured: Hindi's 1.59x came from the prototype reader. Per-character canonical costs 1.04x and the compiled class 0.94x. Estimates are 1.00-1.04x on S1-S5. Gates G1-G3 are test assertions; G4 (1.25x) is evidence; a remedy rule is written. | 4.4, T9, acceptance 9 | `r3/cost-r3-main.out` |
 | D4 | Joined-reading views dropped: max 10 passes. W is 4.21 s at the cap, against 7.61 s for 18 passes. 0 verdict changes over the author's checks. | 3, W2 pseudo-code, 4.4 | `r3/cost-r3-main.out`, `r3/check-diff.txt`, `r3/repro-diff.txt` (both empty) |
@@ -49,11 +49,14 @@ Author of the ticket (egm draft step). This is not a review; fresh reviewers jud
 | `python r3/scripts/run_without_joined_views.py errata/check2.py` and `... errata/repro.py protofixes` | 0, 0 | `r3/check-nojoinedviews.out`, `r3/repro-nojoinedviews.out`; diffs empty |
 | `python -I r3/scripts/cost_r3.py r3/scripts` | 0 | `r3/cost-r3-main.out` |
 | `heavy.sh ... pytest -q -p plug_r3 ... 43 files` (run 1) | 0, but INCOMPLETE (no summary, 6,978 results of about 7,506) | `r3/targeted-r3-probe.log`, `r3/step6-count.txt` (0 lines) |
-| the same with `-v` (run 2) | RUN2_RC | `r3/targeted-r3-probe-run2.log`, `r3/step6-count-run2.txt` |
+| the same with `-v` (run 2) | 0, but INCOMPLETE (4,918 passed, 0 failed, stopped inside `test_k5_fixes9.py::...[json-18]`) | `r3/targeted-r3-probe-run2.log`, `r3/step6-count-run2.txt` (0 lines) |
+| that one test alone, same plugin, `timeout 400` | 0 (1 passed in 0.21 s) | `r3/single-json18.log`, `r3/step6-count-run3.txt` (0 lines) |
 | `uv run --no-project --with regex==2026.9.29 --with strip-ansi==0.1.1 --with stransi==0.3.0 python -I r3/scripts/rung3_compare.py ...` (throwaway cache, deleted) | 0 | `r3/rung3-compare.out` |
 | PyPI JSON fetch for 5 packages | 200 each | `r3/rung3-pypi-metadata.out` |
 | `gitleaks dir` on two scratch files | 1 (one finding), then 0 | `r3/m8-gitleaks.out` |
 | `curl -m 10` to the 3 standards URLs and PyPI | 000, 000, 000, 200 | `r3/hosts-check.out` |
+| `gitleaks dir` over a copy of `r3/`, the ticket, the PR H-c stub and this report | 0 (no finding) | (not saved; rerun the same command) |
+| invisible-character scan of the ticket, stub and report (Python, categories Cf/Cc/Zl/Zp plus variation selectors) | 0 left after escaping 13 | - |
 
 ## Files changed
 
@@ -67,4 +70,4 @@ PRH-b was not changed.
 
 R-numbers used: R447/R448 (rung table), R449 (no stage names introduced), R371 (no shared cache: the probes use throwaway caches).
 
-Process hygiene: background jobs `bcexr6hqi` (run 1, finished) and `b7hhf17pg` (run 2, RUN2_STATE). The temporary uv cache was deleted; no other process was started.
+Process hygiene: background jobs `bcexr6hqi` (run 1), `b7hhf17pg` (run 2) and `bhdd5dyx3` (single test) all ended. The temporary uv cache was deleted; no other process was started.

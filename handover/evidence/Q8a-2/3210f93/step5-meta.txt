@@ -1,9 +1,0 @@
-main HEAD=2a8c2aac89f83dd0a45af0412563b59ff4fe5632 dirty-before=0
- M tests/contracts/test_capabilities.py
- M tests/test_lockin_guard.py
- M tests/test_p7_tick.py
-?? tests/test_q8a2_callback.py
-imported /home/user/build/EV-Q8a2-r4-main/src/hadavin_sdk/__init__.py
-run A rc=2 2 errors in 0.55s
-run B rc=2 1 error in 0.38s
-restored dirty-after=0

@@ -1,10 +1,5 @@
 
 ==================================== ERRORS ====================================
-_________________ ERROR collecting tests/test_q8a2_callback.py _________________
-tests/test_q8a2_callback.py:824: in <module>
-    @pytest.mark.parametrize("good", [1e-3, 0.5, 1, 10, 3600, 3600.0, defaults.RECEIVER_READ_TIMEOUT_S])
-                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: module 'hadavin_sdk.defaults' has no attribute 'RECEIVER_READ_TIMEOUT_S'
 ____________________ ERROR collecting tests/test_p7_tick.py ____________________
 ImportError while importing test module '/home/user/build/EV-Q8a2-r4-main/tests/test_p7_tick.py'.
 Hint: make sure your test modules/packages have valid Python names.
@@ -16,7 +11,6 @@ tests/test_p7_tick.py:18: in <module>
     from hadavin_sdk.approvals.receiver import MAX_BODY, handle_action, serve
 E   ImportError: cannot import name 'handle_action' from 'hadavin_sdk.approvals.receiver' (/home/user/build/EV-Q8a2-r4-main/src/hadavin_sdk/approvals/receiver.py)
 =========================== short test summary info ============================
-ERROR tests/test_q8a2_callback.py - AttributeError: module 'hadavin_sdk.defau...
 ERROR tests/test_p7_tick.py
-!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
-2 errors in 0.55s
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.42s

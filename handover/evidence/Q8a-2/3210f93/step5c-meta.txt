@@ -1,0 +1,7 @@
+main HEAD=2a8c2aac89f83dd0a45af0412563b59ff4fe5632 dirty-before=0
+tests/test_q8a2_callback.py rc=2 1 error in 0.41s
+tests/test_lockin_guard.py rc=1 29 failed, 197 passed in 10.49s
+tests/contracts/test_capabilities.py rc=1 2 failed, 41 passed in 2.11s
+tests/test_p7_tick.py rc=2 1 error in 0.42s
+all4 --continue-on-collection-errors rc=1 31 failed, 238 passed, 2 errors in 12.99s
+restored dirty-after=0
