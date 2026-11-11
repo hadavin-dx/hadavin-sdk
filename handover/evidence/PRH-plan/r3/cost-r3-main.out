@@ -1,1 +1,32 @@
  17:01:57 up  3:34,  0 user,  load average: 4.18, 4.23, 4.70
+python 3.13.18 unidata 15.1.0 cap 262144 budget 6.0
+hadavin_sdk loaded from /home/user/build/prh-author/main/src/hadavin_sdk/__init__.py
+canon-equal S1 plain ASCII log main==rev3: True rev2==rev3: True
+canon-equal S2 tab table main==rev3: True rev2==rev3: True
+canon-equal S3 JSON lines main==rev3: True rev2==rev3: True
+canon-equal S4 Hindi main==rev3: True rev2==rev3: True
+canon-equal S5 Persian ZWNJ emoji main==rev3: False rev2==rev3: True
+canon-equal H1 coloured output main==rev3: True rev2==rev3: True
+canon-equal H2 colour inside a word main==rev3: True rev2==rev3: True
+canon-equal W worst: Persian + colour inside a word + percent main==rev3: True rev2==rev3: True
+shape | chars | main cpu | rev2-canon cpu | rev3-canon cpu | fastpath cpu | rev3 estimate | rev3/main | rev2/main
+S1 plain ASCII log | 65536 | 0.098 | 0.098 | 0.102 | 0.0002 | 0.103 | 1.04 | 0.99
+S1 plain ASCII log | 262144 | 0.393 | 0.395 | 0.392 | 0.0007 | 0.393 | 1.00 | 1.00
+S2 tab table | 65536 | 0.100 | 0.101 | 0.101 | 0.0002 | 0.101 | 1.00 | 1.00
+S2 tab table | 262144 | 0.403 | 0.406 | 0.404 | 0.0007 | 0.405 | 1.01 | 1.01
+S3 JSON lines | 65536 | 0.099 | 0.100 | 0.098 | 0.0002 | 0.099 | 1.00 | 1.01
+S3 JSON lines | 262144 | 0.392 | 0.397 | 0.392 | 0.0007 | 0.393 | 1.00 | 1.01
+S4 Hindi | 65536 | 0.211 | 0.199 | 0.177 | 0.0094 | 0.186 | 0.88 | 0.95
+S4 Hindi | 262144 | 0.786 | 0.814 | 0.741 | 0.0406 | 0.782 | 0.99 | 1.04
+S5 Persian ZWNJ emoji | 65536 | 0.341 | 0.340 | 0.318 | 0.0248 | 0.343 | 1.01 | 1.00
+S5 Persian ZWNJ emoji | 262144 | 1.417 | 1.438 | 1.313 | 0.1329 | 1.446 | 1.02 | 1.01
+H1 coloured output | 65536 | 0.060 | 0.060 | 0.061 | 0.0000 | 0.061 | 1.01 | 1.00
+H1 coloured output | 262144 | 0.239 | 0.238 | 0.240 | 0.0000 | 0.240 | 1.01 | 1.00
+H2 colour inside a word | 65536 | 0.079 | 0.080 | 0.080 | 0.0000 | 0.080 | 1.01 | 1.00
+H2 colour inside a word | 262144 | 0.323 | 0.319 | 0.319 | 0.0000 | 0.319 | 0.99 | 0.99
+W pass cpu 0.410 | views cpu 0.118 | main end-to-end 1.566 finished
+W rev-2 bound (18 passes, 2 views sets): estimate 7.61 s cpu at the cap; largest size under the 6 s budget about 206713 chars
+W rev-3 bound (10 passes, 1 views set): estimate 4.21 s cpu at the cap; largest size under the 6 s budget about 262144 chars
+done
+rc=0
+ 17:03:37 up  3:35,  0 user,  load average: 5.69, 4.78, 4.85
