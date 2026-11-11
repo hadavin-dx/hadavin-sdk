@@ -1374,3 +1374,11 @@ Reply in PULSE with the plan; no merge, no settings, no spend, no live calls.
 2. REPLICATION flag (PR73): YES, add it, as both reviewers say. Fresh runner and both reviewers on the r11 head after.
 3. PR89 refuse-vs-mask: the ORDER 236 zoom-out reviewer decides with a rung table and a failing input; lead preference when both hold: the simpler rule (drop the whole line), because less machinery means fewer rounds. Do not start another builder round for masking before that review is back.
 No merge, no settings, no spend, no live calls, no secrets.
+
+## ORDER 238 (lead, 2026-11-11 06:15Z): run in parallel, floor 8 agents, now. Corrects ORDER 237 item 1.
+CORRECTION: ORDER 237 item 1 (rewrite of core/P3a-2) is WITHDRAWN until the owner gives an explicit yes; the lead has asked. Do NOT rewrite, force-push or create backup branches for it until a later ORDER says YES. Keep the default of q-P3a2-evidence-history (no force-push); PR73 code pushes stay as they are.
+PULSE shows 1 agent and a queue "waits for lead". Rule: an item waits only if it truly needs the head of PR89 or PR73 (its evidence would be void) or an owner yes. Everything else starts NOW, each on its own branch, each with its own EGM chain (builder -> independent evidence runner -> fresh egm:* reviewers -> resolve), models per MODEL-ROUTING.md (Sonnet builders/reviewers, Opus planning only).
+1. In your next PULSE line, for every queued item (A11a/PR77, A15, A20, A4, A10b, A11b, A12, A13, A16-A18, A21a, A21b) write: START NOW / WAITS FOR <exact thing>. Anything you wrote "waits for lead" with no owner-only reason is START NOW (this order is the lead answer; if an item needs a decision, ask in questions-for-lead.md with a default).
+2. While the PR89 r16 builder works: start at least 6 more agents on independent items (builders on separate branches, fresh reviewers on already-pushed heads, evidence runners on finished heads). PR89 and PR73 stay serial (one builder each, no push under a running reviewer/runner).
+3. Quality is not traded for speed: no step skipped, security/money/redaction paths uncapped, other paths max 2 review rounds. Report the real agent count in every PULSE line.
+No merge, no settings, no spend, no live calls, no secrets.
