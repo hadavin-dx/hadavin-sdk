@@ -1466,3 +1466,7 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | PR89 r25 | EV + design + codebase | 22:55Z | 60 min | RUNNING |
 | Q8a-1 r8 | EV + design + codebase | 23:01Z | 60 min | RUNNING |
 | PRH r-next | design + codebase | 23:02Z | 30 min | RUNNING (EV pending) |
+| a5069d97 | PR H fix batch b4 builder | 23:22Z | 90 min | RUNNING, checkpoint /home/user/build/B-PRH-b4-checkpoint.md |
+| aca36365 | Q8c-1 r6 fix builder | 23:22Z | 90 min | RUNNING |
+| a769587c | PR89 r26 fix builder | 23:22Z | 90 min | RUNNING |
+| ab69eabb | Q8a-1 b8 fix builder | 23:22Z | 90 min | RUNNING |
