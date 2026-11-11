@@ -157,9 +157,10 @@ pinned interpreter. PUNCTUATION is not folded: the Unicode hyphen (U+2010) and t
 apostrophe, so "INV-2026" and "INV" + U+2212 + "2026" are different, and so are "O'Brien" and "O" + U+2019 + "Brien" in ``could_be_same_person``
 (corpus rows r114 to r117, strict expected failures). ``has_mixed_script`` is the fail-closed backstop: a word that mixes Latin
 with Cyrillic, Greek, Armenian, Cherokee, Coptic, Georgian, Hebrew, Lisu or another look-alike-rich script is a deny signal whatever the
-table knows. Property: ``fold(x + mark) == fold(x) == fold(mark + x)`` for any non-spacing or enclosing mark (Mn, Me), format, control,
-private-use, surrogate or unassigned character (the nine dropped categories), with the one exception above (U+0345 after a Greek letter, for
-the single spelling variant (b) only); for the spelling variants, any such mark, U+0345 included, leaves a shared spelling variant
+table knows. Property: ``fold(x + mark) == fold(x) == fold(mark + x)`` for any non-spacing or enclosing mark (Mn, Me), format, private-use, surrogate or unassigned character and any control character that is not
+white space, with two exceptions: the one above (U+0345 after a Greek letter, for the single spelling variant (b) only) and a white-space control
+(tab, line feed, vertical tab, form feed, carriage return, U+001C to U+001F, U+0085) or a line or paragraph separator (Zl, Zp), which becomes a
+space (``fold("admin\\n") == "admin "``); ``identity_key``, ``squeeze`` and ``could_be_same_person`` are unaffected by those; for the spelling variants, any such mark, U+0345 included, leaves a shared spelling variant
 (``could_be_same_person(x + mark, x)``). The property does NOT hold for a spacing mark (Mc), a modifier letter (Lm) or a modifier symbol (Sk) in the
 spelling variants; the marks-dropped views of ``fold_views`` and ``squeeze_views`` hold it for those.
 """

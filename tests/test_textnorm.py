@@ -96,6 +96,17 @@ def test_fold_is_stable_under_combining_marks_format_unassigned_and_tag_characte
     )
 
 
+def test_a_white_space_control_or_separator_becomes_a_space_and_the_identity_functions_ignore_it():
+    """The stability property above does NOT cover them: step 5 turns each into a space. identity_key, squeeze and could_be_same_person are unaffected."""
+    for cp in (0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x1C, 0x1D, 0x1E, 0x1F, 0x85, 0x2028, 0x2029):
+        c = chr(cp)
+        assert fold("admin" + c) == "admin " != fold("admin"), f"U+{cp:04X}"
+        assert fold(c + "admin") == " admin"
+        assert identity_key("admin" + c) == identity_key("admin")
+        assert squeeze("admin" + c) == squeeze("admin")
+        assert could_be_same_person("admin" + c, "admin")
+
+
 def test_fold_covers_the_listed_look_alikes_and_all_map_to_ascii():
     listed = {0x405: "S", 0x406: "I", 0x408: "J", 0x423: "Y", 0x41E: "O", 0x455: "s", 0x3B9: "i", 0x3BA: "k", 0x3C1: "p", 0x3C4: "t",
               0x3C5: "u", 0x3C7: "x", 0x501: "d", 0x131: "i", 0x130: "I", 0x585: "o", 0x57D: "u", 0x555: "O", 0x54D: "U", 0x3BF: "o",
