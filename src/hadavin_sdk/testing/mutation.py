@@ -1,23 +1,37 @@
 """Judge one mutation-test run by the REASON for the kill, not only the exit code.
 
-Harness contract (the runner is ``tools/mutation_runner.py``, not shipped; this judges one run): revert one guard in a copy of the package, run the
-targeted tests, read the JUnit file ONCE with ``read_junit(xml)`` and call ``judge_report(returncode, report, expect=..., pinned=...)``. That is the
-one call that judges a run correctly: a run whose first failing case is a fixture error or a test file that could not be collected is ``ERROR``
-there (no test ran as written, so it is never a kill). ``judge(returncode, test_id, first_line, ...)`` judges the two plain values only: it
-cannot know about a fixture or collection failure, so a harness that feeds it the output of ``first_failure_junit(xml)`` alone can count a
-fixture error as a kill. ``first_failure_junit(xml)`` extracts the id and the first ``E `` line (robust for ids that contain ``-``,
-``|`` or ``[...]``); ``first_failure(stdout)`` parses ``-rf`` text and is only safe for ids without `` - ``.
+A *mutant* is one deliberate bug put into a copy of the code. It is *killed* when a test fails because of it. The harness that runs mutants is
+``tools/mutation_runner.py`` (a developer tool, not shipped); this module judges one run of it.
 
-Verdicts: SURVIVED (exit 0), NO_TESTS (exit 5), ERROR (any other exit code except 1, and exit 1 when no failing test id is known: a failing run that
-names no test cannot have been killed by one), WRONG_REASON (``expect`` is not in the first error
-line; the test id is NOT searched, ``pinned`` is what ties a kill to its test), OTHER_TEST (not the test pinned in a reviewed baseline: ``Mutant.pinned`` of ``tools/mutation_runner.py``), CRASH (the first line is not an AssertionError, or it matches a
-``crash_markers`` pattern such as an executor's ``denied:internal_error``), KILLED (an AssertionError, the intended way). Only an
-AssertionError (or ``Failed: DID NOT RAISE``) first line is KILLED; anything else (KeyError, TypeError, an import error, ``pytest.fail``
-with another message) is CRASH, so a mutant that merely breaks the code is not counted as an assertion kill. A runner should count CRASH
-as a failure unless the mutant says a crash is the intended reaction.
+How a harness uses this module: put one mutant into a copy of the package and run the targeted tests with a JUnit result file (the XML file
+pytest writes). Read that file ONCE with ``read_junit(xml)``. Then call ``judge_report(returncode, report, expect=..., pinned=...)``. That
+is the one call that judges a run correctly. A run whose first failing case is a fixture error (a failure in the setup or teardown of a test)
+or a test file that could not be collected is ``ERROR``: no test ran as written, so it is never a kill.
 
-Limits: an ``assert`` inside the package code that a mutant trips looks like an assertion kill; the judge sees only text. ``expect`` must
-be at least 4 characters (a one-letter fragment matches almost anything).
+Two lower-level helpers exist. ``judge(returncode, test_id, first_line, ...)`` judges the two plain values only. It cannot know about a
+fixture or collection failure, so a harness that feeds it the output of ``first_failure_junit(xml)`` alone can count a fixture error as a
+kill. ``first_failure_junit(xml)`` returns the id and the first line that starts with ``E `` of the first failing case (it copes with ids that
+contain ``-``, ``|`` or ``[...]``). ``first_failure(stdout)`` reads the short failure list of pytest's ``-rf`` option and is safe only for ids
+without `` - ``.
+
+Verdicts:
+
+- SURVIVED: exit code 0.
+- NO_TESTS: exit code 5.
+- ERROR: any other exit code except 1. Also exit code 1 when no failing test id is known (a failing run that names no test cannot have been
+  killed by one).
+- WRONG_REASON: ``expect`` is not in the first error line. The test id is NOT searched; ``pinned`` is what ties a kill to its test.
+- OTHER_TEST: the failing test is not the test named in ``pinned`` (``Mutant.pinned`` in ``tools/mutation_runner.py``).
+- CRASH: the first line is not an AssertionError, or it holds one of the ``crash_markers`` (texts or patterns the caller gives for failures
+  that must count as a crash, for example ``denied:internal_error``).
+- KILLED: the first line is an AssertionError, the intended way.
+
+Only an AssertionError (or ``Failed: DID NOT RAISE``) first line is KILLED. Anything else (KeyError, TypeError, an import error,
+``pytest.fail`` with another message) is CRASH, so a mutant that merely breaks the code is not counted as an assertion kill. A runner should
+count CRASH as a failure unless the mutant says a crash is the intended reaction.
+
+Limits: an ``assert`` inside the package code that a mutant trips looks like an assertion kill, because the judge sees only text.
+``expect`` must be at least 4 characters (a one-letter fragment matches almost anything).
 """
 
 from __future__ import annotations
