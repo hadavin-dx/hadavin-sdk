@@ -1124,7 +1124,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | af5482b9 | PR89 egm-zoom-out (ORDER 236 pt 1): simpler rule? | 03:37Z | expected ~03:50Z; check 03:50Z; then file-sliced reviewers | running |
 | af5482b9 | PR89 egm-zoom-out | 03:37Z | closed ~03:44Z: verdict PARTLY (literal drop-line rule fails; refuse-then-plain holds), saved round-w2-r12-zoomout.md | closed |
 | a8904ec1 | PR89 builder round 12 (resumed) | 03:47Z | cut to refuse-then-plain, differential, deletion table; check 04:50Z | running |
-| a622796d | PR89 r13 reviewer (egm-design) slice tools/mutation_runner.py, head 0cd10b9 | 04:11Z | 04:30Z | 04:11Z | running | save report, ledger rows |
-| a4aead31 | PR89 r13 reviewer (egm-codebase-details) slice test_mutation_runner_keywords.py | 04:11Z | 04:30Z | 04:11Z | running | save report, ledger rows |
+| a622796d | PR89 r13 reviewer slice runner | done 04:14Z | | | closed (round-w2-r13-design-runner.md) | |
+| a4aead31 | PR89 r13 reviewer slice keyword tests | done 04:17Z | | | closed (round-w2-r13-codebase-keywordtests.md) | |
 | add433e4 | PR89 r13 reviewer (egm-implementation-readiness) slice mutants, manifest, CHANGELOG, others | 04:11Z | 04:30Z | 04:11Z | running | save report, ledger rows |
 | a8904ec1 | PR89 builder r12 | done 04:09Z | | | closed (report 0cd10b9) | independent runner after reviews |

@@ -2399,3 +2399,9 @@
 | BL-core-a2-w2-r13-04 | handover/reviews/P89/round-w2-r13-design-runner.md | Major | PR89 | password-word lookbehind skips sslpassword/dbpassword/PGPASSWORD (M2) | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r13-05 | handover/reviews/P89/round-w2-r13-design-runner.md | Major | PR89 | lock file name is a 64-bit offline guess check of the DSN (M3) | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r13-06 | handover/reviews/P89/round-w2-r13-design-runner.md | Minor | PR89 | N4-N9 over-refusal of port colon, cost bound, U+2026, 1,000-hit wipe, docstring, cost sentence | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r13-07 | handover/reviews/P89/round-w2-r13-codebase-keywordtests.md | Major | PR89 | no secret test for COLLECTION/FIXTURE ERROR message masking (F1) | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r13-08 | handover/reviews/P89/round-w2-r13-codebase-keywordtests.md | Major | PR89 | canary-skip message never tested with a secret (F2) | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r13-09 | handover/reviews/P89/round-w2-r13-codebase-keywordtests.md | Major | PR89 | baseline-skip test can pass for the wrong reason (F3) | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r13-10 | handover/reviews/P89/round-w2-r13-codebase-keywordtests.md | Major | PR89 | fake credentials not built from parts, ~20 places (F4) | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r13-11 | handover/reviews/P89/round-w2-r13-codebase-keywordtests.md | Minor | PR89 | F5-F10 test gaps and wording | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r13-12 | handover/reviews/P89/round-w2-r13-codebase-keywordtests.md | Major | PR89 | 47 deleted tests: 'never weakened' unverifiable from diff; independent check against b855a8f needed (deletion table withheld, gitleaks) | OPEN | 2026-11-11 |
