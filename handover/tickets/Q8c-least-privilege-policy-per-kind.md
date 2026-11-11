@@ -1,290 +1,233 @@
-# Ticket Q8c (rev 1, draft, NOT yet reviewed): every cloud kind ships its minimum permission policy, a reason per permission, and a negative test
-Source: reviews/Q8/deps-audit.md F3; rule `.claude/rules/least-privilege-hard-rule.md` item 5 (bible R365); code read at origin/main 2a8c2aac (the 22 kind files were compared byte for byte with `/home/user/build/EV-P89-db0d9eb/src`, all the same, 2026-11-11). Branch: NEW `core/q8c-policy-per-kind` from origin/main; draft PR against main; never merged by the builder. Path class: security (least privilege): result-review rounds uncapped. Depends on: nothing merged first; Q8a-1 touches only app.py, config.py and CHANGELOG (CHANGELOG is the one shared file). This ticket is longer than 250 lines because section 6 is the per-kind policy table for 19 kinds, which the builder copies from.
+# Ticket Q8c (rev 2, draft, NOT yet reviewed; slice 1): ten backend kinds ship their smallest permission set, a reason per permission, and an honest negative test
+Source: reviews/Q8/deps-audit.md F3; rule `.claude/rules/least-privilege-hard-rule.md` item 5 (bible R365); plan review round 1 (reviews/Q8c/plan-r1-zoomout.md, plan-r1-design.md); decision D-010. Revision 1 is in `Q8c-rev1-superseded.md` (do not build from it). Code read at origin/main 2a8c2aac: source export `/home/user/build/q8a2-dryrun/main-2a8c2aa/src`, tests of main from `/home/user/build/EV-P3a2-main-2a8c2aa/tests` (that folder exists; its `src` is identical to the export, `diff -rq` empty). Branch: NEW `core/q8c-policy-per-kind` from origin/main; pull request against main; never merged by the builder. Path class: security (least privilege), result-review rounds uncapped. Depends on: nothing merged first; CHANGELOG.md is the one file shared with Q8a-1.
 
-Words used here, one meaning each. A "kind" is one backend choice in `backends/table.py` (for example `aws_kms`). A "policy" is the declared smallest set of permissions one kind needs. A "grant" is one permission in that set. The "never-list" is the permissions that identity must not be given. An "operation" is one request the kind's code sends, as a test fake sees it.
+Words, one meaning each. A "kind" is one backend choice (for example `aws_kms`). A "grant" is one permission a kind needs. The "never-list" is the short list of permissions that would undo what the kind promises. An "operation" is one request the kind's code sends, written as a pair (verb, operation). "Code equals declaration" names tests that compare our code with our own list. "Real engine refuses" names tests in which software we did not write (a Vault server, the `moto` AWS emulator) reads the generated policy text and refuses a request.
 
-## 0. What is not known (read first)
-- **Every permission name in section 6 is UNVERIFIED-NEEDS-LIVE-CHECK.** The author had no network documentation access and checked none against a live vendor page today. Counts: 40 grant rows and 19 never-lists holding 169 entries, so 209 unverified items (counted by script, end of section 6). Each row carries the author's confidence (H, M, L); L rows are listed again in section 11. The builder or lead checks each name against the vendor's own page, writes the page and the date beside it, and corrects the table BEFORE the build starts.
-- No test was run and no code was written for this ticket.
-- A fake that enforces our own declared policy proves two things only: the code makes no request the policy lacks, and the policy holds no permission the tests never use. It does NOT prove that the real cloud accepts these names or that they are enough. That proof needs a real account (section 9, owner step).
-- Not read: `store/postgres.py` beyond lines 100-125, `backends/factory.py` beyond `hosts`, `audit/chain.py` beyond lines 320-360, the contract fakes beyond their first lines and function lists.
+## 0. What is not known, and what revision 1 got wrong (read first)
+- **No permission name in section 5 has been checked against a vendor page by this author** (no network). A separate evidence runner with network access (EV-Q8c-live, started 14:08Z UTC / 19:38 IST) is checking them; its result was not available when this was written. Every row is therefore `verified = None` today.
+- **Only 2 of the 10 kinds get a test in which a real engine reads the policy text (the two Vault kinds).** The S3 anchor gets a partial test on an emulator. The other 7 get "code equals declaration" only: such a test cannot tell whether the permission NAME is right. Section 6.2 says this per kind. The studio rule's "negative test" is fully met only where 6.2 says "real engine".
+- Nothing was built. The author ran two read-only experiments on main (section 4.3 prototype, section 3 moto check); scripts and output are in `/tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/` (`extract.py`, `spike.py`, `spike-out.txt`; session folder, may not persist; the builder re-creates both as step 1 and step 2).
+- Author's slip in that moto check: the first run let one un-checked call through (the count of set-up calls was 4, the real number is 3), so its first "allowed" line was false. Corrected and re-run; the test in 6.3 carries a control for this.
+- False statements of revision 1, corrected here: (a) "the repo chose not to use moto": wrong; `pyproject.toml:52` pins `moto[s3,kms,secretsmanager]==5.2.5` and four test files use it (tests/test_p4_secrets.py:11, tests/contracts/kinds/audit_neutral.py:16 and :80, tests/warden_port/test_audit_chain.py:27). (b) "the code refuses verb `watch`": wrong; `watch` is in `_READ_VERBS` (sources/kubernetes.py:39) and is refused only on `secrets` (:123). (c) Test-fake locations: the Slack fake is a local server in tests/fixtures/fake_slack.py:8 used by tests/contracts/kinds/channel_slack.py:10-12; the Kubernetes fake is `FakeApi` in tests/contracts/test_sources.py:55; `GuardrailClient` (tests/contracts/kinds/detectors.py:55) fakes `apply_guardrail` only, no start-up `get_guardrail`; both Vault fixtures use ONE admin token for set-up and for the kind (tests/contracts/kinds/secrets_neutral.py:42-67, audit_neutral.py:43-60). (d) A verifier identity that never signs is impossible today (section 8, finding 1). (e) The S3 rows lacked the encryption-key rows and stated a retention-days condition as if known; both are UNVERIFIED (section 9). (f) An empty Vault `path_prefix` (the default, backends/table.py:285) makes the read path the whole mount; revision 1 only "warned".
+- Not read: `tools.py` `fetch` (the run-time binding of a Kubernetes operation id to its path, claimed by the comment at sources/kubernetes.py:24-25); `tests/test_no_hardcoded_values.py` beyond its header (whether it accepts the new literals in all ten modules is not established; the builder runs it after the first literal).
 
 ## 1. Problem in plain words
-The core can sign in to AWS, Azure, Google Cloud, Vault, Slack and Kubernetes. For none of these does the repository say which exact permissions the code needs. An operator who sets up a client's cloud has to guess, and a guess usually ends as a broad built-in role. The studio's rule says every kind ships three things: the policy text, one reason per permission, and a test showing the identity is refused what it must not do. Today all three are missing for all 19 kinds (the one partial exception: Slack's scope is in `docs/slack-app-manifest.yaml` and tested at tests/test_p7_tick.py:536).
+The core can sign in to AWS, Vault, Slack and Kubernetes. The repository does not say which exact permissions the code needs, so an operator setting up a client's cloud has to guess and usually ends with a broad built-in role. The studio rule says every kind ships the policy text, one reason per permission and a test showing the identity is refused what it must not do. Today that exists only for Slack's scope (docs/slack-app-manifest.yaml, tests/test_p7_tick.py:530-538).
 
-## 2. Rung table (CODE-LAST v1; scale of 2026-11-06: 1 no-code tools, 2 our own core modules, 3 existing free tools, 4 free libraries, 5 our own new code)
+## 2. Scope
+In (slice 1, ten kinds): `vault` secrets, `vault_transit` signer, `kubernetes` source, `slack` channel, and the six AWS kinds `aws_secrets_manager`, `aws_kms`, `s3_object_lock`, `bedrock`, `bedrock_guardrail`, `postgres` with `iam_auth`.
+Out (each with where it goes):
+| item | goes to |
+|---|---|
+| Azure kinds (3), Google Cloud kinds (3), the model kinds that use an API key (`anthropic`, `gemini`, `openai_compat`) | slice 2, after their names are verified and the owner answers section 9 questions O2-O3 |
+| Separate identities inside one process; a verifier that cannot sign | audit F2 ticket (ledger BL-core-q8deps-F2b) |
+| Database roles and GRANT statements of the migrations | P3a-2 (in review) |
+| Any change to what a kind sends or accepts, including refusing an empty Vault `path_prefix` | section 8 findings; own tickets |
+| Explicit Deny statements, permission boundaries, organisation-wide deny policies, infrastructure code, CI deploy and break-glass identities | client delivery work |
+| Filling a policy from one deployment's config (`for_config`), a `hadavin-sdk policy` command, per-request target checks | not built (cut by review) |
+
+## 3. Rung table (CODE-LAST v1; scale of 2026-11-06: 1 no-code tools, 2 our own core modules, 3 existing free tools, 4 free libraries, 5 our own new code)
 | component | need | rung tried | evidence | what only our code gives | verdict |
 |---|---|---|---|---|---|
-| the policy text per kind | the exact permissions each kind's code needs, in the repository, before any cloud exists | 3: AWS IAM Access Analyzer policy generation (builds a policy from recorded account activity); Google Cloud role recommendations; no Azure tool known for data-level permissions | UNVERIFIED (author's memory, no live page 2026-11-11). They need a real account with weeks of real traffic, cover one cloud each (AWS: 6 of 19 kinds), and cannot fail a pull request | the list exists on day one, for all six platforms, and is tied to our code | KEEP, as DATA (a literal in each kind module, no logic). Access Analyzer becomes the cross-check at the first live run (section 9) |
-| are the AWS permission names real | catch a misspelt or invented name without a cloud account | 4: an offline AWS permission database: `parliament` or `policy_sentry` (open source, bundle the AWS permission list); botocore's own data (installed) lists API operations, not permission names | UNVERIFIED: licence, last release date and whether both still ship current data must be checked live by the builder (R450) | nothing | CUT-TO-CONFIG+GLUE: one test-group dependency and about 15 test lines (guard G9). If the live check fails: no dependency; the lead's dated check against the AWS page stands instead and G9 is dropped |
-| refusing a request in tests with no cloud | a new API call with no grant must fail a test | 4: `moto` has an option that enforces IAM policies (AWS only; UNVERIFIED whether it covers Ed25519 signing, Object Lock headers and Converse; the repo already chose not to use moto, tests/contracts/aws_stub.py:1-2). 3: a real Vault server already runs in CI (.github/workflows/ci.yml:50-61). 2: our fakes already sit on every request (tests/contracts/aws_stub.py `respond`, http_fake.py `FakeAdapter`, vault_fake.py) | files read 2026-11-11 | one check for all six platforms at choke points that exist | Vault kinds: CUT-TO-CONFIG+GLUE (apply the generated policy to the real CI Vault server). Others: KEEP-CODE, test code only, one wrapper (about 120 lines) |
-| binding the code's calls to the policy | a policy line no code uses, or a call no line covers, fails CI | 3: `iamlive` (records the AWS calls a program sends and writes a policy; AWS only, needs real requests). 2: tests/test_lockin_guard.py already has the syntax-tree helpers (`_fold`, `module_name`, `_source_docstring` :215-221) and sources/kubernetes.py:27-32 already binds operation ids to method and path | UNVERIFIED for iamlive; files read 2026-11-11 | the only thing that knows which calls OUR modules make | KEEP-CODE (guard test, reuses those helpers) |
-| the page operators copy | one page per release with every kind's policy | 2: generated from the same data; Slack's manifest file already exists | docs/slack-app-manifest.yaml read 2026-11-11 | stays equal to the code because a test regenerates and compares | KEEP thin glue. SCOPE CUT: copy-ready native text only where we can test the format offline (AWS IAM JSON, Vault policy, Kubernetes Role). Azure, Google Cloud and API keys are shown as a table of permissions; no native file is generated for them |
-| proof on a real cloud | the real service accepts the policy and refuses the never-list | 3: AWS policy simulator and Access Analyzer validation, `kubectl auth can-i`, Google policy troubleshooter | UNVERIFIED; all need accounts, some cost money | nothing | NOT BUILT HERE: owner step at the first live run (section 9) |
-Why a static declared policy is still needed although cloud tools exist: every cloud tool above works after the fact, on one cloud, on a real account. Rule item 5 asks for the policy to ship WITH the change. Honest limit of what we build: it keeps code and declared policy equal; it cannot tell whether the declaration is right for the real service.
+| policy text per kind | the permissions each kind needs, in the repository, before any cloud exists | 3: AWS IAM Access Analyzer policy generation, built from recorded account activity | UNVERIFIED (author's memory). Needs a real account with real traffic; cannot fail a pull request | the list exists on day one and is tied to our code | KEEP as DATA: one `POLICY` literal per kind module, no logic |
+| are the names real | catch an invented or misspelt name | 3: the vendor's own pages, read by a separate evidence runner; result stored per row as `verified = (date, url)` | running (EV-Q8c-live), no result yet | nothing | CUT-TO-CONFIG+GLUE: data fields plus one saved, dated copy of the AWS action lists for the services used (section 4.5); no new library |
+| a real engine refuses, AWS | the generated AWS JSON is read by something we did not write | 4: `moto` 5.2.5, already pinned (pyproject.toml:52), with its IAM check on (`moto.core.set_initial_no_auth_action_count`) | author's run 2026-11-11 on main's venv: S3 honours action and resource (put, get, list, delete; names outside `anchors/` refused); S3 ignores conditions (a list with no prefix was allowed under an `s3:prefix` condition), does not ask for `s3:PutObjectRetention` and authorises the PutObjectRetention call as `s3:PutObject`; for every non-S3 service moto compares the policy's Resource with the text `*` (moto/core/responses.py:436-439), so the resource-scoped Secrets Manager policy refused even the allowed read; `?` in a Resource raised `re.PatternError` (moto/iam/access_control.py:572-576). moto has no Ed25519 KMS keys (tests/contracts/kinds/audit_chain.py:3, checked there on 5.2.4, not re-checked on 5.2.5), no Converse (llm_wire.py:2), no guardrails (detectors.py:7) | nothing | USE for the S3 anchor, action and resource only. NO home-made enforcing fake is built (revision 1's enforcer is CUT) |
+| a real engine refuses, Vault | same, for Vault policy text | 3: the real Vault server already in CI (.github/workflows/ci.yml:51-64, :90) | file read 2026-11-11; the admin calls needed (`sys/policies/acl/<name>`, `auth/token/create` with `no_default_policy`) are from memory, UNVERIFIED until the run | nothing | CUT-TO-CONFIG+GLUE: two test fixtures |
+| a real engine refuses, Kubernetes | the credential is read-only | 2: the kind already asks the real cluster at every start-up what the credential may do and refuses write verbs, shell subresources and reading secrets (sources/kubernetes.py:100-125, :325-351) | code read 2026-11-11 | nothing new | CUT: no test cluster; tests feed the generated Role to that same function |
+| code calls equal the declared list | a new call with no grant, or a grant no call uses, fails CI | 3: `iamlive` (records AWS calls of a running program; AWS only; UNVERIFIED). 2: tests/test_lockin_guard.py `_fold` :565, `module_name` :89, `Pending` :27 | prototype by the author ran on all ten modules of main (4.3) | only a test over OUR modules can know which calls they make | KEEP-CODE, test code only |
+| the page operators copy | one page with every kind's policy | 2: generated from the same data | n/a | stays equal to the code because a test regenerates and compares | KEEP thin glue in `tools/` |
+| S3-compatible real engine (MinIO in CI) | conditions and lock permissions that moto does not model | 3: a MinIO service container | UNVERIFIED: licence terms for CI use, current maintenance state, which condition keys it honours | n/a | NOT in slice 1; question L1 |
+| proof on a real cloud | the real service accepts the policy | 3: AWS policy simulator, Access Analyzer validation | UNVERIFIED; needs accounts | nothing | NOT BUILT: owner step O1 |
 
-## 3. Design
-### 3.1 Types (in `backends/table.py`; plain dataclasses, no vendor word, no new import)
+## 4. Design
+### 4.1 Data: one literal per kind module (ten modules; data only, no import, no logic)
 ```python
-@dataclass(frozen=True)
-class Grant:
-    action: str                 # the platform's own permission name, exact; never holds '*'
-    resource: str               # template: {field} is this kind's setting, <NAME> is filled in by the operator
-    reason: str                 # one plain sentence: which behaviour of the kind needs it
-    calls: tuple[str, ...]      # how the call is written in the kind module (3.3)
-    operations: tuple[str, ...] # the same call as a test fake sees it (3.4)
-    used_by: tuple[str, ...]    # any of "start_up", "runtime", "verify"
-    when: tuple[str, Any] | None = None  # (setting, value): the grant applies only then
-    condition: str = ""         # the recorded bound; required when `resource` holds '*'
-    target: str = ""            # what the request may name, as the fake sees it; "" = any (operation level only)
-
-@dataclass(frozen=True)
-class FreeCall:                 # a request that needs no permission (a sign-in, a self-check)
-    calls: tuple[str, ...]; operations: tuple[str, ...]; reason: str
-
-@dataclass(frozen=True)
-class Policy:
-    platform: str               # "aws_iam" | "azure_rbac" | "gcp_iam" | "vault" | "slack" | "kubernetes_rbac" | "api_key"
-    grants: tuple[Grant, ...]
-    never: tuple[tuple[str, str], ...]   # (permission name, why it must not be granted)
-    credential: str             # how the identity signs in and how long the credential lives
-    free: tuple[FreeCall, ...] = ()
+POLICY = {
+  "platform": "aws_iam",                    # or "vault", "kubernetes_rbac", "slack"
+  "services": ("s3",),                      # AWS only: the client names the module builds
+  "credential": {"how": "...", "lifetime": "short" | "long", "exception": "required when long: why, and the ticket that removes it"},
+  "grants": ({
+      "name": "s3:ListBucket",              # the platform's own permission name; never holds * or ?
+      "resource": "arn:aws:s3:::{bucket}",  # {field} = this kind's setting, <NAME> = filled in by the operator
+      "bound": "",                          # prose; REQUIRED when resource holds * or ?: what limits the wildcard
+      "conditions": (("StringLike", "s3:prefix", "anchors/*"),),   # (operator, key, value template)
+      "operations": (("s3", "ListObjectsV2"),),                    # the calls that need this grant
+      "rides_on": None,                     # or the operation of another grant: this one has no call of its own
+      "no_wire": "",                        # or the reason no request is sent at all
+      "applies_when": "",                   # plain words, e.g. "the bucket encrypts with a key the client manages"
+      "reason": "lists the anchors when the audit trail is verified",
+      "verified": None,                     # or ("2026-11-11", "https://...") = checked against the vendor's page
+      "confirmed_live": None,               # or ("date", "which account, masked") = accepted by a real account
+  },),
+  "free": ({"operations": (...), "reason": "..."},),   # requests that need no permission (a sign-in, a self-check)
+  "never": ({"type": "action" | "role" | "path" | "prose", "name": "...", "reason": "...", "verified": None},),
+}
 ```
-`Entry` gains `policy: str | None = None`, a `"module:NAME"` reference in the same style as `factory`. `sources/kinds.py` `SourceKind` gains the same field (the Kubernetes source is not in TABLE).
-### 3.2 Where the policy data lives (a deviation from the audit's wording, stated)
-The audit says "a `policy` field on Entry holding" the data. Proposed instead: the field holds a REFERENCE; the data is a module-level literal `POLICY = {...}` (plain dict, list, tuple and string literals only) in the kind module that makes the calls. Reasons: (1) tests/test_lockin_guard.py rule c refuses vendor words in neutral modules (`PATTERNS` "bare vendor name" matches a string starting `kms:` or `s3:`, "ARN" matches `arn:aws`); kind modules are where vendor words are allowed; (2) a pull request that adds an API call and its grant touches one file. Alternative for the reviewers: write the data inline in TABLE (the guard skips TABLE nodes, test_lockin_guard.py `_skipped_table_nodes`); cost: about 250 more lines in table.py. The author recommends the reference.
-New neutral module `backends/policy.py` (standard library only): `load(reference) -> Policy` reads the module's SOURCE FILE and evaluates only the `POLICY` literal with `ast.literal_eval` (no import, so no optional extra is needed and no code runs; precedent `_source_docstring`); `for_config(entries) -> list[tuple[str, str, Policy]]` (twin of `factory.hosts`) keeps the grants whose `when` matches the settings and fills `{field}`; `render(...)` (section 7). The postgres kind's reference points at `store/auth_aws.py` (the only AWS call of the store).
-### 3.3 Guard test (new `tests/test_policy_guard.py`; each rule has a plant test in the repo's `test_plant_*` style)
-- G1 needs a policy: every TABLE kind with `hosts is not None` or `extra in {"aws", "azure", "gcp", "anthropic"}`, every `sources.kinds.KINDS` entry, and `store/postgres` (named explicitly: its AWS path is a setting). Read with `getattr(entry, "policy", None)` so that on main it fails with the list of 19 kind names, not with an AttributeError.
-- G2 no wildcard: `*` or `?` never in `action`; `*` in `resource` only with a non-empty `condition`.
-- G3 fields are real: every `{field}` in `resource` and `target`, and every `when` field, exists on the kind's settings model.
-- G4 nothing empty: `reason`, `credential`, each never-list reason; the never-list has at least one entry; no name is both granted and on the never-list.
-- G5 policy to code: every `calls` entry is found in the policy's module, either as a method call of that name or inside a string constant (folded with `_fold`). A grant no code uses fails.
-- G6 code to policy, SDK kinds: every method call in the module whose name is an API method of the SDK client it builds must be in some grant's or free call's `calls`. AWS: the method list comes from botocore's own service data for each `boto3.client("<service>")` literal (offline, no credentials; precedent aws_stub.py REGION), plus `generate_db_auth_token`. Azure and Google: the public methods of the client classes the module imports (needs the extras: skipped on a default install, and CI must fail if it was skipped). A short allowlist names methods that send nothing (`blob`, `bucket`, `with_options`, `get_paginator`), each with a reason; a stale allowlist entry fails.
-- G7 code to policy, plain-HTTP kinds (vault, vault_transit, slack, gemini, openai_compat, kubernetes): every call to the module's one request function (named in the test per module: `_call`, `authed`/`call`, `post_json`, `_get`/`_items`) must have its folded path or method-name argument matched by a `calls` entry.
-- G8 cross-checks with code that exists: the Slack policy's scopes equal the bot scopes in docs/slack-app-manifest.yaml; the Kubernetes policy, rendered as RBAC rules, makes `sources.kubernetes.rules_problems` return an empty list (the policy passes the code's own read-only check).
-- G9 (only if the rung-4 library passes its live check) every `aws_iam` action exists in the offline permission database.
-- G10 the committed page equals `render` output (section 7).
-### 3.4 Negative tests with no cloud: a fake that enforces the declared policy
-New `tests/contracts/policy_enforcer.py`: `Enforcer(policy, settings, used_by)` with `allow(operation, target) -> bool` (deny by default; allow only when a grant or free call lists the operation, its `when` matches, its `used_by` is included and `target` matches) and `seen` (the operations asked). `operations` grammar: AWS `"<service>:<ApiOperationName>"` exactly as aws_stub.py's `respond` receives `model.name`; every other platform `"METHOD path-regex"` in the READ_OPERATIONS style, matched against the request path. It is wired in at the choke points that already exist, not per test:
-| platform | choke point (exists) | what a refusal looks like (the platform's own shape, so the kind's real error handling runs) |
+A grant holds exactly one of: `operations` (non-empty), `rides_on`, `no_wire`. `verified` and `confirmed_live` are two different facts and are never merged.
+### 4.2 Where the helper code lives (nothing new in `src/` except the ten literals)
+`tools/policy_page.py` (standard library only; precedent tools/mutation_runner.py, imported by tests as `tools.*`): plain dataclasses `Grant`, `Never`, `Policy`; `load(path)` reads the module's SOURCE text and evaluates only the `POLICY` literal with `ast.literal_eval` (nothing is imported or run; returns None when the module has none); `render_aws`, `render_vault`, `render_kubernetes`; `python tools/policy_page.py --write | --check`. `backends/table.py`, `sources/kinds.py` and tests/test_lockin_guard.py `VENDOR_MODULES` are NOT changed. All ten modules are either already vendor modules for the lock-in guard (the six AWS modules, tests/test_lockin_guard.py:40-45; `approvals.slack_channel` :499) or hold no word its patterns match (Vault paths, Kubernetes verbs).
+### 4.3 The ONE code-to-declaration rule (family A1): extracted set EQUALS declared set, per module
+Extraction reads `ast.Call` nodes only, so docstrings and comments never count. Declared set = all `operations` of grants and free entries. Any difference, either way, fails with the module, line and pair. Author's prototype on main found exactly the pairs below and the pass-through lines listed.
+| module | what is read | extracted pair | pairs on main | allowlisted lines (module, function, reason; a stale entry fails) |
+|---|---|---|---|---|
+| actions/secrets_aws.py, audit/signer_aws.py, audit/anchor_s3.py, llm/bedrock.py, store/auth_aws.py | first argument of `boto3.client(...)` must be a string literal = `services`; every attribute call whose name is an API method of those services (names from botocore's own service data, `xform_name`, offline); `get_paginator("<literal>")` counts as that operation | (service, API operation name); the three local signing helpers (`generate_db_auth_token`, `generate_presigned_url`, `generate_presigned_post`) as ("local", name) | (secretsmanager, GetSecretValue) :29; (kms, Sign) :32, (kms, GetPublicKey) :41; (s3, PutObject) :55, (s3, GetObject) :67 :78, (s3, ListObjectsV2) :73; (bedrock-runtime, Converse) :156; (local, generate_db_auth_token) :19 | none |
+| guard/bedrock_guardrail.py | same; service names are read from the call sites of its helper `_client` (:63, :66) | same; a method name present in two of the module's services fails as ambiguous | (bedrock, GetGuardrail) :47; (bedrock-runtime, ApplyGuardrail) :101 | `_client` :28-29 (forwards its own first argument to `boto3.client`) |
+| actions/secrets_vault.py | calls of `.authed(` and `.call(`: verb literal + path folded to a template (`{attribute}` per formatted value) | (verb, path template) | (GET, `{mount}/data/{path_prefix}{name}`) :115; (POST, `auth/{auth_mount}/login`) :138 | `authed` :101, :104 (passes its own arguments on) |
+| audit/signer_vault.py | calls of `._call(`, prefixed with the wrapper's own `{mount}/` | same | (POST, `{mount}/sign/{key_name}`) :52; (GET, `{mount}/keys/{key_name}`) :62 | `_call` :40 (adds `{mount}/`) |
+| approvals/slack_channel.py | first argument of `._call(` | (POST, Slack method name) | (POST, chat.postMessage) :124 :166 :195; (POST, chat.update) :184 | `_call` :51 (builds the URL from its argument) |
+| sources/kubernetes.py | the operation-id literal of `._get(`, `._items(`, `._call(` | operation id | k8s.list_deployments :232, k8s.list_events :247, k8s.pod_log :285, k8s.rules_review :328 | `_call` :168, `_get` :184, `_items` :203 (pass their arguments on) |
+Fail closed: a service name, verb, path, method name or operation id that is not a literal (or a foldable f-string) fails unless its line is on the allowlist above. Banned in these ten modules (each fails by name): `getattr` with a non-literal name, `_make_api_call`, `.meta.client`, `get_waiter`, `methodcaller`, `__getattribute__`. Kubernetes has two more equalities: extracted ids = keys of `READ_OPERATIONS` (sources/kubernetes.py:27-32) = declared ids; and each declared row's (API group, resource, verb) equals what the test derives from that id's path pattern in `READ_OPERATIONS` (a collection path gives `list`, an object or subresource path gives `get`).
+Stated bounds of this rule (printed on the page): it is name-based; it sees calls written in the kind module, not a client object handed to another module, and not the requests the SDK makes by itself to sign in (instance metadata, token exchange); it proves the list of CALLS is complete, never that a permission NAME is right.
+### 4.4 Data rules (family A2; each with a plant test in the repo's `test_plant_*` style)
+D1 `*` and `?` never in `name`; in `resource` only with a non-empty `bound`. D2 every `{field}` exists on the kind's settings model. D3 `reason` non-empty; `never` entries typed and reasoned. D4 exactly one of `operations` / `rides_on` / `no_wire`; a `rides_on` target is an operation of a grant in the same policy. D5 across all ten kinds: no `never` entry of type `action` equals any grant `name` (one process holds several kinds, so a contradiction would break a deployment). D6 `credential.lifetime == "long"` needs `exception`. D7 a `POLICY` that is not a pure literal, or has an unknown key, platform or never-type, is refused by `load` and never executed.
+### 4.5 Verified names (family A4)
+- `verified` is set only from the evidence runner's saved page text (date, URL). Slice-1 merge gate: **zero grants with `verified = None`** (a test).
+- Until then a name sits in `PENDING_NAMES` in tests/test_policy_guard.py, reusing `Pending` (tests/test_lockin_guard.py:27-34: reason, fix reference, decided, review-by; overdue and stale entries fail, as at :336-352). At merge only `never` entries may still be pending.
+- A kind with ANY grant or condition not verified gets NO copy-ready block on the page; the page shows its table with "not yet checked against the vendor's page".
+- `tests/fixtures/aws_actions_<date>.txt`: the action names of the services used (Secrets Manager, KMS, S3, Bedrock, RDS IAM sign-in), saved by the network evidence runner from the AWS service authorization reference, with URL, date and SHA-256 in its header. Test: every `aws_iam` grant and `action`-type never name is in it. Needs the lead to order the save (this author has no network).
+### 4.6 Rendering and the page
+- AWS: one JSON document per kind holding Allow statements only (one per grant, with its conditions). NO Deny statement is ever rendered. The never-list is shown as a table. The page says: one process uses one AWS role; attach the blocks of every kind that process runs.
+- Vault: policy text (`path "..." { capabilities = [...] }`). Kubernetes: one namespaced Role and RoleBinding per namespace, never a ClusterRole. Slack: no block; the manifest file is the copy-ready text.
+- A value put into a template must fully match its grammar, else the renderer refuses (it never escapes):
+| value | grammar | source |
 |---|---|---|
-| AWS | tests/contracts/aws_stub.py `stub_client` (new optional `enforce=`); the hand-written `kms_stub` (contracts/kinds/audit_chain.py:29), `GuardrailClient` (contracts/kinds/detectors.py:55) and `BedrockWire` (contracts/kinds/llm_wire.py:144) move onto `stub_client` or take the same hook | `ClientError`, code `AccessDeniedException` (`AccessDenied` for S3), HTTP 403 |
-| Azure, Google Cloud | tests/contracts/http_fake.py `FakeAdapter.send` | HTTP 403 with the service's error body; the SDK raises its own error |
-| Vault | CI: the REAL server. The test renders the policy (section 7), writes it with the root token, creates a token holding only that policy, and runs the kind's contract suite with it. Laptop: vault_fake.py takes the same hook | HTTP 403 |
-| Slack, Gemini, OpenAI-compatible | the fake behind `llm.common.post_json` that each kind's contract fixture already uses | Slack: `{"ok": false, "error": "missing_scope"}`; others HTTP 403 |
-| Kubernetes | the fake `fetch` in tests/contracts/sources.py | HTTP 403 Status |
-Each kind's existing contract suite runs through the enforcer (fixture change in tests/contracts/kinds/*, no new suite). Then:
-- N1 a call without a grant fails: the kind's contract tests pass only if every request was allowed.
-- N2 no unused grant: after the kind's suite plus one start-up and one verify run, every grant's operation is in `seen`.
-- N3 one grant removed, one test fails: a parametrised test removes each grant in turn and expects the kind's smoke path to be refused with the platform's refusal (one case per grant, in-process, no mutation run needed).
-- N4 the never-list is refused: for each never-list entry that names a wire operation, a raw client behind the enforcer is refused (AWS examples: `PutSecretValue`, `ScheduleKeyDeletion`, `DeleteObject`). On Vault in CI this runs against the real server: write to the secret path, read another prefix, rotate and export the Transit key are each answered 403.
-- N5 wrong target refused (kinds whose target comes from settings): signing with another key, writing an anchor outside `anchors/`, reading a Vault path outside `path_prefix`, a Kubernetes namespace not configured.
-- N6 a refusal message never holds the secret value, the token or the request body.
-- N7 identity split: with `used_by=("runtime",)` the anchor's list call is refused; with `used_by=("verify",)` the anchor's write is refused.
+| region | `[a-z]{2}(-[a-z]+)+-[0-9]` | author, UNVERIFIED |
+| bucket | `[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]` | author, UNVERIFIED |
+| KMS key | a key id (UUID, or `mrk-` plus 32 hex) or a full key ARN; an alias (`alias/...`) is REFUSED for a resource line with the message "write the key's ARN" | author, UNVERIFIED (question V5) |
+| guardrail id | `[a-z0-9]{1,64}` | author, UNVERIFIED |
+| account id | 12 digits (tests build it from parts) | AWS |
+| Vault mount, key name | the settings' own patterns (backends/table.py:247, :298) | code |
+| Vault path prefix | the settings' pattern (table.py:285) AND non-empty: an empty prefix is refused for a copy-ready block, and the page says an empty prefix means the whole mount | code + this ticket |
+| Kubernetes namespace | `_NS` (sources/kubernetes.py:26) | code |
+- Page head: what the tests do and do not prove (4.3 bounds, 6.2 table), then per kind: what it does, identity, table (permission, on what, why, when), never-list, credential and lifetime, the two dates (`verified`, `confirmed_live`), copy-ready block if allowed.
 
-## 4. Files
-Create: `src/hadavin_sdk/backends/policy.py`; `tests/test_policy_guard.py`; `tests/contracts/policy_enforcer.py`; `tests/contracts/test_policy.py` (N1-N7); `docs/least-privilege-policies.md` (generated). Change: `backends/table.py` (three dataclasses, `Entry.policy`, 18 references; its docstring line "imports no other Hadavin module" stays true); `sources/kinds.py` (field + reference); one `POLICY` literal in each of the 19 modules of section 6; `tests/contracts/aws_stub.py`, `http_fake.py`, `vault_fake.py`, `contracts/kinds/*.py` (the `enforce` hook); `tests/test_lockin_guard.py` only if `backends/policy.py` needs listing; CHANGELOG; README link. Delete: none. No production behaviour changes: no kind sends a different request after this ticket.
-
-## 5. Reuse checked
-tests/test_lockin_guard.py (`_fold`, `module_name`, `_source_docstring`, plant-test style); tests/contracts/aws_stub.py, http_fake.py, vault_fake.py; sources/kubernetes.py `READ_OPERATIONS`, `rules_problems`, `_WRITE_VERBS`, `_SHELL_RESOURCES`; `backends/factory.hosts` (the model for `for_config`); docs/slack-app-manifest.yaml. Not found in the repository: any existing policy text, IaC, or permission list besides the Slack manifest and three mentions (`rds-db:connect` store/auth_aws.py:4, `bedrock:GetGuardrail` guard/bedrock_guardrail.py:9 and CHANGELOG.md:213, `chat:write`).
-
-## 6. Per-kind policy table (derived from the code; ALL names UNVERIFIED-NEEDS-LIVE-CHECK; conf = author's confidence)
-Line numbers are in `src/hadavin_sdk/`. `<NAME>` is filled in by the operator; `{field}` is the kind's setting. "S" = start-up, "R" = runtime, "V" = audit verify.
-
-**K1 secrets / aws_secrets_manager** (AWS; actions/secrets_aws.py; client built :42)
-| id | code call | permission | resource | reason | conf |
+## 5. The ten policies (every name `verified = None` today; line numbers in `src/hadavin_sdk/`)
+| id | kind (module) | permission | on what | call it serves | reason |
 |---|---|---|---|---|---|
-| G01 | `get_secret_value(SecretId=name)` :29 (R) | `secretsmanager:GetSecretValue` | `arn:aws:secretsmanager:{region}:<ACCOUNT_ID>:secret:<SECRET_NAME>-??????` one line per secret the config names (the six characters are the suffix AWS adds) | reads one named secret when a caller asks | H |
-| G02 | same call, only when the secret uses the client's own encryption key | `kms:Decrypt` | that key's ARN; condition `kms:ViaService` = the Secrets Manager service of `{region}` | Secrets Manager decrypts with that key on the caller's behalf | M |
-NEVER K1: `secretsmanager:PutSecretValue`; `secretsmanager:UpdateSecret`; `secretsmanager:CreateSecret`; `secretsmanager:DeleteSecret`; `secretsmanager:RestoreSecret`; `secretsmanager:PutResourcePolicy`; `secretsmanager:ListSecrets`; `secretsmanager:DescribeSecret`; `secretsmanager:BatchGetSecretValue`; `secretsmanager:RotateSecret`
+| R01 | aws_secrets_manager (actions/secrets_aws.py) | `secretsmanager:GetSecretValue` | `arn:aws:secretsmanager:{region}:<ACCOUNT_ID>:secret:<SECRET_NAME>-??????`, one line per secret; bound: the six characters AWS adds to a secret's ARN | (secretsmanager, GetSecretValue) :29 | reads one named secret |
+| R02 | same | `kms:Decrypt` | that key's ARN; condition (StringEquals, `kms:ViaService`, `secretsmanager.{region}.amazonaws.com`) | rides on R01; applies when the secret is encrypted with a key the client manages | Secrets Manager decrypts on the caller's behalf |
+| R03 | aws_kms (audit/signer_aws.py) | `kms:Sign` | `arn:aws:kms:{region}:<ACCOUNT_ID>:key/<KEY_ID>` | (kms, Sign) :32 | signs each audit checkpoint and the start-up test message |
+| R04 | same | `kms:GetPublicKey` | same key | (kms, GetPublicKey) :41 | checks the key type; signatures are verified locally |
+| R05 | s3_object_lock (audit/anchor_s3.py) | `s3:PutObject` | `arn:aws:s3:::{bucket}/anchors/*`; bound: the fixed name prefix (audit/anchors.py:9) | (s3, PutObject) :55 | writes one new anchor object, never over an existing one |
+| R06 | same | `s3:PutObjectRetention` | same | rides on R05 (the put carries the lock headers, :59-60) | S3 asks for it when a put sets a lock (UNVERIFIED, V1) |
+| R07 | same | `s3:GetObject` | same | (s3, GetObject) :67, :78 | compares an existing anchor; reads anchors when verifying |
+| R08 | same | `s3:ListBucket` | `arn:aws:s3:::{bucket}`; condition (StringLike, `s3:prefix`, `anchors/*`) | (s3, ListObjectsV2) :73 | lists the anchors when verifying |
+| R09 | same | `kms:GenerateDataKey` | the bucket key's ARN | rides on R05; applies when the bucket encrypts with a key the client manages | S3 encrypts the new object (UNVERIFIED, V2) |
+| R10 | same | `kms:Decrypt` | same key | rides on R07; same condition | S3 decrypts the object read (UNVERIFIED, V2) |
+| R11 | bedrock (llm/bedrock.py) | `bedrock:InvokeModel` | per route: `arn:aws:bedrock:{region}::foundation-model/<MODEL_ID>`, or the inference-profile ARN plus the model ARN in each region it sends to | (bedrock-runtime, Converse) :156 | the Converse call is authorised by the invoke permission (UNVERIFIED, V4) |
+| R12 | bedrock_guardrail (guard/bedrock_guardrail.py) | `bedrock:GetGuardrail` | `arn:aws:bedrock:{region}:<ACCOUNT_ID>:guardrail/{guardrail_id}` | (bedrock, GetGuardrail) :47 | start-up refuses a guardrail whose prompt-attack filter is off |
+| R13 | same | `bedrock:ApplyGuardrail` | same | (bedrock-runtime, ApplyGuardrail) :101 | screens one text |
+| R14 | postgres with `iam_auth` (store/auth_aws.py) | `rds-db:connect` | `arn:aws:rds-db:{region}:<ACCOUNT_ID>:dbuser:<DB_RESOURCE_ID>/<RUNTIME_DB_USER>` | no wire: the token is signed locally (:19) and the database checks it at sign-in (store/postgres.py:138-146) | the runtime signs in to the database with no stored password |
+| R15 | same | `rds-db:connect` | the same, for `<PURGE_DB_USER>` | no wire; applies when `purge_dsn_secret_name` is set (required in pilot and prod, app.py:86-89) | the SAME process opens a second connection as the purge user (app.py:151-160) |
+| R16 | slack (approvals/slack_channel.py) | bot scope `chat:write` | the client's own app, invited to the one channel `{channel_id}` | (POST, chat.postMessage), (POST, chat.update) | posts the approval message and replaces its buttons with the decision |
+| R17 | vault (actions/secrets_vault.py) | capability `read` | path `{mount}/data/<PATH_PREFIX>*`; bound: this deployment's non-empty prefix | (GET, `{mount}/data/{path_prefix}{name}`) :115 | reads one named secret |
+| R18 | vault_transit (audit/signer_vault.py) | capability `update` | path `{transit_mount}/sign/{key_name}` | (POST, `{mount}/sign/{key_name}`) :52 | signs each audit checkpoint and the start-up test message |
+| R19 | same | capability `read` | path `{transit_mount}/keys/{key_name}` | (GET, `{mount}/keys/{key_name}`) :62 | reads the pinned version's public key and the key type |
+| R20 | kubernetes (sources/kubernetes.py) | verb `list` | `deployments`, API group `apps`, each of `{namespaces}` | k8s.list_deployments :232 | reads deployments, their revision and images |
+| R21 | same | verb `list` | `events`, core group, same namespaces | k8s.list_events :247 | reads events in the time window |
+| R22 | same | verb `get` | `pods/log`, core group, same namespaces | k8s.pod_log :285 | reads one pod's log lines |
+Free (no permission): the Vault sign-in (POST, `auth/{auth_mount}/login`) :138 for auth `approle` and `kubernetes` (auth `token` sends none, :165-168); Kubernetes `k8s.rules_review` :328 (every signed-in identity may ask what it may do, :80-81).
+Never-lists (trimmed: over-broad built-in roles, plus only what undoes the kind's promise):
+| kind | type: entries |
+|---|---|
+| aws_secrets_manager | role: `SecretsManagerReadWrite`, `AdministratorAccess`. action: `secretsmanager:PutSecretValue` (the reader could replace what it reads). prose: `Resource: *` on R01 |
+| aws_kms | role: `AWSKeyManagementServicePowerUser`. action: `kms:ScheduleKeyDeletion`, `kms:DisableKey`, `kms:PutKeyPolicy`, `kms:CreateGrant` (each lets the signer destroy or hand on the audit key) |
+| s3_object_lock | role: `AmazonS3FullAccess`. action: `s3:BypassGovernanceRetention`, `s3:DeleteObjectVersion`, `s3:PutBucketObjectLockConfiguration` (each can remove or shorten a lock) |
+| bedrock | role: `AmazonBedrockFullAccess`. action: `bedrock:PutModelInvocationLoggingConfiguration` (could copy prompts to another store) |
+| bedrock_guardrail | action: `bedrock:UpdateGuardrail`, `bedrock:DeleteGuardrail` (the screened process could switch its own screen off) |
+| postgres `iam_auth` | role: `AmazonRDSFullAccess`. prose: `rds-db:connect` for the migration user on the runtime role; a `dbuser:*` wildcard |
+| slack | action: `chat:write.public` (posting where the bot was never invited). prose: any user-token scope; one app shared between clients |
+| vault | role: policy `root`. path: `sys/*`; `create`, `update` or `delete` on the data path; `{mount}/metadata/*`, `{mount}/destroy/*` |
+| vault_transit | role: policy `root`. path: `sys/*`; `delete` on `{transit_mount}/keys/{key_name}`; `{transit_mount}/keys/{key_name}/config`; `{transit_mount}/export/*`; `{transit_mount}/backup/*` (each can destroy or copy out the signing key) |
+| kubernetes | role: `cluster-admin`, `admin`, `edit`. action: the write verbs, the shell subresources and any read of `secrets`, exactly the lists the code refuses at start-up (sources/kubernetes.py:36-49, :116-124). `watch` is NOT listed: the code does not refuse it |
+Identities, as the code supports them today: ONE identity per process. All four signer kinds sign a test message when built (audit/signer.py:79-90, signing at :83; called from signer_aws.py:55, signer_vault.py:81, signer_azure.py:63, signer_gcp.py:61) and `audit verify` builds the signer (cli.py:187), so the verifying process needs R03 or R18 too; no writer/verifier split is claimed or tested. Postgres with `iam_auth`: the runtime process's role holds R14 and R15; the migration user is a THIRD identity, the operator's or the deploy job's, used only by `hadavin-sdk migrate` (cli.py:322-336, store/postgres.py:140), shown on the page in its own table and never attached to the runtime role.
+Count (`grep -cE '^\| R[0-9]{2} '` over this file, run 2026-11-11: 22): 22 grant rows over 10 kinds, of which 6 have no call of their own (R02, R06, R09, R10 ride on another; R14, R15 send nothing); 2 free requests. The never entries were not counted by script; the builder counts them from the data.
 
-**K2 signer / aws_kms** (AWS; audit/signer_aws.py; client built :54; both calls also run once at start-up through `audit/signer.py` `probe` :79-90)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G03 | `sign(KeyId, Message, MessageType="RAW", SigningAlgorithm="ED25519_SHA_512")` :32-37 (S, R) | `kms:Sign` | `arn:aws:kms:{region}:<ACCOUNT_ID>:key/<KEY_ID>`; conditions `kms:SigningAlgorithm` = `ED25519_SHA_512`, `kms:MessageType` = `RAW` | signs each audit checkpoint | H (conditions M) |
-| G04 | `get_public_key(KeyId)` :41 (S, V; once per process) | `kms:GetPublicKey` | same key | checks the key type and verifies signatures locally | H |
-NEVER K2: `kms:ScheduleKeyDeletion`; `kms:DisableKey`; `kms:PutKeyPolicy`; `kms:CreateGrant`; `kms:UpdateKeyDescription`; `kms:UpdateAlias`; `kms:DeleteAlias`; `kms:ImportKeyMaterial`; `kms:DeleteImportedKeyMaterial`; `kms:Decrypt`; `kms:Encrypt`; `kms:Verify`; `kms:TagResource`
-Note: an IAM policy must name the key ARN; if `key_id` is an alias the operator still writes the key ARN. The key's own key policy must let IAM policies apply.
+## 6. Tests
+### 6.1 The two families
+- **A, "code equals declaration"** (tests/test_policy_guard.py): A1 the set equality of 4.3; A2 the data rules of 4.4; A3 the committed page equals `--check` output, and Slack's declared scopes equal the bot scopes of docs/slack-app-manifest.yaml; A4 verified, pending and the saved action list of 4.5; A5 Kubernetes: the generated Role rules make `rules_problems` return `[]` (sources/kubernetes.py:100) and a plant adding a write verb, `pods/exec` or a read of `secrets` makes it non-empty. A5 is our code checking our data, not an engine.
+- **B, "real engine refuses"** (tests/test_policy_engine.py): the generated text is applied to an engine and the kind's own code runs under the resulting credential. B1 the allowed path works (start-up plus one read or write). B2 remove one grant, expect the engine's refusal in the kind's own error; grants with `rides_on` or `no_wire` are exempt BY ID (R02, R06, R09, R10, R14, R15) and the test fails if that exempt list is stale. B3 each `path`- or `action`-type never entry that is a request is refused. B4 control: the same request with the admin credential succeeds, so the refusal is the policy's doing. B3 on an engine that denies by default shows only that the generated text grants no more than intended; it is not proof of the never-list as such.
+### 6.2 Which kind has which (the honest table; printed on the page)
+| kind | A | B: engine, and what it covers | not covered by any test |
+|---|---|---|---|
+| vault | yes | REAL Vault server (CI): B1-B4 for R17; read outside the prefix, write, `sys/mounts` refused | OpenBao never run; auth `approle` and `kubernetes` roles |
+| vault_transit | yes | REAL Vault server: B1-B4 for R18, R19; sign with another key, `config`, `export`, key delete refused | same |
+| s3_object_lock | yes | EMULATOR (moto): B1, B2 for R05, R07, R08; put and get outside `anchors/`, delete refused | R06, R09, R10; the `s3:prefix` condition; the lock-bypass never entry; real AWS, MinIO, Ceph |
+| aws_secrets_manager | yes | NONE (moto cannot evaluate the resource-scoped policy, section 3) | every name and resource form |
+| aws_kms, bedrock, bedrock_guardrail | yes | NONE (moto lacks the feature) | every name |
+| postgres `iam_auth` | yes | NONE (no request is sent) | the name, the resource form |
+| kubernetes | yes (A1, A5) | none in tests; in production the code asks the real cluster at every start-up | that the three rules are ENOUGH on a real cluster |
+| slack | yes (A1, A3) | none | Slack's own scope check |
+### 6.3 Fixtures for B (new, beside the existing ones; existing contract fixtures unchanged)
+- Vault: `vault_target()` (tests/contracts/kinds/secrets_neutral.py:42-46) stays the ADMIN side (seeding, enabling Transit as audit_neutral.py:43-51 does). New `runtime_token(policy_text)`: with the admin token write the policy, then create a token holding only that policy with `no_default_policy: true` and a short lifetime. The kind is built with the runtime token (`VaultProvider(address, lambda p: runtime)`), seeding stays with the admin token. These tests need a real server: without `HADAVIN_TEST_VAULT_ADDR` they skip (the laptop fake, tests/contracts/vault_fake.py, enforces nothing), and CI sets a new `HADAVIN_REQUIRE_VAULT_ENGINE=1` (in .github/workflows/ci.yml beside :90-91, same idea as the existing `HADAVIN_REQUIRE_PINNED_UNIDATA`) that turns the skip into a failure.
+- S3 on moto: inside `mock_aws()` (as audit_neutral.py:78-88), create the bucket as admin, create an IAM user with the generated JSON, build `S3Anchor` with that user's keys, with `set_initial_no_auth_action_count(n)` where n is exactly the number of set-up calls. Control test: a request known to be forbidden is the FIRST call after set-up and must be refused (guards against the author's own off-by-one).
+### 6.4 Must FAIL on origin/main
+Run: main's `src/` untouched, with these new files overlaid: `tools/policy_page.py`, `tests/test_policy_guard.py`, `tests/test_policy_engine.py`, the saved action list. Because the helper code is overlaid and `load` returns None for a module without the literal, the failures are assertions, not import errors:
+- F1 A1: "no POLICY in" followed by exactly the ten module names.
+- F2 A3: `docs/least-privilege-policies.md` missing (the page is not overlaid).
+- F3 B on Vault (run where a Vault server is set) and on moto: "no POLICY in actions/secrets_vault.py" / "... audit/anchor_s3.py".
+The builder pastes each failing run with its message. Everything else is a regression guard, each proved by its own plant: A1 (a new `list_secrets` call; a grant whose call was deleted; a non-literal service name; a banned indirect call; a stale allowlist line; a call that appears only in a docstring changes nothing), 4.4 D1-D7, 4.5 (an unverified grant with no pending entry; an overdue pending entry; a copy-ready block for a kind with an unverified grant; an AWS name missing from the saved list), 4.6 (each grammar refuses `*`, `{`, a space and an alias; rendered AWS JSON parses, holds no `Deny`, no `"Action": "*"`, no `"Resource": "*"`), A5, B2-B4.
+Mutants: one per rule (A1 each direction, D1-D7, the merge gate of 4.5, "no Deny", the grammar refusal, the B2 exempt-list check), in a new `tests/policy_mutants.py` on the existing runner (precedent tests/stage_mutants.py; `run_mutants` takes `extra_dirs`, tools/mutation_runner.py:370). Not established: whether the runner can mutate a file under `tools/`; if it cannot, the builder says so and the plants stand as the proof.
 
-**K3 anchor / s3_object_lock** (AWS S3, MinIO, Ceph; audit/anchor_s3.py; client built :89; object names start `anchors/`, audit/anchors.py:9)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G05 | `put_object(..., ObjectLockMode, ObjectLockRetainUntilDate, IfNoneMatch="*")` :55-63 (R) | `s3:PutObject` | `arn:aws:s3:::{bucket}/anchors/*` (recorded bound: fixed name prefix) | writes one new anchor object, never over an existing one | H |
-| G06 | same call (it sets the lock in the same request) | `s3:PutObjectRetention` | same; conditions `s3:object-lock-mode` = `{mode}` and `s3:object-lock-remaining-retention-days` at least `{retain_days}` | S3 asks for this permission when a put carries lock headers | M (conditions L) |
-| G07 | `get_object(Bucket, Key)` :67 (R, only after a refused double write) and :78 (V) | `s3:GetObject` | `arn:aws:s3:::{bucket}/anchors/*` | compares an anchor that already exists; reads anchors when verifying | H |
-| G08 | `get_paginator("list_objects_v2").paginate(Bucket, Prefix)` :73-75 (V only) | `s3:ListBucket` | `arn:aws:s3:::{bucket}`; condition `s3:prefix` like `anchors/*` | lists the anchors when verifying | H |
-NEVER K3: `s3:DeleteObject`; `s3:DeleteObjectVersion`; `s3:BypassGovernanceRetention`; `s3:PutObjectLegalHold`; `s3:PutBucketObjectLockConfiguration`; `s3:PutLifecycleConfiguration`; `s3:PutBucketPolicy`; `s3:PutBucketVersioning`; `s3:PutObjectAcl`; `s3:PutBucketAcl`; `s3:DeleteBucket`
-Two identities: the writer (runtime) gets G05-G07; the verifier gets G07-G08 only. `s3:BypassGovernanceRetention` is the permission that lets a caller shorten or remove a GOVERNANCE lock, so it is first on the never-list. On MinIO and Ceph the same names are used in their own policy files (UNVERIFIED which of the conditions they support).
+## 7. Build steps and files
+| step | what | exit artifact |
+|---|---|---|
+| 0 | fold the evidence runner's result into section 5: set `verified`, correct or drop wrong names, answer V1-V5 | updated table; names still unverified listed |
+| 1 | spike: the generated JSON of R01 and R05-R08 on moto with the IAM check on; record what is and is not refused | raw output file; 6.2 corrected if it differs from the author's run |
+| 2 | `tools/policy_page.py`, `tests/test_policy_guard.py` (A), plants | F1, F2 failing on main, pasted |
+| 3 | the ten `POLICY` literals | A green |
+| 4 | `tests/test_policy_engine.py` (B: Vault, S3 on moto), the CI variable | B green in CI, Vault tests shown as not skipped |
+| 5 | `docs/least-privilege-policies.md`, README link, CHANGELOG, `tests/policy_mutants.py` | page check green |
+Create: the five files named above plus `tests/fixtures/aws_actions_<date>.txt`. Change: ten kind modules (one literal each; no behaviour change, no kind sends a different request), `.github/workflows/ci.yml` (one variable, one mutant step), README.md, CHANGELOG.md. Delete: none. Reuse checked: tests/test_lockin_guard.py (`_fold`, `module_name`, `Pending`, plant style); `READ_OPERATIONS`, `rules_problems`; the Vault and S3 fixtures; `tools/mutation_runner.py`; docs/slack-app-manifest.yaml.
 
-**K4 llm / bedrock** (AWS; llm/bedrock.py; client built :43-55)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G09 | `converse(**request)` :156 (R) | `bedrock:InvokeModel` | one line per route: `arn:aws:bedrock:{region}::foundation-model/<MODEL_ID>`, or `arn:aws:bedrock:{region}:<ACCOUNT_ID>:inference-profile/<PROFILE_ID>` plus the foundation-model ARN in each region that profile sends to | Converse is authorised by the invoke permission | H (profile resources M) |
-NEVER K4: `bedrock:InvokeModelWithResponseStream`; `bedrock:CreateModelInvocationJob`; `bedrock:PutModelInvocationLoggingConfiguration`; `bedrock:DeleteModelInvocationLoggingConfiguration`; `bedrock:CreateProvisionedModelThroughput`; `bedrock:CreateModelCustomizationJob`; `bedrock:PutFoundationModelEntitlement`; `aws-marketplace:Subscribe`
-Note: model ids come from the routes, not from this kind's settings, so the page shows `<MODEL_ID>` per route.
+## 8. Findings recorded for other tickets (not fixed here: each needs a code or behaviour change outside this ticket's scope; the lead adds ledger rows)
+1. A verifier that cannot sign is impossible: every signer kind signs at start-up and `audit verify` builds the signer (lines in section 5). Already BL-core-q8deps-F2b.
+2. Vault `path_prefix` defaults to empty (backends/table.py:285), so a default config reads the whole mount. Proposed: refuse an empty prefix in pilot and prod. It is a breaking config change, so it needs its own ticket and upgrade note.
+3. `AwsKmsSettings.key_id`, `S3ObjectLockSettings.bucket` and `region`, `GuardrailSettings.guardrail_id` have no pattern (table.py:229-230, :163-164, :102); the renderer's grammar (4.6) guards the page only.
+4. Kubernetes start-up does not refuse verb `watch` (kubernetes.py:39, :123); whether it should is a design question for that kind.
+5. The Slack bot token and a Vault token from the environment are long-lived (`token_rotation_enabled: false` in the manifest; Q8a-1 covers the Vault token); the page marks both with `lifetime: long` and the exception line.
 
-**K5 detector / bedrock_guardrail** (AWS; guard/bedrock_guardrail.py; clients built :28-40, two services)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G10 | `get_guardrail(guardrailIdentifier, guardrailVersion)` :47 (S) | `bedrock:GetGuardrail` | `arn:aws:bedrock:{region}:<ACCOUNT_ID>:guardrail/{guardrail_id}` | start-up refuses a guardrail whose prompt-attack filter is off | H (ARN M) |
-| G11 | `apply_guardrail(..., source="INPUT", content)` :101-106 (R) | `bedrock:ApplyGuardrail` | same | screens one text | H |
-NEVER K5: `bedrock:UpdateGuardrail`; `bedrock:DeleteGuardrail`; `bedrock:CreateGuardrail`; `bedrock:CreateGuardrailVersion`; `bedrock:ListGuardrails`; `bedrock:InvokeModel`
+## 9. Open questions and unverified items
+For the lead: L1 add a MinIO service to CI as a real S3-compatible engine for the anchor (zero money, one container; licence and condition support UNVERIFIED), or accept "emulator, action and resource only" for slice 1? L2 order the network runner to save the AWS action lists (4.5). L3 CI runs HashiCorp Vault only; should the OpenBao image be added to the matrix (the kind names both)?
+For the owner: O1 live proof on a real account (which accounts, when, and a yes with numbers if anything costs money): attach each generated policy to a test identity, run the kind, try each never entry, write date and masked account into `confirmed_live`. Until then 7 of 10 kinds have no engine test. O2, O3 (slice 2, unchanged from revision 1): the Azure anchor in GOVERNANCE mode, and the resource-wide key of Anthropic on Azure AI Foundry.
+To verify on vendor pages (each UNVERIFIED; the question the runner must answer):
+- V1 Does a PutObject that carries Object Lock headers need `s3:PutObjectRetention` besides `s3:PutObject`? May `s3:object-lock-mode` be used as a condition on it? How does S3 compute `s3:object-lock-remaining-retention-days` when retain-until is "now plus N days" as sent at anchor_s3.py:60: could "at least N" refuse every put? Until answered, NO retention-days or lock-mode condition is in the data.
+- V2 On a bucket whose default encryption uses a client-managed KMS key, which KMS permissions does the caller need for PutObject and for GetObject, and does a SHA-256 checksum or a lock header change that?
+- V3 Exact condition keys and values for `kms:Sign` with Ed25519 (`kms:SigningAlgorithm`, `kms:MessageType`); not in the data until answered.
+- V4 Is Converse authorised by `bedrock:InvokeModel`, and which ARNs does a cross-region inference profile need? Guardrail ARN and id format.
+- V5 Can an IAM resource line name a KMS alias, or must it be the key ARN (with `kms:RequestAlias` as a condition)?
+- V6 Vault: capability names for the three requests, the admin paths of 6.3, and the role setting that keeps the `default` policy off tokens issued by AppRole and Kubernetes sign-in. Kubernetes: that `list` on deployments and events and `get` on `pods/log` are the verbs for the three requests. Slack: that `chat.update` needs only `chat:write`. AWS managed-policy names in the never table.
 
-**K6 store / postgres with `iam_auth: true`** (AWS RDS; store/auth_aws.py; client built :16; called from store/postgres.py:122)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G12 | `generate_db_auth_token(DBHostname, Port, DBUsername)` :19 (R). It sends nothing: the token is signed locally and the database checks it at sign-in | `rds-db:connect` | `arn:aws:rds-db:{region}:<ACCOUNT_ID>:dbuser:<DB_RESOURCE_ID>/<DB_USER>` | signs in to the database with no stored password | H |
-NEVER K6: `rds-db:connect` for any other database user (the purge user and the migration user above all); `rds:ModifyDBInstance`; `rds:DeleteDBInstance`; `rds:ModifyDBCluster`; `rds:CreateDBSnapshot`; `rds:RestoreDBInstanceFromDBSnapshot`; `rds:DescribeDBInstances`
-`when=("iam_auth", True)`. With `iam_auth: false` the kind needs no cloud permission (the password is in the DSN secret).
+## 10. Evidence, gates, estimate
+Gates: `uv run --all-extras --group test pytest` with `HADAVIN_TEST_PG_DSN` and `HADAVIN_TEST_VAULT_ADDR` set (the Vault engine tests must show as NOT skipped; if the build machine has no Vault server, they are proven in CI only and the report says so), `ruff check`, `ruff format --check`, `bandit -ll`, the guard tests, `python tests/policy_mutants.py`. One full run at the final head in one heavy slot. Then a separate EVIDENCE RUNNER and the egm:* result reviewers (diff, this ticket, evidence; never the builder's verdict).
+Estimate at agent speed (redone): steps 0-1 about 45 minutes; steps 2-5 about 4 hours in 60-minute boxes; final gate run 30 minutes; independent evidence about 1 hour; two result-review and fix rounds about 3 hours (security path, more rounds if a fresh pass still finds something). About 9 to 10 hours of real clock, one heavy slot, gated first on step 0 (the runner's result) and on L2.
+CHANGELOG text (Unreleased, Added): "Least-privilege policies for ten backend kinds (Vault secrets, Vault Transit, Kubernetes source, Slack channel, AWS Secrets Manager, AWS KMS, S3 Object Lock, Bedrock, Bedrock guardrail, Postgres with `iam_auth`). Each kind module now carries the smallest permission set its code needs, with a reason per permission; `docs/least-privilege-policies.md` is generated from it and holds copy-ready policy text for the kinds whose names were checked against the vendor's pages. Tests keep the list equal to the calls the code makes. The generated Vault policies are applied to a real Vault server in CI and the S3 anchor policy to an emulator; the page says per kind what was and was not tested, and no policy has yet been confirmed on a real cloud account. No behaviour change: no kind sends a different request. Azure, Google Cloud and the API-key model kinds follow."
 
-**K7 secrets / azure_key_vault** (Azure; actions/secrets_azure.py; client built :45-51, `DefaultAzureCredential`)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G13 | `get_secret(name)` :37 (R) | data action `Microsoft.KeyVault/vaults/secrets/getSecret/action` (smallest built-in role that holds it: Key Vault Secrets User, which also allows reading secret metadata) | scope: the single secret `.../vaults/<VAULT>/secrets/<SECRET_NAME>`, one assignment per secret | reads one named secret | H |
-NEVER K7: `Microsoft.KeyVault/vaults/secrets/setSecret/action`; `Microsoft.KeyVault/vaults/secrets/delete`; `Microsoft.KeyVault/vaults/secrets/backup/action`; `Microsoft.KeyVault/vaults/secrets/purge/action`; `Microsoft.KeyVault/vaults/secrets/readMetadata/action`; `Microsoft.KeyVault/vaults/write`; `Microsoft.KeyVault/vaults/accessPolicies/write`; role `Key Vault Secrets Officer`; role `Key Vault Administrator`; role `Contributor`
-Note: assumes the vault uses Azure role-based access. With the older vault access policies the equivalent is secret permission Get only.
-
-**K8 signer / azure_key_vault_key** (Azure; audit/signer_azure.py; clients built :57-62)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G14 | `CryptographyClient.sign(es256, digest)` :38 (S, R) | data action `Microsoft.KeyVault/vaults/keys/sign/action` | scope: the single key `.../vaults/<VAULT>/keys/<KEY_NAME>` | signs each audit checkpoint | H |
-| G15 | `KeyClient.get_key(name, version)` :43 (S, V); the SDK's crypto client may also read the key before its first operation | data action `Microsoft.KeyVault/vaults/keys/read` | same key | reads the public half and checks the key type | H |
-NEVER K8: `Microsoft.KeyVault/vaults/keys/delete`; `Microsoft.KeyVault/vaults/keys/update/action`; `Microsoft.KeyVault/vaults/keys/rotate/action`; `Microsoft.KeyVault/vaults/keys/create/action`; `Microsoft.KeyVault/vaults/keys/import/action`; `Microsoft.KeyVault/vaults/keys/backup/action`; `Microsoft.KeyVault/vaults/keys/purge/action`; `Microsoft.KeyVault/vaults/keys/release/action`; `Microsoft.KeyVault/vaults/keys/decrypt/action`; `Microsoft.KeyVault/vaults/keys/unwrap/action`; role `Key Vault Crypto Officer`
-Note: the built-in role Key Vault Crypto User also allows encrypt, decrypt, wrap and unwrap, so a custom role with G14 and G15 is the minimum. A Managed HSM has its own role system with its own names (not derived here; section 11).
-
-**K9 anchor / azure_immutable_blob** (Azure; audit/anchor_azure.py; client built :72-79)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G16 | `get_container_properties()` :85 (S) | `Microsoft.Storage/storageAccounts/blobServices/containers/read` | scope: the container `{container}` | start-up refuses a container without version-level immutability | M |
-| G17 | `upload_blob(name, data, overwrite=False, immutability_policy=...)` :57 (R) | data action `Microsoft.Storage/storageAccounts/blobServices/containers/blobs/add/action` (creates, cannot replace); if the service asks for it instead: `.../blobs/write` | same container; a role-assignment condition on the blob name prefix `anchors/` | writes one new anchor blob | L |
-| G18 | same call (it sets the blob's immutability policy in the same request) | data action `Microsoft.Storage/storageAccounts/blobServices/containers/blobs/immutableStorage/runAsSuperUser/action` | same | Azure asks for this to set a retention policy on a blob version | L |
-| G19 | `download_blob(name).readall()` :59 (R, after a refused double write), :65 (V) | data action `Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read` | same | compares an existing anchor; reads anchors when verifying | H |
-| G20 | `list_blobs(name_starts_with="anchors/")` :64 (V only) | same data action as G19 (listing blobs) | same | lists the anchors when verifying | M |
-NEVER K9: `Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete`; `Microsoft.Storage/storageAccounts/blobServices/containers/blobs/deleteBlobVersion/action`; `Microsoft.Storage/storageAccounts/blobServices/containers/blobs/permanentDelete/action`; `Microsoft.Storage/storageAccounts/blobServices/containers/delete`; `Microsoft.Storage/storageAccounts/blobServices/containers/write`; `Microsoft.Storage/storageAccounts/blobServices/containers/immutabilityPolicies/delete`; `Microsoft.Storage/storageAccounts/blobServices/containers/immutabilityPolicies/write`; `Microsoft.Storage/storageAccounts/listKeys/action`; `Microsoft.Storage/storageAccounts/regenerateKey/action`; `Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action`; role `Storage Blob Data Owner`; role `Storage Account Contributor`
-Unresolved (section 11): G18 may be the same permission that lets a caller shorten or delete an Unlocked policy. If so, in GOVERNANCE mode the Azure writer can undo its own lock, and only COMPLIANCE (Locked) holds against the writer.
-
-**K10 secrets / gcp_secret_manager** (Google Cloud; actions/secrets_gcp.py; client built :50)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G21 | `access_secret_version(name="projects/{project_id}/secrets/<name>/versions/latest")` :42 (R) | `secretmanager.versions.access` (role `roles/secretmanager.secretAccessor` holds only this) | bound on the single secret `projects/{project_id}/secrets/<SECRET_NAME>`, never on the project | reads the newest version of one named secret | H |
-NEVER K10: `secretmanager.versions.add`; `secretmanager.versions.destroy`; `secretmanager.versions.disable`; `secretmanager.secrets.delete`; `secretmanager.secrets.update`; `secretmanager.secrets.setIamPolicy`; `secretmanager.secrets.list`; role `roles/secretmanager.admin`
-
-**K11 signer / gcp_kms** (Google Cloud; audit/signer_gcp.py; client built :55)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G22 | `asymmetric_sign(request={"name", "data"})` :41 (S, R) | `cloudkms.cryptoKeyVersions.useToSign` | bound on the one key (the lowest level a binding can sit): the key part of `{key_version}` | signs each audit checkpoint | H |
-| G23 | `get_public_key(request={"name"})` :45 (S, V) | `cloudkms.cryptoKeyVersions.viewPublicKey` | same key | reads the public half and checks the algorithm | H |
-NEVER K11: `cloudkms.cryptoKeyVersions.destroy`; `cloudkms.cryptoKeyVersions.update`; `cloudkms.cryptoKeyVersions.create`; `cloudkms.cryptoKeys.update`; `cloudkms.cryptoKeys.setIamPolicy`; `cloudkms.cryptoKeyVersions.useToDecrypt`; `cloudkms.cryptoKeyVersions.restore`; role `roles/cloudkms.admin`
-Note: role `roles/cloudkms.signerVerifier` holds G22, G23 and a verify permission the code does not use; a custom role with the two is the minimum.
-
-**K12 anchor / gcs_retention_lock** (Google Cloud; audit/anchor_gcs.py; client built :61)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G24 | `bucket.reload()` :71 (S) | `storage.buckets.get` | bucket `{bucket}` | start-up checks the retention period and, for COMPLIANCE, that it is locked | H |
-| G25 | `blob.upload_from_string(..., if_generation_match=0)` :43-45 (R) | `storage.objects.create` | bucket `{bucket}`; condition: object name starts `anchors/` | writes one new anchor object | H |
-| G26 | `download_as_bytes()` :47 (R, after a refused double write), :53 (V) | `storage.objects.get` | same | compares an existing anchor; reads anchors when verifying | H |
-| G27 | `list_blobs(prefix="anchors/")` :52 (V only) | `storage.objects.list` | same | lists the anchors when verifying | H |
-NEVER K12: `storage.objects.delete`; `storage.objects.update`; `storage.objects.setRetention`; `storage.objects.overrideUnlockedRetention`; `storage.buckets.update`; `storage.buckets.delete`; `storage.buckets.setIamPolicy`; `storage.hmacKeys.create`; role `roles/storage.objectAdmin`; role `roles/storage.admin`
-Note: `storage.buckets.update` lets a caller shorten or remove an unlocked retention policy, so it leads the never-list with `storage.objects.delete`. A custom role with G24-G27 is the minimum.
-
-**K13 llm / anthropic** (llm/anthropic.py; one request: `messages.create(**request)` :122; three platforms, chosen by `platform`)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G28 | `platform: vertex`: `AnthropicVertex(...)` :42-47, then :122. Sign-in: Google Application Default Credentials | `aiplatform.endpoints.predict` | project `{project_id}`; a narrower bound to one publisher model: not established | sends one model request through Vertex AI | M |
-| G29 | `platform: api`: `Anthropic(api_key=...)` :54, then :122 | no cloud permission: an API key of ONE workspace made for this deployment, with that workspace's spend limit | workspace `<WORKSPACE>` | sends one model request | M |
-| G30 | `platform: foundry`: `AnthropicFoundry(api_key=...)` :49-53, then :122 | no role: the resource's API key, which allows every data request on that resource | resource `{resource}` | sends one model request | M |
-NEVER K13: `aiplatform.models.upload`; `aiplatform.endpoints.deploy`; `aiplatform.endpoints.create`; `aiplatform.tuningJobs.create`; `aiplatform.datasets.create`; role `roles/aiplatform.user`; role `roles/aiplatform.admin`; an organisation admin API key on `platform: api`; an Azure role on the Foundry resource that can list or regenerate its keys
-Unresolved (section 11): the Foundry key cannot be narrowed below the whole resource.
-
-**K14 llm / gemini** (llm/gemini.py; plain HTTP, key in the `x-goog-api-key` header)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G31 | `post_json(".../v1beta/models/<model>:generateContent", ...)` :84-90 (R) | no role: an API key restricted to the Generative Language API only | a project made for this deployment | sends one model request | M |
-NEVER K14: an unrestricted API key; a key shared with another deployment; a key from a project that holds other data
-
-**K15 llm / openai_compat** (llm/openai_compat.py; plain HTTP)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G32 | `post_json("<base_url>/chat/completions", ...)` :88, :120 (R) | no role: where the provider offers restricted keys, a key allowed chat completions only; a self-hosted server needs none | one project or one server | sends one model request | L |
-NEVER K15: an organisation admin key; a key allowed to manage files, fine-tunes or other keys
-
-**K16 channel / slack** (approvals/slack_channel.py; plain HTTP, bot token)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G33 | `chat.postMessage` :125, :167, :196 (R) | bot scope `chat:write` | the client's own internal app; the bot is invited to the one channel `{channel_id}` | posts the approval message, cards and notices | H |
-| G34 | `chat.update` :185 (R) | the same scope (a bot may update only its own messages) | same | replaces the buttons with the decision | H |
-NEVER K16: `chat:write.public`; `chat:write.customize`; `channels:read`; `channels:history`; `groups:history`; `users:read`; `users:read.email`; `files:write`; `admin`; any user token scope; `incoming-webhook`
-Already in docs/slack-app-manifest.yaml; guard G8 keeps the two equal. Inbound clicks are checked with the signing secret and need no scope.
-
-**K17 secrets / vault** (Vault or OpenBao; actions/secrets_vault.py)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G35 | `authed("GET", "{mount}/data/{path_prefix}<name>")` :115 (R) | capability `read` | path `{mount}/data/{path_prefix}*` (recorded bound: this deployment's prefix; an empty `path_prefix` gives the whole mount and the page must warn) | reads one named secret | H |
-| free | `call("POST", "auth/<auth_mount>/login", ...)` :138 (auth approle :172-173, kubernetes :183-184); auth token sends no sign-in request | none (the sign-in path takes no token) | n/a | signs in | H |
-NEVER K17: capability `create`, `update`, `patch`, `delete` or `list` on `{mount}/data/*`; any capability on `{mount}/metadata/*`; `{mount}/delete/*`; `{mount}/destroy/*`; `sys/*`; `auth/token/create`; `auth/*` beyond the sign-in; capability `sudo`; the `root` policy
-
-**K18 signer / vault_transit** (Vault or OpenBao; audit/signer_vault.py; signs in through `secrets_vault.connect` :79)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G36 | `authed("POST", "{transit_mount}/sign/{key_name}", ...)` :52 via :40 (S, R) | capability `update` | path `{transit_mount}/sign/{key_name}` | signs each audit checkpoint | H |
-| G37 | `authed("GET", "{transit_mount}/keys/{key_name}")` :62 via :40 (S, V) | capability `read` | path `{transit_mount}/keys/{key_name}` | reads the pinned version's public key and the key type | H |
-| free | the sign-in request, as in K17 | none | n/a | signs in | H |
-NEVER K18: capability `update`, `create` or `delete` on `{transit_mount}/keys/{key_name}`; `{transit_mount}/keys/{key_name}/rotate`; `{transit_mount}/keys/{key_name}/config`; `{transit_mount}/keys/{key_name}/trim`; `{transit_mount}/export/*`; `{transit_mount}/backup/*`; `{transit_mount}/restore/*`; `{transit_mount}/sign/*` for another key; `sys/*`; capability `sudo`
-
-**K19 source / kubernetes** (sources/kubernetes.py; registry sources/kinds.py:39-47; one namespaced Role and RoleBinding per configured namespace, never a ClusterRole)
-| id | code call | permission | resource | reason | conf |
-|---|---|---|---|---|---|
-| G38 | `GET /apis/apps/v1/namespaces/<ns>/deployments?limit=...` :232-234 (R) | verb `list` | `deployments`, API group `apps`, in each of `{namespaces}` | reads deployments, their rollout revision and images | H |
-| G39 | `GET /api/v1/namespaces/<ns>/events?limit=...` :247 (R) | verb `list` | `events`, core API group, same namespaces | reads events in the time window | H |
-| G40 | `GET /api/v1/namespaces/<ns>/pods/<pod>/log?...` :281-287 (R) | verb `get` | `pods/log`, core API group, same namespaces | reads one pod's log lines | H |
-| free | `POST /apis/authorization.k8s.io/v1/selfsubjectrulesreviews` :328-337 (S) | none in a default cluster (every signed-in identity may ask what it may do); if the cluster removed that default, verb `create` on `selfsubjectrulesreviews` | cluster | start-up proves the credential is read-only | H |
-NEVER K19: verbs `create`, `update`, `patch`, `delete`, `deletecollection`, `escalate`, `bind`, `impersonate`; verb `watch`; verb `*`; `pods/exec`; `pods/attach`; `pods/portforward`; `pods/proxy`; `nodes/proxy`; `services/proxy`; any verb on `secrets`; any ClusterRoleBinding
-The never-list is the list the code already refuses at start-up (kubernetes.py:36-49, :100-125).
-
-Count (script over this file, 2026-11-11: `grep -cE '^\| G[0-9]{2} '` and the `; `-separated items of the `NEVER` lines): 19 kinds; 40 grant rows (author's confidence: 29 H, 8 M, 3 L); 3 calls that need no permission; 19 never-lists holding 169 entries. None verified live. The builder will write more than 40 `Grant` literals, because a row used by two identities (G07, G19, G26) or with two resource forms (G09) becomes one literal per identity or form; those extra literals add no new permission name.
-
-## 7. Docs output
-`docs/least-privilege-policies.md`, generated by `python -m hadavin_sdk.backends.policy` and committed; guard G10 fails when it is stale. For each kind: one plain sentence saying what the kind does; the identity or identities (runtime, verifier); a table (permission, on what, why, when it is used); the never-list with reasons; how the identity signs in and how long the credential lives; then a copy-ready block for AWS (IAM policy JSON: one Allow statement per grant with its condition, one explicit Deny statement for the never-list), Vault (policy text) and Kubernetes (Role and RoleBinding). Azure, Google Cloud and API-key kinds show the table and name the nearest built-in role with what it allows beyond the minimum. Placeholders stay as `<NAME>`: no account id, region, key id or ARN of a real account is written anywhere. The page opens with the honest limit: these policies are derived from the code and are kept equal to it by tests; each was (or was not yet) confirmed on a real account on a stated date. `for_config(entries)` gives the same for one config with the settings filled in; a command-line subcommand for it is NOT in this ticket (section 10).
-
-## 8. Tests
-Must FAIL on origin/main (the builder pastes each failing run against main's `src/`, with the expected message, so a failure for a wrong reason does not count):
-- F1 guard G1 lists all 19 kinds as "no policy" (exact names asserted).
-- F2 N1 for each of the 19 kinds: the contract fixture cannot load a policy (message names the kind).
-- F3 G10: the page does not exist.
-- F4 G8: the Slack policy and the Kubernetes policy do not exist to compare.
-Regression guards (pass once built; exempt from the fail-on-main proof, each proved by its own plant): plants for G2 (a `*` action; a `*` resource with no condition), G3 (an unknown `{field}`), G4 (empty reason; a name both granted and never), G5 (a grant whose call is not in the module), G6 (a kind module calling `list_secrets` with no grant; a stale allowlist entry), G7 (a new Slack method string with no grant; a new Vault path with no grant), G9 (an invented AWS action), G10 (a stale page); N2-N7 of section 3.4; the enforcer's own tests (deny by default; an unknown operation refused; `when` and `used_by` honoured; refusal shapes per platform).
-Hostile inputs: a `POLICY` that is not a pure literal (a call, an f-string, an import) is refused by `load` and never executed; a `POLICY` with an unknown key or platform is refused; a settings value holding `*` or `{` cannot widen a rendered resource (the renderer refuses it); a rendered AWS block parses as JSON and holds no `"Action": "*"`, no `"Resource": "*"`.
-Mutants: one per guard rule G1-G10 and one for the enforcer's default deny, each killed by a named test, added to the repository's mutant list (tests/stage_mutants.py is the Q8a precedent; the builder says which file it used).
-
-## 9. Evidence, gates, review
-Gates: `uv run --all-extras --group test pytest` with HADAVIN_TEST_PG_DSN and HADAVIN_TEST_VAULT_ADDR set (own throwaway Postgres and Vault dev server; the Vault tests must show as NOT skipped), `ruff check`, `ruff format --check`, `bandit -ll`, the guard tests. One full run at the final head through one heavy slot. Then a separate EVIDENCE RUNNER and the egm:* result reviewers (they get the diff, this ticket and the evidence). Estimate at agent speed: build about 4 hours of real clock in four 60-minute boxes (types, loader and guard; 19 policies; enforcer wiring; page and renderers), plus evidence and review rounds.
-Live proof, NOT in this ticket (needs the owner: accounts, and a yes with numbers where anything costs money): at the first live run of each kind, attach the page's policy to the test identity, run the kind's contract suite, attempt each never-list operation, and record the result and date on the page; for AWS also run the policy simulator and Access Analyzer validation.
-
-## 10. Out of scope (each with where it goes)
-- Splitting one process's identities (runtime, purge, signer, channel): audit F2, its own ticket. This ticket only labels each grant with `used_by` so that split has its input.
-- Step-up sign-in for approvers (F4); Vault static token (F5, ticket Q8a-1); RDS-only passwordless sign-in (F7).
-- Database roles and GRANT statements: they live in the migrations (`store/migrations/0001_core.sql`, `hadavin-sdk migrate`), which this author did not read; whether they meet item 5 is NOT established here and needs its own audit line.
-- Infrastructure code (Terraform or similar), permission boundaries, organisation-level deny policies, CI deploy, break-glass and human identities: client delivery work, not core.
-- Any change to what a kind sends. Findings from reading the code that would need one are in section 11, not fixed here.
-- A `hadavin-sdk policy` command; native Azure and Google Cloud role files.
-- Network egress (the `hosts` list and the network policy prerequisite) is separate and unchanged.
-
-## 11. Open questions and items not established
-For the plan reviewers:
-1. Reference plus literal in the kind module (3.2), or data inline in TABLE?
-2. Is target-level enforcement (`Grant.target`, N5) worth its size in this ticket, or operation level first?
-3. One pull request for all 19 kinds, or AWS, Vault, Slack and Kubernetes first and Azure and Google Cloud second? The author sees no technical need to split.
-4. Should CI gain a MinIO service so the S3 anchor policy is enforced by a real S3-compatible server, as Vault is? Zero money; one more CI container.
-For the owner (each needs a decision only he can make):
-5. Azure anchor in GOVERNANCE mode: if G18 is confirmed to be the same permission that removes an Unlocked policy, should pilot and prod refuse `azure_immutable_blob` with `mode: GOVERNANCE`, or accept it in writing per client?
-6. Anthropic on Azure AI Foundry signs in with a resource-wide key. Accept with "one Foundry resource per deployment" written on the page, or order a follow-up ticket for identity-based sign-in (a code change)?
-7. Live proof (section 9): which accounts, and when.
-Not established (lowest confidence first; the live check must settle each before build):
-- G17, G18 (Azure blob create and immutability permissions) and whether listing needs more than G19/G20.
-- G06 conditions (`s3:object-lock-mode`, `s3:object-lock-remaining-retention-days`) and whether MinIO and Ceph honour them.
-- G32 (restricted keys differ per OpenAI-compatible provider).
-- G28: whether one publisher model can be the resource; G09 resources for cross-region inference profiles.
-- G03 condition values for Ed25519; G16; K8 on Managed HSM (different permission names, not derived).
-- Whether `parliament` or `policy_sentry` is maintained and licence-clean today.
-- G02 applies only with a client-managed key; the page must say so.
+## 11. Resolution table (every Blocker and Major of round 1)
+| review, id | finding in short | resolved in |
+|---|---|---|
+| zoom-out B1 | names never exercised; test families misnamed; never-list test tautological | 0 (second bullet), 6.1 (families named; B3 limit stated), 6.2 |
+| zoom-out B2 | verifier/writer split cannot work | 5 (identities), 8.1; `used_by` and N7 removed |
+| zoom-out B3 | rendered Deny breaks deployments | 4.6 (Allow only), 4.4 D5, 2 (out list) |
+| zoom-out M1 | moto is a dependency; spike before any enforcer | 0 (a), 3, 7 step 1; enforcer cut |
+| zoom-out M2 | "one grant, one operation" fails for many rows | 4.1 (`rides_on`, `no_wire`, `applies_when`, `verified`), 6.1 B2 exempt list, 6.2 |
+| zoom-out M3 | scope cut | 2 (slice 1; out list), 4.2 (no table.py change), 5 (never-lists trimmed) |
+| zoom-out M4 | mechanism for unverified names | 4.5, 7 step 0 |
+| zoom-out M5 | literals in kind modules; helpers out of `src/` | 4.1, 4.2 |
+| zoom-out M6 | name-based rule: state the bound; paginator by its string | 4.3 (rule and stated bounds) |
+| design B1 | K6 never-list forbade a call the code makes | 5 (R14, R15, migration user as third identity) |
+| design B2 | Deny unspecified and contradictory across kinds | 4.6, 4.4 D5, 5 (typed never table; `kms:Decrypt` and `bedrock:InvokeModel` no longer on any never-list) |
+| design B3 | code-to-policy binding not achievable as written | 4.3 (one equality rule; prototype ran on all ten modules) |
+| design M1 | S3 anchor had no hook; moto is used | 3, 6.3 |
+| design M2 | choke points misnamed; one admin Vault client | 0 (c), 6.3 |
+| design M3 | grants with no wire operation | 4.1, 4.4 D4, 5 (R02, R06, R09, R10, R14, R15) |
+| design M4 | prose conditions; `?` is a wildcard | 4.1 (structured conditions, separate `bound`), 4.4 D1 |
+| design M5 | verifier must sign at start-up | 5 (identities), 8.1 |
+| design M6 | substring search passes stale grants | 4.3 (call nodes only, set equality, docstrings excluded) |
+| design M7 | never-lists untyped | 4.1, 5 |
+| design M8 | S3 encryption-key rows missing; retention-days boundary | 5 (R09, R10), 9 V1-V2 (UNVERIFIED; no such condition in the data) |
+| design M9 | name-prefix conditions on Google and Azure list calls | not resolved here because those kinds are slice 2 (section 2); the same risk for S3 is R08's condition, unverified until step 0 and not testable on moto (6.2) |
+| design M10 | Vault tests need `no_default_policy` | 6.3; 9 V6 (UNVERIFIED until run) |
+| design M11 | allowlist grammar per rendered value | 4.6 |
+| design M12 | fallback must be a saved dated action list | 4.5 (needs L2) |
+Minors taken: `watch` (0 b, 5, 8.4); no neutral policy module exists (4.2); fail-on-main for the right reason (6.4); structured credential lifetime (4.1, D6, 8.5); empty Vault prefix (4.6, 8.2); SDK sign-in requests (4.3 bounds); OpenBao (6.2, L3); estimate (10). Not taken: Azure and Foundry minors (slice 2).

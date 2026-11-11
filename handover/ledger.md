@@ -2576,3 +2576,6 @@
 | BL-core-q8c-plan-r1-B1 | Blocker | Q8c-plan | reviews/Q8c/plan-r1-design.md B1 and plan-r1-zoomout.md | OPEN | | | 2026-11-11 |
 | BL-core-q8c-plan-r1-B2 | Blocker | Q8c-plan | reviews/Q8c/plan-r1-design.md B2 and plan-r1-zoomout.md | OPEN | | | 2026-11-11 |
 | BL-core-q8c-plan-r1-B3 | Blocker | Q8c-plan | reviews/Q8c/plan-r1-design.md B3 and plan-r1-zoomout.md | OPEN | | | 2026-11-11 |
+| BL-core-q8c-find-Vault | Minor | core-main | Vault path_prefix defaults to empty (backends/table.py:285): default config reads the whole mount (tickets/Q8c rev 2 section 8) | OPEN | | | 2026-11-11 |
+| BL-core-q8c-find-key_id | Minor | core-main | key_id, bucket, region, guardrail_id settings have no pattern (backends/table.py) (tickets/Q8c rev 2 section 8) | OPEN | | | 2026-11-11 |
+| BL-core-q8c-find-Kubern | Minor | core-main | Kubernetes start-up does not refuse verb watch (sources/kubernetes.py:39,116-124) (tickets/Q8c rev 2 section 8) | OPEN | | | 2026-11-11 |
