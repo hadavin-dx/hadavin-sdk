@@ -1470,3 +1470,8 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | aca36365 | Q8c-1 r6 fix builder | 23:22Z | 90 min | RUNNING |
 | a769587c | PR89 r26 fix builder | 23:22Z | 90 min | RUNNING |
 | ab69eabb | Q8a-1 b8 fix builder | 23:22Z | 90 min | RUNNING |
+| ab258684d1aeda457 | Q8b r4 EVIDENCE RUNNER 4091f8b1 | 23:25Z | +55m | 23:25Z | running | collect RESULTS.md |
+| ade4ab8f149f1095a | Q8b r4 egm-design | 23:25Z | +30m | 23:25Z | running | save report, resolve |
+| a181696c25bc0e463 | Q8b r4 egm-codebase-details | 23:25Z | +30m | 23:25Z | running | save report, resolve |
+| aacde19899a414b3f | Q8b fix batch 3 builder | - | - | 23:25Z | closed (4091f8b1) | - |
+| a19633e6a12fb0ef7 | P3a-2 3b builder | - | - | 23:25Z | handed back, WIP 1ffa6559; full suite B2-full.log still running | read exit code ~23:50Z, then stop leftovers |

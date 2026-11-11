@@ -917,3 +917,4 @@ PULSE 17:13Z 12 agents, load 5.0
 PULSE 17:23Z: 9 agents, load ~3.5, push ok
 PULSE 19:40Z: 18 agents (3 builders, 5 EV, 10 reviewers)
 PULSE 21:12Z 7 agents running (PR H, P3a-2, timing EV, Q8b b2, Q8a-1 b6, PR89 r24, Q8c-1 b4)
+PULSE 23:25Z: Q8b round 4 launched (EV + 2 reviewers) on 4091f8b1; fix builders PR H b4, Q8c-1 b6, PR89 r26, Q8a-1 b8 running; P3a-2 suite pending; load ~1-2.
