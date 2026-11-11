@@ -82,3 +82,4 @@ Each line: UTC | IST | item | running agents | next 3 steps | blockers
 16:59 Q8a-2 r4 codebase review saved: READY by reading, 0 Blocker 0 Major, 4 minor 3 nit (no evidence yet; runner a4b5e2ea pending). P3a-2 rev 3 author a80b0727 launched. Plan: Q8a-2 minors fixed in one push after evidence lands (cap reached: no new review for minors).
 16:59 D-022: user wants the EGM skills themselves used in sequence. Starting with egm:egm-resolve on Q8a-2 r4 reports.
 16:59 egm:egm-resolve run on Q8a-2 r4 (Skill): 6 PROPOSE FIX, 1 DECLINE (n3 personal data in logs); report handover/reviews/Q8a-2/goldfish_review_report-r4.md. Launching batch 4 builder.
+17:03 CHECKPOINT: 9 agents running (oldest 42 min: Q8b evidence, timing fix, PR89 r22), load 5.7. Fresh checkpoints from Q8a-2 b4, EV Q8a-2, PR H rev3, P3a-2 rev3. Next: at 60 min message the three oldest if silent.
