@@ -1454,7 +1454,7 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a092f756 | P3a-2 3b builder | box | CLOSED, WIP saved wip/cloud-p3a2-3b | resume builder queued (load) |
 | a15f9690 | timing nits builder | start 22:03Z, 60 min | RUNNING | collect; then ledger + READY check |
 | ae11c03a | Q8c-1 fix batch r5 builder | start 22:06Z, 90 min | CLOSED 5015c990 | collect -> snapshot -> EV + 2 reviewers |
-| a2a2c707 | PR H resume builder (92 pairs, T5, WP3, WP4) | start 22:06Z, 90 min | RUNNING | collect -> snapshot -> EV + 2 reviewers |
+| a2a2c707 | PR H resume builder (92 pairs, T5, WP3, WP4) | start 22:06Z, 90 min | CLOSED e852b577 | collect -> snapshot -> EV + 2 reviewers |
 | a19633e6 | P3a-2 resume builder (3b) | start 22:18Z, 90 min | RUNNING | collect -> snapshot -> EV + 2 reviewers |
 | aacde198 | Q8b fix batch 3 builder | start 22:20Z, 90 min | RUNNING | collect -> snapshot -> EV + 2 reviewers (round 4) |
 | ab548440 | EV Q8a-1 4ccb4f9a | start 22:21Z, 50 min | RUNNING | read RESULTS.md |
@@ -1465,3 +1465,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | Q8c-1 r6 | EV + design + codebase | 22:38Z | 50 min | RUNNING |
 | PR89 r25 | EV + design + codebase | 22:55Z | 60 min | RUNNING |
 | Q8a-1 r8 | EV + design + codebase | 23:01Z | 60 min | RUNNING |
+| PRH r-next | design + codebase | 23:02Z | 30 min | RUNNING (EV pending) |
