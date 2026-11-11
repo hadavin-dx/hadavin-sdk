@@ -1,0 +1,13 @@
+HEAD 0cd10b99f3c591e2d2bba04a6b6aeb16a56826da
+ M CHANGELOG.md
+ M tests/fixtures/mutation_manifest.json
+ M tests/mutation_runner_mutants.py
+BAD WRONG_REASON runner: a port after the host is read as the start of a password  [test_a_host_with_a_port_is_not_read_as_a_url_login_and_a_num]
+      first line: E           AssertionError: a port after the host was read as the start of a password
+ok  KILLED       runner: a port followed by a question mark or a hash is a password  [test_a_host_with_a_port_is_not_read_as_a_url_login_and_a_num]
+ok  KILLED       runner: a value of exactly the ceiling is refused  [test_a_value_longer_than_the_ceiling_is_refused_without_show]
+ok  KILLED       runner: the one-character ellipsis is not looked for  [test_a_piece_beside_a_unicode_ellipsis_is_masked_like_one_be]
+ok  KILLED       runner: the one-character ellipsis has the width of three dots  [test_the_scan_gives_the_unicode_ellipsis_the_width_of_one_ch]
+ok  KILLED       runner: a line with exactly the ceiling of dots is replaced  [test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_s]
+5 of 6 good; problems: ['runner: a port after the host is read as the start of a password']
+exit=1

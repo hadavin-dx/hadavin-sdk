@@ -1,0 +1,10 @@
+I4 the edge minimum is 1 (over-masking: one character beside the dots)
+replaced: 'EDGE_MIN = 2  #'
+by: 'EDGE_MIN = 1  #'
+summary: FAILED tests/test_mutation_runner_keywords.py::test_every_head_and_tail_of_a_short_plain_secret_next_to_dots_is_hidden
+exit=1
+FAILED kept tests:
+test_a_piece_of_exactly_the_edge_minimum_is_masked_and_a_shorter_one_is_not
+test_a_shortened_value_is_masked_by_its_fragments
+test_every_head_and_tail_of_a_short_plain_secret_next_to_dots_is_hidden
+test_the_fragment_scan_agrees_with_the_plain_definition

@@ -1128,4 +1128,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a4aead31 | PR89 r13 reviewer slice keyword tests | done 04:17Z | | | closed (round-w2-r13-codebase-keywordtests.md) | |
 | add433e4 | PR89 r13 reviewer slice mutants/CHANGELOG | done 04:20Z | | | closed (round-w2-r13-implreadiness-mutants.md) | |
 | a8904ec1 | PR89 builder r12 | done 04:09Z | | | closed (report 0cd10b9) | independent runner after reviews |
-| a8904ec1 | PR89 builder round 13 (resumed, batch of r13-03..17) | 04:23Z | 05:20Z (60 min box) | 04:23Z | running | read report; then independent runner on final head + fresh reviewers on delta |
+| a8904ec1 | PR89 builder round 13 | done 04:47Z | | | closed (report e957592) | |
