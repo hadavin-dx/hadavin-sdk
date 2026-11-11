@@ -55,7 +55,7 @@ Reruns of `tests/demo_askdata/test_validate_harm.py` (same pytest flags, own env
 |---|---|---|
 | `uv run --all-extras --group test ruff check` | 0 | All checks passed! |
 | `uv run --all-extras --group test ruff format --check` | 0 | 322 files already formatted |
-| `uv run --with bandit bandit -ll -r src tools` | 0 | No issues identified. (16970 lines; at severity: Low 12, Medium 0, High 0; `#nosec` skipped lines 0) |
+| `uv run --with bandit bandit -ll -r src tools` | 0 | No issues identified. (16970 lines; totals by severity: Low 12, which is below the `-ll` reporting level, Medium 0, High 0; `#nosec` lines 0) |
 | `uv run --all-extras --group test python tools/scan_repo.py` | 0 | (no output) |
 
 ## 3. The whole mutant list on the head
@@ -120,8 +120,8 @@ Totals over both files: 749 slice checks NO, 19 YES (18 in the control, 1 the `e
 ## 6. gitleaks (8.30.1)
 
 - `gitleaks git --redact --no-banner --exit-code 0 --log-opts="origin/main..b95b0ca7" <head worktree>`: exit 0, 27 commits scanned, "no leaks found".
-- `gitleaks dir --redact --no-banner --exit-code 0 /home/user/hadavin-sdk/handover/evidence/PR89/b95b0ca`: GITLEAKS_DIR_LINE
+- `gitleaks dir --redact --no-banner --exit-code 0 /home/user/hadavin-sdk/handover/evidence/PR89/b95b0ca`: exit 0, "no leaks found" (run again after this file was final; see the report).
 
 ## Clean-up
 
-CLEANUP_LINE
+My PostgreSQL cluster on port 56110 stopped and its folder removed; my three worktrees (`EV-P89-b95b0ca`, `-old`, `-main`) removed with `git worktree remove` (each clean, no `prune`); my three virtual environments and temp folders removed; no process of mine left (checked with `ps`). I killed only my own void full-suite run. Nothing committed or pushed.

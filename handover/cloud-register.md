@@ -1215,7 +1215,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | R-Q8b-r2 a865e68c | 14:38Z | 8 min | read-only review | on track |
 | EV-Q8a1-r2 ad880047 | EVIDENCE RUNNER (Fable) Q8a-1 head f6fad26f, heavy.sh, pg 56140 | 14:48Z | +50m | 14:48Z | CLOSED evidence/Q8a-1/f6fad26/RESULTS.md (10652 passed, 0 failed; mutants 46/46; probes: steps=[] runs in pilot and returns 0 = confirms the open Major; new test file needs a one-line alias to import on older bases) | read RESULTS.md |
 | R-Q8a1-r2 a8768ee3, ac32ad6b | both CLOSED, saved reviews/Q8a/result-r2-*-full.md (1 Major: run_tick steps=) | | | | closed | |
-| A-Q8b (resumed 2) a123e38f | Q8b ticket revision 3 (third and last plan round; full review texts) | 14:48Z | +45m | | running | freeze with errata if clean enough; builder after PR77 result is known |
+| A-Q8b (resumed 2) a123e38f | Q8b ticket revision 3 (third and last plan round; full review texts) | 14:48Z | +45m | | CLOSED ticket rev 3 (167 lines) + Q8b-appendix.md (932 lines) written; three plan rounds used; FROZEN | freeze with errata if clean enough; builder after PR77 result is known |
 | EV-Q8a2-res a96bf331 | EVIDENCE RUNNER (Fable) Q8a-2 head 02068ebe, heavy.sh, pg 56150, socket probes | 14:52Z | +50m | 14:52Z | CLOSED evidence/Q8a-2/02068eb/RESULTS.md (10648 passed, 0 failed; each commit green; merged tree with Q8a-1: both scans empty, 431 passed; probe: a path with doubled leading slashes answers like the right path, also on main) | read RESULTS.md |
 | R-Q8a2-res a3040b43, ae979d0b | both CLOSED, saved reviews/Q8a-2/result-r1-*-full.md (2 code Majors: gcs skip, import module path) | | | | closed | |
 
@@ -1244,7 +1244,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-flaky, EV-Q8a1-r2 | 36 / 16 min | writing results (17 files across the four evidence folders) | on track |
 | B-PR89-r20, B-Q8c1, B-flaky fix, B-Q8a1 fix 2, B-Q8a2 fix 1, A-Q8b rev 3 | 6-35 min | building / writing | on track |
 | EV-P77 ab49c9d1 | EVIDENCE RUNNER (Fable) PR77 work head 97fd2028: full suite with Postgres, 93 mutants, fail-before on 3 bases, hostile probes, cost; heavy.sh, pg 56160 | 15:07Z | +90m | 15:07Z | running (queues for a slot) | read RESULTS.md |
-| R-P77-r7 a6a27c37, a1068d0f | egm design + codebase (Fable) RESULT review round 7 of PR77 (snapshot p77-97fd202) | 15:07Z | +30m | 15:07Z | running | save reviews/PR77/round7-*-full.md, ledger |
+| R-P77-r7 a6a27c37 (design CLOSED: NOT CLEAN, 2 Blockers reproduced by lead), a1068d0f | egm design + codebase (Fable) RESULT review round 7 of PR77 (snapshot p77-97fd202) | 15:07Z | +30m | 15:07Z | codebase reviewer still running | save reviews/PR77/round7-*-full.md, ledger |
 
 ### Long-running check 15:13Z
 | agent | age | doing now | verdict |
@@ -1257,6 +1257,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-P77 ab49c9d1 | 7 min | full suite through heavy.sh 5 min in | on track |
 | B-Q8a2 fix 1, B-flaky fix, A-Q8b rev 3, R-P77-r7 x2 | 7-40 min | building / writing / reading | on track |
 | EV-Q8a1-r3 af8c6f12 | EVIDENCE RUNNER (Fable) Q8a-1 head fcd77a68, heavy.sh, pg 56170 | 15:17Z | +60m | 15:17Z | running (queues) | read RESULTS.md |
-| R-Q8a1-r3 a5f0e2c7, a3703391 | egm design + codebase (Fable) RESULT review round 3 of Q8a-1 (snapshot q8a1-fcd77a6) | 15:17Z | +25m | 15:17Z | running | save reviews/Q8a/result-r3-*-full.md; CLEAN + evidence = READY candidate |
+| R-Q8a1-r3 a5f0e2c7 (design CLOSED: CLEAN by reading, 5 Minor), a3703391 | egm design + codebase (Fable) RESULT review round 3 of Q8a-1 (snapshot q8a1-fcd77a6) | 15:17Z | +25m | 15:17Z | codebase reviewer still running | save reviews/Q8a/result-r3-*-full.md; CLEAN + evidence = READY candidate |
 | EV-Q8c1 adaef824 | EVIDENCE RUNNER (Fable) Q8c-1 head 7af13809 (no outside program; engine tests recorded as not run), heavy.sh, pg 56180 | 15:20Z | +60m | 15:20Z | running (queues) | read RESULTS.md |
 | R-Q8c1-res a1693872, a176d628 | egm design + codebase (Fable) RESULT review r1 of Q8c-1 (snapshot q8c1-7af1380) | 15:20Z | +30m | 15:20Z | running | save reviews/Q8c/result-r1-*-full.md |
