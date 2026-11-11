@@ -4687,6 +4687,8 @@ def test_a_name_of_python_itself_is_shown_whole_also_when_it_holds_the_password(
     for parts in (("Er", "ror"), ("Key", "Error"), ("Fai", "led"), ("r",)):
         shown, word = _weak_shown(tmp_path, parts)
         for name in ("KeyError", "AssertionError", "Failed"):
+            if name.casefold() == word.casefold():
+                continue  # a password EQUAL to the name hides it (round 24); the next tests pin that
             assert mr._shown_line(f"E   {name}: x", shown) == name, (
                 f"a name of Python itself was replaced or cut for a password of {len(word)} characters that is a piece of it"
             )
@@ -6113,6 +6115,15 @@ def test_a_password_that_is_only_a_piece_of_a_class_name_does_not_hide_the_class
         shown = _shown_for_password(tmp_path, piece)
         assert mr._shown_line("E   KeyError: boom", shown) == "KeyError", (
             f"a name of Python itself was hidden for a password that is a piece of it ({piece!r})"
+        )
+
+
+def test_a_password_that_holds_a_whole_class_name_does_not_hide_the_class(tmp_path):
+    # only a password EQUAL to the name hides it; a longer password that merely contains the name does not (names stay whole, as for a piece)
+    for password in ("xxKeyErrorxx", "KeyErrors"):
+        shown = _shown_for_password(tmp_path, password)
+        assert mr._shown_line("E   KeyError: boom", shown) == "KeyError", (
+            f"a name of Python itself was hidden for a password that holds it ({password!r})"
         )
 
 
