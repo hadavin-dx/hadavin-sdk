@@ -211,6 +211,24 @@
   field with a default no longer un-qualifies agents, and swapping the llm backend does.
 
 ### Added
+- **Declared permissions for three backend kinds** (ticket Q8c, part 1): `vault` (secrets), `vault_transit` (signer)
+  and `kubernetes` (source). Each of the three kind modules now carries a `POLICY` literal: the permissions its
+  code needs, one reason per permission, the requests that need no permission, and what the identity must never
+  be given. [docs/least-privilege-policies.md](docs/least-privilege-policies.md) is generated from it
+  (`python tools/policy_page.py --write`; `--check` fails when the page and the data differ).
+  - What is tested: three backend kinds ship a declared permission set tied to the calls their code makes; the
+    two Vault kinds are also refused by a real Vault server in CI; Kubernetes is checked against the code's own
+    read-only rule. "Tied to the calls" means: the requests written in that module by the listed call shapes are
+    all declared, and every declared request is still made (`tests/test_policy_guard.py`).
+  - What is not shown: no test shows that a permission name is right. The names and path forms were found in the
+    vendors' documentation source files on 2026-11-11 (`tests/fixtures/policy_sources_2026-11-11.txt`); the
+    rendered vendor pages could not be reached. No policy has been confirmed on a real account or a real
+    cluster. OpenBao was not run. Sign-in through an AppRole or Kubernetes role is not exercised.
+  - The Vault server tests (`tests/test_policy_engine.py`) are skipped on a machine with no Vault server and are
+    required in CI (`HADAVIN_REQUIRE_VAULT_ENGINE=1`).
+  - No behaviour change: no kind sends a different request. The other 16 kinds that sign in to an outside system
+    (the AWS, Azure and Google Cloud kinds, Slack, Postgres, the API-key model kinds) have no declared permission
+    set yet; a dated list in the guard test names them.
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.
   - It covers AWS, gcloud/gsutil/bq, az, azcopy and PowerShell Az, kubectl/oc, helm, terraform/tofu/pulumi,

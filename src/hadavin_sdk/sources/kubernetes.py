@@ -349,3 +349,195 @@ class KubernetesSource:
                 problems.append(f"namespace {ns}: the rules review is incomplete, scope not proven")
             problems += rules_problems(ns, status["resourceRules"])
         return problems
+
+
+# The permissions this kind needs. Data only: nothing here is run. `tools/policy_page.py` reads this literal
+# from the source text, and `tests/test_policy_guard.py` fails when it differs from the calls written above.
+# `verified` = (date, source ids): the name and the path form were found, spelled so, in those vendor sources
+# (the ids resolve in tests/fixtures/policy_sources_2026-11-11.txt). `confirmed_live` = accepted by a real
+# account; None everywhere so far.
+POLICY = {
+    "platform": "kubernetes_rbac",
+    "credential": {
+        "how": (
+            "The ServiceAccount token that the tool's fetch attaches to each request. This module holds no "
+            "credential."
+        ),
+        "lifetime": "long",
+        "exception": (
+            "Whether the token expires is decided by the cluster and the operator, and this code cannot tell. "
+            "From the builder's memory, not checked against the Kubernetes pages: a token projected into the "
+            "pod expires and is renewed, a token stored in a Secret does not expire. Use a projected token. "
+            "No ticket removes this yet."
+        ),
+    },
+    "notes": (
+        (
+            "One Role and one RoleBinding per namespace in `namespaces`. Never a ClusterRole or a "
+            "ClusterRoleBinding."
+        ),
+        (
+            "At every start-up the kind asks the cluster what this identity may do and reports write verbs, "
+            "shell subresources and any read of `secrets`. It does not report the verb `watch`."
+        ),
+    ),
+    "grants": (
+        {
+            "id": "R20",
+            "name": "list",
+            "resource": "apps/deployments in {namespaces}",
+            "bound": "",
+            "operations": (("k8s.list_deployments",),),
+            "applies_when": "",
+            "reason": "reads deployments, their rollout revision and images",
+            "verified": ("2026-11-11", "K-AUTHZ", "K-SRC"),
+            "confirmed_live": None,
+            "claims_unverified": (),
+        },
+        {
+            "id": "R21",
+            "name": "list",
+            "resource": "core/events in {namespaces}",
+            "bound": "",
+            "operations": (("k8s.list_events",),),
+            "applies_when": "",
+            "reason": "reads events in the time window",
+            "verified": ("2026-11-11", "K-AUTHZ", "K-SRC"),
+            "confirmed_live": None,
+            "claims_unverified": (),
+        },
+        {
+            "id": "R22",
+            "name": "get",
+            "resource": "core/pods/log in {namespaces}",
+            "bound": "",
+            "operations": (("k8s.pod_log",),),
+            "applies_when": "",
+            "reason": "reads one pod's log lines",
+            "verified": ("2026-11-11", "K-RBAC", "K-SRC"),
+            "confirmed_live": None,
+            "claims_unverified": (),
+        },
+    ),
+    "free": (
+        {
+            "operations": (("k8s.rules_review",),),
+            "reason": "asks the cluster what this identity may do; it creates nothing",
+            "note": (
+                "default clusters only: a cluster that took this right away from signed-in identities must "
+                "grant `create` on `selfsubjectrulesreviews`"
+            ),
+            "verified": ("2026-11-11", "K-RBAC", "K-SRC", "K-SSRR"),
+        },
+    ),
+    "never": (
+        {
+            "type": "role",
+            "name": "cluster-admin",
+            "reason": "a built-in role that may write",
+            "verified": None,
+        },
+        {
+            "type": "role",
+            "name": "admin",
+            "reason": "a built-in role that may write",
+            "verified": None,
+        },
+        {
+            "type": "role",
+            "name": "edit",
+            "reason": "a built-in role that may write",
+            "verified": None,
+        },
+        {
+            "type": "action",
+            "name": "create",
+            "reason": "a write verb: this source only reads",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "update",
+            "reason": "a write verb: this source only reads",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "patch",
+            "reason": "a write verb: this source only reads",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "delete",
+            "reason": "a write verb: this source only reads",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "deletecollection",
+            "reason": "a write verb: this source only reads",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "escalate",
+            "reason": "lets the identity widen its own rights",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "bind",
+            "reason": "lets the identity widen its own rights",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "impersonate",
+            "reason": "lets the identity act as another one",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "resource",
+            "name": "pods/exec",
+            "reason": "opens a shell or a tunnel into a workload",
+            "verified": ("2026-11-11", "K-RBAC", "K-SRC"),
+        },
+        {
+            "type": "resource",
+            "name": "pods/attach",
+            "reason": "opens a shell or a tunnel into a workload",
+            "verified": ("2026-11-11", "K-SRC"),
+        },
+        {
+            "type": "resource",
+            "name": "pods/portforward",
+            "reason": "opens a shell or a tunnel into a workload",
+            "verified": ("2026-11-11", "K-SRC"),
+        },
+        {
+            "type": "resource",
+            "name": "pods/proxy",
+            "reason": "opens a shell or a tunnel into a workload",
+            "verified": ("2026-11-11", "K-SRC"),
+        },
+        {
+            "type": "resource",
+            "name": "nodes/proxy",
+            "reason": "opens a shell or a tunnel into a workload",
+            "verified": ("2026-11-11", "K-KUBELET"),
+        },
+        {
+            "type": "resource",
+            "name": "services/proxy",
+            "reason": "opens a shell or a tunnel into a workload",
+            "verified": ("2026-11-11", "K-SRC"),
+        },
+        {
+            "type": "resource",
+            "name": "secrets",
+            "reason": "reading a secret reveals its value",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+    ),
+}

@@ -1,0 +1,25 @@
+# Vendor-owned sources behind the `verified` field of the POLICY literals (ticket Q8c, PR 1).
+# A kind module names a source by its id only; this file resolves the id. No URL is written in src/.
+# Who read what: a separate evidence runner read these files on 2026-11-11 between 14:02 and 14:20 UTC and
+# recorded which permission names and path forms it found in them. The rendered vendor pages were not
+# reachable; these are the documentation source files the pages are built from, and three source-code files.
+# The sha256 column: the builder fetched each file again on 2026-11-11 at 14:30 UTC from the raw form of the
+# URL at the commit shown and hashed the bytes. The evidence runner saved no text and no hash, so for a row
+# marked "branch" the hash proves only what the branch held at 14:30 UTC, at the commit the builder resolved.
+# Columns: id | url | commit or version | sha256 of the raw file | note
+V-POL | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/docs/concepts/policies.mdx | 82e7167 | beac497452411caa6ed293876e3ddf5e29228db17bc26365cd707b095abc75d4 | Vault v2.x: policies
+V-TOK | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/auth/token.mdx | 82e7167 | 03b51d9467d20ec64ff7c145d3abe7e904a3261692cd083ee957b04421fb8eed | Vault v2.x: token API (no_default_policy)
+V-KV | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/secret/kv/kv-v2.mdx | 82e7167 | 911ad99c444198cc0505e1622b9bf23f2abe7a280cfd163f61c98752db5f9da4 | Vault v2.x: KV version 2 API
+V-TR | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/secret/transit.mdx | 82e7167 | f767de0be9cb973797ac0c8d82541728d8a2ee46fe7fd034210eef0e870db863 | Vault v2.x: Transit API
+V-API | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/index.mdx | 82e7167 | b9b4e92ebc727abbc0ef928e1bd6106d1af32221f3f972a860685968dec48af2 | Vault v2.x: API index (sign-in endpoints need no token)
+V-APPROLE | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/auth/approle.mdx | 82e7167 | 500e5a3941f01727f59d055535f70365ca2a5cc72ece0734d53e19fa82dff0b3 | Vault v2.x: AppRole API
+V-K8S | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/auth/kubernetes.mdx | 82e7167 | 8a03df23fb2bfc6b259144011701430ca5551239795edda472f54dbb963a54b3 | Vault v2.x: Kubernetes sign-in API
+B-POL | https://github.com/openbao/openbao/blob/0d706a0/website/content/docs/concepts/policies.mdx | 0d706a0 | dec63d61627b3ee85775ff368a7d0842477eafaa016e740ae4eaaff7d099ebeb | OpenBao: policies
+B-KV | https://github.com/openbao/openbao/blob/0d706a0/website/content/docs/api/secret/kv/kv-v2.mdx | 0d706a0 | 3f6d4634f3d472745a97b647551c19308e27212797b90605cdc0ac29ba30d68a | OpenBao: KV version 2 API
+B-TR | https://github.com/openbao/openbao/blob/0d706a0/website/content/docs/api/secret/transit.mdx | 0d706a0 | 61cf47fcd8a42c5308571acc2165adf4644c7ae6e19388eb258a48238e365f6f | OpenBao: Transit API
+B-API | https://github.com/openbao/openbao/blob/0d706a0/website/content/docs/api/index.mdx | 0d706a0 | f45f108dd9e43df463bc522d5cb733907341da5e854dd23a3e97076331176649 | OpenBao: API index
+K-RBAC | https://raw.githubusercontent.com/kubernetes/website/main/content/en/docs/reference/access-authn-authz/rbac.md | branch main at 18f8e9f | b120961b770f1cf2a5bd234a415b88c3676eae5a9ee21f4d3eaa62687fd7e88d | Kubernetes: RBAC (same bytes at commit 18f8e9f and on main at 14:30 UTC)
+K-AUTHZ | https://raw.githubusercontent.com/kubernetes/website/main/content/en/docs/reference/access-authn-authz/authorization.md | branch main at 18f8e9f | ee14ff64beb73246c8909325abbdd069f882713dfd4d47d2daed258b08c3217c | Kubernetes: authorization, request verbs (same bytes at commit 18f8e9f and on main at 14:30 UTC)
+K-SSRR | https://github.com/kubernetes/website/blob/18f8e9f/content/en/docs/reference/kubernetes-api/definitions/self-subject-rules-review-v1-authorization.md | 18f8e9f | bb10e3bc868003190f2e8682c3829b31ccad112f7970d4b0eda604fd1cd99b7c | Kubernetes: SelfSubjectRulesReview
+K-KUBELET | https://github.com/kubernetes/website/blob/18f8e9f/content/en/docs/reference/access-authn-authz/kubelet-authn-authz.md | 18f8e9f | 3c322401fd5976e52b459f87f8c7ec581936e3a4bb816712067380dc83201f7f | Kubernetes: kubelet authorization (nodes/proxy)
+K-SRC | https://raw.githubusercontent.com/kubernetes/kubernetes/master/plugin/pkg/auth/authorizer/rbac/bootstrappolicy/policy.go | branch master at dd21ea9 | 80ff03d8755d067b10bff95851b53d0a09fb1b37c12b43f59d42169743aa6bc8 | Kubernetes source: built-in roles (branch; commit resolved by the builder at 14:30 UTC)

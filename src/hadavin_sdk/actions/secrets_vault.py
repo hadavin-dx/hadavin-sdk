@@ -193,3 +193,93 @@ def connect(settings, **kw: Any) -> VaultProvider:
         renewable=settings.auth != "token",
         **kw,
     )
+
+
+# The permissions this kind needs. Data only: nothing here is run. `tools/policy_page.py` reads this literal
+# from the source text, and `tests/test_policy_guard.py` fails when it differs from the calls written above.
+# `verified` = (date, source ids): the name and the path form were found, spelled so, in those vendor sources
+# (the ids resolve in tests/fixtures/policy_sources_2026-11-11.txt). `confirmed_live` = accepted by a real
+# account; None everywhere so far.
+POLICY = {
+    "platform": "vault",
+    "credential": {
+        "how": (
+            "A Vault token: read from an environment variable (auth `token`), or issued at sign-in through "
+            "AppRole or through the pod's Kubernetes service account."
+        ),
+        "lifetime": "long",
+        "exception": (
+            "With auth `token` the operator supplies the token, so how long it lives is the operator's choice "
+            "and this kind cannot shorten it. A token issued through AppRole or Kubernetes sign-in lives as "
+            "long as the Vault role says. Ticket Q8a-1 covers the token from the environment."
+        ),
+    },
+    "notes": (
+        (
+            "Create the token or the sign-in role so that it holds this policy only. Vault adds its `default` "
+            "policy to every token unless told not to (`no_default_policy` when a token is created, "
+            "`token_no_default_policy` on an AppRole or Kubernetes role)."
+        ),
+    ),
+    "grants": (
+        {
+            "id": "R17",
+            "name": "read",
+            "resource": "{mount}/data/{path_prefix}*",
+            "bound": (
+                "the prefix is this deployment's `path_prefix` setting and must not be empty; the `*` then "
+                "covers only what lies under that prefix"
+            ),
+            "operations": (("GET", "{mount}/data/{path_prefix}{name}"),),
+            "applies_when": "",
+            "reason": "reads one named secret",
+            "verified": ("2026-11-11", "V-KV", "V-POL", "B-KV", "B-POL"),
+            "confirmed_live": None,
+            "claims_unverified": (),
+        },
+    ),
+    "free": (
+        {
+            "operations": (("POST", "auth/{auth_mount}/login"),),
+            "reason": (
+                "the sign-in request of auth `approle` and `kubernetes` carries no token; auth `token` sends "
+                "no sign-in request"
+            ),
+            "note": "",
+            "verified": ("2026-11-11", "V-API", "V-APPROLE", "V-K8S", "B-API"),
+        },
+    ),
+    "never": (
+        {
+            "type": "role",
+            "name": "root",
+            "reason": "the built-in policy that may do everything",
+            "verified": ("2026-11-11", "V-POL"),
+        },
+        {
+            "type": "path",
+            "name": "sys/*",
+            "reason": "the server's own settings: mounts, policies, audit devices",
+            "verified": ("2026-11-11", "V-POL"),
+        },
+        {
+            "type": "path",
+            "name": "{mount}/data/*",
+            "capabilities": ("create", "update", "delete"),
+            "reason": "the reader could replace or remove what it reads",
+            "verified": ("2026-11-11", "V-POL", "V-KV"),
+        },
+        {
+            "type": "path",
+            "name": "{mount}/metadata/*",
+            "reason": "lists every secret name and can delete every version of a secret",
+            "verified": ("2026-11-11", "V-KV", "B-KV"),
+        },
+        {
+            "type": "path",
+            "name": "{mount}/destroy/*",
+            "reason": "removes versions of a secret for good",
+            "verified": ("2026-11-11", "V-KV", "B-KV"),
+        },
+    ),
+}
