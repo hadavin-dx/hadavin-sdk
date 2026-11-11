@@ -252,3 +252,4 @@ Heads (origin): see the branch table at the top of handover/PULSE.md. State per 
 - Timing fix (core/fix-timing-harness-flake ef83cd86): evidence handover/evidence/timing/ef83cd86/RESULTS.md (full 10624 passed, 65/65 mutants, perf 0/42 failed x6 under load); nits builder a15f9690 running.
 - Q8a-2: nits only; one-push fix and drift report still queued.
 Nothing merged, nothing spent, no live call, no PR state change. Owner-needed items: handover/RECOMMENDATIONS.md and questions-for-lead.md.
+23:09Z update: PR H b3 resolved (report r-b3), Q8a-1 r8 reviews saved, Q8c-1 r6 resolved; builders to launch: PR H fix (9 items), Q8c-1 r6 fix (7 items).

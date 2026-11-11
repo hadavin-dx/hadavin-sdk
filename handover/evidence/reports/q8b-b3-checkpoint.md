@@ -7,3 +7,6 @@ Blockers: heavy.sh queue is busy (my first queued run waited ~10 min); q8b tests
 
 ## 60-minute note (22:45Z)
 Done: Issues 1-8 code and tests (tests/test_q8b_batch3.py 24 tests, corpus tests/q8b_key_corpus.py), q8b_mutants 63 of 63 good (exit 0, own log /home/user/build/B-Q8b-b3-mut3.log), ruff, format, bandit, scan_repo, stage_mutants 37/37, gitleaks clean, D-032 written. Next: full suite with own Postgres, commit, push, report.
+
+## note (23:08Z)
+Full suite at ca2e5ffe: 10739 passed, 1 skipped, 16 xfailed, rc 0 (log /home/user/build/B-Q8b-b3-full2.log). First full run found 2 failures I caused (runner byte-copy hash pin; test list pin of test_mutation_runner.py): fixed (hash moved, test moved to test_q8b_batch3.py). Then a refactor of the value-tail regex into named parts (f46ecc1a); final full run in progress (full3.log), then perf alone, mutation_runner_mutants, stage and q8b mutants, push.
