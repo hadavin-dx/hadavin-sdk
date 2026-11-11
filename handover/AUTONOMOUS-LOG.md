@@ -61,3 +61,4 @@ Each line: UTC | IST | item | running agents | next 3 steps | blockers
 16:27 Q8a-1 r4 evidence saved (0b97d55a all gates green); Q8c-1 r2 design (2 Major), Q8a-2 r3 design (0 Major, 6 minor, evidence pending) saved; launching Q8a-1 fix batch 4
 16:28 saved Q8a-2 r3 codebase (1 Major: handle_error untested) and Q8b r1 design (2 Major); Q8a-1 batch-4 builder ae9691ed running; waiting for evidence runners ab1486e8/a1120e73/af24c08c and Q8b codebase review acd34384, Q8c-1 codebase a55fde8a
 16:28 saved Q8b r1 codebase review (2 Major F1,F2; 12 minor); waiting for Q8b evidence af24c08c before fix batch
+16:29 saved Q8c-1 r2 codebase review (1 Major same as design M2, 9 minor). Q8c-1 fix batch waits for evidence a1120e73 (+ engine tests can't run here)
