@@ -2595,3 +2595,6 @@
 | BL-PR89-r19-w07 | Major | PR89 | reviews/PR89/r19-comprehension.md M7 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
 | BL-PR89-r19-w08 | Major | PR89 | reviews/PR89/r19-comprehension.md M8 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
 | BL-PR89-r19-w09 | Major | PR89 | reviews/PR89/r19-comprehension.md M9 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
+| BL-core-timing-r1-M1 | Major | timing-harness | reviews/timing-harness/result-r1-fa3f8c1.md M1 | OPEN | | | 2026-11-11 |
+| BL-core-timing-r1-M2 | Major | timing-harness | reviews/timing-harness/result-r1-fa3f8c1.md M2 | OPEN | | | 2026-11-11 |
+| BL-core-timing-r1-M3 | Major | timing-harness | reviews/timing-harness/result-r1-fa3f8c1.md M3 | OPEN | | | 2026-11-11 |

@@ -1192,7 +1192,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-P89-r19 a3767c91 | EVIDENCE RUNNER (Fable) PR89 head b95b0ca7: full suite, all 224 mutants, fail-before, hostile address + projection probes; pg 56110 | 14:27Z | +70m | 14:27Z | running | read RESULTS.md |
 | R-P89-r19 a6c1cd5e, a3278730, a9588739 | egm design + codebase + comprehension (Fable) RESULT review r19 of PR89 (snapshot p89-b95b0ca) | 14:27Z | +25m | 14:27Z | running | save reviews/PR89/r19-*, ledger |
 | EV-flaky a67f662c | EVIDENCE RUNNER (Fable) timing-harness fix fa3f8c1b; pg 56100 | 14:27Z | +60m | 14:27Z | running | read RESULTS.md |
-| R-flaky a6bff613 | egm codebase (Fable) RESULT review of timing-harness fix | 14:27Z | +20m | 14:27Z | running | save reviews/timing-harness/ |
+| R-flaky a6bff613 | egm codebase (Fable) RESULT review of timing-harness fix | 14:27Z | +20m | 14:27Z | CLOSED saved reviews/timing-harness/result-r1-fa3f8c1.md (3 Major) | save reviews/timing-harness/ |
 | B-Q8a1 (resumed) a0c5bd99 | Q8a-1 fix batch after result review r1 (D-012) | 14:27Z | +60m | 14:27Z | running | new head -> evidence + fresh reviewers r2 |
 | A-Q8b (resumed) a123e38f | Q8b ticket revision 2 (D-011) | 14:27Z | +40m | 14:27Z | running | plan review r2 |
 | B-Q8c1 a56207cb | ONE builder (Fable) Q8c PR 1 (Vault x2 + Kubernetes + mechanism), branch core/q8c-1-policy-vault-kubernetes, pg 56120 | 14:28Z | +120m | 14:28Z | running | checkpoint 30m; evidence + reviewers |
