@@ -904,3 +904,4 @@ PULSE 2026-11-11T15:23:46Z 17 running; load 13.1
 PULSE 2026-11-11T15:25:55Z 17 running
 - 15:30Z PULSE: Q8c-1 design review saved (NOT CLEAN, 3 Major). Q8a-2 fix batch 1 head 5f94f598 on the remote; evidence runner and two fresh reviewers started for round 2. PR89 round 20 (local 351fa07a) and the Q8a-1 evidence run are waiting for a heavy slot. Load 4.93 9.33 10.92.
 - 15:33Z PULSE: 12 agents, none stuck; heavy slots full (3). Load 5.80.
+- 15:44Z PULSE: 12 agents, none stuck; two builders past 75 min are making commits (checked). Load 8.96.

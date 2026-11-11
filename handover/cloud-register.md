@@ -1320,4 +1320,14 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | id | purpose | started | expected end | last check | state | next action |
 |---|---|---|---|---|---|---|
 | R-P3a2-r12 design a98329b0 | | | | 15:44Z | CLOSED: NOT CLEAN, 1 Blocker + 6 Major by reading; saved reviews/P3a-2/r12-design-full.md | D-019 |
-| R-P3a2-zoom | fresh egm zoom-out (Fable): threat model and final-state design before round 13 | 15:44Z | +15m | 15:44Z | starting | ticket for round 13 |
+| R-P3a2-zoom a26d1a15 | fresh egm zoom-out (Fable): threat model and final-state design before round 13 | 15:44Z | +15m | 15:44Z | starting | ticket for round 13 |
+
+### 15:44Z Long-running check (heartbeat)
+| item | age | what it is doing now (checked: process list, checkpoint notes, git logs) | verdict |
+|---|---|---|---|
+| B-PR89-r20 a7b9ddc4 | 80 min | its first mutant run found 9 not-good of 252; fixed (5 killer tests, 4 redundant mutants removed); now rerunning mutants + full suite at local head 7a2eb4cc; not pushed | on track but long: if no push by 16:10Z, ask for a report with what is green |
+| B-flaky a6e5db57 | 75 min | second commit 9e00d40d made (processor time, sizes take turns, five repeats); proving under load | check at 15:55Z; ask for a report if silent |
+| B-Q8a1 a0c5bd99 | 30 min | fix batch 3 + lead addendum (purge step, config timeout); stage mutants running | on track |
+| B-Q8c1-fix1 a9b15053, B-Q8b a74d0f05, B-Q8a2-fix2 a2cd2d28, A-PRH a2f42970 | 5-20 min | building / writing; no checkpoint note due yet | on track |
+| EV-P3a2-r12 a10b6577 | 10 min | full suite running in a slot; route probes added | on track |
+| R-P3a2-r12 codebase a20099a3, R-P3a2-zoom a26d1a15 | under 10 min | reading | on track |
