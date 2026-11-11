@@ -1408,3 +1408,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | TA-PRH-errata a02f43ab | Opus | PR H ticket rev 2 | errata + probes | 16:40Z | running | then plan review round 2 |
 | TA-P3a2-errata ab2d8714 | Opus | P3a-2 ticket rev 2 | errata + PG probes | 16:50Z | running | then plan review round 2 |
 | B-Q8a1-b4 ae9691ed | Q8a-1 fix batch 4 builder (sonnet) | 16:28 | +60 min | RUNNING | check checkpoint B-Q8a1-b4.md |
+| EV-Q8c1 a1120e73 | closed, report saved | | | CLOSED |
+| B-Q8c1-b2 a5cfa82b | Q8c-1 fix batch 2 builder (sonnet) | 16:31 | +60 min | RUNNING | check checkpoint B-Q8c1-b2.md |
