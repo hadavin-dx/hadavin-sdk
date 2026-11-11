@@ -2709,3 +2709,7 @@
 | Q8a-2-r4-m2 | same | minor | Q8a-2 | write timeout in _answer after handler failure loses the ERROR line | OPEN | batch 4 | - | 2026-11-11 |
 | Q8a-2-r4-m3m4 | same | minor | Q8a-2 | _plain tests miss \x7f, U+2029, bidi, U+200B; error-kind chain unbounded (cycle) | OPEN | batch 4 | - | 2026-11-11 |
 | Q8c-1-r3-resolve | reviews/Q8c-1/goldfish_review_report-r3.md | minor x7 | Q8c-1 | 7 valid minors PROPOSE FIX (batch 3), 1 ESCALATE engine run, 1 DECLINE | OPEN | batch 3 | - | 2026-11-11 |
+| timing-r1-D-M1/C-M1 | reviews/timing/r1-*-full.md | Major | timing harness | wait guard false Untimeable on tiny preempted batches | OPEN | fix batch 1 | - | 2026-11-11 |
+| timing-r1-D-M2 | reviews/timing/r1-design-full.md | Major | timing harness | real-clock tests not marked perf | OPEN | fix batch 1 | - | 2026-11-11 |
+| timing-r1-D-M3 | reviews/timing/r1-design-full.md | Major | timing harness | guard tests cannot pass on win32 | OPEN | fix batch 1 | - | 2026-11-11 |
+| timing-r1-D-4 | reviews/timing/r1-design-full.md | Major | timing harness | sentinel runmap test has no control | OPEN | fix batch 1 | - | 2026-11-11 |
