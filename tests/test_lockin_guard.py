@@ -3,19 +3,36 @@
 Three rules, each with plant tests that prove it fails on a planted violation:
   a. a vendor SDK is imported only inside its own kind module; open-source libraries stay in their layer;
   b. every capability has a neutral prod kind and at least two prod kinds, or a dated EXCEPTIONS entry;
-  c. no vendor identifiers (names, regions, hosts, model ids, account ids) in core logic.
+  c. no vendor identifiers (names, regions, hosts, model ids, account ids) in core logic: in its strings
+     (`literal_problems`) and in the names it gives to modules, functions, classes, parameters, variables and
+     attributes (`identifier_problems`).
 Known violations go in dated lists. A stale entry (its violation is gone) fails the test, and so does an
 overdue one, so an entry cannot linger.
+
+What rule c does not see (each limit is pinned by a test, so a later change is deliberate):
+  - the scans know only the words in VENDOR_WORDS;
+  - inside a string, a vendor word in free prose (`"post to Slack"`) or glued in camel case (`"/slackActions"`):
+    the string pattern needs the word at the start or end of the string or beside one of `/ _ . - = ? & # @` (a `:` counts only after the word);
+  - comments and docstrings (only `approvals/receiver.py` is checked as whole text);
+  - in a name, a word glued to capitals (`AWSclient`) or to other lower-case letters (`awsome`); a name that is
+    only read (it is scanned where it is bound);
+  - files that are not Python under `src` (YAML, Markdown), tests and demos.
 """
 
 import ast
+import itertools
 import re
+import shutil
 import sys
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
 
 from hadavin_sdk.backends.table import DEMO_ONLY, NOT_PROD, TABLE
+from hadavin_sdk.sources.kinds import KINDS as SOURCE_KINDS
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -400,7 +417,41 @@ EXCEPTIONS: dict[str, ExceptionEntry] = {
         date(2026, 10, 31),
         date(2027, 1, 31),
     ),
+    "sources": ExceptionEntry(
+        "accepted",
+        "Kubernetes (open source, runs on every cloud and on-prem) is the only read-source kind built; the "
+        "Source Protocol and the sources.kinds registry are the seam",
+        "K5-ITO: first client that needs a second source kind",
+        date(2026, 11, 11),
+        date(2027, 4, 30),
+    ),
 }
+
+
+@dataclass(frozen=True)
+class _E:
+    neutral: bool = False
+
+
+def source_table(kinds=SOURCE_KINDS) -> dict[str, dict[str, _E]]:
+    """The read-source registry (`sources.kinds.KINDS`) as one more capability for rule b. A source kind has no
+    hand-set `neutral` flag: it counts as neutral when the module of its settings states a `Neutral protocol:`
+    line (the evidence `neutral_problems` asks of a table kind) and is not a vendor module."""
+    return {
+        "sources": {
+            name: _E(
+                "Neutral protocol:" in _source_docstring(kind.settings.__module__)
+                and kind.settings.__module__ not in VENDOR_MODULES
+            )
+            for name, kind in kinds.items()
+        }
+    }
+
+
+def coverage_table(kinds=SOURCE_KINDS) -> dict:
+    """The kind table plus the read-source registry: what rule b is held against."""
+    assert "sources" not in TABLE, "the kind table gained a 'sources' capability: drop the adapter"
+    return {**TABLE, **source_table(kinds)}
 
 
 def coverage_problems(
@@ -427,16 +478,63 @@ def coverage_problems(
 
 
 def test_every_capability_has_a_neutral_prod_kind_and_two_prod_kinds():
-    assert coverage_problems(TABLE, DEMO_ONLY, NOT_PROD, NULL_KINDS, EXCEPTIONS, TODAY) == []
+    # A new source kind changes what the `sources` exception says: re-read that entry, then widen this set.
+    assert set(SOURCE_KINDS) == {"kubernetes"}
+    assert (
+        coverage_problems(coverage_table(), DEMO_ONLY, NOT_PROD, NULL_KINDS, EXCEPTIONS, TODAY)
+        == []
+    )
+
+
+def test_the_source_registry_needs_its_exception_entry():
+    without = {name: ex for name, ex in EXCEPTIONS.items() if name != "sources"}
+    assert coverage_problems(coverage_table(), DEMO_ONLY, NOT_PROD, NULL_KINDS, without, TODAY) == [
+        "sources: needs a neutral prod kind and >= 2 prod kinds, or an EXCEPTIONS entry"
+    ]
+    # and the entry cannot stay if the adapter is dropped
+    assert coverage_problems(TABLE, DEMO_ONLY, NOT_PROD, NULL_KINDS, EXCEPTIONS, TODAY) == [
+        "sources: exception names no capability: delete the entry"
+    ]
+
+
+def _settings_in(module: str) -> SimpleNamespace:
+    """A stand-in source kind whose settings class lives in `module`."""
+    return SimpleNamespace(settings=type("PlantedSettings", (), {"__module__": module}))
+
+
+def test_a_source_kind_is_neutral_only_with_the_docstring_line_and_outside_the_vendor_modules():
+    real = source_table()["sources"]
+    assert real == {"kubernetes": _E(True)}
+    planted = source_table(
+        {
+            "no_line": _settings_in(
+                f"{PKG}.config"
+            ),  # its module docstring states no neutral protocol
+            "vendor": _settings_in(
+                f"{PKG}.audit.anchor_s3"
+            ),  # states the line, but is a vendor module
+        }
+    )["sources"]
+    assert "Neutral protocol:" in _source_docstring(f"{PKG}.audit.anchor_s3")
+    assert planted == {"no_line": _E(False), "vendor": _E(False)}
+
+
+def test_plant_a_second_source_kind_makes_the_sources_exception_stale():
+    two = {"kubernetes": SOURCE_KINDS["kubernetes"], "second": SOURCE_KINDS["kubernetes"]}
+    problems = coverage_problems(
+        coverage_table(two), DEMO_ONLY, NOT_PROD, NULL_KINDS, EXCEPTIONS, TODAY
+    )
+    assert problems == ["sources: passes now, delete its EXCEPTIONS entry"]
+    # two kinds of which none is neutral still need the entry
+    vendor_only = {k: _settings_in(f"{PKG}.audit.anchor_s3") for k in ("a", "b")}
+    without = {name: ex for name, ex in EXCEPTIONS.items() if name != "sources"}
+    assert coverage_problems(
+        coverage_table(vendor_only), DEMO_ONLY, NOT_PROD, NULL_KINDS, without, TODAY
+    ) == ["sources: needs a neutral prod kind and >= 2 prod kinds, or an EXCEPTIONS entry"]
 
 
 def test_the_anchor_is_a_capability_with_a_prod_kind_besides_s3():
     assert {k for k in TABLE["anchor"] if k != "none"} >= {"s3_object_lock", "azure_immutable_blob"}
-
-
-@dataclass(frozen=True)
-class _E:
-    neutral: bool = False
 
 
 def _cov(table, exceptions=None, demo_only=frozenset(), today=date(2026, 11, 1)) -> list[str]:
@@ -511,14 +609,122 @@ LITERAL_OK: dict[tuple[str, str], str] = {
         f"{PKG}.llm.openai_compat",
         r"^(?:gpt-[\w.-]+|o\d[\w.-]*|chatgpt-[\w.-]+)$",
     ): "the OpenAI protocol's own moving aliases; this kind exists to speak that protocol",
+    (
+        f"{PKG}.guard.producers",
+        "guard/bedrock_guardrail.py",
+    ): "the redaction registry must list every module that sends text to a model or a vendor screen, by file "
+    "path; data read by tests/test_k5_producers.py, not a call into the vendor module",
+    (
+        f"{PKG}.llm.openai_compat",
+        "openai_compat",
+    ): "the kind's own name in error messages; the name of an open wire format that several servers speak "
+    "(Neutral protocol line of llm/openai_compat.py; neutral=True in backends/table.py)",
+    (
+        f"{PKG}.approvals.gate",
+        "gcloud",
+    ): "G4 command shape: one of many programs (tests/test_g4_parity.py); same exception as 'aws' above",
+    (
+        f"{PKG}.tools",
+        "metadata.google.internal",
+    ): "a cloud metadata host name the fetch guard refuses: naming it is the control (tests/test_http_metadata.py)",
+    (
+        f"{PKG}.tools",
+        ".metadata.google.internal",
+    ): "the same refused metadata host, as a suffix of longer names",
+}
+# (module, name) -> why this name may hold a vendor word in an otherwise neutral module. Stale entries fail. For a
+# module's own name the key is (module, its last segment).
+IDENTIFIER_OK: dict[tuple[str, str], str] = {
+    (
+        f"{PKG}.approvals.gate",
+        "_AWS_READ_PREFIXES",
+    ): "G4 command shape: the read-verb prefixes of the aws program only; same exception as LITERAL_OK "
+    "(approvals.gate, 'aws') (tests/test_g4_parity.py)",
+    (
+        f"{PKG}.backends.table",
+        "OpenAICompatSettings",
+    ): "settings class of the neutral openai_compat kind: an open wire format, not one vendor's service",
+    (
+        f"{PKG}.llm.openai_compat",
+        "OpenAICompatLLM",
+    ): "class of the neutral openai_compat kind (open wire format)",
+    (
+        f"{PKG}.llm.openai_compat",
+        "openai_compat",
+    ): "module of the neutral openai_compat kind (open wire format); renaming the kind would break every config "
+    "that says kind: openai_compat",
+    (
+        f"{PKG}.store.postgres",
+        "auth_aws",
+    ): "lazy import of the declared VENDOR_HELPER for IAM database sign-in",
 }
 _TABLE_MODULE = f"{PKG}.backends.table"
+# `gcs` joined this pattern with the name scan (Q8a-2): GcsRetentionLockSettings is a vendor kind's settings class
+# like its S3 and Azure neighbours, which the pattern always matched.
 _TABLE_VENDOR_NAME = re.compile(
-    r"^_?(aws|bedrock|anthropic|gemini|s3|slack|gcp|azure|vertex)", re.IGNORECASE
+    r"^_?(aws|bedrock|anthropic|gemini|s3|slack|gcp|gcs|azure|vertex)", re.IGNORECASE
 )
+# The top-level classes and functions of backends.table (the kind table, where vendor kinds are declared) that both
+# scans skip with everything inside them. Pinned by name: `_TABLE_VENDOR_NAME` is a prefix pattern, and a new
+# vendor-named thing in the table file must be added here by hand (test_the_table_skip_is_the_pinned_set).
+TABLE_VENDOR_NAMES = frozenset(
+    {
+        "AnthropicSettings",
+        "BedrockSettings",
+        "GeminiSettings",
+        "AwsSecretsManagerSettings",
+        "S3ObjectLockSettings",
+        "AzureImmutableBlobSettings",
+        "GcsRetentionLockSettings",
+        "AwsKmsSettings",
+        "AzureKeyVaultKeySettings",
+        "GcpKmsSettings",
+        "AzureKeyVaultSettings",
+        "GcpSecretManagerSettings",
+        "SlackSettings",
+        "_aws_host",
+        "_aws",
+        "_vertex_host",
+        "_anthropic_hosts",
+        "_s3_anchor_hosts",
+    }
+)
+# The one word list of the string scan and the name scan. The first 15 words are the list this guard always had;
+# the rest were added with the name scan (Q8a-2). The scan knows only these words.
+VENDOR_WORDS = (
+    "slack",
+    "teams",
+    "aws",
+    "azure",
+    "gcp",
+    "github",
+    "gitlab",
+    "bedrock",
+    "anthropic",
+    "vertex",
+    "gemini",
+    "openai",
+    "kms",
+    "s3",
+    "foundry",
+    "google",
+    "gcs",
+    "gcloud",
+    "amazon",
+    "microsoft",
+    "alibaba",
+    "oracle",
+    "digitalocean",
+    "openstack",
+    "cloudwatch",
+    "pagerduty",
+)
+_W = "|".join(VENDOR_WORDS)
+_SEP = "/_.=?&#@-"  # what may stand beside a vendor word in a path, a key, a query string or an address
 PATTERNS = {
-    "bare vendor name": r"^(slack|teams|aws|azure|gcp|github|gitlab|bedrock|anthropic|vertex|gemini"
-    r"|openai|kms|s3|foundry)(:|$)",
+    "bare vendor name": rf"^({_W})(:|$)",
+    # A string that holds one vendor word matches at most one of these first two entries.
+    "vendor word in a path or key": rf"[{_SEP}]({_W})([:{_SEP}]|$)|^({_W})[{_SEP}]",
     "vendor header": r"x-(slack|amz|goog|ms)-",
     "ARN": r"\barn:aws[a-z-]*:",
     "AWS region": r"\b(us|eu|ap|sa|ca|me|af|il|mx|cn)(-gov|-iso[a-z]*)?-"
@@ -622,6 +828,114 @@ def literal_problems(
     return out
 
 
+_CAMEL = re.compile(r"[A-Z]+(?![a-z])\d*|[A-Z]?[a-z]+\d*|\d+")
+_WORD_SET = frozenset(VENDOR_WORDS)
+_DIGITS = "0123456789"
+
+
+def name_parts(name: str) -> set[str]:
+    """Snake parts (split on `_`), the camel parts of each snake part, and each pair of neighbouring camel
+    parts joined (so GitHub -> github, GitLab -> gitlab, OpenAI/OpenAi -> openai)."""
+    out = []
+    for snake in [s for s in name.split("_") if s]:
+        out.append(snake.lower())
+        camel = [c.lower() for c in _CAMEL.findall(snake)]
+        out += camel
+        out += [a + b for a, b in itertools.pairwise(camel)]
+    return set(out)
+
+
+def vendor_words_in(name: str) -> list[str]:
+    """The vendor words a name holds, sorted: a part that EQUALS a word, or equals one once its trailing digits
+    are removed (`slack2_url`, `aws1`). A part that is itself a listed word (`s3`) is never stripped."""
+    found = set()
+    for part in name_parts(name):
+        if part in _WORD_SET:
+            found.add(part)
+        elif part.rstrip(_DIGITS) in _WORD_SET:
+            found.add(part.rstrip(_DIGITS))
+    return sorted(found)
+
+
+# Node types whose bound name is their `name` field.
+_NAMED = (
+    ast.FunctionDef
+    | ast.AsyncFunctionDef
+    | ast.ClassDef
+    | ast.ExceptHandler
+    | ast.MatchAs
+    | ast.MatchStar
+    | ast.TypeVar
+    | ast.ParamSpec
+    | ast.TypeVarTuple
+)
+
+
+def _bound_names(tree: ast.AST, skip: set[int]) -> list[tuple[int, str]]:
+    """(line, name) of every name a module binds or passes by keyword: functions, classes, parameters, assignment
+    and loop targets, attributes that are assigned, imported names, `except ... as`, `match` captures, type
+    parameters, and keyword names at call sites."""
+    out: list[tuple[int, str | None]] = []
+    for n in ast.walk(tree):
+        if id(n) in skip:
+            continue
+        if isinstance(n, _NAMED):
+            out.append((n.lineno, n.name))
+        elif isinstance(n, ast.arg | ast.keyword):
+            out.append((n.lineno, n.arg))
+        elif isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store):
+            out.append((n.lineno, n.id))
+        elif isinstance(n, ast.Attribute) and isinstance(n.ctx, ast.Store):
+            out.append((n.lineno, n.attr))
+        elif isinstance(n, ast.Import):
+            out += [(a.lineno, a.asname or a.name.split(".")[0]) for a in n.names]
+        elif isinstance(n, ast.ImportFrom):
+            out += [(a.lineno, a.asname or a.name) for a in n.names]
+        elif isinstance(n, ast.MatchMapping):
+            out.append((n.lineno, n.rest))
+    return [(line, name) for line, name in out if name]
+
+
+def identifier_problems(
+    src: Path,
+    vendor_modules: set[str],
+    identifier_ok: dict[tuple[str, str], str],
+    table_names: frozenset[str],
+) -> list[str]:
+    """A vendor word in a name that shared code gives to something: one line per (name occurrence, word). The
+    module's own name comes first (each segment after the package, reported at line 1), then the names it binds,
+    sorted by (line, name, word). In `backends.table` a top-level class or function listed in `table_names` is
+    skipped with everything inside it."""
+    out: list[str] = []
+    used: set[tuple[str, str]] = set()
+    for path in sorted(src.rglob("*.py")):
+        mod = module_name(src, path)
+        if mod in vendor_modules:
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        skip: set[int] = set()
+        if mod == _TABLE_MODULE:
+            for top in tree.body:
+                named = isinstance(top, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef)
+                if named and top.name in table_names:
+                    skip |= {id(n) for n in ast.walk(top)}
+        own = {(1, seg, w) for seg in mod.split(".")[1:] for w in vendor_words_in(seg)}
+        bound = {
+            (ln, name, w) for ln, name in _bound_names(tree, skip) for w in vendor_words_in(name)
+        }
+        for line, name, word in [*sorted(own), *sorted(bound - own)]:
+            if (mod, name) in identifier_ok:
+                used.add((mod, name))
+            else:
+                out.append(f"{mod}:{line}: vendor word {word!r} in the name {name!r}")
+    out += [
+        f"IDENTIFIER_OK {k[0]} {k[1]!r} is gone: delete the entry"
+        for k in identifier_ok
+        if k not in used
+    ]
+    return out
+
+
 def sql_problems(folder: Path) -> list[str]:
     out = []
     for path in sorted(folder.glob("*.sql")):
@@ -637,6 +951,48 @@ def sql_problems(folder: Path) -> list[str]:
 
 def test_core_logic_names_no_vendor():
     assert literal_problems(SRC, VENDOR_MODULES, LITERAL_OK) == []
+
+
+def test_core_names_no_vendor_in_identifiers():
+    assert identifier_problems(SRC, VENDOR_MODULES, IDENTIFIER_OK, TABLE_VENDOR_NAMES) == []
+
+
+def _top_level_table_names() -> list[str]:
+    tree = ast.parse((SRC / PKG / "backends" / "table.py").read_text(encoding="utf-8"))
+    return [
+        top.name
+        for top in tree.body
+        if isinstance(top, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef)
+    ]
+
+
+def test_the_table_skip_is_the_pinned_set():
+    """The prefix pattern that decides which parts of the kind table the string scan skips matches exactly the
+    pinned names, so the skip cannot grow without an edit to TABLE_VENDOR_NAMES."""
+    matched = {name for name in _top_level_table_names() if _TABLE_VENDOR_NAME.match(name)}
+    assert matched == TABLE_VENDOR_NAMES
+
+
+_WHOLE_WORD = re.compile(rf"(?<![A-Za-z0-9])({_W})(?![A-Za-z0-9])", re.IGNORECASE)
+_RECEIVER = Path(PKG) / "approvals" / "receiver.py"
+
+
+def test_the_receiver_file_names_no_vendor_anywhere():
+    """The approval receiver serves every channel kind, so it is held to more than the scans: no vendor word in
+    its code, comments or docstrings."""
+    text = (SRC / _RECEIVER).read_text(encoding="utf-8")
+    assert [m.group(0) for m in _WHOLE_WORD.finditer(text)] == []
+
+
+def test_the_word_list_covers_the_list_of_the_http_metadata_test():
+    """Two tests keep a vendor word list; the other one must stay a subset of this one."""
+    from tests.test_http_metadata import VENDOR_WORDS as other
+
+    listed = re.search(r"\)\(([a-z0-9|]+)\)\(", other.pattern)  # the one group of alternatives
+    assert listed is not None, other.pattern
+    words = set(listed.group(1).split("|"))
+    assert len(words) >= 15
+    assert words <= set(VENDOR_WORDS), sorted(words - set(VENDOR_WORDS))
 
 
 def test_no_vendor_literal_in_migrations():
@@ -742,6 +1098,297 @@ def test_a_vendor_name_in_a_sql_comment_is_not_flagged(tmp_path):
         "-- 'slack' is one channel\n/* 'aws' */\nSELECT 1;\n", encoding="utf-8"
     )
     assert sql_problems(tmp_path) == []
+
+
+# ---- rule c, the string pattern for paths and keys (Q8a-2)
+
+_PATH_OR_KEY = "vendor word in a path or key"
+_BARE = "bare vendor name"
+
+
+def _labels_by_line(problems: list[str]) -> dict[int, list[str]]:
+    """line number -> the labels of the problem lines reported there."""
+    out: dict[int, list[str]] = {}
+    for problem in problems:
+        m = re.match(r"[\w.]+:(\d+): (.+?) in '", problem)
+        assert m, problem
+        out.setdefault(int(m.group(1)), []).append(m.group(2))
+    return out
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "/slack/actions",
+        "aws_region",
+        "x.azure.example",
+        "s3-bucket",
+        "q?team=slack&x=1",
+        "ops@pagerduty",
+        "#github",
+    ],
+)
+def test_plant_vendor_word_in_a_path_or_key_is_caught(tmp_path, text):
+    found = _lit(tmp_path, "runtime/x.py", f"X = {text!r}\n")
+    assert found == [f"{PKG}.runtime.x:1: {_PATH_OR_KEY} in {text!r}"]
+
+
+def test_a_bare_vendor_word_gives_one_line_and_a_word_that_only_contains_one_gives_none(tmp_path):
+    assert _lit(tmp_path, "runtime/x.py", "X = 'aws'\n") == [f"{PKG}.runtime.x:1: {_BARE} in 'aws'"]
+    assert _lit(tmp_path, "runtime/x.py", "X = 'laws_of_teamsters'\n") == []
+
+
+def test_the_stated_limits_of_the_string_pattern(tmp_path):
+    """Pinned so a later change is deliberate: a word glued in camel case and a word in free prose are not seen."""
+    assert _lit(tmp_path, "runtime/x.py", "A = '/slackActions'\nB = 'post to Slack now'\n") == []
+
+
+def test_property_every_word_beside_every_separator_gives_exactly_one_path_or_key_line(tmp_path):
+    cases = [
+        text
+        for word in VENDOR_WORDS
+        for sep in _SEP
+        for text in (f"{word}{sep}q", f"q{sep}{word}{sep}q", f"q{sep}{word}")
+    ]
+    assert len(cases) == len(VENDOR_WORDS) * len(_SEP) * 3
+    source = "".join(f"X = {text!r}\n" for text in cases)
+    labels = _labels_by_line(_lit(tmp_path, "runtime/x.py", source))
+    for line, text in enumerate(cases, 1):
+        # another entry (a model id, a vendor header) may report the same string too; these two are counted
+        got = labels.get(line, [])
+        assert (got.count(_PATH_OR_KEY), got.count(_BARE)) == (1, 0), text
+    bare = "".join(f"X = {word!r}\n" for word in VENDOR_WORDS)
+    labels = _labels_by_line(_lit(tmp_path, "runtime/x.py", bare))
+    for line, word in enumerate(VENDOR_WORDS, 1):
+        assert labels.get(line) == [_BARE], word
+
+
+# ---- rule c, names (Q8a-2)
+
+
+def _ident(tmp_path: Path, rel: str, text: str, ok=None, table_names=frozenset()) -> list[str]:
+    root = _plant(tmp_path, rel, text)
+    return identifier_problems(root, VENDOR_MODULES, ok or {}, table_names)
+
+
+def _hit(mod: str, line: int, word: str, name: str) -> str:
+    return f"{PKG}.{mod}:{line}: vendor word {word!r} in the name {name!r}"
+
+
+@pytest.mark.parametrize(
+    ("source", "line", "word", "name"),
+    [
+        ("def post_to_slack():\n    pass\n", 1, "slack", "post_to_slack"),
+        ("async def aws_call():\n    pass\n", 1, "aws", "aws_call"),
+        ("class GitHubClient:\n    pass\n", 1, "github", "GitHubClient"),
+        ("def f(azure_key):\n    pass\n", 1, "azure", "azure_key"),
+        ("def f(*, gcp_zone=1):\n    pass\n", 1, "gcp", "gcp_zone"),
+        ("f = lambda bedrock_id: 1\n", 1, "bedrock", "bedrock_id"),
+        (
+            "class C:\n    def __init__(self):\n        self.slack_url = 1\n",
+            3,
+            "slack",
+            "slack_url",
+        ),
+        ("class C:\n    kms_key: str\n", 2, "kms", "kms_key"),
+        ("X = 1\nOPENAI_BASE = X\n", 2, "openai", "OPENAI_BASE"),
+        ("for gemini_part in ():\n    pass\n", 1, "gemini", "gemini_part"),
+        ("with open(__file__) as s3_file:\n    pass\n", 1, "s3", "s3_file"),
+        ("X = [1 for vertex_i in ()]\n", 1, "vertex", "vertex_i"),
+        ("if (teams_n := 1):\n    pass\n", 1, "teams", "teams_n"),
+        ("import json as openai\n", 1, "openai", "openai"),
+        ("import gitlab.v4.objects\n", 1, "gitlab", "gitlab"),
+        ("from x import (\n    a,\n    slack_helper,\n)\n", 3, "slack", "slack_helper"),
+        ("from x import a as anthropic_a\n", 1, "anthropic", "anthropic_a"),
+        ("try:\n    pass\nexcept Exception as aws_error:\n    pass\n", 3, "aws", "aws_error"),
+        ("match 1:\n    case azure_value:\n        pass\n", 2, "azure", "azure_value"),
+        ("match [1]:\n    case [*foundry_rest]:\n        pass\n", 2, "foundry", "foundry_rest"),
+        ("match {}:\n    case {**gcs_rest}:\n        pass\n", 2, "gcs", "gcs_rest"),
+        ("def f[SlackT](x):\n    pass\n", 1, "slack", "SlackT"),
+        ("class C[*AwsTs]:\n    pass\n", 1, "aws", "AwsTs"),
+        ("def f[**KmsP](x):\n    pass\n", 1, "kms", "KmsP"),
+        ("type OracleRow = int\n", 1, "oracle", "OracleRow"),
+        ("def f(**kw):\n    pass\n\n\nf(google_project=1)\n", 5, "google", "google_project"),
+        ("slack2_url = 1\n", 1, "slack", "slack2_url"),
+        ("aws1 = 1\n", 1, "aws", "aws1"),
+        ("my_s3 = 1\n", 1, "s3", "my_s3"),
+    ],
+)
+def test_plant_vendor_word_in_a_bound_name_is_caught(tmp_path, source, line, word, name):
+    assert _ident(tmp_path, "runtime/x.py", source) == [_hit("runtime.x", line, word, name)]
+
+
+def test_plant_vendor_word_in_a_module_or_package_name_is_caught(tmp_path):
+    assert _ident(tmp_path, "approvals/slack_helpers.py", "X = 1\n") == [
+        _hit("approvals.slack_helpers", 1, "slack", "slack_helpers")
+    ]
+    assert _ident(tmp_path / "pkg", "aws/x.py", "X = 1\n") == [_hit("aws.x", 1, "aws", "aws")]
+    # a vendor module is not scanned, by its name or by its content
+    assert _ident(tmp_path / "vendor", "approvals/slack_channel.py", "slack_x = 1\n") == []
+
+
+def test_a_word_that_only_contains_a_vendor_word_is_not_a_name_hit(tmp_path):
+    assert _ident(tmp_path, "runtime/x.py", "awsome = laws = teamster = xs3y = kmsx = 1\n") == []
+    # a name that is only read is scanned where it is bound, not here
+    assert (
+        _ident(tmp_path, "runtime/x.py", "def f(a):\n    return a.slack_url + len(a.aws)\n") == []
+    )
+
+
+def test_the_stated_limit_of_the_name_scan(tmp_path):
+    """Pinned so a later change is deliberate: a word glued to capitals is not seen."""
+    assert _ident(tmp_path, "runtime/x.py", "AWSclient = 1\n") == []
+
+
+def test_name_hits_are_one_per_occurrence_and_word_in_a_fixed_order(tmp_path):
+    source = (
+        "import os\n"
+        "class AwsKmsThing:\n"  # two words in one name: two lines, words sorted
+        "    pass\n"
+        "slack_b = slack_a = 1\n"  # two names on one line: sorted by name
+        "slack_a, slack_a = 1, 2\n"  # the same name twice on one line: one line
+        "slack_a = 3\n"  # the same name on another line: its own line
+    )
+    assert _ident(tmp_path, "runtime/gcp_x.py", source) == [
+        _hit("runtime.gcp_x", 1, "gcp", "gcp_x"),  # the module's own name first
+        _hit("runtime.gcp_x", 2, "aws", "AwsKmsThing"),
+        _hit("runtime.gcp_x", 2, "kms", "AwsKmsThing"),
+        _hit("runtime.gcp_x", 4, "slack", "slack_a"),
+        _hit("runtime.gcp_x", 4, "slack", "slack_b"),
+        _hit("runtime.gcp_x", 5, "slack", "slack_a"),
+        _hit("runtime.gcp_x", 6, "slack", "slack_a"),
+    ]
+
+
+def test_a_listed_name_is_allowed_and_a_stale_entry_is_caught(tmp_path):
+    ok = {(f"{PKG}.runtime.x", "slack_a"): "why"}
+    assert _ident(tmp_path, "runtime/x.py", "slack_a = 1\nslack_b = 2\n", ok) == [
+        _hit("runtime.x", 2, "slack", "slack_b")
+    ]
+    assert _ident(tmp_path, "runtime/x.py", "X = 1\n", ok) == [
+        f"IDENTIFIER_OK {PKG}.runtime.x 'slack_a' is gone: delete the entry"
+    ]
+    # the entry is for its module only
+    assert len(_ident(tmp_path, "runtime/y.py", "slack_a = 1\n", ok)) == 2
+
+
+def test_the_table_skip_covers_listed_top_level_names_only(tmp_path):
+    source = (
+        "class SlackSettings:\n"
+        "    slack_token: str = ''\n"
+        "def _aws():\n"
+        "    aws_x = 1\n"
+        "class Other:\n"
+        "    class SlackSettings:\n"  # nested: not a top-level name of the table
+        "        pass\n"
+        "    gcp_y = 1\n"
+    )
+    names = frozenset({"SlackSettings", "_aws"})
+    assert _ident(tmp_path, "backends/table.py", source, table_names=names) == [
+        _hit("backends.table", 6, "slack", "SlackSettings"),
+        _hit("backends.table", 8, "gcp", "gcp_y"),
+    ]
+    # the same names in any other module are not skipped
+    assert len(_ident(tmp_path / "other", "runtime/x.py", source, table_names=names)) == 6
+
+
+def test_property_every_word_is_seen_in_snake_and_camel_names_and_not_inside_a_longer_word(
+    tmp_path,
+):
+    forms = [
+        (lambda w: f"x_{w}_y", True),
+        (lambda w: f"{w.upper()}_X", True),
+        (lambda w: f"{w.capitalize()}Client", True),
+        (lambda w: f"my{w.capitalize()}", True),
+        (lambda w: f"x{w}y", False),
+    ]
+    names = [(form(word), word, hit) for word in VENDOR_WORDS for form, hit in forms]
+    source = "".join(f"{name} = 1\n" for name, _, _ in names)
+    found = _ident(tmp_path, "runtime/x.py", source)
+    expected = [
+        _hit("runtime.x", line, word, name)
+        for line, (name, word, hit) in enumerate(names, 1)
+        if hit
+    ]
+    assert found == expected
+
+
+# ---- rule c, each new allow entry is needed and exact; a plant in the real receiver (Q8a-2)
+
+_NEW_LITERAL_OK = {
+    (f"{PKG}.guard.producers", "guard/bedrock_guardrail.py"): [_PATH_OR_KEY, _PATH_OR_KEY],
+    (f"{PKG}.llm.openai_compat", "openai_compat"): [_PATH_OR_KEY],
+    (f"{PKG}.approvals.gate", "gcloud"): [_BARE],
+    (f"{PKG}.tools", "metadata.google.internal"): [_PATH_OR_KEY],
+    (f"{PKG}.tools", ".metadata.google.internal"): [_PATH_OR_KEY],
+}
+_IDENTIFIER_OK_WORDS = {
+    (f"{PKG}.approvals.gate", "_AWS_READ_PREFIXES"): "aws",
+    (f"{PKG}.backends.table", "OpenAICompatSettings"): "openai",
+    (f"{PKG}.llm.openai_compat", "OpenAICompatLLM"): "openai",
+    (f"{PKG}.llm.openai_compat", "openai_compat"): "openai",
+    (f"{PKG}.store.postgres", "auth_aws"): "aws",
+}
+
+
+def _without_lines(problems: list[str]) -> list[str]:
+    return [re.sub(r":\d+: ", ": ", problem) for problem in problems]
+
+
+@pytest.mark.parametrize("key", sorted(_NEW_LITERAL_OK))
+def test_each_new_literal_allowance_covers_exactly_its_own_hits(key):
+    assert key in LITERAL_OK
+    rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+    mod, text = key
+    assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest)) == [
+        f"{mod}: {label} in {text!r}" for label in _NEW_LITERAL_OK[key]
+    ]
+
+
+def test_every_name_allowance_is_checked_by_the_removal_test():
+    assert set(_IDENTIFIER_OK_WORDS) == set(IDENTIFIER_OK)
+
+
+@pytest.mark.parametrize("key", sorted(_IDENTIFIER_OK_WORDS))
+def test_each_name_allowance_covers_exactly_its_own_hit(key):
+    rest = {k: v for k, v in IDENTIFIER_OK.items() if k != key}
+    mod, name = key
+    found = identifier_problems(SRC, VENDOR_MODULES, rest, TABLE_VENDOR_NAMES)
+    assert _without_lines(found) == [
+        f"{mod}: vendor word {_IDENTIFIER_OK_WORDS[key]!r} in the name {name!r}"
+    ]
+
+
+def test_removing_one_name_from_the_pinned_table_set_reports_that_name():
+    for name in sorted(TABLE_VENDOR_NAMES):
+        found = identifier_problems(SRC, VENDOR_MODULES, IDENTIFIER_OK, TABLE_VENDOR_NAMES - {name})
+        assert any(f"in the name {name!r}" in line for line in found), name
+
+
+def test_a_vendor_path_or_name_planted_in_the_real_receiver_is_caught(tmp_path):
+    """A copy of the real tree with one vendor path and one vendor name appended to the receiver: each scan
+    reports its line. The real tree is never written."""
+    shutil.copytree(SRC / PKG, tmp_path / PKG, ignore=shutil.ignore_patterns("__pycache__"))
+    assert literal_problems(tmp_path, VENDOR_MODULES, LITERAL_OK) == []
+    assert identifier_problems(tmp_path, VENDOR_MODULES, IDENTIFIER_OK, TABLE_VENDOR_NAMES) == []
+    planted = tmp_path / _RECEIVER
+    before = planted.read_text(encoding="utf-8")
+    assert _WHOLE_WORD.search(before) is None
+    lines = before.count("\n")
+    planted.write_text(
+        before + 'PATH = "/slack/actions"\n\n\ndef handle_slack_action(): ...\n', encoding="utf-8"
+    )
+    mod = f"{PKG}.approvals.receiver"
+    assert literal_problems(tmp_path, VENDOR_MODULES, LITERAL_OK) == [
+        f"{mod}:{lines + 1}: {_PATH_OR_KEY} in '/slack/actions'"
+    ]
+    assert identifier_problems(tmp_path, VENDOR_MODULES, IDENTIFIER_OK, TABLE_VENDOR_NAMES) == [
+        f"{mod}:{lines + 4}: vendor word 'slack' in the name 'handle_slack_action'"
+    ]
+    assert {m.group(0) for m in _WHOLE_WORD.finditer(planted.read_text(encoding="utf-8"))} == {
+        "slack"
+    }
+    assert _WHOLE_WORD.search((SRC / _RECEIVER).read_text(encoding="utf-8")) is None
 
 
 # ------------------------------------------------------------------- the test environment and anchors
