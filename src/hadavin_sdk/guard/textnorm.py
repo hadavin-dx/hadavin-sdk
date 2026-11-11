@@ -108,6 +108,7 @@ import bisect
 import hashlib
 import re
 import sys
+import time
 import types
 import unicodedata
 import warnings
@@ -460,10 +461,19 @@ def _tag_texts(raw: str) -> list[str]:
     return [text0, "".join(t1), text0 + "".join(decoded), "".join(decoded)]
 
 
-def _converge(text: str, step) -> str:
+def _clock() -> float:
+    """The clock of the scan time budget: ``time.monotonic()`` read at each call (a test replaces ``time.monotonic`` with a fake that jumps
+    forward and needs no sleep). A module function and not a parameter: ``scan_keyset`` keeps its one parameter (SK-1)."""
+    return time.monotonic()
+
+
+def _converge(text: str, step, deadline: float | None = None) -> str:
     """Repeat ``step`` until its output equals its input, for at most ``defaults.TEXTNORM_MAX_PASSES`` passes (the confirming pass
-    included); a text still changing after that raises ``FoldNotConverged``."""
+    included); a text still changing after that raises ``FoldNotConverged``. With a ``deadline`` (a value of ``_clock()``), a pass that
+    would start after it raises ``TextTooLong`` (the scan time budget, checked between passes, never inside one)."""
     for _ in range(defaults.TEXTNORM_MAX_PASSES):
+        if deadline is not None and _clock() > deadline:
+            raise TextTooLong("the scan time budget ran out")
         out = step(text)
         if out == text:
             return out
@@ -487,10 +497,10 @@ def _pass_b(text: str) -> str:
 _CLASS_MAP = str.maketrans("zl", "3i")
 
 
-def _scan_key(text: str, step) -> str:
+def _scan_key(text: str, step, deadline: float | None = None) -> str:
     """One key of one reading of one tag text: the reading to its fixed point, the class maps ``z`` to ``3`` and ``l`` to ``i``, then only
     letters and digits (every character for which ``str.isalnum()`` is False, and every modifier letter (category Lm), is removed)."""
-    s = _converge(text, step).translate(_CLASS_MAP)
+    s = _converge(text, step, deadline).translate(_CLASS_MAP)
     return "".join(ch for ch in s if ch.isalnum() and unicodedata.category(ch) != "Lm")
 
 
@@ -498,7 +508,7 @@ def scan_keyset(raw: str) -> frozenset[str]:
     """The DENY keys of a text: a small set of strings, two texts match when their key-sets share a key (or, for a scan, when a key of
     the needle is inside a key of the text). Contract SK-1 to SK-6: the one parameter is ``raw``; at most 2 readings x 4 tag texts = 8
     keys, by construction, each at most as long as the weight of ``raw``; a text over the size rule raises ``TextTooLong``, a non-``str``
-    ``NotText``; over-matching is the safe side; there is no clock or deadline; the keys hold letters and digits only (spaces, punctuation,
+    ``NotText``; over-matching is the safe side; a call that has run longer than ``defaults.REDACT_BUDGET_S`` seconds (wall clock, checked before each pass of each reading, never inside a pass) raises ``TextTooLong`` and returns no keys, so a hostile text cannot hold the caller for long (the budget is a parameter of the module, not of the call: SK-1); the keys hold letters and digits only (spaces, punctuation,
     ``#``, ``~``, ``@``, ``|`` and U+FFFD are dropped). Invisible-only text gives ``frozenset()``.
 
     Order: the size rule on the raw text; every modifier letter (Lm) is removed from the raw text; the tag texts T0 to T3 (a text with no tag
@@ -507,9 +517,10 @@ def scan_keyset(raw: str) -> frozenset[str]:
     does not depend on its neighbours. No escape decoder runs (HTML entities, percent and backslash escapes come from the caller's own
     decoded view). Scan keys carry no ``key_tag()``: they are compared at once, never stored."""
     _checked(raw)
+    deadline = _clock() + defaults.REDACT_BUDGET_S
     raw = "".join(ch for ch in raw if unicodedata.category(ch) != "Lm")
     keys = {
-        _scan_key(text, step)
+        _scan_key(text, step, deadline)
         for text in dict.fromkeys(_tag_texts(raw))
         for step in (_pass_a, _pass_b)
     }

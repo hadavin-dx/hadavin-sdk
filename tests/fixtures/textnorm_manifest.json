@@ -1,7 +1,7 @@
 {
  "note": "sha256 of the files a demo copies (line endings read as LF). Recompute after the last edit of any of them, and add the hashes to the CHANGELOG re-copy list.",
  "files": {
-  "src/hadavin_sdk/guard/textnorm.py": "6ed476df74ddd152380ba4ffc9478ade076be3499daaca8e0dd74bb6588ec296",
+  "src/hadavin_sdk/guard/textnorm.py": "32f01777e2767f6cb503c6f43fd3396c515ab98142a9847d9cd459c8be5991f5",
   "src/hadavin_sdk/guard/_confusables.py": "506a6a02ac51ad9f60e8164ac6693dfe7f3610204b75a822ea01fa9c5274754a",
   "src/hadavin_sdk/guard/_scripts.py": "5c59f80ddfeea13b7cabc6b41e09dc12a1954045c944d65f4e62cbd51b06cc67",
   "tests/fixtures/textnorm_vectors.json": "1a1944708f7d1737588d7b02666620ceb308b0fe4a71ce2a312c4dc29113d349",

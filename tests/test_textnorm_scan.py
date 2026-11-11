@@ -839,3 +839,67 @@ def test_on_another_unicode_version_identity_keys_are_tagged_and_scan_keys_are_n
         "same_person is unusable on another Unicode version"
     )
     assert not same_person("bob", "bobby")
+
+
+# ---- G7 (fix batch w3, finding M1): the scan time budget, checked with a fake clock (no sleep, no wall-clock assertion) ----------------------
+def _fake_monotonic(values):
+    """A ``time.monotonic`` replacement that returns the given values in order (the last one again and again) and counts its reads."""
+    reads = []
+
+    def fake():
+        reads.append(1)
+        return values[min(len(reads), len(values)) - 1]
+
+    return fake, reads
+
+
+def test_g7_a_scan_that_ran_over_the_budget_is_refused_with_text_too_long(monkeypatch):
+    import time
+
+    fake, reads = _fake_monotonic([0.0, 0.0, defaults.REDACT_BUDGET_S + 1.0])
+    monkeypatch.setattr(time, "monotonic", fake)
+    with pytest.raises(TextTooLong) as info:
+        scan_keyset("pay" + VAULT)
+    assert len(reads) == 3, (
+        f"the clock was read {len(reads)} times: the budget is not checked before each reading"
+    )
+    assert VAULT not in str(info.value), "the refusal message holds the input"
+
+
+def test_g7_the_budget_is_the_defaults_value_read_at_the_call(monkeypatch):
+    import time
+
+    clock = [0.0, 0.4, 0.6]
+    monkeypatch.setattr(defaults, "REDACT_BUDGET_S", 0.5)
+    fake, _ = _fake_monotonic(clock)
+    monkeypatch.setattr(time, "monotonic", fake)
+    with pytest.raises(TextTooLong):
+        scan_keyset("abc")  # 0.6 s after the start is over a 0.5 s budget
+    monkeypatch.setattr(defaults, "REDACT_BUDGET_S", 1.0)
+    fake, _ = _fake_monotonic(clock)
+    monkeypatch.setattr(time, "monotonic", fake)
+    assert scan_keyset("abc") == frozenset({"abc"}), "0.6 s is inside a 1.0 s budget"
+
+
+def test_g7_a_clock_that_stands_still_never_refuses_and_changes_no_key(monkeypatch):
+    import time
+
+    text = "bob" + ZE + chr(0xE0061)
+    expected = scan_keyset(text)
+    fake, _ = _fake_monotonic([5.0])
+    monkeypatch.setattr(time, "monotonic", fake)
+    assert scan_keyset(text) == expected, "the clock changed the keys"
+
+
+def test_g7_the_budget_is_over_only_when_the_clock_is_past_it_not_at_it(monkeypatch):
+    import time
+
+    fake, _ = _fake_monotonic([0.0, defaults.REDACT_BUDGET_S, defaults.REDACT_BUDGET_S])
+    monkeypatch.setattr(time, "monotonic", fake)
+    refused = False
+    try:
+        keys = scan_keyset("abc")
+    except TextTooLong:
+        refused = True  # asserted below, outside the handler, so the report does not start with the refusal
+    assert not refused, "a call exactly at the budget was refused"
+    assert keys == frozenset({"abc"})

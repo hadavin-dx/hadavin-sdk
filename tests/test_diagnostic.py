@@ -245,6 +245,17 @@ def test_kind_identity_rule() -> None:
     assert class_name_of(pydantic.create_model("Jane_Doe")) == "dynamic_class"
 
 
+def test_safe_token_holds_the_member_of_the_allowed_set_not_the_callers_object() -> None:
+    member = "ab" + "c" * 2
+    allowed = frozenset({member})
+    value = b"abcc".decode()  # equal to the member, a different object
+    assert value == member and value is not member
+    token = SafeToken.of(value, allowed)
+    assert token is not None and token.value is next(iter(allowed)), (
+        "the token holds the caller's object"
+    )
+
+
 def test_locator_and_fp() -> None:
     def run() -> str:
         try:
@@ -388,3 +399,96 @@ def test_off_list_foreign_class_prints_foreign_class() -> None:
     row = _row("foreign_name", 1)
     with corpus.CONTEXTS["vendor_module"]():
         assert class_name_of(corpus.build_exception(row.spec)) == "foreign_class"
+
+
+# --- golden T7: a secret that Vault does not hold (a 404) ---------------------------------------------------------------------
+def _vault_error(status: int, name: str) -> BaseException:
+    from hadavin_sdk.actions.secrets_vault import VaultProvider
+
+    provider = VaultProvider("http://127.0.0.1:9", lambda _p: "t", path_prefix="app/")
+    provider.authed = lambda *_a, **_k: (status, {})  # type: ignore[method-assign]  # the reader's one network call, stubbed
+    with pytest.raises(Exception) as info:
+        provider._fetch(name)
+    return info.value
+
+
+def _line_of_source(module_file: str, wanted: str) -> int:
+    from pathlib import Path
+
+    lines = Path(module_file).read_text(encoding="utf-8").splitlines()
+    return 1 + next(i for i, text in enumerate(lines) if text.strip() == wanted)
+
+
+def test_t7_a_vault_404_is_a_config_error_with_its_own_line_and_no_free_text() -> None:
+    from hadavin_sdk.actions import secrets_vault
+
+    secret_name = "pay-" + "quentin-abernathy"  # made up
+    exc = _vault_error(404, secret_name)
+    assert type(exc) is ConfigError
+    line = _line_of_source(
+        secrets_vault.__file__, 'raise ConfigError(f"secret {name!r} not found in Vault")'
+    )
+    out = line_of(exc, step=Where.extract)
+    assert re.fullmatch(
+        rf"ConfigError: diag_v=1 code=config_invalid step=extract at=actions/secrets_vault\.py:{line} fp=[0-9a-f]{{8}}",
+        out,
+    ), out
+    assert secret_name not in out and "Vault" not in out and "not found" not in out
+    assert grammar_ok(out)
+
+
+def test_t7_a_vault_server_answer_is_a_vault_error_with_code_provider_http() -> None:
+    from hadavin_sdk.actions import secrets_vault
+
+    exc = _vault_error(500, "pay-" + "quentin-abernathy")
+    assert type(exc) is secrets_vault.VaultError
+    out = line_of(exc, step=Where.extract)
+    assert re.fullmatch(
+        r"VaultError: diag_v=1 code=provider_http step=extract at=actions/secrets_vault\.py:[0-9]{1,5} fp=[0-9a-f]{8}",
+        out,
+    ), out
+
+
+# --- BN-3: a BaseException from a hostile attribute leaves ``diagnose`` --------------------------------------------------------
+def _oserror_with_errno_that_raises(error: BaseException) -> OSError:
+    class Hostile(OSError):
+        @property
+        def errno(self) -> int:  # type: ignore[override]
+            raise error
+
+    return Hostile("x")
+
+
+@pytest.mark.parametrize(
+    "error",
+    [KeyboardInterrupt(), GeneratorExit(), asyncio.CancelledError()],
+    ids=lambda e: type(e).__name__,
+)
+def test_baseexception_from_hostile_attribute_propagates(error: BaseException) -> None:
+    """``diagnose`` reads ``errno`` on every platform: a ``BaseException`` that is not an ``Exception`` leaves it; the same property
+    raising ``ValueError`` gives the fixed fallback line; and every row in ``PROPAGATES_ROWS`` does the same."""
+    with pytest.raises(type(error)):
+        diagnose(_oserror_with_errno_that_raises(error), step=STEP)
+    out = line_of(_oserror_with_errno_that_raises(ValueError("x")))
+    assert grammar_ok(out) and "diag_v=1" in out, out
+    by_id = {r.id: r for r in corpus.ROWS}
+    for row_id in corpus.PROPAGATES_ROWS:
+        with pytest.raises(BaseException) as info:
+            diagnose(corpus.build_exception(by_id[row_id].spec), step=STEP)
+        assert not isinstance(info.value, Exception)
+
+
+# --- one read of the class names (a hostile metaclass cannot answer differently the second time) ---------------------------
+def test_class_name_reads_the_module_name_once() -> None:
+    reads: list[str] = []
+
+    class Meta(type):
+        @property
+        def __module__(cls) -> str:  # type: ignore[override]
+            reads.append("module")
+            return "builtins" if len(reads) % 2 else "hadavin_sdk.errors"
+
+    hostile = Meta("Hostile", (Exception,), {})
+    out = class_name_of(hostile)
+    assert reads.count("module") == 1, f"__module__ was read {len(reads)} times"
+    assert out == "dynamic_class", out

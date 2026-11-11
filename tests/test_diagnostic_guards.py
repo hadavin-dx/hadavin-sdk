@@ -177,6 +177,16 @@ def test_every_blind_except_is_one_listed_guard_with_its_reason_on_its_line() ->
     assert sorted(r[2] for r in rows) == sorted(
         f"test_guard_catches_and_records[{s}]" for s in SITES
     )
+    # each listed reason is the reason written on its noqa line, and the site name the line passes to _guard_failed is the one in the
+    # test name of its row
+    source_lines = SOURCE.read_text(encoding="utf-8").splitlines()
+    for number, reason, test_name in rows:
+        line = source_lines[int(number) - 1]
+        assert line.split("# noqa: BLE001 - ", 1)[1] == reason, (
+            f"line {number}: the reason in noqa_sites.txt differs from the one on the line"
+        )
+        site = re.search(r'_guard_failed\("(\w+)"\)', source_lines[int(number)])
+        assert site and test_name == f"test_guard_catches_and_records[{site.group(1)}]", number
     src = SOURCE.read_text(encoding="utf-8")
     assert "suppress" not in src and "S110" not in src and "S112" not in src
     pyproject = (SOURCE.parents[3] / "pyproject.toml").read_text(encoding="utf-8")

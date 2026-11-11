@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
+from pathlib import Path
 
 import pytest
 from pydantic_core import ValidationError, core_schema
@@ -128,15 +130,89 @@ def test_pydantic_error_reads_are_closed_ast() -> None:
     assert {s.slice.value for s in subs} == {"type"}
 
 
-@pytest.mark.parametrize("n", range(3))
-def test_t6_real_config_typo(n: int) -> None:
-    from hadavin_sdk.config import Config
+def _fixture_config(tmp_path: Path) -> Path:
+    """The fixture config folder copied under ``tmp_path`` (the same steps as ``tests.conftest.make_cfg``, which the mutation runner does not load)."""
+    for name in ("config", "recorded", "inputs", "golden"):
+        shutil.copytree(
+            Path(__file__).parent / "fixtures" / name, tmp_path / name, dirs_exist_ok=True
+        )
+    root = tmp_path / "config"
+    (root / "config.yaml").write_text(
+        (root / "config.yaml").read_text(encoding="utf-8").replace("{port}", "0"), encoding="utf-8"
+    )
+    return root
 
+
+def _config_problem(tmp_path: Path, **change: object) -> ValidationError:
+    """The real ``Config`` model, built the way ``load_config`` builds it, with a stray key or a wrong value (ticket golden T6)."""
+    from pydantic import ValidationError as PydanticError
+
+    from hadavin_sdk.config import Config, _read_yaml, parse_backends
+
+    root = _fixture_config(tmp_path)
+    raw = _read_yaml(root / "config.yaml")
+    for key in ("golden_dir", "inputs_dir"):
+        raw[key] = root / raw[key]
+    raw["backends"] = parse_backends(raw.get("backends"), root)
     try:
-        Config.model_validate({"zzz_typo": n})
-    except ValidationError as e:
-        out = render(diagnose(e, step=Where.config_load))
-        assert "code=validation_failed step=config_load" in out and "zzz_typo" not in out
-        assert grammar_ok(validation_text(e), "V")
-    else:
-        raise AssertionError("validated")
+        Config(**{**raw, **change}, egress_hosts=frozenset(), root=root)
+    except PydanticError as exc:
+        return exc  # type: ignore[return-value]
+    raise AssertionError("the real Config accepted the change")
+
+
+T6_HEAD = r"pydantic_core\._pydantic_core\.ValidationError: diag_v=1 code=validation_failed step=config_load at=- fp=[0-9a-f]{8} "
+
+
+def test_t6_a_stray_key_in_the_real_config_is_two_literal_outputs(tmp_path: Path) -> None:
+    e = _config_problem(tmp_path, zzz_typo=1)
+    out = render(diagnose(e, step=Where.config_load))
+    assert re.fullmatch(T6_HEAD + r"type=extra_forbidden count=1", out), out
+    assert validation_text(e) == "extra_forbidden"
+    assert "zzz_typo" not in out and grammar_ok(out)
+
+
+def test_t6_a_wrong_value_in_the_real_config_is_two_literal_outputs(tmp_path: Path) -> None:
+    e = _config_problem(tmp_path, environment="nowhere")
+    out = render(diagnose(e, step=Where.config_load))
+    assert re.fullmatch(T6_HEAD + r"type=literal_error count=1", out), out
+    assert validation_text(e) == "literal_error"
+    assert "nowhere" not in out and grammar_ok(out)
+
+
+def test_t6_through_the_loader_the_error_is_a_config_error_with_no_type_fact(
+    tmp_path: Path,
+) -> None:
+    """``load_config`` wraps the pydantic error as ``ConfigError(str(exc))``: code ``config_invalid``, the own frame as locator, no type fact."""
+    from hadavin_sdk import config as config_module
+    from hadavin_sdk.config import load_config
+
+    root = _fixture_config(tmp_path)
+    (root / "config.yaml").write_text(
+        (root / "config.yaml").read_text(encoding="utf-8") + "\nzzz_typo: 1\n", encoding="utf-8"
+    )
+    wrapped = "raise ConfigError(_validation_text(exc)) from exc"
+    source = Path(config_module.__file__).read_text(encoding="utf-8").splitlines()
+    line = 1 + next(i for i, text in enumerate(source) if text.strip() == wrapped)
+    with pytest.raises(Exception) as info:
+        load_config(root)
+    out = render(diagnose(info.value, step=Where.config_load))
+    assert re.fullmatch(
+        rf"ConfigError: diag_v=1 code=config_invalid step=config_load at=config\.py:{line} fp=[0-9a-f]{{8}}",
+        out,
+    ), out
+    assert "zzz_typo" not in out
+
+
+def test_t6_five_thousand_links_of_a_cause_chain_read_zero_hostile_names() -> None:
+    """The row that chains 5000 links: no link is asked for ``args``, ``__cause__``, ``__context__`` or ``__notes__`` (zero reads), and the
+    only read of any counted name is the head's own ``__traceback__`` (the locator needs it): at most 2 reads in all, not one per link."""
+    rows = [r for r in corpus.ROWS if r.spec.get("reads_zero")]
+    assert [r.id for r in rows] == ["HC-size_time-05"]
+    for r in rows:
+        exc = corpus.build_exception(r.spec)
+        assert corpus._Counting.reads == []
+        render(diagnose(exc, step=Where.extract))
+        reads = list(corpus._Counting.reads)
+        assert {n for n in reads if n != "__traceback__"} == set(), reads[:5]
+        assert len(reads) <= 2, f"{len(reads)} reads: the chain was walked"

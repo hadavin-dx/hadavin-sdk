@@ -91,6 +91,9 @@ EMPTYMATCH = "test_the_scan_match_of_two_empty_key_sets_is_false_and_x_x_is_true
 L2I = "test_l_to_i_rows"
 LMRAW = "test_r12_lm_inserting_any_modifier_letter_still_finds_the_value"
 LMFOLD = "test_r12_lm_fold_a_modifier_letter_that_nfkd_turns_into_a_letter_still_matches"
+G7A = "test_g7_a_scan_that_ran_over_the_budget_is_refused_with_text_too_long"
+G7B = "test_g7_the_budget_is_the_defaults_value_read_at_the_call"
+G7C = "test_g7_the_budget_is_over_only_when_the_clock_is_past_it_not_at_it"
 CFTABLE = (
     "test_the_case_fold_table_is_on_the_case_fold_image_and_its_conflicts_are_the_known_conflicts"
 )
@@ -271,6 +274,14 @@ M = [
         '    raw = "".join(ch for ch in raw if unicodedata.category(ch) != "Lm")', "    raw = raw", LMRAW, "hides the value", test_file=SC),
     mutant("scan: the modifier-letter test removed from the key drop", TN, ' and unicodedata.category(ch) != "Lm"', "",
         LMFOLD, "survives in the key", test_file=SC),
+    mutant("scan: the budget check before a pass removed", TN, "        if deadline is not None and _clock() > deadline:",
+        "        if False:", G7A, "DID NOT RAISE", test_file=SC),
+    mutant("scan: the deadline is not passed to the reading", TN, "        _scan_key(text, step, deadline)",
+        "        _scan_key(text, step)", G7A, "DID NOT RAISE", test_file=SC),
+    mutant("scan: the budget is a constant, not the defaults value", TN, "    deadline = _clock() + defaults.REDACT_BUDGET_S",
+        "    deadline = _clock() + 6.0", G7B, "DID NOT RAISE", test_file=SC),
+    mutant("scan: a call exactly at the budget is refused", TN, "        if deadline is not None and _clock() > deadline:",
+        "        if deadline is not None and _clock() >= deadline:", G7C, "exactly at the budget", test_file=SC),
 ]  # fmt: skip
 
 

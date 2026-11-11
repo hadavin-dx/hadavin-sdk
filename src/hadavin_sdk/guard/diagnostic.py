@@ -21,6 +21,7 @@ import os
 import re
 import socket
 import sys
+import threading
 from collections import deque
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -88,7 +89,12 @@ class SafeToken:
 
     @staticmethod
     def of(value: object, allowed: frozenset[str]) -> SafeToken | None:
-        """The member of ``allowed`` that equals ``value`` (exact ``str`` only), if it fits the token pattern."""
+        """The member of ``allowed`` that equals ``value`` (exact ``str`` only), if it fits the token pattern.
+
+        What this does NOT guarantee: that ``allowed`` is a closed list. A call such as ``SafeToken.of(x, frozenset({x}))`` makes any
+        text that fits the pattern a token. The closed list is a property of the CALL SITE, so every caller must pass a constant set
+        written in the code (a ``Final`` frozenset of a module, or an enum's values). P5a's own sites do; the callers that P5b3 wires
+        in are covered by its call-site check (an AST test that fails on a set built from the value being checked)."""
         if type(value) is not str or type(allowed) is not frozenset:
             return None
         for member in allowed:
@@ -124,22 +130,27 @@ class Diagnostic:
 
 # How often each guard below fired, by site name. A count only: nothing about the exception (no text, no type) is kept.
 _GUARD_FAILURES: dict[str, int] = {}
+_GUARD_LOCK = threading.Lock()  # a count read-then-written by two threads at once would lose one
 
 
 def _guard_failed(site: str) -> None:
     """Record that the guard at ``site`` caught an ``Exception``. A fixed site name and a count; never the exception."""
-    _GUARD_FAILURES[site] = _GUARD_FAILURES.get(site, 0) + 1
+    with _GUARD_LOCK:
+        _GUARD_FAILURES[site] = _GUARD_FAILURES.get(site, 0) + 1
 
 
 def guard_failures() -> dict[str, int]:
     """A copy of the guard counters (site name -> times caught)."""
-    return dict(_GUARD_FAILURES)
+    with _GUARD_LOCK:
+        return dict(_GUARD_FAILURES)
 
 
-def _is_the_named_class(tp: type) -> bool:
-    """True if walking ``sys.modules[tp.__module__].__dict__`` along ``tp.__qualname__`` reaches ``tp`` itself."""
+def _is_the_named_class(tp: type, names: tuple[object, object] | None = None) -> bool:
+    """True if walking ``sys.modules[tp.__module__].__dict__`` along ``tp.__qualname__`` reaches ``tp`` itself. A caller that has already
+    read the two names passes them as ``names``, so the answer and the printed name come from ONE read (a hostile metaclass could
+    answer differently the second time)."""
     try:
-        mod, qual = tp.__module__, tp.__qualname__
+        mod, qual = names if names is not None else (tp.__module__, tp.__qualname__)
         if type(mod) is not str or type(qual) is not str or "<" in qual:
             return False
         parts = qual.split(".")
@@ -168,9 +179,12 @@ def class_name_of(exc_or_type: object) -> str:
     object found under its own name prints ``dynamic_class``."""
     try:
         tp = exc_or_type if issubclass(type(exc_or_type), type) else type(exc_or_type)
-        if not _is_the_named_class(tp):
+        mod, qual = (
+            tp.__module__,
+            tp.__qualname__,
+        )  # read once; the check below gets these same two values
+        if not _is_the_named_class(tp, (mod, qual)):
             return "dynamic_class"
-        mod, qual = tp.__module__, tp.__qualname__
         if mod == "builtins":
             return qual if _KIND_RE.fullmatch(qual) else "foreign_class"
         if mod == _OWN_PACKAGE or mod.startswith(_OWN_PACKAGE + "."):
@@ -191,7 +205,7 @@ def _own_code(tp: type) -> Code | None:
             if type(mod) is not str or type(qual) is not str:
                 continue
             code = OWN_CODES.get(f"{mod}:{qual}")
-            if code is not None and _is_the_named_class(cls):
+            if code is not None and _is_the_named_class(cls, (mod, qual)):
                 return code
         except Exception:  # noqa: BLE001 - a hostile class attribute may raise any Exception: not an own class
             _guard_failed("own_code")
