@@ -22,6 +22,7 @@ from typing import Any
 from urllib.parse import unquote
 
 from hadavin_sdk import defaults
+from hadavin_sdk.guard import hidden
 from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, mask_spans, redact
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
@@ -138,7 +139,7 @@ def hex_unescape(text: str) -> str:
     return text
 
 
-def undo(text: str, clean: bool = False) -> str:
+def undo(text: str, clean: bool = False, strip_hidden: bool = False) -> str:
     """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON string escapes
     (backslash-u with surrogate pairs joined, and the one-character escapes: PHP writes every slash as backslash-slash),
     backslash-x, backslash-U and octal escapes, percent-encoding, HTML entities, then NFKC and invisible characters. Each round applies the three decoders ONE
@@ -151,7 +152,11 @@ def undo(text: str, clean: bool = False) -> str:
     values slip past checks, and says to reject input that does not conform; OWASP's Input Validation Cheat Sheet
     (fetched 2026-11-03) says to decode before checking, to cap parser nesting depth, and does not describe
     decoding to a fixed point; CWE-176 is Unicode handling. With `clean`, a half-written escape at the end of the text is
-    dropped before every decoder (the tail a cut left)."""
+    dropped before every decoder (the tail a cut left). With `strip_hidden`, every round ends by removing the hidden
+    items (`hidden.strip`, the joined reading) that the decoders produced or exposed, so one that cuts an encoding
+    token (`%4` + a colour code + `1KIA...`) no longer hides what the token spells; a placeholder or marker shape that
+    only that removal would create is written in its escaped look-alike form (`_no_created_shapes`). The default keeps
+    every existing caller unchanged."""
     cur = text
     for _ in range(defaults.SCRUB_MAX_LAYERS + 1):
         step = cur
@@ -166,6 +171,8 @@ def undo(text: str, clean: bool = False) -> str:
                         :cut
                     ]  # repeat: the look-back may start inside a run of half escapes
             step = decode(step)
+        if strip_hidden:
+            step = _no_created_shapes(step, hidden.strip(step)[0])
         if step == cur:
             return cur
         cur = step
@@ -275,21 +282,20 @@ def storable(mapping: dict[str, str], kinds: frozenset[str] | None = None) -> di
 
 def canonical(text: str) -> str:
     """Untrusted text in one canonical form before it is escaped, redacted or compared: Unicode NFKC (a
-    full-width `＜ＩＰＶ４＿２＞` becomes `<IPV4_2>`) with the invisible format characters removed (a zero-width
-    space inside a token no longer hides it)."""
-    return "".join(
-        c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf"
-    )
+    full-width `＜ＩＰＶ４＿２＞` becomes `<IPV4_2>`) with every ignorable character removed (a zero-width space, a
+    variation selector or a Hangul filler inside a token no longer hides it). Ignorable = `hidden.IGNORABLE_RE`: the
+    Unicode Default_Ignorable_Code_Point property plus the rest of category Cf (main dropped category Cf only)."""
+    return hidden.IGNORABLE_RE.sub("", unicodedata.normalize("NFKC", text))
 
 
 def _canonical_view(text: str) -> tuple[str, list[int]]:
-    """The canonical form of `text` (NFKC, invisible format characters removed) and, for each canonical
+    """The canonical form of `text` (NFKC, ignorable characters removed) and, for each canonical
     character, the index of the original character it came from."""
     chars: list[str] = []
     index: list[int] = []
     for i, c in enumerate(text):
         for d in unicodedata.normalize("NFKC", c):
-            if unicodedata.category(d) != "Cf":
+            if not hidden.is_ignorable(d):
                 chars.append(d)
                 index.append(i)
     return "".join(chars), index
@@ -398,8 +404,14 @@ def _clean(text: str) -> str:
     return text.replace("\x00", "").encode("utf-8", "replace").decode("utf-8", "replace")
 
 
+def _repair(text: str) -> str:
+    """Lone surrogates become '?' so the text always encodes. NUL is NOT touched here: it is a removed item, taken out
+    with the other hidden items (`hidden.strip`) with the same glue rule."""
+    return text.encode("utf-8", "replace").decode("utf-8", "replace")
+
+
 def _views(text: str) -> list[str]:
-    """Other forms a secret can hide in: the canonical view (NFKC, invisible characters removed) and the same
+    """Other forms a secret can hide in: the canonical view (NFKC, ignorable characters removed) and the same
     with JSON `\\uXXXX` escapes decoded. Only forms that differ from `text` are returned."""
     # `\\/` too (PHP writes every slash that way); `\\n` and the like are left alone here: a log line full of them
     # would come back with real newlines whenever the second pass finds anything.
@@ -407,7 +419,17 @@ def _views(text: str) -> list[str]:
     out = []
     # the layers undone to a fixed point (percent, entity, backslash, NFKC, any order, up to the depth cap; deeper
     # raises TooDeep and nothing is redacted or shown): `%41KIA...`, `&#65;KIA...`, `password%3Dx`
-    for view in (canonical(text), canonical(unescaped), fits_after_nfkc(undo(text))):
+    decoded = fits_after_nfkc(undo(text))
+    views = [canonical(text), canonical(unescaped), decoded]
+    # One more, only when it can differ from the plain decode (a decoder never removes a control character, so when
+    # neither the text nor its decode holds a hidden item the stripped decode IS the plain one and is not computed):
+    # the decode with the hidden items removed at the end of every round, so a hidden item that cuts an encoding
+    # token (`%4` + a colour code + `1KIA...`) is read.
+    if any(c in text for c in _ENCODED_MARKS) and (
+        hidden.ANY.search(text) or hidden.ANY.search(decoded)
+    ):
+        views.append(fits_after_nfkc(undo(text, strip_hidden=True)))
+    for view in views:
         view = _clean(view)
         if view != text and view not in out:
             out.append(view)
@@ -469,18 +491,141 @@ def _keep_earlier_masks(view: str, pairs: list[tuple[str, str]], mapping: dict[s
     return mask_spans(view, spans, mapping) if spans else view
 
 
+def _check_budget(started: float) -> None:
+    """Refuse (`InputTooLarge`, nothing shown) when this call has used more than `defaults.REDACT_BUDGET_S`: a hostile
+    text must not keep the process busy. Checked before every pass, so one call overruns the budget by at most one."""
+    if time.monotonic() - started > defaults.REDACT_BUDGET_S:
+        raise InputTooLarge("InputTooLarge")
+
+
+def _no_created_shapes(before: str, after: str) -> str:
+    """`after` is `before` with hidden items removed. Removing them must never ASSEMBLE a genuine-shaped placeholder or a
+    result-marker shape that was not there as written: `<` + a colour code + `IPV4_2>` is harmless as written and a real
+    looking `<IPV4_2>` once the colour code is gone. Every genuine-shaped placeholder that occurs more often in `after`
+    than in `before` is written in the escaped look-alike form (`\u2039IPV4_2\u203a`, the spelling `escape_placeholders`
+    writes), and a marker shape that occurs more often in the canonical form of `after` than in that of `before` is
+    escaped by `escape_markers`. Counting, not positions: when a text holds the same placeholder both plainly and
+    created, both are written escaped (it fails to the escaped spelling). Returns `after` itself when nothing was
+    removed or nothing was created."""
+    if after == before:
+        return after
+    fits_after_nfkc(before)
+    fits_after_nfkc(after)
+    had = collections.Counter(m.group(0) for m in PLACEHOLDER.finditer(before))
+    now = collections.Counter(m.group(0) for m in PLACEHOLDER.finditer(after))
+    created = {p for p, n in now.items() if n > had.get(p, 0)}
+    if created:
+        after = PLACEHOLDER.sub(
+            lambda m: (
+                f"\u2039{m.group(1)}_{m.group(2)}\u203a" if m.group(0) in created else m.group(0)
+            ),
+            after,
+        )
+    if len(_MARKER.findall(canonical(after))) > len(_MARKER.findall(canonical(before))):
+        after = escape_markers(after)
+    return after
+
+
+def _refuse_forgery(out: str, mapping: dict[str, str]) -> None:
+    """Last check on the output of an untrusted text: no result-marker shape and no genuine-shaped placeholder that is not
+    a key of the call's map, read as written AND in the canonical form (a full-width spelling folds into one). A backstop
+    behind the escaping and `_no_created_shapes`; it raises `RedactionError` (the callers turn that into a fixed note or
+    an abstention) and never repairs."""
+    for t in (out,) if out.isascii() else (out, canonical(out)):
+        if _MARKER.search(t) or any(m.group(0) not in mapping for m in PLACEHOLDER.finditer(t)):
+            raise RedactionError("forged marker or placeholder")
+
+
+def _gap_pattern(value: str) -> re.Pattern[str]:
+    """The value as the spaced reading can hold it: its characters, with ONE optional space between two neighbouring
+    word characters (a run of hidden items between two word characters left exactly one space there, so no optional
+    space ever competes with a character of the value: at each position there is at most one way to go on, and a search is
+    linear). A value of fewer than 4 characters is matched only as a whole word, as the redactor's sweep does."""
+    parts = []
+    for i, c in enumerate(value):
+        if i and hidden.is_word(value[i - 1]) and hidden.is_word(c):
+            parts.append(" ?")
+        parts.append(re.escape(c))
+    body = "".join(parts)
+    return re.compile(body if len(value) >= 4 else r"(?<!\w)" + body + r"(?!\w)")
+
+
+def _held_placeholders(found_text: str, joined: str, mapping: dict[str, str]) -> list[str]:
+    """The placeholders this find pass put into `found_text` (one that stands in the text as written does not count)."""
+    out: list[str] = []
+    for ph in dict.fromkeys(m.group(0) for m in PLACEHOLDER.finditer(found_text)):
+        if ph in mapping and found_text.count(ph) > joined.count(ph):
+            out.append(ph)
+    return out
+
+
+def _redact_stripped(
+    joined: str, spaced: str, mapping: dict[str, str], cache: dict | None, started: float
+) -> tuple[str, dict[str, str]]:
+    """Redact one text that holds no hidden item, given as its two readings (`hidden.strip`): values are FOUND in the
+    joined reading and MASKED in the spaced reading, which is what the reader is given. Returns (text, map).
+
+    1. Both readings equal: one pass over `spaced`.
+    2. Otherwise a find pass over `joined`; the placeholders that stand in its result are the "held" values.
+    3. "Needed" = the held values whose text does not occur as written in `spaced` (a value that does is masked by the
+       sweep of known values in step 6) and that are not seed entries.
+    4. More than `MAX_DECODED_MASKS` needed values: `InputTooLarge`, nothing shown.
+    5. Each needed value is looked for in `spaced` by its gap pattern (`_gap_pattern`); every match is a span and the one
+       span rule (`redact.mask_spans`) puts the placeholders in.
+    6. The mask pass over that text with the map of the find pass. If a held value is then missing (not standing, and
+       not inside a placeholder that took its place) the text is refused (`RedactionError`), never the joined result:
+       the joined reading has lost the boundaries that main's behaviour relies on."""
+    if joined == spaced:
+        result = redact(spaced, mapping=mapping, _cache=cache)
+        return result.text, result.mapping
+    found = redact(joined, mapping=mapping, _cache=cache)
+    held = _held_placeholders(found.text, joined, found.mapping)
+    needed = [
+        ph
+        for ph in held
+        if not found.mapping[ph].startswith("\0seed") and found.mapping[ph] not in spaced
+    ]
+    if len(needed) > MAX_DECODED_MASKS:
+        raise InputTooLarge("InputTooLarge")
+    spans: list[tuple[int, int, str]] = []
+    for ph in needed:
+        spans.extend(
+            (m.start(), m.end(), ph) for m in _gap_pattern(found.mapping[ph]).finditer(spaced)
+        )
+    work = dict(found.mapping)
+    masked = mask_spans(spaced, spans, work) if spans else spaced
+    _check_budget(started)
+    result = redact(masked, mapping=work, _cache=cache)
+    standing = {m.group(0) for m in PLACEHOLDER.finditer(result.text)}
+    for ph in held:
+        value = found.mapping[ph]
+        if ph not in standing and not any(value in result.mapping.get(q, "") for q in standing):
+            raise RedactionError("held value lost")
+    return result.text, result.mapping
+
+
 def redact_text(
     text: str, mapping: dict[str, str], neutralise: Callable[[str], str] | None = None
 ) -> str:
     """Redact `text` with the run's map, continuing it in place. Any failure is a RedactionError.
 
-    A second pass runs over the canonical view (and the JSON-unescaped view) of the INPUT: a secret hidden by a
-    full-width letter, a zero-width space or a `\\u0041` escape is found there. When that pass finds something
-    new (the map grows) the redacted VIEW is returned, trading fidelity of that one string for safety. The
+    Hidden items (the removed and space-like characters and the escape sequences of `hidden`) are taken out FIRST, before
+    anything else reads the text: the escaping step, the patterns and the decoded readings all see the text as a reader
+    sees it. Values are found in the joined reading and masked in the spaced reading (`_redact_stripped`), so a key cut
+    by a colour code is masked, and a word boundary that main relied on (`user` + bell + a key) stays one. Removing them
+    never creates a placeholder or a marker shape (`_no_created_shapes`).
+
+    A second pass runs over the canonical view (and the JSON-unescaped view, and the layers-undone views) of the INPUT: a
+    secret hidden by a full-width letter, a zero-width space or a `\\u0041` escape is found there. When that pass finds
+    something new (the map grows) the redacted VIEW is returned, trading fidelity of that one string for safety. The
     caller's `neutralise` (untrusted text: escape result markers and placeholder look-alikes) runs on the input
     and on every view BEFORE it is redacted, so the returned text is never a decoded view that was not
-    neutralised: a `\\u003c<IPV4_2>` cannot come back as a real placeholder. Output is cleaned of NUL and lone
-    surrogates last, so it always encodes.
+    neutralised: a `\\u003c<IPV4_2>` cannot come back as a real placeholder. For untrusted text a last check
+    (`_refuse_forgery`) refuses an output that still holds a marker shape or a placeholder the call did not issue. Output
+    is cleaned of NUL and lone surrogates last, so it always encodes.
+
+    Passes (one pass = all patterns over one reading): the text 1 pass, or 2 when a run of hidden items stands between two
+    word characters; each other reading the same; at most 10 in all. The 6-second budget is checked before every pass.
 
     The one choke point for input size. The cap is on the WORK, not only on the input: the text, the text after
     `neutralise`, and every view the second pass will scan must each be within `defaults.MAX_REDACT_CHARS`, else
@@ -493,40 +638,61 @@ def redact_text(
     _within_cap(text)
     started = time.monotonic()
     try:
-        text = fits_after_nfkc(_clean(text))
-        if neutralise is not None:
-            text = fits_after_nfkc(neutralise(text))
-        scan = not text.isascii() or any(c in text for c in "\\%&")
-        views = _views(text) if scan else []  # _views refuses a view that would pass the cap
         cache = getattr(mapping, "redact_cache", None)
-        result = redact(text, mapping=mapping, _cache=cache)
-        out, current = result.text, result.mapping
-        if views and time.monotonic() - started > defaults.REDACT_BUDGET_S:
-            raise InputTooLarge("InputTooLarge")
-        pairs = _decoded_masks(current, text) if views else []
+        text = fits_after_nfkc(_repair(text))
+        joined, spaced = hidden.strip(text)
+        if joined is not text:
+            same = spaced is joined
+            joined = _no_created_shapes(text, joined)
+            spaced = joined if same else _no_created_shapes(text, spaced)
+
+        def esc(t: str) -> str:
+            return fits_after_nfkc(neutralise(t)) if neutralise is not None else t
+
+        e_text = esc(text)  # the escaped ORIGINAL: the decoded readings are built from it
+        e_joined = e_text if joined is text else esc(joined)
+        e_spaced = e_joined if spaced is joined else esc(spaced)
+        _check_budget(started)
+        out, current = _redact_stripped(e_joined, e_spaced, mapping, cache, started)
+        scan = not e_text.isascii() or any(c in e_text for c in "\\%&")
+        views = [v for v in (_views(e_text) if scan else []) if v not in (e_joined, e_spaced)]
+        pairs: list[tuple[str, str]] = []
+        if views:
+            for base in dict.fromkeys((e_spaced, e_joined)):
+                pairs += [p for p in _decoded_masks(current, base) if p not in pairs]
         if (
             neutralise is not None
         ):  # the view is neutralised before it is redacted: pair the neutralised spelling too
             pairs += [
                 (ph, n)
                 for ph, d in pairs
-                if (n := fits_after_nfkc(neutralise(d))) != d and len(n) >= 4
+                if (n := esc(d)) != d and len(n) >= 4 and (ph, n) not in pairs
             ]
+        # a decoded spelling that holds hidden items is looked for without them too (the view has none)
+        pairs += [
+            (ph, sj)
+            for ph, d in pairs
+            if (sj := hidden.strip(d)[0]) != d and len(sj) >= 4 and (ph, sj) not in pairs
+        ]
         for view in views:
-            if (
-                time.monotonic() - started > defaults.REDACT_BUDGET_S
-            ):  # a hostile text: fail closed, nothing shown
-                raise InputTooLarge("InputTooLarge")
-            if neutralise is not None:
-                view = fits_after_nfkc(neutralise(view))
+            _check_budget(started)  # a hostile text: fail closed, nothing shown
+            vj, vs = hidden.strip(view)
+            if vj is not view:
+                same = vs is vj
+                vj = _no_created_shapes(view, vj)
+                vs = vj if same else _no_created_shapes(view, vs)
+            same = vs is vj
             # a merged placeholder (W0) is issued into this copy, not into the finished map
             work = dict(current)
-            view = _keep_earlier_masks(view, pairs, work)
-            again = redact(view, mapping=work, _cache=cache)
+            vj = _keep_earlier_masks(esc(vj), pairs, work)
+            vs = vj if same else _keep_earlier_masks(esc(vs), pairs, work)
+            again, again_map = _redact_stripped(vj, vs, work, cache, started)
             # a new value, or a known one only the view spells in a way pass one could not read
-            if again.mapping != current or _held(again.text) > _held(out):
-                out, current = again.text, again.mapping
+            if again_map != current or _held(again) > _held(out):
+                out, current = again, again_map
         out = _clean(out)
+        if neutralise is neutralise_untrusted:
+            _refuse_forgery(out, current)
     except (InputTooLarge, TooDeep):
         raise
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent

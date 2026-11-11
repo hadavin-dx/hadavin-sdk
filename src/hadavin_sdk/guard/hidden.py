@@ -62,6 +62,7 @@ _CSI_DROP = _chars(
 # The first character of any hidden item (a candidate; the state machine decides what the item is), and of a SEQUENCE
 # item only (an item that starts with ESC or a C1 opener: what `strip_sequences` removes).
 _ANY = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\u2028\u2029]")
+ANY = _ANY  # public name: `ANY.search(text)` is None when the text holds no removed or space-like item
 _SEQ_ANY = re.compile(r"[\x1b\x90\x98\x9b\x9d-\x9f]")
 _CSI_PARAMS = re.compile(r"[\x20-\x3f]*")
 # where a string sequence can end: ST, CAN, SUB, BEL (OSC only), ESC, a line end
@@ -123,6 +124,9 @@ def is_ignorable(ch: str) -> bool:
 def _is_word(ch: str) -> bool:
     """A word character (letter, digit, underscore) that is not ignorable: the neighbour test of the glue rule."""
     return (ch.isalnum() or ch == "_") and IGNORABLE_RE.match(ch) is None
+
+
+is_word = _is_word  # public name: the redactor's gap pattern puts a space only between two such characters
 
 
 # ---- the reader -----------------------------------------------------------------------------------------------------
