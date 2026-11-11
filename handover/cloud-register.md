@@ -1197,3 +1197,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | A-Q8b (resumed) a123e38f | Q8b ticket revision 2 (D-011) | 14:27Z | +40m | 14:27Z | running | plan review r2 |
 | B-Q8c1 a56207cb | ONE builder (Fable) Q8c PR 1 (Vault x2 + Kubernetes + mechanism), branch core/q8c-1-policy-vault-kubernetes, pg 56120 | 14:28Z | +120m | 14:28Z | running | checkpoint 30m; evidence + reviewers |
 | B-flaky (resumed) a6e5db57 | timing-harness fix batch after result review r1 (interleave, 5 repeats, pinned constants, mutants) | 14:30Z | +60m | | running | new head -> fresh evidence + reviewer |
+| B-PR89-r20 a7b9ddc4 | ONE builder (Fable) PR89 round 20 (allowlist projection, strict sockets, test switch removed, wording), pg 56130, heavy.sh for full runs | 14:35Z | +120m | 14:35Z | running | checkpoint 30m; then evidence + fresh reviewers r21 |
