@@ -1245,3 +1245,14 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-PR89-r20, B-Q8c1, B-flaky fix, B-Q8a1 fix 2, B-Q8a2 fix 1, A-Q8b rev 3 | 6-35 min | building / writing | on track |
 | EV-P77 ab49c9d1 | EVIDENCE RUNNER (Fable) PR77 work head 97fd2028: full suite with Postgres, 93 mutants, fail-before on 3 bases, hostile probes, cost; heavy.sh, pg 56160 | 15:07Z | +90m | 15:07Z | running (queues for a slot) | read RESULTS.md |
 | R-P77-r7 a6a27c37, a1068d0f | egm design + codebase (Fable) RESULT review round 7 of PR77 (snapshot p77-97fd202) | 15:07Z | +30m | 15:07Z | running | save reviews/PR77/round7-*-full.md, ledger |
+
+### Long-running check 15:13Z
+| agent | age | doing now | verdict |
+|---|---|---|---|
+| B-P3a2 a73e15b4 | 68 min | whole mutant list, 21 min in; a fresh pytest child every few seconds (checked: child 2 s old) | progressing, slow because of load 12.7; limit 120 min |
+| EV-P89-r19 a3767c91 | 46 min | pytest run 5 min in (after its mutant list) | progressing |
+| B-PR89-r20 a7b9ddc4 | 38 min | four commits, local head feb99fb4, fail-before proven; mutant list + full suite queued | on track |
+| B-Q8c1 a56207cb | 45 min | local head 7af13809; final full suite 8 min in | on track |
+| B-Q8a1 fix 2 a0c5bd99 | 19 min | full suite through heavy.sh 8 min in | on track |
+| EV-P77 ab49c9d1 | 7 min | full suite through heavy.sh 5 min in | on track |
+| B-Q8a2 fix 1, B-flaky fix, A-Q8b rev 3, R-P77-r7 x2 | 7-40 min | building / writing / reading | on track |
