@@ -1232,3 +1232,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-Q8c1 a56207cb | 25 min | proof files being written | on track |
 | B-flaky fix a6e5db57 | 22 min | measuring | on track; sent the overload evidence |
 | B-Q8a1 (resumed 2) a0c5bd99 | Q8a-1 fix batch 2 (run_tick steps= refusal, mutants, timeout bounds, seam) | 14:55Z | +45m | 14:55Z | running | new head -> evidence + fresh reviewers round 3 |
+| B-Q8a2 (resumed) a0472549 | Q8a-2 fix batch 1 of 2 (gcs skip reverted, import module path scanned, suppressions removed, limits made true) | 15:00Z | +50m | 15:00Z | running | new head -> evidence + fresh reviewers round 2 |
