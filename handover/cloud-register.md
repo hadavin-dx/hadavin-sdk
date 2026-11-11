@@ -1116,3 +1116,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | abc34109 | PR73 evidence runner on ac94d18 | 2026-11-11 ~03:20Z | +2 h | running; output /home/user/build/EVOUT-P73-ac94d18/ |
 | a8531550 | PR73 design/security reviewer r10 (egm-design) | 2026-11-11 ~03:20Z | +40 min | running |
 | a6b68d12 | PR73 codebase reviewer r10 (egm-codebase-details) | 2026-11-11 ~03:20Z | +40 min | running |
+| a8531550 | PR73 design/security reviewer r10 | 02:35Z | closed 02:50Z: 0B/2M/9m/1N, saved round10-design-security.md | closed |
+| a6b68d12 | PR73 codebase reviewer r10 | 02:35Z | closed 02:50Z: 0B/1M(decision)/8m/3N, saved round10-codebase.md | closed |
+| abc34109 | PR73 evidence runner ac94d18 | ~02:45Z | agent returned; jobs still running in /home/user/build/EV-P73-ac94d18 (ALLDONE marker); output will be copied after it ends, partial output never deleted | running (jobs) |
+| aed5770d | PR73 builder r11 (resumed) | 02:51Z | batch r10-01..07 sent; code-only push, report once; check 03:50Z | running |
