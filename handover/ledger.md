@@ -2454,3 +2454,5 @@
 | BL-core-a2-w2-r16-s3-02 | reviews/P89/round-w2-r16-src-b.md s3-02 | Minor | PR89 | lock entered before the try/finally; SystemExit in a few-bytecode window keeps the lock until GC | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r16-t2 | reviews/P89/round-w2-r16-tests-b.md BL-slice-01 | Minor | PR89 | test at :2583 cannot catch a decoded leak ("é" check missing) | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r16-m1 | reviews/P89/round-w2-r16-mutants-docs.md M1 | Minor | PR89 | meta test docstring stale (tree holds KW file and conftest too) | OPEN | 2026-11-11 |
+| BL-core-a11a-w3-06 | evidence/P2d/8b2b716-runner-partial | Major | PR77 | ruff format --check fails on tests/test_redact_fold.py (CI gate) | OPEN | 2026-11-11 |
+| BL-core-a11a-w3-07 | evidence/P2d/8b2b716-runner-partial | Major | PR77 | 148 failed + 27 errors in Postgres tests on local PG16 (3.12 and 3.13); cause undetermined (env vs real); compare with base main on the same cluster at the fix head | OPEN | 2026-11-11 |
