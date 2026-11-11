@@ -1080,3 +1080,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | (runner, started 01:0xZ) | PR73 evidence runner on f906e3d, output /home/user/build/EVOUT-P73-f906e3d (outside repo) | 2026-11-11 | +75 min | running |
 | ab8d95c83c033463c | PR73 design/security reviewer round 8 on f906e3d snapshot | 2026-11-11 | +30 min | running |
 | ad02e6d49ea824da6 | PR73 codebase reviewer round 8 on f906e3d snapshot | 2026-11-11 | +30 min | running |
+| ab8d95c83c033463c | PR73 evidence runner on f906e3d (this id is the runner; ad02e6d4 was the design reviewer, af48a85a the codebase reviewer) | 2026-11-11 | - | STOPPED after 4 min (head will be replaced by round 9); driver, job, cluster killed, output deleted |
+| ad02e6d49ea824da6 | PR73 design/least-privilege reviewer round 8 | 2026-11-11 | - | CLOSED: 0 Blocker, 1 Major, 5 Minor, 2 Nit saved |
+| af48a85a93c880d76 | PR73 codebase reviewer round 8 | 2026-11-11 | - | CLOSED: 0 Blocker, 0 Major, 6 minor groups saved |
+| aea5c3b20851d826d | PR73 builder round 9 (r8-01 Major grants/ACLs, r8-02, r8-03) | 01:00Z 2026-11-11 | +90 min | running |
