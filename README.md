@@ -37,7 +37,7 @@ What this release does and does not promise, in one place.
 - Grounding is a whole-token match, exact in case. A proposal may name the front of a longer name only where the tool's manifest declares a `generated_suffix`; case is folded only for a `target_system` listed in `evidence.case_insensitive_targets`. An identifier input that is not a string is ungrounded.
 - `caught_by=guard` is set when a guard stopped a concrete proposal (ungrounded, uncited, invalid_proposal, run_budget, injection_suspected); failures (tool, redaction, evidence, a guard outage, the provider) are not catches.
 - A tooled agent's action contracts must set `additionalProperties: false`; an undeclared input is refused as `invalid_proposal`.
-- A hold on a run is not retroactive, and no hold outlives 400 days. The purge step is due 60 s early by design (`TICK_SLACK_S`).
+- A hold on a run is not retroactive, and no hold outlives 400 days. The purge step is due 60 s early by design (`TICK_MARGIN_S`).
 - Every read is an audit event (principal, tool, `inputs_hash`, `output_hash`, `rows`) and a `tool_calls` row a client can review. Nothing of one client is kept in a process-global cache.
 - Kubernetes is the only built read-source kind; a second one is an SDK edit (trigger K5-ITO).
 

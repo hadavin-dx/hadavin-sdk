@@ -283,7 +283,7 @@ class KubernetesSource:
             f"?timestamps=true&sinceTime={quote(start, safe='')}&limitBytes={self._cfg.log_bytes}"
         )
         text = self._call(
-            path, "k8s.pod_log", max_bytes=self._cfg.log_bytes + defaults.K8S_LOG_SLACK_BYTES
+            path, "k8s.pod_log", max_bytes=self._cfg.log_bytes + defaults.K8S_LOG_MARGIN_BYTES
         )
         out: list[Record] = []
         lines = text.splitlines()

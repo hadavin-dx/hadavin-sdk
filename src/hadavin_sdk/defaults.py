@@ -39,7 +39,7 @@ MAX_REDACT_CHARS = MAX_DOCUMENT_BYTES
 # A case bundle is many strings, each within the cap above; the SUM is capped too (redaction cost is linear in it).
 MAX_BUNDLE_CHARS = 8 * MAX_REDACT_CHARS
 # A text over the redaction cap is cut at the cap, redacted, and this many characters of the result's end are dropped: a
-# secret that straddles the cut leaves only a fragment of at most this length (a PEM key is about 1.7 KB for RSA-2048, 3.2 KB for RSA-4096 and 6.4 KB for RSA-8192; 8,192 covers all three with slack), and it is the
+# secret that straddles the cut leaves only a fragment of at most this length (a PEM key is about 1.7 KB for RSA-2048, 3.2 KB for RSA-4096 and 6.4 KB for RSA-8192; 8,192 covers all three with margin), and it is the
 # part dropped, never shown.
 CUT_MARGIN = 8192
 # The most wall-clock seconds one `redact_text` call may spend before it refuses (fail closed, `InputTooLarge`): a hostile
@@ -127,5 +127,5 @@ STORED_KINDS = (
 K8S_PAGE_SIZE = 20  # list page size: a deployment object can be tens of KB
 K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is incomplete
 K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
-K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
+K8S_LOG_MARGIN_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
 K8S_LOG_BYTES = 65536  # asked of the API as limitBytes

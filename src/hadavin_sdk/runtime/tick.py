@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from hadavin_sdk.app import App
 
 S = RunState
-TICK_SLACK_S = 60  # the longest gap between ticks (design: every 30-60 s)
+TICK_MARGIN_S = 60  # the longest gap between ticks (design: every 30-60 s)
 _LOG = logging.getLogger("hadavin_sdk.tick")
 OK, FAILED, SKIPPED = "ok", "failed", "skipped"
 
@@ -301,7 +301,7 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
         if (
             step.interval
         ):  # a tick comes every 30-60 s: due a tick-period early, so the cadence does not drift
-            every = max(every - TICK_SLACK_S, every // 2)
+            every = max(every - TICK_MARGIN_S, every // 2)
         # A step whose last run FAILED is due again at the next tick (a persistently raising hold hook must
         # not push the 30-day purge a whole interval away each time).
         if (

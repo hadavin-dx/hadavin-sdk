@@ -99,7 +99,7 @@ _IP_LINK = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}(?::\d{1,5})?/\S*")
 _HTML = re.compile(r"</?[a-zA-Z][a-zA-Z0-9-]*(?:[\s/][^<>]*)?>", re.DOTALL)
 # Slack's own control syntax: <!channel>, <!here>, <!subteam^S1>, <@U123>, <#C123>, <url|text>. And
 # the bare words a client may still expand.
-_SLACK = re.compile(r"<[!@#][^<>]*>|<[a-z][a-z0-9+.\-]*:[^<>|]*\|[^<>]*>", re.IGNORECASE)
+_CHAT_CONTROL = re.compile(r"<[!@#][^<>]*>|<[a-z][a-z0-9+.\-]*:[^<>|]*\|[^<>]*>", re.IGNORECASE)
 _MENTION = re.compile(r"(?<![\w@])@(here|channel|everyone)\b", re.IGNORECASE)
 # Bare domains are defanged (`evil[.]com`) so a chat client does not turn them into links - data can
 # ride in a subdomain or a path (audit A-C-9). Every two-letter top-level domain (country codes), the
@@ -251,7 +251,7 @@ def _clean_line(line: str) -> str:
         before = line
         line = _IMAGE.sub("[image removed]", line)
         line = _MDLINK.sub(r"\1 [link removed]", line)
-        line = _SLACK.sub("", line)
+        line = _CHAT_CONTROL.sub("", line)
         line = _URL.sub("[link removed]", line)
         line = _IP_LINK.sub("[link removed]", line)
         line = _HTML.sub("", line)
