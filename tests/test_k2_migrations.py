@@ -13,7 +13,7 @@ from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import Plan
 from hadavin_sdk.store import migrate as mig
 from tests.contracts.kinds.store_postgres import pg_schema
-from tests.fixtures.migration_role import create_login_role
+from tests.fixtures.migration_role import create_login_role, login_dsn
 from tests.fixtures.released_stub import made_up_files_are_not_released
 
 FIXTURE = Path(__file__).parent / "fixtures" / "plan_v1.json"
@@ -237,9 +237,7 @@ def test_the_runtime_role_cannot_update_or_delete_the_audit_log(roles):
 
     dsn, runtime, _ = roles
     mig.migrate(dsn, runtime_role=runtime)
-    from psycopg.conninfo import make_conninfo
-
-    with psycopg.connect(make_conninfo(dsn, user=runtime), autocommit=True) as db:
+    with psycopg.connect(login_dsn(dsn, runtime), autocommit=True) as db:
         assert db.execute("SELECT current_user").fetchone()[0] == runtime
         for statement in (
             "UPDATE audit_entries SET body = '{}'",
@@ -267,9 +265,7 @@ def test_the_portal_role_reads_only_the_portal_relations(roles):
                 if _can(db, portal, name, p)
             }
             assert held == ({"SELECT"} if grant.portal else set()), name
-    from psycopg.conninfo import make_conninfo
-
-    with psycopg.connect(make_conninfo(dsn, user=portal), autocommit=True) as db:
+    with psycopg.connect(login_dsn(dsn, portal), autocommit=True) as db:
         db.execute("SELECT count(*) FROM runs")
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             db.execute("SELECT count(*) FROM kill_switch")

@@ -1395,7 +1395,7 @@ M: list[Mutant] = [
         "tests/fixtures/migration_role.py",
         '    parts.pop("options", None)\n',
         "    pass\n",
-        k(T_PG, "test_one_server_is_one_entry_whatever_the_search_path"),
+        k(T_PG, "test_one_connection_target_is_one_entry_whatever_the_search_path"),
     ),
     Mutant(
         "SW1",
@@ -1412,8 +1412,8 @@ M: list[Mutant] = [
         "SW2",
         "a stale test role with an open session is dropped",
         "tests/fixtures/migration_role.py",
-        'WHERE a.usename = r.rolname "\n        "OR a.application_name = r.rolname)',
-        "WHERE a.application_name = r.rolname)",
+        'WHERE a.usename = r.rolname "\n        "OR a.application_name = r.rolname) "',
+        'WHERE a.application_name = r.rolname) "',
         k(T_PG, "test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not"),
     ),
     Mutant(
@@ -1517,7 +1517,10 @@ M: list[Mutant] = [
         "tests/fixtures/migration_role.py",
         "    _hold_the_role(db)\n",
         "",
-        k(T_WIRING, "test_the_live_process_lock_is_taken_on_the_server_that_makes_the_role"),
+        k(
+            T_WIRING,
+            "test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role",
+        ),
     ),
     Mutant(
         "SW5",
@@ -1525,7 +1528,10 @@ M: list[Mutant] = [
         "tests/fixtures/migration_role.py",
         "    hold = psycopg.connect(\n        make_conninfo(db.info.dsn, password=db.info.password or None, application_name=PLAIN_ROLE),\n        autocommit=True,\n    )\n",
         '    hold = psycopg.connect("host=localhost", autocommit=True)\n',
-        k(T_WIRING, "test_the_live_process_lock_is_taken_on_the_server_that_makes_the_role"),
+        k(
+            T_WIRING,
+            "test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role",
+        ),
     ),
     Mutant(
         "SW6",
@@ -1539,8 +1545,8 @@ M: list[Mutant] = [
         "SW7",
         "the sweep does not look at the name of the connections, so a role held from another database is dropped",
         "tests/fixtures/migration_role.py",
-        'AND NOT EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.usename = r.rolname "\n        "OR a.application_name = r.rolname)",',
-        'AND NOT EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.usename = r.rolname)",',
+        'a.usename = r.rolname "\n        "OR a.application_name = r.rolname) "',
+        'a.usename = r.rolname) "',
         k(
             T_PG,
             "test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server",
@@ -1553,7 +1559,10 @@ M: list[Mutant] = [
         "password=db.info.password or None, application_name=PLAIN_ROLE),",
         "password=db.info.password or None),",
         (
-            k(T_WIRING, "test_the_live_process_lock_is_taken_on_the_server_that_makes_the_role"),
+            k(
+                T_WIRING,
+                "test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role",
+            ),
             k(
                 T_PG,
                 "test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server",
@@ -1592,6 +1601,101 @@ M: list[Mutant] = [
         "if where is None or where == schema:",
         "if where is None:",
         k(T_WIRING, "test_a_function_of_another_schema_is_not_a_managed_name"),
+    ),
+    Mutant(
+        "SW10",
+        "the hold connection is not given the password of the connection",
+        "tests/fixtures/migration_role.py",
+        "make_conninfo(db.info.dsn, password=db.info.password or None, application_name=PLAIN_ROLE),",
+        "make_conninfo(db.info.dsn, application_name=PLAIN_ROLE),",
+        k(T_WIRING, "test_the_hold_connection_is_given_the_password_of_the_connection"),
+    ),
+    Mutant(
+        "SW11",
+        "the sweep does not ask whether the login can see the sessions of other users",
+        "tests/fixtures/migration_role.py",
+        "    if not seen or not seen[0]:\n        return []\n",
+        "",
+        (
+            k(T_WIRING, "test_a_login_that_cannot_see_other_sessions_sweeps_nothing"),
+            k(
+                T_PG,
+                "test_a_login_that_cannot_see_other_sessions_sweeps_nothing_on_a_real_server",
+            ),
+        ),
+    ),
+    Mutant(
+        "SW12",
+        "the unlock after a sweep is not guarded against a broken connection",
+        "tests/fixtures/migration_role.py",
+        '            try:\n                db.execute("SELECT pg_advisory_unlock(%s)", (key,))\n            except psycopg.Error:\n                pass  # a broken connection must not fail the setup of a test\n',
+        '            db.execute("SELECT pg_advisory_unlock(%s)", (key,))\n',
+        k(T_WIRING, "test_a_failed_unlock_does_not_fail_the_setup"),
+    ),
+    Mutant(
+        "SW13",
+        "the sweep drops a role that owns a schema that is not a scratch schema",
+        "tests/fixtures/migration_role.py",
+        "AND NOT (n.nspname LIKE ANY(%s)))",
+        "AND %s::text[] IS NULL)",
+        k(T_PG, "test_a_role_that_owns_a_schema_that_is_not_a_scratch_schema_is_not_swept"),
+    ),
+    Mutant(
+        "SW14",
+        "the message of a role that could not be dropped does not name the databases",
+        "tests/fixtures/migration_role.py",
+        'where = ", ".join(_databases_that_still_hold(db, name)) or "none found"',
+        'where = "none found"',
+        k(
+            T_PG,
+            "test_a_stale_role_that_owns_objects_in_another_database_is_left_and_the_databases_are_named",
+        ),
+    ),
+    Mutant(
+        "SW15",
+        "the exit hook cleans only the first database before it drops the role",
+        "tests/fixtures/migration_role.py",
+        "            for dsn in dsns:\n",
+        "            for dsn in dsns[:1]:\n",
+        k(
+            T_PG,
+            "test_the_exit_hook_drops_what_the_role_owns_in_every_used_database_and_then_the_role",
+        ),
+    ),
+    Mutant(
+        "TD1",
+        "a function name with a database part (db.schema.name) is read as schema db and name schema",
+        MIG,
+        '_SCHEMA_DOT = rf"{_DATABASE_DOT}(?:',
+        '_SCHEMA_DOT = rf"(?:',
+        k(T_WIRING, "test_a_function_of_another_schema_is_not_a_managed_name"),
+    ),
+    Mutant(
+        "ML1",
+        "the refusal for objects of another role does not say that nothing was changed",
+        MIG,
+        'unchanged = "Nothing was changed."',
+        'unchanged = ""',
+        k(
+            T_PG,
+            "test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over",
+        ),
+    ),
+    Mutant(
+        "GM1",
+        "the words after a refusal of the portal role do not say what the grant map is",
+        MIG,
+        "for the portal role SELECT only)",
+        "the one right it may have on each)",
+        k(T_PG, "test_the_portal_role_is_refused_what_the_other_roles_are_refused"),
+    ),
+    Mutant(
+        "GD1",
+        "one test login loses its password",
+        "tests/test_migration_postgres.py",
+        "make_conninfo(DSN, user=live, password=passwords[live])",
+        "make_conninfo(DSN, user=live)",
+        k(T_RULES, "test_no_test_logs_in_as_a_role_without_passing_its_password"),
     ),
     Mutant(
         "RP1",
