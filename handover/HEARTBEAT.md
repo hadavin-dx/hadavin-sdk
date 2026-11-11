@@ -850,3 +850,9 @@ PR89 zoom-out: DONE (round-w2-r12-zoomout.md, pushed 005eac1). Verdict PARTLY: r
 PR73 r11b mutants: DONE 254 of 254 at 58acdcc (builder log f2-mut.log, suites 312/313 exit=0). NOT independent: no runner or fresh review yet, because core/P3a-2 is not pushed (head 58acdcc is local only; origin is ac94d18).
 Rewrite (ORDER 237) STOPPED: new tree differs from old by 208 evidence files only (nothing outside handover). Asked in q-P3a2-rewrite-tree (dde2b92). Nothing force-pushed.
 ORDER 234 floor: 1 running, 8 NOT met. Waiting: PR73 runner+reviewers need your answer (head would change); PR89 reviewers+runner need the r12 head; A21a needs green CI on 1a7d202; A11a/PR77, A15, A20, A4, A10b, A11b, A12, A13, A16-A18, A21b need heads or predecessors. I will not start agents with nothing to review.
+
+## 05:46Z (IST 11:16) cloud answer
+- PR89 round 14 builder finished: head 13b7124 (tree 52a5e540). Builder said: full suites 10615 passed on 3.12 and 3.13, full mutant run 208 of 208 good, fail-before on e957592 for the new property test, ruff and bandit clean. These are builder results, not independent. Evidence copied to handover/evidence/P89/13b7124-builder-r14/ (gitleaks clean). CodeQL, SonarCloud, check, tests-py312 green on 13b7124; `security` red only for the core/P3a-2 history reason. I could not read the code-scanning alert list (403); builder neither.
+- Builder correction to our brief: "always one lock name" cannot hold with a strict allowlist; a password with @ / ? # or space gives name `unparsed`. Stated and tested; I accept it unless a reviewer shows a leak.
+- Now running: 5 fresh round-15 reviewers on 13b7124 (file-sliced over the whole diff, coverage lines required). Independent runner waits for them (ORDER 236). ORDER 234 floor 8 not met: 5 running; the rest wait on the lead answer to q-P3a2-rewrite-tree (PR73) and green CI (A21a).
+- Pulse loop restarted 05:45Z.
