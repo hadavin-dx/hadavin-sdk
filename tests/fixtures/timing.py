@@ -48,6 +48,12 @@ and by its rules (read in the `timeit` module of Python 3.13 on 2026-11-11):
   * These ceilings count computing only: a regression that sleeps or blocks is NOT caught by a processor-time ceiling; a
     test for that needs a wall-time limit (`test_k5_review.py` abandons a hang at its deadline, `test_pgsource_layers.py`
     uses a database sleep with a watchdog).
+  * THE RAW WALL-CLOCK TESTS THAT REMAIN, on purpose (they guard a hang or a wait, which processor time cannot see, with a
+    ceiling far above the normal time): `test_k5_classes.py` (a hung tool is abandoned: the child process must finish
+    in under 30 s, its tool deadline is 0.3 s), `test_k5_review.py` (the same abandon, in under 3 s against a 0.3 s
+    deadline) and `test_scan_repo.py::test_long_word_runs_do_not_hang_the_password_rule` (the scan runs in a child
+    process, which processor time does not count: 20 s against a measured 0.09 s). A new ceiling on a computing cost
+    goes through this rule, not through a raw clock.
   * Only the doubling-ratio test (`growth`, marked `perf` where it uses the real clock) sees mild super-linear growth (an
     exponent of 1.3 passes a fixed ceiling on seconds); the fixed ceilings catch an exploding cost only.
 

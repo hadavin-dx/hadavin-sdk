@@ -493,6 +493,25 @@ def test_the_sizing_loops_end_by_construction_even_without_the_calls_cap(monkeyp
         stopped.is_superlinear()
 
 
+def test_the_repeat_rounds_end_by_construction_when_every_resized_batch_stays_short(monkeypatch):
+    # the SECOND loop (the repeats): the first sizing batch is long enough (30 ms), every later batch shows 1 ms, so the
+    # texts are resized round after round and never reach the batch length; the loop must end in a refusal
+    monkeypatch.setattr(timing, "MAX_ROUNDS", 3)
+    reads = itertools.count()
+    now = [0.0]
+
+    def clock() -> float:
+        n = next(reads)
+        if (
+            n % 2 == 1
+        ):  # the read that ends a batch: the first batch took 30 ms, every other one 1 ms
+            now[0] += 0.03 if n == 1 else 0.001
+        return now[0]
+
+    with pytest.raises(timing.Untimeable, match="3 rounds in a row had a batch under"):
+        timing.seconds_per_call(lambda _text: None, "a", clock)
+
+
 # --- work that waits: refused, because processor time does not count it -------------------------------------------------------
 
 not_on_windows = pytest.mark.skipif(
@@ -531,8 +550,11 @@ class WallModel:
 
 @pytest.mark.parametrize("calls_paused", [1, 2, 3, 5])
 def test_one_pause_inside_a_tiny_batch_is_not_taken_for_waiting(calls_paused):
-    # 60 microseconds of work, and the scheduler takes the program away for 8 ms inside the batch: 8 ms is more than 50
-    # times 60 microseconds and more than 5 ms, which is what the first version of the check refused at once
+    # 60 microseconds of work per call; the scheduler takes the program away for 8 ms during call number `calls_paused`.
+    # Only calls_paused=1 lands in a tiny batch (the first sizing batch is one call): there 8 ms is more than 50 times
+    # the batch's processor time and more than 5 ms, which is what the first version of the check refused at once. The
+    # cases 2, 3 and 5 land in the next batch (400 calls, 24 ms of processor time), where 8 ms is far from 50 times: they
+    # show that the check also stays quiet for a pause in a batch that is already long
     model = WallModel(6e-5, pause=8e-3, paused_calls=[calls_paused])
     assert model.seconds() == pytest.approx(6e-5), "the pause changed the time of one call"
 
@@ -551,6 +573,20 @@ def test_a_pause_on_every_try_of_a_batch_is_what_waiting_looks_like():
     assert model.calls == timing.WAIT_TRIES, (
         "it must refuse after exactly the allowed tries, not run on"
     )
+
+
+def test_work_with_a_wall_time_of_a_few_times_its_processor_time_is_not_waiting():
+    # each call spends 1 ms computing and 2 ms of wall time more (a busy machine): 3 times, far from the 50 times that
+    # is waiting, in batches of 20 ms or more (above the 5 ms floor), so the time of one call is the processor time
+    model = WallModel(1e-3, wait=2e-3)
+    assert model.seconds() == pytest.approx(1e-3)
+
+
+def test_a_pause_under_the_waiting_floor_is_not_waiting_even_on_every_try():
+    # 1 ms of wall time on a 10 microsecond call is 100 times, but under the 5 ms floor: not taken for waiting, even
+    # when all three tries of the first batch are paused
+    model = WallModel(1e-5, pause=1e-3, paused_calls=[1, 2, 3])
+    assert model.seconds() == pytest.approx(1e-5)
 
 
 def test_the_waiting_check_is_not_armed_by_a_wall_clock_that_agrees_with_the_processor_clock():
@@ -626,8 +662,9 @@ def test_a_hand_built_growth_with_no_time_is_refused_not_a_division_by_zero(t_sm
 
 
 def test_a_resize_times_again_only_the_text_whose_batch_changed():
-    # the small text's first guess is short (its first batch is paused, so it looks long enough) and is resized; the big
-    # text's batch is right the first time and its five results stand
+    # the first sizing batch of the small text (one call) is paused, so it looks long enough and the guess stays at one
+    # call; its later, unpaused batches are far too short, so it is resized. Every batch of the big text is paused, but its
+    # size (3000 calls, 24 ms) is right anyway, so its five results stand and it is not timed again
     model = Model(power(1), 1e-9, pause=0.5, spell=1)
     timing.seconds_per_call_each(model.fn, ["a" * SMALL, "a" * BIG], clock=model.clock)
     sizes = [size for size, _ in model.batches]

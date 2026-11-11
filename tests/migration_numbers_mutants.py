@@ -11,6 +11,19 @@ mutant is good, and the last line is `N of N good; problems: []`):
     uv run python tests/migration_numbers_mutants.py            # all; exit 1 if any is not good
     uv run python tests/migration_numbers_mutants.py hidden     # only names that hold the text
 
+SIX MUTANTS ARE GOOD BY A CRASH, NOT BY A FAILED ASSERTION (the runner prints their first error line; a crash counts as a
+kill only when that line starts with the exception class the mutant declares in `crash_type`, so any other crash is not
+good). Each is a real kill: with the guard reverted, the ordinary code path raises that exception out of the code under
+test, which is the very thing the named test pins down. Measured on 2026-11-11:
+  fix1 "a missing text raises KeyError"                -> KeyError: PosixPath('0002_b.sql')
+  o100 "statement_text returns the bare text"          -> ValueError: too many values to unpack (expected 2)
+  timing "a case that cannot be timed stops the sweep" -> Untimeable: 1000 calls took 0.0 s ... too fast to time
+  timing "a clock difference ... overflows"            -> OverflowError: cannot convert float infinity to integer
+  timing "refuses on one look"                         -> Untimeable: 1 calls took 6e-05 s ... 1 times in a row
+  timing "a hand-built growth ... divides by zero"     -> ZeroDivisionError: float division by zero
+The waiting-factor "2" and waiting-floor "0" mutants (added later) also end in an `Untimeable` crash and are declared the
+same way.
+
 A cheap check that runs with the ordinary tests, `test_every_mutant_still_applies_to_the_source`, fails when a mutant's
 `old` text is no longer in its file or its killer test no longer exists, so the list cannot rot between two runs.
 """
@@ -614,6 +627,50 @@ M = [
         allow_crash=True,
         crash_type="ZeroDivisionError",
     ),
+    mutant(
+        "timing: the repeat rounds end without a refusal (the last raise returns the untrusted times)",
+        '    raise Untimeable(\n        f"{MAX_ROUNDS} rounds in a row had a batch under {MIN_BATCH_S} s: not a time that grows"\n    )\n',
+        "    return [seconds / n for seconds, n in zip(best, calls, strict=True)]\n",
+        T3,
+        "test_the_repeat_rounds_end_by_construction_when_every_resized_batch_stays_short",
+        "DID NOT RAISE",
+        src=TIMING,
+        allow_crash=True,  # pytest.raises that did not raise is a `Failed` exception, not an assertion
+        crash_type="Failed",
+    ),
+    mutant(
+        "timing: the waiting factor is 5000, not 50 (work that waits is timed)",
+        "    50.0,\n",
+        "    5000.0,\n",
+        T3,
+        "test_a_pause_on_every_try_of_a_batch_is_what_waiting_looks_like",
+        "DID NOT RAISE",
+        src=TIMING,
+        allow_crash=True,
+        crash_type="Failed",
+    ),
+    mutant(
+        "timing: the waiting factor is 2, not 50 (a busy machine is refused as waiting)",
+        "    50.0,\n",
+        "    2.0,\n",
+        T3,
+        "test_work_with_a_wall_time_of_a_few_times_its_processor_time_is_not_waiting",
+        "mostly waits",
+        src=TIMING,
+        allow_crash=True,
+        crash_type="Untimeable",
+    ),
+    mutant(
+        "timing: the waiting floor is 0 s, not 5 ms (a short pause is refused as waiting)",
+        "    0.005,\n",
+        "    0.0,\n",
+        T3,
+        "test_a_pause_under_the_waiting_floor_is_not_waiting_even_on_every_try",
+        "mostly waits",
+        src=TIMING,
+        allow_crash=True,
+        crash_type="Untimeable",
+    ),
 ]
 
 if __name__ == "__main__":
@@ -629,7 +686,9 @@ if __name__ == "__main__":
             f"{'ok ' if good else 'BAD'} {v:12} {name}  [{test_id.split('::')[-1][:70]}]",
             flush=True,
         )
-        if not good:
+        if (
+            not good or v == "CRASH"
+        ):  # a crash counts as a kill only with the declared exception class: show the line
             print("      first line:", first_lines.get(name, "")[:200], flush=True)
 
     res = run_mutants(

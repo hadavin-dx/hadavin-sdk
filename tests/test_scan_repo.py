@@ -181,4 +181,9 @@ def test_long_word_runs_do_not_hang_the_password_rule(tmp_path):
     repo = _repo(tmp_path, {"min.js": "a" * 300_000 + "\n" + "pass" + "word" * 50_000 + "\n"})
     start = time.monotonic()
     rc, _ = _scan(repo)
+    # A wall-clock ceiling on purpose, and not a growth test: the scan runs in a child process (processor time of this
+    # process would not count it), and the failure this guards against is a hang, not a slow-down. Measured on 2026-11-11
+    # (Linux, quiet machine): 0.09 s for the whole test. A quadratic cost on a line of 300,000 characters is about
+    # 9 * 10**10 steps, far more than 20 s, so the ceiling sits about 200 times above the normal time and far below the
+    # failure; a busy machine cannot move one across the other.
     assert rc == 0 and time.monotonic() - start < 20
