@@ -4,8 +4,9 @@ Three rules, each with plant tests that prove it fails on a planted violation:
   a. a vendor SDK is imported only inside its own kind module; open-source libraries stay in their layer;
   b. every capability has a neutral prod kind and at least two prod kinds, or a dated EXCEPTIONS entry;
   c. no vendor identifiers (names, regions, hosts, model ids, account ids) in core logic: in its strings
-     (`literal_problems`) and in the names it gives to modules, functions, classes, parameters, variables and
-     attributes (`identifier_problems`).
+     (`literal_problems`) and in the names it writes or reads (`identifier_problems`): the names it gives to
+     modules, functions, classes, parameters, variables and attributes, the names it only reads (an attribute, a
+     decorator), the names it passes by keyword, and what it imports (module path, original name and alias).
 Known violations go in dated lists. A stale entry (its violation is gone) fails the test, and so does an
 overdue one, so an entry cannot linger.
 
@@ -13,7 +14,8 @@ What rule c sees in a string: a vendor word that has, on each side, the start or
 character that is not an ASCII letter or digit (so white space, `|`, quotes, brackets and `:` are boundaries), and
 the two-part words (PagerDuty, OpenAI and seven more) also with one of `/ _ . -` between their parts.
 
-What rule c does not see (each limit marked [pinned] has a test, so a later change to it is deliberate):
+What rule c does not see (each limit marked [pinned] has a test that fixes it, so a later change to it is
+deliberate):
   - any word that is not in VENDOR_WORDS: the scans know only those words [pinned];
   - inside a string, a vendor word glued to another ASCII letter or digit (`"/slackActions"`, `"myslack"`,
     `"slack2"`), a two-part word with more than one separator or with white space inside (`"pager--duty"`,
@@ -22,8 +24,9 @@ What rule c does not see (each limit marked [pinned] has a test, so a later chan
     parts are scanned one by one; an f-string and a `+` join are scanned as joined text);
   - an f-string or a `+` join is reported once for the joined text and once for each constant part that hits by
     itself, so `f"/slack/{x}"` gives two lines and needs two allow entries [pinned];
-  - comments and docstrings: they are prose for the reader, and shared code may say which vendors a thing was built
-    for [pinned]. Only `approvals/receiver.py` is checked as whole text;
+  - comments, docstrings and SQL comments (`-- ...`, `/* ... */` in the migration files): a vendor word there is
+    prose for the reader and cannot change what the program does, so they are not scanned (a design decision, not
+    a gap) [pinned]. Only `approvals/receiver.py` is checked as whole text;
   - in a name, a word glued to capitals (`AWSclient`) or to other lower-case letters (`awsome`) [pinned]. The
     reverse also holds: two neighbouring parts that together spell a listed word are reported even when that was
     not meant (`TeamS`, `team_s`) [pinned];
@@ -972,6 +975,12 @@ def literal_problems(
     out: list[str] = []
     used: set[tuple[str, str]] = set()
     used_words: set[tuple[str, str, str]] = set()
+    # an empty assignment name would match every string outside an assignment of that module: refused
+    out += [
+        f"WORD_IN_OK {k[0]} {k[2]!r} has an empty assignment name: name the assignment"
+        for k in word_in_ok
+        if not k[1]
+    ]
     for path in sorted(src.rglob("*.py")):
         mod = module_name(src, path)
         if mod in vendor_modules:
@@ -1460,6 +1469,16 @@ def test_a_comment_and_a_docstring_are_not_scanned(tmp_path):
     assert _lit(tmp_path, "runtime/x.py", source) == []
     assert _ident(tmp_path, "runtime/x.py", source) == []
     assert {m.group(0).lower() for m in _WHOLE_WORD.finditer(source)} == {"slack", "aws"}
+
+
+def test_a_word_allowance_with_an_empty_assignment_name_is_refused_and_covers_nothing(tmp_path):
+    mod = f"{PKG}.runtime.x"
+    source = 'A = "x|slack"\ndef f():\n    return "tel|slack"\n'
+    found = _lit(tmp_path, "runtime/x.py", source, word_ok={(mod, "", "slack"): "why"})
+    assert f"WORD_IN_OK {mod} 'slack' has an empty assignment name: name the assignment" in found
+    # the refusal, and the string of the first assignment (`A`), which the key does not name
+    assert len(found) == 2, found
+    assert all(k[1] for k in WORD_IN_OK)
 
 
 def test_the_word_allowance_of_an_assignment_covers_its_words_there_and_nothing_else(tmp_path):

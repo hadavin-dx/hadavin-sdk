@@ -125,6 +125,9 @@ STORED_KINDS = (
 # Seconds within which a whole callback request (first line, headers, body) must arrive; the tightest reply deadline of
 # an interactive channel is 3 seconds, so a sender that needs longer than this to deliver a few KB has already given up.
 RECEIVER_READ_TIMEOUT_S = 10.0
+# The longest read bound `serve` accepts (one hour): the operating system refuses a socket timeout that does not fit
+# its time type (10 billion seconds raises OverflowError on every request), so a larger value is a mistake.
+RECEIVER_READ_TIMEOUT_MAX_S = 3600.0
 
 # --- kubernetes kind: the Kubernetes source (KubernetesSettings). Decision: kind defaults stay here with every other default
 # (a repo rule keeps one set); when a second kind arrives each kind gets its own `<kind>_defaults.py` and the rule test

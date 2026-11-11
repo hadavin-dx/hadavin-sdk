@@ -3,7 +3,9 @@
 It verifies the request, records the decision (``record_only``) and answers well inside the reply deadline of an
 interactive channel (the tightest one known is 3 seconds). It never executes: ``tick`` reconcile runs approved
 plans, so a repeated delivery can never cause double work. Production hosting is decided at S11; ``serve`` is a
-stdlib server for the demo stage and local runs. Any other host must route by ``callback_path(approvals)``.
+stdlib server for the demo stage and local runs, with no limit on the number of connections open at once (each
+gets its own thread): production hosting (S11) must limit them. Any other host must route by
+``callback_path(approvals)``.
 """
 
 from __future__ import annotations
@@ -17,14 +19,22 @@ from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from hadavin_sdk.approvals.channel import CALLBACK_PATH_MAX_CHARS, valid_callback_path
+from hadavin_sdk.approvals.hmac_v0 import MAX_HEADER_DIGITS, is_plain_digits
 from hadavin_sdk.approvals.requests import Approvals
-from hadavin_sdk.defaults import RECEIVER_READ_TIMEOUT_S
+from hadavin_sdk.defaults import RECEIVER_READ_TIMEOUT_MAX_S, RECEIVER_READ_TIMEOUT_S
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store.protocol import NotFound
 
 MAX_BODY = 64 * 1024  # interactive callback payloads are a few KB
 _MAX_NAME_CHARS = 64  # of a channel name shown in a refusal message
+_MAX_LOG_CHARS = 200  # of a logged request line
 _LOG = logging.getLogger("hadavin_sdk.receiver")
+
+
+def _plain(text: str, limit: int) -> str:
+    """`text` cut to `limit` characters with every non-printable character (a line break, a terminal escape)
+    replaced by `?`, so text that a caller wrote cannot forge or hide a log line."""
+    return "".join(c if c.isprintable() else "?" for c in text[:limit])
 
 
 def _shown_name(channel: object) -> str:
@@ -32,8 +42,9 @@ def _shown_name(channel: object) -> str:
     whichever was chosen is then cut to 64 characters and every non-printable character becomes `?`."""
     name = getattr(channel, "name", None)
     chosen = name if isinstance(name, str) and name else type(channel).__name__
-    text = str.__str__(chosen)[:_MAX_NAME_CHARS]  # a plain str, also for a str subclass
-    return "".join(c if c.isprintable() else "?" for c in text) or "?"
+    return (
+        _plain(str.__str__(chosen), _MAX_NAME_CHARS) or "?"
+    )  # a plain str, also for a str subclass
 
 
 def callback_path(approvals: Approvals) -> str:
@@ -54,7 +65,7 @@ def handle_action(
     approvals: Approvals, headers: Mapping[str, str], body: bytes
 ) -> tuple[int, bytes]:
     """401 for a bad or stale signature, 413 for an oversize body, else 200 (the outcome is audited and the
-    channel message updated; a refused click is not an HTTP error)."""
+    outcome is audited; tick updates the channel message; a refused click is not an HTTP error)."""
     if len(body) > MAX_BODY:
         return 413, b""
     try:
@@ -71,14 +82,15 @@ def handle_action(
 def body_length(values: list[str]) -> int | None:
     """The body length a request states, from every `Content-Length` header line it carries. No such line: 0.
     None (the request is refused with 400) for more than one line, an empty value, a sign, a space, or any
-    character that is not an ASCII digit. A number of more than 12 digits is answered as too large without being
-    converted: `int()` raises past Python's digit limit (the same guard as `hmac_v0.verify`)."""
+    character that is not an ASCII digit (so `5 ` with a trailing space is refused too: fail closed, stricter than
+    HTTP). A number of more than 12 digits is answered as too large without being converted: `int()` raises past
+    Python's digit limit (the same check as `hmac_v0.verify`: `MAX_HEADER_DIGITS` and `is_plain_digits`)."""
     if not values:
         return 0
     raw = values[0]
-    if len(values) > 1 or not (raw.isascii() and raw.isdigit()):
+    if len(values) > 1 or not is_plain_digits(raw):
         return None
-    return int(raw) if len(raw) <= 12 else MAX_BODY + 1
+    return int(raw) if len(raw) <= MAX_HEADER_DIGITS else MAX_BODY + 1
 
 
 class _DeadlineReader(io.RawIOBase):
@@ -106,12 +118,22 @@ def serve(
     read_timeout_s: float = RECEIVER_READ_TIMEOUT_S,
 ) -> ThreadingHTTPServer:
     """A stdlib server for ``POST`` to the configured channel's ``callback_path`` (every other path: 404); call
-    ``serve_forever()`` on the result. Raises ``ConfigError`` when the channel names no valid path.
+    ``serve_forever()`` on the result. Raises ``ConfigError`` when the channel names no valid path or ``read_timeout_s`` is not a number (an int or a float,
+    not a bool) above 0 and at most ``defaults.RECEIVER_READ_TIMEOUT_MAX_S``.
 
     A request (its first line, its headers and its body together) must arrive within ``read_timeout_s`` seconds;
     after that the connection is closed without an answer, which is what the standard library server does for a
-    timeout. A failure while a click is handled is answered 500, so the sender delivers it again. No error of a
-    request prints a traceback: the kind of error is logged in one line."""
+    timeout. A failure while a click is handled is answered 500, so a sender that retries on 5xx delivers it again.
+    No error of a request prints a traceback: the kind of error is logged in one line (enable debug level on the
+    logger ``hadavin_sdk.receiver`` for the request lines and the hang-ups)."""
+    if (
+        type(read_timeout_s) not in (int, float)
+        or not 0 < read_timeout_s <= RECEIVER_READ_TIMEOUT_MAX_S
+    ):
+        raise ConfigError(
+            "read_timeout_s must be a number of seconds above 0 and at most "
+            f"{RECEIVER_READ_TIMEOUT_MAX_S:g} (an int or a float, not a bool)"
+        )
     path = callback_path(approvals)
 
     class Handler(BaseHTTPRequestHandler):
@@ -136,7 +158,7 @@ def serve(
                 return self._answer(413)
             body = self.rfile.read(length)
             # A failure while the click is handled (the store or the channel is down) is answered 500, so the
-            # sender delivers the click again; the error then goes on to `handle_error` below.
+            # sender that retries on 5xx delivers the click again; the error then goes on to `handle_error` below.
             status, out = 500, b""
             try:
                 status, out = handle_action(approvals, dict(self.headers), body)
@@ -152,13 +174,22 @@ def serve(
             self.wfile.write(out)
 
         def log_message(self, format: str, *args: object) -> None:
-            _LOG.debug(format, *args)
+            # The request line is in the arguments and any caller can write anything in it (a line break, a
+            # terminal escape): build the text, cut it, and replace what is not printable before it is logged.
+            try:
+                text = format % args
+            except (TypeError, ValueError):
+                text = format
+            _LOG.debug("%s", _plain(text, _MAX_LOG_CHARS))
 
     class Server(ThreadingHTTPServer):
         def handle_error(self, request: object, client_address: object) -> None:
             # Every error that ends a request arrives here; the standard library would print a traceback. One log
             # line with the kind of error only: no request text, no error message (it could carry request data).
-            # A caller that resets or closes the connection early is not a fault of this server: debug level.
+            # A caller that resets or closes the connection early is not a fault of this server: debug level. That
+            # holds only when the hang-up is the whole story: a hang-up that follows a failed handler is logged at
+            # error level (`ConnectionResetError while handling RuntimeError`), because the handler failure matters.
+            # An operator who sees only the kind of error can enable debug level for the request lines.
             exc = sys.exception()
             kinds: list[str] = []
             while exc is not None:

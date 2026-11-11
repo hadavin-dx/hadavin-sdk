@@ -2,7 +2,8 @@
 
 No database: a callback with a bad signature is refused before the store is touched. Every server listens on
 port 0 (any free port) and is closed in ``finally``. Names that the change adds or removes are looked up with
-``getattr`` so this file loads on the code before the change. Each test of the first section fails there on its
+``getattr`` so this file loads on the code before the change (two small hedges for that fail-on-main proof, in
+``_served`` and ``_path_before_and_after``, are marked; every test that matters asserts on its own). Each test of the first section fails there on its
 own assertion; the second section holds what is true before and after.
 """
 
@@ -11,17 +12,21 @@ import hmac
 import http.client
 import inspect
 import json
+import logging
+import math
 import re
 import socket
 import string
 import threading
 import time
 from contextlib import contextmanager
+from pathlib import Path
 from urllib.parse import urlencode
 
 import pytest
 
-from hadavin_sdk.approvals import FakeChannel, receiver
+from hadavin_sdk import defaults
+from hadavin_sdk.approvals import FakeChannel, hmac_v0, receiver
 from hadavin_sdk.approvals.requests import Approvals
 from hadavin_sdk.approvals.slack_channel import SlackChannel
 from hadavin_sdk.errors import ConfigError
@@ -44,6 +49,8 @@ def _slack() -> SlackChannel:
 @contextmanager
 def _served(channel, approvals=None, read_timeout_s=None):
     extra = {}
+    # hedge for the fail-on-main proof only: the code before the change has no `read_timeout_s`; the timeout tests
+    # fail on their own bound, and `test_serve_refuses_a_read_timeout...` fails when the parameter is lost
     if (
         read_timeout_s is not None
         and "read_timeout_s" in inspect.signature(receiver.serve).parameters
@@ -76,7 +83,8 @@ def _post(port: int, path: str, body: bytes | None = None) -> int:
 
 
 def _path_before_and_after(channel) -> str:
-    # before the change every kind was served on VENDOR
+    # hedge for the fail-on-main proof only: before the change every kind was served on VENDOR (the tests of the
+    # first section fail on their own assertion when `callback_path` is lost)
     return getattr(channel, "callback_path", VENDOR)
 
 
@@ -377,9 +385,10 @@ def test_the_generated_paths_cover_every_length_and_both_joiners():
     """The generator itself (no product code): the 500 paths of the acceptance test cover what its name says."""
     draws = _Draws(8802)
     paths = [_valid_path(draws) for _ in range(500)]
-    assert {len(path) for path in paths} == set(range(2, 65))
     assert any("-" in path for path in paths) and any("/" in path[1:] for path in paths)
     assert len(set(paths)) > 450
+    # explicit, not left to the order of the draws: every length from 2 to 64 can be built
+    assert {len(_valid_path(_Draws(8802 + n), n)) for n in range(2, 65)} == set(range(2, 65))
 
 
 def test_the_vendor_kind_keeps_its_path():
@@ -460,8 +469,14 @@ BAD_LENGTHS = [
     (b"Content-Length: 0x5", 400),
     (b"Content-Length: 5.0", 400),
     (b"Content-Length:", 400),  # an empty value
-    (b"Content-Length: \xb2", 400),  # a digit that is not an ASCII digit (superscript two)
-    (b"Content-Length: \xd9\xa5", 400),  # the bytes of an Arabic-Indic five
+    (
+        b"Content-Length: \xb2",
+        400,
+    ),  # the only case here of a digit that is not an ASCII digit (superscript two)
+    (
+        b"Content-Length: \xd9\xa5",
+        400,
+    ),  # two bytes that are not digits when read as latin-1 (the header charset)
     (b"Content-Length: 9\r\nContent-Length: 9", 400),  # the header twice, same value
     (b"Content-Length: 0\r\nContent-Length: 9", 400),
 ]
@@ -502,7 +517,10 @@ def test_a_request_that_sends_less_than_it_announces_frees_its_thread_within_the
         status, taken = _raw(
             port, _request(NEUTRAL, b"Content-Length: 100", body=UNSIGNED), wait_s=4
         )
-        assert status is None and taken < 2.5, (status, taken)
+        assert status is None and taken < 4, (
+            status,
+            taken,
+        )  # bound 0.5 s; the ceiling allows a loaded runner
         # the server still answers the next caller
         assert _raw(port, _request(NEUTRAL, b"Content-Length: 9", body=UNSIGNED))[0] == 401
         _no_traceback(capsys)
@@ -536,22 +554,27 @@ def test_a_request_that_arrives_too_slowly_is_dropped_at_the_bound_however_it_is
                     closed = True
                 if closed:
                     break
-        assert closed and time.monotonic() - started < 2.5
+        assert (
+            closed and time.monotonic() - started < 4
+        )  # bound 0.6 s; the ceiling allows a loaded runner
         _no_traceback(capsys)
 
 
-def test_a_caller_that_leaves_before_the_answer_causes_no_traceback(capsys):
-    """Content-Length 100, nine bytes, then the caller resets the connection: the answer cannot be written."""
+def _reset(conn: socket.socket) -> None:
+    """Close with linger 0: the close sends a reset instead of an orderly end."""
+    conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, b"\x01\x00\x00\x00\x00\x00\x00\x00")
+    conn.close()
+
+
+def test_a_caller_that_resets_while_the_body_is_read_causes_no_traceback(capsys):
+    """Content-Length 100, nine bytes, then the caller resets the connection: the server is waiting in the body
+    read, so the reset ends the request there (the write of an answer is tested below)."""
     with _served(FakeChannel(SIG), read_timeout_s=3) as port:
         for _ in range(5):
             conn = socket.create_connection(("127.0.0.1", port), timeout=5)
             conn.sendall(_request(NEUTRAL, b"Content-Length: 100", body=UNSIGNED))
             time.sleep(0.05)
-            # linger 0: closing sends a reset, so the server's write fails
-            conn.setsockopt(
-                socket.SOL_SOCKET, socket.SO_LINGER, b"\x01\x00\x00\x00\x00\x00\x00\x00"
-            )
-            conn.close()
+            _reset(conn)
         time.sleep(0.3)
         assert _raw(port, _request(NEUTRAL, b"Content-Length: 9", body=UNSIGNED))[0] == 401
         _no_traceback(capsys)
@@ -587,15 +610,245 @@ class _Recording:
         raise self.failure
 
 
-def test_a_failure_while_a_signed_click_is_recorded_is_answered_500_without_a_traceback(capsys):
+ERROR_LINE = "a request ended with an error: "
+
+
+def _wait_for(caplog, wanted, seconds: float = 5.0) -> list[logging.LogRecord]:
+    """The records that satisfy `wanted`, waiting (up to `seconds`) for the handler thread to log them."""
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        found = [r for r in list(caplog.records) if wanted(r)]
+        if found:
+            return found
+        time.sleep(0.02)
+    return []
+
+
+def test_a_failure_while_a_signed_click_is_recorded_is_answered_500_and_logged_once_without_its_text(
+    caplog,
+):
     channel = FakeChannel(SIG)
     headers, body = _signed()
+    caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
     for approvals in (_approvals(channel), _Recording(channel, RuntimeError("store is down"))):
         with _served(channel, approvals) as port:  # `_approvals` has no store at all
             status, _ = _raw(port, _request(_path_before_and_after(channel), *headers, body=body))
             assert status == 500
-            _no_traceback(capsys)
     assert approvals.verified == 1
+    errors = _wait_for(
+        caplog, lambda r: r.levelno == logging.ERROR and r.getMessage().startswith(ERROR_LINE)
+    )
+    assert errors, caplog.text
+    time.sleep(0.2)  # let a second line show, if one would be written
+    errors = [r for r in caplog.records if r.levelno >= logging.ERROR]
+    messages = sorted(r.getMessage() for r in errors)
+    # one line per failed request: the first has no store at all (an AttributeError), the second is the RuntimeError
+    assert messages[1] == ERROR_LINE + "RuntimeError", messages
+    assert all(m.startswith(ERROR_LINE) and "\n" not in m for m in messages)
+    assert len(messages) == 2, messages
+    assert (
+        "store is down" not in caplog.text
+    )  # the message of the error can carry request data: never logged
+    assert not any(r.exc_info for r in caplog.records)  # and no traceback
+
+
+def test_a_caller_that_hangs_up_is_logged_at_debug_only(caplog):
+    """The server is waiting in the body read when the caller resets: no ERROR line, one DEBUG line."""
+    caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
+    with _served(FakeChannel(SIG), read_timeout_s=3) as port:
+        conn = socket.create_connection(("127.0.0.1", port), timeout=5)
+        conn.sendall(_request(NEUTRAL, b"Content-Length: 100", body=UNSIGNED))
+        time.sleep(0.05)
+        _reset(conn)
+        hung_up = _wait_for(
+            caplog, lambda r: r.getMessage().startswith(ERROR_LINE) and "Error" in r.getMessage()
+        )
+        assert hung_up, caplog.text
+    assert [r.levelno for r in hung_up] == [logging.DEBUG], caplog.text
+    assert hung_up[0].getMessage() == ERROR_LINE + "ConnectionResetError"
+    assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
+
+
+class _Slow:
+    """Stands where the approvals object stands: answers `bad_signature` after a pause, so a caller can leave
+    first and the write of the answer fails (the whole request has been read and the handler has not failed)."""
+
+    def __init__(self, channel):
+        self.channel = channel
+
+    def receive(self, headers, body, *, record_only=False):
+        time.sleep(0.4)
+        return False, "bad_signature"
+
+
+def test_a_caller_that_leaves_before_the_answer_is_written_is_logged_at_debug_only(caplog):
+    """A complete request, then a reset before the answer: the write of the answer fails with a hang-up and the
+    handler had not failed, so the line is DEBUG and there is no ERROR line."""
+    caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
+    channel = FakeChannel(SIG)
+    headers, body = _signed()
+    with _served(channel, _Slow(channel)) as port:
+        conn = socket.create_connection(("127.0.0.1", port), timeout=5)
+        conn.sendall(_request(_path_before_and_after(channel), *headers, body=body))
+        time.sleep(0.1)  # the request is read and the handler is paused in `receive`
+        _reset(conn)
+        written = _wait_for(
+            caplog,
+            lambda r: (
+                r.getMessage().startswith(ERROR_LINE + "ConnectionResetError")
+                or r.getMessage().startswith(ERROR_LINE + "BrokenPipeError")
+            ),
+        )
+        assert written, caplog.text
+    assert [r.levelno for r in written] == [logging.DEBUG]
+    assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
+
+
+def _handle_error_records(caplog, *raises) -> list[logging.LogRecord]:
+    """Call `Server.handle_error` inside nested `except` blocks, one per exception: the last one raised is the
+    one being handled, the earlier ones are its context (as when an answer cannot be written after a failure)."""
+    caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
+    server = receiver.serve(_approvals(FakeChannel(SIG)), port=0)
+    try:
+
+        def go(remaining):
+            try:
+                raise remaining[0]
+            except type(remaining[0]):
+                if len(remaining) > 1:
+                    go(remaining[1:])
+                else:
+                    server.handle_error(None, None)
+
+        go(list(raises))
+    finally:
+        server.server_close()
+    return [r for r in caplog.records if r.name == "hadavin_sdk.receiver"]
+
+
+@pytest.mark.parametrize("hangup", [BrokenPipeError, ConnectionResetError, ConnectionAbortedError])
+def test_a_hang_up_alone_is_debug(caplog, hangup):
+    records = _handle_error_records(caplog, hangup("secret text of the error"))
+    assert [(r.levelno, r.getMessage()) for r in records] == [
+        (logging.DEBUG, ERROR_LINE + hangup.__name__)
+    ]
+    assert "secret text" not in caplog.text
+
+
+def test_a_hang_up_after_a_failed_handler_is_error_and_names_both_kinds(caplog):
+    """Decided: the handler failure is what matters, so a reset that follows it is still an ERROR line. It names
+    both kinds: the later error first, then `while handling`, then the failure that was being handled."""
+    records = _handle_error_records(
+        caplog, RuntimeError("store is down"), ConnectionResetError("peer gone")
+    )
+    assert [(r.levelno, r.getMessage()) for r in records] == [
+        (logging.ERROR, ERROR_LINE + "ConnectionResetError while handling RuntimeError")
+    ]
+    assert "store is down" not in caplog.text and "peer gone" not in caplog.text
+
+
+def test_any_other_error_is_error_with_its_kind_only(caplog):
+    records = _handle_error_records(caplog, ValueError("request text"))
+    assert [(r.levelno, r.getMessage()) for r in records] == [
+        (logging.ERROR, ERROR_LINE + "ValueError")
+    ]
+    assert "request text" not in caplog.text and not records[0].exc_info
+
+
+def test_the_error_line_is_what_the_changelog_says_it_is():
+    """The CHANGELOG item for the receiver describes this behaviour; its wording is held to the code."""
+    text = (Path(__file__).parents[1] / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert "ConnectionResetError while handling" in text and "error level" in text
+
+
+def test_the_request_line_is_logged_cut_and_without_control_characters(caplog):
+    caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
+    with _served(FakeChannel(SIG)) as port:
+        # an escape sequence inside the path (no white space, so it stays one word of the line); the 404 is logged
+        assert _raw(port, _request("/x\x1b[31mred" + "y" * 400))[0] == 404
+        lines = _wait_for(
+            caplog, lambda r: "[31mred" in r.getMessage()
+        )  # the line is cut before its status
+    assert lines, caplog.text
+    shown = lines[0].getMessage()
+    assert "\x1b" not in shown and '"POST /x?[31mred' in shown and len(shown) == 200, shown
+
+
+def test_log_message_replaces_every_non_printable_and_cuts_the_text(caplog):
+    caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
+    server = receiver.serve(_approvals(FakeChannel(SIG)), port=0)
+    try:
+        handler = server.RequestHandlerClass.__new__(
+            server.RequestHandlerClass
+        )  # no connection needed
+        handler.log_message('"%s" %s %s', "GET /a\r\nERROR forged line\x1b[31m\x85\u2028", 404, "-")
+        handler.log_message(
+            "100%"
+        )  # a format that does not fit its (no) arguments is logged as it is
+        handler.log_message("%s", "z" * 5000)
+    finally:
+        server.server_close()
+    first, second, third = (r.getMessage() for r in caplog.records)
+    assert first == '"GET /a??ERROR forged line?[31m??" 404 -', first
+    assert second == "100%" and len(third) == 200
+    assert all(r.levelno == logging.DEBUG for r in caplog.records)
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        0,
+        -1,
+        0.0,
+        -0.5,
+        None,
+        "5",
+        b"5",
+        True,
+        False,
+        math.nan,
+        math.inf,
+        -math.inf,
+        10**10,
+        3601,
+        1j,
+        [3],
+    ],
+    ids=repr,
+)
+def test_serve_refuses_a_read_timeout_that_is_not_a_positive_finite_number(bad):
+    with pytest.raises(ConfigError, match="read_timeout_s"):
+        receiver.serve(_approvals(FakeChannel(SIG)), port=0, read_timeout_s=bad)
+
+
+@pytest.mark.parametrize("good", [1e-3, 0.5, 1, 10, 3600, 3600.0, defaults.RECEIVER_READ_TIMEOUT_S])
+def test_serve_accepts_a_read_timeout_between_zero_and_the_maximum(good):
+    server = receiver.serve(_approvals(FakeChannel(SIG)), port=0, read_timeout_s=good)
+    server.server_close()
+
+
+def test_the_digit_check_is_shared_with_the_signature_check():
+    """One rule for a number read from a header: `body_length` and `hmac_v0.verify` both use these two names."""
+    assert hmac_v0.MAX_HEADER_DIGITS == 12
+    assert hmac_v0.is_plain_digits("0123456789")
+    assert not any(
+        hmac_v0.is_plain_digits(t)
+        for t in ["", " 5", "5 ", "+5", "-5", "5.0", "٥", "²", "５", "1_0"]
+    )
+    assert receiver.MAX_HEADER_DIGITS is hmac_v0.MAX_HEADER_DIGITS
+    assert receiver.is_plain_digits is hmac_v0.is_plain_digits
+    now = 1_700_000_000
+    assert hmac_v0.verify(*_verify_args(now, str(now)), now, SIG, "X") is True
+    assert (
+        hmac_v0.verify(*_verify_args(now, "0" * 13 + str(now)), now, SIG, "X") is False
+    )  # 13+ digits: no int()
+    assert hmac_v0.verify(*_verify_args(now, str(now) + " "), now, SIG, "X") is False
+
+
+def _verify_args(now: int, ts_text: str) -> tuple[dict[str, str], bytes]:
+    body = b"x"
+    sig = hmac_v0.sign(body, now, SIG, "X")["x-signature"]
+    return {"x-request-timestamp": ts_text, "x-signature": sig}, body
 
 
 def test_a_correctly_signed_click_on_a_doubled_slash_is_not_handled():

@@ -19,6 +19,16 @@ from hadavin_sdk.models import ApprovalDecision
 MAX_AGE_S = 300
 
 
+# Unix seconds and a request length both fit in 12 digits; a longer run of digits would make int() raise past
+# Python's digit limit, so every reader of a number from a header checks length first (receiver.body_length too).
+MAX_HEADER_DIGITS = 12
+
+
+def is_plain_digits(text: str) -> bool:
+    """True for a non-empty text of ASCII digits only (no sign, space, separator or other-script digit)."""
+    return text.isascii() and text.isdigit()
+
+
 def _names(prefix: str) -> tuple[str, str]:
     return f"{prefix}-Request-Timestamp".lower(), f"{prefix}-Signature".lower()
 
@@ -43,8 +53,10 @@ def verify(
     ts_name, sig_name = _names(prefix)
     h = {k.lower(): v for k, v in headers.items()}
     ts, sig = h.get(ts_name, ""), h.get(sig_name, "")
-    # Unix seconds fit in 12 digits; a longer header would make int() raise past Python's digit limit.
-    if not (ts.isascii() and ts.isdigit() and len(ts) <= 12) or abs(now_ts - int(ts)) > MAX_AGE_S:
+    if (
+        not (is_plain_digits(ts) and len(ts) <= MAX_HEADER_DIGITS)
+        or abs(now_ts - int(ts)) > MAX_AGE_S
+    ):
         return False
     if not (sig.isascii() and sig.startswith("v0=")):
         return False
