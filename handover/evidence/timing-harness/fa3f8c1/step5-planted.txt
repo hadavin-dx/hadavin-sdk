@@ -1,0 +1,42 @@
+== plant a-limit-1000
+-PER_SIZE = 3.0
++PER_SIZE = 1000.0
+harness selection:
+total 4 {'failure': 2, 'passed': 2}
+failure | tests.test_migration_numbers::test_the_timing_harness_flags_a_quadratic_stand_in | AssertionError: a quadratic function must be flagged | E       AssertionError: a quadratic function must be
+failure | tests.test_migration_numbers::test_the_timing_harness_flags_a_quadratic_stand_in_that_is_fast_on_the_small_input | AssertionError: a quadratic function must be flagged however fast its small
+extra test_timing_fixture.py:
+total 38 {'passed': 24, 'failure': 14}
+failure | tests.test_timing_fixture::test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-11] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-10] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-09] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-07] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-06] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-05] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_fast_small_run_is_not_raised_to_a_floor | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_larger_size_gap_separates_the_two_shapes_more | assert False | E       assert False
+failure | tests.test_timing_fixture::test_there_is_no_fixed_seconds_floor_on_the_big_run | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_coarse_clock_cannot_turn_a_fast_call_into_zero[0.001] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_coarse_clock_cannot_turn_a_fast_call_into_zero[0.0156] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_other_programs_taking_the_machine_in_two_of_three_batches_change_nothing[0.05] | assert False | E           assert Fal
+failure | tests.test_timing_fixture::test_other_programs_taking_the_machine_in_two_of_three_batches_change_nothing[1.0] | assert False | E           assert Fals
+failure | tests.test_timing_fixture::test_other_programs_taking_the_machine_in_two_of_three_batches_change_nothing[30.0] | assert False | E           assert Fal
+== plant b-floor-4ms
+-    return PER_SIZE * (big / small) * t_small
++    return PER_SIZE * (big / small) * max(t_small, 0.004)
+harness selection:
+total 4 {'failure': 2, 'passed': 2}
+failure | tests.test_migration_numbers::test_the_timing_harness_flags_a_quadratic_stand_in | AssertionError: a quadratic function must be flagged | E       AssertionError: a quadratic function must be
+failure | tests.test_migration_numbers::test_the_timing_harness_flags_a_quadratic_stand_in_that_is_fast_on_the_small_input | AssertionError: a quadratic function must be flagged however fast its small
+extra test_timing_fixture.py:
+total 38 {'passed': 28, 'failure': 10}
+failure | tests.test_timing_fixture::test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-11] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-10] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-09] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_fast_small_run_is_not_raised_to_a_floor | assert False | E       assert False
+failure | tests.test_timing_fixture::test_the_limit_is_a_ratio_of_the_two_sizes | assert 0.048 == 1.2e-05 ± 1.2e-11 | E       assert 0.048 == 1.2e-05 ± 1.2e-1
+failure | tests.test_timing_fixture::test_a_coarse_clock_cannot_turn_a_fast_call_into_zero[0.001] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_a_coarse_clock_cannot_turn_a_fast_call_into_zero[0.0156] | assert False | E       assert False
+failure | tests.test_timing_fixture::test_other_programs_taking_the_machine_in_two_of_three_batches_change_nothing[0.05] | assert False | E           assert Fal
+failure | tests.test_timing_fixture::test_other_programs_taking_the_machine_in_two_of_three_batches_change_nothing[1.0] | assert False | E           assert Fals
+failure | tests.test_timing_fixture::test_other_programs_taking_the_machine_in_two_of_three_batches_change_nothing[30.0] | assert False | E           assert Fal

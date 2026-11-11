@@ -2582,9 +2582,9 @@
 | BL-core-q8b-plan-r1-B1 | Blocker | Q8b-plan | reviews/Q8b/plan-r1-readiness.md B1 | OPEN | | | 2026-11-11 |
 | BL-core-q8b-plan-r1-dB1 | Blocker | Q8b-plan | reviews/Q8b/plan-r1-design.md B1 | OPEN | | | 2026-11-11 |
 | BL-core-q8red-F5c | Major | redaction-main | k1b sensitive() misses PGPASSWORD/pwd/DBPassword and non-string env values: values returned unmasked (REPRODUCED by lead on main; reviews/Q8b/plan-r1-design.md M1, M2) | OPEN | ticket Q8b rev 2 | | 2026-11-11 |
-| BL-core-q8a1-r1-d01 | Major | Q8a-1 | reviews/Q8a/result-r1-464dee1.md design M1 | OPEN | | | 2026-11-11 |
-| BL-core-q8a1-r1-d02 | Major | Q8a-1 | reviews/Q8a/result-r1-464dee1.md design M2 | OPEN | | | 2026-11-11 |
-| BL-core-q8a1-r1-d03 | Major | Q8a-1 | reviews/Q8a/result-r1-464dee1.md design M3 | OPEN | | | 2026-11-11 |
+| BL-core-q8a1-r1-d01 | Major | Q8a-1 | reviews/Q8a/result-r1-464dee1.md design M1 | FIXED-UNVERIFIED (head f6fad26f; round 2 running) | | | 2026-11-11 |
+| BL-core-q8a1-r1-d02 | Major | Q8a-1 | reviews/Q8a/result-r1-464dee1.md design M2 | FIXED-UNVERIFIED (head f6fad26f; round 2 running) | | | 2026-11-11 |
+| BL-core-q8a1-r1-d03 | Major | Q8a-1 | reviews/Q8a/result-r1-464dee1.md design M3 | FIXED-UNVERIFIED (head f6fad26f; round 2 running) | | | 2026-11-11 |
 | BL-core-q8c-plan-r2-B1 | Blocker | Q8c-plan | reviews/Q8c/plan-r2.md B1, B2 | OPEN | | | 2026-11-11 |
 | BL-PR89-r19-w01 | Major | PR89 | reviews/PR89/r19-comprehension.md M1 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
 | BL-PR89-r19-w02 | Major | PR89 | reviews/PR89/r19-comprehension.md M2 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |

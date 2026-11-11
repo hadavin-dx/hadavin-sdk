@@ -1,0 +1,9 @@
+xml files: 30
+pytest exit codes: {'1': 19, '0': 11}
+test_the_timing_harness_flags_a_quadratic_stand_in {'passed': 11, 'failure': 19}
+FIRST ('test_the_timing_harness_flags_a_quadratic_stand_in', 'failure') | AssertionError: a quadratic function must be flagged
+start 2026-11-11T14:25:37Z  14:25:37 up 57 min,  0 user,  load average: 3.19, 3.71, 3.86
+middle(run 15) 2026-11-11T14:25:51Z  14:25:51 up 58 min,  0 user,  load average: 3.44, 3.74, 3.87
+end 2026-11-11T14:26:07Z  14:26:07 up 58 min,  0 user,  load average: 3.77, 3.80, 3.89
+DONE
+

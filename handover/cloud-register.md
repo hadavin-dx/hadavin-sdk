@@ -1193,7 +1193,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | R-P89-r19 a6c1cd5e, a3278730, a9588739 | egm design + codebase + comprehension (Fable) RESULT review r19 of PR89 (snapshot p89-b95b0ca) | 14:27Z | +25m | 14:27Z | CLOSED all three saved reviews/PR89/r19-*.md (design 4 Major, codebase 3 Major, comprehension 9 Major wording) | save reviews/PR89/r19-*, ledger |
 | EV-flaky a67f662c | EVIDENCE RUNNER (Fable) timing-harness fix fa3f8c1b; pg 56100 | 14:27Z | +60m | 14:27Z | running | read RESULTS.md |
 | R-flaky a6bff613 | egm codebase (Fable) RESULT review of timing-harness fix | 14:27Z | +20m | 14:27Z | CLOSED saved reviews/timing-harness/result-r1-fa3f8c1.md (3 Major) | save reviews/timing-harness/ |
-| B-Q8a1 (resumed) a0c5bd99 | Q8a-1 fix batch after result review r1 (D-012) | 14:27Z | +60m | 14:27Z | running | new head -> evidence + fresh reviewers r2 |
+| B-Q8a1 (resumed) a0c5bd99 | Q8a-1 fix batch after result review r1 (D-012) | 14:27Z | +60m | 14:27Z | CLOSED head f6fad26f pushed (lead: FF ok, gitleaks no leaks); builder full suite 10652 passed, 46/46 mutants (unverified) | new head -> evidence + fresh reviewers r2 |
 | A-Q8b (resumed) a123e38f | Q8b ticket revision 2 (D-011) | 14:27Z | +40m | 14:27Z | CLOSED ticket rev 2 written (65 measured rows; replay scores NOT run) | plan review r2 |
 | B-Q8c1 a56207cb | ONE builder (Fable) Q8c PR 1 (Vault x2 + Kubernetes + mechanism), branch core/q8c-1-policy-vault-kubernetes, pg 56120 | 14:28Z | +120m | 14:28Z | running | checkpoint 30m; evidence + reviewers |
 | B-flaky (resumed) a6e5db57 | timing-harness fix batch after result review r1 (interleave, 5 repeats, pinned constants, mutants) | 14:30Z | +60m | | running | new head -> fresh evidence + reviewer |
@@ -1213,3 +1213,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-Q8c1 a56207cb | 14:28Z | 18 min | building the tool and guard tests, nothing committed | on track |
 | B-PR89-r20 a7b9ddc4 | 14:35Z | 11 min | reading runner and tests | on track |
 | R-Q8b-r2 a865e68c | 14:38Z | 8 min | read-only review | on track |
+| EV-Q8a1-r2 ad880047 | EVIDENCE RUNNER (Fable) Q8a-1 head f6fad26f, heavy.sh, pg 56140 | 14:48Z | +50m | 14:48Z | running | read RESULTS.md |
+| R-Q8a1-r2 a8768ee3, ac32ad6b | egm design + codebase (Fable) RESULT review round 2 of Q8a-1 (snapshot q8a1-f6fad26) | 14:48Z | +20m | 14:48Z | running | save reviews/Q8a/result-r2-*, ledger |
