@@ -179,7 +179,8 @@ def test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_
 ):
     """Refused before a connection is opened. Killed by: mutants LV1 (0 is accepted), LV2 (True is accepted: it is a
     bool, not a number of seconds), LV3 (a string or a fraction is accepted), LV4 (one above the largest wait is
-    accepted)."""
+    accepted).
+    Pin: the check is older than this test (it also passes on the source before round 11); the mutants show it can fail."""
     calls = _no_server(monkeypatch)
     accepted = False
     try:
@@ -196,7 +197,7 @@ def test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_
 
 @pytest.mark.parametrize("fine", [1, mig.MAX_LOCK_WAIT_SECONDS])
 def test_the_smallest_and_the_largest_lock_wait_pass_the_check(fine, monkeypatch):
-    """The two ends are accepted: the run goes on to open its connection (the stand-in stops it there)."""
+    """The two ends are accepted: the run goes on to open its connection (the stand-in stops it there). Pin (it also passes on the source before round 11)."""
     calls = _no_server(monkeypatch)
     with pytest.raises(_Connected):
         mig.migrate("postgresql://made-up-host/none", lock_wait_seconds=fine)

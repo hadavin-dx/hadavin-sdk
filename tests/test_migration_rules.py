@@ -452,7 +452,8 @@ def test_the_owner_refusal_holds_under_noise(before, after):
 @pytest.mark.parametrize("form", NOT_OWNER_FORMS)
 def test_a_column_or_a_text_that_says_owner_is_not_taken_for_an_owner_change(form):
     """Killed by: mutants OT2 (any statement that holds the word `owner` is refused) and OT4 (the rename of a column
-    called `owner` is not let through)."""
+    called `owner` is not let through).
+    Pin: the cases that 8382bdd already had also pass on the source before round 11 (they hold the exemption in place); mutant OT4 shows the test can fail."""
     assert not any("OWNER TO" in r for r in _reasons(form)), (form, _reasons(form))
 
 

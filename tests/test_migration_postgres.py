@@ -3306,7 +3306,8 @@ def test_a_refused_read_in_the_sweep_does_not_abort_the_transaction_of_the_calle
 ):
     """`plain_role_connect` runs the sweep on a connection that is inside a transaction. A read the server refuses (a real
     server error, not one raised by Python) put that whole transaction in the failed state, so the next statement failed
-    and the lock of the setup stayed taken. The read is now in a savepoint. Killed by: mutant SW20 (no savepoint)."""
+    and the lock of the setup stayed taken. The read is now in a savepoint. Killed by: mutant SW20 (no savepoint).
+    Pin: it also passes on the source before round 11 (42fc259), as the independent run of 8382bdd showed; it holds the behaviour in place and its mutant shows that it can fail."""
     with _databases_and_a_stale_role() as (name, (db_x, db_y)):
         with psycopg.connect(make_conninfo(DSN, dbname=db_x), autocommit=True) as in_x:
             in_x.execute(
@@ -3564,7 +3565,8 @@ def test_a_function_that_kept_a_foreign_owner_is_not_refused_for_that_owner(
 ):
     """A function that another role owned before the run (the migration role belongs to it) and that a file replaces keeps
     that owner: only an owner that a FILE handed over is refused. Killed by: mutant OW7 (the owner a function had before
-    is not remembered)."""
+    is not remembered).
+    Pin: it also passes on the source before round 11 (42fc259), as the independent run of 8382bdd showed; it holds the behaviour in place and its mutant shows that it can fail."""
     dsn, _schema = scratch
     other = "hadavin_test_ow_" + uuid.uuid4().hex[:8]
     _create_roles(other)
@@ -3843,7 +3845,8 @@ def test_a_function_whose_body_a_file_replaced_is_treated_as_changed(
     scratch, monkeypatch, tmp_path
 ):
     """A function that existed before, with the same flag, rights and owner, but a new body, is a changed function: it
-    loses the default right of everyone to call it. Killed by: mutant FB1 (the body is not part of the state)."""
+    loses the default right of everyone to call it. Killed by: mutant FB1 (the body is not part of the state).
+    Pin: it also passes on the source before round 11 (42fc259), as the independent run of 8382bdd showed; it holds the behaviour in place and its mutant shows that it can fail."""
     dsn, schema = scratch
     _admin(
         sql.SQL(
@@ -3925,7 +3928,8 @@ def test_a_named_role_that_may_pass_a_function_right_on_is_refused(
     """`GRANT EXECUTE ON FUNCTION ... TO <named role> WITH GRANT OPTION` lets that role pass the right on. The message
     names the function with its schema and its argument list (on 8382bdd the last assertion was `... and schema`, which
     is always true; it now reads the message). Killed by: mutant GO4 (the grant option of a function right is
-    ignored)."""
+    ignored).
+    Pin: it also passes on the source before round 11 (42fc259), as the independent run of 8382bdd showed; it holds the behaviour in place and its mutant shows that it can fail."""
     dsn, _schema = scratch
     _admin(
         sql.SQL(
