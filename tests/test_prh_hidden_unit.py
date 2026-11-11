@@ -323,3 +323,16 @@ def test_gate_set_holds_removed_and_space_like():
 
     missing = (hidden.REMOVED_CHARS | hidden.SPACE_LIKE) - gate._CONTROL_CHARS
     assert missing == {"\u2028", "\u2029"}
+
+
+def test_strip_consuming():
+    """The consuming reading (`hidden.strip_consuming`) takes the final byte of an nF, Fp, Fe or Fs sequence, a letter or
+    digit too; the ordinary reading keeps it (D-029). `tput sgr0` writes ESC ( B."""
+    esc = "\x1b"
+    key = "AKIA" + "IOSFODNN7EXAMPLE"
+    cut = key[:4] + esc + "(B" + esc + "[m" + key[4:]
+    assert hidden.strip_consuming(cut)[0] == key
+    assert hidden.strip(cut)[0] == key[:4] + "(B" + key[4:]
+    assert hidden.strip_consuming("a" + esc + "e" + "b")[0] == "ab"
+    assert hidden.strip("a" + esc + "e" + "b")[0] == "aeb"
+    assert hidden.strip_consuming("plain text") == ("plain text", "plain text")

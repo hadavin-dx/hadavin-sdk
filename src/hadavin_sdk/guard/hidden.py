@@ -175,8 +175,10 @@ def _string_end(text: str, k: int, osc: bool) -> int:
     return m.end()
 
 
-def _item_end(text: str, i: int) -> int:
-    """The end of the sequence item that starts with ESC or a C1 opener at `i` (ground state of the table)."""
+def _item_end(text: str, i: int, consume: bool = False) -> int:
+    """The end of the sequence item that starts with ESC or a C1 opener at `i` (ground state of the table). With `consume`
+    the final byte of an nF, Fp, Fe or Fs sequence always goes with it, a letter or digit too (the ticket grammar, the
+    reading of a terminal; `strip_consuming`)."""
     c = text[i]
     n = len(text)
     if c == _C1_CSI:
@@ -197,7 +199,7 @@ def _item_end(text: str, i: int) -> int:
         k = j
         while k < n and "\x20" <= text[k] <= "\x2f":
             k += 1
-        if k < n and "\x30" <= text[k] <= "\x7e" and not text[k].isalnum():
+        if k < n and "\x30" <= text[k] <= "\x7e" and (consume or not text[k].isalnum()):
             # D-026 (as built): a letter or digit after the intermediates is not a final byte here: it may be the start of a
             # value (ESC, space, then a key), and the intermediates may be part of it (a dash in an id). Only the ESC goes.
             return k + 1
@@ -206,11 +208,11 @@ def _item_end(text: str, i: int) -> int:
         # A digit or lower-case letter stays as text, as in main (`ESC e` + `yJ...` keeps the `e` of a token); an upper-case
         # letter is a C1 function (ESC `M` moves the cursor up) and goes, as in main: it is ambiguous with the first letter of
         # a value, which main loses too (D-026 gave the same rule for the last byte of an nF sequence).
-        return j if (d.isalnum() and not d.isupper()) else j + 1
+        return j if (d.isalnum() and not d.isupper() and not consume) else j + 1
     return i + 1  # a lone ESC; the next character is read afresh
 
 
-def _scan(text: str, sequences_only: bool) -> tuple[str, str]:
+def _scan(text: str, sequences_only: bool, consume: bool = False) -> tuple[str, str]:
     """(joined, spaced) of `text`; the same object twice when they are equal. With `sequences_only` only the items
     that start with ESC or a C1 opener are hidden items: every other character stays as written."""
     pattern = _SEQ_ANY if sequences_only else _ANY
@@ -250,7 +252,7 @@ def _scan(text: str, sequences_only: bool) -> tuple[str, str]:
             i = start + 1
         else:
             end = (
-                _item_end(text, start)
+                _item_end(text, start, consume)
                 if (c == _ESC or c == _C1_CSI or c in _C1_STRING)
                 else start + 1
             )
@@ -268,6 +270,13 @@ def strip(text: str) -> tuple[str, str]:
     removed or space-like item it is returned untouched, twice (the same object); ignorable characters are not handled
     here. Idempotent."""
     return _scan(text, False)
+
+
+def strip_consuming(text: str) -> tuple[str, str]:
+    """The joined and spaced reading when every escape sequence takes its final byte, a letter or digit too (`ESC ( B`,
+    `ESC e`): what a terminal does. Main-compatible `strip` keeps such a letter (D-026, D-029) because it may start a
+    value; this reading is searched as one more reading, so a value cut by `tput sgr0` (`ESC ( B ESC [ m`) is found."""
+    return _scan(text, False, True)
 
 
 def strip_sequences(text: str) -> str:
