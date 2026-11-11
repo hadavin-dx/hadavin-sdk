@@ -909,3 +909,4 @@ PULSE 2026-11-11T15:25:55Z 17 running
 - 16:04Z PULSE: 12 agents; heavy queue 9 for 3 slots; one builder told to stop its load test. Load 8.60.
 - 16:11Z PULSE: 16 agents (12 on Fable, 4 plan reviewers on Sonnet).
 PULSE 16:55Z agents=14 load=5 stuck=0
+16:33 PULSE 8 agents, load 2.9, nothing stalled

@@ -63,3 +63,4 @@ Each line: UTC | IST | item | running agents | next 3 steps | blockers
 16:28 saved Q8b r1 codebase review (2 Major F1,F2; 12 minor); waiting for Q8b evidence af24c08c before fix batch
 16:29 saved Q8c-1 r2 codebase review (1 Major same as design M2, 9 minor). Q8c-1 fix batch waits for evidence a1120e73 (+ engine tests can't run here)
 16:31 Q8c-1 evidence a77fab72 saved: gates green, policy mutants 41/41, stage 37/37, plants 32/32; full suite 1 fail (demo_askdata dblink, also fails on main: env); Vault engine tests not run (no binary). Launching Q8c-1 fix batch 2
+16:33 CHECKPOINT: 8 agents running (all <15 min since start/resume): a02f43ab PRH errata, ab2d8714 P3a-2 errata, ab1486e8 EV Q8a-2, af24c08c EV Q8b, a7d64dc9 timing fix, a309e5a8 PR89 r22, ae9691ed Q8a-1 b4, a5cfa82b Q8c-1 b2. Load 2.9. Pending: Q8a-2 and Q8b fix batches wait for their evidence; PRH/P3a-2 plan review round 2 wait for errata.

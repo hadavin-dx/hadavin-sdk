@@ -1,0 +1,44 @@
+reported  == plant 1: appended text 'from hadavin_sdk.approvals.slack import HEADER_PREFIX'  (file still compi
+reported  == plant 2: appended text 'import hadavin_sdk.approvals.slack_channel as chat'  (file still compiles
+reported  == plant 3: appended text 'import boto3 as awsclient'  (file still compiles: yes)
+reported  == plant 4: appended text 'pager_duty_key = 1'  (file still compiles: yes)
+reported  == plant 5: appended text 'x = "slack,teams"'  (file still compiles: yes)
+reported  == plant 6: appended text 'x = "slack|teams"'  (file still compiles: yes)
+reported  == plant 7: appended text 'x = "slack teams"'  (file still compiles: yes)
+reported  == plant 8: appended text 'x = "/pager-duty/hook"'  (file still compiles: yes)
+reported  == plant 9: appended text 'x = f"/sl{\'ack\'}/hook"'  (file still compiles: yes)
+reported  == plant 10: appended text 'x = "/sl" "ack/hook"'  (file still compiles: yes)
+reported  == plant 11: appended text 'x = "\\x73lack"'  (file still compiles: yes)
+reported  == plant 12: appended text 'x = b"slack"'  (file still compiles: yes)
+reported  == plant 13: appended text 'def outer():\n    def inner():\n        SLACK = 1'  (file still compiles
+reported  == plant 14: appended text 'class C:  slack_url: str = ""'  (file still compiles: yes)
+reported  == plant 15: appended text 'def f(*, slack=None): pass'  (file still compiles: yes)
+reported  == plant 16: appended text 'lambda slack: 0'  (file still compiles: yes)
+reported  == plant 17: appended text 'for slack in (): pass'  (file still compiles: yes)
+reported  == plant 18: appended text 'with open(p) as slack: pass'  (file still compiles: yes)
+reported  == plant 19: appended text 'try:\n    pass\nexcept E as slack:\n    pass'  (file still compiles: yes
+reported  == plant 20: appended text 'def g_():\n    global slack'  (file still compiles: yes)
+reported  == plant 21: appended text '@slack.hook\ndef h(): pass'  (file still compiles: yes)
+reported  == plant 22: appended text 'obj.slack_token = 1'  (file still compiles: yes)
+reported  == plant 23: appended text '{"slack": 1}'  (file still compiles: yes)
+ALL-EMPTY == plant 24: appended text '# slack'  (file still compiles: yes)
+ALL-EMPTY == plant 25: appended text 'def d():\n    """Slack is named here."""'  (file still compiles: yes)
+reported  == plant 26: appended text 'from .slack_x import y'  (file still compiles: yes)
+reported  == plant 27: appended text 'from ..approvals import slack_channel as chat2'  (file still compiles: y
+reported  == plant 28: appended text 'import boto3'  (file still compiles: yes)
+reported  == plant 29: appended text 'from hadavin_sdk.approvals import slack_channel'  (file still compiles: 
+reported  == plant 30: appended text 'async def slack_poll(): pass'  (file still compiles: yes)
+reported  == plant 31: appended text 'async def poll(aws_key): pass'  (file still compiles: yes)
+reported  == plant 32: appended text 'x = "S3://bucket/key"'  (file still compiles: yes)
+reported  == plant 33: appended text 'x = "arn:aws:iam::123456789012:role/x"'  (file still compiles: yes)
+reported  == plant 34: appended text 'x = "https://hooks.slack.com/services/T0/B0/x"'  (file still compiles: y
+reported  == plant 35: appended text 'from sqlalchemy import text as aws_text'  (file still compiles: yes)
+reported  == plant 36: appended text 'import hadavin_sdk.approvals.receiver as slack_receiver'  (file still co
+reported  == GCS plant A: in class GcsRetentionLockSettings (hadavin_sdk.backends.table) added line 189: endpo
+reported  == GCS plant B (A removed): appended to the same module at line 607: class GcsOther(KindSettings): /
+reported  == SQL plant 1: 'CREATE TABLE t (slack_id text);'
+reported  == SQL plant 2: "INSERT INTO t VALUES ('slack');"
+ALL-EMPTY == SQL plant 3: '-- slack\nSELECT 1;'
+reported  == SQL plant 4: "SELECT 'aws' AS k;"
+reported  == SQL plant 5: 'SELECT s3_key FROM t;'
+ALL-EMPTY == SQL plant 6: 'SELECT 1 /* slack */;'
