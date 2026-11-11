@@ -46,7 +46,7 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
 (all off by default) cover tests that need more:
 
 - ``conftest="tests/conftest.py"``: a file of the tree (copied like a test file) that every pytest run loads as a plugin (``-p``), named
-  by a path of plain ASCII identifier parts that ends in ``.py`` and is either called ``conftest.py`` or lies in a folder called ``tests``
+  by a path of plain ASCII identifier parts (no part a Python keyword, so ``class/conftest.py`` is refused) that ends in ``.py`` and is either called ``conftest.py`` or lies in a folder called ``tests``
   (any other tree file, such as ``src/pk/core.py``, is refused). It replaces ``--noconftest`` for that one file only; no other conftest is read.
 - ``pass_env=("HADAVIN_TEST_PG_DSN",)``: names of caller environment variables the pytest child also sees (baseline and mutants). Only
   names in ``PASS_ENV_ALLOWED`` are accepted (``ValueError`` for any other name, before anything runs): a token or any other secret of the
@@ -55,61 +55,63 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   that a demo's tests need (a second database, for example), never for a token or a key.
   Masking of the passed values: refuse odd values up front, then match plain text. Three parts.
 
-  1. What is hidden. The value of a passed name, and the password inside it (the one of a URL; the one after ``password=``, ``passwd=`` or
+  1. What is hidden. The whole value of a passed name, and the password inside it (the one of a URL; the one after ``password=``, ``passwd=`` or
      ``pwd=`` in a key=value text or a URL query; a URL password with an unencoded ``/``, ``?``, ``#`` or ``@``, read by trying every ``@`` as the
      end of the login, so ``svc:12/45@h/db`` gives ``12/45``; with no ``@`` after the colon, as in ``host:5432/db``, there is no password). Only the
      password itself (the text right after ``password=``, and the URL password) is percent-decoded and checked for odd characters; the rest of the
      word after a password word, its ``;`` and ``&`` pieces, a text after ``password=`` and a space, and a URL candidate that holds ``?`` or ``#`` are
      hidden as written only, so an option such as ``application_name=caf%C3%A9`` beside a password does not refuse the run. The word is found inside longer words
-     too (``sslpassword=``, ``PGPASSWORD=``) and in any case. Each is hidden as written, percent-decoded (again and again until nothing changes), with
-     ``+`` read as a space, and percent-encoded again (``quote(safe="")``, ``quote``, ``quote_plus``, each in upper and in lower case hex). Each of
-     these texts is called a "plain text" below.
+     too (``sslpassword=``, ``PGPASSWORD=``) and in any case. The whole value and the other texts named above are hidden AS WRITTEN and nothing more. Only a
+     password text (the two kinds just named) is in addition percent-decoded (again and again until nothing changes), decoded with ``+`` read as a space, and
+     percent-encoded again (``quote(safe="")``, ``quote``, ``quote_plus``, each in upper and in lower case hex). Every text that is hidden, written or
+     decoded or encoded, is called a "hidden text" below; the ones that are not percent-decoded or encoded are the "plain texts" (as written only).
   2. What is refused. ``ValueError`` (before anything runs; the message names the variable and the kind of character, never the value) when
-     the value or any plain text (but an encoded one) holds a quote mark, a backslash, a control character or a non-ASCII character, and when the
+     the whole value (so every text cut out of it) or a percent-decoded form of a password holds a quote mark, a backslash, a control character or a non-ASCII character, and when the
      value is longer than ``MAX_VALUE_CHARS`` (2,000) characters. A print of such a text (``repr``,
-     ``ascii()``, JSON, bytes) adds or changes characters, so the plain text would no longer be there to find. Every plain text left is printable ASCII
+     ``ascii()``, JSON, bytes) adds or changes characters, so the hidden text would no longer be there to find. Every hidden text left that is not a percent-encoded form is printable ASCII
      without quote marks and backslashes, and a print leaves it as it is at any depth. Cost: a throwaway database whose address holds such a
      character ANYWHERE (the host, the database name, an option as well as the password; also as a percent code in the password such as ``%27``,
      ``%00`` or ``%C3%A9``) cannot be passed; make the address of plain letters, digits and punctuation.
-  3. How the runner finds it. Two checks, together. (a) Every plain text is searched as it stands, overlapping matches included, and every match is
+  3. How the runner finds it. Two checks, together. (a) Every hidden text is searched as it stands, overlapping matches included, and every match is
      hidden. (b) Head and tail next to ``...``: pytest shortens a long text in the first ``E`` line of a comparison to about its first 12 and last
      13 characters around ``...`` (observed with pytest 9.2.0 on a 69-character value, with ``-q``, with ``-q -vv`` and by default; it prints in
      full only with ``-vv`` without ``-q`` and with ``-o verbosity_assertions=2``; the runner keeps ``-q`` and adds no such option). So the longest
-     start of a plain text that ends right before ``...`` and the longest end that starts right after it, of ``EDGE_MIN`` (2) characters or more
-     (and shorter than the plain text), are hidden; a ``...`` is the three dots or the one character U+2026. Cost: over-masking, at most
-     ``MAX_FRAGMENT_HITS`` pieces per line. All spans are found in the original text and cut out at once, each run of hidden characters as one
+     start of a hidden text that ends right before ``...`` and the longest end that starts right after it, of ``EDGE_MIN`` (2) characters or more
+     (and shorter than the hidden text), are hidden; a ``...`` is the three dots or the one character U+2026. Cost: over-masking, at most two pieces (a start and an end)
+     for each ``...`` and each hidden text, so up to 2 x ``MAX_FRAGMENT_HITS`` x (number of hidden texts) pieces, held down by ``MAX_FRAGMENT_WORK`` below. The work for one ``...`` and one hidden text is
+     linear in the length of that text (a prefix table of the text is built once per line, then one pass over at most ``len - 1`` characters on each side of the ``...``). All spans are found in the original text and cut out at once, each run of hidden characters as one
      ``MASK``. A text with more than ``MAX_FRAGMENT_HITS`` ``...`` is replaced as a whole, on purpose: no honest run writes that many, and the other
      choice (hide the first 1,000 and only match the rest as written) would leave the head or tail beside the 1,001st ``...`` readable.
   Where: ``first_lines``, the failing test id of a row, the ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` messages and the baseline
   skip message.
 
   Not covered: a changed form of the value (only the host, only the user name, a re-encoded copy, a piece cut out of the middle) that is not
-  the head or tail beside a plain-ASCII ``...`` (a head or tail of one character and pprint line wrapping are not read
+  the head or tail beside a plain-ASCII ``...`` (a head or tail of one character and the line wrapping of ``pprint`` (Python's pretty printer for long values) are not read
   as such); another encoding (base64, hex, HTML escapes); a password
-  with no ``password=`` word that is not the password of a URL (hidden only as part of the whole value), and a password that holds a quote mark, a backslash, a control character or a non-ASCII character in a form the runner does not decode (refused only where it is read as a password). A password that holds ``;`` or ``&`` is
+  with no ``password=`` word that is not the password of a URL (hidden only as part of the whole value, as written), and a password that holds a quote mark, a backslash, a control character or a non-ASCII character in a form the runner does not decode (refused only where it is read as a password). A password that holds ``;`` or ``&`` is
   hidden in full when printed alone (up to the next white space), and each piece of it of ``PASSWORD_PIECE_MIN`` characters or more is hidden
   too. A short secret hides every such text: a one-character or two-character password hides every such character or pair in a line (over-masking on purpose; only the one-character head or tail rule beside ``...`` is relaxed). Work is bounded: more than ``MAX_SECRETS`` (300) texts to hide refuse the run, and a line with (number of ``...``) x (number of secrets) over ``MAX_FRAGMENT_WORK`` (50,000) is replaced as a whole. Text of a failure that the runner never reads (the child's own console output is discarded) cannot leak through it.
+  The environment is read ONCE. At the start of the call the runner takes a snapshot of the variables the child gets (``CHILD_ENV`` and the names in ``pass_env``); the secrets to hide, the canary test, the lock name and the environment of EVERY child run (baseline, mutants, canary runs) come from that one snapshot, never again from ``os.environ``. A caller that changes a variable while the run is going (from ``on_result``, say) neither changes what the child sees nor makes a new value appear in the output unhidden: the child gets the old value, and that old value is the one that is hidden.
   SAFETY: the address must point at a THROWAWAY database, and its login must be able to touch only that database (never a shared or
   production one): every mutant run executes the tests against it, and a mutant can make those tests write, drop or fill tables with
   anything. Two runs at once that share one database collide (the same tables and rows), so give each parallel run its own database.
   The runner checks one thing in code: after EVERY mutant run it runs the unmutated copy again on that same database (the canary run), and
   when that no longer passes it stops with ``RuntimeError`` naming the mutant, because what the mutant left behind would make the verdicts
-  of the later mutants unreliable (a false kill). The cost is one extra pytest run (and one extra copy of the tree) per mutant while a ``pass_env`` name is set; the second copy is kept on purpose: the canary run leaves bytecode that could hide the next mutation. The canary proves only that the full unmutated tests still pass; it does not prove the database is clean, and under ``forbid_skips`` a canary run with a skipped test is refused too. A failed canary, a skipped one included, raises ``CanaryFailed`` (a ``RuntimeError``; its ``rows`` hold the rows judged so far); the message says "timed out" or "reaped" instead of an exit code when the run did. A second runner that uses the same temp folder (in practice the same machine and the same account, or the same ``TMPDIR``) with the same passed value is refused by an exclusive lock file there, named by the first 16 hex digits of a SHA-256 of the host, port and database name that a strict grammar reads from the value (``_address_parts``; no password text is read or hashed; the name is readable by other users of that folder). It is a best-effort match on spelling: one database written two ways (``localhost`` and ``127.0.0.1``, a port written or left out, ``host=`` and ``hostaddr=``) gets two names and is NOT refused, and values outside the grammar share the name ``unparsed``. A runner with another temp folder or on another machine is not seen (give each run a database of its own). The lock file is opened without following a symbolic link (``O_NOFOLLOW`` where the system has it; a planted link is refused with a clear message), with mode 0600, and is never deleted: one empty file per distinct value stays in the temp folder (delete it by hand only when no run is going and only as its owner: a deleted file that a run still holds lets a second run lock a new file of the same name). A lock file that cannot be opened or locked for another reason (no permission, no lock space) is refused with its own message.
+  of the later mutants unreliable (a false kill). The cost is one extra pytest run (and one extra copy of the tree) per mutant while a ``pass_env`` name is set; the second copy is kept on purpose: the canary run leaves bytecode that could hide the next mutation. The canary proves only that the full unmutated tests still pass; it does not prove the database is clean, and under ``forbid_skips`` a canary run with a skipped test is refused too. A failed canary, a skipped one included, raises ``CanaryFailed`` (a ``RuntimeError``; its ``rows`` hold the rows judged so far); the message says "timed out" or "reaped" instead of an exit code when the run did. A second runner that uses the same temp folder (in practice the same machine and the same account, or the same ``TMPDIR``) with the same address (the same spelling of host, host address, port and database name; the rest of the value, a password included, does not matter) is refused by an exclusive lock file there, named by the first 16 hex digits of a SHA-256 of the host, host address, port and database name that a strict grammar reads from the value (``_address_parts``; a password is never captured or hashed; the name is readable by other users of that folder). It is a best-effort match on spelling: one database written two ways (``localhost`` and ``127.0.0.1``, a port written or left out, ``host=`` and ``hostaddr=``) gets two names and is NOT refused, and values outside the grammar share the name ``unparsed``. A runner with another temp folder or on another machine is not seen (give each run a database of its own). The lock file is opened without following a symbolic link (``O_NOFOLLOW`` where the system has it; a planted link is refused with a clear message), with mode 0600, and is never deleted: one empty file per distinct name (one per spelling of an address, not per value) stays in the temp folder (delete it by hand only when no run is going and only as its owner: a deleted file that a run still holds lets a second run lock a new file of the same name). A lock file that cannot be opened or locked for another reason (no permission, no lock space) is refused with its own message.
 - ``forbid_skips=True``: a run in which any selected test is skipped (or an expected failure) proves nothing, so it is an ERROR row
   ``SKIPPED TESTS`` (never a kill), and an unmutated baseline with a skipped test raises ``RuntimeError``. This closes the false kill where
   a mutant "dies" because the tests could not run (for example no database was reachable). A mutant run with no JUnit file or an empty one
   is the ERROR row ``JUNIT MISSING`` under this keyword.
 
 Always on (no keyword), two changes of result and one new label: (1) a run whose FIRST failing test case failed in a fixture, at setup or at teardown
-(``testing.mutation.fixture_errors``), is the ERROR row ``FIXTURE ERROR`` and never a kill; before, such a run was a kill when the fixture
+(``read_junit(...).fixture_failed`` in ``testing.mutation``), is the ERROR row ``FIXTURE ERROR`` and never a kill; before, such a run was a kill when the fixture
 failed with an ``AssertionError`` and a crash otherwise. A test whose body failed and whose teardown failed afterwards is judged by the failure
 (the test ran as written). (2) ``testing.mutation.judge`` returns ``ERROR`` when the run failed (exit 1) and no failing test id is known (an empty or
 unreadable JUnit file), where it used to return ``CRASH`` or ``KILLED``; (3) a run whose FIRST failing case is a test file that could not be imported or collected (pytest word: ``collection failure``; an ``assert`` at import time included) is the ERROR row ``COLLECTION ERROR`` with pytest's message. This is only a new label: pytest exits 2 for it and the judge already returned ERROR for every exit code other than 1, so the old row was an ERROR row with the module name as its test id (the CHANGELOG has the run that shows it), never a kill. A mutant counts as killed only when a test ran as written and failed: that part of the rule is not changed by item 3.
 
 Result rows. A row is ``(name, verdict, test id, good)``. The test id column holds the failing test id, or one of these texts for an ERROR row
 that has no verdict from the judge: ``SETUP FAILED: <error class>``, ``SNIPPET NOT FOUND``, ``TIMEOUT``, ``REAPED ELSEWHERE``, ``JUNIT REFUSED``,
-``JUNIT MISSING`` (``forbid_skips``), ``COLLECTION ERROR``, ``FIXTURE ERROR``, ``SKIPPED TESTS`` (``forbid_skips``) and ``NO FAILING TEST NAMED`` (the run failed, the JUnit file names no failing test). ``first_lines`` holds the first ``E`` line (masked)
-of the rows that have one, and for ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` the masked message that says why.
+``JUNIT MISSING`` (``forbid_skips``), ``COLLECTION ERROR``, ``FIXTURE ERROR``, ``SKIPPED TESTS`` (``forbid_skips``) and ``NO FAILING TEST NAMED`` (the run failed, the JUnit file names no failing test). ``first_lines`` holds, for every judged row that has a first ``E`` line (a kill or not), that line with the hidden texts masked, and for ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` the masked message that says why.
 
 Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``PASS_ENV_ALLOWED``, ``MASK``, ``EDGE_MIN``, ``PASSWORD_PIECE_MIN``, ``MAX_FRAGMENT_HITS``, ``MAX_SECRETS``, ``MAX_FRAGMENT_WORK``, ``MAX_VALUE_CHARS``, ``NO_TEST_NAMED``, ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
 ``TIMED_OUT``, ``REAPED_ELSEWHERE``, ``CHILD_ENV``, ``CHILD_FIXED_ENV``, ``JUNIT_REFUSED`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
@@ -134,7 +136,7 @@ import sys
 import tempfile
 import threading
 import time
-from collections.abc import Callable, Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from urllib.parse import quote, quote_plus, unquote, unquote_plus, urlsplit
@@ -317,8 +319,8 @@ def _checked_env_names(names: Iterable[str]) -> tuple[str, ...]:
 
 
 _PASSWORD_WORD = re.compile(
-    r"(?is)(?:password|passwd|pwd)[ \t]*=([ \t]*)([^\s&;]+)"
-)  # ``password=...`` of a key=value DSN or a URL query, up to the next white space, ``&`` or ``;`` (no quote mark or backslash can be in it: see ``_refuse_odd``). No lookbehind: ``sslpassword=`` and ``PGPASSWORD=`` are read too
+    r"(?is)(?:password|passwd|pwd) *=( *)([^\s&;]+)"
+)  # ``password=...`` of a key=value DSN or a URL query, up to the next white space, ``&`` or ``;`` (no quote mark, backslash or control character such as a tab can be in the value: see ``_refuse_odd``, which runs first, so only the space is spelled out). No lookbehind: ``sslpassword=`` and ``PGPASSWORD=`` are read too
 _NOT_WHITE = re.compile(r"\S*")  # the rest of a word, up to the next white space
 # every ``...`` (or the one character U+2026 that a newer pytest could print), also those that share a dot (a secret may end in a dot): one match at the start of each
 _DOTS = re.compile(r"(?=\.\.\.|\u2026)")
@@ -417,7 +419,7 @@ def _decoded_forms(name: str, password: str) -> set[str]:
         ):  # each change makes the text shorter or swaps ``+`` for a space, so this ends
             decoded = decode(text)
             _refuse_odd(name, what, decoded)
-            # nothing changed: stop (a form already seen on the other way is still followed: ``a%2Bb``)
+            # this chain ends when a step changes nothing; the other chain starts again from the password (``a%2Bb`` is ``a+b`` after ``unquote`` and ``a b`` after ``unquote_plus``)
             if decoded == text:
                 break
             forms.add(decoded)
@@ -481,15 +483,24 @@ def _address_parts(value: str) -> str:
     return "\n".join(found.get(key, "") for key in _ADDRESS_VALUE)
 
 
-def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
-    """The values of the passed environment variables, and the password inside them (see ``_password_texts``; each as written, percent-decoded
+def _env_snapshot(names: Iterable[str]) -> dict[str, str]:
+    """ONE read of the caller's environment for a whole call: the variables a child gets (``CHILD_ENV``) and the passed ``names`` that are set (a
+    name set to an empty text is kept). The secrets to hide, the canary test, the lock name and every child's environment come from this dict and
+    never again from ``os.environ``, so a variable the caller changes while the run is going changes nothing."""
+    return {k: os.environ[k] for k in (*CHILD_ENV, *names) if k in os.environ}
+
+
+def _secret_values(
+    names: Iterable[str], environ: Mapping[str, str] | None = None
+) -> tuple[str, ...]:
+    """The values of the passed environment variables (read from ``environ``, the snapshot of the call; ``os.environ`` when none is given), and the password inside them (see ``_password_texts``; each as written, percent-decoded
     until nothing changes, with ``+`` read as a space, and percent-encoded again as ``_encoded_forms`` writes it), longest first. Text that may show
     them is run through ``_masked``. ``ValueError`` (before anything runs) when a value is longer than ``MAX_VALUE_CHARS``, or when any of these
     texts but the encoded ones holds a quote mark, a backslash, a control character or a non-ASCII character (``_refuse_odd``): every text left is
     plain printable ASCII, so a print of it at any depth still holds it as written."""
     bases: set[str] = set()
     for name in names:
-        value = os.environ.get(name, "")
+        value = (os.environ if environ is None else environ).get(name, "")
         if not value:
             continue
         if len(value) > MAX_VALUE_CHARS:
@@ -512,33 +523,56 @@ def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
     return tuple(sorted(bases, key=len, reverse=True))
 
 
+def _prefix_table(pattern: str) -> list[int]:
+    """The KMP failure table of ``pattern`` (entry ``i``: the length of the longest proper prefix of ``pattern[:i + 1]`` that is also its suffix)."""
+    table = [0] * len(pattern)
+    k = 0
+    for i in range(1, len(pattern)):
+        while k and pattern[i] != pattern[k]:
+            k = table[k - 1]
+        if pattern[i] == pattern[k]:
+            k += 1
+        table[i] = k
+    return table
+
+
+def _longest_overlap(pattern: str, table: Sequence[int], window: str) -> int:
+    """The length of the longest prefix of ``pattern`` that is a suffix of ``window`` (``table`` is ``_prefix_table(pattern)``). One pass over ``window``
+    (the cost is linear in ``len(window)``; the table work is amortised), no slice and no repeated compare. ``window`` must be shorter than ``pattern``."""
+    k = 0
+    for ch in window:
+        while k and ch != pattern[k]:
+            k = table[k - 1]
+        if ch == pattern[k]:
+            k += 1
+    return k
+
+
 def _fragment_spans(text: str, secret: str, hits: list[re.Match[str]]) -> list[tuple[int, int]]:
     """Spans of ``text`` that show a shortened ``secret``: pytest cuts a long text in an assertion line to ``head...tail`` (about 12 characters
     at the start and 13 at the end, checked with a real run), so the longest start of the secret that ends right before a ``...`` and the longest end of it that
     starts right after one are returned (each ``EDGE_MIN`` characters or longer, and shorter than the secret). ``hits`` are the ``...`` of the line,
-    found once by ``_masked`` (not more than ``MAX_FRAGMENT_HITS``); each costs at most a scan of ``len(secret)`` characters."""
+    found once by ``_masked`` (not more than ``MAX_FRAGMENT_HITS``). Cost: the prefix tables of the secret and of its reverse are built once, O(len(secret)); each ``...`` then costs one pass
+    over at most ``len(secret) - 1`` characters before it and one over as many after it (``_longest_overlap``), O(len(secret)) per ``...``, never a compare per candidate start."""
     spans: list[tuple[int, int]] = []
     top = len(secret) - 1
-    head, tail = secret[:EDGE_MIN], secret[-EDGE_MIN:]
+    if top < EDGE_MIN:  # a piece must be shorter than the secret and EDGE_MIN long
+        return spans
+    backwards = secret[::-1]
+    head_table, tail_table = _prefix_table(secret), _prefix_table(backwards)
     for hit in hits:
         start = hit.start()
         end = start + (
             1 if text[start] == "\u2026" else 3
         )  # the width of the ellipsis that this hit is
-        i = text.find(head, max(0, start - top), start)  # the leftmost start gives the longest head
-        while i != -1:
-            if text[i:start] == secret[: start - i]:
-                spans.append((i, start))
-                break
-            i = text.find(head, i + 1, start)
-        stop = min(len(text), end + top)
-        j = text.rfind(tail, end, stop)  # the rightmost end gives the longest tail
-        while j != -1:
-            k = j + EDGE_MIN - end
-            if text[end : j + EDGE_MIN] == secret[-k:]:
-                spans.append((end, end + k))
-                break
-            j = text.rfind(tail, end, j + EDGE_MIN - 1)
+        # the longest start of the secret that ends right before the ellipsis: the longest prefix of the secret that is a suffix of the text before it
+        size = _longest_overlap(secret, head_table, text[max(0, start - top) : start])
+        if size >= EDGE_MIN:
+            spans.append((start - size, start))
+        # the longest end of the secret that starts right after it: the same on the reversed secret and the reversed text after it
+        size = _longest_overlap(backwards, tail_table, text[end : end + top][::-1])
+        if size >= EDGE_MIN:
+            spans.append((end, end + size))
     return spans
 
 
@@ -548,7 +582,7 @@ def _masked(text: str, secrets: Sequence[str]) -> str:
     to ``head...tail`` is masked by its pieces beside ``...`` too (see ``_fragment_spans``). Every span is found in the ORIGINAL text and then
     all are cut out at once, so a short secret that sits inside a longer one cannot break the match of the longer one. More than
     ``MAX_FRAGMENT_HITS`` ``...`` replace the whole text (no honest line has that many; hiding only the first ``MAX_FRAGMENT_HITS`` would leave a
-    piece beside a later ``...`` readable). Cost: a line is scanned for each secret once, and each ``...`` costs one scan per secret of at most the length of that secret; (``...`` x secrets) above ``MAX_FRAGMENT_WORK`` replaces the whole line. A secret of one or two characters hides every such text in the line (garbling is the price of never leaving a short secret readable)."""
+    piece beside a later ``...`` readable). Cost: a line is scanned for each secret once, and each ``...`` costs one pass per secret over at most twice the length of that secret (``_fragment_spans``); (``...`` x secrets) above ``MAX_FRAGMENT_WORK`` replaces the whole line. A secret of one or two characters hides every such text in the line (garbling is the price of never leaving a short secret readable)."""
     chosen = tuple(v for v in secrets if v)
     if not chosen:
         return text
@@ -642,18 +676,18 @@ def _check_lock_file(fd: int) -> None:
 
 @contextlib.contextmanager
 def _one_run_per_database(values: Sequence[str]) -> Iterator[None]:
-    """Hold an exclusive lock named by a hash of where the passed values point (host, port and database name; never the values) in the temp folder for the whole run. A second runner that
-    uses the same temp folder (same machine and account, or the same ``TMPDIR``) with the same passed value is refused (``RuntimeError``) instead
+    """Hold an exclusive lock named by a hash of where the passed values point (host, host address, port and database name as spelled; never the values) in the temp folder for the whole run. A second runner that
+    uses the same temp folder (same machine and account, or the same ``TMPDIR``) with the same address (the same spelling of the four parts; the lock name depends on the address only, not on the rest of the value) is refused (``RuntimeError``) instead
     of sharing the database and its tables. It does not see a runner with another temp folder or on another machine; that stays the caller's
     job (a database of its own per run).
 
     The file is opened without following a symbolic link, without blocking (so a FIFO under the name is refused instead of hanging the run) and
-    with mode 0600. It is never deleted: one empty file per value stays in the temp folder. After opening it is checked, and it is refused with a
+    with mode 0600. It is never deleted: one empty file per distinct name (per spelling of an address, not per value) stays in the temp folder. After opening it is checked, and it is refused with a
     message that names the cause when it belongs to another user, has a wider mode, is not a regular file, or has more than one hard link. A temp
     folder on a network file system whose ``flock`` fails is refused as "could not be locked": use a local ``TMPDIR``.
 
-    The file name holds the first 16 hex digits of a SHA-256 of the host, port and database name that ``_address_parts`` reads from the values by a strict
-    grammar (nothing else of a value is read, so no secret is hashed). It is a best-effort match on SPELLING: one database written two ways
+    The file name holds the first 16 hex digits of a SHA-256 of the host, host address, port and database name that ``_address_parts`` reads from the values by a strict
+    grammar (a password is never captured or hashed: only the four address parts are cut out of the value). It is a best-effort match on SPELLING: one database written two ways
     (``localhost`` and ``127.0.0.1``, a port written or left out, ``host=`` and ``hostaddr=``, a ``?host=`` in a URL query) gets two names and a second
     runner on the other spelling is NOT refused. Values outside the grammar (anything with a password word in a key=value address, a URL with a query,
     a second ``/``, or an ``@``, ``/``, ``?``, ``#`` or space in the password) share the name ``unparsed``, so such a second run is refused even on another database. A lock
@@ -713,12 +747,15 @@ def _pytest(
     *,
     plugin: str = "",
     env_names: Sequence[str] = (),
+    environ: Mapping[str, str] | None = None,
 ) -> int:
     # an ALLOWLIST, not os.environ: a mutant run must not see a database DSN, a token or any other secret of the caller; PYTHONPATH also holds the tree root (tests may import tools.*)
     for operand in tests:  # the one place the caller's strings reach the argv: refuse here too, not only where the paths are first checked
         _plain_operand(operand)
-    env = {k: os.environ[k] for k in CHILD_ENV if k in os.environ}
-    env.update({k: os.environ[k] for k in _checked_env_names(env_names) if k in os.environ})
+    # ``environ`` is the snapshot that ``run_mutants`` took once at its start (see ``_env_snapshot``); a direct call without one reads ``os.environ`` now
+    source = os.environ if environ is None else environ
+    env = {k: source[k] for k in CHILD_ENV if k in source}
+    env.update({k: source[k] for k in _checked_env_names(env_names) if k in source})
     env.update(CHILD_FIXED_ENV)
     load = ["-p", _plugin_module(plugin)] if plugin else []
     env["PYTHONPATH"] = os.pathsep.join([str(cwd / "src"), str(cwd)])
@@ -907,7 +944,7 @@ def run_mutants(
     so a test can use a short mutant timeout without failing a slow baseline. ``on_result`` is called with each result as soon as that mutant
     finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
     must name a file inside its tree (``ValueError``). ``first_lines``, if given, is emptied at the start and then filled with the first ``E`` line
-    of each judged kill (mutant name -> line; diagnostics, and what ``crash_type`` is checked against): it belongs to this call, so two
+    of each judged row that has one, masked (mutant name -> line; diagnostics, and what ``crash_type`` is checked against): it belongs to this call, so two
     runs in two threads never share it. ``conftest``, ``pass_env`` and ``forbid_skips`` are opt-in (see the module docstring; by default no plugin, no environment name and no skip check
     are added; the always-on changes in the module docstring still apply): a plugin file of the tree, allowlisted environment names for the child, and "a skipped test is an
     error, not a kill". A bad value, or a ``conftest`` that is not a file of the tree, is a ``ValueError`` before any temp folder exists. A SIGTERM or SIGHUP during the call ends it like Ctrl-C (see the module docstring).
@@ -1072,9 +1109,10 @@ def _run_mutants(
             not _inside(root, conftest).is_file()
         ):  # before any temp folder: a missing plugin file is a refusal, not a late copy error
             raise ValueError(f"conftest is not a file of the tree: {conftest!r}")
-    secrets = _secret_values(env_names)
+    environ = _env_snapshot(env_names)  # the ONE read of the environment of this call
+    secrets = _secret_values(env_names, environ)
     canary = any(
-        name in os.environ for name in env_names
+        name in environ for name in env_names
     )  # a passed name that is set, even to an empty text, means a shared resource
     copied = (*tests, conftest) if conftest and conftest not in tests else tuple(tests)
     for m in mutants:  # before anything runs: a bad `test_file` must not surface after earlier mutants were already run
@@ -1120,9 +1158,7 @@ def _run_mutants(
 
     held = contextlib.ExitStack()
     if canary:  # before any temp folder: a second runner on the same database is refused
-        held.enter_context(
-            _one_run_per_database([os.environ[n] for n in env_names if n in os.environ])
-        )
+        held.enter_context(_one_run_per_database([environ[n] for n in env_names if n in environ]))
     # the try starts right after the first temp folder exists: a refusal (a path through a link out of the tree, a missing ``src``)
     # or a signal at any later point leaves no temp folder behind
     try:
@@ -1151,7 +1187,13 @@ def _run_mutants(
         fresh()
         base_timeout = timeout if baseline_timeout is None else baseline_timeout
         base_rc = _pytest(
-            tmp, tests, tmp / "base.xml", base_timeout, plugin=conftest, env_names=env_names
+            tmp,
+            tests,
+            tmp / "base.xml",
+            base_timeout,
+            plugin=conftest,
+            env_names=env_names,
+            environ=environ,
         )
         if base_rc == REAPED_ELSEWHERE:
             raise RuntimeError(
@@ -1180,7 +1222,15 @@ def _run_mutants(
                 operands = [f"{m.test_file}::{m.only_test}" if m.only_test else m.test_file]
             else:
                 operands = [f"{tests[0]}::{m.only_test}", *tests[1:]] if m.only_test else tests
-            rc = _pytest(tmp, operands, junit, timeout, plugin=conftest, env_names=env_names)
+            rc = _pytest(
+                tmp,
+                operands,
+                junit,
+                timeout,
+                plugin=conftest,
+                env_names=env_names,
+                environ=environ,
+            )
             emit(_row(m, rc, junit, forbid_skips, secrets, first_lines))
             if canary:  # the passed database is shared by the baseline and every mutant run: prove the unmutated copy still passes on what this one left
                 try:
@@ -1196,6 +1246,7 @@ def _run_mutants(
                     base_timeout,
                     plugin=conftest,
                     env_names=env_names,
+                    environ=environ,
                 )
                 reason = ""
                 if again == 0 and forbid_skips:

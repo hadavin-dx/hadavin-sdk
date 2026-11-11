@@ -209,7 +209,20 @@ def test_a_conftest_that_is_not_a_plain_python_path_is_refused_before_anything_r
         "tésts/conftest.py",
         "tests/",
     ):
-        _must_refuse(f"conftest {bad!r}", _run, root, conftest=bad)
+        # create the file where the name can be one, so the refusal can only come from the grammar and not from "is not a file of the tree"
+        with contextlib.suppress(OSError, ValueError):
+            target = root / bad
+            if target.name and root.resolve() in target.resolve().parents:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(PASSES, encoding="utf-8")
+        try:
+            _run(root, conftest=bad)
+        except ValueError as exc:
+            assert "is not a file of the tree" not in str(exc), (
+                f"conftest {bad!r} was refused only because the file is missing, not by the grammar"
+            )
+        else:
+            raise AssertionError(f"conftest {bad!r}: was not refused")
     assert _run(root, conftest="") == [], "an empty conftest (the default) was not accepted"
     for bad in ("tests/my-conf.py", "tests/1x.py", "tests/", "tests/conf.txt"):
         _must_raise(
@@ -311,14 +324,26 @@ def test_pass_env_never_widens_to_other_variables(tmp_path, monkeypatch):
     monkeypatch.setenv("SOME_API_TOKEN", "tok")
     body = "import os\n\ndef test_a():\n    assert 'SOME_API_TOKEN' not in os.environ\n"
     root = _tree(tmp_path, {CORE_TEST: body})
-    assert _run(root, pass_env=(DSN_NAME,)) == [], "another variable reached the child"
+    try:
+        rows = _run(root, pass_env=(DSN_NAME,))
+    except RuntimeError:
+        raise AssertionError(
+            "SOME_API_TOKEN reached the child: the unmutated run failed its own check"
+        ) from None
+    assert rows == [], "a run with no mutants returned a row"
 
 
 def test_pass_env_with_an_unset_variable_passes_nothing(tmp_path, monkeypatch):
     monkeypatch.delenv(DSN_NAME, raising=False)
     body = f"import os\n\ndef test_a():\n    assert {DSN_NAME!r} not in os.environ\n"
     root = _tree(tmp_path, {CORE_TEST: body})
-    assert _run(root, pass_env=(DSN_NAME,)) == [], "an unset variable was passed"
+    try:
+        rows = _run(root, pass_env=(DSN_NAME,))
+    except RuntimeError:
+        raise AssertionError(
+            "an unset variable was passed: the unmutated run found it in the child"
+        ) from None
+    assert rows == [], "a run with no mutants returned a row"
 
 
 UNLISTED_NAMES = (
@@ -400,14 +425,13 @@ def _showing_value_tree(tmp_path, dsn):
 
 
 def test_pass_env_values_never_reach_first_lines(tmp_path, monkeypatch):
-    dsn, word = _secret_dsn()
+    dsn, _word = _secret_dsn()
     monkeypatch.setenv(DSN_NAME, dsn)
     lines: dict[str, str] = {}
     _run(_showing_value_tree(tmp_path, dsn), [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
-    assert word not in lines["flip"] and dsn not in lines["flip"], (
-        "the passed value reached first_lines"
+    assert lines["flip"] == "E       AssertionError: [REDACTED]", (
+        "the failure line was not the exact masked line (the passed value reached first_lines, or the line changed)"
     )
-    assert "[REDACTED]" in lines["flip"], f"the failure line was not shown with a marker: {lines}"
 
 
 def test_pass_env_values_never_reach_the_failing_test_id_of_a_row(tmp_path, monkeypatch):
@@ -447,13 +471,11 @@ def test_the_baseline_skip_message_never_holds_the_passed_value(tmp_path, monkey
             "the positive control failed: the unmasked baseline skip message holds no password"
         )
     refusal = refusal_of_the_baseline()
-    assert "skipped" in refusal, (
-        f"a baseline that skips was accepted or refused otherwise: {refusal!r}"
-    )
+    assert "skipped" in refusal, "a baseline that skips was accepted or refused otherwise"
     assert dsn not in refusal and word not in refusal, (
         "the baseline skip message held the passed value"
     )
-    assert "[REDACTED]" in refusal, f"the baseline skip message has no marker: {refusal!r}"
+    assert "[REDACTED]" in refusal, "the baseline skip message has no marker"
 
 
 def test_masked_replaces_the_value_and_the_url_password(monkeypatch):
@@ -465,7 +487,9 @@ def test_masked_replaces_the_value_and_the_url_password(monkeypatch):
         f"the secrets were not the value and its password ({len(secrets)} secrets)"
     )
     out = mr._masked(f"E assert {dsn} and only {word} here", secrets)
-    assert dsn not in out and word not in out, "a secret survived the masking"
+    assert out == "E assert [REDACTED] and only [REDACTED] here", (
+        "a secret survived the masking, or the text around it changed"
+    )
 
 
 def test_a_percent_encoded_password_is_masked_in_both_forms(monkeypatch):
@@ -480,7 +504,9 @@ def test_a_percent_encoded_password_is_masked_in_both_forms(monkeypatch):
         f"the decoded password was not a secret ({len(secrets)} secrets)"
     )
     out = mr._masked(f"E {raw} and {decoded}", secrets)
-    assert raw not in out and decoded not in out, "a form of the password survived the masking"
+    assert out == "E [REDACTED] and [REDACTED]", (
+        "a form of the password survived the masking, or the text around it changed"
+    )
 
 
 def _long_value() -> str:
@@ -600,6 +626,8 @@ def test_a_piece_of_exactly_the_edge_minimum_is_masked_and_a_shorter_one_is_not(
     assert secret[:6] not in head6, f"a 6-character head next to the dots was not masked: {head6}"
     tail6 = mr._masked(f"E x == 'zzz...{secret[-6:]}'", (secret,))
     assert secret[-6:] not in tail6, f"a 6-character tail next to the dots was not masked: {tail6}"
+    # the lower limit is EDGE_MIN (2): a 2-character piece is masked, a 1-character piece is accepted as ordinary text
+    # (the sizes are written out on purpose: a mutant that moves EDGE_MIN must not move the test with it)
     head2 = mr._masked(f"E x == '{secret[:2]}...zzz'", (secret,))
     assert secret[:2] not in head2, f"a 2-character head next to the dots was not masked: {head2}"
     short = mr._masked(f"E x == '{secret[:1]}...zzz'", (secret,))
@@ -661,6 +689,24 @@ def _dots(text):
     return list(re.finditer(r"(?=\.\.\.)", text))
 
 
+def _plain_spans(text, secret):
+    """The plain definition of the spans (every length from the largest down), written out slowly on purpose: it is the reference of the fast scan."""
+    plain: list[tuple[int, int]] = []
+    for at in range(len(text) - 2):
+        if text[at : at + 3] != "...":
+            continue
+        start, end, top = at, at + 3, len(secret) - 1
+        for k in range(min(top, start), 1, -1):
+            if text[start - k : start] == secret[:k]:
+                plain.append((start - k, start))
+                break
+        for k in range(min(top, len(text) - end), 1, -1):
+            if text[end : end + k] == secret[-k:]:
+                plain.append((end, end + k))
+                break
+    return plain
+
+
 def test_the_fragment_scan_agrees_with_the_plain_definition():
     """The scan was rewritten to be fast; it must still return the spans of the plain definition (every length from the largest down)."""
     rng = _Det(7)
@@ -678,19 +724,7 @@ def test_the_fragment_scan_agrees_with_the_plain_definition():
                 + secret[-rng.randint(1, len(secret)) :]
                 + text[5:]
             )
-        plain: list[tuple[int, int]] = []
-        for at in range(len(text) - 2):
-            if text[at : at + 3] != "...":
-                continue
-            start, end, top = at, at + 3, len(secret) - 1
-            for k in range(min(top, start), 1, -1):
-                if text[start - k : start] == secret[:k]:
-                    plain.append((start - k, start))
-                    break
-            for k in range(min(top, len(text) - end), 1, -1):
-                if text[end : end + k] == secret[-k:]:
-                    plain.append((end, end + k))
-                    break
+        plain = _plain_spans(text, secret)
         assert sorted(mr._fragment_spans(text, secret, _dots(text))) == sorted(plain), (
             "the fast scan found other spans than the plain definition"
         )
@@ -700,16 +734,111 @@ def test_the_fragment_scan_agrees_with_the_plain_definition():
     )
 
 
+def test_the_fragment_scan_agrees_with_the_plain_definition_on_repeating_secrets():
+    """Secrets and texts over two letters repeat themselves, which is where a prefix table that falls back wrongly gives another answer."""
+    rng = _Det(11)
+    non_empty = 0
+    for _ in range(400):
+        secret = "".join(rng.choice("ab") for _ in range(rng.randint(3, 30)))
+        head = secret[: rng.randint(0, len(secret) - 1)]
+        tail = secret[len(secret) - rng.randint(0, len(secret) - 1) :]
+        filler = "".join(rng.choice("ab") for _ in range(rng.randint(0, 25)))
+        text = filler + head + "..." + tail + filler + "..." + filler + head
+        fast = sorted(mr._fragment_spans(text, secret, _dots(text)))
+        plain = sorted(_plain_spans(text, secret))
+        assert fast == plain, (
+            "the fast scan found other spans than the plain definition on a repeating secret"
+        )
+        non_empty += bool(plain)
+    assert non_empty >= 200, f"only {non_empty} of 400 repeating cases had any span"
+
+
+class _CountingText(str):
+    """A text that counts its own ``find`` and ``rfind`` calls and stops the scan when there are more than ``limit``: a scan that looks at every
+    candidate start of a head or tail makes thousands of them for one ``...``."""
+
+    calls = 0
+    limit = 0
+
+    def _count(self) -> None:
+        type(self).calls += 1
+        if type(self).calls > type(self).limit:
+            raise AssertionError(
+                "the scan makes a search per candidate start, not a pass per ellipsis"
+            )
+
+    def find(self, *args):
+        self._count()
+        return super().find(*args)
+
+    def rfind(self, *args):
+        self._count()
+        return super().rfind(*args)
+
+
+def test_one_ellipsis_costs_no_search_per_candidate_start():
+    secret = "a" * 1999 + "b"
+    line = (
+        "a" * 1998 + "c" + "..."
+    ) * 1000  # every start of a head matches 1998 characters and fails on the last
+    hits = list(mr._DOTS.finditer(line))
+    assert len(hits) == 1000, "the test line does not hold 1,000 ellipses"
+    _CountingText.calls, _CountingText.limit = 0, 4 * len(hits)
+    spans = mr._fragment_spans(_CountingText(line), secret, hits)
+    assert spans == [], (
+        "a head or tail was found where the text before and after each ellipsis ends in another letter"
+    )
+    assert _CountingText.calls <= _CountingText.limit, "the scan made too many searches"
+
+
+def test_the_work_of_one_ellipsis_is_linear_in_the_length_of_the_secret():
+    """Counted, not timed: the executed lines of the two passes (``_prefix_table``, ``_longest_overlap``) stay within a fixed multiple of ``hits x len(secret)``."""
+    secret = "a" * 1999 + "b"
+    line = ("a" * 1998 + "c" + "...") * 100
+    hits = list(mr._DOTS.finditer(line))
+    events = [0]
+
+    def tracer(frame, event, arg):
+        code = frame.f_code
+        if code.co_filename != mr.__file__ or code.co_name not in (
+            "_prefix_table",
+            "_longest_overlap",
+        ):
+            return None
+
+        def local(frame, event, arg):
+            if event == "line":
+                events[0] += 1
+            return local
+
+        return local
+
+    before = sys.gettrace()
+    sys.settrace(tracer)
+    try:
+        mr._fragment_spans(line, secret, hits)
+    finally:
+        sys.settrace(before)
+    assert events[0] > len(hits), (
+        "the passes were not counted (the scan does not use _prefix_table and _longest_overlap)"
+    )
+    assert events[0] <= 12 * len(hits) * len(secret), (
+        f"{events[0]} lines for {len(hits)} ellipses and a secret of {len(secret)} characters: the work is not linear"
+    )
+
+
 def test_the_fragment_scan_finds_the_largest_head_and_tail_at_every_size():
     # the largest head and tail (one character short of the whole secret) at every length, which random text almost never hits
     for size in range(3, 21):
         secret = "".join("pqrstuvwxyz"[(i * 3 + size) % 11] for i in range(size))
         top = size - 1
         text = secret[:top] + "..." + secret[-top:]
-        assert sorted(mr._fragment_spans(text, secret, _dots(text))) == [
-            (0, top),
-            (top + 3, len(text)),
-        ], f"the largest head and tail of a {size}-character secret were not both found: {text!r}"
+        spans = sorted(mr._fragment_spans(text, secret, _dots(text)))
+        assert (0, top) in spans, f"the largest head of a {size}-character secret was not found"
+        assert (top + 3, len(text)) in spans, (
+            f"the largest tail of a {size}-character secret was not found"
+        )
+        assert len(spans) == 2, f"the scan of a {size}-character secret found a span too many"
 
 
 # ---- pass_env: the shared database ------------------------------------------------------------------------------------------
@@ -853,8 +982,10 @@ def test_a_copy_that_cannot_be_rebuilt_for_the_canary_is_a_clear_refusal(tmp_pat
     assert "could not be rebuilt for the canary" in str(caught), f"another refusal: {caught}"
 
 
-def _lock_name(value: str) -> str:
-    return f"hadavin_mutation_{hashlib.sha256(mr._address_parts(value).encode()).hexdigest()[:16]}.lock"
+def _lock_name(parts: str) -> str:
+    """The lock file name for the hashed ``parts`` text, written out by the test (not computed by the code under test): ``"unparsed"`` for a
+    value outside the grammar, or host, host address, port and database name joined by newlines."""
+    return f"hadavin_mutation_{hashlib.sha256(parts.encode()).hexdigest()[:16]}.lock"
 
 
 def test_a_second_runner_with_the_same_passed_value_is_refused(tmp_path, monkeypatch):
@@ -874,7 +1005,7 @@ def test_a_second_runner_with_the_same_passed_value_is_refused(tmp_path, monkeyp
     assert _short(_run(root, [FLIP], pass_env=(DSN_NAME,))) == [("flip", Verdict.KILLED, True)], (
         "the lock was not given back after a run"
     )
-    assert [f.name for f in tmp_path.glob("hadavin_mutation_*.lock")] == [_lock_name(value)], (
+    assert [f.name for f in tmp_path.glob("hadavin_mutation_*.lock")] == [_lock_name("unparsed")], (
         "the lock file was not named by the first 16 hex digits of the SHA-256 of the address parts (and by nothing else)"
     )
 
@@ -939,7 +1070,7 @@ def test_a_lock_file_that_is_a_symbolic_link_is_refused_and_the_file_has_mode_06
         pytest.skip("symbolic links and file modes are POSIX here")
     target = tmp_path / "target"
     target.write_text("x")
-    (tmp_path / _lock_name("x")).symlink_to(target)
+    (tmp_path / _lock_name("unparsed")).symlink_to(target)
     caught = None
     try:
         with mr._one_run_per_database(["x"]):
@@ -949,12 +1080,16 @@ def test_a_lock_file_that_is_a_symbolic_link_is_refused_and_the_file_has_mode_06
     assert isinstance(caught, RuntimeError) and "symbolic link" in str(caught), (
         f"a planted symbolic link was followed or refused otherwise: {caught!r}"
     )
+    # no mask of the caller may hide a wide mode (a mask of 077 would turn 0666 into 0600): the file is made under mask 0
+    outer_mask = os.umask(0)
     try:
         with mr._one_run_per_database(["host=y"]):
             pass
     except RuntimeError as exc:
         raise AssertionError(f"the lock file was not private: {exc}") from None
-    mode = (tmp_path / _lock_name("host=y")).stat().st_mode & 0o777
+    finally:
+        os.umask(outer_mask)
+    mode = (tmp_path / _lock_name("y\n\n\n")).stat().st_mode & 0o777
     assert mode == 0o600, f"the lock file was not private: {oct(mode)}"
 
 
@@ -1091,6 +1226,50 @@ def test_forbid_skips_with_a_missing_or_empty_junit_file_is_an_error_row_never_j
 # ---- defaults unchanged -----------------------------------------------------------------------------------------------------
 
 
+def test_the_environment_is_read_once_and_a_change_during_the_run_changes_nothing(
+    tmp_path, monkeypatch
+):
+    old = _fake_dsn()
+    new = _url("svc", "Nw4", "Yv8", rest="other.invalid/y")
+    monkeypatch.setenv(DSN_NAME, old)
+    body = (
+        "import os\nfrom pk.core import go\n\n"
+        f"def test_a():\n    assert go(True) is True, os.environ[{DSN_NAME!r}]\n"
+        f"    assert os.environ[{DSN_NAME!r}] == {old!r}, 'the child got another value than the snapshot'\n"
+    )
+    root = _tree(tmp_path, {CORE_TEST: body})
+    first = Mutant("flip", "src/pk/core.py", "return flag", "return not flag", "AssertionError")
+    second = Mutant("flip2", "src/pk/core.py", "return flag", "return not flag", "AssertionError")
+    lines: dict[str, str] = {}
+
+    def change_the_variable(_row):
+        monkeypatch.setenv(
+            DSN_NAME, new
+        )  # the caller edits its own environment while the run is going
+
+    try:
+        rows = _run(
+            root,
+            [first, second],
+            pass_env=(DSN_NAME,),
+            first_lines=lines,
+            on_result=change_the_variable,
+        )
+    except mr.CanaryFailed:
+        raise AssertionError(
+            "a canary run got the changed value: the environment was read again"
+        ) from None
+    assert _short(rows) == [("flip", Verdict.KILLED, True), ("flip2", Verdict.KILLED, True)], (
+        "the two mutants were not both killed"
+    )
+    assert lines["flip"] == "E       AssertionError: [REDACTED]", (
+        "the first mutant did not see the value"
+    )
+    assert lines["flip2"] == "E       AssertionError: [REDACTED]", (
+        "the second mutant run got the changed value (or its old value was not hidden): the environment was read again"
+    )
+
+
 def test_a_default_call_passes_pytest_no_plugin_and_no_env_names(tmp_path, monkeypatch):
     root = _tree(tmp_path, {CORE_TEST: PASSES})
     calls = []
@@ -1101,7 +1280,9 @@ def test_a_default_call_passes_pytest_no_plugin_and_no_env_names(tmp_path, monke
 
     monkeypatch.setattr(mr, "_pytest", fake)
     _run(root)
-    assert calls == [(4, {"plugin": "", "env_names": ()})]
+    assert calls == [(4, {"plugin": "", "env_names": (), "environ": mr._env_snapshot(())})], (
+        "a default call changed the arguments of the pytest run"
+    )
 
 
 def test_the_default_child_environment_has_no_database_address(tmp_path, monkeypatch):
@@ -1230,7 +1411,10 @@ def test_a_fixture_error_in_the_mutant_run_is_an_error_row_not_a_kill(tmp_path):
     assert rows == [("flip", Verdict.ERROR, "FIXTURE ERROR", False)], (
         f"a fixture that failed at setup was not the FIXTURE ERROR row: {rows}"
     )
-    assert "assert" in lines.get("flip", ""), f"the FIXTURE ERROR row kept no message: {lines}"
+    assert lines.get("flip", "").startswith("E"), "the FIXTURE ERROR row kept no message"
+    assert lines["flip"] == "E       assert False is True", (
+        "the FIXTURE ERROR message is not the assertion of the fixture"
+    )
 
 
 def test_a_teardown_error_of_a_fixture_is_an_error_row_not_a_kill(tmp_path):
@@ -1388,7 +1572,9 @@ def test_nothing_is_rebuilt_when_no_secret_is_set():
 
 
 def _own_lock_file(tmp_path, name):
-    path = tmp_path / _lock_name(name)
+    path = tmp_path / _lock_name(
+        "unparsed"
+    )  # ``name`` is no address (not in the grammar), so the lock hashes "unparsed"
     path.write_bytes(b"")
     return path
 
@@ -1821,15 +2007,15 @@ def test_the_value_that_pytest_shortens_never_reaches_a_row_from_a_real_run(tmp_
         seen: dict[str, str] = {}
         _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=seen)
     assert "..." in seen["flip"] and any(w in seen["flip"] for w in _windows(value)), (
-        f"the positive control failed: pytest printed no piece of the value: {seen}"
+        "the positive control failed: pytest printed no piece of the value"
     )
     lines: dict[str, str] = {}
     _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
     assert not any(w in lines["flip"] for w in _windows(value)), (
-        f"a piece of the shortened value reached first_lines: {lines}"
+        "a piece of the shortened value reached first_lines"
     )
     assert not any(w in lines["flip"] for w in _windows(word, 4)), (
-        f"a piece of the password reached first_lines: {lines}"
+        "a piece of the password reached first_lines"
     )
 
 
@@ -1905,7 +2091,7 @@ def test_a_value_inside_a_bigger_secret_or_overlapping_another_is_masked_in_full
     assert mr._masked("a" * 10, ("aaaa",)) == "[REDACTED]", (
         "a secret that overlaps itself left a rest readable"
     )
-    # "ab" has two characters (EDGE_MIN) and the piece rule needs PASSWORD_PIECE_MIN (3): the two cases below differ on purpose
+    # "ab" has two characters (EDGE_MIN) and the piece rule needs PASSWORD_PIECE_MIN (3); the line holds no secret, so it is kept as it is
     assert mr._masked("ab", ("zz",)) == "ab", "a text with no secret was changed"
 
 
@@ -2049,7 +2235,7 @@ def test_a_plus_in_a_url_password_is_also_read_as_a_space(monkeypatch):
 def test_a_lock_file_that_is_a_fifo_is_refused_and_does_not_hang(tmp_path, monkeypatch):
     if not hasattr(os, "mkfifo"):
         pytest.skip("this system has no named pipes")
-    path = tmp_path / _lock_name("fifo")
+    path = tmp_path / _lock_name("unparsed")  # "fifo" is no address
     os.mkfifo(path, 0o600)
     result: dict[str, object] = {}
 
@@ -2176,7 +2362,7 @@ def test_the_message_of_a_collection_error_never_holds_the_passed_value(tmp_path
         tmp_path / "a", monkeypatch, COLLECTION_SHOWS_VALUE, masking_off=True
     )
     assert rows == [("flip", Verdict.ERROR, "COLLECTION ERROR", False)] and word in seen, (
-        f"the positive control failed: with the masking off the collection error shows no password: {rows} {seen}"
+        f"the positive control failed: with the masking off the collection error shows no password: {rows}"
     )
     rows, line = _the_first_line_of_a_failing_run(
         tmp_path / "b", monkeypatch, COLLECTION_SHOWS_VALUE
@@ -2185,9 +2371,9 @@ def test_the_message_of_a_collection_error_never_holds_the_passed_value(tmp_path
         f"the collection error was not a COLLECTION ERROR row: {rows}"
     )
     assert word not in line and dsn not in line, (
-        f"the passed value reached the first line of a COLLECTION ERROR row: {line}"
+        "the passed value reached the first line of a COLLECTION ERROR row"
     )
-    assert "[REDACTED]" in line, f"the COLLECTION ERROR line has no marker: {line}"
+    assert "[REDACTED]" in line, "the COLLECTION ERROR line has no marker"
 
 
 def test_the_message_of_a_fixture_error_never_holds_the_passed_value(tmp_path, monkeypatch):
@@ -2196,16 +2382,16 @@ def test_the_message_of_a_fixture_error_never_holds_the_passed_value(tmp_path, m
         tmp_path / "a", monkeypatch, FIXTURE_SHOWS_VALUE, masking_off=True
     )
     assert rows == [("flip", Verdict.ERROR, "FIXTURE ERROR", False)] and word in seen, (
-        f"the positive control failed: with the masking off the fixture error shows no password: {rows} {seen}"
+        f"the positive control failed: with the masking off the fixture error shows no password: {rows}"
     )
     rows, line = _the_first_line_of_a_failing_run(tmp_path / "b", monkeypatch, FIXTURE_SHOWS_VALUE)
     assert rows == [("flip", Verdict.ERROR, "FIXTURE ERROR", False)], (
         f"the fixture error was not a FIXTURE ERROR row: {rows}"
     )
     assert word not in line and dsn not in line, (
-        f"the passed value reached the first line of a FIXTURE ERROR row: {line}"
+        "the passed value reached the first line of a FIXTURE ERROR row"
     )
-    assert "[REDACTED]" in line, f"the FIXTURE ERROR line has no marker: {line}"
+    assert "[REDACTED]" in line, "the FIXTURE ERROR line has no marker"
 
 
 def test_the_canary_skip_message_never_holds_the_passed_value(tmp_path, monkeypatch):
@@ -2273,13 +2459,13 @@ def test_a_password_that_was_encoded_twice_or_more_is_decoded_until_it_stops_cha
     assert "Ab3" + "@Xy9" in mr._secret_values((DSN_NAME,)), (
         "a password encoded three times was not decoded to the end"
     )
-    # the refusal is checked at each depth: the second step of this one is a quote mark
+    # the refusal is checked at each depth: the third step of this one is a quote mark
     monkeypatch.setenv(DSN_NAME, _url("svc", "Ab3%25", "2527Xy9"))
     text = _refusal_text(
-        "a password that decodes to a quote mark at the second depth was not refused"
+        "a password that decodes to a quote mark at the third depth was not refused"
     )
     assert "percent-decoded" in text and "Ab3" not in text and "Xy9" not in text, (
-        f"the refusal at the second depth names the secret or the wrong text: {text}"
+        f"the refusal at the third depth names the secret or the wrong text: {text}"
     )
     monkeypatch.setenv(DSN_NAME, _url("svc", "Ab3%25", "252527Xy9"))
     _refusal_text("a password that decodes to a quote mark at the fourth depth was not refused")
@@ -2315,11 +2501,24 @@ def test_the_lock_file_name_does_not_depend_on_the_password(tmp_path, monkeypatc
     assert name != _lock_file_name(
         tmp_path, monkeypatch, _url("svc", "Zq9x", "K4mTw", rest="other.invalid/scratch")
     ), "two addresses with another host got one lock file name"
+    # key=value addresses that differ only in an option that is no part of the address (the user, an ssl mode) share one name, and it is a real name
+    one = _lock_file_name(tmp_path, monkeypatch, "host=db.invalid dbname=scratch user=alice")
+    assert one == _lock_file_name(
+        tmp_path, monkeypatch, "host=db.invalid dbname=scratch user=bob sslmode=require"
+    ), "two key=value addresses that differ only in options got two lock file names"
+    assert one != _lock_file_name(tmp_path, monkeypatch, "unparsed-value"), (
+        "a key=value address got the name of the values outside the grammar"
+    )
+    # a key=value address that holds a password word is outside the grammar and shares the name "unparsed" with every such value, on purpose
     kv_one = _kv(_HK, key="ssl" + _PW_KEY)
     kv_two = _kv("Rt5Vb", "9LmQw", key="ssl" + _PW_KEY)
-    assert _lock_file_name(tmp_path, monkeypatch, kv_one) == _lock_file_name(
-        tmp_path, monkeypatch, kv_two
-    ), "two key=value addresses that differ only in the password got two lock file names"
+    assert (
+        _lock_file_name(tmp_path, monkeypatch, kv_one)
+        == _lock_file_name(tmp_path, monkeypatch, kv_two)
+        == _lock_file_name(tmp_path, monkeypatch, "unparsed-value")
+    ), (
+        "a key=value address with a password word did not get the name of the values outside the grammar"
+    )
     # the name is not the hash of the whole address, whatever password is tried (no offline guess)
     guesses = {
         f"hadavin_mutation_{hashlib.sha256(_url('svc', p, rest='db.invalid/scratch').encode()).hexdigest()[:16]}.lock"
@@ -2427,13 +2626,17 @@ _ADDRESS_CASES = [
     ("postgresql://svc:12/45@db.invalid/app", "unparsed"),
     ("postgresql://u:a@b/c@h/db", "unparsed"),
     ("postgresql://u:" + "Zq9x" + "@K4mTw@h/db", "unparsed"),
-    ("Zq9xK4mTw://K4mTw", "unparsed"),
+    ("Zq9x" + "K4mTw" + "://K4mTw", "unparsed"),
     ("host='a b' dbname=x", "unparsed"),
     ("host=db1  port=1", "unparsed"),
     (" host=db1", "unparsed"),
     ("host=db1 " + "pass" + "word=aaa dbname=t", "unparsed"),
     ("host=db1 dbname=t " + "pass" + "word=aaa sslrootcert=file:///ca.pem", "unparsed"),
     ("host=db1 ssl" + "pass" + "word=aaa", "unparsed"),
+    ("host=db1 p" + "wd=aaa dbname=t", "unparsed"),
+    ("host=db1 pass" + "wd=aaa dbname=t", "unparsed"),
+    ("host=db1 PASS" + "WORD=aaa dbname=t", "unparsed"),
+    ("host=db1 P" + "wD=aaa", "unparsed"),
     ("user=svc", "unparsed"),
     ("host=/tmp dbname=x", "unparsed"),
     ("port=abc host=h", "unparsed"),
@@ -2445,8 +2648,10 @@ _ADDRESS_CASES = [
 
 
 def test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed():
-    for value, expected in _ADDRESS_CASES:
-        assert mr._address_parts(value) == expected, "a lock name input was not the expected one"
+    for index, (value, expected) in enumerate(_ADDRESS_CASES):
+        assert mr._address_parts(value) == expected, (
+            f"a lock name input was not the expected one (row {index} of the table)"
+        )
 
 
 def test_one_spelling_in_url_and_key_value_form_gives_one_name():
@@ -2468,7 +2673,8 @@ def test_the_same_database_written_two_ways_gets_two_names_as_the_docstring_says
         "two spellings of one database got one name: the docstring says they get two"
     )
     for text in (mr._address_parts, mr._one_run_per_database):
-        assert "SPELLING" in (text.__doc__ or "") or "spelling" in (text.__doc__ or ""), (
+        doc = (text.__doc__ or "").lower()
+        assert "match on spelling" in doc, (
             "the docstring does not say that the match is on spelling"
         )
 
@@ -2488,35 +2694,28 @@ _PW_FORMS = [
 ]
 
 
-class _Steps:
-    """A small fixed-seed generator (no module-level randomness, the same cases on every run)."""
-
-    def __init__(self, seed: int) -> None:
-        self.state = seed
-
-    def below(self, n: int) -> int:
-        self.state = (self.state * 6364136223846793005 + 1442695040888963407) % (1 << 64)
-        return (self.state >> 33) % n
-
-    def pick(self, items):
-        return items[self.below(len(items))]
-
-
 def test_property_the_lock_name_holds_no_byte_of_a_password_and_calm_passwords_give_one_name():
-    rng = _Steps(1414)
+    rng = _Det(1414)
     letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    pieces = ["host=", "dbname=", "port=", "://", "@", "/", "?", "#", ";", "&", ":", "%", " "]
+    pieces = [
+        "host=", "dbname=", "port=", "://", "@", "/", "?", "#", ";", "&", ":", "%", " ",
+        " host=", " dbname=", " port=", " hostaddr=",
+    ]  # fmt: skip  # the ones with a space in front are a password that poses as the next option
 
     def password(alphabet: str, with_pieces: bool) -> str:
-        out = "".join(rng.pick(letters) for _ in range(3))
-        for _ in range(1 + rng.below(6)):
-            part = rng.pick(pieces) if with_pieces and rng.below(10) < 7 else rng.pick(alphabet)
-            out += part + "".join(rng.pick(letters) for _ in range(1 + rng.below(3)))
+        out = "".join(rng.choice(letters) for _ in range(3))
+        for _ in range(rng.randint(1, 6)):
+            part = (
+                rng.choice(pieces)
+                if with_pieces and rng.randint(0, 9) < 7
+                else rng.choice(alphabet)
+            )
+            out += part + "".join(rng.choice(letters) for _ in range(rng.randint(1, 3)))
         return out
 
-    ran = calm_pairs = parsed = unparsed = 0
-    for _ in range(40):
-        for make in _PW_FORMS:
+    ran = url_pairs = hostile_parsed = hostile_unparsed = 0
+    for _ in range(120):
+        for number, make in enumerate(_PW_FORMS):
             hostile, calm_a, calm_b = (
                 password(_HOSTILE, True),
                 password(_CALM, False),
@@ -2526,8 +2725,11 @@ def test_property_the_lock_name_holds_no_byte_of_a_password_and_calm_passwords_g
             for text in (hostile, calm_a, calm_b):
                 name = mr._address_parts(make(text))
                 ran += 1
-                parsed += name != "unparsed"
-                unparsed += name == "unparsed"
+                if (
+                    text is hostile and number < 3
+                ):  # the forms whose outcome depends on the password
+                    hostile_parsed += name != "unparsed"
+                    hostile_unparsed += name == "unparsed"
                 for t in (text, *text.replace("'", "").split()):
                     if len(t) >= 3 and t not in skeleton:
                         assert t not in name, (
@@ -2537,14 +2739,18 @@ def test_property_the_lock_name_holds_no_byte_of_a_password_and_calm_passwords_g
                 assert name in {mr._address_parts(make("Calm" + "9")), "unparsed"}, (
                     "a password changed the name to something that is neither"
                 )
-            if calm_a != calm_b:
-                calm_pairs += 1
+            if calm_a != calm_b and number < 3:
+                # only the three URL forms with a password in the login give a name for a calm password; the other forms are always "unparsed"
+                url_pairs += 1
                 assert mr._address_parts(make(calm_a)) == mr._address_parts(make(calm_b)), (
                     "two values that differ only in a calm password got two lock names"
                 )
-    assert ran >= 300 and calm_pairs >= 300, f"the property test ran only {ran} cases"
-    assert parsed >= 40 and unparsed >= 40, (
-        f"the property test did not cover both outcomes (parsed {parsed}, unparsed {unparsed})"
+    assert ran >= 3000 and url_pairs >= 300, (
+        f"the property test ran only {ran} cases ({url_pairs} pairs of calm passwords in a URL login)"
+    )
+    assert hostile_parsed >= 20 and hostile_unparsed >= 20, (
+        "the property test did not cover both outcomes for a hostile password in a URL login "
+        f"(parsed {hostile_parsed}, unparsed {hostile_unparsed})"
     )
 
 
@@ -2599,7 +2805,9 @@ def test_many_repeats_of_one_option_are_few_secrets_and_fast(monkeypatch):
     except ValueError:
         raise AssertionError("a repeated option was refused as too many texts") from None
     spent = time.monotonic() - began
-    assert len(got) < 20 and spent < 2, f"{len(got)} secrets in {spent:.1f} s for a repeated option"
+    assert len(got) < 20, f"{len(got)} secrets for a repeated option"
+    # the count above is the exact check; this bound only catches a run that takes minutes, so a slow machine does not fail it
+    assert spent < 60, f"a repeated option took {spent:.1f} s"
     assert mr._masked("x " + "pwd=a&" * 5, got).count(mr.MASK) >= 1, (
         "the repeated text was not hidden"
     )
@@ -2618,7 +2826,8 @@ def test_a_password_in_many_encoded_layers_is_refused_fast_without_showing_it(mo
         "a value with hundreds of layers was accepted"
     )
     assert "2525" not in str(caught), "the refusal shows the value"
-    assert time.monotonic() - began < 5, "the refusal took more than 5 s"
+    # the refusal above is the exact check (it comes from a count); this bound only catches minutes
+    assert time.monotonic() - began < 60, "the refusal took more than 60 s"
 
 
 def test_a_line_with_many_dots_and_many_secrets_is_replaced_not_scanned():
@@ -2627,7 +2836,8 @@ def test_a_line_with_many_dots_and_many_secrets_is_replaced_not_scanned():
     began = time.monotonic()
     out = mr._masked(line, secrets)
     assert out.startswith(mr.MASK) and "too many" in out, f"the line was scanned: {out[:60]}"
-    assert time.monotonic() - began < 2, "the capped line took more than 2 s"
+    # the marker above is the exact check (the line was not scanned); this bound only catches minutes
+    assert time.monotonic() - began < 60, "the capped line took more than 60 s"
     assert mr._masked("x ... y " + secrets[0], secrets) == "x ... y " + mr.MASK, (
         "a normal line with a secret was changed wrongly"
     )
