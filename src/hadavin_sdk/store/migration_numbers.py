@@ -113,6 +113,11 @@ def escape_name(name: str) -> str:
     return ascii(name)[1:-1]
 
 
+def _label(*names: str) -> str:
+    """Names of database objects for a message: control characters are written as escapes."""
+    return ".".join(escape_name(n) for n in names)
+
+
 # --- file names and the ledger -----------------------------------------------------------------------------------------
 
 

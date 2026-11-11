@@ -30,6 +30,8 @@ MIGRATION_TEST_FILES = [
     "tests/test_migration_postgres.py",
     "tests/test_migration_rules.py",
     "tests/test_migration_compare.py",
+    "tests/test_migration_verify.py",
+    "tests/test_migration_verify_pg.py",
 ]
 
 

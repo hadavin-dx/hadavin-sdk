@@ -98,6 +98,7 @@ from hadavin_sdk.store.migration_numbers import (
     STEM,
     TRIGGER_CHANGES,
     MigrationNumberError,
+    _label,
     check_ledger,
     escape_name,
     gone_message,
@@ -1359,11 +1360,6 @@ def _membership_words(rest: str) -> str:
         if key in cols:
             words.append(yes if cols[key] else no)
     return ", ".join(words) or "no further columns"
-
-
-def _label(*names: str) -> str:
-    """Names of database objects for a message: control characters are written as escapes."""
-    return ".".join(escape_name(n) for n in names)
 
 
 def _check_read_back(
