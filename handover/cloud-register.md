@@ -1074,3 +1074,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a15efb43802a648cc | PR89 codebase reviewer r9, same snapshot | 2026-11-11 | on report | running; model sonnet |
 | a65ea831ec30561b9 | PR89 evidence runner ef4c572 | 2026-11-11 | - | STOPPED unfinished (round 9 will replace the head): driver, jobs, clusters p89-ef4c572-312/313 stopped, partial evidence deleted |
 | ab78cc6897a0feb5a / a15efb43802a648cc | PR89 design/security and codebase reviewers r9 | 2026-11-11 | - | CLOSED: 0 Blocker, 0 Major, 5 + 7 Minor saved; ledger r9-01, r9-02 |
+| a290aa955ce105a74 | PR89 builder round 9 (12 Minors, three-layer choke-point fix, pins) | 00:38Z 2026-11-11 | +90 min | running; evidence runner a65ea831 on ef4c572 stopped twice (it restarted itself once; driver, jobs, clusters killed again, folder deleted) |
