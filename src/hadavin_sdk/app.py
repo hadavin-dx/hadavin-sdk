@@ -72,10 +72,13 @@ def build(
     hold_run_ids: Callable[[], set[str] | frozenset[str]] | None = None,
     clock: Callable[[], datetime] = now,
     timeout_s: float | None = None,
+    target_labels: Mapping[str, str] | None = None,
 ) -> App:
     """Build every backend from the config's table entries, in the design 4.2 order. The keyword overrides
     replace one configured backend (tests); `secrets` replaces the configured provider for both the executor
-    and the backends' own secrets. Missing or shared secret names fail here, before the first run."""
+    and the backends' own secrets. `target_labels` maps a target system to the display name an approval card shows (a
+    host name on a card is masked, so a label such as `orders-db` is how an approver reads the target). Missing or shared
+    secret names fail here, before the first run."""
     cfg = load_config(config_dir)
     reg = load_registry(cfg)
     b = cfg.backends
@@ -181,6 +184,7 @@ def build(
         lambda run_id, status, d: holder["rt"].on_decided(run_id, status, d),
         clock,
         summary_detector,
+        target_labels,
     )
 
     def post_card(card: Card) -> Delivery:
@@ -192,7 +196,7 @@ def build(
             return Delivery(ok=False, reason=type(exc).__name__)
 
     def request_approval(plan, decision, requested_by) -> Delivery:
-        if len(summary(plan, summary_detector)) > channel.max_card_chars:
+        if len(summary(plan, summary_detector, target_labels)) > channel.max_card_chars:
             return Delivery(ok=False, reason="card_too_long")
         # A failed send is NOT terminal: the request stays PENDING and tick resends it
         # (tests/test_p7_tick.py::test_failed_send_is_resent_by_tick), so a saved request is delivered-or-retrying.

@@ -22,6 +22,7 @@ from hadavin_sdk.approvals.requests import summary
 from hadavin_sdk.approvals.slack_channel import SlackChannel
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import ApprovalRequest, ChainStep, GateDecision, Plan, Target
+from tests.q8b_helpers import bare_domain_tokens
 
 PW_KEY = "pass" + "word"
 ONE = "hunter2" + "secretXYZ"
@@ -87,14 +88,14 @@ N4_ROWS = [
 
 
 def test_n4_an_address_outside_code():
-    """One test, not one per row: the mutant list pins it by its plain name."""
+    """One test, not one per row (the mutant list pins it by its plain name); every failing row is listed."""
+    bad = []
     for label, text, identifier in N4_ROWS:
         result = clean(text)
-        assert not readable(result, identifier), (
-            f"an identifier is readable on the card ({label}): {result!r}"
-        )
         parts = [w for w in ("smith", "example", "corp") if w in result]
-        assert not parts, f"an identifier is readable on the card ({label}): {parts} in {result!r}"
+        if readable(result, identifier) or parts:
+            bad.append(f"an identifier is readable on the card ({label}): {result!r}")
+    assert not bad, "; ".join(bad)
 
 
 # ---- N5: the same through every way a card text is built ----------------------------------------------------------------
@@ -169,35 +170,36 @@ N6_PINNED = [
 
 
 def test_n6_a_domain_after_a_placeholder():
+    bad = []
     for text, pattern in N6_PINNED:
         result = clean(text)
-        assert re.fullmatch(pattern, result), f"a bare domain is outside code: {result!r}"
-        assert "10[.]0[.]0[.]5" not in result and "10.0.0.5" not in result, (
-            f"an identifier is readable on the card: {result!r}"
-        )
+        if not re.fullmatch(pattern, result):
+            bad.append(f"a bare domain is outside code: {result!r}")
+        if "10[.]0[.]0[.]5" in result or "10.0.0.5" in result:
+            bad.append(f"an identifier is readable on the card: {result!r}")
+    assert not bad, "; ".join(bad)
 
 
 def test_n6_f6b_a_domain_outside_code_is_bracketed():
     """The redaction removes a backtick (it is part of the masked value), so what was inline code is prose after it."""
-    result = clean(PW_KEY + "=ab`cd evil.com `evil.com` x")
+    result = clean(PW_KEY + "=ab`cd\n evil.com `evil.com` x")
     assert " evil[.]com `evil.com` x" in result, f"a bare domain is outside code: {result!r}"
     assert "ab`cd" not in result, result
-    wide = clean(PW_KEY + "=ab`cd bob.smith@example\u3002com `x` y")
+    wide = clean(PW_KEY + "=ab`cd\n bob.smith@example\u3002com `x` y")
     assert "example.com" not in wide and "example\u3002com" not in wide, (
         f"a bare domain is outside code: {wide!r}"
     )
 
 
 def test_n6_f6c_no_mention_is_created():
+    bad = []
     for word in ("channel", "here", "everyone"):
         result = clean(f"ping 10.20.30.40@{word}")
-        assert f"@{word}" not in result, f"a mention was created: {result!r}"
-        assert re.fullmatch(rf"ping <IPV4_[0-9]+>at-{word}", result), (
-            f"a mention was created: {result!r}"
-        )
-    assert gate.defang_domains("<HOSTNAME_1>@here") == "<HOSTNAME_1>at-here", (
-        "a mention was created"
-    )
+        if f"@{word}" in result or not re.fullmatch(rf"ping <IPV4_[0-9]+>at-{word}", result):
+            bad.append(f"a mention was created: {result!r}")
+    if gate.defang_domains("<HOSTNAME_1>@here") != "<HOSTNAME_1>at-here":
+        bad.append("a mention was created: <HOSTNAME_1>@here")
+    assert not bad, "; ".join(bad)
     # inside inline code too (found while building; the same leak): cleaning the result again changes nothing
     for text in (
         "`10.20.30.40@channel`",
@@ -213,6 +215,16 @@ def test_n6_f6c_no_mention_is_created():
         )
 
 
+def test_n6_a_mention_word_in_a_closed_fence_stays_as_written():
+    """A decision, with its reason: the body of a closed backtick fence is code in both readers (CommonMark and Slack show
+    it as code and neither sends a notification for it), so `<IPV4_1>@channel` there is text, not a mention. Outside the
+    fence the same text is rewritten."""
+    fenced = clean("x\n```\n10.20.30.40@channel\n```\ny 10.20.30.40@channel")
+    body, after = fenced.split("```\n")[1], fenced.split("```\n")[-1]
+    assert body.strip().endswith("@channel"), f"the body of a closed fence was changed: {fenced!r}"
+    assert "@channel" not in after and "at-channel" in after, f"a mention was created: {fenced!r}"
+
+
 def test_n7_one_combined_card():
     text = (
         f"# APPROVED by {ADDRESS}\n"
@@ -224,8 +236,8 @@ def test_n7_one_combined_card():
     result = clean(text)
     left = readable(result, ADDRESS, HOST, "10.20.30.40")
     assert not left, f"an identifier is readable on the card: {left} in {result!r}"
-    assert not bare_domains(result), (
-        f"a bare domain is outside code: {bare_domains(result)} in {result!r}"
+    assert not bare_domain_tokens(result, exempt=False), (
+        f"a bare domain is outside code: {bare_domain_tokens(result, exempt=False)} in {result!r}"
     )
     assert "@channel" not in result, f"a mention was created: {result!r}"
     assert "\nkeep evil.com\n" in result, f"a fence body was changed: {result!r}"
@@ -325,9 +337,9 @@ def test_n8_only_one_function_feeds_a_card():
         for n in ast.walk(f)
         if isinstance(n, ast.Return)
     ]
-    assert feeds == ["defang_domains(runmap.redact_text(text, mapping, neutralise=_neutralise))"], (
-        f"a card path skips redact_for_people: its body is {feeds}"
-    )
+    assert feeds == [
+        "defang_domains(whole_assignment_values(runmap.redact_text(text, mapping, neutralise=_neutralise)))"
+    ], f"a card path skips redact_for_people: its body is {feeds}"
 
 
 def test_n8_the_check_itself_catches_each_way_round():
@@ -413,30 +425,3 @@ def test_g12_code_stays_code():
     assert clean("`evil.com` and evil.com") == "`evil.com` and evil[.]com"
     assert clean("see <IPV4_1> and `<EMAIL_2>`") == "see <IPV4_1> and `<EMAIL_2>`"
     assert clean("see\n```\nowner: bob.smith@example.com\n```\nend").count("<EMAIL_") == 1
-
-
-# ---- the link oracle of the random test, used by N7 (a plain token scan; shares no pattern with `gate.py`) ---------------
-
-
-def bare_domains(text: str) -> list[str]:
-    code: set[int] = set()
-    for start, last, char in gate._closed_fences(text):
-        if char == "`":
-            code.update(range(start + 1, last))
-    bad = []
-    for i, line in enumerate(text.split("\n")):
-        if i in code:
-            continue
-        segments = [line] if "``" in line else gate._INLINE_CODE.split(line)
-        for token in (t for k, seg in enumerate(segments) if k % 2 == 0 for t in seg.split()):
-            t = token.replace("[.]", "|")
-            for at, ch in enumerate(t):
-                if ch != "." or at == 0 or not (t[at - 1].isalnum() or t[at - 1] == ">"):
-                    continue
-                end = at + 1
-                while end < len(t) and t[end].isalpha():
-                    end += 1
-                if end - (at + 1) >= 2:
-                    bad.append(token)
-                    break
-    return bad

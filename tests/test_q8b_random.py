@@ -2,7 +2,7 @@
 
 P1: a value under a credential key, or an entry of a Kubernetes Secret, in an incident case. P2 and N9: the text of an
 approval card. The generators and the oracles are the ticket's (appendix C). The oracle for a bare domain is a plain
-token scan that shares no pattern with ``approvals/gate.py``.
+token scan with its own reader of code fences (``tests/q8b_helpers.py``), not the functions of ``approvals/gate.py``.
 """
 
 from __future__ import annotations
@@ -15,20 +15,14 @@ from functools import cache
 import pytest
 
 from hadavin_sdk.approvals import channel as C
-from hadavin_sdk.approvals import gate
 from hadavin_sdk.approvals.channel import clean
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.k1b import redaction as R
 from hadavin_sdk.k1b.bundle import Bundle
-
-
-class SeededData(random.Random):
-    """A seeded generator of made-up test data, so every run draws the same cases. Never used for a secret."""
-
+from tests.q8b_helpers import ONLY_PLACEHOLDERS, bare_domain_tokens
 
 PW = "pass" + "word"
 ONE = "hunter2" + "secretXYZ"
-ONLY_PLACEHOLDERS = re.compile(rf"(?:{runmap.PLACEHOLDER.pattern})+")
 
 # --- P1 (seed 20261111, 3,000 cases)
 SEED, CASES = 20261111, 3000
@@ -115,12 +109,11 @@ def _visible(v: str) -> bool:
 @cache
 def p1_results():
     """One run of the generator for the three P1 tests: counts and the first examples of each failure."""
-    rng = SeededData(SEED)
+    rng = random.Random(SEED)  # noqa: S311 - a seeded test generator, never a secret
     res = {
         "run": 0,
         "over_255": 0,
         "a": [],
-        "b": [],
         "c": [],
         "c_checked": 0,
         "x9": [],
@@ -141,8 +134,6 @@ def p1_results():
         got = (first.get("stringData") or first)[under]
         if not (isinstance(got, str) and (got == R.MASKED or ONLY_PLACEHOLDERS.fullmatch(got))):
             res["a"].append((under, v[:60], got))
-        if any(r in got for r in runs(v)):
-            res["b"].append((under, v[:60], got))
         try:
             unchanged = runmap.redact_text(v, runmap.RunMap()) == v
         except runmap.RedactionError:
@@ -167,13 +158,6 @@ def test_p1_the_shown_value_is_only_placeholders_or_the_fixed_mask():
     )
 
 
-def test_p1_no_run_of_the_value_is_readable_under_its_key():
-    res = p1_results()
-    assert not res["b"], (
-        f"part of the value is readable: {len(res['b'])} cases, first {res['b'][:3]!r}"
-    )
-
-
 def test_p1_a_plain_value_is_masked_where_it_is_repeated():
     res = p1_results()
     assert res["c_checked"] >= 100, res["c_checked"]
@@ -193,54 +177,6 @@ def test_x9_a_value_with_special_characters_is_masked_where_it_is_repeated():
 
 def test_x9_has_cases_to_check():
     assert p1_results()["x9_checked"] >= 100, p1_results()["x9_checked"]
-
-
-# --- "outside code" and the link oracle (a plain token scan; the exemptions E1-E3 are NOT used: call with exempt=False)
-def outside_code(text):
-    code = set()
-    for start, last, ch in gate._closed_fences(text):
-        if ch == "`":
-            code.update(range(start + 1, last))
-    out = []
-    for i, line in enumerate(text.split("\n")):
-        if i in code:
-            continue
-        segs = [line] if "``" in line else gate._INLINE_CODE.split(line)
-        out += [seg for k, seg in enumerate(segs) if k % 2 == 0]
-    return out
-
-
-def bare_domain_tokens(text, exempt=True):
-    """A token (split at white space, outside code) fails when, with every `[.]` read as `|`, it still holds
-    letter-or-digit-or-`>` then `.` then two or more letters. Three exemptions, each the older code's own stated rule:
-    E1 the dot is in the part before an `@` (an e-mail's local part); E2 the letters after the dot are directly followed
-    by a digit, `_`, `-` or `@` (not the shape of a top-level domain); E3 the label starts right after `/` and the token
-    holds no placeholder. The tests call it with ``exempt=False``."""
-    bad = []
-    for seg in outside_code(text):
-        for tok in seg.split():
-            t = tok.replace("[.]", "|")
-            for i, ch in enumerate(t):
-                if ch != "." or i == 0 or not (t[i - 1].isalnum() or t[i - 1] == ">"):
-                    continue
-                j = i + 1
-                while j < len(t) and t[j].isalpha():
-                    j += 1
-                if j - (i + 1) < 2:
-                    continue
-                if exempt:
-                    if "@" in t[i:]:
-                        continue  # E1
-                    if j < len(t) and (t[j].isdigit() or t[j] in "_-@"):
-                        continue  # E2
-                    k = i
-                    while k > 0 and (t[k - 1].isalnum() or t[k - 1] in "-_"):
-                        k -= 1
-                    if k > 0 and t[k - 1] == "/" and "<" not in t:
-                        continue  # E3
-                bad.append(tok)
-                break
-    return bad
 
 
 # --- P2 (seed 8, 4,000 cases)
@@ -269,7 +205,7 @@ def _standalone(original: str, flat: str) -> bool:
 
 @cache
 def p2_results():
-    rng = SeededData(P2_SEED)
+    rng = random.Random(P2_SEED)  # noqa: S311 - a seeded test generator, never a secret
     res = {"run": 0, "leak": [], "bare": [], "twice": []}
     for _ in range(P2_CASES):
         text = p2_text(rng)
@@ -342,7 +278,7 @@ def n9_readable(text):
 
 
 def test_n9_nothing_the_first_view_masked_is_readable_in_the_returned_text():
-    rng = SeededData(N9_SEED)
+    rng = random.Random(N9_SEED)  # noqa: S311 - a seeded test generator, never a secret
     run, bad = 0, []
     for _ in range(N9_CASES):
         text = n9_text(rng)

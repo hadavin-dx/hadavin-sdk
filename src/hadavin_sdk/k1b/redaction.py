@@ -11,7 +11,8 @@ Left unchanged on purpose, so citations and queries still resolve:
 * evidence IDs (``logs/001.jsonl#2``) are built from file names and positions, not from content;
 * file names; the values of ``service``, ``kind`` and ``fault_type`` are redacted like any other text (a plain word
   passes the redactor unchanged), so a secret planted there is masked;
-* any string that is exactly a UTC timestamp (``parse_ts``), and every number.
+* any string that is exactly a UTC timestamp (``parse_ts``); numbers, except under a credential key, where they are
+  masked (a bool or None is always kept).
 
 What this does NOT catch (``LIMITS``): the redactor is pattern-based. A name in free text ("Acme asked ..."), an
 internal project name, a ticket number, a value in an unusual format, or a secret no pattern matches reaches the
@@ -25,6 +26,7 @@ import base64
 import binascii
 import dataclasses
 import re
+import unicodedata
 from collections import Counter
 from collections.abc import Callable
 from typing import Any
@@ -36,22 +38,28 @@ from hadavin_sdk.k1b.bundle import Bundle, parse_ts
 SCHEME = (
     "every text value and every key of the alert, metrics, logs, deploys, Kubernetes records and runbooks is "
     "masked with the studio redactor (pattern based; one placeholder per distinct value, per case) before the "
-    "model or the injection screen sees it; file names, evidence IDs, timestamps and numbers are kept"
+    "model or the injection screen sees it; file names, evidence IDs and timestamps are kept, and numbers are kept "
+    "except under a credential key"
 )
 LIMITS = (
     "The redactor is pattern based. It does not catch names in free text, customer or project names, ticket "
-    "numbers, values in unusual formats, or anything else no pattern matches. A value under a key that names a "
-    "credential, and every entry of a Kubernetes Secret, is always masked under its own key. The same value is "
-    "also masked where it is repeated elsewhere in the case only when all of this holds: it is a text of 4 to "
-    "255 characters directly under that key; it is made of printable ASCII characters and white space; it does "
-    "not hold both kinds of quote mark; no part of it is something another pattern masks (an e-mail address, a "
-    "host name, a key); and the copy is spelled the same way. An entry of a Secret under a key that does not "
-    "name a credential is masked elsewhere only when it also has at least 8 characters and is not all digits or "
-    "one lower-case word. Not masked where repeated: longer or shorter values, numbers, values nested deeper "
-    "under a credential key, values with control or other special characters, and copies in another spelling "
-    "(base64, capitals, wrapped over lines). A setting about a credential (a key that ends in enabled, policy, "
-    "count, expiry and the like) is shown only when its value is a yes or no word, a number or a time. Masking "
-    "is a first filter, not proof that no client data reached the model."
+    "numbers, values in unusual formats, or anything else no pattern matches.\n"
+    "- A key that names a credential (for example `password` or `api_key`) and every entry of a Kubernetes Secret "
+    "(a stored credential record) are masked under their own key. Three things are shown as written: a text that "
+    "is exactly a UTC time, a true, false or null value, and a setting about a credential (below).\n"
+    "- The same value is also masked where it is repeated elsewhere in the case only when all of this holds: it is "
+    "a text of 4 to 255 characters directly under that key; it is made of printable ASCII characters and white "
+    "space; it does not hold both kinds of quote mark; no part of it is something another pattern masks (an "
+    "e-mail address, a host name, a key); and the copy is spelled the same way.\n"
+    "- An entry of a Secret under a key that does not name a credential is masked elsewhere only when it also has "
+    "at least 8 characters and is not all digits or one lower-case word (a value such as `orders` stays readable "
+    "where it is repeated). At most 256 texts of one Secret, nested ones included, are treated this way.\n"
+    "- Not masked where repeated: longer or shorter values, numbers, values nested deeper under a credential key, "
+    "copies in another spelling (base64, capitals, wrapped over lines), and values with control or other special "
+    "characters (a copy of such a value may be shown partly masked).\n"
+    "- A setting about a credential (a key that ends in enabled, policy, count, expiry and the like) is shown only "
+    "when its value is a yes or no word, a number or a time.\n"
+    "Masking is a first filter, not proof that no client data reached the model."
 )
 KINDS_NOTE = "Counts are distinct values masked per class (EMAIL, IPV4, ARN, ...), summed over the cases; no values."
 
@@ -96,6 +104,9 @@ MASKED = "<SECRET_REDACTED>"
 _CAMEL = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
 _SPLIT = re.compile(r"[_.\-\s]+")
 _TRAILING_DIGITS = re.compile(r"(?<=[a-z])[0-9]+$")
+# The older rule was written with `re.IGNORECASE`, which also reads U+017F (long s) as `s` and U+0130 / U+0131 (dotted
+# and dotless i) as `i`; NFKC maps the long s, these two are mapped here, so a key spelled with them is still a key.
+_FOLD = str.maketrans({"\u0130": "i", "\u0131": "i", "\u017f": "s"})
 CREDENTIAL_WORDS = frozenset(
     [
         "pass",
@@ -123,19 +134,46 @@ CREDENTIAL_WORDS = frozenset(
 )
 GLUED_ENDINGS = (
     "password", "passwd", "pwd", "passphrase", "secret", "token", "apikey", "secretkey", "accesskey",
-    "privatekey", "sessionid", "sessid",
+    "privatekey", "sessionid", "sessid", "accountkey", "keydata", "certdata", "certificatedata",
 )  # fmt: skip
 # (word before, word): `api_key`, `client-key-data`, `connect.sid`
 WORD_PAIRS = frozenset(
     {
         (q, k)
-        for q in ["api", "private", "access", "secret", "signing", "encryption", "account"]
+        for q in [
+            "api",
+            "private",
+            "access",
+            "secret",
+            "signing",
+            "encryption",
+            "account",
+            "sharedaccess",
+        ]
         for k in ("key", "keys")
     }
     | {("key", "data"), ("cert", "data"), ("certificate", "data"), ("connect", "sid")}
 )
 COUNT_WORDS_BEFORE_TOKENS = frozenset(
-    ["max", "min", "input", "output", "prompt", "completion", "total", "cached"]
+    [
+        "max", "min", "input", "output", "prompt", "completion", "total", "cached", "cache", "reasoning",
+        "thinking", "audio", "image", "text", "read", "creation", "billed", "usage",
+    ]
+)  # fmt: skip
+COUNT_WORDS_AFTER_TOKENS = frozenset(
+    [
+        "used",
+        "remaining",
+        "left",
+        "per",
+        "limit",
+        "limits",
+        "budget",
+        "count",
+        "total",
+        "usage",
+        "consumed",
+    ]
 )
 SETTING_WORDS = frozenset(
     [
@@ -156,7 +194,10 @@ SETTING_VALUE = re.compile(r"(?i)true|false|yes|no|on|off|none|[0-9]{1,10}[smhdw
 
 
 def _key_words(key: str) -> list[str]:
-    return [_TRAILING_DIGITS.sub("", w) for w in _SPLIT.split(_CAMEL.sub("_", key).lower()) if w]
+    # camelCase is cut first, on the key as written (as the older rule did), then NFKC (full-width and compatibility
+    # letters read as plain letters), the fold of the three letters above, and the case
+    plain = unicodedata.normalize("NFKC", _CAMEL.sub("_", key)).translate(_FOLD).casefold()
+    return [_TRAILING_DIGITS.sub("", w) for w in _SPLIT.split(plain) if w]
 
 
 def sensitive(key: object) -> bool:
@@ -164,10 +205,13 @@ def sensitive(key: object) -> bool:
 
     The key is cut into words (at camelCase, `_`, `.`, `-` and white space; lower case; digits at the end of a word
     dropped). It is a credential key when a word is in `CREDENTIAL_WORDS`, ends with one of `GLUED_ENDINGS`, forms a
-    pair of `WORD_PAIRS` with the word before it, or is `tokens` (unless it is a count: `max_tokens`, `tokens_used`).
-    There is no exception by the last word: a key the older rule accepted is still accepted. Cost, accepted on purpose:
-    keys such as `auth_method` or `session_duration`, and env entries named `PWD`, `OLDPWD` or ending in `pwd`, are
-    masked although they hold no login secret."""
+    pair of `WORD_PAIRS` with the word before it, or is `tokens` (unless it is a count: `max_tokens`, `reasoning_tokens`,
+    `tokens_used`, `tokens_per_second`; the words are `COUNT_WORDS_BEFORE_TOKENS` and `COUNT_WORDS_AFTER_TOKENS`).
+    There is no exception by the last word: a key the older rule accepted is still accepted. Cost, accepted on purpose,
+    so a key that holds no login secret is masked: `auth_method`, `session_duration`, `sessionAffinity` (the word
+    `session` or `auth` alone), env entries named `PWD`, `OLDPWD` or ending in `pwd`, and any `tokens` key whose other
+    words are not a count word listed above. A key is read after NFKC and with the long s and the dotted and dotless
+    i written as plain letters, as the older `re.IGNORECASE` rule read it."""
     if not isinstance(key, str):
         return False
     words = _key_words(key)
@@ -176,7 +220,11 @@ def sensitive(key: object) -> bool:
         after = words[i + 1] if i + 1 < len(words) else ""
         if w in CREDENTIAL_WORDS or w.endswith(GLUED_ENDINGS) or (before, w) in WORD_PAIRS:
             return True
-        if w == "tokens" and before not in COUNT_WORDS_BEFORE_TOKENS and after != "used":
+        if (
+            w == "tokens"
+            and before not in COUNT_WORDS_BEFORE_TOKENS
+            and after not in COUNT_WORDS_AFTER_TOKENS
+        ):
             return True
     return False
 
@@ -187,12 +235,11 @@ def _setting_key(key: object) -> bool:
 
 
 def _setting_value(obj: Any) -> bool:
-    """The only values shown under a setting key: a bool, None, a number, a timestamp, a short on/off word or count."""
+    """The only values shown under a setting key: a bool, None, a number, a short on/off word or count. (A text that
+    is exactly a UTC time is shown under any key; `_walk` checks that first, so it is not repeated here.)"""
     if obj is None or isinstance(obj, bool | int | float):
         return True
-    return isinstance(obj, str) and (
-        parse_ts(obj) is not None or SETTING_VALUE.fullmatch(obj) is not None
-    )
+    return isinstance(obj, str) and SETTING_VALUE.fullmatch(obj) is not None
 
 
 FALLBACK_KEY = "secret"
@@ -237,8 +284,22 @@ def _accepted(key: str, text: str, credential: bool, f: Callable[[str], str]) ->
     return None
 
 
-def _pair(key: str, value: str, f: Callable[[str], str], known_secret: bool = False) -> str:
-    """A value whose key names a credential, or an entry of a Kubernetes Secret (`known_secret`).
+class _Budget:
+    """The texts of ONE Kubernetes Secret that may be registered (`MAX_REGISTERED_ENTRIES`, counted over the whole
+    `data` / `stringData`, nested lists and maps included); later texts get the fixed mask under their key only."""
+
+    def __init__(self) -> None:
+        self.left = MAX_REGISTERED_ENTRIES
+
+    def take(self) -> bool:
+        if self.left <= 0:
+            return False
+        self.left -= 1
+        return True
+
+
+def _pair(key: str, value: str, f: Callable[[str], str], budget: _Budget | None = None) -> str:
+    """A value whose key names a credential, or a text inside a Kubernetes Secret (`budget` is that Secret's).
 
     The value is written to the redactor behind a key word (its own key when both are plain, else the word `secret`
     and a quote mark), so the redactor's key=value rules see it; the decoded text of a base64 value is tried too. The
@@ -248,10 +309,13 @@ def _pair(key: str, value: str, f: Callable[[str], str], known_secret: bool = Fa
 
     Masked where it is repeated elsewhere in the case only within the limits of `LIMITS`: a text of 4 to 255
     characters directly under the key, printable ASCII and white space, not both kinds of quote mark, no part that
-    another pattern masks, and a copy spelled the same way. One exception to the masking is made before this function
-    is called: a text that is exactly a UTC timestamp is shown as written (`_walk`)."""
+    another pattern masks, and a copy spelled the same way. Two exceptions to the masking are made before this function
+    is called (`_walk`): a text that is exactly a UTC timestamp, and a value under a setting key that is a yes or no
+    word, a number or a time. A text of a Secret past the budget (and a credential value of such a text) is masked
+    under its key only."""
     credential = sensitive(key)
-    if not credential and not known_secret:
+    in_secret = budget is not None
+    if (not credential and not in_secret) or (in_secret and not budget.take()):
         f(value)
         return MASKED
     spellings = [value]
@@ -265,7 +329,7 @@ def _pair(key: str, value: str, f: Callable[[str], str], known_secret: bool = Fa
         if got is None:
             continue
         result = got
-        if not known_secret:
+        if not in_secret:
             return result
     if result is not None:
         return result
@@ -273,38 +337,42 @@ def _pair(key: str, value: str, f: Callable[[str], str], known_secret: bool = Fa
     return MASKED
 
 
-def _named(obj: dict) -> tuple[Any, Any]:
-    """(name, the key that holds the value) of an entry shaped {name|key: ..., value: ...}, in any letter case."""
-    nk = next((k for k in obj if isinstance(k, str) and k.lower() in ("name", "key")), None)
-    vk = next((k for k in obj if isinstance(k, str) and k.lower() == "value"), None)
-    if nk is None or vk is None or not sensitive(obj[nk]):
-        return None, None
-    return obj[nk], vk
+def _named(obj: dict) -> tuple[Any, list[Any]]:
+    """(the sensitive name, the keys that hold the value) of an entry shaped {name|key: ..., value: ...}, in any letter
+    case. EVERY name-like key is looked at (`{"name": "db", "key": "password", "value": ...}` is named by `key`), and
+    every spelling of `value` holds the value."""
+    names = [obj[k] for k in obj if isinstance(k, str) and k.lower() in ("name", "key")]
+    value_keys = [k for k in obj if isinstance(k, str) and k.lower() == "value"]
+    name = next((n for n in names if sensitive(n)), None)
+    if name is None or not value_keys:
+        return None, []
+    return name, value_keys
+
+
+def _is_secret(obj: dict) -> bool:
+    """A record of kind Secret, in any letter case (`kind: secret`)."""
+    kind = obj.get("kind")
+    return isinstance(kind, str) and kind.casefold() == "secret"
 
 
 def _walk_dict(
-    obj: dict, f: Callable[[str], str], sens: bool, known_secret: bool, secret: bool
+    obj: dict, f: Callable[[str], str], sens: bool, budget: _Budget | None, secret: bool
 ) -> dict[Any, Any]:
     """One dict. `secret`: this dict is a Kubernetes Secret, or the `spec` of a record whose kind is Secret (a bundle's
     k8s record has exactly the keys kind, name, as_of, spec, events, so the Secret's `data` sits under `spec`)."""
-    name, value_key = _named(obj)
+    name, value_keys = _named(obj)
     out: dict[Any, Any] = {}
     for k, v in obj.items():
-        if value_key is not None and k == value_key:
-            out[_key(k, f)] = _walk(v, f, str(name), sens, known_secret)
-        elif secret and k in ("data", "stringData") and isinstance(v, dict):
-            out[_key(k, f)] = {
-                _key(kx, f): _walk(vx, f, str(kx), True, i < MAX_REGISTERED_ENTRIES)
-                for i, (kx, vx) in enumerate(v.items())
-            }
+        if k in value_keys:
+            out[_key(k, f)] = _walk(v, f, str(name), sens, budget)
         elif secret and k in ("data", "stringData"):
-            # not a map (a malformed Secret): still the content of a Secret, so every text and number in it gets the
-            # fixed mask; nothing of it is registered
-            out[_key(k, f)] = _walk(v, f, str(k), True, False)
+            # the content of a Secret whatever its shape (a map, a list, a text, a number): every text in it is
+            # registered up to ONE budget, so a text copied into a log is masked there too
+            out[_key(k, f)] = _walk(v, f, str(k), True, _Budget(), True)
         elif secret and k == "spec" and isinstance(v, dict):
-            out[_key(k, f)] = _walk_dict(v, f, sens, known_secret, True)
+            out[_key(k, f)] = _walk_dict(v, f, sens, budget, True)
         else:
-            out[_key(k, f)] = _walk(v, f, k, sens, known_secret)
+            out[_key(k, f)] = _walk(v, f, k, sens, budget)
     return out
 
 
@@ -313,11 +381,13 @@ def _walk(
     f: Callable[[str], str],
     key: str | None = None,
     secret_data: bool = False,
-    known_secret: bool = False,
+    budget: _Budget | None = None,
+    secret_content: bool = False,
 ) -> Any:
     """Every string is redacted, at any depth: no key exempts a value. `key` is the parent key (or the name of a named
-    entry), `secret_data` says the value sits under a credential key or in a Secret, `known_secret` that it is an entry
-    of a Secret's `data` / `stringData` (only those and values directly under a credential key are registered)."""
+    entry), `secret_data` says the value sits under a credential key or in a Secret, `budget` that it is inside the
+    `data` / `stringData` of a Secret (only those and values directly under a credential key are registered).
+    `secret_content` is true for the `data` / `stringData` value itself: a map there gives each entry its own key."""
     own = sensitive(key)
     sens = secret_data or own
     if own and not secret_data and _setting_key(key) and _setting_value(obj):
@@ -326,16 +396,18 @@ def _walk(
         if parse_ts(obj) is not None:
             return obj
         if key is not None and sens:
-            return _pair(key, obj, f, known_secret)
+            return _pair(key, obj, f, budget)
         return f(obj)
     if isinstance(obj, int | float) and not isinstance(obj, bool) and sens:
         return MASKED
     if isinstance(obj, dict):
-        return _walk_dict(obj, f, sens, known_secret, obj.get("kind") == "Secret")
+        if secret_content:
+            return {_key(kx, f): _walk(vx, f, str(kx), True, budget) for kx, vx in obj.items()}
+        return _walk_dict(obj, f, sens, budget, _is_secret(obj))
     if isinstance(obj, list):
-        return [_walk(v, f, key, sens, known_secret) for v in obj]
+        return [_walk(v, f, key, sens, budget) for v in obj]
     if isinstance(obj, tuple):
-        return tuple(_walk(v, f, key, sens, known_secret) for v in obj)
+        return tuple(_walk(v, f, key, sens, budget) for v in obj)
     return obj
 
 

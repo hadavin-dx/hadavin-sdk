@@ -23,9 +23,10 @@ def clean(text: str) -> str:
     # The neutralising hook (sanitise, then withhold commands) runs on the text AND on every decoded view the redactor
     # tries (`redact_text(..., neutralise=)`): a view that replaces the text (because it found a secret only the decoding
     # shows) is sanitised too, so `%72m -rf /`, `%3Cimg%3E`, `&lt;!channel&gt;` cannot come back as a command, an image
-    # or a mention. After the final redaction only brackets are added, wide dots are written as dots and `@here`-style words are
-    # rewritten; nothing is removed or joined. Placeholders already in the text
-    # (`<IPV4_1>`) survive sanitising (tested) and are seeded into the map so a new one never reuses their number.
+    # or a mention. After the final redaction brackets are added, wide dots are written as dots, `@here`-style words are
+    # rewritten, and the words after a masked unquoted credential value are dropped (`whole_assignment_values`); no
+    # other text is removed or joined. Placeholders already in the text (`<IPV4_1>`) survive sanitising (tested) and are
+    # seeded into the map so a new one never reuses their number.
     text = text.replace("\x00", "")
     mapping = _seeded(text)
     out = redact_for_people(text, mapping)
@@ -55,7 +56,38 @@ def redact_for_people(text: str, mapping: dict[str, str]) -> str:
     text and on every decoded view the redactor tries), ONE redaction, then `gate.defang_domains` on the masked text.
     Bracketing dots before the redaction would hide an address from the redactor (`bob@example[.]com` is no address
     to it), so the brackets are written last."""
-    return defang_domains(runmap.redact_text(text, mapping, neutralise=_neutralise))
+    return defang_domains(
+        whole_assignment_values(runmap.redact_text(text, mapping, neutralise=_neutralise))
+    )
+
+
+# A credential key, `=` or `:`, and a placeholder the redactor wrote for its value (the redactor stops an unquoted
+# value at the first white space, so the words after it were left readable: `password=<SECRET_1> horse battery`).
+_ASSIGNED = re.compile(
+    r"(?i)(?:password|passwd|pwd|passphrase|pass|secret|token|api[_\-]?key|apikey|credential|auth)[\w.\-]{0,20}"
+    r"[\"']?[ \t]*[:=][ \t]*<SECRET_\d+>"
+)
+# The words after it, up to the end of the line or the next `key=` / `key:` / placeholder / quote.
+_TAIL_WORD = re.compile(r"[ \t]+(?![\w.\-]+[\"']?[ \t]*[:=])[^\s<>\"']+")
+
+
+def whole_assignment_values(text: str) -> str:
+    """An unquoted value that holds spaces is masked whole on a card, as it is in a case bundle: the words that follow a
+    masked credential value (up to the end of the line or the next `key=`) are dropped, so `password=<SECRET_1>` is all
+    a person sees of `password=correct horse battery staple`. Cost: prose right after an unquoted credential value on
+    the same line (`token=abc12345 failed for bob`) is dropped with it. Idempotent: it only removes."""
+    out: list[str] = []
+    pos = 0
+    for m in _ASSIGNED.finditer(text):
+        if m.start() < pos:
+            continue
+        end = m.end()
+        while (w := _TAIL_WORD.match(text, end)) is not None:
+            end = w.end()
+        out.append(text[pos : m.end()])
+        pos = end
+    out.append(text[pos:])
+    return "".join(out)
 
 
 def _seeded(text: str) -> runmap.RunMap:

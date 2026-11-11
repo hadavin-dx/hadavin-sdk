@@ -22,6 +22,7 @@ from hadavin_sdk.k1b.bundle import Bundle, load_bundle
 from hadavin_sdk.k1b.redaction import redact_bundle
 from hadavin_sdk.k1b.tools import Snapshot
 from tests import k1b_support as K
+from tests.q8b_helpers import ONLY_PLACEHOLDERS
 
 PW_KEY = "pass" + "word"
 P = "correct horse battery staple"
@@ -34,7 +35,6 @@ V256 = ("ab cd " * 50)[:256]
 ESC_VALUE = "hunter\x1b[0m2" + "secretXYZ"
 BOTH_QUOTES = "pa55\"word 'tail' part"
 DB_PW = "Zq7" + "xkW2vy9JtR4m"
-ONLY_PLACEHOLDERS = re.compile(rf"(?:{runmap.PLACEHOLDER.pattern})+")
 BREAKS = re.compile(r"[\s;&,\"']+")
 XFAIL = pytest.mark.xfail(
     strict=True,
@@ -243,7 +243,7 @@ def test_t1_the_key_rule():
 
 def test_t1_every_key_the_older_rule_accepted_is_still_accepted():
     """The rule this ticket replaced, written out here, against the new one: every key of one or two words from the
-    list below, with every separator (34,410 made-up keys, no random numbers)."""
+    list below, with every separator (about 7,000 made-up keys; the count is asserted below, no random numbers)."""
     older = re.compile(
         r"(^|[_.\-\s])(pass(word|wd|phrase)?|secret|token|api[_-]?key|authorization|credentials?"
         r"|private[_-]?key|bearer)($|[_.\-\s])",
@@ -364,18 +364,25 @@ def test_n1_an_entry_of_a_secret(label, record):
 
 
 def test_n1_a_secret_whose_data_is_not_a_map():
-    """A malformed Secret (the ticket is silent; the option that masks more): nothing of it is shown or registered."""
+    """A malformed Secret (the ticket is silent; the option that masks more): nothing of it is shown, and its texts are registered."""
     for content in (P, [P, 42], 12345678, [{"note": P}]):
         for record in (
             {"kind": "Secret", "data": content},
             {"kind": "Secret", "spec": {"stringData": content}},
         ):
-            (out, second), counts = shown(record, {"message": f"saw {P}"})
+            (out, second), _counts = shown(record, {"message": f"saw {P}"})
             text = json.dumps(out)
             assert "horse" not in text and "12345678" not in text and "42" not in text, (
                 f"part of the value is readable: a Secret whose data is not a map: {out!r}"
             )
-            assert second == {"message": f"saw {P}"} and not counts, (second, counts)
+            # the content is registered whatever its shape, so a copy of it in a log line is masked there too
+            # (all digits is not registered: it is a number, not a secret text)
+            if content != 12345678:
+                assert "horse" not in json.dumps(second), (
+                    f"a copy of the content is readable in the log line: {second!r}"
+                )
+            else:
+                assert second == {"message": f"saw {P}"}, second
 
 
 def test_n1_a_number_in_a_named_entry():
@@ -400,12 +407,14 @@ SETTING_ROWS = [
 
 
 def test_n1_a_value_under_a_setting_key_is_masked():
-    """One test, not one per row: the mutant list pins it by its plain name."""
+    """One test, not one per row (the mutant list pins it by its plain name); every failing row is listed."""
+    bad = []
     for record in SETTING_ROWS:
         (out,), _ = shown(record)
-        assert T not in json.dumps(out), f"a value under a setting key was shown: {out!r}"
         value = out["value"] if "value" in out else next(iter(out.values()))
-        assert shape_ok(value), f"a value under a setting key was shown: {out!r}"
+        if T in json.dumps(out) or not shape_ok(value):
+            bad.append(f"a value under a setting key was shown: {out!r}")
+    assert not bad, "; ".join(bad)
 
 
 def test_n1_a_list_under_a_setting_key():

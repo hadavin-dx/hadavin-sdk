@@ -16,10 +16,9 @@ from typing import Any
 
 from hadavin_sdk.approvals import slack
 from hadavin_sdk.approvals.cards import Card, Delivery
-from hadavin_sdk.approvals.channel import clean, redact_for_people
+from hadavin_sdk.approvals.channel import _seeded, clean, redact_for_people
 from hadavin_sdk.approvals.gate import withhold_commands
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.guard import runmap
 from hadavin_sdk.llm.common import post_json
 from hadavin_sdk.models import ApprovalDecision, ApprovalRequest
 
@@ -72,13 +71,7 @@ class SlackChannel:
         # The map is seeded with the placeholders the summary already holds (a fake original that never occurs in text),
         # so a placeholder this pass adds never reuses one of their numbers.
         withheld = withhold_commands(req.summary)
-        seeded = runmap.RunMap(
-            {
-                ph: "\0seed" + ph
-                for ph in (m.group(0) for m in runmap.PLACEHOLDER.finditer(withheld))
-            }
-        )
-        shown = redact_for_people(withheld, seeded)
+        shown = redact_for_people(withheld, _seeded(withheld))
         if len(shown) > self.max_card_chars:
             shown = "(the summary is too long to show here; open the full request in the console)"
         blocks: list[dict[str, Any]] = [

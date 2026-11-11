@@ -145,11 +145,39 @@ _KEY_PREFIXES = (
 # An ARN's resource part: letters, digits and the punctuation ARNs use. `;` `,` `=` `(` `)` `?` `&` `#` and quotes
 # end it, so a credential glued to an ARN is never swallowed into the identifier (and so into a stored map).
 ARN_TAIL = r"[A-Za-z0-9_\-./:*+@]"
+# The words of the generic `key=value` rule further down, one regex fragment each (kubeconfig secrets: client-key-data,
+# certificate-data; session cookies are live bearer credentials: sessionid, JSESSIONID, PHPSESSID, connect.sid). The ARN
+# and address patterns must not swallow a key of this list either. Public so that a test can feed every one of them to
+# `k1b.redaction.sensitive` (the two key lists must not drift apart).
+KEY_ALTERNATIVES = (
+    r"password", r"passwd", r"pwd", r"secret", r"access[_\-]?key", r"account[_\-]?key",
+    r"shared[_\-]?access[_\-]?key", r"private[_\-]?key", r"api[_\-]?key", r"apikey", r"auth[_\-]?token",
+    r"access[_\-]?token", r"sas[_\-]?token", r"key[_\-]?data", r"cert(?:ificate)?[_\-]?data",
+    r"session[_\-]?id", r"jsessionid", r"phpsessid", r"sessid", r"connect\.sid", r"client[_\-]?secret",
+    r"credential", r"token", r"pass(?=[\"']?\s*[:=])", r"auth(?=[\"']?\s*[:=])", r"session(?=[\"']?\s*[:=])",
+)  # fmt: skip
 # What the redactor FINDS: the same characters, but never through a `key=` that begins a credential. `*`, `+` and `@`
 # are legal ARN characters, so `...:function:billing*token=V` is ambiguous; the identifier stops before the key and
 # the key=value rule masks V. Over-redaction (an ARN segment that looks like `...token=`) is the accepted price.
-_KV_WORD = r"(?:password|passwd|pwd|secret|token|api[_\-]?key|apikey|access[_\-]?key|private[_\-]?key|credential|auth)"
-ARN_CHAR = r"(?:(?![\w.\-*+@]{0,40}?" + _KV_WORD + r"[\w.\-]{0,20}=)" + ARN_TAIL + ")"
+_KV_WORD = r"(?:auth|authorization|" + "|".join(KEY_ALTERNATIVES) + ")"
+# Any letter case (`TOKEN=`, `Authorization=`); the key may end in a quote and `:` (`..bucketpassword":"V"`, JSON).
+ARN_CHAR = (
+    r"(?:(?i:(?![\w.\-*+@]{0,40}?"
+    + _KV_WORD
+    + r"[\w.\-]{0,20}(?:=|[\"']\s*[:=])))"
+    + ARN_TAIL
+    + ")"
+)
+# The same rule for an e-mail address. Its domain part is made of letters, digits, `.` and `-`, so a credential key glued
+# to it (`bob@example.compassword=V`, no space, or a zero-width character that is removed first) would be read as the
+# last label of the domain: the address pattern ran first, swallowed the key, and `=V` stayed readable. Bug class: a
+# pattern that runs first swallows the key a later rule needs (`ARN_CHAR` above is the same class). Fix: the first
+# address pattern does not start at an `@` whose domain run holds a credential key followed by `=` or `:`; the key=value
+# rules then mask V; the address patterns appended at the end of this list (`_EMAIL_DOMAIN` without the guard) mask the
+# address, with the key still in its place.
+_GLUED_KEY_WORD = r"(?:authorization|" + "|".join(KEY_ALTERNATIVES) + ")"
+_NO_GLUED_KEY = r"(?i:(?![A-Za-z0-9.\-]{0,255}?" + _GLUED_KEY_WORD + r"[\w\-]{0,20}[\"']?\s*[:=]))"
+_EMAIL_DOMAIN = r"[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # A whole PEM private key block — the highest-value secret that turns up in a misconfig dump.
     # PEM and PGP. A key cut off by a line-length limit has no END line: mask to the end.
@@ -235,7 +263,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "EMAIL",
         re.compile(
-            r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{1,254}(?:@|%40)[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"
+            r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{1,254}(?:@|%40)" + _NO_GLUED_KEY + _EMAIL_DOMAIN
         ),
     ),
     # IBAN (ISO 13616): a REAL country code + 2 check digits + 11-30 alnum BBAN. Financial PII in
@@ -485,7 +513,11 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # Header values and client flags that carry a credential whole (2026-09-27 audit).
     (
         "SECRET",
-        re.compile(r"(?i)\bauthorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+\s+)?([^\s\"']{8,})"),
+        re.compile(
+            # no boundary before the word: a key glued to a host or an address (`example.comAuthorization=V`,
+            # `HTTP_AUTHORIZATION=V`) is a key too, as in the generic key rule below (cost: `reauthorization=...` too)
+            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+\s+)?([^\s\"']{8,})"
+        ),
     ),
     # The whole cookie value: it may hold placeholders already placed (they are stored restored, see find()).
     # Stopping at `<` left every cookie after a masked one in clear (seventh review, 2026-10-01). Any key ending
@@ -595,15 +627,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             # the .npmrc form (//registry/:_authToken=) are caught — ubiquitous in access/CI logs.
             # The key starts where the previous character is not a key character (any separator, ASCII or
             # Unicode): an allowlist of key characters, not a list of delimiters (K5 review rounds 1-3).
-            r"(?i)(?<![\w.\-])[\w.\-]{0,40}"
-            r"(?:password|passwd|pwd|secret|access[_\-]?key|account[_\-]?key|shared[_\-]?access[_\-]?key"
-            r"|private[_\-]?key|api[_\-]?key|apikey|auth[_\-]?token|access[_\-]?token|sas[_\-]?token"
-            # kubeconfig secrets: client-key-data (the private key), certificate-data.
-            r"|key[_\-]?data|cert(?:ificate)?[_\-]?data"
-            # session cookies are live bearer credentials: sessionid, JSESSIONID, PHPSESSID, connect.sid.
-            r"|session[_\-]?id|jsessionid|phpsessid|sessid|connect\.sid"
-            r"|client[_\-]?secret|credential|token|pass(?=[\"']?\s*[:=])|auth(?=[\"']?\s*[:=])"
-            r"|session(?=[\"']?\s*[:=]))[\w.\-]{0,20}"
+            r"(?i)(?<![\w.\-])[\w.\-]{0,40}(?:" + "|".join(KEY_ALTERNATIVES) + r")[\w.\-]{0,20}"
             # optional closing quote after the key so a JSON credential ("password": "x") is matched too
             r"[\"']?\s*[:=]\s*[\"']?"
             # The value: any non-separator char, OR a comma that does NOT begin a new key=value pair
@@ -679,9 +703,7 @@ PATTERNS.append(
 PATTERNS.append(
     (
         "EMAIL",
-        re.compile(
-            r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{255,}(?:@|%40)[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"
-        ),
+        re.compile(r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{255,}(?:@|%40)" + _EMAIL_DOMAIN),
     )
 )
 
@@ -691,6 +713,15 @@ PATTERNS.append(
     (
         "HIGHENTROPY",
         re.compile(r"(?<![A-Za-z0-9+/_\-])[A-Za-z0-9+_\-]{129,}={0,2}(?![A-Za-z0-9+/=_\-])"),
+    )
+)
+
+# The address patterns again, without the guard: an address whose domain run held a glued credential key was skipped
+# above, and its value is masked by now (`bob@example.compassword=<SECRET_1>`), so the address is masked here.
+PATTERNS.append(
+    (
+        "EMAIL",
+        re.compile(r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{1,254}(?:@|%40)" + _EMAIL_DOMAIN),
     )
 )
 

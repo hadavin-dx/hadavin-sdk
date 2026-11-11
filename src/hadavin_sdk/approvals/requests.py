@@ -30,15 +30,23 @@ RESEND_AFTER = timedelta(seconds=60)  # more than 2x a channel call's timeout
 WARNING = "WARNING: the inputs read like instructions to an AI. Check them before approving. "
 
 
-def summary(plan: Plan, detector: Detector | None = None) -> str:
+def summary(
+    plan: Plan, detector: Detector | None = None, target_labels: Mapping[str, str] | None = None
+) -> str:
     """Template-built, never by the model; inputs redacted and link-free. Inputs that read like instructions
-    (the model copied them from a document) get a warning so a person does not approve them on autopilot."""
+    (the model copied them from a document) get a warning so a person does not approve them on autopilot.
+
+    The target is masked like any other text, so a target written as a host name reads `<HOSTNAME_1>` on
+    the card. `target_labels` is the way round it: the integrator's own display name per target
+    system (`{"<system name>": "orders-db"}`), written to the card instead of the system name. A label is
+    integrator-chosen text and is masked like the rest, so a label that is itself shaped like a host name is masked."""
     inputs = canonical_json(plan.inputs)
+    system = (target_labels or {}).get(plan.target.system, plan.target.system)
     flagged = detector is not None and injection_check(detector, inputs, "approval_summary").flagged
     try:
         return clean(
             f"{WARNING if flagged else ''}{plan.agent_id} asks to run {plan.action_id} "
-            f"v{plan.action_version} ({plan.risk_class}) on {plan.target.system}. Inputs: {inputs}. "
+            f"v{plan.action_version} ({plan.risk_class}) on {system}. Inputs: {inputs}. "
             f"Expected: {plan.expected_outcome}. Plan {plan.hash()[:12]}."
         )
     except (
@@ -46,7 +54,7 @@ def summary(plan: Plan, detector: Detector | None = None) -> str:
     ):  # inputs too large to redact (or nested too deep): the approver still sees what and where
         return clean(
             f"{WARNING if flagged else ''}{plan.agent_id} asks to run {plan.action_id} "
-            f"v{plan.action_version} ({plan.risk_class}) on {plan.target.system}. "
+            f"v{plan.action_version} ({plan.risk_class}) on {system}. "
             f"Inputs: (too large to show here). Plan {plan.hash()[:12]}."
         )
 
@@ -64,9 +72,11 @@ class Approvals:
         on_decided: OnDecided,
         clock: Callable[[], datetime] = now,
         detector: Detector | None = None,
+        target_labels: Mapping[str, str] | None = None,
     ) -> None:
         self.store, self.audit, self.registry, self.channel = store, audit, registry, channel
         self.on_decided, self.clock, self.detector = on_decided, clock, detector
+        self.target_labels = dict(target_labels or {})
 
     def receive(
         self, headers: Mapping[str, str], body: bytes, *, record_only: bool = False
@@ -102,7 +112,7 @@ class Approvals:
             steps=chain.steps,
             step_expires_at=self.clock() + timedelta(seconds=chain.steps[0].timeout_s),
             requested_by=requested_by,
-            summary=summary(plan, self.detector),
+            summary=summary(plan, self.detector, self.target_labels),
         )
         self.store.save_approval_request(req)
         req = self._send(req, chain.steps[0].approver_ids)
