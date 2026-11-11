@@ -1158,7 +1158,8 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 |---|---|---|---|---|---|---|
 | (none running) | Step 0 done; PR89 partial evidence run inline, worktree /home/user/build/EV-P89-db0d9eb | | | idle | see AUTONOMOUS-LOG |
 | EV-P89 a092be0f | EVIDENCE RUNNER PR89 db0d9eb full suite | 13:28Z | +60m | 13:28Z | running | read report |
-| R-P89 af950fd4,a2a4d816,a384da9c | egm reviewers PR89 snapshot p89-db0d9eb | 13:28Z | +30m | 13:28Z | running | save to handover/reviews/PR89 |
+| R-P89 af950fd4,a2a4d816,a384da9c | egm reviewers PR89 snapshot p89-db0d9eb | 13:28Z | +30m | 13:28Z | CLOSED reports saved reviews/PR89 | save to handover/reviews/PR89 |
 | B-PR77 a23fcc26 | builder PR77 from wip/P2d-1-w6 | 13:28Z | +60m | 13:28Z | running | checkpoint 30m |
 | M-P3a2 a5853cac | memo P3a-2 history | 13:28Z | +30m | 13:28Z | running | read memo |
 | B-PR85 a758870b | retarget branch core/P5b2-main | 13:28Z | +45m | 13:28Z | running | check checks |
+| B-PR89-r18 ada68aaa | PR89 r18 fix batch (worktree /home/user/build/B-PR89) | 13:31Z | +90m | 13:31Z | running | checkpoint 30m; then fresh reviewers r19 on new head |
