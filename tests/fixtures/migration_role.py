@@ -86,7 +86,9 @@ def _mark_the_role(db) -> None:
     inside its own database (a lock belongs to one database). The sweep never touches a role whose mark is there. One
     marking connection per database (`_database_of`), kept open until the process ends. If the marking
     connection has died (the database was dropped with FORCE, an idle limit, a restart, `pg_terminate_backend`) it is
-    opened again here, because without it a parallel sweep would drop a role that is still in use."""
+    opened again here, because without it a parallel sweep would drop a role that is still in use. There is a short
+    window between the death of the marking connection and the next connect in which a sweep of another test run can
+    still drop the role; a test that is already running on it then fails (a stated window, not closed)."""
     import psycopg
 
     key = _database_of(db.info.dsn)  # no password in the key
@@ -106,15 +108,35 @@ def _mark_the_role(db) -> None:
         autocommit=True,
     )
     try:
-        mark.execute("SELECT pg_advisory_lock(%s)", (_mark_key(_TOKEN),))
+        _take_the_mark(mark)
     except BaseException:
         mark.close()
         raise
     _MARKS[key] = mark
 
 
+_MARK_WAIT_SECONDS = 15
+
+
+def _take_the_mark(mark) -> None:
+    """Take the advisory lock of this run on the marking connection, trying again for at most `_MARK_WAIT_SECONDS`. A
+    blocking wait could hang the test setup for ever: when the old marking connection died half-open (a firewall drop, a
+    cut network) the server may still hold its lock until it notices. A clear error ends the wait instead."""
+    import time
+
+    deadline = time.monotonic() + _MARK_WAIT_SECONDS
+    while not mark.execute("SELECT pg_try_advisory_lock(%s)", (_mark_key(_TOKEN),)).fetchone()[0]:
+        if time.monotonic() >= deadline:
+            raise RuntimeError(
+                f"the marking connection of this test run could not take its lock in {_MARK_WAIT_SECONDS} seconds: "
+                "the server still holds the lock of an earlier marking connection of this run (a half-open connection). "
+                "End that session on the server (pg_terminate_backend) and run the tests again."
+            )
+        time.sleep(0.2)
+
+
 _CAN_SEE_SESSIONS_SQL = (
-    "SELECT rolsuper OR pg_has_role(current_user, 'pg_read_all_stats', 'MEMBER') FROM pg_roles "
+    "SELECT rolsuper OR pg_has_role(current_user, 'pg_read_all_stats', 'USAGE') FROM pg_roles "
     "WHERE rolname = current_user"
 )
 
@@ -180,7 +202,11 @@ def sweep_stale_roles(db) -> list[str]:
                     db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(name)))
                 dropped.append(name)
             except psycopg.Error as e:
-                where = ", ".join(_databases_that_still_hold(db, name)) or "none found"
+                try:
+                    where = ", ".join(_databases_that_still_hold(db, name)) or "none found"
+                # a login that may not read `pg_shdepend` must not fail the setup
+                except psycopg.Error:
+                    where = "not known (this login cannot read pg_shdepend)"
                 print(
                     f"stale test role {name} was not dropped: {type(e).__name__}; it still holds objects in: {where}"
                 )

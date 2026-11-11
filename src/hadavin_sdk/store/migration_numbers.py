@@ -11,7 +11,7 @@ is passed in) and `read_files`.
 Why a lexer of our own (decided 2026-11-06). The text rules do exactly two jobs the database cannot do for us:
 (a) hand `migrate._scan` a view of the file without comments, so it can refuse a `CREATE TABLE` that has no exact grants;
 (b) refuse transaction control (`COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT` ...) before the run, because a hidden `COMMIT`
-ends the one migration transaction. The other refusals (`SET`, `RESET`, `ALTER ROLE`, `DO`, `EXECUTE` ...) are a tripwire
+ends the one migration transaction. The other refusals (`SET`, `RESET`, `ALTER ROLE`, `DO`, `EXECUTE` ...) are a quick check that catches accidents
 against accidents and a help to the reviewer: the guard that cannot be blinded by spelling is the read-back in `migrate()`
 after each file (`migrate._check_read_back`), which compares the role, `search_path`, `standard_conforming_strings`,
 `backslash_quote`, `client_encoding`, the two time limits, the role memberships, the saved per-role settings and the trigger state. A higher rung was looked at: the SQL tokenizer of sqlglot
@@ -30,7 +30,7 @@ alone or raises `SqlReadError`. `lex` is the same as `statement_text`.
 
 The lexer follows the PostgreSQL scanner rules that matter for where a string, comment or body starts and ends, with
 `standard_conforming_strings = on`. Preconditions: the migration role is NOT a superuser (statements such as
-`CREATE EXTENSION`, `COPY ... PROGRAM` and `LOAD` are refused here as a tripwire, not as the guard), the server is
+`CREATE EXTENSION`, `COPY ... PROGRAM` and `LOAD` are refused here as a quick check that catches accidents, not as the guard), the server is
 PostgreSQL 16 or later, and the files are UTF-8 text without hidden characters. The scanner rules were compared with
 pglast 8.7 (the PostgreSQL 17 scanner) and probed on 16.15; an older server is not supported (the role checks need 16). `refused_statements` refuses `CREATE EXTENSION` outright: no extension is allowed
 today, because no planned migration creates one (checked in the pull request text). If one is wanted, add
@@ -664,13 +664,23 @@ _TRANSACTION = re.compile(
 _SET = re.compile(r"(set|reset)\b", re.IGNORECASE)
 _BLIND = re.compile(
     rf"(do|execute|load|discard|alter{_W}role|alter{_W}user|alter{_W}group|alter{_W}system|alter{_W}database"
-    rf"|create{_W}role|create{_W}user|create{_W}group|create{_W}extension|drop{_W}owned|reassign{_W}owned)\b",
+    rf"|create{_W}role|create{_W}user|create{_W}group|create{_W}extension|drop{_W}owned|reassign{_W}owned"
+    rf"|alter{_W}default{_W}privileges|alter{_W}publication)\b",
     re.IGNORECASE,
 )
 # `COPY ... PROGRAM` runs a shell command; `GRANT r TO s` and `REVOKE r FROM s` (no ON) change role membership.
 _COPY_PROGRAM = re.compile(r"copy\b.*?\bprogram\b", re.IGNORECASE | re.DOTALL)
 _ROLE_MEMBERSHIP = re.compile(
     rf"(grant|revoke)\b(?!.*?{_NAME_START}on{_NAME_END})", re.IGNORECASE | re.DOTALL
+)
+# A file may `GRANT` or `REVOKE` only on a table, a view, a sequence, a column or a function (`ON name`, `ON TABLE`,
+# `ON SEQUENCE`, `ON FUNCTION`, `ON ROUTINE`). A right on the schema itself, a database, a type, a domain, a language, a
+# large object, a foreign server or data wrapper, a tablespace, a parameter, or on `ALL ... IN SCHEMA` (every object, also
+# of another schema) is refused: the read-back after the file does not look at those places. Over-matching is the safe direction.
+_GRANT_TARGET = re.compile(
+    rf"(grant|revoke)\b.*?{_NAME_START}on{_W}"
+    rf"(schema|database|type|domain|language|large|foreign|tablespace|parameter|all|procedure){_NAME_END}",
+    re.IGNORECASE | re.DOTALL,
 )
 
 
@@ -679,9 +689,9 @@ def refused_statements(text: str) -> list[str]:
     transaction control; every `SET` and `RESET`, with no exception (`SET LOCAL lock_timeout` and `SET LOCAL statement_timeout` included: `migrate` sets
     the two limits itself and the read-back would refuse a file that changes them, so the text scan says so first);
     `DO`, `EXECUTE`, `LOAD`, `DISCARD`, `COPY ... PROGRAM`, `ALTER ROLE|USER|GROUP|SYSTEM|DATABASE`,
-    `CREATE ROLE|USER|GROUP|EXTENSION`, `GRANT` and `REVOKE` without `ON` (role membership), `DROP OWNED`,
+    `CREATE ROLE|USER|GROUP|EXTENSION`, `ALTER DEFAULT PRIVILEGES`, `ALTER PUBLICATION`, `GRANT` and `REVOKE` without `ON` (role membership) or on anything but a table, view, sequence, column or function, `DROP OWNED`,
     `REASSIGN OWNED`; hidden characters (`hidden_character`) come first. A rule matches at the START of a
-    statement (the cleaned text split at `;`, leading whitespace removed). A tripwire against accidents, not a
+    statement (the cleaned text split at `;`, leading whitespace removed). A quick check that catches accidents, not a
     sandbox: the read-back after each file is the guard."""
     cleaned, problem = lex(text)
     reasons = [hidden] if (hidden := hidden_character(text)) else []
@@ -716,5 +726,10 @@ def refused_statements(text: str) -> list[str]:
         elif m := _ROLE_MEMBERSHIP.match(s):
             reasons.append(
                 f"{m.group(1).upper()} without ON: the guard cannot read what this statement does or changes"
+            )
+        elif m := _GRANT_TARGET.match(s):
+            reasons.append(
+                f"{m.group(1).upper()} on a place other than a table, view, sequence, column or function "
+                f"({m.group(2).upper()}): the guard does not read rights there"
             )
     return reasons

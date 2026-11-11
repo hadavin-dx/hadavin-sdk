@@ -102,7 +102,14 @@ def test_copy_program_is_refused_across_blanks_and_lines():
 
 
 # The only patterns that may keep the word boundary: a match there REFUSES, so an over-match is the safe direction.
-BOUNDARY_ALLOWED_IN = {"_TRANSACTION", "_SET", "_BLIND", "_COPY_PROGRAM", "_ROLE_MEMBERSHIP"}
+BOUNDARY_ALLOWED_IN = {
+    "_TRANSACTION",
+    "_SET",
+    "_BLIND",
+    "_COPY_PROGRAM",
+    "_ROLE_MEMBERSHIP",
+    "_GRANT_TARGET",
+}
 
 
 def test_the_word_boundary_is_used_only_where_a_match_refuses():

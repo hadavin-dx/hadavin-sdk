@@ -32,9 +32,15 @@ What `migrate` does, in order:
    every role any of them is a member of; a change to any other role (for example by another session on the same
    server) is not compared. Then it asks the role questions again, so a file cannot leave the migration role holding
    what the first check refused.
-5. After the grants it reads back who holds a right on each relation and function of this package and refuses a right
-   for any role other than the owner and the roles named in this run, for PUBLIC (everyone), and a SECURITY DEFINER
-   function that is not on the reviewed list.
+5. After the grants it reads from the server who holds a right where this package lives, and refuses what this package
+   does not give. It looks at: the tables, views and sequences in `GRANTS`; every function a file names or the migration
+   role owns; every table, view or sequence that is new, and every function that is new or changed, in ANY schema of the
+   database (a file can make one by dynamic SQL or write another schema in front of the name); the schema of the run
+   (who may create in it); and the default rights of the migration role (`ALTER DEFAULT PRIVILEGES`, which a file may
+   not set and an administrator may have). It refuses a right for any role other than the owner and the roles named in
+   this run, a right for PUBLIC (everyone), an owner that a file handed an object to, a right that may be passed on
+   (`WITH GRANT OPTION`) on a function, and a SECURITY DEFINER function (one that runs with the rights of its owner)
+   that is not on the reviewed list. A role that only has USAGE on the schema (it may look a name up) is not refused.
 
 When `migrate` refuses, a database administrator repairs by hand (the full runbook, cases (a) to (h), is the section
 "Migration repair steps" of CHANGELOG.md). Every hand step is a FILE of SQL run with `psql -X -v ON_ERROR_STOP=1 -f <file>`
@@ -796,102 +802,246 @@ def _refuse_foreign_owned(db, texts) -> None:
 # migration role can do. Adding a name here is a code change that a reviewer reads.
 REVIEWED_DEFINER_FUNCTIONS: frozenset[str] = frozenset()
 
-_ACL_RELATION_SQL = (
-    "SELECT c.relname, CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END, a.privilege_type, "
-    "a.grantee = c.relowner, NULL::text FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
-    "CROSS JOIN LATERAL aclexplode(c.relacl) a WHERE n.nspname = %s AND c.relname = ANY(%s) "
-    "AND c.relkind IN ('r','p','v','m','S') "
-    "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e') "
-    "UNION ALL "
-    "SELECT c.relname, CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END, a.privilege_type, "
-    "a.grantee = c.relowner, t.attname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
-    "JOIN pg_attribute t ON t.attrelid = c.oid AND t.attnum > 0 AND NOT t.attisdropped "
-    "CROSS JOIN LATERAL aclexplode(t.attacl) a WHERE n.nspname = %s AND c.relname = ANY(%s) "
-    "AND c.relkind IN ('r','p','v','m','S') "
-    "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e') ORDER BY 1, 2, 3"
+# The objects of the whole database that a run is compared on: not the system schemas, not what an installed extension
+# owns (`pg_depend`, type `e`: the extension's, not this package's).
+# Parts of the queries below, put in by `_sql` (a plain text replacement of a marker, so that no query is built by a
+# format string).
+_NOT_SYSTEM_PARTS = {
+    "@NOT_SYSTEM_C@": "n.nspname <> 'information_schema' AND n.nspname !~ '^pg_' "
+    "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e')",
+    "@NOT_SYSTEM_P@": "n.nspname <> 'information_schema' AND n.nspname !~ '^pg_' "
+    "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_proc'::regclass AND d.objid = p.oid AND d.deptype = 'e')",
+    "@ME@": "(SELECT oid FROM pg_roles WHERE rolname = current_user)",
+}
+
+
+def _sql(text: str) -> str:
+    for marker, part in _NOT_SYSTEM_PARTS.items():
+        text = text.replace(marker, part)
+    return text
+
+
+_FUNCTION_STATE_SQL = _sql(
+    "SELECT p.oid, p.prosecdef, coalesce(p.proacl::text, ''), pg_get_userbyid(p.proowner) FROM pg_proc p "
+    "JOIN pg_namespace n ON n.oid = p.pronamespace WHERE "
+    "@NOT_SYSTEM_P@"
 )
-# Objects that belong to an installed extension (`pg_depend`, type `e`) are the extension's, not this package's.
-_ACL_FUNCTION_SQL = (
+_RELATION_STATE_SQL = _sql(
+    "SELECT c.oid, pg_get_userbyid(c.relowner) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
+    "WHERE c.relkind IN ('r','p','v','m','S') AND @NOT_SYSTEM_C@"
+)
+# What is looked at after the files: (1) the relations and functions this package names in its schema, (2) every
+# function in the schema that the migration role owns (a function replaced with the same id keeps its id), and (3) every
+# relation that is new and every function that is new or changed (its SECURITY DEFINER flag, its rights or its owner)
+# ANYWHERE in the database, whatever schema the file wrote and however the statement was made.
+_ACL_RELATION_SQL = _sql(
+    "SELECT c.relname, CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END, a.privilege_type, "
+    "a.grantee = c.relowner AND (c.relowner = @ME@ OR c.oid = ANY(%(kept)s::oid[])), NULL::text, n.nspname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
+    "CROSS JOIN LATERAL aclexplode(c.relacl) a WHERE ((n.nspname = %(schema)s AND c.relname = ANY(%(managed)s)) OR c.oid = ANY(%(new_rel)s::oid[])) "
+    "AND c.relkind IN ('r','p','v','m','S') AND "
+    "@NOT_SYSTEM_C@"
+    " UNION ALL "
+    "SELECT c.relname, CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END, a.privilege_type, "
+    "a.grantee = c.relowner AND (c.relowner = @ME@ OR c.oid = ANY(%(kept)s::oid[])), t.attname, n.nspname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
+    "JOIN pg_attribute t ON t.attrelid = c.oid AND t.attnum > 0 AND NOT t.attisdropped "
+    "CROSS JOIN LATERAL aclexplode(t.attacl) a WHERE ((n.nspname = %(schema)s AND c.relname = ANY(%(managed)s)) OR c.oid = ANY(%(new_rel)s::oid[])) "
+    "AND c.relkind IN ('r','p','v','m','S') AND "
+    "@NOT_SYSTEM_C@"
+    " ORDER BY 1, 2, 3"
+)
+_ACL_FUNCTION_SQL = _sql(
     "SELECT p.proname, p.oid::regprocedure::text, p.prosecdef AS definer, p.proacl IS NULL, "
     "CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END, a.privilege_type, "
-    "a.grantee = p.proowner FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace "
-    "LEFT JOIN LATERAL aclexplode(p.proacl) a ON true WHERE n.nspname = %s AND p.proname = ANY(%s) "
-    "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_proc'::regclass AND d.objid = p.oid AND d.deptype = 'e') ORDER BY 1, 2, 5, 6"
+    "a.grantee = p.proowner AND (p.proowner = @ME@ OR p.oid = ANY(%(kept)s::oid[])), coalesce(a.is_grantable, false) "
+    "FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace "
+    "LEFT JOIN LATERAL aclexplode(p.proacl) a ON true "
+    "WHERE ((n.nspname = %(schema)s AND (p.proname = ANY(%(managed)s) OR p.proowner = @ME@)) OR p.oid = ANY(%(changed)s::oid[])) AND "
+    "@NOT_SYSTEM_P@"
+    " ORDER BY 1, 2, 5, 6"
 )
-
-
-_FUNCTION_IDS_SQL = (
-    "SELECT p.oid, p.proname FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace "
-    "WHERE n.nspname = current_schema()"
+# An object whose owner is not the migration role (the owner row of an ACL is hidden while the ACL is NULL).
+_ACL_OWNER_SQL = _sql(
+    "SELECT 'table or sequence', c.relname, pg_get_userbyid(c.relowner) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
+    "WHERE ((n.nspname = %(schema)s AND c.relname = ANY(%(managed)s)) OR c.oid = ANY(%(new_rel)s::oid[])) AND c.relkind IN ('r','p','v','m','S') "
+    "AND c.relowner <> @ME@ AND c.oid <> ALL(%(kept)s::oid[]) AND "
+    "@NOT_SYSTEM_C@"
+    " UNION ALL "
+    "SELECT 'function', p.oid::regprocedure::text, pg_get_userbyid(p.proowner) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace "
+    "WHERE ((n.nspname = %(schema)s AND (p.proname = ANY(%(managed)s) OR p.proowner = @ME@)) OR p.oid = ANY(%(changed)s::oid[])) "
+    "AND p.proowner <> @ME@ AND p.oid <> ALL(%(kept)s::oid[]) AND "
+    "@NOT_SYSTEM_P@"
+    " ORDER BY 1, 2"
 )
+# The schema itself: who may use it and who may create in it (a role that may create in the schema can plant a function
+# that a role of this package then calls, so a CREATE right is the one that matters most).
+_ACL_SCHEMA_SQL = _sql(
+    "SELECT CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END, a.privilege_type, a.is_grantable, "
+    "a.grantee = n.nspowner OR a.grantee = @ME@ FROM pg_namespace n CROSS JOIN LATERAL aclexplode(n.nspacl) a "
+    "WHERE n.nspname = %s ORDER BY 1, 2"
+)
+# Default rights (`ALTER DEFAULT PRIVILEGES`) of the migration role, for every schema and for the schema of the run: they
+# decide the rights of every object this role makes LATER, also outside `migrate`. An administrator may have set them.
+_ACL_DEFAULT_SQL = _sql(
+    "SELECT d.defaclobjtype::text, coalesce(n.nspname, 'every schema'), "
+    "CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END, a.privilege_type "
+    "FROM pg_default_acl d LEFT JOIN pg_namespace n ON n.oid = d.defaclnamespace "
+    "CROSS JOIN LATERAL aclexplode(d.defaclacl) a "
+    "WHERE d.defaclrole = @ME@ AND (d.defaclnamespace = 0 OR n.nspname = %s) AND a.grantee <> d.defaclrole ORDER BY 1, 2, 3, 4"
+)
+_DEFAULT_KINDS = {"r": "tables", "S": "sequences", "f": "functions", "T": "types", "n": "schemas"}
 
 
-def _function_ids(db) -> dict[int, str]:
-    """Every function in the schema of the run, by id: read before the files run and again after, so a function a file
-    made in a way the text rules do not read (for example `EXECUTE format('CREATE FUNCTION ...')` inside a `$$` body)
-    is found by what is new."""
-    return {oid: name for oid, name in db.execute(_FUNCTION_IDS_SQL).fetchall()}
+class _Objects:
+    """What exists in the whole database (not the system schemas): every function with its SECURITY DEFINER flag, its
+    rights and its owner, and every relation by id. Read before the files run and after them."""
+
+    def __init__(self, functions: dict[int, tuple], relations: dict[int, str]) -> None:
+        self.functions = functions
+        self.relations = relations
 
 
-def _refuse_unlisted_grantees(db, texts, named, made_here: frozenset[str] = frozenset()) -> None:
-    """After every file and every grant of this run: read the rights back from the server (`relacl`, the column
-    rights and `proacl`) for every relation in `GRANTS`, `schema_migrations` and every function a file creates. Only the
-    owner and the runtime, portal and purge roles NAMED in this run may hold a right there (what each of those three may
-    do is checked by `effective_problems`). A right for any other role, or for PUBLIC (everyone), is refused, also when
-    `migrate` runs with no role arguments; a SECURITY DEFINER function is refused unless it is on
-    `REVIEWED_DEFINER_FUNCTIONS`. A function nobody granted anything to has the default right "everyone may call it":
-    that default is removed here (`REVOKE ... FROM PUBLIC`), so only the owner may call it. The run is in one
-    transaction, so a refusal keeps nothing. `made_here` are the names of the functions that are new after the files
-    ran, however they were made; they are looked at like the functions the file text names."""
+def _objects(db) -> _Objects:
+    functions = {row[0]: tuple(row[1:]) for row in db.execute(_FUNCTION_STATE_SQL).fetchall()}
+    return _Objects(functions, {r[0]: r[1] for r in db.execute(_RELATION_STATE_SQL).fetchall()})
+
+
+def _changed_since(
+    before: _Objects, after: _Objects
+) -> tuple[frozenset[int], frozenset[int], frozenset[int]]:
+    """(the functions that are new or changed, the relations that are new, the objects that kept the owner they had
+    before the files): found by what the files left behind, so a function or table made by dynamic SQL, written with
+    another schema, or replaced under the same id is found. An owner other than the migration role is accepted only for
+    an object that already had it before the files (a database first built under a role the migration role belongs to:
+    `_refuse_foreign_owned` looked at that before); an owner that a file handed over is refused."""
+    functions = frozenset(i for i, st in after.functions.items() if before.functions.get(i) != st)
+    kept = {
+        i
+        for i, st in after.functions.items()
+        if i in before.functions and before.functions[i][2] == st[2]
+    }
+    kept |= {i for i, owner in after.relations.items() if before.relations.get(i) == owner}
+    return functions, frozenset(set(after.relations) - set(before.relations)), frozenset(kept)
+
+
+def _refuse_unlisted_grantees(
+    db,
+    texts,
+    named,
+    changed_functions: frozenset[int] = frozenset(),
+    new_relations: frozenset[int] = frozenset(),
+    kept_owner: frozenset[int] = frozenset(),
+) -> None:
+    """After every file and every grant of this run, read from the server who holds a right where this package lives, and
+    refuse anything this package does not give. Looked at: the relations (tables, views, sequences) in `GRANTS` and
+    `schema_migrations`, every function this package names, every function in the schema that the migration role owns,
+    every relation that is new after the files and every function that is new or changed, in any schema; the schema of
+    the run; and the default rights of the migration role. Only the owner (the migration role itself) and the runtime,
+    portal and purge roles NAMED in this run may hold a right there; a right for any other role, or for PUBLIC
+    (everyone), an owner other than the migration role, a right that may be passed on (`WITH GRANT OPTION`) on a
+    function, and a SECURITY DEFINER function that is not on `REVIEWED_DEFINER_FUNCTIONS`, are refused, also when
+    `migrate` runs with no role arguments. How much each of the three named roles may do on tables, views, sequences
+    and columns is checked by `effective_problems`; on a function they may only execute it. A function nobody granted
+    anything to has the default right "everyone may call it": that default is removed here (`REVOKE ... FROM PUBLIC`),
+    so only the owner may call it. Any role may have USAGE on the schema (looking a name up; PUBLIC has it by default on `public`), but no role other than the owner and the named roles may create in it.
+    The run is in one transaction, so a refusal keeps nothing."""
     schema = db.execute("SELECT current_schema()").fetchone()[0]
-    managed = sorted({*_managed_names(texts, schema), *made_here})
+    managed = sorted(_managed_names(texts, schema))
     allowed = set(named)
+    keys = {
+        "schema": schema,
+        "managed": managed,
+        "changed": sorted(changed_functions),
+        "new_rel": sorted(new_relations),
+        "kept": sorted(kept_owner),
+    }
     problems: list[str] = []
-    for rel, who, priv, is_owner, col in db.execute(
-        _ACL_RELATION_SQL, (schema, managed, schema, managed)
-    ).fetchall():
+    for rel, who, priv, is_owner, col, rel_schema in db.execute(_ACL_RELATION_SQL, keys).fetchall():
         if not is_owner and who not in allowed:
             where = f"{_label(rel)}.{_label(col)}" if col else _label(rel)
-            problems.append(f"{_label(who)} holds {priv} on {where}")
+            problems.append(f"{_label(who)} holds {priv} on {_where_in(rel_schema, schema, where)}")
+    for kind, name, owner in db.execute(_ACL_OWNER_SQL, keys).fetchall():
+        problems.append(
+            f"the {kind} {_label(name)} was handed to {_label(owner)} (it is not owned by the migration role)"
+        )
     revoke: list[str] = []
-    for name, ident, definer, default_acl, who, priv, is_owner in db.execute(
-        _ACL_FUNCTION_SQL, (schema, managed)
+    for name, ident, definer, default_acl, who, priv, is_owner, grantable in db.execute(
+        _ACL_FUNCTION_SQL, keys
     ).fetchall():
         if definer and name not in REVIEWED_DEFINER_FUNCTIONS:
             problems.append(
-                f"the function {_label(name)} is SECURITY DEFINER (it runs with the rights of its owner)"
+                f"the function {ident} is SECURITY DEFINER (it runs with the rights of its owner)"
             )
         if default_acl:
             revoke.append(ident)
-        elif who is not None and not is_owner and who not in allowed:
-            problems.append(f"{_label(who)} holds {priv} on the function {_label(name)}")
+        elif who is not None and not is_owner:
+            if who not in allowed:
+                problems.append(f"{_label(who)} holds {priv} on the function {ident}")
+            elif grantable:
+                problems.append(
+                    f"{_label(who)} may pass {priv} on the function {ident} on to others (WITH GRANT OPTION)"
+                )
+    for who, priv, _grantable, is_owner in db.execute(_ACL_SCHEMA_SQL, (schema,)).fetchall():
+        if is_owner or who == "pg_database_owner" or who in allowed:
+            continue
+        # USAGE only lets a role look a name up; the rights on the objects themselves are read above
+        if priv == "USAGE":
+            continue
+        problems.append(f"{_label(who)} holds {priv} on the schema {_label(schema)} itself")
+    for kind, where, who, priv in db.execute(_ACL_DEFAULT_SQL, (schema,)).fetchall():
+        if who not in allowed:
+            problems.append(
+                f"{_label(who)} gets {priv} on every new {_DEFAULT_KINDS.get(kind, kind)} the migration role makes "
+                f"in {where} (a default right, `ALTER DEFAULT PRIVILEGES`)"
+            )
     if problems:
         shown = "; ".join(sorted(set(problems))[:20])
         raise ConfigError(
-            f"after the migration files ran, rights in schema {_label(schema)} that this package does not give are "
-            f"in place: {shown}. Only the owner and the runtime, portal and purge roles named in this run may hold "
-            "rights on this package's tables, views, sequences and functions, and a function that runs with the "
+            f"after the migration files ran, rights that this package does not give are in place, in schema "
+            f"{_label(schema)} or elsewhere in this database: {shown}. "
+            "Nothing was changed. The whole run is undone. "
+            "Only the migration role itself and the runtime, portal and purge roles named in this run may hold rights "
+            "on this package's tables, views, sequences, functions and schema, and a function that runs with the "
             "rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. "
-            "Nothing was changed. Remove the statement from the migration file (a GRANT to another role or to PUBLIC, "
-            "or the SECURITY DEFINER), or name the role in the run if it is one of the three roles of this package."
+            "What to do, in three steps. (1) If a migration file made it (a GRANT to another role or to PUBLIC, "
+            "ALTER DEFAULT PRIVILEGES, a SECURITY DEFINER function, an owner change), remove that statement from the file. "
+            "(2) If no file did, an earlier run or a database administrator did (also a default right set for the "
+            "database): when the role is the runtime, portal or purge role of this package, name it in this run; "
+            "otherwise a database administrator revokes the right. (3) Run migrate again."
         )
     for ident in revoke:
         db.execute(sql.SQL("REVOKE ALL ON ROUTINE {} FROM PUBLIC").format(sql.SQL(ident)))
 
 
+def _where_in(rel_schema: str, run_schema: str, where: str) -> str:
+    """The place of a right in words: the bare name in the schema of the run, the schema written first elsewhere."""
+    return where if rel_schema == run_schema else f"{_label(rel_schema)}.{where}"
+
+
 _LOCK_HOLDER_SQL = (
     "SELECT a.pid, a.usename, a.application_name, a.state, a.backend_start FROM pg_locks l "
-    "JOIN pg_stat_activity a ON a.pid = l.pid WHERE l.locktype = 'advisory' AND l.granted "
+    "JOIN pg_stat_activity a ON a.pid = l.pid WHERE l.locktype = 'advisory' AND l.granted AND l.objsubid = 1 "
     "AND l.database = (SELECT oid FROM pg_database WHERE datname = current_database()) "
     "AND ((l.classid::bigint << 32) | l.objid::bigint) = %s ORDER BY a.backend_start LIMIT 1"
 )
+# `lock_timeout` is a whole number of milliseconds that PostgreSQL holds in 32 bits.
+MAX_LOCK_WAIT_SECONDS = 2_147_483
+
+
+def _seen(value) -> str:
+    """A column of `pg_stat_activity` as words: the server shows NULL for the session of another user to a login that may
+    not look."""
+    return "not visible to this login" if value is None else str(value)
 
 
 def _take_the_lock(db, wait_seconds: int) -> None:
     """Take the one migration lock (the same key a hand recipe takes), waiting at most `wait_seconds`. The wait is
     bounded by `lock_timeout` (a number of milliseconds made from an integer); the next statements of the run set the
     two limits of `RECIPE_TIMEOUTS`. A run that gives up names the session that holds the lock and changes nothing."""
-    db.execute(f"SET LOCAL lock_timeout = '{int(wait_seconds) * 1000}ms';")
+    # `statement_timeout` is also a limit on the wait for a lock: a value saved for the migration role would end the
+    # wait early and the message would blame the wrong limit. The wait has the one limit `lock_timeout`.
+    db.execute(
+        f"SET LOCAL lock_timeout = '{int(wait_seconds) * 1000}ms'; SET LOCAL statement_timeout = 0;"
+    )
     try:
         with (
             db.transaction()
@@ -902,8 +1052,8 @@ def _take_the_lock(db, wait_seconds: int) -> None:
     except pg_errors.LockNotAvailable:
         row = db.execute(_LOCK_HOLDER_SQL, (MIGRATE_LOCK,)).fetchone()
         who = (
-            f"the session of {_label(str(row[1]))} (process {row[0]}, application {_label(str(row[2]))}, "
-            f"state {row[3]}, connected since {row[4]})"
+            f"the session of {_seen(row[1])} (process {row[0]}, application {_seen(row[2])}, "
+            f"state {_seen(row[3])}, connected since {_seen(row[4])})"
             if row
             else "a session this login cannot see"
         )
@@ -911,7 +1061,8 @@ def _take_the_lock(db, wait_seconds: int) -> None:
             f"migrate waited {wait_seconds} seconds for the migration lock and gave up: {who} holds it. "
             "Nothing was changed. Wait until that run ends and run migrate again; if it is stuck, a database "
             "administrator ends that session (pg_terminate_backend with the process number), or you run migrate "
-            "again with a larger lock_wait_seconds when the other run is a long migration."
+            "again with a larger lock_wait_seconds (the command line option --lock-wait-seconds) when the other run "
+            "is a long migration."
         ) from None
 
 
@@ -1123,8 +1274,9 @@ def migrate(
     is not timed as a whole; seen on PostgreSQL 16.15). A limit that is reached fails the whole run, keeps nothing and
     is raised as a `ConfigError` in plain words that names the step and the setting. Order: the hand recipe sets the
     limits BEFORE the advisory lock (a person must not hang); `migrate` sets them AFTER it, on purpose: a second
-    `migrate` started at the same time waits for the first (that is how two runs apply a file once) and is not
-    limited while it waits. A migration file may not change either limit: the read-back after each file refuses the run
+    `migrate` started at the same time waits for the first (that is how two runs apply a file once), but only for
+    `lock_wait_seconds` (command line option `--lock-wait-seconds`; from 1 to `MAX_LOCK_WAIT_SECONDS`, the most that
+    the server accepts); then it gives up, changes nothing and names the session that holds the lock. A migration file may not change either limit: the read-back after each file refuses the run
     if `lock_timeout` or `statement_timeout` differs from the value the run set.
 
     The migration role must not be a superuser and must not hold CREATEROLE, CREATEDB or BYPASSRLS: the run reads these
@@ -1144,9 +1296,11 @@ def migrate(
     if (
         isinstance(lock_wait_seconds, bool)
         or not isinstance(lock_wait_seconds, int)
-        or lock_wait_seconds < 1
+        or not 1 <= lock_wait_seconds <= MAX_LOCK_WAIT_SECONDS
     ):
-        raise ConfigError("lock_wait_seconds must be a whole number of seconds, 1 or more")
+        raise ConfigError(
+            f"lock_wait_seconds must be a whole number of seconds, from 1 to {MAX_LOCK_WAIT_SECONDS}"
+        )
     for role in (runtime_role, portal_role, purge_role):
         if role is not None and not _ROLE.fullmatch(role):
             raise ConfigError(f"not a plain database role name: {role!r}")
@@ -1191,7 +1345,7 @@ def migrate(
             if late := order_problems(done, files, texts, schema):
                 raise MigrationNumberError(late)
             pending = [p for p in files if p.stem not in done]
-            functions_before = _function_ids(db)
+            objects_before = _objects(db)
             if pending:
                 saved = _read_back(db, named)
                 _refuse_unusual_strings(saved)
@@ -1246,11 +1400,11 @@ def migrate(
                         + "; ".join(extra[:20])
                         + _GRANT_MAP_WORDS
                     )
+            changed_functions, new_relations, kept_owner = _changed_since(
+                objects_before, _objects(db)
+            )
             _refuse_unlisted_grantees(
-                db,
-                texts.values(),
-                named,
-                frozenset(n for i, n in _function_ids(db).items() if i not in functions_before),
+                db, texts.values(), named, changed_functions, new_relations, kept_owner
             )
             for role in named:
                 got = db.execute(_SCHEMA_USAGE_SQL, (role,)).fetchone()
