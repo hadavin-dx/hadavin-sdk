@@ -90,6 +90,11 @@ _UNREAD = re.compile(
 )
 
 
+def _ascii(name: str) -> str:
+    """A shipped file name for a message: control characters and non-ASCII are written as escapes (no outer quotes)."""
+    return ascii(name)[1:-1]
+
+
 def _migration_files(folder: Path = MIGRATIONS) -> list[Path]:
     return sorted(folder.glob("*.sql"))
 
@@ -97,9 +102,7 @@ def _migration_files(folder: Path = MIGRATIONS) -> list[Path]:
 def check_ledger(paths: list[Path]) -> list[str]:
     """Problems with the file names: each is `NNNN_<name>.sql` and the numbers run 1, 2, 3 ... with no repeat or gap."""
     problems = [
-        f"{ascii(p.name)[1:-1]}: not named NNNN_<name>.sql"
-        for p in paths
-        if not _FILE.fullmatch(p.name)
+        f"{_ascii(p.name)}: not named NNNN_<name>.sql" for p in paths if not _FILE.fullmatch(p.name)
     ]
     numbers = sorted(int(p.name[:4]) for p in paths if _FILE.fullmatch(p.name))
     for n in sorted({n for n in numbers if numbers.count(n) > 1}):
@@ -135,9 +138,11 @@ def _scan(paths: list[Path]) -> tuple[dict[str, str], list[str]]:
         for m in _ANY_CREATE.finditer(text):
             if not _SAFE_CREATE.match(text, m.start()):
                 snippet = " ".join(text[m.start() : m.start() + 40].split())
-                unread.append(f"{path.name}: statement the guard does not read: {snippet!r}")
+                unread.append(
+                    f"{_ascii(path.name)}: statement the guard does not read: {snippet!a}"
+                )
         unread += [
-            f"{path.name}: {u.group(0)[:40]!r} is not read by the guard"
+            f"{_ascii(path.name)}: {u.group(0)[:40]!a} is not read by the guard"
             for u in _UNREAD.finditer(text)
         ]
         for m in _CREATE.finditer(text):

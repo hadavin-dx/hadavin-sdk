@@ -187,8 +187,9 @@ def load_bundle(path: Path) -> Bundle:
     path = Path(path)
     case = path.name
     if not CASE_RE.fullmatch(case) or path.is_symlink() or not path.is_dir():
-        # `case` is the raw folder name here (not yet matched against CASE_RE): show it escaped, never raw.
-        raise _fail(repr(case), "folder name must look like case-001")
+        # `case` is the raw folder name here (not yet matched against CASE_RE): ascii() writes control and
+        # non-ASCII characters as escapes, so the message cannot forge a log line.
+        raise _fail(ascii(case), "folder name must look like case-001")
     man_path = path / "manifest.json"
     if not man_path.is_file():
         raise _fail(case, "manifest.json is missing")

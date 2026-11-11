@@ -61,7 +61,10 @@ def test_plant_badly_named_file_is_caught(tmp_path):
 def test_plant_table_missing_from_the_map_is_caught(tmp_path):
     files = _dir(tmp_path, {"0001_a.sql": "CREATE TABLE runs (\n    id TEXT\n);\n"})
     problems = mig.check_grants(files)
-    assert "runs" not in " ".join(problems[:1]), problems  # runs is mapped
+    assert problems, "the map has entries no migration here creates, so the list is not empty"
+    assert (
+        "runs (table) is created by a migration but is not in GRANTS" not in problems
+    )  # runs is mapped
     files = _dir(tmp_path, {"0001_a.sql": "CREATE TABLE brand_new (\n    id TEXT\n);\n"})
     assert "brand_new (table) is created by a migration but is not in GRANTS" in mig.check_grants(
         files
@@ -445,3 +448,16 @@ def test_check_ledger_escapes_hostile_file_names():
     """A file name with a control character is shown escaped, never raw (a log line cannot be forged)."""
     got = mig.check_ledger([Path("0001_ok.sql"), Path("0002_x\x1b]0;y\x07\nforged.sql")])
     assert got == ["0002_x\\x1b]0;y\\x07\\nforged.sql: not named NNNN_<name>.sql"]
+
+
+def test_check_grants_escapes_hostile_file_names_and_snippets(tmp_path):
+    """Every shipped file name and SQL snippet in a `check_grants` message is ascii-escaped, never raw."""
+    files = _dir(
+        tmp_path,
+        {"0001_a\x1b]0;x\x07\nb.sql": 'CREATE TABLE "q\u00e9" (id TEXT);\n'},
+    )
+    problems = mig.check_grants(files)
+    unread = [p for p in problems if "statement the guard does not read" in p]
+    assert len(unread) == 1, problems
+    assert unread[0].startswith("0001_a\\x1b]0;x\\x07\\nb.sql: statement the guard does not read")
+    assert all(p.isascii() and p.isprintable() for p in problems), problems

@@ -117,12 +117,12 @@ def test_committed_table_is_in_canonical_form() -> None:
 # The class counts are pinned EXACTLY (not "at most"): a new row, a removed row or a relabelled row changes a number, and a
 # person must change it here on purpose. FOREIGN history: 21 before order 132, +4 migrate.py rows that interpolate names read
 # back from the database, +2 store/postgres.py tls_mode rows (sslmode can come from the DSN), +1 k1b/bundle.py row (a folder
-# name echoed before it was checked), then -1 when that call began to pass repr(case) (round w4, finding k1b-01).
+# name echoed before it was checked), then -1 when that call began to pass ascii(case) (rounds w4-w5, finding k1b-01).
 # OPERATOR is a claim about the producers of a value that the scan cannot prove (every OPERATOR site is "unproven-origin" to
 # the scan, and the table has no proof column), so the SET of OPERATOR keys is pinned too: swapping one FOREIGN row for an
 # OPERATOR row keeps the counts but changes the fingerprint. To change a pin: review the row, then paste the printed value.
 PINNED_COUNTS = {"LITERAL": 42, "OPERATOR": 134, "FOREIGN": 27}
-PINNED_FINGERPRINTS = {"OPERATOR": "f2607d2b65254c9f", "FOREIGN": "87305e2f9f6d5875"}
+PINNED_FINGERPRINTS = {"OPERATOR": "48b6d509d3bc13a8", "FOREIGN": "87305e2f9f6d5875"}
 
 
 def pin_problems(rows: list[Any]) -> list[str]:
@@ -153,7 +153,7 @@ def test_the_table_has_no_blank_class_and_the_class_counts_are_pinned() -> None:
 
 
 def test_a_foreign_row_relabelled_operator_is_caught_by_the_pins() -> None:
-    """The comparison alone accepts an unproven-origin site labelled OPERATOR; the pins must not."""
+    """``compare`` does not look at the class counts (it accepts an unproven-origin site labelled OPERATOR); the pins must not."""
     rows = need("load_csv")(TABLE)
     k = next(i for i, r in enumerate(rows) if r.klass == "FOREIGN")
     flipped = [
@@ -181,7 +181,7 @@ def test_a_new_row_or_a_dropped_row_is_caught_by_the_pins() -> None:
     rows = need("load_csv")(TABLE)
     extra = [*rows, need("Row")("x.py::f::0123456789abcdef::1", "FOREIGN", "new")]
     assert any(p.startswith("FOREIGN rows grew") for p in pin_problems(extra))
-    fewer = [r for r in rows if r.klass != "FOREIGN"][:]
+    fewer = [r for r in rows if r.klass != "FOREIGN"]
     assert any(p.startswith("FOREIGN rows shrank") for p in pin_problems(fewer))
 
 
@@ -723,7 +723,7 @@ def site_of(auto_class: str, auto_reason: str, name: str = "s") -> Any:
 
 
 def test_unit9_clean_case_is_ok() -> None:
-    site_cls, row_cls = need("Site"), need("Row")
+    row_cls = need("Row")
     sites = [
         site_of("LITERAL", "constant", "a"),
         site_of("FOREIGN", "unproven-origin", "b"),
@@ -735,8 +735,8 @@ def test_unit9_clean_case_is_ok() -> None:
         row_cls(sites[2].key, "FOREIGN", ""),
     ]
     report = need("compare")(sites, rows)
-    assert report.ok is True
-    assert site_cls is not None
+    assert report.ok is True, report.render()
+    assert report.rows == 3
 
 
 LISTS = (
@@ -1013,19 +1013,28 @@ def test_unit13_reason_problems_flags_a_key_shaped_string_and_passes_a_plain_rea
 
 
 def test_hostile_syntax_error(tmp_path: Path) -> None:
-    refuses(tmp_path, {"bad.py": "def broken(:\n"})
+    refuses(tmp_path, {"bad.py": "def broken(:\n"}, match="cannot parse bad.py: SyntaxError")
 
 
 def test_hostile_invalid_utf8(tmp_path: Path) -> None:
-    refuses(tmp_path, {"bad.py": b"x = '\xff\xfe'\n"})  # type: ignore[dict-item]
+    refuses(
+        tmp_path,
+        {"bad.py": b"x = '\xff\xfe'\n"},  # type: ignore[dict-item]
+        match="cannot parse bad.py: UnicodeDecodeError",
+    )
 
 
 def test_hostile_null_byte(tmp_path: Path) -> None:
-    refuses(tmp_path, {"bad.py": "x = 1\x00\n"})
+    refuses(tmp_path, {"bad.py": "x = 1\x00\n"}, match="cannot parse bad.py: SyntaxError")
 
 
 def test_hostile_no_python_files(tmp_path: Path) -> None:
-    refuses(tmp_path, {"readme.txt": "ConfigError('x')"}, errors=False)
+    refuses(
+        tmp_path,
+        {"readme.txt": "ConfigError('x')"},
+        match="no .py file under the package folder",
+        errors=False,
+    )
 
 
 def test_hostile_missing_package_folder(tmp_path: Path) -> None:
@@ -1034,7 +1043,12 @@ def test_hostile_missing_package_folder(tmp_path: Path) -> None:
 
 
 def test_hostile_no_config_error_class(tmp_path: Path) -> None:
-    refuses(tmp_path, {"m.py": "def f():\n    raise ValueError('x')\n"}, errors=False)
+    refuses(
+        tmp_path,
+        {"m.py": "def f():\n    raise ValueError('x')\n"},
+        match="class ConfigError is not defined in the package folder",
+        errors=False,
+    )
 
 
 def test_hostile_pycache_and_other_file_types_are_not_read(tmp_path: Path) -> None:
@@ -1084,21 +1098,41 @@ def test_hostile_symlinked_file_and_folder_are_refused(tmp_path: Path) -> None:
 )
 def test_hostile_site_class_bodies_are_refused(tmp_path: Path, cls_body: str) -> None:
     text = f"{HEAD}\n\ndef helper(self):\n    return 'x'\n\n\nclass A(ConfigError):\n{cls_body}"
-    refuses(tmp_path, {"a.py": text})
+    refuses(
+        tmp_path,
+        {"a.py": text},
+        match="assigns a dunder or complex name"
+        if "= helper" in cls_body
+        else "holds more than a docstring and plain fields",
+    )
 
 
-@pytest.mark.parametrize(
-    "header",
-    [
+HEADERS = {
+    "decorator": (
         "@decorator\nclass A(ConfigError):\n    pass\n",
+        "site class A has a decorator",
+    ),
+    "two-bases": (
         "class A(ConfigError, Mixin):\n    pass\n",
+        "site class A must have exactly one site class as base",
+    ),
+    "keyword": (
         "class A(ConfigError, metaclass=Meta):\n    pass\n",
+        "site class A has a class keyword",
+    ),
+    "mixed": (
         "class A(ValueError):\n    pass\n\n\nclass B(A, ConfigError):\n    pass\n",
-    ],
-    ids=["decorator", "two-bases", "keyword", "mixed"],
-)
-def test_hostile_site_class_headers_are_refused(tmp_path: Path, header: str) -> None:
-    refuses(tmp_path, {"a.py": f"{HEAD}\n\nMixin = object\nMeta = type\n\n\n{header}"})
+        "site class B must have exactly one site class as base",
+    ),
+}
+
+
+@pytest.mark.parametrize("name", list(HEADERS))
+def test_hostile_site_class_headers_are_refused(tmp_path: Path, name: str) -> None:
+    header, wanted = HEADERS[name]
+    refuses(
+        tmp_path, {"a.py": f"{HEAD}\n\nMixin = object\nMeta = type\n\n\n{header}"}, match=wanted
+    )
 
 
 def test_hostile_config_error_itself_must_have_exactly_value_error(tmp_path: Path) -> None:

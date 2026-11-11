@@ -232,8 +232,16 @@ def test_bundle_refusals(tmp_path, name):
     REFUSALS[name](d)
     (d / "manifest.json").unlink()
     write_manifest(d)
-    with pytest.raises(BundleError):
+    with pytest.raises(BundleError, match=r"^bundle case-\d+: \S"):
         load_bundle(d)
+
+
+def test_bundle_refusals_start_from_a_bundle_that_loads(tmp_path):
+    """Positive control for ``test_bundle_refusals``: the untouched bundle loads, so each refusal comes from its own change."""
+    d = make_bundle(tmp_path)
+    (d / "manifest.json").unlink()
+    write_manifest(d)
+    assert load_bundle(d) is not None
 
 
 def test_manifest_mismatch_unlisted_and_missing(tmp_path):
@@ -526,12 +534,18 @@ def test_list_data_is_capped(tmp_path):
     assert len(text.encode()) <= 20_000 and ids == set() and json.loads(text)["metrics"]
 
 
-@pytest.mark.parametrize("name", ["case-1\x1b]0;x\x07", "case-1\nforged log line", "café x"])
+@pytest.mark.parametrize(
+    "name", ["case-1\x1b]0;x\x07", "case-1\nforged log line", "caf\u00e9 x", "a\u2028b"]
+)
 def test_a_folder_name_is_never_echoed_raw_in_the_refusal(tmp_path, name):
     folder = tmp_path / name
     folder.mkdir()
     with pytest.raises(BundleError, match="folder name must look like case-001") as info:
         load_bundle(folder)
     text = str(info.value)
-    assert text.isprintable() and text.isascii() is False or text.isprintable()
-    assert not any(c in text for c in "\x1b\x07\n ")
+    assert text.isascii() and text.isprintable()
+    assert not any(c in text for c in "\x1b\x07\n\u2028\u00e9")
+    if "\u00e9" in name:
+        assert "\\xe9" in text
+    if "\u2028" in name:
+        assert "\\u2028" in text
