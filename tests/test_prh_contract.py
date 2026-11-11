@@ -418,21 +418,33 @@ def test_mf_masked_pairs():
     assert not bad, f"{len(bad)} of {counted} unmasked, first: {bad[:8]}"
 
 
-# Pairs main masked and the branch does not, listed by input and path: none. Pairs where main masked only BY DELETING the
-# text (an unterminated string sequence swallowed the value) and the same path does not mask the plain value either
-# (a flag pattern that does not read `-p`, the card showing an e-mail address as written, a direct caller reading a
-# percent-encoded key): main's mask was an accident of the swallowing, not a protection, and they are counted below.
+# Pairs main masked and the branch does not, each listed by input and path in `fixtures/prh_accidental_pairs.json`, in two
+# classes, with the raw outputs of main and the branch for every pair in
+# `handover/evidence/PRH/b3/accidental-92.md`. In both classes main masked the value only BY DELETING the text after a
+# string sequence it read as unterminated (an operating-system-command string closed by the C1 string terminator U+009C,
+# which ECMA-48 defines and main did not read); the same path does not mask the plain value either:
+#   plain_not_masked: a plain reading of the input holds the value whole and neither main nor the branch masks it. The
+#     causes, each by design: the credential-flag pattern reads `mysql -pVALUE` and not `-p VALUE` (with a space the
+#     value is a database name; redact.py, the `mysql` pattern), the approval card shows an e-mail address as written,
+#     and direct callers of `redact()` read escape sequences only (no other control character, no percent or
+#     full-width reading).
+#   no_whole_plain_reading: no plain reading holds the value whole (a form feed or other space-like character splits
+#     it, a string introducer with no terminator cuts it, or the value stands only percent-encoded for a direct caller),
+#     so a plain input leaves the same text readable.
+# The test recomputes both lists on every run and compares them with the fixture: a new pair, or a pair that no longer
+# belongs, fails it. Nothing is a pinned count.
 NO_STEP_BACK_EXCEPTIONS: set[str] = set()
-ACCIDENTAL_MAIN_MASKS = 92  # measured 2026-11-11 (PRH-wp2c-accidental.txt)
+ACCIDENTAL_PAIRS = json.loads((FIXTURES / "prh_accidental_pairs.json").read_text(encoding="utf-8"))
 
 
 def test_no_step_back():
     """Everything main masks, the branch masks (fixture recorded from main, section 5.1), on every path, with the
-    direct callers (`redact()`) included; except where main masked only by deleting text and the same path does not mask
-    the plain value (counted and pinned, never silent)."""
+    direct callers (`redact()`) included; except the pairs of `ACCIDENTAL_PAIRS` (see the comment above), which are
+    recomputed here and must equal the fixture exactly."""
     res = _results()
     verdicts = _main_verdicts()
-    worse, accidental = [], []
+    worse: list[str] = []
+    accidental: dict[str, list[str]] = {"plain_not_masked": [], "no_whole_plain_reading": []}
     for case in res["cases"]:
         paths = rec.PATHS_FOR[case.kind] + (("direct",) if case.kind != "handed" else ())
         bits = verdicts[case.id]
@@ -440,9 +452,15 @@ def test_no_step_back():
         for path, bit in zip(paths, bits, strict=True):
             if bit != "1" or res["masked"][case.id][path] or case.id in NO_STEP_BACK_EXCEPTIONS:
                 continue
-            (worse if _plain_masked(case, path) else accidental).append(f"{case.id} [{path}]")
+            label = f"{case.id} [{path}]"
+            if _plain_masked(case, path):
+                worse.append(label)
+            elif _plain_readings(case, path):
+                accidental["plain_not_masked"].append(label)
+            else:
+                accidental["no_whole_plain_reading"].append(label)
     assert not worse, f"{len(worse)} masked on main and not on the branch, first: {worse[:8]}"
-    assert len(accidental) == ACCIDENTAL_MAIN_MASKS, len(accidental)
+    assert {k: sorted(v) for k, v in accidental.items()} == ACCIDENTAL_PAIRS
 
 
 # counted per reason: the class of "not promised" cannot grow silently

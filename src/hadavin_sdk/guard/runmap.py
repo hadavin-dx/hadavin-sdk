@@ -745,6 +745,14 @@ def redact_text(
                     and hidden.strip(c)[0] not in hidden.strip(v)
                 ):
                     cleaned.append(_no_created_shapes(v, c))
+        # The consuming reading (`hidden.strip_consuming`: an escape sequence takes its final byte, a letter too) finds a value
+        # that `ESC ( B` (what `tput sgr0` writes) cut: the conservative reading keeps that final byte (D-029).
+        if joined is not text:
+            for r in hidden.strip_consuming(text):
+                er = esc(r)
+                if er not in (e_joined, e_spaced) and er not in cleaned:
+                    char_views[_no_created_shapes(text, er)] = (er, e_joined)
+                    cleaned.append(_no_created_shapes(text, er))
         views += [c for c in dict.fromkeys(cleaned) if c not in views]
 
         def make_pairs(cur: dict[str, str], bases: tuple[str, ...]) -> list[tuple[str, str]]:
