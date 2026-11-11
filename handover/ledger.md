@@ -2629,3 +2629,6 @@
 | BL-core-q8c1-r1-d01 | Major | Q8c-1 | reviews/Q8c/result-r1-design-full.md Major 1 | OPEN | | | 2026-11-11 |
 | BL-core-q8c1-r1-d02 | Major | Q8c-1 | reviews/Q8c/result-r1-design-full.md Major 2 | OPEN | | | 2026-11-11 |
 | BL-core-q8c1-r1-d03 | Major | Q8c-1 | reviews/Q8c/result-r1-design-full.md Major 3 | OPEN | | | 2026-11-11 |
+| BL-core-q8c1-r1-c02 | Minor(sec) | Q8c-1 | reviews/Q8c/result-r1-codebase-full.md m2 | OPEN | | | 2026-11-11 |
+| BL-core-q8c1-r1-c07 | Minor(sec) | Q8c-1 | reviews/Q8c/result-r1-codebase-full.md m7 | OPEN | | | 2026-11-11 |
+| BL-core-q8c1-r1-c11 | Minor(sec) | Q8c-1 | reviews/Q8c/result-r1-codebase-full.md m11 | OPEN | | | 2026-11-11 |
