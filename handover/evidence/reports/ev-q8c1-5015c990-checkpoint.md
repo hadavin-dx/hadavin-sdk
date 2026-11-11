@@ -1,1 +1,2 @@
 checkpoint (start 22:40:07 UTC): setup done; ruff check/format, bandit, scan, policy_page --check, stage_mutants 37/37, gitleaks all rc=0. Own pg16 on 56731 up. Full pytest launched via heavy.sh. Note: uv sync --no-build failed (editable project needs a local build); ran without --no-build.
+checkpoint 2 (22:43:26 UTC): probes P1-P5 done (raw in evidence-raw/q8c1-5015c990/probes-*.log); full pytest running via heavy.sh (no queue wait); fail-before worktrees prepared. Next: mutants alone, engine tests, fail-before, RESULTS.md.
