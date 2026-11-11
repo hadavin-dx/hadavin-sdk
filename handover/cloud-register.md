@@ -1233,3 +1233,13 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-flaky fix a6e5db57 | 22 min | measuring | on track; sent the overload evidence |
 | B-Q8a1 (resumed 2) a0c5bd99 | Q8a-1 fix batch 2 (run_tick steps= refusal, mutants, timeout bounds, seam) | 14:55Z | +45m | 14:55Z | running | new head -> evidence + fresh reviewers round 3 |
 | B-Q8a2 (resumed) a0472549 | Q8a-2 fix batch 1 of 2 (gcs skip reverted, import module path scanned, suppressions removed, limits made true) | 15:00Z | +50m | 15:00Z | running | new head -> evidence + fresh reviewers round 2 |
+
+### Long-running check 15:03Z
+| agent | age | doing now | verdict |
+|---|---|---|---|
+| B-PR77 a23fcc26 | 95 min (past its 90 min limit) | worktree clean, two commits pushed (wip/cloud-P2d-1-w7 97fd2028); re-running one mutant (H6) for 6 min | finishing; if no report by 15:10Z I message it |
+| B-P3a2 a73e15b4 | 58 min | whole mutant list through heavy.sh, 11 min in (list took 15 min idle; machine at load 14) | on track, slow because of load |
+| EV-P89-r19 a3767c91 | 36 min | whole 224-mutant list, 10 min in | on track, slow |
+| EV-Q8a2-res a96bf331 | 13 min | full suite through heavy.sh, 11 min in | on track, slow |
+| EV-flaky, EV-Q8a1-r2 | 36 / 16 min | writing results (17 files across the four evidence folders) | on track |
+| B-PR89-r20, B-Q8c1, B-flaky fix, B-Q8a1 fix 2, B-Q8a2 fix 1, A-Q8b rev 3 | 6-35 min | building / writing | on track |
