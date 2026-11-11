@@ -1389,3 +1389,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | EV-Q8a1-r4 a55ad3b3 | EVIDENCE RUNNER (Sonnet) 0b97d55a, pg 56192 | 16:12Z | +50m | 16:12Z | running | RESULTS.md |
 | R-Q8a1-r4 delta a9678c99 | fresh egm reviewer (Sonnet) on the delta fcd77a68..0b97d55a, snapshot /home/user/build/snap/q8a1-0b97d55 | 16:12Z | +15m | 16:12Z | running | save report |
 | R-flaky-r2 codebase a1db18a8 | | | | 16:14Z | CLOSED: NOT CLEAN (gate + 11 Minor), saved | wait for design review + evidence, then ONE small batch |
+| R-flaky-r2 design ac12b987 | | | | 16:14Z | CLOSED: NOT CLEAN (gate + 2 Major + 9 Minor), saved | evidence addendum sent; ONE fix batch after evidence |
