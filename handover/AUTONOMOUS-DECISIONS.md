@@ -16,3 +16,10 @@ Entry format: `D-NNN | date UTC / IST | question | options (cost, risk) | RECOMM
 - Options: (a) retry/work around the denial (rejected: bypasses a safety control); (b) fallback in the prompt: fresh general-purpose read-only reviewer agents, same order (design, codebase-details, comprehension, implementation-readiness, structural, zoom-out, synthesizer); (c) stop. 
 - Recommended/chosen: (b). Reversible: yes (swap to egm:* once a human installs the plugin and restarts).
 - Revisit: if the owner installs the plugin.
+
+## D-002 2026-11-11 13:31Z UTC: PR89 round 18 fix approach
+- Question: how to resolve design Majors M2 (denylist masker) and M3 (no throwaway-DB check) without replacing working code.
+- Options: (a) rewrite masker from scratch as k-gram + allowlist (reviewer proposal; big, loses 2,800 lines of tests); (b) add the k-gram class mask as ONE extra pass at the existing choke point _masked (every substring >= 6 chars of any secret, plus its percent-decoded/base64/hex forms), keep existing API/tests, add fuzz tests with random slices; add allowlisted output (class name + caller expect fragment) only when pass_env set if tests still pass; (c) accept documented gaps (forbidden: fix-dont-defer). For M3: refuse non-loopback host/non-socket and require database-name marker unless explicit keyword allow_remote_address=True; negative tests.
+- Chosen: (b) (improve-before-replace; reversible; security path uncapped rounds). M3 as stated. m1-m9 + c1-c5 fixed in same batch.
+- Revisit if k-gram pass breaks legitimate error text (then allowlist for pass_env outputs).
+- Verified by lead: grep of tools/mutation_runner.py found no host/loopback refusal code (only docs), M3 premise holds.

@@ -2533,3 +2533,17 @@
 | BL-PR89-r18-i05 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 5 | OPEN | | | 2026-11-11 |
 | BL-PR89-r18-i06 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 6 | OPEN | | | 2026-11-11 |
 | BL-PR89-r18-i07 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 7 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-d01 | Major | PR89 | see reviews/PR89/r18-design.md M1 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-d02 | Major | PR89 | see reviews/PR89/r18-design.md M2 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-d03 | Major | PR89 | see reviews/PR89/r18-design.md M3 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-d04 | Major | PR89 | see reviews/PR89/r18-design.md M4 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-d05 | Minor | PR89 | see reviews/PR89/r18-design.md m5 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-d06 | Minor | PR89 | see reviews/PR89/r18-design.md m6 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-d07 | Minor | PR89 | see reviews/PR89/r18-design.md m7 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-d08 | Minor | PR89 | see reviews/PR89/r18-design.md m8 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-d09 | Minor | PR89 | see reviews/PR89/r18-design.md m9 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-c01 | Minor | PR89 | see reviews/PR89/r18-codebase.md item 1 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-c02 | Minor | PR89 | see reviews/PR89/r18-codebase.md item 2 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-c03 | Minor | PR89 | see reviews/PR89/r18-codebase.md item 3 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-c04 | Minor | PR89 | see reviews/PR89/r18-codebase.md item 4 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-c05 | Minor | PR89 | see reviews/PR89/r18-codebase.md item 5 | OPEN | | | 2026-11-11 |
