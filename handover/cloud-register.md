@@ -1172,7 +1172,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | R-Q8a1-r2 a62ab99a | egm impl-readiness (Fable) plan review r2 ticket Q8a-1 | 13:51Z | +15m | 13:51Z | running | if READY start ONE builder |
 | B-flaky a6e5db57 | builder (Fable) flaky timing harness test on main, branch core/fix-timing-harness-flake, pg 56040 | 13:51Z | +60m | 13:51Z | running | evidence + review |
 | R-P3a2-r11 a2b6f315, a573bc87 | egm design + codebase (Fable) result review round 11 of core/P3a-2-rewritten 8382bdd (snapshot p3a2-r11-8382bdd) | 13:51Z | +25m | 13:51Z | running | save reviews/P3a-2/, ledger; evidence run still needed |
-| R-P85main a470bfd9 | egm codebase (Fable) review of InvalidRunId code mapping on core/P5b2-main 3b9617e4 | 13:51Z | +10m | 13:51Z | running | save reviews/PR85/ |
+| R-P85main a470bfd9 | egm codebase (Fable) review of InvalidRunId code mapping on core/P5b2-main 3b9617e4 | 13:51Z | +10m | 13:51Z | CLOSED saved reviews/PR85/p5b2-main-delta-review.md | save reviews/PR85/ |
 | EV-Q8a2 a795f178 | EVIDENCE RUNNER (Fable) dry run of guard pattern on main | 13:51Z | +20m | 13:51Z | running | write ticket Q8a-2 from the hit list |
 | A-Q8b a123e38f | ticket author (Fable) Q8b partial-mask + card redaction (F5, F6) | 13:51Z | +25m | 13:51Z | running | plan review, then builder |
 | A-Q8c a2a53d4b | ticket author (Fable) Q8c policy per kind (F3) | 13:51Z | +30m | 13:51Z | running | plan review |
