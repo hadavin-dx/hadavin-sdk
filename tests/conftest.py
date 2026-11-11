@@ -88,3 +88,21 @@ def fake_system():
 @pytest.fixture
 def live_cfg_dir(tmp_path: Path, fake_system) -> Path:
     return make_cfg(tmp_path, port=fake_system.port)
+
+
+@pytest.fixture(autouse=True)
+def _migrate_runs_as_a_plain_role(request, monkeypatch):
+    """The test databases are reached with a superuser login (the CI service and a laptop cluster), which `migrate()`
+    always refuses (there is no switch). For every test, `store.migrate.connect` is swapped for a wrapper that runs
+    `SET ROLE` to a plain role when the login is a superuser (`tests/fixtures/migration_role.py`); `migrate()` itself is
+    called exactly as in production. A test that proves the refusal carries the marker `real_connect`."""
+    try:
+        from hadavin_sdk.store import migrate as mig
+    except ImportError:  # the pg extra is not installed: no migrate, nothing to swap
+        return
+    if request.node.get_closest_marker("real_connect") is None and os.environ.get(
+        "HADAVIN_TEST_PG_DSN"
+    ):
+        from tests.fixtures.migration_role import plain_role_connect
+
+        monkeypatch.setattr(mig, "connect", plain_role_connect(mig.connect))

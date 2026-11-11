@@ -2,7 +2,7 @@
 written recipe, the ledger-without-file message, the one-pass lexer and the refusal list. No database, no psycopg.
 
 The module is imported inside each test (the `mn` fixture), so on a tree without the module every test is one error
-and not a collection error. Planted names and SQL are made up. Postgres-side tests live in a later change."""
+and not a collection error. Planted names and SQL are made up. Postgres-side tests live in tests/test_migration_postgres.py."""
 
 from __future__ import annotations
 
@@ -300,6 +300,7 @@ def test_recipe_order_and_command(mn):
     order = [
         lines.index('SET search_path TO "p3a_s";'),
         lines.index("BEGIN;"),
+        *[lines.index(limit) for limit in mn.RECIPE_TIMEOUTS],
         lines.index(f"SELECT pg_advisory_xact_lock({mn.MIGRATE_LOCK});"),
         lines.index("SELECT 1;"),
         lines.index("INSERT INTO schema_migrations (version) VALUES ('0004_a');"),
@@ -446,7 +447,7 @@ def test_order_problems_empty_when_nothing_is_late(mn):
 
 def test_a_hostile_name_never_reaches_the_order_message(mn):
     """The names in the order message are file names that passed `NAME` and a highest applied name that passed `STEM`,
-    both ASCII letters, digits and underscores, so the escape (`_esc`) in that message cannot be reached by a hostile
+    both ASCII letters, digits and underscores, so the escape (`escape_name`) in that message cannot be reached by a hostile
     name: the name is not late at all. This test fails if `NAME` or `STEM` ever lets such a name through unescaped
     into a message that this function builds."""
     hostile = [
@@ -736,6 +737,9 @@ def test_each_transaction_word_is_refused(mn, stmt):
         "SET session_replication_role = replica",
         "RESET ALL",
         "set x to 1",
+        "SET LOCAL lock_timeout = '10s'",
+        "set  local  statement_timeout TO 0",
+        "SET LOCAL statement_timeout = '1h'",
     ],
 )
 def test_each_set_form_is_refused(mn, stmt):
@@ -743,11 +747,14 @@ def test_each_set_form_is_refused(mn, stmt):
     assert len(got) == 1 and "may not be changed" in got[0], stmt
 
 
-@pytest.mark.parametrize(
-    "stmt", ["SET LOCAL lock_timeout = '10s'", "set  local  statement_timeout TO 0"]
-)
-def test_the_two_allowed_set_forms_pass(mn, stmt):
-    assert mn.refused_statements(f"{stmt};") == []
+def test_the_two_time_limits_are_refused_in_the_text_scan_not_only_by_the_read_back(mn):
+    """the scan and the read-back must agree. The read-back refuses a file that changes either limit, so
+    the scan refuses the `SET LOCAL` text too, with a message that names the limits. Killed by: the mutant "SET LOCAL
+    lock_timeout/statement_timeout is allowed in the text scan again" of tests/migration_numbers_mutants.py."""
+    for name in ("lock_timeout", "statement_timeout"):
+        got = mn.refused_statements(f"SET LOCAL {name} = '1s';")
+        assert len(got) == 1 and "time limits" in got[0], got
+    assert not hasattr(mn, "_SET_ALLOWED")
 
 
 @pytest.mark.parametrize(
@@ -893,3 +900,53 @@ def test_ledger_property_only_the_named_error_and_agreement(mn, tmp_path):
     _folder(sub, valid)
     mn.check_migration_numbers(sub)
     assert mn.late_files({"0001_a", "0002_b"}, mn.list_migration_files(sub)) == []
+
+
+# --- the grant scan reads through the lexer (wiring; `store.migrate` is imported inside each test) -------------
+
+
+def _scan_file(tmp_path: Path, text: str) -> list[str]:
+    from hadavin_sdk.store import migrate as mig
+
+    path = tmp_path / "0001_x.sql"
+    path.write_text(text, encoding="utf-8")
+    return mig.check_grants([path])
+
+
+def test_scan_comment_ends_at_cr(tmp_path):
+    """FAIL-BEFORE 8: a `--` comment ends at a carriage return as well, so the CREATE after it is seen."""
+    got = _scan_file(tmp_path, "SELECT 1; -- x\rCREATE TABLE evil_cr (x INT);")
+    assert any("evil_cr" in p for p in got), got
+    # M69: an unterminated quote must give the lexer's own text and the file name, not only the GRANTS lines
+    bad = _scan_file(tmp_path, "SELECT 'never closed;")
+    assert any("not closed at line" in p and "0001_x.sql" in p for p in bad), bad
+
+
+def test_scan_double_dash_in_string(tmp_path):
+    """FAIL-BEFORE 9: a `--` inside a string is not a comment, so the CREATE after the string is seen."""
+    got = _scan_file(tmp_path, "SELECT '--'; CREATE TABLE evil_str (x INT);")
+    assert any("evil_str" in p for p in got), got
+
+
+def test_scan_sees_create_inside_bodies_and_strings(tmp_path):
+    """Pin (passes before and after): text inside a `$$` body and a string is still seen by the grant scan, so a
+    table made inside a function body is refused, as before the lexer. M87: a scan of the emptied view fails it."""
+    body = _scan_file(
+        tmp_path,
+        "CREATE OR REPLACE FUNCTION f() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+        "CREATE TABLE hidden_body (x INT); END $$;",
+    )
+    assert any("hidden_body" in p for p in body), body
+    string = _scan_file(tmp_path, "SELECT 'CREATE TABLE hidden_str (x INT)';")
+    assert any("hidden_str" in p for p in string), string
+
+
+def test_scan_reads_the_given_text_not_the_file(tmp_path):
+    """`check_grants(files, texts=...)` scans the text it is given (the text `migrate` executes)."""
+    from hadavin_sdk.store import migrate as mig
+
+    path = tmp_path / "0001_x.sql"
+    path.write_text("SELECT 1;", encoding="utf-8")
+    got = mig.check_grants([path], texts={path: "CREATE TABLE from_given_text (x INT);"})
+    assert any("from_given_text" in p for p in got), got
+    assert not any("from_given_text" in p for p in mig.check_grants([path]))

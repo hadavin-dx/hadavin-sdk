@@ -106,6 +106,9 @@ def test_the_portal_relations_exclude_the_never_list():
 def test_migrate_refuses_an_inconsistent_ledger_before_connecting(monkeypatch, tmp_path):
     files = _dir(tmp_path, {"0001_a.sql": "CREATE TABLE brand_new (\n    id TEXT\n);\n"})
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(
+        mig, "released_problems", lambda *a, **k: []
+    )  # made-up or missing files: only the grant or ledger refusal is under test
 
     def no_db(*a, **k):
         raise AssertionError("connected")
@@ -389,7 +392,10 @@ def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatc
     files = mig._migration_files()
     monkeypatch.setattr(mig, "_migration_files", lambda: files[:-1])
     # The grant map still names the removed file's tables; only the applied-without-file refusal is under test.
-    monkeypatch.setattr(mig, "check_grants", lambda paths: [])
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    monkeypatch.setattr(
+        mig, "released_problems", lambda *a, **k: []
+    )  # made-up or missing files: only the grant or ledger refusal is under test
     with pytest.raises(ConfigError, match="no file in this release"):
         mig.migrate(dsn)
 

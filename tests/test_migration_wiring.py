@@ -1,0 +1,1053 @@
+"""`migrate()` calls the migration rule: the old checks are replaced, not doubled; the text that was scanned
+is the text that runs; the read-back after each file is checked against an answering stub (no database).
+
+The read-back queries are module constants of `store.migrate`; the stub answers them by EXACT text and gives every
+other statement an empty answer. Planted names and SQL are made up."""
+
+from __future__ import annotations
+
+import contextlib
+from pathlib import Path
+
+import pytest
+
+from tests.fixtures.dsn_skip import require_module
+
+# store.migrate imports psycopg (the pg extra); with the DSN set a missing driver FAILS (never a skip)
+require_module("psycopg")
+
+from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.store import migrate as mig
+from hadavin_sdk.store import migration_numbers as mn
+
+T0, T1 = "2026-11-06T00:00:00+00:00", "2026-11-06T00:00:01+00:00"
+START = (
+    "mig",
+    "mig",
+    "origin",
+    '"$user", public',
+    "on",
+    "safe_encoding",
+    "UTF8",
+    "5s",
+    "60s",
+    T0,
+    700,
+)
+# the item names in the order of `START`
+ITEMS = (
+    "current_user",
+    "session_user",
+    "session_replication_role",
+    "search_path",
+    "standard_conforming_strings",
+    "backslash_quote",
+    "client_encoding",
+    "lock_timeout",
+    "statement_timeout",
+    "transaction_timestamp",
+    "txid_current",
+)
+
+
+def _values(**changes):
+    row = list(START)
+    for name, value in changes.items():
+        row[ITEMS.index(name)] = value
+    return tuple(row)
+
+
+class _Result:
+    def __init__(self, rows):
+        self.rows = rows
+
+    def fetchone(self):
+        return self.rows[0] if self.rows else None
+
+    def fetchall(self):
+        return list(self.rows)
+
+
+class _Db:
+    """A connection that answers the read-back queries from canned lists (next answer per call) and records every
+    statement."""
+
+    def __init__(
+        self, values, triggers, applied=(), members=None, flags=None, settings=None, borrowed=()
+    ):
+        self.borrowed = [(r,) for r in borrowed]
+        self.values, self.triggers = list(values), list(triggers)
+        self.flags = (False, False, False, False) if flags is None else flags  # the role flags
+        self.settings = None if settings is None else list(settings)  # one answer per read
+        self.members = (
+            None if members is None else list(members)
+        )  # one answer per read; None = never any member
+        self.applied = list(applied)
+        self.log: list[str] = []
+        self.params: list[tuple] = []  # (statement, parameters) of every statement, in order
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def transaction(self):
+        return contextlib.nullcontext()
+
+    def execute(self, query, params=None):
+        text = str(query)
+        self.log.append(text)
+        self.params.append((text, params))
+        if text == mig._READBACK_VALUES_SQL:
+            return _Result([self.values.pop(0)])
+        if text == mig._READBACK_TRIGGERS_SQL:
+            return _Result(self.triggers.pop(0))
+        if text == mig._READBACK_MEMBERS_SQL:
+            return _Result([] if self.members is None else self.members.pop(0))
+        if text == mig._ROLE_FLAGS_SQL:
+            return _Result([self.flags])
+        if text == mig._BORROWED_ROLES_SQL:
+            return _Result(self.borrowed)
+        if text == mig._READBACK_SETTINGS_SQL:
+            return _Result([] if self.settings is None else self.settings.pop(0))
+        if text == "SELECT current_schema()":
+            return _Result([("s",)])
+        if text.startswith("SELECT version FROM schema_migrations"):
+            return _Result([(v,) for v in self.applied])
+        return _Result([])
+
+
+def _files(tmp_path: Path, n: int = 2) -> list[Path]:
+    paths = []
+    for i in range(1, n + 1):
+        p = tmp_path / f"{i:04d}_f{i}.sql"
+        p.write_text(f"SELECT {i};\n", encoding="utf-8")
+        paths.append(p)
+    return paths
+
+
+def _run(
+    monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+):
+    files = _files(tmp_path, n)
+    db = _Db(values, triggers, applied, members, settings=settings)
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    monkeypatch.setattr(
+        mig, "released_problems", lambda *a, **k: []
+    )  # these made-up file names are not the released ones
+    monkeypatch.setattr(
+        mig, "released_problems", lambda *a, **k: []
+    )  # these made-up file names are not the released ones
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    try:
+        applied_now = mig.migrate("postgresql://unused", **kw)
+        return None, db, applied_now
+    except ConfigError as e:
+        return e, db, None
+
+
+def _trigger(
+    name="trg",
+    enabled="O",
+    schema="s",
+    table="t",
+    definition=None,
+    src="BEGIN END",
+    secdef=False,
+    owner="owner_a",
+    relid=None,
+):
+    """One answer row of `_READBACK_TRIGGERS_SQL`. `src` is the function text; the query returns its md5."""
+    import hashlib
+    import zlib
+
+    definition = (
+        definition
+        or f"CREATE TRIGGER {name} BEFORE UPDATE ON {schema}.{table} EXECUTE FUNCTION {schema}.f()"
+    )
+    relid = zlib.crc32(f"{schema}.{table}".encode()) if relid is None else relid  # one id per table
+    return (
+        name,
+        enabled,
+        table,
+        schema,
+        relid,
+        definition,
+        hashlib.md5(src.encode(), usedforsecurity=False).hexdigest(),
+        secdef,
+        owner,
+        None,
+    )
+
+
+# --- the old checks are replaced, not doubled -------------------------------------------------------------------
+
+
+def test_migrate_uses_the_one_implementation_of_each_rule():
+    assert mig.check_ledger is mn.check_ledger
+    assert mig.MIGRATIONS is mn.MIGRATIONS
+    assert mig.MIGRATE_LOCK is mn.MIGRATE_LOCK
+    assert not hasattr(mig, "_FILE"), (
+        "the second file-name pattern (it accepted Arabic-Indic digits) is gone"
+    )
+    assert mig._migration_files(mn.MIGRATIONS) == mn.list_migration_files(mn.MIGRATIONS)
+
+
+def test_unicode_digit_names_are_refused(tmp_path):
+    """FAIL-BEFORE 2 (also full-width digits)."""
+    for digits in ("٠٠٠٢", "０００２"):
+        folder = tmp_path / digits.encode("ascii", "backslashreplace").hex()
+        folder.mkdir()
+        (folder / "0001_a.sql").write_text("SELECT 1;")
+        (folder / f"{digits}_b.sql").write_text("SELECT 1;")
+        assert mig.check_ledger(mig._migration_files(folder)) != []
+
+
+def test_uppercase_extension_is_refused(tmp_path):
+    """FAIL-BEFORE 3 (Linux: `glob` is case-sensitive there)."""
+    import os
+
+    (tmp_path / "0001_a.sql").write_text("SELECT 1;")
+    (tmp_path / "0002_b.SQL").write_text("SELECT 1;")
+    assert "0002_b.SQL" in {e.name for e in os.scandir(tmp_path)}
+    assert mig.check_ledger(mig._migration_files(tmp_path)) != []
+
+
+def test_number_zero_is_refused(tmp_path):
+    """FAIL-BEFORE 7."""
+    (tmp_path / "0000_a.sql").write_text("SELECT 1;")
+    (tmp_path / "0001_b.sql").write_text("SELECT 1;")
+    assert mig.check_ledger(mig._migration_files(tmp_path)) != []
+
+
+def test_dangling_link_is_refused(tmp_path):
+    """FAIL-BEFORE 4b (Linux)."""
+    (tmp_path / "0001_a.sql").write_text("SELECT 1;")
+    (tmp_path / "0002_b.sql").symlink_to(tmp_path / "missing-target")
+    got = mig.check_ledger(mig._migration_files(tmp_path))
+    assert any("0002_b.sql: not a regular file" in p for p in got), got
+
+
+def test_directory_named_like_a_migration_is_refused(monkeypatch, tmp_path):
+    """FAIL-BEFORE 4a: a clear refusal before connecting, not a raw IsADirectoryError."""
+    files = mig._migration_files() + [tmp_path / "0006_x.sql"]
+    (tmp_path / "0006_x.sql").mkdir()
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+
+    def no_db(*a, **k):
+        raise AssertionError("connected")
+
+    monkeypatch.setattr(mig, "connect", no_db)
+    with pytest.raises(Exception) as e:
+        mig.migrate("postgresql://unused")
+    assert type(e.value) is mn.MigrationNumberError, repr(e.value)
+    assert "0006_x.sql: not a regular file" in str(e.value)
+
+
+def test_commit_in_a_file_is_refused_before_connecting(monkeypatch, tmp_path):
+    """FAIL-BEFORE 5: the real files plus one that ends the transaction."""
+    planted = tmp_path / "0006_commit.sql"
+    planted.write_text("ALTER TABLE runs ADD COLUMN IF NOT EXISTS p3a_c TEXT;\nCOMMIT;\n")
+    files = mig._migration_files() + [planted]
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+
+    def no_db(*a, **k):
+        raise AssertionError("connected")
+
+    monkeypatch.setattr(mig, "connect", no_db)
+    with pytest.raises(Exception) as e:
+        mig.migrate("postgresql://unused")
+    assert isinstance(e.value, ConfigError), repr(e.value)
+    assert "0006_commit.sql" in str(e.value)
+
+
+def test_migrate_executes_the_text_it_scanned(monkeypatch, tmp_path):
+    """One read per file. A file changed after the read is not run in its new form."""
+    files = _files(tmp_path, 2)
+    reads = []
+    real = Path.read_text
+
+    def counting(self, *a, **k):
+        reads.append(self.name)
+        return real(self, *a, **k)
+
+    db = _Db([START, START, START], [[], [], []])
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "released_problems", lambda *a, **k: [])  # made-up file names
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    monkeypatch.setattr(Path, "read_text", counting)
+    real_scan = mig.check_grants
+
+    def scan_then_change(paths, texts=None):
+        out = real_scan(paths, texts=texts)
+        files[0].write_text("SELECT 'changed after the read';\n", encoding="utf-8")
+        return out
+
+    monkeypatch.setattr(
+        mig, "check_grants", lambda p, texts=None: scan_then_change(p, texts) and []
+    )
+    mig.migrate("postgresql://unused")
+    assert reads.count("0001_f1.sql") == 1 and reads.count("0002_f2.sql") == 1, reads
+    assert "SELECT 1;\n" in db.log and not any("changed after" in s for s in db.log)
+
+
+# --- gone names and late files: refused inside the transaction, nothing applied ----------------------------------------
+
+
+def test_late_file_is_refused_and_nothing_runs(monkeypatch, tmp_path):
+    err, db, _ = _run(monkeypatch, tmp_path, [START], [[]], n=3, applied=["0001_f1", "0003_f3"])
+    assert type(err) is mn.MigrationNumberError and "0002_f2.sql" in str(err)
+    assert not any(s.startswith(("SELECT 2", "INSERT")) for s in db.log)
+
+
+def test_gone_name_is_refused_with_the_old_phrase(monkeypatch, tmp_path):
+    err, db, _ = _run(monkeypatch, tmp_path, [START], [[]], n=2, applied=["0001_f1", "0007_z"])
+    assert type(err) is mn.MigrationNumberError
+    assert "applied migrations have no file in this release" in str(err)
+    assert "newer than this release" in str(err)
+    assert not any(s.startswith(("SELECT 2", "INSERT")) for s in db.log)
+
+
+# --- the read-back ----------------------------------------------------------------------------------------------------
+
+
+def test_migrate_takes_the_one_advisory_lock_key_first(monkeypatch, tmp_path):
+    """The lock `migrate` takes is the key of `migration_numbers` (the key a hand recipe takes too), before anything else."""
+    err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+    assert err is None
+    assert db.params[0] == ("SELECT pg_advisory_xact_lock(%s)", (mn.MIGRATE_LOCK,))
+
+
+def test_migrate_sets_the_recipe_limits_right_after_its_lock_and_before_any_file(
+    monkeypatch, tmp_path
+):
+    """`migrate` runs the two `SET LOCAL` lines of `RECIPE_TIMEOUTS`, in order, right after the advisory
+    lock and before the first file; they are the constant's, not copies (a patched constant is what runs)."""
+    err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+    assert err is None
+    assert db.params[0] == ("SELECT pg_advisory_xact_lock(%s)", (mn.MIGRATE_LOCK,))
+    assert [t for t, _ in db.params[1:3]] == list(mn.RECIPE_TIMEOUTS)
+    assert db.log.index("SELECT 1;\n") > 2
+    other = ("SET LOCAL lock_timeout = '1ms';", "SET LOCAL statement_timeout = '2ms';")
+    monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", other)
+    err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+    assert err is None and tuple(t for t, _ in db.params[1:3]) == other
+
+
+def test_clean_run_reads_before_each_file_insert(monkeypatch, tmp_path):
+    """Cases (i) and (xii): saved values are read BEFORE the first file; each file is followed by both read queries
+    and only then by its ledger INSERT (M64, M95)."""
+    err, db, applied = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+    assert err is None and applied == ["0001_f1", "0002_f2"]
+    log = db.log
+    first_file = log.index("SELECT 1;\n")
+    assert log.index(mig._READBACK_VALUES_SQL) < first_file, (
+        "saved values are read before the first file"
+    )
+    second_file = log.index("SELECT 2;\n")
+    inserts = [i for i, s in enumerate(log) if s.startswith("INSERT INTO schema_migrations")]
+    for file_at, insert_at in zip((first_file, second_file), inserts, strict=True):
+        reads = [
+            i
+            for i, s in enumerate(log)
+            if s == mig._READBACK_VALUES_SQL and file_at < i < insert_at
+        ]
+        trig = [
+            i
+            for i, s in enumerate(log)
+            if s == mig._READBACK_TRIGGERS_SQL and file_at < i < insert_at
+        ]
+        assert reads and trig, "both read queries run after the file and before its ledger row"
+
+
+def test_nothing_to_apply_reads_nothing(monkeypatch, tmp_path):
+    err, db, applied = _run(monkeypatch, tmp_path, [], [], n=2, applied=["0001_f1", "0002_f2"])
+    assert err is None and applied == []
+    assert mig._READBACK_VALUES_SQL not in db.log
+
+
+@pytest.mark.parametrize("item", ITEMS[:-2] + ITEMS[-2:])
+def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, item):
+    """Cases (ii), (x), (xiv), (xv): one value differs after file 1: refused naming file 1 and exactly that item
+    (M62, M65 to M71, M91 to M94; M67 reads only after the last file: the second file never runs)."""
+    new = {
+        "current_user": "other",
+        "session_user": "other",
+        "session_replication_role": "replica",
+        "search_path": "public",
+        "standard_conforming_strings": "off",
+        "backslash_quote": "on",
+        "client_encoding": "LATIN1",
+        "lock_timeout": "0",
+        "statement_timeout": "0",
+        "transaction_timestamp": T1,
+        "txid_current": 701,
+    }[item]
+    err, db, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: new})], [[], []])
+    assert isinstance(err, ConfigError) and "0001_f1.sql" in str(err), err
+    assert item in str(err) and ascii(new) in str(err)
+    others = [i for i in ITEMS if i != item]
+    assert not any(f"{o} was" in str(err) for o in others), "only the differing item is named"
+    assert "SELECT 2;\n" not in db.log, "file 2 never ran"
+    assert not any(s.startswith("INSERT INTO schema_migrations") for s in db.log)
+
+
+def test_session_authorization_names_both_users(monkeypatch, tmp_path):
+    """Case (iii): `set_config('session_authorization', ..)` moves both users: both are named (M65)."""
+    err, _, _ = _run(
+        monkeypatch, tmp_path, [START, _values(current_user="x", session_user="x")], [[], []]
+    )
+    assert "current_user" in str(err) and "session_user" in str(err)
+
+
+def test_saved_users_that_differ_are_not_a_refusal(monkeypatch, tmp_path):
+    """Case (xiii): `mig` is the current user and `admin` the session user at the start and nothing moves."""
+    start = _values(session_user="admin")
+    err, _, applied = _run(monkeypatch, tmp_path, [start, start, start], [[], [], []])
+    assert err is None and applied == ["0001_f1", "0002_f2"]
+
+
+def test_start_value_of_standard_conforming_strings_must_be_on(monkeypatch, tmp_path):
+    """Case (ix), M90: refused before any file runs."""
+    err, db, _ = _run(monkeypatch, tmp_path, [_values(standard_conforming_strings="off")], [[]])
+    assert isinstance(err, ConfigError) and "standard_conforming_strings" in str(err)
+    assert "SELECT 1;\n" not in db.log
+
+
+def test_a_disabled_trigger_is_refused(monkeypatch, tmp_path):
+    """Any change of the enabled state of a trigger that existed BEFORE the file is refused (`O` to `A` too: a list
+    of only `D` and `R` let it pass). Killed by: mutant T1 (back to a D/R-only check). A trigger that the file itself
+    creates disabled is another branch of the code; it is tested by the next test (mutant M88)."""
+    for state in ("D", "R", "A"):
+        err, _, _ = _run(
+            monkeypatch, tmp_path, [START, START], [[_trigger()], [_trigger(enabled=state)]]
+        )
+        assert isinstance(err, ConfigError) and "0001_f1.sql" in str(err)
+        assert "trigger s.t.trg changed: enabled state" in str(err), err
+    for was, now in (("A", "O"), ("D", "O"), ("R", "A")):
+        err, _, _ = _run(
+            monkeypatch,
+            tmp_path,
+            [START, START],
+            [[_trigger(enabled=was)], [_trigger(enabled=now)]],
+        )
+        assert isinstance(err, ConfigError), (was, now)
+
+
+def test_a_trigger_created_disabled_is_refused_and_one_created_enabled_is_not(
+    monkeypatch, tmp_path
+):
+    """A trigger the file creates disabled (`D`) or replica-only (`R`) is refused; one created enabled is not.
+    Killed by: mutant M88 (the check of a new trigger's state removed)."""
+    for state in ("D", "R"):
+        err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], [_trigger(enabled=state)]])
+        assert isinstance(err, ConfigError) and "is created" in str(err), err
+    for state in ("O", "A"):
+        err, _, _ = _run(
+            monkeypatch,
+            tmp_path,
+            [START] * 3,
+            [[], [_trigger(enabled=state)], [_trigger(enabled=state)]],
+        )
+        assert err is None, err
+
+
+def test_a_trigger_recreated_with_another_definition_or_function_is_refused(monkeypatch, tmp_path):
+    """the trigger keeps its name, enabled state and table but not what it does.
+    Killed by: mutants T1..T5 and T7 of tests/migrate_mutants.py (one part of the saved trigger not compared)."""
+    changes = {
+        "definition": {
+            "definition": "CREATE TRIGGER trg AFTER INSERT ON s.t EXECUTE FUNCTION s.g()"
+        },
+        "function text": {"src": "BEGIN RETURN NULL; END"},
+        "function security mode": {"secdef": True},
+        "function owner": {"owner": "owner_b"},
+    }
+    for part, change in changes.items():
+        err, _, _ = _run(
+            monkeypatch, tmp_path, [START, START], [[_trigger()], [_trigger(**change)]]
+        )
+        assert isinstance(err, ConfigError) and f"trigger s.t.trg changed: {part}" in str(err), (
+            part,
+            err,
+        )
+
+
+def test_the_trigger_query_reads_definition_function_text_and_security_mode():
+    q = mig._READBACK_TRIGGERS_SQL
+    assert "pg_get_triggerdef(t.oid)" in q and "md5(p.prosrc)" in q and "p.prosecdef" in q
+    assert "pg_get_userbyid(p.proowner)" in q and "p.proconfig" in q
+    assert "pg_proc" in q
+
+
+def test_a_trigger_that_was_disabled_at_the_start_is_not_a_refusal(monkeypatch, tmp_path):
+    same = [_trigger(enabled="D")]
+    err, _, _ = _run(monkeypatch, tmp_path, [START] * 3, [same, same, same])
+    assert err is None, err
+
+
+def test_a_dropped_trigger_is_refused(monkeypatch, tmp_path):
+    """Case (viii), M89."""
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[_trigger()], []])
+    assert isinstance(err, ConfigError) and "trigger s.t.trg no longer exists" in str(err)
+
+
+def test_a_new_trigger_is_not_a_refusal_and_is_watched_from_then_on(monkeypatch, tmp_path):
+    """Case (xvii), M101: file 1 adds trigger O (fine); file 2 makes it vanish: refused naming file 2."""
+    err, _, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [_trigger(name="new")], []])
+    assert isinstance(err, ConfigError) and "0002_f2.sql" in str(err), err
+    assert "trigger s.t.new no longer exists" in str(err)
+
+
+def test_a_trigger_change_is_not_reported_as_a_changed_session(monkeypatch, tmp_path):
+    """the message names the trigger, what changed and the way to allow it; it does not say the database
+    session changed. Killed by: mutant T8 (a trigger change goes into the session list again)."""
+    err, _, _ = _run(
+        monkeypatch,
+        tmp_path,
+        [START, START],
+        [[_trigger()], [_trigger(src="BEGIN RETURN NULL; END")]],
+    )
+    msg = str(err)
+    assert "0001_f1.sql changed a trigger: trigger s.t.trg changed: function text" in msg, msg
+    assert "migrations_trigger_changes.json" in msg
+    assert "session" not in msg, msg
+    # a session change and a trigger change together are both named
+    err, _, _ = _run(
+        monkeypatch,
+        tmp_path,
+        [START, _values(search_path="public")],
+        [[_trigger()], [_trigger(src="x")]],
+    )
+    assert "left the database session changed: search_path" in str(err)
+    assert "changed a trigger: trigger s.t.trg changed" in str(err)
+
+
+def test_a_renamed_table_with_a_trigger_is_reported_as_a_renamed_table(monkeypatch, tmp_path):
+    """The audit trigger stays on the same table id when the table is renamed, but code that
+    names the table and a new table made under the old name would not have the trigger, so a rename is refused, and the
+    message says "renamed", not "no longer exists". Killed by: mutant T9 (a renamed table reads as a vanished trigger)."""
+    old = _trigger(table="t", relid=77)
+    new = _trigger(table="t2", relid=77)
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[old], [new]])
+    msg = str(err)
+    assert "its table was renamed from t to t2" in msg, msg
+    assert "no longer exists" not in msg
+    # a table dropped and made again under ANOTHER name (new id) is not a rename
+    err, _, _ = _run(
+        monkeypatch, tmp_path, [START, START], [[old], [_trigger(table="t2", relid=78)]]
+    )
+    assert "trigger s.t.trg no longer exists" in str(err)
+
+
+def _listed(*entries):
+    """A fake reviewed list: entries are (migration, schema or None, table, trigger[, state])."""
+    return frozenset(mig.TriggerChange(*e) for e in entries)
+
+
+def test_an_allowed_trigger_change_passes_only_for_that_file_table_and_trigger(
+    monkeypatch, tmp_path
+):
+    """The reviewed list names (migration, table, trigger); it allows a change, never a disappearance, and no other
+    trigger, table or file. Killed by: mutant T10 (any trigger is allowed once any entry exists) and T11 (a disappearance
+    is allowed)."""
+    changed = [_trigger(src="BEGIN RETURN NULL; END")]
+    monkeypatch.setattr(mig, "_trigger_changes", lambda: _listed(("0001_f1", None, "t", "trg")))
+    err, _, applied = _run(monkeypatch, tmp_path, [START] * 3, [[_trigger()], changed, changed])
+    assert err is None and applied == ["0001_f1", "0002_f2"], err
+    # same trigger, another file: refused
+    err, _, _ = _run(monkeypatch, tmp_path, [START] * 3, [[_trigger()], [_trigger()], changed])
+    assert isinstance(err, ConfigError) and "0002_f2.sql" in str(err), err
+    # same file, another trigger: refused
+    other = [_trigger(), _trigger(name="other")]
+    err, _, _ = _run(
+        monkeypatch,
+        tmp_path,
+        [START, START],
+        [other, [_trigger(), _trigger(name="other", src="x")]],
+    )
+    assert "trigger s.t.other changed" in str(err), err
+    # same file, same trigger name on ANOTHER table: refused (the name alone is not the key)
+    on_two = [_trigger(), _trigger(table="u", relid=78)]
+    err, _, _ = _run(
+        monkeypatch,
+        tmp_path,
+        [START, START],
+        [on_two, [_trigger(), _trigger(table="u", relid=78, src="x")]],
+    )
+    assert "trigger s.u.trg changed: function text" in str(err), err
+    # the allowed trigger vanishes: refused
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[_trigger()], []])
+    assert "trigger s.t.trg no longer exists" in str(err), err
+
+
+def test_an_entry_that_names_another_schema_does_not_allow_the_change(monkeypatch, tmp_path):
+    """An entry written `schema.table` allows only that schema; one with no schema means the schema `migrate` uses."""
+    changed = [_trigger(src="BEGIN RETURN NULL; END")]
+    monkeypatch.setattr(
+        mig, "_trigger_changes", lambda: _listed(("0001_f1", "elsewhere", "t", "trg"))
+    )
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[_trigger()], changed])
+    assert isinstance(err, ConfigError) and "trigger s.t.trg changed: function text" in str(err), (
+        err
+    )
+    monkeypatch.setattr(mig, "_trigger_changes", lambda: _listed(("0001_f1", "s", "t", "trg")))
+    err, _, _ = _run(monkeypatch, tmp_path, [START] * 3, [[_trigger()], changed, changed])
+    assert err is None, err
+
+
+def test_a_listed_trigger_may_not_be_left_disabled_or_replica_only_unless_the_entry_says_so(
+    monkeypatch, tmp_path
+):
+    """The list allows a change of what a trigger does; it does not allow switching it off. `D` and `R` are refused for a
+    listed trigger unless the entry names that exact state. Killed by: mutant T14 (a listed trigger may be left in any
+    state)."""
+    for state in ("D", "R"):
+        monkeypatch.setattr(mig, "_trigger_changes", lambda: _listed(("0001_f1", None, "t", "trg")))
+        err, _, _ = _run(
+            monkeypatch, tmp_path, [START, START], [[_trigger()], [_trigger(enabled=state)]]
+        )
+        assert isinstance(err, ConfigError) and "which its list entry does not name" in str(err), (
+            err
+        )
+        assert "enabled_state" in str(err)
+        # the entry names the OTHER state: still refused
+        other = "R" if state == "D" else "D"
+        monkeypatch.setattr(
+            mig,
+            "_trigger_changes",
+            lambda other=other: _listed(("0001_f1", None, "t", "trg", other)),
+        )
+        err, _, _ = _run(
+            monkeypatch, tmp_path, [START, START], [[_trigger()], [_trigger(enabled=state)]]
+        )
+        assert isinstance(err, ConfigError) and "does not name" in str(err), err
+        # the entry names this state: allowed
+        monkeypatch.setattr(
+            mig,
+            "_trigger_changes",
+            lambda state=state: _listed(("0001_f1", None, "t", "trg", state)),
+        )
+        err, _, applied = _run(
+            monkeypatch,
+            tmp_path,
+            [START] * 3,
+            [[_trigger()], [_trigger(enabled=state)], [_trigger(enabled=state)]],
+        )
+        assert err is None and applied == ["0001_f1", "0002_f2"], (state, err)
+    # a listed trigger that stays enabled and changes only its function: allowed, no state named
+    monkeypatch.setattr(mig, "_trigger_changes", lambda: _listed(("0001_f1", None, "t", "trg")))
+    err, _, _ = _run(
+        monkeypatch,
+        tmp_path,
+        [START] * 3,
+        [[_trigger()], [_trigger(enabled="A", src="x")], [_trigger(enabled="A", src="x")]],
+    )
+    assert err is None, err
+
+
+def test_the_list_of_allowed_trigger_changes_is_empty_today_and_strictly_read(
+    monkeypatch, tmp_path
+):
+    """The shipped list is empty. A bad list is a ConfigError (never "allow"). Killed by: mutant T12 (the loader ignores
+    a bad shape)."""
+    assert mig._trigger_changes() == frozenset()
+    good = {
+        "migration": "0007_x",
+        "table": "audit_entries",
+        "trigger": "trg",
+        "reason": "replaces the function, same rule",
+    }
+
+    def load(text):
+        f = tmp_path / "list.json"
+        f.write_text(text, encoding="utf-8")
+        monkeypatch.setattr(mig, "TRIGGER_CHANGES", f)
+        return mig._trigger_changes()
+
+    import json
+
+    assert load(json.dumps([good])) == _listed(("0007_x", None, "audit_entries", "trg"))
+    assert load(
+        json.dumps([{**good, "table": "app.audit_entries", "enabled_state": "D"}])
+    ) == _listed(("0007_x", "app", "audit_entries", "trg", "D"))
+    # the same trigger name on two tables is two entries, not a repeat
+    assert len(load(json.dumps([good, {**good, "table": "other"}]))) == 2
+    for bad in (
+        "{}",
+        "not json",
+        json.dumps([{**good, "extra": "x"}]),
+        json.dumps([{"migration": "0007_x", "trigger": "trg", "reason": "x"}]),  # no table
+        json.dumps([{**good, "reason": " "}]),
+        json.dumps([{**good, "reason": "a\nb"}]),
+        json.dumps([{**good, "migration": "7_x"}]),
+        json.dumps([{**good, "migration": "0007_X"}]),
+        json.dumps([{**good, "trigger": 5}]),
+        json.dumps([{**good, "table": "a.b.c"}]),
+        json.dumps([{**good, "table": "a b"}]),
+        json.dumps([{**good, "enabled_state": "A"}]),
+        json.dumps([{**good, "enabled_state": ""}]),
+        json.dumps([good, good]),
+    ):
+        with pytest.raises(ConfigError, match="allowed trigger changes"):
+            load(bad)
+    monkeypatch.setattr(mig, "TRIGGER_CHANGES", tmp_path / "missing.json")
+    with pytest.raises(ConfigError, match="cannot be read"):
+        mig._trigger_changes()
+
+
+def test_trigger_query_reads_only_the_migration_schema():
+    """Case (xvi), M102: the schema filter is in the query text (a stub cannot answer for another schema)."""
+    assert "current_schema()" in mig._READBACK_TRIGGERS_SQL
+    assert "NOT t.tgisinternal" in mig._READBACK_TRIGGERS_SQL
+
+
+def test_the_message_has_no_connection_string_and_escapes_names(monkeypatch, tmp_path):
+    err, _, _ = _run(monkeypatch, tmp_path, [START, _values(search_path="a\x1b[31mred")], [[], []])
+    assert "\x1b" not in str(err) and "://" not in str(err)
+
+
+# --- role memberships: a grant made inside a function body is found by the read-back ------------------------
+
+EDGE = ("app_rw", "app_admin", '{"admin_option": false, "grantor": 10}')
+
+
+def test_a_new_role_membership_after_a_file_is_refused(monkeypatch, tmp_path):
+    """Killed by: mutant R1 (membership not compared) and mutant R2 (membership not read after the file)."""
+    err, db, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[], [EDGE]])
+    assert isinstance(err, ConfigError) and "0001_f1.sql" in str(err), err
+    assert "role app_rw has a new member app_admin" in str(err)
+    assert "SELECT 2;\n" not in db.log, "file 2 never ran"
+
+
+def test_a_removed_role_membership_is_refused(monkeypatch, tmp_path):
+    """Killed by: mutant R3 (a removed membership is not reported)."""
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[EDGE], []])
+    assert isinstance(err, ConfigError) and "role app_rw lost the member app_admin" in str(err), err
+
+
+def test_a_changed_grant_option_of_a_membership_is_refused(monkeypatch, tmp_path):
+    """Killed by: mutant R4 (only role and member compared, not the other columns)."""
+    other = (*EDGE[:2], '{"admin_option": true, "grantor": 10}')
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[EDGE], [other]])
+    assert isinstance(err, ConfigError) and "app_rw" in str(err), err
+
+
+def test_memberships_that_were_there_at_the_start_are_not_a_refusal(monkeypatch, tmp_path):
+    err, _, applied = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], members=[[EDGE]] * 3)
+    assert err is None and applied == ["0001_f1", "0002_f2"], err
+
+
+def test_the_membership_message_escapes_names(monkeypatch, tmp_path):
+    bad = ("r\x1b[31m", "s", "{}")
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[], [bad]])
+    assert "\x1b" not in str(err) and "\\x1b" in str(err)
+
+
+def test_the_membership_is_read_after_every_file_and_before_its_ledger_row(monkeypatch, tmp_path):
+    """Killed by: mutant R2 (the members query is never sent by the read-back)."""
+    err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+    assert err is None
+    log = db.log
+    assert log.count(mig._READBACK_MEMBERS_SQL) == 3  # the start and one per file
+    inserts = [i for i, s in enumerate(log) if s.startswith("INSERT INTO schema_migrations")]
+    reads = [i for i, s in enumerate(log) if s == mig._READBACK_MEMBERS_SQL]
+    assert reads[1] < inserts[0] < reads[2] < inserts[1]
+
+
+def test_the_membership_query_reads_names_and_every_other_column():
+    assert "pg_auth_members" in mig._READBACK_MEMBERS_SQL
+    assert "::regrole::text" in mig._READBACK_MEMBERS_SQL
+    assert "to_jsonb(m)" in mig._READBACK_MEMBERS_SQL
+
+
+# --- a trigger is the same trigger when its table is dropped and made again --------------------------------
+
+
+def test_a_table_made_again_with_its_trigger_is_not_a_false_refusal(monkeypatch, tmp_path):
+    """The table has a new OID after DROP + CREATE; the trigger has the same schema, table and name."""
+    err, _, applied = _run(
+        monkeypatch,
+        tmp_path,
+        [START] * 3,
+        [[_trigger()], [_trigger()], [_trigger()]],
+    )
+    assert err is None and applied == ["0001_f1", "0002_f2"], err
+
+
+def test_a_trigger_on_another_table_with_the_same_name_is_another_trigger(monkeypatch, tmp_path):
+    err, _, _ = _run(
+        monkeypatch,
+        tmp_path,
+        [START] * 2,
+        [[_trigger(table="a")], [_trigger(table="b")]],
+    )
+    assert isinstance(err, ConfigError) and "trigger s.a.trg no longer exists" in str(err), err
+
+
+# --- the migration role is not a superuser ----------------------------------------------------------------
+
+
+FLAGS = ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls")
+
+
+@pytest.mark.parametrize("flag", FLAGS)
+def test_a_privileged_migration_role_is_refused_before_any_file_runs(monkeypatch, tmp_path, flag):
+    """Killed by: mutants S1 (no check), S2..S5 (one flag not read)."""
+    files = _files(tmp_path, 2)
+    flags = tuple(f == flag for f in FLAGS)
+    db = _Db([START] * 3, [[], [], []], flags=flags)
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    monkeypatch.setattr(
+        mig, "released_problems", lambda *a, **k: []
+    )  # these made-up file names are not the released ones
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    with pytest.raises(ConfigError, match=f"it holds: {flag}"):
+        mig.migrate("postgresql://unused")
+    assert "SELECT 1;\n" not in db.log
+    assert not any(s.startswith("CREATE TABLE IF NOT EXISTS schema_migrations") for s in db.log)
+
+
+def test_a_role_that_is_a_member_of_a_privileged_role_is_refused_before_any_file_runs(
+    monkeypatch, tmp_path
+):
+    files = _files(tmp_path, 1)
+    db = _Db([START], [[]], borrowed=("boss_role", "other_boss"))
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    monkeypatch.setattr(mig, "released_problems", lambda *a, **k: [])
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    with pytest.raises(ConfigError, match="member of a role that is a superuser") as e:
+        mig.migrate("postgresql://unused")
+    assert "boss_role, other_boss" in str(e.value) and "REVOKE" in str(e.value)
+    assert "SELECT 1;\n" not in db.log
+    assert not any(s.startswith("CREATE TABLE IF NOT EXISTS schema_migrations") for s in db.log)
+
+
+def test_the_membership_check_reads_the_current_user_and_all_four_flags():
+    q = mig._BORROWED_ROLES_SQL
+    assert "current_user" in q and "'MEMBER'" in q
+    for flag in ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls"):
+        assert flag in q
+
+
+def test_the_role_flags_are_read_from_the_current_user():
+    assert "current_user" in mig._ROLE_FLAGS_SQL and "pg_roles" in mig._ROLE_FLAGS_SQL
+    for flag in ("rolsuper", "rolcreaterole", "rolcreatedb", "rolbypassrls"):
+        assert flag in mig._ROLE_FLAGS_SQL
+
+
+def test_there_is_no_switch_that_turns_the_role_check_off():
+    """no argument, setting or module name can switch the check off."""
+    import inspect
+
+    assert "allow_privileged_role_for_tests" not in inspect.signature(mig.migrate).parameters
+    assert not any("privileged" in name for name in dir(mig) if name != "_refuse_privileged_role")
+    assert "allow_privileged_role_for_tests" not in inspect.getsource(mig)
+
+
+def test_the_refusal_says_how_to_make_a_plain_migration_role(monkeypatch, tmp_path):
+    """The message names the flags held and gives one SQL example with no password or other secret."""
+    files = _files(tmp_path, 1)
+    db = _Db([START], [[]], flags=(True, False, False, False))
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    monkeypatch.setattr(
+        mig, "released_problems", lambda *a, **k: []
+    )  # these made-up file names are not the released ones
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    with pytest.raises(ConfigError) as e:
+        mig.migrate("postgresql://unused")
+    msg = str(e.value)
+    assert "it holds: rolsuper" in msg and mig.PLAIN_MIGRATION_ROLE_SQL in msg
+    assert "NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS" in msg
+    assert "password" not in msg.lower()
+
+
+# --- settings saved per database or role and the two time limits ---------------------------------
+
+
+def test_a_new_saved_setting_for_a_role_is_refused(monkeypatch, tmp_path):
+    """`ALTER ROLE x SET search_path = ...` changes the NEXT session, not this one: only pg_db_role_setting shows it.
+    Killed by: mutants PS1 (settings not read), PS2 (not compared)."""
+    saved = ("mydb", "app_rw", "{search_path=evil}")
+    err, _db, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], settings=[[], [saved]])
+    assert isinstance(err, ConfigError) and "0001_f1.sql" in str(err), err
+    assert "saved setting for database mydb role app_rw is new" in str(err)
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], settings=[[saved], []])
+    assert isinstance(err, ConfigError) and "is gone" in str(err), err
+    err, _, applied = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], settings=[[saved]] * 3)
+    assert err is None and applied == ["0001_f1", "0002_f2"]
+
+
+@pytest.mark.parametrize("item", ["lock_timeout", "statement_timeout"])
+def test_a_file_that_changes_a_time_limit_is_refused(monkeypatch, tmp_path, item):
+    """Killed by: mutant L1 (the limits are not in the read-back)."""
+    err, _, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: "0"})], [[], []])
+    assert isinstance(err, ConfigError) and f"{item} was '" in str(err), err
+
+
+def test_the_membership_message_says_it_reads_the_whole_server():
+    import inspect
+
+    assert "whole database server" in inspect.getsource(mig._check_read_back)
+
+
+# --- the released-file list is checked by migrate() itself ---------------------------------------------
+
+
+def test_migrate_refuses_a_changed_released_file_before_it_connects(monkeypatch, tmp_path):
+    """Killed by: mutant R6 (the call to released_problems removed from migrate())."""
+    import json
+
+    manifest = dict(mig._released_manifest())
+    first = min(manifest)
+    manifest[first] = "0" * 64
+    path = tmp_path / "released.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
+
+    def no_connect(*a, **k):
+        raise AssertionError("migrate connected although a released file changed")
+
+    monkeypatch.setattr(mig, "connect", no_connect)
+    with pytest.raises(mn.MigrationNumberError, match=f"{first}: a released file was changed"):
+        mig.migrate("postgresql://unused")
+
+
+def test_migrate_refuses_when_the_released_list_is_unreadable_or_wrong(monkeypatch, tmp_path):
+    """An unreadable or wrongly shaped list of released files is a ConfigError before any connection."""
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+    missing = tmp_path / "none.json"
+    monkeypatch.setattr(mig, "RELEASED_MANIFEST", missing)
+    with pytest.raises(ConfigError, match="released migration files cannot be read"):
+        mig.migrate("postgresql://unused")
+    wrong = tmp_path / "wrong.json"
+    wrong.write_text('["0001_core"]', encoding="utf-8")
+    monkeypatch.setattr(mig, "RELEASED_MANIFEST", wrong)
+    with pytest.raises(ConfigError, match="not a name -> SHA-256 table"):
+        mig.migrate("postgresql://unused")
+
+
+def test_the_released_list_ships_inside_the_package_and_covers_every_real_file():
+    assert mig.RELEASED_MANIFEST.parent == mn.MIGRATIONS.parent
+    assert mig.RELEASED_MANIFEST.is_file()
+    assert mn.released_problems(mn.MIGRATIONS, mig._released_manifest()) == []
+
+
+def test_the_released_check_looks_at_the_files_migrate_runs_not_at_the_folder(
+    monkeypatch, tmp_path
+):
+    """`migrate` runs the list `_migration_files()` gives it; the released check must read that same list. Here the files
+    are copies in another folder with one released file edited: the folder itself is untouched, so a check that listed
+    the folder would pass. Killed by: mutant R7 (the check lists the folder again)."""
+    import shutil
+
+    for p in mn.MIGRATIONS.glob("*.sql"):
+        shutil.copy(p, tmp_path / p.name)
+    edited = tmp_path / "0002_audit_chain.sql"
+    edited.write_text(edited.read_text(encoding="utf-8") + "\nSELECT 1;\n", encoding="utf-8")
+    monkeypatch.setattr(mig, "_migration_files", lambda: sorted(tmp_path.glob("*.sql")))
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+    with pytest.raises(
+        mn.MigrationNumberError, match="0002_audit_chain: a released file was changed"
+    ):
+        mig.migrate("postgresql://unused")
+
+
+def test_a_bad_hash_in_the_released_list_is_a_config_error_not_a_changed_file(
+    monkeypatch, tmp_path
+):
+    """a value that is not 64 lower-case hex digits is a broken list (ConfigError, before any connection),
+    not "a released file was changed"."""
+    import json
+
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+    good = dict(mig._released_manifest())
+    first = min(good)
+    for bad in ("xyz", "", "0" * 63, "0" * 65, "A" * 64, "0" * 63 + "g", ("0" * 64) + "\n"):
+        path = tmp_path / "bad.json"
+        path.write_text(json.dumps({**good, first: bad}), encoding="utf-8")
+        monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
+        with pytest.raises(ConfigError, match="no SHA-256 .* for"):
+            mig.migrate("postgresql://unused")
+
+
+def test_a_json_name_written_twice_in_the_released_list_is_refused(monkeypatch, tmp_path):
+    """`json` would keep the last of two equal names, so an edited second hash would hide the first."""
+    good = mig._released_manifest()
+    first, digest = next(iter(good.items()))
+    path = tmp_path / "dup.json"
+    path.write_text(
+        '{"' + first + '": "' + digest + '", "' + first + '": "' + "1" * 64 + '"}', encoding="utf-8"
+    )
+    monkeypatch.setattr(mig, "RELEASED_MANIFEST", path)
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+    with pytest.raises(ConfigError, match="cannot be read: .*written twice"):
+        mig.migrate("postgresql://unused")
+
+
+class _Raises(_Db):
+    """The connection raises `error` when the text of file `trigger` is executed."""
+
+    def __init__(self, error, trigger, *a):
+        super().__init__(*a)
+        self.error, self.trigger = error, trigger
+
+    def execute(self, query, params=None):
+        if str(query) == self.trigger:
+            raise self.error
+        return super().execute(query, params)
+
+
+def _run_raising(monkeypatch, tmp_path, error):
+    files = _files(tmp_path, 2)
+    db = _Raises(error, "SELECT 2;\n", [START] * 3, [[], [], []])
+    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    monkeypatch.setattr(
+        mig, "released_problems", lambda *a, **k: []
+    )  # these made-up file names are not the released ones
+    monkeypatch.setattr(
+        mig, "released_problems", lambda *a, **k: []
+    )  # these made-up file names are not the released ones
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+    mig.migrate("postgresql://unused")
+
+
+def test_a_lock_wait_or_a_slow_statement_is_a_plain_config_error_naming_step_and_setting(
+    monkeypatch, tmp_path
+):
+    """A lock wait that runs out is reported with the file being applied and the setting `lock_timeout`."""
+    from psycopg import errors as pge
+
+    with pytest.raises(ConfigError, match=r"applying 0002_f2\.sql.*lock_timeout") as got:
+        _run_raising(
+            monkeypatch, tmp_path, pge.LockNotAvailable("canceling statement due to lock timeout")
+        )
+    assert "kept nothing" in str(got.value) and "Migration repair steps" in str(got.value)
+    assert mn.RECIPE_TIMEOUTS[0].split("'")[1] in str(
+        got.value
+    )  # the number comes from the constant
+    with pytest.raises(ConfigError, match=r"applying 0002_f2\.sql.*statement_timeout"):
+        _run_raising(
+            monkeypatch, tmp_path, pge.QueryCanceled("canceling statement due to statement timeout")
+        )
+
+
+def test_the_statement_limit_is_found_by_the_error_code_not_by_the_words(monkeypatch, tmp_path):
+    """the server words follow `lc_messages` (a German server says "wegen Zeitüberschreitung"); the code
+    57014 does not."""
+    from psycopg import errors as pge
+
+    with pytest.raises(ConfigError, match=r"applying 0002_f2\.sql.*statement_timeout"):
+        _run_raising(
+            monkeypatch,
+            tmp_path,
+            pge.QueryCanceled("Anweisung wurde wegen Zeitüberschreitung abgebrochen"),
+        )
+    with pytest.raises(pge.DeadlockDetected):
+        _run_raising(monkeypatch, tmp_path, pge.DeadlockDetected("statement timeout"))
