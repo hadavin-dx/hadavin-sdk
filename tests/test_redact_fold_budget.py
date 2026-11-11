@@ -67,7 +67,7 @@ def test_the_budget_is_checked_inside_the_per_line_work(monkeypatch):
     )  # the scan, two sweeps, the suspect line, the rounds and the alignment each ask
 
 
-def test_line_hits_asks_for_the_budget_once_per_pattern(monkeypatch):
+def test_line_hits_asks_for_the_budget_once_per_pattern_and_once_after_the_last_pass(monkeypatch):
     assert hasattr(_Redactor, "_line_hits"), "hook missing on this head"
     seen = []
     real = _Redactor._over_budget
@@ -75,7 +75,7 @@ def test_line_hits_asks_for_the_budget_once_per_pattern(monkeypatch):
         _Redactor, "_over_budget", staticmethod(lambda d: seen.append(1) or real(d))
     )
     _Redactor(None)._line_hits("café x", [0], 1e18)
-    assert len(seen) == len(redact_mod.PATTERNS)
+    assert len(seen) == len(redact_mod.PATTERNS) + 1  # before each pattern, and after the last pass
 
 
 def test_one_deadline_covers_the_text_and_all_its_views(monkeypatch):
@@ -392,3 +392,61 @@ def test_view_1_the_clock_is_read_before_each_view_of_a_line(monkeypatch):
     assert "Hunter2" not in out
     assert events.count("view") >= 2
     assert all(events[i - 1] == "clock" for i, e in enumerate(events) if e == "view"), events
+
+
+def _count_checks(monkeypatch):
+    seen = []
+    real = _Redactor._over_budget
+    monkeypatch.setattr(
+        _Redactor, "_over_budget", staticmethod(lambda d: seen.append(1) or real(d))
+    )
+    return seen
+
+
+def test_clock_1_mask_in_place_looks_at_the_clock_once_per_pattern(monkeypatch):
+    seen = _count_checks(monkeypatch)
+    _Redactor(None)._mask_in_place("ab", "ab", [0, 1], bytearray(2))
+    assert len(seen) == len(redact_mod.PATTERNS)
+
+
+def test_clock_2_withhold_looks_at_the_clock_once_per_pattern_and_view(monkeypatch):
+    seen = _count_checks(monkeypatch)
+    _Redactor(None)._withhold(["x", "y"], "x")
+    assert len(seen) == 2 * len(redact_mod.PATTERNS)
+
+
+def test_clock_3_registering_a_written_value_looks_at_the_clock_once_per_alias_key(monkeypatch):
+    seen = _count_checks(monkeypatch)
+    written = "Hunter2\u093eabc\tdef"
+    r = _Redactor(None)
+    r._register_written("SECRET", written)
+    assert len(seen) == len(redact_mod._alias_keys(written)) > 1
+
+
+def test_clock_4_a_line_that_is_withheld_looks_at_the_clock_before_each_view(monkeypatch):
+    seen = _count_checks(monkeypatch)
+    line = (
+        "АKIA" + "IOSFODNN7" + "EXAMPLE"
+    )  # a Cyrillic capital A for the first letter of an access key id: withheld whole
+    out = _Redactor(None)._folded_line(line)
+    assert out.startswith(redact_mod.FOLD_NOTE), out
+    assert len(seen) >= 2 * len(redact_mod.PATTERNS) + 3, len(
+        seen
+    )  # the withhold pass, and one look before each view and each round
+
+
+def test_clock_5_a_tab_table_near_the_limit_is_refused_never_finished_late(monkeypatch):
+    """Whatever read of the clock first sees the deadline passed, the call raises; it never goes on to finish. ``total`` is the number of reads
+    a call makes when the clock never moves: it is above the number of pattern passes of two views, so the loops do look at the clock."""
+    text = "id\tname\tvalue\tstatus\n" * 60
+    clean = CountedClock(0.0, 10**9, 100.0)
+    monkeypatch.setattr(runmap.time, "thread_time", clean)
+    redact_text(text, {})
+    total = clean.reads
+    assert total > 2 * len(redact_mod.PATTERNS), total
+    for k in (1, total // 4, total // 2, total - 2):
+        clock = CountedClock(0.0, k, 100.0)
+        monkeypatch.setattr(runmap.time, "thread_time", clock)
+        with pytest.raises(InputTooLarge):
+            redact_text(text, {})
+        assert clock.reads <= total, (k, clock.reads, total)

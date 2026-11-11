@@ -477,3 +477,107 @@ def test_marks_26_a_key_glued_to_a_word_by_one_tab_and_cut_by_another_leaves_no_
                     leaks.append((hex(ord(ctl)), at, pre, suf))
     assert not leaks, (len(leaks), leaks[:4])
     assert "<APIKEY_1>" in runmap.redact_text("user\t" + KEY[:8] + "\t" + KEY[8:], {})
+
+
+GAP_ITEMS = [
+    "\t",
+    "\x1d",
+    "\x1b[0m",
+    "\x9b1m",
+    "\u093e",
+]  # a tab, a group separator, two escape sequences, a mark
+GAP_MORE = [
+    "\x1b[?25h",
+    "\x1b[2 q",
+    "\x1b]0;t\x07",
+    "\u200b",
+    "\x85",
+    "\x1f",
+]  # a private parameter, an intermediate byte, a title string, a zero-width space, NEL, U+001F
+PRE = ("k ", "user\t", "id: ", "a\x1b[0m")
+SUF = (" e", "", "\tok")
+
+
+def _pieces_left(secret: str, text: str, size: int = 3) -> list[str]:
+    out = redact(text).text
+    return [w for w in _windows(secret, size) if w in out]
+
+
+def _pair_leaks(firsts: list[str], seconds: list[str]) -> list[tuple]:
+    leaks = []
+    for a in firsts:
+        for b in seconds:
+            for p in range(len(KEY) + 1):
+                for q in range(p, len(KEY) + 1):
+                    if p == 0 and q == 0:
+                        continue
+                    spelled = KEY[:p] + a + KEY[p:q] + b + KEY[q:]
+                    for pre in PRE:
+                        for suf in SUF:
+                            if _pieces_left(KEY, pre + spelled + suf):
+                                leaks.append((a, b, p, q, pre, suf))
+    return leaks
+
+
+def test_marks_27_two_hiding_techniques_at_any_two_positions_leave_no_three_character_piece():
+    """Round 6. The class: techniques that each work alone are not combined. Every ordered pair of five items (a tab, a group separator, two
+    escape sequences, a mark) at every pair of positions of the key (the two may stand at the same place), against the FULL product of four
+    prefixes and three suffixes; no window of THREE characters of the key may stay in the text."""
+    leaks = _pair_leaks(GAP_ITEMS, GAP_ITEMS)
+    assert not leaks, (len(leaks), leaks[:3])
+
+
+def test_marks_27b_the_other_shapes_beside_a_tab_at_any_two_positions_leave_no_three_character_piece():
+    leaks = _pair_leaks(GAP_MORE, ["\t"]) + _pair_leaks(["\t"], GAP_MORE)
+    assert not leaks, (len(leaks), leaks[:3])
+
+
+def test_marks_27c_three_techniques_at_any_three_positions_leave_no_three_character_piece():
+    leaks = []
+    order = [("\t", "\x1b[0m", "\u093e"), ("\x1b[1m", "\x1e", "\t"), ("\t", "\t", "\x9b2K")]
+    for items in order:
+        for p in range(len(KEY) + 1):
+            for q in range(p, len(KEY) + 1):
+                for r in range(q, len(KEY) + 1):
+                    if p == q == r == 0:
+                        continue
+                    a, b, c = items
+                    spelled = KEY[:p] + a + KEY[p:q] + b + KEY[q:r] + c + KEY[r:]
+                    for pre, suf in (("user\t", "\tok"), ("k ", " e")):
+                        if _pieces_left(KEY, pre + spelled + suf):
+                            leaks.append((items, p, q, r, pre, suf))
+    assert not leaks, (len(leaks), leaks[:3])
+
+
+def test_marks_28_a_key_after_any_number_of_tab_separated_columns_with_hidden_items_inside_is_masked():
+    """Runs of white-space-like controls numbered 0 to 6 in front of the key, with a tab and an escape sequence inside it (the old views tried
+    only the first three runs)."""
+    leaks = []
+    for runs in range(7):
+        for sep in ("\t", "\x1f"):
+            for at in range(1, len(KEY) - 1):
+                spelled = KEY[:at] + sep + KEY[at : at + 2] + "\x1b[0m" + KEY[at + 2 :]
+                for tail in (" e", "\tok", ""):
+                    text = ("w" + sep) * runs + "user" + sep + spelled + tail
+                    if _pieces_left(KEY, text):
+                        leaks.append((runs, sep, at, tail))
+    assert not leaks, (len(leaks), leaks[:3])
+
+
+def test_marks_29_the_reproduced_inputs_of_round_6_are_masked():
+    k = "AKIA" + "IOSFODNN7" + "EXAMPLE"
+    g = "ghp_" + "A" * 18 + "\t" + "B" * 18
+    for text in (
+        "a\tb\tc\td\t" + k[:12] + "\t" + k[12:] + " e",
+        "a\tb\tc\tuser\t" + k[:8] + "\t" + k[8:] + " e",
+        "user\t" + k[:4] + "\x1b[0m" + k[4:8] + "\t" + k[8:] + " e",
+        "user\t" + k[:7] + "\t\x1b[0m" + k[7:] + " e",
+        "user\t" + k[:8] + "\t" + k[8:13] + "\x1b[1m" + k[13:] + " e",
+        "user\x1b[0m" + k[:7] + "\x1b[0m" + k[7:] + " e",
+        "a\tb\tc\td\t" + g,
+    ):
+        out = redact(text).text
+        assert "<APIKEY_1>" in out and not _pieces_left(k, text) and "BBB" not in out, (text, out)
+    assert (
+        redact("id: \x9b" + k).text == "id: \x9b<APIKEY_1>"
+    )  # the placeholder is not eaten by the sequence remover
