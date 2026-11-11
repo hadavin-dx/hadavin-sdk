@@ -156,34 +156,51 @@ def test_cli_migrate_passes_the_portal_role(cfg_dir, monkeypatch):
         cli.main([*args, "--lock-wait-seconds", "0"])
 
 
+class _Connected(Exception):
+    """Raised by the stand-in for `connect`: the run got as far as opening a connection."""
+
+
+def _no_server(monkeypatch) -> list[str]:
+    """Replace the connect function of `migrate` by one that only records the call and stops the run. No address is
+    dialled (the tests used to dial 127.0.0.1 port 1 and rely on nothing listening there)."""
+    calls: list[str] = []
+
+    def connect(dsn, **_kwargs):
+        calls.append(dsn)
+        raise _Connected
+
+    monkeypatch.setattr(mig, "connect", connect)
+    return calls
+
+
 @pytest.mark.parametrize("bad", [0, -1, True, False, "5", 1.5, None, mig.MAX_LOCK_WAIT_SECONDS + 1])
 def test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_before_anything_is_done(
-    bad,
+    bad, monkeypatch
 ):
-    """Killed by: mutants LV1 (0 is accepted), LV2 (True is accepted: it is a bool, not a number of seconds), LV3 (a string
-    or a fraction is accepted), LV4 (one above the largest wait is accepted)."""
-    import psycopg
-
+    """Refused before a connection is opened. Killed by: mutants LV1 (0 is accepted), LV2 (True is accepted: it is a
+    bool, not a number of seconds), LV3 (a string or a fraction is accepted), LV4 (one above the largest wait is
+    accepted)."""
+    calls = _no_server(monkeypatch)
     accepted = False
     try:
-        mig.migrate("postgresql://postgres@127.0.0.1:1/none", lock_wait_seconds=bad)
+        mig.migrate("postgresql://made-up-host/none", lock_wait_seconds=bad)
     except ConfigError as e:
         assert "whole number of seconds" in str(e)
-    except psycopg.Error:  # the check let it through and the run went on to connect
+    except _Connected:  # the check let it through and the run went on to connect
         accepted = True
     else:
         accepted = True
     assert not accepted, f"a wait of {bad!r} was accepted"
+    assert calls == [], "no connection is opened for a refused value"
 
 
 @pytest.mark.parametrize("fine", [1, mig.MAX_LOCK_WAIT_SECONDS])
-def test_the_smallest_and_the_largest_lock_wait_pass_the_check(fine):
-    """The two ends are accepted (the failure that follows is the refused connection, not the check)."""
-    import psycopg
-
-    with pytest.raises((ConfigError, psycopg.Error)) as e:  # no server is there
-        mig.migrate("postgresql://postgres@127.0.0.1:1/none", lock_wait_seconds=fine)
-    assert "whole number of seconds" not in str(e.value)
+def test_the_smallest_and_the_largest_lock_wait_pass_the_check(fine, monkeypatch):
+    """The two ends are accepted: the run goes on to open its connection (the stand-in stops it there)."""
+    calls = _no_server(monkeypatch)
+    with pytest.raises(_Connected):
+        mig.migrate("postgresql://made-up-host/none", lock_wait_seconds=fine)
+    assert calls == ["postgresql://made-up-host/none"]
 
 
 # --- plan hash ---------------------------------------------------------------------------------------
