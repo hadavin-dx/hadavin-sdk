@@ -1747,3 +1747,8 @@ Held back by gitleaks in this pass: none. Still unpushed from the earlier pass: 
 
 ## 15:34Z UTC Redaction: is a tab inside a key something we must mask? (default taken: no, same as a space)
 A tab inside a secret key (for example the first half of a key, a tab, the second half) is treated like a space inside a key: not masked, and stated as a limit. The stricter choice (ignore tabs when matching) made ordinary tab-separated tool output unreadable in round 7. If you want the stricter rule for vendor-prefixed keys only, say so: it is a contained later change. Decision record: D-018.
+
+## 15:53Z UTC Database migrations (P3a-2): what we promise, and two defaults (D-020)
+1. Promise, in plain words: the migration runner stops honest mistakes in our own files and detects lasting excess rights; it does NOT stop a deliberately hostile migration file (that file runs as the owner of the tables; no check running as the same database role can). Earlier texts claimed more. If you want hostile files stopped, the control is a separate read-only checker identity and review of files, not more rounds on this runner. Default taken: promise as above.
+2. Every PostgreSQL database lets every role create temporary tables by default. Default taken: stated as normal, not refused. Say if you want it refused (existing setups would then fail until an administrator revokes it).
+3. A migration role that OWNS the database stays allowed (default taken), and is named as a risk in the hardening guide. Say if it should be refused.

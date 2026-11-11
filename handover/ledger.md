@@ -2650,3 +2650,9 @@
 | BL-core-p3a2-r12-d07 | Major | P3a-2 | reviews/P3a-2/r12-design-full.md F7 (not yet reproduced) | OPEN | | | 2026-11-11 |
 | BL-core-p3a2-r12-c01 | Major | P3a-2 | reviews/P3a-2/r12-codebase-full.md F1 (same class as design F6) | OPEN | | | 2026-11-11 |
 | BL-core-p3a2-r12-c02 | Major | P3a-2 | r12-codebase-full.md F2 (same class as design F3) | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-split-A | Major | P3a-2 | D-020 split ticket: A read-only verify command + verifier identity | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-split-B | Major | P3a-2 | D-020 split ticket: B audit triggers present as state | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-split-C | Major | P3a-2 | D-020 split ticket: C text-rule cleanup | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-split-D | Major | P3a-2 | D-020 split ticket: D client hardening guide | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-split-E | Major | P3a-2 | D-020 split ticket: E row security and views | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-split-F | Major | P3a-2 | D-020 split ticket: F surviving minors | OPEN | | | 2026-11-11 |

@@ -1339,3 +1339,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-PR89-r20 a7b9ddc4 | round 20 builder | 14:35Z | | 15:51Z | CLOSED. Its account: full suite 10770 passed exit 0; mutants 248 of 248 after its first run showed 9 not-good (5 tests fixed, a redundant password-word check and its 4 mutants REMOVED: reviewers must look); 12 type-checker errors remain for Windows (not a repo gate); commit split partly as asked | evidence + 3 fresh reviewers |
 | EV-P89-r21 | EVIDENCE RUNNER (Fable) 7a2eb4cc, pg 56131 | 15:51Z | +50m | 15:51Z | starting | RESULTS.md |
 | R-P89-r21 design, codebase, comprehension | fresh egm reviewers (Fable), snapshot /home/user/build/snap/p89-7a2eb4c | 15:51Z | +15m | 15:51Z | starting | save full reports |
+| R-P3a2-zoom a26d1a15 | design answer | 15:45Z | | 15:53Z | CLOSED: saved reviews/P3a-2/r13-design-zoomout-full.md (report + addendum); D-020 | probes, then ticket |
+| A-P3a2-r13 | TICKET AUTHOR (Fable): round-13 ticket (promise table, verify function, new order, deletion list, test design) | 15:53Z | +45m | 15:53Z | starting | plan review after probes land |
+| R-P89-r21 design a91411ca, codebase abd93594, comprehension a3cdc11d; EV-P89-r21 a23252a4 | PR89 round 21 | 15:52Z | +15m / +50m | 15:53Z | running | save reports |

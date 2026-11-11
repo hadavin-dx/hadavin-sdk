@@ -1,0 +1,602 @@
+State probes (step 6c): excerpt. Each line cut at 700 characters; full text in /home/user/build/evidence-raw/P3a2-4d328e3/probe6c-states.txt and probe6c-states-roundB.txt
+Entry point: hadavin_sdk.store.migrate.migrate(dsn, runtime_role=<named role>) with store.migrate.connect swapped for tests/fixtures/migration_role.plain_role_connect (as tests/conftest.py does); planted files through the tests' _with_files; roles through the tests' _create_roles / _let_the_plain_role_belong_to / _let_the_plain_role_grant.
+
+############################## probe6c-states.txt
+hadavin_sdk imported from: /home/user/build/EV-P3a2-4d328e3/src/hadavin_sdk/__init__.py
+PLAIN_ROLE (migration role of this process): hadavin_test_migrator_83226567
+STATE: C00 control: real files only, runtime_role named
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+STATE: C01 named role given EXECUTE on a plain function in the run schema
+  [step 1] planted file 0006_probe.sql: CREATE FUNCTION hadavin_test_pf() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_pf() RETURN'
+  ledger after step 1: None
+STATE: C01b plain function created in the run schema, no grant at all
+  [step 1] planted file 0006_probe.sql: CREATE FUNCTION hadavin_test_pf() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_pf() RETURN'
+  ledger after step 1: None
+STATE: C01c plain function, PUBLIC execute revoked, EXECUTE granted to named
+  [step 1] planted file 0006_probe.sql: CREATE FUNCTION hadavin_test_pf() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_pf() RETURN'
+  ledger after step 1: None
+STATE: C02 named role given USAGE on a NEW sequence in the run schema (not in the grant map)
+  [step 1] planted file 0006_probe.sql: CREATE SEQUENCE hadavin_test_sq;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE SEQUENCE hadavin_test_sq; GRANT U'; 0006_probe.sql: 'CREATE SEQUENCE' is not read by the guard
+  ledger after step 1: None
+STATE: C02b named role given USAGE on the package's own sequence approval_decisions_seq_seq
+  [step 1] planted file 0006_probe.sql: GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO hadavin_test_pn_2517b12f;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_probe']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_probe']
+STATE: C03 SECURITY DEFINER function owned by a role the migration role is a MEMBER of (made by the superuser before the run)
+  [step 1] superuser SQL before the run: GRANT USAGE, CREATE ON SCHEMA "hadavin_test_4c074db2e398" TO "hadavin_test_pg_125c2343"
+  [step 1] superuser SQL before the run: CREATE FUNCTION "hadavin_test_4c074db2e398".hadavin_test_sdm() RETURNS int LANGUAGE sql SECURITY DEFINER AS $$ SELECT 1 $$
+  [step 1] superuser SQL before the run: ALTER FUNCTION "hadavin_test_4c074db2e398".hadavin_test_sdm() OWNER TO "hadavin_test_pg_125c2343"
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_4c074db2e398 or elsewhere in this database: hadavin_test_pg_125c2343 has CREATE on the schema hadavin_test_4c074db2e398 itself; the function hadavin_test_4c074db2e398.hadavin_test_sdm() is SECURITY DEFINER (it runs with the rights of its owner), and no file of this run made or changed it: the migration role or a role it belongs to owns it. Nothing was changed. The whole run is undone. Only the migration role itself and the runtime, portal and purge roles named in this run may have rights on this package's tables, views, sequences, functions and schema; a named role gets the r
+  ledger after step 1: None
+STATE: C03f SECURITY DEFINER function made in the file and handed to a role the migration role is a MEMBER of [plain file]
+  [step 1] superuser SQL before the run: GRANT USAGE, CREATE ON SCHEMA "hadavin_test_d59287ec2d19" TO "hadavin_test_pg_3e4cc30e"
+  [step 1] planted file 0006_probe.sql: CREATE FUNCTION hadavin_test_sdm() RETURNS int LANGUAGE sql SECURITY DEFINER AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: ALTER ... OWNER TO: an object may not be handed to another role by a migration file; 0006_probe.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_sdm() RETUR'
+  ledger after step 1: None
+STATE: C03fd SECURITY DEFINER function made in the file and handed to a role the migration role is a MEMBER of [tests' _dynamic wrapper]
+  [step 1] superuser SQL before the run: GRANT USAGE, CREATE ON SCHEMA "hadavin_test_4ed197c47de7" TO "hadavin_test_pg_65606daa"
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE FUNCTION hadavin_test_sdm() RETURNS int LANGUAGE sql SECURITY DEFINER AS $$ SELECT 1 $$'; EXECUTE 'ALTER FUNCTION hadavin_test_sdm() OWNER TO "hadavin_test_pg_65606daa"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_sdm() RETUR'
+  ledger after step 1: None
+STATE: C04 SECURITY DEFINER function in ANOTHER schema owned by the migration role (made in the file)
+  [step 1] planted file 0006_probe.sql: CREATE FUNCTION "hadavin_test_o_3d93575db8".hadavin_test_sd2() RETURNS int LANGUAGE sql SECURITY DEFINER AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FUNCTION "hadavin_test_o_3d93575d'
+  ledger after step 1: None
+STATE: C04p SECURITY DEFINER function in ANOTHER schema owned by the migration role (exists before the run)
+  [step 1] superuser SQL before the run: CREATE FUNCTION "hadavin_test_o_27064077d6".hadavin_test_sd2() RETURNS int LANGUAGE sql SECURITY DEFINER AS $$ SELECT 1 $$
+  [step 1] superuser SQL before the run: ALTER FUNCTION "hadavin_test_o_27064077d6".hadavin_test_sd2() OWNER TO "hadavin_test_migrator_83226567"
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+STATE: C05 function whose only change in the run is ALTER FUNCTION ... SET search_path = public (step 1 makes it, step 2 alters it)
+  [step 1] planted file 0006_mk.sql: CREATE FUNCTION hadavin_test_fn() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_mk.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_fn() RETURN'
+  ledger after step 1: None
+  [step 2] planted file 0007_alt.sql: ALTER FUNCTION hadavin_test_fn() SET search_path = public;
+  [step 2] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 2: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_mk.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_fn() RETURN'
+  ledger after step 2: None
+STATE: C05b the package's own trigger function: ALTER FUNCTION hadavin_audit_append_only() SET search_path = public
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  [step 2] planted file 0006_alt.sql: ALTER FUNCTION hadavin_audit_append_only() SET search_path = public;
+  [step 2] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 2: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migration 0006_alt.sql changed a trigger: trigger hadavin_test_345d811c50a2.audit_checkpoints.audit_checkpoints_append_only changed: function settings; trigger hadavin_test_345d811c50a2.audit_checkpoints.audit_checkpoints_no_truncate changed: function settings; trigger hadavin_test_345d811c50a2.audit_entries.audit_entries_append_only changed: function settings; trigger hadavin_test_345d811c50a2.audit_entries.audit_entries_no_truncate changed: function settings. A trigger change is refused unless this file, this table and this trigger are named, with a reason, in migrations_trigger_changes.json next to the released-files list (a reviewed change of the package)
+  ledger after step 2: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+STATE: C05c as C05b through the tests' _dynamic wrapper
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  [step 2] planted file 0006_alt.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'ALTER FUNCTION hadavin_audit_append_only() SET search_path = public'; END $$;
+  [step 2] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 2: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migration 0006_alt.sql changed a trigger: trigger hadavin_test_b0250e816c0c.audit_checkpoints.audit_checkpoints_append_only changed: function settings; trigger hadavin_test_b0250e816c0c.audit_checkpoints.audit_checkpoints_no_truncate changed: function settings; trigger hadavin_test_b0250e816c0c.audit_entries.audit_entries_append_only changed: function settings; trigger hadavin_test_b0250e816c0c.audit_entries.audit_entries_no_truncate changed: function settings. A trigger change is refused unless this file, this table and this trigger are named, with a reason, in migrations_trigger_changes.json next to the released-files list (a reviewed change of the package)
+  ledger after step 2: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+STATE: C06 function whose only change in the run is ALTER FUNCTION ... OWNER TO another role [plain file]
+  [step 1] superuser SQL before the run: GRANT USAGE, CREATE ON SCHEMA "hadavin_test_e8f5c57cbbb4" TO "hadavin_test_pg_56f2d5a8"
+  [step 1] planted file 0006_mk.sql: CREATE FUNCTION hadavin_test_fn() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_mk.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_fn() RETURN'
+  ledger after step 1: None
+  [step 2] planted file 0007_own.sql: ALTER FUNCTION hadavin_test_fn() OWNER TO "hadavin_test_pg_56f2d5a8";
+  [step 2] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 2: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_mk.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_fn() RETURN'; 0007_own.sql: ALTER ... OWNER TO: an object may not be handed to another role by a migration file
+  ledger after step 2: None
+STATE: C06d function whose only change in the run is ALTER FUNCTION ... OWNER TO another role [tests' _dynamic wrapper]
+  [step 1] superuser SQL before the run: GRANT USAGE, CREATE ON SCHEMA "hadavin_test_ab1a88cb3570" TO "hadavin_test_pg_59623c16"
+  [step 1] planted file 0006_mk.sql: CREATE FUNCTION hadavin_test_fn() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_mk.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_fn() RETURN'
+  ledger after step 1: None
+  [step 2] planted file 0007_own.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'ALTER FUNCTION hadavin_test_fn() OWNER TO "hadavin_test_pg_59623c16"'; END $$;
+  [step 2] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 2: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_mk.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_fn() RETURN'
+  ledger after step 2: None
+STATE: C07 table in the run schema owned by a third role, which grants SELECT to the named role (before the run)
+  [step 1] superuser SQL before the run: CREATE TABLE "hadavin_test_7252795fdee8".hadavin_test_t3 (a int)
+  [step 1] superuser SQL before the run: ALTER TABLE "hadavin_test_7252795fdee8".hadavin_test_t3 OWNER TO "hadavin_test_po_52ea63db"
+  [step 1] superuser SQL before the run: GRANT SELECT ON "hadavin_test_7252795fdee8".hadavin_test_t3 TO "hadavin_test_pn_5276acbe"
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: the runtime role has more than the grant map, in schema hadavin_test_7252795fdee8: hadavin_test_pn_5276acbe: can SELECT hadavin_test_t3 (not in the grant map); hadavin_test_pn_5276acbe: can SELECT hadavin_test_t3.a (the grant map is the list in the code of the tables each role of this package may use, and the rights each may have on each: for the portal role SELECT only)
+  ledger after step 1: None
+STATE: C07s as C07, but a second session does it while a file of the run waits (after a first clean run)
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  [step 2] call: mig.migrate(dsn, runtime_role=<named>)
+  [step 2] second session (superuser) while the file waits: CREATE TABLE "hadavin_test_e43368819443".hadavin_test_t3 (a int)
+  [step 2] second session (superuser) while the file waits: ALTER TABLE "hadavin_test_e43368819443".hadavin_test_t3 OWNER TO "hadavin_test_po_345cd919"
+  [step 2] second session (superuser) while the file waits: GRANT SELECT ON "hadavin_test_e43368819443".hadavin_test_t3 TO "hadavin_test_pn_146ea233"
+  RESULT step 2: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: the runtime role has more than the grant map, in schema hadavin_test_e43368819443: hadavin_test_pn_146ea233: can SELECT hadavin_test_t3 (not in the grant map); hadavin_test_pn_146ea233: can SELECT hadavin_test_t3.a (the grant map is the list in the code of the tables each role of this package may use, and the rights each may have on each: for the portal role SELECT only)
+  ledger after step 2: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+STATE: C08 foreign table (postgres_fdw) made in the file, SELECT granted to the named role
+  [step 1] superuser SQL before the run: CREATE EXTENSION IF NOT EXISTS postgres_fdw
+  [step 1] superuser SQL before the run: CREATE SERVER hadavin_test_probe_srv FOREIGN DATA WRAPPER postgres_fdw OPTIONS (dbname 'postgres')
+  [step 1] superuser SQL before the run: GRANT USAGE ON FOREIGN SERVER hadavin_test_probe_srv TO "hadavin_test_migrator_83226567"
+  [step 1] planted file 0006_probe.sql: CREATE FOREIGN TABLE hadavin_test_ft (a int) SERVER hadavin_test_probe_srv;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FOREIGN TABLE hadavin_test_ft (a'
+  ledger after step 1: None
+STATE: C08b foreign table (postgres_fdw) made in the file, no grant
+  [step 1] superuser SQL before the run: CREATE EXTENSION IF NOT EXISTS postgres_fdw
+  [step 1] superuser SQL before the run: CREATE SERVER hadavin_test_probe_srv FOREIGN DATA WRAPPER postgres_fdw OPTIONS (dbname 'postgres')
+  [step 1] superuser SQL before the run: GRANT USAGE ON FOREIGN SERVER hadavin_test_probe_srv TO "hadavin_test_migrator_83226567"
+  [step 1] planted file 0006_probe.sql: CREATE FOREIGN TABLE hadavin_test_ft (a int) SERVER hadavin_test_probe_srv;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FOREIGN TABLE hadavin_test_ft (a'
+  ledger after step 1: None
+STATE: C09 materialized view made in the file, SELECT granted to the named role
+  [step 1] planted file 0006_probe.sql: CREATE MATERIALIZED VIEW hadavin_test_mv AS SELECT 1 AS a;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE MATERIALIZED VIEW hadavin_test_mv'; hadavin_test_mv (view) is created by a migration but is not in GRANTS
+  ledger after step 1: None
+STATE: C09b materialized view made in the file, no grant
+  [step 1] planted file 0006_probe.sql: CREATE MATERIALIZED VIEW hadavin_test_mv AS SELECT 1 AS a;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE MATERIALIZED VIEW hadavin_test_mv'; hadavin_test_mv (view) is created by a migration but is not in GRANTS
+  ledger after step 1: None
+STATE: C10 partitioned table in the run schema with a partition in another schema, no grant
+  [step 1] planted file 0006_probe.sql: CREATE TABLE hadavin_test_pt (a int) PARTITION BY RANGE (a);
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE TABLE "hadavin_test_o_0f3b69c8ad"'; hadavin_test_pt (table) is created by a migration but is not in GRANTS
+  ledger after step 1: None
+STATE: C10b as C10, SELECT on the partition in the other schema granted to the named role
+  [step 1] planted file 0006_probe.sql: CREATE TABLE hadavin_test_pt (a int) PARTITION BY RANGE (a);
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE TABLE "hadavin_test_o_c19305512c"'; hadavin_test_pt (table) is created by a migration but is not in GRANTS
+  ledger after step 1: None
+STATE: C11 column-level GRANT SELECT(col) to the named role on a table outside the grant map
+  [step 1] planted file 0006_probe.sql: CREATE TABLE hadavin_test_out (a int, b int);
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: hadavin_test_out (table) is created by a migration but is not in GRANTS
+  ledger after step 1: None
+STATE: C12 a role granted membership in the named role during the run (GRANT named TO other) [plain file]
+  [step 1] planted file 0006_probe.sql: GRANT "hadavin_test_pn_79cfe44a" TO "hadavin_test_po_153c2c2b";
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: GRANT without ON: the guard cannot read what this statement does or changes
+  ledger after step 1: None
+STATE: C12d a role granted membership in the named role during the run (GRANT named TO other) [tests' _dynamic wrapper]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'GRANT "hadavin_test_pn_deb4a826" TO "hadavin_test_po_f9543f96"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migration 0006_probe.sql a role membership changed while the file ran (it may be another session; run migrate again): role hadavin_test_pn_deb4a826 has a new member hadavin_test_po_f9543f96 (without grant option, uses its rights at once, may switch to it)
+  ledger after step 1: None
+STATE: C13 ALTER DEFAULT PRIVILEGES FOR ROLE <role the migration role is a member of> IN SCHEMA s GRANT SELECT ON TABLES TO named [plain file]
+  [step 1] planted file 0006_probe.sql: ALTER DEFAULT PRIVILEGES FOR ROLE "hadavin_test_pg_5b6e26a9" IN SCHEMA "hadavin_test_12d71201e6bd" GRANT SELECT ON TABLES TO "hadavin_test_pn_f3209306";
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: ALTER DEFAULT PRIVILEGES: the guard cannot read what this statement does or changes
+  ledger after step 1: None
+STATE: C13d ALTER DEFAULT PRIVILEGES FOR ROLE <role the migration role is a member of> IN SCHEMA s GRANT SELECT ON TABLES TO named [tests' _dynamic wrapper]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'ALTER DEFAULT PRIVILEGES FOR ROLE "hadavin_test_pg_8019baad" IN SCHEMA "hadavin_test_29fd6bb80fa7" GRANT SELECT ON TABLES TO "hadavin_test_pn_1e274152"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_29fd6bb80fa7 or elsewhere in this database: hadavin_test_pn_1e274152 gets SELECT on every new table that hadavin_test_pg_8019baad makes in the schema hadavin_test_29fd6bb80fa7 (a default right, `ALTER DEFAULT PRIVILEGES`, which this statement undoes: ALTER DEFAULT PRIVILEGES FOR ROLE <that role> IN SCHEMA <that schema> REVOKE SELECT ON TABLES FROM <the role or PUBLIC>). Nothing was changed. The whole run is undone. Only the migration role itself and the runtime, portal and purge roles named in this run may have rights on this package's tables, views, sequences, functions and 
+  ledger after step 1: None
+STATE: C14 GRANT SELECT ON audit_entries TO named WITH GRANT OPTION (a grant-map table)
+  [step 1] planted file 0006_probe.sql: GRANT SELECT ON audit_entries TO hadavin_test_pn_cd7a3599 WITH GRANT OPTION;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_probe']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_probe']
+STATE: C15 large object made in the file and granted to the named role
+  [step 1] planted file 0006_probe.sql: SELECT lo_create(923728549);
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: GRANT on a place other than a table, view, sequence, column or function (LARGE): the guard does not read rights there
+  ledger after step 1: None
+STATE: C16 domain made in the file, USAGE granted to the named role
+  [step 1] planted file 0006_probe.sql: CREATE DOMAIN hadavin_test_dom AS int;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: GRANT on a place other than a table, view, sequence, column or function (DOMAIN): the guard does not read rights there; 0006_probe.sql: statement the guard does not read: 'CREATE DOMAIN hadavin_test_dom AS int; G'
+  ledger after step 1: None
+STATE: C16b enum type made in the file, USAGE granted to the named role
+  [step 1] planted file 0006_probe.sql: CREATE TYPE hadavin_test_en AS ENUM ('a');
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: GRANT on a place other than a table, view, sequence, column or function (TYPE): the guard does not read rights there; 0006_probe.sql: statement the guard does not read: "CREATE TYPE hadavin_test_en AS ENUM ('a'"
+  ledger after step 1: None
+STATE: C17 GRANT CREATE ON SCHEMA <run schema> TO PUBLIC
+  [step 1] planted file 0006_probe.sql: GRANT CREATE ON SCHEMA "hadavin_test_bb044da32e93" TO PUBLIC;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: GRANT on a place other than a table, view, sequence, column or function (SCHEMA): the guard does not read rights there; 0006_probe.sql: statement the guard does not read: 'CREATE ON SCHEMA "hadavin_test_bb044da32'
+  ledger after step 1: None
+STATE: C18 RLS switched on and a policy for the named role added to a grant-map table
+  [step 1] planted file 0006_probe.sql: ALTER TABLE audit_entries ENABLE ROW LEVEL SECURITY;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE POLICY hadavin_test_pol ON audit_'
+  ledger after step 1: None
+STATE: C18b a policy for the named role added to a grant-map table (RLS not switched on)
+  [step 1] planted file 0006_probe.sql: CREATE POLICY hadavin_test_pol ON audit_entries FOR SELECT TO hadavin_test_pn_c684fba9 USING (true);
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE POLICY hadavin_test_pol ON audit_'
+  ledger after step 1: None
+STATE: C19 a second session commits an unrelated table in another schema while a file of the run waits
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  [step 2] call: mig.migrate(dsn, runtime_role=<named>)
+  [step 2] second session (superuser) while the file waits: CREATE TABLE "hadavin_test_o_dd8eb0b30c".hadavin_test_unrelated (a int)
+  second-session order=['file_is_waiting', 'roles_changed', 'file_released'] errors=[]
+  RESULT step 2: ACCEPTED, returned ['0006_slow']
+  ledger after step 2: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_slow']
+############################## probe6c-states-roundB.txt
+hadavin_sdk imported from: /home/user/build/EV-P3a2-4d328e3/src/hadavin_sdk/__init__.py
+PLAIN_ROLE (migration role of this process): hadavin_test_migrator_4a8242a1
+STATE: P01 plain file: CREATE OR REPLACE FUNCTION + GRANT EXECUTE to the named role
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_pf() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_ca4490132e46 or elsewhere in this database: PUBLIC has EXECUTE on the function hadavin_test_ca4490132e46.hadavin_test_pf(); hadavin_test_pn_654b1c5a has EXECUTE on the function hadavin_test_ca4490132e46.hadavin_test_pf() (a role named in this run gets no right outside the grant map, which holds tables, views and sequences only). Nothing was changed. The whole run is undone. Only the migration role itself and the runtime, portal and purge roles named in this run may have rights on this package's tables, views, sequences, functions and schema; a named role gets the rights of th
+  ledger after step 1: None
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_ca4490132e46'::regnamespace, 'hadavin_test_o_a721fe5c0c'::regnamespace) ORDER BY 1
+    -> []
+STATE: P01b plain file: CREATE OR REPLACE FUNCTION only, no grant
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_pf() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_probe']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_probe']
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_44f77a88d136'::regnamespace, 'hadavin_test_o_aee5787795'::regnamespace) ORDER BY 1
+    -> [('hadavin_test_pf', 'hadavin_test_migrator_4a8242a1', False, None, '{hadavin_test_migrator_4a8242a1=X/hadavin_test_migrator_4a8242a1}')]
+STATE: P01c plain file: CREATE OR REPLACE FUNCTION, REVOKE ALL FROM PUBLIC, GRANT EXECUTE to the named role
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_pf() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_c2873971cd2f or elsewhere in this database: hadavin_test_pn_5561b0da has EXECUTE on the function hadavin_test_c2873971cd2f.hadavin_test_pf() (a role named in this run gets no right outside the grant map, which holds tables, views and sequences only). Nothing was changed. The whole run is undone. Only the migration role itself and the runtime, portal and purge roles named in this run may have rights on this package's tables, views, sequences, functions and schema; a named role gets the rights of the grant map and nothing on any other table, view, sequence or function; and a fu
+  ledger after step 1: None
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_c2873971cd2f'::regnamespace, 'hadavin_test_o_02405a479a'::regnamespace) ORDER BY 1
+    -> []
+STATE: D01 function + GRANT EXECUTE to the named role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE FUNCTION hadavin_test_pf() RETURNS int LANGUAGE sql AS $q$ SELECT 1 $q$'; EXECUTE 'GRANT EXECUTE ON FUNCTION hadavin_test_pf() TO "hadavin_test_pn_270cccf0"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_pf() RETURN'
+  ledger after step 1: None
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_08837938bab5'::regnamespace, 'hadavin_test_o_824e646369'::regnamespace) ORDER BY 1
+    -> []
+STATE: D01b function only, no grant [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE FUNCTION hadavin_test_pf() RETURNS int LANGUAGE sql AS $q$ SELECT 1 $q$'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_pf() RETURN'
+  ledger after step 1: None
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_c08e602f8c34'::regnamespace, 'hadavin_test_o_37e3a75cb6'::regnamespace) ORDER BY 1
+    -> []
+STATE: D01c function, REVOKE ALL FROM PUBLIC, GRANT EXECUTE to the named role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE FUNCTION hadavin_test_pf() RETURNS int LANGUAGE sql AS $q$ SELECT 1 $q$'; EXECUTE 'REVOKE ALL ON FUNCTION hadavin_test_pf() FROM PUBLIC'; EXECUTE 'GRANT EXECUTE ON FUNCTION hadavin_test_pf() TO "hadavin_test_pn_a74afeb2"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_pf() RETURN'
+  ledger after step 1: None
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_a9955086590f'::regnamespace, 'hadavin_test_o_b89d2d48cf'::regnamespace) ORDER BY 1
+    -> []
+STATE: D02 new sequence in the run schema + USAGE to the named role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE SEQUENCE hadavin_test_sq'; EXECUTE 'GRANT USAGE ON SEQUENCE hadavin_test_sq TO "hadavin_test_pn_85005c98"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: "CREATE SEQUENCE hadavin_test_sq'; EXECUT"; 0006_probe.sql: 'CREATE SEQUENCE' is not read by the guard
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_467b624d6ecf'::regnamespace, 'hadavin_test_o_bf69a64a11'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: D02c new sequence only, no grant (control) [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE SEQUENCE hadavin_test_sq'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: "CREATE SEQUENCE hadavin_test_sq'; END $$"; 0006_probe.sql: 'CREATE SEQUENCE' is not read by the guard
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_5a6cb274d43d'::regnamespace, 'hadavin_test_o_096ea276b3'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: C02b (again, with the ACL after) USAGE on the package's own sequence approval_decisions_seq_seq to the named role
+  [step 1] planted file 0006_probe.sql: GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO hadavin_test_pn_22d43925;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_probe']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_probe']
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_8fd57f26f74c'::regnamespace, 'hadavin_test_o_364c3de62a'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> [('approval_decisions_seq_seq', 'S', 'hadavin_test_migrator_4a8242a1', '{hadavin_test_migrator_4a8242a1=rwU/hadavin_test_migrator_4a8242a1,hadavin_test_pn_22d43925=U/hadavin_test_migrator_4a8242a1}', False), ('audit_entries', 'r', 'hadavin_test_migrator_4a8242a1', '{hadavin_test_migrator_4a8242a1=arwdDxt/hadavin_test_migrator_4a8242a1,hadavin_test_pn_22d43925=ar/hadavin_test_migrator_4a8242a1}', False)]
+STATE: D03f SECURITY DEFINER function made in the file, then OWNER TO a role the migration role is a MEMBER of [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] superuser SQL before the run: GRANT USAGE, CREATE ON SCHEMA "hadavin_test_b6c5d4378144" TO "hadavin_test_pg_a877cd6d"
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE FUNCTION hadavin_test_sdm() RETURNS int LANGUAGE sql SECURITY DEFINER AS $q$ SELECT 1 $q$'; EXECUTE 'ALTER FUNCTION hadavin_test_sdm() OWNER TO "hadavin_test_pg_a877cd6d"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FUNCTION hadavin_test_sdm() RETUR'
+  ledger after step 1: None
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_b6c5d4378144'::regnamespace, 'hadavin_test_o_d8f1c4aa5d'::regnamespace) ORDER BY 1
+    -> []
+STATE: C03n SECURITY DEFINER function owned by a role the migration role is a MEMBER of, made before the run, that role has NO right on the schema
+  [step 1] superuser SQL before the run: CREATE FUNCTION "hadavin_test_16d733b709dd".hadavin_test_sdm() RETURNS int LANGUAGE sql SECURITY DEFINER AS $$ SELECT 1 $$
+  [step 1] superuser SQL before the run: ALTER FUNCTION "hadavin_test_16d733b709dd".hadavin_test_sdm() OWNER TO "hadavin_test_pg_9d3613e1"
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_16d733b709dd or elsewhere in this database: the function hadavin_test_16d733b709dd.hadavin_test_sdm() is SECURITY DEFINER (it runs with the rights of its owner), and no file of this run made or changed it: the migration role or a role it belongs to owns it. Nothing was changed. The whole run is undone. Only the migration role itself and the runtime, portal and purge roles named in this run may have rights on this package's tables, views, sequences, functions and schema; a named role gets the rights of the grant map and nothing on any other table, view, sequence or function; a
+  ledger after step 1: None
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_16d733b709dd'::regnamespace, 'hadavin_test_o_cb73ddaa6d'::regnamespace) ORDER BY 1
+    -> [('hadavin_test_sdm', 'hadavin_test_pg_9d3613e1', True, None, None)]
+STATE: C03o as C03n but the function is in ANOTHER schema
+  [step 1] superuser SQL before the run: CREATE FUNCTION "hadavin_test_o_5dfff0062c".hadavin_test_sdm() RETURNS int LANGUAGE sql SECURITY DEFINER AS $$ SELECT 1 $$
+  [step 1] superuser SQL before the run: ALTER FUNCTION "hadavin_test_o_5dfff0062c".hadavin_test_sdm() OWNER TO "hadavin_test_pg_92835a96"
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_10d95251de4b'::regnamespace, 'hadavin_test_o_5dfff0062c'::regnamespace) ORDER BY 1
+    -> [('hadavin_test_sdm', 'hadavin_test_pg_92835a96', True, None, None)]
+STATE: P04 plain file: CREATE OR REPLACE FUNCTION in ANOTHER schema, SECURITY DEFINER, owned by the migration role
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION "hadavin_test_o_2064eea932".hadavin_test_sd2() RETURNS int LANGUAGE sql SECURITY DEFINER AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_2dca7be6eb12 or elsewhere in this database: the function hadavin_test_o_2064eea932.hadavin_test_sd2() is SECURITY DEFINER (it runs with the rights of its owner). Nothing was changed. The whole run is undone. Only the migration role itself and the runtime, portal and purge roles named in this run may have rights on this package's tables, views, sequences, functions and schema; a named role gets the rights of the grant map and nothing on any other table, view, sequence or function; and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a 
+  ledger after step 1: None
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_2dca7be6eb12'::regnamespace, 'hadavin_test_o_2064eea932'::regnamespace) ORDER BY 1
+    -> []
+STATE: D04 SECURITY DEFINER function in ANOTHER schema owned by the migration role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE FUNCTION "hadavin_test_o_969d1b1caf".hadavin_test_sd2() RETURNS int LANGUAGE sql SECURITY DEFINER AS $q$ SELECT 1 $q$'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FUNCTION "hadavin_test_o_969d1b1c'
+  ledger after step 1: None
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_0f48439d0cfe'::regnamespace, 'hadavin_test_o_969d1b1caf'::regnamespace) ORDER BY 1
+    -> []
+STATE: C04p (again, with the catalog after) SECURITY DEFINER function in ANOTHER schema owned by the migration role, exists before the run
+  [step 1] superuser SQL before the run: CREATE FUNCTION "hadavin_test_o_8e3509e54e".hadavin_test_sd2() RETURNS int LANGUAGE sql SECURITY DEFINER AS $$ SELECT 1 $$
+  [step 1] superuser SQL before the run: ALTER FUNCTION "hadavin_test_o_8e3509e54e".hadavin_test_sd2() OWNER TO "hadavin_test_migrator_4a8242a1"
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_e526a3173d82'::regnamespace, 'hadavin_test_o_8e3509e54e'::regnamespace) ORDER BY 1
+    -> [('hadavin_test_sd2', 'hadavin_test_migrator_4a8242a1', True, None, None)]
+STATE: C05 step 1 makes a plain function (CREATE OR REPLACE), step 2's only change is ALTER FUNCTION ... SET search_path = public [plain file]
+  [step 1] planted file 0006_mk.sql: CREATE OR REPLACE FUNCTION hadavin_test_fn() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_mk']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_mk']
+  [step 2] planted file 0007_alt.sql: ALTER FUNCTION hadavin_test_fn() SET search_path = public;
+  [step 2] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 2: ACCEPTED, returned ['0007_alt']
+  ledger after step 2: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_mk', '0007_alt']
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_d63d32cf37b7'::regnamespace, 'hadavin_test_o_d7444ec6d0'::regnamespace) ORDER BY 1
+    -> [('hadavin_test_fn', 'hadavin_test_migrator_4a8242a1', False, ['search_path=public'], '{hadavin_test_migrator_4a8242a1=X/hadavin_test_migrator_4a8242a1}')]
+STATE: C05d as C05, step 2 through the tests' _dynamic wrapper
+  [step 1] planted file 0006_mk.sql: CREATE OR REPLACE FUNCTION hadavin_test_fn() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_mk']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_mk']
+  [step 2] planted file 0007_alt.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'ALTER FUNCTION hadavin_test_fn() SET search_path = public'; END $$;
+  [step 2] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 2: ACCEPTED, returned ['0007_alt']
+  ledger after step 2: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_mk', '0007_alt']
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_63b27b14c0ad'::regnamespace, 'hadavin_test_o_d70a58da89'::regnamespace) ORDER BY 1
+    -> [('hadavin_test_dyn_runner', 'hadavin_test_migrator_4a8242a1', False, None, '{hadavin_test_migrator_4a8242a1=X/hadavin_test_migrator_4a8242a1}'), ('hadavin_test_fn', 'hadavin_test_migrator_4a8242a1', False, ['search_path=public'], '{hadavin_test_migrator_4a8242a1=X/hadavin_test_migrator_4a8242a1}')]
+STATE: C06 step 1 makes a plain function, step 2's only change is ALTER FUNCTION ... OWNER TO a role the migration role belongs to [plain file]
+  [step 1] superuser SQL before the run: GRANT USAGE, CREATE ON SCHEMA "hadavin_test_2428bfd2cfaf" TO "hadavin_test_pg_034445ca"
+  [step 1] planted file 0006_mk.sql: CREATE OR REPLACE FUNCTION hadavin_test_fn() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_2428bfd2cfaf or elsewhere in this database: hadavin_test_pg_034445ca has CREATE on the schema hadavin_test_2428bfd2cfaf itself. Nothing was changed. The whole run is undone. Only the migration role itself and the runtime, portal and purge roles named in this run may have rights on this package's tables, views, sequences, functions and schema; a named role gets the rights of the grant map and nothing on any other table, view, sequence or function; and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the
+  ledger after step 1: None
+  [step 2] planted file 0007_own.sql: ALTER FUNCTION hadavin_test_fn() OWNER TO "hadavin_test_pg_034445ca";
+  [step 2] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 2: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0007_own.sql: ALTER ... OWNER TO: an object may not be handed to another role by a migration file
+  ledger after step 2: None
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_2428bfd2cfaf'::regnamespace, 'hadavin_test_o_e7e9e42e17'::regnamespace) ORDER BY 1
+    -> []
+STATE: C06d as C06, step 2 through the tests' _dynamic wrapper
+  [step 1] superuser SQL before the run: GRANT USAGE, CREATE ON SCHEMA "hadavin_test_31bdacd5fdfb" TO "hadavin_test_pg_4fc36f57"
+  [step 1] planted file 0006_mk.sql: CREATE OR REPLACE FUNCTION hadavin_test_fn() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_31bdacd5fdfb or elsewhere in this database: hadavin_test_pg_4fc36f57 has CREATE on the schema hadavin_test_31bdacd5fdfb itself. Nothing was changed. The whole run is undone. Only the migration role itself and the runtime, portal and purge roles named in this run may have rights on this package's tables, views, sequences, functions and schema; a named role gets the rights of the grant map and nothing on any other table, view, sequence or function; and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the
+  ledger after step 1: None
+  [step 2] planted file 0007_own.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'ALTER FUNCTION hadavin_test_fn() OWNER TO "hadavin_test_pg_4fc36f57"'; END $$;
+  [step 2] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 2: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_31bdacd5fdfb or elsewhere in this database: hadavin_test_pg_4fc36f57 has CREATE on the schema hadavin_test_31bdacd5fdfb itself; the function hadavin_test_31bdacd5fdfb.hadavin_test_fn() was handed to hadavin_test_pg_4fc36f57 (it is not owned by the migration role). Nothing was changed. The whole run is undone. Only the migration role itself and the runtime, portal and purge roles named in this run may have rights on this package's tables, views, sequences, functions and schema; a named role gets the rights of the grant map and nothing on any other table, view, sequence or func
+  ledger after step 2: None
+  AFTER (superuser) SELECT proname, proowner::regrole::text, prosecdef, proconfig, proacl::text FROM pg_proc WHERE proname LIKE 'hadavin_test_%%' AND pronamespace IN ('hadavin_test_31bdacd5fdfb'::regnamespace, 'hadavin_test_o_fb23a4d184'::regnamespace) ORDER BY 1
+    -> []
+STATE: D08 foreign table (postgres_fdw) + SELECT to the named role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] superuser SQL before the run: CREATE EXTENSION IF NOT EXISTS postgres_fdw
+  [step 1] superuser SQL before the run: CREATE SERVER hadavin_test_probe_srv FOREIGN DATA WRAPPER postgres_fdw OPTIONS (dbname 'postgres')
+  [step 1] superuser SQL before the run: GRANT USAGE ON FOREIGN SERVER hadavin_test_probe_srv TO "hadavin_test_migrator_4a8242a1"
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE FOREIGN TABLE hadavin_test_ft (a int) SERVER hadavin_test_probe_srv'; EXECUTE 'GRANT SELECT ON hadavin_test_ft TO "hadavin_test_pn_6781f01c"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FOREIGN TABLE hadavin_test_ft (a'
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_52c2ea9842d3'::regnamespace, 'hadavin_test_o_e34fea1a10'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: D08b foreign table (postgres_fdw), no grant [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] superuser SQL before the run: CREATE EXTENSION IF NOT EXISTS postgres_fdw
+  [step 1] superuser SQL before the run: CREATE SERVER hadavin_test_probe_srv FOREIGN DATA WRAPPER postgres_fdw OPTIONS (dbname 'postgres')
+  [step 1] superuser SQL before the run: GRANT USAGE ON FOREIGN SERVER hadavin_test_probe_srv TO "hadavin_test_migrator_4a8242a1"
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE FOREIGN TABLE hadavin_test_ft (a int) SERVER hadavin_test_probe_srv'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE FOREIGN TABLE hadavin_test_ft (a'
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_910522e620b1'::regnamespace, 'hadavin_test_o_196233d569'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: D09 materialized view + SELECT to the named role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE MATERIALIZED VIEW hadavin_test_mv AS SELECT 1 AS a'; EXECUTE 'GRANT SELECT ON hadavin_test_mv TO "hadavin_test_pn_3c3e59af"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE MATERIALIZED VIEW hadavin_test_mv'; hadavin_test_mv (view) is created by a migration but is not in GRANTS
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_2557e5a98187'::regnamespace, 'hadavin_test_o_c0c2d914d5'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: D09b materialized view, no grant [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE MATERIALIZED VIEW hadavin_test_mv AS SELECT 1 AS a'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE MATERIALIZED VIEW hadavin_test_mv'; hadavin_test_mv (view) is created by a migration but is not in GRANTS
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_8b80793405c6'::regnamespace, 'hadavin_test_o_4f259a6bd2'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: D10 partitioned table in the run schema with a partition in another schema, no grant [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE TABLE hadavin_test_pt (a int) PARTITION BY RANGE (a)'; EXECUTE 'CREATE TABLE "hadavin_test_o_90ae7e6364".hadavin_test_pt_1 PARTITION OF hadavin_test_pt FOR VALUES FROM (0) TO (10)'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE TABLE "hadavin_test_o_90ae7e6364"'; hadavin_test_pt (table) is created by a migration but is not in GRANTS
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_11c14569aa99'::regnamespace, 'hadavin_test_o_90ae7e6364'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: D10b as D10 + SELECT on the partition (other schema) to the named role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE TABLE hadavin_test_pt (a int) PARTITION BY RANGE (a)'; EXECUTE 'CREATE TABLE "hadavin_test_o_05188e9f35".hadavin_test_pt_1 PARTITION OF hadavin_test_pt FOR VALUES FROM (0) TO (10)'; EXECUTE 'GRANT SELECT ON "hadavin_test_o_05188e9f35".hadavin_test_pt_1 TO "hadavin_test_pn_15cb1a87"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE TABLE "hadavin_test_o_05188e9f35"'; hadavin_test_pt (table) is created by a migration but is not in GRANTS
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_f2a4d6825249'::regnamespace, 'hadavin_test_o_05188e9f35'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: D10c as D10 + SELECT on the partitioned parent to the named role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE TABLE hadavin_test_pt (a int) PARTITION BY RANGE (a)'; EXECUTE 'CREATE TABLE "hadavin_test_o_42c983e385".hadavin_test_pt_1 PARTITION OF hadavin_test_pt FOR VALUES FROM (0) TO (10)'; EXECUTE 'GRANT SELECT ON hadavin_test_pt TO "hadavin_test_pn_6ad7e7dd"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE TABLE "hadavin_test_o_42c983e385"'; hadavin_test_pt (table) is created by a migration but is not in GRANTS
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_c689af05513b'::regnamespace, 'hadavin_test_o_42c983e385'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: D11 table outside the grant map + column-level GRANT SELECT (a) to the named role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE TABLE hadavin_test_out (a int, b int)'; EXECUTE 'GRANT SELECT (a) ON hadavin_test_out TO "hadavin_test_pn_c71b0948"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: hadavin_test_out (table) is created by a migration but is not in GRANTS
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_b4d2a5a7cfd6'::regnamespace, 'hadavin_test_o_3cd3b88f4e'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+  AFTER (superuser) SELECT attname, attacl::text FROM pg_attribute WHERE attrelid = to_regclass('"hadavin_test_b4d2a5a7cfd6".hadavin_test_out') AND attacl IS NOT NULL
+    -> []
+STATE: D11b table outside the grant map, no grant (control) [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE TABLE hadavin_test_out (a int, b int)'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: hadavin_test_out (table) is created by a migration but is not in GRANTS
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_2bbb9b2fc11c'::regnamespace, 'hadavin_test_o_642908535d'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: D11c column-level grant in ANOTHER schema's new table to the named role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE TABLE "hadavin_test_o_83380ebab7".hadavin_test_out (a int, b int)'; EXECUTE 'GRANT SELECT (a) ON "hadavin_test_o_83380ebab7".hadavin_test_out TO "hadavin_test_pn_f4c241e1"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE TABLE "hadavin_test_o_83380ebab7"'
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_3efbbd8960d7'::regnamespace, 'hadavin_test_o_83380ebab7'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: C14 (again, with the ACL after) GRANT SELECT ON audit_entries TO named WITH GRANT OPTION
+  [step 1] planted file 0006_probe.sql: GRANT SELECT ON audit_entries TO hadavin_test_pn_e116bd7e WITH GRANT OPTION;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_probe']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_probe']
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_44e468eb6fad'::regnamespace, 'hadavin_test_o_32b2686bc9'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> [('approval_decisions_seq_seq', 'S', 'hadavin_test_migrator_4a8242a1', '{hadavin_test_migrator_4a8242a1=rwU/hadavin_test_migrator_4a8242a1,hadavin_test_pn_e116bd7e=U/hadavin_test_migrator_4a8242a1}', False), ('audit_entries', 'r', 'hadavin_test_migrator_4a8242a1', '{hadavin_test_migrator_4a8242a1=arwdDxt/hadavin_test_migrator_4a8242a1,hadavin_test_pn_e116bd7e=ar/hadavin_test_migrator_4a8242a1}', False)]
+STATE: C14o GRANT SELECT ON audit_entries TO a role NOT named in the run WITH GRANT OPTION
+  [step 1] planted file 0006_probe.sql: GRANT SELECT ON audit_entries TO hadavin_test_po_997b1416 WITH GRANT OPTION;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_0059a422b43f or elsewhere in this database: hadavin_test_po_997b1416 has SELECT on the table hadavin_test_0059a422b43f.audit_entries. Nothing was changed. The whole run is undone. Only the migration role itself and the runtime, portal and purge roles named in this run may have rights on this package's tables, views, sequences, functions and schema; a named role gets the rights of the grant map and nothing on any other table, view, sequence or function; and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list 
+  ledger after step 1: None
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_0059a422b43f'::regnamespace, 'hadavin_test_o_402d435492'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: D15 large object made in the file and granted to the named role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'SELECT lo_create(934389197)'; EXECUTE 'GRANT SELECT ON LARGE OBJECT 934389197 TO "hadavin_test_pn_fae902fd"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_probe']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_probe']
+  AFTER (superuser) SELECT oid, lomowner::regrole::text, lomacl::text FROM pg_largeobject_metadata WHERE oid = 934389197
+    -> [(934389197, 'hadavin_test_migrator_4a8242a1', '{hadavin_test_migrator_4a8242a1=rw/hadavin_test_migrator_4a8242a1,hadavin_test_pn_fae902fd=r/hadavin_test_migrator_4a8242a1}')]
+STATE: D16 domain + USAGE to the named role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE DOMAIN hadavin_test_dom AS int'; EXECUTE 'GRANT USAGE ON DOMAIN hadavin_test_dom TO "hadavin_test_pn_ab396a1f"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: "CREATE DOMAIN hadavin_test_dom AS int';"
+  ledger after step 1: None
+  AFTER (superuser) SELECT typname, typowner::regrole::text, typacl::text FROM pg_type WHERE typname IN ('hadavin_test_dom','hadavin_test_en')
+    -> []
+STATE: D16b enum type + USAGE to the named role [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE TYPE hadavin_test_en AS ENUM (''a'')'; EXECUTE 'GRANT USAGE ON TYPE hadavin_test_en TO "hadavin_test_pn_5348f74b"'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: "CREATE TYPE hadavin_test_en AS ENUM (''a"
+  ledger after step 1: None
+  AFTER (superuser) SELECT typname, typowner::regrole::text, typacl::text FROM pg_type WHERE typname IN ('hadavin_test_dom','hadavin_test_en')
+    -> []
+STATE: D17 GRANT CREATE ON SCHEMA <run schema> TO PUBLIC [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'GRANT CREATE ON SCHEMA "hadavin_test_4b6618bb6fdc" TO PUBLIC'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE ON SCHEMA "hadavin_test_4b6618bb6'
+  ledger after step 1: None
+  AFTER (superuser) SELECT nspname, nspowner::regrole::text, nspacl::text FROM pg_namespace WHERE nspname IN ('hadavin_test_4b6618bb6fdc','hadavin_test_o_754ffecafc')
+    -> [('hadavin_test_4b6618bb6fdc', 'postgres', None), ('hadavin_test_o_754ffecafc', 'postgres', '{postgres=UC/postgres,hadavin_test_migrator_4a8242a1=UC/postgres}')]
+STATE: D17b GRANT CREATE ON SCHEMA <another schema the migration role does not own> TO PUBLIC [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'GRANT CREATE ON SCHEMA "hadavin_test_o_7167e3aaeb" TO PUBLIC'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE ON SCHEMA "hadavin_test_o_7167e3a'
+  ledger after step 1: None
+  AFTER (superuser) SELECT nspname, nspowner::regrole::text, nspacl::text FROM pg_namespace WHERE nspname IN ('hadavin_test_45b8fa64ee6e','hadavin_test_o_7167e3aaeb')
+    -> [('hadavin_test_45b8fa64ee6e', 'postgres', None), ('hadavin_test_o_7167e3aaeb', 'postgres', '{postgres=UC/postgres,hadavin_test_migrator_4a8242a1=UC/postgres}')]
+STATE: D18 RLS switched on + a policy for the named role on the grant-map table audit_entries [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'ALTER TABLE audit_entries ENABLE ROW LEVEL SECURITY'; EXECUTE 'CREATE POLICY hadavin_test_pol ON audit_entries FOR SELECT TO "hadavin_test_pn_625d3b2b" USING (true)'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE POLICY hadavin_test_pol ON audit_'
+  ledger after step 1: None
+  AFTER (superuser) SELECT polname, polrelid::regclass::text, polroles::regrole[]::text FROM pg_policy WHERE polname = 'hadavin_test_pol'
+    -> []
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_114d6c81c112'::regnamespace, 'hadavin_test_o_333e0e8432'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
+STATE: D18b a policy for the named role on audit_entries, RLS not switched on [tests' _dynamic wrapper: EXECUTE in a function body]
+  [step 1] planted file 0006_probe.sql: CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN EXECUTE 'CREATE POLICY hadavin_test_pol ON audit_entries FOR SELECT TO "hadavin_test_pn_cccaf73d" USING (true)'; END $$;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_probe.sql: statement the guard does not read: 'CREATE POLICY hadavin_test_pol ON audit_'
+  ledger after step 1: None
+  AFTER (superuser) SELECT polname, polrelid::regclass::text, polroles::regrole[]::text FROM pg_policy WHERE polname = 'hadavin_test_pol'
+    -> []
+  AFTER (superuser) SELECT relname, relkind, relowner::regrole::text, relacl::text, relrowsecurity FROM pg_class WHERE relnamespace IN ('hadavin_test_972014c94a7e'::regnamespace, 'hadavin_test_o_23f390aca4'::regnamespace) AND (relname LIKE 'hadavin_test_%%' OR relname IN ('audit_entries','approval_decisions_seq_seq')) ORDER BY 1
+    -> []
