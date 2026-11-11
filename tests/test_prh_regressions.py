@@ -236,3 +236,12 @@ def test_unmasked_secret_rows_are_named_not_promised():
         if r["secrets"] and not r.get("pin") and any(v != "masked" for v in r["expect"].values())
     }
     assert unmasked <= named, sorted(unmasked - named)
+
+
+def test_every_prh_mutant_still_applies():
+    """The mutant list (`tests/prh_mutants.py`, run by CI) cannot rot: each `old` text is still in its file exactly once and
+    each killer test still exists."""
+    from tests import prh_mutants
+
+    assert len(prh_mutants.M) >= 43
+    assert prh_mutants.check_applies() == []

@@ -182,13 +182,15 @@ def test_scrub_backstop_withholds(monkeypatch):
     real = tools._scrub_layers
     calls: list[int] = []
 
-    def second_call_leaks(raw, long_enough, scrub=tools._DEFAULT_SCRUB):
+    def later_calls_leak(raw, long_enough, scrub=tools._DEFAULT_SCRUB):
         calls.append(1)
-        if len(calls) == 2:
-            return "leak " + HAND
+        if (
+            len(calls) >= 2
+        ):  # every call after the find: the real result with the secret standing in it, as many marks as before
+            return real(raw, long_enough, scrub) + " leak " + HAND
         return real(raw, long_enough, scrub)
 
-    monkeypatch.setattr(tools, "_scrub_layers", second_call_leaks)
+    monkeypatch.setattr(tools, "_scrub_layers", later_calls_leak)
     text = "auth failed for " + HAND + " end" + ESC + "[0m"
     out = tools._scrub(text, [HAND])
     assert HAND not in out and not _pieces_stand(out, HAND), out

@@ -38,10 +38,10 @@ def test_created_marker_is_escaped():
 
 
 def test_gap_pattern_shape():
-    assert runmap._gap_pattern("abcd").pattern == "a ?b ?c ?d"
-    assert runmap._gap_pattern("x-y1").pattern == "x\\-y ?1"
-    assert runmap._gap_pattern("ab7").pattern.startswith("(?<!\\w)")
-    assert runmap._gap_pattern("ab7").pattern.endswith("(?!\\w)")
+    assert runmap.gap_pattern("abcd").pattern == "a ?b ?c ?d"
+    assert runmap.gap_pattern("x-y1").pattern == "x\\-y ?1"
+    assert runmap.gap_pattern("ab7").pattern.startswith("(?<!\\w)")
+    assert runmap.gap_pattern("ab7").pattern.endswith("(?!\\w)")
 
 
 def test_refuse_forgery_reads_canonical():

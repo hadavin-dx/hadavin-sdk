@@ -336,3 +336,17 @@ def test_strip_consuming():
     assert hidden.strip_consuming("a" + esc + "e" + "b")[0] == "ab"
     assert hidden.strip("a" + esc + "e" + "b")[0] == "aeb"
     assert hidden.strip_consuming("plain text") == ("plain text", "plain text")
+
+
+def test_merged_placeholder_is_reused_by_mask_spans():
+    """Two calls of `mask_spans` with one map and the same partially overlapping pair: the merged text gets ONE entry."""
+    from hadavin_sdk.guard.redact import mask_spans
+    from tests.test_prh_spans import MERGED, A, B
+
+    mapping = {"<SECRET_1>": A, "<SECRET_2>": B}
+    start_b = MERGED.index(B)
+    spans = [(0, len(A), "<SECRET_1>"), (start_b, len(MERGED), "<SECRET_2>")]
+    first = mask_spans(MERGED, spans, mapping)
+    second = mask_spans(MERGED, spans, mapping)
+    assert first == second
+    assert [ph for ph, v in mapping.items() if v == MERGED] == [first]

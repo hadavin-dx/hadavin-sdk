@@ -1,0 +1,26 @@
+{
+ "S1 plain ASCII log": [
+  1,
+  0
+ ],
+ "S2 tab table": [
+  1,
+  0
+ ],
+ "S3 JSON lines": [
+  1,
+  0
+ ],
+ "S4 Hindi": [
+  1,
+  1
+ ],
+ "S5 Persian ZWNJ emoji": [
+  2,
+  1
+ ],
+ "H2 colour inside a word": [
+  1,
+  0
+ ]
+}
