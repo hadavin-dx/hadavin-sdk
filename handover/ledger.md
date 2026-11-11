@@ -2689,3 +2689,7 @@
 | PRH-r2-R-M1 | reviews/PRH/plan-r2-readiness-full.md | Major | PRH | W3 says _first_decoded NO change but main calls _decoded (regression) | OPEN | ticket rev 3 | - | 2026-11-11 |
 | PRH-r2-R-M2 | same | Major | PRH | reader grammar 4.1: string sequence end rule, ESC inside string, strip_sequences scope, oracle | OPEN | ticket rev 3 | - | 2026-11-11 |
 | PRH-r2-R-M3..M9 | same | Major | PRH | T5 sources not in ticket; tests not mapped to files/killers (35,36,31 unkillable?); cost gate four shapes undefined (Hindi 1.59x); env setup/uv offline/heavy.sh form; 60-min box vs green-per-commit; invisible chars as escapes + scan_repo early; oracle Other_Default_Ignorable ranges not in ticket | OPEN | ticket rev 3 | - | 2026-11-11 |
+| Q8c-1-r3-d-m1 | reviews/Q8c-1/result-r3-design-full.md | minor | Q8c-1 | R17 verified cell lists builder-only sources (cosmetic) | OPEN | batch 3 | - | 2026-11-11 |
+| Q8c-1-r3-d-m2 | same | minor | Q8c-1 | R17 claims_unverified has no dated pending entry; fixture header contradicts itself | OPEN | batch 3 | - | 2026-11-11 |
+| Q8c-1-r3-d-m3 | same | minor | Q8c-1 | no automated Vault never-path vs grant cross-check (manual check consistent) | OPEN | batch 3 | - | 2026-11-11 |
+| Q8c-1-r3-d-OPEN | same | Major(evidence) | Q8c-1 | 12 Vault engine tests never run; R17 + reading needs re-read/re-fetch (needs CI run / third party) | OWNER-ONLY | CI run with HADAVIN_REQUIRE_VAULT_ENGINE=1 | - | 2026-11-11 |

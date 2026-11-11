@@ -1,4 +1,24 @@
 head be53718ccbf5e2038cc18c87d334577e7b11ace8 started 16:54:02
 
 T-E8 watchdog: pg_sleep(30) cancelled after 2.01s (watchdog 2.0s; the assertion allows 3.0s: the timer, the cancel round trip to the server and the connection close)
-.
+........................F...                                             [100%]
+=================================== FAILURES ===================================
+______________ test_the_timing_harness_flags_a_quadratic_stand_in ______________
+
+    @pytest.mark.perf
+    def test_the_timing_harness_flags_a_quadratic_stand_in():
+        def quadratic(t: str) -> float:
+            return _median_time(lambda s: sum(s.count("a", 0, i) for i in range(0, len(s), 64)), t)
+    
+>       assert timing.is_superlinear(quadratic, "a", 16 * 1024, 256 * 1024), (
+            "a quadratic function must be flagged"
+        )
+E       AssertionError: a quadratic function must be flagged
+E       assert False
+E        +  where False = <function is_superlinear at 0x7fd775fdd620>(<function test_the_timing_harness_flags_a_quadratic_stand_in.<locals>.quadratic at 0x7fd77535b920>, 'a', (16 * 1024), (256 * 1024))
+E        +    where <function is_superlinear at 0x7fd775fdd620> = timing.is_superlinear
+
+tests/test_migration_numbers.py:836: AssertionError
+1 failed, 27 passed, 10687 deselected in 53.61s
+exit 1
+ended 16:54:57
