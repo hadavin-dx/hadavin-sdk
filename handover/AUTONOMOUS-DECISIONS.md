@@ -31,3 +31,6 @@ Entry format: `D-NNN | date UTC / IST | question | options (cost, risk) | RECOMM
 
 ## D-004 2026-11-11 13:36Z UTC: EGM model = Fable 5.2 (owner order, not my decision)
 Owner said: use Fable 5.2 for all EGM skills/agents instead of Opus/Sonnet/Haiku. Done by patching egm_model_patch.py (OPUS=SONNET=FABLE) and running it. Scope: EGM only; builders/evidence runners unchanged (ambiguous in the order; revisit if the owner means all agents). Reversible: restore the two constants. Cost goes up (Fable pricing not verified here).
+
+## D-005 2026-11-11 13:40Z UTC: Fable 5.2 for ALL agents (owner order, not my decision)
+Owner switched the session to claude-fable-5-2 and said "use fable 5.2 for all agents also". Action: every new Agent call sets model=fable; one-line edit of .claude/hooks/agent_preamble_gate.py (VALID_MODELS += "fable"), otherwise the hook refuses the owner's chosen model. EGM skipped: one-line mechanical edit on a direct owner order. Running Sonnet agents (EV-P89, B-PR77, B-PR85, B-PR89-r18) are not restarted (restart would waste finished work). Cost: higher; Fable prices not verified here. Reversible: remove "fable" from the set.

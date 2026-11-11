@@ -38,3 +38,6 @@ Upstream sets `disable-model-invocation: true` on all seven EGM skills. A skill 
 
 ## OVERRIDE 2026-11-11 (owner's direct order in the cloud session): Fable 5.2 for ALL of EGM
 Every EGM skill and every egm:* reviewer agent runs on `claude-fable-5-2` (the table above is superseded for EGM). `handover/tools/egm_model_patch.py` now writes that id everywhere. Builders and evidence runners stay on Sonnet 5.5 until the owner says otherwise. Start a NEW session after patching.
+
+## OVERRIDE 2 2026-11-11 (owner's direct order): Fable 5.2 for ALL agents
+Session model, builders, evidence runners and every EGM skill/agent run on `claude-fable-5-2` (Agent `model: "fable"`). The Agent hook's allowed-model list gained "fable". Agents started before this order (Sonnet) finish their current task; new agents use Fable.
