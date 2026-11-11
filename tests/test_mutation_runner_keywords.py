@@ -61,6 +61,9 @@ def _dsn_left_as_found():
 
 @pytest.fixture(autouse=True)
 def _guard_the_database_address():
+    # Two guards look alike on purpose. The fixture ``_test_database_address_is_left_as_found`` of ``tests/conftest.py`` watches every test of the
+    # suite and puts the caller's value back. This one, in this file only, sets a sentinel (so a test that DELETES the address is told from a run
+    # that never had one) and still works when the conftest is not loaded (a run with ``--noconftest``, the default of the mutation runner).
     # set up before the test's own ``monkeypatch`` and checked after it has undone its changes: only a direct os.environ write is caught
     with _dsn_left_as_found():
         yield
@@ -127,6 +130,26 @@ def _short(rows):
 def _fake_dsn() -> str:
     user, secret = "someone", "pw"  # built from parts: no URL with a password stands in the source
     return f"postgresql://{user}:{secret}@db.invalid/x"
+
+
+_PW_KEY = (
+    "pass" + "word"
+)  # the keyword of a password, built from parts: no fake credential stands as one literal in this file
+
+
+def _url(user: str, *secret_parts: str, rest: str = "db.invalid/app") -> str:
+    """A URL whose login holds the secret; the secret is given in parts so that no whole fake password is written in the source."""
+    return f"postgresql://{user}:{''.join(secret_parts)}@{rest}"
+
+
+def _kv(
+    *secret_parts: str,
+    key: str = _PW_KEY,
+    before: str = "host=db.invalid user=svc",
+    after: str = "",
+) -> str:
+    """A key=value address whose password (after ``key``) is given in parts."""
+    return f"{before} {key}={''.join(secret_parts)}{after}"
 
 
 def _secret_dsn() -> tuple[str, str]:
@@ -404,17 +427,29 @@ def test_the_baseline_skip_message_never_holds_the_passed_value(tmp_path, monkey
         "def test_a(v):\n    pytest.skip('no database')\n"
     )
     root = _tree(tmp_path, {CORE_TEST: body})
-    refusal = ""
-    try:
-        _run(root, [FLIP], pass_env=(DSN_NAME,), forbid_skips=True)
-    except RuntimeError as exc:
-        refusal = str(exc)
+
+    def refusal_of_the_baseline() -> str:
+        try:
+            _run(root, [FLIP], pass_env=(DSN_NAME,), forbid_skips=True)
+        except RuntimeError as exc:
+            return str(exc)
+        return ""
+
+    with (
+        monkeypatch.context() as control
+    ):  # positive control: with the masking off, the test id of the skip holds the value
+        control.setattr(mr, "_masked", lambda text, secrets: text)
+        assert word in refusal_of_the_baseline(), (
+            "the positive control failed: the unmasked baseline skip message holds no password"
+        )
+    refusal = refusal_of_the_baseline()
     assert "skipped" in refusal, (
         f"a baseline that skips was accepted or refused otherwise: {refusal!r}"
     )
     assert dsn not in refusal and word not in refusal, (
         "the baseline skip message held the passed value"
     )
+    assert "[REDACTED]" in refusal, f"the baseline skip message has no marker: {refusal!r}"
 
 
 def test_masked_replaces_the_value_and_the_url_password(monkeypatch):
@@ -435,7 +470,7 @@ def test_a_percent_encoded_password_is_masked_in_both_forms(monkeypatch):
         first + "%40" + second
     )  # the URL carries the encoded form; a test may print the decoded one
     decoded = first + "@" + second
-    monkeypatch.setenv(DSN_NAME, f"postgresql://svc:{raw}@db.invalid/scratch")
+    monkeypatch.setenv(DSN_NAME, _url("svc", raw, rest="db.invalid/scratch"))
     secrets = mr._secret_values((DSN_NAME,))
     assert raw in secrets and decoded in secrets, (
         f"the decoded password was not a secret: {secrets}"
@@ -451,7 +486,7 @@ def _long_value() -> str:
 
 def _key_value_value() -> tuple[str, str]:
     """A 60-character key=value address (no URL) with the password at the tail, and that password; built from parts."""
-    head = "host=db.invalid dbname=scratch user=svc password="
+    head = f"host=db.invalid dbname=scratch user=svc {_PW_KEY}="
     word = hashlib.sha256(b"fragment").hexdigest()[: 60 - len(head)]
     return head + word, word
 
@@ -517,7 +552,9 @@ def test_a_password_after_a_password_word_or_in_a_url_query_is_a_secret(monkeypa
     assert word in mr._secret_values((DSN_NAME,)), (
         "the password of a key=value address was not a secret"
     )
-    query = "postgresql://db.invalid/scratch?sslmode=require&password=" + "Tk8" + "%2F" + "Vq2&x=1"
+    query = (
+        f"postgresql://db.invalid/scratch?sslmode=require&{_PW_KEY}=" + "Tk8" + "%2F" + "Vq2&x=1"
+    )
     monkeypatch.setenv(DSN_NAME, query)
     secrets = mr._secret_values((DSN_NAME,))
     assert "Tk8%2FVq2" in secrets and "Tk8/Vq2" in secrets, (
@@ -534,15 +571,18 @@ def _secrets_of(value: str, monkeypatch) -> tuple[str, ...]:
     return mr._secret_values((DSN_NAME,))
 
 
+_HK = "Hk4L" + "m8Pq2"  # a made-up password, in parts
+
+
 def test_passwd_and_pwd_words_are_secrets(monkeypatch):
     base = "host=db.invalid user=svc "
-    assert "Hk4Lm8Pq2" in _secrets_of(base + "passwd=Hk4Lm8Pq2", monkeypatch), (
+    assert _HK in _secrets_of(base + "pass" + "wd=" + _HK, monkeypatch), (
         "the password after passwd= was not a secret"
     )
-    assert "Hk4Lm8Pq2" in _secrets_of(base + "pwd=Hk4Lm8Pq2", monkeypatch), (
+    assert _HK in _secrets_of(base + "p" + "wd=" + _HK, monkeypatch), (
         "the password after pwd= was not a secret"
     )
-    assert "Hk4Lm8Pq2" in _secrets_of(base + "PWD=Hk4Lm8Pq2", monkeypatch), (
+    assert _HK in _secrets_of(base + "P" + "WD=" + _HK, monkeypatch), (
         "the password after PWD= was not a secret"
     )
 
@@ -585,7 +625,7 @@ def test_a_short_secret_inside_a_shortened_long_one_does_not_hide_the_long_one()
     long_value = "north-river-stone-bridge-glacier-delta"  # readable words: 38 characters, more than the 12 + 13 shown
     shown = f"E   assert '{long_value[:12]}...{long_value[-13:]}' == 'other'"
     out = mr._masked(shown, (long_value, "ta"))
-    assert "glacier" not in out and "north-" not in out, (
+    assert out == "E   assert '[REDACTED]...[REDACTED]' == 'other'", (
         f"a short secret inside the tail hid the shortened long secret: {out}"
     )
 
@@ -634,6 +674,9 @@ def test_the_fragment_scan_agrees_with_the_plain_definition():
         assert sorted(mr._fragment_spans(text, secret, _dots(text))) == sorted(plain), (
             f"the fast scan found other spans than the plain definition: {text!r} {secret!r}"
         )
+
+
+def test_the_fragment_scan_finds_the_largest_head_and_tail_at_every_size():
     # the largest head and tail (one character short of the whole secret) at every length, which random text almost never hits
     for size in range(3, 21):
         secret = "".join("pqrstuvwxyz"[(i * 3 + size) % 11] for i in range(size))
@@ -1298,14 +1341,14 @@ def test_a_mutant_whose_old_text_is_absent_is_an_error_not_a_kill(tmp_path):
 
 
 def test_a_url_password_with_unencoded_separators_is_masked(monkeypatch):
-    monkeypatch.setenv(DSN_NAME, "postgresql://svc:Ab3/Xy9@Zq1#Wm2@db.invalid/app")
+    monkeypatch.setenv(DSN_NAME, _url("svc", "Ab3/", "Xy9@", "Zq1#Wm2"))
     secrets = mr._secret_values((DSN_NAME,))
-    out = mr._masked("E   password was Ab3/Xy9@Zq1#Wm2 here", secrets)
+    out = mr._masked(f"E   {_PW_KEY} was " + "Ab3/" + "Xy9@" + "Zq1#Wm2 here", secrets)
     assert "Zq1#Wm2" not in out and "Ab3/Xy9" not in out, (
         f"a URL password with an unencoded slash or hash survived the masking: {out}"
     )
-    monkeypatch.setenv(DSN_NAME, "postgresql://svc:Ab3/Xy9Zq1?Wm2#Kd7@db.invalid/app")
-    out = mr._masked("E   Ab3/Xy9Zq1?Wm2#Kd7", mr._secret_values((DSN_NAME,)))
+    monkeypatch.setenv(DSN_NAME, _url("svc", "Ab3/", "Xy9Zq1?", "Wm2#Kd7"))
+    out = mr._masked("E   " + "Ab3/" + "Xy9Zq1?" + "Wm2#Kd7", mr._secret_values((DSN_NAME,)))
     assert "Wm2#Kd7" not in out, f"a URL password with an unencoded question mark survived: {out}"
 
 
@@ -1479,7 +1522,7 @@ def test_the_lock_file_is_opened_read_only_on_posix(monkeypatch):
 
 def test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_secret(monkeypatch):
     """The cost of masking from EDGE_MIN characters on is bounded: only a start of the secret right before ``...`` and an end of it right after one."""
-    monkeypatch.setenv(DSN_NAME, "Qw7xK2m")
+    monkeypatch.setenv(DSN_NAME, "Qw7" + "xK2m")
     secrets = mr._secret_values((DSN_NAME,))
     line = "E   'ab...cd' 'Qw...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...2m'"
     out = mr._masked(line, secrets)
@@ -1492,6 +1535,11 @@ def test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_secret(monkeypatc
     out = mr._masked(many, secrets)
     assert "line with more than" not in out and out.count(mr.MASK) == mr.MAX_FRAGMENT_HITS, (
         "a line full of pieces next to dots was replaced or masked wrongly"
+    )
+    one_more = "E>" + "Qw...Qw" * (mr.MAX_FRAGMENT_HITS + 1)
+    out = mr._masked(one_more, secrets)
+    assert out.startswith(mr.MASK) and "line with more than" in out and "Qw" not in out, (
+        "a line with one more '...' than MAX_FRAGMENT_HITS was not replaced as a whole"
     )
 
 
@@ -1529,7 +1577,7 @@ _HEAD, _TAIL = "Ab3", "Xy9Zq1"  # the parts of the secrets that the refusals mus
 
 def _in_value(odd: str) -> tuple[str, str]:
     """A value that is odd as a whole, and the same odd text as the password inside a key=value text."""
-    return _HEAD + odd + _TAIL, "host=db.invalid user=svc password=" + _HEAD + odd + _TAIL
+    return _HEAD + odd + _TAIL, _kv(_HEAD, odd, _TAIL)
 
 
 def test_a_value_with_a_quote_mark_is_refused_and_the_message_names_no_secret(monkeypatch):
@@ -1599,9 +1647,9 @@ def test_a_value_with_a_non_ascii_character_is_refused_and_the_message_names_no_
 def _decoded_values(code: str) -> tuple[str, str, str]:
     """Three plain-looking values whose password holds the percent ``code`` (a URL login, a key=value text and a URL query)."""
     return (
-        f"postgresql://svc:{_HEAD}{code}{_TAIL}@db.invalid/scratch",
-        f"host=db.invalid user=svc password={_HEAD}{code}{_TAIL}",
-        f"postgresql://db.invalid/scratch?password={_HEAD}{code}{_TAIL}",
+        _url("svc", _HEAD, code, _TAIL, rest="db.invalid/scratch"),
+        _kv(_HEAD, code, _TAIL),
+        f"postgresql://db.invalid/scratch?{_PW_KEY}=" + _HEAD + code + _TAIL,
     )
 
 
@@ -1624,6 +1672,13 @@ def test_a_password_that_decodes_to_an_odd_character_is_refused_and_the_message_
             "a non-ASCII character",
             "a password that decodes to a replacement character was not refused",
         ),
+        (
+            "%C2%80",
+            "a non-ASCII character",
+            "a password that decodes to a C1 control character was not refused",
+        ),
+        ("%00", "a control character", "a password that decodes to a NUL was not refused"),
+        ("%0A", "a control character", "a password that decodes to a line feed was not refused"),
     ):
         for value in _decoded_values(code):
             monkeypatch.setenv(DSN_NAME, value)
@@ -1634,7 +1689,7 @@ def test_a_password_that_decodes_to_an_odd_character_is_refused_and_the_message_
             assert _TAIL not in text and _HEAD not in text, (
                 f"the refusal of a decoded password holds a piece of the secret: {text}"
             )
-    monkeypatch.setenv(DSN_NAME, "host=db.invalid user=svc password=Ab3%20Xy9%2F%40")
+    monkeypatch.setenv(DSN_NAME, _kv("Ab3%20", "Xy9%2F%40"))
     assert "Ab3 Xy9/@" in mr._secret_values((DSN_NAME,)), (
         "a percent code of a plain character was refused or not read"
     )
@@ -1642,14 +1697,14 @@ def test_a_password_that_decodes_to_an_odd_character_is_refused_and_the_message_
 
 def test_the_printable_ascii_range_is_accepted_and_the_characters_next_to_it_are_not(monkeypatch):
     plain = "".join(chr(c) for c in range(32, 127) if chr(c) not in "'\"" + chr(92))
-    monkeypatch.setenv(DSN_NAME, "host=db.invalid user=svc password=" + plain)
+    monkeypatch.setenv(DSN_NAME, _kv(plain))
     try:
         secrets = mr._secret_values((DSN_NAME,))
     except ValueError:
         raise AssertionError(
             "a value of the plain printable characters (space to tilde) was refused"
         ) from None
-    assert "host=db.invalid user=svc password=" + plain in secrets, (
+    assert _kv(plain) in secrets, (
         "a value of the plain printable characters (space to tilde) was not a secret"
     )
     monkeypatch.setenv(DSN_NAME, "")
@@ -1668,8 +1723,8 @@ def test_run_mutants_refuses_an_odd_value_before_any_temp_folder_and_names_no_se
     real = mr.tempfile.mkdtemp
     monkeypatch.setattr(mr.tempfile, "mkdtemp", lambda *a, **k: made.append(1) or real(*a, **k))
     for value in (
-        "host=db.invalid password=Ab3'Xy9Zq1",
-        "postgresql://svc:Ab3%C3%A9Xy9Zq1@db.invalid/scratch",
+        _kv("Ab3'", "Xy9Zq1", before="host=db.invalid"),
+        _url("svc", "Ab3%C3", "%A9Xy9Zq1", rest="db.invalid/scratch"),
     ):
         monkeypatch.setenv(DSN_NAME, value)
         with pytest.raises(ValueError) as caught:
@@ -1682,7 +1737,7 @@ def test_run_mutants_refuses_an_odd_value_before_any_temp_folder_and_names_no_se
 
 def _review_value() -> tuple[str, str]:
     """The case of the round 12 review: a long address with the password last, which pytest prints as ``head...tail``."""
-    head = "host=db.internal.example.org port=5432 dbname=mutants user=svc password="
+    head = f"host=db.internal.example.org port=5432 dbname=mutants user=svc {_PW_KEY}="
     word = "Zq9x" + "K2mP7wRt4vNb8LcY3"  # built from parts
     return head + word, word
 
@@ -1760,7 +1815,7 @@ def test_a_plain_value_is_masked_at_any_print_depth_whole_or_shortened(monkeypat
     alphabet = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789 %+;&@/:=.-_()"
     for n in range(150):
         core = "".join(rng.choice(alphabet) for _ in range(rng.randint(8, 24))).strip() + "Q7"
-        value = f"host=db.invalid user=svc password={core}"
+        value = _kv(core)
         monkeypatch.setenv(DSN_NAME, value)
         try:
             secrets = mr._secret_values((DSN_NAME,))
@@ -1836,25 +1891,33 @@ def test_a_one_character_secret_on_a_huge_line_is_masked_fast_and_a_normal_line_
 def test_the_pieces_of_an_unquoted_password_that_holds_a_semicolon_or_an_ampersand_are_secrets(
     monkeypatch,
 ):
-    monkeypatch.setenv(DSN_NAME, "host=db.invalid password=Ab3;Cd4Xy9;Pq7&Rs2Tk5 user=svc")
+    monkeypatch.setenv(
+        DSN_NAME, _kv("Ab3;", "Cd4Xy9;", "Pq7&Rs2Tk5", before="host=db.invalid", after=" user=svc")
+    )
     bases = mr._secret_values((DSN_NAME,))
     assert "Cd4Xy9" in bases, (
         "a long piece of an unquoted password after a semicolon was not a secret"
     )
     assert "Rs2Tk5" in bases, "a piece of an unquoted password after an ampersand was not a secret"
     assert "Pq7" in bases, "a piece of exactly PASSWORD_PIECE_MIN characters was not a secret"
-    monkeypatch.setenv(DSN_NAME, "host=db.invalid password=Ab3;Zz;Qw user=svc")
+    # PASSWORD_PIECE_MIN is 3: a piece of 2 characters is NOT a secret on purpose (it would hide every "Zz" and "Qw" in unrelated text). This
+    # test pins that bound; a lowered minimum fails it.
+    monkeypatch.setenv(
+        DSN_NAME, _kv("Ab3;", "Zz;", "Qw", before="host=db.invalid", after=" user=svc")
+    )
     bases = mr._secret_values((DSN_NAME,))
     assert "Zz" not in bases and "Qw" not in bases, (
         "a piece shorter than PASSWORD_PIECE_MIN characters was a secret"
     )
     out = mr._masked("E   saw Cd4Xy9 here", mr._secret_values((DSN_NAME,)))
     assert "Cd4Xy9" in out, "a piece of another value was hidden"
-    monkeypatch.setenv(DSN_NAME, "host=db.invalid password=ab;Cd4Xy9 user=svc")
+    monkeypatch.setenv(DSN_NAME, _kv("ab;", "Cd4Xy9", before="host=db.invalid", after=" user=svc"))
     assert "ab" in mr._secret_values((DSN_NAME,)), (
         "the text up to the first semicolon of an unquoted password was not a secret"
     )
-    monkeypatch.setenv(DSN_NAME, "host=db.invalid password=Ab3;Cd4Xy9;Pq7 user=svc")
+    monkeypatch.setenv(
+        DSN_NAME, _kv("Ab3;", "Cd4Xy9;", "Pq7", before="host=db.invalid", after=" user=svc")
+    )
     out = mr._masked("E   saw Cd4Xy9 here", mr._secret_values((DSN_NAME,)))
     assert "Cd4Xy9" not in out, "a piece that stands alone in a line was left readable"
 
@@ -1863,7 +1926,9 @@ def test_an_unquoted_password_with_a_semicolon_or_an_ampersand_is_masked_in_full
     monkeypatch,
 ):
     for odd in (";", "&"):
-        monkeypatch.setenv(DSN_NAME, f"host=db.invalid password=Ab3{odd}Xy9Zq1 user=svc")
+        monkeypatch.setenv(
+            DSN_NAME, _kv("Ab3", odd, "Xy9Zq1", before="host=db.invalid", after=" user=svc")
+        )
         out = mr._masked(f"E   assert 'Ab3{odd}Xy9Zq1' == 1", mr._secret_values((DSN_NAME,)))
         assert out == "E   assert '[REDACTED]' == 1", (
             f"an unquoted password with {odd!r} printed alone was not masked in one mark: {out}"
@@ -1907,14 +1972,33 @@ def test_the_fixture_that_guards_the_database_address_fails_a_test_that_changes_
     assert os.environ[DSN_NAME] == SENTINEL, "the fixture did not put the old value back"
 
 
+def test_the_fixture_that_guards_the_database_address_removes_an_address_that_a_test_added(
+    monkeypatch,
+):
+    monkeypatch.delenv(DSN_NAME)
+    fixture = _the_conftest_module()._test_database_address_is_left_as_found
+    loud = getattr(fixture, "__wrapped__", fixture)()
+    next(loud)
+    os.environ[DSN_NAME] = "added by a test"
+    try:
+        next(loud)
+    except pytest.fail.Exception:
+        pass
+    except StopIteration:
+        raise AssertionError(
+            "the fixture did not fail a test that added the database address"
+        ) from None
+    assert DSN_NAME not in os.environ, "the fixture did not remove an address that a test added"
+
+
 def test_a_plus_in_a_url_password_is_also_read_as_a_space(monkeypatch):
-    value = "postgresql://svc:" + "Open+Sesame9" + "@db.invalid/app"
+    value = _url("svc", "Open+", "Sesame9")
     monkeypatch.setenv(DSN_NAME, value)
     secrets = mr._secret_values((DSN_NAME,))
     assert "Open Sesame9" in secrets, "the plus-as-space form of the password was not a secret"
     assert "Sesame9" not in mr._masked("E   password Open Sesame9 wrong", secrets)
     # a percent code beside a plus: the plain percent rule keeps the plus, the form rule turns it into a space; both are secrets
-    value = "postgresql://svc:" + "Open+Sesame%219" + "@db.invalid/app"
+    value = _url("svc", "Open+", "Sesame%219")
     monkeypatch.setenv(DSN_NAME, value)
     secrets = mr._secret_values((DSN_NAME,))
     assert "Open+Sesame!9" in secrets, "the percent-decoded form with a plus kept was not a secret"
@@ -2006,3 +2090,249 @@ def test_an_over_sized_junit_file_is_refused_before_it_is_read(tmp_path, monkeyp
     monkeypatch.setattr(Path, "read_text", never)
     with pytest.raises(ValueError, match="over the ceiling"):
         mr._junit_text(junit)
+
+
+# ---- round 13: messages of collection and fixture errors, re-encoded passwords, password words, the lock name, ellipsis, limits --------------
+
+COLLECTION_SHOWS_VALUE = (
+    "import os\nfrom pk.core import go\n\n"
+    f"assert go(True) is True, os.environ[{DSN_NAME!r}]\n\n"
+    "def test_a():\n    assert True\n"
+)
+FIXTURE_SHOWS_VALUE = (
+    "import os\nimport pytest\nfrom pk.core import go\n\n"
+    f"@pytest.fixture\ndef checked():\n    assert go(True) is True, os.environ[{DSN_NAME!r}]\n    return 1\n\n"
+    "def test_a(checked):\n    assert checked == 1\n"
+)
+
+
+def _the_first_line_of_a_failing_run(tmp_path, monkeypatch, body, masking_off=False):
+    """Run the flip on ``body`` with the secret address passed; the row (name, verdict, label, good) and the first line kept for the row."""
+    dsn, _word = _secret_dsn()
+    monkeypatch.setenv(DSN_NAME, dsn)
+    root = _tree(tmp_path, {CORE_TEST: body})
+    lines: dict[str, str] = {}
+    with monkeypatch.context() as control:
+        if masking_off:
+            control.setattr(mr, "_masked", lambda text, secrets: text)
+        rows = _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
+    return rows, lines.get("flip", "")
+
+
+def test_the_message_of_a_collection_error_never_holds_the_passed_value(tmp_path, monkeypatch):
+    dsn, word = _secret_dsn()
+    rows, seen = _the_first_line_of_a_failing_run(
+        tmp_path / "a", monkeypatch, COLLECTION_SHOWS_VALUE, masking_off=True
+    )
+    assert rows == [("flip", Verdict.ERROR, "COLLECTION ERROR", False)] and word in seen, (
+        f"the positive control failed: with the masking off the collection error shows no password: {rows} {seen}"
+    )
+    rows, line = _the_first_line_of_a_failing_run(
+        tmp_path / "b", monkeypatch, COLLECTION_SHOWS_VALUE
+    )
+    assert rows == [("flip", Verdict.ERROR, "COLLECTION ERROR", False)], (
+        f"the collection error was not a COLLECTION ERROR row: {rows}"
+    )
+    assert word not in line and dsn not in line, (
+        f"the passed value reached the first line of a COLLECTION ERROR row: {line}"
+    )
+    assert "[REDACTED]" in line, f"the COLLECTION ERROR line has no marker: {line}"
+
+
+def test_the_message_of_a_fixture_error_never_holds_the_passed_value(tmp_path, monkeypatch):
+    dsn, word = _secret_dsn()
+    rows, seen = _the_first_line_of_a_failing_run(
+        tmp_path / "a", monkeypatch, FIXTURE_SHOWS_VALUE, masking_off=True
+    )
+    assert rows == [("flip", Verdict.ERROR, "FIXTURE ERROR", False)] and word in seen, (
+        f"the positive control failed: with the masking off the fixture error shows no password: {rows} {seen}"
+    )
+    rows, line = _the_first_line_of_a_failing_run(tmp_path / "b", monkeypatch, FIXTURE_SHOWS_VALUE)
+    assert rows == [("flip", Verdict.ERROR, "FIXTURE ERROR", False)], (
+        f"the fixture error was not a FIXTURE ERROR row: {rows}"
+    )
+    assert word not in line and dsn not in line, (
+        f"the passed value reached the first line of a FIXTURE ERROR row: {line}"
+    )
+    assert "[REDACTED]" in line, f"the FIXTURE ERROR line has no marker: {line}"
+
+
+def test_the_canary_skip_message_never_holds_the_passed_value(tmp_path, monkeypatch):
+    dsn, word = _secret_dsn()
+    monkeypatch.setenv(DSN_NAME, dsn)
+    state = tmp_path / "state.flag"
+    body = (
+        "import pytest\nfrom pathlib import Path\nfrom pk.core import go\n\n"
+        f"@pytest.mark.parametrize('v', [{dsn!r}])\n"
+        f"def test_a(v):\n    state = Path({str(state)!r})\n    if state.exists():\n        pytest.skip('no database')\n"
+        "    if go(True) is not True:\n        state.write_text('x')\n    assert go(True) is True\n"
+    )
+    root = _tree(tmp_path, {CORE_TEST: body})
+
+    def refusal_of_the_canary() -> str:
+        state.unlink(missing_ok=True)
+        try:
+            _run(root, [FLIP], pass_env=(DSN_NAME,), forbid_skips=True)
+        except mr.CanaryFailed as exc:
+            return str(exc)
+        return ""
+
+    with (
+        monkeypatch.context() as control
+    ):  # positive control: with the masking off, the test id of the skip holds the value
+        control.setattr(mr, "_masked", lambda text, secrets: text)
+        assert word in refusal_of_the_canary(), (
+            "the positive control failed: the unmasked canary skip message holds no password"
+        )
+    text = refusal_of_the_canary()
+    assert "skipped" in text, f"the canary skip was not refused: {text!r}"
+    assert word not in text and dsn not in text, "the canary skip message held the passed value"
+    assert "[REDACTED]" in text, f"the canary skip message has no marker: {text!r}"
+
+
+def test_the_re_encoded_forms_of_a_url_password_are_secrets(monkeypatch):
+    # the URL writes the password as "Open%20Sesame/9"; a test or a library may print it decoded, or encode it again in another way
+    monkeypatch.setenv(DSN_NAME, _url("svc", "Open%20", "Sesame/9"))
+    secrets = mr._secret_values((DSN_NAME,))
+    for form, why in (
+        ("Open%20Sesame/9", "the password as the URL has it was not a secret"),
+        ("Open Sesame/9", "the decoded password was not a secret"),
+        ("Open%20Sesame%2F9", "the password encoded with quote(safe='') was not a secret"),
+        ("Open%20Sesame%2f9", "the lower-case hex form of quote(safe='') was not a secret"),
+        ("Open+Sesame%2F9", "the quote_plus form was not a secret"),
+        ("Open+Sesame%2f9", "the lower-case hex form of the quote_plus form was not a secret"),
+    ):
+        assert form in secrets, f"{why}: {sorted(secrets)}"
+    out = mr._masked("E   saw Open+Sesame%2f9 and Open%20Sesame%2F9 here", secrets)
+    assert out == "E   saw [REDACTED] and [REDACTED] here", f"a re-encoded form survived: {out}"
+    # a URL that wrote the slash as %2F: quote() with its default (the slash kept) writes the password another way
+    monkeypatch.setenv(DSN_NAME, _url("svc", "Open%20", "Sesame%2F9"))
+    assert "Open%20Sesame/9" in mr._secret_values((DSN_NAME,)), (
+        "the form of quote() that keeps the slash was not a secret"
+    )
+
+
+def test_a_password_that_was_encoded_twice_or_more_is_decoded_until_it_stops_changing(monkeypatch):
+    monkeypatch.setenv(DSN_NAME, _url("svc", "Ab3%25", "40Xy9"))
+    secrets = mr._secret_values((DSN_NAME,))
+    assert "Ab3%40Xy9" in secrets and "Ab3@Xy9" in secrets, (
+        f"a password encoded twice was not read at both depths: {sorted(secrets)}"
+    )
+    monkeypatch.setenv(DSN_NAME, _url("svc", "Ab3%25", "2540Xy9"))
+    assert "Ab3@Xy9" in mr._secret_values((DSN_NAME,)), (
+        "a password encoded three times was not decoded to the end"
+    )
+    # the refusal is checked at each depth: the second step of this one is a quote mark
+    monkeypatch.setenv(DSN_NAME, _url("svc", "Ab3%25", "2527Xy9"))
+    text = _refusal_text(
+        "a password that decodes to a quote mark at the second depth was not refused"
+    )
+    assert "percent-decoded" in text and "Ab3" not in text and "Xy9" not in text, (
+        f"the refusal at the second depth names the secret or the wrong text: {text}"
+    )
+    monkeypatch.setenv(DSN_NAME, _url("svc", "Ab3%25", "252527Xy9"))
+    _refusal_text("a password that decodes to a quote mark at the fourth depth was not refused")
+
+
+def test_a_password_word_inside_a_longer_word_and_in_any_case_is_read(monkeypatch):
+    for key, why in (
+        ("ssl" + _PW_KEY, "the password after sslpassword= was not a secret"),
+        ("db" + _PW_KEY, "the password after dbpassword= was not a secret"),
+        ("PG" + _PW_KEY.upper(), "the password after PGPASSWORD= was not a secret"),
+        (_PW_KEY.capitalize(), "the password after Password= was not a secret"),
+    ):
+        assert _HK in _secrets_of(_kv(_HK, key=key), monkeypatch), why
+
+
+def _lock_file_name(tmp_path, monkeypatch, value) -> str:
+    folder = tmp_path / f"folder{len(list(tmp_path.iterdir()))}"
+    folder.mkdir()
+    monkeypatch.setattr(mr, "_lock_dir", lambda: folder)
+    with mr._one_run_per_database([value]):
+        pass
+    (only,) = list(folder.iterdir())
+    return only.name
+
+
+def test_the_lock_file_name_does_not_depend_on_the_password(tmp_path, monkeypatch):
+    first = _url("svc", "Zq9x", "K4mTw", rest="db.invalid/scratch")
+    second = _url("svc", "Pw3t", "Hb8Nc", rest="db.invalid/scratch")
+    name = _lock_file_name(tmp_path, monkeypatch, first)
+    assert name == _lock_file_name(tmp_path, monkeypatch, second), (
+        "two addresses that differ only in the password got two lock file names"
+    )
+    assert name != _lock_file_name(
+        tmp_path, monkeypatch, _url("svc", "Zq9x", "K4mTw", rest="other.invalid/scratch")
+    ), "two addresses with another host got one lock file name"
+    kv_one = _kv(_HK, key="ssl" + _PW_KEY)
+    kv_two = _kv("Rt5Vb", "9LmQw", key="ssl" + _PW_KEY)
+    assert _lock_file_name(tmp_path, monkeypatch, kv_one) == _lock_file_name(
+        tmp_path, monkeypatch, kv_two
+    ), "two key=value addresses that differ only in the password got two lock file names"
+    # no offline guess: the name is not the hash of the whole address, whatever password is tried
+    guesses = {
+        _lock_name(_url("svc", p, rest="db.invalid/scratch")) for p in ("Zq9xK4mTw", "Pw3tHb8Nc")
+    }
+    assert name not in guesses and name != _lock_name(first), (
+        "the lock file name is the hash of a whole address with a password in it"
+    )
+
+
+def test_a_piece_beside_a_unicode_ellipsis_is_masked_like_one_beside_three_dots():
+    secret = "Zq9xK2mP" + "7wRt4vNb8LcY3"  # built from parts
+    for dots in ("\u2026", "..."):
+        out = mr._masked(f"E   x == '{secret[:8]}{dots}{secret[-8:]}' y", (secret,))
+        assert out == f"E   x == '[REDACTED]{dots}[REDACTED]' y", (
+            f"a piece beside the ellipsis {dots!r} was not masked: {out}"
+        )
+
+
+def test_the_scan_gives_the_unicode_ellipsis_the_width_of_one_character():
+    secret = "Zq9xK2mP" + "7wRt4vNb8LcY3"  # built from parts
+    text = f"E   x == '{secret[:8]}\u2026{secret[-8:]}'"
+    spans = mr._fragment_spans(text, secret, list(mr._DOTS.finditer(text)))
+    assert spans == [
+        (len("E   x == '"), len("E   x == '") + 8),
+        (len("E   x == '") + 9, len("E   x == '") + 17),
+    ], f"the one-character ellipsis was given the width of three dots: {spans}"
+
+
+def test_a_host_with_a_port_is_not_read_as_a_url_login_and_a_numeric_password_still_is(monkeypatch):
+    def secrets_or_say(value, why):
+        try:
+            return _secrets_of(value, monkeypatch)
+        except ValueError:
+            raise AssertionError(why) from None
+
+    value = "postgresql://db.invalid:5432/app?application_name=caf%C3%A9&x=a@b"
+    assert secrets_or_say(value, "a port after the host was read as the start of a password") == (
+        value,
+    ), "a port after the host was read as the start of a password, or the value was refused"
+    for ending in ("?", "#"):  # the port may also be followed by a question mark or a hash
+        other = f"postgresql://db.invalid:5432{ending}application_name=caf%C3%A9&x=a@b"
+        assert secrets_or_say(
+            other, "a port followed by a question mark or a hash was read as a password"
+        ) == (other,), (
+            "a port followed by a question mark or a hash was read as the start of a password"
+        )
+    assert "12345" in _secrets_of(_url("svc", "12", "345"), monkeypatch), (
+        "a password of digits only was not a secret"
+    )
+    # bound (stated in the module docstring): a password of digits that goes on with an unencoded / ? or # is read as a port, so it is not found
+    assert "12/45" not in _secrets_of(_url("svc", "12", "/45"), monkeypatch), (
+        "the stated bound of the port rule changed: a password of digits then a slash was found"
+    )
+
+
+def test_a_value_longer_than_the_ceiling_is_refused_without_showing_it(monkeypatch):
+    monkeypatch.setenv(DSN_NAME, "ab" * (mr.MAX_VALUE_CHARS // 2))
+    try:
+        secrets = mr._secret_values((DSN_NAME,))
+    except ValueError:
+        raise AssertionError("a value of exactly MAX_VALUE_CHARS characters was refused") from None
+    assert secrets == ("ab" * (mr.MAX_VALUE_CHARS // 2),), "a value at the ceiling was changed"
+    monkeypatch.setenv(DSN_NAME, "ab" * (mr.MAX_VALUE_CHARS // 2) + "c")
+    text = _refusal_text("a value of MAX_VALUE_CHARS + 1 characters was not refused")
+    assert DSN_NAME in text and "ababab" not in text, (
+        f"the refusal of a long value names no variable or shows the value: {text[:200]}"
+    )

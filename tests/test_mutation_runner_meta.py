@@ -78,7 +78,7 @@ MOVED = (
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 166
+EXPECTED_MUTANTS = 189
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
@@ -115,8 +115,10 @@ def test_a_there_are_the_listed_number_of_mutants_with_unique_names():
         "tests/conftest.py",
     }  # the guard fixture of the database address is mutated too
     assert sum(m.file == mm.MU for m in mm.M) == 12
-    assert sum(m.file == "tests/conftest.py" for m in mm.M) == 1
-    assert sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 13
+    assert sum(m.file == "tests/conftest.py" for m in mm.M) == 4
+    assert (
+        sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 12 - 4
+    )  # not the judge, not the conftest
 
 
 def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists():
