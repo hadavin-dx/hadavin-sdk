@@ -1433,3 +1433,6 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | B-PR89-r22 a309e5a8 | closed, pushed c2f98f49 (own: full 10777 passed, mutants 261/261, fail-before 42) | | | CLOSED |
 | B-Q8c1-b3 a9529a54 (Sonnet) | Q8c-1 batch 3 (7 fixes from egm-resolve) | launched | +60 min | RUNNING |
 | EV-PR89-r22 a8c5dcf3 + reviewers a4857c31 (design) a8db9264 (codebase) | PR89 c2f98f49 | launched | +60/+40 min | RUNNING |
+| ad18b1b5 | EV timing-fix 2f94c2b2 (evidence) | 17:12 | +45m | 17:12 | running | collect, then resolve |
+| aed6d80b | timing-fix design review r1 | 17:12 | +20m | - | running | save, egm-resolve |
+| a122c19a | timing-fix codebase review r1 | 17:12 | +20m | - | running | save, egm-resolve |

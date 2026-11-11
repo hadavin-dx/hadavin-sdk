@@ -321,7 +321,7 @@ Imports nothing from `hadavin_sdk` (standard library `re` and `unicodedata` only
 - `strip_sequences(text) -> str`: the same reader, but only SEQUENCE items are removed: an item that starts with ESC or with a C1 opener (U+009B, U+009D, U+0090, U+0098, U+009E, U+009F), i.e. every row of the grammar table whose "Opens with" column is filled, plus the lone ESC row. Every other removed or space-like character stays as written (a stray U+009C, BEL, NUL, U+0085 stay). The glue rule applies to runs of sequence items. Used by `strip_ansi`. Changes against main, stated in the CHANGELOG: a lone ESC and a lone U+009B are now removed by `strip_ansi` (main left them, 2.3); the families main missed are removed. Oracle: `readings(text, sequences_only=True)[1]` of the reference oracle (M2).
 - Every public function is idempotent: applying it to its own output changes nothing (T10 checks `strip` and `strip_sequences`).
 
-**Glue rule, per run** (design M3). Examples, each checked with the prototype (`repro-protofixes.out`, lines "M3 strip table"):
+**Glue rule, per run** (design M3). Examples, each checked with the prototype (`repro-protofixes.out`, lines "M3 strip table") and, in rev 3, with the reference oracle (`r3/oracle-*.out`, lines starting `glue PASS`):
 
 | Input (Python) | joined reading | spaced reading | Why |
 |---|---|---|---|
@@ -336,23 +336,49 @@ Imports nothing from `hadavin_sdk` (standard library `re` and `unicodedata` only
 | `ESC + "[0mab"` | `ab` | `ab` | a run at the start has no left neighbour |
 | `"ab\\" + "\n" + "cd"` | unchanged | unchanged | a backslash and a line end are kept (out of scope) |
 
-**The ONE escape-sequence reader. Grammar it accepts** (ECMA-48 and ECMA-35 names; byte ranges are code points; names explained in section 1):
+**The ONE escape-sequence reader (rev 3: complete state table, M2).** A left-to-right state machine; it never looks more than ONE character ahead, so it is linear (no scanning ahead for a terminator). "Read afresh" means: the item ends BEFORE this character, and this character is then read in state GROUND. Names are explained in section 1; byte ranges are code points. Reference implementation: `r3/scripts/hidden_ref_oracle.py` (36 grammar rows and 10 glue rows, all PASS on Python 3.13.18 and 3.12.3, linear: 4x the text costs 3.4 to 4.3x the time; `r3/oracle-*.out`).
 
-| Family | Opens with | Body | Ends | Then |
-|---|---|---|---|---|
-| CSI control sequence | ESC `[` or U+009B | parameter bytes 0x30-0x3F and intermediate bytes 0x20-0x2F in any order (lenient on purpose) | one final byte 0x40-0x7E | removed whole |
-| C0 control or DEL inside a CSI | - | any of U+0000-U+0009, U+000B, U+000C, U+000E-U+0017, U+0019, U+001C-U+001F, U+007F | - | dropped, the sequence continues |
-| CSI aborted | - | CAN U+0018 or SUB U+001A: both dropped with what was read. A line end, another ESC or C1 opener, or any other character outside 0x20-0x7E: what was read is dropped, that character is processed afresh | - | - |
-| string: OSC, DCS, SOS, PM, APC | ESC `]`, ESC `P`, ESC `X`, ESC `^`, ESC `_`; or U+009D, U+0090, U+0098, U+009E, U+009F | anything | ST (ESC backslash, or U+009C); for OSC also BEL U+0007; CAN or SUB | removed whole with its payload |
-| string never ended | - | - | the next line end (U+000A or U+000D), which is kept; or the end of the text | payload up to there removed |
-| nF escape | ESC + one or more 0x20-0x2F | - | one byte 0x30-0x7E | removed whole; with no final byte only the ESC is removed |
-| Fp, Fe, Fs escapes | ESC + one byte 0x30-0x7E not listed above | - | - | both removed |
-| lone ESC | ESC + anything else, or at the end | - | - | the ESC removed |
-| every other member of "removed" | - | - | - | removed |
+| State | Next character | Action | Next state |
+|---|---|---|---|
+| GROUND | ESC U+001B | start an item | ESC |
+| GROUND | U+009B (C1 CSI) | start an item | CSI |
+| GROUND | U+009D (OSC), U+0090 (DCS), U+0098 (SOS), U+009E (PM), U+009F (APC) | start an item; remember "OSC" or "other string" | STRING |
+| GROUND | any other member of "removed" (including a stray U+009C) | one removed item | GROUND |
+| GROUND | a member of "space-like" | one space-like item | GROUND |
+| GROUND | anything else (letters, tab, line end, ignorables) | kept | GROUND |
+| ESC | `[` | - | CSI |
+| ESC | `]` (OSC); `P` (DCS), `X` (SOS), `^` (PM), `_` (APC) | - | STRING |
+| ESC | 0x20-0x2F (nF intermediate) | - | ESC-INTER |
+| ESC | any other 0x30-0x7E (Fp, Fe, Fs; also a stray ESC backslash) | the item is ESC plus this character, removed | GROUND |
+| ESC | anything else (another ESC, a control, DEL, a line end, a non-ASCII character) or the end of the text | the item is the lone ESC, removed; this character is read afresh | GROUND |
+| ESC-INTER | 0x20-0x2F | - | ESC-INTER |
+| ESC-INTER | 0x30-0x7E (final) | the item is ESC + intermediates + final, removed | GROUND |
+| ESC-INTER | anything else, or the end of the text | only the ESC is removed; the intermediates are read afresh as ordinary text | GROUND |
+| CSI | 0x20-0x3F (parameter and intermediate, any order) | - | CSI |
+| CSI | 0x40-0x7E (final) | the whole item removed | GROUND |
+| CSI | CAN U+0018 or SUB U+001A | the item so far AND the CAN/SUB removed | GROUND |
+| CSI | U+0000-U+0009, U+000B, U+000C, U+000E-U+0017, U+0019, U+001C-U+001F, U+007F | dropped (part of the item), the sequence continues | CSI |
+| CSI | anything else (line end, ESC, a C1 character, a character above U+007F) or the end of the text | the item so far removed; this character is read afresh | GROUND |
+| STRING | ST = U+009C, or ESC directly followed by backslash | the item including the terminator removed | GROUND |
+| STRING (OSC only) | BEL U+0007 | the item including BEL removed | GROUND |
+| STRING | CAN or SUB | the item including CAN/SUB removed | GROUND |
+| STRING | ESC NOT followed by backslash (another sequence starts), or a line end U+000A / U+000D | the item so far removed; this character is read afresh (so the line end is KEPT, and ESC `[0m` after an unended OSC is read as a CSI) | GROUND |
+| STRING | the end of the text | the item so far removed | - |
+| STRING | anything else (letters, BEL in DCS/SOS/PM/APC, C1 openers, other controls) | part of the payload | STRING |
+
+So a string sequence's body never contains a line end: it ends at whichever comes first of its terminator, an ESC that is not ST, the line end, or the end of the text. An unterminated opener repeated n times costs O(n) (measured, `r3/oracle-python.out`, row `linear '\x1b]'`).
+
+Classification for the glue rule and for `strip_sequences`: every item started in GROUND by ESC or a C1 opener is a SEQUENCE item; every other removed character is a SINGLE item. A *run* is a longest stretch of removed items (either kind) with nothing else between them.
 
 Not read as sequences, on purpose: an escape written out as text (backslash-x-1-b, `%1b`). Those are undone by the existing layer decoding (`runmap.undo`), and every decoded reading goes through `strip` (W2), which is what fixes L11 and F1e; the new decoded reading of W2 fixes M2a and M2b.
 
 ### 4.2 Work items, file by file (line numbers on main)
+
+**W0 (new in rev 3, D2) `guard/redact.py` and `guard/runmap.py`: one span rule for putting known values back.** Bug class: overlapping known values are replaced one after another, so the first replacement breaks the second value and a piece of it stays readable. Main has it in the redactor's own sweep (redact.py:1011-1049, longest first, one `replace` after another) and in `_keep_earlier_masks` (runmap.py:455-461, list order); `r3/d2-overlap-main.out` shows main leaking a 4-character piece on partial overlap in both places, and through `redact_text` / `redact_untrusted` with the run's map. Rev 2's longest-first sort fixed only the nested case.
+- New helper in redact.py, `mask_spans(text, spans, mapping) -> str`, where `spans` are `(start, end, placeholder)` found on `text` as it stands. Rule: (1) sort by start, longer first at equal start; (2) drop every span that lies inside another kept span (nested values: the longer one wins, as main's sweep intends); (3) a chain of spans that partially overlap (each starts before the previous one ends) is ONE merged span; (4) a merged span of one span gets that span's placeholder; a merged span of two or more gets ONE placeholder issued for the merged text through the redactor's own numbering (`_Redactor._place`, kind = the kind of the longest member, leftmost on a tie), or the existing placeholder when the map already holds that exact text. So `restore` gives back exactly the merged text (the reference rule restores exactly in all 7 probe rows).
+- Callers: the sweep (spans of every present value on the ORIGINAL segment: every copy for `_EVERY_COPY` values, standalone copies only for the others, judged on the original segment, not on a partly replaced one); `_keep_earlier_masks(view, pairs, mapping)` (spans of every pair's spelling; a merged placeholder is issued into the mapping passed in, which is the copy `_redact_stripped` then uses, so a view that needed a merged placeholder replaces the output by the existing rule at runmap.py:517-518); `_redact_stripped` step 5 (spans of the gap patterns).
+- This replaces rev 2's `sorted(pairs, key=lambda p: -len(p[1]))`. It is the fix for case 790 AND for the root condition named in PR H-c (fragment values inside other values): with W0, a fragment entry can no longer cut a longer value, so PR H-c becomes map hygiene only, not a prerequisite of any promise (stub updated).
+- Commit 1 of the branch (WP0), on main's behaviour only, before any hidden-item work: it fixes a leak of main by itself.
 
 **W1 `guard/redact.py`.** `_ANSI` (:820-822) is deleted; `strip_ansi` (:825-838) keeps its name, its signature and its glue rule and becomes `return hidden.strip_sequences(text)`. Its three call sites stay as they are (:877, :920, :1254). The call in `find` (:920) is NOT removed: after W2 no escape sequence reaches `find` from the choke point (T7 proves it with stand-ins on `runmap.redact` AND on `_Redactor.find`), while direct callers of `redact()`, `redact_many()` and `sweep()` keep today's behaviour, and a stored map from an older run may still hold an original with ESC in it. Improve, do not replace. So the claim is "one reader, used by the choke point, the scrub and `strip_ansi`", not "one call".
 
