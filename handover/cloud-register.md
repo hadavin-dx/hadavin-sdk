@@ -1300,3 +1300,11 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | R-P77-design ac9534ea | zoom-out design review | 15:26Z | | 15:34Z | CLOSED: saved reviews/PR77/round8-design-zoomout-full.md; D-018 | ticket |
 | A-PRH | TICKET AUTHOR (Fable): ticket for the small redaction fix off main (strip controls and escape sequences once at the choke point) | 15:34Z | +35m | 15:34Z | starting | plan review (design + readiness), then ONE builder |
 | B-Q8b | BUILDER (Fable): Q8b ticket rev 3 (frozen) on main, worktree /home/user/build/B-Q8b, pg 56160 | 15:34Z | +75m | 15:34Z | starting | evidence + fresh reviewers |
+
+### 15:36Z P3a-2 round 12 result (head 4d328e3d on core/P3a-2-clean, pushed; lead checked the remote ref)
+| id | purpose | started | expected end | last check | state | next action |
+|---|---|---|---|---|---|---|
+| B-P3a2 a73e15b4 | round 12 builder | 14:03Z | | 15:36Z | CLOSED. Builder's own account: full suite exit 1 (1 failed: its own Postgres setup; folder rerun green), mutants 287 of 288 then the broken one fixed and killed alone; NEITHER rerun in full on the final head; policy added: no function right for a named role (lead: confirmed, stricter than D-009, least privilege) | evidence on the final head |
+| EV-P3a2-r12 | EVIDENCE RUNNER (Fable) 4d328e3d, pg 56170 with max_prepared_transactions=10 | 15:36Z | +60m | 15:36Z | starting | RESULTS.md |
+| R-P3a2-r12 design + codebase | fresh egm reviewers (Fable), snapshot /home/user/build/snap/p3a2-r12-4d328e3 | 15:36Z | +20m | 15:36Z | starting | save full reports |
+| A-PRH a2f42970, B-Q8b a74d0f05 | ticket author for the small redaction fix; Q8b builder | 15:40Z | +45m / +90m | 15:36Z | running | plan review / evidence |
