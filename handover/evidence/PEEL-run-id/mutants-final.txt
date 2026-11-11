@@ -1,0 +1,10 @@
+MP1 given run_id ignored (fresh id) | KILLED | GOOD | AssertionError: assert 'run-9a215620...74440d2db95dc' == 'run-01234567...3456789abcdef'
+MP2 validation removed | KILLED | GOOD | Failed: DID NOT RAISE InvalidRunId
+MP3 pattern length loosened | KILLED | GOOD | Failed: DID NOT RAISE InvalidRunId
+MP4 fullmatch -> match | KILLED | GOOD | Failed: DID NOT RAISE InvalidRunId
+MP5 upper-case hex allowed | KILLED | GOOD | Failed: DID NOT RAISE InvalidRunId
+MP6 duplicate swallowed (a fresh run is made) | KILLED | GOOD | hadavin_sdk.llm.fake.UnknownRecording: '4f3a1545a1bc7a888ba565cbcafe532aec5cc036bab28ddec57baabe1e4ae326-2.json'
+MP7 non-string accepted | KILLED | GOOD | TypeError: expected string or bytes-like object, got 'list'
+MP9 keyword made positional | KILLED | GOOD | assert (<_ParameterKind.POSITIONAL_OR_KEYWORD: 1> is <_ParameterKind.KEYWORD_ONLY: 3>)
+MP10 default id shape changed | KILLED | GOOD | AssertionError: assert (None)
+9/9 good
