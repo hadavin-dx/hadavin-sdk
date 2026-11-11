@@ -1,0 +1,5 @@
+# PR89 round 16, head f552f26 - slice tests/test_mutation_runner_keywords.py 1450-2871 + tests/conftest.py 1-107. Read only, nothing run.
+No Blocker/Major. Positive controls present, property tests seeded with minimum counts, key-shaped fakes built from parts. Round-15 key=value, lock-name and 12/45 items fixed in tests. The _prefix_table assert is outside this slice (tests-a confirmed it at :739).
+- BL-slice-01 Minor :2583 assertion `all("%C3" not in s_ or s_ == value or ...)` points the wrong way: a decoded leak ("application_name=café") has no "%C3" and passes. Use the form at 2778-2783 (`not any("é" in s_ ...)`). This is the builder's unaddressed "loose startswith" nit and it is real.
+- BL-slice-02 Nit :1920-1930 plain starting with a space: final `_kv(plain) in secrets` is trivially true; pins "not refused" only (builder's unaddressed "starts with a space" nit).
+- BL-slice-03 Nit whole fake passwords as literals at 2162, 2140, 2151, 2438-2447 (not key-shaped). BL-slice-04 Nit :2859-2861 `A is B or ...` passes on identity. BL-slice-05 Nit :1713-1721 fd-reuse probe 4096 opens vs low RLIMIT_NOFILE.
