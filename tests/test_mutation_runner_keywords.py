@@ -736,6 +736,9 @@ def test_the_fragment_scan_agrees_with_the_plain_definition():
 
 def test_the_fragment_scan_agrees_with_the_plain_definition_on_repeating_secrets():
     """Secrets and texts over two letters repeat themselves, which is where a prefix table that falls back wrongly gives another answer."""
+    assert mr._prefix_table("aabaaab") == [0, 1, 0, 1, 2, 2, 3], (
+        "the prefix table gave other lengths on a repeating secret"
+    )
     rng = _Det(11)
     non_empty = 0
     for _ in range(400):
