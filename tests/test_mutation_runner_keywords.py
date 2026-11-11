@@ -111,9 +111,11 @@ def _must_raise(label, error, call, *args, match="", **kwargs):
     try:
         call(*args, **kwargs)
     except error as exc:
-        assert match in str(exc), f"{label}: raised another message: {exc}"
-        return
-    raise AssertionError(f"{label}: nothing was raised")
+        text = str(exc)
+    else:
+        raise AssertionError(f"{label}: nothing was raised")
+    # checked outside the ``except`` block, so the first line of a failure is this assertion and not the error that was caught
+    assert match in text, f"{label}: raised another message: {text}"
 
 
 def _tree(tmp_path: Path, tests: dict[str, str]) -> Path:
@@ -928,6 +930,7 @@ def test_a_passed_name_set_to_an_empty_text_is_refused_before_any_run(tmp_path, 
         root,
         [FLIP],
         pass_env=(DSN_NAME,),
+        forbid_skips=False,  # so that a run which wrongly starts ends quietly and this check, not a later refusal, is what fails
         match="not in a shape",
     )
     assert count == [], f"a run started for a passed name set to an empty text: {count}"
@@ -3412,9 +3415,6 @@ def test_a_test_id_is_shown_only_when_it_is_made_of_the_callers_own_text(tmp_pat
     body = "class TestK:\n    def test_in_class(self):\n        pass\n\ndef test_a(v):\n    pass\n"
     shown = _shown(tmp_path, body=body)
     assert mr._shown_id("tests/test_core::test_a", shown) == "tests/test_core::test_a"
-    assert mr._shown_id("tests/test_core/TestK::test_in_class", shown) == (
-        "tests/test_core/TestK::test_in_class"
-    ), "a test in a class of the caller's file was hidden"
     cases = {
         "the file part is not one of the caller's tests": f"tests/{_PW[::-1]}::test_a",
         "a file part that only starts like a caller's test": "tests/test_core_more::test_a",
@@ -3429,6 +3429,9 @@ def test_a_test_id_is_shown_only_when_it_is_made_of_the_callers_own_text(tmp_pat
         assert mr._shown_id(test_id, shown) == mr.ID_HIDDEN, (
             f"a test id that is not the caller's own text was shown: {label}"
         )
+    assert mr._shown_id("tests/test_core/TestK::test_in_class", shown) == (
+        "tests/test_core/TestK::test_in_class"
+    ), "a test in a class of the caller's file was hidden"
     assert mr._shown_id("tests/test_core::test_gone", shown) == mr.ID_HIDDEN
     assert mr._shown_id("tests/test_core::test_gone", shown, ("test_gone",)) == (
         "tests/test_core::test_gone"
@@ -4164,11 +4167,13 @@ def test_the_address_check_has_no_override_keyword_and_no_database_name_rule():
 def test_run_mutants_refuses_an_address_before_any_folder_or_run(tmp_path, monkeypatch):
     root = _tree(tmp_path, {CORE_TEST: USES_GO})
     started = []
+    real_mkdtemp = mr.tempfile.mkdtemp
     monkeypatch.setattr(
-        mr.tempfile, "mkdtemp", lambda *a, **k: started.append("folder") or str(tmp_path)
+        mr.tempfile, "mkdtemp", lambda *a, **k: started.append("folder") or real_mkdtemp(*a, **k)
     )
     monkeypatch.setattr(mr, "_pytest", lambda *a, **k: started.append("run") or 0)
-    monkeypatch.setattr(mr, "_open_lock_dir", lambda: started.append("lock") or None)
+    real_lock_dir = mr._open_lock_dir
+    monkeypatch.setattr(mr, "_open_lock_dir", lambda: started.append("lock") or real_lock_dir())
     for value, why in (
         ("host=db.example.org dbname=app", "host is not one of"),
         ("host=localhost hostaddr=10.0.0.5 dbname=a", "hostaddr"),
@@ -4185,6 +4190,7 @@ def test_run_mutants_refuses_an_address_before_any_folder_or_run(tmp_path, monke
             [CORE_TEST],
             extra_dirs=(),
             pass_env=(DSN_NAME,),
+            forbid_skips=False,  # a run that wrongly starts ends quietly, so the missing refusal is what fails
             match=why,
         )
     assert started == [], f"something started before the address was refused: {started}"

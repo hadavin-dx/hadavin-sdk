@@ -37,7 +37,7 @@ Which mutants need what on Windows (only Linux is run in CI; nobody has run this
 - Every other killer is written to run on both systems. The lists above are written by hand from the skip markers of the killers, and only the Linux run in CI checks them.
   The tree-kill killers use ``taskkill /T`` on Windows; the Windows branch after a normal exit is run on any system with the Windows flag faked.
 
-Keyword tests (``tests/test_mutation_runner_keywords.py``): 190 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
+Keyword tests (``tests/test_mutation_runner_keywords.py``): 186 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
 fixture errors, the snapshot of the environment, the lock name). Many tests of that file have no mutant of their own, and this header does NOT
 list them all: a test either guards the test code itself (the guard test of the database address), an old behaviour that no replacement
 can bring back (the check that the old text is gone), a place that one replacement cannot move ("a missing conftest is noticed only at the
@@ -51,6 +51,10 @@ forms, a message that shows the value) and each is killed by the refusal test of
 so none: ``lo = max(at, marked)`` in ``_masked`` (the text before ``marked`` is already marked; a lower start marks the same characters twice),
 the sort of the secrets longest first (every span is found in the original text and all are cut out at once, so the order cannot change the
 result) and the second refusal of an ``unquote_plus`` form (a ``+`` only becomes a space, which is plain). A fourth: the early return of ``_fragment_spans`` for a secret of fewer than ``EDGE_MIN + 1`` characters (the two passes would find no piece of ``EDGE_MIN`` characters in a window that short either).
+
+Removed in round 20, with the code they mutated: the four mutants of the password-word check of the address grammar. The check was
+redundant (every key that is not on the key allowlist is refused, a password key in any spelling included), so its mutants could no
+longer be killed; the table rows with password keys stay and are killed through the mutant of the key allowlist.
 
 Tests with no mutant (the guard is checked by the test only; names as in ``tests/test_mutation_runner.py``):
 - ``test_run_mutants_refuses_test_and_fixture_paths_that_leave_the_tree``: the list-based path checks of ``run_mutants`` for tests
@@ -447,9 +451,6 @@ M = [
     kmutant('runner: the prefix table of a secret falls back to zero', MR, '        while k and pattern[i] != pattern[k]:\n            k = table[k - 1]', '        while k and pattern[i] != pattern[k]:\n            k = 0', 'test_the_fragment_scan_agrees_with_the_plain_definition_on_repeating_secrets', 'on a repeating secret'),
     kmutant('runner: the pass over a window falls back to zero', MR, '        while k and ch != pattern[k]:\n            k = table[k - 1]', '        while k and ch != pattern[k]:\n            k = 0', 'test_the_fragment_scan_agrees_with_the_plain_definition_on_repeating_secrets', 'on a repeating secret'),
     kmutant('runner: the tail is read in the order of the text', MR, 'text[end : end + top][::-1]', 'text[end : end + top]', 'test_the_fragment_scan_agrees_with_the_plain_definition', 'the fast scan found other spans than the plain definition'),
-    kmutant('runner: the lock grammar misses the password word pwd', MR, '(?i)password|passwd|pwd', '(?i)password|passwd', 'test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed', 'a lock name input was not the expected one'),
-    kmutant('runner: the lock grammar misses the password word passwd', MR, '(?i)password|passwd|pwd', '(?i)password|pwd', 'test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed', 'a lock name input was not the expected one'),
-    kmutant('runner: the lock grammar reads the password word in lower case only', MR, '(?i)password|passwd|pwd', 'password|passwd|pwd', 'test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed', 'a lock name input was not the expected one'),
     kmutant('runner: a value that overlaps itself is found once', MR, '            at = text.find(value, at + 1)', '            at = text.find(value, at + len(value))', 'test_a_value_inside_a_bigger_secret_or_overlapping_another_is_masked_in_full', 'a secret that overlaps itself left a rest readable'),
     kmutant('runner: every masked character gets its own mark', MR, '        elif not out or out[-1] != MASK:\n', '        else:\n', 'test_an_unquoted_password_with_a_semicolon_or_an_ampersand_is_masked_in_full_when_printed_alone', 'printed alone was not masked in one mark'),
     kmutant('runner: a plus in a URL password is not read as a space', MR, '("the password in it, percent-decoded with + read as a space", unquote_plus),', '("the password in it, percent-decoded with + read as a space", unquote),', 'test_a_plus_in_a_url_password_is_also_read_as_a_space', 'the plus-as-space form of the password was not a secret'),
@@ -468,7 +469,7 @@ M = [
     kmutant('runner: the lock file name depends on the password', MR, 'sorted(_address_parts(v) for v in values)', 'sorted(values)', 'test_the_lock_file_name_does_not_depend_on_the_password', 'two addresses that differ only in the password got two lock file names'),
     kmutant('runner: the lock file name ignores the port of a URL', MR, '"port": url.group(2) or "",', '"port": "",', 'test_the_lock_file_name_does_not_depend_on_the_password', 'two addresses with another port got one lock file name'),
     kmutant('runner: the lock file name ignores the database of a URL', MR, '"dbname": url.group(3),', '"dbname": "",', 'test_the_lock_file_name_does_not_depend_on_the_password', 'two addresses with another database got one lock file name'),
-    kmutant('runner: values that are no address get a name of their own', MR, '    if fields is None:\n        return "unparsed"', '    if fields is None:\n        return value', 'test_the_lock_file_name_does_not_depend_on_the_password', 'two values that are no address got two names (the secret-free fallback must be one name)'),
+    kmutant('runner: values that are no address get a name of their own', MR, '    if fields is None:\n        return "unparsed"', '    if fields is None:\n        return value', 'test_the_lock_file_name_does_not_depend_on_the_password', 'did not get the name of the values outside the grammar'),
     kmutant('runner: the lock grammar reads text after the database (a prefix match)', MR, 'url = _URL_ADDRESS.fullmatch(value)', 'url = _URL_ADDRESS.match(value)', 'test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed', 'a lock name input was not the expected one'),
     kmutant('runner: the lock grammar reads a URL query', MR, '/([A-Za-z0-9_.-]+)"\n)  # the WHOLE value', '/([A-Za-z0-9_.-]+)(?:[?#;]\\S*)?"\n)  # the WHOLE value', 'test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed', 'a lock name input was not the expected one'),
     kmutant('runner: the lock grammar reads a path of more than one part', MR, '/([A-Za-z0-9_.-]+)"\n)  # the WHOLE value', '/([A-Za-z0-9_./-]+)"\n)  # the WHOLE value', 'test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed', 'a lock name input was not the expected one'),
@@ -478,7 +479,6 @@ M = [
     kmutant('runner: the lock grammar reads a key=value port of any shape', MR, '"port": re.compile(r"[0-9]+"),', '"port": re.compile(r"[0-9a-z]+"),', 'test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed', 'a lock name input was not the expected one'),
     kmutant('runner: the lock grammar reads a key=value database of any shape', MR, '"dbname": re.compile(r"[A-Za-z0-9_.-]+"),', '"dbname": re.compile(r".+"),', 'test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed', 'a lock name input was not the expected one'),
     kmutant('runner: the lock grammar reads a key=value host address of any shape', MR, '"hostaddr": re.compile(r"[0-9A-Fa-f.:]+"),', '"hostaddr": re.compile(r".+"),', 'test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed', 'a lock name input was not the expected one'),
-    kmutant('runner: the lock grammar accepts a password word in a key', MR, 'or _PASSWORD_KEY.search(pair.group(1))', 'or False', 'test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed', 'a lock name input was not the expected one'),
     kmutant('runner: the lock grammar skips blank words of a key=value address', MR, 'for word in value.split(" "):', 'for word in value.split():', 'test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed', 'a lock name input was not the expected one'),
     kmutant('runner: a repeated password word adds a word each time', MR, 'if m.start(2) >= reached:', 'if True:', 'test_many_repeats_of_one_option_are_few_secrets_and_fast', 'a repeated option was refused as too many texts'),
     kmutant('runner: the number of texts to hide has no ceiling', MR, 'if len(bases) > MAX_SECRETS:', 'if False:', 'test_a_password_in_many_encoded_layers_is_refused_fast_without_showing_it', 'a value with hundreds of layers was accepted'),

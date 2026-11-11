@@ -556,7 +556,6 @@ _ADDRESS_VALUE = {
     "port": re.compile(r"[0-9]+"),
     "dbname": re.compile(r"[A-Za-z0-9_.-]+"),
 }
-_PASSWORD_KEY = re.compile(r"(?i)password|passwd|pwd")
 # the ONLY keys a key=value address may hold, each with the reason it is needed. Every other key is refused: it can change where the connection goes
 # (``service``, ``options``, ``passfile``, ``target_session_attrs``), names a file to read (``sslrootcert``, ``sslcert``, ``sslkey``) or is not needed
 # to reach a test database (``application_name``).
@@ -585,7 +584,7 @@ def _address_fields(value: str) -> dict[str, str] | None:
     """The parts (``host``, ``hostaddr``, ``port``, ``dbname``) of ``value``, or ``None`` when the value is outside the ONE strict grammar that the
     address check and the lock name share. (a) A URL ``postgres://`` or ``postgresql://`` with an optional login, a host (a name, an IPv4 address or
     an IPv6 address in brackets), an optional ``:digits`` port and exactly one ``/name``, with nothing after it. (b) Words ``key=token`` separated by
-    one space, every key in ``ADDRESS_KEYS_ALLOWED``, NO key twice, no password word in a key; ``host`` is a name, an IPv4 address, an IPv6 address
+    one space, every key in ``ADDRESS_KEYS_ALLOWED`` (so no password key, whatever its spelling), NO key twice; ``host`` is a name, an IPv4 address, an IPv6 address
     without brackets or a unix socket folder (``_is_socket_dir``). A host name is given in lower case, a bracketed IPv6 host without its brackets, a
     socket folder as written (a path keeps its letter case). An empty value is outside the grammar."""
     found: dict[str, str] = {}
@@ -599,7 +598,7 @@ def _address_fields(value: str) -> dict[str, str] | None:
     seen: set[str] = set()
     for word in value.split(" "):
         pair = _PAIR.fullmatch(word)
-        if not pair or _PASSWORD_KEY.search(pair.group(1)):
+        if not pair:
             return None
         key, token = pair.group(1).lower(), pair.group(2)
         if key not in ADDRESS_KEYS_ALLOWED:

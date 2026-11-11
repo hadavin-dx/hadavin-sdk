@@ -80,7 +80,7 @@ MOVED = (
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 252
+EXPECTED_MUTANTS = 248
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
