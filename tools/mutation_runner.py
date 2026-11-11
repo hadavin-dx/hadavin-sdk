@@ -53,44 +53,34 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   caller still never reaches the child. A name that is not set in the caller is simply not passed. To allow one more name, add it to
   ``PASS_ENV_ALLOWED``, re-copy the file and update its pin (see the CHANGELOG); do that only for the ADDRESS of a throwaway test resource
   that a demo's tests need (a second database, for example), never for a token or a key.
-  Masking of the passed values, in four parts.
+  Masking of the passed values: refuse odd values up front, then match plain text. Three parts.
 
   1. What is hidden. The value of a passed name, and the password inside it (the one of a URL; the one after ``password=``, ``passwd=`` or
-     ``pwd=`` in a key=value text or a URL query, quoted or not; a libpq backslash escape read both ways; a URL password with an unencoded ``/``,
-     ``?``, ``#`` or ``@``, read by trying every ``@`` as the end of the login). Each is hidden as written, percent-decoded, and with ``+`` read as a
-     space. Each of these texts is called a "plain text" below.
-  2. How it may have been printed. By ``repr``, ``ascii()``, ``unicode_escape``, JSON (with and without ``\\u`` escapes) or the ``repr`` of its UTF-8
-     bytes, any number of times in any order. A print only adds backslashes and quote marks, and writes a character such as ``é`` as an escape
-     (``\\xe9``, ``\\u00e9`` or ``\\xc3\\xa9``). The "stripped text" of a text is the text without its backslashes and quote marks; the "run view"
-     replaces each run of backslashes and quote marks by one mark. Example: ``a'b`` printed twice by ``repr`` is ``'"a\\'b"'``; the stripped text of all three is ``ab``.
-  3. How the runner finds it. Four checks, together:
-     (a) Exact forms: the plain text, with each quote mark escaped with a backslash or not (layer 0), every layer-0 form printed once by the real
-     functions above (layer 1) and once more (layer 2). Searched as they stand. Every plain text is found at ANY depth this way when it holds no
-     backslash, quote mark, control character or non-ASCII character (a print never changes the other characters).
-     (b) Stripped text match, at ANY depth, for a plain text whose stripped text has ``FRAGMENT_MIN`` characters or more: the line and the plain text
-     are both stripped, the plain text may show each character as any of its escapes, and the whole span found is hidden in the original line
-     (with the quote marks and backslashes next to it). Cost: over-masking; any text whose letters, in order, read as a plain text once its
-     backslashes and quote marks are ignored is hidden too.
-     (c) Run match, at ANY depth, ONLY for a plain text whose stripped text is shorter than ``FRAGMENT_MIN`` characters and that holds a quote mark,
-     a backslash, a control character or a non-ASCII character (a longer text has no run pattern: layer (b) covers it): the pattern is made from the plain text as written; each run of quote marks and
-     backslashes in it must stand as such a run in the line (so ``ab'c`` is never found in ``abc``), and each other character may show as any of
-     its escapes. Only the match itself is hidden. A plain text of nothing but quote marks and backslashes is looked for as a run of
-     ``QUOTE_RUN_MIN`` (10) or more of them (checked: every print of it that the exact forms miss holds such a run), so every such run is hidden.
-     (d) Head and tail next to ``...``: pytest shortens a long text in the first ``E`` line of a comparison to about its first 12 and last 13
-     characters around ``...`` (observed with pytest 9.2.0 on a 69-character value, with ``-q``, with ``-q -vv`` and by default; it prints in
-     full only with ``-vv`` without ``-q`` and with ``-o verbosity_assertions=2``; the runner keeps ``-q`` and adds no such option). So every
-     start of a plain text that ends right before ``...`` and every end that starts right after it, of ``EDGE_MIN`` (2) stripped characters or
-     more (and shorter than the whole text), is hidden, at any depth. Cost: over-masking, at most ``MAX_FRAGMENT_HITS`` pieces per line. All pieces are found in the original text and cut out at once; a text with more than ``MAX_FRAGMENT_HITS``
-     ``...`` or more than ``MAX_MATCHES`` matches is replaced as a whole.
-  4. Where. ``first_lines``, the failing test id of a row, the ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` messages and the baseline
-     skip message.
+     ``pwd=`` in a key=value text or a URL query; a URL password with an unencoded ``/``, ``?``, ``#`` or ``@``, read by trying every ``@`` as the
+     end of the login). Each is hidden as written, percent-decoded, and with ``+`` read as a space. Each of these texts is called a "plain text" below.
+  2. What is refused. ``ValueError`` (before anything runs; the message names the variable and the kind of character, never the value) when
+     the value or any plain text holds a quote mark, a backslash, a control character or a non-ASCII character. A print of such a text (``repr``,
+     ``ascii()``, JSON, bytes) adds or changes characters, so the plain text would no longer be there to find. Every plain text left is printable ASCII
+     without quote marks and backslashes, and a print leaves it as it is at any depth. Cost: a throwaway database whose address or password
+     holds such a character (also as a percent code such as ``%27`` or ``%C3%A9``) cannot be passed; make the password of plain letters,
+     digits and punctuation.
+  3. How the runner finds it. Two checks, together. (a) Every plain text is searched as it stands, overlapping matches included, and every match is
+     hidden. (b) Head and tail next to ``...``: pytest shortens a long text in the first ``E`` line of a comparison to about its first 12 and last
+     13 characters around ``...`` (observed with pytest 9.2.0 on a 69-character value, with ``-q``, with ``-q -vv`` and by default; it prints in
+     full only with ``-vv`` without ``-q`` and with ``-o verbosity_assertions=2``; the runner keeps ``-q`` and adds no such option). So the longest
+     start of a plain text that ends right before ``...`` and the longest end that starts right after it, of ``EDGE_MIN`` (2) characters or more
+     (and shorter than the whole text), are hidden. Cost: over-masking, at most ``MAX_FRAGMENT_HITS`` pieces per line. All spans are found in the
+     original text and cut out at once, each run of hidden characters as one ``MASK``; a text with more than ``MAX_FRAGMENT_HITS`` ``...`` is
+     replaced as a whole.
+  Where: ``first_lines``, the failing test id of a row, the ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` messages and the baseline
+  skip message.
 
-  Not covered: a changed form of the value (only the host, only the user name, a re-encoded copy, a piece cut out of the middle, a head or tail
-  piece shorter than ``EDGE_MIN`` (one character), or one that does not stand next to a plain-ASCII ``...``: pprint line wrapping, a
-  Unicode ellipsis); another encoding (base64, hex, HTML escapes); a password that holds a quote, a ``;`` or an ``&``, is written without quotes,
-  and starts after such a character (printed alone it is hidden in full up to the next white space); a password word glued to a letter or digit
-  in front (``dbpassword=``); a password with no ``password=`` word and not the password of a URL (hidden only as part of the whole value). Text of
-  a failure that the runner never reads (the child's own console output is discarded) cannot leak through it.
+  Not covered: a changed form of the value (only the host, only the user name, a re-encoded copy, a piece cut out of the middle) that is not
+  the head or tail beside a plain-ASCII ``...`` (a head or tail of one character, pprint line wrapping and a Unicode ellipsis are not read
+  as such); another encoding (base64, hex, HTML escapes); a password word glued to a letter or digit in front (``dbpassword=``); a password
+  with no ``password=`` word that is not the password of a URL (hidden only as part of the whole value). A password that holds ``;`` or ``&`` is
+  hidden in full when printed alone (up to the next white space), and each piece of it of ``PASSWORD_PIECE_MIN`` characters or more is hidden
+  too. Text of a failure that the runner never reads (the child's own console output is discarded) cannot leak through it.
   SAFETY: the address must point at a THROWAWAY database, and its login must be able to touch only that database (never a shared or
   production one): every mutant run executes the tests against it, and a mutant can make those tests write, drop or fill tables with
   anything. Two runs at once that share one database collide (the same tables and rows), so give each parallel run its own database.
@@ -113,7 +103,7 @@ that has no verdict from the judge: ``SETUP FAILED: <error class>``, ``SNIPPET N
 ``JUNIT MISSING`` (``forbid_skips``), ``COLLECTION ERROR``, ``FIXTURE ERROR``, ``SKIPPED TESTS`` (``forbid_skips``) and ``NO FAILING TEST NAMED`` (the run failed, the JUnit file names no failing test). ``first_lines`` holds the first ``E`` line (masked)
 of the rows that have one, and for ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` the masked message that says why.
 
-Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``PASS_ENV_ALLOWED``, ``MASK``, ``FRAGMENT_MIN``, ``EDGE_MIN``, ``PASSWORD_PIECE_MIN``, ``MAX_FRAGMENT_HITS``, ``MAX_MATCHES``, ``NO_TEST_NAMED``, ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
+Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``PASS_ENV_ALLOWED``, ``MASK``, ``EDGE_MIN``, ``PASSWORD_PIECE_MIN``, ``MAX_FRAGMENT_HITS``, ``NO_TEST_NAMED``, ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
 ``TIMED_OUT``, ``REAPED_ELSEWHERE``, ``CHILD_ENV``, ``CHILD_FIXED_ENV``, ``JUNIT_REFUSED`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
 the no-hardcoding rule is about product behaviour (names, regions, prices, thresholds a deployment tunes), and this is a developer tool
 that ships in no wheel, has no config surface and is copied byte for byte into demos. A caller changes the timeouts by argument.
@@ -121,13 +111,10 @@ that ships in no wheel, has no config surface and is copied byte for byte into d
 
 from __future__ import annotations
 
-import array
 import contextlib
 import errno
-import functools
 import hashlib
 import itertools
-import json
 import keyword
 import os
 import re
@@ -236,11 +223,8 @@ CHILD_ENV = (
 PASS_ENV_ALLOWED = ("HADAVIN_TEST_PG_DSN",)
 MASK = "[REDACTED]"
 NO_TEST_NAMED = "NO FAILING TEST NAMED"  # the id column of an ERROR row for a failed run whose JUnit file names no failing test
-FRAGMENT_MIN = 6  # pytest shortens a long text in an assertion line to ``head...tail``: a head or tail fragment of a secret this long (or longer) next to ``...`` is masked
 EDGE_MIN = 2  # a head or tail piece of a secret next to ``...`` is masked from this many characters on (one character cannot be told from ordinary text)
 PASSWORD_PIECE_MIN = 3  # a piece of an unquoted password that holds a quote mark, ``;`` or ``&`` is a secret of its own from this many characters on
-QUOTE_RUN_MIN = 10  # a secret made only of quote marks and backslashes, printed three or more times, shows as a run of at least this many of them (checked: the shortest such run that the exact forms miss is 10 long)
-MAX_MATCHES = 100_000  # more matches of the secrets than this in one text is no honest line either: the whole text is replaced (a 1-character secret on a huge line stays fast)
 MAX_FRAGMENT_HITS = 1_000  # more ``...`` than this in one text is no honest line (pytest writes a few): the whole text is replaced, and the scan stays short (a worst-case line of this many takes about a second)
 CHILD_FIXED_ENV = {
     "PYTHONNOUSERSITE": "1"
@@ -322,54 +306,40 @@ def _checked_env_names(names: Iterable[str]) -> tuple[str, ...]:
 
 
 _PASSWORD_WORD = re.compile(
-    r"(?is)(?<![A-Za-z0-9])(?:password|passwd|pwd)\s*=\s*(?:'((?:[^'\\]|\\.)*)'|\"((?:[^\"\\]|\\.)*)\"|((?:[^\s&;'\"\\]|\\.)+))"
-)  # ``password=...`` of a key=value DSN or a URL query; a quoted value may hold spaces, and a backslash escapes the next character (libpq)
-_BACKSLASH_ESCAPE = re.compile(r"\\(.)", re.DOTALL)
+    r"(?is)(?<![A-Za-z0-9])(?:password|passwd|pwd)\s*=\s*([^\s&;]+)"
+)  # ``password=...`` of a key=value DSN or a URL query, up to the next white space, ``&`` or ``;`` (no quote mark or backslash can be in it: see ``_refuse_odd``)
 _NOT_WHITE = re.compile(r"\S*")  # the rest of a word, up to the next white space
+# every ``...``, also those that share a dot (a secret may end in a dot): one match at the start of each
+_DOTS = re.compile(r"(?=\.\.\.)")
 
 
-_WHOLE_ENCODERS: tuple[Callable[[str], str], ...] = (
-    lambda s: repr(s)[1:-1],
-    lambda s: ascii(s)[1:-1],
-    lambda s: s.encode("unicode_escape").decode("ascii"),
-    lambda s: json.dumps(s)[1:-1],
-    lambda s: json.dumps(s, ensure_ascii=False)[1:-1],
-    lambda s: repr(s.encode("utf-8", "backslashreplace"))[2:-1],
-)  # a whole printed text printed once more, by the real function (no hand-made escaping)
-_BOTH_QUOTES = "'\""
+def _odd_character(text: str) -> str | None:
+    """The kind of the first character of ``text`` that a print of the text could change, or ``None``: a quote mark or a backslash (a print adds
+    them), a control character or a non-ASCII character (a print writes them as an escape such as ``\\xe9``). Space and the other printable ASCII
+    characters are printed as they are."""
+    for char in text:
+        if char in "'\"":
+            return "a quote mark"
+        if char == "\\":
+            return "a backslash"
+        if ord(char) < 32 or ord(char) == 127:
+            return "a control character"
+        if ord(char) > 127:
+            return "a non-ASCII character"
+    return None
 
 
-def _printed_again(form: str) -> set[str]:
-    """``form`` printed once more by each whole-text encoder, the way it comes out when the larger text holds only the quote kind that ``form`` holds
-    and the way it comes out when the larger text holds BOTH kinds (``repr`` then escapes the single quote; the suffix is cut off again)."""
-    out: set[str] = set()
-    for encode in _WHOLE_ENCODERS:
-        out.add(encode(form))
-        both, suffix = encode(form + _BOTH_QUOTES), encode(_BOTH_QUOTES)
-        if both.endswith(suffix):
-            out.add(both[: len(both) - len(suffix)])
-    return out
-
-
-def _written_forms(text: str) -> set[str]:
-    """The exact forms of check (1) in the module docstring, every layer made by the real functions (no hand-made escaping). Layer 0: ``text``, with
-    each quote mark escaped with a backslash or not (all four mixes: a quoted libpq password and a ``repr`` of a LARGER text carry them). Layer 1: every
-    layer-0 form printed once by ``repr``, ``ascii``, ``unicode_escape``, JSON (with and without ``\\u`` escapes) and the ``repr`` of its UTF-8 bytes, each
-    with and without both quote kinds in the larger text. Layer 2: every layer-1 form printed once more the same way (``repr(repr(x))``,
-    ``repr(json.dumps(x))``, ``json.dumps(repr(x))`` and the rest). Deeper prints, and the prints of a longer text, are found by the skeleton match
-    (``_stripped_spans``), not here. Empty forms are dropped."""
-    layer = {
-        "".join(
-            {"'": "\\'" if single else "'", '"': '\\"' if double else '"'}.get(c, c) for c in text
+def _refuse_odd(name: str, what: str, text: str) -> None:
+    """``ValueError`` when ``text`` (``what`` of the variable ``name``) holds a character ``_odd_character`` names. The message names the variable and
+    the kind of character, never the text."""
+    kind = _odd_character(text)
+    if kind is not None:
+        raise ValueError(
+            f"{name} is refused: {what} holds {kind}. The runner hides a secret by looking for its plain text, and a print of a text with such a"
+            " character no longer shows the plain text, so it could not be hidden. Use a throwaway database whose address and password hold"
+            " only plain printable ASCII letters, digits and punctuation without quote marks and backslashes (a percent-encoded password is"
+            " read decoded)."
         )
-        for single in (False, True)
-        for double in (False, True)
-    }
-    forms = set(layer)
-    for _ in range(2):  # the fixed depth: two prints
-        layer = {printed for form in layer for printed in _printed_again(form)}
-        forms |= layer
-    return {f for f in forms if f}
 
 
 def _url_passwords(value: str) -> list[str]:
@@ -389,268 +359,46 @@ def _url_passwords(value: str) -> list[str]:
     return found
 
 
-def _secret_values(names: Iterable[str]) -> _SecretSet:
+def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
     """The values of the passed environment variables, and the password inside them (the one of a URL, the one after ``password=`` in a
-    key=value text or a URL query; each as written, percent-decoded, and every printed form of it that ``_written_forms`` builds), longest first, as
-    a ``_SecretSet`` whose ``bases`` are the plain texts. Text that may show them is run through ``_masked``."""
-    found: set[str] = set()
+    key=value text or a URL query; each as written, percent-decoded, and with ``+`` read as a space), longest first. Text that may show them is run
+    through ``_masked``. ``ValueError`` (before anything runs) when any of these texts holds a quote mark, a backslash, a control character or a
+    non-ASCII character (``_refuse_odd``): every text left is plain printable ASCII, so a print of it at any depth still holds it as written."""
     bases: set[str] = set()
     for name in names:
         value = os.environ.get(name, "")
         if not value:
             continue
+        _refuse_odd(name, "its value", value)
         bases.add(value)
-        found.update(_written_forms(value))
         matches = list(_PASSWORD_WORD.finditer(value))
-        passwords = [next(g for g in m.groups() if g is not None) for m in matches]
-        # an unquoted password ends at the first quote, ``;`` or ``&`` above; printed alone, the rest of the word is part of it too
-        passwords += [
-            value[m.start(3) : _NOT_WHITE.match(value, m.start(3)).end()]  # type: ignore[union-attr]
+        passwords = [m.group(1) for m in matches]
+        # an unquoted password ends at ``&`` or ``;`` above; printed alone, the rest of the word is part of it too
+        words = [
+            value[m.start(1) : _NOT_WHITE.match(value, m.start(1)).end()]  # type: ignore[union-attr]
             for m in matches
-            if m.group(3) is not None
         ]
+        passwords += words
         passwords += [
             piece
-            for word in passwords[len(matches) :]
-            for piece in re.split(r"['\";&]", word)
+            for word in words
+            for piece in re.split(r"[;&]", word)
             if len(piece) >= PASSWORD_PIECE_MIN
-        ]  # the pieces of an unquoted password that holds a quote, ``;`` or ``&``: each may stand alone in a message
-        passwords += [
-            _BACKSLASH_ESCAPE.sub(r"\1", word) for word in passwords
-        ]  # libpq: a backslash escapes the next character
+        ]  # the pieces of an unquoted password that holds ``;`` or ``&``: each may stand alone in a message
         passwords += _url_passwords(value)
         for password in passwords:
             if password:
-                for form in (password, unquote(password), unquote_plus(password)):
+                bases.add(password)
+                for what, form in (
+                    ("the password in it, percent-decoded", unquote(password)),
+                    (
+                        "the password in it, percent-decoded with + read as a space",
+                        unquote_plus(password),
+                    ),
+                ):
+                    _refuse_odd(name, what, form)
                     bases.add(form)
-                    found.update(_written_forms(form))
-    out = _SecretSet(sorted(found, key=len, reverse=True))
-    out.bases = tuple(sorted(bases, key=len, reverse=True))
-    return out
-
-
-_DROPPED = "\\'\""  # a backslash and the two quote marks: the only characters a print adds to a text, at any depth, besides the escape letters of its characters
-_HEAVY_RUN = re.compile(
-    rf"[\\'\"]{{{QUOTE_RUN_MIN},}}"
-)  # a secret of only quote marks and backslashes: every run of this many of them is hidden
-# every ``...``, also those that share a dot (a secret may end in a dot): one match at the start of each
-_DOTS = re.compile(r"(?=\.\.\.)")
-_RUN = "\x00"  # in the run view of a text, one mark for each run of backslashes and quote marks
-
-
-class _SecretSet(tuple):  # type: ignore[type-arg]
-    """The masking forms of ``_secret_values`` (a tuple, longest first) and, as ``bases``, the plain texts they were built from: ``_masked`` also
-    matches the stripped text of every base (see ``_stripped_pattern``), which holds at any print depth."""
-
-    bases: tuple[str, ...] = ()
-
-
-def _stripped(text: str) -> str:
-    """``text`` without its backslashes and quote marks (the "stripped text" of the module docstring)."""
-    return "".join(c for c in text if c not in _DROPPED)
-
-
-def _run_view(text: str) -> str:
-    """``text`` with each run of backslashes and quote marks replaced by one ``_RUN`` mark (the "run view": it keeps WHERE the quote marks stood)."""
-    return re.sub(r"[\\'\"]+", _RUN, text)
-
-
-@functools.lru_cache(maxsize=4096)
-def _char_looks(char: str, run_view: bool = False) -> frozenset[str]:
-    """Every way a single character can show in a printed text, as ``_stripped`` (or ``_run_view``) sees it: itself, and the escape it gets from
-    ``repr``, ``ascii``, ``unicode_escape``, JSON (with and without ``\\u`` escapes) and the ``repr`` of its UTF-8 bytes (``é`` as ``é``, ``xe9``,
-    ``u00e9`` or ``xc3xa9`` in the stripped text)."""
-    view = _run_view if run_view else _stripped
-    return frozenset({char, *(view(encode(char)) for encode in _WHOLE_ENCODERS)})
-
-
-def _any_of(looks: Iterable[str], reverse: bool = False) -> str:
-    return (
-        "(?:"
-        + "|".join(
-            re.escape(x[::-1] if reverse else x) for x in sorted(looks, key=len, reverse=True)
-        )
-        + ")"
-    )
-
-
-def _nested(parts: list[tuple[str, str]]) -> str:
-    """``p1(p2(p3|q3)?|q2)?|q1``: the longest run of whole parts from the left (greedy), used for the head and tail pieces of a secret. Each part comes
-    with ``q``, a start of its own (a cut that falls inside an escape such as ``\\U0001f600`` leaves only a start of the written character)."""
-    out = ""
-    for whole, partial in reversed(parts):
-        out = f"(?:{whole}{out}|{partial})?"
-    return out
-
-
-def _starts_of(looks: Iterable[str], reverse: bool = False) -> str:
-    """Every proper start (one character or more, never the whole) of every look, as one choice; never matches when no look has one."""
-    starts = {(x[::-1] if reverse else x)[:n] for x in looks for n in range(1, len(x))}
-    if not starts:
-        return "(?!)"
-    return "(?:" + "|".join(re.escape(x) for x in sorted(starts, key=len, reverse=True)) + ")"
-
-
-@functools.lru_cache(maxsize=512)
-def _stripped_pattern(base: str) -> re.Pattern[str] | None:
-    """A pattern that matches ``base`` as it stands in the stripped text of a printed line, or ``None`` when its stripped text is shorter than
-    ``FRAGMENT_MIN`` (see ``_run_pattern``). Printing a text any number of times only adds backslashes and quote marks (removed by stripping) and
-    rewrites each character into one of its ``_char_looks``, so one pattern of per-character choices matches the base at every depth, in every mix of
-    encoders."""
-    kept = [c for c in base if c not in _DROPPED]
-    if len(kept) < FRAGMENT_MIN:
-        return None
-    return re.compile("".join(_any_of(_char_looks(c)) for c in kept), re.DOTALL)
-
-
-@functools.lru_cache(maxsize=512)
-def _run_pattern(base: str) -> re.Pattern[str] | None:
-    """For a base whose stripped text is shorter than ``FRAGMENT_MIN`` characters: a pattern over the run view of the line, made from the base AS
-    WRITTEN. Each run of backslashes and quote marks in the base must stand as a run of one or more of them in the line (so ordinary text is not
-    hit: ``ab'c`` is ``ab`` + a run + ``c``), and each other character may show as any of its ``_char_looks``. ``None`` when the base has no quote
-    mark, backslash, control or non-ASCII character (its plain text is then found at every depth by the exact forms) or has only quote marks and
-    backslashes (matching every run would hide all quote marks of every line; its exact forms hide each quote mark written as it is)."""
-    kept = [c for c in base if c not in _DROPPED]
-    # a longer base is found by ``_stripped_pattern``; a second pattern would only match twice
-    if not kept or len(kept) >= FRAGMENT_MIN:
-        return None
-    if not any(c in _DROPPED or _char_looks(c, True) != {c} for c in base):
-        return None
-    parts: list[str] = []
-    after_run = False
-    for char in base:
-        if char in _DROPPED:
-            if not after_run:
-                parts.append(re.escape(_RUN))
-            after_run = True
-            continue
-        alternatives = []
-        for look in sorted(_char_looks(char, True), key=len, reverse=True):
-            if look.startswith(
-                _RUN
-            ):  # an escape starts with its backslash; right after a run that backslash is already in it
-                look = re.escape(_RUN) + ("?" if after_run else "") + re.escape(look[1:])
-            else:
-                look = re.escape(look)
-            alternatives.append(look)
-        parts.append("(?:" + "|".join(alternatives) + ")")
-        after_run = False
-    return re.compile("".join(parts), re.DOTALL)
-
-
-@functools.lru_cache(maxsize=512)
-def _edge_patterns(base: str) -> tuple[re.Pattern[str], re.Pattern[str]] | None:
-    """The head and the tail of ``base`` as pytest cuts them around ``...``, for the stripped text of a line: the head pattern matches the longest start
-    of the base (``EDGE_MIN`` stripped characters or more) that ends right before a ``...``; the tail pattern, meant for the REVERSED stripped
-    text, the longest end of the base right after one. ``None`` when the base is too short to have a piece."""
-    kept = [c for c in base if c not in _DROPPED]
-    if len(kept) <= EDGE_MIN:
-        return None
-    ahead = r"(?=\.\.\.)"
-    heads = [(_any_of(_char_looks(c)), _starts_of(_char_looks(c))) for c in kept]
-    tails = [
-        (_any_of(_char_looks(c), reverse=True), _starts_of(_char_looks(c), reverse=True))
-        for c in reversed(kept)
-    ]
-    return (
-        re.compile(
-            heads[0][0] + _nested(heads[1:]) + ahead,
-            re.DOTALL,
-        ),
-        re.compile(
-            tails[0][0] + _nested(tails[1:]) + ahead,
-            re.DOTALL,
-        ),
-    )
-
-
-def _widened(text: str, lo: int, hi: int) -> tuple[int, int]:
-    """The span ``lo:hi`` widened over the backslashes and quote marks next to it (the quote marks of the print itself) and over a ``b`` right before
-    a quote (the prefix of a bytes print)."""
-    while lo > 0 and (
-        text[lo - 1] in _DROPPED or (text[lo - 1] == "b" and text[lo] in _DROPPED)
-    ):  # a ``b`` right before a quote is the prefix of a bytes print
-        lo -= 1
-    while hi < len(text) and text[hi] in _DROPPED:
-        hi += 1
-    return lo, hi
-
-
-def _view_with_places(text: str) -> tuple[str, array.array[int], array.array[int]]:
-    """The run view of ``text`` and, for each of its characters, where it starts and ends in ``text``. Memory: two arrays as long as the view (8 bytes
-    per character), built only for a line that a short secret has to be looked for in."""
-    view: list[str] = []
-    starts = array.array("I")
-    ends = array.array("I")
-    for run in re.finditer(r"[\\'\"]+|[^\\'\"]+", text):
-        if text[run.start()] in _DROPPED:
-            view.append(_RUN)
-            starts.append(run.start())
-            ends.append(run.end())
-        else:
-            view.append(run.group())
-            starts.extend(range(run.start(), run.end()))
-            ends.extend(range(run.start() + 1, run.end() + 1))
-    return "".join(view), starts, ends
-
-
-def _stripped_spans(text: str, bases: Sequence[str], dots: bool) -> list[tuple[int, int]]:
-    """Spans of ``text`` that show a base at some print depth (see "How it may be printed" in the module docstring). Over-masking is the only cost:
-    any text whose letters, in order, read as a base once its backslashes and quote marks are ignored is masked too. ``dots``: the line holds a ``...``
-    (pytest cut a long text), so the head and the tail of each base are looked for next to it as well."""
-    long_patterns = [p for p in map(_stripped_pattern, bases) if p is not None]
-    short_patterns = [p for p in map(_run_pattern, bases) if p is not None]
-    edges = [e for e in map(_edge_patterns, bases) if e is not None] if dots else []
-    quotes_only = any(base and not _stripped(base) for base in bases)
-    if not (long_patterns or short_patterns or edges or quotes_only):
-        return []
-    spans: list[tuple[int, int]] = []
-
-    def add(lo: int, hi: int, widen: bool = True) -> None:
-        if len(spans) >= MAX_MATCHES:
-            raise _TooManyHits(MAX_MATCHES, "matches of a secret")
-        spans.append(_widened(text, lo, hi) if widen else (lo, hi))
-
-    if long_patterns or edges:
-        where = array.array(
-            "I", (i for i, c in enumerate(text) if c not in _DROPPED)
-        )  # 4 bytes per character
-        flat = _stripped(text)
-        for pat in long_patterns:
-            for found in itertools.islice(pat.finditer(flat), MAX_MATCHES + 1):
-                add(where[found.start()], where[found.end() - 1] + 1)
-        if edges:
-            reverse = flat[::-1]
-            top = len(flat)
-            for head, tail in edges:
-                for found in itertools.islice(head.finditer(flat), MAX_MATCHES + 1):
-                    if found.end() - found.start() >= EDGE_MIN:
-                        add(where[found.start()], where[found.end() - 1] + 1)
-                for found in itertools.islice(tail.finditer(reverse), MAX_MATCHES + 1):
-                    if found.end() - found.start() >= EDGE_MIN:
-                        add(where[top - found.end()], where[top - found.start() - 1] + 1)
-    if quotes_only:
-        for found in itertools.islice(_HEAVY_RUN.finditer(text), MAX_MATCHES + 1):
-            add(found.start(), found.end(), widen=False)
-    if short_patterns:
-        view, starts, ends = _view_with_places(text)
-        for pat in short_patterns:
-            for found in itertools.islice(pat.finditer(view), MAX_MATCHES + 1):
-                add(
-                    starts[found.start()], ends[found.end() - 1], widen=False
-                )  # the match holds its own runs; a quote of the print beside it is no secret
-    return spans
-
-
-def _forget_secrets() -> None:
-    """Empty the caches whose keys are secret texts (``run_mutants`` calls this when it ends: a secret must not stay in the memory of the process)."""
-    for cached in (_char_looks, _stripped_pattern, _run_pattern, _edge_patterns):
-        cached.cache_clear()
-
-
-class _TooManyHits(Exception):
-    """A line holds more ``...`` than ``MAX_FRAGMENT_HITS`` (or more matches of the secrets than ``MAX_MATCHES``): no honest line does, so
-    ``_masked`` replaces the whole line. ``args`` is ``(limit, what was counted)``."""
+    return tuple(sorted(bases, key=len, reverse=True))
 
 
 def _fragment_spans(text: str, secret: str, hits: list[re.Match[str]]) -> list[tuple[int, int]]:
@@ -683,38 +431,31 @@ def _fragment_spans(text: str, secret: str, hits: list[re.Match[str]]) -> list[t
 
 def _masked(text: str, secrets: Sequence[str]) -> str:
     """``text`` with every secret value replaced by a marker (pass_env values must never reach ``first_lines``, a result row or an error message).
-    A secret that pytest shortened to ``head...tail`` is masked by its fragments too (see ``_fragment_spans``). Every span is found in the
-    ORIGINAL text and then all are cut out at once, so a short secret that sits inside a longer one cannot break the match of the longer one.
-    More than ``MAX_MATCHES`` matches (a 1-character secret on a huge line) or ``MAX_FRAGMENT_HITS`` ``...`` replace the whole text."""
+    ``secrets`` are plain printable ASCII (``_secret_values`` refuses anything else), so each is found as it stands. A secret that pytest shortened
+    to ``head...tail`` is masked by its pieces beside ``...`` too (see ``_fragment_spans``). Every span is found in the ORIGINAL text and then
+    all are cut out at once, so a short secret that sits inside a longer one cannot break the match of the longer one. More than
+    ``MAX_FRAGMENT_HITS`` ``...`` replace the whole text."""
     chosen = tuple(v for v in secrets if v)
     if not chosen:
         return text
+    dots = list(
+        itertools.islice(_DOTS.finditer(text), MAX_FRAGMENT_HITS + 1)
+    )  # found once for the whole line
+    if len(dots) > MAX_FRAGMENT_HITS:
+        return f"{MASK} (line with more than {MAX_FRAGMENT_HITS} '...' replaced: it cannot be checked for pieces of a value)"
     hit = bytearray(len(text))
-    matches = 0
-    try:
-        dots = list(
-            itertools.islice(_DOTS.finditer(text), MAX_FRAGMENT_HITS + 1)
-        )  # found once for the whole line
-        if len(dots) > MAX_FRAGMENT_HITS:
-            raise _TooManyHits(MAX_FRAGMENT_HITS, "'...'")
-        bases = getattr(secrets, "bases", None) or chosen
-        for lo, hi in _stripped_spans(text, bases, bool(dots)):
-            hit[lo:hi] = b"\x01" * (hi - lo)
+    for value in chosen:
+        marked = 0  # the text before this index is already marked for this value: each character is marked once
+        at = text.find(value)
+        while at != -1:
+            lo = max(at, marked)
+            hit[lo : at + len(value)] = b"\x01" * (at + len(value) - lo)
+            marked = at + len(value)
+            at = text.find(value, at + 1)
+    if dots:
         for value in chosen:
-            at = text.find(value)
-            while at != -1:
-                matches += 1
-                if matches > MAX_MATCHES:
-                    raise _TooManyHits(MAX_MATCHES, "matches of a secret")
-                hit[at : at + len(value)] = b"\x01" * len(value)
-                at = text.find(value, at + 1)
-        for value in chosen:
-            if dots and len(value) > EDGE_MIN:
-                for lo, hi in _fragment_spans(text, value, dots):
-                    hit[lo:hi] = b"\x01" * (hi - lo)
-    except _TooManyHits as many:
-        limit, what = many.args
-        return f"{MASK} (line with more than {limit} {what} replaced: it cannot be checked for pieces of a value)"
+            for lo, hi in _fragment_spans(text, value, dots):
+                hit[lo:hi] = b"\x01" * (hi - lo)
     out: list[str] = []
     for ch, bad in zip(text, hit, strict=True):
         if not bad:
@@ -1352,7 +1093,6 @@ def _run_mutants(
                     raise failure
     finally:
         held.close()
-        _forget_secrets()
         with _signals_held():  # a signal is raised after the removal
             for folder in made:
                 shutil.rmtree(folder, ignore_errors=True)
