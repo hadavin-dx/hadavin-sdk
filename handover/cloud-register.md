@@ -1134,3 +1134,9 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a553a337 | PR89 r14 reviewer keyword tests 1201-2349 | done 05:04Z | | | closed (round-w2-r14-keywordtests-b.md) | |
 | a111db5b | PR89 r14 reviewer mutants/CHANGELOG | done 05:10Z | | | closed (round-w2-r14-implreadiness-mutants.md) | |
 | a8904ec1 | PR89 builder round 14 (resumed, batch r14-02..14) | 05:11Z | 06:10Z (60 min box) | 05:11Z | running | read report; independent runner on final head; fresh reviewers on the delta |
+| R15-design a98837df | PR89 r15 egm-design: runner whole, lock name | started 05:44Z | expected end ~06:05Z | running | read report, ledger rows |
+| R15-codebase af88b8cf | PR89 r15 egm-codebase-details: runner + CHANGELOG claims | 05:44Z | ~06:05Z | running | same |
+| R15-testsA a265a7f2 | PR89 r15 tests lines 1-1330 | 05:44Z | ~06:05Z | running | same |
+| R15-testsB a2ad88f1 | PR89 r15 tests lines 1330-2657 | 05:44Z | ~06:05Z | running | same |
+| R15-mutants a930e384 | PR89 r15 mutants file + meta | 05:44Z | ~06:05Z | running | same |
+| B-r14 a8904ec1 | PR89 builder round 14 | closed 05:42Z, head 13b7124 | | reported | evidence copied (gitleaks clean) |
