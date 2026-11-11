@@ -2456,3 +2456,4 @@
 | BL-core-a2-w2-r16-m1 | reviews/P89/round-w2-r16-mutants-docs.md M1 | Minor | PR89 | meta test docstring stale (tree holds KW file and conftest too) | OPEN | 2026-11-11 |
 | BL-core-a11a-w3-06 | evidence/P2d/8b2b716-runner-partial | Major | PR77 | ruff format --check fails on tests/test_redact_fold.py (CI gate) | OPEN | 2026-11-11 |
 | BL-core-a11a-w3-07 | evidence/P2d/8b2b716-runner-partial | Major | PR77 | 148 failed + 27 errors in Postgres tests on local PG16 (3.12 and 3.13); cause undetermined (env vs real); compare with base main on the same cluster at the fix head | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r17-s1 | reviews/P89/round-w2-r17-delta.md s1-01..03 | Minor | PR89 | CHANGELOG describes a deleted test; CHANGELOG ?host= contradiction; broad except in new test | OPEN (builder pushing) | 2026-11-11 |
