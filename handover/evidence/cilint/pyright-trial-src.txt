@@ -1,0 +1,10 @@
+pyright 1.1.414, basic mode, on main 0dabf1f (src). 2026-11-09T06:49Z
+$ uvx --from pyright==1.1.414 pyright --pythonpath <venv python> src
+  /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/base/src/hadavin_sdk/tools.py:384:13 - error: Cannot assign to attribute "__hadavin_pin__" for class "ModuleType"
+    Attribute "__hadavin_pin__" is unknown (reportAttributeAccessIssue)
+  /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/base/src/hadavin_sdk/tools.py:412:12 - error: Type "(...) -> object" is not assignable to return type "(...) -> str"
+    Type "(...) -> object" is not assignable to type "(...) -> str"
+      Function return type "object" is incompatible with type "str"
+        "object" is not assignable to "str" (reportReturnType)
+  /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/base/src/hadavin_sdk/tools.py:610:25 - error: "open" is not a known attribute of "None" (reportOptionalMemberAccess)
+117 errors, 0 warnings, 0 informations

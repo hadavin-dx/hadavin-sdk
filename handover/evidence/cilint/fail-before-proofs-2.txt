@@ -1,0 +1,186 @@
+fail-before proofs (file 2: round 2 plants and the checks added after round 1). Run 2026-11-09T06:50Z on head 2905c1d.
+
+==================================================================
+PROOF: ruff PLW2901: loop variable overwritten
+tree: throwaway copy of git head 2905c1d
+plant: printf "def f(xs):\n    for x in xs:\n        x = x + 1\n        print(x)\n" > src/hadavin_sdk/zz_plant.py
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/ruff check src
+PLW2901 `for` loop variable `x` overwritten by assignment target
+ --> src/hadavin_sdk/zz_plant.py:3:9
+  |
+1 | def f(xs):
+2 |     for x in xs:
+3 |         x = x + 1
+  |         ^
+4 |         print(x)
+  |
+Found 1 error.
+after the plant: exit 1
+
+==================================================================
+PROOF: ruff SIM105: try/except/pass
+tree: throwaway copy of git head 2905c1d
+plant: printf "def f():\n    try:\n        print(1)\n    except ValueError:\n        pass\n" > src/hadavin_sdk/zz_plant.py
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/ruff check src
+SIM105 Use `contextlib.suppress(ValueError)` instead of `try`-`except`-`pass`
+ --> src/hadavin_sdk/zz_plant.py:2:5
+  |
+1 |   def f():
+2 | /     try:
+3 | |         print(1)
+4 | |     except ValueError:
+5 | |         pass
+  | |____________^
+help: Replace `try`-`except`-`pass` with `with contextlib.suppress(ValueError): ...`
+  |
+1 + import contextlib
+2 | def f():
+  -     try:
+3 +     with contextlib.suppress(ValueError):
+4 |         print(1)
+  -     except ValueError:
+  -         pass
+  |
+note: This is an unsafe fix and may change runtime behavior
+Found 1 error.
+1 unsafe fix available with `--fix --unsafe-fixes`.
+after the plant: exit 1
+
+==================================================================
+PROOF: ruff RUF100: a noqa that suppresses nothing
+tree: throwaway copy of git head 2905c1d
+plant: printf "x = 1  # noqa: F401\n" > src/hadavin_sdk/zz_plant.py
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/ruff check src
+RUF100 [*] Unused `noqa` directive (unused: `F401`)
+ --> src/hadavin_sdk/zz_plant.py:1:8
+  |
+1 | x = 1  # noqa: F401
+  |        ^^^^^^^^^^^^
+help: Remove unused `noqa` directive
+  |
+  - x = 1  # noqa: F401
+1 + x = 1
+  |
+Found 1 error.
+[*] 1 fixable with `--fix`.
+after the plant: exit 1
+
+==================================================================
+PROOF: ruff E722: bare except
+tree: throwaway copy of git head 2905c1d
+plant: printf "def f():\n    try:\n        print(1)\n    except:\n        print(2)\n" > src/hadavin_sdk/zz_plant.py
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/ruff check src
+E722 Do not use bare `except`
+ --> src/hadavin_sdk/zz_plant.py:4:5
+  |
+2 |     try:
+3 |         print(1)
+4 |     except:
+  |     ^^^^^^
+5 |         print(2)
+  |
+Found 1 error.
+after the plant: exit 1
+
+==================================================================
+PROOF: mypy ratchet: a listed module gets worse
+tree: throwaway copy of git head 2905c1d
+plant: printf "\nzz_planted: int = \"a\"\n" >> src/hadavin_sdk/config.py
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/python tools/mypy_ratchet.py
+28 listed, 80 findings, 1 problems
+  src/hadavin_sdk/config.py: 7 findings, baseline 6 (it got worse)
+after the plant: exit 1
+
+==================================================================
+PROOF: mypy ratchet: an unlisted module has a finding
+tree: throwaway copy of git head 2905c1d
+plant: printf "x: int = \"a\"\n" > src/hadavin_sdk/zz_plant.py
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/python tools/mypy_ratchet.py
+28 listed, 80 findings, 1 problems
+  src/hadavin_sdk/zz_plant.py: has 1 finding(s) but is not listed
+after the plant: exit 1
+
+==================================================================
+PROOF: mypy ratchet: a listed module does not exist
+tree: throwaway copy of git head 2905c1d
+plant: sed -i "0,/\"hadavin_sdk.evals\",/s//\"hadavin_sdk.evals\", \"hadavin_sdk.zz_gone\",/" pyproject.toml
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/python tools/mypy_ratchet.py
+28 listed, 79 findings, 1 problems
+  hadavin_sdk.zz_gone: no such module (remove or rename the line)
+after the plant: exit 1
+
+==================================================================
+PROOF: ruff-version check: the pin and the pre-commit hook differ
+tree: throwaway copy of git head 2905c1d
+plant: sed -i "s/ruff==0.17.1/ruff==0.17.0/" pyproject.toml
+before the plant: exit 0
+$ pins=$(grep -oE "\"ruff==[0-9.]+\"" pyproject.toml); pin=$(printf "%s" "$pins" | tr -dc "0-9."); hook=$(grep -oE "rev: [0-9a-f]{40} +# v[0-9.]+" .pre-commit-config.yaml | grep -oE "v[0-9.]+$" | tr -d v); echo "pyproject ruff=$pin, pre-commit hook=$hook"; test -n "$pin" && test "$pin" = "$hook"
+pyproject ruff=0.17.0, pre-commit hook=0.17.1
+after the plant: exit 1
+
+==================================================================
+PROOF: licence check: a copyleft package without an exception line
+tree: throwaway copy of git head 2905c1d
+plant: grep -v "^allow psycopg-binary" tools/licence_exceptions.txt > x && mv x tools/licence_exceptions.txt
+before the plant: exit 0
+$ uv export --locked --all-extras --group test --group lint --no-hashes --no-emit-project > /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/locked.txt 2>/dev/null; /home/user/build/B-cilint-b3/.venv/bin/python tools/licence_check.py /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/locked.txt tools/licence_exceptions.txt
+ok        annotated-types 0.8.0: MIT; MIT License
+ok        anthropic 2.1.0: Apache-2.0; Apache Software License
+ok        anyio 4.15.1: MIT
+ok        ast-serialize 0.13.1: MIT
+ok        azure-core 1.41.0: MIT
+ok        azure-identity 1.26.0: MIT
+ok        azure-keyvault-keys 4.11.3: MIT
+ok        azure-keyvault-secrets 4.12.0: MIT License; MIT License
+ok        azure-storage-blob 12.31.0: MIT License; MIT License
+ok        boto3 1.43.122: Apache-2.0
+ok        boto3-stubs 1.43.122: MIT
+ok        botocore 1.43.122: Apache-2.0
+ok        botocore-stubs 1.43.122: MIT
+ok        certifi 2026.10.19: MPL-2.0; Mozilla Public License 2.0 (MPL 2.0)
+ok        cffi 2.1.1: MIT-0
+ok        charset-normalizer 3.5.2: MIT
+ok        click 8.5.1: BSD-3-Clause
+UNCHECKED colorama 0.4.6: not installed here (sys_platform == 'win32'); licence entered by hand
+ok        cryptography 50.0.2: Apache-2.0 OR BSD-3-Clause
+ok        deptry 0.25.1: MIT
+ok        docstring-parser 0.18.0: MIT; MIT License
+ok        google-api-core 2.43.0: Apache 2.0; Apache Software License
+after the plant: exit 1
+
+==================================================================
+PROOF: licence check: a stale exception line (package version gone)
+tree: throwaway copy of git head 2905c1d
+plant: printf "allow zz-nonexistent==1.0  # planted\n" >> tools/licence_exceptions.txt
+before the plant: exit 0
+$ uv export --locked --all-extras --group test --group lint --no-hashes --no-emit-project > /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/locked.txt 2>/dev/null; /home/user/build/B-cilint-b3/.venv/bin/python tools/licence_check.py /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/locked.txt tools/licence_exceptions.txt
+ok        annotated-types 0.8.0: MIT; MIT License
+ok        anthropic 2.1.0: Apache-2.0; Apache Software License
+ok        anyio 4.15.1: MIT
+ok        ast-serialize 0.13.1: MIT
+ok        azure-core 1.41.0: MIT
+ok        azure-identity 1.26.0: MIT
+ok        azure-keyvault-keys 4.11.3: MIT
+ok        azure-keyvault-secrets 4.12.0: MIT License; MIT License
+ok        azure-storage-blob 12.31.0: MIT License; MIT License
+ok        boto3 1.43.122: Apache-2.0
+ok        boto3-stubs 1.43.122: MIT
+ok        botocore 1.43.122: Apache-2.0
+ok        botocore-stubs 1.43.122: MIT
+ok        certifi 2026.10.19: MPL-2.0; Mozilla Public License 2.0 (MPL 2.0)
+ok        cffi 2.1.1: MIT-0
+ok        charset-normalizer 3.5.2: MIT
+ok        click 8.5.1: BSD-3-Clause
+UNCHECKED colorama 0.4.6: not installed here (sys_platform == 'win32'); licence entered by hand
+ok        cryptography 50.0.2: Apache-2.0 OR BSD-3-Clause
+ok        deptry 0.25.1: MIT
+ok        docstring-parser 0.18.0: MIT; MIT License
+ok        google-api-core 2.43.0: Apache 2.0; Apache Software License
+after the plant: exit 1

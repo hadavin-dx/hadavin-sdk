@@ -1,0 +1,101 @@
+licence scan, 2026-11-09T06:51Z, head 2905c1d
+$ uv export --locked --all-extras --group test --group lint --no-hashes --no-emit-project > locked.txt
+export exit 0
+$ python tools/licence_check.py locked.txt tools/licence_exceptions.txt
+ok        annotated-types 0.8.0: MIT; MIT License
+ok        anthropic 2.1.0: Apache-2.0; Apache Software License
+ok        anyio 4.15.1: MIT
+ok        ast-serialize 0.13.1: MIT
+ok        azure-core 1.41.0: MIT
+ok        azure-identity 1.26.0: MIT
+ok        azure-keyvault-keys 4.11.3: MIT
+ok        azure-keyvault-secrets 4.12.0: MIT License; MIT License
+ok        azure-storage-blob 12.31.0: MIT License; MIT License
+ok        boto3 1.43.122: Apache-2.0
+ok        boto3-stubs 1.43.122: MIT
+ok        botocore 1.43.122: Apache-2.0
+ok        botocore-stubs 1.43.122: MIT
+ok        certifi 2026.10.19: MPL-2.0; Mozilla Public License 2.0 (MPL 2.0)
+ok        cffi 2.1.1: MIT-0
+ok        charset-normalizer 3.5.2: MIT
+ok        click 8.5.1: BSD-3-Clause
+UNCHECKED colorama 0.4.6: not installed here (sys_platform == 'win32'); licence entered by hand
+ok        cryptography 50.0.2: Apache-2.0 OR BSD-3-Clause
+ok        deptry 0.25.1: MIT
+ok        docstring-parser 0.18.0: MIT; MIT License
+ok        google-api-core 2.43.0: Apache 2.0; Apache Software License
+ok        google-auth 2.62.0: Apache 2.0; Apache Software License
+ok        google-cloud-core 2.8.0: Apache 2.0; Apache Software License
+ok        google-cloud-kms 3.18.0: Apache-2.0; Apache Software License
+ok        google-cloud-secret-manager 2.31.0: Apache-2.0; Apache Software License
+ok        google-cloud-storage 3.17.1: Apache-2.0; Apache Software License
+ok        google-crc32c 1.9.0: Apache-2.0
+ok        google-resumable-media 2.11.0: Apache 2.0; Apache Software License
+ok        googleapis-common-protos 1.76.0: Apache-2.0
+ok        grimp 3.19: BSD 2-Clause License; BSD License
+ok        grpc-google-iam-v1 0.14.6: Apache 2.0; Apache Software License
+ok        grpcio 1.84.1: Apache-2.0
+ok        grpcio-status 1.84.1: Apache-2.0
+ok        h11 0.16.0: MIT; MIT License
+ok        httpcore2 2.16.0: BSD-3-Clause; BSD License
+ok        httpx2 2.16.0: BSD-3-Clause; BSD License
+UNCHECKED httpx2-jsfetch 1.0: not installed here (sys_platform == 'emscripten'); licence entered by hand
+ok        idna 3.20: BSD-3-Clause
+ok        import-linter 2.15: BSD 2-Clause License; BSD License
+ok        iniconfig 2.3.1: MIT
+ok        isodate 0.7.2: Copyright (c) 2021, Hugo van Kemenade and contributors; BSD License
+ok        jiter 0.18.0: MIT
+ok        jmespath 1.1.0: MIT; MIT License
+ok        librt 0.16.0: MIT
+ok        markdown-it-py 4.2.0: MIT License
+ok        markupsafe 3.0.4: BSD-3-Clause
+ok        mdurl 0.1.2: MIT License
+ok        moto 5.2.5: Apache-2.0
+ok        msal 1.39.0: MIT; MIT License
+ok        msal-extensions 1.3.1: MIT License; MIT License
+ok        mypy 2.4.1: MIT
+ok        mypy-extensions 1.2.0: MIT
+ok        opentelemetry-api 1.45.2: Apache-2.0
+ok        packaging 26.3: Apache-2.0 OR BSD-2-Clause
+ok        pathspec 1.1.1: Mozilla Public License 2.0 (MPL 2.0)
+ALLOWED   pglast 8.7: GPL-3.0-or-later
+ok        pluggy 1.7.0: MIT; MIT License
+ok        proto-plus 1.29.0: Apache 2.0; Apache Software License
+ok        protobuf 7.36.2: 3-Clause BSD License
+ALLOWED   psycopg 3.3.6: LGPL-3.0-only
+ALLOWED   psycopg-binary 3.3.6: LGPL-3.0-only
+ok        py-partiql-parser 0.6.3: MIT
+ok        pyasn1 0.6.5: BSD-2-Clause
+ok        pyasn1-modules 0.4.2: BSD; BSD License
+ok        pycparser 3.12: BSD-3-Clause
+ok        pydantic 2.14.1: MIT
+ok        pydantic-core 2.50.1: MIT
+ok        pydantic-settings 2.16.1: MIT; MIT License
+ok        pygments 2.21.0: BSD-2-Clause
+ok        pyjwt 2.15.1: MIT
+ok        pytest 9.2.0: MIT
+ok        python-dateutil 2.9.0.post0: Dual License; BSD License; Apache Software License
+ok        python-dotenv 1.2.4: BSD-3-Clause
+ok        pyyaml 6.0.3: MIT; MIT License
+ok        requests 2.34.2: Apache-2.0; Apache Software License
+ok        requirements-parser 0.13.1: Apache-2.0; Apache Software License
+ok        responses 0.26.3: Apache-2.0
+ok        rich 15.0.0: MIT; MIT License
+ok        ruff 0.17.1: MIT
+ok        s3transfer 0.19.3: Apache License 2.0; Apache Software License
+ok        six 1.17.0: MIT; MIT License
+ok        sniffio 1.3.1: MIT OR Apache-2.0; MIT License; Apache Software License
+ok        sqlglot 30.26.0: MIT
+ok        tomli 2.4.1: MIT
+ok        truststore 0.10.5: MIT
+ok        types-pyyaml 6.0.12.20261030: Apache-2.0
+ok        types-s3transfer 0.19.3: MIT
+ok        typing-extensions 4.16.0: PSF-2.0
+ok        typing-inspection 0.4.4: MIT
+UNCHECKED tzdata 2026.6: not installed here (sys_platform == 'win32'); licence entered by hand
+ok        urllib3 2.8.0: MIT
+ok        vulture 2.16: The MIT License (MIT); MIT License
+ok        werkzeug 3.1.9: BSD-3-Clause
+ok        xmltodict 1.0.4: MIT
+92 packages read, 6 exceptions used, 0 problems
+exit 0
