@@ -1,0 +1,83 @@
+guard file: /home/user/build/EV-Q8a2-5f94f59/tests/test_lockin_guard.py
+hadavin_sdk: /home/user/build/EV-Q8a2-5f94f59/src/hadavin_sdk/__init__.py
+SRC scanned: /home/user/build/EV-Q8a2-5f94f59/src
+literal_problems(SRC, VENDOR_MODULES, LITERAL_OK) -> 0 line(s): []
+identifier_problems(SRC, VENDOR_MODULES, IDENTIFIER_OK, TABLE_VENDOR_NAMES) -> 0 line(s): []
+VENDOR_WORDS: ('slack', 'teams', 'aws', 'azure', 'gcp', 'github', 'gitlab', 'bedrock', 'anthropic', 'vertex', 'gemini', 'openai', 'kms', 's3', 'foundry', 'google', 'gcs', 'gcloud', 'amazon', 'microsoft', 'alibaba', 'oracle', 'digitalocean', 'openstack', 'cloudwatch', 'pagerduty')
+TABLE_VENDOR_NAMES: ['AnthropicSettings', 'AwsKmsSettings', 'AwsSecretsManagerSettings', 'AzureImmutableBlobSettings', 'AzureKeyVaultKeySettings', 'AzureKeyVaultSettings', 'BedrockSettings', 'GcpKmsSettings', 'GcpSecretManagerSettings', 'GeminiSettings', 'S3ObjectLockSettings', 'SlackSettings', '_anthropic_hosts', '_aws', '_aws_host', '_s3_anchor_hosts', '_vertex_host']
+
+== every LITERAL_OK entry removed in turn (all entries, also those older than this branch)
+removed ('hadavin_sdk.approvals.gate', 'aws') ->
+    hadavin_sdk.approvals.gate:540: bare vendor name in 'aws'
+    hadavin_sdk.approvals.gate:595: bare vendor name in 'aws'
+removed ('hadavin_sdk.approvals.gate', 's3') ->
+    hadavin_sdk.approvals.gate:597: bare vendor name in 's3'
+removed ('hadavin_sdk.config', 'slack') ->
+    hadavin_sdk.config:98: bare vendor name in 'slack'
+removed ('hadavin_sdk.llm.openai_compat', '^(?:gpt-[\\w.-]+|o\\d[\\w.-]*|chatgpt-[\\w.-]+)$') ->
+    hadavin_sdk.llm.openai_compat:35: model id in '^(?:gpt-[\\w.-]+|o\\d[\\w.-]*|chatgpt-[\\w.-]+)$'
+removed ('hadavin_sdk.guard.producers', 'guard/bedrock_guardrail.py') ->
+    hadavin_sdk.guard.producers:29: vendor word in a path or key in 'guard/bedrock_guardrail.py'
+    hadavin_sdk.guard.producers:60: vendor word in a path or key in 'guard/bedrock_guardrail.py'
+removed ('hadavin_sdk.llm.openai_compat', 'openai_compat') ->
+    hadavin_sdk.llm.openai_compat:75: vendor word in a path or key in 'openai_compat'
+removed ('hadavin_sdk.approvals.gate', 'gcloud') ->
+    hadavin_sdk.approvals.gate:464: bare vendor name in 'gcloud'
+removed ('hadavin_sdk.tools', 'metadata.google.internal') ->
+    hadavin_sdk.tools:142: vendor word in a path or key in 'metadata.google.internal'
+removed ('hadavin_sdk.tools', '.metadata.google.internal') ->
+    hadavin_sdk.tools:170: vendor word in a path or key in '.metadata.google.internal'
+removed ('hadavin_sdk.backends.table', 'gcs_retention_lock') ->
+    hadavin_sdk.backends.table:188: vendor word in a path or key in 'gcs_retention_lock'
+
+== every IDENTIFIER_OK entry removed in turn
+removed ('hadavin_sdk.approvals.gate', '_AWS_READ_PREFIXES') ->
+    hadavin_sdk.approvals.gate:404: vendor word 'aws' in the name '_AWS_READ_PREFIXES'
+removed ('hadavin_sdk.backends.table', 'OpenAICompatSettings') ->
+    hadavin_sdk.backends.table:71: vendor word 'openai' in the name 'OpenAICompatSettings'
+removed ('hadavin_sdk.backends.table', 'GcsRetentionLockSettings') ->
+    hadavin_sdk.backends.table:185: vendor word 'gcs' in the name 'GcsRetentionLockSettings'
+removed ('hadavin_sdk.llm.openai_compat', 'OpenAICompatLLM') ->
+    hadavin_sdk.llm.openai_compat:74: vendor word 'openai' in the name 'OpenAICompatLLM'
+removed ('hadavin_sdk.llm.openai_compat', 'module:openai_compat') ->
+    hadavin_sdk.llm.openai_compat:1: vendor word 'openai' in the name 'openai_compat'
+removed ('hadavin_sdk.store.postgres', 'auth_aws') ->
+    hadavin_sdk.store.postgres:115: vendor word 'aws' in the name 'auth_aws'
+
+== every TABLE_VENDOR_NAMES name removed in turn
+removed 'AnthropicSettings' ->
+    hadavin_sdk.backends.table:43: vendor word 'anthropic' in the name 'AnthropicSettings'
+removed 'AwsKmsSettings' ->
+    hadavin_sdk.backends.table:228: vendor word 'aws' in the name 'AwsKmsSettings'
+    hadavin_sdk.backends.table:228: vendor word 'kms' in the name 'AwsKmsSettings'
+removed 'AwsSecretsManagerSettings' ->
+    hadavin_sdk.backends.table:145: vendor word 'aws' in the name 'AwsSecretsManagerSettings'
+removed 'AzureImmutableBlobSettings' ->
+    hadavin_sdk.backends.table:177: vendor word 'azure' in the name 'AzureImmutableBlobSettings'
+removed 'AzureKeyVaultKeySettings' ->
+    hadavin_sdk.backends.table:233: vendor word 'azure' in the name 'AzureKeyVaultKeySettings'
+removed 'AzureKeyVaultSettings' ->
+    hadavin_sdk.backends.table:305: vendor word 'azure' in the name 'AzureKeyVaultSettings'
+removed 'BedrockSettings' ->
+    hadavin_sdk.backends.table:64: vendor word 'bedrock' in the name 'BedrockSettings'
+removed 'GcpKmsSettings' ->
+    hadavin_sdk.backends.table:238: vendor word 'gcp' in the name 'GcpKmsSettings'
+    hadavin_sdk.backends.table:238: vendor word 'kms' in the name 'GcpKmsSettings'
+removed 'GcpSecretManagerSettings' ->
+    hadavin_sdk.backends.table:310: vendor word 'gcp' in the name 'GcpSecretManagerSettings'
+removed 'GeminiSettings' ->
+    hadavin_sdk.backends.table:88: vendor word 'gemini' in the name 'GeminiSettings'
+removed 'S3ObjectLockSettings' ->
+    hadavin_sdk.backends.table:159: vendor word 's3' in the name 'S3ObjectLockSettings'
+removed 'SlackSettings' ->
+    hadavin_sdk.backends.table:320: vendor word 'slack' in the name 'SlackSettings'
+removed '_anthropic_hosts' ->
+    hadavin_sdk.backends.table:365: vendor word 'anthropic' in the name '_anthropic_hosts'
+removed '_aws' ->
+    hadavin_sdk.backends.table:352: vendor word 'aws' in the name '_aws'
+removed '_aws_host' ->
+    hadavin_sdk.backends.table:347: vendor word 'aws' in the name '_aws_host'
+removed '_s3_anchor_hosts' ->
+    hadavin_sdk.backends.table:373: vendor word 's3' in the name '_s3_anchor_hosts'
+removed '_vertex_host' ->
+    hadavin_sdk.backends.table:356: vendor word 'vertex' in the name '_vertex_host'

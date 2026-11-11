@@ -1,0 +1,68 @@
+hadavin_sdk imported from: /home/user/build/EV-Q8a2-5f94f59/src/hadavin_sdk/__init__.py
+
+== kind fake: class FakeChannel, name 'fake', right path '/channel/actions' from channel.callback_path, signature header prefix 'X-Hadavin', listening 127.0.0.1:35569 (port 0 asked)
+   -- bad signature (well-formed headers signed with a wrong secret), 9-byte body
+   right path: b'POST /channel/actions HTTP/1.1' -> HTTP/1.0 401 Unauthorized
+   two slashes in front: b'POST //channel/actions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   three slashes in front: b'POST ///channel/actions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   trailing slash: b'POST /channel/actions/ HTTP/1.1' -> HTTP/1.0 404 Not Found
+   query: b'POST /channel/actions?x=1 HTTP/1.1' -> HTTP/1.0 404 Not Found
+   fragment: b'POST /channel/actions#f HTTP/1.1' -> HTTP/1.0 404 Not Found
+   upper case: b'POST /CHANNEL/ACTIONS HTTP/1.1' -> HTTP/1.0 404 Not Found
+   percent-encoded letter: b'POST /channel/%61ctions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   dot-dot segment: b'POST /channel/../channel/actions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   absolute form, loopback host: b'POST http://127.0.0.1/channel/actions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   absolute form, other host, two slashes: b'POST http://evil.example//channel/actions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   asterisk: b'POST * HTTP/1.1' -> HTTP/1.0 404 Not Found
+   empty target (two spaces): b'POST  HTTP/1.1' -> HTTP/1.0 400 Bad HTTP/0.9 request type ('POST')
+   trailing space and extra token: b'POST /channel/actions x HTTP/1.1' -> HTTP/1.0 400 Bad request syntax ('POST /channel/actions x HTTP/1.1')
+   target of 70 characters: b'POST /aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa HTTP/1.1' -> HTTP/1.0 404 Not Found
+   target of 9000 characters: b'POST /aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'...b'aaa HTTP/1.1' (request line of 9014 bytes) -> HTTP/1.0 404 Not Found
+   NUL byte inside the right path: b'POST /cha\x00nnel/actions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   NUL byte after the right path: b'POST /channel/actions\x00 HTTP/1.1' -> HTTP/1.0 404 Not Found
+   tab between method and target: b'POST\t/channel/actions HTTP/1.1' -> HTTP/1.0 401 Unauthorized
+   tab between target and version: b'POST /channel/actions\tHTTP/1.1' -> HTTP/1.0 401 Unauthorized
+   -- to the right path
+   correctly signed approval body (built as tests/test_p7_tick.py::_callback does; made-up approval id; the store is None as in tests/test_q8a2_callback.py) -> connection closed / no status (0 bytes received)
+   body of 2097152 bytes (2 MB), bad signature, Content-Length 2097152 -> HTTP/1.0 413 Content Too Large
+   Content-Length 5 with a 9-byte body, bad signature -> HTTP/1.0 401 Unauthorized
+   Content-Length 100 with a 9-byte body, bad signature, client timeout 3 s -> connection closed / no status (0 bytes received) [recv: TimeoutError after 3s timeout] (client waited 3.0s)
+   GET /channel/actions (no body) -> HTTP/1.0 501 Unsupported method ('GET')
+   HEAD /channel/actions (no body) -> HTTP/1.0 501 Unsupported method ('HEAD')
+   PUT /channel/actions (no body) -> HTTP/1.0 501 Unsupported method ('PUT')
+   server closed; server thread alive after join: False
+
+== kind slack: class SlackChannel, name 'slack', right path '/slack/actions' from channel.callback_path, signature header prefix 'X-Slack', listening 127.0.0.1:39607 (port 0 asked)
+   -- bad signature (well-formed headers signed with a wrong secret), 9-byte body
+   right path: b'POST /slack/actions HTTP/1.1' -> HTTP/1.0 401 Unauthorized
+   two slashes in front: b'POST //slack/actions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   three slashes in front: b'POST ///slack/actions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   trailing slash: b'POST /slack/actions/ HTTP/1.1' -> HTTP/1.0 404 Not Found
+   query: b'POST /slack/actions?x=1 HTTP/1.1' -> HTTP/1.0 404 Not Found
+   fragment: b'POST /slack/actions#f HTTP/1.1' -> HTTP/1.0 404 Not Found
+   upper case: b'POST /SLACK/ACTIONS HTTP/1.1' -> HTTP/1.0 404 Not Found
+   percent-encoded letter: b'POST /slack/%61ctions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   dot-dot segment: b'POST /slack/../slack/actions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   absolute form, loopback host: b'POST http://127.0.0.1/slack/actions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   absolute form, other host, two slashes: b'POST http://evil.example//slack/actions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   asterisk: b'POST * HTTP/1.1' -> HTTP/1.0 404 Not Found
+   empty target (two spaces): b'POST  HTTP/1.1' -> HTTP/1.0 400 Bad HTTP/0.9 request type ('POST')
+   trailing space and extra token: b'POST /slack/actions x HTTP/1.1' -> HTTP/1.0 400 Bad request syntax ('POST /slack/actions x HTTP/1.1')
+   target of 70 characters: b'POST /aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa HTTP/1.1' -> HTTP/1.0 404 Not Found
+   target of 9000 characters: b'POST /aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'...b'aaa HTTP/1.1' (request line of 9014 bytes) -> HTTP/1.0 404 Not Found
+   NUL byte inside the right path: b'POST /sla\x00ck/actions HTTP/1.1' -> HTTP/1.0 404 Not Found
+   NUL byte after the right path: b'POST /slack/actions\x00 HTTP/1.1' -> HTTP/1.0 404 Not Found
+   tab between method and target: b'POST\t/slack/actions HTTP/1.1' -> HTTP/1.0 401 Unauthorized
+   tab between target and version: b'POST /slack/actions\tHTTP/1.1' -> HTTP/1.0 401 Unauthorized
+   -- to the right path
+   correctly signed approval body (built as tests/test_p7_tick.py::_callback does; made-up approval id; the store is None as in tests/test_q8a2_callback.py) -> connection closed / no status (0 bytes received)
+   body of 2097152 bytes (2 MB), bad signature, Content-Length 2097152 -> HTTP/1.0 413 Content Too Large
+   Content-Length 5 with a 9-byte body, bad signature -> HTTP/1.0 401 Unauthorized
+   Content-Length 100 with a 9-byte body, bad signature, client timeout 3 s -> connection closed / no status (0 bytes received) [recv: TimeoutError after 3s timeout] (client waited 3.0s)
+   GET /slack/actions (no body) -> HTTP/1.0 501 Unsupported method ('GET')
+   HEAD /slack/actions (no body) -> HTTP/1.0 501 Unsupported method ('HEAD')
+   PUT /slack/actions (no body) -> HTTP/1.0 501 Unsupported method ('PUT')
+   server closed; server thread alive after join: False
+
+connections to a non-loopback address attempted during the probes: 0 []
+threads still alive at the end: ['MainThread']
