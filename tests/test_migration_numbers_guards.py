@@ -1,4 +1,4 @@
-"""P3a-1 fix 1: tests for the findings of review round 1 on PR 68 (hidden characters, the dollar rule, a lexer that
+"""Tests for the findings of the first review of the lexer change (hidden characters, the dollar rule, a lexer that
 fails closed, plain-words messages, the lock key, a refusal list that covers more, the released-file manifest) and the
 differential test against the PostgreSQL scanner (pglast, test-only: GPL-3.0, never imported by the product)."""
 
@@ -17,11 +17,15 @@ from pathlib import Path
 
 import pytest
 
+import hadavin_sdk.store.migration_numbers as mn_module
+from tests.fixtures.dsn_skip import require_test_module
 from tests.fixtures.seeded import Seeded
 
 SEED = 20261106
 CASES = 30000
-MANIFEST = Path(__file__).parent / "fixtures" / "migrations_released.json"
+MANIFEST = (
+    mn_module.RELEASED_MANIFEST
+)  # the one list, the path `migrate()` reads (not a second copy of it)
 
 
 @pytest.fixture
@@ -141,16 +145,16 @@ def test_checked_statement_text_raises_instead_of_returning_a_cut_text(mn):
     assert mn.checked_statement_text("SELECT 'a' /* c */;", keep_quoted=True) == "SELECT 'a'  ;"
 
 
-def test_statement_text_called_the_ticket_way_returns_the_pair(mn):
-    """Ticket P3a: `statement_text(text, keep_quoted=False) -> tuple[str, str]`. P3a-2 builds `_scan` from the ticket,
-    so these are the calls it will write. A function that returned a bare `str` would make `[0]` one character and
+def test_statement_text_called_with_a_plain_text_returns_the_pair(mn):
+    """`statement_text(text, keep_quoted=False) -> tuple[str, str]`. `migrate` builds `_scan` from it,
+    so these are the calls it writes. A function that returned a bare `str` would make `[0]` one character and
     the unpacking either fail or split a two-character text: both are tested."""
     sql = "SELECT 'a' /* c */;"
     cleaned, problem = mn.statement_text(sql)
     assert (cleaned, problem) == ("SELECT ''  ;", "")
     kept, problem = mn.statement_text(
         sql, True
-    )  # keep_quoted by position, as the ticket's `_scan` call
+    )  # keep_quoted by position, as the agreed `_scan` call
     assert (kept, problem) == ("SELECT 'a'  ;", "")
     result = mn.statement_text(sql, keep_quoted=True)
     assert isinstance(result, tuple) and len(result) == 2
@@ -231,22 +235,17 @@ def _imports_from_numbers(path: Path, name: str) -> bool:
 
 
 def test_the_lock_key_and_the_folder_are_the_ones_migrate_uses(mn):
-    """`migrate.py` keeps its own copies of the lock key (`_LOCK`) and the folder (`MIGRATIONS`) until P3a-2 makes it
-    import them from this module. Until then this test reads that file as text (no import, so no psycopg) and requires
-    the SAME expression for each. After P3a-2, `migrate.py` imports the name from here and the test accepts that."""
+    """`migrate.py` imports the lock key and the folder from this module (read as text, no import, so no psycopg) and
+    has no second copy of either: a second `_LOCK` or `MIGRATIONS` assignment there would let the two drift apart."""
     here = Path(mn.__file__)
     other = here.with_name("migrate.py")
     assert other.is_file()
-    lock_here = ast.dump(_assigned(here, "MIGRATE_LOCK"))
-    lock_there = _assigned(other, "_LOCK")
-    assert lock_there is not None or _imports_from_numbers(other, "MIGRATE_LOCK")
-    if lock_there is not None:
-        assert ast.dump(lock_there) == lock_here
-    folder_there = _assigned(other, "MIGRATIONS")
-    assert folder_there is not None or _imports_from_numbers(other, "MIGRATIONS")
-    if folder_there is not None:
-        assert ast.dump(folder_there) == ast.dump(_assigned(here, "MIGRATIONS"))
-    # the value itself, computed here from the same bytes: a change of the expression in both files is still caught
+    assert _imports_from_numbers(other, "MIGRATE_LOCK")
+    assert _assigned(other, "_LOCK") is None
+    assert _assigned(other, "MIGRATE_LOCK") is None
+    assert _imports_from_numbers(other, "MIGRATIONS")
+    assert _assigned(other, "MIGRATIONS") is None
+    # the value itself, computed here from the same bytes: a change of the expression is still caught
     assert mn.MIGRATE_LOCK == int.from_bytes(b"hadvnmig", "big") >> 1
     assert isinstance(mn.MIGRATE_LOCK, int)
     assert mn.MIGRATIONS == here.parent / "migrations" == other.parent / "migrations"
@@ -360,7 +359,34 @@ def _sha(path: Path) -> str:
 def test_the_real_folder_matches_the_released_manifest(mn):
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     assert mn.released_problems(mn.MIGRATIONS, manifest) == []
-    assert len(manifest) == 5
+    assert len(manifest) >= len(FIRST_FIVE), "a release adds rows after the first five; none may go"
+    assert list(manifest)[: len(FIRST_FIVE)] == list(FIRST_FIVE), "the first five stay, in order"
+
+
+# The SHA-256 of the five files that were on main when the list was made, typed here by hand from
+# `git show origin/main:<file> | sha256sum`, on purpose NOT read from the json: a person who edits a released file AND
+# recomputes the json must also edit this table, in plain sight of a reviewer. Rows are added after these, never changed.
+FIRST_FIVE = {
+    "0001_core": "d60b37ba5f929c7ae888f53920bd58c6c823b27a80d7ca82074aefdb42832374",
+    "0002_audit_chain": "17325ed9f0a67cb276132d5cc0a42c6997d1191123122ba13491dd0413ac8dc3",
+    "0003_approvals_tick": "f3e2a56cc11ee1b3c009f08dcd1aafc5bb52711dbd28368ad56ac8d06a2fe346",
+    "0004_audit_checkpoint_meta": "1e0a67c9a9d22245dbeb54c65ff6b31e6392927f64c41deb955018595aef76a7",
+    "0005_evidence": "d8a714926a61bc1a6ec45137a9563df20ca44a796f63f01f99d2028d87558ad9",
+}
+
+
+def test_the_first_five_released_files_have_the_pinned_hashes(mn):
+    """The hashes of the first five released files are typed in this test, not read from the list."""
+    for stem, digest in FIRST_FIVE.items():
+        assert _sha(mn.MIGRATIONS / f"{stem}.sql") == digest, f"{stem}.sql was edited"
+
+
+def test_the_released_json_keeps_the_first_five_hashes_and_is_well_formed(mn):
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    for stem, digest in FIRST_FIVE.items():
+        assert manifest.get(stem) == digest, f"{stem}: the json row was changed"
+    for stem, digest in manifest.items():
+        assert re.fullmatch(r"[0-9a-f]{64}", digest), f"{stem}: not 64 lower-case hex digits"
 
 
 def test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number(mn, tmp_path):
@@ -473,7 +499,7 @@ def _differential(mn, pieces, cases, longest):
 
 
 def test_lexer_agrees_with_the_postgresql_scanner_on_statement_starts(mn):
-    pytest.importorskip("pglast")
+    require_test_module("pglast")
     agreed, refused_by_us, server_refused = _differential(mn, PIECES, CASES, 12)
     assert agreed > CASES // 4, (agreed, refused_by_us, server_refused)
     agreed2, _, _ = _differential(mn, ALPHABET, CASES, 30)
@@ -497,7 +523,7 @@ def test_lexer_agrees_with_the_postgresql_scanner_on_statement_starts(mn):
     ],
 )
 def test_probe_cases_agree_with_the_scanner(mn, sql):
-    pytest.importorskip("pglast")
+    require_test_module("pglast")
     theirs = _server_statement_starts(sql)
     ours = _our_statement_starts(mn, sql)
     assert theirs is not None
@@ -560,3 +586,36 @@ def test_every_mutant_still_applies_to_the_source():
         test_path, _, test_id = m.pinned.partition("::")
         function = test_id.split("[")[0]
         assert f"def {function}(" in (ROOT / f"{test_path}.py").read_text(encoding="utf-8"), m.name
+
+
+def test_released_problems_hashes_the_text_that_is_executed_not_a_second_read(mn, tmp_path):
+    """with `texts`, the hash is of `texts[p]`. A file changed on disk after `read_files` is not the text that
+    runs, so a changed disk copy must not fail the check and a changed text must."""
+    f = tmp_path / "0001_a.sql"
+    f.write_bytes(b"SELECT 1;\r\nSELECT 2;\n")
+    texts = mn.read_files([f])
+    good = {"0001_a": hashlib.sha256(texts[f].encode("utf-8")).hexdigest()}
+    assert mn.released_problems(tmp_path, good, texts) == []
+    f.write_bytes(b"SELECT 99;\n")  # edited on disk after the one read
+    assert mn.released_problems(tmp_path, good, texts) == []  # the executed text is what counts
+    assert mn.released_problems(tmp_path, good) == ["0001_a: a released file was changed"]
+    assert mn.released_problems(tmp_path, good, {f: "SELECT 100;\n"}) == [
+        "0001_a: a released file was changed"
+    ]
+
+
+def test_a_lone_carriage_return_hashes_like_the_text_that_runs(mn, tmp_path):
+    f = tmp_path / "0001_a.sql"
+    f.write_bytes(b"SELECT 1;\rSELECT 2;\r\nSELECT 3;\n")
+    good = {"0001_a": hashlib.sha256(mn.read_files([f])[f].encode("utf-8")).hexdigest()}
+    assert mn.released_problems(tmp_path, good) == []
+    assert mn.released_problems(tmp_path, good, mn.read_files([f])) == []
+
+
+def test_a_missing_test_only_module_is_a_failure_in_ci_and_a_skip_elsewhere():
+    """A test-only module that is missing fails the CI run and only skips a run on a laptop."""
+    with pytest.raises(pytest.fail.Exception, match="CI is set"):
+        require_test_module("no_such_module_xyz", {"CI": "true"})
+    with pytest.raises(pytest.skip.Exception, match="not installed"):
+        require_test_module("no_such_module_xyz", {})
+    assert require_test_module("json", {"CI": "true"}) is json
