@@ -59,8 +59,8 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
 - ``conftest="tests/conftest.py"``: a file of the tree (copied like a test file) that every pytest run loads as a plugin (``-p``), named
   by a path of plain ASCII identifier parts (no part a Python keyword, so ``class/conftest.py`` is refused) that ends in ``.py`` and is either called ``conftest.py`` or lies in a folder called ``tests``
   (any other tree file, such as ``src/pk/core.py``, is refused). It replaces ``--noconftest`` for that one file only; no other conftest is read.
-- ``pass_env=("HADAVIN_TEST_PG_DSN",)``: names of environment variables of the caller that the pytest process (the child) also gets, in the
-  baseline run, every mutant run and every canary run. Words used below: a *passed variable* is a variable whose name is listed here; its
+- ``pass_env=("HADAVIN_TEST_PG_DSN",)``: names of environment variables of the caller that the pytest process (the child) also gets. It gets
+  them in the baseline run (the first run, on the unmutated copy), in every mutant run and in every canary run. Words used below: a *passed variable* is a variable whose name is listed here; its
   *address* is the whole value of that variable; a *replacement text* is a fixed text the runner shows in place of text that came from the child.
 
   Only one name is accepted today (the address of the test database); any other name is a ``ValueError`` before anything runs. The runner checks
