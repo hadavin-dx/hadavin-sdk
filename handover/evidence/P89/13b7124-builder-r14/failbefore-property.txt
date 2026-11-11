@@ -1,0 +1,7 @@
+E           AssertionError: a lock name input was not the expected one
+E                   AssertionError: a password changed the name to something that is neither
+E           AssertionError: a password reached the lock name
+FAILED tests/test_mutation_runner_keywords.py::test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed
+FAILED tests/test_mutation_runner_keywords.py::test_property_the_lock_name_holds_no_byte_of_a_password_and_calm_passwords_give_one_name
+FAILED tests/test_mutation_runner_keywords.py::test_the_two_values_the_review_found_no_longer_leak_into_the_lock_name
+3 failed, 1 passed, 126 deselected in 0.41s

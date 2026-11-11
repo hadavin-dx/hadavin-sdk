@@ -1,0 +1,7 @@
+I5 the dots limit is off (a hostile line is scanned)
+replaced: '    if len(dots) > MAX_FRAGMENT_HITS:'
+by: '    if False:'
+summary: FAILED tests/test_mutation_runner_keywords.py::test_a_line_with_a_hostile_number_of_dots_is_replaced_fast
+exit=1
+FAILED kept tests:
+test_a_line_with_a_hostile_number_of_dots_is_replaced_fast
