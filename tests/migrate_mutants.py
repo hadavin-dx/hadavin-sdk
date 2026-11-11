@@ -2120,7 +2120,7 @@ M: list[Mutant] = [
         '"AND p.proowner <> @ME@ AND p.oid <> ALL(%(kept)s::oid[]) AND "',
         '"AND false AND "',
         k(T_PG, "test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind")
-        + "[function]",
+        + "[function-function]",
     ),
     Mutant(
         "OW6",
@@ -2130,9 +2130,9 @@ M: list[Mutant] = [
         "\"AND c.relowner <> @ME@ AND c.relkind IN ('r', 'p') AND c.oid <> ALL(%(kept)s::oid[]) AND \"",
         (
             k(T_PG, "test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind")
-            + "[sequence]",
+            + "[sequence-table or sequence]",
             k(T_PG, "test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind")
-            + "[view]",
+            + "[view-table or sequence]",
         ),
     ),
     Mutant(
