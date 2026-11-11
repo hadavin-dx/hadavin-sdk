@@ -1,0 +1,16 @@
+### tests/test_migration_postgres.py::test_a_superuser_among_the_named_roles_does_not_widen_the_read_back rc=1
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_a_superuser_among_the_named_roles_does_not_widen_the_read_back[members] _
+tests/test_migration_postgres.py:2311: in test_a_superuser_among_the_named_roles_does_not_widen_the_read_back
+    assert x not in text and y not in text, rows
+E   AssertionError: [('pg_read_all_settings', 'pg_monitor', '{"grantor": "10", "set_option": true, "admin_option": false, "inherit_option"...5fef', 'hadavin_test_migrator', '{"grantor": "10", "set_option": true, "admin_option": true, "inherit_option": true}')]
+E   assert ('hadavin_test_ux_1b25e944' not in 'pg_read_all...tion": true}'
+E     
+E     'hadavin_test_ux_1b25e944' is contained here:
+E       n": true} hadavin_test_ux_1b25e944 hadavin_test_uy_6ed6963d {"grantor": "10", "set_option": true, "admin_option": false, "inherit_option": true} hadavin_test_fo_39cf5fef hadavin_test_migrator {"grantor": "10", "set_option": true, "admin_option": true, "inherit_option": true}
+E     ?           ++++++++++++++++++++++++)
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_superuser_among_the_named_roles_does_not_widen_the_read_back[members]
+1 failed, 1 passed in 0.55s
+

@@ -1,0 +1,9 @@
+head=d1dff3adb6f10f1a05ce424116275a6cc39ca69a python=Python 3.13.18 postgres=16.15
+$ ruff check src tests
+All checks passed!
+exit=0
+$ ruff format --check
+330 files already formatted
+exit=0
+$ bandit -ll -r src -q
+exit=0

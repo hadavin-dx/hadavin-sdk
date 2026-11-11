@@ -1,0 +1,14 @@
+### tests/test_migration_wiring.py::test_the_named_roles_are_checked_against_each_other_after_every_file rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_the_named_roles_are_checked_against_each_other_after_every_file _____
+tests/test_migration_wiring.py:1547: in test_the_named_roles_are_checked_against_each_other_after_every_file
+    with pytest.raises(ConfigError, match=r"migration 0001_f1\.sql left the roles changed") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'migration 0001_f1\\.sql left the roles changed'
+E     Actual message: 'the runtime, portal and purge roles must not be members of each other'
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_named_roles_are_checked_against_each_other_after_every_file
+1 failed in 0.39s
+

@@ -1,0 +1,16 @@
+### tests/test_migration_postgres.py::test_h11_a_listed_trigger_change_passes_for_that_file_and_trigger_only rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_h11_a_listed_trigger_change_passes_for_that_file_and_trigger_only ____
+tests/test_migration_postgres.py:329: in test_h11_a_listed_trigger_change_passes_for_that_file_and_trigger_only
+    assert mig.migrate(dsn) == ["0006_listed"]
+           ^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:1041: in migrate
+    saved = _check_read_back(
+src/hadavin_sdk/store/migrate.py:903: in _check_read_back
+    raise ConfigError(f"migration {escape_name(file_name)} " + ". It also ".join(parts))
+E   hadavin_sdk.errors.ConfigError: migration 0006_listed.sql changed a trigger: trigger hadavin_test_57088aee9a71.audit_entries.audit_entries_no_truncate changed: definition. A trigger change is refused unless this file, this table and this trigger are named, with a reason, in migrations_trigger_changes.json next to the released-files list (a reviewed change of the package)
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_h11_a_listed_trigger_change_passes_for_that_file_and_trigger_only
+1 failed in 0.63s
+

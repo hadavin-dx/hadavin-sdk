@@ -1,0 +1,31 @@
+### tests/test_migration_postgres.py::test_a_superuser_login_that_switches_to_a_plain_role_is_refused rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_a_superuser_login_that_switches_to_a_plain_role_is_refused ________
+tests/test_migration_postgres.py:1532: in test_a_superuser_login_that_switches_to_a_plain_role_is_refused
+    with pytest.raises(ConfigError, match="must not be a superuser"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'must not be a superuser'
+E     Actual message: 'the migration role is a member of a role that is a superuser, holds CREATEROLE, CREATEDB or BYPASSRLS, or is a built-in server role (pg_checkpoint, pg_create_subscription, pg_execute_server_program, pg_monitor, pg_read_all_data, pg_read_all_settings, pg_read_all_stats, pg_read_server_files, pg_signal_backend, pg_stat_scan_tables, pg_use_reserved_connections, pg_write_all_data, pg_write_server_files), so it could use those rights. Remove the membership (REVOKE <that role> FROM <the migration role>) or run migrate with a plain role that is a member of none of them.'
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_superuser_login_that_switches_to_a_plain_role_is_refused
+1 failed in 0.49s
+
+### tests/test_migration_wiring.py::test_the_role_flags_are_read_for_the_current_user_and_the_session_user rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_the_role_flags_are_read_for_the_current_user_and_the_session_user ____
+tests/test_migration_wiring.py:875: in test_the_role_flags_are_read_for_the_current_user_and_the_session_user
+    assert "current_user" in mig._ROLE_FLAGS_SQL and "session_user" in mig._ROLE_FLAGS_SQL
+E   AssertionError: assert ('current_user' in 'SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls FROM pg_roles WHERE rolname IN (current_user)' and 'session_user' in 'SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls FROM pg_roles WHERE rolname IN (current_user)')
+E    +  where 'SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls FROM pg_roles WHERE rolname IN (current_user)' = mig._ROLE_FLAGS_SQL
+E    +  and   'SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls FROM pg_roles WHERE rolname IN (current_user)' = mig._ROLE_FLAGS_SQL
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_role_flags_are_read_for_the_current_user_and_the_session_user
+1 failed in 0.42s
+
+### tests/test_migration_wiring.py::test_a_privileged_session_user_is_refused_even_when_the_current_user_is_plain rc=0
+.                                                                        [100%]
+1 passed in 0.35s
+

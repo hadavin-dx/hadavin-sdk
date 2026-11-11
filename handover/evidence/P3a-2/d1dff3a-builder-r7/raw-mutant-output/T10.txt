@@ -1,0 +1,27 @@
+### tests/test_migration_wiring.py::test_an_allowed_trigger_change_passes_only_for_that_file_table_and_trigger rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_an_allowed_trigger_change_passes_only_for_that_file_table_and_trigger __
+tests/test_migration_wiring.py:600: in test_an_allowed_trigger_change_passes_only_for_that_file_table_and_trigger
+    err, _, _ = _run(
+tests/test_migration_wiring.py:175: in _run
+    applied_now = mig.migrate("postgresql://unused", **kw)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:1041: in migrate
+    saved = _check_read_back(
+src/hadavin_sdk/store/migrate.py:824: in _check_read_back
+    now = _read_back(db, named)
+          ^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:542: in _read_back
+    values = tuple(db.execute(_READBACK_VALUES_SQL).fetchone())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_wiring.py:126: in execute
+    return _Result([self._next(self.values, "settings")])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_wiring.py:118: in _next
+    raise AssertionError(f"the run read the {what} more often than this test scripted")
+E   AssertionError: the run read the settings more often than this test scripted
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_an_allowed_trigger_change_passes_only_for_that_file_table_and_trigger
+1 failed in 0.41s
+

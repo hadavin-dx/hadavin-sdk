@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement _
+tests/test_migration_wiring.py:1087: in test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement
+    assert not {n for n in names if n.startswith("hidden")}, names
+E   AssertionError: {'approval_decisions', 'approval_decisions_seq_seq', 'approval_requests', 'audit_checkpoints', 'audit_entries', 'audit_outbox', ...}
+E   assert not {'hidden_mid_statement'}
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement
+1 failed in 0.43s
+

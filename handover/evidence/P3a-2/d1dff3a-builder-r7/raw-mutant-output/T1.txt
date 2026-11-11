@@ -1,0 +1,126 @@
+### tests/test_migration_wiring.py::test_a_trigger_recreated_with_another_definition_or_function_is_refused rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_a_trigger_recreated_with_another_definition_or_function_is_refused ____
+tests/test_migration_wiring.py:499: in test_a_trigger_recreated_with_another_definition_or_function_is_refused
+    err, _, _ = _run(
+tests/test_migration_wiring.py:175: in _run
+    applied_now = mig.migrate("postgresql://unused", **kw)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:1041: in migrate
+    saved = _check_read_back(
+src/hadavin_sdk/store/migrate.py:824: in _check_read_back
+    now = _read_back(db, named)
+          ^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:542: in _read_back
+    values = tuple(db.execute(_READBACK_VALUES_SQL).fetchone())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_wiring.py:126: in execute
+    return _Result([self._next(self.values, "settings")])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_wiring.py:118: in _next
+    raise AssertionError(f"the run read the {what} more often than this test scripted")
+E   AssertionError: the run read the settings more often than this test scripted
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_trigger_recreated_with_another_definition_or_function_is_refused
+1 failed in 0.46s
+
+### tests/test_migration_wiring.py::test_the_trigger_query_reads_definition_function_text_and_security_mode rc=0
+.                                                                        [100%]
+1 passed in 0.35s
+
+### tests/test_migration_postgres.py::test_h11_the_read_back_refuses_a_planted_file rc=1
+.F..FFFF....FF                                                           [100%]
+=================================== FAILURES ===================================
+________ test_h11_the_read_back_refuses_a_planted_file[disable_trigger] ________
+tests/test_migration_postgres.py:251: in test_h11_the_read_back_refuses_a_planted_file
+    _run_plant(dsn, monkeypatch, tmp_path, body, item)
+tests/test_migration_postgres.py:257: in _run_plant
+    mig.migrate(dsn)
+src/hadavin_sdk/store/migrate.py:1041: in migrate
+    saved = _check_read_back(
+src/hadavin_sdk/store/migrate.py:858: in _check_read_back
+    elif after[0] != before[0] and after[0] in ("D", "R") and after[0] != entry.state:
+                                                                          ^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'state'
+_________ test_h11_the_read_back_refuses_a_planted_file[function_body] _________
+tests/test_migration_postgres.py:251: in test_h11_the_read_back_refuses_a_planted_file
+    _run_plant(dsn, monkeypatch, tmp_path, body, item)
+tests/test_migration_postgres.py:256: in _run_plant
+    with pytest.raises(ConfigError) as e:  # call 2: real folder plus the planted file
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+____ test_h11_the_read_back_refuses_a_planted_file[function_security_mode] _____
+tests/test_migration_postgres.py:251: in test_h11_the_read_back_refuses_a_planted_file
+    _run_plant(dsn, monkeypatch, tmp_path, body, item)
+tests/test_migration_postgres.py:256: in _run_plant
+    with pytest.raises(ConfigError) as e:  # call 2: real folder plus the planted file
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_______ test_h11_the_read_back_refuses_a_planted_file[function_settings] _______
+tests/test_migration_postgres.py:251: in test_h11_the_read_back_refuses_a_planted_file
+    _run_plant(dsn, monkeypatch, tmp_path, body, item)
+tests/test_migration_postgres.py:256: in _run_plant
+    with pytest.raises(ConfigError) as e:  # call 2: real folder plus the planted file
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+________ test_h11_the_read_back_refuses_a_planted_file[replica_trigger] ________
+tests/test_migration_postgres.py:251: in test_h11_the_read_back_refuses_a_planted_file
+    _run_plant(dsn, monkeypatch, tmp_path, body, item)
+tests/test_migration_postgres.py:257: in _run_plant
+    mig.migrate(dsn)
+src/hadavin_sdk/store/migrate.py:1041: in migrate
+    saved = _check_read_back(
+src/hadavin_sdk/store/migrate.py:858: in _check_read_back
+    elif after[0] != before[0] and after[0] in ("D", "R") and after[0] != entry.state:
+                                                                          ^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'state'
+________ test_h11_the_read_back_refuses_a_planted_file[trigger_always] _________
+tests/test_migration_postgres.py:251: in test_h11_the_read_back_refuses_a_planted_file
+    _run_plant(dsn, monkeypatch, tmp_path, body, item)
+tests/test_migration_postgres.py:256: in _run_plant
+    with pytest.raises(ConfigError) as e:  # call 2: real folder plus the planted file
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+______ test_h11_the_read_back_refuses_a_planted_file[trigger_definition] _______
+tests/test_migration_postgres.py:251: in test_h11_the_read_back_refuses_a_planted_file
+    _run_plant(dsn, monkeypatch, tmp_path, body, item)
+tests/test_migration_postgres.py:256: in _run_plant
+    with pytest.raises(ConfigError) as e:  # call 2: real folder plus the planted file
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_h11_the_read_back_refuses_a_planted_file[disable_trigger]
+FAILED tests/test_migration_postgres.py::test_h11_the_read_back_refuses_a_planted_file[function_body]
+FAILED tests/test_migration_postgres.py::test_h11_the_read_back_refuses_a_planted_file[function_security_mode]
+FAILED tests/test_migration_postgres.py::test_h11_the_read_back_refuses_a_planted_file[function_settings]
+FAILED tests/test_migration_postgres.py::test_h11_the_read_back_refuses_a_planted_file[replica_trigger]
+FAILED tests/test_migration_postgres.py::test_h11_the_read_back_refuses_a_planted_file[trigger_always]
+FAILED tests/test_migration_postgres.py::test_h11_the_read_back_refuses_a_planted_file[trigger_definition]
+7 failed, 7 passed in 2.35s
+
+### tests/test_migration_postgres.py::test_h11_a_function_owner_change_is_refused rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________ test_h11_a_function_owner_change_is_refused __________________
+tests/test_migration_postgres.py:294: in test_h11_a_function_owner_change_is_refused
+    with pytest.raises(
+E   Failed: DID NOT RAISE ConfigError
+
+During handling of the above exception, another exception occurred:
+tests/test_migration_postgres.py:300: in test_h11_a_function_owner_change_is_refused
+    _drop_roles(other)
+tests/test_migration_postgres.py:400: in _drop_roles
+    db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
+/home/user/build/B-P73r2/.venv/lib/python3.13/site-packages/psycopg/connection.py:304: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.DependentObjectsStillExist: cannot drop function hadavin_test_9108d80c2cb1.hadavin_audit_append_only() because other objects depend on it
+E   DETAIL:  trigger audit_entries_append_only on table hadavin_test_9108d80c2cb1.audit_entries depends on function hadavin_test_9108d80c2cb1.hadavin_audit_append_only()
+E   trigger audit_checkpoints_append_only on table hadavin_test_9108d80c2cb1.audit_checkpoints depends on function hadavin_test_9108d80c2cb1.hadavin_audit_append_only()
+E   trigger audit_entries_no_truncate on table hadavin_test_9108d80c2cb1.audit_entries depends on function hadavin_test_9108d80c2cb1.hadavin_audit_append_only()
+E   trigger audit_checkpoints_no_truncate on table hadavin_test_9108d80c2cb1.audit_checkpoints depends on function hadavin_test_9108d80c2cb1.hadavin_audit_append_only()
+E   HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_h11_a_function_owner_change_is_refused
+1 failed in 0.63s
+

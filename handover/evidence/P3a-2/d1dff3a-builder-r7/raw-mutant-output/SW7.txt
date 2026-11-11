@@ -1,0 +1,14 @@
+### tests/test_migration_postgres.py::test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server _
+tests/test_migration_postgres.py:2052: in test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server
+    assert name not in helper.sweep_stale_roles(in_y), (
+E   AssertionError: a live process's role was dropped
+E   assert 'hadavin_test_migrator_e0ba5a77' not in ['hadavin_test_migrator_e0ba5a77']
+E    +  where ['hadavin_test_migrator_e0ba5a77'] = <function sweep_stale_roles at 0x7f5892c523e0>(<psycopg.Connection [IDLE] (host=127.0.0.1 port=56073 user=postgres database=hadavin_test_db_b54d559b) at 0x7f5892d102b0>)
+E    +    where <function sweep_stale_roles at 0x7f5892c523e0> = helper.sweep_stale_roles
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server
+1 failed in 0.53s
+

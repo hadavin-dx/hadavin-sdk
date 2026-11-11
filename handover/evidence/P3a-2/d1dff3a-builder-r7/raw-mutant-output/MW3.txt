@@ -1,0 +1,15 @@
+### tests/test_migration_wiring.py::test_directory_named_like_a_migration_is_refused rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_directory_named_like_a_migration_is_refused _______________
+tests/test_migration_wiring.py:275: in test_directory_named_like_a_migration_is_refused
+    assert type(e.value) is mn.MigrationNumberError, repr(e.value)
+E   AssertionError: ConfigError('0006_x.sql: not a regular file (a directory, or a link that points nowhere)')
+E   assert <class 'hadavin_sdk.errors.ConfigError'> is <class 'hadavin_sdk.store.migration_numbers.MigrationNumberError'>
+E    +  where <class 'hadavin_sdk.errors.ConfigError'> = type(ConfigError('0006_x.sql: not a regular file (a directory, or a link that points nowhere)'))
+E    +    where ConfigError('0006_x.sql: not a regular file (a directory, or a link that points nowhere)') = <ExceptionInfo ConfigError('0006_x.sql: not a regular file (a directory, or a link that points nowhere)') tblen=2>.value
+E    +  and   <class 'hadavin_sdk.store.migration_numbers.MigrationNumberError'> = mn.MigrationNumberError
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_directory_named_like_a_migration_is_refused
+1 failed in 0.41s
+

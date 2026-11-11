@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_a_function_of_another_schema_is_not_a_managed_name rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________ test_a_function_of_another_schema_is_not_a_managed_name ____________
+tests/test_migration_wiring.py:1069: in test_a_function_of_another_schema_is_not_a_managed_name
+    assert not {"audit_other", "quoted_other", "audit_quoted_mine"} & names, names
+E   AssertionError: {'approval_decisions', 'approval_decisions_seq_seq', 'approval_requests', 'audit_bare', 'audit_checkpoints', 'audit_entries', ...}
+E   assert not ({'audit_other', 'audit_quoted_mine', 'quoted_other'} & {'approval_decisions', 'approval_decisions_seq_seq', 'approval_requests', 'audit_bare', 'audit_checkpoints', 'audit_entries', ...})
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_function_of_another_schema_is_not_a_managed_name
+1 failed in 0.40s
+

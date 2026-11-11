@@ -1,0 +1,15 @@
+### tests/test_migration_wiring.py::test_only_a_schema_with_the_test_prefix_is_a_scratch_schema rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_only_a_schema_with_the_test_prefix_is_a_scratch_schema __________
+tests/test_migration_wiring.py:1526: in test_only_a_schema_with_the_test_prefix_is_a_scratch_schema
+    assert mr._is_scratch("hadavin_test_abc") and not mr._is_scratch("t_abc")
+E   AssertionError: assert (True and not True)
+E    +  where True = <function _is_scratch at 0x7f27a57991c0>('hadavin_test_abc')
+E    +    where <function _is_scratch at 0x7f27a57991c0> = <module 'tests.fixtures.migration_role' from '/tmp/migrate-mutants-ywevyh6p/repo/tests/fixtures/migration_role.py'>._is_scratch
+E    +  and   True = <function _is_scratch at 0x7f27a57991c0>('t_abc')
+E    +    where <function _is_scratch at 0x7f27a57991c0> = <module 'tests.fixtures.migration_role' from '/tmp/migrate-mutants-ywevyh6p/repo/tests/fixtures/migration_role.py'>._is_scratch
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_only_a_schema_with_the_test_prefix_is_a_scratch_schema
+1 failed in 0.43s
+

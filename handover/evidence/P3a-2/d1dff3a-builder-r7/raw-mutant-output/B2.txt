@@ -1,0 +1,29 @@
+### tests/test_migration_postgres.py::test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server rc=1
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[TRUE] _
+tests/test_migration_postgres.py:1393: in test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server
+    with pytest.raises(ConfigError, match="member of a role that is a superuser") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[FALSE] _
+tests/test_migration_postgres.py:1393: in test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server
+    with pytest.raises(ConfigError, match="member of a role that is a superuser") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[TRUE]
+FAILED tests/test_migration_postgres.py::test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[FALSE]
+2 failed in 0.75s
+
+### tests/test_migration_wiring.py::test_the_membership_check_reads_both_user_names_all_four_flags_and_the_built_in_roles rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_the_membership_check_reads_both_user_names_all_four_flags_and_the_built_in_roles _
+tests/test_migration_wiring.py:868: in test_the_membership_check_reads_both_user_names_all_four_flags_and_the_built_in_roles
+    assert "current_user" in q and "session_user" in q and "'MEMBER'" in q and "'pg_'" in q
+E   assert ('current_user' in "SELECT r.rolname FROM pg_roles r WHERE (r.rolsuper OR r.rolcreaterole OR r.rolcreatedb OR r.rolbypassrls OR (left(r.r... AND r.rolname <> 'pg_database_owner')) AND r.rolname NOT IN (current_user, session_user) AND false ORDER BY r.rolname" and 'session_user' in "SELECT r.rolname FROM pg_roles r WHERE (r.rolsuper OR r.rolcreaterole OR r.rolcreatedb OR r.rolbypassrls OR (left(r.r... AND r.rolname <> 'pg_database_owner')) AND r.rolname NOT IN (current_user, session_user) AND false ORDER BY r.rolname" and "'MEMBER'" in "SELECT r.rolname FROM pg_roles r WHERE (r.rolsuper OR r.rolcreaterole OR r.rolcreatedb OR r.rolbypassrls OR (left(r.r... AND r.rolname <> 'pg_database_owner')) AND r.rolname NOT IN (current_user, session_user) AND false ORDER BY r.rolname")
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_membership_check_reads_both_user_names_all_four_flags_and_the_built_in_roles
+1 failed in 0.40s
+
