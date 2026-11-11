@@ -1431,3 +1431,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | check 17:03 | all 9 have live checkpoints or are <45 min | | | OK |
 | EV-Q8c1-r3 ab2e588a | closed: all gates exit 0, full 10817 passed 13 skipped, policy mutants 45/45, stage 37/37, plants 32/32, fail-before 8 on a77fab72; Vault engine tests NOT RUN | | | CLOSED |
 | B-PR89-r22 a309e5a8 | closed, pushed c2f98f49 (own: full 10777 passed, mutants 261/261, fail-before 42) | | | CLOSED |
+| B-Q8c1-b3 a9529a54 (Sonnet) | Q8c-1 batch 3 (7 fixes from egm-resolve) | launched | +60 min | RUNNING |
+| EV-PR89-r22 a8c5dcf3 + reviewers a4857c31 (design) a8db9264 (codebase) | PR89 c2f98f49 | launched | +60/+40 min | RUNNING |

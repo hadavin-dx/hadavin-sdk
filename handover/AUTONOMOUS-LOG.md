@@ -85,3 +85,4 @@ Each line: UTC | IST | item | running agents | next 3 steps | blockers
 17:03 CHECKPOINT: 9 agents running (oldest 42 min: Q8b evidence, timing fix, PR89 r22), load 5.7. Fresh checkpoints from Q8a-2 b4, EV Q8a-2, PR H rev3, P3a-2 rev3. Next: at 60 min message the three oldest if silent.
 17:07 Q8c-1 evidence 6bdfadc1 saved (runner ab2e588a): everything green, Vault 12 engine tests still NOT RUN (no binary). 02-full.xml excluded from push (secret-shaped test ids). Next: egm-resolve on the two r3 reviews, then one minor batch.
 17:08 Q8c-1 egm-resolve r3 done (7 fixes, 1 ESCALATE, 1 DECLINE): launching batch 3. PR89 round 22 builder done: c2f98f49 own evidence green (full 10777 passed, mutants 261/261); launching evidence + 2 fresh reviewers.
+17:09 launched: Q8c-1 batch 3 builder a9529a54; PR89 c2f98f49 evidence a8c5dcf3 + design a4857c31 + codebase a8db9264. 11 agents running.

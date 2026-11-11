@@ -7,3 +7,10 @@ git status:
 ?? tests/test_q8b_random.py
 hadavin_sdk imported from: /home/user/build/EV-Q8b-main/src/hadavin_sdk/__init__.py
 ## ON CLEAN MAIN SRC
+112 failed, 104 passed, 14 xfailed in 29.26s
+exit 0
+## ON HEAD SRC (same tests)
+hadavin_sdk imported from: /home/user/build/EV-Q8b-be53718/src/hadavin_sdk/__init__.py
+...........x............................................................ [ 93%]
+...............                                                          [100%]
+215 passed, 16 xfailed in 28.49s
