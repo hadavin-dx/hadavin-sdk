@@ -2453,3 +2453,4 @@
 | BL-core-a2-w2-r16-t1 | reviews/P89/round-w2-r16-tests-a.md R16-T1 | Minor | PR89 | one-ellipsis search-count test passes for any implementation (retarget/delete) | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r16-s3-02 | reviews/P89/round-w2-r16-src-b.md s3-02 | Minor | PR89 | lock entered before the try/finally; SystemExit in a few-bytecode window keeps the lock until GC | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r16-t2 | reviews/P89/round-w2-r16-tests-b.md BL-slice-01 | Minor | PR89 | test at :2583 cannot catch a decoded leak ("é" check missing) | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r16-m1 | reviews/P89/round-w2-r16-mutants-docs.md M1 | Minor | PR89 | meta test docstring stale (tree holds KW file and conftest too) | OPEN | 2026-11-11 |
