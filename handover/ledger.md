@@ -2465,3 +2465,4 @@
 | BL-core-a11a-w4-s01 | reviews/PR77/round-w4-src.md M1 | MAJOR | PR77 62acddd | masked value keeps leading/trailing Mc/Lm/Sk in clear: "café password=Hunter2abc^" -> "<SECRET_1>^" (redact.py:1301-1311, 1196-1200, 1251, 1393-1396); regression vs 8b2b716 | OPEN (fix builder a15af6a6 resumed 07:3xZ; reading only, builder to confirm by running) | 2026-11-11 |
 | BL-core-a11a-w4-s02 | reviews/PR77/round-w4-src.md m1 | Minor | PR77 | ASCII ^ and backtick not folded on an all-ASCII line; boundary unstated | OPEN | 2026-11-11 |
 | BL-core-a11a-w4-s03 | reviews/PR77/round-w4-src.md m2,m3 | Minor | PR77 | over-withhold "ᾳ josé@example.com"; clock once per round (4 views) | OPEN | 2026-11-11 |
+| BL-core-a15-w4-n01 | reviews/PR74/round-w4-textnorm-tests-docs.md n1-n7 | Nit | PR74 08844ed | mutant count 53/71 vs 75, wall-clock wording, untargeted g7 test/mutant, CHANGELOG omits 4 g7 mutants | OPEN (batch with next push) | 2026-11-11 |
