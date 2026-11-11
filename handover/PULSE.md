@@ -4,3 +4,4 @@
 - PR74: WAITS FOR PR77 merge (ORDER 240).
 WAITS FOR lead: core/P3a-2 push approval; q-A11a-sep-keep (now moot if the gap-tolerant match lands). | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 12:16Z); detail in HEARTBEAT.md
 10:46Z | STOPPED (ORDER 241): no agents, no shells, no jobs running; everything pushed except the items listed in handover/CLOUD-RESUME-2026-11-11.md section (e). PULSE refresher stopped.
+11:58Z | STARTED 243 (core only). Disk freed: deleted my 87 old Postgres cluster folders under /home/user/build/pg (7.3 GB; free 2.2 -> 9.4 GB). Agents running: 1 (PR77 builder, branch fix/P2d-1-w7 from wip/P2d-1-w6, box ends 13:28Z). PR89: independent evidence on db0d9eb already exists (handover/evidence/P89/db0d9eb-indep), so no re-run needed unless the lead says otherwise. PR74 waits for PR77. Next PULSE in 10 min.

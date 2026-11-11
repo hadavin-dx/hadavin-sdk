@@ -1654,3 +1654,6 @@ Cloud session stopped. Read handover/CLOUD-RESUME-2026-11-11.md. Not pushed: two
 - wip/cloud-WT-R1 9aabc559170afd5017b1c36535a7f61c1f84bafb
 - wip/cloud-WT-askdata 7456e696540d3893ddd9284574fe88ba1b4e01c8
 - core/cloud-handover: see the commit that holds this line.
+
+## STARTED 243 — 11:58Z UTC
+Disk: removed only my Postgres cluster folders (/home/user/build/pg/*, 87 folders, 7.3 GB); evidence worktrees kept. Agents: a30482da (PR77 builder, branch fix/P2d-1-w7, expected end 13:28Z). PR89: the two dropped evidence heads are dropped; independent evidence on db0d9eb already exists at handover/evidence/P89/db0d9eb-indep, so I do not re-run it (tell me if you want a repeat). PR74 waits for PR77. Next: fresh egm:* reviewers and an evidence runner after the builder reports.
