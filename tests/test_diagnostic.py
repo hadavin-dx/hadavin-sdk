@@ -112,7 +112,7 @@ def test_non_exception_baseexception_passed_in_is_foreign() -> None:
 
 
 def test_fallback_fp_is_pinned() -> None:
-    assert FALLBACK_FP == "2a1e659d"
+    assert FALLBACK_FP == "2a1e659d", "the fallback fp changed"
     out = render(
         diagnose(corpus.build_exception({"factory": "getattr_raises", "args": ("x",)}), step=STEP)
     )
@@ -150,7 +150,7 @@ def test_str_repr_args_getitem_notes_are_never_called() -> None:
 
     e = Spy(2, "Quentin")
     diagnose(e, step=STEP)
-    assert reads == [], reads
+    assert reads == [], f"the exception was read: {reads}"
 
 
 def test_facts_bounds_table() -> None:
@@ -160,14 +160,14 @@ def test_facts_bounds_table() -> None:
             assert (f" {key.value}={value}" in out) is kept, (
                 f"{'kept' if kept else 'dropped'} {key.value}={value}: {out}"
             )
-        assert f" {key.value}=" not in line_of(
-            ValueError("x"), facts={key: True}
-        )  # a bool is not a number
+        assert f" {key.value}=" not in line_of(ValueError("x"), facts={key: True}), (
+            f"a bool was printed as the number {key.value}"
+        )
         assert f" {key.value}=" not in line_of(ValueError("x"), facts={key: "5"})  # type: ignore[dict-item]
 
 
 def test_fact_patterns_use_fullmatch() -> None:
-    assert SafeToken.sqlstate("28P01\n") is None
+    assert SafeToken.sqlstate("28P01\n") is None, "a sqlstate with a trailing newline was accepted"
     assert SafeToken.sqlstate("28P01") is not None
     assert SafeToken.of("a\n", frozenset({"a\n"})) is None
 
@@ -206,6 +206,15 @@ def test_facts_read_from_exc_only() -> None:
     except ConfigError as outer:
         out = line_of(outer)
     assert "code=config_invalid" in out and "errno" not in out
+    # an exception that is no OSError takes no fact from the OSError it was raised from
+    try:
+        try:
+            raise OSError(5, "x")
+        except OSError as e:
+            raise RuntimeError("x") from e
+    except RuntimeError as outer:
+        out = line_of(outer)
+    assert out.startswith("RuntimeError: ") and "errno" not in out, f"facts from the cause: {out}"
 
 
 def test_exception_group_takes_first_member_code() -> None:
@@ -215,8 +224,10 @@ def test_exception_group_takes_first_member_code() -> None:
         ("raises", "foreign_exception"),
     ):
         out = line_of(corpus.build_exception({"factory": "group", "args": (kind, "Quentin")}))
-        assert f"code={code} " in out and "Quentin" not in out
-    assert "code=foreign_exception" in line_of(ExceptionGroup("x", [ValueError("y")]))
+        assert f"code={code} " in out and "Quentin" not in out, f"group {kind}: {out}"
+    assert "code=foreign_exception" in line_of(ExceptionGroup("x", [ValueError("y")])), (
+        "a group of a built-in error took a member code"
+    )
 
 
 def test_step_token_closed_to_tick_steps() -> None:
@@ -231,7 +242,9 @@ def test_step_token_closed_to_tick_steps() -> None:
 def test_kind_identity_rule() -> None:
     assert class_name_of(ValueError("x")) == "ValueError"
     assert class_name_of(socket.gaierror(-2, "x")) == "socket.gaierror"
-    assert class_name_of(type("Jane", (ValueError,), {})("x")) == "dynamic_class"
+    assert class_name_of(type("Jane", (ValueError,), {})("x")) == "dynamic_class", (
+        "a class not found under its own name was printed"
+    )
     assert (
         class_name_of(type("N" * 81, (ValueError,), {"__module__": "builtins"})("x"))
         == "dynamic_class"
@@ -274,17 +287,21 @@ def test_locator_and_fp() -> None:
     assert "at=-" in line_of(corpus._f_compiled("made_up.py", "x", None))
 
 
-def _raised_in_stats(source: str, **names: object) -> BaseException:
-    """Run ``source`` as a function ``_p5a_probe`` in the real namespace of ``stats`` (own code by every frame rule) and return what it raises."""
+def _raised_in_stats(source: str, inner: str | None = None, **names: object) -> BaseException:
+    """Run ``source`` as a function ``_p5a_probe`` in the real namespace of ``stats`` (own code by every frame rule) and return what it raises.
+    ``inner`` is compiled under a made-up file name (frame rule c: not counted) and defines ``_p5a_inner``, for ``source`` to call."""
     d = vars(stats)
     d.update(names)
     try:
+        if inner is not None:
+            exec(compile(inner, "p5a_made_up.py", "exec"), d)  # noqa: S102
         exec(compile(source, stats.__file__, "exec"), d)  # noqa: S102
         with pytest.raises(Exception) as caught:
             d["_p5a_probe"]()
         return caught.value
     finally:
         d.pop("_p5a_probe", None)
+        d.pop("_p5a_inner", None)
         for n in names:
             d.pop(n, None)
 
@@ -292,6 +309,12 @@ def _raised_in_stats(source: str, **names: object) -> BaseException:
 def test_internal_bug_is_decided_on_the_raise_frame() -> None:
     out = line_of(corpus._f_in_stats("same", "x"))
     assert "code=internal_bug" in out and "at=stats.py:" in out, f"own raise: {out}"
+    # deterministic (no frozen-module detail): an own frame calls a frame compiled under a made-up file name, which is not counted
+    deep = _raised_in_stats(
+        "def _p5a_probe():\n    return _p5a_inner()\n",
+        inner="def _p5a_inner():\n    return {}['x']\n",
+    )
+    assert "code=foreign_exception" in line_of(deep), f"uncounted inner frame: {line_of(deep)}"
     env = _raised_in_stats(
         "def _p5a_probe():\n    import os\n    return os.environ['P5A_NOT_SET_ANYWHERE']\n"
     )
@@ -335,12 +358,17 @@ def test_psycopg_claimed_module_name_is_not_trusted() -> None:
         "OperationalError", (Exception,), {"__module__": "psycopg.errors", "sqlstate": "28P01"}
     )
     out = line_of(fake("x"))
-    assert "code=db_error" not in out and "sqlstate" not in out
+    assert "code=db_error" not in out and "sqlstate" not in out, (
+        f"a class that only claims the psycopg module name was trusted: {out}"
+    )
 
 
-def test_golden_lines_t8_t9_t10() -> None:
-    assert re.fullmatch(r"json\.decoder\.JSONDecodeError: diag_v=1 code=validation_failed step=extract at=- fp=[0-9a-f]{8} position=3",
-                        line_of(corpus._f_json("m", "d", 3)))  # fmt: skip
+def test_golden_lines_json_position_kept_and_dropped() -> None:
+    head = r"json\.decoder\.JSONDecodeError: diag_v=1 code=validation_failed step=extract at=- fp=[0-9a-f]{8}"
+    assert re.fullmatch(head + " position=3", line_of(corpus._f_json("m", "d", 3)))
+    assert re.fullmatch(head, line_of(corpus._f_json("m", "d", 10**12))), (
+        "an out-of-bounds position is dropped"
+    )
 
 
 def _row(cls: str, n: int) -> corpus.Row:
@@ -400,7 +428,9 @@ def test_long_traceback_is_foreign() -> None:
 def test_off_list_foreign_class_prints_foreign_class() -> None:
     row = _row("foreign_name", 1)
     with corpus.CONTEXTS["vendor_module"]():
-        assert class_name_of(corpus.build_exception(row.spec)) == "foreign_class"
+        assert class_name_of(corpus.build_exception(row.spec)) == "foreign_class", (
+            f"an off-list package class was printed ({row.id})"
+        )
 
 
 # --- golden T7: a secret that Vault does not hold (a 404) ---------------------------------------------------------------------
@@ -465,7 +495,7 @@ def test_a_valueerror_in_errno_gives_the_fallback_and_every_propagating_row_prop
     """The ``BaseException`` case of a hostile ``errno`` is ``test_baseexception_from_hostile_getattr_propagates`` above; this adds the
     ``ValueError`` case (a line, not a crash) and every row in ``PROPAGATES_ROWS``."""
     out = line_of(_oserror_with_errno_that_raises(ValueError("x")))
-    assert grammar_ok(out) and "diag_v=1" in out, out
+    assert grammar_ok(out) and f"fp={FALLBACK_FP}" in out, f"not the fallback: {out}"
     by_id = {r.id: r for r in corpus.ROWS}
     for row_id in corpus.PROPAGATES_ROWS:
         with pytest.raises(BaseException) as info:
@@ -531,6 +561,103 @@ def test_links_flag_a_traceback_over_the_step_cap_and_keep_nothing() -> None:
     from hadavin_sdk.guard import diagnostic as dg
 
     exc = ValueError("x").with_traceback(_traceback_of(defaults.DIAG_TB_STEPS + 1))
-    assert dg._links(exc) == ([], True)
+    assert dg._links(exc) == ([], True), "a traceback over the step cap was walked"
     d = diagnose(exc, step=STEP)
     assert d.code.value == "foreign_exception" and d.locator == "-"
+
+
+def test_a_long_class_name_prints_a_fixed_word_not_the_name() -> None:
+    """A class reachable under its own name but longer than ``DIAG_KIND_CHARS`` prints ``foreign_class`` (built-in) or ``dynamic_class`` (own)."""
+    import builtins
+
+    n = "L" * (defaults.DIAG_KIND_CHARS + 20)
+    built = type(n, (Exception,), {"__module__": "builtins"})
+    own = type(n, (Exception,), {"__module__": "hadavin_sdk.stats"})
+    setattr(builtins, n, built)
+    setattr(stats, n, own)
+    try:
+        got_built, got_own = class_name_of(built), class_name_of(own)
+        assert got_built == "foreign_class", f"long built-in name printed (length {len(got_built)})"
+        assert got_own == "dynamic_class", f"long own name printed (length {len(got_own)})"
+    finally:
+        delattr(builtins, n)
+        delattr(stats, n)
+
+
+def test_phase_of_each_class_of_sqlstate() -> None:
+    from hadavin_sdk.guard.diagnostic import _phase_of
+
+    assert _phase_of(None) is Phase.unknown, "no sqlstate"
+    assert _phase_of(SafeToken.sqlstate("28P01")) is Phase.auth
+    assert _phase_of(SafeToken.sqlstate("08006")) is Phase.connect
+    assert _phase_of(SafeToken.sqlstate("42P01")) is Phase.query, "any other sqlstate is a query"
+
+
+def test_own_code_reads_the_class_names_once() -> None:
+    from hadavin_sdk.guard.diagnostic import _own_code
+
+    reads: list[str] = []
+
+    class Meta(type):
+        @property
+        def __module__(cls) -> str:  # type: ignore[override]
+            reads.append("module")
+            return "hadavin_sdk.errors" if len(reads) % 2 else "builtins"
+
+    hostile = Meta("ConfigError", (Exception,), {})
+    assert _own_code(hostile) is None, "a class that answers differently the second time is not own"
+    assert reads.count("module") == 1, f"__module__ was read {reads.count('module')} times"
+
+
+def test_render_stops_at_the_first_fact_that_does_not_fit() -> None:
+    """Trailing facts are dropped from the first one that overflows: a later, shorter fact is not squeezed in after it."""
+    d = diagnose(ValueError("x"), step=STEP)
+    base = Diagnostic("K", d.code, "extract", "-", (), "0" * 8)
+    start = len(render(base)) + len(" key=") + 120 + len(" cause_kind=") + 120
+    n = defaults.DIAG_LINE_CHARS + 1 - start - len(" field=")
+    big = "f" * n
+    facts = (
+        (FactKey.key, SafeToken.of("a" * 120, frozenset({"a" * 120}))),
+        (FactKey.cause_kind, SafeToken.of("a" * 120, frozenset({"a" * 120}))),
+        (FactKey.field, SafeToken.of(big, frozenset({big}))),
+        (FactKey.request_id, SafeToken.of("r", frozenset({"r"}))),
+    )
+    out = render(Diagnostic("K", d.code, "extract", "-", facts, "0" * 8))
+    assert " field=" not in out and " request_id=" not in out, f"a later fact after the cut: {out}"
+
+
+def test_a_frame_of_this_package_without_a_locator_hands_over_to_the_next_own_frame() -> None:
+    """``_locate`` skips an own frame that gives no locator (no line number) and takes the next outer own frame."""
+    from hadavin_sdk.guard.diagnostic import _locate
+
+    frame = sys._getframe()  # a frame of this test file: not an own frame
+    own = vars(stats)["upper_error_bound"]
+    own_frame = types.SimpleNamespace(f_globals=vars(stats), f_code=own.__code__)
+    assert "stats.py" in own.__code__.co_filename
+    outer = (own_frame, 7)
+    inner = (own_frame, None)
+    assert _locate([outer, inner])[0] == "stats.py:7", (
+        "the inner frame has no line: the outer own frame is used"
+    )
+    assert _locate([inner]) == ("-", "-", "-")
+    assert _locate([(frame, 1)]) == ("-", "-", "-")
+
+
+def test_a_class_of_the_entry_script_prints_a_fixed_word() -> None:
+    """``__main__`` is not in the list of printable packages: a class of the application's entry script is never printed by name."""
+    main = sys.modules["__main__"]
+    cls = type("EntryScriptError", (Exception,), {"__module__": "__main__"})
+    main.EntryScriptError = cls  # type: ignore[attr-defined]
+    try:
+        got = class_name_of(cls)
+    finally:
+        del main.EntryScriptError  # type: ignore[attr-defined]
+    assert got == "foreign_class", f"entry script class printed as {got}"
+
+
+def test_the_psycopg_extra_is_installed_where_ci_runs() -> None:
+    """``test_psycopg_claimed_module_name_is_not_trusted`` skips without the ``pg`` extra; CI installs every extra, so there it must not skip."""
+    import os
+
+    if os.environ.get("CI") == "true":
+        import psycopg  # noqa: F401

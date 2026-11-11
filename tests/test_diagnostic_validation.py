@@ -81,6 +81,30 @@ def test_more_than_5_errors_gives_plus_n_more() -> None:
     assert out.endswith("; +2 more"), f"tail: {out}"
 
 
+def _n_errors(n: int) -> BaseException:
+    from pydantic import TypeAdapter
+
+    try:
+        TypeAdapter(list[int]).validate_python(["x"] * n)
+    except ValidationError as e:
+        return e
+    raise AssertionError("no error")
+
+
+def test_the_more_tail_starts_after_exactly_5_errors() -> None:
+    five, six = validation_text(_n_errors(5)), validation_text(_n_errors(6))
+    assert five.count(";") == 4 and "more" not in five, f"5 errors: {five}"
+    assert six.count(";") == 5 and six.endswith("; +1 more"), f"6 errors: {six}"
+
+
+def test_a_count_above_the_bound_is_printed_as_the_bound(monkeypatch: pytest.MonkeyPatch) -> None:
+    from hadavin_sdk.guard import diagnostic
+
+    monkeypatch.setattr(diagnostic, "FACT_BOUNDS", {FactKey.count: (0, 8)})
+    out = validation_text(_n_errors(12))
+    assert out.endswith("; +3 more"), f"count 12 above bound 8 must show the bound: {out}"
+
+
 def test_non_validation_error_gives_other() -> None:
     assert validation_text(ValueError(CAN)) == VALIDATION_OTHER
     assert validation_text(object()) == VALIDATION_OTHER  # type: ignore[arg-type]
@@ -126,7 +150,9 @@ def test_pydantic_error_reads_are_closed_ast() -> None:
     ]
     assert len(calls) == 1
     kws = {k.arg: ast.literal_eval(k.value) for k in calls[0].keywords}
-    assert kws == {"include_url": False, "include_context": False, "include_input": False}
+    assert kws == {"include_url": False, "include_context": False, "include_input": False}, (
+        "pydantic input, context or url was requested"
+    )
     fn = next(
         n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == "_error_types"
     )
