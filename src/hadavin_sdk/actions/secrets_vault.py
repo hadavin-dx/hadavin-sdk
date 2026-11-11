@@ -214,8 +214,8 @@ POLICY = {
             "With auth `token` the operator supplies the token, so how long it lives is the operator's choice "
             "and this kind cannot shorten it. With auth `approle` the secret id in the environment is itself "
             "a long-lived credential unless the operator gives it an expiry in Vault. A token issued through "
-            "AppRole or Kubernetes sign-in lives as long as the Vault role says. Ticket Q8a-1 covers the "
-            "credentials read from the environment."
+            "AppRole or Kubernetes sign-in lives as long as the Vault role says. No ticket removes "
+            "these long-lived credentials yet: ledger row BL-core-q8c1-lifetime tracks it."
         ),
     },
     "notes": (
@@ -253,7 +253,7 @@ POLICY = {
                 "B-ACL",
             ),
             "confirmed_live": None,
-            "claims_unverified": (),
+            "claims_unverified": ("the + matches exactly one whole path part, nothing deeper",),
         },
     ),
     "free": (
@@ -297,13 +297,13 @@ POLICY = {
             "type": "path",
             "name": "{mount}/undelete/*",
             "reason": "brings deleted versions of a secret back",
-            "verified": ("2026-11-11", "V-KV", "B-KV"),
+            "verified": None,
         },
         {
             "type": "path",
             "name": "{mount}/subkeys/*",
             "reason": "shows the field names inside secrets this kind was not asked to read",
-            "verified": ("2026-11-11", "V-KV", "B-KV"),
+            "verified": None,
         },
         {
             "type": "path",

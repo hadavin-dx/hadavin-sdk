@@ -17,7 +17,8 @@ code needs (one reason each), the requests that need no permission, and what the
   Kubernetes is checked against the code's own read-only rule, not against a cluster.
 - Those server tests run against one server image only: `hashicorp/vault:2.2.0`, licence: Business Source License 1.1 (source-available, not open source).
   The open alternative OpenBao (licence MPL-2.0) serves the same API by its own statement; it has not yet been
-  run by these tests.
+  run by these tests. Trigger to run them against OpenBao: a deployment chooses OpenBao, or the review date
+  2026-12-11, whichever comes first (ledger row BL-core-q8c1-openbao).
 - The test token holds the generated policy and nothing else. That does not represent sign-in through an
   AppRole or a Kubernetes role: there the role's own settings and the identity groups of the signed-in entity
   can add further policies, and the token then may do more than this page lists. Check the role.
@@ -30,8 +31,19 @@ code needs (one reason each), the requests that need no permission, and what the
   documentation and source files on the date shown per row (`tests/fixtures/policy_sources_2026-11-11.txt`
   lists them, each pinned to a commit). The rendered vendor pages were not reachable; the files they are
   built from were read.
+- One claim is weaker than that. In the Vault secrets permission R17, the `+` stands for exactly one whole path
+  part and nothing deeper. Only the builder of a fix read the vendor source files behind that claim; no
+  evidence runner has re-read them and no server has run the test of it. The page therefore lists it under
+  "claims not checked" and gives no copy-ready text for that kind. The same builder-only reading stands behind
+  the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked".
+- Two links the call check does not follow. First, the map from an object attribute to the setting it holds
+  (`self.mount` holds the setting `mount`) is written by hand in the test; a test reads each `build` function
+  and checks that the setting is stored in that attribute, but nothing follows the value beyond that. Second,
+  the Kubernetes check that a namespace is one of the configured ones is found by a test only as a line of
+  code, not by running it against a cluster. Inside the one sending function of the Vault client, a test pins
+  the single request construction (address, path and verb) and the single send; it does not read the rest.
 - When values are filled into the text, a value that names a reserved thing is refused, not warned about: a
-  Vault mount that starts with `sys`, `auth`, `identity` or `cubbyhole`; a namespace that starts with `kube-`;
+  Vault mount whose first part is `sys`, `auth`, `identity` or `cubbyhole` (so `sysdata` is accepted); a namespace that starts with `kube-`;
   a role name `cluster-admin`, `admin`, `edit`, `view` or one that starts with `system`; the ServiceAccount
   `default`; the same namespace twice. A mount with a slash in it (a nested mount) is accepted. Length limits:
   63 characters for a namespace and 253 for the other Kubernetes names, from memory (not found in the pinned
@@ -40,6 +52,17 @@ code needs (one reason each), the requests that need no permission, and what the
 - No policy on this page has been confirmed on a real account or a real cluster ("accepted by a real account"
   says `no` everywhere).
 - One process uses one identity. Give that identity the text of every kind the process runs.
+- How to read the tables. "permission": the right the identity is given (`read`, `update`, `list`, `get`).
+  "on what": the path or resource that right covers; `+` stands for exactly one path part. "what limits a
+  wildcard": how far a `+` or `*` reaches. "the call it serves": the request in the code that needs the right;
+  `{self.mount}` and the like are settings, named in the notes of the kind. "name and form found in a vendor
+  source": the date and the source ids (listed in the sources file) where the vendor's own text shows this
+  name and spelling; "not yet checked" means no such reading was confirmed. "accepted by a real account":
+  whether a real account took the permission; `no` everywhere. "claims not checked": statements in the row that
+  nobody but the builder has read.
+- Vault calls signing `update` and calls reading `read`. For the signer (`vault_transit`) `update` stores
+  nothing: it lets the identity ask for a signature, and no key or secret is changed. That is why "no write
+  rights" and `update` do not contradict each other there.
 - The Transit signer signs a test message at start-up, and verifying the audit trail builds the signer, so a
   process that only verifies still needs the signing permission today.
 
@@ -54,7 +77,7 @@ Declared in `src/hadavin_sdk/actions/secrets_vault.py`.
 
 | id | permission | on what | what limits a wildcard | the call it serves | why | when | name and form found in a vendor source | accepted by a real account | claims not checked |
 |---|---|---|---|---|---|---|---|---|---|
-| R17 | `read` | `{mount}/data/{path_prefix}+` | the `+` stands for exactly one path part, the secret's name, directly under this deployment's `path_prefix` setting (which must not be empty); nothing deeper is covered | `GET {self.mount}/data/{self.path_prefix}{name}` | reads one named secret | always | 2026-11-11, sources V-KV, V-POL, V-ACL, V-PARSE, B-KV, B-POL, B-ACL | no | none |
+| R17 | `read` | `{mount}/data/{path_prefix}+` | the `+` stands for exactly one path part, the secret's name, directly under this deployment's `path_prefix` setting (which must not be empty); nothing deeper is covered | `GET {self.mount}/data/{self.path_prefix}{name}` | reads one named secret | always | 2026-11-11, sources V-KV, V-POL, V-ACL, V-PARSE, B-KV, B-POL, B-ACL | no | the + matches exactly one whole path part, nothing deeper |
 
 Requests that need no permission:
 
@@ -68,25 +91,18 @@ Never give this identity (each line would undo what the kind promises):
 | path | `sys/*` | the server's own settings: mounts, policies, audit devices | 2026-11-11, sources V-POL |
 | path | `{mount}/data/*` with create, update, patch, delete | the reader could replace, change or remove what it reads | 2026-11-11, sources V-POL, V-KV |
 | path | `{mount}/delete/*` | marks versions of a secret as deleted | 2026-11-11, sources V-KV, B-KV |
-| path | `{mount}/undelete/*` | brings deleted versions of a secret back | 2026-11-11, sources V-KV, B-KV |
-| path | `{mount}/subkeys/*` | shows the field names inside secrets this kind was not asked to read | 2026-11-11, sources V-KV, B-KV |
+| path | `{mount}/undelete/*` | brings deleted versions of a secret back | not yet checked |
+| path | `{mount}/subkeys/*` | shows the field names inside secrets this kind was not asked to read | not yet checked |
 | path | `{mount}/metadata/*` | lists every secret name and can delete every version of a secret | 2026-11-11, sources V-KV, B-KV |
 | path | `{mount}/destroy/*` | removes versions of a secret for good | 2026-11-11, sources V-KV, B-KV |
 
 Credential: A Vault token: read from an environment variable (auth `token`), or issued at sign-in through AppRole (the role's secret id is read from an environment variable) or through the pod's Kubernetes service account. Lifetime: long.
-Exception for the long-lived case: With auth `token` the operator supplies the token, so how long it lives is the operator's choice and this kind cannot shorten it. With auth `approle` the secret id in the environment is itself a long-lived credential unless the operator gives it an expiry in Vault. A token issued through AppRole or Kubernetes sign-in lives as long as the Vault role says. Ticket Q8a-1 covers the credentials read from the environment.
+Exception for the long-lived case: With auth `token` the operator supplies the token, so how long it lives is the operator's choice and this kind cannot shorten it. With auth `approle` the secret id in the environment is itself a long-lived credential unless the operator gives it an expiry in Vault. A token issued through AppRole or Kubernetes sign-in lives as long as the Vault role says. No ticket removes these long-lived credentials yet: ledger row BL-core-q8c1-lifetime tracks it.
 
 Tested: declared calls equal the calls written in the module: yes. Engine: checked by tests that run against a real Vault server in CI only (image `hashicorp/vault:2.2.0`). These tests have not run yet: no run of them is on record. What those tests check: a token that holds only the generated policy text can make the kind's own requests; with one grant removed, the request that grant serves is answered 403 (refused); and each of these requests is answered 403: read two levels below the prefix; read outside the prefix; write under the prefix; delete under the prefix; read the metadata path; destroy a version; read the server's mounts.
 Not covered by any test: the open alternative OpenBao (not yet run); sign-in through AppRole or Kubernetes roles, where the role and identity groups can add policies; any never-list line that is not among the requests named above; a real deployment's own mounts.
 
-Copy-ready text (replace every `{setting}` with this deployment's setting and every `<NAME>` with your own name):
-
-```hcl
-# R17: reads one named secret
-path "{mount}/data/{path_prefix}+" {
-  capabilities = ["read"]
-}
-```
+No copy-ready text: at least one permission of this kind is not yet checked against the vendor's own sources.
 
 ## vault_transit (signer)
 
@@ -95,6 +111,7 @@ Declared in `src/hadavin_sdk/audit/signer_vault.py`.
 - The sign-in request of this kind is written in the imported module `actions/secrets_vault.py` and is declared there, not here.
 - In the call column, `{self.mount}` is the `transit_mount` setting and `{self.key_name}` the `key_name` setting, as the signer object holds them; the permission is written with the setting's name.
 - Vault's sign path has an optional last part naming a hash algorithm. R18 is the exact path without it, so that longer form is not allowed by this policy, and the code never sends it.
+- In plain words: Vault calls signing `update`, but signing stores nothing; the permission lets the identity ask for a signature, not change any key or secret.
 - The signer signs a test message when it is built, and verifying the audit trail builds the signer, so a process that only verifies needs R18 too.
 - Create the token or the sign-in role so that it holds this policy only. Vault adds its `default` policy to every token unless told not to (`no_default_policy` when a token is created, `token_no_default_policy` on an AppRole or Kubernetes role).
 
@@ -116,7 +133,7 @@ Never give this identity (each line would undo what the kind promises):
 | path | `{transit_mount}/keys/{key_name}` with delete | deletes the key that signs the audit trail | 2026-11-11, sources V-TR, B-TR |
 | path | `{transit_mount}/keys/{key_name}/config` | can allow the key to be deleted or exported | 2026-11-11, sources V-TR, B-TR |
 | path | `{transit_mount}/export/*` | copies the private key out | 2026-11-11, sources V-TR, B-TR |
-| path | `{transit_mount}/byok-export/*` | copies the private key out, wrapped for another system | 2026-11-11, sources V-TR, B-TR |
+| path | `{transit_mount}/byok-export/*` | copies the private key out, wrapped for another system | not yet checked |
 | path | `{transit_mount}/keys/{key_name}/rotate` | makes a new key version, so new signatures no longer match the pinned version | 2026-11-11, sources V-TR, B-TR |
 | path | `{transit_mount}/keys/{key_name}/trim` | removes old key versions for good | 2026-11-11, sources V-TR, B-TR |
 | path | `{transit_mount}/restore` | replaces a key with one from a backup | 2026-11-11, sources V-TR, B-TR |
@@ -124,7 +141,7 @@ Never give this identity (each line would undo what the kind promises):
 | path | `{transit_mount}/backup/*` | copies the private key out as a backup | 2026-11-11, sources V-TR, B-TR |
 
 Credential: The same Vault client and sign-in as the `vault` secrets kind. A Vault token: read from an environment variable (auth `token`), or issued at sign-in through AppRole (the role's secret id is read from an environment variable) or through the pod's Kubernetes service account. Lifetime: long.
-Exception for the long-lived case: With auth `token` the operator supplies the token, so how long it lives is the operator's choice and this kind cannot shorten it. With auth `approle` the secret id in the environment is itself a long-lived credential unless the operator gives it an expiry in Vault. A token issued through AppRole or Kubernetes sign-in lives as long as the Vault role says. Ticket Q8a-1 covers the credentials read from the environment.
+Exception for the long-lived case: With auth `token` the operator supplies the token, so how long it lives is the operator's choice and this kind cannot shorten it. With auth `approle` the secret id in the environment is itself a long-lived credential unless the operator gives it an expiry in Vault. A token issued through AppRole or Kubernetes sign-in lives as long as the Vault role says. No ticket removes these long-lived credentials yet: ledger row BL-core-q8c1-lifetime tracks it.
 
 Tested: declared calls equal the calls written in the module: yes. Engine: checked by tests that run against a real Vault server in CI only (image `hashicorp/vault:2.2.0`). These tests have not run yet: no run of them is on record. What those tests check: a token that holds only the generated policy text can make the kind's own requests; with one grant removed, the request that grant serves is answered 403 (refused); and each of these requests is answered 403: sign with another key; change the key's settings; export the key; back the key up; read the server's mounts; delete the key.
 Not covered by any test: the open alternative OpenBao (not yet run); sign-in through AppRole or Kubernetes roles, where the role and identity groups can add policies; any never-list line that is not among the requests named above.
@@ -185,7 +202,7 @@ Never give this identity (each line would undo what the kind promises):
 | resource | `secrets` | reading a secret reveals its value | 2026-11-11, sources K-AUTHZ |
 
 Credential: The ServiceAccount token that the tool's fetch attaches to each request. This module holds no credential. Lifetime: long.
-Exception for the long-lived case: Whether the token expires is decided by the cluster and the operator; this code cannot tell and does not shorten it. Use a token that expires. Ticket Q8a-1 covers credentials that this package reads but does not issue.
+Exception for the long-lived case: Whether the token expires is decided by the cluster and the operator; this code cannot tell and does not shorten it. Use a token that expires. No ticket removes a long-lived token yet: ledger row BL-core-q8c1-lifetime tracks it.
 
 Tested: declared calls equal the calls written in the module: yes. Engine: no cluster in any test. The generated Role is given to the kind's own read-only rule (the function that judges a real cluster's answer at every start-up), which finds no problem in it and does find one when a write verb, `pods/exec` or a read of `secrets` is added.
 Not covered by any test: whether the three rules are enough on a real cluster; clusters that changed the default right of every signed-in identity to ask what it may do.

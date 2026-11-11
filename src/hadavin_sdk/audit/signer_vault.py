@@ -100,8 +100,8 @@ POLICY = {
             "With auth `token` the operator supplies the token, so how long it lives is the operator's choice "
             "and this kind cannot shorten it. With auth `approle` the secret id in the environment is itself "
             "a long-lived credential unless the operator gives it an expiry in Vault. A token issued through "
-            "AppRole or Kubernetes sign-in lives as long as the Vault role says. Ticket Q8a-1 covers the "
-            "credentials read from the environment."
+            "AppRole or Kubernetes sign-in lives as long as the Vault role says. No ticket removes "
+            "these long-lived credentials yet: ledger row BL-core-q8c1-lifetime tracks it."
         ),
     },
     "notes": (
@@ -117,6 +117,10 @@ POLICY = {
         (
             "Vault's sign path has an optional last part naming a hash algorithm. R18 is the exact path "
             "without it, so that longer form is not allowed by this policy, and the code never sends it."
+        ),
+        (
+            "In plain words: Vault calls signing `update`, but signing stores nothing; the permission lets "
+            "the identity ask for a signature, not change any key or secret."
         ),
         (
             "The signer signs a test message when it is built, and verifying the audit trail builds the "
@@ -191,7 +195,7 @@ POLICY = {
             "type": "path",
             "name": "{transit_mount}/byok-export/*",
             "reason": "copies the private key out, wrapped for another system",
-            "verified": ("2026-11-11", "V-TR", "B-TR"),
+            "verified": None,
         },
         {
             "type": "path",

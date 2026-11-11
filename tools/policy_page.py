@@ -581,7 +581,8 @@ def load(path: Path) -> Policy | None:
     return parse(text, Path(path).name)
 
 
-def load_all(root: Path = ROOT) -> dict[str, Policy | None]:
+def load_all(root: Path | None = None) -> dict[str, Policy | None]:
+    root = DATA_ROOT if root is None else root
     return {kind: load(root / rel) for kind, rel in KIND_MODULES.items()}
 
 
@@ -966,7 +967,8 @@ code needs (one reason each), the requests that need no permission, and what the
   Kubernetes is checked against the code's own read-only rule, not against a cluster.
 - Those server tests run against one server image only: `{ENGINE_IMAGE}`, licence: {ENGINE_LICENCE}.
   The open alternative OpenBao (licence MPL-2.0) serves the same API by its own statement; it has not yet been
-  run by these tests.
+  run by these tests. Trigger to run them against OpenBao: a deployment chooses OpenBao, or the review date
+  2026-12-11, whichever comes first (ledger row BL-core-q8c1-openbao).
 - The test token holds the generated policy and nothing else. That does not represent sign-in through an
   AppRole or a Kubernetes role: there the role's own settings and the identity groups of the signed-in entity
   can add further policies, and the token then may do more than this page lists. Check the role.
@@ -979,8 +981,19 @@ code needs (one reason each), the requests that need no permission, and what the
   documentation and source files on the date shown per row (`tests/fixtures/policy_sources_2026-11-11.txt`
   lists them, each pinned to a commit). The rendered vendor pages were not reachable; the files they are
   built from were read.
+- One claim is weaker than that. In the Vault secrets permission R17, the `+` stands for exactly one whole path
+  part and nothing deeper. Only the builder of a fix read the vendor source files behind that claim; no
+  evidence runner has re-read them and no server has run the test of it. The page therefore lists it under
+  "claims not checked" and gives no copy-ready text for that kind. The same builder-only reading stands behind
+  the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked".
+- Two links the call check does not follow. First, the map from an object attribute to the setting it holds
+  (`self.mount` holds the setting `mount`) is written by hand in the test; a test reads each `build` function
+  and checks that the setting is stored in that attribute, but nothing follows the value beyond that. Second,
+  the Kubernetes check that a namespace is one of the configured ones is found by a test only as a line of
+  code, not by running it against a cluster. Inside the one sending function of the Vault client, a test pins
+  the single request construction (address, path and verb) and the single send; it does not read the rest.
 - When values are filled into the text, a value that names a reserved thing is refused, not warned about: a
-  Vault mount that starts with `sys`, `auth`, `identity` or `cubbyhole`; a namespace that starts with `kube-`;
+  Vault mount whose first part is `sys`, `auth`, `identity` or `cubbyhole` (so `sysdata` is accepted); a namespace that starts with `kube-`;
   a role name `cluster-admin`, `admin`, `edit`, `view` or one that starts with `system`; the ServiceAccount
   `default`; the same namespace twice. A mount with a slash in it (a nested mount) is accepted. Length limits:
   63 characters for a namespace and 253 for the other Kubernetes names, from memory (not found in the pinned
@@ -989,12 +1002,24 @@ code needs (one reason each), the requests that need no permission, and what the
 - No policy on this page has been confirmed on a real account or a real cluster ("accepted by a real account"
   says `no` everywhere).
 - One process uses one identity. Give that identity the text of every kind the process runs.
+- How to read the tables. "permission": the right the identity is given (`read`, `update`, `list`, `get`).
+  "on what": the path or resource that right covers; `+` stands for exactly one path part. "what limits a
+  wildcard": how far a `+` or `*` reaches. "the call it serves": the request in the code that needs the right;
+  `{{self.mount}}` and the like are settings, named in the notes of the kind. "name and form found in a vendor
+  source": the date and the source ids (listed in the sources file) where the vendor's own text shows this
+  name and spelling; "not yet checked" means no such reading was confirmed. "accepted by a real account":
+  whether a real account took the permission; `no` everywhere. "claims not checked": statements in the row that
+  nobody but the builder has read.
+- Vault calls signing `update` and calls reading `read`. For the signer (`vault_transit`) `update` stores
+  nothing: it lets the identity ask for a signature, and no key or secret is changed. That is why "no write
+  rights" and `update` do not contradict each other there.
 - The Transit signer signs a test message at start-up, and verifying the audit trail builds the signer, so a
   process that only verifies still needs the signing permission today.
 """
 
 
-def page(root: Path = ROOT) -> str:
+def page(root: Path | None = None) -> str:
+    root = DATA_ROOT if root is None else root
     out = [head()]
     for kind, rel in KIND_MODULES.items():
         policy = load(root / rel)

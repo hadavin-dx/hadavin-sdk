@@ -15,9 +15,25 @@
 #   commits now written here (checked by the second builder at 15:38 UTC).
 # - V-ACL, V-PARSE, B-ACL: fetched and hashed by the second builder only, at 15:35 UTC. Not re-fetched by
 #   anyone else yet.
-# Every row is pinned: the commit column is a commit id and it is written in the URL. The Vault documentation
-# rows carry a 7-character id (the full id could not be looked up from this machine); the others are full.
-# The Vault and OpenBao source-code commits are the ids that the tags v2.2.0 and v2.4.0 pointed to.
+# Every row is pinned: the commit column is a commit id and it is written in the URL. The 7 Vault documentation
+# rows (V-POL to V-K8S) carry a 7-character id: the full 40-character id could not be looked up from this
+# session (the GitHub API refused the request), so it is NOT written here and was not guessed. The other 12 rows
+# carry full 40-character ids.
+# Versions: Vault source code (V-ACL, V-PARSE) is the commit the tag v2.2.0 pointed to, the version the engine
+# tests run against (hashicorp/vault:2.2.0). OpenBao source code (B-ACL) is the commit the tag v2.4.0 pointed
+# to. The OpenBao documentation rows (B-POL, B-KV, B-TR, B-API) are at commit 0d706a0c...; which OpenBao release
+# that commit belongs to was not looked up, so the OpenBao claims are not tied to one release.
+# WHAT A LATER EVIDENCE RUNNER MUST RE-READ (fix batch 2, 2026-11-11): nothing below has been checked by anyone
+# but the builder of a fix.
+# - V-POL and B-POL: the passage that says `+` matches exactly one path segment in a policy path.
+# - V-ACL and B-ACL: the code that matches a policy path with `+` (a whole path part, nothing deeper, and what
+#   a `+` does to the longest-prefix choice).
+# - V-PARSE: the code that reads a policy path and refuses `+*`.
+# - B-ACL: the same matching rule in OpenBao.
+# - V-KV and B-KV: the paths `undelete`, `subkeys` (and `byok-export` in V-TR and B-TR).
+# After that run, set `claims_unverified` of R17 back to () and `verified` of the three never-list paths in the
+# kind modules, and delete their PENDING_NAMES entries in tests/test_policy_guard.py. The hashes of V-ACL,
+# V-PARSE and B-ACL must be fetched again at the same time (nobody has re-fetched them).
 # No test fetches anything or compares a hash: the hashes are a record for a person to re-check.
 # Columns: id | url | commit | sha256 of the raw file | note
 V-POL | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/docs/concepts/policies.mdx | 82e7167 | beac497452411caa6ed293876e3ddf5e29228db17bc26365cd707b095abc75d4 | Vault v2.x: policies

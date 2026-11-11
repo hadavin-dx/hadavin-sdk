@@ -367,8 +367,8 @@ POLICY = {
         "lifetime": "long",
         "exception": (
             "Whether the token expires is decided by the cluster and the operator; this code cannot tell and "
-            "does not shorten it. Use a token that expires. Ticket Q8a-1 covers credentials that this "
-            "package reads but does not issue."
+            "does not shorten it. Use a token that expires. No ticket removes a "
+            "long-lived token yet: ledger row BL-core-q8c1-lifetime tracks it."
         ),
     },
     "notes": (

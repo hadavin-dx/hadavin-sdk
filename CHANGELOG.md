@@ -229,7 +229,17 @@
     They run against one server image (`hashicorp/vault:2.2.0`, Business Source License 1.1); the open
     alternative OpenBao has not been run.
   - The Vault secrets permission covers exactly one path part below the configured prefix (Vault's one-part
-    wildcard `+`), which is what the code reads; it no longer covers everything below the prefix.
+    wildcard `+`), which is what the code reads; it no longer covers everything below the prefix. That the `+`
+    matches exactly one whole path part (nothing deeper) was read in the vendors' source files by the builder of a
+    fix only: no evidence runner has re-read it and no server has run the test of it. The page lists it under
+    "claims not checked" and gives no copy-ready text for the Vault secrets kind until that is done. The never-list
+    lines `undelete`, `subkeys` and `byok-export` were read the same way and show "not yet checked". The 12
+    Vault server tests still need one CI run with `HADAVIN_REQUIRE_VAULT_ENGINE=1` that shows 12 passed and 0
+    skipped; until then the page says "not run yet".
+  - The page also gained a plain-words legend for its column heads, a sentence that Vault calls signing `update`
+    although signing stores nothing, and the two links the call check does not follow. New checks: the paging
+    query of the Kubernetes list wrapper, the one sending function of the Vault client, the setting-to-attribute
+    map through `build`, and every `.call` outside the three modules.
   - What is not shown: no test shows that a permission name is right. The names and path forms were found in the
     vendors' documentation and source files on 2026-11-11 (`tests/fixtures/policy_sources_2026-11-11.txt`, every
     row pinned to a commit); the rendered vendor pages could not be reached. No policy has been confirmed on a

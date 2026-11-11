@@ -11,12 +11,23 @@ from tools import policy_page as pp
 from tests.test_policy_guard import ROOT, _policies
 
 
+def _changelog_entry() -> str:
+    """The entry for this work: from its heading line to the next top-level bullet."""
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    start = changelog.index("- **Declared permissions for three backend kinds**")
+    end = changelog.find("\n- **", start + 1)
+    return changelog[start : end if end != -1 else len(changelog)]
+
+
+def _readme_paragraph() -> str:
+    lines = (ROOT / "README.md").read_text(encoding="utf-8").splitlines()
+    return next(line for line in lines if line.startswith("- **Declared permissions.**"))
+
+
 def test_m1_no_text_states_the_vault_refusals_as_fact_while_no_run_is_on_record():
     assert pp.ENGINE_RUN is None, "a run is on record: change this test together with ENGINE_RUN"
     page = pp.page(ROOT)
-    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    entry = changelog[changelog.index("**Declared permissions for three backend kinds**") :][:4000]
-    for name, text in (("page", page), ("CHANGELOG", entry)):
+    for name, text in (("page", page), ("CHANGELOG", _changelog_entry())):
         flat = " ".join(text.split())
         assert "refused by a real Vault server" not in flat, name
         assert "have not run yet" in flat, name
@@ -27,9 +38,12 @@ def test_the_page_title_notes_and_engine_image_are_true():
     text = pp.page(ROOT)
     assert text.startswith("# Declared permissions per backend kind\n")
     assert pp.PAGE == "docs/declared-permissions.md"
-    for path in ("README.md", "CHANGELOG.md", "docs/declared-permissions.md"):
-        body = (ROOT / path).read_text(encoding="utf-8").lower()
-        assert "least-privilege polic" not in body, path
+    for name, body in (
+        ("README paragraph", _readme_paragraph()),
+        ("CHANGELOG entry", _changelog_entry()),
+        ("page", text),
+    ):
+        assert "least-privilege polic" not in body.lower(), name
     assert "builder's memory" not in text and "No ticket removes this yet" not in text
     jobs = _yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))["jobs"]
     images = {

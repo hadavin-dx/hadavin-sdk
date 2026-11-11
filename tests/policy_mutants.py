@@ -7,6 +7,12 @@ Each mutant reverts ONE rule in a temp copy (of ``tools/policy_page.py``, or of 
     python tests/policy_mutants.py            # all mutants; exit 1 if any is not good
     python tests/policy_mutants.py D1         # only mutants whose name contains the text
 
+How strong the kill check is: the first failing line must hold ``expect``. Where the killer asserts through
+``same()`` (the run prints how many mutants), that line already holds the expected text, so the check shows only
+that the test failed at an assertion, not at which one. Those mutants are WEAK: a revert that makes some other
+``same()`` of the same test fail counts as killed. Two mutants may share one killer (the run prints which). The
+four mutants for the fix-batch-2 rules use killers with their own message and are not weak.
+
 What has NO mutant here, and why:
 * the tests that need a Vault server (tests/test_policy_engine.py): a reverted rule there can only be shown on
   a real server, so their plants run in CI and nowhere else;
@@ -16,6 +22,7 @@ What has NO mutant here, and why:
   assertion of a test, with no rule function to revert; the independent plants P09b and P09c showed them fire.
 """
 
+import ast
 import sys
 from pathlib import Path
 
@@ -31,6 +38,22 @@ PIN = "tests/test_policy_guard::"
 TOOL = "tools/policy_page.py"
 
 
+def _killers_using_same() -> set[str]:
+    """Names of the killer tests that assert through `same()`. `same()` writes the EXPECTED text into its
+    failure message, and `expect` is a fragment of that text, so for these killers the first-line check only
+    shows that the test failed at an assertion, not which one: any failing `same()` in that test passes it."""
+    tree = ast.parse((ROOT / TEST).read_text(encoding="utf-8"))
+    return {
+        f.name
+        for f in tree.body
+        if isinstance(f, ast.FunctionDef)
+        and any(
+            isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "same"
+            for n in ast.walk(f)
+        )
+    }
+
+
 def mutant(name, file, old, new, killer, expect):
     return Mutant(
         name, file, old, new, expect, test_file=TEST, only_test=killer, pinned=PIN + killer
@@ -38,6 +61,38 @@ def mutant(name, file, old, new, killer, expect):
 
 
 M = [
+    mutant(
+        "A1 a second request or send in the Vault sending function is no longer reported",
+        TEST,
+        "    if len(requests) != 1 or len(sends) != 1:\n",
+        "    if False:\n",
+        "test_plant_a_second_send_in_the_sending_function_is_the_class_caught",
+        "a second send inside `call` is not reported",
+    ),
+    mutant(
+        "A1 any text in the Kubernetes paging query is accepted",
+        TEST,
+        "            if node.value not in _PAGING_TEXT:\n",
+        "            if False:\n",
+        "test_plant_a_bare_watch_in_the_paging_query_is_the_class_caught",
+        "a bare `watch` in the paging query is not reported",
+    ),
+    mutant(
+        "A1 a setting stored in the wrong attribute is no longer reported",
+        TEST,
+        "        elif stored[name] not in passed:\n",
+        "        elif False:\n",
+        "test_plant_a_setting_handed_to_the_wrong_parameter_is_the_class_caught",
+        "a setting stored in the wrong attribute is not reported",
+    ),
+    mutant(
+        "A1 a `.call` of the Vault client in another module is no longer reported",
+        TEST,
+        '                and node.attr == "call"\n',
+        '                and node.attr == "no-such-name"\n',
+        "test_plant_a_call_of_the_vault_client_in_another_module_is_the_class_caught",
+        "a `.call` outside the declared modules is not reported",
+    ),
     mutant(
         "A1 a request with no grant is no longer reported",
         TEST,
@@ -374,6 +429,8 @@ if __name__ == "__main__":
         print(f"no mutant name contains any of {only}; nothing was run", file=sys.stderr)
         sys.exit(2)
     first_lines: dict[str, str] = {}
+    weak_killers = _killers_using_same()
+    weak = [m.name for m in M if m.only_test in weak_killers]
 
     def show(row):
         name, v, test_id, good = row
@@ -395,4 +452,8 @@ if __name__ == "__main__":
     )
     bad = [n for n, _, _, g in res if not g]
     print(f"{len(res) - len(bad)} of {len(res)} good; problems: {bad}")
+    print(
+        f"first-line check is weak (killer asserts through same()) for {len(weak)} of {len(M)} mutants; "
+        f"killer shared by more than one mutant: {sorted({k for k in (m.only_test for m in M) if [m.only_test for m in M].count(k) > 1})}"
+    )
     sys.exit(1 if bad else 0)
