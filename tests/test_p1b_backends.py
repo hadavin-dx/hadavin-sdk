@@ -218,7 +218,9 @@ def test_config_error_never_echoes_a_mistyped_value(cfg_dir):
     )
     with pytest.raises(ConfigError) as err:
         load_config(cfg_dir)
-    assert "pasword" in str(err.value) and value not in str(err.value)
+    # an unknown key is never shown (it may be a mistyped value): the line says so, the value stays out
+    assert "<unknown key>" in str(err.value) and "pasword" not in str(err.value)
+    assert value not in str(err.value)
     _edit(
         cfg_dir,
         lambda d: (
@@ -227,7 +229,8 @@ def test_config_error_never_echoes_a_mistyped_value(cfg_dir):
     )
     with pytest.raises(ConfigError) as err:
         load_config(cfg_dir)
-    assert "tokn" in str(err.value) and value not in str(err.value)
+    assert "<unknown key>" in str(err.value) and "tokn" not in str(err.value)
+    assert value not in str(err.value)
 
 
 def test_broken_hadavin_module_keeps_its_own_import_error(monkeypatch):

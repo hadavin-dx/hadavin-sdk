@@ -48,6 +48,22 @@ def mutant(name, file, old, new, killer, expect):
     )
 
 
+def crash_mutant(name, file, old, new, killer, crash_type):
+    """A mutant that lets a library error through: the killer test dies with that exception class."""
+    return Mutant(
+        name,
+        file,
+        old,
+        new,
+        crash_type,
+        allow_crash=True,
+        crash_type=crash_type,
+        test_file=TEST,
+        only_test=killer,
+        pinned=PIN + killer,
+    )
+
+
 OBJECT = "test_pilot_and_prod_refuse_a_test_object_handed_to_build"
 VAULT = "test_pilot_and_prod_refuse_a_static_vault_token"
 TICK_TEST = "test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick"
@@ -315,14 +331,14 @@ M = [
     mutant("M16e a settings check splits the URL with the library again (table.py)", TBL,
         "        url = safe_urlsplit(self.address)", '        url = __import__("urllib.parse", fromlist=["urlsplit"]).urlsplit(self.address)',
         "test_no_module_splits_a_configured_url_without_the_safe_splitter", "split a URL themselves"),
-    mutant("M16g the one YAML reader lets a YAML error through again (config.py)", CFG,
+    crash_mutant("M16g the one YAML reader lets a YAML error through again (config.py)", CFG,
         "    except yaml.YAMLError as exc:\n        raise ConfigError(config_error_text(exc)) from None\n\n\ndef _read_yaml",
         "    except ZeroDivisionError as exc:\n        raise ConfigError(config_error_text(exc)) from None\n\n\ndef _read_yaml",
-        "test_the_one_yaml_reader_gives_a_value_free_error_for_every_caller", "yaml", allow_crash=True, crash_type="ScannerError"),
-    mutant("M16h the registry's file reader lets a decode error through (registry.py)", REGISTRY,
+        "test_the_one_yaml_reader_gives_a_value_free_error_for_every_caller", "ScannerError"),
+    crash_mutant("M16h the registry's file reader lets a decode error through (registry.py)", REGISTRY,
         "    except (ValueError, OSError) as exc:\n        raise ConfigError(config_error_text(exc)) from None",
         "    except OSError as exc:\n        raise ConfigError(config_error_text(exc)) from None",
-        "test_a_tool_file_that_is_not_utf8_is_reported_by_its_type_only", "codec", allow_crash=True, crash_type="UnicodeDecodeError"),
+        "test_a_tool_file_that_is_not_utf8_is_reported_by_its_type_only", "UnicodeDecodeError"),
     mutant("M16i an unknown key is shown again (errors.py)", ERRORS,
         '        elif error["type"] == "extra_forbidden" and i == len(loc) - 1:', "        elif False:",
         "test_an_unknown_key_in_an_action_file_is_not_shown", "the error shows the refused value"),
