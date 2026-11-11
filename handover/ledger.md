@@ -2605,3 +2605,4 @@
 | BL-PR89-r19-c01 | Major | PR89 | reviews/PR89/r19-codebase.md M1 (duplicates design M4/M1/M2) | OPEN | | | 2026-11-11 |
 | BL-PR89-r19-c02 | Major | PR89 | reviews/PR89/r19-codebase.md M2 (duplicates design M4/M1/M2) | OPEN | | | 2026-11-11 |
 | BL-PR89-r19-c03 | Major | PR89 | reviews/PR89/r19-codebase.md M3 (duplicates design M4/M1/M2) | OPEN | | | 2026-11-11 |
+| BL-core-q8b-plan-r2-B1 | Blocker | Q8b-plan | reviews/Q8b/plan-r2-full.md B1 (rev 2's setting-word rule unmasks credentials main masks) | OPEN | | | 2026-11-11 |
