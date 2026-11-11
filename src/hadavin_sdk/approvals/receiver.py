@@ -22,7 +22,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from hadavin_sdk.approvals.channel import CALLBACK_PATH_MAX_CHARS, valid_callback_path
 from hadavin_sdk.approvals.hmac_v0 import MAX_HEADER_DIGITS, is_plain_digits
 from hadavin_sdk.approvals.requests import Approvals
-from hadavin_sdk.defaults import RECEIVER_READ_TIMEOUT_MAX_S, RECEIVER_READ_TIMEOUT_S
+from hadavin_sdk.defaults import (
+    RECEIVER_BACKLOG,
+    RECEIVER_READ_TIMEOUT_MAX_S,
+    RECEIVER_READ_TIMEOUT_S,
+)
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store.protocol import NotFound
 
@@ -222,6 +226,10 @@ def serve(
             _LOG.debug("%s", _plain(text, _MAX_LOG_CHARS))
 
     class Server(ThreadingHTTPServer):
+        request_queue_size = (
+            RECEIVER_BACKLOG  # the standard library's 5 delays callers that arrive together
+        )
+
         def handle_error(self, request: object, client_address: object) -> None:
             # Every error that ends a request arrives here; the standard library would print a traceback. One log
             # line with the kind of error only: no request text, no error message (it could carry request data).

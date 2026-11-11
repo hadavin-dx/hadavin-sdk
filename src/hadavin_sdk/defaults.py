@@ -128,6 +128,10 @@ RECEIVER_READ_TIMEOUT_S = 10.0
 # The longest read bound `serve` accepts (one hour): the operating system refuses a socket timeout that does not fit
 # its time type (10 billion seconds raises OverflowError on every request), so a larger value is a mistake.
 RECEIVER_READ_TIMEOUT_MAX_S = 3600.0
+# Connections the operating system may hold waiting to be accepted (the listen backlog). The standard library's own
+# value is 5: with more than 5 callers arriving at once the rest wait for seconds (or until the caller's retry) before
+# the server accepts them, and the read bound starts only at accept, so a connection could outlive it by that wait.
+RECEIVER_BACKLOG = 128
 
 # --- kubernetes kind: the Kubernetes source (KubernetesSettings). Decision: kind defaults stay here with every other default
 # (a repo rule keeps one set); when a second kind arrives each kind gets its own `<kind>_defaults.py` and the rule test

@@ -719,6 +719,47 @@ def test_a_handler_failure_is_logged_once_even_when_the_answer_cannot_be_written
     assert "secret text" not in caplog.text
 
 
+def test_a_burst_of_silent_connections_is_all_closed_within_the_read_bound_of_its_own_start():
+    """150 callers connect at once and send nothing. Measured from the start of its own connect, every connection
+    must be closed by the server within the read bound plus a margin. With the standard library's listen backlog
+    of 5 the surplus waited for seconds before it was accepted (the bound starts at accept) and some were not
+    closed for 30 s (measured: 8 to 25 of 50 over the bound; with backlog 128: none)."""
+    bound, margin, callers = 1.0, 1.5, 150
+    lives: list[float] = []
+    lock = threading.Lock()
+
+    def one(port: int) -> None:
+        start = time.perf_counter()
+        conn = socket.create_connection(("127.0.0.1", port), timeout=20)
+        try:
+            conn.settimeout(20)
+            try:
+                conn.recv(10)  # b"" when the server closes
+            except OSError:
+                pass
+        finally:
+            conn.close()
+        with lock:
+            lives.append(time.perf_counter() - start)
+
+    with _served(FakeChannel(SIG), read_timeout_s=bound) as port:
+        threads = [threading.Thread(target=one, args=(port,)) for _ in range(callers)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(30)
+    assert len(lives) == callers
+    assert max(lives) < bound + margin, sorted(lives)[-5:]
+
+
+def test_the_listen_backlog_is_the_configured_one_not_the_standard_librarys_five():
+    server = receiver.serve(_approvals(FakeChannel(SIG)), port=0)
+    try:
+        assert server.request_queue_size == defaults.RECEIVER_BACKLOG > 5
+    finally:
+        server.server_close()
+
+
 def test_a_caller_that_hangs_up_is_logged_at_debug_only(caplog):
     """The server is waiting in the body read when the caller resets: no ERROR line, one DEBUG line."""
     caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
