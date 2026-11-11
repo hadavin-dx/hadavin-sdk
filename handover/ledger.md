@@ -2439,3 +2439,7 @@
 | BL-core-a18-w3-02 | handover/reviews/PR86/round-w3-cost-slice.md | Major | PR78/P4c-2 stack | R2 agent_loop books nothing for unpriced/missing-usage/exhausted provider replies (money regression vs main); P4c-2 owns | OPEN | 2026-11-11 |
 | BL-core-a18-w3-03 | handover/reviews/PR86/round-w3-cost-slice.md | Minor | PR86 stack | R3-R6 max_tokens cap at load, 6 vs 8 decimals, stop race, fake usage | OPEN | 2026-11-11 |
 | BL-core-a18-w3-04 | cloud note | Major | PR86 (A18) | P6b1 no-training statement check itself not yet reviewed (reviewer got wrong slice from cloud) | OPEN | 2026-11-11 |
+| BL-core-a15-w3-03 | handover/reviews/PR74/round-w3-codebase-tests.md | Major | PR74 (A15) | T1 gate test-file name drift (rc 4); T2 test_reverse_check_fails_90_percent absent; T3 teeth test weaker than BN-3; T4 D9 literal order test missing; T5 golden T6/T7 unpinned | OPEN | 2026-11-11 |
+| BL-core-a15-w3-04 | handover/reviews/PR74/round-w3-codebase-tests.md | Minor | PR74 (A15) | T6-T17 missing/vacuous tests, noqa reason unchecked, conftest side effect, stacked on unmerged P1a/P1b (lead merge order) | OPEN | 2026-11-11 |
+| BL-core-a17-w3-01 | handover/reviews/PR85/round-w3-codebase.md | Minor | PR85 (A17) | F-1..F-4 stale CHANGELOG (CORPUS_STEP, src heading), rows 005/033 active without test, factory-limit doc | OPEN | 2026-11-11 |
+| BL-core-a17-w3-02 | handover/reviews/PR85/round-w3-codebase.md | Major (coverage gap) | PR85 (A17) | ~140 OPERATOR/FOREIGN CSV labels unverified; needs reviewer with full tree + test/mutant/cmp run | OPEN | 2026-11-11 |
