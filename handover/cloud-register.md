@@ -1169,10 +1169,12 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | Q8-deps a35f933f | egm:egm-design (Fable) kind-module single-dependency audit of main | 13:40Z | +20m | 13:40Z | CLOSED report saved reviews/Q8/deps-audit.md | save handover/reviews/Q8/deps-audit.md, ledger |
 | Q8-redact a608409c | egm:egm-codebase-details (Fable) hostile sibling sweep of masking choke points on main | 13:40Z | +20m | 13:40Z | CLOSED saved reviews/Q8/redaction-sweep.md | save handover/reviews/Q8/redaction-sweep.md, reproduce Majors |
 | R-Q8a-plan a126a1f8, a5ec89be | egm design + implementation-readiness (Fable) plan review r1 of tickets/Q8a | 13:44Z | +15m | 13:44Z | CLOSED saved reviews/Q8a/plan-r1-summary.md | save reviews/Q8a/, resolve, then ONE builder |
-| R-Q8a1-r2 a62ab99a | egm impl-readiness (Fable) plan review r2 ticket Q8a-1 | 13:51Z | +15m | 13:51Z | running | if READY start ONE builder |
+| R-Q8a1-r2 a62ab99a | egm impl-readiness (Fable) plan review r2 ticket Q8a-1 | 13:51Z | +15m | 13:51Z | CLOSED saved reviews/Q8a/plan-r2.md; errata rev 3 | if READY start ONE builder |
 | B-flaky a6e5db57 | builder (Fable) flaky timing harness test on main, branch core/fix-timing-harness-flake, pg 56040 | 13:51Z | +60m | 13:51Z | running | evidence + review |
 | R-P3a2-r11 a2b6f315, a573bc87 | egm design + codebase (Fable) result review round 11 of core/P3a-2-rewritten 8382bdd (snapshot p3a2-r11-8382bdd) | 13:51Z | +25m | 13:51Z | running | save reviews/P3a-2/, ledger; evidence run still needed |
 | R-P85main a470bfd9 | egm codebase (Fable) review of InvalidRunId code mapping on core/P5b2-main 3b9617e4 | 13:51Z | +10m | 13:51Z | CLOSED saved reviews/PR85/p5b2-main-delta-review.md | save reviews/PR85/ |
-| EV-Q8a2 a795f178 | EVIDENCE RUNNER (Fable) dry run of guard pattern on main | 13:51Z | +20m | 13:51Z | running | write ticket Q8a-2 from the hit list |
+| EV-Q8a2 a795f178 | EVIDENCE RUNNER (Fable) dry run of guard pattern on main | 13:51Z | +20m | 13:51Z | CLOSED evidence/Q8a-2/dryrun-2026-11-11.md | write ticket Q8a-2 from the hit list |
 | A-Q8b a123e38f | ticket author (Fable) Q8b partial-mask + card redaction (F5, F6) | 13:51Z | +25m | 13:51Z | running | plan review, then builder |
 | A-Q8c a2a53d4b | ticket author (Fable) Q8c policy per kind (F3) | 13:51Z | +30m | 13:51Z | running | plan review |
+| B-Q8a1 a0c5bd99 | ONE builder (Fable) ticket Q8a-1, branch core/q8a-1-live-override-refusals, pg 56050 | 13:54Z | +90m | 13:54Z | running | checkpoint 30m; then evidence runner + egm reviewers |
+| A-Q8a2 a2718ca8 | ticket author (Fable) Q8a-2 neutral callback + guard | 13:54Z | +25m | 13:54Z | running | plan review |
