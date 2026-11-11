@@ -2410,3 +2410,4 @@
 | BL-core-a2-w2-r13-15 | handover/reviews/P89/round-w2-r13-implreadiness-mutants.md | Major | PR89 | mutants header Windows paragraph false (M3) | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r13-16 | handover/reviews/P89/round-w2-r13-implreadiness-mutants.md | Major | PR89 | conftest guard mutants missing (M4) | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r13-17 | handover/reviews/P89/round-w2-r13-implreadiness-mutants.md | Minor | PR89 | N5-N9 and CHANGELOG wording W10-W18 | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r13-18 | CodeQL alert 8 on bfce3d9 (tools/mutation_runner.py:604) | Major | PR89 | HIGH: password-derived value hashed with SHA-256 for the lock name (introduced by the r13-05 fix); builder told: redesign, no suppression | OPEN | 2026-11-11 |
