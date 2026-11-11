@@ -869,3 +869,4 @@ ORDER 234 floor: 1 running, 8 NOT met. Waiting: PR73 runner+reviewers need your 
 - Slips/uncertainty: A17 snapshot includes stacked parent PRs (83 files), so that reviewer cannot isolate P5b2 and says so in coverage; A16/A21b/A10b/A12/A13/A11b are "waits" because their code or evidence depends on another PR head or merge, not because of lead; challenge any of them.
 PULSE 2026-11-11T13:28:58Z 7 agents running (see register)
 PULSE 2026-11-11T13:33:32Z agents: EV-P89 a092be0f, B-PR77 a23fcc26, M-P3a2 a5853cac, B-PR85 a758870b (pg 56020), B-PR89-r18 ada68aaa; no reports yet
+PULSE 2026-11-11T13:40:43Z 7 running
