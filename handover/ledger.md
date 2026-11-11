@@ -2674,3 +2674,5 @@
 | Q8a-2-r3-M1 | reviews/Q8a-2/result-r3-codebase-full.md | Major | Q8a-2 | Server.handle_error untested (log levels, no request text) though CHANGELOG states it | OPEN | fix batch | - | 2026-11-11 |
 | Q8b-r1-M1 | reviews/Q8b/result-r1-design-full.md | Major | Q8b | card path: key glued to e-mail/host leaves assignment value readable (87 vs 38 of 3000 on main) | OPEN | fix batch | - | 2026-11-11 |
 | Q8b-r1-M2 | same | Major | Q8b | approver cannot read target host on card (owner question open) | OWNER-ONLY | questions-for-lead | - | 2026-11-11 |
+| Q8b-r1-F1 | reviews/Q8b/result-r1-codebase-full.md | Major | Q8b | _named takes first of name/key: {"name":"db","key":"password","value":..} shows the secret | OPEN | fix batch | - | 2026-11-11 |
+| Q8b-r1-F2 | same | Major | Q8b | LIMITS text says always masked but UTC-time and setting-key exceptions exist (ticket text; fix on ticket side) | OPEN | fix batch | - | 2026-11-11 |

@@ -60,3 +60,4 @@ Each line: UTC | IST | item | running agents | next 3 steps | blockers
 2026-11-11 16:55Z | CHECKPOINT | 14 agents running, none stuck (all started 1-10 min ago; Q8a-1 evidence a55ad3b3 at 10 min): 3 evidence runners + 6 reviewers (Q8a-2/Q8c-1/Q8b), timing-fix and PR89-r22 builders, 2 ticket authors (PR H, P3a-2 errata) | load 5 | next: collect reports; Q8a-1 fix batch 4 after a55ad3b3 | owner list unchanged
 16:27 Q8a-1 r4 evidence saved (0b97d55a all gates green); Q8c-1 r2 design (2 Major), Q8a-2 r3 design (0 Major, 6 minor, evidence pending) saved; launching Q8a-1 fix batch 4
 16:28 saved Q8a-2 r3 codebase (1 Major: handle_error untested) and Q8b r1 design (2 Major); Q8a-1 batch-4 builder ae9691ed running; waiting for evidence runners ab1486e8/a1120e73/af24c08c and Q8b codebase review acd34384, Q8c-1 codebase a55fde8a
+16:28 saved Q8b r1 codebase review (2 Major F1,F2; 12 minor); waiting for Q8b evidence af24c08c before fix batch
