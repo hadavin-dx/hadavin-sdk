@@ -1619,3 +1619,38 @@ Builder a15af6a6 reports a cost-versus-coverage trade-off in the tab-like contro
 
 ## q-PR85-ready (2026-11-11)
 PR85 (A17, head bd33cc9) is a DRAFT stacked on core/P5b1 (base is not main). Fresh reviews found no Major (round w5), the Minors batch is pushed, independent evidence is valid (handover/evidence/A17/bd33cc9-REPORT.md). GitHub shows only SonarCloud (success) and CodeRabbit (skipped); the repository workflow (unit tests, CodeQL, security) does not run on a PR whose base is not main, so "real GitHub checks green" cannot be shown yet. DEFAULT: leave PR85 a draft until PR80/P5b1 merges, then retarget to main and read the checks; I do not mark it ready. PR body updated with current numbers (42/134/27, 46 mutants, src changes).
+
+## STOPPED 241 — 10:46Z UTC / 16:16 IST
+Cloud session stopped. Read handover/CLOUD-RESUME-2026-11-11.md. Not pushed: two PR89 evidence heads (gitleaks hit) and the 32 MB old P3a-2 bundle. Branch heads pushed in this stop pass (new refs, no force, no deletes):
+- core/P3a-2-rewritten 8382bdd5b0e356bb794800f8c05f7dfa88ed0229
+- wip/P2d-1-w6 b6f3b8dd0ab877aa3896db4f292094493c869ad7
+- wip/cloud-B-P4da2 0bb80170cee6ae00c2ef950b053a8eda7e0a2c45
+- wip/cloud-B-P73r2 58acdcc46b5e38d59ef8a4734d99ba1531c7d71a
+- wip/cloud-B-R84 73d07e5515d045b914130fc859241e7c940642c9
+- wip/cloud-B-cilint-b3 019c61f557a55648bcd92a1551911108c51f1164
+- wip/cloud-B-peel 4980e24ee3e76b2b054866a0229dd19056b6b3e9
+- wip/cloud-EV-A21a-1a7d202-wtfb 93f20eddcc1cd5276ea4c8d40f13efc8d4ea1f98
+- wip/cloud-EV-A21a-1a7d202-wtflakyhead 16807f9ddb147104fbac7987dbf3a609ce5e39f0
+- wip/cloud-EV-A21a-1a7d202-wtflakymain b1087d4632004011d97e4af48d1812a2d8da73d4
+- wip/cloud-EV-P6a-d392200-base f2b0b8b2ccf47f727521db69e897f273472b271e
+- wip/cloud-EV-P6a-ec76c73-base 2b5957567e55913298da82313b802a647710ec50
+- wip/cloud-EV-P73-0c52491-wtbase 4a7e1a39aa6cd6d87edda267b5d31d60f9061613
+- wip/cloud-EV-P73-d1dff3a-base d60d05a29b2dac7a4a2f42c37350cd379848a9d5
+- wip/cloud-EV-P73-ef2adc7-base 0384f52d03c6ff30d4fc4bdf067f1071ab420071
+- wip/cloud-EV-P77-8b2b716-old 71767d90135b21b68a99a75118c763ea4150ca05
+- wip/cloud-EV-P89-025ec61-fb 44ac8eb99d02025d11d408721514056d62b6799e
+- wip/cloud-EV-P89-0e4f6d5-base 9f8829ef413222336b3e9b5f71d22d9844839f67
+- wip/cloud-EV-P89-14879da-wt-old 686e6883d43dc62f86a23783e9cb3897b75aaaaa
+- wip/cloud-EV-P89-3586dcc-wt-base 4ec96a5bffc5ebe230773e5283ba04585a164984
+- wip/cloud-EV-P89-58f7d56-wt-base e42dd7c1606c1d0b837a8139771aca3cc8c82d48
+- wip/cloud-EV-P89-6706e67-fb 4f5d63019ca3e6be64d5ecf63628b92a73644eec
+- wip/cloud-EV-P89-9ed5217-fb d0e64ea94a0a4c1acfe6262a4228c51f69edcae6
+- wip/cloud-EV-P89-ef4c572-wt-base 64077ed0c940d42e8c399544279316246b95805b
+- wip/cloud-EV-P89-f4301d5-wt-base cd4b6e432b67dc3e1990683e187bb9b9f5a26f64
+- wip/cloud-EV-PR87 5520a67cd623b52723776e0eccd3d9b87ec916b5
+- wip/cloud-EV-PR89 b7a6b07888771e76aa38e023ac112be81717e4a4
+- wip/cloud-FB87 e8fd3a129a6f7352b30b8de3d988af056bf5f65a
+- wip/cloud-WT-A1 2b3e01041babd71e115640756874f82cad1f8e63
+- wip/cloud-WT-R1 9aabc559170afd5017b1c36535a7f61c1f84bafb
+- wip/cloud-WT-askdata 7456e696540d3893ddd9284574fe88ba1b4e01c8
+- core/cloud-handover: see the commit that holds this line.

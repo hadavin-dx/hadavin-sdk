@@ -3,3 +3,4 @@
 - PR85 DONE on my side: fresh reviews (no Major) + independent evidence valid on bd33cc9; draft, waits for lead (q-PR85-ready: no workflow checks until retarget to main).
 - PR74: WAITS FOR PR77 merge (ORDER 240).
 WAITS FOR lead: core/P3a-2 push approval; q-A11a-sep-keep (now moot if the gap-tolerant match lands). | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 12:16Z); detail in HEARTBEAT.md
+10:46Z | STOPPED (ORDER 241): no agents, no shells, no jobs running; everything pushed except the items listed in handover/CLOUD-RESUME-2026-11-11.md section (e). PULSE refresher stopped.
