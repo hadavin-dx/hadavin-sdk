@@ -1788,7 +1788,7 @@ M: list[Mutant] = [
         "only the function names in the file text are looked at, not what changed in the database",
         MIG,
         "            changed = _changed_since(objects_before, _objects(db))",
-        "            changed = (frozenset(),) * 4\n            _unused = (objects_before, _objects(db))",
+        "            changed = _Changed()\n            _unused = (objects_before, _objects(db))",
         k(T_PG, "test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new"),
     ),
     Mutant(
