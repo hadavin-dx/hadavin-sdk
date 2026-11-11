@@ -2528,8 +2528,7 @@ def test_property_the_lock_name_holds_no_byte_of_a_password_and_calm_passwords_g
                 ran += 1
                 parsed += name != "unparsed"
                 unparsed += name == "unparsed"
-                found = mr._password_texts(make(text))
-                for t in [text, *found[0], *found[1]]:
+                for t in (text, *text.replace("'", "").split()):
                     if len(t) >= 3 and t not in skeleton:
                         assert t not in name, (
                             "a password text is inside the text that the lock hashes"
