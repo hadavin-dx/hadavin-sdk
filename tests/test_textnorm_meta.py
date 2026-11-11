@@ -88,7 +88,9 @@ def test_a_the_list_has_75_mutants_28_repointed_25_of_p1a_18_of_p1b_and_4_of_the
     assert tuple(names[:28]) == REPOINTED, (
         "the first 28 are the re-pointed mutants, in the order of the placement table"
     )
-    assert len(names[28:]) == 47  # 25 of P1a (13 new, 9 of fold2, 3 of fold3), the 18 of P1b and the 4 of the scan budget
+    assert (
+        len(names[28:]) == 47
+    )  # 25 of P1a (13 new, 9 of fold2, 3 of fold3), the 18 of P1b and the 4 of the scan budget
     assert len(names[53:71]) == 18, "P1b adds 18 mutants"
     assert len(names[71:]) == 4, "the scan budget (P5a round w3) adds 4 mutants"
 
