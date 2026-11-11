@@ -15,7 +15,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-import yaml
 
 from hadavin_sdk import app as app_mod
 from hadavin_sdk import config as config_mod
@@ -27,6 +26,7 @@ from hadavin_sdk.config import Config, ConfigError, _anchor_refusals, load_confi
 from hadavin_sdk.registry import _module_pin_problems, load_registry
 from hadavin_sdk.stages import STAGES, is_live, is_prod
 from tests.conftest import make_cfg, qualify
+from tests.k5_support import edit_config as _edit
 
 # The old word is built from parts in this file: the class test never scans this file, but a grep for it should find
 # only the places that matter.
@@ -44,13 +44,6 @@ ALLOWED = "Input should be 'demo', 'pilot' or 'prod'"  # pydantic's text for a v
 def cfg_dir(tmp_path):
     """A copy of the fixture config. Defined here, not taken from conftest, because the mutation runner runs with --noconftest."""
     return make_cfg(tmp_path)
-
-
-def _edit(cfg_dir, fn):
-    path = cfg_dir / "config.yaml"
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    fn(data)
-    path.write_text(yaml.safe_dump(data), encoding="utf-8")
 
 
 def _set_env(cfg_dir, value):
@@ -314,6 +307,7 @@ def _live_by_site(tmp_path, stage):
                 cfg_dir,
                 ["test-agent"],
                 secrets=FakeSecretProvider({"fixture-token": "tok" + "-stage"}),
+                allow_test_doubles=True,  # pilot and prod refuse a handed-in provider without the switch
             )
             in_app = False
         except ConfigError as exc:
