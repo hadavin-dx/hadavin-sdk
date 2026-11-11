@@ -220,6 +220,7 @@ import time
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath, PureWindowsPath
+from types import FrameType
 from urllib.parse import quote, quote_plus, unquote, unquote_plus, urlsplit
 
 from hadavin_sdk.testing.mutation import (
@@ -339,6 +340,12 @@ def _taskkill() -> str:
     return str(Path(root) / "System32" / "taskkill.exe")
 
 
+# the Windows flag that gives the child a process group of its own (Python defines the name on Windows only; 0, "no flag", elsewhere,
+# where the flag is never used for a real run)
+if sys.platform == "win32":
+    _NEW_PROCESS_GROUP = subprocess.CREATE_NEW_PROCESS_GROUP
+else:
+    _NEW_PROCESS_GROUP = 0
 WAIT_POLL = (
     0.05  # seconds between two looks at a running child (POSIX ``os.waitid`` has no timeout)
 )
@@ -1147,17 +1154,14 @@ def _pytest(
             *("-x", "-c", str(ini), f"--rootdir={cwd}", f"--junitxml={junit}", *tests),
         ]
         # own process group (POSIX session / Windows group): on a timeout the whole tree dies, not only pytest (a test may have started psql or a server)
-        own = (
-            {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
-            if _IS_WINDOWS
-            else {"start_new_session": True}
-        )
         # the child's own console output (stdout and stderr) goes to the null device: the runner never reads or prints it
         # a termination signal during the start is held until ``proc`` is known, then raised inside this ``try``: the child is killed
         with _signals_held():
             # S603 stays a listed exception: the argument list holds the caller's test paths and the junit path, so ruff cannot see it as a literal. Fixed argv (our own interpreter), no shell, caller strings only as pytest operands that ``_plain_operand`` has checked
+            # both keywords are always given and chosen by platform: a new process group on Windows, a new session elsewhere
             proc = subprocess.Popen(  # noqa: S603
-                cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **own  # type: ignore[call-overload]
+                cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                creationflags=_NEW_PROCESS_GROUP if _IS_WINDOWS else 0, start_new_session=not _IS_WINDOWS,
             )  # fmt: skip
         try:
             _wait_unreaped(proc, timeout)
@@ -1275,14 +1279,14 @@ def _terminations_raise() -> Iterator[None]:
             "run_mutants is not re-entrant: a second call inside a running one is refused"
         )
 
-    def stop(signum: int, _frame: object) -> None:
+    def stop(signum: int, _frame: FrameType | None) -> None:
         if _SIGNALS["depth"] or _SIGNALS["ended"]:
             _SIGNALS["pending"] = _SIGNALS["pending"] or signum
             return
         _SIGNALS["ended"] = 1
         raise SystemExit(128 + signum)
 
-    previous: dict[int, object] = {}
+    previous: dict[int, Callable[[int, FrameType | None], object] | int | None] = {}
     _SIGNALS.update(depth=0, pending=0, ended=0, active=1)
     try:
         for name in _TERMINATING:
@@ -1293,7 +1297,7 @@ def _terminations_raise() -> Iterator[None]:
         yield
     finally:
         for sig, old in previous.items():
-            signal.signal(sig, old if old is not None else signal.SIG_DFL)  # type: ignore[arg-type]
+            signal.signal(sig, signal.SIG_DFL if old is None else old)
         _SIGNALS.update(depth=0, pending=0, ended=0, active=0)
 
 
@@ -1664,7 +1668,9 @@ def _run_mutants(
             if m.test_file:
                 operands = [f"{m.test_file}::{m.only_test}" if m.only_test else m.test_file]
             else:
-                operands = [f"{tests[0]}::{m.only_test}", *tests[1:]] if m.only_test else tests
+                operands = (
+                    [f"{tests[0]}::{m.only_test}", *tests[1:]] if m.only_test else list(tests)
+                )
             rc = _pytest(
                 tmp,
                 operands,
