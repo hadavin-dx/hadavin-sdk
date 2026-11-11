@@ -42,9 +42,9 @@ RAISE = (
 )
 
 
-def mutant(name, file, old, new, killer, expect):
+def mutant(name, file, old, new, killer, expect, param=""):
     return Mutant(
-        name, file, old, new, expect, test_file=TEST, only_test=killer, pinned=PIN + killer
+        name, file, old, new, expect, test_file=TEST, only_test=killer, pinned=PIN + killer + param
     )
 
 
@@ -329,37 +329,37 @@ M = [
         "    except InvalidUrl:\n        return False\n    if parts.scheme", "    except InvalidUrl:\n        return True\n    if parts.scheme",
         "test_a_url_that_cannot_be_read_is_never_called_loginless_or_allowed", "is False"),
     mutant("M16e a settings check splits the URL with the library again (table.py)", TBL,
-        "        url = safe_urlsplit(self.address)", '        url = __import__("urllib.parse", fromlist=["urlsplit"]).urlsplit(self.address)',
+        "        url = safe_urlsplit(self.address)", "        url = urlparse(self.address)",
         "test_no_module_splits_a_configured_url_without_the_safe_splitter", "split a URL themselves"),
     crash_mutant("M16g the one YAML reader lets a YAML error through again (config.py)", CFG,
         "    except yaml.YAMLError as exc:\n        raise ConfigError(config_error_text(exc)) from None\n\n\ndef _read_yaml",
         "    except ZeroDivisionError as exc:\n        raise ConfigError(config_error_text(exc)) from None\n\n\ndef _read_yaml",
-        "test_the_one_yaml_reader_gives_a_value_free_error_for_every_caller", "ScannerError"),
+        "test_the_one_yaml_reader_gives_a_value_free_error_for_every_caller", "ParserError"),
     crash_mutant("M16h the registry's file reader lets a decode error through (registry.py)", REGISTRY,
         "    except (ValueError, OSError) as exc:\n        raise ConfigError(config_error_text(exc)) from None",
         "    except OSError as exc:\n        raise ConfigError(config_error_text(exc)) from None",
         "test_a_tool_file_that_is_not_utf8_is_reported_by_its_type_only", "UnicodeDecodeError"),
     mutant("M16i an unknown key is shown again (errors.py)", ERRORS,
         '        elif error["type"] == "extra_forbidden" and i == len(loc) - 1:', "        elif False:",
-        "test_an_unknown_key_in_an_action_file_is_not_shown", "the error shows the refused value"),
+        "test_an_unknown_key_in_an_action_file_is_not_shown", "validation error for ActionContract"),
     mutant("M16j the name filter shows every text (errors.py)", ERRORS,
         "    if isinstance(name, str) and _SHOWABLE.fullmatch(name):", "    if isinstance(name, str):",
-        "test_the_name_filter_is_a_shape_check_only", "<not shown>"),
+        "test_the_name_filter_is_a_shape_check_only", "Zq9x-pw-4417"),
     mutant("M16k a library ValueError keeps its text again (config.py)", CFG,
         '    if e["type"] == "value_error" and not _own_error(e.get("ctx", {}).get("error")):', "    if False:",
-        "test_a_library_value_error_in_a_validator_shows_its_type_only_but_our_sentence_stays", "Zq9x"),
+        "test_a_library_value_error_in_a_validator_shows_its_type_only_but_our_sentence_stays", "validation error for Probe"),
     mutant("M16l every ValueError counts as ours (config.py)", CFG,
-        '    return isinstance(module, str) and (module == "hadavin_sdk" or module.startswith("hadavin_sdk."))', "    return True",
-        "test_a_library_value_error_in_a_validator_shows_its_type_only_but_our_sentence_stays", "Zq9x"),
+        '    return isinstance(module, str) and (\n        module == "hadavin_sdk" or module.startswith("hadavin_sdk.")\n    )', "    return True",
+        "test_a_library_value_error_in_a_validator_shows_its_type_only_but_our_sentence_stays", "validation error for Probe"),
     mutant("M16m no ValueError counts as ours (config.py)", CFG,
-        '    return isinstance(module, str) and (module == "hadavin_sdk" or module.startswith("hadavin_sdk."))', "    return False",
+        '    return isinstance(module, str) and (\n        module == "hadavin_sdk" or module.startswith("hadavin_sdk.")\n    )', "    return False",
         "test_our_own_value_error_sentence_is_kept", "must be an int or float"),
     mutant("M16n a pasted model_route is shown again (registry.py)", REGISTRY,
         "unknown model_route {shown_name(a.model_route)}", "unknown model_route {a.model_route}",
-        "test_a_name_pasted_where_the_registry_expects_a_known_one_is_not_shown", "Zq9x"),
+        "test_a_name_pasted_where_the_registry_expects_a_known_one_is_not_shown", "Zq9x", "[over0-unknown model_route <not shown>]"),
     mutant("M16o a pasted scope name is shown again (registry.py)", REGISTRY,
         "no contract for {shown_name(x)}", "no contract for {x}",
-        "test_a_name_pasted_where_the_registry_expects_a_known_one_is_not_shown", "Zq9x"),
+        "test_a_name_pasted_where_the_registry_expects_a_known_one_is_not_shown", "Zq9x", "[over1-no contract for <not shown>]"),
     mutant("M16p a schema keyword is shown again (contract.py)", CONTRACT,
         "unsupported keyword {_keyword_shown(k)}", "unsupported keyword {k}",
         "test_a_keyword_or_property_name_in_an_input_schema_is_not_shown", "Zq9x"),
@@ -368,10 +368,10 @@ M = [
         "test_a_name_in_a_tool_manifest_problem_is_not_shown", "Zq9x"),
     mutant("M16r the given-time refusal goes back to the replace() sentence (tick.py)", TICK,
         '"(a copy made by replace() carries the old time as a given one, so it is refused too)"', '"(a context is not copied by replace())"',
-        "test_the_given_time_refusal_is_true_for_a_direct_context_and_a_copy", "refused too"),
+        "test_the_given_time_refusal_is_true_for_a_direct_context_and_a_copy", "told it copied"),
     mutant("M16s a tool entry's unknown key is shown again (tools.py)", TOOLS,
         'error_where(e) or "?" for e in exc.errors(include_input=False)', '".".join(str(p) for p in e["loc"]) or "?" for e in exc.errors()',
-        "test_an_unknown_key_in_a_tool_manifest_entry_is_not_shown", "<unknown key>"),
+        "test_an_unknown_key_in_a_tool_manifest_entry_is_not_shown", "invalid tool entry"),
     mutant("M10a pilot dropped from the redactor's common words", REDACT, '        "pilot",\n', "",
         "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "pilot is swept"),
     mutant("M10b demo dropped from the redactor's common words", REDACT, '        "demo",\n', "",
