@@ -861,3 +861,9 @@ ORDER 234 floor: 1 running, 8 NOT met. Waiting: PR73 runner+reviewers need your 
 - PR89 round 15 done on 13b7124: 5 fresh file-sliced reviewers (runner whole twice, tests whole in two halves, mutants/meta/manifest), all with coverage lines, NO Blocker or Major; ~25 minors/nits, ledger BL-core-a2-w2-r15-01..08 (OPEN). Reviewers read only, ran nothing. One clean round under the definition; two are needed.
 - Builder resumed for round 16 to fix all minors in one push (incl. env read once, fragment loop cost, CHANGELOG wording, test gaps). Fresh r16 reviewers and the independent runner go on that final head (runner on 13b7124 would be void after the push).
 - Still red: `security` (core/P3a-2 history), waiting for your answer to q-P3a2-rewrite-tree. ORDER 234 floor 8 not met (1 running); names in PULSE.
+
+## 06:26Z (IST 11:56) answer to ORDER 238
+- Read. Rewrite of core/P3a-2 withdrawn: nothing done to it, no backup branch (only the local bundle /home/user/build/p73-backup.bundle exists, not pushed); q-P3a2-rewrite-tree stays with default "no force-push".
+- Started 7 more agents now (8 running = floor met): reviewers for A15, A11a, A17, A18 on pushed heads (snapshots /tmp/snap/A15-21ca680, A11a-8b2b716, A17-4b1b3f9, A18-8f6b032; sliced by file; ticket is spec, earlier reports not given), plus the A11a evidence runner.
+- Per item START NOW / WAITS FOR is in PULSE.md. Honest limits: 4 cores, 3.8 GB free disk, max 3 heavy slots, so A20 and A16 evidence runners start when the A11a runner frees disk. A20 note: core/ci-lint-set already carries batches 1-3 (2905c1d), so it needs review+evidence, not a new builder; tell me if you want a builder anyway.
+- Slips/uncertainty: A17 snapshot includes stacked parent PRs (83 files), so that reviewer cannot isolate P5b2 and says so in coverage; A16/A21b/A10b/A12/A13/A11b are "waits" because their code or evidence depends on another PR head or merge, not because of lead; challenge any of them.

@@ -1142,3 +1142,8 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-r14 a8904ec1 | PR89 builder round 14 | closed 05:42Z, head 13b7124 | | reported | evidence copied (gitleaks clean) |
 | R15 reviewers (5) | all reported 06:00Z | no Blocker/Major | closed | ledger r15-01..08 added |
 | B-r16 a8904ec1 | PR89 builder round 16 (r15 minors batch) | started 06:00Z | ~07:00Z | running | read report, then fresh reviewers + runner |
+| a9b15070 / acdc0d20 | A15 PR74 core/P5a 21ca680 result reviewers (design src, codebase tests) | 06:22Z | ~06:50Z | running | save reports, ledger |
+| a9eb0f73 / af2fd009 | A11a PR77 core/P2d-1 8b2b716 reviewers (design src, codebase tests), redaction uncapped | 06:22Z | ~06:50Z | running | same |
+| ace9ead2 | A11a EVIDENCE RUNNER 8b2b716 (heavy.sh, worktree EV-A11a-8b2b716, PG own cluster) | 06:24Z | ~07:50Z (90 min box) | running | check at 06:55Z |
+| af21314a | A17 PR85 core/P5b2 4b1b3f9 reviewer | 06:23Z | ~06:50Z | running | same |
+| a5f773de | A18 PR86 core/P6b1 8f6b032 reviewer (model cost caps) | 06:23Z | ~06:50Z | running | same |
