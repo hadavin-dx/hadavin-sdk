@@ -5151,10 +5151,7 @@ def _modes_during_a_run(tmp_path, monkeypatch, mutants=MODE_MUTANTS, **kw):
     monkeypatch.setattr(mr.tempfile, "tempdir", str(scratch))
     root = _tree(tmp_path, {CORE_TEST: MODE_TESTS})
     with _umask(0):
-        try:
-            return _run(root, mutants, **kw), scratch
-        except RuntimeError as exc:
-            raise AssertionError(f"a folder or file of the run was not private: {exc}") from None
+        return _run(root, mutants, **kw), scratch
 
 
 @posix_only
@@ -5163,7 +5160,14 @@ def test_every_folder_and_file_the_run_makes_is_private_under_umask_0_also_after
 ):
     """Class: a folder or file the runner makes takes the umask of the caller (``mkdir``, ``copytree``, ``rmtree`` then ``mkdir``). The baseline
     run sees the first build; each mutant run sees a REBUILD of the temp copy, which used to make the top folder again with the default mode."""
-    rows, scratch = _modes_during_a_run(tmp_path, monkeypatch)
+    try:
+        rows, scratch = _modes_during_a_run(tmp_path, monkeypatch)
+    except (
+        RuntimeError
+    ) as exc:  # a refusal of the runner (a folder that is not private) or a child test that failed
+        raise AssertionError(
+            f"the folders and files of a run were not private while it ran: {exc}"
+        ) from None
     assert _short(rows) == [("flip", Verdict.KILLED, True), ("flip again", Verdict.KILLED, True)], (
         f"the folders and files of a run were not private while it ran: {rows}"
     )
@@ -5372,8 +5376,14 @@ def test_a_private_folder_is_made_with_mode_0700_whatever_the_umask_and_never_ov
     real_uid = os.getuid()
     with monkeypatch.context() as other, _umask(0):
         other.setattr(mr.os, "getuid", lambda: real_uid + 1)
-        with pytest.raises(RuntimeError, match="belongs to another user"):
-            mr._make_private_dir(tmp_path / "foreign", "snapshot folder")
+        _must_raise(
+            "a folder of another user was accepted right after it was made",
+            RuntimeError,
+            mr._make_private_dir,
+            tmp_path / "foreign",
+            "snapshot folder",
+            match="belongs to another user",
+        )
     # a name that is taken is never used: a folder, a file or a link (also a link to a private folder)
     taken = tmp_path / "taken"
     os.mkdir(taken, 0o700)
@@ -5396,8 +5406,13 @@ def test_the_parts_between_are_made_private_too_and_a_file_in_the_way_is_refused
             f"the part {part} was made with mode {_mode(top / part):o}"
         )
     (top / "file").write_text("x", encoding="utf-8")
-    with pytest.raises(FileExistsError):
-        mr._make_dirs(top, top.resolve() / "file")
+    _must_raise(
+        "a file in the way of a part was accepted",
+        FileExistsError,
+        mr._make_dirs,
+        top,
+        top.resolve() / "file",
+    )
 
 
 @posix_only
@@ -5462,8 +5477,12 @@ def test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_n
     target.write_text("target", encoding="utf-8")
     link = tmp_path / "link"
     os.symlink(target, link)
-    with pytest.raises(OSError):
-        mr._make_private_file(link)
+    _must_raise(
+        "a link under the name of the file was followed",
+        OSError,
+        mr._make_private_file,
+        link,
+    )
     assert target.read_text(encoding="utf-8") == "target", (
         "a link was followed and its target emptied"
     )
@@ -5487,7 +5506,7 @@ def test_the_lock_folder_and_the_lock_file_are_private_under_umask_0(tmp_path, m
 # ---- a bare string where a sequence of texts is meant -------------------------------------------------------------------------
 
 
-def _bare_string_is_refused(keyword: str, tmp_path, **kw):
+def _bare_string_is_refused(keyword: str, tmp_path, label: str, **kw):
     fresh = tmp_path / f"t{len(list(tmp_path.iterdir()))}"
     fresh.mkdir()
     root = _tree(fresh, {CORE_TEST: PASSES})
@@ -5502,23 +5521,32 @@ def _bare_string_is_refused(keyword: str, tmp_path, **kw):
         OSError,
     ) as exc:  # a missing guard fails with another class: the assertion says so
         caught = exc
-    assert isinstance(caught, TypeError), (
-        f"a bare string for {keyword} was read letter by letter: {caught!r}"
-    )
+    assert isinstance(caught, TypeError), f"{label}: {caught!r}"
     assert f"{keyword} is a sequence" in str(caught), f"another refusal for {keyword}: {caught}"
 
 
 def test_a_bare_string_for_tests_is_a_type_error_not_letters(tmp_path):
-    _bare_string_is_refused("tests", tmp_path, tests="test_core.py")
-    _bare_string_is_refused("tests", tmp_path, tests=CORE_TEST)  # with slashes: a ValueError before
+    _bare_string_is_refused(
+        "tests", tmp_path, "a bare string for tests was read letter by letter", tests="test_core.py"
+    )
+    _bare_string_is_refused(
+        "tests", tmp_path, "a bare string for tests was read letter by letter", tests=CORE_TEST
+    )  # with slashes: a ValueError before
 
 
 def test_a_bare_string_for_extra_dirs_is_a_type_error_not_letters(tmp_path):
-    _bare_string_is_refused("extra_dirs", tmp_path, extra_dirs="fixtures")
+    _bare_string_is_refused(
+        "extra_dirs",
+        tmp_path,
+        "a bare string for extra_dirs was read letter by letter",
+        extra_dirs="fixtures",
+    )
 
 
 def test_a_bare_string_for_only_is_a_type_error_not_letters(tmp_path):
-    _bare_string_is_refused("only", tmp_path, only="flip")
+    _bare_string_is_refused(
+        "only", tmp_path, "a bare string for only was read letter by letter", only="flip"
+    )
     _bare_string_is_refused(
         "only", tmp_path, only=""
     )  # an empty string would select no mutant at all
@@ -5581,7 +5609,9 @@ def test_a_port_is_one_to_five_digits_and_from_1_to_65535_in_both_forms():
 
 
 def test_the_port_boundaries_are_the_tcp_port_numbers():
-    assert (mr.PORT_MIN, mr.PORT_MAX) == (1, 65535)
+    assert (mr.PORT_MIN, mr.PORT_MAX) == (1, 65535), (
+        f"the port limits are {(mr.PORT_MIN, mr.PORT_MAX)}"
+    )
     assert mr._port_in_range("1") and mr._port_in_range("65535")
     assert not mr._port_in_range("0") and not mr._port_in_range("65536")
 
