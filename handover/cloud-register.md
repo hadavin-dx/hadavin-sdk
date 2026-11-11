@@ -1075,3 +1075,8 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a65ea831ec30561b9 | PR89 evidence runner ef4c572 | 2026-11-11 | - | STOPPED unfinished (round 9 will replace the head): driver, jobs, clusters p89-ef4c572-312/313 stopped, partial evidence deleted |
 | ab78cc6897a0feb5a / a15efb43802a648cc | PR89 design/security and codebase reviewers r9 | 2026-11-11 | - | CLOSED: 0 Blocker, 0 Major, 5 + 7 Minor saved; ledger r9-01, r9-02 |
 | a290aa955ce105a74 | PR89 builder round 9 (12 Minors, three-layer choke-point fix, pins) | 00:38Z 2026-11-11 | +90 min | running; evidence runner a65ea831 on ef4c572 stopped twice (it restarted itself once; driver, jobs, clusters killed again, folder deleted) |
+| aea5c3b20851d826d | PR73 builder round 8 | 2026-11-11 | - | CLOSED: f906e3d pushed (plain push; full suites and full mutant run were on adef142, f906e3d is one test only) |
+| ade34d837cfd4dc3f | PR73 evidence runner on d1dff3a | 2026-11-11 | - | STOPPED (head replaced); driver, jobs, cluster killed, folder deleted |
+| (runner, started 01:0xZ) | PR73 evidence runner on f906e3d, output /home/user/build/EVOUT-P73-f906e3d (outside repo) | 2026-11-11 | +75 min | running |
+| ab8d95c83c033463c | PR73 design/security reviewer round 8 on f906e3d snapshot | 2026-11-11 | +30 min | running |
+| ad02e6d49ea824da6 | PR73 codebase reviewer round 8 on f906e3d snapshot | 2026-11-11 | +30 min | running |
