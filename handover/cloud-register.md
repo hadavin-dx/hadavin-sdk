@@ -1214,7 +1214,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-PR89-r20 a7b9ddc4 | 14:35Z | 11 min | reading runner and tests | on track |
 | R-Q8b-r2 a865e68c | 14:38Z | 8 min | read-only review | on track |
 | EV-Q8a1-r2 ad880047 | EVIDENCE RUNNER (Fable) Q8a-1 head f6fad26f, heavy.sh, pg 56140 | 14:48Z | +50m | 14:48Z | running | read RESULTS.md |
-| R-Q8a1-r2 a8768ee3 (design CLOSED, saved), ac32ad6b | egm design + codebase (Fable) RESULT review round 2 of Q8a-1 (snapshot q8a1-f6fad26) | 14:48Z | +20m | 14:48Z | codebase reviewer still running | save reviews/Q8a/result-r2-*, ledger |
+| R-Q8a1-r2 a8768ee3, ac32ad6b | both CLOSED, saved reviews/Q8a/result-r2-*-full.md (1 Major: run_tick steps=) | | | | closed | |
 | A-Q8b (resumed 2) a123e38f | Q8b ticket revision 3 (third and last plan round; full review texts) | 14:48Z | +45m | | running | freeze with errata if clean enough; builder after PR77 result is known |
 | EV-Q8a2-res a96bf331 | EVIDENCE RUNNER (Fable) Q8a-2 head 02068ebe, heavy.sh, pg 56150, socket probes | 14:52Z | +50m | 14:52Z | running | read RESULTS.md |
 | R-Q8a2-res a3040b43, ae979d0b | egm design + codebase (Fable) RESULT review r1 of Q8a-2 (snapshot q8a2-02068eb) | 14:52Z | +20m | 14:52Z | running | save reviews/Q8a-2/result-r1-*, ledger |
