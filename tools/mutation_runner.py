@@ -102,9 +102,11 @@ cover tests that need more. ``forbid_skips`` switches itself on when you list a 
   listed, variable present with a value   on (off with ``forbid_skips=False``)  yes         yes
   ======================================  ====================================  ==========  ===============
 
-  What is refused, in this order, before any test runs. Refusals 1 to 12 are a ``ValueError`` (a bare string in place of a list is a
-  ``TypeError``) before any folder is made. Refusal 13 is a ``RuntimeError``. A refusal of an address names the variable and the reason, never
-  the address.
+  What is refused, in this order, before any test runs. Refusals 1 to 12 are a ``ValueError`` before any folder is made (a bare string in
+  place of a list is a ``TypeError`` for ``tests``, ``extra_dirs``, ``only``, ``pass_env``, ``throwaway_hosts`` and ``shown_classes``, checked
+  first). The one exception to "before any folder is made" is a symbolic link: the junction checks come before any folder is made, but the check
+  of relative links out of the tree comes after the snapshot is copied (it needs the copy), and the folders are removed again. Refusal 13 is a
+  ``RuntimeError``. A refusal of an address names the variable and the reason, never the address.
 
   1. A path in ``tests`` or ``extra_dirs`` that is not a plain relative path. What to do: write the path relative to ``root``.
   2. Not allowed: a name in ``pass_env`` that is not allowed. What to do: pass only the name above.
@@ -118,10 +120,10 @@ cover tests that need more. ``forbid_skips`` switches itself on when you list a 
      address or in its password after percent-decoding. What to do: change the password of the test database to plain ASCII letters and digits.
   8. An address that gives more than 300 texts to search for. What to do: do not percent-encode the password more than once.
   9. Wrong shape: an address outside the grammar. The grammar has two shapes, both in lower case. Shape one is a ``postgresql://`` (or
-     ``postgres://``) URL with an optional login, a host, an optional port and ONE database name, and nothing after it. Shape two is words
+     ``postgres://``) URL with an optional login, a host, an optional port (1 to 65535) and ONE database name, and nothing after it. Shape two is words
      ``key=value`` separated by one space, with these keys only, each at most once: ``host``, ``hostaddr``, ``port``, ``dbname``, ``user``,
      ``sslmode``, ``connect_timeout``. ``sslmode`` takes ``disable``, ``allow``, ``prefer``, ``require``, ``verify-ca`` or ``verify-full``;
-     ``connect_timeout`` takes digits. An IPv6 host is written ``[::1]`` in a URL and ``host=::1`` in words. Any other key is refused, a
+     ``connect_timeout`` takes digits; ``port`` takes one to five digits that are a port number (1 to 65535, so ``0000080`` and ``99999999999`` are refused). An IPv6 host is written ``[::1]`` in a URL and ``host=::1`` in words. Any other key is refused, a
      password key included, because it can change where the connection goes or name a file. A URL with a driver name in its scheme
      (``postgresql+driver://``) is refused too. What to do: write the address in one of the two shapes.
 
@@ -141,7 +143,9 @@ cover tests that need more. ``forbid_skips`` switches itself on when you list a 
       ``localhost`` in it when you still need it.
   12. A mutant whose ``test_file`` is not one of ``tests``. What to do: add the file to ``tests``.
   13. Lock held: a second runner on the same database address in the same lock folder (the lock, below). What to do: wait for the other
-      run, or give this run a database of its own.
+      run, or give this run a database of its own. The lock folder is refused when it lies inside the tree under test (the temp folder that
+      Python picks is the working folder when no temp folder can be written, and ``TMPDIR`` may point into the tree). What to do: give the run a
+      temp folder outside the tree with ``TMPDIR``.
 
   SAFETY: what the runner CANNOT check. It cannot check that the database is disposable. It cannot see what the login may do. The host list
   checks only the host written in the address. The tests are code and can connect elsewhere. A local name does not prove a local database: a
@@ -152,7 +156,8 @@ cover tests that need more. ``forbid_skips`` switches itself on when you list a 
   What protects the address (it may hold a password):
 
   - The child's console output (stdout and stderr) goes to the null device. The runner never reads or prints it.
-  - The environment is read once, at the start of the call. Every child run, the lock name and the texts to search for come from that one reading.
+  - The environment is read once, at the start of the call, except ``XDG_RUNTIME_DIR`` and the temp folder lookup of the lock folder, which are
+    read when the lock is taken. Every child run, the lock name and the texts to search for come from that one reading.
   - The child gets a fixed short list of variables (``PATH``, the temp folder, ``HOME`` and a few more) plus the passed variable. No variable
     of the database library (``PGHOST``, ``PGSERVICE``, ``PGPASSFILE``, ...) is on that list. ``HOME`` IS inherited: see "What the tests can
     reach" at the top.
@@ -209,18 +214,29 @@ cover tests that need more. ``forbid_skips`` switches itself on when you list a 
   - The name column of a row and the keys of ``first_lines`` are the caller's mutant names, given back unchanged. A piece of a password
     written in ``expect`` or in a mutant name is shown (only the whole password is found). So never put a secret in ``expect`` or in a mutant name.
   - A test that itself writes the address to a file or to the network is out of reach of this tool.
-  - A test can also write the result file of its own run, so a hostile test can forge its own verdict row.
+  - A test that runs as the same user can alter everything the runner reads back: the result file of its own run (so it can forge its own
+    verdict row, its test id, its first failing line and the list of skipped tests; the allowlist bounds what is then shown, never whether it is
+    true), and the snapshot folder and ``base.xml`` of the run. The folders and files of the run are private to the user, not to the tests.
   - A test can choose which allowed name it shows (one of about 70 exception class names of Python, one of the caller's function names).
     A hostile test could pass a few bits per row that way. The counts and the exit code are numbers the child chooses, too.
-  - The JUnit files hold the child's real text. They lie in a temp folder of the run that Python makes for this user only (``mkdtemp``, mode
-    0700 on POSIX); the runner does not check that mode itself. The runner removes the folder at the end. After SIGKILL, which cannot be
-    caught, it stays on disk (``mutants_*`` in the temp folder): delete it by hand.
+  - The JUnit files hold the child's real text. Every folder the runner makes is created with mode 0700 whatever the umask and is checked (a real
+    folder of this user with no access for group or others, ``lstat``) when it is made and checked again after every rebuild of the temp copy:
+    the temp folder of the run, its snapshot folder (next to it in the temp folder), the folder of the pytest settings file and the lock folder.
+    The temp folder is emptied and kept, never removed and made again with the default mode. The settings file and every result file are made by
+    the runner with mode 0600 before the child gets their path. The folders below these (the copies of ``src`` and of the tests) keep the modes of the
+    caller's tree and can be reached only through the private folder. On Windows nothing is checked: mode bits mean nothing there. The runner removes the folders at the end. After SIGKILL, which cannot be
+    caught, they stay on disk (``mutants_*`` in the temp folder): delete it by hand.
   - A traceback of an error the runner raises holds the address in its local variables. A tool that prints local variables (pytest
     ``--showlocals``, an error tracker) prints the address with its password. The messages of the errors never hold it.
 
   ``pinned`` is compared with the child's real test id inside the runner, parameters included. The judge and the ``crash_type`` check read the
   child's real line inside the runner; ``first_lines`` gets what the table above shows. With no passed variable that has a value, nothing is
   replaced: the line and the test id are shown as the child wrote them.
+
+  With no passed variable nothing is replaced and nothing is claimed. The allowlist protects the value of a passed variable and has nothing to
+  protect then, and the runner cannot know what else a test suite must not show. Hiding the failure text of every child for every caller was
+  considered and not done: it would take away the failing line from every caller who has nothing to protect. The child can read the files of the
+  caller's home folder (see "What the tests can reach"), so do not pass this runner a test suite that must not see them.
 
   ``shown_classes=("PostgresError",)``: exception class names of the caller's libraries that may be shown (plain identifiers only). It
   allows exception class names only, not the names of test classes.
@@ -240,6 +256,8 @@ cover tests that need more. ``forbid_skips`` switches itself on when you list a 
   written another way (``localhost`` and ``127.0.0.1``, a port written or left out). It does NOT see a runner that keeps its lock folder
   elsewhere: a run WITH ``XDG_RUNTIME_DIR`` (a login shell) and a run WITHOUT it (cron, ``su``, a CI step) use two lock folders and do not
   see each other. Give each run a database of its own. The lock only catches the plain mistake of starting twice.
+  The login is not part of the lock name: two runs that differ only in the login are treated as one database, and the second is refused. A run with
+  the variable absent takes no lock at all (no address, no shared database).
   The lock folder (POSIX) is ``hadavin_mutation_locks_<uid>``. It lies in ``XDG_RUNTIME_DIR`` when that is a folder of this user closed to
   others, else in the temp folder that Python picks (``tempfile.gettempdir()``, which is not ``TMPDIR`` when ``TMPDIR`` cannot be written). ``XDG_RUNTIME_DIR`` is read from the environment when the lock is taken. The folder is made with mode 0700
   and opened without following a link; the lock file is created under the opened folder.
@@ -408,6 +426,8 @@ NO_TEST_NAMED = "NO FAILING TEST NAMED"  # the id column of an ERROR row for a f
 EDGE_MIN = 2  # a head or tail piece of a secret next to ``...`` is masked from this many characters on (one character cannot be told from ordinary text)
 PASSWORD_PIECE_MIN = 3  # a piece of an unquoted password that holds a quote mark, ``;`` or ``&`` is a secret of its own from this many characters on
 MAX_FRAGMENT_HITS = 1_000  # more ``...`` than this in one text is no honest line (pytest writes a few): the whole text is replaced, never scanned (see ``_masked``)
+PORT_MIN = 1  # a port of an address is from here to ``PORT_MAX`` (TCP port numbers); outside it the address is outside the grammar
+PORT_MAX = 65_535
 MAX_SECRETS = 300  # more secret texts than this (a value, its password and their decoded and encoded forms) are refused: no honest address has that many
 MAX_FRAGMENT_WORK = 50_000  # (``...`` in a line) x (secrets): more than this replaces the whole line, so one line costs a bounded number of scans
 MAX_VALUE_CHARS = 2_000  # a passed value longer than this is refused: no address is that long, and the scan and the memory of the secrets grow with its length
@@ -487,6 +507,13 @@ def _plugin_module(conftest: str) -> str:
             f"conftest must be called conftest.py or lie in a folder called tests: {conftest!r}"
         )
     return ".".join([*parts[:-1], parts[-1][:-3]])
+
+
+def _refuse_bare_string(value: object, name: str) -> None:
+    """``TypeError`` when ``value`` is one string where a sequence of texts is meant: it would be read letter by letter (``only="flip"`` would
+    select every mutant whose name holds an ``f``, an ``l``, an ``i`` or a ``p``; ``extra_dirs="fixtures"`` would copy nothing)."""
+    if isinstance(value, str):
+        raise TypeError(f"{name} is a sequence of texts, not one string")
 
 
 def _checked_env_names(names: Iterable[str]) -> tuple[str, ...]:
@@ -629,7 +656,7 @@ _IP6_HOST = (
     r"[0-9A-Fa-f:.]*:[0-9A-Fa-f:.]*"  # an IPv6 address: hex digits, dots and at least one colon
 )
 _URL_ADDRESS = re.compile(
-    rf"postgres(?:ql)?://(?:[^@/?#\s]*@)?({_NAME_HOST}|\[{_IP6_HOST}\])(?::([0-9]+))?/([A-Za-z0-9_.-]+)"
+    rf"postgres(?:ql)?://(?:[^@/?#\s]*@)?({_NAME_HOST}|\[{_IP6_HOST}\])(?::([0-9]{{1,5}}))?/([A-Za-z0-9_.-]+)"
 )  # the WHOLE value: a scheme, a login with no ``@``, ``/``, ``?`` or ``#`` in it, a host (IPv6 in brackets), a port, ONE database name, nothing after
 _PAIR = re.compile(
     r"([a-z_]+)=([A-Za-z0-9_.:/@+%,~-]+)"
@@ -641,7 +668,7 @@ _ADDRESS_VALUE = {
     # IPv6 WITHOUT brackets in key=value form (``host=::1``), as the database library reads it
     "host": re.compile(rf"{_NAME_HOST}|{_IP6_HOST}"),
     "hostaddr": re.compile(r"[0-9A-Fa-f.:]+"),
-    "port": re.compile(r"[0-9]+"),
+    "port": re.compile(r"[0-9]{1,5}"),
     "dbname": re.compile(r"[A-Za-z0-9_.-]+"),
 }
 # the two option keys take listed values only (the lock name is not made from them)
@@ -673,6 +700,11 @@ def _is_socket_dir(token: str) -> bool:
     return bool(_SOCKET_DIR.fullmatch(token)) and ".." not in token.split("/")
 
 
+def _port_in_range(port: str) -> bool:
+    """True when ``port`` (one to five digits, as the grammar read it) is a TCP port number: 1 to 65535."""
+    return PORT_MIN <= int(port) <= PORT_MAX
+
+
 def _address_fields(value: str) -> dict[str, str] | None:
     """The parts (``host``, ``hostaddr``, ``port``, ``dbname``) of ``value``, or ``None`` when the value is outside the ONE strict grammar that the
     address check and the lock name share. (a) A URL ``postgres://`` or ``postgresql://`` with an optional login, a host (a name, an IPv4 address or
@@ -683,6 +715,8 @@ def _address_fields(value: str) -> dict[str, str] | None:
     found: dict[str, str] = {}
     url = _URL_ADDRESS.fullmatch(value)
     if url:
+        if url.group(2) and not _port_in_range(url.group(2)):
+            return None
         return {
             "host": url.group(1).strip("[]").lower(),
             "port": url.group(2) or "",
@@ -705,6 +739,8 @@ def _address_fields(value: str) -> dict[str, str] | None:
             continue
         socket = key == "host" and _is_socket_dir(token)
         if not socket and not _ADDRESS_VALUE[key].fullmatch(token):
+            return None
+        if key == "port" and not _port_in_range(token):
             return None
         found[key] = token.lower() if key in ("host", "hostaddr") and not socket else token
     return found
@@ -753,7 +789,7 @@ def _refuse_unsafe_address(env_name: str, value: str, throwaway_hosts: Sequence[
     if fields is None:
         raise ValueError(
             f"{env_name} is refused: its address is not in a shape the runner can check. Write a postgresql:// URL in lower case with an optional"
-            " login, a host, an optional port and ONE database name and nothing after it, or key=value words separated by one space, with the keys"
+            " login, a host, an optional port (1 to 65535) and ONE database name and nothing after it, or key=value words separated by one space, with the keys"
             f" {', '.join(ADDRESS_KEYS_ALLOWED)} in lower case, each key once. The key=value shape takes no password key: a password goes in the"
             " login part of the URL (postgresql://user:password@host:port/database), with @ / ? # in it written as %40 %2F %3F %23. Also"
             " refused: a service file, an option after the database name, sslmode other than disable, allow, prefer, require, verify-ca or"
@@ -1095,6 +1131,85 @@ def _own_private_dir(path: str) -> bool:
     )
 
 
+def _dir_problem(info: os.stat_result) -> str:
+    """Why a folder that was looked at (``lstat`` or ``fstat``) is not a private folder of this user, or ``""`` when it is: it is not a real folder
+    (a link is not followed), it belongs to another user, or it is open to group or others (it must have mode 0700). POSIX only. THE ONE
+    CHECK for every folder this runner makes: the lock folder, the temp folder of a run, its snapshot folder and the folder of the pytest settings file."""
+    if not stat.S_ISDIR(info.st_mode):
+        return "is not a folder"
+    if info.st_uid != os.getuid():
+        return "belongs to another user"
+    if stat.S_IMODE(info.st_mode) & 0o077:
+        return "is open to group or others (it must have mode 0700)"
+    return ""
+
+
+def _refuse_unless_private(path: Path, what: str) -> None:
+    """``RuntimeError`` unless ``path`` (``what`` of this run) is a real folder of this user with mode 0700 (``lstat``: a link is not followed;
+    ``_dir_problem``). Called when a folder is made and after every rebuild of the temp copy. Not on Windows, whose mode bits mean nothing."""
+    if _IS_WINDOWS:
+        return
+    problem = ""
+    try:
+        problem = _dir_problem(os.lstat(path))
+    except OSError as exc:
+        problem = f"could not be looked at ({type(exc).__name__})"
+    # raised outside the ``except`` block: the error keeps no other exception in its chain
+    if problem:
+        raise RuntimeError(f"the {what} of this run {problem}")
+
+
+def _make_private_dir(path: Path, what: str) -> None:
+    """Make the folder ``path`` (it must not exist, ``FileExistsError`` otherwise, also for a link) with mode 0700 whatever the umask, then
+    check it (``_refuse_unless_private``). ``os.mkdir`` takes the mode and the umask can only take bits away; ``chmod`` then puts them back."""
+    os.mkdir(path, 0o700)
+    if not _IS_WINDOWS:
+        os.chmod(path, 0o700)
+    _refuse_unless_private(path, what)
+
+
+def _make_dirs(top: Path, path: Path) -> None:
+    """Make ``path`` (inside ``top``) and every missing folder between them, each with mode 0700 (``mkdir(parents=True)`` would make the ones
+    in between with the default mode). A part that exists and is not a folder is ``FileExistsError``."""
+    here = top.resolve()
+    for part in path.relative_to(here).parts:
+        here = here / part
+        try:
+            os.mkdir(here, 0o700)
+        except FileExistsError:
+            if not here.is_dir():
+                raise
+
+
+def _empty_dir(folder: Path) -> None:
+    """Remove everything INSIDE ``folder`` and keep ``folder`` itself: it was made private once and a new folder under the same name would have the
+    default mode. Errors are ignored (a Windows file lock may hold a file for a moment): what is left makes the rebuild fail and be retried."""
+    try:
+        children = list(os.scandir(folder))
+    except OSError:
+        return
+    for child in children:
+        if child.is_dir(follow_symlinks=False):
+            shutil.rmtree(child.path, ignore_errors=True)
+        else:
+            with contextlib.suppress(OSError):
+                os.unlink(child.path)
+
+
+def _make_private_file(path: Path) -> None:
+    """Make (or empty) the file ``path`` with mode 0600 whatever the umask, without following a link. A result file or a settings file that the
+    runner names is made here before the child gets its path."""
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+    # a link under the name is refused (``ELOOP``), not followed
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(path, flags, 0o600)
+    try:
+        if not _IS_WINDOWS:
+            os.fchmod(fd, 0o600)
+    finally:
+        os.close(fd)
+
+
 def _lock_dir() -> Path:
     """Where the folder of the lock files lies. POSIX: ``hadavin_mutation_locks_<uid>`` inside ``XDG_RUNTIME_DIR`` when that variable names a real
     folder of this user that is closed to group and others (no other user can then put a folder under the name first), else inside the temp
@@ -1106,6 +1221,18 @@ def _lock_dir() -> Path:
     if runtime and os.path.isabs(runtime) and _own_private_dir(runtime):
         base = Path(runtime)
     return base / f"hadavin_mutation_locks_{os.getuid()}"
+
+
+def _refuse_lock_folder_in_tree(root: Path) -> None:
+    """``RuntimeError`` when the lock folder lies inside ``root``, the tree under test. That happens when the temp folder that Python picks is
+    the working folder (``tempfile.gettempdir()`` falls back to it when no temp folder can be written), or ``TMPDIR`` points into the tree. Lock
+    files would then be left in the caller's own tree."""
+    lock = _lock_dir().resolve()
+    base = Path(root).resolve()
+    if lock.is_relative_to(base):  # also true when the two are the same folder
+        raise RuntimeError(
+            "the lock folder of this run lies inside the tree under test: give the run a temp folder outside the tree with TMPDIR"
+        )
 
 
 def _open_lock_dir() -> int | None:
@@ -1126,12 +1253,7 @@ def _open_lock_dir() -> int | None:
     except OSError as exc:
         problem = f"could not be made or opened ({type(exc).__name__})"
     else:
-        if not stat.S_ISDIR(info.st_mode):
-            problem = "is not a folder"
-        elif info.st_uid != os.getuid():
-            problem = "belongs to another user"
-        elif stat.S_IMODE(info.st_mode) & 0o077:
-            problem = "is open to group or others (it must have mode 0700)"
+        problem = _dir_problem(info)
     if (
         problem
     ):  # raised outside the ``except`` block: the error keeps no other exception in its chain
@@ -1289,8 +1411,12 @@ def _pytest(
     try:
         with _signals_held():
             ini_dir = Path(tempfile.mkdtemp(prefix="mutant_ini_"))
+        _refuse_unless_private(ini_dir, "folder of the pytest settings file")
         ini = ini_dir / "mutant_run.ini"
-        ini.write_text("", encoding="utf-8")
+        # an empty settings file, mode 0600
+        _make_private_file(ini)
+        # the result file pytest fills: made by the runner (mode 0600), not by the umask of the caller
+        _make_private_file(junit)
         cmd = [
             sys.executable,
             *("-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", *load),
@@ -1360,7 +1486,7 @@ def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
     with _signals_held():
         try:
             if _IS_WINDOWS:
-                # S603 stays a listed exception: the pid is our own child's, but the list is not a literal to ruff. Fixed argv, no shell
+                # S603 stays a listed exception: the pid is our own child's, but the list is not a literal to ruff. No shell; the program path is built from SystemRoot (``_taskkill``), which is the caller's environment, as trusted as PATH
                 subprocess.run(  # noqa: S603
                     [_taskkill(), "/F", "/T", "/PID", str(proc.pid)],
                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=TREE_KILL_TIMEOUT,
@@ -1463,7 +1589,8 @@ def run_mutants(
 ) -> list[tuple[str, Verdict, str, bool]]:
     """Run every mutant and return one row per mutant: ``(name, verdict, failing test id, good)``. The module docstring explains each keyword.
 
-    Refused before any folder is made: a bad path, keyword or address is a ``ValueError`` (a bare string in place of a list is a ``TypeError``).
+    Refused before any folder is made: a bad path, keyword or address is a ``ValueError`` (a bare string in place of a list is a ``TypeError`` for
+    ``tests``, ``extra_dirs``, ``only``, ``pass_env``, ``throwaway_hosts`` and ``shown_classes``).
     The module docstring lists these refusals in the order of the code.
 
     A ``RuntimeError`` is raised when:
@@ -1688,6 +1815,11 @@ def _run_mutants(
     first_lines.clear()  # the diagnostics of an earlier run must not answer for this one
     root = Path(root)
     mutants = list(mutants)
+    # a bare string is a ``TypeError`` for every keyword that takes a sequence of texts (the three below, and ``pass_env``,
+    # ``throwaway_hosts`` and ``shown_classes`` in their own checks): it would be read letter by letter
+    _refuse_bare_string(tests, "tests")
+    _refuse_bare_string(extra_dirs, "extra_dirs")
+    _refuse_bare_string(only, "only")
     for t in (*tests, *extra_dirs):
         _relative(t)
     # the refusals below come in the order the module docstring gives them; each is raised before any folder is made or any test runs
@@ -1724,18 +1856,23 @@ def _run_mutants(
     snap: Path
 
     def build() -> None:
-        shutil.rmtree(tmp, ignore_errors=True)
-        (tmp / "tests").mkdir(parents=True)
+        # the top folder is KEPT and emptied, never removed and made again (a new folder would have the default mode, not 0700); it is
+        # checked before anything is removed in it and again after every rebuild
+        _refuse_unless_private(tmp, "temp folder")
+        _empty_dir(tmp)
+        # not ``_make_dirs``: a ``tests`` folder that is still there (a failed removal) must fail this attempt
+        os.mkdir(tmp / "tests", 0o700)
         shutil.copytree(snap / "src", tmp / "src", symlinks=True)
         for t in copied:
             dst = _inside(tmp, t)
-            dst.parent.mkdir(parents=True, exist_ok=True)
+            _make_dirs(tmp, dst.parent)
             shutil.copy(_inside(snap, t), dst)
         for d in extra_dirs:
             if _inside(snap, d).exists():
                 shutil.copytree(
                     _inside(snap, d), _inside(tmp, d), symlinks=True, dirs_exist_ok=True
                 )
+        _refuse_unless_private(tmp, "temp folder")
 
     def fresh() -> None:
         """Rebuild the temp copy: retried ``SETUP_TRIES`` times, then the last ``OSError`` is raised (never swallowed)."""
@@ -1760,30 +1897,37 @@ def _run_mutants(
     # a link out of the tree, a missing ``src``) or a signal at any later point leaves no temp folder behind either
     try:
         if canary:  # before any temp folder: a second runner on the same database is refused
+            _refuse_lock_folder_in_tree(root)
             held.enter_context(
                 _one_run_per_database([environ[n] for n in env_names if n in environ])
             )
+        # the junction checks look at the CALLER's tree, so they come before any folder is made; the check of relative links out of the tree
+        # (``_refuse_links_out``) needs the copy and comes after it (the folders are removed again)
+        _refuse_junctions(root, "src")
+        for d in extra_dirs:
+            if _inside(root, d).exists():
+                _refuse_junctions(root, d)
         with _signals_held():
             made.append(Path(tempfile.mkdtemp(prefix="mutants_")))
         tmp = made[0]
+        _refuse_unless_private(tmp, "temp folder")
         snap = tmp.with_name(tmp.name + "_snap")
-        snap.mkdir()
+        _make_private_dir(snap, "snapshot folder")
         # ONE snapshot of the tree at the start: every mutant copy is made from it, so an edit of ``root`` while the run is going (a
         # developer saving a file, a second tool) can never leak into a later mutant
-        _refuse_junctions(root, "src")
         shutil.copytree(
             root / "src", snap / "src", symlinks=True, ignore=shutil.ignore_patterns("__pycache__")
         )  # links stay links (never followed out of the tree)
         for t in copied:
             dst = _inside(snap, t)
-            dst.parent.mkdir(parents=True, exist_ok=True)
+            _make_dirs(snap, dst.parent)
             shutil.copy(_inside(root, t), dst)
         for d in extra_dirs:
             if _inside(root, d).exists():
-                _refuse_junctions(root, d)
                 shutil.copytree(
                     _inside(root, d), _inside(snap, d), symlinks=True, dirs_exist_ok=True
                 )
+        _refuse_unless_private(snap, "snapshot folder")
         _refuse_links_out(snap)
         shown = _shown_for(secrets, mutants, tests, classes, snap)
         fresh()

@@ -106,6 +106,18 @@ def _must_refuse(label, call, *args, **kwargs):
     raise AssertionError(f"{label}: was not refused")
 
 
+def _must_refuse_at(label, step_text, call, *args, **kwargs):
+    """``call`` must raise ``ValueError`` and its message must hold ``step_text`` (the words of the step that is meant to refuse); otherwise the
+    first assertion line is ``<label>: was not refused`` or ``<label>: another step refused``."""
+    try:
+        call(*args, **kwargs)
+    except ValueError as exc:
+        text = str(exc)
+    else:
+        raise AssertionError(f"{label}: was not refused")
+    assert step_text in text, f"{label}: another step refused: {text[:80]}"
+
+
 def _must_raise(label, error, call, *args, match="", **kwargs):
     """``call`` must raise ``error`` (its text holding ``match``); otherwise the first assertion line says ``label``."""
     try:
@@ -3201,8 +3213,8 @@ def test_the_lock_folder_is_made_private_and_reused(_real_lock_dir):
 @pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
 def test_a_lock_folder_that_others_can_enter_or_that_is_not_the_users_is_refused(_real_lock_dir):
     path = _real_lock_dir / f"hadavin_mutation_locks_{os.getuid()}"
-    path.mkdir(mode=0o755)
-    path.chmod(0o755)
+    path.mkdir(mode=OPEN_MODE)
+    path.chmod(OPEN_MODE)
     _must_raise(
         "a lock folder that others can enter was accepted",
         RuntimeError,
@@ -3326,7 +3338,7 @@ def test_the_lock_folder_prefers_the_runtime_folder_of_the_user_when_it_is_priva
     assert mr._lock_dir() == runtime / name, (
         "a private XDG_RUNTIME_DIR of this user was not preferred"
     )
-    runtime.chmod(0o755)
+    runtime.chmod(OPEN_MODE)
     assert mr._lock_dir() == _real_lock_dir / name, "a runtime folder open to others was used"
     runtime.chmod(0o700)
     monkeypatch.setenv("XDG_RUNTIME_DIR", "run")
@@ -4120,19 +4132,28 @@ def test_property_a_host_that_is_not_exactly_in_the_list_is_refused():
     }
     members = set(mr.THROWAWAY_HOSTS)
     checked = 0
+    reached_the_host_rule = 0
     for host in [*near, *sorted(random_hosts)]:
         if host.lower() in members:
             continue
         for value in _in_every_form(host):
-            _must_refuse(
+            # a draw that the shape grammar refuses (step 9) says so; a draw inside the grammar must be refused by the HOST LIST (step 11): the
+            # test names the step it expects, so a draw that never reaches the host rule cannot pass for a test of it
+            in_the_grammar = mr._address_fields(value) is not None
+            _must_refuse_at(
                 f"a host that is not exactly in the list was accepted ({value!r})",
+                "is not one of throwaway_hosts" if in_the_grammar else "not in a shape",
                 mr._refuse_unsafe_address,
                 DSN_NAME,
                 value,
                 mr.THROWAWAY_HOSTS,
             )
             checked += 1
+            reached_the_host_rule += in_the_grammar
     assert checked >= 5 * (len(near) + 290), checked
+    assert reached_the_host_rule >= 5 * len(near) // 2 + 300, (
+        f"too few draws reached the host rule (step 11): {reached_the_host_rule}"
+    )
     # a member is accepted in any letter case, because host names ignore the case of letters
     for value, hosts in (
         ("host=LocalHost dbname=app", mr.THROWAWAY_HOSTS),
@@ -4473,8 +4494,10 @@ REFUSAL_ORDER = (
 
 
 def test_the_refusals_come_in_the_order_the_docstring_gives(tmp_path, monkeypatch):
-    """All 13 documented steps are pinned: at each step everything an EARLIER step refuses is put right and everything a LATER step refuses
-    is still wrong, and the message must be the one of that step."""
+    """All 13 documented steps are pinned: at each step everything an EARLIER step refuses is put right, and the values of that step are wrong for
+    every LATER step they can be wrong for as well (step 7 with 901 layers and an unlisted host, step 8 with an unlisted host), and the message
+    must be the one of that step. A step is not wrong for a later step where the value would then no longer be wrong for its own (a value
+    that is too long for step 6 has no shape to be wrong for), so each value is listed with the steps it covers."""
     doc = " ".join((mr.__doc__ or "").split())
     places = [doc.find(words) for words, _message in REFUSAL_ORDER]
     assert len(REFUSAL_ORDER) == 13 and -1 not in places and places == sorted(places), (
@@ -4497,17 +4520,24 @@ def test_the_refusals_come_in_the_order_the_docstring_gives(tmp_path, monkeypatc
         ("shown_classes", ("not a name",), ()),
         ("conftest", "src/pk/core.py", ""),
     )
-    # then the steps of the address, each value wrong for its own step and for every later one that it can be
+    # a password in 901 layers that ends in a quote mark (step 7), and the same count of layers with an unlisted host (steps 8 and 11)
+    odd_many = _url("svc", "%", "25" * 900, "27", rest="other.invalid/scratch")
+    many_unlisted = _url("svc", "%", "25" * 900, "40", rest="other.invalid/scratch")
+    assert len(odd_many) < mr.MAX_VALUE_CHARS and len(many_unlisted) < mr.MAX_VALUE_CHARS
+    # then the steps of the address: for each step the values that are wrong for that step AND for every later step that they can be wrong for
     values = (
-        "'" + "x" * mr.MAX_VALUE_CHARS,  # too long, and a quote mark, and no address
-        "'not an address",  # a quote mark, and no address
-        many,  # too many texts
-        "not an address",
-        "dbname=scratch",  # in the grammar, no host
-        "host=other.invalid dbname=scratch",  # a host, not listed
-        good,  # the address is right: the mutant's test_file is still wrong
+        ("'" + "x" * mr.MAX_VALUE_CHARS,),  # too long, and a quote mark, and no address
+        (
+            "'not an address",
+            odd_many,
+        ),  # a quote mark (the second one: also 901 layers and an unlisted host)
+        (many, many_unlisted),  # too many texts (the second one: also an unlisted host)
+        ("not an address",),
+        ("dbname=scratch",),  # in the grammar, no host
+        ("host=other.invalid dbname=scratch",),  # a host, not listed
+        (good,),  # the address is right: the mutant's test_file is still wrong
     )
-    monkeypatch.setenv(DSN_NAME, values[0])
+    monkeypatch.setenv(DSN_NAME, values[0][0])
     keywords = {name: wrong for name, wrong, _right in keyword_steps}
 
     def call(mutants):
@@ -4522,13 +4552,14 @@ def test_the_refusals_come_in_the_order_the_docstring_gives(tmp_path, monkeypatc
         )
         keywords[name] = right
         step += 1
-    for value in values:
-        monkeypatch.setenv(DSN_NAME, value)
-        with pytest.raises(ValueError) as caught:
-            call([stray])
-        assert REFUSAL_ORDER[step][1] in str(caught.value), (
-            f"step {step + 1} was not the refusal the docstring gives ({REFUSAL_ORDER[step][0]}): {str(caught.value)[:80]}"
-        )
+    for step_values in values:
+        for value in step_values:
+            monkeypatch.setenv(DSN_NAME, value)
+            with pytest.raises(ValueError) as caught:
+                call([stray])
+            assert REFUSAL_ORDER[step][1] in str(caught.value), (
+                f"step {step + 1} was not the refusal the docstring gives ({REFUSAL_ORDER[step][0]}): {str(caught.value)[:80]}"
+            )
         step += 1
     assert step == 12
     with mr._one_run_per_database([good]):
@@ -5054,3 +5085,747 @@ def test_the_weak_password_fuzz_fails_when_a_slot_is_cut_or_shown_with_the_passw
         off.setattr(mr, "_own_text", lambda text, fixed, secrets: text)
         with pytest.raises(AssertionError, match="holds the password"):
             _weak_fuzz(tmp_path, range(20))
+
+
+# ---- round 23: every folder and file the run makes is private, and the checks that go with it ----------------------------------
+
+posix_only = pytest.mark.skipif(
+    sys.platform == "win32", reason="mode bits and owners mean nothing on Windows"
+)
+
+
+@contextlib.contextmanager
+def _umask(mask: int):
+    """Run the block under the process umask ``mask`` (the child processes inherit it) and put the old one back."""
+    before = os.umask(mask)
+    try:
+        yield
+    finally:
+        os.umask(before)
+
+
+def _mode(path) -> int:
+    return stat.S_IMODE(os.lstat(path).st_mode)
+
+
+# the child's own test: it looks at the folders and files of ITS run while it runs (its working folder is the temp copy, its snapshot is the
+# sibling ``<copy>_snap``, pytest gives it the settings file and the result file the runner named)
+MODE_TESTS = """import os
+import stat
+
+
+def _mode(p):
+    return stat.S_IMODE(os.lstat(p).st_mode)
+
+
+def test_a_private(request):
+    here = os.getcwd()
+    snap = here + "_snap"
+    ini = str(request.config.inifile)
+    junit = str(request.config.option.xmlpath)
+    assert os.lstat(here).st_uid == os.getuid(), "temp folder owner"
+    assert _mode(here) == 0o700, "temp folder mode"
+    assert _mode(os.path.join(here, "tests")) == 0o700, "tests folder mode"
+    assert _mode(snap) == 0o700, "snapshot folder mode"
+    assert _mode(os.path.dirname(ini)) == 0o700, "settings folder mode"
+    assert _mode(ini) == 0o600, "settings file mode"
+    assert _mode(junit) == 0o600, "result file mode"
+
+
+def test_go():
+    from pk.core import go
+
+    assert go(True) is True
+"""
+MODE_MUTANTS = [
+    Mutant("flip", "src/pk/core.py", "return flag", "return not flag", "assert", pinned="tests/test_core::test_go"),
+    Mutant("flip again", "src/pk/core.py", "return flag", "return not flag", "assert", pinned="tests/test_core::test_go"),
+]  # fmt: skip
+
+
+def _modes_during_a_run(tmp_path, monkeypatch, mutants=MODE_MUTANTS, **kw):
+    """Run the child test of ``MODE_TESTS`` under umask 0 (a caller whose files would be world-writable) with the temp folders in a scratch folder.
+    A refusal of the runner (a folder that is not private) is turned into an assertion so that the first failing line says so."""
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    monkeypatch.setattr(mr.tempfile, "tempdir", str(scratch))
+    root = _tree(tmp_path, {CORE_TEST: MODE_TESTS})
+    with _umask(0):
+        try:
+            return _run(root, mutants, **kw), scratch
+        except RuntimeError as exc:
+            raise AssertionError(f"a folder or file of the run was not private: {exc}") from None
+
+
+@posix_only
+def test_every_folder_and_file_the_run_makes_is_private_under_umask_0_also_after_a_rebuild(
+    tmp_path, monkeypatch
+):
+    """Class: a folder or file the runner makes takes the umask of the caller (``mkdir``, ``copytree``, ``rmtree`` then ``mkdir``). The baseline
+    run sees the first build; each mutant run sees a REBUILD of the temp copy, which used to make the top folder again with the default mode."""
+    rows, scratch = _modes_during_a_run(tmp_path, monkeypatch)
+    assert _short(rows) == [("flip", Verdict.KILLED, True), ("flip again", Verdict.KILLED, True)], (
+        f"the folders and files of a run were not private while it ran: {rows}"
+    )
+    assert list(scratch.iterdir()) == [], "a temp folder was left behind"
+
+
+@posix_only
+def test_the_temp_folder_is_checked_after_a_rebuild_and_before_anything_is_removed_in_it(
+    tmp_path, monkeypatch
+):
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    real_empty = mr._empty_dir
+    # something changes the mode of the top folder while the copy is rebuilt: the check at the end of the rebuild refuses it
+    monkeypatch.setattr(
+        mr, "_empty_dir", lambda folder: (real_empty(folder), os.chmod(folder, OPEN_MODE))[0]
+    )
+    _must_raise(
+        "the mode of the temp folder was not checked after the rebuild",
+        RuntimeError,
+        _run,
+        root,
+        [],
+        match="temp folder of this run is open to group or others",
+    )
+    # a top folder that is already open is refused BEFORE anything in it is removed
+    removed = []
+    monkeypatch.setattr(mr, "_empty_dir", lambda folder: removed.append(folder))
+    real_mkdtemp = mr.tempfile.mkdtemp
+
+    def open_mkdtemp(*args, **kwargs):
+        made = real_mkdtemp(*args, **kwargs)
+        os.chmod(made, OPEN_MODE)
+        return made
+
+    monkeypatch.setattr(mr.tempfile, "mkdtemp", open_mkdtemp)
+    _must_raise(
+        "a temp folder that is open to others was accepted",
+        RuntimeError,
+        _run,
+        root,
+        [],
+        match="temp folder of this run is open to group or others",
+    )
+    assert removed == [], "the temp folder was emptied before its mode was checked"
+
+
+@posix_only
+def test_the_temp_folder_is_checked_at_the_start_of_every_rebuild(tmp_path, monkeypatch):
+    """The folder is made private once; between two runs of the tests something can open it (a mutated test is code that the runner does not
+    trust). The check at the START of the next rebuild refuses it before anything in it is removed."""
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    made, state, emptied_after = [], {"open": False}, []
+    real_mkdtemp, real_pytest, real_empty = mr.tempfile.mkdtemp, mr._pytest, mr._empty_dir
+    monkeypatch.setattr(
+        mr.tempfile, "mkdtemp", lambda *a, **k: made.append(real_mkdtemp(*a, **k)) or made[-1]
+    )
+
+    def open_after_the_tests(*args, **kwargs):
+        result = real_pytest(*args, **kwargs)
+        os.chmod(made[0], OPEN_MODE)
+        state["open"] = True
+        return result
+
+    def spy_empty(folder):
+        if state["open"]:
+            emptied_after.append(folder)
+        real_empty(folder)
+
+    monkeypatch.setattr(mr, "_pytest", open_after_the_tests)
+    monkeypatch.setattr(mr, "_empty_dir", spy_empty)
+    _must_raise(
+        "a temp folder that was opened between two runs was accepted",
+        RuntimeError,
+        _run,
+        root,
+        [FLIP],
+        match="temp folder of this run is open to group or others",
+    )
+    assert emptied_after == [], (
+        "the temp folder was emptied before its mode was checked at the rebuild"
+    )
+
+
+@posix_only
+def test_the_snapshot_folder_is_checked_after_the_copy(tmp_path, monkeypatch):
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    real_copytree = mr.shutil.copytree
+
+    def copy_then_open_the_snapshot(src, dst, *args, **kwargs):
+        made = real_copytree(src, dst, *args, **kwargs)
+        if Path(dst).parent.name.endswith("_snap"):
+            os.chmod(Path(dst).parent, OPEN_MODE)
+        return made
+
+    monkeypatch.setattr(mr.shutil, "copytree", copy_then_open_the_snapshot)
+    _must_raise(
+        "the mode of the snapshot folder was not checked after the copy",
+        RuntimeError,
+        _run,
+        root,
+        [],
+        match="snapshot folder of this run is open to group or others",
+    )
+
+
+@posix_only
+def test_the_folder_of_the_settings_file_is_checked(tmp_path, monkeypatch):
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    real_mkdtemp = mr.tempfile.mkdtemp
+
+    def open_settings_folder(*args, **kwargs):
+        made = real_mkdtemp(*args, **kwargs)
+        if kwargs.get("prefix") == "mutant_ini_":
+            os.chmod(made, OPEN_MODE)
+        return made
+
+    monkeypatch.setattr(mr.tempfile, "mkdtemp", open_settings_folder)
+    _must_raise(
+        "the folder of the settings file was not checked",
+        RuntimeError,
+        _run,
+        root,
+        [],
+        match="folder of the pytest settings file of this run is open to group or others",
+    )
+
+
+@posix_only
+def test_a_folder_that_is_not_private_is_refused_with_its_reason(tmp_path, monkeypatch):
+    good = tmp_path / "good"
+    os.mkdir(good, 0o700)
+    os.chmod(good, 0o700)
+    mr._refuse_unless_private(good, "temp folder")  # accepted
+    for mode in (0o750, 0o705, 0o770, 0o707, OPEN_MODE, 0o777):
+        wide = tmp_path / f"wide{mode:o}"
+        os.mkdir(wide)
+        os.chmod(wide, mode)
+        _must_raise(
+            f"a folder of mode {mode:o} was accepted",
+            RuntimeError,
+            mr._refuse_unless_private,
+            wide,
+            "snapshot folder",
+            match="the snapshot folder of this run is open to group or others",
+        )
+    link = tmp_path / "link"
+    os.symlink(good, link)
+    _must_raise(
+        "a link to a private folder was accepted",
+        RuntimeError,
+        mr._refuse_unless_private,
+        link,
+        "temp folder",
+        match="is not a folder",
+    )
+    file = tmp_path / "file"
+    file.write_text("x", encoding="utf-8")
+    _must_raise(
+        "a file was accepted as a folder",
+        RuntimeError,
+        mr._refuse_unless_private,
+        file,
+        "temp folder",
+        match="is not a folder",
+    )
+    _must_raise(
+        "a missing folder was accepted",
+        RuntimeError,
+        mr._refuse_unless_private,
+        tmp_path / "missing",
+        "temp folder",
+        match="could not be looked at (FileNotFoundError)",
+    )
+    real_uid = os.getuid()
+    with monkeypatch.context() as other:
+        other.setattr(mr.os, "getuid", lambda: real_uid + 1)
+        _must_raise(
+            "a folder of another user was accepted",
+            RuntimeError,
+            mr._refuse_unless_private,
+            good,
+            "temp folder",
+            match="belongs to another user",
+        )
+
+
+@posix_only
+def test_a_private_folder_is_made_with_mode_0700_whatever_the_umask_and_never_over_a_name(
+    tmp_path, monkeypatch
+):
+    for mask in (0, 0o022, 0o077, 0o277):
+        with _umask(mask):
+            made = tmp_path / f"d{mask:o}"
+            mr._make_private_dir(made, "snapshot folder")
+        assert _mode(made) == 0o700, f"under umask {mask:o} the folder had mode {_mode(made):o}"
+    # the mode is given to ``mkdir`` itself: there is no moment with the default mode (``chmod`` is switched off here)
+    with monkeypatch.context() as no_chmod, _umask(0):
+        no_chmod.setattr(mr.os, "chmod", lambda *args, **kwargs: None)
+        made = tmp_path / "nochmod"
+        try:
+            mr._make_private_dir(made, "snapshot folder")
+        except RuntimeError as exc:
+            raise AssertionError(f"mkdir was not given the mode 0700: {exc}") from None
+    assert _mode(made) == 0o700, "mkdir was not given the mode 0700"
+    # the folder is checked once it is made (a folder of another user is refused)
+    real_uid = os.getuid()
+    with monkeypatch.context() as other, _umask(0):
+        other.setattr(mr.os, "getuid", lambda: real_uid + 1)
+        with pytest.raises(RuntimeError, match="belongs to another user"):
+            mr._make_private_dir(tmp_path / "foreign", "snapshot folder")
+    # a name that is taken is never used: a folder, a file or a link (also a link to a private folder)
+    taken = tmp_path / "taken"
+    os.mkdir(taken, 0o700)
+    os.symlink(taken, tmp_path / "taken_link")
+    (tmp_path / "taken_file").write_text("x", encoding="utf-8")
+    for name in ("taken", "taken_link", "taken_file"):
+        with pytest.raises(FileExistsError):
+            mr._make_private_dir(tmp_path / name, "snapshot folder")
+
+
+@posix_only
+def test_the_parts_between_are_made_private_too_and_a_file_in_the_way_is_refused(tmp_path):
+    top = tmp_path / "top"
+    os.mkdir(top, 0o700)
+    with _umask(0):
+        mr._make_dirs(top, top.resolve() / "a" / "b" / "c")
+        mr._make_dirs(top, top.resolve() / "a" / "b")  # exists already: fine
+    for part in ("a", "a/b", "a/b/c"):
+        assert _mode(top / part) == 0o700, (
+            f"the part {part} was made with mode {_mode(top / part):o}"
+        )
+    (top / "file").write_text("x", encoding="utf-8")
+    with pytest.raises(FileExistsError):
+        mr._make_dirs(top, top.resolve() / "file")
+
+
+@posix_only
+def test_emptying_a_folder_keeps_the_folder_and_its_mode_and_follows_no_link(tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "keep.txt").write_text("keep", encoding="utf-8")
+    folder = tmp_path / "folder"
+    os.mkdir(folder, 0o700)
+    inode = os.lstat(folder).st_ino
+    (folder / "file.txt").write_text("x", encoding="utf-8")
+    (folder / "sub").mkdir()
+    (folder / "sub" / "inner.txt").write_text("x", encoding="utf-8")
+    os.symlink(outside, folder / "link_to_folder")
+    os.symlink(outside / "keep.txt", folder / "link_to_file")
+    mr._empty_dir(folder)
+    assert folder.is_dir(), "the folder itself was removed with what was in it"
+    assert sorted(os.listdir(folder)) == [], f"the folder was not emptied: {os.listdir(folder)}"
+    assert os.lstat(folder).st_ino == inode and _mode(folder) == 0o700, (
+        "the folder itself was removed and made again"
+    )
+    assert (outside / "keep.txt").read_text(encoding="utf-8") == "keep", "a link was followed"
+    mr._empty_dir(tmp_path / "missing")  # nothing to empty: no error
+
+
+OPEN_MODE = (
+    0o700 | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
+)  # a folder that others can enter (the test makes it so on purpose)
+
+
+def _mode_of(fd):
+    return stat.S_IMODE(os.fstat(fd).st_mode)
+
+
+@posix_only
+def test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_no_link(
+    tmp_path, monkeypatch
+):
+    for mask in (0, 0o277):
+        with _umask(mask):
+            made = tmp_path / f"f{mask:o}"
+            mr._make_private_file(made)
+        assert _mode(made) == 0o600, f"under umask {mask:o} the file had mode {_mode(made):o}"
+    # a NEW file has its mode from the moment it exists (the later ``fchmod`` only repairs an old file)
+    seen = []
+    real_fchmod = os.fchmod
+    monkeypatch.setattr(
+        os, "fchmod", lambda fd, mode: (seen.append(_mode_of(fd)), real_fchmod(fd, mode))[1]
+    )
+    with _umask(0):
+        mr._make_private_file(tmp_path / "window")
+    monkeypatch.undo()
+    assert seen == [0o600], f"a new file had mode {seen} before it was made private"
+    old = tmp_path / "old"
+    old.write_text("stale text", encoding="utf-8")
+    os.chmod(old, 0o644)
+    mr._make_private_file(old)
+    assert _mode(old) == 0o600 and old.read_text(encoding="utf-8") == "", (
+        "an existing file was not made private and empty"
+    )
+    target = tmp_path / "target"
+    target.write_text("target", encoding="utf-8")
+    link = tmp_path / "link"
+    os.symlink(target, link)
+    with pytest.raises(OSError):
+        mr._make_private_file(link)
+    assert target.read_text(encoding="utf-8") == "target", (
+        "a link was followed and its target emptied"
+    )
+
+
+@posix_only
+def test_the_lock_folder_and_the_lock_file_are_private_under_umask_0(tmp_path, monkeypatch):
+    locks = tmp_path / "locks"
+    monkeypatch.setattr(mr, "_lock_dir", lambda: locks)
+    with _umask(0):
+        try:
+            with mr._one_run_per_database(["host=db.invalid dbname=x"]):
+                pass
+        except RuntimeError as exc:
+            raise AssertionError(f"the lock folder was not made private: {exc}") from None
+    assert _mode(locks) == 0o700, f"the lock folder had mode {_mode(locks):o}"
+    (lock_file,) = list(locks.iterdir())
+    assert _mode(lock_file) == 0o600, f"the lock file had mode {_mode(lock_file):o}"
+
+
+# ---- a bare string where a sequence of texts is meant -------------------------------------------------------------------------
+
+
+def _bare_string_is_refused(keyword: str, tmp_path, **kw):
+    fresh = tmp_path / f"t{len(list(tmp_path.iterdir()))}"
+    fresh.mkdir()
+    root = _tree(fresh, {CORE_TEST: PASSES})
+    args = {"extra_dirs": (), "timeout": 120, **kw}
+    tests = args.pop("tests", [CORE_TEST])
+    caught = None
+    try:
+        run_mutants(root, [FLIP], tests, **args)
+    except (
+        TypeError,
+        ValueError,
+        OSError,
+    ) as exc:  # a missing guard fails with another class: the assertion says so
+        caught = exc
+    assert isinstance(caught, TypeError), (
+        f"a bare string for {keyword} was read letter by letter: {caught!r}"
+    )
+    assert f"{keyword} is a sequence" in str(caught), f"another refusal for {keyword}: {caught}"
+
+
+def test_a_bare_string_for_tests_is_a_type_error_not_letters(tmp_path):
+    _bare_string_is_refused("tests", tmp_path, tests="test_core.py")
+    _bare_string_is_refused("tests", tmp_path, tests=CORE_TEST)  # with slashes: a ValueError before
+
+
+def test_a_bare_string_for_extra_dirs_is_a_type_error_not_letters(tmp_path):
+    _bare_string_is_refused("extra_dirs", tmp_path, extra_dirs="fixtures")
+
+
+def test_a_bare_string_for_only_is_a_type_error_not_letters(tmp_path):
+    _bare_string_is_refused("only", tmp_path, only="flip")
+    _bare_string_is_refused(
+        "only", tmp_path, only=""
+    )  # an empty string would select no mutant at all
+
+
+def test_a_bare_string_for_throwaway_hosts_is_a_type_error_not_letters(tmp_path):
+    root = _tree(tmp_path, {CORE_TEST: PASSES})
+    caught = None
+    try:
+        _run(root, [FLIP], throwaway_hosts="localhost")
+    except (TypeError, ValueError) as exc:
+        caught = exc
+    assert isinstance(caught, TypeError), (
+        f"a bare string for throwaway_hosts was read as hosts: {caught!r}"
+    )
+    assert "not one string" in str(caught), f"another refusal: {caught}"
+
+
+def test_a_bare_string_for_shown_classes_is_a_type_error_not_letters(tmp_path):
+    root = _tree(tmp_path, {CORE_TEST: PASSES})
+    caught = None
+    try:
+        _run(root, [FLIP], shown_classes="PostgresError")
+    except (TypeError, ValueError) as exc:
+        caught = exc
+    assert isinstance(caught, TypeError), (
+        f"a bare string for shown_classes was read as names: {caught!r}"
+    )
+    assert "not one string" in str(caught), f"another refusal: {caught}"
+
+
+# ---- the port of an address ---------------------------------------------------------------------------------------------------
+
+
+def _port_forms(port: str) -> list[str]:
+    return [f"postgresql://svc@db.invalid:{port}/app", f"host=db.invalid port={port} dbname=app"]
+
+
+def test_a_port_is_one_to_five_digits_and_from_1_to_65535_in_both_forms():
+    for port in ("1", "80", "5432", "65535", "00080", "01"):
+        for value in _port_forms(port):
+            try:
+                mr._refuse_unsafe_address(DSN_NAME, value, FAKE_HOSTS)
+            except ValueError:
+                raise AssertionError(f"a good port was refused ({value!r})") from None
+    for port in ("0", "00000", "65536", "99999", "100000", "99999999999", "0000080", "000080"):
+        for value in _port_forms(port):
+            _must_refuse_at(
+                f"the port {port} was accepted ({value!r})",
+                "not in a shape",
+                mr._refuse_unsafe_address,
+                DSN_NAME,
+                value,
+                FAKE_HOSTS,
+            )
+    assert mr._address_fields("postgresql://db.invalid:65535/app")["port"] == "65535"
+    assert mr._address_fields("host=db.invalid port=1 dbname=app")["port"] == "1"
+    assert mr._address_fields("postgresql://db.invalid:65536/app") is None
+    assert mr._address_fields("host=db.invalid port=0 dbname=app") is None
+
+
+def test_the_port_boundaries_are_the_tcp_port_numbers():
+    assert (mr.PORT_MIN, mr.PORT_MAX) == (1, 65535)
+    assert mr._port_in_range("1") and mr._port_in_range("65535")
+    assert not mr._port_in_range("0") and not mr._port_in_range("65536")
+
+
+# ---- the lock folder lies outside the tree ------------------------------------------------------------------------------------
+
+
+@posix_only
+def test_a_lock_folder_inside_the_tree_under_test_is_refused(tmp_path, monkeypatch):
+    root = _tree(tmp_path, {CORE_TEST: PASSES})
+    monkeypatch.setenv(DSN_NAME, f"host={FAKE_HOST} dbname=scratch")
+    (tmp_path / "outside").mkdir()
+    (tmp_path / "pkg2").mkdir()  # a sibling whose name starts like the tree's: not inside it
+    alias = tmp_path / "alias"
+    os.symlink(root / "tests", alias)  # a link whose real place is inside the tree
+    for label, where in (
+        ("the tree itself", root),
+        ("a folder inside the tree", root / "tests" / "locks"),
+        ("a link to a folder inside the tree", alias / "locks"),
+    ):
+        monkeypatch.setattr(mr, "_lock_dir", lambda where=where: where)
+        _must_raise(
+            f"a lock folder in the tree was accepted ({label})",
+            RuntimeError,
+            _run,
+            root,
+            [FLIP],
+            pass_env=(DSN_NAME,),
+            match="lock folder of this run lies inside the tree under test",
+        )
+    for where in (tmp_path / "outside" / "locks", tmp_path / "pkg2" / "locks", tmp_path):
+        monkeypatch.setattr(mr, "_lock_dir", lambda where=where: where)
+        assert _run(root, [], pass_env=(DSN_NAME,)) == [], (
+            f"a lock folder outside the tree was refused ({where})"
+        )
+
+
+# ---- the junction checks come before any folder is made ------------------------------------------------------------------------
+
+
+def test_a_junction_is_refused_before_any_folder_is_made(tmp_path, monkeypatch):
+    """The checks of the caller's tree (the junctions) need no folder of the run, so no folder is made when one is refused. The check of a
+    relative link out of the tree needs the snapshot, so that one comes after it (and the folders are removed again)."""
+    monkeypatch.setattr(
+        os.path, "isjunction", lambda path: os.path.basename(path) == "jn", raising=False
+    )
+    root = _tree(tmp_path, {CORE_TEST: PASSES})
+    (root / "tests" / "fixtures").mkdir()
+    made = []
+    real = mr.tempfile.mkdtemp
+    monkeypatch.setattr(mr.tempfile, "mkdtemp", lambda *a, **k: made.append(1) or real(*a, **k))
+    for where, extra in (
+        (root / "src" / "pk", ()),
+        (root / "tests" / "fixtures", ("tests/fixtures",)),
+    ):
+        (where / "jn").mkdir()
+        _must_raise(
+            f"a junction was refused only after a folder was made ({where.name})",
+            ValueError,
+            run_mutants,
+            root,
+            [],
+            [CORE_TEST],
+            extra_dirs=extra,
+            match="junction",
+        )
+        assert made == [], f"a folder was made before the junction in {where.name} was refused"
+        (where / "jn").rmdir()
+
+
+# ---- the number of texts to search for -----------------------------------------------------------------------------------------
+
+
+def _layers(count: int) -> str:
+    """An address whose password is percent-encoded in ``count`` layers: it gives ``count + 4`` texts to search for."""
+    return _url("svc", "%", "25" * count, "40", rest=f"{FAKE_HOST}/scratch")
+
+
+def test_exactly_300_texts_to_search_for_are_accepted_and_301_are_refused():
+    assert mr.MAX_SECRETS == 300
+    at_the_limit = _layers(296)
+    try:
+        texts = mr._secret_values((DSN_NAME,), {DSN_NAME: at_the_limit})
+    except ValueError as exc:
+        raise AssertionError(f"300 texts to search for were refused: {exc}") from None
+    assert len(texts) == 300, "the made-up address no longer gives exactly 300 texts"
+    over = _layers(297)
+    _must_refuse_at(
+        "301 texts to search for were accepted",
+        "texts to search for",
+        mr._secret_values,
+        (DSN_NAME,),
+        {DSN_NAME: over},
+    )
+    # the same through the whole run: 300 gets past this step (the later steps accept the address), 301 stops at it
+    mr._refuse_unsafe_address(DSN_NAME, at_the_limit, FAKE_HOSTS)
+
+
+# ---- the texts say what the code does (round 23) -------------------------------------------------------------------------------
+
+
+def _doc() -> str:
+    return " ".join((mr.__doc__ or "").split())
+
+
+def test_the_module_docstring_states_the_limits_of_round_23():
+    doc = _doc()
+    for words in (
+        # no passed variable: nothing is replaced and nothing is claimed
+        "With no passed variable nothing is replaced and nothing is claimed",
+        "do not pass this runner a test suite that must not see them",
+        # a test that runs as the same user can change what the runner reads back
+        "A test that runs as the same user can alter",
+        # the lock reaches only so far
+        "two runs that differ only in the login are treated as one database",
+        "A run with the variable absent takes no lock",
+        # every folder is private and checked
+        "checked again after every rebuild of the temp copy",
+        "the junction checks come before any folder is made",
+        "the check of relative links out of the tree comes after the snapshot is copied",
+        "The temp folder is emptied and kept, never removed and made again with the default mode",
+        # the lock folder lies outside the tree
+        "refused when it lies inside the tree under test",
+        "the folders are removed again",
+        # the port
+        "port (1 to 65535)",
+        # the sequences
+        "a bare string in place of a list is a ``TypeError`` for ``tests``, ``extra_dirs``, ``only``",
+    ):
+        assert words in doc, f"the module docstring does not hold: {words}"
+    # the two statements that were too wide
+    assert "The environment is read once" in doc
+    assert "except ``XDG_RUNTIME_DIR``" in doc, (
+        "the lock folder lookup is the one late read of the environment"
+    )
+
+
+def test_with_no_passed_variable_nothing_is_replaced_and_a_failing_line_is_shown_as_it_is(
+    tmp_path, monkeypatch
+):
+    """Decision D-023, pinned: without a passed variable the runner replaces nothing (the allowlist needs a value to protect). The text of a
+    failing child, a test id and a class name are shown as the child wrote them. The docstring says so, with what follows from it."""
+    monkeypatch.delenv(DSN_NAME, raising=False)
+    root = _tree(
+        tmp_path,
+        {
+            CORE_TEST: "from pk.core import go\n\ndef test_a():\n    assert go(True) is True, 'free text of the child'\n"
+        },
+    )
+    lines: dict[str, str] = {}
+    mutant = Mutant(
+        "flip", "src/pk/core.py", "return flag", "return not flag", "free text of the child"
+    )
+    rows = _run(root, [mutant], first_lines=lines, pass_env=())
+    assert _short(rows) == [("flip", Verdict.KILLED, True)], rows
+    assert rows[0][2] == "tests/test_core::test_a", (
+        f"the test id was changed with no value passed: {rows}"
+    )
+    assert "free text of the child" in lines["flip"], (
+        f"the line was changed with no value passed: {lines}"
+    )
+    assert (
+        mr._shown_line("E   KeyError: not on any list", mr._Shown())
+        == "E   KeyError: not on any list"
+    ), "a line was changed with no value passed"
+    assert (
+        mr._shown_id("tests/any_file::test_x[a-b]", mr._Shown()) == "tests/any_file::test_x[a-b]"
+    ), "a test id was changed with no value passed"
+
+
+# ---- the count of POSIX-only names that the texts give for ``mypy --platform win32`` -----------------------------------------------
+
+# each ``os.`` or ``signal.`` name that mypy reports for ``--platform win32`` (it does not know the name there), with the number of places the
+# runner uses it: 12 places, which with the one untyped import of ``hadavin_sdk.testing.mutation`` are the "13 errors" of the texts
+POSIX_ONLY_NAMES = {
+    "os.getuid": 4,
+    "os.O_DIRECTORY": 1,
+    "os.O_NOFOLLOW": 1,
+    "os.P_PID": 1,
+    "os.WEXITED": 1,
+    "os.WNOHANG": 1,
+    "os.WNOWAIT": 1,
+    "os.killpg": 1,
+    "signal.SIGKILL": 1,
+}
+# every other ``os.`` or ``signal.`` name the runner uses: known on Windows, or behind ``hasattr``, or an ``if _IS_WINDOWS`` branch that mypy reads
+# as reachable
+OTHER_NAMES = frozenset(
+    [
+        "os.O_CREAT",
+        "os.O_RDONLY",
+        "os.O_RDWR",
+        "os.O_TRUNC",
+        "os.O_WRONLY",
+        "os.SEEK_SET",
+        "os.chmod",
+        "os.close",
+        "os.environ",
+        "os.fchmod",
+        "os.fdopen",
+        "os.fstat",
+        "os.lseek",
+        "os.lstat",
+        "os.mkdir",
+        "os.name",
+        "os.open",
+        "os.path",
+        "os.pathsep",
+        "os.readlink",
+        "os.scandir",
+        "os.sep",
+        "os.stat_result",
+        "os.unlink",
+        "os.waitid",
+        "os.walk",
+        "signal.SIG_DFL",
+        "signal.SIG_IGN",
+        "signal.getsignal",
+        "signal.signal",
+    ]
+)
+
+
+def test_a_new_os_or_signal_name_is_noticed_so_the_win32_error_count_in_the_texts_stays_true():
+    """The texts say ``mypy --platform win32`` gives 13 errors (12 places of POSIX-only names and 1 untyped import). Running mypy is not part of
+    the suite, so the places are counted here: a new ``os.`` or ``signal.`` name, or one more place of a POSIX-only name, fails this test until
+    the table above, the module docstring and the CHANGELOG are made to agree."""
+    tree = ast.parse(Path(mr.__file__).read_text(encoding="utf-8"))
+    used: dict[str, int] = {}
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Attribute)
+            and isinstance(node.value, ast.Name)
+            and node.value.id in ("os", "signal")
+        ):
+            name = f"{node.value.id}.{node.attr}"
+            used[name] = used.get(name, 0) + 1
+    unknown = sorted(set(used) - set(POSIX_ONLY_NAMES) - OTHER_NAMES)
+    assert not unknown, (
+        f"a new os or signal name was used (is it POSIX-only? then the count of mypy errors changes): {unknown}"
+    )
+    posix = {name: used.get(name, 0) for name in POSIX_ONLY_NAMES}
+    assert posix == POSIX_ONLY_NAMES, f"the places of POSIX-only names changed: {posix}"
+    assert sum(posix.values()) + 1 == 13, (
+        "the sum of the places is no longer the 13 errors of the texts"
+    )
+    assert "13 errors" in _doc(), "the module docstring does not give the count of mypy errors"
