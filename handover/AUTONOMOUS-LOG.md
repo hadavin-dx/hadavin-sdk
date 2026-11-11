@@ -73,3 +73,4 @@ Each line: UTC | IST | item | running agents | next 3 steps | blockers
 16:50 P3a-2 ticket rev 2 delivered (6 commits A1,B1,A2,C1,B2,C2; no options arg; step 8 one try exit 5; owner questions appended). Launching plan review round 2
 16:51 PR H plan r2 readiness saved: NOT READY 9 Major (+design 5 Major). Q8c-1 batch 2 pushed 6bdfadc1 (policy mutants 45/45, stage 37/37, fail-before 8; R17 + now claims_unverified; 12 Vault tests still unrun). Launching: Q8c-1 evidence + 2 reviewers, PR H rev 3 author (Opus, final plan round)
 16:54 launched (earlier register rows were written before launch; hook failed on wrong cwd, relaunched): Q8c-1 evidence ab2e588a + reviewers aec2bc5f/a052087c; PR H rev 3 author a2df9258. 10 agents now running.
+16:54 CHECKPOINT: 11 agents running, none older than 32 min, load 3.5. Waiting for hand-backs (Q8b/Q8a-1 evidence, Q8a-2 b3, PR89 r22, timing fix, P3a-2 plan r2, Q8c-1 r3, PR H rev 3).

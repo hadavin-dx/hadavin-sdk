@@ -1,1 +1,4 @@
 head be53718ccbf5e2038cc18c87d334577e7b11ace8 started 16:54:02
+
+T-E8 watchdog: pg_sleep(30) cancelled after 2.01s (watchdog 2.0s; the assertion allows 3.0s: the timer, the cancel round trip to the server and the connection close)
+.
