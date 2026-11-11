@@ -1,0 +1,12 @@
+# Autonomous decision log (core-modules cloud session)
+Rule (owner 2026-11-11): the cloud session takes ALL decisions itself, including major ones, choosing the recommended option, and records each one here BEFORE acting and updates the outcome after. Owner-safety items (money, secrets, merge to main, repo settings, history rewrites of existing remote branches, deletes, DNS, demo/client material in this repo) are not decided here; they go to `questions-for-lead.md` with a do-nothing-irreversible default.
+Entry format: `D-NNN | date UTC / IST | question | options (cost, risk) | RECOMMENDED + why | reversible? | evidence | revisit if | outcome (commit/PR)`.
+
+## Decisions already taken by the lead before leaving (carry forward, you may refine them by a new entry)
+- D-001 | 2026-11-11 14:40Z / 20:10 IST | Who drives core work? | (a) laptop lead + cloud in parallel, (b) cloud alone | RECOMMENDED (b): the owner decided the laptop works only on the duplicate-proof-lead-desk demo | reversible: yes (a new GO order from the laptop) | owner message 2026-11-11 | revisit: owner restarts laptop core work | outcome: ORDER 246 retired the old session; this plan starts a new one.
+- D-002 | same | Queue order | (a) PR77 first, (b) PR89 evidence first | RECOMMENDED (b) first (small, already clean evidence, unblocks nothing else) then PR77 (largest open Major class), PR74 after PR77 (depends on it), PR85/P3a-2 as new branches | reversible: yes | CLOUD-RESUME-2026-11-11.md | revisit: PR77 shows a smaller fix is possible | outcome: see AUTONOMOUS-LOG.md.
+- D-003 | same | Merge authority | (a) cloud may merge own clean PRs, (b) cloud only prepares READY PRs, a human merges | RECOMMENDED (b) as the default (repo CLAUDE.md: cloud sessions never merge; merging is not reversible on `main`); (a) only if the owner adds the line `MERGE ALLOWED` to the prompt | reversible: yes | repo CLAUDE.md, owner standing approval applies to the laptop lead | revisit: owner pastes `MERGE ALLOWED` | outcome: n/a.
+- D-004 | same | Old unpushed laptop branches | push as backups | DONE: 11 branches pushed as `backup/laptop-2026-11-11/*` after gitleaks (0 findings each); they are backups, not work items.
+- D-005 | same | Two unpushed PR89 evidence heads (gitleaks hit in history) | (a) push anyway, (b) drop and re-run evidence on db0d9eb | RECOMMENDED (b) | reversible: yes | ORDER 242 | outcome: re-run is Q2.
+
+## Decisions taken by the cloud session (append below, newest last)
