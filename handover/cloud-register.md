@@ -1108,3 +1108,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | aba32f2f | PR89 evidence runner on 025ec61 | 2026-11-11 ~02:40Z | +2 h | running; output /home/user/build/EVOUT-P89-025ec61/ |
 | a904ccff | PR89 design/security reviewer r11 (egm-design) | 2026-11-11 ~02:40Z | +40 min | running |
 | ae4b72af | PR89 codebase reviewer r11 (egm-codebase-details) | 2026-11-11 ~02:40Z | +40 min | running |
+| ae4b72af | PR89 codebase reviewer r11 | closed: 0 Blocker, 1 Major, 7 Minor, 3 Nit saved (round-w2-r11-codebase.md) | |
+| a904ccff | PR89 design/security reviewer r11 | closed: 0 Blocker, 2 Major, 6 Minor saved (round-w2-r11-design.md) | |
+| aba32f2f | PR89 evidence runner on 025ec61 | STOPPED 2026-11-11 ~03:05Z (Majors found, head will change); processes, cluster ev89c killed, output deleted | |
+| a8904ec1 | PR89 builder round 11 (r11-01..04) | 2026-11-11 ~03:05Z | +90 min | running |
