@@ -402,8 +402,11 @@ def test_the_ownership_check_before_the_files_gets_the_relation_names_and_the_fu
     names. Killed by: mutants OA4 (the function half gets no names) and MC1 (it gets the relation names)."""
     db = _Db()
     text = "CREATE OR REPLACE FUNCTION audit_guard() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$;"
-    mig._refuse_foreign_owned(db, [text])
-    ((relations, functions),) = [p for t, p in db.log if t == mig._FOREIGN_OWNED_SQL]
+    mig._refuse_foreign_owned(db, "s", [text])
+    ((schema_a, relations, schema_b, functions),) = [
+        p for t, p in db.log if t == mig._FOREIGN_OWNED_SQL
+    ]
+    assert (schema_a, schema_b) == ("s", "s")
     assert functions == ["audit_guard"]
     assert set(relations) == set(mig.GRANTS) | {"schema_migrations"}
 

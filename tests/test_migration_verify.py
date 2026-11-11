@@ -597,3 +597,91 @@ def test_the_self_check_names_an_unknown_and_a_missing_column():
         v.check_acl_columns([*have, "pg_made_up.acl"])
     with pytest.raises(ConfigError, match=r"does not have \(pg_class.relacl\)"):
         v.check_acl_columns([c for c in have if c != "pg_class.relacl"])
+
+
+# --- the commit outcome (ticket P3a-2, 4.1 step 7): refused or unknown ----------------------------------------------------
+
+
+class _FakeCommitError(Exception):
+    def __init__(self, sqlstate):
+        super().__init__("made-up error at commit")
+        self.sqlstate = sqlstate
+
+
+def _fake_db(*, closed=False, status=None):
+    import types
+
+    from psycopg.pq import TransactionStatus
+
+    status = TransactionStatus.IDLE if status is None else status
+    return types.SimpleNamespace(
+        closed=closed, info=types.SimpleNamespace(transaction_status=status)
+    )
+
+
+@pytest.mark.parametrize(
+    "state",
+    [
+        "22001",
+        "23503",
+        "23505",
+        "40001",
+        "40P01",
+        "42P01",
+        "44000",
+        "P0001",
+        "55P03",
+        "55000",
+        "55006",
+        "57014",
+    ],
+)
+def test_commit_outcome_classes_refused(state):
+    """A live session in IDLE state with an SQLSTATE of a refusing class: the server rolled back, nothing was kept."""
+    from hadavin_sdk.store import migrate as mig
+
+    assert mig._commit_outcome(_FakeCommitError(state), _fake_db()) == "refused"
+
+
+@pytest.mark.parametrize(
+    "state",
+    [
+        "08006",
+        "08000",
+        "57P01",
+        "57P02",
+        "57P03",
+        "53100",
+        "58030",
+        "XX000",
+        "25P02",
+        "2D000",
+        "0A000",
+    ],
+)
+def test_commit_outcome_classes_unknown_by_code(state):
+    """Connection loss, shutdown, resource, system and internal classes, and any code outside the list: unknown (the
+    commit may or may not have happened)."""
+    from hadavin_sdk.store import migrate as mig
+
+    assert mig._commit_outcome(_FakeCommitError(state), _fake_db()) == "unknown"
+
+
+def test_commit_outcome_classes_unknown_without_a_code_a_closed_connection_or_a_transaction_state():
+    from psycopg.pq import TransactionStatus
+
+    from hadavin_sdk.store import migrate as mig
+
+    assert mig._commit_outcome(_FakeCommitError(None), _fake_db()) == "unknown"
+    assert mig._commit_outcome(_FakeCommitError(""), _fake_db()) == "unknown"
+    assert mig._commit_outcome(ValueError("no sqlstate attribute"), _fake_db()) == "unknown"
+    assert mig._commit_outcome(_FakeCommitError("23503"), _fake_db(closed=True)) == "unknown"
+    for status in (
+        TransactionStatus.INTRANS,
+        TransactionStatus.INERROR,
+        TransactionStatus.ACTIVE,
+        TransactionStatus.UNKNOWN,
+    ):
+        assert (
+            mig._commit_outcome(_FakeCommitError("23503"), _fake_db(status=status)) == "unknown"
+        ), status

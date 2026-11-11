@@ -7,7 +7,10 @@
                                                          audit checkpoint; exit 0 ok, 1 a step failed,
                                                          2 config error, 4 store unreachable
   hadavin-sdk [--config DIR] migrate [--runtime-role R] [--portal-role P]  apply the postgres schema; the migration role's DSN
-                                                         comes from the HADAVIN_MIGRATE_DSN environment variable
+                                                         comes from the HADAVIN_MIGRATE_DSN environment variable;
+                                                         exit 0 applied and checked, 2 refused (nothing kept), 3 failure,
+                                                         5 applied and committed but not verified (or the commit's
+                                                         outcome is unknown); the statements that repair go to standard output
   hadavin-sdk [--config DIR] audit verify                exit 0 intact, 1 not, 2 refused, 3 unreadable
   hadavin-sdk [--config DIR] replay AGENT --bundles D --cause-list D --max-usd X --out OUT [--k K]
                                                          K1b-lite: run recorded incidents through the agent;
@@ -38,7 +41,7 @@ from hadavin_sdk.audit import AuditUnavailable
 from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import load_config
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import AppliedNotVerifiedError, ConfigError
 from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import new_id
@@ -340,17 +343,20 @@ def _migrate(
 
     ca = ca_file(store, make("secrets", cfg.backends.secrets).get)
     wait = {} if lock_wait_seconds is None else {"lock_wait_seconds": lock_wait_seconds}
-    applied = migrate(
-        dsn,
-        **wait,
-        runtime_role=runtime_role,
-        portal_role=portal_role,
-        purge_role=purge_role,
-        iam_auth=store.iam_auth,
-        region=store.region,
-        sslmode=store.sslmode,
-        sslrootcert=ca,
-    )
+    try:
+        applied = migrate(
+            dsn,
+            **wait,
+            runtime_role=runtime_role,
+            portal_role=portal_role,
+            purge_role=purge_role,
+            iam_auth=store.iam_auth,
+            region=store.region,
+            sslmode=store.sslmode,
+            sslrootcert=ca,
+        )
+    except AppliedNotVerifiedError as e:
+        return _applied_not_verified(e)
     print(f"applied: {', '.join(applied) or 'nothing (up to date)'}")
     if applied and not runtime_role:
         print(
@@ -358,6 +364,29 @@ def _migrate(
             file=sys.stderr,
         )
     return 0
+
+
+_OUTSIDE_BLOCK_MARK = "-- NOT THIS PACKAGE'S OBJECTS: confirm each with its owner before running"
+
+
+def _applied_not_verified(e: AppliedNotVerifiedError) -> int:
+    """Exit 5 (ticket P3a-2, 4.2): the message goes to standard error, every repair statement to standard output (one per
+    line and nothing else there, so `migrate > fix.sql` captures them), no "applied" line. Statements for objects that
+    are not this package's come in a second block after a comment line."""
+    print(str(e), file=sys.stderr)
+    if e.problems:
+        from hadavin_sdk.store.migration_verify import statement_blocks
+
+        own, outside = statement_blocks(e.problems)
+    else:
+        own, outside = list(e.statements), []
+    for statement in own:
+        print(statement)
+    if outside:
+        print(_OUTSIDE_BLOCK_MARK)
+        for statement in outside:
+            print(statement)
+    return 5
 
 
 def audit_verify(audit) -> int:

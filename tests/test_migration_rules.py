@@ -1010,3 +1010,12 @@ def test_no_test_logs_in_as_a_role_without_passing_its_password():
             if not any("# pw-env" in line for line in span):
                 bad.append(f"{path.relative_to(root)}:{node.lineno}")
     assert not bad, "a login without its password: " + ", ".join(bad)
+
+
+def test_batch_2_names_only_real_mutants():
+    """`BATCH_2_IDS` (ticket P3a-2, 5.5) lists mutants by id; an id that no mutant has (retired or mistyped) is a failure,
+    so the batch cannot name a mutant that is gone."""
+    from tests import migrate_mutants
+
+    known = {m.name for m in migrate_mutants.M}
+    assert sorted(migrate_mutants.BATCH_2_IDS - known) == []

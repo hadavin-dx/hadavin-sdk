@@ -49,6 +49,7 @@ T_NUM = "tests/test_migration_numbers.py"
 T_GUARDS = "tests/test_migration_numbers_guards.py"
 T_NAMES = "tests/test_migration_names.py"
 T_CMP = "tests/test_migration_compare.py"
+T_VERIFY = "tests/test_migration_verify.py"
 
 
 @dataclass(frozen=True)
@@ -77,7 +78,7 @@ PAIR_FUNC = "def _table_body(text: str, start: int) -> str:"
 LEX_CALL = "        text, lexer_problem = lex(raw, keep_quoted=True)\n"
 SAVE_READ = (
     "            if pending:\n"
-    "                saved = _read_back(db, named)\n"
+    "                saved = _read_back(db, schema, named)\n"
     "                _refuse_unusual_strings(saved)\n"
     "            for path in pending:\n"
     '                step[0] = f"applying {path.name}"\n'
@@ -124,10 +125,63 @@ CALL = (
     "                    path.name,\n"
     "                    frozenset(c for c in allowed_changes if c.migration == path.stem),\n"
     "                    named,\n"
+    "                    schema=schema,\n"
     "                )\n"
 )
 RECHECK = "                _recheck_roles(db, named, path.name)\n"
 INSERT = '                db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))\n'
+
+
+# Batch 2 of the four mutant batches (ticket P3a-2, 5.5 and 7.10): the mutants re-pointed, re-checked or newly checked
+# because their planted text sits in code that ticket P3a-2 edits. Ids that a later commit retires are taken out in that
+# commit; `test_batch_2_names_only_real_mutants` fails until they are.
+BATCH_2_IDS: frozenset[str] = frozenset(
+    {
+        # re-pointed (the rule lives on; the planted line moves)
+        *("AC1", "AC2", "AC3", "AC4", "AC5", "SD1", "SD2", "SD6", "SD7", "SD8"),
+        *("DP1", "DP2", "DP3", "DP4", "DP5", "DP6", "DP7", "DP8", "DP9"),
+        *("SC8", "SC9", "SC12", "SC13", "SC14", "GO4", "GO5", "GO6", "RO1", "RO3", "RO4", "RO5"),
+        *(
+            "RA2",
+            "RA4",
+            "IM1",
+            "RK1",
+            "RK2",
+            "RF5",
+            "OW5",
+            "OW6",
+            "OW9",
+            "MC2",
+            "PDO2",
+            "PC1",
+            "PT1",
+        ),
+        *("GO2", "R23", "SH1"),
+        # re-checked, killer changes (the mutant text stays)
+        *(
+            "MW1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "B1",
+            "SU1",
+            "PA1",
+            "RC2",
+            "RF1",
+            "R7",
+            "CL1",
+            "CL2",
+            "GM1",
+            "MC1",
+            "OA4",
+        ),
+        # re-checked, planted inside code that moves
+        *("M102", "LV1", "LV2", "LV3", "LV4", "LW4", "N15", "MW2", "MW3", "MW4", "MW5", "MW6"),
+        *("M61", "M64", "M67", "M95", "T13", "RC1", "S1", "O1", "R6"),
+        *("LW1", "LW2", "LW3", "LW5", "LW6", "MW8", "LW7", "LW8", "P8"),
+    }
+)
 
 
 def cmp_mutant(name: str, item: str, desc: str, killer_item: str) -> Mutant:
@@ -230,7 +284,7 @@ M: list[Mutant] = [
         '                step[0] = f"applying {path.name}"\n'
         "                db.execute(texts[path])  # the text that was scanned, never a second read\n"
         "                if saved is None:\n"
-        "                    saved = _read_back(db, named)\n"
+        "                    saved = _read_back(db, schema, named)\n"
         "                    _refuse_unusual_strings(saved)\n",
         READS_BEFORE,
     ),
@@ -246,9 +300,48 @@ M: list[Mutant] = [
         "M102",
         "trigger query has no schema filter",
         MIG,
-        '"WHERE NOT t.tgisinternal AND n.nspname = current_schema()"',
-        '"WHERE NOT t.tgisinternal"',
+        '"WHERE NOT t.tgisinternal AND n.nspname = %s"',
+        '"WHERE NOT t.tgisinternal AND true"',
         k(T_WIRING, "test_trigger_query_reads_only_the_migration_schema"),
+    ),
+    # --- the commit outcome (commit 3a, ticket P3a-2 4.1 step 7) ---
+    Mutant(
+        "CO1",
+        "a commit error is called refused whatever the transaction state",
+        MIG,
+        '    if db.info.transaction_status != TransactionStatus.IDLE:\n        return "unknown"\n',
+        "",
+        k(
+            T_VERIFY,
+            "test_commit_outcome_classes_unknown_without_a_code_a_closed_connection_or_a_transaction_state",
+        ),
+    ),
+    Mutant(
+        "CO2",
+        "a commit error on a closed connection is called refused",
+        MIG,
+        'if not state or getattr(db, "closed", True):',
+        "if not state:",
+        k(
+            T_VERIFY,
+            "test_commit_outcome_classes_unknown_without_a_code_a_closed_connection_or_a_transaction_state",
+        ),
+    ),
+    Mutant(
+        "CO3",
+        "the connection-loss class 08 is called refused",
+        MIG,
+        '_COMMIT_REFUSED_CLASSES = ("22", "23", "40", "42", "44", "P0")',
+        '_COMMIT_REFUSED_CLASSES = ("08", "22", "23", "40", "42", "44", "P0")',
+        k(T_VERIFY, "test_commit_outcome_classes_unknown_by_code") + "[08006]",
+    ),
+    Mutant(
+        "CO4",
+        "a refusing class is called unknown (23 left out)",
+        MIG,
+        '_COMMIT_REFUSED_CLASSES = ("22", "23", "40", "42", "44", "P0")',
+        '_COMMIT_REFUSED_CLASSES = ("22", "40", "42", "44", "P0")',
+        k(T_VERIFY, "test_commit_outcome_classes_refused") + "[23503]",
     ),
     # --- _scan (migrate.py) ---
     Mutant(
@@ -901,7 +994,7 @@ M: list[Mutant] = [
         "O1",
         "the check for objects another role owns is not called",
         MIG,
-        "            _refuse_foreign_owned(db, texts.values())\n",
+        "            _refuse_foreign_owned(db, schema, texts.values())\n",
         "            pass\n",
         (
             k(
@@ -1183,8 +1276,8 @@ M: list[Mutant] = [
         "OA4",
         "the managed names are not given to the function half of the query",
         MIG,
-        "db.execute(_FOREIGN_OWNED_SQL, (managed_rel, managed_fn))",
-        "db.execute(_FOREIGN_OWNED_SQL, (managed_rel, []))",
+        "db.execute(_FOREIGN_OWNED_SQL, (schema, managed_rel, schema, managed_fn))",
+        "db.execute(_FOREIGN_OWNED_SQL, (schema, managed_rel, schema, []))",
         k(
             T_CMP,
             "test_the_ownership_check_before_the_files_gets_the_relation_names_and_the_function_names_apart",
@@ -2707,8 +2800,8 @@ M: list[Mutant] = [
         "MC1",
         "the function half of the ownership check gets the relation names",
         MIG,
-        "db.execute(_FOREIGN_OWNED_SQL, (managed_rel, managed_fn))",
-        "db.execute(_FOREIGN_OWNED_SQL, (managed_rel, managed_rel + managed_fn))",
+        "db.execute(_FOREIGN_OWNED_SQL, (schema, managed_rel, schema, managed_fn))",
+        "db.execute(_FOREIGN_OWNED_SQL, (schema, managed_rel, schema, managed_rel + managed_fn))",
         (
             k(
                 T_CMP,
@@ -2743,8 +2836,8 @@ M: list[Mutant] = [
         "OA6",
         "the relation half of the ownership check gets no names",
         MIG,
-        "db.execute(_FOREIGN_OWNED_SQL, (managed_rel, managed_fn))",
-        "db.execute(_FOREIGN_OWNED_SQL, ([], managed_fn))",
+        "db.execute(_FOREIGN_OWNED_SQL, (schema, managed_rel, schema, managed_fn))",
+        "db.execute(_FOREIGN_OWNED_SQL, (schema, [], schema, managed_fn))",
         k(T_WIRING, "test_the_ownership_query_gets_the_managed_names"),
     ),
     Mutant(

@@ -87,6 +87,7 @@ from typing import Literal
 
 from psycopg import errors as pg_errors
 from psycopg import sql
+from psycopg.pq import TransactionStatus
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store.migration_numbers import (
@@ -258,10 +259,10 @@ def check_grants(paths: list[Path], texts: dict[Path, str] | None = None) -> lis
     return problems
 
 
-def _apply_grants(db, role_name: str, privileges, columns=None) -> None:
-    """Reset the role's rights on every relation in `GRANTS`, then give back what `privileges(grant)` names."""
+def _apply_grants(db, schema: str, role_name: str, privileges, columns=None) -> None:
+    """Reset the role's rights on every relation in `GRANTS` in `schema` (the schema of the run, read once at step 1),
+    then give back what `privileges(grant)` names."""
     role = sql.Identifier(role_name)
-    schema = db.execute("SELECT current_schema()").fetchone()[0]
     db.execute(sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(sql.Identifier(schema), role))
     for name, grant in GRANTS.items():
         what = sql.SQL(
@@ -279,6 +280,31 @@ def _apply_grants(db, role_name: str, privileges, columns=None) -> None:
                     sql.SQL(", ").join(sql.Identifier(c) for c in cols), rel, role
                 )
             )
+
+
+# The COMMIT of a run (ticket P3a-2, 4.1 step 7). A commit that the server refuses (a deferred check or trigger that
+# raises at commit time while the session stays usable) means nothing was kept. Anything else (a lost connection, no
+# SQLSTATE at all, a shutdown, a code outside this list) means the commit may or may not have happened. The list errs
+# towards "unknown": a refused commit outside it is reported as "may or may not have happened", which costs one more
+# run of `migrate`, never a false "nothing was kept". Probed on PostgreSQL 16.15: 23503 (a deferred foreign key), 57014
+# (a cancel), 57P01 (`pg_terminate_backend`: closed connection, so "unknown").
+_COMMIT_REFUSED_CLASSES = ("22", "23", "40", "42", "44", "P0")
+_COMMIT_REFUSED_STATES = frozenset({"55P03", "55000", "55006", "57014"})
+
+
+def _commit_outcome(exc: BaseException, db) -> Literal["refused", "unknown"]:
+    """Decide what an error at the COMMIT means. "refused" only when all four hold: the error carries an SQLSTATE; the
+    connection is not closed; the connection's transaction state is IDLE (the server rolled back and the session lives);
+    and the SQLSTATE is of a class in `_COMMIT_REFUSED_CLASSES` or one of `_COMMIT_REFUSED_STATES`. Everything else is
+    "unknown"."""
+    state = getattr(exc, "sqlstate", None)
+    if not state or getattr(db, "closed", True):
+        return "unknown"
+    if db.info.transaction_status != TransactionStatus.IDLE:
+        return "unknown"
+    if state in _COMMIT_REFUSED_STATES or state.startswith(_COMMIT_REFUSED_CLASSES):
+        return "refused"
+    return "unknown"
 
 
 _TABLE_PRIVS = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER")
@@ -465,7 +491,7 @@ _READBACK_MEMBERS_SQL = (
     "(to_jsonb(m) - 'oid' - 'roleid' - 'member')::text FROM pg_auth_members m "
     "WHERE m.member IN (SELECT oid FROM scope WHERE own OR via_membership) OR m.roleid IN (SELECT oid FROM scope WHERE own)"
 )
-# Triggers of the migration schema only (the schema `current_schema()` names now); internal ones are skipped. Per
+# Triggers of the migration schema only (the schema of the run, read once at step 1 and passed as the parameter); internal ones are skipped. Per
 # trigger: its table's id (only to tell a renamed table from a new one), its enabled state, its full definition and
 # its function's source text, the function's security mode, owner and saved settings (a function replaced
 # under the same name keeps the trigger name but not what it does).
@@ -474,7 +500,7 @@ _READBACK_TRIGGERS_SQL = (
     "p.prosrc, p.prosecdef, pg_get_userbyid(p.proowner), p.proconfig::text FROM pg_trigger t "
     "JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace "
     "LEFT JOIN pg_proc p ON p.oid = t.tgfoid "
-    "WHERE NOT t.tgisinternal AND n.nspname = current_schema()"
+    "WHERE NOT t.tgisinternal AND n.nspname = %s"
 )
 # The parts of a saved trigger, in the order of its saved tuple (after the name, table and schema).
 _TRIGGER_PARTS = (
@@ -579,14 +605,14 @@ class _Saved:
     )  # the same keys -> the table's id (tells a renamed table from a new one)
 
 
-def _read_back(db, named=()) -> _Saved:
+def _read_back(db, schema: str, named=()) -> _Saved:
     values = tuple(db.execute(_READBACK_VALUES_SQL).fetchone())
     triggers, relids = {}, {}
-    for name, enabled, table, schema, relid, *detail in db.execute(
-        _READBACK_TRIGGERS_SQL
+    for name, enabled, table, trigger_schema, relid, *detail in db.execute(
+        _READBACK_TRIGGERS_SQL, (schema,)
     ).fetchall():
-        triggers[(schema, table, name)] = (enabled, *detail)
-        relids[(schema, table, name)] = relid
+        triggers[(trigger_schema, table, name)] = (enabled, *detail)
+        relids[(trigger_schema, table, name)] = relid
     scope = (list(named),)
     members = frozenset(tuple(r) for r in db.execute(_READBACK_MEMBERS_SQL, scope).fetchall())
     settings = frozenset(tuple(r) for r in db.execute(_READBACK_SETTINGS_SQL, scope).fetchall())
@@ -669,7 +695,7 @@ def _refuse_privileged_role(db) -> None:
 # Columns: what ('r' relation, 'f' function), kind (relkind or prokind), name, owner, argument list of a function.
 _FOREIGN_OWNED_SQL = (
     "SELECT 'r', c.relkind::text, c.relname, pg_get_userbyid(c.relowner), '' FROM pg_class c "
-    "JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = current_schema() "
+    "JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = %s "
     "AND c.relkind IN ('r','p','v','m','S','f') AND c.relname = ANY(%s::text[]) "
     "AND NOT pg_has_role(current_user, c.relowner, 'USAGE') "
     "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid "
@@ -678,7 +704,7 @@ _FOREIGN_OWNED_SQL = (
     "AND d.objid = c.oid AND d.deptype IN ('a','i'))) "
     "UNION ALL SELECT 'f', p.prokind::text, p.proname, pg_get_userbyid(p.proowner), "
     "pg_get_function_identity_arguments(p.oid) FROM pg_proc p "
-    "JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = current_schema() "
+    "JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = %s "
     "AND p.proname = ANY(%s::text[]) AND NOT pg_has_role(current_user, p.proowner, 'USAGE') "
     "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_proc'::regclass AND d.objid = p.oid "
     "AND d.deptype = 'e') ORDER BY 1, 3, 5"
@@ -761,16 +787,15 @@ def _managed_names(texts, schema: str) -> tuple[list[str], list[str]]:
     return sorted(relations), sorted(names)
 
 
-def _refuse_foreign_owned(db, texts) -> None:
+def _refuse_foreign_owned(db, schema: str, texts) -> None:
     """Refuse a run whose migration role cannot change what this package manages in the schema (the names, see
     `_managed_names`; the objects of another application in the schema are not looked at; see `_FOREIGN_OWNED_SQL`). The
     message names the objects (at most `_FOREIGN_OWNED_SHOWN`), their owners, and prints the SQL that hands every one
     of them to the migration role. A statement is printed only when every name in it is plain: another role owns the
     object and chose its name, so a name with a control or unusual character is not copied into a line that a person
     runs; for such an object the message says a person must write the statement by hand."""
-    schema = db.execute("SELECT current_schema()").fetchone()[0]
     managed_rel, managed_fn = _managed_names(texts, schema)
-    rows = db.execute(_FOREIGN_OWNED_SQL, (managed_rel, managed_fn)).fetchall()
+    rows = db.execute(_FOREIGN_OWNED_SQL, (schema, managed_rel, schema, managed_fn)).fetchall()
     if not rows:
         return
     me = db.execute("SELECT current_user").fetchone()[0]
@@ -1368,6 +1393,8 @@ def _check_read_back(
     file_name: str,
     allowed_triggers: frozenset[TriggerChange] = frozenset(),
     named=(),
+    *,
+    schema: str,
 ) -> _Saved:
     """Read again after `file_name` and compare. The eleven values in `_READBACK_VALUES` (the user names and settings,
     the two time limits, then the transaction clock and id) must equal the values saved before the first file. A trigger
@@ -1381,7 +1408,7 @@ def _check_read_back(
     the roles they are members of they are the only roles whose memberships and saved settings are compared (the server
     holds every role, and another session may change an unrelated one while the file runs). Returns the trigger
     state just read (the base for the next file); the saved values stay those of the start."""
-    now = _read_back(db, named)
+    now = _read_back(db, schema, named)
     session = [
         f"{item} was {old!a} and is now {new!a}"
         for item, old, new in zip(_READBACK_VALUES, saved.values, now.values, strict=True)
@@ -1586,8 +1613,11 @@ def migrate(
             for limit in RECIPE_TIMEOUTS:
                 db.execute(limit)
             step[0] = "checking the migration role"
+            schema = (
+                db.execute("SELECT current_schema()").fetchone()[0] or ""
+            )  # read once; passed on
             _refuse_privileged_role(db)
-            _refuse_foreign_owned(db, texts.values())
+            _refuse_foreign_owned(db, schema, texts.values())
             db.execute(
                 "CREATE TABLE IF NOT EXISTS schema_migrations "
                 "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
@@ -1596,13 +1626,12 @@ def migrate(
             done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
             if gone := gone_message(done, files):
                 raise MigrationNumberError([gone])
-            schema = db.execute("SELECT current_schema()").fetchone()[0] or ""
             if late := order_problems(done, files, texts, schema):
                 raise MigrationNumberError(late)
             pending = [p for p in files if p.stem not in done]
             objects_before = _objects(db)
             if pending:
-                saved = _read_back(db, named)
+                saved = _read_back(db, schema, named)
                 _refuse_unusual_strings(saved)
             for path in pending:
                 step[0] = f"applying {path.name}"
@@ -1613,6 +1642,7 @@ def migrate(
                     path.name,
                     frozenset(c for c in allowed_changes if c.migration == path.stem),
                     named,
+                    schema=schema,
                 )
                 _recheck_roles(db, named, path.name)
                 db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
@@ -1623,7 +1653,7 @@ def migrate(
                     "the runtime, portal and purge roles must not be members of each other"
                 )
             if runtime_role:
-                _apply_grants(db, runtime_role, lambda g: g.runtime)
+                _apply_grants(db, schema, runtime_role, lambda g: g.runtime)
                 if bad := effective_problems(db, runtime_role, lambda g: g.runtime if g else ""):
                     raise ConfigError(
                         f"the runtime role has more than the grant map, in schema {_label(schema)}: "
@@ -1631,7 +1661,7 @@ def migrate(
                         + _GRANT_MAP_WORDS
                     )
             if purge_role:
-                _apply_grants(db, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
+                _apply_grants(db, schema, purge_role, lambda g: g.purge, lambda g: g.purge_cols)
                 if bad := effective_problems(
                     db,
                     purge_role,
@@ -1644,7 +1674,7 @@ def migrate(
                         + _GRANT_MAP_WORDS
                     )
             if portal_role:
-                _apply_grants(db, portal_role, lambda g: "SELECT" if g.portal else "")
+                _apply_grants(db, schema, portal_role, lambda g: "SELECT" if g.portal else "")
                 if (
                     extra := effective_problems(
                         db, portal_role, lambda g: "SELECT" if (g and g.portal) else ""

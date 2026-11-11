@@ -738,7 +738,10 @@ def test_the_list_of_allowed_trigger_changes_is_empty_today_and_strictly_read(
 
 def test_trigger_query_reads_only_the_migration_schema():
     """Case (xvi), M102: the schema filter is in the query text (a stub cannot answer for another schema)."""
-    assert "current_schema()" in mig._READBACK_TRIGGERS_SQL
+    assert "n.nspname = %s" in mig._READBACK_TRIGGERS_SQL
+    assert (
+        "current_schema()" not in mig._READBACK_TRIGGERS_SQL
+    )  # the schema is the one read at step 1
     assert "NOT t.tgisinternal" in mig._READBACK_TRIGGERS_SQL
 
 
@@ -1025,7 +1028,8 @@ def test_the_ownership_query_gets_the_managed_names(monkeypatch, tmp_path):
     assert err is None, err
     given = [p for t, p in db.params if t == mig._FOREIGN_OWNED_SQL]
     assert len(given) == 1, given
-    relations, functions = given[0]
+    schema_a, relations, schema_b, functions = given[0]
+    assert schema_a == schema_b, "both halves look in the one schema read at step 1"
     assert "spend" in relations and "schema_migrations" in relations, given
     assert functions == [], "the made-up files of this test create no function"
 
@@ -1663,3 +1667,84 @@ def test_the_wait_for_the_lock_is_limited_by_the_argument(monkeypatch, tmp_path)
 def test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds(monkeypatch, tmp_path, bad):
     err, _db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], lock_wait_seconds=bad)
     assert type(err) is ConfigError and "lock_wait_seconds" in str(err)
+
+
+def test_cli_migrate_maps_applied_not_verified_to_exit_5(cfg_dir, monkeypatch, capsys):
+    """Exit 5 (ticket P3a-2, 4.2): the message on standard error, the statements of the package's own objects on standard
+    output, then a comment line and the statements for objects that are not this package's; no "applied" line."""
+    import yaml
+
+    from hadavin_sdk import cli
+    from hadavin_sdk.errors import AppliedNotVerifiedError
+    from hadavin_sdk.store.migration_verify import Problem
+
+    path = cfg_dir / "config.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["backends"]["store"] = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    monkeypatch.setenv("HADAVIN_MIGRATE_DSN", "postgresql://unused")
+    own = Problem(
+        "right",
+        "app",
+        "runs",
+        "",
+        "EVERYONE",
+        "SELECT",
+        "mig",
+        owner="mig",
+        grantor_is_owner=True,
+        fix='REVOKE SELECT ON TABLE "app"."runs" FROM PUBLIC;',
+        word="table",
+    )
+    other = Problem(
+        "everyone",
+        "other",
+        "secret",
+        "",
+        "EVERYONE",
+        "SELECT",
+        "someone",
+        owner="someone",
+        outside_package=True,
+        fix='REVOKE SELECT ON TABLE "other"."secret" FROM PUBLIC;',
+        word="table",
+    )
+
+    def fake(dsn, **kw):
+        raise AppliedNotVerifiedError(
+            "FIRST SENTENCE of the message", applied=["0001"], problems=[other, own]
+        )
+
+    monkeypatch.setattr("hadavin_sdk.store.migrate.migrate", fake)
+    assert cli.main(["--config", str(cfg_dir), "migrate", "--runtime-role", "rt"]) == 5
+    out, err = capsys.readouterr()
+    assert "FIRST SENTENCE of the message" in err
+    assert "applied:" not in out and "applied:" not in err
+    assert out.splitlines() == [
+        'REVOKE SELECT ON TABLE "app"."runs" FROM PUBLIC;',
+        "-- NOT THIS PACKAGE'S OBJECTS: confirm each with its owner before running",
+        'REVOKE SELECT ON TABLE "other"."secret" FROM PUBLIC;',
+    ]
+
+    def fake_statements_only(dsn, **kw):
+        raise AppliedNotVerifiedError("could not run", could_not_run="made-up reason")
+
+    monkeypatch.setattr("hadavin_sdk.store.migrate.migrate", fake_statements_only)
+    assert cli.main(["--config", str(cfg_dir), "migrate"]) == 5
+    out, err = capsys.readouterr()
+    assert out == "" and "could not run" in err
+
+
+def test_applied_not_verified_is_not_a_config_error():
+    """`ConfigError` means "refused, nothing happened" in this package; the new error must never be caught as one."""
+    from hadavin_sdk.errors import AppliedNotVerifiedError
+
+    assert not issubclass(AppliedNotVerifiedError, ConfigError)
+    e = AppliedNotVerifiedError("m", applied=("0001",), commit_unknown=True)
+    assert (e.applied, e.problems, e.statements, e.could_not_run, e.commit_unknown) == (
+        ["0001"],
+        [],
+        [],
+        "",
+        True,
+    )
