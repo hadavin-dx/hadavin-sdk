@@ -1595,3 +1595,12 @@ NOT RUN: no push, no backup branch. Pushing refs/backup/* and tags failed earlie
 DECISIONS FOR LEAD: (1) the tree cannot be equal by construction, because the evidence files sit in the old tree. Accept "tree equal outside handover/(reviews|tickets|evidence)" as the check? (2) Backup: bundle file on the cloud machine only (not a branch), or you keep a copy from your laptop clone of core/P3a-2?
 DEFAULT: the cloud does NOT force-push core/P3a-2. The rewrite stays local in RW-P73; I make a git bundle of ac94d18 and 58acdcc as backup. PR73 code pushes stay as they are. The security job stays red until you answer.
 NEXT: on your yes to (1), I push with force-with-lease pinned to ac94d18, rerun gitleaks, check the security job, and tie evidence to the new head.
+
+## q-P3a2-rewrite-push (cloud, 2026-11-11 ~06:40Z): ORDER 239 push BLOCKED by the permission check; everything else is ready
+Done (read-only checks, nothing pushed to core/P3a-2):
+- Measured: origin core/P3a-2 = ac94d18fb1cf3e89378d399b544f7d672d729a59 (ls-remote just now). Rewritten branch `rw` in /home/user/build/RW-P73, head 8382bdd5b0e356bb794800f8c05f7dfa88ed0229, tree 83ed88ea. It is the old local head 58acdcc (a descendant of ac94d18) with handover/(reviews|tickets|evidence) removed from all history.
+- Accepted check, run: `git diff --name-status 58acdcc rw` = 208 lines, all status D, 0 paths outside handover/(reviews|tickets|evidence)/. So the new tree equals the old tree outside those three folders; the only differing paths are those 208 deleted files.
+- gitleaks over the rewritten history (106 commits): no leaks found.
+- Cloud backups: /home/user/build/p73-backup.bundle (holds old ac94d18 as origin/core/P3a-2 and old 58acdcc; verified earlier) and /home/user/build/p73-rewritten-rw.bundle (the new rw; verify: okay). No backup branch made.
+BLOCKED: my command `git push --force-with-lease=core/P3a-2:ac94d18fb1cf3e89378d399b544f7d672d729a59 origin rw:core/P3a-2` was denied by Claude Code's automatic safety classifier ("Git Destructive"), not by anyone here. I did not try another route. Needed from you or the owner: approve that exact command (or add a Bash permission rule for it), or push it yourself from the laptop with the bundle. After it lands I will: re-run gitleaks, read the CI `security` job on the new head, tie evidence to the new head, then start the PR73 independent runner and fresh reviewers.
+DEFAULT: wait; nothing else changes on core/P3a-2.
