@@ -1213,7 +1213,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-Q8c1 a56207cb | 14:28Z | 18 min | building the tool and guard tests, nothing committed | on track |
 | B-PR89-r20 a7b9ddc4 | 14:35Z | 11 min | reading runner and tests | on track |
 | R-Q8b-r2 a865e68c | 14:38Z | 8 min | read-only review | on track |
-| EV-Q8a1-r2 ad880047 | EVIDENCE RUNNER (Fable) Q8a-1 head f6fad26f, heavy.sh, pg 56140 | 14:48Z | +50m | 14:48Z | running | read RESULTS.md |
+| EV-Q8a1-r2 ad880047 | EVIDENCE RUNNER (Fable) Q8a-1 head f6fad26f, heavy.sh, pg 56140 | 14:48Z | +50m | 14:48Z | CLOSED evidence/Q8a-1/f6fad26/RESULTS.md (10652 passed, 0 failed; mutants 46/46; probes: steps=[] runs in pilot and returns 0 = confirms the open Major; new test file needs a one-line alias to import on older bases) | read RESULTS.md |
 | R-Q8a1-r2 a8768ee3, ac32ad6b | both CLOSED, saved reviews/Q8a/result-r2-*-full.md (1 Major: run_tick steps=) | | | | closed | |
 | A-Q8b (resumed 2) a123e38f | Q8b ticket revision 3 (third and last plan round; full review texts) | 14:48Z | +45m | | running | freeze with errata if clean enough; builder after PR77 result is known |
 | EV-Q8a2-res a96bf331 | EVIDENCE RUNNER (Fable) Q8a-2 head 02068ebe, heavy.sh, pg 56150, socket probes | 14:52Z | +50m | 14:52Z | running | read RESULTS.md |
