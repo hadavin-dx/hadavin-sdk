@@ -61,3 +61,4 @@ WAITS FOR lead: core/P3a-2 push approval; q-A11a-sep-keep (now moot if the gap-t
 - 23:04Z PR H b3 design review: 2 Blockers (consuming reading dropped by _char_reading_wins; tools._scrub lacks it). Report /home/user/build/reports/prhb3-design.md. Codebase reviewer pending; EV held (load>4).
 - 23:05Z Q8a-1 r8 design review: 0 Blocker 4 Major (F1 ca_file OSError, F2 pin[:12], F3 sibling names, F4 approver_ids refusal vs test_k3_pilot_env). Report saved; waiting codebase reviewer + EV ad4ebf1f.
 - 23:07Z PR H b3 resolved: 2 Blockers (consuming reading gate, _scrub) + 4 Major; report handover/reviews/PRH/goldfish_review_report-r-b3.md. Fix builder to launch when load<=4 (EV on fixed head).
+- 23:07Z Q8a-1 r8 codebase review: 3 Major (F4=R8-1 test_k3_pilot_env, M17zb URLError, M17r accidental kill) + minors. Reports saved. Waiting EV ad4ebf1f then resolve r8.
