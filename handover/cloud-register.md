@@ -1231,3 +1231,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-PR89-r20 a7b9ddc4 | 18 min | runner code for allowlist, grammar, sockets written, uncommitted | on track |
 | B-Q8c1 a56207cb | 25 min | proof files being written | on track |
 | B-flaky fix a6e5db57 | 22 min | measuring | on track; sent the overload evidence |
+| B-Q8a1 (resumed 2) a0c5bd99 | Q8a-1 fix batch 2 (run_tick steps= refusal, mutants, timeout bounds, seam) | 14:55Z | +45m | 14:55Z | running | new head -> evidence + fresh reviewers round 3 |
