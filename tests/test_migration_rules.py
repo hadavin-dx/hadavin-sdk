@@ -357,6 +357,65 @@ def test_privileges_on_objects_are_not_refused_as_role_membership(form):
     assert not any(REFUSED in r for r in _reasons(form)), _reasons(form)
 
 
+ALLOWED_TARGET_FORMS = [
+    "GRANT SELECT ON t TO r",
+    "GRANT SELECT ON TABLE t TO r",
+    "GRANT USAGE ON SEQUENCE q TO r",
+    "GRANT SELECT (c) ON t TO r",
+    "GRANT EXECUTE ON FUNCTION f() TO r",
+    "GRANT EXECUTE ON ROUTINE f() TO r",
+    "REVOKE ALL ON t FROM PUBLIC",
+    "REVOKE GRANT OPTION FOR SELECT ON t FROM r CASCADE",
+    'GRANT SELECT ON TABLE t TO "on schema"',
+]
+REFUSED_TARGET_FORMS = [
+    "GRANT USAGE ON SCHEMA s TO r",
+    "GRANT CREATE ON SCHEMA s TO PUBLIC",
+    "REVOKE ALL ON SCHEMA s FROM r",
+    "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA s TO r",
+    "GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA s TO r",
+    "GRANT CREATE ON DATABASE d TO r",
+    "GRANT USAGE ON TYPE ty TO r",
+    "GRANT USAGE ON DOMAIN dm TO r",
+    "GRANT USAGE ON LANGUAGE plpgsql TO r",
+    "GRANT SELECT ON LARGE OBJECT 1 TO r",
+    "GRANT USAGE ON FOREIGN SERVER fs TO r",
+    "GRANT CREATE ON TABLESPACE ts TO r",
+    "GRANT SET ON PARAMETER work_mem TO r",
+    "GRANT EXECUTE ON PROCEDURE p() TO r",
+    "GRANT SELECT ON t TO r; GRANT USAGE ON SCHEMA s TO r",
+    "/* on */ GRANT USAGE -- on\n ON SCHEMA s TO r",
+    "GRANT USAGE ON\nSCHEMA s TO r",
+    'GRANT USAGE ON SCHEMA "s" TO "on schema"',
+]
+DEFAULT_FORMS = [
+    "ALTER DEFAULT PRIVILEGES IN SCHEMA s GRANT SELECT ON TABLES TO r",
+    "ALTER DEFAULT PRIVILEGES GRANT SELECT ON TABLES TO PUBLIC",
+    "alter   default\tprivileges FOR ROLE m REVOKE ALL ON FUNCTIONS FROM PUBLIC",
+    "ALTER PUBLICATION p ADD TABLE audit_entries",
+]
+
+
+@pytest.mark.parametrize("form", ALLOWED_TARGET_FORMS)
+def test_a_right_on_a_table_column_sequence_or_function_is_not_refused(form):
+    assert _reasons(form) == [], _reasons(form)
+
+
+@pytest.mark.parametrize("form", REFUSED_TARGET_FORMS + DEFAULT_FORMS)
+def test_a_right_anywhere_but_on_a_table_view_sequence_column_or_function_is_refused(form):
+    """The read-back after a file looks at tables, views, sequences, columns and functions (and the schema of the run
+    and the default rights of the migration role). A file that changes a right anywhere else (the schema, a database, a
+    type, `ALL ... IN SCHEMA`, a default right, a publication) is refused by the text rule first, whatever the
+    comments, line breaks, case or quotes around it."""
+    assert _reasons(form), form
+
+
+@pytest.mark.parametrize("before,after", NOISE)
+def test_the_refusal_of_a_right_elsewhere_holds_under_noise(before, after):
+    missed = [f for f in REFUSED_TARGET_FORMS + DEFAULT_FORMS if not _reasons(before + f + after)]
+    assert not missed, missed[:5]
+
+
 def test_the_corpus_is_able_to_fail():
     """Control: on the view with the quoted parts KEPT, a role grant with a quoted `on` has a standalone `on` and the
     regex lets it through, so the corpus above does contain a case that a view mistake would turn into a failure."""
@@ -573,7 +632,10 @@ def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
     )
     assert "Why a test run keeps a connection open.** So that another test run" in tests_part
     assert "a *test schema* is a schema whose name starts with `hadavin_test_`" in tests_part
-    assert "Refused: rights for any other role, and SECURITY DEFINER." in first
+    assert (
+        "Refused: rights for any other role, owners a file handed over, rights on the schema, default rights, and SECURITY DEFINER."
+        in first
+    )
     assert (
         "`REVIEWED_DEFINER_FUNCTIONS`" in first
         and "waits for the lock at most `lock_wait_seconds`" in first
@@ -780,8 +842,8 @@ def test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill():
     postgres_tests = (Path(__file__).resolve().parent / "test_migration_postgres.py").read_text(
         encoding="utf-8"
     )
-    assert postgres_tests.count(mm.SETUP_PROBLEM) == 4, (
-        "the four tests that can fail for want of a setup say so"
+    assert postgres_tests.count(mm.SETUP_PROBLEM) == 8, (
+        "the eight places where a test can fail for want of a setup, or by a timing flake, say so"
     )
     two = _failure(test, "AssertionError: x", path) + _failure("test_other", "KeyError: 'x'", path)
     assert mm.status_of(m, runs(two)) == "BROKEN", "one broken failure among the failures"
@@ -797,13 +859,24 @@ def test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill():
     assert mm.status_of(m, [(2, "")] + [(0, "")] * (len(names) - 1)).startswith("ERROR")
 
 
-def _dict_literals_in(node: ast.AST) -> list[ast.Dict]:
-    """The dict literals an expression can be (itself, or either branch of `a if c else b`)."""
+def _password_keys_in(node: ast.AST) -> list[ast.AST | None]:
+    """The values given for a `password` key by an expression that can be a dict literal, a `dict(password=...)` call,
+    or either branch of `a if c else b`; an empty list when it is none of those or has no `password` key."""
     if isinstance(node, ast.Dict):
-        return [node]
+        return [
+            v
+            for key, v in zip(node.keys, node.values, strict=True)
+            if isinstance(key, ast.Constant) and key.value == "password"
+        ]
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "dict":
+        return [k.value for k in node.keywords if k.arg == "password"]
     if isinstance(node, ast.IfExp):
-        return _dict_literals_in(node.body) + _dict_literals_in(node.orelse)
+        return _password_keys_in(node.body) + _password_keys_in(node.orelse)
     return []
+
+
+def _is_none(node: ast.AST | None) -> bool:
+    return isinstance(node, ast.Constant) and node.value is None
 
 
 def _passes_a_password(call: ast.Call) -> bool:
@@ -812,11 +885,8 @@ def _passes_a_password(call: ast.Call) -> bool:
     for k in call.keywords:
         if k.arg == "password":
             return True
-        if k.arg is None and any(
-            isinstance(key, ast.Constant) and key.value == "password"
-            for d in _dict_literals_in(k.value)
-            for key in d.keys
-        ):
+        # `**{"password": None}` passes no password
+        if k.arg is None and any(not _is_none(v) for v in _password_keys_in(k.value)):
             return True
     return False
 
@@ -827,6 +897,9 @@ def _passes_a_password(call: ast.Call) -> bool:
         ("make_conninfo(d, user=u, password=p)", True),
         ('make_conninfo(d, user=u, **{"password": p})', True),
         ('make_conninfo(d, user=u, **({"password": p} if p else {}))', True),
+        ("make_conninfo(d, user=u, **dict(password=p))", True),
+        ("make_conninfo(d, user=u, **dict(sslmode=m))", False),
+        ('make_conninfo(d, user=u, **{"password": None})', False),
         ("make_conninfo(d, user=u, **extra)", False),
         ("make_conninfo(d, user=u, **options())", False),
         ('make_conninfo(d, user=u, **{"sslmode": "x"})', False),
@@ -842,8 +915,10 @@ def test_no_test_logs_in_as_a_role_without_passing_its_password():
     """A test that makes a login role and connects as it must pass the password (`login_dsn`, or `password=` in
     `make_conninfo`), or the test fails with a connection error on a server that asks for a password instead of
     testing what it is about. The scan reads every test file: a call of `make_conninfo` or `connect` with a `user=`
-    argument and no password is a failure. A `**` expansion counts only when it is a dict literal (or the two-branch
-    form `{"password": p} if p else {}`) with a `password` key; a `**` of a name or a call is a failure. A line of the
+    argument and no password is a failure. A `**` expansion counts only when it is a dict literal, a `dict(password=...)` call, or the two-branch
+    form `{"password": p} if p else {}`, with a `password` key whose value is not the constant `None`; a `**` of a
+    name or of any other call is a failure (the scan cannot tell what the name holds, so the line says `# pw-env`
+    or passes the password as `password=`). A line of the
     call that says `# pw-env` (the password travels in the environment) is skipped.
 
     What this scan does NOT see, on purpose: a connection string written as text (`f"... user={role} ..."`), a

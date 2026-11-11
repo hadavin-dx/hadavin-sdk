@@ -347,7 +347,9 @@ def test_migrate_takes_the_one_advisory_lock_key_first(monkeypatch, tmp_path):
     """The lock `migrate` takes is the key of `migration_numbers` (the key a hand recipe takes too), before anything else."""
     err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
     assert err is None
-    assert db.params[0][0] == f"SET LOCAL lock_timeout = '{mn.MIGRATE_LOCK_WAIT_SECONDS * 1000}ms';"
+    assert db.params[0][0] == (
+        f"SET LOCAL lock_timeout = '{mn.MIGRATE_LOCK_WAIT_SECONDS * 1000}ms'; SET LOCAL statement_timeout = 0;"
+    )
     assert db.params[1] == ("SELECT pg_advisory_xact_lock(%s)", (mn.MIGRATE_LOCK,))
 
 
@@ -1406,6 +1408,7 @@ class _Hold:
 
     def execute(self, query, params=None):
         self.log.append((query, params))
+        return _Result([(True,)])  # the try-lock is granted
 
     def close(self):
         self.closed = True
@@ -1436,7 +1439,7 @@ def test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_
     assert f"application_name={mr.PLAIN_ROLE}" in holds[0].server, holds[0].server
     assert "password" not in str(list(mr._MARKS)), "the table of held connections keeps no password"
     ((query, params),) = holds[0].log
-    assert "pg_advisory_lock" in query and params == (mr._mark_key(mr._TOKEN),)
+    assert "pg_try_advisory_lock" in query and params == (mr._mark_key(mr._TOKEN),)
     mr.ensure_plain_role(_Roles(exists=False))
     assert len(holds) == 1, "a second role creation on the same server takes no second lock"
 
@@ -1623,7 +1626,7 @@ def test_the_wait_for_the_lock_is_limited_by_the_argument(monkeypatch, tmp_path)
     mutants LW1 (no limit is set) and LW3 (the constant is used, not the argument)."""
     err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], lock_wait_seconds=7)
     assert err is None
-    assert db.params[0][0] == "SET LOCAL lock_timeout = '7000ms';"
+    assert db.params[0][0] == "SET LOCAL lock_timeout = '7000ms'; SET LOCAL statement_timeout = 0;"
     assert "pg_advisory_xact_lock" in db.params[1][0]
 
 

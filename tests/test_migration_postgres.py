@@ -284,17 +284,19 @@ def test_h11_a_function_owner_change_is_refused(scratch, monkeypatch, tmp_path):
     dsn, schema = scratch
     other = "hadavin_test_fo_" + uuid.uuid4().hex[:8]
     _create_roles(other)
-    with psycopg.connect(DSN, autocommit=True) as db:
-        db.execute(
-            sql.SQL("GRANT CREATE ON SCHEMA {} TO {}").format(
-                sql.Identifier(schema), sql.Identifier(other)
-            )
-        )
-    _let_the_plain_role_grant(
-        other
-    )  # the plain role may give an object to a role it is a member of
     try:
-        mig.migrate(dsn)
+        mig.migrate(
+            dsn
+        )  # first, while nobody else may create in the schema (a run with such a right is refused)
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(
+                sql.SQL("GRANT CREATE ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(other)
+                )
+            )
+        _let_the_plain_role_grant(
+            other
+        )  # the plain role may give an object to a role it is a member of
         body = f"ALTER FUNCTION hadavin_audit_append_only() OWNER TO {other};\n"
         _with_files(monkeypatch, tmp_path, {"0006_owner.sql": body})
         with pytest.raises(
@@ -2721,7 +2723,7 @@ def test_a_right_for_a_role_the_run_does_not_name_is_refused(
             _create_roles(run_as)
             roles = {"runtime_role": run_as}
         try:
-            with pytest.raises(ConfigError, match="rights in schema") as e:
+            with pytest.raises(ConfigError, match="rights that this package does not give") as e:
                 mig.migrate(dsn, **roles)
             text = str(e.value)
             assert "Nothing was changed." in text
@@ -2784,7 +2786,10 @@ def test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it(
 def _sessions_named(name: str) -> int:
     with psycopg.connect(DSN, autocommit=True) as db:
         return db.execute(
-            "SELECT count(*) FROM pg_stat_activity WHERE application_name = %s", (name,)
+            "SELECT count(*) FROM pg_stat_activity WHERE application_name = %s AND datname = current_database()",
+            (
+                name,
+            ),  # this database only: the marks of other databases of this process are not counted
         ).fetchone()[0]
 
 
@@ -2800,7 +2805,9 @@ def test_a_marking_connection_that_died_is_opened_again_and_the_role_is_not_swep
         lambda dsn, **k: psycopg.connect(dsn, autocommit=True, **k)  # as the store's `connect`
     )
     connect(dsn).close()
-    assert _sessions_named(helper.PLAIN_ROLE) == 1
+    assert _sessions_named(helper.PLAIN_ROLE) == 1, (
+        "TEST SETUP PROBLEM: the marking connection of this run is not the one session of this database"
+    )
     with psycopg.connect(DSN, autocommit=True) as admin:
         admin.execute(
             "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE application_name = %s",
@@ -2809,9 +2816,13 @@ def test_a_marking_connection_that_died_is_opened_again_and_the_role_is_not_swep
     deadline = time.monotonic() + 10
     while _sessions_named(helper.PLAIN_ROLE) and time.monotonic() < deadline:
         time.sleep(0.05)
-    assert _sessions_named(helper.PLAIN_ROLE) == 0, "the marking connection did not end"
+    assert _sessions_named(helper.PLAIN_ROLE) == 0, (
+        "TEST SETUP PROBLEM: the server did not end the marking connection in 10 s"
+    )
     connect(dsn).close()
-    assert _sessions_named(helper.PLAIN_ROLE) == 1, "the marking connection was not opened again"
+    assert _sessions_named(helper.PLAIN_ROLE) == 1, (
+        "the marking connection was not opened again"
+    )  # a defect, not setup
     with monkeypatch.context() as other_run, psycopg.connect(DSN, autocommit=True) as admin:
         other_run.setattr(helper, "PLAIN_ROLE", "hadavin_test_migrator_" + uuid.uuid4().hex[:8])
         assert helper.PLAIN_ROLE not in helper.sweep_stale_roles(
@@ -2893,7 +2904,399 @@ def test_a_run_that_cannot_get_the_migration_lock_gives_up_and_names_the_holder(
         started = time.monotonic()
         with pytest.raises(ConfigError, match="waited 1 seconds for the migration lock") as e:
             mig.migrate(dsn, lock_wait_seconds=1)
-        assert time.monotonic() - started < 30
+        assert time.monotonic() - started < 30, (
+            "TEST SETUP PROBLEM, a timing flake and not a defect: a 1 second wait took 30 s on this machine"
+        )
         assert holder_name in str(e.value) and "Nothing was changed." in str(e.value)
     assert _ledger(dsn) is None, "nothing was made"
     assert mig.migrate(dsn) == REAL, "after the holder is gone the run goes through"
+
+
+# --- rights that escaped the read-back in round 9 (round 10) ---------------------------------------------------------
+
+
+@pytest.fixture
+def second_schema():
+    """A second schema in the same database that the migration role may create in (a database before PostgreSQL 15, or
+    one where an administrator granted it)."""
+    name = "hadavin_test_o_" + uuid.uuid4().hex[:10]
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(name)))
+        db.execute(
+            sql.SQL("GRANT USAGE, CREATE ON SCHEMA {} TO {}").format(
+                sql.Identifier(name), sql.Identifier(PLAIN_ROLE)
+            )
+        )
+    try:
+        yield name
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(name)))
+
+
+@needs_pg
+def test_a_security_definer_function_written_with_another_schema_is_refused(
+    scratch, monkeypatch, tmp_path, second_schema
+):
+    """The first version looked only at the schema of the run: `CREATE OR REPLACE FUNCTION other.f() ... SECURITY DEFINER`
+    escaped (it keeps the default right for everyone to call it and runs with the rights of the migration role). Now every
+    function that is new or changed anywhere in the database is read. Class: a read-back limited to one schema.
+    Killed by: mutant SD4 (only the schema of the run is read)."""
+    dsn, _schema = scratch
+    body = (
+        f'CREATE OR REPLACE FUNCTION "{second_schema}".hadavin_test_f() RETURNS int LANGUAGE sql SECURITY DEFINER '
+        "AS $$ SELECT 1 $$;\n"
+    )
+    _with_files(monkeypatch, tmp_path, {"0006_other_schema.sql": body})
+    with pytest.raises(ConfigError, match="SECURITY DEFINER") as e:
+        mig.migrate(dsn)
+    assert "hadavin_test_f" in str(e.value) and "Nothing was changed." in str(e.value)
+    assert _ledger(dsn) is None
+
+
+@needs_pg
+def test_a_plain_function_in_another_schema_loses_the_default_right_for_everyone(
+    scratch, monkeypatch, tmp_path, second_schema
+):
+    """A function that a file makes in another schema is not SECURITY DEFINER here, but it still has the default
+    'everyone may call it': that default is removed, as for the functions of the run's schema. Killed by: mutant SD4."""
+    dsn, _schema = scratch
+    body = f'CREATE OR REPLACE FUNCTION "{second_schema}".hadavin_test_g() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;\n'
+    _with_files(monkeypatch, tmp_path, {"0006_other_schema.sql": body})
+    assert mig.migrate(dsn) == REAL + ["0006_other_schema"]
+    with psycopg.connect(DSN, autocommit=True) as db:
+        grantees = db.execute(
+            "SELECT (aclexplode(p.proacl)).grantee FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace "
+            "WHERE n.nspname = %s AND p.proname = 'hadavin_test_g'",
+            (second_schema,),
+        ).fetchall()
+    assert grantees and all(g != 0 for (g,) in grantees)
+
+
+@needs_pg
+def test_a_function_replaced_with_the_same_id_and_made_security_definer_is_found(
+    scratch, monkeypatch, tmp_path
+):
+    """A function made by an earlier run (named in no file) keeps its id when a later file replaces it by dynamic SQL;
+    what is compared is its state, not whether its id is new. Killed by: mutant SD5 (only new ids are looked at)."""
+    dsn, _schema = scratch
+    maker = (
+        "CREATE OR REPLACE FUNCTION hadavin_test_maker2() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+        "EXECUTE 'CREATE OR REPLACE FUNCTION hadavin_test_dyn() RETURNS int LANGUAGE sql AS $q$ SELECT 1 $q$'; "
+        "END $$;\nSELECT hadavin_test_maker2();\n"
+    )
+    _with_files(monkeypatch, tmp_path, {"0006_first.sql": maker})
+    assert mig.migrate(dsn) == REAL + ["0006_first"]
+    again = (
+        "CREATE OR REPLACE FUNCTION hadavin_test_maker3() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+        "EXECUTE 'CREATE OR REPLACE FUNCTION hadavin_test_dyn() RETURNS int LANGUAGE sql SECURITY DEFINER AS $q$ SELECT 1 $q$'; "
+        "END $$;\nSELECT hadavin_test_maker3();\n"
+    )
+    _with_files(monkeypatch, tmp_path, {"0007_second.sql": again})
+    with pytest.raises(ConfigError, match="SECURITY DEFINER") as e:
+        mig.migrate(dsn)
+    assert "hadavin_test_dyn" in str(e.value)
+
+
+@needs_pg
+def test_a_table_made_by_dynamic_sql_and_opened_to_everyone_is_refused(
+    scratch, monkeypatch, tmp_path
+):
+    """The text rules and the names in `GRANTS` do not see a table that a function body makes. What is new in the
+    database after the files is read. Killed by: mutant RN6 (new relations are not read)."""
+    dsn, _schema = scratch
+    body = (
+        "CREATE OR REPLACE FUNCTION hadavin_test_mk() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+        "EXECUTE 'CRE' || 'ATE TABLE hadavin_test_open (a int)'; "
+        "EXECUTE 'GRANT SELECT ON hadavin_test_open TO PUBLIC'; END $$;\nSELECT hadavin_test_mk();\n"
+    )
+    _with_files(monkeypatch, tmp_path, {"0006_dyn_table.sql": body})
+    with pytest.raises(ConfigError, match="PUBLIC holds SELECT on hadavin_test_open") as e:
+        mig.migrate(dsn)
+    assert "Nothing was changed." in str(e.value)
+    assert _ledger(dsn) is None
+
+
+@needs_pg
+@pytest.mark.parametrize("scope", ["schema", "database"])
+def test_a_default_right_that_an_administrator_set_is_refused_and_the_message_says_so(
+    scratch, scope
+):
+    """`ALTER DEFAULT PRIVILEGES` of the migration role (for the schema, or for every schema) decides the rights of the
+    tables made later, also outside `migrate`. A file cannot set it (refused by text), an administrator can; the
+    read-back finds it and does not blame a file. Class: a right that is not on an existing object. Killed by:
+    mutant DP1 (the default rights are not read)."""
+    dsn, schema = scratch
+    where = (
+        sql.SQL("IN SCHEMA {} ").format(sql.Identifier(schema))
+        if scope == "schema"
+        else sql.SQL("")
+    )
+    role = sql.Identifier(PLAIN_ROLE)
+    admin_sets = sql.SQL(
+        "ALTER DEFAULT PRIVILEGES FOR ROLE {} {}GRANT SELECT ON TABLES TO PUBLIC"
+    ).format(role, where)
+    admin_undoes = sql.SQL(
+        "ALTER DEFAULT PRIVILEGES FOR ROLE {} {}REVOKE SELECT ON TABLES FROM PUBLIC"
+    ).format(role, where)
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(admin_sets)
+    try:
+        with pytest.raises(ConfigError, match="a default right") as e:
+            mig.migrate(dsn)
+        text = str(e.value)
+        assert (
+            "PUBLIC gets SELECT on every new tables" in text
+            or "PUBLIC gets SELECT on every new" in text
+        )
+        assert "a database administrator" in text and "Nothing was changed." in text
+        assert _ledger(dsn) is None
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(admin_undoes)
+    assert mig.migrate(dsn) == REAL
+
+
+@needs_pg
+def test_a_file_that_sets_default_rights_or_changes_a_publication_is_refused_by_text(
+    scratch, monkeypatch, tmp_path
+):
+    dsn, schema = scratch
+    for name, body in {
+        "0006_default.sql": f"ALTER DEFAULT PRIVILEGES IN SCHEMA {schema} GRANT SELECT ON TABLES TO PUBLIC;\n",
+        "0006_publication.sql": "ALTER PUBLICATION hadavin_pub ADD TABLE audit_entries;\n",
+    }.items():
+        with monkeypatch.context() as m:
+            _with_files(m, tmp_path, {name: body})
+            with pytest.raises(Exception, match="guard cannot read"):
+                mig.migrate(dsn)
+
+
+@needs_pg
+@pytest.mark.parametrize("right", ["CREATE", "USAGE"])
+def test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_look_is_not(
+    scratch, right
+):
+    """CREATE in the package schema lets a role plant a function that a role of this package then calls; the rights on
+    the schema were never read. USAGE only lets a role look a name up, so it is not refused (the rights on the objects
+    are read). Killed by: mutant SC1 (the schema rights are not read)."""
+    dsn, schema = scratch
+    other = "hadavin_test_sc_" + uuid.uuid4().hex[:8]
+    _create_roles(other)
+    try:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(
+                sql.SQL(f"GRANT {right} ON SCHEMA {{}} TO {{}}").format(
+                    sql.Identifier(schema), sql.Identifier(other)
+                )
+            )
+        if right == "CREATE":
+            with pytest.raises(ConfigError, match=f"{other} holds CREATE on the schema") as e:
+                mig.migrate(dsn)
+            assert "Nothing was changed." in str(e.value) and _ledger(dsn) is None
+        else:
+            assert mig.migrate(dsn) == REAL
+    finally:
+        _drop_roles(other)
+    with psycopg.connect(DSN, autocommit=True) as db:  # PUBLIC may not create either
+        db.execute(sql.SQL("GRANT CREATE ON SCHEMA {} TO PUBLIC").format(sql.Identifier(schema)))
+    with pytest.raises(ConfigError, match="PUBLIC holds CREATE on the schema"):
+        mig.migrate(dsn)
+
+
+@needs_pg
+def test_an_owner_a_file_handed_an_object_to_is_refused_even_when_the_migration_role_belongs_to_it(
+    scratch, monkeypatch, tmp_path
+):
+    """An owner is accepted only when the object had it before the files. `ALTER TABLE audit_entries OWNER TO other`
+    (the migration role is a member of `other`) made `other` the owner with every right, and the read-back treated an
+    owner as normal. Killed by: mutant OW2 (any owner is accepted)."""
+    dsn, schema = scratch
+    other = "hadavin_test_ow_" + uuid.uuid4().hex[:8]
+    _create_roles(other)
+    try:
+        assert mig.migrate(dsn) == REAL
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(
+                sql.SQL("GRANT CREATE ON SCHEMA {} TO {}").format(
+                    sql.Identifier(schema), sql.Identifier(other)
+                )
+            )
+        _let_the_plain_role_grant(other)
+        _with_files(
+            monkeypatch,
+            tmp_path,
+            {"0006_hand_over.sql": f"ALTER TABLE approval_decisions OWNER TO {other};\n"},
+        )
+        with pytest.raises(ConfigError, match="was handed to") as e:
+            mig.migrate(dsn)
+        assert other in str(e.value) and _ledger(dsn) == REAL
+    finally:
+        _drop_roles(other)
+
+
+@needs_pg
+def test_a_right_that_an_earlier_run_gave_is_named_as_such_in_the_refusal(scratch):
+    """A later run that names no role finds the rights an earlier run gave to the runtime role; the refusal said 'remove
+    the statement from the migration file' although no file was at fault. Killed by: mutant WD1 (old wording)."""
+    dsn, _schema = scratch
+    run_as = "hadavin_test_er_" + uuid.uuid4().hex[:8]
+    _create_roles(run_as)
+    try:
+        assert mig.migrate(dsn, runtime_role=run_as) == REAL
+        with pytest.raises(ConfigError, match="an earlier run or a database administrator") as e:
+            mig.migrate(dsn)
+        assert f"{run_as} holds" in str(e.value) and "name it in this run" in str(e.value)
+    finally:
+        _drop_roles(run_as)
+
+
+@needs_pg
+def test_a_named_role_may_not_pass_a_function_right_on(scratch, monkeypatch, tmp_path):
+    """`WITH GRANT OPTION` on a function lets the runtime role hand EXECUTE to anyone later; the ACL of a function is not
+    reset by the grant map, so it is read. Killed by: mutant GO1 (the grant option is not read)."""
+    dsn, _schema = scratch
+    run_as = "hadavin_test_go_" + uuid.uuid4().hex[:8]
+    _create_roles(run_as)
+    try:
+        _with_files(
+            monkeypatch,
+            tmp_path,
+            {
+                "0006_option.sql": f"GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {run_as} WITH GRANT OPTION;\n"
+            },
+        )
+        with pytest.raises(ConfigError, match="WITH GRANT OPTION") as e:
+            mig.migrate(dsn, runtime_role=run_as)
+        assert "Nothing was changed." in str(e.value)
+    finally:
+        _drop_roles(run_as)
+
+
+@needs_pg
+def test_the_lock_wait_has_an_upper_bound_that_the_server_accepts(scratch):
+    """`lock_timeout` is a whole number of milliseconds in 32 bits; above 2147483 seconds the server answered with a raw
+    driver error. Now a `ConfigError` before anything runs. Killed by: mutant LW4 (no upper bound)."""
+    dsn, _schema = scratch
+    with pytest.raises(ConfigError, match="from 1 to 2147483"):
+        mig.migrate(dsn, lock_wait_seconds=mig.MAX_LOCK_WAIT_SECONDS + 1)
+    assert mig.MAX_LOCK_WAIT_SECONDS * 1000 <= 2**31 - 1 < (mig.MAX_LOCK_WAIT_SECONDS + 1) * 1000
+
+
+@needs_pg
+def test_a_lock_holder_that_this_login_cannot_look_into_is_named_in_plain_words(scratch):
+    """For the session of another user the server shows NULL in some columns of `pg_stat_activity`; the message said
+    'state None, connected since None'. Killed by: mutant LW5 (NULL is printed as None)."""
+    dsn, _schema = scratch
+    with psycopg.connect(DSN, autocommit=True) as holder:
+        holder.execute("SELECT pg_advisory_lock(%s)", (mig.MIGRATE_LOCK,))
+        with pytest.raises(ConfigError, match="waited 1 seconds") as e:
+            mig.migrate(dsn, lock_wait_seconds=1)
+    text = str(e.value)
+    assert "None" not in text, text
+    assert "not visible to this login" in text, text
+
+
+def test_a_null_column_of_the_activity_view_is_worded_for_a_reader():
+    assert mig._seen(None) == "not visible to this login"
+    assert mig._seen("idle") == "idle"
+
+
+@needs_pg
+def test_a_statement_limit_saved_for_the_migration_role_does_not_end_the_lock_wait(scratch):
+    """The wait for the migration lock is a statement too, so a `statement_timeout` saved for the login ended it early
+    (error code 57014) and the message named the wrong limit. Now the wait has the lock limit only. Killed by: mutant
+    LW6 (the statement limit is not switched off for the wait)."""
+    dsn, _schema = scratch
+    assert mig.migrate(dsn) == REAL  # also makes the plain role of the test run
+    with psycopg.connect(DSN, autocommit=True) as admin:
+        admin.execute(
+            sql.SQL("ALTER ROLE {} SET statement_timeout = '300ms'").format(
+                sql.Identifier(PLAIN_ROLE)
+            )
+        )
+    try:
+        with psycopg.connect(DSN, autocommit=True) as holder:
+            holder.execute("SELECT pg_advisory_lock(%s)", (mig.MIGRATE_LOCK,))
+            with pytest.raises(ConfigError, match="waited 2 seconds for the migration lock") as e:
+                mig.migrate(dsn, lock_wait_seconds=2)
+        assert "statement" not in str(e.value).lower().split("holds it")[0]
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            admin.execute(
+                sql.SQL("ALTER ROLE {} RESET statement_timeout").format(sql.Identifier(PLAIN_ROLE))
+            )
+
+
+@needs_pg
+def test_a_login_that_cannot_read_which_databases_hold_a_role_does_not_fail_the_sweep(
+    capsys, monkeypatch
+):
+    """The one line that names the databases reads `pg_shdepend`; a login that may not read it must not turn the report
+    into an error of the test setup. Killed by: mutant SW18 (the read is not guarded)."""
+    with _databases_and_a_stale_role() as (name, (db_x, db_y)):
+        with psycopg.connect(make_conninfo(DSN, dbname=db_x), autocommit=True) as in_x:
+            in_x.execute(
+                sql.SQL("CREATE SCHEMA hadavin_test_owned AUTHORIZATION {}").format(
+                    sql.Identifier(name)
+                )
+            )
+
+        def refused(db, role):
+            raise psycopg.errors.InsufficientPrivilege("permission denied for table pg_shdepend")
+
+        monkeypatch.setattr(helper, "_databases_that_still_hold", refused)
+        with psycopg.connect(make_conninfo(DSN, dbname=db_y), autocommit=True) as in_y:
+            assert name not in helper.sweep_stale_roles(in_y)
+        out = capsys.readouterr().out
+        assert name in out and "this login cannot read pg_shdepend" in out, out
+
+
+@needs_pg
+def test_a_marking_connection_that_cannot_get_its_lock_ends_with_a_plain_error_not_a_hang(
+    monkeypatch,
+):
+    """After a half-open death the server may still hold the old lock of this run; a blocking wait would hang the test
+    setup for ever. Now it tries again for a few seconds and then says what to do. Killed by: mutant SW19 (a blocking
+    wait)."""
+    with psycopg.connect(DSN, autocommit=True) as db:
+        helper._mark_the_role(
+            db
+        )  # this run's marking connection holds the lock, as an old half-open one would
+        monkeypatch.setattr(helper, "_MARKS", {})  # a run that has lost track of it
+        monkeypatch.setattr(helper, "_MARK_WAIT_SECONDS", 1)
+        started = time.monotonic()
+        with pytest.raises(RuntimeError, match="could not take its lock") as e:
+            helper._mark_the_role(db)
+    assert "pg_terminate_backend" in str(e.value)
+    assert time.monotonic() - started >= 0.9, (
+        "it must try for the whole wait, not give up at the first miss"
+    )
+    assert time.monotonic() - started < 30, (
+        "TEST SETUP PROBLEM, a timing flake and not a defect: a 1 second wait took 30 s"
+    )
+
+
+@needs_pg
+def test_the_holder_named_is_the_one_that_holds_the_real_lock_not_one_with_the_same_two_words(
+    scratch,
+):
+    """An advisory lock made of two whole numbers (`pg_advisory_lock(int, int)`) whose halves equal the two halves of
+    the migration lock's number has the same `classid` and `objid` in `pg_locks`; only `objsubid` tells them apart
+    (1 for one 64-bit number, 2 for two). Without it, an older session with the look-alike lock was named as the holder.
+    Killed by: mutant LW7 (`objsubid` is not compared)."""
+    dsn, _schema = scratch
+    high = mig.MIGRATE_LOCK >> 32
+    low = mig.MIGRATE_LOCK & 0xFFFFFFFF
+    low = low - (1 << 32) if low >= (1 << 31) else low
+    decoy_name = "hadavin_test_decoy_" + uuid.uuid4().hex[:6]
+    real_name = "hadavin_test_real_" + uuid.uuid4().hex[:6]
+    with (
+        psycopg.connect(make_conninfo(DSN, application_name=decoy_name), autocommit=True) as decoy,
+        psycopg.connect(make_conninfo(DSN, application_name=real_name), autocommit=True) as real,
+    ):
+        decoy.execute("SELECT pg_advisory_lock(%s::int, %s::int)", (high, low))
+        real.execute("SELECT pg_advisory_lock(%s)", (mig.MIGRATE_LOCK,))
+        with pytest.raises(ConfigError, match="waited 1 seconds") as e:
+            mig.migrate(dsn, lock_wait_seconds=1)
+    assert real_name in str(e.value) and decoy_name not in str(e.value), str(e.value)

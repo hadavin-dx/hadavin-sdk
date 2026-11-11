@@ -285,8 +285,6 @@ def test_more_blind_statements_are_refused(mn, stmt):
     "stmt",
     [
         "GRANT SELECT ON t TO r",
-        "GRANT USAGE ON SCHEMA s TO r",
-        "GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA s TO r",
         "REVOKE ALL ON t FROM PUBLIC",
         "COPY t TO STDOUT",
         "CREATE TABLE copy_program (x int)",
