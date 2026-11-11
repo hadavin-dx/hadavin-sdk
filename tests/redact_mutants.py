@@ -210,6 +210,16 @@ M = [
       "test_marks_19_a_look_alike_letter_with_a_subscript_iota_does_not_withhold_the_line_beside_an_address", "ssert"),
     m("W21 the clock is not read before each view", RD, "                    self._over_budget(self._scan_deadline)\n                    aligned =", "                    aligned =", "tests/test_redact_fold_budget.py",
       "test_view_1_the_clock_is_read_before_each_view_of_a_line", "ssert"),
+    m("W22 the marks-dropped views keep the white-space-like controls", RD, 'fold_view(JOIN_RE.sub("", text) if marks else text,', "fold_view(text,", FM,
+      "test_marks_18_a_control_character_inside_a_key_or_a_value_leaves_no_piece_in_clear", "ssert"),
+    m("W23 the white-space-like controls are not flagged as marks", RD, "in SPACING_CATEGORIES or ch in _JOIN_CTLS,", "in SPACING_CATEGORIES,", FM,
+      "test_marks_18_a_control_character_inside_a_key_or_a_value_leaves_no_piece_in_clear", "ssert"),
+    m("W24 lines are cut by splitlines", RD, "lines = _LINES.findall(", "lines = str.splitlines(", FM,
+      "test_marks_18_a_control_character_inside_a_key_or_a_value_leaves_no_piece_in_clear", "ssert"),
+    m("W25 a two-byte escape is cut with the letter after it", RD, "if glued and e - s == 2 and text[s + 1].isalpha():", "if False:", FM,
+      "test_marks_18d_an_escape_character_keeps_the_letter_after_it_between_two_word_characters", "ssert"),
+    m("W26 a control between two word characters is not hidden", RD, "|(?<=[A-Za-z0-9])[\\t\\x0b\\x0c\\x1c-\\x1f](?=[A-Za-z0-9])", "", FM,
+      "test_marks_18_a_control_character_inside_a_key_or_a_value_leaves_no_piece_in_clear", "ssert"),
 ]  # fmt: skip
 
 if __name__ == "__main__":

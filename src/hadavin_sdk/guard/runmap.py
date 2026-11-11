@@ -22,7 +22,7 @@ from typing import Any
 from urllib.parse import unquote
 
 from hadavin_sdk import defaults
-from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, redact
+from hadavin_sdk.guard.redact import ARN_TAIL, JOIN_RE, PATTERNS, SECRET_KINDS, kind_of, redact
 from hadavin_sdk.guard.textnorm import without_spacing_marks
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
@@ -414,7 +414,7 @@ def _views(text: str) -> list[str]:
         canonical(text),
         canonical(unescaped),
         fits_after_nfkc(undo(text)),
-        canonical(without_spacing_marks(text)),
+        canonical(without_spacing_marks(JOIN_RE.sub("", text))),
     ):
         view = _clean(view)
         if view != text and view not in out:

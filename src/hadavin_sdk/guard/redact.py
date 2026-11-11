@@ -843,6 +843,10 @@ def strip_ansi(text: str) -> str:
             and (text[s - 1].isalnum() or text[s - 1] == "_")
             and (text[e].isalnum() or text[e] == "_")
         )
+        if glued and e - s == 2 and text[s + 1].isalpha():
+            return m.group(
+                0
+            )  # ESC or U+009B with ONE letter: that letter may belong to a key cut by the control (the fold drops the control)
         return " " if glued else ""
 
     return _ANSI.sub(cut, text) if "\x1b" in text or "\x9b" in text else text
@@ -941,8 +945,20 @@ def _char_class(ch: str) -> tuple[str, int] | None:
 
 
 _HIDDEN_ASCII = re.compile(
-    "[\x00-\x08\x0e-\x1b\x7f]"
-)  # ASCII control characters the fold drops (white space is a separator, not hidden)
+    "[\x00-\x08\x0e-\x1b\x7f]|(?<=[A-Za-z0-9])[\t\x0b\x0c\x1c-\x1f](?=[A-Za-z0-9])"
+)  # ASCII control characters the fold drops, and a white-space-like one (see _JOIN_CTLS) between two letters or digits
+# The white-space-like control characters the fold reads as a space: tab, vertical tab, form feed, U+001C to U+001F and NEL (U+0085). A reader sees
+# a separator, so a key cut by one is two words; but a key in the text is a key whatever a character inside it looks like, so the views that
+# drop spacing marks drop these too, and a fixed-shape value found that way is masked whole, with the control characters inside it. (A new line
+# and a carriage return are line ends, not read this way.)
+_JOIN_CTLS = "\t\x0b\x0c\x1c\x1d\x1e\x1f\x85"
+JOIN_RE = re.compile("[" + _JOIN_CTLS + "]")
+_LINES = re.compile(r"[^\r\n]*(?:\r\n|\r|\n)|[^\r\n]+")
+
+
+def _view(text: str, marks: bool, iota: bool) -> str:
+    """One view of ``text`` (``fold_view``); the views that drop the spacing marks drop the white-space-like control characters first."""
+    return fold_view(JOIN_RE.sub("", text) if marks else text, marks_dropped=marks, iota=iota)
 
 
 def _plain(text: str) -> bool:
@@ -959,9 +975,14 @@ _IOTA_MARK = "\u0345"
 def _mark_flags(ch: str) -> tuple[bool, bool]:
     """(is a spacing mark, modifier letter or modifier symbol: the characters the marks-dropped views remove, ASCII ``^`` and the backtick
     too (both are category Sk); has a U+0345 in its NFKD form, as U+0345 itself and U+037A do). Per character, so a line costs its distinct characters."""
-    return unicodedata.category(ch) in SPACING_CATEGORIES, _IOTA_MARK in unicodedata.normalize(
-        "NFKD", ch
-    )
+    return unicodedata.category(
+        ch
+    ) in SPACING_CATEGORIES or ch in _JOIN_CTLS, _IOTA_MARK in unicodedata.normalize("NFKD", ch)
+
+
+def _is_edge_mark(ch: str) -> bool:
+    """A spacing mark, modifier letter or modifier symbol (not a control character): the characters a masked value takes with it at its edge."""
+    return unicodedata.category(ch) in SPACING_CATEGORIES
 
 
 def _is_spacing(ch: str) -> bool:
@@ -989,7 +1010,7 @@ def _view_specs(line: str) -> tuple[tuple[bool, bool], ...]:
 def _alias_keys(value: str) -> tuple[str, ...]:
     """The folded spellings that key the alias index: every view of the value (a clear copy of a value written with a mark inside must be masked)."""
     keys = [fold(value)]
-    keys += [fold_view(value, marks_dropped=m, iota=i) for m, i in _view_specs(value)]
+    keys += [_view(value, m, i) for m, i in _view_specs(value)]
     return tuple(dict.fromkeys(keys))
 
 
@@ -1101,7 +1122,9 @@ class _Redactor:
             else time.thread_time() + defaults.REDACT_BUDGET_S
         )
         self._scan_deadline = started
-        lines = text.splitlines(keepends=True)
+        lines = _LINES.findall(
+            text
+        )  # lines end at \n, \r\n or \r only: ``splitlines`` also cuts at a vertical tab, form feed, U+001C to U+001E and NEL, inside a key
         specs_of = [_view_specs(ln) for ln in lines]
         all_specs = list(dict.fromkeys(sp for one in specs_of for sp in one))
         views: dict[tuple[bool, bool], list[str]] = {_PRIMARY_VIEW: []}
@@ -1115,10 +1138,7 @@ class _Redactor:
             spec
         ) in all_specs:  # a line without this view's characters reads the same in the primary view
             views[spec] = [
-                (
-                    fold_view(ln.rstrip("\r\n"), marks_dropped=spec[0], iota=spec[1])
-                    + ln[len(ln.rstrip("\r\n")) :]
-                )
+                (_view(ln.rstrip("\r\n"), spec[0], spec[1]) + ln[len(ln.rstrip("\r\n")) :])
                 if spec in one
                 else views[_PRIMARY_VIEW][n]
                 for n, (ln, one) in enumerate(zip(lines, specs_of, strict=True))
@@ -1216,7 +1236,7 @@ class _Redactor:
                 where.extend([i] * len(f))
                 alike.extend([flag] * len(f))
         text = "".join(parts)
-        whole = fold_view(body, marks_dropped=marks, iota=iota).replace("\u2044", "/")
+        whole = _view(body, marks, iota).replace("\u2044", "/")
         return (text, where, alike) if text == whole else None
 
     def _mask_in_place(
@@ -1257,9 +1277,9 @@ class _Redactor:
             if marks:
                 # This view has no spacing marks, modifier letters or modifier symbols, so a value that begins or ends beside some would be cut short
                 # and the mark left in clear. Take in the run of them on both sides (never into a value already replaced).
-                while start > prev and _is_spacing(body[start - 1]):
+                while start > prev and _is_edge_mark(body[start - 1]):
                     start -= 1
-                while stop < len(body) and _is_spacing(body[stop]):
+                while stop < len(body) and _is_edge_mark(body[stop]):
                     stop += 1
             written = body[start:stop]  # the value as it stands in the line
             out += [body[prev:start], self._register_written(label, written)]
@@ -1340,7 +1360,7 @@ class _Redactor:
         self._rollback(counters)
         folded = [
             fold(body),
-            *(fold_view(body, marks_dropped=m, iota=i) for m, i in _view_specs(body)),
+            *(_view(body, m, i) for m, i in _view_specs(body)),
         ]
         direct = self._dry_hits(body)
         if not any(self._dry_hits(f) - direct for f in folded):

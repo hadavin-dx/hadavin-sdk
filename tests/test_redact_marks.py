@@ -301,17 +301,55 @@ def test_marks_17_an_ascii_circumflex_or_backtick_is_a_mark_only_on_a_line_with_
     assert KEY_TAIL not in out and "<" in out, out
 
 
-@pytest.mark.parametrize("cp", [0x09, 0x0B, 0x0C, 0x1C, 0x85])
-def test_marks_18_white_space_inside_a_key_is_not_undone_but_an_invisible_control_character_is(cp):
-    """The hidden-control-character class: NUL, 0x01-0x08, 0x0E-0x1A and DEL are dropped by the fold and the key is masked. Tab, VT, FF,
-    FS and NEL are read as a SPACE by the fold, as a reader sees them: a key cut by one is two words, which no pattern claims; the same on
-    8b2b716 (evidence: handover note, ctl-compare.txt). ESC is cut away together with the next character by an earlier stage."""
-    for at in (4, 10):
-        text = "k " + KEY[:at] + chr(cp) + KEY[at:] + " e"
-        assert redact(text).text == text, (hex(cp), at)
-    for hidden in (0x00, 0x01, 0x08, 0x0E, 0x1A, 0x7F):
-        out = redact("k " + KEY[:4] + chr(hidden) + KEY[4:] + " e").text
-        assert KEY_TAIL not in out and "<" in out, (hex(hidden), out)
+CONTROLS = [chr(cp) for cp in (*range(0x20), 0x7F, *range(0x80, 0xA0)) if cp not in (0x0A, 0x0D)]
+PW = "Hunter2" + "abcdef"
+
+
+def _windows(value: str, size: int = 4) -> list[str]:
+    return [value[i : i + size] for i in range(len(value) - size + 1)]
+
+
+def test_marks_18_a_control_character_inside_a_key_or_a_value_leaves_no_piece_in_clear():
+    """Review w4, supervisor round: the class "a control character inside a secret splits it so a piece stays visible". Every C0 and C1
+    control character except the two line ends, at positions across the parts of an AWS access key id and inside an open-ended value. White
+    space-like ones (tab, VT, FF, U+001C to U+001F, NEL) are read as the separator they look like AND the views that drop spacing marks join
+    across them; the rest are dropped by the fold; ESC and U+009B no longer swallow the letter after them."""
+    leaks = []
+    for ctl in CONTROLS:
+        for at in (1, 3, 4, 5, 9, 10, 16, 19):
+            out = redact("k " + KEY[:at] + ctl + KEY[at:] + " e").text
+            if any(w in out for w in _windows(KEY)):
+                leaks.append(("key", hex(ord(ctl)), at, out))
+        for at in (1, 3, 7, 12):
+            out = redact("password=" + PW[:at] + ctl + PW[at:] + " e").text
+            if any(w in out for w in _windows(PW)):
+                leaks.append(("pw", hex(ord(ctl)), at, out))
+    assert not leaks, (len(leaks), leaks[:4])
+
+
+def test_marks_18b_a_new_line_or_carriage_return_is_a_line_end_and_cuts_a_key_in_two():
+    """The boundary that stays: a line end is not read as a separator inside a value (CHANGELOG, P2d-1). A key cut by one is two lines."""
+    for end in ("\n", "\r", "\r\n"):
+        text = "k " + KEY[:4] + end + KEY[4:] + " e"
+        assert redact(text).text == text
+
+
+def test_marks_18c_a_tab_between_fields_is_kept_and_only_a_secret_and_the_field_joined_to_it_are_masked():
+    assert redact("a\tb\tc\n1\t2\t3").text == "a\tb\tc\n1\t2\t3"
+    assert redact("user\t" + KEY + "\tok").text == "user\t<APIKEY_1>\tok"
+    out = redact("id\tpassword=abc\tstatus=ok").text
+    assert out == "id\tpassword=<SECRET_1>", (
+        out
+    )  # stated over-masking: the field after a secret is masked with it
+
+
+def test_marks_18d_an_escape_character_keeps_the_letter_after_it_between_two_word_characters():
+    out = redact("k " + KEY[:1] + "\x1b" + KEY[1:] + " e").text
+    assert KEY_TAIL not in out and "<APIKEY_1>" in out, out
+    assert (
+        redact("foo\x1b[1mAKIA bar").text == "foo AKIA bar"
+        or "\x1b" not in redact("foo\x1b[1mbar").text
+    )
 
 
 def test_marks_19_a_look_alike_letter_with_a_subscript_iota_does_not_withhold_the_line_beside_an_address():
