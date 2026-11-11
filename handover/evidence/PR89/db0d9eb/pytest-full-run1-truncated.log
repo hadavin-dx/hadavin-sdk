@@ -1,0 +1,13 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.......F................................................................ [  0%]
+..............s......................................................... [  1%]
+.....................E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E.E [  2%]
+........................................................................ [  2%]
+................................................................FFFFFFFF [  3%]
+.F....FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF [  4%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+..........................F..FFFFFFFFF.FF
+T-E8 watchdog: pg_sleep(30) cancelled after 0.00s (watchdog 2.0s; the assertion allows 3.0s: the timer, the cancel round trip to the server and the connection close)
+FFFFFFF........................ [  6%]
+...............................F...................................

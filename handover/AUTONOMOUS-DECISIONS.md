@@ -23,3 +23,8 @@ Entry format: `D-NNN | date UTC / IST | question | options (cost, risk) | RECOMM
 - Chosen: (b) (improve-before-replace; reversible; security path uncapped rounds). M3 as stated. m1-m9 + c1-c5 fixed in same batch.
 - Revisit if k-gram pass breaks legitimate error text (then allowlist for pass_env outputs).
 - Verified by lead: grep of tools/mutation_runner.py found no host/loopback refusal code (only docs), M3 premise holds.
+
+## D-003 2026-11-11 13:35Z UTC: P3a-2 history (Q6)
+- Options: A keep old core/P3a-2 (never mergeable, 208 handover files in tree); B open a NEW draft PR from core/P3a-2-rewritten (additive, old PR73 untouched); C rewrite/force existing branch (owner-only, forbidden).
+- Chosen: B as the recommendation only; opening the PR is deferred until the security-CI question is settled (it would fail for the same reason). Round-11 commits on the rewritten branch (4 commits, 11 non-handover files) have no review/evidence: schedule fresh review + evidence when PR is opened.
+- Evidence: handover/decisions/P3a2-history-memo.md; lead verified CI rule in main ci.yml.

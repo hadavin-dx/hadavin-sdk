@@ -1699,3 +1699,8 @@ Held back by gitleaks in this pass: none. Still unpushed from the earlier pass: 
 - What: `.claude/hooks/agent_preamble_gate.py` refuses general-purpose agents worded as independent reviews, and BRIEF-PREAMBLE rule 13 says never replace EGM with own review. With the egm plugin not installed (install denied), no review step in the queue can run.
 - Blocks: every "fresh review" step (PR89, PR77, PR74, PR85, bulk packages). Evidence and builds are not blocked.
 - Safe default taken: did not bypass the hook; recorded partial evidence only. Next step for a human: allow `claude plugin install egm@egm` (or run it) and restart the session, then paste the prompt again.
+
+## Q-2026-11-11-security-ci: the CI `security` job fails EVERY PR because of six other remote branches (verified by lead in main's ci.yml lines 213-224)
+- What: step "Stale gitleaks ignore entries" runs `git log ... HEAD --all --not origin/core/cloud-handover` and fails if any fetched ref other than core/cloud-handover holds handover/(reviews|tickets|evidence)/ paths. Offending refs (memo agent reproduced): core/P3a-2 (213 paths), wip/cloud-B-P73r2 (213), wip/cloud-B-cilint-b3 (14), wip/cloud-245-B-cilint-b3 (14), wip/cloud-B-peel (5), wip/cloud-245-B-peel (5). The earlier resume note ("fails any PR whose history holds handover paths") was wrong: PR89 has none and still fails.
+- Why it blocks: no PR can get a green `security` check, so nothing is READY by the definition.
+- Safe default taken: nothing deleted or changed (deleting remote branches / changing CI are owner-only). Next step for the human: back up the six refs with a bundle, then delete them (or change the CI rule); details in handover/decisions/P3a2-history-memo.md section 4. After that, rerun the checks on PR89.
