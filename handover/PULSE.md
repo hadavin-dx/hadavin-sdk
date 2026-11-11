@@ -35,3 +35,4 @@ WAITS FOR lead: core/P3a-2 push approval; q-A11a-sep-keep (now moot if the gap-t
 - 21:58Z Q8b r3 design report in: 0 Blocker, 3 Major (F1 _NOT_A_VALUE bypass by tail + sweep spreads; F2 hand key list in quoted rules; F3 walk-path key names = D-028 question, now Major from reviewer). Waiting for codebase reviewer a807a0f4 + EV a6a7b621 before resolve r3.
 - 22:00Z Q8b r3 codebase report in: 0 Blocker, 1 Major (M22 dropped, runmap.py:441 no mutant), 5 Nits. Only EV a6a7b621 pending before resolve r3.
 - 22:01Z PR H builder closed at box: WP2c f09c6825 pushed; 92 accidental pairs open (D-030); resume builder queued. Load high; queue: Q8c-1 fix builder, PR H resume. Pending EV: Q8b a6a7b621, Q8c-1 a5832502, timing a027c17f.
+- 22:02Z P3a-2 3b builder closed NOT green; WIP pushed wip/cloud-p3a2-3b f468bde0; D-031. Queue (need load<=4): Q8c-1 fix, PR H resume, P3a-2 resume. Pending EV: Q8b, Q8c-1, timing.
