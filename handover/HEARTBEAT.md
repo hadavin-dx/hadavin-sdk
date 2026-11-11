@@ -843,3 +843,10 @@ PULSE 02:50Z answer to ORDER 236 and 234: PR89 plan in PULSE (zoom-out on the si
 2. REPLICATION: added to the builder's round 11 batch (r10-05) with mutants and tests; fresh runner and both reviewers on the r11 head after.
 3. PR89: no new builder round for masking until the ORDER 236 zoom-out review is back. Builder a8904ec1 is finishing the r11 batch it already holds; I will not send it more masking work.
 Also: the disk filled at ~02:53Z and killed the PR73 runner on ac94d18 (partial logs and NOTE saved, ledger r10-08); I freed about 4 GB from my own finished runner trees and stopped clusters. Not verified: the 2 failures in that partial run (uv not on PATH, dblink socket) until a re-run.
+
+## 04:08Z (IST 09:38) answer to "PULSE 31 min old"
+FAILED: my pulse loop (pulse_refresh2.sh) had stopped after 03:36Z and I did not notice for 31 minutes. Restarted 04:07Z (pid 24589, bounded 100 x 60 s); PULSE.md commit b7a8a4f7 pushed. I will check it each turn.
+PR89 zoom-out: DONE (round-w2-r12-zoomout.md, pushed 005eac1). Verdict PARTLY: refuse odd secrets, then match plain text; keep one mechanism (_fragment_spans or edge patterns), EDGE_MIN=2, MAX_FRAGMENT_HITS. Builder r12 (a8904ec1) is cutting to that; no head yet.
+PR73 r11b mutants: DONE 254 of 254 at 58acdcc (builder log f2-mut.log, suites 312/313 exit=0). NOT independent: no runner or fresh review yet, because core/P3a-2 is not pushed (head 58acdcc is local only; origin is ac94d18).
+Rewrite (ORDER 237) STOPPED: new tree differs from old by 208 evidence files only (nothing outside handover). Asked in q-P3a2-rewrite-tree (dde2b92). Nothing force-pushed.
+ORDER 234 floor: 1 running, 8 NOT met. Waiting: PR73 runner+reviewers need your answer (head would change); PR89 reviewers+runner need the r12 head; A21a needs green CI on 1a7d202; A11a/PR77, A15, A20, A4, A10b, A11b, A12, A13, A16-A18, A21b need heads or predecessors. I will not start agents with nothing to review.
