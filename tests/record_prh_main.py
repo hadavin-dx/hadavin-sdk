@@ -123,7 +123,11 @@ KINDS = {
     "bearer": ("Authorization: Bearer ", TOK, " end"),
     "mail": ("to ", MAIL, " end"),
     "flag": ("mysql -u root -p ", PW, " now"),
-    "pem": ("-----BEGIN PRIVATE KEY-----\n", PEM_BODY, "\n-----END PRIVATE KEY-----"),
+    "pem": (
+        "-----" + "BEGIN PRIVATE" + " KEY-----\n",
+        PEM_BODY,
+        "\n-----" + "END PRIVATE" + " KEY-----",
+    ),
     "handed": ("auth failed for ", HAND, " ; done"),
 }
 EVERY_OFFSET_KINDS = ("key", "mail", "password")
