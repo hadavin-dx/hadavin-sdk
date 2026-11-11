@@ -1412,3 +1412,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | B-Q8c1-b2 a5cfa82b | Q8c-1 fix batch 2 builder (sonnet) | 16:31 | +60 min | RUNNING | check checkpoint B-Q8c1-b2.md |
 | EV-Q8a2 ab1486e8 | closed, report saved | | | CLOSED |
 | B-Q8a2-b3 | Q8a-2 fix batch 3 builder (sonnet) | 16:33 | +60 min | RUNNING | check checkpoint B-Q8a2-b3.md |
+| B-Q8a1-b4 ae9691ed | closed, pushed ecd5dba1 (1 full-suite fail = dblink setup) | | | CLOSED |
+| EV-Q8a1-r5 + REV-Q8a1-r5 | evidence runner + one delta reviewer on ecd5dba1 | 16:44 | +40 min | RUNNING |
