@@ -1,0 +1,48 @@
+HEAD /home/user/build/EV-Q8c1-fbc837b4/wt
+--- P0 baseline data
+  data_problems count=0
+  page(scratch) == docs file: True
+  rules_review lines on the real page:
+   | - `k8s.rules_review`: asks the cluster what this identity may do; the start-up check treats it as harmless (that it changes nothing in the cluster was not found in a vendor source). Note: a default cluster gives every signed-in identity this right. The request path names no namespace, so the namespaced Role on this page cannot grant it: in a cluster that took the right away, an administrator must 
+--- P1a free reason says 'creates nothing' (claims_unverified kept, K-SSRR kept in verified)
+  data_problems count=0
+   | ... d binding of their own; this page produces no text for that and no test covers such a cluster (sources: K-RBAC, K-SRC, K-SSRR). Checked: 2026-11-11, sources K-RBAC, K-SRC, K-SSRR. Claims not checked: a `create` on `selfsubjectrulesreviews` changes nothing in the cluster (the one source for the resource, K-SSRR, does not say so).
+--- P1b free reason says 'creates nothing', claims_unverified emptied
+  data_problems count=0
+   | ... e cannot grant it: in a cluster that took the right away, an administrator must grant `create` on `selfsubjectrulesreviews` with a cluster-wide role and binding of their own; this page produces no text for that and no test covers such a cluster (sources: K-RBAC, K-SRC, K-SSRR). Checked: 2026-11-11, sources K-RBAC, K-SRC, K-SSRR.
+--- P1c free reason 'read-only and changes nothing' (claims_unverified kept)
+  data_problems count=0
+--- P2a never type resource, name a path
+  data_problems count=1
+   * secrets_vault.py: never entry 4: never type 'resource' does not fit platform 'vault' (allowed: role, path); no cover rule would read it
+--- P2b never type prose, name holds a path
+  data_problems count=1
+   * secrets_vault.py: never entry 4: never type 'prose' does not fit platform 'vault' (allowed: role, path); no cover rule would read it
+--- P2c never type action, name a path
+  data_problems count=1
+   * secrets_vault.py: never entry 4: never type 'action' does not fit platform 'vault' (allowed: role, path); no cover rule would read it
+--- P2d never type path, name prose
+  data_problems count=0
+--- P3a never path {mount}/data/+/+ (two parts)
+  data_problems count=1
+   * secrets/vault: never-list path '{mount}/data/+/+' covers the resource and capability of grant R17 (read on '{mount}/data/{path_prefix}+'): the page would give and forbid the same right
+--- P3b never path {mount}/data/{path_prefix}+/+
+  data_problems count=1
+   * secrets/vault: never-list path '{mount}/data/{path_prefix}+/+' covers the resource and capability of grant R17 (read on '{mount}/data/{path_prefix}+'): the page would give and forbid the same right
+--- P3c never path {mount}/data/+ (one part, control)
+  data_problems count=0
+--- P3d never path {mount}/data/{path_prefix}+ exact (control)
+  data_problems count=1
+   * secrets/vault: never-list path '{mount}/data/{path_prefix}+' covers the resource and capability of grant R17 (read on '{mount}/data/{path_prefix}+'): the page would give and forbid the same right
+--- P3e never path {mount}/data/{path_prefix}+/deeper/+ (not over R17, control)
+  data_problems count=1
+   * secrets/vault: never-list path '{mount}/data/{path_prefix}+/deeper/+' covers the resource and capability of grant R17 (read on '{mount}/data/{path_prefix}+'): the page would give and forbid the same right
+--- P4a NOTE_CLASSES key present: True
+--- P4a class sources with unknown id K-NOPE (tool constant patched)
+  data_problems count=0
+   page EXC KeyError 'K-NOPE'
+--- P4b free entry verified drops K-SSRR while note class lists it
+  data_problems count=0
+--- P4c class sources lists V-TOK (a real source id of the other kind)
+  data_problems count=0
+--- P5 real page equals page(): True | bytes 29023
