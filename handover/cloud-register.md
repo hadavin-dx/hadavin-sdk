@@ -1112,3 +1112,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a904ccff | PR89 design/security reviewer r11 | closed: 0 Blocker, 2 Major, 6 Minor saved (round-w2-r11-design.md) | |
 | aba32f2f | PR89 evidence runner on 025ec61 | STOPPED 2026-11-11 ~03:05Z (Majors found, head will change); processes, cluster ev89c killed, output deleted | |
 | a8904ec1 | PR89 builder round 11 (r11-01..04) | 2026-11-11 ~03:05Z | +90 min | running |
+| aed5770d | PR73 builder round 10 | closed 2026-11-11 ~03:15Z | - | head ac94d18 pushed (code only); 220 of 220 mutants; raw tails committed (b396b16); clusters stopped |
+| abc34109 | PR73 evidence runner on ac94d18 | 2026-11-11 ~03:20Z | +2 h | running; output /home/user/build/EVOUT-P73-ac94d18/ |
+| a8531550 | PR73 design/security reviewer r10 (egm-design) | 2026-11-11 ~03:20Z | +40 min | running |
+| a6b68d12 | PR73 codebase reviewer r10 (egm-codebase-details) | 2026-11-11 ~03:20Z | +40 min | running |
