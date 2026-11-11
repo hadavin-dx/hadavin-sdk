@@ -1,0 +1,29 @@
+head e0a9c97 (code; evidence is committed after it), Python 3.13.x and 3.12.x, Postgres 16.15, 2026-11-11
+17 new mutants (first run: SG1 survived, fixed by adding a sequence case; rerun SG1-SG3 killed)
+copy of the repository: /tmp/migrate-mutants-a5_814f7/repo
+import path: /tmp/migrate-mutants-a5_814f7/repo/src/hadavin_sdk/__init__.py
+BASELINE rc=0 29 passed in 4.32s (5.7s, 10 killer ids)
+name | kind | description | result | failing killers (only the ones that fail) | seconds
+AC1 | behaviour | the rights on tables, views and sequences are not read back | KILLED | tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT | 3.8s
+AC2 | behaviour | the rights on single columns are not read back | KILLED | tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT | 3.5s
+AC3 | behaviour | the rights on functions are not read back | KILLED | tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT | 3.5s
+AC4 | behaviour | PUBLIC (everyone) is allowed to hold a right | KILLED | tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT, tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT | 3.3s
+AC5 | behaviour | the default 'everyone may call it' of a function is not removed | KILLED | tests/test_migration_postgres.py::test_the_named_roles_and_the_owner_may_hold_rights_and_a_function_loses_the_default_for_everyone | 2.0s
+SD1 | behaviour | a SECURITY DEFINER function is not looked at | KILLED | tests/test_migration_postgres.py::test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it | 2.0s
+SD2 | behaviour | the reviewed list of SECURITY DEFINER functions is not read | KILLED | tests/test_migration_postgres.py::test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it | 2.1s
+SD3 | behaviour | only the function names in the file text are looked at, not what is new in the schema | KILLED | tests/test_migration_postgres.py::test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new | 1.8s
+LW1 | behaviour | the wait for the migration lock is not limited | KILLED | tests/test_migration_wiring.py::test_the_wait_for_the_lock_is_limited_by_the_argument | 1.7s
+LW2 | behaviour | a run that gives up does not name the session that holds the lock | KILLED | tests/test_migration_postgres.py::test_a_run_that_cannot_get_the_migration_lock_gives_up_and_names_the_holder | 2.8s
+LW3 | behaviour | the wait is the constant, not the argument | KILLED | tests/test_migration_wiring.py::test_the_wait_for_the_lock_is_limited_by_the_argument | 1.8s
+SW16 | test-helper | the sweep that cannot see other sessions says nothing | KILLED | tests/test_migration_wiring.py::test_a_login_that_cannot_see_other_sessions_sweeps_nothing | 1.8s
+SW17 | test-helper | a dead marking connection is kept | KILLED | tests/test_migration_postgres.py::test_a_marking_connection_that_died_is_opened_again_and_the_role_is_not_swept | 1.9s
+SG1 | test-helper | the sweep does not look at tables and views the role owns | SURVIVED | - | 1.9s
+SG2 | test-helper | the sweep does not look at functions the role owns | KILLED | tests/test_migration_postgres.py::test_a_role_that_owns_a_table_function_or_type_outside_a_scratch_schema_is_not_swept[function] | 2.0s
+SG3 | test-helper | the sweep does not look at types the role owns | KILLED | tests/test_migration_postgres.py::test_a_role_that_owns_a_table_function_or_type_outside_a_scratch_schema_is_not_swept[type] | 2.0s
+GD2 | test-helper | any ** expansion counts as a password in the login guard | KILLED | tests/test_migration_rules.py::test_the_password_scan_reads_the_star_star_forms[make_conninfo(d,, tests/test_migration_rules.py::test_the_password_scan_reads_the_star_star_forms[make_conninfo(d,, tests/test_migration_rules.py::test_the_password_scan_reads_the_star_star_forms[make_conninfo(d, | 1.7s
+behaviour: 11 of 11 killed
+prose: 0 of 0 killed
+test-helper: 5 of 6 killed
+not killed: ['SG1:SURVIVED']
+16 of 17 killed
+rc=1

@@ -774,7 +774,9 @@ def test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill():
         "AssertionError: TEST SETUP PROBLEM, a timing flake and not a defect: the file started waiting",
         "assert 1 == 2, TEST SETUP PROBLEM",
     ):
-        assert one(head) == "BROKEN", head
+        # the message holds only the first word: a failure line that quoted the text "TEST SETUP PROBLEM" would be
+        # read by the mutant runner as a test that could not start
+        assert one(head) == "BROKEN", head.split()[0]
     postgres_tests = (Path(__file__).resolve().parent / "test_migration_postgres.py").read_text(
         encoding="utf-8"
     )
