@@ -16,3 +16,5 @@ unless it switches role itself; each `.py` prints its own steps. Output files ho
 | h | h-pg-monitor.sql/.out | what rev 1 would print for a named role in `pg_monitor` |
 | queries | queries.py, run_queries.py/.out | the final query texts of the ticket, run as a plain role, plus a 25-level diamond of roles |
 | mutants | mutclass.py/.out | which mutants of `tests/migrate_mutants.py` at 4d328e3d the ticket's lists miss |
+| x | x-extension-owner.sql/.out | settles rev 1's open conflict: who owns a trusted extension that a plain role with CREATE on the database installs |
+| cost | createdb_cost.py/.out | create plus drop of one database per test case |

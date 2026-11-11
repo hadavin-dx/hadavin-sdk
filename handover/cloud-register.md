@@ -1414,3 +1414,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | B-Q8a2-b3 | Q8a-2 fix batch 3 builder (sonnet) | 16:33 | +60 min | RUNNING | check checkpoint B-Q8a2-b3.md |
 | B-Q8a1-b4 ae9691ed | closed, pushed ecd5dba1 (1 full-suite fail = dblink setup) | | | CLOSED |
 | EV-Q8a1-r5 + REV-Q8a1-r5 | evidence runner + one delta reviewer on ecd5dba1 | 16:44 | +40 min | RUNNING |
+| A-PRH-errata a02f43ab | closed, ticket rev 2 written | | | CLOSED |
+| REV-PRH-plan-r2 (2 reviewers) | PR H plan review round 2 | 16:46 | +30 min | RUNNING |

@@ -8,9 +8,9 @@ Status: written by a ticket author. Nothing is built. Fresh egm:* plan reviewers
 
 ## Changes in rev 2 (each answers a round-1 finding; the full table is section 8.4)
 
-1. **Case 790 diagnosed and the design changed** (readiness B2, design B1): the leak on the card path came from the order in which the redactor puts back earlier masks in a decoded reading (shorter value first). Design answer: one sorted list, longest spelling first (W2, `_keep_earlier_masks`). With that change the failing test passes under the author prototype, and 7,505 tests of 43 redaction-related files pass (section 8.1).
+1. **Case 790 diagnosed and the design changed** (readiness B2, design B1): the leak on the card path came from the order in which the redactor puts back earlier masks in a decoded reading (shorter value first). Design answer: one sorted list, longest spelling first (W2, `_keep_earlier_masks`). With that change the failing test passes under the author prototype, and 7,505 tests of 43 redaction-related files pass, also with every other rev-2 change (sections 8.1, 8.3).
 2. **Line continuation split out** to its own ticket `tickets/PRH-b-line-continuation-matching.md` (readiness B1, design section 3). PR H leaves a backslash and a line end exactly as written; a key cut that way is "not promised", like a key cut by a tab or a line break.
-3. **Map clean-up (old W5) split out** to `tickets/PRH-c-map-entries-hygiene.md` (design M4). The old test T4 and mutants 32, 33 are gone.
+3. **Map clean-up (old W5) split out** to `tickets/PRH-c-map-entries-hygiene.md` (design M4). The old test T4 (map invariants) and the old mutants 32, 33 are gone; the number T4 is reused for the case-790 test.
 4. **Glue rule defined per run** of removed items, with an example table (design M3; section 4.1).
 5. **The 256 limit**: only values that need the gap are counted; more than 256 refuse the text (`InputTooLarge`), as main's `_decoded_masks` does; values under 4 characters are replaced only as a whole word (design M1 and design section 3).
 6. **One more decoded reading** that removes hidden items at the end of every decoding round, so a hidden item that cuts an encoding token (`%4` + `%1b[0m` + `1KIA...`) is read (design M2; reproduced on main and fixed in the prototype).
@@ -24,7 +24,7 @@ Status: written by a ticket author. Nothing is built. Fresh egm:* plan reviewers
 
 1. **Not verified from the standards themselves.** The hosts for the standards cannot be reached from the build machine (`curl -m 8 https://www.unicode.org/Public/15.1.0/ucd/DerivedCoreProperties.txt` and the ECMA-48 page both ended with code 000, no answer). Every statement about ECMA-48 clause numbers and about the Unicode derivation rule is marked "from memory" where it appears.
 2. **"Author prototype" numbers are not independent evidence.** The author applied the planned design to a clean import of main by monkeypatching (throwaway, never committed). Rev 1 files: `/home/user/build/prh-author/scratch/proto.py`, drivers `check.py`, `fuzz.py`. Rev 2 files: `/home/user/build/prh-author/errata/prh_proto.py` (a copy of proto.py, renamed because a test file imports a third-party package called `proto`), `errata/fixes.py` (the rev-2 design changes on top), `errata/fix790.py`, `errata/repro.py`, `errata/c790*.py`, `errata/check2.py`, `errata/cost2.py`; raw outputs copied to `handover/evidence/PRH-plan/`. The prototype's escape-sequence reader is the author's own quick version, and the comparison used that same reader as its yardstick. Its counts (for example "14,132 runs, 0 breaks") are not cited as evidence for the design. The builder's tests must not share code with the implementation (section 5).
-3. **Not run by the author:** the full suite, ruff, bandit, `tools/scan_repo.py`, gitleaks, the `perf` tests, the mutation runner, Python 3.12 tests, `tests/warden_port/test_gate*.py` under the prototype (the 43 files of section 8.1 hold the redaction, tools, channel, gate-import and evidence tests the author could find by import; the list is in `handover/evidence/PRH-plan/target-files.txt`).
+3. **Not run by the author:** the full suite, ruff, bandit, `tools/scan_repo.py`, gitleaks, the `perf` tests, the mutation runner, Python 3.12 tests. The 43 files of section 8.3 (every test file that imports the redaction modules, including `tests/warden_port/test_gate.py` and `test_gate_render.py`; list in `handover/evidence/PRH-plan/target-files.txt`) were run under the prototype only.
 4. **Handed-out secrets were checked with two inputs only** (L6, L12 below).
 5. **The inputs of rounds 5 and 6 were not re-read one by one.** The regression file (section 5, T5) names the source files the builder must take every input from.
 6. **"The six leak inputs on main"** are not listed anywhere the author could find (AUTONOMOUS-LOG line 33 gives only the count). The author reproduced twelve on main and names them L1 to L12.
@@ -618,7 +618,7 @@ The 43 files are listed in `target-files.txt` (every test file that imports runm
 - M2c stays LEAKED by the check script; judged "not a key spelling" (section 3, not promised). A reviewer may disagree.
 - The 1.25-times cost limit for plain shapes is not shown by any run (prototype 1.34 times on plain ASCII, single runs under load).
 - The `_keep_earlier_masks` order problem was not shown to trigger on main itself.
-- Not run: full suite, ruff, bandit, gitleaks, mutation runner, perf tests, Python 3.12 tests, the gate tests under the prototype beyond those of the 43 files.
+- Not run: full suite, ruff, bandit, gitleaks on the repository, mutation runner, perf tests, Python 3.12 tests.
 
 ## What I did not verify
 

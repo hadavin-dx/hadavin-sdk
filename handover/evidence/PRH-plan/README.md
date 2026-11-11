@@ -15,10 +15,13 @@ Pytest runs: `env -i ... PYTHONPATH=<errata dir> python -m pytest -q -p no:cache
 | targeted-proto-fix.log | the 43 files under proto + case-790 fix | `-p plug_proto_fix` |
 | targeted-proto-fixes-run1.log | first run under every rev-2 change: 3 failures (author's prototype slip, ticket 8.3) | `-p plug_proto_fixes` |
 | targeted-proto-fixes-rerun3.log | the two failing files + the round-12 fuzz file after the correction | `-p plug_proto_fixes` |
-| targeted-proto-fixes.log | the 43 files under every rev-2 change, after the correction | `-p plug_proto_fixes` |
+| targeted-proto-fixes-run2.log | the 43 files after the first correction (before the in-round created-shape rule) | `-p plug_proto_fixes` |
+| targeted-proto-fixes.log | the 43 files under the FINAL rev-2 prototype | `-p plug_proto_fixes` |
 | repro-main.out / repro-proto.out / repro-protofix.out / repro-protofixes.out | design-review inputs M1 to M6, `_first_decoded`, the OSC/U+009C row | `scripts/repro.py <mode>` |
 | check-protofixes.out | the leak rows L1-L12, G1-G3 and forgery rows of ticket section 2 under every rev-2 change | `scripts/check2.py` |
 | f1b-error-reason.out | the real output of F1b on `error_reason` (the check script flags it only because that path's map is internal) | `scripts/f1b.py` |
-| cost-main.out / cost-protofixes.out | forgery on callers without the escaping step; rough cost at the cap, 1 run per row, machine shared with other agents | `scripts/cost2.py <mode>` |
+| cost-main.out / cost-protofixes.out (final prototype; the first rev-2 run's file was overwritten, its two F1e lines are quoted in ticket W2) | forgery on callers without the escaping step; rough cost at the cap, 1 run per row, machine shared with other agents | `scripts/cost2.py <mode>` |
 | di-312-313.out | Default_Ignorable: formula vs perl table on Python 3.12.3 and 3.13.18; perl version; hash of the range file | `scripts/di312.py` |
 | default_ignorable_perl5382_unicode1500.txt | the range file the builder copies into tests/fixtures/ (SHA-256 in di-312-313.out) | perl one-liner of ticket W6, converted to ranges |
+
+Scripts are in `scripts/` (copies of `/home/user/build/prh-author/errata/`); `c790b.py` printed to the terminal only (its reduced-input finding is repeated in `c790d.out`).
