@@ -22,6 +22,8 @@ import pytest
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
+from tests.fixtures.migration_role import scram_hash
+
 DEMO = Path(__file__).resolve().parents[2] / "demos" / "ask-your-data"
 sys.path.insert(0, str(DEMO))
 
@@ -100,8 +102,8 @@ class Db:
         with self.admin() as conn:
             conn.execute(
                 sql.SQL("CREATE ROLE {} LOGIN PASSWORD {}").format(
-                    sql.Identifier(role), sql.Literal(password)
-                )
+                    sql.Identifier(role), sql.Literal(scram_hash(conn, role, password))
+                )  # the hash, so the password is in no statement and no server log
             )
             conn.execute(
                 sql.SQL("GRANT CONNECT ON DATABASE {} TO {}").format(

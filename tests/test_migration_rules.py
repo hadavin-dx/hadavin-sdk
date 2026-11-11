@@ -566,8 +566,18 @@ def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
     assert "do not hand it over: point `migrate` at another schema" in first
     tests_part = _words(CHANGELOG[CHANGELOG.index("### Tests") :].split("\n### ", 1)[0])
     assert "On a normal exit it drops what the role owns in every database it used" in tests_part
-    assert "named after its role (`application_name`)" in tests_part
-    assert "a guard test fails when a test connects with `user=` and no password" in tests_part
+    assert "named after the role (`application_name`" in tests_part
+    assert (
+        "a guard test fails when a test calls `make_conninfo` or `connect` with `user=` and no password"
+        in tests_part
+    )
+    assert "Why a test run keeps a connection open.** So that another test run" in tests_part
+    assert "a *test schema* is a schema whose name starts with `hadavin_test_`" in tests_part
+    assert "Refused: rights for any other role, and SECURITY DEFINER." in first
+    assert (
+        "`REVIEWED_DEFINER_FUNCTIONS`" in first
+        and "waits for the lock at most `lock_wait_seconds`" in first
+    )
     assert "Tested on:** PostgreSQL 16.15, on the build machine" in first
     assert "session_user" in first and "WITH GRANT OPTION" in first and "pg_parameter_acl" in first
     assert "PostgreSQL 16 is the lowest version" in first
@@ -725,7 +735,7 @@ def test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill():
     """A planted line that only breaks the code (a NameError, a syntax error, a server error, an error nobody has named
     yet) makes a test fail but proves nothing about the named killer: only the exceptions a test raises on purpose count.
     Killed by: mutants RN2 (status_of does not look), RN3 (the allow list takes everything), RN4 (any dotted name is
-    allowed)."""
+    allowed) and RN5 (a test that could not start counts as a kill)."""
     from tests import migrate_mutants as mm
 
     m = next(x for x in mm.M if x.name == "R4")
@@ -760,8 +770,17 @@ def test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill():
         "errors.InsufficientPrivilege: permission denied",
         "DeadlockDetected: deadlock detected",
         "SomeErrorNobodyHasNamedYet: x",
+        "Failed: TEST SETUP PROBLEM: this test needs CREATEDB on the HADAVIN_TEST_PG_DSN login",
+        "AssertionError: TEST SETUP PROBLEM, a timing flake and not a defect: the file started waiting",
+        "assert 1 == 2, TEST SETUP PROBLEM",
     ):
         assert one(head) == "BROKEN", head
+    postgres_tests = (Path(__file__).resolve().parent / "test_migration_postgres.py").read_text(
+        encoding="utf-8"
+    )
+    assert postgres_tests.count(mm.SETUP_PROBLEM) == 4, (
+        "the four tests that can fail for want of a setup say so"
+    )
     two = _failure(test, "AssertionError: x", path) + _failure("test_other", "KeyError: 'x'", path)
     assert mm.status_of(m, runs(two)) == "BROKEN", "one broken failure among the failures"
     other = _failure("test_other", "AssertionError: x", "tests/test_other.py")
@@ -776,17 +795,62 @@ def test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill():
     assert mm.status_of(m, [(2, "")] + [(0, "")] * (len(names) - 1)).startswith("ERROR")
 
 
+def _dict_literals_in(node: ast.AST) -> list[ast.Dict]:
+    """The dict literals an expression can be (itself, or either branch of `a if c else b`)."""
+    if isinstance(node, ast.Dict):
+        return [node]
+    if isinstance(node, ast.IfExp):
+        return _dict_literals_in(node.body) + _dict_literals_in(node.orelse)
+    return []
+
+
+def _passes_a_password(call: ast.Call) -> bool:
+    """A `password=` argument, or a `**` expansion of a dict literal (or of `{"password": p} if p else {}`) that has a
+    `password` key in at least one branch: the password is given when there is one."""
+    for k in call.keywords:
+        if k.arg == "password":
+            return True
+        if k.arg is None and any(
+            isinstance(key, ast.Constant) and key.value == "password"
+            for d in _dict_literals_in(k.value)
+            for key in d.keys
+        ):
+            return True
+    return False
+
+
+@pytest.mark.parametrize(
+    ("call", "has_password"),
+    [
+        ("make_conninfo(d, user=u, password=p)", True),
+        ('make_conninfo(d, user=u, **{"password": p})', True),
+        ('make_conninfo(d, user=u, **({"password": p} if p else {}))', True),
+        ("make_conninfo(d, user=u, **extra)", False),
+        ("make_conninfo(d, user=u, **options())", False),
+        ('make_conninfo(d, user=u, **{"sslmode": "x"})', False),
+        ("make_conninfo(d, user=u)", False),
+    ],
+)
+def test_the_password_scan_reads_the_star_star_forms(call, has_password):
+    """Killed by: mutant GD2 (any `**` expansion counts as a password)."""
+    assert _passes_a_password(ast.parse(call).body[0].value) is has_password
+
+
 def test_no_test_logs_in_as_a_role_without_passing_its_password():
     """A test that makes a login role and connects as it must pass the password (`login_dsn`, or `password=` in
     `make_conninfo`), or the test fails with a connection error on a server that asks for a password instead of
     testing what it is about. The scan reads every test file: a call of `make_conninfo` or `connect` with a `user=`
-    argument and no `password=` (and no `**` expansion that may hold it) is a failure, unless the line says
-    `# pw-env` (the password travels in the environment). Killed by: mutant GD1 (one login loses its password)."""
+    argument and no password is a failure. A `**` expansion counts only when it is a dict literal (or the two-branch
+    form `{"password": p} if p else {}`) with a `password` key; a `**` of a name or a call is a failure. A line of the
+    call that says `# pw-env` (the password travels in the environment) is skipped.
+
+    What this scan does NOT see, on purpose: a connection string written as text (`f"... user={role} ..."`), a
+    `conninfo_to_dict` result changed by hand, `user` given as a positional or in a `**` dict, a function that is called
+    `connect` but is not psycopg's, and whether the text after `# pw-env` is true (only that the marker is there).
+    Killed by: mutant GD1 (one login loses its password)."""
     root = Path(__file__).resolve().parent
     bad = []
     for path in sorted(root.rglob("*.py")):
-        if path.name == "migrate_mutants.py":
-            continue
         text = path.read_text(encoding="utf-8")
         lines = text.splitlines()
         for node in ast.walk(ast.parse(text)):
@@ -796,8 +860,9 @@ def test_no_test_logs_in_as_a_role_without_passing_its_password():
             name = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", "")
             if name not in ("make_conninfo", "connect"):
                 continue
-            keys = {k.arg for k in node.keywords}
-            no_password = "user" in keys and "password" not in keys and None not in keys
-            if no_password and "# pw-env" not in lines[node.lineno - 1]:
+            if "user" not in {k.arg for k in node.keywords} or _passes_a_password(node):
+                continue
+            span = lines[node.lineno - 1 : (node.end_lineno or node.lineno)]
+            if not any("# pw-env" in line for line in span):
                 bad.append(f"{path.relative_to(root)}:{node.lineno}")
     assert not bad, "a login without its password: " + ", ".join(bad)

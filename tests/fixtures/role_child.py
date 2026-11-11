@@ -18,5 +18,7 @@ def make_the_role_and_own_a_schema(dsn: str, schema: str, names) -> None:
             )
         )
         db.execute(sql.SQL("CREATE TABLE {}.t (id int)").format(sql.Identifier(schema)))
-    m._USED_DSNS.add(dsn)
+    m._USED_DSNS.add(
+        m._target_key(dsn)
+    )  # one entry per connection target, as the helper keeps them
     names.put(m.PLAIN_ROLE)

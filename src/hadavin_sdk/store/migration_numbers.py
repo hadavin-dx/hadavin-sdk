@@ -66,6 +66,10 @@ RECIPE_FIRST_LINE = "\\set ON_ERROR_STOP on"
 # The ONLY place the two limits are written. Right after BEGIN in every hand file, and in `migrate` right after its
 # advisory lock: an ALTER TABLE on a live table waits for a lock that stops every reader.
 RECIPE_TIMEOUTS = ("SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';")
+# How long a `migrate` run waits for the migration lock before it gives up (seconds). A run that holds the lock is
+# normally over in seconds, so this is a ceiling that frees a run stuck behind a session that never lets go (any role
+# that may connect can take a lock number). A long migration on a big table may need more: pass `lock_wait_seconds`.
+MIGRATE_LOCK_WAIT_SECONDS = 600
 # The advisory-lock key of every migrate run and every hand recipe; `migrate` imports it from here as `MIGRATE_LOCK`.
 MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 1
 MIGRATIONS = Path(__file__).parent / "migrations"

@@ -140,6 +140,8 @@ def cmp_mutant(name: str, item: str, desc: str, killer_item: str) -> Mutant:
     )
 
 
+FX_ = "tests/fixtures/migration_role.py"
+R = "test_a_right_for_a_role_the_run_does_not_name_is_refused"
 M: list[Mutant] = [
     # --- read-back and its order (migrate.py) ---
     Mutant(
@@ -591,7 +593,7 @@ M: list[Mutant] = [
         "P8",
         "D: the docstring goes back to three session settings",
         MIG,
-        "three settings that\nchange how SQL text is read",
+        "three settings that change how SQL text is read",
         "three session settings",
         k(T_RULES, "test_the_migrate_docstring_counts_what_it_reads_back"),
     ),
@@ -1401,8 +1403,8 @@ M: list[Mutant] = [
         "SW1",
         "the stale roles are not swept when the test role is made",
         "tests/fixtures/migration_role.py",
-        "    _hold_the_role(db)\n    sweep_stale_roles(db)\n",
-        "    _hold_the_role(db)\n",
+        "    _mark_the_role(db)\n    sweep_stale_roles(db)\n",
+        "    _mark_the_role(db)\n",
         k(
             T_WIRING,
             "test_making_the_test_role_first_sweeps_the_stale_roles_of_killed_processes",
@@ -1436,8 +1438,16 @@ M: list[Mutant] = [
         "RN4",
         "the mutant runner's allow list takes any dotted name, so a server error counts as a kill",
         "tests/migrate_mutants.py",
-        'r"^(?:assert\\b|AssertionError\\b|Failed:|',
-        'r"^(?:[\\w.]+|assert\\b|AssertionError\\b|Failed:|',
+        "(?:assert\\b|AssertionError\\b|Failed:|",
+        "(?:[\\w.]+|assert\\b|AssertionError\\b|Failed:|",
+        k(T_RULES, "test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill"),
+    ),
+    Mutant(
+        "RN5",
+        "the mutant runner counts a test that could not start as a kill",
+        "tests/migrate_mutants.py",
+        "(?!.*TEST SETUP PROBLEM)(?:assert\\b",
+        "(?:assert\\b",
         k(T_RULES, "test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill"),
     ),
     Mutant(
@@ -1515,7 +1525,7 @@ M: list[Mutant] = [
         "SW4",
         "the live-process lock is never taken when the test role is made",
         "tests/fixtures/migration_role.py",
-        "    _hold_the_role(db)\n",
+        "    _mark_the_role(db)\n",
         "",
         k(
             T_WIRING,
@@ -1526,8 +1536,8 @@ M: list[Mutant] = [
         "SW5",
         "the live-process lock is taken on a fixed local server, not on the server that makes the role",
         "tests/fixtures/migration_role.py",
-        "    hold = psycopg.connect(\n        make_conninfo(db.info.dsn, password=db.info.password or None, application_name=PLAIN_ROLE),\n        autocommit=True,\n    )\n",
-        '    hold = psycopg.connect("host=localhost", autocommit=True)\n',
+        "    mark = psycopg.connect(\n        make_conninfo(db.info.dsn, password=db.info.password or None, application_name=PLAIN_ROLE),\n        autocommit=True,\n    )\n",
+        '    mark = psycopg.connect("host=localhost", autocommit=True)\n',
         k(
             T_WIRING,
             "test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role",
@@ -1554,7 +1564,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "SW8",
-        "the hold connection is not named like the role",
+        "the marking connection is not named like the role",
         "tests/fixtures/migration_role.py",
         "password=db.info.password or None, application_name=PLAIN_ROLE),",
         "password=db.info.password or None),",
@@ -1571,11 +1581,11 @@ M: list[Mutant] = [
     ),
     Mutant(
         "SW9",
-        "the hold connection is left open when the lock cannot be taken",
+        "the marking connection is left open when the lock cannot be taken",
         "tests/fixtures/migration_role.py",
-        "    except BaseException:\n        hold.close()\n        raise\n",
+        "    except BaseException:\n        mark.close()\n        raise\n",
         "    except BaseException:\n        raise\n",
-        k(T_WIRING, "test_the_hold_connection_is_closed_when_the_lock_cannot_be_taken"),
+        k(T_WIRING, "test_the_marking_connection_is_closed_when_the_lock_cannot_be_taken"),
     ),
     Mutant(
         "NS2",
@@ -1604,18 +1614,18 @@ M: list[Mutant] = [
     ),
     Mutant(
         "SW10",
-        "the hold connection is not given the password of the connection",
+        "the marking connection is not given the password of the connection",
         "tests/fixtures/migration_role.py",
         "make_conninfo(db.info.dsn, password=db.info.password or None, application_name=PLAIN_ROLE),",
         "make_conninfo(db.info.dsn, application_name=PLAIN_ROLE),",
-        k(T_WIRING, "test_the_hold_connection_is_given_the_password_of_the_connection"),
+        k(T_WIRING, "test_the_marking_connection_is_given_the_password_of_the_connection"),
     ),
     Mutant(
         "SW11",
         "the sweep does not ask whether the login can see the sessions of other users",
         "tests/fixtures/migration_role.py",
-        "    if not seen or not seen[0]:\n        return []\n",
-        "",
+        "    if not seen or not seen[0]:\n",
+        "    if False:\n",
         (
             k(T_WIRING, "test_a_login_that_cannot_see_other_sessions_sweeps_nothing"),
             k(
@@ -1705,6 +1715,154 @@ M: list[Mutant] = [
         "NOBYPASSRLS PASSWORD",
         k(T_WIRING, "test_the_test_role_is_made_without_the_replication_flag"),
     ),
+    Mutant(
+        "AC1",
+        "the rights on tables, views and sequences are not read back",
+        MIG,
+        "CROSS JOIN LATERAL aclexplode(c.relacl) a WHERE n.nspname = %s AND c.relname = ANY(%s) ",
+        "CROSS JOIN LATERAL aclexplode(c.relacl) a WHERE false AND n.nspname = %s AND c.relname = ANY(%s) ",
+        k(T_PG, R),
+    ),
+    Mutant(
+        "AC2",
+        "the rights on single columns are not read back",
+        MIG,
+        "CROSS JOIN LATERAL aclexplode(t.attacl) a WHERE n.nspname",
+        "CROSS JOIN LATERAL aclexplode(t.attacl) a WHERE false AND n.nspname",
+        k(T_PG, R),
+    ),
+    Mutant(
+        "AC3",
+        "the rights on functions are not read back",
+        MIG,
+        "        elif who is not None and not is_owner and who not in allowed:",
+        "        elif False:",
+        k(T_PG, R),
+    ),
+    Mutant(
+        "AC4",
+        "PUBLIC (everyone) is allowed to hold a right",
+        MIG,
+        "    allowed = set(named)\n    problems: list[str] = []",
+        '    allowed = set(named) | {"PUBLIC"}\n    problems: list[str] = []',
+        k(T_PG, R),
+    ),
+    Mutant(
+        "AC5",
+        "the default 'everyone may call it' of a function is not removed",
+        MIG,
+        "    for ident in revoke:",
+        "    for ident in []:",
+        k(
+            T_PG,
+            "test_the_named_roles_and_the_owner_may_hold_rights_and_a_function_loses_the_default_for_everyone",
+        ),
+    ),
+    Mutant(
+        "SD1",
+        "a SECURITY DEFINER function is not looked at",
+        MIG,
+        "        if definer and name not in REVIEWED_DEFINER_FUNCTIONS:",
+        "        if False and name not in REVIEWED_DEFINER_FUNCTIONS:",
+        k(T_PG, "test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it"),
+    ),
+    Mutant(
+        "SD2",
+        "the reviewed list of SECURITY DEFINER functions is not read",
+        MIG,
+        "name not in REVIEWED_DEFINER_FUNCTIONS:",
+        "name not in ():",
+        k(T_PG, "test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it"),
+    ),
+    Mutant(
+        "SD3",
+        "only the function names in the file text are looked at, not what is new in the schema",
+        MIG,
+        "                frozenset(n for i, n in _function_ids(db).items() if i not in functions_before),",
+        "                frozenset(),",
+        k(T_PG, "test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new"),
+    ),
+    Mutant(
+        "LW1",
+        "the wait for the migration lock is not limited",
+        MIG,
+        "    db.execute(f\"SET LOCAL lock_timeout = '{int(wait_seconds) * 1000}ms';\")\n",
+        "",
+        k(T_WIRING, "test_the_wait_for_the_lock_is_limited_by_the_argument"),
+    ),
+    Mutant(
+        "LW2",
+        "a run that gives up does not name the session that holds the lock",
+        MIG,
+        "        row = db.execute(_LOCK_HOLDER_SQL, (MIGRATE_LOCK,)).fetchone()",
+        "        row = None",
+        k(T_PG, "test_a_run_that_cannot_get_the_migration_lock_gives_up_and_names_the_holder"),
+    ),
+    Mutant(
+        "LW3",
+        "the wait is the constant, not the argument",
+        MIG,
+        "int(wait_seconds) * 1000",
+        "MIGRATE_LOCK_WAIT_SECONDS * 1000",
+        k(T_WIRING, "test_the_wait_for_the_lock_is_limited_by_the_argument"),
+    ),
+    Mutant(
+        "SW16",
+        "the sweep that cannot see other sessions says nothing",
+        FX_,
+        '"stale test roles were not looked for: this login is neither a superuser nor a member of pg_read_all_stats, "',
+        '"x "',
+        k(T_WIRING, "test_a_login_that_cannot_see_other_sessions_sweeps_nothing"),
+    ),
+    Mutant(
+        "SW17",
+        "a dead marking connection is kept",
+        FX_,
+        '        try:\n            if not mark.closed:\n                mark.execute("SELECT 1")\n                return\n        except psycopg.Error:\n            pass\n',
+        "        return\n",
+        k(T_PG, "test_a_marking_connection_that_died_is_opened_again_and_the_role_is_not_swept"),
+    ),
+    Mutant(
+        "SG1",
+        "the sweep does not look at tables and views the role owns",
+        FX_,
+        '"UNION ALL SELECT relnamespace FROM pg_class WHERE relowner = r.oid "',
+        '""',
+        k(
+            T_PG,
+            "test_a_role_that_owns_a_table_function_or_type_outside_a_scratch_schema_is_not_swept",
+        ),
+    ),
+    Mutant(
+        "SG2",
+        "the sweep does not look at functions the role owns",
+        FX_,
+        '"UNION ALL SELECT pronamespace FROM pg_proc WHERE proowner = r.oid "',
+        '""',
+        k(
+            T_PG,
+            "test_a_role_that_owns_a_table_function_or_type_outside_a_scratch_schema_is_not_swept",
+        ),
+    ),
+    Mutant(
+        "SG3",
+        "the sweep does not look at types the role owns",
+        FX_,
+        '"UNION ALL SELECT typnamespace FROM pg_type WHERE typowner = r.oid) o JOIN pg_namespace n ON n.oid = o.ns "',
+        '") o JOIN pg_namespace n ON n.oid = o.ns "',
+        k(
+            T_PG,
+            "test_a_role_that_owns_a_table_function_or_type_outside_a_scratch_schema_is_not_swept",
+        ),
+    ),
+    Mutant(
+        "GD2",
+        "any ** expansion counts as a password in the login guard",
+        T_RULES,
+        "        if k.arg is None and any(",
+        "        if k.arg is None or any(",
+        k(T_RULES, "test_the_password_scan_reads_the_star_star_forms"),
+    ),
 ]
 
 
@@ -1754,8 +1912,11 @@ def killers_of(m: Mutant) -> list[str]:
 # `psycopg.errors.UndefinedTable`, an error that is not named yet) is a mutant that only broke the code.
 _BLOCK = re.compile(r"^_+ \S.* _+$", re.MULTILINE)  # pytest pads the title with one or more "_"
 _FIRST_E = re.compile(r"^E\s+(.*)$", re.MULTILINE)
+# A test that cannot start (no CREATEDB right, a slow machine, a timeout of its own wait) says so with this phrase, and
+# that is never a kill: the same failure happens with no mutant planted.
+SETUP_PROBLEM = "TEST SETUP PROBLEM"
 _KILL_HEAD = re.compile(
-    r"^(?:assert\b|AssertionError\b|Failed:|(?:[A-Za-z_][\w]*\.)*ConfigError\b)",
+    r"^(?!.*TEST SETUP PROBLEM)(?:assert\b|AssertionError\b|Failed:|(?:[A-Za-z_][\w]*\.)*ConfigError\b)",
 )
 
 
