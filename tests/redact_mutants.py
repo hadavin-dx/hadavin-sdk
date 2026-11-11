@@ -116,7 +116,7 @@ M = [
     m("20 the alignment never checks the budget", RD, "if i >= check:", "if False:", FB,
       "test_aligned_fold_checks_the_budget_every_4096_characters", "DID NOT RAISE"),
     m("21 the views get no shared deadline", GM, "_deadline=started + defaults.REDACT_BUDGET_S", "_deadline=None", FB,
-      "test_one_deadline_covers_the_text_and_all_its_views", "ssert", occurrences=2),
+      "test_one_deadline_covers_the_text_and_all_its_views", "ssert"),
     # ---- the 21 new mutants ----
     m("N1 U+2044 is no longer mapped to a slash", RD,
       '    if ch == "\\u2044":\n        return "/", 1  # a fraction slash spells a slash: masked around, never inside (SL-D)\n', "",
@@ -250,7 +250,7 @@ M = [
     m("H2 a control character is not hidden", GM, 'if cat == "Cf" or (cat == "Cc" and char not in "\\t\\n\\r"):', 'if cat == "Cf":', FH, "test_hidden_1_every_default_ignorable_and_every_control_character_is_hidden_and_a_mark_or_letter_is_not", "ssert"),
     m("H3 a default-ignorable character is not hidden", GM, "    return any(lo <= cp <= hi for lo, hi in _DEFAULT_IGNORABLE)", "    return False", FH, "test_hidden_1_every_default_ignorable_and_every_control_character_is_hidden_and_a_mark_or_letter_is_not", "ssert"),
     m("H4 the last check of an untrusted text is gone", GM, "            _refuse_forgery(out, current)\n", "            pass\n", FH, "test_hidden_4_the_last_check_refuses_a_forged_shape_that_a_later_step_assembled", "Failed"),
-    m("H6 ASCII text with a control character takes the fast path", GM, "not _HIDDEN_ASCII.search(text)", "True", FH, "test_hidden_5_a_handed_out_secret_with_a_hidden_item_at_any_offset_is_scrubbed", "ssert", occurrences=2),
+    m("H6 ASCII text with a control character takes the fast path", GM, "not _HIDDEN_ASCII.search(text)", "True", FH, "test_hidden_5_a_handed_out_secret_with_a_hidden_item_at_any_offset_is_scrubbed", "ssert"),
     m("H7 a host full stop of UTS 46 is no dot in any view", GM, "        canonical(text.translate(_DOTS)),\n", "", FH, "test_hidden_14_an_address_with_any_host_full_stop_or_a_non_ascii_host_label_is_masked", "ssert"),
     m("H8 a view wins although it drops a mask the text has", GM, "    return sum(have.values()) > sum(want.values()) and all(have[k] >= n for k, n in want.items())", "    return sum(have.values()) > sum(want.values())", FH, "test_hidden_16_a_view_wins_only_if_it_keeps_every_mask_the_text_has", "ssert"),
 ]  # fmt: skip

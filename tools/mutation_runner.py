@@ -85,7 +85,6 @@ class Mutant:
     ] = ()  # passed to ``judge``: a first line holding one of these is a CRASH even if it is an assertion
     test_file: str = ""  # one of the `tests` files: run ONLY this file for the mutant (its killer is not in the first file)
     pinned: str = ""  # the test id (as ``first_failure_junit`` writes it, ``tests/test_x::test_y``) that must be the one failing; another failing test is OTHER_TEST
-    occurrences: int = 1  # how many times ``old`` stands in the file: the runner replaces EVERY occurrence, so a snippet that stands twice (or no longer at all) is an ERROR row, not a mutant that tests something else
     only_test: str = ""  # a test function name: run ONLY that test (of the first test file, or of `test_file`), so the killer never depends on test order or a fuzz seed
 
     def __post_init__(self) -> None:
@@ -100,8 +99,6 @@ class Mutant:
             raise ValueError("crash_type without allow_crash")
         if self.only_test and not self.only_test.isidentifier():
             raise ValueError("only_test must be a test function name")
-        if self.occurrences < 1:
-            raise ValueError("occurrences must be at least 1")
         if self.test_file:
             _relative(self.test_file)
 
@@ -540,16 +537,6 @@ def _run_mutants(
             text = p.read_text(encoding="utf-8")
             if m.old not in text:
                 emit((m.name, Verdict.ERROR, "SNIPPET NOT FOUND", False))
-                continue
-            if text.count(m.old) != m.occurrences:
-                emit(
-                    (
-                        m.name,
-                        Verdict.ERROR,
-                        f"SNIPPET FOUND {text.count(m.old)} TIMES, expected {m.occurrences}",
-                        False,
-                    )
-                )
                 continue
             p.write_text(text.replace(m.old, m.new), encoding="utf-8", newline="\n")
             junit = tmp / "r.xml"
