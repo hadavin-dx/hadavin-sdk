@@ -1478,3 +1478,7 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a19633e6a12fb0ef7 | P3a-2 3b builder | - | - | 23:30Z | closed; suite RED 5 failed; fix builder queued | brief new builder: re-point 3 k5 tests, move psycopg import into kind module, rerun |
 | a1cd5c7d716378ca9 | P3a-2 red-suite fix builder (75m box) | 23:35Z | +75m | 23:35Z | running | check checkpoint B-P3a2-fix-checkpoint.md at +30m |
 | a1cd5c7d716378ca9 | P3a-2 fix builder | - | - | 23:42Z | handed back twice (waiting on mutants); WIP ee831364 pushed | after rc= in B-P3a2-fx-mutants.log: timing alone, fail-before, whole suite, stop PG 56912 |
+| a84305a6190d1191f | Q8b fix batch 4 builder (90m box) | 23:57Z | +90m | 23:57Z | running | check B-Q8b-b4-checkpoint.md at +30m; then snapshot, EV, 2 reviewers, resolve r5 |
+| a5ed25d778cfd9b0e / aec21ef8590d94516 / a09a63245f27bf7de | Q8c-1 r7 EV runner / egm-design / egm-codebase-details on d598d967 | 23:57Z | +55m | 23:57Z | running | save reports, resolve r7 |
+| ab258684d1aeda457 | Q8b r4 EV runner | - | - | 23:57Z | closed | - |
+| aca3636534ceda296 | Q8c-1 b6 builder | - | - | 23:57Z | closed (d598d967, WIP wip/cloud-q8c1-b6, full suite NOT run) | - |
