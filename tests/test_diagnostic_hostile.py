@@ -143,3 +143,32 @@ def test_oracle_and_grammar_are_independent() -> None:
         "ValueError: diag_v=1 code=foreign_exception step=extract at=- fp=00000000", (corpus.NAME,)
     )
     assert leaks("x " + corpus.NAME + " y", (corpus.NAME,))
+
+
+def test_planted_unclassified_config_error_site_fails_the_table_check(tmp_path) -> None:
+    """P5b2: a ``ConfigError(f"...{exc}")`` planted into a copy of the SDK is reported by the table check (the generator's own
+    version of this test is ``test_planted_unclassified_site_is_refused`` in ``tests/test_config_error_sites.py``).
+    Killing mutant: M12 (``compare`` does not report unclassified sites)."""
+    import shutil
+    from pathlib import Path
+
+    from tools.gen_config_error_sites import compare, load_csv, scan
+
+    root = Path(__file__).resolve().parents[1]
+    copy = tmp_path / "hadavin_sdk"
+    shutil.copytree(
+        root / "src" / "hadavin_sdk", copy, ignore=shutil.ignore_patterns("__pycache__")
+    )
+    before = {s.key for s in scan(copy)}
+    plant = (
+        "\n\ndef plant():\n    try:\n        pass\n    except Exception as exc:\n"
+        '        raise ConfigError(f"plant {exc}")\n'
+    )
+    with (copy / "audit" / "signer.py").open("a", encoding="utf-8") as handle:
+        handle.write(plant)
+    after = scan(copy)
+    new = [s for s in after if s.key not in before]
+    assert [(s.symbol, s.auto_reason) for s in new] == [("plant", "exception-variable")]
+    report = compare(after, load_csv(root / "tests" / "data" / "config_error_sites.csv"))
+    assert report.unclassified == [new[0].key]
+    assert report.ok is False
