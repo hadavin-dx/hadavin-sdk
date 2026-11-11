@@ -1216,7 +1216,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-Q8a1-r2 ad880047 | EVIDENCE RUNNER (Fable) Q8a-1 head f6fad26f, heavy.sh, pg 56140 | 14:48Z | +50m | 14:48Z | CLOSED evidence/Q8a-1/f6fad26/RESULTS.md (10652 passed, 0 failed; mutants 46/46; probes: steps=[] runs in pilot and returns 0 = confirms the open Major; new test file needs a one-line alias to import on older bases) | read RESULTS.md |
 | R-Q8a1-r2 a8768ee3, ac32ad6b | both CLOSED, saved reviews/Q8a/result-r2-*-full.md (1 Major: run_tick steps=) | | | | closed | |
 | A-Q8b (resumed 2) a123e38f | Q8b ticket revision 3 (third and last plan round; full review texts) | 14:48Z | +45m | | running | freeze with errata if clean enough; builder after PR77 result is known |
-| EV-Q8a2-res a96bf331 | EVIDENCE RUNNER (Fable) Q8a-2 head 02068ebe, heavy.sh, pg 56150, socket probes | 14:52Z | +50m | 14:52Z | running | read RESULTS.md |
+| EV-Q8a2-res a96bf331 | EVIDENCE RUNNER (Fable) Q8a-2 head 02068ebe, heavy.sh, pg 56150, socket probes | 14:52Z | +50m | 14:52Z | CLOSED evidence/Q8a-2/02068eb/RESULTS.md (10648 passed, 0 failed; each commit green; merged tree with Q8a-1: both scans empty, 431 passed; probe: a path with doubled leading slashes answers like the right path, also on main) | read RESULTS.md |
 | R-Q8a2-res a3040b43, ae979d0b | both CLOSED, saved reviews/Q8a-2/result-r1-*-full.md (2 code Majors: gcs skip, import module path) | | | | closed | |
 
 ### Long-running check 14:53Z
