@@ -2648,3 +2648,5 @@
 | BL-core-p3a2-r12-d05 | Major | P3a-2 | reviews/P3a-2/r12-design-full.md F5 (not yet reproduced) | OPEN | | | 2026-11-11 |
 | BL-core-p3a2-r12-d06 | Major | P3a-2 | reviews/P3a-2/r12-design-full.md F6 (not yet reproduced) | OPEN | | | 2026-11-11 |
 | BL-core-p3a2-r12-d07 | Major | P3a-2 | reviews/P3a-2/r12-design-full.md F7 (not yet reproduced) | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r12-c01 | Major | P3a-2 | reviews/P3a-2/r12-codebase-full.md F1 (same class as design F6) | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r12-c02 | Major | P3a-2 | r12-codebase-full.md F2 (same class as design F3) | OPEN | | | 2026-11-11 |

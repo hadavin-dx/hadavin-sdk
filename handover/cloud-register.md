@@ -1331,3 +1331,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-Q8c1-fix1 a9b15053, B-Q8b a74d0f05, B-Q8a2-fix2 a2cd2d28, A-PRH a2f42970 | 5-20 min | building / writing; no checkpoint note due yet | on track |
 | EV-P3a2-r12 a10b6577 | 10 min | full suite running in a slot; route probes added | on track |
 | R-P3a2-r12 codebase a20099a3, R-P3a2-zoom a26d1a15 | under 10 min | reading | on track |
+| R-P3a2-r12 codebase a20099a3 | | | | 15:46Z | CLOSED: NOT CLEAN, 2 Major (same classes as the design review), saved | wait for zoom-out + route probes |
