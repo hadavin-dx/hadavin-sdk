@@ -1817,3 +1817,8 @@ Q8b batch 2 (2026-11-11): (1) PR77 and Q8b both change `guard/redact.py`; Q8b sh
 
 ## q-prh-stray-branch (23:02Z, 2026-11-11): stray remote branch core/prh-b3-local (1ef1212c)
 - A PR H builder pushed a duplicate branch core/prh-b3-local by mistake (git push origin HEAD). It is not the PR branch (core/prh-strip-hidden-controls, head e852b577). Deleting a remote branch needs the owner or lead, so I did not. Safe default: leave it; delete it when convenient (nothing depends on it; 1ef1212c is a local WIP copy).
+
+## q-p3a2-3b-decisions (23:23Z, 2026-11-11): P3a-2 commit 3b needs sign-off (WIP 1ffa6559 saved on wip/cloud-p3a2-3b, NOT on core/P3a-2-clean)
+- Sign-off items from the builder: dropped group-owner refusal (rule O5 struck); retired WD1 rule; PUBLIC-function grant now undone by step 4; retired/re-pointed mutants (SD4 SD5 OW7-9 FB1-3 SO1-3 CS2 E5 FO5; E22 OA3 OW5 OW6 SD7 SD8); step-1 _refuse_foreign_owned and verify foreign_owner refuse the same third-role-owned object (ticket 4.1 keeps both, only wording differs); pg_monitor ticket text says one line, code gives four (pinned at four); saved-statement-timeout test uses 50 ms not 5 ms.
+- Mutants EX1/EX2 (extension exclusion in _FOREIGN_OWNED_SQL) cannot be killed without a custom-extension fixture installed in the server's sharedir. Options: build the fixture, accept untestable, or remove the exclusion. Safe default: keep the exclusion, build the fixture later (my recommendation: try the fixture first; if it needs root writes to the sharedir, remove the exclusion).
+- 39 of 41 surviving mutants plant in dead code that ticket commit 3c deletes (re-planted with killers there): follows the ticket order.

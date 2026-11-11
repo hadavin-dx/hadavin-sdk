@@ -10,3 +10,6 @@ Done: Issues 1-8 code and tests (tests/test_q8b_batch3.py 24 tests, corpus tests
 
 ## note (23:08Z)
 Full suite at ca2e5ffe: 10739 passed, 1 skipped, 16 xfailed, rc 0 (log /home/user/build/B-Q8b-b3-full2.log). First full run found 2 failures I caused (runner byte-copy hash pin; test list pin of test_mutation_runner.py): fixed (hash moved, test moved to test_q8b_batch3.py). Then a refactor of the value-tail regex into named parts (f46ecc1a); final full run in progress (full3.log), then perf alone, mutation_runner_mutants, stage and q8b mutants, push.
+
+## Final (23:23Z)
+Pushed 4091f8b1 (fast-forward from 13ea6b75). Full suite at f46ecc1a (same tree): 10739 passed, 1 skipped, 16 xfailed, rc 0. q8b_mutants 63/63, stage_mutants 37/37, mutation_runner_mutants 62/62, perf 27 passed 1 failed (known timing test, also fails 3/3 on 13ea6b75). Postgres stopped and its folder deleted.
