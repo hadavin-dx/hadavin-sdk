@@ -1475,3 +1475,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a181696c25bc0e463 | Q8b r4 egm-codebase-details | 23:25Z | +30m | 23:25Z | running | save report, resolve |
 | aacde19899a414b3f | Q8b fix batch 3 builder | - | - | 23:25Z | closed (4091f8b1) | - |
 | a19633e6a12fb0ef7 | P3a-2 3b builder | - | - | 23:25Z | handed back, WIP 1ffa6559; full suite B2-full.log still running | read exit code ~23:50Z, then stop leftovers |
+| a19633e6a12fb0ef7 | P3a-2 3b builder | - | - | 23:30Z | closed; suite RED 5 failed; fix builder queued | brief new builder: re-point 3 k5 tests, move psycopg import into kind module, rerun |
