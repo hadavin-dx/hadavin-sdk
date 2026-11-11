@@ -1122,3 +1122,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | aed5770d | PR73 builder r11 (resumed) | 02:51Z | batch r10-01..07 sent; code-only push, report once; check 03:50Z | running |
 | a8904ec1 | PR89 builder r11 | closed ~03:35Z: head b855a8f (tree b71c650), pushed code only; builder figures: suites 10619 passed 3.12/3.13, mutants 207 of 207, ruff/bandit rc 0, fail-before 9 failed/125 passed (shim). Not independently verified. | closed |
 | af5482b9 | PR89 egm-zoom-out (ORDER 236 pt 1): simpler rule? | 03:37Z | expected ~03:50Z; check 03:50Z; then file-sliced reviewers | running |
+| af5482b9 | PR89 egm-zoom-out | 03:37Z | closed ~03:44Z: verdict PARTLY (literal drop-line rule fails; refuse-then-plain holds), saved round-w2-r12-zoomout.md | closed |
+| a8904ec1 | PR89 builder round 12 (resumed) | 03:47Z | cut to refuse-then-plain, differential, deletion table; check 04:50Z | running |
