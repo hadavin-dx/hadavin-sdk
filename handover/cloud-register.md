@@ -1360,3 +1360,14 @@ Heavy queue: 8 jobs for 3 slots at 15:54Z (load 10 on 4 cores): waits of 5-15 mi
 | R-P89-r21 codebase abd93594 | | | | 16:03Z | CLOSED: NOT CLEAN, 1 Major (same as design), saved | fix batch |
 | B-PR89-r22 a25ff55a | BUILDER (Fable, fresh) PR89 round 22: one code Major, four wording Majors, Minors; worktree /home/user/build/B-PR89-r20, pg 56132 | 16:03Z | +70m | 16:03Z | running | evidence + fresh reviewers round 23 |
 | EV-P3a2-r12 a10b6577 | | | | 16:04Z | report not yet handed back (mutant list still running); RESULTS.md read by the lead: 5 of 6 probed routes REPRODUCED (Blocker confirmed), one not reproducible, F8 confirmed, P1-P8 observed | wait for the mutant total |
+
+### 16:04Z Long-running check (heartbeat)
+| item | age | what it is doing now (checked: process list, checkpoint notes) | verdict |
+|---|---|---|---|
+| B-flaky a6e5db57 | 95 min | was running 8 busy loops for 22 min (its load proof), which slowed every other heavy job | told at 16:04Z to stop its loops and report within 10 min; check at 16:16Z |
+| B-Q8a1 a0c5bd99 | 50 min | no checkpoint since 15:32Z; stage mutants were queued | check at 16:16Z; message if still silent |
+| B-Q8c1-fix1 a9b15053 | 35 min | checkpoint 15:47Z, full suite queued | on track |
+| B-Q8b a74d0f05 | 25 min | checkpoint 15:57Z: reading results, push next | on track |
+| B-Q8a2-fix2 a2cd2d28 | 23 min | two local commits, affected tests 503 passed, full suite next | on track |
+| B-PR89-r22 a25ff55a, A-PRH a2f42970, A-P3a2-r13 a0ea76bf, EV-P89-r21 a23252a4, EV-P3a2-r12 a10b6577 | under 30 min | building / writing / running | on track |
+Heavy queue: 9 jobs for 3 slots (load 10).

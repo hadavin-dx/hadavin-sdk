@@ -906,3 +906,4 @@ PULSE 2026-11-11T15:25:55Z 17 running
 - 15:33Z PULSE: 12 agents, none stuck; heavy slots full (3). Load 5.80.
 - 15:44Z PULSE: 12 agents, none stuck; two builders past 75 min are making commits (checked). Load 8.96.
 - 15:54Z PULSE: 15 agents, none stuck; heavy queue 8 for 3 slots. Load 10.27.
+- 16:04Z PULSE: 12 agents; heavy queue 9 for 3 slots; one builder told to stop its load test. Load 8.60.
