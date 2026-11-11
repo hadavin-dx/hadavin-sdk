@@ -15,6 +15,7 @@ from hadavin_sdk.guard import (
 )
 from hadavin_sdk.llm import FakeLLM, UnknownRecording
 from hadavin_sdk.models import DeadLetter
+from tests.fixtures import timing
 from tests.fixtures.schemas import RecordRequest
 
 
@@ -208,16 +209,15 @@ def test_invalid_compact_timestamp_shape_is_still_masked():
 # P0 review (3): clean() terminates on adversarial nested input (the gate's fixed-point loop is bounded)
 @pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_clean_terminates_on_adversarial_nesting():
-    import time
 
     from hadavin_sdk.approvals.channel import clean
 
     nested = "![a](" * 200 + "//evil%2Ecom/p.png" + ")" * 200
     tangled = "".join(f"[x{i}](<!here>![y](//e{i}.example/{i}.png))" for i in range(300))
     for text in (nested, tangled, "<" * 5000 + "!here>" * 50):
-        start = time.monotonic()
+        start = timing.CLOCK()
         out = clean(text)
-        assert time.monotonic() - start < 5
+        assert timing.CLOCK() - start < 5
         assert "//evil" not in out and "](//" not in out
 
 

@@ -30,7 +30,7 @@ from hadavin_sdk.sources.kubernetes import KubernetesSettings
 from hadavin_sdk.store import MemoryStore
 from hadavin_sdk.store.protocol import NotFound
 from tests.conftest import qualify
-from tests.fixtures import k5_tools
+from tests.fixtures import k5_tools, timing
 from tests.k5_support import (
     BUNDLES,
     TOOL,
@@ -249,10 +249,10 @@ def test_m2_a_toolbox_without_a_proposal_check_is_refused(tmp_path):
 @pytest.mark.perf  # a wall-clock bound: runs in the perf step, not the default suite
 def test_m3_a_multi_megabyte_return_is_cut_before_redaction():
     huge = "ERROR 10.0.0.5 retry\n" * 400_000  # about 8 MB
-    started = __import__("time").monotonic()
+    started = timing.CLOCK()
     out = tools_mod.prepare_output(huge, {}, 16384, raw_cap=100_000)
     assert len(out.encode()) <= 16384 + len(tools_mod.TRUNCATED)
-    assert __import__("time").monotonic() - started < 20
+    assert timing.CLOCK() - started < 20
 
 
 def test_m3_nul_bytes_are_replaced_so_the_store_can_keep_the_row():

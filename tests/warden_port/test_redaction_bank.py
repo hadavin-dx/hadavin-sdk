@@ -13,11 +13,10 @@ scripts/check_publishable.py allows."""
 
 from __future__ import annotations
 
-import time
-
 import pytest
 
 from hadavin_sdk.guard.redact import redact, redact_many
+from tests.fixtures import timing
 
 BC, BA = ("BANKCODE", "BANKACCT")
 BSB = "062" + "-000"
@@ -354,9 +353,9 @@ def test_L1_a_copy_glued_to_other_characters_is_not_swept():
 @pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_T1_a_planted_line_is_read_in_linear_time():
     for text in ("BSB" + " " * 50000 + "x", "account" + " " * 50000 + "x"):
-        start = time.process_time()
+        start = timing.CLOCK()
         redact(text)
-        assert time.process_time() - start < 2.0, text[:10]
-    start = time.process_time()
+        assert timing.CLOCK() - start < 2.0, text[:10]
+    start = timing.CLOCK()
     redact_many([f"sort code {SORT} account {ACCT7}{i}" for i in range(2000)])
-    assert time.process_time() - start < 15.0
+    assert timing.CLOCK() - start < 15.0

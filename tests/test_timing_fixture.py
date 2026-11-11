@@ -1,11 +1,13 @@
 """The shared linear-time rule (`tests/fixtures/timing.py`) itself, with a made-up clock: no real clock, so a loaded
-machine cannot change the result. The tests that use the rule with the real clock are marked `perf`."""
+machine cannot change the result. The tests that use the real clock (waiting work, a child process, ordinary computing)
+are marked `perf`; the two that need the processor-time clock are skipped on Windows, where the check is off."""
 
 from __future__ import annotations
 
 import gc
 import itertools
 import math
+import multiprocessing
 import sys
 import time
 import timeit
@@ -493,7 +495,71 @@ def test_the_sizing_loops_end_by_construction_even_without_the_calls_cap(monkeyp
 
 # --- work that waits: refused, because processor time does not count it -------------------------------------------------------
 
+not_on_windows = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="on Windows the rule's clock is the wall clock, so there is no waiting check to test",
+)
 
+
+class WallModel:
+    """A made-up processor-time clock and a made-up wall clock that move together by `cost` seconds per call, and a
+    list of calls (by number, from 1) after which the wall clock alone jumps by `pause` seconds: a program paused by the
+    scheduler while it computes. With `wait` seconds the work also waits that long in every call (the wall moves, the
+    processor time does not)."""
+
+    def __init__(self, cost: float, pause: float = 0.0, paused_calls=(), wait: float = 0.0):
+        self.cost, self.pause, self.paused, self.wait = cost, pause, set(paused_calls), wait
+        self.cpu = self.real = 0.0
+        self.calls = 0
+
+    def fn(self, _text: str) -> None:
+        self.calls += 1
+        self.cpu += self.cost
+        self.real += self.cost + self.wait
+        if self.calls in self.paused:
+            self.real += self.pause
+
+    def cpu_clock(self) -> float:
+        return self.cpu
+
+    def wall_clock(self) -> float:
+        return self.real
+
+    def seconds(self) -> float:
+        return timing.seconds_per_call(self.fn, "a", self.cpu_clock, self.wall_clock)
+
+
+@pytest.mark.parametrize("calls_paused", [1, 2, 3, 5])
+def test_one_pause_inside_a_tiny_batch_is_not_taken_for_waiting(calls_paused):
+    # 60 microseconds of work, and the scheduler takes the program away for 8 ms inside the batch: 8 ms is more than 50
+    # times 60 microseconds and more than 5 ms, which is what the first version of the check refused at once
+    model = WallModel(6e-5, pause=8e-3, paused_calls=[calls_paused])
+    assert model.seconds() == pytest.approx(6e-5), "the pause changed the time of one call"
+
+
+def test_two_pauses_in_a_row_on_the_same_batch_are_still_not_waiting():
+    # calls 1 and 2 are the first two tries of the first batch (one call each); the third try is clean
+    model = WallModel(6e-5, pause=8e-3, paused_calls=[1, 2])
+    assert model.seconds() == pytest.approx(6e-5)
+
+
+def test_a_pause_on_every_try_of_a_batch_is_what_waiting_looks_like():
+    # the made-up work waits 8 ms in every call: every try of the batch looks the same, so it is refused
+    model = WallModel(6e-5, wait=8e-3)
+    with pytest.raises(timing.Untimeable, match=f"{timing.WAIT_TRIES} times in a row"):
+        model.seconds()
+    assert model.calls == timing.WAIT_TRIES, (
+        "it must refuse after exactly the allowed tries, not run on"
+    )
+
+
+def test_the_waiting_check_is_not_armed_by_a_wall_clock_that_agrees_with_the_processor_clock():
+    model = WallModel(6e-5)
+    assert model.seconds() == pytest.approx(6e-5)
+
+
+@not_on_windows
+@pytest.mark.perf
 def test_work_that_sleeps_is_refused_not_timed_from_a_few_microseconds_of_processor_time(
     monkeypatch,
 ):
@@ -512,17 +578,21 @@ def _burn_in_the_child(_text: str) -> None:
         pass
 
 
+@not_on_windows
+@pytest.mark.perf
 def test_work_done_in_a_child_process_is_refused_because_processor_time_does_not_count_it(
     monkeypatch,
 ):
     monkeypatch.setattr(timing, "MAX_CALLS", 2)
+    # a "spawn" child (a new interpreter): no fork of a threaded test process, so no fork warning under `-W error`
     with (
-        ProcessPoolExecutor(max_workers=1) as pool,
+        ProcessPoolExecutor(max_workers=1, mp_context=multiprocessing.get_context("spawn")) as pool,
         pytest.raises(timing.Untimeable, match="child process"),
     ):
         timing.seconds_per_call(lambda text: pool.submit(_burn_in_the_child, text).result(), "a")
 
 
+@pytest.mark.perf
 def test_ordinary_computing_is_not_taken_for_waiting():
     got = timing.seconds_per_call(lambda text: sum(map(ord, text)), "a" * 2000)
     assert 0 < got < 0.01, "a few thousand additions are not waiting"
@@ -533,3 +603,35 @@ def test_the_waiting_check_is_for_the_real_clock_only(monkeypatch):
     monkeypatch.setattr(timing, "MAX_CALLS", 10)
     with pytest.raises(timing.Untimeable, match="too fast to time"):
         timing.seconds_per_call(lambda _text: time.sleep(0.006), "a", lambda: 0.0)
+
+
+def test_the_waiting_check_is_off_when_the_rules_clock_is_not_processor_time(monkeypatch):
+    # Windows (the wall clock is the clock), or a test that swapped the rule's clock for a made-up one
+    monkeypatch.setattr(timing, "CLOCK", time.perf_counter)
+    assert timing._wall_for(None, None) is None
+    monkeypatch.setattr(timing, "CLOCK", time.process_time)
+    assert timing._wall_for(None, None) is time.perf_counter
+    assert timing._wall_for(lambda: 0.0, None) is None
+    given = lambda: 0.0
+    assert timing._wall_for(None, given) is given
+
+
+@pytest.mark.parametrize("t_small, t_big", [(0.0, 1.0), (1.0, 0.0), (math.nan, 1.0), (1.0, -1.0)])
+def test_a_hand_built_growth_with_no_time_is_refused_not_a_division_by_zero(t_small, t_big):
+    built = timing.Growth(t_small, t_big, SMALL, BIG)
+    with pytest.raises(timing.Untimeable):
+        built.ratio  # noqa: B018
+    with pytest.raises(timing.Untimeable):
+        str(built)
+
+
+def test_a_resize_times_again_only_the_text_whose_batch_changed():
+    # the small text's first guess is short (its first batch is paused, so it looks long enough) and is resized; the big
+    # text's batch is right the first time and its five results stand
+    model = Model(power(1), 1e-9, pause=0.5, spell=1)
+    timing.seconds_per_call_each(model.fn, ["a" * SMALL, "a" * BIG], clock=model.clock)
+    sizes = [size for size, _ in model.batches]
+    assert sizes.count(BIG) == 2 + 5, (
+        "the big text: two sizing batches and five repeats, and no more"
+    )
+    assert sizes[-5:] == [SMALL] * 5, "after the resize only the small text is timed"

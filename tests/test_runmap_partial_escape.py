@@ -113,9 +113,7 @@ def test_a_very_long_run_of_percent_bytes_takes_linear_time():
         return lambda: [runmap.partial_escape_start(t) for t in texts]
 
     first = _fastest(run(hostile))
-    assert first < 60.0, (
-        first
-    )  # generous: a busy runner or a coverage run is slower, a quadratic pattern is hours
+    assert first < 60.0, first  # generous: a quadratic pattern is hours
 
 
 @pytest.mark.perf
@@ -129,6 +127,18 @@ def test_the_time_of_a_long_run_grows_no_faster_than_its_length(unit):
         lambda run: runmap.partial_escape_start("x" + run + "y"), unit, 6_000, 48_000
     )
     assert not measured.flagged, f"partial_escape_start on {unit!r}: {measured}"
+
+
+@pytest.mark.perf
+def test_the_growth_rule_flags_the_old_pattern_on_the_same_text():
+    # the control for the test above: the old regex really is quadratic on a `%XX` run that is followed by a character
+    # that is not part of it, and the rule flags it. Only this unit has a documented quadratic history for the old
+    # pattern (the others in the test above are linear guards: they pass for a linear function and would flag a
+    # quadratic one, but no quadratic pattern for them was measured here).
+    measured = timing.growth(lambda run: _old("x" + run + "y", 0), "%C3", 1_500, 12_000)
+    assert measured.flagged, (
+        f"the old pattern was not flagged, so the rule would miss it: {measured}"
+    )
 
 
 def test_other_long_runs_are_linear_too():

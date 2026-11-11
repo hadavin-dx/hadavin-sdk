@@ -8,7 +8,6 @@ exposed views and allowlisted functions. Every POISONED case (a hazard in code p
 
 import collections
 import random
-import time
 
 import pytest
 import sqlglot
@@ -16,6 +15,7 @@ from askdata.validate import Rejected, validate
 
 from tests.demo_askdata import fuzzgen
 from tests.demo_askdata.oracle import judge
+from tests.fixtures import timing
 
 SEED = 20261101
 CASES = 2000
@@ -87,9 +87,9 @@ def run_fuzz(seed: int = SEED, cases: int = CASES):
 
 @pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
 def test_fuzz_2000_cases_hold_the_invariant():
-    started = time.monotonic()
+    started = timing.CLOCK()
     stats, failures, _ = run_fuzz()
-    elapsed = time.monotonic() - started
+    elapsed = timing.CLOCK() - started
     assert sum(stats[k] for k in ("clean", "poisoned", "slot", "mutated")) == CASES
     detail = "\n".join(f"{k}: {s!r} -> {why}" for k, s, why in failures[:5])
     assert not failures, f"{len(failures)} failures, first:\n{detail}"

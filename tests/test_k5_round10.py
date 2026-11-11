@@ -22,7 +22,7 @@ from hadavin_sdk.guard.egress import EgressRefused
 from hadavin_sdk.models import RunState
 from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import evidence
-from tests.fixtures import k5_tools
+from tests.fixtures import k5_tools, timing
 from tests.k5_support import SECRETS, TOOL, ScriptLLM, build_runtime, handle, k5_cfg
 
 S = RunState
@@ -125,15 +125,13 @@ def test_a_non_ascii_text_does_not_rebuild_for_each_of_its_passes(monkeypatch):
 def test_the_cpu_of_a_full_size_run_stays_in_budget():
     rmap = runmap.RunMap()
     doc = " ".join(f"10.{i // 60000}.{(i // 250) % 240}.{i % 250 + 1}" for i in range(1500))
-    t0 = time.process_time()
+    t0 = timing.CLOCK()
     runmap.redact_untrusted(
         doc, rmap
     )  # intake: 1,500 distinct addresses (under the default cap of 2,000)
     for i in range(40):  # then 40 tool calls x 5 strings of arguments
         runmap.redact_value({f"k{j}": f"value {i} {j} 10.9.9.{j}" for j in range(5)}, rmap)
-    assert (
-        time.process_time() - t0 < 30
-    )  # measured about 1 s; the old per-string rebuild took minutes
+    assert timing.CLOCK() - t0 < 30  # measured about 1 s; the old per-string rebuild took minutes
 
 
 def test_a_document_with_too_many_distinct_values_is_refused_not_ground_through(tmp_path):

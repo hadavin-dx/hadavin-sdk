@@ -35,10 +35,21 @@ and by its rules (read in the `timeit` module of Python 3.13 on 2026-11-11):
     fastest batch that must reach `MIN_BATCH_S`, so a pause during one batch cannot shorten the batches;
   * the batches of the two sizes take turns (small, big, small, big, ...), so a slow spell of the machine that lasts
     longer than one batch falls on both sizes and not on all the batches of one of them;
-  * WORK THAT MOSTLY WAITS is refused, not mis-timed: with the real processor-time clock, a batch whose wall time is more
-    than `WAIT_FACTOR` times its processor time (and at least `WAIT_MIN_S`) raises `Untimeable` at once. That covers
-    sleeping, input and output, lock waits and work done in a child process (processor time does not count a child:
-    measured 0.0003 s of process time for a child that burned 1.0 s).
+  * WORK THAT MOSTLY WAITS is refused, not mis-timed: with the real processor-time clock (not on Windows, where the wall
+    clock is the clock and the check is off), a batch whose wall time is more than `WAIT_FACTOR` times its processor time
+    (and at least `WAIT_MIN_S`) looks like waiting; it is run again, and `Untimeable` is raised when `WAIT_TRIES`
+    tries of the same batch in a row all look like it. That covers sleeping, input and output, lock waits and work done in
+    a child process (processor time does not count a child: measured 0.0003 s of process time for a child that burned
+    1.0 s). ONE look is not enough, because a program that is paused by the scheduler for a few milliseconds inside a batch
+    of a few microseconds (the first, tiny sizing batches) would look the same: the machine paused, the work did not
+    wait. Work that waits does so in every try; a pause does not repeat in the next try (shown with a made-up wall clock in
+    `test_timing_fixture.py`; the same pause with the first version of the check, which judged one look, failed under four
+    busy processes, see the changelog).
+  * These ceilings count computing only: a regression that sleeps or blocks is NOT caught by a processor-time ceiling; a
+    test for that needs a wall-time limit (`test_k5_review.py` abandons a hang at its deadline, `test_pgsource_layers.py`
+    uses a database sleep with a watchdog).
+  * Only the doubling-ratio test (`growth`, marked `perf` where it uses the real clock) sees mild super-linear growth (an
+    exponent of 1.3 passes a fixed ceiling on seconds); the fixed ceilings catch an exploding cost only.
 
 MEASURED on 2026-11-11 (4 processors, LINUX, other test runs on the machine; ratio big/small of a linear, an "n log n"
 and a quadratic stand-in at a gap of 16, limit 48, 100 samples each, batch length 20 ms; full tables in the changelog):
@@ -84,7 +95,8 @@ MAX_ROUNDS = (
 WAIT_FACTOR, WAIT_MIN_S = (
     50.0,
     0.005,
-)  # a batch with 50x more wall time than processor time (and 5 ms or more) waits
+)  # a batch with 50x more wall time than processor time (and 5 ms or more) looks like waiting ...
+WAIT_TRIES = 3  # ... and is refused only when this many tries of the SAME batch in a row all look like waiting
 
 Work = Callable[[str], object]
 Clock = Callable[[], float]
@@ -145,6 +157,8 @@ class Growth(NamedTuple):
 
     @property
     def ratio(self) -> float:
+        _check_time(self.t_small, "small")
+        _check_time(self.t_big, "big")
         return self.t_big / self.t_small
 
     @property
@@ -162,23 +176,31 @@ class Growth(NamedTuple):
         )
 
 
+def _looks_like_waiting(took: float, waited: float) -> bool:
+    return waited >= WAIT_MIN_S and waited > WAIT_FACTOR * took
+
+
 def _batch_timer(fn: Work, text: str, clock: Clock, wall: Clock | None) -> Callable[[int], float]:
     """`batch(n)`: the seconds `n` calls of `fn(text)` take, with the garbage collector off. With `wall` (the real
-    processor-time clock only) a batch that mostly waits is refused."""
+    processor-time clock only) a batch that mostly waits is refused: a batch that looks like waiting is run again, and
+    only `WAIT_TRIES` looks in a row refuse it (a pause by the scheduler is one look, never three), so one pause is
+    thrown away and the batch is measured again."""
     timed = timeit.Timer(functools.partial(fn, text), timer=clock).timeit
     if wall is None:
         return timed
 
     def batch(n: int) -> float:
-        started = wall()
-        took = timed(n)
-        waited = wall() - started
-        if waited >= WAIT_MIN_S and waited > WAIT_FACTOR * took:
-            raise Untimeable(
-                f"{n} calls took {took:.3g} s of processor time but {waited:.3g} s of real time: the work mostly "
-                "waits (sleep, input and output, a lock) or runs in a child process, which processor time does not count"
-            )
-        return took
+        for _ in range(WAIT_TRIES):
+            started = wall()
+            took = timed(n)
+            waited = wall() - started
+            if not _looks_like_waiting(took, waited):
+                return took
+        raise Untimeable(
+            f"{n} calls took {took:.3g} s of processor time but {waited:.3g} s of real time, {WAIT_TRIES} times in a row: "
+            "the work mostly waits (sleep, input and output, a lock) or runs in a child process, which processor time "
+            "does not count"
+        )
 
     return batch
 
@@ -193,11 +215,19 @@ def _more_calls(calls: int, took: float) -> int:
     return min(MAX_CALLS, max(calls * 2, wanted))
 
 
+def _wall_for(clock: Clock | None, wall: Clock | None) -> Clock | None:
+    """The wall clock that arms the waiting check: given (a test with a made-up one), or the real one when the real
+    processor-time clock is used; none otherwise (a made-up clock, or Windows, where the wall clock is the clock)."""
+    if wall is not None:
+        return wall
+    return time.perf_counter if clock is None and CLOCK is time.process_time else None
+
+
 def seconds_per_call_each(
-    fn: Work, texts: Sequence[str], clock: Clock | None = None
+    fn: Work, texts: Sequence[str], clock: Clock | None = None, wall: Clock | None = None
 ) -> list[float]:
     """Seconds of ONE `fn(text)` for each text: the fastest of `REPEATS` batches per text, the texts taking turns."""
-    wall = time.perf_counter if clock is None else None
+    wall = _wall_for(clock, wall)
     batches = [_batch_timer(fn, text, clock or CLOCK, wall) for text in texts]
     calls = [1] * len(texts)
     for i, batch in enumerate(batches):  # a first guess at the number of calls a batch needs
@@ -209,24 +239,31 @@ def seconds_per_call_each(
             raise Untimeable(
                 f"{MAX_ROUNDS} batches in a row stayed under {MIN_BATCH_S} s: not a time that grows"
             )
+    best = [0.0] * len(texts)
+    todo = list(
+        range(len(texts))
+    )  # the texts whose batch size is new: only these are timed again after a resize
     for _ in range(MAX_ROUNDS):
-        runs: list[list[float]] = [[] for _ in texts]
+        runs: dict[int, list[float]] = {i: [] for i in todo}
         for _ in range(REPEATS):
-            for i, batch in enumerate(batches):
-                runs[i].append(batch(calls[i]))
-        best = [min(r) for r in runs]
-        short = [i for i, seconds in enumerate(best) if not seconds >= MIN_BATCH_S]
-        if not short:
+            for i in todo:
+                runs[i].append(batches[i](calls[i]))
+        for i in todo:
+            best[i] = min(runs[i])
+        todo = [i for i, seconds in enumerate(best) if not seconds >= MIN_BATCH_S]
+        if not todo:
             return [seconds / n for seconds, n in zip(best, calls, strict=True)]
-        for i in short:  # the guess was made during a pause: the fastest batch shows the true need
+        for i in todo:  # the guess was made during a pause: the fastest batch shows the true need
             calls[i] = _more_calls(calls[i], best[i])
     raise Untimeable(
         f"{MAX_ROUNDS} rounds in a row had a batch under {MIN_BATCH_S} s: not a time that grows"
     )
 
 
-def seconds_per_call(fn: Work, text: str, clock: Clock | None = None) -> float:
-    return seconds_per_call_each(fn, [text], clock)[0]
+def seconds_per_call(
+    fn: Work, text: str, clock: Clock | None = None, wall: Clock | None = None
+) -> float:
+    return seconds_per_call_each(fn, [text], clock, wall)[0]
 
 
 def growth(fn: Work, unit: str, small: int, big: int, clock: Clock | None = None) -> Growth:
