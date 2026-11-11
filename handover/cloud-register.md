@@ -1104,3 +1104,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a290aa95 / aea5c3b2 | PR89 / PR73 builders round 10 | 2026-11-11 | - | LOST at container restart ~01:50Z; uncommitted edits survived (RB89, B-P73r2) |
 | a8904ec1 | PR89 builder round 10 resumed (r10-01..04) | 2026-11-11 ~01:55Z | +90 min | running |
 | aed5770d | PR73 builder round 10 resumed (r9-01..03) | 2026-11-11 ~01:55Z | +90 min | running |
+| a8904ec1 | PR89 builder round 10 (resumed) | closed 2026-11-11 ~02:30Z | - | new head 025ec61 pushed; 192 of 192 mutants; raw tails committed (8f6e16c) |
+| aba32f2f | PR89 evidence runner on 025ec61 | 2026-11-11 ~02:40Z | +2 h | running; output /home/user/build/EVOUT-P89-025ec61/ |
+| a904ccff | PR89 design/security reviewer r11 (egm-design) | 2026-11-11 ~02:40Z | +40 min | running |
+| ae4b72af | PR89 codebase reviewer r11 (egm-codebase-details) | 2026-11-11 ~02:40Z | +40 min | running |
