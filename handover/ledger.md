@@ -2713,3 +2713,10 @@
 | timing-r1-D-M2 | reviews/timing/r1-design-full.md | Major | timing harness | real-clock tests not marked perf | OPEN | fix batch 1 | - | 2026-11-11 |
 | timing-r1-D-M3 | reviews/timing/r1-design-full.md | Major | timing harness | guard tests cannot pass on win32 | OPEN | fix batch 1 | - | 2026-11-11 |
 | timing-r1-D-4 | reviews/timing/r1-design-full.md | Major | timing harness | sentinel runmap test has no control | OPEN | fix batch 1 | - | 2026-11-11 |
+| Q8a1-r5-M1 | reviews/Q8a/result-r5-delta-full.md | Major | Q8a-1 | config error messages still echo values (base_url login, YAML line, registry str(exc)) | OPEN | fix batch 5 | - | 2026-11-11 |
+| Q8a1-r5-probes | evidence/Q8a-1/ecd5dba/RESULTS.md | Major | Q8a-1 | same-process object.__setattr__ / direct store purge not stopped by tick refusals | IMPOSSIBLE-NOW | purge identity is the control; wording fix in batch 5 | - | 2026-11-11 |
+| Q8b-r1-E1/D-M1 | evidence/Q8b/be53718/08c-*, reviews/Q8b/result-r1-design-full.md | Blocker | Q8b | REGRESSION vs main: e-mail/host glued to credential key leaves value readable | OPEN | fix batch 1 | - | 2026-11-11 |
+| Q8b-r1-C-F1 | reviews/Q8b/result-r1-codebase-full.md | Major | Q8b | _named misses entry with both name and key | OPEN | fix batch 1 | - | 2026-11-11 |
+| Q8b-r1-C-F2 | reviews/Q8b/result-r1-codebase-full.md | Major | Q8b | LIMITS text contradicts code | OPEN | fix batch 1 | - | 2026-11-11 |
+| Q8b-r1-E2/E3 | evidence/Q8b/be53718/RESULTS.md | Major | Q8b | card path half-masks multi-word value; other readable copies (kind: secret, bad-data log copy, fence, M5) | OPEN | fix batch 1 | - | 2026-11-11 |
+| Q8b-r1-D-M2 | reviews/Q8b/result-r1-design-full.md | Major | Q8b | approver cannot read card target (host masked) | OWNER-ONLY | default: mask + label route | - | 2026-11-11 |

@@ -4924,4 +4924,4 @@ tests/test_k5_fixes9.py::test_m3_a_fit_cut_then_a_decoded_swap_leaves_no_front_o
 tests/test_k5_fixes9.py::test_m3_a_fit_cut_then_a_decoded_swap_leaves_no_front_of_the_cut_secret[json-15] PASSED [ 65%]
 tests/test_k5_fixes9.py::test_m3_a_fit_cut_then_a_decoded_swap_leaves_no_front_of_the_cut_secret[json-16] PASSED [ 65%]
 tests/test_k5_fixes9.py::test_m3_a_fit_cut_then_a_decoded_swap_leaves_no_front_of_the_cut_secret[json-17] PASSED [ 65%]
-tests/test_k5_fixes9.py::test_m3_a_fit_cut_then_a_decoded_swap_leaves_no_front_of_the_cut_secret[json-18] 
+tests/test_k5_fixes9.py::test_m3_a_fit_cut_then_a_decoded_swap_leaves_no_front_of_the_cut_secret[json-18] rc=0
