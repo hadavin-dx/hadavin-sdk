@@ -1,0 +1,57 @@
+python 3.13.18 unidata 15.1.0
+REMOVED 55 SPACE_LIKE 9 overlap 0
+derived ignorable 4174 ranges 17
+perl file 4174 equal to derived: True only perl 0 only derived 0
+ranges: 00AD..00AD 034F..034F 061C..061C 115F..1160 17B4..17B5 180B..180F 200B..200F 202A..202E 2060..206F 3164..3164 FE00..FE0F FEFF..FEFF FFA0..FFA0 FFF0..FFF8 1BCA0..1BCA3 1D173..1D17A E0000..E0FFF
+glue PASS 'ab\x07cd' 'abcd' 'ab cd'
+glue PASS 'ab\x07\x07cd' 'abcd' 'ab cd'
+glue PASS 'ab\x1b[0m\x1b[1mcd' 'abcd' 'ab cd'
+glue PASS 'ab\x07\u200b\x07cd' 'ab\u200bcd' 'ab\u200bcd'
+glue PASS 'ab\x07-cd' 'ab-cd' 'ab-cd'
+glue PASS 'ab\x07 cd' 'ab cd' 'ab cd'
+glue PASS 'ab\x0c\x07cd' 'ab cd' 'ab cd'
+glue PASS 'ab\x00cd' 'abcd' 'ab cd'
+glue PASS '\x1b[0mab' 'ab' 'ab'
+glue PASS 'ab\\\ncd' 'ab\\\ncd' 'ab\\\ncd'
+grammar PASS csi 'a\x1b[1;31mb' -> 'ab'
+grammar PASS csi c1 'a\x9b0mb' -> 'ab'
+grammar PASS csi private+intermediate 'a\x1b[?25l\x1b[1 qb' -> 'ab'
+grammar PASS csi c0 inside dropped 'a\x1b[0\x07mb' -> 'ab'
+grammar PASS csi del inside dropped 'a\x1b[0\x7fmb' -> 'ab'
+grammar PASS csi tab inside dropped 'a\x1b[0\tmb' -> 'ab'
+grammar PASS csi CAN abort 'a\x1b[12\x18mb' -> 'amb'
+grammar PASS csi SUB abort 'a\x1b[12\x1amb' -> 'amb'
+grammar PASS csi LF abort 'a\x1b[12\nmb' -> 'a\nmb'
+grammar PASS csi ESC abort 'a\x1b[12\x1b[0mb' -> 'ab'
+grammar PASS csi non-ASCII abort 'a\x1b[12\xe9b' -> 'a\xe9b'
+grammar PASS csi end of text 'a\x1b[12' -> 'a'
+grammar PASS osc BEL 'a\x1b]0;t\x07b' -> 'ab'
+grammar PASS osc ST 'a\x1b]0;t\x1b\\b' -> 'ab'
+grammar PASS osc C1 ST 'a\x1b]0;t\x9cb' -> 'ab'
+grammar PASS osc C1 opener 'a\x9d0;t\x07b' -> 'ab'
+grammar PASS osc CAN 'a\x1b]0;t\x18b' -> 'ab'
+grammar PASS osc never ended, line end kept 'a\x1b]0;t\nline two' -> 'a\nline two'
+grammar PASS osc never ended, CR kept 'a\x1b]0;t\rx' -> 'a\rx'
+grammar PASS osc ended by ESC not backslash 'a\x1b]0;t\x1b[0mb' -> 'ab'
+grammar PASS osc end of text 'a\x1b]0;title' -> 'a'
+grammar PASS dcs BEL is body 'a\x1bPq\x07x\x1b\\b' -> 'ab'
+grammar PASS dcs C1 'a\x90q pay\x9cb' -> 'ab'
+grammar PASS sos pm apc 'a\x1bXs\x1b\\\x1b^p\x1b\\\x1b_a\x1b\\b' -> 'ab'
+grammar PASS c1 csi inside string is body 'a\x1b]0;\x9bt\x07b' -> 'ab'
+grammar PASS nF 'a\x1b(Bb' -> 'ab'
+grammar PASS nF two intermediates 'a\x1b#!8b' -> 'ab'
+grammar PASS nF no final 'a\x1b(\nb' -> 'a(\nb'
+grammar PASS Fp 'a\x1b7b' -> 'ab'
+grammar PASS Fe 'a\x1bMb' -> 'ab'
+grammar PASS Fs 'a\x1bcb' -> 'ab'
+grammar PASS lone ESC at end 'a\x1b' -> 'a'
+grammar PASS lone ESC before non-ASCII 'a\x1b\xe9' -> 'a\xe9'
+grammar PASS lone ESC before LF 'a\x1b\nb' -> 'a\nb'
+grammar PASS ESC ESC [0m 'a\x1b\x1b[0mb' -> 'ab'
+grammar PASS stray ST C1 'a\x9cb' -> 'ab'
+random 20000: property failures 0
+linear '\x1b]' 50k 0.154s 200k 2.629s ratio 17.02
+linear '\x1b[' 50k 0.012s 200k 0.049s ratio 4.15
+linear '\x1b(' 50k 0.013s 200k 0.056s ratio 4.39
+linear '\x9d' 50k 0.006s 200k 0.029s ratio 4.69
+SELFCHECK PASS

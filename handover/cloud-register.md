@@ -1426,3 +1426,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | A-PRH-rev3 a2df9258 (Opus) | PR H ticket rev 3 | launched | +60 min | RUNNING |
 | B-Q8a2-b3 acecc94a | closed, pushed 3210f93a | | | CLOSED |
 | A-P3a2-rev3 (pending design reviewer a061e753) | P3a-2 ticket rev 3 | - | - | WAITING |
+| A-P3a2-rev3 (Opus) | P3a-2 ticket rev 3 = last plan round | 16:58 | +60 min | RUNNING |
