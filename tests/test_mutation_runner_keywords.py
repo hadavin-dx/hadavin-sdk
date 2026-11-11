@@ -382,7 +382,9 @@ def test_an_unlisted_env_name_is_refused_before_anything_runs(tmp_path, monkeypa
     seen = []
     monkeypatch.setattr(mr, "_pytest", lambda *a, **k: seen.append(a) or 0)
     for names in UNLISTED_NAMES:
-        _must_refuse("an unlisted pass_env name was accepted", _run, root, pass_env=names)
+        _must_refuse(
+            "an unlisted pass_env name was accepted", _run, root, pass_env=names, forbid_skips=False
+        )  # the fake run writes no JUnit file, which forbid_skips would refuse
         assert seen == [], "a refused name must not start a single pytest run"
 
 
@@ -1260,12 +1262,17 @@ def test_the_environment_is_read_once_and_a_change_during_the_run_changes_nothin
     monkeypatch.setenv(DSN_NAME, old)
     body = (
         "import os\nfrom pk.core import go\n\n"
-        f"def test_a():\n    assert go(True) is True, os.environ[{DSN_NAME!r}]\n"
-        f"    assert os.environ[{DSN_NAME!r}] == {old!r}, 'the child got another value than the snapshot'\n"
+        f"def test_a():\n    assert os.environ[{DSN_NAME!r}] == {old!r}, 'the child got another value than the snapshot'\n"
+        "    assert go(True) is True, 'the mutant is judged'\n"
     )
     root = _tree(tmp_path, {CORE_TEST: body})
-    first = Mutant("flip", "src/pk/core.py", "return flag", "return not flag", "AssertionError")
-    second = Mutant("flip2", "src/pk/core.py", "return flag", "return not flag", "AssertionError")
+    # ``expect`` is the message of the second assertion: a child that got another value fails the FIRST assertion, and the row is then WRONG_REASON
+    first = Mutant(
+        "flip", "src/pk/core.py", "return flag", "return not flag", "the mutant is judged"
+    )
+    second = Mutant(
+        "flip2", "src/pk/core.py", "return flag", "return not flag", "the mutant is judged"
+    )
     lines: dict[str, str] = {}
 
     def change_the_variable(_row):
@@ -1285,14 +1292,15 @@ def test_the_environment_is_read_once_and_a_change_during_the_run_changes_nothin
         raise AssertionError(
             "a canary run got the changed value: the environment was read again"
         ) from None
-    assert _short(rows) == [("flip", Verdict.KILLED, True), ("flip2", Verdict.KILLED, True)], (
-        "the two mutants were not both killed"
-    )
-    assert lines["flip"] == "AssertionError [expect found] AssertionError", (
+    assert _short(rows)[0] == ("flip", Verdict.KILLED, True), (
         "the first mutant did not see the value"
     )
-    assert lines["flip2"] == "AssertionError [expect found] AssertionError", (
-        "the second mutant run got the changed value (or its old value was not hidden): the environment was read again"
+    assert _short(rows) == [("flip", Verdict.KILLED, True), ("flip2", Verdict.KILLED, True)], (
+        "the second mutant run got the changed value: the environment was read again"
+    )
+    shown = "AssertionError [expect found] the mutant is judged"
+    assert lines == {"flip": shown, "flip2": shown}, (
+        f"the lines were not the projection of the old value: {lines}"
     )
 
 
