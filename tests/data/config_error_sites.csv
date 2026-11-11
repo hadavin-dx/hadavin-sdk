@@ -104,12 +104,12 @@ k1b/bundle.py::load_bundle::3af6540b0927cfb9::1,OPERATOR,"case matches CASE_RE (
 k1b/bundle.py::load_bundle::3ce88b1034c2c206::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
 k1b/bundle.py::load_bundle::3d0ec796149eb28b::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
 k1b/bundle.py::load_bundle::46ed204f42ba69ac::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
-k1b/bundle.py::load_bundle::7599a335cae3d428::1,FOREIGN,"case is path.name BEFORE the CASE_RE check passes: any folder name, control characters unescaped, shown in the message (log-injection route)"
 k1b/bundle.py::load_bundle::7bc916c763ae4f5b::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
 k1b/bundle.py::load_bundle::86307242b50f6152::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
 k1b/bundle.py::load_bundle::8d303270f4e1b2f0::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
 k1b/bundle.py::load_bundle::90f838ad849dbca0::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
 k1b/bundle.py::load_bundle::9ed5eda2ff31842f::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
+k1b/bundle.py::load_bundle::a88caf2bc133733d::1,OPERATOR,"case is the operator's bundles folder name, not yet matched to CASE_RE; the call passes repr(case), which writes control characters and non-ASCII as escapes (no forged log line)"
 k1b/bundle.py::load_bundle::b8269aecae4e514f::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
 k1b/bundle.py::load_bundle::c5448ed8fbf747a1::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
 k1b/bundle.py::load_bundle::d54b7e7f7b7823cc::1,OPERATOR,"case matches CASE_RE (checked first in load_bundle), rel matches the fixed layout (_FILE_RES) and keys ALERT_KEYS before use; no caller passes exception text"
@@ -160,8 +160,8 @@ k1b/score.py::score::f4415acef9271f53::1,OPERATOR,"run number, metadata key from
 llm/anthropic.py::client::f16fb59c422d4d25::1,FOREIGN,
 llm/common.py::pinned::38e6245b9162fced::1,OPERATOR,route name and model id from the operator's settings
 registry.py::_by_id::1184a6b0919516b4::1,OPERATOR,file name is fixed by the callers; id typed in the operator's yaml
-registry.py::_load_tools::32786aa5b3e5bcc6::1,OPERATOR,"pin_problems from _module_pin_problems: module names and short hashes from the operator's settings, plus str() of the ConfigErrors of tools._module_files and module_sha256"
-registry.py::_load_tools::44046cf9213d021f::1,OPERATOR,"problems: tool, action, input and operation names from the operator's yaml, schema_problems and spec_problems output (fixed words plus the operator's values)"
+registry.py::_load_tools::32786aa5b3e5bcc6::1,OPERATOR,"module names and short hashes from the operator's settings, plus str() of the ConfigErrors of tools._module_files and module_sha256 (relayed; the scan cannot see the relay)"
+registry.py::_load_tools::44046cf9213d021f::1,OPERATOR,"tool, action, input and operation names from the operator's yaml, schema_problems and spec_problems output (fixed words plus the operator's values); relayed by str(), which the scan cannot see"
 registry.py::load_registry::14c337433bdfe1dd::1,OPERATOR,"early (deferred.key_problems: the operator's yaml keys), _cross_check and deferred.check (ids from the operator's yaml, fixed words)"
 registry.py::load_registry::3bada809a56baae4::1,FOREIGN,
 registry.py::load_registry::4bd5af26797fce41::1,OPERATOR,"early (deferred.key_problems: the operator's yaml keys), _cross_check and deferred.check (ids from the operator's yaml, fixed words)"
@@ -170,7 +170,7 @@ replay_records.py::read_records::0c8aa448491ccf02::1,OPERATOR,file name constant
 replay_records.py::read_records::2c55d28a45aecba6::1,OPERATOR,file name constant and a line number
 runtime/agent_loop.py::_check_golden_refs::896e0291f6d137b0::1,OPERATOR,golden file name from the operator's settings
 runtime/agent_loop.py::qualified_runs::368048cbf8c2ed62::1,OPERATOR,"line number, an integer"
-store/migrate.py::migrate::1bff9a371d8ad2b3::1,OPERATOR,problems from check_ledger and check_grants: names of the migration files shipped in the package (escaped) plus fixed words
+store/migrate.py::migrate::1bff9a371d8ad2b3::1,OPERATOR,problems from check_ledger and check_grants: names of the migration files shipped in the package (check_ledger writes them with ascii escapes) plus fixed words
 store/migrate.py::migrate::1cde22a37a5aaf36::1,FOREIGN,gone: version strings read back from the schema_migrations table in the database
 store/migrate.py::migrate::3fdb0a28a66e9b2f::1,LITERAL,
 store/migrate.py::migrate::40db02b3ad655c40::1,LITERAL,
@@ -178,7 +178,7 @@ store/migrate.py::migrate::5b70a3de6848f7f4::1,FOREIGN,"bad: relation and privil
 store/migrate.py::migrate::8572036092447371::1,OPERATOR,role name typed in the operator's settings; the message echoes it with repr
 store/migrate.py::migrate::cc384fb69683a0e2::1,FOREIGN,"bad: relation and privilege names from effective_problems, read back from the database catalog (runtime role)"
 store/migrate.py::migrate::f53330a8ec02c74f::1,FOREIGN,"extra: privilege names from _excess_privileges, read back from the database catalog (portal role)"
-store/migration_numbers.py::MigrationNumberError.__init__::3b603dfb529e4dd6::1,OPERATOR,problems from folder_problems/ledger checks: migration file names escaped by _esc plus fixed words; _problems_message only joins them
+store/migration_numbers.py::MigrationNumberError.__init__::3b603dfb529e4dd6::1,OPERATOR,problems from folder_problems/ledger checks: file names escaped by _esc plus fixed words. Holds only while every caller passes _esc text; P3a-2 adds migrate as a caller and must do so
 store/migration_numbers.py::check_migration_numbers::fc464faa6509b451::1,OPERATOR,problems list: file names escaped by _esc plus fixed words; the class builds its text from it
 store/postgres.py::build::356ecc824f46d20e::1,LITERAL,
 store/postgres.py::build::a590b415f6b4b552::1,FOREIGN,
@@ -195,10 +195,10 @@ tools.py::parse_manifest::61d8c730885b2083::1,OPERATOR,"where is a fixed string 
 tools.py::parse_manifest::a625bf4a762bbf6d::1,OPERATOR,"where is a fixed string with the manifest file name; key, phase and tool names from the operator's manifest"
 tools.py::parse_manifest::a8db0131bce484fd::1,OPERATOR,"where is a fixed string with the manifest file name; key, phase and tool names from the operator's manifest"
 tools.py::parse_manifest::acb0402572c0b16c::1,FOREIGN,
-tools.py::read_operations::43f23b59237dca18::1,OPERATOR,operation ids and methods declared by the operator's own tool module
-tools.py::read_operations::a4efabcf9f367ec9::1,OPERATOR,operation ids and methods declared by the operator's own tool module
-tools.py::read_operations::f91d6fa6f8c4812b::1,OPERATOR,operation ids and methods declared by the operator's own tool module
-tools.py::read_operations::f9378719ed153aa8::1,OPERATOR,operation ids and methods declared by the operator's own tool module
+tools.py::read_operations::43f23b59237dca18::1,OPERATOR,operation ids and methods declared by the operator's own tool module code (shown with repr; the module is pinned operator code)
+tools.py::read_operations::a4efabcf9f367ec9::1,OPERATOR,operation ids and methods declared by the operator's own tool module code (shown with repr; the module is pinned operator code)
+tools.py::read_operations::f91d6fa6f8c4812b::1,OPERATOR,operation ids and methods declared by the operator's own tool module code (shown with repr; the module is pinned operator code)
+tools.py::read_operations::f9378719ed153aa8::1,OPERATOR,operation ids and methods declared by the operator's own tool module code (shown with repr; the module is pinned operator code)
 tools.py::resolve_function::3407b987665e493b::1,OPERATOR,tool name and function reference from the operator's manifest
 tools.py::resolve_function::39ac57879232b496::1,OPERATOR,tool name and function reference from the operator's manifest
 tools.py::resolve_function::d45271903d69e462::1,OPERATOR,tool name and function reference from the operator's manifest

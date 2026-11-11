@@ -8,7 +8,6 @@ Synthetic source folders are written into ``tmp_path``; no repository code is im
 from __future__ import annotations
 
 import ast
-import csv
 import importlib
 import re
 import shutil
@@ -86,8 +85,10 @@ def call_node(text: str) -> ast.AST:
     return node.value
 
 
-def refuses(tmp: Path, files: dict[str, str], **kw: Any) -> None:
-    with pytest.raises(need("SitesError")):
+def refuses(tmp: Path, files: dict[str, str], match: str | None = None, **kw: Any) -> None:
+    """The scan must refuse with ``SitesError``; ``match`` (plain text) pins WHICH refusal, so a refusal for another reason
+    cannot make the test pass."""
+    with pytest.raises(need("SitesError"), match=re.escape(match) if match else None):
         need("scan")(make(tmp, files, **kw))
 
 
@@ -113,17 +114,75 @@ def test_committed_table_is_in_canonical_form() -> None:
     assert b"\r" not in TABLE.read_bytes()
 
 
-# The FOREIGN count is a stop sign, not a target: 21 before order 132, then +4 migrate.py rows that interpolate names read back
-# from the database, +2 store/postgres.py tls_mode rows (sslmode can come from the DSN) and +1 k1b/bundle.py row (a folder name
-# echoed before it is validated). A new FOREIGN row must be reviewed by a person who raises this number on purpose.
-FOREIGN_LIMIT = 28
+# The class counts are pinned EXACTLY (not "at most"): a new row, a removed row or a relabelled row changes a number, and a
+# person must change it here on purpose. FOREIGN history: 21 before order 132, +4 migrate.py rows that interpolate names read
+# back from the database, +2 store/postgres.py tls_mode rows (sslmode can come from the DSN), +1 k1b/bundle.py row (a folder
+# name echoed before it was checked), then -1 when that call began to pass repr(case) (round w4, finding k1b-01).
+# OPERATOR is a claim about the producers of a value that the scan cannot prove (every OPERATOR site is "unproven-origin" to
+# the scan, and the table has no proof column), so the SET of OPERATOR keys is pinned too: swapping one FOREIGN row for an
+# OPERATOR row keeps the counts but changes the fingerprint. To change a pin: review the row, then paste the printed value.
+PINNED_COUNTS = {"LITERAL": 42, "OPERATOR": 134, "FOREIGN": 27}
+PINNED_FINGERPRINTS = {"OPERATOR": "f2607d2b65254c9f", "FOREIGN": "87305e2f9f6d5875"}
 
 
-def test_the_table_has_no_blank_class_and_a_bounded_foreign_count() -> None:
+def pin_problems(rows: list[Any]) -> list[str]:
+    problems: list[str] = []
+    for klass, expected in PINNED_COUNTS.items():
+        got = sum(r.klass == klass for r in rows)
+        if got != expected:
+            way = (
+                "grew: a person must review the new rows"
+                if got > expected
+                else "shrank: lower the pin"
+            )
+            problems.append(f"{klass} rows {way} (pinned {expected}, table has {got})")
+    for klass, expected_hash in PINNED_FINGERPRINTS.items():
+        got_hash = need("class_fingerprint")(rows, klass)
+        if got_hash != expected_hash:
+            problems.append(
+                f"the set of {klass} rows changed (fingerprint {got_hash}, pinned {expected_hash})"
+            )
+    return problems
+
+
+def test_the_table_has_no_blank_class_and_the_class_counts_are_pinned() -> None:
     rows = need("load_csv")(TABLE)
     assert rows
     assert all(r.klass in need("CLASSES") for r in rows)
-    assert sum(r.klass == "FOREIGN" for r in rows) <= FOREIGN_LIMIT
+    assert pin_problems(rows) == []
+
+
+def test_a_foreign_row_relabelled_operator_is_caught_by_the_pins() -> None:
+    """The comparison alone accepts an unproven-origin site labelled OPERATOR; the pins must not."""
+    rows = need("load_csv")(TABLE)
+    k = next(i for i, r in enumerate(rows) if r.klass == "FOREIGN")
+    flipped = [
+        need("Row")(r.site, "OPERATOR", "producers are operator text") if i == k else r
+        for i, r in enumerate(rows)
+    ]
+    problems = pin_problems(flipped)
+    assert any(p.startswith("FOREIGN rows shrank") for p in problems), problems
+    assert any(p.startswith("OPERATOR rows grew") for p in problems), problems
+    assert any("set of OPERATOR rows changed" in p for p in problems), problems
+
+
+def test_a_swap_that_keeps_the_counts_is_caught_by_the_fingerprints() -> None:
+    rows = need("load_csv")(TABLE)
+    f = next(i for i, r in enumerate(rows) if r.klass == "FOREIGN")
+    o = next(i for i, r in enumerate(rows) if r.klass == "OPERATOR")
+    swapped = list(rows)
+    swapped[f] = need("Row")(rows[f].site, "OPERATOR", rows[f].reason)
+    swapped[o] = need("Row")(rows[o].site, "FOREIGN", rows[o].reason)
+    problems = pin_problems(swapped)
+    assert problems and all("fingerprint" in p for p in problems), problems
+
+
+def test_a_new_row_or_a_dropped_row_is_caught_by_the_pins() -> None:
+    rows = need("load_csv")(TABLE)
+    extra = [*rows, need("Row")("x.py::f::0123456789abcdef::1", "FOREIGN", "new")]
+    assert any(p.startswith("FOREIGN rows grew") for p in pin_problems(extra))
+    fewer = [r for r in rows if r.klass != "FOREIGN"][:]
+    assert any(p.startswith("FOREIGN rows shrank") for p in pin_problems(fewer))
 
 
 def test_reasons_name_symbols_not_line_numbers() -> None:
@@ -1137,12 +1196,37 @@ INIT_BODIES = {
 }
 
 
-@pytest.mark.parametrize("body", list(INIT_BODIES.values()), ids=list(INIT_BODIES))
+INIT_REFUSAL = "A.__init__ may only assign attributes of self and call super().__init__(...)"
+INIT_REFUSALS = {
+    "args": "A.__init__ uses .args; the text must go through super()",
+    "args-read": "A.__init__ uses .args; the text must go through super()",
+    "args-in-super": "A.__init__ uses .args; the text must go through super()",
+    "setattr-in-assign": "A.__init__ uses setattr; the text must go through super()",
+    "dict-in-assign": "A.__init__ uses .__dict__; the text must go through super()",
+    "add-note-in-assign": "A.__init__ uses .add_note; the text must go through super()",
+    "vars-in-super": "A.__init__ uses vars; the text must go through super()",
+    "object-in-assign": "A.__init__ uses .__setattr__; the text must go through super()",
+    "with": "A.__init__ must call super().__init__(...) as a statement",
+    "try": "A.__init__ must call super().__init__(...) as a statement",
+}
+INIT_TEMPLATE = f"{HEAD}\n\nclass A(ConfigError):\n    def __init__(self, p):\n"
+
+
+@pytest.mark.parametrize("name", list(INIT_BODIES))
 def test_hostile_init_bodies_beyond_attributes_and_super_are_refused(
-    tmp_path: Path, body: str
+    tmp_path: Path, name: str
 ) -> None:
-    text = f"{HEAD}\n\nclass A(ConfigError):\n    def __init__(self, p):\n{body}"
-    refuses(tmp_path, {"a.py": text})
+    refuses(
+        tmp_path,
+        {"a.py": INIT_TEMPLATE + INIT_BODIES[name]},
+        match=INIT_REFUSALS.get(name, INIT_REFUSAL),
+    )
+
+
+def test_the_init_template_itself_scans_when_the_body_is_plain(tmp_path: Path) -> None:
+    """Positive control for the hostile bodies above: only the body differs."""
+    text = INIT_TEMPLATE + "        self.p = p\n        super().__init__('x')\n"
+    assert [s.symbol for s in need("scan")(make(tmp_path, {"a.py": text}))] == ["A.__init__"]
 
 
 def test_a_docstring_and_annotated_attribute_in_init_are_accepted(tmp_path: Path) -> None:
@@ -1175,16 +1259,35 @@ REDUCES = {
 }
 
 
-@pytest.mark.parametrize("body", list(REDUCES.values()), ids=list(REDUCES))
+REDUCE_TEMPLATE = (
+    f"{HEAD}\n\nOther = type\n\n\ndef helper(self):\n    return 1\n\n\ndef rebuild(x):\n    return x\n\n\n"
+    "class A(ConfigError):\n    def __init__(self, problems):\n        self.problems = problems\n"
+    "        super().__init__('x')\n\n"
+)
+REDUCE_REFUSALS = {
+    "reduce-ex": "site class A holds more than a docstring and plain fields",
+    "getstate": "site class A holds more than a docstring and plain fields",
+    "setstate": "site class A holds more than a docstring and plain fields",
+    "assigned": "site class A assigns a dunder or complex name",
+}
+
+
+@pytest.mark.parametrize("name", list(REDUCES))
 def test_hostile_pickle_helpers_other_than_the_one_exact_reduce_are_refused(
-    tmp_path: Path, body: str
+    tmp_path: Path, name: str
 ) -> None:
-    text = (
-        f"{HEAD}\n\nOther = type\n\n\ndef helper(self):\n    return 1\n\n\ndef rebuild(x):\n    return x\n\n\n"
-        f"class A(ConfigError):\n    def __init__(self, problems):\n        self.problems = problems\n"
-        f"        super().__init__('x')\n\n{body}"
+    refuses(
+        tmp_path,
+        {"a.py": REDUCE_TEMPLATE + REDUCES[name]},
+        match=REDUCE_REFUSALS.get(name, "A.__reduce__ must be exactly"),
     )
-    refuses(tmp_path, {"a.py": text})
+
+
+def test_the_reduce_template_scans_with_the_one_exact_reduce(tmp_path: Path) -> None:
+    """Positive control for the hostile pickle helpers above: same template, the one allowed ``__reduce__``."""
+    body = RED + "        return (type(self), (self.problems,))\n"
+    text = REDUCE_TEMPLATE + body
+    assert [s.symbol for s in need("scan")(make(tmp_path, {"a.py": text}))] == ["A.__init__"]
 
 
 def test_the_one_exact_reduce_is_accepted_with_a_docstring_and_two_attributes(
@@ -1284,12 +1387,14 @@ def test_hostile_csv_with_crlf_line_endings_is_accepted(tmp_path: Path) -> None:
     assert [r.klass for r in rows] == ["LITERAL"]
 
 
-def test_csv_module_is_used_with_the_stated_columns() -> None:
-    assert csv.excel is not None
+def test_the_stated_columns_and_widths_are_what_the_committed_table_uses() -> None:
     assert tuple(need("COLUMNS")) == ("site", "class", "reason")
-    assert need("REASON_MAX") == 200
-    assert need("HASH_LEN") == 16
-    assert tuple(need("CLASSES")) == ("LITERAL", "OPERATOR", "FOREIGN")
+    assert need("render_csv")([]).splitlines() == [",".join(need("COLUMNS"))]
+    rows = need("load_csv")(TABLE)
+    assert {len(r.site.split("::")) for r in rows} == {4}
+    assert {len(r.site.split("::")[2]) for r in rows} == {need("HASH_LEN")}
+    assert max(len(r.reason) for r in rows) <= need("REASON_MAX")
+    assert {r.klass for r in rows} == set(need("CLASSES"))
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -1317,16 +1422,18 @@ VALUE_USES = {
 
 @pytest.mark.parametrize("body", list(VALUE_USES.values()), ids=list(VALUE_USES))
 def test_f3_a_site_class_used_as_a_value_is_refused(tmp_path: Path, body: str) -> None:
-    """Design F3. Killing mutant: M33 (the value check is removed)."""
-    refuses(tmp_path, {"m.py": HEAD + body})
+    """Design F3. The refusal must be the value check (the message is matched), so removing that check fails every case."""
+    refuses(tmp_path, {"m.py": HEAD + body}, match="a site class is used as a value")
 
 
-def test_f3_a_subclass_and_an_alias_used_as_a_value_are_refused(tmp_path: Path) -> None:
+def test_f3_a_subclass_used_as_a_value_is_refused(tmp_path: Path) -> None:
     sub = "class Sub(ConfigError):\n    pass\n\n\nkind = Sub\n"
-    refuses(tmp_path, {"m.py": HEAD + sub})
-    (tmp_path / "x").mkdir()
+    refuses(tmp_path, {"m.py": HEAD + sub}, match="a site class is used as a value")
+
+
+def test_f3_an_alias_used_as_a_value_is_refused(tmp_path: Path) -> None:
     alias = "from pkg.errors import ConfigError as CE\n\nkind = CE\n"
-    refuses(tmp_path / "x", {"m.py": alias})
+    refuses(tmp_path, {"m.py": alias}, match="a site class is used as a value")
 
 
 ALLOWED_USES = {
@@ -1348,6 +1455,11 @@ ALLOWED_USES = {
 }
 
 
-@pytest.mark.parametrize("body", list(ALLOWED_USES.values()), ids=list(ALLOWED_USES))
-def test_f3_the_allowed_uses_of_a_site_class_still_scan(tmp_path: Path, body: str) -> None:
-    need("scan")(make(tmp_path, {"m.py": HEAD + body}))
+# How many constructions the scan must find in each allowed use: a call or a bare raise builds one; naming the class does not.
+ALLOWED_SITE_COUNTS = {"call": 1, "bare-raise": 1, "attribute-call": 1}
+
+
+@pytest.mark.parametrize("name", list(ALLOWED_USES))
+def test_f3_the_allowed_uses_of_a_site_class_still_scan(tmp_path: Path, name: str) -> None:
+    sites = need("scan")(make(tmp_path, {"m.py": HEAD + ALLOWED_USES[name]}))
+    assert len(sites) == ALLOWED_SITE_COUNTS.get(name, 0), [s.key for s in sites]

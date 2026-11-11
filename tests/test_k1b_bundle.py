@@ -524,3 +524,14 @@ def test_list_data_is_capped(tmp_path):
     many = {f"{i:03d}": {"query": "q" * 500 + str(i), "points": []} for i in range(1, 80)}
     text, ids = render(_snap(tmp_path, metrics=many).call("list_data", {}))
     assert len(text.encode()) <= 20_000 and ids == set() and json.loads(text)["metrics"]
+
+
+@pytest.mark.parametrize("name", ["case-1\x1b]0;x\x07", "case-1\nforged log line", "café x"])
+def test_a_folder_name_is_never_echoed_raw_in_the_refusal(tmp_path, name):
+    folder = tmp_path / name
+    folder.mkdir()
+    with pytest.raises(BundleError, match="folder name must look like case-001") as info:
+        load_bundle(folder)
+    text = str(info.value)
+    assert text.isprintable() and text.isascii() is False or text.isprintable()
+    assert not any(c in text for c in "\x1b\x07\n ")
