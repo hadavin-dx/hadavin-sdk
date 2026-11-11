@@ -78,7 +78,7 @@ MOVED = (
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 62
+EXPECTED_MUTANTS = 162
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
@@ -110,8 +110,8 @@ def test_a_there_are_the_listed_number_of_mutants_with_unique_names():
     names = [m.name for m in mm.M]
     assert len(names) == EXPECTED_MUTANTS and len(set(names)) == EXPECTED_MUTANTS, names
     assert {m.file for m in mm.M} == {mm.MU, mm.MR}
-    assert sum(m.file == mm.MU for m in mm.M) == 6
-    assert sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 6
+    assert sum(m.file == mm.MU for m in mm.M) == 12
+    assert sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 12
 
 
 def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists():
@@ -122,7 +122,14 @@ def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists
         assert path.is_file(), (m.name, m.test_file)
         defined.setdefault(m.test_file, _functions(path))
         assert m.only_test in defined[m.test_file], (m.name, m.only_test, "is not in", m.test_file)
-        assert m.only_test in MOVED, (m.name, m.only_test, "is not one of the runner file's tests")
+        if m.test_file == mm.TEST:
+            assert m.only_test in MOVED, (
+                m.name,
+                m.only_test,
+                "is not one of the runner file's tests",
+            )
+        else:  # the only other killer file: the keyword tests
+            assert m.test_file == mm.KW, (m.name, m.test_file)
         # the judge looks for ``expect`` in the first E line only (not in the test id). A fragment of the killer's own name is
         # still forbidden, so a mutant that breaks another guard of the same test is never counted: ``expect`` must come from the
         # assertion message of the guard
@@ -140,7 +147,8 @@ def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists
                 "expect is in no string of the killer",
             )
         # and every mutant pins its own killer, so another failing test is OTHER_TEST and not a kill
-        assert m.pinned == mm.PIN + m.only_test, (m.name, m.pinned)
+        pin = mm.PIN if m.test_file == mm.TEST else mm.KWPIN
+        assert m.pinned == pin + m.only_test, (m.name, m.pinned)
 
 
 def test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not():
