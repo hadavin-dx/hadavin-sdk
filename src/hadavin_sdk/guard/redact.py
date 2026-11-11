@@ -1315,9 +1315,8 @@ class _Redactor:
                     *reversed(_view_specs(cur)),
                     _PRIMARY_VIEW,
                 ):  # every view; the marks-dropped ones first, so a value split by a mark is cut whole, not at the mark
-                    self._over_budget(
-                        self._scan_deadline
-                    )  # one view of a long line can take a large share of the budget: look at the clock per view
+                    # one view of a long line can take a large share of the budget: look at the clock per view
+                    self._over_budget(self._scan_deadline)
                     aligned = self._aligned_fold(cur, self._scan_deadline, spec)
                     new = (
                         None

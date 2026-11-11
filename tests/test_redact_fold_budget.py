@@ -378,6 +378,14 @@ def test_view_1_the_clock_is_read_before_each_view_of_a_line(monkeypatch):
         events.append("view")
         return real_fold(body, deadline, *view)
 
+    real_mask = _Redactor._mask_in_place
+
+    def mask(self, *a, **k):
+        out = real_mask(self, *a, **k)
+        events.append("mask")  # logged when the masking of one view is over
+        return out
+
+    monkeypatch.setattr(_Redactor, "_mask_in_place", mask)
     monkeypatch.setattr(_Redactor, "_over_budget", staticmethod(budget))
     monkeypatch.setattr(_Redactor, "_aligned_fold", staticmethod(fold))
     out = redact_text("caf\u00e9 password=Hunter2abc^ end", runmap.RunMap())
