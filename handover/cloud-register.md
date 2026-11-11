@@ -1390,3 +1390,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | R-Q8a1-r4 delta a9678c99 | fresh egm reviewer (Sonnet) on the delta fcd77a68..0b97d55a, snapshot /home/user/build/snap/q8a1-0b97d55 | 16:12Z | +15m | 16:12Z | running | save report |
 | R-flaky-r2 codebase a1db18a8 | | | | 16:14Z | CLOSED: NOT CLEAN (gate + 11 Minor), saved | wait for design review + evidence, then ONE small batch |
 | R-flaky-r2 design ac12b987 | | | | 16:14Z | CLOSED: NOT CLEAN (gate + 2 Major + 9 Minor), saved | evidence addendum sent; ONE fix batch after evidence |
+| R-PRH-plan readiness adaafa73 | | | | 16:15Z | CLOSED: NOT READY (2 Blocker, 9 Major), saved | wait for the design plan review a6a4d892, then errata rev 2 and ONE builder |
+| EV-P3a2-r12 a10b6577 | | | | 16:15Z | CLOSED: RESULTS.md final: full suite exit 0 (11015), whole mutant list 288 of 288 killed (exit 0), 69 new tests fail on the old source; routes F1 F2 F4 F5 F7 reproduced; F3 sentence wrong (see correction). Transcript also shows 53 requests to model claude-opus-4-8 that I did not choose | closed |

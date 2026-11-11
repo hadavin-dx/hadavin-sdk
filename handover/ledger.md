@@ -2665,3 +2665,5 @@
 | BL-core-flaky-r2-c01 | Major(gate) | timing fix | evidence for a8c269c8 still running | OPEN | | | 2026-11-11 |
 | BL-core-flaky-r2-d01 | Major | timing fix | hand-repeat note: deferred and its reason false; real ratios unmeasured | OPEN | | | 2026-11-11 |
 | BL-core-flaky-r2-d02 | Major | timing fix | sibling wall-clock ceilings not fixed or named (test_k5_perf 30 s; test_k5_layers) | OPEN | | | 2026-11-11 |
+| BL-core-prh-plan-r1-b01 | Blocker(plan) | PR H | reviews/PRH/plan-r1-readiness-full.md B1 | OPEN | | | 2026-11-11 |
+| BL-core-prh-plan-r1-b02 | Blocker(plan) | PR H | reviews/PRH/plan-r1-readiness-full.md B2 | OPEN | | | 2026-11-11 |
