@@ -1340,5 +1340,18 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-P89-r21 | EVIDENCE RUNNER (Fable) 7a2eb4cc, pg 56131 | 15:51Z | +50m | 15:51Z | starting | RESULTS.md |
 | R-P89-r21 design, codebase, comprehension | fresh egm reviewers (Fable), snapshot /home/user/build/snap/p89-7a2eb4c | 15:51Z | +15m | 15:51Z | starting | save full reports |
 | R-P3a2-zoom a26d1a15 | design answer | 15:45Z | | 15:53Z | CLOSED: saved reviews/P3a-2/r13-design-zoomout-full.md (report + addendum); D-020 | probes, then ticket |
-| A-P3a2-r13 | TICKET AUTHOR (Fable): round-13 ticket (promise table, verify function, new order, deletion list, test design) | 15:53Z | +45m | 15:53Z | starting | plan review after probes land |
+| A-P3a2-r13 a0ea76bf | TICKET AUTHOR (Fable): round-13 ticket (promise table, verify function, new order, deletion list, test design) | 15:53Z | +45m | 15:53Z | starting | plan review after probes land |
 | R-P89-r21 design a91411ca, codebase abd93594, comprehension a3cdc11d; EV-P89-r21 a23252a4 | PR89 round 21 | 15:52Z | +15m / +50m | 15:53Z | running | save reports |
+
+### 15:54Z Long-running check (heartbeat)
+| item | age | what it is doing now (checked: process list, checkpoint notes, git logs) | verdict |
+|---|---|---|---|
+| B-flaky a6e5db57 | 85 min | last commit 15:31Z (second fix commit); no heavy job of its own in the list; proving under load | long: if no report by 16:05Z, message it for a report of what is proven |
+| B-Q8a1 a0c5bd99 | 40 min | fix batch 3 + addendum; stage mutants waiting for a slot | on track |
+| B-Q8c1-fix1 a9b15053 | 25 min | checkpoint 15:47Z: mutants, PR notes, full suite queued | on track |
+| B-Q8b a74d0f05 | 15 min | checkpoint 15:47Z: code written, CHANGELOG and proofs next, no commit yet | on track |
+| B-Q8a2-fix2 a2cd2d28 | 13 min | receiver rewritten (path first, deadline reader), socket tests | on track |
+| EV-P3a2-r12 a10b6577 | 20 min | mutant list in a slot; its checkpoint says the ROUTE PROBES (step 9) were NOT RUN: its own reply writing them was stopped by a safety filter and it did not retry | reproductions F1-F7 stay UNPROVEN; see note below |
+| EV-P89-r21 a23252a4, R-P89-r21 x3, A-PRH a2f42970, A-P3a2-r13 a0ea76bf | under 15 min | running / reading / writing | on track |
+Note (honest): the route reproductions for P3a-2 are not available. D-020 does not rest on them (the mechanism they attack is deleted), but the ticket's facts P1-P8 do need runs: the ticket author runs the plain single-session ones itself; the hostile-file routes become the sensitivity controls of the round-13 test generator, where each must be shown live.
+Heavy queue: 8 jobs for 3 slots at 15:54Z (load 10 on 4 cores): waits of 5-15 min expected; no new heavy work is started by the lead until it drains.
