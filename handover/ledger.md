@@ -2447,3 +2447,5 @@
 | BL-core-a11a-w3-02 | reviews/PR77/round-w3-tests-docs.md F2 | Major | PR77 | test_sep_1 never asserts the password is gone | OPEN | 2026-11-11 |
 | BL-core-a11a-w3-03 | reviews/PR77/round-w3-tests-docs.md F3-F8,F12 | Minor | PR77 | vacuous map_6; U fail-before; whole-literal fake secrets; weak HOSTILE-1; CHANGELOG cost wording; dangling comment; mutant 21 duplicate snippet unchecked | OPEN | 2026-11-11 |
 | BL-core-a18-w3-05 | reviews/PR86/round-w3-no-training.md F1-F3 | Minor | PR86 | self_hosted not enforced; per-host not per-route; bedrock_guardrail has no statement; track in P6a | OPEN | 2026-11-11 |
+| BL-core-a11a-w3-04 | reviews/PR77/round-w3-src.md F1 | Major | PR77 | redactor scans fold only, not fold_views/squeeze_views; Mc/Lm/Sk and Greek+U+0345 split a key (redaction, uncapped) | OPEN | 2026-11-11 |
+| BL-core-a11a-w3-05 | reviews/PR77/round-w3-src.md F2-F4 | Minor | PR77 | unclocked weight work on distinct text; Hangul line refused at 90000; overlapping multi-line block tail | OPEN | 2026-11-11 |
