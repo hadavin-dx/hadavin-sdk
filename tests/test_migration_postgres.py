@@ -2649,10 +2649,13 @@ def test_an_aggregate_with_no_arguments_is_revoked_with_empty_brackets(
 ):
     """The server names the arguments of an aggregate with none `*`; GRANT, REVOKE and ALTER ROUTINE write `()` for it
     (`(*)` is a syntax error there). The aggregate keeps the default right for everyone; the printed REVOKE must run.
-    Old name: `test_an_aggregate_with_no_arguments_is_printed_with_a_star`. Killed by: mutant FO5."""
+    Old name: `test_an_aggregate_with_no_arguments_is_printed_with_a_star`. Killed by: mutant FO5.
+    Re-pointed in commit 3b: the new check (ticket P3a-2, 3.4 line 3) does not judge the default right for everyone on a
+    function that ANOTHER role owns, so the old test (a superuser made the aggregate) no longer reached a refusal; the
+    migration role makes the aggregate now, which is the case the rule still refuses."""
     dsn, _role = plain_role
-    super_dsn, schema = scratch
-    with psycopg.connect(super_dsn, autocommit=True) as db:
+    _super_dsn, schema = scratch
+    with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(
             "CREATE AGGREGATE hadavin_test_zero_agg(*) (sfunc = int8inc, stype = int8, initcond = '0')"
         )
@@ -2660,7 +2663,9 @@ def test_an_aggregate_with_no_arguments_is_revoked_with_empty_brackets(
         mig.migrate(dsn)
     text = str(e.value)
     statements = re.findall(r"To remove: (REVOKE EXECUTE ON ROUTINE [^;]*;)", text)
-    assert len(statements) == 1 and "hadavin_test_zero_agg()" in statements[0], text
+    assert len(statements) == 1 and '"hadavin_test_zero_agg"()' in statements[0], (
+        text
+    )  # names are quoted now
     assert "(*)" not in statements[0]
     done = _psql(schema, tmp_path, *statements)
     assert done.returncode == 0, done.stderr
@@ -2764,7 +2769,6 @@ def _acl_of(dsn, schema: str, relation: str) -> list[str]:
         "GRANT SELECT (seq) ON audit_entries TO {other};",
         "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
         "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
-        "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
     ],
 )
 @pytest.mark.parametrize("with_roles", [False, True])
@@ -2790,7 +2794,10 @@ def test_a_right_for_a_role_the_run_does_not_name_is_refused(
                 mig.migrate(dsn, **roles)
             text = str(e.value)
             assert _kept_nothing(text)
-            assert ("everyone (PUBLIC) has" in text) == ("PUBLIC" in grant or "FUNCTION" in grant)
+            # Re-pointed in commit 3b: step 4 removes the default right for everyone from the function a file names
+            # BEFORE the last check, so a function line never says "everyone (PUBLIC) has" any more (the function case
+            # for PUBLIC has its own test below); a relation line still does.
+            assert ("everyone (PUBLIC) has" in text) == ("PUBLIC" in grant)
             assert (f"{other} has" in text) == ("{other}" in grant)
             assert "0006_grant" not in (_ledger(dsn) or [])
         finally:
@@ -2798,6 +2805,42 @@ def test_a_right_for_a_role_the_run_does_not_name_is_refused(
                 _drop_roles(roles["runtime_role"])
     finally:
         _drop_roles(other)
+
+
+@needs_pg
+@pytest.mark.parametrize("with_roles", [False, True])
+def test_a_file_that_grants_execute_on_its_function_to_everyone_leaves_nobody_but_the_owner(
+    scratch, monkeypatch, tmp_path, with_roles
+):
+    """Split out of `test_a_right_for_a_role_the_run_does_not_name_is_refused` in commit 3b. The old test expected a
+    refusal for `GRANT EXECUTE ON FUNCTION <package function> TO PUBLIC`. The new order removes everyone's right to
+    execute from every function the files name (step 4) BEFORE the last check, and an explicit grant to PUBLIC is the same
+    entry as the default, so the run ends clean: the run returns, the file is in the ledger and the function has no
+    right for everyone. What still counts is the final state, which is asserted on the server."""
+    dsn, schema = scratch
+    _with_files(
+        monkeypatch,
+        tmp_path,
+        {"0006_grant.sql": "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;\n"},
+    )
+    roles = {}
+    if with_roles:
+        roles = {"runtime_role": "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]}
+        _create_roles(roles["runtime_role"])
+    try:
+        assert "0006_grant" in mig.migrate(dsn, **roles)
+        assert "0006_grant" in (_ledger(dsn) or [])
+        with psycopg.connect(dsn, autocommit=True) as db:
+            everyone = db.execute(
+                "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace, "
+                "aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a "
+                "WHERE n.nspname = %s AND p.proname = 'hadavin_audit_append_only' AND a.grantee = 0",
+                (schema,),
+            ).fetchone()[0]
+        assert everyone == 0
+    finally:
+        if with_roles:
+            _drop_roles(roles["runtime_role"])
 
 
 @needs_pg
@@ -3001,23 +3044,31 @@ def second_schema():
 
 
 @needs_pg
-def test_a_security_definer_function_written_with_another_schema_is_refused(
+def test_a_security_definer_function_written_with_another_schema_is_made_owner_only_by_the_run(
     scratch, monkeypatch, tmp_path, second_schema
 ):
-    """The first version looked only at the schema of the run: `CREATE OR REPLACE FUNCTION other.f() ... SECURITY DEFINER`
-    escaped (it keeps the default right for everyone to call it and runs with the rights of the migration role). Now every
-    function that is new or changed anywhere in the database is read. Class: a read-back limited to one schema.
-    Killed by: mutant SD4 (only the schema of the run is read)."""
+    """Old name: `test_a_security_definer_function_written_with_another_schema_is_refused`. Re-pointed in commit 3b
+    (ticket P3a-2, rule S7): the old code refused a SECURITY DEFINER function that a file wrote with another schema
+    before the dot because it was new. The new check judges who can CALL it: step 4 removes the default right of everyone
+    to call a function that a file names, also in another schema, so only the owner can call it and rule S7 ("a function
+    that a subject or everyone may execute") has nothing to refuse. The hidden form, where the file does not name the
+    function (dynamic SQL), is the one that is still refused, by the test just above. Asserted on the server: the
+    run returns, and nobody but the owner holds EXECUTE. Class: a read limited to one schema. Killed by: mutant SD4."""
     dsn, _schema = scratch
     body = (
         f'CREATE OR REPLACE FUNCTION "{second_schema}".hadavin_test_f() RETURNS int LANGUAGE sql SECURITY DEFINER '
         "AS $$ SELECT 1 $$;\n"
     )
     _with_files(monkeypatch, tmp_path, {"0006_other_schema.sql": body})
-    with pytest.raises(ConfigError, match="SECURITY DEFINER") as e:
-        mig.migrate(dsn)
-    assert "hadavin_test_f" in str(e.value) and _kept_nothing(str(e.value))
-    assert _ledger(dsn) is None
+    assert mig.migrate(dsn) == REAL + ["0006_other_schema"]
+    with psycopg.connect(DSN, autocommit=True) as db:
+        callers = db.execute(
+            "SELECT a.grantee = 0, a.grantee = p.proowner FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace, "
+            "aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a "
+            "WHERE n.nspname = %s AND p.proname = 'hadavin_test_f' AND p.prosecdef",
+            (second_schema,),
+        ).fetchall()
+    assert callers and all(owner and not everyone for everyone, owner in callers), callers
 
 
 @needs_pg
@@ -3146,8 +3197,8 @@ def test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_l
     scratch, right
 ):
     """CREATE in the package schema lets a role plant a function that a role of this package then calls; the rights on
-    the schema were never read. USAGE only lets a role look a name up, so it is not refused (the rights on the objects
-    are read). Killed by: mutant SC1 (the schema rights are not read)."""
+    the schema were never read. USAGE for everyone only lets a name be looked up, so it is not refused; USAGE for a third
+    role is (commit 3b, see the comment in the test). Killed by: mutant SC1 (the schema rights are not read)."""
     dsn, schema = scratch
     other = "hadavin_test_sc_" + uuid.uuid4().hex[:8]
     _create_roles(other)
@@ -3165,6 +3216,23 @@ def test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_l
                 mig.migrate(dsn)
             assert _kept_nothing(str(e.value)) and _ledger(dsn) is None
         else:
+            # Re-pointed in commit 3b (ticket P3a-2, rule O1): the old test let a third role keep USAGE on the schema of
+            # the run. The new check allows only the owner, the migration role and the named roles as grantees on the
+            # schema, so a third role's USAGE is refused, with the line that names the role. Everyone's USAGE is the
+            # one allowed exception (rule O2, the default of the `public` schema from PostgreSQL 15): it only lets a
+            # name be looked up.
+            with pytest.raises(ConfigError, match=f"schema {schema}: {other} has USAGE") as e:
+                mig.migrate(dsn)
+            assert _kept_nothing(str(e.value)) and _ledger(dsn) is None
+            with psycopg.connect(DSN, autocommit=True) as db:
+                db.execute(
+                    sql.SQL("REVOKE USAGE ON SCHEMA {} FROM {}").format(
+                        sql.Identifier(schema), sql.Identifier(other)
+                    )
+                )
+                db.execute(
+                    sql.SQL("GRANT USAGE ON SCHEMA {} TO PUBLIC").format(sql.Identifier(schema))
+                )
             assert mig.migrate(dsn) == REAL
     finally:
         _drop_roles(other)
@@ -3205,16 +3273,28 @@ def test_an_owner_a_file_handed_an_object_to_is_refused_even_when_the_migration_
 
 @needs_pg
 def test_a_right_that_an_earlier_run_gave_is_named_as_such_in_the_refusal(scratch):
-    """A later run that names no role finds the rights an earlier run gave to the runtime role; the refusal said 'remove
-    the statement from the migration file' although no file was at fault. Killed by: mutant WD1 (old wording)."""
+    """A later run that names no role finds the rights an earlier run gave to the runtime role; the refusal once said
+    'remove the statement from the migration file' although no file was at fault. Killed by: mutant WD1.
+    Re-pointed in commit 3b (the wording changed, the intent did not): the rights are now found at step 2, before any
+    file runs, so the refusal says that no file ran and nothing was changed, names the role and prints the REVOKE
+    statements. It never tells the reader to remove a statement from a file. (The old sentence 'an earlier run or a
+    database administrator' and the hint 'name it in this run' are gone with the old message.)"""
     dsn, _schema = scratch
     run_as = "hadavin_test_er_" + uuid.uuid4().hex[:8]
     _create_roles(run_as)
     try:
         assert mig.migrate(dsn, runtime_role=run_as) == REAL
-        with pytest.raises(ConfigError, match="an earlier run or a database administrator") as e:
+        with pytest.raises(
+            ConfigError, match="before any migration file ran, this database already holds rights"
+        ) as e:
             mig.migrate(dsn)
-        assert f"{run_as} has" in str(e.value) and "name it in this run" in str(e.value)
+        text = str(e.value)
+        assert (
+            f"{run_as} has" in text and "To remove: REVOKE" in text and f'FROM "{run_as}"' in text
+        )
+        assert "Nothing was changed. No file ran." in text
+        assert "remove that statement" not in text and "migration file made it" not in text
+        assert _ledger(dsn) == REAL, "the ledger is as the first run left it"
     finally:
         _drop_roles(run_as)
 
@@ -3476,12 +3556,17 @@ def test_a_right_given_on_a_table_that_existed_before_the_run_is_refused(
     dsn, schema = scratch
     _pre_existing(schema, "table", X)
     _with_files(monkeypatch, tmp_path, {"0006_open.sql": later})
+    # Re-pointed in commit 3b: a right on one column is a line of its own kind now ("column <schema>.<table>, column a:")
+    # and the statement is part of the line; a right on the whole table keeps "table <schema>.<table>:".
+    on_column = "(a)" in later
+    word = "column" if on_column else "table"
     with pytest.raises(
-        ConfigError, match=f"table {schema}.{X}: everyone \\(PUBLIC\\) has SELECT"
+        ConfigError,
+        match=f"{word} {schema}.{X}{', column a' if on_column else ''}: everyone \\(PUBLIC\\) has SELECT",
     ) as e:
         mig.migrate(dsn)
     assert _kept_nothing(str(e.value))
-    assert (f"the table {schema}.{X}, column a" in str(e.value)) == ("(a)" in later)
+    assert ('To remove: REVOKE SELECT ("a") ON TABLE' in str(e.value)) == on_column
     assert _ledger(dsn) is None
 
 
@@ -3493,7 +3578,12 @@ def test_a_second_right_on_a_column_that_already_had_one_is_refused(
     right for PUBLIC on the same column. The set of columns that hold a right does not change, only what the right says,
     so the table counts as changed only when the text of the rights is part of its state. Killed by: mutant RA1b (the
     rights of a column are not part of its state; a first right on a column still changes the set, so only this case
-    shows it)."""
+    shows it).
+    Re-pointed in commit 3b: there is no before/after comparison any more; the state is judged whoever made it. The
+    earlier right is given to a THIRD role (one the run does not name: the check does not judge a third role's right on
+    an object of another schema, ticket P3a-2 section 1.4), because the same right for a role the run names is now
+    refused at step 2 before any file runs. The file then adds the right for everyone, and the end of the run refuses
+    that one: a column that already holds a right of someone else does not hide a new right for everyone."""
     dsn, schema = scratch
     _pre_existing(schema, "table", X, in_schema=second_schema)
     _admin(
@@ -3509,7 +3599,7 @@ def test_a_second_right_on_a_column_that_already_had_one_is_refused(
     with pytest.raises(
         ConfigError, match=f"column {second_schema}.{X}, column a: everyone \\(PUBLIC\\) has SELECT"
     ):
-        mig.migrate(dsn, runtime_role=named_role)
+        mig.migrate(dsn)
 
 
 @needs_pg
@@ -3564,9 +3654,17 @@ def test_an_owner_handed_over_in_the_run_schema_is_refused(scratch, monkeypatch,
 def test_a_schema_that_a_file_changed_is_read_back_whatever_schema_it_is(
     scratch, monkeypatch, tmp_path, second_schema, change
 ):
-    """`GRANT CREATE ON SCHEMA other TO PUBLIC` and `ALTER SCHEMA other OWNER TO r` inside a function body changed a
-    schema that the run does not live in; only the schema of the run was read. Killed by: mutants SC10 (changed schemas
-    are not read) and SC11 (a schema owner is not read)."""
+    """`GRANT CREATE ON SCHEMA other TO PUBLIC` inside a function body changed a schema that the run does not live in; only
+    the schema of the run was read. Killed by: mutants SC10 (changed schemas are not read) and SC11 (a schema owner is not
+    read).
+    Re-pointed in commit 3b (ticket P3a-2, 3.3 rule O5 struck, and 10.3 items 3 and 11). The `acl` case keeps its intent:
+    a right for everyone is judged in EVERY schema. The `owner` case pinned a REFUSAL that the new design drops on
+    purpose: the schema is handed to a role the migration role belongs to (the only kind of role a plain migration role
+    can hand an object to: the server wants it to be able to switch to the new owner), and a group owner is allowed. It
+    is now the clean control for that choice: the run returns and the schema is owned by the group. The class
+    "a changed schema is not read" stays covered by the `acl` case and, for the run's own schema, by
+    `test_a_foreign_owner_of_a_table_the_package_manages_is_refused_at_the_end_of_the_run` (tests/test_migration_verify_pg.py).
+    NEEDS THE LEAD'S SIGN-OFF as a refusal dropped on purpose (ticket 5.4, rev 3 F6)."""
     dsn, _schema = scratch
     other = "hadavin_test_sw_" + uuid.uuid4().hex[:8]
     _create_roles(other)
@@ -3588,13 +3686,19 @@ def test_a_schema_that_a_file_changed_is_read_back_whatever_schema_it_is(
             else f'ALTER SCHEMA "{second_schema}" OWNER TO {other}'
         )
         _with_files(monkeypatch, tmp_path, {"0006_schema.sql": _dynamic(statement)})
-        expect = (
-            f"schema {second_schema}: everyone \\(PUBLIC\\) has CREATE"
-            if change == "acl"
-            else f"the schema {second_schema} was handed to {other}"
-        )
-        with pytest.raises(ConfigError, match=expect):
-            mig.migrate(dsn)
+        if change == "acl":
+            with pytest.raises(
+                ConfigError, match=f"schema {second_schema}: everyone \\(PUBLIC\\) has CREATE"
+            ):
+                mig.migrate(dsn)
+        else:
+            assert "0006_schema" in mig.migrate(dsn)
+            with psycopg.connect(DSN, autocommit=True) as db:
+                owner = db.execute(
+                    "SELECT pg_get_userbyid(nspowner) FROM pg_namespace WHERE nspname = %s",
+                    (second_schema,),
+                ).fetchone()[0]
+            assert owner == other
     finally:
         _drop_roles(other)
 
@@ -3689,8 +3793,9 @@ def test_a_right_that_a_named_role_may_pass_on_is_refused_on_a_table_of_the_gran
             )
         with pytest.raises(ConfigError, match="may pass SELECT on to others") as e:
             mig.migrate(dsn, runtime_role=named_role)
-        where = f"the table {schema}.runs" + (", column run_id" if columns else "")
-        assert f"{named_role} may pass SELECT on {where} on to others" in str(e.value)
+        # Re-pointed in commit 3b: a line is now "<kind> <schema>.<name>[, column <c>]: <role> may pass <right> on to others"
+        where = f"column {schema}.runs, column run_id" if columns else f"table {schema}.runs"
+        assert f"{where}: {named_role} may pass SELECT on to others" in str(e.value)
         assert _kept_nothing(str(e.value))
     finally:
         _drop_roles(giver)
@@ -3755,7 +3860,10 @@ def test_a_named_role_gets_no_right_on_what_is_not_in_the_grant_map(
     )
     with pytest.raises(ConfigError, match="NOT THIS PACKAGE'S OBJECT") as e:
         mig.migrate(dsn, runtime_role=named_role)
-    assert f"{kind} {second_schema}.{X}: {named_role} has {right}" in str(e.value)
+    # Re-pointed in commit 3b: a right on one column is a line of the kind "column", with the column after the table.
+    on_column = "(a)" in grant
+    shown = f"column {second_schema}.{X}, column a" if on_column else f"{kind} {second_schema}.{X}"
+    assert f"{shown}: {named_role} has {right}" in str(e.value)
     assert "Confirm with the owner of" in str(e.value)
     assert "0006_grant" not in (_ledger(dsn) or [])
 
@@ -3946,8 +4054,16 @@ def test_a_security_definer_function_of_the_migration_role_that_no_file_made_is_
         with pytest.raises(ConfigError, match="SECURITY DEFINER") as e:
             mig.migrate(dsn)
         text = str(e.value)
-        assert f"the function {schema}.hadavin_test_def() is SECURITY DEFINER" in text
-        assert "and no file of this run made or changed it" in text
+        # Re-pointed in commit 3b: the line is "function <schema>.<name>(): <owner> runs with the rights of its owner
+        # (SECURITY DEFINER) and is not on the reviewed list" (rule O4); the "no file of this run made or changed it" part
+        # is now the fact that the refusal comes at step 2, before any file ran.
+        owner_role = PLAIN_ROLE if owner == "the_migration_role" else group
+        assert (
+            f"function {schema}.hadavin_test_def(): {owner_role} runs with the rights of its owner (SECURITY DEFINER) "
+            "and is not on the reviewed list"
+        ) in text
+        assert "Nothing was changed. No file ran." in text
+        assert "SECURITY INVOKER" in text
         assert _kept_nothing(text) and _ledger(dsn) is None
     finally:
         _admin(
@@ -4107,12 +4223,17 @@ def test_a_named_role_gets_no_right_on_a_function(scratch, monkeypatch, tmp_path
     )
     with pytest.raises(ConfigError, match="rights that the grant map does not give") as e:
         mig.migrate(dsn, runtime_role=named_role)
-    found = str(e.value).split("in this database: ", 1)[1].split(". Nothing was changed.", 1)[0]
-    assert found == (
-        f"{named_role} has EXECUTE on the function {schema}.hadavin_audit_append_only() "
-        "(a role named in this run gets no right outside the grant map, which holds tables, views and sequences "
-        "only)"
-    )
+    # Re-pointed in commit 3b: one line of the kind "function <schema>.<name>(): <role> has EXECUTE" and the printed
+    # REVOKE; the refusal is the ONE line (the default for everyone was taken by the file) and it comes after the files
+    # and the grants (step 6), so the run is rolled back.
+    lines = [ln for ln in str(e.value).splitlines() if ln.startswith("  - ")]
+    assert lines == [
+        (
+            f"  - function {schema}.hadavin_audit_append_only(): {named_role} has EXECUTE. To remove: "
+            f'REVOKE EXECUTE ON ROUTINE "{schema}"."hadavin_audit_append_only"() FROM "{named_role}";'
+        )
+    ], str(e.value)
+    assert _kept_nothing(str(e.value)) and "0006_fn" not in (_ledger(dsn) or [])
 
 
 @needs_pg
@@ -4140,6 +4261,21 @@ def test_a_function_that_is_called_like_a_table_of_the_grant_map_is_not_this_pac
                 fn, sql.Identifier(PLAIN_ROLE if owner == "the_migration_role" else other)
             ),
         )
+        if owner == "the_migration_role":
+            # Re-pointed in commit 3b (ticket P3a-2, 3.4 line 3: a function of the migration role in the schema of the run
+            # may be called by nobody else; the old code left it alone). The run is refused at step 2 and the refusal
+            # names BOTH rights (everyone's and the third role's). That everyone's right is named at all shows `spend()`
+            # was NOT taken for the table `spend` of the grant map: a managed function has the default for everyone
+            # removed by step 4 and would not be named. The function keeps its rights (nothing was changed).
+            with pytest.raises(ConfigError, match="before any migration file ran") as e:
+                mig.migrate(dsn)
+            lines = [ln for ln in str(e.value).splitlines() if ln.startswith("  - ")]
+            assert any(
+                f"function {schema}.spend(): everyone (PUBLIC) has EXECUTE" in ln for ln in lines
+            )
+            assert any(f"function {schema}.spend(): {other} has EXECUTE" in ln for ln in lines)
+            assert "No file ran." in str(e.value) and _ledger(dsn) is None
+            return
         assert mig.migrate(dsn) == REAL
         with psycopg.connect(DSN, autocommit=True) as db:
             everyone = db.execute(
@@ -4201,8 +4337,9 @@ def test_a_named_role_that_can_read_a_foreign_table_in_the_run_schema_is_refused
         )
         with pytest.raises(ConfigError, match="foreign table .*: .* has SELECT") as e:
             mig.migrate(dsn, runtime_role=named_role)
-        assert f"{named_role}: can SELECT hadavin_test_ft (not in the grant map)" in str(e.value)
-        assert f"in schema {schema}" in str(e.value)
+        # Re-pointed in commit 3b: the line names the kind, the schema and the table, then the role and the right.
+        assert f"foreign table {schema}.hadavin_test_ft: {named_role} has SELECT" in str(e.value)
+        assert 'REVOKE SELECT ON TABLE "' in str(e.value) and "No file ran." in str(e.value)
 
 
 @needs_pg

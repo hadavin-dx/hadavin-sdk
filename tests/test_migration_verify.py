@@ -14,6 +14,7 @@ import pytest
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store import migration_verify as v
 from hadavin_sdk.store.migrate import GRANTS
+from tests.test_migration_steps import harness  # noqa: F401  (the fixture: `migrate` on made-up files and a stub)
 
 SCHEMA = "app"
 NAMED = {"rt": "runtime", "po": "portal", "pu": "purge"}
@@ -792,3 +793,33 @@ def test_the_pinned_read_check_finds_a_read_that_is_not_pinned():
     assert flat == [("execute", False)] and pinned == [("execute", True)]
     assert _UNQUALIFIED_CATALOG.search("SELECT 1 FROM pg_roles")
     assert not _UNQUALIFIED_CATALOG.search("SELECT 1 FROM pg_catalog.pg_roles")
+
+
+def test_the_rights_table_equals_what_apply_grants_is_called_with(harness, monkeypatch):  # noqa: F811
+    """The rights `verify` allows a named role (`_rights_for`, and the purge columns of `_allowed_for`) are exactly what
+    `migrate` gives that role: the functions step 4 passes to `_apply_grants` are evaluated on every relation of the
+    grant map and compared. A right given by step 4 that `verify` would call excess (or the other way round) fails here."""
+    from hadavin_sdk.store import migrate as mig
+
+    calls = []
+    monkeypatch.setattr(
+        mig,
+        "_apply_grants",
+        lambda db, schema, role, privileges, columns=None: calls.append(
+            (role, privileges, columns)
+        ),
+    )
+    err, _opened, _rec, _applied = harness(
+        runtime_role="rt_role", portal_role="pt_role", purge_role="pu_role"
+    )
+    assert err is None, err
+    assert [c[0] for c in calls] == ["rt_role", "pu_role", "pt_role"]
+    kinds = {"rt_role": "runtime", "pu_role": "purge", "pt_role": "portal"}
+    for role, privileges, columns in calls:
+        for name, g in GRANTS.items():
+            given = frozenset(w.strip() for w in privileges(g).split(",") if w.strip())
+            assert given == v._rights_for(kinds[role], g), (role, name)
+            if kinds[role] == "purge":
+                assert columns is not None and tuple(columns(g)) == g.purge_cols, name
+            else:
+                assert columns is None, (role, name)

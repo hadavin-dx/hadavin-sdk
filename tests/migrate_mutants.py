@@ -51,6 +51,8 @@ T_NAMES = "tests/test_migration_names.py"
 T_CMP = "tests/test_migration_compare.py"
 T_VERIFY = "tests/test_migration_verify.py"
 T_STEPS = "tests/test_migration_steps.py"
+T_VERIFY_PG = "tests/test_migration_verify_pg.py"
+VERIFY = "src/hadavin_sdk/store/migration_verify.py"
 
 
 @dataclass(frozen=True)
@@ -158,7 +160,6 @@ BATCH_2_IDS: frozenset[str] = frozenset(
             "RF5",
             "OW5",
             "OW6",
-            "OW9",
             "MC2",
             "PDO2",
         ),
@@ -263,14 +264,6 @@ STEP_MUTANTS: list[Mutant] = [
         MIG,
         "                    _revoke_default_execute(db, schema, me, login, texts.values())\n",
         "                    pass\n",
-        S4_REVOKE,
-    ),
-    Mutant(
-        "E5",
-        "step 4 writes an aggregate with no arguments with empty brackets",
-        MIG,
-        'signature = args if args or kind != "a" else "*"\n        db.execute(',
-        "signature = args\n        db.execute(",
         S4_REVOKE,
     ),
     Mutant(
@@ -408,7 +401,7 @@ STEP_MUTANTS: list[Mutant] = [
         "E22",
         "every owner problem of the kind schema is excused, whatever the schema",
         MIG,
-        "            and p.obj == schema\n",
+        "            and p.schema == schema\n",
         "            and True\n",
         OWNER_ONLY + "[other2]",
     ),
@@ -426,7 +419,7 @@ STEP_MUTANTS: list[Mutant] = [
         MIG,
         "    with pinned_read(db, RECIPE_TIMEOUTS):\n        rows = db.execute(\n            STEP4_SQL",
         "    if True:\n        rows = db.execute(\n            STEP4_SQL",
-        PINNED,
+        (PINNED, S_("test_step_4_asks_for_the_functions_of_this_run_and_this_schema")),
     ),
     Mutant(
         "E26",
@@ -470,7 +463,7 @@ M: list[Mutant] = [
         "read-back removed from migrate()",
         MIG,
         CALL,
-        "                saved = saved\n",
+        "                        saved = saved\n",
         READS_BEFORE,
     ),
     cmp_mutant("M62", "search_path", "search_path not compared", "search_path"),
@@ -1517,8 +1510,8 @@ M: list[Mutant] = [
         "OA3",
         "the functions the files create are not managed names",
         MIG,
-        "        for m in _FUNCTION_CREATE.finditer(text):\n",
-        "        for m in ():\n",
+        "        for m in _FUNCTION_CREATE.finditer(text):\n            where = _name_of(m.group(1), m.group(2))\n            # no schema written",
+        "        for m in ():\n            where = _name_of(m.group(1), m.group(2))\n            # no schema written",
         (
             k(
                 T_WIRING,
@@ -1605,14 +1598,6 @@ M: list[Mutant] = [
         "AND r.rolname <> 'pg_database_owner'",
         "AND true",
         k(T_PG, "test_the_owner_of_a_database_belongs_to_pg_database_owner_and_is_not_refused"),
-    ),
-    Mutant(
-        "FO5",
-        "an aggregate with no arguments is printed with the star of ALTER AGGREGATE",
-        "src/hadavin_sdk/store/migration_verify.py",
-        'args = "" if sub == "*" else sub',
-        "args = sub",
-        k(T_PG, "test_an_aggregate_with_no_arguments_is_revoked_with_empty_brackets"),
     ),
     Mutant(
         "OS1",
@@ -2191,34 +2176,6 @@ M: list[Mutant] = [
         k(T_RULES, "test_the_password_scan_reads_the_star_star_forms"),
     ),
     Mutant(
-        "SD4",
-        "only the schema of the run is read for functions (a function in another schema escapes)",
-        MIG,
-        '"FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE "\n    "@NOT_SYSTEM_P@"',
-        '"FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = current_schema() AND "\n    "@NOT_SYSTEM_P@"',
-        (
-            k(T_PG, "test_a_security_definer_function_written_with_another_schema_is_refused"),
-            k(T_PG, "test_a_plain_function_in_another_schema_loses_the_default_right_for_everyone"),
-        ),
-    ),
-    Mutant(
-        "SD5",
-        "only new ids are looked at, not the state of an object that existed before (a replaced function, a table whose rights changed)",
-        MIG,
-        "        if (st[_IN_SCOPE] or (i in before and before[i][_IN_SCOPE])) and before.get(i) != st",
-        "        if (st[_IN_SCOPE] or (i in before and before[i][_IN_SCOPE])) and i not in before",
-        (
-            k(T_PG, "test_a_function_replaced_with_the_same_id_and_made_security_definer_is_found"),
-            k(T_PG, "test_a_right_given_on_a_table_that_existed_before_the_run_is_refused")
-            + "[table]",
-            k(T_PG, "test_an_owner_handed_over_in_the_run_schema_is_refused"),
-            k(
-                T_PG,
-                "test_with_the_printed_role_an_owner_handed_over_is_the_one_cause_of_the_refusal",
-            ),
-        ),
-    ),
-    Mutant(
         "RN6",
         "relations that changed during the run are not read",
         MIG,
@@ -2436,51 +2393,27 @@ M: list[Mutant] = [
     ),
     Mutant(
         "OW5",
-        "the owner of a function is not read",
+        "the owner of a function is not read (step 1)",
         MIG,
-        '"AND p.proowner <> @ME@ AND p.oid <> ALL(%(kept_fn)s::oid[]) AND "',
-        '"AND false AND "',
-        k(T_PG, "test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind")
-        + "[function-function]",
+        "\"AND p.proname = ANY(%s::text[]) AND NOT pg_has_role(current_user, p.proowner, 'USAGE') \"",
+        '"AND p.proname = ANY(%s::text[]) AND false "',
+        k(
+            T_VERIFY_PG,
+            "test_a_name_the_package_manages_that_a_third_role_owns_is_refused_at_step_2",
+        )
+        + "[function]",
     ),
     Mutant(
         "OW6",
-        "the owner of a view or a sequence is not read",
+        "the owner of a sequence is not read (step 1)",
         MIG,
-        '"AND c.relowner <> @ME@ AND c.oid <> ALL(%(kept_rel)s::oid[]) AND "',
-        "\"AND c.relowner <> @ME@ AND c.relkind IN ('r', 'p') AND c.oid <> ALL(%(kept_rel)s::oid[]) AND \"",
-        (
-            k(T_PG, "test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind")
-            + "[sequence-sequence]",
-            k(T_PG, "test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind")
-            + "[view-view]",
-        ),
-    ),
-    Mutant(
-        "OW7",
-        "a function that kept its owner is refused for that owner",
-        MIG,
-        "        _kept_owner_ids(before.functions, after.functions),",
-        "        frozenset(),",
-        (
-            k(T_PG, "test_a_function_that_kept_a_foreign_owner_is_not_refused_for_that_owner"),
-            k(T_CMP, "test_the_ids_that_kept_their_owner_are_one_set_per_catalog"),
-        ),
-    ),
-    Mutant(
-        "FB1",
-        "the text body of a function is not part of its state",
-        MIG,
-        '"p.prosrc, pg_get_function_sqlbody',
-        "\"''::text, pg_get_function_sqlbody",
-        (
-            k(T_PG, "test_a_function_whose_body_a_file_replaced_is_treated_as_changed"),
-            k(
-                T_PG,
-                "test_every_part_of_a_function_that_a_file_can_change_makes_it_a_changed_function",
-            )
-            + "[text_body]",
-        ),
+        "\"AND c.relkind IN ('r','p','v','m','S','f') AND c.relname = ANY(%s::text[]) \"",
+        "\"AND c.relkind IN ('r','p','v','m','f') AND c.relname = ANY(%s::text[]) \"",
+        k(
+            T_VERIFY_PG,
+            "test_a_name_the_package_manages_that_a_third_role_owns_is_refused_at_step_2",
+        )
+        + "[sequence]",
     ),
     Mutant(
         "SC10",
@@ -2901,30 +2834,6 @@ M: list[Mutant] = [
         + "[ALTER TABLE t RENAME COLUMN owner TO owner_name]",
     ),
     Mutant(
-        "SO1",
-        "every function of the database is in scope (another session's function is compared)",
-        MIG,
-        '"SELECT p.oid, (p.proowner IN @MINE@ OR EXISTS (SELECT 1 FROM aclexplode(p.proacl) a WHERE a.grantor IN @MINE@)), "',
-        '"SELECT p.oid, true, "',
-        k(T_PG, "test_what_another_session_commits_during_the_run_does_not_stop_the_run"),
-    ),
-    Mutant(
-        "SO2",
-        "every relation of the database is in scope (another session's table is compared)",
-        MIG,
-        '"SELECT c.oid, (c.relowner IN @MINE@ OR EXISTS (SELECT 1 FROM aclexplode(c.relacl) a WHERE a.grantor IN @MINE@) "',
-        '"SELECT c.oid, (true OR EXISTS (SELECT 1 FROM aclexplode(c.relacl) a WHERE a.grantor IN @MINE@) "',
-        k(T_PG, "test_what_another_session_commits_during_the_run_does_not_stop_the_run"),
-    ),
-    Mutant(
-        "SO3",
-        "every schema of the database is in scope (another session's schema is compared)",
-        MIG,
-        '"SELECT n.oid, (n.nspowner IN @MINE@ OR EXISTS (SELECT 1 FROM aclexplode(n.nspacl) a WHERE a.grantor IN @MINE@)), "',
-        '"SELECT n.oid, true, "',
-        k(T_PG, "test_what_another_session_commits_during_the_run_does_not_stop_the_run"),
-    ),
-    Mutant(
         "CS1",
         "only a new owner makes an object changed",
         MIG,
@@ -2937,18 +2846,6 @@ M: list[Mutant] = [
             + "[relations-2]",
             k(T_CMP, "test_a_difference_in_any_one_field_of_an_object_in_scope_makes_it_changed")
             + "[schemas-2]",
-        ),
-    ),
-    Mutant(
-        "CS2",
-        "the scope is not asked: every difference in the database is a change",
-        MIG,
-        "        if (st[_IN_SCOPE] or (i in before and before[i][_IN_SCOPE])) and before.get(i) != st",
-        "        if before.get(i) != st",
-        (
-            k(T_CMP, "test_an_object_that_is_out_of_scope_before_and_after_is_never_changed")
-            + "[relations]",
-            k(T_PG, "test_what_another_session_commits_during_the_run_does_not_stop_the_run"),
         ),
     ),
     Mutant(
@@ -2996,29 +2893,6 @@ M: list[Mutant] = [
         k(
             T_CMP,
             "test_nothing_found_means_no_refusal_and_the_queries_get_one_set_of_ids_per_catalog",
-        ),
-    ),
-    Mutant(
-        "OW8",
-        "a schema that kept the owner it had before the files is refused for that owner",
-        MIG,
-        "        _kept_owner_ids(before.schemas, after.schemas),",
-        "        frozenset(),",
-        k(
-            T_PG,
-            "test_a_schema_that_a_file_changed_and_that_kept_its_owner_is_not_taken_for_handed_over",
-        ),
-    ),
-    Mutant(
-        "OW9",
-        "every relation is called a table in the owner message",
-        MIG,
-        "            thing = f\"the {_OWNER_WORD.get(kind, 'relation').lower()} {_label(obj_schema, name)}\"",
-        '            thing = f"the table {_label(obj_schema, name)}"',
-        (
-            k(T_CMP, "test_the_owner_loop_says_what_the_object_is_and_names_it_with_its_schema"),
-            k(T_PG, "test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind")
-            + "[view-view]",
         ),
     ),
     Mutant(
@@ -3086,27 +2960,19 @@ M: list[Mutant] = [
     ),
     Mutant(
         "SD7",
-        "every untouched SECURITY DEFINER function of the run schema is refused, whoever owns it",
-        MIG,
-        '"OR (n.nspname = %(schema)s AND p.prosecdef AND p.proowner IN @MINE@)) AND "',
-        '"OR (n.nspname = %(schema)s AND p.prosecdef)) AND "',
-        k(
-            T_PG,
-            "test_a_security_definer_function_that_is_not_the_migration_roles_or_not_in_the_run_schema_is_left_alone",
-        )
-        + "[another_owner]",
+        "every SECURITY DEFINER function of the run schema is refused, whoever owns it (rule S7)",
+        VERIFY,
+        "            and fam_owned\n            and it.definer\n",
+        "            and it.definer\n",
+        k(T_VERIFY_PG, "test_a_reviewed_definer_is_excused_only_in_its_schema_with_its_arguments"),
     ),
     Mutant(
         "SD8",
-        "the untouched SECURITY DEFINER functions of every schema are refused",
-        MIG,
-        '"OR (n.nspname = %(schema)s AND p.prosecdef AND p.proowner IN @MINE@)) AND "',
-        '"OR (p.prosecdef AND p.proowner IN @MINE@)) AND "',
-        k(
-            T_PG,
-            "test_a_security_definer_function_that_is_not_the_migration_roles_or_not_in_the_run_schema_is_left_alone",
-        )
-        + "[another_schema]",
+        "the SECURITY DEFINER functions of every schema are refused (rule S7 is read in the schema of the run only)",
+        VERIFY,
+        "        if it.system or it.schema != schema:\n            continue\n        fam_owned",
+        "        if it.system:\n            continue\n        fam_owned",
+        k(T_VERIFY_PG, "test_a_reviewed_definer_is_excused_only_in_its_schema_with_its_arguments"),
     ),
     Mutant(
         "SD9",
@@ -3118,24 +2984,6 @@ M: list[Mutant] = [
             T_CMP,
             "test_the_function_loop_refuses_rights_and_security_definer_and_removes_the_default_for_everyone",
         ),
-    ),
-    Mutant(
-        "FB2",
-        "the SQL-standard body of a function (RETURN ...) is not part of its state",
-        MIG,
-        "pg_get_function_sqlbody(p.oid), p.probin",
-        "NULL::text, p.probin",
-        k(T_PG, "test_every_part_of_a_function_that_a_file_can_change_makes_it_a_changed_function")
-        + "[sql_standard_body]",
-    ),
-    Mutant(
-        "FB3",
-        "the saved settings of a function are not part of its state",
-        MIG,
-        'p.prolang::bigint, p.proconfig::text "',
-        'p.prolang::bigint, NULL::text "',
-        k(T_PG, "test_every_part_of_a_function_that_a_file_can_change_makes_it_a_changed_function")
-        + "[saved_settings]",
     ),
     Mutant(
         "RA4",

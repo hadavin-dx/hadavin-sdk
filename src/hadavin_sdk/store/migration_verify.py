@@ -670,9 +670,9 @@ def _object_sql(kind: str, schema: str, name: str, sub: str) -> sql.Composable |
     ):
         return _ident(schema, name) if _plain(schema, name) else None
     if kind in _FUNCTION_KINDS:
-        # the server prints the arguments of an aggregate with none as `*`; GRANT, REVOKE and ALTER ROUTINE take `()`
-        # for it (`(*)` is a syntax error there: it is the form of `ALTER AGGREGATE` only)
-        args = "" if sub == "*" else sub
+        # the identity arguments of an aggregate with none are empty on 16.15 (checked), so `()` is what is printed
+        # (`(*)` is a syntax error in GRANT, REVOKE and ALTER ROUTINE)
+        args = sub
         return (
             sql.SQL("{}({})").format(_ident(schema, name), sql.SQL(args))
             if _plain(schema, name, sub)

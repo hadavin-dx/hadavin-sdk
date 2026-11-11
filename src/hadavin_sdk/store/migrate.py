@@ -1598,9 +1598,7 @@ def _revoke_default_execute(db, schema: str, me: str, login: str, texts) -> None
             },
         ).fetchall()
     for _shown_name, where, name, args, _kind in rows:
-        signature = (
-            "" if args == "*" else args
-        )  # `(*)` is the form of ALTER AGGREGATE only; REVOKE takes `()`
+        signature = args  # an aggregate with no arguments has `` here (checked on 16.15), so the text is `()`
         db.execute(
             sql.SQL("REVOKE ALL ON ROUTINE {}({}) FROM PUBLIC").format(
                 sql.Identifier(where, name), sql.SQL(signature)

@@ -41,6 +41,10 @@ class _StepDb(_Db):
         self.step4_rows = list(step4_rows)
         self.rendered: list[str] = []
         self.closed, self.info = False, _Info()
+        self.isolation_level, self.read_only = (
+            None,
+            False,
+        )  # a connection setting the run never sets stays as it is
         self._depth = 0
 
     def execute(self, query, params=None):
@@ -159,7 +163,8 @@ def harness(monkeypatch, tmp_path):
         monkeypatch.setattr(mig, "connect", connect)
         try:
             return None, opened, recorder, mig.migrate("postgresql://unused", **migrate_kw)
-        except (ConfigError, AppliedNotVerifiedError) as e:
+        except (ConfigError, AppliedNotVerifiedError, psycopg.Error, RuntimeError) as e:
+            # a driver error or a stub failure that escapes is judged by the assertions of the test, not a crash
             return e, opened, recorder, None
 
     return go
@@ -318,6 +323,10 @@ def test_step_4_asks_for_the_functions_of_this_run_and_this_schema(harness):
     assert {k: given[0][k] for k in ("family", "schema")} == {"family": ["mig"], "schema": "s"}
     assert all(isinstance(given[0][k], list) for k in ("managed", "other_schemas", "other_names"))
     assert len(given[0]["other_schemas"]) == len(given[0]["other_names"])
+    # the read is pinned: the search path is set to the catalogs just before it (the text check of the pinning test
+    # cannot see this read, its text qualifies every name). Killed by: mutant E25.
+    at = _index(opened[0], mig.STEP4_SQL)
+    assert opened[0].rendered[at - 1] == "SET LOCAL search_path = pg_catalog, pg_temp"
 
 
 def test_step_5_runs_the_deferred_checks_before_the_commit(harness):
