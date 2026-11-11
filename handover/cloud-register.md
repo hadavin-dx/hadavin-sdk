@@ -1453,7 +1453,7 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a5d8945a | PR H builder | 90-min box | CLOSED (WP2c done, T5/WP3/WP4 pending, 92 pairs open) | resume builder queued, waits for load<=4 |
 | a092f756 | P3a-2 3b builder | box | CLOSED, WIP saved wip/cloud-p3a2-3b | resume builder queued (load) |
 | a15f9690 | timing nits builder | start 22:03Z, 60 min | RUNNING | collect; then ledger + READY check |
-| ae11c03a | Q8c-1 fix batch r5 builder | start 22:06Z, 90 min | RUNNING | collect -> snapshot -> EV + 2 reviewers |
+| ae11c03a | Q8c-1 fix batch r5 builder | start 22:06Z, 90 min | CLOSED 5015c990 | collect -> snapshot -> EV + 2 reviewers |
 | a2a2c707 | PR H resume builder (92 pairs, T5, WP3, WP4) | start 22:06Z, 90 min | RUNNING | collect -> snapshot -> EV + 2 reviewers |
 | a19633e6 | P3a-2 resume builder (3b) | start 22:18Z, 90 min | RUNNING | collect -> snapshot -> EV + 2 reviewers |
 | aacde198 | Q8b fix batch 3 builder | start 22:20Z, 90 min | RUNNING | collect -> snapshot -> EV + 2 reviewers (round 4) |
@@ -1462,3 +1462,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a215ed18 | codebase review Q8a-1 r7 | start 22:21Z | RUNNING | save report, resolve |
 | a15f9690 | timing nits builder | box | CLOSED a9a25e6f | READY candidate logged |
 | Q8a-1 b7 | fix batch r7 builder | 22:33Z | box 90 min | RUNNING | ckpt /home/user/build/B-Q8a1-b7-checkpoint.md |
+| Q8c-1 r6 | EV + design + codebase | 22:38Z | 50 min | RUNNING |
