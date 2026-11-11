@@ -2418,3 +2418,5 @@
 | BL-core-a2-w2-r14-05 | handover/reviews/P89/round-w2-r14-keywordtests-b.md | Major | PR89 | lock name untested for token-like ://, query, IPv6, bad port, no host, quoted host (M1) | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r14-06 | handover/reviews/P89/round-w2-r14-keywordtests-b.md | Major | PR89 | weak case 1350, property test can run zero cases, whole-literal fake passwords, read-before-size guard only patches read_text (M2-M5) | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r14-07 | handover/reviews/P89/round-w2-r14-keywordtests-b.md | Minor | PR89 | N1-N8 secret printed on failure, no positive control, EDGE_MIN hard-coded, fd reuse, timeouts | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r14-08 | handover/reviews/P89/round-w2-r14-keywordtests-a.md | Major | PR89 | whole-literal fake secrets at 560-561 and 625-630 | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r14-09 | handover/reviews/P89/round-w2-r14-keywordtests-a.md | Minor | PR89 | N3-N10: secret printed on failure, hex coupling, hostile-name loop vacuous, absence-only asserts, control weak, first_lines.clear untested, xfail control | OPEN | 2026-11-11 |
