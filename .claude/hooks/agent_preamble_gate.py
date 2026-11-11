@@ -20,7 +20,7 @@ ALLOWED_PREFIXES = ("egm:", "caveman:")
 ALLOWED_TYPES = {"explore", "plan", "web-fetch", "claude-code-guide", "statusline-setup"}
 GATED_TYPES = {"", "general-purpose", "claude"}
 MIN_PROMPT = 300
-VALID_MODELS = {"opus", "sonnet", "haiku", "fable"}  # fable added 2026-11-11 on the owner's direct order (D-005)
+VALID_MODELS = {"opus", "sonnet", "haiku"}
 # A brief that asks a general-purpose agent to act as an independent reviewer (instead of an egm:* agent).
 REVIEW_BRIEF = re.compile(
     r"(fresh,?\s+independent[^.]{0,80}review|independent\s+(adversarial\s+)?review\s*\(read-?only|"
