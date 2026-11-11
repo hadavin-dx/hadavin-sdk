@@ -59,3 +59,17 @@ neutral module used for plants: hadavin_sdk.runtime.tick (369 lines; each plant 
     receiver-only whole-word pattern (_WHOLE_WORD.findall on the planted text alone) -> ['slack', 'teams']
 
 == plant 8: appended text 'x = "/pager-duty/hook"'  (file still compiles: yes)
+    import_problems -> []
+    vendor_module_problems -> []
+    literal_problems -> ["hadavin_sdk.runtime.tick:371: vendor word in a string in '/pager-duty/hook'"]
+    identifier_problems -> []
+    receiver-only whole-word pattern (_WHOLE_WORD.findall on the planted text alone) -> ['pager-duty']
+
+== plant 9: appended text 'x = f"/sl{\'ack\'}/hook"'  (file still compiles: yes)
+    import_problems -> []
+    vendor_module_problems -> []
+    literal_problems -> ["hadavin_sdk.runtime.tick:371: vendor word in a string in '/slack/hook'"]
+    identifier_problems -> []
+    receiver-only whole-word pattern (_WHOLE_WORD.findall on the planted text alone) -> []
+
+== plant 10: appended text 'x = "/sl" "ack/hook"'  (file still compiles: yes)
