@@ -482,18 +482,35 @@ def confined(base: Path, relative: str) -> Path:
     return path
 
 
+def _error_line(e: Any) -> str:
+    """One problem as `where: what` (used beside the rename sentence)."""
+    where = ".".join(str(p) for p in e["loc"])
+    return f"{where}: {e['msg']}" if where else e["msg"]
+
+
+def _value_free_text(exc: ValidationError) -> str:
+    """pydantic's own layout (`N validation errors for Config`, then `where`, then `  what [type=...]`), without the
+    refused value (`input_value=...`, which could be a secret written into the wrong field) and without the link."""
+    errors = exc.errors(include_url=False, include_input=False, include_context=False)
+    lines = [f"{len(errors)} validation error{'s' if len(errors) != 1 else ''} for {exc.title}"]
+    for e in errors:
+        lines += [".".join(str(p) for p in e["loc"]), f"  {e['msg']} [type={e['type']}]"]
+    return "\n".join(lines)
+
+
 def _validation_text(exc: ValidationError) -> str:
-    """pydantic's text, except that the rename sentence is shown as written, without pydantic's wrapper, beside the
-    other problems found in the same file (one fix round is enough)."""
+    """pydantic's text without the refused values (see `_value_free_text`), except that the rename sentence is shown
+    as written, without pydantic's wrapper, beside the other problems found in the same file (one fix round is
+    enough)."""
     renamed = [
         e["ctx"]["error"]
         for e in exc.errors()
         if isinstance(e.get("ctx", {}).get("error"), _RenamedStage)
     ]
     if not renamed:
-        return str(exc)
+        return _value_free_text(exc)
     others = [
-        f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}"
+        _error_line(e)
         for e in exc.errors()
         if not isinstance(e.get("ctx", {}).get("error"), _RenamedStage)
     ]

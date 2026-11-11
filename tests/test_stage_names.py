@@ -13,6 +13,7 @@ import typing
 import unicodedata
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
@@ -627,6 +628,25 @@ def test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick(tmp_path
         assert got == no_time and purged == [], (
             f"a live tick step took a stand-in context with a time ({stage!r}): {got[:60]!r}, {purged}"
         )
+
+        def spec_mock():
+            mock = MagicMock(spec=tick_mod.TickContext)
+            mock.app, mock.now = app, ahead
+            return mock
+
+        got = by_hand(spec_mock)
+        assert got == no_time and purged == [], (
+            f"a live tick step took a Mock(spec=TickContext) with a time ({stage!r}): {got[:60]!r}, {purged}"
+        )
+    with pytest.raises(TypeError, match="cannot be subclassed"):
+
+        class _Sub(
+            tick_mod.TickContext
+        ):  # a subclass could skip the refusal in its own __post_init__
+            def __post_init__(self) -> None:
+                pass
+
+        raise AssertionError("a subclass of TickContext was allowed")
     for stage in ("stag" + "ing", "Demo", "", None):
         app.config = app.config.model_copy(update={"environment": stage})
         got = by_hand(lambda: tick_mod.TickContext(app, ahead))
@@ -694,6 +714,16 @@ def test_pilot_and_prod_refuse_a_tick_whose_step_list_lacks_a_built_in_step(tmp_
     )
     got = tick_with(without_purge, "demo")
     assert got == (0, [s.name for s in without_purge]), f"demo did not run the list as it is: {got}"
+    # A second step with a built-in name would overwrite the built-in step's outcome (results and the tick_state
+    # row are kept by name), so a failed built-in step would be recorded as ok.
+    twice = tick_mod.TickStep("purge_evidence", 0, lambda _ctx: None)
+    for stage in ("pilot", "prod", "stag" + "ing", None):
+        got = tick_with([*built_in, twice], stage)
+        assert got == ("a tick step name is used twice: purge_evidence", []), (
+            f"a live tick ran a step list with a name used twice ({stage!r}): {got}"
+        )
+    got = tick_with([*built_in, twice], "demo")
+    assert got[0] == 0, f"demo did not run the list as it is: {got}"
 
 
 ANCHOR = {"kind": "s3_object_lock", "bucket": "b", "region": "r"}

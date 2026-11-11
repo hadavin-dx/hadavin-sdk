@@ -17,7 +17,11 @@ changed or patched runtime.tick.STEPS that still holds every built-in step name 
 function), a clock replaced after build, the time parameters of Approvals.sweep and resend_unsent, the store's
 purge_tool_calls(before) and purge_redaction_maps(before)). A runtime.tick.STEPS that lacks a built-in step IS refused
 outside demo, and so is a tick context (TickContext) that is handed a time: a tick step called by hand cannot work with
-a time of the caller's choice.
+a time of the caller's choice. A tick step outside demo takes only an object whose type is exactly TickContext (a plain
+stand-in, a Mock(spec=TickContext) and a subclass are refused), and a STEPS list with a name used twice is refused.
+Not covered, and said so in the docstrings and the CHANGELOG: object.__setattr__ on a real context, a context built
+without its constructor, an app wrapper reporting demo, a reordered STEPS or a same-name replacement of a step, a
+rebound _BUILT_IN, and the store's purge methods called directly with a time (no test here pretends otherwise).
 
 No test here can read a real Vault credential: the two environment variables a Vault sign-in reads are removed for
 every test of this module, so a broken check fails at once and never reaches the network.
@@ -678,6 +682,74 @@ def test_a_step_refuses_a_stand_in_context_with_a_time_outside_demo(
     ):
         getattr(tick_mod, step)(stand_in)
     assert reached == []
+
+
+class _LiesAboutItsClass:
+    """Says `__class__` is TickContext, like a spec'd Mock does, and carries a time far ahead."""
+
+    def __init__(self, app):
+        self.app, self.now, self.results = app, datetime.now(UTC) + FAR_AHEAD, {}
+
+    @property
+    def __class__(self):
+        return tick_mod.TickContext
+
+
+@pytest.mark.parametrize("step", ["sweep", "stuck", "purge_evidence"])
+@pytest.mark.parametrize("where", ["pilot", "prod", *NOT_A_STAGE])
+def test_a_step_refuses_an_object_that_says_it_is_a_tick_context_outside_demo(
+    demo_dir, monkeypatch, where, step
+):
+    """`isinstance` believes a `Mock(spec=TickContext)` and any object with a `__class__` property; the step asks for
+    the exact type. No purge call reaches the store."""
+    from unittest.mock import Mock
+
+    app = _demo_app_at(demo_dir, where)
+    reached = _purge_spy(app, monkeypatch)
+    spec_mock = Mock(spec=tick_mod.TickContext)
+    spec_mock.app, spec_mock.now = app, datetime.now(UTC) + FAR_AHEAD
+    for stand_in in (spec_mock, _LiesAboutItsClass(app)):
+        assert isinstance(stand_in, tick_mod.TickContext), "the stand-in no longer fools isinstance"
+        with pytest.raises(
+            ConfigError, match=exactly("now= is for tests; it is refused in pilot and prod")
+        ):
+            getattr(tick_mod, step)(stand_in)
+    assert reached == []
+
+
+def test_a_tick_context_cannot_be_subclassed():
+    with pytest.raises(TypeError, match="cannot be subclassed"):
+        type("Sub", (tick_mod.TickContext,), {})
+
+
+@pytest.mark.parametrize("where", ["pilot", "prod"])
+def test_run_tick_refuses_a_step_name_used_twice_outside_demo(demo_dir, monkeypatch, where):
+    """Results and the tick_state row are kept by name: a step appended under a built-in name, with a failed
+    built-in step before it, would record the built-in step as ok and the tick would return 0."""
+    app = _demo_app_at(demo_dir, where)
+
+    def broken(_ctx):
+        raise RuntimeError("purge failed")
+
+    built_in = [TickStep(s.name, 0, broken if s.name == "purge_evidence" else s.fn) for s in STEPS]
+    monkeypatch.setattr(
+        tick_mod, "STEPS", [*built_in, TickStep("purge_evidence", 0, lambda _c: None)]
+    )
+    with pytest.raises(
+        ConfigError, match=exactly("a tick step name is used twice: purge_evidence")
+    ):
+        run_tick(app)
+    assert app.store.get_tick_state("purge_evidence") is None, "a step ran before the refusal"
+
+
+def test_a_config_error_never_shows_the_value_that_was_refused(tmp_path):
+    secret_like = "not" + "-a-number-" + "zq81"
+    with pytest.raises(ConfigError, match="executor_timeout_s") as err:
+        load_config(_config_with_timeout(tmp_path, f"'{secret_like}'"))
+    text = str(err.value)
+    assert TIMEOUT_RULE in text
+    assert secret_like not in text, "the config error repeats the refused value"
+    assert "input_value" not in text and "errors.pydantic" not in text, text
 
 
 def test_the_time_of_a_tick_context_cannot_be_changed_afterwards(demo_dir):

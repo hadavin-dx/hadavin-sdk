@@ -63,8 +63,19 @@ class TickContext:
     age from it). `TickContext(app)` takes the time from the app's clock. `TickContext(app, <time>)` is for tests:
     outside demo (pilot, prod and any stage value that is not exactly demo) a context that is given a time is refused
     with a ConfigError, whoever builds it (`run_tick`, or a caller that runs one step by hand). The time cannot be
-    changed afterwards (the object is frozen); `results` is filled in as the steps run. `app` must carry its config
-    (`app.config.environment`)."""
+    changed afterwards by assignment (the object is frozen); `results` is filled in as the steps run. `app` must
+    carry its config (`app.config.environment`).
+
+    The class cannot be subclassed, and a step outside demo takes only an object whose type is exactly this class.
+    NOT covered: `object.__setattr__(ctx, "now", <time>)` on a real context, an object built without its constructor
+    (`TickContext.__new__` followed by filling in its fields, or a crafted pickle), and an `app` that is a wrapper
+    reporting `demo` and passing everything else to the real app. Those are deliberate acts inside the same process,
+    not a test object that arrives by accident."""
+
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        raise TypeError(
+            "TickContext cannot be subclassed: a subclass could hand a made-up time to a tick step"
+        )
 
     app: App
     now: datetime | None = None  # None: the app's clock. Always a time once the object exists.
@@ -78,9 +89,11 @@ class TickContext:
 
 
 def _now(ctx: TickContext) -> datetime:
-    """The time of this tick, for a step. Outside demo only a real `TickContext` is taken (its time came from the
-    clock): a stand-in object that merely has a `now` is refused, so a hand-made time cannot reach a step that way."""
-    if not isinstance(ctx, TickContext) and is_live(ctx.app.config.environment):
+    """The time of this tick, for a step. Outside demo only an object whose type is exactly `TickContext` is taken
+    (its time came from the clock): any other object (a plain stand-in with a `now`, a `Mock(spec=TickContext)`,
+    which says it is a `TickContext` to `isinstance`) is refused, so a hand-made time cannot reach a step that way.
+    What this does not stop is listed at `TickContext`."""
+    if type(ctx) is not TickContext and is_live(ctx.app.config.environment):
         raise ConfigError(NO_GIVEN_TIME)
     return ctx.now
 
@@ -315,6 +328,19 @@ def _missing_built_in_steps() -> list[str]:
     return [name for name in _BUILT_IN if name not in present]
 
 
+def _repeated_step_names() -> list[str]:
+    """The step names that appear more than once in `STEPS` right now, in list order. Results and the `tick_state`
+    row are kept by name, so a second step with a name already used would overwrite the first one's outcome (a
+    failed built-in step would be recorded as ok)."""
+    seen: set[str] = set()
+    repeated: list[str] = []
+    for step in STEPS:
+        if step.name in seen and step.name not in repeated:
+            repeated.append(step.name)
+        seen.add(step.name)
+    return repeated
+
+
 STORE_UNREACHABLE = 4
 STORE_NOT_READY = (
     2  # the store answers but a table or grant is missing: same code as a config error
@@ -404,8 +430,14 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
     The same rule holds one level down, where the time enters the steps: a `TickContext` that is given a time is
     refused outside demo, so `purge_evidence(TickContext(app, <time>))` raises too (see `TickContext`).
 
+    Outside demo `run_tick` also refuses a `STEPS` in which one name appears twice ("a tick step name is used twice"),
+    because results and the `tick_state` row are kept by name and a second step with a built-in name would hide a
+    failed built-in step.
+
     Not covered by these refusals: a changed or patched `runtime.tick.STEPS` that still holds every built-in name
-    (reordering, or replacing a step's function); a clock that tells the wrong time (`app.approvals.clock` replaced
+    once (reordering; replacing a step's function under the same name, such as a no-op `purge_evidence`; a built-in
+    name given a huge `every_s` or `interval`, which is also a replacement); a rebound `runtime.tick._BUILT_IN`;
+    a `TickContext` altered or built as listed at `TickContext`; a clock that tells the wrong time (`app.approvals.clock` replaced
     after build, or a hand-built `Approvals(clock=...)`); and the methods that take a time or a cut-off date
     directly, below the tick: `Approvals.sweep(at=)`, `Approvals.resend_unsent(at=)`, and the store's
     `purge_tool_calls(before)` and `purge_redaction_maps(before)` (the store knows no stage)."""
@@ -415,6 +447,8 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
         raise ConfigError(f"{given[0]}= is for tests; it is refused in pilot and prod")
     if live and (missing := _missing_built_in_steps()):
         raise ConfigError(f"a built-in tick step is missing: {', '.join(missing)}")
+    if live and (repeated := _repeated_step_names()):
+        raise ConfigError(f"a tick step name is used twice: {', '.join(repeated)}")
     ctx = TickContext(app, now)
     try:
         app.store.get_tick_state(_PROBE)  # the store answers, or nothing runs

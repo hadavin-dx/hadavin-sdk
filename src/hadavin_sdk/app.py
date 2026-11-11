@@ -112,14 +112,18 @@ def build(
     one of these commands with a static token in its environment is not refused either.
 
     Limit of these refusals: `build` refuses the six keywords above; `run_tick` refuses its `now=` and `steps=`
-    and a `runtime.tick.STEPS` that lacks a built-in step; a `TickContext` refuses a time handed to it (so a tick
-    step called by hand cannot work with a time of the caller's choice).
+    and a `runtime.tick.STEPS` that lacks a built-in step or holds a name twice; a `TickContext` refuses a time
+    handed to it (so a tick step called by hand cannot work with a time of the caller's choice), and outside demo a
+    step takes only an object whose type is exactly `TickContext`.
     Any route that does not pass through them is not covered: constructing App, Runtime or Approvals directly (a
     hand-built `Approvals(clock=...)` among them), assigning attributes after build, a kind added to the table, a
     direct call of `backends.factory.make`, a leftover patch of `app.make` or `app.now`, a changed or patched
-    `runtime.tick.STEPS` (reordering, or replacing a step's function), a clock replaced after build, and the
+    `runtime.tick.STEPS` that holds every built-in name once (reordering, replacing a step's function under the same
+    name, a huge interval on a built-in name), a rebound `runtime.tick._BUILT_IN`, a clock replaced after build, a
+    context altered with `object.__setattr__`, built without its constructor, or given a wrapped app, and the
     methods below the tick that take a time or a cut-off date directly: the store's `purge_tool_calls(before)` and
-    `purge_redaction_maps(before)`, and the time parameters
+    `purge_redaction_maps(before)` (called directly with a time far ahead on a pilot or prod app they delete
+    everything, no refusal), and the time parameters
     of `Approvals.sweep(at=)` and `Approvals.resend_unsent(at=)`. The refusals stop a test object that reaches a
     pilot or prod process by ACCIDENT, not hostile code in the same process."""
     cfg = load_config(config_dir)
