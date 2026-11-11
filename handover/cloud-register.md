@@ -1147,3 +1147,8 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | ace9ead2 | A11a EVIDENCE RUNNER 8b2b716 (heavy.sh, worktree EV-A11a-8b2b716, PG own cluster) | 06:24Z | ~07:50Z (90 min box) | running | check at 06:55Z |
 | af21314a | A17 PR85 core/P5b2 4b1b3f9 reviewer | 06:23Z | ~06:50Z | running | same |
 | a5f773de | A18 PR86 core/P6b1 8f6b032 reviewer (model cost caps) | 06:23Z | ~06:50Z | running | same |
+
+## 06:50Z update
+- CLOSED: PR89 r16 reviewers ab9d02aa, aa9e4660, a73b12d6, a966bb30, a1069d9f (5 reports saved, no Blocker/Major); A11a reviewers a9eb0f73, af2fd009; A18 reviewer ab82a14e.
+- STARTED: PR89 final batch (a8904ec1 resumed, expected end 08:05Z); PR74 fix builder af1e4bab (expected end 08:10Z); PR77 fix builder a15af6a6 (expected end 08:10Z). Evidence runner ace9ead2 told to save partial output and stop.
+- Next checks: 07:15Z each builder checkpoint note; independent PR89 runner after r17 head.
