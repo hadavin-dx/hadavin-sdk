@@ -1453,3 +1453,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a5d8945a | PR H builder | 90-min box | CLOSED (WP2c done, T5/WP3/WP4 pending, 92 pairs open) | resume builder queued, waits for load<=4 |
 | a092f756 | P3a-2 3b builder | box | CLOSED, WIP saved wip/cloud-p3a2-3b | resume builder queued (load) |
 | a15f9690 | timing nits builder | start 22:03Z, 60 min | RUNNING | collect; then ledger + READY check |
+| ae11c03a | Q8c-1 fix batch r5 builder | start 22:06Z, 90 min | RUNNING | collect -> snapshot -> EV + 2 reviewers |
+| a2a2c707 | PR H resume builder (92 pairs, T5, WP3, WP4) | start 22:06Z, 90 min | RUNNING | collect -> snapshot -> EV + 2 reviewers |

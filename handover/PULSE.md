@@ -37,3 +37,4 @@ WAITS FOR lead: core/P3a-2 push approval; q-A11a-sep-keep (now moot if the gap-t
 - 22:01Z PR H builder closed at box: WP2c f09c6825 pushed; 92 accidental pairs open (D-030); resume builder queued. Load high; queue: Q8c-1 fix builder, PR H resume. Pending EV: Q8b a6a7b621, Q8c-1 a5832502, timing a027c17f.
 - 22:02Z P3a-2 3b builder closed NOT green; WIP pushed wip/cloud-p3a2-3b f468bde0; D-031. Queue (need load<=4): Q8c-1 fix, PR H resume, P3a-2 resume. Pending EV: Q8b, Q8c-1, timing.
 - 22:03Z timing EV in (ef83cd86): full suite 10624 passed, 65/65 mutants (6 CRASH counted good, 32 vs 30 unreconciled), perf 42x3 + 42x6 under load all pass, 13 fail-before; main flaky 2/5. Nits builder a15f9690 launched. Load 5.3.
+- 22:06Z PULSE: 7 agents (Q8a-1 b6, PR89 r24, EV Q8c-1, EV Q8b, timing nits, Q8c-1 fix r5, PR H resume); load 2.75; no checkpoint stuck yet; LEAD-ORDERS no newer than 247; unpushed none. Waiting: P3a-2 resume (next slot), Q8b r3 resolve after EV.
