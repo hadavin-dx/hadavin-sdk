@@ -2,7 +2,7 @@
 
 Factories are ``"module:function"`` strings, imported only when that kind is built, so a kind whose optional
 extra is not installed fails at start-up with the install hint, and nothing else pays for it. This module
-imports no other Hadavin module except the standard-library-only leaf ``safe_url`` (``config`` imports it).
+imports no other Hadavin module except the leaves ``safe_url``, ``errors`` and ``config_url`` (``config`` imports it).
 """
 
 from __future__ import annotations
@@ -15,6 +15,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from hadavin_sdk.config_url import ConfigUrl
+from hadavin_sdk.errors import ConfigValueError
 from hadavin_sdk.safe_url import safe_urlsplit
 
 
@@ -58,7 +60,7 @@ class AnthropicSettings(_LLMSettings):
             "foundry": ["api_key_secret_name", "resource"],
         }[self.platform]
         if missing := [n for n in need if not getattr(self, n)]:
-            raise ValueError(f"platform {self.platform} needs: {', '.join(missing)}")
+            raise ConfigValueError(f"platform {self.platform} needs: {', '.join(missing)}")
         return self
 
 
@@ -70,7 +72,7 @@ _LOOPBACK = {"127.0.0.1", "localhost", "::1"}
 
 
 class OpenAICompatSettings(_LLMSettings):
-    base_url: str
+    base_url: ConfigUrl
     api_key_secret_name: str | None = None  # a local Ollama needs none
     # OpenAI reasoning models refuse `max_tokens` and want `max_completion_tokens`.
     max_completion_tokens: bool = False
@@ -80,7 +82,7 @@ class OpenAICompatSettings(_LLMSettings):
         url = safe_urlsplit(self.base_url)
         local = url.scheme == "http" and url.hostname in _LOOPBACK
         if url.scheme != "https" and not (local and not self.api_key_secret_name):
-            raise ValueError(
+            raise ConfigValueError(
                 "base_url must be https (plain http only to this machine, with no key)"
             )
         return self
@@ -133,9 +135,9 @@ class PostgresSettings(KindSettings):
     @model_validator(mode="after")
     def _checks(self) -> PostgresSettings:
         if self.iam_auth and not self.region:
-            raise ValueError("iam_auth needs region (and pip install hadavin-sdk[aws])")
+            raise ConfigValueError("iam_auth needs region (and pip install hadavin-sdk[aws])")
         if self.sslrootcert and self.sslrootcert_secret_name:
-            raise ValueError("set sslrootcert or sslrootcert_secret_name, not both")
+            raise ConfigValueError("set sslrootcert or sslrootcert_secret_name, not both")
         return self
 
 
@@ -163,7 +165,7 @@ class S3ObjectLockSettings(_AnchorSettings):
     kind: Literal["s3_object_lock"]
     bucket: str
     region: str
-    endpoint_url: str | None = None  # https; plain http only to this machine (a local MinIO)
+    endpoint_url: ConfigUrl | None = None  # https; plain http only to this machine (a local MinIO)
 
     @model_validator(mode="after")
     def _endpoint(self) -> S3ObjectLockSettings:
@@ -171,7 +173,9 @@ class S3ObjectLockSettings(_AnchorSettings):
             url = safe_urlsplit(self.endpoint_url)
             local = url.scheme == "http" and url.hostname in _LOOPBACK
             if url.scheme != "https" and not local:
-                raise ValueError("endpoint_url must be https (plain http only to this machine)")
+                raise ConfigValueError(
+                    "endpoint_url must be https (plain http only to this machine)"
+                )
         return self
 
 
@@ -179,7 +183,9 @@ class AzureImmutableBlobSettings(_AnchorSettings):
     """GOVERNANCE -> an Unlocked blob immutability policy, COMPLIANCE -> Locked."""
 
     kind: Literal["azure_immutable_blob"]
-    account_url: str = Field(pattern=r"^https://")  # e.g. https://<account>.blob.core.windows.net
+    account_url: ConfigUrl = Field(
+        pattern=r"^https://"
+    )  # e.g. https://<account>.blob.core.windows.net
     container: str = Field(pattern=r"^[a-z0-9-]{3,63}$")
 
 
@@ -207,7 +213,7 @@ class _SignerSettings(KindSettings):
         # The pattern allows no ':' or '/', so an ARN, key URL or resource path cannot pass; a 12-digit run
         # (an account id) is refused here.
         if value is not None and re.search(r"\d{12}", value):
-            raise ValueError("key_label may not hold a 12-digit number (an account id)")
+            raise ConfigValueError("key_label may not hold a 12-digit number (an account id)")
         return value
 
 
@@ -222,7 +228,9 @@ class Ed25519LocalSettings(_SignerSettings):
     @model_validator(mode="after")
     def _one_source(self) -> Ed25519LocalSettings:
         if (self.private_key_path is None) == (self.private_key_secret_name is None):
-            raise ValueError("set exactly one of private_key_path and private_key_secret_name")
+            raise ConfigValueError(
+                "set exactly one of private_key_path and private_key_secret_name"
+            )
         return self
 
 
@@ -233,7 +241,7 @@ class AwsKmsSettings(_SignerSettings):
 
 class AzureKeyVaultKeySettings(_SignerSettings):
     # One key version: https://<vault>.vault.azure.net/keys/<name>/<version> (or a managedhsm.azure.net URL).
-    key_id: str = Field(pattern=r"^https://[^/]+/keys/[A-Za-z0-9-]+/[A-Za-z0-9]+$")
+    key_id: ConfigUrl = Field(pattern=r"^https://[^/]+/keys/[A-Za-z0-9-]+/[A-Za-z0-9]+$")
 
 
 class GcpKmsSettings(_SignerSettings):
@@ -253,7 +261,7 @@ class VaultConnection(KindSettings):
     signer). `app.build` asks for this type to refuse the static token (`auth: token`) in pilot and prod, so a
     new kind that signs in to Vault must be built on this class."""
 
-    address: str  # https; plain http only to this machine (a local server)
+    address: ConfigUrl  # https; plain http only to this machine (a local server)
     auth: Literal["token", "approle", "kubernetes"] = "token"
     namespace: str | None = None
     token_env: str = "VAULT_TOKEN"  # noqa: S105 - auth token: the variable name
@@ -273,12 +281,14 @@ class VaultConnection(KindSettings):
     def _checks(self) -> VaultConnection:
         url = safe_urlsplit(self.address)
         if url.scheme != "https" and not (url.scheme == "http" and url.hostname in _LOOPBACK):
-            raise ValueError("address must be https (plain http only to this machine)")
+            raise ConfigValueError("address must be https (plain http only to this machine)")
         if {".", ".."} & {seg for p in self._paths() for seg in p.split("/")}:
-            raise ValueError("mount, path_prefix and auth_mount may not hold '.' or '..' segments")
+            raise ConfigValueError(
+                "mount, path_prefix and auth_mount may not hold '.' or '..' segments"
+            )
         need = {"token": [], "approle": ["role_id"], "kubernetes": ["role"]}[self.auth]
         if missing := [n for n in need if not getattr(self, n)]:
-            raise ValueError(f"auth {self.auth} needs: {', '.join(missing)}")
+            raise ConfigValueError(f"auth {self.auth} needs: {', '.join(missing)}")
         return self
 
 
@@ -305,7 +315,7 @@ class VaultTransitSettings(VaultConnection, _SignerSettings):
 
 
 class AzureKeyVaultSettings(KindSettings):
-    vault_url: str = Field(pattern=r"^https://")  # e.g. https://<vault-name>.vault.azure.net
+    vault_url: ConfigUrl = Field(pattern=r"^https://")  # e.g. https://<vault-name>.vault.azure.net
     ttl_s: float = _TTL
 
 
@@ -323,7 +333,7 @@ class SlackSettings(KindSettings):
     channel_id: str
     signing_secret_name: str
     bot_token_secret_name: str
-    api_base: str = "https://slack.com/api"
+    api_base: ConfigUrl = "https://slack.com/api"
     timeout_s: float = Field(default=10.0, gt=0, le=60)
 
 

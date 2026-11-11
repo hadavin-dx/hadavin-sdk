@@ -44,7 +44,7 @@ from hadavin_sdk.errors import ConfigError, error_where, shown_name
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
-from hadavin_sdk.safe_url import safe_urlsplit
+from hadavin_sdk.safe_url import InvalidUrl, safe_urlsplit
 from hadavin_sdk.scrub_settings import ScrubSettings
 
 DEFAULT_MAX_OUTPUT_BYTES = defaults.MAX_OUTPUT_BYTES  # the manifest field's default
@@ -219,17 +219,19 @@ def spec_problems(
     module, _, fn = spec.function.partition(":")
     if not fn or module not in tool_modules:
         out.append(f"tool {shown_name(spec.name)}: its function is outside tool_modules")
-    for host in spec.hosts:
+    for i, host in enumerate(
+        spec.hosts
+    ):  # a host is a value from the file: named by its position, never quoted
         if not host or host != host.lower() or "/" in host or ":" in host or "@" in host:
             out.append(
-                f"tool {shown_name(spec.name)}: host {shown_name(host)} must be a bare lowercase hostname"
+                f"tool {shown_name(spec.name)}: hosts entry {i} must be a bare lowercase hostname"
             )
         elif why := forbidden_host(host):
-            out.append(f"tool {shown_name(spec.name)}: host {shown_name(host)} is {why}")
+            out.append(f"tool {shown_name(spec.name)}: hosts entry {i} is {why}")
     if spec.cluster_http and not all(host_allowed_over_http(h, suffixes) for h in spec.hosts):
         # One tool is either in-cluster (plain http allowed) or outside it (https only); never a mix (design 6.4).
         out.append(
-            f"tool {shown_name(spec.name)}: cluster_http needs every host to end in one of {list(suffixes)}"
+            f"tool {shown_name(spec.name)}: cluster_http needs every host to end in one of evidence.cluster_suffixes"
         )
     if spec.cluster_http and not spec.hosts:
         out.append(f"tool {shown_name(spec.name)}: cluster_http needs hosts")
@@ -309,11 +311,13 @@ def _reach_problems(module: str, files: list[tuple[str, Path, bytes]]) -> list[s
         body = ast.parse(data).body
         if any(not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant)) for n in body):
             out.append(
-                f"tool module {module}: package {name} has code in __init__.py, outside the pin"
+                f"tool module {shown_name(module)}: package {shown_name(name)} has code in __init__.py, outside the pin"
             )
     tree = ast.parse(files[-1][2])
     if any(isinstance(n, ast.ImportFrom) and n.level > 0 for n in ast.walk(tree)):
-        out.append(f"tool module {module}: a relative import loads a file the pin does not cover")
+        out.append(
+            f"tool module {shown_name(module)}: a relative import loads a file the pin does not cover"
+        )
     # Best effort, by NAME and not only by call: a deny-list cannot be complete, so anything that can load code from
     # somewhere else is refused wherever it appears (a call, an alias, `getattr(importlib, "import_module")`).
     for n in ast.walk(tree):
@@ -342,7 +346,7 @@ def _reach_problems(module: str, files: list[tuple[str, Path, bytes]]) -> list[s
         )  # `re.compile` is fine
         if banned.intersection(seen):
             out.append(
-                f"tool module {module}: refused loader name (a best-effort tripwire against accidental dynamic "
+                f"tool module {shown_name(module)}: refused loader name (a best-effort tripwire against accidental dynamic "
                 "loading, not a boundary: a tool body is trusted code, and the boundary is code review plus K7)"
             )
             break
@@ -372,7 +376,7 @@ def load_tool_module(module: str, pins: Mapping[str, str] | None = None) -> type
         digest = _pin_digest([(n, data) for n, _, data in files])
         if digest != pin:
             raise ConfigError(
-                f"tool module {module}: its source hash is {digest[:12]}..., the pin says {pin[:12]}..."
+                f"tool module {shown_name(module)}: its source hash is {digest[:12]}..., the pin says {pin[:12]}..."
             )
         if problems := _reach_problems(module, files):
             raise ConfigError("; ".join(problems))
@@ -380,7 +384,7 @@ def load_tool_module(module: str, pins: Mapping[str, str] | None = None) -> type
             if getattr(sys.modules[module], "__hadavin_pin__", None) == digest:
                 return sys.modules[module]
             raise ConfigError(
-                f"tool module {module} is already loaded from other bytes than the pinned ones; "
+                f"tool module {shown_name(module)} is already loaded from other bytes than the pinned ones; "
                 "restart the process"
             )
         _, path, source = files[-1]
@@ -412,8 +416,8 @@ def resolve_function(
         raise ConfigError(f"tool {shown_name(spec.name)}: its function is outside tool_modules")
     try:
         fn = getattr(load_tool_module(module, pins), name)
-    except AttributeError as exc:
-        raise ConfigError(f"tool {shown_name(spec.name)}: its function cannot be loaded") from exc
+    except AttributeError:
+        raise ConfigError(f"tool {shown_name(spec.name)}: its function cannot be loaded") from None
     if not callable(fn):
         raise ConfigError(f"tool {shown_name(spec.name)}: its function is not callable")
     return fn
@@ -430,7 +434,7 @@ def read_operations(
         declared = getattr(load_tool_module(module, pins), "READ_OPERATIONS", {})
         if not isinstance(declared, dict):
             raise ConfigError(
-                f"tool_modules: {module}.READ_OPERATIONS must map each operation id to (METHOD, path regex)"
+                f"tool_modules: {shown_name(module)}.READ_OPERATIONS must map each operation id to (METHOD, path regex)"
             )
         for op, binding in declared.items():
             try:
@@ -438,7 +442,7 @@ def read_operations(
                 re.compile(pattern)
             except (TypeError, ValueError, re.error):
                 raise ConfigError(
-                    f"{module}: operation {op!r} has no valid (METHOD, regex)"
+                    f"{shown_name(module)}: operation {shown_name(op)} has no valid (METHOD, regex)"
                 ) from None
             if method not in _METHODS:
                 raise ConfigError(
@@ -446,7 +450,7 @@ def read_operations(
                 )
             if out.get(op, (method, pattern)) != (method, pattern):
                 raise ConfigError(
-                    f"{module}: operation {op!r} is already bound differently by another module"
+                    f"{shown_name(module)}: operation {shown_name(op)} is already bound differently by another module"
                 )
             out[op] = (method, pattern)
     return out
@@ -531,10 +535,9 @@ class ToolContext:
         return left
 
     def _port(self, parts, scheme: str) -> int:
-        try:
-            port = parts.port or (443 if scheme == "https" else 80)
-        except ValueError:
-            raise ToolRefused("the URL's port is not valid") from None
+        port = parts.port or (
+            443 if scheme == "https" else 80
+        )  # `safe_urlsplit` already read the port
         allowed = set(self.spec.ports) or (
             self._cluster_ports if scheme == "http" else self._https_ports
         )
@@ -570,7 +573,10 @@ class ToolContext:
             raise ToolRefused(
                 "the URL holds a backslash, whitespace, a control or a non-ASCII character"
             )
-        parts = safe_urlsplit(url)
+        try:
+            parts = safe_urlsplit(url)
+        except InvalidUrl:
+            raise ToolRefused("the URL is not valid") from None
         if "%" in parts.netloc or "%" in parts.path or "." + "." in parts.path:
             raise ToolRefused("percent-encoding in the host or path, and '..', are refused")
         if not re.fullmatch(binding[1], parts.path or "/"):

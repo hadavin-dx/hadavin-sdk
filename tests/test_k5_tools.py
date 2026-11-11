@@ -91,7 +91,7 @@ def test_k5_manifest_tool_must_be_in_tools_allowed(tmp_path):
 def test_k5_manifest_for_an_unknown_agent_is_refused(tmp_path):
     cfg = k5_cfg(tmp_path)
     (cfg / "tools" / "ghost.yaml").write_text(yaml.safe_dump([TOOL]), encoding="utf-8")
-    with pytest.raises(ConfigError, match="no agent ghost"):
+    with pytest.raises(ConfigError, match=r"1 manifest file\(s\) match no agent id"):
         load_registry(load_config(cfg))
 
 

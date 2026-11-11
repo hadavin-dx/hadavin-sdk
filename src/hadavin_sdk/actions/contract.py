@@ -7,7 +7,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from hadavin_sdk.errors import shown_name
+from hadavin_sdk.errors import ConfigValueError, shown_name
 from hadavin_sdk.models import RiskClass
 
 _ORDER: list[RiskClass] = ["read_only", "reversible", "sign_off"]
@@ -69,18 +69,20 @@ class ActionContract(BaseModel):
     def _fields_per_kind(self) -> ActionContract:
         kind = self.executor.kind
         if kind != "http" and not _LABEL.fullmatch(self.target_system):
-            raise ValueError("target_system must be a label [a-z0-9_-]{1,40} for none and manual")
+            raise ConfigValueError(
+                "target_system must be a label [a-z0-9_-]{1,40} for none and manual"
+            )
         if kind == "none":
             return self
         if self.chain_id is None:
-            raise ValueError(f"executor {kind} needs chain_id")
+            raise ConfigValueError(f"executor {kind} needs chain_id")
         if kind == "http" and self.verify_check is None:
-            raise ValueError("executor http needs verify_check")
+            raise ConfigValueError("executor http needs verify_check")
         if kind == "manual":
             if self.verify_check is None or self.undo_test is None:
-                raise ValueError("executor manual needs verify_check and undo_test")
+                raise ConfigValueError("executor manual needs verify_check and undo_test")
             if self.rollback is not None or self.rollback_test is not None:
-                raise ValueError("executor manual must not set rollback or rollback_test")
+                raise ConfigValueError("executor manual must not set rollback or rollback_test")
         return self
 
 

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 from hadavin_sdk import replay_records
 from hadavin_sdk.actions.contract import effective_class
+from hadavin_sdk.errors import shown_name
 from hadavin_sdk.stages import is_live
 
 if TYPE_CHECKING:
@@ -33,6 +34,12 @@ DEFERRED_KEYS = {
 }
 
 
+def _named(name: object) -> str:
+    """A name from a file, as printed in a refusal: `shown_name` (a plain identifier only, never a look-alike or a long
+    token). The one place the messages of this module get a name from."""
+    return shown_name(name)
+
+
 def key_problems(where: str, raw: Any) -> list[str]:
     if not isinstance(raw, dict):
         return []
@@ -49,53 +56,55 @@ def check(reg: Registry) -> list[str]:
     out: list[str] = []
     for c in reg.contracts.values():
         if c.executor.kind == "manual":
-            out.append(f"action {c.id}: executor manual arrives with K8 (posted fixes)")
+            out.append(f"action {_named(c.id)}: executor manual arrives with K8 (posted fixes)")
         if live and c.executor.kind == "http":
             out.append(
-                f"action {c.id}: executor http is not available in pilot or prod until Phase 2"
+                f"action {_named(c.id)}: executor http is not available in pilot or prod until Phase 2"
             )
         if live and c.risk_class == "read_only":
             out.append(
-                f"action {c.id}: a read_only action is a tool in pilot or prod, not a contract"
+                f"action {_named(c.id)}: a read_only action is a tool in pilot or prod, not a contract"
             )
     for a in reg.agents.values():
+        a_name = _named(a.id)
         if live and a.max_run_usd is None:
-            out.append(f"agent {a.id}: max_run_usd is required in pilot and prod")
+            out.append(f"agent {a_name}: max_run_usd is required in pilot and prod")
         if live and a.data_class in {"confidential", "restricted"}:
-            out.append(f"agent {a.id}: data_class {a.data_class} is not available until Phase 3")
+            out.append(f"agent {a_name}: data_class {a.data_class} is not available until Phase 3")
         levels = a.levels
         if levels is None:
             if live:
-                out.append(f"agent {a.id}: levels is required in pilot and prod")
+                out.append(f"agent {a_name}: levels is required in pilot and prod")
             continue
-        out += [
-            f"agent {a.id}: levels names {x}, which is not in scope_allowed"
-            for x in sorted(set(levels) - set(a.scope_allowed))
-        ]
+        if stray := set(levels) - set(a.scope_allowed):  # keys from the file: counted, never quoted
+            out.append(
+                f"agent {a_name}: levels names {len(stray)} action(s) that are not in scope_allowed"
+            )
         if live:
             out += [
-                f"agent {a.id}: levels must list {x} (every scope_allowed action)"
+                f"agent {a_name}: levels must list {_named(x)} (every scope_allowed action)"
                 for x in sorted(set(a.scope_allowed) - set(levels))
             ]
         for action, level in levels.items():
             contract = reg.contracts.get(action)
+            name = _named(action) if contract is not None else "an unlisted action"
             if level == "act":
-                out.append(f"agent {a.id}: level act for {action} arrives in Phase 4")
+                out.append(f"agent {a_name}: level act for {name} arrives in Phase 4")
             if level != "suggest" or contract is None:
                 continue
             if live:
-                out.append(f"agent {a.id}: suggest for {action} cannot load before K6 and K8")
+                out.append(f"agent {a_name}: suggest for {name} cannot load before K6 and K8")
             if contract.executor.kind == "none":
-                out.append(f"agent {a.id}: {action} is a none contract and can never be suggest")
+                out.append(f"agent {a_name}: {name} is a none contract and can never be suggest")
             if effective_class(contract, a.data_class) == "sign_off":
-                out.append(f"agent {a.id}: suggest for sign_off action {action} arrives in Phase 3")
+                out.append(f"agent {a_name}: suggest for sign_off action {name} arrives in Phase 3")
         if (
             a.tools_allowed
             and "suggest" in levels.values()
             and not replay_records.has_green_record(reg, a.id)
         ):
             out.append(
-                f"agent {a.id}: a tooled agent at suggest needs a green replay record "
+                f"agent {a_name}: a tooled agent at suggest needs a green replay record "
                 f"({replay_records.FILE}) for its current config hash"
             )
     return out

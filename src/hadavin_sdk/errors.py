@@ -11,6 +11,13 @@ class ConfigError(ValueError):
     """The client config is invalid; the process must not start."""
 
 
+class ConfigValueError(ValueError):
+    """A configuration validator's own refusal. THE marker for "Hadavin wrote this sentence": the sentence of a
+    `value_error` problem is shown in a config error only when its cause is this class (any other `ValueError`, for
+    example one out of `int()`, `float()`, `Decimal()`, `bytes.fromhex` or a library, may quote the value it choked on
+    and gets a fixed sentence). Raise it only with a sentence that holds no text taken from the configuration."""
+
+
 _SHOWABLE = re.compile(r"[a-z0-9_.-]{1,64}")
 NOT_SHOWN = "<not shown>"
 UNKNOWN_KEY = "<unknown key>"

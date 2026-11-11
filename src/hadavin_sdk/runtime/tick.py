@@ -74,8 +74,8 @@ class TickContext:
     carry its config (`app.config.environment`).
 
     `dataclasses.replace(ctx, ...)` is not a way to copy a context: the copy would carry the old time as a given one,
-    so outside demo it is refused with the message above ("a context is not copied by replace(); build a new
-    TickContext(app)"). `now` is never None once the object exists.
+    so outside demo it is refused with the same message, which also says that a copy made by replace() is refused too
+    (the sentence `NO_GIVEN_TIME_COPY` below). `now` is never None once the object exists.
 
     The class cannot be subclassed, and a step outside demo takes only an object whose type is exactly this class.
     NOT covered: `object.__setattr__(ctx, "now", <time>)` on a real context, an object built without its constructor

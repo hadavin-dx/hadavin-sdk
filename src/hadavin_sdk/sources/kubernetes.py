@@ -19,6 +19,7 @@ from urllib.parse import quote
 from pydantic import BaseModel, ConfigDict, Field
 
 from hadavin_sdk import defaults
+from hadavin_sdk.config_url import ConfigUrl
 from hadavin_sdk.sources import Record, SourceError
 
 # The operation ids a manifest may list for this source, each bound to one method and one path (design 6.4): a
@@ -56,7 +57,7 @@ class KubernetesSettings(BaseModel):
     path: the operation paths are absolute (`/api/v1/...`), so a base path would silently shift every call."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
-    api_url: str = Field(pattern=r"^https?://[^\s/?#]+/?$")
+    api_url: ConfigUrl = Field(pattern=r"^https?://[^\s/?#]+/?$")
     namespaces: tuple[str, ...] = Field(min_length=1)
     page_size: int = Field(default=defaults.K8S_PAGE_SIZE, gt=0)
     max_pages: int = Field(default=defaults.K8S_MAX_PAGES, gt=0)

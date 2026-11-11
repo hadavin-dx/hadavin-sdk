@@ -19,6 +19,8 @@ import contextvars
 from collections.abc import Mapping
 from typing import Any, Protocol, runtime_checkable
 
+from hadavin_sdk.errors import shown_name
+
 Record = dict[str, Any]
 
 
@@ -70,13 +72,13 @@ def scope_problems(sources: Mapping[str, Source], inventory: Mapping[str, str]) 
         try:
             found = source.probe_scope()
         except Exception as exc:  # noqa: BLE001 - an unprobeable credential is an unproven one
-            out.append(f"source {key}: scope probe failed ({type(exc).__name__})")
+            out.append(f"source {shown_name(key)}: scope probe failed ({type(exc).__name__})")
             continue
         if found is None:
             if key not in inventory:
                 out.append(
-                    f"source {key}: cannot be probed and has no scope_inventory reference (design 6.6)"
+                    f"source {shown_name(key)}: cannot be probed and has no scope_inventory reference (design 6.6)"
                 )
         else:
-            out += [f"source {key}: {p}" for p in found]
+            out += [f"source {shown_name(key)}: {p}" for p in found]
     return out

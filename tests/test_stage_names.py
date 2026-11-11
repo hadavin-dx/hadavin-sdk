@@ -1352,7 +1352,7 @@ def test_a_host_that_changes_under_nfkc_is_refused_without_its_text(cfg_dir, edi
     """`urlsplit` raises a `ValueError` that holds the whole host, login included. It must never reach our error."""
     exc = _refused(cfg_dir, edit=edit)
     _assert_value_free(exc, PW, USER, "records.example.invalid", WIDE_AT, WIDE_COLON, "netloc")
-    assert "not a valid URL" in str(exc) or "a value was refused" in str(exc), str(exc)
+    assert "not a valid URL" in str(exc), str(exc)
 
 
 def test_the_one_url_splitter_gives_a_fixed_sentence_and_no_cause():
@@ -1385,7 +1385,7 @@ def test_no_module_splits_a_configured_url_without_the_safe_splitter():
         for p in (ROOT / "src").rglob("*.py")
         if p != own
         and re.search(
-            r"(?<![\w.])urlsplit\(|urlparse\(|urllib\.parse\.urlsplit",
+            r"\b(?:urlsplit|urlparse)\b",  # also `parse.urlsplit`, `up.urlsplit`, `import urlsplit as x`
             p.read_text(encoding="utf-8"),
         )
     ]
@@ -1499,8 +1499,8 @@ def _agent_entry(**over):
 @pytest.mark.parametrize(
     "over, said",
     [
-        ({"model_route": PW}, "unknown model_route <not shown>"),
-        ({"scope_allowed": [PW]}, "no contract for <not shown>"),
+        ({"model_route": PW}, "model_route is not one of the configured routes"),
+        ({"scope_allowed": [PW]}, "scope_allowed entry 0 has no contract"),
     ],
 )
 def test_a_name_pasted_where_the_registry_expects_a_known_one_is_not_shown(cfg_dir, over, said):
@@ -1509,9 +1509,12 @@ def test_a_name_pasted_where_the_registry_expects_a_known_one_is_not_shown(cfg_d
     assert said in str(exc), str(exc)
 
 
-def test_a_plain_name_is_still_shown_so_the_user_can_find_the_problem(cfg_dir):
+def test_a_plain_looking_name_that_matched_nothing_is_not_shown_either(cfg_dir):
+    """Round 7: a value that matched nothing is named by its field, not quoted, even when it looks like a plain
+    identifier (a pasted token can look like one: `shown_name` is a shape filter, not a secret detector)."""
     exc = _refused(cfg_dir, extra_file=("agents.yaml", _agent_entry(model_route="no-such-route")))
-    assert "unknown model_route no-such-route" in str(exc), str(exc)
+    assert "agent test-agent: model_route is not one of the configured routes" in str(exc), str(exc)
+    assert "no-such-route" not in _everything_shown(exc)
 
 
 def test_the_name_filter_is_a_shape_check_only():
@@ -1521,7 +1524,30 @@ def test_the_name_filter_is_a_shape_check_only():
         shown_name("lookup_record") == "lookup_record"
         and shown_name("k8s.pods-list") == "k8s.pods-list"
     )
-    for odd in (PW, "", "a b", "x" * 65, "ａbc", "naïve", None, 5, "Lookup"):
+    for fine in (
+        "x" * 64,
+        "a",
+        "a.b-c_d9",
+        "0",
+        "z" * 63,
+        "tools.read-pods_v2",
+    ):  # 64 is the longest shown name
+        assert shown_name(fine) == fine, fine
+    cyrillic_a = "\u0430"  # looks like the Latin a
+    for odd in (
+        PW,
+        "",
+        "a b",
+        "x" * 65,
+        "ａbc",
+        "naïve",
+        None,
+        5,
+        "Lookup",
+        cyrillic_a + "bc",
+        "ab" + cyrillic_a,
+        "a\n",
+    ):
         assert shown_name(odd) == NOT_SHOWN, odd
 
 
@@ -1592,7 +1618,14 @@ def test_the_given_time_refusal_is_true_for_a_direct_context_and_a_copy():
     text = tick_mod.NO_GIVEN_TIME_COPY
     assert text.startswith(tick_mod.NO_GIVEN_TIME) and "TickContext(app)" in text
     assert "is not copied" not in text, "a direct construction is told it copied something"
-    assert "replace()" in text and "refused too" in text
+    assert text.endswith(
+        "(a copy made by replace() carries the old time as a given one, so it is refused too)"
+    )
+    doc = " ".join((tick_mod.TickContext.__doc__ or "").split())
+    assert (
+        "refused with the same message, which also says that a copy made by replace() is refused too"
+        in doc
+    ), "the class docstring quotes a sentence the code does not say"
 
 
 def test_an_unknown_key_in_a_tool_manifest_entry_is_not_shown(cfg_dir):
@@ -1611,3 +1644,900 @@ def test_egress_check_refuses_a_url_it_cannot_read_without_its_text():
         egress_check(WIDE_URL, frozenset({"records.example.invalid"}))
     assert str(err.value) == "host not in egress.yaml: ?"
     assert PW not in _everything_shown(err.value) and err.value.__cause__ is None
+
+
+# ======================================================================================================================
+# Round 7. The made-up marker below is built from parts and LOOKS like a plain identifier on purpose: `shown_name` is a
+# shape filter, so a marker with capital letters (PW) is hidden by it and proves nothing about a value that passed it.
+# ======================================================================================================================
+MARK = "zq" + "-probe-" + "mk4417"
+
+
+def _yaml_edit(name, fn):
+    def go(root):
+        path = root / name
+        path.write_text(yaml.safe_dump(fn(yaml.safe_load(path.read_text(encoding="utf-8")))))
+
+    return go
+
+
+def _raw_file(name, text, append=True):
+    def go(root):
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        old = path.read_text(encoding="utf-8") if (append and path.exists()) else ""
+        path.write_text(old + text, encoding="utf-8")
+
+    return go
+
+
+def _setitem(d, key, value):
+    d[key] = value
+    return d
+
+
+_FW_AT, _FW_COLON, _FW_HASH, _FW_SLASH, _FW_Q = "＠", "：", "＃", "／", "？"
+_SM_AT, _SM_COLON, _SM_HASH, _SM_Q = "﹫", "﹕", "﹟", "﹖"
+_NETLOCS = {
+    "fw-at-and-colon": f"user{_FW_COLON}{MARK}{_FW_AT}host.example",
+    "fw-at-only": f"{MARK}{_FW_AT}host.example",
+    "fw-colon-port": f"host.example{_FW_COLON}{MARK}",
+    "fw-bad-port": f"host.example{_FW_COLON}99999999{MARK}",
+    "fw-hash": f"host.example{_FW_HASH}{MARK}",
+    "fw-slash": f"host.example{_FW_SLASH}{MARK}",
+    "fw-question": f"host.example{_FW_Q}{MARK}",
+    "small-at-colon": f"user{_SM_COLON}{MARK}{_SM_AT}host.example",
+    "u2100": f"{MARK}℀host.example",
+    "u2105": f"{MARK}℅host.example",
+    "fw-brackets": f"［{MARK}］host.example",
+    "ascii-bracket-open": f"[{MARK}host.example",
+    "ascii-bad-ipv6": f"[{MARK}]",
+    "ascii-bad-port": f"host.example:{MARK}",
+    "ascii-login": f"user:{MARK}@host.example",
+    "fw-percent": f"host％{MARK}.example",
+    "ascii-percent": f"host%{MARK}.example",
+}
+
+
+def _url_rows():
+    rows = {}
+    for shape, netloc in _NETLOCS.items():
+        rows[f"systems.base_url {shape}"] = _yaml_edit(
+            "config.yaml",
+            lambda d, n=netloc: (
+                d["systems"]["fixture-records"].update(base_url=f"https://{n}/x") or d
+            ),
+        )
+        rows[f"openai_compat.base_url {shape}"] = _yaml_edit(
+            "config.yaml",
+            lambda d, n=netloc: (
+                d["backends"].update(llm={"kind": "openai_compat", "base_url": f"https://{n}/v1"})
+                or d
+            ),
+        )
+        rows[f"vault.address {shape}"] = _yaml_edit(
+            "config.yaml",
+            lambda d, n=netloc: (
+                d["backends"].update(secrets={"kind": "vault", "address": f"https://{n}"}) or d
+            ),
+        )
+        rows[f"s3.endpoint_url {shape}"] = _yaml_edit(
+            "config.yaml",
+            lambda d, n=netloc: (
+                d["backends"].update(
+                    anchor={
+                        "kind": "s3_object_lock",
+                        "bucket": "b",
+                        "region": "r",
+                        "endpoint_url": f"https://{n}",
+                    }
+                )
+                or d
+            ),
+        )
+    return rows
+
+
+_BAD_YAML = f"- name: x\n  function: [{MARK}\n  bad: : {MARK}\n"
+_TOOL_HEAD = "- name: t\n  function: m:f\n  description: d\n  input_schema: {type: object}\n  side_effect: none\n"
+PROBE_ROWS = {
+    **_url_rows(),
+    "broken yaml tools": _raw_file("tools/test-agent.yaml", _BAD_YAML, append=False),
+    "broken yaml tools tab": _raw_file(
+        "tools/test-agent.yaml", f"- name: x\n\tfunction: {MARK}\n", append=False
+    ),
+    "broken yaml config": _raw_file("config.yaml", f"\nbroken: [unclosed {MARK}\nx: {{a: {MARK}\n"),
+    "broken yaml config indent": _raw_file("config.yaml", f"\n  stray: {MARK}\n bad: {MARK}\n"),
+    "duplicate key config": _raw_file("config.yaml", f"\nenvironment: {MARK}\n"),
+    "broken yaml agents": _raw_file("agents.yaml", f"\n- id: [{MARK}\n"),
+    "broken yaml principals": _raw_file("principals.yaml", f"\n- id: [{MARK}\n"),
+    "broken yaml chains": _raw_file("chains.yaml", f"\n- id: [{MARK}\n"),
+    "broken yaml egress": _raw_file("egress.yaml", f"\nhosts: [{MARK}\n"),
+    "broken yaml action": _raw_file("actions/lookup_record.yaml", f"\nx: [{MARK}\n"),
+    "yaml python tag": _raw_file("config.yaml", f"\nz: !!python/object:os.system {MARK}\n"),
+    "yaml alias": _raw_file("config.yaml", f"\nz: *{MARK}\n"),
+    "yaml list as a key": _raw_file("config.yaml", f"\n? [{MARK}]\n: 1\n"),
+    "yaml list as a key in agents": _raw_file("agents.yaml", f"\n- id: x\n  ? [{MARK}]\n  : 1\n"),
+    "yaml list as a key in a tool manifest": _raw_file(
+        "tools/test-agent.yaml", f"? [{MARK}]\n: 1\n", append=False
+    ),
+    "unknown key config": _yaml_edit("config.yaml", lambda d: _setitem(d, MARK, 1)),
+    "unknown key agents": _yaml_edit("agents.yaml", lambda d: _setitem(d[0], MARK, 1) and d),
+    "unknown key principals": _yaml_edit(
+        "principals.yaml", lambda d: _setitem(d[0], MARK, 1) and d
+    ),
+    "unknown key chains": _yaml_edit("chains.yaml", lambda d: _setitem(d[0], MARK, 1) and d),
+    "unknown key action": _yaml_edit("actions/lookup_record.yaml", lambda d: _setitem(d, MARK, 1)),
+    "unknown key egress": _yaml_edit("egress.yaml", lambda d: _setitem(d, MARK, 1)),
+    "unknown key route": _yaml_edit(
+        "config.yaml", lambda d: _setitem(d["routes"]["default"], MARK, 1) and d
+    ),
+    "unknown key backends": _yaml_edit(
+        "config.yaml", lambda d: _setitem(d["backends"], MARK, 1) and d
+    ),
+    "unknown key system": _yaml_edit(
+        "config.yaml", lambda d: _setitem(d["systems"]["fixture-records"], MARK, 1) and d
+    ),
+    "unknown key llm setting": _yaml_edit(
+        "config.yaml", lambda d: _setitem(d["backends"]["llm"], MARK, 1) and d
+    ),
+    "unknown key tool entry": _raw_file(
+        "tools/test-agent.yaml", _TOOL_HEAD + f"  {MARK}: 1\n", append=False
+    ),
+    "unknown key budget": _yaml_edit(
+        "agents.yaml", lambda d: _setitem(d[0]["budget_usd"], MARK, "1") and d
+    ),
+    "unknown key executor": _yaml_edit(
+        "actions/lookup_record.yaml", lambda d: _setitem(d["executor"], MARK, 1) and d
+    ),
+    "unknown key chain step": _yaml_edit(
+        "chains.yaml", lambda d: _setitem(d[0]["steps"][0], MARK, 1) and d
+    ),
+    "value model_route": _yaml_edit(
+        "agents.yaml", lambda d: _setitem(d[0], "model_route", MARK) and d
+    ),
+    "value scope_allowed": _yaml_edit(
+        "agents.yaml", lambda d: _setitem(d[0], "scope_allowed", [MARK]) and d
+    ),
+    "value status": _yaml_edit("agents.yaml", lambda d: _setitem(d[0], "status", MARK) and d),
+    "value data_class": _yaml_edit(
+        "agents.yaml", lambda d: _setitem(d[0], "data_class", MARK) and d
+    ),
+    "value environment": _yaml_edit("config.yaml", lambda d: _setitem(d, "environment", MARK)),
+    "value backend kind": _yaml_edit(
+        "config.yaml", lambda d: _setitem(d["backends"], "store", MARK)
+    ),
+    "value backend kind mapping": _yaml_edit(
+        "config.yaml", lambda d: _setitem(d["backends"], "llm", {"kind": MARK})
+    ),
+    "value target_system": _yaml_edit(
+        "actions/lookup_record.yaml", lambda d: _setitem(d, "target_system", MARK)
+    ),
+    "value chain_id": _yaml_edit(
+        "actions/lookup_record.yaml", lambda d: _setitem(d, "chain_id", MARK)
+    ),
+    "value risk_class": _yaml_edit(
+        "actions/lookup_record.yaml", lambda d: _setitem(d, "risk_class", MARK)
+    ),
+    "value executor kind": _yaml_edit(
+        "actions/lookup_record.yaml", lambda d: _setitem(d["executor"], "kind", MARK) and d
+    ),
+    "value verify_check": _yaml_edit(
+        "actions/lookup_record.yaml", lambda d: _setitem(d, "verify_check", MARK)
+    ),
+    "value rollback": _yaml_edit(
+        "actions/lookup_record.yaml", lambda d: _setitem(d, "rollback", MARK)
+    ),
+    "value approver_of": _yaml_edit(
+        "principals.yaml", lambda d: _setitem(d[1], "approver_of", [MARK]) and d
+    ),
+    "value principal kind": _yaml_edit(
+        "principals.yaml", lambda d: _setitem(d[0], "kind", MARK) and d
+    ),
+    "value approver_ids": _yaml_edit(
+        "chains.yaml", lambda d: _setitem(d[0]["steps"][0], "approver_ids", [MARK]) and d
+    ),
+    "value rights": _yaml_edit("principals.yaml", lambda d: _setitem(d[0], "rights", [MARK]) and d),
+    "value egress host": _yaml_edit("egress.yaml", lambda d: _setitem(d, "hosts", [MARK])),
+    "value prompt_file": _yaml_edit(
+        "agents.yaml", lambda d: _setitem(d[0], "prompt_file", MARK) and d
+    ),
+    "value tool file name": _raw_file(f"tools/{MARK}.yaml", "[]\n", append=False),
+    "value tool function and operations and hosts": _raw_file(
+        "tools/test-agent.yaml",
+        _TOOL_HEAD.replace("m:f", f"{MARK}:f")
+        + f"  operations: [{MARK}]\n  hosts: [{MARK}]\n  secret_names: [{MARK}]\n",
+        append=False,
+    ),
+    "value tool side_effect": _raw_file(
+        "tools/test-agent.yaml",
+        _TOOL_HEAD.replace("side_effect: none", f"side_effect: {MARK}"),
+        append=False,
+    ),
+    "value tool name": _raw_file(
+        "tools/test-agent.yaml", _TOOL_HEAD.replace("name: t", f"name: {MARK}"), append=False
+    ),
+    "value tools_allowed without a manifest": _yaml_edit(
+        "agents.yaml", lambda d: _setitem(d[0], "tools_allowed", [MARK]) and d
+    ),
+    "value tools_allowed with a manifest": _raw_file(
+        "tools/test-agent.yaml", _TOOL_HEAD.replace("name: t", "name: t_a"), append=False
+    ),
+    "value route key": _yaml_edit(
+        "config.yaml", lambda d: _setitem(d["routes"], MARK, d["routes"]["default"]) and d
+    ),
+    "value check_modules": _yaml_edit(
+        "config.yaml", lambda d: _setitem(d, "check_modules", [MARK, "tests.fixtures.checks"])
+    ),
+    "value tool list not a list": _raw_file("tools/test-agent.yaml", f"{MARK}: 1\n", append=False),
+    "value tool entry not a mapping": _raw_file(
+        "tools/test-agent.yaml", f"- {MARK}\n", append=False
+    ),
+}
+
+# Rows that raise nothing, each with the line that makes that safe (a typo there narrows or does nothing; it never
+# turns a check off). A row that starts raising, or a new row that does not raise, must be looked at.
+ACCEPTED_ROWS = {
+    "value egress host": "a host name in egress.yaml is a grant the operator writes; a wrong one allows a host nobody calls, "
+    "and every entry must be a bare host (`_bare_host`, tested below)",
+    "value tools_allowed without a manifest": "no manifest: the callables handed to app.build are the tools; an entry "
+    "that matches none is never offered (registry.Registry.tools_for intersects with what exists), so it only narrows",
+    "value route key": "a route no agent names is never used; an agent's model_route that names no route is refused "
+    "(registry._cross_check)",
+    "value check_modules": "a module listed there that no action names is never imported for a check",
+}
+
+
+def _run_probe(cfg_dir, mutate):
+    """The error `load_config` then `load_registry` raise for one mutated config folder, or None."""
+    mutate(cfg_dir)
+    try:
+        load_registry(load_config(cfg_dir))
+    except ConfigError as exc:
+        return exc
+    return None
+
+
+@pytest.mark.parametrize("row", sorted(PROBE_ROWS))
+def test_the_marker_is_in_no_error_text_in_any_probe_row(cfg_dir, row):
+    """The evidence probe (107 results, 8 readable on 4ccb4f9a) as a test: one made-up marker per row; where an error is
+    raised, no copy of it is in `str`, `repr`, the cause or the printed traceback (the chain a command line prints)."""
+    exc = _run_probe(cfg_dir, PROBE_ROWS[row])
+    if exc is None:
+        assert row in ACCEPTED_ROWS, f"nothing was refused for: {row}"
+        return
+    assert row not in ACCEPTED_ROWS, f"now refused, take it off ACCEPTED_ROWS: {row}"
+    assert MARK not in _everything_shown(exc), _everything_shown(exc)[:400]
+    assert exc.__cause__ is None
+
+
+def test_every_probe_row_either_raises_or_is_listed_with_its_reason():
+    assert set(ACCEPTED_ROWS) <= set(PROBE_ROWS)
+    assert all(isinstance(r, str) and len(r) >= 30 for r in ACCEPTED_ROWS.values()), (
+        "each accepted row says why"
+    )
+
+
+# ---- Issue 1: which pydantic message may be shown ------------------------------------------------------------------
+def _validation_errors(model, data):
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError) as err:
+        model(**data) if isinstance(model, type) else model.validate_python(data)
+    return err.value.errors(include_url=False, include_input=False)
+
+
+def test_the_fixed_sentence_types_are_real_pydantic_error_types():
+    from pydantic_core.core_schema import ErrorType
+
+    assert config_mod._FIXED_SENTENCE_TYPES <= set(typing.get_args(ErrorType))
+
+
+def _fixed_sentence_cases():
+    from decimal import Decimal
+
+    from pydantic import BaseModel, ConfigDict, Field
+
+    class Inner(BaseModel):
+        model_config = ConfigDict(extra="forbid", frozen=True)
+        a: int
+
+    class M(BaseModel):
+        model_config = ConfigDict(extra="forbid", frozen=True)
+        lit: typing.Literal["x", "y"] = "x"
+        text: str = "a"
+        number: int = 1
+        real: float = 1.0
+        flag: bool = False
+        money: Decimal = Decimal(1)
+        items: list[str] = []
+        named: dict[str, int] = {}
+        inner: Inner | None = None
+        gt: int = Field(default=5, gt=0)
+        ge: int = Field(default=5, ge=0)
+        lt: int = Field(default=5, lt=10)
+        le: int = Field(default=5, le=10)
+        short: str = Field(default="abc", min_length=2)
+        long: str = Field(default="a", max_length=2)
+        pat: str = Field(default="abc", pattern=r"^abc$")
+        many: list[int] = Field(default=[1], min_length=1)
+        few: list[int] = Field(default=[], max_length=1)
+        path: Path = Path(".")
+
+    # One typed value per problem type; the value is the marker, or holds it.
+    cases = {
+        "literal_error": {"lit": MARK},
+        "string_type": {"text": 5},
+        "int_parsing": {"number": MARK},
+        "float_parsing": {"real": MARK},
+        "bool_parsing": {"flag": MARK},
+        "decimal_parsing": {"money": MARK},
+        "list_type": {"items": MARK},
+        "dict_type": {"named": MARK},
+        "model_type": {"inner": MARK},
+        "greater_than": {"gt": -1},
+        "greater_than_equal": {"ge": -1},
+        "less_than": {"lt": 99},
+        "less_than_equal": {"le": 99},
+        "string_too_short": {"short": "a"},
+        "string_too_long": {"long": MARK},
+        "string_pattern_mismatch": {"pat": MARK},
+        "too_short": {"many": []},
+        "too_long": {"few": [1, 2]},
+        "extra_forbidden": {MARK: 1},
+        "int_type": {"number": [MARK]},
+        "float_type": {"real": [MARK]},
+        "bool_type": {"flag": [MARK]},
+        "decimal_type": {"money": [MARK]},
+    }
+    return M, cases
+
+
+def test_every_pydantic_message_type_that_is_shown_as_written_holds_no_typed_value():
+    model, cases = _fixed_sentence_cases()
+    seen = set()
+    for kind, data in cases.items():
+        for e in _validation_errors(model, data):
+            seen.add(e["type"])
+            assert e["type"] in config_mod._FIXED_SENTENCE_TYPES, (kind, e["type"])
+            assert MARK not in config_mod._what(e), (kind, config_mod._what(e))
+            assert config_mod._what(e) == e["msg"]
+    assert seen >= {"literal_error", "int_parsing", "extra_forbidden", "string_pattern_mismatch"}, (
+        seen
+    )
+
+
+@pytest.mark.parametrize(
+    "kind, expected",
+    [
+        ("union_tag_invalid", "the kind is missing or not one of the known kinds"),
+        ("union_tag_not_found", "the kind is missing or not one of the known kinds"),
+        ("assertion_error", "a value was refused (assertion_error)"),
+        ("json_invalid", "a value was refused (json_invalid)"),
+        ("url_parsing", "a value was refused (url_parsing)"),
+        ("a_type_added_later", "a value was refused (a_type_added_later)"),
+    ],
+)
+def test_a_pydantic_type_off_the_allow_list_gets_the_fixed_sentence(kind, expected):
+    said = config_mod._what({"type": kind, "msg": f"Input {MARK} is wrong", "ctx": {}})
+    assert said == expected and MARK not in said, said
+
+
+def test_a_typed_discriminator_value_is_never_quoted_and_the_allowed_kinds_are_listed(cfg_dir):
+    path = cfg_dir / "actions" / "lookup_record.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    for typed in (MARK, PW, "http "):
+        data["executor"]["kind"] = typed
+        path.write_text(yaml.safe_dump(data), encoding="utf-8")
+        with pytest.raises(ConfigError) as err:
+            load_registry(load_config(cfg_dir))
+        assert typed.strip() not in _everything_shown(err.value).replace(
+            "'none', 'manual', 'http'", ""
+        )
+        assert (
+            "the kind is missing or not one of the known kinds; allowed: 'none', 'manual', 'http'"
+            in str(err.value)
+        )
+    del data["executor"]["kind"]
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    with pytest.raises(ConfigError) as err:
+        load_registry(load_config(cfg_dir))
+    assert "the kind is missing or not one of the known kinds" in str(err.value)
+
+
+# ---- Issue 4: the marker class that says "Hadavin wrote this sentence" ---------------------------------------------
+_PROBE_SOURCE = """
+from decimal import Decimal
+from pydantic import BaseModel, field_validator
+from hadavin_sdk.errors import ConfigValueError
+
+class Probe(BaseModel):
+    kind: str
+    value: str
+
+    @field_validator("value")
+    @classmethod
+    def _check(cls, v, info):
+        k = info.data.get("kind")
+        if k == "int":
+            int(v)
+        elif k == "float":
+            float(v)
+        elif k == "decimal":
+            Decimal(v)
+        elif k == "fromhex":
+            bytes.fromhex(v)
+        elif k == "plain":
+            raise ValueError("the value is " + v)
+        elif k == "ours":
+            raise ConfigValueError("the value is out of its range")
+        return v
+"""
+
+
+def _probe_in_a_hadavin_module(kind, value):
+    """A validator that lives in a module NAMED `hadavin_sdk...` (so the old last-frame test counted it as ours)."""
+    import types
+
+    mod = types.ModuleType("hadavin_sdk._round7_probe")
+    exec(compile(_PROBE_SOURCE, "<round7-probe>", "exec"), mod.__dict__)  # noqa: S102  # nosec B102 - test source
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError) as err:
+        mod.Probe(kind=kind, value=value)
+    return config_mod.config_error_text(err.value)
+
+
+@pytest.mark.parametrize("kind", ["int", "float", "fromhex", "plain"])
+def test_a_library_or_plain_value_error_inside_a_hadavin_module_shows_no_text(kind):
+    text = _probe_in_a_hadavin_module(kind, "x" + MARK)
+    assert MARK not in text and "a value was refused (ValueError)" in text, text
+
+
+def test_a_config_value_error_keeps_its_sentence_wherever_it_is_raised():
+    text = _probe_in_a_hadavin_module("ours", MARK)
+    assert "the value is out of its range" in text and MARK not in text, text
+
+
+def test_a_config_error_is_not_the_marker_class():
+    """`ConfigError` is a ValueError too, but only `ConfigValueError` marks a sentence as written for display."""
+    from hadavin_sdk.errors import ConfigError as CE
+    from hadavin_sdk.errors import ConfigValueError
+
+    assert not issubclass(CE, ConfigValueError) and not issubclass(ConfigValueError, CE)
+
+
+def test_no_validator_of_the_config_files_raises_a_plain_value_error():
+    """The class: a pydantic validator of a configuration model raises `ConfigValueError`, never `ValueError`."""
+    for name in ("config.py", "backends/table.py", "actions/contract.py"):
+        text = (ROOT / "src" / "hadavin_sdk" / name).read_text(encoding="utf-8")
+        assert not re.search(r"raise ValueError\(", text), name
+
+
+# ---- Issue 6: URL fields, unknown values, files -------------------------------------------------------------------
+URL_FIELDS = {
+    "base_url",
+    "address",
+    "endpoint_url",
+    "account_url",
+    "vault_url",
+    "key_id",
+    "api_base",
+    "api_url",
+}
+
+
+def test_every_settings_field_that_holds_a_url_uses_the_one_url_type():
+    """The class: a field named like a URL is a `ConfigUrl` (login and look-alike hosts refused for every field)."""
+    from hadavin_sdk.sources.kinds import KINDS
+
+    models = {e.settings for caps in table.TABLE.values() for e in caps.values()}
+    models |= {k.settings for k in KINDS.values()}
+    found = set()
+    for model in models:
+        for name, info in model.model_fields.items():
+            if (
+                name in URL_FIELDS and model.__name__ != "AwsKmsSettings"
+            ):  # a key id, not an address
+                found.add((model.__name__, name))
+                assert "checked_url" in repr(info.annotation) + repr(info.metadata), (
+                    model.__name__,
+                    name,
+                )
+    assert len(found) >= 8, found
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        f"https://user:{MARK}@host.example/x",
+        f"https://{MARK}@host.example/x",
+        "https://:" + MARK + "@host.example/",
+        "https://［" + MARK + "］host.example/",
+        "https://host％" + MARK + ".example/",
+        "https://host%" + MARK + ".example/",
+        "https://host.example:" + MARK + "/",
+        "https://[" + MARK + "/",
+    ],
+)
+def test_the_one_url_type_refuses_a_login_a_look_alike_host_and_a_bad_port_with_a_fixed_sentence(
+    url,
+):
+    from pydantic import TypeAdapter, ValidationError
+
+    from hadavin_sdk.config_url import ConfigUrl
+
+    with pytest.raises(ValidationError) as err:
+        TypeAdapter(ConfigUrl).validate_python(url)
+    text = config_mod.config_error_text(err.value)
+    assert MARK not in text, text
+    assert "a URL must not contain a login" in text or "not a valid URL" in text, text
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://host.example/x",
+        "http://127.0.0.1:8080",
+        "https://[::1]:8443/v1",
+        "https://xn--bcher-kva.example",
+    ],
+)
+def test_the_one_url_type_keeps_ordinary_urls(url):
+    from pydantic import TypeAdapter
+
+    from hadavin_sdk.config_url import ConfigUrl
+
+    assert TypeAdapter(ConfigUrl).validate_python(url) == url
+
+
+def test_the_login_in_a_url_is_refused_for_the_two_fields_that_missed_it(cfg_dir):
+    for edit in (
+        lambda d: d["backends"].update(
+            llm={"kind": "openai_compat", "base_url": f"https://u:{MARK}@h.example/v1"}
+        ),
+        lambda d: d["backends"].update(
+            secrets={"kind": "vault", "address": f"https://u:{MARK}@h.example"}
+        ),
+    ):
+        exc = _refused(cfg_dir, edit=edit)
+        assert "a URL must not contain a login" in str(exc) and MARK not in _everything_shown(exc)
+        _edit(
+            cfg_dir,
+            lambda d: d["backends"].update(
+                llm={"kind": "fake", "recorded_dir": "../recorded"}, secrets="fake"
+            ),
+        )
+
+
+def test_the_system_base_url_refuses_fullwidth_brackets_and_percent_like_the_other_url_fields():
+    from hadavin_sdk.safe_url import InvalidUrl, UrlHasLogin, config_urlsplit
+
+    for bad in ("https://［a］b.example/", "https://a％41.example/", "https://a%41.example/"):
+        with pytest.raises(InvalidUrl) as err:
+            config_urlsplit(bad)
+        assert not isinstance(err.value, UrlHasLogin) and str(err.value) == "not a valid URL"
+    with pytest.raises(UrlHasLogin):
+        config_urlsplit("https://u:p@h.example/")
+
+
+def _pilot_principals(cfg_dir, edit):
+    _edit_file = _yaml_edit("principals.yaml", edit)
+    _edit_file(cfg_dir)
+    with pytest.raises(ConfigError) as err:
+        load_registry(load_config(cfg_dir))
+    return str(err.value)
+
+
+def test_a_chain_approver_must_be_a_person_who_is_in_principals(cfg_dir):
+    text = _yaml_edit(
+        "chains.yaml",
+        lambda d: _setitem(d[0]["steps"][0], "approver_ids", ["svc:test-agent", MARK]) and d,
+    )
+    text(cfg_dir)
+    with pytest.raises(ConfigError) as err:
+        load_registry(load_config(cfg_dir))
+    msg = str(err.value)
+    assert (
+        "chain chain-abc step 0: approver_ids entry 0 is not a person" in msg
+    )  # a service identity
+    assert (
+        "approver_ids entry 1 is not a person" in msg and MARK not in msg
+    )  # one that is not there at all
+
+
+def test_a_right_must_name_an_action_and_approver_of_must_name_a_chain(cfg_dir):
+    msg = _pilot_principals(
+        cfg_dir, lambda d: _setitem(d[0], "rights", ["lookup_record", MARK]) and d
+    )
+    assert "principal <not shown>: rights entry 1 names no action" in msg and MARK not in msg
+    _yaml_edit("principals.yaml", lambda d: _setitem(d[0], "rights", ["lookup_record"]) and d)(
+        cfg_dir
+    )
+    msg = _pilot_principals(
+        cfg_dir, lambda d: _setitem(d[1], "approver_of", ["chain-abc", MARK]) and d
+    )
+    assert "principal <not shown>: approver_of entry 1 names no chain" in msg and MARK not in msg
+
+
+def test_with_a_manifest_a_tools_allowed_entry_with_no_tool_in_it_is_refused(cfg_dir):
+    _yaml_edit("agents.yaml", lambda d: _setitem(d[0], "tools_allowed", ["t_a", MARK]) and d)(
+        cfg_dir
+    )
+    for path in (cfg_dir / "actions").glob(
+        "*.yaml"
+    ):  # a tooled agent: each string input says `identifier`
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        for sub in ((data.get("input_schema") or {}).get("properties") or {}).values():
+            if sub.get("type") == "string":
+                sub.setdefault("identifier", False)
+        path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    _raw_file("tools/test-agent.yaml", _TOOL_HEAD.replace("name: t", "name: t_a"), append=False)(
+        cfg_dir
+    )
+    with pytest.raises(ConfigError) as err:
+        load_registry(load_config(cfg_dir))
+    assert "tools_allowed entry 1 has no tool in this manifest" in str(err.value)
+    assert MARK not in _everything_shown(err.value)
+
+
+def test_egress_yaml_takes_only_a_list_of_bare_hosts(cfg_dir):
+    for edit, said in (
+        (lambda d: _setitem(d, "host", ["a.example"]), "1 unknown key(s)"),
+        (lambda d: _setitem(d, "hosts", "a.example"), "list of bare host names"),
+        (lambda d: _setitem(d, "hosts", [f"https://{MARK}/x"]), "list of bare host names"),
+        (lambda d: _setitem(d, "hosts", [f"{MARK}:443"]), "list of bare host names"),
+        (lambda d: _setitem(d, "hosts", [f"u@{MARK}"]), "list of bare host names"),
+        (lambda d: _setitem(d, "hosts", [f"{MARK} x"]), "list of bare host names"),
+        (lambda d: _setitem(d, "hosts", [5]), "list of bare host names"),
+    ):
+        _yaml_edit("egress.yaml", edit)(cfg_dir)
+        with pytest.raises(ConfigError) as err:
+            load_config(cfg_dir)
+        assert said in str(err.value) and MARK not in _everything_shown(err.value)
+        (cfg_dir / "egress.yaml").write_text("hosts:\n  - 127.0.0.1\n", encoding="utf-8")
+    for fine in (["a.example", "127.0.0.1", "::1"], []):
+        (cfg_dir / "egress.yaml").write_text(yaml.safe_dump({"hosts": fine}), encoding="utf-8")
+        assert load_config(cfg_dir).egress_hosts == frozenset(fine)
+
+
+def test_a_config_file_that_cannot_be_read_is_reported_by_its_type_only(cfg_dir):
+    (cfg_dir / "egress.yaml").unlink()
+    (
+        cfg_dir / "egress.yaml"
+    ).mkdir()  # a folder where a file belongs: IsADirectoryError, whose text has the path
+    with pytest.raises(ConfigError) as err:
+        load_config(cfg_dir)
+    assert str(err.value) == "egress.yaml: cannot be read (IsADirectoryError)", str(err.value)
+    assert str(cfg_dir) not in _everything_shown(err.value)
+    (cfg_dir / "agents.yaml").unlink()
+    (cfg_dir / "agents.yaml").mkdir()
+    (cfg_dir / "egress.yaml").rmdir()
+    with pytest.raises(ConfigError) as err:
+        load_registry(load_config(cfg_dir))
+    assert str(cfg_dir) not in _everything_shown(err.value)
+
+
+def test_a_yaml_key_that_is_a_list_is_a_config_error_not_a_type_error():
+    from hadavin_sdk.config import load_yaml
+
+    with pytest.raises(ConfigError) as err:
+        load_yaml(f"? [{MARK}]\n: 1\n")
+    assert (
+        str(err.value) == "a mapping key must be a plain value (line 1)"
+        and err.value.__cause__ is None
+    )
+
+
+# ---- Issue 5: the runtime path of a tool call --------------------------------------------------------------------
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://api.example.com:abc/x",
+        "https://api.example.com:99999/x",
+        "https://[api.example.com/x",
+        "https://[" + MARK + "]/x",
+    ],
+)
+def test_a_tool_call_with_an_unreadable_url_is_a_tool_refusal_with_a_fixed_sentence(url):
+    from hadavin_sdk import tools as tools_mod
+    from tests import k5_support
+    from tests.test_k5_review import _ctx
+
+    del k5_support
+    with pytest.raises(tools_mod.ToolRefused) as err:
+        _ctx().fetch("GET", url, operation="bundle.read")
+    assert str(err.value) == "the URL is not valid" and MARK not in _everything_shown(err.value)
+    assert err.value.__cause__ is None
+
+
+def test_a_tool_call_with_a_login_in_the_url_is_a_tool_refusal():
+    from hadavin_sdk import tools as tools_mod
+    from tests.test_k5_review import _ctx
+
+    with pytest.raises(tools_mod.ToolRefused, match="credentials in the URL are refused") as err:
+        _ctx().fetch("GET", f"https://u:{MARK}@api.example.com/x", operation="bundle.read")
+    assert MARK not in _everything_shown(err.value)
+
+
+# ---- Issue 2: the names in the deferred-feature checks ---------------------------------------------------------------
+def test_an_agent_id_and_a_levels_key_that_are_not_plain_names_are_not_shown_by_the_deferred_checks(
+    cfg_dir,
+):
+    agents = _agent_entry(id=PW, levels={"lookup_record": "act", PW: "act"})
+    exc = _refused(cfg_dir, extra_file=("agents.yaml", agents))
+    assert "agent <not shown>: level act for lookup_record arrives in Phase 4" in str(exc), str(exc)
+    assert "agent <not shown>: levels names 1 action(s) that are not in scope_allowed" in str(
+        exc
+    ), str(exc)
+    _assert_value_free(exc, PW)
+
+
+def test_an_action_id_that_is_not_a_plain_name_is_not_shown_by_the_deferred_checks():
+    """The check works on a loaded registry; a stand-in with the three fields it reads keeps the test to one rule."""
+    contract = SimpleNamespace(
+        id=PW, executor=SimpleNamespace(kind="manual"), risk_class="read_only"
+    )
+    reg = SimpleNamespace(
+        config=SimpleNamespace(environment="demo"), contracts={PW: contract}, agents={}
+    )
+    assert deferred.check(reg) == [
+        "action <not shown>: executor manual arrives with K8 (posted fixes)"
+    ]
+
+
+# ---- Issue 3: the sites in sources, secrets, the tool runner and the app ------------------------------------------------
+def test_a_source_key_that_is_not_a_plain_name_is_not_shown():
+    from hadavin_sdk.sources import scope_problems
+
+    class Opaque:
+        def probe_scope(self):
+            return None
+
+    class Broken:
+        def probe_scope(self):
+            raise RuntimeError(PW)
+
+    class Wide:
+        def probe_scope(self):
+            return ["a rule is too wide"]
+
+    out = scope_problems({PW + "1": Opaque(), PW + "2": Broken(), PW + "3": Wide()}, {})
+    assert sorted(out) == [
+        "source <not shown>: a rule is too wide",
+        "source <not shown>: cannot be probed and has no scope_inventory reference (design 6.6)",
+        "source <not shown>: scope probe failed (RuntimeError)",
+    ], out
+
+
+def test_a_secret_name_that_is_not_a_plain_name_is_not_shown_by_the_platform_secrets_checks():
+    from pydantic import create_model
+
+    from hadavin_sdk.backends import platform_secrets as ps
+
+    field = (
+        "token_secret" + "_name"
+    )  # built from parts: the name alone makes a scanner see a password
+    Settings = create_model("Settings", **{field: (str, "ok_name")})
+
+    class Broken:
+        def get(self, name):
+            raise RuntimeError(name)
+
+    with pytest.raises(ConfigError) as err:
+        ps.bound(SimpleNamespace(get=lambda n: n), Settings(), "backend x")(PW)
+    assert (
+        str(err.value)
+        == "backend x: may read only the secrets named in its own settings, not <not shown>"
+    )
+    both = Settings(**{field: PW})
+    for kwargs, said in (
+        (
+            {"executor_names": {PW}},
+            "secret names used by both a backend and an action executor: <not shown>;",
+        ),
+        (
+            {"executor_names": set(), "tool_names": {PW}},
+            "secret names used by both a backend and a read tool: <not shown>;",
+        ),
+    ):
+        with pytest.raises(ConfigError) as err:
+            ps.check(SimpleNamespace(get=lambda n: n), [both], **kwargs)
+        assert str(err.value).startswith(said), str(err.value)
+        assert PW not in _everything_shown(err.value)
+    with pytest.raises(ConfigError) as err:
+        ps.check(Broken(), [both], set())
+    assert str(err.value) == "secret <not shown> cannot be read at start-up (RuntimeError)"
+    assert err.value.__cause__ is None and PW not in _everything_shown(err.value)
+
+
+def test_a_tool_module_name_that_is_not_a_plain_name_is_not_shown_by_the_tool_loader(
+    tmp_path, monkeypatch
+):
+    from hadavin_sdk import tools as tools_mod
+
+    odd = "Zq9x" + "Mod"  # a legal module name that `shown_name` hides (upper-case letters)
+    (tmp_path / (odd + ".py")).write_text("VALUE = 1\n", encoding="utf-8")
+    monkeypatch.syspath_prepend(str(tmp_path))
+    with pytest.raises(ConfigError) as err:
+        tools_mod.load_tool_module(odd, {odd: "0" * 64})
+    assert str(err.value).startswith("tool module <not shown>: its source hash is "), str(err.value)
+    with pytest.raises(ConfigError) as err2:
+        tools_mod.load_tool_module(odd + "Missing", {odd + "Missing": "0" * 64})
+    assert str(err2.value) == "tool module <not shown> cannot be found on the module path"
+    for err_ in (err, err2):
+        assert odd not in _everything_shown(err_.value) and err_.value.__cause__ is None
+
+
+def test_a_tls_ca_name_that_is_not_a_plain_name_is_not_shown_by_the_app(cfg_dir):
+    cfg = load_config(cfg_dir)
+    (cfg_dir / (PW + ".pem")).write_text(" ", encoding="utf-8")
+    stub = SimpleNamespace(get=lambda name: " ")
+    for ca_file, ca_secret in ((PW + ".pem", None), (None, PW)):
+        with pytest.raises(ConfigError) as err:
+            app_mod._tls_context(cfg, stub, ca_file, ca_secret)
+        assert str(err.value) == "the CA <not shown> is empty", str(err.value)
+        assert PW not in _everything_shown(err.value)
+
+
+def test_a_tool_name_in_the_app_is_pattern_bound_so_shown_name_there_changes_nothing():
+    """`app._unprobed_tools` prints `ToolSpec.name`, which is held to `^[a-z][a-z0-9_]{0,39}$` by the model; a name
+    that `shown_name` would hide cannot reach it. Pinned here so a looser name pattern shows up as a failure."""
+    from hadavin_sdk.tools import ToolSpec
+
+    def make(name):
+        return ToolSpec(
+            name=name,
+            function="m:f",
+            description="d",
+            input_schema={"type": "object"},
+            side_effect="none",
+        )
+
+    assert (
+        make("a_tool").name == "a_tool" and make("x" * 40).name == "x" * 40
+    )  # the rest of the spec is valid
+    for bad in (PW, "Tool", "a b", "x" * 41, "a.b", "1abc"):
+        with pytest.raises(ValueError, match="string_pattern_mismatch|should match pattern"):
+            make(bad)
+
+
+# ---- Issue 8: the file readers and the nested settings error -------------------------------------------------------------
+def test_a_source_whose_settings_hold_a_secret_as_api_url_and_an_unknown_key_shows_neither():
+    from pydantic import ValidationError
+
+    from hadavin_sdk.sources.kinds import KINDS
+
+    kind = "kubernetes"
+    assert kind in KINDS
+    for settings in (
+        {"api_url": LOGIN_URL, MARK: PW},
+        {"api_url": "https://[" + PW, "extra_" + PW: 1},
+        {"api_url": PW},
+    ):
+        with pytest.raises(ValidationError) as err:
+            config_mod.SourceConfig(kind=kind, settings=settings)
+        text = config_mod.config_error_text(err.value)
+        assert PW not in text and MARK not in text and USER not in text, (
+            text
+        )  # the text the loader shows
+
+
+def test_a_registry_file_that_is_a_folder_or_has_a_list_as_a_key_is_a_config_error_without_the_path(
+    cfg_dir,
+):
+    (cfg_dir / "chains.yaml").unlink()
+    (cfg_dir / "chains.yaml").mkdir()
+    with pytest.raises(ConfigError) as err:
+        load_registry(load_config(cfg_dir))
+    assert str(
+        err.value
+    ) == "chains.yaml: cannot be read (IsADirectoryError)" or "IsADirectoryError" in str(err.value)
+    assert str(cfg_dir) not in _everything_shown(err.value)
+    (cfg_dir / "chains.yaml").rmdir()
+    (cfg_dir / "chains.yaml").write_text(f"? [{MARK}]\n: 1\n", encoding="utf-8")
+    with pytest.raises(ConfigError) as err:
+        load_registry(load_config(cfg_dir))
+    assert "a mapping key must be a plain value" in str(
+        err.value
+    ) and MARK not in _everything_shown(err.value)

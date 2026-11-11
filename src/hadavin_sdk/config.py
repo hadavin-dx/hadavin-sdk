@@ -5,6 +5,7 @@ Bad config fails at start-up. Cross-file checks (agents, actions, chains) live i
 
 from __future__ import annotations
 
+import ipaddress
 import re
 from decimal import Decimal
 from pathlib import Path
@@ -24,8 +25,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hadavin_sdk import defaults, deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
-from hadavin_sdk.errors import ConfigError, error_where, shown_name
-from hadavin_sdk.safe_url import NOT_A_URL, InvalidUrl, safe_urlsplit
+from hadavin_sdk.errors import ConfigError, ConfigValueError, error_where, shown_name
+from hadavin_sdk.safe_url import (
+    HAS_LOGIN,
+    NOT_A_URL,
+    InvalidUrl,
+    UrlHasLogin,
+    config_urlsplit,
+    safe_urlsplit,
+)
 from hadavin_sdk.scrub_settings import ScrubSettings
 from hadavin_sdk.stages import STAGES, is_live, is_prod
 
@@ -49,7 +57,7 @@ __all__ = [
 def _money(v: object) -> object:
     if isinstance(v, float):
         # ValueError, not TypeError: pydantic turns only ValueError into a validation error.
-        raise ValueError("money must be a decimal string, not a float")  # noqa: TRY004
+        raise ConfigValueError("money must be a decimal string, not a float")
     return v
 
 
@@ -89,7 +97,7 @@ class Backends(_Strict):
 _OLD_STAGE = "dev"
 
 
-class _RenamedStage(ValueError):
+class _RenamedStage(ConfigValueError):
     """The old first stage name was written: carries the whole sentence the reader should see."""
 
 
@@ -234,7 +242,9 @@ class Retention(_Strict):
     @model_validator(mode="after")
     def _held_not_shorter(self) -> Retention:
         if self.held_maps_max_days < self.redaction_maps_days:
-            raise ValueError("retention.held_maps_max_days must be at least redaction_maps_days")
+            raise ConfigValueError(
+                "retention.held_maps_max_days must be at least redaction_maps_days"
+            )
         return self
 
 
@@ -290,11 +300,11 @@ class EvidenceSettings(_Strict):
         if bad := [
             t for t in self.case_insensitive_targets if not re.fullmatch(r"[a-z0-9_-]{1,40}", t)
         ]:
-            raise ValueError(
+            raise ConfigValueError(
                 f"evidence.case_insensitive_targets: {len(bad)} entries are not target_system labels"
             )
         if unknown := sorted(set(self.stored_kinds) - set(defaults.STORED_KINDS)):
-            raise ValueError(
+            raise ConfigValueError(
                 f"evidence.stored_kinds: {len(unknown)} entries cannot be stored (secret, regulated or unknown)"
             )
         if bad_suffix := [
@@ -302,14 +312,14 @@ class EvidenceSettings(_Strict):
             for s in self.cluster_suffixes
             if not s.startswith(".") or s.rsplit(".", 1)[-1] not in defaults.PRIVATE_SUFFIX_LABELS
         ]:
-            raise ValueError(
+            raise ConfigValueError(
                 f"evidence.cluster_suffixes: {len(bad_suffix)} entries must start with a dot and end in a private label "
                 f"({', '.join(sorted(defaults.PRIVATE_SUFFIX_LABELS))}); a public suffix such as .com would "
                 "allow plain http to the internet"
             )
         for name in ("https_ports", "cluster_ports"):
             if bad := [p for p in getattr(self, name) if not 0 < p < 65536]:
-                raise ValueError(f"evidence.{name}: {len(bad)} entries are not ports")
+                raise ConfigValueError(f"evidence.{name}: {len(bad)} entries are not ports")
         return self
 
 
@@ -329,7 +339,7 @@ class SourceConfig(_Strict):
         from hadavin_sdk.sources.kinds import KINDS
 
         if self.kind not in KINDS:
-            raise ValueError(f"source kind is unknown; known: {', '.join(sorted(KINDS))}")
+            raise ConfigValueError(f"source kind is unknown; known: {', '.join(sorted(KINDS))}")
         KINDS[self.kind].settings(**self.settings)
         return self
 
@@ -389,7 +399,7 @@ class Config(_Strict):
     @classmethod
     def _executor_timeout(cls, value: object) -> object:
         if not executor_timeout_ok(value):
-            raise ValueError(EXECUTOR_TIMEOUT_RULE)
+            raise ConfigValueError(EXECUTOR_TIMEOUT_RULE)
         return value
 
     @field_validator("environment", mode="before")
@@ -408,21 +418,23 @@ class Config(_Strict):
     def _cross_checks(self) -> Config:
         for source, ref in self.scope_inventory.items():
             if not _inventory_ref_ok(ref):
-                raise ValueError(
+                raise ConfigValueError(
                     f"scope_inventory {shown_name(source)}: expected '<page>#<anchor> sha256:<64 hex digits>'"
                 )
         for d in self.backends.detector:  # llm_judge names a route
             if getattr(d, "route", None) is not None and d.route not in self.routes:
-                raise ValueError(f"backends.detector {d.kind}: its route is not in routes")
+                raise ConfigValueError(f"backends.detector {d.kind}: its route is not in routes")
         for name, system in self.systems.items():
             try:
-                has_login = url_has_login(system.base_url)
+                config_urlsplit(system.base_url)
+            except UrlHasLogin:
+                raise ConfigValueError(f"system {shown_name(name)}: base_url {HAS_LOGIN}") from None
             except InvalidUrl:
-                raise ValueError(f"system {shown_name(name)}: base_url is {NOT_A_URL}") from None
-            if has_login:
-                raise ValueError(f"system {shown_name(name)}: base_url must not contain a login")
+                raise ConfigValueError(
+                    f"system {shown_name(name)}: base_url is {NOT_A_URL}"
+                ) from None
             if not url_allowed(system.base_url, self.allow_insecure_loopback):
-                raise ValueError(
+                raise ConfigValueError(
                     f"system {shown_name(name)}: base_url must be https "
                     "(http only for loopback with allow_insecure_loopback)"
                 )
@@ -434,7 +446,7 @@ class Config(_Strict):
             refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []
         refused += _anchor_refusals(self.environment, self.backends)
         if refused:
-            raise ValueError(f"environment {self.environment}: refused: {', '.join(refused)}")
+            raise ConfigValueError(f"environment {self.environment}: refused: {', '.join(refused)}")
         return self
 
 
@@ -468,7 +480,13 @@ class _UniqueKeyLoader(yaml.SafeLoader):
         seen = set()
         for key_node, _ in node.value:
             key = self.construct_object(key_node, deep=True)
-            if key in seen:
+            try:
+                duplicate = key in seen
+            except TypeError:  # a list or mapping used as a key cannot be hashed
+                raise ConfigError(
+                    f"a mapping key must be a plain value (line {key_node.start_mark.line + 1})"
+                ) from None
+            if duplicate:
                 raise ConfigError(f"duplicate key (line {key_node.start_mark.line + 1})")
             seen.add(key)
         return super().construct_mapping(node, deep)
@@ -487,10 +505,40 @@ def load_yaml(text: str) -> Any:
 def _read_yaml(path: Path) -> dict:
     if not path.exists():
         return {}
-    data = load_yaml(path.read_text(encoding="utf-8")) or {}
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:  # a folder, no permission: the type only (the error text holds the path)
+        raise ConfigError(f"{path.name}: cannot be read ({type(exc).__name__})") from None
+    data = load_yaml(text) or {}
     if not isinstance(data, dict):
         raise ConfigError(f"{path.name}: expected a mapping at the top level")
     return data
+
+
+def _bare_host(host: object) -> bool:
+    """A host name or an IP address and nothing else: no scheme, port, path, login or space (such an entry would
+    never match a call, and the call would be refused: a typo that silently narrows, so it is refused at load)."""
+    if not isinstance(host, str) or not host.strip() or host != host.strip():
+        return False
+    if any(c in host for c in "/@?#\\%") or any(c.isspace() for c in host):
+        return False
+    if ":" in host:
+        try:
+            ipaddress.ip_address(host)
+        except ValueError:
+            return False
+    return True
+
+
+def _egress_hosts(raw: dict) -> list[str]:
+    """The `hosts` of `egress.yaml`. The only key is `hosts` (another key is a typo that would leave the list empty
+    and block every call), and every entry must be a bare host. Neither refusal quotes the file."""
+    if extra := set(raw) - {"hosts"}:
+        raise ConfigError(f"egress.yaml: {len(extra)} unknown key(s); the only key is hosts")
+    hosts = raw.get("hosts") or []
+    if not isinstance(hosts, list) or not all(_bare_host(h) for h in hosts):
+        raise ConfigError("egress.yaml: hosts must be a list of bare host names or IP addresses")
+    return hosts
 
 
 def confined(base: Path, relative: str) -> Path:
@@ -502,27 +550,73 @@ def confined(base: Path, relative: str) -> Path:
     return path
 
 
-def _own_error(error: object) -> bool:
-    """True if a `ValueError` was raised by Hadavin's own code (a validator or cross-check that writes its own
-    sentence), false if it came out of a library call (`urlsplit`, `int()`, `Decimal`, ...) whose text quotes the
-    value it choked on. The last frame of the traceback says which; no traceback means not known, so false."""
-    tb = getattr(error, "__traceback__", None)
-    if tb is None:
-        return False
-    while tb.tb_next is not None:
-        tb = tb.tb_next
-    module = tb.tb_frame.f_globals.get("__name__", "")
-    return isinstance(module, str) and (
-        module == "hadavin_sdk" or module.startswith("hadavin_sdk.")
-    )
+# The pydantic problem types whose message is a fixed sentence about the SHAPE the field must have, never the value
+# that was refused (checked against pydantic_core 2.x on 2026-11-11: each message names the rule, a bound or the
+# allowed values, all written by the code). Every other type, and every type a later pydantic adds, gets the fixed
+# sentence below, because its message may quote the value (`union_tag_invalid` quotes the typed tag).
+_FIXED_SENTENCE_TYPES = frozenset(
+    {
+        "missing",
+        "extra_forbidden",
+        "literal_error",
+        "enum",
+        "string_type",
+        "int_type",
+        "float_type",
+        "bool_type",
+        "dict_type",
+        "list_type",
+        "tuple_type",
+        "set_type",
+        "frozen_set_type",
+        "bytes_type",
+        "model_type",
+        "model_attributes_type",
+        "int_parsing",
+        "int_parsing_size",
+        "int_from_float",
+        "float_parsing",
+        "bool_parsing",
+        "decimal_type",
+        "decimal_parsing",
+        "greater_than",
+        "greater_than_equal",
+        "less_than",
+        "less_than_equal",
+        "multiple_of",
+        "finite_number",
+        "too_short",
+        "too_long",
+        "string_too_short",
+        "string_too_long",
+        "string_pattern_mismatch",
+        "none_required",
+        "frozen_instance",
+    }
+)
 
 
 def _what(e: Any) -> str:
-    """The sentence of one problem. A `value_error` keeps its own sentence only when Hadavin's code wrote it
-    (`_own_error`); a library's `ValueError` text may quote the value, so only its type name is kept."""
-    if e["type"] == "value_error" and not _own_error(e.get("ctx", {}).get("error")):
+    """The sentence of one problem. Shown as pydantic wrote it only for the types in `_FIXED_SENTENCE_TYPES`; a
+    `value_error` keeps its sentence only when its cause is `ConfigValueError` (Hadavin wrote it); a bad choice of
+    kind (`union_tag_invalid`, `union_tag_not_found`) says so with the allowed kinds and never the typed one; anything
+    else is `a value was refused (<type>)`. The type name is pydantic's, not the file's."""
+    kind = e["type"]
+    if kind in _FIXED_SENTENCE_TYPES:
+        return e["msg"]
+    if kind == "value_error":
+        if isinstance(e.get("ctx", {}).get("error"), ConfigValueError):
+            return e["msg"]
         return "a value was refused (ValueError)"
-    return e["msg"]
+    if kind in ("union_tag_invalid", "union_tag_not_found"):
+        allowed = e.get("ctx", {}).get("expected_tags")
+        tail = (
+            f"; allowed: {allowed}"
+            if kind == "union_tag_invalid" and isinstance(allowed, str)
+            else ""
+        )
+        return f"the kind is missing or not one of the known kinds{tail}"
+    return f"a value was refused ({kind})"
 
 
 def _error_line(e: Any) -> str:
@@ -548,11 +642,12 @@ def config_error_text(exc: BaseException) -> str:
     where it is, never the value that was refused (a mistyped key or a pasted login can be a secret). A pydantic
     error keeps its own layout without `input_value`, the link and the context; the place shows field names and
     positions, an unknown key as `<unknown key>` and any other name from the file only if `errors.shown_name` allows
-    it; the sentence of a `value_error` is kept only when Hadavin's own code wrote it (a library's `ValueError` text
-    may quote the value, so its type only is shown). A YAML error keeps its line and column only (its own text
+    it; the sentence of a `value_error` is kept only when it was raised as `ConfigValueError` (the class that means
+    "Hadavin wrote this sentence"; any other `ValueError` may quote the value, so its type only is shown). A YAML error keeps its line and column only (its own text
     quotes the offending line); any other error keeps its type only. Callers raise with `from None`, so the cause
-    (whose text may carry the value) is not shown either. Not covered: names of fields and kinds, and the errors
-    that `app.build` or a backend raises later."""
+    (whose text may carry the value) is not shown either. Not covered: names of fields and kinds, an `id`
+    that has the plain shape and describes the thing itself, and the errors that a backend raises after the build
+    (names inside `app.build` go through `shown_name`, see the CHANGELOG for the exact list)."""
     if isinstance(exc, ValidationError):
         return _value_free_text(exc)
     if isinstance(exc, yaml.MarkedYAMLError) and exc.problem_mark is not None:
@@ -587,7 +682,7 @@ def load_config(config_dir: Path | None = None) -> Config:
     try:
         root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
         raw = _read_yaml(root / "config.yaml")
-        egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+        egress = _egress_hosts(_read_yaml(root / "egress.yaml"))
         if early := deferred.key_problems("config.yaml", raw):
             raise ConfigError("; ".join(early))
         if moved := [k for k in MOVED if k in raw]:
@@ -601,5 +696,10 @@ def load_config(config_dir: Path | None = None) -> Config:
         raise
     except ValidationError as exc:
         raise ConfigError(_validation_text(exc)) from None
-    except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
+    except (
+        ValueError,
+        TypeError,
+        OSError,
+        yaml.YAMLError,
+    ) as exc:  # pydantic errors are ValueErrors
         raise ConfigError(config_error_text(exc)) from None

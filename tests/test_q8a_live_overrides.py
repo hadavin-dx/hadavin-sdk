@@ -767,7 +767,9 @@ def test_the_time_of_a_tick_context_cannot_be_changed_afterwards(demo_dir):
         dataclasses.replace(ctx, now=datetime.now(UTC) + FAR_AHEAD)
     with pytest.raises(ConfigError, match=exactly(COPY_REFUSAL)):
         dataclasses.replace(ctx, results={})  # `now` is never None once the context exists
-    assert "replace()" in (tick_mod.TickContext.__doc__ or "")
+    doc = " ".join((tick_mod.TickContext.__doc__ or "").split())
+    assert "the same message, which also says that a copy made by replace() is refused too" in doc
+    assert "is not copied by replace()" not in doc
 
 
 @pytest.mark.parametrize("where", ["pilot", "prod"])

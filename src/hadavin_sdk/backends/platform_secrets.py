@@ -12,7 +12,12 @@ from collections.abc import Callable, Iterable
 from pydantic import BaseModel
 
 from hadavin_sdk.actions.secrets import SecretProvider
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, shown_name
+
+
+def _names(names: Iterable[str]) -> str:
+    """Secret NAMES (never values) for an error text, each through `shown_name`."""
+    return ", ".join(shown_name(n) for n in sorted(names))
 
 
 def secret_names(settings: BaseModel) -> set[str]:
@@ -26,7 +31,7 @@ def bound(provider: SecretProvider, settings: BaseModel, label: str) -> Callable
     def resolve(name: str) -> str:
         if name not in allowed:
             raise ConfigError(
-                f"{label}: may read only the secrets named in its own settings, not {name!r}"
+                f"{label}: may read only the secrets named in its own settings, not {shown_name(name)}"
             )
         return provider.get(name)
 
@@ -46,18 +51,20 @@ def check(
     tools = tool_names or set()
     if shared := backend & tools:
         raise ConfigError(
-            f"secret names used by both a backend and a read tool: {sorted(shared)}; "
+            f"secret names used by both a backend and a read tool: {_names(shared)}; "
             "give the tool its own secret"
         )
     platform = backend | tools
     if overlap := platform & executor_names:
         raise ConfigError(
-            f"secret names used by both a backend and an action executor: {sorted(overlap)}; "
+            f"secret names used by both a backend and an action executor: {_names(overlap)}; "
             "give the backend its own secret"
         )
     for name in sorted(platform | executor_names):
         # Any provider failure is a start-up failure; the value is never shown.
         try:
             provider.get(name)
-        except Exception as exc:
-            raise ConfigError(f"secret {name!r} cannot be read at start-up") from exc
+        except Exception as exc:  # noqa: BLE001 - any provider failure stops start-up; the type is all that is kept
+            raise ConfigError(
+                f"secret {shown_name(name)} cannot be read at start-up ({type(exc).__name__})"
+            ) from None

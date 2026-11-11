@@ -374,12 +374,12 @@ def _tls_context(
     )
     if not pem or not pem.strip():
         # A CA that was asked for and is empty must not fall back to the system CAs.
-        raise ConfigError(f"the CA {ca_file or ca_secret_name!r} is empty")
+        raise ConfigError(f"the CA {shown_name(str(ca_file or ca_secret_name))} is empty")
     try:
         return ssl.create_default_context(cadata=pem)
     except ssl.SSLError:
         raise ConfigError(
-            f"the CA {ca_file or ca_secret_name!r} holds no valid PEM certificate"
+            f"the CA {shown_name(str(ca_file or ca_secret_name))} holds no valid PEM certificate"
         ) from None
 
 
@@ -476,9 +476,9 @@ def _unprobed_tools(cfg: Config, reg: Registry) -> list[str]:
             ):
                 continue
             out.append(
-                f"tool {t.name}: reads a source or holds a credential that no probe vouches for: map it to a "
+                f"tool {shown_name(t.name)}: reads a source or holds a credential that no probe vouches for: map it to a "
                 f"configured source with options.source (using that source's token secret) or attest it with "
-                f"scope_inventory 'tool:{t.name}' (design 6.6)"
+                f"scope_inventory 'tool:{shown_name(t.name)}' (design 6.6)"
             )
     return sorted(set(out))
 

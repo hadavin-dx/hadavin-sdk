@@ -188,7 +188,7 @@ def _yaml(path) -> object:
         return load_yaml(path.read_text(encoding="utf-8"))
     except ConfigError:
         raise
-    except (ValueError, OSError) as exc:
+    except (ValueError, TypeError, OSError) as exc:
         raise ConfigError(config_error_text(exc)) from None
 
 
@@ -239,7 +239,9 @@ def load_registry(config: Config) -> Registry:
         raise
     except (ValidationError, ValueError, TypeError, yaml.YAMLError) as exc:
         raise ConfigError(config_error_text(exc)) from None
-    problems = _cross_check(config, agents, chains, contracts)
+    problems = _cross_check(config, agents, chains, contracts) + _principal_problems(
+        principals, chains, contracts
+    )
     if problems:
         raise ConfigError("; ".join(problems))
     tools = _load_tools(config, agents, contracts)
@@ -258,11 +260,9 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
     problems: list[str] = []
     found: dict[str, dict[str, ToolSpec]] = {}
     if folder.is_dir():
-        problems += [
-            f"tools/{shown_name(p.stem)}.yaml: no agent {shown_name(p.stem)}"
-            for p in sorted(folder.glob("*.yaml"))
-            if p.stem not in agents
-        ]
+        orphans = [p for p in folder.glob("*.yaml") if p.stem not in agents]
+        if orphans:  # a file name is a value from the folder: counted, never quoted
+            problems.append(f"tools/: {len(orphans)} manifest file(s) match no agent id")
     read_ops: set[str] | None = None
     for agent_id, agent in agents.items():
         path = folder / f"{agent_id}.yaml"
@@ -273,6 +273,13 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
         if specs and read_ops is None:
             read_ops = read_operations(config.tool_modules, config.tool_module_hashes)
         found[agent_id] = {}
+        # With a manifest the manifest is the whole list of tools: an entry of `tools_allowed` with no tool in it would
+        # silently never be offered (a typo that narrows the agent). Named by position, never quoted.
+        problems += [
+            f"{where}: tools_allowed entry {i} has no tool in this manifest"
+            for i, allowed in enumerate(agent.tools_allowed)
+            if allowed not in {sp.name for sp in specs}
+        ]
         problems += [  # grounding checks declared inputs only, so a tooled agent's contracts must be closed
             f"{where}: action {shown_name(action)} must set `additionalProperties: false` on its input_schema "
             "(an agent with tools cannot have undeclared inputs)"
@@ -315,14 +322,14 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
                     f"{where}: tool {shown_name(spec.name)} has the id of an action contract"
                 )
             problems += [
-                f"{where}: tool {shown_name(spec.name)}: operation {shown_name(op)} is not on the read list of tool_modules"
-                for op in spec.operations
+                f"{where}: tool {shown_name(spec.name)}: operations entry {i} is not on the read list of tool_modules"
+                for i, op in enumerate(spec.operations)
                 if op not in (read_ops or set())
             ]
             problems += [  # a POST read (a review, a query body) is named in the config, not only in tool code
-                f"{where}: tool {shown_name(spec.name)}: operation {shown_name(op)} is bound to {read_ops[op][0]}; "
+                f"{where}: tool {shown_name(spec.name)}: operations entry {i} is bound to {read_ops[op][0]}; "
                 "list it in evidence.post_read_operations to allow it"
-                for op in spec.operations
+                for i, op in enumerate(spec.operations)
                 if read_ops
                 and op in read_ops
                 and read_ops[op][0] != "GET"
@@ -357,14 +364,42 @@ def _module_pin_problems(config: Config) -> list[str]:
     return out
 
 
+def _principal_problems(principals: dict, chains: dict, contracts: dict) -> list[str]:
+    """Every reference in `principals.yaml` and `chains.yaml` must name something that exists. Each of these would
+    otherwise be a typo that no one sees at load: a right that names no action (that principal is refused, silently),
+    an `approver_of` that names no chain, an approver who is not a person (nobody could approve, or a service
+    identity would be one). A value is named by its position, never quoted."""
+    out = []
+    for p in principals.values():
+        name = shown_name(p.id)
+        out += [
+            f"principal {name}: rights entry {i} names no action"
+            for i, right in enumerate(p.rights)
+            if right not in contracts
+        ]
+        out += [
+            f"principal {name}: approver_of entry {i} names no chain"
+            for i, chain in enumerate(p.approver_of)
+            if chain not in chains
+        ]
+    for c in chains.values():
+        for i, step in enumerate(c.steps):
+            out += [
+                f"chain {shown_name(c.id)} step {i}: approver_ids entry {j} is not a person in principals.yaml"
+                for j, who in enumerate(step.approver_ids)
+                if who not in principals or principals[who].kind != "person"
+            ]
+    return out
+
+
 def _cross_check(config, agents, chains, contracts) -> list[str]:
     out = []
     for a in agents.values():
         if a.model_route not in config.routes:
-            out.append(f"agent {shown_name(a.id)}: unknown model_route {shown_name(a.model_route)}")
-        out += [
-            f"agent {shown_name(a.id)}: no contract for {shown_name(x)}"
-            for x in a.scope_allowed
+            out.append(f"agent {shown_name(a.id)}: model_route is not one of the configured routes")
+        out += [  # a value that matched nothing may be a pasted secret: named by its position, never quoted
+            f"agent {shown_name(a.id)}: scope_allowed entry {i} has no contract"
+            for i, x in enumerate(a.scope_allowed)
             if x not in contracts
         ]
         try:
@@ -401,11 +436,11 @@ def _cross_check(config, agents, chains, contracts) -> list[str]:
                         f"action {shown_name(c.id)}: path field {shown_name(field)} needs a pattern in input_schema"
                     )
         if c.chain_id is not None and c.chain_id not in chains:
-            out.append(f"action {shown_name(c.id)}: unknown chain {shown_name(c.chain_id)}")
-        for ref in filter(None, [c.verify_check, c.rollback]):
-            module = ref.split(":", 1)[0]
-            if ":" not in ref or module not in config.check_modules:
-                out.append(f"action {shown_name(c.id)}: {shown_name(ref)} is outside check_modules")
+            out.append(f"action {shown_name(c.id)}: chain_id names no chain")
+        for field_name in ("verify_check", "rollback"):
+            ref = getattr(c, field_name)
+            if ref and (":" not in ref or ref.split(":", 1)[0] not in config.check_modules):
+                out.append(f"action {shown_name(c.id)}: {field_name} is outside check_modules")
         if http is not None and c.target_system not in config.systems:
-            out.append(f"action {shown_name(c.id)}: unknown system {shown_name(c.target_system)}")
+            out.append(f"action {shown_name(c.id)}: target_system names no configured system")
     return out
