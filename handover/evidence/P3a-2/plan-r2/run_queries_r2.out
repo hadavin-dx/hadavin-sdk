@@ -66,3 +66,23 @@ connected as ('q_mig', False)
    ('type', 'r', 'app', False, 'handed', '', 'q_third', False, False, True, None, None, None, 'q_third', False, False, True, 'USAGE', False, 'q_third', True)
    ('type', 'r', 'app', False, 'handed', '', 'q_third', False, False, True, None, None, None, None, False, False, False, 'USAGE', False, 'q_third', True)
    ('type', 'r', 'app', False, 'runs', '', 'q_mig', True, False, True, None, None, None, 'q_mig', False, False, True, 'USAGE', False, 'q_mig', True)
+   ('type', 'r', 'app', False, 'runs', '', 'q_mig', True, False, True, None, None, None, None, False, False, False, 'USAGE', False, 'q_mig', True)
+
+== Q3: 7 rows, 1.2 ms
+   ('a', 'pg_class', 16411, 0, 'q_grp', 'table other.secret', False)
+   ('a', 'pg_class', 16396, 0, 'q_po', 'table app.runs', False)
+   ('a', 'pg_namespace', 16392, 0, 'q_po', 'schema app', False)
+   ('a', 'pg_namespace', 16392, 0, 'q_pu', 'schema app', False)
+   ('a', 'pg_class', 16396, 0, 'q_rt', 'table app.runs', False)
+   ('a', 'pg_default_acl', 16417, 0, 'q_rt', 'default privileges on new relations belonging to role q_mig in schema app', False)
+   ('a', 'pg_namespace', 16392, 0, 'q_rt', 'schema app', False)
+
+== Q4: 1 rows, 0.8 ms
+   ('r', 'app', 'q_mig', True, 'q_rt', True, 'SELECT', False)
+
+== STEP4: 1 rows, 0.7 ms
+   ('app.trg()', 'app', 'trg', '', 'f')
+
+== the old Q1 shape (UNION ALL with depth) on the same ladder, limited to 10 s
+cancelled by the 10 s limit
+10.1 s

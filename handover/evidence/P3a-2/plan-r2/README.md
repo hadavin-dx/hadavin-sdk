@@ -18,3 +18,4 @@ unless it switches role itself; each `.py` prints its own steps. Output files ho
 | mutants | mutclass.py/.out | which mutants of `tests/migrate_mutants.py` at 4d328e3d the ticket's lists miss |
 | x | x-extension-owner.sql/.out | settles rev 1's open conflict: who owns a trusted extension that a plain role with CREATE on the database installs |
 | cost | createdb_cost.py/.out | create plus drop of one database per test case |
+| queries r2 | run_queries_r2.py/.out | the same, after widening Q2's third clause for rule O8 (fresh cluster, deleted after) |
