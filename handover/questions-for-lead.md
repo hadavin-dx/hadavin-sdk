@@ -1581,3 +1581,10 @@ NOT RUN: CI security job on the new head not yet seen. The builder's unpushed ro
 DECISIONS FOR LEAD: none.
 DEFAULT: none.
 NEXT: builder rebases and pushes round 6; then independent evidence plus a fresh redaction review on that head.
+
+## q-P3a2-evidence-history (2026-11-11T02:45Z UTC; IST 08:15): CI `security` job fails on PR89 at 025ec61 because branch core/P3a-2 carries handover/evidence paths
+CHECKED BY ME: `security` failed on hadavin-dx/hadavin-sdk#89 at 025ec61 (job 130281116037). The job's own message: "files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover: the temporary allowlist would hide generic keys in them" (ci.yml lines 213-222 on the PR89 branch). I ran the same git log range locally: 213 paths under handover/evidence/P3a-2 come from two commits on origin/core/P3a-2 (ce3ade7, d41a0c0: PR73 round 9 builder evidence pushed to its own PR branch). PR89's tree has no handover/ path. Every PR whose workflow has this guard fails the same way while core/P3a-2 holds them; the PR89 code did not cause it. SonarCloud, CodeQL passed at 025ec61; `check` and tests-py312 were still running when I read.
+NOT RUN: no CI re-run, no history rewrite, no comment on the PR.
+DECISIONS FOR LEAD: may I rewrite core/P3a-2 (drop the handover/evidence paths from ce3ade7 and d41a0c0, keep the same source tree, force-with-lease pinned to d41a0c0, backup branch first), or will you? Round 10 of PR73 is being pushed on top; I told the builder to push code only and keep evidence on core/cloud-handover.
+DEFAULT: the cloud does NOT force-push; PR73 round 10 code is pushed on d41a0c0 as it is; the evidence stays on core/cloud-handover. The security job stays red on all PRs until you say yes or rewrite.
+NEXT: wait for the PR89 runner and reviewers; confirm `check` and tests-py312 on 025ec61.
