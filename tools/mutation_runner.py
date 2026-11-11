@@ -78,7 +78,7 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
      full only with ``-vv`` without ``-q`` and with ``-o verbosity_assertions=2``; the runner keeps ``-q`` and adds no such option). So the longest
      start of a hidden text that ends right before ``...`` and the longest end that starts right after it, of ``EDGE_MIN`` (2) characters or more
      (and shorter than the hidden text), are hidden; a ``...`` is the three dots or the one character U+2026. Cost: over-masking, at most two pieces (a start and an end)
-     for each ``...`` and each hidden text, so up to 2 x ``MAX_FRAGMENT_HITS`` x (number of hidden texts) pieces, held down by ``MAX_FRAGMENT_WORK`` below. The work for one ``...`` and one hidden text is
+     for each ``...`` and each hidden text, so up to 2 x ``MAX_FRAGMENT_HITS`` x (number of hidden texts) pieces. ``MAX_FRAGMENT_WORK`` below counts PAIRS (one ``...`` and one hidden text), not characters: the most it allows is 50,000 pairs, each one pass over up to 2 x 1,999 characters, so about 2 x 10^8 character steps in the worst case (300 hidden texts of 2,000 characters on a line with 166 ``...``): slow, never a leak. The work for one ``...`` and one hidden text is
      linear in the length of that text (a prefix table of the text is built once per line, then one pass over at most ``len - 1`` characters on each side of the ``...``). All spans are found in the original text and cut out at once, each run of hidden characters as one
      ``MASK``. A text with more than ``MAX_FRAGMENT_HITS`` ``...`` is replaced as a whole, on purpose: no honest run writes that many, and the other
      choice (hide the first 1,000 and only match the rest as written) would leave the head or tail beside the 1,001st ``...`` readable.
@@ -462,8 +462,8 @@ def _address_parts(value: str) -> str:
     and every other pair are never read. Everything else gives ``"unparsed"``, so a value that holds a password where this reading could be fooled
     shares one name with all such values (so whether a value is read can depend on the password's shape: a password with ``@``, ``/``, ``?``, ``#`` or
     a space in a URL gives ``"unparsed"``, a plain one gives the address; the hashed text itself never holds a password text). THIS IS A MATCH ON SPELLING, NOT ON THE DATABASE: ``localhost`` and ``127.0.0.1``, a port written or left
-    out, ``host=`` and ``hostaddr=``, and a ``?host=`` in a URL query give different names for one database, and two runners on those are NOT
-    refused. A value with a password word in a key=value address is ``"unparsed"`` too (a password with a space could pose as an option)."""
+    out, and ``host=`` and ``hostaddr=`` give different names for one database, and two runners on those are NOT
+    refused. A URL with a query (``?host=`` included) is ``"unparsed"``, and so is a value with a password word in a key=value address (a password with a space could pose as an option)."""
     found: dict[str, str] = {}
     url = _URL_ADDRESS.fullmatch(value)
     if url:
@@ -582,7 +582,7 @@ def _masked(text: str, secrets: Sequence[str]) -> str:
     to ``head...tail`` is masked by its pieces beside ``...`` too (see ``_fragment_spans``). Every span is found in the ORIGINAL text and then
     all are cut out at once, so a short secret that sits inside a longer one cannot break the match of the longer one. More than
     ``MAX_FRAGMENT_HITS`` ``...`` replace the whole text (no honest line has that many; hiding only the first ``MAX_FRAGMENT_HITS`` would leave a
-    piece beside a later ``...`` readable). Cost: a line is scanned for each secret once, and each ``...`` costs one pass per secret over at most twice the length of that secret (``_fragment_spans``); (``...`` x secrets) above ``MAX_FRAGMENT_WORK`` replaces the whole line. A secret of one or two characters hides every such text in the line (garbling is the price of never leaving a short secret readable)."""
+    piece beside a later ``...`` readable). Cost: a line is scanned for each secret once, and each ``...`` costs one pass per secret over at most twice the length of that secret (``_fragment_spans``); (``...`` x secrets) above ``MAX_FRAGMENT_WORK`` (a count of pairs, not of characters; worst case about 2 x 10^8 character steps) replaces the whole line. A secret of one or two characters hides every such text in the line (garbling is the price of never leaving a short secret readable)."""
     chosen = tuple(v for v in secrets if v)
     if not chosen:
         return text
@@ -688,7 +688,7 @@ def _one_run_per_database(values: Sequence[str]) -> Iterator[None]:
 
     The file name holds the first 16 hex digits of a SHA-256 of the host, host address, port and database name that ``_address_parts`` reads from the values by a strict
     grammar (a password is never captured or hashed: only the four address parts are cut out of the value). It is a best-effort match on SPELLING: one database written two ways
-    (``localhost`` and ``127.0.0.1``, a port written or left out, ``host=`` and ``hostaddr=``, a ``?host=`` in a URL query) gets two names and a second
+    (``localhost`` and ``127.0.0.1``, a port written or left out, ``host=`` and ``hostaddr=``) gets two names and a second
     runner on the other spelling is NOT refused. Values outside the grammar (anything with a password word in a key=value address, a URL with a query,
     a second ``/``, or an ``@``, ``/``, ``?``, ``#`` or space in the password) share the name ``unparsed``, so such a second run is refused even on another database. A lock
     file that cannot be opened (another user's file) or locked for a reason other than "held by another run" is a ``RuntimeError`` with its own message."""
@@ -939,7 +939,7 @@ def run_mutants(
     pass_env: Sequence[str] = (),
     forbid_skips: bool = False,
 ) -> list[tuple[str, Verdict, str, bool]]:
-    """(name, verdict, failing test id, good). Raises ``RuntimeError`` if the unmutated copy fails or times out; a mutant whose temp copy cannot be built (after ``SETUP_TRIES`` tries) is ``(name, Verdict.ERROR, "SETUP FAILED: <error class>", False)``; a mutant run that exceeds
+    """(name, verdict, failing test id, good). Raises ``RuntimeError`` when: the unmutated copy fails or times out; the baseline run was reaped by someone else (its exit status is unknown); the baseline skipped a test or left no readable JUnit file (``forbid_skips``); another runner holds the lock for the same database address (``canary``); the lock file is not a regular file of the current user with a mode of 0600 or less, or cannot be opened or locked; a copy of the tree cannot be rebuilt for the canary run; or the canary run fails after a mutant (``CanaryFailed``, a subclass, with the rows so far in ``rows``); a call made while another is under way in the same thread is a ``RuntimeError`` too (below). A mutant whose temp copy cannot be built (after ``SETUP_TRIES`` tries) is ``(name, Verdict.ERROR, "SETUP FAILED: <error class>", False)``; a mutant run that exceeds
     ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. The unmutated baseline run gets ``baseline_timeout`` (default: ``timeout``; 0 is a real, immediate timeout and not "unset"),
     so a test can use a short mutant timeout without failing a slow baseline. ``on_result`` is called with each result as soon as that mutant
     finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
@@ -1002,7 +1002,7 @@ def _refuse_junctions(root: Path, rel: str) -> None:
 
 def _junit_text(junit: Path) -> str:
     """The text of a JUnit file, or ``""`` when there is none. Only a regular file is read (``lstat``, so a symbolic link is not followed; a FIFO
-    would block the read for ever): anything else, or a file over ``MAX_JUNIT_CHARS``, is a ``ValueError``."""
+    would block the read for ever): anything else, or a file of more than ``MAX_JUNIT_CHARS`` bytes (``st_size`` counts bytes; testing.mutation counts characters, and a file has at least as many bytes as characters, so this ceiling is the stricter), is a ``ValueError``."""
     try:
         info = junit.lstat()
     except FileNotFoundError:
@@ -1157,11 +1157,14 @@ def _run_mutants(
             on_result(row)
 
     held = contextlib.ExitStack()
-    if canary:  # before any temp folder: a second runner on the same database is refused
-        held.enter_context(_one_run_per_database([environ[n] for n in env_names if n in environ]))
-    # the try starts right after the first temp folder exists: a refusal (a path through a link out of the tree, a missing ``src``)
-    # or a signal at any later point leaves no temp folder behind
+    # the try starts before the lock is entered: a ``SystemExit`` right after the lock is taken (a signal, a caller) still reaches
+    # ``held.close()`` in the ``finally``, so the lock is never left held until the garbage collector runs. A refusal (a path through
+    # a link out of the tree, a missing ``src``) or a signal at any later point leaves no temp folder behind either
     try:
+        if canary:  # before any temp folder: a second runner on the same database is refused
+            held.enter_context(
+                _one_run_per_database([environ[n] for n in env_names if n in environ])
+            )
         with _signals_held():
             made.append(Path(tempfile.mkdtemp(prefix="mutants_")))
         tmp = made[0]

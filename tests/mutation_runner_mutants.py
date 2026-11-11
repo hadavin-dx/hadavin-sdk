@@ -14,7 +14,7 @@ Good means KILLED, or CRASH with the declared exception class (three mutants dec
 compared with the leading class name of the failing line). The script exits 1 if any mutant is not good, and 2 if the filter
 selects no mutant at all (a typo in the filter must not look like a pass).
 
-Which mutants need what on Windows (this list is run on Linux and on Windows; the Windows run is made by whoever has a Windows machine):
+Which mutants need what on Windows (only Linux is run in CI; nobody has run this list on Windows, so the notes below are written from the skip markers of the killers, not from a Windows run):
 - POSIX only (the killer skips on Windows, so the mutant SURVIVES there): "a finished run's background process lives on"
   (``taskkill /T`` walks parent links and the parent of a finished run is gone), "a termination signal does not clean up",
   "a signal during the cleanup cuts it short", "a second signal cuts the cleanup of the first short", "a signal while the child
@@ -31,10 +31,10 @@ Which mutants need what on Windows (this list is run on Linux and on Windows; th
   FILE link; they skip there, and only there (error 1314), when the account lacks the privilege, and a skipped killer makes the
   mutant SURVIVE in that run). The folder-link case (a junction on Windows, no privilege needed) is a separate test with no mutant:
   on Linux ``os.walk`` never enters a symlinked folder, so that test cannot tell the mutant from the original there.
-- Every other killer runs on both systems (the lists above are written by hand from the skip markers of the killers; the CI Linux run is the one that is checked) (the tree-kill killers use ``taskkill /T`` on Windows; the Windows branch after a normal
-  exit is run on any system with the Windows flag faked).
+- Every other killer is written to run on both systems. The lists above are written by hand from the skip markers of the killers, and only the Linux run in CI checks them.
+  The tree-kill killers use ``taskkill /T`` on Windows; the Windows branch after a normal exit is run on any system with the Windows flag faked.
 
-Keyword tests (``tests/test_mutation_runner_keywords.py``): 154 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
+Keyword tests (``tests/test_mutation_runner_keywords.py``): 155 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
 fixture errors, the snapshot of the environment, the lock name). Many tests of that file have no mutant of their own, and this header does NOT
 list them all: a test either guards the test code itself (the guard test of the database address), an old behaviour that no replacement
 can bring back (the check that the old text is gone), a place that one replacement cannot move ("a missing conftest is noticed only at the
@@ -460,6 +460,7 @@ M = [
     kmutant('runner: a password is decoded only twice', MR, '            len(password) + 1\n', '            2\n', 'test_a_password_that_was_encoded_twice_or_more_is_decoded_until_it_stops_changing', 'a password encoded three times was not decoded to the end'),
     kmutant('runner: only the first decoding step is checked for odd characters', MR, '            _refuse_odd(name, what, decoded)\n', '            if decoded == decode(password):\n                _refuse_odd(name, what, decoded)\n', 'test_a_password_that_was_encoded_twice_or_more_is_decoded_until_it_stops_changing', 'a password that decodes to a quote mark at the third depth was not refused'),
     kmutant('runner: a password word inside a longer word is not read', MR, 'r"(?is)(?:password|passwd|pwd)', 'r"(?is)(?<![A-Za-z0-9])(?:password|passwd|pwd)', 'test_a_password_word_inside_a_longer_word_and_in_any_case_is_read', 'the password after sslpassword= was not a secret'),
+    kmutant('runner: the lock is entered before the try, so an exit right after it leaves the lock held', MR, '    try:\n        if canary:  # before any temp folder: a second runner on the same database is refused\n            held.enter_context(\n                _one_run_per_database([environ[n] for n in env_names if n in environ])\n            )\n        with _signals_held():', '    if canary:  # before any temp folder: a second runner on the same database is refused\n        held.enter_context(\n            _one_run_per_database([environ[n] for n in env_names if n in environ])\n        )\n    try:\n        with _signals_held():', 'test_an_exit_right_after_the_lock_is_taken_still_gives_the_lock_back', 'left the lock held'),
     kmutant('runner: the lock file name depends on the password', MR, 'sorted(_address_parts(v) for v in values)', 'sorted(values)', 'test_the_lock_file_name_does_not_depend_on_the_password', 'two addresses that differ only in the password got two lock file names'),
     kmutant('runner: the lock file name ignores the port of a URL', MR, '"port": url.group(2) or "",', '"port": "",', 'test_the_lock_file_name_does_not_depend_on_the_password', 'two addresses with another port got one lock file name'),
     kmutant('runner: the lock file name ignores the database of a URL', MR, '"dbname": url.group(3)}', '"dbname": ""}', 'test_the_lock_file_name_does_not_depend_on_the_password', 'two addresses with another database got one lock file name'),

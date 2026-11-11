@@ -756,44 +756,6 @@ def test_the_fragment_scan_agrees_with_the_plain_definition_on_repeating_secrets
     assert non_empty >= 200, f"only {non_empty} of 400 repeating cases had any span"
 
 
-class _CountingText(str):
-    """A text that counts its own ``find`` and ``rfind`` calls and stops the scan when there are more than ``limit``: a scan that looks at every
-    candidate start of a head or tail makes thousands of them for one ``...``."""
-
-    calls = 0
-    limit = 0
-
-    def _count(self) -> None:
-        type(self).calls += 1
-        if type(self).calls > type(self).limit:
-            raise AssertionError(
-                "the scan makes a search per candidate start, not a pass per ellipsis"
-            )
-
-    def find(self, *args):
-        self._count()
-        return super().find(*args)
-
-    def rfind(self, *args):
-        self._count()
-        return super().rfind(*args)
-
-
-def test_one_ellipsis_costs_no_search_per_candidate_start():
-    secret = "a" * 1999 + "b"
-    line = (
-        "a" * 1998 + "c" + "..."
-    ) * 1000  # every start of a head matches 1998 characters and fails on the last
-    hits = list(mr._DOTS.finditer(line))
-    assert len(hits) == 1000, "the test line does not hold 1,000 ellipses"
-    _CountingText.calls, _CountingText.limit = 0, 4 * len(hits)
-    spans = mr._fragment_spans(_CountingText(line), secret, hits)
-    assert spans == [], (
-        "a head or tail was found where the text before and after each ellipsis ends in another letter"
-    )
-    assert _CountingText.calls <= _CountingText.limit, "the scan made too many searches"
-
-
 def test_the_work_of_one_ellipsis_is_linear_in_the_length_of_the_secret():
     """Counted, not timed: the executed lines of the two passes (``_prefix_table``, ``_longest_overlap``) stay within a fixed multiple of ``hits x len(secret)``."""
     secret = "a" * 1999 + "b"
@@ -1011,6 +973,33 @@ def test_a_second_runner_with_the_same_passed_value_is_refused(tmp_path, monkeyp
     assert [f.name for f in tmp_path.glob("hadavin_mutation_*.lock")] == [_lock_name("unparsed")], (
         "the lock file was not named by the first 16 hex digits of the SHA-256 of the address parts (and by nothing else)"
     )
+
+
+def test_an_exit_right_after_the_lock_is_taken_still_gives_the_lock_back(tmp_path, monkeypatch):
+    value = str(tmp_path / "state.flag")
+    monkeypatch.setenv(DSN_NAME, value)
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    entered = contextlib.ExitStack.enter_context
+
+    def enter_then_exit(self, manager):
+        entered(self, manager)
+        raise SystemExit(7)
+
+    with monkeypatch.context() as patched:
+        patched.setattr(contextlib.ExitStack, "enter_context", enter_then_exit)
+        # ``caught`` keeps the traceback, and with it the frame of the run, alive: a lock that only the garbage collector would give back stays held
+        with pytest.raises(SystemExit) as caught:
+            _run(root, [FLIP], pass_env=(DSN_NAME,))
+    assert caught.value.code == 7, (
+        "the run did not end with the exit that was raised after the lock"
+    )
+    try:
+        rows = _run(root, [FLIP], pass_env=(DSN_NAME,))
+    except RuntimeError:
+        raise AssertionError(
+            "an exit right after the lock was taken left the lock held: the next run was refused"
+        ) from None
+    assert _short(rows) == [("flip", Verdict.KILLED, True)], "the next run gave other rows"
 
 
 def test_the_lock_is_still_held_while_the_mutants_run(tmp_path, monkeypatch):
@@ -1928,6 +1917,10 @@ def test_the_printable_ascii_range_is_accepted_and_the_characters_next_to_it_are
     assert _kv(plain) in secrets, (
         "a value of the plain printable characters (space to tilde) was not a secret"
     )
+    # the password itself starts after the space that follows ``=`` and ends at the next white space (there is none: the others are inside it)
+    assert plain.lstrip(" ") in secrets, (
+        "the password part of the printable range (without the leading space) was not a secret"
+    )
     monkeypatch.setenv(DSN_NAME, "")
     assert mr._secret_values((DSN_NAME,)) == (), "an empty value was refused or made a secret"
     monkeypatch.delenv(DSN_NAME)
@@ -2580,9 +2573,7 @@ def test_a_host_with_a_port_is_not_read_as_a_url_login_and_a_numeric_password_st
     value = "postgresql://db.invalid:5432/app?application_name=caf%C3%A9&x=a@b"
     got = secrets_or_say(value, "a non-ASCII option beside an @ refused the run")
     assert value in got, "the whole value was not a secret"
-    assert all("%C3" not in s_ or s_ == value or s_.startswith("5432/") for s_ in got), (
-        "a text that is only part of an option was decoded"
-    )
+    assert not any("é" in s_ for s_ in got), "a text that is only part of an option was decoded"
     assert "12" + "345" in _secrets_of(_url("svc", "12", "345"), monkeypatch), (
         "a password of digits only was not a secret"
     )
@@ -2856,9 +2847,9 @@ def test_a_one_character_secret_hides_every_such_character_as_the_docstring_says
 
 
 def test_the_no_access_message_is_one_text_for_both_error_codes():
-    assert mr._why_not_opened(errno.EACCES) is mr._why_not_opened(errno.EPERM) or (
-        mr._why_not_opened(errno.EACCES) == mr._why_not_opened(errno.EPERM) == mr._NO_ACCESS
-    ), "the two permission codes have two messages"
+    assert mr._why_not_opened(errno.EACCES) == mr._why_not_opened(errno.EPERM) == mr._NO_ACCESS, (
+        "the two permission codes have two messages, or not the no-access text"
+    )
 
 
 def test_first_lines_given_with_a_stale_entry_is_emptied_at_the_start(tmp_path):

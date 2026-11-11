@@ -1,7 +1,8 @@
 """Meta-tests of the mutant list of the mutation runner: the list names real killers, and every search string is usable.
 
 These tests read ``tests/mutation_runner_mutants.py`` (the mutants) and the files the mutants target. They are NOT in the test
-list the mutants run against (a mutant tree holds only the runner's own test file), so they are checked on the real tree only.
+list the mutants run against (a mutant tree holds the runner's own test file, the keyword test file and the conftest the keyword tests use,
+but not this file), so they are checked on the real tree only.
 Checks: (a) the list is the test placement table and every killer exists, (g) every search string occurs exactly once in the file it
 targets; the script that runs the list exits 2 when its filter selects nothing.
 """
@@ -78,7 +79,7 @@ MOVED = (
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 216
+EXPECTED_MUTANTS = 217
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
