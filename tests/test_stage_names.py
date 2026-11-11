@@ -332,14 +332,15 @@ def test_a_value_that_is_not_a_stage_is_live_for_every_guard(tmp_path):
             assert live, f"{site} treated {bad!r} as not live (an allowlist of live stages)"
 
 
-def _build_refusal(tmp_path, stage, **given):
-    """What `app.build` says when a config whose stage is `stage` (the pilot config, real kinds only; for another stage
-    an unvalidated copy with the stage changed) is built with the keyword arguments `given`. '' when it builds or fails
-    in another way than a refusal."""
+def _build_refusal(tmp_path, stage, edit=None, **given):
+    """What `app.build` says when a config whose stage is `stage` (the pilot config, real kinds only, changed by
+    `edit`; for a stage other than pilot an unvalidated copy with the stage changed) is built with the keyword
+    arguments `given`. '' when it builds. (Past the refusals this config stops at the empty secrets folder, also a ConfigError.)"""
     root = pilot_cfg(tmp_path)
-    (
-        root / "secrets"
-    ).mkdir()  # the mounted-file secrets kind reads nothing until a secret is asked for
+    # the mounted-file secrets kind reads nothing until a secret is asked for
+    (root / "secrets").mkdir()
+    if edit:
+        _edit(root, edit)
     cfg = load_config(root)
     reg = load_registry(cfg)
     copy = cfg.model_copy(update={"environment": stage})
@@ -350,19 +351,46 @@ def _build_refusal(tmp_path, stage, **given):
             app_mod.build(root, ["ito-agent"], **given)
         except ConfigError as exc:
             return str(exc)
-        except Exception:  # noqa: BLE001 - past the refusal: a real backend was asked for something
-            return ""
     return ""
 
 
+class _FalsyChannel(FakeChannel):
+    def __bool__(self) -> bool:
+        return False
+
+
+def _fixed_clock():
+    return None
+
+
 def test_pilot_and_prod_refuse_a_test_object_handed_to_build(tmp_path):
-    """`channel=` (like `secrets=`, `detector=`, `llm=`, `clock=` and `timeout_s=`) hands `build` an object in place of
-    a configured backend. That is for tests: only exactly demo accepts it. Each keyword and each stage has its own
-    test in tests/test_q8a_live_overrides.py; this one needs no database and no conftest fixture."""
-    want = "channel= is for tests; configure backends.channel in pilot and prod"
+    """`secrets=`, `channel=`, `detector=`, `llm=`, `clock=` and `timeout_s=` hand `build` an object in place of a
+    configured part. That is for tests: only exactly demo accepts it, and an object that is falsy counts as given.
+    Each keyword and each stage has its own test in tests/test_q8a_live_overrides.py; this one needs no database and
+    no conftest fixture."""
+    backend = "{0}= is for tests; configure backends.{0} in pilot and prod"
+    other = "{0}= is for tests; it is refused in pilot and prod"
     for n, stage in enumerate(["pilot", "prod", "stag" + "ing", "Demo", "", None]):
         got = _build_refusal(tmp_path / str(n), stage, channel=FakeChannel())
-        assert got == want, f"a live build took a test object ({stage!r}): {got[:80]!r}"
+        assert got == backend.format("channel"), (
+            f"a live build took a test object ({stage!r}): {got[:80]!r}"
+        )
+    six = {
+        "secrets": (FakeSecretProvider({}), backend),
+        "channel": (FakeChannel(), backend),
+        "detector": (object(), backend),
+        "llm": (object(), backend),
+        "clock": (_fixed_clock, other),
+        "timeout_s": (2.5, other),
+    }
+    for name, (value, text) in six.items():
+        got = _build_refusal(tmp_path / name, "pilot", **{name: value})
+        assert got == text.format(name), f"a live build took the keyword {name}=: {got[:80]!r}"
+    falsy = _FalsyChannel()
+    got = _build_refusal(tmp_path / "falsy", "pilot", channel=falsy)
+    assert not falsy and got == backend.format("channel"), (
+        f"a live build took a falsy test object: {got[:80]!r}"
+    )
 
 
 VAULT_KINDS = {
@@ -378,38 +406,57 @@ VAULT_KINDS = {
 
 def test_pilot_and_prod_refuse_a_static_vault_token(tmp_path):
     """The Vault kinds sign in with a static token unless the config says otherwise (`auth: token` is the default).
-    A static token in the environment of a live process is refused, written or left out; demo keeps it."""
+    A pilot or prod BUILD refuses that, written or left out. The config itself loads (the one-off commands that only
+    load it, such as the kill switch, keep working), and demo keeps the token."""
     n = 0
-    for cap, settings in VAULT_KINDS.items():
-        for stage in ("pilot", "prod"):
+    for stage in ("pilot", "prod", "stag" + "ing"):
+        for cap, settings in VAULT_KINDS.items():
             for extra in ({}, {"auth": "token"}):
                 n += 1
-                root = pilot_cfg(tmp_path / str(n), env=stage)
 
-                def use(data, cap=cap, settings=settings, extra=extra, stage=stage):
-                    if (
-                        stage == "prod"
-                    ):  # what prod needs for other reasons, so the token is the only refusal
-                        data["backends"]["anchor"] = ANCHOR | {"retention_ack": True}
-                        data["backends"]["signer"] = KEY_SECRET
+                def use(data, cap=cap, settings=settings, extra=extra):
                     data["backends"][cap] = settings | extra
 
-                _edit(root, use)
                 want = (
                     f"environment {stage}: refused: {cap}: {settings['kind']} auth token "
-                    "(the default; set auth: kubernetes or auth: approle)"
+                    "(the default; set auth: kubernetes (recommended) or auth: approle)"
                 )
-                try:
-                    load_config(root)
-                    got = ""
-                except ConfigError as exc:
-                    got = str(exc)
-                assert want in got, (
-                    f"a static Vault token was accepted ({stage}, {cap}, {extra}): {got[:80]!r}"
+                # _build_refusal loads the config first: a loader that refuses the token fails there
+                got = _build_refusal(tmp_path / str(n), stage, use)
+                assert got == want, (
+                    f"a static Vault token was accepted for {cap} ({stage}, {extra}): {got[:80]!r}"
                 )
     demo = make_cfg(tmp_path / "demo")
     _edit(demo, lambda d: d["backends"].update(secrets=VAULT_KINDS["secrets"]))
     assert load_config(demo).backends.secrets.auth == "token", "demo refused a static Vault token"
+
+
+def test_pilot_and_prod_refuse_a_time_handed_to_the_tick(tmp_path):
+    """`run_tick(app, now=...)` sets the time of the approval sweep, the stuck-run check and the evidence purge. That is
+    for tests: only exactly demo accepts it."""
+    from hadavin_sdk.runtime.tick import run_tick
+
+    cfg_dir = make_cfg(tmp_path)
+    qualify(load_registry(load_config(cfg_dir)))
+    app = build(
+        cfg_dir, ["test-agent"], secrets=FakeSecretProvider({"fixture-token": "tok" + "-tick"})
+    )
+    at = app.approvals.clock()
+    try:
+        assert run_tick(app, now=at) == 0
+    except ConfigError as exc:
+        raise AssertionError(f"demo refused a time handed to the tick: {exc}") from None
+    for stage in ("pilot", "prod", "stag" + "ing", "Demo", "", None):
+        app.config = app.config.model_copy(update={"environment": stage})
+        try:
+            run_tick(app, now=at)
+            got = ""
+        except ConfigError as exc:
+            got = str(exc)
+        assert got == "now= is for tests; it is refused in pilot and prod", (
+            f"a live tick took a time handed to it ({stage!r}): {got[:80]!r}"
+        )
+        assert run_tick(app) == 0, "a live tick with no time handed to it must run"
 
 
 ANCHOR = {"kind": "s3_object_lock", "bucket": "b", "region": "r"}

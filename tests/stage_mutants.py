@@ -1,4 +1,4 @@
-"""The mutants of the stage rename (named M1 to M12 with letter variants; there is no M7 or M11), run by the P1m runner (``tools/mutation_runner.py``).
+"""The mutants of the stage rename (named M1 to M13 with letter variants; there is no M7 or M11), run by the P1m runner (``tools/mutation_runner.py``).
 
 They are NOT in ``tests/mutation_runner_mutants.py``: the meta-tests of that file pin its own mutants (the runner's and the
 judge's) by count and by target file. Same runner, same judge, a separate list. Each mutant reverts ONE guard in a temp copy
@@ -27,6 +27,7 @@ TBL = "src/hadavin_sdk/backends/table.py"
 DEFERRED = "src/hadavin_sdk/deferred.py"
 REGISTRY = "src/hadavin_sdk/registry.py"
 APP = "src/hadavin_sdk/app.py"
+TICK = "src/hadavin_sdk/runtime/tick.py"
 REDACT = "src/hadavin_sdk/guard/redact.py"
 OLD = "d" + "ev"  # built from parts: this file is scanned by the class test it helps to check
 RAISE = (
@@ -123,11 +124,29 @@ M = [
     mutant("M9c app.py goes back to an allowlist of live stages", APP, "live = is_live(cfg.environment)",
         'live = cfg.environment in ("pilot", "prod")',
         "test_a_value_that_is_not_a_stage_is_live_for_every_guard", "app treated"),
-    mutant("M12a a live build takes a test object (app.py: the override refusal is switched off)", APP, "if live and given:", "if False:",
+    mutant("M12a a live build takes a test object (app.py: the refusal of the six keywords is switched off)", APP, "if live and given:", "if False:",
         "test_pilot_and_prod_refuse_a_test_object_handed_to_build", "a live build took a test object"),
-    mutant("M12b a static Vault token is allowed in pilot and prod (config.py: the rule never matches)", CFG,
-        'getattr(s, "auth", None) == "token"', "False",
+    mutant("M12b a static Vault token is allowed in pilot and prod (app.py: the check never matches)", APP,
+        'isinstance(s, VaultConnection) and s.auth == "token"', "False",
         "test_pilot_and_prod_refuse_a_static_vault_token", "a static Vault token was accepted"),
+    mutant("M12c the six keywords are tested for truth, not for being given (app.py)", APP, "if value is not None\n", "if value\n",
+        "test_pilot_and_prod_refuse_a_test_object_handed_to_build", "a live build took a falsy test object"),
+    mutant("M12d clock dropped from the six keywords (app.py)", APP, '            ("clock", clock),\n', "",
+        "test_pilot_and_prod_refuse_a_test_object_handed_to_build", "a live build took the keyword clock="),
+    mutant("M12e timeout_s dropped from the six keywords (app.py)", APP, '            ("timeout_s", timeout_s),\n', "",
+        "test_pilot_and_prod_refuse_a_test_object_handed_to_build", "a live build took the keyword timeout_s="),
+    mutant("M12f the Vault check is narrowed to the secrets kind (app.py)", APP,
+        "isinstance(s, VaultConnection) and", 'type(s).__name__ == "VaultSettings" and',
+        "test_pilot_and_prod_refuse_a_static_vault_token", "a static Vault token was accepted for signer"),
+    mutant("M12g the Vault check runs in prod only (app.py)", APP, "if live and (static := _static_vault_tokens(b)):",
+        'if cfg.environment == "prod" and (static := _static_vault_tokens(b)):',
+        "test_pilot_and_prod_refuse_a_static_vault_token", "a static Vault token was accepted for secrets (pilot"),
+    mutant("M13a a live tick takes a time handed to it (tick.py: the refusal is switched off)", TICK,
+        "if now is not None and is_live(app.config.environment):", "if False:",
+        "test_pilot_and_prod_refuse_a_time_handed_to_the_tick", "a live tick took a time handed to it"),
+    mutant("M13b the tick refuses a handed time in demo too (tick.py)", TICK,
+        "if now is not None and is_live(app.config.environment):", "if now is not None:",
+        "test_pilot_and_prod_refuse_a_time_handed_to_the_tick", "demo refused a time handed to the tick"),
     mutant("M10a pilot dropped from the redactor's common words", REDACT, '        "pilot",\n', "",
         "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "pilot is swept"),
     mutant("M10b demo dropped from the redactor's common words", REDACT, '        "demo",\n', "",

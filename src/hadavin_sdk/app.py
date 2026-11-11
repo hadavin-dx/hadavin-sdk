@@ -25,6 +25,7 @@ from hadavin_sdk.approvals.requests import summary
 from hadavin_sdk.audit import AuditSink
 from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
+from hadavin_sdk.backends.table import VaultConnection
 from hadavin_sdk.config import Config, ConfigError, confined, load_config
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
@@ -79,14 +80,28 @@ def build(
     `secrets=`, `channel=`, `detector=`, `llm=`, `clock=` and `timeout_s=` are for tests and are accepted in demo
     only: each replaces one configured part with an object the caller hands in (`secrets` replaces the configured
     provider for both the executor and the backends' own secrets). In pilot and prod (any stage that is not exactly
-    demo) a build that is given one of them is refused with a ConfigError, after the `sources=` and `tools=`
-    refusals and before any backend other than secrets is built. An object counts as given when it is not None, so
-    an object that is falsy is refused too. With several given, only the first in the order secrets, channel,
-    detector, llm, clock, timeout_s is named. `hold_run_ids=` stays allowed in pilot and prod: it is a production
-    hook (the caller's list of runs whose evidence the purge must keep), not a test object.
+    demo) a build that is given one of them is refused with a ConfigError. An object counts as given when it is not
+    None, so an object that is falsy is refused too. With several given, only the first in the order secrets,
+    channel, detector, llm, clock, timeout_s is named. `hold_run_ids=` stays allowed in pilot and prod: it is a
+    production hook (the caller's list of runs whose evidence the purge must keep), not a test object. In demo a
+    given `timeout_s=` must be a number greater than 0.
 
-    Limit of this refusal: it stops a test object that reaches a pilot or prod process by ACCIDENT. It does not stop
-    hostile code in the same process, which could replace the table of kinds itself."""
+    Five checks run before that refusal in pilot and prod, in this order, each with its own message: the static
+    Vault token (below), the missing restored-hash key, the missing purge DSN of a Postgres store, `sources=`, and
+    `tools=`. The Vault check runs before any backend is built; the other four and the refusal of the six keywords
+    run after the secrets backend is built and before any other backend.
+
+    Static Vault token: a pilot or prod build refuses a backend whose settings are a Vault sign-in
+    (`backends.table.VaultConnection`: the `vault` secrets kind, the `vault_transit` signer, any kind built on that
+    class) with `auth: token`, written or left out (it is the default). This covers the long-running process only:
+    every start that goes through `build`, which for the command line is `tick`. It does not cover the one-off
+    commands that load the config without `build` (limits stop and reset, audit verify, gate, migrate, replay,
+    score): a person may run those with a short-lived token of their own.
+
+    Limit of these refusals: `build` refuses the six keywords above and `run_tick` refuses its `now=`. Any route
+    that does not pass through them is not covered: constructing App, Runtime or Approvals directly, assigning
+    attributes after build, a kind added to the table. They stop a test object that reaches a pilot or prod process
+    by ACCIDENT, not hostile code in the same process."""
     cfg = load_config(config_dir)
     reg = load_registry(cfg)
     b = cfg.backends
@@ -102,19 +117,22 @@ def build(
         )
         if value is not None
     ]
+    live = is_live(cfg.environment)
+    if live and (static := _static_vault_tokens(b)):
+        # Before any backend is built: the token is never read from the environment of this process.
+        raise ConfigError(f"environment {cfg.environment}: refused: {', '.join(static)}")
     if secrets is None:
         secrets = make("secrets", b.secrets)
-    live = is_live(cfg.environment)
     if live and not cfg.evidence.restored_hash_key_secret_name:
         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
     if live and getattr(b.store, "kind", "") == "postgres" and not b.store.purge_dsn_secret_name:
         # Only the purge role may DELETE evidence; without its DSN the purge fails every tick and the
         # redaction maps (plaintext originals) are kept for ever.
         raise ConfigError("backends.store.purge_dsn_secret_name is required in pilot and prod")
-    if sources and live:
+    if sources is not None and live:
         # A source handed in as an object would replace a configured, probed one; live deployments use Config.sources.
         raise ConfigError("sources= is for tests; configure Config.sources in pilot and prod")
-    if tools and live:
+    if tools is not None and live:
         # Plain callables run with no egress allowlist, operation binding, deadline or schema: they are for replay
         # and tests. A pilot or prod deployment declares its tools in tools/<agent>.yaml.
         raise ConfigError(
@@ -130,7 +148,11 @@ def build(
             else f"configure backends.{name} in pilot and prod"
         )
         raise ConfigError(f"{name}= is for tests; {fix}")
+    if timeout_s is not None and not _positive_number(timeout_s):
+        # 0 would make every executor call fail at once (a socket that never waits); the config field is > 0 too.
+        raise ConfigError("timeout_s= must be greater than 0")
     clock = now if clock is None else clock
+    given_sources = {} if sources is None else dict(sources)
     # Only http contracts hold a client-system secret; pilot and prod have none (http is refused there).
     executor_names = {
         c.executor.secret_name for c in reg.contracts.values() if c.executor.kind == "http"
@@ -158,7 +180,7 @@ def build(
     # Design 6.6: every read source has a passing scope probe or a client-signed inventory; else no start. The
     # configured sources (Config.sources) are probed here, so a deployed cluster is never read unprobed.
     if problems := sources_mod.scope_problems(
-        {**built_sources, **(sources or {})}, cfg.scope_inventory
+        {**built_sources, **given_sources}, cfg.scope_inventory
     ):
         raise ConfigError("; ".join(problems))
     if problems := _unprobed_tools(cfg, reg):
@@ -247,7 +269,7 @@ def build(
         verify=executor.verify if executor else None,
         rollback=executor.rollback if executor else None,
         post_card=post_card,
-        tools=dict(tools or {}),
+        tools={} if tools is None else dict(tools),
         toolbox=toolbox,
         validate_proposal=evidence.make_validator(
             store,
@@ -282,10 +304,29 @@ def build(
         executor,
         approvals,
         runtime,
-        sources={**built_sources, **(sources or {})},
+        sources={**built_sources, **given_sources},
         disabled_sources=disabled_sources,
         purge_store=purge_store,
     )
+
+
+def _static_vault_tokens(backends) -> list[str]:
+    """The backends that sign in to Vault with a static token, one refusal item each. `auth: token` is the default,
+    so a config that leaves `auth` out is found too. The match is by settings type, not by kind name, so a new kind
+    built on `VaultConnection` is covered. `auth: approle` is allowed: its secret id is also read from the
+    environment, so set a short secret id lifetime on the Vault side; this code cannot check that."""
+    return [
+        f"{c}: {s.kind} auth token (the default; set auth: kubernetes (recommended) or auth: approle)"
+        for c, s in backends.entries()
+        if isinstance(s, VaultConnection) and s.auth == "token"
+    ]
+
+
+def _positive_number(value: object) -> bool:
+    """A real number greater than 0 (True and False are not numbers here; not a number and infinity are refused)."""
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return False
+    return 0 < value < float("inf")
 
 
 def _own_secrets(secrets: SecretProvider, spec: tools_mod.ToolSpec) -> Callable[[str], str]:

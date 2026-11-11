@@ -164,8 +164,6 @@ def parse_backends(raw: Any, root: Path) -> Backends:
 
 
 _LOOPBACK = {"127.0.0.1", "localhost", "::1"}
-# The kinds that sign in to Vault or OpenBao (their settings share `auth`, see backends/table.py).
-_VAULT_KINDS = frozenset({"vault", "vault_transit"})
 
 
 def url_allowed(url: str, allow_insecure_loopback: bool) -> bool:
@@ -398,14 +396,6 @@ class Config(_Strict):
                 f"{c}: {s.kind}" for c, s in self.backends.entries() if (c, s.kind) in DEMO_ONLY
             ]
             refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []
-            # A static Vault token would sit in the environment of a live process. `auth: token` is the default,
-            # so a config that leaves `auth` out is refused too. (`approle` stays allowed: its secret id is also
-            # read from the environment, and its lifetime is set on the Vault side, which this code cannot check.)
-            refused += [
-                f"{c}: {s.kind} auth token (the default; set auth: kubernetes or auth: approle)"
-                for c, s in self.backends.entries()
-                if getattr(s, "kind", "") in _VAULT_KINDS and getattr(s, "auth", None) == "token"
-            ]
         refused += _anchor_refusals(self.environment, self.backends)
         if refused:
             raise ValueError(f"environment {self.environment}: refused: {', '.join(refused)}")

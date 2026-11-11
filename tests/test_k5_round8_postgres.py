@@ -15,7 +15,14 @@ from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import tick as tick_mod
 from tests.conftest import qualify
 from tests.contracts.kinds.store_postgres import PURGE_DSN, pg_schema
-from tests.test_k3_pilot_env import FakeChannel, ScriptedLLM, pilot_cfg, plant_test_backends
+from tests.test_k3_pilot_env import (
+    PILOT_KINDS,
+    FakeChannel,
+    ScriptedLLM,
+    asked,
+    pilot_cfg,
+    plant_test_backends,
+)
 
 
 def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path, monkeypatch):
@@ -37,8 +44,14 @@ def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path, monk
                 "restored-key": "r" * 16,
             }
         )
-        plant_test_backends(monkeypatch, secrets=secrets, channel=FakeChannel(), llm=ScriptedLLM())
+        calls = plant_test_backends(
+            monkeypatch, secrets=secrets, channel=FakeChannel(), llm=ScriptedLLM()
+        )
         app = app_mod.build(cfg, ["ito-agent"])
+        assert asked(calls, secrets) == PILOT_KINDS
+        assert [c for c, _, _ in calls].count("store") == 2, (
+            "the purge store is a second connection"
+        )
         assert app.purge_store is not app.store
         with pytest.raises(Exception, match="rivilege|ermission|denied|navailable"):
             app.store.purge_tool_calls(datetime.now(UTC), keep_run_ids=frozenset())

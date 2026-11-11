@@ -33,6 +33,19 @@ AGENT = {
 }
 
 
+# What a build of `pilot_cfg` asks the factory for (capability -> kinds).
+PILOT_KINDS = {
+    "secrets": {"mounted_file"},
+    "signer": {"ed25519_local"},
+    "anchor": {"none"},
+    "store": {"postgres"},
+    "audit": {"chain"},
+    "llm": {"openai_compat"},
+    "detector": {"regex"},
+    "channel": {"slack"},
+}
+
+
 def pilot_cfg(tmp_path: Path, *, env="pilot", agent=None, contract=None, config=None) -> Path:
     """A pilot config with real kinds only (nothing is contacted until `build`)."""
     root = tmp_path / "pilot"
@@ -172,18 +185,39 @@ def _spy(dsn: str, resolved: list[str]) -> FakeSecretProvider:
     return Spy(values)
 
 
-def plant_test_backends(monkeypatch, *, secrets, channel, llm) -> None:
-    """Make the real pilot build path use three test objects, without `build(secrets=, channel=, llm=)` (refused in
-    pilot and prod). `app.make` is wrapped: for the capabilities secrets, channel and llm it returns the test object;
-    every other capability goes to the real factory. The config keeps its real kinds (slack, openai_compat)."""
-    planted = {"secrets": secrets, "channel": channel, "llm": llm}
+def plant_test_backends(monkeypatch, *, module=app_mod, store=None, **objects) -> list[tuple]:
+    """The ONE seam for a test that needs test objects on the real pilot or prod build path, where
+    `build(secrets=, channel=, llm=, ...)` is refused. The factory function `make` of `module` (the app, or the
+    command line) is wrapped: for a capability named in `objects` it returns that object; for the store, when
+    `store` is given, it returns `store()` (a new one per call: the app asks twice when a purge DSN is configured);
+    every other capability goes to the real factory. The config keeps its real kinds.
 
-    def wrapper(capability, settings, *args, **kwargs):
-        if capability in planted:
-            return planted[capability]
-        return factory_mod.make(capability, settings, *args, **kwargs)
+    Returns the list of calls the build made, one `(capability, kind, provider)` per call, where `provider` is the
+    secret provider the build handed on (None for the secrets backend itself), so a test can assert what was asked."""
+    calls: list[tuple] = []
 
-    monkeypatch.setattr(app_mod, "make", wrapper)
+    def wrapper(capability, settings, provider=None, **available):
+        calls.append((capability, settings.kind, provider))
+        if capability in objects:
+            return objects[capability]
+        if capability == "store" and store is not None:
+            return store()
+        return factory_mod.make(capability, settings, provider, **available)
+
+    monkeypatch.setattr(module, "make", wrapper)
+    return calls
+
+
+def asked(calls: list[tuple], provider) -> dict[str, set[str]]:
+    """capability -> the kinds the build asked the factory for; every call after the secrets backend must hand on
+    `provider`."""
+    for capability, kind, handed in calls:
+        if capability != "secrets":
+            assert handed is provider, f"{capability} {kind}: built with another secret provider"
+    out: dict[str, set[str]] = {}
+    for capability, kind, _ in calls:
+        out.setdefault(capability, set()).add(kind)
+    return out
 
 
 def test_k3_pilot_app_has_no_executor(tmp_path, monkeypatch):
@@ -197,11 +231,14 @@ def test_k3_pilot_app_has_no_executor(tmp_path, monkeypatch):
         spy = _spy(dsn, resolved)
 
         channel = FakeChannel()
-        plant_test_backends(
+        calls = plant_test_backends(
             monkeypatch, secrets=spy, channel=channel, llm=ScriptedLLM(reply(PROPOSE), reply())
         )
         # hold_run_ids= is a production hook: a pilot build accepts it
         app = app_mod.build(cfg, ["ito-agent"], hold_run_ids=lambda: frozenset())
+        # the build asked the factory for the configured real kinds, with the one provider
+        assert asked(calls, spy) == PILOT_KINDS
+        assert calls[0] == ("secrets", "mounted_file", None)
         assert app.executor is None
         assert app.runtime.hooks.execute is None and app.runtime.hooks.verify is None
         assert sorted(set(resolved)) == [

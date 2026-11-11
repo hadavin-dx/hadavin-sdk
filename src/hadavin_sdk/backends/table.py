@@ -247,9 +247,10 @@ _TTL = Field(default=300, ge=0)  # seconds a secret value is cached; 0 = no cach
 _PATH = r"^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$"
 
 
-class _VaultConnection(KindSettings):
+class VaultConnection(KindSettings):
     """How to reach and sign in to Vault or OpenBao (the `vault` secrets kind and the `vault_transit`
-    signer)."""
+    signer). `app.build` asks for this type to refuse the static token (`auth: token`) in pilot and prod, so a
+    new kind that signs in to Vault must be built on this class."""
 
     address: str  # https; plain http only to this machine (a local server)
     auth: Literal["token", "approle", "kubernetes"] = "token"
@@ -268,7 +269,7 @@ class _VaultConnection(KindSettings):
         return [self.auth_mount or ""]
 
     @model_validator(mode="after")
-    def _checks(self) -> _VaultConnection:
+    def _checks(self) -> VaultConnection:
         url = urlsplit(self.address)
         if url.scheme != "https" and not (url.scheme == "http" and url.hostname in _LOOPBACK):
             raise ValueError("address must be https (plain http only to this machine)")
@@ -280,7 +281,7 @@ class _VaultConnection(KindSettings):
         return self
 
 
-class VaultSettings(_VaultConnection):
+class VaultSettings(VaultConnection):
     mount: str = Field(default="secret", pattern=_PATH)
     path_prefix: str = Field(default="", pattern=r"^([A-Za-z0-9_.-]+/)*$")  # e.g. "hadavin/acme/"
     field: str = "value"
@@ -290,7 +291,7 @@ class VaultSettings(_VaultConnection):
         return [self.auth_mount or "", self.mount, self.path_prefix]
 
 
-class VaultTransitSettings(_VaultConnection, _SignerSettings):
+class VaultTransitSettings(VaultConnection, _SignerSettings):
     """An `ed25519` Transit key, pinned to one version: checkpoints signed before a rotation must still
     verify with the key that signed them."""
 

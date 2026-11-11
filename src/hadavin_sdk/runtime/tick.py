@@ -26,9 +26,11 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
+from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.models import AuditEvent, RunState, TickState
 from hadavin_sdk.runtime.runs import IllegalTransition, advance
+from hadavin_sdk.stages import is_live
 from hadavin_sdk.store.protocol import StaleState, is_connectivity_error
 
 if TYPE_CHECKING:
@@ -334,8 +336,14 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
 
 def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None = None) -> int:
     """One tick. Returns the exit code: 0 ok, 1 a step failed, 4 the store is unreachable, 2 the store answers but
-    is not ready (STORE_NOT_READY). A config that does not load is the caller's, before this runs."""
-    ctx = TickContext(app, now or app.approvals.clock())
+    is not ready (STORE_NOT_READY). A config that does not load is the caller's, before this runs.
+
+    `now=` is for tests: it sets the time every step works with (the approval sweep, the stuck-run check, the
+    evidence purge), so a time in the future would delete evidence early. In pilot and prod (any stage that is not
+    exactly demo) a tick that is given one is refused with a ConfigError, and the time comes from the app's clock."""
+    if now is not None and is_live(app.config.environment):
+        raise ConfigError("now= is for tests; it is refused in pilot and prod")
+    ctx = TickContext(app, app.approvals.clock() if now is None else now)
     try:
         app.store.get_tick_state(_PROBE)  # the store answers, or nothing runs
     except Exception as exc:  # noqa: BLE001 - any store failure: change nothing
