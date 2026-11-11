@@ -64,6 +64,11 @@ from tests.test_k3_pilot_env import (
     plant_test_backends,
 )
 
+# What a context built with a given time says outside demo (a copy made by dataclasses.replace says the same).
+COPY_REFUSAL = (
+    "now= is for tests; it is refused in pilot and prod. A context is not copied by replace() "
+    "(the copy would carry a given time); build a new TickContext(app)"
+)
 NAMES = ("secrets", "channel", "detector", "llm", "clock", "timeout_s")
 NOT_A_STAGE = ["stag" + "ing", "Demo", "demo ", "", None]
 DEMO_SECRETS = {"fixture-token": "tok" + "-q8a"}
@@ -647,13 +652,9 @@ def test_a_tick_context_refuses_a_time_handed_to_it_outside_demo(demo_dir, monke
     app = _demo_app_at(demo_dir, where)
     reached = _purge_spy(app, monkeypatch)
     ahead = datetime.now(UTC) + FAR_AHEAD
-    with pytest.raises(
-        ConfigError, match=exactly("now= is for tests; it is refused in pilot and prod")
-    ):
+    with pytest.raises(ConfigError, match=exactly(COPY_REFUSAL)):
         tick_mod.purge_evidence(tick_mod.TickContext(app, ahead))
-    with pytest.raises(
-        ConfigError, match=exactly("now= is for tests; it is refused in pilot and prod")
-    ):
+    with pytest.raises(ConfigError, match=exactly(COPY_REFUSAL)):
         tick_mod.TickContext(app, now=datetime.now(UTC))
     assert reached == [], "a purge reached the store with a time handed in by hand"
 
@@ -759,8 +760,11 @@ def test_the_time_of_a_tick_context_cannot_be_changed_afterwards(demo_dir):
     ctx = tick_mod.TickContext(app)
     with pytest.raises(dataclasses.FrozenInstanceError):
         ctx.now = datetime.now(UTC) + FAR_AHEAD
-    with pytest.raises(ConfigError, match="now= is for tests"):
+    with pytest.raises(ConfigError, match=exactly(COPY_REFUSAL)):
         dataclasses.replace(ctx, now=datetime.now(UTC) + FAR_AHEAD)
+    with pytest.raises(ConfigError, match=exactly(COPY_REFUSAL)):
+        dataclasses.replace(ctx, results={})  # `now` is never None once the context exists
+    assert "replace()" in (tick_mod.TickContext.__doc__ or "")
 
 
 @pytest.mark.parametrize("where", ["pilot", "prod"])
@@ -1014,3 +1018,27 @@ def test_the_kill_switch_command_is_not_refused_for_a_static_vault_token(
     # the long-running process with the same config is refused
     with pytest.raises(ConfigError, match=exactly(vault_message(where, "secrets", "vault"))):
         app_mod.build(root, ["ito-agent"])
+
+
+@pytest.mark.parametrize("where", ["pilot", "prod"])
+def test_run_tick_takes_one_copy_of_the_step_list_for_the_checks_and_the_loop(
+    demo_dir, monkeypatch, where
+):
+    """A list edited in place between the checks and the loop must change nothing: the loop runs the list the
+    checks saw. Here the purge step is cut out of STEPS by the first read of the app's store (after the checks)."""
+    app = _demo_app_at(demo_dir, where)
+    ran: list[str] = []
+    steps = [TickStep(s.name, 0, lambda _c, n=s.name: ran.append(n)) for s in STEPS]
+    monkeypatch.setattr(tick_mod, "STEPS", steps)
+    original = app.store.get_tick_state
+
+    def edit_after_the_checks(name):
+        steps[:] = steps[:1]  # the checks have passed; now the list is cut in place
+        return original(name)
+
+    app.store.get_tick_state = edit_after_the_checks
+    assert run_tick(app) == 0
+    assert ran == STEP_FUNCTIONS, f"the loop ran a list other than the one that was checked: {ran}"
+    # the checks themselves read a copy too: a list that is complete when read is not refused later
+    assert tick_mod._missing_built_in_steps(tuple(steps)) == STEP_FUNCTIONS[1:]
+    assert tick_mod._repeated_step_names(steps + steps) == [steps[0].name]

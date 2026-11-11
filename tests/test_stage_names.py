@@ -621,7 +621,7 @@ def test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick(tmp_path
     for stage in ("pilot", "prod"):
         app.config = app.config.model_copy(update={"environment": stage})
         got = by_hand(lambda: tick_mod.TickContext(app, ahead))
-        assert got == no_time and purged == [], (
+        assert got == tick_mod.NO_GIVEN_TIME_COPY and got.startswith(no_time) and purged == [], (
             f"a live tick step took a time handed to its context ({stage!r}): {got[:60]!r}, {purged}"
         )
         got = by_hand(lambda: SimpleNamespace(app=app, now=ahead, results={}))
@@ -650,7 +650,7 @@ def test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick(tmp_path
     for stage in ("stag" + "ing", "Demo", "", None):
         app.config = app.config.model_copy(update={"environment": stage})
         got = by_hand(lambda: tick_mod.TickContext(app, ahead))
-        assert got == no_time and purged == [], (
+        assert got == tick_mod.NO_GIVEN_TIME_COPY and got.startswith(no_time) and purged == [], (
             f"the tick context treated {stage!r} as not live (an allowlist of live stages): {got[:60]!r}"
         )
         got = by_hand(lambda: SimpleNamespace(app=app, now=ahead, results={}))
@@ -1085,3 +1085,218 @@ def test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_an
     assert _sweep("<SECRET_1>", "demo") is not None, (
         "a secret that reads 'demo' must still be swept"
     )
+
+
+# --- a configuration error never shows the value that was refused (Q8a-1 fix batch 5, item 1) ------------------------
+# The class: error text built from a refused value (a login inside base_url, a line of YAML, a duplicate key, the text
+# of a wrapped exception, the cause printed under the error). The shared choke point is `config.config_error_text`
+# plus `from None` at every site that wraps. Made-up credentials are built from parts.
+PW = "Zq" + "9x" + "-pw-" + "4417"
+USER = "svc" + "-user"
+LOGIN_URL = "https://" + USER + ":" + PW + "@records.example.invalid/api"
+
+
+def _everything_shown(exc: BaseException) -> str:
+    """All the text a person could see for this error: its message, its repr, the cause and the whole traceback
+    text with the chain (what the command line prints)."""
+    import traceback
+
+    return "\n".join(
+        [
+            str(exc),
+            repr(exc),
+            str(exc.__cause__),
+            "".join(traceback.format_exception(exc)),
+        ]
+    )
+
+
+def _refused(cfg_dir, *, edit=None, text=None, extra_file=None):
+    """Load the config (and the registry) and return the ConfigError it raises."""
+    if edit is not None:
+        _edit(cfg_dir, edit)
+    if text is not None:
+        path = cfg_dir / "config.yaml"
+        path.write_text(path.read_text(encoding="utf-8") + text, encoding="utf-8")
+    if extra_file is not None:
+        name, content = extra_file
+        (cfg_dir / name).write_text(content, encoding="utf-8")
+    with pytest.raises(ConfigError) as err:
+        load_registry(load_config(cfg_dir))
+    return err.value
+
+
+def _assert_value_free(exc: ConfigError, *secrets: str) -> None:
+    shown = _everything_shown(exc)
+    for secret in secrets:
+        assert secret not in shown, f"the error shows the refused value: {shown[:300]!r}"
+    assert exc.__cause__ is None, "the cause (whose text may hold the value) is still attached"
+    assert "errors.pydantic.dev" not in shown and "input_value" not in shown, shown[:300]
+
+
+def test_a_login_inside_a_system_base_url_is_refused_without_showing_the_url(cfg_dir):
+    exc = _refused(
+        cfg_dir, edit=lambda d: d["systems"]["fixture-records"].update(base_url=LOGIN_URL)
+    )
+    assert "base_url must not contain a login" in str(exc)
+    _assert_value_free(exc, PW, USER, LOGIN_URL, "records.example.invalid")
+
+
+def test_a_system_base_url_that_is_not_https_is_refused_without_showing_the_url(cfg_dir):
+    url = "http://" + USER + ":" + PW + "@10.1.2.3/api"
+    exc = _refused(cfg_dir, edit=lambda d: d["systems"]["fixture-records"].update(base_url=url))
+    _assert_value_free(exc, PW, USER, "10.1.2.3")
+    plain = (
+        "http://" + "host-" + PW + ".example.invalid/api"
+    )  # no login: the https rule, still without the URL
+    cfg2 = make_cfg(cfg_dir.parent / "second")
+    exc = _refused(cfg2, edit=lambda d: d["systems"]["fixture-records"].update(base_url=plain))
+    assert "base_url must be https" in str(exc)
+    _assert_value_free(exc, PW, "host-")
+
+
+def test_a_line_of_broken_yaml_is_not_quoted_in_the_error(cfg_dir):
+    exc = _refused(cfg_dir, text='\nnote: "' + PW + " and no closing quote\nother: 1\n")
+    assert re.search(r"not valid YAML \(line \d+, column \d+\)", str(exc)), str(exc)
+    _assert_value_free(exc, PW, "no closing quote")
+
+
+def test_a_line_of_broken_yaml_in_a_registry_file_is_not_quoted_in_the_error(cfg_dir):
+    exc = _refused(cfg_dir, extra_file=("agents.yaml", "- id: [" + PW + "\n  status: {\n"))
+    assert "not valid YAML" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+
+
+def test_a_duplicate_key_is_reported_by_line_only(cfg_dir):
+    exc = _refused(cfg_dir, text="\n" + PW + ": 1\n" + PW + ": 2\n")
+    assert re.fullmatch(r"duplicate key \(line \d+\)", str(exc)), str(exc)
+    _assert_value_free(exc, PW)
+
+
+def test_a_duplicate_id_in_a_registry_file_is_reported_by_entry_number_only(cfg_dir):
+    ident = "person-" + PW + "@example.invalid"  # a personal e-mail address as an id
+    content = f"- id: {ident}\n  kind: person\n- id: {ident}\n  kind: person\n"
+    exc = _refused(cfg_dir, extra_file=("principals.yaml", content))
+    assert "principals.yaml: duplicate id in entry 2" in str(exc), str(exc)
+    _assert_value_free(exc, PW, "example.invalid")
+
+
+def test_a_registry_validation_error_does_not_echo_the_value(cfg_dir):
+    """`principals.yaml` models do not hide their input: pydantic's own text would print `input_value='...'`."""
+    content = "- id: user:z\n  kind: " + PW + "\n"
+    exc = _refused(cfg_dir, extra_file=("principals.yaml", content))
+    assert "validation error" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+
+
+def test_a_backend_settings_error_does_not_echo_the_value_or_keep_the_cause(cfg_dir):
+    exc = _refused(
+        cfg_dir, edit=lambda d: d["backends"].update(detector=[{"kind": "regex", "threshold": PW}])
+    )
+    assert "backends.detector (regex)" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+
+
+def test_an_unknown_kind_or_capability_is_not_echoed(cfg_dir):
+    exc = _refused(cfg_dir, edit=lambda d: d["backends"].update(channel={"kind": PW}))
+    assert "unknown kind; known:" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+    cfg2 = make_cfg(cfg_dir.parent / "second")
+    exc = _refused(cfg2, edit=lambda d: d["backends"].update({PW: "fake"}))
+    assert "1 unknown capability name(s); known:" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+
+
+def test_an_unknown_source_kind_or_route_is_not_echoed(cfg_dir):
+    exc = _refused(cfg_dir, edit=lambda d: d.update(sources={"s": {"kind": PW, "settings": {}}}))
+    assert "source kind is unknown" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+    cfg2 = make_cfg(cfg_dir.parent / "second")
+
+    def judge(d):
+        d["routes"]["screen"] = dict(d["routes"]["default"], max_tokens=64)
+        d["backends"]["detector"] = [{"kind": "regex"}, {"kind": "llm_judge", "route": PW}]
+
+    exc = _refused(cfg2, edit=judge)
+    assert "its route is not in routes" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("case_insensitive_targets", ["Bad " + PW]),
+        ("stored_kinds", [PW]),
+        ("cluster_suffixes", ["." + PW]),
+        ("https_ports", [70000 + 4417]),
+    ],
+)
+def test_a_refused_list_entry_in_the_evidence_settings_is_counted_not_shown(cfg_dir, field, value):
+    exc = _refused(cfg_dir, edit=lambda d: d.update(evidence={field: value}))
+    assert f"evidence.{field}: 1 entries" in str(exc), str(exc)
+    _assert_value_free(exc, PW, "74417")
+
+
+def test_a_path_that_leaves_its_folder_is_refused_without_the_path(tmp_path):
+    with pytest.raises(ConfigError) as err:
+        config_mod.confined(tmp_path, "../" + PW)
+    assert str(err.value) == "path escapes its folder"
+    _assert_value_free(err.value, PW)
+
+
+def test_any_other_error_while_loading_is_reduced_to_its_type(cfg_dir, monkeypatch):
+    """The last-resort branch (`except (ValueError, TypeError, ...)` in load_config) never prints `str(exc)`."""
+
+    def boom(*_a, **_k):
+        raise ValueError("secret value " + PW)
+
+    monkeypatch.setattr(config_mod, "parse_backends", boom)
+    with pytest.raises(ConfigError) as err:
+        load_config(cfg_dir)
+    assert str(err.value) == "a value was refused (ValueError)"
+    _assert_value_free(err.value, PW)
+
+
+def test_the_error_text_function_keeps_a_yaml_position_and_drops_the_rest():
+    with pytest.raises(yaml.YAMLError) as err:
+        yaml.safe_load("a: '" + PW + "\nb: 1\n")
+    assert PW in str(err.value), "the premise of the test: the YAML error itself quotes the value"
+    text = config_mod.config_error_text(err.value)
+    assert PW not in text and text.startswith("not valid YAML")
+
+
+def test_a_live_tick_runs_the_step_list_its_checks_saw_even_if_the_list_is_edited_in_place(
+    tmp_path,
+):
+    """One copy of `STEPS` is taken at the start of `run_tick` and serves the checks and the loop: a list cut in place
+    after the checks (here by the first read of the store) must not change what runs."""
+    from hadavin_sdk.runtime import tick as tick_mod
+
+    cfg_dir = make_cfg(tmp_path)
+    qualify(load_registry(load_config(cfg_dir)))
+    app = build(
+        cfg_dir, ["test-agent"], secrets=FakeSecretProvider({"fixture-token": "tok" + "-copy"})
+    )
+    app.config = app.config.model_copy(update={"environment": "pilot"})
+    ran: list[str] = []
+    steps = [
+        tick_mod.TickStep(s.name, 0, lambda _c, n=s.name: ran.append(n)) for s in tick_mod.STEPS
+    ]
+    names = [s.name for s in steps]
+    original = app.store.get_tick_state
+
+    def cut_after_the_checks(name):
+        steps[:] = steps[:1]
+        return original(name)
+
+    app.store.get_tick_state = cut_after_the_checks
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(tick_mod, "STEPS", steps)
+        assert tick_mod.run_tick(app) == 0
+    assert ran == names, f"the tick ran a list other than the one its checks saw: {ran}"
+
+
+def test_a_refused_stored_kind_is_counted_not_shown(cfg_dir):
+    exc = _refused(cfg_dir, edit=lambda d: d.update(evidence={"stored_kinds": [PW]}))
+    assert "evidence.stored_kinds: 1 entries cannot be stored" in str(exc), str(exc)
+    _assert_value_free(exc, PW)

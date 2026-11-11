@@ -23,7 +23,7 @@ def test_k3_duplicate_levels_key_refused(tmp_path):
         + "  levels: {lookup_record: shadow}\n  levels: {lookup_record: suggest}\n",
         encoding="utf-8",
     )
-    with pytest.raises(ConfigError, match="duplicate key 'levels'"):
+    with pytest.raises(ConfigError, match=r"duplicate key \(line \d+\)"):
         load_registry(load_config(cfg))
 
 
@@ -31,7 +31,7 @@ def test_k3_duplicate_config_key_refused(tmp_path):
     cfg = demo_cfg(tmp_path)
     path = cfg / "config.yaml"
     path.write_text(path.read_text(encoding="utf-8") + "eval_threshold: 0.5\n", encoding="utf-8")
-    with pytest.raises(ConfigError, match="duplicate key 'eval_threshold'"):
+    with pytest.raises(ConfigError, match=r"duplicate key \(line \d+\)"):
         load_config(cfg)
 
 

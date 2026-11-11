@@ -13,9 +13,9 @@ Contract (design v5 kernel, section 4):
   not ready (missing table or grant: run ``migrate``); 4 store unreachable (connection refused, dropped or
   timed out), before any step or when it stops answering during the steps; 3 is the CLI wrapper's code for any
   other uncaught error.
-* Three refusals do NOT come back as an exit code. For an app whose stage is not exactly demo, ``run_tick`` RAISES
+* Four refusals do NOT come back as an exit code. For an app whose stage is not exactly demo, ``run_tick`` RAISES
   ``ConfigError`` when it is given ``now=`` or ``steps=`` (both are for tests; the command line never passes them),
-  and when a built-in step is missing from ``STEPS``. A caller must catch the error; an uncaught one ends a Python
+  when a built-in step is missing from ``STEPS``, and when a step name is used twice in ``STEPS``. A caller must catch the error; an uncaught one ends a Python
   process with exit code 1, which this list reads as "a step failed" (the command line reports it as a config
   error, exit code 2).
 * The time enters the steps through ``TickContext``. Outside demo a context that is given a time is refused
@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
@@ -53,6 +53,11 @@ OK, FAILED, SKIPPED = "ok", "failed", "skipped"
 
 
 NO_GIVEN_TIME = "now= is for tests; it is refused in pilot and prod"
+# A context is also refused when it is COPIED with `dataclasses.replace`: replace passes the old time on as a given one.
+NO_GIVEN_TIME_COPY = (
+    f"{NO_GIVEN_TIME}. A context is not copied by replace() (the copy would carry a given time); "
+    "build a new TickContext(app)"
+)
 
 
 @dataclass(frozen=True)
@@ -65,6 +70,10 @@ class TickContext:
     with a ConfigError, whoever builds it (`run_tick`, or a caller that runs one step by hand). The time cannot be
     changed afterwards by assignment (the object is frozen); `results` is filled in as the steps run. `app` must
     carry its config (`app.config.environment`).
+
+    `dataclasses.replace(ctx, ...)` is not a way to copy a context: the copy would carry the old time as a given one,
+    so outside demo it is refused with the message above ("a context is not copied by replace(); build a new
+    TickContext(app)"). `now` is never None once the object exists.
 
     The class cannot be subclassed, and a step outside demo takes only an object whose type is exactly this class.
     NOT covered: `object.__setattr__(ctx, "now", <time>)` on a real context, an object built without its constructor
@@ -85,7 +94,7 @@ class TickContext:
         if self.now is None:
             object.__setattr__(self, "now", self.app.approvals.clock())
         elif is_live(self.app.config.environment):
-            raise ConfigError(NO_GIVEN_TIME)
+            raise ConfigError(NO_GIVEN_TIME_COPY)
 
 
 def _now(ctx: TickContext) -> datetime:
@@ -322,19 +331,20 @@ STEPS: list[TickStep] = [
 _BUILT_IN: tuple[str, ...] = tuple(step.name for step in STEPS)
 
 
-def _missing_built_in_steps() -> list[str]:
-    """The built-in steps that are not in `STEPS` right now (by name), in their built-in order."""
-    present = {step.name for step in STEPS}
+def _missing_built_in_steps(steps: Sequence[TickStep] | None = None) -> list[str]:
+    """The built-in steps that are not in `steps` (by name), in their built-in order. Without an argument, `steps`
+    is a copy of `STEPS` taken now."""
+    present = {step.name for step in (tuple(STEPS) if steps is None else steps)}
     return [name for name in _BUILT_IN if name not in present]
 
 
-def _repeated_step_names() -> list[str]:
-    """The step names that appear more than once in `STEPS` right now, in list order. Results and the `tick_state`
+def _repeated_step_names(steps: Sequence[TickStep] | None = None) -> list[str]:
+    """The step names that appear more than once in `steps` (by default a copy of `STEPS` taken now), in list order. Results and the `tick_state`
     row are kept by name, so a second step with a name already used would overwrite the first one's outcome (a
     failed built-in step would be recorded as ok)."""
     seen: set[str] = set()
     repeated: list[str] = []
-    for step in STEPS:
+    for step in tuple(STEPS) if steps is None else steps:
         if step.name in seen and step.name not in repeated:
             repeated.append(step.name)
         seen.add(step.name)
@@ -445,9 +455,12 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
     live = is_live(app.config.environment)
     if given and live:
         raise ConfigError(f"{given[0]}= is for tests; it is refused in pilot and prod")
-    if live and (missing := _missing_built_in_steps()):
+    own_steps = tuple(
+        STEPS
+    )  # ONE copy: the checks and the loop read the same list, even if STEPS is edited between
+    if live and (missing := _missing_built_in_steps(own_steps)):
         raise ConfigError(f"a built-in tick step is missing: {', '.join(missing)}")
-    if live and (repeated := _repeated_step_names()):
+    if live and (repeated := _repeated_step_names(own_steps)):
         raise ConfigError(f"a tick step name is used twice: {', '.join(repeated)}")
     ctx = TickContext(app, now)
     try:
@@ -462,7 +475,7 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
             type(exc).__name__,
         )
         return STORE_NOT_READY
-    for step in STEPS if steps is None else steps:
+    for step in own_steps if steps is None else steps:
         ctx.results[step.name] = _run_step(ctx, step)
     try:
         heartbeat(ctx)

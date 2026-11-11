@@ -48,7 +48,7 @@ def test_unknown_provider_lists_the_valid_options(tmp_path):
             {"llm": {"kind": "banana"}, "audit": {"kind": "local_dir", "dir": "a"}}, tmp_path
         )
     msg = str(exc.value)
-    assert "banana" in msg
+    assert "banana" not in msg, "a config error never shows the value that was refused"
     for known in ("anthropic", "bedrock", "gemini", "openai_compat"):
         assert known in msg
 

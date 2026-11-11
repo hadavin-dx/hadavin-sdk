@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from hadavin_sdk import deferred
 from hadavin_sdk.actions.contract import ActionContract, schema_problems
-from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
+from hadavin_sdk.config import Config, ConfigError, Money, config_error_text, confined, load_yaml
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
@@ -184,10 +184,10 @@ def _yaml(path) -> object:
 def _by_id(items: list, model: type, where: str) -> dict:
     """Validated entries keyed by id; a duplicate id fails (a later entry must never shadow an earlier one)."""
     out: dict = {}
-    for raw in items or []:
+    for number, raw in enumerate(items or [], start=1):
         obj = model(**raw) if isinstance(raw, dict) else model(raw)
         if obj.id in out:
-            raise ConfigError(f"{where}: duplicate id {obj.id}")
+            raise ConfigError(f"{where}: duplicate id in entry {number}")
         out[obj.id] = obj
     return out
 
@@ -207,8 +207,13 @@ def _nested_identifier(sub: dict[str, Any]) -> bool:
 
 def load_registry(config: Config) -> Registry:
     root = config.root
-    raw_agents = _yaml(root / "agents.yaml")
-    raw_actions = [_yaml(p) for p in sorted((root / "actions").glob("*.yaml"))]
+    try:
+        raw_agents = _yaml(root / "agents.yaml")
+        raw_actions = [_yaml(p) for p in sorted((root / "actions").glob("*.yaml"))]
+    except ConfigError:
+        raise
+    except yaml.YAMLError as exc:
+        raise ConfigError(config_error_text(exc)) from None
     if early := [
         *(p for a in raw_agents or [] for p in deferred.key_problems("agents.yaml", a)),
         *(p for a in raw_actions for p in deferred.key_problems("actions/", a)),
@@ -221,8 +226,8 @@ def load_registry(config: Config) -> Registry:
         contracts = _by_id(raw_actions, ActionContract, "actions/")
     except ConfigError:
         raise
-    except (ValidationError, TypeError, yaml.YAMLError) as exc:
-        raise ConfigError(str(exc)) from exc
+    except (ValidationError, ValueError, TypeError, yaml.YAMLError) as exc:
+        raise ConfigError(config_error_text(exc)) from None
     problems = _cross_check(config, agents, chains, contracts)
     if problems:
         raise ConfigError("; ".join(problems))

@@ -111,9 +111,7 @@ def _one(cap: str, raw: Any, root: Path) -> KindSettings:
     kinds = TABLE[cap]
     kind = raw["kind"]
     if kind not in kinds:
-        raise ConfigError(
-            f"backend {cap}: unknown kind {kind!r}; known: {', '.join(sorted(kinds))}"
-        )
+        raise ConfigError(f"backend {cap}: unknown kind; known: {', '.join(sorted(kinds))}")
     model = kinds[kind].settings
     required = [n for n, f in model.model_fields.items() if f.is_required() and n != "kind"]
     if bare and required:
@@ -133,7 +131,7 @@ def _one(cap: str, raw: Any, root: Path) -> KindSettings:
     try:
         return model(**data)
     except ValidationError as exc:
-        raise ConfigError(f"backends.{cap} ({kind}): {exc}") from exc
+        raise ConfigError(f"backends.{cap} ({kind}): {config_error_text(exc)}") from None
 
 
 def parse_backends(raw: Any, root: Path) -> Backends:
@@ -142,7 +140,7 @@ def parse_backends(raw: Any, root: Path) -> Backends:
     raw = dict(raw or {})
     if unknown := set(raw) - set(TABLE):
         raise ConfigError(
-            f"backends: unknown capability {sorted(unknown)}; known: {', '.join(TABLE)}"
+            f"backends: {len(unknown)} unknown capability name(s); known: {', '.join(TABLE)}"
         )
     if missing := [cap for cap in TABLE if cap not in raw and cap not in DEFAULTS]:
         raise ConfigError(f"backends: {', '.join(missing)} must be set")
@@ -177,6 +175,16 @@ def executor_timeout_ok(value: object) -> bool:
     if isinstance(value, bool) or not isinstance(value, int | float):
         return False
     return defaults.EXECUTOR_TIMEOUT_MIN_S <= value <= defaults.EXECUTOR_TIMEOUT_MAX_S
+
+
+def url_has_login(url: str) -> bool:
+    """True if the URL carries a user name or password (`user:pw@host`). A login in a URL is refused whole: it would
+    end up in logs and error texts."""
+    try:
+        parts = urlsplit(url)
+        return parts.username is not None or parts.password is not None
+    except ValueError:
+        return False
 
 
 def url_allowed(url: str, allow_insecure_loopback: bool) -> bool:
@@ -280,11 +288,11 @@ class EvidenceSettings(_Strict):
             t for t in self.case_insensitive_targets if not re.fullmatch(r"[a-z0-9_-]{1,40}", t)
         ]:
             raise ValueError(
-                f"evidence.case_insensitive_targets: {bad} are not target_system labels"
+                f"evidence.case_insensitive_targets: {len(bad)} entries are not target_system labels"
             )
         if unknown := sorted(set(self.stored_kinds) - set(defaults.STORED_KINDS)):
             raise ValueError(
-                f"evidence.stored_kinds: {unknown} cannot be stored (secret, regulated or unknown)"
+                f"evidence.stored_kinds: {len(unknown)} entries cannot be stored (secret, regulated or unknown)"
             )
         if bad_suffix := [
             s
@@ -292,13 +300,13 @@ class EvidenceSettings(_Strict):
             if not s.startswith(".") or s.rsplit(".", 1)[-1] not in defaults.PRIVATE_SUFFIX_LABELS
         ]:
             raise ValueError(
-                f"evidence.cluster_suffixes: {bad_suffix} must start with a dot and end in a private label "
+                f"evidence.cluster_suffixes: {len(bad_suffix)} entries must start with a dot and end in a private label "
                 f"({', '.join(sorted(defaults.PRIVATE_SUFFIX_LABELS))}); a public suffix such as .com would "
                 "allow plain http to the internet"
             )
         for name in ("https_ports", "cluster_ports"):
             if bad := [p for p in getattr(self, name) if not 0 < p < 65536]:
-                raise ValueError(f"evidence.{name}: {bad} are not ports")
+                raise ValueError(f"evidence.{name}: {len(bad)} entries are not ports")
         return self
 
 
@@ -318,9 +326,7 @@ class SourceConfig(_Strict):
         from hadavin_sdk.sources.kinds import KINDS
 
         if self.kind not in KINDS:
-            raise ValueError(
-                f"source kind {self.kind!r} is unknown; known: {', '.join(sorted(KINDS))}"
-            )
+            raise ValueError(f"source kind is unknown; known: {', '.join(sorted(KINDS))}")
         KINDS[self.kind].settings(**self.settings)
         return self
 
@@ -404,12 +410,14 @@ class Config(_Strict):
                 )
         for d in self.backends.detector:  # llm_judge names a route
             if getattr(d, "route", None) is not None and d.route not in self.routes:
-                raise ValueError(f"backends.detector {d.kind}: unknown route {d.route!r}")
+                raise ValueError(f"backends.detector {d.kind}: its route is not in routes")
         for name, system in self.systems.items():
+            if url_has_login(system.base_url):
+                raise ValueError(f"system {name}: base_url must not contain a login")
             if not url_allowed(system.base_url, self.allow_insecure_loopback):
                 raise ValueError(
                     f"system {name}: base_url must be https "
-                    f"(http only for loopback with allow_insecure_loopback): {system.base_url}"
+                    "(http only for loopback with allow_insecure_loopback)"
                 )
         refused = []  # environment table, design 4.6: every refusal at once, so one fix round is enough
         if is_live(self.environment):
@@ -454,7 +462,7 @@ class _UniqueKeyLoader(yaml.SafeLoader):
         for key_node, _ in node.value:
             key = self.construct_object(key_node, deep=True)
             if key in seen:
-                raise ConfigError(f"duplicate key {key!r} (line {key_node.start_mark.line + 1})")
+                raise ConfigError(f"duplicate key (line {key_node.start_mark.line + 1})")
             seen.add(key)
         return super().construct_mapping(node, deep)
 
@@ -478,7 +486,7 @@ def confined(base: Path, relative: str) -> Path:
     root = Path(base).resolve()
     path = (root / relative).resolve()
     if not path.is_relative_to(root):
-        raise ConfigError(f"path escapes its folder: {relative}")
+        raise ConfigError("path escapes its folder")
     return path
 
 
@@ -496,6 +504,22 @@ def _value_free_text(exc: ValidationError) -> str:
     for e in errors:
         lines += [".".join(str(p) for p in e["loc"]), f"  {e['msg']} [type={e['type']}]"]
     return "\n".join(lines)
+
+
+def config_error_text(exc: BaseException) -> str:
+    """THE one way an exception from reading or checking configuration becomes error text: it names the problem and
+    where it is, never the value that was refused (a mistyped key or a pasted login can be a secret). A pydantic
+    error keeps its own layout without `input_value`, the link and the context; a YAML error keeps its line and
+    column only (its own text quotes the offending line); any other error keeps its type only. Callers raise
+    with `from None`, so the cause (whose text may carry the value) is not shown either."""
+    if isinstance(exc, ValidationError):
+        return _value_free_text(exc)
+    if isinstance(exc, yaml.MarkedYAMLError) and exc.problem_mark is not None:
+        mark = exc.problem_mark
+        return f"not valid YAML (line {mark.line + 1}, column {mark.column + 1})"
+    if isinstance(exc, yaml.YAMLError):
+        return "not valid YAML"
+    return f"a value was refused ({type(exc).__name__})"
 
 
 def _validation_text(exc: ValidationError) -> str:
@@ -535,6 +559,6 @@ def load_config(config_dir: Path | None = None) -> Config:
     except ConfigError:
         raise
     except ValidationError as exc:
-        raise ConfigError(_validation_text(exc)) from exc
+        raise ConfigError(_validation_text(exc)) from None
     except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
-        raise ConfigError(str(exc)) from exc
+        raise ConfigError(config_error_text(exc)) from None
