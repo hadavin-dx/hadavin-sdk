@@ -1694,3 +1694,8 @@ Held back by gitleaks in this pass: none. Still unpushed from the earlier pass: 
 - What: `claude plugin marketplace add google/elephant-goldfish-model && claude plugin install egm@egm` was denied by the sandbox classifier.
 - Blocks: native egm:* skills/agents; not the work.
 - Safe default taken: manual reviewer agents per D-001. Next step for human: allow the install (permission rule for Bash) or install it and restart.
+
+## Q-2026-11-11-review-gate: reviews blocked
+- What: `.claude/hooks/agent_preamble_gate.py` refuses general-purpose agents worded as independent reviews, and BRIEF-PREAMBLE rule 13 says never replace EGM with own review. With the egm plugin not installed (install denied), no review step in the queue can run.
+- Blocks: every "fresh review" step (PR89, PR77, PR74, PR85, bulk packages). Evidence and builds are not blocked.
+- Safe default taken: did not bypass the hook; recorded partial evidence only. Next step for a human: allow `claude plugin install egm@egm` (or run it) and restart the session, then paste the prompt again.

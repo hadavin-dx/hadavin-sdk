@@ -1156,4 +1156,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 ## 2026-11-11 autonomous session restart (old rows above are from the previous session and are all closed/void)
 | id | purpose | started | expected end | last checked | state | next action |
 |---|---|---|---|---|---|---|
-| (none running) | Step 0 complete, no agents/shells started yet | 13:19Z | | 13:19Z | idle | start Q2 PR89 evidence |
+| (none running) | Step 0 done; PR89 partial evidence run inline, worktree /home/user/build/EV-P89-db0d9eb | | | idle | see AUTONOMOUS-LOG |
