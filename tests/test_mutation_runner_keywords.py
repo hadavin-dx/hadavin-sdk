@@ -5456,11 +5456,16 @@ def test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_n
             made = tmp_path / f"f{mask:o}"
             mr._make_private_file(made)
         assert _mode(made) == 0o600, f"under umask {mask:o} the file had mode {_mode(made):o}"
-    # a NEW file has its mode from the moment it exists (the later ``fchmod`` only repairs an old file)
+    # a NEW file has its mode from the moment it exists (the later ``chmod`` on the descriptor only repairs an old file)
     seen = []
-    real_fchmod = os.fchmod
+    real_chmod = os.chmod
     monkeypatch.setattr(
-        os, "fchmod", lambda fd, mode: (seen.append(_mode_of(fd)), real_fchmod(fd, mode))[1]
+        os,
+        "chmod",
+        lambda target, mode: (
+            seen.append(_mode_of(target)) if isinstance(target, int) else None,
+            real_chmod(target, mode),
+        )[1],
     )
     with _umask(0):
         mr._make_private_file(tmp_path / "window")
@@ -5531,7 +5536,7 @@ def test_a_bare_string_for_tests_is_a_type_error_not_letters(tmp_path):
     )
     _bare_string_is_refused(
         "tests", tmp_path, "a bare string for tests was read letter by letter", tests=CORE_TEST
-    )  # with slashes: a ValueError before
+    )  # a path with slashes: the three new guards come before the path check, so this is still a TypeError
 
 
 def test_a_bare_string_for_extra_dirs_is_a_type_error_not_letters(tmp_path):
@@ -5798,8 +5803,8 @@ POSIX_ONLY_NAMES = {
     "os.killpg": 1,
     "signal.SIGKILL": 1,
 }
-# every other ``os.`` or ``signal.`` name the runner uses: known on Windows, or behind ``hasattr``, or an ``if _IS_WINDOWS`` branch that mypy reads
-# as reachable
+# every other ``os.`` or ``signal.`` name the runner uses: known to mypy on Windows for Python 3.12 and 3.13 (``os.fchmod`` is not: the runner calls
+# ``os.chmod`` on the descriptor instead), or behind ``hasattr``
 OTHER_NAMES = frozenset(
     [
         "os.O_CREAT",
@@ -5811,7 +5816,6 @@ OTHER_NAMES = frozenset(
         "os.chmod",
         "os.close",
         "os.environ",
-        "os.fchmod",
         "os.fdopen",
         "os.fstat",
         "os.lseek",
@@ -5860,3 +5864,337 @@ def test_a_new_os_or_signal_name_is_noticed_so_the_win32_error_count_in_the_text
         "the sum of the places is no longer the 13 errors of the texts"
     )
     assert "13 errors" in _doc(), "the module docstring does not give the count of mypy errors"
+
+
+# ---- round 24: the win32 count is measured, files are checked like folders, the creation sites are the helpers, class names -------
+
+MYPY_ERROR = re.compile(
+    r"^(?P<file>[^:]+):(?P<line>\d+): error: (?P<text>.*?)\s+\[(?P<code>[a-z-]+)\]$"
+)
+
+
+@pytest.mark.skipif(
+    __import__("importlib.util", fromlist=["find_spec"]).find_spec("mypy") is None,
+    reason="mypy is not installed in this environment; the table test above counts the places, this one measures them",
+)
+@pytest.mark.parametrize("python_version", ["3.12", "3.13"])
+def test_mypy_for_win32_reports_the_errors_the_texts_count(python_version, tmp_path):
+    """RUNS mypy (the two Python versions the package supports) and compares: 12 errors are the POSIX-only names of the table, and one is the
+    import of ``hadavin_sdk.testing.mutation`` (untyped, or not found where the package is not installed). The count of the texts is the
+    measured one, on both versions: ``os.fchmod`` would make it 14 on 3.12."""
+    command = [
+        sys.executable,
+        "-m",
+        "mypy",
+        "--platform",
+        "win32",
+        "--python-version",
+        python_version,
+        "--cache-dir",
+        str(tmp_path / "mypy_cache"),
+        str(Path(mr.__file__)),
+    ]
+    run = subprocess.run(  # noqa: S603  # our own interpreter running mypy on a file of this repository, no shell
+        command, capture_output=True, text=True, timeout=600, check=False
+    )
+    errors = [m for m in map(MYPY_ERROR.match, run.stdout.splitlines()) if m]
+    attribute = [m for m in errors if m["code"] == "attr-defined"]
+    other = [m for m in errors if m["code"] != "attr-defined"]
+    named = sorted(re.findall(r'no attribute "(\w+)"', " ".join(m["text"] for m in attribute)))
+    wanted = sorted(
+        name.split(".")[1] for name, places in POSIX_ONLY_NAMES.items() for _ in range(places)
+    )
+    assert named == wanted, (
+        f"mypy reports other POSIX-only names than the table (python {python_version}): {named}"
+    )
+    assert len(other) == 1 and other[0]["code"] in ("import-untyped", "import-not-found"), (
+        f"mypy reports something else than the one import error: {[m['text'] for m in other]}"
+    )
+    assert f"Found {len(errors)} errors" in run.stdout and len(errors) == 13, (
+        f"mypy --platform win32 gives {len(errors)} errors, the texts say 13 (python {python_version})"
+    )
+    assert "measured with mypy" in _doc() and "13 errors" in _doc()
+
+
+def test_the_runner_does_not_call_os_fchmod_which_mypy_does_not_know_on_windows_before_python_3_13():
+    tree = ast.parse(Path(mr.__file__).read_text(encoding="utf-8"))
+    used = [
+        node.lineno
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Attribute)
+        and node.attr == "fchmod"
+        and isinstance(node.value, ast.Name)
+        and node.value.id == "os"
+    ]
+    assert not used, (
+        f"os.fchmod was used again (line {used}): mypy --platform win32 gives one more error on Python 3.12"
+    )
+
+
+def _stat(mode, *, uid=None, links=1):
+    return os.stat_result((mode, 1, 1, links, os.getuid() if uid is None else uid, 0, 0, 0, 0, 0))
+
+
+@posix_only
+def test_a_file_that_is_not_private_is_refused_with_its_reason():
+    good = stat.S_IFREG | 0o600
+    assert mr._file_problem(_stat(good)) == "", "a private file was refused"
+    assert mr._file_problem(_stat(stat.S_IFREG | 0o400)) == "", "a narrower mode was refused"
+    for label, info, words in (
+        ("a folder", _stat(stat.S_IFDIR | 0o600), "is not a regular file"),
+        ("a link", _stat(stat.S_IFLNK | 0o600), "is not a regular file"),
+        ("a pipe", _stat(stat.S_IFIFO | 0o600), "is not a regular file"),
+        ("another user", _stat(good, uid=os.getuid() + 1), "belongs to another user"),
+        ("group read", _stat(stat.S_IFREG | 0o640), "open to group or others"),
+        ("other write", _stat(stat.S_IFREG | 0o602), "open to group or others"),
+        ("owner run bit", _stat(stat.S_IFREG | 0o700), "open to group or others"),
+        ("two names", _stat(good, links=2), "more than one name"),
+    ):
+        got = mr._file_problem(info)
+        assert words in got, f"a file that {label} gave {got!r}, not the reason {words!r}"
+
+
+@posix_only
+def test_a_made_private_file_is_checked_on_the_open_file_and_a_second_name_is_refused(
+    tmp_path, monkeypatch
+):
+    made = tmp_path / "result.xml"
+    mr._make_private_file(made, "result file")  # accepted
+    other_name = tmp_path / "other_name.xml"
+    os.link(made, other_name)
+    _must_raise(
+        "a file with a second name was accepted",
+        RuntimeError,
+        mr._make_private_file,
+        made,
+        "result file",
+        match="the result file of this run has more than one name",
+    )
+    other_name.unlink()
+    monkeypatch.setattr(os, "getuid", lambda: os.stat(made).st_uid + 1)
+    _must_raise(
+        "a file of another user was accepted",
+        RuntimeError,
+        mr._make_private_file,
+        made,
+        "pytest settings file",
+        match="the pytest settings file of this run belongs to another user",
+    )
+
+
+@posix_only
+def test_a_temp_folder_is_made_by_the_one_helper_and_checked_and_a_refused_one_is_removed(
+    tmp_path, monkeypatch
+):
+    real = mr.tempfile.mkdtemp
+    monkeypatch.setattr(mr.tempfile, "mkdtemp", lambda prefix: real(prefix=prefix, dir=tmp_path))
+    with _umask(0o277):  # a mask that takes owner bits away: mkdtemp alone would give 0500
+        made = mr._make_private_temp_dir("probe_", "temp folder")
+    assert _mode(made) == 0o700 and made.name.startswith("probe_"), (
+        f"the temp folder had mode {_mode(made):o} under umask 0277"
+    )
+    made.rmdir()
+
+    # a folder that others can enter is refused and removed again
+    def wide(prefix):
+        folder = real(prefix=prefix, dir=tmp_path)
+        os.chmod(folder, OPEN_MODE)
+        return folder
+
+    monkeypatch.setattr(mr.tempfile, "mkdtemp", wide)
+    _must_raise(
+        "a temp folder open to others was accepted",
+        RuntimeError,
+        mr._make_private_temp_dir,
+        "wide_",
+        "folder of the pytest settings file",
+        match="the folder of the pytest settings file of this run is open to group or others",
+    )
+    assert list(tmp_path.iterdir()) == [], "a refused temp folder was left behind"
+
+
+def test_every_folder_and_file_the_runner_creates_is_made_by_one_of_the_helpers():
+    """The class: a creation site that is not one of the private helpers makes a folder or file with the mode of the umask and no check. Every
+    call of a creating function of the standard library is found in the source (outermost function that holds it) and pinned."""
+    tree = ast.parse(Path(mr.__file__).read_text(encoding="utf-8"))
+    creating = {
+        "tempfile.mkdtemp",
+        "tempfile.mkstemp",
+        "tempfile.NamedTemporaryFile",
+        "os.mkdir",
+        "os.makedirs",
+        "os.open",
+        "open",
+    }
+    creating_methods = {"mkdir", "touch", "write_text", "write_bytes", "open"}
+    sites: dict[str, set[str]] = {}
+
+    def dotted(node):
+        parts = []
+        while isinstance(node, ast.Attribute):
+            parts.append(node.attr)
+            node = node.value
+        if isinstance(node, ast.Name):
+            parts.append(node.id)
+        return ".".join(reversed(parts))
+
+    for top in tree.body:
+        if not isinstance(top, (ast.FunctionDef, ast.ClassDef)):
+            continue
+        for node in ast.walk(top):
+            if isinstance(node, ast.Call):
+                name = dotted(node.func)
+                method = node.func.attr if isinstance(node.func, ast.Attribute) else ""
+                if name in creating or (method in creating_methods and name not in ("os.open",)):
+                    sites.setdefault(name or method, set()).add(top.name)
+    assert sites == {
+        "tempfile.mkdtemp": {"_make_private_temp_dir"},
+        "os.mkdir": {"_make_private_dir", "_make_dirs", "_open_lock_dir"},
+        "os.open": {"_make_private_file", "_open_lock_dir", "_one_run_per_database"},
+        "p.write_text": {"_run_mutants"},
+    }, f"a creation site that is not a private helper (or a helper that moved): {sites}"
+
+
+def test_the_temp_folder_the_tests_folder_and_the_settings_folder_are_made_by_the_helpers(
+    tmp_path, monkeypatch
+):
+    """Through a real run: ``mkdtemp`` is called by the helper only, and the ``tests`` folder of the temp copy is made by ``_make_private_dir``."""
+    callers: list[str] = []
+    real_mkdtemp = mr.tempfile.mkdtemp
+
+    def spy(*args, **kwargs):
+        callers.append(sys._getframe(1).f_code.co_name)
+        return real_mkdtemp(*args, **kwargs)
+
+    monkeypatch.setattr(mr.tempfile, "mkdtemp", spy)
+    whats: list[str] = []
+    real_dir = mr._make_private_dir
+    monkeypatch.setattr(
+        mr, "_make_private_dir", lambda path, what: (whats.append(what), real_dir(path, what))[1]
+    )
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    assert _short(_run(root, [FLIP])) == [("flip", Verdict.KILLED, True)]
+    assert callers and set(callers) == {"_make_private_temp_dir"}, (
+        f"mkdtemp was called outside the helper: {callers}"
+    )
+    assert "tests folder" in whats and "snapshot folder" in whats, (
+        f"folders made by the helper: {whats}"
+    )
+
+
+# ---- a password that is the name of a Python exception class is not shown as the class of a failing line -----------------------
+
+
+def _shown_for_password(tmp_path, password):
+    return _shown(tmp_path, url=_url("svc", password, rest=f"{FAKE_HOST}/app"))
+
+
+def test_a_password_equal_to_a_built_in_class_name_is_not_shown_as_the_class(tmp_path):
+    names = sorted(mr._BUILT_IN_CLASSES)
+    assert len(names) > 60, "the table of built-in class names was not read"
+    for name in names:
+        shown = _shown_for_password(tmp_path, name)
+        got = mr._shown_line(f"E   {name}: boom", shown, "boom")
+        assert name not in got and got.startswith(mr.CLASS_HIDDEN), (
+            f"a password equal to the class name {name} was shown as the class: {got!r}"
+        )
+        folded = mr._shown_line(f"E   {name}: boom", _shown_for_password(tmp_path, name.lower()))
+        assert folded == mr.CLASS_HIDDEN, (
+            f"a password that is the class name {name} in lower case was shown as the class: {folded!r}"
+        )
+        other = "KeyError" if name != "KeyError" else "ValueError"
+        assert mr._shown_line(f"E   {other}: boom", shown) == other, (
+            f"another class was hidden for a password that is {name}"
+        )
+
+
+def test_a_password_that_is_only_a_piece_of_a_class_name_does_not_hide_the_class(tmp_path):
+    for piece in ("Err", "Key", "r"):
+        shown = _shown_for_password(tmp_path, piece)
+        assert mr._shown_line("E   KeyError: boom", shown) == "KeyError", (
+            f"a name of Python itself was hidden for a password that is a piece of it ({piece!r})"
+        )
+
+
+RAISES_TIMEOUT = (
+    "from pk.core import go\n\n"
+    "def test_a():\n    if go(True) is not True:\n        raise TimeoutError('the text of the child')\n    assert True\n"
+)
+
+
+def test_a_password_equal_to_the_class_the_child_raises_is_not_in_first_lines(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv(DSN_NAME, _url("svc", "Timeout", "Error", rest=f"{FAKE_HOST}/app"))
+    root = _tree(tmp_path, {CORE_TEST: RAISES_TIMEOUT})
+    lines: dict[str, str] = {}
+    _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
+    assert lines["flip"].startswith(mr.CLASS_HIDDEN) and "TimeoutError" not in lines["flip"], (
+        f"the password was shown as the class of the failing line: {lines['flip']!r}"
+    )
+    monkeypatch.setenv(DSN_NAME, _url("svc", "Other", "Word", rest=f"{FAKE_HOST}/app"))
+    lines.clear()
+    _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
+    assert lines["flip"].startswith("TimeoutError"), (
+        f"another password hid the class: {lines['flip']!r}"
+    )
+
+
+def test_the_module_docstring_says_a_class_equal_to_a_secret_is_not_shown():
+    assert "is ``[class not shown]`` too" in _doc() or "``[class not shown]`` too" in _doc()
+    assert "EQUAL to a secret value" in _doc()
+
+
+# ---- the sibling cases of the round-23 nits --------------------------------------------------------------------------------------
+
+
+def test_a_bare_string_for_crash_markers_of_a_mutant_is_a_type_error_not_letters():
+    _must_raise(
+        "a bare string for crash_markers was read letter by letter",
+        TypeError,
+        Mutant,
+        "m",
+        "src/pk/core.py",
+        "return flag",
+        "return not flag",
+        "assert",
+        crash_markers="abc",
+    )
+    assert Mutant(
+        "m", "src/pk/core.py", "return flag", "return not flag", "assert", crash_markers=("abc",)
+    ).crash_markers == ("abc",)
+
+
+def test_connect_timeout_takes_one_to_five_digits_in_the_texts_and_in_the_code():
+    for value, accepted in (
+        ("1", True),
+        ("99999", True),
+        ("100000", False),
+        ("abc", False),
+        ("", False),
+    ):
+        address = f"host={FAKE_HOST} dbname=app connect_timeout={value}"
+        if accepted:
+            mr._refuse_unsafe_address(DSN_NAME, address, FAKE_HOSTS)
+            continue
+        caught = None
+        try:
+            mr._refuse_unsafe_address(DSN_NAME, address, FAKE_HOSTS)
+        except ValueError as exc:
+            caught = str(exc)
+        assert caught is not None and "connect_timeout other than one to five digits" in caught, (
+            f"connect_timeout={value!r}: {caught!r}"
+        )
+    assert "``connect_timeout`` takes one to five digits" in _doc()
+
+
+def test_the_order_of_the_bare_string_guards_is_the_one_the_docstring_gives(tmp_path):
+    root = _tree(tmp_path, {CORE_TEST: PASSES})
+    bare = "X"  # one string, not a list of names
+    # a bad path next to a bare string for ``only`` is a TypeError (the three guards come before the path check) ...
+    with pytest.raises(TypeError, match="only is a sequence"):
+        run_mutants(root, [FLIP], ["../x"], only="flip", extra_dirs=(), timeout=60)
+    # ... and next to a bare string for ``pass_env`` it is the ValueError of the path (that guard is in its own, later refusal)
+    with pytest.raises(ValueError, match="path escapes its tree"):
+        run_mutants(root, [FLIP], ["../x"], pass_env=bare, extra_dirs=(), timeout=60)
+    assert "so a bad path next to one of them still gives the ``TypeError``" in _doc()

@@ -80,7 +80,7 @@ MOVED = (
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 299
+EXPECTED_MUTANTS = 320
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
@@ -177,6 +177,85 @@ def test_a_the_four_crash_mutants_declare_their_exception_class_and_the_others_d
         "runner: a JUnit file that cannot be read stops the run": "PermissionError",
     }
     assert sum(not m.allow_crash and not m.crash_type for m in mm.M) == EXPECTED_MUTANTS - 4
+
+
+def _dotted(node: ast.expr) -> str:
+    parts: list[str] = []
+    while isinstance(node, ast.Attribute):
+        parts.append(node.attr)
+        node = node.value
+    if isinstance(node, ast.Name):
+        parts.append(node.id)
+    return ".".join(reversed(parts))
+
+
+def _true_on_windows(node: ast.expr) -> bool | None:
+    """Whether the condition ``node`` of a ``skipif`` is true when ``sys.platform`` is ``"win32"`` and ``os.name`` is ``"nt"``: ``True``,
+    ``False``, or ``None`` when it names anything else (a file of the repository, ``hasattr``): that says nothing about Windows. Only
+    comparisons of those two values with a text, ``or``, ``and`` and ``not`` are read."""
+    if (
+        isinstance(node, ast.Compare)
+        and len(node.ops) == 1
+        and isinstance(node.comparators[0], ast.Constant)
+    ):
+        known = {"sys.platform": "win32", "os.name": "nt"}.get(_dotted(node.left))
+        if known is not None and isinstance(node.ops[0], (ast.Eq, ast.NotEq)):
+            return (known == node.comparators[0].value) == isinstance(node.ops[0], ast.Eq)
+        return None
+    if isinstance(node, ast.BoolOp):
+        values = [_true_on_windows(v) for v in node.values]
+        if isinstance(node.op, ast.Or):
+            return True if any(v is True for v in values) else (None if None in values else False)
+        return False if any(v is False for v in values) else (None if None in values else True)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        inner = _true_on_windows(node.operand)
+        return None if inner is None else not inner
+    return None
+
+
+def _windows_skip_mark(function: ast.FunctionDef) -> bool:
+    """True when a decorator of ``function`` makes pytest skip it on Windows: the ``posix_only`` mark of the keyword tests, or a
+    ``pytest.mark.skipif(<condition>, ...)`` whose condition is true on Windows (``_true_on_windows``)."""
+    for decorator in function.decorator_list:
+        if isinstance(decorator, ast.Name) and decorator.id == "posix_only":
+            return True
+        if (
+            isinstance(decorator, ast.Call)
+            and _dotted(decorator.func) == "pytest.mark.skipif"
+            and _true_on_windows(decorator.args[0]) is True
+        ):
+            return True
+    return False
+
+
+def _windows_skip_killers() -> list[str]:
+    """The names of the mutants whose killer carries a Windows skip mark (derived from the decorators of the killers, not typed)."""
+    functions: dict[str, dict[str, ast.FunctionDef]] = {}
+    for file, path in ((mm.TEST, RUNNER_TESTS), (mm.KW, KEYWORD_TESTS)):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        functions[file] = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
+    return [m.name for m in mm.M if _windows_skip_mark(functions[m.test_file][m.only_test])]
+
+
+def test_the_header_names_every_mutant_whose_killer_is_skipped_on_windows_derived_from_the_skip_marks():
+    """The header of the mutant list says which mutants survive on Windows. The list between its two marker lines is compared with the one read
+    from the decorators of the killers, so a killer that gets (or loses) a Windows skip mark makes this test fail until the header agrees.
+    A killer that skips INSIDE its body (``pytest.skip(...)``) has no mark: those are named in the prose of the header by hand."""
+    lines = (mm.__doc__ or "").splitlines()
+    begin = lines.index("POSIX-ONLY-MUTANTS-BEGIN")
+    end = lines.index("POSIX-ONLY-MUTANTS-END")
+    named = [line.strip() for line in lines[begin + 1 : end]]
+    derived = _windows_skip_killers()
+    assert len(derived) > 40, f"the skip marks of the killers were not read: {len(derived)} found"
+    assert sorted(named) == sorted(derived), (
+        f"header only: {sorted(set(named) - set(derived))}; marks only: {sorted(set(derived) - set(named))}"
+    )
+    assert len(set(named)) == len(named), "a mutant is named twice in the header"
+    all_names = {m.name for m in mm.M}
+    assert set(named) <= all_names, "the header names a mutant that does not exist"
+    assert "Every other killer is written to run on both systems" not in (mm.__doc__ or ""), (
+        "the header says every other killer runs on both systems: a skip inside a killer's body is not read from a mark"
+    )
 
 
 def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():

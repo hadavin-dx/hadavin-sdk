@@ -34,10 +34,68 @@ Which mutants need what on Windows (only Linux is run in CI; nobody has run this
   FILE link; they skip there, and only there (error 1314), when the account lacks the privilege, and a skipped killer makes the
   mutant SURVIVE in that run). The folder-link case (a junction on Windows, no privilege needed) is a separate test with no mutant:
   on Linux ``os.walk`` never enters a symlinked folder, so that test cannot tell the mutant from the original there.
-- Every other killer is written to run on both systems. The lists above are written by hand from the skip markers of the killers, and only the Linux run in CI checks them.
-  The tree-kill killers use ``taskkill /T`` on Windows; the Windows branch after a normal exit is run on any system with the Windows flag faked.
+- Killers that skip through a MARK (``posix_only``, or ``skipif`` on ``sys.platform`` or ``os.name``): the mutants below SURVIVE on Windows. This list is
+  derived, not typed: ``tests/test_mutation_runner_meta.py`` reads the decorators of every killer and fails when the list between the two marker
+  lines differs from what it reads. The prose above names, by hand, the killers that skip INSIDE their body (``pytest.skip(...)``): those have
+  no mark and no test reads them, and only the Linux run in CI checks the prose.
+POSIX-ONLY-MUTANTS-BEGIN
+runner: a leader reaped by someone else stays unknown
+runner: a child reaped by someone else is read as exit code 0
+runner: a nested run_mutants call is accepted
+runner: a finished run's background process lives on
+runner: a termination signal does not clean up
+runner: the group is killed after its leader was reaped
+runner: a signal during the cleanup cuts it short
+runner: a second signal cuts the cleanup of the first short
+runner: a signal while the child starts orphans it
+runner: a signal while the temp folders go leaves one
+runner: a lock folder that others can enter is accepted
+runner: a private XDG_RUNTIME_DIR is not used for the lock folder
+runner: a link to a private folder counts as a private folder
+runner: the error for an unusable baseline result file is raised inside the except block
+runner: a lock folder of another user is accepted
+runner: what was opened as the lock folder is not checked to be a folder
+runner: the lock folder is opened without the folder and no-link flags
+runner: the lock file is opened by its path, not under the opened folder
+runner: the temp folder is removed and made again at a rebuild
+runner: the temp folder is not checked before a rebuild empties it
+runner: the temp folder is not checked after a rebuild
+runner: the snapshot folder is made without the private helper
+runner: the snapshot folder is not checked after the copy
+runner: the folder of the settings file is not checked
+runner: the settings file is made by the umask
+runner: the result file is made by the umask
+runner: a folder check uses stat and follows a link
+runner: a folder check never raises
+runner: a folder that cannot be looked at is accepted
+runner: a private folder is not put back to 0700
+runner: a private folder is made without the mode
+runner: a private folder is not checked after it is made
+runner: the parts between are made with the default mode
+runner: a file in the way of a part is accepted
+runner: emptying a folder follows a link
+runner: emptying a folder removes the folder
+runner: a private file is not put back to 0600
+runner: a private file is not emptied
+runner: a private file follows a link
+runner: a private file is made with a wide mode first
+runner: the lock folder is made with the default mode
+runner: a lock folder inside the tree is accepted
+runner: the lock folder is not resolved before the tree check
+runner: a file that is not a regular file passes the file check
+runner: a file of a lower user number passes the file check
+runner: a file with the owner run bit passes the file check
+runner: a file with two or three names passes the file check
+runner: a made file is not checked
+runner: a made file that fails the check is not refused
+runner: a temp folder is not checked by its helper
+runner: a temp folder is not put back to 0700 when a umask took owner bits
+runner: a refused temp folder is left behind
+POSIX-ONLY-MUTANTS-END
+- Every killer that is in neither the list above nor the prose carries no Windows skip. The tree-kill killers use ``taskkill /T`` on Windows; the
+  Windows branch after a normal exit is run on any system with the Windows flag faked.
 
-Keyword tests (``tests/test_mutation_runner_keywords.py``): 237 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
+Keyword tests (``tests/test_mutation_runner_keywords.py``): 258 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
 fixture errors, the snapshot of the environment, the lock name). Many tests of that file have no mutant of their own, and this header does NOT
 list them all: a test either guards the test code itself (the guard test of the database address), an old behaviour that no replacement
 can bring back (the check that the old text is gone), a place that one replacement cannot move ("a missing conftest is noticed only at the
@@ -45,11 +103,15 @@ copy" stands for "move the check after ``mkdtemp``": the mutant turns the early 
 neighbouring mutant already breaks (the lock-name property test and the one-spelling test are broken by the grammar mutants, the pass_env
 tests by the masking mutants). Where that matters, the test's own docstring says so.
 
-Round 23 (private folders and files, bare strings, port range, lock folder in the tree, 300 texts): 38 mutants, one per guard. Tests with no
-mutant of their own: the order of the junction checks against ``mkdtemp`` (one replacement cannot move a block; the test checks that no folder
-is made), the order of the secret-count step against the address step (the same), the text of the module docstring and the D-023 limit (the
-text is the guard), and the count of ``mypy --platform win32`` errors (a new POSIX-only name makes the test fail). The two guards of
-``throwaway_hosts`` and ``shown_classes`` that had no mutant before now have one each.
+Round 23 (private folders and files, bare strings, port range, lock folder in the tree, 300 texts): 38 mutants, one per guard. The two guards of
+``throwaway_hosts`` and ``shown_classes`` that had no mutant before got one each.
+
+Round 24 (the files are checked like the folders, every creation site is a helper, class names equal to a secret, the order of the refusals): 21
+mutants. The order of the secret-count step against the address step, and the order of the junction checks against the first temp folder, HAVE
+mutants now ("the address step comes before the count of the secrets", "the junction checks come after the temp folder is made"): a mutant may
+replace several lines at once, so a block can be moved. Tests with no mutant of their own: the text of the module docstring and the D-023 limit
+(the text is the guard), the table test of the ``os.`` and ``signal.`` names (the mypy test and the ``os.fchmod`` test have mutants), and the
+two runs of mypy themselves (skipped where mypy is not installed, so no mutant could depend on them).
 
 Masking (the refusal of odd characters, the plain match, the head and tail beside ``...``): the refusal has one mutant per guard (a quote
 mark, a backslash, a control character below the space, DEL, a non-ASCII character, its first value 128, the whole value, the percent-decoded
@@ -420,12 +482,12 @@ M = [
     kmutant('runner: the unencoded-separator URL passwords are not read', MR, '    decoded += url_decoded\n    plain += url_plain\n', '    decoded += [urlsplit(value).password or ""]\n', 'test_a_url_password_with_unencoded_separators_is_masked', 'an unencoded slash or hash was not hidden in full'),
     kmutant('runner: only the first @ ends the login of a URL', MR, '        while at != -1:\n            found.append(rest[colon + 1 : at])', '        if at != -1:\n            found.append(rest[colon + 1 : at])', 'test_a_url_password_with_unencoded_separators_is_masked', 'an unencoded slash or hash was not hidden in full'),
     kmutant('runner: a text with no secret is rebuilt', MR, '    if not chosen:\n        return text\n', '', 'test_nothing_is_rebuilt_when_no_secret_is_set', 'a text with no secret was rebuilt'),
-    kmutant('runner: a lock file of another user is accepted', MR, '        or info.st_uid != os.getuid()\n', '', 'test_a_lock_file_of_another_user_is_refused', 'a lock file of another user was accepted'),
-    kmutant('runner: a lock file with a wide mode is accepted', MR, '        or stat.S_IMODE(info.st_mode) & 0o177\n', '', 'test_a_lock_file_with_a_wider_mode_is_refused', 'a lock file with a wide mode was accepted'),
-    kmutant('runner: a lock file that is not a regular file is accepted', MR, 'not stat.S_ISREG(info.st_mode)\n        or info.st_uid', 'False\n        or info.st_uid', 'test_a_lock_file_that_is_not_a_regular_file_is_refused', 'a lock file that is not a regular file was accepted'),
+    kmutant('runner: a lock file of another user is accepted', MR, '    if info.st_uid != os.getuid():\n        return "belongs to another user"\n    if stat.S_IMODE(info.st_mode) & 0o177:', '    if stat.S_IMODE(info.st_mode) & 0o177:', 'test_a_lock_file_of_another_user_is_refused', 'a lock file of another user was accepted'),
+    kmutant('runner: a lock file with a wide mode is accepted', MR, '    if stat.S_IMODE(info.st_mode) & 0o177:\n        return "is open', '    if False:\n        return "is open', 'test_a_lock_file_with_a_wider_mode_is_refused', 'a lock file with a wide mode was accepted'),
+    kmutant('runner: a lock file that is not a regular file is accepted', MR, '    if not stat.S_ISREG(info.st_mode):\n        return "is not a regular file"', '    if False:\n        return "is not a regular file"', 'test_a_lock_file_that_is_not_a_regular_file_is_refused', 'a lock file that is not a regular file was accepted'),
     kmutant('runner: the descriptor of the lock folder leaks', MR, '            if folder is not None:\n                os.close(folder)', '            if folder is not None:\n                pass', 'test_the_descriptor_is_closed_when_no_file_object_can_take_it', 'the descriptor stayed open'),
     kmutant('runner: the descriptor leaks when no file object is made', MR, '            os.close(fd)  # no file object took the descriptor over', '            pass  # no file object took the descriptor over', 'test_the_descriptor_is_closed_when_no_file_object_can_take_it', 'the descriptor stayed open'),
-    kmutant('runner: a lock file with two names is accepted', MR, '        or info.st_nlink > 1\n', '', 'test_a_lock_file_with_two_hard_links_is_refused', 'a lock file with two hard links was accepted'),
+    kmutant('runner: a lock file with two names is accepted', MR, '    if info.st_nlink > 1:\n        return "has more', '    if False:\n        return "has more', 'test_a_lock_file_with_two_hard_links_is_refused', 'a lock file with two hard links was accepted'),
     kmutant('runner: a folder is not named as the cause', MR, '    errno.EISDIR: "it is a folder",\n', '', 'test_a_lock_file_that_cannot_be_opened_names_the_cause', 'did not name its cause'),
     kmutant('runner: a not-a-folder path is not named as the cause', MR, '    errno.ENOTDIR: "a part of its path is not a folder",\n', '', 'test_a_lock_file_that_cannot_be_opened_names_the_cause', 'did not name its cause'),
     kmutant('runner: a refused permission is not named as the cause', MR, '    errno.EACCES: _NO_ACCESS,', '    errno.EXDEV: _NO_ACCESS,', 'test_a_lock_file_that_cannot_be_opened_names_the_cause', 'did not name its cause'),
@@ -528,7 +590,7 @@ M = [
     kmutant("runner: a mutant name that holds a secret is shown in the canary message", MR, '    name = _own_text(m.name, MUTANT_HIDDEN, shown.secrets)', '    name = m.name', 'test_the_second_layer_replaces_a_whole_slot_of_caller_text_that_holds_a_secret', 'a mutant name that holds a secret was not replaced whole in the canary message'),
     kmutant("runner: the second layer cuts the secret out of a slot instead of replacing the slot", MR, '    return fixed if _holds_secret(text, secrets) else text', '    return _masked(text, secrets)', 'test_a_test_id_that_holds_the_password_is_the_fixed_text_and_never_a_name_with_a_piece_cut_out', 'a test id was shown with a piece cut out of a file name'),
     kmutant("runner: a bare assert line gets no fixed word", MR, '    if _BARE_ASSERT.match(raw.strip()):\n        return ASSERT_SHOWN\n', '', 'test_a_bare_assert_line_shows_the_fixed_word_assert', 'a bare assert line did not give the fixed word'),
-    kmutant("runner: a name of Python itself goes through the second layer", MR, '    if head in _BUILT_IN_CLASSES:\n        return head\n', '', 'test_a_name_of_python_itself_is_shown_whole_also_when_it_holds_the_password', 'a name of Python itself was replaced'),
+    kmutant("runner: a name of Python itself goes through the second layer", MR, '    if head in _BUILT_IN_CLASSES:\n        folded = head.casefold()\n        equal = any(secret.casefold() == folded for secret in shown.secrets)\n        return CLASS_HIDDEN if equal else head\n', '', 'test_a_name_of_python_itself_is_shown_whole_also_when_it_holds_the_password', 'a name of Python itself was replaced'),
     kmutant("runner: a tests entry written with a leading dot is not put in the id form", MR, '    return PurePosixPath(test_path.replace("\\\\", "/")).as_posix().removesuffix(".py")', '    return test_path.replace("\\\\", "/").removesuffix(".py")', 'test_a_tests_entry_written_with_a_leading_dot_slash_still_shows_its_ids', 'did not give the id form of pytest'),
     kmutant("runner: the function that starts a child does not check the address", MR, '            _refuse_unsafe_address(name, source[name], hosts)\n            env[name] = source[name]', '            env[name] = source[name]', 'test_the_function_that_starts_a_child_checks_the_address_itself', 'the function that starts a child handed over an unchecked address'),
     kmutant("runner: a scheme in upper case is accepted", MR, 'rf"postgres(?:ql)?://', 'rf"(?i:postgres(?:ql)?)://', 'test_the_scheme_and_the_keys_are_lower_case_and_the_two_options_take_listed_values', 'a scheme that is not in lower case was accepted'),
@@ -553,7 +615,7 @@ M = [
     kmutant('judge: judge_report counts a fixture or collection error as a kill', MU, '        if rc == 1 and (report.fixture_failed or report.collection_failed)', '        if False', 'test_judge_report_never_counts_a_fixture_or_collection_error_as_a_kill_and_judge_alone_would', 'a fixture or collection error was a kill'),
     kmutant('runner: every ERROR row with no failing test says no test was named', MR, '(NO_TEST_NAMED if rc == 1 else f"EXIT CODE {rc}")', '(NO_TEST_NAMED)', 'test_an_error_row_with_no_failing_test_names_the_exit_code_unless_it_is_one', 'did not name it'),
     kmutant('runner: a JUnit file that cannot be read stops the run', MR, '_UNUSABLE_JUNIT = (\n    OSError,\n', '_UNUSABLE_JUNIT = (\n', 'test_an_unreadable_junit_file_is_that_mutants_error_row_and_the_run_goes_on', 'denied', allow_crash=True, crash_type='PermissionError'),
-    kmutant('runner: a lock folder of another user is accepted', MR, '    if info.st_uid != os.getuid():\n        return "belongs', '    if False:\n        return "belongs', 'test_a_lock_folder_of_another_user_is_refused', 'a lock folder of another user was accepted'),
+    kmutant('runner: a lock folder of another user is accepted', MR, '    if info.st_uid != os.getuid():\n        return "belongs to another user"\n    if stat.S_IMODE(info.st_mode) & 0o077:', '    if False:\n        return "belongs to another user"\n    if stat.S_IMODE(info.st_mode) & 0o077:', 'test_a_lock_folder_of_another_user_is_refused', 'a lock folder of another user was accepted'),
     kmutant('runner: what was opened as the lock folder is not checked to be a folder', MR, '    if not stat.S_ISDIR(info.st_mode):\n        return "is not a folder"', '    if False:\n        return "is not a folder"', 'test_what_was_opened_as_the_lock_folder_must_be_a_folder', 'something that is not a folder was accepted'),
     kmutant('runner: the lock folder is opened without the folder and no-link flags', MR, 'os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW', 'os.O_RDONLY', 'test_the_lock_folder_is_opened_as_a_folder_without_following_a_link_and_the_file_is_made_under_it', 'the lock folder was not opened as a folder without following a link'),
     kmutant('runner: the lock file is opened by its path, not under the opened folder', MR, 'fd = os.open(name, flags, 0o600, dir_fd=folder)', 'fd = os.open(_lock_dir() / name, flags, 0o600)', 'test_the_lock_folder_is_opened_as_a_folder_without_following_a_link_and_the_file_is_made_under_it', 'the lock file was opened by a path'),
@@ -562,11 +624,11 @@ M = [
     kmutant('runner: the temp folder is not checked after a rebuild', MR, '                )\n        _refuse_unless_private(tmp, "temp folder")\n\n    def fresh', '                )\n\n    def fresh', 'test_the_temp_folder_is_checked_after_a_rebuild_and_before_anything_is_removed_in_it', 'after the rebuild'),
     kmutant('runner: the snapshot folder is made without the private helper', MR, '        _make_private_dir(snap, "snapshot folder")', '        os.mkdir(snap)', 'test_every_folder_and_file_the_run_makes_is_private_under_umask_0_also_after_a_rebuild', 'were not private while it ran'),
     kmutant('runner: the snapshot folder is not checked after the copy', MR, '        _refuse_unless_private(snap, "snapshot folder")\n        _refuse_links_out(snap)', '        _refuse_links_out(snap)', 'test_the_snapshot_folder_is_checked_after_the_copy', 'was not checked after the copy'),
-    kmutant('runner: the folder of the settings file is not checked', MR, '        _refuse_unless_private(ini_dir, "folder of the pytest settings file")\n', '', 'test_the_folder_of_the_settings_file_is_checked', 'was not checked'),
-    kmutant('runner: the settings file is made by the umask', MR, '        _make_private_file(ini)\n', '        ini.write_text("", encoding="utf-8")\n', 'test_every_folder_and_file_the_run_makes_is_private_under_umask_0_also_after_a_rebuild', 'were not private while it ran'),
-    kmutant('runner: the result file is made by the umask', MR, '        _make_private_file(junit)\n', '        open(junit, "w").close()\n', 'test_every_folder_and_file_the_run_makes_is_private_under_umask_0_also_after_a_rebuild', 'were not private while it ran'),
+    kmutant('runner: the folder of the settings file is not checked', MR, '        ini_dir = _make_private_temp_dir("mutant_ini_", "folder of the pytest settings file")\n', '        ini_dir = Path(tempfile.mkdtemp(prefix="mutant_ini_"))\n', 'test_the_folder_of_the_settings_file_is_checked', 'was not checked'),
+    kmutant('runner: the settings file is made by the umask', MR, '        _make_private_file(ini, "pytest settings file")\n', '        ini.write_text("", encoding="utf-8")\n', 'test_every_folder_and_file_the_run_makes_is_private_under_umask_0_also_after_a_rebuild', 'were not private while it ran'),
+    kmutant('runner: the result file is made by the umask', MR, '        _make_private_file(junit, "result file")\n', '        open(junit, "w").close()\n', 'test_every_folder_and_file_the_run_makes_is_private_under_umask_0_also_after_a_rebuild', 'were not private while it ran'),
     kmutant('runner: a folder check uses stat and follows a link', MR, '        problem = _dir_problem(os.lstat(path))', '        problem = _dir_problem(os.stat(path))', 'test_a_folder_that_is_not_private_is_refused_with_its_reason', 'link'),
-    kmutant('runner: a folder check never raises', MR, '    if problem:\n        raise RuntimeError(f"the {what}', '    if False:\n        raise RuntimeError(f"the {what}', 'test_a_folder_that_is_not_private_is_refused_with_its_reason', 'was accepted'),
+    kmutant('runner: a folder check never raises', MR, '``except`` block: the error keeps no other exception in its chain\n    if problem:\n        raise RuntimeError(f"the {what}', '``except`` block: the error keeps no other exception in its chain\n    if False:\n        raise RuntimeError(f"the {what}', 'test_a_folder_that_is_not_private_is_refused_with_its_reason', 'was accepted'),
     kmutant('runner: a folder that cannot be looked at is accepted', MR, '        problem = f"could not be looked at ({type(exc).__name__})"', '        problem = ""', 'test_a_folder_that_is_not_private_is_refused_with_its_reason', 'a missing folder was accepted'),
     kmutant('runner: a private folder is not put back to 0700', MR, '    if not _IS_WINDOWS:\n        os.chmod(path, 0o700)\n    _refuse_unless_private(path, what)', '    _refuse_unless_private(path, what)', 'test_a_private_folder_is_made_with_mode_0700_whatever_the_umask_and_never_over_a_name', 'under umask'),
     kmutant('runner: a private folder is made without the mode', MR, '    os.mkdir(path, 0o700)\n    if not _IS_WINDOWS:', '    os.mkdir(path)\n    if not _IS_WINDOWS:', 'test_a_private_folder_is_made_with_mode_0700_whatever_the_umask_and_never_over_a_name', 'was not given the mode 0700'),
@@ -575,7 +637,7 @@ M = [
     kmutant('runner: a file in the way of a part is accepted', MR, '            if not here.is_dir():\n                raise', '            if False:\n                raise', 'test_the_parts_between_are_made_private_too_and_a_file_in_the_way_is_refused', 'a file in the way of a part was accepted'),
     kmutant('runner: emptying a folder follows a link', MR, '        if child.is_dir(follow_symlinks=False):', '        if child.is_dir():', 'test_emptying_a_folder_keeps_the_folder_and_its_mode_and_follows_no_link', 'was not emptied'),
     kmutant('runner: emptying a folder removes the folder', MR, '            with contextlib.suppress(OSError):\n                os.unlink(child.path)', '            with contextlib.suppress(OSError):\n                os.unlink(child.path)\n    os.rmdir(folder)', 'test_emptying_a_folder_keeps_the_folder_and_its_mode_and_follows_no_link', 'folder itself was removed'),
-    kmutant('runner: a private file is not put back to 0600', MR, '        if not _IS_WINDOWS:\n            os.fchmod(fd, 0o600)', '        if False:\n            os.fchmod(fd, 0o600)', 'test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_no_link', 'had mode'),
+    kmutant('runner: a private file is not put back to 0600', MR, '            os.chmod(fd, 0o600)\n            problem = _file_problem(os.fstat(fd))', '            problem = _file_problem(os.fstat(fd))', 'test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_no_link', 'had mode'),
     kmutant('runner: a private file is not emptied', MR, '    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC', '    flags = os.O_WRONLY | os.O_CREAT', 'test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_no_link', 'was not made private and empty'),
     kmutant('runner: a private file follows a link', MR, '    flags |= getattr(os, "O_NOFOLLOW", 0)\n', '    flags |= 0\n', 'test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_no_link', 'a link under the name of the file was followed'),
     kmutant('runner: a private file is made with a wide mode first', MR, '    fd = os.open(path, flags, 0o600)\n    try:', '    fd = os.open(path, flags, 0o666)\n    try:', 'test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_no_link', 'before it was made private'),
@@ -595,6 +657,27 @@ M = [
     kmutant('runner: the lock folder is not resolved before the tree check', MR, '    lock = _lock_dir().resolve()', '    lock = _lock_dir()', 'test_a_lock_folder_inside_the_tree_under_test_is_refused', 'inside the tree'),
     kmutant('runner: the secrets are counted with a limit one too high', MR, '        if len(bases) > MAX_SECRETS:', '        if len(bases) > MAX_SECRETS + 1:', 'test_exactly_300_texts_to_search_for_are_accepted_and_301_are_refused', 'were accepted'),
     kmutant('runner: the secrets are counted with a limit one too low', MR, '        if len(bases) > MAX_SECRETS:', '        if len(bases) >= MAX_SECRETS:', 'test_exactly_300_texts_to_search_for_are_accepted_and_301_are_refused', '300 texts to search for were refused'),
+    kmutant('runner: a file that is not a regular file passes the file check', MR, '    if not stat.S_ISREG(info.st_mode):\n        return "is not a regular file"\n    if info.st_uid != os.getuid():\n        return "belongs to another user"\n    if stat.S_IMODE(info.st_mode) & 0o177:\n        return "is open to group or others (it must', '    if stat.S_ISDIR(info.st_mode):\n        return "is not a regular file"\n    if info.st_uid != os.getuid():\n        return "belongs to another user"\n    if stat.S_IMODE(info.st_mode) & 0o177:\n        return "is open to group or others (it must', 'test_a_file_that_is_not_private_is_refused_with_its_reason', 'gave'),
+    kmutant('runner: a file of a lower user number passes the file check', MR, '    if info.st_uid != os.getuid():\n        return "belongs to another user"\n    if stat.S_IMODE(info.st_mode) & 0o177:\n        return "is open to group or others (it must', '    if info.st_uid < os.getuid():\n        return "belongs to another user"\n    if stat.S_IMODE(info.st_mode) & 0o177:\n        return "is open to group or others (it must', 'test_a_file_that_is_not_private_is_refused_with_its_reason', 'gave'),
+    kmutant('runner: a file with the owner run bit passes the file check', MR, '    if stat.S_IMODE(info.st_mode) & 0o177:\n        return "is open to group or others (it must', '    if stat.S_IMODE(info.st_mode) & 0o077:\n        return "is open to group or others (it must', 'test_a_file_that_is_not_private_is_refused_with_its_reason', 'gave'),
+    kmutant('runner: a file with two or three names passes the file check', MR, '    if info.st_nlink > 1:\n        return "has more than one name"\n    return ""', '    if info.st_nlink > 2:\n        return "has more than one name"\n    return ""', 'test_a_file_that_is_not_private_is_refused_with_its_reason', 'gave'),
+    kmutant('runner: a made file is not checked', MR, '            problem = _file_problem(os.fstat(fd))\n    finally:', '            problem = ""\n    finally:', 'test_a_made_private_file_is_checked_on_the_open_file_and_a_second_name_is_refused', 'was accepted'),
+    kmutant('runner: a made file that fails the check is not refused', MR, '    if problem:\n        raise RuntimeError(f"the {what} of this run {problem}")\n\n\ndef _lock_dir', '    if False:\n        raise RuntimeError(f"the {what} of this run {problem}")\n\n\ndef _lock_dir', 'test_a_made_private_file_is_checked_on_the_open_file_and_a_second_name_is_refused', 'was accepted'),
+    kmutant('runner: a temp folder is not checked by its helper', MR, '        _refuse_unless_private(path, what)\n        checked = True', '        checked = True', 'test_a_temp_folder_is_made_by_the_one_helper_and_checked_and_a_refused_one_is_removed', 'was accepted'),
+    kmutant('runner: a temp folder is not put back to 0700 when a umask took owner bits', MR, '        if not _IS_WINDOWS and stat.S_IMODE(os.lstat(path).st_mode) & 0o700 != 0o700:\n            os.chmod(path, 0o700)', '        if False:\n            os.chmod(path, 0o700)', 'test_a_temp_folder_is_made_by_the_one_helper_and_checked_and_a_refused_one_is_removed', 'under umask 0277'),
+    kmutant('runner: a refused temp folder is left behind', MR, '        if not checked:\n            shutil.rmtree(path, ignore_errors=True)\n    return path', '        if not checked:\n            pass\n    return path', 'test_a_temp_folder_is_made_by_the_one_helper_and_checked_and_a_refused_one_is_removed', 'was left behind'),
+    kmutant('runner: the tests folder of the copy is made without the private helper', MR, '        _make_private_dir(tmp / "tests", "tests folder")', '        os.mkdir(tmp / "tests", 0o700)', 'test_the_temp_folder_the_tests_folder_and_the_settings_folder_are_made_by_the_helpers', 'folders made by the helper'),
+    kmutant('runner: the temp folder is made without the private helper', MR, '            made.append(_make_private_temp_dir("mutants_", "temp folder"))', '            made.append(Path(tempfile.mkdtemp(prefix="mutants_")))', 'test_the_temp_folder_the_tests_folder_and_the_settings_folder_are_made_by_the_helpers', 'mkdtemp was called outside the helper'),
+    kmutant('runner: a creation site moved out of the helpers', MR, '    os.mkdir(path, 0o700)\n    if not _IS_WINDOWS:\n        os.chmod(path, 0o700)\n    _refuse_unless_private(path, what)\n\n\ndef _make_private_temp_dir', '    os.mkdir(path, 0o700)\n    if not _IS_WINDOWS:\n        os.chmod(path, 0o700)\n    _refuse_unless_private(path, what)\n    Path(path).joinpath("note").write_text("x", encoding="utf-8")\n\n\ndef _make_private_temp_dir', 'test_every_folder_and_file_the_runner_creates_is_made_by_one_of_the_helpers', 'a creation site that is not a private helper'),
+    kmutant('runner: os.fchmod is used again', MR, '            # ``chmod`` on the descriptor: ``os.fchmod`` is unknown to mypy on Windows before Python 3.13\n            os.chmod(fd, 0o600)', '            os.fchmod(fd, 0o600)', 'test_the_runner_does_not_call_os_fchmod_which_mypy_does_not_know_on_windows_before_python_3_13', 'was used again'),
+    kmutant('runner: a built-in class name equal to a secret is shown', MR, '    if head in _BUILT_IN_CLASSES:\n        folded = head.casefold()\n        equal = any(secret.casefold() == folded for secret in shown.secrets)\n        return CLASS_HIDDEN if equal else head\n', '    if head in _BUILT_IN_CLASSES:\n        return head\n', 'test_a_password_equal_to_the_class_the_child_raises_is_not_in_first_lines', 'was shown as the class of the failing line'),
+    kmutant('runner: a built-in class name equal to a secret in another letter case is shown', MR, 'secret.casefold() == folded for secret in shown.secrets', 'secret == head for secret in shown.secrets', 'test_a_password_equal_to_a_built_in_class_name_is_not_shown_as_the_class', 'in lower case was shown as the class'),
+    kmutant('runner: a built-in class name is hidden for any secret that holds it', MR, 'secret.casefold() == folded for secret in shown.secrets', 'folded in secret.casefold() for secret in shown.secrets', 'test_a_password_that_is_only_a_piece_of_a_class_name_does_not_hide_the_class', 'was hidden for a password that is a piece of it'),
+    kmutant('runner: a bare string for crash_markers is read letter by letter', MR, '        if isinstance(self.crash_markers, str):\n            raise TypeError("crash_markers is', '        if False:\n            raise TypeError("crash_markers is', 'test_a_bare_string_for_crash_markers_of_a_mutant_is_a_type_error_not_letters', 'was read letter by letter'),
+    kmutant('runner: connect_timeout may have six digits', MR, '"connect_timeout": re.compile(r"[0-9]{1,5}"),', '"connect_timeout": re.compile(r"[0-9]{1,6}"),', 'test_connect_timeout_takes_one_to_five_digits_in_the_texts_and_in_the_code', 'connect_timeout='),
+    kmutant('runner: the three bare-string guards come after the path check', MR, '    _refuse_bare_string(tests, "tests")\n    _refuse_bare_string(extra_dirs, "extra_dirs")\n    _refuse_bare_string(only, "only")\n    for t in (*tests, *extra_dirs):\n        _relative(t)\n', '    for t in (*tests, *extra_dirs):\n        _relative(t)\n    _refuse_bare_string(tests, "tests")\n    _refuse_bare_string(extra_dirs, "extra_dirs")\n    _refuse_bare_string(only, "only")\n', 'test_the_order_of_the_bare_string_guards_is_the_one_the_docstring_gives', 'only is a sequence'),
+    kmutant('runner: the address step comes before the count of the secrets', MR, '    secrets = _secret_values(env_names, environ)\n    for env_name in env_names:  # a variable that is present, also with an empty text, must hold an address the check accepts\n        if env_name in environ:\n            _refuse_unsafe_address(env_name, environ[env_name], hosts)\n', '    for env_name in env_names:  # a variable that is present, also with an empty text, must hold an address the check accepts\n        if env_name in environ:\n            _refuse_unsafe_address(env_name, environ[env_name], hosts)\n    secrets = _secret_values(env_names, environ)\n', 'test_the_refusals_come_in_the_order_the_docstring_gives', 'was not the refusal the docstring gives'),
+    kmutant('runner: the junction checks come after the temp folder is made', MR, '        _refuse_junctions(root, "src")\n        for d in extra_dirs:\n            if _inside(root, d).exists():\n                _refuse_junctions(root, d)\n        with _signals_held():\n            made.append(_make_private_temp_dir("mutants_", "temp folder"))\n', '        with _signals_held():\n            made.append(_make_private_temp_dir("mutants_", "temp folder"))\n        _refuse_junctions(root, "src")\n        for d in extra_dirs:\n            if _inside(root, d).exists():\n                _refuse_junctions(root, d)\n', 'test_a_junction_is_refused_before_any_folder_is_made', 'a junction was refused only after a folder was made'),
 ]  # fmt: skip
 
 
