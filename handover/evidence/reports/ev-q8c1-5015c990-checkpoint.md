@@ -1,0 +1,1 @@
+checkpoint (start 22:40:07 UTC): setup done; ruff check/format, bandit, scan, policy_page --check, stage_mutants 37/37, gitleaks all rc=0. Own pg16 on 56731 up. Full pytest launched via heavy.sh. Note: uv sync --no-build failed (editable project needs a local build); ran without --no-build.
