@@ -149,8 +149,10 @@ NEVER_TYPES_BY_PLATFORM = {
 # The longest time a dated entry (a pending name, claim or kind) may stand before a person decides again. The
 # tests read it from here, so there is one number.
 MAX_PENDING_DAYS = 92
-# Words that say a statement of fact has no vendor source or was never checked. A `reason` or `note` that holds
-# one of them must also list the statement under `claims_unverified`, which the page shows and the tests date.
+# A phrase list, not proof: words that say a statement of fact has no vendor source or was never checked. A
+# `reason` or `note` that holds one of them must also list the statement under `claims_unverified`. This is only
+# an extra tripwire. The closed rule is `NOTE_CLASSES`: every note and every reason must have a class, and a
+# reason or note with no class is refused whatever words it uses.
 UNCHECKED_WORDING = re.compile(
     r"not found in a vendor source|nobody has checked|not been checked|not yet checked|unchecked|unverified",
     re.IGNORECASE,
@@ -715,7 +717,10 @@ def data_problems(root: Path | None = None) -> list[str]:
             policies[kind] = policy
     out += cross_problems(policies) + stray_modules(root)
     try:
-        out += source_problems(policies, set(source_ids(root)))
+        known = set(source_ids(root))
+        out += source_problems(policies, known)
+        out += note_problems(policies, NOTE_CLASSES, known)
+        out += claim_mark_problems(policies, claim_readers(root))
     except PolicyError as exc:
         out.append(str(exc))
     return out
@@ -744,11 +749,14 @@ def cross_problems(policies: dict[str, Policy]) -> list[str]:
 
 # A Vault policy path as a small automaton, so that two paths are compared by whether ONE concrete path fits
 # both (a real overlap), not by one sample string each. Characters: a literal, `+` (one or more characters that
-# are not `/`), a last `*` (any characters, also none), and the setting `{path_prefix}` (one or more parts, each
-# ending in `/`; the setting's own grammar, GRAMMAR["path_prefix"]). Every other `{setting}` and `<NAME>` stays
-# one fixed word (its own name) the same way in both paths, so equal placeholders stay equal. Source: V-POL,
-# V-ACL (the matching rule); the automaton is this file's own reading of it.
+# are not `/`) and a last `*` (any characters, also none). The setting `{path_prefix}` is ONE value in a
+# deployment (one or more parts, each ending in `/`; GRAMMAR["path_prefix"]), so both paths are given the SAME
+# number of parts for it, tried from 1 upward (`vault_paths_overlap`); the characters of its parts are not
+# required to be equal in both, so a never line is flagged when it MAY overlap (the safe side). Every other
+# `{setting}` and `<NAME>` stays one fixed word (its own name) the same way in both paths, so equal placeholders
+# stay equal. Source: V-POL, V-ACL (the matching rule); the automaton is this file's own reading of it.
 _ANY, _NOT_SLASH = "any", "not-slash"
+_PREFIX = "{path_prefix}"
 
 
 def _vault_form(resource: str) -> str:
@@ -761,7 +769,7 @@ def _vault_form(resource: str) -> str:
 
 
 def _vault_automaton(path: str) -> tuple[dict[int, list[tuple[str, int]]], int]:
-    """(moves per state, final state) of one policy path in `_vault_form`."""
+    """(moves per state, final state) of one policy path in `_vault_form` with no `{path_prefix}` left."""
     moves: dict[int, list[tuple[str, int]]] = {}
     count = 0
 
@@ -775,14 +783,7 @@ def _vault_automaton(path: str) -> tuple[dict[int, list[tuple[str, int]]], int]:
 
     cur, i = 0, 0
     while i < len(path):
-        if path.startswith("{path_prefix}", i):
-            part, after = new(), new()
-            edge(cur, _NOT_SLASH, part)
-            edge(part, _NOT_SLASH, part)
-            edge(part, "/", after)
-            edge(after, _NOT_SLASH, part)  # a further part
-            cur, i = after, i + len("{path_prefix}")
-        elif path[i] == "+":
+        if path[i] == "+":
             nxt = new()
             edge(cur, _NOT_SLASH, nxt)
             edge(nxt, _NOT_SLASH, nxt)
@@ -806,8 +807,8 @@ def _both_take(a: str, b: str) -> bool:
     return a == b or (b == _NOT_SLASH and a != "/")
 
 
-def vault_paths_overlap(first: str, second: str) -> bool:
-    """True when some concrete path is allowed by both policy paths (each given in `_vault_form`)."""
+def _overlap_of_forms(first: str, second: str) -> bool:
+    """True when some concrete path fits two policy paths that hold no `{path_prefix}`."""
     one, end_one = _vault_automaton(first)
     two, end_two = _vault_automaton(second)
     seen, todo = {(0, 0)}, [(0, 0)]
@@ -821,6 +822,20 @@ def vault_paths_overlap(first: str, second: str) -> bool:
                     seen.add((nxt_one, nxt_two))
                     todo.append((nxt_one, nxt_two))
     return False
+
+
+def vault_paths_overlap(first: str, second: str) -> bool:
+    """True when some concrete path is allowed by both policy paths (each given in `_vault_form`). A
+    `{path_prefix}` in either is one value of `k` parts (each part `+/`), the same `k` in both, for k from 1 up to
+    the number of slashes of the two paths plus one (a longer prefix cannot fit the other path, and a path with a
+    last `*` that fits at a longer prefix also fits at a shorter one)."""
+    if _PREFIX not in first and _PREFIX not in second:
+        return _overlap_of_forms(first, second)
+    most = first.count("/") + second.count("/") + 1
+    return any(
+        _overlap_of_forms(first.replace(_PREFIX, "+/" * k), second.replace(_PREFIX, "+/" * k))
+        for k in range(1, most + 1)
+    )
 
 
 def never_covers_grant_problems(kind: str, policy: Policy) -> list[str]:
@@ -1051,10 +1066,80 @@ def builder_marks(root: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
 # one of these ids it says so: a reader must not take the id for a checked source.
 BUILDER_ONLY_SOURCES, PARTLY_BUILDER_ONLY_SOURCES = builder_marks(DATA_ROOT)
 
+# The two marks of a claim that nobody has checked against the vendor. Which claim gets which mark is written in
+# the head of the sources file (one source, read by `claim_readers`), never in this tool.
+MARK_BUILDER_READ = "builder read the passage"
+MARK_NOBODY_READ = "nobody has read the passage"
+_CLAIM_LINES = {
+    "CLAIM-READ-BY-BUILDER": MARK_BUILDER_READ,
+    "CLAIM-READ-BY-NOBODY": MARK_NOBODY_READ,
+}
+_CLAIM_SEPARATOR = " ;; "
+
+
+def claim_readers(root: Path) -> dict[str, tuple[str, ...]]:
+    """{mark: the starts of the claim texts that carry it}, from the two lines `# CLAIM-READ-BY-BUILDER:` and
+    `# CLAIM-READ-BY-NOBODY:` in the head of the sources file (the starts are separated by ` ;; `)."""
+    try:
+        lines = (root / SOURCES).read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise PolicyError(f"{SOURCES}: cannot be read ({type(exc).__name__})") from None
+    found: dict[str, tuple[str, ...]] = {}
+    for tag, mark in _CLAIM_LINES.items():
+        rows = [ln for ln in lines if ln.startswith(f"# {tag}:")]
+        if len(rows) != 1:
+            raise PolicyError(f"{SOURCES}: needs exactly one line starting `# {tag}:`")
+        starts = tuple(x.strip() for x in rows[0].split(":", 1)[1].split(_CLAIM_SEPARATOR))
+        if not all(starts):
+            raise PolicyError(f"{SOURCES}: the `# {tag}:` line holds an empty claim start")
+        found[mark] = starts
+    return found
+
+
+CLAIM_READERS = claim_readers(DATA_ROOT)
+
+
+def claim_mark(text: str, readers: dict[str, tuple[str, ...]] | None = None) -> str:
+    """The one mark of a claim text: `MARK_BUILDER_READ` or `MARK_NOBODY_READ`. A claim that starts like no listed
+    start, or like starts of both marks, is refused (PolicyError): nothing is shown as read by default."""
+    readers = CLAIM_READERS if readers is None else readers
+    marks = [m for m, starts in readers.items() if any(text.startswith(x) for x in starts)]
+    if len(marks) != 1:
+        raise PolicyError(
+            f"claim {text[:60]!r} has {len(marks)} marks in the head of {SOURCES}, needs exactly one"
+        )
+    return marks[0]
+
+
+def claim_mark_problems(
+    policies: dict[str, Policy], readers: dict[str, tuple[str, ...]] | None = None
+) -> list[str]:
+    """Every claim has one mark, and every listed start belongs to a claim (a stale start is refused)."""
+    readers = CLAIM_READERS if readers is None else readers
+    out, used = [], set()
+    for kind, policy in policies.items():
+        for e in (*policy.grants, *policy.free, *policy.never):
+            for claim in e.claims_unverified:
+                try:
+                    claim_mark(claim, readers)
+                except PolicyError as exc:
+                    out.append(f"{kind}: {exc}")
+                used |= {x for starts in readers.values() for x in starts if claim.startswith(x)}
+    if set(policies) != set(KIND_MODULES):
+        return out  # a kind whose module could not be read is reported once, by its own problem
+    return out + [
+        f"{SOURCES}: the claim start {x!r} matches no claim: delete it"
+        for x in sorted({x for starts in readers.values() for x in starts} - used)
+    ]
+
+
+def _claim_text(claim: str) -> str:
+    return f"{claim} ({claim_mark(claim)})"
+
 
 def _checked_cell(verified: tuple[str, ...] | None, claim: bool = False) -> str:
-    """`claim`: the entry carries an unchecked claim, so a source of which only a passage was read by the builder
-    says so too."""
+    """`claim`: the entry carries an unchecked claim, so a source of which only a passage was read says that the
+    passage behind the claim is shown in the claims text of the same entry."""
     if verified is None:
         return "not yet checked"
     ids = ", ".join(
@@ -1062,7 +1147,7 @@ def _checked_cell(verified: tuple[str, ...] | None, claim: bool = False) -> str:
         + (
             " (builder only)"
             if s in BUILDER_ONLY_SOURCES
-            else " (partly builder only: see claims)"
+            else " (the passage behind the claim: see claims)"
             if claim and s in PARTLY_BUILDER_ONLY_SOURCES
             else ""
         )
@@ -1104,18 +1189,175 @@ NOTE_CLASSES: dict[tuple[str, str], tuple] = {
         "sources",
         ("K-RBAC", "K-SRC", "K-SSRR"),
     ),
+    # The `reason` of every grant, free request and never-list line, written out in full (a reason matches only
+    # its exact text, so a reworded reason has no class until a person decides). Classes: `code` (what this
+    # kind's code asks for, held by the call check); `sources` (a statement about the vendor, backed by the source
+    # ids in `verified` of the SAME entry, at least one); `claim` (a fragment of a text of the entry's own
+    # `claims_unverified`); `pending` (a statement about the vendor with no source yet: the entry's `verified`
+    # is None and the page says "not yet checked").
+    (
+        "secrets/vault",
+        "reason:reads one named secret; the right also covers every secret directly under the prefix, each with every older version",
+    ): ("claim", "also serves a request for an older version"),
+    (
+        "secrets/vault",
+        "reason:the sign-in request of auth `approle` and `kubernetes` carries no token; auth `token` sends no sign-in request",
+    ): ("sources",),
+    ("secrets/vault", "reason:the built-in policy that may do everything"): ("sources",),
+    ("secrets/vault", "reason:the server's own settings: mounts, policies, audit devices"): (
+        "sources",
+    ),
+    ("secrets/vault", "reason:the reader could replace, change or remove what it reads"): (
+        "sources",
+    ),
+    ("secrets/vault", "reason:marks versions of a secret as deleted"): ("sources",),
+    ("secrets/vault", "reason:brings deleted versions of a secret back"): ("pending",),
+    (
+        "secrets/vault",
+        "reason:shows the field names inside secrets this kind was not asked to read",
+    ): ("pending",),
+    ("secrets/vault", "reason:lists every secret name and can delete every version of a secret"): (
+        "sources",
+    ),
+    ("secrets/vault", "reason:removes versions of a secret for good"): ("sources",),
+    ("signer/vault_transit", "reason:signs each audit checkpoint and the start-up test message"): (
+        "code",
+    ),
+    ("signer/vault_transit", "reason:reads the pinned version's public key and the key type"): (
+        "code",
+    ),
+    ("signer/vault_transit", "reason:the built-in policy that may do everything"): ("sources",),
+    ("signer/vault_transit", "reason:the server's own settings: mounts, policies, audit devices"): (
+        "sources",
+    ),
+    ("signer/vault_transit", "reason:deletes the key that signs the audit trail"): ("sources",),
+    ("signer/vault_transit", "reason:can allow the key to be deleted or exported"): ("sources",),
+    ("signer/vault_transit", "reason:copies the private key out"): ("sources",),
+    ("signer/vault_transit", "reason:copies the private key out, wrapped for another system"): (
+        "pending",
+    ),
+    (
+        "signer/vault_transit",
+        "reason:makes a new key version, so new signatures no longer match the pinned version",
+    ): ("sources",),
+    ("signer/vault_transit", "reason:removes old key versions for good"): ("sources",),
+    ("signer/vault_transit", "reason:replaces a key with one from a backup"): ("sources",),
+    ("signer/vault_transit", "reason:replaces the named key with one from a backup"): ("sources",),
+    ("signer/vault_transit", "reason:copies the private key out as a backup"): ("sources",),
+    ("source/kubernetes", "reason:reads deployments, their rollout revision and images"): ("code",),
+    ("source/kubernetes", "reason:reads events in the time window"): ("code",),
+    ("source/kubernetes", "reason:reads one pod's log lines"): ("code",),
+    (
+        "source/kubernetes",
+        "reason:asks the cluster what this identity may do; the start-up check treats it as harmless (that it changes nothing in the cluster was not found in a vendor source)",
+    ): ("claim", "changes nothing in the cluster"),
+    ("source/kubernetes", "reason:a built-in role that may write"): ("pending",),
+    (
+        "source/kubernetes",
+        "reason:a write verb: this source only reads. One exception, the same one the start-up check makes: `create` on the self-review resources (`selfsubjectrulesreviews`, `selfsubjectaccessreviews`, `selfsubjectreviews`), which the start-up check treats as harmless; that these three requests write nothing was not found in a vendor source",
+    ): ("claim", "writes nothing"),
+    ("source/kubernetes", "reason:a write verb: this source only reads"): ("sources",),
+    ("source/kubernetes", "reason:lets the identity widen its own rights"): ("sources",),
+    ("source/kubernetes", "reason:lets the identity act as another one"): ("sources",),
+    ("source/kubernetes", "reason:opens a shell or a tunnel into a workload"): ("sources",),
+    ("source/kubernetes", "reason:reading a secret reveals its value"): ("sources",),
 }
+
+
+def _class_keys(
+    kind: str, text: str, classes: dict[tuple[str, str], tuple]
+) -> list[tuple[str, str]]:
+    """The keys of `classes` that name this note: a note by the start of its text, a reason (`reason:` and the
+    full text) only by its exact text."""
+    if text.startswith("reason:"):
+        return [k for k in classes if k[0] == kind and k[1] == text]
+    return [
+        k
+        for k in classes
+        if k[0] == kind and not k[1].startswith("reason:") and text.startswith(k[1])
+    ]
 
 
 def note_class(kind: str, text: str) -> tuple | None:
     """The one class of a note, or None when it has none (or more than one)."""
-    keys = [k for k in NOTE_CLASSES if k[0] == kind and text.startswith(k[1])]
+    keys = _class_keys(kind, text, NOTE_CLASSES)
     return NOTE_CLASSES[keys[0]] if len(keys) == 1 else None
+
+
+def _note_items(policy: Policy) -> list[tuple[str, Grant | Free | Never | None]]:
+    """(text, entry) for every note of a kind (entry None), every free-request note and every reason."""
+    items: list[tuple[str, Grant | Free | Never | None]] = [(n, None) for n in policy.notes]
+    items += [(f"free:{f.note}", f) for f in policy.free if f.note]
+    items += [(f"reason:{e.reason}", e) for e in (*policy.grants, *policy.free, *policy.never)]
+    return items
+
+
+def note_problems(
+    policies: dict[str, Policy], classes: dict[tuple[str, str], tuple], known: set[str]
+) -> list[str]:
+    """The closed rule for every statement of fact: each note, free-request note and reason has exactly one class
+    (see `NOTE_CLASSES`), the class is consistent with its entry (source ids exist and are in the entry's
+    `verified`; a claim fragment is in the entry's own `claims_unverified`; `pending` only with no source), and
+    no class entry is stale. `known`: the source ids of the sources file."""
+    out, used = [], set()
+    for kind, policy in policies.items():
+        kind_claims = " ".join(
+            c for e in (*policy.grants, *policy.free, *policy.never) for c in e.claims_unverified
+        )
+        for text, entry in _note_items(policy):
+            keys = _class_keys(kind, text, classes)
+            if len(keys) != 1:
+                out.append(
+                    f"{kind}: note {text[:50]!r} has {len(keys)} classes in NOTE_CLASSES, needs one"
+                )
+                continue
+            used.add(keys[0])
+            how, *rest = classes[keys[0]]
+            claims = kind_claims if entry is None else " ".join(entry.claims_unverified)
+            held = (entry.verified or ())[1:] if entry is not None else ()
+            where = f"{kind}: note {text[:50]!r}"
+            if how == "claim":
+                if not rest or rest[0] not in claims:
+                    out.append(f"{where} is a claim, but no claims_unverified holds {rest[:1]}")
+            elif how == "sources" and rest:
+                out += [
+                    f"{where} names source {s}, which is not in the sources file"
+                    for s in rest[0]
+                    if s not in known
+                ]
+                if not rest[0]:
+                    out.append(f"{where} is class sources with no source id")
+                if entry is not None:
+                    out += [
+                        f"{where} names source {s}, which is not in `verified` of the same entry"
+                        for s in rest[0]
+                        if s not in held
+                    ]
+            elif how == "sources":
+                # a reason: the sources are the ones in `verified` of its own entry
+                if not held:
+                    out.append(f"{where} is class sources, but its entry names no source")
+                out += [
+                    f"{where} names source {s}, which is not in the sources file"
+                    for s in held
+                    if s not in known
+                ]
+            elif how == "pending":
+                if entry is None or entry.verified is not None:
+                    out.append(f"{where} is class pending, but its entry has `verified` set")
+            elif how != "code":
+                out.append(f"{where} has an unknown class {how!r}")
+    return out + [
+        f"NOTE_CLASSES entry {k} matches no note: delete it"
+        for k in sorted(set(classes) - used)
+        if k[0]
+        in policies  # a kind whose module could not be read is reported once, by its own problem
+    ]
 
 
 def _sources_suffix(kind: str, text: str) -> str:
     cls = note_class(kind, text)
-    if not cls or cls[0] != "sources":
+    if not cls or cls[0] != "sources" or len(cls) < 2:
         return ""
     ids = ", ".join(s + (" (builder only)" if s in BUILDER_ONLY_SOURCES else "") for s in cls[1])
     return f" (sources: {ids})"
@@ -1143,14 +1385,18 @@ def _kind_section(kind: str, rel: str, policy: Policy) -> list[str]:
             f"| {g.id} | `{g.name}` | `{_cell(g.resource)}` | {_cell(g.bound) or 'no wildcard'} | "
             f"{', '.join(_operation(op) for op in g.operations)} | {_cell(g.reason)} | "
             f"{_cell(g.applies_when) or 'always'} | {_checked_cell(g.verified, bool(g.claims_unverified))} | {live} | "
-            f"{_cell('; '.join(g.claims_unverified)) or 'none'} |"
+            f"{_cell('; '.join(map(_claim_text, g.claims_unverified))) or 'none'} |"
         )
     out += ["", "Requests that need no permission:", ""]
     out += [
         f"- {', '.join(_operation(op) for op in f.operations)}: {f.reason}."
         + (f" Note: {f.note}{_sources_suffix(kind, 'free:' + f.note)}." if f.note else "")
-        + f" Checked: {_checked_cell(f.verified)}."
-        + (f" Claims not checked: {'; '.join(f.claims_unverified)}." if f.claims_unverified else "")
+        + f" Checked: {_checked_cell(f.verified, bool(f.claims_unverified))}."
+        + (
+            f" Claims not checked: {'; '.join(map(_claim_text, f.claims_unverified))}."
+            if f.claims_unverified
+            else ""
+        )
         for f in policy.free
     ] or ["- none"]
     out += [
@@ -1163,8 +1409,8 @@ def _kind_section(kind: str, rel: str, policy: Policy) -> list[str]:
     for n in policy.never:
         caps = f" with {', '.join(n.capabilities)}" if n.capabilities else ""
         out.append(
-            f"| {n.type} | `{_cell(n.name)}`{caps} | {_cell(n.reason)} | {_checked_cell(n.verified)} | "
-            f"{_cell('; '.join(n.claims_unverified)) or 'none'} |"
+            f"| {n.type} | `{_cell(n.name)}`{caps} | {_cell(n.reason)} | {_checked_cell(n.verified, bool(n.claims_unverified))} | "
+            f"{_cell('; '.join(map(_claim_text, n.claims_unverified))) or 'none'} |"
         )
     out += ["", f"Credential: {policy.how} Lifetime: {policy.lifetime}."]
     if policy.exception:
@@ -1234,8 +1480,8 @@ code needs (one reason each), the requests that need no permission, and what the
   with a constant operation id for Kubernetes. Indirect ways to reach those calls (`getattr`, a new import, a
   raw HTTP call outside the one sending function, another module importing the Vault client) are refused by
   listed rules, not by proof: a way to send a request that no rule lists is not seen.
-- Some permissions allow more than their reason says. Reading the reason alone would understate them: R17 also reads
-  every older version of the one secret it names; R20 returns whole Deployment objects (including any setting
+- Some permissions allow more than their reason says. Reading the reason alone would understate them: R17 reads
+  every secret directly under the prefix, each with every older version (not only the one secret it names); R20 returns whole Deployment objects (including any setting
   values in them); R21 returns all events of a namespace, not a time window; R22 reads the log of every pod in a
   configured namespace. The "what limits a wildcard" cell of each says so and why the right cannot be narrower:
   Kubernetes rights cannot be limited by time or by a query, and a pod name list cannot be written in advance.
@@ -1243,7 +1489,7 @@ code needs (one reason each), the requests that need no permission, and what the
   Vault's rules, not in this kind.
 - A never-list line is compared with the grants of its own kind: a Vault path with each grant path by whether one
   concrete path fits both (a real overlap, including `+` and a last `*` on both sides and a `{{path_prefix}}` of any
-  number of parts), a Kubernetes resource by name. Two limits: kinds are not compared with each other, because
+  number of parts, the same number on both sides because the setting has one value in a deployment), a Kubernetes resource by name. Two limits: kinds are not compared with each other, because
   each kind has its own identity (a deployment that runs two Vault kinds on one mount name gets two identities);
   and the values of the settings are not known here, so `{{path_prefix}}` is taken as every value its pattern
   allows, but any other setting (the mount, the key name) is taken as one fixed word: a never line that writes
@@ -1255,21 +1501,26 @@ code needs (one reason each), the requests that need no permission, and what the
   carry a 7-character abbreviated commit id, not the full 40 characters, and the OpenBao documentation rows
   sit at a commit whose OpenBao release was not looked up, so the OpenBao claims are not tied to one release.
   The rendered vendor pages were not reachable; the files they are built from were read.
-- Some claims are weaker than that. They are statements about how the vendor's server or API behaves that only
-  the builder of a fix has read, or that nobody has checked: in the Vault secrets permission R17, the `+`
-  stands for exactly one whole path part and nothing deeper (only the builder of a fix read the vendor source
-  files behind it; no evidence runner has re-read them and no server has run the test of it); in the signer
-  permission R18, that the exact path does not also allow Vault's longer sign path that ends in a hash
-  algorithm name (nobody has checked it); in the Kubernetes permissions R20 to R22, that the query parameters
-  the code sends do not change the verb the request needs (nobody has checked it). The page lists each under
-  "claims not checked" and, for that reason, gives no copy-ready text for any of the three kinds. A source id
-  marked "(builder only)" was read by the builder of a fix only; one marked "(partly builder only: see claims)"
-  was read by an evidence runner for the permission name, while the passage behind the claim in that row was
-  read by the builder only. The same builder-only reading stands behind the never-list lines `undelete`,
-  `subkeys` and `byok-export`; they show "not yet checked", as do the three Kubernetes role names `cluster-admin`,
-  `admin` and `edit` (no evidence runner looked for those names in the Kubernetes source). Each of these has a
-  dated entry in the tests (review by 2026-12-11) that turns the suite red if nobody re-reads it by then. The
-  lists of marked ids are read from the head of the sources file, not written in this tool.
+- Some claims are weaker than that. They are statements about how the vendor's server or API behaves that
+  nobody has checked against the vendor's own text. The page lists each under "claims not checked" and, for that
+  reason, gives no copy-ready text for any of the three kinds. Each claim carries one of two marks, taken from
+  the head of the sources file: "builder read the passage" (the builder of a fix read the vendor passage behind
+  the claim; no evidence runner has re-read it) or "nobody has read the passage" (nobody has found a vendor
+  passage for it). Only one claim has the first mark: in the Vault secrets permission R17, the `+` stands for
+  exactly one whole path part and nothing deeper (the sources are in the R17 row; no server
+  has run the test of it). Every other claim has the second mark: in R17, that a `read` on a secret's path also
+  serves a request for an older version of that secret; in the signer permission R18, that the exact path does not also
+  allow Vault's longer sign path that ends in a hash algorithm name; in the Kubernetes permissions R20 to R22,
+  that the query parameters the code sends do not change the verb the request needs; for the Kubernetes free
+  request `k8s.rules_review` and the never-list line `create`, that a `create` on the self-review resources
+  writes nothing. A source id marked "(builder only)" was read by the builder of a fix only; one marked "(the
+  passage behind the claim: see claims)" was read by an evidence runner for the permission name, while the
+  passage behind the claim in that row has the mark shown in the claims cell. The same builder-only reading
+  stands behind the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked", as do
+  the three Kubernetes role names `cluster-admin`, `admin` and `edit` (no evidence runner looked for those names
+  in the Kubernetes source). Each of these has a dated entry in the tests (review by 2026-12-11) that turns the
+  suite red if nobody re-reads it by then. The lists of marked ids and claims are read from the head of the
+  sources file, not written in this tool.
 - Two links the call check does not follow. First, the map from an object attribute to the setting it holds
   (`self.mount` holds the setting `mount`) is written by hand in the test; a test reads each `build` function
   and checks that the setting is stored in that attribute, but nothing follows the value beyond that. Second,
@@ -1293,7 +1544,7 @@ code needs (one reason each), the requests that need no permission, and what the
   source": the date and the source ids (listed in the sources file) where the vendor's own text shows this
   name and spelling; "not yet checked" means no such reading was confirmed. "accepted by a real account":
   whether a real account took the permission; `no` everywhere. "claims not checked": statements in the row that
-  nobody but the builder has read.
+  nobody has checked against the vendor, each with the mark of who read the passage behind it.
 - Vault calls signing `update` and calls reading `read`. For the signer (`vault_transit`) `update` stores
   nothing: it lets the identity ask for a signature, and no key or secret is changed. That is why "no write
   rights" and `update` do not contradict each other there.
@@ -1307,7 +1558,7 @@ def named_source_ids(kind: str, policy: Policy) -> set[str]:
     ids = {s for e in (*policy.grants, *policy.free, *policy.never) for s in (e.verified or ())[1:]}
     for text in (*policy.notes, *(f"free:{f.note}" for f in policy.free if f.note)):
         cls = note_class(kind, text)
-        if cls and cls[0] == "sources":
+        if cls and cls[0] == "sources" and len(cls) > 1:
             ids |= set(cls[1])
     return ids
 
@@ -1323,6 +1574,8 @@ def page(root: Path | None = None) -> str:
         out += _kind_section(kind, rel, policy)
         named |= named_source_ids(kind, policy)
     sources = source_ids(root)
+    if missing := sorted(named - set(sources)):
+        raise PolicyError(f"the page names source {missing[0]}, which is not in the sources file")
     out += [
         "## Sources named on this page",
         "",

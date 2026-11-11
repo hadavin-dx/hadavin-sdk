@@ -239,13 +239,16 @@ POLICY = {
                 "the `+` stands for exactly one path part, the secret's name, directly under this "
                 "deployment's `path_prefix` setting (which must not be empty); nothing deeper is covered. "
                 "Allows more than the reason says: the right covers every secret directly under the prefix, "
-                "not only the one the code asks for, and every older version of each (a `read` on the path "
-                "also serves a request for an older version); the right cannot name one secret because the "
-                "secret's name is not known when the policy is written"
+                "not only the one the code asks for, and every older version of each (this last part is the "
+                "second claim in the claims cell, not yet checked); the right cannot name one secret because "
+                "the secret's name is not known when the policy is written"
             ),
             "operations": (("GET", "{self.mount}/data/{self.path_prefix}{name}"),),
             "applies_when": "",
-            "reason": "reads one named secret",
+            "reason": (
+                "reads one named secret; the right also covers every secret directly under the prefix, each "
+                "with every older version"
+            ),
             "verified": (
                 "2026-11-11",
                 "V-KV",
@@ -257,7 +260,10 @@ POLICY = {
                 "B-ACL",
             ),
             "confirmed_live": None,
-            "claims_unverified": ("the + matches exactly one whole path part, nothing deeper",),
+            "claims_unverified": (
+                "the + matches exactly one whole path part, nothing deeper",
+                "a `read` on a secret's path also serves a request for an older version of that secret",
+            ),
         },
     ),
     "free": (

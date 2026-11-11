@@ -27,8 +27,8 @@ code needs (one reason each), the requests that need no permission, and what the
   with a constant operation id for Kubernetes. Indirect ways to reach those calls (`getattr`, a new import, a
   raw HTTP call outside the one sending function, another module importing the Vault client) are refused by
   listed rules, not by proof: a way to send a request that no rule lists is not seen.
-- Some permissions allow more than their reason says. Reading the reason alone would understate them: R17 also reads
-  every older version of the one secret it names; R20 returns whole Deployment objects (including any setting
+- Some permissions allow more than their reason says. Reading the reason alone would understate them: R17 reads
+  every secret directly under the prefix, each with every older version (not only the one secret it names); R20 returns whole Deployment objects (including any setting
   values in them); R21 returns all events of a namespace, not a time window; R22 reads the log of every pod in a
   configured namespace. The "what limits a wildcard" cell of each says so and why the right cannot be narrower:
   Kubernetes rights cannot be limited by time or by a query, and a pod name list cannot be written in advance.
@@ -36,7 +36,7 @@ code needs (one reason each), the requests that need no permission, and what the
   Vault's rules, not in this kind.
 - A never-list line is compared with the grants of its own kind: a Vault path with each grant path by whether one
   concrete path fits both (a real overlap, including `+` and a last `*` on both sides and a `{path_prefix}` of any
-  number of parts), a Kubernetes resource by name. Two limits: kinds are not compared with each other, because
+  number of parts, the same number on both sides because the setting has one value in a deployment), a Kubernetes resource by name. Two limits: kinds are not compared with each other, because
   each kind has its own identity (a deployment that runs two Vault kinds on one mount name gets two identities);
   and the values of the settings are not known here, so `{path_prefix}` is taken as every value its pattern
   allows, but any other setting (the mount, the key name) is taken as one fixed word: a never line that writes
@@ -48,21 +48,26 @@ code needs (one reason each), the requests that need no permission, and what the
   carry a 7-character abbreviated commit id, not the full 40 characters, and the OpenBao documentation rows
   sit at a commit whose OpenBao release was not looked up, so the OpenBao claims are not tied to one release.
   The rendered vendor pages were not reachable; the files they are built from were read.
-- Some claims are weaker than that. They are statements about how the vendor's server or API behaves that only
-  the builder of a fix has read, or that nobody has checked: in the Vault secrets permission R17, the `+`
-  stands for exactly one whole path part and nothing deeper (only the builder of a fix read the vendor source
-  files behind it; no evidence runner has re-read them and no server has run the test of it); in the signer
-  permission R18, that the exact path does not also allow Vault's longer sign path that ends in a hash
-  algorithm name (nobody has checked it); in the Kubernetes permissions R20 to R22, that the query parameters
-  the code sends do not change the verb the request needs (nobody has checked it). The page lists each under
-  "claims not checked" and, for that reason, gives no copy-ready text for any of the three kinds. A source id
-  marked "(builder only)" was read by the builder of a fix only; one marked "(partly builder only: see claims)"
-  was read by an evidence runner for the permission name, while the passage behind the claim in that row was
-  read by the builder only. The same builder-only reading stands behind the never-list lines `undelete`,
-  `subkeys` and `byok-export`; they show "not yet checked", as do the three Kubernetes role names `cluster-admin`,
-  `admin` and `edit` (no evidence runner looked for those names in the Kubernetes source). Each of these has a
-  dated entry in the tests (review by 2026-12-11) that turns the suite red if nobody re-reads it by then. The
-  lists of marked ids are read from the head of the sources file, not written in this tool.
+- Some claims are weaker than that. They are statements about how the vendor's server or API behaves that
+  nobody has checked against the vendor's own text. The page lists each under "claims not checked" and, for that
+  reason, gives no copy-ready text for any of the three kinds. Each claim carries one of two marks, taken from
+  the head of the sources file: "builder read the passage" (the builder of a fix read the vendor passage behind
+  the claim; no evidence runner has re-read it) or "nobody has read the passage" (nobody has found a vendor
+  passage for it). Only one claim has the first mark: in the Vault secrets permission R17, the `+` stands for
+  exactly one whole path part and nothing deeper (the sources are in the R17 row; no server
+  has run the test of it). Every other claim has the second mark: in R17, that a `read` on a secret's path also
+  serves a request for an older version of that secret; in the signer permission R18, that the exact path does not also
+  allow Vault's longer sign path that ends in a hash algorithm name; in the Kubernetes permissions R20 to R22,
+  that the query parameters the code sends do not change the verb the request needs; for the Kubernetes free
+  request `k8s.rules_review` and the never-list line `create`, that a `create` on the self-review resources
+  writes nothing. A source id marked "(builder only)" was read by the builder of a fix only; one marked "(the
+  passage behind the claim: see claims)" was read by an evidence runner for the permission name, while the
+  passage behind the claim in that row has the mark shown in the claims cell. The same builder-only reading
+  stands behind the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked", as do
+  the three Kubernetes role names `cluster-admin`, `admin` and `edit` (no evidence runner looked for those names
+  in the Kubernetes source). Each of these has a dated entry in the tests (review by 2026-12-11) that turns the
+  suite red if nobody re-reads it by then. The lists of marked ids and claims are read from the head of the
+  sources file, not written in this tool.
 - Two links the call check does not follow. First, the map from an object attribute to the setting it holds
   (`self.mount` holds the setting `mount`) is written by hand in the test; a test reads each `build` function
   and checks that the setting is stored in that attribute, but nothing follows the value beyond that. Second,
@@ -86,7 +91,7 @@ code needs (one reason each), the requests that need no permission, and what the
   source": the date and the source ids (listed in the sources file) where the vendor's own text shows this
   name and spelling; "not yet checked" means no such reading was confirmed. "accepted by a real account":
   whether a real account took the permission; `no` everywhere. "claims not checked": statements in the row that
-  nobody but the builder has read.
+  nobody has checked against the vendor, each with the mark of who read the passage behind it.
 - Vault calls signing `update` and calls reading `read`. For the signer (`vault_transit`) `update` stores
   nothing: it lets the identity ask for a signature, and no key or secret is changed. That is why "no write
   rights" and `update` do not contradict each other there.
@@ -104,7 +109,7 @@ Declared in `src/hadavin_sdk/actions/secrets_vault.py`.
 
 | id | permission | on what | what limits a wildcard | the call it serves | why | when | name and form found in a vendor source | accepted by a real account | claims not checked |
 |---|---|---|---|---|---|---|---|---|---|
-| R17 | `read` | `{mount}/data/{path_prefix}+` | the `+` stands for exactly one path part, the secret's name, directly under this deployment's `path_prefix` setting (which must not be empty); nothing deeper is covered. Allows more than the reason says: the right covers every secret directly under the prefix, not only the one the code asks for, and every older version of each (a `read` on the path also serves a request for an older version); the right cannot name one secret because the secret's name is not known when the policy is written | `GET {self.mount}/data/{self.path_prefix}{name}` | reads one named secret | always | 2026-11-11, sources V-KV (partly builder only: see claims), V-POL (partly builder only: see claims), V-ACL (builder only), V-PARSE (builder only), B-KV (partly builder only: see claims), B-POL (partly builder only: see claims), B-ACL (builder only) | no | the + matches exactly one whole path part, nothing deeper |
+| R17 | `read` | `{mount}/data/{path_prefix}+` | the `+` stands for exactly one path part, the secret's name, directly under this deployment's `path_prefix` setting (which must not be empty); nothing deeper is covered. Allows more than the reason says: the right covers every secret directly under the prefix, not only the one the code asks for, and every older version of each (this last part is the second claim in the claims cell, not yet checked); the right cannot name one secret because the secret's name is not known when the policy is written | `GET {self.mount}/data/{self.path_prefix}{name}` | reads one named secret; the right also covers every secret directly under the prefix, each with every older version | always | 2026-11-11, sources V-KV (the passage behind the claim: see claims), V-POL (the passage behind the claim: see claims), V-ACL (builder only), V-PARSE (builder only), B-KV (the passage behind the claim: see claims), B-POL (the passage behind the claim: see claims), B-ACL (builder only) | no | the + matches exactly one whole path part, nothing deeper (builder read the passage); a `read` on a secret's path also serves a request for an older version of that secret (nobody has read the passage) |
 
 Requests that need no permission:
 
@@ -144,7 +149,7 @@ Declared in `src/hadavin_sdk/audit/signer_vault.py`.
 
 | id | permission | on what | what limits a wildcard | the call it serves | why | when | name and form found in a vendor source | accepted by a real account | claims not checked |
 |---|---|---|---|---|---|---|---|---|---|
-| R18 | `update` | `{transit_mount}/sign/{key_name}` | no wildcard | `POST {self.mount}/sign/{self.key_name}` | signs each audit checkpoint and the start-up test message | always | 2026-11-11, sources V-TR (partly builder only: see claims), B-TR (partly builder only: see claims), V-POL (partly builder only: see claims) | no | the exact path R18 does not also allow Vault's longer sign path that ends in a hash algorithm name |
+| R18 | `update` | `{transit_mount}/sign/{key_name}` | no wildcard | `POST {self.mount}/sign/{self.key_name}` | signs each audit checkpoint and the start-up test message | always | 2026-11-11, sources V-TR (the passage behind the claim: see claims), B-TR (the passage behind the claim: see claims), V-POL (the passage behind the claim: see claims) | no | the exact path R18 does not also allow Vault's longer sign path that ends in a hash algorithm name (nobody has read the passage) |
 | R19 | `read` | `{transit_mount}/keys/{key_name}` | no wildcard | `GET {self.mount}/keys/{self.key_name}` | reads the pinned version's public key and the key type | always | 2026-11-11, sources V-TR, B-TR | no | none |
 
 Requests that need no permission:
@@ -185,13 +190,13 @@ Declared in `src/hadavin_sdk/sources/kubernetes.py`.
 
 | id | permission | on what | what limits a wildcard | the call it serves | why | when | name and form found in a vendor source | accepted by a real account | claims not checked |
 |---|---|---|---|---|---|---|---|---|---|
-| R20 | `list` | `apps/deployments in {namespaces}` | Allows more than the reason says: `list` returns the whole Deployment objects, with every setting written in them (including any value set in the pod template), not only the revision and the images. A right cannot be limited to some fields of an object | `k8s.list_deployments` | reads deployments, their rollout revision and images | always | 2026-11-11, sources K-AUTHZ (partly builder only: see claims), K-SRC | no | the query parameters `limit` and `continue` do not change the verb the request needs |
-| R21 | `list` | `core/events in {namespaces}` | Allows more than the reason says: Kubernetes rights cannot be limited by time, so the right covers every event of each configured namespace, not only the time window the code asks for | `k8s.list_events` | reads events in the time window | always | 2026-11-11, sources K-AUTHZ (partly builder only: see claims), K-SRC | no | the query parameters `limit` and `continue` do not change the verb the request needs |
-| R22 | `get` | `core/pods/log in {namespaces}` | Allows more than the reason says: the right covers the log of every pod in each configured namespace, not one pod; a pod name list cannot be written in advance. Log lines can hold secrets, and what a log holds is outside this kind's control | `k8s.pod_log` | reads one pod's log lines | always | 2026-11-11, sources K-RBAC (partly builder only: see claims), K-SRC | no | the query parameters `timestamps`, `sinceTime` and `limitBytes` do not change the verb the request needs |
+| R20 | `list` | `apps/deployments in {namespaces}` | Allows more than the reason says: `list` returns the whole Deployment objects, with every setting written in them (including any value set in the pod template), not only the revision and the images. A right cannot be limited to some fields of an object | `k8s.list_deployments` | reads deployments, their rollout revision and images | always | 2026-11-11, sources K-AUTHZ (the passage behind the claim: see claims), K-SRC | no | the query parameters `limit` and `continue` do not change the verb the request needs (nobody has read the passage) |
+| R21 | `list` | `core/events in {namespaces}` | Allows more than the reason says: Kubernetes rights cannot be limited by time, so the right covers every event of each configured namespace, not only the time window the code asks for | `k8s.list_events` | reads events in the time window | always | 2026-11-11, sources K-AUTHZ (the passage behind the claim: see claims), K-SRC | no | the query parameters `limit` and `continue` do not change the verb the request needs (nobody has read the passage) |
+| R22 | `get` | `core/pods/log in {namespaces}` | Allows more than the reason says: the right covers the log of every pod in each configured namespace, not one pod; a pod name list cannot be written in advance. Log lines can hold secrets, and what a log holds is outside this kind's control | `k8s.pod_log` | reads one pod's log lines | always | 2026-11-11, sources K-RBAC (the passage behind the claim: see claims), K-SRC | no | the query parameters `timestamps`, `sinceTime` and `limitBytes` do not change the verb the request needs (nobody has read the passage) |
 
 Requests that need no permission:
 
-- `k8s.rules_review`: asks the cluster what this identity may do; the start-up check treats it as harmless (that it changes nothing in the cluster was not found in a vendor source). Note: a default cluster gives every signed-in identity this right. The request path names no namespace, so the namespaced Role on this page cannot grant it: in a cluster that took the right away, an administrator must grant `create` on `selfsubjectrulesreviews` with a cluster-wide role and binding of their own; this page produces no text for that and no test covers such a cluster (sources: K-RBAC, K-SRC, K-SSRR). Checked: 2026-11-11, sources K-RBAC, K-SRC, K-SSRR. Claims not checked: a `create` on `selfsubjectrulesreviews` changes nothing in the cluster (the one source for the resource, K-SSRR, does not say so).
+- `k8s.rules_review`: asks the cluster what this identity may do; the start-up check treats it as harmless (that it changes nothing in the cluster was not found in a vendor source). Note: a default cluster gives every signed-in identity this right. The request path names no namespace, so the namespaced Role on this page cannot grant it: in a cluster that took the right away, an administrator must grant `create` on `selfsubjectrulesreviews` with a cluster-wide role and binding of their own; this page produces no text for that and no test covers such a cluster (sources: K-RBAC, K-SRC, K-SSRR). Checked: 2026-11-11, sources K-RBAC (the passage behind the claim: see claims), K-SRC, K-SSRR (the passage behind the claim: see claims). Claims not checked: a `create` on `selfsubjectrulesreviews` changes nothing in the cluster (the one source for the resource, K-SSRR, does not say so) (nobody has read the passage).
 
 Never give this identity (each line would undo what the kind promises):
 
@@ -200,7 +205,7 @@ Never give this identity (each line would undo what the kind promises):
 | role | `cluster-admin` | a built-in role that may write | not yet checked | none |
 | role | `admin` | a built-in role that may write | not yet checked | none |
 | role | `edit` | a built-in role that may write | not yet checked | none |
-| action | `create` | a write verb: this source only reads. One exception, the same one the start-up check makes: `create` on the self-review resources (`selfsubjectrulesreviews`, `selfsubjectaccessreviews`, `selfsubjectreviews`), which the start-up check treats as harmless; that these three requests write nothing was not found in a vendor source | 2026-11-11, sources K-AUTHZ | `create` on `selfsubjectrulesreviews`, `selfsubjectaccessreviews` and `selfsubjectreviews` writes nothing (the source for the first, K-SSRR, does not mention the verb; none was found for the other two) |
+| action | `create` | a write verb: this source only reads. One exception, the same one the start-up check makes: `create` on the self-review resources (`selfsubjectrulesreviews`, `selfsubjectaccessreviews`, `selfsubjectreviews`), which the start-up check treats as harmless; that these three requests write nothing was not found in a vendor source | 2026-11-11, sources K-AUTHZ (the passage behind the claim: see claims) | `create` on `selfsubjectrulesreviews`, `selfsubjectaccessreviews` and `selfsubjectreviews` writes nothing (the source for the first, K-SSRR, does not mention the verb; none was found for the other two) (nobody has read the passage) |
 | action | `update` | a write verb: this source only reads | 2026-11-11, sources K-AUTHZ | none |
 | action | `patch` | a write verb: this source only reads | 2026-11-11, sources K-AUTHZ | none |
 | action | `delete` | a write verb: this source only reads | 2026-11-11, sources K-AUTHZ | none |

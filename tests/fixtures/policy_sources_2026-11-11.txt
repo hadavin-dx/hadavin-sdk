@@ -31,7 +31,8 @@
 #   a `+` does to the longest-prefix choice).
 # - V-PARSE: the code that reads a policy path and refuses `+*`.
 # - B-ACL: the same matching rule in OpenBao.
-# - V-KV and B-KV: the paths `undelete`, `subkeys` (and `byok-export` in V-TR and B-TR).
+# - V-KV and B-KV: the paths `undelete`, `subkeys` (and `byok-export` in V-TR and B-TR). Nobody has read the
+#   passage that says a `read` on a secret's path also serves a request for an older version (grant R17).
 # - V-TR and B-TR: that the exact signing path (`sign/<key>`) does not also allow the longer path that ends in a
 #   hash algorithm name (grant R18). Nobody has read this yet.
 # - K-AUTHZ and K-RBAC: that the query parameters the Kubernetes code sends (`limit`, `continue`, `timestamps`,
@@ -50,6 +51,15 @@
 # in the list above (V-... B-... K-...) is on one of them.
 # BUILDER-ONLY: V-ACL, V-PARSE, B-ACL
 # PARTLY-BUILDER-ONLY: V-POL, B-POL, V-KV, B-KV, V-TR, B-TR, K-AUTHZ, K-RBAC, K-SSRR
+# Two more lines, read by tools/policy_page.py: which claim (a statement in `claims_unverified` of a kind module)
+# has which mark on the page. A claim is named by the first words of its text, several starts are separated by
+# ` ;; `. "builder read the passage": the builder of a fix read the vendor passage behind the claim; no evidence
+# runner has. "nobody has read the passage": nobody has found the passage. Today the builder read the passage for
+# one claim only (the `+` of grant R17: V-POL, B-POL, V-ACL, V-PARSE, B-ACL); the R17 claim about older versions
+# (V-KV, B-KV), R18, R20 to R22, the Kubernetes free request `k8s.rules_review` and the never-list line `create`
+# have not been read by anyone. A claim with no start here, or with starts on both lines, fails the data check.
+# CLAIM-READ-BY-BUILDER: the + matches exactly one whole path part
+# CLAIM-READ-BY-NOBODY: a `read` on a secret's path also serves a request for an older version ;; the exact path R18 does not also allow ;; the query parameters `limit` and `continue` ;; the query parameters `timestamps` ;; a `create` on `selfsubjectrulesreviews` changes nothing ;; `create` on `selfsubjectrulesreviews`, `selfsubjectaccessreviews`
 # Columns: id | url | commit | sha256 of the raw file | note
 V-POL | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/docs/concepts/policies.mdx | 82e7167 | beac497452411caa6ed293876e3ddf5e29228db17bc26365cd707b095abc75d4 | Vault v2.x: policies
 V-TOK | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/auth/token.mdx | 82e7167 | 03b51d9467d20ec64ff7c145d3abe7e904a3261692cd083ee957b04421fb8eed | Vault v2.x: token API (no_default_policy); named by tests/test_policy_engine.py, by no POLICY literal

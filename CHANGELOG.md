@@ -255,6 +255,15 @@
     wildcard" cell, the 92-day limit is one number in `tools/policy_page.py`, and the Transit server test sends
     the longer sign path that ends in a hash name for the signing key and expects a refusal (not yet run: needs
     a Vault server).
+  - Round-5 review fixes: every unchecked claim on the page now carries one of two marks, "builder read the
+    passage" (only the `+` of R17) or "nobody has read the passage" (every other claim, including a new claim
+    that a `read` on a secret's path also serves an older version, R17); the marks are read from the head of the
+    sources file and a claim with no mark fails the check. Free requests and never-list lines with a claim mark
+    their partly read sources too. Every note and every reason (grant, free request, never-list line) has one
+    class in `NOTE_CLASSES` (a reason is matched by its exact text), the rule runs in `tools/policy_page.py
+    --check` and a bad class table is a reported problem, never a crash. The never-versus-grant check now treats
+    `{path_prefix}` as one value with the same number of parts on both sides, so `{mount}/data/{path_prefix}+/deeper/+`
+    is no longer reported as covering R17. The page head and the R17 cell say the same scope.
   - The page also gained a plain-words legend for its column heads, a sentence that Vault calls signing `update`
     although signing stores nothing, and the two links the call check does not follow. New checks: the paging
     query of the Kubernetes list wrapper, the one sending function of the Vault client, the setting-to-attribute
