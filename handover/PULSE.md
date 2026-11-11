@@ -1,3 +1,22 @@
+## BRANCH TABLE (ORDER 247 step 1, 21:15Z; SHAs from git ls-remote)
+| branch | pushed SHA | worktree | clean |
+|---|---|---|---|
+| core/P3a-2-clean | c150b5ff | B-P3a2 | no (builder 3b running) |
+| core/P5b2-main | 610e4692 | B-PR85 | yes |
+| core/fix-timing-harness-flake | 2f94c2b2 | B-flaky | yes |
+| wip/cloud-timing-fix2 | ef83cd86 | B-timing-fix2 | yes |
+| core/prh-strip-hidden-controls | adf69605 | PRH | no (builder running) |
+| core/q8a-1-live-override-refusals | 3f3d4b6c | B-Q8a1-b5 (head 3f3d4b6c) | yes; builder b6 running (core/q8a-1-b6 not pushed yet) |
+| core/q8a-2-neutral-callback-and-guard | c19d87dc | B-Q8a2 | yes |
+| core/q8b-partial-mask-and-card-redaction | bcb2bfec | B-Q8b-b1 (head bcb2bfec) | yes; builder b2 running (local q8b-b2-local not pushed yet) |
+| core/q8c-1-policy-vault-kubernetes | be531371 | B-Q8c1 | yes; builder b4 running |
+| core/mutation-runner-keywords | 4cc427b5 | B-PR89-r20 (4cc427b5) | yes; builder r24 running (wip/cloud-PR89-r24 not pushed yet) |
+| wip/cloud-P2d-1-w7 | 97fd2028 | B-PR77 | yes |
+| wip/cloud-PR89-r18 | b95b0ca7 | B-PR89 | yes |
+| core/cloud-handover | dcf13fda | main checkout | yes (handover files only) |
+
+Unpushed local-only names: core/q8a-1-b5 (3f3d4b6c, on remote as core/q8a-1-live-override-refusals), core/q8b-...-b1 (bcb2bfec, on remote), q8b-b2-local (bcb2bfec, on remote). Every SHA a worktree holds is on the remote; the only open work is in the running builders' own worktrees (their commits are pushed by them, gitleaks first). Nothing forced, deleted or pushed to main.
+
 10:36Z | agents: Agents running: 1 of floor 8 (floor NOT met; 10:10Z).
 - PR77 builder a15af6a6: round 6 had 6 Majors (5 reproduced), one class (hiding techniques not combined). Told to replace view enumeration by one gap-tolerant match, 90-min box (ends in 90 min). Then fresh reviewers (redaction uncapped) -> independent runner. WAITS FOR its push.
 - PR85 DONE on my side: fresh reviews (no Major) + independent evidence valid on bd33cc9; draft, waits for lead (q-PR85-ready: no workflow checks until retarget to main).
@@ -6,3 +25,4 @@ WAITS FOR lead: core/P3a-2 push approval; q-A11a-sep-keep (now moot if the gap-t
 10:46Z | STOPPED (ORDER 241): no agents, no shells, no jobs running; everything pushed except the items listed in handover/CLOUD-RESUME-2026-11-11.md section (e). PULSE refresher stopped.
 11:58Z | STARTED 243 (core only). Disk freed: deleted my 87 old Postgres cluster folders under /home/user/build/pg (7.3 GB; free 2.2 -> 9.4 GB). Agents running: 1 (PR77 builder, branch fix/P2d-1-w7 from wip/P2d-1-w6, box ends 13:28Z). PR89: independent evidence on db0d9eb already exists (handover/evidence/P89/db0d9eb-indep), so no re-run needed unless the lead says otherwise. PR74 waits for PR77. Next PULSE in 10 min.
 12:05Z | STOPPED (ORDER 245): no agents, no shells, no jobs; PULSE reminder disabled; all work pushed (wip/cloud-245-*, fix/P2d-1-w7). Details in CLOUD-RESUME-2026-11-11.md.
+21:15Z | GO 247: agents 7 (PR H, P3a-2 3b, timing EV, Q8b b2, Q8a-1 b6, PR89 r24, Q8c-1 b4) | load 2.05/4 | stuck: none | unpushed: none (table at top) | queue in questions-for-lead q-247-ack | next PULSE 10 min

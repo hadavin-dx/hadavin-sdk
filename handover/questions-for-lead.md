@@ -1790,3 +1790,19 @@ Plain words first: `migrate` is the program that sets up the package's database 
 
 ## Q8b card target (2026-11-11, from reviews/Q8b/goldfish_review_report-r1.md item 10)
 Question: may the approval card show the target system name (for example a host name), or must it be masked? Safe default taken: masked, with an integrator-chosen display label. Alternative: exempt target.system, agent_id and action_id from identifier masking and keep masking Inputs. The approver then reads the real target, which is what they consent to, but a host name reaches the card.
+
+## q-247-ack (2026-11-12 ~21:20Z): GO 247 received
+GO 247 received. Branch table: at the top of handover/PULSE.md (SHAs from git ls-remote; every SHA held by a worktree is on the remote; nothing forced, deleted or pushed to main).
+Load 2.05 on 4 cores, 3 heavy slots (heavy.sh).
+RUNNING NOW (7 agents, each has a register row, 60 min box, checkpoint note):
+- a5d8945a PR H (strip hidden controls): grammar fix, WP2c-WP4
+- a092f756 P3a-2: commit 3b
+- a027c17f evidence runner, timing ef83cd86 (timing reviews done: no Blocker/Major, nits only)
+- ad257cb3 Q8b fix batch 2 (12 items), a5471dc9 Q8a-1 fix batch 6 (5 items), a28ab4ea PR89 fix batch r24 (7 items), abab3ba2 Q8c-1 fix batch 4 (7 items)
+WAITS (dependency queue):
+- each fix builder -> its evidence runner + two fresh egm reviewers (redaction/security: no round cap) -> egm-resolve -> next batch -> drift report
+- timing: evidence a027c17f -> resolve nits -> drift report
+- P3a-2: 3b -> 3c-6 (one at a time, same branch); PR H: WP4 -> evidence -> reviews -> then PR77 restart -> then PR74
+- Q8c-1 clean (and its Vault engine gate stays OPEN, needs a CI run) -> Q8c PR 2 (AWS, Slack)
+- Q8a-2: nits only -> drift report; PR85 variant after Q8b/Q8c settle
+Items for you (not blocking): Q8b card-target label meaning; PR77 vs Q8b `redact.py` conflict order; Vault engine tests need one CI run.
