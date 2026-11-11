@@ -1549,3 +1549,5 @@ tests/test_cuj.py::test_kill_switch_with_the_store_down_exits_4_and_says_it_was_
 tests/test_cuj.py::test_kill_switch_with_the_store_down_exits_4_and_says_it_was_not_changed[reset] PASSED [ 14%]
 tests/test_cuj.py::test_kill_switch_with_a_store_that_answers_with_an_error_exits_2_and_says_not_set PASSED [ 14%]
 tests/test_executor.py::test_create_verify_ok PASSED                     [ 14%]
+tests/test_executor.py::test_timeout_then_lookup_exactly_one_record PASSED [ 14%]
+tests/test_executor.py::test_timeout_and_lookup_fails_is_unknown 
