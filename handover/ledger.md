@@ -2425,3 +2425,11 @@
 | BL-core-a2-w2-r14-12 | handover/reviews/P89/round-w2-r14-design-runner.md | Minor | PR89 | N3,N5-N9 dead branch, plus-chain stop, no minimum length, work amplification and wrong cost claim, wrong 'never less' claim, duplicated message | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r14-13 | handover/reviews/P89/round-w2-r14-implreadiness-mutants.md | Major | PR89 | Windows paragraph false (5 mutants), lock-name rule overstated, CHANGELOG terms undefined (M1-M3) | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r14-14 | handover/reviews/P89/round-w2-r14-implreadiness-mutants.md | Minor | PR89 | CHANGELOG nits (canary wording, empty-name canary, stray paren, run-time doubling, ci.yml claim, port reading) | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r15-01 | handover/reviews/P89/round-w2-r15-design-runner.md | Minor | PR89 | s1-01 doc says all hidden texts decoded/encoded; only password texts are | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r15-02 | handover/reviews/P89/round-w2-r15-design-runner.md | Minor | PR89 | s1-02 fragment head/tail loops O(len^2) per hit; cost claim false | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r15-03 | handover/reviews/P89/round-w2-r15-design-runner.md | Minor | PR89 | s1-03 environment read twice (snapshot vs _pytest); mid-run change not refused/masked | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r15-04 | handover/reviews/P89/round-w2-r15-codebase.md | Minor | PR89 | cd-01..05 CHANGELOG/doc wording: ci.yml line cites, scheme-less example, hostaddr omitted, "same value", fragment bound | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r15-05 | handover/reviews/P89/round-w2-r15-tests-b.md | Minor | PR89 | t-01..04 lock-name tests: pwd/passwd/PASSWORD rows, space-then-key shape, vacuous counters, row index in message | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r15-06 | handover/reviews/P89/round-w2-r15-tests-a.md | Minor | PR89 | K-01 conftest loop passes for wrong reason; K-02 absence-only masking asserts | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r15-07 | handover/reviews/P89/round-w2-r15-mutants.md | Minor | PR89 | M-01..03 stale header lines; mutant 0o666 survives under umask 077 | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r15-08 | all five r15 reports | Nit | PR89 | nits listed in the reports (comments, literals, dead \t, term definitions, flake bounds) | OPEN | 2026-11-11 |
