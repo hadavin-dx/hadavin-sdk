@@ -1,3 +1,5 @@
-07:53Z | agents: 2 running (floor 8 NOT met, 07:47Z): PR74/A15 fix builder af1e4bab (w4 batch: Mc docstring Major + minors, expected end ~09:15Z); PR77/A11a fix builder a15af6a6 (edge-marks Major + control-char question + minors, expected end ~08:50Z). PR89 independent evidence done and clean (768f8e4), rows wait on `security` CI (core/P3a-2 push approval).
-START NOW: A17/PR85 second reviewer with full CSV tree (no dependency). Fresh independent runners for A15 and A11a start only after their fix heads get fresh reviews.
-WAITS FOR: PR73 rewrite push -> lead approval of the force-with-lease command; A18 runner -> free heavy slot and disk; A20 runner -> disk/slot; A21a -> green CI on 1a7d202; A21b/A13 -> PR75/A3 merge; A10b/A12/A11b -> PR75 merge, A6, A8; A4/P1d-a -> ORDER 230 item 2 order, BS-0. | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 09:33Z); detail in HEARTBEAT.md
+07:54Z | agents: Agents running: 2 of floor 8 (floor NOT met).
+- PR77 fix builder a15af6a6 (edge-marks Major + control chars): box ends ~08:50Z; next: fresh sliced reviewers, then independent runner.
+- PR74 fix builder af1e4bab (Mc docstring Major + minors): box ends ~09:00Z; WAITS FOR its push; then reviewers; rebase WAITS FOR PR77 merge (ORDER 240).
+START NOW (blocked by disk/slot): PR85 evidence runner (test file, mutants, 3.12 vs 3.13) + reviewer for tests 1131-1354.
+WAITS FOR lead: core/P3a-2 force-with-lease push approval (q-P3a2-rewrite-push). | evid shells: none | unpushed: none | refreshed every 60 s by a bounded script (ends 09:34Z); detail in HEARTBEAT.md
