@@ -1424,3 +1424,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | EV-Q8c1-r3 ab2e588a | evidence Q8c-1 6bdfadc1 | launched | +60 min | RUNNING |
 | REV-Q8c1-r3 design aec2bc5f / codebase a052087c | delta reviewers | launched | +40 min | RUNNING |
 | A-PRH-rev3 a2df9258 (Opus) | PR H ticket rev 3 | launched | +60 min | RUNNING |
+| B-Q8a2-b3 acecc94a | closed, pushed 3210f93a | | | CLOSED |

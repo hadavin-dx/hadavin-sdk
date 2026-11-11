@@ -76,3 +76,4 @@ Each line: UTC | IST | item | running agents | next 3 steps | blockers
 16:54 CHECKPOINT: 11 agents running, none older than 32 min, load 3.5. Waiting for hand-backs (Q8b/Q8a-1 evidence, Q8a-2 b3, PR89 r22, timing fix, P3a-2 plan r2, Q8c-1 r3, PR H rev 3).
 16:56 Q8c-1 r3 design review saved: READY on delta, 0 Blocker 0 Major, 5 minor; Vault engine run + R17 plus re-read still open (needs CI/third party). Codebase reviewer + evidence pending.
 16:56 Q8c-1 r3 codebase review saved: READY at review level, 0 Blocker 0 new Major, 8 minor (R18/K claims unflagged, credential wording). Plan: ONE minor batch 3 after evidence runner ab2e588a lands (non-security cap: minors fixed in same push, no new review).
+16:57 Q8a-2 batch 3 builder done: 3210f93a, all M1/minors fixed, 20 new tests fail on old, 8/8 mutants, stage 37/37, full suite 10830 passed 1 skipped (builder's own run, unreviewed). Launching evidence runner + one fresh delta reviewer.
