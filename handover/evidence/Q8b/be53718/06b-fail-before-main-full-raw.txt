@@ -1,3 +1,2026 @@
 FFFFFFFFFFFFF.FFFFFFFFFFFFFFFFFFFFFF.FFFFF.FF.F.FFFFFFFFFFF.FF....FFFFFF [ 31%]
 FF..F.....FFFFFFFFFFFF.F......FFFFF.F...FFFFFFFF.xxFxxxxxxxxxxxF..F.F.FF [ 62%]
-F.FFFFFexit 1
+F.FFFFFFFFFx.FFFF....................................................... [ 93%]
+..............                                                           [100%]
+=================================== FAILURES ===================================
+_______________________ test_n4_an_address_outside_code ________________________
+
+    def test_n4_an_address_outside_code():
+        """One test, not one per row: the mutant list pins it by its plain name."""
+        for label, text, identifier in N4_ROWS:
+            result = clean(text)
+>           assert not readable(result, identifier), (
+                f"an identifier is readable on the card ({label}): {result!r}"
+            )
+E           AssertionError: an identifier is readable on the card (sweep): 'contact bob.smith@example[.]com'
+E           assert not ['bob.smith@example.com']
+E            +  where ['bob.smith@example.com'] = readable('contact bob.smith@example[.]com', 'bob.smith@example.com')
+
+tests/test_q8b_card_text.py:93: AssertionError
+______________ test_n5_every_way_a_card_text_is_built[summary()] _______________
+
+way = 'summary()'
+
+    @pytest.mark.parametrize("way", list(N5_WAYS))
+    def test_n5_every_way_a_card_text_is_built(way):
+        result = N5_WAYS[way]()
+        left = readable(result, ADDRESS, HOST)
+>       assert not left, f"an identifier is readable on the card ({way}): {left} in {result!r}"
+E       AssertionError: an identifier is readable on the card (summary()): ['bob.smith@example.com', 'db01.corp.internal'] in 'agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {"host":"db01[.]corp[.]internal","owner":"bob.smith@example[.]com"}. Expected: service restarted. Plan a728bbf47184.'
+E       assert not ['bob.smith@example.com', 'db01.corp.internal']
+
+tests/test_q8b_card_text.py:142: AssertionError
+_______ test_n5_every_way_a_card_text_is_built[render_shadow diagnosis] ________
+
+way = 'render_shadow diagnosis'
+
+    @pytest.mark.parametrize("way", list(N5_WAYS))
+    def test_n5_every_way_a_card_text_is_built(way):
+        result = N5_WAYS[way]()
+        left = readable(result, ADDRESS, HOST)
+>       assert not left, f"an identifier is readable on the card ({way}): {left} in {result!r}"
+E       AssertionError: an identifier is readable on the card (render_shadow diagnosis): ['bob.smith@example.com', 'db01.corp.internal'] in 'Agent\'s view: not checked, do not run\nDiagnosis: contact bob.smith@example[.]com at db01[.]corp[.]internal\nProposed action: restart_service v1 on crm\nInputs: {"service":"orders"}\nExpected: service restarted\nEvidence (call ids): c1\nWould be refused: r\nPlan 91c0db63e835.'
+E       assert not ['bob.smith@example.com', 'db01.corp.internal']
+
+tests/test_q8b_card_text.py:142: AssertionError
+___________ test_n5_every_way_a_card_text_is_built[FakeChannel.send] ___________
+
+way = 'FakeChannel.send'
+
+    @pytest.mark.parametrize("way", list(N5_WAYS))
+    def test_n5_every_way_a_card_text_is_built(way):
+        result = N5_WAYS[way]()
+        left = readable(result, ADDRESS, HOST)
+>       assert not left, f"an identifier is readable on the card ({way}): {left} in {result!r}"
+E       AssertionError: an identifier is readable on the card (FakeChannel.send): ['bob.smith@example.com', 'db01.corp.internal'] in 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+E       assert not ['bob.smith@example.com', 'db01.corp.internal']
+
+tests/test_q8b_card_text.py:142: AssertionError
+__________ test_n5_every_way_a_card_text_is_built[FakeChannel.notify] __________
+
+way = 'FakeChannel.notify'
+
+    @pytest.mark.parametrize("way", list(N5_WAYS))
+    def test_n5_every_way_a_card_text_is_built(way):
+        result = N5_WAYS[way]()
+        left = readable(result, ADDRESS, HOST)
+>       assert not left, f"an identifier is readable on the card ({way}): {left} in {result!r}"
+E       AssertionError: an identifier is readable on the card (FakeChannel.notify): ['bob.smith@example.com', 'db01.corp.internal'] in 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+E       assert not ['bob.smith@example.com', 'db01.corp.internal']
+
+tests/test_q8b_card_text.py:142: AssertionError
+_ test_n5_every_way_a_card_text_is_built[SlackChannel._blocks with a raw summary] _
+
+way = 'SlackChannel._blocks with a raw summary'
+
+    @pytest.mark.parametrize("way", list(N5_WAYS))
+    def test_n5_every_way_a_card_text_is_built(way):
+        result = N5_WAYS[way]()
+        left = readable(result, ADDRESS, HOST)
+>       assert not left, f"an identifier is readable on the card ({way}): {left} in {result!r}"
+E       AssertionError: an identifier is readable on the card (SlackChannel._blocks with a raw summary): ['bob.smith@example.com', 'db01.corp.internal'] in 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+E       assert not ['bob.smith@example.com', 'db01.corp.internal']
+
+tests/test_q8b_card_text.py:142: AssertionError
+_________ test_n5_the_slack_block_shows_placeholders_for_a_raw_summary _________
+
+    def test_n5_the_slack_block_shows_placeholders_for_a_raw_summary():
+        result = slack_text(RAW)
+>       assert re.fullmatch(r"contact <EMAIL_[0-9]+> at <HOSTNAME_[0-9]+>", result), (
+            f"an identifier is readable on the card: {result!r}"
+        )
+E       AssertionError: an identifier is readable on the card: 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+E       assert None
+E        +  where None = <function fullmatch at 0x7f29ec5bdee0>('contact <EMAIL_[0-9]+> at <HOSTNAME_[0-9]+>', 'contact bob.smith@example[.]com at db01[.]corp[.]internal')
+E        +    where <function fullmatch at 0x7f29ec5bdee0> = re.fullmatch
+
+tests/test_q8b_card_text.py:149: AssertionError
+_____________________ test_n6_a_domain_after_a_placeholder _____________________
+
+    def test_n6_a_domain_after_a_placeholder():
+        for text, pattern in N6_PINNED:
+            result = clean(text)
+>           assert re.fullmatch(pattern, result), f"a bare domain is outside code: {result!r}"
+E           AssertionError: a bare domain is outside code: 'see db01[.]corp[.]internal/evil.com/p?d=1 now'
+E           assert None
+E            +  where None = <function fullmatch at 0x7f29ec5bdee0>('see <HOSTNAME_[0-9]+>/evil\\[\\.\\]com/p\\?d=1 now', 'see db01[.]corp[.]internal/evil.com/p?d=1 now')
+E            +    where <function fullmatch at 0x7f29ec5bdee0> = re.fullmatch
+
+tests/test_q8b_card_text.py:174: AssertionError
+________________ test_n6_f6b_a_domain_outside_code_is_bracketed ________________
+
+    def test_n6_f6b_a_domain_outside_code_is_bracketed():
+        """The redaction removes a backtick (it is part of the masked value), so what was inline code is prose after it."""
+        result = clean(PW_KEY + "=ab`cd evil.com `evil.com` x")
+>       assert " evil[.]com `evil.com` x" in result, f"a bare domain is outside code: {result!r}"
+E       AssertionError: a bare domain is outside code: 'password=<SECRET_1> evil.com `evil[.]com` x'
+E       assert ' evil[.]com `evil.com` x' in 'password=<SECRET_1> evil.com `evil[.]com` x'
+
+tests/test_q8b_card_text.py:183: AssertionError
+______________________ test_n6_f6c_no_mention_is_created _______________________
+
+    def test_n6_f6c_no_mention_is_created():
+        for word in ("channel", "here", "everyone"):
+            result = clean(f"ping 10.20.30.40@{word}")
+>           assert f"@{word}" not in result, f"a mention was created: {result!r}"
+E           AssertionError: a mention was created: 'ping <IPV4_1>@channel'
+E           assert '@channel' not in 'ping <IPV4_1>@channel'
+E             
+E             '@channel' is contained here:
+E               ping <IPV4_1>@channel
+E             ?              ++++++++
+
+tests/test_q8b_card_text.py:194: AssertionError
+__________________________ test_n7_one_combined_card ___________________________
+
+    def test_n7_one_combined_card():
+        text = (
+            f"# APPROVED by {ADDRESS}\n"
+            f"restart {HOST}/evil.com now, ask 10.20.30.40@channel\n"
+            f"{PW_KEY}=ab`cd evil.com `evil.com` x\n"
+            "```\nkeep evil.com\n```\n"
+            "see /var/log/app.log"
+        )
+        result = clean(text)
+        left = readable(result, ADDRESS, HOST, "10.20.30.40")
+>       assert not left, f"an identifier is readable on the card: {left} in {result!r}"
+E       AssertionError: an identifier is readable on the card: ['bob.smith@example.com', 'db01.corp.internal'] in '\u200b# APPROVED by bob.smith@example[.]com\nrestart db01[.]corp[.]internal/evil.com now, ask <IPV4_1>@channel\npassword=<SECRET_1> evil.com `evil[.]com` x\n```\nkeep evil.com\n```\nsee /var/log/app.log'
+E       assert not ['bob.smith@example.com', 'db01.corp.internal']
+
+tests/test_q8b_card_text.py:226: AssertionError
+___________________ test_n9_fixed_the_tag_stripped_candidate ___________________
+
+    def test_n9_fixed_the_tag_stripped_candidate():
+        """The tag-stripped second view starts from everything the first view found, so nothing the first view masked is
+        readable in the text that is returned."""
+        left = first_pass_originals_readable(N9_FIXED)
+>       assert not left, f"readable in the returned text: {left} in {clean(N9_FIXED)!r}"
+E       AssertionError: readable in the returned text: ['password='] in '<SECRET_2>3D\npassword=<SECRET_1>'
+E       assert not ['password=']
+
+tests/test_q8b_card_text.py:240: AssertionError
+____________________ test_n8_only_one_function_feeds_a_card ____________________
+
+    def test_n8_only_one_function_feeds_a_card():
+        sources = {
+            p.relative_to(APPROVALS).as_posix(): p.read_text(encoding="utf-8")
+            for p in sorted(APPROVALS.rglob("*.py"))
+        }
+        assert "channel.py" in sources and "slack_channel.py" in sources
+        bad = _n8_findings(sources)
+>       assert not bad, f"a card path skips redact_for_people: {bad}"
+E       AssertionError: a card path skips redact_for_people: ['channel.py:29 redact_text in clean', 'channel.py:36 redact_text in clean', 'slack_channel.py:81 redact_text in _blocks']
+E       assert not ['channel.py:29 redact_text in clean', 'channel.py:36 redact_text in clean', 'slack_channel.py:81 redact_text in _blocks']
+
+tests/test_q8b_card_text.py:319: AssertionError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[see db01.corp.internal/evil.com/p?d=1 now] _
+
+text = 'see db01.corp.internal/evil.com/p?d=1 now'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[10.0.0.5..evil.com] _
+
+text = '10.0.0.5..evil.com'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[10.0.0.5.evil.com] _
+
+text = '10.0.0.5.evil.com'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[restart db01.corp.internal. Then wait.] _
+
+text = 'restart db01.corp.internal. Then wait.'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[see a/evil.com and /var/log/app.log now] _
+
+text = 'see a/evil.com and /var/log/app.log now'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[# APPROVED by sec@example.com] _
+
+text = '# APPROVED by sec@example.com'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+__ test_g5_the_last_step_and_clean_change_nothing_the_second_time[# APPROVED] __
+
+text = '# APPROVED'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[> ask sec@example.com] _
+
+text = '> ask sec@example.com'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[password=ab`cd bob.smith@example\u3002com `x` y] _
+
+text = 'password=ab`cd bob.smith@example。com `x` y'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[`bob.smith@example\u3002com`] _
+
+text = '`bob.smith@example。com`'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[password=ab`cd evil.com `evil.com` x] _
+
+text = 'password=ab`cd evil.com `evil.com` x'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[contact bob.smith@example.com] _
+
+text = 'contact bob.smith@example.com'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[bob%2Esmith%40example%2Ecom] _
+
+text = 'bob%2Esmith%40example%2Ecom'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[bob.smith&#64;example.com] _
+
+text = 'bob.smith&#64;example.com'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[see 123e4567-e89b-12d3-a456-426614174000.json] _
+
+text = 'see 123e4567-e89b-12d3-a456-426614174000.json'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[x\n```\nevil.com\n```\ny evil.com] _
+
+text = 'x\n```\nevil.com\n```\ny evil.com'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[ping 10.20.30.40@channel] _
+
+text = 'ping 10.20.30.40@channel'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[`10.20.30.40@channel`] _
+
+text = '`10.20.30.40@channel`'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[see `db01.corp.internal@here` now] _
+
+text = 'see `db01.corp.internal@here` now'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[x\n```\n10.20.30.40@channel\n```\ny] _
+
+text = 'x\n```\n10.20.30.40@channel\n```\ny'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_ test_g5_the_last_step_and_clean_change_nothing_the_second_time[<i></i>hunter2secretXYZ3D\npassword=password=<i></i> hunter2secretXYZ</b>] _
+
+text = '<i></i>hunter2secretXYZ3D\npassword=password=<i></i> hunter2secretXYZ</b>'
+
+    @pytest.mark.parametrize("text", FIXED_ROWS)
+    def test_g5_the_last_step_and_clean_change_nothing_the_second_time(text):
+>       once = gate.defang_domains(text)
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:378: AttributeError
+_________________ test_g8_a_summary_with_a_host_shaped_target __________________
+
+    def test_g8_a_summary_with_a_host_shaped_target():
+        text = summary(plan(HOST, {"service": "orders"}))
+>       assert HOST not in text and "db01" not in text, text
+E       AssertionError: agent-ops asks to run restart_service v1 (reversible) on db01[.]corp[.]internal. Inputs: {"service":"orders"}. Expected: service restarted. Plan 81c33da1b023.
+E       assert ('db01.corp.internal' not in 'agent-ops a...1c33da1b023.'
+E         
+E         'db01.corp.internal' is contained here:
+E           c33da1b023. and 'db01' not in 'agent-ops a...1c33da1b023.'
+E         
+E         'db01' is contained here:
+E           sible) on db01[.]corp[.]internal. Inputs: {"service":"orders"}. Expected: service restarted. Plan 81c33da1b023.
+E         ?           ++++)
+
+tests/test_q8b_card_text.py:386: AssertionError
+_ test_g11_a_line_whose_only_change_is_a_masked_identifier_keeps_its_block_marker _
+
+    def test_g11_a_line_whose_only_change_is_a_masked_identifier_keeps_its_block_marker():
+        result = clean("# APPROVED by sec@example.com")
+>       assert result.startswith("# APPROVED by <"), result
+E       AssertionError: ​# APPROVED by sec@example[.]com
+E       assert False
+E        +  where False = <built-in method startswith of str object at 0x7f29ea845630>('# APPROVED by <')
+E        +    where <built-in method startswith of str object at 0x7f29ea845630> = '\u200b# APPROVED by sec@example[.]com'.startswith
+
+tests/test_q8b_card_text.py:400: AssertionError
+___________________________ test_g12_code_stays_code ___________________________
+
+    def test_g12_code_stays_code():
+        fenced = "x\n```\nevil.com\n```\ny evil.com"
+>       assert gate.defang_domains(fenced) == "x\n```\nevil.com\n```\ny evil[.]com", (
+               ^^^^^^^^^^^^^^^^^^^
+            f"a fence body was changed: {gate.defang_domains(fenced)!r}"
+        )
+E       AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+
+tests/test_q8b_card_text.py:407: AttributeError
+__________________ test_s1_a_partly_masked_result_is_refused ___________________
+
+    def test_s1_a_partly_masked_result_is_refused():
+        got = R._pair(PW_KEY, PLAIN, tail("<SECRET_1> rest"))
+>       assert got == R.MASKED, f"a partly masked value was accepted: {got!r}"
+E       AssertionError: a partly masked value was accepted: '<SECRET_1> rest'
+E       assert '<SECRET_1> rest' == '<SECRET_REDACTED>'
+E         
+E         - <SECRET_REDACTED>
+E         + <SECRET_1> rest
+
+tests/test_q8b_credential_keys.py:113: AssertionError
+________________ test_s2_text_after_the_placeholder_is_refused _________________
+
+    def test_s2_text_after_the_placeholder_is_refused():
+        got = R._pair(PW_KEY, PLAIN, tail("<SECRET_1>x"))
+>       assert got == R.MASKED, f"text after the placeholder was accepted: {got!r}"
+E       AssertionError: text after the placeholder was accepted: '<SECRET_1>x'
+E       assert '<SECRET_1>x' == '<SECRET_REDACTED>'
+E         
+E         - <SECRET_REDACTED>
+E         + <SECRET_1>x
+
+tests/test_q8b_credential_keys.py:118: AssertionError
+_________________ test_s3_a_result_without_its_key_is_refused __________________
+
+    def test_s3_a_result_without_its_key_is_refused():
+        got = R._pair(PW_KEY, PLAIN, lambda s: "p<SECRET_1>ssword=<SECRET_1>")
+>       assert got == R.MASKED, f"a result without its key was accepted: {got!r}"
+E       AssertionError: a result without its key was accepted: 'p<SECRET_1>ssword=<SECRET_1>'
+E       assert 'p<SECRET_1>ssword=<SECRET_1>' == '<SECRET_REDACTED>'
+E         
+E         - <SECRET_REDACTED>
+E         + p<SECRET_1>ssword=<SECRET_1>
+
+tests/test_q8b_credential_keys.py:125: AssertionError
+_________________ test_s5_a_look_alike_placeholder_is_refused __________________
+
+    def test_s5_a_look_alike_placeholder_is_refused():
+        got = R._pair(PW_KEY, PLAIN, tail("<secret_1>"))
+>       assert got == R.MASKED, f"a look-alike placeholder was accepted: {got!r}"
+E       AssertionError: a look-alike placeholder was accepted: '<secret_1>'
+E       assert '<secret_1>' == '<SECRET_REDACTED>'
+E         
+E         - <SECRET_REDACTED>
+E         + <secret_1>
+
+tests/test_q8b_credential_keys.py:138: AssertionError
+___________________ test_s6_what_is_written_to_the_redactor ____________________
+
+    def test_s6_what_is_written_to_the_redactor():
+        calls: list[str] = []
+    
+        def record(s: str) -> str:
+            calls.append(s)
+            return s
+    
+        R._pair(PW_KEY, "qx zj", record)
+>       assert calls == ['secret="qx zj"', "qx zj"], (
+            f"a value that is not plain was written under its real key: {calls!r}"
+        )
+E       AssertionError: a value that is not plain was written under its real key: ['password=qx zj', 'qx zj']
+E       assert ['password=qx zj', 'qx zj'] == ['secret="qx zj"', 'qx zj']
+E         
+E         At index 0 diff: 'password=qx zj' != 'secret="qx zj"'
+E         Use -v to get more diff
+
+tests/test_q8b_credential_keys.py:149: AssertionError
+_____________________________ test_t1_the_key_rule _____________________________
+
+    def test_t1_the_key_rule():
+        missed = [k for k in CREDENTIAL_KEYS + SETTING_KEYS if not R.sensitive(k)]
+>       assert not missed, f"the key rule changed: not a credential key any more: {missed}"
+E       AssertionError: the key rule changed: not a credential key any more: ['PGPASSWORD', 'pwd', 'DBPassword', 'secretkey', 'secrets', 'rootpassword', 'accessKey', 'api_tokens', 'refresh_tokens', 'tokens', 'session', 'JSESSIONID', 'auth', 'account_key', 'client-key-data', 'connect.sid', 'password2', 'token1', 'OLDPWD']
+E       assert not ['PGPASSWORD', 'pwd', 'DBPassword', 'secretkey', 'secrets', 'rootpassword', ...]
+
+tests/test_q8b_credential_keys.py:232: AssertionError
+________ test_n1_a_value_under_a_credential_key[M1 PG+key, multi-word] _________
+
+label = 'M1 PG+key, multi-word'
+record = {'PGPASSWORD': 'correct horse battery staple'}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M1 PG+key, multi-word', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M1 PG+key, multi-word): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+_________ test_n1_a_value_under_a_credential_key[M1 env entry PG+key] __________
+
+label = 'M1 env entry PG+key'
+record = {'name': 'PGPASSWORD', 'value': 'hunter2secretXYZ'}, at = 'value'
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M1 env entry PG+key', original = 'hunter2secretXYZ'
+got = 'hunter2secretXYZ'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M1 env entry PG+key): shown as 'hunter2secretXYZ'
+E       assert False
+E        +  where False = shape_ok('hunter2secretXYZ')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+________________ test_n1_a_value_under_a_credential_key[M1 pwd] ________________
+
+label = 'M1 pwd', record = {'pwd': 'hunter2secretXYZ'}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M1 pwd', original = 'hunter2secretXYZ', got = 'hunter2secretXYZ'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M1 pwd): shown as 'hunter2secretXYZ'
+E       assert False
+E        +  where False = shape_ok('hunter2secretXYZ')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+______________ test_n1_a_value_under_a_credential_key[M1 DB+key] _______________
+
+label = 'M1 DB+key', record = {'DBPassword': 'correct horse battery staple'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M1 DB+key', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M1 DB+key): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+_____________ test_n1_a_value_under_a_credential_key[M1 secretkey] _____________
+
+label = 'M1 secretkey', record = {'secretkey': 'correct horse battery staple'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M1 secretkey', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M1 secretkey): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+______________ test_n1_a_value_under_a_credential_key[M1 secrets] ______________
+
+label = 'M1 secrets', record = {'secrets': 'correct horse battery staple'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M1 secrets', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M1 secrets): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+_____________ test_n1_a_value_under_a_credential_key[M1 root+key] ______________
+
+label = 'M1 root+key', record = {'rootpassword': 'correct horse battery staple'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M1 root+key', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M1 root+key): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+_____________ test_n1_a_value_under_a_credential_key[M1 accessKey] _____________
+
+label = 'M1 accessKey', record = {'accessKey': 'correct horse battery staple'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M1 accessKey', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M1 accessKey): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+_________ test_n1_a_value_under_a_credential_key[M2 list in env entry] _________
+
+label = 'M2 list in env entry'
+record = {'name': 'DB_PASSWORD', 'value': ['correct horse battery staple', 42]}
+at = 'value'
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 list in env entry', original = ['correct horse battery staple', 42]
+got = ['correct horse battery staple', 42]
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 list in env entry): shown as ['correct horse battery staple', 42]
+E       assert False
+E        +  where False = shape_ok(['correct horse battery staple', 42])
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+____________ test_n1_a_value_under_a_credential_key[M2 Name/Value] _____________
+
+label = 'M2 Name/Value'
+record = {'Name': 'DB_PASSWORD', 'Value': 'correct horse battery staple'}
+at = 'Value'
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 Name/Value', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 Name/Value): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+_____________ test_n1_a_value_under_a_credential_key[M2 key/value] _____________
+
+label = 'M2 key/value'
+record = {'key': 'api_key', 'value': 'correct horse battery staple'}
+at = 'value'
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 key/value', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 key/value): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+___________ test_n1_a_value_under_a_credential_key[B1r private_key] ____________
+
+label = 'B1r private_key'
+record = {'private_key': 'correct horse battery staple'}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'B1r private_key', original = 'correct horse battery staple'
+got = '<SECRET_1> horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (B1r private_key): shown as '<SECRET_1> horse battery staple'
+E       assert False
+E        +  where False = shape_ok('<SECRET_1> horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+____________ test_n1_a_value_under_a_credential_key[B1r privateKey] ____________
+
+label = 'B1r privateKey'
+record = {'privateKey': 'correct horse battery staple'}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'B1r privateKey', original = 'correct horse battery staple'
+got = '<SECRET_1> horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (B1r privateKey): shown as '<SECRET_1> horse battery staple'
+E       assert False
+E        +  where False = shape_ok('<SECRET_1> horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+_______ test_n1_a_value_under_a_credential_key[B1r 300-char multi-word] ________
+
+label = 'B1r 300-char multi-word'
+record = {'password': 'alpha bravo charlie delta echo foxtrot alpha bravo charlie delta echo foxtrot alpha bravo charlie delta ...cho foxtrot alpha bravo charlie delta echo foxtrot alpha bravo charlie delta echo foxtrot alpha bravo charlie delta e'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'B1r 300-char multi-word'
+original = 'alpha bravo charlie delta echo foxtrot alpha bravo charlie delta echo foxtrot alpha bravo charlie delta echo foxtrot ...echo foxtrot alpha bravo charlie delta echo foxtrot alpha bravo charlie delta echo foxtrot alpha bravo charlie delta e'
+got = '<SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delt...ECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta e'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (B1r 300-char multi-word): shown as '<SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta e'
+E       assert False
+E        +  where False = shape_ok('<SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delt...ECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta e')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+______________ test_n1_a_value_under_a_credential_key[255 chars] _______________
+
+label = '255 chars'
+record = {'password': 'ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab...ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab '}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = '255 chars'
+original = 'ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab ... ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab '
+got = '<SECRET_1> cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd a... ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab '
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (255 chars): shown as '<SECRET_1> cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab '
+E       assert False
+E        +  where False = shape_ok('<SECRET_1> cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd a... ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab ')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+______________ test_n1_a_value_under_a_credential_key[256 chars] _______________
+
+label = '256 chars'
+record = {'password': 'ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab...b cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab c'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = '256 chars'
+original = 'ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab ...ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab c'
+got = '<SECRET_1> cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd a...ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab c'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (256 chars): shown as '<SECRET_1> cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab c'
+E       assert False
+E        +  where False = shape_ok('<SECRET_1> cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd a...ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab c')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+_________ test_n1_a_value_under_a_credential_key[M6 ESC inside value] __________
+
+label = 'M6 ESC inside value', record = {'password': 'hunter\x1b[0m2secretXYZ'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M6 ESC inside value', original = 'hunter\x1b[0m2secretXYZ'
+got = '<SECRET_1> 2secretXYZ'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M6 ESC inside value): shown as '<SECRET_1> 2secretXYZ'
+E       assert False
+E        +  where False = shape_ok('<SECRET_1> 2secretXYZ')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+_______________ test_n1_a_value_under_a_credential_key[F5 sweep] _______________
+
+label = 'F5 sweep', record = {'password': 'correct horse battery staple'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'F5 sweep', original = 'correct horse battery staple'
+got = '<SECRET_1> horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (F5 sweep): shown as '<SECRET_1> horse battery staple'
+E       assert False
+E        +  where False = shape_ok('<SECRET_1> horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+________________ test_n1_a_value_under_a_credential_key[F5 a b] ________________
+
+label = 'F5 a b', record = {'password': 'a b'}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'F5 a b', original = 'a b', got = 'p<SECRET_1>ssword=<SECRET_1> b'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (F5 a b): shown as 'p<SECRET_1>ssword=<SECRET_1> b'
+E       assert False
+E        +  where False = shape_ok('p<SECRET_1>ssword=<SECRET_1> b')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+____________ test_n1_a_value_under_a_credential_key[F5 both quotes] ____________
+
+label = 'F5 both quotes', record = {'db_password': 'pa55"word \'tail\' part'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'F5 both quotes', original = 'pa55"word \'tail\' part'
+got = '<SECRET_1>"word \'tail\' part'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (F5 both quotes): shown as '<SECRET_1>"word \'tail\' part'
+E       assert False
+E        +  where False = shape_ok('<SECRET_1>"word \'tail\' part')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+_____________ test_n1_a_value_under_a_credential_key[XF composite] _____________
+
+label = 'XF composite', record = {'token': 'bob.smith@example.com Zx9 tail'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'XF composite', original = 'bob.smith@example.com Zx9 tail'
+got = '<EMAIL_1> Zx9 tail'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (XF composite): shown as '<EMAIL_1> Zx9 tail'
+E       assert False
+E        +  where False = shape_ok('<EMAIL_1> Zx9 tail')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+________ test_n1_a_value_under_a_credential_key[B1 key_used multi-word] ________
+
+label = 'B1 key_used multi-word'
+record = {'password_used': 'correct horse battery staple'}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'B1 key_used multi-word', original = 'correct horse battery staple'
+got = '<SECRET_1> horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (B1 key_used multi-word): shown as '<SECRET_1> horse battery staple'
+E       assert False
+E        +  where False = shape_ok('<SECRET_1> horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+__________ test_n1_a_value_under_a_credential_key[M2 api_tokens list] __________
+
+label = 'M2 api_tokens list'
+record = {'api_tokens': ['correct horse battery staple']}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 api_tokens list', original = ['correct horse battery staple']
+got = ['correct horse battery staple']
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 api_tokens list): shown as ['correct horse battery staple']
+E       assert False
+E        +  where False = shape_ok(['correct horse battery staple'])
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+__________ test_n1_a_value_under_a_credential_key[M2 refresh_tokens] ___________
+
+label = 'M2 refresh_tokens'
+record = {'refresh_tokens': 'correct horse battery staple'}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 refresh_tokens', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 refresh_tokens): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+______________ test_n1_a_value_under_a_credential_key[M2 tokens] _______________
+
+label = 'M2 tokens', record = {'tokens': 'correct horse battery staple'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 tokens', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 tokens): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+______________ test_n1_a_value_under_a_credential_key[M2 session] ______________
+
+label = 'M2 session', record = {'session': 'correct horse battery staple'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 session', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 session): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+____________ test_n1_a_value_under_a_credential_key[M2 JSESSIONID] _____________
+
+label = 'M2 JSESSIONID', record = {'JSESSIONID': 'hunter2secretXYZ'}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 JSESSIONID', original = 'hunter2secretXYZ', got = 'hunter2secretXYZ'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 JSESSIONID): shown as 'hunter2secretXYZ'
+E       assert False
+E        +  where False = shape_ok('hunter2secretXYZ')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+_______________ test_n1_a_value_under_a_credential_key[M2 auth] ________________
+
+label = 'M2 auth', record = {'auth': 'correct horse battery staple'}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 auth', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 auth): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+____________ test_n1_a_value_under_a_credential_key[M2 account_key] ____________
+
+label = 'M2 account_key'
+record = {'account_key': 'correct horse battery staple'}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 account_key', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 account_key): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+__________ test_n1_a_value_under_a_credential_key[M2 client-key-data] __________
+
+label = 'M2 client-key-data'
+record = {'client-key-data': 'correct horse battery staple'}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 client-key-data', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 client-key-data): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+____________ test_n1_a_value_under_a_credential_key[M2 connect.sid] ____________
+
+label = 'M2 connect.sid', record = {'connect.sid': 'hunter2secretXYZ'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 connect.sid', original = 'hunter2secretXYZ'
+got = 'hunter2secretXYZ'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 connect.sid): shown as 'hunter2secretXYZ'
+E       assert False
+E        +  where False = shape_ok('hunter2secretXYZ')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+_______________ test_n1_a_value_under_a_credential_key[M2 key2] ________________
+
+label = 'M2 key2', record = {'password2': 'correct horse battery staple'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 key2', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 key2): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+______________ test_n1_a_value_under_a_credential_key[M2 token1] _______________
+
+label = 'M2 token1', record = {'token1': 'correct horse battery staple'}
+at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 token1', original = 'correct horse battery staple'
+got = 'correct horse battery staple'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 token1): shown as 'correct horse battery staple'
+E       assert False
+E        +  where False = shape_ok('correct horse battery staple')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+______________ test_n1_a_value_under_a_credential_key[M2 OLDPWD] _______________
+
+label = 'M2 OLDPWD', record = {'name': 'OLDPWD', 'value': '/srv/app'}
+at = 'value'
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'M2 OLDPWD', original = '/srv/app', got = '/srv/app'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (M2 OLDPWD): shown as '/srv/app'
+E       assert False
+E        +  where False = shape_ok('/srv/app')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+______________ test_n1_a_value_under_a_credential_key[one letter] ______________
+
+label = 'one letter', record = {'password': 'a'}, at = None
+
+    @pytest.mark.parametrize(("label", "record", "at"), N1_ROWS, ids=[r[0] for r in N1_ROWS])
+    def test_n1_a_value_under_a_credential_key(label, record, at):
+        key = at or next(iter(record))
+        (out,), _ = shown(record)
+>       _check_n1(label, record[key], out[key])
+
+tests/test_q8b_credential_keys.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'one letter', original = 'a', got = 'p<SECRET_1>ssword=<SECRET_1>'
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (one letter): shown as 'p<SECRET_1>ssword=<SECRET_1>'
+E       assert False
+E        +  where False = shape_ok('p<SECRET_1>ssword=<SECRET_1>')
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+___________ test_n1_an_entry_of_a_secret[F5c Secret data under spec] ___________
+
+label = 'F5c Secret data under spec'
+record = {'kind': 'Secret', 'spec': {'data': {'DB_USER': 'cG9zdGdyZXM='}}}
+
+    @pytest.mark.parametrize(("label", "record"), N1_SECRET_ROWS, ids=[r[0] for r in N1_SECRET_ROWS])
+    def test_n1_an_entry_of_a_secret(label, record):
+        def entries(rec):
+            inner = rec.get("spec", rec)
+            return inner.get("data") or inner.get("stringData")
+    
+        (out,), _ = shown(record)
+>       _check_n1(label, entries(record), entries(out))
+
+tests/test_q8b_credential_keys.py:363: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'F5c Secret data under spec', original = {'DB_USER': 'cG9zdGdyZXM='}
+got = {'DB_USER': 'cG9zdGdyZXM='}
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (F5c Secret data under spec): shown as {'DB_USER': 'cG9zdGdyZXM='}
+E       assert False
+E        +  where False = shape_ok({'DB_USER': 'cG9zdGdyZXM='})
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+________ test_n1_an_entry_of_a_secret[F5c Secret stringData under spec] ________
+
+label = 'F5c Secret stringData under spec'
+record = {'kind': 'Secret', 'spec': {'stringData': {'cfg': 'correct horse battery staple'}}}
+
+    @pytest.mark.parametrize(("label", "record"), N1_SECRET_ROWS, ids=[r[0] for r in N1_SECRET_ROWS])
+    def test_n1_an_entry_of_a_secret(label, record):
+        def entries(rec):
+            inner = rec.get("spec", rec)
+            return inner.get("data") or inner.get("stringData")
+    
+        (out,), _ = shown(record)
+>       _check_n1(label, entries(record), entries(out))
+
+tests/test_q8b_credential_keys.py:363: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'F5c Secret stringData under spec'
+original = {'cfg': 'correct horse battery staple'}
+got = {'cfg': 'correct horse battery staple'}
+
+    def _check_n1(label, original, got):
+>       assert shape_ok(got), f"part of the value is readable ({label}): shown as {got!r}"
+E       AssertionError: part of the value is readable (F5c Secret stringData under spec): shown as {'cfg': 'correct horse battery staple'}
+E       assert False
+E        +  where False = shape_ok({'cfg': 'correct horse battery staple'})
+
+tests/test_q8b_credential_keys.py:343: AssertionError
+___________________ test_n1_a_secret_whose_data_is_not_a_map ___________________
+
+    def test_n1_a_secret_whose_data_is_not_a_map():
+        """A malformed Secret (the ticket is silent; the option that masks more): nothing of it is shown or registered."""
+        for content in (P, [P, 42], 12345678, [{"note": P}]):
+            for record in (
+                {"kind": "Secret", "data": content},
+                {"kind": "Secret", "spec": {"stringData": content}},
+            ):
+                (out, second), counts = shown(record, {"message": f"saw {P}"})
+                text = json.dumps(out)
+>               assert "horse" not in text and "12345678" not in text and "42" not in text, (
+                    f"part of the value is readable: a Secret whose data is not a map: {out!r}"
+                )
+E               AssertionError: part of the value is readable: a Secret whose data is not a map: {'kind': 'Secret', 'data': 'correct horse battery staple'}
+E               assert ('horse' not in '{"kind": "S...ery staple"}'
+E                 
+E                 'horse' is contained here:
+E                   {"kind": "Secret", "data": "correct horse battery staple"}
+E                 ?                                     +++++)
+
+tests/test_q8b_credential_keys.py:375: AssertionError
+______________________ test_n1_a_number_in_a_named_entry _______________________
+
+    def test_n1_a_number_in_a_named_entry():
+        (out,), _ = shown({"name": "DB_" + PW_KEY.upper(), "value": 12345678})
+>       assert out["value"] == R.MASKED, (
+            f"part of the value is readable: a number in a named entry: {out!r}"
+        )
+E       AssertionError: part of the value is readable: a number in a named entry: {'name': 'DB_PASSWORD', 'value': 12345678}
+E       assert 12345678 == '<SECRET_REDACTED>'
+E        +  where '<SECRET_REDACTED>' = R.MASKED
+
+tests/test_q8b_credential_keys.py:383: AssertionError
+________________ test_n1_a_value_under_a_setting_key_is_masked _________________
+
+    def test_n1_a_value_under_a_setting_key_is_masked():
+        """One test, not one per row: the mutant list pins it by its plain name."""
+        for record in SETTING_ROWS:
+            (out,), _ = shown(record)
+            assert T not in json.dumps(out), f"a value under a setting key was shown: {out!r}"
+            value = out["value"] if "value" in out else next(iter(out.values()))
+>           assert shape_ok(value), f"a value under a setting key was shown: {out!r}"
+E           AssertionError: a value under a setting key was shown: {'token_expiry': '<SECRET_1> 30d'}
+E           assert False
+E            +  where False = shape_ok('<SECRET_1> 30d')
+
+tests/test_q8b_credential_keys.py:408: AssertionError
+______ test_n2_a_value_is_masked_where_repeated[F5b repeat, pattern-free] ______
+
+label = 'F5b repeat, pattern-free'
+record = {'password': 'correct horse battery staple'}
+line = 'login with correct horse battery staple failed; correct answer'
+words = ['horse', 'battery', 'staple']
+
+    @pytest.mark.parametrize(("label", "record", "line", "words"), N2_ROWS, ids=[r[0] for r in N2_ROWS])
+    def test_n2_a_value_is_masked_where_repeated(label, record, line, words):
+        (_, second), _ = shown(record, {"message": line})
+        readable = [w for w in words if w in second["message"]]
+>       assert not readable, f"readable in the log line ({label}): {readable} in {second['message']!r}"
+E       AssertionError: readable in the log line (F5b repeat, pattern-free): ['horse', 'battery', 'staple'] in 'login with <SECRET_1> horse battery staple failed; <SECRET_1> answer'
+E       assert not ['horse', 'battery', 'staple']
+
+tests/test_q8b_credential_keys.py:438: AssertionError
+_____ test_n2_a_value_is_masked_where_repeated[XF respelled, percent copy] _____
+
+label = 'XF respelled, percent copy'
+record = {'kind': 'Secret', 'stringData': {'cfg': 'correct horse battery staple'}}
+line = 'GET /login?p=correct%20horse%20battery%20staple'
+words = ['horse', 'battery', 'staple']
+
+    @pytest.mark.parametrize(("label", "record", "line", "words"), N2_ROWS, ids=[r[0] for r in N2_ROWS])
+    def test_n2_a_value_is_masked_where_repeated(label, record, line, words):
+        (_, second), _ = shown(record, {"message": line})
+        readable = [w for w in words if w in second["message"]]
+>       assert not readable, f"readable in the log line ({label}): {readable} in {second['message']!r}"
+E       AssertionError: readable in the log line (XF respelled, percent copy): ['horse', 'battery', 'staple'] in 'GET /login?p=correct%20horse%20battery%20staple'
+E       assert not ['horse', 'battery', 'staple']
+
+tests/test_q8b_credential_keys.py:438: AssertionError
+_______________ test_n2_a_secret_entry_is_masked_where_repeated ________________
+
+    def test_n2_a_secret_entry_is_masked_where_repeated():
+        (first, second), _ = shown(
+            {"kind": "Secret", "stringData": {"cfg": P}}, {"message": f"login with {P} failed"}
+        )
+        readable = [w for w in ("horse", "battery", "staple") if w in second["message"]]
+>       assert not readable, f"readable in the log line: {readable} in {second['message']!r}"
+E       AssertionError: readable in the log line: ['horse', 'battery', 'staple'] in 'login with correct horse battery staple failed'
+E       assert not ['horse', 'battery', 'staple']
+
+tests/test_q8b_credential_keys.py:446: AssertionError
+____________________ test_n2_decoded_copy_of_a_base64_entry ____________________
+
+    def test_n2_decoded_copy_of_a_base64_entry():
+        (first, second), _ = shown(
+            {"kind": "Secret", "data": {"p": b64(P)}}, {"message": f"login with {P} failed"}
+        )
+        readable = [w for w in ("horse", "battery", "staple") if w in second["message"]]
+>       assert not readable, f"readable in the log line: {readable} in {second['message']!r}"
+E       AssertionError: readable in the log line: ['horse', 'battery', 'staple'] in 'login with correct horse battery staple failed'
+E       assert not ['horse', 'battery', 'staple']
+
+tests/test_q8b_credential_keys.py:455: AssertionError
+____________ test_n2_a_json_escaped_copy[line1 horse\nline2 staple] ____________
+
+value = 'line1 horse\nline2 staple'
+
+    @pytest.mark.parametrize("value", ["line1 horse\nline2 staple", 'say "horse" twice'])
+    def test_n2_a_json_escaped_copy(value):
+        copy = json.dumps({"stringData": {"cfg": value}})
+        (_, second), _ = shown(
+            {"kind": "Secret", "stringData": {"cfg": value}},
+            {"annotations": {"last-applied-configuration": copy}},
+        )
+        text = json.dumps(second)
+>       assert "horse" not in text and "staple" not in text, f"readable in the log line: {text}"
+E       AssertionError: readable in the log line: {"annotations": {"last-applied-configuration": "{\"stringData\": {\"cfg\": \"line1 horse\\nline2 staple\"}}"}}
+E       assert ('horse' not in '{"annotatio...aple\\"}}"}}'
+E         
+E         'horse' is contained here:
+E           : \"line1 horse\\nline2 staple\"}}"}}
+E         ?           +++++)
+
+tests/test_q8b_credential_keys.py:471: AssertionError
+________________ test_n2_a_json_escaped_copy[say "horse" twice] ________________
+
+value = 'say "horse" twice'
+
+    @pytest.mark.parametrize("value", ["line1 horse\nline2 staple", 'say "horse" twice'])
+    def test_n2_a_json_escaped_copy(value):
+        copy = json.dumps({"stringData": {"cfg": value}})
+        (_, second), _ = shown(
+            {"kind": "Secret", "stringData": {"cfg": value}},
+            {"annotations": {"last-applied-configuration": copy}},
+        )
+        text = json.dumps(second)
+>       assert "horse" not in text and "staple" not in text, f"readable in the log line: {text}"
+E       AssertionError: readable in the log line: {"annotations": {"last-applied-configuration": "{\"stringData\": {\"cfg\": \"say \\\"horse\\\" twice\"}}"}}
+E       assert ('horse' not in '{"annotatio...wice\\"}}"}}'
+E         
+E         'horse' is contained here:
+E           \"say \\\"horse\\\" twice\"}}"}}
+E         ?           +++++)
+
+tests/test_q8b_credential_keys.py:471: AssertionError
+______________________ test_n2_f5c_secret_data_under_spec ______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3482/test_n2_f5c_secret_data_under_0')
+
+    def test_n2_f5c_secret_data_under_spec(tmp_path):
+        """Both shapes a loaded case can have: `spec: {data: ...}` and `spec: {kind: Secret, data: ...}`."""
+        for shape in ("spec.data", "spec.manifest"):
+            _, masked = _fixture(tmp_path / shape, shape)
+            lines = [r["message"] for r in _log_records(masked)]
+>           assert not [x for x in lines if DB_PW in x], f"readable in the log line ({shape}): {lines}"
+E           AssertionError: readable in the log line (spec.data): ['start', 'boom code=7', 'boom again', 'information: retry in 5s', 'orders-api timeout on port 5432 as postgres in prod', 'debug=true orders_count=3 env prod', 'login as postgres with Zq7xkW2vy9JtR4m refused', 'start']
+E           assert not ['login as postgres with Zq7xkW2vy9JtR4m refused']
+
+tests/test_q8b_credential_keys.py:519: AssertionError
+_____________________ test_n3_no_fragment_for_an_esc_value _____________________
+
+    def test_n3_no_fragment_for_an_esc_value():
+        (_, second), _ = shown({PW_KEY: ESC_VALUE}, {"message": "the hunter came"})
+>       assert second["message"] == "the hunter came", (
+            f"a fragment was registered: {second['message']!r}"
+        )
+E       AssertionError: a fragment was registered: 'the <SECRET_1> came'
+E       assert 'the <SECRET_1> came' == 'the hunter came'
+E         
+E         - the hunter came
+E         + the <SECRET_1> came
+
+tests/test_q8b_credential_keys.py:534: AssertionError
+__________________ test_n3_no_fragment_of_a_multi_word_value ___________________
+
+    def test_n3_no_fragment_of_a_multi_word_value():
+        (_, second), _ = shown({PW_KEY: P}, {"message": f"login with {P} failed; correct answer"})
+>       assert second["message"].endswith("failed; correct answer"), (
+            f"a fragment was registered: {second['message']!r}"
+        )
+E       AssertionError: a fragment was registered: 'login with <SECRET_1> horse battery staple failed; <SECRET_1> answer'
+E       assert False
+E        +  where False = <built-in method endswith of str object at 0x7f29eadb1300>('failed; correct answer')
+E        +    where <built-in method endswith of str object at 0x7f29eadb1300> = 'login with <SECRET_1> horse battery staple failed; <SECRET_1> answer'.endswith
+
+tests/test_q8b_credential_keys.py:541: AssertionError
+________ test_x3_a_value_with_both_quote_marks_is_masked_where_repeated ________
+[XPASS(strict)] Q8d: sweep of registered secrets before the patterns
+____________ test_x8_the_copy_without_the_escape_sequence_is_masked ____________
+[XPASS(strict)] Q8d: sweep of registered secrets before the patterns
+_____________ test_g3_a_timestamp_stays_and_near_misses_are_masked _____________
+
+    def test_g3_a_timestamp_stays_and_near_misses_are_masked():
+        (out,), _ = shown({"token": "2026-11-11T10:00:00Z"})
+        assert out == {"token": "2026-11-11T10:00:00Z"}
+        for near in (
+            "2026-11-11T10:00:00+00:00",
+            "2026-11-11 10:00:00Z",
+            "2026-11-11T10:00:00Zx",
+            "2026-13-11T10:00:00Z",
+        ):
+            (out,), _ = shown({"token": near})
+>           assert shape_ok(out["token"]), (
+                f"part of the value is readable: near miss {near!r} shown as {out!r}"
+            )
+E           AssertionError: part of the value is readable: near miss '2026-11-11 10:00:00Z' shown as {'token': '<SECRET_1> 10:00:00Z'}
+E           assert False
+E            +  where False = shape_ok('<SECRET_1> 10:00:00Z')
+
+tests/test_q8b_credential_keys.py:658: AssertionError
+_ test_g6_a_setting_about_a_credential_is_shown[{"password_policy_enabled": "true"}] _
+
+record = {'password_policy_enabled': 'true'}
+
+    @pytest.mark.parametrize("record", GATE_ROWS, ids=[json.dumps(r) for r in GATE_ROWS])
+    def test_g6_a_setting_about_a_credential_is_shown(record):
+        (out,), _ = shown(record)
+>       assert out == record
+E       AssertionError: assert {'password_po...ET_REDACTED>'} == {'password_po...bled': 'true'}
+E         
+E         Differing items:
+E         {'password_policy_enabled': '<SECRET_REDACTED>'} != {'password_policy_enabled': 'true'}
+E         Use -v to get more diff
+
+tests/test_q8b_credential_keys.py:685: AssertionError
+____ test_g6_a_setting_about_a_credential_is_shown[{"token_expiry": 3600}] _____
+
+record = {'token_expiry': 3600}
+
+    @pytest.mark.parametrize("record", GATE_ROWS, ids=[json.dumps(r) for r in GATE_ROWS])
+    def test_g6_a_setting_about_a_credential_is_shown(record):
+        (out,), _ = shown(record)
+>       assert out == record
+E       AssertionError: assert {'token_expir...ET_REDACTED>'} == {'token_expiry': 3600}
+E         
+E         Differing items:
+E         {'token_expiry': '<SECRET_REDACTED>'} != {'token_expiry': 3600}
+E         Use -v to get more diff
+
+tests/test_q8b_credential_keys.py:685: AssertionError
+____ test_g6_a_setting_about_a_credential_is_shown[{"token_expiry": "30d"}] ____
+
+record = {'token_expiry': '30d'}
+
+    @pytest.mark.parametrize("record", GATE_ROWS, ids=[json.dumps(r) for r in GATE_ROWS])
+    def test_g6_a_setting_about_a_credential_is_shown(record):
+        (out,), _ = shown(record)
+>       assert out == record
+E       AssertionError: assert {'token_expiry': '<SECRET_1>'} == {'token_expiry': '30d'}
+E         
+E         Differing items:
+E         {'token_expiry': '<SECRET_1>'} != {'token_expiry': '30d'}
+E         Use -v to get more diff
+
+tests/test_q8b_credential_keys.py:685: AssertionError
+______ test_g6_a_setting_about_a_credential_is_shown[{"secret_count": 3}] ______
+
+record = {'secret_count': 3}
+
+    @pytest.mark.parametrize("record", GATE_ROWS, ids=[json.dumps(r) for r in GATE_ROWS])
+    def test_g6_a_setting_about_a_credential_is_shown(record):
+        (out,), _ = shown(record)
+>       assert out == record
+E       AssertionError: assert {'secret_coun...ET_REDACTED>'} == {'secret_count': 3}
+E         
+E         Differing items:
+E         {'secret_count': '<SECRET_REDACTED>'} != {'secret_count': 3}
+E         Use -v to get more diff
+
+tests/test_q8b_credential_keys.py:685: AssertionError
+_ test_g6_a_setting_about_a_credential_is_shown[{"name": "TOKEN_TTL", "value": "15m"}] _
+
+record = {'name': 'TOKEN_TTL', 'value': '15m'}
+
+    @pytest.mark.parametrize("record", GATE_ROWS, ids=[json.dumps(r) for r in GATE_ROWS])
+    def test_g6_a_setting_about_a_credential_is_shown(record):
+        (out,), _ = shown(record)
+>       assert out == record
+E       AssertionError: assert {'name': 'TOK... '<SECRET_1>'} == {'name': 'TOK...value': '15m'}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'value': '<SECRET_1>'} != {'value': '15m'}
+E         Use -v to get more diff
+
+tests/test_q8b_credential_keys.py:685: AssertionError
+_____ test_g6_no_setting_is_shown_under_a_credential_parent_or_in_a_secret _____
+
+    def test_g6_no_setting_is_shown_under_a_credential_parent_or_in_a_secret():
+        (out,), _ = shown({"credentials": {PW_KEY + "_policy_enabled": "true"}})
+        assert out == {"credentials": {PW_KEY + "_policy_enabled": R.MASKED}}
+        (out,), _ = shown({"kind": "Secret", "stringData": {"token_expiry": "30d"}})
+        assert shape_ok(out["stringData"]["token_expiry"]), out
+        (out,), _ = shown({"name": PW_KEY + "_policy_enabled", "value": {"mode": T}})
+>       assert T not in json.dumps(out), out
+E       AssertionError: {'name': 'password_policy_enabled', 'value': {'mode': 'tr0ub4dor'}}
+E       assert 'tr0ub4dor' not in '{"name": "p...tr0ub4dor"}}'
+E         
+E         'tr0ub4dor' is contained here:
+E           {"mode": "tr0ub4dor"}}
+
+tests/test_q8b_credential_keys.py:694: AssertionError
+________________ test_g7_common_words_of_a_secret_stay_readable ________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3482/test_g7_common_words_of_a_secr0')
+
+    def test_g7_common_words_of_a_secret_stay_readable(tmp_path):
+        raw, masked = _fixture(tmp_path)
+        lines = " | ".join(r["message"] for r in _log_records(masked))
+        gone = [w for w in ("orders", "info", "true", "5432", "prod", "postgres") if w not in lines]
+        assert not gone, f"a common word was replaced: {gone} in {lines!r}"
+        pairs = zip(_log_records(raw), _log_records(masked), strict=True)
+        changed = [m["message"] for r, m in pairs if r != m and DB_PW not in r["message"]]
+        assert not changed, (
+            f"a common word was replaced: a log line without the secret changed: {changed}"
+        )
+        (_, second), _ = shown(
+            {"kind": "Secret", "stringData": {"ENV": "Prod-1"}}, {"message": "deploy to Prod-1 done"}
+        )
+        assert second["message"] == "deploy to Prod-1 done", (
+            f"a common word was replaced: a value under 8 characters: {second['message']!r}"
+        )
+        (_, second), _ = shown(
+            {"kind": "Secret", "stringData": {"username": "orders-svc"}},
+            {"message": "user orders-svc NAME denied"},
+        )
+        assert "orders-svc" not in second["message"], second
+>       assert re.search(r"user <SECRET_[0-9]+> NAME denied", second["message"]), second
+E       AssertionError: {'message': 'user <NAME_1> NAME denied'}
+E       assert None
+E        +  where None = <function search at 0x7f29ec5bdf80>('user <SECRET_[0-9]+> NAME denied', 'user <NAME_1> NAME denied')
+E        +    where <function search at 0x7f29ec5bdf80> = re.search
+
+tests/test_q8b_credential_keys.py:718: AssertionError
+__________ test_g9_the_fixture_answers_the_same_tool_calls[spec.data] __________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3482/test_g9_the_fixture_answers_th0')
+shape = 'spec.data'
+
+    @pytest.mark.parametrize("shape", ["spec.data", "spec.manifest"])
+    def test_g9_the_fixture_answers_the_same_tool_calls(tmp_path, shape):
+        raw, masked = _fixture(tmp_path, shape)
+        raw_calls, masked_calls = _calls(raw), _calls(masked)
+        assert len(raw_calls) == len(masked_calls) == 24
+        for (name, raw_in), (_, masked_in) in zip(raw_calls, masked_calls, strict=True):
+            want = _ids(Snapshot(raw).call(name, raw_in))
+            got = _ids(Snapshot(masked).call(name, masked_in))
+            assert got == want, f"evidence IDs differ for {name} {masked_in}: {got} against {want}"
+        for field in ("level", "service"):
+            assert [r[field] for r in _log_records(masked)] == [r[field] for r in _log_records(raw)]
+        before, after = _strings_outside_the_secret(raw), _strings_outside_the_secret(masked)
+        changed = [(a, b) for a, b in zip(before, after, strict=True) if a != b]
+>       assert len(changed) == 1, f"strings outside the Secret that changed: {changed}"
+E       AssertionError: strings outside the Secret that changed: []
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_q8b_credential_keys.py:778: AssertionError
+________ test_g9_the_fixture_answers_the_same_tool_calls[spec.manifest] ________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3482/test_g9_the_fixture_answers_th1')
+shape = 'spec.manifest'
+
+    @pytest.mark.parametrize("shape", ["spec.data", "spec.manifest"])
+    def test_g9_the_fixture_answers_the_same_tool_calls(tmp_path, shape):
+        raw, masked = _fixture(tmp_path, shape)
+        raw_calls, masked_calls = _calls(raw), _calls(masked)
+        assert len(raw_calls) == len(masked_calls) == 24
+        for (name, raw_in), (_, masked_in) in zip(raw_calls, masked_calls, strict=True):
+            want = _ids(Snapshot(raw).call(name, raw_in))
+            got = _ids(Snapshot(masked).call(name, masked_in))
+            assert got == want, f"evidence IDs differ for {name} {masked_in}: {got} against {want}"
+        for field in ("level", "service"):
+            assert [r[field] for r in _log_records(masked)] == [r[field] for r in _log_records(raw)]
+        before, after = _strings_outside_the_secret(raw), _strings_outside_the_secret(masked)
+        changed = [(a, b) for a, b in zip(before, after, strict=True) if a != b]
+>       assert len(changed) == 1, f"strings outside the Secret that changed: {changed}"
+E       AssertionError: strings outside the Secret that changed: []
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_q8b_credential_keys.py:778: AssertionError
+______________________ test_g10_a_large_secret_is_bounded ______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f29ea5f1cd0>
+
+    def test_g10_a_large_secret_is_bounded(monkeypatch):
+        entries = {f"k{i}": ("qx zj " * 34)[:200] + str(i) for i in range(2000)}
+        seen = 0
+        real = runmap.redact_untrusted
+    
+        def counting(text, mapping, *args, **kwargs):
+            nonlocal seen
+            seen += len(text)
+            return real(text, mapping, *args, **kwargs)
+    
+        monkeypatch.setattr(runmap, "redact_untrusted", counting)
+        (out,), _ = shown({"kind": "Secret", "stringData": entries})
+        per_pass = seen / 2
+        assert per_pass <= 2 * defaults.MAX_BUNDLE_CHARS, per_pass
+        assert per_pass <= 2.2 * sum(len(v) for v in entries.values()), per_pass
+        values = list(out["stringData"].values())
+        assert all(shape_ok(v) for v in values)
+>       assert R.MAX_REGISTERED_ENTRIES == 256
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.k1b.redaction' has no attribute 'MAX_REGISTERED_ENTRIES'
+
+tests/test_q8b_credential_keys.py:801: AttributeError
+________ test_p1_the_shown_value_is_only_placeholders_or_the_fixed_mask ________
+
+    def test_p1_the_shown_value_is_only_placeholders_or_the_fixed_mask():
+        res = p1_results()
+        assert res["run"] == CASES and res["over_255"] >= CASES * 0.05, (res["run"], res["over_255"])
+>       assert not res["a"], (
+            f"part of the value is readable: {len(res['a'])} cases, first {res['a'][:3]!r}"
+        )
+E       AssertionError: part of the value is readable: 2391 cases, first [('authorization', '62jwz0k13j09vzx72zj35&#59;66kvww57v51xk0j0q44\u20099v7v63751\t&0qv', '<SECRET_1>\u20099v7v63751\t&0qvw4w8\u200990175xz\xa0\u2003%20‹SECRET_1›\x1f6w80z@\x1c＇<APIKEY_1>\u200aw78z41\x1eqyyz26yv＇73738w6q416q0\t91x28q\xa04kwj27yw\u2001,<HIGHENTROPY_1>\x1cvw76110.20.30.40y989y11jzvk7'), ('authorization', "3425k7x68xv038qzz71k7v@AKIAIOSFODNN7EXAMPLE\u2001';'ａｂ", "<SECRET_1>\u2001';'ａｂ"), ('refresh_tokens', '&ａｂjv8zq\\u0', '&ａｂjv8zq\\u0')]
+E       assert not [('authorization', '62jwz0k13j09vzx72zj35&#59;66kvww57v51xk0j0q44\u20099v7v63751\t&0qv', '<SECRET_1>\u20099v7v63751\t&...DNN7EXAM', '2x484qk68q43v55741zjw608z\u200d\u1680<HIGHENTROPY_1>;1v2wqz5q37yz1xv0;\x1dj1405"\u205f2j6v5ａｂ\u202f'), ...]
+
+tests/test_q8b_random.py:165: AssertionError
+____________ test_p1_no_run_of_the_value_is_readable_under_its_key _____________
+
+    def test_p1_no_run_of_the_value_is_readable_under_its_key():
+        res = p1_results()
+>       assert not res["b"], (
+            f"part of the value is readable: {len(res['b'])} cases, first {res['b'][:3]!r}"
+        )
+E       AssertionError: part of the value is readable: 2177 cases, first [('authorization', '62jwz0k13j09vzx72zj35&#59;66kvww57v51xk0j0q44\u20099v7v63751\t&0qv', '<SECRET_1>\u20099v7v63751\t&0qvw4w8\u200990175xz\xa0\u2003%20‹SECRET_1›\x1f6w80z@\x1c＇<APIKEY_1>\u200aw78z41\x1eqyyz26yv＇73738w6q416q0\t91x28q\xa04kwj27yw\u2001,<HIGHENTROPY_1>\x1cvw76110.20.30.40y989y11jzvk7'), ('passphrase', 'z55q\t＇\u2009\x1f3ky5kx51z2zk4qj0db01.corp.internal111y4v1v"jjzq5v4,\u2002', 'z55q\t＇\u2009\x1f<HOSTNAME_1>.internal111y4v1v"jjzq5v4,\u200263q7849qvjxw6q6q51q\u202f"\u205f\u200a4wzw=>4q1z3wqx'), ('cfg', '"2j6jvz94z9xv2\x1e,;5v24569xk2qq2v9\u2003vvqzkz1y1vqw1\x1b[0m6qkjq79q9k', '"2j6jvz94z9xv2\x1e,;5v24569xk2qq2v9\u2003vvqzkz1y1vqw1 6qkjq79q9k\x7fyvqj73231 ,660y\u200b<EMAIL_1>\u2007<\'>6317kj3xvx8j919xvk1v57k0488<1v5y6zy3869v193q1j7')]
+E       assert not [('authorization', '62jwz0k13j09vzx72zj35&#59;66kvww57v51xk0j0q44\u20099v7v63751\t&0qv', '<SECRET_1>\u20099v7v63751\t&...u2000qqyw8:\x7f\u2029\x08w', '<SECRET_1>\u202f1qv9y1＇71486675z&#59;k9vwz\u2000qqyw8:\x7f\u2029\x08wq4qqz2352259'), ...]
+
+tests/test_q8b_random.py:172: AssertionError
+_____________ test_p1_a_plain_value_is_masked_where_it_is_repeated _____________
+
+    def test_p1_a_plain_value_is_masked_where_it_is_repeated():
+        res = p1_results()
+        assert res["c_checked"] >= 100, res["c_checked"]
+>       assert not res["c"], (
+            f"readable in the log line: {len(res['c'])} of {res['c_checked']} cases, first {res['c'][:3]!r}"
+        )
+E       AssertionError: readable in the log line: 497 of 628 cases, first [('bearer', '1w4552304\u200aw40k2&3k', 'saw 1w4552304\u200aw40k2&3k there'), ('passphrase', '6y072z', 'saw 6y072z there'), ('password_for_the_primary_database_replica', '7z3yq1164&#59;wzy', 'saw 7z3yq1164&#59;wzy there')]
+E       assert not [('bearer', '1w4552304\u200aw40k2&3k', 'saw 1w4552304\u200aw40k2&3k there'), ('passphrase', '6y072z', 'saw 6y072z ther...'6vq30z6%3B91q37813y0y53q94qq8187v029yyv6"394158y76x5y24xwk9\t', 'saw <SECRET_1>"394158y76x5y24xwk9\t1jxw there'), ...]
+
+tests/test_q8b_random.py:180: AssertionError
+______ test_p2_every_identifier_the_redactor_masks_is_masked_on_the_card _______
+
+    def test_p2_every_identifier_the_redactor_masks_is_masked_on_the_card():
+        res = p2_results()
+        assert res["run"] >= P2_CASES * 0.9, res["run"]
+>       assert not res["leak"], (
+            f"an identifier is readable on the card: {len(res['leak'])} texts, first {res['leak'][:2]!r}"
+        )
+E       AssertionError: an identifier is readable on the card: 2619 texts, first [('pay-api.prod.svc.cluster.local wiki.corp.internal a.b-c@mail.corp.example.org10.20.30.40', 'pay-api[.]prod[.]svc[.]cluster[.]local wiki[.]corp[.]internal a.b-c@mail[.]corp[.]example.org10.20.30.40', ['wiki.corp.internal']), (' \t\t  **  priya.nair@example.co.in ', '\u200b \t\t  **  priya.nair@example[.]co[.]in ', ['priya.nair@example.co.in'])]
+E       assert not [('pay-api.prod.svc.cluster.local wiki.corp.internal a.b-c@mail.corp.example.org10.20.30.40', 'pay-api[.]prod[.]svc[.]...vil.com &lt; ', 'bob.smith@example[.]com: :  `\u200b`\u200b`\n  evil[.]com &amp;lt; ', ['bob.smith@example.com']), ...]
+
+tests/test_q8b_random.py:298: AssertionError
+____________________ test_p2_no_bare_domain_is_outside_code ____________________
+
+    def test_p2_no_bare_domain_is_outside_code():
+        res = p2_results()
+>       assert not res["bare"], (
+            f"a bare domain is outside code: {len(res['bare'])} texts, first {res['bare'][:2]!r}"
+        )
+E       AssertionError: a bare domain is outside code: 1801 texts, first [('pay-api.prod.svc.cluster.local wiki.corp.internal a.b-c@mail.corp.example.org10.20.30.40', 'pay-api[.]prod[.]svc[.]cluster[.]local wiki[.]corp[.]internal a.b-c@mail[.]corp[.]example.org10.20.30.40', ['a.b-c@mail[.]corp[.]example.org10.20.30.40']), (' \t\t  **  priya.nair@example.co.in ', '\u200b \t\t  **  priya.nair@example[.]co[.]in ', ['priya.nair@example[.]co[.]in'])]
+E       assert not [('pay-api.prod.svc.cluster.local wiki.corp.internal a.b-c@mail.corp.example.org10.20.30.40', 'pay-api[.]prod[.]svc[.]... @here ', 'db01[.]corp[.]internal priya.nair@example[.]co[.]in  \t\t at-here ', ['priya.nair@example[.]co[.]in']), ...]
+
+tests/test_q8b_random.py:305: AssertionError
+_______________ test_p2_cleaning_a_cleaned_text_changes_nothing ________________
+
+    def test_p2_cleaning_a_cleaned_text_changes_nothing():
+        res = p2_results()
+>       assert not res["twice"], f"{len(res['twice'])} texts, first {res['twice'][:2]!r}"
+E       AssertionError: 12 texts, first [(' \n```\n db01.corp.internal@here', ' \n`\u200b`\u200b`\n db01[.]<HOSTNAME_1>@here', ' \n`\u200b`\u200b`\n db01[.]<HOSTNAME_1>at-here'), ('pay-api.prod.svc.cluster.local@here', 'pay-api[.]prod[.]svc[.]<HOSTNAME_1>@here', 'pay-api[.]prod[.]svc[.]<HOSTNAME_1>at-here')]
+E       assert not [(' \n```\n db01.corp.internal@here', ' \n`\u200b`\u200b`\n db01[.]<HOSTNAME_1>@here', ' \n`\u200b`\u200b`\n db01[.]<H...i[.]corp[.]internal  wiki[.]corp[.]internal  priya.nair@example[.]co[.]in a.b-c@mail[.]corp[.]example[.]org \n '), ...]
+
+tests/test_q8b_random.py:312: AssertionError
+____ test_n9_nothing_the_first_view_masked_is_readable_in_the_returned_text ____
+
+    def test_n9_nothing_the_first_view_masked_is_readable_in_the_returned_text():
+        rng = SeededData(N9_SEED)
+        run, bad = 0, []
+        for _ in range(N9_CASES):
+            text = n9_text(rng)
+            try:
+                left = n9_readable(text)
+            except runmap.RedactionError:
+                continue
+            run += 1
+            if left:
+                bad.append((text, left))
+        assert run >= N9_CASES * 0.9, run
+>       assert not bad, f"readable in the returned text: {len(bad)} texts, first {bad[:2]!r}"
+E       AssertionError: readable in the returned text: 1 texts, first [('<i></i>hunter2secretXYZ3D\npassword=password=<i></i> hunter2secretXYZ</b>', ['password='])]
+E       assert not [('<i></i>hunter2secretXYZ3D\npassword=password=<i></i> hunter2secretXYZ</b>', ['password='])]
+
+tests/test_q8b_random.py:357: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_q8b_card_text.py::test_n4_an_address_outside_code - Asserti...
+FAILED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[summary()]
+FAILED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[render_shadow diagnosis]
+FAILED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[FakeChannel.send]
+FAILED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[FakeChannel.notify]
+FAILED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[SlackChannel._blocks with a raw summary]
+FAILED tests/test_q8b_card_text.py::test_n5_the_slack_block_shows_placeholders_for_a_raw_summary
+FAILED tests/test_q8b_card_text.py::test_n6_a_domain_after_a_placeholder - As...
+FAILED tests/test_q8b_card_text.py::test_n6_f6b_a_domain_outside_code_is_bracketed
+FAILED tests/test_q8b_card_text.py::test_n6_f6c_no_mention_is_created - Asser...
+FAILED tests/test_q8b_card_text.py::test_n7_one_combined_card - AssertionErro...
+FAILED tests/test_q8b_card_text.py::test_n9_fixed_the_tag_stripped_candidate
+FAILED tests/test_q8b_card_text.py::test_n8_only_one_function_feeds_a_card - ...
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[see db01.corp.internal/evil.com/p?d=1 now]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[10.0.0.5..evil.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[10.0.0.5.evil.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[restart db01.corp.internal. Then wait.]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[see a/evil.com and /var/log/app.log now]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[# APPROVED by sec@example.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[# APPROVED]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[> ask sec@example.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[password=ab`cd bob.smith@example\u3002com `x` y]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[`bob.smith@example\u3002com`]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[password=ab`cd evil.com `evil.com` x]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[contact bob.smith@example.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[bob%2Esmith%40example%2Ecom]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[bob.smith&#64;example.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[see 123e4567-e89b-12d3-a456-426614174000.json]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[x\n```\nevil.com\n```\ny evil.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[ping 10.20.30.40@channel]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[`10.20.30.40@channel`]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[see `db01.corp.internal@here` now]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[x\n```\n10.20.30.40@channel\n```\ny]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[<i></i>hunter2secretXYZ3D\npassword=password=<i></i> hunter2secretXYZ</b>]
+FAILED tests/test_q8b_card_text.py::test_g8_a_summary_with_a_host_shaped_target
+FAILED tests/test_q8b_card_text.py::test_g11_a_line_whose_only_change_is_a_masked_identifier_keeps_its_block_marker
+FAILED tests/test_q8b_card_text.py::test_g12_code_stays_code - AttributeError...
+FAILED tests/test_q8b_credential_keys.py::test_s1_a_partly_masked_result_is_refused
+FAILED tests/test_q8b_credential_keys.py::test_s2_text_after_the_placeholder_is_refused
+FAILED tests/test_q8b_credential_keys.py::test_s3_a_result_without_its_key_is_refused
+FAILED tests/test_q8b_credential_keys.py::test_s5_a_look_alike_placeholder_is_refused
+FAILED tests/test_q8b_credential_keys.py::test_s6_what_is_written_to_the_redactor
+FAILED tests/test_q8b_credential_keys.py::test_t1_the_key_rule - AssertionErr...
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 PG+key, multi-word]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 env entry PG+key]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 pwd]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 DB+key]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 secretkey]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 secrets]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 root+key]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 accessKey]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 list in env entry]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 Name/Value]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 key/value]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r private_key]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r privateKey]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r 300-char multi-word]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[255 chars]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[256 chars]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M6 ESC inside value]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[F5 sweep]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[F5 a b]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[F5 both quotes]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[XF composite]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 key_used multi-word]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 api_tokens list]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 refresh_tokens]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 tokens]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 session]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 JSESSIONID]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 auth]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 account_key]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 client-key-data]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 connect.sid]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 key2]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 token1]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 OLDPWD]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[one letter]
+FAILED tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[F5c Secret data under spec]
+FAILED tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[F5c Secret stringData under spec]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_secret_whose_data_is_not_a_map
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_number_in_a_named_entry
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_setting_key_is_masked
+FAILED tests/test_q8b_credential_keys.py::test_n2_a_value_is_masked_where_repeated[F5b repeat, pattern-free]
+FAILED tests/test_q8b_credential_keys.py::test_n2_a_value_is_masked_where_repeated[XF respelled, percent copy]
+FAILED tests/test_q8b_credential_keys.py::test_n2_a_secret_entry_is_masked_where_repeated
+FAILED tests/test_q8b_credential_keys.py::test_n2_decoded_copy_of_a_base64_entry
+FAILED tests/test_q8b_credential_keys.py::test_n2_a_json_escaped_copy[line1 horse\nline2 staple]
+FAILED tests/test_q8b_credential_keys.py::test_n2_a_json_escaped_copy[say "horse" twice]
+FAILED tests/test_q8b_credential_keys.py::test_n2_f5c_secret_data_under_spec
+FAILED tests/test_q8b_credential_keys.py::test_n3_no_fragment_for_an_esc_value
+FAILED tests/test_q8b_credential_keys.py::test_n3_no_fragment_of_a_multi_word_value
+FAILED tests/test_q8b_credential_keys.py::test_x3_a_value_with_both_quote_marks_is_masked_where_repeated
+FAILED tests/test_q8b_credential_keys.py::test_x8_the_copy_without_the_escape_sequence_is_masked
+FAILED tests/test_q8b_credential_keys.py::test_g3_a_timestamp_stays_and_near_misses_are_masked
+FAILED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"password_policy_enabled": "true"}]
+FAILED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"token_expiry": 3600}]
+FAILED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"token_expiry": "30d"}]
+FAILED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"secret_count": 3}]
+FAILED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"name": "TOKEN_TTL", "value": "15m"}]
+FAILED tests/test_q8b_credential_keys.py::test_g6_no_setting_is_shown_under_a_credential_parent_or_in_a_secret
+FAILED tests/test_q8b_credential_keys.py::test_g7_common_words_of_a_secret_stay_readable
+FAILED tests/test_q8b_credential_keys.py::test_g9_the_fixture_answers_the_same_tool_calls[spec.data]
+FAILED tests/test_q8b_credential_keys.py::test_g9_the_fixture_answers_the_same_tool_calls[spec.manifest]
+FAILED tests/test_q8b_credential_keys.py::test_g10_a_large_secret_is_bounded
+FAILED tests/test_q8b_random.py::test_p1_the_shown_value_is_only_placeholders_or_the_fixed_mask
+FAILED tests/test_q8b_random.py::test_p1_no_run_of_the_value_is_readable_under_its_key
+FAILED tests/test_q8b_random.py::test_p1_a_plain_value_is_masked_where_it_is_repeated
+FAILED tests/test_q8b_random.py::test_p2_every_identifier_the_redactor_masks_is_masked_on_the_card
+FAILED tests/test_q8b_random.py::test_p2_no_bare_domain_is_outside_code - Ass...
+FAILED tests/test_q8b_random.py::test_p2_cleaning_a_cleaned_text_changes_nothing
+FAILED tests/test_q8b_random.py::test_n9_nothing_the_first_view_masked_is_readable_in_the_returned_text
+112 failed, 104 passed, 14 xfailed in 28.56s
+exit 1
