@@ -88,7 +88,14 @@ if __name__ == "__main__":
     if which == "addon":
         print(json.dumps(run(ADDON, label), indent=0))
     elif which == "corpus":
-        keys = corpus_keys()
+        import os
+        kf = os.environ.get("KEYFILE")
+        if kf and os.path.exists(kf):
+            keys = json.load(open(kf))
+        else:
+            keys = corpus_keys()
+            if kf:
+                json.dump(keys, open(kf, "w"))
         res = run(keys, label)
         # nested record walk with deeper nesting and a mixed-case separator form
         bad = {k: v for k, v in res.items() if v}
@@ -101,5 +108,8 @@ if __name__ == "__main__":
                 masked.append(k)
         print(json.dumps({"keys": len(keys), "probes": len(res), "readable_secret_probes": len(bad), "errors": len(errs),
                           "readable_by_path": {p: sum(1 for k in bad if k.split("|")[1] == p) for p in PATHS},
+                          "readable_by_value_style": {v: sum(1 for k in bad if k.split("|")[2] == v) for v in VALUES},
+                          "readable_by_path_style": {k2: sum(1 for k in bad if "|".join(k.split("|")[1:]) == k2) for k2 in sorted({"|".join(k.split("|")[1:]) for k in bad})},
+                          "readable_by_piece": {p: sum(1 for v in bad.values() if p in v) for p in PIECES},
                           "readable_by_key_sample": sorted({k.split("|")[0] for k in bad})[:40],
                           "benign_total": len(BENIGN), "benign_masked": masked}, indent=1))
