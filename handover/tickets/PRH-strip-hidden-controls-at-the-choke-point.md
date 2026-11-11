@@ -557,7 +557,8 @@ The rows of section 2.4 and 2.5 under `protofixes` (`check-protofixes.out`): L1 
 The 43 files are listed in `target-files.txt` (every test file that imports runmap, redact, tools, channel, slack_channel, the gate, the judge or evidence).
 - `protofix` (case-790 fix only): `targeted-proto-fix.log`: 7,505 passed, 1 skipped, 22 deselected, rc 0 (215.74 s).
 - `protofixes`, FIRST run: `targeted-proto-fixes-run1.log`: 3 failed, 7,502 passed. The three failures (`tests/test_k5_fixes2.py::test_an_escape_that_decodes_to_an_expanding_character_is_refused_before_the_work`, `tests/test_k5_fixes3.py::test_a_tool_result_with_a_secret_and_an_expanding_text_is_refused_before_the_work`, `tests/test_k5_fixes3.py::test_percent_encoded_expanding_text_is_refused_after_the_decode`) were the author's own slip in the prototype of `_no_created_shapes`: it ran `canonical` (an NFKC) over the whole raw text even when nothing had been removed, before the size checks, so an expanding text was normalised before it was refused. The design text of W2 now says when the helper returns at once and that it works on `fits_after_nfkc` output. Rerun of those two files plus the round-12 fuzz file: `targeted-proto-fixes-rerun3.log`, 34 passed, 1 skipped, rc 0.
-- `protofixes`, second full run of the 43 files: `targeted-proto-fixes.log` (result quoted in section 8.5).
+- `protofixes`, second full run of the 43 files (after that correction): `targeted-proto-fixes-run2.log`, 7,505 passed, 1 skipped, 22 deselected, rc 0.
+- `protofixes`, third and final run, after the in-round created-shape rule of W2 `undo` was added: `targeted-proto-fixes.log`, 7,505 passed, 1 skipped, 22 deselected, rc 0 (169 s). The reproduction and leak rows were rerun on this final prototype (`repro-protofixes.out`, `check-protofixes.out`, `f1b-error-reason.out`, `cost-protofixes.out`).
 
 ### 8.4 Every round-1 finding and its answer
 
@@ -613,7 +614,11 @@ The 43 files are listed in `target-files.txt` (every test file that imports runm
 
 ### 8.5 What failed or was not checked in this errata pass
 
-- See "What I did not verify" below; the targeted run result is quoted there.
+- Failed and fixed during this pass (the author's own prototype slips, both now rules in the design text): the created-shape check normalised the whole text before the size checks (3 cap tests failed, 8.3); the created-shape check did not run inside the decoding rounds (F1e still forged on two callers, W2 `undo`).
+- M2c stays LEAKED by the check script; judged "not a key spelling" (section 3, not promised). A reviewer may disagree.
+- The 1.25-times cost limit for plain shapes is not shown by any run (prototype 1.34 times on plain ASCII, single runs under load).
+- The `_keep_earlier_masks` order problem was not shown to trigger on main itself.
+- Not run: full suite, ruff, bandit, gitleaks, mutation runner, perf tests, Python 3.12 tests, the gate tests under the prototype beyond those of the 43 files.
 
 ## What I did not verify
 

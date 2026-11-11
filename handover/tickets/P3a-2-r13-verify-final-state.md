@@ -920,54 +920,77 @@ Least-privilege lines: this ticket creates no new identity and gives no identity
 
 ## 9. Acceptance, gates, branch, CHANGELOG
 
-### 9.1 Acceptance checklist (each item is checked by an evidence runner with the command; "paste" means raw output in the evidence file)
+### 9.1 Acceptance checklist (rev 2: each item names its test id or command, R-M4; an evidence runner runs each and pastes raw output; `T=uv run --all-extras --group test`; `DSN` = `HADAVIN_TEST_PG_DSN` set to a superuser login of a scratch server with `max_prepared_transactions` above 0; every pytest exit code is taken from pytest itself, never through a pipe)
 
-1. `git -C <repo> merge-base --is-ancestor 4d328e3d HEAD; echo $?` prints 0; `git log --oneline 4d328e3d..HEAD` shows the commit split of 9.3.
-2. `grep -n "_changed_since\|_Objects\|_objects(\|_Changed\|_kept_owner_ids\|_changed_ids\|_STATE_SQL\|@MINE@\|@ME@" -r src tests` prints nothing.
-3. `grep -n "current_user\|session_user\|current_schema" src/hadavin_sdk/store/migration_verify.py` prints nothing.
-4. The repository test "every catalog name is qualified" passes, and fails when one `pg_catalog.` is removed from Q2 (mutant).
-5. `grep -c "has_table_privilege\|has_column_privilege\|has_sequence_privilege" src/hadavin_sdk/store/migrate.py src/hadavin_sdk/store/migration_verify.py` prints 0 for both.
-6. The promise table of 1.3 is the first thing after the title line in the `MIG` docstring and in the CHANGELOG item; a test compares the two texts with each other.
-7. The grep of 1.5 is pasted with one line of reason per remaining hit.
-8. Generator: the count test passes; the collected numbers (cases, pre-existing, compositions, controls, not-buildable cells with their server errors) are pasted.
-9. Sensitivity control: for every effect the raw application is reported by the oracle (paste the per-effect table).
-10. No case ends "applied with excess" (paste the summary line by outcome class).
-11. 7.9: each must-fail id pasted failing on 4d328e3d and passing on the head, with pytest's own exit codes.
-12. Mutants: `uv run python tests/migrate_mutants.py` on the final head ends with `N of N killed`; the table retired / re-pointed / new is in the builder notes; every `V*` mutant has a real-server killer.
-13. After-commit tests of 7.6 pass; the pasted message starts with the exact first sentence of 4.2; exit code 5 shown through `hadavin-sdk migrate`.
-14. Every printed fix statement runs as a superuser and the next `verify` returns nothing (7.6, paste).
-15. Prepared transaction: evidence states `SHOW max_prepared_transactions` of the server used (above 0), the test ran (not skipped), the bystander is not named.
-16. `ConfigError` for an unreadable lock view (6.2): test pasted.
-17. Duplicate CREATE (6.4): test pasted; `check_grants` on the shipped files still returns no problem.
-18. 7.8 repository check passes on the head and is shown failing on 4d328e3d.
-19. CI on PostgreSQL 17.10 is green for the whole suite, including 7.7 and the self-check; the CI log line with the server version is pasted. A local 16.15 run of the same is pasted.
-20. Version refusal and self-check messages pasted.
-21. Cost test of 7.6 pasted with the measured time.
-22. Upgrade-from-main test of 7.6 pasted.
-23. Gates, each with its own exit code (never through a pipe), on the final head with no cloud configuration in the environment:
-    `uv run --all-extras --group test ruff check`; `uv run --all-extras --group test ruff format --check`; `uv run --all-extras --group test pytest > log 2>&1; rc=$?; tail -n 1 log; echo $rc`; `bandit -ll -r src`; the repository guard tests (`scan_repo` and `stage_mutants` as `.github/workflows/ci.yml` on the branch runs them: the builder copies the two command lines from the workflow into the evidence); the migrate mutant list (item 12) and `tests/migration_numbers_mutants.py`; `gitleaks` as the workflow runs it. CodeQL, SonarCloud and CodeRabbit green on the pull request; threads resolved after fixing; no suppression, no weakened or deleted test outside the lists of 5.4.
+The builder notes also carry a table "item -> exact command as run -> exit code", a Blocker-level deliverable: an item without its row is not done.
+
+1. `git merge-base --is-ancestor 4d328e3d HEAD; echo $?` prints 0; `git log --oneline 4d328e3d..HEAD` shows the commits of 9.3 in that order.
+2. `grep -rn --include='*.py' "_changed_since\|_Objects\|_objects(\|_Changed\|_kept_owner_ids\|_changed_ids\|_STATE_SQL\|@MINE@\|@ME@\|effective_problems\|_MAINTAIN_FROM\|_SCHEMA_USAGE_SQL\|_TABLE_PRIVS" src tests` prints nothing (`--include` keeps committed `.pyc` files out).
+3. `grep -n "current_user\|session_user\|current_schema" src/hadavin_sdk/store/migration_verify.py` prints nothing. The new module must not contain these words anywhere, comments and docstrings included (write "the role that runs migrate" instead).
+4. `$T pytest tests/test_migration_verify.py::test_every_catalog_name_in_the_queries_is_qualified tests/test_migration_verify.py::test_the_qualified_name_check_catches_a_missing_prefix` passes (the second feeds the check a copy of Q2 with one `pg_catalog.` removed and asserts it is caught).
+5. `grep -c "has_table_privilege\|has_column_privilege\|has_sequence_privilege\|has_schema_privilege\|pg_has_role" src/hadavin_sdk/store/migration_verify.py` prints 0, and `grep -c "has_table_privilege\|has_column_privilege\|has_sequence_privilege\|has_schema_privilege" src/hadavin_sdk/store/migrate.py` prints 0. (`pg_has_role` and `has_parameter_privilege` stay in the kept step-1 checks and read-back of `migrate.py`, MIG:438-461, 607-625, 661-681, 1474; they are not part of `verify`.)
+6. `$T pytest tests/test_migration_verify.py::test_the_promise_table_is_the_same_in_the_docstring_and_the_changelog` passes. Markers (R-Mn9): the promise table sits between a line `[promise table]` and a line `[end of promise table]` in the `migrate.py` module docstring and in the CHANGELOG item; the test compares the text between the markers.
+7. The grep of 1.5 (with `--include`) is pasted with one line of reason per remaining hit.
+8. `DSN=... $T pytest tests/test_migration_matrix.py::test_the_matrix_has_exactly_the_planned_cells -s` passes; its printed numbers are pasted (cases, pre-existing, compositions with the seed, controls, server-refused cells with their errors, empty-by-logic pairs, not-promised cells).
+9. `DSN=... $T pytest tests/test_migration_matrix.py -k test_the_oracle_sees_every_effect_applied_raw -rA` passes; the per-effect table it prints is pasted.
+10. `DSN=... $T pytest tests/test_migration_matrix.py -q -rA > m.log 2>&1; echo $?` is 0, and the outcome summary the module prints at session end (counts of (i), (ii), (iii), and "applied with excess: 0") is pasted.
+11. 7.9: each must-fail id pasted failing on 4d328e3d with the "applied with excess:" line (or the lock test's or the repository check's own assertion), and passing on the head.
+12. Mutants: the four batches of 7.10 on the final head, one after another, each ending `N of N killed`, total 313; the table retired / re-pointed / re-checked / new is in the builder notes; `$T pytest tests/test_migration_rules.py::test_every_migrate_mutant_still_applies_to_the_source` passes.
+13. `DSN=... $T pytest tests/test_migration_verify_pg.py -k "after_commit or step_8 or any_error_inside_step_8 or commit_refused or lost_connection_at_commit" -rA` passes; the message of `test_after_commit_a_grant_gives_exit_5_and_the_statements_repair_it` is pasted and starts with the exact first sentence of 4.2; exit code 5 is shown through `cli.main`.
+14. `DSN=... $T pytest tests/test_migration_verify_pg.py::test_printed_statements_remove_every_problem_for_every_grantor_form tests/test_migration_verify_pg.py::test_a_named_role_in_pg_monitor_prints_exactly_one_statement -rA` passes; the printed statements are pasted.
+15. Prepared transaction: `SHOW max_prepared_transactions` of the server used (above 0) pasted; `DSN=... $T pytest "tests/test_migration_postgres.py::test_a_prepared_transaction_that_holds_the_migration_lock_is_named_as_one" -rA` passes, not skipped.
+16. `DSN=... $T pytest tests/test_migration_verify_pg.py::test_an_unreadable_lock_view_is_a_plain_config_error` passes.
+17. `$T pytest tests/test_migration_verify_pg.py::test_a_grant_map_name_created_twice_is_refused` passes, and `$T python -c "from pathlib import Path; from hadavin_sdk.store import migrate as m; print(m.check_grants(sorted(Path('src/hadavin_sdk/store/migrations').glob('*.sql'))))"` prints `[]`.
+18. `$T pytest tests/test_migration_rules.py::test_no_real_server_test_returns_before_it_runs_migrate` passes on the head and fails on 4d328e3d (TPG:4520).
+19. CI on PostgreSQL 17.10 is green for the whole suite, including 7.7 and the self-check; the CI log line with the server version and the line `max_prepared_transactions` = 10 are pasted. A local 16.15 run of the same suite is pasted.
+20. `DSN=... $T pytest tests/test_migration_verify_pg.py -k "running_server_is_16 or below_16 or self_check" -rA` passes; both messages pasted.
+21. `DSN=... $T pytest -m perf tests/test_migration_verify_pg.py::test_verify_cost_on_a_large_catalog -s` passes; the measured times pasted.
+22. `DSN=... $T pytest tests/test_migration_verify_pg.py::test_upgrade_from_mains_state_is_repaired` passes.
+23. Rev 2 items: `DSN=... $T pytest tests/test_migration_verify_pg.py -k "public_schema or create_for_everyone_on_public or grant_option_holder_is_not_dropped or row_types_of_six or audit_triggers or reviewed_definer_is_excused or message_safety" -rA` passes.
+24. Gates, each with its own exit code, on the final head with no cloud configuration in the environment: `$T ruff check`; `$T ruff format --check`; `DSN=... $T pytest > log 2>&1; rc=$?; tail -n 1 log; echo $rc`; `bandit -ll -r src`; the repository guard steps as `.github/workflows/ci.yml` at the branch head runs them (line 84 `python tools/scan_repo.py`, line 94 `python tests/stage_mutants.py`; the builder copies the lines from the workflow at the final head into the evidence); the migrate mutant batches (item 12) and `$T python tests/migration_numbers_mutants.py` (its header, line 11); `gitleaks` as the workflow runs it. CodeQL, SonarCloud and CodeRabbit green on the pull request; threads resolved after fixing; no suppression, no weakened or deleted test outside the lists of 5.4 and 5.4b.
 
 ### 9.2 Stop rule
 
-Security path: result-review rounds repeat until a fresh round finds no Blocker and no Major. Classing rule for every finding from now on (D-020): it is either a bug in a numbered clause of section 3.3 or 3.4 (fix it and add the generator cell), or it is inside a stated non-promise of 1.3/1.4 (no fix; check that the text says so), or it is a way around a text rule (not a finding).
+Security path: result-review rounds repeat until a fresh round finds no Blocker and no Major. Classing rule for every finding from now on (D-020): it is either a bug in a numbered clause of section 3.3 or 3.4 (fix it and add the generator cell), or it is inside a stated non-promise of 1.3/1.4 (no fix; check that the text says so), or it is a way around a text rule (not a finding). When the builder or the lead and a reviewer disagree on the class of a finding, the lead decides and writes the decision in handover/AUTONOMOUS-DECISIONS.md before the next round (R-readiness D, stop rule).
 
-### 9.3 Commits and CHANGELOG
+### 9.3 Commits (rev 2, R-B1): one buildable order, each commit green on its own
 
-Commit split, in this order, each one leaving ruff and the affected tests green:
-1. Deletion: the comparison code, its tests (5.4 "retired") and mutants (5.5 "retired"). The suite is green with the old final check reduced to the kept loops.
-2. `verify`: the new module, `_judge` unit tests, version refusal, self-check.
-3. Order: section 4, `AppliedNotVerifiedError`, cli exit code 5, removal of `effective_problems` and `_refuse_unlisted_grantees`.
-4. Extras: section 6 (lock message, unreadable view, duplicate CREATE, CI server setting).
-5. Tests: oracle, generator, dedicated tests, repository checks, re-pointed and new mutants.
-6. Texts: docstrings, CHANGELOG.
+The per-commit green command (G): `$T ruff check && $T ruff format --check && DSN=... $T pytest <the affected test files of that commit> tests/test_migration_rules.py::test_every_migrate_mutant_still_applies_to_the_source`, each exit code taken from pytest. A mutant that a commit's code change moves (re-pointed) or removes (retired) is changed IN THAT COMMIT, so `test_every_migrate_mutant_still_applies_to_the_source` is green at every commit.
 
-Commit messages end with the attribution lines the session reminder gives. Draft pull request stays the existing one for `core/P3a-2-clean` if there is one; otherwise the lead opens it.
+1. **verify beside the old code** (nothing calls it yet): `migration_verify.py` (queries, `_judge`, `Problem`, `PROBLEM_KINDS`, `KNOWN_ACL_COLUMNS`, version refusal, self-check, `pinned_read`), `_label` moved to `migration_numbers.py` with the import back in `migrate.py`, `tests/test_migration_verify.py`, and the parts of `tests/test_migration_verify_pg.py` that call `verify` directly (version, self-check, public schema, pg_monitor, grantor forms, row types, cost). Old code untouched, so every old test and mutant still holds. G affected files: tests/test_migration_verify.py, tests/test_migration_verify_pg.py, tests/test_migration_rules.py.
+2. **oracle** (no product code): `tests/fixtures/oracle.py`, the sensitivity-control test and the oracle's repository test in `tests/test_migration_matrix.py`. G affected: tests/test_migration_matrix.py -k "oracle".
+3. **the switch** (one commit, because the deletion and the new order depend on each other): `migrate()` takes the order of 4.1; `AppliedNotVerifiedError`; cli exit 5 and its docstring line; COMMIT handling; step 8; deletion of the comparison code, `effective_problems`, `_refuse_unlisted_grantees` and the other names of 5.3; retired tests of 5.4 removed; kept tests of 5.4 re-pointed; the fake-database answers of 5.4b; `test_k2_migrations.py` change of 5.4b; the 29 retired mutants removed and the 45 re-pointed mutants re-planted (with killers that exist in this commit); the 16 re-checked mutants confirmed killed (run them: batch 2 ids that exist at this commit); the step-8 and COMMIT tests of 7.6. G affected: tests/test_migration_wiring.py, tests/test_migration_postgres.py, tests/test_migration_compare.py, tests/test_k2_migrations.py, tests/test_migration_verify*.py, tests/test_migration_rules.py.
+4. **extras** (section 6): lock message and join, unreadable view, duplicate CREATE, CI server setting, the prepared-transaction test change, mutants LW7 and LW8 re-planted. G affected: tests/test_migration_postgres.py, tests/test_migration_verify_pg.py, tests/test_migration_rules.py.
+5. **the matrix**: generator, controls, count test, 7.7, 7.8, the 54 V* mutants with their killers, `--list-batch`. G affected: tests/test_migration_matrix.py, tests/test_migration_rules.py, plus the V* ids run once.
+6. **texts**: module docstring (its numbered list "What `migrate` does, in order" rewritten to the eight steps of 4.1, R-Mn11), `migrate` docstring (promise table first between the markers, then the eight steps, then 1.4 as "What it cannot notice", keeping the phrases listed in 5.4b item 3), the CHANGELOG item, the MUT header ("about 10 minutes" replaced by the measured time), the TR pins of 5.4b item 3 and mutant R23 re-pointed in the same commit. G affected: tests/test_migration_rules.py, tests/test_migration_verify.py.
 
-CHANGELOG ("Unreleased", "Upgrade steps", replacing CL:15, 17, 18 and correcting CL:12 and 34):
-- First the promise table of 1.3 under the heading "What migrate promises", then 1.4 as "What it cannot notice".
-- The baseline of 3.4 in its four lines.
-- The three calls and the exit codes (2 refused and nothing kept; 5 applied and committed but not verified).
-- Upgrade note, in these words or plainer: "A setup with rights beyond the grant map is now refused before any file runs. Earlier versions only refused rights that changed during the run, so a database that passed before can be refused now. `migrate` prints one line per right with the statement that removes it. A database administrator runs those statements (they are REVOKE statements and membership removals; none of them changes data), then runs `migrate` again. Typical cases: a table of another application that everyone may read; a login used as runtime role that is also a member of a group; a function in the same schema, owned by the migration role, that everyone may call; a default right set long ago with `ALTER DEFAULT PRIVILEGES`. Two things `migrate` repairs by itself and does not refuse: rights of the named roles on the package's own tables (they are reset to the grant map as before), and the right of everyone to call the package's own functions (removed as before). If the listed object belongs to another application that needs the right as it is, do not remove it: give this package a database or a schema of its own, with roles that are not shared."
+Commit messages end with the attribution lines the session reminder gives. The draft pull request stays the existing one for `core/P3a-2-clean` if there is one; otherwise the lead opens it.
+
+### 9.4 Work packages, each within one 60-minute builder session (rev 2, R-M5)
+
+A session writes a checkpoint note every 30 minutes (done / next / blockers / commit SHA) and stops at 60 minutes with a commit; a fresh builder resumes from the note. A package may take more than one session; the estimates are guesses, not measurements.
+
+| Package | Commits | Depends on | Can run in parallel with | Estimate |
+|---|---|---|---|---|
+| A1 | 1 | nothing | B1 | 1-2 sessions |
+| B1 | 2 | nothing (the oracle uses no product code) | A1 | 1 session |
+| A2 | 3 | A1 | B1 (if not done) | 2 sessions (the largest: deletion, order, 5.4b test edits) |
+| C1 | 4 | A2 | B2 | 1 session |
+| B2 | 5 | A2, B1 | C1 | 2 sessions |
+| C2 | 6 | A2, B2 | - | 1 session |
+
+Critical path: A1 -> A2 -> B2 -> C2, about 6 sessions; with B1 and C1 beside it, about 8 sessions in all. Heavy jobs: one full suite, the four mutant batches and one matrix run, once each on the final head (7.10).
+
+### 9.5 CHANGELOG
+
+CHANGELOG ("Unreleased", "Upgrade steps", replacing CL:15, 17, 18, correcting CL:11 and 34). Everything below is NESTED inside the existing first bullet "- **Migrations: stricter checks ...**" (indented two spaces), never a new top-level bullet, so `_upgrade_bullet()` (TR:666) still covers it:
+- First the promise table of 1.3 under the heading "What migrate promises", between the markers of 9.1 item 6, then 1.4 as "What it cannot notice".
+- The baseline of 3.4 in its four lines, plus: "Every built-in `pg_*` role is refused for the three roles, also the harmless ones."
+- The three calls and the exit codes (2 refused and nothing kept; 5 applied and committed but not verified, or the commit's outcome unknown); that the statements go to standard output.
+- "Before the commit the eight reads may each see the database at a slightly different moment; the check after the commit reads one consistent picture."
+- "On objects outside the schema of the run, `migrate` judges what the three named roles and everyone can do, not what other roles can do."
+- "A SECURITY DEFINER function of the migration role in another schema that only its owner may call is no longer refused."
+- Upgrade note, in these words or plainer: "A setup with rights beyond the grant map is now refused before any file runs. Earlier versions only refused rights that changed during the run, so a database that passed before can be refused now. `migrate` prints one line per right and, on standard output, the statements that remove them. A database administrator runs those statements (they are REVOKE statements and membership removals; none of them changes data), then runs `migrate` again. Typical cases: a table of another application that everyone may read; a login used as runtime role that is also a member of a group; a function in the same schema, owned by the migration role, that everyone may call; a default right set long ago with `ALTER DEFAULT PRIVILEGES`. Two things `migrate` repairs by itself and does not refuse: rights the migration role itself gave the named roles on the package's own tables (they are reset to the grant map as before), and the right of everyone to call the package's own functions (removed as before). In a shared database, the check covers the whole database: any table of another application that everyone may read is refused, whatever schema it is in. If such an object belongs to another application that needs the right as it is, do not remove it: give this package a database of its own, or roles that no other application uses. A schema of its own is not enough." (D-m6)
 - The minimum version, and that PostgreSQL 18 has not been run.
 - No sentence may say more than the promise table; reviewers check the CHANGELOG against 1.3 line by line.
 
