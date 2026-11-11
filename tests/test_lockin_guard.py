@@ -9,21 +9,28 @@ Three rules, each with plant tests that prove it fails on a planted violation:
 Known violations go in dated lists. A stale entry (its violation is gone) fails the test, and so does an
 overdue one, so an entry cannot linger.
 
-What rule c does not see (the limits marked [pinned] have a test, so a later change to them is deliberate):
+What rule c sees in a string: a vendor word that has, on each side, the start or end of the string or any
+character that is not an ASCII letter or digit (so white space, `|`, quotes, brackets and `:` are boundaries), and
+the two-part words (PagerDuty, OpenAI and seven more) also with one of `/ _ . -` between their parts.
+
+What rule c does not see (each limit marked [pinned] has a test, so a later change to it is deliberate):
   - any word that is not in VENDOR_WORDS: the scans know only those words [pinned];
-  - inside a string, a vendor word without a boundary on BOTH sides. Before the word must come the start of the
-    string or one of `/ _ . - = ? & # @ , ; ( ) +`; after it one of those, a `:`, or the end of the string. So
-    free prose (`"post to Slack"`, `"x/slack y"`), a word glued in camel case (`"/slackActions"`), a word beside
-    `|` (`"slack|teams"`: three command-recognising regular expressions of the approval gate use `|` beside such
-    words) and a two-part name written with a separator (`"/pager-duty/hook"`) are not seen [pinned];
+  - inside a string, a vendor word glued to another ASCII letter or digit (`"/slackActions"`, `"myslack"`,
+    `"slack2"`), a two-part word with more than one separator or with white space inside (`"pager--duty"`,
+    `"pager duty"`), and a letter of another script that looks like a Latin one [pinned];
+  - a string built at run time from parts that are not constants, `%` formatting and `str.format` (the constant
+    parts are scanned one by one; an f-string and a `+` join are scanned as joined text);
   - an f-string or a `+` join is reported once for the joined text and once for each constant part that hits by
     itself, so `f"/slack/{x}"` gives two lines and needs two allow entries [pinned];
-  - comments and docstrings (only `approvals/receiver.py` is checked as whole text);
-  - in a name, a word glued to capitals (`AWSclient`) or to other lower-case letters (`awsome`) [pinned]; a name
-    that is only read (it is scanned where it is bound or imported). The reverse also holds: two neighbouring
-    parts that happen to spell a word are reported (`TeamS`, `team_s`, `open_ai`) [pinned];
+  - comments and docstrings: they are prose for the reader, and shared code may say which vendors a thing was built
+    for [pinned]. Only `approvals/receiver.py` is checked as whole text;
+  - in a name, a word glued to capitals (`AWSclient`) or to other lower-case letters (`awsome`) [pinned]. The
+    reverse also holds: two neighbouring parts that together spell a listed word are reported even when that was
+    not meant (`TeamS`, `team_s`) [pinned];
   - in a name, a letter of another script that looks like a Latin one (`sl\u0430ck` with a Cyrillic a) [pinned].
     Python itself folds compatibility forms such as full-width letters before the scan sees a name;
+  - a name that exists only as text at run time (`getattr(x, name)` with a computed name); a literal name is a
+    string and the string scan sees it [pinned];
   - files that are not Python (YAML, Markdown, SQL outside the migrations rule) [pinned], and everything outside
     `src`: tests and demos are not scanned at all.
 """
@@ -671,12 +678,57 @@ LITERAL_OK: dict[tuple[str, str], str] = {
         f"{PKG}.backends.table",
         "gcs_retention_lock",
     ): "the kind's own name in its settings class",
+    (
+        f"{PKG}.config",
+        "backends.<capability>.region on each AWS kind",
+    ): "refusal text for the retired slice 1 key `region`: it tells the reader where the setting moved",
+    (
+        f"{PKG}.config",
+        "backends.channel: {kind: slack, channel_id, signing_secret_name, bot_token_secret_name}",
+    ): "refusal text for the retired slice 1 key `slack` (allowed above): it shows the new place of the setting",
+    (
+        f"{PKG}.backends.table",
+        "iam_auth needs region (and pip install hadavin-sdk[aws])",
+    ): "refusal text that names this package's own optional install extra `aws`",
+    (
+        f"{PKG}.store.postgres",
+        "store postgres with iam_auth needs: pip install hadavin-sdk[aws]",
+    ): "refusal text that names this package's own optional install extra `aws`",
+}
+# (module, assignment name, vendor word) -> why the strings inside that one assignment may hold that word. For long
+# texts (regular expressions) whose full text would be a brittle key. It covers only "vendor word in a string"
+# lines, and a string only when each of its vendor words is listed. Stale entries fail.
+WORD_IN_OK: dict[tuple[str, str, str], str] = {
+    (
+        f"{PKG}.approvals.gate",
+        "_URL",
+        "slack",
+    ): "the list of link schemes the gate removes from a card (`slack:` among mailto, tel, vscode and others): "
+    "naming the scheme is the control",
+    (
+        f"{PKG}.approvals.gate",
+        "_URL",
+        "teams",
+    ): "the same list of link schemes (`ms-teams:`)",
+    (
+        f"{PKG}.approvals.gate",
+        "_WRITE_SHAPES",
+        "s3",
+    ): "G4 command shape: PowerShell cloud commands that write (`Remove-S3Object` among az, ec2, iam and others); "
+    "recognising them is the control (tests/test_g4_parity.py)",
+    (
+        f"{PKG}.guard.runmap",
+        "_GRAMMAR",
+        "aws",
+    ): "the shape of an ARN (an AWS resource name) that the redaction map may hold: recognising it is the "
+    "control; the same text stands in the vendor module guard.redact",
 }
 # (module, name) -> why this name may hold a vendor word in an otherwise neutral module. Stale entries fail. An
-# entry covers every binding of that name in that module, whatever binds it (a def, a variable, an import). A
-# module's own name has a key of its own, (module, "module:<segment>"), for each segment of its dotted name that
-# holds a vendor word (so a package folder `aws/` needs one entry in each module under it); such an entry does
-# not allow a variable of the same name.
+# entry covers every place that name is written in that module, whatever writes it (a def, a variable, an import,
+# a read). A module's own name has a key of its own, by position: (module, "module:" + the dotted name up to that
+# segment, the package's own name left out), for each segment that holds a vendor word (so a package folder `aws/`
+# needs the entry "module:aws" in each module under it, and `aws/aws.py` also needs "module:aws.aws"); such an
+# entry does not allow a variable of the same name.
 IDENTIFIER_OK: dict[tuple[str, str], str] = {
     (
         f"{PKG}.approvals.gate",
@@ -698,7 +750,7 @@ IDENTIFIER_OK: dict[tuple[str, str], str] = {
     ): "class of the neutral openai_compat kind (open wire format)",
     (
         f"{PKG}.llm.openai_compat",
-        "module:openai_compat",
+        "module:llm.openai_compat",
     ): "module of the neutral openai_compat kind (open wire format); renaming the kind would break every config "
     "that says kind: openai_compat",
     (
@@ -765,15 +817,41 @@ VENDOR_WORDS = (
     "openstack",
     "cloudwatch",
     "pagerduty",
+    # other chat and paging vendors (the approval receiver serves any chat tool)
+    "discord",
+    "telegram",
+    "webex",
+    "whatsapp",
+    "twilio",
+    "zoom",
+    "opsgenie",
 )
 _W = "|".join(VENDOR_WORDS)
-# What may stand beside a vendor word in a path, a key, a query string, an address or a list. `|` is left out:
-# on main it adds three hits, all regular expressions of the approval gate that recognise commands.
-_SEP = "/_.=?&#@,;()+-"
+# Words that are two words in the vendor's own spelling (PagerDuty, OpenAI): inside a string they are also seen
+# with ONE separator at that place (`pager-duty`, `open_ai`, `git.hub`, `cloud/watch`).
+TWO_PART_WORDS = {
+    "pagerduty": ("pager", "duty"),
+    "cloudwatch": ("cloud", "watch"),
+    "openai": ("open", "ai"),
+    "github": ("git", "hub"),
+    "gitlab": ("git", "lab"),
+    "digitalocean": ("digital", "ocean"),
+    "openstack": ("open", "stack"),
+    "opsgenie": ("ops", "genie"),
+    "whatsapp": ("whats", "app"),
+}
+_INNER_SEP = "/_.-"
+_W_SPLIT = "|".join(
+    f"{TWO_PART_WORDS[w][0]}[{_INNER_SEP}]?{TWO_PART_WORDS[w][1]}" if w in TWO_PART_WORDS else w
+    for w in VENDOR_WORDS
+)
+# THE BOUNDARY RULE of the string scan (a rule, not a list of characters): a vendor word counts when the character
+# before it and the character after it are each the start or end of the string, or any character that is not an
+# ASCII letter or digit. White space, `|`, quotes, brackets, braces and `:` are therefore boundaries on both sides.
+_VENDOR_WORD = re.compile(rf"(?<![A-Za-z0-9])(?:{_W_SPLIT})(?![A-Za-z0-9])", re.IGNORECASE)
+_WORD_IN_STRING = "vendor word in a string"
 PATTERNS = {
     "bare vendor name": rf"^({_W})(:|$)",
-    # A string that holds one vendor word matches at most one of these first two entries.
-    "vendor word in a path or key": rf"[{_SEP}]({_W})([:{_SEP}]|$)|^({_W})[{_SEP}]",
     "vendor header": r"x-(slack|amz|goog|ms)-",
     "ARN": r"\barn:aws[a-z-]*:",
     "AWS region": r"\b(us|eu|ap|sa|ca|me|af|il|mx|cn)(-gov|-iso[a-z]*)?-"
@@ -788,6 +866,10 @@ PATTERNS = {
     "account id": r"\b\d{12}\b",
     "host": r"(amazonaws\.com(\.cn)?|aws\.amazon\.com|azure\.com|(azure|windows)\.net|googleapis\.com"
     r"|cloud\.google\.com|slack\.com|github\.com|anthropic\.com|openai\.com)\b",
+    # Every string that holds a vendor word by the boundary rule matches exactly one of the first entry and this
+    # last one: this one stands aside for what the first one reports. It is last so that a more exact label (an ARN,
+    # a host) comes first in the report.
+    _WORD_IN_STRING: rf"(?s)\A(?!(?:{_W})(?::|$)).*?(?<![A-Za-z0-9])(?:{_W_SPLIT})(?![A-Za-z0-9])",
 }
 _SQL_LITERAL = re.compile(
     r"'(slack|teams|github|gitlab|aws|azure|gcp|bedrock|anthropic|kms|s3)'", re.IGNORECASE
@@ -808,10 +890,14 @@ def _skipped_table_nodes(tree: ast.Module) -> set[int]:
     """In backends.table: vendor-named settings classes and helpers, and the TABLE itself, name vendors."""
     skipped: set[int] = set()
     for top in tree.body:
-        named = isinstance(
-            top, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef
-        ) and _TABLE_VENDOR_NAME.match(top.name)
-        table = isinstance(top, ast.AnnAssign | ast.Assign) and "TABLE" in ast.unparse(top)[:12]
+        # an `async def` is never skipped (the kind table has none): it is scanned like any other code
+        named = isinstance(top, ast.ClassDef | ast.FunctionDef) and _TABLE_VENDOR_NAME.match(
+            top.name
+        )
+        targets = top.targets if isinstance(top, ast.Assign) else [getattr(top, "target", None)]
+        table = isinstance(top, ast.AnnAssign | ast.Assign) and any(
+            isinstance(t, ast.Name) and t.id == "TABLE" for t in targets
+        )
         if named or table:
             skipped |= {id(n) for n in ast.walk(top)}
     return skipped
@@ -833,7 +919,7 @@ def _fold(node: ast.AST) -> str | None:
     if isinstance(node, ast.JoinedStr):
         # A constant `{"east"}` inside an f-string is folded, so f'us-{"east"}-1' reads as us-east-1.
         return "".join(
-            (_fold(v.value) or "{}")
+            (folded if (folded := _fold(v.value)) is not None else "{}")
             if isinstance(v, ast.FormattedValue)
             and v.conversion == -1
             and v.format_spec is None
@@ -844,19 +930,55 @@ def _fold(node: ast.AST) -> str | None:
     return None
 
 
+def words_in_text(text: str) -> list[str]:
+    """The vendor words a string holds by the boundary rule, sorted, each in its list spelling."""
+    found = {m.group(0).lower() for m in _VENDOR_WORD.finditer(text)}
+    return sorted({"".join(c for c in word if c not in _INNER_SEP) for word in found})
+
+
+def _assignment_names(tree: ast.AST) -> dict[int, str]:
+    """id(node) -> the name of the nearest enclosing assignment `NAME = ...` or `NAME: T = ...` it stands in."""
+    out: dict[int, str] = {}
+
+    def walk(node: ast.AST, name: str | None) -> None:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target = node.targets[0]
+            name = target.id if isinstance(target, ast.Name) else name
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            name = node.target.id
+        if name is not None:
+            out[id(node)] = name
+        for child in ast.iter_child_nodes(node):
+            walk(child, name)
+
+    walk(tree, None)
+    return out
+
+
 def literal_problems(
-    src: Path, vendor_modules: set[str], literal_ok: dict[tuple[str, str], str]
+    src: Path,
+    vendor_modules: set[str],
+    literal_ok: dict[tuple[str, str], str],
+    word_in_ok: dict[tuple[str, str, str], str] | None = None,
 ) -> list[str]:
     """Every str or bytes constant, every constant `+` join and every f-string is checked against PATTERNS
-    (so `b'x-amz-date'`, `'us-east' + '-1'` and `f'slack:{x}'` are caught as well as plain strings)."""
+    (so `b'x-amz-date'`, `'us-east' + '-1'` and `f'slack:{x}'` are caught as well as plain strings).
+
+    Two allow forms. `literal_ok`: the exact (module, string). `word_in_ok`: (module, assignment name, word), for
+    a long text such as a regular expression: it covers the "vendor word in a string" lines of the strings inside
+    that one assignment, and only when every vendor word of the string is listed for it; any other label (a host,
+    a region) is still reported."""
+    word_in_ok = word_in_ok or {}
     out: list[str] = []
     used: set[tuple[str, str]] = set()
+    used_words: set[tuple[str, str, str]] = set()
     for path in sorted(src.rglob("*.py")):
         mod = module_name(src, path)
         if mod in vendor_modules:
             continue
         tree = ast.parse(path.read_text(encoding="utf-8"))
         skip = _docstrings(tree) | (_skipped_table_nodes(tree) if mod == _TABLE_MODULE else set())
+        assigned = _assignment_names(tree)
         for n in ast.walk(tree):
             if id(n) in skip or not isinstance(n, ast.Constant | ast.BinOp | ast.JoinedStr):
                 continue
@@ -864,15 +986,24 @@ def literal_problems(
             if text is None:
                 continue
             for label, pattern in PATTERNS.items():
-                if re.search(pattern, text, re.IGNORECASE):
-                    if (mod, text) in literal_ok:
-                        used.add((mod, text))
-                    else:
-                        out.append(f"{mod}:{n.lineno}: {label} in {text[:50]!r}")
+                if not re.search(pattern, text, re.IGNORECASE):
+                    continue
+                keys = {(mod, assigned.get(id(n), ""), word) for word in words_in_text(text)}
+                if label == _WORD_IN_STRING:
+                    used_words |= keys & set(word_in_ok)
+                if (mod, text) in literal_ok:
+                    used.add((mod, text))
+                elif label != _WORD_IN_STRING or not keys <= set(word_in_ok):
+                    out.append(f"{mod}:{n.lineno}: {label} in {text[:50]!r}")
     out += [
         f"LITERAL_OK {k[0]} {k[1][:30]!r} is gone: delete the entry"
         for k in literal_ok
         if k not in used
+    ]
+    out += [
+        f"WORD_IN_OK {k[0]} {k[1]} {k[2]!r} is gone: delete the entry"
+        for k in word_in_ok
+        if k not in used_words
     ]
     return out
 
@@ -891,23 +1022,24 @@ def name_parts(name: str) -> set[str]:
     parts joined (so pager_duty -> pagerduty, open_ai -> openai). All lower case."""
     snakes = [s for s in name.split("_") if s]
     out = [a.lower() + b.lower() for a, b in itertools.pairwise(snakes)]
-    for snake in snakes:
-        out.append(snake.lower())
-        camel = [c.lower() for c in _CAMEL.findall(snake)]
-        out += camel
-        out += [a + b for a, b in itertools.pairwise(camel)]
+    camel = [c.lower() for snake in snakes for c in _CAMEL.findall(snake)]
+    # neighbouring camel parts are joined across a `_` too, so git_HubClient -> github
+    out += (
+        [snake.lower() for snake in snakes] + camel + [a + b for a, b in itertools.pairwise(camel)]
+    )
     return set(out)
 
 
 def vendor_words_in(name: str) -> list[str]:
-    """The vendor words a name holds, sorted: a part that EQUALS a word, or equals one once its trailing digits
-    are removed (`slack2_url`, `aws1`). A part that is itself a listed word (`s3`) is never stripped."""
+    """The vendor words a name holds, sorted: a part that EQUALS a word, or equals one once trailing digits are
+    removed one at a time (`slack2_url`, `aws1`, `s32_bucket`). A part that is itself a listed word (`s3`) is
+    never stripped."""
     found = set()
     for part in name_parts(name):
+        while part and part not in _WORD_SET and part[-1] in _DIGITS:
+            part = part[:-1]
         if part in _WORD_SET:
             found.add(part)
-        elif part.rstrip(_DIGITS) in _WORD_SET:
-            found.add(part.rstrip(_DIGITS))
     return sorted(found)
 
 
@@ -931,32 +1063,41 @@ def _path_segments(dotted: str) -> list[str]:
     return segments[1:] if segments[:1] == [PKG] else segments
 
 
-def _bound_names(tree: ast.AST, skip: set[int]) -> list[tuple[int, str]]:
-    """(line, name) of every name a module binds or passes by keyword: functions, classes, parameters, assignment
-    and loop targets, attributes that are assigned, imported names, `except ... as`, `match` captures, type
-    parameters, and keyword names at call sites. Also every segment of the module path of an import (the package's
-    own first segment left out), so `from <package>.approvals.slack import X` is seen although it binds only `X`."""
-    out: list[tuple[int, str | None]] = []
+def _scanned_names(tree: ast.AST, skip: set[int]) -> list[tuple[int, str, bool]]:
+    """(line, name, is a plain read) of every name a module writes down in its code:
+    - what it binds: functions, classes, parameters, assignment and loop targets, attributes that are assigned,
+      `except ... as`, `match` captures, type parameters, `global` and `nonlocal` lists;
+    - what it imports: both the original name and the alias of `import` and of `from ... import`, and every
+      segment of the module path (the package's own first segment left out), also for relative imports;
+    - what it passes or matches by keyword: keyword names at call sites, the keyword names of a class pattern;
+    - what it only reads: every other name and every attribute (`cfg.slack_token`, `ap.slack.X`, a decorator,
+      an annotation, `del x`). These are marked as plain reads."""
+    out: list[tuple[int, str | None, bool]] = []
     for n in ast.walk(tree):
         if id(n) in skip:
             continue
         if isinstance(n, _NAMED):
-            out.append((n.lineno, n.name))
+            out.append((n.lineno, n.name, False))
         elif isinstance(n, ast.arg | ast.keyword):
-            out.append((n.lineno, n.arg))
-        elif isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store):
-            out.append((n.lineno, n.id))
-        elif isinstance(n, ast.Attribute) and isinstance(n.ctx, ast.Store):
-            out.append((n.lineno, n.attr))
+            out.append((n.lineno, n.arg, False))
+        elif isinstance(n, ast.Name):
+            out.append((n.lineno, n.id, not isinstance(n.ctx, ast.Store)))
+        elif isinstance(n, ast.Attribute):
+            out.append((n.lineno, n.attr, not isinstance(n.ctx, ast.Store)))
+        elif isinstance(n, ast.Global | ast.Nonlocal):
+            out += [(n.lineno, name, False) for name in n.names]
         elif isinstance(n, ast.Import):
             for a in n.names:
-                out += [(a.lineno, a.asname), *((a.lineno, seg) for seg in _path_segments(a.name))]
+                out.append((a.lineno, a.asname, False))
+                out += [(a.lineno, seg, False) for seg in _path_segments(a.name)]
         elif isinstance(n, ast.ImportFrom):
-            out += [(n.lineno, seg) for seg in _path_segments(n.module or "")]
-            out += [(a.lineno, a.asname or a.name) for a in n.names]
+            out += [(n.lineno, seg, False) for seg in _path_segments(n.module or "")]
+            out += [(a.lineno, x, False) for a in n.names for x in (a.name, a.asname)]
         elif isinstance(n, ast.MatchMapping):
-            out.append((n.lineno, n.rest))
-    return [(line, name) for line, name in out if name]
+            out.append((n.lineno, n.rest, False))
+        elif isinstance(n, ast.MatchClass):
+            out += [(n.lineno, name, False) for name in n.kwd_attrs]
+    return [(line, name, read) for line, name, read in out if name]
 
 
 def identifier_problems(
@@ -965,10 +1106,11 @@ def identifier_problems(
     identifier_ok: dict[tuple[str, str], str],
     table_names: frozenset[str],
 ) -> list[str]:
-    """A vendor word in a name that shared code gives to something: one line per (name occurrence, word). The
-    module's own name comes first (each segment after the package, reported at line 1), then the names it binds,
-    sorted by (line, name, word). In `backends.table` a top-level class or function listed in `table_names` is
-    skipped with everything inside it."""
+    """A vendor word in a name that shared code writes down (`_scanned_names`): one line per (name occurrence,
+    word). The module's own name comes first (each segment of its dotted name, the package's own first segment
+    left out, reported at line 1), then the names in its code, sorted by (line, name, word). In `backends.table`
+    a top-level class or function listed in `table_names` is skipped with everything inside it, and so is a plain
+    read of one of those names (the kind table refers to its own settings classes)."""
     out: list[str] = []
     used: set[tuple[str, str]] = set()
     for path in sorted(src.rglob("*.py")):
@@ -977,17 +1119,27 @@ def identifier_problems(
             continue
         tree = ast.parse(path.read_text(encoding="utf-8"))
         skip: set[int] = set()
+        pinned: frozenset[str] = frozenset()
         if mod == _TABLE_MODULE:
+            pinned = table_names
             for top in tree.body:
-                named = isinstance(top, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef)
-                if named and top.name in table_names:
+                # an `async def` is never skipped, as in the string scan
+                if isinstance(top, ast.ClassDef | ast.FunctionDef) and top.name in table_names:
                     skip |= {id(n) for n in ast.walk(top)}
-        own = {(1, seg, w) for seg in mod.split(".")[1:] for w in vendor_words_in(seg)}
+        # A module's own name has a key of its own, by position ("module:" + the dotted name up to that segment),
+        # so allowing it never allows a variable of the same name, nor an equal segment elsewhere in the path.
+        segments = _path_segments(mod)
+        keyed = [
+            (f"{MODULE_NAME_KEY}{'.'.join(segments[: i + 1])}", (1, seg, w))
+            for i, seg in enumerate(segments)
+            for w in vendor_words_in(seg)
+        ]
         bound = {
-            (ln, name, w) for ln, name in _bound_names(tree, skip) for w in vendor_words_in(name)
+            (ln, name, w)
+            for ln, name, read in _scanned_names(tree, skip)
+            if not (read and name in pinned)
+            for w in vendor_words_in(name)
         }
-        # A module's own name has its own key, so allowing it never allows a variable of the same name.
-        keyed = [(f"{MODULE_NAME_KEY}{seg}", (1, seg, w)) for _, seg, w in sorted(own)]
         keyed += [(name, (ln, name, w)) for ln, name, w in sorted(bound)]
         lines: dict[str, None] = {}
         for key, (line, name, word) in keyed:
@@ -1012,13 +1164,15 @@ def sql_problems(folder: Path) -> list[str]:
         for m in _SQL_LITERAL.finditer(text):
             out.append(f"{path.name}: vendor literal {m.group(0)}")
         for label, pattern in PATTERNS.items():
-            if label != "bare vendor name" and re.search(pattern, text, re.IGNORECASE):
+            # a quoted word that the line above has reported is not reported a second time by the word entry
+            scanned = _SQL_LITERAL.sub("''", text) if label == _WORD_IN_STRING else text
+            if label != "bare vendor name" and re.search(pattern, scanned, re.IGNORECASE):
                 out.append(f"{path.name}: {label}")
     return out
 
 
 def test_core_logic_names_no_vendor():
-    assert literal_problems(SRC, VENDOR_MODULES, LITERAL_OK) == []
+    assert literal_problems(SRC, VENDOR_MODULES, LITERAL_OK, WORD_IN_OK) == []
 
 
 def test_core_names_no_vendor_in_identifiers():
@@ -1027,11 +1181,7 @@ def test_core_names_no_vendor_in_identifiers():
 
 def _top_level_table_names() -> list[str]:
     tree = ast.parse((SRC / PKG / "backends" / "table.py").read_text(encoding="utf-8"))
-    return [
-        top.name
-        for top in tree.body
-        if isinstance(top, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef)
-    ]
+    return [top.name for top in tree.body if isinstance(top, ast.ClassDef | ast.FunctionDef)]
 
 
 def test_the_table_skip_is_the_pinned_set():
@@ -1041,7 +1191,9 @@ def test_the_table_skip_is_the_pinned_set():
     assert matched == TABLE_VENDOR_NAMES
 
 
-_WHOLE_WORD = re.compile(rf"(?<![A-Za-z0-9])({_W})(?![A-Za-z0-9])", re.IGNORECASE)
+_WHOLE_WORD = (
+    _VENDOR_WORD  # the receiver's whole text is held to the same boundary rule as a string
+)
 _RECEIVER = Path(PKG) / "approvals" / "receiver.py"
 
 
@@ -1076,9 +1228,9 @@ def test_every_named_vendor_module_exists():
     assert missing == []
 
 
-def _lit(tmp_path: Path, rel: str, text: str, ok=None) -> list[str]:
+def _lit(tmp_path: Path, rel: str, text: str, ok=None, word_ok=None) -> list[str]:
     root = _plant(tmp_path, rel, text)
-    return literal_problems(root, VENDOR_MODULES, ok or {})
+    return literal_problems(root, VENDOR_MODULES, ok or {}, word_ok)
 
 
 def test_plant_region_constant_is_caught(tmp_path):
@@ -1170,7 +1322,6 @@ def test_a_vendor_name_in_a_sql_comment_is_not_flagged(tmp_path):
 
 # ---- rule c, the string pattern for paths and keys (Q8a-2)
 
-_PATH_OR_KEY = "vendor word in a path or key"
 _BARE = "bare vendor name"
 
 
@@ -1198,7 +1349,7 @@ def _labels_by_line(problems: list[str]) -> dict[int, list[str]]:
 )
 def test_plant_vendor_word_in_a_path_or_key_is_caught(tmp_path, text):
     found = _lit(tmp_path, "runtime/x.py", f"X = {text!r}\n")
-    assert found == [f"{PKG}.runtime.x:1: {_PATH_OR_KEY} in {text!r}"]
+    assert found == [f"{PKG}.runtime.x:1: {_WORD_IN_STRING} in {text!r}"]
 
 
 def test_a_bare_vendor_word_gives_one_line_and_a_word_that_only_contains_one_gives_none(tmp_path):
@@ -1207,13 +1358,14 @@ def test_a_bare_vendor_word_gives_one_line_and_a_word_that_only_contains_one_giv
 
 
 UNSEEN_STRINGS = [
-    "/slackActions",  # glued in camel case
-    "post to Slack now",  # free prose
-    "x/slack y",  # a boundary before the word, none after it
-    "slack|teams",  # `|` is not a separator
-    "/pager-duty/hook",  # a two-part name written with a separator
+    "/slackActions",  # glued to other letters
+    "myslack",
+    "slack2",  # glued to a digit
     "/datadog/api",  # a word that is not in the list
     "datadog_key",
+    "pager--duty",  # two separators inside a two-part name (one is seen)
+    "pager duty",  # white space inside a two-part name
+    "sl\u0430ck",  # a Cyrillic letter that looks like "a"
 ]
 
 
@@ -1223,29 +1375,152 @@ def test_the_stated_limits_of_the_string_pattern(tmp_path, text):
     assert _lit(tmp_path, "runtime/x.py", f"X = {text!r}\n") == []
 
 
-@pytest.mark.parametrize("text", ["slack,teams", "(aws)", "aws+kms", "/slack;v=1", "f(gcp)"])
-def test_plant_vendor_word_beside_a_list_separator_is_caught(tmp_path, text):
+@pytest.mark.parametrize(
+    "text",
+    [
+        "slack,teams",
+        "(aws)",
+        "aws+kms",
+        "/slack;v=1",
+        "f(gcp)",
+        # the boundary is a rule: any character that is not an ASCII letter or digit, on both sides
+        "slack|teams",
+        "^(slack|teams)$",
+        "SELECT 1 FROM t WHERE kind = 'slack'",
+        "https://{host}/{aws_region}/x",
+        "%(aws_region)s",
+        "[slack]",
+        "<slack>",
+        "channel:slack",
+        "kind: slack",
+        "aws s3 ls",
+        "slack teams",
+        "post to Slack now",
+        "x/slack y",
+        'say "slack"',
+        "a\\slack\\b",
+        "\tslack",
+        "caf\u00e9slack\u00e9",  # a letter outside ASCII is a boundary
+        "hadavin_sdk.approvals.slack",  # the text of a dynamic import
+        "discord/hook",
+        "/zoom/actions",
+    ],
+)
+def test_plant_vendor_word_between_any_two_boundaries_is_caught(tmp_path, text):
     found = _lit(tmp_path, "runtime/x.py", f"X = {text!r}\n")
-    assert found == [f"{PKG}.runtime.x:1: {_PATH_OR_KEY} in {text!r}"]
+    assert found == [f"{PKG}.runtime.x:1: {_WORD_IN_STRING} in {text[:50]!r}"]
+
+
+@pytest.mark.parametrize(
+    ("text", "word"),
+    [
+        ("/pager-duty/hook", "pagerduty"),
+        ("git-hub", "github"),
+        ("cloud_watch_ns", "cloudwatch"),
+        ("open.ai", "openai"),
+        ("git/lab", "gitlab"),
+        ("Digital_Ocean", "digitalocean"),
+        ("open-stack", "openstack"),
+        ("ops-genie", "opsgenie"),
+        ("whats_app", "whatsapp"),
+    ],
+)
+def test_plant_a_two_part_vendor_name_with_one_separator_in_a_string_is_caught(
+    tmp_path, text, word
+):
+    assert words_in_text(text) == [word]
+    assert _lit(tmp_path, "runtime/x.py", f"X = {text!r}\n") == [
+        f"{PKG}.runtime.x:1: {_WORD_IN_STRING} in {text!r}"
+    ]
+    assert _lit(tmp_path, "runtime/x.py", f"X = {{{text!r}: 1}}\n") != []  # as a dictionary key too
+
+
+def test_every_two_part_word_is_a_listed_word_split_in_two():
+    assert set(TWO_PART_WORDS) <= set(VENDOR_WORDS)
+    assert all(a + b == word for word, (a, b) in TWO_PART_WORDS.items())
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        'import importlib\nM = importlib.import_module("hadavin_sdk.approvals.slack")\n',
+        'M = __import__("slack_sdk")\n',
+        'import importlib\nM = importlib.import_module(".slack", "hadavin_sdk.approvals")\n',
+    ],
+)
+def test_plant_a_dynamic_import_of_a_vendor_module_by_a_literal_name_is_caught(tmp_path, source):
+    found = _lit(tmp_path, "runtime/x.py", source)
+    assert len(found) == 1 and _WORD_IN_STRING in found[0]
+
+
+def test_a_comment_and_a_docstring_are_not_scanned(tmp_path):
+    """Pinned: comments and docstrings are prose for the reader; shared code may say which vendors a thing was
+    built for. Only the approval receiver is held to more (its whole text is checked)."""
+    source = '"""Slack is named here."""\n# slack\ndef f():\n    """Posts to AWS."""\n    return 1  # aws\n'
+    assert _lit(tmp_path, "runtime/x.py", source) == []
+    assert _ident(tmp_path, "runtime/x.py", source) == []
+    assert {m.group(0).lower() for m in _WHOLE_WORD.finditer(source)} == {"slack", "aws"}
+
+
+def test_the_word_allowance_of_an_assignment_covers_its_words_there_and_nothing_else(tmp_path):
+    mod = f"{PKG}.runtime.x"
+    source = (
+        'import re\n_URL = re.compile(r"(?:tel|slack|" r"ms-teams):")\n_OTHER = "tel|slack"\n'
+        '_HOST = "x|slack|hooks.slack.com"\n'
+    )
+    both = {(mod, "_URL", "slack"): "why", (mod, "_URL", "teams"): "why"}
+    assert sorted(_lit(tmp_path, "runtime/x.py", source, word_ok=both)) == [
+        f"{mod}:3: {_WORD_IN_STRING} in 'tel|slack'",  # another assignment
+        f"{mod}:4: host in 'x|slack|hooks.slack.com'",
+        f"{mod}:4: {_WORD_IN_STRING} in 'x|slack|hooks.slack.com'",
+    ]
+    # a string is covered only when each of its words is listed for that assignment
+    only_one = _lit(tmp_path, "runtime/x.py", source, word_ok={(mod, "_URL", "slack"): "why"})
+    assert (
+        f"{mod}:2: {_WORD_IN_STRING} in '(?:tel|slack|ms-teams):'" in only_one
+        and len(only_one) == 4
+    )
+    # any other label inside the assignment is still reported, and a stale entry fails
+    host = {(mod, "_HOST", "slack"): "why"}
+    found = _lit(tmp_path, "runtime/x.py", '_HOST = "x|slack|hooks.slack.com"\n', word_ok=host)
+    assert found == [f"{mod}:1: host in 'x|slack|hooks.slack.com'"]
+    assert _lit(tmp_path, "runtime/x.py", "_HOST = 1\n", word_ok=host) == [
+        f"WORD_IN_OK {mod} _HOST 'slack' is gone: delete the entry"
+    ]
+    # the bare word itself is never covered by this form
+    assert _lit(tmp_path, "runtime/x.py", '_HOST = "slack"\n', word_ok=host) == [
+        f"{mod}:1: {_BARE} in 'slack'",
+        f"WORD_IN_OK {mod} _HOST 'slack' is gone: delete the entry",
+    ]
 
 
 def test_an_fstring_or_a_join_is_reported_for_the_joined_text_and_for_each_part_that_hits(tmp_path):
     """Pinned: the scan walks a joined text and its constant parts as separate nodes."""
     assert _lit(tmp_path, "runtime/x.py", "def f(y):\n    return f'/slack/{y}'\n") == [
-        f"{PKG}.runtime.x:2: {_PATH_OR_KEY} in '/slack/{{}}'",
-        f"{PKG}.runtime.x:2: {_PATH_OR_KEY} in '/slack/'",
+        f"{PKG}.runtime.x:2: {_WORD_IN_STRING} in '/slack/{{}}'",
+        f"{PKG}.runtime.x:2: {_WORD_IN_STRING} in '/slack/'",
     ]
-    # `{}` stands for the part that is not a constant, and is no boundary: only the constant part hits here
+    # `{}` stands for the part that is not a constant; like every character that is no letter or digit it is a
+    # boundary, so the joined text hits as well as the constant part
     assert _lit(tmp_path, "runtime/x.py", "def f(tail):\n    return '/slack' + tail\n") == [
-        f"{PKG}.runtime.x:2: {_PATH_OR_KEY} in '/slack'"
+        f"{PKG}.runtime.x:2: {_WORD_IN_STRING} in '/slack{{}}'",
+        f"{PKG}.runtime.x:2: {_WORD_IN_STRING} in '/slack'",
+    ]
+    # an empty constant inside an f-string is folded to nothing, not to `{}`
+    quote = chr(34)
+    assert _lit(tmp_path, "runtime/x.py", f"X = f'sl{{{quote}{quote}}}ack'\n") == [
+        f"{PKG}.runtime.x:1: {_BARE} in 'slack'"
     ]
 
 
 def test_a_file_that_is_not_python_is_not_scanned(tmp_path):
-    """Pinned: a vendor word in a YAML or Markdown file under the package is not seen by either scan."""
+    """Pinned: a vendor word in a YAML, Markdown or SQL file under the package is not seen by either scan (the
+    SQL files of the migrations folder have their own rule, `sql_problems`)."""
     _plant(tmp_path, "runtime/x.py", "X = 1\n")
     _plant(tmp_path, "runtime/slack_hook.yaml", "request_url: /slack/actions\naws_region: x\n")
     _plant(tmp_path, "runtime/notes.md", "post to /slack/actions\n")
+    _plant(tmp_path, "runtime/slack_report.sql", "SELECT 1 FROM t WHERE channel = 'slack';\n")
+    assert sql_problems(tmp_path / PKG / "runtime") != []  # the migrations rule would see it
     assert literal_problems(tmp_path, VENDOR_MODULES, {}) == []
     assert identifier_problems(tmp_path, VENDOR_MODULES, {}, frozenset()) == []
 
@@ -1277,24 +1552,68 @@ def test_plant_a_vendor_literal_inside_the_gcs_settings_class_is_caught(tmp_path
     ]
 
 
-def test_property_every_word_beside_every_separator_gives_exactly_one_path_or_key_line(tmp_path):
+def _boundary_characters() -> list[str]:
+    """Every character of the first 256 that is not an ASCII letter or digit, and three from further on."""
+    letters_and_digits = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    return [c for c in map(chr, range(256)) if c not in letters_and_digits] + [
+        chr(0x2028),
+        chr(0x3000),  # an ideographic space
+        chr(0x0430),
+    ]
+
+
+def test_property_every_word_between_any_two_boundary_characters_gives_exactly_one_line():
+    """The boundary rule itself, for every listed word and every boundary character (over 5,000 texts), checked on
+    the two patterns directly: exactly one of them matches, whatever stands on either side."""
+    bare, in_string = (
+        re.compile(PATTERNS[_BARE], re.IGNORECASE),
+        re.compile(PATTERNS[_WORD_IN_STRING], re.IGNORECASE),
+    )
+    boundaries = _boundary_characters()
+    assert len(boundaries) == 256 - 62 + 3
+    checked = 0
+    for word in VENDOR_WORDS:
+        assert bare.search(word) and not in_string.search(word), word
+        assert bare.search(word + ":x") and not in_string.search(word + ":x"), word
+        for i, c in enumerate(boundaries):
+            other = boundaries[(i * 7 + 3) % len(boundaries)]
+            for text in (
+                f"{word}{c}q",
+                f"q{c}{word}{other}q",
+                f"q{c}{word}",
+                f"{c}{word.upper()}{c}",
+            ):
+                hits = (bool(bare.search(text)), bool(in_string.search(text)))
+                first = (
+                    text == f"{word}:q"
+                )  # `word:` at the very start is the first entry's; all else the last's
+                assert hits == ((True, False) if first else (False, True)), (text, hits)
+                assert words_in_text(text) == [word], text
+                checked += 1
+        for glued in (f"q{word}", f"{word}q", f"9{word}", f"{word}9x", f"/q{word}/", f"/{word}q/"):
+            assert not (bare.search(glued) or in_string.search(glued)), glued
+    assert checked == len(VENDOR_WORDS) * len(boundaries) * 4
+
+
+def test_property_planted_strings_give_one_line_each_through_the_scan(tmp_path):
+    seps = "/_.=?&#@,;()+-|:[]{}<> "
     cases = [
         text
         for word in VENDOR_WORDS
-        for sep in _SEP
+        for sep in seps
         for text in (f"{word}{sep}q", f"q{sep}{word}{sep}q", f"q{sep}{word}")
+        if text != f"{word}:q"
     ]
-    assert len(cases) == len(VENDOR_WORDS) * len(_SEP) * 3
     source = "".join(f"X = {text!r}\n" for text in cases)
     labels = _labels_by_line(_lit(tmp_path, "runtime/x.py", source))
     for line, text in enumerate(cases, 1):
         # another entry (a model id, a vendor header) may report the same string too; these two are counted
         got = labels.get(line, [])
-        assert (got.count(_PATH_OR_KEY), got.count(_BARE)) == (1, 0), text
-    bare = "".join(f"X = {word!r}\n" for word in VENDOR_WORDS)
+        assert (got.count(_WORD_IN_STRING), got.count(_BARE)) == (1, 0), text
+    bare = "".join(f"X = {word!r}\nY = '{word}:q'\n" for word in VENDOR_WORDS)
     labels = _labels_by_line(_lit(tmp_path, "runtime/x.py", bare))
-    for line, word in enumerate(VENDOR_WORDS, 1):
-        assert labels.get(line) == [_BARE], word
+    for line in range(1, 2 * len(VENDOR_WORDS) + 1):
+        assert labels.get(line, []).count(_BARE) == 1 and _WORD_IN_STRING not in labels[line], line
 
 
 # ---- rule c, names (Q8a-2)
@@ -1363,10 +1682,59 @@ def test_plant_vendor_word_in_a_module_or_package_name_is_caught(tmp_path):
 
 def test_a_word_that_only_contains_a_vendor_word_is_not_a_name_hit(tmp_path):
     assert _ident(tmp_path, "runtime/x.py", "awsome = laws = teamster = xs3y = kmsx = 1\n") == []
-    # a name that is only read is scanned where it is bound, not here
-    assert (
-        _ident(tmp_path, "runtime/x.py", "def f(a):\n    return a.slack_url + len(a.aws)\n") == []
-    )
+
+
+@pytest.mark.parametrize(
+    ("source", "line", "word", "name"),
+    [
+        (
+            "def f(cfg):\n    if cfg.slack_signing_secret:\n        pass\n",
+            2,
+            "slack",
+            "slack_signing_secret",
+        ),
+        ("def f(settings):\n    return settings.aws_region\n", 2, "aws", "aws_region"),
+        ("def f(ap):\n    return ap.slack.HEADER_PREFIX\n", 2, "slack", "slack"),
+        ("def f(d):\n    @d.slack.hook\n    def h():\n        pass\n", 2, "slack", "slack"),
+        ("def f(a):\n    return len(a.aws)\n", 2, "aws", "aws"),
+        ("def f(d):\n    return teams_list\n", 2, "teams", "teams_list"),
+        ("def f(x: 'T') -> None:\n    del x.gcp_zone\n", 2, "gcp", "gcp_zone"),
+        ("def f():\n    global slack\n", 2, "slack", "slack"),
+        ("def f():\n    def g():\n        nonlocal aws_x\n", 3, "aws", "aws_x"),
+        ("match 1:\n    case C(slack_id=1):\n        pass\n", 2, "slack", "slack_id"),
+        ("s32_bucket = 1\n", 1, "s3", "s32_bucket"),
+        ("git_HubClient = 1\n", 1, "github", "git_HubClient"),
+    ],
+)
+def test_plant_vendor_word_in_a_name_that_is_only_read_or_listed_is_caught(
+    tmp_path, source, line, word, name
+):
+    """A name that shared code only reads ties it to the vendor as much as one it binds: the field may be bound
+    in a vendor module, which is not scanned at all."""
+    assert _ident(tmp_path, "runtime/x.py", source) == [_hit("runtime.x", line, word, name)]
+
+
+@pytest.mark.parametrize(
+    ("source", "names"),
+    [
+        (f"from {PKG}.approvals import slack as chat\n", ["slack"]),
+        (f"from {PKG}.llm import gemini as g\n", ["gemini"]),
+        ("from . import slack as chat\n", ["slack"]),
+        ("from .slack import HEADER_PREFIX\n", ["slack"]),
+        ("from ..approvals.slack_channel import X as Y\n", ["slack_channel"]),
+        ("from x import slack_a as slack_b\n", ["slack_a", "slack_b"]),
+        (f"import {PKG}.approvals as ap\nP = ap.slack.HEADER_PREFIX\n", ["slack"]),
+    ],
+)
+def test_plant_an_import_whose_original_name_is_dropped_by_an_alias_is_caught(
+    tmp_path, source, names
+):
+    """Class: an import form that binds a neutral name for a vendor thing. Both the original name and the alias
+    are scanned, for `import` and for `from ... import`, relative ones included."""
+    line = source.count("\n")
+    assert _ident(tmp_path, "approvals/x.py", source) == [
+        _hit("approvals.x", line, vendor_words_in(name)[0], name) for name in names
+    ]
 
 
 def test_the_stated_limits_of_the_name_scan(tmp_path):
@@ -1438,7 +1806,7 @@ def test_the_package_name_itself_and_a_neutral_import_path_are_not_hits(tmp_path
 
 def test_a_module_name_allowance_does_not_allow_a_variable_of_that_name(tmp_path):
     mod = f"{PKG}.runtime.slack_x"
-    ok = {(mod, f"{MODULE_NAME_KEY}slack_x"): "why"}
+    ok = {(mod, f"{MODULE_NAME_KEY}runtime.slack_x"): "why"}
     assert _ident(tmp_path, "runtime/slack_x.py", "X = 1\n", ok) == []
     assert _ident(tmp_path, "runtime/slack_x.py", "slack_x = 1\n", ok) == [
         _hit("runtime.slack_x", 1, "slack", "slack_x")
@@ -1449,8 +1817,31 @@ def test_a_module_name_allowance_does_not_allow_a_variable_of_that_name(tmp_path
     ]
     # a stale module-name entry is reported with its key
     assert _ident(
-        tmp_path / "o", "runtime/y.py", "X = 1\n", {(f"{PKG}.runtime.y", "module:y"): "w"}
-    ) == [f"IDENTIFIER_OK {PKG}.runtime.y 'module:y' is gone: delete the entry"]
+        tmp_path / "o", "runtime/y.py", "X = 1\n", {(f"{PKG}.runtime.y", "module:runtime.y"): "w"}
+    ) == [f"IDENTIFIER_OK {PKG}.runtime.y 'module:runtime.y' is gone: delete the entry"]
+
+
+def test_a_module_name_is_keyed_by_position_and_a_second_top_level_package_is_scanned(tmp_path):
+    """Two equal segments have two keys, and a package beside this one is scanned from its first segment on."""
+    path = tmp_path / PKG / "aws" / "aws.py"
+    path.parent.mkdir(parents=True)
+    path.write_text("X = 1\n", encoding="utf-8")
+    mod, hit = f"{PKG}.aws.aws", _hit("aws.aws", 1, "aws", "aws")
+    assert identifier_problems(tmp_path, VENDOR_MODULES, {}, frozenset()) == [
+        hit
+    ]  # one line: equal texts
+    file_only = {(mod, "module:aws.aws"): "why"}
+    assert identifier_problems(tmp_path, VENDOR_MODULES, file_only, frozenset()) == [hit]
+    both = {**file_only, (mod, "module:aws"): "why"}
+    assert identifier_problems(tmp_path, VENDOR_MODULES, both, frozenset()) == []
+    other = tmp_path / "second"
+    (other / "slack_tools").mkdir(parents=True)
+    (other / "slack_tools" / "x.py").write_text("X = 1\n", encoding="utf-8")
+    (other / "aws_helpers.py").write_text("X = 1\n", encoding="utf-8")
+    assert identifier_problems(other, VENDOR_MODULES, {}, frozenset()) == [
+        "aws_helpers:1: vendor word 'aws' in the name 'aws_helpers'",
+        "slack_tools.x:1: vendor word 'slack' in the name 'slack_tools'",
+    ]
 
 
 def test_name_hits_are_one_per_occurrence_and_word_in_a_fixed_order(tmp_path):
@@ -1483,6 +1874,42 @@ def test_a_listed_name_is_allowed_and_a_stale_entry_is_caught(tmp_path):
     ]
     # the entry is for its module only
     assert len(_ident(tmp_path, "runtime/y.py", "slack_a = 1\n", ok)) == 2
+
+
+def test_an_async_def_and_a_look_alike_of_the_table_are_never_skipped(tmp_path):
+    """The kind table's skip is for classes, plain functions and the assignment named exactly TABLE."""
+    source = (
+        "async def _aws_fetch():\n"
+        "    aws_x = 'https://s3.amazonaws.com'\n"
+        "TABLE_EXTRA = {'k': 'us-east-1'}\n"
+        "NOT_TABLE: dict = {'k': 'slack'}\n"
+        "TABLE: dict = {'k': 'slack'}\n"
+    )
+    assert sorted(_lit(tmp_path, "backends/table.py", source)) == [
+        f"{_TABLE_MODULE}:2: host in 'https://s3.amazonaws.com'",
+        f"{_TABLE_MODULE}:2: {_WORD_IN_STRING} in 'https://s3.amazonaws.com'",
+        f"{_TABLE_MODULE}:3: AWS region in 'us-east-1'",
+        f"{_TABLE_MODULE}:4: {_BARE} in 'slack'",
+    ]
+    assert _ident(tmp_path, "backends/table.py", source, table_names=frozenset({"_aws_fetch"})) == [
+        _hit("backends.table", 1, "aws", "_aws_fetch"),
+        _hit("backends.table", 2, "aws", "aws_x"),
+    ]
+
+
+def test_a_name_given_as_literal_text_is_seen_by_the_string_scan_and_a_computed_one_is_not(
+    tmp_path,
+):
+    """Pinned: `getattr(cfg, "slack_token")` is a string for the string scan; a name computed at run time is not
+    seen by either scan."""
+    assert _lit(
+        tmp_path, "runtime/x.py", "def f(cfg):\n    return getattr(cfg, 'slack_token')\n"
+    ) == [f"{PKG}.runtime.x:2: {_WORD_IN_STRING} in 'slack_token'"]
+    source = "def f(cfg, part):\n    return getattr(cfg, 'sla' + part)\n"
+    assert (
+        _lit(tmp_path, "runtime/x.py", source) == []
+        and _ident(tmp_path, "runtime/x.py", source) == []
+    )
 
 
 def test_the_table_skip_covers_listed_top_level_names_only(tmp_path):
@@ -1535,20 +1962,40 @@ _LITERAL_OK_LABELS = {
     (f"{PKG}.approvals.gate", "s3"): [_BARE],
     (f"{PKG}.config", "slack"): [_BARE],
     (f"{PKG}.llm.openai_compat", _OPENAI_ALIAS_REGEX): ["model id"],
-    (f"{PKG}.guard.producers", "guard/bedrock_guardrail.py"): [_PATH_OR_KEY, _PATH_OR_KEY],
-    (f"{PKG}.llm.openai_compat", "openai_compat"): [_PATH_OR_KEY],
+    (f"{PKG}.guard.producers", "guard/bedrock_guardrail.py"): [_WORD_IN_STRING, _WORD_IN_STRING],
+    (f"{PKG}.llm.openai_compat", "openai_compat"): [_WORD_IN_STRING],
     (f"{PKG}.approvals.gate", "gcloud"): [_BARE],
-    (f"{PKG}.tools", "metadata.google.internal"): [_PATH_OR_KEY],
-    (f"{PKG}.tools", ".metadata.google.internal"): [_PATH_OR_KEY],
-    (f"{PKG}.backends.table", "gcs_retention_lock"): [_PATH_OR_KEY],
+    (f"{PKG}.tools", "metadata.google.internal"): [_WORD_IN_STRING],
+    (f"{PKG}.tools", ".metadata.google.internal"): [_WORD_IN_STRING],
+    (f"{PKG}.backends.table", "gcs_retention_lock"): [_WORD_IN_STRING],
+    (f"{PKG}.config", "backends.<capability>.region on each AWS kind"): [_WORD_IN_STRING],
+    (
+        f"{PKG}.config",
+        "backends.channel: {kind: slack, channel_id, signing_secret_name, bot_token_secret_name}",
+    ): [_WORD_IN_STRING],
+    (f"{PKG}.backends.table", "iam_auth needs region (and pip install hadavin-sdk[aws])"): [
+        _WORD_IN_STRING
+    ],
+    (
+        f"{PKG}.store.postgres",
+        "store postgres with iam_auth needs: pip install hadavin-sdk[aws]",
+    ): [_WORD_IN_STRING],
+}
+# Every WORD_IN_OK entry -> the number of problem lines it covers (a `+` join is one line for the joined text and
+# one for each constant part that holds the word).
+_WORD_IN_OK_LINES = {
+    (f"{PKG}.approvals.gate", "_URL", "slack"): 1,
+    (f"{PKG}.approvals.gate", "_URL", "teams"): 1,
+    (f"{PKG}.approvals.gate", "_WRITE_SHAPES", "s3"): 2,
+    (f"{PKG}.guard.runmap", "_GRAMMAR", "aws"): 3,
 }
 _IDENTIFIER_OK_WORDS = {
-    (f"{PKG}.approvals.gate", "_AWS_READ_PREFIXES"): "aws",
-    (f"{PKG}.backends.table", "OpenAICompatSettings"): "openai",
-    (f"{PKG}.backends.table", "GcsRetentionLockSettings"): "gcs",
-    (f"{PKG}.llm.openai_compat", "OpenAICompatLLM"): "openai",
-    (f"{PKG}.llm.openai_compat", "module:openai_compat"): "openai",
-    (f"{PKG}.store.postgres", "auth_aws"): "aws",
+    (f"{PKG}.approvals.gate", "_AWS_READ_PREFIXES"): ("aws", 2),
+    (f"{PKG}.backends.table", "OpenAICompatSettings"): ("openai", 3),
+    (f"{PKG}.backends.table", "GcsRetentionLockSettings"): ("gcs", 2),
+    (f"{PKG}.llm.openai_compat", "OpenAICompatLLM"): ("openai", 3),
+    (f"{PKG}.llm.openai_compat", "module:llm.openai_compat"): ("openai", 1),
+    (f"{PKG}.store.postgres", "auth_aws"): ("aws", 2),
 }
 
 
@@ -1558,6 +2005,7 @@ def _without_lines(problems: list[str]) -> list[str]:
 
 def test_every_allowance_is_checked_by_a_removal_test():
     assert set(_LITERAL_OK_LABELS) == set(LITERAL_OK)
+    assert set(_WORD_IN_OK_LINES) == set(WORD_IN_OK)
     assert set(_IDENTIFIER_OK_WORDS) == set(IDENTIFIER_OK)
 
 
@@ -1567,32 +2015,66 @@ def test_every_allowance_is_checked_by_a_removal_test():
 def test_each_literal_allowance_covers_exactly_its_own_hits(key):
     rest = {k: v for k, v in LITERAL_OK.items() if k != key}
     mod, text = key
-    assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest)) == [
+    assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
         f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
     ]
+
+
+@pytest.mark.parametrize("key", sorted(_WORD_IN_OK_LINES), ids=":".join)
+def test_each_word_allowance_covers_exactly_its_own_hits(key):
+    """Without the entry the scan reports the strings of that one assignment that hold the word, and nothing
+    else: no other module, no other assignment, no stale line for a neighbouring entry."""
+    rest = {k: v for k, v in WORD_IN_OK.items() if k != key}
+    mod, name, _ = key
+    found = literal_problems(SRC, VENDOR_MODULES, LITERAL_OK, rest)
+    assert len(found) == _WORD_IN_OK_LINES[key], found
+    tree = ast.parse((SRC / Path(*mod.split(".")).with_suffix(".py")).read_text(encoding="utf-8"))
+    spans = [
+        range(top.lineno, top.end_lineno + 1)
+        for top in tree.body
+        if isinstance(top, ast.Assign | ast.AnnAssign)
+        and name
+        in {t.id for t in ast.walk(top) if isinstance(t, ast.Name) and isinstance(t.ctx, ast.Store)}
+    ]
+    assert len(spans) == 1
+    for line in found:
+        m = re.fullmatch(rf"{re.escape(mod)}:(\d+): {_WORD_IN_STRING} in .+", line, re.DOTALL)
+        assert m and int(m.group(1)) in spans[0], line
 
 
 @pytest.mark.parametrize("key", sorted(_IDENTIFIER_OK_WORDS))
 def test_each_name_allowance_covers_exactly_its_own_hit(key):
     rest = {k: v for k, v in IDENTIFIER_OK.items() if k != key}
-    mod, name = key[0], key[1].removeprefix(MODULE_NAME_KEY)
+    mod, name = key[0], key[1].removeprefix(MODULE_NAME_KEY).rpartition(".")[2]
     found = identifier_problems(SRC, VENDOR_MODULES, rest, TABLE_VENDOR_NAMES)
-    assert _without_lines(found) == [
-        f"{mod}: vendor word {_IDENTIFIER_OK_WORDS[key]!r} in the name {name!r}"
-    ]
+    word, places = _IDENTIFIER_OK_WORDS[key]
+    # one line for each line of the module on which the name is bound or read
+    assert _without_lines(found) == [f"{mod}: vendor word {word!r} in the name {name!r}"] * places
 
 
-def test_removing_one_name_from_the_pinned_table_set_reports_that_name():
+def test_removing_one_name_from_the_pinned_table_set_reports_that_name_and_what_is_inside_it():
+    """Exactly: every reported line is in the kind table, and it either names the removed thing (where it is
+    defined and where the table reads it) or stands inside its definition."""
+    tree = ast.parse((SRC / PKG / "backends" / "table.py").read_text(encoding="utf-8"))
+    tops = {top.name: top for top in tree.body if isinstance(top, ast.ClassDef | ast.FunctionDef)}
     for name in sorted(TABLE_VENDOR_NAMES):
         found = identifier_problems(SRC, VENDOR_MODULES, IDENTIFIER_OK, TABLE_VENDOR_NAMES - {name})
-        assert any(f"in the name {name!r}" in line for line in found), name
+        inside = range(tops[name].lineno, tops[name].end_lineno + 1)
+        assert any(
+            f"{_TABLE_MODULE}:{tops[name].lineno}: " in f and f"name {name!r}" in f for f in found
+        )
+        for line in found:
+            m = re.fullmatch(
+                rf"{re.escape(_TABLE_MODULE)}:(\d+): vendor word '\w+' in the name '(\w+)'", line
+            )
+            assert m and (m.group(2) == name or int(m.group(1)) in inside), (name, line)
 
 
 def test_a_vendor_path_or_name_planted_in_the_real_receiver_is_caught(tmp_path):
     """A copy of the real tree with one vendor path and one vendor name appended to the receiver: each scan
     reports its line. The real tree is never written."""
     shutil.copytree(SRC / PKG, tmp_path / PKG, ignore=shutil.ignore_patterns("__pycache__"))
-    assert literal_problems(tmp_path, VENDOR_MODULES, LITERAL_OK) == []
+    assert literal_problems(tmp_path, VENDOR_MODULES, LITERAL_OK, WORD_IN_OK) == []
     assert identifier_problems(tmp_path, VENDOR_MODULES, IDENTIFIER_OK, TABLE_VENDOR_NAMES) == []
     planted = tmp_path / _RECEIVER
     before = planted.read_text(encoding="utf-8")
@@ -1602,8 +2084,8 @@ def test_a_vendor_path_or_name_planted_in_the_real_receiver_is_caught(tmp_path):
         before + 'PATH = "/slack/actions"\n\n\ndef handle_slack_action(): ...\n', encoding="utf-8"
     )
     mod = f"{PKG}.approvals.receiver"
-    assert literal_problems(tmp_path, VENDOR_MODULES, LITERAL_OK) == [
-        f"{mod}:{lines + 1}: {_PATH_OR_KEY} in '/slack/actions'"
+    assert literal_problems(tmp_path, VENDOR_MODULES, LITERAL_OK, WORD_IN_OK) == [
+        f"{mod}:{lines + 1}: {_WORD_IN_STRING} in '/slack/actions'"
     ]
     assert identifier_problems(tmp_path, VENDOR_MODULES, IDENTIFIER_OK, TABLE_VENDOR_NAMES) == [
         f"{mod}:{lines + 4}: vendor word 'slack' in the name 'handle_slack_action'"
