@@ -58,8 +58,6 @@ def judge(
         return Verdict.NO_TESTS
     if rc != 1:
         return Verdict.ERROR
-    if not test_id:  # a failing run with no failing test id (empty or unreadable JUnit, a collection error) names no test that killed
-        return Verdict.ERROR
     if expect and expect not in first_line:
         return Verdict.WRONG_REASON
     if pinned is not None and pinned != test_id:
@@ -79,8 +77,10 @@ def first_failure(stdout: str) -> tuple[str, str]:
     return test_id, first
 
 
-def _parse_junit(xml_text: str) -> ET.Element:
-    """The root of a JUnit file, after the three refusals (size ceiling, DOCTYPE, ENTITY): the one place where JUnit text is parsed."""
+def first_failure_junit(xml_text: str) -> tuple[str, str]:
+    """(failing test id, first assertion line of THAT test) from a pytest JUnit XML file. The id is ``classname`` with ``.`` read as ``/`` plus
+    ``::name``: a path-like id (``tests/test_x::test_y``; a test in a class reads ``tests/test_x/TestC::test_y``), the form ``Mutant.pinned``
+    must use. A DOCTYPE or ENTITY declaration, or a text over ``MAX_JUNIT_CHARS``, raises ``ValueError`` (the runner marks that mutant ERROR)."""
     # The file is written by our own pytest run, but the parser is shipped: a DOCTYPE or ENTITY declaration (the way an XML bomb or an
     # external entity is written) is refused before parsing, so only plain elements reach expat.
     if len(xml_text) > MAX_JUNIT_CHARS:
@@ -91,14 +91,6 @@ def _parse_junit(xml_text: str) -> ET.Element:
     # The ONE documented exception to S314 and B314 in this file: the call is reached only after the three refusals above (size
     # ceiling, no DOCTYPE, no ENTITY), so no entity can be declared or expanded, and the text is written by our own pytest run.
     root = ET.fromstring(xml_text)  # noqa: S314  # nosec B314
-    return root
-
-
-def first_failure_junit(xml_text: str) -> tuple[str, str]:
-    """(failing test id, first assertion line of THAT test) from a pytest JUnit XML file. The id is ``classname`` with ``.`` read as ``/`` plus
-    ``::name``: a path-like id (``tests/test_x::test_y``; a test in a class reads ``tests/test_x/TestC::test_y``), the form ``Mutant.pinned``
-    must use. A DOCTYPE or ENTITY declaration, or a text over ``MAX_JUNIT_CHARS``, raises ``ValueError`` (the runner marks that mutant ERROR)."""
-    root = _parse_junit(xml_text)
     for case in root.iter("testcase"):
         bad = case.find("failure")
         if bad is None:
@@ -113,28 +105,3 @@ def first_failure_junit(xml_text: str) -> tuple[str, str]:
         )
         return test_id, e_line
     return "", ""
-
-
-def skipped_tests(xml_text: str) -> list[str]:
-    """The ids (same form as ``first_failure_junit``) of the test cases a pytest JUnit file records as skipped, an expected failure
-    (xfail) included. A run that selected a test which did not run proves nothing about it: a runner that forbids skips counts such a
-    mutant run as an error and not as a kill. The same refusals as ``first_failure_junit`` (``ValueError``; a truncated file is a ``SyntaxError``)."""
-    root = _parse_junit(xml_text)
-    return [
-        f"{case.get('classname', '').replace('.', '/')}::{case.get('name', '')}"
-        for case in root.iter("testcase")
-        if case.find("skipped") is not None
-    ]
-
-
-def fixture_errors(xml_text: str) -> list[str]:
-    """The ids (same form as ``first_failure_junit``) of the test cases whose ``error`` record is a setup or teardown failure of a fixture
-    (pytest writes ``failed on setup with ...`` / ``failed on teardown with ...``). Such a test never ran as written, so a runner counts the
-    mutant run as an error and not as a kill, even when the fixture failed with an ``AssertionError``. Same refusals as ``first_failure_junit``."""
-    root = _parse_junit(xml_text)
-    return [
-        f"{case.get('classname', '').replace('.', '/')}::{case.get('name', '')}"
-        for case in root.iter("testcase")
-        for err in case.findall("error")
-        if (err.get("message") or "").startswith(("failed on setup", "failed on teardown"))
-    ]

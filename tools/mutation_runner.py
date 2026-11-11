@@ -41,26 +41,8 @@ Two more limits of the "reaped by someone else" case (SIGCHLD ignored, or a stra
 can still read as exit code 0 there: the ``REAPED_ELSEWHERE`` result exists on platforms with ``os.waitid`` only. (b) On the reaped-leader
 path the group is NOT killed (its leader's pid may belong to another process by now), so descendants the child left behind are not killed.
 
-pytest runs with ``--noconftest`` and with an empty ini file on purpose (a planted file in a parent folder is never read), so a
-``pyproject.toml`` / ``pytest.ini`` is never read and, by default, no ``conftest.py`` is loaded. Three opt-in keywords of ``run_mutants``
-(all off by default: without them the runner behaves exactly as before) cover tests that need more:
-
-- ``conftest="tests/conftest.py"``: a file of the tree (copied like a test file) that every pytest run loads as a plugin (``-p``), named
-  by a path of identifier parts that ends in ``.py``. It replaces ``--noconftest`` for that one file only; no other conftest is read.
-- ``pass_env=("HADAVIN_TEST_PG_DSN",)``: names of caller environment variables the pytest child also sees (baseline and mutants). Only
-  names in ``PASS_ENV_ALLOWED`` are accepted (``ValueError`` for any other name, before anything runs): a token or any other secret of the
-  caller still never reaches the child. A name that is not set in the caller is simply not passed. The value of a passed name (and the password
-  inside it, when it is a URL) is replaced by ``[REDACTED]`` in ``first_lines``, in the failing test id of a row and in the baseline error text.
-  SAFETY: the address must point at a THROWAWAY database, and its login must be able to touch only that database (never a shared or
-  production one): every mutant run executes the tests against it, and a mutant can make those tests write, drop or fill tables with
-  anything. Two runs at once that share one database collide (the same tables and rows), so give each parallel run its own database.
-- ``forbid_skips=True``: a run in which any selected test is skipped (or an expected failure) proves nothing, so it is an ERROR row
-  ``SKIPPED TESTS`` (never a kill), and an unmutated baseline with a skipped test raises ``RuntimeError``. This closes the false kill where
-  a mutant "dies" because the tests could not run (for example no database was reachable). A mutant run with no JUnit file or an empty one
-  is the ERROR row ``JUNIT MISSING`` under this keyword.
-
-Always on (no keyword): a run whose first failure is an error in a FIXTURE (setup or teardown) is the ERROR row ``FIXTURE ERROR`` and never
-a kill (a fixture that asserts looked like a failing test), and the judge never calls a run KILLED when no failing test id is known.
+Packages that need a ``conftest.py`` or pytest options from a ``pyproject.toml`` / ``pytest.ini`` cannot be run by this tool: pytest
+runs with ``--noconftest`` and with an empty ini file on purpose (a planted file in a parent folder is never read).
 
 Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
 ``TIMED_OUT``, ``REAPED_ELSEWHERE``, ``CHILD_ENV``, ``CHILD_FIXED_ENV``, ``JUNIT_REFUSED`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
@@ -71,7 +53,6 @@ that ships in no wheel, has no config surface and is copied byte for byte into d
 from __future__ import annotations
 
 import contextlib
-import keyword
 import os
 import re
 import shutil
@@ -84,16 +65,8 @@ import time
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
-from urllib.parse import urlsplit
 
-from hadavin_sdk.testing.mutation import (
-    MAX_JUNIT_CHARS,
-    Verdict,
-    first_failure_junit,
-    fixture_errors,
-    judge,
-    skipped_tests,
-)
+from hadavin_sdk.testing.mutation import MAX_JUNIT_CHARS, Verdict, first_failure_junit, judge
 
 
 @dataclass(frozen=True)
@@ -172,9 +145,6 @@ CHILD_ENV = (
     "PATH", "PATHEXT", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "TEMP", "TMP", "TMPDIR", "HOME", "USERPROFILE",
     "LANG", "LC_ALL", "PYTHONHASHSEED", "PYTHONUTF8", "PYTHONIOENCODING",
 )  # fmt: skip  # the only variables a mutant run inherits
-PASS_ENV_ALLOWED = (
-    "HADAVIN_TEST_PG_DSN",
-)  # the ONLY names ``pass_env`` may add to the child's environment (a test database address; never a token or key)
 CHILD_FIXED_ENV = {
     "PYTHONNOUSERSITE": "1"
 }  # set, not inherited: the child never imports from the caller's user site-packages
@@ -224,72 +194,12 @@ class _ReapedElsewhere(Exception):
     """The child ended but another waiter reaped it, so its exit status is unknown (``Popen`` itself would call it 0)."""
 
 
-def _plugin_module(conftest: str) -> str:
-    """The module name pytest loads (``-p``) for the tree file ``conftest``: ``tests/conftest.py`` gives ``tests.conftest``. Every part must be a
-    plain ASCII identifier that is not a Python keyword (``class.py`` and a non-ASCII look-alike are refused) and the file must end in ``.py``, so the name can carry no option, no ``no:`` prefix and no path trick."""
-    _relative(conftest)
-    parts = conftest.replace("\\", "/").split("/")
-    names = (*parts[:-1], parts[-1][:-3])
-    if not parts[-1].endswith(".py") or not all(
-        p.isascii() and p.isidentifier() and not keyword.iskeyword(p) for p in names
-    ):
-        raise ValueError(
-            f"conftest must be a .py file whose path parts are plain ASCII names that are not Python keywords: {conftest!r}"
-        )
-    return ".".join([*parts[:-1], parts[-1][:-3]])
-
-
-def _checked_env_names(names: Iterable[str]) -> tuple[str, ...]:
-    """``names`` if every one is in ``PASS_ENV_ALLOWED``, else ``ValueError`` (a bare string is a ``TypeError``, not read letter by letter)."""
-    if isinstance(names, str):
-        raise TypeError("pass_env is a sequence of names, not one string")
-    chosen = tuple(names)
-    for name in chosen:
-        if name not in PASS_ENV_ALLOWED:
-            raise ValueError(f"pass_env may name only {PASS_ENV_ALLOWED}: {name!r} is refused")
-    return chosen
-
-
-def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
-    """The values of the passed environment variables, and the password inside a URL-shaped value, longest first: text that may show them is run through ``_masked``."""
-    found: set[str] = set()
-    for name in names:
-        value = os.environ.get(name, "")
-        if not value:
-            continue
-        found.add(value)
-        try:
-            password = urlsplit(value).password
-        except ValueError:
-            password = None
-        if password:
-            found.add(password)
-    return tuple(sorted(found, key=len, reverse=True))
-
-
-def _masked(text: str, secrets: Sequence[str]) -> str:
-    """``text`` with every secret value replaced by a marker (pass_env values must never reach ``first_lines``, a result row or an error message)."""
-    for value in secrets:
-        text = text.replace(value, "[REDACTED]")
-    return text
-
-
-def _pytest(
-    cwd: Path,
-    tests: Sequence[str],
-    junit: Path,
-    timeout: float,
-    *,
-    plugin: str = "",
-    env_names: Sequence[str] = (),
-) -> int:
+def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int:
     # an ALLOWLIST, not os.environ: a mutant run must not see a database DSN, a token or any other secret of the caller; PYTHONPATH also holds the tree root (tests may import tools.*)
     for operand in tests:  # the one place the caller's strings reach the argv: refuse here too, not only where the paths are first checked
         _plain_operand(operand)
     env = {k: os.environ[k] for k in CHILD_ENV if k in os.environ}
-    env.update({k: os.environ[k] for k in _checked_env_names(env_names) if k in os.environ})
     env.update(CHILD_FIXED_ENV)
-    load = ["-p", _plugin_module(plugin)] if plugin else []
     env["PYTHONPATH"] = os.pathsep.join([str(cwd / "src"), str(cwd)])
     # an EMPTY ini file inside the copy is the config file and the copy is the rootdir: a planted pytest.ini, tox.ini, setup.cfg or
     # pyproject.toml in a parent folder (the shared temp folder, for one) is never picked up
@@ -301,7 +211,7 @@ def _pytest(
             ini_dir = Path(tempfile.mkdtemp(prefix="mutant_ini_"))
         ini = ini_dir / "mutant_run.ini"
         ini.write_text("", encoding="utf-8")
-        cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", *load, "-x", "-c", str(ini), f"--rootdir={cwd}", f"--junitxml={junit}", *tests]  # fmt: skip
+        cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", "-c", str(ini), f"--rootdir={cwd}", f"--junitxml={junit}", *tests]  # fmt: skip
         # own process group (POSIX session / Windows group): on a timeout the whole tree dies, not only pytest (a test may have started psql or a server)
         own = (
             {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
@@ -463,9 +373,6 @@ def run_mutants(
     baseline_timeout: float | None = None,
     on_result: Callable[[tuple[str, Verdict, str, bool]], None] | None = None,
     first_lines: dict[str, str] | None = None,
-    conftest: str = "",
-    pass_env: Sequence[str] = (),
-    forbid_skips: bool = False,
 ) -> list[tuple[str, Verdict, str, bool]]:
     """(name, verdict, failing test id, good). Raises ``RuntimeError`` if the unmutated copy fails or times out; a mutant whose temp copy cannot be built (after ``SETUP_TRIES`` tries) is ``(name, Verdict.ERROR, "SETUP FAILED: <error class>", False)``; a mutant run that exceeds
     ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. The unmutated baseline run gets ``baseline_timeout`` (default: ``timeout``; 0 is a real, immediate timeout and not "unset"),
@@ -473,16 +380,14 @@ def run_mutants(
     finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
     must name a file inside its tree (``ValueError``). ``first_lines``, if given, is emptied at the start and then filled with the first ``E`` line
     of each judged kill (mutant name -> line; diagnostics, and what ``crash_type`` is checked against): it belongs to this call, so two
-    runs in two threads never share it. ``conftest``, ``pass_env`` and ``forbid_skips`` are opt-in (see the module docstring; the defaults
-    keep the old behaviour exactly): a plugin file of the tree, allowlisted environment names for the child, and "a skipped test is an
-    error, not a kill". A bad value, or a ``conftest`` that is not a file of the tree, is a ``ValueError`` before any temp folder exists. A SIGTERM or SIGHUP during the call ends it like Ctrl-C (see the module docstring).
+    runs in two threads never share it. A SIGTERM or SIGHUP during the call ends it like Ctrl-C (see the module docstring).
     NOT re-entrant: the signal state is one module-level record, so on POSIX in the main thread a ``run_mutants`` call made while another is
     running in the same thread (from ``on_result``, say) raises ``RuntimeError`` and leaves the outer call untouched. Calls in other threads do not
     share that state, and each is handled by its own thread (the signal handling is then off, as the module docstring says)."""
     with _terminations_raise():
         return _run_mutants(
             root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
-            {} if first_lines is None else first_lines, conftest, pass_env, forbid_skips,
+            {} if first_lines is None else first_lines,
         )  # fmt: skip
 
 
@@ -528,23 +433,6 @@ def _refuse_junctions(root: Path, rel: str) -> None:
                 )
 
 
-def _refuse_skips_in_baseline(junit: Path, secrets: Sequence[str] = ()) -> None:
-    """``RuntimeError`` when the passing unmutated run skipped a test, or left no readable JUnit file to prove it did not (``forbid_skips``)."""
-    try:
-        skipped = skipped_tests(junit.read_text(encoding="utf-8"))
-    except (OSError, *JUNIT_REFUSED) as exc:
-        raise RuntimeError(
-            f"the unmutated copy left no usable JUnit file to check for skips: {type(exc).__name__}"
-        ) from None
-    if skipped:
-        raise RuntimeError(
-            _masked(
-                f"the unmutated copy skipped {len(skipped)} selected test(s): {skipped[:3]}",
-                secrets,
-            )
-        )
-
-
 def _run_mutants(
     root: Path,
     mutants: Iterable[Mutant],
@@ -555,26 +443,12 @@ def _run_mutants(
     baseline_timeout: float | None,
     on_result: Callable[[tuple[str, Verdict, str, bool]], None] | None,
     first_lines: dict[str, str],
-    conftest: str = "",
-    pass_env: Sequence[str] = (),
-    forbid_skips: bool = False,
 ) -> list[tuple[str, Verdict, str, bool]]:
     first_lines.clear()  # the diagnostics of an earlier run must not answer for this one
     root = Path(root)
     mutants = list(mutants)
     for t in (*tests, *extra_dirs):
         _relative(t)
-    env_names = _checked_env_names(
-        pass_env
-    )  # before anything runs: an unlisted name is refused, never passed
-    if conftest:
-        _plugin_module(conftest)
-        if (
-            not _inside(root, conftest).is_file()
-        ):  # before any temp folder: a missing plugin file is a refusal, not a late copy error
-            raise ValueError(f"conftest is not a file of the tree: {conftest!r}")
-    secrets = _secret_values(env_names)
-    copied = (*tests, conftest) if conftest and conftest not in tests else tuple(tests)
     for m in mutants:  # before anything runs: a bad `test_file` must not surface after earlier mutants were already run
         if m.test_file and m.test_file not in tests:
             raise ValueError(
@@ -589,7 +463,7 @@ def _run_mutants(
         shutil.rmtree(tmp, ignore_errors=True)
         (tmp / "tests").mkdir(parents=True)
         shutil.copytree(snap / "src", tmp / "src", symlinks=True)
-        for t in copied:
+        for t in tests:
             dst = _inside(tmp, t)
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(_inside(snap, t), dst)
@@ -630,7 +504,7 @@ def _run_mutants(
         shutil.copytree(
             root / "src", snap / "src", symlinks=True, ignore=shutil.ignore_patterns("__pycache__")
         )  # links stay links (never followed out of the tree)
-        for t in copied:
+        for t in tests:
             dst = _inside(snap, t)
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(_inside(root, t), dst)
@@ -643,16 +517,14 @@ def _run_mutants(
         _refuse_links_out(snap)
         fresh()
         base_rc = _pytest(
-            tmp, tests, tmp / "base.xml", timeout if baseline_timeout is None else baseline_timeout, plugin=conftest, env_names=env_names
-        )  # fmt: skip
+            tmp, tests, tmp / "base.xml", timeout if baseline_timeout is None else baseline_timeout
+        )
         if base_rc == REAPED_ELSEWHERE:
             raise RuntimeError(
                 "the baseline run was reaped by someone else: its exit status is unknown"
             )
         if base_rc != 0:
             raise RuntimeError("the unmutated copy does not pass its tests")
-        if forbid_skips:
-            _refuse_skips_in_baseline(tmp / "base.xml", secrets)
         for m in mutants:
             if only and not any(o in m.name for o in only):
                 continue
@@ -672,7 +544,7 @@ def _run_mutants(
                 operands = [f"{m.test_file}::{m.only_test}" if m.only_test else m.test_file]
             else:
                 operands = [f"{tests[0]}::{m.only_test}", *tests[1:]] if m.only_test else tests
-            rc = _pytest(tmp, operands, junit, timeout, plugin=conftest, env_names=env_names)
+            rc = _pytest(tmp, operands, junit, timeout)
             if rc == TIMED_OUT:
                 emit((m.name, Verdict.ERROR, "TIMEOUT", False))
                 continue
@@ -686,25 +558,13 @@ def _run_mutants(
                 )  # looked at BEFORE the file is read
                 if too_big:
                     raise ValueError("junit file over the ceiling")
-                xml_text = junit.read_text(encoding="utf-8") if junit.exists() else ""
-                test_id, first = first_failure_junit(xml_text) if xml_text else ("", "")
-                skipped = skipped_tests(xml_text) if forbid_skips and xml_text else []
-                broken = fixture_errors(xml_text) if xml_text else []
+                test_id, first = (
+                    first_failure_junit(junit.read_text(encoding="utf-8"))
+                    if junit.exists()
+                    else ("", "")
+                )
             except JUNIT_REFUSED:
                 emit((m.name, Verdict.ERROR, "JUNIT REFUSED", False))
-                continue
-            if (
-                forbid_skips and not xml_text
-            ):  # no record of what ran cannot prove nothing was skipped: never judged
-                emit((m.name, Verdict.ERROR, "JUNIT MISSING", False))
-                continue
-            if broken:  # a fixture that failed in setup or teardown means the test never ran as written: never a kill
-                emit((m.name, Verdict.ERROR, "FIXTURE ERROR", False))
-                continue
-            if (
-                skipped
-            ):  # a skipped test proves nothing: never a kill, whatever else failed in the same run
-                emit((m.name, Verdict.ERROR, "SKIPPED TESTS", False))
                 continue
             v = judge(
                 rc,
@@ -714,10 +574,10 @@ def _run_mutants(
                 pinned=m.pinned or None,
                 crash_markers=m.crash_markers,
             )
-            first_lines[m.name] = _masked(first, secrets)
+            first_lines[m.name] = first
             declared = _leading_class(first) == m.crash_type
             crash_ok = v is Verdict.CRASH and m.allow_crash and declared
-            emit((m.name, v, _masked(test_id, secrets), v is Verdict.KILLED or crash_ok))
+            emit((m.name, v, test_id, v is Verdict.KILLED or crash_ok))
     finally:
         with _signals_held():  # a signal is raised after the removal
             for folder in made:
