@@ -1165,6 +1165,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-PR89-r18 ada68aaa | PR89 r18 fix batch (worktree /home/user/build/B-PR89) | 13:31Z | +90m | 13:31Z | running | checkpoint 30m; then fresh reviewers r19 on new head |
 | S-bulk aa442830 | bulk package status table (read-only) | 13:33Z | +20m | 13:33Z | running | read reports/bulk-status-2026-11-11.md, plan Q7 |
 | M-P3a2 a5853cac | | | | | CLOSED memo saved | |
-| R-P89-zoom a30d9a6c | egm:egm-zoom-out (Fable 5.2) plan review of D-002 PR89 fix approach | 13:39Z | +15m | 13:39Z | running | save to reviews/PR89/r18-zoomout-plan.md; steer builder ada68aaa if plan changes |
+| R-P89-zoom a30d9a6c | egm:egm-zoom-out (Fable 5.2) plan review of D-002 PR89 fix approach | 13:39Z | +15m | 13:39Z | CLOSED report saved; builder ada68aaa redirected to D-002 REVISED | save to reviews/PR89/r18-zoomout-plan.md; steer builder ada68aaa if plan changes |
 | Q8-deps a35f933f | egm:egm-design (Fable) kind-module single-dependency audit of main | 13:40Z | +20m | 13:40Z | running | save handover/reviews/Q8/deps-audit.md, ledger |
 | Q8-redact a608409c | egm:egm-codebase-details (Fable) hostile sibling sweep of masking choke points on main | 13:40Z | +20m | 13:40Z | running | save handover/reviews/Q8/redaction-sweep.md, reproduce Majors |
