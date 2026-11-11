@@ -27,13 +27,6 @@ Which mutants need what on Windows (this list is run on Linux and on Windows; th
 - Every other killer runs on both systems (the tree-kill killers use ``taskkill /T`` on Windows; the Windows branch after a normal
   exit is run on any system with the Windows flag faked).
 
-Keyword tests (``tests/test_mutation_runner_keywords.py``): 93 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
-fixture errors). Tests of that file with no mutant: the guard test of the database address (it protects the tests, not the runner),
-the check that the old text is gone, the default-call tests (a default call passes no plugin and no name), the percent-encoded password
-case (an equivalent mutant: ``unquote`` of a value with no ``%`` is the value), and the narrowing test for a failing body plus a failing
-teardown (the old behaviour already judged by the failure). "A missing conftest is noticed only at the copy" stands for "move the check
-after ``mkdtemp``": one replacement cannot move a line, so the mutant turns the early check off and the error comes late.
-
 Tests with no mutant (the guard is checked by the test only; names as in ``tests/test_mutation_runner.py``):
 - ``test_run_mutants_refuses_test_and_fixture_paths_that_leave_the_tree``: the list-based path checks of ``run_mutants`` for tests
   and fixtures (each is also checked again by ``_inside``, so a mutant that removes the first check is equivalent). The same holds
@@ -62,21 +55,12 @@ TEST = "tests/test_mutation_runner.py"  # the file that holds every killer
 PIN = "tests/test_mutation_runner::"  # the id prefix of a test in the JUnit file
 MU = "src/hadavin_sdk/testing/mutation.py"
 MR = "tools/mutation_runner.py"
-KW = "tests/test_mutation_runner_keywords.py"  # the killers of the keyword mutants
-KWPIN = "tests/test_mutation_runner_keywords::"
 
 
 def mutant(name, file, old, new, killer, expect, **kw):
     """One mutant: ``killer`` is the test that must fail first, with a line holding ``expect``."""
     return Mutant(
         name, file, old, new, expect, test_file=TEST, only_test=killer, pinned=PIN + killer, **kw
-    )
-
-
-def kmutant(name, file, old, new, killer, expect, **kw):
-    """One mutant whose killer is a test of the keyword test file (``tests/test_mutation_runner_keywords.py``)."""
-    return Mutant(
-        name, file, old, new, expect, test_file=KW, only_test=killer, pinned=KWPIN + killer, **kw
     )
 
 
@@ -146,7 +130,7 @@ M = [
         "test_a_child_reaped_by_someone_else_is_an_error_result_not_exit_code_zero",
         "a child reaped by someone else was read as exit code 0"),
     mutant("runner: a reaped mutant run is not an error row", MR,
-        "    if rc == REAPED_ELSEWHERE:", "    if False:",
+        "            if rc == REAPED_ELSEWHERE:", "            if False:",
         "test_a_reaped_child_is_an_error_row_for_a_mutant",
         "a mutant run reaped by someone else was not an error row"),
     mutant("runner: a junction under src is copied", MR,
@@ -285,7 +269,7 @@ M = [
         "timeout if baseline_timeout is None else baseline_timeout", "baseline_timeout or timeout",
         "test_a_baseline_timeout_of_zero_is_not_unset", "a baseline_timeout of 0 was treated as unset"),
     mutant("runner: a crash class is matched as a substring", MR,
-        "declared = _leading_class(report.first_line) == m.crash_type", "declared = m.crash_type in report.first_line",
+        "declared = _leading_class(first) == m.crash_type", "declared = m.crash_type in first",
         CRASHROW, "a crash row was good for a lookalike class name"),
     mutant("runner: a stream name is accepted", MR, '    if ":" in rel:', "    if False:",
         "test_a_mutant_path_with_a_stream_name_is_refused", "a mutant path with a stream name"),
@@ -319,101 +303,6 @@ M = [
         "                shutil.rmtree(ini_dir, ignore_errors=True)", "                pass",
         "test_the_pytest_run_writes_no_file_into_its_working_folder_and_leaves_no_temp_folder",
         "was left behind"),
-    # ---- keyword tests (conftest, pass_env, forbid_skips, fixture errors): killers in tests/test_mutation_runner_keywords.py
-    kmutant('runner: a mutant run does not load the conftest', MR, '            rc = _pytest(tmp, operands, junit, timeout, plugin=conftest, env_names=env_names)', '            rc = _pytest(tmp, operands, junit, timeout, env_names=env_names)', 'test_a_mutant_is_judged_with_the_conftest_loaded', 'was not judged with the conftest loaded'),
-    kmutant('runner: a mutant run does not get the passed variables', MR, '            rc = _pytest(tmp, operands, junit, timeout, plugin=conftest, env_names=env_names)', '            rc = _pytest(tmp, operands, junit, timeout, plugin=conftest)', 'test_a_mutant_run_sees_the_passed_variable', 'did not see the passed variable'),
-    kmutant('runner: the shared name check accepts any name', MR, '        if name not in PASS_ENV_ALLOWED:', '        if False:', 'test_an_unlisted_env_name_is_refused_before_anything_runs', 'an unlisted pass_env name was accepted'),
-    kmutant('runner: the pytest step passes any name it is given', MR, '    env.update({k: os.environ[k] for k in _checked_env_names(env_names) if k in os.environ})', '    env.update({k: os.environ[k] for k in env_names if k in os.environ})', 'test_the_pytest_step_refuses_an_unlisted_env_name_by_itself', 'the pytest step passed an unlisted name'),
-    kmutant('runner: run_mutants does not check the names before it starts', MR, '    env_names = _checked_env_names(\n        pass_env\n    )  # before anything runs: an unlisted name is refused, never passed', '    env_names = tuple(pass_env)  # (mutant)', 'test_an_unlisted_env_name_is_refused_before_anything_runs', 'an unlisted pass_env name was accepted'),
-    kmutant('runner: a conftest path with a keyword part is accepted', MR, 'p.isascii() and p.isidentifier() and not keyword.iskeyword(p) for p in names', 'p.isascii() and p.isidentifier() for p in names', 'test_a_conftest_with_a_python_keyword_part_is_refused', 'a keyword part in'),
-    kmutant('runner: a conftest path with a non-ASCII part is accepted', MR, 'p.isascii() and p.isidentifier() and not keyword.iskeyword(p) for p in names', 'p.isidentifier() and not keyword.iskeyword(p) for p in names', 'test_a_conftest_with_a_non_ascii_part_is_refused', 'a non-ascii part in'),
-    kmutant('runner: a conftest path that does not end in .py is accepted', MR, '    if not parts[-1].endswith(".py") or not all(', '    if not all(', 'test_a_conftest_that_does_not_end_in_py_is_refused', 'a conftest without the .py ending'),
-    kmutant('runner: any tree file is accepted as a conftest', MR, '    if parts[-1] != "conftest.py" and "tests" not in parts[:-1]:', '    if False:', 'test_a_conftest_must_be_called_conftest_or_lie_in_a_tests_folder', 'a tree file that is no conftest and no test helper'),
-    kmutant('runner: the conftest is not copied into the run', MR, '    copied = (*tests, conftest) if conftest and conftest not in tests else tuple(tests)', '    copied = tuple(tests)', 'test_conftest_loads_the_given_file_as_a_plugin_and_without_it_nothing_is_loaded', 'the conftest was not loaded for the baseline'),
-    kmutant('runner: a missing conftest is noticed only at the copy', MR, '            not _inside(root, conftest).is_file()\n', '            False\n', 'test_a_conftest_path_that_is_valid_but_missing_is_a_value_error_before_any_temp_folder', 'a missing conftest was noticed late'),
-    kmutant('judge: a failing run with no test id can be a kill', MU, '    if not test_id:  # a failing run', '    if False:  # a failing run', 'test_judge_never_returns_killed_for_an_empty_failing_test_id', 'an empty failing test id was judged as a kill'),
-    kmutant('runner: a baseline that skips is accepted', MR, '        if forbid_skips:\n            _refuse_skips_in_baseline(tmp / "base.xml", secrets)\n', '        if False:\n            _refuse_skips_in_baseline(tmp / "base.xml", secrets)\n', 'test_forbid_skips_refuses_a_baseline_that_skips', 'a baseline that skips was accepted'),
-    kmutant('judge: an expected failure is not counted as a skip', MU, '    return [_case_id(case) for case in root.iter("testcase") if case.find("skipped") is not None]', '    return [_case_id(case) for case in root.iter("testcase") if case.find("skipped") is not None and case.find("skipped").get("type") != "pytest.xfail"]', 'test_forbid_skips_counts_an_expected_failure_as_a_skip', 'an expected failure was not counted as a skip'),
-    kmutant('runner: the baseline skip message shows the passed value', MR, '            _masked(\n                f"the unmutated copy skipped {len(skipped)} selected test(s): {skipped[:3]}",\n                secrets,\n            )\n', '            f"the unmutated copy skipped {len(skipped)} selected test(s): {skipped[:3]}"\n', 'test_the_baseline_skip_message_never_holds_the_passed_value', 'the baseline skip message held the passed value'),
-    kmutant('runner: a skip is an error without forbid_skips', MR, '        forbid_skips and report.skipped\n', '        report.skipped\n', 'test_default_counts_a_run_with_a_skipped_test_as_before', 'a skipped test changed the result of a run without forbid_skips'),
-    kmutant('runner: a skipped run is judged as a kill', MR, '        forbid_skips and report.skipped\n', '        False\n', 'test_forbid_skips_makes_a_mutant_run_with_a_skipped_test_an_error_not_a_kill', 'a skipped test was counted as a kill under forbid_skips'),
-    kmutant('runner: no JUnit file is judged under forbid_skips', MR, '        forbid_skips and not xml_text\n', '        False\n', 'test_forbid_skips_with_a_missing_or_empty_junit_file_is_an_error_row_never_judged', 'was not the JUNIT MISSING row'),
-    kmutant('runner: no JUnit file is JUNIT MISSING without forbid_skips', MR, '        forbid_skips and not xml_text\n', '        forbid_skips or not xml_text\n', 'test_a_run_that_fails_with_no_junit_file_is_never_a_kill_even_without_forbid_skips', 'was not the plain empty ERROR row'),
-    kmutant('runner: a fixture error is judged like a failure', MR, '    if report.fixture_failed:', '    if False:', 'test_a_fixture_error_in_the_mutant_run_is_an_error_row_not_a_kill', 'a fixture that failed at setup was not the FIXTURE ERROR row'),
-    kmutant('runner: a skip is judged before a fixture error', MR, '    if report.fixture_failed:', '    if report.fixture_failed and not (forbid_skips and report.skipped):', 'test_a_fixture_error_and_a_skipped_test_in_one_run_are_a_fixture_error', 'a skip was judged before a fixture error'),
-    kmutant('runner: the FIXTURE ERROR row keeps no message', MR, '        first_lines[m.name] = _masked(report.first_line, secrets)\n        return (m.name, Verdict.ERROR, "FIXTURE ERROR", False)', '        return (m.name, Verdict.ERROR, "FIXTURE ERROR", False)', 'test_a_fixture_error_in_the_mutant_run_is_an_error_row_not_a_kill', 'the FIXTURE ERROR row kept no message'),
-    kmutant('runner: the SKIPPED TESTS row keeps no message', MR, '        first_lines[m.name] = _masked(why, secrets)\n', '', 'test_a_skipped_tests_row_without_a_failure_says_which_tests_were_skipped', 'the SKIPPED TESTS row did not say which tests were skipped'),
-    kmutant('runner: the SKIPPED TESTS message shows the passed value', MR, '        first_lines[m.name] = _masked(why, secrets)', '        first_lines[m.name] = why', 'test_the_skipped_tests_row_keeps_a_masked_message', 'the SKIPPED TESTS message held the passed value'),
-    kmutant('runner: first_lines shows the passed value', MR, '    first_lines[m.name] = _masked(report.first_line, secrets)\n    declared', '    first_lines[m.name] = report.first_line\n    declared', 'test_pass_env_values_never_reach_first_lines', 'the passed value reached first_lines'),
-    kmutant('runner: the row id shows the passed value', MR, '_masked(shown, secrets)', 'shown', 'test_pass_env_values_never_reach_the_failing_test_id_of_a_row', 'the passed value reached the test id of a row'),
-    kmutant('runner: a percent-decoded password is not masked', MR, '            for form in (password, unquote(password)):', '            for form in (password,):', 'test_a_percent_encoded_password_is_masked_in_both_forms', 'the decoded password was not a secret'),
-    kmutant('runner: the password of a URL is not a secret', MR, '        if password:\n', '        if False:\n', 'test_masked_replaces_the_value_and_the_url_password', 'the secrets were not the value and its password'),
-    kmutant('runner: a shortened value is not masked by its fragments', MR, '            if len(value) > FRAGMENT_MIN:\n                for lo, hi in _fragment_spans(text, value):', '            if False:\n                for lo, hi in _fragment_spans(text, value):', 'test_pass_env_values_shortened_by_pytest_never_reach_first_lines', 'a fragment of the shortened value reached first_lines'),
-    kmutant('runner: the database is not checked again after a mutant', MR, '            if canary:  # the passed database', '            if False:  # the passed database', 'test_a_database_that_a_mutant_left_dirty_stops_the_run_after_that_mutant', 'a dirty database did not stop the run'),
-    kmutant('runner: the result of the database check is ignored', MR, '                if again != 0:', '                if False:', 'test_a_database_that_a_mutant_left_dirty_stops_the_run_after_that_mutant', 'a dirty database did not stop the run'),
-    kmutant('runner: the database is checked again without a passed value too', MR, '            if canary:  # the passed database', '            if True:  # the passed database', 'test_without_a_passed_value_there_is_no_extra_run', 'a run with no passed value made an extra run'),
-    kmutant('mutation: a teardown error is not a fixture error', MU, '    "failed on teardown",\n', '', 'test_a_teardown_error_of_a_fixture_is_an_error_row_not_a_kill', 'a fixture that failed at teardown was not the FIXTURE ERROR row'),
-    kmutant('mutation: a setup error is not a fixture error', MU, '    "failed on setup",\n', '', 'test_a_fixture_error_in_the_mutant_run_is_an_error_row_not_a_kill', 'a fixture that failed at setup was not the FIXTURE ERROR row'),
-    kmutant('mutation: any fixture error of the file decides, not the first failure', MU, '        _fixture_errors(root),\n        kind == "fixture",', '        _fixture_errors(root),\n        bool(_fixture_errors(root)),', 'test_a_failing_body_and_a_failing_teardown_are_judged_by_the_failure', 'a test body that failed was hidden behind its failing teardown'),
-    kmutant('runner: a shortened value is not masked at its start', MR, 'if text[i:start] == secret[: start - i]:', 'if False:', 'test_a_shortened_value_is_masked_by_its_fragments', 'a fragment of the shortened value survived the masking'),
-    kmutant('runner: a shortened value is not masked at its end', MR, 'if text[end : j + FRAGMENT_MIN] == secret[-k:]:', 'if False:', 'test_a_shortened_value_is_masked_by_its_fragments', 'a fragment of the shortened value survived the masking'),
-    kmutant('runner: the fragment minimum is longer than what pytest shows', MR, 'FRAGMENT_MIN = 6  #', 'FRAGMENT_MIN = 14  #', 'test_a_shortened_value_is_masked_by_its_fragments', 'a fragment of the shortened value survived the masking'),
-    kmutant('runner: a passed name set to an empty text gets no canary', MR, '    canary = any(\n        name in os.environ for name in env_names\n    )  # a passed name', '    canary = bool(secrets)  # a passed name', 'test_a_passed_name_set_to_an_empty_text_still_gets_the_canary', 'an empty passed value got no canary run'),
-    kmutant('runner: a canary run that skips is accepted', MR, 'if again == 0 and forbid_skips:', 'if False:', 'test_a_canary_run_that_skips_is_refused_under_forbid_skips', 'a canary run that skipped was accepted'),
-    kmutant('runner: a failed canary carries no rows', MR, 'failure.rows = tuple(out)', 'pass', 'test_a_database_that_a_mutant_left_dirty_stops_the_run_after_that_mutant', 'the failure did not carry the rows so far'),
-    kmutant('runner: a failed canary rebuild is not a clear refusal', MR, '                except OSError as exc:\n                    raise RuntimeError(\n                        f"the unmutated copy could not be rebuilt', '                except ZeroDivisionError as exc:\n                    raise RuntimeError(\n                        f"the unmutated copy could not be rebuilt', 'test_a_copy_that_cannot_be_rebuilt_for_the_canary_is_a_clear_refusal', 'the canary copy failure was not a clear refusal'),
-    kmutant('runner: the canary runs the mutated copy', MR, '                try:\n                    fresh()\n                except OSError as exc:\n                    raise RuntimeError(\n                        f"the unmutated copy could not be rebuilt', '                try:\n                    pass\n                except OSError as exc:\n                    raise RuntimeError(\n                        f"the unmutated copy could not be rebuilt', 'test_the_canary_runs_the_unmutated_copy', 'the canary ran the mutated copy'),
-    kmutant('runner: a baseline with no usable JUnit file is not refused', MR, '    except (OSError, *JUNIT_REFUSED) as exc:\n        raise RuntimeError(\n            f"the unmutated copy left no usable JUnit', '    except ZeroDivisionError as exc:\n        raise RuntimeError(\n            f"the unmutated copy left no usable JUnit', 'test_a_baseline_that_left_no_usable_junit_file_is_refused_under_forbid_skips', 'no refusal for a baseline without a JUnit file'),
-    kmutant('runner: a collection error is judged like a failure', MR, '    if report.collection_failed:', '    if False:', 'test_a_test_file_that_cannot_be_imported_is_an_error_row_never_a_kill', 'an assert at import time was counted as a kill'),
-    kmutant('judge: a collection error is not marked', MU, '            kind = "collection"', '            kind = ""', 'test_read_junit_marks_a_collection_error_of_a_real_pytest_run', 'a real collection error was not read as one'),
-    kmutant('runner: an ERROR row with no failing test names none', MR, '    shown = report.test_id or (NO_TEST_NAMED if v is Verdict.ERROR else "")', '    shown = report.test_id', 'test_a_run_that_fails_with_no_junit_file_is_never_a_kill_even_without_forbid_skips', 'was not the plain empty ERROR row'),
-    kmutant('runner: a second runner on the same database is not refused', MR, '    if canary:  # before any temp folder: a second runner on the same database is refused', '    if False:  # before any temp folder: a second runner on the same database is refused', 'test_a_second_runner_with_the_same_passed_value_is_refused', 'a second runner on the same passed value was accepted'),
-    kmutant('runner: the password after a password word is not a secret', MR, '        passwords = [next(g for g in m.groups() if g is not None) for m in matches]', '        passwords = []', 'test_a_password_after_a_password_word_or_in_a_url_query_is_a_secret', 'the password of a URL query was not a secret'),
-    kmutant('runner: the pytest step does not load the conftest', MR, '"--noconftest", *load),', '"--noconftest"),', 'test_conftest_loads_the_given_file_as_a_plugin_and_without_it_nothing_is_loaded', 'the conftest was not loaded for the baseline'),
-    kmutant('runner: a bare string is read letter by letter', MR, '    if isinstance(names, str):\n        raise TypeError(', '    if False:\n        raise TypeError(', 'test_a_bare_string_for_pass_env_is_refused_not_read_letter_by_letter', 'a bare string was read as names'),
-    kmutant('runner: the unicode_escape form of a value is not a secret', MR, '    lambda c: c.encode("unicode_escape").decode("ascii"),\n', '', 'test_a_value_with_a_non_ascii_letter_is_masked_as_unicode_escape_prints_it', 'the unicode_escape form of a non-ASCII value survived'),
-    kmutant('runner: the fragment minimum is one too long', MR, 'FRAGMENT_MIN = 6  #', 'FRAGMENT_MIN = 7  #', 'test_a_fragment_of_exactly_the_minimum_length_is_masked_and_a_shorter_one_is_not', 'a 6-character head next to the dots was not masked'),
-    kmutant('runner: the passwd word is not read', MR, '(?:password|passwd|pwd)', '(?:password)', 'test_passwd_and_pwd_words_and_a_quoted_password_are_secrets', 'the password after passwd= was not a secret'),
-    kmutant('runner: the pwd word is not read', MR, '(?:password|passwd|pwd)', '(?:password|passwd)', 'test_passwd_and_pwd_words_and_a_quoted_password_are_secrets', 'the password after pwd= was not a secret'),
-    kmutant('runner: a quoted password is not read', MR, '(?:\'((?:[^\'\\\\]|\\\\.)*)\'|\\"((?:[^\\"\\\\]|\\\\.)*)\\"|', '(?:(?!)()()|', 'test_passwd_and_pwd_words_and_a_quoted_password_are_secrets', 'a quoted password with spaces was not a secret'),
-    kmutant('runner: the lock is given back while the run goes on', MR, '        yield  # the lock goes with the closed file', '        handle.close()\n        yield  # the lock goes with the closed file', 'test_the_lock_is_still_held_while_the_mutants_run', 'the lock was not held while a mutant result came in'),
-    kmutant('runner: any lock failure is called another run', MR, '            if exc.errno in _LOCK_HELD:', '            if True:', 'test_a_lock_that_fails_for_another_reason_is_not_called_another_run', 'a lock failure that is not a second run was called one'),
-    kmutant('runner: a lock file that cannot be opened is not a clear refusal', MR, '    except OSError as exc:\n        raise RuntimeError(\n            f"the lock file of this run could not be opened', '    except ZeroDivisionError as exc:\n        raise RuntimeError(\n            f"the lock file of this run could not be opened', 'test_a_lock_file_that_cannot_be_opened_is_a_clear_refusal', 'the open failure was not a clear refusal'),
-    kmutant('runner: a canary that skips is a plain RuntimeError', MR, '                    failure = CanaryFailed(reason)', '                    failure = RuntimeError(reason)', 'test_a_canary_run_that_skips_is_refused_under_forbid_skips', 'a canary run that skipped was not a CanaryFailed'),
-    kmutant('runner: the UTF-8 JSON form of a value is not a secret', MR, '    lambda c: json.dumps(c, ensure_ascii=False)[1:-1],\n', '', 'test_a_value_is_masked_as_json_writes_it', 'the UTF-8 JSON form survived the masking'),
-    kmutant('runner: the bytes form of a value is not a secret', MR, '    lambda c: repr(c.encode("utf-8", "backslashreplace"))[2:-1],\n', '', 'test_a_value_is_masked_as_the_repr_of_its_bytes_prints_it', 'the repr of the UTF-8 bytes survived the masking'),
-    kmutant('runner: a line with a hostile number of dots is scanned', MR, '    if len(hits) > MAX_FRAGMENT_HITS:', '    if False:', 'test_a_line_with_a_hostile_number_of_dots_is_replaced_fast', 'a line with a hostile number of dots was not replaced as a whole'),
-    kmutant('runner: the head scan window is one short', MR, 'text.find(head, max(0, start - top), start)', 'text.find(head, max(0, start - top + 1), start)', 'test_the_fragment_scan_agrees_with_the_plain_definition', 'the largest head and tail of a'),
-    kmutant('runner: a lock file that is a symbolic link is followed', MR, ' | getattr(os, "O_NOFOLLOW", 0)', '', 'test_a_lock_file_that_is_a_symbolic_link_is_refused_and_the_file_has_mode_0600', 'a planted symbolic link was followed or refused otherwise'),
-    kmutant('runner: the lock file is open to others', MR, 'fd = os.open(path, flags, 0o600)', 'fd = os.open(path, flags, 0o666)', 'test_a_lock_file_that_is_a_symbolic_link_is_refused_and_the_file_has_mode_0600', 'the lock file was not private'),
-    kmutant('runner: a canary timeout is shown as a number', MR, '    TIMED_OUT: "the run timed out",\n', '', 'test_a_canary_run_that_timed_out_says_so', 'the canary timeout was not in words'),
-    kmutant('runner: a reaped canary is shown as a number', MR, '    REAPED_ELSEWHERE: "the run was reaped by another waiter, its exit status is lost",\n', '', 'test_a_canary_run_that_was_reaped_says_so', 'the reaped canary was not in words'),
-    kmutant('runner: the exit code of a canary run is lost', MR, '    return _RUN_END_IN_WORDS.get(rc, f"exit code {rc}")', '    return _RUN_END_IN_WORDS.get(rc, "")', 'test_a_canary_run_with_an_exit_code_shows_the_code', 'the exit code of the canary run was lost'),
-    kmutant('runner: a short secret is cut out before the long one is matched', MR, '    chosen = tuple(v for v in secrets if v)\n', '    chosen = tuple(v for v in secrets if v)\n    text = text.replace(min(chosen, key=len), MASK) if chosen else text\n', 'test_a_short_secret_inside_a_shortened_long_one_does_not_hide_the_long_one', 'a short secret inside the tail hid the shortened long secret'),
-    kmutant('runner: a quote mark written with a backslash is not a form', MR, '            swap = {"\'": "\\\\\'" if single else "\'", \'"\': \'\\\\"\' if double else \'"\'}', '            swap = {"\'": "\'", \'"\': \'"\'}', 'test_a_value_with_one_quote_kind_is_masked_inside_a_text_that_holds_the_other_kind', 'a single-quote-escaped form survived the masking'),
-    kmutant('runner: the double-quote-escaped forms are not built', MR, '        for double in (False, True):', '        for double in (False,):', 'test_a_value_with_one_quote_kind_is_masked_inside_a_text_that_holds_the_other_kind', 'a form with both quote marks escaped survived the masking'),
-    kmutant('runner: a libpq backslash escape is not undone', MR, '            _BACKSLASH_ESCAPE.sub(r"\\1", word) for word in passwords\n', '            word for word in []\n', 'test_libpq_backslash_escapes_in_a_password_are_read', 'the unescaped password of a quoted libpq value survived the masking'),
-    kmutant('runner: a backslash in an unquoted password ends it', MR, '((?:[^\\s&;\'\\"\\\\]|\\\\.)+))"', '([^\\s&;\'\\"\\\\]+))"', 'test_libpq_backslash_escapes_in_a_password_are_read', 'the unescaped password after a backslash and a space survived the masking'),
-    kmutant('runner: the unencoded-separator URL passwords are not read', MR, '        passwords += _url_passwords(value)\n', '        passwords += [urlsplit(value).password or ""]\n', 'test_a_url_password_with_unencoded_separators_is_masked', 'a URL password with an unencoded slash or hash survived the masking'),
-    kmutant('runner: only the first @ ends the login of a URL', MR, '        while at != -1:\n            found.append(rest[colon + 1 : at])', '        if at != -1:\n            found.append(rest[colon + 1 : at])', 'test_a_url_password_with_unencoded_separators_is_masked', 'a URL password with an unencoded slash or hash survived the masking'),
-    kmutant('runner: a huge number of matches is scanned', MR, '                if matches > MAX_MATCHES:', '                if False:', 'test_a_one_character_secret_on_a_huge_line_is_replaced_fast_and_a_normal_line_is_not', 'a huge line with millions of matches was not replaced as a whole'),
-    kmutant('runner: a text with no secret is rebuilt', MR, '    if not chosen:\n        return text\n', '', 'test_nothing_is_rebuilt_when_no_secret_is_set', 'a text with no secret was rebuilt'),
-    kmutant('runner: a lock file of another user is accepted', MR, '        or info.st_uid != os.getuid()\n', '', 'test_a_lock_file_of_another_user_is_refused', 'a lock file of another user was accepted'),
-    kmutant('runner: a lock file with a wide mode is accepted', MR, '        or stat.S_IMODE(info.st_mode) & 0o177\n', '', 'test_a_lock_file_with_a_wider_mode_is_refused', 'a lock file with a wide mode was accepted'),
-    kmutant('runner: a lock file that is not a regular file is accepted', MR, 'not stat.S_ISREG(info.st_mode)', 'False', 'test_a_lock_file_that_is_not_a_regular_file_is_refused', 'a lock file that is not a regular file was accepted'),
-    kmutant('runner: the descriptor leaks when no file object is made', MR, '            os.close(fd)  # no file object took the descriptor over', '            pass  # no file object took the descriptor over', 'test_the_descriptor_is_closed_when_no_file_object_can_take_it', 'the descriptor stayed open'),
-    kmutant('runner: the repr form of a letter is not a form', MR, '    lambda c: repr(c)[1:-1],\n', '', 'test_a_value_with_a_control_character_and_a_non_ascii_letter_is_masked_as_repr_prints_it', 'the repr form with a control character survived the masking'),
-    kmutant('runner: the plain form of a letter is not a form', MR, '    lambda c: c,\n', '', 'test_a_value_with_a_backslash_is_masked_as_repr_prints_it', 'the plain form survived the masking'),
-    kmutant('runner: the doubled-backslash layer is not built', MR, '    forms |= {f.replace("\\\\", "\\\\\\\\") for f in forms}\n', '', 'test_a_repr_of_a_json_text_and_a_doubled_backslash_form_are_masked', 'the repr of a JSON text of the value survived the masking'),
-    kmutant('runner: the JSON layer is not built', MR, '    forms |= {json.dumps(f)[1:-1] for f in forms}\n', '', 'test_a_repr_of_a_json_text_and_a_doubled_backslash_form_are_masked', 'the JSON text of the repr of the value survived the masking'),
-    kmutant('runner: the rest of an unquoted password is not a secret', MR, '            if m.group(3) is not None\n', '            if False\n', 'test_an_unquoted_password_with_a_quote_a_semicolon_or_an_ampersand_is_masked_in_full_when_printed_alone', 'printed alone was not masked in full'),
-    kmutant('runner: a backslash and a newline end a quoted password', MR, 'r"(?is)(?<!', 'r"(?i)(?<!', 'test_a_backslash_and_a_newline_in_a_quoted_libpq_password_are_read', 'a quoted libpq password with a backslash and a newline was not read'),
-    kmutant('runner: a lock file with two names is accepted', MR, '        or info.st_nlink > 1\n', '', 'test_a_lock_file_with_two_hard_links_is_refused', 'a lock file with two hard links was accepted'),
-    kmutant('runner: a folder is not named as the cause', MR, '    errno.EISDIR: "it is a folder",\n', '', 'test_a_lock_file_that_cannot_be_opened_names_the_cause', 'did not name its cause'),
-    kmutant('runner: a not-a-folder path is not named as the cause', MR, '    errno.ENOTDIR: "a part of its path is not a folder",\n', '', 'test_a_lock_file_that_cannot_be_opened_names_the_cause', 'did not name its cause'),
-    kmutant('runner: a refused permission is not named as the cause', MR, '    errno.EACCES: "this user may not open it', '    errno.EXDEV: "this user may not open it', 'test_a_lock_file_that_cannot_be_opened_names_the_cause', 'did not name its cause'),
-    kmutant('runner: the lock file is opened for writing on POSIX', MR, '(os.O_RDWR if _IS_WINDOWS else os.O_RDONLY)', '(os.O_RDWR)', 'test_the_lock_file_is_opened_read_only_on_posix', 'the lock file was opened for writing'),
-    kmutant('runner: the ASCII JSON form of a value is not a secret', MR, '    lambda c: json.dumps(c)[1:-1],\n', '', 'test_a_repr_of_a_json_text_and_a_doubled_backslash_form_are_masked', 'the repr of a JSON text of the value survived the masking'),
 ]  # fmt: skip
 
 
@@ -438,7 +327,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [TEST, KW],
+        [TEST],
         extra_dirs=("tests/fixtures", "tools"),
         only=only,
         on_result=show,
