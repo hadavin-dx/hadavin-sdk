@@ -1571,10 +1571,13 @@ def test_a_failed_unlock_does_not_fail_the_setup(monkeypatch):
                 return _Result([("hadavin_test_migrator_0123abcd",)])
             return super().execute(query, params)
 
+    raised = None
+    got = None
     try:
         got = mr.sweep_stale_roles(Db(exists=False))
     except psycopg.Error as e:
-        pytest.fail(f"the error of the unlock was raised out of the sweep: {e}")
+        raised = str(e)
+    assert raised is None, f"the error of the unlock was raised out of the sweep: {raised}"
     assert got == ["hadavin_test_migrator_0123abcd"]
 
 
