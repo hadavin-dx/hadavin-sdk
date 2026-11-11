@@ -2602,3 +2602,6 @@
 | BL-PR89-r19-d02 | Major | PR89 | reviews/PR89/r19-design.md M2 (M1-M3 reproduced by lead) | OPEN | | | 2026-11-11 |
 | BL-PR89-r19-d03 | Major | PR89 | reviews/PR89/r19-design.md M3 (M1-M3 reproduced by lead) | OPEN | | | 2026-11-11 |
 | BL-PR89-r19-d04 | Major | PR89 | reviews/PR89/r19-design.md M4 (M1-M3 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-c01 | Major | PR89 | reviews/PR89/r19-codebase.md M1 (duplicates design M4/M1/M2) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-c02 | Major | PR89 | reviews/PR89/r19-codebase.md M2 (duplicates design M4/M1/M2) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-c03 | Major | PR89 | reviews/PR89/r19-codebase.md M3 (duplicates design M4/M1/M2) | OPEN | | | 2026-11-11 |
