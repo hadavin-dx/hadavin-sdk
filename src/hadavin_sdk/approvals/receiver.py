@@ -14,6 +14,7 @@ import io
 import logging
 import socket
 import sys
+import threading
 import time
 from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -28,6 +29,8 @@ from hadavin_sdk.store.protocol import NotFound
 MAX_BODY = 64 * 1024  # interactive callback payloads are a few KB
 _MAX_NAME_CHARS = 64  # of a channel name shown in a refusal message
 _MAX_LOG_CHARS = 200  # of a logged request line
+_MAX_KINDS = 5  # error kinds named in one log line
+_ERROR_LINE = "a request ended with an error: %s"
 _LOG = logging.getLogger("hadavin_sdk.receiver")
 
 
@@ -35,6 +38,27 @@ def _plain(text: str, limit: int) -> str:
     """`text` cut to `limit` characters with every non-printable character (a line break, a terminal escape)
     replaced by `?`, so text that a caller wrote cannot forge or hide a log line."""
     return "".join(c if c.isprintable() else "?" for c in text[:limit])
+
+
+class _Reported(threading.local):
+    """Per request thread: has the failure of the click handler been logged (at error level) yet?"""
+
+    flag = False
+
+
+def _kinds(exc: BaseException | None) -> str:
+    """The kinds (class names only, never the message) of `exc` and of the errors it was raised while handling,
+    joined by `while handling`: at most five, and the walk stops at an error it has already named (a chain that
+    loops back on itself); `...` is appended when the chain goes on."""
+    kinds: list[str] = []
+    seen: set[int] = set()
+    while exc is not None and id(exc) not in seen and len(kinds) < _MAX_KINDS:
+        seen.add(id(exc))
+        kinds.append(type(exc).__name__)
+        exc = exc.__context__
+    if exc is not None:
+        kinds.append("...")
+    return " while handling ".join(kinds)
 
 
 def _shown_name(channel: object) -> str:
@@ -64,8 +88,8 @@ def callback_path(approvals: Approvals) -> str:
 def handle_action(
     approvals: Approvals, headers: Mapping[str, str], body: bytes
 ) -> tuple[int, bytes]:
-    """401 for a bad or stale signature, 413 for an oversize body, else 200 (the outcome is audited and the
-    outcome is audited; tick updates the channel message; a refused click is not an HTTP error)."""
+    """401 for a bad or stale signature, 413 for an oversize body, else 200 (the outcome is audited, and tick
+    updates the channel message; a refused click is not an HTTP error)."""
     if len(body) > MAX_BODY:
         return 413, b""
     try:
@@ -118,14 +142,16 @@ def serve(
     read_timeout_s: float = RECEIVER_READ_TIMEOUT_S,
 ) -> ThreadingHTTPServer:
     """A stdlib server for ``POST`` to the configured channel's ``callback_path`` (every other path: 404); call
-    ``serve_forever()`` on the result. Raises ``ConfigError`` when the channel names no valid path or ``read_timeout_s`` is not a number (an int or a float,
-    not a bool) above 0 and at most ``defaults.RECEIVER_READ_TIMEOUT_MAX_S``.
+    ``serve_forever()`` on the result. Raises ``ConfigError`` when the channel names no valid path or
+    ``read_timeout_s`` is not a number (an int or a float, not a bool) above 0 and at most
+    ``defaults.RECEIVER_READ_TIMEOUT_MAX_S``.
 
     A request (its first line, its headers and its body together) must arrive within ``read_timeout_s`` seconds;
     after that the connection is closed without an answer, which is what the standard library server does for a
-    timeout. A failure while a click is handled is answered 500, so a sender that retries on 5xx delivers it again.
-    No error of a request prints a traceback: the kind of error is logged in one line (enable debug level on the
-    logger ``hadavin_sdk.receiver`` for the request lines and the hang-ups)."""
+    timeout. A failure while a click is handled is answered 500, so a sender that retries on 5xx delivers it again,
+    and is logged at error level, once, where it happens (whatever kind of error it is, also a refused connection
+    to a store that is down). No error of a request prints a traceback: the kind of error is logged in one line
+    (enable debug level on the logger ``hadavin_sdk.receiver`` for the request lines and the hang-ups)."""
     if (
         type(read_timeout_s) not in (int, float)
         or not 0 < read_timeout_s <= RECEIVER_READ_TIMEOUT_MAX_S
@@ -135,10 +161,12 @@ def serve(
             f"{RECEIVER_READ_TIMEOUT_MAX_S:g} (an int or a float, not a bool)"
         )
     path = callback_path(approvals)
+    reported = _Reported()
 
     class Handler(BaseHTTPRequestHandler):
         def setup(self) -> None:
             super().setup()
+            reported.flag = False  # one thread serves one request; nothing is carried over
             unbounded, self.rfile = (
                 self.rfile,
                 io.BufferedReader(_DeadlineReader(self.connection, read_timeout_s)),
@@ -158,11 +186,19 @@ def serve(
                 return self._answer(413)
             body = self.rfile.read(length)
             # A failure while the click is handled (the store or the channel is down) is answered 500, so the
-            # sender that retries on 5xx delivers the click again; the error then goes on to `handle_error` below.
-            status, out = 500, b""
+            # sender that retries on 5xx delivers the click again. It is logged here, at error level, BEFORE the
+            # answer is written and whatever its kind (a refused connection to a store is a handler failure, not a
+            # caller hanging up): if the write then fails, the standard library may swallow that error as a timeout
+            # without ever calling `handle_error`, and the failure would be lost. `reported` tells `handle_error`
+            # that this request's failure has its error line already, so the request gets exactly one.
+            status, out, failed = 500, b"", True
             try:
                 status, out = handle_action(approvals, dict(self.headers), body)
+                failed = False
             finally:
+                if failed:
+                    reported.flag = True
+                    _LOG.error(_ERROR_LINE, _kinds(sys.exception()))
                 self._answer(status, out)
 
         def _answer(self, status: int, out: bytes = b"") -> None:
@@ -176,6 +212,9 @@ def serve(
         def log_message(self, format: str, *args: object) -> None:
             # The request line is in the arguments and any caller can write anything in it (a line break, a
             # terminal escape): build the text, cut it, and replace what is not printable before it is logged.
+            # An error among the arguments (the standard library logs `Request timed out: %r` with the error) is
+            # shown by its kind only: its message could carry request data.
+            args = tuple(type(a).__name__ if isinstance(a, BaseException) else a for a in args)
             try:
                 text = format % args
             except (TypeError, ValueError):
@@ -186,20 +225,19 @@ def serve(
         def handle_error(self, request: object, client_address: object) -> None:
             # Every error that ends a request arrives here; the standard library would print a traceback. One log
             # line with the kind of error only: no request text, no error message (it could carry request data).
-            # A caller that resets or closes the connection early is not a fault of this server: debug level. That
-            # holds only when the hang-up is the whole story: a hang-up that follows a failed handler is logged at
-            # error level (`ConnectionResetError while handling RuntimeError`), because the handler failure matters.
-            # An operator who sees only the kind of error can enable debug level for the request lines.
+            # A request gets exactly one error level line. When the click handler failed, `do_POST` has already
+            # written it (the state `reported`, not the class of the error, says so: a store that refuses the
+            # connection raises a `ConnectionError` too), and what arrives here is only a debug line. Otherwise a
+            # caller that resets or closes the connection early is not a fault of this server: debug level, when
+            # the hang-up is the whole story (no other error is its context); anything else is error level. An
+            # operator who sees only the kind of error can enable debug level for the request lines.
             exc = sys.exception()
-            kinds: list[str] = []
-            while exc is not None:
-                kinds.append(type(exc).__name__)
-                exc = exc.__context__
-            hung_up = isinstance(sys.exception(), ConnectionError) and len(kinds) == 1
+            already_logged = reported.flag
+            hung_up = isinstance(exc, ConnectionError) and exc.__context__ is None
             _LOG.log(
-                logging.DEBUG if hung_up else logging.ERROR,
-                "a request ended with an error: %s",
-                " while handling ".join(kinds),
+                logging.DEBUG if already_logged or hung_up else logging.ERROR,
+                _ERROR_LINE,
+                _kinds(exc),
             )
 
     return Server((host, port), Handler)

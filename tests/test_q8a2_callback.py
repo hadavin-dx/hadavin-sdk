@@ -652,6 +652,73 @@ def test_a_failure_while_a_signed_click_is_recorded_is_answered_500_and_logged_o
     assert not any(r.exc_info for r in caplog.records)  # and no traceback
 
 
+@pytest.mark.parametrize(
+    "failure",
+    [
+        ConnectionRefusedError("store refused: secret text"),
+        ConnectionResetError("store reset: secret text"),
+        BrokenPipeError("store pipe: secret text"),
+        ConnectionAbortedError("store abort: secret text"),
+        TimeoutError("store timed out: secret text"),
+        RuntimeError("secret text"),
+    ],
+    ids=lambda e: type(e).__name__,
+)
+def test_a_handler_failure_is_error_whatever_its_kind_also_a_connection_error_of_a_store(
+    caplog, failure
+):
+    """Decided by where the error happens, not by its class: a builtin ConnectionError raised by the store (a
+    store that is down) is an outage, so it is logged at ERROR, once, kind only; a caller hanging up is debug."""
+    channel = FakeChannel(SIG)
+    headers, body = _signed()
+    caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
+    recorder = _Recording(channel, failure)
+    with _served(channel, recorder) as port:
+        status, _ = _raw(port, _request(_path_before_and_after(channel), *headers, body=body))
+    assert status == 500 and recorder.verified == 1
+    errors = _wait_for(caplog, lambda r: r.levelno >= logging.ERROR)
+    assert errors, caplog.text
+    time.sleep(0.2)  # let a second line show, if one would be written
+    errors = [r for r in caplog.records if r.levelno >= logging.ERROR]
+    assert [r.getMessage() for r in errors] == [ERROR_LINE + type(failure).__name__]
+    assert "secret text" not in caplog.text and not any(r.exc_info for r in caplog.records)
+
+
+def _stopped_reading(self, status, out=b""):
+    raise TimeoutError("timed out")  # what the write to a peer that has stopped reading raises
+
+
+def test_a_handler_failure_is_logged_once_even_when_the_answer_cannot_be_written(caplog):
+    """The caller stops reading, so the write of the 500 times out (stdlib catches a `TimeoutError` in
+    `handle_one_request` and logs `Request timed out` at DEBUG: `handle_error` is never reached). The handler
+    failure must still be an ERROR line, and the only one. The write is replaced on the handler class of this one
+    server (the class is made inside `serve`, so no other test sees it): a few answer bytes cannot fill a socket
+    buffer, so a real peer cannot be made to stop the write."""
+    channel = FakeChannel(SIG)
+    headers, body = _signed()
+    caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
+    recorder = _Recording(channel, RuntimeError("secret text"))
+    server = receiver.serve(recorder, port=0)
+    server.RequestHandlerClass._answer = _stopped_reading
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        conn = socket.create_connection(("127.0.0.1", server.server_address[1]), timeout=5)
+        conn.sendall(_request(_path_before_and_after(channel), *headers, body=body))
+        assert _wait_for(caplog, lambda r: r.levelno >= logging.ERROR), caplog.text
+        time.sleep(0.3)  # let a second line show, if one would be written
+        conn.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(5)
+    assert recorder.verified == 1
+    assert [r.getMessage() for r in caplog.records if r.levelno >= logging.ERROR] == [
+        ERROR_LINE + "RuntimeError"
+    ]
+    assert "secret text" not in caplog.text
+
+
 def test_a_caller_that_hangs_up_is_logged_at_debug_only(caplog):
     """The server is waiting in the body read when the caller resets: no ERROR line, one DEBUG line."""
     caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
@@ -704,6 +771,37 @@ def test_a_caller_that_leaves_before_the_answer_is_written_is_logged_at_debug_on
     assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
 
 
+class _SlowFailure(_Slow):
+    """Like `_Slow`, but the handler then fails (so there is a failure and a hang-up in one request)."""
+
+    def receive(self, headers, body, *, record_only=False):
+        time.sleep(0.4)
+        raise RuntimeError("secret text")
+
+
+def test_a_handler_failure_and_a_hang_up_in_one_request_are_one_error_line(caplog):
+    """The caller leaves while the handler runs, the handler fails, and the write of the 500 fails with a
+    hang-up: the failure is the error line, the hang-up adds a debug line and no second error line."""
+    caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
+    channel = FakeChannel(SIG)
+    headers, body = _signed()
+    with _served(channel, _SlowFailure(channel)) as port:
+        conn = socket.create_connection(("127.0.0.1", port), timeout=5)
+        conn.sendall(_request(_path_before_and_after(channel), *headers, body=body))
+        time.sleep(0.1)  # the request is read and the handler is paused in `receive`
+        _reset(conn)
+        assert _wait_for(
+            caplog, lambda r: r.levelno >= logging.ERROR or "Reset" in r.getMessage()
+        ), caplog.text
+        _wait_for(
+            caplog, lambda r: r.levelno == logging.DEBUG and "while handling" in r.getMessage(), 1.0
+        )
+        time.sleep(0.5)
+    errors = [r.getMessage() for r in caplog.records if r.levelno >= logging.ERROR]
+    assert errors == [ERROR_LINE + "RuntimeError"], caplog.text
+    assert "secret text" not in caplog.text
+
+
 def _handle_error_records(caplog, *raises) -> list[logging.LogRecord]:
     """Call `Server.handle_error` inside nested `except` blocks, one per exception: the last one raised is the
     one being handled, the earlier ones are its context (as when an answer cannot be written after a failure)."""
@@ -735,9 +833,10 @@ def test_a_hang_up_alone_is_debug(caplog, hangup):
     assert "secret text" not in caplog.text
 
 
-def test_a_hang_up_after_a_failed_handler_is_error_and_names_both_kinds(caplog):
-    """Decided: the handler failure is what matters, so a reset that follows it is still an ERROR line. It names
-    both kinds: the later error first, then `while handling`, then the failure that was being handled."""
+def test_a_hang_up_that_has_another_error_as_its_context_is_error_and_names_both_kinds(caplog):
+    """A hang-up is debug only when it is the whole story. One that was raised while another error was being
+    handled is an ERROR line that names both kinds: the later error first, then `while handling`, then the other.
+    (For a request whose click handler failed, `do_POST` has the one error line; see the tests above.)"""
     records = _handle_error_records(
         caplog, RuntimeError("store is down"), ConnectionResetError("peer gone")
     )
@@ -745,6 +844,57 @@ def test_a_hang_up_after_a_failed_handler_is_error_and_names_both_kinds(caplog):
         (logging.ERROR, ERROR_LINE + "ConnectionResetError while handling RuntimeError")
     ]
     assert "store is down" not in caplog.text and "peer gone" not in caplog.text
+
+
+def test_a_chain_of_errors_is_named_to_five_kinds_and_then_dots(caplog):
+    kinds = [type(f"Kind{i}", (Exception,), {}) for i in range(10)]
+    records = _handle_error_records(caplog, *[k("text of the error") for k in kinds])
+    assert [(r.levelno, r.getMessage()) for r in records] == [
+        (
+            logging.ERROR,
+            ERROR_LINE
+            + "Kind9 while handling Kind8 while handling Kind7 while handling Kind6 while handling Kind5 while handling ...",
+        )
+    ]
+    assert "text of the error" not in caplog.text
+
+
+def test_a_chain_of_exactly_five_kinds_has_no_dots(caplog):
+    kinds = [type(f"Kind{i}", (Exception,), {}) for i in range(5)]
+    records = _handle_error_records(caplog, *[k() for k in kinds])
+    assert (
+        records[0].getMessage()
+        == ERROR_LINE
+        + "Kind4 while handling Kind3 while handling Kind2 while handling Kind1 while handling Kind0"
+    )
+
+
+def test_a_chain_that_loops_back_on_itself_stops_at_the_repeat(caplog):
+    first, second = ValueError("a"), KeyError("b")
+    first.__context__, second.__context__ = (
+        second,
+        first,
+    )  # built by hand: the interpreter never makes a cycle
+    assert receiver._kinds(first) == "ValueError while handling KeyError while handling ..."
+    caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
+    server = receiver.serve(_approvals(FakeChannel(SIG)), port=0)
+    try:
+        try:
+            raise first
+        except ValueError:
+            server.handle_error(None, None)
+    finally:
+        server.server_close()
+    assert [(r.levelno, r.getMessage()) for r in caplog.records] == [
+        (logging.ERROR, ERROR_LINE + "ValueError while handling KeyError while handling ...")
+    ]
+
+
+def test_a_chain_of_one_error_that_is_its_own_context_does_not_loop():
+    loop = ValueError("x")
+    loop.__context__ = loop
+    assert receiver._kinds(loop) == "ValueError while handling ..."
+    assert receiver._kinds(None) == ""
 
 
 def test_any_other_error_is_error_with_its_kind_only(caplog):
@@ -758,7 +908,8 @@ def test_any_other_error_is_error_with_its_kind_only(caplog):
 def test_the_error_line_is_what_the_changelog_says_it_is():
     """The CHANGELOG item for the receiver describes this behaviour; its wording is held to the code."""
     text = (Path(__file__).parents[1] / "CHANGELOG.md").read_text(encoding="utf-8")
-    assert "ConnectionResetError while handling" in text and "error level" in text
+    assert "exactly one error level line" in text and "`ConnectionRefusedError`" in text
+    assert "at most five at a time" in text and "`...`" in text
 
 
 def test_the_request_line_is_logged_cut_and_without_control_characters(caplog):
@@ -781,7 +932,12 @@ def test_log_message_replaces_every_non_printable_and_cuts_the_text(caplog):
         handler = server.RequestHandlerClass.__new__(
             server.RequestHandlerClass
         )  # no connection needed
-        handler.log_message('"%s" %s %s', "GET /a\r\nERROR forged line\x1b[31m\x85\u2028", 404, "-")
+        handler.log_message(
+            '"%s" %s %s',
+            "GET /a\r\nERROR forged line\x1b[31m\x85\u2028\x7f\u2029\u202e\u2066\u200b",
+            404,
+            "-",
+        )
         handler.log_message(
             "100%"
         )  # a format that does not fit its (no) arguments is logged as it is
@@ -789,9 +945,21 @@ def test_log_message_replaces_every_non_printable_and_cuts_the_text(caplog):
     finally:
         server.server_close()
     first, second, third = (r.getMessage() for r in caplog.records)
-    assert first == '"GET /a??ERROR forged line?[31m??" 404 -', first
+    assert first == '"GET /a??ERROR forged line?[31m???????" 404 -', first
     assert second == "100%" and len(third) == 200
     assert all(r.levelno == logging.DEBUG for r in caplog.records)
+
+
+def test_log_message_shows_an_error_among_its_arguments_by_kind_only(caplog):
+    """The standard library logs `Request timed out: %r` with the error itself; its message must not be logged."""
+    caplog.set_level(logging.DEBUG, logger="hadavin_sdk.receiver")
+    server = receiver.serve(_approvals(FakeChannel(SIG)), port=0)
+    try:
+        handler = server.RequestHandlerClass.__new__(server.RequestHandlerClass)
+        handler.log_message("Request timed out: %r", TimeoutError("secret text"))
+    finally:
+        server.server_close()
+    assert [r.getMessage() for r in caplog.records] == ["Request timed out: 'TimeoutError'"]
 
 
 @pytest.mark.parametrize(
