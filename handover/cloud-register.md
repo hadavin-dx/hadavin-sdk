@@ -1260,3 +1260,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | R-Q8a1-r3 a5f0e2c7, a3703391 | both CLOSED: CLEAN by reading (Minors only), saved reviews/Q8a/result-r3-*-full.md | | | | closed | |
 | EV-Q8c1 adaef824 | EVIDENCE RUNNER (Fable) Q8c-1 head 7af13809 (no outside program; engine tests recorded as not run), heavy.sh, pg 56180 | 15:20Z | +60m | 15:20Z | running (queues) | read RESULTS.md |
 | R-Q8c1-res a1693872, a176d628 | egm design + codebase (Fable) RESULT review r1 of Q8c-1 (snapshot q8c1-7af1380) | 15:20Z | +30m | 15:20Z | running | save reviews/Q8c/result-r1-*-full.md |
+| B-Q8a1 (resumed 3) a0c5bd99 | Q8a-1 fix batch 3 (Minors only: STEPS check, config timeout bound, seam identities, wording) + PR-body draft | 15:22Z | +45m | 15:22Z | running | final head -> evidence on that head + one fresh delta reviewer -> READY candidate |
