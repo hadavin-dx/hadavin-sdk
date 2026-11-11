@@ -189,8 +189,9 @@ def test_a_double_slash_in_front_of_the_path_is_not_served(make):
         channel, "callback_path", VENDOR
     )  # before the change every kind was served on VENDOR
     with _served(channel) as port:
-        assert _post(port, "/" + path) == 404
-        assert _post(port, "//" + path, UNSIGNED) == 404
+        for slashes in ("/", "//", "///"):  # two, three and four slashes in front
+            assert _post(port, slashes + path) == 404, slashes
+            assert _post(port, slashes + path, UNSIGNED) == 404, slashes
         assert _post(port, path, UNSIGNED) == 401
 
 
