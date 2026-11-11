@@ -1,0 +1,10 @@
+S1 partly masked: got '<SECRET_REDACTED>' want '<SECRET_REDACTED>' -> ok
+S2 text after the placeholder: got '<SECRET_REDACTED>' want '<SECRET_REDACTED>' -> ok
+S2 quoted half: got '<SECRET_REDACTED>' want '<SECRET_REDACTED>' -> ok
+S3 result without its key: got '<SECRET_REDACTED>' want '<SECRET_REDACTED>' -> ok
+S4 positive, two placeholders: got '<SECRET_1><EMAIL_2>' want '<SECRET_1><EMAIL_2>' -> ok
+S5 look-alike: got '<SECRET_REDACTED>' want '<SECRET_REDACTED>' -> ok
+S7 quote check (ii): got '<SECRET_REDACTED>' want '<SECRET_REDACTED>' -> ok
+S6 calls for a value with a space: ['secret="qx zj"', 'qx zj']
+S6 calls for 256 characters: 1 call(s), first 'qqqqqqqqqqqq'
+exit 0

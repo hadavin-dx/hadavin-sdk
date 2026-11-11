@@ -1,0 +1,3 @@
+N5 Slack block, raw req.summary 'contact bob.smith@example.com at db01.corp.internal' -> 'contact <EMAIL_1> at <HOSTNAME_1>'
+N5 Slack block, raw req.summary 'ping 10.20.30.40@channel' -> 'ping <IPV4_1>at-channel'
+exit 0

@@ -1,0 +1,36 @@
+Pager usage is off.
+== setup: runtime role hrt is a member of pg_monitor (granted by an administrator)
+CREATE ROLE
+GRANT ROLE
+== (h1) the closure of hrt (Q1 shape)
+       subject        
+----------------------
+ hrt
+ pg_monitor
+ pg_read_all_settings
+ pg_read_all_stats
+ pg_stat_scan_tables
+(5 rows)
+
+== (h2) what ticket rev 1 (3.1 change (a) + S5) would read in the two system schemas: items whose grantee is a subject
+      grantee      |   kind   | problem_lines_rev1_would_print 
+-------------------+----------+--------------------------------
+ pg_monitor        | function |                              8
+ pg_read_all_stats | function |                              2
+ pg_read_all_stats | relation |                              2
+(3 rows)
+
+== (h3) three examples of the REVOKE that rev 1 would print and its 4.2 test would run as a superuser
+                                                                                                                                         format                                                                                                                                          
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ REVOKE EXECUTE ON FUNCTION pg_catalog.pg_get_backend_memory_contexts(OUT name text, OUT ident text, OUT parent text, OUT level integer, OUT total_bytes bigint, OUT total_nblocks bigint, OUT free_bytes bigint, OUT free_chunks bigint, OUT used_bytes bigint) FROM pg_read_all_stats;
+ REVOKE EXECUTE ON FUNCTION pg_catalog.pg_get_shmem_allocations(OUT name text, OUT off bigint, OUT size bigint, OUT allocated_size bigint) FROM pg_read_all_stats;
+ REVOKE EXECUTE ON FUNCTION pg_catalog.pg_ls_archive_statusdir(OUT name text, OUT size bigint, OUT modification timestamp with time zone) FROM pg_monitor;
+(3 rows)
+
+== (h4) the single fix the errata prints: the membership line only
+                     format                      
+-------------------------------------------------
+ REVOKE pg_monitor FROM hrt GRANTED BY postgres;
+(1 row)
+

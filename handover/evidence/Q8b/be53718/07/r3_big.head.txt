@@ -1,0 +1,5 @@
+50 entries, two passes: Secret entries under non-credential keys 0.17s (map 50); one-word values under credential keys 0.05s (map 50)
+256 entries, two passes: Secret entries under non-credential keys 1.89s (map 256); one-word values under credential keys 0.84s (map 256)
+500 entries, two passes: Secret entries under non-credential keys 3.03s (map 256); one-word values under credential keys 3.91s (map 500)
+1000 entries, two passes: Secret entries under non-credential keys 5.26s (map 256); one-word values under credential keys 9.83s (map 1000)
+exit 0

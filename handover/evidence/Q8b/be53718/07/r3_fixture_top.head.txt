@@ -1,0 +1,8 @@
+{"changed_chars": 23, "counts": {"SECRET": 9}, "distinct_log_lines_changed": ["login as postgres with Zq7xkW2vy9JtR4m refused"], "levels": ["error", "info"], "services": ["api", "db", "orders", "postgres"], "strings_changed": 1, "strings_outside_secret": 114}
+   log: ['info', 'orders', 'information: retry in 5s']
+   log: ['error', 'orders', 'orders-api timeout on port 5432 as postgres in prod']
+   log: ['info', 'api', 'debug=true orders_count=3 env prod']
+   log: ['error', 'db', 'login as postgres with <SECRET_9> refused']
+   log: ['info', 'postgres', 'start']
+   secret spec: {"kind": "Secret", "data": {"LOG_LEVEL": "<SECRET_1>", "DEBUG": "<SECRET_2>", "ENV": "<SECRET_3>", "PORT": "<SECRET_4>", "DB_USER": "<SECRET_5>", "DB_NAME": "<SECRET_7>", "DB_PASSWORD": "<SECRET_9>"}}
+exit 0

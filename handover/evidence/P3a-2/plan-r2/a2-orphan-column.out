@@ -1,0 +1,48 @@
+Pager usage is off.
+== (a13) the column entry rt=r/boss left after (a5); boss holds no grant option now
+           relacl           
+----------------------------
+ {mig=arwdDxt/mig,rt=w/mig}
+(1 row)
+
+ attname | attacl 
+---------+--------
+(0 rows)
+
+SET
+psql:a2-orphan-column.sql:5: ERROR:  permission denied for table t
+RESET
+== (a14) superuser: REVOKE SELECT (secret) ON app.t FROM rt (acts as the owner)
+REVOKE
+ attname | attacl 
+---------+--------
+(0 rows)
+
+== (a15) SET ROLE boss; REVOKE SELECT (secret) ON app.t FROM rt; RESET ROLE
+SET
+psql:a2-orphan-column.sql:10: ERROR:  permission denied for column "secret" of relation "t"
+RESET
+ attname | attacl 
+---------+--------
+(0 rows)
+
+== (a16) table-level entry granted by boss: SET ROLE boss form removes it (grantor-first order)
+SET
+GRANT
+RESET
+SET
+GRANT
+RESET
+                      relacl                      
+--------------------------------------------------
+ {mig=arwdDxt/mig,rt=w/mig,boss=r*/mig,rt=r/boss}
+(1 row)
+
+SET
+REVOKE
+RESET
+                 after                  
+----------------------------------------
+ {mig=arwdDxt/mig,rt=w/mig,boss=r*/mig}
+(1 row)
+

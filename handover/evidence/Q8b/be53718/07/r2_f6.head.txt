@@ -1,0 +1,20 @@
+XF respelled, JSON \n copy || [{'kind': 'Secret', 'stringData': {'cfg': '<SECRET_1>'}}, {'annotations': {'last-applied-configuration': '{"stringData": {"cfg": "<SECRET_1>"}}'}}]
+XF respelled, percent copy || [{'kind': 'Secret', 'stringData': {'cfg': '<SECRET_1>'}}, {'message': 'GET /login?p=<SECRET_1>'}]
+N4 sweep || 'contact <EMAIL_1>' || flat: 'contact <EMAIL_1>'
+N4 host || 'restart <HOSTNAME_1> now' || flat: 'restart <HOSTNAME_1> now'
+N4 percent || '<EMAIL_1>' || flat: '<EMAIL_1>'
+N4 entity || '<EMAIL_1>' || flat: '<EMAIL_1>'
+N4 tag split || '<EMAIL_1>' || flat: '<EMAIL_1>'
+N4 wide dot || '<EMAIL_1>' || flat: '<EMAIL_1>'
+N4 zero width || '<EMAIL_1>' || flat: '<EMAIL_1>'
+N4 tilde fence || 'see\n~~~\n<EMAIL_1>\n~~~\nend' || flat: 'see\n~~~\n<EMAIL_1>\n~~~\nend'
+N4 angle || 'from ‹<EMAIL_1>> today' || flat: 'from ‹<EMAIL_1>> today'
+N6 ip+domain || '<IPV4_1>[.]evil[.]com' || flat: '<IPV4_1>.evil.com'
+N6 backtick eaten || 'password=<SECRET_1> evil[.]com `evil.com` x' || flat: 'password=<SECRET_1> evil.com `evil.com` x'
+m3 uuid file || 'see <UUID_1>[.]json' || flat: 'see <UUID_1>.json'
+m3 plain file || 'see report[.]json' || flat: 'see report.json'
+guard fence || 'see\n```\nowner: <EMAIL_1>\n```\nend' || flat: 'see\n```\nowner: <EMAIL_1>\n```\nend'
+guard inline || '`evil.com` and evil[.]com' || flat: '`evil.com` and evil.com'
+Plan fields: ['schema_version', 'plan_id', 'run_id', 'agent_id', 'action_id', 'action_version', 'risk_class', 'inputs', 'target', 'idempotency_key', 'expected_outcome', 'created_at']
+N9 texts=3000 returned_the_joined_candidate=30 texts_where_a_first_map_original_is_readable=0
+exit 0

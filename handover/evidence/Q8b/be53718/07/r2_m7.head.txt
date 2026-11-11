@@ -1,0 +1,4 @@
+M7 summary target='db01.corp.internal' || 'agent-ops asks to run restart_service v1 (reversible) on <HOSTNAME_1>. Inputs: {"service":"orders"}. Expected: service restarted. Plan c4496abaae77.'
+M7 summary target='crm' || 'agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {"host":"<HOSTNAME_1>","owner":"<EMAIL_1>"}. Expected: service restarted. Plan 071e66f22ff4.'
+M7 summary target='10.20.30.40' || 'agent-ops asks to run restart_service v1 (reversible) on <IPV4_1>. Inputs: {"service":"orders"}. Expected: service restarted. Plan d26592413c4d.'
+exit 0

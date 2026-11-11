@@ -1,0 +1,94 @@
+Pager usage is off.
+== setup: one object of each relation kind plus types in schema app2
+CREATE SCHEMA
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE VIEW
+SELECT 1
+CREATE SEQUENCE
+CREATE FOREIGN DATA WRAPPER
+CREATE SERVER
+CREATE FOREIGN TABLE
+CREATE TYPE
+CREATE TYPE
+CREATE TYPE
+CREATE DOMAIN
+== (b1) pg_type rows in app2 with the relation they belong to, typacl and the default for everyone
+     typname     | typtype | has_rel | relkind | is_array | typacl |            default_acl            
+-----------------+---------+---------+---------+----------+--------+-----------------------------------
+ comp            | c       | t       | c       | f        |        | {=U/postgres,postgres=U/postgres}
+ ft              | c       | t       | f       | f        |        | {=U/postgres,postgres=U/postgres}
+ mv              | c       | t       | m       | f        |        | {=U/postgres,postgres=U/postgres}
+ part            | c       | t       | p       | f        |        | {=U/postgres,postgres=U/postgres}
+ part_1          | c       | t       | r       | f        |        | {=U/postgres,postgres=U/postgres}
+ tab             | c       | t       | r       | f        |        | {=U/postgres,postgres=U/postgres}
+ v               | c       | t       | v       | f        |        | {=U/postgres,postgres=U/postgres}
+ _comp           | b       | f       |         | t        |        | {=U/postgres,postgres=U/postgres}
+ _dom            | b       | f       |         | t        |        | {=U/postgres,postgres=U/postgres}
+ _en             | b       | f       |         | t        |        | {=U/postgres,postgres=U/postgres}
+ _ft             | b       | f       |         | t        |        | {=U/postgres,postgres=U/postgres}
+ _mv             | b       | f       |         | t        |        | {=U/postgres,postgres=U/postgres}
+ _part           | b       | f       |         | t        |        | {=U/postgres,postgres=U/postgres}
+ _part_1         | b       | f       |         | t        |        | {=U/postgres,postgres=U/postgres}
+ _rng            | b       | f       |         | t        |        | {=U/postgres,postgres=U/postgres}
+ _rng_multirange | b       | f       |         | t        |        | {=U/postgres,postgres=U/postgres}
+ _tab            | b       | f       |         | t        |        | {=U/postgres,postgres=U/postgres}
+ _v              | b       | f       |         | t        |        | {=U/postgres,postgres=U/postgres}
+ dom             | d       | f       |         | f        |        | {=U/postgres,postgres=U/postgres}
+ en              | e       | f       |         | f        |        | {=U/postgres,postgres=U/postgres}
+ rng             | r       | f       |         | f        |        | {=U/postgres,postgres=U/postgres}
+ rng_multirange  | m       | f       |         | f        |        | {=U/postgres,postgres=U/postgres}
+(22 rows)
+
+== (b2) relations in app2 with reltype = 0 (no row type)
+ relname | relkind | reltype 
+---------+---------+---------
+ seq     | S       |       0
+ comp    | c       |   16432
+ ft      | f       |   16429
+ mv      | m       |   16422
+ part    | p       |   16412
+ part_1  | r       |   16415
+ tab     | r       |   16409
+ v       | v       |   16418
+(8 rows)
+
+== (b3) the row-type key the errata uses: typtype = c AND typrelid <> 0 AND relkind <> c
+ typname | relkind 
+---------+---------
+ ft      | f
+ mv      | m
+ part    | p
+ part_1  | r
+ tab     | r
+ v       | v
+(6 rows)
+
+== (b4) a GRANT on a row type materialises typacl with the everyone entry next to it
+CREATE ROLE
+GRANT
+ typname |                      typacl                      
+---------+--------------------------------------------------
+ tab     | {=U/postgres,postgres=U/postgres,rt2=U/postgres}
+(1 row)
+
+== (b5) a GRANT on a standalone composite type and on a sequence row type
+GRANT
+ typname |                      typacl                      
+---------+--------------------------------------------------
+ comp    | {=U/postgres,postgres=U/postgres,rt2=U/postgres}
+(1 row)
+
+psql:b-row-types.sql:33: ERROR:  type "app2.seq" does not exist
+== (b6) every pg_type with typacl NULL defaults to USAGE for everyone (any typtype)
+ typtype |            acldefault             
+---------+-----------------------------------
+ b       | {=U/postgres,postgres=U/postgres}
+ c       | {=U/postgres,postgres=U/postgres}
+ d       | {=U/postgres,postgres=U/postgres}
+ e       | {=U/postgres,postgres=U/postgres}
+ m       | {=U/postgres,postgres=U/postgres}
+ r       | {=U/postgres,postgres=U/postgres}
+(6 rows)
+
