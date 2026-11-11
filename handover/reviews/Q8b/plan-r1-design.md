@@ -1,0 +1,17 @@
+# Q8b ticket plan review round 1, egm:egm-design (Fable 5.2), read-only, nothing run by the reviewer. Verdict NOT READY: 1 Blocker, 7 Majors, 9 Minors. F5 acceptance rule (1a) and the F6 order judged sound.
+LEAD REPRODUCTION on origin/main 2a8c2aa (2026-11-11, `k1b.redaction._walk(obj, lambda s: redact_text(s, {}))`, keys built from parts):
+- {'PGPASSWORD': 'correct horse battery staple'} -> returned UNCHANGED (M1 REPRODUCED)
+- {'name': 'PGPASSWORD', 'value': 'hunter2secretXYZ'} -> UNCHANGED (M1 REPRODUCED)
+- {'pwd': 'hunter2secretXYZ'} -> UNCHANGED (M1 REPRODUCED)
+- {'name': 'DB_PASSWORD', 'value': 12345678} -> UNCHANGED (M2 REPRODUCED)
+- control {'password': 'hunter2secretXYZ'} -> {'password': '<SECRET_1>'}
+B1 F5b cannot be closed for a value that holds anything another pattern masks first (guard/redact.py:919-923 patterns before sweep; :1029-1049 sweep only between placeholders): [{'token': 'bob.smith@example.com Zx9 tail'}, {'message': 'login with bob.smith@example.com Zx9 tail failed'}] leaves ` Zx9 tail`. Options: (A, recommended) narrow the claim everywhere + strict xfail tests naming a dated follow-up (sweep of registered secrets before patterns, in the redactor); (B) a k1b-local pre-pass (second sweep engine).
+M1 choke point one level too high: sensitive() (k1b/redaction.py:88-100) misses PGPASSWORD, DBPassword, pwd, secretkey, secrets, rootpassword, accessKey; two key grammars have drifted -> Behaviour 1f widen SENSITIVE_KEY + table test with negatives (author, tokens_used, password_policy_enabled).
+M2 env-form and non-string values skip _pair (line 141 isinstance str; line 136 exact "name"): numbers, lists, Name/Value and key/value shapes.
+M3 fallback key applied to the wrong set/order: authorization/bearer/passphrase stay MASKED with no map entry; private_key plants `correct`; Secret non-credential own key plants fragments (username -> NAME). Fix: non-credential key under known_secret tries only FALLBACK_KEY; credential key tries own then FALLBACK_KEY.
+M4 "left open" understated: values over 255 chars, nested strings under a credential key, numbers, respelled copies (last-applied-configuration annotation) -> list every case in LIMITS/docstring/CHANGELOG + one strict xfail each.
+M5 1c registers every Secret entry as SECRET swept as substring from 4 chars: {'data': {'DB_NAME': 'b3JkZXJz'}} + log 'orders-api timeout' -> '<SECRET_n>-api timeout': unstated evidence-destroying change -> CHANGELOG line, pinned test, before/after replay scores.
+M6 "plain" is a denylist: {'password': 'hunter\x1b[0m2secretXYZ'} plants `hunter`; make plain an allowlist (visible ASCII minus ; & , " ') or always quote first; widen P1 alphabet; replace the test on private runmap._VALUE_END by a behavioural one.
+M7 approver-facing consequence: a target system named like a host now shows as <HOSTNAME_1> on the card (the person approves a target they cannot see); card numbering is local -> state it, pin summary() for a host-shaped target.system, owner decision.
+Minors m1-m9 (wide-dot folding wording, oracle sharing gate._DOMAIN, after-placeholder regex also brackets <UUID_1>.json, N9 rule: seed the joined pass with the first map, heading guard, stored summaries keep old text, f() call bound, known flag through lists, producers rows count).
+Rulings: F6 order correct; producers rows and mutants are not scope creep; the F1-F4/F7 pull request (PR77) lands FIRST, Q8b built in parallel then rebased; keep the timestamp exception with near-miss tests.

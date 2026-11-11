@@ -1170,7 +1170,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | Q8-redact a608409c | egm:egm-codebase-details (Fable) hostile sibling sweep of masking choke points on main | 13:40Z | +20m | 13:40Z | CLOSED saved reviews/Q8/redaction-sweep.md | save handover/reviews/Q8/redaction-sweep.md, reproduce Majors |
 | R-Q8a-plan a126a1f8, a5ec89be | egm design + implementation-readiness (Fable) plan review r1 of tickets/Q8a | 13:44Z | +15m | 13:44Z | CLOSED saved reviews/Q8a/plan-r1-summary.md | save reviews/Q8a/, resolve, then ONE builder |
 | R-Q8a1-r2 a62ab99a | egm impl-readiness (Fable) plan review r2 ticket Q8a-1 | 13:51Z | +15m | 13:51Z | CLOSED saved reviews/Q8a/plan-r2.md; errata rev 3 | if READY start ONE builder |
-| B-flaky a6e5db57 | builder (Fable) flaky timing harness test on main, branch core/fix-timing-harness-flake, pg 56040 | 13:51Z | +60m | 13:51Z | running | evidence + review |
+| B-flaky a6e5db57 | builder (Fable) flaky timing harness test on main, branch core/fix-timing-harness-flake, pg 56040 | 13:51Z | +60m | 13:51Z | CLOSED head fa3f8c1b pushed (lead: 1 commit, 6 files, gitleaks clean); no single clean full run by builder | evidence + review |
 | R-P3a2-r11 a2b6f315, a573bc87 | both CLOSED, saved reviews/P3a-2/r11-*.md | | | | closed | |
 | R-P85main a470bfd9 | egm codebase (Fable) review of InvalidRunId code mapping on core/P5b2-main 3b9617e4 | 13:51Z | +10m | 13:51Z | CLOSED saved reviews/PR85/p5b2-main-delta-review.md | save reviews/PR85/ |
 | EV-Q8a2 a795f178 | EVIDENCE RUNNER (Fable) dry run of guard pattern on main | 13:51Z | +20m | 13:51Z | CLOSED evidence/Q8a-2/dryrun-2026-11-11.md | write ticket Q8a-2 from the hit list |
@@ -1185,7 +1185,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | A-Q8c-r2 aba593de | ticket author (Fable) Q8c revision 2 (slice 1) | 14:08Z | +30m | 14:08Z | CLOSED ticket rev 2 written (22 names all unverified until EV-Q8c-live lands) | plan review round 2 |
 | EV-Q8c-live a9225128 | EVIDENCE RUNNER (Fable, network) live check of slice-1 permission names against vendor pages | 14:08Z | +40m | 14:08Z | CLOSED evidence/Q8c/live-verification-2026-11-11.md (162 items: 138 verified, 0 wrong, 3 not found, 21 page not reachable; Slack 0 verified) | fold verified/wrong into ticket data |
 | B-Q8a2 a0472549 | ONE builder (Fable) ticket Q8a-2, branch core/q8a-2-neutral-callback-and-guard, pg 56080 | 14:11Z | +90m | 14:11Z | running | checkpoint 30m; then evidence + egm reviewers |
-| R-Q8b-plan ace02d78, a517cf42 | egm design + impl-readiness (Fable) plan review r1 tickets/Q8b | 14:13Z | +20m | 14:13Z | running | resolve, builder after PR77 scope settles |
+| R-Q8b-plan ace02d78, a517cf42 | egm design + impl-readiness (Fable) plan review r1 tickets/Q8b | 14:13Z | +20m | 14:13Z | CLOSED both saved reviews/Q8b/ | resolve, builder after PR77 scope settles |
 | R-Q8c-r2 ac13fdc7 | egm impl-readiness (Fable) plan review r2 of tickets/Q8c rev 2 | 14:18Z | +20m | | running | errata; build only after live verification |
 | EV-Q8a1 a6f9eb55 | EVIDENCE RUNNER (Fable) Q8a-1 head 464dee14: full suite, fail-before, mutants, hostile probes; pg 56090 | 14:20Z | +45m | 14:20Z | running | read RESULTS.md |
 | R-Q8a1-res a2a30519, a06b79ad | egm design + codebase (Fable) RESULT review r1 of Q8a-1 (snapshot q8a1-464dee1) | 14:20Z | +20m | 14:20Z | running | save reviews/Q8a/, ledger, fix batch if needed |

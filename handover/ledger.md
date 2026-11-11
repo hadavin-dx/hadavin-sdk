@@ -2580,3 +2580,5 @@
 | BL-core-q8c-find-key_id | Minor | core-main | key_id, bucket, region, guardrail_id settings have no pattern (backends/table.py) (tickets/Q8c rev 2 section 8) | OPEN | | | 2026-11-11 |
 | BL-core-q8c-find-Kubern | Minor | core-main | Kubernetes start-up does not refuse verb watch (sources/kubernetes.py:39,116-124) (tickets/Q8c rev 2 section 8) | OPEN | | | 2026-11-11 |
 | BL-core-q8b-plan-r1-B1 | Blocker | Q8b-plan | reviews/Q8b/plan-r1-readiness.md B1 | OPEN | | | 2026-11-11 |
+| BL-core-q8b-plan-r1-dB1 | Blocker | Q8b-plan | reviews/Q8b/plan-r1-design.md B1 | OPEN | | | 2026-11-11 |
+| BL-core-q8red-F5c | Major | redaction-main | k1b sensitive() misses PGPASSWORD/pwd/DBPassword and non-string env values: values returned unmasked (REPRODUCED by lead on main; reviews/Q8b/plan-r1-design.md M1, M2) | OPEN | ticket Q8b rev 2 | | 2026-11-11 |
