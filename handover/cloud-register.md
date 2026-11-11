@@ -1332,3 +1332,10 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-P3a2-r12 a10b6577 | 10 min | full suite running in a slot; route probes added | on track |
 | R-P3a2-r12 codebase a20099a3, R-P3a2-zoom a26d1a15 | under 10 min | reading | on track |
 | R-P3a2-r12 codebase a20099a3 | | | | 15:46Z | CLOSED: NOT CLEAN, 2 Major (same classes as the design review), saved | wait for zoom-out + route probes |
+
+### 15:51Z PR89 round 21 (head 7a2eb4cc pushed to the pull request branch; lead checked the remote ref)
+| id | purpose | started | expected end | last check | state | next action |
+|---|---|---|---|---|---|---|
+| B-PR89-r20 a7b9ddc4 | round 20 builder | 14:35Z | | 15:51Z | CLOSED. Its account: full suite 10770 passed exit 0; mutants 248 of 248 after its first run showed 9 not-good (5 tests fixed, a redundant password-word check and its 4 mutants REMOVED: reviewers must look); 12 type-checker errors remain for Windows (not a repo gate); commit split partly as asked | evidence + 3 fresh reviewers |
+| EV-P89-r21 | EVIDENCE RUNNER (Fable) 7a2eb4cc, pg 56131 | 15:51Z | +50m | 15:51Z | starting | RESULTS.md |
+| R-P89-r21 design, codebase, comprehension | fresh egm reviewers (Fable), snapshot /home/user/build/snap/p89-7a2eb4c | 15:51Z | +15m | 15:51Z | starting | save full reports |
