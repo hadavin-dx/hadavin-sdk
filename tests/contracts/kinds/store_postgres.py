@@ -1,5 +1,6 @@
-"""The `postgres` store kind. Needs HADAVIN_TEST_PG_DSN (CI: the postgres service); skipped without it, so the
-laptop needs no Docker. Each test gets its own schema, migrated fresh and dropped afterwards."""
+"""The `postgres` store kind. Needs HADAVIN_TEST_PG_DSN (CI: the postgres service). Without it the tests are skipped
+on a laptop (no Docker needed) and FAIL when CI=true (tests/pg_dsn.py). Each test gets its own schema, migrated fresh
+and dropped afterwards."""
 
 import os
 import uuid
@@ -10,6 +11,7 @@ from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import PostgresSettings
 from tests.contracts.kinds import kind
+from tests.pg_dsn import need_dsn_or_skip
 
 # runtime DSN -> the DSN of the purge role of the same schema (only for `pg_schema(runtime=True)`)
 PURGE_DSN: dict[str, str] = {}
@@ -21,7 +23,7 @@ def pg_schema(migrated=True, runtime=False):
     suite must pass with only those rights); the role is dropped afterwards."""
     dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
     if not dsn:
-        pytest.skip("HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)")
+        need_dsn_or_skip("HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)")
     psycopg = pytest.importorskip("psycopg")
     from psycopg import sql
     from psycopg.conninfo import make_conninfo
