@@ -151,7 +151,7 @@ def test_cli_migrate_passes_the_portal_role(cfg_dir, monkeypatch):
     assert "lock_wait_seconds" not in seen, "the default wait is the one of `migrate`"
     seen.clear()
     assert cli.main([*args, "--lock-wait-seconds", "1800"]) == 0
-    assert seen["lock_wait_seconds"] == 1800
+    assert seen.get("lock_wait_seconds") == 1800
     with pytest.raises(SystemExit):  # not a positive whole number: refused by the parser
         cli.main([*args, "--lock-wait-seconds", "0"])
 
