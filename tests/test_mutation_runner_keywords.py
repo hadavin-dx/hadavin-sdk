@@ -995,7 +995,9 @@ def test_an_exit_right_after_the_lock_is_taken_still_gives_the_lock_back(tmp_pat
     )
     try:
         rows = _run(root, [FLIP], pass_env=(DSN_NAME,))
-    except RuntimeError:
+    except RuntimeError as exc:
+        if "another mutation run" not in str(exc):
+            raise
         raise AssertionError(
             "an exit right after the lock was taken left the lock held: the next run was refused"
         ) from None
