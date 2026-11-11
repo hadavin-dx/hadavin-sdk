@@ -2082,8 +2082,7 @@ M: list[Mutant] = [
         MIG,
         "string_agg(t.attnum::text || t.attacl::text, ',' ORDER BY t.attnum)",
         "string_agg(t.attnum::text, ',' ORDER BY t.attnum)",
-        k(T_PG, "test_a_right_given_on_a_table_that_existed_before_the_run_is_refused")
-        + "[column]",
+        k(T_PG, "test_a_second_right_on_a_column_that_already_had_one_is_refused"),
     ),
     Mutant(
         "RA2",
@@ -2296,7 +2295,7 @@ M: list[Mutant] = [
             T_PG,
             "test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migration_role_belongs_to",
         )
-        + "[named_select]",
+        + "[member_role_select]",
     ),
     Mutant(
         "SW20",
