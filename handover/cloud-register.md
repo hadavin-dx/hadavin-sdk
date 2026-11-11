@@ -1445,3 +1445,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | 19:40Z | a3cd3bd3 | BUILDER timing fix batch (12 items + contention blocker) | start 19:40Z, box 60 min | running | next: EV runner |
 | 19:40Z | ab53dd0a, aaa34d5c, a91f6252, a512e623, abd2ae26 | EVIDENCE Q8b bcb2bfec / Q8a-1 3f3d4b6c / Q8a-2 c19d87dc / Q8c-1 be531371 / PR89 4cc427b5 | start 19:40Z, box 50 min | running | next: collect, resolve |
 | 19:40Z | a177c8fb, a48f1be4, a1603ae6, a65bce81, a49fe95d, ac5f6973, a5e65fc9, ad97d511, afb18593, a0c514c3 | REVIEWERS (design + codebase) for the same five heads | start 19:40Z | running | next: save reports, egm-resolve per package |
+| 2026-11-11 wave 4 | ad257cb3 Q8b b2 builder; a5471dc9 Q8a-1 b6 builder; a28ab4ea PR89 r24 builder; abab3ba2 Q8c-1 b4 builder (first launch refused by the auto-mode classifier: download brief; relaunched without download) | fix batches from egm-resolve reports r2 / r6 / r23 / r4 | launched | +60 min | RUNNING | collect, evidence, fresh reviewers |
+| (still running) | a5d8945a PR H; a092f756 P3a-2 3b; a027c17f timing evidence ef83cd86 | | | | RUNNING | timing reviews done: no Blocker/Major, nits in reviews/timing/r2-summary.md |
