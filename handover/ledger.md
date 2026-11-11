@@ -2626,3 +2626,6 @@
 | BL-core-a11a-w7-cM5 | Major | PR77 | reviews/PR77/round7-codebase.md M5 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |
 | BL-core-a11a-w7-cM6 | Major | PR77 | reviews/PR77/round7-codebase.md M6 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |
 | BL-core-a11a-w7-cM7 | Major | PR77 | reviews/PR77/round7-codebase.md M7 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-q8c1-r1-d01 | Major | Q8c-1 | reviews/Q8c/result-r1-design-full.md Major 1 | OPEN | | | 2026-11-11 |
+| BL-core-q8c1-r1-d02 | Major | Q8c-1 | reviews/Q8c/result-r1-design-full.md Major 2 | OPEN | | | 2026-11-11 |
+| BL-core-q8c1-r1-d03 | Major | Q8c-1 | reviews/Q8c/result-r1-design-full.md Major 3 | OPEN | | | 2026-11-11 |
