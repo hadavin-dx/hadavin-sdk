@@ -464,7 +464,7 @@ M = [
         '        _P + "store.protocol:NotFound": Code.config_invalid,\n',
         TC,
         "test_builtin_ancestry_never_beats_the_row",
-        "code=store_conflict",
+        "NotFound: diag_v=1 code=config_invalid",
     ),
     mutant(
         "table: VaultError gives another code",
@@ -473,7 +473,7 @@ M = [
         '        _P + "actions.secrets_vault:VaultError": Code.config_invalid,\n',
         TD,
         "test_t7_a_vault_server_answer_is_a_vault_error_with_code_provider_http",
-        "provider_http",
+        "VaultError: diag_v=1 code=config_invalid",
     ),
     mutant(
         "class name: the module name is read twice",
@@ -500,7 +500,7 @@ M = [
         "deque(maxlen=None)",
         TD,
         "test_links_keep_the_innermost_frames_only_up_to_the_step_cap",
-        "assert",
+        "the frame cap is 32",
     ),
     mutant(
         "links: the step cap is one too high",

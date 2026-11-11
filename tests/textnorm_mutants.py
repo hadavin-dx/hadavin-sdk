@@ -217,7 +217,7 @@ M = [
     mutant("squeeze: no case fold before the look-alike table", TN,
         "    s = _fold(raw, casefold=True).upper()", "    s = _fold(raw).upper()", SQUEEZE_SYMM, "squeeze is not case symmetric for"),
     mutant("pin: require_pinned_unidata only warns", TN,
-        "    check_pinned_unidata(expected, strict=True)", "    check_pinned_unidata(expected)", REQUIRE, "require_pinned_unidata accepted another Unicode version"),
+        "    check_pinned_unidata(expected, strict=True)", "    check_pinned_unidata(expected)", REQUIRE, "UserWarning: Unicode data"),
     mutant("pin: require_pinned_unidata binds the pin at definition", TN,
         "def require_pinned_unidata(expected: str | None = None) -> None:",
         "def require_pinned_unidata(expected: str | None = defaults.TEXTNORM_PINNED_UNIDATA) -> None:",
