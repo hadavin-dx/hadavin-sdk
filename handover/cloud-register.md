@@ -1218,3 +1218,16 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | A-Q8b (resumed 2) a123e38f | Q8b ticket revision 3 (third and last plan round; full review texts) | 14:48Z | +45m | | running | freeze with errata if clean enough; builder after PR77 result is known |
 | EV-Q8a2-res a96bf331 | EVIDENCE RUNNER (Fable) Q8a-2 head 02068ebe, heavy.sh, pg 56150, socket probes | 14:52Z | +50m | 14:52Z | running | read RESULTS.md |
 | R-Q8a2-res a3040b43, ae979d0b | egm design + codebase (Fable) RESULT review r1 of Q8a-2 (snapshot q8a2-02068eb) | 14:52Z | +20m | 14:52Z | running | save reviews/Q8a-2/result-r1-*, ledger |
+
+### Long-running check 14:53Z
+| agent | age | doing now | verdict |
+|---|---|---|---|
+| B-PR77 a23fcc26 | 85 min | final full pytest, 11 min in (suite takes about 7 min idle; machine at load 10) | on track but at its 90 min limit; if no report by 15:05Z I message it for a status line |
+| B-P3a2 a73e15b4 | 48 min | full suite done, whole mutant list running through heavy.sh (about 15 min) | on track |
+| EV-P89-r19 a3767c91 | 26 min | (no process seen this minute; its full suite started 14:45Z) | check next round |
+| EV-flaky a67f662c | 26 min | steps 1-6 written; full suite running (not through heavy.sh: started before the wrapper) | on track |
+| EV-Q8a1-r2 ad880047 | 6 min | full suite through heavy.sh | on track |
+| EV-Q8a2-res a96bf331 | 3 min | full suite through heavy.sh | on track |
+| B-PR89-r20 a7b9ddc4 | 18 min | runner code for allowlist, grammar, sockets written, uncommitted | on track |
+| B-Q8c1 a56207cb | 25 min | proof files being written | on track |
+| B-flaky fix a6e5db57 | 22 min | measuring | on track; sent the overload evidence |
