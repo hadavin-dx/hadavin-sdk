@@ -115,16 +115,22 @@ def tokens(text: str, ign: frozenset[int] = frozenset()):
                 k = j
                 while k < n and 0x20 <= ord(text[k]) <= 0x2F:
                     k += 1
-                if k < n and 0x30 <= ord(text[k]) <= 0x7E:
+                if k < n and 0x30 <= ord(text[k]) <= 0x7E and not text[k].isalnum():
                     yield ("removed", text[i : k + 1], "seq")
                     i = k + 1
-                else:  # no final byte: only the ESC goes; the intermediates are read afresh as text
+                else:  # no final byte, or a letter or digit: only the ESC goes; the rest is read afresh as text
                     yield ("removed", ESC, "seq")
                     i = j
                 continue
             if d and 0x30 <= ord(d) <= 0x7E:  # Fp, Fe, Fs (and a stray ESC backslash)
-                yield ("removed", text[i : j + 1], "seq")
-                i = j + 1
+                if (
+                    d.isalnum() and not d.isupper()
+                ):  # a digit or lower-case letter stays as text (as in main)
+                    yield ("removed", ESC, "seq")
+                    i = j
+                else:
+                    yield ("removed", text[i : j + 1], "seq")
+                    i = j + 1
                 continue
             yield ("removed", ESC, "seq")  # lone ESC; the next character is read afresh
             i = j
@@ -155,9 +161,15 @@ def _csi_end(text: str, k: int) -> int:
     character that is read afresh (line end, ESC, C1, anything outside 0x20-0x7E that is not a dropped C0),
     the item ends BEFORE that character."""
     n = len(text)
+    inter = False  # an intermediate byte (0x20-0x2F) has been read: a parameter byte (0x30-0x3F) is out of order now
     while k < n:
         o = ord(text[k])
-        if 0x20 <= o <= 0x3F:
+        if 0x30 <= o <= 0x3F:
+            if inter:
+                return k  # out of order: the item ends BEFORE it; the byte is read afresh as text
+            k += 1
+        elif 0x20 <= o <= 0x2F:
+            inter = True
             k += 1
         elif 0x40 <= o <= 0x7E:
             return k + 1
@@ -280,12 +292,23 @@ GRAMMAR_ROWS = [  # (name, input, joined) - section 4.1 grammar table, one row p
         "ab",
     ),
     ("c1 csi inside string is body", "a" + ESC + "]0;" + C1_CSI + "t" + BEL + "b", "ab"),
-    ("nF", "a" + ESC + "(Bb", "ab"),
-    ("nF two intermediates", "a" + ESC + "#!8b", "ab"),
+    ("nF letter final: only the ESC goes", "a" + ESC + "(Bb", "a(Bb"),
+    ("nF two intermediates, digit final: only the ESC goes", "a" + ESC + "#!8b", "a#!8b"),
+    ("nF dash then letter keeps the dash", "a" + ESC + "-b", "a-b"),
+    ("csi parameter after intermediate ends the item", "a" + C1_CSI + " 12b", "a12b"),
+    ("nF symbol final goes", "a" + ESC + "(@b", "ab"),
+    (
+        "nF key after ESC space",
+        "id" + ESC + " AKIA" + "IOSFODNN7EXAMPLE",
+        "id AKIA" + "IOSFODNN7EXAMPLE",
+    ),
     ("nF no final", "a" + ESC + "(" + LF + "b", "a(" + LF + "b"),
-    ("Fp", "a" + ESC + "7b", "ab"),
-    ("Fe", "a" + ESC + "Mb", "ab"),
-    ("Fs", "a" + ESC + "cb", "ab"),
+    ("Fp digit stays", "a" + ESC + "7b", "a7b"),
+    ("Fp symbol goes", "a" + ESC + "=b", "ab"),
+    ("Fe upper-case letter goes", "a" + ESC + "Mb", "ab"),
+    ("Fe symbol goes", "a" + ESC + "\\b", "ab"),
+    ("Fs letter stays", "a" + ESC + "cb", "acb"),
+    ("Fs symbol goes", "a" + ESC + "~b", "ab"),
     ("lone ESC at end", "a" + ESC, "a"),
     ("lone ESC before non-ASCII", "a" + ESC + "\u00e9", "a\u00e9"),
     ("lone ESC before LF", "a" + ESC + LF + "b", "a" + LF + "b"),

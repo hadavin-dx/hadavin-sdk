@@ -46,6 +46,9 @@ CUT_MARGIN = 8192
 # text costs 1 to 4 s at the cap and every extra view repeats that. Checked between the passes, NOT inside one: a single
 # pass can run about 7 s on a hostile text, so one call can take up to the budget plus one pass, and `clean()` makes two
 # calls (the text and its tag-stripped view).
+MAX_SWALLOWED_CHARS = (
+    20_000  # characters a text may have swallowed by sequences and still get the character reading
+)
 REDACT_BUDGET_S = 6.0
 
 

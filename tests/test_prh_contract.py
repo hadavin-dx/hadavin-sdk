@@ -9,7 +9,13 @@ character is written as an escape."""
 
 from __future__ import annotations
 
+import functools
+import importlib
+import json
 import re
+import unicodedata
+import urllib.parse
+from pathlib import Path
 
 import pytest
 
@@ -17,6 +23,7 @@ from hadavin_sdk import tools
 from hadavin_sdk.approvals import channel as channel_mod
 from hadavin_sdk.guard import runmap
 from tests import hidden_oracle as oracle
+from tests import record_prh_main as rec
 
 ESC, BEL = "\x1b", "\x07"
 KEY = "AKIA" + "IOSFODNN7EXAMPLE"
@@ -282,3 +289,189 @@ def test_mf_no_hidden_item_in_the_output_of_the_choke_point():
     for text in ("a" + BEL + "b", "a" + ESC + "[31mred" + ESC + "[0m", "x\x9b0my"):
         out = runmap.redact_untrusted(text, {})
         assert not any(c in oracle.REMOVED or c in oracle.SPACE_LIKE for c in out), out
+
+
+# ---- T1: the generator over every kind, item, offset, run, encoding and pair -------------------------------------------
+
+FIXTURES = Path(__file__).parent / "fixtures"
+redact_mod = importlib.import_module("hadavin_sdk.guard.redact")
+IGNORABLE = oracle.derive_ignorable()
+
+
+@functools.cache
+def _main_verdicts() -> dict[str, str]:
+    return json.loads((FIXTURES / "prh_main_verdicts.json").read_text(encoding="utf-8"))
+
+
+def _reading(case: rec.Case) -> str:
+    """The text as it reads once the hidden items are removed (the oracle's joined reading), the percent token of the
+    design-M2 row decoded, the ignorable characters dropped and NFKC applied (what the package's matching reads)."""
+    base = case.decoded
+    joined = oracle.readings(base)[0]
+    if case.axis == "m2":
+        joined = urllib.parse.unquote(joined)
+    norm = unicodedata.normalize("NFKC", joined)
+    return "".join(c for c in norm if ord(c) not in IGNORABLE)
+
+
+def _expected(case: rec.Case) -> tuple[str, str]:
+    """("masked", "") or ("not_promised", reason); computed by the oracle and the package's own `redact()`, never by the
+    implementation under test."""
+    reading = _reading(case)
+    if case.value not in reading:
+        return "not_promised", "value_not_whole_in_the_joined_reading"
+    # a canonical view drops the ignorable characters of the ORIGINAL text before it removes hidden items, so an escape
+    # can be completed there (`ESC`, zero-width space, `e` reads `ESC e` once the space-like character is gone)
+    dropped = "".join(c for c in case.decoded if ord(c) not in IGNORABLE)
+    if case.value not in "".join(c for c in oracle.readings(dropped)[0] if ord(c) not in IGNORABLE):
+        return "not_promised", "escape_completed_by_the_removal_of_an_ignorable"
+    if case.kind != "handed" and not rec.masked(redact_mod.redact(reading).text, case.value):
+        return "not_promised", "patterns_do_not_mask_the_plain_value"
+    return "masked", ""
+
+
+@functools.cache
+def _results() -> dict:
+    """One run of every case on every path of its kind: {case id: {path: masked on the branch}}, the expected classes
+    and the count of forgery shapes seen."""
+    all_cases = rec.cases()
+    out: dict = {"masked": {}, "class": {}, "forged": [], "cases": all_cases}
+    for case in all_cases:
+        out["class"][case.id] = _expected(case)
+        per_path = {}
+        for path in rec.PATHS_FOR[case.kind] + (("direct",) if case.kind != "handed" else ()):
+            text = rec.evaluate(path, case)
+            per_path[path] = rec.masked(text, case.value)
+            if text is not None and path in ("untrusted", "tool", "error"):
+                for form in (text, runmap.canonical(text)):
+                    if runmap._MARKER.search(form):
+                        out["forged"].append((case.id, path))
+        out["masked"][case.id] = per_path
+    return out
+
+
+def _path_masks_reading(case: rec.Case, path: str) -> bool:
+    """Does this path mask the plain reading of the same case (the text with the hidden items removed)? The card, for
+    one, shows an e-mail address as written, and does not read full-width letters as ASCII: a hidden item changes
+    nothing about that, so such a path is not promised for the case. The direct callers (`redact()`) read the escape
+    sequences and nothing else (no other control character, no percent decoding): their plain reading is that one."""
+    if path == "direct":
+        reading = oracle.readings(case.decoded, sequences_only=True)[0]
+    else:
+        reading = oracle.readings(case.decoded)[0]
+        if case.axis == "m2":
+            reading = urllib.parse.unquote(reading)
+    clean = rec.Case("reading", reading, case.kind, case.value, (path,), reading)
+    return rec.masked(rec.evaluate(path, clean), case.value)
+
+
+def _plain_readings(case: rec.Case, path: str) -> list[str]:
+    """The plain readings of a case a path could be asked to mask: the text with the hidden items removed as the grammar
+    removes them, and the text with every control character deleted on its own (what main's cleaning did); a direct
+    caller reads sequences only. Only a reading that holds the value whole counts (a garbled one cannot be masked)."""
+    if path == "direct":
+        found = [oracle.readings(case.decoded, sequences_only=True)[0]]
+    else:
+        chars = "".join(
+            " " if c in oracle.SPACE_LIKE else c for c in case.decoded if c not in oracle.REMOVED
+        )
+        found = [oracle.readings(case.decoded)[0], chars]
+        if case.axis == "m2":
+            found = [urllib.parse.unquote(f) for f in found]
+    return [f for f in dict.fromkeys(found) if case.value in f]
+
+
+def _plain_masked(case: rec.Case, path: str) -> bool:
+    """Does this path mask at least one plain reading that holds the value whole? (If none does, main masked the value
+    only by deleting the text around a string sequence, and no hidden item is to blame.)"""
+    for reading in _plain_readings(case, path):
+        clean = rec.Case("reading", reading, case.kind, case.value, (path,), reading)
+        if rec.masked(rec.evaluate(path, clean), case.value):
+            return True
+    return False
+
+
+def _failures(axes: set[str]) -> tuple[list[str], int]:
+    res = _results()
+    bad, counted = [], 0
+    for case in res["cases"]:
+        if (case.axis in axes) and res["class"][case.id][0] == "masked":
+            for path in case.paths:
+                counted += 1
+                if not res["masked"][case.id][path] and _path_masks_reading(case, path):
+                    bad.append(f"{case.id} [{path}]")
+    return bad, counted
+
+
+def test_mf_masked_singles():
+    """Every single hidden item (and runs, encodings, the NFKC form and the size seams) in every kind, at every offset:
+    a value the oracle reads as whole is masked on every path of its kind."""
+    bad, counted = _failures({"single", "run", "enc", "m2", "nfkc", "seam"})
+    assert counted >= 9000, counted
+    assert not bad, f"{len(bad)} of {counted} unmasked, first: {bad[:8]}"
+
+
+def test_mf_masked_pairs():
+    """All pairs of two different items, one input each."""
+    bad, counted = _failures({"pair"})
+    assert counted >= 4465, counted
+    assert not bad, f"{len(bad)} of {counted} unmasked, first: {bad[:8]}"
+
+
+# Pairs main masked and the branch does not, listed by input and path: none. Pairs where main masked only BY DELETING the
+# text (an unterminated string sequence swallowed the value) and the same path does not mask the plain value either
+# (a flag pattern that does not read `-p`, the card showing an e-mail address as written, a direct caller reading a
+# percent-encoded key): main's mask was an accident of the swallowing, not a protection, and they are counted below.
+NO_STEP_BACK_EXCEPTIONS: set[str] = set()
+ACCIDENTAL_MAIN_MASKS = 92  # measured 2026-11-11 (PRH-wp2c-accidental.txt)
+
+
+def test_no_step_back():
+    """Everything main masks, the branch masks (fixture recorded from main, section 5.1), on every path, with the
+    direct callers (`redact()`) included; except where main masked only by deleting text and the same path does not mask
+    the plain value (counted and pinned, never silent)."""
+    res = _results()
+    verdicts = _main_verdicts()
+    worse, accidental = [], []
+    for case in res["cases"]:
+        paths = rec.PATHS_FOR[case.kind] + (("direct",) if case.kind != "handed" else ())
+        bits = verdicts[case.id]
+        assert len(bits) == len(paths), case.id
+        for path, bit in zip(paths, bits, strict=True):
+            if bit != "1" or res["masked"][case.id][path] or case.id in NO_STEP_BACK_EXCEPTIONS:
+                continue
+            (worse if _plain_masked(case, path) else accidental).append(f"{case.id} [{path}]")
+    assert not worse, f"{len(worse)} masked on main and not on the branch, first: {worse[:8]}"
+    assert len(accidental) == ACCIDENTAL_MAIN_MASKS, len(accidental)
+
+
+# counted per reason: the class of "not promised" cannot grow silently
+NOT_PROMISED = {  # measured 2026-11-11 over 17,907 cases (PRH-wp2c-notpromised.txt); each reason is a class, not a case list
+    "enc:value_not_whole_in_the_joined_reading": 216,
+    "m2:escape_completed_by_the_removal_of_an_ignorable": 65,
+    "m2:value_not_whole_in_the_joined_reading": 34,
+    "nfkc:escape_completed_by_the_removal_of_an_ignorable": 150,
+    "nfkc:value_not_whole_in_the_joined_reading": 48,
+    "pair:escape_completed_by_the_removal_of_an_ignorable": 2,
+    "pair:patterns_do_not_mask_the_plain_value": 610,
+    "pair:value_not_whole_in_the_joined_reading": 481,
+    "run:value_not_whole_in_the_joined_reading": 24,
+    "single:patterns_do_not_mask_the_plain_value": 697,
+    "single:value_not_whole_in_the_joined_reading": 1610,
+}
+
+
+def test_not_promised_counts():
+    res = _results()
+    counts: dict[str, int] = {}
+    for case in res["cases"]:
+        cls, reason = res["class"][case.id]
+        if cls == "not_promised":
+            key = f"{case.axis}:{reason}"
+            counts[key] = counts.get(key, 0) + 1
+    assert counts == NOT_PROMISED, counts
+
+
+def test_no_result_marker_shape_in_any_output():
+    """T3 over every output of the generator: no result-marker shape, as written or in its canonical form."""
+    assert _results()["forged"] == []

@@ -23,7 +23,16 @@ from urllib.parse import unquote
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard import hidden
-from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, mask_spans, redact
+from hadavin_sdk.guard.redact import (
+    ARN_TAIL,
+    MAX_DECODED_MASKS,
+    PATTERNS,
+    SECRET_KINDS,
+    gap_pattern,
+    kind_of,
+    mask_spans,
+    redact,
+)
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
 # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
@@ -436,13 +445,67 @@ def _views(text: str) -> list[str]:
     return out
 
 
+_PIECE = 5
+_MAX_SWALLOWED = defaults.MAX_SWALLOWED_CHARS
+
+
+def _swallowed_pieces(chars: str, joined: str) -> set[str] | None:
+    """The `_PIECE`-character pieces of the text the grammar's reading removed beyond the control characters themselves
+    (the body of a string sequence, the parameters of a control sequence): `joined` is `chars` with some runs left out,
+    so one pass with two positions finds the runs. None when more than `_MAX_SWALLOWED` characters were left out (the
+    character reading is then not used: a hostile text must not make this check long)."""
+    runs: list[str] = []
+    i = j = start = 0
+    n, m = len(chars), len(joined)
+    swallowed = 0
+    while i < n:
+        if j < m and chars[i] == joined[j]:
+            if start < i:
+                runs.append(chars[start:i])
+            i += 1
+            j += 1
+            start = i
+        else:
+            swallowed += 1
+            i += 1
+            if swallowed > _MAX_SWALLOWED:
+                return None
+    if start < n:
+        runs.append(chars[start:])
+    return {r[k : k + _PIECE] for r in runs for k in range(len(r) - _PIECE + 1)}
+
+
+def _char_reading_wins(
+    shown: str,
+    new_map: dict[str, str],
+    known: dict[str, str],
+    before: dict[str, str],
+    pieces: set[str] | None,
+) -> bool:
+    """May the character reading's output replace the output of the grammar's reading? Only when
+    1. the grammar's reading found NO new value in this text (a value an escape sequence cut is what it exists for; a
+       garbled reading, `password=h` + `]0;t` + `unter2...`, finds a short wrong value and shows the rest);
+    2. it holds a value that is not a piece of one already held;
+    3. no piece of `_PIECE` or more characters of a value already held stands in it; and
+    4. it shows no piece of the text the grammar's reading removed (`pieces`; the character reading must hide more, never
+       show more, than the grammar's reading)."""
+    if pieces is None or any(ph not in before for ph in known):
+        return False
+    values = [v for v in known.values() if not v.startswith("\0seed")]
+    novel = any(not any(v in k for k in values) for ph, v in new_map.items() if ph not in known)
+    return (
+        novel
+        and not any(v[i : i + _PIECE] in shown for v in values for i in range(len(v) - _PIECE + 1))
+        and not any(shown[i : i + _PIECE] in pieces for i in range(len(shown) - _PIECE + 1))
+    )
+
+
 def _held(text: str) -> int:
     return len(PLACEHOLDER.findall(text))
 
 
 _VALUE_END = frozenset(" \t\n;&,\"'")
 _ENCODED_MARKS = ("%", chr(92), "&")
-MAX_DECODED_MASKS = 256
 
 
 def _decoded_masks(current: dict[str, str], text: str) -> list[tuple[str, str]]:
@@ -536,25 +599,6 @@ def _refuse_forgery(out: str, mapping: dict[str, str]) -> None:
             raise RedactionError("forged marker or placeholder")
 
 
-def _gap_pattern(value: str) -> re.Pattern[str]:
-    """The value as the spaced reading can hold it: its characters, with ONE optional space between two neighbouring
-    word characters (a run of hidden items between two word characters left exactly one space there, so no optional
-    space ever competes with a character of the value: at each position there is at most one way to go on, and a search is
-    linear). A value of fewer than 4 characters is matched only as a whole word, as the redactor's sweep does."""
-    parts = []
-    for i, c in enumerate(value):
-        if i and hidden.is_word(value[i - 1]) and hidden.is_word(c):
-            parts.append(" ?")
-        parts.append(re.escape(c))
-    body = "".join(parts)
-    return re.compile(body if len(value) >= 4 else r"(?<!\w)" + body + r"(?!\w)")
-
-
-gap_pattern = (
-    _gap_pattern  # the name other guard modules use (tools: the scrub of handed-out secrets)
-)
-
-
 def _held_placeholders(found_text: str, joined: str, mapping: dict[str, str]) -> list[str]:
     """The placeholders this find pass put into `found_text` (one that stands in the text as written does not count)."""
     out: list[str] = []
@@ -575,7 +619,7 @@ def _redact_stripped(
     3. "Needed" = the held values whose text does not occur as written in `spaced` (a value that does is masked by the
        sweep of known values in step 6) and that are not seed entries.
     4. More than `MAX_DECODED_MASKS` needed values: `InputTooLarge`, nothing shown.
-    5. Each needed value is looked for in `spaced` by its gap pattern (`_gap_pattern`); every match is a span and the one
+    5. Each needed value is looked for in `spaced` by its gap pattern (`redact.gap_pattern`); every match is a span and the one
        span rule (`redact.mask_spans`) puts the placeholders in.
     6. The mask pass over that text with the map of the find pass. If a held value is then missing (not standing, and
        not inside a placeholder that took its place) the text is refused (`RedactionError`), never the joined result:
@@ -595,7 +639,7 @@ def _redact_stripped(
     spans: list[tuple[int, int, str]] = []
     for ph in needed:
         spans.extend(
-            (m.start(), m.end(), ph) for m in _gap_pattern(found.mapping[ph]).finditer(spaced)
+            (m.start(), m.end(), ph) for m in gap_pattern(found.mapping[ph]).finditer(spaced)
         )
     work = dict(found.mapping)
     masked = mask_spans(spaced, spans, work) if spans else spaced
@@ -671,6 +715,28 @@ def redact_text(
         cleaned: list[str] = []
         if joined is not text and hidden.strip(e_text)[0] not in (e_joined, e_spaced):
             cleaned.append(_no_created_shapes(text, e_text))
+            # and the readings of that reading (its percent, entity and NFKC forms): `%4` + a form feed + `1KIA...`
+            if not e_text.isascii() or any(c in e_text for c in "\\%&"):
+                cleaned += [
+                    _no_created_shapes(e_text, v)
+                    for v in _views(e_text)
+                    if v not in (e_joined, e_spaced) and v not in views
+                ]
+        # The character reading (`hidden.strip_characters`: every control character deleted on its own, no sequence read)
+        # is what main saw: a value that an escape sequence cut in the grammar's reading (a string that swallows the rest
+        # of its line, an ESC that takes the letter after it) is found there. It is used only under the rule of
+        # `_char_reading_wins`. PR H: no step back from main.
+        char_views: dict[str, tuple[str, str]] = {}
+        if joined is not text:
+            chars = esc(hidden.strip_characters(text))
+            if chars not in (e_joined, e_spaced) and chars not in cleaned:
+                char_views[_no_created_shapes(text, chars)] = (chars, e_joined)
+                cleaned.append(_no_created_shapes(text, chars))
+        # the same for every decoded reading that holds a hidden item (`%C2%90` decodes to a string opener)
+        for v in views:
+            if hidden.ANY.search(v) and (c := esc(hidden.strip_characters(v))) not in views:
+                char_views[_no_created_shapes(v, c)] = (c, esc(hidden.strip(v)[0]))
+                cleaned.append(_no_created_shapes(v, c))
         if neutralise is not None:
             for v in views:
                 if (
@@ -717,7 +783,13 @@ def redact_text(
             vs = vj if same else _keep_earlier_masks(esc(vs), pairs, work)
             again, again_map = _redact_stripped(vj, vs, work, cache, started)
             # a new value, or a known one only the view spells in a way pass one could not read
-            if again_map != current or _held(again) > _held(out):
+            if (
+                _char_reading_wins(
+                    again, again_map, current, mapping, _swallowed_pieces(*char_views[view])
+                )
+                if view in char_views
+                else again_map != current or _held(again) > _held(out)
+            ):
                 out, current = again, again_map
                 # the values this reading found are carried into the readings still to come, so a later reading that
                 # finds less does not replace the output with one that has lost them

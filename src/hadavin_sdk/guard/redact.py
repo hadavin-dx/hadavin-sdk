@@ -26,6 +26,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
+from hadavin_sdk.guard import hidden
 from hadavin_sdk.guard.hidden import strip_sequences
 
 # Ordered deliberately: the greedy/most-specific patterns run before the narrow ones, otherwise a
@@ -827,6 +828,24 @@ def strip_ansi(text: str) -> str:
     return strip_sequences(text)
 
 
+# At most this many values a text may need masked by their gap pattern (a hostile text must not make the search long).
+MAX_DECODED_MASKS = 256
+
+
+def gap_pattern(value: str) -> re.Pattern[str]:
+    """The value as the spaced reading can hold it: its characters, with ONE optional space between two neighbouring
+    word characters (a run of hidden items between two word characters left exactly one space there, so no optional
+    space ever competes with a character of the value: at each position there is at most one way to go on, and a search is
+    linear). A value of fewer than 4 characters is matched only as a whole word, as the redactor's sweep does."""
+    parts = []
+    for i, c in enumerate(value):
+        if i and hidden.is_word(value[i - 1]) and hidden.is_word(c):
+            parts.append(" ?")
+        parts.append(re.escape(c))
+    body = "".join(parts)
+    return re.compile(body if len(value) >= 4 else r"(?<!\w)" + body + r"(?!\w)")
+
+
 @dataclass
 class RedactionResult:
     text: str
@@ -905,11 +924,47 @@ class _Redactor:
             self._ordered, self._rules, self._finders, self._slow = cache["state"]
             self._built_for = len(self.mapping)
 
-    def find(self, text: str) -> str:
-        out = strip_ansi(text)
+    def _patterns(self, text: str) -> str:
         for label, pattern in PATTERNS:
-            out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
-        return out
+            text = pattern.sub(lambda m, label=label: self._mask(m, label), text)
+        return text
+
+    def find(self, text: str) -> str:
+        """Every value the patterns find, replaced by its placeholder. The one choke point of every caller of `redact` and
+        `redact_many`, so the escape sequences in `text` are read here (PR H), in two readings:
+
+        * the *joined* reading (sequences removed, nothing left in their place): values are FOUND in it;
+        * the *spaced* reading (one space where a sequence stood between two word characters): the text the reader is
+          given, so values the joined reading found are MASKED in it, by their gap pattern;
+
+        A value found in the joined reading that the spaced reading cannot show whole is not lost: the joined result is
+        returned (the boundaries are lost, the value stays masked)."""
+        joined, spaced = hidden.sequence_readings(text)
+        return self._patterns(spaced) if joined == spaced else self._find_readings(joined, spaced)
+
+    def _find_readings(self, joined: str, spaced: str) -> str:
+        found = self._patterns(joined)
+        held = {
+            ph
+            for ph in dict.fromkeys(_PLACEHOLDER.findall(found))
+            if ph in self.mapping and found.count(ph) > joined.count(ph)
+        }
+        needed = [
+            self.mapping[ph]
+            for ph in held
+            if not self.mapping[ph].startswith("\0seed") and self.mapping[ph] not in spaced
+        ]
+        if len(needed) > MAX_DECODED_MASKS:
+            return found
+        spans: list[tuple[int, int, str]] = []
+        for ph in held:
+            if self.mapping[ph] in needed:
+                matches = list(gap_pattern(self.mapping[ph]).finditer(spaced))
+                if not matches:
+                    return found
+                spans.extend((m.start(), m.end(), ph) for m in matches)
+        masked = mask_spans(spaced, spans, self.mapping, _redactor=self) if spans else spaced
+        return self._patterns(masked)
 
     def _mask(self, m: re.Match[str], label: str) -> str:
         """One match of `label`'s pattern, its value replaced by its placeholder (a new one when it is new)."""

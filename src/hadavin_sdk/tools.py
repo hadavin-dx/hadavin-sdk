@@ -915,6 +915,14 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
         if joined is raw:
             return _scrub_layers(raw, long_enough, scrub)
         found = _scrub_layers(joined, long_enough, scrub)
+        # The character reading (every control character deleted on its own, what main saw) can hold a secret whole that
+        # the grammar's reading does not: `ESC` + `T` + `r0ub4dor...` reads `ESC T` as one escape and eats the `T`. A handed-out
+        # secret is an exact string, so a find there is never a false one: when that reading finds more, it is the result.
+        chars = hidden.strip_characters(raw)
+        if chars != joined:
+            alt = _scrub_layers(chars, long_enough, scrub)
+            if alt.count(MARKER) - chars.count(MARKER) > found.count(MARKER) - joined.count(MARKER):
+                return alt
         if found == joined:
             return raw
         forms = sorted({f for x in long_enough for f in _secret_forms(x)}, key=len, reverse=True)

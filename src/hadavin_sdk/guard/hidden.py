@@ -64,7 +64,8 @@ _CSI_DROP = _chars(
 _ANY = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\u2028\u2029]")
 ANY = _ANY  # public name: `ANY.search(text)` is None when the text holds no removed or space-like item
 _SEQ_ANY = re.compile(r"[\x1b\x90\x98\x9b\x9d-\x9f]")
-_CSI_PARAMS = re.compile(r"[\x20-\x3f]*")
+_CSI_PARAMS = re.compile(r"[\x30-\x3f]*([\x20-\x2f]*)")
+_CSI_INTER = re.compile(r"()[\x20-\x2f]*")
 # where a string sequence can end: ST, CAN, SUB, BEL (OSC only), ESC, a line end
 _STRING_END_OSC = re.compile(r"[\x07\x18\x1a\x1b\x9c\n\r]")
 _STRING_END = re.compile(r"[\x18\x1a\x1b\x9c\n\r]")
@@ -133,14 +134,19 @@ is_word = _is_word  # public name: the redactor's gap pattern puts a space only 
 
 
 def _csi_end(text: str, k: int) -> int:
-    """The end of a control sequence whose body starts at `k`: parameter and intermediate bytes (0x20-0x3F), then one
-    final byte (0x40-0x7E) that is part of the item. CAN or SUB abort it and go with it; a dropped C0 character or DEL
-    is part of the item and the sequence goes on; anything else (a line end, ESC, a C1 or non-ASCII character) ends the
-    item BEFORE that character, which is then read afresh. The end of the text ends it."""
+    """The end of a control sequence whose body starts at `k`, in the order ECMA-48 gives: parameter bytes (0x30-0x3F), then
+    intermediate bytes (0x20-0x2F), then one final byte (0x40-0x7E) that is part of the item. A parameter byte after an
+    intermediate byte is out of order: the item ends BEFORE it and that byte is read afresh as text (a letter or digit
+    after `ESC [` and a space is the start of a value, and main kept it). CAN or SUB abort the sequence and go with it;
+    a dropped C0 character or DEL is part of the item and the sequence goes on; anything else (a line end, ESC, a C1 or
+    non-ASCII character) ends the item BEFORE that character, which is then read afresh. The end of the text ends it."""
     n = len(text)
+    inter = False
     while k < n:
-        params = _CSI_PARAMS.match(text, k)
-        k = params.end() if params else k
+        run = (_CSI_INTER if inter else _CSI_PARAMS).match(text, k)
+        if run is not None:
+            inter = inter or bool(run.group(1))
+            k = run.end()
         if k >= n:
             return n
         c = text[k]
@@ -185,15 +191,22 @@ def _item_end(text: str, i: int) -> int:
         return _csi_end(text, j + 1)
     if d in _ESC_STRING:
         return _string_end(text, j + 1, _ESC_STRING[d])
-    if "\x20" <= d <= "\x2f":  # nF: intermediates, then one final byte 0x30-0x7E
+    if (
+        "\x20" <= d <= "\x2f"
+    ):  # nF: intermediates, then one final byte 0x30-0x7E (kept as text when a letter or digit, D-026)
         k = j
         while k < n and "\x20" <= text[k] <= "\x2f":
             k += 1
-        return (
-            k + 1 if k < n and "\x30" <= text[k] <= "\x7e" else i + 1
-        )  # no final byte: only the ESC goes
+        if k < n and "\x30" <= text[k] <= "\x7e" and not text[k].isalnum():
+            # D-026 (as built): a letter or digit after the intermediates is not a final byte here: it may be the start of a
+            # value (ESC, space, then a key), and the intermediates may be part of it (a dash in an id). Only the ESC goes.
+            return k + 1
+        return i + 1  # no final byte, or a letter or digit: only the ESC goes
     if "\x30" <= d <= "\x7e":  # Fp, Fe, Fs (and a stray ESC backslash)
-        return j + 1
+        # A digit or lower-case letter stays as text, as in main (`ESC e` + `yJ...` keeps the `e` of a token); an upper-case
+        # letter is a C1 function (ESC `M` moves the cursor up) and goes, as in main: it is ambiguous with the first letter of
+        # a value, which main loses too (D-026 gave the same rule for the last byte of an nF sequence).
+        return j if (d.isalnum() and not d.isupper()) else j + 1
     return i + 1  # a lone ESC; the next character is read afresh
 
 
@@ -262,3 +275,20 @@ def strip_sequences(text: str) -> str:
     U+009E, U+009F, and a lone ESC); every other character stays as written. A space is left where a run of them stood
     between two word characters. Idempotent."""
     return _scan(text, True)[1]
+
+
+def sequence_readings(text: str) -> tuple[str, str]:
+    """The joined and the spaced reading of `text` with ONLY the escape sequences removed (the same two readings as
+    `strip`, for the callers that read sequences and nothing else). The same object twice when they are equal."""
+    return _scan(text, True)
+
+
+_CHAR_TABLE = {**dict.fromkeys(map(ord, REMOVED_CHARS)), **dict.fromkeys(map(ord, SPACE_LIKE), " ")}
+
+
+def strip_characters(text: str) -> str:
+    """The *character reading*: every removed character deleted ON ITS OWN (an escape sequence is not read as one, so the
+    text a sequence would swallow and the letter after an ESC stay), every space-like character one space. It is what
+    main's callers saw. The redactor searches it as one more reading and uses it only when it shows a value the
+    grammar's reading cannot and hides none the grammar's reading holds (PR H, no step back from main). Idempotent."""
+    return text.translate(_CHAR_TABLE) if _ANY.search(text) else text
