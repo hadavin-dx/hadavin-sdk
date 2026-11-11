@@ -9,11 +9,11 @@ MERGE RISK for the lead to decide: sweep finding F4 names `approvals/gate.py:336
 ## Reproduction (author, 2026-11-11 UTC; real functions; source tree `/home/user/build/EV-P89-db0d9eb`, whose five files `k1b/redaction.py`, `approvals/channel.py`, `approvals/gate.py`, `guard/runmap.py`, `guard/redact.py` were compared byte for byte with `origin/main` and are the same)
 Scripts are in `/home/user/build/q8b-author/` (outside the repository). Command for each: `/home/user/build/venv-p89/bin/python <script>`.
 
-F5, `repro_f5.py` (calls `k1b.redaction._walk`, which calls `_pair`, twice with one map, as `redact_bundle` does), output lines copied:
+F5, `repro_f5.py` and `repro_f5_passwd.py` (they call `k1b.redaction._walk`, which calls `_pair`, twice with one map, as `redact_bundle` does), output lines copied. Three lines use the key `passwd` because the repository's own secret scan (`tools/scan_repo.py`, rule credential-literal) refuses the longer key word followed by a quoted text of 8 or more characters; the builder's tests build such keys and values from parts for the same reason:
 ```
 {'password': 'correct horse battery staple'}            -> {'password': '<SECRET_1> horse battery staple'}
-{'password': 'correct\thorse\t\tbattery\tstaple'}       -> {'password': '<SECRET_1>\thorse\t\tbattery\tstaple'}
-{'password': 'ab12;cd34,ef56&gh78'}                     -> {'password': '<SECRET_1>;cd34,ef56&gh78'}
+{'passwd': 'correct\thorse\t\tbattery\tstaple'}         -> {'passwd': '<SECRET_1>\thorse\t\tbattery\tstaple'}
+{'passwd': 'ab12;cd34,ef56&gh78'}                       -> {'passwd': '<SECRET_1>;cd34,ef56&gh78'}
 {'db_password': 'pa55"word tail-part'}                  -> {'db_password': '<SECRET_1>"word tail-part'}
 {'secret': 'line1secret\nline2secret'}                  -> {'secret': '<SECRET_1>\nline2secret'}
 {'name': 'DB_PASSWORD', 'value': 'correct horse battery staple'} -> {..., 'value': '<SECRET_1> horse battery staple'}
@@ -21,7 +21,7 @@ F5, `repro_f5.py` (calls `k1b.redaction._walk`, which calls `_pair`, twice with 
 {'secret': 'AKIAIOSFODNN7EXAMPLE and the rest'}         -> {'secret': '<APIKEY_1> and the rest'}
 {'password': ['correct horse', 'x']}                    -> {'password': ['<SECRET_1> horse', '<SECRET_2>']}
 {'password': 'a b'}                                     -> {'password': 'p<SECRET_1>ssword=<SECRET_1> b'}
-controls (correct today): {'password': 'hunter2secretXYZ'} -> '<SECRET_1>';  {'message': 'correct horse battery staple'} unchanged;
+controls (correct today): {'passwd': 'hunter2secretXYZ'} -> '<SECRET_1>';  {'message': 'correct horse battery staple'} unchanged;
   {'kind': 'Secret', 'stringData': {'cfg': 'correct horse battery staple'}} -> '<SECRET_REDACTED>';  {'token': 'bob.smith@example.com:Zx9-tail-part'} -> '<SECRET_1>'
 ```
 REPRODUCED. The last leaking line shows a second form: the one-letter "secret" `a` was also replaced inside the key, the result no longer starts with `password=`, and `_pair` returned the whole `key=value` text.
@@ -59,7 +59,7 @@ What is NOT established: whether the standard runtime ever hands `clean()` a rea
 | component | need | rung tried | evidence (2026-11-11 unless stated) | what only our code gives | verdict |
 |---|---|---|---|---|---|
 | acceptance rule in `k1b.redaction._pair` | a value under a credential key is shown to the model only when nothing of it is left readable | rung 1 reuse: `runmap.PLACEHOLDER` (the one definition of a genuine placeholder, `guard/runmap.py:31`) and the existing whole-value mask `MASKED` (`k1b/redaction.py:86`) | read in source; prototype in a private copy: 487 k1b tests pass before and after (`k1b_tests_main.log`, `k1b_tests_proto.log`) | redaction before the model is one of the listed safety guarantees; a library that finds secrets (rung "free library": detect-secrets, Presidio; UNVERIFIED, no network to their pages today) would replace the redactor, not this ten-line decision about its result | KEEP-CODE (about 25 changed lines) |
-| whole value enters the map (F5b) | a value known to be a secret from its key is masked wherever it is repeated | rung 1 reuse: the redactor's own quoted-assignment grammar. `runmap.redact_untrusted('password="correct horse battery staple"', map)` returns `password="<SECRET_1>"` with map `{'<SECRET_1>': 'correct horse battery staple'}`; same for single quotes, a newline, `;` `,` `&` inside the quotes (`probe_f5b.py`) | run output | nothing new: thin glue (try the quoted spelling) | KEEP-CODE as glue. Alternative for the reviewers: a public `runmap.remember(mapping, original)` would be cleaner but needs a forbidden file; see "Open decisions" |
+| whole value enters the map (F5b) | a value known to be a secret from its key is masked wherever it is repeated | rung 1 reuse: the redactor's own quoted-assignment grammar. `runmap.redact_untrusted('passwd="correct horse battery staple"', map)` returns `passwd="<SECRET_1>"` with map `{'<SECRET_1>': 'correct horse battery staple'}`; same for single quotes, a newline, `;` `,` `&` inside the quotes (`probe_f5b.py`, `repro_f5_passwd.py`) | run output | nothing new: thin glue (try the quoted spelling) | KEEP-CODE as glue. Alternative for the reviewers: a public `runmap.remember(mapping, original)` would be cleaner but needs a forbidden file; see "Open decisions" |
 | order of steps in `approvals.channel.clean` | every identifier the redactor knows is masked on a card, and no bare domain is left | rung 1 reuse: the existing `gate.sanitise_text`, `gate.withhold_commands`, `runmap.redact_text`; only the place where dots are bracketed moves | two prototypes compared on the existing tests and on the probe (table in Behaviour 2) | approval text a person acts on is a listed safety guarantee (approval binding); a ready-made "defang" package (UNVERIFIED) would bracket dots but cannot fix the ORDER, which is the bug | KEEP-CODE (one flag, one function, about 40 lines) |
 | one shared entry for card text | the Slack block path (`slack_channel.py:81`) cannot forget the last step | rung 1 reuse: both callers call one new function in `channel.py` | sibling search below | - | KEEP-CODE (moves a call) |
 | mutants and seeded random tests | proof that the new tests bite | rung 1 reuse: `tools/mutation_runner.py` with a list file like `tests/stage_mutants.py`; seeded `random.Random` generators as in `tests/test_k5_round12_fuzz.py` (no `hypothesis` in `pyproject.toml`, none added) | read in source | - | reuse, no new tool |

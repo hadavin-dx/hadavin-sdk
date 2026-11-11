@@ -1181,6 +1181,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-P3a2 a9c85255 | EVIDENCE RUNNER (Fable) core/P3a-2-rewritten 8382bdd: full suite, fail-before on HEAD~4, mutants, probes; pg 56060 | 14:00Z | +60m | 14:00Z | running | read RESULTS.md; then ONE fix builder for round 11 findings |
 | R-Q8c-plan aac974fb, ae5f9e8d | egm zoom-out + design (Fable) plan review r1 of tickets/Q8c | 14:00Z | +20m | 14:00Z | CLOSED both saved reviews/Q8c/ | resolve; live check of permission names before any build |
 | B-P3a2 a73e15b4 | ONE builder (Fable) P3a-2 round 12 fixes, NEW branch core/P3a-2-clean from 8382bdd, pg 56070 | 14:02Z | +120m | 14:02Z | running | checkpoint 30m; then evidence + fresh reviewers r12 |
-| R-Q8a2-plan a28e17be, a0759fb8 | egm design + impl-readiness (Fable) plan review r1 tickets/Q8a-2 | 14:05Z | +20m | | running | resolve, builder |
+| R-Q8a2-plan a28e17be, a0759fb8 | egm design + impl-readiness (Fable) plan review r1 tickets/Q8a-2 | 14:05Z | +20m | | CLOSED both saved reviews/Q8a-2/; errata rev 2 | resolve, builder |
 | A-Q8c-r2 aba593de | ticket author (Fable) Q8c revision 2 (slice 1) | 14:08Z | +30m | 14:08Z | running | plan review round 2 |
 | EV-Q8c-live a9225128 | EVIDENCE RUNNER (Fable, network) live check of slice-1 permission names against vendor pages | 14:08Z | +40m | 14:08Z | running | fold verified/wrong into ticket data |
