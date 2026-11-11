@@ -232,7 +232,7 @@ How "fails on main" is proved for this ticket: the new or changed TEST files are
 11. Proof that each allow entry is needed and exact, as one parametrised test that runs on the branch: for each of the 2 new `LITERAL_OK` and 4 `IDENTIFIER_OK` entries, the scan with that one entry removed returns exactly the hit(s) it covers. (This is a property of the new guard, not a fail-on-main test; listed here so it is not forgotten.)
 
 Trigger rule and source coverage (guard functions are new or changed, so the proof is "the same call with main's guard file returns the other answer"; paste both runs):
-12. `_cov({"x": {"aws": _E()}}, {"x": ExceptionEntry("accepted", "r", t, ...)})` contains "needs a reason and a trigger" for `t` in `none`, `None `, `n/a`, `N/A`, `-`, `tbd`, a single space (main: `[]` for all, dry run 4.2 and 4.3); the same for a reason of `none`.
+12. `_cov({"x": {"aws": _E()}}, {"x": ExceptionEntry("accepted", "r", t, ...)})` contains "needs a reason and a trigger" for `t` in `none`, `None `, `n/a`, `N/A`, `-`, `tbd`, a single space (main: `[]`; the dry run, parts 4.2 and 4.3, measured this for `none`, `None `, `n/a`, `-` and a single space; `N/A` and `tbd` were not run on main); the same for a reason of `none`.
 13. `test_the_source_registry_needs_its_exception_entry` (section 3).
 
 ### Regression guards (expected to PASS on main where they can run there; exempt from the fail-on-main proof)

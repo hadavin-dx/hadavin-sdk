@@ -2572,3 +2572,4 @@
 | BL-core-p3a2-r11-c02 | Major | P3a-2-rewritten | reviews/P3a-2/r11-codebase-8382bdd.md M2 | OPEN | | | 2026-11-11 |
 | BL-core-p3a2-r11-c03 | Major | P3a-2-rewritten | reviews/P3a-2/r11-codebase-8382bdd.md M3 | OPEN | | | 2026-11-11 |
 | BL-core-p3a2-r11-c04 | Major | P3a-2-rewritten | reviews/P3a-2/r11-codebase-8382bdd.md M4 | OPEN | | | 2026-11-11 |
+| BL-core-q8deps-F2b | Major | core-main | audit verify signs at start-up (cli.py:184-190, signer.py:79-90): a sign-free verifier identity is impossible (reviews/Q8c/plan-r1-zoomout.md B2); belongs to the F2 role-split ticket | OPEN | | | 2026-11-11 |
