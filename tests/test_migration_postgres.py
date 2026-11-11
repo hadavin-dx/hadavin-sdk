@@ -2021,7 +2021,7 @@ def test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not(scr
         ) as session,
         psycopg.connect(DSN, autocommit=True) as holder,
     ):
-        holder.execute("SELECT pg_advisory_lock(%s)", (helper._hold_key(held.rsplit("_", 1)[1]),))
+        holder.execute("SELECT pg_advisory_lock(%s)", (helper._mark_key(held.rsplit("_", 1)[1]),))
         session.execute("SELECT 1")
         with psycopg.connect(DSN, autocommit=True) as db:
             dropped = helper.sweep_stale_roles(db)
@@ -2050,17 +2050,40 @@ def _databases_and_a_stale_role(count: int = 2):
                     admin.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(d)))
                     made.append(d)
             except psycopg.errors.InsufficientPrivilege:
-                pytest.fail("this test needs CREATEDB on the HADAVIN_TEST_PG_DSN login")
+                pytest.fail(
+                    "TEST SETUP PROBLEM: this test needs CREATEDB on the HADAVIN_TEST_PG_DSN login"
+                )
         yield name, names
     finally:
-        with contextlib.suppress(psycopg.Error), psycopg.connect(DSN, autocommit=True) as admin:
-            for d in made:
-                admin.execute(
-                    sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(d))
-                )
-            if _role_exists(name):
-                admin.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(name)))
-                admin.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(name)))
+        _clean_up(
+            [
+                sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(d))
+                for d in made
+            ]
+            + [
+                sql.SQL("DROP OWNED BY {}").format(sql.Identifier(name)),
+                sql.SQL("DROP ROLE IF EXISTS {}").format(sql.Identifier(name)),
+            ]
+        )
+
+
+def _clean_up(statements) -> None:
+    """Run each statement of a cleanup on its own, so that one that fails does not skip the others, and say in ONE line
+    what failed (a failed cleanup must not hide the failure of the test, and must not stay silent either)."""
+    failed = []
+    for statement in statements:
+        try:
+            with psycopg.connect(DSN, autocommit=True) as admin:
+                admin.execute(statement)
+        except psycopg.Error as e:
+            failed.append(type(e).__name__)
+    if failed:
+        print(
+            "cleanup of a test failed in "
+            + str(len(failed))
+            + " statement(s): "
+            + ", ".join(failed)
+        )
 
 
 @needs_pg
@@ -2071,7 +2094,7 @@ def test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the
     database X; a second test process sweeps from database Y of the same server: its try-lock on Y succeeds, so only
     the connection named like the role keeps the role. Killed by: mutant SW7 (the sweep does not look at the name of
     the connections)."""
-    monkeypatch.setattr(helper, "_HOLDS", {})
+    monkeypatch.setattr(helper, "_MARKS", {})
     with (
         _databases_and_a_stale_role() as (name, (db_x, db_y)),
         psycopg.connect(make_conninfo(DSN, dbname=db_x), autocommit=True) as in_x,
@@ -2080,18 +2103,20 @@ def test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the
         with monkeypatch.context() as as_that_process:  # only the hold is made as the other process
             as_that_process.setattr(helper, "_TOKEN", name.rsplit("_", 1)[1])
             as_that_process.setattr(helper, "PLAIN_ROLE", name)
-            helper._hold_the_role(in_x)
+            helper._mark_the_role(in_x)
         try:
             assert name not in helper.sweep_stale_roles(in_y), "a live process's role was dropped"
             assert _role_exists(name)
         finally:
-            helper._close_the_hold()
+            helper._close_the_marks()
         for _ in range(100):  # the server ends the closed session a moment later
             if name in helper.sweep_stale_roles(in_y):
                 break
             time.sleep(0.05)
         else:
-            pytest.fail("after the hold is closed the role is stale and is dropped")
+            pytest.fail(
+                "TEST SETUP PROBLEM: the server did not end the closed marking connection in 5 s, so the role never looked stale"
+            )
 
 
 @needs_pg
@@ -2205,11 +2230,11 @@ def _after_the_file_starts(marker: str, key: int, statements: list[str]):
                         break
                     time.sleep(0.05)
                 else:
-                    raise AssertionError("the file never started waiting")
+                    raise AssertionError("TEST SETUP PROBLEM: the file never started waiting")
                 waited = time.monotonic() - started
                 if waited > _SLOW_START_LIMIT:
                     raise AssertionError(
-                        f"TIMING FLAKE, not a defect: the file started waiting after {waited:.1f} s and the run's own "
+                        f"TEST SETUP PROBLEM, a timing flake and not a defect: the file started waiting after {waited:.1f} s and the run's own "
                         f"lock_timeout is 5 s, so the run may stop on that before this test changes anything; run the "
                         "test again on a quiet machine"
                     )
@@ -2535,20 +2560,23 @@ def test_the_owner_of_a_database_belongs_to_pg_database_owner_and_is_not_refused
     super_dsn, _ = scratch
     suffix = uuid.uuid4().hex[:8]
     role, database = f"hadavin_test_dbo_{suffix}", f"hadavin_test_db_{suffix}"
-    with psycopg.connect(DSN, autocommit=True) as db:
-        password = create_login_role(db, role)
-        db.execute(
-            sql.SQL("CREATE DATABASE {} OWNER {}").format(
-                sql.Identifier(database), sql.Identifier(role)
+    try:  # opened before anything is made, so a failure half way still cleans up
+        with psycopg.connect(DSN, autocommit=True) as db:
+            password = create_login_role(db, role)
+            db.execute(
+                sql.SQL("CREATE DATABASE {} OWNER {}").format(
+                    sql.Identifier(database), sql.Identifier(role)
+                )
             )
-        )
-    try:
         dsn = make_conninfo(super_dsn, user=role, password=password, dbname=database, options="")
         assert mig.migrate(dsn) == REAL
     finally:
-        with psycopg.connect(DSN, autocommit=True) as db:
-            db.execute(sql.SQL("DROP DATABASE {} WITH (FORCE)").format(sql.Identifier(database)))
-            db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
+        _clean_up(
+            [
+                sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(database)),
+                sql.SQL("DROP ROLE IF EXISTS {}").format(sql.Identifier(role)),
+            ]
+        )
 
 
 @needs_pg
@@ -2645,3 +2673,227 @@ def test_the_plain_test_role_and_what_it_owns_are_dropped_when_the_process_exits
             if _role_exists(role):
                 db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(role)))
                 db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
+
+
+# --- rights read back for every role (round 9): a right for a role the run does not name is refused --------------
+
+
+def _acl_of(dsn, schema: str, relation: str) -> list[str]:
+    with psycopg.connect(dsn, autocommit=True) as db:
+        return [
+            r[0]
+            for r in db.execute(
+                "SELECT (aclexplode(c.relacl)).grantee::regrole::text FROM pg_class c "
+                "JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = %s AND c.relname = %s",
+                (schema, relation),
+            )
+        ]
+
+
+@needs_pg
+@pytest.mark.parametrize(
+    "grant",
+    [
+        "GRANT SELECT ON audit_entries TO {other};",
+        "GRANT SELECT ON audit_entries TO PUBLIC;",
+        "GRANT SELECT (seq) ON audit_entries TO {other};",
+        "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+        "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+        "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+    ],
+)
+@pytest.mark.parametrize("with_roles", [False, True])
+def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+    scratch, monkeypatch, tmp_path, grant, with_roles
+):
+    """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+    three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+    role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+    AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+    dsn, _schema = scratch
+    other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+    _create_roles(other)
+    try:
+        _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+        roles = {}
+        if with_roles:
+            run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+            _create_roles(run_as)
+            roles = {"runtime_role": run_as}
+        try:
+            with pytest.raises(ConfigError, match="rights in schema") as e:
+                mig.migrate(dsn, **roles)
+            text = str(e.value)
+            assert "Nothing was changed." in text
+            assert ("PUBLIC holds" in text) == ("PUBLIC" in grant or "FUNCTION" in grant)
+            assert (f"{other} holds" in text) == ("{other}" in grant)
+            assert "0006_grant" not in (_ledger(dsn) or [])
+        finally:
+            if with_roles:
+                _drop_roles(roles["runtime_role"])
+    finally:
+        _drop_roles(other)
+
+
+@needs_pg
+def test_the_named_roles_and_the_owner_may_hold_rights_and_a_function_loses_the_default_for_everyone(
+    scratch,
+):
+    """The three named roles keep what the grant map gives; the default right 'everyone may call it' of the trigger
+    function is removed (only the owner stays). Killed by: mutant AC5 (the default is not removed)."""
+    dsn, schema = scratch
+    run_as = "hadavin_test_ac_ok_" + uuid.uuid4().hex[:6]
+    _create_roles(run_as)
+    try:
+        assert mig.migrate(dsn, runtime_role=run_as) == REAL
+        assert run_as in _acl_of(dsn, schema, "audit_entries")
+        with psycopg.connect(dsn, autocommit=True) as db:
+            acl = db.execute(
+                "SELECT (aclexplode(p.proacl)).grantee FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace "
+                "WHERE n.nspname = %s AND p.proname = 'hadavin_audit_append_only'",
+                (schema,),
+            ).fetchall()
+        assert acl and all(g != 0 for (g,) in acl)
+    finally:
+        _drop_roles(run_as)
+
+
+@needs_pg
+def test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it(
+    scratch, monkeypatch, tmp_path
+):
+    """Such a function runs with the rights of its owner, the migration role. Refused unless its name is on
+    `REVIEWED_DEFINER_FUNCTIONS`. Killed by: mutants SD1 (not read) and SD2 (the list is not read)."""
+    dsn, _schema = scratch
+    body = (
+        "CREATE OR REPLACE FUNCTION hadavin_test_definer() RETURNS int LANGUAGE sql SECURITY DEFINER "
+        "AS $$ SELECT 1 $$;\n"
+    )
+    _with_files(monkeypatch, tmp_path, {"0006_definer.sql": body})
+    with pytest.raises(ConfigError, match="SECURITY DEFINER") as e:
+        mig.migrate(dsn)
+    assert "hadavin_test_definer" in str(e.value) and "Nothing was changed." in str(e.value)
+    assert "0006_definer" not in (_ledger(dsn) or [])
+    monkeypatch.setattr(mig, "REVIEWED_DEFINER_FUNCTIONS", frozenset({"hadavin_test_definer"}))
+    assert mig.migrate(dsn) == REAL + ["0006_definer"]
+
+
+# --- the marking connection and the sweep guard (round 9) ----------------------------------------------------------
+
+
+def _sessions_named(name: str) -> int:
+    with psycopg.connect(DSN, autocommit=True) as db:
+        return db.execute(
+            "SELECT count(*) FROM pg_stat_activity WHERE application_name = %s", (name,)
+        ).fetchone()[0]
+
+
+@needs_pg
+def test_a_marking_connection_that_died_is_opened_again_and_the_role_is_not_swept(
+    scratch, monkeypatch
+):
+    """The marking connection can die (a restart, an idle limit, `pg_terminate_backend`); without it another test run
+    would drop the role of this run while it is in use. The next connect opens it again. Killed by: mutant SW17 (a
+    dead marking connection is kept)."""
+    dsn, _schema = scratch
+    connect = helper.plain_role_connect(
+        lambda dsn, **k: psycopg.connect(dsn, autocommit=True, **k)  # as the store's `connect`
+    )
+    connect(dsn).close()
+    assert _sessions_named(helper.PLAIN_ROLE) == 1
+    with psycopg.connect(DSN, autocommit=True) as admin:
+        admin.execute(
+            "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE application_name = %s",
+            (helper.PLAIN_ROLE,),
+        )
+    deadline = time.monotonic() + 10
+    while _sessions_named(helper.PLAIN_ROLE) and time.monotonic() < deadline:
+        time.sleep(0.05)
+    assert _sessions_named(helper.PLAIN_ROLE) == 0, "the marking connection did not end"
+    connect(dsn).close()
+    assert _sessions_named(helper.PLAIN_ROLE) == 1, "the marking connection was not opened again"
+    with monkeypatch.context() as other_run, psycopg.connect(DSN, autocommit=True) as admin:
+        other_run.setattr(helper, "PLAIN_ROLE", "hadavin_test_migrator_" + uuid.uuid4().hex[:8])
+        assert helper.PLAIN_ROLE not in helper.sweep_stale_roles(
+            admin
+        )  # a run that is not this one
+    assert _role_exists(helper.PLAIN_ROLE)  # the role of this run is still there
+
+
+_OWNED_OBJECTS = {
+    "table": (
+        "CREATE TABLE public.hadavin_real_t (id int)",
+        "ALTER TABLE public.hadavin_real_t OWNER TO {}",
+    ),
+    "sequence": (  # has no row type, so only the relation clause can see it (a table is also seen by the type clause)
+        "CREATE SEQUENCE public.hadavin_real_s",
+        "ALTER SEQUENCE public.hadavin_real_s OWNER TO {}",
+    ),
+    "function": (
+        "CREATE FUNCTION public.hadavin_real_f() RETURNS int LANGUAGE sql AS 'SELECT 1'",
+        "ALTER FUNCTION public.hadavin_real_f() OWNER TO {}",
+    ),
+    "type": (
+        "CREATE TYPE public.hadavin_real_ty AS ENUM ('a')",
+        "ALTER TYPE public.hadavin_real_ty OWNER TO {}",
+    ),
+}
+
+
+@needs_pg
+@pytest.mark.parametrize("what", sorted(_OWNED_OBJECTS))
+def test_a_role_that_owns_a_table_function_or_type_outside_a_scratch_schema_is_not_swept(what):
+    """The guard looked at schemas only, but `DROP OWNED BY` also drops what a role owns inside a schema that it does not
+    own, such as `public`. Now a role that owns any such object is left alone. Killed by: mutants SG1 (tables, views and sequences
+    not looked at), SG2 (functions), SG3 (types)."""
+    create, hand_over = _OWNED_OBJECTS[what]
+    with (
+        _databases_and_a_stale_role(1) as (name, (db_x,)),
+        psycopg.connect(make_conninfo(DSN, dbname=db_x), autocommit=True) as in_x,
+    ):
+        in_x.execute(create)
+        in_x.execute(sql.SQL(hand_over.replace("{}", "{r}")).format(r=sql.Identifier(name)))
+        assert name not in helper.sweep_stale_roles(in_x)
+        assert _role_exists(name)
+        in_x.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(name)))
+        assert name in helper.sweep_stale_roles(in_x), "without it the role is swept"
+
+
+@needs_pg
+def test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new(
+    scratch, monkeypatch, tmp_path
+):
+    """The text rules read only a `CREATE FUNCTION` at the start of a statement; here a function body makes the
+    function by `EXECUTE`. What is new in the schema after the files is looked at too. Killed by: mutant SD3 (only the
+    names in the file text are looked at)."""
+    dsn, _schema = scratch
+    body = (
+        "CREATE OR REPLACE FUNCTION hadavin_test_maker() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+        "EXECUTE 'CREATE OR REPLACE FUNCTION hadavin_test_hidden() RETURNS int LANGUAGE sql SECURITY DEFINER AS $q$ SELECT 1 $q$'; "
+        "END $$;\nSELECT hadavin_test_maker();\n"
+    )
+    _with_files(monkeypatch, tmp_path, {"0006_dynamic.sql": body})
+    with pytest.raises(ConfigError, match="SECURITY DEFINER") as e:
+        mig.migrate(dsn)
+    assert "hadavin_test_hidden" in str(e.value)
+    assert "0006_dynamic" not in (_ledger(dsn) or [])
+
+
+@needs_pg
+def test_a_run_that_cannot_get_the_migration_lock_gives_up_and_names_the_holder(scratch):
+    """Any role that may connect can take the lock number and never let go. The run waits at most `lock_wait_seconds`,
+    changes nothing, and names the session that holds the lock. Killed by: mutants LW1 (the wait is not limited, caught
+    by the wiring test), LW2 (the holder is not named)."""
+    dsn, _schema = scratch
+    holder_name = "hadavin_test_lock_holder_" + uuid.uuid4().hex[:6]
+    with psycopg.connect(
+        make_conninfo(DSN, application_name=holder_name), autocommit=True
+    ) as holder:
+        holder.execute("SELECT pg_advisory_lock(%s)", (mig.MIGRATE_LOCK,))
+        started = time.monotonic()
+        with pytest.raises(ConfigError, match="waited 1 seconds for the migration lock") as e:
+            mig.migrate(dsn, lock_wait_seconds=1)
+        assert time.monotonic() - started < 30
+        assert holder_name in str(e.value) and "Nothing was changed." in str(e.value)
+    assert _ledger(dsn) is None, "nothing was made"
+    assert mig.migrate(dsn) == REAL, "after the holder is gone the run goes through"

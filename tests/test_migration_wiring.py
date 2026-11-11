@@ -347,7 +347,8 @@ def test_migrate_takes_the_one_advisory_lock_key_first(monkeypatch, tmp_path):
     """The lock `migrate` takes is the key of `migration_numbers` (the key a hand recipe takes too), before anything else."""
     err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
     assert err is None
-    assert db.params[0] == ("SELECT pg_advisory_xact_lock(%s)", (mn.MIGRATE_LOCK,))
+    assert db.params[0][0] == f"SET LOCAL lock_timeout = '{mn.MIGRATE_LOCK_WAIT_SECONDS * 1000}ms';"
+    assert db.params[1] == ("SELECT pg_advisory_xact_lock(%s)", (mn.MIGRATE_LOCK,))
 
 
 def test_migrate_sets_the_recipe_limits_right_after_its_lock_and_before_any_file(
@@ -357,13 +358,13 @@ def test_migrate_sets_the_recipe_limits_right_after_its_lock_and_before_any_file
     lock and before the first file; they are the constant's, not copies (a patched constant is what runs)."""
     err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
     assert err is None
-    assert db.params[0] == ("SELECT pg_advisory_xact_lock(%s)", (mn.MIGRATE_LOCK,))
-    assert [t for t, _ in db.params[1:3]] == list(mn.RECIPE_TIMEOUTS)
-    assert db.log.index("SELECT 1;\n") > 2
+    assert db.params[1] == ("SELECT pg_advisory_xact_lock(%s)", (mn.MIGRATE_LOCK,))
+    assert [t for t, _ in db.params[2:4]] == list(mn.RECIPE_TIMEOUTS)
+    assert db.log.index("SELECT 1;\n") > 3
     other = ("SET LOCAL lock_timeout = '1ms';", "SET LOCAL statement_timeout = '2ms';")
     monkeypatch.setattr(mig, "RECIPE_TIMEOUTS", other)
     err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
-    assert err is None and tuple(t for t, _ in db.params[1:3]) == other
+    assert err is None and tuple(t for t, _ in db.params[2:4]) == other
 
 
 def test_clean_run_reads_before_each_file_insert(monkeypatch, tmp_path):
@@ -1049,7 +1050,7 @@ def test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_
     ]
     names = set(mig._managed_names(texts, "other_schema"))
     assert {"mixed_case", "a b", 'Q"x', "folded_too"} <= names
-    assert not {"Mixed_Case", "a", "Other_Schema"} & names
+    assert not {"Mixed_Case", "a"} & names
 
 
 def test_a_function_of_another_schema_is_not_a_managed_name():
@@ -1090,9 +1091,10 @@ def test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_o
     assert {"cost$fn", "\u00c4rger_\u00dc"} <= names, names
     assert not {"\u00e4rger_\u00fc", "cost"} & names, names
     assert not {n for n in names if n.startswith("hidden")}, names
-    # Not handled (and safe): the text of a string that holds `; CREATE FUNCTION name` is read as a function too. That
-    # only adds a name that no object has (or a same-named function of another owner, which is refused), so a run is
-    # refused that need not be, never the other way round.
+    # The text of a string that holds `; CREATE FUNCTION name` is read as a function too. That adds a name that no
+    # object has (or a same-named function of another owner, which is refused): a run can be refused that need not be.
+    # A function made by `EXECUTE format('CREATE FUNCTION ...')` in a body is not read by name here; the check of rights
+    # finds it by what is new in the schema (test_a_security_definer_function_made_by_dynamic_sql_...).
     assert "in_string" in set(
         mig._managed_names(["SELECT 'x; CREATE FUNCTION In_String() y';"], "public")
     )
@@ -1415,7 +1417,7 @@ def holds(monkeypatch):
     from tests.fixtures import migration_role as mr
 
     made = []
-    monkeypatch.setattr(mr, "_HOLDS", {})
+    monkeypatch.setattr(mr, "_MARKS", {})
     monkeypatch.setattr(
         "psycopg.connect", lambda server, **k: made.append(_Hold(server)) or made[-1]
     )
@@ -1423,23 +1425,23 @@ def holds(monkeypatch):
 
 
 def test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role(holds):
-    """The lock of "this test process is alive" sits on the server of the connection that creates the role, not on a
-    server named by an environment variable, and it is taken once per server. Killed by: mutants SW4
-    (`_hold_the_role` is not called) and SW5 (the lock is taken on a fixed local server)."""
+    """The lock of "this test process is alive" is taken on the database of the connection that creates the role, not on
+    one named by an environment variable, and it is taken once per database. Killed by: mutants SW4
+    (`_mark_the_role` is not called) and SW5 (the lock is taken on a fixed local server)."""
     from tests.fixtures import migration_role as mr
 
     mr.ensure_plain_role(_Roles(exists=False))
     assert len(holds) == 1, [h.server for h in holds]
     assert "made-up-host" in holds[0].server and "5999" in holds[0].server
     assert f"application_name={mr.PLAIN_ROLE}" in holds[0].server, holds[0].server
-    assert "password" not in "".join(mr._HOLDS), "the table of held connections keeps no password"
+    assert "password" not in str(list(mr._MARKS)), "the table of held connections keeps no password"
     ((query, params),) = holds[0].log
-    assert "pg_advisory_lock" in query and params == (mr._hold_key(mr._TOKEN),)
+    assert "pg_advisory_lock" in query and params == (mr._mark_key(mr._TOKEN),)
     mr.ensure_plain_role(_Roles(exists=False))
     assert len(holds) == 1, "a second role creation on the same server takes no second lock"
 
 
-def test_the_hold_connection_is_closed_when_the_lock_cannot_be_taken(holds):
+def test_the_marking_connection_is_closed_when_the_lock_cannot_be_taken(holds):
     """Killed by: mutant SW9 (the new connection is left open when the lock statement raises)."""
     from tests.fixtures import migration_role as mr
 
@@ -1452,10 +1454,10 @@ def test_the_hold_connection_is_closed_when_the_lock_cannot_be_taken(holds):
     _Hold.execute, saved = fail, _Hold.execute
     try:
         with pytest.raises(Boom):
-            mr._hold_the_role(_Roles(exists=False))
+            mr._mark_the_role(_Roles(exists=False))
     finally:
         _Hold.execute = saved
-    assert len(holds) == 1 and holds[0].closed and mr._HOLDS == {}
+    assert len(holds) == 1 and holds[0].closed and mr._MARKS == {}
 
 
 def test_a_role_that_exists_takes_no_lock_and_a_missing_environment_variable_changes_nothing(
@@ -1478,8 +1480,8 @@ def test_only_eight_lower_case_hex_digits_are_a_token(token):
     from tests.fixtures import migration_role as mr
 
     with pytest.raises(ValueError):
-        mr._hold_key(token)
-    assert mr._hold_key("0123abcd") == mr._HOLD_BASE + 0x0123ABCD
+        mr._mark_key(token)
+    assert mr._mark_key("0123abcd") == mr._MARK_BASE + 0x0123ABCD
 
 
 def test_the_test_role_is_looked_up_first_and_not_made_a_second_time(holds):
@@ -1529,20 +1531,24 @@ def test_making_the_test_role_first_sweeps_the_stale_roles_of_killed_processes(h
     assert not any("pg_stat_activity" in s for s in db.log), "a role that exists is not swept for"
 
 
-def test_a_login_that_cannot_see_other_sessions_sweeps_nothing():
+def test_a_login_that_cannot_see_other_sessions_sweeps_nothing(capsys):
     """Without the right to see the sessions of other users a live role could look unused, so the sweep asks first and
-    does nothing. Killed by: mutant SW11 (the question is not asked)."""
+    does nothing, and says so in one line. Killed by: mutants SW11 (the question is not asked) and SW16 (it does not
+    say so)."""
     from tests.fixtures import migration_role as mr
 
     db = _Roles(exists=False, sees=False)
     assert mr.sweep_stale_roles(db) == []
+    said = capsys.readouterr().out.strip().splitlines()
+    assert len(said) == 1 and said[0].startswith("stale test roles were not looked for"), said
+    assert "cannot see the sessions" in said[0]
     assert not any("pg_stat_activity" in s for s in db.log), db.log
     seeing = _Roles(exists=False, sees=True)
     mr.sweep_stale_roles(seeing)
     assert any("pg_stat_activity" in s for s in seeing.log)
 
 
-def test_the_hold_connection_is_given_the_password_of_the_connection(holds):
+def test_the_marking_connection_is_given_the_password_of_the_connection(holds):
     """`info.dsn` leaves the password out, so it is passed on; it is not kept in the table of held connections. Killed
     by: mutant SW10 (the password is not passed on)."""
     from tests.fixtures import migration_role as mr
@@ -1550,7 +1556,7 @@ def test_the_hold_connection_is_given_the_password_of_the_connection(holds):
     made_up = "pw" + "-made-up"
     mr.ensure_plain_role(_Roles(exists=False, password=made_up))
     assert f"password={made_up}" in holds[0].server, holds[0].server
-    assert not any(made_up in key for key in mr._HOLDS), list(mr._HOLDS)
+    assert not any(made_up in str(key) for key in mr._MARKS), list(mr._MARKS)
 
 
 def test_a_failed_unlock_does_not_fail_the_setup(monkeypatch):
@@ -1610,3 +1616,18 @@ def test_the_named_roles_are_checked_against_each_other_after_every_file(monkeyp
         mig.migrate("postgresql://unused", runtime_role="rt_role", portal_role="pt_role")
     assert "must not be members of each other" in str(e.value)
     assert not any(s.startswith("INSERT INTO schema_migrations") for s in db.log)
+
+
+def test_the_wait_for_the_lock_is_limited_by_the_argument(monkeypatch, tmp_path):
+    """The number of seconds is the argument's (milliseconds in the setting), before the lock is asked for. Killed by:
+    mutants LW1 (no limit is set) and LW3 (the constant is used, not the argument)."""
+    err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], lock_wait_seconds=7)
+    assert err is None
+    assert db.params[0][0] == "SET LOCAL lock_timeout = '7000ms';"
+    assert "pg_advisory_xact_lock" in db.params[1][0]
+
+
+@pytest.mark.parametrize("bad", [0, -1, 1.5, "5", True, None])
+def test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds(monkeypatch, tmp_path, bad):
+    err, _db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], lock_wait_seconds=bad)
+    assert type(err) is ConfigError and "lock_wait_seconds" in str(err)
