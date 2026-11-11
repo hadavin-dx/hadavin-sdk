@@ -70,3 +70,7 @@ Owner switched the session to claude-fable-5-2 and said "use fable 5.2 for all a
 - M2: CHANGELOG and message recommend kubernetes sign-in; approle named as "allowed, needs a short secret id lifetime set on the Vault side; not checked by this code".
 - M3: run_tick(now=...) refused when live (same class as clock=), test + mutant.
 - Minors: timeout_s must be > 0 when given (ConfigError), Vault rule by settings type (isinstance), honest-limit wording widened, one test seam that asserts what build asks the factory for, two more mutants, sources=/tools= switched to , docstring order, formatter artefacts. factory.py:51 change accepted (recorded as a ticket deviation).
+
+## D-013 2026-11-11 14:27Z UTC: Q8c after plan review round 2 (2 Blockers, 8 Majors)
+- Decision: freeze with errata rev 3 and build only PR 1 = mechanism + Vault secrets + Vault Transit + Kubernetes (the three kinds whose names are fully found in vendor-owned sources today); PR 2 (six AWS kinds, Slack) waits for the blocked documentation hosts / a real AWS account (owner questions logged). "verified" accepts vendor-owned machine-readable sources and documentation source repositories at a pinned commit, not only rendered pages; anything else a row asserts is carried as an explicit unverified claim. Reversible (new branch; data only + tests + a tool outside src/).
+- Honest limit: the Vault engine tests cannot run on this machine (no Vault server); they are required in CI, and CI cannot be green for any PR until the six handover-bearing branches are dealt with (owner question).
