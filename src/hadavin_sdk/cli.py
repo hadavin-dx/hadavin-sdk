@@ -103,6 +103,12 @@ def _main(argv: list[str] | None = None) -> int:
     mig.add_argument(
         "--portal-role", help="grant this database role SELECT on the portal's relations only"
     )
+    mig.add_argument(
+        "--lock-wait-seconds",
+        type=_positive,
+        default=None,
+        help="how long to wait for the migration lock (seconds; for a long migration run by another session)",
+    )
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
     rep = sub.add_parser(
@@ -135,7 +141,9 @@ def _main(argv: list[str] | None = None) -> int:
         return _tick()
     cfg = load_config()
     if args.cmd == "migrate":
-        return _migrate(cfg, args.runtime_role, args.portal_role, args.purge_role)
+        return _migrate(
+            cfg, args.runtime_role, args.portal_role, args.purge_role, args.lock_wait_seconds
+        )
     reg = load_registry(cfg)
     if args.cmd in (
         "replay",
@@ -310,7 +318,11 @@ def _tick() -> int:
 
 
 def _migrate(
-    cfg, runtime_role: str | None, portal_role: str | None = None, purge_role: str | None = None
+    cfg,
+    runtime_role: str | None,
+    portal_role: str | None = None,
+    purge_role: str | None = None,
+    lock_wait_seconds: int | None = None,
 ) -> int:
     store = cfg.backends.store
     if store.kind != "postgres":
@@ -327,8 +339,10 @@ def _migrate(
     from hadavin_sdk.store.postgres import ca_file
 
     ca = ca_file(store, make("secrets", cfg.backends.secrets).get)
+    wait = {} if lock_wait_seconds is None else {"lock_wait_seconds": lock_wait_seconds}
     applied = migrate(
         dsn,
+        **wait,
         runtime_role=runtime_role,
         portal_role=portal_role,
         purge_role=purge_role,

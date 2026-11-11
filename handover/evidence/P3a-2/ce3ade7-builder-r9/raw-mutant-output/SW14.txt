@@ -1,0 +1,13 @@
+### tests/test_migration_postgres.py::test_a_stale_role_that_owns_objects_in_another_database_is_left_and_the_databases_are_named rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_stale_role_that_owns_objects_in_another_database_is_left_and_the_databases_are_named _
+tests/test_migration_postgres.py:2140: in test_a_stale_role_that_owns_objects_in_another_database_is_left_and_the_databases_are_named
+    assert name in out and db_x in out and db_y not in out, out
+E   AssertionError: stale test role hadavin_test_migrator_1b2f8c2c was not dropped: DependentObjectsStillExist; it still holds objects in: none found
+E     
+E   assert ('hadavin_test_migrator_1b2f8c2c' in 'stale test role hadavin_test_migrator_1b2f8c2c was not dropped: DependentObjectsStillExist; it still holds objects in: none found\n' and 'hadavin_test_db_2885deca' in 'stale test role hadavin_test_migrator_1b2f8c2c was not dropped: DependentObjectsStillExist; it still holds objects in: none found\n')
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_stale_role_that_owns_objects_in_another_database_is_left_and_the_databases_are_named
+1 failed in 0.57s
+

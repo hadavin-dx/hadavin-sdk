@@ -1,0 +1,12 @@
+### tests/test_migration_postgres.py::test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not ___
+tests/test_migration_postgres.py:2028: in test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not
+    assert stale in dropped and live not in dropped and held not in dropped, dropped
+E   AssertionError: ['hadavin_test_migrator_20ab65b5', 'hadavin_test_migrator_409f7837', 'hadavin_test_migrator_710bb9bd']
+E   assert ('hadavin_test_migrator_409f7837' in ['hadavin_test_migrator_20ab65b5', 'hadavin_test_migrator_409f7837', 'hadavin_test_migrator_710bb9bd'] and 'hadavin_test_migrator_e74b6deb' not in ['hadavin_test_migrator_20ab65b5', 'hadavin_test_migrator_409f7837', 'hadavin_test_migrator_710bb9bd'] and 'hadavin_test_migrator_710bb9bd' not in ['hadavin_test_migrator_20ab65b5', 'hadavin_test_migrator_409f7837', 'hadavin_test_migrator_710bb9bd'])
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not
+1 failed in 0.50s
+

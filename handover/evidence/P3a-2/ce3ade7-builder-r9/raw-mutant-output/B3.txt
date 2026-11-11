@@ -1,0 +1,12 @@
+### tests/test_migration_postgres.py::test_the_test_helper_refuses_to_take_over_a_schema_that_is_not_a_scratch_one rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_the_test_helper_refuses_to_take_over_a_schema_that_is_not_a_scratch_one _
+tests/test_migration_postgres.py:1420: in test_the_test_helper_refuses_to_take_over_a_schema_that_is_not_a_scratch_one
+    with pytest.raises(NotAScratchSchema):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE NotAScratchSchema
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_the_test_helper_refuses_to_take_over_a_schema_that_is_not_a_scratch_one
+1 failed in 0.48s
+

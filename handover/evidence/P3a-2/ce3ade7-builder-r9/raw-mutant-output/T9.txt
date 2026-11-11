@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_a_renamed_table_with_a_trigger_is_reported_as_a_renamed_table rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_a_renamed_table_with_a_trigger_is_reported_as_a_renamed_table ______
+tests/test_migration_wiring.py:572: in test_a_renamed_table_with_a_trigger_is_reported_as_a_renamed_table
+    assert "its table was renamed from t to t2" in msg, msg
+E   AssertionError: migration 0001_f1.sql changed a trigger: trigger s.t.trg no longer exists. A trigger change is refused unless this file, this table and this trigger are named, with a reason, in migrations_trigger_changes.json next to the released-files list (a reviewed change of the package)
+E   assert 'its table was renamed from t to t2' in 'migration 0001_f1.sql changed a trigger: trigger s.t.trg no longer exists. A trigger change is refused unless this fi..., with a reason, in migrations_trigger_changes.json next to the released-files list (a reviewed change of the package)'
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_renamed_table_with_a_trigger_is_reported_as_a_renamed_table
+1 failed in 0.40s
+

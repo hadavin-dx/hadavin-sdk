@@ -1,0 +1,16 @@
+### tests/test_migration_wiring.py::test_the_wait_for_the_lock_is_limited_by_the_argument rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_the_wait_for_the_lock_is_limited_by_the_argument _____________
+tests/test_migration_wiring.py:1626: in test_the_wait_for_the_lock_is_limited_by_the_argument
+    assert db.params[0][0] == "SET LOCAL lock_timeout = '7000ms';"
+E   assert "SET LOCAL lo...= '600000ms';" == "SET LOCAL lo...t = '7000ms';"
+E     
+E     - SET LOCAL lock_timeout = '7000ms';
+E     ?                           ^
+E     + SET LOCAL lock_timeout = '600000ms';
+E     ?                           ^^^
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_wait_for_the_lock_is_limited_by_the_argument
+1 failed in 0.39s
+

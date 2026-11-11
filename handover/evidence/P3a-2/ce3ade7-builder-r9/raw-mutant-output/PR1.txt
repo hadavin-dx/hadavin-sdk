@@ -1,0 +1,14 @@
+### tests/test_migration_postgres.py::test_the_printed_role_may_pass_usage_on_but_not_create rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_the_printed_role_may_pass_usage_on_but_not_create ____________
+tests/test_migration_postgres.py:2636: in test_the_printed_role_may_pass_usage_on_but_not_create
+    assert db.execute(q, (role, schema, "CREATE WITH GRANT OPTION")).fetchone() == (False,)
+E   assert (True,) == (False,)
+E     
+E     At index 0 diff: True != False
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_the_printed_role_may_pass_usage_on_but_not_create
+1 failed in 0.47s
+

@@ -1,0 +1,19 @@
+head ce3ade7 (code; evidence is committed after it), Python 3.13 and 3.12, Postgres 16.15 (own throwaway clusters), 2026-11-11
+copy of the repository: /tmp/migrate-mutants-jh_a2x8t/repo
+import path: /tmp/migrate-mutants-jh_a2x8t/repo/src/hadavin_sdk/__init__.py
+BASELINE rc=1 12 passed, 1 error in 10.37s (11.7s, 149 killer ids)
+............E
+==================================== ERRORS ====================================
+_ ERROR at setup of test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_write_all_data] _
+tests/test_migration_postgres.py:1346: in plain_role
+    db.execute(
+/home/user/build/B-P73r2/.venv/lib/python3.13/site-packages/psycopg/connection.py:304: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.InternalError_: tuple concurrently updated
+=========================== short test summary info ============================
+ERROR tests/test_migration_postgres.py::test_a_member_of_a_built_in_server_role_is_refused_by_a_real_server[pg_write_all_data]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+12 passed, 1 error in 10.37s
+
+STOP: baseline not green
+exit=2

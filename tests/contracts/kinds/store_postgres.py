@@ -17,7 +17,7 @@ PURGE_DSN: dict[str, str] = {}
 
 def pg_schema(migrated=True, runtime=False):
     """Yield a DSN whose search_path is a fresh (migrated) schema; drop the schema afterwards. With `runtime`,
-    yield instead the DSN of a new non-owner login role that `migrate` granted its runtime rights (K2: the store
+    yield instead the DSN of a new non-owner login role that `migrate` granted its runtime rights (the store
     suite must pass with only those rights); the role is dropped afterwards."""
     dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
     if not dsn:
@@ -27,8 +27,9 @@ def pg_schema(migrated=True, runtime=False):
     from psycopg.conninfo import make_conninfo
 
     from hadavin_sdk.store.migrate import migrate
+    from tests.fixtures.migration_role import create_login_role
 
-    schema = f"t_{uuid.uuid4().hex[:12]}"
+    schema = f"hadavin_test_{uuid.uuid4().hex[:12]}"
     with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
@@ -39,11 +40,10 @@ def pg_schema(migrated=True, runtime=False):
         if runtime:
             role, purge = "rt_" + uuid.uuid4().hex[:12], "pu_" + uuid.uuid4().hex[:12]
             with psycopg.connect(dsn, autocommit=True) as db:
-                for r in (role, purge):
-                    db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
+                passwords = {r: create_login_role(db, r) for r in (role, purge)}
             migrate(scoped, runtime_role=role, purge_role=purge)
-            runtime_dsn = make_conninfo(scoped, user=role)
-            PURGE_DSN[runtime_dsn] = make_conninfo(scoped, user=purge)
+            runtime_dsn = make_conninfo(scoped, user=role, password=passwords[role])
+            PURGE_DSN[runtime_dsn] = make_conninfo(scoped, user=purge, password=passwords[purge])
             yield runtime_dsn
         else:
             yield scoped

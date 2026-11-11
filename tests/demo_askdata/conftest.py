@@ -22,6 +22,8 @@ import pytest
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
+from tests.fixtures.migration_role import scram_hash
+
 DEMO = Path(__file__).resolve().parents[2] / "demos" / "ask-your-data"
 sys.path.insert(0, str(DEMO))
 
@@ -88,7 +90,7 @@ class Db:
 
     def run_psql(self, user: str, password: str | None, *args: str, stdin: str | None = None):
         """Run psql as `user`; the password travels in PGPASSWORD, never in the arguments."""
-        conninfo = make_conninfo(self.base, dbname=self.name, user=user)
+        conninfo = make_conninfo(self.base, dbname=self.name, user=user)  # pw-env: PGPASSWORD below
         env = {**os.environ, **({"PGPASSWORD": password} if password else {})}
         return subprocess.run(  # noqa: S603  # fixed argument list, no shell
             [self.psql, "-w", "-X", "-q", *args, conninfo], input=stdin, text=True, capture_output=True,
@@ -100,8 +102,8 @@ class Db:
         with self.admin() as conn:
             conn.execute(
                 sql.SQL("CREATE ROLE {} LOGIN PASSWORD {}").format(
-                    sql.Identifier(role), sql.Literal(password)
-                )
+                    sql.Identifier(role), sql.Literal(scram_hash(conn, role, password))
+                )  # the hash, so the password is in no statement and no server log
             )
             conn.execute(
                 sql.SQL("GRANT CONNECT ON DATABASE {} TO {}").format(

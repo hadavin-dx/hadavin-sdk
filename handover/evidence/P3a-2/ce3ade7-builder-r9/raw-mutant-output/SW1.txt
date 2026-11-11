@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_making_the_test_role_first_sweeps_the_stale_roles_of_killed_processes rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_making_the_test_role_first_sweeps_the_stale_roles_of_killed_processes __
+tests/test_migration_wiring.py:1528: in test_making_the_test_role_first_sweeps_the_stale_roles_of_killed_processes
+    assert swept and created and swept[0] < created[0], db.log
+E   AssertionError: ['SELECT 1 FROM pg_roles WHERE rolname = %s', 'CREATE ROLE "hadavin_test_migrator_ed748a91" LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS NOREPLICATION PASSWORD \'SCRAM-SHA-256$4096:made-up-salt$made-up-keys\'']
+E   assert ([])
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_making_the_test_role_first_sweeps_the_stale_roles_of_killed_processes
+1 failed in 0.41s
+

@@ -1,0 +1,15 @@
+### tests/test_migration_wiring.py::test_the_named_roles_reach_the_two_scoped_read_back_queries rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_the_named_roles_reach_the_two_scoped_read_back_queries __________
+tests/test_migration_wiring.py:1015: in test_the_named_roles_reach_the_two_scoped_read_back_queries
+    assert given == [(["rt_role", "pt_role"],)] * 3, given
+E   AssertionError: [([],), ([],), ([],)]
+E   assert [([],), ([],), ([],)] == [(['rt_role',... 'pt_role'],)]
+E     
+E     At index 0 diff: ([],) != (['rt_role', 'pt_role'],)
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_named_roles_reach_the_two_scoped_read_back_queries
+1 failed in 0.45s
+

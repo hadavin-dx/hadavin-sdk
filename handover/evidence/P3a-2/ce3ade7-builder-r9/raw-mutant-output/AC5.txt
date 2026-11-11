@@ -1,0 +1,11 @@
+### tests/test_migration_postgres.py::test_the_named_roles_and_the_owner_may_hold_rights_and_a_function_loses_the_default_for_everyone rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_the_named_roles_and_the_owner_may_hold_rights_and_a_function_loses_the_default_for_everyone _
+tests/test_migration_postgres.py:2756: in test_the_named_roles_and_the_owner_may_hold_rights_and_a_function_loses_the_default_for_everyone
+    assert acl and all(g != 0 for (g,) in acl)
+E   assert ([])
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_the_named_roles_and_the_owner_may_hold_rights_and_a_function_loses_the_default_for_everyone
+1 failed in 0.56s
+

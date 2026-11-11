@@ -2,17 +2,19 @@
 a late file, the ledger-without-file message, the one-pass SQL lexer with the refusal list, and the check that a released
 file never changes.
 
-`store/migrate.py` calls these before it connects (a later change, P3a-2: until it merges, NOTHING calls them and none of
-the rules here is in force). Nothing here opens a connection; the only file access is `list_migration_files`,
-`check_migration_numbers`, `released_problems` (directory listings and one read per released file) and `read_files`.
+`store/migrate.py` calls these before it connects (`check_ledger`, `read_files`, `order_problems`, `gone_message`, the lexer
+through `check_grants`). `released_problems` is called by `migrate` with the texts it read; the list of released files is
+`store/migrations_released.json` (the one list, shipped in the package; the tests read the same file). Nothing here opens a connection; the only file access is `list_migration_files`,
+`check_migration_numbers`, `released_problems` (directory listings and one read per released file, none when the text
+is passed in) and `read_files`.
 
-Why a lexer of our own (R448 rung decision, 2026-11-06). The text rules do exactly two jobs the database cannot do for us:
+Why a lexer of our own (decided 2026-11-06). The text rules do exactly two jobs the database cannot do for us:
 (a) hand `migrate._scan` a view of the file without comments, so it can refuse a `CREATE TABLE` that has no exact grants;
 (b) refuse transaction control (`COMMIT`, `END`, `ROLLBACK`, `SAVEPOINT` ...) before the run, because a hidden `COMMIT`
-ends the one migration transaction. The other refusals (`SET`, `RESET`, `ALTER ROLE`, `DO`, `EXECUTE` ...) are a tripwire
+ends the one migration transaction. The other refusals (`SET`, `RESET`, `ALTER ROLE`, `DO`, `EXECUTE` ...) are a quick check that catches accidents
 against accidents and a help to the reviewer: the guard that cannot be blinded by spelling is the read-back in `migrate()`
-after each file (a later change), which compares the role, `search_path`, `standard_conforming_strings`,
-`backslash_quote`, `client_encoding` and the trigger state. A higher rung was looked at: the SQL tokenizer of sqlglot
+after each file (`migrate._check_read_back`), which compares the role, `search_path`, `standard_conforming_strings`,
+`backslash_quote`, `client_encoding`, the two time limits, the role memberships, the saved per-role settings and the trigger state. A higher rung was looked at: the SQL tokenizer of sqlglot
 (MIT, already pinned in the `askdata` extra). It was NOT adopted, for design reasons, not for a measured score: in the one check made (2026-11-06,
 not kept here) it did not refuse a psql meta-command (`SELECT 1 \\g` comes out as tokens), and it is a dependency
 upgrade on a safety path whose behaviour could change without a test here failing. No number about sqlglot is claimed in this file,
@@ -21,18 +23,17 @@ test-only: `tests/test_migration_numbers_guards.py` compares it with this lexer 
 lexer reads a file LONGER than the server does, a `COMMIT` can hide inside a string (the dangerous direction); if it ends
 a string EARLIER, the file is refused although it is fine (the safe direction).
 
-Which function to call. `statement_text(text, keep_quoted=False)` returns the pair `(text, problem)` (the ticket's
+Which function to call. `statement_text(text, keep_quoted=False)` returns the pair `(text, problem)` (the agreed
 signature); `problem` is "" when the file was read to its end, and when it is not the returned text stops at the problem
 and must not be used. A caller that wants no pair and no half text uses `checked_statement_text`, which returns the text
 alone or raises `SqlReadError`. `lex` is the same as `statement_text`.
 
 The lexer follows the PostgreSQL scanner rules that matter for where a string, comment or body starts and ends, with
 `standard_conforming_strings = on`. Preconditions: the migration role is NOT a superuser (statements such as
-`CREATE EXTENSION`, `COPY ... PROGRAM` and `LOAD` are refused here as a tripwire, not as the guard), the server is
-PostgreSQL 15 or later, and the files are UTF-8 text without hidden characters. The scanner rules were compared with
-pglast 8.7 (the PostgreSQL 17 scanner) and probed on 16.15 (ticket P3a); that PostgreSQL 15 scans the same way is an
-ASSUMPTION nobody has tested here. `refused_statements` refuses `CREATE EXTENSION` outright: no extension is allowed
-today, because no planned migration creates one (grep of the tickets, in the pull request text). If one is wanted, add
+`CREATE EXTENSION`, `COPY ... PROGRAM` and `LOAD` are refused here as a quick check that catches accidents, not as the guard), the server is
+PostgreSQL 16 or later, and the files are UTF-8 text without hidden characters. The scanner rules were compared with
+pglast 8.7 (the PostgreSQL 17 scanner) and probed on 16.15; an older server is not supported (the role checks need 16). `refused_statements` refuses `CREATE EXTENSION` outright: no extension is allowed
+today, because no planned migration creates one (checked in the pull request text). If one is wanted, add
 its name to a named allow-list constant here and test it; never a bypass.
 """
 
@@ -57,14 +58,26 @@ STEM = re.compile(r"[0-9]{4}_[a-z0-9_]+")
 PLAIN_SCHEMA = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 # One hostile name once produced thousands of problem lines: 21 problems show 20 plus "and 1 more".
 MAX_PROBLEMS_SHOWN = 20
-# The one place this command is written (the late-file message uses it; `migrate` and the CHANGELOG runbook will, in P3a-2).
+# The one place this command is written (the late-file message uses it; the CHANGELOG runbook and a test check against it).
 RECIPE_COMMAND = "psql -X -v ON_ERROR_STOP=1 -f recipe.sql"
 # The one generated psql command: with it a run WITHOUT -X still stops at the first error even when a person's startup
 # file says `\set ON_ERROR_STOP off`.
 RECIPE_FIRST_LINE = "\\set ON_ERROR_STOP on"
-# The advisory-lock key of every migrate run, `migrate._LOCK` (a later change makes that name point here).
+# The ONLY place the two limits are written. Right after BEGIN in every hand file, and in `migrate` right after its
+# advisory lock: an ALTER TABLE on a live table waits for a lock that stops every reader.
+RECIPE_TIMEOUTS = ("SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';")
+# How long a `migrate` run waits for the migration lock before it gives up (seconds). A run that holds the lock is
+# normally over in seconds, so this is a ceiling that frees a run stuck behind a session that never lets go (any role
+# that may connect can take a lock number). A long migration on a big table may need more: pass `lock_wait_seconds`.
+MIGRATE_LOCK_WAIT_SECONDS = 600
+# The advisory-lock key of every migrate run and every hand recipe; `migrate` imports it from here as `MIGRATE_LOCK`.
 MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 1
 MIGRATIONS = Path(__file__).parent / "migrations"
+# The two reviewed lists that ship in the package folder next to `migrations/` (read by `migrate()` at run time; one
+# path each, shared by the product and the tests): the SHA-256 of every released file, and the (file, trigger) pairs
+# whose file may change a trigger.
+RELEASED_MANIFEST = MIGRATIONS.parent / "migrations_released.json"
+TRIGGER_CHANGES = MIGRATIONS.parent / "migrations_trigger_changes.json"
 
 # The recipe's ledger line (text for a person to run, never executed here). Filled with `replace` after the stem passed
 # STEM, so no quote can occur; not an f-string, which the SQL-injection scanner would flag.
@@ -94,7 +107,7 @@ class MigrationNumberError(ConfigError):
         return (type(self), (self.problems,))
 
 
-def _esc(name: str) -> str:
+def escape_name(name: str) -> str:
     """A name for a message: control characters, ANSI escapes and lone surrogates are written as escapes. The slice
     removes the outer quotes that `ascii()` adds, so the old messages keep their exact text."""
     return ascii(name)[1:-1]
@@ -115,7 +128,7 @@ def check_ledger(paths: Sequence[Path]) -> list[str]:
     problems: list[str] = []
     numbers: list[int] = []
     for p in paths:
-        name = _esc(p.name)
+        name = escape_name(p.name)
         if not NAME.fullmatch(p.name):
             problems.append(f"{name}: not named NNNN_<name>.sql")
         elif int(p.name[:4]) == 0:
@@ -151,9 +164,13 @@ def check_migration_numbers(folder: Path = MIGRATIONS) -> None:
     with os.scandir(folder) as it:
         for e in sorted(it, key=lambda e: e.name):
             if e.is_symlink():
-                problems.append(f"{_esc(e.name)}: is a symbolic link; CI wants the file itself")
+                problems.append(
+                    f"{escape_name(e.name)}: is a symbolic link; CI wants the file itself"
+                )
             elif not e.name.lower().endswith(".sql"):
-                problems.append(f"{_esc(e.name)}: not a migration file (stray entry in the folder)")
+                problems.append(
+                    f"{escape_name(e.name)}: not a migration file (stray entry in the folder)"
+                )
     if problems:
         raise MigrationNumberError(problems)
 
@@ -162,7 +179,8 @@ def read_files(files: Sequence[Path]) -> dict[Path, str]:
     """Each file ONCE, as UTF-8 text. The same text is scanned and later executed, so a file changed on disk between
     the scan and the run is not run in its new form. An unreadable file raises the original error. `read_text` in text
     mode translates CRLF and a lone CR to LF, so the text the lexer sees (and the server later gets) has only LF; the
-    hash in `released_problems` reads bytes and does the same translation for CRLF by hand. A byte order mark is NOT
+    hash in `released_problems` hashes the text given to it (the same text that is executed) and, when only a folder is
+    given, reads bytes and does the same translation for CRLF and a lone CR by hand. A byte order mark is NOT
     removed here: `hidden_character` names it and the file is refused."""
     return {p: p.read_text(encoding="utf-8") for p in files}
 
@@ -244,12 +262,13 @@ def hand_recipe(entries: Sequence[tuple[str, str]], schema: str, lock: int = MIG
         raise ValueError("the schema name has unusual characters")
     for stem, text in entries:
         if (why := _refuse_entry(stem, text)) is not None:
-            raise ValueError(f"{_esc(stem)}: {why}")
+            raise ValueError(f"{escape_name(stem)}: {why}")
     lines = [
         "-- RECIPE begins",
         RECIPE_FIRST_LINE,
         f'SET search_path TO "{schema}";',
         "BEGIN;",
+        *RECIPE_TIMEOUTS,
         f"SELECT pg_advisory_xact_lock({int(lock)});",
     ]
     for stem, text in entries:
@@ -276,7 +295,7 @@ def order_problems(
     names = _names([p.name for p in late])
     verb = "would be" if len(late) == 1 else "would all be"
     head = (
-        f"{names} {verb} applied out of order: the number is at or below '{_esc(highest)}', which this database "
+        f"{names} {verb} applied out of order: the number is at or below '{escape_name(highest)}', which this database "
         "has already applied. Do not rename the file. What to do: a database administrator applies it by hand, as "
         "the database user that runs migrations, while no migrate command is running. "
     )
@@ -304,7 +323,7 @@ def order_problems(
 
 def _names(names: Sequence[str]) -> str:
     """At most `MAX_PROBLEMS_SHOWN` names, then "and N more": one hostile ledger once meant thousands of names."""
-    shown = [_esc(n) for n in names[:MAX_PROBLEMS_SHOWN]]
+    shown = [escape_name(n) for n in names[:MAX_PROBLEMS_SHOWN]]
     if len(names) > MAX_PROBLEMS_SHOWN:
         shown.append(f"and {len(names) - MAX_PROBLEMS_SHOWN} more")
     return ", ".join(shown)
@@ -313,23 +332,37 @@ def _names(names: Sequence[str]) -> str:
 # --- a released file never changes -------------------------------------------------------------------------------------
 
 
-def released_problems(folder: Path, manifest: Mapping[str, str]) -> list[str]:
-    """Forward-only: `manifest` maps the stem of every RELEASED file to the SHA-256 of its bytes (Windows line endings
-    read as Unix ones). A released file that is missing or changed is a problem, and so is a file that is not in the
-    manifest but is numbered at or below the highest released one. Add a row to the manifest when a release is cut."""
-    files = {p.name[:-4]: p for p in list_migration_files(folder) if NAME.fullmatch(p.name)}
+def _digest(p: Path, texts: Mapping[Path, str] | None) -> str:
+    if texts is not None and p in texts:
+        return hashlib.sha256(texts[p].encode("utf-8")).hexdigest()
+    return hashlib.sha256(p.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")).hexdigest()
+
+
+def released_problems(
+    folder: Path,
+    manifest: Mapping[str, str],
+    texts: Mapping[Path, str] | None = None,
+    files: Sequence[Path] | None = None,
+) -> list[str]:
+    """Forward-only: `manifest` maps the stem of every RELEASED file to the SHA-256 of its text (line endings read as
+    Unix ones). With `texts` (the result of `read_files`), a file in it is hashed from that text, so the text that is
+    hashed is the text that is executed; any other file is read from disk. A released file that is missing or changed is a problem, and so is a file that is not in the
+    manifest but is numbered at or below the highest released one. Add a row to the manifest when a release is cut. With
+    `files` (the list `migrate` runs) the check looks at exactly those files; without it, at the folder."""
+    listed = list_migration_files(folder) if files is None else files
+    files = {p.name[:-4]: p for p in listed if NAME.fullmatch(p.name)}
     problems: list[str] = []
     for stem in sorted(manifest):
         p = files.get(stem)
         if p is None or not p.is_file():
-            problems.append(f"{_esc(stem)}: a released file is missing")
-        elif hashlib.sha256(p.read_bytes().replace(b"\r\n", b"\n")).hexdigest() != manifest[stem]:
-            problems.append(f"{_esc(stem)}: a released file was changed")
+            problems.append(f"{escape_name(stem)}: a released file is missing")
+        elif _digest(p, texts) != manifest[stem]:
+            problems.append(f"{escape_name(stem)}: a released file was changed")
     released = [s for s in manifest if STEM.fullmatch(s)]
     if released:
         top = max(released, key=lambda s: (int(s[:4]), s))
         problems += [
-            f"{_esc(stem)}: a new migration is numbered at or below the highest released one ({_esc(top)})"
+            f"{escape_name(stem)}: a new migration is numbered at or below the highest released one ({escape_name(top)})"
             for stem in sorted(files)
             if stem not in manifest and int(stem[:4]) <= int(top[:4])
         ]
@@ -371,7 +404,8 @@ def gone_message(applied: Collection[str], files: Sequence[Path]) -> str:
             f"{_names(cases[1])}: the folder has a file with the same name after the number, so the file was probably "
             "renamed. If it is the same migration and its tables already exist, a database administrator changes "
             "the version of each of these records (table schema_migrations) by hand to the name of that file "
-            "(without .sql), while no migrate command is running."
+            "(without .sql), while no migrate command is running. The steps, with the check that stops an update "
+            "that matches no record and the lock, are in CHANGELOG.md, section Migration repair steps, case (b)."
         )
     if cases[2]:
         lines.append(
@@ -450,7 +484,7 @@ class SqlReadError(ValueError):
 def checked_statement_text(text: str, keep_quoted: bool = False) -> str:
     """The text `lex` returns, or `SqlReadError`: a caller that wants the view of the file gets a complete view or no
     view at all, never a text that stops at the first problem (fail closed). It returns a `str`, not a pair; the
-    ticket's name `statement_text` returns the pair."""
+    the agreed name `statement_text` returns the pair."""
     cleaned, problem = lex(text, keep_quoted)
     if problem:
         raise SqlReadError(problem)
@@ -458,7 +492,7 @@ def checked_statement_text(text: str, keep_quoted: bool = False) -> str:
 
 
 def statement_text(text: str, keep_quoted: bool = False) -> tuple[str, str]:
-    """The ticket's function: `(text, problem)`, see `lex`. Write `cleaned, problem = statement_text(...)`. It never
+    """The agreed function: `(text, problem)`, see `lex`. Write `cleaned, problem = statement_text(...)`. It never
     raises and never returns a bare `str`, so `statement_text(...)[0]` is the whole text and not its first character."""
     return lex(text, keep_quoted)
 
@@ -614,29 +648,50 @@ def lex(text: str, keep_quoted: bool = False) -> tuple[str, str]:
 # --- the refusal list --------------------------------------------------------------------------------------------------
 
 _W = f"[{_WS}]+"
+# A name character, exactly as `_ident_char` reads it: ASCII letters and digits, `_`, `$`, and any non-ASCII character.
+# The regex word boundary `\\b` breaks at `$`, so `app$on` and `on$x` (ONE name each in PostgreSQL) show a standalone
+# `on`. Where a match LETS A STATEMENT PASS (the `on` look-ahead of `_ROLE_MEMBERSHIP`) the boundaries
+# below are used; they agree with the lexer. Where a match REFUSES a statement (the keyword at the start of a statement)
+# `\\b` stays on purpose: it can only over-match, which is the safe direction (`COMMIT` + a no-break space is refused).
+# `tests/test_migration_rules.py` pins both rules (one test lists the only patterns that may hold `\\b`).
+_NAME_CHAR = "[A-Za-z0-9_$\u0080-\U0010ffff]"
+_NAME_END = f"(?!{_NAME_CHAR})"
+_NAME_START = f"(?<!{_NAME_CHAR})"
 _TRANSACTION = re.compile(
     rf"(commit|end|begin|abort|rollback|savepoint|release|start{_W}transaction|prepare{_W}transaction)\b",
     re.IGNORECASE,
 )
-_SET_ALLOWED = re.compile(rf"set{_W}local{_W}(?:lock_timeout|statement_timeout)\b", re.IGNORECASE)
 _SET = re.compile(r"(set|reset)\b", re.IGNORECASE)
 _BLIND = re.compile(
     rf"(do|execute|load|discard|alter{_W}role|alter{_W}user|alter{_W}group|alter{_W}system|alter{_W}database"
-    rf"|create{_W}role|create{_W}user|create{_W}group|create{_W}extension|drop{_W}owned|reassign{_W}owned)\b",
+    rf"|create{_W}role|create{_W}user|create{_W}group|create{_W}extension|drop{_W}owned|reassign{_W}owned"
+    rf"|alter{_W}default{_W}privileges|alter{_W}publication)\b",
     re.IGNORECASE,
 )
 # `COPY ... PROGRAM` runs a shell command; `GRANT r TO s` and `REVOKE r FROM s` (no ON) change role membership.
 _COPY_PROGRAM = re.compile(r"copy\b.*?\bprogram\b", re.IGNORECASE | re.DOTALL)
-_ROLE_MEMBERSHIP = re.compile(r"(grant|revoke)\b(?!.*?\bon\b)", re.IGNORECASE | re.DOTALL)
+_ROLE_MEMBERSHIP = re.compile(
+    rf"(grant|revoke)\b(?!.*?{_NAME_START}on{_NAME_END})", re.IGNORECASE | re.DOTALL
+)
+# A file may `GRANT` or `REVOKE` only on a table, a view, a sequence, a column or a function (`ON name`, `ON TABLE`,
+# `ON SEQUENCE`, `ON FUNCTION`, `ON ROUTINE`). A right on the schema itself, a database, a type, a domain, a language, a
+# large object, a foreign server or data wrapper, a tablespace, a parameter, or on `ALL ... IN SCHEMA` (every object, also
+# of another schema) is refused: the read-back after the file does not look at those places. Over-matching is the safe direction.
+_GRANT_TARGET = re.compile(
+    rf"(grant|revoke)\b.*?{_NAME_START}on{_W}"
+    rf"(schema|database|type|domain|language|large|foreign|tablespace|parameter|all|procedure){_NAME_END}",
+    re.IGNORECASE | re.DOTALL,
+)
 
 
 def refused_statements(text: str) -> list[str]:
     """Reasons a file must be refused, from `lex` (the emptied view) and the list: a lexer problem;
-    transaction control; every `SET` and `RESET` except `SET LOCAL lock_timeout` and `SET LOCAL statement_timeout`;
+    transaction control; every `SET` and `RESET`, with no exception (`SET LOCAL lock_timeout` and `SET LOCAL statement_timeout` included: `migrate` sets
+    the two limits itself and the read-back would refuse a file that changes them, so the text scan says so first);
     `DO`, `EXECUTE`, `LOAD`, `DISCARD`, `COPY ... PROGRAM`, `ALTER ROLE|USER|GROUP|SYSTEM|DATABASE`,
-    `CREATE ROLE|USER|GROUP|EXTENSION`, `GRANT` and `REVOKE` without `ON` (role membership), `DROP OWNED`,
+    `CREATE ROLE|USER|GROUP|EXTENSION`, `ALTER DEFAULT PRIVILEGES`, `ALTER PUBLICATION`, `GRANT` and `REVOKE` without `ON` (role membership) or on anything but a table, view, sequence, column or function, `DROP OWNED`,
     `REASSIGN OWNED`; hidden characters (`hidden_character`) come first. A rule matches at the START of a
-    statement (the cleaned text split at `;`, leading whitespace removed). A tripwire against accidents, not a
+    statement (the cleaned text split at `;`, leading whitespace removed). A quick check that catches accidents, not a
     sandbox: the read-back after each file is the guard."""
     cleaned, problem = lex(text)
     reasons = [hidden] if (hidden := hidden_character(text)) else []
@@ -657,10 +712,10 @@ def refused_statements(text: str) -> list[str]:
                 f"{word}: transaction control is not allowed (the run is one transaction){hint}"
             )
         elif m := _SET.match(s):
-            if not _SET_ALLOWED.match(s):
-                reasons.append(
-                    f"{m.group(1).upper()}: a session or role setting may not be changed by a migration"
-                )
+            reasons.append(
+                f"{m.group(1).upper()}: a session or role setting may not be changed by a migration "
+                "(the two time limits of `migrate` included: it sets them itself)"
+            )
         elif m := _BLIND.match(s):
             word = " ".join(m.group(1).upper().split())
             reasons.append(f"{word}: the guard cannot read what this statement does or changes")
@@ -671,5 +726,10 @@ def refused_statements(text: str) -> list[str]:
         elif m := _ROLE_MEMBERSHIP.match(s):
             reasons.append(
                 f"{m.group(1).upper()} without ON: the guard cannot read what this statement does or changes"
+            )
+        elif m := _GRANT_TARGET.match(s):
+            reasons.append(
+                f"{m.group(1).upper()} on a place other than a table, view, sequence, column or function "
+                f"({m.group(2).upper()}): the guard does not read rights there"
             )
     return reasons

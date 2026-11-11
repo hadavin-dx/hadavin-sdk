@@ -1,0 +1,920 @@
+head ce3ade7 (code; evidence is committed after it), Python 3.13 and 3.12, Postgres 16.15 (own throwaway clusters), 2026-11-11 -- this file was produced at e0a9c97; ce3ade7 differs only in one assertion message of tests/test_migration_rules.py
+fail-before: new tests run against f906e3d source (new tests + new helpers copied in)
+.FFFFFFFFFFFFFF.....FF...FFFFFFF..F.........                             [100%]
+=================================== FAILURES ===================================
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT ON audit_entries TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_88ab251331ef'", 'hadavin_test_88ab251331ef')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3093314180>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_right_for_a_role_the_ru0')
+grant = 'GRANT SELECT ON audit_entries TO {other};', with_roles = False
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights in schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2724: Failed
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT ON audit_entries TO PUBLIC;] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_6edc17c4f2c0'", 'hadavin_test_6edc17c4f2c0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f309333bbf0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_right_for_a_role_the_ru1')
+grant = 'GRANT SELECT ON audit_entries TO PUBLIC;', with_roles = False
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights in schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2724: Failed
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT (seq) ON audit_entries TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_5a413f489784'", 'hadavin_test_5a413f489784')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3093bf3240>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_right_for_a_role_the_ru2')
+grant = 'GRANT SELECT (seq) ON audit_entries TO {other};', with_roles = False
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights in schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2724: Failed
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_7940746c067c'", 'hadavin_test_7940746c067c')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3093bf28b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_right_for_a_role_the_ru3')
+grant = 'GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};'
+with_roles = False
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights in schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2724: Failed
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_237a3dbdca07'", 'hadavin_test_237a3dbdca07')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3093706750>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_right_for_a_role_the_ru4')
+grant = 'GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};'
+with_roles = False
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights in schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2724: Failed
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_0b7d38cd4fe1'", 'hadavin_test_0b7d38cd4fe1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3093707d50>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_right_for_a_role_the_ru5')
+grant = 'GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;'
+with_roles = False
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights in schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2724: Failed
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT ON audit_entries TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_a087c74d62ea'", 'hadavin_test_a087c74d62ea')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f309376b4d0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_right_for_a_role_the_ru6')
+grant = 'GRANT SELECT ON audit_entries TO {other};', with_roles = True
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights in schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2724: Failed
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT ON audit_entries TO PUBLIC;] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_0f35012f1987'", 'hadavin_test_0f35012f1987')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f309376b7a0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_right_for_a_role_the_ru7')
+grant = 'GRANT SELECT ON audit_entries TO PUBLIC;', with_roles = True
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights in schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2724: Failed
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT (seq) ON audit_entries TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_0dffce876662'", 'hadavin_test_0dffce876662')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3092b4aa50>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_right_for_a_role_the_ru8')
+grant = 'GRANT SELECT (seq) ON audit_entries TO {other};', with_roles = True
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights in schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2724: Failed
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_36fb56098656'", 'hadavin_test_36fb56098656')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3092b23690>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_right_for_a_role_the_ru9')
+grant = 'GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};'
+with_roles = True
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights in schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2724: Failed
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_b38ac4ade0e4'", 'hadavin_test_b38ac4ade0e4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3092bd3d40>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_right_for_a_role_the_ru10')
+grant = 'GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};'
+with_roles = True
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights in schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2724: Failed
+_ test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;] _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_80c108c21bde'", 'hadavin_test_80c108c21bde')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3093351010>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_right_for_a_role_the_ru11')
+grant = 'GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;'
+with_roles = True
+
+    @needs_pg
+    @pytest.mark.parametrize(
+        "grant",
+        [
+            "GRANT SELECT ON audit_entries TO {other};",
+            "GRANT SELECT ON audit_entries TO PUBLIC;",
+            "GRANT SELECT (seq) ON audit_entries TO {other};",
+            "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};",
+            "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;",
+        ],
+    )
+    @pytest.mark.parametrize("with_roles", [False, True])
+    def test_a_right_for_a_role_the_run_does_not_name_is_refused(
+        scratch, monkeypatch, tmp_path, grant, with_roles
+    ):
+        """A file may hold `GRANT ... ON ... TO <any role>`; nothing used to read the rights back for roles other than the
+        three of the run. Now a right for a third role or for PUBLIC (relation, column, sequence, function), with or without
+        role arguments, is refused in plain words and nothing is kept. Killed by: mutants AC1 (relation rights not read),
+        AC2 (column rights not read), AC3 (function rights not read), AC4 (PUBLIC or any role is allowed)."""
+        dsn, _schema = scratch
+        other = "hadavin_test_ac_" + uuid.uuid4().hex[:8]
+        _create_roles(other)
+        try:
+            _with_files(monkeypatch, tmp_path, {"0006_grant.sql": grant.format(other=other) + "\n"})
+            roles = {}
+            if with_roles:
+                run_as = "hadavin_test_ac_rt_" + uuid.uuid4().hex[:6]
+                _create_roles(run_as)
+                roles = {"runtime_role": run_as}
+            try:
+>               with pytest.raises(ConfigError, match="rights in schema") as e:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2724: Failed
+_ test_the_named_roles_and_the_owner_may_hold_rights_and_a_function_loses_the_default_for_everyone _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_671d9029ea21'", 'hadavin_test_671d9029ea21')
+
+    @needs_pg
+    def test_the_named_roles_and_the_owner_may_hold_rights_and_a_function_loses_the_default_for_everyone(
+        scratch,
+    ):
+        """The three named roles keep what the grant map gives; the default right 'everyone may call it' of the trigger
+        function is removed (only the owner stays). Killed by: mutant AC5 (the default is not removed)."""
+        dsn, schema = scratch
+        run_as = "hadavin_test_ac_ok_" + uuid.uuid4().hex[:6]
+        _create_roles(run_as)
+        try:
+            assert mig.migrate(dsn, runtime_role=run_as) == REAL
+            assert run_as in _acl_of(dsn, schema, "audit_entries")
+            with psycopg.connect(dsn, autocommit=True) as db:
+                acl = db.execute(
+                    "SELECT (aclexplode(p.proacl)).grantee FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace "
+                    "WHERE n.nspname = %s AND p.proname = 'hadavin_audit_append_only'",
+                    (schema,),
+                ).fetchall()
+>           assert acl and all(g != 0 for (g,) in acl)
+E           assert ([])
+
+tests/test_migration_postgres.py:2756: AssertionError
+___ test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it ____
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_233b1fbee08e'", 'hadavin_test_233b1fbee08e')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3092bfedb0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_security_definer_functi0')
+
+    @needs_pg
+    def test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it(
+        scratch, monkeypatch, tmp_path
+    ):
+        """Such a function runs with the rights of its owner, the migration role. Refused unless its name is on
+        `REVIEWED_DEFINER_FUNCTIONS`. Killed by: mutants SD1 (not read) and SD2 (the list is not read)."""
+        dsn, _schema = scratch
+        body = (
+            "CREATE OR REPLACE FUNCTION hadavin_test_definer() RETURNS int LANGUAGE sql SECURITY DEFINER "
+            "AS $$ SELECT 1 $$;\n"
+        )
+        _with_files(monkeypatch, tmp_path, {"0006_definer.sql": body})
+>       with pytest.raises(ConfigError, match="SECURITY DEFINER") as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2773: Failed
+_ test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new _
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_6574bafd5ebe'", 'hadavin_test_6574bafd5ebe')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3093bca190>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_a_security_definer_functi1')
+
+    @needs_pg
+    def test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new(
+        scratch, monkeypatch, tmp_path
+    ):
+        """The text rules read only a `CREATE FUNCTION` at the start of a statement; here a function body makes the
+        function by `EXECUTE`. What is new in the schema after the files is looked at too. Killed by: mutant SD3 (only the
+        names in the file text are looked at)."""
+        dsn, _schema = scratch
+        body = (
+            "CREATE OR REPLACE FUNCTION hadavin_test_maker() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+            "EXECUTE 'CREATE OR REPLACE FUNCTION hadavin_test_hidden() RETURNS int LANGUAGE sql SECURITY DEFINER AS $q$ SELECT 1 $q$'; "
+            "END $$;\nSELECT hadavin_test_maker();\n"
+        )
+        _with_files(monkeypatch, tmp_path, {"0006_dynamic.sql": body})
+>       with pytest.raises(ConfigError, match="SECURITY DEFINER") as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_migration_postgres.py:2876: Failed
+_ test_a_run_that_cannot_get_the_migration_lock_gives_up_and_names_the_holder __
+
+scratch = ("user=postgres dbname=postgres host=127.0.0.1 port=56073 options='-c search_path=hadavin_test_21f4763d240d'", 'hadavin_test_21f4763d240d')
+
+    @needs_pg
+    def test_a_run_that_cannot_get_the_migration_lock_gives_up_and_names_the_holder(scratch):
+        """Any role that may connect can take the lock number and never let go. The run waits at most `lock_wait_seconds`,
+        changes nothing, and names the session that holds the lock. Killed by: mutants LW1 (the wait is not limited, caught
+        by the wiring test), LW2 (the holder is not named)."""
+        dsn, _schema = scratch
+        holder_name = "hadavin_test_lock_holder_" + uuid.uuid4().hex[:6]
+        with psycopg.connect(
+            make_conninfo(DSN, application_name=holder_name), autocommit=True
+        ) as holder:
+            holder.execute("SELECT pg_advisory_lock(%s)", (mig.MIGRATE_LOCK,))
+            started = time.monotonic()
+            with pytest.raises(ConfigError, match="waited 1 seconds for the migration lock") as e:
+>               mig.migrate(dsn, lock_wait_seconds=1)
+E               TypeError: migrate() got an unexpected keyword argument 'lock_wait_seconds'
+
+tests/test_migration_postgres.py:2895: TypeError
+____________ test_the_wait_for_the_lock_is_limited_by_the_argument _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3093748670>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_is_0')
+
+    def test_the_wait_for_the_lock_is_limited_by_the_argument(monkeypatch, tmp_path):
+        """The number of seconds is the argument's (milliseconds in the setting), before the lock is asked for. Killed by:
+        mutants LW1 (no limit is set) and LW3 (the constant is used, not the argument)."""
+>       err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], lock_wait_seconds=7)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:1624: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3093748670>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_is_0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = (), members = None, settings = None
+kw = {'lock_wait_seconds': 7}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+        made_up_files_are_not_released(
+            monkeypatch
+        )  # these made-up file names are not the released ones
+        monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+        try:
+>           applied_now = mig.migrate("postgresql://unused", **kw)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: migrate() got an unexpected keyword argument 'lock_wait_seconds'
+
+tests/test_migration_wiring.py:175: TypeError
+_______ test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds[0] ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3091c34de0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_mus0')
+bad = 0
+
+    @pytest.mark.parametrize("bad", [0, -1, 1.5, "5", True, None])
+    def test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds(monkeypatch, tmp_path, bad):
+>       err, _db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], lock_wait_seconds=bad)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:1632: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3091c34de0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_mus0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = (), members = None, settings = None
+kw = {'lock_wait_seconds': 0}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+        made_up_files_are_not_released(
+            monkeypatch
+        )  # these made-up file names are not the released ones
+        monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+        try:
+>           applied_now = mig.migrate("postgresql://unused", **kw)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: migrate() got an unexpected keyword argument 'lock_wait_seconds'
+
+tests/test_migration_wiring.py:175: TypeError
+_______ test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds[-1] _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3091c35630>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_mus1')
+bad = -1
+
+    @pytest.mark.parametrize("bad", [0, -1, 1.5, "5", True, None])
+    def test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds(monkeypatch, tmp_path, bad):
+>       err, _db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], lock_wait_seconds=bad)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:1632: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3091c35630>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_mus1')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = (), members = None, settings = None
+kw = {'lock_wait_seconds': -1}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+        made_up_files_are_not_released(
+            monkeypatch
+        )  # these made-up file names are not the released ones
+        monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+        try:
+>           applied_now = mig.migrate("postgresql://unused", **kw)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: migrate() got an unexpected keyword argument 'lock_wait_seconds'
+
+tests/test_migration_wiring.py:175: TypeError
+______ test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds[1.5] _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3091c35cc0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_mus2')
+bad = 1.5
+
+    @pytest.mark.parametrize("bad", [0, -1, 1.5, "5", True, None])
+    def test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds(monkeypatch, tmp_path, bad):
+>       err, _db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], lock_wait_seconds=bad)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:1632: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3091c35cc0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_mus2')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = (), members = None, settings = None
+kw = {'lock_wait_seconds': 1.5}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+        made_up_files_are_not_released(
+            monkeypatch
+        )  # these made-up file names are not the released ones
+        monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+        try:
+>           applied_now = mig.migrate("postgresql://unused", **kw)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: migrate() got an unexpected keyword argument 'lock_wait_seconds'
+
+tests/test_migration_wiring.py:175: TypeError
+_______ test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds[5] ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3091c36350>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_mus3')
+bad = '5'
+
+    @pytest.mark.parametrize("bad", [0, -1, 1.5, "5", True, None])
+    def test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds(monkeypatch, tmp_path, bad):
+>       err, _db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], lock_wait_seconds=bad)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:1632: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3091c36350>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_mus3')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = (), members = None, settings = None
+kw = {'lock_wait_seconds': '5'}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+        made_up_files_are_not_released(
+            monkeypatch
+        )  # these made-up file names are not the released ones
+        monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+        try:
+>           applied_now = mig.migrate("postgresql://unused", **kw)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: migrate() got an unexpected keyword argument 'lock_wait_seconds'
+
+tests/test_migration_wiring.py:175: TypeError
+______ test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds[True] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3091c365f0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_mus4')
+bad = True
+
+    @pytest.mark.parametrize("bad", [0, -1, 1.5, "5", True, None])
+    def test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds(monkeypatch, tmp_path, bad):
+>       err, _db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], lock_wait_seconds=bad)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:1632: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3091c365f0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_mus4')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = (), members = None, settings = None
+kw = {'lock_wait_seconds': True}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+        made_up_files_are_not_released(
+            monkeypatch
+        )  # these made-up file names are not the released ones
+        monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+        try:
+>           applied_now = mig.migrate("postgresql://unused", **kw)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: migrate() got an unexpected keyword argument 'lock_wait_seconds'
+
+tests/test_migration_wiring.py:175: TypeError
+______ test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds[None] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3091c37150>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_mus5')
+bad = None
+
+    @pytest.mark.parametrize("bad", [0, -1, 1.5, "5", True, None])
+    def test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds(monkeypatch, tmp_path, bad):
+>       err, _db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], lock_wait_seconds=bad)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:1632: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3091c37150>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-10711/test_the_wait_for_the_lock_mus5')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = (), members = None, settings = None
+kw = {'lock_wait_seconds': None}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+        made_up_files_are_not_released(
+            monkeypatch
+        )  # these made-up file names are not the released ones
+        monkeypatch.setattr(mig, "connect", lambda *a, **k: db)
+        try:
+>           applied_now = mig.migrate("postgresql://unused", **kw)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: migrate() got an unexpected keyword argument 'lock_wait_seconds'
+
+tests/test_migration_wiring.py:175: TypeError
+____________ test_every_migrate_mutant_still_applies_to_the_source _____________
+
+    def test_every_migrate_mutant_still_applies_to_the_source():
+        """The list of mutants in `tests/migrate_mutants.py` cannot rot: each `old` text is in its file exactly once and each
+        killer test exists (the run itself needs a database and is documented at the top of that file)."""
+        from tests import migrate_mutants
+    
+>       assert migrate_mutants.problems_with_the_list() == []
+E       AssertionError: assert ['P8: the old...ctly 1)', ...] == []
+E         
+E         Left contains 12 more items, first extra item: 'P8: the old text is in src/hadavin_sdk/store/migrate.py 0 times (need exactly 1)'
+E         Use -v to get more diff
+
+tests/test_migration_rules.py:713: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT ON audit_entries TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT ON audit_entries TO PUBLIC;]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT (seq) ON audit_entries TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT ON audit_entries TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT ON audit_entries TO PUBLIC;]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT (seq) ON audit_entries TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};]
+FAILED tests/test_migration_postgres.py::test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;]
+FAILED tests/test_migration_postgres.py::test_the_named_roles_and_the_owner_may_hold_rights_and_a_function_loses_the_default_for_everyone
+FAILED tests/test_migration_postgres.py::test_a_security_definer_function_is_refused_unless_a_reviewer_listed_it
+FAILED tests/test_migration_postgres.py::test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new
+FAILED tests/test_migration_postgres.py::test_a_run_that_cannot_get_the_migration_lock_gives_up_and_names_the_holder
+FAILED tests/test_migration_wiring.py::test_the_wait_for_the_lock_is_limited_by_the_argument
+FAILED tests/test_migration_wiring.py::test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds[0]
+FAILED tests/test_migration_wiring.py::test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds[-1]
+FAILED tests/test_migration_wiring.py::test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds[1.5]
+FAILED tests/test_migration_wiring.py::test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds[5]
+FAILED tests/test_migration_wiring.py::test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds[True]
+FAILED tests/test_migration_wiring.py::test_the_wait_for_the_lock_must_be_a_whole_number_of_seconds[None]
+FAILED tests/test_migration_rules.py::test_every_migrate_mutant_still_applies_to_the_source
+24 failed, 20 passed, 297 deselected in 3.88s

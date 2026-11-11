@@ -1,4 +1,4 @@
-"""K2 Upgrade safety and audit integrity: the migration ledger, the one grant map, the portal role, and the
+"""Upgrade safety and audit integrity: the migration ledger, the one grant map, the portal role, and the
 stored-plan hash. The database tests need HADAVIN_TEST_PG_DSN (CI: the postgres service) and skip without it."""
 
 import json
@@ -13,6 +13,8 @@ from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import Plan
 from hadavin_sdk.store import migrate as mig
 from tests.contracts.kinds.store_postgres import pg_schema
+from tests.fixtures.migration_role import create_login_role, login_dsn
+from tests.fixtures.released_stub import made_up_files_are_not_released
 
 FIXTURE = Path(__file__).parent / "fixtures" / "plan_v1.json"
 
@@ -106,6 +108,9 @@ def test_the_portal_relations_exclude_the_never_list():
 def test_migrate_refuses_an_inconsistent_ledger_before_connecting(monkeypatch, tmp_path):
     files = _dir(tmp_path, {"0001_a.sql": "CREATE TABLE brand_new (\n    id TEXT\n);\n"})
     monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    made_up_files_are_not_released(
+        monkeypatch
+    )  # made-up or missing files: only the grant or ledger refusal is under test
 
     def no_db(*a, **k):
         raise AssertionError("connected")
@@ -143,6 +148,12 @@ def test_cli_migrate_passes_the_portal_role(cfg_dir, monkeypatch):
     args = ["--config", str(cfg_dir), "migrate", "--runtime-role", "rt", "--portal-role", "pt"]
     assert cli.main(args) == 0
     assert (seen["runtime_role"], seen["portal_role"]) == ("rt", "pt")
+    assert "lock_wait_seconds" not in seen, "the default wait is the one of `migrate`"
+    seen.clear()
+    assert cli.main([*args, "--lock-wait-seconds", "1800"]) == 0
+    assert seen.get("lock_wait_seconds") == 1800
+    with pytest.raises(SystemExit):  # not a positive whole number: refused by the parser
+        cli.main([*args, "--lock-wait-seconds", "0"])
 
 
 # --- plan hash ---------------------------------------------------------------------------------------
@@ -201,7 +212,7 @@ def roles():
         names = ("rt_" + uuid.uuid4().hex[:10], "pt_" + uuid.uuid4().hex[:10])
         with psycopg.connect(dsn, autocommit=True) as db:
             for n in names:
-                db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(n)))
+                create_login_role(db, n)
         try:
             yield dsn, *names
         finally:
@@ -232,9 +243,7 @@ def test_the_runtime_role_cannot_update_or_delete_the_audit_log(roles):
 
     dsn, runtime, _ = roles
     mig.migrate(dsn, runtime_role=runtime)
-    from psycopg.conninfo import make_conninfo
-
-    with psycopg.connect(make_conninfo(dsn, user=runtime), autocommit=True) as db:
+    with psycopg.connect(login_dsn(dsn, runtime), autocommit=True) as db:
         assert db.execute("SELECT current_user").fetchone()[0] == runtime
         for statement in (
             "UPDATE audit_entries SET body = '{}'",
@@ -262,9 +271,7 @@ def test_the_portal_role_reads_only_the_portal_relations(roles):
                 if _can(db, portal, name, p)
             }
             assert held == ({"SELECT"} if grant.portal else set()), name
-    from psycopg.conninfo import make_conninfo
-
-    with psycopg.connect(make_conninfo(dsn, user=portal), autocommit=True) as db:
+    with psycopg.connect(login_dsn(dsn, portal), autocommit=True) as db:
         db.execute("SELECT count(*) FROM runs")
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             db.execute("SELECT count(*) FROM kill_switch")
@@ -301,7 +308,7 @@ def test_the_store_contract_suite_runs_as_a_non_owner_role():
         assert user.startswith("rt_") and user != owner
 
 
-# --- review round: the guard fails closed ------------------------------------------------------------
+# --- the guard fails closed ------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -389,12 +396,15 @@ def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatc
     files = mig._migration_files()
     monkeypatch.setattr(mig, "_migration_files", lambda: files[:-1])
     # The grant map still names the removed file's tables; only the applied-without-file refusal is under test.
-    monkeypatch.setattr(mig, "check_grants", lambda paths: [])
+    monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+    made_up_files_are_not_released(
+        monkeypatch
+    )  # made-up or missing files: only the grant or ledger refusal is under test
     with pytest.raises(ConfigError, match="no file in this release"):
         mig.migrate(dsn)
 
 
-# --- CodeRabbit round 1 ------------------------------------------------------------------------------
+# --- a first code review ------------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -437,5 +447,5 @@ def test_migrate_refuses_a_portal_role_that_inherits_write_rights(roles):
     with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(sql.SQL("GRANT UPDATE, DELETE ON runs TO {}").format(sql.Identifier(other)))
         db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(other), sql.Identifier(portal)))
-    with pytest.raises(ConfigError, match="runs:UPDATE"):
+    with pytest.raises(ConfigError, match="can UPDATE runs"):
         mig.migrate(dsn, portal_role=portal)

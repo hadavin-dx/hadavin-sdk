@@ -1,0 +1,27 @@
+### tests/test_migration_rules.py::test_the_password_scan_reads_the_star_star_forms rc=1
+...FFF.                                                                  [100%]
+=================================== FAILURES ===================================
+_ test_the_password_scan_reads_the_star_star_forms[make_conninfo(d, user=u, **extra)-False] _
+tests/test_migration_rules.py:838: in test_the_password_scan_reads_the_star_star_forms
+    assert _passes_a_password(ast.parse(call).body[0].value) is has_password
+E   assert True is False
+E    +  where True = _passes_a_password(<ast.Call object at 0x7f853fe3db10>)
+E    +    where <ast.Call object at 0x7f853fe3db10> = <ast.Expr object at 0x7f853fe011d0>.value
+_ test_the_password_scan_reads_the_star_star_forms[make_conninfo(d, user=u, **options())-False] _
+tests/test_migration_rules.py:838: in test_the_password_scan_reads_the_star_star_forms
+    assert _passes_a_password(ast.parse(call).body[0].value) is has_password
+E   assert True is False
+E    +  where True = _passes_a_password(<ast.Call object at 0x7f853fffa810>)
+E    +    where <ast.Call object at 0x7f853fffa810> = <ast.Expr object at 0x7f853fff8b50>.value
+_ test_the_password_scan_reads_the_star_star_forms[make_conninfo(d, user=u, **{"sslmode": "x"})-False] _
+tests/test_migration_rules.py:838: in test_the_password_scan_reads_the_star_star_forms
+    assert _passes_a_password(ast.parse(call).body[0].value) is has_password
+E   assert True is False
+E    +  where True = _passes_a_password(<ast.Call object at 0x7f8540dbfcd0>)
+E    +    where <ast.Call object at 0x7f8540dbfcd0> = <ast.Expr object at 0x7f8540dbf710>.value
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_the_password_scan_reads_the_star_star_forms[make_conninfo(d, user=u, **extra)-False]
+FAILED tests/test_migration_rules.py::test_the_password_scan_reads_the_star_star_forms[make_conninfo(d, user=u, **options())-False]
+FAILED tests/test_migration_rules.py::test_the_password_scan_reads_the_star_star_forms[make_conninfo(d, user=u, **{"sslmode": "x"})-False]
+3 failed, 4 passed in 0.43s
+

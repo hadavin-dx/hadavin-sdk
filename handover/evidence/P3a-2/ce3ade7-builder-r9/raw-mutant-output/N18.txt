@@ -1,0 +1,14 @@
+### tests/test_migration_rules.py::test_the_runbook_carries_the_real_lock_the_command_and_every_case rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_the_runbook_carries_the_real_lock_the_command_and_every_case _______
+tests/test_migration_rules.py:492: in test_the_runbook_carries_the_real_lock_the_command_and_every_case
+    assert "current_user <> '<MIGRATION ROLE>'" in rb.block_with(
+tests/fixtures/runbook.py:43: in block_with
+    assert len(found) == 1, (fragment, len(found))
+           ^^^^^^^^^^^^^^^
+E   AssertionError: ('<MIGRATION ROLE>', 0)
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_the_runbook_carries_the_real_lock_the_command_and_every_case
+1 failed in 0.43s
+

@@ -1,0 +1,14 @@
+### tests/test_migration_wiring.py::test_migrate_takes_the_one_advisory_lock_key_first rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_migrate_takes_the_one_advisory_lock_key_first ______________
+tests/test_migration_wiring.py:351: in test_migrate_takes_the_one_advisory_lock_key_first
+    assert db.params[1] == ("SELECT pg_advisory_xact_lock(%s)", (mn.MIGRATE_LOCK,))
+E   AssertionError: assert ('SELECT pg_a...56253510836,)) == ('SELECT pg_a...56253510835,))
+E     
+E     At index 1 diff: (3760701656253510836,) != (3760701656253510835,)
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_migrate_takes_the_one_advisory_lock_key_first
+1 failed in 0.47s
+

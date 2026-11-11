@@ -1,0 +1,13 @@
+### tests/test_migration_postgres.py::test_a_run_that_cannot_get_the_migration_lock_gives_up_and_names_the_holder rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_run_that_cannot_get_the_migration_lock_gives_up_and_names_the_holder __
+tests/test_migration_postgres.py:2897: in test_a_run_that_cannot_get_the_migration_lock_gives_up_and_names_the_holder
+    assert holder_name in str(e.value) and "Nothing was changed." in str(e.value)
+E   AssertionError: assert ('hadavin_test_lock_holder_e80d8a' in 'migrate waited 1 seconds for the migration lock and gave up: a session this login cannot see holds it. Nothing was ch... the process number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.')
+E    +  where 'migrate waited 1 seconds for the migration lock and gave up: a session this login cannot see holds it. Nothing was ch... the process number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.' = str(ConfigError('migrate waited 1 seconds for the migration lock and gave up: a session this login cannot see holds it. No...the process number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.'))
+E    +    where ConfigError('migrate waited 1 seconds for the migration lock and gave up: a session this login cannot see holds it. No...the process number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.') = <ExceptionInfo ConfigError('migrate waited 1 seconds for the migration lock and gave up: a session this login cannot s...ss number), or you run migrate again with a larger lock_wait_seconds when the other run is a long migration.') tblen=3>.value
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_run_that_cannot_get_the_migration_lock_gives_up_and_names_the_holder
+1 failed in 1.57s
+

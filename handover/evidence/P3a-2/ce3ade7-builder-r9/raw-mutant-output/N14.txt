@@ -1,0 +1,13 @@
+### tests/test_migration_rules.py::test_privileges_on_objects_are_not_refused_as_role_membership[GRANT SELECT ON t TO r] rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_privileges_on_objects_are_not_refused_as_role_membership[GRANT SELECT ON t TO r] _
+tests/test_migration_rules.py:357: in test_privileges_on_objects_are_not_refused_as_role_membership
+    assert not any(REFUSED in r for r in _reasons(form)), _reasons(form)
+E   AssertionError: ['GRANT without ON: the guard cannot read what this statement does or changes']
+E   assert not True
+E    +  where True = any(<generator object test_privileges_on_objects_are_not_refused_as_role_membership.<locals>.<genexpr> at 0x7ff079ad01e0>)
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_privileges_on_objects_are_not_refused_as_role_membership[GRANT SELECT ON t TO r]
+1 failed in 0.35s
+

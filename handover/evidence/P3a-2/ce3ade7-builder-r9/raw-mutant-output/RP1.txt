@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_the_test_role_is_made_without_the_replication_flag rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________ test_the_test_role_is_made_without_the_replication_flag ____________
+tests/test_migration_wiring.py:1504: in test_the_test_role_is_made_without_the_replication_flag
+    assert "NOREPLICATION" in created[0], created
+E   AssertionError: ['CREATE ROLE "hadavin_test_migrator_3a81bb9a" LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS PASSWORD \'SCRAM-SHA-256$4096:made-up-salt$made-up-keys\'']
+E   assert 'NOREPLICATION' in 'CREATE ROLE "hadavin_test_migrator_3a81bb9a" LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS PASSWORD \'SCRAM-SHA-256$4096:made-up-salt$made-up-keys\''
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_test_role_is_made_without_the_replication_flag
+1 failed in 0.38s
+

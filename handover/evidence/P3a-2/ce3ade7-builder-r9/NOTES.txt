@@ -1,0 +1,15 @@
+head ce3ade7 (code; this evidence is committed after it), Python 3.13 and 3.12, Postgres 16.15, 2026-11-11
+Round 9 (builder). Base f906e3d. Items: r8-01 (rights for other roles, PUBLIC, SECURITY DEFINER), r8-02 (2,3,4,6,7,8), r8-03 (M1-M6).
+
+Failed or flawed first (honest list):
+- The first run of the 17 new mutants: SG1 survived (a table also has a row type, so the type clause caught it). Fixed with a sequence case; SG1-SG3 killed on rerun.
+- The first full mutant run at ce3ade7 stopped at its baseline ("tuple concurrently updated" on the shared plain role) because the two full suites ran on the same cluster at the same time. Rerun alone: 198 of 198 killed. File: mutants-first-attempt-baseline-race.txt. This is a clash between parallel runs on one test server, not seen when the runs are alone.
+- RN5 was BROKEN in the first full mutant run (the killer test's own failure message quoted the setup marker). Message shortened (the one change between e0a9c97 and ce3ade7); then everything was run again at ce3ade7.
+- The dblink test in tests/demo_askdata needs the server process to know its own host and port; on my first scram cluster it failed for that reason alone (the server was started without them). Restarted with them: pass.
+
+Results at ce3ade7: suite-py3.13.txt 10839 passed 1 skipped; suite-py3.12.txt 10839 passed 1 skipped; mutants-full.txt 198 of 198 killed (146 behaviour, 11 prose, 41 helper), raw-mutant-output/ has the raw failure output.
+Produced at e0a9c97 (same code; only one assertion message differs): scram.txt (1868 passed 1 skipped on scram-sha-256), fail-before files, new-mutants-first-run.txt, gates.txt (gates re-run at ce3ade7 are appended at its end).
+Fail-before (f906e3d source): 24 of the new tests fail on the old source; helper tests fail on the old helper (6 failed, 2 errors). The password-scan test for ** (a guard on the test files themselves) is covered by mutant GD2, not by a fail-before run.
+
+Not run: PostgreSQL 17 or any other version; a non-UTF-8 database (the note in _fold says so); the pytest-randomly or xdist orders; Windows.
+Open lead decisions (left as they were, defaults named): item 5 REPLICATION flag of the test login is not checked (rolreplication check not added); fixed per-file timeouts kept; pg_database_owner exemption kept; scope beyond the ticket kept.

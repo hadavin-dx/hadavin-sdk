@@ -1,0 +1,28 @@
+### tests/test_migration_postgres.py::test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over _
+tests/test_migration_postgres.py:1473: in test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over
+    mig.migrate(dsn)
+src/hadavin_sdk/store/migrate.py:1187: in migrate
+    done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/user/build/B-P73r2/.venv/lib/python3.13/site-packages/psycopg/connection.py:304: in execute
+    raise ex.with_traceback(None)
+E   psycopg.errors.InsufficientPrivilege: permission denied for table schema_migrations
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over
+1 failed in 0.56s
+
+### tests/test_migration_postgres.py::test_one_table_owned_by_another_role_is_enough_to_refuse_and_a_function_is_named rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_one_table_owned_by_another_role_is_enough_to_refuse_and_a_function_is_named _
+tests/test_migration_postgres.py:1524: in test_one_table_owned_by_another_role_is_enough_to_refuse_and_a_function_is_named
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_one_table_owned_by_another_role_is_enough_to_refuse_and_a_function_is_named
+1 failed in 0.55s
+

@@ -1,0 +1,15 @@
+### tests/test_migration_rules.py::test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________ test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill _________
+tests/test_migration_rules.py:779: in test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill
+    assert one(head) == "BROKEN", head.split()[0]
+E   AssertionError: NameError:
+E   assert 'KILLED' == 'BROKEN'
+E     
+E     - BROKEN
+E     + KILLED
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill
+1 failed in 0.41s
+

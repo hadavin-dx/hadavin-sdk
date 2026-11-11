@@ -1,0 +1,14 @@
+### tests/test_migration_postgres.py::test_the_exit_hook_drops_what_the_role_owns_in_every_used_database_and_then_the_role rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_the_exit_hook_drops_what_the_role_owns_in_every_used_database_and_then_the_role _
+tests/test_migration_postgres.py:2199: in test_the_exit_hook_drops_what_the_role_owns_in_every_used_database_and_then_the_role
+    assert not _role_exists(name)
+E   AssertionError: assert not True
+E    +  where True = _role_exists('hadavin_test_migrator_7868d91e')
+----------------------------- Captured stdout call -----------------------------
+test role hadavin_test_migrator_7868d91e was not dropped: DependentObjectsStillExist
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_the_exit_hook_drops_what_the_role_owns_in_every_used_database_and_then_the_role
+1 failed in 0.70s
+

@@ -2,9 +2,9 @@
 timing rule `tests/fixtures/timing.py`. Not collected by pytest.
 
 Each mutant reverts ONE guard in a temp copy; the test in `killer` must be the one that fails first, with a failing line
-that holds `expect`. The first 17 are the lexer mutants of the ticket (M26 a-h, M74, M50, M51, M52, M72, M73, M96, M97,
+that holds `expect`. The first 17 are the lexer mutants of the first change (M26 a-h, M74, M50, M51, M52, M72, M73, M96, M97,
 M98; the "strings before comments" mutant of M26(i) cannot be written as a one-line revert and M86 is the timing
-stand-in, which lives in the `perf` tests); the rest are the guards added in fix 1 and order 100. Run from the repo
+stand-in, which lives in the `perf` tests); the rest are the guards added in the two fixes after it. Run from the repo
 root (CI-ready: needs only the ordinary test environment, no database, no network, under a minute; exit 0 only when every
 mutant is good, and the last line is `N of N good; problems: []`):
 
@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 T1 = "tests/test_migration_numbers.py"
 T2 = "tests/test_migration_numbers_guards.py"
 T3 = "tests/test_timing_fixture.py"
+T4 = "tests/test_migration_names.py"
 TIMING = "tests/fixtures/timing.py"
 SRC = "src/hadavin_sdk/store/migration_numbers.py"
 
@@ -235,8 +236,8 @@ M = [
     ),
     mutant(
         "fix1: gone_message names are not capped",
-        "shown = [_esc(n) for n in names[:MAX_PROBLEMS_SHOWN]]",
-        "shown = [_esc(n) for n in names]",
+        "shown = [escape_name(n) for n in names[:MAX_PROBLEMS_SHOWN]]",
+        "shown = [escape_name(n) for n in names]",
         T2,
         "test_gone_message_caps_the_names_and_stays_fast",
         "names not capped",
@@ -250,6 +251,38 @@ M = [
         "('GRANT r TO s', [])",
     ),
     mutant(
+        "the role rule looks for a standalone ON with the word boundary again (app$on hides a grant)",
+        "(?!.*?{_NAME_START}on{_NAME_END})",
+        r"(?!.*?\bon\b)",
+        T4,
+        "test_every_short_name_over_the_dollar_alphabet_is_refused_in_a_role_grant",
+        "GRANT r TO",
+    ),
+    mutant(
+        "a name character no longer includes the dollar sign",
+        '_NAME_CHAR = "[A-Za-z0-9_$',
+        '_NAME_CHAR = "[A-Za-z0-9_',
+        T4,
+        "test_the_name_boundary_agrees_with_the_lexer_character_set",
+        "AssertionError: $",
+    ),
+    mutant(
+        "a name character no longer includes non-ASCII characters",
+        '_NAME_CHAR = "[A-Za-z0-9_$\\u0080-\\U0010ffff]"',
+        '_NAME_CHAR = "[A-Za-z0-9_$]"',
+        T4,
+        "test_the_name_boundary_agrees_with_the_lexer_character_set",
+        "AssertionError: \u00e9",
+    ),
+    mutant(
+        "SET LOCAL lock_timeout/statement_timeout is allowed in the text scan again",
+        "elif m := _SET.match(s):",
+        "elif (m := _SET.match(s)) and not re.match(r'set\\s+local\\s+(?:lock|statement)_timeout', s, re.I):",
+        T1,
+        "test_the_two_time_limits_are_refused_in_the_text_scan_not_only_by_the_read_back",
+        "AssertionError",
+    ),
+    mutant(
         "fix1: COPY PROGRAM is not refused",
         "elif _COPY_PROGRAM.match(s):",
         "elif False:",
@@ -259,7 +292,7 @@ M = [
     ),
     mutant(
         "fix1: a changed released file is not found",
-        'elif hashlib.sha256(p.read_bytes().replace(b"\\r\\n", b"\\n")).hexdigest() != manifest[stem]:',
+        "elif _digest(p, texts) != manifest[stem]:",
         "elif False:",
         T2,
         "test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number",
@@ -275,19 +308,19 @@ M = [
         allow_crash=True,
         crash_type="KeyError",
     ),
-    # --- order 100
+    # --- the second fix
     mutant(
-        "o100: statement_text returns the bare text, not the pair",
+        "statement_text returns the bare text, not the pair",
         "    return lex(text, keep_quoted)\n",
         "    return lex(text, keep_quoted)[0]\n",
         T2,
-        "test_statement_text_called_the_ticket_way_returns_the_pair",
+        "test_statement_text_called_with_a_plain_text_returns_the_pair",
         "too many values to unpack",
         allow_crash=True,
         crash_type="ValueError",
     ),
     mutant(
-        "o100: the error is not rebuilt from its problems on copy",
+        "the error is not rebuilt from its problems on copy",
         "    def __reduce__(self):",
         "    def _not_reduce(self):",
         T2,
@@ -295,23 +328,23 @@ M = [
         "and 13 more",
     ),
     mutant(
-        "o100: MIGRATE_LOCK differs from the key migrate uses",
+        "MIGRATE_LOCK differs from the key migrate uses",
         'MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 1',
         'MIGRATE_LOCK = int.from_bytes(b"hadvnmig", "big") >> 2',
         T2,
         "test_the_lock_key_and_the_folder_are_the_ones_migrate_uses",
-        "BinOp(left=C",
+        "== (7521403312507021671 >> 1)",  # migrate.py imports the key, so the last assertion of the test fires
     ),
     mutant(
-        "o100: MIGRATIONS names another folder than migrate does",
+        "MIGRATIONS names another folder than migrate does",
         'MIGRATIONS = Path(__file__).parent / "migrations"',
         'MIGRATIONS = Path(__file__).parent / "migration"',
         T2,
         "test_the_lock_key_and_the_folder_are_the_ones_migrate_uses",
-        "BinOp(left=A",
+        "/ 'migrations')",  # migrate.py imports the folder, so the last assertion of the test fires
     ),
     mutant(
-        "o100: NAME lets any character into a file name",
+        "NAME lets any character into a file name",
         'NAME = re.compile(r"[0-9]{4}_[a-z0-9_]+\\.sql")',
         'NAME = re.compile(r"[0-9]{4}_.+\\.sql")',
         T1,
@@ -319,7 +352,7 @@ M = [
         "== []",
     ),
     mutant(
-        "o100: the timing limit is not a ratio (everything passes)",
+        "the timing limit is not a ratio (everything passes)",
         "PER_SIZE, MIN_SMALL_S = 3.0, 0.004",
         "PER_SIZE, MIN_SMALL_S = 1000.0, 0.004",
         T3,
@@ -328,7 +361,7 @@ M = [
         src=TIMING,
     ),
     mutant(
-        "o100: the timing limit is too tight (everything is flagged)",
+        "the timing limit is too tight (everything is flagged)",
         "PER_SIZE, MIN_SMALL_S = 3.0, 0.004",
         "PER_SIZE, MIN_SMALL_S = 0.001, 0.004",
         T3,
@@ -337,7 +370,7 @@ M = [
         src=TIMING,
     ),
     mutant(
-        "o100: the small run is not floored",
+        "the small run is not floored",
         "max(t_small, MIN_SMALL_S)",
         "t_small",
         T3,
@@ -366,7 +399,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [T1, T2, T3],
+        [T1, T2, T3, T4],
         extra_dirs=("tests/fixtures",),
         only=only,
         on_result=show,

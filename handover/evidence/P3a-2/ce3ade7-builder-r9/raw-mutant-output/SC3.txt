@@ -1,0 +1,12 @@
+### tests/test_migration_postgres.py::test_another_session_changing_the_migration_users_own_roles_stops_the_run rc=1
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_another_session_changing_the_migration_users_own_roles_stops_the_run[membership] _
+tests/test_migration_postgres.py:2335: in test_another_session_changing_the_migration_users_own_roles_stops_the_run
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_another_session_changing_the_migration_users_own_roles_stops_the_run[membership]
+1 failed, 1 passed in 0.87s
+

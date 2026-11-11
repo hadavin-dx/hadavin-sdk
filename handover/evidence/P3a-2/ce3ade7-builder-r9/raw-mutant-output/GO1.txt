@@ -1,0 +1,14 @@
+### tests/test_migration_postgres.py::test_a_role_made_with_the_printed_sql_only_can_pass_usage_on_to_the_runtime_and_portal_roles rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_role_made_with_the_printed_sql_only_can_pass_usage_on_to_the_runtime_and_portal_roles _
+tests/test_migration_postgres.py:1682: in test_a_role_made_with_the_printed_sql_only_can_pass_usage_on_to_the_runtime_and_portal_roles
+    assert mig.migrate(login_dsn(super_dsn, role), runtime_role=rt, portal_role=pt) == REAL
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:1258: in migrate
+    raise ConfigError(
+E   hadavin_sdk.errors.ConfigError: the role hadavin_test_rt_66bfe162 cannot use the schema hadavin_test_3c8c23f1efbc after the grants: the migration role may not pass USAGE on the schema on. Give it the grant option (GRANT USAGE ON SCHEMA <schema> TO <the migration role> WITH GRANT OPTION; CREATE needs no grant option), or make it the owner of the schema.
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_role_made_with_the_printed_sql_only_can_pass_usage_on_to_the_runtime_and_portal_roles
+1 failed in 0.62s
+
