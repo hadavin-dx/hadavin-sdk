@@ -38,7 +38,7 @@ Command (in the head worktree, venv `/home/user/build/venv-evp77`, own PostgreSQ
 
 The one skip: `tests/contracts/test_llm.py::test_a_malformed_answer_is_a_provider_error`, reason "Stubber refuses a malformed Converse shape before the kind sees it".
 The 14 expected failures (4 in `tests/test_redact_fold.py`, 10 in `tests/test_textnorm_differential.py`) are listed with their reasons in `full-suite-counts.txt`.
-Postgres-backed tests ran and were not skipped: `tests/test_p2_postgres.py` 16 passed, `tests/test_k5_postgres.py` 1, `tests/test_k5_round8_postgres.py` 1, `tests/test_k5_round10_postgres.py` 8, `tests/demo_askdata/*` 1,194 passed in 26 files (per-file counts in `full-suite-counts.txt`).
+Postgres-backed tests ran and were not skipped: `tests/test_p2_postgres.py` 16 passed, `tests/test_k5_postgres.py` 1, `tests/test_k5_round8_postgres.py` 1, `tests/test_k5_round10_postgres.py` 8, `tests/demo_askdata/*` 1,214 passed in 26 files, none skipped (per-file counts in `full-suite-counts.txt`).
 The three files of this change on the head: `test_redact_hidden_forms.py` 179 passed, `test_redact_marks.py` 40 passed, `test_redact_fold_budget.py` 28 passed.
 No test in the repository carries the `live` mark (`grep -rn "mark.live" tests` printed nothing), so the unfiltered run made no live call.
 
@@ -138,7 +138,7 @@ Counts per path. whole = the secret stands as it is; hidden-gap = its letters in
 | C with the secret handed out (`[secret]`) | 2912 | 0 | 0 | 125 | 43 | 168 | 0 | 0 |
 | D with the secret handed out (`[secret]`) | 2912 | 0 | 0 | 125 | 43 | 168 | 0 | 0 |
 
-So the count the brief asks for (letters in order with only hidden characters between them) is 22 of 2,912 on each of the four pattern paths and 0 with the secret handed out; all 22 are key=value cases in which the backslash + line break stands inside the NAME (offsets 1 to 8), so the name is no longer read as one word and the value stays. With the backslash also allowed in a gap the count is 147 (pattern paths) and 125 (secret handed out).
+So the count the brief asks for (letters in order with only hidden characters between them) is 22 of 2,912 on each of the four pattern paths and 0 with the secret handed out. All 22 are key=value cases: 9 single cases (backslash + line break at offsets 1 to 9 of the token, that is inside the name `password` or right after the equals sign) and 13 pair cases (the backslash + line break at an offset from 2 to 9). With the backslash + line break at offsets 10 to 17 (inside the value) the first piece of the value is masked and the rest stands after the line break (15 down to 8 characters of 16); at offsets 18 to 24 no piece of 8 or more characters stands (shorter pieces were not counted). With the backslash also allowed in a gap the count is 147 (pattern paths) and 125 (secret handed out).
 Split of path A by carrier: key, single 0 / 0 / 11 / 1 and pair 0 / 0 / 24 / 6 (whole / hidden-gap / loose-gap / part8); e-mail address, single 0 / 0 / 11 / 0 and pair 0 / 0 / 76 / 0; key=value, single 9 / 9 / 9 / 8 and pair 13 / 13 / 16 / 28.
 Every single-case hit is the item "backslash + line break" (table and examples in `probe-5c-combinations.txt`).
 
@@ -203,9 +203,9 @@ Files that hold them: `approvals/channel.py`, `approvals/gate.py`, `approvals/hm
 |---|---|---|
 | `/home/user/build/bin/gitleaks git --redact --no-banner --exit-code 0 --log-opts="origin/main..97fd2028" <worktree>` (gitleaks 8.30.1) | 0 | "24 commits scanned", "no leaks found"; 0 rule and file pairs |
 | the same with `--log-opts="origin/wip/P2d-1-w6..97fd2028"` | 0 | "2 commits scanned", "no leaks found"; 0 rule and file pairs |
-| `/home/user/build/bin/gitleaks dir --redact --no-banner --exit-code 0 /home/user/hadavin-sdk/handover/evidence/PR77/97fd202` | SEE-FINAL-SCAN | SEE-FINAL-SCAN |
-| `python tools/scan_repo.py --root /home/user/hadavin-sdk/handover/evidence/PR77/97fd202` (script, allowlist and banned-name source taken from the head with `git show`) | SEE-FINAL-SCAN | SEE-FINAL-SCAN |
-| replacement check by the runner: the `PATTERNS` and the banned-name list of the head's `tools/scan_repo.py` applied to every file of this folder | SEE-FINAL-SCAN | SEE-FINAL-SCAN |
+| `/home/user/build/bin/gitleaks dir --redact --no-banner --exit-code 0 /home/user/hadavin-sdk/handover/evidence/PR77/97fd202` | 0 | "no leaks found", 0 findings (run again after the last edit of this file: same) |
+| `python tools/scan_repo.py --root /home/user/hadavin-sdk/handover/evidence/PR77/97fd202` (script, allowlist and banned-name source taken from the head with `git show`) | 1 | 3 lines, all "scan_allowlist.txt: stale entry, <file> is not tracked"; no file of this folder was read by it (see point 1 at the top) |
+| replacement check by the runner: the `PATTERNS` and the banned-name list of the head's `tools/scan_repo.py` applied to every file of this folder | 0 hits | 14 files read, 10 banned names loaded, 0 pattern hits, 0 banned-name hits, 0 lines with the example key literal |
 
 No file had to be moved out of this folder after a scan hit. One file was moved for another reason: the incomplete first timing output (see point 3 at the top).
 

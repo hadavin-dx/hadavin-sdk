@@ -1305,6 +1305,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | id | purpose | started | expected end | last check | state | next action |
 |---|---|---|---|---|---|---|
 | B-P3a2 a73e15b4 | round 12 builder | 14:03Z | | 15:36Z | CLOSED. Builder's own account: full suite exit 1 (1 failed: its own Postgres setup; folder rerun green), mutants 287 of 288 then the broken one fixed and killed alone; NEITHER rerun in full on the final head; policy added: no function right for a named role (lead: confirmed, stricter than D-009, least privilege) | evidence on the final head |
-| EV-P3a2-r12 | EVIDENCE RUNNER (Fable) 4d328e3d, pg 56170 with max_prepared_transactions=10 | 15:36Z | +60m | 15:36Z | starting | RESULTS.md |
-| R-P3a2-r12 design + codebase | fresh egm reviewers (Fable), snapshot /home/user/build/snap/p3a2-r12-4d328e3 | 15:36Z | +20m | 15:36Z | starting | save full reports |
+| EV-P3a2-r12 a10b6577 | EVIDENCE RUNNER (Fable) 4d328e3d, pg 56170 with max_prepared_transactions=10 | 15:36Z | +60m | 15:36Z | running | RESULTS.md |
+| R-P3a2-r12 design a98329b0, codebase a20099a3 | fresh egm reviewers (Fable), snapshot /home/user/build/snap/p3a2-r12-4d328e3 | 15:36Z | +20m | 15:36Z | running | save full reports |
 | A-PRH a2f42970, B-Q8b a74d0f05 | ticket author for the small redaction fix; Q8b builder | 15:40Z | +45m / +90m | 15:36Z | running | plan review / evidence |
+| EV-Q8c1 adaef824 | evidence 7af13809 | 15:20Z | | 15:37Z | CLOSED: RESULTS.md. Full suite exit 1 (1 failed = the known timing test under load 15; file alone green on main and head); 11 Vault server tests SKIPPED (no server): nothing shows a real server refusing anything; 2 plants not reported (watch query; literal getattr); renderer renders mount sys, kube-system, cluster-admin, default account, duplicate namespace, 300-char values; hashes 19 of 19 match | forwarded to the fix builder a9b15053 (same batch) |
