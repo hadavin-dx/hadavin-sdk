@@ -253,3 +253,9 @@ Heads (origin): see the branch table at the top of handover/PULSE.md. State per 
 - Q8a-2: nits only; one-push fix and drift report still queued.
 Nothing merged, nothing spent, no live call, no PR state change. Owner-needed items: handover/RECOMMENDATIONS.md and questions-for-lead.md.
 23:09Z update: PR H b3 resolved (report r-b3), Q8a-1 r8 reviews saved, Q8c-1 r6 resolved; builders to launch: PR H fix (9 items), Q8c-1 r6 fix (7 items).
+
+## Update 23:41Z (core lane, order 247 GO)
+- Q8b: head 4091f8b1, round 4 reviews in (design: D1 Blocker pass*/session* quoted keys lost vs main, D2 Major walk allow-list; codebase: C1 Major no mutant for card second-view widening). Independent evidence runner running; resolve next. Reports: /home/user/build/reports/q8b4-*-r4.md (not in git; copied into handover/reviews/Q8b at resolve).
+- Fix builders running (started ~23:21Z, boxes end ~00:50Z): PR H b4, Q8c-1 b6, PR89 r26, Q8a-1 b8.
+- P3a-2: 3b head 1ffa6559 suite RED (5 failed). Fix builder has uncommitted edits in /home/user/build/B-P3a2-fx (3 k5 tests re-pointed, psycopg moved behind store/postgres.py, EX1/EX2 tests); resumed to finish; nothing pushed to core/P3a-2-clean.
+- Owner-needed: see questions-for-lead.md (q-prh-stray-branch, q-p3a2-3b-decisions, Vault CI run, merge order Q8b before PR77).
