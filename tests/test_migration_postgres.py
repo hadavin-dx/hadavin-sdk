@@ -21,7 +21,13 @@ from hadavin_sdk.errors import ConfigError
 from tests.fixtures import migration_role as helper
 from tests.fixtures import runbook as rb
 from tests.fixtures.dsn_skip import require_module
-from tests.fixtures.migration_role import PLAIN_ROLE, create_login_role, ensure_plain_role
+from tests.fixtures.migration_role import (
+    PLAIN_ROLE,
+    create_login_role,
+    ensure_plain_role,
+    login_dsn,
+    set_login_password,
+)
 
 psycopg = require_module("psycopg")  # with the DSN set a missing driver FAILS (never a skip)
 from psycopg import sql
@@ -1468,6 +1474,12 @@ def test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_o
     msg = str(e.value)
     assert "cannot change" in msg and "another role owns" in msg, msg
     assert "case (h)" in msg and f'OWNER TO "{role}";' in msg, msg
+    # three parts, in this order: what is wrong, that nothing changed, what the administrator does
+    wrong, unchanged, todo = (
+        msg.find(x) for x in ("cannot change", "Nothing was changed.", "case (h)")
+    )
+    assert 0 <= wrong < unchanged < todo, msg
+    assert "SECURITY DEFINER" in msg, msg
     with psycopg.connect(DSN, autocommit=True) as db:
         login = db.execute("SELECT current_user").fetchone()[0]
     assert "ALTER TABLE" in msg and "audit_entries" in msg and f"owner {login}" in msg, msg
@@ -1580,9 +1592,9 @@ def test_the_session_user_is_checked_for_membership_too(scratch, plain_role):
                 sql.SQL("GRANT {} TO {}").format(sql.Identifier(other), sql.Identifier(role))
             )
             db.execute(sql.SQL("GRANT pg_signal_backend TO {}").format(sql.Identifier(role)))
-            login = make_conninfo(
+            login = login_dsn(
                 super_dsn,
-                user=role,
+                role,
                 options=conninfo_to_dict(super_dsn)["options"] + f" -c role={other}",
             )
             with pytest.raises(ConfigError, match="built-in server role"):
@@ -1636,6 +1648,9 @@ def _role_from_the_printed_sql(schema: str, grant_option: bool) -> tuple[str, st
         printed = printed.replace(" WITH GRANT OPTION", "")
     with psycopg.connect(DSN, autocommit=True) as db:
         db.execute(printed)
+        set_login_password(
+            db, role
+        )  # the printed SQL sets none (a person adds the login method that fits)
         for other in (rt, pt):
             db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(other)))
         db.execute(
@@ -1664,10 +1679,7 @@ def test_a_role_made_with_the_printed_sql_only_can_pass_usage_on_to_the_runtime_
     super_dsn, schema = scratch
     role, rt, pt = _role_from_the_printed_sql(schema, grant_option=True)
     try:
-        assert (
-            mig.migrate(make_conninfo(super_dsn, user=role), runtime_role=rt, portal_role=pt)
-            == REAL
-        )
+        assert mig.migrate(login_dsn(super_dsn, role), runtime_role=rt, portal_role=pt) == REAL
         with psycopg.connect(DSN, autocommit=True) as db:
             assert db.execute(
                 "SELECT has_schema_privilege(%s, %s, 'USAGE')", (rt, schema)
@@ -1685,7 +1697,7 @@ def test_a_role_without_the_grant_option_is_refused_when_its_grants_would_do_not
     role, rt, pt = _role_from_the_printed_sql(schema, grant_option=False)
     try:
         with pytest.raises(ConfigError, match="cannot use the schema"):
-            mig.migrate(make_conninfo(super_dsn, user=role), runtime_role=rt)
+            mig.migrate(login_dsn(super_dsn, role), runtime_role=rt)
         assert _ledger(super_dsn) is None, "the refusal rolled everything back"
     finally:
         _drop_all(role, rt, pt)
@@ -1970,14 +1982,14 @@ def test_functions_with_capitals_or_a_space_in_the_name_count_as_managed(
     assert "mixed_case_fn" in str(e.value) and "Odd Name Fn" in str(e.value), str(e.value)
 
 
-def test_one_server_is_one_entry_whatever_the_search_path():
+def test_one_connection_target_is_one_entry_whatever_the_search_path():
     """Killed by: mutant DD1 (the whole connection string, with its search path, is the entry)."""
     a = "host=h port=1 dbname=d user=u options='-c search_path=hadavin_test_a'"
     b = "host=h port=1 dbname=d user=u options='-c search_path=hadavin_test_b'"
     assert (
-        helper._server_key(a)
-        == helper._server_key(b)
-        != helper._server_key("host=h port=2 dbname=d user=u")
+        helper._target_key(a)
+        == helper._target_key(b)
+        != helper._target_key("host=h port=2 dbname=d user=u")
     )
 
 
@@ -2022,50 +2034,145 @@ def test_a_test_role_left_by_a_killed_process_is_swept_and_a_live_one_is_not(scr
     _drop_roles(*[r for r in (live, held, stale) if _role_exists(r)])
 
 
+@contextlib.contextmanager
+def _databases_and_a_stale_role(count: int = 2):
+    """Throwaway databases (`count` names) and a role named like the helper's, made as the test login; everything is
+    dropped afterwards (the databases with FORCE), and a failure of the cleanup is not allowed to hide a failure of the
+    test. Yields (role, [database names])."""
+    name = f"hadavin_test_migrator_{uuid.uuid4().hex[:8]}"
+    names = [f"hadavin_test_db_{uuid.uuid4().hex[:8]}" for _ in range(count)]
+    made = []
+    try:
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            create_login_role(admin, name)
+            try:
+                for d in names:
+                    admin.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(d)))
+                    made.append(d)
+            except psycopg.errors.InsufficientPrivilege:
+                pytest.fail("this test needs CREATEDB on the HADAVIN_TEST_PG_DSN login")
+        yield name, names
+    finally:
+        with contextlib.suppress(psycopg.Error), psycopg.connect(DSN, autocommit=True) as admin:
+            for d in made:
+                admin.execute(
+                    sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(d))
+                )
+            if _role_exists(name):
+                admin.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(name)))
+                admin.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(name)))
+
+
 @needs_pg
 def test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server(
-    scratch, monkeypatch
+    monkeypatch,
 ):
     """A role belongs to the whole server, an advisory lock to one database. The live process holds its mark from
     database X; a second test process sweeps from database Y of the same server: its try-lock on Y succeeds, so only
     the connection named like the role keeps the role. Killed by: mutant SW7 (the sweep does not look at the name of
     the connections)."""
-    name = f"hadavin_test_migrator_{uuid.uuid4().hex[:8]}"
-    db_x, db_y = (f"hadavin_test_db_{uuid.uuid4().hex[:8]}" for _ in range(2))
     monkeypatch.setattr(helper, "_HOLDS", {})
-    with psycopg.connect(DSN, autocommit=True) as admin:
-        create_login_role(admin, name)
-        for d in (db_x, db_y):
-            admin.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(d)))
-    try:
-        with (
-            psycopg.connect(make_conninfo(DSN, dbname=db_x), autocommit=True) as in_x,
-            psycopg.connect(make_conninfo(DSN, dbname=db_y), autocommit=True) as in_y,
-        ):
-            with (
-                monkeypatch.context() as as_that_process
-            ):  # only the hold is made as the other process
-                as_that_process.setattr(helper, "_TOKEN", name.rsplit("_", 1)[1])
-                as_that_process.setattr(helper, "PLAIN_ROLE", name)
-                helper._hold_the_role(in_x)
-            try:
-                assert name not in helper.sweep_stale_roles(in_y), (
-                    "a live process's role was dropped"
+    with (
+        _databases_and_a_stale_role() as (name, (db_x, db_y)),
+        psycopg.connect(make_conninfo(DSN, dbname=db_x), autocommit=True) as in_x,
+        psycopg.connect(make_conninfo(DSN, dbname=db_y), autocommit=True) as in_y,
+    ):
+        with monkeypatch.context() as as_that_process:  # only the hold is made as the other process
+            as_that_process.setattr(helper, "_TOKEN", name.rsplit("_", 1)[1])
+            as_that_process.setattr(helper, "PLAIN_ROLE", name)
+            helper._hold_the_role(in_x)
+        try:
+            assert name not in helper.sweep_stale_roles(in_y), "a live process's role was dropped"
+            assert _role_exists(name)
+        finally:
+            helper._close_the_hold()
+        for _ in range(100):  # the server ends the closed session a moment later
+            if name in helper.sweep_stale_roles(in_y):
+                break
+            time.sleep(0.05)
+        else:
+            pytest.fail("after the hold is closed the role is stale and is dropped")
+
+
+@needs_pg
+def test_a_stale_role_that_owns_objects_in_another_database_is_left_and_the_databases_are_named(
+    capsys,
+):
+    """DROP OWNED works in one database; the role owns a schema in database X, the sweep runs in Y. The role stays, and
+    the one line names X. Killed by: mutant SW14 (the databases are not named)."""
+    with _databases_and_a_stale_role() as (name, (db_x, db_y)):
+        with psycopg.connect(make_conninfo(DSN, dbname=db_x), autocommit=True) as in_x:
+            in_x.execute(
+                sql.SQL("CREATE SCHEMA hadavin_test_owned AUTHORIZATION {}").format(
+                    sql.Identifier(name)
                 )
-                assert _role_exists(name)
-            finally:
-                helper._close_the_hold()
-            for _ in range(100):  # the server ends the closed session a moment later
-                if name in helper.sweep_stale_roles(in_y):
-                    break
-                time.sleep(0.05)
-            else:
-                raise AssertionError("after the hold is closed the role is stale and is dropped")
-    finally:
+            )
+        in_y_dsn = make_conninfo(DSN, dbname=db_y)
+        with psycopg.connect(in_y_dsn, autocommit=True) as in_y:
+            assert name not in helper.sweep_stale_roles(in_y)
+        assert _role_exists(name)
+        out = capsys.readouterr().out
+        assert name in out and db_x in out and db_y not in out, out
+
+
+@needs_pg
+def test_a_role_that_owns_a_schema_that_is_not_a_scratch_schema_is_not_swept():
+    """A role named like the helper's but made by a person, owning a real schema, is not dropped with what it owns.
+    Killed by: mutant SW13 (the schemas the role owns are not looked at)."""
+    with (
+        _databases_and_a_stale_role(1) as (name, (db_x,)),
+        psycopg.connect(make_conninfo(DSN, dbname=db_x), autocommit=True) as in_x,
+    ):
+        in_x.execute(
+            sql.SQL("CREATE SCHEMA real_data AUTHORIZATION {}").format(sql.Identifier(name))
+        )
+        assert name not in helper.sweep_stale_roles(in_x)
+        assert _role_exists(name)
+        in_x.execute("DROP SCHEMA real_data")
+        assert name in helper.sweep_stale_roles(in_x), "without it the role is swept"
+
+
+@needs_pg
+def test_a_login_that_cannot_see_other_sessions_sweeps_nothing_on_a_real_server():
+    """A plain login sees no `application_name` of other users, so a live role could look unused: nothing is swept.
+    Killed by: mutant SW11 (the right is not asked)."""
+    with _databases_and_a_stale_role(1) as (name, _):
         with psycopg.connect(DSN, autocommit=True) as admin:
-            for d in (db_x, db_y):
-                admin.execute(sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(d)))
-        _drop_roles(*[r for r in (name,) if _role_exists(r)])
+            plain = f"hadavin_test_pl_{uuid.uuid4().hex[:8]}"
+            create_login_role(admin, plain)
+        try:
+            with psycopg.connect(login_dsn(DSN, plain), autocommit=True) as db:
+                assert helper.sweep_stale_roles(db) == []
+            assert _role_exists(name), (
+                "the stale role was left alone by a login that cannot see sessions"
+            )
+        finally:
+            _drop_roles(plain)
+
+
+@needs_pg
+def test_the_exit_hook_drops_what_the_role_owns_in_every_used_database_and_then_the_role(
+    monkeypatch, capsys
+):
+    """The role owns a schema in each of two databases: dropping it database by database fails with a false "not
+    dropped" line. The hook drops what it owns everywhere first and the role once. Killed by: mutant SW15 (only the
+    first database is cleaned)."""
+    with _databases_and_a_stale_role() as (name, (db_x, db_y)):
+        targets = set()
+        for d in (db_x, db_y):
+            with psycopg.connect(make_conninfo(DSN, dbname=d), autocommit=True) as db:
+                db.execute(
+                    sql.SQL("CREATE SCHEMA hadavin_test_owned AUTHORIZATION {}").format(
+                        sql.Identifier(name)
+                    )
+                )
+            targets.add(helper._target_key(make_conninfo(DSN, dbname=d)))
+        monkeypatch.setattr(helper, "PLAIN_ROLE", name)
+        monkeypatch.setattr(helper, "_USED_DSNS", targets)
+        monkeypatch.delenv("HADAVIN_TEST_PG_DSN", raising=False)
+        helper._drop_the_role_at_exit()
+        assert not _role_exists(name)
+        assert "was not dropped" not in capsys.readouterr().out
 
 
 # --- role changes made by ANOTHER session while a file runs ---------------------------------------------------------
@@ -2349,6 +2456,7 @@ def test_the_portal_role_is_refused_what_the_other_roles_are_refused(scratch, ho
             mig.migrate(dsn, portal_role=pt)
         msg = str(e.value)
         assert "the portal role holds privileges outside the portal grant map" in msg, msg
+        assert "for the portal role SELECT only" in msg, msg
         assert expected in msg, msg
         assert _ledger(dsn) == REAL, "nothing was kept"
     finally:
@@ -2390,9 +2498,9 @@ def test_a_parameter_grant_is_refused_however_the_migration_user_holds_it(
                     sql.Identifier(schema), sql.Identifier(other)
                 )
             )
-            dsn = make_conninfo(
+            dsn = login_dsn(
                 super_dsn,
-                user=role,
+                role,
                 options=conninfo_to_dict(super_dsn)["options"] + f" -c role={other}",
             )
         db.execute(

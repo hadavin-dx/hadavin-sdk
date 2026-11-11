@@ -88,7 +88,7 @@ class Db:
 
     def run_psql(self, user: str, password: str | None, *args: str, stdin: str | None = None):
         """Run psql as `user`; the password travels in PGPASSWORD, never in the arguments."""
-        conninfo = make_conninfo(self.base, dbname=self.name, user=user)
+        conninfo = make_conninfo(self.base, dbname=self.name, user=user)  # pw-env: PGPASSWORD below
         env = {**os.environ, **({"PGPASSWORD": password} if password else {})}
         return subprocess.run(  # noqa: S603  # fixed argument list, no shell
             [self.psql, "-w", "-X", "-q", *args, conninfo], input=stdin, text=True, capture_output=True,

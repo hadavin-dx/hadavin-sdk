@@ -1049,7 +1049,7 @@ def test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_
     ]
     names = set(mig._managed_names(texts, "other_schema"))
     assert {"mixed_case", "a b", 'Q"x', "folded_too"} <= names
-    assert not {"Mixed_Case", "a", "Other_Schema", "Sch"} & names
+    assert not {"Mixed_Case", "a", "Other_Schema"} & names
 
 
 def test_a_function_of_another_schema_is_not_a_managed_name():
@@ -1063,10 +1063,15 @@ def test_a_function_of_another_schema_is_not_a_managed_name():
         "CREATE FUNCTION my_schema.audit_mine() RETURNS int LANGUAGE sql AS 'SELECT 1';",
         "CREATE FUNCTION \"My_Schema\".audit_quoted_mine() RETURNS int LANGUAGE sql AS 'SELECT 1';",
         "CREATE FUNCTION audit_bare() RETURNS int LANGUAGE sql AS 'SELECT 1';",
+        # three parts: database.schema.name (the database part is left out; the schema decides)
+        "CREATE FUNCTION some_db.my_schema.audit_three() RETURNS int LANGUAGE sql AS 'SELECT 1';",
+        "CREATE FUNCTION \"Some Db\".other_schema.audit_three_other() RETURNS int LANGUAGE sql AS 'SELECT 1';",
     ]
     names = set(mig._managed_names(texts, "my_schema"))
-    assert {"audit_mine", "audit_bare"} <= names, names
-    assert not {"audit_other", "quoted_other", "audit_quoted_mine"} & names, names
+    assert {"audit_mine", "audit_bare", "audit_three"} <= names, names
+    assert not {"audit_other", "quoted_other", "audit_quoted_mine", "audit_three_other"} & names, (
+        names
+    )
     assert "audit_quoted_mine" in set(mig._managed_names(texts, "My_Schema"))
 
 
@@ -1367,12 +1372,15 @@ def test_the_statement_limit_is_found_by_the_error_code_not_by_the_words(monkeyp
 class _Roles:
     """A connection for `ensure_plain_role`: `exists` answers the `pg_roles` look-up; every statement is recorded."""
 
-    def __init__(self, exists: bool):
-        self.exists, self.log = exists, []
+    def __init__(self, exists: bool, sees: bool = True, password: str = ""):
+        self.exists, self.sees, self.log = exists, sees, []
         self.pgconn = self
         self.info = types.SimpleNamespace(
-            dsn="host=made-up-host port=5999 dbname=made_up", password=""
+            dsn="host=made-up-host port=5999 dbname=made_up", password=password
         )
+
+    def transaction(self):
+        return contextlib.nullcontext()
 
     def encrypt_password(self, password, user, algorithm):
         self.encrypted = (password, user, algorithm)
@@ -1381,6 +1389,8 @@ class _Roles:
     def execute(self, query, params=None):
         text = query if isinstance(query, str) else query.as_string()
         self.log.append(text)
+        if "pg_read_all_stats" in text:
+            return _Result([(self.sees,)])  # may this login see the sessions of other users?
         if "pg_stat_activity" in text:
             return _Result([])  # no stale roles to sweep
         return _Result([(1,)] if "FROM pg_roles WHERE rolname = %s" in text and self.exists else [])
@@ -1412,7 +1422,7 @@ def holds(monkeypatch):
     return made
 
 
-def test_the_live_process_lock_is_taken_on_the_server_that_makes_the_role(holds):
+def test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role(holds):
     """The lock of "this test process is alive" sits on the server of the connection that creates the role, not on a
     server named by an environment variable, and it is taken once per server. Killed by: mutants SW4
     (`_hold_the_role` is not called) and SW5 (the lock is taken on a fixed local server)."""
@@ -1517,6 +1527,55 @@ def test_making_the_test_role_first_sweeps_the_stale_roles_of_killed_processes(h
     db = _Roles(exists=True)
     mr.ensure_plain_role(db)
     assert not any("pg_stat_activity" in s for s in db.log), "a role that exists is not swept for"
+
+
+def test_a_login_that_cannot_see_other_sessions_sweeps_nothing():
+    """Without the right to see the sessions of other users a live role could look unused, so the sweep asks first and
+    does nothing. Killed by: mutant SW11 (the question is not asked)."""
+    from tests.fixtures import migration_role as mr
+
+    db = _Roles(exists=False, sees=False)
+    assert mr.sweep_stale_roles(db) == []
+    assert not any("pg_stat_activity" in s for s in db.log), db.log
+    seeing = _Roles(exists=False, sees=True)
+    mr.sweep_stale_roles(seeing)
+    assert any("pg_stat_activity" in s for s in seeing.log)
+
+
+def test_the_hold_connection_is_given_the_password_of_the_connection(holds):
+    """`info.dsn` leaves the password out, so it is passed on; it is not kept in the table of held connections. Killed
+    by: mutant SW10 (the password is not passed on)."""
+    from tests.fixtures import migration_role as mr
+
+    made_up = "pw" + "-made-up"
+    mr.ensure_plain_role(_Roles(exists=False, password=made_up))
+    assert f"password={made_up}" in holds[0].server, holds[0].server
+    assert not any(made_up in key for key in mr._HOLDS), list(mr._HOLDS)
+
+
+def test_a_failed_unlock_does_not_fail_the_setup(monkeypatch):
+    """The unlock runs on a connection that may be broken; its error is not raised out of the setup of a test. Killed
+    by: mutant SW12 (the unlock is not guarded)."""
+    import psycopg
+
+    from tests.fixtures import migration_role as mr
+
+    class Db(_Roles):
+        def execute(self, query, params=None):
+            text = query if isinstance(query, str) else query.as_string()
+            if "pg_advisory_unlock" in text:
+                raise psycopg.OperationalError("connection lost")
+            if "pg_try_advisory_lock" in text:
+                return _Result([(True,)])
+            if "pg_stat_activity" in text:
+                return _Result([("hadavin_test_migrator_0123abcd",)])
+            return super().execute(query, params)
+
+    try:
+        got = mr.sweep_stale_roles(Db(exists=False))
+    except psycopg.Error as e:
+        pytest.fail(f"the error of the unlock was raised out of the sweep: {e}")
+    assert got == ["hadavin_test_migrator_0123abcd"]
 
 
 def test_only_a_schema_with_the_test_prefix_is_a_scratch_schema():

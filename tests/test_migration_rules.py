@@ -564,7 +564,10 @@ def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
     assert "that this package manages in the migration schema" in first
     assert "every role the two users or those named roles are a member of" in first
     assert "do not hand it over: point `migrate` at another schema" in first
-    assert "on a normal exit of the test process" in first
+    tests_part = _words(CHANGELOG[CHANGELOG.index("### Tests") :].split("\n### ", 1)[0])
+    assert "On a normal exit it drops what the role owns in every database it used" in tests_part
+    assert "named after its role (`application_name`)" in tests_part
+    assert "a guard test fails when a test connects with `user=` and no password" in tests_part
     assert "Tested on:** PostgreSQL 16.15, on the build machine" in first
     assert "session_user" in first and "WITH GRANT OPTION" in first and "pg_parameter_acl" in first
     assert "PostgreSQL 16 is the lowest version" in first
@@ -771,3 +774,30 @@ def test_the_mutant_runner_does_not_count_a_broken_line_as_a_kill():
     assert not mm.only_test_failures("no failures here")
     assert mm.status_of(m, [(0, "")] * len(names)) == "SURVIVED"
     assert mm.status_of(m, [(2, "")] + [(0, "")] * (len(names) - 1)).startswith("ERROR")
+
+
+def test_no_test_logs_in_as_a_role_without_passing_its_password():
+    """A test that makes a login role and connects as it must pass the password (`login_dsn`, or `password=` in
+    `make_conninfo`), or the test fails with a connection error on a server that asks for a password instead of
+    testing what it is about. The scan reads every test file: a call of `make_conninfo` or `connect` with a `user=`
+    argument and no `password=` (and no `**` expansion that may hold it) is a failure, unless the line says
+    `# pw-env` (the password travels in the environment). Killed by: mutant GD1 (one login loses its password)."""
+    root = Path(__file__).resolve().parent
+    bad = []
+    for path in sorted(root.rglob("*.py")):
+        if path.name == "migrate_mutants.py":
+            continue
+        text = path.read_text(encoding="utf-8")
+        lines = text.splitlines()
+        for node in ast.walk(ast.parse(text)):
+            if not isinstance(node, ast.Call):
+                continue
+            func = node.func
+            name = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", "")
+            if name not in ("make_conninfo", "connect"):
+                continue
+            keys = {k.arg for k in node.keywords}
+            no_password = "user" in keys and "password" not in keys and None not in keys
+            if no_password and "# pw-env" not in lines[node.lineno - 1]:
+                bad.append(f"{path.relative_to(root)}:{node.lineno}")
+    assert not bad, "a login without its password: " + ", ".join(bad)

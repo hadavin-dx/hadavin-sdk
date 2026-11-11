@@ -29,13 +29,13 @@ _HOLD_BASE = (
 )
 _HOLDS: dict[
     str, object
-] = {}  # per server: the connection that holds that lock; kept open until the process ends
+] = {}  # per connection target: the connection that holds that lock; kept open until the process ends
 _TOKEN = secrets.token_hex(4)
 PLAIN_ROLE = _ROLE_PREFIX + _TOKEN  # one per test process: a role and its grants belong to the
 # whole server, so two test processes at once on one server (two Python versions, a mutant run) must not share one
 _USED_DSNS: set[str] = (
     set()
-)  # one entry per server (the search path is left out), not per scratch schema
+)  # one entry per connection target (the search path is left out), not per scratch schema
 SCRATCH_PREFIXES = (
     "hadavin_test_",
 )  # schemas made by the test fixtures; the helper works on no other
@@ -49,9 +49,9 @@ class NotAScratchSchema(RuntimeError):
     """The test connection would take over a schema that is not a scratch schema of a test."""
 
 
-def _server_key(dsn: str) -> str:
-    """The server and database of a connection string, without its search path, so every scratch schema of one server
-    is one entry."""
+def _target_key(dsn: str) -> str:
+    """The connection target of a connection string: host, port, database and user, without its search path, so every
+    scratch schema of one database is one entry. (A *server* in this file is the whole cluster: roles belong to it.)"""
     parts = conninfo_to_dict(dsn)
     parts.pop("options", None)
     return make_conninfo(**parts)
@@ -66,16 +66,16 @@ def _hold_key(token: str) -> int:
 
 
 def _hold_the_role(db) -> None:
-    """Hold a connection, open until the process ends, that says "the test process of this role is alive". A role
-    belongs to the whole server, but an advisory lock belongs to one database, so the mark is two things: the
-    connection is named (`application_name`) like the role, and `pg_stat_activity` shows every connection of the server
-    (the sweep of stale roles reads that, whichever database it runs in), and an advisory lock is held on top (a second
-    proof inside this database). The sweep never touches a role whose mark is there. One connection per server (a
-    server is one host, port and database; a second database of the same host gets a connection of its own, which is
-    harmless)."""
+    """A test run keeps one connection open, named after its role, so other runs can tell the role is still in use.
+
+    In detail: a role belongs to the whole server, but an advisory lock belongs to one database, so the mark is two
+    things: the connection is named (`application_name`) like the role, and `pg_stat_activity` shows every connection
+    of the server (the sweep of stale roles reads that, whichever database it runs in); an advisory lock is held on top
+    (a second proof inside this database). The sweep never touches a role whose mark is there. One connection per
+    connection target (host, port, database and user), kept open until the process ends."""
     import psycopg
 
-    key = _server_key(db.info.dsn)  # no password in the key
+    key = _target_key(db.info.dsn)  # no password in the key
     if key in _HOLDS:
         return
     hold = psycopg.connect(
@@ -90,19 +90,48 @@ def _hold_the_role(db) -> None:
     _HOLDS[key] = hold
 
 
+_CAN_SEE_SESSIONS_SQL = (
+    "SELECT rolsuper OR pg_has_role(current_user, 'pg_read_all_stats', 'MEMBER') FROM pg_roles "
+    "WHERE rolname = current_user"
+)
+
+
+def _databases_that_still_hold(db, role: str) -> list[str]:
+    """The databases (other than shared objects) in which `role` still owns something or holds a grant."""
+    rows = db.execute(
+        "SELECT DISTINCT d.datname FROM pg_shdepend s JOIN pg_database d ON d.oid = s.dbid "
+        "WHERE s.refclassid = 'pg_authid'::regclass AND s.refobjid = (SELECT oid FROM pg_roles WHERE rolname = %s) "
+        "ORDER BY 1",
+        (role,),
+    ).fetchall()
+    return [r[0] for r in rows]
+
+
 def sweep_stale_roles(db) -> list[str]:
     """Drop the test roles of earlier test processes that were killed before their exit hook ran: a role named
-    `hadavin_test_migrator_<token>` that is not ours, has no session on the server (also none named like it: the mark of a live
-    test process in any database of the server), and whose live-process lock nobody holds. What it owns goes with it. Returns the names dropped. A role that cannot be dropped is left and reported in
-    one line."""
+    `hadavin_test_migrator_<token>` that is not ours, has no session on the server (also none named like it: the mark of
+    a live test process in any database of the server), whose live-process lock nobody holds, and that owns no schema of
+    the current database except scratch schemas. What it owns in this database goes with it. Returns the names dropped.
+    A role that cannot be dropped (it owns objects in another database too) is left and reported in one line that names
+    those databases. A session that sets `application_name` can only keep a role, never drop one. Without the right to
+    see the sessions of other users (a superuser or a member of `pg_read_all_stats`) a live role could look unused, so
+    nothing is swept then."""
     import psycopg
 
+    seen = db.execute(_CAN_SEE_SESSIONS_SQL).fetchone()
+    if not seen or not seen[0]:
+        return []
     dropped = []
     rows = db.execute(
         "SELECT r.rolname FROM pg_roles r WHERE r.rolname LIKE %s AND r.rolname <> %s "
         "AND NOT EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.usename = r.rolname "
-        "OR a.application_name = r.rolname)",
-        (_ROLE_PREFIX.replace("_", "\\_") + "%", PLAIN_ROLE),
+        "OR a.application_name = r.rolname) "
+        "AND NOT EXISTS (SELECT 1 FROM pg_namespace n WHERE n.nspowner = r.oid AND NOT (n.nspname LIKE ANY(%s)))",
+        (
+            _ROLE_PREFIX.replace("_", "\\_") + "%",
+            PLAIN_ROLE,
+            [p.replace("_", "\\_") + "%" for p in SCRATCH_PREFIXES],
+        ),
     ).fetchall()
     for (name,) in rows:
         token = name[len(_ROLE_PREFIX) :]
@@ -113,35 +142,58 @@ def sweep_stale_roles(db) -> list[str]:
         if not db.execute("SELECT pg_try_advisory_lock(%s)", (key,)).fetchone()[0]:
             continue  # its process is alive
         try:
-            with db.transaction():
-                db.execute(sql.SQL("DROP OWNED BY {} CASCADE").format(sql.Identifier(name)))
-                db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(name)))
-            dropped.append(name)
-        except psycopg.Error as e:
-            print(f"stale test role {name} was not dropped: {type(e).__name__}")
+            try:
+                with db.transaction():
+                    db.execute(sql.SQL("DROP OWNED BY {} CASCADE").format(sql.Identifier(name)))
+                    db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(name)))
+                dropped.append(name)
+            except psycopg.Error as e:
+                where = ", ".join(_databases_that_still_hold(db, name)) or "none found"
+                print(
+                    f"stale test role {name} was not dropped: {type(e).__name__}; it still holds objects in: {where}"
+                )
         finally:
-            db.execute("SELECT pg_advisory_unlock(%s)", (key,))
+            try:
+                db.execute("SELECT pg_advisory_unlock(%s)", (key,))
+            except psycopg.Error:
+                pass  # a broken connection must not fail the setup of a test
     return dropped
+
+
+def _cluster_of(dsn: str) -> tuple:
+    """The server (cluster) a connection target belongs to: host and port."""
+    parts = conninfo_to_dict(dsn)
+    return (parts.get("host", ""), parts.get("port", ""))
 
 
 def _drop_the_role_at_exit() -> None:
     """On a normal exit (also an exception or a `sys.exit`, not a kill: no hook runs then, and `sweep_stale_roles` of a
-    later run takes care of it), take the role of this process off every server it was made on (what it owns and its
-    grants go with it). A server that is gone or a role in use is reported in one line and does not fail the test run."""
+    later run takes care of it), take the role of this process off every server it was made on. A role belongs to the
+    whole server but what it owns belongs to one database, so first what it owns is dropped in every database used
+    (its grants go with it), and then the role is dropped once. A server that is gone or a role in use is reported in
+    one line and does not fail the test run."""
     import psycopg
 
     env_dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
-    for dsn in _USED_DSNS | ({_server_key(env_dsn)} if env_dsn else set()):
+    by_server: dict[tuple, list[str]] = {}
+    for dsn in sorted(_USED_DSNS | ({_target_key(env_dsn)} if env_dsn else set())):
+        by_server.setdefault(_cluster_of(dsn), []).append(dsn)
+    for dsns in by_server.values():
         try:
-            with psycopg.connect(dsn, autocommit=True) as db:
-                if not db.execute(
-                    "SELECT 1 FROM pg_roles WHERE rolname = %s", (PLAIN_ROLE,)
-                ).fetchone():
-                    continue  # this server never saw the role
-                # CASCADE: a table another login (the test superuser) made inside a schema this role owns depends on
-                # that schema, and a plain DROP OWNED BY refuses to drop the schema then
-                db.execute(sql.SQL("DROP OWNED BY {} CASCADE").format(sql.Identifier(PLAIN_ROLE)))
-                db.execute(sql.SQL("DROP ROLE IF EXISTS {}").format(sql.Identifier(PLAIN_ROLE)))
+            for dsn in dsns:
+                with psycopg.connect(dsn, autocommit=True) as db:
+                    if not db.execute(
+                        "SELECT 1 FROM pg_roles WHERE rolname = %s", (PLAIN_ROLE,)
+                    ).fetchone():
+                        break  # this server never saw the role
+                    # CASCADE: a table another login (the test superuser) made inside a schema this role owns depends
+                    # on that schema, and a plain DROP OWNED BY refuses to drop the schema then
+                    db.execute(
+                        sql.SQL("DROP OWNED BY {} CASCADE").format(sql.Identifier(PLAIN_ROLE))
+                    )
+            else:
+                with psycopg.connect(dsns[0], autocommit=True) as db:
+                    db.execute(sql.SQL("DROP ROLE IF EXISTS {}").format(sql.Identifier(PLAIN_ROLE)))
         except (
             psycopg.Error
         ) as e:  # a server that is gone or a role in use must not fail the test run
@@ -170,6 +222,29 @@ def scram_hash(db, role: str, password: str) -> str:
     return db.pgconn.encrypt_password(password.encode(), role.encode(), b"scram-sha-256").decode()
 
 
+_PASSWORDS: dict[
+    str, str
+] = {}  # login role -> its password, for the roles this helper made or gave a hash
+
+
+def set_login_password(db, role: str, password: str | None = None) -> str:
+    """Give an existing login role a password (stored as a SCRAM hash made on this side) and remember it for
+    `login_dsn`. For a role made by other SQL, for example the SQL the refusal message prints."""
+    password = password or secrets.token_hex(16)
+    hashed = scram_hash(db, role, password)
+    db.execute(
+        sql.SQL("ALTER ROLE {} PASSWORD {}").format(sql.Identifier(role), sql.Literal(hashed))
+    )
+    _PASSWORDS[role] = password
+    return password
+
+
+def login_dsn(dsn: str, role: str, **parts) -> str:
+    """The connection string that logs in as `role` (made by `create_login_role` or `set_login_password`), with its
+    password, so the login also works on a server that asks for one. Every test login goes through this."""
+    return make_conninfo(dsn, user=role, password=_PASSWORDS[role], **parts)
+
+
 def create_login_role(db, role: str, password: str | None = None) -> str:
     """Make a plain login role (none of the five flags) whose password is a SCRAM hash, so it also logs in on a server
     that asks for a password; on a server that trusts the connection (the CI service) the password is not asked. Returns
@@ -180,6 +255,7 @@ def create_login_role(db, role: str, password: str | None = None) -> str:
             "CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS NOREPLICATION PASSWORD {}"
         ).format(sql.Identifier(role), sql.Literal(scram_hash(db, role, password)))
     )
+    _PASSWORDS[role] = password
     return password
 
 
@@ -219,7 +295,7 @@ def plain_role_connect(real_connect: Callable) -> Callable:
                         f"so it only runs on a scratch schema of a test (its name starts with one of {SCRATCH_PREFIXES!r})"
                     )
                 ensure_plain_role(db)
-                _USED_DSNS.add(_server_key(dsn))
+                _USED_DSNS.add(_target_key(dsn))
                 db.execute(
                     sql.SQL("ALTER SCHEMA {} OWNER TO {}").format(
                         sql.Identifier(schema), sql.Identifier(PLAIN_ROLE)

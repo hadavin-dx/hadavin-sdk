@@ -657,13 +657,17 @@ _FOREIGN_OWNED_SHOWN = 20  # names in the message; every statement is printed
 
 # The parts of a `CREATE FUNCTION` name, as PostgreSQL reads them: a quoted name (`""` inside is one quote) or a plain
 # name (letters, digits, `_` and `$`; the pattern also lets a digit start it, which only adds a name no object has: a
-# false refusal at most, never a missed one). The schema before the dot is captured (groups 1 and 2).
+# false refusal at most, never a missed one). The schema before the dot is captured (groups 1 and 2); a database part
+# before the schema (`db.schema.name`) is read and left out (PostgreSQL accepts it only for the current database).
 _QUOTED_NAME = r'"(?:[^"]|"")+"'
 _QUOTED_NAME_BODY = r'"((?:[^"]|"")+)"'
 _PLAIN_NAME = r"\w[\w$]*"
-_SCHEMA_DOT = rf"(?:(?:{_QUOTED_NAME_BODY}|({_PLAIN_NAME}))\s*\.\s*)?"
-# Only at the start of a statement (the text has no comments, and a string is not a statement), so a
-# `CREATE FUNCTION` that is only written inside a string is not read as a name.
+_ANY_PART = rf"(?:{_QUOTED_NAME}|{_PLAIN_NAME})"
+_DATABASE_DOT = rf"(?:{_ANY_PART}\s*\.\s*(?={_ANY_PART}\s*\.\s*{_ANY_PART}))?"
+_SCHEMA_DOT = rf"{_DATABASE_DOT}(?:(?:{_QUOTED_NAME_BODY}|({_PLAIN_NAME}))\s*\.\s*)?"
+# Only at the start of a statement (the text has no comments), so a `CREATE FUNCTION` in the middle of a statement is
+# not read as a name. A `;` inside a string literal or a `$$` body is not told from a statement end, so a
+# `CREATE FUNCTION` written after it IS read as a name: that only adds a name (a false refusal, never a missed one).
 _FUNCTION_CREATE = re.compile(
     rf"(?:\A|;)\s*CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+{_SCHEMA_DOT}(?:{_QUOTED_NAME_BODY}|({_PLAIN_NAME}))",
     re.IGNORECASE,
@@ -677,8 +681,8 @@ def _fold(name: str) -> str:
 
 
 _GRANT_MAP_WORDS = (
-    " (the grant map is the list in the code of the tables each of the roles of this package may use, and the one "
-    "right it may have on each)"
+    " (the grant map is the list in the code of the tables each role of this package may use, and the rights each "
+    "may have on each: for the portal role SELECT only)"
 )
 
 
@@ -743,22 +747,27 @@ def _refuse_foreign_owned(db, texts) -> None:
         if by_hand
         else ""
     )
-    raise ConfigError(
-        f"the migration role {_label(me)} cannot change {len(rows)} object(s) of this package in schema {_label(schema)} "
-        f"that another role owns: {'; '.join(names)}{f'; and {more} more' if more > 0 else ''}. A later migration "
-        "that alters one of them would fail with 'must be owner', and the grants of migrate would do nothing without "
-        "an error. Nothing was changed. A database administrator hands the objects to the migration role once, "
-        "connected as a superuser or as a role that is a member of both the old owner and the migration role (objects of "
-        "other applications in the schema are not listed and need no change; but a table of ANOTHER application that "
-        "has the same name as one of this package's tables, for example spend or runs, looks the same here: do not "
-        "hand that one over, point migrate at another schema instead; the same goes for a function: it is matched by "
-        "name, so read the text of each listed function first and hand it over only when it is this package's own "
-        "code, because the migration role would then own, and run, it; a function made SECURITY DEFINER runs with its "
-        "owner's rights, so handing it over also hands over what it can do), "
-        "with a file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): "
+    wrong = (
+        f"the migration role {_label(me)} cannot change {len(rows)} object(s) of this package in schema "
+        f"{_label(schema)} that another role owns: {'; '.join(names)}{f'; and {more} more' if more > 0 else ''}. "
+        "A later migration that alters one of them would fail with 'must be owner', and the grants of migrate would "
+        "do nothing without an error."
+    )
+    unchanged = "Nothing was changed."
+    to_do = (
+        "Before anything is handed over, check two things. Objects of other applications in the schema are not listed "
+        "and need no change, but a table of ANOTHER application that has the same name as one of this package's "
+        "tables, for example spend or runs, looks the same here: do not hand that one over, point migrate at another "
+        "schema instead. The same goes for a function: it is matched by name, so read the text of each listed "
+        "function first and hand it over only when it is this package's own code, because the migration role would "
+        "then own, and run, it; a function made SECURITY DEFINER runs with its owner's rights, so handing it over "
+        "also hands over what it can do. Then a database administrator hands the objects to the migration role once, "
+        "connected as a superuser or as a role that is a member of both the old owner and the migration role, with a "
+        "file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): "
         + " ".join(statements)
         + hand
     )
+    raise ConfigError(f"{wrong} {unchanged} {to_do}")
 
 
 def _refuse_unusual_strings(saved: _Saved) -> None:
