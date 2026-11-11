@@ -1357,3 +1357,5 @@ Note (honest): the route reproductions for P3a-2 are not available. D-020 does n
 Heavy queue: 8 jobs for 3 slots at 15:54Z (load 10 on 4 cores): waits of 5-15 min expected; no new heavy work is started by the lead until it drains.
 | R-P89-r21 comprehension a3cdc11d | | | | 15:56Z | CLOSED: 4 Major (wording that leads a reader to an unsafe or wrong action), saved | wait for design + codebase + evidence, then ONE fix batch |
 | R-P89-r21 design a91411ca | | | | 16:01Z | CLOSED: NOT CLEAN, 1 Major (reproduced by the lead), allow-list holds by reading; saved | wait for codebase + evidence |
+| R-P89-r21 codebase abd93594 | | | | 16:03Z | CLOSED: NOT CLEAN, 1 Major (same as design), saved | fix batch |
+| B-PR89-r22 | BUILDER (Fable, fresh) PR89 round 22: one code Major, four wording Majors, Minors; worktree /home/user/build/B-PR89-r20, pg 56132 | 16:03Z | +70m | 16:03Z | starting | evidence + fresh reviewers round 23 |
