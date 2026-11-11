@@ -123,8 +123,11 @@ def test_a_very_long_run_of_percent_bytes_takes_linear_time():
 def test_the_time_of_a_long_run_grows_no_faster_than_its_length(unit):
     # the shared rule (`tests/fixtures/timing.py`) instead of "twice the input, under four times the time", which a
     # quadratic cost (exactly four times) could pass: 8x the text may take at most 24x the time. The old pattern took about
-    # 0.2 s at 2000 groups and 10 s at 16000 groups here (a ratio of about 64).
-    measured = timing.growth(runmap.partial_escape_start, unit, 6_000, 48_000)
+    # 0.2 s at 2000 groups and 10 s at 16000 groups here (a ratio of about 64), and only when the run is followed by a
+    # character that is not part of it: a run that ends the text is found at once, so the text below has both ends.
+    measured = timing.growth(
+        lambda run: runmap.partial_escape_start("x" + run + "y"), unit, 6_000, 48_000
+    )
     assert not measured.flagged, f"partial_escape_start on {unit!r}: {measured}"
 
 
