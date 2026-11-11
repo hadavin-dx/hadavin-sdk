@@ -102,12 +102,14 @@ def tokens(text: str, ign: frozenset[int] = frozenset()):
             j = i + 1
             d = text[j] if j < n else ""
             if d == "[":
-                i = yield_from_csi(text, i, j + 1)
-                yield ("removed", text[_LAST[0] : i], "seq")
+                k = _csi_end(text, j + 1)
+                yield ("removed", text[i:k], "seq")
+                i = k
                 continue
             if d in ESC_STRING:
-                i = _string_end(text, j + 1, ESC_STRING[d])
-                yield ("removed", text[_LAST[0] : i], "seq")
+                k = _string_end(text, j + 1, ESC_STRING[d])
+                yield ("removed", text[i:k], "seq")
+                i = k
                 continue
             if d and 0x20 <= ord(d) <= 0x2F:  # nF: intermediates, then one final 0x30-0x7E
                 k = j
@@ -128,9 +130,9 @@ def tokens(text: str, ign: frozenset[int] = frozenset()):
             i = j
             continue
         if c == C1_CSI:
-            _LAST[0] = i
-            i = yield_from_csi(text, i, i + 1)
-            yield ("removed", text[_LAST[0] : i], "seq")
+            k = _csi_end(text, i + 1)
+            yield ("removed", text[i:k], "seq")
+            i = k
             continue
         if c in C1_STRING:
             k = _string_end(text, i + 1, C1_STRING[c])
@@ -148,14 +150,10 @@ def tokens(text: str, ign: frozenset[int] = frozenset()):
         i += 1
 
 
-_LAST = [0]
-
-
-def yield_from_csi(text: str, start: int, k: int) -> int:
-    """CSI body from k. Returns the index after the item; the item is text[start:return]. On abort by a
+def _csi_end(text: str, k: int) -> int:
+    """CSI body from k. Returns the index after the item (the item starts at the opener). On abort by a
     character that is read afresh (line end, ESC, C1, anything outside 0x20-0x7E that is not a dropped C0),
     the item ends BEFORE that character."""
-    _LAST[0] = start
     n = len(text)
     while k < n:
         o = ord(text[k])

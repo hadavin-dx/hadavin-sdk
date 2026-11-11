@@ -50,8 +50,8 @@ grammar PASS lone ESC before LF 'a\x1b\nb' -> 'a\nb'
 grammar PASS ESC ESC [0m 'a\x1b\x1b[0mb' -> 'ab'
 grammar PASS stray ST C1 'a\x9cb' -> 'ab'
 random 20000: property failures 0
-linear '\x1b]' 50k 0.154s 200k 2.629s ratio 17.02
-linear '\x1b[' 50k 0.012s 200k 0.049s ratio 4.15
-linear '\x1b(' 50k 0.013s 200k 0.056s ratio 4.39
-linear '\x9d' 50k 0.006s 200k 0.029s ratio 4.69
+linear '\x1b]' 50k 0.009s 200k 0.035s ratio 3.70
+linear '\x1b[' 50k 0.012s 200k 0.048s ratio 4.11
+linear '\x1b(' 50k 0.012s 200k 0.053s ratio 4.26
+linear '\x9d' 50k 0.006s 200k 0.024s ratio 4.06
 SELFCHECK PASS
