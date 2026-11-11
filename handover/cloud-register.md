@@ -1381,3 +1381,10 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | A-PRH a2f42970 | ticket author | | | 16:10Z | CLOSED: ticket handover/tickets/PRH-...md (390 lines). Found: main is NOT forgery-safe (six forged marker/placeholder inputs on every untrusted path); 12 leaks reproduced; D-018 contract wording "as a terminal shows it" would be false; one existing test fails under its prototype (cause unknown: builder's first job) | plan review |
 | A-P3a2-r13 a0ea76bf | ticket author | | | 16:10Z | CLOSED: ticket handover/tickets/P3a-2-r13-verify-final-state.md (761 lines). Found: nothing-runs-at-commit is false even after making constraints immediate (a trigger can defer again): the pre-commit check is never the sound one; oracle must use SET SESSION AUTHORIZATION; D-020 baseline line 3 would refuse every database (row types); join for the prepared-transaction holder corrected; F3 conflict settled (see correction) | plan review |
 | R-PRH-plan design a6a4d892, readiness adaafa73; R-P3a2r13-plan design a5a5ac6b, readiness a4014d7c | PLAN reviews round 1 of the two tickets (Sonnet 5.5: first agents on the restored routing) | 16:11Z | +20m | 16:11Z | running | save full reports, errata, then builders |
+
+### 16:12Z Q8a-1 round 4 (head 0b97d55a on core/q8a-1-live-override-refusals, pushed; lead checked the remote ref)
+| id | purpose | started | expected end | last check | state | next action |
+|---|---|---|---|---|---|---|
+| B-Q8a1 a0c5bd99 | fix batch 3 | 15:22Z | | 16:12Z | CLOSED. Builder's account: full suite exit 1 (1 failed = the known timing test; rerun alone 1 of 3 passed; not touched); 71 of 71 stage mutants; fail-before 85 failed on fcd77a68; timeout lower bound 0.001 s chosen (errata line needed); TickContext now frozen with optional time (API change); NOT covered and named: the store's own purge methods take a cut-off date directly | evidence + ONE delta reviewer |
+| EV-Q8a1-r4 | EVIDENCE RUNNER (Sonnet) 0b97d55a, pg 56192 | 16:12Z | +50m | 16:12Z | starting | RESULTS.md |
+| R-Q8a1-r4 delta | fresh egm reviewer (Sonnet) on the delta fcd77a68..0b97d55a, snapshot /home/user/build/snap/q8a1-0b97d55 | 16:12Z | +15m | 16:12Z | starting | save report |
