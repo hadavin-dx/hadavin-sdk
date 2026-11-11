@@ -1175,7 +1175,8 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | R-P85main a470bfd9 | egm codebase (Fable) review of InvalidRunId code mapping on core/P5b2-main 3b9617e4 | 13:51Z | +10m | 13:51Z | CLOSED saved reviews/PR85/p5b2-main-delta-review.md | save reviews/PR85/ |
 | EV-Q8a2 a795f178 | EVIDENCE RUNNER (Fable) dry run of guard pattern on main | 13:51Z | +20m | 13:51Z | CLOSED evidence/Q8a-2/dryrun-2026-11-11.md | write ticket Q8a-2 from the hit list |
 | A-Q8b a123e38f | ticket author (Fable) Q8b partial-mask + card redaction (F5, F6) | 13:51Z | +25m | 13:51Z | running | plan review, then builder |
-| A-Q8c a2a53d4b | ticket author (Fable) Q8c policy per kind (F3) | 13:51Z | +30m | 13:51Z | running | plan review |
+| A-Q8c a2a53d4b | ticket author (Fable) Q8c policy per kind (F3) | 13:51Z | +30m | 13:51Z | CLOSED ticket draft tickets/Q8c (209 permission names UNVERIFIED) | plan review |
 | B-Q8a1 a0c5bd99 | ONE builder (Fable) ticket Q8a-1, branch core/q8a-1-live-override-refusals, pg 56050 | 13:54Z | +90m | 13:54Z | running | checkpoint 30m; then evidence runner + egm reviewers |
 | A-Q8a2 a2718ca8 | ticket author (Fable) Q8a-2 neutral callback + guard | 13:54Z | +25m | 13:54Z | running | plan review |
 | EV-P3a2 a9c85255 | EVIDENCE RUNNER (Fable) core/P3a-2-rewritten 8382bdd: full suite, fail-before on HEAD~4, mutants, probes; pg 56060 | 14:00Z | +60m | 14:00Z | running | read RESULTS.md; then ONE fix builder for round 11 findings |
+| R-Q8c-plan aac974fb, ae5f9e8d | egm zoom-out + design (Fable) plan review r1 of tickets/Q8c | 14:00Z | +20m | 14:00Z | running | resolve; live check of permission names before any build |
