@@ -247,6 +247,7 @@ OWN_CODES: Final[Mapping[str, Code]] = MappingProxyType(
         _P + "audit.protocol:AuditUnavailable": Code.audit_unavailable,
         _P + "guard.egress:EgressRefused": Code.egress_refused,
         _P + "runtime.agent_loop:Unqualified": Code.unqualified,
+        _P + "runtime.agent_loop:InvalidRunId": Code.config_invalid,
         _P + "k1b.loop:CallTimeout": Code.timeout,
         _P + "tools:ToolRefused": Code.tool_refused,
         _P + "guard.runmap:RedactionError": Code.scan_failed,
