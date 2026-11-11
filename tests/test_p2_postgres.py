@@ -277,8 +277,11 @@ def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_default
     """Apply 0001-0003 only, insert a pre-upgrade checkpoint row, then migrate: the row loads with NULL (not recorded)."""
     import psycopg
 
+    from hadavin_sdk.store import migrate as migrate_module
+
     old = [p for p in sorted(MIGRATIONS.glob("*.sql")) if p.stem < "0004"]
-    with psycopg.connect(fresh_dsn, autocommit=True) as db:
+    # the same plain role `migrate()` runs as makes the old schema, so it owns what it later changes
+    with migrate_module.connect(fresh_dsn) as db:
         for path in old:
             db.execute(path.read_text(encoding="utf-8"))
         db.execute(
