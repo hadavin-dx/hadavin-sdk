@@ -258,9 +258,9 @@ def test_step_token_is_closed_and_final() -> None:
     assert codes.StepToken.of("jane_doe") is codes.Where.other
     assert codes.StepToken.of("sweep\n") is codes.Where.other
     assert codes.StepToken.of(3) is codes.Where.other
-    assert (
-        codes.StepToken.of("extract") is codes.Where.other
-    )  # a Where name as text is not a Where member
+    assert codes.StepToken.of("extract") is codes.Where.other, (
+        "a Where name as text was accepted as a step token"
+    )
 
     class Sub(str):
         pass
@@ -294,7 +294,9 @@ FROZEN_VALIDATION_TYPES = frozenset(
 
 def test_validation_types_are_the_frozen_list() -> None:
     assert len(FROZEN_VALIDATION_TYPES) == 26
-    assert codes.VALIDATION_TYPES == FROZEN_VALIDATION_TYPES
+    assert codes.VALIDATION_TYPES == FROZEN_VALIDATION_TYPES, (
+        "the closed list of validation types changed"
+    )
     assert (
         codes.VALIDATION_OTHER == "other" and codes.VALIDATION_OTHER not in codes.VALIDATION_TYPES
     )
@@ -327,3 +329,23 @@ def test_builtin_ancestry_never_beats_the_row() -> None:
     ):
         line = render(diagnose(cls.__new__(cls), step=codes.Where.other))
         assert f"code={code} " in line, line
+
+
+def test_fact_bounds_values_are_pinned() -> None:
+    from hadavin_sdk.codes import FACT_BOUNDS, FactKey
+
+    got = {k.value: v for k, v in FACT_BOUNDS.items()}
+    assert got == {
+        "http_status": (100, 599),
+        "retry_count": (0, 1000),
+        "attempt": (0, 1000),
+        "errno": (0, 20000),
+        "winerror": (0, 20000),
+        "gai": (-20000, 20000),
+        "count": (0, 10**6),
+        "position": (0, 10**9),
+        "line": (0, 10**9),
+        "column": (0, 10**9),
+        "duration_ms": (0, 10**9),
+    }, f"fact bounds changed: {got}"
+    assert FactKey.count in FACT_BOUNDS

@@ -8,7 +8,8 @@ from a JSON error only ``pos``; from an operating-system error only ``errno`` an
 
     <kind>: diag_v=1 code=<code> step=<step> at=<locator> fp=<8 hex>[ key=value ...]
 
-Pure functions: no file contents, network, environment, clock or database access at run time. Nothing in this module is wired into
+No file contents, network, environment, clock or database access at run time. The only state is a counter of guarded failures and a
+read of ``sys.modules`` to check that a frame belongs to an imported module. Nothing in this module is wired into
 the places that write errors today; that is the job of a later step (P5b3).
 """
 
@@ -256,25 +257,28 @@ def _links(exc: object) -> tuple[list[tuple[object, int]], bool]:
 
 
 def _locate(links: list[tuple[object, int]]) -> tuple[str, str, str]:
-    """(locator, function, relpath) of the innermost counted frame of this package; ('-', '-', '-') when none."""
+    """(locator, function, relpath) of the innermost counted frame of this package that gives a valid locator.
+
+    A frame of this package whose file is outside the package folder, whose line is missing (``None`` on Python 3.11+) or whose
+    locator fails the grammar is skipped and the next outer frame of this package is tried; ('-', '-', '-') when none is left."""
+    prefix = _PKG_DIR + os.sep
     for frame, lineno in reversed(links):
         name = _counted_module(frame)
         if name is None or not _is_own_module(name):
             continue
         try:
             filename = frame.f_code.co_filename  # type: ignore[attr-defined]
-            prefix = _PKG_DIR + os.sep
-            if not _PKG_DIR or not filename.startswith(prefix):
-                return "-", "-", "-"
+            if not _PKG_DIR or not filename.startswith(prefix) or type(lineno) is not int:
+                continue
             rel = filename[len(prefix) :].replace(os.sep, "/")
             locator = f"{rel}:{lineno}"
             if _LOCATOR_RE.fullmatch(locator) is None:
-                return "-", "-", "-"
+                continue
             function = frame.f_code.co_name  # type: ignore[attr-defined]
             return locator, function if type(function) is str else "-", rel
-        except Exception:  # noqa: BLE001 - a hostile frame object may raise any Exception: no locator
+        except Exception:  # noqa: BLE001 - a hostile frame object may raise any Exception: no locator from this frame
             _guard_failed("locator")
-            return "-", "-", "-"
+            continue
     return "-", "-", "-"
 
 
@@ -294,7 +298,10 @@ def _raised_in_own_code(
 
 
 def _error_types(exc: BaseException) -> tuple[int, tuple[str, ...]]:
-    """``error_count()`` and the first ``DIAG_MAX_ERRORS`` ``"type"`` values. The only place that touches a pydantic error."""
+    """``error_count()`` and the first ``DIAG_MAX_ERRORS`` ``"type"`` values. The only place that touches a pydantic error.
+
+    Cost: pydantic builds an entry for every error before the slice, so the time is linear in the error count (a library limit;
+    the traceback and document size bound it, and the call runs only on the error path)."""
     count = exc.error_count()  # type: ignore[attr-defined]
     found = exc.errors(include_url=False, include_context=False, include_input=False)  # type: ignore[attr-defined]
     types: list[str] = []
@@ -316,10 +323,11 @@ def validation_text(exc: BaseException) -> str:
             return VALIDATION_OTHER
         count, types = _error_types(exc)
         names = [_closed_type(t) for t in types] or [VALIDATION_OTHER]
-        lo, hi = FACT_BOUNDS[FactKey.count]
+        _, hi = FACT_BOUNDS[FactKey.count]
         text = "; ".join(names)
-        if type(count) is int and lo <= count <= hi and count > defaults.DIAG_MAX_ERRORS:
-            text += f"; +{count - defaults.DIAG_MAX_ERRORS} more"
+        if type(count) is int and count > defaults.DIAG_MAX_ERRORS:
+            # a count above the bound is printed as the bound (the number of types stays a fact within FACT_BOUNDS)
+            text += f"; +{min(count, hi) - defaults.DIAG_MAX_ERRORS} more"
         return text
     except Exception:  # noqa: BLE001 - a hostile pydantic error object may raise any Exception: other
         _guard_failed("validation_text")

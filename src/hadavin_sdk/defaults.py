@@ -146,8 +146,8 @@ DIAG_KEY_CHARS = 120  # longest value a SafeToken may hold
 DIAG_STEP_CHARS = 30  # longest step part of a rendered line
 DIAG_KIND_CHARS = 80  # longest kind part of a rendered line
 DIAG_MAX_FACTS = 12  # facts kept per diagnostic (the first by priority)
-DIAG_TB_STEPS = (
-    2000  # traceback links walked; a longer traceback gives no locator and code foreign_exception
-)
+# traceback links walked; a longer traceback gives locator '-' and, on the internal-bug path only, code foreign_exception
+# (an own class or a mapped built-in keeps its code)
+DIAG_TB_STEPS = 2000
 DIAG_MAX_FRAMES = 32  # innermost frames examined for the locator
 DIAG_MAX_ERRORS = 5  # validation error types printed before "+N more"

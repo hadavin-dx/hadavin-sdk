@@ -80,11 +80,17 @@ def test_no_table_source_is_in_a_dropped_category_other_than_unassigned():
     print("table sources unassigned on this interpreter:", len(unassigned))
 
 
-def test_the_generator_refuses_an_unpinned_file_and_is_deterministic(tmp_path):
+def test_the_generator_refuses_an_unpinned_file_and_is_deterministic(tmp_path, monkeypatch, capsys):
     gen = _load("gen_confusables")
     bad = tmp_path / "confusables.txt"
     bad.write_text("0430 ;\t0061 ;\tMA\t# x\n", encoding="utf-8")
+    # the interpreter check is made to pass on every interpreter, so the refusal below is the refusal of the FILE (not hollow off-pin)
+    monkeypatch.setattr(gen, "PINNED_VERSION", unicodedata.unidata_version)
     assert gen.main(["gen", str(bad)]) == 1, "the generator accepted an unpinned file"
+    assert "this interpreter" not in capsys.readouterr().out, (
+        "the refusal came from the interpreter check, not from the file"
+    )
+    monkeypatch.undo()
     real = (ROOT / "tools" / "data" / "confusables.txt").read_bytes()
     tampered = gen.check_input(
         real + b"\n# edited",
