@@ -2861,6 +2861,16 @@ def test_no_never_list_line_of_the_three_kinds_covers_a_grant():
 
 def test_plant_a_vault_never_path_over_a_grant_is_caught_and_a_capability_that_differs_is_not():
     vault, transit = "secrets/vault", "signer/vault_transit"
+    clean = [
+        (vault, {"name": "{mount}/data/*", "capabilities": ("create", "update")}),
+        (vault, {"name": "{mount}/metadata/*"}),
+        (vault, {"name": "other/data/*"}),
+        (transit, {"name": "{transit_mount}/keys/{key_name}", "capabilities": ("delete",)}),
+        (transit, {"name": "{transit_mount}/sign/{key_name}/sha2-256"}),
+    ]
+    for kind, entry in clean:
+        found = _covers_problems(_with_never(kind, **entry))
+        assert found == [], f"a never path {entry} that covers no grant is reported: {found}"
     caught = [
         (vault, {"name": "{mount}/data/*", "capabilities": ("read",)}, "R17"),
         (vault, {"name": "{mount}/data/*"}, "R17"),  # no capabilities: all of them
@@ -2880,16 +2890,6 @@ def test_plant_a_vault_never_path_over_a_grant_is_caught_and_a_capability_that_d
             f"never-list path {entry['name']!r}" in f and f"grant {grant} " in f for f in found
         ), f"a never path {entry} that covers grant {grant} is not reported: {found}"
         assert len(found) == 1, f"a never path {entry} is reported more than once: {found}"
-    clean = [
-        (vault, {"name": "{mount}/data/*", "capabilities": ("create", "update")}),
-        (vault, {"name": "{mount}/metadata/*"}),
-        (vault, {"name": "other/data/*"}),
-        (transit, {"name": "{transit_mount}/keys/{key_name}", "capabilities": ("delete",)}),
-        (transit, {"name": "{transit_mount}/sign/{key_name}/sha2-256"}),
-    ]
-    for kind, entry in clean:
-        found = _covers_problems(_with_never(kind, **entry))
-        assert found == [], f"a never path {entry} that covers no grant is reported: {found}"
 
 
 def test_a_never_path_over_a_grant_is_also_refused_by_the_check_command(tmp_path, monkeypatch):
