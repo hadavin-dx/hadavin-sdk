@@ -2609,3 +2609,12 @@
 | BL-core-q8a1-r2-MJ1 | Major | Q8a-1 | reviews/Q8a/result-r2-design-full.md MJ1 run_tick(steps=) open in pilot/prod | FIXED-UNVERIFIED (head fcd77a68; round 3 running) | | | 2026-11-11 |
 | BL-core-q8a2-r1-d02 | Major | Q8a-2 | reviews/Q8a-2/result-r1-design-full.md M2 | OPEN | | | 2026-11-11 |
 | BL-core-q8a2-r1-d03 | Major | Q8a-2 | reviews/Q8a-2/result-r1-design-full.md M3 | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-B1 | Blocker | PR77 | reviews/PR77/round7-design.md B1 (REPRODUCED by lead; regression against main) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-B2 | Blocker | PR77 | reviews/PR77/round7-design.md B2 (REPRODUCED by lead; regression against main) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-M3 | Major | PR77 | reviews/PR77/round7-design.md M3 (M3-M5 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-M4 | Major | PR77 | reviews/PR77/round7-design.md M4 (M3-M5 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-M5 | Major | PR77 | reviews/PR77/round7-design.md M5 (M3-M5 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-M6 | Major | PR77 | reviews/PR77/round7-design.md M6 (M3-M5 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-M7 | Major | PR77 | reviews/PR77/round7-design.md M7 (M3-M5 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-M8 | Major | PR77 | reviews/PR77/round7-design.md M8 (M3-M5 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-tool-timeout-unbounded | Minor | core-main | config tool_timeout_s is only greater than 0 (config.py:349) and is used in pilot/prod (tools.py:495, 1127): no upper bound, infinity not refused (reviews/Q8a/result-r3-design-full.md N2) | OPEN | | | 2026-11-11 |
