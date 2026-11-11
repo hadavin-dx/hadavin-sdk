@@ -1,0 +1,13 @@
+ok  KILLED       runner: a space is a control character  [test_the_printable_ascii_range_is_accepted_and_the_character]
+ok  KILLED       runner: the first non-ASCII character is accepted  [test_a_value_with_a_non_ascii_character_is_refused_and_the_m]
+ok  KILLED       runner: a non-ASCII character is accepted  [test_a_value_with_a_non_ascii_character_is_refused_and_the_m]
+ok  KILLED       runner: the password after a password word is not a secret  [test_the_pieces_of_an_unquoted_password_that_holds_a_semicol]
+ok  KILLED       runner: a line with a hostile number of dots is scanned  [test_a_line_with_a_hostile_number_of_dots_is_replaced_fast]
+ok  KILLED       runner: a shortened value is not masked at its start  [test_the_fragment_scan_agrees_with_the_plain_definition]
+ok  KILLED       runner: a shortened value is not masked at its end  [test_the_fragment_scan_agrees_with_the_plain_definition]
+ok  KILLED       runner: the tail scan window is one short  [test_the_fragment_scan_agrees_with_the_plain_definition]
+ok  KILLED       runner: a value that overlaps itself is found once  [test_a_value_inside_a_bigger_secret_or_overlapping_another_i]
+ok  KILLED       runner: every masked character gets its own mark  [test_an_unquoted_password_with_a_semicolon_or_an_ampersand_i]
+ok  KILLED       runner: a plus in a URL password is not read as a space  [test_a_plus_in_a_url_password_is_also_read_as_a_space]
+11 of 11 good; problems: []
+exit=0
