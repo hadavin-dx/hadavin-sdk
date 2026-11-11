@@ -1,4 +1,4 @@
-"""K5-core round 10, M2 (least privilege of the runtime and purge roles), on a real Postgres. Needs
+"""Least privilege of the runtime and purge roles, on a real Postgres. Needs
 HADAVIN_TEST_PG_DSN (CI: the postgres service); skipped without it."""
 
 from __future__ import annotations
@@ -91,13 +91,16 @@ def _prepared():
     from psycopg.conninfo import make_conninfo
 
     from hadavin_sdk.store.migrate import migrate
+    from tests.fixtures.migration_role import create_login_role
 
     dsn = os.environ["HADAVIN_TEST_PG_DSN"]
-    schema, rt, pu = (f"{p}_{uuid.uuid4().hex[:10]}" for p in ("t", "rt", "pu"))
+    schema, rt, pu = (f"{p}_{uuid.uuid4().hex[:10]}" for p in ("hadavin_test", "rt", "pu"))
     with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
         for role in (rt, pu):
-            db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(role)))
+            create_login_role(
+                db, role
+            )  # nothing connects as these roles; they get a hash like the others
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
     migrate(scoped)
     try:
