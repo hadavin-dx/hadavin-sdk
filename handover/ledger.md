@@ -2443,3 +2443,7 @@
 | BL-core-a15-w3-04 | handover/reviews/PR74/round-w3-codebase-tests.md | Minor | PR74 (A15) | T6-T17 missing/vacuous tests, noqa reason unchecked, conftest side effect, stacked on unmerged P1a/P1b (lead merge order) | OPEN | 2026-11-11 |
 | BL-core-a17-w3-01 | handover/reviews/PR85/round-w3-codebase.md | Minor | PR85 (A17) | F-1..F-4 stale CHANGELOG (CORPUS_STEP, src heading), rows 005/033 active without test, factory-limit doc | OPEN | 2026-11-11 |
 | BL-core-a17-w3-02 | handover/reviews/PR85/round-w3-codebase.md | Major (coverage gap) | PR85 (A17) | ~140 OPERATOR/FOREIGN CSV labels unverified; needs reviewer with full tree + test/mutant/cmp run | OPEN | 2026-11-11 |
+| BL-core-a11a-w3-01 | reviews/PR77/round-w3-tests-docs.md F1 | Major | PR77 | test_digits_1 card half cannot fail (space-grouped card, 8-digit run) | OPEN | 2026-11-11 |
+| BL-core-a11a-w3-02 | reviews/PR77/round-w3-tests-docs.md F2 | Major | PR77 | test_sep_1 never asserts the password is gone | OPEN | 2026-11-11 |
+| BL-core-a11a-w3-03 | reviews/PR77/round-w3-tests-docs.md F3-F8,F12 | Minor | PR77 | vacuous map_6; U fail-before; whole-literal fake secrets; weak HOSTILE-1; CHANGELOG cost wording; dangling comment; mutant 21 duplicate snippet unchecked | OPEN | 2026-11-11 |
+| BL-core-a18-w3-05 | reviews/PR86/round-w3-no-training.md F1-F3 | Minor | PR86 | self_hosted not enforced; per-host not per-route; bedrock_guardrail has no statement; track in P6a | OPEN | 2026-11-11 |
