@@ -1,0 +1,255 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+== (a1) TickContext(app, <time>) on each stage; TickContext(app); ctx.now assignment; dataclasses.replace
+  [demo] app.config.environment='demo'
+(a1) demo TickContext(app, now=today+500d) -> no exception; returned ctx.now=2028-03-25T16:16:03.668328+00:00
+(a1) demo TickContext(app, now=2020-01-01) -> no exception; returned ctx.now=2020-01-01T00:00:00+00:00
+(a1) demo TickContext(app) (clock) -> no exception; returned ctx.now=2026-11-11T16:16:03.668421+00:00 (clock fresh: True)
+(a1) demo TickContext(app) after app.approvals.clock replaced by a fixed time 2026-11-11T09:00Z -> no exception; returned ctx.now=2026-11-11T09:00:00+00:00
+(a1) demo ctx.now = today+500d (assignment after creation) -> FrozenInstanceError: cannot assign to field 'now'
+(a1) demo dataclasses.replace(ctx, now=today+500d) -> no exception; returned ctx.now=2028-03-25T16:16:03.668454+00:00
+(a1) demo object.__setattr__(ctx,'now',today+500d) (a deliberate bypass, for the record) -> no exception; returned returned None; ctx.now is now 2028-03-25T16:16:03.668470+00:00
+  [pilot] app.config.environment='pilot'
+(a1) pilot TickContext(app, now=today+500d) -> ConfigError: now= is for tests; it is refused in pilot and prod
+(a1) pilot TickContext(app, now=2020-01-01) -> ConfigError: now= is for tests; it is refused in pilot and prod
+(a1) pilot TickContext(app) (clock) -> no exception; returned ctx.now=2026-11-11T16:16:03.723321+00:00 (clock fresh: True)
+(a1) pilot TickContext(app) after app.approvals.clock replaced by a fixed time 2026-11-11T09:00Z -> no exception; returned ctx.now=2026-11-11T09:00:00+00:00
+(a1) pilot ctx.now = today+500d (assignment after creation) -> FrozenInstanceError: cannot assign to field 'now'
+(a1) pilot dataclasses.replace(ctx, now=today+500d) -> ConfigError: now= is for tests; it is refused in pilot and prod
+(a1) pilot object.__setattr__(ctx,'now',today+500d) (a deliberate bypass, for the record) -> no exception; returned returned None; ctx.now is now 2028-03-25T16:16:03.723421+00:00
+  [prod] app.config.environment='prod'
+(a1) prod TickContext(app, now=today+500d) -> ConfigError: now= is for tests; it is refused in pilot and prod
+(a1) prod TickContext(app, now=2020-01-01) -> ConfigError: now= is for tests; it is refused in pilot and prod
+(a1) prod TickContext(app) (clock) -> no exception; returned ctx.now=2026-11-11T16:16:03.784174+00:00 (clock fresh: True)
+(a1) prod TickContext(app) after app.approvals.clock replaced by a fixed time 2026-11-11T09:00Z -> no exception; returned ctx.now=2026-11-11T09:00:00+00:00
+(a1) prod ctx.now = today+500d (assignment after creation) -> FrozenInstanceError: cannot assign to field 'now'
+(a1) prod dataclasses.replace(ctx, now=today+500d) -> ConfigError: now= is for tests; it is refused in pilot and prod
+(a1) prod object.__setattr__(ctx,'now',today+500d) (a deliberate bypass, for the record) -> no exception; returned returned None; ctx.now is now 2028-03-25T16:16:03.784221+00:00
+== (a2) a stand-in context (class with `now` and `app`) handed to each of the six step functions on PILOT (and prod); a purge spy on the store; rows planted
+   step names: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(a2) pilot sweep(StandIn(app, now=today+500d)) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref) pilot sweep(StandIn(app, now=app clock)) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref2) pilot sweep(TickContext(app)) real context, clock -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2) pilot reconcile(StandIn(app, now=today+500d)) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref) pilot reconcile(StandIn(app, now=app clock)) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref2) pilot reconcile(TickContext(app)) real context, clock -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2) pilot stuck(StandIn(app, now=today+500d)) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref) pilot stuck(StandIn(app, now=app clock)) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref2) pilot stuck(TickContext(app)) real context, clock -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2) pilot checkpoint(StandIn(app, now=today+500d)) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref) pilot checkpoint(StandIn(app, now=app clock)) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref2) pilot checkpoint(TickContext(app)) real context, clock -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2) pilot purge_evidence(StandIn(app, now=today+500d)) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref) pilot purge_evidence(StandIn(app, now=app clock)) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref2) pilot purge_evidence(TickContext(app)) real context, clock -> no exception; returned None
+    purge calls that reached the store: ['purge_redaction_maps', 'purge_tool_calls', 'purge_tool_calls', 'purge_redaction_maps']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2) pilot reprobe_sources(StandIn(app, now=today+500d)) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref) pilot reprobe_sources(StandIn(app, now=app clock)) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref2) pilot reprobe_sources(TickContext(app)) real context, clock -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2) prod sweep(StandIn(app, now=today+500d)) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref) prod sweep(StandIn(app, now=app clock)) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref2) prod sweep(TickContext(app)) real context, clock -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2) prod reconcile(StandIn(app, now=today+500d)) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref) prod reconcile(StandIn(app, now=app clock)) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref2) prod reconcile(TickContext(app)) real context, clock -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2) prod stuck(StandIn(app, now=today+500d)) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref) prod stuck(StandIn(app, now=app clock)) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref2) prod stuck(TickContext(app)) real context, clock -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2) prod checkpoint(StandIn(app, now=today+500d)) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref) prod checkpoint(StandIn(app, now=app clock)) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref2) prod checkpoint(TickContext(app)) real context, clock -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2) prod purge_evidence(StandIn(app, now=today+500d)) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref) prod purge_evidence(StandIn(app, now=app clock)) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref2) prod purge_evidence(TickContext(app)) real context, clock -> no exception; returned None
+    purge calls that reached the store: ['purge_redaction_maps', 'purge_tool_calls', 'purge_tool_calls', 'purge_redaction_maps']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2) prod reprobe_sources(StandIn(app, now=today+500d)) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref) prod reprobe_sources(StandIn(app, now=app clock)) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(a2-ref2) prod reprobe_sources(TickContext(app)) real context, clock -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+== (b) run_tick(app, steps=..., now=...) all shapes on demo/pilot/prod; new app per row
+(b) demo run_tick(app, steps=None) -> no exception; returned 0
+    recording step ran: []; 
+(b) demo run_tick(app, steps=[]) -> no exception; returned 0
+    recording step ran: []; 
+(b) demo run_tick(app, steps=()) -> no exception; returned 0
+    recording step ran: []; 
+(b) demo run_tick(app, steps='') -> no exception; returned 0
+    recording step ran: []; 
+(b) demo run_tick(app, steps=[one step]) -> no exception; returned 0
+    recording step ran: ['recorded']; 
+(b) demo run_tick(app, steps=generator of one step) -> no exception; returned 0
+    recording step ran: ['recorded']; 
+(b) demo run_tick(app, steps=0) -> TypeError: 'int' object is not iterable
+    recording step ran: []; 
+(b) demo run_tick(app, steps=False) -> TypeError: 'bool' object is not iterable
+    recording step ran: []; 
+(b) demo run_tick(app, steps=tick.STEPS) -> no exception; returned 0
+    recording step ran: []; 
+(b) pilot run_tick(app, steps=None) -> no exception; returned 0
+    recording step ran: []; 
+(b) pilot run_tick(app, steps=[]) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) pilot run_tick(app, steps=()) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) pilot run_tick(app, steps='') -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) pilot run_tick(app, steps=[one step]) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) pilot run_tick(app, steps=generator of one step) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) pilot run_tick(app, steps=0) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) pilot run_tick(app, steps=False) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) pilot run_tick(app, steps=tick.STEPS) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) prod run_tick(app, steps=None) -> no exception; returned 0
+    recording step ran: []; 
+(b) prod run_tick(app, steps=[]) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) prod run_tick(app, steps=()) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) prod run_tick(app, steps='') -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) prod run_tick(app, steps=[one step]) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) prod run_tick(app, steps=generator of one step) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) prod run_tick(app, steps=0) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) prod run_tick(app, steps=False) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+(b) prod run_tick(app, steps=tick.STEPS) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; 
+  -- now= alone and with steps
+(b) demo run_tick(app, now=today+500d) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: []; maps left: []
+(b) demo run_tick(app, now=today+500d, steps=[]) -> no exception; returned 0
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(b) demo run_tick(app, now=None) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(b) demo run_tick(app, (nothing)) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(b) pilot run_tick(app, now=today+500d) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(b) pilot run_tick(app, now=today+500d, steps=[]) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(b) pilot run_tick(app, now=None) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(b) pilot run_tick(app, (nothing)) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(b) prod run_tick(app, now=today+500d) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(b) prod run_tick(app, now=today+500d, steps=[]) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(b) prod run_tick(app, now=None) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(b) prod run_tick(app, (nothing)) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+  -- the module list STEPS changed (monkeypatched for the row), run_tick(app) with no keyword
+(b) demo run_tick(app) with built-in step 'sweep' removed from STEPS -> no exception; returned 0
+    steps with a tick state after: ['reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(b) demo run_tick(app) with built-in step 'reconcile' removed from STEPS -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(b) demo run_tick(app) with built-in step 'stuck' removed from STEPS -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(b) demo run_tick(app) with built-in step 'checkpoint' removed from STEPS -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'purge_evidence', 'reprobe_sources']
+(b) demo run_tick(app) with built-in step 'purge_evidence' removed from STEPS -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'reprobe_sources']
+(b) demo run_tick(app) with built-in step 'reprobe_sources' removed from STEPS -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence']
+(b) demo run_tick(app) with one step appended to STEPS -> no exception; returned 0
+    recording step ran: ['recorded']; steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources', 'recorded']
+(b-extra) demo run_tick(app) with STEPS reordered (reversed) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(b-extra) demo run_tick(app) with purge_evidence's function replaced by a no-op (same name) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(b) pilot run_tick(app) with built-in step 'sweep' removed from STEPS -> ConfigError: a built-in tick step is missing: sweep
+    steps with a tick state after: []
+(b) pilot run_tick(app) with built-in step 'reconcile' removed from STEPS -> ConfigError: a built-in tick step is missing: reconcile
+    steps with a tick state after: []
+(b) pilot run_tick(app) with built-in step 'stuck' removed from STEPS -> ConfigError: a built-in tick step is missing: stuck
+    steps with a tick state after: []
+(b) pilot run_tick(app) with built-in step 'checkpoint' removed from STEPS -> ConfigError: a built-in tick step is missing: checkpoint
+    steps with a tick state after: []
+(b) pilot run_tick(app) with built-in step 'purge_evidence' removed from STEPS -> ConfigError: a built-in tick step is missing: purge_evidence
+    steps with a tick state after: []
+(b) pilot run_tick(app) with built-in step 'reprobe_sources' removed from STEPS -> ConfigError: a built-in tick step is missing: reprobe_sources
+    steps with a tick state after: []
+(b) pilot run_tick(app) with one step appended to STEPS -> no exception; returned 0
+    recording step ran: ['recorded']; steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources', 'recorded']
+(b-extra) pilot run_tick(app) with STEPS reordered (reversed) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(b-extra) pilot run_tick(app) with purge_evidence's function replaced by a no-op (same name) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(b) prod run_tick(app) with built-in step 'sweep' removed from STEPS -> ConfigError: a built-in tick step is missing: sweep
+    steps with a tick state after: []
+(b) prod run_tick(app) with built-in step 'reconcile' removed from STEPS -> ConfigError: a built-in tick step is missing: reconcile
+    steps with a tick state after: []
+(b) prod run_tick(app) with built-in step 'stuck' removed from STEPS -> ConfigError: a built-in tick step is missing: stuck
+    steps with a tick state after: []
+(b) prod run_tick(app) with built-in step 'checkpoint' removed from STEPS -> ConfigError: a built-in tick step is missing: checkpoint
+    steps with a tick state after: []
+(b) prod run_tick(app) with built-in step 'purge_evidence' removed from STEPS -> ConfigError: a built-in tick step is missing: purge_evidence
+    steps with a tick state after: []
+(b) prod run_tick(app) with built-in step 'reprobe_sources' removed from STEPS -> ConfigError: a built-in tick step is missing: reprobe_sources
+    steps with a tick state after: []
+(b) prod run_tick(app) with one step appended to STEPS -> no exception; returned 0
+    recording step ran: ['recorded']; steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources', 'recorded']
+(b-extra) prod run_tick(app) with STEPS reordered (reversed) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(b-extra) prod run_tick(app) with purge_evidence's function replaced by a no-op (same name) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+== (c) store/approvals methods called directly on PILOT app (time = today + 500 days; rows planted)
+  [pilot] store=MemoryStore; retention=Retention(tool_calls_days=30, redaction_maps_days=30, hold_labelled=True, held_maps_max_days=400, held_tool_calls_max_days=400, purge_every_s=86400); app.purge_store is app.store: False
+   before: tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(c) pilot store.purge_tool_calls(today+500d, keep_run_ids=frozenset()) -> no exception; returned 3
+   after: tool calls left: []; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+   before: tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(c) pilot store.purge_redaction_maps(today+500d, keep_run_ids=frozenset(), keep_open=False) -> no exception; returned 3
+   after: tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: []
+(c) pilot app.approvals.sweep(at=today+500d) -> no exception; returned []
+(c) pilot app.approvals.resend_unsent(at=today+500d) -> no exception; returned []
+  [prod] store=MemoryStore; retention=Retention(tool_calls_days=30, redaction_maps_days=30, hold_labelled=True, held_maps_max_days=400, held_tool_calls_max_days=400, purge_every_s=86400); app.purge_store is app.store: False
+   before: tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(c) prod store.purge_tool_calls(today+500d, keep_run_ids=frozenset()) -> no exception; returned 3
+   after: tool calls left: []; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+   before: tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(c) prod store.purge_redaction_maps(today+500d, keep_run_ids=frozenset(), keep_open=False) -> no exception; returned 3
+   after: tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: []
+(c) prod app.approvals.sweep(at=today+500d) -> no exception; returned []
+(c) prod app.approvals.resend_unsent(at=today+500d) -> no exception; returned []
+== end

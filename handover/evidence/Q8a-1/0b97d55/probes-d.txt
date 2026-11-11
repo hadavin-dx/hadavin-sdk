@@ -1,0 +1,73 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+value | keyword route (demo build timeout_s=) | config route (executor_timeout_s in demo config.yaml)
+## 0  (yaml `0`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## 0.0  (yaml `0.0`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## -1  (yaml `-1`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## True  (yaml `true`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## False  (yaml `false`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## 1e-9  (yaml `1.0e-9`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## 5e-324  (yaml `5.0e-324`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## 0.001  (yaml `0.001`)
+   kw : ACCEPTED executor.timeout_s=0.001 (float)
+   cfg: ACCEPTED executor_timeout_s=0.001 (float); executor.timeout_s=0.001
+## 0.0009  (yaml `0.0009`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## 0.5  (yaml `0.5`)
+   kw : ACCEPTED executor.timeout_s=0.5 (float)
+   cfg: ACCEPTED executor_timeout_s=0.5 (float); executor.timeout_s=0.5
+## 3600  (yaml `3600`)
+   kw : ACCEPTED executor.timeout_s=3600 (int)
+   cfg: ACCEPTED executor_timeout_s=3600.0 (float); executor.timeout_s=3600.0
+## 3600.0  (yaml `3600.0`)
+   kw : ACCEPTED executor.timeout_s=3600.0 (float)
+   cfg: ACCEPTED executor_timeout_s=3600.0 (float); executor.timeout_s=3600.0
+## 3600.0000001  (yaml `3600.0000001`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## 3601  (yaml `3601`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## 10**400  (yaml `1 followed by 400 zeros`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## float('inf')  (yaml `.inf`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## float('nan')  (yaml `.nan`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## '5' (text)  (yaml `'5'`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## [5]  (yaml `[5]`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## Decimal('2.5')  (yaml `2.5`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: ACCEPTED executor_timeout_s=2.5 (float); executor.timeout_s=2.5
+## Fraction(5, 2)  (yaml `5/2`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## '5/2' (text)  (yaml `'5/2'`)
+   kw : REFUSED ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+   cfg: REFUSED at load_config ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+## reference: not given
+   kw : ACCEPTED executor.timeout_s=10.0
+## pilot keyword route, timeout_s=2.5 and 0 (outside demo the keyword itself)
+pilot build timeout_s=2.5 -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+pilot build timeout_s=0 -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod

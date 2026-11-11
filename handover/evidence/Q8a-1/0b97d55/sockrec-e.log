@@ -1,0 +1,16 @@
+plugin loaded; at load VAULT_TOKEN set=False VAULT_SECRET_ID set=False
+--- recorder self-check: a deliberate connect to 127.0.0.1:9 follows ---
+getaddrinfo '127.0.0.1'
+connect ('127.0.0.1', 9)
+--- end self-check; the builds follow ---
+--- build pilot secrets {'auth': 'token'} ---
+--- build pilot secrets {} ---
+--- build pilot signer {'auth': 'token'} ---
+--- build pilot signer {} ---
+--- build prod secrets {'auth': 'token'} ---
+--- build prod secrets {} ---
+--- build prod signer {'auth': 'token'} ---
+--- build prod signer {} ---
+--- CONTROL build pilot secrets approle ---
+getaddrinfo '127.0.0.1'
+connect ('127.0.0.1', 9)

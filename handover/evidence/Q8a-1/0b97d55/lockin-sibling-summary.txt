@@ -1,0 +1,3 @@
+FAILED tests/test_lockin_guard.py::test_a_vendor_path_or_name_planted_in_the_real_receiver_is_caught
+20 failed, 138 passed in 15.34s
+20 failed, 138 passed in 11.24s
