@@ -1689,3 +1689,8 @@ Cloud stopped. PR77 builder wrote no code (empty WIP commit). Pushed heads (new 
 - wip/cloud-245-FB87 6b1d38f952cbaf8e83134f95366f12f191bc05f4
 - wip/cloud-245-WT-R1 92bf601358063325eb525ebfa0011b8e2f2d2762
 Held back by gitleaks in this pass: none. Still unpushed from the earlier pass: the two PR89 evidence heads (386875c4a034, f4301d55443b).
+
+## Q-2026-11-11-egm: EGM plugin install denied
+- What: `claude plugin marketplace add google/elephant-goldfish-model && claude plugin install egm@egm` was denied by the sandbox classifier.
+- Blocks: native egm:* skills/agents; not the work.
+- Safe default taken: manual reviewer agents per D-001. Next step for human: allow the install (permission rule for Bash) or install it and restart.

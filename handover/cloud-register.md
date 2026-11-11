@@ -1152,3 +1152,8 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 - CLOSED: PR89 r16 reviewers ab9d02aa, aa9e4660, a73b12d6, a966bb30, a1069d9f (5 reports saved, no Blocker/Major); A11a reviewers a9eb0f73, af2fd009; A18 reviewer ab82a14e.
 - STARTED: PR89 final batch (a8904ec1 resumed, expected end 08:05Z); PR74 fix builder af1e4bab (expected end 08:10Z); PR77 fix builder a15af6a6 (expected end 08:10Z). Evidence runner ace9ead2 told to save partial output and stop.
 - Next checks: 07:15Z each builder checkpoint note; independent PR89 runner after r17 head.
+
+## 2026-11-11 autonomous session restart (old rows above are from the previous session and are all closed/void)
+| id | purpose | started | expected end | last checked | state | next action |
+|---|---|---|---|---|---|---|
+| (none running) | Step 0 complete, no agents/shells started yet | 13:19Z | | 13:19Z | idle | start Q2 PR89 evidence |

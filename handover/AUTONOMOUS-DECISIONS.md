@@ -10,3 +10,9 @@ Entry format: `D-NNN | date UTC / IST | question | options (cost, risk) | RECOMM
 - D-005 | same | Two unpushed PR89 evidence heads (gitleaks hit in history) | (a) push anyway, (b) drop and re-run evidence on db0d9eb | RECOMMENDED (b) | reversible: yes | ORDER 242 | outcome: re-run is Q2.
 
 ## Decisions taken by the cloud session (append below, newest last)
+
+## D-001 2026-11-11 13:19Z UTC: EGM plugin unavailable, use manual reviewer fallback
+- Question: how to run EGM reviews when the plugin cannot be installed (install command denied by the environment's auto-mode classifier).
+- Options: (a) retry/work around the denial (rejected: bypasses a safety control); (b) fallback in the prompt: fresh general-purpose read-only reviewer agents, same order (design, codebase-details, comprehension, implementation-readiness, structural, zoom-out, synthesizer); (c) stop. 
+- Recommended/chosen: (b). Reversible: yes (swap to egm:* once a human installs the plugin and restarts).
+- Revisit: if the owner installs the plugin.
