@@ -1,8 +1,11 @@
 """Judge one mutation-test run by the REASON for the kill, not only the exit code.
 
 Harness contract (the runner is ``tools/mutation_runner.py``, not shipped; this judges one run): revert one guard in a copy of the package, run the
-targeted tests, then call ``judge(returncode, test_id, first_line, expect=..., pinned=...)`` with the FAILING TEST ID and the FIRST
-``E `` line of THAT test. ``first_failure_junit(xml)`` extracts both from a JUnit file (robust for ids that contain ``-``,
+targeted tests, read the JUnit file ONCE with ``read_junit(xml)`` and call ``judge_report(returncode, report, expect=..., pinned=...)``. That is the
+one call that judges a run correctly: a run whose first failing case is a fixture error or a test file that could not be collected is ``ERROR``
+there (no test ran as written, so it is never a kill). ``judge(returncode, test_id, first_line, ...)`` judges the two plain values only: it
+cannot know about a fixture or collection failure, so a harness that feeds it the output of ``first_failure_junit(xml)`` alone can count a
+fixture error as a kill. ``first_failure_junit(xml)`` extracts the id and the first ``E `` line (robust for ids that contain ``-``,
 ``|`` or ``[...]``); ``first_failure(stdout)`` parses ``-rf`` text and is only safe for ids without `` - ``.
 
 Verdicts: SURVIVED (exit 0), NO_TESTS (exit 5), ERROR (any other exit code except 1, and exit 1 when no failing test id is known: a failing run that
@@ -70,6 +73,32 @@ def judge(
         if m.search(first_line) if isinstance(m, re.Pattern) else m in first_line:
             return Verdict.CRASH
     return Verdict.KILLED if _ASSERTION.search(first_line.strip()) else Verdict.CRASH
+
+
+def judge_report(
+    rc: int,
+    report: JunitReport,
+    *,
+    expect: str | None = None,
+    pinned: str | None = None,
+    crash_markers: Iterable[str | re.Pattern[str]] = (),
+) -> Verdict:
+    """``judge`` for a run read by ``read_junit``: ``ERROR`` when the run failed (exit 1) and its FIRST failing case is a fixture error or a test
+    file that could not be collected (no test ran as written, so it is never a kill, whatever the first line says); every other run is judged
+    by ``judge`` on ``report.test_id`` and ``report.first_line``. An exit code other than 1 is judged by ``judge`` alone (0 SURVIVED, 5 NO_TESTS)."""
+    verdict = judge(
+        rc,
+        report.test_id,
+        report.first_line,
+        expect=expect,
+        pinned=pinned,
+        crash_markers=crash_markers,
+    )
+    return (
+        Verdict.ERROR
+        if rc == 1 and (report.fixture_failed or report.collection_failed)
+        else verdict
+    )
 
 
 def first_failure(stdout: str) -> tuple[str, str]:

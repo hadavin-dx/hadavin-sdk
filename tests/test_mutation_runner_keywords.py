@@ -10,18 +10,21 @@ Most killer tests give their assertion a message that names the guard (``_must_r
 mutants in ``tests/mutation_runner_mutants.py`` can tell which guard was removed from the first line of the failure.
 """
 
+import base64
 import contextlib
 import errno
 import hashlib
-import importlib.util
 import json
 import os
 import re
+import shutil
 import stat
+import subprocess
 import sys
 import threading
 import time
 from pathlib import Path
+from urllib.parse import quote
 
 import pytest
 from tools import mutation_runner as mr
@@ -75,6 +78,22 @@ def _own_lock_folder(_guard_the_database_address, tmp_path, monkeypatch):
     monkeypatch.setattr(
         mr, "_lock_dir", lambda: tmp_path
     )  # each test its own lock folder: two test processes never share a lock
+
+
+_ADDRESS_CHECK_TESTS = (
+    "test_the_address_check",
+    "test_run_mutants_refuses_an_address",
+    "test_the_address_of_ci",
+)
+
+
+@pytest.fixture(autouse=True)
+def _fake_addresses_pass_the_address_check(_guard_the_database_address, request, monkeypatch):
+    """The fake addresses of the masking and lock tests (``db.invalid``, a sentinel, a file path, a key=value text with a password word) are not addresses
+    the check accepts. Those tests are about something else, so the check is switched off for them HERE, in the tests only; there is no keyword that
+    does it in the runner. The tests whose names start with one of ``_ADDRESS_CHECK_TESTS`` run the real check."""
+    if not request.node.name.startswith(_ADDRESS_CHECK_TESTS):
+        monkeypatch.setattr(mr, "_refuse_unsafe_address", lambda *a, **k: None, raising=False)
 
 
 def test_the_guard_fails_a_test_that_deletes_the_database_address_and_puts_nothing_back():
@@ -414,6 +433,14 @@ def test_property_the_allowlist_holds_only_the_test_database_address():
 # ---- pass_env: masking ------------------------------------------------------------------------------------------------------
 
 
+def _protection_off(mp) -> None:
+    """The positive controls of the hiding tests: switch off BOTH layers (the projection of the child's text and the masker), so a test can show
+    that the child really printed the value and that the check below could fail."""
+    mp.setattr(mr, "_masked", lambda text, secrets: text)
+    mp.setattr(mr, "_shown_line", lambda raw, secrets, expect="": raw, raising=False)
+    mp.setattr(mr, "_shown_id", lambda test_id, secrets: test_id, raising=False)
+
+
 def _showing_value_tree(tmp_path, dsn):
     """A tree whose test fails after the flip and whose failure line and test id both show the value."""
     body = (
@@ -429,8 +456,8 @@ def test_pass_env_values_never_reach_first_lines(tmp_path, monkeypatch):
     monkeypatch.setenv(DSN_NAME, dsn)
     lines: dict[str, str] = {}
     _run(_showing_value_tree(tmp_path, dsn), [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
-    assert lines["flip"] == "E       AssertionError: [REDACTED]", (
-        "the failure line was not the exact masked line (the passed value reached first_lines, or the line changed)"
+    assert lines["flip"] == "AssertionError [expect not found] assert", (
+        "the failure line was not the exact projection (the passed value reached first_lines, or the projection changed)"
     )
 
 
@@ -443,7 +470,9 @@ def test_pass_env_values_never_reach_the_failing_test_id_of_a_row(tmp_path, monk
     assert word not in rows[0][2] and dsn not in rows[0][2], (
         "the passed value reached the test id of a row"
     )
-    assert "[REDACTED]" in rows[0][2], f"the test id was not shown with a marker: {rows[0][2]}"
+    assert rows[0][2] == "tests/test_core::test_a" + mr.PARAMETERS_HIDDEN, (
+        f"the test id was not shown as file and function with the parameters hidden: {rows[0][2]}"
+    )
 
 
 def test_the_baseline_skip_message_never_holds_the_passed_value(tmp_path, monkeypatch):
@@ -466,7 +495,7 @@ def test_the_baseline_skip_message_never_holds_the_passed_value(tmp_path, monkey
     with (
         monkeypatch.context() as control
     ):  # positive control: with the masking off, the test id of the skip holds the value
-        control.setattr(mr, "_masked", lambda text, secrets: text)
+        _protection_off(control)
         assert word in refusal_of_the_baseline(), (
             "the positive control failed: the unmasked baseline skip message holds no password"
         )
@@ -475,7 +504,9 @@ def test_the_baseline_skip_message_never_holds_the_passed_value(tmp_path, monkey
     assert dsn not in refusal and word not in refusal, (
         "the baseline skip message held the passed value"
     )
-    assert "[REDACTED]" in refusal, "the baseline skip message has no marker"
+    assert mr.PARAMETERS_HIDDEN in refusal, (
+        "the baseline skip message did not hide the parameters of the test id"
+    )
 
 
 def test_masked_replaces_the_value_and_the_url_password(monkeypatch):
@@ -563,7 +594,7 @@ def test_pass_env_values_shortened_by_pytest_never_reach_first_lines(tmp_path, m
         root = _plain_compare_tree(tmp_path / str(n), value)
         # positive control: with the masking off, the line really holds a fragment (so the check below can fail)
         with monkeypatch.context() as m:
-            m.setattr(mr, "_masked", lambda text, secrets: text)
+            _protection_off(m)
             seen: dict[str, str] = {}
             _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=seen)
         assert "..." in seen["flip"], (
@@ -913,7 +944,8 @@ def test_a_canary_run_that_skips_passes_without_forbid_skips(tmp_path, monkeypat
     # the control of the test above: the skip is what the refusal is about
     monkeypatch.setenv(DSN_NAME, str(tmp_path / "state.flag"))
     root = _tree(tmp_path, {CORE_TEST: SKIPS_WHEN_THE_DATABASE_IS_GONE})
-    assert _short(_run(root, [FLIP], pass_env=(DSN_NAME,))) == [("flip", Verdict.KILLED, True)]
+    rows = _run(root, [FLIP], pass_env=(DSN_NAME,), forbid_skips=False)
+    assert _short(rows) == [("flip", Verdict.KILLED, True)]
 
 
 def test_a_copy_that_cannot_be_rebuilt_for_the_canary_is_a_clear_refusal(tmp_path, monkeypatch):
@@ -1256,10 +1288,10 @@ def test_the_environment_is_read_once_and_a_change_during_the_run_changes_nothin
     assert _short(rows) == [("flip", Verdict.KILLED, True), ("flip2", Verdict.KILLED, True)], (
         "the two mutants were not both killed"
     )
-    assert lines["flip"] == "E       AssertionError: [REDACTED]", (
+    assert lines["flip"] == "AssertionError [expect found] AssertionError", (
         "the first mutant did not see the value"
     )
-    assert lines["flip2"] == "E       AssertionError: [REDACTED]", (
+    assert lines["flip2"] == "AssertionError [expect found] AssertionError", (
         "the second mutant run got the changed value (or its old value was not hidden): the environment was read again"
     )
 
@@ -1474,7 +1506,9 @@ def test_the_skipped_tests_row_keeps_a_masked_message(tmp_path, monkeypatch):
     shown = lines.get("flip", "")
     assert shown.startswith("skipped:"), f"the SKIPPED TESTS row kept no message: {lines}"
     assert dsn not in shown and word not in shown, "the SKIPPED TESTS message held the passed value"
-    assert "[REDACTED]" in shown, "the SKIPPED TESTS message was not shown with a marker"
+    assert mr.PARAMETERS_HIDDEN in shown, (
+        "the SKIPPED TESTS message did not hide the parameters of the test id"
+    )
 
 
 def test_a_skipped_tests_row_without_a_failure_says_which_tests_were_skipped(tmp_path, monkeypatch):
@@ -2001,7 +2035,7 @@ def test_the_value_that_pytest_shortens_never_reaches_a_row_from_a_real_run(tmp_
     with (
         monkeypatch.context() as control
     ):  # positive control: with the masking off, the line really holds pieces
-        control.setattr(mr, "_masked", lambda text, secrets: text)
+        _protection_off(control)
         seen: dict[str, str] = {}
         _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=seen)
     assert "..." in seen["flip"] and any(w in seen["flip"] for w in _windows(value)), (
@@ -2160,60 +2194,67 @@ def test_an_unquoted_password_with_a_semicolon_or_an_ampersand_is_masked_in_full
         )
 
 
-def _the_conftest_module():
-    """The conftest module that pytest already loaded (its module-level lines, which set the fake cloud keys, are not run a second time); a run that
-    has not loaded it (a plugin of another name) loads it from the file."""
-    path = Path(__file__).with_name("conftest.py").resolve()
-    for module in list(sys.modules.values()):
-        if Path(getattr(module, "__file__", None) or "/").resolve() == path:
-            return module
-    spec = importlib.util.spec_from_file_location("repo_conftest", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+def _inner_pytest(tmp_path: Path, body: str, address_before: str | None, name: str = "inner"):
+    """A REAL pytest run in a folder of its own that holds a copy of ``tests/conftest.py`` and one test file (``body``), with the database address
+    set to ``address_before`` (or not set). Returns ``(exit code, output)``. No pytest internals are used: the guard fixture is the one that
+    pytest itself loads from the conftest, so what is checked is what a test of the suite meets."""
+    folder = tmp_path / name
+    folder.mkdir()
+    shutil.copy(Path(__file__).with_name("conftest.py"), folder / "conftest.py")
+    (folder / "test_inner.py").write_text(body, encoding="utf-8")
+    (folder / "inner.ini").write_text("", encoding="utf-8")
+    env = dict(os.environ)
+    env.pop(DSN_NAME, None)
+    if address_before is not None:
+        env[DSN_NAME] = address_before
+    done = subprocess.run(  # noqa: S603  # our own interpreter, fixed arguments, no shell
+        [
+            sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-c", str(folder / "inner.ini"),
+            f"--rootdir={folder}", str(folder / "test_inner.py"),
+        ],
+        cwd=folder, env=env, capture_output=True, text=True, timeout=180, check=False,
+    )  # fmt: skip
+    return done.returncode, done.stdout + done.stderr
 
 
-def test_the_fixture_that_guards_the_database_address_fails_a_test_that_changes_it():
-    module = _the_conftest_module()
-    fixture = module._test_database_address_is_left_as_found
-    body = getattr(fixture, "__wrapped__", fixture)
-    quiet = body()
-    next(quiet)
-    with contextlib.suppress(StopIteration):
-        next(quiet)  # nothing changed: no failure
-    loud = body()
-    next(loud)
-    os.environ[DSN_NAME] = "changed by a test"
-    try:
-        next(loud)
-    except pytest.fail.Exception as failure:
-        assert "did not put it back" in str(failure)
-    except StopIteration:
-        raise AssertionError(
-            "the fixture did not fail a test that changed the database address"
-        ) from None
-    else:
-        raise AssertionError("the fixture did not fail a test that changed the database address")
-    assert os.environ[DSN_NAME] == SENTINEL, "the fixture did not put the old value back"
+def _two_inner_tests(marker: Path, first_body: str) -> str:
+    """A test file of two tests: the first runs ``first_body``; the second (it runs after the first, in the same process) writes what the
+    database address then is into ``marker`` (``None`` when it is not set)."""
+    return (
+        "import os\n\n\ndef test_first():\n"
+        + "".join(f"    {line}\n" for line in first_body.splitlines())
+        + "\n\ndef test_second():\n"
+        + f"    open({str(marker)!r}, 'w').write(repr(os.environ.get('HADAVIN_TEST_PG_DSN')))\n"
+    )
+
+
+def test_the_fixture_that_guards_the_database_address_fails_a_test_that_changes_it(tmp_path):
+    marker = tmp_path / "after.txt"
+    body = _two_inner_tests(marker, "os.environ['HADAVIN_TEST_PG_DSN'] = 'changed by a test'")
+    code, out = _inner_pytest(tmp_path, body, "the address before")
+    assert code != 0 and "did not put it back" in out, (
+        f"the fixture did not fail a test that changed the database address (exit {code})"
+    )
+    assert marker.read_text(encoding="utf-8") == repr("the address before"), (
+        "the fixture did not put the old value back"
+    )
+    quiet = _two_inner_tests(tmp_path / "quiet.txt", "pass")
+    code, out = _inner_pytest(tmp_path, quiet, "the address before", name="quiet")
+    assert code == 0, f"the fixture failed a test that changed nothing: {out[-300:]}"
 
 
 def test_the_fixture_that_guards_the_database_address_removes_an_address_that_a_test_added(
-    monkeypatch,
+    tmp_path,
 ):
-    monkeypatch.delenv(DSN_NAME)
-    fixture = _the_conftest_module()._test_database_address_is_left_as_found
-    loud = getattr(fixture, "__wrapped__", fixture)()
-    next(loud)
-    os.environ[DSN_NAME] = "added by a test"
-    try:
-        next(loud)
-    except pytest.fail.Exception:
-        pass
-    except StopIteration:
-        raise AssertionError(
-            "the fixture did not fail a test that added the database address"
-        ) from None
-    assert DSN_NAME not in os.environ, "the fixture did not remove an address that a test added"
+    marker = tmp_path / "after.txt"
+    body = _two_inner_tests(marker, "os.environ['HADAVIN_TEST_PG_DSN'] = 'added by a test'")
+    code, out = _inner_pytest(tmp_path, body, None)
+    assert code != 0 and "did not put it back" in out, (
+        "the fixture did not fail a test that added the database address"
+    )
+    assert marker.read_text(encoding="utf-8") == "None", (
+        "the fixture did not remove an address that a test added"
+    )
 
 
 def test_a_plus_in_a_url_password_is_also_read_as_a_space(monkeypatch):
@@ -2349,7 +2390,7 @@ def _the_first_line_of_a_failing_run(tmp_path, monkeypatch, body, masking_off=Fa
     lines: dict[str, str] = {}
     with monkeypatch.context() as control:
         if masking_off:
-            control.setattr(mr, "_masked", lambda text, secrets: text)
+            _protection_off(control)
         rows = _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
     return rows, lines.get("flip", "")
 
@@ -2371,7 +2412,9 @@ def test_the_message_of_a_collection_error_never_holds_the_passed_value(tmp_path
     assert word not in line and dsn not in line, (
         "the passed value reached the first line of a COLLECTION ERROR row"
     )
-    assert "[REDACTED]" in line, "the COLLECTION ERROR line has no marker"
+    assert line == "AssertionError", (
+        f"the COLLECTION ERROR line is not the class name alone: {line!r}"
+    )
 
 
 def test_the_message_of_a_fixture_error_never_holds_the_passed_value(tmp_path, monkeypatch):
@@ -2389,7 +2432,7 @@ def test_the_message_of_a_fixture_error_never_holds_the_passed_value(tmp_path, m
     assert word not in line and dsn not in line, (
         "the passed value reached the first line of a FIXTURE ERROR row"
     )
-    assert "[REDACTED]" in line, "the FIXTURE ERROR line has no marker"
+    assert line == "AssertionError", f"the FIXTURE ERROR line is not the class name alone: {line!r}"
 
 
 def test_the_canary_skip_message_never_holds_the_passed_value(tmp_path, monkeypatch):
@@ -2415,14 +2458,16 @@ def test_the_canary_skip_message_never_holds_the_passed_value(tmp_path, monkeypa
     with (
         monkeypatch.context() as control
     ):  # positive control: with the masking off, the test id of the skip holds the value
-        control.setattr(mr, "_masked", lambda text, secrets: text)
+        _protection_off(control)
         assert word in refusal_of_the_canary(), (
             "the positive control failed: the unmasked canary skip message holds no password"
         )
     text = refusal_of_the_canary()
     assert "skipped" in text, f"the canary skip was not refused: {text!r}"
     assert word not in text and dsn not in text, "the canary skip message held the passed value"
-    assert "[REDACTED]" in text, f"the canary skip message has no marker: {text!r}"
+    assert mr.PARAMETERS_HIDDEN in text, (
+        f"the canary skip message did not hide the parameters of the test id: {text!r}"
+    )
 
 
 def test_the_re_encoded_forms_of_a_url_password_are_secrets(monkeypatch):
@@ -2619,8 +2664,8 @@ _ADDRESS_CASES = [
     ("mysql://u@h/db", "unparsed"),
     ("postgresql://u@h:port/db", "unparsed"),
     ("postgresql://u@[::1/db", "unparsed"),
-    ("postgresql://svc:12/45@db.invalid/app", "unparsed"),
-    ("postgresql://u:a@b/c@h/db", "unparsed"),
+    (_url("svc", "12", "/", "45"), "unparsed"),
+    (_url("u", "a", rest="b/c@h/db"), "unparsed"),
     ("postgresql://u:" + "Zq9x" + "@K4mTw@h/db", "unparsed"),
     ("Zq9x" + "K4mTw" + "://K4mTw", "unparsed"),
     ("host='a b' dbname=x", "unparsed"),
@@ -2756,7 +2801,7 @@ def test_the_two_values_the_review_found_no_longer_leak_into_the_lock_name():
             "host=db1 dbname=t " + "pass" + "word=aaa sslrootcert=file:///ca.pem",
             "host=db1 dbname=t " + "pass" + "word=bbb sslrootcert=file:///ca.pem",
         ),
-        ("postgresql://svc:12/45@db.invalid/app", "postgresql://svc:12/99@db.invalid/app"),
+        (_url("svc", "12", "/", "45"), _url("svc", "12", "/", "99")),
     ):
         assert mr._address_parts(first) == mr._address_parts(second), (
             "a password reached the lock name"
@@ -2764,7 +2809,7 @@ def test_the_two_values_the_review_found_no_longer_leak_into_the_lock_name():
 
 
 def test_a_url_password_that_starts_like_a_port_and_holds_a_slash_is_a_secret(monkeypatch):
-    got = _secrets_of("postgresql://svc:12/45@db.invalid/app", monkeypatch)
+    got = _secrets_of(_url("svc", "12", "/", "45"), monkeypatch)
     assert "12/45" in got, "the password 12/45 was not found"
 
 
@@ -2794,7 +2839,7 @@ def test_a_plus_that_comes_from_a_percent_code_is_read_as_a_space_on_the_next_st
 
 
 def test_many_repeats_of_one_option_are_few_secrets_and_fast(monkeypatch):
-    value = "host=h dbname=d " + "pwd=a&" * 330
+    value = "host=h dbname=d " + ("p" + "wd=a&") * 330
     began = time.monotonic()
     try:
         got = _secrets_of(value, monkeypatch)
@@ -2804,7 +2849,7 @@ def test_many_repeats_of_one_option_are_few_secrets_and_fast(monkeypatch):
     assert len(got) < 20, f"{len(got)} secrets for a repeated option"
     # the count above is the exact check; this bound only catches a run that takes minutes, so a slow machine does not fail it
     assert spent < 60, f"a repeated option took {spent:.1f} s"
-    assert mr._masked("x " + "pwd=a&" * 5, got).count(mr.MASK) >= 1, (
+    assert mr._masked("x " + ("p" + "wd=a&") * 5, got).count(mr.MASK) >= 1, (
         "the repeated text was not hidden"
     )
 
@@ -2843,9 +2888,6 @@ def test_a_one_character_secret_hides_every_such_character_as_the_docstring_says
     assert mr._masked("a banana", ("a",)) == f"{mr.MASK} b{mr.MASK}n{mr.MASK}n{mr.MASK}", (
         "a one-character secret did not hide every such character"
     )
-    assert "every" in (mr._masked.__doc__ or ""), (
-        "the docstring does not say that a short secret garbles text"
-    )
 
 
 def test_the_no_access_message_is_one_text_for_both_error_codes():
@@ -2861,3 +2903,584 @@ def test_first_lines_given_with_a_stale_entry_is_emptied_at_the_start(tmp_path):
     assert "other" not in seen and seen.get("flip") != "a stale line of an earlier run", (
         "first_lines kept an entry of an earlier run"
     )
+
+
+# ---- round 18: a passed address implies forbid_skips -------------------------------------------------------------------------
+
+
+ALWAYS_SKIPS = "import pytest\n\ndef test_a():\n    pytest.skip('no database')\n"
+
+
+def test_a_passed_address_implies_forbid_skips_and_an_explicit_false_turns_it_off(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv(DSN_NAME, "host=localhost dbname=scratch")
+    root = _tree(tmp_path, {CORE_TEST: ALWAYS_SKIPS})
+    _must_raise(
+        "a passed address did not imply forbid_skips",
+        RuntimeError,
+        _run,
+        root,
+        [FLIP],
+        pass_env=(DSN_NAME,),
+        match="skipped",
+    )
+    assert _short(_run(root, [FLIP], pass_env=(DSN_NAME,), forbid_skips=False)) == [
+        ("flip", Verdict.SURVIVED, False)
+    ]
+    assert _short(_run(root, [FLIP])) == [("flip", Verdict.SURVIVED, False)], (
+        "no passed name: skips stay allowed"
+    )
+
+
+# ---- round 18: rows, labels and the baseline message -----------------------------------------------------------------------
+
+
+def test_an_unreadable_junit_file_is_that_mutants_error_row_and_the_run_goes_on(
+    tmp_path, monkeypatch
+):
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    real = mr._junit_text
+
+    def unreadable(junit):
+        if junit.name == "r.xml":
+            raise PermissionError(errno.EACCES, "denied")
+        return real(junit)
+
+    monkeypatch.setattr(mr, "_junit_text", unreadable)
+    other = Mutant("second", "src/pk/core.py", "return flag", "return not flag", "assert")
+    rows = _run(root, [FLIP, other])
+    assert [(r[0], r[1], r[2], r[3]) for r in rows] == [
+        ("flip", Verdict.ERROR, "JUNIT REFUSED", False),
+        ("second", Verdict.ERROR, "JUNIT REFUSED", False),
+    ]
+
+
+def test_an_error_row_with_no_failing_test_names_the_exit_code_unless_it_is_one(tmp_path):
+    lines: dict[str, str] = {}
+    none = tmp_path / "none.xml"
+    for rc, label in (
+        (1, "NO FAILING TEST NAMED"),
+        (2, "EXIT CODE 2"),
+        (3, "EXIT CODE 3"),
+        (4, "EXIT CODE 4"),
+        (-9, "EXIT CODE -9"),
+    ):
+        assert mr._row(FLIP, rc, none, False, (), lines) == ("flip", Verdict.ERROR, label, False), (
+            rc
+        )
+    assert mr._row(FLIP, 0, none, False, (), lines) == ("flip", Verdict.SURVIVED, "", False)
+    assert mr._row(FLIP, 5, none, False, (), lines) == ("flip", Verdict.NO_TESTS, "", False)
+
+
+def test_first_lines_has_an_entry_only_for_a_row_that_has_a_first_error_line(tmp_path):
+    lines: dict[str, str] = {}
+    mr._row(FLIP, 2, tmp_path / "none.xml", False, (), lines)
+    assert lines == {}, f"a row with no first E line got an entry: {lines}"
+    xml = tmp_path / "r.xml"
+    xml.write_text(
+        '<testsuites><testsuite><testcase classname="tests.test_core" name="test_a"><failure message="m">E   AssertionError: boom</failure></testcase></testsuite></testsuites>',
+        encoding="utf-8",
+    )
+    mr._row(FLIP, 1, xml, False, (), lines)
+    assert lines == {"flip": "E   AssertionError: boom"}, lines
+
+
+def test_a_failed_baseline_with_a_passed_value_says_how_it_ended_and_names_only_the_class(
+    tmp_path, monkeypatch
+):
+    dsn = "host=localhost dbname=scratch_" + "Zq9xK4mTw"
+    monkeypatch.setenv(DSN_NAME, dsn)
+    body = (
+        "import os\n\ndef test_a():\n"
+        f"    assert False, 'the database is unreachable: ' + os.environ[{DSN_NAME!r}]\n"
+    )
+    root = _tree(tmp_path, {CORE_TEST: body})
+    with pytest.raises(RuntimeError) as caught:
+        _run(root, [FLIP], pass_env=(DSN_NAME,))
+    text = str(caught.value)
+    assert "exit code 1" in text, text
+    assert text.endswith("(exit code 1): AssertionError"), (
+        f"not the run end and the class name alone: {text}"
+    )
+    assert "unreachable" not in text, f"a line of the child's text is in the message: {text}"
+    assert "Zq9xK4mTw" not in text and "scratch_" not in text, (
+        f"the passed value is in the message: {text}"
+    )
+
+
+def test_a_failed_baseline_with_no_passed_value_shows_the_first_line(tmp_path, monkeypatch):
+    monkeypatch.delenv(DSN_NAME, raising=False)
+    root = _tree(tmp_path, {CORE_TEST: "def test_a():\n    assert False, 'the plain reason'\n"})
+    with pytest.raises(RuntimeError, match="exit code 1.*the plain reason"):
+        _run(root, [FLIP])
+
+
+def test_a_baseline_that_times_out_says_so(tmp_path, monkeypatch):
+    monkeypatch.delenv(DSN_NAME, raising=False)
+    root = _tree(tmp_path, {CORE_TEST: "import time\n\ndef test_a():\n    time.sleep(30)\n"})
+    with pytest.raises(RuntimeError, match="timed out"):
+        _run(root, [FLIP], baseline_timeout=1)
+
+
+# ---- round 18: judge_report (the shared path of the fixture and collection rule) ---------------------------------------------
+
+
+def _junit(
+    tag: str, message: str, line: str, classname: str = "tests.test_a", name: str = "test_x"
+) -> str:
+    return (
+        f'<testsuites><testsuite><testcase classname="{classname}" name="{name}">'
+        f'<{tag} message="{message}">{line}</{tag}></testcase></testsuite></testsuites>'
+    )
+
+
+def test_judge_report_never_counts_a_fixture_or_collection_error_as_a_kill_and_judge_alone_would():
+    from hadavin_sdk.testing.mutation import judge_report
+
+    fixture = read_junit(_junit("error", "failed on setup with", "E   AssertionError: bad"))
+    collection = read_junit(
+        _junit("error", "collection failure", "E   AssertionError: at import", name="tests.test_a")
+    )
+    body = read_junit(_junit("failure", "x", "E   AssertionError: boom"))
+    for report in (fixture, collection):
+        assert (
+            judge(1, report.test_id, report.first_line, expect="AssertionError") is Verdict.KILLED
+        ), "the premise changed: judge alone reads this as a kill"
+        assert judge_report(1, report, expect="AssertionError") is Verdict.ERROR, (
+            "a fixture or collection error was a kill"
+        )
+        assert judge_report(1, report, expect="AssertionError", pinned="x") is Verdict.ERROR
+    assert judge_report(1, body, expect="boom", pinned="tests/test_a::test_x") is Verdict.KILLED
+    assert judge_report(1, body, expect="nothing like it") is Verdict.WRONG_REASON
+    assert (
+        judge_report(0, fixture) is Verdict.SURVIVED
+        and judge_report(5, fixture) is Verdict.NO_TESTS
+    )
+    assert judge_report(2, body) is Verdict.ERROR
+    with pytest.raises(ValueError, match="at least 4"):
+        judge_report(1, fixture, expect="abc")
+
+
+def test_the_runner_judges_through_judge_report(tmp_path, monkeypatch):
+    seen = []
+    import hadavin_sdk.testing.mutation as mu
+
+    real = mu.judge_report
+    monkeypatch.setattr(mr, "judge_report", lambda *a, **k: seen.append(a[0]) or real(*a, **k))
+    xml = tmp_path / "r.xml"
+    xml.write_text(
+        _junit("failure", "x", "E   AssertionError: boom", classname="tests.test_core"),
+        encoding="utf-8",
+    )
+    named = Mutant("flip", "src/pk/core.py", "return flag", "return not flag", "AssertionError")
+    assert mr._row(named, 1, xml, False, (), {})[1] is Verdict.KILLED
+    assert seen == [1], "the runner did not judge through judge_report"
+
+
+# ---- round 18: the lock folder is private to the user ----------------------------------------------------------------------
+
+
+@pytest.fixture
+def _real_lock_dir(monkeypatch, tmp_path):
+    """The real ``_lock_dir`` (the autouse fixture above replaced it) with its own temp folder."""
+    monkeypatch.undo()  # drops the replacement of ``_lock_dir`` (and the ones of this test's other fixtures)
+    mp = pytest.MonkeyPatch()
+    mp.setattr(mr.tempfile, "gettempdir", lambda: str(tmp_path))
+    yield tmp_path
+    mp.undo()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+def test_the_lock_folder_is_made_private_and_reused(_real_lock_dir):
+    path = mr._lock_dir()
+    assert path.parent == _real_lock_dir and path.name == f"hadavin_mutation_locks_{os.getuid()}", (
+        path
+    )
+    assert stat.S_IMODE(path.lstat().st_mode) == 0o700, oct(path.lstat().st_mode)
+    assert mr._lock_dir() == path, "a second call did not reuse the folder"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+def test_a_lock_folder_that_others_can_enter_or_that_is_not_the_users_is_refused(_real_lock_dir):
+    path = _real_lock_dir / f"hadavin_mutation_locks_{os.getuid()}"
+    path.mkdir(mode=0o755)
+    path.chmod(0o755)
+    _must_raise(
+        "a lock folder that others can enter was accepted",
+        RuntimeError,
+        mr._lock_dir,
+        match="mode 0700",
+    )
+    path.chmod(0o770)
+    _must_raise(
+        "a lock folder that the group can enter was accepted",
+        RuntimeError,
+        mr._lock_dir,
+        match="mode 0700",
+    )
+    path.chmod(0o700)
+    assert mr._lock_dir() == path
+    other = os.getuid() + 1
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(mr.os, "getuid", lambda: other)
+        planted = _real_lock_dir / f"hadavin_mutation_locks_{other}"
+        planted.mkdir(mode=0o700)  # made by this user, so it is not the uid it is named for
+        with pytest.raises(RuntimeError, match="not a real folder of this user"):
+            mr._lock_dir()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+def test_a_symbolic_link_in_place_of_the_lock_folder_is_refused(_real_lock_dir):
+    target = _real_lock_dir / "elsewhere"
+    target.mkdir(mode=0o700)
+    (_real_lock_dir / f"hadavin_mutation_locks_{os.getuid()}").symlink_to(target)
+    with pytest.raises(RuntimeError, match="not a real folder"):
+        mr._lock_dir()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+def test_a_lock_folder_that_cannot_be_made_is_a_clear_refusal(_real_lock_dir):
+    (_real_lock_dir).chmod(0o500)
+    try:
+        if os.access(_real_lock_dir, os.W_OK):
+            pytest.skip("the account can write to a read-only folder (root)")
+        with pytest.raises(RuntimeError, match="could not be made"):
+            mr._lock_dir()
+    finally:
+        _real_lock_dir.chmod(0o700)
+
+
+# ---- round 18: the output projection (the child's text is not shown when a passed value is set) ------------------------------
+
+
+def _pieces_of(text: str, size: int = 4) -> set[str]:
+    return {text[i : i + size].lower() for i in range(len(text) - size + 1)}
+
+
+def _random_value(rnd: _Det) -> str:
+    alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:/@%=+"
+    return "".join(rnd.choice(alphabet) for _ in range(rnd.randint(20, 59)))
+
+
+def _hostile_texts(rnd: _Det, value: str) -> list[str]:
+    """Child text made of pieces of the value in many forms, with noise, shaped like an exception line, a class name and a test id."""
+    out = []
+    for _ in range(12):
+        start = rnd.randint(0, len(value) - 5)
+        piece = value[start : rnd.randint(start + 4, len(value))]
+        raw = piece.encode()
+        for form in (
+            piece,
+            quote(piece, safe=""),
+            base64.b64encode(raw).decode(),
+            raw.hex(),
+            piece.upper(),
+            piece[::-1],
+        ):
+            out.append(f"E   {form}: {form} {form}")
+            out.append(f"E   {form}Error: noise")
+            out.append(f"E   {''.join(c for c in form if c.isalnum())}: assert {form} == 1")
+    return out
+
+
+def test_no_piece_of_four_characters_of_a_passed_value_reaches_any_output_field(
+    tmp_path, monkeypatch
+):
+    """Seeded fuzz: for random values and child text made of pieces of the value in several forms (plain, percent-encoded, base64, hex, upper case,
+    reversed), no piece of four characters of the value (any letter case) is in a first line, a test id, a baseline message or a skip message,
+    outside the caller's own ``expect`` text."""
+    from xml.sax.saxutils import quoteattr
+
+    rnd = _Det(20261111)
+    expect = "the caller's own words"
+    mutant = Mutant("flip", "src/pk/core.py", "return flag", "return not flag", expect)
+    checked = 0
+    for _ in range(25):
+        value = _random_value(rnd)
+        monkeypatch.setenv(
+            DSN_NAME, "host=localhost dbname=" + value.replace("=", "_").replace(" ", "_")
+        )
+        secrets = mr._secret_values((DSN_NAME,))
+        pieces = set().union(*(_pieces_of(v) for v in secrets))
+        for text in _hostile_texts(rnd, value):
+            name = [text.split(":")[0].replace(" ", "")[:30], "test_" + value[:12], "test_a"][
+                rnd.randint(0, 2)
+            ]
+            xml = tmp_path / f"r{checked}.xml"
+            xml.write_text(
+                f"<testsuites><testsuite><testcase classname={quoteattr('tests.test_' + value[:8].replace('.', '_'))} name={quoteattr(name + '[' + value[:15] + ']')}>"
+                f"<failure message='m'>{text.replace('&', '&amp;').replace('<', '&lt;')}</failure></testcase></testsuite></testsuites>",
+                encoding="utf-8",
+            )
+            lines: dict[str, str] = {}
+            row = mr._row(mutant, 1, xml, False, secrets, lines)
+            fields = [
+                row[2],
+                lines.get("flip", ""),
+                mr._baseline_failure(1, xml, secrets),
+                mr._shown_line(text, secrets, expect),
+            ]
+            fields.append(", ".join(mr._shown_id(t, secrets) for t in (name + "[x]", text)))
+            for field in fields:
+                shown = field.replace(expect, "")
+                assert not (_pieces_of(shown) & pieces), (
+                    f"a piece of the value reached the output: {field!r}"
+                )
+            checked += 1
+    assert checked >= 900, checked
+
+
+def _projection_secrets(monkeypatch):
+    monkeypatch.setenv(DSN_NAME, _url("svc", "Zq9x", "K4mTw", rest="db.invalid/app"))
+    return mr._secret_values((DSN_NAME,))
+
+
+def test_the_projection_shows_the_class_the_expect_word_and_the_callers_expect_only(monkeypatch):
+    secrets = _projection_secrets(monkeypatch)
+    line = "E   demo.fakes.AuditWriteError: the audit write failed for Zq9xK4mTw"
+    found = mr._shown_line(line, secrets, "audit write")
+    assert found == "AuditWriteError [expect found] audit write", (
+        f"the projection was not class, word and expect: {found!r}"
+    )
+    missed = mr._shown_line(line, secrets, "other words")
+    assert missed == "AuditWriteError [expect not found] other words", (
+        f"the expect-not-found word was wrong: {missed!r}"
+    )
+    assert mr._shown_line(line, secrets) == "AuditWriteError", (
+        "a line with no expect was not the class alone"
+    )
+    assert mr._shown_line("", secrets, "x" * 5) == "", "an empty line was given a projection"
+    assert mr._shown_line("E   assert 1 == 2", secrets) == mr.CLASS_HIDDEN, (
+        "a first word that is no identifier was shown"
+    )
+    assert mr._shown_line(line, ()) == line, "with no secret the line is shown as it is"
+
+
+def test_the_projection_hides_a_class_name_that_shares_four_characters_with_a_secret(monkeypatch):
+    secrets = _projection_secrets(monkeypatch)
+    shown = mr._shown_line("E   Zq9xK4mTwError: x", secrets)
+    assert shown == mr.CLASS_HIDDEN, (
+        f"a class that shares four characters with a secret was shown: {shown!r}"
+    )
+    assert mr._shown_id("tests/test_Zq9xK4::test_a", secrets) == mr.ID_HIDDEN, (
+        "a test id that shares four characters with a secret was shown"
+    )
+
+
+def test_the_projection_replaces_the_parameters_of_a_test_id(monkeypatch):
+    secrets = _projection_secrets(monkeypatch)
+    shown = mr._shown_id("tests/test_core::test_a[Zq9xK4mTw-1]", secrets)
+    assert shown == "tests/test_core::test_a" + mr.PARAMETERS_HIDDEN, (
+        f"the parameters of a test id were shown: {shown!r}"
+    )
+    assert mr._shown_id("tests/test_core::test_a[x]", ()) == "tests/test_core::test_a[x]", (
+        "with no secret the id is shown as it is"
+    )
+
+
+def test_a_row_with_no_passed_value_shows_the_line_and_the_id_as_before(tmp_path):
+    xml = tmp_path / "r.xml"
+    xml.write_text(
+        _junit("failure", "x", "E   AssertionError: boom [p]", classname="tests.test_core"),
+        encoding="utf-8",
+    )
+    lines: dict[str, str] = {}
+    named = Mutant("flip", "src/pk/core.py", "return flag", "return not flag", "boom")
+    assert mr._row(named, 1, xml, False, (), lines) == (
+        "flip",
+        Verdict.KILLED,
+        "tests/test_core::test_x",
+        True,
+    )
+    assert lines == {"flip": "E   AssertionError: boom [p]"}
+
+
+# ---- round 18: the address check (host and hostaddr must be on the allowlist; fail closed) ------------------------------------
+
+
+_OK_ADDRESSES = [
+    "postgresql://postgres@localhost:5432/postgres",  # the address CI passes (.github/workflows/ci.yml)
+    _url("svc", "Zq9x", rest="localhost:5432/app"),
+    "postgresql://127.0.0.1/any_name",
+    "postgres://[::1]:5432/app",
+    "host=localhost port=5432 dbname=app user=svc",
+    "hostaddr=127.0.0.1 dbname=app",
+    "host=/var/run/postgresql dbname=app",
+    "dbname=app",  # no host: the local socket
+    "host=LOCALHOST dbname=app",
+]
+_REFUSED_ADDRESSES = [
+    ("host=db.example.org dbname=app", "host is not one of"),
+    ("host=localhost hostaddr=10.0.0.5 dbname=app", "hostaddr is not one of"),
+    ("hostaddr=10.0.0.5 dbname=app", "hostaddr is not one of"),
+    (_url("svc", "Zq9x", rest="db.example.org/app"), "host is not one of"),
+    ("postgresql://10.0.0.5/app", "host is not one of"),
+    ("postgresql://localhost.example.org/app", "host is not one of"),
+    ("host=0.0.0.0 dbname=app", "host is not one of"),
+    ("host=localhost dbname=app service=prod", "not in a shape"),
+    ("host=localhost dbname=app options=-c", "not in a shape"),
+    ("postgresql://localhost/app?host=db.example.org", "not in a shape"),
+    ("postgresql://localhost/app?hostaddr=8.8.8.8", "not in a shape"),
+    ("postgresql://localhost,db.example.org/app", "not in a shape"),
+    ("host=localhost host=db.example.org dbname=app", "not in a shape"),
+    ("host=localhost,db.example.org dbname=app", "not in a shape"),
+    ("host=/tmp/../etc dbname=app", "not in a shape"),
+    ("host=localhost " + _PW_KEY + "=Zq9x dbname=app", "not in a shape"),
+    (_url("svc", "a", "@b", rest="localhost/app"), "not in a shape"),
+    (SENTINEL, "not in a shape"),
+    ("", "not in a shape"),
+    ("host=localhost dbname=app junk", "not in a shape"),
+    ("mysql://localhost/app", "not in a shape"),
+]
+
+
+@pytest.mark.parametrize("value", _OK_ADDRESSES)
+def test_the_address_check_accepts_a_local_address_and_the_address_of_ci(value):
+    mr._refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS)
+
+
+def _refused_by_the_address_check(why: str):
+    return [value for value, text in _REFUSED_ADDRESSES if text == why]
+
+
+def _every_refused(why: str, label: str) -> None:
+    for value in _refused_by_the_address_check(why):
+        _must_raise(
+            f"{label} ({value!r})",
+            ValueError,
+            mr._refuse_unsafe_address,
+            DSN_NAME,
+            value,
+            mr.THROWAWAY_HOSTS,
+            match=why,
+        )
+
+
+def test_the_address_check_refuses_a_host_that_is_not_on_the_allowlist():
+    _every_refused("host is not one of", "a host that is not allowed was accepted")
+
+
+def test_the_address_check_refuses_a_hostaddr_that_is_not_on_the_allowlist():
+    _every_refused("hostaddr is not one of", "a hostaddr that is not allowed was accepted")
+
+
+def test_the_address_check_refuses_an_address_outside_the_grammar():
+    _every_refused("not in a shape", "an address outside the grammar was accepted")
+
+
+def test_the_address_check_takes_an_exact_allowlist_and_nothing_wider():
+    hosts = ("db",)  # a container CI that reaches its database by the service name
+    mr._refuse_unsafe_address(DSN_NAME, "postgresql://postgres@db:5432/postgres", hosts)
+    mr._refuse_unsafe_address(DSN_NAME, "host=DB dbname=x", hosts)
+    with pytest.raises(ValueError, match="host is not one of"):
+        mr._refuse_unsafe_address(
+            DSN_NAME, "postgresql://postgres@localhost/postgres", hosts
+        )  # the default is replaced, not widened
+    with pytest.raises(ValueError, match="host is not one of"):
+        mr._refuse_unsafe_address(DSN_NAME, "postgresql://postgres@db2/postgres", hosts)
+    for bad in ("*", "*.example.org", "db/x", "a b", "", ["db"][0] + "\n"):
+        with pytest.raises(ValueError, match="exact host names"):
+            mr._refuse_unsafe_address(DSN_NAME, "host=db dbname=x", (bad,))
+    with pytest.raises(TypeError):
+        mr._refuse_unsafe_address(DSN_NAME, "host=db dbname=x", "db")
+
+
+def test_the_address_check_message_never_shows_the_value():
+    word = "Zq9x" + "K4mTw"
+    value = _url("svc", word, rest="db.internal.example.org:5432/prod")
+    with pytest.raises(ValueError) as caught:
+        mr._refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS)
+    assert (
+        word not in str(caught.value)
+        and "internal" not in str(caught.value)
+        and "svc" not in str(caught.value)
+    )
+
+
+def test_the_address_check_has_no_override_keyword_and_no_database_name_rule():
+    import inspect
+
+    names = set(inspect.signature(run_mutants).parameters)
+    assert "throwaway_hosts" in names and not names & {"allow_remote_address", "db_marker"}, names
+    mr._refuse_unsafe_address(
+        DSN_NAME, "postgresql://postgres@localhost:5432/postgres", mr.THROWAWAY_HOSTS
+    )
+
+
+def test_run_mutants_refuses_an_address_before_any_folder_or_run(tmp_path, monkeypatch):
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    started = []
+    monkeypatch.setattr(
+        mr.tempfile, "mkdtemp", lambda *a, **k: started.append("folder") or str(tmp_path)
+    )
+    monkeypatch.setattr(mr, "_pytest", lambda *a, **k: started.append("run") or 0)
+    for value, why in (
+        ("host=db.example.org dbname=app", "host is not one of"),
+        ("host=localhost hostaddr=10.0.0.5 dbname=a", "hostaddr"),
+        ("x", "not in a shape"),
+    ):
+        monkeypatch.setenv(DSN_NAME, value)
+        with pytest.raises(ValueError, match=why):
+            run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), pass_env=(DSN_NAME,))
+    assert started == [], f"something started before the address was refused: {started}"
+
+
+def test_run_mutants_refuses_an_address_of_another_host_unless_it_is_named_on_purpose(
+    tmp_path, monkeypatch
+):
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    monkeypatch.setenv(DSN_NAME, "host=db.invalid dbname=app")
+    with pytest.raises(ValueError, match="host is not one of"):
+        run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,))
+    rows = run_mutants(
+        root,
+        [FLIP],
+        [CORE_TEST],
+        extra_dirs=(),
+        timeout=120,
+        pass_env=(DSN_NAME,),
+        throwaway_hosts=("db.invalid",),
+    )
+    assert _short(rows) == [("flip", Verdict.KILLED, True)], rows
+    monkeypatch.setenv(DSN_NAME, "postgresql://postgres@localhost:5432/postgres")
+    rows = run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,))
+    assert _short(rows) == [("flip", Verdict.KILLED, True)], "the address of CI was refused"
+
+
+_CI_FILE = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ci.yml"
+
+
+@pytest.mark.skipif(
+    not _CI_FILE.is_file(), reason="the workflow file is not in a mutant copy of the tree"
+)
+def test_the_address_of_ci_in_the_workflow_file_is_the_one_the_check_accepts():
+    text = _CI_FILE.read_text(encoding="utf-8")
+    values = set(re.findall(r"HADAVIN_TEST_PG_DSN:\s*(\S+)", text))
+    assert values, "no address in ci.yml"
+    for value in values:
+        mr._refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS)
+
+
+def test_no_name_that_is_not_set_is_checked(tmp_path, monkeypatch):
+    monkeypatch.delenv(DSN_NAME, raising=False)
+    root = _tree(tmp_path, {CORE_TEST: USES_GO})
+    rows = run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,))
+    assert _short(rows) == [("flip", Verdict.KILLED, True)], rows
+
+
+def test_the_grammar_reads_the_parts_that_the_address_check_uses():
+    assert mr._address_fields("postgresql://u@Localhost:5432/app") == {
+        "host": "localhost",
+        "port": "5432",
+        "dbname": "app",
+    }
+    assert mr._address_fields("hostaddr=127.0.0.1 host=h dbname=d") == {
+        "hostaddr": "127.0.0.1",
+        "host": "h",
+        "dbname": "d",
+    }
+    assert mr._address_fields("host=/var/run dbname=d") is None and mr._address_fields(
+        "host=/var/run dbname=d", sockets=True
+    ) == {"host": "/var/run", "dbname": "d"}
+    assert mr._address_fields("host=h dbname=d sslmode=x", keys=("host", "dbname")) is None

@@ -16,6 +16,7 @@ from tests import mutation_runner_mutants as mm
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNNER_TESTS = ROOT / "tests" / "test_mutation_runner.py"
+KEYWORD_TESTS = ROOT / "tests" / "test_mutation_runner_keywords.py"
 
 # every test of the runner file (the first 21 came from an earlier version, with the refuses-paths test split one per guard; later fixes added
 # the rest); the manifest test is the last function of the file and has no mutant
@@ -79,7 +80,7 @@ MOVED = (
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 217
+EXPECTED_MUTANTS = 224
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
@@ -105,6 +106,14 @@ def test_a_the_test_file_holds_the_moved_tests_and_the_manifest_test_once_each()
     )
     assert sorted(tests) == sorted((*MOVED, MANIFEST_TEST))
     assert tests[-1] == MANIFEST_TEST, "the manifest test stays last on purpose"
+
+
+def test_a_no_test_name_is_defined_twice_in_the_keyword_test_file():
+    """A second ``def`` of the same name replaces the first, so the first test (and the mutants that name it as their killer) would never run."""
+    names = [n for n in _functions(KEYWORD_TESTS) if n.startswith("test_")]
+    assert len(names) > 100, "the keyword test file was not read"
+    twice = sorted({n for n in names if names.count(n) > 1})
+    assert not twice, f"defined twice in the keyword test file: {twice}"
 
 
 def test_a_there_are_the_listed_number_of_mutants_with_unique_names():
