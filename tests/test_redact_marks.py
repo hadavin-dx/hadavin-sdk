@@ -141,6 +141,8 @@ def test_marks_7_a_second_multi_line_value_that_starts_inside_the_first_is_withh
     out = redact(text).text
     assert tail not in out and "MIIEvQ" not in out, out
     assert out.startswith(redact_mod.FOLD_NOTE)
+    # the withheld block lists BOTH values it holds (the key block and the one that starts inside it), not only the first
+    assert len(re.findall(r"<PRIVKEY_\d+>", out)) == 2, out
     plain = redact(
         "one\n" + text.replace(e, "E").replace(r, "P")
     ).text  # the same block spelled plainly is masked by the direct pass too
