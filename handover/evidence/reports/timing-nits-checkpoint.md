@@ -7,3 +7,6 @@ sha: not committed yet
 
 ## checkpoint 2 (22:25 UTC)
 Committed a9a25e6f (local, not pushed). New 4 mutants 4 of 4 good; 10-sample 10 of 10 good; affected files 415 passed; ruff, format, bandit, scan_repo, staged gitleaks clean. Full suite running (own Postgres 16, port 56871, folder /home/user/build/B-timing-nits-pg, to be stopped and deleted).
+
+## final (22:29 UTC)
+Full suite at a9a25e6f: 10627 passed, 1 skipped, 42 deselected, rc 0. Pushed fast-forward 2f94c2b2..a9a25e6f to origin core/fix-timing-harness-flake. Postgres stopped and folder deleted. sha a9a25e6f0faf7412074498be8cb5fd5840488439

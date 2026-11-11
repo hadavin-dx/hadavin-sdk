@@ -1807,3 +1807,10 @@ WAITS (dependency queue):
 - Q8a-2: nits only -> drift report; PR85 variant after Q8b/Q8c settle
 Items for you (not blocking): Q8b card-target label meaning; PR77 vs Q8b `redact.py` conflict order; Vault engine tests need one CI run.
 Q8b batch 2 (2026-11-11): (1) PR77 and Q8b both change `guard/redact.py`; Q8b should merge first and PR77 rebase (Q8b edits: key rule, glue guard, value tail, Bearer/Authorization). (2) Record-walk key rule: `dbpass`, `usersession`, `userauth`, `mycredential` are not credential keys there; adding `pass`/`auth`/`session` endings also masks `bypass`, `compass`, `oauth` (test_t1 pins them as plain). Your choice: accept the over-masking, or a word-split rule.
+
+## READY candidate: timing harness fix (22:27Z, 2026-11-11)
+- Branch core/fix-timing-harness-flake, head a9a25e6f0faf7412074498be8cb5fd5840488439 (fast-forward from 2f94c2b2; gitleaks origin/main..HEAD, 9 commits: no leaks, run by me).
+- Review: round 1 and round 2 by egm:egm-design and egm:egm-codebase-details (handover/reviews/timing/goldfish_review_report-r1.md, r2-summary.md): round 2 had no Blocker and no Major; nits N1-N3 and siblings were fixed in a9a25e6f without a new review (non-security path, round cap).
+- Evidence: handover/evidence/timing/ef83cd86/RESULTS.md (an independent runner, on ef83cd86: full suite 10624 passed 1 skipped; 65/65 mutants; perf 42 tests x6 beside 4 busy loops, 0 failed; 13 new tests fail on old code; the flaky test failed 2 of 5 on main, 5 of 5 pass on the head). The delta ef83cd86..a9a25e6f (5 files, tests + CHANGELOG only, +114/-7) has the BUILDER's own gates only: ruff, bandit, scan_repo, full suite 10627 passed 1 skipped, 4 new mutants 4/4 + sample 10/10; the full 69-mutant list and the 42 perf tests were NOT re-run on a9a25e6f; no CI 3.12 / Postgres 17 / Vault run.
+- Ledger: no timing rows in handover/ledger.md (this fix is not a ledger package); no BLOCKER/MAJOR open from the round-2 reviews.
+- Open for the lead: nothing blocks merge from this lane; the lead merges. A CI run on the head is the remaining check I cannot do.
