@@ -6,6 +6,8 @@ import asyncio
 import random
 import re
 import socket
+import sys
+import types
 
 import pytest
 
@@ -459,16 +461,9 @@ def _oserror_with_errno_that_raises(error: BaseException) -> OSError:
     return Hostile("x")
 
 
-@pytest.mark.parametrize(
-    "error",
-    [KeyboardInterrupt(), GeneratorExit(), asyncio.CancelledError()],
-    ids=lambda e: type(e).__name__,
-)
-def test_baseexception_from_hostile_attribute_propagates(error: BaseException) -> None:
-    """``diagnose`` reads ``errno`` on every platform: a ``BaseException`` that is not an ``Exception`` leaves it; the same property
-    raising ``ValueError`` gives the fixed fallback line; and every row in ``PROPAGATES_ROWS`` does the same."""
-    with pytest.raises(type(error)):
-        diagnose(_oserror_with_errno_that_raises(error), step=STEP)
+def test_a_valueerror_in_errno_gives_the_fallback_and_every_propagating_row_propagates() -> None:
+    """The ``BaseException`` case of a hostile ``errno`` is ``test_baseexception_from_hostile_getattr_propagates`` above; this adds the
+    ``ValueError`` case (a line, not a crash) and every row in ``PROPAGATES_ROWS``."""
     out = line_of(_oserror_with_errno_that_raises(ValueError("x")))
     assert grammar_ok(out) and "diag_v=1" in out, out
     by_id = {r.id: r for r in corpus.ROWS}
@@ -492,3 +487,37 @@ def test_class_name_reads_the_module_name_once() -> None:
     out = class_name_of(hostile)
     assert reads.count("module") == 1, f"__module__ was read {len(reads)} times"
     assert out == "dynamic_class", out
+
+
+def test_a_group_gives_the_code_of_its_first_member_and_no_member_facts() -> None:
+    """``ExceptionGroup("x", [OSError(5, "x")])`` is ``os_error``, and the member's errno is NOT read (a group never reads facts)."""
+    d = diagnose(ExceptionGroup("x", [OSError(5, "x")]), step=STEP)
+    assert d.code.value == "os_error", d.code
+    assert FactKey.errno not in dict(d.facts), d.facts
+
+
+def _traceback_of(n: int) -> types.TracebackType:
+    frame = sys._getframe()
+    tb = None
+    for _ in range(n):
+        tb = types.TracebackType(tb, frame, 0, 1)
+    return tb  # type: ignore[return-value]
+
+
+@pytest.mark.parametrize("links", [1, 32, 33, 500, 2000])
+def test_links_keep_the_innermost_frames_only_up_to_the_step_cap(links: int) -> None:
+    """BN-18: a hand-built traceback of 1 to ``DIAG_TB_STEPS`` links keeps at most ``DIAG_MAX_FRAMES`` of them and is not too long."""
+    from hadavin_sdk.guard import diagnostic as dg
+
+    exc = ValueError("x").with_traceback(_traceback_of(links))
+    kept, too_long = dg._links(exc)
+    assert not too_long and len(kept) == min(links, defaults.DIAG_MAX_FRAMES), (links, len(kept))
+
+
+def test_links_flag_a_traceback_over_the_step_cap_and_keep_nothing() -> None:
+    from hadavin_sdk.guard import diagnostic as dg
+
+    exc = ValueError("x").with_traceback(_traceback_of(defaults.DIAG_TB_STEPS + 1))
+    assert dg._links(exc) == ([], True)
+    d = diagnose(exc, step=STEP)
+    assert d.code.value == "foreign_exception" and d.locator == "-"

@@ -1161,6 +1161,31 @@ def test_every_name_the_module_defines_is_public_and_listed_or_private():
 
 
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin
+def test_a_spacing_combining_mark_is_the_tested_exemption_of_the_mark_property():
+    """The module docstring promises ``fold(x + mark) == fold(x)`` for Mn and Me marks only. A spacing mark (Mc) is kept by ``fold``
+    (the Devanagari vowel sign aa), so the property does NOT hold for it: this pins the exemption and the dropped categories."""
+    mc = chr(0x093E)
+    assert unicodedata.category(mc) == "Mc"
+    assert "Mc" not in textnorm._DROP_CATEGORIES
+    assert textnorm.fold("admin" + mc) != textnorm.fold("admin")
+    for mark in (chr(0x0301), chr(0x20DD)):  # Mn and Me
+        assert unicodedata.category(mark) in ("Mn", "Me")
+        assert (
+            textnorm.fold("admin" + mark) == textnorm.fold("admin") == textnorm.fold(mark + "admin")
+        )
+
+
+def test_the_size_rule_refuses_by_length_before_it_counts_weights(monkeypatch):
+    """Every character weighs at least 1, so a text longer than the cap is refused at once: the linear weight count never runs on it."""
+
+    def boom(_text):
+        raise AssertionError("the weight was counted on a text that is over the length cap")
+
+    monkeypatch.setattr(textnorm, "_weight", boom)
+    with pytest.raises(textnorm.TextTooLong):
+        textnorm.fold("\u00e9" * (defaults.TEXTNORM_MAX_CHARS + 1))
+
+
 def test_the_manifest_pins_the_files_a_demo_copies():
     manifest = json.loads((FIX / "textnorm_manifest.json").read_text(encoding="utf-8"))
     for rel, sha in manifest["files"].items():

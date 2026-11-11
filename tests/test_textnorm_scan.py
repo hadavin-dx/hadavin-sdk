@@ -843,10 +843,17 @@ def test_on_another_unicode_version_identity_keys_are_tagged_and_scan_keys_are_n
 
 # ---- G7 (fix batch w3, finding M1): the scan time budget, checked with a fake clock (no sleep, no wall-clock assertion) ----------------------
 def _fake_monotonic(values):
-    """A ``time.monotonic`` replacement that returns the given values in order (the last one again and again) and counts its reads."""
+    """A ``time.monotonic`` replacement that returns the given values in order (the last one again and again) and counts its reads.
+    Only a read made by ``guard/textnorm.py`` is counted and answered; any other caller (a second thread, pytest) gets the real clock."""
+    import sys
+    import time as _time
+
+    real = _time.monotonic
     reads = []
 
     def fake():
+        if not sys._getframe(1).f_code.co_filename.endswith("textnorm.py"):
+            return real()
         reads.append(1)
         return values[min(len(reads), len(values)) - 1]
 
@@ -882,6 +889,7 @@ def test_g7_the_budget_is_the_defaults_value_read_at_the_call(monkeypatch):
 
 
 def test_g7_a_clock_that_stands_still_never_refuses_and_changes_no_key(monkeypatch):
+    """A non-regression test (it also passes on code with no clock): a clock that never moves must neither refuse nor change a key."""
     import time
 
     text = "bob" + ZE + chr(0xE0061)
@@ -903,3 +911,18 @@ def test_g7_the_budget_is_over_only_when_the_clock_is_past_it_not_at_it(monkeypa
         refused = True  # asserted below, outside the handler, so the report does not start with the refusal
     assert not refused, "a call exactly at the budget was refused"
     assert keys == frozenset({"abc"})
+
+
+def test_g7_the_budget_refusal_and_the_size_refusal_have_different_messages(monkeypatch):
+    """Both are ``TextTooLong``; a log line tells them apart by the message (the message never holds the input)."""
+    import time
+
+    fake, _ = _fake_monotonic([0.0, 0.0, defaults.REDACT_BUDGET_S + 1.0])
+    monkeypatch.setattr(time, "monotonic", fake)
+    with pytest.raises(TextTooLong) as budget:
+        scan_keyset("pay" + VAULT)
+    monkeypatch.undo()
+    with pytest.raises(TextTooLong) as size:
+        scan_keyset("a" * (defaults.TEXTNORM_MAX_CHARS + 1))
+    assert "time budget" in str(budget.value) and "time budget" not in str(size.value)
+    assert "limit" in str(size.value)
