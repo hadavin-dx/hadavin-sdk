@@ -1252,11 +1252,11 @@ def compare(sites: list[Site], rows: list[Row]) -> Report:
 def class_fingerprint(rows: list[Row], klass: str) -> str:
     """A short hash of the sorted site keys that carry ``klass``.
 
-    A test pins this value for OPERATOR, so a new unproven-origin site cannot be labelled OPERATOR (and a FOREIGN row cannot be
-    relabelled OPERATOR, nor the other way round) without a person editing the pin on purpose; the compare step alone cannot tell
-    an OPERATOR claim about the producers of a value from a hint (no proof column exists)."""
+    A test pins this value for OPERATOR and for FOREIGN, so a new unproven-origin site cannot be labelled OPERATOR (and a row
+    cannot be moved between FOREIGN and OPERATOR) without a person editing the pins on purpose. ``compare`` alone cannot do this:
+    an OPERATOR claim is about the producers of a value, which the scan cannot prove (the table has no proof column)."""
     keys = "\n".join(sorted(r.site for r in rows if r.klass == klass))
-    return hashlib.sha256(keys.encode("ascii")).hexdigest()[:HASH_LEN]
+    return hashlib.sha256(keys.encode("utf-8")).hexdigest()[:HASH_LEN]
 
 
 def render_csv(rows: list[Row]) -> str:
