@@ -439,3 +439,9 @@ def test_migrate_refuses_a_portal_role_that_inherits_write_rights(roles):
         db.execute(sql.SQL("GRANT {} TO {}").format(sql.Identifier(other), sql.Identifier(portal)))
     with pytest.raises(ConfigError, match="runs:UPDATE"):
         mig.migrate(dsn, portal_role=portal)
+
+
+def test_check_ledger_escapes_hostile_file_names():
+    """A file name with a control character is shown escaped, never raw (a log line cannot be forged)."""
+    got = mig.check_ledger([Path("0001_ok.sql"), Path("0002_x\x1b]0;y\x07\nforged.sql")])
+    assert got == ["0002_x\\x1b]0;y\\x07\\nforged.sql: not named NNNN_<name>.sql"]

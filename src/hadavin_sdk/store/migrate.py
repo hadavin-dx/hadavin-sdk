@@ -97,7 +97,9 @@ def _migration_files(folder: Path = MIGRATIONS) -> list[Path]:
 def check_ledger(paths: list[Path]) -> list[str]:
     """Problems with the file names: each is `NNNN_<name>.sql` and the numbers run 1, 2, 3 ... with no repeat or gap."""
     problems = [
-        f"{p.name}: not named NNNN_<name>.sql" for p in paths if not _FILE.fullmatch(p.name)
+        f"{ascii(p.name)[1:-1]}: not named NNNN_<name>.sql"
+        for p in paths
+        if not _FILE.fullmatch(p.name)
     ]
     numbers = sorted(int(p.name[:4]) for p in paths if _FILE.fullmatch(p.name))
     for n in sorted({n for n in numbers if numbers.count(n) > 1}):
