@@ -1084,3 +1084,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | ad02e6d49ea824da6 | PR73 design/least-privilege reviewer round 8 | 2026-11-11 | - | CLOSED: 0 Blocker, 1 Major, 5 Minor, 2 Nit saved |
 | af48a85a93c880d76 | PR73 codebase reviewer round 8 | 2026-11-11 | - | CLOSED: 0 Blocker, 0 Major, 6 minor groups saved |
 | aea5c3b20851d826d | PR73 builder round 9 (r8-01 Major grants/ACLs, r8-02, r8-03) | 01:00Z 2026-11-11 | +90 min | running |
+| a290aa955ce105a74 | PR89 builder round 9 | 2026-11-11 | - | CLOSED: 9ed5217 pushed (179/179 mutants root and uid 65534; suites 3.12/3.13 with and without Postgres; floor of 6 letters stated as limit) |
+| a5e99379c12314596 | PR89 evidence runner on 9ed5217, output /home/user/build/EVOUT-P89-9ed5217 (outside repo) | 01:40Z 2026-11-11 | +75 min | running |
+| af26dd74903bfa896 | PR89 design reviewer round 10 on 9ed5217 snapshot | 01:40Z 2026-11-11 | +30 min | running |
+| a171fd751a7582652 | PR89 codebase reviewer round 10 on 9ed5217 snapshot | 01:40Z 2026-11-11 | +30 min | running |
