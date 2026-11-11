@@ -1355,3 +1355,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-P89-r21 a23252a4, R-P89-r21 x3, A-PRH a2f42970, A-P3a2-r13 a0ea76bf | under 15 min | running / reading / writing | on track |
 Note (honest): the route reproductions for P3a-2 are not available. D-020 does not rest on them (the mechanism they attack is deleted), but the ticket's facts P1-P8 do need runs: the ticket author runs the plain single-session ones itself; the hostile-file routes become the sensitivity controls of the round-13 test generator, where each must be shown live.
 Heavy queue: 8 jobs for 3 slots at 15:54Z (load 10 on 4 cores): waits of 5-15 min expected; no new heavy work is started by the lead until it drains.
+| R-P89-r21 comprehension a3cdc11d | | | | 15:56Z | CLOSED: 4 Major (wording that leads a reader to an unsafe or wrong action), saved | wait for design + codebase + evidence, then ONE fix batch |

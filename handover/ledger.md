@@ -2656,3 +2656,7 @@
 | BL-core-p3a2-split-D | Major | P3a-2 | D-020 split ticket: D client hardening guide | OPEN | | | 2026-11-11 |
 | BL-core-p3a2-split-E | Major | P3a-2 | D-020 split ticket: E row security and views | OPEN | | | 2026-11-11 |
 | BL-core-p3a2-split-F | Major | P3a-2 | D-020 split ticket: F surviving minors | OPEN | | | 2026-11-11 |
+| BL-core-pr89-r21-w01 | Major(wording) | PR89 | reviews/PR89/r21-comprehension-full.md Major 1 | OPEN | | | 2026-11-11 |
+| BL-core-pr89-r21-w02 | Major(wording) | PR89 | reviews/PR89/r21-comprehension-full.md Major 2 | OPEN | | | 2026-11-11 |
+| BL-core-pr89-r21-w03 | Major(wording) | PR89 | reviews/PR89/r21-comprehension-full.md Major 3 | OPEN | | | 2026-11-11 |
+| BL-core-pr89-r21-w04 | Major(wording) | PR89 | reviews/PR89/r21-comprehension-full.md Major 4 | OPEN | | | 2026-11-11 |
