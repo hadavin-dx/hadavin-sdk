@@ -13,14 +13,16 @@ What this file does:
   else the renderer refuses; it never escapes.
 * `python tools/policy_page.py --write` writes `docs/declared-permissions.md`; `--check` fails, with one line
   per problem and exit code 1, when a data rule is broken or the committed page differs from what the data
-  gives. `--check` runs every check of the DATA that the tests run (`data_problems`): the rules of each
-  literal, the rules across kinds, every source id resolves in the sources file, and no module outside
-  `KIND_MODULES` holds a `POLICY`.
+  gives. `--check` runs `data_problems`: the rules of each literal, the rules across kinds, every source id
+  resolves in the sources file, no module outside `KIND_MODULES` holds a `POLICY`, every note and reason has
+  one class (`NOTE_CLASSES`, whose own shape is checked too), every claim has one mark by full-text equality
+  with the head of the sources file, and the dated lists of unchecked names (`PENDING_NAMES`) and unchecked
+  claims (`PENDING_CLAIMS`): an entry is needed, stale, overdue (past `review_by`) or too far out is a problem.
 
 What it does not do: it does not prove that a permission name is right, and it never contacts a server. Three
-checks need this package imported or today's date and so live only in tests/test_policy_guard.py: the requests
-written in a module equal the declared ones, every kind is declared or on a dated list, and every placeholder
-is a real setting of the kind. Standard library only.
+checks need this package imported and so live only in tests/test_policy_guard.py, not in `--check`: the
+requests written in a module equal the declared ones, every kind is declared or on the dated list of kinds
+(`PENDING_KINDS`, which stays in the tests), and every placeholder is a real setting of the kind. Standard library only.
 """
 
 from __future__ import annotations
@@ -32,7 +34,7 @@ import re
 import sys
 from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -655,13 +657,24 @@ def stray_modules(root: Path) -> list[str]:
     return out
 
 
+def head_lines(root: Path) -> list[str]:
+    """The lines of the sources file. The ONE place the file is read for every parser (the rows, the lists of
+    builder-only ids and the claim marks): a leading byte-order mark is dropped here, once, so all three accept
+    or refuse the same file."""
+    try:
+        text = (root / SOURCES).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise PolicyError(f"{SOURCES}: cannot be read ({type(exc).__name__})") from None
+    return text.removeprefix("﻿").splitlines()
+
+
 def source_ids(root: Path) -> dict[str, tuple[str, str, str, str]]:
     """id -> (url, commit, sha256, note) from the sources file. Every row is pinned: the commit is written
     in the URL, never a branch name. PolicyError names the first bad row."""
-    try:
-        lines = (root / SOURCES).read_text(encoding="utf-8").splitlines()
-    except (OSError, UnicodeDecodeError) as exc:
-        raise PolicyError(f"{SOURCES}: cannot be read ({type(exc).__name__})") from None
+    return _source_rows(head_lines(root))
+
+
+def _source_rows(lines: list[str]) -> dict[str, tuple[str, str, str, str]]:
     out: dict[str, tuple[str, str, str, str]] = {}
     for n, line in enumerate(lines, 1):
         if line.startswith("#") or not line.strip():
@@ -700,10 +713,132 @@ def source_problems(policies: dict[str, Policy], known: set[str]) -> list[str]:
     return out
 
 
-def data_problems(root: Path | None = None) -> list[str]:
+@dataclass(frozen=True)
+class Pending:
+    """A dated entry: something not yet done, with the day it was decided and the day it is looked at again."""
+
+    reason: str
+    fix_ref: str
+    decided: date
+    review_by: date  # the check fails after this date
+
+
+_DECIDED = date(2026, 11, 11)
+_ROLE_NAMES = Pending(
+    "the built-in role name was not among the names the evidence runner looked for",
+    "an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry",
+    _DECIDED,
+    date(2026, 12, 11),
+)
+_BUILDER_ONLY = Pending(
+    "the path was read in the vendor source by the builder of a fix only, not by an evidence runner",
+    "an evidence run that finds the path in the listed sources, then set `verified` and delete this entry",
+    _DECIDED,
+    date(2026, 12, 11),
+)
+# (kind, entry) -> a name not yet found in a vendor source by the evidence runner. The entry is a grant id,
+# `free:<n>` or `never:<name>`. All six grants are found (the claims of R17, R18, R20 to R22 are separate: see
+# `claims_unverified`); three built-in role names of the Kubernetes never-list are not, and three never-list
+# paths were read by the builder of a fix only. Moved here from the tests so that `--check` runs the rule.
+PENDING_NAMES: dict[tuple[str, str], Pending] = {
+    ("secrets/vault", "never:{mount}/undelete/*"): _BUILDER_ONLY,
+    ("secrets/vault", "never:{mount}/subkeys/*"): _BUILDER_ONLY,
+    ("signer/vault_transit", "never:{transit_mount}/byok-export/*"): _BUILDER_ONLY,
+    ("source/kubernetes", "never:cluster-admin"): _ROLE_NAMES,
+    ("source/kubernetes", "never:admin"): _ROLE_NAMES,
+    ("source/kubernetes", "never:edit"): _ROLE_NAMES,
+}
+_CLAIM_PENDING = Pending(
+    "the statement about server or API behaviour is not checked by an evidence runner",
+    "an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and "
+    "delete this entry",
+    _DECIDED,
+    date(2026, 12, 11),
+)
+# (kind, grant id | `free:<n>` | `never:<name>`) -> a statement about how the vendor's server or API behaves that
+# nobody but the builder of a fix has read, or that nobody has checked. Every entry with a `claims_unverified`
+# needs one; the check goes red on the review date if the claim is still unread.
+PENDING_CLAIMS: dict[tuple[str, str], Pending] = {
+    ("secrets/vault", "R17"): _CLAIM_PENDING,
+    ("signer/vault_transit", "R18"): _CLAIM_PENDING,
+    ("source/kubernetes", "R20"): _CLAIM_PENDING,
+    ("source/kubernetes", "R21"): _CLAIM_PENDING,
+    ("source/kubernetes", "R22"): _CLAIM_PENDING,
+    ("source/kubernetes", "free:0"): _CLAIM_PENDING,
+    ("source/kubernetes", "never:create"): _CLAIM_PENDING,
+}
+
+
+def pending_problems(label: str, pending: dict, live: set, today: date) -> list[str]:
+    """The one rule for every dated list: an entry whose subject is fixed or gone is stale; an entry past its
+    `review_by` is overdue; a `review_by` more than MAX_PENDING_DAYS after `decided` is refused; a `decided` in
+    the future is refused."""
+    out = [
+        f"{label} {key} is fixed or gone: delete the entry" for key in pending if key not in live
+    ]
+    out += [
+        f"{label} {key} is overdue (review_by {p.review_by}): {p.fix_ref}. What to do: finish that work "
+        "and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day "
+        f"of the new decision and `review_by` to at most {MAX_PENDING_DAYS} days after it"
+        for key, p in pending.items()
+        if key in live and today > p.review_by
+    ]
+    out += [
+        f"{label} {key}: review_by {p.review_by} is more than {MAX_PENDING_DAYS} days after the decision "
+        f"of {p.decided}: a date may not be moved further than that"
+        for key, p in pending.items()
+        if (p.review_by - p.decided).days > MAX_PENDING_DAYS
+    ]
+    return out + [
+        f"{label} {key}: decided {p.decided} is in the future"
+        for key, p in pending.items()
+        if p.decided > today
+    ]
+
+
+def entries(policies: dict[str, Policy]) -> Iterator[tuple[str, str, Grant | Free | Never]]:
+    """(kind, entry label, entry): a grant is labelled by its id, a free request `free:<n>`, a never-list line
+    `never:<name>`."""
+    for kind, p in policies.items():
+        yield from ((kind, g.id, g) for g in p.grants)
+        yield from ((kind, f"free:{i}", f) for i, f in enumerate(p.free))
+        yield from ((kind, f"never:{n.name}", n) for n in p.never)
+
+
+def name_pending_problems(
+    policies: dict[str, Policy], pending: dict[tuple[str, str], Pending], today: date
+) -> list[str]:
+    """ONE rule: an entry (a grant, a free request, a never-list line) with `verified = None` fails unless its
+    (kind, entry) has a dated PENDING_NAMES entry."""
+    unverified = {(k, label) for k, label, e in entries(policies) if e.verified is None}
+    out = [
+        f"{kind} {label}: the name is not found in a vendor source (verified is None) and has no "
+        "PENDING_NAMES entry"
+        for kind, label in sorted(unverified - set(pending))
+    ]
+    return out + pending_problems("PENDING_NAMES", pending, unverified, today)
+
+
+def claim_pending_problems(
+    policies: dict[str, Policy], pending: dict[tuple[str, str], Pending], today: date
+) -> list[str]:
+    """ONE rule: an entry with an unchecked claim (`claims_unverified`) fails unless its (kind, entry) has a dated
+    PENDING_CLAIMS entry; an entry for one with no such claim is stale."""
+    claimed = {(k, label) for k, label, e in entries(policies) if e.claims_unverified}
+    out = [
+        f"{kind} {label}: has an unchecked claim (claims_unverified) and no PENDING_CLAIMS entry"
+        for kind, label in sorted(claimed - set(pending))
+    ]
+    return out + pending_problems("PENDING_CLAIMS", pending, claimed, today)
+
+
+def data_problems(root: Path | None = None, today: date | None = None) -> list[str]:
     """Every data problem `--check` reports, one line each (empty: the page may be written): each literal's
-    own rules, the rules across kinds, modules that hold a POLICY nobody reads, and source ids."""
+    own rules, the rules across kinds, modules that hold a POLICY nobody reads, source ids, the rule of every
+    note and reason, the claim marks, and the dated lists (PENDING_NAMES, PENDING_CLAIMS: a name or claim with
+    no dated entry, a stale or overdue entry). `today` defaults to the current UTC date."""
     root = DATA_ROOT if root is None else root
+    today = datetime.now(UTC).date() if today is None else today
     out, policies = [], {}
     for kind, rel in KIND_MODULES.items():
         try:
@@ -716,11 +851,16 @@ def data_problems(root: Path | None = None) -> list[str]:
         else:
             policies[kind] = policy
     out += cross_problems(policies) + stray_modules(root)
+    if set(policies) == set(
+        KIND_MODULES
+    ):  # a kind that could not be read is reported once, by its own line
+        out += name_pending_problems(policies, PENDING_NAMES, today)
+        out += claim_pending_problems(policies, PENDING_CLAIMS, today)
     try:
         known = set(source_ids(root))
         out += source_problems(policies, known)
         out += note_problems(policies, NOTE_CLASSES, known)
-        out += claim_mark_problems(policies, claim_readers(root))
+        out += claim_mark_problems(policies, read_marks(root))
     except PolicyError as exc:
         out.append(str(exc))
     return out
@@ -1038,117 +1178,146 @@ def _cell(text: str) -> str:
     return text.replace("|", "\\|").replace("\n", " ")
 
 
-def builder_marks(root: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    """(sources only the builder of a fix has read, sources of which only a passage was read by the builder),
-    from the two lines `# BUILDER-ONLY:` and `# PARTLY-BUILDER-ONLY:` in the head of the sources file. That head
-    is the one place the page takes them from; a test compares the lines with the head's list of what a later
-    evidence runner must re-read. Every id must be a row of the file."""
-    try:
-        lines = (root / SOURCES).read_text(encoding="utf-8").splitlines()
-    except (OSError, UnicodeDecodeError) as exc:
-        raise PolicyError(f"{SOURCES}: cannot be read ({type(exc).__name__})") from None
-    found: dict[str, tuple[str, ...]] = {}
-    for tag in ("BUILDER-ONLY", "PARTLY-BUILDER-ONLY"):
-        rows = [ln for ln in lines if ln.startswith(f"# {tag}:")]
-        if len(rows) != 1:
-            raise PolicyError(f"{SOURCES}: needs exactly one line starting `# {tag}:`")
-        ids = tuple(x.strip() for x in rows[0].split(":", 1)[1].split(","))
-        if not all(_SOURCE_ID.fullmatch(x) for x in ids):
-            raise PolicyError(f"{SOURCES}: the `# {tag}:` line must list source ids")
-        found[tag] = ids
-    known = set(source_ids(root))
-    if unknown := sorted((set(found["BUILDER-ONLY"]) | set(found["PARTLY-BUILDER-ONLY"])) - known):
-        raise PolicyError(f"{SOURCES}: builder-only id {unknown[0]} is not a row of the file")
-    return found["BUILDER-ONLY"], found["PARTLY-BUILDER-ONLY"]
-
-
-# Sources that only the builder of a fix has read (no evidence runner has re-read them). Wherever the page lists
-# one of these ids it says so: a reader must not take the id for a checked source.
-BUILDER_ONLY_SOURCES, PARTLY_BUILDER_ONLY_SOURCES = builder_marks(DATA_ROOT)
-
 # The two marks of a claim that nobody has checked against the vendor. Which claim gets which mark is written in
-# the head of the sources file (one source, read by `claim_readers`), never in this tool.
+# the head of the sources file (the one place, read by `read_marks`), never in this tool.
 MARK_BUILDER_READ = "builder read the passage"
 MARK_NOBODY_READ = "nobody has read the passage"
-_CLAIM_LINES = {
-    "CLAIM-READ-BY-BUILDER": MARK_BUILDER_READ,
-    "CLAIM-READ-BY-NOBODY": MARK_NOBODY_READ,
-}
+_CLAIM_LINES = (
+    ("CLAIM-READ-BY-BUILDER", MARK_BUILDER_READ),
+    ("CLAIM-READ-BY-NOBODY", MARK_NOBODY_READ),
+)
 _CLAIM_SEPARATOR = " ;; "
 
 
-def claim_readers(root: Path) -> dict[str, tuple[str, ...]]:
-    """{mark: the starts of the claim texts that carry it}, from the two lines `# CLAIM-READ-BY-BUILDER:` and
-    `# CLAIM-READ-BY-NOBODY:` in the head of the sources file (the starts are separated by ` ;; `)."""
-    try:
-        lines = (root / SOURCES).read_text(encoding="utf-8").splitlines()
-    except (OSError, UnicodeDecodeError) as exc:
-        raise PolicyError(f"{SOURCES}: cannot be read ({type(exc).__name__})") from None
-    found: dict[str, tuple[str, ...]] = {}
-    for tag, mark in _CLAIM_LINES.items():
-        rows = [ln for ln in lines if ln.startswith(f"# {tag}:")]
-        if len(rows) != 1:
-            raise PolicyError(f"{SOURCES}: needs exactly one line starting `# {tag}:`")
-        starts = tuple(x.strip() for x in rows[0].split(":", 1)[1].split(_CLAIM_SEPARATOR))
-        if not all(starts):
-            raise PolicyError(f"{SOURCES}: the `# {tag}:` line holds an empty claim start")
-        found[mark] = starts
-    return found
+@dataclass(frozen=True)
+class Marks:
+    """What the head of the sources file says about who read what, read once from one root.
+
+    `builder_only`: sources only the builder of a fix has read. `partly_builder_only`: sources of which a passage
+    behind a claim is marked on the page (the mark is in the claims cell of the same row). `builder_read` and
+    `nobody_read`: the FULL texts of the claims (`claims_unverified`) that carry each mark; a claim matches only
+    its exact full text, never its start."""
+
+    builder_only: tuple[str, ...]
+    partly_builder_only: tuple[str, ...]
+    builder_read: tuple[str, ...]
+    nobody_read: tuple[str, ...]
+
+    def texts(self, mark: str) -> tuple[str, ...]:
+        return self.builder_read if mark == MARK_BUILDER_READ else self.nobody_read
 
 
-CLAIM_READERS = claim_readers(DATA_ROOT)
+def _head_line(lines: list[str], tag: str) -> str:
+    rows = [ln for ln in lines if ln.startswith(f"# {tag}:")]
+    if len(rows) != 1:
+        raise PolicyError(f"{SOURCES}: needs exactly one line starting `# {tag}:`")
+    return rows[0].split(":", 1)[1]
 
 
-def claim_mark(text: str, readers: dict[str, tuple[str, ...]] | None = None) -> str:
-    """The one mark of a claim text: `MARK_BUILDER_READ` or `MARK_NOBODY_READ`. A claim that starts like no listed
-    start, or like starts of both marks, is refused (PolicyError): nothing is shown as read by default."""
-    readers = CLAIM_READERS if readers is None else readers
-    marks = [m for m, starts in readers.items() if any(text.startswith(x) for x in starts)]
-    if len(marks) != 1:
+def read_marks(root: Path) -> Marks:
+    """The four lists of the head of the sources file (`# BUILDER-ONLY:`, `# PARTLY-BUILDER-ONLY:`,
+    `# CLAIM-READ-BY-BUILDER:`, `# CLAIM-READ-BY-NOBODY:`), read from ONE place with ONE set of refusals (a
+    missing or repeated line, an empty item, an id that is no row of the file, a claim text that holds `;;`, a
+    text twice or under both marks). Nothing is read until this is called, so a malformed head is a problem the
+    check reports, not a traceback at import. A test compares the id lines with the head's list of what a
+    later evidence runner must re-read."""
+    lines = head_lines(root)
+    ids: dict[str, tuple[str, ...]] = {}
+    for tag in ("BUILDER-ONLY", "PARTLY-BUILDER-ONLY"):
+        found = tuple(x.strip() for x in _head_line(lines, tag).split(","))
+        if not all(_SOURCE_ID.fullmatch(x) for x in found):
+            raise PolicyError(f"{SOURCES}: the `# {tag}:` line must list source ids")
+        ids[tag] = found
+    known = set(_source_rows(lines))
+    if unknown := sorted((set(ids["BUILDER-ONLY"]) | set(ids["PARTLY-BUILDER-ONLY"])) - known):
+        raise PolicyError(f"{SOURCES}: builder-only id {unknown[0]} is not a row of the file")
+    texts: dict[str, tuple[str, ...]] = {}
+    for tag, mark in _CLAIM_LINES:
+        found = tuple(x.strip() for x in _head_line(lines, tag).split(_CLAIM_SEPARATOR))
+        if not all(found):
+            raise PolicyError(f"{SOURCES}: the `# {tag}:` line holds an empty claim text")
+        if any(";;" in x for x in found):
+            raise PolicyError(
+                f"{SOURCES}: the `# {tag}:` line holds `;;` inside a claim text (the separator is a space, "
+                "two semicolons and a space)"
+            )
+        if len(set(found)) != len(found):
+            raise PolicyError(f"{SOURCES}: the `# {tag}:` line holds a claim text twice")
+        texts[mark] = found
+    if both := sorted(set(texts[MARK_BUILDER_READ]) & set(texts[MARK_NOBODY_READ])):
+        raise PolicyError(f"{SOURCES}: the claim text {both[0][:60]!r} is under both marks")
+    return Marks(
+        ids["BUILDER-ONLY"],
+        ids["PARTLY-BUILDER-ONLY"],
+        texts[MARK_BUILDER_READ],
+        texts[MARK_NOBODY_READ],
+    )
+
+
+def claim_mark(text: str, marks: Marks | None = None) -> str:
+    """The one mark of a claim text: `MARK_BUILDER_READ` or `MARK_NOBODY_READ`. The whole text must equal a
+    listed text. A claim that equals no listed text, or texts of both marks, is refused (PolicyError): nothing is
+    shown as read by default."""
+    marks = read_marks(DATA_ROOT) if marks is None else marks
+    found = [m for m in (MARK_BUILDER_READ, MARK_NOBODY_READ) if text in marks.texts(m)]
+    if len(found) != 1:
         raise PolicyError(
-            f"claim {text[:60]!r} has {len(marks)} marks in the head of {SOURCES}, needs exactly one"
+            f"claim {text[:60]!r} has {len(found)} marks in the head of {SOURCES}, needs exactly one"
         )
-    return marks[0]
+    return found[0]
 
 
-def claim_mark_problems(
-    policies: dict[str, Policy], readers: dict[str, tuple[str, ...]] | None = None
-) -> list[str]:
-    """Every claim has one mark, and every listed start belongs to a claim (a stale start is refused)."""
-    readers = CLAIM_READERS if readers is None else readers
+def claim_mark_problems(policies: dict[str, Policy], marks: Marks) -> list[str]:
+    """Every claim has one mark by full-text equality; the builder-read mark stands only on an entry that names a
+    source only the builder has read, and such an entry with a claim has one builder-read claim (a mark moved to
+    another claim is refused); every listed text belongs to a claim (a stale text is refused)."""
     out, used = [], set()
-    for kind, policy in policies.items():
-        for e in (*policy.grants, *policy.free, *policy.never):
-            for claim in e.claims_unverified:
-                try:
-                    claim_mark(claim, readers)
-                except PolicyError as exc:
-                    out.append(f"{kind}: {exc}")
-                used |= {x for starts in readers.values() for x in starts if claim.startswith(x)}
+    for kind, label, e in entries(policies):
+        got = []
+        for claim in e.claims_unverified:
+            try:
+                got.append(claim_mark(claim, marks))
+            except PolicyError as exc:
+                out.append(f"{kind}: {exc}")
+            used.add(claim)
+        cited = sorted(set((e.verified or ())[1:]) & set(marks.builder_only))
+        if MARK_BUILDER_READ in got and not cited:
+            out.append(
+                f"{kind} {label}: a claim is marked {MARK_BUILDER_READ!r}, but the entry names none of the "
+                f"sources only the builder has read ({', '.join(marks.builder_only)}): the mark is on the wrong claim"
+            )
+        if e.claims_unverified and cited and MARK_BUILDER_READ not in got:
+            out.append(
+                f"{kind} {label}: names {', '.join(cited)}, which only the builder has read, but none of its "
+                f"claims is marked {MARK_BUILDER_READ!r}"
+            )
     if set(policies) != set(KIND_MODULES):
         return out  # a kind whose module could not be read is reported once, by its own problem
     return out + [
-        f"{SOURCES}: the claim start {x!r} matches no claim: delete it"
-        for x in sorted({x for starts in readers.values() for x in starts} - used)
+        f"{SOURCES}: the claim text {x!r} matches no claim: delete it"
+        for x in sorted((set(marks.builder_read) | set(marks.nobody_read)) - used)
     ]
 
 
-def _claim_text(claim: str) -> str:
-    return f"{claim} ({claim_mark(claim)})"
+def _claim_text(claim: str, marks: Marks | None = None) -> str:
+    return f"{claim} ({claim_mark(claim, marks)})"
 
 
-def _checked_cell(verified: tuple[str, ...] | None, claim: bool = False) -> str:
+def _checked_cell(
+    verified: tuple[str, ...] | None, claim: bool = False, marks: Marks | None = None
+) -> str:
     """`claim`: the entry carries an unchecked claim, so a source of which only a passage was read says that the
     passage behind the claim is shown in the claims text of the same entry."""
     if verified is None:
         return "not yet checked"
+    marks = read_marks(DATA_ROOT) if marks is None else marks
     ids = ", ".join(
         s
         + (
             " (builder only)"
-            if s in BUILDER_ONLY_SOURCES
+            if s in marks.builder_only
             else " (the passage behind the claim: see claims)"
-            if claim and s in PARTLY_BUILDER_ONLY_SOURCES
+            if claim and s in marks.partly_builder_only
             else ""
         )
         for s in verified[1:]
@@ -1197,7 +1366,7 @@ NOTE_CLASSES: dict[tuple[str, str], tuple] = {
     # is None and the page says "not yet checked").
     (
         "secrets/vault",
-        "reason:reads one named secret; the right also covers every secret directly under the prefix, each with every older version",
+        "reason:reads one named secret; the right also covers every secret directly under the prefix; it may also cover every older version of each (not yet checked against the vendor, see the claims cell)",
     ): ("claim", "also serves a request for an older version"),
     (
         "secrets/vault",
@@ -1268,14 +1437,11 @@ def _class_keys(
     kind: str, text: str, classes: dict[tuple[str, str], tuple]
 ) -> list[tuple[str, str]]:
     """The keys of `classes` that name this note: a note by the start of its text, a reason (`reason:` and the
-    full text) only by its exact text."""
+    full text) only by its exact text. A note never starts with `reason:`, so no `reason:` key can be the start of
+    one and the second branch needs no test for it."""
     if text.startswith("reason:"):
         return [k for k in classes if k[0] == kind and k[1] == text]
-    return [
-        k
-        for k in classes
-        if k[0] == kind and not k[1].startswith("reason:") and text.startswith(k[1])
-    ]
+    return [k for k in classes if k[0] == kind and text.startswith(k[1])]
 
 
 def note_class(kind: str, text: str) -> tuple | None:
@@ -1292,6 +1458,55 @@ def _note_items(policy: Policy) -> list[tuple[str, Grant | Free | Never | None]]
     return items
 
 
+_CLASS_HOWS = ("code", "sources", "claim", "pending")
+
+
+def _key_ok(key: object) -> bool:
+    return isinstance(key, tuple) and len(key) == 2 and all(isinstance(x, str) for x in key)
+
+
+def class_shape_problem(key: object, cls: object) -> str | None:
+    """Why one `NOTE_CLASSES` entry has a shape no rule can read, or None. A key is (kind, start of the note); a class is a
+    non-empty tuple whose first item is one of `_CLASS_HOWS`: `code` and `pending` stand alone, `claim` holds one
+    non-empty text (a fragment of a claim), `sources` holds nothing (the ids are in `verified` of the entry) or a tuple
+    of source ids (text)."""
+    if not _key_ok(key):
+        return "its key is not a tuple of two texts (kind, note)"
+    if not isinstance(cls, tuple) or not cls:
+        return "its class is not a non-empty tuple"
+    how, *rest = cls
+    if how not in _CLASS_HOWS:
+        return f"its class {how!r} is not one of {', '.join(_CLASS_HOWS)}"
+    if how in ("code", "pending") and rest:
+        return f"its class {how} takes nothing after the name"
+    if how == "claim" and not (len(rest) == 1 and isinstance(rest[0], str) and rest[0].strip()):
+        return "its class claim needs exactly one non-empty text (a fragment of a claim)"
+    if how == "sources" and not (
+        not rest
+        or (
+            len(rest) == 1
+            and isinstance(rest[0], tuple)
+            and all(isinstance(x, str) for x in rest[0])
+        )
+    ):
+        return "its class sources needs nothing or one tuple of source ids (texts)"
+    return None
+
+
+def readable_classes(classes: dict, out: list[str]) -> tuple[dict, set]:
+    """(the entries whose KEY has the shape the matching code reads, the keys among them whose CLASS has no shape any
+    rule can read). One problem line in `out` for every entry of either kind; neither kind makes a rule crash."""
+    keyed, bad = {}, set()
+    for key, cls in classes.items():
+        if why := class_shape_problem(key, cls):
+            out.append(f"NOTE_CLASSES entry {key!r}: {why}")
+            if not _key_ok(key):
+                continue
+            bad.add(key)
+        keyed[key] = cls
+    return keyed, bad
+
+
 def note_problems(
     policies: dict[str, Policy], classes: dict[tuple[str, str], tuple], known: set[str]
 ) -> list[str]:
@@ -1300,6 +1515,7 @@ def note_problems(
     `verified`; a claim fragment is in the entry's own `claims_unverified`; `pending` only with no source), and
     no class entry is stale. `known`: the source ids of the sources file."""
     out, used = [], set()
+    classes, shapeless = readable_classes(classes, out)
     for kind, policy in policies.items():
         kind_claims = " ".join(
             c for e in (*policy.grants, *policy.free, *policy.never) for c in e.claims_unverified
@@ -1312,6 +1528,8 @@ def note_problems(
                 )
                 continue
             used.add(keys[0])
+            if keys[0] in shapeless:
+                continue  # reported once, by its own shape problem
             how, *rest = classes[keys[0]]
             claims = kind_claims if entry is None else " ".join(entry.claims_unverified)
             held = (entry.verified or ())[1:] if entry is not None else ()
@@ -1355,11 +1573,11 @@ def note_problems(
     ]
 
 
-def _sources_suffix(kind: str, text: str) -> str:
+def _sources_suffix(kind: str, text: str, marks: Marks) -> str:
     cls = note_class(kind, text)
     if not cls or cls[0] != "sources" or len(cls) < 2:
         return ""
-    ids = ", ".join(s + (" (builder only)" if s in BUILDER_ONLY_SOURCES else "") for s in cls[1])
+    ids = ", ".join(s + (" (builder only)" if s in marks.builder_only else "") for s in cls[1])
     return f" (sources: {ids})"
 
 
@@ -1367,12 +1585,12 @@ def _operation(op: tuple[str, ...]) -> str:
     return "`" + " ".join(op) + "`"
 
 
-def _kind_section(kind: str, rel: str, policy: Policy) -> list[str]:
+def _kind_section(kind: str, rel: str, policy: Policy, marks: Marks) -> list[str]:
     out = [f"## {kind.split('/')[1]} ({kind.split('/')[0]})", ""]
     if any("{path_prefix}" in g.resource for g in policy.grants):
         out += [WHOLE_MOUNT, ""]
     out += [f"Declared in `{rel}`.", ""]
-    out += [f"- {note}{_sources_suffix(kind, note)}" for note in policy.notes] + (
+    out += [f"- {note}{_sources_suffix(kind, note, marks)}" for note in policy.notes] + (
         [""] if policy.notes else []
     )
     out += [
@@ -1384,16 +1602,16 @@ def _kind_section(kind: str, rel: str, policy: Policy) -> list[str]:
         out.append(
             f"| {g.id} | `{g.name}` | `{_cell(g.resource)}` | {_cell(g.bound) or 'no wildcard'} | "
             f"{', '.join(_operation(op) for op in g.operations)} | {_cell(g.reason)} | "
-            f"{_cell(g.applies_when) or 'always'} | {_checked_cell(g.verified, bool(g.claims_unverified))} | {live} | "
-            f"{_cell('; '.join(map(_claim_text, g.claims_unverified))) or 'none'} |"
+            f"{_cell(g.applies_when) or 'always'} | {_checked_cell(g.verified, bool(g.claims_unverified), marks)} | {live} | "
+            f"{_cell('; '.join(_claim_text(c, marks) for c in g.claims_unverified)) or 'none'} |"
         )
     out += ["", "Requests that need no permission:", ""]
     out += [
         f"- {', '.join(_operation(op) for op in f.operations)}: {f.reason}."
-        + (f" Note: {f.note}{_sources_suffix(kind, 'free:' + f.note)}." if f.note else "")
-        + f" Checked: {_checked_cell(f.verified, bool(f.claims_unverified))}."
+        + (f" Note: {f.note}{_sources_suffix(kind, 'free:' + f.note, marks)}." if f.note else "")
+        + f" Checked: {_checked_cell(f.verified, bool(f.claims_unverified), marks)}."
         + (
-            f" Claims not checked: {'; '.join(map(_claim_text, f.claims_unverified))}."
+            f" Claims not checked: {'; '.join(_claim_text(c, marks) for c in f.claims_unverified)}."
             if f.claims_unverified
             else ""
         )
@@ -1409,8 +1627,8 @@ def _kind_section(kind: str, rel: str, policy: Policy) -> list[str]:
     for n in policy.never:
         caps = f" with {', '.join(n.capabilities)}" if n.capabilities else ""
         out.append(
-            f"| {n.type} | `{_cell(n.name)}`{caps} | {_cell(n.reason)} | {_checked_cell(n.verified, bool(n.claims_unverified))} | "
-            f"{_cell('; '.join(map(_claim_text, n.claims_unverified))) or 'none'} |"
+            f"| {n.type} | `{_cell(n.name)}`{caps} | {_cell(n.reason)} | {_checked_cell(n.verified, bool(n.claims_unverified), marks)} | "
+            f"{_cell('; '.join(_claim_text(c, marks) for c in n.claims_unverified)) or 'none'} |"
         )
     out += ["", f"Credential: {policy.how} Lifetime: {policy.lifetime}."]
     if policy.exception:
@@ -1446,8 +1664,21 @@ def _kind_section(kind: str, rel: str, policy: Policy) -> list[str]:
     return out
 
 
-def head() -> str:
-    return _HEAD.replace("ENGINE_STATE", engine_state())
+def head(marks: Marks | None = None) -> str:
+    """The page head. The sentence about which claim carries which mark is built from the lists in the head of
+    the sources file (the claim texts in full), never written here."""
+    marks = read_marks(DATA_ROOT) if marks is None else marks
+
+    def quoted(texts: tuple[str, ...]) -> str:
+        return "; ".join(f'"{t}"' for t in texts)
+
+    listed = (
+        "Every claim on this page carries one of the two marks, shown after the claim. The claim texts with the "
+        f"first mark ({len(marks.builder_read)}): {quoted(marks.builder_read)}. The claim texts with the second "
+        f"mark ({len(marks.nobody_read)}; one text can stand on more than one permission): "
+        f"{quoted(marks.nobody_read)}."
+    )
+    return _HEAD.replace("ENGINE_STATE", engine_state()).replace("CLAIM_MARKS_TEXT", listed)
 
 
 _HEAD = f"""\
@@ -1481,7 +1712,7 @@ code needs (one reason each), the requests that need no permission, and what the
   raw HTTP call outside the one sending function, another module importing the Vault client) are refused by
   listed rules, not by proof: a way to send a request that no rule lists is not seen.
 - Some permissions allow more than their reason says. Reading the reason alone would understate them: R17 reads
-  every secret directly under the prefix, each with every older version (not only the one secret it names); R20 returns whole Deployment objects (including any setting
+  every secret directly under the prefix (not only the one secret it names) and may also read every older version of each (not yet checked against the vendor, see the claims cell); R20 returns whole Deployment objects (including any setting
   values in them); R21 returns all events of a namespace, not a time window; R22 reads the log of every pod in a
   configured namespace. The "what limits a wildcard" cell of each says so and why the right cannot be narrower:
   Kubernetes rights cannot be limited by time or by a query, and a pod name list cannot be written in advance.
@@ -1506,14 +1737,7 @@ code needs (one reason each), the requests that need no permission, and what the
   reason, gives no copy-ready text for any of the three kinds. Each claim carries one of two marks, taken from
   the head of the sources file: "builder read the passage" (the builder of a fix read the vendor passage behind
   the claim; no evidence runner has re-read it) or "nobody has read the passage" (nobody has found a vendor
-  passage for it). Only one claim has the first mark: in the Vault secrets permission R17, the `+` stands for
-  exactly one whole path part and nothing deeper (the sources are in the R17 row; no server
-  has run the test of it). Every other claim has the second mark: in R17, that a `read` on a secret's path also
-  serves a request for an older version of that secret; in the signer permission R18, that the exact path does not also
-  allow Vault's longer sign path that ends in a hash algorithm name; in the Kubernetes permissions R20 to R22,
-  that the query parameters the code sends do not change the verb the request needs; for the Kubernetes free
-  request `k8s.rules_review` and the never-list line `create`, that a `create` on the self-review resources
-  writes nothing. A source id marked "(builder only)" was read by the builder of a fix only; one marked "(the
+  passage for it). CLAIM_MARKS_TEXT A source id marked "(builder only)" was read by the builder of a fix only; one marked "(the
   passage behind the claim: see claims)" was read by an evidence runner for the permission name, while the
   passage behind the claim in that row has the mark shown in the claims cell. The same builder-only reading
   stands behind the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked", as do
@@ -1565,13 +1789,14 @@ def named_source_ids(kind: str, policy: Policy) -> set[str]:
 
 def page(root: Path | None = None) -> str:
     root = DATA_ROOT if root is None else root
-    out = [head()]
+    marks = read_marks(root)
+    out = [head(marks)]
     named: set[str] = set()
     for kind, rel in KIND_MODULES.items():
         policy = load(root / rel)
         if policy is None:
             raise PolicyError(f"no POLICY in {rel}")
-        out += _kind_section(kind, rel, policy)
+        out += _kind_section(kind, rel, policy, marks)
         named |= named_source_ids(kind, policy)
     sources = source_ids(root)
     if missing := sorted(named - set(sources)):
@@ -1585,7 +1810,7 @@ def page(root: Path | None = None) -> str:
         ),
         "",
         *[
-            f"- {sid}{' (builder only)' if sid in BUILDER_ONLY_SOURCES else ''}: {sources[sid][3]} "
+            f"- {sid}{' (builder only)' if sid in marks.builder_only else ''}: {sources[sid][3]} "
             f"(commit {sources[sid][1][:7]})"
             for sid in sorted(named)
         ],

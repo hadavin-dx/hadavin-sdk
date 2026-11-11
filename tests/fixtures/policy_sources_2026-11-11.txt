@@ -25,7 +25,7 @@
 # that commit belongs to was not looked up, so the OpenBao claims are not tied to one release.
 # WHAT A LATER EVIDENCE RUNNER MUST RE-READ (2026-11-11): only the items listed below were read by the builder
 # of a fix alone (the other readings are the evidence runner's, named above). Each has a dated entry in
-# tests/test_policy_guard.py (review by 2026-12-11).
+# tools/policy_page.py (review by 2026-12-11; `python tools/policy_page.py --check` and the tests run the rule).
 # - V-POL and B-POL: the passage that says `+` matches exactly one path segment in a policy path.
 # - V-ACL and B-ACL: the code that matches a policy path with `+` (a whole path part, nothing deeper, and what
 #   a `+` does to the longest-prefix choice).
@@ -44,7 +44,7 @@
 #   mention the verb. Nobody has read this yet.
 # After that run: set `claims_unverified` of R17, R18 and R20 to R22 back to () and delete their PENDING_CLAIMS
 # entries; do the same for the Kubernetes free request and the never-list line `create`; set `verified` of the three never-list paths in the kind modules and delete their PENDING_NAMES
-# entries (both dictionaries are in tests/test_policy_guard.py). The hashes of V-ACL,
+# entries (both dictionaries are in tools/policy_page.py). The hashes of V-ACL,
 # V-PARSE and B-ACL must be fetched again at the same time (nobody has re-fetched them).
 # No test fetches anything or compares a hash: the hashes are a record for a person to re-check.
 # The two lines below are read by tools/policy_page.py: the page marks these ids. A test checks that every id named
@@ -52,14 +52,19 @@
 # BUILDER-ONLY: V-ACL, V-PARSE, B-ACL
 # PARTLY-BUILDER-ONLY: V-POL, B-POL, V-KV, B-KV, V-TR, B-TR, K-AUTHZ, K-RBAC, K-SSRR
 # Two more lines, read by tools/policy_page.py: which claim (a statement in `claims_unverified` of a kind module)
-# has which mark on the page. A claim is named by the first words of its text, several starts are separated by
-# ` ;; `. "builder read the passage": the builder of a fix read the vendor passage behind the claim; no evidence
-# runner has. "nobody has read the passage": nobody has found the passage. Today the builder read the passage for
-# one claim only (the `+` of grant R17: V-POL, B-POL, V-ACL, V-PARSE, B-ACL); the R17 claim about older versions
-# (V-KV, B-KV), R18, R20 to R22, the Kubernetes free request `k8s.rules_review` and the never-list line `create`
-# have not been read by anyone. A claim with no start here, or with starts on both lines, fails the data check.
-# CLAIM-READ-BY-BUILDER: the + matches exactly one whole path part
-# CLAIM-READ-BY-NOBODY: a `read` on a secret's path also serves a request for an older version ;; the exact path R18 does not also allow ;; the query parameters `limit` and `continue` ;; the query parameters `timestamps` ;; a `create` on `selfsubjectrulesreviews` changes nothing ;; `create` on `selfsubjectrulesreviews`, `selfsubjectaccessreviews`
+# has which mark on the page. A claim is named by its FULL text: the whole text must be equal, the start of a text
+# is not enough. Several texts are separated by ` ;; ` (a space, two semicolons, a space); two semicolons may not
+# stand inside a text. "builder read the passage": the builder of a fix read the vendor passage behind the claim;
+# no evidence runner has. "nobody has read the passage": nobody has found the passage. Only the claim about the
+# `+` of grant R17 (sources V-POL, B-POL, V-ACL, V-PARSE, B-ACL) has a builder-read passage; every other claim
+# (6 different texts) is nobody-read. Of the 9 ids on the PARTLY-BUILDER-ONLY line only V-POL and B-POL have a
+# builder-read passage behind a claim; for the other 7 (V-KV, B-KV, V-TR, B-TR, K-AUTHZ, K-RBAC, K-SSRR) the passage
+# behind the claim is read by nobody (in V-KV, B-KV, V-TR and B-TR the builder read a path name, listed above, not a
+# claim). The page head lists both sets of claims in full, built from these two lines. A claim with no text here, or
+# whose text is on both lines, fails the data check; so does a builder-read mark on a claim whose entry names none of
+# the BUILDER-ONLY sources (the mark would be on the wrong claim).
+# CLAIM-READ-BY-BUILDER: the + matches exactly one whole path part, nothing deeper
+# CLAIM-READ-BY-NOBODY: a `read` on a secret's path also serves a request for an older version of that secret ;; the exact path R18 does not also allow Vault's longer sign path that ends in a hash algorithm name ;; the query parameters `limit` and `continue` do not change the verb the request needs ;; the query parameters `timestamps`, `sinceTime` and `limitBytes` do not change the verb the request needs ;; a `create` on `selfsubjectrulesreviews` changes nothing in the cluster (the one source for the resource, K-SSRR, does not say so) ;; `create` on `selfsubjectrulesreviews`, `selfsubjectaccessreviews` and `selfsubjectreviews` writes nothing (the source for the first, K-SSRR, does not mention the verb; none was found for the other two)
 # Columns: id | url | commit | sha256 of the raw file | note
 V-POL | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/docs/concepts/policies.mdx | 82e7167 | beac497452411caa6ed293876e3ddf5e29228db17bc26365cd707b095abc75d4 | Vault v2.x: policies
 V-TOK | https://github.com/hashicorp/web-unified-docs/blob/82e7167/content/vault/v2.x/content/api-docs/auth/token.mdx | 82e7167 | 03b51d9467d20ec64ff7c145d3abe7e904a3261692cd083ee957b04421fb8eed | Vault v2.x: token API (no_default_policy); named by tests/test_policy_engine.py, by no POLICY literal

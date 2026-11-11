@@ -264,6 +264,20 @@
     --check` and a bad class table is a reported problem, never a crash. The never-versus-grant check now treats
     `{path_prefix}` as one value with the same number of parts on both sides, so `{mount}/data/{path_prefix}+/deeper/+`
     is no longer reported as covering R17. The page head and the R17 cell say the same scope.
+  - Round-6 review fixes: a claim has its mark only when its whole text equals a text listed in the head of the
+    sources file (a clause added to a claim, a text under both marks, or a text ending in ` ;;` is a problem), and
+    the builder-read mark must stand on a claim of an entry that names a source only the builder read, so the
+    R17 and R18 marks cannot be swapped unseen. One reader (`head_lines`) strips a leading byte-order mark once
+    for the row, id and claim parsers. The marks are read from the `root` the check is given, so a damaged head
+    is one problem line (exit 1), not a crash. The dated lists of names and claims, and the shape of
+    `NOTE_CLASSES`, now run in `python tools/policy_page.py --check`. The R17 older-versions scope is said as
+    "may also read every older version of each (not yet checked against the vendor)" in the head, the reason,
+    the cell and the rendered comment. The sources file head states that only V-POL and B-POL have a
+    builder-read passage and the other 7 sources are nobody-read, and the page head lists the claims of each
+    mark from that file. The policy mutants gained 14 mutants for these rules and every B4 and B5 mutant is
+    anchored on text of its own function. One person editing the sources file to move the builder-read mark onto
+    another claim of an entry that already names a builder-only source is not caught by code: only a human
+    re-reading the vendor text can tell who read it.
   - The page also gained a plain-words legend for its column heads, a sentence that Vault calls signing `update`
     although signing stores nothing, and the two links the call check does not follow. New checks: the paging
     query of the Kubernetes list wrapper, the one sending function of the Vault client, the setting-to-attribute
@@ -277,8 +291,10 @@
     the role and identity groups can add policies.
   - No behaviour change: no kind sends a different request. The other 16 kinds that sign in to an outside system
     (the AWS, Azure and Google Cloud kinds, Slack, Postgres, the API-key model kinds) have no declared permission
-    set yet; a dated list in the guard test names them, and that test starts to fail on 2026-12-12 unless the
-    second pull request has landed or the dates were decided again (at most 92 days at a time).
+    set yet; a dated list in the guard test names them, and that test fails for 7 of them from 2026-12-12 and
+    the other 9 from 2027-02-01, unless the second pull request has landed or the dates were decided again (at
+    most 92 days at a time). The dated lists of names and claims (13 entries, review by 2026-12-11) fail from
+    2026-12-12 in the tests and in `python tools/policy_page.py --check`.
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.
   - It covers AWS, gcloud/gsutil/bq, az, azcopy and PowerShell Az, kubectl/oc, helm, terraform/tofu/pulumi,

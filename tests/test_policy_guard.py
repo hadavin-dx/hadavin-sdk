@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import ast
 import copy
+import dataclasses
 import re
 from dataclasses import dataclass
 from datetime import date
@@ -81,51 +82,10 @@ NO_IDENTITY: dict[str, str] = {
     "detector/llm_judge": "calls through the llm kind; holds no credential of its own",
     "channel/fake": "in-memory test kind",
 }
-# (kind, entry) -> a name not yet found in a vendor source by the evidence runner. The entry is a grant id,
-# `free:<n>` or `never:<name>`. All six grants are found (the `+` claim of R17 is
-# separate: see `claims_unverified`); three built-in role names of the Kubernetes never-list are not, and
-# three never-list paths were read by the builder of a fix only.
-_ROLE_NAMES = Pending(
-    "the built-in role name was not among the names the evidence runner looked for",
-    "an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry",
-    DECIDED,
-    date(2026, 12, 11),
-)
-_BUILDER_ONLY = Pending(
-    "the path was read in the vendor source by the builder of a fix only, not by an evidence runner",
-    "an evidence run that finds the path in the listed sources, then set `verified` and delete this entry",
-    DECIDED,
-    date(2026, 12, 11),
-)
-PENDING_NAMES: dict[tuple[str, str], Pending] = {
-    ("secrets/vault", "never:{mount}/undelete/*"): _BUILDER_ONLY,
-    ("secrets/vault", "never:{mount}/subkeys/*"): _BUILDER_ONLY,
-    ("signer/vault_transit", "never:{transit_mount}/byok-export/*"): _BUILDER_ONLY,
-    ("source/kubernetes", "never:cluster-admin"): _ROLE_NAMES,
-    ("source/kubernetes", "never:admin"): _ROLE_NAMES,
-    ("source/kubernetes", "never:edit"): _ROLE_NAMES,
-}
-
-
-# (kind, grant id | `free:<n>` | `never:<name>`) -> a statement about how the vendor's server or API behaves that
-# nobody but the builder of a fix has read, or that nobody has checked. Every entry with a `claims_unverified` needs one; the suite goes red
-# on the review date if the claim is still unread (fixture header: what a later evidence runner must re-read).
-_CLAIM_PENDING = Pending(
-    "the statement about server or API behaviour is not checked by an evidence runner",
-    "an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and "
-    "delete this entry",
-    DECIDED,
-    date(2026, 12, 11),
-)
-PENDING_CLAIMS: dict[tuple[str, str], Pending] = {
-    ("secrets/vault", "R17"): _CLAIM_PENDING,
-    ("signer/vault_transit", "R18"): _CLAIM_PENDING,
-    ("source/kubernetes", "R20"): _CLAIM_PENDING,
-    ("source/kubernetes", "R21"): _CLAIM_PENDING,
-    ("source/kubernetes", "R22"): _CLAIM_PENDING,
-    ("source/kubernetes", "free:0"): _CLAIM_PENDING,
-    ("source/kubernetes", "never:create"): _CLAIM_PENDING,
-}
+# The dated lists of names and claims live in the tool (`pp.PENDING_NAMES`, `pp.PENDING_CLAIMS`), so that
+# `python tools/policy_page.py --check` runs their rules too; the tests below read the same objects.
+PENDING_NAMES = pp.PENDING_NAMES
+PENDING_CLAIMS = pp.PENDING_CLAIMS
 
 
 def all_kinds() -> set[str]:
@@ -133,28 +93,7 @@ def all_kinds() -> set[str]:
     return out | {f"source/{name}" for name in source_kinds.KINDS}
 
 
-def _pending_problems(label: str, pending: dict, live: set, today: date) -> list[str]:
-    out = [
-        f"{label} {key} is fixed or gone: delete the entry" for key in pending if key not in live
-    ]
-    out += [
-        f"{label} {key} is overdue (review_by {p.review_by}): {p.fix_ref}. What to do: finish that work "
-        "and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day "
-        f"of the new decision and `review_by` to at most {MAX_PENDING_DAYS} days after it"
-        for key, p in pending.items()
-        if key in live and today > p.review_by
-    ]
-    out += [
-        f"{label} {key}: review_by {p.review_by} is more than {MAX_PENDING_DAYS} days after the decision "
-        f"of {p.decided}: a date may not be moved further than that"
-        for key, p in pending.items()
-        if (p.review_by - p.decided).days > MAX_PENDING_DAYS
-    ]
-    return out + [
-        f"{label} {key}: decided {p.decided} is in the future"
-        for key, p in pending.items()
-        if p.decided > today
-    ]
+_pending_problems = pp.pending_problems  # one rule for every dated list, in the tool
 
 
 def kind_problems(
@@ -184,6 +123,19 @@ def same(found: object, expected: object) -> None:
     """`found == expected`, with both written out in full in the failure message (pytest shortens a long
     list in the first line, and the mutant runner reads that line)."""
     assert found == expected, f"reported {found!r}, expected {expected!r}"
+
+
+def _marks_for(policy: pp.Policy) -> pp.Marks:
+    """The real marks, plus the nobody-read mark for every claim of `policy` that the sources file does not list
+    (a planted claim), so that a planted policy can be rendered."""
+    marks = pp.read_marks(ROOT)
+    extra = tuple(
+        c
+        for e in (*policy.grants, *policy.free, *policy.never)
+        for c in e.claims_unverified
+        if c not in (*marks.builder_read, *marks.nobody_read)
+    )
+    return dataclasses.replace(marks, nobody_read=(*marks.nobody_read, *extra))
 
 
 def _policies() -> dict[str, pp.Policy]:
@@ -1492,42 +1444,15 @@ def name_problems(
     known: set[str],
     today: date,
 ) -> list[str]:
-    """ONE rule: an entry (a grant, a free request, a never-list line) with `verified = None` fails unless
-    its (kind, entry) has a dated PENDING_NAMES entry. Every source id must resolve in the sources file."""
-    unverified = _unverified(policies)
-    out = [
-        f"{kind} {gid}: the name is not found in a vendor source (verified is None) and has no "
-        "PENDING_NAMES entry"
-        for kind, gid in sorted(unverified - set(pending))
-    ]
-    out += _pending_problems("PENDING_NAMES", pending, unverified, today)
-    return out + pp.source_problems(policies, known)
+    """The rule of `pp.name_pending_problems` and every source id resolving in the sources file."""
+    return pp.name_pending_problems(policies, pending, today) + pp.source_problems(policies, known)
 
 
 def test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves():
     assert name_problems(_policies(), PENDING_NAMES, set(source_ids()), TODAY) == []
 
 
-def _claimed(policies: dict[str, pp.Policy]) -> set[tuple[str, str]]:
-    out: set[tuple[str, str]] = set()
-    for k, p in policies.items():
-        out |= {(k, g.id) for g in p.grants if g.claims_unverified}
-        out |= {(k, f"free:{i}") for i, f in enumerate(p.free) if f.claims_unverified}
-        out |= {(k, f"never:{n.name}") for n in p.never if n.claims_unverified}
-    return out
-
-
-def claim_problems(
-    policies: dict[str, pp.Policy], pending: dict[tuple[str, str], Pending], today: date
-) -> list[str]:
-    """ONE rule: a grant, a free request or a never-list line with an unchecked claim (`claims_unverified`) fails
-    unless its (kind, entry) has a dated PENDING_CLAIMS entry; an entry for one with no such claim is stale."""
-    claimed = _claimed(policies)
-    out = [
-        f"{kind} {gid}: has an unchecked claim (claims_unverified) and no PENDING_CLAIMS entry"
-        for kind, gid in sorted(claimed - set(pending))
-    ]
-    return out + _pending_problems("PENDING_CLAIMS", pending, claimed, today)
+claim_problems = pp.claim_pending_problems
 
 
 def test_every_unchecked_claim_has_a_dated_entry_and_the_suite_goes_red_when_it_is_overdue():
@@ -1592,9 +1517,10 @@ def test_the_builder_only_claims_are_not_shown_as_checked_and_no_kind_has_copy_r
 
 
 def test_a_builder_only_source_is_marked_wherever_the_page_lists_it():
-    assert set(pp.BUILDER_ONLY_SOURCES) <= set(source_ids())
+    marks = pp.read_marks(ROOT)
+    assert set(marks.builder_only) <= set(source_ids())
     text = pp.page()
-    for sid in pp.BUILDER_ONLY_SOURCES:
+    for sid in marks.builder_only:
         assert sid in text, sid
         unmarked = re.findall(rf"\b{sid}\b(?! \(builder only\))", text)
         assert unmarked == [], f"the page lists {sid} without the mark (builder only)"
@@ -1665,13 +1591,16 @@ def test_plant_no_copy_ready_text_for_a_kind_with_an_unverified_grant_or_claim()
         assert not pp.copy_ready(changed), (
             "copy-ready text is offered for a kind with an unchecked grant"
         )
-        section = "\n".join(pp._kind_section("signer/vault_transit", TRANSIT, changed))
+        section = "\n".join(
+            pp._kind_section("signer/vault_transit", TRANSIT, changed, _marks_for(changed))
+        )
         assert "```" not in section and "No copy-ready text" in section
     section = "\n".join(
         pp._kind_section(
             "signer/vault_transit",
             TRANSIT,
             _with_grant("signer/vault_transit", verified=None)["signer/vault_transit"],
+            pp.read_marks(ROOT),
         )
     )
     assert "| not yet checked |" in section
@@ -1705,11 +1634,11 @@ TRANSIT_VALUES = {"transit_mount": "transit", "key_name": "audit-key"}
 def test_vault_text_in_page_mode_and_with_values():
     policies = _policies()
     assert pp.render_vault(policies["secrets/vault"]) == (
-        "# R17: reads one named secret; the right also covers every secret directly under the prefix, each with every older version\n"
+        "# R17: reads one named secret; the right also covers every secret directly under the prefix; it may also cover every older version of each (not yet checked against the vendor, see the claims cell)\n"
         'path "{mount}/data/{path_prefix}+" {\n  capabilities = ["read"]\n}\n'
     )
     assert pp.render_vault(policies["secrets/vault"], VAULT_VALUES) == (
-        "# R17: reads one named secret; the right also covers every secret directly under the prefix, each with every older version\n"
+        "# R17: reads one named secret; the right also covers every secret directly under the prefix; it may also cover every older version of each (not yet checked against the vendor, see the claims cell)\n"
         'path "secret/data/hadavin/acme/+" {\n  capabilities = ["read"]\n}\n'
     )
     text = pp.render_vault(policies["signer/vault_transit"], TRANSIT_VALUES)
@@ -1729,7 +1658,7 @@ def test_an_empty_vault_prefix_is_refused_and_the_page_says_so_first():
         ValueError, match="'path_prefix' is empty: an empty prefix means the whole mount"
     ):
         pp.render_vault(policy, {**VAULT_VALUES, "path_prefix": ""})
-    section = pp._kind_section("secrets/vault", VAULT, policy)
+    section = pp._kind_section("secrets/vault", VAULT, policy, pp.read_marks(ROOT))
     assert section[2] == pp.WHOLE_MOUNT
     assert "every secret at the top level of the mount" in pp.WHOLE_MOUNT
 
@@ -2692,7 +2621,15 @@ def test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1(
     code, lines = _check(monkeypatch, capsys, root)
     same(
         (code, lines),
-        (1, ["policy page: grant id R17 is used by secrets/vault and by signer/vault_transit"]),
+        (
+            1,
+            [
+                "policy page: grant id R17 is used by secrets/vault and by signer/vault_transit",
+                # the renamed grant has a claim and no dated entry, and the entry of the old id is stale
+                "policy page: signer/vault_transit R17: has an unchecked claim (claims_unverified) and no PENDING_CLAIMS entry",
+                "policy page: PENDING_CLAIMS ('signer/vault_transit', 'R18') is fixed or gone: delete the entry",
+            ],
+        ),
     )
     transit.write_text("def broken(:\n", encoding="utf-8")
     same(
@@ -3115,6 +3052,9 @@ def test_the_path_overlap_automaton_agrees_with_a_brute_force_search_on_every_sm
 
 
 def test_the_path_prefix_setting_is_read_as_one_or_more_parts_each_ending_in_a_slash():
+    assert pp.vault_paths_overlap("m/+", "m/abc") is True, (
+        "a `+` is read as one character, so m/+ and m/abc are not reported as overlapping"
+    )
     same(pp.vault_paths_overlap("m/{path_prefix}x", "m/a/x"), True)
     same(pp.vault_paths_overlap("m/{path_prefix}x", "m/a/b/c/x"), True)
     same(pp.vault_paths_overlap("m/{path_prefix}x", "m/x"), False)
@@ -3153,6 +3093,7 @@ def test_a_never_type_that_does_not_fit_the_platform_is_refused():
 
 def test_every_note_with_a_sources_class_shows_its_source_ids_after_the_note_and_in_the_source_list():
     text = pp.page(ROOT)
+    marks = pp.read_marks(ROOT)
     listed = text.split("## Sources named on this page", 1)[1]
     for (kind, start), cls in pp.NOTE_CLASSES.items():
         if cls[0] != "sources" or start.startswith("reason:"):
@@ -3164,13 +3105,13 @@ def test_every_note_with_a_sources_class_shows_its_source_ids_after_the_note_and
         )
         shown = note.removeprefix("free:")
         suffix = ", ".join(
-            s + (" (builder only)" if s in pp.BUILDER_ONLY_SOURCES else "") for s in cls[1]
+            s + (" (builder only)" if s in marks.builder_only else "") for s in cls[1]
         )
         assert f"{shown} (sources: {suffix})" in text, (
             f"the note {shown[:40]!r} does not show its source ids"
         )
         for sid in cls[1]:
-            mark = " (builder only)" if sid in pp.BUILDER_ONLY_SOURCES else ""
+            mark = " (builder only)" if sid in marks.builder_only else ""
             assert f"\n- {sid}{mark}: " in listed, (
                 f"{sid} (named by a note) is not in the source list"
             )
@@ -3193,17 +3134,18 @@ def test_a_sources_note_whose_free_entry_does_not_list_the_id_is_caught():
 
 def test_the_builder_only_marks_are_read_from_the_head_of_the_sources_file_and_match_its_list():
     text = _text(pp.SOURCES)
-    assert pp.builder_marks(ROOT) == (pp.BUILDER_ONLY_SOURCES, pp.PARTLY_BUILDER_ONLY_SOURCES)
+    marks = pp.read_marks(ROOT)
+    assert marks.builder_only == ("V-ACL", "V-PARSE", "B-ACL")
     listed = text.split("# WHAT A LATER EVIDENCE RUNNER MUST RE-READ", 1)[1].split(
         "# After that run", 1
     )[0]
     named = set(re.findall(r"\b[VBK]-[A-Z]+\b", listed))
-    marked = set(pp.BUILDER_ONLY_SOURCES) | set(pp.PARTLY_BUILDER_ONLY_SOURCES)
-    assert marked == named | set(pp.BUILDER_ONLY_SOURCES), (
+    marked = set(marks.builder_only) | set(marks.partly_builder_only)
+    assert marked == named | set(marks.builder_only), (
         f"the marked ids {sorted(marked)} differ from the ids the head says a later runner must re-read "
         f"{sorted(named)}"
     )
-    assert not set(pp.BUILDER_ONLY_SOURCES) & set(pp.PARTLY_BUILDER_ONLY_SOURCES)
+    assert not set(marks.builder_only) & set(marks.partly_builder_only)
 
 
 def test_the_builder_marks_refuse_a_missing_line_an_unknown_id_and_a_second_line(tmp_path):
@@ -3217,7 +3159,7 @@ def test_the_builder_marks_refuse_a_missing_line_an_unknown_id_and_a_second_line
         (tmp_path / pp.SOURCES).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / pp.SOURCES).write_text(body, encoding="utf-8")
         with pytest.raises(pp.PolicyError):
-            pp.builder_marks(tmp_path)
+            pp.read_marks(tmp_path)
         _ = name
 
 
@@ -3471,17 +3413,18 @@ def _claim_rows(text: str) -> list[str]:
 
 
 def test_every_claim_has_one_of_two_marks_taken_from_the_head_of_the_sources_file():
-    same(pp.claim_mark_problems(_policies()), [])
+    marks = pp.read_marks(ROOT)
     claims = [
         (g.id, c) for p in _policies().values() for g in p.grants for c in g.claims_unverified
     ]
-    builder = [(gid, c) for gid, c in claims if pp.claim_mark(c) == pp.MARK_BUILDER_READ]
-    assert [gid for gid, _ in builder] == ["R17"] and builder[0][1].startswith("the + matches"), (
+    builder = [(gid, c) for gid, c in claims if pp.claim_mark(c, marks) == pp.MARK_BUILDER_READ]
+    assert [gid for gid, _ in builder] == ["R17"] and builder[0][1] == R17_CLAIM[0], (
         f"the claims with the builder mark are not exactly the + claim of R17: {builder}"
     )
+    same(pp.claim_mark_problems(_policies(), marks), [])
     for gid, c in claims:
         if (gid, c) not in builder:
-            assert pp.claim_mark(c) == pp.MARK_NOBODY_READ, (gid, c)
+            assert pp.claim_mark(c, marks) == pp.MARK_NOBODY_READ, (gid, c)
     assert pp.MARK_BUILDER_READ != pp.MARK_NOBODY_READ
 
 
@@ -3507,38 +3450,32 @@ def test_the_page_shows_the_builder_mark_on_the_plus_claim_of_r17_and_the_nobody
     assert marked == [r17], marked
 
 
-def test_a_claim_with_no_mark_two_marks_or_a_stale_start_is_a_problem_and_a_missing_line_is_refused(
+def test_a_claim_with_no_mark_two_marks_or_a_stale_text_is_a_problem_and_a_bad_line_is_refused(
     tmp_path,
 ):
     policies = _policies()
-    readers = dict(pp.CLAIM_READERS)
-    only_builder = {
-        pp.MARK_BUILDER_READ: readers[pp.MARK_BUILDER_READ],
-        pp.MARK_NOBODY_READ: ("zzz",),
-    }
-    found = pp.claim_mark_problems(policies, only_builder)
+    marks = pp.read_marks(ROOT)
+    found = pp.claim_mark_problems(policies, dataclasses.replace(marks, nobody_read=("zzz",)))
     assert any("has 0 marks" in p for p in found), found
     assert any("'zzz' matches no claim" in p for p in found), (
-        f"a stale start is not reported: {found}"
+        f"a stale text is not reported: {found}"
     )
-    both = {
-        pp.MARK_BUILDER_READ: ("the + matches", "the exact path R18"),
-        pp.MARK_NOBODY_READ: (*readers[pp.MARK_NOBODY_READ],),
-    }
+    r18 = next(c for c in marks.nobody_read if c.startswith("the exact path R18"))
+    both = dataclasses.replace(marks, builder_read=(*marks.builder_read, r18))
     assert any("has 2 marks" in p for p in pp.claim_mark_problems(policies, both)), "two marks pass"
     body = _text(pp.SOURCES)
     for name, text in {
         "missing": body.replace("# CLAIM-READ-BY-NOBODY:", "# X:"),
         "second": body + "\n# CLAIM-READ-BY-BUILDER: x\n",
-        "empty start": body.replace(
+        "empty text": body.replace(
             "# CLAIM-READ-BY-BUILDER: the +", "# CLAIM-READ-BY-BUILDER: ;; the +"
         ),
     }.items():
         (tmp_path / pp.SOURCES).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / pp.SOURCES).write_text(text, encoding="utf-8")
-        with pytest.raises(pp.PolicyError):
-            pp.claim_readers(tmp_path)
-        _ = name
+        why = "holds an empty claim text" if name == "empty text" else "needs exactly one line"
+        with pytest.raises(pp.PolicyError, match=why):
+            pp.read_marks(tmp_path)
 
 
 # ---- C3: free and never rows carry the mark too
@@ -3685,19 +3622,50 @@ def test_the_check_command_reports_a_claim_with_no_mark_in_the_sources_file(tmp_
 # ---- C4: the head sentence and the R17 cell say the same
 
 
-def test_the_page_head_and_the_r17_cell_and_reason_state_the_same_scope():
-    scope = ("every secret directly under the prefix", "every older version")
+R17_HEDGED = "it may also cover every older version of each (not yet checked against the vendor, see the claims cell)"
+R17_FLAT = "each with every older version"
+
+
+def test_the_page_head_and_the_r17_cell_and_reason_state_the_same_hedged_scope():
     text = pp.page(ROOT)
     head = text.split("## vault (secrets)", 1)[0].replace("\n  ", " ")
     r17_row = next(ln for ln in text.splitlines() if ln.startswith("| R17 "))
     r17 = _policies()["secrets/vault"].grants[0]
-    for part in scope:
-        assert part in head, f"the page head does not say {part!r}"
-        assert part in r17_row, f"the R17 cell does not say {part!r}"
-        assert part in r17.reason or part in r17.bound
+    for where, said in (
+        ("the page head", head),
+        ("the R17 cell", r17_row),
+        ("the reason", r17.reason),
+    ):
+        assert "every secret directly under the prefix" in said, (
+            f"{where} does not say the prefix scope"
+        )
+        assert "may also" in said and "every older version of each" in said, (
+            f"{where} does not say the older versions are only possible"
+        )
+        assert "not yet checked against the vendor" in said, (
+            f"{where} does not hedge the older versions"
+        )
+    assert R17_HEDGED in r17.reason, r17.reason
+    assert "also serves a request for an older version" in r17.bound, (
+        "the bound does not name the claim"
+    )
+    assert "second claim" not in r17.bound, (
+        "the bound points at a claim by its place, not in its own words"
+    )
     assert "reads one named secret" not in head.replace("not only the one secret it names", "")
-    assert "the one secret it names" not in head.replace("not only the one secret it names", "")
-    assert "every secret directly under the prefix" in r17.reason, r17.reason
+    docs = (ROOT / "docs/declared-permissions.md").read_text(encoding="utf-8")
+    for where, said in (
+        ("the page head", head),
+        ("the R17 cell", r17_row),
+        ("the reason", r17.reason),
+        ("the bound", r17.bound),
+        ("docs/declared-permissions.md", docs),
+        ("the secrets_vault.py source", _text(pp.KIND_MODULES["secrets/vault"])),
+        ("the rendered Vault policy", pp.render_vault(_policies()["secrets/vault"])),
+    ):
+        assert R17_FLAT not in said and "and every older version of each" not in said, (
+            f"{where} still says flatly that R17 covers every older version"
+        )
 
 
 # ---- (a) a never path that is deeper than the grant does not cover it
@@ -3749,3 +3717,308 @@ def test_the_path_overlap_with_a_prefix_setting_agrees_with_a_brute_force_search
             f"overlap of {first!r} and {second!r} differs from the brute-force answer {answer}"
         )
     assert seen == {True, False}
+
+
+# ------------------------------------------------ fix batch 6: the review of round 6 and the evidence run
+
+
+PLUS_CLAIM = R17_CLAIM[0]
+OLDER_CLAIM = R17_CLAIM[1]
+R18_CLAIM = "the exact path R18 does not also allow Vault's longer sign path that ends in a hash algorithm name"
+
+
+def _edit(root: Path, rel: str, old: str, new: str) -> None:
+    text = (root / rel).read_text(encoding="utf-8")
+    assert text.count(old) == 1, (rel, old)
+    (root / rel).write_text(text.replace(old, new), encoding="utf-8")
+
+
+def _head(root: Path) -> str:
+    return (root / pp.SOURCES).read_text(encoding="utf-8")
+
+
+# ---- 1: a claim carries a mark by its FULL text, one reader for the three parsers
+
+
+_MORE = ", and so does every other path"
+
+
+def test_a_clause_appended_to_a_claim_is_no_longer_the_listed_claim(tmp_path):
+    # the end of the R18 claim is written in two strings in the module, so the clause goes after `algorithm name"`
+    for rel, old in ((VAULT, PLUS_CLAIM), (VAULT, OLDER_CLAIM), (TRANSIT, 'algorithm name"')):
+        root = _tree(tmp_path / rel.replace("/", "_"))
+        _edit(root, rel, old, old.removesuffix('"') + _MORE + ('"' if old.endswith('"') else ""))
+        found = pp.data_problems(root)
+        assert any("has 0 marks" in p for p in found), f"the longer claim still has a mark: {found}"
+        assert any("matches no claim" in p for p in found), f"the listed text is not stale: {found}"
+
+
+def test_the_marks_of_r17_and_r18_swapped_in_the_sources_file_are_reported_by_the_check(tmp_path):
+    root = _tree(tmp_path)
+    text = _head(root)
+    text = text.replace(
+        f"# CLAIM-READ-BY-BUILDER: {PLUS_CLAIM}\n", f"# CLAIM-READ-BY-BUILDER: {R18_CLAIM}\n"
+    )
+    assert f" ;; {R18_CLAIM}" in text
+    (root / pp.SOURCES).write_text(
+        text.replace(f" ;; {R18_CLAIM}", f" ;; {PLUS_CLAIM}"), encoding="utf-8"
+    )
+    found = pp.data_problems(root)
+    assert any(
+        p.startswith("signer/vault_transit R18") and "marked 'builder read the passage'" in p
+        for p in found
+    ), f"a builder-read mark on R18 is not reported: {found}"
+    assert any(
+        p.startswith("secrets/vault R17") and "none of its claims is marked" in p for p in found
+    ), f"R17 with no builder-read claim is not reported: {found}"
+
+
+def test_a_claim_text_under_both_marks_is_refused(tmp_path):
+    root = _tree(tmp_path)
+    (root / pp.SOURCES).write_text(
+        _head(root).replace(
+            "# CLAIM-READ-BY-NOBODY: ", f"# CLAIM-READ-BY-NOBODY: {PLUS_CLAIM} ;; ", 1
+        ),
+        encoding="utf-8",
+    )
+    assert any("is under both marks" in p for p in pp.data_problems(root)), (
+        "a text under both marks is not reported"
+    )
+    with pytest.raises(pp.PolicyError, match="is under both marks"):
+        pp.read_marks(root)
+
+
+def test_a_claim_text_that_ends_in_two_semicolons_or_repeats_is_refused(tmp_path):
+    root = _tree(tmp_path)
+    nobody = next(ln for ln in _head(root).splitlines() if ln.startswith("# CLAIM-READ-BY-NOBODY:"))
+    for name, line, why in (
+        ("a trailing ` ;;`", nobody + " ;;", "holds `;;` inside a claim text"),
+        ("a text twice", nobody + f" ;; {OLDER_CLAIM}", "holds a claim text twice"),
+    ):
+        (root / pp.SOURCES).write_text(
+            _head(_tree(tmp_path)).replace(nobody, line), encoding="utf-8"
+        )
+        assert any(why in p for p in pp.data_problems(root)), f"{name} is not refused"
+        with pytest.raises(pp.PolicyError, match=why):
+            pp.read_marks(root)
+
+
+def test_a_byte_order_mark_is_read_the_same_by_the_row_the_id_and_the_claim_parsers(tmp_path):
+    for first in ("# BUILDER-ONLY:", "# CLAIM-READ-BY-BUILDER:", "V-POL | "):
+        root = _tree(tmp_path / first[:6].strip("#| "))
+        plain_rows = pp.source_ids(root)
+        lines = _head(root).split("\n")
+        moved = next(ln for ln in lines if ln.startswith(first))
+        lines.remove(moved)
+        (root / pp.SOURCES).write_bytes("\n".join([moved, *lines]).encode("utf-8-sig"))
+        assert (root / pp.SOURCES).read_bytes().startswith(b"\xef\xbb\xbf")
+        assert pp.data_problems(root) == [], (
+            f"a file with a byte-order mark before `{first}` is refused somewhere"
+        )
+        assert pp.source_ids(root) == plain_rows
+        assert pp.read_marks(root) == pp.read_marks(ROOT)
+
+
+# ---- 2: R17 says "it may also cover every older version" only as a hedge (test above: ..._same_hedged_scope)
+
+
+# ---- 3: the dated lists are run by `--check`
+
+
+def test_the_check_command_reports_a_name_or_claim_with_no_dated_entry_and_a_stale_or_overdue_entry(
+    monkeypatch, capsys
+):
+    monkeypatch.setattr(pp, "PENDING_NAMES", {})
+    code, lines = _check(monkeypatch, capsys, ROOT)
+    assert code == 1 and len(lines) == len(PENDING_NAMES), lines
+    assert all("no PENDING_NAMES entry" in ln for ln in lines), lines
+    monkeypatch.setattr(pp, "PENDING_NAMES", PENDING_NAMES)
+    monkeypatch.setattr(pp, "PENDING_CLAIMS", {})
+    code, lines = _check(monkeypatch, capsys, ROOT)
+    assert code == 1 and len(lines) == len(PENDING_CLAIMS), lines
+    assert all("no PENDING_CLAIMS entry" in ln for ln in lines), lines
+    stale = {**PENDING_CLAIMS, ("secrets/vault", "R99"): PENDING_CLAIMS[("secrets/vault", "R17")]}
+    monkeypatch.setattr(pp, "PENDING_CLAIMS", stale)
+    code, lines = _check(monkeypatch, capsys, ROOT)
+    same(
+        (code, lines),
+        (
+            1,
+            [
+                "policy page: PENDING_CLAIMS ('secrets/vault', 'R99') is fixed or gone: delete the entry"
+            ],
+        ),
+    )
+    monkeypatch.setattr(pp, "PENDING_CLAIMS", PENDING_CLAIMS)
+    overdue = pp.data_problems(ROOT, today=date(2026, 12, 12))
+    assert len(overdue) == len(PENDING_NAMES) + len(PENDING_CLAIMS), overdue
+    assert all("is overdue (review_by 2026-12-11)" in p for p in overdue), overdue
+    assert pp.data_problems(ROOT, today=date(2026, 12, 11)) == []
+
+
+def test_a_grant_whose_name_is_unchecked_with_no_pending_row_is_reported_by_the_check(tmp_path):
+    root = _tree(tmp_path)
+    text = (root / VAULT).read_text(encoding="utf-8")
+    planted, n = re.subn(
+        r'"verified": \(\s*"2026-11-11",\s*"V-KV",.*?\),\n',
+        '"verified": None,\n',
+        text,
+        count=1,
+        flags=re.DOTALL,
+    )
+    assert n == 1
+    (root / VAULT).write_text(planted, encoding="utf-8")
+    found = pp.data_problems(root)
+    assert any(
+        p.startswith("secrets/vault R17: the name is not found in a vendor source")
+        and "no PENDING_NAMES entry" in p
+        for p in found
+    ), f"a name with no dated entry is not reported by the check: {found}"
+
+
+def test_a_new_unchecked_claim_with_no_pending_row_is_reported_by_the_check(tmp_path):
+    root = _tree(tmp_path)
+    text = (root / TRANSIT).read_text(encoding="utf-8")
+    head, tail = text.split('"id": "R19"', 1)
+    assert tail.count('"claims_unverified": (),') == 1
+    (root / TRANSIT).write_text(
+        head
+        + '"id": "R19"'
+        + tail.replace(
+            '"claims_unverified": (),', '"claims_unverified": ("a planted statement",),'
+        ),
+        encoding="utf-8",
+    )
+    found = pp.data_problems(root)
+    assert any(
+        p.startswith("signer/vault_transit R19: has an unchecked claim")
+        and "no PENDING_CLAIMS entry" in p
+        for p in found
+    ), f"a claim with no dated entry is not reported by the check: {found}"
+
+
+# ---- 4: the marks are read from `root`; a bad class table is one problem line
+
+
+@pytest.mark.parametrize(
+    "tag",
+    [
+        "# BUILDER-ONLY:",
+        "# PARTLY-BUILDER-ONLY:",
+        "# CLAIM-READ-BY-BUILDER:",
+        "# CLAIM-READ-BY-NOBODY:",
+    ],
+)
+def test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback(
+    tmp_path, monkeypatch, capsys, tag
+):
+    root = _tree(tmp_path)
+    assert _head(root).count(tag) == 1
+    (root / pp.SOURCES).write_text(_head(root).replace(tag, "# X:"), encoding="utf-8")
+    code, lines = _check(monkeypatch, capsys, root)
+    assert code == 1 and len(lines) == 1, lines
+    assert f"needs exactly one line starting `{tag}`" in lines[0], lines
+
+
+def test_the_page_takes_its_marks_from_the_root_it_is_given(tmp_path):
+    root = _tree(tmp_path)
+    (root / pp.SOURCES).write_text(
+        _head(root).replace("# BUILDER-ONLY: V-ACL, ", "# BUILDER-ONLY: V-KV, V-ACL, "),
+        encoding="utf-8",
+    )
+    r17 = next(ln for ln in pp.page(root).splitlines() if ln.startswith("| R17 "))
+    assert "V-KV (builder only)" in r17, r17
+    r17 = next(ln for ln in pp.page(ROOT).splitlines() if ln.startswith("| R17 "))
+    assert "V-KV (builder only)" not in r17, r17
+
+
+_KEY = ("signer/vault_transit", "In the call column")
+BAD_CLASSES = {
+    "an empty tuple": ((), "its class is not a non-empty tuple"),
+    "a bare text": ("code", "its class is not a non-empty tuple"),
+    "a claim with a number": (("claim", 5), "its class claim needs exactly one non-empty text"),
+    "a claim with an empty text": (
+        ("claim", ""),
+        "its class claim needs exactly one non-empty text",
+    ),
+    "a claim with no text": (("claim",), "its class claim needs exactly one non-empty text"),
+    "a source list holding a number": (("sources", ("V-KV", 5)), "its class sources needs"),
+    "a source list as bare text": (("sources", "V-KV"), "its class sources needs"),
+    "an unknown class": (("weird",), "is not one of code, sources, claim, pending"),
+    "code with an extra item": (("code", "x"), "its class code takes nothing"),
+    "pending with an extra item": (("pending", ("x",)), "its class pending takes nothing"),
+}
+
+
+def _check_or_fail(monkeypatch, capsys):
+    try:
+        return _check(monkeypatch, capsys, ROOT)
+    except (AttributeError, IndexError, KeyError, TypeError, ValueError) as exc:
+        # the check must report, never raise: the assertion that follows shows this
+        return -1, [f"the check raised {type(exc).__name__} instead of one problem line"]
+
+
+def test_a_malformed_note_class_is_one_problem_line_of_the_check_and_no_traceback(
+    monkeypatch, capsys
+):
+    for name in sorted(BAD_CLASSES):
+        cls, why = BAD_CLASSES[name]
+        with monkeypatch.context() as m:
+            m.setitem(pp.NOTE_CLASSES, _KEY, cls)
+            code, lines = _check_or_fail(m, capsys)
+        assert code == 1 and len(lines) == 1, (
+            f"a malformed class is not one problem line ({name}): {lines}"
+        )
+        assert "NOTE_CLASSES entry" in lines[0] and why in lines[0], (
+            f"the problem line does not name the class shape ({name}): {lines}"
+        )
+
+
+def test_a_malformed_note_class_key_is_one_problem_line_of_the_check_and_no_traceback(
+    monkeypatch, capsys
+):
+    for key in (("secrets/vault",), (1, "x"), "secrets/vault", ("a", "b", "c")):
+        with monkeypatch.context() as m:
+            m.setitem(pp.NOTE_CLASSES, key, ("code",))
+            code, lines = _check_or_fail(m, capsys)
+        assert code == 1 and len(lines) == 1, f"a malformed key is not one problem line: {lines}"
+        assert "its key is not a tuple of two texts" in lines[0], lines
+
+
+# ---- 5: head prose about which claim has which mark is built from the sources file
+
+
+def test_the_page_head_lists_the_claims_of_each_mark_from_the_sources_file_not_from_prose():
+    marks = pp.read_marks(ROOT)
+    planted = dataclasses.replace(
+        marks, builder_read=("planted builder text",), nobody_read=("planted other text",)
+    )
+    head = pp.head(planted)
+    assert '"planted builder text"' in head and '"planted other text"' in head, head
+    assert PLUS_CLAIM not in head
+    real = pp.head(marks)
+    for text in (*marks.builder_read, *marks.nobody_read):
+        assert f'"{text}"' in real, text
+    assert "Only one claim has the first mark" not in real
+
+
+def test_the_fixture_head_names_the_builder_read_claims_as_they_are():
+    head = _head(ROOT)
+    marks = pp.read_marks(ROOT)
+    assert len(marks.builder_read) == 1 and marks.builder_read[0] == PLUS_CLAIM
+    assert "only V-POL and B-POL have a builder-read passage" in " ".join(
+        ln.removeprefix("#").strip() for ln in head.splitlines()
+    ), "the fixture head does not say which sources have a builder-read passage"
+    assert "the other 7" in " ".join(ln.removeprefix("#").strip() for ln in head.splitlines())
+    assert len(marks.partly_builder_only) == 9
+
+
+def test_a_kind_whose_module_could_not_be_read_adds_no_stale_class_line():
+    # The note classes of a kind that is not among the loaded policies are not reported as stale: that kind has
+    # its own problem line, and its notes were never looked at.
+    kube = "source/kubernetes"
+    policies = {k: v for k, v in _policies().items() if k != kube}
+    found = pp.note_problems(policies, pp.NOTE_CLASSES, set(pp.source_ids(ROOT)))
+    assert not [p for p in found if kube in p], (
+        f"a kind that was not loaded is reported as stale class lines: {found}"
+    )
