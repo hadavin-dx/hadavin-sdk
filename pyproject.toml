@@ -14,7 +14,7 @@ classifiers = ["Private :: Do Not Upload"]
 dependencies = [
     "markdown-it-py==4.2.0",
     "pydantic==2.14.1",
-    "pydantic-settings==2.16.1",
+    "pydantic-settings==2.16.2",
     "pyyaml==6.0.3",
 ]
 
