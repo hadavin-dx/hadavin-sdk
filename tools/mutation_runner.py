@@ -57,7 +57,10 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
 
   1. What is hidden. The value of a passed name, and the password inside it (the one of a URL; the one after ``password=``, ``passwd=`` or
      ``pwd=`` in a key=value text or a URL query; a URL password with an unencoded ``/``, ``?``, ``#`` or ``@``, read by trying every ``@`` as the
-     end of the login; a colon that starts a port such as ``host:5432/db`` is not the start of a password). The word is found inside longer words
+     end of the login, so ``svc:12/45@h/db`` gives ``12/45``; with no ``@`` after the colon, as in ``host:5432/db``, there is no password). Only the
+     password itself (the text right after ``password=``, and the URL password) is percent-decoded and checked for odd characters; the rest of the
+     word after a password word, its ``;`` and ``&`` pieces, a text after ``password=`` and a space, and a URL candidate that holds ``?`` or ``#`` are
+     hidden as written only, so an option such as ``application_name=caf%C3%A9`` beside a password does not refuse the run. The word is found inside longer words
      too (``sslpassword=``, ``PGPASSWORD=``) and in any case. Each is hidden as written, percent-decoded (again and again until nothing changes), with
      ``+`` read as a space, and percent-encoded again (``quote(safe="")``, ``quote``, ``quote_plus``, each in upper and in lower case hex). Each of
      these texts is called a "plain text" below.
@@ -83,16 +86,15 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   Not covered: a changed form of the value (only the host, only the user name, a re-encoded copy, a piece cut out of the middle) that is not
   the head or tail beside a plain-ASCII ``...`` (a head or tail of one character and pprint line wrapping are not read
   as such); another encoding (base64, hex, HTML escapes); a password
-  with no ``password=`` word that is not the password of a URL (hidden only as part of the whole value), and a URL password of digits that goes on
-  with an unencoded ``/``, ``?`` or ``#`` (it reads as a port; it too is hidden only as part of the whole value). A password that holds ``;`` or ``&`` is
+  with no ``password=`` word that is not the password of a URL (hidden only as part of the whole value), and a password that holds a quote mark, a backslash, a control character or a non-ASCII character in a form the runner does not decode (refused only where it is read as a password). A password that holds ``;`` or ``&`` is
   hidden in full when printed alone (up to the next white space), and each piece of it of ``PASSWORD_PIECE_MIN`` characters or more is hidden
-  too. Text of a failure that the runner never reads (the child's own console output is discarded) cannot leak through it.
+  too. A short secret hides every such text: a one-character or two-character password hides every such character or pair in a line (over-masking on purpose; only the one-character head or tail rule beside ``...`` is relaxed). Work is bounded: more than ``MAX_SECRETS`` (300) texts to hide refuse the run, and a line with (number of ``...``) x (number of secrets) over ``MAX_FRAGMENT_WORK`` (50,000) is replaced as a whole. Text of a failure that the runner never reads (the child's own console output is discarded) cannot leak through it.
   SAFETY: the address must point at a THROWAWAY database, and its login must be able to touch only that database (never a shared or
   production one): every mutant run executes the tests against it, and a mutant can make those tests write, drop or fill tables with
   anything. Two runs at once that share one database collide (the same tables and rows), so give each parallel run its own database.
   The runner checks one thing in code: after EVERY mutant run it runs the unmutated copy again on that same database (the canary run), and
   when that no longer passes it stops with ``RuntimeError`` naming the mutant, because what the mutant left behind would make the verdicts
-  of the later mutants unreliable (a false kill). The cost is one extra pytest run (and one extra copy of the tree) per mutant while a ``pass_env`` name is set; the second copy is kept on purpose: the canary run leaves bytecode that could hide the next mutation. The canary proves only that the full unmutated tests still pass; it does not prove the database is clean, and under ``forbid_skips`` a canary run with a skipped test is refused too. A failed canary, a skipped one included, raises ``CanaryFailed`` (a ``RuntimeError``; its ``rows`` hold the rows judged so far); the message says "timed out" or "reaped" instead of an exit code when the run did. A second runner that uses the same temp folder (in practice the same machine and the same account, or the same ``TMPDIR``) with the same passed value is refused by an exclusive lock file there, named by the first 16 hex digits of a SHA-256 of the value with every password text cut out (two addresses that differ only in the password give one name, and the name holds no byte that depends on a password that the runner can read; the name is readable by other users of that folder); a runner with another temp folder or on another machine is not seen (give each run a database of its own). The lock file is opened without following a symbolic link (``O_NOFOLLOW`` where the system has it; a planted link is refused with a clear message), with mode 0600, and is never deleted: one empty file per distinct value stays in the temp folder (delete it by hand only when no run is going and only as its owner: a deleted file that a run still holds lets a second run lock a new file of the same name). A lock file that cannot be opened or locked for another reason (no permission, no lock space) is refused with its own message.
+  of the later mutants unreliable (a false kill). The cost is one extra pytest run (and one extra copy of the tree) per mutant while a ``pass_env`` name is set; the second copy is kept on purpose: the canary run leaves bytecode that could hide the next mutation. The canary proves only that the full unmutated tests still pass; it does not prove the database is clean, and under ``forbid_skips`` a canary run with a skipped test is refused too. A failed canary, a skipped one included, raises ``CanaryFailed`` (a ``RuntimeError``; its ``rows`` hold the rows judged so far); the message says "timed out" or "reaped" instead of an exit code when the run did. A second runner that uses the same temp folder (in practice the same machine and the same account, or the same ``TMPDIR``) with the same passed value is refused by an exclusive lock file there, named by the first 16 hex digits of a SHA-256 of the host, port and database name that a strict grammar reads from the value (``_address_parts``; no password text is read or hashed; the name is readable by other users of that folder). It is a best-effort match on spelling: one database written two ways (``localhost`` and ``127.0.0.1``, a port written or left out, ``host=`` and ``hostaddr=``) gets two names and is NOT refused, and values outside the grammar share the name ``unparsed``. A runner with another temp folder or on another machine is not seen (give each run a database of its own). The lock file is opened without following a symbolic link (``O_NOFOLLOW`` where the system has it; a planted link is refused with a clear message), with mode 0600, and is never deleted: one empty file per distinct value stays in the temp folder (delete it by hand only when no run is going and only as its owner: a deleted file that a run still holds lets a second run lock a new file of the same name). A lock file that cannot be opened or locked for another reason (no permission, no lock space) is refused with its own message.
 - ``forbid_skips=True``: a run in which any selected test is skipped (or an expected failure) proves nothing, so it is an ERROR row
   ``SKIPPED TESTS`` (never a kill), and an unmutated baseline with a skipped test raises ``RuntimeError``. This closes the false kill where
   a mutant "dies" because the tests could not run (for example no database was reachable). A mutant run with no JUnit file or an empty one
@@ -109,7 +111,7 @@ that has no verdict from the judge: ``SETUP FAILED: <error class>``, ``SNIPPET N
 ``JUNIT MISSING`` (``forbid_skips``), ``COLLECTION ERROR``, ``FIXTURE ERROR``, ``SKIPPED TESTS`` (``forbid_skips``) and ``NO FAILING TEST NAMED`` (the run failed, the JUnit file names no failing test). ``first_lines`` holds the first ``E`` line (masked)
 of the rows that have one, and for ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` the masked message that says why.
 
-Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``PASS_ENV_ALLOWED``, ``MASK``, ``EDGE_MIN``, ``PASSWORD_PIECE_MIN``, ``MAX_FRAGMENT_HITS``, ``MAX_VALUE_CHARS``, ``NO_TEST_NAMED``, ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
+Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``PASS_ENV_ALLOWED``, ``MASK``, ``EDGE_MIN``, ``PASSWORD_PIECE_MIN``, ``MAX_FRAGMENT_HITS``, ``MAX_SECRETS``, ``MAX_FRAGMENT_WORK``, ``MAX_VALUE_CHARS``, ``NO_TEST_NAMED``, ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
 ``TIMED_OUT``, ``REAPED_ELSEWHERE``, ``CHILD_ENV``, ``CHILD_FIXED_ENV``, ``JUNIT_REFUSED`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
 the no-hardcoding rule is about product behaviour (names, regions, prices, thresholds a deployment tunes), and this is a developer tool
 that ships in no wheel, has no config surface and is copied byte for byte into demos. A caller changes the timeouts by argument.
@@ -232,6 +234,8 @@ NO_TEST_NAMED = "NO FAILING TEST NAMED"  # the id column of an ERROR row for a f
 EDGE_MIN = 2  # a head or tail piece of a secret next to ``...`` is masked from this many characters on (one character cannot be told from ordinary text)
 PASSWORD_PIECE_MIN = 3  # a piece of an unquoted password that holds a quote mark, ``;`` or ``&`` is a secret of its own from this many characters on
 MAX_FRAGMENT_HITS = 1_000  # more ``...`` than this in one text is no honest line (pytest writes a few): the whole text is replaced, never scanned (see ``_masked``)
+MAX_SECRETS = 300  # more secret texts than this (a value, its password and their decoded and encoded forms) are refused: no honest address has that many
+MAX_FRAGMENT_WORK = 50_000  # (``...`` in a line) x (secrets): more than this replaces the whole line, so one line costs a bounded number of scans
 MAX_VALUE_CHARS = 2_000  # a passed value longer than this is refused: no address is that long, and the scan and the memory of the secrets grow with its length
 CHILD_FIXED_ENV = {
     "PYTHONNOUSERSITE": "1"
@@ -313,14 +317,11 @@ def _checked_env_names(names: Iterable[str]) -> tuple[str, ...]:
 
 
 _PASSWORD_WORD = re.compile(
-    r"(?is)(?:password|passwd|pwd)\s*=\s*([^\s&;]+)"
+    r"(?is)(?:password|passwd|pwd)[ \t]*=([ \t]*)([^\s&;]+)"
 )  # ``password=...`` of a key=value DSN or a URL query, up to the next white space, ``&`` or ``;`` (no quote mark or backslash can be in it: see ``_refuse_odd``). No lookbehind: ``sslpassword=`` and ``PGPASSWORD=`` are read too
 _NOT_WHITE = re.compile(r"\S*")  # the rest of a word, up to the next white space
 # every ``...`` (or the one character U+2026 that a newer pytest could print), also those that share a dot (a secret may end in a dot): one match at the start of each
 _DOTS = re.compile(r"(?=\.\.\.|\u2026)")
-_PORT_SHAPED = re.compile(
-    r"\d*[/?#]"
-)  # what follows the colon of ``host:5432/db``: a port, not a password
 
 
 def _odd_character(text: str) -> str | None:
@@ -352,48 +353,54 @@ def _refuse_odd(name: str, what: str, text: str) -> None:
         )
 
 
-def _url_passwords(value: str) -> list[str]:
+def _url_passwords(value: str) -> tuple[list[str], list[str]]:
     """The password of a URL as ``urlsplit`` reads it, and every text between the first ``:`` after ``://`` and an ``@`` after it: a password that
     holds an unencoded ``/``, ``?``, ``#`` or ``@`` is not read right by ``urlsplit`` (it takes the first of them as the end of the address), so
-    every ``@`` is tried as the end of the login (more than needed is masked, never less). A colon that is followed by digits and then ``/``, ``?`` or
-    ``#`` is a port (``host:5432/db``), not the start of a password, and gives no candidate: a password that itself starts that way is not read
-    as a password of the URL (it stays hidden inside the whole value)."""
-    found: list[str] = []
+    every ``@`` is tried as the end of the login (more than needed is masked, never less). With no ``@`` after the first colon (``host:5432/db``) there is
+    no password and no candidate; with one, everything between them is a candidate, also ``12/45`` in ``svc:12/45@h/db``."""
+    found: list[str] = []  # every text between the first colon and an @
+    proper = ""
     with contextlib.suppress(ValueError):  # not URL-shaped: only the key=value scan applies
-        found.append(urlsplit(value).password or "")
+        proper = urlsplit(value).password or ""
     if "://" in value:
         rest = value.split("://", 1)[1]
         colon = rest.find(":")
-        at = (
-            rest.find("@", colon + 1)
-            if colon != -1 and not _PORT_SHAPED.match(rest, colon + 1)
-            else -1
-        )
+        at = rest.find("@", colon + 1) if colon != -1 else -1
         while at != -1:
             found.append(rest[colon + 1 : at])
             at = rest.find("@", at + 1)
-    return found
-
-
-def _password_texts(value: str) -> list[str]:
-    """Every text of ``value`` that is, or may be, a password as written: the one after a password word (up to the next ``&`` or ``;`` and up to the next
-    white space), the pieces of an unquoted password that holds ``;`` or ``&``, and the passwords of a URL."""
-    matches = list(_PASSWORD_WORD.finditer(value))
-    passwords = [m.group(1) for m in matches]
-    # an unquoted password ends at ``&`` or ``;`` above; printed alone, the rest of the word is part of it too
-    words = [
-        value[m.start(1) : _NOT_WHITE.match(value, m.start(1)).end()]  # type: ignore[union-attr]
-        for m in matches
+    # a candidate with ``?`` or ``#`` in it may reach into the options after the address: hidden as written only; the others are read as passwords
+    return [proper, *(c for c in found if not re.search(r"[?#]", c))], [
+        c for c in found if re.search(r"[?#]", c)
     ]
-    passwords += words
-    passwords += [
+
+
+def _password_texts(value: str) -> tuple[list[str], list[str]]:
+    """``(decoded, plain)``: the texts of ``value`` that are, or may be, a password. ``decoded`` are those that are read as a password and so also
+    checked and percent-decoded: the one right after ``password=`` (up to the next ``&``, ``;`` or white space) and the passwords of a URL.
+    ``plain`` are those that are only hidden as written: the rest of the word after a password word (up to the next white space), its pieces split
+    at ``;`` and ``&`` of ``PASSWORD_PIECE_MIN`` characters or more (an unquoted password may hold them), and the text after ``password=`` and a
+    space (it may be the next option, not a password). Other options in the same value are not decoded, so a non-ASCII option does not refuse a run."""
+    matches = list(_PASSWORD_WORD.finditer(value))
+    decoded = [m.group(2) for m in matches if not m.group(1)]
+    plain = [m.group(2) for m in matches if m.group(1)]
+    words: list[str] = []
+    reached = 0  # a password word inside the word of an earlier one adds nothing: its text is a piece of that word and of its pieces
+    for m in matches:
+        if m.start(2) >= reached:
+            reached = _NOT_WHITE.match(value, m.start(2)).end()  # type: ignore[union-attr]
+            words.append(value[m.start(2) : reached])
+    plain += words
+    plain += [
         piece
         for word in words
         for piece in re.split(r"[;&]", word)
         if len(piece) >= PASSWORD_PIECE_MIN
     ]  # the pieces of an unquoted password that holds ``;`` or ``&``: each may stand alone in a message
-    passwords += _url_passwords(value)
-    return [p for p in passwords if p]
+    url_decoded, url_plain = _url_passwords(value)
+    decoded += url_decoded
+    plain += url_plain
+    return [p for p in dict.fromkeys(decoded) if p], [p for p in dict.fromkeys(plain) if p]
 
 
 def _decoded_forms(name: str, password: str) -> set[str]:
@@ -408,11 +415,13 @@ def _decoded_forms(name: str, password: str) -> set[str]:
         for _ in range(
             len(password) + 1
         ):  # each change makes the text shorter or swaps ``+`` for a space, so this ends
-            text = decode(text)
-            _refuse_odd(name, what, text)
-            if text in forms:
+            decoded = decode(text)
+            _refuse_odd(name, what, decoded)
+            # nothing changed: stop (a form already seen on the other way is still followed: ``a%2Bb``)
+            if decoded == text:
                 break
-            forms.add(text)
+            forms.add(decoded)
+            text = decoded
     return forms
 
 
@@ -426,29 +435,50 @@ def _encoded_forms(text: str) -> set[str]:
     return forms
 
 
-_ADDRESS_KEYS = ("host", "hostaddr", "port", "dbname")
-_KEY_VALUE = re.compile(
-    r"(?:^|\s)(host|hostaddr|port|dbname)\s*=\s*(?:'([^']*)'|(\S+))", re.IGNORECASE
-)
+_HOST = r"(?:[A-Za-z0-9.-]+|\[[0-9A-Fa-f:.]+\])"
+_URL_ADDRESS = re.compile(
+    rf"(?i:postgres(?:ql)?)://(?:[^@/?#\s]*@)?({_HOST})(?::([0-9]+))?/([A-Za-z0-9_.-]+)"
+)  # the WHOLE value: a scheme, a login with no ``@``, ``/``, ``?`` or ``#`` in it, a host, a port, ONE database name, nothing after
+_PAIR = re.compile(
+    r"([A-Za-z_][A-Za-z0-9_]*)=([A-Za-z0-9_.:/@+%,~-]+)"
+)  # one ``key=token`` of a key=value address
+_ADDRESS_VALUE = {
+    "host": re.compile(_HOST),
+    "hostaddr": re.compile(r"[A-Za-z0-9.:-]+"),
+    "port": re.compile(r"[0-9]+"),
+    "dbname": re.compile(r"[A-Za-z0-9_.-]+"),
+}
+_PASSWORD_KEY = re.compile(r"(?i)password|passwd|pwd")
 
 
 def _address_parts(value: str) -> str:
-    """Where ``value`` points, and nothing else: the host, port and database name of a URL (``urlsplit``) or of a ``key=value`` address (only the keys
-    ``host``, ``hostaddr``, ``port`` and ``dbname``), joined by a line break. No other part of ``value`` is read, so nothing that depends on a password
-    is in the result. A value that is neither gives ``"unparsed"``: all such values share one name (a second run is refused more often, never less)."""
-    parts: list[str] = []
-    if "://" in value:
-        try:
-            split = urlsplit(value)
-            parts = [split.hostname or "", str(split.port or ""), split.path]
-        except ValueError:
-            return "unparsed"
+    """The name of the database in ``value`` as the lock hashes it, or ``"unparsed"``. A STRICT ALLOWLIST: text is taken from ``value`` only when the
+    WHOLE value is (a) a URL ``postgres://`` or ``postgresql://`` with an optional login, a host (letters, digits, ``.``, ``-`` or a bracketed
+    IPv6), an optional ``:digits`` port and exactly one ``/name`` of letters, digits, ``_``, ``.``, ``-``, with nothing after it (no query, no
+    fragment, no second ``/``), or (b) space-separated ``key=token`` pairs, none with a password word in its key, where ``host``, ``hostaddr``, ``port``
+    and ``dbname`` (if present) match their own grammar. Only the host (in lower case), host address, port and database name are then used; the login
+    and every other pair are never read. Everything else gives ``"unparsed"``, so a value that holds a password where this reading could be fooled
+    shares one name with all such values (so whether a value is read can depend on the password's shape: a password with ``@``, ``/``, ``?``, ``#`` or
+    a space in a URL gives ``"unparsed"``, a plain one gives the address; the hashed text itself never holds a password text). THIS IS A MATCH ON SPELLING, NOT ON THE DATABASE: ``localhost`` and ``127.0.0.1``, a port written or left
+    out, ``host=`` and ``hostaddr=``, and a ``?host=`` in a URL query give different names for one database, and two runners on those are NOT
+    refused. A value with a password word in a key=value address is ``"unparsed"`` too (a password with a space could pose as an option)."""
+    found: dict[str, str] = {}
+    url = _URL_ADDRESS.fullmatch(value)
+    if url:
+        found = {"host": url.group(1).lower(), "port": url.group(2) or "", "dbname": url.group(3)}
     else:
-        found = {
-            m.group(1).lower(): m.group(2) or m.group(3) or "" for m in _KEY_VALUE.finditer(value)
-        }
-        parts = [found.get(key, "") for key in _ADDRESS_KEYS]
-    return "\n".join(parts) if any(parts) else "unparsed"
+        for word in value.split(" "):
+            pair = _PAIR.fullmatch(word)
+            if not pair or _PASSWORD_KEY.search(pair.group(1)):
+                return "unparsed"
+            key, token = pair.group(1).lower(), pair.group(2)
+            if key in _ADDRESS_VALUE:
+                if not _ADDRESS_VALUE[key].fullmatch(token):
+                    return "unparsed"
+                found[key] = token.lower() if key == "host" else token
+    if not found:
+        return "unparsed"
+    return "\n".join(found.get(key, "") for key in _ADDRESS_VALUE)
 
 
 def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
@@ -469,10 +499,16 @@ def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
             )
         _refuse_odd(name, "its value", value)
         bases.add(value)
-        for password in _password_texts(value):
+        decoded, plain = _password_texts(value)
+        bases.update(plain)
+        for password in decoded:
             for form in _decoded_forms(name, password):
                 bases.add(form)
                 bases |= _encoded_forms(form)
+        if len(bases) > MAX_SECRETS:
+            raise ValueError(
+                f"{name} is refused: it gives more than {MAX_SECRETS} texts to hide (a password written in many encoded layers). Use a plainer address."
+            )
     return tuple(sorted(bases, key=len, reverse=True))
 
 
@@ -512,8 +548,7 @@ def _masked(text: str, secrets: Sequence[str]) -> str:
     to ``head...tail`` is masked by its pieces beside ``...`` too (see ``_fragment_spans``). Every span is found in the ORIGINAL text and then
     all are cut out at once, so a short secret that sits inside a longer one cannot break the match of the longer one. More than
     ``MAX_FRAGMENT_HITS`` ``...`` replace the whole text (no honest line has that many; hiding only the first ``MAX_FRAGMENT_HITS`` would leave a
-    piece beside a later ``...`` readable). Cost with values of at most ``MAX_VALUE_CHARS`` characters: each ``...`` and each secret cost a scan of at
-    most the length of that secret."""
+    piece beside a later ``...`` readable). Cost: a line is scanned for each secret once, and each ``...`` costs one scan per secret of at most the length of that secret; (``...`` x secrets) above ``MAX_FRAGMENT_WORK`` replaces the whole line. A secret of one or two characters hides every such text in the line (garbling is the price of never leaving a short secret readable)."""
     chosen = tuple(v for v in secrets if v)
     if not chosen:
         return text
@@ -522,6 +557,8 @@ def _masked(text: str, secrets: Sequence[str]) -> str:
     )  # found once for the whole line
     if len(dots) > MAX_FRAGMENT_HITS:
         return f"{MASK} (line with more than {MAX_FRAGMENT_HITS} '...' replaced: it cannot be checked for pieces of a value)"
+    if len(dots) * len(chosen) > MAX_FRAGMENT_WORK:
+        return f"{MASK} (line with too many '...' for the number of values replaced: it cannot be checked for pieces of a value)"
     hit = bytearray(len(text))
     for value in chosen:
         marked = 0  # the text before this index is already marked for this value: each character is marked once
@@ -572,10 +609,11 @@ def _lock_dir() -> Path:
     return Path(tempfile.gettempdir())
 
 
+_NO_ACCESS = "this user may not open it (it belongs to another user, the temp folder is closed to this user, or the temp folder is read-only; give the run a temp folder of its own with TMPDIR)"
 _NOT_OPENED_BECAUSE = {
     errno.ELOOP: "it is a symbolic link",
-    errno.EACCES: "this user may not open it (it belongs to another user, the temp folder is closed to this user, or the temp folder is read-only; give the run a temp folder of its own with TMPDIR)",
-    errno.EPERM: "this user may not open it (it belongs to another user, the temp folder is closed to this user, or the temp folder is read-only; give the run a temp folder of its own with TMPDIR)",
+    errno.EACCES: _NO_ACCESS,
+    errno.EPERM: _NO_ACCESS,
     errno.EISDIR: "it is a folder",
     errno.ENOTDIR: "a part of its path is not a folder",
 }
@@ -614,9 +652,11 @@ def _one_run_per_database(values: Sequence[str]) -> Iterator[None]:
     message that names the cause when it belongs to another user, has a wider mode, is not a regular file, or has more than one hard link. A temp
     folder on a network file system whose ``flock`` fails is refused as "could not be locked": use a local ``TMPDIR``.
 
-    The file name holds the first 16 hex digits of a SHA-256 of the host, port and database name read from the values (``_address_parts``; the rest of a
-    value is never read, so no secret is hashed): two addresses that differ only in the password (or any other part) give one name. A value that is
-    not a URL or a ``key=value`` address with one of those keys shares one name with all such values, so the lock may refuse a run that could have gone on. A lock
+    The file name holds the first 16 hex digits of a SHA-256 of the host, port and database name that ``_address_parts`` reads from the values by a strict
+    grammar (nothing else of a value is read, so no secret is hashed). It is a best-effort match on SPELLING: one database written two ways
+    (``localhost`` and ``127.0.0.1``, a port written or left out, ``host=`` and ``hostaddr=``, a ``?host=`` in a URL query) gets two names and a second
+    runner on the other spelling is NOT refused. Values outside the grammar (anything with a password word in a key=value address, a URL with a query,
+    a second ``/``, or an ``@``, ``/``, ``?``, ``#`` or space in the password) share the name ``unparsed``, so such a second run is refused even on another database. A lock
     file that cannot be opened (another user's file) or locked for a reason other than "held by another run" is a ``RuntimeError`` with its own message."""
     digest = hashlib.sha256(
         "\0".join(sorted(_address_parts(v) for v in values)).encode()
