@@ -881,3 +881,4 @@ PULSE 2026-11-11T14:14:23Z 12 running
 PULSE 2026-11-11T14:20:23Z 14 running
 PULSE 2026-11-11T14:27:19Z 14 running
 PULSE 2026-11-11T14:28:23Z 15 running
+PULSE 2026-11-11T14:28:49Z 15 running; load 6.8 on 4 cores (over capacity: no new heavy runs started); builders: PR77 (F1-F4 done, F5/F6 reverted, mutants running), P3a-2 r12 (server tests running), Q8a-2 (3 commits, head 02068ebe, full run started), Q8a-1 fix batch (4 files changed), Q8c PR1 (setting up)
