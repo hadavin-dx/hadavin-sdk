@@ -2449,3 +2449,4 @@
 | BL-core-a18-w3-05 | reviews/PR86/round-w3-no-training.md F1-F3 | Minor | PR86 | self_hosted not enforced; per-host not per-route; bedrock_guardrail has no statement; track in P6a | OPEN | 2026-11-11 |
 | BL-core-a11a-w3-04 | reviews/PR77/round-w3-src.md F1 | Major | PR77 | redactor scans fold only, not fold_views/squeeze_views; Mc/Lm/Sk and Greek+U+0345 split a key (redaction, uncapped) | OPEN | 2026-11-11 |
 | BL-core-a11a-w3-05 | reviews/PR77/round-w3-src.md F2-F4 | Minor | PR77 | unclocked weight work on distinct text; Hangul line refused at 90000; overlapping multi-line block tail | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r16-s1 | reviews/P89/round-w2-r16-src-a.md s1 | Minor | PR89 | MAX_FRAGMENT_WORK counts pairs not characters; slow worst case, not a leak | OPEN | 2026-11-11 |
