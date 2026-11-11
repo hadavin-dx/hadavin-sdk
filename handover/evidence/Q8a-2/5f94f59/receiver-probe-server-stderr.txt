@@ -1,0 +1,91 @@
+=== head: server stderr during the socket probes: 4 tracebacks (2 AttributeError, 2 BrokenPipeError), 116 lines
+client ports named in stderr: 39920 39960 38536 38566 
+probe lines with those client ports:
+   correctly signed approval body (built as tests/test_p7_tick.py::_caack.py) -> connection closed / no status (0 bytes received)  [client port 39920]
+   Content-Length 100 with a 9-byte body, bad signature, client timeoufter 3s timeout]  [client port 39960] (client waited 3.0s)
+   correctly signed approval body (built as tests/test_p7_tick.py::_caack.py) -> connection closed / no status (0 bytes received)  [client port 38536]
+   Content-Length 100 with a 9-byte body, bad signature, client timeoufter 3s timeout]  [client port 38566] (client waited 3.0s)
+--- distinct traceback 1, first 15 lines, and its last line
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+AttributeError: 'NoneType' object has no attribute 'get_approval_request'
+--- distinct traceback 2, first 15 lines, and its last 5 lines
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+=== main: server stderr during the socket probes: 4 tracebacks (2 AttributeError, 2 BrokenPipeError), 124 lines
+client ports named in stderr: 47802 47826 50424 50438 
+probe lines with those client ports:
+   correctly signed approval body (built as tests/test_p7_tick.py::_caack.py) -> connection closed / no status (0 bytes received)  [client port 47802]
+   Content-Length 100 with a 9-byte body, bad signature, client timeoufter 3s timeout]  [client port 47826] (client waited 3.0s)
+   correctly signed approval body (built as tests/test_p7_tick.py::_caack.py) -> connection closed / no status (0 bytes received)  [client port 50424]
+   Content-Length 100 with a 9-byte body, bad signature, client timeoufter 3s timeout]  [client port 50438] (client waited 3.0s)
+--- distinct traceback 1, first 15 lines, and its last line
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+AttributeError: 'NoneType' object has no attribute 'get_approval_request'
+--- distinct traceback 2, first 15 lines, and its last 5 lines
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+=== signed-approval probe with the real app fixture (pytest -s): tracebacks on stderr head=0 main=0; on stdout head=0 main=0

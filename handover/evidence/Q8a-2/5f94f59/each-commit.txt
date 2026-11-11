@@ -1,0 +1,8 @@
+e5fbdae9 worktree HEAD=e5fbdae9fd78e2d340d099ec5caf01a00cb3c24d dirty=0
+imported /home/user/build/EV-Q8a2r2-e5fb/src/hadavin_sdk/__init__.py
+e5fbdae9 pytest rc=0 dur=43s last: 244 passed in 38.70s
+e5fbdae9 ruff check rc=0 last: All checks passed!
+5f94f598 worktree HEAD=5f94f5980306901e30c3acdc6a0c9c391f1339f4 dirty=0
+imported /home/user/build/EV-Q8a2-5f94f59/src/hadavin_sdk/__init__.py
+5f94f598 pytest rc=0 dur=42s last: 280 passed in 38.77s
+5f94f598 ruff check rc=0 last: All checks passed!
