@@ -674,7 +674,9 @@ def redact_text(
     is cleaned of NUL and lone surrogates last, so it always encodes.
 
     Passes (one pass = all patterns over one reading): the text 1 pass, or 2 when a run of hidden items stands between two
-    word characters; each other reading the same; at most 10 in all. The 6-second budget is checked before every pass.
+    word characters; each other reading the same; at most 10 in all, and at most 12 when an escape sequence ends in a letter
+    or digit (`ESC ( B`) so that the consuming reading (`hidden.strip_consuming`) differs from the other two (one pass each).
+    The 6-second budget is checked before every pass.
 
     The one choke point for input size. The cap is on the WORK, not only on the input: the text, the text after
     `neutralise`, and every view the second pass will scan must each be within `defaults.MAX_REDACT_CHARS`, else
