@@ -112,9 +112,9 @@ def test_a_suspect_line_loops_only_the_patterns_that_matched_it(monkeypatch):
     seen = []
     real = _Redactor._mask_in_place
 
-    def spy(self, body, folded, where, alike, only=None):
+    def spy(self, body, folded, where, alike, only=None, marks=False):
         seen.append(only)
-        return real(self, body, folded, where, alike, only=only)
+        return real(self, body, folded, where, alike, only=only, marks=marks)
 
     monkeypatch.setattr(_Redactor, "_mask_in_place", spy)
     assert redact("mail josé@example.com now").text == "mail <EMAIL_1> now"

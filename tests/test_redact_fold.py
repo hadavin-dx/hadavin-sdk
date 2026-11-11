@@ -765,8 +765,8 @@ def test_reg_1b_non_converging_rounds_leave_no_orphan_placeholder(monkeypatch):
     _old_tree_guard()
     real = _Redactor._mask_in_place
 
-    def wrapper(self, body, folded, where, alike, only=None):
-        out = real(self, body, folded, where, alike, only=only)
+    def wrapper(self, body, folded, where, alike, only=None, marks=False):
+        out = real(self, body, folded, where, alike, only=only, marks=marks)
         return (body if out is None else out) + "x"
 
     monkeypatch.setattr(_Redactor, "_mask_in_place", wrapper)
