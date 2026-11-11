@@ -1607,3 +1607,5 @@ DEFAULT: wait; nothing else changes on core/P3a-2.
 
 ## q-textnorm-two-prs (cloud, 2026-11-11 07:47Z)
 PR74 (core/P5a) and PR77 (core/P2d-1) both change `src/hadavin_sdk/guard/textnorm.py` (a byte-copy file with a pinned sha256 in `tests/fixtures/textnorm_manifest.json` and the CHANGELOG). PR77 adds `SPACING_CATEGORIES`, `fold_view`, `without_spacing_marks` and a weight memo; PR74 adds the scan-time budget (`_clock`, `deadline`). Whichever merges second will conflict, and both manifest hashes change. Plan unless you say otherwise: merge PR77 first (it is the redaction fix), then rebase PR74 and recompute its hash; PR74's docstring about Mc is being narrowed to match PR77's wording. Default if no answer: that order. Needs: your merge order.
+
+ANSWERED by ORDER 240 (07:50Z): PR77 first, then rebase PR74 onto merged main and recompute its hash and CHANGELOG entry. Cloud: PR74 builder keeps working on the w4 batch now (no rebase yet); the rebase starts after the lead merges PR77. Task: after the merge, one rebase builder for PR74 with a fresh evidence runner and reviewers on the rebased head (a new head voids evidence).
