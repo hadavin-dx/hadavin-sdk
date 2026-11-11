@@ -160,7 +160,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-          fetch-depth: 0  # gitleaks scans the whole history
+          fetch-depth: 0  # gitleaks scans the history reachable from the checked-out head; the ignore-list checks need every branch
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
           version: "0.13.6"
@@ -170,6 +170,9 @@ jobs:
           cache-suffix: "ci-security"
       - name: Install the scanners (locked)
         run: uv sync --locked --no-build --only-group scan
+      - name: System tools resolve outside the workspace
+        run: |
+          for c in sha256sum tar curl git grep date tr cut sort head mktemp rm touch; do p=$(command -v "$c") || exit 1; case "$p" in /*) ;; *) echo "$c is not a file: $p"; exit 1;; esac; case "$p" in "$GITHUB_WORKSPACE"/*) echo "$c resolves inside the workspace: $p"; exit 1;; esac; done
       - name: Dependencies with known vulnerabilities (every locked package, hashes required)
         run: |
           uv export --locked --all-extras --all-groups --no-emit-project --format requirements-txt -o "$RUNNER_TEMP/locked.txt"
@@ -220,13 +223,15 @@ jobs:
             rm -f "$gl_tmp"
           fi
           exit "$fail"
-      - name: Secrets in the whole history (gitleaks, checksum-verified binary)
+      - name: Secrets in the history of the checked-out head (gitleaks, checksum-verified binary)
         run: |
-          curl -sSfL --proto "=https" --tlsv1.2 -o "$RUNNER_TEMP/gitleaks.tgz" \
+          curl -sSfL --retry 5 --retry-all-errors --retry-delay 5 --connect-timeout 30 --proto "=https" --proto-redir "=https" --tlsv1.2 -o "$RUNNER_TEMP/gitleaks.tgz" \
             "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
           echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/gitleaks.tgz" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
-          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 --config .gitleaks.toml \
+          # scope: only commits reachable from the checked-out head (--log-opts=HEAD). Without it gitleaks scans every fetched
+          # ref (--all), so another branch's content (handover notes, backup branches) fails every pull request.
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 --config .gitleaks.toml --log-opts=HEAD \
             --report-format json --report-path "$RUNNER_TEMP/gl.json" . || {
             # the secret itself is redacted; print only where it is, so a false positive can be fingerprinted
             python3 -c 'import json,sys; [print(f["RuleID"], f["File"], f["StartLine"], f["Commit"][:10], f["Fingerprint"]) for f in json.load(open(sys.argv[1]))]' "$RUNNER_TEMP/gl.json"
@@ -234,7 +239,7 @@ jobs:
           }
       - name: Vulnerabilities, misconfigurations and secrets in the files (Trivy, checksum-verified binary)
         run: |
-          curl -sSfL --proto "=https" --tlsv1.2 -o "$RUNNER_TEMP/trivy.tgz" \
+          curl -sSfL --retry 5 --retry-all-errors --retry-delay 5 --connect-timeout 30 --proto "=https" --proto-redir "=https" --tlsv1.2 -o "$RUNNER_TEMP/trivy.tgz" \
             "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
           echo "${TRIVY_SHA256}  $RUNNER_TEMP/trivy.tgz" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/trivy.tgz" -C "$RUNNER_TEMP" trivy

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -22,6 +23,10 @@ def now() -> datetime:
 
 def new_id(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex}"
+
+
+# The shape of `new_id("run")`: a caller-chosen run id must have it (checked in `Runtime.handle`).
+RUN_ID_PATTERN = re.compile(r"run-[0-9a-f]{32}")
 
 
 def _no_floats(obj: Any, path: str = "$") -> None:

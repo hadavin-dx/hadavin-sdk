@@ -2,8 +2,8 @@
 # First allowlist: anchored on the file path AND on the whole finding
 # (regexTarget is the finding's secret, so each regex must match ALL of it: a real key block or any other value in that
 # file is still reported). It does not depend on a commit id, so a squash or rebase of the branch that adds the file
-# cannot invalidate it. The file it names is on another branch's history (a scanner test); CI scans every fetched ref, so
-# the entry is needed there even where the file is absent from this tree. `condition = "AND"` means the path AND a
+# cannot invalidate it. The file it names (a scanner test) may be absent from a given branch; the entry is harmless there.
+# `condition = "AND"` means the path AND a
 # regex must both match (checked: the same header lines in any other path are reported, and so is a real key block in
 # that path).
 [extend]
@@ -35,7 +35,7 @@ paths = ['''^handover/(reviews|tickets|evidence)/[^/]+\.md$''']
 # "identity_key". The name contains "key" and the value is 64 hex digits, so the entropy heuristic fires. Allowed: ONLY the
 # generic-api-key rule, ONLY in that file, ONLY when the whole finding is exactly 64 lowercase hex digits. Any other rule,
 # any other value shape (a real key, token or longer string) and every other path stay fully scanned. Not temporary: the
-# fixture is part of the product tests. CI scans every fetched ref, so this entry must be on main before the file is.
+# fixture is part of the product tests.
 [[allowlists]]
 description = "textnorm golden fixture: sha256 digests under identity_key (entropy heuristic only, exact 64-hex shape, one path)"
 condition = "AND"
