@@ -1,0 +1,4 @@
+sha=2f94c2b28df25bca9bb28d6a50d13f8c292c19c9 label=alone n=20 start=17:41:46
+run 1 perf-marked(27 tests) exit=0 secs=125 27 passed, 600 deselected in 124.58s (0:02:04)
+run 1 test_timing_fixture.py exit=0 secs=2 100 passed in 2.28s
+STOPPED BY ME at 17:44:05 after 1 complete iteration (and iteration 2's perf run cut) to keep the 45 min time box; one perf run takes about 125 s, so 20 would need about 42 min per condition.

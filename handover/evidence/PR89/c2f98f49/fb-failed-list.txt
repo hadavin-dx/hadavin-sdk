@@ -1,0 +1,42 @@
+FAILED tests/test_mutation_runner_keywords.py::test_a_default_call_passes_pytest_no_plugin_and_no_env_names
+FAILED tests/test_mutation_runner_keywords.py::test_the_second_layer_replaces_a_whole_slot_of_caller_text_that_holds_a_secret
+FAILED tests/test_mutation_runner_keywords.py::test_fuzz_every_output_field_holds_only_allowlisted_classes_and_caller_ids
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_fails_when_the_class_or_the_id_allowlist_is_switched_off
+FAILED tests/test_mutation_runner_keywords.py::test_a_pattern_or_an_empty_text_in_the_host_list_is_refused[*]
+FAILED tests/test_mutation_runner_keywords.py::test_a_pattern_or_an_empty_text_in_the_host_list_is_refused[]
+FAILED tests/test_mutation_runner_keywords.py::test_one_run_goes_through_the_real_address_check_the_real_lock_folder_and_the_allowlist
+FAILED tests/test_mutation_runner_keywords.py::test_the_refusals_come_in_the_order_the_docstring_gives
+FAILED tests/test_mutation_runner_keywords.py::test_a_test_id_that_holds_the_password_is_the_fixed_text_and_never_a_name_with_a_piece_cut_out
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a function name of the test file]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a piece of Python's exception names]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a piece of every test id]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a word of the runner's fixed texts (class)]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a word of the runner's fixed texts (expect)]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[one character]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[the usual default name]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[the word assert]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[two characters]
+FAILED tests/test_mutation_runner_keywords.py::test_a_name_of_python_itself_is_shown_whole_also_when_it_holds_the_password
+FAILED tests/test_mutation_runner_keywords.py::test_a_weak_password_in_a_real_run_gives_rows_that_are_whole_or_fixed_text
+FAILED tests/test_mutation_runner_keywords.py::test_a_bare_assert_line_shows_the_fixed_word_assert
+FAILED tests/test_mutation_runner_keywords.py::test_a_tests_entry_written_with_a_leading_dot_slash_still_shows_its_ids
+FAILED tests/test_mutation_runner_keywords.py::test_the_function_that_starts_a_child_checks_the_address_itself
+FAILED tests/test_mutation_runner_keywords.py::test_the_scheme_and_the_keys_are_lower_case_and_the_two_options_take_listed_values
+FAILED tests/test_mutation_runner_keywords.py::test_no_error_the_runner_raises_keeps_another_exception_or_child_text_in_its_chain
+FAILED tests/test_mutation_runner_keywords.py::test_the_error_of_a_failed_canary_copy_keeps_no_other_exception
+FAILED tests/test_mutation_runner_keywords.py::test_a_lock_folder_that_cannot_be_looked_at_is_the_documented_refusal_and_leaks_no_descriptor
+FAILED tests/test_mutation_runner_keywords.py::test_the_projection_argument_is_required_so_a_forgotten_one_cannot_show_child_text
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[failure-the unmutated copy does not pass its tests (exit code 1): Zork-more than the run end]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[failure-the unmutated copy does not pass its tests (exit code 1): KeyError: text-more than the run end]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[skip-the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']-not the caller's text]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[skip-the unmutated copy skipped 1 selected test(s): child text-not the fixed text with a list]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[skip-after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']-not the fixed text with a list]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[canary-the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']-not the fixed text with a list]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[canary-after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']-not the caller's text]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[canary-the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text-not the fixed text]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[canary-the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)-not the fixed text]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[id-tests/test_[REDACTED]::test_a-a marker inside a text]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[line-Key[REDACTED]-a marker inside a text]
+FAILED tests/test_mutation_runner_keywords.py::test_fuzz_with_weak_passwords_every_output_is_whole_caller_text_or_a_fixed_text
+FAILED tests/test_mutation_runner_keywords.py::test_the_weak_password_fuzz_fails_when_a_slot_is_cut_or_shown_with_the_password
+FAILED tests/test_mutation_runner_meta.py::test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets

@@ -1,0 +1,6 @@
+busy loops started (4, timeout 600 s each), pids 23777 23778 23779 23780
+sha=2f94c2b28df25bca9bb28d6a50d13f8c292c19c9 label=busy n=2 start=17:48:30
+run 1 perf-marked(27 tests) exit=1 secs=286 1 failed, 26 passed, 600 deselected in 284.58s (0:04:44)
+run 1 test_timing_fixture.py exit=0 secs=4 100 passed in 3.65s
+run 2 perf-marked(27 tests) exit=1 secs=207 3 failed, 24 passed, 600 deselected in 206.11s (0:03:26)
+run 2 test_timing_fixture.py: not run (loop cut by my 500 s limit)

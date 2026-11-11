@@ -1440,3 +1440,8 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a12db528 | P3a-2 builder (rev 3 frozen) | 17:17 | +60m | - | running | EV + reviewers |
 | ab671b67 | Q8a-1 fix batch 5 builder | 17:19 | +60m | - | running | one push |
 | a20e064e | Q8b fix batch 1 builder (be53718c) | 17:20 | +60m | - | running | EV + fresh reviewers |
+| 19:40Z | a2ad0a68 | BUILDER PR H WP2a-WP4 (resume) | start 19:40Z, end +60 min per package | state running | next: EV + reviewers after WP4 |
+| 19:40Z | a386d3cb | BUILDER P3a-2 commits 2-6 (resume) | start 19:40Z, box 60 min | running | next: delta EV + reviewers |
+| 19:40Z | a3cd3bd3 | BUILDER timing fix batch (12 items + contention blocker) | start 19:40Z, box 60 min | running | next: EV runner |
+| 19:40Z | ab53dd0a, aaa34d5c, a91f6252, a512e623, abd2ae26 | EVIDENCE Q8b bcb2bfec / Q8a-1 3f3d4b6c / Q8a-2 c19d87dc / Q8c-1 be531371 / PR89 4cc427b5 | start 19:40Z, box 50 min | running | next: collect, resolve |
+| 19:40Z | a177c8fb, a48f1be4, a1603ae6, a65bce81, a49fe95d, ac5f6973, a5e65fc9, ad97d511, afb18593, a0c514c3 | REVIEWERS (design + codebase) for the same five heads | start 19:40Z | running | next: save reports, egm-resolve per package |

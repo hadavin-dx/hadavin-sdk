@@ -1,0 +1,20 @@
+256:+    return ET.fromstring(xml_text)  # noqa: S314  # nosec B314
+353:+    (xfail) included. A run that selected a test which did not run proves nothing about it: a runner that forbids skips counts such a
+563:+    kmutant('judge: an expected failure is not counted as a skip', MU, '    return [_case_id(case) for case in root.iter("testcase") if case.find("skipped") is not None]', '    return [_case_id(case) for case in root.iter("testcase") if case.find("skipped") is not None and case.find("skipped").get("type") != "pytest.xfail"]', 'test_forbid_skips_counts_an_expected_failure_as_a_skip', 'an expected failure was not counted as a skip'),
+2060:+    body = "import pytest\n\n@pytest.mark.xfail\ndef test_a():\n    assert False\n"
+2063:+    assert _run(root, []) == [], "the xfail tree did not run without forbid_skips"
+3097:+    done = subprocess.run(  # noqa: S603  # our own interpreter, fixed arguments, no shell
+4026:+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+4039:+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+4061:+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+4077:+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+4099:+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+4114:+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+4129:+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+4155:+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+5119:+@pytest.mark.skipif(
+5190:+@pytest.mark.skipif(os.name == "nt", reason="the lock folder checks are POSIX")
+5640:+@pytest.mark.skipif(os.name == "nt", reason="POSIX lock folder")
+5691:+@pytest.mark.skipif(os.name == "nt", reason="POSIX lock folder")
+5714:+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+5741:+@pytest.mark.skipif(os.name == "nt", reason="POSIX owners, modes and links")
