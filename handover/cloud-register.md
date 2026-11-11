@@ -1421,3 +1421,6 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | B-Q8c1-b2 a5cfa82b | closed, pushed 6bdfadc1 | | | CLOSED |
 | EV-Q8c1-r3 + 2 reviewers (Q8c-1 6bdfadc1) | evidence + design + codebase | 16:51 | +40 min | RUNNING |
 | A-PRH-rev3 (Opus) | PR H ticket rev 3 = plan round 3 (last) | 16:51 | +40 min | RUNNING |
+| EV-Q8c1-r3 ab2e588a | evidence Q8c-1 6bdfadc1 | launched | +60 min | RUNNING |
+| REV-Q8c1-r3 design aec2bc5f / codebase a052087c | delta reviewers | launched | +40 min | RUNNING |
+| A-PRH-rev3 a2df9258 (Opus) | PR H ticket rev 3 | launched | +60 min | RUNNING |
