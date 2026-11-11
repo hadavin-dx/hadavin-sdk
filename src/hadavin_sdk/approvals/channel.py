@@ -77,7 +77,7 @@ def valid_callback_path(value: object) -> bool:
     """The one check of a kind's `callback_path` (the receiver and the channel contract test both call it): a str
     of the grammar above, whole, and at most `CALLBACK_PATH_MAX_CHARS` characters."""
     return (
-        isinstance(value, str)
+        type(value) is str  # exactly str: a subclass could bring its own comparison
         and len(value) <= CALLBACK_PATH_MAX_CHARS
         and CALLBACK_PATH.fullmatch(value) is not None
     )

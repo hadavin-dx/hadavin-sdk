@@ -121,6 +121,11 @@ STORED_KINDS = (
     "TENANT",
 )  # not UUID: a UUID is often a session or API token, so it is placeholdered but never stored
 
+# --- approval receiver (approvals/receiver.py, the stdlib server of the demo stage and local runs)
+# Seconds within which a whole callback request (first line, headers, body) must arrive; the tightest reply deadline of
+# an interactive channel is 3 seconds, so a sender that needs longer than this to deliver a few KB has already given up.
+RECEIVER_READ_TIMEOUT_S = 10.0
+
 # --- kubernetes kind: the Kubernetes source (KubernetesSettings). Decision: kind defaults stay here with every other default
 # (a repo rule keeps one set); when a second kind arrives each kind gets its own `<kind>_defaults.py` and the rule test
 # becomes syntax-tree based (K5-ITO outline in sources/kinds.py) -------------------

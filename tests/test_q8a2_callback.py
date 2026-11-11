@@ -2,14 +2,22 @@
 
 No database: a callback with a bad signature is refused before the store is touched. Every server listens on
 port 0 (any free port) and is closed in ``finally``. Names that the change adds or removes are looked up with
-``getattr`` so this file loads on the code before the change and each test fails there on its own assertion.
+``getattr`` so this file loads on the code before the change. Each test of the first section fails there on its
+own assertion; the second section holds what is true before and after.
 """
 
+import hashlib
+import hmac
 import http.client
+import inspect
+import json
 import re
+import socket
 import string
 import threading
+import time
 from contextlib import contextmanager
+from urllib.parse import urlencode
 
 import pytest
 
@@ -17,6 +25,7 @@ from hadavin_sdk.approvals import FakeChannel, receiver
 from hadavin_sdk.approvals.requests import Approvals
 from hadavin_sdk.approvals.slack_channel import SlackChannel
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.store.protocol import NotFound
 
 SIG = "sig" + "-q8a2"  # built from parts
 TOKEN = "xoxb" + "-q8a2-fake"  # built from parts
@@ -33,8 +42,14 @@ def _slack() -> SlackChannel:
 
 
 @contextmanager
-def _served(channel):
-    server = receiver.serve(_approvals(channel), port=0)
+def _served(channel, approvals=None, read_timeout_s=None):
+    extra = {}
+    if (
+        read_timeout_s is not None
+        and "read_timeout_s" in inspect.signature(receiver.serve).parameters
+    ):
+        extra["read_timeout_s"] = read_timeout_s  # the code before the change has no such bound
+    server = receiver.serve(approvals or _approvals(channel), port=0, **extra)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
@@ -50,13 +65,19 @@ UNSIGNED = b"payload=x"
 
 def _post(port: int, path: str, body: bytes | None = None) -> int:
     """POST to `path` exactly as written (no normalising) and return the status. A probe that expects 404 sends
-    no body: the server answers 404 without reading one."""
+    no body: the server answers 404 without reading one, and closing with unread data can reset the connection
+    before the client has read the status."""
     conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
     try:
         conn.request("POST", path, body=body)
         return conn.getresponse().status
     finally:
         conn.close()
+
+
+def _path_before_and_after(channel) -> str:
+    # before the change every kind was served on VENDOR
+    return getattr(channel, "callback_path", VENDOR)
 
 
 class FutureChannel(FakeChannel):
@@ -147,9 +168,71 @@ class _NamedChannel:
         self.name = name
 
 
-@pytest.mark.parametrize("name", ["", "two\nlines", "tab\there", 7, None], ids=repr)
-def test_the_refusal_names_the_class_when_the_channel_name_is_not_a_printable_word(name):
-    _assert_serve_refuses(_NamedChannel(name), f"channel _NamedChannel: {REFUSAL}")
+class _LoudStr(str):
+    """A str subclass that answers every text question with a line break."""
+
+    def __str__(self):
+        return "loud\nstr"
+
+    __repr__ = __str__
+
+
+@pytest.mark.parametrize(
+    ("name", "class_name", "shown"),
+    [
+        ("", "Plain", "Plain"),  # no usable name: the class name is shown
+        (7, "Plain", "Plain"),
+        (None, "Plain", "Plain"),
+        ("two\nlines", "Plain", "two?lines"),  # whichever was chosen gets the same one check
+        ("tab\there", "Plain", "tab?here"),
+        (None, "two\nlines", "two?lines"),
+        ("", "esc\x1b[31m", "esc?[31m"),
+        ("n" * 100, "Plain", "n" * 64),
+        (None, "C" * 100, "C" * 64),
+        (_LoudStr("quiet"), "Plain", "quiet"),
+    ],
+    ids=repr,
+)
+def test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source(
+    name, class_name, shown
+):
+    channel = type(class_name, (), {"name": name})()
+    server = None
+    try:
+        with pytest.raises(ConfigError) as refused:
+            server = receiver.serve(_approvals(channel), port=0)
+    finally:
+        if server is not None:
+            server.server_close()
+    message = str(refused.value)
+    assert message.startswith(f"channel {shown}: {REFUSAL}"), message
+    assert message.isprintable()
+
+
+def test_the_refusal_states_the_rule_for_a_callback_path():
+    with pytest.raises(ConfigError) as refused:
+        receiver.serve(_approvals(_with_path("/Teams_Hook")), port=0).server_close()
+    assert str(refused.value) == (
+        f"channel fake: {REFUSAL} (a `/`, then lower-case letters and digits in parts joined by `/` or `-`, "
+        "at most 64 characters)"
+    )
+
+
+class _EqualToAll(str):
+    def __eq__(self, other):
+        return True
+
+    __hash__ = str.__hash__
+
+
+def test_a_str_subclass_is_not_a_callback_path():
+    """A subclass could bring its own comparison and so match every request path."""
+    from hadavin_sdk.approvals import channel as channel_module
+
+    valid = getattr(channel_module, "valid_callback_path", None)
+    assert valid is not None
+    assert valid("/channel/actions") and not valid(_EqualToAll("/channel/actions"))
+    _assert_serve_refuses(_with_path(_EqualToAll("/channel/actions")), f"channel fake: {REFUSAL}")
 
 
 def test_the_path_is_read_once_when_the_server_starts():
@@ -160,9 +243,8 @@ def test_the_path_is_read_once_when_the_server_starts():
         channel.callback_path = "/moved/actions"
         assert _post(port, FutureChannel.callback_path, UNSIGNED) == 401
         assert _post(port, "/moved/actions") == 404
-        channel.callback_path = (
-            "not a path"  # and an invalid later value cannot stop a running server
-        )
+        # and an invalid later value cannot stop a running server
+        channel.callback_path = "not a path"
         assert _post(port, FutureChannel.callback_path, UNSIGNED) == 401
 
 
@@ -185,13 +267,10 @@ def test_a_double_slash_in_front_of_the_path_is_not_served(make):
     """The standard library server rewrites a request target that starts with `//` to one `/`; the receiver
     compares the target as it was sent, so the rewritten form does not reach the signature check."""
     channel = make()
-    path = getattr(
-        channel, "callback_path", VENDOR
-    )  # before the change every kind was served on VENDOR
+    path = _path_before_and_after(channel)
     with _served(channel) as port:
         for slashes in ("/", "//", "///"):  # two, three and four slashes in front
             assert _post(port, slashes + path) == 404, slashes
-            assert _post(port, slashes + path, UNSIGNED) == 404, slashes
         assert _post(port, path, UNSIGNED) == 401
 
 
@@ -250,14 +329,6 @@ def _valid_path(draws: _Draws, length: int | None = None) -> str:
     return "".join(chars)
 
 
-def test_the_generated_paths_cover_every_length_and_both_joiners():
-    draws = _Draws(8802)
-    paths = [_valid_path(draws) for _ in range(500)]
-    assert {len(path) for path in paths} == set(range(2, 65))
-    assert any("-" in path for path in paths) and any("/" in path[1:] for path in paths)
-    assert len(set(paths)) > 450
-
-
 def test_property_paths_of_the_grammar_are_accepted_up_to_64_characters():
     draws = _Draws(8802)
     for _ in range(500):
@@ -302,6 +373,15 @@ def test_property_one_foreign_character_empty_segment_or_missing_slash_is_refuse
 # ---- regression guards: true before and after the change ----------------------------------------------------------
 
 
+def test_the_generated_paths_cover_every_length_and_both_joiners():
+    """The generator itself (no product code): the 500 paths of the acceptance test cover what its name says."""
+    draws = _Draws(8802)
+    paths = [_valid_path(draws) for _ in range(500)]
+    assert {len(path) for path in paths} == set(range(2, 65))
+    assert any("-" in path for path in paths) and any("/" in path[1:] for path in paths)
+    assert len(set(paths)) > 450
+
+
 def test_the_vendor_kind_keeps_its_path():
     with _served(_slack()) as port:
         assert _post(port, VENDOR, UNSIGNED) == 401
@@ -326,3 +406,234 @@ def test_a_near_miss_of_a_path_is_not_served(make):
             )
             for path in near:
                 assert _post(port, path) == 404, path
+
+
+# ---- the receiver against hostile requests, over a real loopback socket (fix batch 2) -----------------------------
+# Each of these fails on the code before the fix batch; the first three groups also fail on main, where the same
+# faults existed.
+
+TRACEBACK = "Traceback (most recent call last)"
+
+
+def _raw(port: int, request: bytes, wait_s: float = 5.0) -> tuple[int | None, float]:
+    """Send bytes exactly as given and read until the server closes the connection. Returns the status of the
+    answer (None when the server closed without one, or did not close within `wait_s`) and the seconds it took."""
+    started = time.monotonic()
+    with socket.create_connection(("127.0.0.1", port), timeout=wait_s) as conn:
+        conn.sendall(request)
+        answer = b""
+        try:
+            while chunk := conn.recv(4096):
+                answer += chunk
+        except TimeoutError:
+            return None, time.monotonic() - started
+    taken = time.monotonic() - started
+    return (int(answer.split()[1]) if answer.startswith(b"HTTP/") else None), taken
+
+
+def _request(path: str, *headers: bytes, body: bytes = b"") -> bytes:
+    return b"\r\n".join([f"POST {path} HTTP/1.1".encode(), b"Host: x", *headers, b"", body])
+
+
+def _no_traceback(capsys) -> None:
+    time.sleep(
+        0.2
+    )  # a handler thread that failed prints after the client has been answered or dropped
+    assert TRACEBACK not in capsys.readouterr().err
+
+
+BAD_LENGTHS = [
+    (
+        b"Content-Length: " + b"9" * 4301,
+        413,
+    ),  # past Python's limit for converting digits to a number
+    (b"Content-Length: " + b"9" * 60000, 413),
+    (b"Content-Length: " + b"9" * 13, 413),
+    (
+        b"Content-Length: " + b"0" * 12 + b"5",
+        413,
+    ),  # 13 digits are not converted, whatever their value
+    (b"Content-Length: +5", 400),
+    (b"Content-Length: -5", 400),
+    (b"Content-Length: 5 5", 400),
+    (b"Content-Length: 5,5", 400),
+    (b"Content-Length: 0x5", 400),
+    (b"Content-Length: 5.0", 400),
+    (b"Content-Length:", 400),  # an empty value
+    (b"Content-Length: \xb2", 400),  # a digit that is not an ASCII digit (superscript two)
+    (b"Content-Length: \xd9\xa5", 400),  # the bytes of an Arabic-Indic five
+    (b"Content-Length: 9\r\nContent-Length: 9", 400),  # the header twice, same value
+    (b"Content-Length: 0\r\nContent-Length: 9", 400),
+]
+
+
+@pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+    header, status, capsys
+):
+    with _served(FakeChannel(SIG)) as port:
+        assert _raw(port, _request(NEUTRAL, header))[0] == status
+        assert _raw(port, _request("/other", header))[0] == 404  # the path is judged first
+        assert _raw(port, _request(NEUTRAL, b"Content-Length: 9", body=UNSIGNED))[0] == 401
+        _no_traceback(capsys)
+
+
+def test_the_body_length_reader_never_raises_and_accepts_only_plain_digits():
+    read = getattr(receiver, "body_length", None)
+    assert read is not None
+    assert read([]) == 0 and read(["0"]) == 0 and read(["65536"]) == 65536
+    assert read(["9" * 12]) == 999_999_999_999 and read(["9" * 13]) == receiver.MAX_BODY + 1
+    draws = _Draws(8804)
+    alphabet = "0123456789" * 3 + " +-.,xe_\t²٥５"
+    for _ in range(2000):
+        text = "".join(draws.pick(alphabet) for _ in range(draws.below(20)))
+        got = read([text])
+        plain = text != "" and all(c in "0123456789" for c in text)
+        assert (got is not None) == plain, text
+        if plain and len(text) <= 12:
+            assert got == int(text)
+        assert read([text, text]) is None
+
+
+def test_a_request_that_sends_less_than_it_announces_frees_its_thread_within_the_bound(capsys):
+    """Content-Length 100, nine bytes sent, connection held open: the server gives up after the read bound and
+    closes without an answer (what the standard library server does for a timeout)."""
+    with _served(FakeChannel(SIG), read_timeout_s=0.5) as port:
+        status, taken = _raw(
+            port, _request(NEUTRAL, b"Content-Length: 100", body=UNSIGNED), wait_s=4
+        )
+        assert status is None and taken < 2.5, (status, taken)
+        # the server still answers the next caller
+        assert _raw(port, _request(NEUTRAL, b"Content-Length: 9", body=UNSIGNED))[0] == 401
+        _no_traceback(capsys)
+
+
+@pytest.mark.parametrize(
+    "start",
+    [b"POST /chan", b"POST /channel/actions HTTP/1.1\r\nHost: x\r\nContent-Le"],
+    ids=["first line", "headers"],
+)
+def test_a_request_that_arrives_too_slowly_is_dropped_at_the_bound_however_it_is_sent(
+    start, capsys
+):
+    """The bound is for the whole request: a sender that keeps the connection alive with one byte every 0.2
+    seconds is dropped at the same moment as one that sends nothing more."""
+    with _served(FakeChannel(SIG), read_timeout_s=0.6) as port:
+        started = time.monotonic()
+        with socket.create_connection(("127.0.0.1", port), timeout=5) as conn:
+            conn.sendall(start)
+            closed = False
+            for _ in range(20):  # at most 4 seconds of dripping
+                time.sleep(0.2)
+                try:
+                    conn.sendall(b"a")
+                    conn.settimeout(0.01)
+                    try:
+                        closed = conn.recv(1) == b""
+                    except TimeoutError:
+                        closed = False
+                except ConnectionError:
+                    closed = True
+                if closed:
+                    break
+        assert closed and time.monotonic() - started < 2.5
+        _no_traceback(capsys)
+
+
+def test_a_caller_that_leaves_before_the_answer_causes_no_traceback(capsys):
+    """Content-Length 100, nine bytes, then the caller resets the connection: the answer cannot be written."""
+    with _served(FakeChannel(SIG), read_timeout_s=3) as port:
+        for _ in range(5):
+            conn = socket.create_connection(("127.0.0.1", port), timeout=5)
+            conn.sendall(_request(NEUTRAL, b"Content-Length: 100", body=UNSIGNED))
+            time.sleep(0.05)
+            # linger 0: closing sends a reset, so the server's write fails
+            conn.setsockopt(
+                socket.SOL_SOCKET, socket.SO_LINGER, b"\x01\x00\x00\x00\x00\x00\x00\x00"
+            )
+            conn.close()
+        time.sleep(0.3)
+        assert _raw(port, _request(NEUTRAL, b"Content-Length: 9", body=UNSIGNED))[0] == 401
+        _no_traceback(capsys)
+
+
+def _signed(secret: str = SIG) -> tuple[list[bytes], bytes]:
+    """A correctly signed click for the fake kind, for an approval that does not exist (made-up ids)."""
+    value = "apr-q8a2|" + "0" * 64 + "|0|approve"
+    body = urlencode(
+        {"payload": json.dumps({"user": {"id": "user:a"}, "actions": [{"value": value}]})}
+    ).encode()
+    ts = str(int(time.time()))
+    sig = hmac.new(secret.encode(), f"v0:{ts}:".encode() + body, hashlib.sha256).hexdigest()
+    headers = [
+        b"X-Hadavin-Request-Timestamp: " + ts.encode(),
+        b"X-Hadavin-Signature: v0=" + sig.encode(),
+        b"Content-Length: " + str(len(body)).encode(),
+    ]
+    return headers, body
+
+
+class _Recording:
+    """Stands where the approvals object stands: the real channel checks the signature, and every verified
+    click is counted and then reported as unknown or as a failure of the store."""
+
+    def __init__(self, channel, failure):
+        self.channel, self.failure, self.verified = channel, failure, 0
+
+    def receive(self, headers, body, *, record_only=False):
+        if self.channel.parse_decision(headers, body, time.time()) is None:
+            return False, "bad_signature"
+        self.verified += 1
+        raise self.failure
+
+
+def test_a_failure_while_a_signed_click_is_recorded_is_answered_500_without_a_traceback(capsys):
+    channel = FakeChannel(SIG)
+    headers, body = _signed()
+    for approvals in (_approvals(channel), _Recording(channel, RuntimeError("store is down"))):
+        with _served(channel, approvals) as port:  # `_approvals` has no store at all
+            status, _ = _raw(port, _request(_path_before_and_after(channel), *headers, body=body))
+            assert status == 500
+            _no_traceback(capsys)
+    assert approvals.verified == 1
+
+
+def test_a_correctly_signed_click_on_a_doubled_slash_is_not_handled():
+    """The real change of comparing the path as written: before, a correctly SIGNED request to `//<path>` was
+    handled like one to `<path>` (the standard library had already rewritten it). Now it is answered 404 and the
+    click is never looked at."""
+    channel = FakeChannel(SIG)
+    approvals = _Recording(channel, NotFound("no such approval"))
+    path = _path_before_and_after(channel)
+    headers, body = _signed()
+    with _served(channel, approvals) as port:
+        assert _raw(port, _request(path, *headers, body=body))[0] == 200
+        assert approvals.verified == 1
+        wrong, _ = _signed("another" + "-secret")
+        assert _raw(port, _request(path, *wrong, body=body))[0] == 401
+        assert approvals.verified == 1
+        assert _raw(port, _request("/" + path, b"Content-Length: 0"))[0] == 404
+        assert _raw(port, _request("/" + path, *headers, body=body))[0] in (
+            404,
+            None,
+        )  # unread body: maybe a reset
+        assert approvals.verified == 1
+
+
+@pytest.mark.parametrize(
+    ("separator", "status"),
+    [(b"\t", 401), (b"\xa0", 401), (b"\x0b", 401), (b"\x1c", 401), (b"  ", 401)],
+    ids=["tab", "no-break space", "vertical tab", "file separator", "two spaces"],
+)
+def test_pinned_other_white_space_between_the_words_of_the_request_line_is_accepted(
+    separator, status
+):
+    """Recorded, not chosen: the standard library splits the first line of a request on any white space (Python's
+    `str.split`), and the receiver takes the second word. So these lines reach the signature check, as they did
+    before this change. A proxy in front that routes by path may read such a line differently: to be looked at
+    when the hosting is decided."""
+    channel = FakeChannel(SIG)
+    line = separator.join([b"POST", _path_before_and_after(channel).encode(), b"HTTP/1.1"])
+    request = b"\r\n".join([line, b"Host: x", b"Content-Length: 9", b"", UNSIGNED])
+    with _served(channel) as port:
+        assert _raw(port, request)[0] == status

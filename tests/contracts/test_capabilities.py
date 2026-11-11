@@ -155,9 +155,8 @@ def test_channel_names_its_callback_path(channel_factory):
     """Every channel kind names the one URL path the receiver answers for it (no fallback path exists)."""
     from hadavin_sdk.approvals import channel as channel_module
 
-    valid = getattr(
-        channel_module, "valid_callback_path", None
-    )  # grammar and length, as the receiver checks
+    # grammar and length, as the receiver checks
+    valid = getattr(channel_module, "valid_callback_path", None)
     assert valid is not None
     path = getattr(channel_factory(SIG), "callback_path", None)
     assert valid(path), path
