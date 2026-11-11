@@ -1457,3 +1457,6 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a2a2c707 | PR H resume builder (92 pairs, T5, WP3, WP4) | start 22:06Z, 90 min | RUNNING | collect -> snapshot -> EV + 2 reviewers |
 | a19633e6 | P3a-2 resume builder (3b) | start 22:18Z, 90 min | RUNNING | collect -> snapshot -> EV + 2 reviewers |
 | aacde198 | Q8b fix batch 3 builder | start 22:20Z, 90 min | RUNNING | collect -> snapshot -> EV + 2 reviewers (round 4) |
+| ab548440 | EV Q8a-1 4ccb4f9a | start 22:21Z, 50 min | RUNNING | read RESULTS.md |
+| a7b98338 | design review Q8a-1 r7 | start 22:21Z | RUNNING | save report, resolve |
+| a215ed18 | codebase review Q8a-1 r7 | start 22:21Z | RUNNING | save report, resolve |
