@@ -32,6 +32,7 @@ MIGRATION_TEST_FILES = [
     "tests/test_migration_compare.py",
     "tests/test_migration_verify.py",
     "tests/test_migration_verify_pg.py",
+    "tests/test_migration_matrix.py",
 ]
 
 
