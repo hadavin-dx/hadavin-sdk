@@ -1738,3 +1738,6 @@ Held back by gitleaks in this pass: none. Still unpushed from the earlier pass: 
 
 ## Q-2026-11-11-pr89-password-shapes
 - With the strict address grammar in PR89, a test-database address written as key=value pairs with a password, or a URL whose password contains @ / ? #, is refused by the mutation runner. Safe default taken: keep refusing and document it. Owner decision: is that acceptable for demo repositories, or must the grammar read those shapes?
+
+## Note 2026-11-11: older evidence folder also flagged by gitleaks
+- handover/evidence/P3a-2/ef2adc7-cloud/ (committed by an EARLIER session, commit fbca253c) holds 135 strings gitleaks flags (test-made credentials in raw logs). Same class as my own slip above; not touched (existing history; owner decision together with the handover-branch question).
