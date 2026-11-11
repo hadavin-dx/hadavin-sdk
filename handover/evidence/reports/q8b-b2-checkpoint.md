@@ -1,3 +1,5 @@
-# Q8b batch 2 checkpoint (builder, Sonnet 5.5)
-Start: 2026-11-11, worktree /home/user/build/B-Q8b-b2, base bcb2bfec.
-Checkpoint 1 (~30 min): done: probes confirm the 12 items on bcb2bfec; redact.py changed (guarded address pattern without a length bound, value tail words, passphrase, Bearer/Authorization keyed values, shared KEY_PREFIX_MAX), gate.py link patterns stop before a glued key, channel.py whole_assignment_values removed, requests.py plan suffix appended after cleaning, shadow card label. Next: update pinned tests, write new tests + mutants, fail-before run on bcb2bfec src, CHANGELOG test, lint, full pytest via heavy.sh, commit and push. Blockers: none. Commit: not yet.
+# Q8b batch 2 checkpoint 2 (2026-11-11 ~21:58Z)
+Done: issues 1-7, 9-12 in code and tests (tests/test_q8b_batch2.py, 19 tests; 15 fail on bcb2bfec, 4 pass there by design); mutants 52 of 52 good (M22 dropped: redundant now); ruff, format, bandit clean; Q8b+k5+k1b tests 7269 passed (before last test edits).
+Next: full suite (queued in heavy.sh slot, log /home/user/build/evidence-raw/q8b-b2/full.log), perf step, final report.
+Blockers: gitleaks is not installed here (not run). n1 (record-walk key names dbpass etc.) not fixed: needs lead decision (over-masks bypass/compass/oauth).
+Commit: see push below.
