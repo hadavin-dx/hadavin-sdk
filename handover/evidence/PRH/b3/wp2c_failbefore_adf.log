@@ -1,0 +1,35 @@
+....F.                                                                   [100%]
+=================================== FAILURES ===================================
+______________________________ test_no_step_back _______________________________
+
+    def test_no_step_back():
+        """Everything main masks, the branch masks (fixture recorded from main, section 5.1), on every path, with the
+        direct callers (`redact()`) included; except the pairs of `ACCIDENTAL_PAIRS` (see the comment above), which are
+        recomputed here and must equal the fixture exactly."""
+        res = _results()
+        verdicts = _main_verdicts()
+        worse: list[str] = []
+        accidental: dict[str, list[str]] = {"plain_not_masked": [], "no_whole_plain_reading": []}
+        for case in res["cases"]:
+            paths = rec.PATHS_FOR[case.kind] + (("direct",) if case.kind != "handed" else ())
+            bits = verdicts[case.id]
+            assert len(bits) == len(paths), case.id
+            for path, bit in zip(paths, bits, strict=True):
+                if bit != "1" or res["masked"][case.id][path] or case.id in NO_STEP_BACK_EXCEPTIONS:
+                    continue
+                label = f"{case.id} [{path}]"
+                if _plain_masked(case, path):
+                    worse.append(label)
+                elif _plain_readings(case, path):
+                    accidental["plain_not_masked"].append(label)
+                else:
+                    accidental["no_whole_plain_reading"].append(label)
+>       assert not worse, f"{len(worse)} masked on main and not on the branch, first: {worse[:8]}"
+E       AssertionError: 358 masked on main and not on the branch, first: ['s|key|r1b|sep [untrusted]', 's|key|r1b|sep [tool]', 's|key|r1b|sep [error]', 's|key|r1b|sep [head]', 's|key|r1b|sep [card]', 's|key|r1b|sep [value]', 's|key|r1b|sep [direct]', 's|key|r90|o5 [card]']
+E       assert not ['s|key|r1b|sep [untrusted]', 's|key|r1b|sep [tool]', 's|key|r1b|sep [error]', 's|key|r1b|sep [head]', 's|key|r1b|sep [card]', 's|key|r1b|sep [value]', ...]
+
+tests/test_prh_contract.py:462: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_prh_contract.py::test_no_step_back - AssertionError: 358 ma...
+1 failed, 5 passed, 50 deselected in 38.59s
+rc=1
