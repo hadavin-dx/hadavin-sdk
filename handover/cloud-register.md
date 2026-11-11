@@ -1271,3 +1271,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-P77 ab49c9d1 | 17 min | full suite through heavy.sh 15 min in; 9 probe/fail-before files already written | on track |
 | B-Q8a2 fix 1 a0472549 | 22 min | full suite 8.5 min in | on track |
 | EV-Q8a1-r3, EV-Q8c1, B-Q8a1 fix 3, R-P77 codebase, R-Q8c1 x2 | 3-15 min | queued or reading | on track |
+| R-P77-design ac9534ea | egm:egm-zoom-out (Fable) PLAN review of D-017: redaction design before round 8 (canonicalise-then-match vs more pattern readings vs small separate fix) | 15:25Z | +30m | 15:25Z | running | save in full; ticket author for round 8; then ONE builder |

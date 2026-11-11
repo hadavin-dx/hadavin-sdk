@@ -1,0 +1,89 @@
+Fail-before: clean origin/main 2a8c2aac + ONLY the branch's tests/policy_mutants.py, tests/test_policy_engine.py, tests/test_policy_guard.py,
+tests/fixtures/policy_sources_2026-11-11.txt and tools/policy_page.py (the three src files and docs are origin/main's).
+Column 'data marker' is a text match made by code, not a judgement: LACK-OF-DATA = every 'E' line of the failure that states a cause
+contains 'no POLICY in', 'has no POLICY' or 'is missing'; MIXED = some E line contains one of those and the failure text also holds other content worth reading; OTHER = no such text.
+Counts: {'passed': 17, 'LACK-OF-DATA': 52, 'MIXED': 13, 'OTHER': 0}
+
+result | test | first assertion line (cut at 600) | data marker
+FAILED | test_every_kind_is_declared_pending_or_holds_no_identity | E   AssertionError: assert ['kind secret... dated entry'] == [] | MIXED
+PASSED | test_plant_a_new_kind_on_no_list_is_caught | | 
+PASSED | test_plant_a_declared_kind_left_on_the_pending_list_is_caught | | 
+PASSED | test_plant_an_overdue_pending_kind_is_caught | | 
+FAILED | test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/actions/secrets_vault.py] | E   AssertionError: assert ['no POLICY i...ets_vault.py'] == [] | MIXED
+FAILED | test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/audit/signer_vault.py] | E   AssertionError: assert ['no POLICY i...ner_vault.py'] == [] | MIXED
+FAILED | test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/sources/kubernetes.py] | E   AssertionError: assert ['no POLICY i...ubernetes.py'] == [] | MIXED
+PASSED | test_every_declared_kind_module_has_a_call_shape | | 
+PASSED | test_the_extracted_requests_are_the_ones_the_ticket_lists | | 
+FAILED | test_plant_a_new_request_with_no_grant_is_caught | E   AssertionError: reported ['no POLICY in src/hadavin_sdk/actions/secrets_vault.py'], expected ["src/hadavin_sdk/actions/secrets_vault.py:199: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"] | MIXED
+FAILED | test_plant_a_grant_whose_request_was_deleted_is_caught | E   AssertionError: reported ['no POLICY in src/hadavin_sdk/audit/signer_vault.py'], expected ["src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call"] | MIXED
+FAILED | test_plant_a_request_that_is_not_a_literal_is_caught | E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:199: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list', 'no POLICY in src/hadavin_sdk/actions/secrets_vault.py'], expected ['src/hadavin_sdk/actions/secrets_vault.py:199: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list'] | MIXED
+FAILED | test_plant_a_path_built_by_a_call_is_not_foldable_and_is_caught | E   AssertionError: assert (2 == 1) | MIXED
+PASSED | test_plant_a_banned_indirect_call_is_caught[getattr(p, name)('GET', 'sys/mounts')-banned `getattr` with a name that is not a literal] | | 
+PASSED | test_plant_a_banned_indirect_call_is_caught[operator.methodcaller('authed', 'GET', 'sys/mounts')(p)-banned indirect call `methodcaller`] | | 
+PASSED | test_plant_a_banned_indirect_call_is_caught[p.__getattribute__('authed')-banned indirect call `__getattribute__`] | | 
+PASSED | test_plant_a_banned_indirect_call_is_caught[p.meta.client.get_waiter('x')-banned indirect call `.meta.client`] | | 
+PASSED | test_plant_a_banned_indirect_call_is_caught[p._make_api_call('GetSecretValue', {})-banned indirect call `_make_api_call`] | | 
+FAILED | test_plant_a_sink_taken_as_a_value_is_caught | E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:199: `.authed` is taken as a value, not called: the request it would send cannot be read', 'no POLICY in src/hadavin_sdk/actions/secrets_vault.py'], expected ['src/hadavin_sdk/actions/secrets_vault.py:199: `.authed` is taken as a value, not called: the request it would send cannot be read'] | MIXED
+FAILED | test_plant_a_raw_http_request_outside_the_one_sender_is_caught | E   AssertionError: reported ['src/hadavin_sdk/audit/signer_vault.py:85: raw HTTP call `Request` outside any allowed function', 'no POLICY in src/hadavin_sdk/audit/signer_vault.py'], expected ['src/hadavin_sdk/audit/signer_vault.py:85: raw HTTP call `Request` outside any allowed function'] | MIXED
+FAILED | test_plant_a_stale_allowlist_line_is_caught | E   AssertionError: assert (3 == 6) | MIXED
+PASSED | test_plant_an_allowlisted_line_that_stops_passing_its_parameter_is_caught | | 
+FAILED | test_a_request_named_only_in_a_docstring_changes_nothing | E   AssertionError: assert ['no POLICY i...ets_vault.py'] == [] | MIXED
+FAILED | test_plant_a_new_kubernetes_operation_is_caught | E   AssertionError: reported ['no POLICY in src/hadavin_sdk/sources/kubernetes.py'], expected ["src/hadavin_sdk/sources/kubernetes.py:355: request ('k8s.list_secrets',) has no grant and no free entry in POLICY"] | MIXED
+PASSED | test_template_folds_only_names_and_attributes | | 
+FAILED | test_kubernetes_declared_operations_equal_the_bound_operation_ids | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_each_kubernetes_grant_is_the_verb_and_resource_of_its_path | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_the_kubernetes_never_list_equals_what_the_code_refuses_at_start_up | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_the_generated_role_passes_the_kinds_own_read_only_rule | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra0-write verb patch] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra1-access to pods/exec] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra2-read access to secrets] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_the_three_literals_break_no_data_rule | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py | LACK-OF-DATA
+FAILED | test_plant_d1_a_wildcard_in_a_permission_name_is_caught | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py | LACK-OF-DATA
+FAILED | test_plant_d1_a_wildcard_resource_with_no_bound_is_caught | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py | LACK-OF-DATA
+FAILED | test_d2_every_field_of_a_resource_is_a_setting_of_the_kind | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_plant_d2_a_field_that_is_no_setting_is_caught | E   AssertionError: no POLICY in src/hadavin_sdk/audit/signer_vault.py | LACK-OF-DATA
+FAILED | test_plant_d3_an_empty_reason_is_caught | E   AssertionError: no POLICY in src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_plant_d4_a_grant_that_names_no_call_is_caught | E   AssertionError: no POLICY in src/hadavin_sdk/audit/signer_vault.py | LACK-OF-DATA
+FAILED | test_plant_d5_a_never_action_that_another_kind_needs_is_caught | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_plant_a_grant_id_used_by_two_kinds_is_caught | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_plant_d6_a_long_lived_credential_with_no_exception_is_caught | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py | LACK-OF-DATA
+PASSED | test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run[POLICY = dict(platform='vault')] | | 
+PASSED | test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run[POLICY = {'platform': PLATFORM}] | | 
+PASSED | test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run[POLICY = {**BASE}] | | 
+FAILED | test_plant_d7_unknown_keys_platform_and_never_type_are_refused | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py | LACK-OF-DATA
+PASSED | test_a_module_with_no_policy_loads_as_none | | 
+FAILED | test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_pr1_grants_are_all_verified_with_no_unverified_claim | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_plant_an_unverified_grant_with_no_pending_entry_is_caught | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_plant_a_source_id_that_does_not_resolve_is_caught | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_plant_a_url_or_host_in_verified_is_refused[https://developer.hashicorp.com/vault] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py | LACK-OF-DATA
+FAILED | test_plant_a_url_or_host_in_verified_is_refused[developer.hashicorp.com] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py | LACK-OF-DATA
+FAILED | test_plant_a_url_or_host_in_verified_is_refused[v-kv] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py | LACK-OF-DATA
+FAILED | test_plant_a_url_or_host_in_verified_is_refused[] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py | LACK-OF-DATA
+FAILED | test_plant_no_copy_ready_text_for_a_kind_with_an_unverified_grant_or_claim | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+PASSED | test_each_grammar_is_the_settings_own_pattern | | 
+FAILED | test_vault_text_in_page_mode_and_with_values | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_an_empty_vault_prefix_is_refused_and_the_page_says_so_first | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_each_vault_grammar_refuses_what_is_not_a_plain_name[*] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_each_vault_grammar_refuses_what_is_not_a_plain_name[a*] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_each_vault_grammar_refuses_what_is_not_a_plain_name[{mount}] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_each_vault_grammar_refuses_what_is_not_a_plain_name[a b] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_each_vault_grammar_refuses_what_is_not_a_plain_name[ a] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_each_vault_grammar_refuses_what_is_not_a_plain_name[a\n] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_each_vault_grammar_refuses_what_is_not_a_plain_name[] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_each_vault_grammar_refuses_what_is_not_a_plain_name[..] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_each_vault_grammar_refuses_what_is_not_a_plain_name[a/../b] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_each_vault_grammar_refuses_what_is_not_a_plain_name[a/] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[*] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[Shop] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[a b] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[{namespaces}] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[shop,] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[-a] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[a_b] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[] | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_a_missing_an_unused_and_a_non_text_value_are_refused | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_kubernetes_page_mode_keeps_the_placeholders | E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py | LACK-OF-DATA
+FAILED | test_the_committed_page_equals_what_the_data_gives | E   AssertionError: docs/least-privilege-policies.md is missing: run `python tools/policy_page.py --write` | LACK-OF-DATA
+FAILED | test_the_page_states_its_limits_and_offers_text_for_the_three_kinds | E   tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py | LACK-OF-DATA
+FAILED | test_plant_a_page_that_differs_from_the_data_fails_the_check | E   tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py | LACK-OF-DATA
