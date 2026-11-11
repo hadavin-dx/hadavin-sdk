@@ -6203,8 +6203,14 @@ def test_the_order_of_the_bare_string_guards_is_the_one_the_docstring_gives(tmp_
     root = _tree(tmp_path, {CORE_TEST: PASSES})
     bare = "X"  # one string, not a list of names
     # a bad path next to a bare string for ``only`` is a TypeError (the three guards come before the path check) ...
-    with pytest.raises(TypeError, match="only is a sequence"):
+    try:
         run_mutants(root, [FLIP], ["../x"], only="flip", extra_dirs=(), timeout=60)
+    except ValueError as exc:
+        raise AssertionError(f"the path check came before the guard of only: {exc}") from exc
+    except TypeError as exc:
+        assert "only is a sequence" in str(exc), exc
+    else:
+        raise AssertionError("a bare string for only was not refused")
     # ... and next to a bare string for ``pass_env`` it is the ValueError of the path (that guard is in its own, later refusal)
     with pytest.raises(ValueError, match="path escapes its tree"):
         run_mutants(root, [FLIP], ["../x"], pass_env=bare, extra_dirs=(), timeout=60)
