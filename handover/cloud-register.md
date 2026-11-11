@@ -1171,7 +1171,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | R-Q8a-plan a126a1f8, a5ec89be | egm design + implementation-readiness (Fable) plan review r1 of tickets/Q8a | 13:44Z | +15m | 13:44Z | CLOSED saved reviews/Q8a/plan-r1-summary.md | save reviews/Q8a/, resolve, then ONE builder |
 | R-Q8a1-r2 a62ab99a | egm impl-readiness (Fable) plan review r2 ticket Q8a-1 | 13:51Z | +15m | 13:51Z | CLOSED saved reviews/Q8a/plan-r2.md; errata rev 3 | if READY start ONE builder |
 | B-flaky a6e5db57 | builder (Fable) flaky timing harness test on main, branch core/fix-timing-harness-flake, pg 56040 | 13:51Z | +60m | 13:51Z | running | evidence + review |
-| R-P3a2-r11 a2b6f315 (design CLOSED, saved), a573bc87 | egm design + codebase (Fable) result review round 11 of core/P3a-2-rewritten 8382bdd (snapshot p3a2-r11-8382bdd) | 13:51Z | +25m | 13:51Z | codebase reviewer still running | save reviews/P3a-2/, ledger; evidence run still needed |
+| R-P3a2-r11 a2b6f315, a573bc87 | both CLOSED, saved reviews/P3a-2/r11-*.md | | | | closed | |
 | R-P85main a470bfd9 | egm codebase (Fable) review of InvalidRunId code mapping on core/P5b2-main 3b9617e4 | 13:51Z | +10m | 13:51Z | CLOSED saved reviews/PR85/p5b2-main-delta-review.md | save reviews/PR85/ |
 | EV-Q8a2 a795f178 | EVIDENCE RUNNER (Fable) dry run of guard pattern on main | 13:51Z | +20m | 13:51Z | CLOSED evidence/Q8a-2/dryrun-2026-11-11.md | write ticket Q8a-2 from the hit list |
 | A-Q8b a123e38f | ticket author (Fable) Q8b partial-mask + card redaction (F5, F6) | 13:51Z | +25m | 13:51Z | running | plan review, then builder |

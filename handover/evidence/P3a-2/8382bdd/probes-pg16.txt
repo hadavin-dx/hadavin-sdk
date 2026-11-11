@@ -1,0 +1,22 @@
+server: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+encoding/locale (datname|encoding|datcollate|datctype): postgres|UTF8|C.UTF-8|C.UTF-8
+--- probe (a) ---
+CREATE FUNCTION f() RETURNS int LANGUAGE sql RETURN 1;
+CREATE FUNCTION
+SELECT prosrc, prosrc IS NULL AS prosrc_is_null, length(prosrc) AS prosrc_length, prosqlbody IS NOT NULL AS prosqlbody_is_not_null, pg_get_function_sqlbody(oid) FROM pg_proc WHERE proname = 'f' AND pronamespace = 'public'::regnamespace;
+-[ RECORD 1 ]-----------+---------
+prosrc                  | 
+prosrc_is_null          | f
+prosrc_length           | 0
+prosqlbody_is_not_null  | t
+pg_get_function_sqlbody | RETURN 1
+
+psql rc=0
+--- probe (b) ---
+SELECT md5('a' || '{x}'), md5('a{x}' || '');
+               md5                |               md5                
+----------------------------------+----------------------------------
+ 40d5bb449f14dcad424ea6990eb88efc | 40d5bb449f14dcad424ea6990eb88efc
+(1 row)
+
+psql rc=0
