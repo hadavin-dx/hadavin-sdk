@@ -2526,3 +2526,10 @@
 | BL-core-a11a-w6-t02 | same, M4 | Major (gate cannot pass) | PR77 249a0a59 | 8 mutants with `old` text matching 0 times (W4, W5, W11, W16, W19, mutant 6, N9, N14) | OPEN (builder) | 2026-11-11 |
 | BL-core-a11a-w6-t03 | same, Minors m1-m9, Nits | Minor | PR77 249a0a59 | W30 pin, W33 equivalent, W29, prefix x suffix product, window size 4, \x1d-\x1f/NEL beside separators, OSC and CSI-intermediate shapes, multi-sequence lines, test 14 for modes 1-3 and tuple reads, counts and ids in docstring/CHANGELOG | OPEN (builder, batch) | 2026-11-11 |
 | BL-core-a17-w6-ev | handover/evidence/A17/bd33cc9-REPORT.md (independent runner a19696e2) | evidence | PR85 bd33cc9 | exact head: ruff 0, format 0, bandit -ll 0, gen --check 0 (203 rows 42/134/27), full pytest 3.12 11476 passed 455 skipped 86 xfailed, 3.13 11476 passed 455 skipped 86 xfailed, mutants KILLED=46 of 46, git status clean. Not run: Postgres suites, plugin-on run (pytest-randomly/xdist not installed), CI/CodeQL/SonarCloud/CodeRabbit | EVIDENCE-VALID (w5 rows still FIXED-UNVERIFIED until real GitHub checks are read) | 2026-11-11 |
+| BL-PR89-r18-i01 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 1 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-i02 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 2 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-i03 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 3 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-i04 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 4 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-i05 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 5 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-i06 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 6 | OPEN | | | 2026-11-11 |
+| BL-PR89-r18-i07 | Minor | PR89 | see reviews/PR89/r18-implementation-readiness.md item 7 | OPEN | | | 2026-11-11 |
