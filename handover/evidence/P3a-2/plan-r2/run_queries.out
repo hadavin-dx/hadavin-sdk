@@ -1,0 +1,79 @@
+connected as ('q_mig', False)
+
+== Q1: 60 rows, 1.9 ms
+   ('q_po', 'q_grp', False, False, False, False, False, False)
+   ('q_po', 'q_po', True, False, False, False, False, False)
+   ('q_pu', 'q_pu', True, False, False, False, False, False)
+   ('q_rt', 'pg_monitor', True, False, False, False, False, False)
+   ('q_rt', 'pg_read_all_settings', True, False, False, False, False, False)
+   ('q_rt', 'pg_read_all_stats', True, False, False, False, False, False)
+   ('q_rt', 'pg_stat_scan_tables', True, False, False, False, False, False)
+   ('q_rt', 'q_rt', True, False, False, False, False, False)
+   ('...', '52 dia_* rows', None)
+
+== Q1B: 4 rows, 0.6 ms
+   ('q_po', 'q_grp', 'postgres', False, False, True)
+   ('q_pu', 'dia_a_0', 'postgres', False, True, True)
+   ('q_pu', 'dia_b_0', 'postgres', False, True, True)
+   ('q_rt', 'pg_monitor', 'postgres', False, True, True)
+
+== Q2: 40 rows, 16.8 ms
+   ('database', '', '', False, 'pq', '', 'postgres', False, False, False, None, None, None, None, False, False, False, 'CONNECT', False, 'postgres', True)
+   ('database', '', '', False, 'pq', '', 'postgres', False, False, False, None, None, None, None, False, False, False, 'TEMPORARY', False, 'postgres', True)
+   ('function', '', 'app', False, 'door', 'q text', 'q_mig', True, True, False, None, None, None, 'q_mig', False, False, True, 'EXECUTE', False, 'q_mig', True)
+   ('function', '', 'app', False, 'door', 'q text', 'q_mig', True, True, False, None, None, None, None, False, False, False, 'EXECUTE', False, 'q_mig', True)
+   ('function', '', 'app', False, 'trg', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'EXECUTE', False, 'q_mig', True)
+   ('function', '', 'app', False, 'trg', '', 'q_mig', True, False, False, None, None, None, None, False, False, False, 'EXECUTE', False, 'q_mig', True)
+   ('schema', '', 'app', False, '', '', 'q_mig', True, False, False, None, None, None, 'q_boss', False, False, False, 'USAGE', False, 'q_mig', True)
+   ('schema', '', 'app', False, '', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'CREATE', False, 'q_mig', True)
+   ('schema', '', 'app', False, '', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'USAGE', False, 'q_mig', True)
+   ('schema', '', 'app', False, '', '', 'q_mig', True, False, False, None, None, None, 'q_po', True, True, False, 'USAGE', False, 'q_mig', True)
+   ('schema', '', 'app', False, '', '', 'q_mig', True, False, False, None, None, None, 'q_pu', True, True, False, 'USAGE', False, 'q_mig', True)
+   ('schema', '', 'app', False, '', '', 'q_mig', True, False, False, None, None, None, 'q_rt', True, True, False, 'USAGE', False, 'q_mig', True)
+   ('schema', '', 'public', False, '', '', 'pg_database_owner', False, False, False, None, None, None, None, False, False, False, 'USAGE', False, 'pg_database_owner', True)
+   ('table', 'r', 'app', False, 'extra', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'DELETE', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'extra', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'INSERT', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'extra', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'REFERENCES', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'extra', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'SELECT', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'extra', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'TRIGGER', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'extra', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'TRUNCATE', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'extra', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'UPDATE', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'extra', '', 'q_mig', True, False, False, None, None, None, 'q_third', False, False, False, 'SELECT', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'runs', '', 'q_mig', True, False, False, None, None, None, 'q_boss', False, False, False, 'SELECT', True, 'q_mig', True)
+   ('table', 'r', 'app', False, 'runs', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'DELETE', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'runs', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'INSERT', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'runs', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'REFERENCES', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'runs', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'SELECT', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'runs', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'TRIGGER', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'runs', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'TRUNCATE', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'runs', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'UPDATE', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'runs', '', 'q_mig', True, False, False, None, None, None, 'q_po', True, True, False, 'SELECT', False, 'q_boss', False)
+   ('table', 'r', 'app', False, 'runs', '', 'q_mig', True, False, False, None, None, None, 'q_rt', True, True, False, 'INSERT', False, 'q_mig', True)
+   ('table', 'r', 'app', False, 'runs', '', 'q_mig', True, False, False, None, None, None, 'q_rt', True, True, False, 'SELECT', False, 'q_mig', True)
+   ('table', 'r', 'other', False, 'secret', '', 'postgres', False, False, False, None, None, None, 'q_grp', True, False, False, 'SELECT', False, 'postgres', True)
+   ('table', 'r', 'other', False, 'secret', '', 'postgres', False, False, False, None, None, None, None, False, False, False, 'SELECT', False, 'postgres', True)
+   ('type', 'c', 'app', False, 'comp', '', 'q_mig', True, False, False, None, None, None, 'q_mig', False, False, True, 'USAGE', False, 'q_mig', True)
+   ('type', 'c', 'app', False, 'comp', '', 'q_mig', True, False, False, None, None, None, None, False, False, False, 'USAGE', False, 'q_mig', True)
+   ('type', 'r', 'app', False, 'extra', '', 'q_mig', True, False, True, None, None, None, 'q_mig', False, False, True, 'USAGE', False, 'q_mig', True)
+   ('type', 'r', 'app', False, 'extra', '', 'q_mig', True, False, True, None, None, None, None, False, False, False, 'USAGE', False, 'q_mig', True)
+   ('type', 'r', 'app', False, 'runs', '', 'q_mig', True, False, True, None, None, None, 'q_mig', False, False, True, 'USAGE', False, 'q_mig', True)
+   ('type', 'r', 'app', False, 'runs', '', 'q_mig', True, False, True, None, None, None, None, False, False, False, 'USAGE', False, 'q_mig', True)
+
+== Q3: 7 rows, 1.3 ms
+   ('a', 'pg_class', 16544, 0, 'q_grp', 'table other.secret', False)
+   ('a', 'pg_class', 16529, 0, 'q_po', 'table app.runs', False)
+   ('a', 'pg_namespace', 16525, 0, 'q_po', 'schema app', False)
+   ('a', 'pg_namespace', 16525, 0, 'q_pu', 'schema app', False)
+   ('a', 'pg_class', 16529, 0, 'q_rt', 'table app.runs', False)
+   ('a', 'pg_default_acl', 16547, 0, 'q_rt', 'default privileges on new relations belonging to role q_mig in schema app', False)
+   ('a', 'pg_namespace', 16525, 0, 'q_rt', 'schema app', False)
+
+== Q4: 1 rows, 0.8 ms
+   ('r', 'app', 'q_mig', True, 'q_rt', True, 'SELECT', False)
+
+== STEP4: 1 rows, 0.6 ms
+   ('app.trg()', 'app', 'trg', '', 'f')
+
+== the old Q1 shape (UNION ALL with depth) on the same ladder, limited to 10 s
+cancelled by the 10 s limit
+10.2 s
