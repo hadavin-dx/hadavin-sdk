@@ -80,7 +80,7 @@ Total "no exception" rows: 6 (all in e2, listed above).
 
 ## 7. gitleaks
 `gitleaks git --redact --no-banner --exit-code 0 --log-opts="origin/main..464dee14" <worktree>` -> exit 0, "1 commits scanned", "no leaks found".
-`gitleaks dir --redact --no-banner --exit-code 0 /home/user/hadavin-sdk/handover/evidence/Q8a-1` -> see the line appended below.
+`gitleaks dir --redact --no-banner --exit-code 0 /home/user/hadavin-sdk/handover/evidence/Q8a-1` -> exit 0, "scanned ~85712 bytes", "no leaks found" (run after RESULTS.md and the other four files were written; rerun after this line was added: see final report).
 
 ## Where the raw files are
 `/home/user/build/evidence-raw/Q8a1-464dee1/`: full.log, full-junit.xml, failbefore.log, failbefore-junit.xml, pilot-two.log, negative-files.log, mutants.log, probes.log, ruff-check.log, ruff-format.log, bandit.log, scan-repo.log, gitleaks-git.log, gitleaks-dir.log, wait.log, pg-init.log, uv-sync.log.
