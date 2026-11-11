@@ -53,18 +53,32 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
   caller still never reaches the child. A name that is not set in the caller is simply not passed. To allow one more name, add it to
   ``PASS_ENV_ALLOWED``, re-copy the file and update its pin (see the CHANGELOG); do that only for the ADDRESS of a throwaway test resource
   that a demo's tests need (a second database, for example), never for a token or a key.
-  Masking: the value of a passed name (and the password inside it: the one of a URL, the one after ``password=``, ``passwd=`` or ``pwd=`` in a
-  key=value text or a URL query, a quoted one included; each also percent-decoded (a ``+`` read as itself and as a space), a backslash escape of libpq (``password='it\\'s'``, ``password=ab\\ cd``) read both ways, a URL password with an unencoded ``/``, ``?``, ``#`` or ``@`` read by trying every ``@`` as the end of the login, and each also as itself, ``repr`` or ``ascii()``, ``unicode_escape``, JSON (with and without ``\\u`` escapes) and the ``repr`` of its UTF-8 bytes print it, every one with each quote mark escaped or not (a ``repr`` of a larger text or bytes picks its quote from the whole), in exactly two layers (layer 2 is each of those forms printed once more by the real ``repr``, ``ascii``, ``unicode_escape``, JSON and bytes-``repr`` functions, with and without both quote kinds in the larger text), so a backslash, a quote or a non-ASCII letter is covered) is replaced by ``[REDACTED]`` in ``first_lines``, in the failing test id of a row,
-  in the ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` messages and in the baseline skip message. Checked with a real run: pytest
-  shortens a long text in the first ``E`` line of a comparison to about its first 12 and last 13 characters around ``...``. Observed with
-  pytest 9.2.0 (one 69-character value): the text is still shortened with ``-q``, with ``-q -vv`` and by default; it is printed in full only with
-  ``-vv`` without ``-q`` and with ``-o verbosity_assertions=2``. The runner keeps ``-q`` and adds no such option, so the ``first_lines`` of every
-  caller stay as they were,
-  so every start of a secret that ends right before ``...`` and every end that starts right after ``...`` of ``FRAGMENT_MIN`` characters or more is masked too (all pieces are found in the original text and cut out at once; a text with more than ``MAX_FRAGMENT_HITS`` ``...`` or more than ``MAX_MATCHES`` matches of the secrets is replaced as a whole).
-  What stays open, stated plainly: a test that prints a changed form of the value (only the host, only the user name, a re-encoded copy, a
-  piece cut out of the middle, a fragment shorter than ``FRAGMENT_MIN`` characters, a head or tail piece that does not stand next to a plain-ASCII ``...`` (pprint line wrapping, a Unicode ellipsis), another encoding such as base64, hex or HTML escapes) is not masked; neither is a password that holds a quote, a ``;`` or an ``&`` and is written without quotes (it is masked in full, up to the next white space, when printed alone; a piece of it that starts after such a character is not; a third layer of escaping (a ``repr`` of a ``repr`` of a ``repr``) is not covered; a quoted password with a backslash escape is read as libpq reads it, anything else odd is masked only inside the whole value) nor a password word glued to a letter or digit in front (``dbpassword=``); a password that has no ``password=`` word
-  in front of it and is not the password of a URL is masked only as part of the whole value; and text of a failure that the runner never
-  reads (the child's own console output is discarded) cannot leak through it.
+  Masking. What is hidden: the value of a passed name, and the password inside it (the one of a URL; the one after ``password=``, ``passwd=`` or
+  ``pwd=`` in a key=value text or a URL query, quoted or not; a libpq backslash escape read both ways; a URL password with an unencoded ``/``, ``?``,
+  ``#`` or ``@``, read by trying every ``@`` as the end of the login). Each is hidden as written, percent-decoded, and with ``+`` read as a space.
+  How it may be printed: by ``repr``, ``ascii()``, ``unicode_escape``, JSON (with and without ``\\u`` escapes) or the ``repr`` of its UTF-8 bytes,
+  any number of times in any order, with any backslashes and quote marks. Two checks together cover this:
+  (1) Exact forms. Layer 0 is the text, with each quote mark escaped with a backslash or not. Layer 1 is every layer-0 form printed once by the real
+  functions above. Layer 2 is every layer-1 form printed once more. These forms are searched as they stand. For a text whose skeleton (the text
+  without backslashes and quote marks) has fewer than ``FRAGMENT_MIN`` characters this is the only check, so only layers 0 to 2 are covered for it.
+  (2) Skeleton match, for texts whose skeleton has ``FRAGMENT_MIN`` characters or more, at ANY depth. A print only adds backslashes and quote marks
+  and rewrites a character into one of its escapes (``é`` as ``xe9``, ``u00e9`` or ``xc3xa9`` once its backslash is gone). So the line and the secret are
+  both reduced to their skeleton, the secret may show each character as any of its escapes, and the whole span found is hidden in the original line
+  (with the quote marks and backslashes next to it). The cost is over-masking: any text whose letters, in order, read as a secret once its
+  backslashes and quote marks are ignored is hidden too.
+  Where: ``first_lines``, the failing test id of a row, the ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` messages and the baseline
+  skip message. pytest shortens a long text in the first ``E`` line of a comparison to about its first 12 and last 13 characters around ``...``
+  (observed with pytest 9.2.0 on a 69-character value, with ``-q``, with ``-q -vv`` and by default; it prints in full only with ``-vv`` without ``-q``
+  and with ``-o verbosity_assertions=2``; the runner keeps ``-q`` and adds no such option). So every start of a secret that ends right before ``...`` and
+  every end that starts right after ``...``, of ``FRAGMENT_MIN`` characters or more, is hidden too. All pieces are found in the original text and cut
+  out at once; a text with more than ``MAX_FRAGMENT_HITS`` ``...`` or more than ``MAX_MATCHES`` matches is replaced as a whole.
+  Not covered: a changed form of the value (only the host, only the user name, a re-encoded copy, a piece cut out of the middle, a fragment
+  shorter than ``FRAGMENT_MIN`` characters, a head or tail piece that does not stand next to a plain-ASCII ``...``: pprint line wrapping, a Unicode
+  ellipsis); another encoding (base64, hex, HTML escapes); a short secret (skeleton under ``FRAGMENT_MIN``) printed three or more times; a password
+  that holds a quote, a ``;`` or an ``&``, is written without quotes, and starts after such a character (printed alone it is hidden in full up to the
+  next white space); a password word glued to a letter or digit in front (``dbpassword=``); a password with no ``password=`` word and not the password
+  of a URL (hidden only as part of the whole value). Text of a failure that the runner never reads (the child's own console output is discarded)
+  cannot leak through it.
   SAFETY: the address must point at a THROWAWAY database, and its login must be able to touch only that database (never a shared or
   production one): every mutant run executes the tests against it, and a mutant can make those tests write, drop or fill tables with
   anything. Two runs at once that share one database collide (the same tables and rows), so give each parallel run its own database.
@@ -321,12 +335,12 @@ def _printed_again(form: str) -> set[str]:
 
 
 def _written_forms(text: str) -> set[str]:
-    """``text`` and the ways a test or pytest may print it, in exactly TWO layers, every layer made by the real functions (no hand-made escaping).
-    Layer 0: the text as it is, with each quote mark escaped with a backslash or not (all four mixes: a quoted libpq password and a ``repr`` of a
-    LARGER text carry them). Layer 1: every layer-0 form printed once by ``repr``, ``ascii``, ``unicode_escape``, JSON (with and without ``\\u``
-    escapes) and the ``repr`` of its UTF-8 bytes, each with and without both quote kinds in the larger text. Layer 2: every layer-1 form printed once
-    more the same way (``repr(repr(x))``, ``repr(json.dumps(x))``, ``json.dumps(repr(x))`` and the rest). A third layer and other encodings
-    (base64, hex, HTML) are not covered. Empty forms are dropped."""
+    """The exact forms of check (1) in the module docstring, every layer made by the real functions (no hand-made escaping). Layer 0: ``text``, with
+    each quote mark escaped with a backslash or not (all four mixes: a quoted libpq password and a ``repr`` of a LARGER text carry them). Layer 1: every
+    layer-0 form printed once by ``repr``, ``ascii``, ``unicode_escape``, JSON (with and without ``\\u`` escapes) and the ``repr`` of its UTF-8 bytes, each
+    with and without both quote kinds in the larger text. Layer 2: every layer-1 form printed once more the same way (``repr(repr(x))``,
+    ``repr(json.dumps(x))``, ``json.dumps(repr(x))`` and the rest). Deeper prints, and the prints of a longer text, are found by the skeleton match
+    (``_skeleton_spans``), not here. Empty forms are dropped."""
     layer = {
         "".join(
             {"'": "\\'" if single else "'", '"': '\\"' if double else '"'}.get(c, c) for c in text
@@ -358,14 +372,16 @@ def _url_passwords(value: str) -> list[str]:
     return found
 
 
-def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
+def _secret_values(names: Iterable[str]) -> _SecretSet:
     """The values of the passed environment variables, and the password inside them (the one of a URL, the one after ``password=`` in a
     key=value text or a URL query; each as written, percent-decoded, and as ``repr`` / ``unicode_escape`` print it), longest first: text that may show them is run through ``_masked``."""
     found: set[str] = set()
+    bases: set[str] = set()
     for name in names:
         value = os.environ.get(name, "")
         if not value:
             continue
+        bases.add(value)
         found.update(_written_forms(value))
         matches = list(_PASSWORD_WORD.finditer(value))
         passwords = [next(g for g in m.groups() if g is not None) for m in matches]
@@ -382,8 +398,75 @@ def _secret_values(names: Iterable[str]) -> tuple[str, ...]:
         for password in passwords:
             if password:
                 for form in (password, unquote(password), unquote_plus(password)):
+                    bases.add(form)
                     found.update(_written_forms(form))
-    return tuple(sorted(found, key=len, reverse=True))
+    out = _SecretSet(sorted(found, key=len, reverse=True))
+    out.bases = tuple(sorted(bases, key=len, reverse=True))
+    return out
+
+
+_DROPPED = "\\'\""  # a backslash and the two quote marks: the only characters a print adds to a text, at any depth, besides the escape letters of its characters
+
+
+class _SecretSet(tuple):  # type: ignore[type-arg]
+    """The masking forms of ``_secret_values`` (a tuple, longest first) and, as ``bases``, the plain texts they were built from: ``_masked`` also
+    matches the skeleton of every base (see ``_skeleton_pattern``), which holds at any print depth."""
+
+    bases: tuple[str, ...] = ()
+
+
+def _skeleton(text: str) -> str:
+    """``text`` without its backslashes and quote marks."""
+    return "".join(c for c in text if c not in _DROPPED)
+
+
+def _char_looks(char: str) -> set[str]:
+    """Every skeleton a single character can show in a printed text: itself, and the escape it gets from ``repr``, ``ascii``, ``unicode_escape``,
+    JSON (with and without ``\\u`` escapes) and the ``repr`` of its UTF-8 bytes (``é`` as ``é``, ``xe9``, ``u00e9`` or ``xc3xa9``)."""
+    looks = {char}
+    for encode in _WHOLE_ENCODERS:
+        looks.add(_skeleton(encode(char)))
+    return looks
+
+
+def _skeleton_pattern(base: str) -> re.Pattern[str] | None:
+    """A pattern that matches ``base`` as it stands in the skeleton of a printed line, or ``None`` when its skeleton is shorter than
+    ``FRAGMENT_MIN`` (a short skeleton would mask ordinary text; such a secret is matched by its written forms only). Printing a text any number of
+    times only adds backslashes and quote marks (removed by the skeleton) and rewrites each character into one of its ``_char_looks``, so one pattern
+    of per-character choices matches the base at every depth, in every mix of encoders."""
+    kept = [c for c in base if c not in _DROPPED]
+    if len(kept) < FRAGMENT_MIN:
+        return None
+    parts = [
+        "(?:" + "|".join(re.escape(x) for x in sorted(_char_looks(c), key=len, reverse=True)) + ")"
+        for c in kept
+    ]
+    return re.compile("".join(parts), re.DOTALL)
+
+
+def _skeleton_spans(text: str, bases: Sequence[str]) -> list[tuple[int, int]]:
+    """Spans of ``text`` that show a base at some print depth: the line and each base are reduced to their skeletons, the spans found there are mapped
+    back to the original text, and each is widened over the backslashes and quote marks next to it (the quotes of the print itself). Over-masking is
+    the only cost: any text whose letters, in order, read as a base once its backslashes and quote marks are ignored is masked too."""
+    patterns = [pat for pat in map(_skeleton_pattern, bases) if pat is not None]
+    if not patterns:
+        return []
+    where = [i for i, c in enumerate(text) if c not in _DROPPED]
+    flat = "".join(text[i] for i in where)
+    spans: list[tuple[int, int]] = []
+    for pat in patterns:
+        for found in itertools.islice(pat.finditer(flat), MAX_MATCHES + 1):
+            if len(spans) >= MAX_MATCHES:
+                raise _TooManyHits(MAX_MATCHES, "matches of a secret")
+            lo, hi = where[found.start()], where[found.end() - 1] + 1
+            while lo > 0 and (
+                text[lo - 1] in _DROPPED or (text[lo - 1] == "b" and text[lo] in _DROPPED)
+            ):  # a ``b`` right before a quote is the prefix of a bytes print
+                lo -= 1
+            while hi < len(text) and text[hi] in _DROPPED:
+                hi += 1
+            spans.append((lo, hi))
+    return spans
 
 
 class _TooManyHits(Exception):
@@ -432,6 +515,8 @@ def _masked(text: str, secrets: Sequence[str]) -> str:
     hit = bytearray(len(text))
     matches = 0
     try:
+        for lo, hi in _skeleton_spans(text, getattr(secrets, "bases", None) or chosen):
+            hit[lo:hi] = b"\x01" * (hi - lo)
         for value in chosen:
             at = text.find(value)
             while at != -1:
@@ -515,12 +600,18 @@ def _check_lock_file(fd: int) -> None:
 
 @contextlib.contextmanager
 def _one_run_per_database(values: Sequence[str]) -> Iterator[None]:
-    """Hold an exclusive lock named by a hash of the passed values (never the values) in the temp folder for the whole run: a second runner that
+    """Hold an exclusive lock named by a hash of the passed values (never the values) in the temp folder for the whole run. A second runner that
     uses the same temp folder (same machine and account, or the same ``TMPDIR``) with the same passed value is refused (``RuntimeError``) instead
     of sharing the database and its tables. It does not see a runner with another temp folder or on another machine; that stays the caller's
-    job (a database of its own per run). The file is opened without following a symbolic link and with mode 0600, and is never deleted (one empty file per value; it stays in the temp folder, and a left-behind file of another user, a wider mode or another kind than a regular file is refused with a clear message that names the cause; a file with more than one hard link is refused too; it is opened without blocking, so a FIFO under the name is refused instead of hanging the run; a temp folder on a network file system whose ``flock`` fails is refused as "could not be locked": use a local ``TMPDIR``). The file name holds the first 16 hex digits of a SHA-256 of the values: not the values, but readable by
-    other users of the temp folder. A lock file that cannot be opened (another user's file) or locked for a reason other than "held by another
-    run" is a ``RuntimeError`` with its own message."""
+    job (a database of its own per run).
+
+    The file is opened without following a symbolic link, without blocking (so a FIFO under the name is refused instead of hanging the run) and
+    with mode 0600. It is never deleted: one empty file per value stays in the temp folder. After opening it is checked, and it is refused with a
+    message that names the cause when it belongs to another user, has a wider mode, is not a regular file, or has more than one hard link. A temp
+    folder on a network file system whose ``flock`` fails is refused as "could not be locked": use a local ``TMPDIR``.
+
+    The file name holds the first 16 hex digits of a SHA-256 of the values: not the values, but readable by other users of the temp folder. A lock
+    file that cannot be opened (another user's file) or locked for a reason other than "held by another run" is a ``RuntimeError`` with its own message."""
     digest = hashlib.sha256("\0".join(sorted(values)).encode()).hexdigest()[:16]
     path = _lock_dir() / f"hadavin_mutation_{digest}.lock"
     # O_NONBLOCK: a FIFO planted under the name would block an open for reading for ever (it is then refused by the fstat check)
