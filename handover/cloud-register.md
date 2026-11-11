@@ -1129,7 +1129,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | add433e4 | PR89 r13 reviewer slice mutants/CHANGELOG | done 04:20Z | | | closed (round-w2-r13-implreadiness-mutants.md) | |
 | a8904ec1 | PR89 builder r12 | done 04:09Z | | | closed (report 0cd10b9) | independent runner after reviews |
 | a8904ec1 | PR89 builder round 13 | done 04:47Z | | | closed (report e957592) | |
-| a6db239f | PR89 r14 reviewer (egm-design) tools/mutation_runner.py, head e957592 | 05:00Z | 05:20Z | 05:00Z | running | save report, ledger |
+| a6db239f | PR89 r14 reviewer runner | done 05:07Z | | | closed (round-w2-r14-design-runner.md) | |
 | ab7dbb75 | PR89 r14 reviewer keyword tests 1-1200 | done 05:05Z | | | closed (round-w2-r14-keywordtests-a.md) | |
 | a553a337 | PR89 r14 reviewer keyword tests 1201-2349 | done 05:04Z | | | closed (round-w2-r14-keywordtests-b.md) | |
 | a111db5b | PR89 r14 reviewer (egm-implementation-readiness) mutants, CHANGELOG, rest | 05:00Z | 05:20Z | 05:00Z | running | save report, ledger |
