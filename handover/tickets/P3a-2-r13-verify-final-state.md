@@ -1,10 +1,32 @@
-# Ticket P3a-2 round 13 (rev 1, DRAFT for plan review): judge the final state of the database with one check called `verify`, and say honestly what it can and cannot promise
+# Ticket P3a-2 round 13 (rev 2, DRAFT for plan review round 2): judge the final state of the database with one check called `verify`, and say honestly what it can and cannot promise
+
+## Changes in rev 2 (errata to rev 1, written 2026-11-11 16:24-17:30 UTC, 21:54-23:00 IST)
+
+Inputs: plan review round 1, implementation readiness (handover/reviews/P3a-2/plan-r1-readiness-full.md, prefix R: B1, B2, M1-M9, Mn1-Mn11, citation list A) and design (plan-r1-design-full.md, prefix D: M1-M8, m1-m12). New probes on PostgreSQL 16.15: handover/evidence/P3a-2/plan-r2/ (README.md there lists them). The sections below are rewritten in place; this list says where. Every finding is answered in the table of section 11.
+
+1. Commit order rebuilt so every commit is green (9.3), with the work split into packages of at most 60 minutes of builder time (9.4). R-B1, R-M5.
+2. Everyone may hold USAGE on the schema of the run; rules O2 and O7 say so; a test runs `migrate` in a `public` schema with the server's own access list (3.3, 7.6). R-B2.
+3. Step 8 sends no extra connection option; every failure in step 8 becomes "applied, not verified" (exit 5); step 8 has its own time limits; a COMMIT whose outcome is unknown also ends in exit 5 (4.1, 4.2). R-M1, D-M2, D-M3, D-M8.
+4. The test oracle: superuser login required (a failure, not a skip), one database per case, a table "effect -> attempt that shows it" for all 37 effects, a whole-word ban list (7.2). R-M2, D-M1.
+5. Named lists of every test and mutant this ticket touches beyond rev 1's lists, with the mutant count corrected to 288 = 279 + 9 (5.4, 5.5). R-M3, R-A, Mn10.
+6. A test id for every acceptance item (9.1). R-M4.
+7. Mutant runs in four batches (7.10). R-M5.
+8. Module layout decided: no import from `migrate` into the new module; `_label` moves to `migration_numbers`; the reviewed list is passed at call time (3.1). R-M6.
+9. Full query texts, the step-4 query, the schema-USAGE rule, `PROBLEM_KINDS` and the rights per role kind are in the ticket (3.2, 3.3). R-M7.
+10. Old-head proof must fail on the assertion, not on an import (7.9). R-M8. Upgrade test emulates main's state and claims no more (7.6). R-M9.
+11. Object side stays limited to the schema of the run, now stated as an AUTHOR ADDITION that narrows D-020 (3.3, 10.3). D-M6.
+12. Rule O5 struck (3.3, 1.4). D-M7.
+13. A right that reaches a named role only through a built-in `pg_*` role is one membership line; no statement is ever printed against a system schema (3.3, 4.2). D-M4.
+14. `Problem` carries the grantor; printed statements use the form the probes show works (`SET ROLE <grantor>` for object rights, `GRANTED BY` for memberships); step 2 drops only what step 4 really removes (3.1, 4.1, 4.2). D-M5, D-m5.
+15. All Minors of both reviews (section 11).
+
+Not changed in rev 2: the promise table's three rows and words (1.3), the decision to delete the before-and-after comparison (5.3), the split tickets (10.2), the stop rule (9.2).
 
 Source: decision D-020 (handover/AUTONOMOUS-DECISIONS.md), which amends D-019 and replaces the scope sentence of D-009; the design review with addendum (handover/reviews/P3a-2/r13-design-zoomout-full.md); the two round-12 reviews (r12-design-full.md, r12-codebase-full.md); evidence in handover/evidence/P3a-2/4d328e3/ (route-probes.txt, design-probes*.txt, run by a separate EVIDENCE RUNNER); the ticket author's own probes in /home/user/build/p3a2-r13-author/ (p1..p6.sql and .out, v1.sql and v1.out, mut.py, tst.py).
 Branch: continue `core/P3a-2-clean` from 4d328e3d, fast-forward only (no rebase, no force push). `core/P3a-2` and `core/P3a-2-rewritten` stay untouched. The builder never merges.
 Path class: security (rights and least privilege). No round cap on result reviews.
 Code references: `MIG` = src/hadavin_sdk/store/migrate.py, `MN` = src/hadavin_sdk/store/migration_numbers.py, `CL` = CHANGELOG.md, `TPG` = tests/test_migration_postgres.py, `TCMP` = tests/test_migration_compare.py, `TW` = tests/test_migration_wiring.py, `MUT` = tests/migrate_mutants.py. All line numbers are for the snapshot /home/user/build/snap/p3a2-r12-4d328e3/ (head 4d328e3d).
-Status: written by a ticket author. Nothing is built. Fresh plan reviewers judge this ticket before any build. Times: written 2026-11-11 about 16:00 to 16:40 UTC (21:30 to 22:10 IST).
+Status: written by ticket authors (rev 1 and rev 2). Nothing is built. Fresh plan reviewers judge this ticket before any build. Times: rev 1 written 2026-11-11 about 16:00 to 16:40 UTC (21:30 to 22:10 IST); rev 2 16:24 to about 17:30 UTC (21:54 to 23:00 IST).
 
 ## Read first: what is not established
 
@@ -14,7 +36,8 @@ Status: written by a ticket author. Nothing is built. Fresh plan reviewers judge
 4. Facts taken from memory and not run by anyone are marked "from memory, unverified" in section 2. None of them carries the design alone.
 5. OPEN CONFLICT between two runs, to be settled before the build (one command, shown in fact 14): the evidence runner's RESULTS.md (Step 9, row F3) says a trusted extension installed by a plain role "is owned by `postgres`", so the migration role "can never own `citext`". The author's run on the same server version shows the opposite, with output: the installing role owns the extension (`citext|r13_mig`), only the 47 functions inside it are owned by `postgres`, and the role could then add its own table and its own SECURITY DEFINER function to the extension. route-probes.txt ends at the heading of that precondition probe (line 92) and holds no output for it. The design does not depend on who is right: rule O6 has no condition (section 3.3).
 5b. The evidence runner's RESULTS.md (sections "Step 5", "Step 6", "Step 9", "Addendum 2"), route-probes.txt, design-probes*.txt and the table of probe 6c were read and are used. The round-12 design finding 6 (rights that already existed before the run) has no row of its own in Step 9; two rows of probe 6c show the same class (facts 27 and 28).
-5c. The mutant list: RESULTS.md says 280 mutants; importing the list object of `tests/migrate_mutants.py` at 4d328e3d gives 288 entries with 288 different names (author run, mut.py). The difference was not resolved. Section 5.5 uses the 288.
+5c. The mutant list has 288 entries with 288 different names at 4d328e3d: 279 written as `Mutant(...)` in the list plus 9 made by the helper `cmp_mutant` (rev 2 author run, mutclass.out; `grep -c "^    Mutant("` = 279, 9 calls of `cmp_mutant(`). The 280 in RESULTS.md is a miscount. Settled.
+5d. Rev 2 probes (handover/evidence/P3a-2/plan-r2/) are facts 30 to 40 in section 2. They confirm every PostgreSQL claim of the two plan reviews that was checked, with one correction: `GRANTED BY` works for memberships only; for object rights PostgreSQL answers "grantor must be current user" (fact 30).
 6. Not read by the author: the lexer body of `MN` (only lines 28-40 and 655-740), most test bodies (names, helpers and the lines cited in the reviews were read), DIFF-main-to-head.patch, TICKET-P3a.md, BUILDER-ticket-notes.md, cli.py beyond `_migrate` and the exit-code lines.
 
 ## 1. What this is about, in plain words
@@ -33,13 +56,13 @@ We also stop promising what no check of this kind can deliver. A migration file 
 
 ### 1.3 The promise table (decided in D-020; this exact table goes first in the module text and in the CHANGELOG)
 
-"Stopped" means: the run is refused and everything it did is undone. "Detected" means: the run reports it loudly, but the change is already in the database and a person must act. "Lasting right" means a right that is still there when the check looks.
+"Stopped" means: the run is refused and everything it did is undone, unless a file ended the transaction itself (a hidden COMMIT); that case is reported separately with its own message, as today. "Detected" means: the run reports it loudly, but the change is already in the database and a person must act. "Lasting right" means a right that is still there when the check looks.
 
 | Who wrote the file | What `migrate` does | Word |
 |---|---|---|
 | 1. We did, and made an honest mistake | When the file leaves a named role, or everyone, with a right outside the grant map, the run is refused and undone. The same mistake is caught before release, because the build server runs the shipped files on an empty database and tests what each role can really do. | STOPPED |
 | 2. Someone careless, or a file copied from elsewhere | The same, for lasting rights only. Nothing is promised about lost data, and nothing about code the file leaves behind to run later. | STOPPED, for lasting rights only |
-| 3. Someone who wants to do harm | NOT stopped. Lasting excess rights that exist when the check after the commit runs are reported, with the statements that remove them. | DETECTED, not stopped |
+| 3. Someone who wants to do harm | NOT stopped. Lasting excess rights that exist when the check after the commit runs are reported, with the statements that remove them. Such a file can also cheat the check after the commit, or make it fail to run; a check that cannot run ends in the same loud "applied, not verified" result, never in "applied". | DETECTED, not stopped |
 
 Why row 3 cannot be better: the file runs as the owner of every table. The real protections against a harmful file are elsewhere: a person reviews every file, each released file's fingerprint is recorded and checked (both exist today), and a separate read-only login that only checks (a new ticket, see 10.2 A).
 
@@ -51,6 +74,9 @@ Why row 3 cannot be better: the file runs as the owner of every table. The real 
 - A right that someone gives again one second after the check.
 - Anything a file does outside its transaction (for example through a second connection).
 - What the server reports when the reader itself is the one being cheated: the check after the commit still connects as the migration role. Only a separate checking login closes that (10.2 A).
+- Who else can act as owner: when the package's tables are owned by a group role, every other member of that group can act as their owner. `migrate` does not judge the members of an owning group (rev 1's rule O5 is struck; section 3.3).
+- Rights for a role that is neither a named role nor everyone, on an object the migration role owns OUTSIDE the schema of the run (the object side reads only the schema of the run; section 3.3, AUTHOR ADDITION 10.3 item 11).
+- A grant made by another session between the last check before the commit and the check after it: the check after the commit reports it like any other excess ("this run, or another session since the commit").
 
 A clean run therefore means "no excess right was there when we looked", not "the database is safe from now on".
 
@@ -70,15 +96,16 @@ Quoted from the snapshot. "Delete" means the sentence goes and the promise table
 | MIG:1240 | "Nothing was changed. The whole run is undone." | Replace by the three wordings of section 4.2 (one per call of `verify`; none says "nothing was changed" where that can be false) |
 | MIG:1241-1244 | "a named role gets the rights of the grant map and nothing on any other table, view, sequence or function" | Replace by the baseline of section 3.4, in the same words as the CHANGELOG |
 | MIG:1247-1249 | "or another session changed an object of the migration role while this run was open (the run compares the database before and after its files ...)" | Delete |
-| MN:680-683 (comment on `_GRANT_TARGET`) | "is refused: the read-back after the file does not look at those places" | Replace: "is refused early, as a plain message for an accident. This rule carries no security claim: `verify` judges the result whatever the text says" |
+| MN:677-679 (comment above `_GRANT_TARGET`, which starts at MN:680; rev 1 said 680-683) | "is refused: the read-back after the file does not look at those places" | Replace: "is refused early, as a plain message for an accident. This rule carries no security claim: `verify` judges the result whatever the text says" |
 | MN:722-723 (`refused_statements`) | "A quick check that catches accidents, not a sandbox: the read-back after each file is the guard." | Replace the last clause: "... not a sandbox, and not the guard: `verify` judges the final state. A way around a text rule is not a defect of this module." |
-| CL:12 | "`migrate` refuses to run when that role could reach beyond this package's own objects, or could not change them" | Replace: "`migrate` refuses to run when that role holds one of the powers listed below, or could not change this package's objects". (No sandbox claim.) |
+| CL:11 (rev 1 said CL:12, which is the "powerful flags" bullet) | "`migrate` refuses to run when that role could reach beyond this package's own objects, or could not change them" | Replace: "`migrate` refuses to run when that role holds one of the powers listed below, or could not change this package's objects". (No sandbox claim.) |
 | CL:15 | "the old default of the `public` schema on PostgreSQL 14 and earlier; fix with ..." and "Not looked at by this check: rights in other schemas, `EXECUTE` on functions, and `REFERENCES` on one column." | Delete both (below 16 is refused; the three "not looked at" are now looked at) |
 | CL:17 (whole item, about 900 words) | among others: "in ANY schema of the database, whatever way the file did it"; "`_refuse_foreign_owned` looked at it first"; "gets no right at all on a table, view, sequence or column that is not in the grant map, in any schema, and no right on a function"; "on PostgreSQL 14 and earlier the default of the `public` schema lets everyone create" | Delete the item. New item: the promise table, the baseline (3.4), the three calls (4), the after-commit message (4.2) |
 | CL:18 | "because the read-back does not look at those places"; "a table, a type or a column that is called `rename` does not make an owner change pass"; "a file cannot create a type or a domain, the text scan refuses `CREATE TYPE` and `CREATE DOMAIN`"; "found by the read-back for a table, view, ... and for no other kind of object" | Delete the four sentences. New sentence: "These text rules refuse common accidents early with a plain message. They are not the guard; dynamic SQL passes them, and `verify` judges what is in the database afterwards." |
 | CL:34 | "PostgreSQL 16 is the lowest version this check is written for" | Replace: "PostgreSQL 16 is the lowest version `migrate` runs on; an older server is refused with a plain message before anything is read or changed" |
+| CL:34 and CL:15 (MAINTAIN) | "Not yet run on PostgreSQL 17.10 ... the `MAINTAIN` check is covered only by tests that fake the server version"; "asks for `MAINTAIN` only from 17, because 16 rejects that name"; "On PostgreSQL 17 and later ... MAINTAIN is also counted" | Delete all three. New sentence: "On PostgreSQL 17 the right MAINTAIN is one more right in the access lists that `verify` reads; there is no version branch for it. The whole suite runs in CI on PostgreSQL 17.10." |
 
-The builder also runs `grep -n -i "however it got it\|whatever way\|by any statement\|cannot leave\|no right at all\|Nothing was changed"` over src, CHANGELOG.md and tests after the edit and pastes the output; each remaining hit is either inside a test of the old wording that was retired, or justified in one line.
+The builder also runs `grep -n -i --include='*.py' --include='*.md' -r "however it got it\|whatever way\|by any statement\|cannot leave\|no right at all\|Nothing was changed" src CHANGELOG.md tests` after the edit and pastes the output; each remaining hit is either inside a test of the old wording that was retired, or justified in one line.
 
 ## 2. Facts the design rests on
 
@@ -114,24 +141,40 @@ Status words: "author run" = verified by the ticket author's run on PostgreSQL 1
 | 28 | Accepted by the round-12 head today: a function whose only change is a new saved setting (`ALTER FUNCTION ... SET search_path = public`, case C05); the same change on the package's own trigger function is refused by the read-back. Also accepted: `GRANT ... ON audit_entries TO <named role> WITH GRANT OPTION` in a file, and a large object opened by dynamic SQL. | verified by the evidence runner (RESULTS.md Step 6 table). New design: the saved setting of a function is not a right, so `verify` does not judge it (stated under 1.4, "code a file leaves behind"); the read-back keeps refusing it for trigger functions, at step 3 and again at step 6; a function of the family in the schema of the run can be called only by its owner after rule O2, and a SECURITY DEFINER one is refused whatever its settings. The grant option: with role arguments step 4 resets the role's rights and the option is gone (fact 16), and what is left is judged by S6; without role arguments rule O1 refuses the role. The large object: rules S5 and O2 (fact 9 column `pg_largeobject_metadata.lomacl`). |
 | 29 | With `max_prepared_transactions = 0` the real-server test of the prepared-transaction message is reported as passed without calling `migrate`. | verified by the evidence runner (RESULTS.md Step 5: "mpt=0: 9 passed ... handles the mpt=0 default internally"); read in code by the author (TPG:4520) |
 | 25 | PostgreSQL 17 has the same 14 columns; PostgreSQL 18 adds a default-rights kind for large objects. | memory, unverified. The self-check of 3.6 and the unknown-kind rule of 3.3 D4 make the design safe if this is wrong. |
-| 26 | Operator lookup can be captured by a user-defined operator in a schema on the search path. | NOT shown: the author's probe (p4.out, a user-defined `=(name, text)`) did not change the result. The path is pinned anyway (it costs one statement). |
+| 26 | CORRECTION (rev 2). Operator and function lookup CAN be captured by a user-defined operator or function with a matching signature in a schema that the search path lists before `pg_catalog` (the documented class behind CVE-2018-1058). Rev 1's probe (p4.out, `=(name, text)`) did not show it, which is no evidence of safety (its signature did not beat the built-in one). | from the PostgreSQL documentation and the CVE, not probed in rev 2. Consequence: every catalog read of the runner, not only `verify`, runs with the path pinned to `pg_catalog, pg_temp` (3.1, "Pinned reads"); `pg_temp` is never searched for functions or operators. |
+| 30 | `REVOKE` removes only the entries whose grantor is the role the statement acts as. A superuser, and the owner, act as the owner: `REVOKE SELECT ON app.t FROM rt` leaves `rt=r/boss` (granted by `boss` through its grant option). `REVOKE ... GRANTED BY boss` on an object right is refused: "grantor must be current user". What works: `SET ROLE boss; REVOKE SELECT ON TABLE app.t FROM rt; RESET ROLE;`, run by a superuser, or `REVOKE SELECT ON app.t FROM boss CASCADE`, which also takes boss's own right. A plain `REVOKE ... FROM boss` while a dependent entry exists fails: "dependent privileges exist". A right granted by a superuser that is not the owner is recorded with the owner as grantor (`rt=w/mig`). `REVOKE GRANT OPTION FOR SELECT ON TABLE ... FROM boss CASCADE` removed boss's table-level dependents but left boss's column-level grant `secret: rt=r/boss` in place; it went only with the later `REVOKE SELECT ... FROM boss CASCADE`. | rev 2 run (plan-r2/a-revoke-grantors.out a1-a7, a11-a12; a2-orphan-column.out a13-a16) |
+| 31 | Step 4's `REVOKE ALL ON TABLE app.t FROM rt`, run by the migration role (the owner), removes the entries it granted and leaves `rt=r/boss` and the column grant `secret: rt=r/boss`; `rt` can still read. | rev 2 run (a-revoke-grantors.out a2: `{mig=arwdDxt/mig,boss=r*/mig,rt=r/boss}`; the `SELECT` as `rt` then ran without error: `rt_can_still_read` = 0 rows of an empty table) |
+| 32 | Memberships on 16: `GRANT grp TO rt` run by a CREATEROLE role `cr` records `cr` as grantor. The superuser's plain `REVOKE grp FROM rt` then does nothing and prints "WARNING: role "rt" has not been granted membership in role "grp" by role "postgres"". `REVOKE grp FROM rt GRANTED BY cr` removes it. Two grants of the same membership by two grantors are two rows; one plain REVOKE leaves the other. `REVOKE ... GRANTED BY <the bootstrap superuser>` also works for the superuser's own grant. | rev 2 run (a-revoke-grantors.out a8-a10) |
+| 33 | Row types on 16: tables, partitioned tables, partitions, views, materialized views and foreign tables each have one (`typtype = 'c'`, `typrelid` set, the relation's `relkind` is `r p v m f`). A sequence has NONE (`reltype = 0`; `GRANT USAGE ON TYPE app.seq` fails "type does not exist"). A standalone composite type has `typtype = 'c'` with a relation of `relkind = 'c'`. Every type (base, composite, domain, enum, range, multirange, array) with a NULL `typacl` defaults to `=U/<owner>`. A GRANT on a row type or a standalone composite type writes `=U/<owner>` next to the grantee. | rev 2 run (b-row-types.out b1-b6) |
+| 34 | The `public` schema of a new database on 16 is owned by `pg_database_owner` with `{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner}`: everyone may look names up, nobody else may create. The owner of the database (a plain role) is a member of `pg_database_owner` and may create in `public`; a new plain role may use it but not create in it. A schema with a NULL access list gives everyone nothing (`acldefault('n', ...)` has no `=` entry). | rev 2 run (c-public-schema.out c1-c5) |
+| 35 | psycopg 3.3.6: a keyword `options=` REPLACES an `options=` inside the DSN (the merged conninfo keeps only the keyword's value). With the DSN alone (`options='-c role=drole'`) the session runs as `drole`; with the keyword added it runs as the login `dlogin`, so the role switch is lost. Also: `store/postgres.connect` at 4d328e3d takes only `dsn, iam_auth, region, sslmode, sslrootcert`, so rev 1's call with `options=` would raise `TypeError`. | rev 2 run (dfg.out d1-d3); signature read at store/postgres.py:125-132 |
+| 36 | A role may run `ALTER ROLE <itself> SET statement_timeout = 1`. A fresh session then starts with `1ms`; 100 of 100 fresh connections that ran a catalog read shaped like Q2 were cancelled (57014). With `SET LOCAL statement_timeout = '60s'; SET LOCAL lock_timeout = '5s'` as the first statements of the transaction, 100 of 100 ran (the `SET TIME ZONE 'UTC'` that `connect` sends ran under the 1 ms limit and passed 100 of 100, which is luck, not a guarantee). | rev 2 run (dfg.out g1-g3) |
+| 37 | COMMIT failures, as psycopg reports them: (a) the server refuses the COMMIT (a deferred foreign key checked at COMMIT): `ForeignKeyViolation`, SQLSTATE 23503, the connection stays open, transaction status IDLE; nothing was committed. (b) the connection is cut after the COMMIT message reached the server (a TCP relay that forwarded COMMIT and dropped the reply): `OperationalError`, SQLSTATE None, "consuming input failed: server closed the connection unexpectedly", status UNKNOWN, connection closed, AND the row IS in the table when read on a new connection: the commit happened although the client got an error. | rev 2 run (f2.out f1, f2; dfg.out holds a first run whose relay cut too late and is not used) |
+| 38 | A named role that is a member of `pg_monitor` reaches `pg_monitor`, `pg_read_all_settings`, `pg_read_all_stats` and `pg_stat_scan_tables`. Rev 1's rules would print 12 problem lines and 12 REVOKE statements against `pg_catalog` functions and views (for example `REVOKE EXECUTE ON FUNCTION pg_catalog.pg_ls_archive_statusdir(...) FROM pg_monitor;`), which would strip monitoring from the whole server. The one right statement is `REVOKE pg_monitor FROM hrt GRANTED BY postgres;`. | rev 2 run (h-pg-monitor.out h1-h4) |
+| 39 | The re-defer route of fact 4 confirmed as the plain migration role with no superuser: the pre-commit read of the access list is empty, the trigger fires a second time at COMMIT, and afterwards the list is `{emig=arwdDxt/emig,=r/emig}`. Promise table row 3 is right to say "detected, not stopped". | rev 2 run (e-redefer.out) |
+| 40 | The final query texts of section 3.2 (Q1, Q1b, Q2, Q3, Q4, the step-4 query) run without error as a plain login on 16.15 against a made-up setup that holds a grant-option chain, a `pg_monitor` member, a membership with INHERIT FALSE, a default right and a 25-level "diamond" of groups (each level two roles, each a member of both roles of the next level). Q1 took 1.9 ms; the rev 1 shape (`UNION ALL` with a depth column) was cancelled by a 10 s limit on the same roles. Q2 returned no `pg_catalog` item for the `pg_monitor` member. | rev 2 run (queries.py, run_queries.out) |
 
 ## 3. Design of `verify`
 
 ### 3.1 Signature and shape
 
-New module `src/hadavin_sdk/store/migration_verify.py` (only `psycopg.sql` from the database library, as `store/migrate.py` uses it today; it imports `Grant` and `GRANTS` types from `migrate` only for type hints, or the two move here: builder's choice, stated in the notes).
+New module `src/hadavin_sdk/store/migration_verify.py`. Module layout (decided in rev 2, R-M6):
+- It imports from the database library only `psycopg` (for `psycopg.Rollback`) and `psycopg.sql`, and from the package only `hadavin_sdk.errors` and `hadavin_sdk.store.migration_numbers`. It never imports `hadavin_sdk.store.migrate` at run time; `Grant` is imported for type hints only, under `if TYPE_CHECKING:`. So `migrate` imports `migration_verify` and there is no import cycle.
+- `_label` moves from `migrate.py` (MIG:1364-1366) into `migration_numbers.py`, next to `escape_name`, which it calls. `migrate.py` imports it back under the same name, so `mig._label` keeps working for tests. No mutant is planted inside `_label` (checked: its body text appears in no `old` of `MUT`).
+- `Grant`, `GRANTS`, `REVIEWED_DEFINER_FUNCTIONS`, `RUN_SCHEMA` and `_shown` stay in `migrate.py`. `verify` receives the grant map and the reviewed list as arguments with NO default value, and `migrate()` passes `REVIEWED_DEFINER_FUNCTIONS` by reading the module global at call time, so `monkeypatch.setattr(mig, "REVIEWED_DEFINER_FUNCTIONS", ...)` (TPG:2804) still reaches `verify`. TPG:2804's patched value becomes `frozenset({(mig.RUN_SCHEMA, "hadavin_test_definer", "")})` (the new key of rule O4).
 
 ```python
 @dataclass(frozen=True)
 class Problem:
-    kind: str     # one of PROBLEM_KINDS (a closed tuple of words, one per clause of section 3.3)
+    kind: str     # one of PROBLEM_KINDS (section 3.3, the closed tuple)
     schema: str   # "" for an object that lives in no schema (database, large object, parameter, ...)
     obj: str      # the object's name; "" when the problem is about a role alone
     detail: str   # the column, the argument list, or the membership path; "" otherwise
     role: str     # the role that holds it; everyone is written "everyone (PUBLIC)"
     right: str    # the right, the flag, "OWNER", or "MEMBER"
-    fix: str      # one SQL statement that removes it, or "" when a name is not plain (a person writes it by hand)
+    grantor: str  # the role recorded as grantor of the item ("" for flags and ownership)
+    fix: str      # the statement(s) that remove it (section 4.2 forms), or "" (a person writes it by hand)
+    by_hand: str = ""  # why no statement is printed: "name" (a name is not plain) or "system" (a server object)
     repaired_by_run: bool = False  # true only for the two cases of section 4.1 step 2
 
     def line(self) -> str: ...
@@ -139,22 +182,26 @@ class Problem:
 
 def verify(
     db,
+    *,
     migration_role: str,
+    login_role: str | None,
     named_roles: Mapping[str, Literal["runtime", "portal", "purge"]],
     grant_map: Mapping[str, Grant],
-    *,
     schema: str,
-    login_role: str | None = None,
-    managed_functions: Sequence[str] = (),
-    reviewed_definers: frozenset[tuple[str, str, str]] = REVIEWED_DEFINER_FUNCTIONS,
+    managed_functions: Sequence[str],
+    reviewed_definers: frozenset[tuple[str, str, str]],
+    limits: Sequence[str],          # the two lines of RECIPE_TIMEOUTS, run as statements
 ) -> list[Problem]:
 ```
+
+**Pinned reads (rev 2, D-m1 and fact 26).** One helper in the new module, `pinned_read(db)`, a context manager: `with db.transaction():` (a savepoint inside the run's transaction, a transaction on a fresh connection), first statement `SET LOCAL search_path = pg_catalog, pg_temp`, then the caller's reads, and on the way out it raises `psycopg.Rollback`, so the path is restored (fact 15) and nothing is kept. `verify` runs all its statements inside one `pinned_read`. The runner's other catalog reads use it too: `_refuse_privileged_role`, the reads of `_refuse_foreign_owned`, `_read_back` and `_check_read_back` (steps 1, 3 and 6), `_recheck_roles`, `_members_of_each_other` and the step-4 query. Writes are never inside it: the step-4 statements are qualified with the schema read at step 1 (`_apply_grants` gets a `schema` argument instead of reading `current_schema()` itself, MIG:263).
 
 - `migration_role` is the current user that `migrate` read once in step 1; `login_role` is the session user when it differs (a login that switches role). Both are plain strings passed in. `verify` never reads `current_user`, `session_user` or `current_schema()`; `schema` is the schema of the run, read once in step 1 (with the path pinned, `current_schema()` would answer `pg_catalog`).
 - `named_roles` maps each role name given on the command line to the column of the grant map it gets. With no role arguments it is empty, and the subject side still judges everyone.
 - `verify` only reads. It returns every problem (the caller cuts the printed list with `_shown`, the decision is taken on the full list).
 - `verify` has two layers, so that tests can pin each: `_read(db, ...)` runs the queries of 3.2 and returns plain rows; `_judge(rows, ...)` is a pure function that turns rows into `Problem`s. All rules of 3.3 live in `_judge`.
-- How it runs: inside `with db.transaction():` (a savepoint when a transaction is open, a transaction on the fresh connection). First statement inside: `SET LOCAL search_path = pg_catalog, pg_temp`. Then the version check (3.5), the self-check (3.6), the queries. The block always ends by rolling back (psycopg `Rollback`), which restores the search path (fact 15) and keeps nothing.
+- How it runs: inside `pinned_read(db)`. After the path, the two lines of `limits` (the `RECIPE_TIMEOUTS` constant, passed in, never written a second time: TR `test_no_source_or_test_file_writes_the_timeout_values_a_second_time`), so every call has a 60 s limit per statement and a 5 s lock limit, also on the fresh connection of step 8 where a saved role setting could hold anything (fact 36). Then the version check (3.5), the self-check (3.6), the queries. The block always ends by rolling back, which restores the search path and the limits and keeps nothing.
+- Snapshots: at steps 2 and 6 the statements run inside the run's READ COMMITTED transaction, so each sees its own snapshot (another session can commit between two of them; the check after the commit catches what lands). At step 8 the fresh connection's transaction is opened `ISOLATION LEVEL REPEATABLE READ, READ ONLY` (psycopg: `db.isolation_level` and `db.read_only` set before `pinned_read`), so all statements of the check after the commit read one snapshot. Said in the CHANGELOG.
 - Every catalog table, view, function and type in every query is written with `pg_catalog.` in front. No `::regclass` or `::regrole` from a bare text literal; `'pg_catalog.pg_class'::pg_catalog.regclass` is the allowed form.
 
 A problem line (what `Problem.line()` returns), fixed order kind of object, schema.name, detail, role, right, what to do:
@@ -166,11 +213,11 @@ role r13_po: is a member of the built-in server role pg_read_server_files. To re
 function app.door(q text): runs with the rights of its owner r13_mig (SECURITY DEFINER) and is not on the reviewed list. To remove: ALTER FUNCTION "app"."door"(q text) SECURITY INVOKER;  (or drop it)
 ```
 
-Every name that comes from the database goes through the existing `_label` helper (MIG:1364) in the readable part. The `fix` statement is printed only when every name in it is plain (`escape_name(x) == x`, the rule `_refuse_foreign_owned` already uses at MIG:780); otherwise `fix` is empty and the line ends "a person must write the statement by hand (a name holds a character that is not copied into a printed line)". Statements are built with `sql.Identifier`, never by string formatting. This also closes the raw names at MIG:316, 324, 339, 353, 365; MIG:1314 (`usename`) gets `_label` in section 6.
+Every name that comes from the database goes through the existing `_label` helper (moved to `migration_numbers`, see above) in the readable part. The `fix` statement is printed only when every text in it is plain (`escape_name(x) == x`, the rule `_refuse_foreign_owned` already uses at MIG:780), and that includes the whole argument list of a function (`pg_get_function_identity_arguments` prints argument NAMES, which can hold control characters) and the grantor; otherwise `fix` is empty, `by_hand = "name"`, and the line ends "a person must write the statement by hand (a name holds a character that is not copied into a printed line)". For an object in `pg_catalog` or `information_schema` no statement is ever printed (`by_hand = "system"`), and the line ends "this is an object of the server itself; a database administrator decides; no statement is printed". Statements are built with `sql.Identifier`, never by string formatting. This also closes the raw names at MIG:316, 324, 339, 353, 365; MIG:1314 (`usename`) gets `_label` in section 6.
 
-### 3.2 The queries (each ran on the author's cluster as the plain role; result shapes pasted)
+### 3.2 The queries (final texts, rev 2; each ran without error as a plain login on 16.15, fact 40; the same text is in handover/evidence/P3a-2/plan-r2/queries.py)
 
-Parameters: `%(named)s` text array, `%(family)s` text array (`migration_role` and `login_role`), `%(schema)s` text. In the sketches the arrays are written as literals.
+The builder copies these texts into the module as constants, without rewording them; a change needs a new run on a server, pasted in the builder notes. Parameters are bound by psycopg with `db.execute(TEXT, params)`: `%(named)s` text array of the named roles, `%(family)s` text array (`migration_role`, plus `login_role` when it differs), `%(roles)s` text array (the roles a closure starts from), `%(schema)s` the schema of the run, `%(managed)s` text array of the function names the files create (`_managed_names(...)[1]`). The two closures (`subj`, `fam`) use `UNION`, not `UNION ALL`: a role graph where groups belong to several groups gives an exponential number of paths otherwise (fact 40: 25-level diamond, 1.9 ms against a cancelled run). No statement is sent per role, per relation or per right: `verify` sends Q0, the version read, Q1 twice (from the named roles and from the family), Q1b, Q2, Q3 and Q4, 8 statements whatever the size of the database. `has_*_privilege` and `pg_has_role` are not used anywhere in the new module (fact 6).
 
 **Q0, self-check input** (section 3.6):
 
@@ -186,113 +233,228 @@ SELECT c.relname || '.' || a.attname
 ```
 Result on 16.15: the 14 rows of fact 9.
 
-**Q1, the subjects.** A subject is a role whose rights count as a named role's rights: the named role itself and every role it belongs to, directly or through other roles, whatever the options. Everyone (PUBLIC) is always a subject too.
+**Q1, the closure.** Run twice: with `%(roles)s` = the named roles (the *subjects* of each named role: the role itself and every role it belongs to, directly or through other roles, whatever the options) and with `%(roles)s` = the family (the *migration role family*). `uses_rights_at_once` is false when every path to that role passes a membership with INHERIT FALSE (fact 6). Whether a role is built in is decided in Python by the prefix `pg_` (a new role cannot take that prefix: "role name ... is reserved"). One row is added in Python when it applies: a closure that contains the owner of the current database (read by Q2's database branch, column `owner`) also contains `pg_database_owner` (fact 8).
 
 ```sql
-WITH RECURSIVE named AS (
-  SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = ANY(%(named)s::text[])),
-closure(root, role, at_once, depth) AS (
-  SELECT n.oid, n.oid, true, 0 FROM named n
-  UNION ALL
-  SELECT c.root, m.roleid, c.at_once AND m.inherit_option, c.depth + 1
+WITH RECURSIVE closure(root, role, at_once) AS (
+  SELECT r.oid, r.oid, true FROM pg_catalog.pg_roles r WHERE r.rolname = ANY(%(roles)s::text[])
+  UNION
+  SELECT c.root, m.roleid, c.at_once AND m.inherit_option
     FROM closure c JOIN pg_catalog.pg_auth_members m ON m.member = c.role)
-SELECT pg_catalog.pg_get_userbyid(c.root) AS named_role, r.rolname AS subject, min(c.depth) AS depth,
-       bool_or(c.at_once) AS uses_rights_at_once, r.rolsuper, r.rolcreaterole, r.rolcreatedb, r.rolbypassrls,
-       r.rolreplication, (r.rolname ~ '^pg_') AS built_in
+SELECT pg_catalog.pg_get_userbyid(c.root) AS start_role, r.rolname AS member_of, bool_or(c.at_once) AS uses_rights_at_once,
+       r.rolsuper, r.rolcreaterole, r.rolcreatedb, r.rolbypassrls, r.rolreplication
   FROM closure c JOIN pg_catalog.pg_roles r ON r.oid = c.role
- GROUP BY 1, 2, r.rolsuper, r.rolcreaterole, r.rolcreatedb, r.rolbypassrls, r.rolreplication ORDER BY 1, 3, 2;
+ GROUP BY c.root, r.rolname, r.rolsuper, r.rolcreaterole, r.rolcreatedb, r.rolbypassrls, r.rolreplication
+ ORDER BY 1, 2;
 ```
-Result shape (v1.out):
-```
- named_role |       subject        | depth | uses_rights_at_once | rolsuper | rolcreaterole | ... | built_in
- r13_po     | r13_po               |     0 | t                   | f        | f             |     | f
- r13_po     | pg_read_server_files |     1 | t                   | f        | f             |     | t
- r13_po     | r13_boss             |     1 | t                   | f        | t             |     | f
- r13_rt     | r13_rt               |     0 | t                   | f        | f             |     | f
- r13_rt     | r13_grp              |     1 | f                   | f        | f             |     | f
-```
-Q1b (same file) returns the direct membership rows with the three options, for the words of the message. The same recursion started from `%(family)s` gives the *migration role family*: the migration role, the login when it differs, and every role either belongs to. One more row is added in Python to both sets when it applies: a set that contains the owner of the current database also contains `pg_database_owner` (fact 8; Q2 returns the database owner).
 
-**Q2, every access-list item that matters, one query over the 13 live columns.** Shape: one inner `UNION ALL` that brings each kind of object to the same columns `(kind, schema, name, sub, owner, definer, ext, acl)` with `coalesce(acl, pg_catalog.acldefault(<kind letter>, owner))`, then one `aclexplode`. The full text that ran is in /home/user/build/p3a2-r13-author/v1.sql (71 result rows on the made-up setup, no error, run as the plain role). Its branches: `pg_class` (relkind `r p v m S f`; letter `s` for a sequence, `r` otherwise), `pg_attribute.attacl` (only where not NULL), `pg_proc` (all `prokind`), `pg_namespace`, `pg_type` (array types left out: they follow their element type), `pg_database` (the current database only), `pg_foreign_data_wrapper`, `pg_foreign_server`, `pg_language`, `pg_largeobject_metadata`, `pg_parameter_acl`, `pg_tablespace`. Outer part:
+**Q1b, the direct membership rows** (for the words of a line and for the printed statement, which needs the grantor, fact 32):
 
 ```sql
-SELECT o.kind, o.schema, o.name, o.sub, pg_catalog.pg_get_userbyid(o.owner) AS owner,
-       (o.owner IN (SELECT role FROM fam)) AS family_owned, o.definer, o.ext,
-       CASE a.grantee WHEN 0 THEN NULL ELSE pg_catalog.pg_get_userbyid(a.grantee) END AS grantee,
-       (a.grantee IN (SELECT role FROM subj)) AS grantee_is_subject, (a.grantee = o.owner) AS owner_item,
-       a.privilege_type, a.is_grantable, pg_catalog.pg_get_userbyid(a.grantor) AS grantor
-  FROM obj o CROSS JOIN LATERAL pg_catalog.aclexplode(o.acl) a
- WHERE a.grantee IN (SELECT role FROM subj)                                   -- a subject is named
-    OR (a.grantee = 0 AND (o.kind NOT IN ('function','procedure','aggregate','type','domain','language')
-                           OR o.owner IN (SELECT role FROM fam) OR o.definer))  -- everyone, where it is judged
-    OR (o.schema = %(schema)s AND (o.owner IN (SELECT role FROM fam) OR o.kind = 'schema'));  -- object side
+SELECT pg_catalog.pg_get_userbyid(m.member) AS member, pg_catalog.pg_get_userbyid(m.roleid) AS role_name,
+       pg_catalog.pg_get_userbyid(m.grantor) AS grantor, m.admin_option, m.inherit_option, m.set_option
+  FROM pg_catalog.pg_auth_members m
+ WHERE m.member IN (SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = ANY(%(roles)s::text[]))
+ ORDER BY 1, 2, 3;
 ```
-Result shape (v1.out, cut):
-```
-     kind     | schema |     name      | sub  |   owner   | f | d | e |  grantee   | s | o | privilege_type | g | grantor
- database     |        | r13db         |      | postgres  | f | f | f | (everyone) | f | f | TEMPORARY      | f | postgres
- database     |        | r13db         |      | postgres  | f | f | f | r13_rt     | t | f | CREATE         | f | postgres
- function     | app    | door          | q text | r13_mig | t | t | f | (everyone) | f | f | EXECUTE        | f | r13_mig
- function     | other  | sd            |      | r13_other | f | t | f | (everyone) | f | f | EXECUTE        | f | r13_other
- large object |        | 424242        |      | r13_mig   | t | f | f | r13_rt     | t | f | SELECT         | f | r13_mig
- parameter    |        | work_mem      |      | unknown (OID=0) | f | f | f | r13_rt | t | f | SET          | f | postgres
- sequence     | app    | audit_entries_seq_seq | | r13_mig | t | f | f | r13_other | f | f | USAGE        | f | r13_mig
- table        | app    | audit_entries |      | r13_mig   | t | f | f | r13_rt     | t | f | INSERT         | t | r13_mig
- table        | other  | secret        |      | r13_other | f | f | f | (everyone) | f | f | SELECT         | f | r13_other
- table        | other  | secret        |      | r13_other | f | f | f | r13_grp    | t | f | SELECT         | f | r13_other
- type         | app    | runs          |      | r13_mig   | t | f | f | r13_rt     | t | f | USAGE          | f | r13_mig
-```
-Changes the builder makes to the sketch, each with a test: (a) the two system schemas are read as well, but only for items whose grantee is a subject role (never for everyone); other schemas whose name starts with `pg_` (temporary and toast schemas of sessions) stay out; (b) the `ext` column is computed for every kind that can be an extension member, not only relations and functions; (c) the extension's owner is returned next to `ext` (needed for rule S7); (d) the relkind is returned so that an access list on a relation kind outside `r p v m S f` becomes a problem line of its own ("a kind of relation this version does not read") instead of being skipped.
 
-**Q3, what a subject or a family role owns, and where a subject is named** (`pg_shdepend`, all kinds in one query; fact 12):
+**Q2, every access-list item that matters, one query over the 13 live columns.** Rev 1's changes (a)-(d) are built in: (a) `pg_catalog` and `information_schema` are read (column `system`), but in them only items whose grantee is a named role itself, or a subject role whose name does not start with `pg_`, are returned (D-M4, fact 38); the schemas of other sessions (`pg_temp_N`, `pg_toast`, `pg_toast_temp_N`) are left out by `!~ '^pg_(toast|temp_)'`; (b) extension membership is computed for every kind except columns, through one join on `pg_depend` type `e`; (c) the extension's owner and whether it is in the family are returned; (d) a relation of a kind outside `r p v m S f` that carries an access list is returned with the kind word "relation of an unread kind" and becomes a problem line of its own. Also returned: `row_type` (fact 33: `typtype = 'c' AND typrelid <> 0 AND relkind <> 'c'`; a standalone composite type is NOT a row type), the grantor and whether the grantor is the owner (facts 30, 31).
 
 ```sql
-SELECT d.deptype, d.classid::pg_catalog.regclass::text AS catalog, d.objid, d.objsubid,
+WITH RECURSIVE subj(role) AS (
+  SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = ANY(%(named)s::text[])
+  UNION
+  SELECT m.roleid FROM subj s JOIN pg_catalog.pg_auth_members m ON m.member = s.role),
+fam(role) AS (
+  SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = ANY(%(family)s::text[])
+  UNION
+  SELECT m.roleid FROM fam f JOIN pg_catalog.pg_auth_members m ON m.member = f.role),
+named(role) AS (SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = ANY(%(named)s::text[])),
+obj(kind, relkind, cls, oid, schema, name, sub, owner, definer, row_type, acl) AS (
+  SELECT CASE c.relkind WHEN 'S' THEN 'sequence' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view'
+                        WHEN 'f' THEN 'foreign table' WHEN 'r' THEN 'table' WHEN 'p' THEN 'table'
+                        ELSE 'relation of an unread kind' END,
+         c.relkind::text, 'pg_catalog.pg_class'::pg_catalog.regclass, c.oid, n.nspname, c.relname, '', c.relowner, false, false,
+         coalesce(c.relacl, pg_catalog.acldefault(CASE c.relkind WHEN 'S' THEN 's' ELSE 'r' END::"char", c.relowner))
+    FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname !~ '^pg_(toast|temp_)' AND (c.relkind IN ('r','p','v','m','S','f') OR c.relacl IS NOT NULL)
+  UNION ALL
+  SELECT 'column', c.relkind::text, 'pg_catalog.pg_class'::pg_catalog.regclass, c.oid, n.nspname, c.relname, a.attname, c.relowner, false, false, a.attacl
+    FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid = a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+   WHERE a.attacl IS NOT NULL AND NOT a.attisdropped AND n.nspname !~ '^pg_(toast|temp_)'
+  UNION ALL
+  SELECT CASE p.prokind WHEN 'p' THEN 'procedure' WHEN 'a' THEN 'aggregate' ELSE 'function' END, '',
+         'pg_catalog.pg_proc'::pg_catalog.regclass, p.oid, n.nspname, p.proname,
+         pg_catalog.pg_get_function_identity_arguments(p.oid), p.proowner, p.prosecdef, false,
+         coalesce(p.proacl, pg_catalog.acldefault('f', p.proowner))
+    FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname !~ '^pg_(toast|temp_)'
+  UNION ALL
+  SELECT 'schema', '', 'pg_catalog.pg_namespace'::pg_catalog.regclass, n.oid, n.nspname, '', '', n.nspowner, false, false,
+         coalesce(n.nspacl, pg_catalog.acldefault('n', n.nspowner))
+    FROM pg_catalog.pg_namespace n WHERE n.nspname !~ '^pg_(toast|temp_)'
+  UNION ALL
+  SELECT CASE t.typtype WHEN 'd' THEN 'domain' ELSE 'type' END, coalesce(rc.relkind::text, ''),
+         'pg_catalog.pg_type'::pg_catalog.regclass, t.oid, n.nspname, t.typname, '', t.typowner, false,
+         (t.typtype = 'c' AND t.typrelid <> 0 AND rc.relkind <> 'c'),
+         coalesce(t.typacl, pg_catalog.acldefault('T', t.typowner))
+    FROM pg_catalog.pg_type t JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+    LEFT JOIN pg_catalog.pg_class rc ON rc.oid = t.typrelid
+   WHERE n.nspname !~ '^pg_(toast|temp_)' AND NOT (t.typelem <> 0 AND t.typcategory = 'A')
+  UNION ALL
+  SELECT 'database', '', 'pg_catalog.pg_database'::pg_catalog.regclass, d.oid, '', d.datname, '', d.datdba, false, false,
+         coalesce(d.datacl, pg_catalog.acldefault('d', d.datdba))
+    FROM pg_catalog.pg_database d WHERE d.datname = pg_catalog.current_database()
+  UNION ALL
+  SELECT 'foreign-data wrapper', '', 'pg_catalog.pg_foreign_data_wrapper'::pg_catalog.regclass, w.oid, '', w.fdwname, '', w.fdwowner, false, false,
+         coalesce(w.fdwacl, pg_catalog.acldefault('F', w.fdwowner)) FROM pg_catalog.pg_foreign_data_wrapper w
+  UNION ALL
+  SELECT 'foreign server', '', 'pg_catalog.pg_foreign_server'::pg_catalog.regclass, s.oid, '', s.srvname, '', s.srvowner, false, false,
+         coalesce(s.srvacl, pg_catalog.acldefault('S', s.srvowner)) FROM pg_catalog.pg_foreign_server s
+  UNION ALL
+  SELECT 'language', '', 'pg_catalog.pg_language'::pg_catalog.regclass, l.oid, '', l.lanname, '', l.lanowner, false, false,
+         coalesce(l.lanacl, pg_catalog.acldefault('l', l.lanowner)) FROM pg_catalog.pg_language l
+  UNION ALL
+  SELECT 'large object', '', 'pg_catalog.pg_largeobject'::pg_catalog.regclass, m.oid, '', m.oid::text, '', m.lomowner, false, false,
+         coalesce(m.lomacl, pg_catalog.acldefault('L', m.lomowner)) FROM pg_catalog.pg_largeobject_metadata m
+  UNION ALL
+  SELECT 'parameter', '', 'pg_catalog.pg_parameter_acl'::pg_catalog.regclass, a.oid, '', a.parname, '', 0::pg_catalog.oid, false, false, a.paracl
+    FROM pg_catalog.pg_parameter_acl a WHERE a.paracl IS NOT NULL
+  UNION ALL
+  SELECT 'tablespace', '', 'pg_catalog.pg_tablespace'::pg_catalog.regclass, s.oid, '', s.spcname, '', s.spcowner, false, false,
+         coalesce(s.spcacl, pg_catalog.acldefault('t', s.spcowner)) FROM pg_catalog.pg_tablespace s),
+items AS (
+  SELECT o.*, (o.schema IN ('pg_catalog', 'information_schema')) AS system, a.grantee, a.grantor, a.privilege_type, a.is_grantable
+    FROM obj o CROSS JOIN LATERAL pg_catalog.aclexplode(o.acl) a)
+SELECT i.kind, i.relkind, i.schema, i.system, i.name, i.sub, pg_catalog.pg_get_userbyid(i.owner) AS owner,
+       (i.owner IN (SELECT role FROM fam)) AS family_owned, i.definer, i.row_type,
+       xe.extname AS extension, pg_catalog.pg_get_userbyid(xe.extowner) AS extension_owner,
+       (xe.extowner IN (SELECT role FROM fam)) AS extension_family_owned,
+       CASE i.grantee WHEN 0 THEN NULL ELSE pg_catalog.pg_get_userbyid(i.grantee) END AS grantee,
+       (i.grantee IN (SELECT role FROM subj)) AS grantee_is_subject, (i.grantee IN (SELECT role FROM named)) AS grantee_is_named,
+       (i.grantee = i.owner) AS owner_item, i.privilege_type, i.is_grantable,
+       pg_catalog.pg_get_userbyid(i.grantor) AS grantor, (i.grantor = i.owner) AS grantor_is_owner
+  FROM items i
+  LEFT JOIN pg_catalog.pg_depend xd ON xd.classid = i.cls AND xd.objid = i.oid AND xd.objsubid = 0 AND xd.deptype = 'e'
+       AND i.kind <> 'column'
+  LEFT JOIN pg_catalog.pg_extension xe ON xe.oid = xd.refobjid
+ WHERE (i.grantee IN (SELECT role FROM subj)
+        AND (NOT i.system OR (i.grantee IN (SELECT role FROM named)
+                               OR pg_catalog.pg_get_userbyid(i.grantee) !~ '^pg_')))
+    OR (NOT i.system AND i.grantee = 0
+        AND (i.kind NOT IN ('function', 'procedure', 'aggregate', 'type', 'domain', 'language')
+             OR i.owner IN (SELECT role FROM fam) OR i.definer))
+    OR (NOT i.system AND i.schema = %(schema)s AND (i.owner IN (SELECT role FROM fam) OR i.kind = 'schema'))
+ ORDER BY 1, 3, 5, 6, 14, 18;
+```
+
+**Q3, what a subject owns, and where a subject is named** (`pg_shdepend`, all kinds in one query, fact 12). Database rows and parameter rows have `dbid` 0; a database row counts only for the current database. `temporary` marks a relation in a session's temporary schema, which is not a problem (TEMPORARY is in the stated baseline).
+
+```sql
+WITH RECURSIVE subj(role) AS (
+  SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = ANY(%(named)s::text[])
+  UNION
+  SELECT m.roleid FROM subj s JOIN pg_catalog.pg_auth_members m ON m.member = s.role)
+SELECT d.deptype::text, d.classid::pg_catalog.regclass::text AS catalog, d.objid, d.objsubid,
        pg_catalog.pg_get_userbyid(d.refobjid) AS role,
-       pg_catalog.pg_describe_object(d.classid, d.objid, d.objsubid) AS described
+       pg_catalog.pg_describe_object(d.classid, d.objid, d.objsubid) AS described,
+       (d.classid = 'pg_catalog.pg_class'::pg_catalog.regclass AND EXISTS (
+          SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+           WHERE c.oid = d.objid AND n.nspname ~ '^pg_(toast_)?temp_')) AS temporary
   FROM pg_catalog.pg_shdepend d
  WHERE d.refclassid = 'pg_catalog.pg_authid'::pg_catalog.regclass AND d.refobjid IN (SELECT role FROM subj)
-   AND d.dbid IN (0, (SELECT oid FROM pg_catalog.pg_database WHERE datname = pg_catalog.current_database()));
+   AND (d.dbid = (SELECT oid FROM pg_catalog.pg_database WHERE datname = pg_catalog.current_database())
+        OR (d.dbid = 0 AND (d.classid <> 'pg_catalog.pg_database'::pg_catalog.regclass
+                             OR d.objid = (SELECT oid FROM pg_catalog.pg_database WHERE datname = pg_catalog.current_database()))))
+ ORDER BY 5, 1, 2, 6;
 ```
-Result shape (v1.out, grouped there): `a | pg_class | table app.runs | r13_po`, `a | pg_default_acl | default privileges on new relations belonging to role r13_mig in schema app | r13_rt`, `a | pg_largeobject | large object 424242 | r13_rt`, `a | pg_parameter_acl | parameter work_mem | r13_rt`, `o | pg_class | table other.owned_by_grp | r13_grp`, `o | pg_database | database r13db | r13_grp`. The builder adds: rows with `dbid = 0` and `classid = pg_database` count only for the current database; an owned relation in a session's temporary schema is not a problem (fact 12: a live temporary table of a named role shows up here; TEMPORARY is part of the stated baseline).
 
 **Q4, default rights, selected by who receives them** (not by who set them):
 
 ```sql
+WITH RECURSIVE subj(role) AS (
+  SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = ANY(%(named)s::text[])
+  UNION
+  SELECT m.roleid FROM subj s JOIN pg_catalog.pg_auth_members m ON m.member = s.role),
+fam(role) AS (
+  SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = ANY(%(family)s::text[])
+  UNION
+  SELECT m.roleid FROM fam f JOIN pg_catalog.pg_auth_members m ON m.member = f.role)
 SELECT d.defaclobjtype::text AS kind, n.nspname AS schema, pg_catalog.pg_get_userbyid(d.defaclrole) AS set_for,
        (d.defaclrole IN (SELECT role FROM fam)) AS set_for_family,
        CASE a.grantee WHEN 0 THEN NULL ELSE pg_catalog.pg_get_userbyid(a.grantee) END AS grantee,
-       a.privilege_type, a.is_grantable
+       (a.grantee IN (SELECT role FROM subj)) AS grantee_is_subject, a.privilege_type, a.is_grantable
   FROM pg_catalog.pg_default_acl d LEFT JOIN pg_catalog.pg_namespace n ON n.oid = d.defaclnamespace
  CROSS JOIN LATERAL pg_catalog.aclexplode(d.defaclacl) a
- WHERE a.grantee IN (SELECT role FROM subj) OR a.grantee = 0 OR d.defaclrole IN (SELECT role FROM fam);
+ WHERE a.grantee IN (SELECT role FROM subj) OR a.grantee = 0 OR d.defaclrole IN (SELECT role FROM fam)
+ ORDER BY 1, 2, 3, 5, 7;
 ```
-Result shape (v1.out): `f | (all) | r13_mig | r13_po | EXECUTE`, `f | (all) | r13_mig | (everyone) | EXECUTE` (the server's own entry, fact 23), `r | app | r13_mig | r13_rt | SELECT`, `r | other | r13_other | r13_rt | SELECT` (set by another role: the round-12 code never read this row).
 
-No query is sent per role, per relation or per right: `verify` sends Q0, the version read, Q1 twice (subjects, family), Q1b, Q2, Q3, Q4 = 8 statements whatever the size of the database. `has_*_privilege` is not used (fact 6).
+**Step-4 query: the functions whose default EXECUTE for everyone the run removes** (replaces "functions that changed"; run inside `pinned_read`; each row becomes `REVOKE ALL ON ROUTINE <schema.name>(<identity arguments>) FROM PUBLIC`, built with `sql.Identifier` for the schema and the name and `sql.SQL` for the argument text, the form MIG:784 uses; a row whose texts are not plain is not revoked by the run and stays a problem line for step 6):
 
-### 3.3 The rules (`_judge`); each lettered clause gets one `Problem.kind` and one mutant
+```sql
+WITH RECURSIVE fam(role) AS (
+  SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = ANY(%(family)s::text[])
+  UNION
+  SELECT m.roleid FROM fam f JOIN pg_catalog.pg_auth_members m ON m.member = f.role)
+SELECT p.oid::pg_catalog.regprocedure::text AS shown, n.nspname, p.proname,
+       pg_catalog.pg_get_function_identity_arguments(p.oid) AS args, p.prokind::text
+  FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+ WHERE n.nspname = %(schema)s AND p.proowner IN (SELECT role FROM fam) AND p.proname = ANY(%(managed)s::text[])
+   AND EXISTS (SELECT 1 FROM pg_catalog.aclexplode(coalesce(p.proacl, pg_catalog.acldefault('f', p.proowner))) a
+                WHERE a.grantee = 0 AND a.privilege_type = 'EXECUTE')
+ ORDER BY 2, 3, 4;
+```
+
+**The "named role can use the schema" check without `has_schema_privilege`** (moved into `verify` from MIG:1662-1671; `_SCHEMA_USAGE_SQL` is deleted). From Q2's rows for the schema of the run (Q2 returns every item of that schema, third clause of its WHERE): a named role can use the schema when one item gives USAGE to (i) the named role itself, (ii) a subject role reached with `uses_rights_at_once` true in Q1, or (iii) everyone (`grantee` NULL, the `public` default, fact 34). A USAGE that reaches the role only through a role it must switch to does not count (the application never switches role; fact 6). Otherwise one problem of kind `missing_schema_usage` with today's message text (MIG:1665-1671), the only "too little" `verify` reports.
+
+**The rights each named role may hold** (R-M7; read today only from the lambdas at MIG:1630-1654; `_judge` takes them from this table, and a unit test asserts the table equals what `_apply_grants` is called with):
+
+| named role kind | on a relation of the grant map (matched by schema of the run, name and kind: `table` = relkind `r` or `p`, `view` = `v`, `sequence` = `S`) | on the schema of the run | anywhere else |
+|---|---|---|---|
+| runtime | exactly the comma-separated words of `Grant.runtime`, table level, no grant option | USAGE (required) | nothing beyond the baseline (3.4) |
+| portal | SELECT when `Grant.portal` is true, table level (a sequence too); nothing otherwise | USAGE (required) | nothing beyond the baseline |
+| purge | exactly the words of `Grant.purge`, table level, plus SELECT on exactly the columns `Grant.purge_cols` (column level) | USAGE (required) | nothing beyond the baseline |
+
+A view of the map is granted with `GRANT ... ON TABLE` (MIG:268) and its access list uses the table letters; MAINTAIN (PostgreSQL 17) is not in any `Grant` and so is never allowed.
+
+### 3.3 The rules (`_judge`); each lettered clause has one `Problem.kind` and at least one mutant
+
+`PROBLEM_KINDS` (a closed tuple in the new module, in this order; a repository test asserts every kind is produced by at least one `_judge` unit test and named in the CHANGELOG list of what is refused):
+
+| kind | clause | kind | clause |
+|---|---|---|---|
+| `flag` | S1 | `other_grantee` | O1 |
+| `built_in_role` | S2 | `everyone` | O2 |
+| `can_act_as_family` | S3 | `object_grant_option` | O3 |
+| `named_roles_overlap` | S3 (existing rule of MIG:1471) | `definer_unreviewed` | O4 |
+| `owns` | S4 | `schema_right` | O7 |
+| `right` | S5 | `default_for_named` | D1 |
+| `grant_option` | S6 | `default_for_everyone` | D2 |
+| `definer_callable` | S7 | `default_for_other` | D3 |
+| `unread_catalog` | S8 | `default_unknown_kind` | D4 |
+| `unread_relation_kind` | Q2 change (d) | `missing_schema_usage` | 3.2, last part |
 
 **Subject side. For each named role and every role it belongs to:**
 
 - S1 flags: none of the five flags (`SUPERUSER`, `CREATEROLE`, `CREATEDB`, `BYPASSRLS`, `REPLICATION`) on the named role or on any role in its closure.
-- S2 built-in roles: no role in the closure has a name starting with `pg_` (this includes `pg_database_owner` added through fact 8).
-- S3 family: no role in the closure is in the migration role family (a named role that can act as the owner of the tables). The existing rule "named roles are not members of each other" (`_members_of_each_other`, MIG:1471) stays and is asked through the same closure.
-- S4 owns nothing: no subject role owns any object in this database or the database itself (Q3 type `o`), temporary objects apart.
-- S5 rights: every item of Q2 whose grantee is a subject role, or everyone, must be allowed by the grant map for the named role it reaches, or by the baseline (3.4). The map is matched by (schema of the run, name, kind): `runs` in another schema is not the grant-map table, and a view called like a grant-map table is not it. Rights on one column count like the map's column list. A right that reaches the named role only through a role it must switch to (fact 6) is judged exactly like a direct one; the line says through which role.
-- S6 no grant option for a subject role on anything (`is_grantable`), the grant map included.
-- S7 SECURITY DEFINER through everyone: a function outside the system schemas that is SECURITY DEFINER and that a subject, or everyone, may execute is refused, unless it is a member of an extension whose owner is not in the migration role family.
+- S2 built-in roles: no role in the closure has a name starting with `pg_` (this includes `pg_database_owner` added through fact 8). Every `pg_*` role is refused, also the harmless ones (consistent with D-020; said in the CHANGELOG). The line names the membership and the fix is the membership statement with its grantor (4.2). A right that reaches the named role THROUGH a `pg_*` role produces no line of its own: the S2 line covers it (D-M4, fact 38). That is enforced twice: Q2 does not return such items in the system schemas, and `_judge` drops an S5 or S6 item whose grantee is a built-in role in any schema.
+- S3 family: no role in the closure is in the migration role family (a named role that can act as the owner of the tables), kind `can_act_as_family`. The existing rule "named roles are not members of each other" (`_members_of_each_other`, MIG:1471) stays and is asked through the same closure, kind `named_roles_overlap`.
+- S4 owns nothing: no subject role owns any object in this database or the database itself (Q3 type `o`), temporary objects apart (Q3 column `temporary`).
+- S5 rights: every Q2 item whose grantee is a subject role that is not built in, or everyone, must be allowed by the table "rights each named role may hold" (3.2) for the named role it reaches, or by the baseline (3.4). The map is matched by (schema of the run, name, kind): `runs` in another schema is not the grant-map table, and a view called like a grant-map table is not it. Rights on one column count like the map's column list. A right that reaches the named role only through a role it must switch to (fact 6) is judged exactly like a direct one; the line says through which role. Items of the system schemas are judged only when the grantee is the named role itself or a subject role that is not built in; no statement is printed for them (3.1).
+- S6 no grant option for a subject role that is not built in, on anything (`is_grantable`), the grant map included.
+- S7 SECURITY DEFINER through everyone: a function outside the system schemas that is SECURITY DEFINER and that a subject, or everyone, may execute is refused, unless it is a member of an extension whose owner is not in the migration role family. A SECURITY DEFINER function of the family in another schema that only its owner may call passes (the old comparison refused it when it changed; said in the CHANGELOG).
 - S8 named where nothing is read: every Q3 row of type `a` for a subject role must belong to a catalog that Q2 or Q4 reads (`pg_class`, `pg_proc`, `pg_namespace`, `pg_type`, `pg_database`, `pg_foreign_data_wrapper`, `pg_foreign_server`, `pg_language`, `pg_largeobject`, `pg_parameter_acl`, `pg_tablespace`, `pg_default_acl`). Any other catalog is a problem line "named in the access list of a kind of object this version does not read". This is the second, independent closure next to the self-check.
 
-**Object side. For each object in the schema of the run that a role of the migration role family owns, and for the schema of the run itself whoever owns it:**
+**Object side. For each object in the schema of the run that a role of the migration role family owns, and for the schema of the run itself whoever owns it.** AUTHOR ADDITION (rev 2, D-M6; 10.3 item 11): D-020 says "the objects the migration role family owns" without a schema limit; this ticket limits the object side to the schema of the run, option (b) of the design review. Reason: the promise table promises the named roles and everyone; on objects outside the schema of the run those two are judged in every schema by the subject side (S5-S7, D1-D2). What the limit leaves out is a right for a THIRD role (neither a named role nor everyone) on a family object in another schema, and an owner change to such a role there. Option (a), reading the object side in every schema, costs no extra statement (only the third clause of Q2's WHERE changes), but it would refuse every setup where the migration role also owns another application's schema whose own roles hold rights there, and whether that setup is supported is an owner question (10.3 item 5); with the default EXECUTE and USAGE for everyone it would also refuse every family function and type in every schema. Rev 2 does not take (a) without that answer. The generator cells C10 x E37 (third role) and C10 x "owner handed to a third role" are marked "not promised" (7.4), and the CHANGELOG says: "On objects outside the schema of the run, `migrate` judges what the three named roles and everyone can do, not what other roles can do."
 
-- O1 allowed grantees: the owner, the migration role itself (also on an object a group owns: this is the round-12 false refusal), and the named roles as far as the grant map gives it. Any other role is a problem. This rule is what protects a run with no role arguments.
-- O2 nothing for everyone, with the one exception of 3.4 line 3 (row types).
+- O1 allowed grantees: the owner, the migration role itself (also on an object a group owns: this is the round-12 false refusal), and the named roles as far as the table of 3.2 gives it. Any other role is a problem, kind `other_grantee`, built-in roles included. This rule is what protects a run with no role arguments.
+- O2 nothing for everyone, with exactly two exceptions: USAGE on the schema of the run (the PostgreSQL 15 and later default of the `public` schema, `=U/pg_database_owner`, fact 34; it only lets a role look a name up), and USAGE on a row type (3.4 line 3, key of fact 33). CREATE or any other schema right for everyone is a problem (it falls under O7, which covers everyone, see below). R-B2.
 - O3 no grant option for anyone but the owner and the migration role (the migration role may hold `USAGE ... WITH GRANT OPTION` on a schema it does not own; that is how the printed role of MIG:597-601 works).
-- O4 SECURITY DEFINER only on the reviewed list. `REVIEWED_DEFINER_FUNCTIONS` becomes `frozenset[tuple[str, str, str]]` of (schema, name, identity arguments as `pg_get_function_identity_arguments` prints them); an entry whose schema is the constant `RUN_SCHEMA = ""` means the schema of the run. It stays empty. One unit test pins the key: same name in another schema, and an overload, are not excused.
-- O5 AUTHOR ADDITION, group owner: when the owner of such an object is not the migration role itself but a group it belongs to, every other member of that group (read downward through `pg_auth_members`, any option) can act as owner. Each such member must be an allowed grantee with all rights, which a named role never is, so each is a problem line "can act as the owner of ... through the role ...". A group whose only member is the migration role passes (the supported case "database first built under a group role"). This replaces "an owner a file handed an object to" (which needed the before-state) by a rule about the state.
+- O4 SECURITY DEFINER only on the reviewed list. `REVIEWED_DEFINER_FUNCTIONS` becomes `frozenset[tuple[str, str, str]]` of (schema, name, identity arguments as `pg_get_function_identity_arguments` prints them); an entry whose schema is the constant `RUN_SCHEMA = ""` means the schema of the run. It stays empty. A unit test pins the key, and a real-server test (C-F9) shows that the same name in another schema, and an overload, are not excused.
+- O5 STRUCK in rev 2 (D-M7). Rev 1 refused every other member of a group that owns a package object. That refuses a normal setup (`CREATE ROLE app_owner; CREATE ROLE mig LOGIN IN ROLE app_owner; CREATE ROLE alice IN ROLE app_owner;`) with no way out but removing colleagues from the group, and a named role in that group is already refused by S3. Other members of an owning group are not judged; 1.4 says so.
 - O6 extension membership is no excuse: an object the family owns is judged the same whether or not it is a member of an extension. The rule has no condition in the code (there is simply no extension filter on family-owned objects), so it holds whoever is right in the open conflict of "Read first" item 5. It matters in practice only for a migration role that owns an extension; fact 14 says how such a role can exist (CREATE on the database plus a trusted extension), and an administrator can also create the situation by installing an extension while switched to the migration role.
-- O7 schema of the run: any right other than USAGE for a role that is not the owner and not the migration role is a problem (today's rule, MIG:1217-1225, unchanged in meaning).
+- O7 schema of the run: any right other than USAGE for a role that is not the owner and not the migration role is a problem, and "role" includes everyone (`CREATE` for everyone on `public`, the PostgreSQL 14 default, is refused). Same meaning as today's rule (MIG:1217-1225).
 
 **Default rights (Q4):**
 
@@ -301,12 +463,14 @@ No query is sent per role, per relation or per right: `verify` sends Q0, the ver
 - D3 for defaults set for a role of the migration role family: no grantee but that role and the migration role (today's rule, MIG:1004-1005).
 - D4 a default-rights kind the code does not know (anything but `r S f T n`) is a problem line that names the letter and prints no guessed statement (this replaces `_DEFAULT_WORDS.get(kind, 'TABLES')`, MIG:1234).
 
+**Grantor (rev 2, D-M5).** Every problem built from a Q2, Q1b or Q4 row carries the grantor. It decides the printed statement (4.2) and `repaired_by_run` (4.1 step 2). It never decides whether something is a problem: a right is judged the same whoever granted it.
+
 ### 3.4 The baseline: what everyone holds on every PostgreSQL server and how it is judged (printed in the CHANGELOG in these four lines)
 
-1. System objects (schemas `pg_catalog` and `information_schema`): what everyone holds there is the server as shipped and is not judged. AUTHOR ADDITION: a grant there that names a subject role is judged (fact 21 shows a fresh server has none outside built-in roles, which S2 refuses anyway). D-020 says "not judged" without this exception; see 10.3.
+1. System objects (schemas `pg_catalog` and `information_schema`): what everyone holds there is the server as shipped and is not judged. AUTHOR ADDITION: a grant there that names a named role itself, or a subject role that is not built in, is judged (fact 21 shows a fresh server has none outside built-in roles). A grant there to a built-in `pg_*` role is never its own line: the membership in that role is one S2 line (fact 38). No statement is ever printed against a system object (3.1). D-020 says "not judged" without this exception; see 10.3.
 2. Kinds where everyone holds nothing by default (table, view, sequence, column, schema rights beyond what an administrator gave, CREATE on the database, large object, foreign server, foreign-data wrapper, tablespace, parameter): judged everywhere in the database. Any right there for a named role, for a role it belongs to, or for everyone, that the grant map does not give, is refused. USAGE on a schema is allowed (it only lets a role look a name up).
 3. Kinds where everyone holds a right by default (EXECUTE on a function, USAGE on a type, a domain or a language):
-   - on an object of the migration role family in the schema of the run, everyone gets nothing; `migrate` removes the default from the functions its files name, anything else is refused with the REVOKE statement printed. CORRECTION to D-020's wording: the row type that every table carries is left out of this line (fact 11: every table of every database would be refused otherwise, and USAGE on a row type gives no access to the rows). A grant on a row type that names a subject role is still refused.
+   - on an object of the migration role family in the schema of the run, everyone gets nothing; `migrate` removes the default from the functions its files name, anything else is refused with the REVOKE statement printed. CORRECTION to D-020's wording: the row type that a relation carries is left out of this line (fact 11: every table of every database would be refused otherwise, and USAGE on a row type gives no access to the rows). Exact key (fact 33, D-m9, R-Mn5): `typtype = 'c' AND typrelid <> 0` and the relation's `relkind` is one of `r p v m f` (table, partitioned table and partition, view, materialized view, foreign table), which is Q2's column `row_type`. A sequence has no row type on 16. A standalone composite type (`CREATE TYPE x AS (...)`, relation `relkind = 'c'`), an enum, a range, a multirange, a domain and a base type are NOT row types and stay refused. A grant on a row type that names a subject role is still refused; the test makes that grant first, so the access list is written (`=U/owner` appears next to the grantee, fact 33) and the exception must still hold for everyone's entry.
    - a grant that names a subject role, anywhere, is refused;
    - everyone's default on other owners' objects is not judged, except rule S7 (SECURITY DEFINER).
 4. On the database: CONNECT is expected. TEMPORARY for everyone is the server default; it is stated here and not judged (the owner may tighten this later). CREATE on the database is refused for a subject role and for everyone. An explicit TEMPORARY grant that names a subject role is refused (it is outside the map and removing it changes nothing while everyone has it).
@@ -344,37 +508,47 @@ A repository test asserts that every live key of `KNOWN_ACL_COLUMNS` appears, wi
 | Step | What happens | On failure: message, error class, exit code of `hadavin-sdk migrate`, what is kept |
 |---|---|---|
 | 0 (unchanged, before connecting) | Argument checks, file names, ledger order, released-file fingerprints, `check_grants` with the new duplicate rule (6.4) | `ConfigError` or `MigrationNumberError`, exit 2. Nothing touched. |
-| 1 | Connect, open the transaction, take the lock (6.1-6.2), version refusal (3.5), the two time limits, `_refuse_privileged_role`, `_refuse_foreign_owned`, read `current_user`, `session_user` and `current_schema()` once into Python values, create the ledger table if missing, read the ledger, late-file checks. Unchanged except the version refusal and the three values. | `ConfigError`, exit 2. Rolled back; nothing kept. |
-| 2 | `verify` before the first file. Problems with `repaired_by_run` are dropped here only. Those are exactly: (i) a right that names a named role directly on a relation of the grant map in the schema of the run (step 4 resets it with `REVOKE ALL` and grants the map again, fact 16); (ii) EXECUTE for everyone on a function in the schema of the run that the family owns and whose name the files create (step 4 removes it). Everything else stops the run. | `ConfigError` starting "before any migration file ran, this database already holds rights that the grant map does not give: ... Nothing was changed. No file ran. What to do: a database administrator runs the statements printed with each line (or removes the cause named there), then run migrate again." Exit 2. Nothing kept. |
+| 1 | Connect, open the transaction, take the lock (6.1-6.2), the two time limits of `RECIPE_TIMEOUTS`, version refusal (3.5), `_refuse_privileged_role`, `_refuse_foreign_owned`, read `current_user`, `session_user` and `current_schema()` once into Python values (this one statement stays outside `pinned_read`, because `current_schema()` must see the run's own search path, as today at MIG:1603; it names no catalog table), create the ledger table if missing, read the ledger, late-file checks. Unchanged except the version refusal, the three values and the pinned reads (3.1). | `ConfigError`, exit 2. Rolled back; nothing kept. |
+| 2 | `verify` before the first file. Problems with `repaired_by_run` are dropped here only. Those are exactly: (i) a right on a relation of the grant map in the schema of the run whose grantee is a named role itself AND whose grantor is the migration role (step 4's `REVOKE ALL` removes only what the migration role granted, fact 31; a right granted by anyone else is NOT repaired and stops the run here, D-m5); (ii) EXECUTE for everyone on a function that the step-4 query of 3.2 returns (step 4 removes it). Everything else stops the run. | `ConfigError` starting "before any migration file ran, this database already holds rights that the grant map does not give: ... Nothing was changed. No file ran. What to do: a database administrator runs the statements printed with each line (or removes the cause named there), then run migrate again." Exit 2. Nothing kept. |
 | 3 | Each pending file, then the existing read-back after the file (`_check_read_back`, `_recheck_roles`), then the ledger row. Unchanged. The read-back stays because it names the file, which a state check cannot. | As today: `ConfigError` naming the file, exit 2, rolled back (with the existing sentence about a hidden COMMIT). |
-| 4 | All writes of the runner itself: `_apply_grants` per named role; `REVOKE ALL ON ROUTINE ... FROM PUBLIC` for each function in the schema of the run that the family owns, whose name is in `_managed_names(...)[1]` and on which everyone has EXECUTE (read with one qualified query; this replaces "functions that changed"). No runner write comes after this step. | A server error here (for example the lock limit on a busy table) is reported as today (`_limit_error`), exit 2, rolled back. |
-| 5 | `SET CONSTRAINTS ALL IMMEDIATE`. Triggers that waited for the commit run now. | An error raised by such a trigger is wrapped: `ConfigError("a trigger that was set to run at the end of the transaction failed when migrate ran it early: <server message through _label>. Nothing was kept.")`, exit 2, rolled back. |
-| 6 | Last statements before the commit: the read-back once more (session values, triggers of the schema, memberships, saved settings; so a trigger on the ledger that disabled the audit triggers is refused as a mistake), `_recheck_roles`, then `verify` in full (nothing dropped), then the existing "each named role can use the schema" check moved into `verify` as a missing-right line (the only "too little" it reports). Nothing reads a user table. | `ConfigError` starting "after the migration files and the grants, rights that the grant map does not give are in place: ... The whole run is rolled back; the database is as it was before this run, unless a file ended the transaction itself (that is reported separately above). What to do: (1) if a migration file made it, remove that statement from the file; (2) if no file did, a database administrator runs the statement printed with the line; (3) run migrate again." Exit 2. |
-| 7 | COMMIT (leaving the `with` blocks). | A server error at COMMIT: raised as it is, exit 3; the server has rolled back. |
-| 8 | A NEW connection through the same `connect(...)` with one extra connection option `options="-c search_path=pg_catalog,pg_temp"` (fact 13), `verify` in full with the values of step 1. The first statement `verify` sends is the `SET LOCAL search_path` of 3.1; the one statement `connect` itself sends before (`SET TIME ZONE 'UTC'`, store/postgres.py:148) looks no name up. Runs also when no file was pending: running `migrate` again is the way to re-check. | See 4.2. |
-
-Step 8 cannot connect (network, login): `AppliedNotVerifiedError` with the "could not be checked" wording of 4.2. It never returns "applied".
+| 4 | All writes of the runner itself: `_apply_grants(db, schema, role, ...)` per named role (schema from step 1); `REVOKE ALL ON ROUTINE ... FROM PUBLIC` for each row of the step-4 query (3.2). No runner write comes after this step. | A server error here (for example the lock limit on a busy table) is reported as today (`_limit_error`), exit 2, rolled back. |
+| 5 | `step[0] = "running the deferred checks and triggers early"`, then `SET CONSTRAINTS ALL IMMEDIATE`. Checks and triggers that waited for the commit run now. | A lock or statement limit (55P03, 57014) goes to `_limit_error` as today (R-Mn7: the limit wins, the step name says where). Any other `psycopg.Error` is wrapped: `ConfigError("a deferred check or trigger failed when migrate ran it before the commit: <server message through _label>. Nothing was kept.")` (D-m4: it can be a foreign key, unique or exclusion check as well as a trigger), exit 2, rolled back. |
+| 6 | Last statements before the commit: the read-back once more (session values, triggers of the schema, memberships, saved settings; so a trigger on the ledger that disabled the audit triggers is refused as a mistake), called as `_check_read_back(db, saved, END_OF_RUN, frozenset(), named)` with the constant `END_OF_RUN = "(after the last file and the grants)"` in the place of the file name (R-Mn6), `_recheck_roles(db, named, END_OF_RUN)`, then `verify` in full (nothing dropped), including the schema-USAGE check of 3.2. Nothing reads a user table. | `ConfigError` starting "after the migration files and the grants, rights that the grant map does not give are in place: ... The whole run is rolled back; the database is as it was before this run, unless a file ended the transaction itself (that is reported separately above). What to do: (1) if a migration file made it, remove that statement from the file; (2) if no file did, a database administrator runs the statement printed with the line; (3) run migrate again." Exit 2. |
+| 7 | COMMIT (leaving the `with` blocks), wrapped (D-M3, fact 37). | (a) The server refused the COMMIT: the error has an SQLSTATE and the connection is still open (`not db.closed`). The server rolled back (fact 37a). `ConfigError("the database server refused the commit (<SQLSTATE>: <message through _label>). Nothing was kept; run migrate again.")`, exit 2. (b) Anything else: no SQLSTATE, or the connection is closed, or the status is UNKNOWN (fact 37b: the commit may have happened). `AppliedNotVerifiedError` with `commit_unknown = True` and the wording of 4.2, exit 5. Step 8 is not run in case (b). |
+| 8 | A NEW connection through the same `connect(dsn, iam_auth=..., region=..., sslmode=..., sslrootcert=...)` with NO extra argument (D-M8, R-M1, fact 35: an `options=` keyword would replace a role switch inside the DSN, and `store/postgres.connect` does not take one); `db.isolation_level = REPEATABLE_READ`, `db.read_only = True`; then `verify` in full with the values of step 1 (its first statements pin the path and set the two limits, 3.1). The one statement `connect` itself sends before (`SET TIME ZONE 'UTC'`, store/postgres.py:148) looks no name up. Runs also when no file was pending: running `migrate` again is the way to re-check. Step 8 has no lock (D-m12): what another session grants after the commit is reported like any other excess. | ALL of step 8 sits in one `try`, outside the `try` that feeds `_limit_error` (MIG:1673-1676): ANY exception (a failed connect, a `QueryCanceled` from a role-level limit, the version or self-check `ConfigError`, a `psycopg.Error` such as an object dropped between two reads) becomes `AppliedNotVerifiedError` with the "could not run" wording of 4.2, exit 5, chained with `raise ... from e`. Problems found: `AppliedNotVerifiedError` with the list, exit 5. It never returns "applied" unless `verify` ran to the end and returned nothing. |
 
 ### 4.2 The failure after the commit
 
-New class in `hadavin_sdk.errors`: `class AppliedNotVerifiedError(Exception)` with the attributes `applied: list[str]`, `problems: list[Problem]`, `statements: list[str]`. It is deliberately NOT a `ConfigError`: a `ConfigError` means "refused, nothing happened" everywhere in this package (cli.py:19, exit 2). `cli._migrate` catches it, prints the message to standard error, prints no "applied" line, and returns exit code 5 (the builder confirms by `grep -n "return 5\|exit 5" src/hadavin_sdk/cli.py` that 5 is unused; 0 to 4 are taken) and adds the code to the usage text at cli.py:9.
+New class in `hadavin_sdk.errors`: `class AppliedNotVerifiedError(Exception)` with the attributes `applied: list[str]`, `problems: list[Problem]`, `statements: list[str]`, `could_not_run: str` ("" when the check ran) and `commit_unknown: bool`. It is deliberately NOT a `ConfigError`: a `ConfigError` means "refused, nothing happened" everywhere in this package (cli.py:19, exit 2). `cli._migrate` catches it, prints the message to standard error, prints every statement to standard output (one per line, nothing else on standard output, so `hadavin-sdk migrate ... > fix.sql` captures them; D-m3), prints no "applied" line, and returns exit code 5 (checked: no `return 5` in cli.py at 4d328e3d; 0 to 4 are taken). The module docstring of cli.py gets one line for `migrate` in the style of the other commands (R-Mn8): `hadavin-sdk migrate ...   exit 0 applied and checked, 2 refused (nothing kept), 3 failure, 5 applied and committed but not verified (or the commit's outcome is unknown)`.
 
-Exact wording (the three bracketed parts are filled in; the first sentence is fixed):
+Exact wording on standard error (the bracketed parts are filled in; the first sentence is fixed):
 
 ```
 The files are applied and committed; the database is over-privileged now; run these statements; run migrate again to re-check.
 Applied in this run: <versions, or "no file (nothing was pending)">.
 What is wrong (<n> things): <problem lines, at most 20, then "and N more">.
-Statements for a database administrator, in this order (every one is printed, not only the first 20):
-<one REVOKE / ALTER ... per line, each ending with ";">
-<when a fix is empty:> For <n> of them no statement is printed, because a name holds a character that is not copied into a printed line: a person writes those by hand.
+The <m> statements that remove them are printed on standard output, in the order to run them (all of them, not only the first 20).
+<when some have no statement:> For <k> of them no statement is printed: <j> because a name holds a character that is not copied into a printed line, <i> because the object belongs to the server itself; a person decides those by hand.
 migrate did not remove anything itself. Until a person has run the statements, the roles named above can do more than the grant map allows.
-This check ran after the commit, on a new connection, as the migration role. A file written to do harm can also cheat this check; see "What migrate promises" in CHANGELOG.md.
+This check ran after the commit, on a new connection, as the migration role; what it found was made by this run or by another session since the commit. A file written to do harm can also cheat this check; see "What migrate promises" in CHANGELOG.md.
 ```
 
 When step 8 could not run at all: first sentence "The files are applied and committed, but the check after the commit could not run (<reason through _label>), so nobody has confirmed that the roles hold only what the grant map gives; run migrate again to check."
 
-How the statements are printed: `Problem.fix` values, de-duplicated, in a fixed order (memberships first, then default rights, then object rights, then owner and SECURITY DEFINER changes), each built with `sql.Identifier` and `sql.SQL` and rendered with `as_string`. Forms: `REVOKE <right> ON <KIND> <schema.name> FROM <role or PUBLIC>;`, column rights `REVOKE <right> (<column>) ON TABLE ...`, `REVOKE GRANT OPTION FOR ...`, `REVOKE <group> FROM <member>;`, `ALTER DEFAULT PRIVILEGES FOR ROLE <r> [IN SCHEMA <s>] REVOKE <right> ON <KINDS> FROM <grantee>;`, `ALTER ROLE <r> NO<FLAG>;`, `ALTER FUNCTION <schema.name>(<identity arguments>) SECURITY INVOKER;`. For an owner problem no statement is guessed: the line says "hand it to the migration role or drop it" and counts as "by hand". A test executes every printed statement as a superuser on the test server and then asserts that `verify` returns nothing (the statements are right and complete).
+When the COMMIT's outcome is unknown (step 7 b): first sentence "The connection was lost while the files were being committed, so the commit may or may not have happened, and nothing was checked afterwards; run migrate again: it applies the files that are not in the ledger and checks the database either way." `applied` lists the versions this run tried to commit, under the words "Tried to commit:".
+
+How the statements are built: each `Problem.fix` is built with `sql.Identifier` and `sql.SQL` and rendered with `as_string`; duplicates removed; order (fact 30: a grant-option holder's dependents must go first): memberships, then default rights, then object rights granted by someone other than the owner, then object rights granted by the owner, then grant options, then flags, then SECURITY DEFINER changes. Forms, each checked against fact 30-32:
+- object right, grantor is the owner: `REVOKE <right> ON <KIND> <schema.name> FROM <role or PUBLIC>;` (a superuser acts as the owner); column right `REVOKE <right> (<column>) ON TABLE <schema.name> FROM ...;`
+- object right, grantor is another role G: `SET ROLE <G>; REVOKE <right> ON <KIND> <schema.name> FROM <role>; RESET ROLE;` on one line (fact 30, a16). `REVOKE ... GRANTED BY` is NOT used for objects ("grantor must be current user").
+- a grant option: `REVOKE GRANT OPTION FOR <right> ON <KIND> <schema.name> FROM <role> CASCADE;` (printed after the dependents above, so CASCADE removes nothing that was not already listed; the line says "also removes what <role> passed on").
+- membership: `REVOKE <group> FROM <member> GRANTED BY <grantor>;`, always with `GRANTED BY` (fact 32: without it a superuser's REVOKE of a membership granted by a CREATEROLE role does nothing and only warns).
+- default right: `ALTER DEFAULT PRIVILEGES FOR ROLE <set_for> [IN SCHEMA <s>] REVOKE <right> ON <KINDS> FROM <grantee>;`
+- flag: `ALTER ROLE <r> NO<FLAG>;`
+- SECURITY DEFINER: `ALTER FUNCTION <schema.name>(<identity arguments>) SECURITY INVOKER;` (the word is `PROCEDURE` for a procedure).
+- owner problem: no statement is guessed; the line says "hand it to the migration role or drop it" and counts as by hand.
+- an object of `pg_catalog` or `information_schema`: never a statement (3.1).
+
+A test executes every printed statement as a superuser on the test server and then asserts that `verify` returns nothing (the statements are right and complete). The test cases include grantor = owner, grantor = a grant-option holder (table and column), and a membership granted by a CREATEROLE role (facts 30-32).
 
 ### 4.3 Why there is no automatic repair
 
@@ -393,10 +567,12 @@ How the statements are printed: `Problem.fix` values, de-duplicated, in a fixed 
 
 | What | Where | Change |
 |---|---|---|
-| `effective_problems` | MIG:283-366 | Body replaced by the subject side of `verify`. The name stays exported as a thin wrapper `effective_problems(db, role, expected_table, expected_cols=None) -> list[str]` only if a caller outside `migrate` exists on the branch (`grep -rn effective_problems src tests`); otherwise it is removed and its tests re-pointed. Main's version (main migrate.py:193-262) is the reuse base: same idea (what the role can do against the map), now all schemas, all kinds, memberships, 8 statements instead of one per role x relation x right x column. |
+| `effective_problems` | MIG:295-372 (`_TABLE_PRIVS` starts at 283, `_no_duplicate_names` at 374) | REMOVED (decided in rev 2, R-Mn1: its only callers outside `migrate()` are the three TW tests retired in 5.4). The subject side of `verify` replaces it. Main's version (main migrate.py:193-262) is the reuse base of the idea (what the role can do against the map), now all schemas, all kinds, memberships, 8 statements instead of one per role x relation x right x column. |
 | Access-list queries | MIG:909-1006 | `_ACL_RELATION_SQL`, `_ACL_FUNCTION_SQL`, `_ACL_OWNER_SQL`, `_ACL_SCHEMA_SQL`, `_ACL_DEFAULT_SQL` are replaced by Q2-Q4. They lose the inputs `changed_*`, `kept_*` and `judged`; default rights are selected by grantee. |
 | `_refuse_unlisted_grantees` | MIG:1098-1254 | Its loops become `_judge`; the REVOKE of everyone's EXECUTE moves to step 4; the function is removed. |
 | `REVIEWED_DEFINER_FUNCTIONS` | MIG:821-824 | Key (schema, name, identity arguments), rule O4. |
+| `_apply_grants` | MIG:260-280 | Takes `schema` as an argument (read once at step 1) instead of `SELECT current_schema()` at MIG:263. |
+| `_label` | MIG:1364-1366 | Moves to `migration_numbers.py`; `migrate.py` imports it back (3.1). |
 | `_routine_name` | MIG:1101-1106 | Replaced by `sql.Identifier(schema, name)` plus the argument text, the form MIG:784 already uses. |
 | Order of `migrate` | MIG:1579-1672 | Section 4. Lines 1607 and 1662-1663 go; 1624-1661 shrink to the three `_apply_grants` calls. |
 | Catalog names | every query that stays in MIG (304-365 goes; 432-477, 609-627, 669-684, 1257-1271) | `pg_catalog.` in front of every catalog table and function, no bare `'pg_class'::regclass`. A repository test greps the SQL constants of `MIG` and the new module for a catalog name without the prefix. |
@@ -404,7 +580,7 @@ How the statements are printed: `Problem.fix` values, de-duplicated, in a fixed 
 
 ### 5.3 Delete, with the written reason
 
-Deleted: `_NOT_SYSTEM_PARTS` entries `@ME@`, `@MINE@`, `@ITEM@` and `_sql` (MIG:826-848, as far as nothing kept uses them), `_IN_SCOPE`, `_OWNER`, `_FUNCTION_FIELDS`, `_FUNCTION_STATE_SQL`, `_RELATION_FIELDS`, `_RELATION_STATE_SQL`, `_SCHEMA_FIELDS`, `_SCHEMA_STATE_SQL` (MIG:851-908), `_Objects`, `_objects`, `_Changed`, `_changed_ids`, `_kept_owner_ids`, `_changed_since` (MIG:1026-1095), `_NO_RIGHT_OUTSIDE` (MIG:1098), the calls at MIG:1607 and 1662.
+Deleted: `_TABLE_PRIVS`, `_SERVER_VERSION_SQL`, `_MAINTAIN_FROM`, `_table_privs` and `effective_problems` (MIG:283-372), `_SCHEMA_USAGE_SQL` (MIG:694, its only use MIG:1665 moves into `verify`), `_NOT_SYSTEM_PARTS` entries `@ME@`, `@MINE@`, `@ITEM@` and `_sql` (MIG:826-848, as far as nothing kept uses them), `_IN_SCOPE`, `_OWNER`, `_FUNCTION_FIELDS`, `_FUNCTION_STATE_SQL`, `_RELATION_FIELDS`, `_RELATION_STATE_SQL`, `_SCHEMA_FIELDS`, `_SCHEMA_STATE_SQL` (MIG:851-908), `_Objects`, `_objects`, `_Changed`, `_changed_ids`, `_kept_owner_ids`, `_changed_since` (MIG:1026-1095), `_NO_RIGHT_OUTSIDE` (MIG:1098), the calls at MIG:1607 and 1662.
 
 Reason (rule "improve before replace": a replacement needs the written reason why the gaps cannot be fixed in place). The comparison answers "what did this run change?". Every excess right a change can produce is present in the final state, so the comparison finds nothing that the state check does not find. The gaps it has cannot be fixed inside it, because they come from the question itself:
 1. It cannot see what was already there before the run (round-12 design finding 6, code finding 1 inputs A and B).
@@ -438,15 +614,29 @@ Rewritten against `_judge` (pure function, made-up rows; they pin the words of a
 
 `TPG`, kept with the same intent and re-pointed at the new message and, where it applies, the new place of refusal (the builder lists old name -> new name in the notes): `test_a_right_given_on_a_table_that_existed_before_the_run_is_refused`, `test_a_second_right_on_a_column_that_already_had_one_is_refused`, `test_a_right_given_on_a_table_of_another_schema_is_refused`, `test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind`, `test_an_owner_handed_over_in_the_run_schema_is_refused`, `test_a_schema_that_a_file_changed_is_read_back_whatever_schema_it_is`, `test_a_foreign_table_that_a_file_opens_to_everyone_is_refused`, `test_a_right_that_a_named_role_may_pass_on_is_refused_on_a_table_of_the_grant_map`, `test_a_named_role_that_may_pass_the_schema_right_on_is_refused`, `test_a_named_role_gets_no_right_on_what_is_not_in_the_grant_map`, `test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migration_role_belongs_to`, `test_a_named_role_that_may_pass_a_function_right_on_is_refused`, `test_the_database_owner_pseudo_role_is_refused_on_a_schema_it_does_not_own`, `test_a_named_role_with_the_replication_flag_is_refused`, `test_a_security_definer_function_of_the_migration_role_that_no_file_made_is_refused`, `test_a_default_right_for_the_migration_role_itself_and_the_servers_own_default_are_not_a_strangers`, `test_a_default_right_for_a_named_role_or_for_everyone_is_refused_for_functions_sequences_and_types`, `test_a_named_role_gets_no_right_on_a_function`, `test_a_function_that_is_called_like_a_table_of_the_grant_map_is_not_this_packages`, `test_a_named_role_that_can_read_a_foreign_table_in_the_run_schema_is_refused`, `test_the_portal_role_is_refused_what_the_other_roles_are_refused`, the three `test_with_the_printed_role_...` / `test_the_printed_role_runs_...` tests.
 
-`TW`: `test_the_maintain_privilege_is_asked_about_from_postgresql_17_only`, `test_a_maintain_grant_is_a_problem_on_postgresql_17`, `test_the_portal_role_is_asked_about_every_table_privilege_the_other_roles_are` answer `effective_problems` by exact query text with a faked server. They are retired: `verify` reads the access lists, where MAINTAIN on 17 is one more item with no version branch (`_MAINTAIN_FROM`, `_table_privs`, MIG:283-292, are deleted). The CI run on 17 (acceptance 19) replaces the faked version. `test_migrate_refuses_a_changed_released_file_before_it_connects` only mentions `changed_rel` in a helper: re-point. The stale md5 wording at TW:192 and 208 goes with its helper.
+`TW`: `test_the_maintain_privilege_is_asked_about_from_postgresql_17_only`, `test_a_maintain_grant_is_a_problem_on_postgresql_17`, `test_the_portal_role_is_asked_about_every_table_privilege_the_other_roles_are` (TW:1196-1235; TW:1227 reads `_TABLE_PRIVS`) answer `effective_problems` by exact query text with a faked server. They are retired: `verify` reads the access lists, where MAINTAIN on 17 is one more item with no version branch. The CI run on 17 (acceptance 19) replaces the faked version. CORRECTIONS to rev 1 (citation list A of the readiness review): `test_migrate_refuses_a_changed_released_file_before_it_connects` (TW:1244) does not mention `changed_rel` and needs no re-pointing; TW:192 and TW:208 sit in the helper of `_READBACK_TRIGGERS_SQL`, which is kept, so nothing there goes.
 
-### 5.5 Retired and re-pointed mutants (ids from `MUT` at 4d328e3d; 288 mutants in the list, 100 of them sit in code this ticket changes; produced by /home/user/build/p3a2-r13-author/mut.py)
+### 5.4b Tests outside rev 1's lists (rev 2, R-M3), each named
 
-Retired (the planted line is in deleted code and the rule it guarded no longer exists as a rule): SD3, SD4, SD5, RN6, OW3, OW4, OW7, OW8, RA1, RA1b, FB1, FB2, FB3, SO1, SO2, SO3, CS1, CS2, CS4, CS5, KC1, KC2, KC3, SC10, SC11, SD9, WD1 (27 ids).
+1. **Fake-database wiring tests in TW that drive `migrate()` with scripted answers.** Through the helpers `_run` (TW:163), `_refused_by` (TW:884) and `_run_raising` (TW:1355), or directly: `test_migrate_executes_the_text_it_scanned`, `test_a_privileged_migration_role_is_refused_before_any_file_runs`, `test_a_role_that_is_a_member_of_a_privileged_role_is_refused_before_any_file_runs`, `test_a_privileged_session_user_is_refused_even_when_the_current_user_is_plain`, `test_a_parameter_grant_is_refused_before_any_file_runs`, `test_a_server_without_parameter_grants_is_not_asked_about_them`, `test_the_refusal_says_how_to_make_a_plain_migration_role`, `test_the_roles_are_asked_again_after_every_file`, `test_the_replication_flag_is_read_again_after_every_file`, `test_the_named_roles_are_checked_against_each_other_after_every_file`, and the four released-list tests `test_migrate_refuses_when_the_released_list_is_unreadable_or_wrong`, `test_the_released_check_looks_at_the_files_migrate_runs_not_at_the_folder`, `test_a_bad_hash_in_the_released_list_is_a_config_error_not_a_changed_file`, `test_a_json_name_written_twice_in_the_released_list_is_refused` (these four and `test_directory_named_like_a_migration_is_refused`, `test_commit_in_a_file_is_refused_before_connecting` stop before connecting; they are listed so the builder confirms they still pass unchanged). Rule: the fake `_Db` gets one shared answer helper that answers the new statements (the savepoint and `SET LOCAL` lines of `pinned_read`, Q0 to Q4, the version read, the step-4 query) by the constants imported from `migration_verify`, with the answers of a clean database; a test that wants a problem overrides one answer. Each listed test keeps its assertion word for word; only scripted answers change. Every mutant that these tests kill (MW1, S2, S3, S4, S5, B1, SU1, PA1, RC2, RF1, R7, and the users of `READS_BEFORE` and `WIRING_VAL`) must still be killed (5.5 group "re-checked").
+2. **tests/test_k2_migrations.py** (13 tests, 12 call `migrate`, 2 patch `connect`): all keep their assertions except `test_migrate_refuses_a_portal_role_that_inherits_write_rights` (killer of PC1, PT1), whose expected message words change from "the portal role has privileges outside the portal grant map" to the new problem line of kind `right` ("... can use it through the role ..."). The two `connect` patches must answer a second call (step 8 opens a new connection). `test_migrate_refuses_roles_that_are_members_of_each_other` keeps today's sentence: the kind `named_roles_overlap` prints "the runtime, portal and purge roles must not be members of each other" unchanged. `test_cli_migrate_passes_the_portal_role` (killer of CL1, CL2) is unchanged.
+3. **CHANGELOG and docstring pins in tests/test_migration_rules.py**, rewritten in the texts commit (9.3 commit 6), each named: `test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim` (TR:672-715: the asserts on the MAINTAIN sentences and on "Refused: rights for any other role, owners a file handed over, ..." are replaced by asserts on the new sentences; the asserts on the released file, REPLICATION, "CREATE has no grant option", "an existing trigger left disabled", "`REVIEWED_DEFINER_FUNCTIONS`", `session_user`, `WITH GRANT OPTION`, `pg_parameter_acl`, "PostgreSQL 16 is the lowest version", "the role memberships", "inside a function body" stay, with the new text written to keep them true; mutant R23 is re-pointed with it), `test_the_scope_the_order_and_the_file_own_limits_are_written_down`, `test_every_timeout_value_written_in_the_docs_is_the_constants`, `test_case_f_says_migrate_has_the_same_limits_as_the_hand_file`. Docstring phrases that MUST survive the rewrite of 1.5 and 9.3: `RECIPE_TIMEOUTS` and `pg_auth_members` (module docstring and `migrate` docstring), "so a run with no pending file is covered too", "sets the limits BEFORE the advisory lock", "AFTER it, on purpose", "A migration file may not change either limit". `_upgrade_bullet()` (TR:666) cuts from "- **Migrations: stricter checks" to the next top-level bullet: the new "What migrate promises" text is a NESTED part of that bullet (indented two spaces), never a new top-level bullet, so the cut still covers it.
+4. **The skip rule.** `test_no_migration_test_skips_silently` (TR:158, rule at TR:87-130) allows `pytest.skip` only under `if not DSN:`. Rev 1's 6.3 would have broken it; 6.3 is changed (a failure, no skip). The new test files are added to `MIGRATION_TEST_FILES` (TR:28).
+5. TPG:2804's patched value of `REVIEWED_DEFINER_FUNCTIONS` changes to the tuple key (3.1); TR:704 keeps finding the name `REVIEWED_DEFINER_FUNCTIONS` in the CHANGELOG.
 
-Re-pointed (the rule lives on in `verify`; the mutant gets a new planted line in the new module and a real-server killer): AC1, AC2, AC3, AC4, AC5, SD1, SD2, SD6, SD7, SD8, DP1, DP2, DP3, DP4, DP5, DP6, DP7, DP8, DP9, SC8, SC9, SC12, SC13, SC14, GO4, GO5, GO6, RO1, RO3, RO4, RO5, RA2, RA4, IM1, RK1, RK2, RF5, OW5, OW6, OW9, MC2, PDO2, PC1, PT1, GO2 (45 ids). RA2 and RA4 change meaning from "only the schema of the run" to "only the schema of the run is read on the SUBJECT side" and must now be killed by a right in another schema.
+### 5.5 Retired, re-pointed and re-checked mutants (ids from `MUT` at 4d328e3d: 288 entries, 279 written as `Mutant(...)` plus 9 made by `cmp_mutant`; the rev 2 mapping is in handover/evidence/P3a-2/plan-r2/mutclass.out)
 
-Unchanged: the 18 in `migrate()` wiring that do not touch the comparison (M61, M64, M67, M95, MW2-MW6, N15, T13, S1, O1, R6, RC1, LV1-LV4, LW4), the lock mutants (MW8, LW1-LW3, LW5-LW8; LW7 and LW8 get the new join as planted text), and the 188 outside the changed regions. The builder's notes carry the final table id -> retired / re-pointed (new killer) / unchanged, and `problems_with_the_list()` (MUT:2997-3016) is changed to check the parametrised id of a killer as well (today it strips it).
+Retired (the planted line is in deleted code and the rule it guarded no longer exists as a rule): SD3, SD4, SD5, RN6, OW3, OW4, OW7, OW8, RA1, RA1b, FB1, FB2, FB3, SO1, SO2, SO3, CS1, CS2, CS4, CS5, KC1, KC2, KC3, SC10, SC11, SD9, WD1, and (rev 2) MT1 and MT2 (MUT:1210-1225, planted in `_MAINTAIN_FROM` and `_table_privs`, killer `test_the_maintain_privilege_is_asked_about_from_postgresql_17_only` retired). 29 ids.
+
+Re-pointed (the rule lives on; the mutant gets a new planted line, in the new module or the rewritten text, and a killer that exists in the same commit): AC1, AC2, AC3, AC4, AC5, SD1, SD2, SD6, SD7, SD8, DP1, DP2, DP3, DP4, DP5, DP6, DP7, DP8, DP9, SC8, SC9, SC12, SC13, SC14, GO4, GO5, GO6, RO1, RO3, RO4, RO5, RA2, RA4, IM1, RK1, RK2, RF5, OW5, OW6, OW9, MC2, PDO2, PC1, PT1, GO2 (45 ids from rev 1), plus (rev 2) R23 (planted in CL:10, which is rewritten; killer the rewritten TR test) and SH1 (planted in `_shown`, kept; its killer `test_a_long_list_is_cut_with_a_count_of_what_was_left_out` is rewritten against `_judge`, so the killer name is re-checked). 47 ids. RA2 and RA4 change meaning from "only the schema of the run" to "only the schema of the run is read on the SUBJECT side" and must now be killed by a right in another schema.
+
+Re-checked, no edit to the mutant (its killer is a test whose scripted answers or expected words change in 5.4b): MW1, S2, S3, S4, S5, B1, SU1, PA1, RC2, RF1, R7, CL1, CL2, GM1, MC1, OA4. 16 ids. Each must still be KILLED after commit 3.
+
+Unchanged: the rev 1 list (M61, M64, M67, M95, MW2-MW6, N15, T13, S1, O1, R6, RC1, LV1-LV4, LW4; the lock mutants MW8, LW1-LW3, LW5-LW8, where LW7 and LW8 get the new join as planted text) and every other id. Rule for the builder: every mutant whose planted text sits inside `migrate()` (MIG:1512-1677) is checked by `problems_with_the_list()` at every commit (it is part of the per-commit green command); one whose text no longer exists exactly once is re-pointed with the same intent in that commit and added to the builder notes table.
+
+`problems_with_the_list()` (MUT:2997-3016) is changed to check the parametrised id of a killer as well (today it strips it at `split("[")[0]`).
+
+Count after this ticket: 288 - 29 retired + 54 new (7.5) = 313.
 
 ### 5.6 What happens to each round-12 finding
 
@@ -455,7 +645,7 @@ Design review (r12-design-full.md):
 | Finding | Result |
 |---|---|
 | F1 deferred trigger at commit | Usual case: stopped at step 5/6 (rows 1 and 2 of the promise table). A trigger that defers itself again (fact 4): detected at step 8 (row 3). Covered by generator carriers C6 and C6b. |
-| F2 trigger on the ledger | Privilege variant: falls away by order (all runner writes come before the last check). Variant that disables the audit triggers: refused by the read-back at step 6 as a mistake; against a harmful file not promised (1.4, code left behind); "required audit triggers present" is split ticket B. |
+| F2 trigger on the ledger | Privilege variant: falls away by order (all runner writes come before the last check). Variant that disables the audit triggers: refused by the read-back at step 6 as a mistake, pinned by the dedicated test `test_a_ledger_trigger_that_disables_the_audit_triggers_is_refused_at_the_end_of_the_run` (7.6, D-m11); against a harmful file not promised (1.4, code left behind); "required audit triggers present" is split ticket B. |
 | F3 extension member | Not reproduced as written by the evidence runner (fact 24); its precondition can exist (fact 14, author run, in conflict with the evidence runner's sentence). Falls away by construction either way (rule O6; no extension filter on family-owned objects; S7 for the named roles). Carrier C8 is the first run of this route through `migrate`. |
 | F4 kinds never read | Falls away by construction (Q2 reads all 13 columns; self-check 3.6; rule S8). |
 | F5 existing memberships | Falls away by construction (Q1 closure; S1, S2, S3). |
@@ -487,7 +677,7 @@ Code review (r12-codebase-full.md, prefixed C):
 | C-F6 raw names | Fixed by 3.1 (`_label` everywhere) and 6.2 (MIG:1314). |
 | C-F7 rules without mutant | Grantor clauses and function state fields: deleted code. `l.pid IS NULL`, the `is_managed` column half: new mutants (7.7). Param ids checked: 5.5. |
 | C-F8 version 13 crash | Fixed by 3.5 (and `pg_get_function_sqlbody` is gone). |
-| C-F9 reviewed list by bare name | Fixed by O4. |
+| C-F9 reviewed list by bare name | Fixed by O4; a unit test pins the key and the real-server test `test_a_reviewed_definer_is_excused_only_in_its_schema_with_its_arguments` (7.6, D-m11) shows that the same name in another schema and an overload are refused. |
 | C-F10 wording, `_DEFAULT_WORDS`, false refusal | Fixed by 1.5, D4, O1. "Names, not OIDs" (MIG:455): the comment is corrected to say the grantor stays an id inside the JSON. |
 | C-F11 test hygiene | Fixed for surviving tests by item 6.5. |
 | C-F12 reuse nits | `_routine_name`: fixed here (5.2). Three caps of 20: split ticket F. |
@@ -518,9 +708,11 @@ Message: exactly one row: "the prepared transaction '<gid>' (owner <owner>, prep
 
 Any `psycopg.Error` raised by the two queries inside the `except LockNotAvailable` handler (MIG:1298-1325) is caught and turned into `ConfigError("migrate waited <n> seconds for the migration lock and gave up; it could not read who holds it (<server message through _label>). Nothing was changed. ...")`. `_seen(row[1])` at MIG:1314 becomes `_label(_seen(row[1]))`, and the same for the application name.
 
-### 6.3 The real-server test runs or skips visibly
+### 6.3 The real-server test runs or fails visibly (rev 2: no skip)
 
-`test_a_prepared_transaction_that_holds_the_migration_lock_is_named_as_one` (TPG:4499) returns early at TPG:4520 when `max_prepared_transactions` is 0, and is reported as passed. New behaviour: `pytest.skip("this server has max_prepared_transactions = 0; the prepared-transaction test did not run")` on a developer machine, and a failure when the environment variable `CI` is set (the same pattern the existing `tests/fixtures/dsn_skip.py` uses for a missing server; the builder reuses that helper). The CI service gets `max_prepared_transactions` above 0: `.github/workflows/ci.yml` lines 40-47 and 110-117 start `postgres:17.10@sha256:7958...` with default settings; the builder adds the server option in the smallest way the workflow allows (the image accepts `-c max_prepared_transactions=10` as the container command; GitHub service containers take no command, so the working form is an `options:` entry or an `ALTER SYSTEM` plus restart step: the builder tries, pastes the CI log line `max_prepared_transactions = 10`, and states which form worked). The test gains a second prepared transaction that does not hold the lock and asserts it is NOT named. The other early return, TPG:242 in `_plain_role_may_set`, is a helper and is checked by the repository test of 7.8.
+`test_a_prepared_transaction_that_holds_the_migration_lock_is_named_as_one` (TPG:4499) returns early at TPG:4520 when `max_prepared_transactions` is 0, and is reported as passed. New behaviour: when `HADAVIN_TEST_PG_DSN` is set and the server says `max_prepared_transactions = 0`, the test FAILS with `pytest.fail("this server has max_prepared_transactions = 0; the prepared-transaction test cannot run. Start the test server with -c max_prepared_transactions=10.", pytrace=False)`, on a developer machine and in CI alike. Rev 1 proposed a `pytest.skip` outside CI; that breaks the repository rule `test_no_migration_test_skips_silently` (TR:87-130 allows a skip only under `if not DSN:`), so rev 2 takes the stricter form (R-M3 item 4). The test gains a second prepared transaction that does not hold the lock and asserts it is NOT named.
+
+CI (R-Mn4): `.github/workflows/ci.yml` lines 40-47 and 110-117 start `postgres:17.10@sha256:7958...` as a GitHub service container, which takes no command, and `options:` passes flags to `docker create`, not to postgres. First route to try: one workflow step right after the services are up, in both jobs: `docker exec ${{ job.services.postgres.id }} psql -U postgres -c "ALTER SYSTEM SET max_prepared_transactions = 10"`, then `docker restart ${{ job.services.postgres.id }}`, then wait until `pg_isready` answers (bounded: at most 30 tries, 2 s apart), then `psql ... -Atc "SHOW max_prepared_transactions"` printed to the log. Second route if the first fails: replace the service by a `docker run -d ... postgres:17.10@sha256:... -c max_prepared_transactions=10` step with the same image digest. The builder pastes the CI log line with `10` and states which route worked. The other early return the rev 1 text named, TPG:242, is NOT such a case: it is the plain `return` after `yield` in the context manager `_plain_role_may_set` (citation list A, item 3); nothing changes there.
 
 ### 6.4 `_scan` refuses a second CREATE of a grant-map name
 
@@ -532,30 +724,69 @@ Every surviving real-server test that creates a role creates it inside the `try`
 
 ## 7. Test design (real server only for every decision; pure-function tests only pin message words)
 
+Test files (rev 2 names, R-M4): `tests/test_migration_verify.py` (pure `_judge` tests and repository checks, no server), `tests/test_migration_verify_pg.py` (dedicated real-server tests of 7.6), `tests/test_migration_matrix.py` (oracle, sensitivity controls, generator), `tests/fixtures/oracle.py` (the oracle). The three test files are added to `MIGRATION_TEST_FILES` (TR:28), so the skip rule and the early-return rule (7.8) cover them.
+
 ### 7.1 The closed property
 
 For every generated case, exactly one of these holds, and the test asserts which:
 - (i) REFUSED: `migrate` raised `ConfigError` before the commit, and the oracle's answers after the run equal its answers before the run;
-- (ii) NOT VERIFIED: `migrate` raised `AppliedNotVerifiedError`, and every excess the oracle finds is named in its problem lines;
-- (iii) APPLIED: `migrate` returned, and the oracle finds no excess for any named role and for a fresh role that stands for everyone.
+- (ii) NOT VERIFIED: `migrate` raised `AppliedNotVerifiedError`, and every excess the oracle finds is named in its problem lines, with the problem kind the effect table (7.3) gives for that effect;
+- (iii) APPLIED: `migrate` returned, and the oracle finds no excess for any named role, for a fresh role that stands for everyone, and (in the schema of the run only, rule O1) for any other role the case created.
 
-Forbidden, and the reason the suite exists: `migrate` returned and the oracle finds an excess.
+Forbidden, and the reason the suite exists: `migrate` returned and the oracle finds an excess. The assertion message for that case starts with the fixed words "applied with excess:" (7.9 greps for them).
 
-### 7.2 The oracle
+### 7.2 The oracle (rev 2: environment decided, D-M1, R-M2)
 
-A separate connection as the test server's superuser. It shares no query and no helper with `src/` (a repository test asserts that the oracle module imports nothing from `hadavin_sdk.store` and contains none of the words `aclexplode`, `acl`, `has_table_privilege`, `has_` + `_privilege`, `pg_auth_members`, `pg_shdepend`, `pg_default_acl`). It reads no access list. It lists objects by name only (`pg_class`, `pg_proc`, `pg_namespace`, `pg_largeobject_metadata`, `pg_roles` for names and kinds) and then TRIES each operation:
+**What it may read.** A separate connection as the test server's superuser. It shares no query and no helper with `src/`. It lists objects by name and kind only: `pg_class` (name, `relkind`), `pg_attribute` (column names), `pg_proc` (name, argument types through `pg_catalog.format_type`, `prokind`, `prosecdef`), `pg_namespace`, `pg_type` (name, `typtype`), `pg_largeobject_metadata` (oids), `pg_roles` (names and the five flags). It reads no access list and no membership table. Repository test `test_the_oracle_shares_nothing_with_the_code_under_test` (in test_migration_matrix.py) asserts that `tests/fixtures/oracle.py` imports nothing from `hadavin_sdk` and that this whole-word pattern finds nothing in its text: `\b(acl|aclexplode|aclitem|acldefault|relacl|attacl|proacl|nspacl|typacl|datacl|fdwacl|srvacl|lanacl|lomacl|paracl|spcacl|defaclacl|initprivs|pg_auth_members|pg_shdepend|pg_default_acl|pg_has_role|has_\w+_privilege)\b` (whole words, so "oracle" does not match).
 
-- It becomes the role with `SET SESSION AUTHORIZATION <role>` (fact 18: `SET ROLE` from a superuser session would allow every later role switch and make the membership tests blind).
-- Each attempt runs inside its own savepoint, which is rolled back whatever happens. The result is classed by the error code: 42501 = not allowed; no error, or any other code (a not-null violation, "trigger functions can only be called as triggers") = allowed.
-- Attempts per relation of every non-system schema: `SELECT ... LIMIT 0`, `INSERT ... DEFAULT VALUES`, `UPDATE ... WHERE false` on the first column, `DELETE ... WHERE false`, `TRUNCATE`, `LOCK TABLE ... IN ACCESS EXCLUSIVE MODE` (owner or MAINTAIN on 17), per column `SELECT <col> ... LIMIT 0`; per sequence `nextval`, `currval` after it, `setval`; per function `EXPLAIN SELECT f(NULL, ...)` (refused without running the body, fact 19; the generator's functions are VOLATILE so nothing is evaluated while planning); per schema `CREATE TABLE <schema>.<unique>(i int)`; in the database `CREATE SCHEMA <unique>`; per large object `SELECT lo_get(<oid>)` and `lo_put`; per other role `SET ROLE <that role>`; and for each role it can switch to, the whole list again as that role (one level is enough: the generator makes no deeper chain; a deeper chain in a case fails the case as "oracle too shallow").
-- "Everyone" is tested as a role created fresh by the oracle with no grant and no membership.
-- Expected set per named role: built from the grant map by an independent, hand-written table in the test file (table, right) -> allowed, not from `GRANTS` through the code under test (one test asserts the hand table equals `GRANTS`, so a map change must touch both).
+**Superuser or failure.** The fixture `oracle_db` connects with `HADAVIN_TEST_PG_DSN` (autocommit) and reads `rolsuper` of `session_user`. Not a superuser: `pytest.fail("the oracle needs a superuser login in HADAVIN_TEST_PG_DSN (SET SESSION AUTHORIZATION needs it); this is a failure, not a skip", pytrace=False)`. DSN not set: the module carries `pytestmark = pytest.mark.skipif(not DSN, reason="HADAVIN_TEST_PG_DSN is not set")`, the one form the skip rule allows.
 
-**Sensitivity control (mandatory, never skipped).** Each effect is also applied raw, as a superuser or as the migration role, without `migrate`; the oracle must then report exactly that excess. An effect the oracle cannot see fails the suite; it does not count as covered.
+**Scope: one database per case.** Every generated case and every dedicated real-server test that judges the whole database runs in its own database, `hadavin_test_m<pid>_<n>`, made by the fixture with `CREATE DATABASE ... TEMPLATE template0` and dropped in `finally` with `DROP DATABASE ... WITH (FORCE)` (measured on 16.15, idle: median 24 ms for create plus drop, handover/evidence/P3a-2/plan-r2/createdb_cost.out). So other tests' scratch schemas, other processes' plain roles and a parallel mutant run cannot change what `verify` or the oracle sees in that database. Roles are server-wide: every case's roles carry the prefix `hadavin_test_m<pid>_<n>_`, are dropped in `finally`, and a session-end check asserts that none with the test prefix is left. Only roles reached from the case's own named roles count, so another test's roles cannot enter a case. Two kinds of object are server-wide, not per database: parameter rights (`pg_parameter_acl`) and tablespaces. Every case takes `pg_advisory_lock_shared(K)` on the `postgres` database for its whole run; the cells of E24 and E25 take `pg_advisory_lock(K)` (exclusive), so no other case runs while they hold a server-wide right.
 
-A second, coarser oracle for outcome (i): `pg_dump --schema-only` of the database and `pg_dumpall --roles-only --no-role-passwords`, text-equal before and after the refused run (the tests already shell out to the PostgreSQL client; ci.yml line 85 checks it is present). Test aid only.
+**Fixture variants** (rev 1 named them without defining them): (P) plain: the database is owned by the DSN superuser and the case's migration role owns only the schema of the run (as `plain_role_connect` does today); (O) the migration role owns the database (`CREATE DATABASE ... OWNER <migration role>`); (C) the migration role holds CREATE on the database (`GRANT CREATE ON DATABASE ... TO <migration role>`); (T) like (P), and the fixture has run `REVOKE TEMPORARY ON DATABASE ... FROM PUBLIC`, `REVOKE USAGE ON LANGUAGE plpgsql FROM PUBLIC`, and revokes everyone's USAGE on the case's own types, so that E19, E20 and E21 become visible by behaviour. The case's migration role is a LOGIN made with the existing helpers `create_login_role` and `login_dsn` (tests/fixtures/migration_role.py; a password built at run time, never written in the source); the tests carry the marker `real_connect`, so the autouse swap of tests/conftest.py:94-108 does not apply.
 
-### 7.3 Effects (each is "a role ends up able to do X"); grantee variants in brackets
+**How an attempt is made and classed.** The oracle becomes the role with `SET SESSION AUTHORIZATION <role>` (fact 18) and runs `RESET SESSION AUTHORIZATION` before the next role. Each attempt runs inside its own savepoint, rolled back whatever happens. Classes: no error = allowed; 42501 = refused; one of these codes, which PostgreSQL raises only AFTER the privilege check = allowed: 23502, 23503, 23505, 23514, and 0A000 with "trigger functions can only be called as triggers" or "cannot truncate a table referenced in a foreign key constraint"; a GRANT attempt that ends with the warning "no privileges were granted" = refused (E16, E26). ANY other code (42809 wrong object type, 42725 ambiguous function, 42830 no unique constraint, 55000 no foreign-data handler, ...) = INCONCLUSIVE: the case fails with "the oracle cannot see this attempt: <code> <message>"; it is never classed allowed. One level of role switching: for each role the probed role can `SET ROLE` to (tried for every role of the case and every `pg_*` role), the whole list again as that role; a deeper chain in a case fails it as "oracle too shallow".
+
+**Effect -> the attempt that shows it** (every column is tried, not only the first; functions are called with typed NULLs `NULL::<type>` built from `format_type`, so an overload is never ambiguous; the generator makes every function VOLATILE and every procedure body empty):
+
+| Effect | Attempt as the probed role | Fixture variant, extra step |
+|---|---|---|
+| E01, E08, E09 SELECT on a table, view, materialized view, foreign table | `SELECT * FROM s.t LIMIT 0`, and per column `SELECT <col> FROM s.t LIMIT 0` | E09: the foreign table uses `file_fdw` (PostgreSQL contrib) with `filename '/dev/null'`, made by the superuser; a server without `file_fdw` makes E09 "not buildable here", with the error text |
+| E02 INSERT, UPDATE, DELETE beyond the map | per column `INSERT INTO s.t (<col>) SELECT NULL WHERE false`; per column `UPDATE s.t SET <col> = NULL WHERE false` (no column on the right, so SELECT is not needed, D-M1); `DELETE FROM s.t WHERE false` | - |
+| E03 TRUNCATE, REFERENCES, TRIGGER | `TRUNCATE s.t`; per primary-key column `CREATE TEMP TABLE <u> (c <type> REFERENCES s.t (<col>))` (on a column without a unique index PostgreSQL answers 42830 first, so REFERENCES is tried on unique columns only and the generator places E03-REFERENCES there); `CREATE TRIGGER <u> BEFORE UPDATE ON s.t FOR EACH ROW EXECUTE FUNCTION pg_catalog.suppress_redundant_updates_trigger()` | - |
+| E04, E05 column SELECT, column UPDATE | the per-column attempts of E01 and E02, on every column | - |
+| E06, E07 sequence USAGE, UPDATE | `SELECT pg_catalog.nextval('s.q')` (USAGE or UPDATE), `SELECT pg_catalog.setval('s.q', 1)` (UPDATE), `SELECT last_value FROM s.q` (SELECT) | - |
+| E10, E11, E12, E13 EXECUTE on a function (explicit, left to everyone, SECURITY DEFINER of the family, SECURITY DEFINER of another owner) | `EXPLAIN SELECT s.f(<typed NULLs>)` (refused with 42501 without running the body, fact 19); aggregates: `EXPLAIN SELECT s.a(<typed NULL>) FROM (VALUES (1)) v(x)`; whether it is SECURITY DEFINER comes from `prosecdef` | - |
+| E14 EXECUTE on a procedure | `CALL s.p(<typed NULLs>)` (the body is empty; `EXPLAIN` does not apply to procedures, D-M2) | - |
+| E15, E17 CREATE on the schema of the run, on another schema | `CREATE TABLE s.<u> (i int)` | E17 needs a second schema: (C) or (O) |
+| E16, E26 grant option on the schema, on a map right | `GRANT USAGE ON SCHEMA s TO <helper>`; `GRANT SELECT ON s.t TO <helper>`; `<helper>` is a fresh role of the case; the warning "no privileges were granted" = refused | - |
+| E18 CREATE on the database | `CREATE SCHEMA <u>` | (O) or (C) for the migration role as actor |
+| E19 TEMPORARY, explicit | `CREATE TEMP TABLE <u> (i int)` | (T): visible only once everyone's TEMPORARY is revoked |
+| E20 USAGE on a type or domain | `CREATE TEMP TABLE <u> (c s.typ)` | (T) |
+| E21 USAGE on a language | `CREATE FUNCTION pg_temp.<u>() RETURNS int LANGUAGE plpgsql AS 'BEGIN RETURN 1; END'` | (T) |
+| E22 large object SELECT, UPDATE | `SELECT pg_catalog.lo_get(<oid>)`; `SELECT pg_catalog.lo_put(<oid>, 0, '\x00')` | - |
+| E23 USAGE on a foreign server, on a wrapper | `CREATE USER MAPPING FOR CURRENT_USER SERVER <srv>` (needs USAGE on the server); `CREATE SERVER <u> FOREIGN DATA WRAPPER <w>` (needs USAGE on the wrapper) | superuser builds the wrapper and server |
+| E24 CREATE on a tablespace | `CREATE TEMP TABLE <u> (i int) TABLESPACE <ts>` | superuser makes `<ts>` with `SET allow_in_place_tablespaces = on; CREATE TABLESPACE <ts> LOCATION ''` (a developer option of 15 and later, so no directory is needed in the CI container); exclusive lock |
+| E25 SET on a parameter | `SET LOCAL log_statement = 'none'` (a superuser-only parameter) | exclusive lock |
+| E27 a map table owned by a group with another member | NOT a promise after rev 2 (O5 struck): a clean control that must end in (iii) and documents the non-promise | - |
+| E28 a named role owns a table, function, schema | `COMMENT ON <KIND> <object> IS NULL` (owner only, every kind) | - |
+| E29, E30 membership in a group with rights, inheriting / INHERIT FALSE SET TRUE | the group's rights show up directly (E29) or after `SET ROLE <group>` (E30) | - |
+| E31 membership in a built-in `pg_*` role | `SET ROLE <pg_* role>` for every built-in role; for a membership with SET FALSE, one attempt per role for these six: `pg_read_all_data` `SELECT * FROM <a table with no grant> LIMIT 0`, `pg_write_all_data` `DELETE FROM <that table> WHERE false`, `pg_read_server_files` `SELECT pg_catalog.pg_stat_file('PG_VERSION')`, `pg_write_server_files` `COPY (SELECT 1) TO '/dev/null'`, `pg_execute_server_program` `COPY (SELECT 1) TO PROGRAM 'true'`, `pg_monitor` `SELECT * FROM pg_catalog.pg_ls_waldir() LIMIT 0`; the generator uses only memberships with SET TRUE or one of these six | superuser builds it (C12) |
+| E32, E33 a flag on a role in the closure, on the named role | the five flags from `pg_roles` for the role and for each role it can `SET ROLE` to (flags are attributes, not access lists); for CREATEROLE also `CREATE ROLE <u>` | superuser builds it (C12) |
+| E34, E35, E36 default rights | after the run, the oracle, as the migration role AND as every role the case created (the generator knows who set the default; the oracle reads no default-rights catalog), creates one fresh table, sequence, function, type and schema (schema only where that role may) in the schema of the run and in the case's second schema, then probes every named role and the fresh role on those objects with the attempts above | (C) for a second schema |
+| E37 any right for a third role on a map table | the oracle also probes every role the case created on the objects of the schema of the run | - |
+| E38 (rev 2) a named role's right on a map table granted by a grant-option holder (D-M5, D-m5) | as E02 | C12 only: superuser grants `WITH GRANT OPTION` to a third role, which grants to the named role |
+| E39 (rev 2) a membership of a named role granted by a CREATEROLE role | as E29 | C12 only |
+
+**Expected set for everyone** (D-m8): the fresh role may hold exactly the 3.4 baseline: CONNECT and TEMPORARY on the database, USAGE on the schema `public` when it carries the server's default list, EXECUTE on functions of other owners that are not SECURITY DEFINER, USAGE on types of other owners and on languages, USAGE on row types. Expected set per named role: built from the grant map by an independent, hand-written table in the test file, (table, right) -> allowed, not from `GRANTS` through the code under test; `test_the_hand_written_map_equals_grants` asserts that the hand table equals `GRANTS`, so a map change must touch both.
+
+**Sensitivity control (mandatory, never skipped).** Each effect is also applied raw, as a superuser or as the migration role, without `migrate`; the oracle must then report exactly that excess (test `test_the_oracle_sees_every_effect_applied_raw`, one parametrised id per effect and variant). An effect the oracle cannot see fails the suite; it does not count as covered.
+
+A second, coarser oracle for outcome (i): `pg_dump --schema-only` of the case database and `pg_dumpall --roles-only --no-role-passwords`, text-equal before and after the refused run (the tests already shell out to the PostgreSQL client; ci.yml line 85 checks it is present). Test aid only.
+
+### 7.3 Effects
+
+E01 to E37 as in the table of rev 1 (kept below), plus E38 and E39 of 7.2. Rev 2 changes: E19, E20, E21 run on variant (T); E27 is a control for a non-promise; E38 and E39 are the grantor cells.
 
 | # | Effect | # | Effect |
 |---|---|---|---|
@@ -566,7 +797,7 @@ A second, coarser oracle for outcome (i): `pg_dump --schema-only` of the databas
 | E05 | UPDATE on one column [third role] | E24 | CREATE on a tablespace [everyone] |
 | E06 | USAGE on a sequence outside the map [named] | E25 | SET on a parameter [named] |
 | E07 | UPDATE (setval) on a map sequence [everyone] | E26 | grant option on a map right [named] |
-| E08 | SELECT on a view or materialized view outside the map [everyone] | E27 | a map table owned by a group that has another member |
+| E08 | SELECT on a view or materialized view outside the map [everyone] | E27 | a map table owned by a group that has another member (control, not a promise) |
 | E09 | SELECT on a foreign table [everyone] | E28 | a named role owns a table, a function or a schema |
 | E10 | EXECUTE on a function, explicit [named] | E29 | named role in a group with rights, inheriting |
 | E11 | a function of the family left callable by everyone, made by dynamic SQL | E30 | the same with INHERIT FALSE, SET TRUE |
@@ -577,11 +808,11 @@ A second, coarser oracle for outcome (i): `pg_dump --schema-only` of the databas
 | E16 | USAGE on the schema WITH GRANT OPTION [named] | E35 | default right for everyone on sequences, all schemas, set by the migration role |
 | E17 | CREATE on another schema [named] | E36 | default right for a named role set by another role |
 | E18 | CREATE on the database [named, everyone] | E37 | any right for a third role on a map table |
-| E19 | TEMPORARY on the database, explicit [named] | | |
+| E19 | TEMPORARY on the database, explicit [named] | E38, E39 | grantor cells (7.2) |
 
-37 effects. Expected outcome is written per effect in the test table (for example E02 "named directly" with role arguments is outcome (iii): the runner repairs it; without role arguments the role is a third role and the outcome is (i)).
+Each effect row in the test file carries: the expected outcome per role-argument variant (for example E02 "named directly" with role arguments is outcome (iii): the runner repairs it, IF the migration role granted it; E38 is the same right granted by someone else and is outcome (i) with "No file ran"), and the problem kind(s) that must name it in outcome (ii) (D-m11), from `PROBLEM_KINDS`.
 
-### 7.4 Carriers (how the effect gets into the database)
+### 7.4 Carriers
 
 | # | Carrier | Expected class when the effect is an excess |
 |---|---|---|
@@ -591,57 +822,82 @@ A second, coarser oracle for outcome (i): `pg_dump --schema-only` of the databas
 | C4 | AFTER INSERT trigger on the ledger table `schema_migrations` | (i) |
 | C5 | trigger on a grant-map table, fired by a later file | (i) |
 | C6 | deferred constraint trigger on the ledger | (i) |
-| C6b | deferred constraint trigger that defers itself again (fact 4) | (ii) |
+| C6b | deferred constraint trigger that defers itself again (facts 4, 39) | (ii) |
 | C7 | a rule, and a column default, on the ledger table that call a function | (i) |
 | C8 | the object is made a member of an extension the migration role owns, then the effect | (i) |
-| C9 | role switch: the login differs from the role (`options=-c role=M`), the effect is done under the login | (i) |
-| C10 | the object lives in another schema that the migration role owns | (i) |
+| C9 | role switch: the login differs from the role (`options=-c role=M` in the DSN), the effect is done under the login | (i) |
+| C10 | the object lives in another schema that the migration role owns | (i) for named roles and everyone; NOT PROMISED for a third role (E05 third role, E37, an owner handed to a third role: rev 2, 3.3 object side) |
 | C11 | a temporary table named like a catalog table is created first, then the effect | (i) |
 | C12 | the state exists before the run, there is no file (an administrator did it) | (i), with "No file ran" in the message |
 | C13 | move and recreate: `ALTER TABLE <map table> SET SCHEMA other; CREATE TABLE <same name> (...)`; also a plain rename | (i) |
 
 Every case runs twice: with the three role arguments and with none.
 
-Cells that cannot be built with a plain migration role as the actor (the server refuses; fact 20). They are listed by name in the test file with the server's error text, built by the superuser instead under carrier C12 only, and counted separately; none is silently dropped: E09 and E23 (foreign-data wrapper), E21, E24, E25, E31, E32, E33, E36, E18 and E19 unless the migration role owns the database (one variant of the fixture does), E17 and E28-schema unless it holds CREATE on the database, C8 unless a trusted extension is available and the role holds CREATE on the database (fact 14; the evidence file states per server whether `citext` is available).
+**Counting (rev 2, D-m11).** The test file holds three written tables: (1) cells the server refuses to a plain migration role, with the server's error text (fact 20: E09 and E23 wrapper creation, E21, E24, E25, E31, E32, E33, E36, E18 and E19 unless variant (O), E17 and E28-schema unless (C) or (O), C8 unless a trusted extension is available and the role holds CREATE on the database; these are built by the superuser under C12 only); (2) pairs that are empty by logic, each with a one-line reason (for example C6 x E33: a trigger runs as the migration role, which cannot set a flag; C13 x E22: a large object has no schema to move it to; E38, E39 x anything but C12); (3) the cells that are not promised (C10 third-role cells, E27). The count test `test_the_matrix_has_exactly_the_planned_cells` computes the expected numbers from the effect, carrier and three exclusion tables and asserts equality (not a minimum), and prints: cases, pre-existing (every effect x C12 x 2), 200 seeded compositions of two or three effects with different carriers (fixed seed, printed), and the clean controls. Clean controls (at least 12, each must end in (iii)): the shipped files alone; the shipped files in a database whose schema of the run is `public` with the server's own access list; another application's schema with tables, a function and a type that give the named roles nothing (D-m8); a named role with a live temporary table; a database owned by the migration role (O); a group-owned database where the migration role is the only member; E27 (group with a second member); no pending file; every relation kind with its row type (fact 33).
 
-Minimum counts, asserted by a test that counts the collected ids: every buildable effect x every carrier x 2 (role arguments) is present, at least 600 cases; the 37 effects as pre-existing state x 2 = 74; 200 seeded compositions of two or three effects with different carriers (fixed seed, the seed is printed); at least 10 clean controls that must end in (iii) (the shipped files alone; another application's schema with tables that give nobody anything; a named role with a live temporary table; a group-owned database where the migration role is the only member; no pending file).
+### 7.5 New mutants, one per clause and per decision (ids `V*` in `MUT`; each killer is a real-server test, and the id of a parametrised killer is part of the killer and is checked)
 
-### 7.5 One mutant per clause of `verify`
+From rev 1, corrected (O5 struck): S1 to S8 (8), O1, O2, O3, O4, O6 (planted as "family objects that are extension members are skipped"; killer C8), O7 (6), D1 to D4 (4); the map key by schema, by name, by kind (3); the row-type exception widened to all types (1); the system-schema rule of 3.4 line 1 (1); `repaired_by_run` set for every problem (1) and never dropped at step 6 (1); the closure follows only inheriting memberships (1); `pg_database_owner` not added (1); the temporary-object exception widened to all objects (1); the pinned path removed from `verify` (killer: carrier C11) (1); the version refusal removed (1, killed by the one allowed fake: a faked version read below 160000); the self-check removed and each of its two directions (3); step 5 removed (killer: C6) (1); step 8 removed (killer: C6b) (1); `AppliedNotVerifiedError` raised as `ConfigError` (1); the "applied" return kept on a step-8 failure (1); the pre-flight removed (killer: C12 must say "No file ran") (1); the new lock join replaced by the old listing (killer: the bystander is named) (1); `l.pid IS NULL` removed (1); the duplicate-CREATE rule removed (1). That is 41.
 
-New ids `V*` in `MUT`, each with a real-server killer from the generator (the id of the parametrised case is part of the killer and is checked): S1 to S8, O1 to O7, D1 to D4 (19); the map key by schema, by name, by kind (3); the row-type exception of 3.4 line 3 widened to all types (1); the system-schema rule of 3.4 line 1 (1); `repaired_by_run` set for every problem (1) and never dropped at step 6 (1); the closure follows only inheriting memberships (1); `pg_database_owner` not added (1); the temporary-object exception widened to all objects (1); the pinned path removed (killer: carrier C11) (1); the version refusal removed (1, killed by a test that runs `verify` against a faked version read: the one fake allowed, because no server below 16 is available) ; the self-check removed and each of its two directions (3); step 5 removed (killer: C6) (1); step 8 removed (killer: C6b) (1); `AppliedNotVerifiedError` raised as `ConfigError` (1); the "applied" return kept on a step-8 failure (1); the pre-flight removed (killer: C12 must say "No file ran") (1); the new lock join replaced by the old listing (killer: the bystander is named) (1); `l.pid IS NULL` removed (1); the duplicate-CREATE rule removed (1). About 44 new mutants; with 5.5 the list goes from 288 to about 305.
+New in rev 2 (13): O2's schema-USAGE exception removed (killer `test_the_public_schema_with_the_server_default_passes`); the built-in-grantee filter removed from S5 (killer `test_a_named_role_in_pg_monitor_prints_exactly_one_statement`); a fix printed for a system object (same killer); the object-right fix ignores the grantor (killer `test_printed_statements_remove_every_problem_for_every_grantor_form`); the membership fix without `GRANTED BY` (same killer); `repaired_by_run` ignores the grantor (killer `test_a_right_granted_by_a_grant_option_holder_is_not_dropped_at_step_2`); the step-8 `try` narrowed to connection errors (killer `test_any_error_inside_step_8_gives_exit_5_not_exit_2`); the two limits not run inside `verify` (killer `test_step_8_with_a_saved_statement_timeout_still_checks`); a server-refused COMMIT classed as unknown (killer `test_a_commit_refused_by_the_server_gives_exit_2_and_keeps_nothing`); a lost connection at COMMIT classed as refused (killer `test_a_lost_connection_at_commit_gives_exit_5`); step 8 not REPEATABLE READ (killer `test_step_8_reads_one_snapshot`); the row-type key widened to standalone composite types (killer `test_row_types_of_six_relation_kinds_pass_and_a_standalone_composite_type_does_not`); Q1's `UNION` turned into `UNION ALL` (killer `test_verify_cost_on_a_large_catalog`, the diamond part).
 
-### 7.6 Dedicated tests outside the matrix
+54 new mutants; with 5.5 the list goes from 288 to 313.
 
-- After-commit: a test wraps `connect` so that, just before the step-8 connection is returned, a superuser grants `SELECT ON <map table> TO PUBLIC`. Asserts: `AppliedNotVerifiedError`, exit code 5 through `cli.main`, the first sentence word for word, no line starting "applied", the ledger holds the files, and running every printed statement as a superuser makes the next `migrate` return normally.
-- Step 8 cannot connect: the wrapped `connect` raises; asserts the "could not be checked" wording and exit code 5.
-- Message safety: one object name, one role name and one column name with a newline and an ESC character; asserts the printed text holds neither and that no statement is printed for them.
-- Version: fact-based test that the running server is 16 or later and `verify` accepts it; the faked read below 160000 gives the 3.5 message.
-- Self-check: on the running server Q0 equals `KNOWN_ACL_COLUMNS` (this is the test that fails first on a new PostgreSQL version).
-- Upgrade from main: a database built by main's `migrate` (main 2a8c2aa, where the trigger function keeps everyone's EXECUTE) is accepted by the new pre-flight and repaired by step 4.
-- Cost: `verify` on a database with 5,000 made-up tables of another application; the time of one call is printed and asserted under a generous bound (30 seconds), so a per-object query cannot come back unnoticed.
+### 7.6 Dedicated tests outside the matrix (in tests/test_migration_verify_pg.py unless said otherwise; each name is the acceptance id of 9.1)
+
+- `test_after_commit_a_grant_gives_exit_5_and_the_statements_repair_it`: a test wraps `connect` so that, just before the step-8 connection is returned, a superuser grants `SELECT ON <map table> TO PUBLIC`. Asserts: `AppliedNotVerifiedError`, exit code 5 through `cli.main(["migrate", ...])`, the first sentence word for word, no line starting "applied", the statements on standard output only, the ledger holds the files, and running every printed statement as a superuser makes the next `migrate` return normally.
+- `test_step_8_that_cannot_connect_gives_exit_5`: the wrapped `connect` raises on its second call; asserts the "could not run" wording and exit code 5.
+- `test_any_error_inside_step_8_gives_exit_5_not_exit_2`: parametrised: (a) the step-8 connection raises `QueryCanceled` on its third statement, (b) its version read answers 150000 (the version `ConfigError`), (c) it raises a plain `psycopg.Error`. Each: exit 5, "could not run", never exit 2, never "Nothing was changed".
+- `test_step_8_with_a_saved_statement_timeout_still_checks` (D-M2): in a case database, `ALTER ROLE <migration role> SET statement_timeout = '5ms'`. Sensitivity first: on a fresh connection of that role, Q2 alone is cancelled (57014), so the setting really bites on this machine (fact 36). Then `migrate` on the shipped files returns normally (exit 0) and the oracle is clean, because `verify` runs the two limits first. The role setting is reset in `finally`.
+- `test_step_8_keeps_a_role_switch_in_the_dsn` (D-M8, carrier C9): the DSN carries `options=-c role=<M>`; a wrapper records `current_user` on the step-8 connection; asserts it is `<M>`.
+- `test_step_8_reads_one_snapshot`: a wrapper records `transaction_isolation` and `transaction_read_only` inside step 8: `repeatable read`, `on`.
+- `test_a_commit_refused_by_the_server_gives_exit_2_and_keeps_nothing` (D-M3): a file with a deferred trigger that defers itself again (fact 4) and whose second firing raises an error at COMMIT. Asserts exit 2, the "the database server refused the commit" wording, the ledger without the file.
+- `test_a_lost_connection_at_commit_gives_exit_5` (D-M3): the same shape, but the second firing runs `pg_sleep(5)`; the test's second thread waits (bounded, 10 s) until `pg_stat_activity` shows that sleep, then runs `pg_terminate_backend` on it. Asserts exit 5 and the "may or may not have happened" wording. It asserts the wording only, not the outcome (here the commit did not happen; fact 37b shows the other outcome with the same error).
+- `test_message_safety_names_with_newline_and_escape`: one object name, one role name, one column name and one function ARGUMENT name with a newline and an ESC character; asserts the printed text holds neither and that no statement is printed for them (`by_hand = "name"`).
+- `test_the_running_server_is_16_or_later_and_accepted`, `test_a_server_below_16_is_refused_with_the_plain_message` (the one allowed fake: the version read answers 150000).
+- `test_the_self_check_matches_the_running_server`: Q0 equals `KNOWN_ACL_COLUMNS` (the test that fails first on a new PostgreSQL version).
+- `test_upgrade_from_mains_state_is_repaired` (R-M9): EMULATES the state main's `migrate` (main 2a8c2aa) leaves; it does not run main's code. In a case database: the five shipped files applied as the migration role in one transaction, the ledger table with the five versions, the three named roles granted exactly the grant map with the migration role as grantor, and the default EXECUTE for everyone left on the package's trigger function (main never removed it). Then the new `migrate` with no pending file: returns normally, the oracle is clean. The claim is exactly this emulated state, nothing more.
+- `test_verify_cost_on_a_large_catalog` (marker `perf`, so CI runs it in its perf step, ci.yml line 100; D-m10): one case database with 5,000 tables of another application (each with a column grant to a third role), 20,000 functions, 2,000 large objects, 500 roles with memberships, and the 25-level diamond of fact 40 under one named role. Asserts one `verify` call under 30 s and prints the time of each of its 8 statements. The statement limit inside `verify` is 60 s per statement (`RECIPE_TIMEOUTS`, migration_numbers.py:68), so the bound of 30 s for the whole call is below it.
+- `test_the_public_schema_with_the_server_default_passes` (R-B2): a case database whose schema of the run is `public` with its own access list (fact 34); `migrate` with the three role arguments on the shipped files returns normally. `test_create_for_everyone_on_public_is_refused` is its sensitivity control: `GRANT CREATE ON SCHEMA public TO PUBLIC` first; refused at step 2 with "No file ran", kind `schema_right`.
+- `test_a_named_role_in_pg_monitor_prints_exactly_one_statement` (D-M4, fact 38): the runtime role is a member of `pg_monitor`; refused at step 2 with exactly one problem line (kind `built_in_role`) and exactly one statement, `REVOKE "pg_monitor" FROM "<runtime role>" GRANTED BY "<grantor>";`.
+- `test_printed_statements_remove_every_problem_for_every_grantor_form` (D-M5, facts 30-32): a right on a table of another schema granted by the owner, the same granted by a grant-option holder (table and column), a membership granted by a CREATEROLE role, a default right; all printed statements run as a superuser; `verify` then returns nothing.
+- `test_a_right_granted_by_a_grant_option_holder_is_not_dropped_at_step_2` (D-m5, effect E38): refused at step 2 with "No file ran"; the run does not reach step 6.
+- `test_row_types_of_six_relation_kinds_pass_and_a_standalone_composite_type_does_not` (D-m9, fact 33).
+- `test_a_ledger_trigger_that_disables_the_audit_triggers_is_refused_at_the_end_of_the_run` (D-m11, round-12 F2 variant).
+- `test_a_reviewed_definer_is_excused_only_in_its_schema_with_its_arguments` (C-F9).
+- `test_a_prepared_transaction_that_holds_the_migration_lock_is_named_as_one` (TPG, changed by 6.3), `test_an_unreadable_lock_view_is_a_plain_config_error` (6.2), `test_a_grant_map_name_created_twice_is_refused` (6.4).
+- In tests/test_migration_verify.py (no server): `test_every_catalog_name_in_the_queries_is_qualified` (acceptance 4), `test_every_live_acl_column_is_read_by_a_query` (3.6), `test_every_runner_catalog_read_is_pinned` (an AST check that `_refuse_privileged_role`, `_refuse_foreign_owned`, `_read_back`, `_check_read_back`, `_recheck_roles`, `_members_of_each_other` and the step-4 query run only inside `pinned_read`), `test_the_promise_table_is_the_same_in_the_docstring_and_the_changelog` (markers of 9.3), `test_every_problem_kind_is_produced_and_named` (3.3), `test_the_rights_table_equals_what_apply_grants_is_called_with` (3.2), the rewritten TCMP tests of 5.4.
 
 ### 7.7 The CI test of the shipped files (promise table row 1)
 
-One test, run in CI on every pull request: empty database, plain migration role as the printed SQL makes it, `migrate` with the three role arguments on the five shipped files; then the oracle shows, for each of the three roles and for the fresh "everyone" role, that it can do every operation the hand-written expected table lists (direction 1: nothing is missing) and is refused every other operation the oracle tries on every object of the database (direction 2: nothing extra). A second run with no pending file must give the same answers.
+`test_the_shipped_files_give_each_role_exactly_the_map` (tests/test_migration_matrix.py), run in CI on every pull request: a case database, plain migration role as the printed SQL makes it, `migrate` with the three role arguments on the five shipped files; then the oracle shows, for each of the three roles and for the fresh "everyone" role, that it can do every operation the hand-written expected table lists (direction 1: nothing is missing) and is refused every other operation the oracle tries on every object of the database (direction 2: nothing extra, the baseline of 3.4 apart). A second run with no pending file must give the same answers.
 
 ### 7.8 Repository check: no real-server test returns before calling `migrate`
 
-Extend the existing `test_no_migration_test_skips_silently` (tests/test_migration_rules.py): parse TPG and the new generator file with `ast`; in every `test_*` function a bare `return` (or `return None`) that comes before the first call whose name is `migrate`, `_run_plant` or the generator's runner is a failure, unless the line carries the marker comment `# visible: pytest.skip above`. Helpers are checked for a bare `return` that follows a server-setting read (the TPG:242 pattern) by the same walk. The test must fail on the round-12 head because of TPG:4520.
+Extend tests/test_migration_rules.py with `test_no_real_server_test_returns_before_it_runs_migrate`: parse TPG, test_migration_verify_pg.py and test_migration_matrix.py with `ast`; in every `test_*` function, a `return` (bare, or `return None`) that comes before the first call whose name is `migrate`, `_run_plant`, `run_case` or `main` is a failure, unless the line carries the marker comment `# visible: pytest.fail above`. Functions that contain `yield` are not checked (rev 1 named TPG:242, which is the plain `return` after `yield` in the context manager `_plain_role_may_set`; it is legitimate, citation list A item 3). Helpers are not checked (rev 1's helper rule is dropped: it had no exact definition). The test must fail on the round-12 head because of TPG:4520.
 
-### 7.9 Which tests must FAIL on the round-12 head, and the proof
+### 7.9 Which tests must FAIL on the round-12 head, and the proof (rev 2, R-M8)
 
-Must fail on 4d328e3d (the builder checks out 4d328e3d into a scratch worktree, copies only the new test files and the oracle onto it, with a thin adapter that maps the old return and error to outcomes (i) and (iii), runs each id, and pastes the failing lines; exit code taken from pytest, never from a pipe):
+How: the builder checks out 4d328e3d into a scratch worktree, copies onto it ONLY tests/fixtures/oracle.py, tests/test_migration_matrix.py, the dedicated test of 6.1 and the repository check of 7.8, plus a 20-line adapter `tests/_old_head_adapter.py` that defines `AppliedNotVerifiedError` as a class nothing raises and maps the old results: `migrate` returned = outcome (iii), `ConfigError` = outcome (i). The new test files must not import `hadavin_sdk.store.migration_verify` at module level (they import `AppliedNotVerifiedError` with `getattr(hadavin_sdk.errors, "AppliedNotVerifiedError", None) or adapter class`), so collection succeeds on the old head. A failure counts ONLY when it is the assertion "applied with excess:" (7.1) or, for the lock test and the repository check, their own assertion; an import error, a collection error or an INCONCLUSIVE attempt does not count, and the evidence shows the failing line for each id. Exit codes from pytest itself, never through a pipe.
+
+Must fail on 4d328e3d:
 - generator cases for E22 x C2 (large object), E29/E30/E31/E32 x C12 (memberships), E01 x C12 in another schema, E10 x C12 (standing EXECUTE), any effect x C6 (deferred trigger), x C8 (extension), x C9 (role switch), x C13 (move), E36 (default right set by another role): each returns "applied" with an excess the oracle sees;
 - the prepared-transaction test with the bystander (the old message names it);
-- the repository check of 7.8;
-- the version refusal test; the self-check test (the names do not exist);
-- the message-safety test for `effective_problems` lines.
+- the repository check of 7.8.
+
+Not part of the old-head proof (rev 2 correction): the version refusal test, the self-check test and the message-safety test of `effective_problems` lines; they test names that do not exist on the old head and could only fail on import.
 
 Regression guards expected to PASS on the round-12 head where they can run there (exempt from the proof, listed as such): effects x C1 that a text rule refuses, the clean controls, the CI test of 7.7 direction 1.
 
-### 7.10 Run time and batching
+### 7.10 Run time, batching and heavy jobs (rev 2, R-M5)
 
-Not measured (nothing is built). Estimate from the existing suite: one `migrate` of the five files on a scratch schema takes well under a second on an idle machine; about 900 cases with two oracle passes each should stay under 15 minutes on one heavy slot. The builder measures the first 50 cases, writes the number in the checkpoint note, and reports if the whole matrix would exceed 20 minutes instead of cutting cells. While building: only the affected ids. On the final head, once each: the full suite (`python tools/heavy_slot.py --slots 3 --timeout 2400 -- ...` where that tool exists on the machine), the migrate mutant list (the header of `MUT` says about 10 minutes today; estimate 15 after this ticket), alone, not in parallel with the suite and never while a gate runs.
+Measured or cited numbers: the migrate mutant list takes 30 minutes or more for 288 mutants (about 6-7 s each; the readiness review's studio figure, not measured by this author; the header of `MUT` still says "about 10 minutes" and is corrected in the texts commit). The new V* killers use the matrix (migrate plus oracle), estimated 10-20 s each (not measured). One case database costs about 24 ms (measured, 7.2).
+
+`tools/heavy_slot.py` does not exist in this repository (checked at 4d328e3d and on core/cloud-handover: `ls tools/heavy_slot.py` fails). Rule here: where the studio machine has it, every heavy job runs through `python tools/heavy_slot.py --slots 3 --timeout 3000 -- <cmd>`; where it does not (this cloud container), the same command runs under `timeout 3000`, and heavy jobs run one after another, never two at once and never while a gate runs.
+
+Mutants: the runner gets `--list-batch N` (N = 1 to 4), a pure function with a unit test that the four batches are disjoint and cover the whole list: batch 1 = the 54 new V* (estimate 9-18 min); batch 2 = the 47 re-pointed, the 16 re-checked and LW7, LW8 (about 65, estimate 8-10 min); batches 3 and 4 = the rest in id order, split in half (about 97 each, estimate 10-12 min each). Command per batch: `HADAVIN_TEST_PG_DSN=... timeout 3000 uv run --all-extras --group test python tests/migrate_mutants.py $(uv run --all-extras --group test python tests/migrate_mutants.py --list-batch N)`. While building: only the ids the commit touches. On the final head: the four batches once, one after another, alone. If a batch hits the time limit: the evidence runner records the last finished id, runs `git status --short` and restores any planted file with `git checkout -- <file>` (rule long-jobs-run-detached), splits the unfinished ids in two and runs each half once; the time-out is written in the evidence, not hidden.
+
+Generator: about 1,000 cases (exact number from the count test) with one database each; estimate 15-25 minutes on one heavy slot. The builder measures the first 50 cases and writes the number in the checkpoint note. The matrix runs in CI on every pull request (it is the promise of row 1); if the measured whole matrix exceeds 20 minutes, the builder reports the number to the lead instead of cutting cells (the lead decides between a separate CI job and a nightly run; cutting cells is not allowed).
 
 ## 8. Tool ladder, single dependency, least privilege
 

@@ -1,0 +1,2 @@
+WAL_LOG: create+drop x10, median 24 ms, max 60 ms (idle 16.15 cluster, no parallel load)
+FILE_COPY: create+drop x10, median 73 ms, max 93 ms (idle 16.15 cluster, no parallel load)
