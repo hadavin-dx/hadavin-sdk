@@ -242,7 +242,9 @@ def test_ed25519_local_loads_its_key_from_a_secret_and_never_echoes_it():
     junk = "not" + "-a-pem-value"
     with pytest.raises(ConfigError) as caught:
         make("signer", settings, FakeSecretProvider({"audit-key": junk}))
-    assert junk not in str(caught.value) and "secret 'audit-key'" in str(caught.value)
+    assert junk not in str(caught.value) and "the private_key_secret_name secret" in str(
+        caught.value
+    )
 
 
 def _prod_config(tmp_path, backends):

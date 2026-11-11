@@ -56,7 +56,8 @@ class KubernetesSettings(BaseModel):
     `hadavin_sdk/defaults.py`. `api_url` has no default: the endpoint is the deployment's, never the code's. It is scheme and host only, no
     path: the operation paths are absolute (`/api/v1/...`), so a base path would silently shift every call."""
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    # A URL typed here may hold a login: the error text never quotes the refused input.
+    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
     api_url: ConfigUrl = Field(pattern=r"^https?://[^\s/?#]+/?$")
     namespaces: tuple[str, ...] = Field(min_length=1)
     page_size: int = Field(default=defaults.K8S_PAGE_SIZE, gt=0)

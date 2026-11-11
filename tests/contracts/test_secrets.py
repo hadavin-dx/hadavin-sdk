@@ -16,7 +16,7 @@ def test_a_missing_name_is_a_config_error_at_the_start_up_probe(secrets_factory,
     provider = secrets_factory({"known": VALUE})
     with caplog.at_level(logging.DEBUG):
         platform_secrets.check(provider, [], {"known"})
-        with pytest.raises(ConfigError, match="'missing' cannot be read at start-up"):
+        with pytest.raises(ConfigError, match=r"secret missing cannot be read at start-up \("):
             platform_secrets.check(provider, [], {"known", "missing"})
         assert provider.get("known") == VALUE
     assert VALUE not in caplog.text  # a value is never logged

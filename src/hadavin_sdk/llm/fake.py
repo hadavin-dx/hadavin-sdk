@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from hadavin_sdk.config import Route
+from hadavin_sdk.errors import read_configured
 from hadavin_sdk.models import Reply
 
 
@@ -45,7 +46,7 @@ class FakeLLM:
         path = self.recorded_dir / f"{digest}-{attempt}.json"
         if not path.is_file():
             raise UnknownRecording(path.name)
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(read_configured(path, "a recorded reply file in recorded_dir"))
         r = self.routes[route]
         cost = (
             Decimal(data.get("input_tokens", 0)) * r.input_usd_per_mtok

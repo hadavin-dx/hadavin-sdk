@@ -34,7 +34,7 @@ from hadavin_sdk.config import (
     executor_timeout_ok,
     load_config,
 )
-from hadavin_sdk.errors import shown_name
+from hadavin_sdk.errors import read_configured, shown_name
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM
@@ -211,10 +211,11 @@ def build(
         raise ConfigError("; ".join(problems))
     if problems := _unprobed_tools(cfg, reg):
         raise ConfigError("; ".join(problems))
+    attestable = set(cfg.sources) | {f"tool:{n}" for per in reg.tools.values() for n in per}
     for name in cfg.scope_inventory:
         _LOG.warning(
             "scope_inventory %s: operator-attested, format-checked only; its hash is not compared with the page",
-            name,
+            shown_name(name, attestable),
         )
     toolbox = _toolbox(
         cfg,
@@ -354,7 +355,9 @@ def _own_secrets(secrets: SecretProvider, spec: tools_mod.ToolSpec) -> Callable[
 
     def read(name: str) -> str:
         if name not in allowed:
-            raise PermissionError(f"secret {name!r} is not one of tool {spec.name}'s secrets")
+            raise PermissionError(
+                f"that secret is not one of tool {shown_name(spec.name, [spec.name])}'s secrets"
+            )
         return secrets.get(name)
 
     return read
@@ -368,19 +371,17 @@ def _tls_context(
     if not (ca_file or ca_secret_name):
         return None
     pem = (
-        confined(cfg.root, ca_file).read_text(encoding="utf-8")
+        read_configured(confined(cfg.root, ca_file), "the CA file (ca_file)")
         if ca_file
         else secrets.get(ca_secret_name or "")
     )
     if not pem or not pem.strip():
         # A CA that was asked for and is empty must not fall back to the system CAs.
-        raise ConfigError(f"the CA {shown_name(str(ca_file or ca_secret_name))} is empty")
+        raise ConfigError("the CA bundle is empty")
     try:
         return ssl.create_default_context(cadata=pem)
     except ssl.SSLError:
-        raise ConfigError(
-            f"the CA {shown_name(str(ca_file or ca_secret_name))} holds no valid PEM certificate"
-        ) from None
+        raise ConfigError("the CA bundle holds no valid PEM certificate") from None
 
 
 def _build_source(
@@ -399,16 +400,16 @@ def _build_source(
     plain = parts.scheme == "http"
     if plain and sc.token_secret_name:
         raise ConfigError(
-            f"source {shown_name(name)}: a bearer token never travels over plain http; use https"
+            f"source {shown_name(name, cfg.sources)}: a bearer token never travels over plain http; use https"
         )
     if why := tools_mod.forbidden_host((parts.hostname or "").lower()):
         raise ConfigError(
-            f"source {shown_name(name)}: host {shown_name(parts.hostname)} is {why}"
+            f"source {shown_name(name, cfg.sources)}: the host of its endpoint is {why}"
         )  # as a tool manifest host
     spec = tools_mod.ToolSpec(
         name="source_" + re.sub(r"[^a-z0-9]", "_", name.lower())[:30],
         function="source:read",
-        description=f"read source {name}",
+        description=f"read source {shown_name(name, cfg.sources)}",
         input_schema={"type": "object"},
         side_effect="none",
         operations=tuple(kind.operations),
@@ -421,7 +422,9 @@ def _build_source(
 
     def fetch(method, url, *, operation, body=None, headers=None, max_bytes=None):
         if disabled and name in disabled and not sources_mod.PROBING.get():
-            raise tools_mod.ToolRefused(f"source {name} is switched off: its scope probe failed")
+            raise tools_mod.ToolRefused(
+                f"source {shown_name(name, cfg.sources)} is switched off: its scope probe failed"
+            )
         ctx = tools_mod.ToolContext(
             spec,
             cfg.tool_timeout_s,
@@ -460,6 +463,7 @@ def _unprobed_tools(cfg: Config, reg: Registry) -> list[str]:
 
     A tool that merely shares a host with a probed source is NOT covered: it may hold a different credential."""
     out = []
+    known = {t.name for per in reg.tools.values() for t in per.values()}
     for per_agent in reg.tools.values():
         for t in per_agent.values():
             reads_source = any(
@@ -476,9 +480,9 @@ def _unprobed_tools(cfg: Config, reg: Registry) -> list[str]:
             ):
                 continue
             out.append(
-                f"tool {shown_name(t.name)}: reads a source or holds a credential that no probe vouches for: map it to a "
+                f"tool {shown_name(t.name, known)}: reads a source or holds a credential that no probe vouches for: map it to a "
                 f"configured source with options.source (using that source's token secret) or attest it with "
-                f"scope_inventory 'tool:{shown_name(t.name)}' (design 6.6)"
+                f"scope_inventory 'tool:{shown_name(t.name, known)}' (design 6.6)"
             )
     return sorted(set(out))
 
@@ -504,7 +508,7 @@ def _switched_off(disabled: set[str] | None, source_hosts: dict[str, str]):
             return None
         named = str(spec.options.get("source", ""))
         if named in disabled:
-            return f"source {named} is switched off: its scope probe failed"
+            return f"source {shown_name(named, disabled)} is switched off: its scope probe failed"
         if {source_hosts[n] for n in disabled if n in source_hosts} & set(spec.hosts):
             return "a source this tool reads is switched off: its scope probe failed"
         return None
@@ -526,7 +530,9 @@ def _toolbox(
     for per_agent in reg.tools.values():
         for name, spec in per_agent.items():
             if specs.setdefault(name, spec) != spec:
-                raise ConfigError(f"tool {shown_name(name)} is defined differently for two agents")
+                raise ConfigError(
+                    f"tool {shown_name(name, specs)} is defined differently for two agents"
+                )
     if not specs:
         return None
     fns = {
@@ -540,8 +546,8 @@ def _toolbox(
             if not evidence.identifier_inputs(reg.contracts[action]):
                 _LOG.info(
                     "agent %s, action %s: no input is flagged identifier, so grounding is skipped",
-                    agent_id,
-                    action,
+                    shown_name(agent_id, reg.agents),
+                    shown_name(action, reg.contracts),
                 )
     contexts = {
         n: _tls_context(cfg, secrets, spec.ca_file, spec.ca_secret_name)

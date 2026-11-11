@@ -11,7 +11,7 @@ import threading
 import time
 from collections.abc import Callable
 
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, shown_name
 
 
 class CachedSecrets:
@@ -32,7 +32,7 @@ class CachedSecrets:
                 return hit[1]
             value = self._fetch(name)
             if not value:  # an empty value would pass the start-up probe and fail at call time
-                raise ConfigError(f"secret {name!r} is empty")
+                raise ConfigError(f"secret {shown_name(name)} is empty")
             if self.ttl_s > 0:
                 self._cache[name] = (now + self.ttl_s, value)
             return value

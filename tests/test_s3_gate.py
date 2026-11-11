@@ -69,7 +69,7 @@ def test_bad_scope_action_without_contract(cfg_dir):
 
 def test_bad_unknown_chain(cfg_dir):
     _edit(cfg_dir / "actions" / "lookup_record.yaml", lambda d: d.update(chain_id="nope"))
-    with pytest.raises(ConfigError, match="unknown chain"):
+    with pytest.raises(ConfigError, match="action lookup_record: chain_id names no chain"):
         _reg(cfg_dir)
 
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from contextlib import ExitStack
 from dataclasses import dataclass
 from dataclasses import field as dc_field
 from typing import Any, Literal
@@ -18,7 +19,13 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from hadavin_sdk import deferred
 from hadavin_sdk.actions.contract import ActionContract, schema_problems
 from hadavin_sdk.config import Config, ConfigError, Money, config_error_text, confined, load_yaml
-from hadavin_sdk.errors import shown_name
+from hadavin_sdk.errors import (
+    digest_prefix,
+    list_configured,
+    loaded_ids,
+    read_configured,
+    shown_name,
+)
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
@@ -78,19 +85,24 @@ class Registry:
         return confined(self.config.root, self.agents[agent_id].prompt_file)
 
     def prompt(self, agent_id: str) -> str:
-        return self._prompt_path(agent_id).read_text(encoding="utf-8")
+        return read_configured(self._prompt_path(agent_id), "an agent's prompt_file")
 
     def prompt_sha256(self, agent_id: str) -> str:
-        return hashlib.sha256(self._prompt_path(agent_id).read_bytes()).hexdigest()
+        data = read_configured(self._prompt_path(agent_id), "an agent's prompt_file", binary=True)
+        return hashlib.sha256(data).hexdigest()
 
     def golden_path(self, agent_id: str):
         return confined(self.config.golden_dir, f"{agent_id}.jsonl")
 
     def golden_sha256(self, agent_id: str) -> str:
-        path = self.golden_path(agent_id)
-        if not path.is_file():
+        data = read_configured(
+            self.golden_path(agent_id),
+            "a golden set file (golden_dir)",
+            binary=True,
+            missing_ok=True,
+        )
+        if data is None:
             return ""
-        data = path.read_bytes()
         # The documents the cases point at decide pass/fail too: a changed input un-qualifies. A bad line or
         # a missing document is left to the gate and the start-up check (`_check_golden_refs`).
         for line in data.decode("utf-8", "replace").splitlines():
@@ -98,10 +110,19 @@ class Registry:
                 ref = confined(self.config.inputs_dir, json.loads(line)["input_ref"])
             except (ValueError, KeyError, TypeError, ConfigError):
                 continue
-            data += b"\0" + (ref.read_bytes() if ref.is_file() else b"")
-        judge = self.config.golden_dir / "judge.jsonl"
-        if any(d.kind == "llm_judge" for d in self.config.backends.detector) and judge.is_file():
-            data += b"\0" + judge.read_bytes()  # a weakened judge set un-qualifies too
+            doc = read_configured(
+                ref, "a golden input document (inputs_dir)", binary=True, missing_ok=True
+            )
+            data += b"\0" + (doc or b"")
+        if any(d.kind == "llm_judge" for d in self.config.backends.detector):
+            judge = read_configured(
+                self.config.golden_dir / "judge.jsonl",
+                "judge.jsonl (golden_dir)",
+                binary=True,
+                missing_ok=True,
+            )
+            if judge is not None:
+                data += b"\0" + judge  # a weakened judge set un-qualifies too
         return hashlib.sha256(data).hexdigest()
 
     def config_hash(self, agent_id: str) -> str:
@@ -178,17 +199,19 @@ class Registry:
         return sorted(set(self.agents[agent_id].tools_allowed) & available)
 
 
-def _yaml(path) -> object:
-    """One YAML file of the configuration folder, or None if it is not there. Every read of such a file goes through
-    here: a YAML error leaves `load_yaml` as a value-free `ConfigError`, and a file that cannot be read as UTF-8 text
-    (or cannot be opened) is reported by its error type only."""
-    if not path.exists():
+def _yaml(path, what: str) -> object:
+    """One YAML file of the configuration folder, or None if it is not there (not: "there but cannot be read": a
+    folder, a loop of links, no permission, not UTF-8 text is `ConfigError`, never an empty file). Every read of such a
+    file goes through here: `what` is a fixed label written in code, a YAML error leaves `load_yaml` as a value-free
+    `ConfigError`."""
+    text = read_configured(path, what, missing_ok=True)
+    if text is None:
         return None
     try:
-        return load_yaml(path.read_text(encoding="utf-8"))
+        return load_yaml(text)
     except ConfigError:
         raise
-    except (ValueError, TypeError, OSError) as exc:
+    except (ValueError, TypeError) as exc:
         raise ConfigError(config_error_text(exc)) from None
 
 
@@ -196,7 +219,9 @@ def _by_id(items: list, model: type, where: str) -> dict:
     """Validated entries keyed by id; a duplicate id fails (a later entry must never shadow an earlier one)."""
     out: dict = {}
     for number, raw in enumerate(items or [], start=1):
-        obj = model(**raw) if isinstance(raw, dict) else model(raw)
+        if not isinstance(raw, dict):
+            raise ConfigError(f"{where}: entry {number} is not a mapping")
+        obj = model(**raw)
         if obj.id in out:
             raise ConfigError(f"{where}: duplicate id in entry {number}")
         out[obj.id] = obj
@@ -219,8 +244,11 @@ def _nested_identifier(sub: dict[str, Any]) -> bool:
 def load_registry(config: Config) -> Registry:
     root = config.root
     try:
-        raw_agents = _yaml(root / "agents.yaml")
-        raw_actions = [_yaml(p) for p in sorted((root / "actions").glob("*.yaml"))]
+        raw_agents = _yaml(root / "agents.yaml", "agents.yaml")
+        raw_actions = [
+            _yaml(p, "a file in actions/")
+            for p in list_configured(root / "actions", "the actions/ folder", ".yaml")
+        ]
     except ConfigError:
         raise
     except yaml.YAMLError as exc:
@@ -232,23 +260,44 @@ def load_registry(config: Config) -> Registry:
         raise ConfigError("; ".join(early))
     try:
         agents = _by_id(raw_agents, AgentRecord, "agents.yaml")
-        principals = _by_id(_yaml(root / "principals.yaml"), Principal, "principals.yaml")
-        chains = _by_id(_yaml(root / "chains.yaml"), Chain, "chains.yaml")
+        principals = _by_id(
+            _yaml(root / "principals.yaml", "principals.yaml"), Principal, "principals.yaml"
+        )
+        chains = _by_id(_yaml(root / "chains.yaml", "chains.yaml"), Chain, "chains.yaml")
         contracts = _by_id(raw_actions, ActionContract, "actions/")
     except ConfigError:
         raise
     except (ValidationError, ValueError, TypeError, yaml.YAMLError) as exc:
         raise ConfigError(config_error_text(exc)) from None
-    problems = _cross_check(config, agents, chains, contracts) + _principal_problems(
-        principals, chains, contracts
-    )
-    if problems:
-        raise ConfigError("; ".join(problems))
-    tools = _load_tools(config, agents, contracts)
-    reg = Registry(config, agents, principals, chains, contracts, tools)
-    if problems := deferred.check(reg):
-        raise ConfigError("; ".join(problems))
-    return reg
+    # Names shown in an error text: the ids this loader has read (D-2322); a reference that matched nothing is not one.
+    with loaded_ids(
+        agents,
+        principals,
+        chains,
+        contracts,
+        config.routes,
+        config.systems,
+        config.sources,
+        config.tool_modules,
+        *(_input_names(c) for c in contracts.values()),
+    ):
+        problems = _cross_check(config, agents, chains, contracts) + _principal_problems(
+            principals, chains, contracts
+        )
+        if problems:
+            raise ConfigError("; ".join(problems))
+        tools = _load_tools(config, agents, contracts)
+        reg = Registry(config, agents, principals, chains, contracts, tools)
+        if problems := deferred.check(reg):
+            raise ConfigError("; ".join(problems))
+        return reg
+
+
+def _input_names(contract: ActionContract) -> list[str]:
+    """The names of an action's declared inputs: defined in its own file, so they are loaded names."""
+    return [
+        n for n in ((contract.input_schema or {}).get("properties") or {}) if isinstance(n, str)
+    ]
 
 
 def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict[str, ToolSpec]]:
@@ -260,81 +309,95 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
     problems: list[str] = []
     found: dict[str, dict[str, ToolSpec]] = {}
     if folder.is_dir():
-        orphans = [p for p in folder.glob("*.yaml") if p.stem not in agents]
+        orphans = [
+            p for p in list_configured(folder, "the tools/ folder", ".yaml") if p.stem not in agents
+        ]
         if orphans:  # a file name is a value from the folder: counted, never quoted
             problems.append(f"tools/: {len(orphans)} manifest file(s) match no agent id")
     read_ops: set[str] | None = None
-    for agent_id, agent in agents.items():
-        path = folder / f"{agent_id}.yaml"
-        if not path.is_file():
-            continue
-        where = f"tools/{shown_name(path.stem)}.yaml"
-        specs = parse_manifest(_yaml(path), where)
-        if specs and read_ops is None:
-            read_ops = read_operations(config.tool_modules, config.tool_module_hashes)
-        found[agent_id] = {}
-        # With a manifest the manifest is the whole list of tools: an entry of `tools_allowed` with no tool in it would
-        # silently never be offered (a typo that narrows the agent). Named by position, never quoted.
-        problems += [
-            f"{where}: tools_allowed entry {i} has no tool in this manifest"
-            for i, allowed in enumerate(agent.tools_allowed)
-            if allowed not in {sp.name for sp in specs}
-        ]
-        problems += [  # grounding checks declared inputs only, so a tooled agent's contracts must be closed
-            f"{where}: action {shown_name(action)} must set `additionalProperties: false` on its input_schema "
-            "(an agent with tools cannot have undeclared inputs)"
-            for action in agent.scope_allowed
-            if action in contracts
-            and (contracts[action].input_schema or {}).get("additionalProperties") is not False
-        ]
-        for spec in specs:
-            found[agent_id][spec.name] = spec
+    with ExitStack() as stack:
+        for agent_id, agent in agents.items():
+            path = folder / f"{agent_id}.yaml"
+            where = f"tools/{shown_name(agent_id)}.yaml"
+            raw_manifest = _yaml(path, f"{where} (an agent's tool manifest)")
+            if (
+                raw_manifest is None
+            ):  # no such file (a folder or an unreadable file is already a ConfigError above)
+                continue
+            specs = parse_manifest(raw_manifest, where)
+            stack.enter_context(
+                loaded_ids(sp.name for sp in specs)
+            )  # the manifest's own tool names
+            if specs and read_ops is None:
+                read_ops = read_operations(config.tool_modules, config.tool_module_hashes)
+            found[agent_id] = {}
+            # With a manifest the manifest is the whole list of tools: an entry of `tools_allowed` with no tool in it would
+            # silently never be offered (a typo that narrows the agent). Named by position, never quoted.
+            # An empty manifest names no tool and so never narrows `tools_allowed` (checked only `if specs`).
             problems += [
-                f"{where}: {p}"
-                for p in spec_problems(spec, config.tool_modules, config.evidence.cluster_suffixes)
+                f"{where}: tools_allowed entry {i} has no tool in this manifest"
+                for i, allowed in enumerate(agent.tools_allowed)
+                if specs and allowed not in {sp.name for sp in specs}
             ]
-            problems += [
-                f"{where}: tool {shown_name(spec.name)}: {p}"
-                for p in schema_problems(spec.input_schema)
+            problems += [  # grounding checks declared inputs only, so a tooled agent's contracts must be closed
+                f"{where}: action {shown_name(action)} must set `additionalProperties: false` on its input_schema "
+                "(an agent with tools cannot have undeclared inputs)"
+                for action in agent.scope_allowed
+                if action in contracts
+                and (contracts[action].input_schema or {}).get("additionalProperties") is not False
             ]
-            if spec.name not in agent.tools_allowed:
-                problems.append(
-                    f"{where}: tool {shown_name(spec.name)} is not in the agent's tools_allowed"
-                )
-            for (
-                action
-            ) in agent.scope_allowed:  # every string input says whether it must be grounded
-                if action not in contracts:
-                    continue  # reported where the agent's scope is checked
-                props = (contracts[action].input_schema or {}).get("properties") or {}
-                # Grounding is a string match. A string input says true or false; any other kind of input
-                # (integer, array, object) cannot be grounded, so it must say `identifier: false` outright
-                # instead of silently skipping the check; a boolean carries no name to ground.
+            for spec in specs:
+                found[agent_id][spec.name] = spec
                 problems += [
-                    f"{where}: action {shown_name(action)} input {shown_name(pname)} must say `identifier: true` or `identifier: false`"
-                    for pname, sub in props.items()
-                    if isinstance(sub, dict)
-                    and sub.get("type") != "boolean"
-                    and "identifier" not in sub
+                    f"{where}: {p}"
+                    for p in spec_problems(
+                        spec, config.tool_modules, config.evidence.cluster_suffixes
+                    )
                 ]
-            if spec.name in contracts:
-                problems.append(
-                    f"{where}: tool {shown_name(spec.name)} has the id of an action contract"
-                )
-            problems += [
-                f"{where}: tool {shown_name(spec.name)}: operations entry {i} is not on the read list of tool_modules"
-                for i, op in enumerate(spec.operations)
-                if op not in (read_ops or set())
-            ]
-            problems += [  # a POST read (a review, a query body) is named in the config, not only in tool code
-                f"{where}: tool {shown_name(spec.name)}: operations entry {i} is bound to {read_ops[op][0]}; "
-                "list it in evidence.post_read_operations to allow it"
-                for i, op in enumerate(spec.operations)
-                if read_ops
-                and op in read_ops
-                and read_ops[op][0] != "GET"
-                and op not in config.evidence.post_read_operations
-            ]
+                problems += [
+                    f"{where}: tool {shown_name(spec.name)}: {p}"
+                    for p in schema_problems(spec.input_schema)
+                ]
+                if spec.ca_file and (why := _ca_problem(config, spec.ca_file)):
+                    problems.append(f"{where}: tool {shown_name(spec.name)}: {why}")
+                if spec.name not in agent.tools_allowed:
+                    problems.append(
+                        f"{where}: tool {shown_name(spec.name)} is not in the agent's tools_allowed"
+                    )
+                for (
+                    action
+                ) in agent.scope_allowed:  # every string input says whether it must be grounded
+                    if action not in contracts:
+                        continue  # reported where the agent's scope is checked
+                    props = (contracts[action].input_schema or {}).get("properties") or {}
+                    # Grounding is a string match. A string input says true or false; any other kind of input
+                    # (integer, array, object) cannot be grounded, so it must say `identifier: false` outright
+                    # instead of silently skipping the check; a boolean carries no name to ground.
+                    problems += [
+                        f"{where}: action {shown_name(action)} input {shown_name(pname)} must say `identifier: true` or `identifier: false`"
+                        for pname, sub in props.items()
+                        if isinstance(sub, dict)
+                        and sub.get("type") != "boolean"
+                        and "identifier" not in sub
+                    ]
+                if spec.name in contracts:
+                    problems.append(
+                        f"{where}: tool {shown_name(spec.name)} has the id of an action contract"
+                    )
+                problems += [
+                    f"{where}: tool {shown_name(spec.name)}: operations entry {i} is not on the read list of tool_modules"
+                    for i, op in enumerate(spec.operations)
+                    if op not in (read_ops or set())
+                ]
+                problems += [  # a POST read (a review, a query body) is named in the config, not only in tool code
+                    f"{where}: tool {shown_name(spec.name)}: operations entry {i} is bound to {read_ops[op][0]}; "
+                    "list it in evidence.post_read_operations to allow it"
+                    for i, op in enumerate(spec.operations)
+                    if read_ops
+                    and op in read_ops
+                    and read_ops[op][0] != "GET"
+                    and op not in config.evidence.post_read_operations
+                ]
     if problems:
         raise ConfigError("; ".join(problems))
     return found
@@ -359,7 +422,7 @@ def _module_pin_problems(config: Config) -> list[str]:
             continue
         if actual != pin:
             out.append(
-                f"tool module {shown_name(module)}: its source hash is {actual[:12]}..., the pin says {pin[:12]}..."
+                f"tool module {shown_name(module)}: its source hash is {digest_prefix(actual)}, the pin says {digest_prefix(pin)}"
             )
     return out
 
@@ -382,7 +445,13 @@ def _principal_problems(principals: dict, chains: dict, contracts: dict) -> list
             for i, chain in enumerate(p.approver_of)
             if chain not in chains
         ]
+    # A chain that some principal names in `approver_of` is linked to people: its approver_ids must be persons. A chain no
+    # principal names keeps channel-native approver ids (for example a Slack user id): they are checked by the channel
+    # and the decision, never by principals.yaml (the behaviour before this change).
+    linked = {chain for p in principals.values() for chain in p.approver_of}
     for c in chains.values():
+        if c.id not in linked:
+            continue
         for i, step in enumerate(c.steps):
             out += [
                 f"chain {shown_name(c.id)} step {i}: approver_ids entry {j} is not a person in principals.yaml"
@@ -392,8 +461,32 @@ def _principal_problems(principals: dict, chains: dict, contracts: dict) -> list
     return out
 
 
+def _is_config_file(config: Config, relative: str) -> bool:
+    """True if `relative` is a file under the configuration folder; a name too long for the file system is the same
+    refusal as one that escapes (ConfigError), never a bare OSError."""
+    path = confined(config.root, relative)
+    try:
+        return path.is_file()
+    except (OSError, ValueError):
+        raise ConfigError("path cannot be resolved") from None
+
+
+def _ca_problem(config: Config, ca_file: object) -> str | None:
+    """None if `ca_file` is a file under the configuration folder, else a fixed sentence (the same rule as an agent's
+    `prompt_file`): found at load, so a missing or oversized path never reaches a file open at build time."""
+    try:
+        if not _is_config_file(config, str(ca_file)):
+            return "ca_file is not a file in the config folder"
+    except ConfigError:
+        return "ca_file escapes the config folder or cannot be resolved"
+    return None
+
+
 def _cross_check(config, agents, chains, contracts) -> list[str]:
     out = []
+    for name, source in config.sources.items():
+        if source.ca_file is not None and (why := _ca_problem(config, source.ca_file)):
+            out.append(f"source {shown_name(name)}: {why}")
     for a in agents.values():
         if a.model_route not in config.routes:
             out.append(f"agent {shown_name(a.id)}: model_route is not one of the configured routes")
@@ -403,7 +496,7 @@ def _cross_check(config, agents, chains, contracts) -> list[str]:
             if x not in contracts
         ]
         try:
-            if not confined(config.root, a.prompt_file).is_file():
+            if not _is_config_file(config, a.prompt_file):
                 out.append(f"agent {shown_name(a.id)}: prompt_file missing")
         except ConfigError:
             out.append(f"agent {shown_name(a.id)}: prompt_file escapes the config folder")

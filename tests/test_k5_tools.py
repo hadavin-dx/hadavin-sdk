@@ -705,9 +705,8 @@ def test_k5_a_tool_that_fetches_outside_its_hosts_gets_an_error(tmp_path):
     rt, _ = build_runtime(cfg, llm, store=store)
     run = handle(rt)
     (row,) = store.list_tool_calls(run.run_id)
-    assert row.output.startswith(
-        "ERROR: host 'evil.example.org' is not in this tool's manifest hosts"
-    )
+    assert row.output.startswith("ERROR: the host is not in this tool's manifest hosts")
+    assert "evil.example.org" not in row.output
     assert run.state == S.NO_ACTION
 
 
@@ -1047,7 +1046,7 @@ def test_k5_unprobeable_source_needs_a_scope_inventory(tmp_path):
     assert scope_problems({"pd": Opaque()}, {"pd": ref}) == []
     cfg = k5_cfg(tmp_path, config={"scope_inventory": {"pd": ref}})
     assert load_config(cfg).scope_inventory == {"pd": ref}
-    with pytest.raises(ConfigError, match="scope_inventory pd"):
+    with pytest.raises(ConfigError, match="scope_inventory <not shown>: expected"):
         load_config(k5_cfg(tmp_path / "x", config={"scope_inventory": {"pd": "no hash"}}))
 
 

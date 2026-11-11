@@ -14,7 +14,7 @@ from typing import Any
 import boto3  # the extra: a missing install fails at start-up with the hint (backends.make)
 
 from hadavin_sdk.actions.secrets_cache import CachedSecrets
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, shown_name
 
 
 class SecretsManagerProvider(CachedSecrets):
@@ -30,11 +30,13 @@ class SecretsManagerProvider(CachedSecrets):
         except Exception as exc:
             code = getattr(exc, "response", {}).get("Error", {}).get("Code")
             if code == "ResourceNotFoundException":
-                raise ConfigError(f"secret {name!r} not found in Secrets Manager") from None
+                raise ConfigError(
+                    f"secret {shown_name(name)} not found in Secrets Manager"
+                ) from None
             raise
         if "SecretString" not in out:
             # ponytail: text secrets only; a binary secret needs a decode rule nobody has asked for yet.
-            raise ConfigError(f"secret {name!r} is binary; store it as a string")
+            raise ConfigError(f"secret {shown_name(name)} is binary; store it as a string")
         return out["SecretString"]
 
 

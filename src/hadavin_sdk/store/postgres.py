@@ -27,7 +27,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel
 
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, read_configured
 from hadavin_sdk.models import (
     OPEN_STATES,
     ApprovalDecision,
@@ -96,6 +96,10 @@ def ca_file(settings, resolve) -> str | None:
     """The CA bundle path: the setting, or the PEM from the secrets backend written to a private temp file
     (a CA bundle is public; the file is 0600 only because mkstemp makes it so)."""
     if not settings.sslrootcert_secret_name:
+        if (
+            settings.sslrootcert
+        ):  # a path from the configuration: read once now, so a bad one stops start-up here
+            read_configured(settings.sslrootcert, "the CA file (sslrootcert)", binary=True)
         return settings.sslrootcert
     fd, path = tempfile.mkstemp(prefix="hadavin-ca-", suffix=".pem")
     with os.fdopen(fd, "w", encoding="utf-8") as f:

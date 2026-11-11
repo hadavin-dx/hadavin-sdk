@@ -20,7 +20,7 @@ from pathlib import Path
 
 from hadavin_sdk.actions.secrets_cache import CachedSecrets
 from hadavin_sdk.config import confined
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, shown_name
 
 
 class MountedFileProvider(CachedSecrets):
@@ -40,27 +40,29 @@ class MountedFileProvider(CachedSecrets):
         try:
             fd = os.open(path, flags)
         except FileNotFoundError:
-            raise ConfigError(f"secret {name!r} not found in the mounted folder") from None
+            raise ConfigError(
+                f"secret {shown_name(name)} not found in the mounted folder"
+            ) from None
         except OSError as exc:  # e.g. PermissionError (wrong owner or fsGroup), ELOOP (a link)
             raise ConfigError(
-                f"secret {name!r}: the mounted file cannot be read ({type(exc).__name__})"
+                f"secret {shown_name(name)}: the mounted file cannot be read ({type(exc).__name__})"
             ) from None
         # Checked on the open file itself, so nothing can change between the check and the read.
         with os.fdopen(fd, "rb") as f:
             mode = os.fstat(f.fileno()).st_mode
             if not stat.S_ISREG(mode):
-                raise ConfigError(f"secret {name!r} is not a regular file")
+                raise ConfigError(f"secret {shown_name(name)} is not a regular file")
             # Windows has no group/other bits; its folder ACL decides who reads or writes the file.
             if os.name != "nt" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH):
                 raise ConfigError(
-                    f"secret {name!r}: the file is readable by every user or writable by others; "
+                    f"secret {shown_name(name)}: the file is readable by every user or writable by others; "
                     "mount it 0400 or 0440"
                 )
             try:
                 text = f.read().decode("utf-8")
             except (OSError, UnicodeDecodeError) as exc:
                 raise ConfigError(
-                    f"secret {name!r}: the mounted file cannot be read ({type(exc).__name__})"
+                    f"secret {shown_name(name)}: the mounted file cannot be read ({type(exc).__name__})"
                 ) from None
         return text.removesuffix("\n").removesuffix("\r")
 

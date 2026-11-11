@@ -116,7 +116,7 @@ def test_cli_limits_without_a_readable_dsn_is_a_config_error(cfg_dir, capsys):
     )  # configured `fake` secrets are empty: a real secrets kind (P4) holds the DSN
     # main maps a ConfigError to exit 2 (never Python's crash code 1) and names the problem on stderr
     assert cli.main(["--config", str(cfg_dir), "limits", "stop", "--by", "user:a"]) == 2
-    assert "'pg-dsn' cannot be read" in capsys.readouterr().err
+    assert "secret pg-dsn cannot be read at start-up (KeyError)" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize("action", ["stop", "reset"])

@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, shown_name
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.llm.retry import with_retry
 from hadavin_sdk.models import Reply, ToolCall
@@ -50,7 +50,7 @@ def pinned(
     for name, route in routes.items():
         if floating_anywhere(route.model_id) or floating(route.model_id.strip()):
             raise ConfigError(
-                f"route {name}: model_id {route.model_id!r} is an alias that moves to new models; "
+                f"route {shown_name(name, routes)}: model_id is an alias that moves to new models; "
                 "name an exact model id"
             )
     return routes

@@ -25,13 +25,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hadavin_sdk import defaults, deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
-from hadavin_sdk.errors import ConfigError, ConfigValueError, error_where, shown_name
+from hadavin_sdk.config_url import ConfigUrl
+from hadavin_sdk.errors import (
+    ConfigError,
+    ConfigValueError,
+    error_where,
+    is_digest,
+    read_configured,
+    shown_name,
+)
 from hadavin_sdk.safe_url import (
-    HAS_LOGIN,
-    NOT_A_URL,
     InvalidUrl,
-    UrlHasLogin,
-    config_urlsplit,
     safe_urlsplit,
 )
 from hadavin_sdk.scrub_settings import ScrubSettings
@@ -186,14 +190,6 @@ def executor_timeout_ok(value: object) -> bool:
     return defaults.EXECUTOR_TIMEOUT_MIN_S <= value <= defaults.EXECUTOR_TIMEOUT_MAX_S
 
 
-def url_has_login(url: str) -> bool:
-    """True if the URL carries a user name or password (`user:pw@host`). A login in a URL is refused whole: it would
-    end up in logs and error texts. A URL that cannot be read raises `InvalidUrl` (fixed text, never the URL):
-    "no login found" must not be said of a text that was not read."""
-    parts = safe_urlsplit(url)
-    return parts.username is not None or parts.password is not None
-
-
 def url_allowed(url: str, allow_insecure_loopback: bool) -> bool:
     """The bearer token travels with every call: https only. Plain http only to this machine, and only when
     the config sets ``allow_insecure_loopback: true`` (the local test fixture). Used at load and at call time.
@@ -208,7 +204,7 @@ def url_allowed(url: str, allow_insecure_loopback: bool) -> bool:
 
 
 class System(_Strict):
-    base_url: str
+    base_url: ConfigUrl  # a login or a look-alike host is refused by the one URL type, as in every other URL field
 
 
 class K1bSettings(_Strict):
@@ -395,6 +391,17 @@ class Config(_Strict):
     executor_timeout_s: float = defaults.EXECUTOR_TIMEOUT_S
     root: Path
 
+    @field_validator("tool_module_hashes", mode="after")
+    @classmethod
+    def _pins_are_digests(cls, value: dict[str, str]) -> dict[str, str]:
+        """A pin is a SHA-256: 64 lower-case hex digits. Anything else (a credential pasted in the wrong place) is
+        refused here with a fixed sentence, by position, so no part of it is ever printed."""
+        if bad := [i for i, pin in enumerate(value.values()) if not is_digest(pin)]:
+            raise ConfigValueError(
+                f"tool_module_hashes: entries {', '.join(str(i) for i in bad)} are not a SHA-256 (64 lower-case hex digits)"
+            )
+        return value
+
     @field_validator("executor_timeout_s", mode="before")
     @classmethod
     def _executor_timeout(cls, value: object) -> object:
@@ -419,23 +426,15 @@ class Config(_Strict):
         for source, ref in self.scope_inventory.items():
             if not _inventory_ref_ok(ref):
                 raise ConfigValueError(
-                    f"scope_inventory {shown_name(source)}: expected '<page>#<anchor> sha256:<64 hex digits>'"
+                    f"scope_inventory {shown_name(source, self.sources)}: expected '<page>#<anchor> sha256:<64 hex digits>'"
                 )
         for d in self.backends.detector:  # llm_judge names a route
             if getattr(d, "route", None) is not None and d.route not in self.routes:
                 raise ConfigValueError(f"backends.detector {d.kind}: its route is not in routes")
         for name, system in self.systems.items():
-            try:
-                config_urlsplit(system.base_url)
-            except UrlHasLogin:
-                raise ConfigValueError(f"system {shown_name(name)}: base_url {HAS_LOGIN}") from None
-            except InvalidUrl:
-                raise ConfigValueError(
-                    f"system {shown_name(name)}: base_url is {NOT_A_URL}"
-                ) from None
             if not url_allowed(system.base_url, self.allow_insecure_loopback):
                 raise ConfigValueError(
-                    f"system {shown_name(name)}: base_url must be https "
+                    f"system {shown_name(name, self.systems)}: base_url must be https "
                     "(http only for loopback with allow_insecure_loopback)"
                 )
         refused = []  # environment table, design 4.6: every refusal at once, so one fix round is enough
@@ -503,15 +502,16 @@ def load_yaml(text: str) -> Any:
 
 
 def _read_yaml(path: Path) -> dict:
-    if not path.exists():
+    """A file of the configuration folder, `{}` only when it does not exist. One that exists but cannot be read (a
+    folder, a loop of links, no permission, not UTF-8 text) is a `ConfigError` with a fixed sentence: reading it as
+    empty could drop restrictions. This is the only place that guards the read (`errors.read_configured`)."""
+    what = shown_name(path.name)
+    text = read_configured(path, what, missing_ok=True)
+    if text is None:
         return {}
-    try:
-        text = path.read_text(encoding="utf-8")
-    except OSError as exc:  # a folder, no permission: the type only (the error text holds the path)
-        raise ConfigError(f"{path.name}: cannot be read ({type(exc).__name__})") from None
     data = load_yaml(text) or {}
     if not isinstance(data, dict):
-        raise ConfigError(f"{path.name}: expected a mapping at the top level")
+        raise ConfigError(f"{what}: expected a mapping at the top level")
     return data
 
 
@@ -543,8 +543,16 @@ def _egress_hosts(raw: dict) -> list[str]:
 
 def confined(base: Path, relative: str) -> Path:
     """``base / relative``, refused if it resolves outside ``base`` (no ``..`` or absolute escapes)."""
-    root = Path(base).resolve()
-    path = (root / relative).resolve()
+    try:
+        root = Path(base).resolve()
+        path = (root / relative).resolve()
+    except (
+        OSError,
+        RuntimeError,
+        ValueError,
+        TypeError,
+    ):  # a loop of links, a name too long, a null byte
+        raise ConfigError("path cannot be resolved") from None
     if not path.is_relative_to(root):
         raise ConfigError("path escapes its folder")
     return path
@@ -696,10 +704,8 @@ def load_config(config_dir: Path | None = None) -> Config:
         raise
     except ValidationError as exc:
         raise ConfigError(_validation_text(exc)) from None
-    except (
-        ValueError,
-        TypeError,
-        OSError,
-        yaml.YAMLError,
-    ) as exc:  # pydantic errors are ValueErrors
+    except (ArithmeticError, ValueError, TypeError, yaml.YAMLError) as exc:
+        # ArithmeticError holds `decimal.InvalidOperation` (a validator's `Decimal(value)`), which pydantic does not
+        # turn into a validation error. A validator's own ValueError is a fixed sentence by `config_error_text`.
+        # No `OSError` here: every file read goes through `read_configured`, which refuses with its own sentence.
         raise ConfigError(config_error_text(exc)) from None

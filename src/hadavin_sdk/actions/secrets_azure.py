@@ -18,7 +18,7 @@ from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
 from hadavin_sdk.actions.secrets_cache import CachedSecrets
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, shown_name
 
 _NAME = re.compile(r"[A-Za-z0-9-]{1,127}")
 
@@ -32,11 +32,11 @@ class AzureKeyVaultProvider(CachedSecrets):
 
     def _fetch(self, name: str) -> str:
         if not _NAME.fullmatch(name):  # the name becomes part of the request path
-            raise ConfigError(f"secret {name!r}: Azure names are letters, digits and '-'")
+            raise ConfigError(f"secret {shown_name(name)}: Azure names are letters, digits and '-'")
         try:
             return self._client.get_secret(name).value or ""
         except ResourceNotFoundError:
-            raise ConfigError(f"secret {name!r} not found in Azure Key Vault") from None
+            raise ConfigError(f"secret {shown_name(name)} not found in Azure Key Vault") from None
 
 
 def build(settings, deps) -> AzureKeyVaultProvider:

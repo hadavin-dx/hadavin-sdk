@@ -16,8 +16,10 @@ from hadavin_sdk.errors import ConfigError, shown_name
 
 
 def _names(names: Iterable[str]) -> str:
-    """Secret NAMES (never values) for an error text, each through `shown_name`."""
-    return ", ".join(shown_name(n) for n in sorted(names))
+    """Secret NAMES (never values) for an error text, each through `shown_name`. The names are the configured ones
+    (the caller passes the sets it just read), so each is a loaded name."""
+    names = sorted(names)
+    return ", ".join(shown_name(n, names) for n in names)
 
 
 def secret_names(settings: BaseModel) -> set[str]:
@@ -31,7 +33,7 @@ def bound(provider: SecretProvider, settings: BaseModel, label: str) -> Callable
     def resolve(name: str) -> str:
         if name not in allowed:
             raise ConfigError(
-                f"{label}: may read only the secrets named in its own settings, not {shown_name(name)}"
+                f"{label}: may read only the secrets named in its own settings (a name that is not one of them is never quoted)"
             )
         return provider.get(name)
 
@@ -66,5 +68,5 @@ def check(
             provider.get(name)
         except Exception as exc:  # noqa: BLE001 - any provider failure stops start-up; the type is all that is kept
             raise ConfigError(
-                f"secret {shown_name(name)} cannot be read at start-up ({type(exc).__name__})"
+                f"secret {shown_name(name, platform | executor_names)} cannot be read at start-up ({type(exc).__name__})"
             ) from None

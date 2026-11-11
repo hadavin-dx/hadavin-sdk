@@ -18,6 +18,7 @@ import threading
 from pathlib import Path
 
 from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
+from hadavin_sdk.errors import read_configured
 from hadavin_sdk.models import AuditEvent
 
 
@@ -34,10 +35,13 @@ class LocalDirSink:
     def _entries(self) -> list[dict]:
         """Index lines, skipping a torn one (disk full mid-append): it records nothing, and must not block
         the rest. The object it pointed at, if any, is completed by the next write of that event."""
-        if not self.index.exists():
+        text = read_configured(
+            self.index, "the audit index file in the audit folder", missing_ok=True
+        )
+        if text is None:
             return []
         out = []
-        for line in self.index.read_text("utf-8").splitlines():
+        for line in text.splitlines():
             try:
                 entry = json.loads(line)
                 if isinstance(entry, dict) and "key" in entry:

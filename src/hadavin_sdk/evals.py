@@ -12,6 +12,7 @@ from decimal import Decimal
 
 from hadavin_sdk import defaults
 from hadavin_sdk.config import ConfigError, confined
+from hadavin_sdk.errors import read_configured
 from hadavin_sdk.guard import judge, runmap
 from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.models import GateRun
@@ -41,7 +42,7 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
     # changed while the run read it was not the set it qualifies on, so the run is never green.
     golden_before = registry.golden_sha256(agent_id)
     golden_path = confined(cfg.golden_dir, f"{agent_id}.jsonl")
-    golden_bytes = golden_path.read_bytes()
+    golden_bytes = read_configured(golden_path, "a golden set file (golden_dir)", binary=True)
     cases = [json.loads(line) for line in golden_bytes.decode("utf-8").splitlines() if line.strip()]
     # What the runtime offers: a tooled agent's action tools carry the required `evidence` field.
     tooled = bool(agent.tools_allowed)
@@ -57,7 +58,11 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
     cost = Decimal(0)
     for case in cases:
         # input_ref comes from a file: confined to inputs_dir (no "../" or absolute escapes).
-        doc = confined(cfg.inputs_dir, case["input_ref"]).read_bytes()
+        doc = read_configured(
+            confined(cfg.inputs_dir, case["input_ref"]),
+            "a golden input document (inputs_dir)",
+            binary=True,
+        )
         # The model sees what the runtime sends it: the document redacted with a fresh per-run map (K5).
         try:
             doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
@@ -104,7 +109,7 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
     for d in cfg.backends.detector:
         if d.kind == "llm_judge":
             path = confined(cfg.golden_dir, "judge.jsonl")
-            if not path.is_file():
+            if read_configured(path, "judge.jsonl (golden_dir)", missing_ok=True) is None:
                 raise ConfigError("llm_judge needs its golden set: golden_dir/judge.jsonl")
             ok, total = judge.qualify(judge.JudgeDetector(llm, d.route, d.threshold), path)
             judges_green = judges_green and total > 0 and ok / total >= cfg.eval_threshold

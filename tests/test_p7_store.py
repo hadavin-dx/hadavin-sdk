@@ -72,8 +72,15 @@ def test_ca_bundle_from_the_secrets_backend(tmp_path):
     path = ca_file(settings, {"db-ca": pem}.__getitem__)
     with open(path, encoding="utf-8") as f:
         assert f.read() == pem
-    with_path = PostgresSettings(kind="postgres", dsn_secret_name="d", sslrootcert=CA)  # noqa: S106
-    assert ca_file(with_path, None) == CA
+    real_ca = tmp_path / "db-ca.pem"
+    real_ca.write_text(
+        pem, encoding="utf-8"
+    )  # a configured CA file must exist and be readable (b8)
+    with_path = PostgresSettings(kind="postgres", dsn_secret_name="d", sslrootcert=str(real_ca))  # noqa: S106
+    assert ca_file(with_path, None) == str(real_ca)
+    gone = PostgresSettings(kind="postgres", dsn_secret_name="d", sslrootcert=CA)  # noqa: S106
+    with pytest.raises(ConfigError, match=r"the CA file \(sslrootcert\): cannot be read"):
+        ca_file(gone, None)
     with pytest.raises(ValueError, match="not both"):
         PostgresSettings(
             kind="postgres",

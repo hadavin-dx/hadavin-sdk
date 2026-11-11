@@ -254,6 +254,8 @@ _TTL = Field(default=300, ge=0)  # seconds a secret value is cached; 0 = no cach
 
 
 _PATH = r"^[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$"
+_ENV_NAME = r"^[A-Za-z_][A-Za-z0-9_]{0,127}$"
+_ID = r"^[A-Za-z0-9_.-]{1,128}$"
 
 
 class VaultConnection(KindSettings):
@@ -264,9 +266,13 @@ class VaultConnection(KindSettings):
     address: ConfigUrl  # https; plain http only to this machine (a local server)
     auth: Literal["token", "approle", "kubernetes"] = "token"
     namespace: str | None = None
-    token_env: str = "VAULT_TOKEN"  # noqa: S105 - auth token: the variable name
-    role_id: str | None = None  # auth: approle (an identifier, not a secret)
-    secret_id_env: str = "VAULT_SECRET_ID"  # noqa: S105 - auth approle: the variable name
+    # The NAME of an environment variable (never its value): a letter or `_`, then letters, digits, `_`. A token pasted
+    # here is refused when it has any other character; the error text never quotes it either way.
+    token_env: str = Field(default="VAULT_TOKEN", pattern=_ENV_NAME)
+    role_id: str | None = Field(
+        default=None, pattern=_ID
+    )  # auth: approle (an identifier, not a secret)
+    secret_id_env: str = Field(default="VAULT_SECRET_ID", pattern=_ENV_NAME)
     role: str | None = None  # auth: kubernetes
     jwt_path: Path = Path("/var/run/secrets/kubernetes.io/serviceaccount/token")  # auth: kubernetes
     # Default: the auth name. Nested mounts (e.g. team-a/kubernetes) are allowed.
@@ -295,7 +301,7 @@ class VaultConnection(KindSettings):
 class VaultSettings(VaultConnection):
     mount: str = Field(default="secret", pattern=_PATH)
     path_prefix: str = Field(default="", pattern=r"^([A-Za-z0-9_.-]+/)*$")  # e.g. "hadavin/acme/"
-    field: str = "value"
+    field: str = Field(default="value", pattern=_ID)
     ttl_s: float = _TTL
 
     def _paths(self) -> list[str]:

@@ -40,7 +40,7 @@ from urllib.parse import quote, quote_plus, urlunsplit
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from hadavin_sdk import defaults
-from hadavin_sdk.errors import ConfigError, error_where, shown_name
+from hadavin_sdk.errors import ConfigError, digest_prefix, error_where, shown_name
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
@@ -119,9 +119,14 @@ def parse_manifest(raw: Any, where: str) -> list[ToolSpec]:
         except ValidationError as exc:
             fields = ", ".join(error_where(e) or "?" for e in exc.errors(include_input=False))
             raise ConfigError(f"{where}: invalid tool entry ({fields})") from None
+        except (
+            TypeError,
+            ValueError,
+        ):  # a key that is not text, or a validator that refused: no value is quoted
+            raise ConfigError(f"{where}: invalid tool entry") from None
     names = [t.name for t in out]
     if dup := sorted({n for n in names if names.count(n) > 1}):
-        raise ConfigError(f"{where}: duplicate tool {', '.join(shown_name(d) for d in dup)}")
+        raise ConfigError(f"{where}: duplicate tool {', '.join(shown_name(d, names) for d in dup)}")
     return out
 
 
@@ -242,7 +247,7 @@ def spec_problems(
             f"tool {shown_name(spec.name)}: a CA applies to https; cluster_http is plain http"
         )
     if bad := [p for p in spec.ports if not 0 < p < 65536]:
-        out.append(f"tool {shown_name(spec.name)}: ports {bad} are not valid")
+        out.append(f"tool {shown_name(spec.name)}: {len(bad)} ports entries are not valid")
     if spec.generated_suffix and (why := suffix_problem(spec.generated_suffix)):
         out.append(f"tool {shown_name(spec.name)}: generated_suffix {why}")
     return out
@@ -376,7 +381,7 @@ def load_tool_module(module: str, pins: Mapping[str, str] | None = None) -> type
         digest = _pin_digest([(n, data) for n, _, data in files])
         if digest != pin:
             raise ConfigError(
-                f"tool module {shown_name(module)}: its source hash is {digest[:12]}..., the pin says {pin[:12]}..."
+                f"tool module {shown_name(module)}: its source hash is {digest_prefix(digest)}, the pin says {digest_prefix(pin)}"
             )
         if problems := _reach_problems(module, files):
             raise ConfigError("; ".join(problems))
@@ -442,15 +447,15 @@ def read_operations(
                 re.compile(pattern)
             except (TypeError, ValueError, re.error):
                 raise ConfigError(
-                    f"{shown_name(module)}: operation {shown_name(op)} has no valid (METHOD, regex)"
+                    f"{shown_name(module)}: operation {shown_name(op, declared)} has no valid (METHOD, regex)"
                 ) from None
             if method not in _METHODS:
                 raise ConfigError(
-                    f"{shown_name(module)}: operation {shown_name(op)} uses method {shown_name(method)}"
+                    f"{shown_name(module)}: operation {shown_name(op, declared)} uses a method that is not allowed"
                 )
             if out.get(op, (method, pattern)) != (method, pattern):
                 raise ConfigError(
-                    f"{shown_name(module)}: operation {shown_name(op)} is already bound differently by another module"
+                    f"{shown_name(module)}: operation {shown_name(op, declared)} is already bound differently by another module"
                 )
             out[op] = (method, pattern)
     return out
@@ -513,14 +518,14 @@ class ToolContext:
 
         def secret(name: str) -> str:
             if name not in spec.secret_names:
-                raise ToolRefused(f"secret {name!r} is not named in the manifest")
+                raise ToolRefused("that secret is not named in the manifest")
             if secret_resolver is None:
                 raise ToolRefused("no secret resolver wired")
             self._remaining()
             value = secret_resolver(name)
             if len(value) < min_secret:
                 raise ToolRefused(
-                    f"secret {name!r} is shorter than {min_secret} characters and could not be scrubbed"
+                    f"secret {shown_name(name, spec.secret_names)} is shorter than {min_secret} characters and could not be scrubbed"
                 )
             with self._lock:
                 self.handed_out.append(value)
@@ -561,12 +566,16 @@ class ToolContext:
         the configured ceiling, and a response over an explicit cap is refused, never silently cut)."""
         spec = self.spec
         if operation not in spec.operations:
-            raise ToolRefused(f"operation {operation!r} is not on the manifest's read list")
+            raise ToolRefused("the operation is not on the manifest's read list")
         binding = self.bindings.get(operation)
         if binding is None:
-            raise ToolRefused(f"operation {operation!r} has no bound method and path")
+            raise ToolRefused(
+                f"operation {shown_name(operation, spec.operations)} has no bound method and path"
+            )
         if method.upper() not in _METHODS or method.upper() != binding[0]:
-            raise ToolRefused(f"method {method!r} is not the one bound to {operation!r}")
+            raise ToolRefused(
+                f"the method is not the one bound to operation {shown_name(operation, spec.operations)}"
+            )
         # One parser, one answer: a URL the checks read differently from the HTTP client (backslashes, a `#` before
         # an `@`, percent-encoded hosts, control characters) is refused.
         if re.search(r"[\\\s\x00-\x1f\x7f]", url) or not url.isascii():
@@ -580,7 +589,9 @@ class ToolContext:
         if "%" in parts.netloc or "%" in parts.path or "." + "." in parts.path:
             raise ToolRefused("percent-encoding in the host or path, and '..', are refused")
         if not re.fullmatch(binding[1], parts.path or "/"):
-            raise ToolRefused(f"path is not the one bound to {operation!r}")
+            raise ToolRefused(
+                f"path is not the one bound to operation {shown_name(operation, spec.operations)}"
+            )
         host = (parts.hostname or "").lower().rstrip(".")
         if parts.scheme != "https" and not (
             parts.scheme == "http"
@@ -599,7 +610,7 @@ class ToolContext:
         try:
             egress_check(url, frozenset(spec.hosts))
         except EgressRefused:
-            raise ToolRefused(f"host {host!r} is not in this tool's manifest hosts") from None
+            raise ToolRefused("the host is not in this tool's manifest hosts") from None
         self._port(parts, parts.scheme)
         if self._on_fetch is not None:
             self._on_fetch()  # every request to the client's system counts toward the box's rate cap

@@ -21,7 +21,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, ed25519
 from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, read_configured
 
 _RAW = (serialization.Encoding.Raw, serialization.PublicFormat.Raw)
 
@@ -99,13 +99,15 @@ def build_local(settings, deps) -> LocalSigner:
     name = settings.passphrase_secret_name
     passphrase = deps.resolve(name).encode("utf-8") if name else None
     if settings.private_key_secret_name:
-        source = f"secret {settings.private_key_secret_name!r}"
+        source = "the private_key_secret_name secret"  # a fixed label: the configured name is never quoted
         pem = deps.resolve(settings.private_key_secret_name).encode("utf-8")
     else:
-        path = Path(settings.private_key_path)
-        if not path.is_file():
-            raise ConfigError(f"signer ed25519_local: no key file at {path}")
-        source, pem = str(path), path.read_bytes()
+        source = "the private_key_path file"
+        pem = read_configured(
+            settings.private_key_path,
+            "signer ed25519_local: the key file (private_key_path)",
+            binary=True,
+        )
     try:
         key = _private_key(pem, passphrase, source)
     except (TypeError, ValueError) as exc:

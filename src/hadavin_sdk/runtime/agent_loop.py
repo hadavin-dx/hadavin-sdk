@@ -23,6 +23,7 @@ from hadavin_sdk.approvals import cards
 from hadavin_sdk.approvals.cards import Card, Delivery
 from hadavin_sdk.audit.protocol import AuditSink, AuditUnavailable
 from hadavin_sdk.config import ConfigError, confined
+from hadavin_sdk.errors import read_configured
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.injection import Detector, injection_check
 from hadavin_sdk.identity import Principal
@@ -111,11 +112,12 @@ def _checked_run_id(run_id: object) -> str:
 
 def qualified_runs(registry: Registry) -> list[GateRun]:
     path = registry.config.root / "qualified.jsonl"
-    if not path.exists():
+    raw = read_configured(path, "qualified.jsonl", binary=True, missing_ok=True)
+    if raw is None:
         return []
     runs = []
     # Bytes per line: a torn append can cut a UTF-8 character, which must skip that line, not the file.
-    for i, line in enumerate(path.read_bytes().splitlines(), 1):
+    for i, line in enumerate(raw.splitlines(), 1):
         if not line.strip():
             continue
         try:
@@ -138,9 +140,10 @@ def qualified_runs(registry: Registry) -> list[GateRun]:
 def _check_golden_refs(registry: Registry, agent_id: str) -> None:
     """Every golden input_ref must stay inside inputs_dir: checked at start-up, not only when the gate runs."""
     path = registry.golden_path(agent_id)
-    if not path.is_file():
+    text = read_configured(path, "a golden set file (golden_dir)", missing_ok=True)
+    if text is None:
         return
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in text.splitlines():
         if line.strip():
             try:
                 ref = json.loads(line)["input_ref"]
