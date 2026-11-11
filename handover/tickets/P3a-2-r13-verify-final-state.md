@@ -1013,29 +1013,34 @@ More text rules or spellings; a SQL parser used for security; detectors per rout
 
 ### 10.3 Open questions, with the safe default this ticket takes
 
-1. AUTHOR ADDITION, baseline line 1: a grant on a system object that names a subject role is judged. D-020 says system objects are not judged. Default taken: judged (stricter; fact 21 shows no false refusal on a fresh server). The lead may strike it.
-2. CORRECTION, baseline line 3: row types of tables are left out of "everyone gets nothing on family objects". Without this every database is refused (fact 11). No alternative offered.
-3. AUTHOR ADDITION, rule O5 (other members of a group that owns a package object). Default taken: refused. Alternative: accept any family owner as today and state it as a limit; weaker.
-4. AUTHOR ADDITION, the pre-flight ignores exactly the two things the run repairs itself (4.1 step 2). Without it every upgrade from main is refused before any file (main never removed everyone's EXECUTE from the trigger function). Alternative: no exception and a hand step for every upgrade; safe but a worse upgrade.
-5. A function or type of another application that the migration role owns in the schema of the run and that everyone may use is refused at the pre-flight (3.4 line 3), where round 12 left it alone. Default taken: refused, with the REVOKE printed. Owner question: is sharing the schema and the owner with another application a supported setup at all? (D-020: the package does not require a schema of its own.)
-6. TEMPORARY for everyone on the database: stated baseline, not judged (D-020). An explicit TEMPORARY grant naming a subject role: refused (default taken here).
-7. A migration role that owns the database or holds CREATE on it: allowed (D-020), named in the hardening guide. Fact 14 shows what it enables; `verify` judges the result.
-8. Exit code 5 and a new error class outside `ConfigError`: default taken. Alternative: a subclass of `ConfigError` with exit 2; rejected because exit 2 means "refused, nothing happened" in this command line.
-9. `effective_problems` as a public name: removed unless a caller outside `migrate` exists on the branch (the builder greps and states the result).
-10. Whether the CI service container can be started with `max_prepared_transactions` above 0 without a custom image was not tried (6.3). Safe default: the test FAILS in CI when the setting is 0, so a vacuous pass is impossible either way.
+1. AUTHOR ADDITION, baseline line 1: a grant on a system object that names a named role itself, or a subject role that is not built in, is judged (rev 2: rights through a built-in `pg_*` role are one membership line, no statement against a system object). D-020 says system objects are not judged. Default taken: judged (stricter; fact 21 shows no false refusal on a fresh server). The lead may strike it.
+2. CORRECTION, baseline line 3: row types are left out of "everyone gets nothing on family objects", with the exact key of fact 33. Without this every database is refused (fact 11). No alternative offered.
+3. STRUCK in rev 2: rule O5 (other members of a group that owns a package object). Plan review D-M7 showed a false refusal on a normal setup with no way out; S3 already refuses a named role in that group. Stated as a non-promise in 1.4.
+4. AUTHOR ADDITION, the pre-flight ignores exactly the two things the run repairs itself (4.1 step 2), and since rev 2 only when the migration role is the grantor (fact 31). Without it every upgrade from main is refused before any file (main never removed everyone's EXECUTE from the trigger function). Alternative: no exception and a hand step for every upgrade; safe but a worse upgrade.
+5. A function or type of another application that the migration role owns in the schema of the run and that everyone may use is refused at the pre-flight (3.4 line 3), where round 12 left it alone. Default taken: refused, with the REVOKE printed. OWNER QUESTION (in handover/questions-for-lead.md): is sharing the migration role, or the schema, with another application a supported setup at all? (D-020: the package does not require a schema of its own.) The answer also decides item 11.
+6. TEMPORARY for everyone on the database: stated baseline, not judged (D-020). An explicit TEMPORARY grant naming a subject role: refused (default taken here); the oracle sees it only on fixture variant (T).
+7. A migration role that owns the database or holds CREATE on it: allowed (D-020), named in the hardening guide. Fact 14 shows what it enables (now settled, "Read first" item 5); `verify` judges the result.
+8. Exit code 5 and a new error class outside `ConfigError`: default taken. Alternative: a subclass of `ConfigError` with exit 2; rejected because exit 2 means "refused, nothing happened" in this command line. Rev 2 adds the unknown COMMIT outcome to exit 5 and a server-refused COMMIT to exit 2.
+9. DECIDED in rev 2: `effective_problems` is removed (its only outside callers are retired tests).
+10. The CI route for `max_prepared_transactions` above 0 is still untried (6.3 names the first and second route). Safe default: the test FAILS when the setting is 0, on every machine, so a vacuous pass is impossible.
+11. AUTHOR ADDITION (rev 2, D-M6): the object side reads only the schema of the run, which narrows D-020's "objects the migration role family owns". Option (b) of the design review, taken because option (a) would refuse a migration role shared with another application, which is the owner question of item 5. If the owner answers "not supported", option (a) costs one changed WHERE clause in Q2, the C10 third-role cells become promised, and its own mutant and tests are added; that would be a new ticket revision.
+12. Statements on standard output, problem lines on standard error (4.2, D-m3). Alternative: a file written by `migrate`; rejected because a library that writes files where it was not asked to is a surprise for the caller.
 
-### 10.4 What I did not verify
+### 10.4 What I did not verify (rev 2)
 
-- Anything on PostgreSQL 17 or 18 (fact 25 is from memory).
-- The cost of Q2 and Q3 on a large catalog.
-- That `psycopg`'s `connect(..., options=...)` passes through the wrapper `store/postgres.connect` unchanged (its `**extra` at postgres.py:146 was read in a 28-line window only).
-- That `REVOKE ALL ON ROUTINE` and the printed fix statements are right for every kind (aggregates with `*`, procedures): section 7.6 tests it; nothing here ran it.
+- Anything on PostgreSQL 17 or 18 (fact 25 is from memory). The rev 2 probes ran on 16.15 only.
+- The cost of the final Q2 and Q3 on a large catalog: fact 40 is a small setup (Q2 16.8 ms). Acceptance 21 measures it.
+- That the printed statement forms work for every kind (aggregates with `*`, procedures, large objects, parameters, tablespaces, default rights with `IN SCHEMA`): facts 30-32 cover table, column and membership forms only. `test_printed_statements_remove_every_problem_for_every_grantor_form` tests the rest.
+- Whether a role-level `statement_timeout` of 5 ms reliably cancels Q2 on the CI runner (fact 36 used 1 ms on an idle laptop-class machine); the dedicated test checks this itself first and fails loudly if not.
+- `file_fdw` and `allow_in_place_tablespaces` in the CI image `postgres:17.10`: from the PostgreSQL documentation, not run.
+- That `REVOKE GRANT OPTION FOR ... CASCADE` printed AFTER the dependents (4.2 order) leaves nothing behind for column grants (fact 30 shows a column grant can survive a table-level CASCADE; the order prints the column REVOKE first, and the statements test checks the end state).
+- How `pg_terminate_backend` during a commit-time trigger is reported by psycopg 3.3 (SQLSTATE 57P01 with the connection closed is expected from reading; `test_a_lost_connection_at_commit_gives_exit_5` will show it).
 - The behaviour of Q3 for objects of kinds I did not create (operators, collations, text-search objects, publications, event triggers): rule S4 reads them through `pg_shdepend` whatever the kind, by fact 12 for the kinds seen.
 - Whether two prepared transactions can really share one virtual transaction id (6.1 handles it either way).
-- Who is right about the owner of a trusted extension installed by a plain role ("Read first" item 5): my run says the installing role; the evidence runner's report says the superuser. I did not see the evidence runner's raw output for it.
-- The difference between 280 mutants (evidence runner) and 288 entries in the list object (my import).
 - The plain-role refusal text for `session_preload_libraries` (fact 13, second half).
-- The descriptions of external tools in section 8.
-- The line numbers of `ci.yml` beyond the grep output (lines 37-47, 85, 110-117 were seen), and how the workflow calls `scan_repo`, `stage_mutants` and gitleaks (acceptance 23 makes the builder copy the commands).
-- TICKET-P3a.md and BUILDER-ticket-notes.md were not read; if they fix a format or a promise that this ticket contradicts, the plan reviewers will see it before I do.
-- No test, lint or mutant of the repository was run by the author.
+- The descriptions of external tools in section 8 (pg_permissions, pgTAP, ldap2pg) are from memory, not researched live.
+- The run time of the mutant list (30+ minutes is the readiness reviewer's studio figure) and of the matrix: not measured.
+- The CI workflow steps beyond the lines grepped (40-47, 84, 92-94, 100, 110-117, 153, gitleaks block 163-209).
+- TICKET-P3a.md and BUILDER-ticket-notes.md were not read by either author.
+- No test, lint or mutant of the repository was run by the rev 2 author. The rev 2 author ran PostgreSQL and psycopg probes only.
+
