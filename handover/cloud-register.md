@@ -1189,3 +1189,9 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | R-Q8c-r2 ac13fdc7 | egm impl-readiness (Fable) plan review r2 of tickets/Q8c rev 2 | 14:18Z | +20m | | CLOSED saved reviews/Q8c/plan-r2.md | errata; build only after live verification |
 | EV-Q8a1 a6f9eb55 | EVIDENCE RUNNER (Fable) Q8a-1 head 464dee14: full suite, fail-before, mutants, hostile probes; pg 56090 | 14:20Z | +45m | 14:20Z | running | read RESULTS.md |
 | R-Q8a1-res a2a30519, a06b79ad | egm design + codebase (Fable) RESULT review r1 of Q8a-1 (snapshot q8a1-464dee1) | 14:20Z | +20m | 14:20Z | CLOSED saved reviews/Q8a/result-r1-464dee1.md (3 Major) | save reviews/Q8a/, ledger, fix batch if needed |
+| EV-P89-r19 a3767c91 | EVIDENCE RUNNER (Fable) PR89 head b95b0ca7: full suite, all 224 mutants, fail-before, hostile address + projection probes; pg 56110 | 14:27Z | +70m | 14:27Z | running | read RESULTS.md |
+| R-P89-r19 a6c1cd5e, a3278730, a9588739 | egm design + codebase + comprehension (Fable) RESULT review r19 of PR89 (snapshot p89-b95b0ca) | 14:27Z | +25m | 14:27Z | running | save reviews/PR89/r19-*, ledger |
+| EV-flaky a67f662c | EVIDENCE RUNNER (Fable) timing-harness fix fa3f8c1b; pg 56100 | 14:27Z | +60m | 14:27Z | running | read RESULTS.md |
+| R-flaky a6bff613 | egm codebase (Fable) RESULT review of timing-harness fix | 14:27Z | +20m | 14:27Z | running | save reviews/timing-harness/ |
+| B-Q8a1 (resumed) a0c5bd99 | Q8a-1 fix batch after result review r1 (D-012) | 14:27Z | +60m | 14:27Z | running | new head -> evidence + fresh reviewers r2 |
+| A-Q8b (resumed) a123e38f | Q8b ticket revision 2 (D-011) | 14:27Z | +40m | 14:27Z | running | plan review r2 |
