@@ -723,10 +723,17 @@ def _derived(text: str, secrets: list[str]) -> str:
     )
 
 
+def _decoded_readings(text: str) -> tuple[str, ...]:
+    """The layers undone with the hidden items removed (the joined reading and, when an escape character stood in the text
+    or a decoder wrote one, the consuming reading: `runmap.decodes`), so a handed-out secret cut by a percent-encoded
+    escape, by an escape that cuts a percent token, or by `ESC ( B` written as `%1B%28B`, is found."""
+    # `decodes` strips at the end of every round, in each reading
+    return tuple(dict.fromkeys(runmap.decodes(text)))
+
+
 def _decoded(text: str) -> str:
-    """The layers undone with the hidden items removed (joined reading), so a handed-out secret cut by a percent-encoded
-    escape, or by an escape that cuts a percent token, is found."""
-    return hidden.strip(undo(text, strip_hidden=True))[0]
+    """The grammar's decode (see `_decoded_readings`)."""
+    return _decoded_readings(text)[0]
 
 
 def _sanitise(text: str) -> str:
@@ -901,6 +908,11 @@ def _sub_form(text: str, form: str) -> str:
     return text.replace(form, MARKER)
 
 
+def _holds(text: str, secret: str, scrub: ScrubSettings) -> bool:
+    """Does `text` hold `secret` in any spelling the scrub reads (whole, in a layer, in base64)? One secret, one scrub run."""
+    return _scrub_layers(text, [secret], scrub).count(MARKER) > text.count(MARKER)
+
+
 def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCRUB) -> str:
     """See `_scrub_layers`. A text nested deeper than the layer cap cannot be read: it is not shown at all.
 
@@ -911,18 +923,28 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
     joined text: a key glued to the text before it by a hidden item stays separated. A result that still holds a
     spelling of a handed-out secret is withheld."""
     try:
-        joined, spaced = hidden.strip(raw)
+        rd = hidden.readings(raw)
+        joined, spaced = rd.joined, rd.spaced
         if joined is raw:
             return _scrub_layers(raw, long_enough, scrub)
         found = _scrub_layers(joined, long_enough, scrub)
-        # The character reading (every control character deleted on its own, what main saw) can hold a secret whole that
-        # the grammar's reading does not: `ESC` + `T` + `r0ub4dor...` reads `ESC T` as one escape and eats the `T`. A handed-out
-        # secret is an exact string, so a find there is never a false one: when that reading finds more, it is the result.
-        chars = hidden.strip_characters(raw)
-        if chars != joined:
-            alt = _scrub_layers(chars, long_enough, scrub)
-            if alt.count(MARKER) - chars.count(MARKER) > found.count(MARKER) - joined.count(MARKER):
-                return alt
+        # The other readings: the character reading (every control character deleted on its own, what main saw) can hold a
+        # secret whole that the grammar's reading does not (`ESC` + `T` + `r0ub4dor...` reads `ESC T` as one escape and eats
+        # the `T`); the consuming reading (an escape sequence takes its final byte, a letter too: `ESC ( B`, what `tput sgr0`
+        # writes) holds whole a secret that `ESC ( B` + `ESC [ m` cut, which the grammar's reading cannot (it keeps the
+        # letter `B`). A handed-out secret is an exact string, so a find there is never a false one: when a reading holds a
+        # secret the grammar's reading does not, it is the result. The readings cannot be merged, so when the grammar's
+        # reading holds a secret that the other one does not (`ESC e` + `yJ...` next to a cut one) nothing is shown.
+        for other in dict.fromkeys((rd.characters, rd.consuming_joined)):
+            if other == joined:
+                continue
+            alt = _scrub_layers(other, long_enough, scrub)
+            if alt.count(MARKER) <= other.count(MARKER):
+                continue
+            in_joined = {x for x in long_enough if _holds(joined, x, scrub)}
+            in_other = {x for x in long_enough if _holds(other, x, scrub)}
+            if in_other - in_joined:
+                return MARKER + TRUNCATED if in_joined - in_other else alt
         if found == joined:
             return raw
         forms = sorted({f for x in long_enough for f in _secret_forms(x)}, key=len, reverse=True)
@@ -931,8 +953,8 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
             spaced = runmap.gap_pattern(form).sub(MARKER, spaced)
         result = _scrub_layers(spaced, long_enough, scrub)
         left = hidden.strip(result)[0]
-        decoded = _decoded(left)
-        if any(_has_form(left, f) or _has_form(decoded, f) for f in forms):
+        decoded = _decoded_readings(left)
+        if any(_has_form(left, f) or any(_has_form(d, f) for d in decoded) for f in forms):
             return MARKER + TRUNCATED
         # a secret found in the joined reading that left no mark in the spaced one (a percent token a hidden item cut:
         # the spaced copy reads `%7 8`, which no spelling matches) is withheld too, never shown
@@ -956,8 +978,8 @@ def _scrub_layers(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFA
 
     raw = _strip_fragment(raw, forms, scrub)
     raw = fit(_derived(raw, long_enough))
-    seen: tuple[str, str] | None = (
-        None  # (raw, its decoded view): decoded once per distinct raw, not per form
+    seen: tuple[str, tuple[str, ...]] | None = (
+        None  # (raw, its decoded readings): decoded once per distinct raw, not per form
     )
     for secret in long_enough:
         for form in _secret_forms(secret):
@@ -965,11 +987,13 @@ def _scrub_layers(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFA
                 raw = fit(_sub_form(raw, form))
                 continue
             if seen is None or seen[0] != raw:
-                seen = (raw, _decoded(raw))
-            if seen[1] != raw and _has_form(seen[1], form):
-                # the secret hides behind an encoding layer: use the decoded text (that one reply loses its
-                # original spelling, which is the price of not showing the secret)
-                raw = fit(_sub_form(seen[1], form))
+                seen = (raw, _decoded_readings(raw))
+            for view in seen[1]:
+                if view != raw and _has_form(view, form):
+                    # the secret hides behind an encoding layer: use the decoded text (that one reply loses its
+                    # original spelling, which is the price of not showing the secret)
+                    raw = fit(_sub_form(view, form))
+                    break
     return raw
 
 

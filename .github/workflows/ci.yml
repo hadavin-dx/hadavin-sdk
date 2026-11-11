@@ -152,6 +152,7 @@ jobs:
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
           HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
+          HADAVIN_REQUIRE_PINNED_UNIDATA: "1"  # Python 3.12 carries Unicode 15.0.0, one of the two pinned versions; any other must fail, not skip
         run: pytest -q -m "not live and not perf" -rs
 
   security:

@@ -313,7 +313,7 @@ def test_hidden_module_imports_nothing_from_the_package():
         if isinstance(n, (ast.Import, ast.ImportFrom))
         for a in (n.names if isinstance(n, ast.Import) else [None])
     }
-    assert modules == {"__future__", "re", "unicodedata"}
+    assert modules == {"__future__", "re", "typing", "unicodedata"}
 
 
 def test_gate_set_holds_removed_and_space_like():
@@ -336,6 +336,27 @@ def test_strip_consuming():
     assert hidden.strip_consuming("a" + esc + "e" + "b")[0] == "ab"
     assert hidden.strip("a" + esc + "e" + "b")[0] == "aeb"
     assert hidden.strip_consuming("plain text") == ("plain text", "plain text")
+
+
+def test_readings_are_the_same_set_everywhere():
+    """`hidden.readings` is the one helper that the redactor and the scrub of tool results both use: no hidden item is the
+    one text five times; a text with an escape sequence has the grammar's, the character and the consuming readings; a
+    text with a hidden item and no ESC has no consuming reading of its own."""
+    esc = "\x1b"
+    plain = "no hidden item here"
+    r = hidden.readings(plain)
+    assert r == (plain,) * 5 and r.joined is plain
+    cut = "AKIA" + esc + "(B" + esc + "[m" + "IOSFODNN7EXAMPLE"
+    r = hidden.readings(cut)
+    assert r.joined == "AKIA(BIOSFODNN7EXAMPLE"
+    assert r.consuming_joined == "AKIAIOSFODNN7EXAMPLE"
+    assert r.characters == "AKIA(B[mIOSFODNN7EXAMPLE"
+    assert r.distinct() == tuple(
+        dict.fromkeys((r.joined, r.spaced, r.characters, r.consuming_joined, r.consuming_spaced))
+    )
+    zw = "ab\x08cd"
+    r = hidden.readings(zw)
+    assert r.consuming_joined == r.joined == "abcd" and r.consuming_spaced == r.spaced
 
 
 def test_merged_placeholder_is_reused_by_mask_spans():

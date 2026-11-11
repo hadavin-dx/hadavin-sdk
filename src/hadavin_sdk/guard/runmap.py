@@ -148,7 +148,35 @@ def hex_unescape(text: str) -> str:
     return text
 
 
-def undo(text: str, clean: bool = False, strip_hidden: bool = False) -> str:
+_CONTROL_REF = re.compile(r"&#(?:[xX]([0-9a-fA-F]{1,2})|([0-9]{1,3}));")
+
+
+def _control_ref(m: re.Match[str]) -> str:
+    n = int(m.group(1), 16) if m.group(1) else int(m.group(2))
+    c = chr(n) if 0 < n < 0x80 else ""
+    return c if c in hidden.REMOVED_CHARS or c in hidden.SPACE_LIKE else m.group(0)
+
+
+def control_refs(text: str) -> str:
+    """Every TERMINATED numeric reference to a control character below U+0080 (`&#27;`, `&#x1b;`) written as that character.
+    `html.unescape` deletes such a reference, and a deleted escape character leaves the rest of its sequence (`(B`, `[m`)
+    in the text as plain letters, so the hidden-item reader could no longer take the sequence out (and an entity it
+    stood inside, `&#6` + `&#27;[0m` + `5;`, was already decoded wrongly). An unterminated reference is left to the decoder."""
+    return _CONTROL_REF.sub(_control_ref, text) if "&#" in text else text
+
+
+def html_unescape(text: str) -> str:
+    """`html.unescape`, except that a terminated reference to a control character is kept as that character (`control_refs`)."""
+    return html.unescape(control_refs(text))
+
+
+def undo(
+    text: str,
+    clean: bool = False,
+    strip_hidden: bool = False,
+    consume: bool = False,
+    escapes: list[bool] | None = None,
+) -> str:
     """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON string escapes
     (backslash-u with surrogate pairs joined, and the one-character escapes: PHP writes every slash as backslash-slash),
     backslash-x, backslash-U and octal escapes, percent-encoding, HTML entities, then NFKC and invisible characters. Each round applies the three decoders ONE
@@ -164,12 +192,14 @@ def undo(text: str, clean: bool = False, strip_hidden: bool = False) -> str:
     dropped before every decoder (the tail a cut left). With `strip_hidden`, every round ends by removing the hidden
     items (`hidden.strip`, the joined reading) that the decoders produced or exposed, so one that cuts an encoding
     token (`%4` + a colour code + `1KIA...`) no longer hides what the token spells; a placeholder or marker shape that
-    only that removal would create is written in its escaped look-alike form (`_no_created_shapes`). The default keeps
-    every existing caller unchanged."""
+    only that removal would create is written in its escaped look-alike form (`_no_created_shapes`). With `consume` as
+    well, the removal reads every escape sequence with its final byte, a letter or digit too (`hidden.strip_consuming`,
+    the consuming reading: `%4` + `ESC ( B` + `1KIA...` needs it). The default keeps every existing caller unchanged."""
     cur = text
+    strip_fn = hidden.strip_consuming if consume else hidden.strip
     for _ in range(defaults.SCRUB_MAX_LAYERS + 1):
         step = cur
-        for decode in (nfkc, json_unescape, hex_unescape, unquote, html.unescape):
+        for decode in (nfkc, json_unescape, hex_unescape, unquote, html_unescape):
             if clean:
                 while (
                     cut := partial_escape_start(
@@ -179,9 +209,22 @@ def undo(text: str, clean: bool = False, strip_hidden: bool = False) -> str:
                     step = step[
                         :cut
                     ]  # repeat: the look-back may start inside a run of half escapes
+            if strip_hidden and decode is html_unescape:
+                # the references to control characters first, then the hidden items out, then the rest of the references:
+                # an entity that a hidden item cuts (`&#6` + `&#27;[0m` + `5;`) is whole when the item is gone
+                step = control_refs(step)
+                if escapes is not None and "\x1b" in step:
+                    escapes.append(
+                        True
+                    )  # an escape character stood here: the consuming reading may differ
+                step = _no_created_shapes(step, strip_fn(step)[0])
             step = decode(step)
         if strip_hidden:
-            step = _no_created_shapes(step, hidden.strip(step)[0])
+            if escapes is not None and "\x1b" in step:
+                escapes.append(
+                    True
+                )  # an escape character stood here: the consuming reading may differ
+            step = _no_created_shapes(step, strip_fn(step)[0])
         if step == cur:
             return cur
         cur = step
@@ -420,7 +463,11 @@ def _repair(text: str) -> str:
 
 
 def _views(text: str) -> list[str]:
-    """Other forms a secret can hide in: the canonical view (NFKC, ignorable characters removed) and the same
+    return _decode_views(text)[0]
+
+
+def _decode_views(text: str) -> tuple[list[str], str]:
+    """(views, plain decode). Other forms a secret can hide in: the canonical view (NFKC, ignorable characters removed) and the same
     with JSON `\\uXXXX` escapes decoded. Only forms that differ from `text` are returned."""
     # `\\/` too (PHP writes every slash that way); `\\n` and the like are left alone here: a log line full of them
     # would come back with real newlines whenever the second pass finds anything.
@@ -430,19 +477,32 @@ def _views(text: str) -> list[str]:
     # raises TooDeep and nothing is redacted or shown): `%41KIA...`, `&#65;KIA...`, `password%3Dx`
     decoded = fits_after_nfkc(undo(text))
     views = [canonical(text), canonical(unescaped), decoded]
-    # One more, only when it can differ from the plain decode (a decoder never removes a control character, so when
-    # neither the text nor its decode holds a hidden item the stripped decode IS the plain one and is not computed):
-    # the decode with the hidden items removed at the end of every round, so a hidden item that cuts an encoding
-    # token (`%4` + a colour code + `1KIA...`) is read.
-    if any(c in text for c in _ENCODED_MARKS) and (
-        hidden.ANY.search(text) or hidden.ANY.search(decoded)
-    ):
-        views.append(fits_after_nfkc(undo(text, strip_hidden=True)))
+    # The decode with the hidden items removed at the end of every round (`decodes`: `%4` + a colour code + `1KIA...`) is
+    # read by `redact_text` as the consuming pair, judged by `_consuming_wins`; it is not a view of its own.
     for view in views:
         view = _clean(view)
         if view != text and view not in out:
             out.append(view)
-    return out
+    return out, decoded
+
+
+def decodes(text: str) -> tuple[str, ...]:
+    """The layers of `text` undone with the hidden items removed at the end of every round, in each reading that can differ:
+    the grammar's (`undo(strip_hidden=True)`) and, only when an escape character stood in the text or a decoder wrote one
+    (`%1B`, `\\u001b`, `&#27;`), the consuming reading (`undo(strip_hidden=True, consume=True)`: `ESC ( B` takes its letter).
+    The one place that says which decodes a searcher must look in (the redactor's views and the scrub of tool results)."""
+    seen: list[bool] = []
+    plain = undo(text, strip_hidden=True, escapes=seen)
+    if not seen:
+        return (plain,)
+    consuming = undo(text, strip_hidden=True, consume=True)
+    return (plain,) if consuming == plain else (plain, consuming)
+
+
+def _consuming_view(text: str) -> str:
+    """The last decode of `text` (`decodes`: the consuming reading when it differs), the way `_views` cleans a view: `%4` +
+    `ESC ( B` + `1KIA...`; `%1B%28B`, which a decoder turns into `ESC ( B`, cut by a colour code."""
+    return _clean(fits_after_nfkc(decodes(text)[-1]))
 
 
 _PIECE = 5
@@ -500,6 +560,27 @@ def _char_reading_wins(
     )
 
 
+def _consuming_wins(shown: str, new_map: dict[str, str], known: dict[str, str]) -> bool:
+    """May the output of a CONSUMING reading (`hidden.strip_consuming`) replace the output so far? Its own rule, not the
+    character reading's: that reading can SHOW text the grammar's reading removed, so it needs the swallowed-piece check
+    (`_char_reading_wins`); the consuming reading only deletes one more byte per escape sequence, it never shows more.
+    1. It must hold a value that is not a piece of one already held (the cut key the other readings could not join); if it
+       does not, the output stays as it is.
+    2. When it does, no piece of `_PIECE` or more characters of a value already held may stand in it. If one does, the
+       reading lost a letter that the value began with (`ESC e` + `yJ...`): replacing the output would show that value and
+       keeping it would show the cut key, and the two readings cannot be merged, so the text is refused (`InputTooLarge`,
+       nothing shown) rather than left.
+    Every value an earlier reading found is carried into this reading (`work` of the caller), so a second masked value,
+    text before or after the key and a tail of any length do not reject it."""
+    values = [v for v in known.values() if not v.startswith("\0seed")]
+    novel = any(not any(v in k for k in values) for ph, v in new_map.items() if ph not in known)
+    if not novel:
+        return False
+    if any(v[i : i + _PIECE] in shown for v in values for i in range(len(v) - _PIECE + 1)):
+        raise InputTooLarge("InputTooLarge")
+    return True
+
+
 def _held(text: str) -> int:
     return len(PLACEHOLDER.findall(text))
 
@@ -554,11 +635,30 @@ def _keep_earlier_masks(view: str, pairs: list[tuple[str, str]], mapping: dict[s
     return mask_spans(view, spans, mapping) if spans else view
 
 
-def _check_budget(started: float) -> None:
-    """Refuse (`InputTooLarge`, nothing shown) when this call has used more than `defaults.REDACT_BUDGET_S`: a hostile
-    text must not keep the process busy. Checked before every pass, so one call overruns the budget by at most one."""
-    if time.monotonic() - started > defaults.REDACT_BUDGET_S:
-        raise InputTooLarge("InputTooLarge")
+class _Work:
+    """What one `redact_text` call has used: the time since it started and the number of passes (one pass = all patterns of
+    `redact` over one reading). Both are bounded, and a call that passes a bound is refused (`InputTooLarge`, nothing shown):
+    a hostile text must not keep the process busy. `defaults.REDACT_BUDGET_S` is checked before every pass, so one call
+    overruns it by at most one pass; `defaults.MAX_REDACT_PASSES` is counted in `count_pass`, which every pass goes through."""
+
+    __slots__ = ("passes", "started")
+
+    def __init__(self) -> None:
+        self.started = time.monotonic()
+        self.passes = 0
+
+    def check(self) -> None:
+        if time.monotonic() - self.started > defaults.REDACT_BUDGET_S:
+            raise InputTooLarge("InputTooLarge")
+
+    def count_pass(self) -> None:
+        self.passes += 1
+        if self.passes > defaults.MAX_REDACT_PASSES:
+            raise InputTooLarge("InputTooLarge")
+
+
+def _check_budget(work: _Work) -> None:
+    work.check()
 
 
 def _no_created_shapes(before: str, after: str) -> str:
@@ -609,7 +709,7 @@ def _held_placeholders(found_text: str, joined: str, mapping: dict[str, str]) ->
 
 
 def _redact_stripped(
-    joined: str, spaced: str, mapping: dict[str, str], cache: dict | None, started: float
+    joined: str, spaced: str, mapping: dict[str, str], cache: dict | None, work: _Work
 ) -> tuple[str, dict[str, str]]:
     """Redact one text that holds no hidden item, given as its two readings (`hidden.strip`): values are FOUND in the
     joined reading and MASKED in the spaced reading, which is what the reader is given. Returns (text, map).
@@ -625,8 +725,10 @@ def _redact_stripped(
        not inside a placeholder that took its place) the text is refused (`RedactionError`), never the joined result:
        the joined reading has lost the boundaries that main's behaviour relies on."""
     if joined == spaced:
+        work.count_pass()
         result = redact(spaced, mapping=mapping, _cache=cache)
         return result.text, result.mapping
+    work.count_pass()
     found = redact(joined, mapping=mapping, _cache=cache)
     held = _held_placeholders(found.text, joined, found.mapping)
     needed = [
@@ -641,10 +743,11 @@ def _redact_stripped(
         spans.extend(
             (m.start(), m.end(), ph) for m in gap_pattern(found.mapping[ph]).finditer(spaced)
         )
-    work = dict(found.mapping)
-    masked = mask_spans(spaced, spans, work) if spans else spaced
-    _check_budget(started)
-    result = redact(masked, mapping=work, _cache=cache)
+    merged = dict(found.mapping)
+    masked = mask_spans(spaced, spans, merged) if spans else spaced
+    work.check()
+    work.count_pass()
+    result = redact(masked, mapping=merged, _cache=cache)
     standing = {m.group(0) for m in PLACEHOLDER.finditer(result.text)}
     for ph in held:
         value = found.mapping[ph]
@@ -673,10 +776,12 @@ def redact_text(
     (`_refuse_forgery`) refuses an output that still holds a marker shape or a placeholder the call did not issue. Output
     is cleaned of NUL and lone surrogates last, so it always encodes.
 
-    Passes (one pass = all patterns over one reading): the text 1 pass, or 2 when a run of hidden items stands between two
-    word characters; each other reading the same; at most 10 in all, and at most 12 when an escape sequence ends in a letter
-    or digit (`ESC ( B`) so that the consuming reading (`hidden.strip_consuming`) differs from the other two (one pass each).
-    The 6-second budget is checked before every pass.
+    Passes (one pass = all patterns of `redact` over one reading): the text 1 pass, or 2 when a run of hidden items stands
+    between two word characters (found in the joined reading, masked in the spaced one); every other reading the same
+    (the decoded readings, the character reading, the consuming reading in which an escape sequence takes its final letter,
+    each also for every decoded reading that holds a hidden item). The number is COUNTED: a call that would make more than
+    `defaults.MAX_REDACT_PASSES` (24; the worst case found by search is 17) is refused (`InputTooLarge`, nothing shown),
+    and the 6-second budget is checked before every pass.
 
     The one choke point for input size. The cap is on the WORK, not only on the input: the text, the text after
     `neutralise`, and every view the second pass will scan must each be within `defaults.MAX_REDACT_CHARS`, else
@@ -687,11 +792,14 @@ def redact_text(
     vendor guardrail input); the registry (`guard/producers.py`) lists them. No bare `redact()` call remains outside
     this module: the second pass of `approvals/channel.py` `clean` is this function too."""
     _within_cap(text)
-    started = time.monotonic()
+    work_done = _Work()
     try:
         cache = getattr(mapping, "redact_cache", None)
         text = fits_after_nfkc(_repair(text))
-        joined, spaced = hidden.strip(text)
+        rd = hidden.readings(
+            text
+        )  # every reading of the text, from the one helper the scrub of tool results uses too
+        joined, spaced = rd.joined, rd.spaced
         if joined is not text:
             same = spaced is joined
             joined = _no_created_shapes(text, joined)
@@ -703,14 +811,15 @@ def redact_text(
         e_text = esc(text)  # the escaped ORIGINAL: the decoded readings are built from it
         e_joined = e_text if joined is text else esc(joined)
         e_spaced = e_joined if spaced is joined else esc(spaced)
-        _check_budget(started)
-        out, current = _redact_stripped(e_joined, e_spaced, mapping, cache, started)
+        _check_budget(work_done)
+        out, current = _redact_stripped(e_joined, e_spaced, mapping, cache, work_done)
         # The decoded readings are built from the text with its hidden items already taken out (joined reading), never
         # from the original: a decoder reads across a run of hidden items, so the backslash that ends a string
         # terminator (ESC then backslash) followed by `n` became a newline, or by digits an octal escape, and cut the value.
         base = e_text if joined is text else e_joined
         scan = not base.isascii() or any(c in base for c in "\\%&")
-        views = [v for v in (_views(base) if scan else []) if v not in (e_joined, e_spaced)]
+        decoded_views, decoded = _decode_views(base) if scan else ([], base)
+        views = [v for v in decoded_views if v not in (e_joined, e_spaced)]
         # What the caller's own cleaning leaves of a reading (the approval card deletes control characters before any
         # value is looked for, which main relied on) is a reading too, when it is not the one already read. They go
         # last, so every other reading keeps its masks; the cleaning must not create a shape either.
@@ -724,21 +833,51 @@ def redact_text(
                     for v in _views(e_text)
                     if v not in (e_joined, e_spaced) and v not in views
                 ]
-        # The character reading (`hidden.strip_characters`: every control character deleted on its own, no sequence read)
-        # is what main saw: a value that an escape sequence cut in the grammar's reading (a string that swallows the rest
-        # of its line, an ESC that takes the letter after it) is found there. It is used only under the rule of
+        # The character reading (`Readings.characters`: every control character deleted on its own, no sequence read) is
+        # what main saw: a value that an escape sequence cut in the grammar's reading (a string that swallows the rest of
+        # its line, an ESC that takes the letter after it) is found there. It is used only under the rule of
         # `_char_reading_wins`. PR H: no step back from main.
         char_views: dict[str, tuple[str, str]] = {}
+        # The consuming reading (`Readings.consuming_joined` and `consuming_spaced`: an escape sequence takes its final byte,
+        # a letter too) finds a value that `ESC ( B` (what `tput sgr0` writes) cut: the conservative reading keeps that
+        # final byte (D-029). Each is a PAIR (found in the joined, masked in the spaced reading, as for the text itself)
+        # under the rule of `_consuming_wins`, not the character reading's. Same helper for the text and for every decoded
+        # reading that holds a hidden item.
+        consuming: dict[str, tuple[str, str]] = {}
+
+        def add_readings(source: str, r: hidden.Readings, found_in: str) -> None:
+            if (c := esc(r.characters)) not in (e_joined, e_spaced) and c not in cleaned + views:
+                key = _no_created_shapes(source, c)
+                char_views[key] = (c, found_in)
+                cleaned.append(key)
+            if r.consuming_joined is r.joined and r.consuming_spaced is r.spaced:
+                return  # no sequence takes a letter here: the grammar's reading is the consuming one
+            cj, cs = esc(r.consuming_joined), esc(r.consuming_spaced)
+            if cj in (e_joined, e_spaced) and cs in (e_joined, e_spaced):
+                return
+            key = _no_created_shapes(source, cj)
+            if key in char_views or key in consuming or key in cleaned:
+                return
+            consuming[key] = (key, key if cs == cj else _no_created_shapes(source, cs))
+            cleaned.append(key)
+
         if joined is not text:
-            chars = esc(hidden.strip_characters(text))
-            if chars not in (e_joined, e_spaced) and chars not in cleaned:
-                char_views[_no_created_shapes(text, chars)] = (chars, e_joined)
-                cleaned.append(_no_created_shapes(text, chars))
+            add_readings(text, rd, e_joined)
         # the same for every decoded reading that holds a hidden item (`%C2%90` decodes to a string opener)
         for v in views:
-            if hidden.ANY.search(v) and (c := esc(hidden.strip_characters(v))) not in views:
-                char_views[_no_created_shapes(v, c)] = (c, esc(hidden.strip(v)[0]))
-                cleaned.append(_no_created_shapes(v, c))
+            if hidden.ANY.search(v):
+                r = hidden.readings(v)
+                add_readings(v, r, esc(r.joined))
+        # and the decode that removes the hidden items in the consuming reading at every round (`%4` + `ESC ( B` + `1KIA`;
+        # `%1B%28B`): built from the text's consuming reading when the text holds an escape item, from the text itself when
+        # only the decode exposes one
+        if scan:
+            csrc = base if joined is text else esc(_no_created_shapes(text, rd.consuming_joined))
+            if csrc != base or hidden.ANY.search(decoded):
+                cv = _consuming_view(csrc)
+                if cv not in (e_joined, e_spaced, csrc) and cv not in views + cleaned:
+                    consuming[cv] = (cv, cv)
+                    cleaned.append(cv)
         if neutralise is not None:
             for v in views:
                 if (
@@ -747,14 +886,6 @@ def redact_text(
                     and hidden.strip(c)[0] not in hidden.strip(v)
                 ):
                     cleaned.append(_no_created_shapes(v, c))
-        # The consuming reading (`hidden.strip_consuming`: an escape sequence takes its final byte, a letter too) finds a value
-        # that `ESC ( B` (what `tput sgr0` writes) cut: the conservative reading keeps that final byte (D-029).
-        if joined is not text:
-            for r in hidden.strip_consuming(text):
-                er = esc(r)
-                if er not in (e_joined, e_spaced) and er not in cleaned:
-                    char_views[_no_created_shapes(text, er)] = (er, e_joined)
-                    cleaned.append(_no_created_shapes(text, er))
         views += [c for c in dict.fromkeys(cleaned) if c not in views]
 
         def make_pairs(cur: dict[str, str], bases: tuple[str, ...]) -> list[tuple[str, str]]:
@@ -780,26 +911,31 @@ def redact_text(
         base_texts = (e_spaced, e_joined)
         pairs = make_pairs(current, base_texts) if views else []
         for view in views:
-            _check_budget(started)  # a hostile text: fail closed, nothing shown
-            vj, vs = hidden.strip(view)
-            if vj is not view:
-                same = vs is vj
-                vj = _no_created_shapes(view, vj)
-                vs = vj if same else _no_created_shapes(view, vs)
+            _check_budget(work_done)  # a hostile text: fail closed, nothing shown
+            if view in consuming:
+                vj, vs = consuming[view]
+            else:
+                vj, vs = hidden.strip(view)
+                if vj is not view:
+                    same = vs is vj
+                    vj = _no_created_shapes(view, vj)
+                    vs = vj if same else _no_created_shapes(view, vs)
             same = vs is vj
             # a merged placeholder (W0) is issued into this copy, not into the finished map
             work = dict(current)
             vj = _keep_earlier_masks(esc(vj), pairs, work)
             vs = vj if same else _keep_earlier_masks(esc(vs), pairs, work)
-            again, again_map = _redact_stripped(vj, vs, work, cache, started)
+            again, again_map = _redact_stripped(vj, vs, work, cache, work_done)
             # a new value, or a known one only the view spells in a way pass one could not read
-            if (
-                _char_reading_wins(
+            if view in consuming:
+                wins = _consuming_wins(again, again_map, current)
+            elif view in char_views:
+                wins = _char_reading_wins(
                     again, again_map, current, mapping, _swallowed_pieces(*char_views[view])
                 )
-                if view in char_views
-                else again_map != current or _held(again) > _held(out)
-            ):
+            else:
+                wins = again_map != current or _held(again) > _held(out)
+            if wins:
                 out, current = again, again_map
                 # the values this reading found are carried into the readings still to come, so a later reading that
                 # finds less does not replace the output with one that has lost them

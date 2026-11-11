@@ -1,8 +1,9 @@
 """Mutants of pull request H (hidden items taken out at the choke point). Not collected by pytest.
 
-Each mutant reverts ONE guard in a temp copy of `src`; the test named in `killer` (a test function, run alone) must fail,
-with a failing line that holds `expect`. A killer that is parametrised runs all its rows, and the first failing row is
-accepted (no pin); a killer that is one test is pinned, so another test failing first is "OTHER_TEST", not good. Numbers 1 to
+Each mutant reverts ONE guard in a temp copy of `src`; the test named in `killer` (a test function, run alone) must fail
+with a failing first line that holds `expect` (a distinctive fragment of the row or the message, so a crash or another failure
+does not count). A killer that is parametrised runs all its rows, and the first failing row is
+accepted (no pin), unless `pinned` is the id of one row (44); a killer that is one test is pinned, so another test failing first is "OTHER_TEST", not good. Numbers 1 to
 43 follow the ticket (section 5.2); 44 and later are added by the builder (the consuming reading). Mutant 11 differs from the
 ticket: a lone ESC that is KEPT would make the reader loop for ever, so the mutant makes a lone ESC swallow the next character.
 Mutants 18, 27, 29 and 40 are written as the nearest one-place revert of the guard. Run from the repo root:
@@ -11,9 +12,10 @@ Mutants 18, 27, 29 and 40 are written as the nearest one-place revert of the gua
     uv run python tests/prh_mutants.py glue       # only names that hold the text
 
 The last line is `N of N good; problems: [...]`. The check `test_every_prh_mutant_still_applies` in `tests/test_prh_regressions.py`
-fails when a mutant's `old` text is no longer in its file exactly once, or its killer test no longer exists. Honest limit: `expect` is the
-word `assert` for most mutants (any assertion failure of the named test counts), because the killers are table tests whose failing
-line holds the row data; the kill is judged by the named test failing by an assertion, not by a crash.
+fails when a mutant's `old` text is no longer in its file exactly once, or its killer test no longer exists. Honest limit: `expect` is the word `AssertionError` (any assertion failure of the named test counts) only for the mutants of the
+class tables whose killers compare whole sets (12 to 15, 19) and are pinned to one test; every other mutant holds a distinctive
+fragment of its failing row or message, and the kill is judged by the named test failing by an assertion, not by a crash (a crash counts only
+where `crash` is given).
 """
 
 import sys
@@ -48,7 +50,9 @@ def mutant(name, src, old, new, test_file, killer, expect="AssertionError", pinn
         expect,
         test_file=test_file,
         only_test=killer,
-        pinned=f"{test_file[:-3]}::{killer}" if pinned else "",
+        pinned=pinned
+        if isinstance(pinned, str)
+        else (f"{test_file[:-3]}::{killer}" if pinned else ""),
         allow_crash=bool(crash),
         crash_type=crash,
     )
@@ -63,6 +67,7 @@ M = [
         'if "@" <= c <= "}" or c == _CAN',
         UNIT,
         "test_grammar_row",
+        expect="csi final 0x7E",
     ),
     mutant(
         "2 C1 CSI opener not recognised",
@@ -71,6 +76,7 @@ M = [
         "if c == _C1_CSI:\n        return i + 1",
         UNIT,
         "test_grammar_row",
+        expect="csi c1",
     ),
     mutant(
         "3 C0 inside a CSI aborts instead of being dropped",
@@ -79,6 +85,7 @@ M = [
         "if False:",
         UNIT,
         "test_grammar_row",
+        expect="csi c0 inside dropped",
     ),
     mutant(
         "4 DEL inside a CSI not dropped",
@@ -87,6 +94,7 @@ M = [
         "(0x19, 0x19), (0x1C, 0x1F)",
         UNIT,
         "test_grammar_row",
+        expect="csi del inside dropped",
     ),
     mutant(
         "5 OSC does not end at BEL",
@@ -95,6 +103,7 @@ M = [
         r'_STRING_END_OSC = re.compile(r"[\x18\x1a\x1b\x9c\n\r]")',
         UNIT,
         "test_grammar_row",
+        expect="osc BEL",
     ),
     mutant(
         "6 ST as U+009C not recognised in an OSC",
@@ -103,6 +112,7 @@ M = [
         r'_STRING_END_OSC = re.compile(r"[\x07\x18\x1a\x1b\n\r]")',
         UNIT,
         "test_grammar_row",
+        expect="osc C1 ST",
     ),
     mutant(
         "7 a string never ended runs past the line end",
@@ -111,8 +121,17 @@ M = [
         "    if False:\n        return m.start()",
         UNIT,
         "test_grammar_row",
+        expect="osc never ended, line end kept",
     ),
-    mutant("8 DCS payload kept", H, '"P": False, "X"', '"X"', UNIT, "test_grammar_row"),
+    mutant(
+        "8 DCS payload kept",
+        H,
+        '"P": False, "X"',
+        '"X"',
+        UNIT,
+        "test_grammar_row",
+        expect="dcs BEL is body",
+    ),
     mutant(
         "9 nF final byte not consumed",
         H,
@@ -120,6 +139,7 @@ M = [
         "            return k\n        return i + 1  # no final byte",
         UNIT,
         "test_grammar_row",
+        expect="nF symbol final goes",
     ),
     mutant(
         "10 Fp range missing",
@@ -128,6 +148,7 @@ M = [
         'if "\\x40" <= d <= "\\x7e":  # Fp, Fe, Fs',
         UNIT,
         "test_grammar_row",
+        expect="Fp symbol goes",
     ),
     mutant(
         "11 a lone ESC swallows the next character",
@@ -136,6 +157,7 @@ M = [
         "return i + 2  # a lone ESC; the next character is read afresh",
         UNIT,
         "test_grammar_row",
+        expect="lone ESC at end",
     ),
     mutant(
         "12 U+0000 not in removed",
@@ -180,6 +202,7 @@ M = [
         "if False:",
         UNIT,
         "test_glue_row",
+        expect="('abcd', 'abcd') == ('abcd', 'ab cd')",
     ),
     mutant(
         "17 glue space added at every removed item",
@@ -188,6 +211,7 @@ M = [
         "if left_word:",
         UNIT,
         "test_glue_row",
+        expect="'ab \\u200bcd'",
     ),
     mutant(
         "18 glue decided per item, not per run",
@@ -196,6 +220,7 @@ M = [
         "            in_run = True\n            left_word = _is_word(text[start - 1]) if start else False",
         UNIT,
         "test_glue_row",
+        expect="('abcd', 'abcd') == ('abcd', 'ab cd')",
     ),
     mutant(
         "19 ignorable ranges emptied (Cf only)",
@@ -210,7 +235,7 @@ M = [
     mutant(
         "20 hidden items not taken out first in redact_text",
         R,
-        "joined, spaced = hidden.strip(text)\n        if joined is not text:",
+        "joined, spaced = rd.joined, rd.spaced\n        if joined is not text:",
         "joined, spaced = text, text\n        if joined is not text:",
         CONTRACT,
         "test_mf_forgery_untrusted",
@@ -220,8 +245,8 @@ M = [
     mutant(
         "21 decoded readings not stripped (undo)",
         R,
-        "            step = _no_created_shapes(step, hidden.strip(step)[0])",
-        "            pass",
+        "    strip_fn = hidden.strip_consuming if consume else hidden.strip\n",
+        "    strip_fn = lambda t: (t, t)\n",
         CONTRACT,
         "test_mf_decoded_reading_removes_hidden_items",
         pinned=True,
@@ -284,14 +309,7 @@ M = [
         "    out = view\n    for ph, decoded in pairs:\n        if decoded:\n            out = out.replace(decoded, ph)\n    return out",
         SPANS,
         "test_mf_keep_earlier_masks_partial_overlap",
-    ),
-    mutant(
-        "28 the stripped decoded reading removed from _views",
-        R,
-        "        views.append(fits_after_nfkc(undo(text, strip_hidden=True)))",
-        "        pass",
-        REG,
-        "test_regression_row",
+        expect="id <SECRET_1>w4Xy9 end",
     ),
     mutant(
         "29 _no_created_shapes does nothing",
@@ -300,6 +318,7 @@ M = [
         "def _no_created_shapes(before: str, after: str) -> str:\n    return after\n\n\ndef _no_created_shapes_unused(before: str, after: str) -> str:",
         CONTRACT,
         "test_mf_no_created_shapes",
+        expect="log <<END TOOL RESULT>> more",
     ),
     mutant(
         "30 _scrub finds on the raw text",
@@ -317,14 +336,16 @@ M = [
         "        return found\n    except runmap.TooDeep:",
         TOOLS_T,
         "test_scrub_keeps_boundary",
+        expect="userAKIAIOSFODNN7EXAMPLE",
     ),
     mutant(
-        "32 _decoded not stripped",
+        "32 _decoded is the plain decode, not the one with hidden items removed",
         T,
-        "return hidden.strip(undo(text, strip_hidden=True))[0]",
-        "return undo(text)",
+        "return tuple(dict.fromkeys(runmap.decodes(text)))",
+        "return (runmap.undo(text),)",
         TOOLS_T,
         "test_mf_handed_out_encoded_cut",
+        expect="id T%1b[0mr0ub4dor-3xyzQ end",
     ),
     mutant(
         "33 _first_decoded calls the stripped _decoded",
@@ -389,6 +410,7 @@ M = [
         "held = members[0][2]",
         SPANS,
         "test_mf_span_rule_generator",
+        expect="qjSf8D9NmFTz8Lr",
     ),
     mutant(
         "40 the sweep puts values in one after another (W0 not applied)",
@@ -397,6 +419,7 @@ M = [
         "                out_seg = segment\n                for original, placeholder, rule in todo:\n                    out_seg = out_seg.replace(original, placeholder)\n                parts[i] = out_seg",
         SPANS,
         "test_mf_sweep_partial_overlap",
+        expect="id Qz7k<SECRET_2> end",
     ),
     mutant(
         "41 a merged placeholder is issued anew",
@@ -410,7 +433,7 @@ M = [
     mutant(
         "42 the _scrub backstop removed",
         T,
-        "if any(_has_form(left, f) or _has_form(decoded, f) for f in forms):",
+        "if any(_has_form(left, f) or any(_has_form(d, f) for d in decoded) for f in forms):",
         "if False:",
         TOOLS_T,
         "test_scrub_backstop_withholds",
@@ -429,10 +452,12 @@ M = [
     mutant(
         "44 the consuming reading removed (tput sgr0 inside a key)",
         R,
-        "for r in hidden.strip_consuming(text):",
-        "for r in ():",
+        "if r.consuming_joined is r.joined and r.consuming_spaced is r.spaced:\n                return  # no sequence",
+        "if True:\n                return  # no sequence",
         REG,
         "test_regression_row",
+        expect="t_L9 [untrusted]",
+        pinned="tests/test_prh_regressions::test_regression_row[mf_t_L9]",
     ),
     mutant(
         "45 the consuming reading keeps the final letter of an nF sequence",
@@ -450,6 +475,104 @@ M = [
         "and not d.isupper()",
         UNIT,
         "test_strip_consuming",
+        pinned=True,
+    ),
+    mutant(
+        "47 the consuming reading not computed (hidden.readings)",
+        H,
+        "cj, cs = strip_consuming(text) if _ESC in text else (joined, spaced)",
+        "cj, cs = (joined, spaced)",
+        UNIT,
+        "test_readings_are_the_same_set_everywhere",
+        expect="AKIAIOSFODNN7EXAMPLE",
+        pinned=True,
+    ),
+    mutant(
+        "48 a lost letter in the consuming reading not refused",
+        R,
+        'if any(v[i : i + _PIECE] in shown for v in values for i in range(len(v) - _PIECE + 1)):\n        raise InputTooLarge("InputTooLarge")',
+        'if False:\n        raise InputTooLarge("InputTooLarge")',
+        STEPS,
+        "test_consuming_wins_needs_a_novel_value_and_refuses_a_lost_letter",
+        expect="DID NOT RAISE",
+        pinned=True,
+    ),
+    mutant(
+        "49 the consuming reading wins without a novel value",
+        R,
+        "    if not novel:\n        return False",
+        "    if False:\n        return False",
+        STEPS,
+        "test_consuming_wins_needs_a_novel_value_and_refuses_a_lost_letter",
+        expect="is False",
+        pinned=True,
+    ),
+    mutant(
+        "50 the pass counter never refuses",
+        R,
+        "if self.passes > defaults.MAX_REDACT_PASSES:",
+        "if False:",
+        STEPS,
+        "test_pass_counter_refuses_past_the_bound",
+        expect="DID NOT RAISE",
+        pinned=True,
+    ),
+    mutant(
+        "51 a control reference is not kept (control_refs)",
+        R,
+        'return _CONTROL_REF.sub(_control_ref, text) if "&#" in text else text',
+        "return text",
+        STEPS,
+        "test_control_refs_keeps_a_terminated_control_reference",
+        expect="a&#27;b",
+        pinned=True,
+    ),
+    mutant(
+        "52 decodes has no consuming reading",
+        R,
+        "    consuming = undo(text, strip_hidden=True, consume=True)\n    return (plain,) if consuming == plain else (plain, consuming)",
+        "    return (plain,)",
+        STEPS,
+        "test_decodes_holds_the_consuming_reading",
+        expect="(BIOSFODNN7EXAMPLE',)",
+    ),
+    mutant(
+        "53 the scrub shows the other reading when the grammar's holds a secret it lacks",
+        T,
+        "return MARKER + TRUNCATED if in_joined - in_other else alt",
+        "return alt",
+        TOOLS_T,
+        "test_scrub_lost_letter_withholds_the_result",
+        expect="a Yk3pQ9wRtZ b",
+        pinned=True,
+    ),
+    mutant(
+        "54 the scrub does not search the consuming reading",
+        T,
+        "for other in dict.fromkeys((rd.characters, rd.consuming_joined)):",
+        "for other in dict.fromkeys((rd.characters,)):",
+        TOOLS_T,
+        "test_mf_scrub_consuming_cut",
+        expect="Tr0ub4dor(B-3xyzQ",
+    ),
+    mutant(
+        "55 a terminated control reference deleted by the entity decoder",
+        R,
+        "return html.unescape(control_refs(text))",
+        "return html.unescape(text)",
+        STEPS,
+        "test_undo_keeps_a_control_reference_as_the_character",
+        expect="a(Bb",
+        pinned=True,
+    ),
+    mutant(
+        "56 the pass bound set to 1",
+        "src/hadavin_sdk/defaults.py",
+        "MAX_REDACT_PASSES = 24",
+        "MAX_REDACT_PASSES = 1",
+        STEPS,
+        "test_pass_bound_is_above_the_measured_worst_case",
+        expect="17 <",
         pinned=True,
     ),
 ]

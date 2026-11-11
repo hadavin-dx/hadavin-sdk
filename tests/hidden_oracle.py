@@ -94,7 +94,7 @@ def _is_ignorable(ch: str, ign: frozenset[int]) -> bool:
     return ord(ch) in ign or (ord(ch) > 0x7F and unicodedata.category(ch) == "Cf")
 
 
-def tokens(text: str, ign: frozenset[int] = frozenset()):
+def tokens(text: str, ign: frozenset[int] = frozenset(), consuming: bool = False):
     i, n = 0, len(text)
     while i < n:
         c = text[i]
@@ -115,7 +115,7 @@ def tokens(text: str, ign: frozenset[int] = frozenset()):
                 k = j
                 while k < n and 0x20 <= ord(text[k]) <= 0x2F:
                     k += 1
-                if k < n and 0x30 <= ord(text[k]) <= 0x7E and not text[k].isalnum():
+                if k < n and 0x30 <= ord(text[k]) <= 0x7E and (consuming or not text[k].isalnum()):
                     yield ("removed", text[i : k + 1], "seq")
                     i = k + 1
                 else:  # no final byte, or a letter or digit: only the ESC goes; the rest is read afresh as text
@@ -124,8 +124,8 @@ def tokens(text: str, ign: frozenset[int] = frozenset()):
                 continue
             if d and 0x30 <= ord(d) <= 0x7E:  # Fp, Fe, Fs (and a stray ESC backslash)
                 if (
-                    d.isalnum() and not d.isupper()
-                ):  # a digit or lower-case letter stays as text (as in main)
+                    d.isalnum() and not d.isupper() and not consuming
+                ):  # a digit or lower-case letter stays as text (as in main), but not in the consuming reading
                     yield ("removed", ESC, "seq")
                     i = j
                 else:
@@ -206,11 +206,15 @@ def _word(ch: str) -> bool:
 
 
 def readings(
-    text: str, ign: frozenset[int] = frozenset(), sequences_only: bool = False
+    text: str,
+    ign: frozenset[int] = frozenset(),
+    sequences_only: bool = False,
+    consuming: bool = False,
 ) -> tuple[str, str]:
     """(joined, spaced). With sequences_only: only items that start with ESC or a C1 opener are removed; other
-    single controls and space-like characters stay as text (the `strip_sequences` reading is `spaced`)."""
-    toks = list(tokens(text, ign))
+    single controls and space-like characters stay as text (the `strip_sequences` reading is `spaced`). With consuming:
+    the final byte of an nF, Fp, Fe or Fs sequence always goes with it, a letter or digit too (`ESC ( B`)."""
+    toks = list(tokens(text, ign, consuming))
     if sequences_only:
         toks = [
             t

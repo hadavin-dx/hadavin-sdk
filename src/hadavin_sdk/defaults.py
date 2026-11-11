@@ -50,6 +50,12 @@ MAX_SWALLOWED_CHARS = (
     20_000  # characters a text may have swallowed by sequences and still get the character reading
 )
 REDACT_BUDGET_S = 6.0
+# The most passes (one pass = all patterns of `redact` over one reading) one `redact_text` call may make; one more is refused
+# (`InputTooLarge`, nothing shown), counted in `runmap._Work.count_pass`. Measured worst case 2026-11-11: 17 passes (a hill-climb
+# of 60 s over texts mixing ESC ( B, colour codes, percent, entity and backslash-u spellings, non-ASCII, a placeholder look-alike
+# and values; 6,000 random texts reached 16; every row of `tests/fixtures/prh_regressions.json` 7 or fewer); the bound leaves
+# a margin of 7 so no text seen is refused. `tests/test_prh_perf.py` repeats the search and fails if it passes the bound.
+MAX_REDACT_PASSES = 24
 
 
 def cut_margin(length: int) -> int:

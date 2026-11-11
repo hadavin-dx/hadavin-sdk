@@ -303,11 +303,12 @@ def _main_verdicts() -> dict[str, str]:
     return json.loads((FIXTURES / "prh_main_verdicts.json").read_text(encoding="utf-8"))
 
 
-def _reading(case: rec.Case) -> str:
+def _reading(case: rec.Case, consuming: bool = False) -> str:
     """The text as it reads once the hidden items are removed (the oracle's joined reading), the percent token of the
-    design-M2 row decoded, the ignorable characters dropped and NFKC applied (what the package's matching reads)."""
+    design-M2 row decoded, the ignorable characters dropped and NFKC applied (what the package's matching reads). With
+    `consuming` the oracle's consuming reading (an escape sequence takes its final letter too: `ESC ( B`)."""
     base = case.decoded
-    joined = oracle.readings(base)[0]
+    joined = oracle.readings(base, consuming=consuming)[0]
     if case.axis == "m2":
         joined = urllib.parse.unquote(joined)
     norm = unicodedata.normalize("NFKC", joined)
@@ -319,6 +320,13 @@ def _expected(case: rec.Case) -> tuple[str, str]:
     implementation under test."""
     reading = _reading(case)
     if case.value not in reading:
+        # `ESC ( B` + `ESC [ m` (what `tput sgr0` writes) cuts a value so that only the CONSUMING reading holds it whole:
+        # that case is promised on its own account (the two readings of one text are both searched; PR H, round b4)
+        via = _reading(case, consuming=True)
+        if case.value in via:
+            if case.kind != "handed" and not rec.masked(redact_mod.redact(via).text, case.value):
+                return "not_promised", "patterns_do_not_mask_the_plain_value"
+            return "masked", VIA_CONSUMING
         return "not_promised", "value_not_whole_in_the_joined_reading"
     # a canonical view drops the ignorable characters of the ORIGINAL text before it removes hidden items, so an escape
     # can be completed there (`ESC`, zero-width space, `e` reads `ESC e` once the space-like character is gone)
@@ -328,6 +336,9 @@ def _expected(case: rec.Case) -> tuple[str, str]:
     if case.kind != "handed" and not rec.masked(redact_mod.redact(reading).text, case.value):
         return "not_promised", "patterns_do_not_mask_the_plain_value"
     return "masked", ""
+
+
+VIA_CONSUMING = "via_the_consuming_reading"
 
 
 @functools.cache
@@ -358,7 +369,8 @@ def _path_masks_reading(case: rec.Case, path: str) -> bool:
     if path == "direct":
         reading = oracle.readings(case.decoded, sequences_only=True)[0]
     else:
-        reading = oracle.readings(case.decoded)[0]
+        via = _results()["class"][case.id][1] == VIA_CONSUMING
+        reading = oracle.readings(case.decoded, consuming=via)[0]
         if case.axis == "m2":
             reading = urllib.parse.unquote(reading)
     clean = rec.Case("reading", reading, case.kind, case.value, (path,), reading)
@@ -464,19 +476,38 @@ def test_no_step_back():
 
 
 # counted per reason: the class of "not promised" cannot grow silently
-NOT_PROMISED = {  # measured 2026-11-11 over 17,907 cases (PRH-wp2c-notpromised.txt); each reason is a class, not a case list
+NOT_PROMISED = {  # measured 2026-11-11 over 17,907 cases (PRH-wp2c-notpromised.txt, again at round b4); each reason is a class
     "enc:value_not_whole_in_the_joined_reading": 216,
     "m2:escape_completed_by_the_removal_of_an_ignorable": 65,
-    "m2:value_not_whole_in_the_joined_reading": 34,
+    "m2:value_not_whole_in_the_joined_reading": 31,
     "nfkc:escape_completed_by_the_removal_of_an_ignorable": 150,
-    "nfkc:value_not_whole_in_the_joined_reading": 48,
+    "nfkc:value_not_whole_in_the_joined_reading": 42,
     "pair:escape_completed_by_the_removal_of_an_ignorable": 2,
-    "pair:patterns_do_not_mask_the_plain_value": 610,
-    "pair:value_not_whole_in_the_joined_reading": 481,
-    "run:value_not_whole_in_the_joined_reading": 24,
-    "single:patterns_do_not_mask_the_plain_value": 697,
-    "single:value_not_whole_in_the_joined_reading": 1610,
+    "pair:patterns_do_not_mask_the_plain_value": 614,
+    "pair:value_not_whole_in_the_joined_reading": 452,
+    "run:value_not_whole_in_the_joined_reading": 12,
+    "single:patterns_do_not_mask_the_plain_value": 700,
+    "single:value_not_whole_in_the_joined_reading": 1421,
 }
+# Cases a value of which is whole only in the CONSUMING reading (`ESC ( B` + `ESC [ m`: the letter after the intermediate byte
+# goes too). Round b3 counted them among the 1,610 single "not whole in the joined reading" cases and never asserted them
+# masked, so a hole in that reading was not seen. Now promised and asserted on every path of their kind.
+VIA_CONSUMING_COUNTS = {"m2": 3, "nfkc": 6, "pair": 25, "run": 12, "single": 186}
+
+
+def test_mf_consuming_cuts_are_promised_and_masked():
+    res = _results()
+    by_axis: dict[str, int] = {}
+    bad = []
+    for case in res["cases"]:
+        if res["class"][case.id][1] != VIA_CONSUMING:
+            continue
+        by_axis[case.axis] = by_axis.get(case.axis, 0) + 1
+        for path in case.paths:
+            if not res["masked"][case.id][path] and _path_masks_reading(case, path):
+                bad.append(f"{case.id} [{path}]")
+    assert by_axis == VIA_CONSUMING_COUNTS, by_axis
+    assert not bad, f"{len(bad)} unmasked, first: {bad[:8]}"
 
 
 def test_not_promised_counts():

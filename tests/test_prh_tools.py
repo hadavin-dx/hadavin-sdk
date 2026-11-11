@@ -204,6 +204,50 @@ def test_scrub_without_secret_returns_the_text_as_written():
     assert tools._scrub(text, [HAND]) == text
 
 
+# ---- batch b4: the consuming reading in the scrub --------------------------------------------------------------------
+
+
+def _cut_by_sgr0(secret: str, off: int = 9) -> str:
+    return secret[:off] + ESC + "(B" + ESC + "[m" + secret[off:]
+
+
+@pytest.mark.parametrize("tail", ["", " done", " " + "word " * 30])
+def test_mf_scrub_consuming_cut(tail):
+    """A handed-out secret cut by `ESC ( B` + `ESC [ m` (what `tput sgr0` writes) is masked: the conservative reading keeps
+    the letter `B`, the consuming reading does not."""
+    text = "result: " + _cut_by_sgr0(HAND) + tail
+    for out in _both_paths(text, HAND):
+        assert not _pieces_stand(out, HAND), out
+
+
+@pytest.mark.parametrize(
+    "spelling", ["%1B%28B%1B%5Bm", "\\u001b(B\\u001b[m", "&#27;(B&#27;[m", "&#x1b;(B&#x1b;[m"]
+)
+def test_mf_scrub_consuming_cut_encoded(spelling):
+    text = "result: " + HAND[:9] + spelling + HAND[9:] + " done"
+    for out in _both_paths(text, HAND):
+        assert not _pieces_stand(out, HAND), out
+
+
+def test_scrub_lost_letter_withholds_the_result():
+    """`ESC e` + the rest of a handed-out secret that starts with `e` next to a secret cut by `ESC ( B`: the grammar's reading
+    holds the first, the consuming reading the second, and they cannot be merged: nothing is shown, never one of them."""
+    first, second = "e" + "Yk3pQ9wRtZ", HAND
+    text = "a " + ESC + first + " b " + _cut_by_sgr0(second)
+    out = tools._scrub(text, [first, second])
+    assert out == tools.MARKER + tools.TRUNCATED, out
+
+
+def test_scrub_two_secrets_found_by_different_readings():
+    """One secret whole for the grammar's reading, another only for the consuming one: neither is shown."""
+    other = ALNUM
+    text = "k " + other + " m " + _cut_by_sgr0(HAND)
+    for out in _both_paths(text, HAND):
+        assert not _pieces_stand(out, HAND), out
+    out = tools.prepare_output(text, {}, 4000, [HAND, other])
+    assert not _pieces_stand(out, HAND) and not _pieces_stand(out, other), out
+
+
 # ---- T12 ----------------------------------------------------------------------------------------------------------
 
 

@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from typing import NamedTuple
 
 # ---- the classes (PR H ticket, section 3) --------------------------------------------------------------------------
 
@@ -301,3 +302,36 @@ def strip_characters(text: str) -> str:
     main's callers saw. The redactor searches it as one more reading and uses it only when it shows a value the
     grammar's reading cannot and hides none the grammar's reading holds (PR H, no step back from main). Idempotent."""
     return text.translate(_CHAR_TABLE) if _ANY.search(text) else text
+
+
+class Readings(NamedTuple):
+    """Every reading of one text that a searcher must look in (the ONE place that says which readings there are; the
+    redactor's views and the scrub of handed-out secrets both take them from `readings`):
+
+    * `joined`, `spaced`: the grammar's two readings (`strip`);
+    * `characters`: every removed character deleted on its own, no sequence read (`strip_characters`, what main saw);
+    * `consuming_joined`, `consuming_spaced`: the two readings when every escape sequence takes its final byte, a letter
+      or digit too (`strip_consuming`, what a terminal does: `ESC ( B`).
+
+    A reading that equals another is the SAME object, so a caller finds the distinct ones with `distinct`."""
+
+    joined: str
+    spaced: str
+    characters: str
+    consuming_joined: str
+    consuming_spaced: str
+
+    def distinct(self) -> tuple[str, ...]:
+        """The readings that differ from each other, in the order above."""
+        return tuple(dict.fromkeys(self))
+
+
+def readings(text: str) -> Readings:
+    """All readings of `text` (see `Readings`). A text with no hidden item is the one reading five times. The consuming
+    readings differ from the grammar's only where an escape character starts a sequence, so a text without ESC does not
+    pay for a second scan."""
+    joined, spaced = strip(text)
+    if joined is text:
+        return Readings(text, text, text, text, text)
+    cj, cs = strip_consuming(text) if _ESC in text else (joined, spaced)
+    return Readings(joined, spaced, strip_characters(text), cj, cs)

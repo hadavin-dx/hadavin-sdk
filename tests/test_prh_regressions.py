@@ -2,7 +2,7 @@
 
 Each row is a list of parts, so the file holds no control character and no secret-shaped string: `{"lit": ...}` is text,
 `{"cp": "1B"}` is one code point (hex), `{"const": "KEY", "slice": [0, 4]}` is a made-up value of `CONSTS` (a slice is
-optional). A row records where it came from (`source`, a file and a line or a finding id), the secrets it carries (names
+optional; `"rep": n` on a `lit` repeats it n times). A row records where it came from (`source`, a file and a line or a finding id), the secrets it carries (names
 of `CONSTS`), the handed-out secret list for the tool and error paths, the paths it is run on, and the expected
 verdict per path:
 
@@ -52,6 +52,13 @@ CONSTS: dict[str, str] = {
     "H2B": "Hunter2" + "abcdef",
     "GTAIL": "IOSFODNN7EXAMPLE" * 2,
     "GH36": "IOSFODNN7EXAMPLE12" + "IOSFODNN7EXAMPLE34",
+    "LOW": "e"
+    + "Yk3pQ9wRtZ",  # a handed-out secret that starts with a lower-case letter (round b4)
+    "JWT": "eyJhbGciOiJIUzI1NiJ9"
+    + "."
+    + "eyJzdWIiOiIxMjM0NTY3ODkwIn0"
+    + "."
+    + "sig1Abc2Def3Ghi4Jkl5Mno6Pqr7S",
 }
 # names that are secrets (a piece of five characters standing in an output is a leak); the others are only text
 SECRET_NAMES = {
@@ -71,8 +78,10 @@ SECRET_NAMES = {
     "H2B",
     "GTAIL",
     "GH36",
+    "LOW",
+    "JWT",
 }
-HANDED_NAMES = {"HAND"}
+HANDED_NAMES = {"HAND", "LOW"}
 PATHS_ALL = ("untrusted", "tool", "error", "head")
 MARKER = re.compile(r"<<(?=\s*(?:end\s+)?tool\s+result)", re.IGNORECASE)
 PLACEHOLDER = re.compile(r"<[A-Z][A-Z0-9]*_[0-9]+>")
@@ -82,7 +91,7 @@ def build(parts: list[dict]) -> str:
     out: list[str] = []
     for part in parts:
         if "lit" in part:
-            out.append(part["lit"])
+            out.append(part["lit"] * part.get("rep", 1))
         elif "cp" in part:
             out.append(chr(int(part["cp"], 16)))
         else:
@@ -192,7 +201,6 @@ NOT_PROMISED = {
         "r5s_M3a",
         "r5t_M1a",
         "r5t_M1b",
-        "r5t_M3",
         "r6s_M1a",
         "r6s_M1b",
         "r6s_M2",
@@ -216,6 +224,10 @@ NOT_PROMISED = {
         "t_vis_bslash_lf",
     ],
     "look-alike letters and encoded spellings of pattern-shaped values (pull request 77, ticket section 3)": [
+        "p5d_Cyrillic_a_U_0430_in_the_key_name_1",
+        "p5d_Cyrillic_o_U_043E_in_the_key_name_1",
+        "p5d_Cyrillic_a_c_o_p_in_the_key_name_1",
+        "p5d_Cyrillic_capital_letters_in_the_key_A_K__1",
         "p5ab_F7_1",
         "p5ab_F7_2",
         "p5ab_F8_1",
@@ -224,18 +236,85 @@ NOT_PROMISED = {
         "r7d_M5a",
         "r7d_M5b",
     ],
-    "an entity cut by a hidden item spells no key (ticket section 3, M2c)": ["t_M2c"],
 }
 
 
+def _ids(rows):
+    return {r["id"] for r in rows}
+
+
+def _leaks_somewhere(row) -> bool:
+    text = build(row["parts"])
+    handed = [CONSTS[n] for n in row["handed"]]
+    secrets = [CONSTS[n] for n in row["secrets"]]
+    return any(leaked(run_path(p, text, handed), s) for p in row["paths"] for s in secrets)
+
+
+def _named_ids():
+    return {i for ids in NOT_PROMISED.values() for i in ids}
+
+
 def test_unmasked_secret_rows_are_named_not_promised():
-    named = {i for ids in NOT_PROMISED.values() for i in ids}
+    """A secret row whose verdict is not "masked", and every pinned row that carries a secret, needs a named reason."""
     unmasked = {
         r["id"]
         for r in ROWS
-        if r["secrets"] and not r.get("pin") and any(v != "masked" for v in r["expect"].values())
+        if r["secrets"] and (r.get("pin") or any(v != "masked" for v in r["expect"].values()))
     }
+    named = _named_ids() | set(PINNED_BUT_MASKED_TODAY)
     assert unmasked <= named, sorted(unmasked - named)
+
+
+# Pinned rows that carry a secret but show none of it today on any path: pinned because the promise does not cover the
+# input, so a later change in the shape is noticed. The converse test below checks each really is masked now.
+PINNED_BUT_MASKED_TODAY = {
+    "r6c_M3": "outside the promise, masked today",
+    **{
+        i: "encoded spelling outside the promise, masked today (pull request 77, ticket section 3)"
+        for i in (
+            "p5d_full_width_digits_in_the_value_1",
+            "p5d_full_width_digit_in_the_key_1",
+            "p5d_base64_of_the_key_1",
+            "p5d_base64_of_name_value_1",
+            "p5d_hex_of_the_key_1",
+            "p5d_hex_of_name_value_1",
+            "p5d_quoted_printable_every_letter_of_the_key_1",
+            "p5d_quoted_printable_of_name_value_quopri_1",
+            "p5d_percent_encoding_once_first_letter_of_th_1",
+            "p5d_percent_encoding_once_every_letter_of_th_1",
+            "p5d_percent_encoding_twice_first_letter_of_t_1",
+            "p5d_percent_encoding_twice_every_letter_of_t_1",
+            "p5d_percent_encoding_once_name_value_1",
+            "p5d_percent_encoding_twice_name_value_1",
+            "p5d_percent_encoding_once_the_only_1",
+            "p5d_percent_encoding_twice_the_only_1",
+        )
+    },
+}
+NOT_PROMISED[
+    "encoded first letter or soft line break of the key (pull request 77, ticket section 3)"
+] = [
+    "p5d_quoted_printable_first_letter_of_the_key_1",
+    "p5d_quoted_printable_soft_line_break_inside__1",
+]
+
+
+def test_named_ids_exist_and_the_converse_holds():
+    """Each id in the lists is a real row, and the lists are true: a NOT_PROMISED row leaks on some path; a row named
+    as masked-today leaks on none (so a fixed gap is moved out of the list, not left as a stale excuse)."""
+    by_id = {r["id"]: r for r in ROWS}
+    for i in _named_ids():
+        assert i in by_id, f"{i} is not a row"
+        assert _leaks_somewhere(by_id[i]), f"{i} no longer leaks: take it out of NOT_PROMISED"
+    for i in PINNED_BUT_MASKED_TODAY:
+        row = by_id.get(i)
+        assert row is not None, f"{i} is not a row"
+        assert not _leaks_somewhere(row), f"{row['id']} leaks: name it in NOT_PROMISED"
+
+
+def test_pinned_secret_rows_count():
+    pinned = [r for r in ROWS if r.get("pin") and r["secrets"]]
+    assert len(pinned) == 23 and len([r for r in ROWS if r.get("pin")]) == 32
 
 
 def test_every_prh_mutant_still_applies():
@@ -243,5 +322,5 @@ def test_every_prh_mutant_still_applies():
     each killer test still exists."""
     from tests import prh_mutants
 
-    assert len(prh_mutants.M) >= 43
+    assert len(prh_mutants.M) >= 55
     assert prh_mutants.check_applies() == []

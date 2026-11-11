@@ -5,7 +5,7 @@ W is the worst case (a Persian sentence, a colour code inside a word and a perce
 read). All values are made up.
 
 * G1  the number of `redact` calls per `redact_text` call equals main's (recorded in `fixtures/prh_main_passes.json`) for
-      S1 to S5; H2 at most one more than main per reading; W at most 10.
+      S1 to S5; H2 at most one more than main per reading; W and the sgr0 shapes at most `defaults.MAX_REDACT_PASSES` (24, counted in `runmap._Work`).
 * G2  the number of `undo` calls equals main's for S1 to S5.
 * G3  every S and H shape at the cap under 3.0 s of CPU (median of 5); growth by `fixtures/timing.py`; W finishes or
       raises `InputTooLarge`, never past the 6-second budget by more than one pass.
@@ -55,6 +55,33 @@ SHAPES = {
     + ESC
     + "[0m\n",
     "H2 colour inside a word": "match: req" + ESC + "[1;31muest" + ESC + "[0m_id served in 12ms\n",
+    "H3 sgr0 inside a word": "match: req"
+    + ESC
+    + "(B"
+    + ESC
+    + "[mu"
+    + ESC
+    + "(B"
+    + ESC
+    + "[mest_id served in 12ms\n",
+    "H4 colourised log with sgr0": ESC
+    + "[32mINFO"
+    + ESC
+    + "(B"
+    + ESC
+    + "[m worker-7 "
+    + ESC
+    + "[1mrequest"
+    + ESC
+    + "(B"
+    + ESC
+    + "[m served status=200 path=/api/v1/items "
+    + ESC
+    + "[34m12ms"
+    + ESC
+    + "(B"
+    + ESC
+    + "[m\n",
     "W worst: Persian + colour inside a word + percent": "می‌خواهم req"
     + ESC
     + "[1;31muest"
@@ -126,11 +153,25 @@ if pytest is not None:
         assert undos == _main_passes()[shape][1], shape
 
     def test_pass_count_h2_and_w():
-        """G1: H2 at most one more than main per reading (main's count plus 1 per reading, at most 4 readings); W at most 10."""
+        """G1: H2 at most one more than main per reading (main's count plus 1 per reading, at most 4 readings); W and the sgr0 shapes at most `defaults.MAX_REDACT_PASSES` (24, counted in `runmap._Work`)."""
         redacts, _ = count_calls(fill(SHAPES["H2 colour inside a word"], CAP))
         assert redacts <= _main_passes()["H2 colour inside a word"][0] * 2 + 1
         redacts, _ = count_calls(fill(SHAPES[SHAPE_W], CAP))
-        assert redacts <= 10
+        assert redacts <= defaults.MAX_REDACT_PASSES
+
+    @pytest.mark.parametrize("shape", ["H3 sgr0 inside a word", "H4 colourised log with sgr0"])
+    def test_sgr0_shapes_within_the_counted_bound(shape):
+        """G1: a text with `ESC ( B` (`tput sgr0`) needs no more passes than the counted bound, and a large legitimate
+        colourised log at the cap is shown (not refused) in under the time limit."""
+        text = fill(SHAPES[shape], CAP)
+        redacts, _ = count_calls(text)
+        assert redacts <= defaults.MAX_REDACT_PASSES, redacts
+        start = time.process_time()
+        out = runmap.redact_untrusted(
+            text, {}
+        )  # raises InputTooLarge if the log is wrongly refused
+        assert time.process_time() - start < SECONDS_LIMIT
+        assert out
 
     @pytest.mark.parametrize("shape", HIDDEN_FREE + SHAPE_H)
     def test_seconds(shape):
