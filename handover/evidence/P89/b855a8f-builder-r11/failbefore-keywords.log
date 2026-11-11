@@ -1,0 +1,60 @@
+.......................F.....F.....F.................................... [ 53%]
+..........................................FFFFF......F........           [100%]
+=================================== FAILURES ===================================
+E   AssertionError: a two-character head or tail next to the dots was not masked
+    assert "E   x == 'ab...kl'" == 'E   x == [RE......[REDACTED]'
+      
+      - E   x == [REDACTED]...[REDACTED]
+      + E   x == 'ab...kl'
+/home/user/build/EV-P89-r11fb/tests/test_mutation_runner_keywords.py:479: AssertionError: a two-character head or tail next to the dots was not masked
+E   AssertionError: a 2-character head next to the dots was not masked: E x == 'Qw...zzz'
+    assert 'Qw' not in "E x == 'Qw...zzz'"
+      
+      'Qw' is contained here:
+        E x == 'Qw...zzz'
+      ?         ++
+/home/user/build/EV-P89-r11fb/tests/test_mutation_runner_keywords.py:601: AssertionError: a 2-character head next to the dots was not masked: E x == 'Qw...zzz'
+E   AssertionError: the fast scan found other spans than the plain definition: 'bcaaabbdddcacba.c.babaccbd...dcbadbc.abdaaba.' 'bddab'
+    assert [] == [(24, 26)]
+      
+      Right contains one more item: (24, 26)
+      Use -v to get more diff
+/home/user/build/EV-P89-r11fb/tests/test_mutation_runner_keywords.py:774: AssertionError: the fast scan found other spans than the plain definition: 'bcaaabbdddcacba.c.babaccbd...dcbadbc.abdaaba.' 'bddab'
+E   AssertionError: a base of more than FRAGMENT_MIN stripped characters got a run pattern: "ab'cdefghij"
+    assert re.compile('(?:a)(?:b)\x00(?:c)(?:d)(?:e)(?:f)(?:g)(?:h)(?:i)(?:j)', re.DOTALL) is None
+     +  where re.compile('(?:a)(?:b)\x00(?:c)(?:d)(?:e)(?:f)(?:g)(?:h)(?:i)(?:j)', re.DOTALL) = <functools._lru_cache_wrapper object at 0x7faaa38aa4b0>("ab'cdefghij")
+     +    where <functools._lru_cache_wrapper object at 0x7faaa38aa4b0> = mr._run_pattern
+/home/user/build/EV-P89-r11fb/tests/test_mutation_runner_keywords.py:2351: AssertionError: a base of more than FRAGMENT_MIN stripped characters got a run pattern: "ab'cdefghij"
+E   AssertionError: the test shrank: 196 cases
+    assert 196 > 500
+/home/user/build/EV-P89-r11fb/tests/test_mutation_runner_keywords.py:2395: AssertionError: the test shrank: 196 cases
+E   AssertionError: a piece that is not a start or an end of the secret, or one not next to dots, was changed: E   'ab...cd' 'Qw...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...2m'
+    assert "E   'ab...cd... K2m 'x...2m'" == "E   'ab...cd......[REDACTED]"
+      
+      - E   'ab...cd' [REDACTED]...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...[REDACTED]
+      ?               ^^^^^^^^^^                                               ^^^^^^^^^^
+      + E   'ab...cd' 'Qw...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...2m'
+      ?               ^^^                                               ^^^
+/home/user/build/EV-P89-r11fb/tests/test_mutation_runner_keywords.py:2407: AssertionError: a piece that is not a start or an end of the secret, or one not next to dots, was changed: E   'ab...cd' 'Qw...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...2m'
+E   AttributeError: module 'tools.mutation_runner' has no attribute '_DOTS'
+/home/user/build/EV-P89-r11fb/tests/test_mutation_runner_keywords.py:2430: AttributeError: module 'tools.mutation_runner' has no attribute '_DOTS'
+E   AssertionError: a long piece of an unquoted password after a quote was not a secret
+    assert 'Cd4Xy9' in ("host=db.invalid password=Ab3'Cd4Xy9;Pq7&Rs2Tk5 user=svc", "Ab3'Cd4Xy9;Pq7&Rs2Tk5", 'Ab3')
+/home/user/build/EV-P89-r11fb/tests/test_mutation_runner_keywords.py:2441: AssertionError: a long piece of an unquoted password after a quote was not a secret
+E   AssertionError: a secret stayed in a cache after the run ended: [162, 512, 512, 338]
+    assert [162, 512, 512, 338] == [0, 0, 0, 0]
+      
+      At index 0 diff: 162 != 0
+      Use -v to get more diff
+/home/user/build/EV-P89-r11fb/tests/test_mutation_runner_keywords.py:2588: AssertionError: a secret stayed in a cache after the run ended: [162, 512, 512, 338]
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_keywords.py::test_a_shortened_value_is_masked_by_its_fragments
+FAILED tests/test_mutation_runner_keywords.py::test_a_piece_of_exactly_the_edge_minimum_is_masked_and_a_shorter_one_is_not
+FAILED tests/test_mutation_runner_keywords.py::test_the_fragment_scan_agrees_with_the_plain_definition
+FAILED tests/test_mutation_runner_keywords.py::test_a_long_base_with_a_quote_mark_has_no_run_pattern_and_does_not_halve_the_match_limit
+FAILED tests/test_mutation_runner_keywords.py::test_every_head_and_tail_of_a_short_secret_next_to_dots_is_hidden
+FAILED tests/test_mutation_runner_keywords.py::test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_secret
+FAILED tests/test_mutation_runner_keywords.py::test_dots_that_share_a_dot_are_all_found
+FAILED tests/test_mutation_runner_keywords.py::test_the_pieces_of_an_unquoted_password_that_holds_a_quote_a_semicolon_or_an_ampersand_are_secrets
+FAILED tests/test_mutation_runner_keywords.py::test_the_secret_caches_are_emptied_when_a_run_ends
+9 failed, 125 passed in 45.76s

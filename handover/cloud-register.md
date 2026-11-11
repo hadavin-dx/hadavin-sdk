@@ -1120,3 +1120,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a6b68d12 | PR73 codebase reviewer r10 | 02:35Z | closed 02:50Z: 0B/1M(decision)/8m/3N, saved round10-codebase.md | closed |
 | abc34109 | PR73 evidence runner ac94d18 | ~02:45Z | agent returned; jobs still running in /home/user/build/EV-P73-ac94d18 (ALLDONE marker); output will be copied after it ends, partial output never deleted | running (jobs) |
 | aed5770d | PR73 builder r11 (resumed) | 02:51Z | batch r10-01..07 sent; code-only push, report once; check 03:50Z | running |
+| a8904ec1 | PR89 builder r11 | closed ~03:35Z: head b855a8f (tree b71c650), pushed code only; builder figures: suites 10619 passed 3.12/3.13, mutants 207 of 207, ruff/bandit rc 0, fail-before 9 failed/125 passed (shim). Not independently verified. | closed |
+| af5482b9 | PR89 egm-zoom-out (ORDER 236 pt 1): simpler rule? | 03:37Z | expected ~03:50Z; check 03:50Z; then file-sliced reviewers | running |
