@@ -1132,4 +1132,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a6db239f | PR89 r14 reviewer runner | done 05:07Z | | | closed (round-w2-r14-design-runner.md) | |
 | ab7dbb75 | PR89 r14 reviewer keyword tests 1-1200 | done 05:05Z | | | closed (round-w2-r14-keywordtests-a.md) | |
 | a553a337 | PR89 r14 reviewer keyword tests 1201-2349 | done 05:04Z | | | closed (round-w2-r14-keywordtests-b.md) | |
-| a111db5b | PR89 r14 reviewer (egm-implementation-readiness) mutants, CHANGELOG, rest | 05:00Z | 05:20Z | 05:00Z | running | save report, ledger |
+| a111db5b | PR89 r14 reviewer mutants/CHANGELOG | done 05:10Z | | | closed (round-w2-r14-implreadiness-mutants.md) | |
+| a8904ec1 | PR89 builder round 14 (resumed, batch r14-02..14) | 05:11Z | 06:10Z (60 min box) | 05:11Z | running | read report; independent runner on final head; fresh reviewers on the delta |

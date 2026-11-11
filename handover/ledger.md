@@ -2423,3 +2423,5 @@
 | BL-core-a2-w2-r14-10 | handover/reviews/P89/round-w2-r14-design-runner.md | Blocker | PR89 | key=value DSN containing :// goes to urlsplit; password text in the lock name (B1) | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r14-11 | handover/reviews/P89/round-w2-r14-design-runner.md | Major | PR89 | URL path / unexplained userinfo carries password into lock name (M2); refusal and masking reach beyond the password (M4) | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r14-12 | handover/reviews/P89/round-w2-r14-design-runner.md | Minor | PR89 | N3,N5-N9 dead branch, plus-chain stop, no minimum length, work amplification and wrong cost claim, wrong 'never less' claim, duplicated message | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r14-13 | handover/reviews/P89/round-w2-r14-implreadiness-mutants.md | Major | PR89 | Windows paragraph false (5 mutants), lock-name rule overstated, CHANGELOG terms undefined (M1-M3) | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r14-14 | handover/reviews/P89/round-w2-r14-implreadiness-mutants.md | Minor | PR89 | CHANGELOG nits (canary wording, empty-name canary, stray paren, run-time doubling, ci.yml claim, port reading) | OPEN | 2026-11-11 |
