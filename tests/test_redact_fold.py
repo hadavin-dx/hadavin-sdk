@@ -241,7 +241,7 @@ def test_four_rounds_that_never_converge_fall_through_to_the_withhold(monkeypatc
     assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
     calls = []
 
-    def never_done(self, body, folded, where, alike, only=None):
+    def never_done(self, body, folded, where, alike, only=None, marks=False):
         calls.append(body)
         return body + " "
 
@@ -627,25 +627,31 @@ def _tag_leak(text: str, key: str) -> bool:
     return key[:12] in decoded
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="open hole GAP-1: closed by P2d-2 (a pass here means it is closed: remove this mark)",
+)
 def test_gap_1_tag_characters_hide_a_key_open_hole():
     text = "the note " + _tagged(KEY) + " end"
     assert _tag_leak(text, KEY)
-    out = redact(text).text
-    if _tag_leak(out, KEY):
-        pytest.xfail("open hole GAP-1: closed by P2d-2")
+    assert not _tag_leak(redact(text).text, KEY)
+
+
+def test_gap_1_the_tagged_key_reads_as_the_key():
+    assert _tag_leak("the note " + _tagged(KEY) + " end", KEY)
 
 
 @pytest.mark.parametrize(("cp", "letter"), [(0x1CCD6, "A"), (0x113D4, "l"), (0x16EB6, "b")])
-def test_p1b_1_an_unassigned_code_point_in_place_of_a_letter_open_hole(cp, letter):
+def test_p1b_1_an_unassigned_code_point_in_place_of_a_letter_is_masked_on_this_unicode_build(
+    cp, letter
+):
     ch = chr(cp)
     if unicodedata.category(ch) != "Cn":
         pytest.skip("assigned on this Unicode build")
     spelled = "sk-" + CANARY[3:].replace(letter, ch, 1)
     text = "the key " + spelled + " end"
     assert ch in text
-    out = redact(text).text
-    if ch in out:
-        pytest.xfail("open hole P1B-1: unassigned code points are not a signal")
+    assert ch not in redact(text).text
 
 
 def test_ctrl_1_the_outcome_helper_sees_a_masked_key_and_a_leaked_one():
@@ -666,12 +672,14 @@ def _context_text(copy: str) -> str:
     return "password: " + V13 + "\nfiller one\nfiller two\nfiller three\n" + copy
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="open hole VARIANT-1(a): closed by P2d-2 (a pass here means it is closed: remove this mark)",
+)
 def test_variant_1_a_bare_redact_zwsp_copy_open_hole():
     copy = V13[:7] + chr(0x200B) + V13[7:]
     assert copy.replace(chr(0x200B), "") == V13
-    out = redact(_context_text(copy)).text
-    if copy in out:
-        pytest.xfail("open hole VARIANT-1(a): closed by P2d-2")
+    assert copy not in redact(_context_text(copy)).text
 
 
 def test_variant_1_b_redact_text_masks_a_zwsp_and_a_full_width_copy_with_one_placeholder():
@@ -684,23 +692,34 @@ def test_variant_1_b_redact_text_masks_a_zwsp_and_a_full_width_copy_with_one_pla
         assert out.rstrip().endswith(next(iter(m)))
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="open hole VARIANT-1(c): closed by P2d-2 (a pass here means it is closed: remove this mark)",
+)
 def test_variant_1_c_redact_text_lookalike_copy_open_hole():
     copy = V13.replace("a", chr(0x430))
     assert copy != V13
     m = runmap.RunMap()
-    out = runmap.redact_text(_context_text(copy), m)
-    if copy in out:
-        pytest.xfail("open hole VARIANT-1(c): closed by P2d-2")
+    assert copy not in runmap.redact_text(_context_text(copy), m)
 
 
-def test_restore_1_a_withheld_line_placeholder_restores_a_value_not_in_the_input():
+def test_restore_1_a_withheld_line_placeholder_is_restorable():
     text = "mail josé@example.com ／／ x"
     r = redact(text)
     assert r.text.startswith(FOLD_NOTE)
-    back = runmap.restore_text(r.text, r.mapping)
-    assert back != r.text, "the placeholder is not restorable on this head"
-    if "jose@example.com" in back and "jose@example.com" not in text:
-        pytest.xfail("open hole L5: closed by the P5c marker")
+    assert runmap.restore_text(r.text, r.mapping) != r.text, (
+        "the placeholder is not restorable on this head"
+    )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="open hole L5: closed by the P5c marker (a pass here means it is closed: remove this mark)",
+)
+def test_restore_2_a_withheld_line_does_not_restore_a_value_the_input_did_not_hold():
+    text = "mail josé@example.com ／／ x"
+    r = redact(text)
+    assert "jose@example.com" not in runmap.restore_text(r.text, r.mapping)
 
 
 def test_sweep_1_a_clear_copy_after_a_written_variant_gets_the_same_placeholder():

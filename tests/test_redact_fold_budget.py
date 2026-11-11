@@ -339,14 +339,48 @@ def test_hostile_1_hostile_shapes_return_a_clean_text_or_refuse():
         "4000 attack lines": ("k " + attack_key + "\n") * 4_000,
         "nested escapes": "%26amp%3B" * (cap // 9),
     }
+    mc = chr(0x93E)
+    shapes["devanagari lines"] = ("यह एक वाक्य है\n" * 18_000)[
+        :cap
+    ]  # every line holds spacing marks: a second view of each
+    shapes["mark-split key lines"] = (("the key " + KEY_[:4] + mc + KEY_[4:] + "\n") * 7_000)[:cap]
+    shapes["mc at cap"] = mc * cap
+    # a refusal is the fail-closed answer to a text that spends the budget; only these two shapes may be refused (on a machine slower than the
+    # test machine), every other shape must come back as a text, so that the assertions below really run for it
+    may_refuse = {"e-acute lines", "devanagari lines"}
     for name, text in shapes.items():
         assert len(text) <= cap, name
         try:
             out = redact_text(text, runmap.RunMap())
         except (InputTooLarge, runmap.TooDeep):
+            assert name in may_refuse, name
             continue
-        assert KEY_[:12] not in out and attack_key not in out, name
+        assert KEY_[:12] not in out and attack_key not in out and KEY_[4:] not in out, name
         assert "exemple.fr" not in out.replace("<", ""), name
         if name in {"lookalike key lines", "at-cap attack line", "4000 attack lines"}:
             # a result that is not a refusal says what happened: the key is masked in place (a placeholder) or the line is withheld (the note)
             assert "<APIKEY_" in out or redact_mod.FOLD_NOTE in out, name
+        if name == "mark-split key lines":
+            assert out.count("<APIKEY_") >= 1 and mc not in out.replace("\n", ""), name
+
+
+def test_view_1_the_clock_is_read_before_each_view_of_a_line(monkeypatch):
+    """Review w4 m3: a round runs up to four views of a line and one view of a long line can take a large share of the budget, so the clock is
+    read before EACH view, not once per round."""
+    events: list[str] = []
+    real_budget, real_fold = _Redactor._over_budget, _Redactor._aligned_fold
+
+    def budget(deadline):
+        events.append("clock")
+        real_budget(deadline)
+
+    def fold(body, deadline, *view):
+        events.append("view")
+        return real_fold(body, deadline, *view)
+
+    monkeypatch.setattr(_Redactor, "_over_budget", staticmethod(budget))
+    monkeypatch.setattr(_Redactor, "_aligned_fold", staticmethod(fold))
+    out = redact_text("caf\u00e9 password=Hunter2abc^ end", runmap.RunMap())
+    assert "Hunter2" not in out
+    assert events.count("view") >= 2
+    assert all(events[i - 1] == "clock" for i, e in enumerate(events) if e == "view"), events

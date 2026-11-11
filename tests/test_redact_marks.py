@@ -114,13 +114,14 @@ def test_marks_6_a_clear_copy_of_a_value_masked_with_a_mark_inside_is_masked_too
     assert KEY in keys and textnorm.fold(spelled) in keys, (
         keys
     )  # the alias index holds the written fold AND the marks-dropped fold
-    r = redact("first " + spelled + " end")
-    assert (
-        KEY in set(redact_mod._alias_keys(next(iter(r.mapping.values()))))
-        or KEY in r.mapping.values()
-    )
-    again = redact("then " + KEY + " plain", mapping=r.mapping).text
-    assert KEY not in again, again
+    # a password-style value: no direct pattern masks a bare copy of it, so only the alias index can
+    value = "hunter" + "-secret-a1b2c3"
+    spelled_pw = value[:6] + chr(0x0903) + value[6:]
+    r = redact("password: " + spelled_pw + " end")
+    (placeholder,) = r.mapping
+    assert value[:6] not in r.text, r.text
+    again = redact("then " + value + " plain", mapping=r.mapping).text
+    assert value not in again and placeholder in again, again
 
 
 def test_marks_7_a_second_multi_line_value_that_starts_inside_the_first_is_withheld_to_its_end():
@@ -204,9 +205,9 @@ def test_marks_11_the_views_by_name_are_exactly_the_views_of_fold_views():
         )
 
 
-def test_marks_12_the_weight_of_a_long_text_is_remembered_by_digest_and_never_wrong():
+def test_marks_12_the_weight_of_a_long_text_is_remembered_by_digest_and_never_wrong(monkeypatch):
     text = "".join(chr(cp) for cp in range(0x4E00, 0x4E00 + 3000))
-    textnorm._WEIGHT_MEMO.clear()
+    monkeypatch.setattr(textnorm, "_WEIGHT_MEMO", {})  # restored after the test
     first = textnorm._weight(text)
     assert len(textnorm._WEIGHT_MEMO) == 1
     (key,) = textnorm._WEIGHT_MEMO
@@ -239,7 +240,7 @@ def test_marks_14_the_alignment_of_every_view_agrees_with_that_view_of_the_fold_
 
 def test_marks_15_a_hangul_line_is_refused_at_the_same_size_by_the_redactor_and_the_fold():
     """Review F3. A Hangul syllable is 3 characters after NFKD and its fold weight is 3, so the two size rules agree: ticket V23 (the class "weight above
-    the NFKD length", such as the German sharp s) does not apply to it. 87,381 syllables (262,143) pass both; 87,382 (262,146) are refused by both:
+    the NFKD length", such as the German sharp s) does not apply to it. 87,381 syllables (262,143) pass both; 87,382 (262,146) are refused by both (the test takes 0.5 s CPU, measured 2026-11-11):
     `redact_text` with `InputTooLarge`, the bare `redact` with `TextTooLong` (nothing is shown, fail closed)."""
     syllable = chr(0xAC01)
     assert textnorm._char_weight(syllable) == len(unicodedata.normalize("NFKD", syllable)) == 3
@@ -248,3 +249,72 @@ def test_marks_15_a_hangul_line_is_refused_at_the_same_size_by_the_redactor_and_
         redact(syllable * 87_382)
     with pytest.raises(runmap.InputTooLarge):
         runmap.redact_text(syllable * 87_382, {})
+
+
+EDGE_SAMPLES = [  # (text before the value, the value, text after it); every line also holds a non-ASCII letter, so the fold scan runs
+    ("password=", "Hunter2" + "abc", " end"),
+    ("secret: ", "Hunter2" + "abc", " end"),
+    ("api_key=", "Hunter2" + "abc", " end"),
+    ("Authorization: Bearer ", "Hunter2" + "abc", " end"),
+    ("", "sk-" + SK_HEAD + SK_TAIL, " end"),
+    ("", KEY, " end"),
+    ("email ", "jo" + "@example.com", " end"),
+]
+
+
+def test_marks_16_a_mark_beside_a_value_is_masked_with_it():
+    """Review w4 M1. The marks-dropped views cut a value short at the mark beside it and left the mark in clear. The class: ADDING a spacing
+    mark, modifier letter or modifier symbol before or after a value must not change what is masked. Checked for every open-ended pattern
+    and for fixed-length ones, with a mark before, after, and on both sides, and with the same value twice in a line."""
+    leaks = []
+    marks = [*MARKS[::9], "^", "`", chr(0xB4), chr(0x2B0), chr(0x93E)]
+    for pre, value, post in EDGE_SAMPLES:
+        base = redact("caf\u00e9 " + pre + value + post).text
+        assert value not in base and "<" in base, (pre, base)
+        for mark in marks:
+            for before, after in ((mark, ""), ("", mark), (mark, mark * 2)):
+                text = "caf\u00e9 " + pre + before + value + after + post
+                out = redact(text).text
+                # an open-ended value (a password, a secret, a token) takes the mark beside it with it; a fixed-shape key or address ends where
+                # its shape ends, so only its own characters must be gone
+                open_ended = pre.endswith(("=", ": ", "Bearer "))
+                if (
+                    (open_ended and mark in out)
+                    or value in out
+                    or textnorm.fold(value) in textnorm.fold(out)
+                ):
+                    leaks.append((pre, hex(ord(mark)), bool(before), bool(after)))
+                twice = redact(text + " " + pre + before + value + after + post).text
+                if (open_ended and mark in twice) or value in twice:
+                    leaks.append(("twice", pre, hex(ord(mark))))
+    assert not leaks, (len(leaks), leaks[:5])
+
+
+def test_marks_17_an_ascii_circumflex_or_backtick_is_a_mark_only_on_a_line_with_other_non_ascii_text():
+    """Review w4 m1, decided on the evidence: the fold scan (and so the marks-dropped views) runs only for a line with a non-ASCII character
+    (``_plain``). On an all-ASCII line ``^`` and the backtick are the visible characters they look like, so ``AKIA^...`` is a different
+    string that no pattern claims; the same on 8b2b716. With one non-ASCII letter on the line they are read as marks and the key is masked.
+    This pins that boundary (CHANGELOG, P2d-1: "What this does NOT promise")."""
+    spelled = KEY[:4] + "^" + KEY[4:]
+    assert redact("k " + spelled + " e").text == "k " + spelled + " e"
+    out = redact("k caf\u00e9 " + spelled + " e").text
+    assert KEY_TAIL not in out and "<" in out, out
+
+
+@pytest.mark.parametrize("cp", [0x09, 0x0B, 0x0C, 0x1C, 0x85])
+def test_marks_18_white_space_inside_a_key_is_not_undone_but_an_invisible_control_character_is(cp):
+    """The hidden-control-character class: NUL, 0x01-0x08, 0x0E-0x1A and DEL are dropped by the fold and the key is masked. Tab, VT, FF,
+    FS and NEL are read as a SPACE by the fold, as a reader sees them: a key cut by one is two words, which no pattern claims; the same on
+    8b2b716 (evidence: handover note, ctl-compare.txt). ESC is cut away together with the next character by an earlier stage."""
+    for at in (4, 10):
+        text = "k " + KEY[:at] + chr(cp) + KEY[at:] + " e"
+        assert redact(text).text == text, (hex(cp), at)
+    for hidden in (0x00, 0x01, 0x08, 0x0E, 0x1A, 0x7F):
+        out = redact("k " + KEY[:4] + chr(hidden) + KEY[4:] + " e").text
+        assert KEY_TAIL not in out and "<" in out, (hex(hidden), out)
+
+
+def test_marks_19_a_look_alike_letter_with_a_subscript_iota_does_not_withhold_the_line_beside_an_address():
+    for text in ("\u1fb3 jos\u00e9@example.com", "jos\u00e9@example.com \u1fb3"):
+        out = redact(text).text
+        assert redact_mod.FOLD_NOTE not in out and "<EMAIL_" in out and "\u1fb3" in out, out

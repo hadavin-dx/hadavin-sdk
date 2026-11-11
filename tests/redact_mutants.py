@@ -1,4 +1,4 @@
-"""The mutants of the fold scan (P2d-1): 21 redactor mutants of core PR #50 (748849c), re-pointed, 21 new ones and the 16 of review round w3
+"""The mutants of the fold scan (P2d-1): 21 redactor mutants of core PR #50 (748849c), re-pointed, 21 new ones, the 16 of review round w3 and the 5 of round w4
 (the views that drop spacing marks, the control-character gate, the block that grows over a second block, the line end of a withheld block).
 
 ``tools.mutation_runner`` replaces EVERY occurrence of a mutant's ``old`` text. Mutant 21 therefore removes both
@@ -200,6 +200,16 @@ M = [
       "test_marks_12_the_weight_of_a_long_text_is_remembered_by_digest_and_never_wrong", "ssert"),
     m("W16 the alignment ignores the view it is asked for", RD, "        marks, iota = spec\n", "        marks, iota = False, True\n", FM,
       "test_marks_14_the_alignment_of_every_view_agrees_with_that_view_of_the_fold_or_steps_aside", "ssert"),
+    m("W17 the cut of a marks-dropped claim is not extended", RD, "marks=spec[0])", "marks=False)", FM,
+      "test_marks_16_a_mark_beside_a_value_is_masked_with_it", "ssert"),
+    m("W18 the cut is extended on the left only", RD, "                while stop < len(body) and _is_spacing(body[stop]):\n                    stop += 1\n", "", FM,
+      "test_marks_16_a_mark_beside_a_value_is_masked_with_it", "ssert"),
+    m("W19 the cut is extended on the right only", RD, "                while start > prev and _is_spacing(body[start - 1]):\n                    start -= 1\n", "", FM,
+      "test_marks_16_a_mark_beside_a_value_is_masked_with_it", "ssert"),
+    m("W20 the view without the iota keeps the letter plus an i", RD, "if own != f and own.isascii():", "if False:", FM,
+      "test_marks_19_a_look_alike_letter_with_a_subscript_iota_does_not_withhold_the_line_beside_an_address", "ssert"),
+    m("W21 the clock is not read before each view", RD, "                    self._over_budget(self._scan_deadline)  # one view", "                    pass  # one view", "tests/test_redact_fold_budget.py",
+      "test_view_1_the_clock_is_read_before_each_view_of_a_line", "ssert"),
 ]  # fmt: skip
 
 if __name__ == "__main__":

@@ -166,6 +166,7 @@ spelling variants; the marks-dropped views of ``fold_views`` and ``squeeze_views
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import re
 import sys
@@ -284,6 +285,9 @@ _DIGITS = types.MappingProxyType(
 )  # built once at import: no lazy fill, so no thread can see a half-filled table
 
 
+@functools.lru_cache(
+    maxsize=8192
+)  # a pure function of the character; a text of one script repeats a few dozen of them thousands of times
 def _char_weight(c: str) -> int:
     """The weight of ``c``: the larger of the single-pass weight of ``c`` and of its case fold (the case-folding path folds case first)."""
     return max(_pass_weight(c), _pass_weight(c.casefold()))

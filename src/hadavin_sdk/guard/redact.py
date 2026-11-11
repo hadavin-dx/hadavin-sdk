@@ -1207,6 +1207,10 @@ class _Redactor:
             if cls is None:
                 return None
             f, flag = cls
+            if not iota:  # the spelling that drops a subscript iota: a letter with one (U+1FB3) is its base letter alone, not base letter + "i"
+                own = fold_view(ch, marks_dropped=marks, iota=False).replace("\u2044", "/")
+                if own != f and own.isascii():
+                    f = own
             if f:
                 parts.append(f)
                 where.extend([i] * len(f))
@@ -1222,6 +1226,7 @@ class _Redactor:
         where: list[int],
         alike: bytearray,
         only: set[int] | None = None,
+        marks: bool = False,
     ) -> str | None:
         """Mask the matches found in ``folded`` inside ``body`` itself: the output is ``body`` with each matched value replaced by its
         placeholder; every other character stays as written, and no folded text is ever emitted. ``None`` when a masked value contains a
@@ -1248,9 +1253,17 @@ class _Redactor:
             return None  # discarded before anything is registered: no orphan placeholder
         out, prev = [], 0
         for s, e, label, _ in sorted(claims):
-            written = body[where[s] : where[e - 1] + 1]  # the value as it stands in the line
-            out += [body[prev : where[s]], self._register_written(label, written)]
-            prev = where[e - 1] + 1
+            start, stop = where[s], where[e - 1] + 1
+            if marks:
+                # This view has no spacing marks, modifier letters or modifier symbols, so a value that begins or ends beside some would be cut short
+                # and the mark left in clear. Take in the run of them on both sides (never into a value already replaced).
+                while start > prev and _is_spacing(body[start - 1]):
+                    start -= 1
+                while stop < len(body) and _is_spacing(body[stop]):
+                    stop += 1
+            written = body[start:stop]  # the value as it stands in the line
+            out += [body[prev:start], self._register_written(label, written)]
+            prev = stop
         return "".join(out) + body[prev:] if claims else body
 
     def _register_written(self, label: str, written: str) -> str:
@@ -1302,8 +1315,15 @@ class _Redactor:
                     *reversed(_view_specs(cur)),
                     _PRIMARY_VIEW,
                 ):  # every view; the marks-dropped ones first, so a value split by a mark is cut whole, not at the mark
+                    self._over_budget(
+                        self._scan_deadline
+                    )  # one view of a long line can take a large share of the budget: look at the clock per view
                     aligned = self._aligned_fold(cur, self._scan_deadline, spec)
-                    new = None if aligned is None else self._mask_in_place(cur, *aligned, only=only)
+                    new = (
+                        None
+                        if aligned is None
+                        else self._mask_in_place(cur, *aligned, only=only, marks=spec[0])
+                    )
                     if new is None:
                         failed = True  # not an ordinary fold, or a value hidden behind look-alikes: withhold below
                         break
