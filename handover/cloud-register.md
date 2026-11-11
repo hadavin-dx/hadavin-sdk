@@ -1272,3 +1272,11 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-Q8a2 fix 1 a0472549 | 22 min | full suite 8.5 min in | on track |
 | EV-Q8a1-r3, EV-Q8c1, B-Q8a1 fix 3, R-P77 codebase, R-Q8c1 x2 | 3-15 min | queued or reading | on track |
 | R-P77-design ac9534ea | egm:egm-zoom-out (Fable) PLAN review of D-017: redaction design before round 8 (canonicalise-then-match vs more pattern readings vs small separate fix) | 15:25Z | +30m | 15:25Z | running | save in full; ticket author for round 8; then ONE builder |
+
+### 15:30Z Q8a-2 round 2 (head 5f94f598, builder fix batch 1 of 2 reported: 10694 passed by its own run, unverified)
+| id | purpose | started | expected end | last check | state | next action |
+|---|---|---|---|---|---|---|
+| B-Q8a2 a0472549 | fix batch 1 | 15:00Z | | 15:30Z | CLOSED: head 5f94f598 pushed (lead checked the remote ref); deviation: receiver compares the raw request target (doubled slashes now 404) | evidence + reviewers |
+| EV-Q8a2-r2 | EVIDENCE RUNNER (Fable) head 5f94f598, pg 56151 | 15:30Z | +45m | 15:30Z | starting | read RESULTS.md |
+| R-Q8a2-r2 design + codebase | fresh egm reviewers (Fable), snapshot /home/user/build/snap/q8a2-5f94f59 | 15:30Z | +15m | 15:30Z | starting | save full reports |
+| B-PR89-r20 a7b9ddc4, EV-Q8a1-r3 af8c6f12 | both stopped their turn while their full suites wait for a heavy slot (local PR89 head 351fa07a, not pushed) | | | 15:30Z | waiting on own background jobs | resume by message if a job ends and the agent stays idle |

@@ -1,7 +1,8 @@
 Fail-before: clean origin/main 2a8c2aac + ONLY the branch's tests/policy_mutants.py, tests/test_policy_engine.py, tests/test_policy_guard.py,
 tests/fixtures/policy_sources_2026-11-11.txt and tools/policy_page.py (the three src files and docs are origin/main's).
-Column 'data marker' is a text match made by code, not a judgement: LACK-OF-DATA = every 'E' line of the failure that states a cause
-contains 'no POLICY in', 'has no POLICY' or 'is missing'; MIXED = some E line contains one of those and the failure text also holds other content worth reading; OTHER = no such text.
+Column 'data marker' is a text match made by code, not a judgement. LACK-OF-DATA = the first 'E' line of the failure contains 'no POLICY in',
+'has no POLICY' or 'is missing' and is not a 'reported [...], expected [...]' comparison. MIXED = any other failure whose full text contains one of
+those three strings (pytest shortens some first lines, and some compare a reported list with an expected one; read the row). OTHER = none of the strings.
 Counts: {'passed': 17, 'LACK-OF-DATA': 52, 'MIXED': 13, 'OTHER': 0}
 
 result | test | first assertion line (cut at 600) | data marker

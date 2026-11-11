@@ -1,0 +1,8 @@
+start 15:30:15  15:30:15 up  2:02,  0 user,  load average: 4.92, 10.04, 11.22
+== head 97fd202: hadavin_sdk from /home/user/build/EV-P77-97fd202/src/hadavin_sdk/__init__.py
+(i) 262,144 characters of Devanagari text | input 262144 chars | run 1 | wall 7.324 s | thread CPU 6.007 s | load 4.92 10.04 11.22 | RAISED InputTooLarge: InputTooLarge
+(i) 262,144 characters of Devanagari text | input 262144 chars | run 2 | wall 7.300 s | thread CPU 6.532 s | load 4.93 9.87 11.15 | returned 262144 characters, 0 mapping entries
+(i) 262,144 characters of Devanagari text | input 262144 chars | run 3 | wall 7.285 s | thread CPU 6.530 s | load 4.94 9.79 11.12 | returned 262144 characters, 0 mapping entries
+(ii) 131,072 characters of Devanagari text | input 131072 chars | run 1 | wall 3.503 s | thread CPU 3.279 s | load 4.94 9.71 11.08 | returned 131072 characters, 0 mapping entries
+(ii) 131,072 characters of Devanagari text | input 131072 chars | run 2 | wall 3.145 s | thread CPU 3.107 s | load 5.11 9.67 11.06 | returned 131072 characters, 0 mapping entries
+(ii) 131,072 characters of Devanagari text | input 131072 chars | run 3 | wall 3.292 s | thread CPU 3.200 s | load 5.02 9.57 11.02 | returned 131072 characters, 0 mapping entries
