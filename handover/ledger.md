@@ -2462,3 +2462,6 @@
 | BL-core-a11a-w4-t02 | reviews/PR77/round-w4-tests-docs.md m2 | Minor | PR77 | no marks-heavy hostile test; 5.0/6.0 s unbacked; continue on InputTooLarge asserts nothing; ratio 2.9x; marks_15 Hangul in default suite | OPEN | 2026-11-11 |
 | BL-core-a11a-w4-t03 | reviews/PR77/round-w4-tests-docs.md m3 | Minor | PR77 | pure-ASCII ^ and backtick Sk separators not folded; boundary not stated or pinned | OPEN | 2026-11-11 |
 | BL-core-a11a-w4-t04 | reviews/PR77/round-w4-tests-docs.md m4,m5,n1,n2 | Minor | PR77 | CHANGELOG time/name-count wording; open-hole tests pass either way; whole fake literals | OPEN | 2026-11-11 |
+| BL-core-a11a-w4-s01 | reviews/PR77/round-w4-src.md M1 | MAJOR | PR77 62acddd | masked value keeps leading/trailing Mc/Lm/Sk in clear: "café password=Hunter2abc^" -> "<SECRET_1>^" (redact.py:1301-1311, 1196-1200, 1251, 1393-1396); regression vs 8b2b716 | OPEN (fix builder a15af6a6 resumed 07:3xZ; reading only, builder to confirm by running) | 2026-11-11 |
+| BL-core-a11a-w4-s02 | reviews/PR77/round-w4-src.md m1 | Minor | PR77 | ASCII ^ and backtick not folded on an all-ASCII line; boundary unstated | OPEN | 2026-11-11 |
+| BL-core-a11a-w4-s03 | reviews/PR77/round-w4-src.md m2,m3 | Minor | PR77 | over-withhold "ᾳ josé@example.com"; clock once per round (4 views) | OPEN | 2026-11-11 |
