@@ -45,3 +45,4 @@ WAITS FOR lead: core/P3a-2 push approval; q-A11a-sep-keep (now moot if the gap-t
 - 22:25Z Q8a-1 r7 design report in: 0 Blocker, 4 Major (F1 union_tag_invalid echo, F2 deferred.py raw ids, F3 app.build tool/source names vs CHANGELOG, F4 _own_error frame heuristic), 2 Nit. Waiting codebase a215ed18 + EV ab548440.
 - 22:26Z Q8a-1 r7 codebase report in: 4 Major (F1/F2 = design F1/F2, F3 safe_urlsplit turns ToolRefused port refusal into InvalidUrl, F4 latent _own_error), 4 Nit. Only EV ab548440 pending before resolve r7.
 - 22:27Z timing nits builder done: a9a25e6f pushed ff to core/fix-timing-harness-flake; my gitleaks on origin/main..HEAD clean (9 commits); READY candidate entry in questions-for-lead.md (delta evidence = builder's own). 8 agents.
+- 22:29Z PULSE: 6 agents running (PR89 r24 a28ab4ea 1h, Q8c-1 fix, PR H resume, P3a-2 resume, Q8b fix 3, Q8a-1 EV ab548440); load 3.3; no new orders (last 247); all pushed (90a00e05). Next: Q8a-1 resolve r7 when EV lands.
