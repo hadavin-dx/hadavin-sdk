@@ -1231,7 +1231,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-PR89-r20 a7b9ddc4 | 18 min | runner code for allowlist, grammar, sockets written, uncommitted | on track |
 | B-Q8c1 a56207cb | 25 min | proof files being written | on track |
 | B-flaky fix a6e5db57 | 22 min | measuring | on track; sent the overload evidence |
-| B-Q8a1 (resumed 2) a0c5bd99 | Q8a-1 fix batch 2 (run_tick steps= refusal, mutants, timeout bounds, seam) | 14:55Z | +45m | 14:55Z | running | new head -> evidence + fresh reviewers round 3 |
+| B-Q8a1 (resumed 2) a0c5bd99 | Q8a-1 fix batch 2 (run_tick steps= refusal, mutants, timeout bounds, seam) | 14:55Z | +45m | 14:55Z | CLOSED head fcd77a68 pushed (lead: FF ok, gitleaks no leaks, 0 suppressions added); builder: 10680 passed, 61/61 mutants (unverified) | new head -> evidence + fresh reviewers round 3 |
 | B-Q8a2 (resumed) a0472549 | Q8a-2 fix batch 1 of 2 (gcs skip reverted, import module path scanned, suppressions removed, limits made true) | 15:00Z | +50m | 15:00Z | running | new head -> evidence + fresh reviewers round 2 |
 
 ### Long-running check 15:03Z
@@ -1256,3 +1256,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-Q8a1 fix 2 a0c5bd99 | 19 min | full suite through heavy.sh 8 min in | on track |
 | EV-P77 ab49c9d1 | 7 min | full suite through heavy.sh 5 min in | on track |
 | B-Q8a2 fix 1, B-flaky fix, A-Q8b rev 3, R-P77-r7 x2 | 7-40 min | building / writing / reading | on track |
+| EV-Q8a1-r3 af8c6f12 | EVIDENCE RUNNER (Fable) Q8a-1 head fcd77a68, heavy.sh, pg 56170 | 15:17Z | +60m | 15:17Z | running (queues) | read RESULTS.md |
+| R-Q8a1-r3 a5f0e2c7, a3703391 | egm design + codebase (Fable) RESULT review round 3 of Q8a-1 (snapshot q8a1-fcd77a6) | 15:17Z | +25m | 15:17Z | running | save reviews/Q8a/result-r3-*-full.md; CLEAN + evidence = READY candidate |

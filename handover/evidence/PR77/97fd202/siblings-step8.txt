@@ -1,0 +1,52 @@
+51 occurrences (regex: word-boundary strip_ansi( , .isascii() , canonical( , redact_text( ; includes definitions and mentions inside docstrings, marked as seen)
+src/hadavin_sdk/approvals/channel.py:23 | redact_text | in clean | comment/docstring? | # tries (`redact_text(..., neutralise=)`): a view that replaces the text (because it found a secret only the d
+src/hadavin_sdk/approvals/channel.py:29 | redact_text | in clean | call or mention | out = runmap.redact_text(text, mapping, neutralise=_neutralise)
+src/hadavin_sdk/approvals/channel.py:36 | redact_text | in clean | call or mention | alt = runmap.redact_text(joined, joined_map, neutralise=_neutralise)
+src/hadavin_sdk/approvals/gate.py:205 | strip_ansi | in normalise | call or mention | return _INVISIBLE_IN_NAME.sub("", strip_controls(strip_ansi(text)))
+src/hadavin_sdk/approvals/gate.py:217 | strip_ansi | in _views | call or mention | views = {text, strip_ansi(text), _ANSI_AS_TEXT.sub(" ", text)}
+src/hadavin_sdk/approvals/hmac_v0.py:47 | .isascii() | in verify | call or mention | if not (ts.isascii() and ts.isdigit() and len(ts) <= 12) or abs(now_ts - int(ts)) > MAX_AGE_S:
+src/hadavin_sdk/approvals/hmac_v0.py:49 | .isascii() | in verify | call or mention | if not (sig.isascii() and sig.startswith("v0=")):
+src/hadavin_sdk/approvals/receiver.py:46 | .isascii() | in serve.Handler.do_POST | call or mention | length = int(raw) if raw.isascii() and raw.isdigit() else -1
+src/hadavin_sdk/approvals/slack_channel.py:81 | redact_text | in SlackChannel._blocks | call or mention | shown = runmap.redact_text(withheld, seeded, neutralise=_neutralise)
+src/hadavin_sdk/guard/bedrock_guardrail.py:98 | redact_text | in GuardrailDetector.check | call or mention | text = runmap.redact_text(
+src/hadavin_sdk/guard/egress.py:17 | .isascii() | in normalise_host | call or mention | if not host.isascii():
+src/hadavin_sdk/guard/judge.py:71 | redact_text | in JudgeDetector.check | call or mention | text = runmap.redact_text(text, {})
+src/hadavin_sdk/guard/redact.py:835 | strip_ansi | in strip_ansi | definition | def strip_ansi(text: str) -> str:
+src/hadavin_sdk/guard/redact.py:892 | strip_ansi | in redact | call or mention | r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
+src/hadavin_sdk/guard/redact.py:902 | .isascii() | in _countable | call or mention | return suffix.isascii() and suffix.isdigit() and len(suffix) <= 18
+src/hadavin_sdk/guard/redact.py:925 | .isascii() | in _char_class | call or mention | if not (len(f) == 1 and f.isascii() and f.isdigit()):
+src/hadavin_sdk/guard/redact.py:931 | .isascii() | in _char_class | call or mention | 0 if f.isascii() else 1
+src/hadavin_sdk/guard/redact.py:933 | .isascii() | in _char_class | call or mention | elif f.isascii() and ch.isalpha() and unicodedata.normalize("NFKC", ch) == ch:
+src/hadavin_sdk/guard/redact.py:937 | .isascii() | in _char_class | call or mention | elif (g := f.replace("\u2044", "/")).isascii() and all(
+src/hadavin_sdk/guard/redact.py:998 | .isascii() | in _gap_spans | call or mention | if not text.isascii() or not text.isprintable():
+src/hadavin_sdk/guard/redact.py:1031 | .isascii() | in _plain | call or mention | return text.isascii() and _HIDDEN_ASCII.search(text) is None
+src/hadavin_sdk/guard/redact.py:1257 | strip_ansi | in _Redactor.find | call or mention | out = "".join(strip_ansi(part) for part in _PLACEHOLDER.split(out))
+src/hadavin_sdk/guard/redact.py:1437 | .isascii() | in _Redactor._aligned_fold | call or mention | if own != f and own.isascii():
+src/hadavin_sdk/guard/redact.py:2013 | strip_ansi | in redact_many | call or mention | r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in (*items, *near))
+src/hadavin_sdk/guard/runmap.py:117 | .isascii() | in nfkc | call or mention | if text.isascii() and not _HIDDEN_ASCII.search(text):
+src/hadavin_sdk/guard/runmap.py:119 | canonical | in nfkc | call or mention | return canonical(fits_after_nfkc(text))
+src/hadavin_sdk/guard/runmap.py:202 | .isascii() | in _expanded_len | call or mention | if text.isascii():
+src/hadavin_sdk/guard/runmap.py:325 | canonical | in canonical | definition | def canonical(text: str) -> str:
+src/hadavin_sdk/guard/runmap.py:362 | .isascii() | in replace_canonical | call or mention | if text.isascii() and not _HIDDEN_ASCII.search(text):
+src/hadavin_sdk/guard/runmap.py:383 | canonical | in escape_placeholders | call or mention | `canonical(text)`, so Unicode look-alikes are already ASCII."""
+src/hadavin_sdk/guard/runmap.py:407 | redact_text | in redact_untrusted | call or mention | return redact_text(text, mapping, neutralise=neutralise_untrusted)
+src/hadavin_sdk/guard/runmap.py:436 | .isascii() | in json_unescape | call or mention | if out.isascii():
+src/hadavin_sdk/guard/runmap.py:475 | canonical | in _views | call or mention | canonical(text),
+src/hadavin_sdk/guard/runmap.py:476 | canonical | in _views | call or mention | canonical(text.translate(_DOTS)),
+src/hadavin_sdk/guard/runmap.py:477 | canonical | in _views | call or mention | canonical(unescaped),
+src/hadavin_sdk/guard/runmap.py:479 | canonical | in _views | call or mention | canonical(without_spacing_marks(JOIN_RE.sub("", text))),
+src/hadavin_sdk/guard/runmap.py:524 | .isascii() | in _decoded_masks | call or mention | any(c in original for c in _ENCODED_MARKS) or not original.isascii()
+src/hadavin_sdk/guard/runmap.py:552 | redact_text | in redact_text | definition | def redact_text(
+src/hadavin_sdk/guard/runmap.py:579 | .isascii() | in redact_text | call or mention | scan = not text.isascii() or any(c in text for c in "\\%&")
+src/hadavin_sdk/guard/runmap.py:628 | canonical | in _refuse_forgery | call or mention | seen = canonical(out)
+src/hadavin_sdk/guard/runmap.py:666 | redact_text | in redact_bounded | call or mention | out = redact_text(text[: defaults.MAX_REDACT_CHARS], mapping, neutralise)
+src/hadavin_sdk/guard/runmap.py:694 | redact_text | in _redact_value | call or mention | return redact_text(value, mapping)
+src/hadavin_sdk/guard/runmap.py:697 | redact_text | in _redact_value | call or mention | (redact_text(k, mapping) if isinstance(k, str) else k): _redact_value(v, mapping)
+src/hadavin_sdk/guard/textnorm.py:330 | .isascii() | in _weight | call or mention | if text.isascii():
+src/hadavin_sdk/runtime/evidence.py:57 | canonical | in normalise | call or mention | return runmap.canonical(text).casefold().strip()
+src/hadavin_sdk/runtime/evidence.py:87 | canonical | in contains | call or mention | want = runmap.canonical(value).strip()
+src/hadavin_sdk/runtime/evidence.py:88 | canonical | in contains | call or mention | hay = runmap.canonical(text)
+src/hadavin_sdk/runtime/evidence.py:151 | canonical | in grounded | call or mention | runmap.canonical(value) != value
+src/hadavin_sdk/runtime/evidence.py:154 | redact_text | in grounded | call or mention | redacted = runmap.redact_text(
+src/hadavin_sdk/tools.py:560 | .isascii() | in ToolContext.fetch | call or mention | if re.search(r"[\\\s\x00-\x1f\x7f]", url) or not url.isascii():
+src/hadavin_sdk/tools.py:856 | .isascii() | in _strip_fragment.starts_a_form | call or mention | if hexes and t.isalnum() and t.isascii():
