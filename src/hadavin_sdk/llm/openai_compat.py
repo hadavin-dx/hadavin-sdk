@@ -15,7 +15,6 @@ import re
 import time
 from collections.abc import Callable
 from typing import Any
-from urllib.parse import urlsplit
 
 from hadavin_sdk.llm.common import (
     Answer,
@@ -29,6 +28,7 @@ from hadavin_sdk.llm.common import (
     stop_reason,
 )
 from hadavin_sdk.models import Reply, ToolCall
+from hadavin_sdk.safe_url import safe_urlsplit
 
 # OpenAI's own family names without a dated snapshot (`gpt-4o`, `o3`, `chatgpt-4o-latest`) move to new models;
 # `gpt-4o-2024-08-06` does not. Other servers name models their own way and are left to `latest`.
@@ -46,7 +46,7 @@ def floating(model_id: str, base_url: str) -> bool:
     name = model_name(model_id)  # `openai/gpt-4o` on a router is still the moving `gpt-4o`
     if _OPENAI_ALIAS.match(name) and not _DATED.search(name):
         return True
-    return urlsplit(base_url).hostname in _LOOPBACK and ":" not in model_id
+    return safe_urlsplit(base_url).hostname in _LOOPBACK and ":" not in model_id
 
 
 def make(settings: Any, deps: Any) -> OpenAICompatLLM:

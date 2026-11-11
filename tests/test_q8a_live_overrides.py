@@ -46,7 +46,7 @@ from hadavin_sdk import defaults
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.approvals.channel import FakeChannel
 from hadavin_sdk.backends import factory as factory_mod
-from hadavin_sdk.backends.table import TABLE, Entry, KindSettings, VaultConnection
+from hadavin_sdk.backends.table import TABLE, Entry, KindSettings
 from hadavin_sdk.config import ConfigError, load_config
 from hadavin_sdk.guard.injection import RegexDetector
 from hadavin_sdk.models import now
@@ -54,7 +54,7 @@ from hadavin_sdk.registry import load_registry
 from hadavin_sdk.runtime import tick as tick_mod
 from hadavin_sdk.runtime.tick import STEPS, TickStep, run_tick
 from hadavin_sdk.store.memory import MemoryStore
-from tests.conftest import make_cfg, qualify
+from tests.conftest import make_cfg, qualify, vault_connection_class
 from tests.test_k3_pilot import ScriptedLLM
 from tests.test_k3_pilot_env import (
     PILOT_KINDS,
@@ -64,10 +64,13 @@ from tests.test_k3_pilot_env import (
     plant_test_backends,
 )
 
+VaultConnection = vault_connection_class()
+
 # What a context built with a given time says outside demo (a copy made by dataclasses.replace says the same).
 COPY_REFUSAL = (
-    "now= is for tests; it is refused in pilot and prod. A context is not copied by replace() "
-    "(the copy would carry a given time); build a new TickContext(app)"
+    "now= is for tests; it is refused in pilot and prod. Build the context as TickContext(app), which takes "
+    "the time from the app's clock (a copy made by replace() carries the old time as a given one, so it is "
+    "refused too)"
 )
 NAMES = ("secrets", "channel", "detector", "llm", "clock", "timeout_s")
 NOT_A_STAGE = ["stag" + "ing", "Demo", "demo ", "", None]

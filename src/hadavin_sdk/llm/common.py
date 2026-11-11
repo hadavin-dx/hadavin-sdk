@@ -13,12 +13,12 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
-from urllib.parse import urlsplit
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.llm.retry import with_retry
 from hadavin_sdk.models import Reply, ToolCall
+from hadavin_sdk.safe_url import safe_urlsplit
 
 # The forced tool an `output_schema` becomes: its input schema IS the schema, so the API enforces the shape.
 ANSWER_TOOL = "submit_answer"
@@ -260,6 +260,6 @@ def post_json(url: str, body: dict[str, Any], headers: dict[str, str], timeout_s
         headers={"Content-Type": "application/json", **headers},
         method="POST",
     )
-    opener = _LOCAL_OPENER if urlsplit(url).hostname in _LOOPBACK else _OPENER
+    opener = _LOCAL_OPENER if safe_urlsplit(url).hostname in _LOOPBACK else _OPENER
     with opener.open(req, timeout=timeout_s) as resp:  # nosec B310
         return json.loads(resp.read())

@@ -18,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from hadavin_sdk import deferred
 from hadavin_sdk.actions.contract import ActionContract, schema_problems
 from hadavin_sdk.config import Config, ConfigError, Money, config_error_text, confined, load_yaml
+from hadavin_sdk.errors import shown_name
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
@@ -178,7 +179,17 @@ class Registry:
 
 
 def _yaml(path) -> object:
-    return load_yaml(path.read_text(encoding="utf-8")) if path.exists() else None
+    """One YAML file of the configuration folder, or None if it is not there. Every read of such a file goes through
+    here: a YAML error leaves `load_yaml` as a value-free `ConfigError`, and a file that cannot be read as UTF-8 text
+    (or cannot be opened) is reported by its error type only."""
+    if not path.exists():
+        return None
+    try:
+        return load_yaml(path.read_text(encoding="utf-8"))
+    except ConfigError:
+        raise
+    except (ValueError, OSError) as exc:
+        raise ConfigError(config_error_text(exc)) from None
 
 
 def _by_id(items: list, model: type, where: str) -> dict:
@@ -248,7 +259,7 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
     found: dict[str, dict[str, ToolSpec]] = {}
     if folder.is_dir():
         problems += [
-            f"tools/{p.name}: no agent {p.stem}"
+            f"tools/{shown_name(p.stem)}.yaml: no agent {shown_name(p.stem)}"
             for p in sorted(folder.glob("*.yaml"))
             if p.stem not in agents
         ]
@@ -257,13 +268,13 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
         path = folder / f"{agent_id}.yaml"
         if not path.is_file():
             continue
-        where = f"tools/{path.name}"
+        where = f"tools/{shown_name(path.stem)}.yaml"
         specs = parse_manifest(_yaml(path), where)
         if specs and read_ops is None:
             read_ops = read_operations(config.tool_modules, config.tool_module_hashes)
         found[agent_id] = {}
         problems += [  # grounding checks declared inputs only, so a tooled agent's contracts must be closed
-            f"{where}: action {action} must set `additionalProperties: false` on its input_schema "
+            f"{where}: action {shown_name(action)} must set `additionalProperties: false` on its input_schema "
             "(an agent with tools cannot have undeclared inputs)"
             for action in agent.scope_allowed
             if action in contracts
@@ -276,10 +287,13 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
                 for p in spec_problems(spec, config.tool_modules, config.evidence.cluster_suffixes)
             ]
             problems += [
-                f"{where}: tool {spec.name}: {p}" for p in schema_problems(spec.input_schema)
+                f"{where}: tool {shown_name(spec.name)}: {p}"
+                for p in schema_problems(spec.input_schema)
             ]
             if spec.name not in agent.tools_allowed:
-                problems.append(f"{where}: tool {spec.name} is not in the agent's tools_allowed")
+                problems.append(
+                    f"{where}: tool {shown_name(spec.name)} is not in the agent's tools_allowed"
+                )
             for (
                 action
             ) in agent.scope_allowed:  # every string input says whether it must be grounded
@@ -290,21 +304,23 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
                 # (integer, array, object) cannot be grounded, so it must say `identifier: false` outright
                 # instead of silently skipping the check; a boolean carries no name to ground.
                 problems += [
-                    f"{where}: action {action} input {pname!r} must say `identifier: true` or `identifier: false`"
+                    f"{where}: action {shown_name(action)} input {shown_name(pname)} must say `identifier: true` or `identifier: false`"
                     for pname, sub in props.items()
                     if isinstance(sub, dict)
                     and sub.get("type") != "boolean"
                     and "identifier" not in sub
                 ]
             if spec.name in contracts:
-                problems.append(f"{where}: tool {spec.name} has the id of an action contract")
+                problems.append(
+                    f"{where}: tool {shown_name(spec.name)} has the id of an action contract"
+                )
             problems += [
-                f"{where}: tool {spec.name}: operation {op!r} is not on the read list of tool_modules"
+                f"{where}: tool {shown_name(spec.name)}: operation {shown_name(op)} is not on the read list of tool_modules"
                 for op in spec.operations
                 if op not in (read_ops or set())
             ]
             problems += [  # a POST read (a review, a query body) is named in the config, not only in tool code
-                f"{where}: tool {spec.name}: operation {op!r} is bound to {read_ops[op][0]}; "
+                f"{where}: tool {shown_name(spec.name)}: operation {shown_name(op)} is bound to {read_ops[op][0]}; "
                 "list it in evidence.post_read_operations to allow it"
                 for op in spec.operations
                 if read_ops
@@ -326,7 +342,7 @@ def _module_pin_problems(config: Config) -> list[str]:
         if pin is None:
             if is_live(config.environment):
                 out.append(
-                    f"tool module {module} has no tool_module_hashes pin (required in pilot and prod)"
+                    f"tool module {shown_name(module)} has no tool_module_hashes pin (required in pilot and prod)"
                 )
             continue
         try:
@@ -336,7 +352,7 @@ def _module_pin_problems(config: Config) -> list[str]:
             continue
         if actual != pin:
             out.append(
-                f"tool module {module}: its source hash is {actual[:12]}..., the pin says {pin[:12]}..."
+                f"tool module {shown_name(module)}: its source hash is {actual[:12]}..., the pin says {pin[:12]}..."
             )
     return out
 
@@ -345,29 +361,35 @@ def _cross_check(config, agents, chains, contracts) -> list[str]:
     out = []
     for a in agents.values():
         if a.model_route not in config.routes:
-            out.append(f"agent {a.id}: unknown model_route {a.model_route}")
-        out += [f"agent {a.id}: no contract for {x}" for x in a.scope_allowed if x not in contracts]
+            out.append(f"agent {shown_name(a.id)}: unknown model_route {shown_name(a.model_route)}")
+        out += [
+            f"agent {shown_name(a.id)}: no contract for {shown_name(x)}"
+            for x in a.scope_allowed
+            if x not in contracts
+        ]
         try:
             if not confined(config.root, a.prompt_file).is_file():
-                out.append(f"agent {a.id}: prompt_file missing")
+                out.append(f"agent {shown_name(a.id)}: prompt_file missing")
         except ConfigError:
-            out.append(f"agent {a.id}: prompt_file escapes the config folder")
+            out.append(f"agent {shown_name(a.id)}: prompt_file escapes the config folder")
     for c in chains.values():
         if not c.steps:
-            out.append(f"chain {c.id}: no steps")
+            out.append(f"chain {shown_name(c.id)}: no steps")
         for i, s in enumerate(c.steps):
             if not s.approver_ids or s.timeout_s <= 0:
-                out.append(f"chain {c.id} step {i}: needs approvers and timeout_s > 0")
+                out.append(f"chain {shown_name(c.id)} step {i}: needs approvers and timeout_s > 0")
     for c in contracts.values():
-        out += [f"action {c.id}: {p}" for p in schema_problems(c.input_schema)]
+        out += [f"action {shown_name(c.id)}: {p}" for p in schema_problems(c.input_schema)]
         props = (c.input_schema or {}).get("properties") or {}
         if "key" in props:
-            out.append(f"action {c.id}: input 'key' is reserved for the idempotency key")
+            out.append(
+                f"action {shown_name(c.id)}: input 'key' is reserved for the idempotency key"
+            )
         # Grounding reads the TOP-LEVEL inputs only (evidence.identifier_inputs): an `identifier` flag deeper in an
         # object or array would be silently ignored, for every agent, tooled or not. Refused (flag the top-level
         # input, or say `identifier: false` on it). Fail closed: any boolean `identifier` below the top level counts.
         out += [
-            f"action {c.id}: input {n!r} has an `identifier` flag below the top level, which grounding does not read"
+            f"action {shown_name(c.id)}: input {shown_name(n)} has an `identifier` flag below the top level, which grounding does not read"
             for n, sub in props.items()
             if isinstance(sub, dict) and _nested_identifier(sub)
         ]
@@ -375,13 +397,15 @@ def _cross_check(config, agents, chains, contracts) -> list[str]:
         for op in filter(None, [http and http.operation, http and http.lookup_operation]):
             for field in re.findall(r"{(\w+)}", op):
                 if field != "key" and "pattern" not in props.get(field, {}):
-                    out.append(f"action {c.id}: path field {field} needs a pattern in input_schema")
+                    out.append(
+                        f"action {shown_name(c.id)}: path field {shown_name(field)} needs a pattern in input_schema"
+                    )
         if c.chain_id is not None and c.chain_id not in chains:
-            out.append(f"action {c.id}: unknown chain {c.chain_id}")
+            out.append(f"action {shown_name(c.id)}: unknown chain {shown_name(c.chain_id)}")
         for ref in filter(None, [c.verify_check, c.rollback]):
             module = ref.split(":", 1)[0]
             if ":" not in ref or module not in config.check_modules:
-                out.append(f"action {c.id}: {ref} is outside check_modules")
+                out.append(f"action {shown_name(c.id)}: {shown_name(ref)} is outside check_modules")
         if http is not None and c.target_system not in config.systems:
-            out.append(f"action {c.id}: unknown system {c.target_system}")
+            out.append(f"action {shown_name(c.id)}: unknown system {shown_name(c.target_system)}")
     return out

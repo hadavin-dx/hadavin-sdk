@@ -111,7 +111,11 @@ def test_dev_is_refused_with_the_rename(cfg_dir):
     with pytest.raises(ConfigError) as both:
         load_config(cfg_dir)
     assert RENAMED in str(both.value), "the rename sentence is lost beside another problem"
-    assert "nonsense_key" in str(both.value), "the other problem is hidden by the rename sentence"
+    # the other problem is shown, but an unknown key is pasted text, so its name is never shown (a secret can sit there)
+    assert "<unknown key>: Extra inputs are not permitted" in str(both.value), (
+        "the other problem is hidden by the rename sentence"
+    )
+    assert "nonsense_key" not in str(both.value), "an unknown key name is shown"
     assert "validation error" not in str(both.value), "pydantic's wrapper is visible"
     # direct construction gets the same text
     loaded = load_config(make_cfg(cfg_dir.parent / "again"))
@@ -779,17 +783,20 @@ def test_no_old_spelling_of_the_demo_only_flag_is_left():
 
 @pytest.mark.parametrize("key", [OLD + "_only", "demo_only", "demo", OLD, "stage"])
 def test_a_config_key_for_either_spelling_of_the_flag_refuses_start(cfg_dir, key):
-    """Config has no such key; the strict model refuses it, so a half-renamed pair never starts."""
+    """Config has no such key; the strict model refuses it, so a half-renamed pair never starts. The refusal says an
+    unknown key was found and where (the parent path), never the key's own text (a secret can sit in a key)."""
     _edit(cfg_dir, lambda d: d.update({key: True}))
-    with pytest.raises(ConfigError, match=key):
+    with pytest.raises(ConfigError, match="<unknown key>") as refused:
         load_config(cfg_dir)
+    assert "Extra inputs are not permitted" in str(refused.value)
 
 
 def test_both_spellings_of_the_stage_together_refuse_start(cfg_dir):
     """`environment: demo` beside an old-spelling key is refused (strict keys), never read as allowed."""
     _edit(cfg_dir, lambda d: d.update({"environment_" + OLD: "demo"}))
-    with pytest.raises(ConfigError, match="environment_" + OLD):
+    with pytest.raises(ConfigError, match="<unknown key>") as refused:
         load_config(cfg_dir)
+    assert "environment_" + OLD not in str(refused.value)
 
 
 # --- the class test, stage POSITIONS only ------------------------------------------------------------------
@@ -1300,3 +1307,307 @@ def test_a_refused_stored_kind_is_counted_not_shown(cfg_dir):
     exc = _refused(cfg_dir, edit=lambda d: d.update(evidence={"stored_kinds": [PW]}))
     assert "evidence.stored_kinds: 1 entries cannot be stored" in str(exc), str(exc)
     _assert_value_free(exc, PW)
+
+
+# --- Q8a-1 batch 6: library error texts, the YAML reader, unknown keys and names -----------------------------------------
+# Class 1: a library's own error text (here `urllib.parse.urlsplit`) copied into our error text. Class 2: a read site
+# outside the one YAML reader. Class 3: a name or key taken from a file shown in an error text. Each test below fails
+# on the head before this batch (3f3d4b6c); `tests/stage_mutants.py` (M16*) holds one mutant per guard.
+
+WIDE_AT, WIDE_COLON = "＠", "："  # full-width `@` and `:`; under NFKC they become `@` and `:`
+# a login written with full-width characters: `urlsplit` refuses it and quotes the whole host in its error text
+WIDE_LOGIN_HOST = USER + WIDE_COLON + PW + WIDE_AT + "records.example.invalid"
+WIDE_URL = "https://" + WIDE_LOGIN_HOST + "/api"
+OPENAI_COMPAT = {"kind": "openai_compat", "base_url": WIDE_URL}
+VAULT_WIDE = {"kind": "vault", "address": WIDE_URL}
+
+
+def _set_backend(capability, settings):
+    return lambda d: d["backends"].update({capability: settings})
+
+
+@pytest.mark.parametrize(
+    "edit",
+    [
+        lambda d: d["systems"]["fixture-records"].update(base_url=WIDE_URL),
+        _set_backend("llm", OPENAI_COMPAT),
+        _set_backend("secrets", VAULT_WIDE),
+        _set_backend(
+            "signer", {**VAULT_WIDE, "kind": "vault_transit", "key_name": "k", "key_version": 1}
+        ),
+        _set_backend(
+            "anchor",
+            {"kind": "s3_object_lock", "bucket": "b", "region": "r", "endpoint_url": WIDE_URL},
+        ),
+    ],
+    ids=[
+        "systems.base_url",
+        "openai_compat.base_url",
+        "vault.address",
+        "vault_transit.address",
+        "s3.endpoint_url",
+    ],
+)
+def test_a_host_that_changes_under_nfkc_is_refused_without_its_text(cfg_dir, edit):
+    """`urlsplit` raises a `ValueError` that holds the whole host, login included. It must never reach our error."""
+    exc = _refused(cfg_dir, edit=edit)
+    _assert_value_free(exc, PW, USER, "records.example.invalid", WIDE_AT, WIDE_COLON, "netloc")
+    assert "not a valid URL" in str(exc) or "a value was refused" in str(exc), str(exc)
+
+
+def test_the_one_url_splitter_gives_a_fixed_sentence_and_no_cause():
+    from hadavin_sdk.safe_url import NOT_A_URL, InvalidUrl, safe_urlsplit
+
+    for bad in (WIDE_URL, "https://[" + PW, "https://host:" + PW + "x/"):
+        with pytest.raises(InvalidUrl) as err:
+            safe_urlsplit(bad)
+        assert str(err.value) == NOT_A_URL and err.value.__cause__ is None
+        assert PW not in _everything_shown(err.value)
+        assert isinstance(err.value, ValueError)
+    assert safe_urlsplit("https://records.example.invalid:8443/x").port == 8443
+
+
+def test_a_url_that_cannot_be_read_is_never_called_loginless_or_allowed():
+    """The old `url_has_login` said False for a text it could not read."""
+    from hadavin_sdk.config import url_allowed, url_has_login
+    from hadavin_sdk.safe_url import InvalidUrl
+
+    with pytest.raises(InvalidUrl):
+        url_has_login(WIDE_URL)
+    assert url_allowed(WIDE_URL, True) is False
+
+
+def test_no_module_splits_a_configured_url_without_the_safe_splitter():
+    """The class: every `urlsplit` of a value that came from a file or a model goes through `safe_urlsplit`."""
+    own = ROOT / "src" / "hadavin_sdk" / "safe_url.py"
+    users = [
+        p.relative_to(ROOT).as_posix()
+        for p in (ROOT / "src").rglob("*.py")
+        if p != own
+        and re.search(
+            r"(?<![\w.])urlsplit\(|urlparse\(|urllib\.parse\.urlsplit",
+            p.read_text(encoding="utf-8"),
+        )
+    ]
+    assert users == [], f"these files split a URL themselves: {users}"
+
+
+def test_the_one_yaml_reader_gives_a_value_free_error_for_every_caller():
+    from hadavin_sdk.config import load_yaml
+
+    with pytest.raises(ConfigError) as err:
+        load_yaml("tool:\n  token: [" + PW + " no closing bracket\n")
+    assert re.fullmatch(r"not valid YAML \(line \d+, column \d+\)", str(err.value)), str(err.value)
+    _assert_value_free(err.value, PW)
+
+
+@pytest.mark.parametrize(
+    "name, content",
+    [
+        ("tools/test-agent.yaml", "- name: x\n  note: {a: 1, b: " + PW + "\n"),
+        ("agents.yaml", "- id: x\n  note: [" + PW + "\n"),
+        ("principals.yaml", "- id: x\n  note: '" + PW + "\n"),
+        ("chains.yaml", "- id: x\n  note: {" + PW + "\n"),
+        ("egress.yaml", "hosts: [" + PW + "\n"),
+    ],
+)
+def test_a_broken_yaml_line_in_any_file_of_the_folder_is_not_quoted(cfg_dir, name, content):
+    """`tools/<agent>.yaml` was read outside the guarded block and its YAML error quoted the line."""
+    (cfg_dir / "tools").mkdir(exist_ok=True)
+    exc = _refused(cfg_dir, extra_file=(name, content))
+    assert re.search(r"not valid YAML \(line \d+, column \d+\)", str(exc)), str(exc)
+    _assert_value_free(exc, PW)
+
+
+def test_a_tool_file_that_is_not_utf8_is_reported_by_its_type_only(cfg_dir):
+    (cfg_dir / "tools").mkdir(exist_ok=True)
+    (cfg_dir / "tools" / "test-agent.yaml").write_bytes(b"- name: \xff\xfe" + PW.encode())
+    with pytest.raises(ConfigError) as err:
+        load_registry(load_config(cfg_dir))
+    assert "UnicodeDecodeError" in str(err.value)
+    _assert_value_free(err.value, PW)
+
+
+# Unknown keys: the key text is what a person pasted, so it is never shown. Five places (the evidence probe rows).
+KEY = PW
+UNKNOWN_KEY_ROWS = {
+    "config.yaml top level": lambda d: d.update({KEY: 1}),
+    "backend setting": lambda d: d["backends"].update(channel={"kind": "fake", KEY: 1}),
+    "systems entry": lambda d: d["systems"]["fixture-records"].update({KEY: 1}),
+}
+
+
+@pytest.mark.parametrize("row", sorted(UNKNOWN_KEY_ROWS))
+def test_an_unknown_key_in_the_config_is_not_shown(cfg_dir, row):
+    exc = _refused(cfg_dir, edit=UNKNOWN_KEY_ROWS[row])
+    _assert_value_free(exc, KEY)
+    assert "<unknown key>" in str(exc) and "Extra inputs are not permitted" in str(exc), str(exc)
+
+
+@pytest.mark.parametrize(
+    "name, content",
+    [
+        (
+            "agents.yaml",
+            "- id: test-agent\n  status: live\n  data_class: internal\n  model_route: default\n  prompt_file: prompts/test-agent.md\n  scope_allowed: []\n  max_steps: 4\n  budget_usd: {daily: '1.00', monthly: '10.00'}\n  "
+            + KEY
+            + ": 1\n",
+        ),
+    ],
+)
+def test_an_unknown_key_in_an_agent_entry_is_not_shown(cfg_dir, name, content):
+    exc = _refused(cfg_dir, extra_file=(name, content))
+    _assert_value_free(exc, KEY)
+    assert "<unknown key>" in str(exc), str(exc)
+
+
+def test_an_unknown_key_in_an_action_file_is_not_shown(cfg_dir):
+    path = cfg_dir / "actions" / "lookup_record.yaml"
+    path.write_text(path.read_text(encoding="utf-8") + KEY + ": 1\n", encoding="utf-8")
+    with pytest.raises(ConfigError) as err:
+        load_registry(load_config(cfg_dir))
+    _assert_value_free(err.value, KEY)
+    assert "<unknown key>" in str(err.value), str(err.value)
+
+
+def test_a_mapping_key_that_is_not_a_plain_name_is_not_shown_in_the_place(cfg_dir):
+    """`systems.<name>.base_url`: a name that is not a plain identifier (here with capital letters) is not shown."""
+    exc = _refused(
+        cfg_dir,
+        edit=lambda d: d["systems"].update({KEY: {"base_url": 5}}),
+    )
+    _assert_value_free(exc, KEY)
+    assert "systems.<not shown>.base_url" in str(exc), str(exc)
+
+
+# Names as VALUES in the registry cross-check: the file and the field are said, the pasted name is not.
+def _agent_entry(**over):
+    entry = {
+        "id": "test-agent",
+        "status": "live",
+        "data_class": "internal",
+        "model_route": "default",
+        "prompt_file": "prompts/test-agent.md",
+        "scope_allowed": ["lookup_record"],
+        "max_steps": 4,
+        "budget_usd": {"daily": "1.00", "monthly": "10.00"},
+    }
+    entry.update(over)
+    return yaml.safe_dump([entry])
+
+
+@pytest.mark.parametrize(
+    "over, said",
+    [
+        ({"model_route": PW}, "unknown model_route <not shown>"),
+        ({"scope_allowed": [PW]}, "no contract for <not shown>"),
+    ],
+)
+def test_a_name_pasted_where_the_registry_expects_a_known_one_is_not_shown(cfg_dir, over, said):
+    exc = _refused(cfg_dir, extra_file=("agents.yaml", _agent_entry(**over)))
+    _assert_value_free(exc, PW)
+    assert said in str(exc), str(exc)
+
+
+def test_a_plain_name_is_still_shown_so_the_user_can_find_the_problem(cfg_dir):
+    exc = _refused(cfg_dir, extra_file=("agents.yaml", _agent_entry(model_route="no-such-route")))
+    assert "unknown model_route no-such-route" in str(exc), str(exc)
+
+
+def test_the_name_filter_is_a_shape_check_only():
+    from hadavin_sdk.errors import NOT_SHOWN, shown_name
+
+    assert (
+        shown_name("lookup_record") == "lookup_record"
+        and shown_name("k8s.pods-list") == "k8s.pods-list"
+    )
+    for odd in (PW, "", "a b", "x" * 65, "ａbc", "naïve", None, 5, "Lookup"):
+        assert shown_name(odd) == NOT_SHOWN, odd
+
+
+def test_a_name_in_a_tool_manifest_problem_is_not_shown(cfg_dir):
+    from hadavin_sdk.tools import ToolSpec, spec_problems
+
+    spec = ToolSpec(
+        name="a_tool", function="m:f", description="d", input_schema={"type": "object"},
+        side_effect="none", hosts=(USER + ":" + PW + "@records.example.invalid",),
+    )  # fmt: skip
+    shown = " ".join(spec_problems(spec, ["m"]))
+    assert "bare lowercase hostname" in shown and PW not in shown and USER not in shown, shown
+
+
+def test_a_keyword_or_property_name_in_an_input_schema_is_not_shown():
+    from hadavin_sdk.actions.contract import schema_problems
+
+    shown = " ".join(
+        schema_problems(
+            {"type": "object", "properties": {PW: {"type": "string", PW + "k": 1, "pattern": "("}}}
+        )
+    )
+    assert PW not in shown and "unsupported keyword <not shown>" in shown, shown
+    assert PW not in " ".join(schema_problems({"type": PW}))
+
+
+# Class 3b: a ValueError that a LIBRARY raised inside a validator quotes the value; only ours keep their sentence.
+def test_a_library_value_error_in_a_validator_shows_its_type_only_but_our_sentence_stays():
+    from pydantic import BaseModel, field_validator
+
+    from hadavin_sdk.config import config_error_text
+
+    class Probe(BaseModel):
+        number: str
+
+        @field_validator("number")
+        @classmethod
+        def _read(cls, v):
+            int(v)  # the library's text: "invalid literal for int() with base 10: '<the value>'"
+            return v
+
+    with pytest.raises(Exception) as lib:
+        Probe(number=PW)
+    text = config_error_text(lib.value)
+    assert PW not in text and "a value was refused (ValueError)" in text, text
+
+
+def test_our_own_value_error_sentence_is_kept(cfg_dir):
+    exc = _refused(cfg_dir, edit=lambda d: d.update(executor_timeout_s=0))
+    assert "must be an int or float between 0.001 and 3600" in str(exc)
+
+
+def test_the_rename_sentence_shows_no_unknown_key_beside_it(cfg_dir):
+    _set_env(cfg_dir, OLD)
+    _edit(cfg_dir, lambda d: d.update({KEY: 1}))
+    with pytest.raises(ConfigError) as both:
+        load_config(cfg_dir)
+    assert RENAMED in str(both.value) and "<unknown key>: Extra inputs are not permitted" in str(
+        both.value
+    )
+    _assert_value_free(both.value, KEY)
+
+
+def test_the_given_time_refusal_is_true_for_a_direct_context_and_a_copy():
+    """The copy sentence was attached to every refusal, so a direct `TickContext(app, t)` was told about replace()."""
+    from hadavin_sdk.runtime import tick as tick_mod
+
+    text = tick_mod.NO_GIVEN_TIME_COPY
+    assert text.startswith(tick_mod.NO_GIVEN_TIME) and "TickContext(app)" in text
+    assert "is not copied" not in text, "a direct construction is told it copied something"
+    assert "replace()" in text and "refused too" in text
+
+
+def test_an_unknown_key_in_a_tool_manifest_entry_is_not_shown(cfg_dir):
+    """`parse_manifest` joined the raw `loc` of each problem: an unknown key was shown as written."""
+    (cfg_dir / "tools").mkdir(exist_ok=True)
+    entry = "- {name: a_tool, " + KEY + ": 1}\n"
+    exc = _refused(cfg_dir, extra_file=("tools/test-agent.yaml", entry))
+    assert "invalid tool entry" in str(exc) and "<unknown key>" in str(exc), str(exc)
+    _assert_value_free(exc, KEY)
+
+
+def test_egress_check_refuses_a_url_it_cannot_read_without_its_text():
+    from hadavin_sdk.guard.egress import EgressRefused, egress_check
+
+    with pytest.raises(EgressRefused) as err:
+        egress_check(WIDE_URL, frozenset({"records.example.invalid"}))
+    assert str(err.value) == "host not in egress.yaml: ?"
+    assert PW not in _everything_shown(err.value) and err.value.__cause__ is None

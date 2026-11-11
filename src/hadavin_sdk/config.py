@@ -9,7 +9,6 @@ import re
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any, Literal, get_args
-from urllib.parse import urlsplit
 
 import yaml
 from pydantic import (
@@ -25,7 +24,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hadavin_sdk import defaults, deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, error_where, shown_name
+from hadavin_sdk.safe_url import NOT_A_URL, InvalidUrl, safe_urlsplit
 from hadavin_sdk.scrub_settings import ScrubSettings
 from hadavin_sdk.stages import STAGES, is_live, is_prod
 
@@ -57,7 +57,8 @@ Money = Annotated[Decimal, BeforeValidator(_money)]
 
 
 class _Strict(BaseModel):
-    # A mistyped key may hold a secret: errors name the field, never its value.
+    # A mistyped key may hold a secret: an error names the field (an unknown key shows as `<unknown key>`), never the
+    # value; `config_error_text` is the one place that decides what text of a problem is shown.
     model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
 
 
@@ -179,18 +180,20 @@ def executor_timeout_ok(value: object) -> bool:
 
 def url_has_login(url: str) -> bool:
     """True if the URL carries a user name or password (`user:pw@host`). A login in a URL is refused whole: it would
-    end up in logs and error texts."""
-    try:
-        parts = urlsplit(url)
-        return parts.username is not None or parts.password is not None
-    except ValueError:
-        return False
+    end up in logs and error texts. A URL that cannot be read raises `InvalidUrl` (fixed text, never the URL):
+    "no login found" must not be said of a text that was not read."""
+    parts = safe_urlsplit(url)
+    return parts.username is not None or parts.password is not None
 
 
 def url_allowed(url: str, allow_insecure_loopback: bool) -> bool:
     """The bearer token travels with every call: https only. Plain http only to this machine, and only when
-    the config sets ``allow_insecure_loopback: true`` (the local test fixture). Used at load and at call time."""
-    parts = urlsplit(url)
+    the config sets ``allow_insecure_loopback: true`` (the local test fixture). Used at load and at call time.
+    A URL that cannot be read is not allowed (False)."""
+    try:
+        parts = safe_urlsplit(url)
+    except InvalidUrl:
+        return False
     if parts.scheme == "https":
         return True
     return parts.scheme == "http" and allow_insecure_loopback and parts.hostname in _LOOPBACK
@@ -406,17 +409,21 @@ class Config(_Strict):
         for source, ref in self.scope_inventory.items():
             if not _inventory_ref_ok(ref):
                 raise ValueError(
-                    f"scope_inventory {source}: expected '<page>#<anchor> sha256:<64 hex digits>'"
+                    f"scope_inventory {shown_name(source)}: expected '<page>#<anchor> sha256:<64 hex digits>'"
                 )
         for d in self.backends.detector:  # llm_judge names a route
             if getattr(d, "route", None) is not None and d.route not in self.routes:
                 raise ValueError(f"backends.detector {d.kind}: its route is not in routes")
         for name, system in self.systems.items():
-            if url_has_login(system.base_url):
-                raise ValueError(f"system {name}: base_url must not contain a login")
+            try:
+                has_login = url_has_login(system.base_url)
+            except InvalidUrl:
+                raise ValueError(f"system {shown_name(name)}: base_url is {NOT_A_URL}") from None
+            if has_login:
+                raise ValueError(f"system {shown_name(name)}: base_url must not contain a login")
             if not url_allowed(system.base_url, self.allow_insecure_loopback):
                 raise ValueError(
-                    f"system {name}: base_url must be https "
+                    f"system {shown_name(name)}: base_url must be https "
                     "(http only for loopback with allow_insecure_loopback)"
                 )
         refused = []  # environment table, design 4.6: every refusal at once, so one fix round is enough
@@ -468,8 +475,13 @@ class _UniqueKeyLoader(yaml.SafeLoader):
 
 
 def load_yaml(text: str) -> Any:
-    """``yaml.safe_load`` that refuses duplicate mapping keys."""
-    return yaml.load(text, Loader=_UniqueKeyLoader)  # noqa: S506  # nosec B506 - SafeLoader subclass
+    """``yaml.safe_load`` that refuses duplicate mapping keys. THE one YAML reader: a YAML error leaves it as a
+    `ConfigError` that names the line and column only (the error's own text quotes the offending line, which can hold
+    a secret), with no cause, so every caller, present and future, gets a value-free error."""
+    try:
+        return yaml.load(text, Loader=_UniqueKeyLoader)  # noqa: S506  # nosec B506 - SafeLoader subclass
+    except yaml.YAMLError as exc:
+        raise ConfigError(config_error_text(exc)) from None
 
 
 def _read_yaml(path: Path) -> dict:
@@ -490,28 +502,57 @@ def confined(base: Path, relative: str) -> Path:
     return path
 
 
+def _own_error(error: object) -> bool:
+    """True if a `ValueError` was raised by Hadavin's own code (a validator or cross-check that writes its own
+    sentence), false if it came out of a library call (`urlsplit`, `int()`, `Decimal`, ...) whose text quotes the
+    value it choked on. The last frame of the traceback says which; no traceback means not known, so false."""
+    tb = getattr(error, "__traceback__", None)
+    if tb is None:
+        return False
+    while tb.tb_next is not None:
+        tb = tb.tb_next
+    module = tb.tb_frame.f_globals.get("__name__", "")
+    return isinstance(module, str) and (
+        module == "hadavin_sdk" or module.startswith("hadavin_sdk.")
+    )
+
+
+def _what(e: Any) -> str:
+    """The sentence of one problem. A `value_error` keeps its own sentence only when Hadavin's code wrote it
+    (`_own_error`); a library's `ValueError` text may quote the value, so only its type name is kept."""
+    if e["type"] == "value_error" and not _own_error(e.get("ctx", {}).get("error")):
+        return "a value was refused (ValueError)"
+    return e["msg"]
+
+
 def _error_line(e: Any) -> str:
     """One problem as `where: what` (used beside the rename sentence)."""
-    where = ".".join(str(p) for p in e["loc"])
-    return f"{where}: {e['msg']}" if where else e["msg"]
+    where = error_where(e)
+    return f"{where}: {_what(e)}" if where else _what(e)
 
 
 def _value_free_text(exc: ValidationError) -> str:
     """pydantic's own layout (`N validation errors for Config`, then `where`, then `  what [type=...]`), without the
-    refused value (`input_value=...`, which could be a secret written into the wrong field) and without the link."""
-    errors = exc.errors(include_url=False, include_input=False, include_context=False)
+    refused value (`input_value=...`, which could be a secret written into the wrong field) and without the link.
+    The place keeps field names and position numbers; an unknown key is `<unknown key>` and a mapping key is shown
+    only if it is a plain identifier (`shown_name`). A `ValueError` that a library raised shows its type only."""
+    errors = exc.errors(include_url=False, include_input=False)
     lines = [f"{len(errors)} validation error{'s' if len(errors) != 1 else ''} for {exc.title}"]
     for e in errors:
-        lines += [".".join(str(p) for p in e["loc"]), f"  {e['msg']} [type={e['type']}]"]
+        lines += [error_where(e), f"  {_what(e)} [type={e['type']}]"]
     return "\n".join(lines)
 
 
 def config_error_text(exc: BaseException) -> str:
     """THE one way an exception from reading or checking configuration becomes error text: it names the problem and
     where it is, never the value that was refused (a mistyped key or a pasted login can be a secret). A pydantic
-    error keeps its own layout without `input_value`, the link and the context; a YAML error keeps its line and
-    column only (its own text quotes the offending line); any other error keeps its type only. Callers raise
-    with `from None`, so the cause (whose text may carry the value) is not shown either."""
+    error keeps its own layout without `input_value`, the link and the context; the place shows field names and
+    positions, an unknown key as `<unknown key>` and any other name from the file only if `errors.shown_name` allows
+    it; the sentence of a `value_error` is kept only when Hadavin's own code wrote it (a library's `ValueError` text
+    may quote the value, so its type only is shown). A YAML error keeps its line and column only (its own text
+    quotes the offending line); any other error keeps its type only. Callers raise with `from None`, so the cause
+    (whose text may carry the value) is not shown either. Not covered: names of fields and kinds, and the errors
+    that `app.build` or a backend raises later."""
     if isinstance(exc, ValidationError):
         return _value_free_text(exc)
     if isinstance(exc, yaml.MarkedYAMLError) and exc.problem_mark is not None:

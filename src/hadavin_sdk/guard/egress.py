@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import unicodedata
-from urllib.parse import urlsplit
+
+from hadavin_sdk.safe_url import InvalidUrl, safe_urlsplit
 
 
 class EgressRefused(PermissionError):
@@ -23,7 +24,10 @@ def normalise_host(host: str | None) -> str:
 
 
 def egress_check(host_or_url: str, allowed: frozenset[str]) -> str:
-    host = urlsplit(host_or_url).hostname if "://" in host_or_url else host_or_url
+    try:
+        host = safe_urlsplit(host_or_url).hostname if "://" in host_or_url else host_or_url
+    except InvalidUrl:
+        raise EgressRefused("host not in egress.yaml: ?") from None
     host = normalise_host(host)
     if not host or host not in {normalise_host(a) for a in allowed}:
         raise EgressRefused(f"host not in egress.yaml: {host or '?'}")

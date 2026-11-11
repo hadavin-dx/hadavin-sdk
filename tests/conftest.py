@@ -36,6 +36,15 @@ os.environ["AWS_SECRET_ACCESS_KEY"] = "fake" + "-secret-key"
 os.environ["AWS_EC2_METADATA_DISABLED"] = "true"
 
 
+def vault_connection_class() -> type:
+    """The shared settings class of the Vault kinds. It is `backends.table.VaultConnection` since Q8a-1 and was the
+    private `_VaultConnection` before; both names are accepted so that a test file which needs the class still
+    COLLECTS on code from before the rename (a collection error would hide whether its tests fail on the old code)."""
+    from hadavin_sdk.backends import table
+
+    return getattr(table, "VaultConnection", None) or table._VaultConnection
+
+
 def make_cfg(tmp_path: Path, port: int = 0) -> Path:
     for name in ("config", "recorded", "inputs", "golden"):
         shutil.copytree(FIXTURES / name, tmp_path / name, dirs_exist_ok=True)

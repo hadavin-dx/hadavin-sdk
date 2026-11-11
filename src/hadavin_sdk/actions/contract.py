@@ -7,6 +7,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from hadavin_sdk.errors import shown_name
 from hadavin_sdk.models import RiskClass
 
 _ORDER: list[RiskClass] = ["read_only", "reversible", "sign_off"]
@@ -115,14 +116,81 @@ _KEYWORDS = {
 }
 
 
+# The standard JSON Schema keywords (draft 2020-12), a closed list of OUR OWN: one of them in a contract is named in
+# the error so the author sees which unsupported keyword it is. Any other key is the file's own text and goes through
+# `shown_name` (a pasted secret can sit in a key).
+_JSON_SCHEMA_VOCABULARY = frozenset(
+    {
+        "$anchor",
+        "$comment",
+        "$defs",
+        "$dynamicAnchor",
+        "$dynamicRef",
+        "$id",
+        "$ref",
+        "$schema",
+        "$vocabulary",
+        "additionalItems",
+        "allOf",
+        "anyOf",
+        "const",
+        "contains",
+        "contentEncoding",
+        "contentMediaType",
+        "contentSchema",
+        "default",
+        "definitions",
+        "dependencies",
+        "dependentRequired",
+        "dependentSchemas",
+        "deprecated",
+        "description",
+        "else",
+        "examples",
+        "exclusiveMaximum",
+        "exclusiveMinimum",
+        "format",
+        "if",
+        "items",
+        "maxContains",
+        "maxItems",
+        "maxProperties",
+        "maximum",
+        "minContains",
+        "minItems",
+        "minProperties",
+        "minimum",
+        "multipleOf",
+        "not",
+        "oneOf",
+        "patternProperties",
+        "prefixItems",
+        "propertyNames",
+        "readOnly",
+        "then",
+        "title",
+        "unevaluatedItems",
+        "unevaluatedProperties",
+        "uniqueItems",
+        "writeOnly",
+    }
+)
+
+
+def _keyword_shown(keyword: object) -> str:
+    return keyword if keyword in _JSON_SCHEMA_VOCABULARY else shown_name(keyword)
+
+
 def schema_problems(schema: Any, where: str = "input_schema") -> list[str]:
     """Load-time check: only the subset ``schema_errors`` understands, so a contract can't crash the gate."""
     if not isinstance(schema, dict):
         return [f"{where}: must be a mapping"]
-    out = [f"{where}: unsupported keyword {k}" for k in schema if k not in _KEYWORDS]
+    out = [
+        f"{where}: unsupported keyword {_keyword_shown(k)}" for k in schema if k not in _KEYWORDS
+    ]
     t = schema.get("type")
     if "type" in schema and (not isinstance(t, str) or t not in _TYPES):
-        out.append(f"{where}: unsupported type {t!r} (use string for numbers)")
+        out.append(f"{where}: unsupported type (use string for numbers)")
     if "pattern" in schema:
         try:
             if not isinstance(schema["pattern"], str):
@@ -148,7 +216,7 @@ def schema_problems(schema: Any, where: str = "input_schema") -> list[str]:
     if not isinstance(props, dict):
         return [*out, f"{where}: properties must be a mapping"]
     for k, sub in props.items():
-        out += schema_problems(sub, f"{where}.{k}")
+        out += schema_problems(sub, f"{where}.{shown_name(k)}")
     return out
 
 

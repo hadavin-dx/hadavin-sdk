@@ -35,15 +35,16 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
-from urllib.parse import quote, quote_plus, urlsplit, urlunsplit
+from urllib.parse import quote, quote_plus, urlunsplit
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from hadavin_sdk import defaults
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, error_where, shown_name
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
+from hadavin_sdk.safe_url import safe_urlsplit
 from hadavin_sdk.scrub_settings import ScrubSettings
 
 DEFAULT_MAX_OUTPUT_BYTES = defaults.MAX_OUTPUT_BYTES  # the manifest field's default
@@ -116,11 +117,11 @@ def parse_manifest(raw: Any, where: str) -> list[ToolSpec]:
                 ToolSpec(**entry) if isinstance(entry, dict) else ToolSpec.model_validate(entry)
             )
         except ValidationError as exc:
-            fields = ", ".join(".".join(str(p) for p in e["loc"]) or "?" for e in exc.errors())
+            fields = ", ".join(error_where(e) or "?" for e in exc.errors(include_input=False))
             raise ConfigError(f"{where}: invalid tool entry ({fields})") from None
     names = [t.name for t in out]
     if dup := sorted({n for n in names if names.count(n) > 1}):
-        raise ConfigError(f"{where}: duplicate tool {', '.join(dup)}")
+        raise ConfigError(f"{where}: duplicate tool {', '.join(shown_name(d) for d in dup)}")
     return out
 
 
@@ -217,27 +218,31 @@ def spec_problems(
     out = []
     module, _, fn = spec.function.partition(":")
     if not fn or module not in tool_modules:
-        out.append(f"tool {spec.name}: {spec.function} is outside tool_modules")
+        out.append(f"tool {shown_name(spec.name)}: its function is outside tool_modules")
     for host in spec.hosts:
         if not host or host != host.lower() or "/" in host or ":" in host or "@" in host:
-            out.append(f"tool {spec.name}: host {host!r} must be a bare lowercase hostname")
+            out.append(
+                f"tool {shown_name(spec.name)}: host {shown_name(host)} must be a bare lowercase hostname"
+            )
         elif why := forbidden_host(host):
-            out.append(f"tool {spec.name}: host {host!r} is {why}")
+            out.append(f"tool {shown_name(spec.name)}: host {shown_name(host)} is {why}")
     if spec.cluster_http and not all(host_allowed_over_http(h, suffixes) for h in spec.hosts):
         # One tool is either in-cluster (plain http allowed) or outside it (https only); never a mix (design 6.4).
         out.append(
-            f"tool {spec.name}: cluster_http needs every host to end in one of {list(suffixes)}"
+            f"tool {shown_name(spec.name)}: cluster_http needs every host to end in one of {list(suffixes)}"
         )
     if spec.cluster_http and not spec.hosts:
-        out.append(f"tool {spec.name}: cluster_http needs hosts")
+        out.append(f"tool {shown_name(spec.name)}: cluster_http needs hosts")
     if spec.ca_file and spec.ca_secret_name:
-        out.append(f"tool {spec.name}: set ca_file or ca_secret_name, not both")
+        out.append(f"tool {shown_name(spec.name)}: set ca_file or ca_secret_name, not both")
     if (spec.ca_file or spec.ca_secret_name) and spec.cluster_http:
-        out.append(f"tool {spec.name}: a CA applies to https; cluster_http is plain http")
+        out.append(
+            f"tool {shown_name(spec.name)}: a CA applies to https; cluster_http is plain http"
+        )
     if bad := [p for p in spec.ports if not 0 < p < 65536]:
-        out.append(f"tool {spec.name}: ports {bad} are not valid")
+        out.append(f"tool {shown_name(spec.name)}: ports {bad} are not valid")
     if spec.generated_suffix and (why := suffix_problem(spec.generated_suffix)):
-        out.append(f"tool {spec.name}: generated_suffix {why}")
+        out.append(f"tool {shown_name(spec.name)}: generated_suffix {why}")
     return out
 
 
@@ -252,7 +257,7 @@ def _module_files(module: str) -> list[tuple[str, Path]]:
     `sys.path` entry that holds the module wins, as it would for an import."""
     parts = module.split(".")
     if not all(p.isidentifier() for p in parts):
-        raise ConfigError(f"tool module {module!r} is not a dotted module name")
+        raise ConfigError("a tool module name is not a dotted module name")
     for entry in sys.path:
         root = Path(entry or ".")
         leaf = root.joinpath(*parts)
@@ -266,7 +271,7 @@ def _module_files(module: str) -> list[tuple[str, Path]]:
             if init.is_file():
                 files.append((".".join(parts[:i]), init))
         return [*files, (module, own)]
-    raise ConfigError(f"tool module {module} cannot be found on the module path")
+    raise ConfigError(f"tool module {shown_name(module)} cannot be found on the module path")
 
 
 def _pin_digest(files: list[tuple[str, bytes]]) -> str:
@@ -394,7 +399,9 @@ def load_tool_module(module: str, pins: Mapping[str, str] | None = None) -> type
     except ConfigError:
         raise
     except Exception as exc:  # noqa: BLE001 - whatever the module did on load, start-up refuses
-        raise ConfigError(f"tool module {module} cannot be loaded ({type(exc).__name__})") from None
+        raise ConfigError(
+            f"tool module {shown_name(module)} cannot be loaded ({type(exc).__name__})"
+        ) from None
 
 
 def resolve_function(
@@ -402,13 +409,13 @@ def resolve_function(
 ) -> Callable[..., str]:
     module, _, name = spec.function.partition(":")
     if not name or module not in tool_modules:
-        raise ConfigError(f"tool {spec.name}: {spec.function} is outside tool_modules")
+        raise ConfigError(f"tool {shown_name(spec.name)}: its function is outside tool_modules")
     try:
         fn = getattr(load_tool_module(module, pins), name)
     except AttributeError as exc:
-        raise ConfigError(f"tool {spec.name}: {spec.function} cannot be loaded") from exc
+        raise ConfigError(f"tool {shown_name(spec.name)}: its function cannot be loaded") from exc
     if not callable(fn):
-        raise ConfigError(f"tool {spec.name}: {spec.function} is not callable")
+        raise ConfigError(f"tool {shown_name(spec.name)}: its function is not callable")
     return fn
 
 
@@ -434,7 +441,9 @@ def read_operations(
                     f"{module}: operation {op!r} has no valid (METHOD, regex)"
                 ) from None
             if method not in _METHODS:
-                raise ConfigError(f"{module}: operation {op!r} uses method {method!r}")
+                raise ConfigError(
+                    f"{shown_name(module)}: operation {shown_name(op)} uses method {shown_name(method)}"
+                )
             if out.get(op, (method, pattern)) != (method, pattern):
                 raise ConfigError(
                     f"{module}: operation {op!r} is already bound differently by another module"
@@ -561,7 +570,7 @@ class ToolContext:
             raise ToolRefused(
                 "the URL holds a backslash, whitespace, a control or a non-ASCII character"
             )
-        parts = urlsplit(url)
+        parts = safe_urlsplit(url)
         if "%" in parts.netloc or "%" in parts.path or "." + "." in parts.path:
             raise ToolRefused("percent-encoding in the host or path, and '..', are refused")
         if not re.fullmatch(binding[1], parts.path or "/"):

@@ -12,7 +12,6 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from hadavin_sdk import sources as sources_mod
 from hadavin_sdk import tools as tools_mod
@@ -35,6 +34,7 @@ from hadavin_sdk.config import (
     executor_timeout_ok,
     load_config,
 )
+from hadavin_sdk.errors import shown_name
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM
@@ -42,6 +42,7 @@ from hadavin_sdk.models import now
 from hadavin_sdk.registry import Registry, load_registry
 from hadavin_sdk.runtime import evidence
 from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
+from hadavin_sdk.safe_url import safe_urlsplit
 from hadavin_sdk.sources import Source
 from hadavin_sdk.sources.kinds import KINDS
 from hadavin_sdk.stages import is_live
@@ -394,13 +395,15 @@ def _build_source(
     operation bindings of its kind, its CA, and its credential from the secrets kind."""
     kind = KINDS[sc.kind]
     settings = kind.settings(**sc.settings)
-    parts = urlsplit(kind.endpoint(settings))
+    parts = safe_urlsplit(kind.endpoint(settings))
     plain = parts.scheme == "http"
     if plain and sc.token_secret_name:
-        raise ConfigError(f"source {name}: a bearer token never travels over plain http; use https")
+        raise ConfigError(
+            f"source {shown_name(name)}: a bearer token never travels over plain http; use https"
+        )
     if why := tools_mod.forbidden_host((parts.hostname or "").lower()):
         raise ConfigError(
-            f"source {name}: host {parts.hostname!r} is {why}"
+            f"source {shown_name(name)}: host {shown_name(parts.hostname)} is {why}"
         )  # as a tool manifest host
     spec = tools_mod.ToolSpec(
         name="source_" + re.sub(r"[^a-z0-9]", "_", name.lower())[:30],
@@ -443,7 +446,7 @@ def _build_source(
 
 def _source_host(sc) -> str:
     kind = KINDS[sc.kind]
-    return (urlsplit(kind.endpoint(kind.settings(**sc.settings))).hostname or "").lower()
+    return (safe_urlsplit(kind.endpoint(kind.settings(**sc.settings))).hostname or "").lower()
 
 
 def _unprobed_tools(cfg: Config, reg: Registry) -> list[str]:
@@ -523,7 +526,7 @@ def _toolbox(
     for per_agent in reg.tools.values():
         for name, spec in per_agent.items():
             if specs.setdefault(name, spec) != spec:
-                raise ConfigError(f"tool {name} is defined differently for two agents")
+                raise ConfigError(f"tool {shown_name(name)} is defined differently for two agents")
     if not specs:
         return None
     fns = {

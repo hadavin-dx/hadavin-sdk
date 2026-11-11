@@ -53,10 +53,12 @@ OK, FAILED, SKIPPED = "ok", "failed", "skipped"
 
 
 NO_GIVEN_TIME = "now= is for tests; it is refused in pilot and prod"
-# A context is also refused when it is COPIED with `dataclasses.replace`: replace passes the old time on as a given one.
+# The refusal of a context that is handed a time. `__post_init__` cannot tell a direct `TickContext(app, t)` from a
+# `dataclasses.replace` copy (replace calls the constructor with the old time), so the one sentence is true of both
+# and does not say which one the caller did.
 NO_GIVEN_TIME_COPY = (
-    f"{NO_GIVEN_TIME}. A context is not copied by replace() (the copy would carry a given time); "
-    "build a new TickContext(app)"
+    f"{NO_GIVEN_TIME}. Build the context as TickContext(app), which takes the time from the app's clock "
+    "(a copy made by replace() carries the old time as a given one, so it is refused too)"
 )
 
 

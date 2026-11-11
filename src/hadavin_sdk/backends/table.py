@@ -2,7 +2,7 @@
 
 Factories are ``"module:function"`` strings, imported only when that kind is built, so a kind whose optional
 extra is not installed fails at start-up with the install hint, and nothing else pays for it. This module
-imports no other Hadavin module (``config`` imports it).
+imports no other Hadavin module except the standard-library-only leaf ``safe_url`` (``config`` imports it).
 """
 
 from __future__ import annotations
@@ -12,9 +12,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
-from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from hadavin_sdk.safe_url import safe_urlsplit
 
 
 class KindSettings(BaseModel):
@@ -76,7 +77,7 @@ class OpenAICompatSettings(_LLMSettings):
 
     @model_validator(mode="after")
     def _https_or_keyless_loopback(self) -> OpenAICompatSettings:
-        url = urlsplit(self.base_url)
+        url = safe_urlsplit(self.base_url)
         local = url.scheme == "http" and url.hostname in _LOOPBACK
         if url.scheme != "https" and not (local and not self.api_key_secret_name):
             raise ValueError(
@@ -167,7 +168,7 @@ class S3ObjectLockSettings(_AnchorSettings):
     @model_validator(mode="after")
     def _endpoint(self) -> S3ObjectLockSettings:
         if self.endpoint_url is not None:
-            url = urlsplit(self.endpoint_url)
+            url = safe_urlsplit(self.endpoint_url)
             local = url.scheme == "http" and url.hostname in _LOOPBACK
             if url.scheme != "https" and not local:
                 raise ValueError("endpoint_url must be https (plain http only to this machine)")
@@ -270,7 +271,7 @@ class VaultConnection(KindSettings):
 
     @model_validator(mode="after")
     def _checks(self) -> VaultConnection:
-        url = urlsplit(self.address)
+        url = safe_urlsplit(self.address)
         if url.scheme != "https" and not (url.scheme == "http" and url.hostname in _LOOPBACK):
             raise ValueError("address must be https (plain http only to this machine)")
         if {".", ".."} & {seg for p in self._paths() for seg in p.split("/")}:
@@ -373,7 +374,7 @@ def _anthropic_hosts(s: Any) -> list[str]:
 
 def _s3_anchor_hosts(s: Any) -> list[str]:
     if s.endpoint_url:  # an S3-compatible store (MinIO, Ceph RGW)
-        return [urlsplit(s.endpoint_url).hostname or ""]
+        return [safe_urlsplit(s.endpoint_url).hostname or ""]
     return [_aws_host(f"{s.bucket}.s3", s.region)]
 
 
@@ -401,7 +402,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             VaultSettings,
             f"{_ACTIONS}.secrets_vault:build",
             status=_UNVERIFIED,
-            hosts=lambda s: [urlsplit(s.address).hostname or ""],
+            hosts=lambda s: [safe_urlsplit(s.address).hostname or ""],
             neutral=True,
         ),
         "azure_key_vault": Entry(
@@ -409,7 +410,10 @@ TABLE: dict[str, dict[str, Entry]] = {
             f"{_ACTIONS}.secrets_azure:build",
             extra="azure",
             status=_UNVERIFIED,
-            hosts=lambda s: [urlsplit(s.vault_url).hostname or "", "login.microsoftonline.com"],
+            hosts=lambda s: [
+                safe_urlsplit(s.vault_url).hostname or "",
+                "login.microsoftonline.com",
+            ],
         ),
         "gcp_secret_manager": Entry(
             GcpSecretManagerSettings,
@@ -446,7 +450,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             f"{_SIGNER}_azure:build",
             extra="azure",
             status=_UNVERIFIED,
-            hosts=lambda s: [urlsplit(s.key_id).hostname or "", "login.microsoftonline.com"],
+            hosts=lambda s: [safe_urlsplit(s.key_id).hostname or "", "login.microsoftonline.com"],
         ),
         "gcp_kms": Entry(
             GcpKmsSettings,
@@ -460,7 +464,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             f"{_SIGNER}_vault:build",
             extra="signer",
             status=_UNVERIFIED,
-            hosts=lambda s: [urlsplit(s.address).hostname or ""],
+            hosts=lambda s: [safe_urlsplit(s.address).hostname or ""],
             neutral=True,
         ),
     },
@@ -480,7 +484,10 @@ TABLE: dict[str, dict[str, Entry]] = {
             f"{_AUDIT}.anchor_azure:build",
             extra="azure",
             status=_UNVERIFIED,
-            hosts=lambda s: [urlsplit(s.account_url).hostname or "", "login.microsoftonline.com"],
+            hosts=lambda s: [
+                safe_urlsplit(s.account_url).hostname or "",
+                "login.microsoftonline.com",
+            ],
         ),
         "gcs_retention_lock": Entry(
             GcsRetentionLockSettings,
@@ -531,7 +538,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             OpenAICompatSettings,
             "hadavin_sdk.llm.openai_compat:make",
             status=_UNVERIFIED,
-            hosts=lambda s: [urlsplit(s.base_url).hostname or ""],
+            hosts=lambda s: [safe_urlsplit(s.base_url).hostname or ""],
             neutral=True,
         ),
         "gemini": Entry(
@@ -562,7 +569,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             SlackSettings,
             "hadavin_sdk.approvals.slack_channel:build",
             status=_UNVERIFIED,
-            hosts=lambda s: [urlsplit(s.api_base).hostname or ""],
+            hosts=lambda s: [safe_urlsplit(s.api_base).hostname or ""],
         ),
     },
 }
