@@ -1396,3 +1396,14 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | R-P3a2r13-plan readiness a4014d7c | | | | 16:25Z | CLOSED: NOT READY (2 Blocker, 9 Major, 11 Minor), saved; B2 confirmed by lead reading | wait for design plan review a5a5ac6b, then errata rev 2 (answers B1-B2, M1-M9) and ONE builder in work packages A/B/C |
 | R-P3a2r13-plan design a5a5ac6b | | | | 16:35Z | CLOSED: NOT READY (0 Blocker, 8 Major, 12 Minor), saved | errata rev 2 together with readiness findings; probes first (grantor, sequence row type, options) |
 | R-PRH-plan design a6a4d892 | | | | 16:42Z | CLOSED: NOT READY (1 Blocker, 7 Major, 12 Minor), saved; none reproduced yet | PR H ticket author: errata rev 2 (answer both plan reviews, diagnose case 790, reproduce M1-M3), then plan review round 2 |
+| PAUSE (owner order 16:30Z): all 6 Fable agents stopped with notes (Q8c1-fix1, Q8b, Q8a2-fix2, PR89-r22, EV-P89-r21, EV-flaky-r2) | | | | 16:50Z | CLOSED, reports in /home/user/build/reports-raw/ | resumed on Sonnet 5.5 (routing D-021) |
+| EV-Q8a2 ab1486e8 | Sonnet | f6c2a3d | evidence | 16:42Z | running | RESULTS.md in handover/evidence/Q8a-2/f6c2a3d/ |
+| EV-Q8c1 a1120e73 | Sonnet | a77fab7 | evidence | 16:42Z | running | |
+| EV-Q8b af24c08c | Sonnet | be53718 | evidence | 16:42Z | running | |
+| R-Q8a2-r3 design a3dab418 + codebase ac5c317b | Sonnet | f6c2a3d | result review | 16:48Z | running | |
+| R-Q8c1-r2 design a4db3f05 + codebase a55fde8a | Sonnet | a77fab7 | result review | 16:48Z | running | |
+| R-Q8b-r1 design a40df0e2 + codebase acd34384 | Sonnet | be53718 | result review | 16:48Z | running | |
+| B-timing-fix2 a7d64dc9 | Sonnet | a8c269c8 | ONE fix batch | 16:45Z | running | |
+| B-PR89-r22b a309e5a8 | Sonnet | 3b2dc9c1 | finish round 22 | 16:45Z | running | |
+| TA-PRH-errata a02f43ab | Opus | PR H ticket rev 2 | errata + probes | 16:40Z | running | then plan review round 2 |
+| TA-P3a2-errata ab2d8714 | Opus | P3a-2 ticket rev 2 | errata + PG probes | 16:50Z | running | then plan review round 2 |
