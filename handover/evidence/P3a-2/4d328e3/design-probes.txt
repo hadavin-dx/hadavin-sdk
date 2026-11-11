@@ -1,0 +1,105 @@
+Design probes (lead addendum 2): plain PostgreSQL facts, PostgreSQL 16.15 on this machine. PostgreSQL 17 and 18 are NOT installed on this machine (only /usr/lib/postgresql/16 exists), so 17/18 were not tested. Throwaway roles/schemas/databases, dropped afterwards. Full raw: design-probes-main.txt (P4,P5,P6,P7-defaults), design-probes-P2P3.txt (P2,P3), design-probes-F8P1P7P5.txt and the clean re-runs (F8,P1,P7-session,P8,P5-shared).
+===== P4,P5(owned/acl),P6,P7(defaults) =====
+                                                                 version                                                                  
+ PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+          k           | v 
+ db_connect           | t
+ db_temp              | t
+ db_create            | f
+ schema_public_usage  | t
+ schema_public_create | f
+ fn_execute           | t
+ type_usage           | t
+ lang_plpgsql         | t
+ lang_sql             | t
+(9 rows)
+---- P7 ALTER ROLE <itself> SET search_path as a non-superuser (done in session below)
+           k           |   v   
+ has_table_priv_SELECT | false
+ pg_has_role MEMBER    | true
+ pg_has_role USAGE     | false
+ pg_has_role SET       | true
+(4 rows)
+  ?column?  | ?column? 
+ --lo oid-- | 778800
+ deptype |    classid     |     refobjid      
+ o       | pg_class       | dp_owner_adca347c
+ o       | pg_default_acl | dp_owner_adca347c
+ o       | pg_default_acl | dp_owner_adca347c
+ o       | pg_namespace   | dp_owner_adca347c
+ o       | pg_proc        | dp_owner_adca347c
+ o       | pg_type        | dp_owner_adca347c
+(6 rows)
+ deptype |    classid     | count 
+ a       | pg_class       |     2
+ a       | pg_default_acl |     2
+ a       | pg_language    |     1
+ a       | pg_largeobject |     1
+ a       | pg_namespace   |     1
+ a       | pg_proc        |     1
+ a       | pg_type        |     1
+(7 rows)
+         relname         |  attname  
+ pg_attribute            | attacl
+ pg_class                | relacl
+ pg_database             | datacl
+ pg_default_acl          | defaclacl
+ pg_foreign_data_wrapper | fdwacl
+ pg_foreign_server       | srvacl
+ pg_init_privs           | initprivs
+ pg_language             | lanacl
+ pg_largeobject_metadata | lomacl
+ pg_namespace            | nspacl
+ pg_parameter_acl        | paracl
+ pg_proc                 | proacl
+ pg_tablespace           | spcacl
+ pg_type                 | typacl
+(14 rows)
+psql:/home/user/build/ev-p3a2r12-scripts/design-probes.sql:59: NOTICE:  table "dp_tbl_adca347c" does not exist, skipping
+
+===== P2 / P3 constraint-trigger firing (non-superuser) =====
+SELECT current_user, session_user, rolsuper FROM pg_roles WHERE rolname=current_user;
+ current_user  | session_user  | rolsuper 
+CREATE FUNCTION tf() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE NOTICE 'TRIGGER-A fired for %', TG_NAME; RETURN NULL; END $$;
+====== P2: does SET CONSTRAINTS ALL IMMEDIATE fire a queued deferred constraint trigger at once?
+INSERT INTO t VALUES (1);
+(after INSERT, before SET CONSTRAINTS)
+SET CONSTRAINTS ALL IMMEDIATE;
+psql:/home/user/build/ev-p3a2r12-scripts/ct.sql:10: NOTICE:  TRIGGER-A fired for ct_a
+SET CONSTRAINTS
+(after SET CONSTRAINTS ALL IMMEDIATE -- TRIGGER-A notice should appear above this line if it fired)
+---- now create a SECOND constraint trigger after the SET and insert again
+INSERT INTO t VALUES (2);
+psql:/home/user/build/ev-p3a2r12-scripts/ct.sql:14: NOTICE:  TRIGGER-A fired for ct_a
+psql:/home/user/build/ev-p3a2r12-scripts/ct.sql:14: NOTICE:  TRIGGER-A fired for ct_b
+(after 2nd INSERT; ct_b is INITIALLY DEFERRED and SET CONSTRAINTS already ran -> when does TRIGGER-A for ct_b fire?)
+COMMIT;
+COMMIT
+(after COMMIT)
+====== P3: what still runs at COMMIT for a non-superuser after SET CONSTRAINTS ALL IMMEDIATE
+CREATE FUNCTION tf2() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE NOTICE 'TRIGGER-C (made after SET) fired'; RETURN NULL; END $$;
+CREATE TEMP TABLE tmp_oc (a int) ON COMMIT DROP;
+INSERT INTO t VALUES (3);
+SET CONSTRAINTS ALL IMMEDIATE;
+psql:/home/user/build/ev-p3a2r12-scripts/ct.sql:24: NOTICE:  TRIGGER-A fired for ct_a
+psql:/home/user/build/ev-p3a2r12-scripts/ct.sql:24: NOTICE:  TRIGGER-A fired for ct_b
+SET CONSTRAINTS
+(after SET CONSTRAINTS; below: make a new deferred constraint trigger and queue it)
+INSERT INTO p3 VALUES (1);
+psql:/home/user/build/ev-p3a2r12-scripts/ct.sql:27: NOTICE:  TRIGGER-C (made after SET) fired
+(end of transaction body; COMMIT next -> TRIGGER-C should fire at COMMIT)
+COMMIT;
+COMMIT
+(after COMMIT)
+
+===== F8 / P1 catalog shadowing, P7-session, P8, P5-shared =====
+(see design-probes-F8P1P7P5.txt for the verbatim F8/P1 session; key observed facts:)
+F8: as a non-superuser, CREATE TEMP TABLE pg_class (...): unqualified "pg_class" then counts 0 (the temp table), pg_catalog.pg_class counts 416; 'pg_class'::regclass resolves to the TEMP table (regclass_resolves_to_catalog = f), to_regclass('pg_class') = the temp. After SET search_path = pg_catalog, pg_temp: unqualified pg_class = 416 and 'pg_class'::regclass = pg_catalog (= t). So an unqualified catalog name IS shadowed by a same-named temp table unless pg_catalog precedes pg_temp.
+P1: temp tables pg_roles and pg_namespace likewise shadow the unqualified names (a later SELECT ... FROM pg_roles in the same session returned 0 rows from the empty temp table). A temp FUNCTION pg_temp.has_table_privilege(text,text,text) did NOT win: with search_path = pg_temp, pg_catalog, has_table_privilege('x','y','z') raised the BUILT-IN's error "role \"x\" does not exist" (PostgreSQL always searches pg_temp LAST for functions/operators, regardless of its position in search_path).
+P2: SET CONSTRAINTS ALL IMMEDIATE fired the already-queued deferred constraint trigger at once (NOTICE "TRIGGER-A fired for ct_a" printed at the SET). A second constraint trigger ct_b created AFTER the SET and queued by a later INSERT fired at that INSERT's statement end, not at COMMIT (SET CONSTRAINTS ALL IMMEDIATE puts the whole transaction in immediate mode, so later-queued deferred constraint triggers fire immediately too).
+P3: after SET CONSTRAINTS ALL IMMEDIATE, a new deferred constraint trigger (ct_c) created later and queued by an INSERT fired at that INSERT (NOTICE "TRIGGER-C fired" at the INSERT, before COMMIT); an ON COMMIT DROP temp table ran its drop silently at COMMIT with no user code. So, in a transaction already switched to immediate, no user trigger code was observed to run at COMMIT.
+P4: GRANT boss TO r WITH INHERIT FALSE (boss has SELECT on a table): has_table_privilege('r',tbl,'SELECT') = false; pg_has_role('r','boss','MEMBER') = true; pg_has_role(...,'USAGE') = false; pg_has_role(...,'SET') = true. r may SET ROLE boss (SET=true) and then SELECT.
+P5: pg_shdepend after owning: deptype 'o' rows with classid pg_class, pg_proc, pg_namespace, pg_type, and two pg_default_acl rows. After being an ACL grantee: deptype 'a' rows with classid pg_class (table + column counted together: 2), pg_proc, pg_namespace, pg_type, pg_language, pg_largeobject, pg_default_acl (x2). Database owner and database-ACL grantee: deptype 'o' and 'a' rows with classid pg_database and dbid = 0 (shared, not tied to one database) -- so a current_database() filter MISSES them.
+P6: pg_catalog tables with an aclitem[] column (relkind 'r'): pg_attribute.attacl, pg_class.relacl, pg_database.datacl, pg_default_acl.defaclacl, pg_foreign_data_wrapper.fdwacl, pg_foreign_server.srvacl, pg_init_privs.initprivs, pg_language.lanacl, pg_largeobject_metadata.lomacl, pg_namespace.nspacl, pg_parameter_acl.paracl, pg_proc.proacl, pg_tablespace.spcacl, pg_type.typacl (14 tables).
+P7: on a fresh database a brand-new role with no grants has by DEFAULT: database CONNECT = t, TEMPORARY = t, CREATE = f; public schema USAGE = t, CREATE = f; a fresh function EXECUTE = t (PUBLIC default); a fresh type USAGE = t; plpgsql USAGE = t, sql USAGE = t. A non-superuser CAN run ALTER ROLE <itself> SET search_path = evil, pg_catalog (accepted; rolconfig shows {"search_path=evil, pg_catalog"}); a NEW session as that role then shows search_path = evil, pg_catalog.
+P8: with ALTER ROLE r SET search_path = evil, pg_catalog in force: a new session started with options=-c search_path=pg_catalog shows "pg_catalog" (the per-connection option overrides the role default); a plain new session shows "evil, pg_catalog"; a first statement SET search_path = pg_catalog, pg_temp set it to "pg_catalog, pg_temp" (an explicit SET in the session wins over the role default).

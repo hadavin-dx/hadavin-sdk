@@ -2660,3 +2660,4 @@
 | BL-core-pr89-r21-w02 | Major(wording) | PR89 | reviews/PR89/r21-comprehension-full.md Major 2 | OPEN | | | 2026-11-11 |
 | BL-core-pr89-r21-w03 | Major(wording) | PR89 | reviews/PR89/r21-comprehension-full.md Major 3 | OPEN | | | 2026-11-11 |
 | BL-core-pr89-r21-w04 | Major(wording) | PR89 | reviews/PR89/r21-comprehension-full.md Major 4 | OPEN | | | 2026-11-11 |
+| BL-core-pr89-r21-d01 | Major | PR89 | reviews/PR89/r21-design-full.md M1 second layer cuts the password out of caller-known text (lead reproduced) | OPEN | | | 2026-11-11 |

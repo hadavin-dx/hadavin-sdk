@@ -1,0 +1,123 @@
+SELECT current_user, rolsuper FROM pg_roles WHERE rolname=current_user;
+ current_user  | rolsuper 
+---------------+----------
+ dp_u_df13d790 | f
+(1 row)
+
+====== F8 temp table named pg_class
+SHOW search_path;
+   search_path   
+-----------------
+ "$user", public
+(1 row)
+
+CREATE TEMP TABLE pg_class AS SELECT * FROM pg_catalog.pg_class WHERE false;
+SELECT 0
+SELECT count(*) AS unqualified_pg_class FROM pg_class;
+ unqualified_pg_class 
+----------------------
+                    0
+(1 row)
+
+SELECT count(*) AS qualified_pg_catalog_pg_class FROM pg_catalog.pg_class;
+ qualified_pg_catalog_pg_class 
+-------------------------------
+                           416
+(1 row)
+
+SELECT 'pg_class'::regclass::oid = 'pg_catalog.pg_class'::regclass::oid AS regclass_resolves_to_catalog;
+ regclass_resolves_to_catalog 
+------------------------------
+ f
+(1 row)
+
+SELECT 'pg_class'::regclass::text AS what_regclass_pg_class_is, to_regclass('pg_class')::text;
+ what_regclass_pg_class_is | to_regclass 
+---------------------------+-------------
+ pg_class                  | pg_class
+(1 row)
+
+-- now force the catalog ahead of pg_temp
+SET search_path = pg_catalog, pg_temp;
+SET
+SHOW search_path;
+     search_path     
+---------------------
+ pg_catalog, pg_temp
+(1 row)
+
+SELECT count(*) AS unqualified_pg_class_after_setpath FROM pg_class;
+ unqualified_pg_class_after_setpath 
+------------------------------------
+                                416
+(1 row)
+
+SELECT 'pg_class'::regclass::oid = 'pg_catalog.pg_class'::regclass::oid AS regclass_after_setpath;
+ regclass_after_setpath 
+------------------------
+ t
+(1 row)
+
+RESET search_path;
+RESET
+====== P1 temp pg_roles, pg_namespace, and a temp FUNCTION named has_table_privilege
+CREATE TEMP TABLE pg_roles AS SELECT * FROM pg_catalog.pg_roles WHERE false;
+SELECT 0
+CREATE TEMP TABLE pg_namespace AS SELECT * FROM pg_catalog.pg_namespace WHERE false;
+SELECT 0
+SELECT count(*) AS unqualified_pg_roles FROM pg_roles;
+ unqualified_pg_roles 
+----------------------
+                    0
+(1 row)
+
+SELECT 'pg_namespace'::regclass::text AS regclass_pg_namespace;
+ regclass_pg_namespace 
+-----------------------
+ pg_namespace
+(1 row)
+
+CREATE FUNCTION pg_temp.has_table_privilege(text, text, text) RETURNS boolean LANGUAGE sql AS 'SELECT true';
+CREATE FUNCTION
+SELECT has_table_privilege('dp_u_df13d790','pg_catalog.pg_class','SELECT') AS builtin_unqualified_in_default_path;
+ builtin_unqualified_in_default_path 
+-------------------------------------
+ t
+(1 row)
+
+SET search_path = pg_temp, pg_catalog;
+SET
+SELECT has_table_privilege('x','y','z') AS which_wins_with_pg_temp_first;
+psql:/home/user/build/ev-p3a2r12-scripts/shadow.sql:24: ERROR:  role "x" does not exist
+SELECT pg_catalog.has_table_privilege('dp_u_df13d790','pg_catalog.pg_class','SELECT') AS schema_qualified_builtin;
+ schema_qualified_builtin 
+--------------------------
+ t
+(1 row)
+
+RESET search_path;
+RESET
+====== P7-session: non-superuser ALTER ROLE <itself> SET search_path
+ALTER ROLE dp_u_df13d790 SET search_path = evil, pg_catalog;
+ALTER ROLE
+SELECT rolname, rolconfig FROM pg_roles WHERE rolname='dp_u_df13d790';
+ rolname | rolconfig 
+---------+-----------
+(0 rows)
+
+====== P5 extra: shared (dbid=0) shdepend rows for a database-ACL grantee
+CREATE ROLE dp_dba_df13d790;
+psql:/home/user/build/ev-p3a2r12-scripts/shadow.sql:31: ERROR:  permission denied to create role
+DETAIL:  Only roles with the CREATEROLE attribute may create roles.
+GRANT CONNECT ON DATABASE hadavin_test_sh_df13d790 TO dp_dba_df13d790;
+psql:/home/user/build/ev-p3a2r12-scripts/shadow.sql:32: ERROR:  role "dp_dba_df13d790" does not exist
+SELECT deptype, classid::regclass::text, dbid, refobjid::regrole::text FROM pg_shdepend WHERE refobjid=(SELECT oid FROM pg_roles WHERE rolname='dp_dba_df13d790');
+ deptype | classid | dbid | refobjid 
+---------+---------+------+----------
+(0 rows)
+
+REVOKE CONNECT ON DATABASE hadavin_test_sh_df13d790 FROM dp_dba_df13d790;
+psql:/home/user/build/ev-p3a2r12-scripts/shadow.sql:34: ERROR:  role "dp_dba_df13d790" does not exist
+DROP ROLE dp_dba_df13d790;
+psql:/home/user/build/ev-p3a2r12-scripts/shadow.sql:34: ERROR:  permission denied to drop role
+DETAIL:  Only roles with the CREATEROLE attribute and the ADMIN option on the target roles may drop roles.

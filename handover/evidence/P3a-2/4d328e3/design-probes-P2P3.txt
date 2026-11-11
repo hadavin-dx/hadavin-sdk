@@ -1,0 +1,58 @@
+SELECT current_user, session_user, rolsuper FROM pg_roles WHERE rolname=current_user;
+ current_user  | session_user  | rolsuper 
+---------------+---------------+----------
+ dp_u_62baa43c | dp_u_62baa43c | f
+(1 row)
+
+CREATE FUNCTION tf() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE NOTICE 'TRIGGER-A fired for %', TG_NAME; RETURN NULL; END $$;
+CREATE FUNCTION
+CREATE TABLE t (a int);
+CREATE TABLE
+CREATE CONSTRAINT TRIGGER ct_a AFTER INSERT ON t DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION tf();
+CREATE TRIGGER
+====== P2: does SET CONSTRAINTS ALL IMMEDIATE fire a queued deferred constraint trigger at once?
+BEGIN;
+BEGIN
+INSERT INTO t VALUES (1);
+INSERT 0 1
+(after INSERT, before SET CONSTRAINTS)
+SET CONSTRAINTS ALL IMMEDIATE;
+psql:/home/user/build/ev-p3a2r12-scripts/ct.sql:10: NOTICE:  TRIGGER-A fired for ct_a
+SET CONSTRAINTS
+(after SET CONSTRAINTS ALL IMMEDIATE -- TRIGGER-A notice should appear above this line if it fired)
+---- now create a SECOND constraint trigger after the SET and insert again
+CREATE CONSTRAINT TRIGGER ct_b AFTER INSERT ON t DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION tf();
+CREATE TRIGGER
+INSERT INTO t VALUES (2);
+psql:/home/user/build/ev-p3a2r12-scripts/ct.sql:14: NOTICE:  TRIGGER-A fired for ct_a
+psql:/home/user/build/ev-p3a2r12-scripts/ct.sql:14: NOTICE:  TRIGGER-A fired for ct_b
+INSERT 0 1
+(after 2nd INSERT; ct_b is INITIALLY DEFERRED and SET CONSTRAINTS already ran -> when does TRIGGER-A for ct_b fire?)
+COMMIT;
+COMMIT
+(after COMMIT)
+====== P3: what still runs at COMMIT for a non-superuser after SET CONSTRAINTS ALL IMMEDIATE
+CREATE FUNCTION tf2() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE NOTICE 'TRIGGER-C (made after SET) fired'; RETURN NULL; END $$;
+CREATE FUNCTION
+BEGIN;
+BEGIN
+CREATE TEMP TABLE tmp_oc (a int) ON COMMIT DROP;
+CREATE TABLE
+CREATE TABLE p3 (a int);
+CREATE TABLE
+INSERT INTO t VALUES (3);
+INSERT 0 1
+SET CONSTRAINTS ALL IMMEDIATE;
+psql:/home/user/build/ev-p3a2r12-scripts/ct.sql:24: NOTICE:  TRIGGER-A fired for ct_a
+psql:/home/user/build/ev-p3a2r12-scripts/ct.sql:24: NOTICE:  TRIGGER-A fired for ct_b
+SET CONSTRAINTS
+(after SET CONSTRAINTS; below: make a new deferred constraint trigger and queue it)
+CREATE CONSTRAINT TRIGGER ct_c AFTER INSERT ON p3 DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION tf2();
+CREATE TRIGGER
+INSERT INTO p3 VALUES (1);
+psql:/home/user/build/ev-p3a2r12-scripts/ct.sql:27: NOTICE:  TRIGGER-C (made after SET) fired
+INSERT 0 1
+(end of transaction body; COMMIT next -> TRIGGER-C should fire at COMMIT)
+COMMIT;
+COMMIT
+(after COMMIT)
