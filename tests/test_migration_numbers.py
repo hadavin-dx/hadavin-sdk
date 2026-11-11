@@ -2,7 +2,7 @@
 written recipe, the ledger-without-file message, the one-pass lexer and the refusal list. No database, no psycopg.
 
 The module is imported inside each test (the `mn` fixture), so on a tree without the module every test is one error
-and not a collection error. Planted names and SQL are made up. Postgres-side tests live in a later change."""
+and not a collection error. Planted names and SQL are made up. Postgres-side tests live in tests/test_migration_postgres.py."""
 
 from __future__ import annotations
 
@@ -279,7 +279,7 @@ def test_late_files_are_sorted_by_number(mn):
 # --- the recipe ---------------------------------------------------------------------------------------------------
 
 
-def _recipe(mn, entries=(("0004_x", "SELECT 1;"),), schema="p3a_s"):
+def _recipe(mn, entries=(("0004_x", "SELECT 1;"),), schema="hadavin_test_s"):
     return mn.hand_recipe(list(entries), schema)
 
 
@@ -289,7 +289,7 @@ def test_recipe_order_and_command(mn):
         {"0009_z"},
         _paths("0004_a.sql", "0005_b.sql", "0006_c.sql"),
         {Path(f"{s}.sql"): t for s, t in entries},
-        "p3a_s",
+        "hadavin_test_s",
     )
     assert len(got) == 1, "one problem, one recipe, however many files are late"
     msg = got[0]
@@ -298,8 +298,9 @@ def test_recipe_order_and_command(mn):
     lines = recipe.split("\n")
     assert lines[0] == "-- RECIPE begins" and lines[-1] == "-- RECIPE ends"
     order = [
-        lines.index('SET search_path TO "p3a_s";'),
+        lines.index('SET search_path TO "hadavin_test_s";'),
         lines.index("BEGIN;"),
+        *[lines.index(limit) for limit in mn.RECIPE_TIMEOUTS],
         lines.index(f"SELECT pg_advisory_xact_lock({mn.MIGRATE_LOCK});"),
         lines.index("SELECT 1;"),
         lines.index("INSERT INTO schema_migrations (version) VALUES ('0004_a');"),
@@ -323,7 +324,7 @@ def test_recipe_first_line(mn):
 
 def test_recipe_has_no_include_command(mn):
     msg = mn.order_problems(
-        {"0009_z"}, _paths("0004_x.sql"), {Path("0004_x.sql"): "SELECT 1;"}, "p3a_s"
+        {"0009_z"}, _paths("0004_x.sql"), {Path("0004_x.sql"): "SELECT 1;"}, "hadavin_test_s"
     )[0]
     assert msg.count("\\") == 1, "the only backslash is the generated first line"
     assert msg.index("\\") == msg.index("\\set ON_ERROR_STOP on")
@@ -422,7 +423,7 @@ def test_recipe_unterminated_last_statement(mn):
 
 def test_recipe_schema_quoted(mn):
     assert 'SET search_path TO "default";' in _recipe(mn, schema="default")
-    assert 'SET search_path TO "p3a_s";' in _recipe(mn)
+    assert 'SET search_path TO "hadavin_test_s";' in _recipe(mn)
 
 
 def test_schema_name_plain(mn):
@@ -435,7 +436,7 @@ def test_schema_name_plain(mn):
 
 def test_order_problems_turns_a_refused_file_into_a_message(mn):
     msg = mn.order_problems(
-        {"0009_z"}, _paths("0004_x.sql"), {Path("0004_x.sql"): "\\! echo hi"}, "p3a_s"
+        {"0009_z"}, _paths("0004_x.sql"), {Path("0004_x.sql"): "\\! echo hi"}, "hadavin_test_s"
     )[0]
     assert "-- RECIPE begins" not in msg and "0004_x" in msg and "by hand" in msg
 
@@ -446,7 +447,7 @@ def test_order_problems_empty_when_nothing_is_late(mn):
 
 def test_a_hostile_name_never_reaches_the_order_message(mn):
     """The names in the order message are file names that passed `NAME` and a highest applied name that passed `STEM`,
-    both ASCII letters, digits and underscores, so the escape (`_esc`) in that message cannot be reached by a hostile
+    both ASCII letters, digits and underscores, so the escape (`escape_name`) in that message cannot be reached by a hostile
     name: the name is not late at all. This test fails if `NAME` or `STEM` ever lets such a name through unescaped
     into a message that this function builds."""
     hostile = [
@@ -736,6 +737,9 @@ def test_each_transaction_word_is_refused(mn, stmt):
         "SET session_replication_role = replica",
         "RESET ALL",
         "set x to 1",
+        "SET LOCAL lock_timeout = '10s'",
+        "set  local  statement_timeout TO 0",
+        "SET LOCAL statement_timeout = '1h'",
     ],
 )
 def test_each_set_form_is_refused(mn, stmt):
@@ -743,11 +747,14 @@ def test_each_set_form_is_refused(mn, stmt):
     assert len(got) == 1 and "may not be changed" in got[0], stmt
 
 
-@pytest.mark.parametrize(
-    "stmt", ["SET LOCAL lock_timeout = '10s'", "set  local  statement_timeout TO 0"]
-)
-def test_the_two_allowed_set_forms_pass(mn, stmt):
-    assert mn.refused_statements(f"{stmt};") == []
+def test_the_two_time_limits_are_refused_in_the_text_scan_not_only_by_the_read_back(mn):
+    """the scan and the read-back must agree. The read-back refuses a file that changes either limit, so
+    the scan refuses the `SET LOCAL` text too, with a message that names the limits. Killed by: the mutant "SET LOCAL
+    lock_timeout/statement_timeout is allowed in the text scan again" of tests/migration_numbers_mutants.py."""
+    for name in ("lock_timeout", "statement_timeout"):
+        got = mn.refused_statements(f"SET LOCAL {name} = '1s';")
+        assert len(got) == 1 and "time limits" in got[0], got
+    assert not hasattr(mn, "_SET_ALLOWED")
 
 
 @pytest.mark.parametrize(
@@ -796,7 +803,7 @@ def test_the_real_files_read_clean(mn):
         assert problem == "", p.name
         assert mn.refused_statements(text) == [], p.name
         counts.append(len([s for s in cleaned.split(";") if s.strip()]))
-    # the first five files are the released ones (34 statements, the ticket's counts); a new file may follow
+    # the first five files are the released ones (34 statements, the agreed counts); a new file may follow
     assert len(counts) >= 5 and counts[:5] == [12, 9, 8, 2, 3]
 
 
@@ -893,3 +900,53 @@ def test_ledger_property_only_the_named_error_and_agreement(mn, tmp_path):
     _folder(sub, valid)
     mn.check_migration_numbers(sub)
     assert mn.late_files({"0001_a", "0002_b"}, mn.list_migration_files(sub)) == []
+
+
+# --- the grant scan reads through the lexer (wiring; `store.migrate` is imported inside each test) -------------
+
+
+def _scan_file(tmp_path: Path, text: str) -> list[str]:
+    from hadavin_sdk.store import migrate as mig
+
+    path = tmp_path / "0001_x.sql"
+    path.write_text(text, encoding="utf-8")
+    return mig.check_grants([path])
+
+
+def test_scan_comment_ends_at_cr(tmp_path):
+    """FAIL-BEFORE 8: a `--` comment ends at a carriage return as well, so the CREATE after it is seen."""
+    got = _scan_file(tmp_path, "SELECT 1; -- x\rCREATE TABLE evil_cr (x INT);")
+    assert any("evil_cr" in p for p in got), got
+    # M69: an unterminated quote must give the lexer's own text and the file name, not only the GRANTS lines
+    bad = _scan_file(tmp_path, "SELECT 'never closed;")
+    assert any("not closed at line" in p and "0001_x.sql" in p for p in bad), bad
+
+
+def test_scan_double_dash_in_string(tmp_path):
+    """FAIL-BEFORE 9: a `--` inside a string is not a comment, so the CREATE after the string is seen."""
+    got = _scan_file(tmp_path, "SELECT '--'; CREATE TABLE evil_str (x INT);")
+    assert any("evil_str" in p for p in got), got
+
+
+def test_scan_sees_create_inside_bodies_and_strings(tmp_path):
+    """Pin (passes before and after): text inside a `$$` body and a string is still seen by the grant scan, so a
+    table made inside a function body is refused, as before the lexer. M87: a scan of the emptied view fails it."""
+    body = _scan_file(
+        tmp_path,
+        "CREATE OR REPLACE FUNCTION f() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+        "CREATE TABLE hidden_body (x INT); END $$;",
+    )
+    assert any("hidden_body" in p for p in body), body
+    string = _scan_file(tmp_path, "SELECT 'CREATE TABLE hidden_str (x INT)';")
+    assert any("hidden_str" in p for p in string), string
+
+
+def test_scan_reads_the_given_text_not_the_file(tmp_path):
+    """`check_grants(files, texts=...)` scans the text it is given (the text `migrate` executes)."""
+    from hadavin_sdk.store import migrate as mig
+
+    path = tmp_path / "0001_x.sql"
+    path.write_text("SELECT 1;", encoding="utf-8")
+    got = mig.check_grants([path], texts={path: "CREATE TABLE from_given_text (x INT);"})
+    assert any("from_given_text" in p for p in got), got
+    assert not any("from_given_text" in p for p in mig.check_grants([path]))

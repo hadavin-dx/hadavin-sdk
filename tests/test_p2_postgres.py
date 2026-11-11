@@ -1,4 +1,4 @@
-"""Slice 2 P2: postgres store, `hadavin-sdk migrate`, and the CLI kill switch on a shared store.
+"""The postgres store, `hadavin-sdk migrate`, and the CLI kill switch on a shared store.
 
 Tests that need a database skip without HADAVIN_TEST_PG_DSN (CI runs the postgres service)."""
 
@@ -111,9 +111,7 @@ def test_migrate_needs_the_migration_dsn(cfg_dir, monkeypatch, capsys):
 
 
 def test_cli_limits_without_a_readable_dsn_is_a_config_error(cfg_dir, capsys):
-    _use_postgres(
-        cfg_dir
-    )  # configured `fake` secrets are empty: a real secrets kind (P4) holds the DSN
+    _use_postgres(cfg_dir)  # configured `fake` secrets are empty: a real secrets kind holds the DSN
     # main maps a ConfigError to exit 2 (never Python's crash code 1) and names the problem on stderr
     assert cli.main(["--config", str(cfg_dir), "limits", "stop", "--by", "user:a"]) == 2
     assert "'pg-dsn' cannot be read" in capsys.readouterr().err
@@ -174,7 +172,7 @@ def test_runtime_role_can_write_but_not_delete(fresh_dsn):
     import psycopg
     from psycopg import sql
 
-    role = "rt_" + fresh_dsn.rsplit("search_path=t_", 1)[1][:8]
+    role = "rt_" + fresh_dsn.rsplit("search_path=hadavin_test_", 1)[1][:8]
     with psycopg.connect(fresh_dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE ROLE {}").format(sql.Identifier(role)))
     try:
@@ -277,8 +275,11 @@ def test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_default
     """Apply 0001-0003 only, insert a pre-upgrade checkpoint row, then migrate: the row loads with NULL (not recorded)."""
     import psycopg
 
+    from hadavin_sdk.store import migrate as migrate_module
+
     old = [p for p in sorted(MIGRATIONS.glob("*.sql")) if p.stem < "0004"]
-    with psycopg.connect(fresh_dsn, autocommit=True) as db:
+    # the same plain role `migrate()` runs as makes the old schema, so it owns what it later changes
+    with migrate_module.connect(fresh_dsn) as db:
         for path in old:
             db.execute(path.read_text(encoding="utf-8"))
         db.execute(
