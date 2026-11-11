@@ -30,6 +30,19 @@ RESEND_AFTER = timedelta(seconds=60)  # more than 2x a channel call's timeout
 WARNING = "WARNING: the inputs read like instructions to an AI. Check them before approving. "
 
 
+def target_label(plan: Plan, target_labels: Mapping[str, str] | None = None) -> str:
+    """The text a card shows for the plan's target: the integrator's display name for that system when there is one, else
+    the system name. The ONE function every card uses (the approval request and the shadow card)."""
+    return (target_labels or {}).get(plan.target.system, plan.target.system)
+
+
+def _with_plan(text: str, plan: Plan) -> str:
+    """The plan fingerprint is written by the template after the cleaning, never by the model, and is hex: it is not part
+    of any text the redactor or the cleaner reads, so no value in the model's words (`Expected: reset token=abc ...`)
+    can mask it, join with it or push it off the card."""
+    return f"{text} Plan {plan.hash()[:12]}."
+
+
 def summary(
     plan: Plan, detector: Detector | None = None, target_labels: Mapping[str, str] | None = None
 ) -> str:
@@ -41,21 +54,27 @@ def summary(
     system (`{"<system name>": "orders-db"}`), written to the card instead of the system name. A label is
     integrator-chosen text and is masked like the rest, so a label that is itself shaped like a host name is masked."""
     inputs = canonical_json(plan.inputs)
-    system = (target_labels or {}).get(plan.target.system, plan.target.system)
+    system = target_label(plan, target_labels)
     flagged = detector is not None and injection_check(detector, inputs, "approval_summary").flagged
     try:
-        return clean(
-            f"{WARNING if flagged else ''}{plan.agent_id} asks to run {plan.action_id} "
-            f"v{plan.action_version} ({plan.risk_class}) on {system}. Inputs: {inputs}. "
-            f"Expected: {plan.expected_outcome}. Plan {plan.hash()[:12]}."
+        return _with_plan(
+            clean(
+                f"{WARNING if flagged else ''}{plan.agent_id} asks to run {plan.action_id} "
+                f"v{plan.action_version} ({plan.risk_class}) on {system}. Inputs: {inputs}. "
+                f"Expected: {plan.expected_outcome}."
+            ),
+            plan,
         )
     except (
         RedactionError
     ):  # inputs too large to redact (or nested too deep): the approver still sees what and where
-        return clean(
-            f"{WARNING if flagged else ''}{plan.agent_id} asks to run {plan.action_id} "
-            f"v{plan.action_version} ({plan.risk_class}) on {system}. "
-            f"Inputs: (too large to show here). Plan {plan.hash()[:12]}."
+        return _with_plan(
+            clean(
+                f"{WARNING if flagged else ''}{plan.agent_id} asks to run {plan.action_id} "
+                f"v{plan.action_version} ({plan.risk_class}) on {system}. "
+                f"Inputs: (too large to show here)."
+            ),
+            plan,
         )
 
 

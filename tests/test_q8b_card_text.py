@@ -337,9 +337,9 @@ def test_n8_only_one_function_feeds_a_card():
         for n in ast.walk(f)
         if isinstance(n, ast.Return)
     ]
-    assert feeds == [
-        "defang_domains(whole_assignment_values(runmap.redact_text(text, mapping, neutralise=_neutralise)))"
-    ], f"a card path skips redact_for_people: its body is {feeds}"
+    assert feeds == ["defang_domains(runmap.redact_text(text, mapping, neutralise=_neutralise))"], (
+        f"a card path skips redact_for_people: its body is {feeds}"
+    )
 
 
 def test_n8_the_check_itself_catches_each_way_round():

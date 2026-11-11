@@ -7,11 +7,12 @@ channel kind turns it into its own markup, so no channel vocabulary lives here.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
 from hadavin_sdk.approvals.channel import clean
-from hadavin_sdk.approvals.requests import WARNING
+from hadavin_sdk.approvals.requests import WARNING, target_label
 from hadavin_sdk.guard.injection import Detector, injection_check
 from hadavin_sdk.models import GateDecision, Plan, canonical_json, sha256_hex
 
@@ -70,6 +71,7 @@ def render_shadow(
     *,
     diagnosis: str = "",
     detector: Detector | None = None,
+    target_labels: Mapping[str, str] | None = None,
 ) -> Card:
     """The shadow card. No command is shown: the action and its inputs are fields. ``injection_check`` of the
     diagnosis, not ``summary()``, whose "asks to run" wording clashes with "do not run"."""
@@ -82,7 +84,7 @@ def render_shadow(
         SHADOW_HEADER,
         *([WARNING.strip()] if flagged else []),
         f"Diagnosis: {diagnosis or '(none given)'}",
-        f"Proposed action: {plan.action_id} v{plan.action_version} on {plan.target.system}",
+        f"Proposed action: {plan.action_id} v{plan.action_version} on {target_label(plan, target_labels)}",
         f"Inputs: {canonical_json(plan.inputs)}",
         f"Expected: {plan.expected_outcome}",
         f"Evidence (call ids): {', '.join(cited) or 'none'}",

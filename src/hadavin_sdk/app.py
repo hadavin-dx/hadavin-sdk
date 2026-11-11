@@ -228,6 +228,7 @@ def build(
         ),
         hold_run_ids=hold_run_ids,
         restored_key=restored_key,
+        target_labels=dict(target_labels or {}),
     )
     runtime = Runtime(
         reg,

@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import re
 
-from hadavin_sdk.k1b import redaction as R
+from hadavin_sdk.guard import runmap
 
-ONLY_PLACEHOLDERS = R._ONLY_PLACEHOLDERS  # one source: the pattern the code itself uses
+# One or more placeholders and nothing else. Built from the public `runmap.PLACEHOLDER` (present on main too), not from the
+# private `R._ONLY_PLACEHOLDERS`, so these tests are collected on code that predates that name.
+ONLY_PLACEHOLDERS = re.compile(rf"(?:{runmap.PLACEHOLDER.pattern})+")
 
 _FENCE_OPEN = re.compile(r"^ {0,3}(`{3,})[^`]*$")
 

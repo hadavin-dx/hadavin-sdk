@@ -12,7 +12,7 @@ import inspect
 import json
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -189,6 +189,8 @@ class Hooks:
     hold_run_ids: Callable[[], set[str] | frozenset[str]] | None = None
     # Keys the HMAC of the restored inputs on the gate's audit event (None: a plain hash, demo only).
     restored_key: bytes | None = None
+    # The display name per target system that cards show in place of the (masked) system name.
+    target_labels: Mapping[str, str] = field(default_factory=dict)
 
 
 class Runtime:
@@ -648,7 +650,12 @@ class Runtime:
         """Shadow: the would-be outcome is shown and never acted on."""
         try:
             card: Card | None = cards.render_shadow(
-                plan, decision, cited, diagnosis=diagnosis, detector=self.detector
+                plan,
+                decision,
+                cited,
+                diagnosis=diagnosis,
+                detector=self.detector,
+                target_labels=self.hooks.target_labels,
             )
         except Exception:  # noqa: BLE001 - an unrenderable card is an undelivered one
             card = None

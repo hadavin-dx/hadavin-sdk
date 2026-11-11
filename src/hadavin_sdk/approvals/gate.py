@@ -72,7 +72,7 @@ from collections.abc import Callable
 
 from markdown_it import MarkdownIt
 
-from hadavin_sdk.guard.redact import strip_ansi
+from hadavin_sdk.guard.redact import GLUED_KEY, strip_ansi
 
 # A link label may hold escaped brackets (`[a\]b]`); a destination may be anything but `)`.
 _LABEL = r"\[((?:[^\]\\\n]|\\.)*)\]"
@@ -89,11 +89,14 @@ _REFDEF = re.compile(r"^\s{0,3}(?:(?:[-*+]|\d{1,9}[.)])\s+|>\s*)*" + _LABEL + r"
 _URL = re.compile(
     r"(?:\b[a-z][a-z0-9+.\-]{0,30}://|(?<![\w:])://[\w-]+(?:\.|%2e)|\b(?:https?|mailto|data|javascript|vbscript|tel|slack|"
     r"ms-teams|vscode|ssh|smb|file|sms|facetime|skype|zoommtg|itms-services):"
-    r"|(?<![\w:/])//[\w-]+(?:\.|%2e))[^\s)>\]'\"`]*",
+    r"|(?<![\w:/])//[\w-]+(?:\.|%2e))(?:(?!" + GLUED_KEY + r")[^\s)>\]'\"`])*",
     re.IGNORECASE,
 )
 # An IP address with a port or a path is a link to a chat client.
-_IP_LINK = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}(?::\d{1,5})?/\S*")
+# Both link patterns stop in front of a credential key followed by `=` or `:` (`GLUED_KEY`): a link that swallowed
+# `.../xpassword:` left the value after it readable (`[link removed] V`) because the redactor, which runs next, never
+# saw the key. The key and its value stay in the text for the redactor; only the link is removed.
+_IP_LINK = re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}(?::\d{1,5})?/(?:(?!" + GLUED_KEY + r")\S)*")
 # A tag, not a `<TENANT_1>` placeholder (placeholders carry `_`, which a tag name never does here).
 # `<img/src=...>` is a tag too: a `/` may separate the name from its attributes (audit A-C-9). Tags are
 # also removed ACROSS lines before the line pass: `<img\nsrc=...>` is one tag to a renderer.

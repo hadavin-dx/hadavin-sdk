@@ -67,7 +67,7 @@ def test_r1_the_address_is_masked_too_when_a_key_is_glued_to_it():
     assert "bob" not in out and "smith" not in out and "example" not in out, (
         f"an address is readable beside a glued key: {out!r}"
     )
-    assert out == "<EMAIL_1>=<SECRET_1>", out
+    assert out == "<EMAIL_1>password=<SECRET_1>", out
 
 
 def test_r1_an_address_before_a_separated_key_is_unchanged():
@@ -109,13 +109,24 @@ def test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote():
     assert not bad, f"a value glued to a credential key is readable: {bad}"
 
 
+@pytest.mark.perf  # a wall-clock bound: it runs in the perf step (`pytest -m perf`), not the default suite
 def test_r1_the_guard_in_front_of_the_address_pattern_is_bounded():
-    """Work is bounded per `@`: a long run of `@` and of domain characters stays fast (a loose bound; the perf step of CI
-    has the ratio test)."""
-    text = ("a@" + "b" * 250 + ".") * 400 + "\n" + ("x@y." * 400)
-    started = time.monotonic()
-    runmap.redact_untrusted(text, runmap.RunMap())
-    assert time.monotonic() - started < 30, "the address pattern is slow on a run of @"
+    """The ratio method of CI's perf step: 4x the text may take at most 12x the time (best of three, so a noisy runner
+    moves both runs alike); a super-linear guard fails it."""
+
+    def best(n):
+        text = ("a@" + "b" * 250 + ".") * n + "\n" + ("x@y." * n)
+        times = []
+        for _ in range(3):
+            started = time.perf_counter()
+            runmap.redact_untrusted(text, runmap.RunMap())
+            times.append(time.perf_counter() - started)
+        return min(times)
+
+    small, large = best(100), best(400)
+    assert large < 12 * max(small, 0.005), (
+        f"the address pattern is super-linear: {small:.3f}s -> {large:.3f}s"
+    )
 
 
 # ---- an unquoted value with spaces on a card -------------------------------------------------------------------------
@@ -323,7 +334,19 @@ def test_r6_a_key_with_a_letter_the_older_rule_read_as_ascii_is_still_a_key():
                 if older.search(camel.sub("_", key)) and not R.sensitive(key):
                     bad.append(key)
     assert not bad, f"a key the older rule accepted is refused (letter case folding): {bad[:10]}"
-    assert R.sensitive("paſſword") and R.sensitive("TOKEN" + "İ".lower()[:0])
+    # real spellings: long s, dotted capital I (U+0130) and dotless i (U+0131) inside key words
+    for key in (
+        "paſſword",
+        "PASſWORD",
+        "credentİal",
+        "CREDENTİAL",
+        "credentıal",
+        "authorİzation",
+        "secret_key",
+    ):
+        assert R.sensitive(key), key
+    for key in ("ınternal_note", "ordınary"):
+        assert not R.sensitive(key), key
 
 
 def _expand(fragment):

@@ -436,6 +436,9 @@ def _decoded_masks(current: dict[str, str], text: str) -> list[tuple[str, str]]:
             any(c in original for c in _ENCODED_MARKS) or not original.isascii()
         ):
             continue
+        # A value that holds a placeholder the TEXT already had (a seeded one, stored as `\0seed<...>`) is spelled with that
+        # placeholder in the text and in every view.
+        original = original.replace("\0seed", "")
         if original not in text:
             continue
         if len(out) >= MAX_DECODED_MASKS:

@@ -150,19 +150,24 @@ ARN_TAIL = r"[A-Za-z0-9_\-./:*+@]"
 # and address patterns must not swallow a key of this list either. Public so that a test can feed every one of them to
 # `k1b.redaction.sensitive` (the two key lists must not drift apart).
 KEY_ALTERNATIVES = (
-    r"password", r"passwd", r"pwd", r"secret", r"access[_\-]?key", r"account[_\-]?key",
+    r"password", r"passwd", r"pass[_\-]?phrase", r"pwd", r"secret", r"access[_\-]?key", r"account[_\-]?key",
     r"shared[_\-]?access[_\-]?key", r"private[_\-]?key", r"api[_\-]?key", r"apikey", r"auth[_\-]?token",
     r"access[_\-]?token", r"sas[_\-]?token", r"key[_\-]?data", r"cert(?:ificate)?[_\-]?data",
     r"session[_\-]?id", r"jsessionid", r"phpsessid", r"sessid", r"connect\.sid", r"client[_\-]?secret",
     r"credential", r"token", r"pass(?=[\"']?\s*[:=])", r"auth(?=[\"']?\s*[:=])", r"session(?=[\"']?\s*[:=])",
 )  # fmt: skip
+# How far the ARN rule looks ahead for a key it must not swallow. The generic key rule has no prefix bound (it starts at
+# the key word), so any distance works for the guard; one named number keeps the look-ahead short.
+KEY_PREFIX_MAX = 40
 # What the redactor FINDS: the same characters, but never through a `key=` that begins a credential. `*`, `+` and `@`
 # are legal ARN characters, so `...:function:billing*token=V` is ambiguous; the identifier stops before the key and
 # the key=value rule masks V. Over-redaction (an ARN segment that looks like `...token=`) is the accepted price.
 _KV_WORD = r"(?:auth|authorization|" + "|".join(KEY_ALTERNATIVES) + ")"
 # Any letter case (`TOKEN=`, `Authorization=`); the key may end in a quote and `:` (`..bucketpassword":"V"`, JSON).
 ARN_CHAR = (
-    r"(?:(?i:(?![\w.\-*+@]{0,40}?"
+    r"(?:(?i:(?![\w.\-*+@]{0,"
+    + str(KEY_PREFIX_MAX)
+    + "}?"
     + _KV_WORD
     + r"[\w.\-]{0,20}(?:=|[\"']\s*[:=])))"
     + ARN_TAIL
@@ -171,13 +176,69 @@ ARN_CHAR = (
 # The same rule for an e-mail address. Its domain part is made of letters, digits, `.` and `-`, so a credential key glued
 # to it (`bob@example.compassword=V`, no space, or a zero-width character that is removed first) would be read as the
 # last label of the domain: the address pattern ran first, swallowed the key, and `=V` stayed readable. Bug class: a
-# pattern that runs first swallows the key a later rule needs (`ARN_CHAR` above is the same class). Fix: the first
-# address pattern does not start at an `@` whose domain run holds a credential key followed by `=` or `:`; the key=value
-# rules then mask V; the address patterns appended at the end of this list (`_EMAIL_DOMAIN` without the guard) mask the
-# address, with the key still in its place.
+# pattern that runs first swallows the key a later rule needs (`ARN_CHAR` above is the same class).
+# Fix, with no length bound that could disagree with the key rule: the first address pattern reads the domain one
+# character at a time and never takes a character that begins a credential key followed by `=` or `:`
+# (`GLUED_KEY`); the address ends right in front of such a key, so the key=value rule sees the key whatever the length of
+# the domain (`<EMAIL_1>password=<SECRET_1>`). The address patterns appended at the end of this list (`_EMAIL_DOMAIN`
+# without the guard) still mask an address the guarded one declined.
 _GLUED_KEY_WORD = r"(?:authorization|" + "|".join(KEY_ALTERNATIVES) + ")"
-_NO_GLUED_KEY = r"(?i:(?![A-Za-z0-9.\-]{0,255}?" + _GLUED_KEY_WORD + r"[\w\-]{0,20}[\"']?\s*[:=]))"
+# A credential key word with what the generic key rule needs after it: at most 20 key characters, a quote, `=` or `:`.
+GLUED_KEY = r"(?i:" + _GLUED_KEY_WORD + r"[\w.\-]{0,20}[\"']?\s*[:=])"
+_NOT_GLUED_KEY = r"(?!" + GLUED_KEY + ")"
 _EMAIL_DOMAIN = r"[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"
+_GUARDED_DOMAIN = (
+    r"(?:"
+    + _NOT_GLUED_KEY
+    + r"[A-Za-z0-9.\-]){1,255}\.(?:"
+    + _NOT_GLUED_KEY
+    + r"[A-Za-z]){2,}(?:\b|(?="
+    + GLUED_KEY
+    + "))"
+)
+# What a value is: one character of it (a numeric HTML entity is ONE character, not the `&` of a query separator; a comma
+# that does not begin a new `key=value` pair belongs to the value), and the words that follow it after spaces or tabs.
+# An unquoted value that holds spaces (`password=correct horse battery staple`) is masked whole: words go on until the
+# end of the line, a flag (`--force`, `-f`), the next `key=` / `key:` word, a quote, `;`, `,` or `&`. The flags and the
+# next key stay readable, so a card still shows `--force --target prod`. Cost: prose right after an unquoted credential
+# value on the same line (`token=abc12345 failed for bob`) is masked with it.
+_VALUE_CHAR = r"(?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|[^\s\"';,&]|,(?!\s*[\w.\-]+\s*[:=]))"
+_VALUE_TAIL = r"(?:[ \t]+(?!--?[A-Za-z]|[\w.\-]+[\"']?\s*[:=])" + _VALUE_CHAR + "+)*"
+# A value that is only placeholders of secret kinds is masked already (`password=<SECRET_1>`): no word after it is taken
+# in (a second cleaning of the same text must change nothing: the first one may have rewritten the text after it).
+_MASKED_KINDS = (
+    "PRIVKEY",
+    "JWT",
+    "APIKEY",
+    "GCPTOKEN",
+    "AZURESAS",
+    "WEBHOOK",
+    "URLCRED",
+    "BEARER",
+    "BASIC",
+    "SECRET",
+    "HIGHENTROPY",
+    "IBAN",
+    "CREDITCARD",
+)  # fmt: skip  (the same names as `SECRET_KINDS` below, which a test compares)
+_VALUE_WITH_TAIL = (
+    r"(?:(?:<(?:"
+    + "|".join(_MASKED_KINDS)
+    + r")_\d+>)+(?![^\s\"';,&])|"
+    + _VALUE_CHAR
+    + "+"
+    + _VALUE_TAIL
+    + ")"
+)
+# A key, the sign, and the value (the text after a scheme word such as `Bearer`): the Bearer and Authorization rules
+# take a word after the scheme as the token, so `Bearer db_password = V` masked `db_password` and left V. When the word
+# is a credential key with its value, the whole of it is the token.
+_KEYED_VALUE = (
+    r"(?=[\w.\-]*"
+    + _GLUED_KEY_WORD
+    + r"[\w.\-]{0,20}[\"']?\s*[:=])[\w.\-]+[\"']?\s*[:=]\s*[\"']?"
+    + _VALUE_WITH_TAIL
+)
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # A whole PEM private key block — the highest-value secret that turns up in a misconfig dump.
     # PEM and PGP. A key cut off by a line-length limit has no END line: mask to the end.
@@ -262,9 +323,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # Bounded (RFC 5321: local part 64, domain 255): an unbounded run is quadratic on `a.a.a.` text.
     (
         "EMAIL",
-        re.compile(
-            r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{1,254}(?:@|%40)" + _NO_GLUED_KEY + _EMAIL_DOMAIN
-        ),
+        re.compile(r"(?<![A-Za-z0-9._+\-])[A-Za-z0-9._+\-]{1,254}(?:@|%40)" + _GUARDED_DOMAIN),
     ),
     # IBAN (ISO 13616): a REAL country code + 2 check digits + 11-30 alnum BBAN. Financial PII in
     # payment/refund incident logs (SEPA charge/transfer). Masked WHOLE and BEFORE ACCOUNTID/PHONE,
@@ -428,7 +487,10 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ),
     # A token following `Bearer ` in an Authorization header (when it is not already a JWT/API key).
     # `<>` too: a value whose start an earlier pattern masked (`Bearer <UUID_1>.rest`) is masked whole (ninth review).
-    ("BEARER", re.compile(r"(?i)\bbearer\s+([a-z0-9._~+/\-<>]{12,}=*)")),
+    (
+        "BEARER",
+        re.compile(r"(?i)\bbearer\s+(" + _KEYED_VALUE + r"|[a-z0-9._~+/\-<>]{12,}=*)"),
+    ),
     # HTTP Basic auth: `Authorization: Basic <base64 of user:pass>` - the base64 IS the credential.
     ("BASIC", re.compile(r"(?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})")),
     # National ids (owner, 2026-10-21), before CREDITCARD and PHONE, which would take their digits in part: a US Social
@@ -516,7 +578,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(
             # no boundary before the word: a key glued to a host or an address (`example.comAuthorization=V`,
             # `HTTP_AUTHORIZATION=V`) is a key too, as in the generic key rule below (cost: `reauthorization=...` too)
-            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+\s+)?([^\s\"']{8,})"
+            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+\s+)?("
+            + _KEYED_VALUE
+            + r"|[^\s\"']{8,})"
         ),
     ),
     # The whole cookie value: it may hold placeholders already placed (they are stored restored, see find()).
@@ -570,7 +634,12 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # `docker build --secret id=npmrc,src=.npmrc` names a secret; it is not one.
     (
         "SECRET",
-        re.compile(_CRED_FLAG + rf"(?:=|{_SP}+(?![A-Za-z_][\w.-]*=))(?![-\"'])([^\s\"']{{3,}})"),
+        # `--password=correct horse` (an `=` and then spaces) is one value as it is for `password=`: see `_VALUE_TAIL`; a flag
+        # after it (`--force`) is not part of it. After a space instead of `=`, the value is the one next word.
+        re.compile(
+            _CRED_FLAG
+            + rf"(?:=(?![-\"'])([^\s\"']{{3,}}{_VALUE_TAIL})|{_SP}+(?![A-Za-z_][\w.-]*=)(?![-\"'])([^\s\"']{{3,}}))"
+        ),
     ),
     (
         "SECRET",
@@ -625,9 +694,10 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(
             # Leading delimiter includes ? & : so URL QUERY-PARAM credentials (?password=, &token=) and
             # the .npmrc form (//registry/:_authToken=) are caught — ubiquitous in access/CI logs.
-            # The key starts where the previous character is not a key character (any separator, ASCII or
-            # Unicode): an allowlist of key characters, not a list of delimiters (K5 review rounds 1-3).
-            r"(?i)(?<![\w.\-])[\w.\-]{0,40}(?:" + "|".join(KEY_ALTERNATIVES) + r")[\w.\-]{0,20}"
+            # The rule starts AT the key word, whatever stands in front of it: a prefix bound (it was 40 characters, behind
+            # a "previous character is not a key character" test) left the value readable behind a longer identifier
+            # (`<41 letters>password=V`). The prefix is not part of the match, so the output is the same.
+            r"(?i)(?:" + "|".join(KEY_ALTERNATIVES) + r")[\w.\-]{0,20}"
             # optional closing quote after the key so a JSON credential ("password": "x") is matched too
             r"[\"']?\s*[:=]\s*[\"']?"
             # The value: any non-separator char, OR a comma that does NOT begin a new key=value pair
@@ -635,7 +705,8 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             # URL query-param value at the next parameter. Char-by-char, so no catastrophic backtracking.
             # A numeric HTML entity (`&#59;`, `&amp;#59;` once escaped, `&#x3b;`) is ONE character of the value, not the `&` of a query separator:
             # an entity-encoded `;` or `&` must not end the value early and leave its tail shown.
-            r"((?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|[^\s\"';,&]|,(?!\s*[\w.\-]+\s*[:=]))+)"
+            # Spaces inside an unquoted value: see `_VALUE_TAIL` (the words after the first one are part of the value).
+            r"(" + _VALUE_WITH_TAIL + ")"
         ),
     ),
     # A hex key under a credential's name no pattern above lists - `ENCRYPTION_KEY=`, `hmac_key=`,
