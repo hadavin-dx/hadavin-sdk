@@ -1,0 +1,24 @@
+EVIDENCE RUNNER report, PR89 round 23, head 4cc427b5bfbf1ff07beb8db03da80c9e59b44fc6 (clean tree confirmed). Record only: I judged and fixed nothing, pushed nothing. Full table: /home/user/hadavin-sdk/handover/evidence/PR89/4cc427b5/RESULTS.md (gitleaks on that folder: exit 0). Raw logs: /home/user/build/evidence-raw/pr89r23-4cc427b5/. Times: 19:39 to 20:37 UTC (01:09 to 02:07 IST); about 35 min of that was waiting for heavy slots that other sessions held.
+
+FAILED / NOT RUN / ODD (first)
+1. Full suite: exit 1, "1 failed, 10800 passed, 1 skipped, 28 deselected in 481s". The one failure is tests/demo_askdata/test_validate_harm.py[dblink-connect] (socket /var/run/postgresql/.s.PGSQL.5432 not found). Cause is my own setup slip: I started my Postgres without PGHOST/PGPORT in the server's environment. I restarted it with them set and re-ran that whole file alone via heavy.sh: 253 passed. I did NOT re-run the whole suite. As recorded, the suite on the head is 1 failed.
+2. Leak probe: 2 of 498 cases still SHOWN, the same 2 as at c2f98f49 (password equals `TimeoutError`, child raises that class; first_lines `probe mutant / TimeoutError [expect found] value must be one`). All 498 case records compared with c2f98f49: no case changed its hits.
+3. Known flaky timing test: FAILED 3 of 3 alone on the head and 3 of 3 alone on origin/main (2a8c2aac); 0.6 s each. It did not fail inside the full suite.
+4. Fail-before on origin/main src: tests/test_mutation_runner_keywords.py (276 tests on the head) cannot be imported on main (ImportError: PASS_ENV_ALLOWED), so none of its tests ran there. Result with --continue-on-collection-errors: 3 failed, 63 passed, 1 error. The failed ones are two in test_mutation_runner.py (refused and truncated junit), plus test_g_every_search_string_occurs_exactly_once in the meta file. The first run without that flag stopped at the collection error; both logs are kept.
+5. `uv sync --locked --no-build` from the common brief was refused (editable package has no binary distribution). I used `uv sync --locked --all-extras --group test` in all venvs.
+6. Not run: Windows, macOS, perf-marked tests (none named), mypy (not in this brief). bandit has no summary counts at -q; it exited 0 with only nosec warnings.
+7. The machine was shared with other sessions' heavy jobs. I killed my own queued fail-before job so the mutant list ran with no other job of mine; I cannot say what other sessions ran.
+8. Cleanup: my Postgres (port 56873) stopped and its folder deleted; my 3 worktrees removed; my lock probe's /tmp/hadavin_mutation_locks_102 removed; no process of mine left. /tmp/hadavin_mutation_locks_0 is not mine and was left.
+
+RESULTS
+- Head, ruff check (All checks passed), ruff format --check (319 files already formatted), scan_repo, gitleaks origin/main..HEAD (no leaks), stage_mutants (37 of 37 good): all exit 0. Changed files vs origin/main: 9 (CHANGELOG.md, src/hadavin_sdk/testing/mutation.py, tests/conftest.py, tests/fixtures/mutation_manifest.json, tests/mutation_runner_mutants.py, tests/test_mutation_runner.py, tests/test_mutation_runner_keywords.py, tests/test_mutation_runner_meta.py, tools/mutation_runner.py).
+- Whole mutant list via heavy.sh, run alone: exit 0, "299 of 299 good; problems: []" (295 KILLED, 4 CRASH, all marked ok), 19:48 to 19:55 UTC.
+- Pins: I recomputed sha256 of the 4 manifest files myself; all 4 equal tests/fixtures/mutation_manifest.json and the CHANGELOG list (mutation.py 3489a198..., mutation_runner.py 8c1178ff...).
+- Extra fail-before on the previous head c2f98f49 src (same overlay): 19 failed, 323 passed. 18 failures are in the keywords file (private-folder checks under umask 0, rebuild checks, empty-folder helper, bare strings for tests/extra_dirs/only, port range and boundaries, lock folder inside the tree, junction check before any folder, docstring limits) plus the meta test_g. The other 258 of 276 keywords tests passed on round 22 src. List: fbprev-failed-list.txt.
+
+SAME PROBES RE-RUN, change against c2f98f49 per case
+- Leak: no change (still 2 of 498 SHOWN, same cases).
+- Address (136 cases): now 25 accepted / 111 refused (was 26 / 110). The only outcome that changed is URL port 99999999999: ACCEPTED then, REFUSED now. HOST=localhost (upper-case key) and POSTGRESQL:// scheme: refused then and now (they were accepted only at 7a2eb4cc). The wording of the refusal changed for 48 refused cases (same start, different tail). 0 harness errors, 0 secret text in any output, 0 refused-but-child-ran.
+- Lock (43 cases, root and postgres user): 23 REFUSED / 20 RAN, per-case outcome and file changes identical to c2f98f49.
+
+Not checked: whether any of this meets the spec (reviewers judge). Token use: not measured by me.

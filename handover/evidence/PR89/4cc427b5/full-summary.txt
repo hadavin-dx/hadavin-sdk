@@ -1,0 +1,4 @@
+E           DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+FAILED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+1 failed, 10800 passed, 1 skipped, 28 deselected in 481.29s (0:08:01)

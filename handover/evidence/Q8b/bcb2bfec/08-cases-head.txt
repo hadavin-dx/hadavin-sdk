@@ -1,0 +1,365 @@
+## import /home/user/build/EV-Q8b-bcb2bfec/wt/src/hadavin_sdk/__init__.py
+[E2 card password=correct horse battery]
+  in : "password=correct horse battery staple"
+  out: {"clean": "password=<SECRET_1>", "slack": "password=<SECRET_1>"}
+  readable=[] idempotent=True
+[E2 walk password=correct horse battery]
+  in : "password=correct horse battery staple"
+  out: {"message": "password=<SECRET_1> horse battery staple"}
+  readable=['horse', 'battery', 'staple'] 
+[E2 card password: correct horse batter]
+  in : "password: correct horse battery staple"
+  out: {"clean": "password: <SECRET_1>", "slack": "password: <SECRET_1>"}
+  readable=[] idempotent=True
+[E2 walk password: correct horse batter]
+  in : "password: correct horse battery staple"
+  out: {"message": "password: <SECRET_1> horse battery staple"}
+  readable=['horse', 'battery', 'staple'] 
+[E2 card password%3Dcorrect%20horse%20b]
+  in : "password%3Dcorrect%20horse%20battery%20staple"
+  out: {"clean": "password=<SECRET_1>", "slack": "password=<SECRET_1>"}
+  readable=[] idempotent=True
+[E2 walk password%3Dcorrect%20horse%20b]
+  in : "password%3Dcorrect%20horse%20battery%20staple"
+  out: {"message": "password%3D<SECRET_1>%20horse%20battery%20staple"}
+  readable=['horse', 'battery', 'staple'] 
+[E2 card password="correct horse batter]
+  in : "password=\"correct horse battery staple\""
+  out: {"clean": "password=\"<SECRET_1>\"", "slack": "password=\"<SECRET_1>\""}
+  readable=[] idempotent=True
+[E2 walk password="correct horse batter]
+  in : "password=\"correct horse battery staple\""
+  out: {"message": "password=\"<SECRET_1>\""}
+  readable=[] 
+[E2 card password='correct horse batter]
+  in : "password='correct horse battery staple'"
+  out: {"clean": "password='<SECRET_1>'", "slack": "password='<SECRET_1>'"}
+  readable=[] idempotent=True
+[E2 walk password='correct horse batter]
+  in : "password='correct horse battery staple'"
+  out: {"message": "password='<SECRET_1>'"}
+  readable=[] 
+[E2 card db_password=correct horse batt]
+  in : "db_password=correct horse battery staple and more"
+  out: {"clean": "db_password=<SECRET_1>", "slack": "db_password=<SECRET_1>"}
+  readable=[] idempotent=True
+[E2 walk db_password=correct horse batt]
+  in : "db_password=correct horse battery staple and more"
+  out: {"message": "db_password=<SECRET_1> horse battery staple and more"}
+  readable=['horse', 'battery', 'staple'] 
+[E2 card x password=correct horse batte]
+  in : "x password=correct horse battery staple\nnext line"
+  out: {"clean": "x password=<SECRET_1>\nnext line", "slack": "x password=<SECRET_1>\nnext line"}
+  readable=[] idempotent=True
+[E2 walk x password=correct horse batte]
+  in : "x password=correct horse battery staple\nnext line"
+  out: {"message": "x password=<SECRET_1> horse battery staple\nnext line"}
+  readable=['horse', 'battery', 'staple'] 
+[E2 card password=correct horse battery]
+  in : "password=correct horse battery staple."
+  out: {"clean": "password=<SECRET_1>", "slack": "password=<SECRET_1>"}
+  readable=[] idempotent=True
+[E2 walk password=correct horse battery]
+  in : "password=correct horse battery staple."
+  out: {"message": "password=<SECRET_1> horse battery staple."}
+  readable=['horse', 'battery', 'staple'] 
+[E2 card Password = correct horse batte]
+  in : "Password = correct horse battery staple"
+  out: {"clean": "Password = <SECRET_1>", "slack": "Password = <SECRET_1>"}
+  readable=[] idempotent=True
+[E2 walk Password = correct horse batte]
+  in : "Password = correct horse battery staple"
+  out: {"message": "Password = <SECRET_1> horse battery staple"}
+  readable=['horse', 'battery', 'staple'] 
+[E2 card PASSWD=correct horse battery s]
+  in : "PASSWD=correct horse battery staple"
+  out: {"clean": "PASSWD=<SECRET_1>", "slack": "PASSWD=<SECRET_1>"}
+  readable=[] idempotent=True
+[E2 walk PASSWD=correct horse battery s]
+  in : "PASSWD=correct horse battery staple"
+  out: {"message": "PASSWD=<SECRET_1> horse battery staple"}
+  readable=['horse', 'battery', 'staple'] 
+[E2 card passphrase=correct horse batte]
+  in : "passphrase=correct horse battery staple"
+  out: {"clean": "passphrase=correct horse battery staple", "slack": "passphrase=correct horse battery staple"}
+  readable=['correct', 'horse', 'battery', 'staple'] idempotent=True
+[E2 walk passphrase=correct horse batte]
+  in : "passphrase=correct horse battery staple"
+  out: {"message": "passphrase=correct horse battery staple"}
+  readable=['correct', 'horse', 'battery', 'staple'] 
+[E2 card pwd=correct horse battery stap]
+  in : "pwd=correct horse battery staple"
+  out: {"clean": "pwd=<SECRET_1>", "slack": "pwd=<SECRET_1>"}
+  readable=[] idempotent=True
+[E2 walk pwd=correct horse battery stap]
+  in : "pwd=correct horse battery staple"
+  out: {"message": "pwd=<SECRET_1> horse battery staple"}
+  readable=['horse', 'battery', 'staple'] 
+[E3 kind Secret (control)]
+  in : [{"data": {"DB_PASSWORD": "<made-up-value-A-in-base64>"}, "kind": "Secret", "name": "s"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": {"DB_PASSWORD": "<SECRET_2>"}, "kind": "Secret", "name": "s"}, {"message": "login failed with <SECRET_2> twice <SECRET_2>"}]
+  readable=[] 
+[E3 kind secret lower]
+  in : [{"data": {"DB_PASSWORD": "<made-up-value-A-in-base64>"}, "kind": "secret", "name": "s"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": {"DB_PASSWORD": "<SECRET_2>"}, "kind": "secret", "name": "s"}, {"message": "login failed with <SECRET_2> twice <SECRET_2>"}]
+  readable=[] 
+[E3 kind SECRET upper]
+  in : [{"data": {"DB_PASSWORD": "<made-up-value-A-in-base64>"}, "kind": "SECRET", "name": "s"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": {"DB_PASSWORD": "<SECRET_2>"}, "kind": "SECRET", "name": "s"}, {"message": "login failed with <SECRET_2> twice <SECRET_2>"}]
+  readable=[] 
+[E3 kind ' Secret ' spaces]
+  in : [{"data": {"DB_PASSWORD": "<made-up-value-A-in-base64>"}, "kind": " Secret ", "name": "s"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": {"DB_PASSWORD": "<SECRET_1>"}, "kind": " Secret ", "name": "s"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  readable=['<made-up-value-A>'] 
+[E3 kind secret lower under spec]
+  in : [{"kind": "secret", "name": "s", "spec": {"data": {"DB_PASSWORD": "<made-up-value-A-in-base64>"}}}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"kind": "secret", "name": "s", "spec": {"data": {"DB_PASSWORD": "<SECRET_2>"}}}, {"message": "login failed with <SECRET_2> twice <SECRET_2>"}]
+  readable=[] 
+[E3 Secret stringData]
+  in : [{"kind": "Secret", "stringData": {"DB_PASSWORD": "<made-up-value-A>"}}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"kind": "Secret", "stringData": {"DB_PASSWORD": "<SECRET_1>"}}, {"message": "login failed with <SECRET_1> twice <SECRET_1>"}]
+  readable=[] 
+[E3 data is a string (valid b64)]
+  in : [{"data": "<made-up-value-A-in-base64>", "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": "<SECRET_2>", "kind": "Secret"}, {"message": "login failed with <SECRET_2> twice <SECRET_2>"}]
+  readable=[] 
+[E3 data is a string (invalid b64)]
+  in : [{"data": "!!not base64*<made-up-value-A>", "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": "<SECRET_1>", "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  readable=['<made-up-value-A>'] 
+[E3 data is a list]
+  in : [{"data": ["<made-up-value-A-in-base64>", "<made-up-value-A>"], "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": ["<SECRET_2>", "<SECRET_2>"], "kind": "Secret"}, {"message": "login failed with <SECRET_2> twice <SECRET_2>"}]
+  readable=[] 
+[E3 data is a list of maps]
+  in : [{"data": [{"DB_PASSWORD": "<made-up-value-A>"}], "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": [{"DB_PASSWORD": "<SECRET_1>"}], "kind": "Secret"}, {"message": "login failed with <SECRET_1> twice <SECRET_1>"}]
+  readable=[] 
+[E3 data map, entry invalid b64]
+  in : [{"data": {"DB_PASSWORD": "***<made-up-value-A>"}, "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": {"DB_PASSWORD": "<SECRET_1>"}, "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  readable=['<made-up-value-A>'] 
+[E3 data map, entry is list]
+  in : [{"data": {"DB_PASSWORD": ["<made-up-value-A>", "<made-up-value-A-in-base64>"]}, "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": {"DB_PASSWORD": ["<SECRET_1>", "<SECRET_1>"]}, "kind": "Secret"}, {"message": "login failed with <SECRET_1> twice <SECRET_1>"}]
+  readable=[] 
+[E3 data map, entry is map]
+  in : [{"data": {"DB_PASSWORD": {"x": "<made-up-value-A>"}}, "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": {"DB_PASSWORD": {"x": "<SECRET_1>"}}, "kind": "Secret"}, {"message": "login failed with <SECRET_1> twice <SECRET_1>"}]
+  readable=[] 
+[E3 data map, entry number]
+  in : [{"data": {"PORT": 123456789}, "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": {"PORT": "<SECRET_REDACTED>"}, "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  readable=['<made-up-value-A>'] 
+[E3 data None]
+  in : [{"data": null, "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": null, "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  readable=['<made-up-value-A>'] 
+[E3 data is int]
+  in : [{"data": 12345678, "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"data": "<SECRET_REDACTED>", "kind": "Secret"}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  readable=['<made-up-value-A>'] 
+[E3 data nested spec.spec]
+  in : [{"kind": "Secret", "spec": {"spec": {"data": {"A": "<made-up-value-A>"}}}}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"kind": "Secret", "spec": {"spec": {"data": {"A": "<SECRET_1>"}}}}, {"message": "login failed with <SECRET_1> twice <SECRET_1>"}]
+  readable=[] 
+[E3 stringData non-cred key]
+  in : [{"kind": "Secret", "stringData": {"CONFIG": "<made-up-value-A>"}}, {"message": "login failed with <made-up-value-A> twice <made-up-value-A>"}]
+  out: [{"kind": "Secret", "stringData": {"CONFIG": "<SECRET_1>"}}, {"message": "login failed with <SECRET_1> twice <SECRET_1>"}]
+  readable=[] 
+[M5 orders]
+  in : [{"data": {"DB_NAME": "b3JkZXJz"}, "kind": "Secret"}, {"message": "orders-api timeout"}]
+  out: [{"data": {"DB_NAME": "<SECRET_1>"}, "kind": "Secret"}, {"message": "orders-api timeout"}]
+  readable=['orders'] 
+[8 chars]
+  in : [{"data": {"DB_NAME": "YWJjZGVmZ2g="}, "kind": "Secret"}, {"message": "abcdefgh-api timeout"}]
+  out: [{"data": {"DB_NAME": "<SECRET_1>"}, "kind": "Secret"}, {"message": "abcdefgh-api timeout"}]
+  readable=['abcdefgh'] 
+[7 chars]
+  in : [{"data": {"DB_NAME": "YWJjZGVmZw=="}, "kind": "Secret"}, {"message": "abcdefg-api timeout"}]
+  out: [{"data": {"DB_NAME": "<SECRET_1>"}, "kind": "Secret"}, {"message": "abcdefg-api timeout"}]
+  readable=['abcdefg'] 
+[digits 8]
+  in : [{"data": {"DB_NAME": "MTIzNDU2Nzg="}, "kind": "Secret"}, {"message": "12345678-api timeout"}]
+  out: [{"data": {"DB_NAME": "<SECRET_1>"}, "kind": "Secret"}, {"message": "12345678-api timeout"}]
+  readable=['12345678'] 
+[upper 8]
+  in : [{"data": {"DB_NAME": "QUJDREVGR0g="}, "kind": "Secret"}, {"message": "ABCDEFGH-api timeout"}]
+  out: [{"data": {"DB_NAME": "<SECRET_3>"}, "kind": "Secret"}, {"message": "<SECRET_3>-api timeout"}]
+  readable=[] 
+[mixed 8]
+  in : [{"data": {"DB_NAME": "YWJjZEVGMTI="}, "kind": "Secret"}, {"message": "abcdEF12-api timeout"}]
+  out: [{"data": {"DB_NAME": "<SECRET_2>"}, "kind": "Secret"}, {"message": "<SECRET_2>-api timeout"}]
+  readable=[] 
+[APPENDIX M5 orders-api timeout (exact)]
+  in : [{"data": {"DB_NAME": "b3JkZXJz"}, "kind": "Secret"}, {"message": "orders-api timeout"}]
+  out: [{"data": {"DB_NAME": "<SECRET_1>"}, "kind": "Secret"}, {"message": "orders-api timeout"}]
+  readable=['orders-api timeout'] 
+[E4 env entry PWD]
+  in : [{"name": "PWD", "value": "/srv/app"}]
+  out: [{"name": "PWD", "value": "<SECRET_1>"}]
+  readable=[] 
+[E4 env entry OLDPWD]
+  in : [{"name": "OLDPWD", "value": "/srv"}]
+  out: [{"name": "OLDPWD", "value": "<SECRET_1>"}]
+  readable=[] 
+[E4 env entry auth_method]
+  in : [{"name": "auth_method", "value": "oauth2"}]
+  out: [{"name": "auth_method", "value": "<SECRET_1>"}]
+  readable=[] 
+[E4 map PWD]
+  in : {"PWD": "/srv/app"}
+  out: {"PWD": "<SECRET_1>"}
+  readable=[] 
+[E4 map OLDPWD]
+  in : {"OLDPWD": "/srv"}
+  out: {"OLDPWD": "<SECRET_1>"}
+  readable=[] 
+[E4 map auth_method]
+  in : {"auth_method": "oauth2"}
+  out: {"auth_method": "<SECRET_1>"}
+  readable=[] 
+[E4 map author]
+  in : {"author": "bob"}
+  out: {"author": "bob"}
+  readable=[] 
+[E4 map authority]
+  in : {"authority": "internal"}
+  out: {"authority": "internal"}
+  readable=[] 
+[E4 map authorization_type]
+  in : {"authorization_type": "bearer"}
+  out: {"authorization_type": "<SECRET_1>"}
+  readable=[] 
+[E4 map session_id]
+  in : {"session_id": "abc123"}
+  out: {"session_id": "<SECRET_1>"}
+  readable=[] 
+[E4 map pwd_enabled]
+  in : {"pwd_enabled": "true"}
+  out: {"pwd_enabled": "true"}
+  readable=[] 
+[E4 map password_policy]
+  in : {"password_policy": "strict"}
+  out: {"password_policy": "<SECRET_1>"}
+  readable=[] 
+[E4 map password_policy_enabled yes]
+  in : {"password_policy_enabled": "yes"}
+  out: {"password_policy_enabled": "yes"}
+  readable=[] 
+[E4 map token_expiry ts]
+  in : {"token_expiry": "2026-11-11T10:00:00Z"}
+  out: {"token_expiry": "2026-11-11T10:00:00Z"}
+  readable=[] 
+[E4 map secret_count 5]
+  in : {"secret_count": 5}
+  out: {"secret_count": 5}
+  readable=[] 
+[E4 map secretary]
+  in : {"secretary": "alice"}
+  out: {"secretary": "alice"}
+  readable=[] 
+[E4 map keyboard_layout]
+  in : {"keyboard_layout": "us"}
+  out: {"keyboard_layout": "us"}
+  readable=[] 
+[E4 map monkey]
+  in : {"monkey": "x"}
+  out: {"monkey": "x"}
+  readable=[] 
+[E4 map hostname]
+  in : {"hostname": "node1"}
+  out: {"hostname": "node1"}
+  readable=[] 
+[MENTION ```
+10.20.30.40@channel
+```]
+  in : "```\n10.20.30.40@channel\n```"
+  out: {"clean": "```\n<IPV4_1>@channel\n```", "slack": "```\n<IPV4_1>@channel\n```"}
+  readable=[] idempotent=True
+[MENTION `10.20.30.40@channel`]
+  in : "`10.20.30.40@channel`"
+  out: {"clean": "`<IPV4_1>at-channel`", "slack": "`<IPV4_1>at-channel`"}
+  readable=[] idempotent=True
+[MENTION ping 10.20.30.40@channel]
+  in : "ping 10.20.30.40@channel"
+  out: {"clean": "ping <IPV4_1>at-channel", "slack": "ping <IPV4_1>at-channel"}
+  readable=[] idempotent=True
+[MENTION ```
+10.20.30.40@here now
+```
+a]
+  in : "```\n10.20.30.40@here now\n```\nafter 10.20.30.40@everyone"
+  out: {"clean": "```\n<IPV4_1>@here now\n```\nafter <IPV4_1>at-everyone", "slack": "```\n<IPV4_1>@here now\n```\nafter <IPV4_1>at-everyone"}
+  readable=[] idempotent=True
+[MENTION ~~~
+10.20.30.40@channel
+~~~]
+  in : "~~~\n10.20.30.40@channel\n~~~"
+  out: {"clean": "~~~\n<IPV4_1>at-channel\n~~~", "slack": "~~~\n<IPV4_1>at-channel\n~~~"}
+  readable=[] idempotent=True
+[MENTION ```
+10.20.30.40@channel]
+  in : "```\n10.20.30.40@channel"
+  out: {"clean": "`\u200b`\u200b`\n<IPV4_1>at-channel", "slack": "`\u200b`\u200b`\n<IPV4_1>at-channel"}
+  readable=[] idempotent=True
+[LABEL host, no label]
+  in : ["db01.corp.internal", null]
+  out: "agent-ops asks to run restart_service v1 (reversible) on <HOSTNAME_1>. Inputs: {\"n\":1}. Expected: service restarted. Plan 8f73ee716abd."
+  readable=[] sl=
+[LABEL host + label orders-db]
+  in : ["db01.corp.internal", {"db01.corp.internal": "orders-db"}]
+  out: "agent-ops asks to run restart_service v1 (reversible) on orders-db. Inputs: {\"n\":1}. Expected: service restarted. Plan f7d8b149e179."
+  readable=[] sl=
+[LABEL host + host-shaped label]
+  in : ["db01.corp.internal", {"db01.corp.internal": "x.evil.corp"}]
+  out: "agent-ops asks to run restart_service v1 (reversible) on <HOSTNAME_1>. Inputs: {\"n\":1}. Expected: service restarted. Plan 6d3db9f2b4ba."
+  readable=[] sl=
+[LABEL host + email label]
+  in : ["db01.corp.internal", {"db01.corp.internal": "bob.smith@example.com"}]
+  out: "agent-ops asks to run restart_service v1 (reversible) on <EMAIL_1>. Inputs: {\"n\":1}. Expected: service restarted. Plan 555f8b11e697."
+  readable=[] sl=
+[LABEL host + label L5 (assignment-shaped)]
+  in : ["db01.corp.internal", {"db01.corp.internal": "password=<made-up-value-C>"}]
+  out: "agent-ops asks to run restart_service v1 (reversible) on password=<SECRET_1> Inputs: {\"n\":1}. Expected: service restarted. Plan 4686df0429c3."
+  readable=[] sl=
+[LABEL host + label with markdown link]
+  in : ["db01.corp.internal", {"db01.corp.internal": "[x](http://evil.example)"}]
+  out: "agent-ops asks to run restart_service v1 (reversible) on x [link removed]. Inputs: {\"n\":1}. Expected: service restarted. Plan d63ee72e0a9b."
+  readable=[] sl=
+[LABEL host + label with @channel]
+  in : ["db01.corp.internal", {"db01.corp.internal": "orders @channel"}]
+  out: "agent-ops asks to run restart_service v1 (reversible) on orders at-channel. Inputs: {\"n\":1}. Expected: service restarted. Plan 50ca8ee7f8c2."
+  readable=[] sl=
+[LABEL host + label with newline heading]
+  in : ["db01.corp.internal", {"db01.corp.internal": "a\n# forged"}]
+  out: "agent-ops asks to run restart_service v1 (reversible) on a\n# forged. Inputs: {\"n\":1}. Expected: service restarted. Plan f1d85adc7c8c."
+  readable=[] sl=
+[LABEL host + label that is an IP]
+  in : ["db01.corp.internal", {"db01.corp.internal": "10.20.30.40"}]
+  out: "agent-ops asks to run restart_service v1 (reversible) on <IPV4_1>. Inputs: {\"n\":1}. Expected: service restarted. Plan dc46d9538e68."
+  readable=[] sl=
+[LABEL ip target, no label]
+  in : ["10.20.30.40", null]
+  out: "agent-ops asks to run restart_service v1 (reversible) on <IPV4_1>. Inputs: {\"n\":1}. Expected: service restarted. Plan 758b9d6704ba."
+  readable=[] sl=
+[LABEL label for other system]
+  in : ["other.corp.internal", {"db01.corp.internal": "orders-db"}]
+  out: "agent-ops asks to run restart_service v1 (reversible) on <HOSTNAME_1>. Inputs: {\"n\":1}. Expected: service restarted. Plan 3dd2c1ec5959."
+  readable=[] sl=
+[LABEL plain target]
+  in : ["orders-db", null]
+  out: "agent-ops asks to run restart_service v1 (reversible) on orders-db. Inputs: {\"n\":1}. Expected: service restarted. Plan 3be7cc1dfc5b."
+  readable=[] sl=
+[LABEL email target]
+  in : ["bob.smith@example.com", null]
+  out: "agent-ops asks to run restart_service v1 (reversible) on <EMAIL_1>. Inputs: {\"n\":1}. Expected: service restarted. Plan b43f1df1c474."
+  readable=[] sl=
+[LABEL host + 500-char label]
+  in : ["db01.corp.internal", {"db01.corp.internal": "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL
+  out: "agent-ops asks to run restart_service v1 (reversible) on <HIGHENTROPY_1>. Inputs: {\"n\":1}. Expected: service restarted. Plan f23acc9e5340."
+  readable=[] sl=
+[LABEL host + zero-width label]
+  in : ["db01.corp.internal", {"db01.corp.internal": "orders\u200b-db"}]
+  out: "agent-ops asks to run restart_service v1 (reversible) on orders-db. Inputs: {\"n\":1}. Expected: service restarted. Plan ec92d61969fd."
+  readable=[] sl=

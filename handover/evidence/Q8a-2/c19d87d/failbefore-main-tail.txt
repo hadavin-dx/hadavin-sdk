@@ -1,0 +1,4 @@
+FAILED tests/contracts/test_capabilities.py::test_channel_names_its_callback_path[slack]
+ERROR tests/test_q8a2_callback.py - AttributeError: module 'hadavin_sdk.defau...
+ERROR tests/test_p7_tick.py
+31 failed, 238 passed, 2 errors in 15.84s

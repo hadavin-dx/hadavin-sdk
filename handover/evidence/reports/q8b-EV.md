@@ -1,0 +1,31 @@
+EVIDENCE RUNNER report, Q8b round 2, head bcb2bfec179f18bd58de0df2b6669d94a9312472 (fetched, equals the branch head; clean detached worktree, 0 changed files before and after every run, including after the mutant runs). I record, I do not judge, I fixed nothing.
+
+Full table and probe outputs: /home/user/hadavin-sdk/handover/evidence/Q8b/bcb2bfec/RESULTS.md (gitleaks on that folder: exit 0; not committed or pushed). Raw logs: /home/user/build/evidence-raw/Q8b-bcb2bfec/. Probe scripts, runnable originals: /home/user/build/EV-Q8b-bcb2bfec/scripts/. My Postgres is stopped and my worktrees and pg folder are removed (0 of my processes left).
+
+NOT RUN or run differently:
+- `uv sync --locked --no-build ...` from the brief fails (editable package has no binary build). I used `uv sync --locked --all-extras --group test` (rc 0).
+- Not run: semgrep, zizmor, the Python 3.12 job, Postgres 17, the Vault service tests, perf, and the flaky timing test x3 (the round-2 brief names no perf item).
+- Fail-before: the head's test files do NOT run on main src. 4 files fail at collection (`k1b.redaction` has no `_ONLY_PLACEHOLDERS`, read by tests/q8b_helpers.py): 69 passed, 4 collection errors. To get counts I changed ONE helper line (pattern built from `runmap.PLACEHOLDER`): 133 failed, 109 passed, 14 xfailed. Failed per file: card_text 37, credential_keys 68, glued_and_whole_values 22, random 6. 40 Q8b tests pass on old code (32 credential_keys, 4 glued, 3 card_text, 1 random; list in 06c), plus 69 of the older k5 tests. Same files on head: 241 passed, 16 xfailed. This run did not go through heavy.sh (my queued attempt waited over 25 min; I cancelled my own job).
+- My "assignment readable" property generator is my own (seed 20261111, 3000 texts), so the round-1 figure 87 is not reproduced. Mine: head 38 (all start with `Authorization: Bearer <key>`), main 432.
+- Fact: the diff contains src/hadavin_sdk/guard/redact.py, which the ticket's HARD LIMIT says no edit of.
+
+GATES (all on the exact head):
+- ruff check exit 0 (All checks passed); ruff format --check exit 0 (324 files already formatted).
+- bandit -ll: exit 0, no issues. tools/scan_repo.py: exit 0. gitleaks origin/main..HEAD: no leaks (2 commits).
+- stage_mutants: 37 of 37 good.
+- q8b_mutants (the CI step, via heavy.sh): 46 of 46 good, problems [] (round 1 had 26).
+- Full pytest (via heavy.sh, exit 0): 10696 passed, 1 skipped, 28 deselected, 16 xfailed in 386.18 s.
+- The Q8b mutant run waited about 35 min in the heavy.sh queue.
+
+ROUND-1 CASES ON THE HEAD (my own inputs, compared with clean main 2a8c2aac; "readable" = made-up value still in the output):
+- E1: `bob.smith@example.com` glued to `password=` or `token=`, and with U+200B between: value masked on walk and card paths (`<EMAIL_1>=<SECRET_1>`), main walk leaves it readable. Grid of 640 texts (8 left parts, 10 separators, 8 key forms): readable head walk 0 / card 8 / Slack 8, main walk 15 / card 8 / Slack 8. Those 8 are `https://example.com/x` followed by `password: `: output `[link removed] <value>` on head and main. Property run: head walk 38 / card 38 (Bearer prefix only); main walk 432 (e-mail kinds 394, zero-width 9, Bearer 38) / card 38. Exceptions 0.
+- E2: card path `password=correct horse battery staple`, also `password:`, percent form, quoted, db_password, PASSWD, pwd, with prefix, with trailing dot: head nothing readable, Slack block the same; main leaves `horse battery staple`. Record-walk path on head still gives `password=<SECRET_1> horse battery staple` (same as main). `passphrase=correct horse battery staple` is unmasked on head and main (card and walk).
+- E3: `kind: secret` lower case, `SECRET`, `data` under `spec`, `spec.spec`, `stringData`, `data` as a base64 string or a list: masked under the key and in the log copy on head (readable on main). `kind: " Secret "` (spaces) is not recognised (log copy readable). `data` as a string or an entry that is not valid base64: masked under the key, log copy readable (same on main). `data` None, int, or a numeric entry: nothing registered. Kind spelled with İ, ı, Kelvin sign, NBSP, ZWSP or full-width S is not recognised; `ſecret` is.
+- Code fence `10.20.30.40@channel`: closed backtick fence `<IPV4_1>@channel`; closed `~~~` fence, inline code, plain text and unclosed fence `<IPV4_1>at-channel`. All 6 idempotent on head; 5 of 6 not idempotent on main.
+- M5 `orders-api timeout`: still readable on head and main (6-character entry, under the 8-character rule). 7-letter, 8-letter lower-case and 8-digit entries also stay readable in the log; 8 characters of mixed case or digits and 8 upper-case are masked on head.
+- E4: `PWD`, `OLDPWD`, `auth_method`, `authorization_type`, `session_id` and `password_policy: strict` are masked on head. `author`, `authority`, `secretary`, `keyboard_layout`, `monkey`, `hostname`, `pwd_enabled: true`, `password_policy_enabled: yes`, a `token_expiry` timestamp and `secret_count: 5` are kept.
+- F3: `paſſword`, `ſecret`, `ApİKey`, `apıkey`, Kelvin-sign `TOKEN`, full-width `password`, `Authorİzation`: masked. `paßword`: masked on the record-walk path on head (readable on main); on the card path the value is readable on head and main.
+- 256 caps: Secret with N entries whose values are repeated in logs: copies readable on head N=255: 0, 256: 0, 257: 1, 300: 44, 1000: 744 (entries past 256 get the fixed mask; repeats stay readable); main: all readable. The cap is per Secret (3 Secrets x 200: 0 of 600 readable). A map of 300 values under key `credentials`: all 300 repeats readable on head and main. 300 values in a list under a credential key: 0 readable on head. Values of 254 to 1000 characters: repeats masked at every length.
+- Card target label: host target gives `<HOSTNAME_1>`, label `orders-db` is shown, host-shaped, e-mail, IP or assignment-shaped labels are masked, `@channel` in a label gives `at-channel`, markdown link label gives `x [link removed]`. A label `a\n# forged` leaves a line `# forged` on the card.
+
+Not checked: round-1 appendix scripts and the 113-shape hostile list were not re-run; Slack text was checked through `_blocks` with a stub request, not a real Slack call; no live model call.

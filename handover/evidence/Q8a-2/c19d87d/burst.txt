@@ -1,0 +1,10 @@
+run 1 wt rc=0 load=2.05 2.86 2.64 | 1 passed, 120 deselected in 1.85s | 
+run 1 wt-old rc=1 load=2.05 2.86 2.64 | 1 failed, 120 deselected in 22.58s | E   assert 22.097308311999996 < (1.0 + 1.5)
+run 2 wt rc=0 load=2.10 2.81 2.63 | 1 passed, 120 deselected in 1.84s | 
+run 2 wt-old rc=1 load=2.10 2.81 2.63 | 1 failed, 120 deselected in 21.54s | E   assert 21.087899759000038 < (1.0 + 1.5)
+run 3 wt rc=0 load=1.53 2.61 2.57 | 1 passed, 120 deselected in 1.85s | 
+run 3 wt-old rc=1 load=1.53 2.61 2.57 | 1 failed, 120 deselected in 21.56s | E   assert 21.064585180999984 < (1.0 + 1.5)
+run 4 wt rc=0 load=1.53 2.54 2.55 | 1 passed, 120 deselected in 1.85s | 
+run 4 wt-old rc=1 load=1.57 2.53 2.54 | 1 failed, 120 deselected in 21.56s | E   assert 21.072880704 < (1.0 + 1.5)
+run 5 wt rc=0 load=1.55 2.46 2.52 | 1 passed, 120 deselected in 1.83s | 
+run 5 wt-old rc=1 load=1.50 2.44 2.51 | 1 failed, 120 deselected in 21.57s | E   assert 21.088439453000092 < (1.0 + 1.5)

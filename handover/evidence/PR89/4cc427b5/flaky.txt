@@ -1,0 +1,13 @@
+head run 1 queued 20:29:04
+head run 1 rc=1 1 failed in 0.57s end 20:37:23
+head run 2 queued 20:37:24
+head run 2 rc=1 1 failed in 0.58s end 20:37:25
+head run 3 queued 20:37:25
+head run 3 rc=1 1 failed in 0.56s end 20:37:27
+main run 1 queued 20:37:27
+main run 1 rc=1 1 failed in 0.64s end 20:37:29
+main run 2 queued 20:37:29
+main run 2 rc=1 1 failed in 0.57s end 20:37:31
+main run 3 queued 20:37:31
+main run 3 rc=1 1 failed in 0.60s end 20:37:33
+done

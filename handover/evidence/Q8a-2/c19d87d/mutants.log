@@ -1,0 +1,15 @@
+baseline (unmutated): PASS 121 passed in 29.99s
+m1_type_decides_handler_log KILLED ['FAILED tests/test_q8a2_callback.py::test_a_handler_failure_is_error_whatever_its_kind_also_a_connection_error_'] 1 failed, 66 passed in 22.79s
+m1b_handler_failure_not_logged KILLED ['FAILED tests/test_q8a2_callback.py::test_a_failure_while_a_signed_click_is_recorded_is_answered_500_and_logged'] 1 failed, 65 passed in 22.57s
+m1c_handle_error_type_only_decides KILLED ['FAILED tests/test_q8a2_callback.py::test_a_failure_while_a_signed_click_is_recorded_is_answered_500_and_logged'] 1 failed, 65 passed in 17.26s
+m2_flag_not_set_second_error_line KILLED ['FAILED tests/test_q8a2_callback.py::test_a_failure_while_a_signed_click_is_recorded_is_answered_500_and_logged'] 1 failed, 65 passed in 17.77s
+m2b_log_after_answer_lost_on_write_timeout KILLED ['FAILED tests/test_q8a2_callback.py::test_a_handler_failure_is_logged_once_even_when_the_answer_cannot_be_writt'] 1 failed, 72 passed in 26.51s
+m4a_no_cap KILLED ['FAILED tests/test_q8a2_callback.py::test_a_chain_of_errors_is_named_to_five_kinds_and_then_dots'] 1 failed, 82 passed in 27.06s
+m4b_cap_six KILLED ['FAILED tests/test_q8a2_callback.py::test_a_chain_of_errors_is_named_to_five_kinds_and_then_dots'] 1 failed, 82 passed in 26.11s
+m4c_no_seen_set KILLED ['FAILED tests/test_q8a2_callback.py::test_a_chain_that_loops_back_on_itself_stops_at_the_repeat'] 1 failed, 84 passed in 26.14s
+m4d_no_dots KILLED ['FAILED tests/test_q8a2_callback.py::test_a_chain_of_errors_is_named_to_five_kinds_and_then_dots'] 1 failed, 82 passed in 26.14s
+m4e_hungup_context_ignored KILLED ['FAILED tests/test_q8a2_callback.py::test_a_hang_up_that_has_another_error_as_its_context_is_error_and_names_bo'] 1 failed, 81 passed in 26.12s
+m3a_isprintable_hand_range KILLED ['FAILED tests/test_q8a2_callback.py::test_log_message_replaces_every_non_printable_and_cuts_the_text'] 1 failed, 89 passed in 26.56s
+m3b_isprintable_c0_only KILLED ['FAILED tests/test_q8a2_callback.py::test_log_message_replaces_every_non_printable_and_cuts_the_text'] 1 failed, 89 passed in 27.11s
+m5_exception_arg_logged_raw KILLED ['FAILED tests/test_q8a2_callback.py::test_a_handler_failure_is_error_whatever_its_kind_also_a_connection_error_'] 1 failed, 70 passed in 21.24s
+m6_backlog_back_to_stdlib_five KILLED ['FAILED tests/test_q8a2_callback.py::test_a_burst_of_silent_connections_is_all_closed_within_the_read_bound_of_'] 1 failed, 73 passed in 43.54s
