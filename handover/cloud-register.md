@@ -1186,3 +1186,4 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-Q8c-live a9225128 | EVIDENCE RUNNER (Fable, network) live check of slice-1 permission names against vendor pages | 14:08Z | +40m | 14:08Z | running | fold verified/wrong into ticket data |
 | B-Q8a2 a0472549 | ONE builder (Fable) ticket Q8a-2, branch core/q8a-2-neutral-callback-and-guard, pg 56080 | 14:11Z | +90m | 14:11Z | running | checkpoint 30m; then evidence + egm reviewers |
 | R-Q8b-plan ace02d78, a517cf42 | egm design + impl-readiness (Fable) plan review r1 tickets/Q8b | 14:13Z | +20m | 14:13Z | running | resolve, builder after PR77 scope settles |
+| R-Q8c-r2 ac13fdc7 | egm impl-readiness (Fable) plan review r2 of tickets/Q8c rev 2 | 14:18Z | +20m | | running | errata; build only after live verification |
