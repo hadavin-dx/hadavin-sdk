@@ -1410,3 +1410,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | B-Q8a1-b4 ae9691ed | Q8a-1 fix batch 4 builder (sonnet) | 16:28 | +60 min | RUNNING | check checkpoint B-Q8a1-b4.md |
 | EV-Q8c1 a1120e73 | closed, report saved | | | CLOSED |
 | B-Q8c1-b2 a5cfa82b | Q8c-1 fix batch 2 builder (sonnet) | 16:31 | +60 min | RUNNING | check checkpoint B-Q8c1-b2.md |
+| EV-Q8a2 ab1486e8 | closed, report saved | | | CLOSED |
+| B-Q8a2-b3 | Q8a-2 fix batch 3 builder (sonnet) | 16:33 | +60 min | RUNNING | check checkpoint B-Q8a2-b3.md |
