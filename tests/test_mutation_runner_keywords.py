@@ -473,8 +473,14 @@ def test_a_shortened_value_is_masked_by_its_fragments(monkeypatch):
         assert "AssertionError: assert" in out and "== 'other'" in out, (
             f"the line was not kept around the markers: {out}"
         )
-    assert mr._masked("E   x == 'abc...def'", ("abcdefghijkl",)) == "E   x == 'abc...def'", (
-        "a fragment shorter than the minimum was masked"
+    assert mr._masked("E   x == 'a...l'", ("abcdefghijkl",)) == "E   x == 'a...l'", (
+        "a one-character piece next to the dots was masked"
+    )
+    assert (
+        mr._masked("E   x == 'ab...kl'", ("abcdefghijkl",)) == "E   x == [REDACTED]...[REDACTED]"
+    ), "a two-character head or tail next to the dots was not masked"
+    assert mr._masked("E   x == 'abc...def'", ("abcdefghijkl",)) == "E   x == [REDACTED]...def'", (
+        "a head of 3 characters next to the dots was not masked, or a piece that is not the end of the secret was"
     )
 
 
@@ -585,14 +591,28 @@ def test_passwd_and_pwd_words_and_a_quoted_password_are_secrets(monkeypatch):
     )
 
 
-def test_a_fragment_of_exactly_the_minimum_length_is_masked_and_a_shorter_one_is_not():
+def test_a_piece_of_exactly_the_edge_minimum_is_masked_and_a_shorter_one_is_not():
     secret = "Qw7xK2mTp9" + "Zr4Vb8Nc3L"  # built from parts
     head6 = mr._masked(f"E x == '{secret[:6]}...zzz'", (secret,))
     assert secret[:6] not in head6, f"a 6-character head next to the dots was not masked: {head6}"
     tail6 = mr._masked(f"E x == 'zzz...{secret[-6:]}'", (secret,))
     assert secret[-6:] not in tail6, f"a 6-character tail next to the dots was not masked: {tail6}"
-    short = mr._masked(f"E x == '{secret[:5]}...zzz'", (secret,))
-    assert secret[:5] in short, f"a 5-character head was masked, below the minimum: {short}"
+    head2 = mr._masked(f"E x == '{secret[:2]}...zzz'", (secret,))
+    assert secret[:2] not in head2, f"a 2-character head next to the dots was not masked: {head2}"
+    with pytest.MonkeyPatch.context() as only_raw:
+        only_raw.setattr(mr, "_stripped_spans", lambda text, bases, dots: [])
+        raw = mr._masked(f"E x == '{secret[:1]}...zzz'", (secret,))
+    assert secret[:1] in raw, (
+        f"a 1-character head was masked by the raw scan, below the minimum: {raw}"
+    )
+    short = mr._masked(f"E x == '{secret[:1]}...zzz'", (secret,))
+    assert secret[:1] in short, (
+        f"a 1-character head was masked by the edge pattern, below the minimum: {short}"
+    )
+    tail = mr._masked(f"E x == 'zzz...{secret[-1:]}'", (secret,))
+    assert secret[-1:] in tail, (
+        f"a 1-character tail was masked by the edge pattern, below the minimum: {tail}"
+    )
 
 
 class _Det:
@@ -729,25 +749,25 @@ def test_a_line_with_a_hostile_number_of_dots_is_replaced_fast(monkeypatch):
 
 
 def _dots(text):
-    return list(re.finditer(r"\.\.\.", text))
+    return list(re.finditer(r"(?=\.\.\.)", text))
 
 
 def test_the_fragment_scan_agrees_with_the_plain_definition():
     """The scan was rewritten to be fast; it must still return the spans of the plain definition (every length from the largest down)."""
     rng = _Det(7)
     for _ in range(300):
-        secret = "".join(rng.choice("abcd") for _ in range(rng.randint(7, 20)))
+        secret = "".join(rng.choice("abcd") for _ in range(rng.randint(3, 20)))
         text = "".join(rng.choice("abcd.") for _ in range(rng.randint(0, 60)))
         plain: list[tuple[int, int]] = []
         for at in range(len(text) - 2):
             if text[at : at + 3] != "...":
                 continue
             start, end, top = at, at + 3, len(secret) - 1
-            for k in range(min(top, start), 5, -1):
+            for k in range(min(top, start), 1, -1):
                 if text[start - k : start] == secret[:k]:
                     plain.append((start - k, start))
                     break
-            for k in range(min(top, len(text) - end), 5, -1):
+            for k in range(min(top, len(text) - end), 1, -1):
                 if text[end : end + k] == secret[-k:]:
                     plain.append((end, end + k))
                     break
@@ -755,7 +775,7 @@ def test_the_fragment_scan_agrees_with_the_plain_definition():
             f"the fast scan found other spans than the plain definition: {text!r} {secret!r}"
         )
     # the largest head and tail (one character short of the whole secret) at every length, which random text almost never hits
-    for size in range(7, 21):
+    for size in range(3, 21):
         secret = "".join("pqrstuvwxyz"[(i * 3 + size) % 11] for i in range(size))
         top = size - 1
         text = secret[:top] + "..." + secret[-top:]
@@ -2064,6 +2084,7 @@ def test_a_short_value_printed_three_to_five_times_leaves_nothing_readable(monke
     non-ASCII character is found at any print depth by its run pattern (the exact forms reach layer 2 only)."""
     rng = _Det(59)
     leaked: list[tuple[str, tuple[int, ...]]] = []
+    embedded: list[tuple[str, tuple[int, ...]]] = []
     count = 0
     for body in _short_secret_bodies_for_depth():
         monkeypatch.setenv(DSN_NAME, body)
@@ -2077,9 +2098,18 @@ def test_a_short_value_printed_three_to_five_times_leaves_nothing_readable(monke
             text = _printed_n(body, sequence)
             if _readable(mr._masked(LINE + text, secrets)) != _readable(LINE):
                 leaked.append((body, sequence))
+            if (
+                count % 3 == 0
+            ):  # inside a larger text that holds both quote kinds (``repr`` then escapes the single quote)
+                text = _printed_n(body + QUOTES, sequence)
+                if _readable(mr._masked(LINE + text, secrets)) != _readable(LINE):
+                    embedded.append((body, sequence))
     assert count > 10_000, f"the property test shrank: {count} cases"
     assert not leaked, (
         f"{len(leaked)} short values printed 3 to 5 times left something readable, first: {leaked[0]}"
+    )
+    assert len(embedded) == 0, (
+        f"{len(embedded)} short values inside a text with both quote kinds, printed 3 to 5 times, left something readable, first: {embedded[0]}"
     )
 
 
@@ -2088,20 +2118,25 @@ def test_a_short_value_that_is_only_quote_marks_and_backslashes_leaves_no_long_r
     forms miss is that long."""
     leaked: list[tuple[str, tuple[int, ...]]] = []
     rng = _Det(61)
-    for size in (1, 2, 3):
-        for body in map("".join, itertools.product(QUOTES + chr(92), repeat=size)):
-            monkeypatch.setenv(DSN_NAME, body)
-            secrets = mr._secret_values((DSN_NAME,))
-            sequences = list(itertools.product(range(6), repeat=3))
-            sequences += [
-                tuple(rng.randint(0, 5) for _ in range(depth))
-                for depth in (4, 5)
-                for _ in range(20)
-            ]
-            for sequence in sequences:
-                out = mr._masked(LINE + _printed_n(body, sequence), secrets)
-                if re.search("[" + re.escape(chr(92) + QUOTES) + "]{10,}", out):
-                    leaked.append((body, sequence))
+    bodies = [
+        "".join(p) for size in (1, 2, 3) for p in itertools.product(QUOTES + chr(92), repeat=size)
+    ]
+    bodies += [
+        "".join(rng.choice(QUOTES + chr(92)) for _ in range(size))
+        for size in (4, 5, 6, 8)
+        for _ in range(25)
+    ]  # longer ones: a sample (3 to the power 8 is too many for every one)
+    for body in bodies:
+        monkeypatch.setenv(DSN_NAME, body)
+        secrets = mr._secret_values((DSN_NAME,))
+        sequences = list(itertools.product(range(6), repeat=3))
+        sequences += [
+            tuple(rng.randint(0, 5) for _ in range(depth)) for depth in (4, 5) for _ in range(20)
+        ]
+        for sequence in sequences:
+            out = mr._masked(LINE + _printed_n(body, sequence), secrets)
+            if re.search("[" + re.escape(chr(92) + QUOTES) + "]{10,}", out):
+                leaked.append((body, sequence))
     assert not leaked, f"{len(leaked)} long quote runs were not hidden, first: {leaked[0]}"
     ordinary = "E   assert 'a' == \"b\" and 'c' != 'd'"
     monkeypatch.setenv(DSN_NAME, QUOTES)  # a secret of both quote marks
@@ -2196,6 +2231,22 @@ def test_the_head_and_the_tail_next_to_dots_are_hidden_at_any_print_depth(monkey
     )
 
 
+def test_a_head_that_starts_with_characters_that_print_as_escapes_is_hidden(monkeypatch):
+    """The raw scan compares the line with the plain value, so a head whose first characters are printed as escapes (``\\xe9``) is found only by the stripped
+    text layer: its head pattern must hold every character of the piece, not only the first."""
+    value = chr(233) + chr(1) + "Pw3Tk5Zq9Lm2" + chr(233) + chr(2)
+    monkeypatch.setenv(DSN_NAME, value)
+    secrets = mr._secret_values((DSN_NAME,))
+    leaked = []
+    for sequence in itertools.product(range(6), repeat=3):
+        cut = _cut_around_dots(_printed_n(value, sequence), kept=6)
+        if _readable(mr._masked(LINE + cut, secrets)) != _readable(LINE + "..."):
+            leaked.append((sequence, cut))
+    assert not leaked, (
+        f"{len(leaked)} head or tail pieces that print as escapes were left, first: {leaked[0]}"
+    )
+
+
 def test_the_stripped_text_match_costs_over_masking_and_pins_it(monkeypatch):
     """The accepted cost: text whose letters, in order, read as a secret once its backslashes and quote marks are ignored is hidden too."""
     monkeypatch.setenv(DSN_NAME, "host=db.invalid password=" + MARKER + "Tail")
@@ -2216,6 +2267,9 @@ def test_a_short_secret_does_not_hide_plain_text_that_has_no_quote_mark_where_it
 ):
     """The over-masking of a short secret is bounded: ``ab'c`` is hidden where a run of quote marks or backslashes stands between ``ab`` and ``c``,
     never in ordinary text (``abc``, ``ab c``), and a short secret with no quote, backslash or non-ASCII character needs no pattern at all."""
+    assert mr._stripped_pattern("a'bcdef") is not None, (
+        "a stripped text of exactly FRAGMENT_MIN characters got no pattern"
+    )
     assert mr._stripped_pattern("a'bc") is None, (
         "a stripped text shorter than FRAGMENT_MIN must not get a pattern"
     )
@@ -2285,6 +2339,253 @@ def test_masking_a_quote_heavy_secret_on_a_long_line_stays_fast(monkeypatch):
         assert built < 5 and spent < 10, (
             f"masking is slow: {built:.2f} s to build, {spent:.2f} s for {len(text):,} characters of {name}"
         )
+
+
+# ---- round 11: the run pattern is for short secrets only, pieces next to dots from EDGE_MIN, password pieces, exact forms, caches --------------
+
+
+def test_a_long_base_with_a_quote_mark_has_no_run_pattern_and_does_not_halve_the_match_limit(
+    monkeypatch,
+):
+    for base in ("ab'cdefghij", "Qw7xK2m" + chr(233), "a" + chr(92) + "bcdefg"):
+        assert mr._run_pattern(base) is None, (
+            f"a base of more than FRAGMENT_MIN stripped characters got a run pattern: {base!r}"
+        )
+    assert mr._run_pattern("ab'cdef") is None, (
+        "a base of exactly FRAGMENT_MIN stripped characters got a run pattern"
+    )
+    assert mr._run_pattern("ab'cde") is not None, (
+        "a base with fewer than FRAGMENT_MIN stripped characters got no run pattern"
+    )
+    monkeypatch.setenv(DSN_NAME, "ab'cdefgh")
+    secrets = mr._secret_values((DSN_NAME,))
+    line = (
+        "E> " + "ab'cdefgh " * 60_000
+    )  # 60,000 matches of the stripped-text pattern: a second pattern would make 120,000
+    out = mr._masked(line, secrets)
+    assert "line with more than" not in out and out.count(mr.MASK) == 60_000, (
+        f"60,000 matches of a long base were treated as too many: {out[:80]}"
+    )
+
+
+EDGE_SECRETS = ("Qw7xK2m", "Qw'xK2m", "Qw7xK" + chr(233) + "m", 'Q"7xK2' + chr(92) + "m")
+
+
+def test_every_head_and_tail_of_a_short_secret_next_to_dots_is_hidden(monkeypatch):
+    """pytest's cut can fall anywhere in a 7-character secret: the 5 of 7 characters that a floor of 6 left readable are masked too (from EDGE_MIN on)."""
+    leaked: list[tuple] = []
+    cases = 0
+    for secret in EDGE_SECRETS:
+        monkeypatch.setenv(DSN_NAME, secret)
+        secrets = mr._secret_values((DSN_NAME,))
+        for k in range(mr.EDGE_MIN, len(secret)):
+            for inner in (lambda x: x, *_INNER_PRINTERS):
+                for outer in (lambda x: x, *_INNER_PRINTERS):
+                    head, tail = outer(inner(secret[:k])), outer(inner(secret[-k:]))
+                    if len(mr._stripped(secret[:k])) >= mr.EDGE_MIN:
+                        cases += 1
+                        out = mr._masked(LINE + head + "...zz", secrets)
+                        if _readable(out) != _readable(LINE + "...zz"):
+                            leaked.append(("head", k, head))
+                    if len(mr._stripped(secret[-k:])) >= mr.EDGE_MIN:
+                        cases += 1
+                        out = mr._masked(LINE + "zz..." + tail, secrets)
+                        if _readable(out) != _readable(LINE + "zz..."):
+                            leaked.append(("tail", k, tail))
+    assert cases > 500, f"the test shrank: {cases} cases"
+    assert not leaked, (
+        f"{len(leaked)} short head or tail pieces next to '...' were left readable, first: {leaked[0]}"
+    )
+
+
+def test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_secret(monkeypatch):
+    """The cost of masking from EDGE_MIN characters on is bounded: only a start of the secret right before ``...`` and an end of it right after one."""
+    monkeypatch.setenv(DSN_NAME, "Qw7xK2m")
+    secrets = mr._secret_values((DSN_NAME,))
+    line = "E   'ab...cd' 'Qw...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...2m'"
+    out = mr._masked(line, secrets)
+    assert (
+        out == "E   'ab...cd' [REDACTED]...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...[REDACTED]"
+    ), (
+        f"a piece that is not a start or an end of the secret, or one not next to dots, was changed: {out}"
+    )
+    many = "E>" + "Qw...Qw" * mr.MAX_FRAGMENT_HITS
+    out = mr._masked(many, secrets)
+    assert "line with more than" not in out and out.count(mr.MASK) == mr.MAX_FRAGMENT_HITS, (
+        "a line full of pieces next to dots was replaced or masked wrongly"
+    )
+
+
+def test_dots_that_share_a_dot_are_all_found(monkeypatch):
+    """``....`` holds two ``...`` (a head that ends in a dot, then the cut): both are looked at."""
+    monkeypatch.setenv(DSN_NAME, "Zq1Xy9" + "." + "Pw3Tk5")
+    secrets = mr._secret_values((DSN_NAME,))
+    out = mr._masked("E   x == 'Zq1Xy9....bb'", secrets)
+    assert out == "E   x == [REDACTED]...bb'", (
+        f"a head that ends in a dot, before the cut, was not all hidden: {out}"
+    )
+    # the raw scan on its own (the stripped-text layer also finds this head, so only a direct call shows each ``...`` is looked at)
+    secret = "Zq1Xy9" + "." + "Pw3Tk5"
+    text = "x " + "Zq1Xy9" + "...." + "bb"
+    spans = mr._fragment_spans(text, secret, list(mr._DOTS.finditer(text)))
+    assert (2, 9) in spans and (2, 8) in spans, (
+        f"a head that ends in a dot, before the cut, was not all hidden by the raw scan: {spans}"
+    )
+
+
+def test_the_pieces_of_an_unquoted_password_that_holds_a_quote_a_semicolon_or_an_ampersand_are_secrets(
+    monkeypatch,
+):
+    monkeypatch.setenv(DSN_NAME, "host=db.invalid password=Ab3'Cd4Xy9;Pq7&Rs2Tk5 user=svc")
+    bases = mr._secret_values((DSN_NAME,)).bases
+    assert "Cd4Xy9" in bases, "a long piece of an unquoted password after a quote was not a secret"
+    assert "Rs2Tk5" in bases, "a piece of an unquoted password after an ampersand was not a secret"
+    assert "Pq7" in bases, "a piece of exactly PASSWORD_PIECE_MIN characters was not a secret"
+    monkeypatch.setenv(DSN_NAME, "host=db.invalid password=Ab3'Zz;Qw user=svc")
+    bases = mr._secret_values((DSN_NAME,)).bases
+    assert "Zz" not in bases and "Qw" not in bases, (
+        "a piece shorter than PASSWORD_PIECE_MIN characters was a secret"
+    )
+    out = mr._masked("E   saw Cd4Xy9 here", mr._secret_values((DSN_NAME,)))
+    assert "Cd4Xy9" in out, "a piece of another value was hidden"
+    monkeypatch.setenv(DSN_NAME, "host=db.invalid password=Ab3'Cd4Xy9;Pq7 user=svc")
+    out = mr._masked("E   saw Cd4Xy9 here", mr._secret_values((DSN_NAME,)))
+    assert "Cd4Xy9" not in out, "a piece that stands alone in a line was left readable"
+
+
+def test_masking_a_short_quote_secret_on_a_long_line_stays_fast(monkeypatch):
+    secret = "ab'c" + chr(92) + "d'" + chr(233)  # 5 stripped characters: a run pattern
+    monkeypatch.setenv(DSN_NAME, secret)
+    secrets = mr._secret_values((DSN_NAME,))
+    assert mr._run_pattern(secret) is not None, (
+        "the control is wrong: the secret has no run pattern"
+    )
+    near = (
+        "ab'c" + chr(92) + "d'"
+    )  # the secret without its last character, as written: a real near miss
+    for name, text in (
+        ("near misses", ("E> " + near + " ") * 40_000),
+        ("runs only", "'a" * 150_000),
+        ("runs and dots", ("E> " + near + " ... " + near + " ") * 500),
+    ):
+        started = time.perf_counter()
+        out = mr._masked(text, secrets)
+        spent = time.perf_counter() - started
+        assert out == text, f"a near miss was hidden: {name}"
+        assert spent < 10, f"masking is slow: {spent:.2f} s for {len(text):,} characters of {name}"
+
+
+def test_a_short_secret_is_cut_out_exactly_where_its_run_pattern_found_it(monkeypatch):
+    """The run view keeps a position for every character: the span cut out starts at the first character of the secret and ends after its last."""
+    secret = "ab'c" + chr(233)
+    monkeypatch.setenv(DSN_NAME, secret)
+    secrets = mr._secret_values((DSN_NAME,))
+    out = mr._masked("Aab'c" + chr(233) + "Z", secrets)
+    assert out.startswith("A" + mr.MASK), (
+        f"a match in plain text started at the wrong character: {out}"
+    )
+    assert out.endswith(mr.MASK + "Z"), f"a match in plain text ended at the wrong character: {out}"
+    for sequence in ((0, 2, 0), (1, 0, 2), (4, 3, 1)):
+        out = mr._masked("x1 " + _printed_n(secret, sequence) + " y2", secrets)
+        assert out.startswith("x1 ") and out.endswith(" y2"), (
+            f"the text around a short secret was changed: {out}"
+        )
+        before, mask, after = out.partition(mr.MASK)
+        assert mask and _readable(before) == "x1 ", (
+            f"a printed short secret was left readable at its start: {out}"
+        )
+        assert _readable(after) == " y2", (
+            f"a printed short secret was left readable at its end: {out}"
+        )
+    monkeypatch.setenv(DSN_NAME, "'ab" + chr(233))  # starts with a quote mark
+    out = mr._masked(
+        "pre " + chr(92) * 2 + "'ab" + chr(92) + "xe9 post", mr._secret_values((DSN_NAME,))
+    )
+    assert out == "pre " + mr.MASK + " post", (
+        f"a match that starts with a run did not start at the run: {out}"
+    )
+    monkeypatch.setenv(DSN_NAME, "ab" + chr(233) + "'")  # ends with a quote mark
+    out = mr._masked("pre ab" + chr(92) + "xe9''' post", mr._secret_values((DSN_NAME,)))
+    assert out == "pre " + mr.MASK + " post", (
+        f"a match that ends with a run did not end at the run: {out}"
+    )
+
+
+def test_a_run_pattern_reads_runs_of_marks_and_the_escape_after_a_run():
+    pattern = mr._run_pattern("ab'c")
+    assert pattern is not None, "a short base with a quote mark got no run pattern"
+    view = mr._run_view
+    assert not pattern.search(view("abc")) and not pattern.search(view("ab c")), (
+        "a run pattern matched text with no quote mark where the base has one"
+    )
+    two = mr._run_pattern("ab'" + chr(34) + "c")  # two marks in a row in the base are one run
+    assert two is not None and two.search(view("ab" + chr(92) + "'c")), (
+        "the marks in a row of a base were not read as one run in a run pattern"
+    )
+    accent = mr._run_pattern("a'" + chr(233) + "b")
+    assert accent is not None and accent.search(view("a'" + chr(92) + "xe9b")), (
+        "the backslash of an escape right after a run was required again"
+    )
+
+
+def test_the_written_forms_hold_what_each_printer_makes_of_a_value():
+    value = "a'b" + chr(34) + "c" + chr(92) + chr(233) + chr(1)
+    forms = mr._written_forms(value)
+    messages = (
+        "the repr print of a value is not one of its written forms",
+        "the ascii print of a value is not one of its written forms",
+        "the JSON print of a value is not one of its written forms",
+        "the UTF-8 JSON print of a value is not one of its written forms",
+        "the bytes print of a value is not one of its written forms",
+        "the unicode_escape print of a value is not one of its written forms",
+    )
+    for printer, message in zip(_INNER_PRINTERS, messages, strict=True):
+        assert printer(value) in forms, message
+
+
+def test_the_written_forms_hold_a_print_of_a_print_and_the_double_quote_forms():
+    plain = (
+        "a" + chr(92) + "b" + chr(233)
+    )  # no quote mark: layer 0 has one form, so a double print is a layer-2 form only
+    for first in _INNER_PRINTERS:
+        for second in _INNER_PRINTERS:
+            assert second(first(plain)) in mr._written_forms(plain), (
+                "a value printed twice is not one of its written forms"
+            )
+    value = "a'b" + chr(34) + "c" + chr(233)
+    forms = mr._written_forms(value)
+    assert value in forms, "a value with an unescaped double quote is not one of its written forms"
+    assert _INNER_PRINTERS[0](_INNER_PRINTERS[0](value)) in forms, (
+        "a value with both quote kinds printed twice by repr is not one of its written forms"
+    )
+    assert value.replace("'", chr(92) + "'") in forms, (
+        "a value with an escaped single quote and an unescaped double quote is not one of its written forms"
+    )
+    assert value.replace(chr(34), chr(92) + chr(34)) in forms, (
+        "a value with an escaped double quote and an unescaped single quote is not one of its written forms"
+    )
+
+
+def test_the_printed_forms_of_a_password_are_secrets_too(monkeypatch):
+    password = "Pw" + chr(34) + "x" + chr(233) + "Z9"
+    monkeypatch.setenv(DSN_NAME, "host=db.invalid user=svc password=" + password + " ")
+    secrets = mr._secret_values((DSN_NAME,))
+    assert ascii(password)[1:-1] in secrets, (
+        "the ascii print of a password was not one of the secrets"
+    )
+
+
+def test_the_secret_caches_are_emptied_when_a_run_ends(tmp_path, monkeypatch):
+    value = _key_value_value()[0]
+    monkeypatch.setenv(DSN_NAME, value)
+    root = _plain_compare_tree(tmp_path, value)
+    lines: dict[str, str] = {}
+    _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
+    sizes = [
+        cached.cache_info().currsize
+        for cached in (mr._char_looks, mr._stripped_pattern, mr._run_pattern, mr._edge_patterns)
+    ]
+    assert sizes == [0, 0, 0, 0], f"a secret stayed in a cache after the run ended: {sizes}"
 
 
 def _the_conftest_module():

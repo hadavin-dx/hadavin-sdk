@@ -71,22 +71,22 @@ pytest runs with ``--noconftest`` and with an empty ini file on purpose (a plant
      are both stripped, the plain text may show each character as any of its escapes, and the whole span found is hidden in the original line
      (with the quote marks and backslashes next to it). Cost: over-masking; any text whose letters, in order, read as a plain text once its
      backslashes and quote marks are ignored is hidden too.
-     (c) Run match, at ANY depth, for a plain text whose stripped text is shorter than ``FRAGMENT_MIN`` characters and that holds a quote mark,
-     a backslash, a control character or a non-ASCII character: the pattern is made from the plain text as written; each run of quote marks and
+     (c) Run match, at ANY depth, ONLY for a plain text whose stripped text is shorter than ``FRAGMENT_MIN`` characters and that holds a quote mark,
+     a backslash, a control character or a non-ASCII character (a longer text has no run pattern: layer (b) covers it): the pattern is made from the plain text as written; each run of quote marks and
      backslashes in it must stand as such a run in the line (so ``ab'c`` is never found in ``abc``), and each other character may show as any of
      its escapes. Only the match itself is hidden. A plain text of nothing but quote marks and backslashes is looked for as a run of
      ``QUOTE_RUN_MIN`` (10) or more of them (checked: every print of it that the exact forms miss holds such a run), so every such run is hidden.
      (d) Head and tail next to ``...``: pytest shortens a long text in the first ``E`` line of a comparison to about its first 12 and last 13
      characters around ``...`` (observed with pytest 9.2.0 on a 69-character value, with ``-q``, with ``-q -vv`` and by default; it prints in
      full only with ``-vv`` without ``-q`` and with ``-o verbosity_assertions=2``; the runner keeps ``-q`` and adds no such option). So every
-     start of a plain text that ends right before ``...`` and every end that starts right after it, of ``FRAGMENT_MIN`` stripped characters or
-     more, is hidden, at any depth. All pieces are found in the original text and cut out at once; a text with more than ``MAX_FRAGMENT_HITS``
+     start of a plain text that ends right before ``...`` and every end that starts right after it, of ``EDGE_MIN`` (2) stripped characters or
+     more (and shorter than the whole text), is hidden, at any depth. Cost: over-masking, at most ``MAX_FRAGMENT_HITS`` pieces per line. All pieces are found in the original text and cut out at once; a text with more than ``MAX_FRAGMENT_HITS``
      ``...`` or more than ``MAX_MATCHES`` matches is replaced as a whole.
   4. Where. ``first_lines``, the failing test id of a row, the ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` messages and the baseline
      skip message.
 
   Not covered: a changed form of the value (only the host, only the user name, a re-encoded copy, a piece cut out of the middle, a head or tail
-  piece shorter than ``FRAGMENT_MIN`` stripped characters, or one that does not stand next to a plain-ASCII ``...``: pprint line wrapping, a
+  piece shorter than ``EDGE_MIN`` (one character), or one that does not stand next to a plain-ASCII ``...``: pprint line wrapping, a
   Unicode ellipsis); another encoding (base64, hex, HTML escapes); a password that holds a quote, a ``;`` or an ``&``, is written without quotes,
   and starts after such a character (printed alone it is hidden in full up to the next white space); a password word glued to a letter or digit
   in front (``dbpassword=``); a password with no ``password=`` word and not the password of a URL (hidden only as part of the whole value). Text of
@@ -113,7 +113,7 @@ that has no verdict from the judge: ``SETUP FAILED: <error class>``, ``SNIPPET N
 ``JUNIT MISSING`` (``forbid_skips``), ``COLLECTION ERROR``, ``FIXTURE ERROR``, ``SKIPPED TESTS`` (``forbid_skips``) and ``NO FAILING TEST NAMED`` (the run failed, the JUnit file names no failing test). ``first_lines`` holds the first ``E`` line (masked)
 of the rows that have one, and for ``COLLECTION ERROR``, ``FIXTURE ERROR`` and ``SKIPPED TESTS`` the masked message that says why.
 
-Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``PASS_ENV_ALLOWED``, ``MASK``, ``FRAGMENT_MIN``, ``MAX_FRAGMENT_HITS``, ``MAX_MATCHES``, ``NO_TEST_NAMED``, ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
+Dev-tool constants: ``MAX_JUNIT_CHARS`` (in ``testing.mutation``), ``PASS_ENV_ALLOWED``, ``MASK``, ``FRAGMENT_MIN``, ``EDGE_MIN``, ``PASSWORD_PIECE_MIN``, ``MAX_FRAGMENT_HITS``, ``MAX_MATCHES``, ``NO_TEST_NAMED``, ``SETUP_TRIES``, ``SETUP_WAIT``, ``WAIT_POLL``, ``TREE_KILL_TIMEOUT``,
 ``TIMED_OUT``, ``REAPED_ELSEWHERE``, ``CHILD_ENV``, ``CHILD_FIXED_ENV``, ``JUNIT_REFUSED`` and the default run timeout (``DEFAULT_TIMEOUT``, 900.0 seconds) are module constants here and NOT in ``defaults.py``:
 the no-hardcoding rule is about product behaviour (names, regions, prices, thresholds a deployment tunes), and this is a developer tool
 that ships in no wheel, has no config surface and is copied byte for byte into demos. A caller changes the timeouts by argument.
@@ -237,6 +237,8 @@ PASS_ENV_ALLOWED = ("HADAVIN_TEST_PG_DSN",)
 MASK = "[REDACTED]"
 NO_TEST_NAMED = "NO FAILING TEST NAMED"  # the id column of an ERROR row for a failed run whose JUnit file names no failing test
 FRAGMENT_MIN = 6  # pytest shortens a long text in an assertion line to ``head...tail``: a head or tail fragment of a secret this long (or longer) next to ``...`` is masked
+EDGE_MIN = 2  # a head or tail piece of a secret next to ``...`` is masked from this many characters on (one character cannot be told from ordinary text)
+PASSWORD_PIECE_MIN = 3  # a piece of an unquoted password that holds a quote mark, ``;`` or ``&`` is a secret of its own from this many characters on
 QUOTE_RUN_MIN = 10  # a secret made only of quote marks and backslashes, printed three or more times, shows as a run of at least this many of them (checked: the shortest such run that the exact forms miss is 10 long)
 MAX_MATCHES = 100_000  # more matches of the secrets than this in one text is no honest line either: the whole text is replaced (a 1-character secret on a huge line stays fast)
 MAX_FRAGMENT_HITS = 1_000  # more ``...`` than this in one text is no honest line (pytest writes a few): the whole text is replaced, and the scan stays short (a worst-case line of this many takes about a second)
@@ -408,6 +410,12 @@ def _secret_values(names: Iterable[str]) -> _SecretSet:
             if m.group(3) is not None
         ]
         passwords += [
+            piece
+            for word in passwords[len(matches) :]
+            for piece in re.split(r"['\";&]", word)
+            if len(piece) >= PASSWORD_PIECE_MIN
+        ]  # the pieces of an unquoted password that holds a quote, ``;`` or ``&``: each may stand alone in a message
+        passwords += [
             _BACKSLASH_ESCAPE.sub(r"\1", word) for word in passwords
         ]  # libpq: a backslash escapes the next character
         passwords += _url_passwords(value)
@@ -425,6 +433,8 @@ _DROPPED = "\\'\""  # a backslash and the two quote marks: the only characters a
 _HEAVY_RUN = re.compile(
     rf"[\\'\"]{{{QUOTE_RUN_MIN},}}"
 )  # a secret of only quote marks and backslashes: every run of this many of them is hidden
+# every ``...``, also those that share a dot (a secret may end in a dot): one match at the start of each
+_DOTS = re.compile(r"(?=\.\.\.)")
 _RUN = "\x00"  # in the run view of a text, one mark for each run of backslashes and quote marks
 
 
@@ -501,7 +511,10 @@ def _run_pattern(base: str) -> re.Pattern[str] | None:
     mark, backslash, control or non-ASCII character (its plain text is then found at every depth by the exact forms) or has only quote marks and
     backslashes (matching every run would hide all quote marks of every line; its exact forms hide each quote mark written as it is)."""
     kept = [c for c in base if c not in _DROPPED]
-    if not kept or not any(c in _DROPPED or _char_looks(c, True) != {c} for c in base):
+    # a longer base is found by ``_stripped_pattern``; a second pattern would only match twice
+    if not kept or len(kept) >= FRAGMENT_MIN:
+        return None
+    if not any(c in _DROPPED or _char_looks(c, True) != {c} for c in base):
         return None
     parts: list[str] = []
     after_run = False
@@ -528,10 +541,10 @@ def _run_pattern(base: str) -> re.Pattern[str] | None:
 @functools.lru_cache(maxsize=512)
 def _edge_patterns(base: str) -> tuple[re.Pattern[str], re.Pattern[str]] | None:
     """The head and the tail of ``base`` as pytest cuts them around ``...``, for the stripped text of a line: the head pattern matches the longest start
-    of the base (``FRAGMENT_MIN`` stripped characters or more) that ends right before a ``...``; the tail pattern, meant for the REVERSED stripped
+    of the base (``EDGE_MIN`` stripped characters or more) that ends right before a ``...``; the tail pattern, meant for the REVERSED stripped
     text, the longest end of the base right after one. ``None`` when the base is too short to have a piece."""
     kept = [c for c in base if c not in _DROPPED]
-    if len(kept) <= FRAGMENT_MIN:
+    if len(kept) <= EDGE_MIN:
         return None
     ahead = r"(?=\.\.\.)"
     heads = [(_any_of(_char_looks(c)), _starts_of(_char_looks(c))) for c in kept]
@@ -611,10 +624,10 @@ def _stripped_spans(text: str, bases: Sequence[str], dots: bool) -> list[tuple[i
             top = len(flat)
             for head, tail in edges:
                 for found in itertools.islice(head.finditer(flat), MAX_MATCHES + 1):
-                    if found.end() - found.start() >= FRAGMENT_MIN:
+                    if found.end() - found.start() >= EDGE_MIN:
                         add(where[found.start()], where[found.end() - 1] + 1)
                 for found in itertools.islice(tail.finditer(reverse), MAX_MATCHES + 1):
-                    if found.end() - found.start() >= FRAGMENT_MIN:
+                    if found.end() - found.start() >= EDGE_MIN:
                         add(where[top - found.end()], where[top - found.start() - 1] + 1)
     if quotes_only:
         for found in itertools.islice(_HEAVY_RUN.finditer(text), MAX_MATCHES + 1):
@@ -629,6 +642,12 @@ def _stripped_spans(text: str, bases: Sequence[str], dots: bool) -> list[tuple[i
     return spans
 
 
+def _forget_secrets() -> None:
+    """Empty the caches whose keys are secret texts (``run_mutants`` calls this when it ends: a secret must not stay in the memory of the process)."""
+    for cached in (_char_looks, _stripped_pattern, _run_pattern, _edge_patterns):
+        cached.cache_clear()
+
+
 class _TooManyHits(Exception):
     """A line holds more ``...`` than ``MAX_FRAGMENT_HITS`` (or more matches of the secrets than ``MAX_MATCHES``): no honest line does, so
     ``_masked`` replaces the whole line. ``args`` is ``(limit, what was counted)``."""
@@ -637,13 +656,14 @@ class _TooManyHits(Exception):
 def _fragment_spans(text: str, secret: str, hits: list[re.Match[str]]) -> list[tuple[int, int]]:
     """Spans of ``text`` that show a shortened ``secret``: pytest cuts a long text in an assertion line to ``head...tail`` (about 12 characters
     at the start and 13 at the end, checked with a real run), so the longest start of the secret that ends right before a ``...`` and the longest end of it that
-    starts right after one are returned (each ``FRAGMENT_MIN`` characters or longer, and shorter than the secret). ``hits`` are the ``...`` of the line,
+    starts right after one are returned (each ``EDGE_MIN`` characters or longer, and shorter than the secret). ``hits`` are the ``...`` of the line,
     found once by ``_masked`` (not more than ``MAX_FRAGMENT_HITS``); each costs at most a scan of ``len(secret)`` characters."""
     spans: list[tuple[int, int]] = []
     top = len(secret) - 1
-    head, tail = secret[:FRAGMENT_MIN], secret[-FRAGMENT_MIN:]
+    head, tail = secret[:EDGE_MIN], secret[-EDGE_MIN:]
     for hit in hits:
-        start, end = hit.start(), hit.end()
+        start = hit.start()
+        end = start + 3
         i = text.find(head, max(0, start - top), start)  # the leftmost start gives the longest head
         while i != -1:
             if text[i:start] == secret[: start - i]:
@@ -653,11 +673,11 @@ def _fragment_spans(text: str, secret: str, hits: list[re.Match[str]]) -> list[t
         stop = min(len(text), end + top)
         j = text.rfind(tail, end, stop)  # the rightmost end gives the longest tail
         while j != -1:
-            k = j + FRAGMENT_MIN - end
-            if text[end : j + FRAGMENT_MIN] == secret[-k:]:
+            k = j + EDGE_MIN - end
+            if text[end : j + EDGE_MIN] == secret[-k:]:
                 spans.append((end, end + k))
                 break
-            j = text.rfind(tail, end, j + FRAGMENT_MIN - 1)
+            j = text.rfind(tail, end, j + EDGE_MIN - 1)
     return spans
 
 
@@ -673,7 +693,7 @@ def _masked(text: str, secrets: Sequence[str]) -> str:
     matches = 0
     try:
         dots = list(
-            itertools.islice(re.finditer(r"\.\.\.", text), MAX_FRAGMENT_HITS + 1)
+            itertools.islice(_DOTS.finditer(text), MAX_FRAGMENT_HITS + 1)
         )  # found once for the whole line
         if len(dots) > MAX_FRAGMENT_HITS:
             raise _TooManyHits(MAX_FRAGMENT_HITS, "'...'")
@@ -689,7 +709,7 @@ def _masked(text: str, secrets: Sequence[str]) -> str:
                 hit[at : at + len(value)] = b"\x01" * len(value)
                 at = text.find(value, at + 1)
         for value in chosen:
-            if dots and len(value) > FRAGMENT_MIN:
+            if dots and len(value) > EDGE_MIN:
                 for lo, hi in _fragment_spans(text, value, dots):
                     hit[lo:hi] = b"\x01" * (hi - lo)
     except _TooManyHits as many:
@@ -1332,6 +1352,7 @@ def _run_mutants(
                     raise failure
     finally:
         held.close()
+        _forget_secrets()
         with _signals_held():  # a signal is raised after the removal
             for folder in made:
                 shutil.rmtree(folder, ignore_errors=True)
