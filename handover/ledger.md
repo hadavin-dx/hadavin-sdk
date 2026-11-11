@@ -2606,3 +2606,4 @@
 | BL-PR89-r19-c02 | Major | PR89 | reviews/PR89/r19-codebase.md M2 (duplicates design M4/M1/M2) | OPEN | | | 2026-11-11 |
 | BL-PR89-r19-c03 | Major | PR89 | reviews/PR89/r19-codebase.md M3 (duplicates design M4/M1/M2) | OPEN | | | 2026-11-11 |
 | BL-core-q8b-plan-r2-B1 | Blocker | Q8b-plan | reviews/Q8b/plan-r2-full.md B1 (rev 2's setting-word rule unmasks credentials main masks) | OPEN | | | 2026-11-11 |
+| BL-core-q8a1-r2-MJ1 | Major | Q8a-1 | reviews/Q8a/result-r2-design-full.md MJ1 run_tick(steps=) open in pilot/prod | OPEN | | | 2026-11-11 |
