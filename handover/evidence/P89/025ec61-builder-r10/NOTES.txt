@@ -1,0 +1,7 @@
+PR89 round 10 builder, head 025ec61 (pushed to core/mutation-runner-keywords, was 9ed5217). tools/mutation_runner.py sha256 a4e8c6c8...
+Gate at this head: ruff check and format --check clean; bandit -ll rc 0; pytest 3.12: 10606 passed 1 skipped; 3.13: 10606 passed 1 skipped (own Postgres clusters, ports 57411/57412); mutants: 192 of 192 good (3.13 only).
+Fail-before (old tools + alias shim): 6 of 9 new/changed tests fail. Shim artefacts: the cut-inside-an-escape test fails there only because the old tool has no _stripped_spans, the pattern-count test fails because the alias returns []. Passing on old code by design: backslash-after-it, over-masking pin, database-address fixture guard.
+Lock-file name (r10-02 item 5): the 16 hex digits of the SHA-256 of the value are visible to other users of the temp folder; CHANGELOG says to use a random password.
+Memory: run view uses two array('I') of 4 bytes per view character (about 8 bytes per character of a line, built only when a short secret needs it).
+Open lead decision: REPLICATION flag handling unchanged (PR73).
+EGM steps (review of result, resolve, drift report) are for the lead; not run here.
