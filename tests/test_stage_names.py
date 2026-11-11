@@ -8,6 +8,7 @@ Rows: unknown stage and half-renamed flag refuse start; the class test looks at 
 refuse relaxed kinds; the live and prod-only guards fail closed on a value that is not a stage.
 """
 
+import collections
 import re
 import typing
 import unicodedata
@@ -406,6 +407,16 @@ def test_both_spellings_of_the_stage_together_refuse_start(cfg_dir):
 _W = r"(?<![A-Za-z0-9])" + OLD + r"(?![A-Za-z0-9])"  # the old word as a whole word
 _ANY = r"(?<![A-Za-z0-9])(?:" + OLD + r"|staging|stage)(?![A-Za-z0-9])"  # the old word or a sibling
 _STAGE = r"(?:pilot|prod|production|demo)"
+# Three more words that name a stage somewhere else (test, development, production). Why they are scanned although the
+# stages are demo, pilot and prod (order 132, design review F8): they are the usual names of a stage in other projects'
+# configs, so a config, doc or CLI flag that says `environment: test` or `--env production` would bring back a second
+# stage vocabulary beside the three; `stages.STAGE_WORDS` lists the same six words and an id may not be spelled like
+# any of them (tests/test_tenant_ids.py pins that the two lists agree). Many tests depend on them (NEW_WORDS shapes,
+# pairs and negative cases below), so the scan was not narrowed to production and development. "test" and "production"
+# are common words, so they count only in the value forms below, never as a bare quoted word (`"test"` is pytest's own);
+# the data-split lines of the demo repos that say `"test"` are listed one by one in tests/stage_exemptions.tsv.
+_NEW = r"(?:test|development|production)"
+_NEWQ = r"(?:development|production)"  # the two that are rare enough to count as a quoted literal
 _Q = r"[`'\"]?"  # a quote or backtick around the word
 _NAME = r"(?<![A-Za-z0-9])(?:env(?:ironment)?|stage|tier|profile|mode)(?![A-Za-z0-9])"
 _BEFORE = r"(?:in|for|outside|than|kept in|refused in)"
@@ -445,6 +456,40 @@ POSITIONS = {
     ),
     "url host": re.compile(r"://" + OLD + r"\.|://[^/\s]*-" + OLD + r"\.", re.IGNORECASE),
     "heading": re.compile(r"^#{1,6} .*" + _W, re.IGNORECASE),
+}
+# The three further words, as a stage VALUE only: YAML/config (`environment: production`), CLI and env var
+# (`--env test`, `NODE_ENV=production`), a dict key or literal (`{"development": 1}`, `== "production"`), a pair of
+# stage words (`test|pilot|prod`) and a YAML list item that is only the word.
+# Boundaries for the words of a stage list: a letter, a digit or an underscore touching the word makes it part of an
+# identifier (`pilot_count`, `env_test_dir`, `my_test`), not a stage word.
+# A dot or an at sign before the word makes it a host label (`mail@example.test`, `a.test`) and a dot with a letter after
+# it a name part (`test.example`); a dot then a space is a sentence end and stays a boundary.
+_L = r"(?<![A-Za-z0-9_.@])"
+_R = r"(?![A-Za-z0-9_]|\.[A-Za-z0-9])"
+# A stage name, also in the plural (`environments: ["test", "pilot"]`).
+_NAMES = r"(?<![A-Za-z0-9])(?:env(?:ironment)?|stage|tier|profile|mode)s?(?![A-Za-z0-9])"
+# Between a stage name and its value: spaces, a colon, an equals sign, a quote, a bracket. Never a full stop (a
+# sentence boundary: "the next stage. Test the config") and never an underscore (an identifier: `env_test_dir`).
+_SEP = r"[\s:=\"'`\[\](){}]{1,6}"
+_STAGE_ITEM = r"(?:pilot|prod|demo|test|development|production)"  # a member of a stage list
+_STAGE_OLD = r"(?:pilot|prod|demo)"
+# The separator of two list members, a quote or backtick allowed on either side of it.
+_BETWEEN = _Q + r"\s*[,|/;]\s*" + _Q
+NEW_POSITIONS = {
+    "new word after a stage name": re.compile(_NAMES + _SEP + _NEW + _R, re.IGNORECASE),
+    # `env == "test"`, `environment != 'test'`, `g["tier"] == "test"`, `os.environ.get("ENV") == "test"`
+    "new word compared with a stage name": re.compile(
+        _NAMES + r"[\s\"'`\])]{0,3}(?:===?|!==?)\s*" + _Q + _NEW + _R, re.IGNORECASE
+    ),
+    "new word as quoted literal": re.compile(r"[`'\"]" + _NEWQ + r"[`'\"]", re.IGNORECASE),
+    # two members of a stage list, one of them a new word: `test|pilot|prod`, `demo, test`, `("demo","pilot","test")`,
+    # `Literal["test", "pilot"]`, `development, production`, `test|development|production`
+    "new word beside another stage": re.compile(
+        _L + _Q + _NEW + _BETWEEN + _STAGE_ITEM + _R + "|" + _L + _STAGE_OLD + _BETWEEN + _NEW + _R,
+        re.IGNORECASE,
+    ),
+    # a YAML list item that is only the word: `- test`, `- "production"`
+    "new word as a list item": re.compile(r"^\s*-\s+" + _Q + _NEW + _Q + r"\s*$", re.IGNORECASE),
 }
 # Every file of these types below these folders, and in the repo root except the three skipped by name (history, the
 # packaging group called dev, a lock file). Not scanned by type: .jsonl, the ask-your-data gold data (42 records hold the
@@ -492,6 +537,13 @@ def _exemptions() -> dict:
     return {(f, line): why for f, line, why in rows}
 
 
+def _exemption_budget() -> collections.Counter:
+    """(file, exact stripped line) -> how many occurrences the tsv excuses: one per row. Two rows with the same file and
+    line excuse two occurrences; a third identical line is a hit."""
+    rows = [r.split("\t") for r in EXEMPT_FILE.read_text(encoding="utf-8").splitlines() if r]
+    return collections.Counter((f, line) for f, line, _ in rows)
+
+
 def _fold(line: str) -> str:
     """The line as a reader sees it: NFKC, casefold, invisible characters out, look-alike letters made Latin."""
     folded = unicodedata.normalize("NFKC", line).casefold()
@@ -503,30 +555,39 @@ def _hits(line: str, markdown: bool = True) -> list[str]:
     line = re.sub(
         r"\bfor \w+ in " + OLD + r"\b", "", _fold(line)
     )  # `for row in dev`: a dataset split
-    return [n for n, rx in POSITIONS.items() if rx.search(line) and (markdown or n != "heading")]
+    names = [n for n, rx in POSITIONS.items() if rx.search(line) and (markdown or n != "heading")]
+    return names + [n for n, rx in NEW_POSITIONS.items() if rx.search(line)]
 
 
-def _scan_text(rel: str, text: str, exempt: dict | None = None) -> tuple[list[str], set]:
-    """Hits in one file's text; a line that is exactly an exempt line is excused and its entry is marked used."""
-    exempt, out, used = _exemptions() if exempt is None else exempt, [], set()
+def _scan_text(
+    rel: str, text: str, exempt: dict | None = None
+) -> tuple[list[str], collections.Counter]:
+    """Hits in one file's text; a line that is exactly an exempt line is excused (ONE occurrence per row of the tsv)
+    and the number of occurrences excused per entry is counted. A second identical line is a hit unless the tsv has a
+    second row for it."""
+    budget = (
+        _exemption_budget() if exempt is None else collections.Counter(dict.fromkeys(exempt, 1))
+    )
+    out, used = [], collections.Counter()
     for number, line in enumerate(text.splitlines(), 1):
         names = _hits(line, rel.endswith(".md"))
-        if names and (rel, line.strip()) in exempt:
-            used.add((rel, line.strip()))
+        if names and budget[(rel, line.strip())] > 0:
+            budget[(rel, line.strip())] -= 1
+            used[(rel, line.strip())] += 1
             names = []
         if names:
             out.append(f"{rel}:{number} [{', '.join(names)}] {line.strip()[:100]}")
     return out, used
 
 
-def _scan() -> tuple[list[str], set]:
-    """(hits, the exemption entries that matched a line)."""
+def _scan() -> tuple[list[str], collections.Counter]:
+    """(hits, how many occurrences each exemption entry excused)."""
     paths = [p for folder in SCANNED for p in (ROOT / folder).rglob("*")]
     paths += [p for p in ROOT.glob("*") if p.name not in SKIPPED_ROOT]
     paths = [
         p for p in paths if p.suffix in TYPES or p.name.startswith(".git")
     ]  # .gitleaks.toml, .gitignore
-    out, used = [], set()
+    out, used = [], collections.Counter()
     for path in paths:
         if not path.is_file() or path in (SELF, EXEMPT_FILE) or "__pycache__" in path.parts:
             continue
@@ -536,7 +597,7 @@ def _scan() -> tuple[list[str], set]:
             continue
         found, hit_entries = _scan_text(path.relative_to(ROOT).as_posix(), text)
         out += found
-        used |= hit_entries
+        used += hit_entries
     return sorted(set(out)), used
 
 
@@ -545,13 +606,55 @@ def test_the_old_stage_word_is_gone():
     assert not found, "the old stage word is still used as a stage:\n" + "\n".join(found)
 
 
+def _exemption_problems(used: collections.Counter, budget: collections.Counter) -> str:
+    """Empty when the rows and the real occurrences agree in number, else the difference in words."""
+    if used != budget:
+        return (
+            f"rows without an occurrence: {sorted((budget - used).items())}; "
+            f"occurrences without a row: {sorted((used - budget).items())}"
+        )
+    return ""
+
+
 def test_the_exemptions_have_no_stale_entry():
-    """An entry that matches no line is stale and fails; each entry is one exact line of one file, with its reason."""
+    """An entry that matches no line is stale and fails, and so is a row that excuses an occurrence that is not there:
+    the number of rows with the same file and line must equal the number of real occurrences (a third copy of a
+    duplicated line is a hit; a duplicate row for a single line is stale). Each entry is one exact line of one file,
+    with its reason."""
     _, used = _scan()
-    exempt = _exemptions()
-    assert used == set(exempt), f"stale entries: {sorted(set(exempt) - used)}"
-    for (rel, _), why in exempt.items():
+    assert not _exemption_problems(used, _exemption_budget())
+    for (rel, _), why in _exemptions().items():
         assert why.strip() and (ROOT / rel).is_file(), rel
+
+
+def test_the_stale_check_sees_a_spare_duplicate_row_and_a_missing_row():
+    """Kills T27b (the comparison looks at the entries, not the counts). A set comparison cannot see a second row for a
+    line that occurs once."""
+    key = ("x.py", "line")
+    one, two = collections.Counter({key: 1}), collections.Counter({key: 2})
+    assert "rows without an occurrence" in _exemption_problems(one, two), (
+        "a spare duplicate row went unseen"
+    )
+    assert "occurrences without a row" in _exemption_problems(two, one), "a missing row went unseen"
+    assert _exemption_problems(two, two) == ""
+
+
+def test_a_duplicate_row_excuses_exactly_two_real_occurrences():
+    """Kills T27 (the budget collapses duplicate rows). The rows that appear twice
+    in the tsv each match two real lines; a text with only one of them leaves the second row unused."""
+    budget = _exemption_budget()
+    doubled = sorted(key for key, n in budget.items() if n == 2)
+    assert doubled, "no duplicate rows: this test has nothing to pin"
+    assert len(doubled) == 3, "the three duplicate rows of the tsv are not the ones checked here"
+    for rel, line in doubled:
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        real = sum(1 for ln in text.splitlines() if ln.strip() == line)
+        assert real == 2, f"{rel}: {line!r} has {real} real occurrences for 2 rows"
+        _, used = _scan_text(rel, text)
+        assert used[(rel, line)] == 2
+        one = "\n".join(ln for ln in text.splitlines() if ln.strip() != line) + "\n" + line + "\n"
+        _, used_once = _scan_text(rel, one)
+        assert used_once[(rel, line)] == 1, "a single occurrence used the budget of two rows"
 
 
 def test_a_stage_shaped_line_in_a_file_that_holds_an_exempt_line_still_fails():
@@ -567,7 +670,7 @@ def test_a_stage_shaped_line_in_a_file_that_holds_an_exempt_line_still_fails():
     ):
         found, used = _scan_text(rel, text + "\n" + added + "\n")
         assert len(found) == 1 and added in found[0], f"the added line was not found: {added}"
-        assert used == {(rel, line)}
+        assert set(used) == {(rel, line)}
 
 
 def _lookalike(word: str) -> str:
@@ -622,6 +725,171 @@ def test_the_scanner_finds_each_shape_for_each_word(shape):
 def test_the_scanner_finds_each_old_word_only_shape(shape):
     line = shape.format(w=OLD, W=OLD.upper())
     assert _hits(line), f"not found: {line}"
+
+
+# The three further words as a stage value: {w} is each of test, development, production in turn.
+NEW_WORDS = ("test", "development", "production")
+NEW_SHAPES = [
+    "environment: {w}",  # YAML / config
+    'environment = "{w}"',
+    '"environment": "{w}"',
+    "stage: {w}",
+    "      env: {w}",
+    "NODE_ENV={w}",  # env var and CLI
+    "APP_ENV={w}",
+    "docker run --env {w} app",
+    "hadavin-sdk serve --stage={w}",
+    "profile={w}",
+    "x = {w}|pilot|prod",  # a stage list
+    "demo, {w}",
+    # the quoted list forms (the most natural way to write a stage list), double and single quotes, tuples, brackets
+    'STAGES = ("demo", "{w}")',
+    'STAGES = ("demo","pilot","{w}")',
+    'Literal["{w}", "pilot", "prod"]',
+    "Literal['{w}','pilot']",
+    'environments: ["{w}", "pilot"]',
+    "environments: ['{w}']",
+    "stages = ['{w}','pilot']",
+    "x = [{w}, pilot]",
+    "x = {{'demo', '{w}'}}",
+    '"demo" | "{w}"',
+    # a comparison with a stage name (more than four characters between the two)
+    'env == "{w}"',
+    "environment != '{w}'",
+    'if g["tier"] == "{w}":',
+    'os.environ.get("ENV") == "{w}"',
+    # a list item that is only the word
+    "  - {w}",
+    '  - "{w}"',
+]
+# Quoted literal / dict key: only the two rare words (a quoted "test" alone is pytest's own word).
+NEW_QUOTED_SHAPES = ['x = {{"{w}": 1}}', 'if env == "{w}":', "    case '{w}':", "  - {w}"]
+# Two of the new words together, and a new word beside another one.
+NEW_PAIR_LINES = [
+    "test|development|production",
+    "development, production",
+    "test, production",
+    "production/test",
+    "test; development",
+    '"test", "production"',
+    "('development','test')",
+    "pilot, production",
+    "- test",
+    "- development",
+]
+
+
+@pytest.mark.parametrize("shape", NEW_SHAPES)
+@pytest.mark.parametrize("word", NEW_WORDS)
+def test_the_scanner_finds_test_development_production_as_a_stage_value(shape, word):
+    line = shape.format(w=word)
+    assert _hits(line), f"not found: {line}"
+
+
+@pytest.mark.parametrize("line", NEW_PAIR_LINES)
+def test_the_scanner_finds_two_of_the_new_words_together_and_a_bare_list_item(line):
+    assert _hits(line), f"not found: {line}"
+
+
+@pytest.mark.parametrize("shape", NEW_QUOTED_SHAPES)
+@pytest.mark.parametrize("word", ("development", "production"))
+def test_the_scanner_finds_development_and_production_as_a_key_or_literal(shape, word):
+    line = shape.format(w=word)
+    assert _hits(line), f"not found: {line}"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        'pytest.mark.parametrize("test")',
+        "def test_environment_is_set():",
+        "python -m pytest tests/test_x.py",
+        "production-ready code and a test of it",
+        "the production of widgets",
+        "tests: 12 passed",
+        "mode: testing",
+        "environment: demo",
+        "stage: developmental",
+        "  - test the config",
+        "The development team",
+        # the word is part of an identifier: a letter, digit or underscore touches it
+        "x = test, pilot_count",  # the right-hand word ends in an underscore name part
+        "x = test, pilotage",
+        "x = my_test, demo",  # the left-hand word starts with an underscore name part
+        "x = test_demo, prod",
+        "env_test_dir = 1",  # a stage name, then an underscore: an identifier, not a value
+        "mode_test_cases = 2",
+        "env_test = 1",
+        "tier_production",
+        "profile_test_data = 3",
+        "def test_env_production_guard():",
+        # a sentence boundary is not the separator between a stage name and a word
+        "the next stage. Test the config",
+        "set the environment. Production runs next",
+        # a host label (a dot or an at sign touching the word)
+        '("mail prod@example.test", "prod", False)',
+        "a.test, prod",
+        "test.example, demo",
+        "x = demo, test.example",
+        # quoted "test" alone is pytest's own word
+        '@pytest.mark.parametrize("test", [1])',
+        "tests = [1, 2]",
+    ],
+)
+def test_the_scanner_ignores_the_new_words_outside_a_stage_value(line):
+    assert not _hits(line), f"false hit: {line}: {_hits(line)}"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Mode: test the config",
+        "unit test, demo run",
+        "a test, demo or prod run",
+        "x = test, pilot count",
+    ],
+)
+def test_known_prose_collisions_are_hits_that_need_an_exact_line_exemption(line):
+    """Documented, not hidden: a stage name or a stage list written as ordinary English cannot be told from a value,
+    so it is a hit and a file that really contains such a line needs one exact-line row in stage_exemptions.tsv. None
+    of the scanned files has one today (test_the_old_stage_word_is_gone)."""
+    assert _hits(line), f"expected a hit (see the docstring): {line}"
+
+
+def test_a_new_word_stage_value_in_a_scanned_file_fails_unless_its_exact_line_is_exempt():
+    rel = "src/hadavin_sdk/commonwords.py"
+    text = (ROOT / rel).read_text(encoding="utf-8")
+    assert _scan_text(rel, text)[0] == [], "the file as it is should be clean"
+    assert (rel, '"production",') in _scan_text(rel, text)[1], "the exempt line was not read"
+    found, _ = _scan_text(rel, text + "\nenvironment: production\n")
+    assert len(found) == 1 and "environment: production" in found[0]
+    # the exemption is the exact line, not the word: the same word in a stage position elsewhere in the file fails
+    found, _ = _scan_text(rel, text + '\n    "production", 1\n')
+    assert len(found) == 1
+
+
+def test_an_exemption_covers_one_occurrence_not_every_identical_line():
+    """A row of the tsv excuses ONE occurrence of its exact line. A second identical line (a copy added later in the same
+    file) is a hit, and a second row for the same line excuses exactly two."""
+    rel = "src/hadavin_sdk/commonwords.py"
+    text = (ROOT / rel).read_text(encoding="utf-8")
+    assert _scan_text(rel, text)[0] == [], "the file as it is should be clean"
+    found, _ = _scan_text(rel, text + '\n    "production",\n')
+    assert len(found) == 1 and '"production",' in found[0], (
+        "a second identical exempt line was excused"
+    )
+
+
+def test_two_rows_for_the_same_line_excuse_two_occurrences_and_no_more(tmp_path, monkeypatch):
+    tsv = tmp_path / "exempt.tsv"
+    line = 'ENV = "d' + 'evelopment"'
+    tsv.write_text(f"x.py\t{line}\twhy one\nx.py\t{line}\twhy two\n", encoding="utf-8")
+    monkeypatch.setitem(globals(), "EXEMPT_FILE", tsv)
+    text = f"{line}\nok = 1\n{line}"
+    assert _scan_text("x.py", text)[0] == [], "two rows should excuse two occurrences"
+    found, used = _scan_text("x.py", text + "\n" + line)
+    assert len(found) == 1 and found[0].startswith("x.py:4"), "a third occurrence must be a hit"
+    assert set(used) == {("x.py", line)} and used[("x.py", line)] == 2
 
 
 FULLWIDTH = "".join(chr(0xFF00 + ord(c) - 0x20) for c in OLD)
@@ -689,3 +957,76 @@ def test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_an
     assert _sweep("<SECRET_1>", "demo") is not None, (
         "a secret that reads 'demo' must still be swept"
     )
+
+
+# --- full redaction, not only _sweep: a tenant named "Pilot" and a customer named "Demo" -----------------------
+
+TEXT_PD = (
+    "tenant_id=Pilot ran; customer_id: Demo failed. Pilot and Demo again, also Pilots and Demo-1. "
+    "tenant_id=" + "acme" + "corp seen; " + "acme" + "corp again."
+)
+MASKED_PD = (
+    "tenant_id=<TENANT_1> ran; customer_id: <TENANT_2> failed. Pilot and Demo again, also Pilots and Demo-1. "
+    "tenant_id=<TENANT_3> seen; <TENANT_3> again."
+)
+
+
+def test_a_tenant_named_pilot_and_a_customer_named_demo_are_masked_where_labelled_and_not_swept_elsewhere():
+    """Exactly what is and is not masked (same sentence as the CHANGELOG): the value after a label (`tenant_id=Pilot`,
+    `customer_id: Demo`) is masked in the spelling it was written (the lower-case `tenant_id=pilot` too, pinned below);
+    the same word standing alone in the text is NOT swept,
+    because `pilot` and `demo` are common words; an ordinary tenant name IS swept everywhere. Through the two real
+    entry points, not `_sweep` alone."""
+    from hadavin_sdk.guard.redact import redact
+    from hadavin_sdk.guard.runmap import redact_text
+
+    result = redact(TEXT_PD)
+    assert result.text == MASKED_PD
+    assert result.mapping == {
+        "<TENANT_1>": "Pilot",
+        "<TENANT_2>": "Demo",
+        "<TENANT_3>": "acme" + "corp",
+    }
+    mapping: dict[str, str] = {}
+    assert redact_text(TEXT_PD, mapping) == MASKED_PD
+    assert mapping == result.mapping
+
+
+def test_a_secret_that_reads_pilot_or_demo_is_swept_in_every_copy_but_only_in_that_spelling():
+    from hadavin_sdk.guard.redact import redact
+    from hadavin_sdk.guard.runmap import redact_text
+
+    text = "password=pilot and token=demo and pilot and Pilot and demo and Demo."
+    want = (
+        "password=<SECRET_1> and token=<SECRET_2> and <SECRET_1> and Pilot and <SECRET_2> and Demo."
+    )
+    result = redact(text)
+    assert result.text == want
+    mapping: dict[str, str] = {}
+    assert redact_text(text, mapping) == want and mapping == result.mapping
+
+
+def test_a_label_masks_the_lower_case_spelling_too_and_only_that_spelling_elsewhere():
+    from hadavin_sdk.guard.redact import redact
+    from hadavin_sdk.guard.runmap import redact_text
+
+    text = (
+        "tenant_id=pilot ran; customer_id=demo failed; pilot and demo again, also Pilot and Demo."
+    )
+    want = "tenant_id=<TENANT_1> ran; customer_id=<TENANT_2> failed; pilot and demo again, also Pilot and Demo."
+    result = redact(text)
+    assert result.text == want
+    assert result.mapping == {"<TENANT_1>": "pilot", "<TENANT_2>": "demo"}
+    mapping: dict[str, str] = {}
+    assert redact_text(text, mapping) == want and mapping == result.mapping
+
+
+def test_only_an_id_label_masks_the_value_so_tenant_colon_pilot_is_not_masked():
+    """The tenant rule needs an id label (`tenant_id`, `org_id`, `customer_id`, `account_id`, `user_id`) and `:` or `=`.
+    `tenant: Pilot` and `customer=Demo` carry no id label: nothing is masked, the CHANGELOG says so."""
+    from hadavin_sdk.guard.redact import redact
+    from hadavin_sdk.guard.runmap import redact_text
+
+    text = "tenant: Pilot ran; customer=Demo failed; Pilot again."
+    assert redact(text).text == text and redact(text).mapping == {}
+    assert redact_text(text, {}) == text

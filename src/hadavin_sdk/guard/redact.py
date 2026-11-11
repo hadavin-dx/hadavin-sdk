@@ -25,6 +25,8 @@ import string
 from dataclasses import dataclass, field
 from typing import Any
 
+from hadavin_sdk.commonwords import COMMON_WORDS
+
 # Ordered deliberately: the greedy/most-specific patterns run before the narrow ones, otherwise a
 # narrow pattern eats part of a broader secret (a UUID inside an ARN, an EMAIL inside a connection
 # string) and the broader pattern then fails to match.
@@ -1154,38 +1156,7 @@ SECRET_KINDS = frozenset(
         "CREDITCARD",
     }
 )
-_COMMON = frozenset(
-    {
-        "prod",
-        "production",
-        "test",
-        "dev",
-        "demo",
-        "pilot",
-        "stage",
-        "staging",
-        "default",
-        "admin",
-        "root",
-        "user",
-        "users",
-        "none",
-        "null",
-        "true",
-        "false",
-        "main",
-        "master",
-        "api",
-        "app",
-        "web",
-        "db",
-        "public",
-        "local",
-        "info",
-        "error",
-        "debug",
-    }
-)
+_COMMON = COMMON_WORDS
 
 
 def _kind(placeholder: str) -> str:
