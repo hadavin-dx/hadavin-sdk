@@ -52,9 +52,7 @@ BEGIN
             RAISE EXCEPTION 'spend_reservations: change refused';
         END IF;
     ELSIF OLD.status = 'open' AND NEW.status IN ('settled', 'released') THEN
-        IF NEW.expired_at IS NOT NULL THEN
-            RAISE EXCEPTION 'spend_reservations: change refused';
-        END IF;
+        NULL;
     ELSIF OLD.status = 'expired' AND NEW.status IN ('settled', 'released') THEN
         IF NEW.expired_at IS DISTINCT FROM OLD.expired_at THEN
             RAISE EXCEPTION 'spend_reservations: change refused';

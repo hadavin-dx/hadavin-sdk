@@ -300,24 +300,12 @@ def test_public_methods_lists_only_public_callables():
 def _nested(extra_env):
     env = {k: v for k, v in os.environ.items() if k not in RULE_VARS}
     env.update(extra_env)
-    return subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pytest",
-            "tests/contracts/test_store.py",
-            "-q",
-            "-p",
-            "no:cacheprovider",
-            "-k",
-            "memory and test_plan_round_trip",
-        ],
-        cwd=ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=False,
+    cmd = [
+        sys.executable, "-m", "pytest", "tests/contracts/test_store.py", "-q", "-p", "no:cacheprovider",
+        "-k", "memory and test_plan_round_trip",
+    ]  # fmt: skip
+    return subprocess.run(  # noqa: S603 - our own interpreter and a fixed command
+        cmd, cwd=ROOT, env=env, capture_output=True, text=True, timeout=120, check=False
     )
 
 
