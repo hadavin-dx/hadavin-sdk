@@ -1315,3 +1315,9 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | R-Q8a2-r2 codebase afdf0ff5 | | | | 15:40Z | CLOSED: NOT CLEAN, 1 Major (reproduced by the lead), saved | fix batch 2 |
 | B-Q8a2-fix2 a2cd2d28 | BUILDER (Fable, fresh) Q8a-2 fix batch 2 of 2: both Majors + Minors, worktree /home/user/build/B-Q8a2, pg 56081 | 15:40Z | +60m | 15:40Z | starting | evidence + ONE fresh delta reviewer per path |
 | EV-Q8a2-r2 a30418d4 | evidence 5f94f598 | 15:31Z | | 15:41Z | CLOSED: RESULTS.md. Full suite exit 1 (1 failed = the known timing test; on main the same file failed 1 of 1 whole-file runs and 2 of 3 single runs); doubled-slash signed approval: main 200, head 404; a Content-Length longer than the body holds a thread until the client leaves and prints a traceback (also on main); 4 tracebacks per tree in the probes | forwarded to B-Q8a2-fix2 |
+
+### 15:44Z P3a-2 round 12 design review in
+| id | purpose | started | expected end | last check | state | next action |
+|---|---|---|---|---|---|---|
+| R-P3a2-r12 design a98329b0 | | | | 15:44Z | CLOSED: NOT CLEAN, 1 Blocker + 6 Major by reading; saved reviews/P3a-2/r12-design-full.md | D-019 |
+| R-P3a2-zoom | fresh egm zoom-out (Fable): threat model and final-state design before round 13 | 15:44Z | +15m | 15:44Z | starting | ticket for round 13 |

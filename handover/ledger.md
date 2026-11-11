@@ -2641,3 +2641,10 @@
 | BL-core-q8a2-r2-c01 | Major | Q8a-2 | reviews/Q8a-2/result-r2-codebase-full.md F1 aliased from-import (lead reproduced) | OPEN | | | 2026-11-11 |
 | BL-core-q8a2-r2-c02 | Minor(sec, on main) | Q8a-2 | result-r2-codebase-full.md F2 Content-Length digits before the path check | OPEN | | | 2026-11-11 |
 | BL-core-q8a2-r2-ev1 | Major(sec, on main) | Q8a-2 | evidence/Q8a-2/5f94f59: no read timeout in the approval receiver; traceback on a closed connection | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r12-d01 | Blocker | P3a-2 | reviews/P3a-2/r12-design-full.md F1 (not yet reproduced) | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r12-d02 | Major | P3a-2 | reviews/P3a-2/r12-design-full.md F2 (not yet reproduced) | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r12-d03 | Major | P3a-2 | reviews/P3a-2/r12-design-full.md F3 (not yet reproduced) | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r12-d04 | Major | P3a-2 | reviews/P3a-2/r12-design-full.md F4 (not yet reproduced) | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r12-d05 | Major | P3a-2 | reviews/P3a-2/r12-design-full.md F5 (not yet reproduced) | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r12-d06 | Major | P3a-2 | reviews/P3a-2/r12-design-full.md F6 (not yet reproduced) | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r12-d07 | Major | P3a-2 | reviews/P3a-2/r12-design-full.md F7 (not yet reproduced) | OPEN | | | 2026-11-11 |
