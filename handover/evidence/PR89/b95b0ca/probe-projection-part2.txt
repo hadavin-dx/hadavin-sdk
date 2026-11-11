@@ -1,0 +1,527 @@
+head: b95b0ca762dd74574e44e7fb546f82ef04f55295
+
+##### CONTROL: the same test bodies run by plain pytest (no runner) on the mutated code, variable set: does the raw output hold the value?
+  plain pytest on test_msg_whole: exit code 1
+    FIELD stdout+stderr: <728 characters, not printed>
+      4-char slices of the VALUE present: YES, 51 different slices
+      4-char slices of the slice6 form present: YES, 3 different slices
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  plain pytest on test_msg_slice6: exit code 1
+    FIELD stdout+stderr: <684 characters, not printed>
+      4-char slices of the VALUE present: YES, 3 different slices
+      4-char slices of the slice6 form present: YES, 3 different slices
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  plain pytest on test_msg_b64: exit code 1
+    FIELD stdout+stderr: <738 characters, not printed>
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: YES, 69 different slices
+      4-char slices of the rev form present: NO
+  plain pytest on test_msg_rev: exit code 1
+    FIELD stdout+stderr: <720 characters, not printed>
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: YES, 51 different slices
+  plain pytest on test_id_whole: exit code 1
+    FIELD stdout+stderr: <765 characters, not printed>
+      4-char slices of the VALUE present: YES, 51 different slices
+      4-char slices of the slice6 form present: YES, 3 different slices
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  plain pytest on test_id_slice6: exit code 1
+    FIELD stdout+stderr: <703 characters, not printed>
+      4-char slices of the VALUE present: YES, 3 different slices
+      4-char slices of the slice6 form present: YES, 3 different slices
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  plain pytest on test_id_b64: exit code 1
+    FIELD stdout+stderr: <804 characters, not printed>
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: YES, 69 different slices
+      4-char slices of the rev form present: NO
+  plain pytest on test_id_rev: exit code 1
+    FIELD stdout+stderr: <759 characters, not printed>
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: YES, 51 different slices
+  plain pytest on test_both_whole: exit code 1
+    FIELD stdout+stderr: <811 characters, not printed>
+      4-char slices of the VALUE present: YES, 51 different slices
+      4-char slices of the slice6 form present: YES, 3 different slices
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  plain pytest on test_both_slice6: exit code 1
+    FIELD stdout+stderr: <699 characters, not printed>
+      4-char slices of the VALUE present: YES, 3 different slices
+      4-char slices of the slice6 form present: YES, 3 different slices
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  plain pytest on test_both_b64: exit code 1
+    FIELD stdout+stderr: <870 characters, not printed>
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: YES, 69 different slices
+      4-char slices of the rev form present: NO
+  plain pytest on test_both_rev: exit code 1
+    FIELD stdout+stderr: <805 characters, not printed>
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: YES, 51 different slices
+
+##### PART 2b: baseline failure, a tree with ONE test per run
+  baseline of a tree with only test_msg_whole:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline of a tree with only test_msg_slice6:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline of a tree with only test_msg_b64:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline of a tree with only test_msg_rev:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline of a tree with only test_id_whole:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline of a tree with only test_id_slice6:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline of a tree with only test_id_b64:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline of a tree with only test_id_rev:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline of a tree with only test_both_whole:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline of a tree with only test_both_slice6:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline of a tree with only test_both_b64:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline of a tree with only test_both_rev:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+
+##### PART 4: skips. (a) a mutant makes the test skip; (b) the unmutated copy skips
+  (a) mutant run of test_skip_whole:
+    FIELD row[0]: 'ms'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'ERROR'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'SKIPPED TESTS'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: "{'ms': 'skipped: tests/test_core::test_skip_whole'}"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (b) baseline of a tree where test_skip_whole skips:
+    RAISED RuntimeError
+    FIELD exception message: "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_skip_whole']"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (a) mutant run of test_skip_slice6:
+    FIELD row[0]: 'ms'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'ERROR'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'SKIPPED TESTS'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: "{'ms': 'skipped: tests/test_core::test_skip_slice6'}"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (b) baseline of a tree where test_skip_slice6 skips:
+    RAISED RuntimeError
+    FIELD exception message: "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_skip_slice6']"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (a) mutant run of test_skip_b64:
+    FIELD row[0]: 'ms'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'ERROR'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'SKIPPED TESTS'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: "{'ms': 'skipped: tests/test_core::test_skip_b64'}"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (b) baseline of a tree where test_skip_b64 skips:
+    RAISED RuntimeError
+    FIELD exception message: "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_skip_b64']"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (a) mutant run of test_skip_rev:
+    FIELD row[0]: 'ms'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'ERROR'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'SKIPPED TESTS'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: "{'ms': 'skipped: tests/test_core::test_skip_rev'}"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (b) baseline of a tree where test_skip_rev skips:
+    RAISED RuntimeError
+    FIELD exception message: "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_skip_rev']"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (a) mutant run of test_skipid_whole:
+    FIELD row[0]: 'ms'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'ERROR'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'SKIPPED TESTS'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: "{'ms': 'skipped: tests/test_core::test_skipid_whole[parameters hidden]'}"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (b) baseline of a tree where test_skipid_whole skips:
+    RAISED RuntimeError
+    FIELD exception message: "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_skipid_whole[parameters hidden]']"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (a) mutant run of test_skipid_slice6:
+    FIELD row[0]: 'ms'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'ERROR'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'SKIPPED TESTS'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: "{'ms': 'skipped: tests/test_core::test_skipid_slice6[parameters hidden]'}"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (b) baseline of a tree where test_skipid_slice6 skips:
+    RAISED RuntimeError
+    FIELD exception message: "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_skipid_slice6[parameters hidden]']"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (a) mutant run of test_skipid_b64:
+    FIELD row[0]: 'ms'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'ERROR'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'SKIPPED TESTS'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: "{'ms': 'skipped: tests/test_core::test_skipid_b64[parameters hidden]'}"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (b) baseline of a tree where test_skipid_b64 skips:
+    RAISED RuntimeError
+    FIELD exception message: "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_skipid_b64[parameters hidden]']"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (a) mutant run of test_skipid_rev:
+    FIELD row[0]: 'ms'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'ERROR'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'SKIPPED TESTS'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: "{'ms': 'skipped: tests/test_core::test_skipid_rev[parameters hidden]'}"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  (b) baseline of a tree where test_skipid_rev skips:
+    RAISED RuntimeError
+    FIELD exception message: "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_skipid_rev[parameters hidden]']"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
