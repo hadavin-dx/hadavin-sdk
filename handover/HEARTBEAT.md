@@ -872,3 +872,4 @@ PULSE 2026-11-11T13:33:32Z agents: EV-P89 a092be0f, B-PR77 a23fcc26, M-P3a2 a585
 PULSE 2026-11-11T13:40:43Z 7 running
 PULSE 2026-11-11T13:43:39Z 6 running (EV-P89 full suite at ~2 percent after a cluster restart, B-PR77, B-PR85 tests, B-PR89-r18, Q8-deps, Q8-redact); mem 14G free, disk 29G
 PULSE 2026-11-11T13:51:17Z 11 running
+PULSE 2026-11-11T13:54:41Z 10 running; builders progressing (dirty worktrees PR77=5 PR89=5 flaky=4 files); load 2.7 of 4 cores, mem 14G free, disk 30G
