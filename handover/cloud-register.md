@@ -1162,7 +1162,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | B-PR77 a23fcc26 | builder PR77 from wip/P2d-1-w6 | 13:28Z | +60m | 13:28Z | running | checkpoint 30m |
 | M-P3a2 a5853cac | memo P3a-2 history | 13:28Z | +30m | 13:28Z | running | read memo |
 | B-PR85 a758870b | retarget branch core/P5b2-main | 13:28Z | +45m | 13:28Z | CLOSED branch core/P5b2-main 3b9617e4 pushed; 1 flaky timing test | check checks |
-| B-PR89-r18 ada68aaa | PR89 r18 fix batch (worktree /home/user/build/B-PR89) | 13:31Z | +90m | 13:31Z | running | checkpoint 30m; then fresh reviewers r19 on new head |
+| B-PR89-r18 ada68aaa | PR89 r18 fix batch (worktree /home/user/build/B-PR89) | 13:31Z | +90m | 13:31Z | CLOSED head b95b0ca7 fast-forwarded on core/mutation-runner-keywords (lead: FF ok, 3 commits, gitleaks no leaks) | checkpoint 30m; then fresh reviewers r19 on new head |
 | S-bulk aa442830 | bulk package status table (read-only) | 13:33Z | +20m | 13:33Z | running | read reports/bulk-status-2026-11-11.md, plan Q7 |
 | M-P3a2 a5853cac | | | | | CLOSED memo saved | |
 | R-P89-zoom a30d9a6c | egm:egm-zoom-out (Fable 5.2) plan review of D-002 PR89 fix approach | 13:39Z | +15m | 13:39Z | CLOSED report saved; builder ada68aaa redirected to D-002 REVISED | save to reviews/PR89/r18-zoomout-plan.md; steer builder ada68aaa if plan changes |
@@ -1186,6 +1186,6 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-Q8c-live a9225128 | EVIDENCE RUNNER (Fable, network) live check of slice-1 permission names against vendor pages | 14:08Z | +40m | 14:08Z | CLOSED evidence/Q8c/live-verification-2026-11-11.md (162 items: 138 verified, 0 wrong, 3 not found, 21 page not reachable; Slack 0 verified) | fold verified/wrong into ticket data |
 | B-Q8a2 a0472549 | ONE builder (Fable) ticket Q8a-2, branch core/q8a-2-neutral-callback-and-guard, pg 56080 | 14:11Z | +90m | 14:11Z | running | checkpoint 30m; then evidence + egm reviewers |
 | R-Q8b-plan ace02d78, a517cf42 | egm design + impl-readiness (Fable) plan review r1 tickets/Q8b | 14:13Z | +20m | 14:13Z | CLOSED both saved reviews/Q8b/ | resolve, builder after PR77 scope settles |
-| R-Q8c-r2 ac13fdc7 | egm impl-readiness (Fable) plan review r2 of tickets/Q8c rev 2 | 14:18Z | +20m | | running | errata; build only after live verification |
+| R-Q8c-r2 ac13fdc7 | egm impl-readiness (Fable) plan review r2 of tickets/Q8c rev 2 | 14:18Z | +20m | | CLOSED saved reviews/Q8c/plan-r2.md | errata; build only after live verification |
 | EV-Q8a1 a6f9eb55 | EVIDENCE RUNNER (Fable) Q8a-1 head 464dee14: full suite, fail-before, mutants, hostile probes; pg 56090 | 14:20Z | +45m | 14:20Z | running | read RESULTS.md |
-| R-Q8a1-res a2a30519, a06b79ad | egm design + codebase (Fable) RESULT review r1 of Q8a-1 (snapshot q8a1-464dee1) | 14:20Z | +20m | 14:20Z | running | save reviews/Q8a/, ledger, fix batch if needed |
+| R-Q8a1-res a2a30519, a06b79ad | egm design + codebase (Fable) RESULT review r1 of Q8a-1 (snapshot q8a1-464dee1) | 14:20Z | +20m | 14:20Z | CLOSED saved reviews/Q8a/result-r1-464dee1.md (3 Major) | save reviews/Q8a/, ledger, fix batch if needed |
