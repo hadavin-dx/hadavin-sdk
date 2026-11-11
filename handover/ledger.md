@@ -2586,3 +2586,12 @@
 | BL-core-q8a1-r1-d02 | Major | Q8a-1 | reviews/Q8a/result-r1-464dee1.md design M2 | OPEN | | | 2026-11-11 |
 | BL-core-q8a1-r1-d03 | Major | Q8a-1 | reviews/Q8a/result-r1-464dee1.md design M3 | OPEN | | | 2026-11-11 |
 | BL-core-q8c-plan-r2-B1 | Blocker | Q8c-plan | reviews/Q8c/plan-r2.md B1, B2 | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-w01 | Major | PR89 | reviews/PR89/r19-comprehension.md M1 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-w02 | Major | PR89 | reviews/PR89/r19-comprehension.md M2 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-w03 | Major | PR89 | reviews/PR89/r19-comprehension.md M3 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-w04 | Major | PR89 | reviews/PR89/r19-comprehension.md M4 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-w05 | Major | PR89 | reviews/PR89/r19-comprehension.md M5 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-w06 | Major | PR89 | reviews/PR89/r19-comprehension.md M6 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-w07 | Major | PR89 | reviews/PR89/r19-comprehension.md M7 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-w08 | Major | PR89 | reviews/PR89/r19-comprehension.md M8 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
+| BL-PR89-r19-w09 | Major | PR89 | reviews/PR89/r19-comprehension.md M9 (wording; reader would do something unsafe or wrong) | OPEN | | | 2026-11-11 |
