@@ -1126,5 +1126,5 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | a8904ec1 | PR89 builder round 12 (resumed) | 03:47Z | cut to refuse-then-plain, differential, deletion table; check 04:50Z | running |
 | a622796d | PR89 r13 reviewer slice runner | done 04:14Z | | | closed (round-w2-r13-design-runner.md) | |
 | a4aead31 | PR89 r13 reviewer slice keyword tests | done 04:17Z | | | closed (round-w2-r13-codebase-keywordtests.md) | |
-| add433e4 | PR89 r13 reviewer (egm-implementation-readiness) slice mutants, manifest, CHANGELOG, others | 04:11Z | 04:30Z | 04:11Z | running | save report, ledger rows |
+| add433e4 | PR89 r13 reviewer slice mutants/CHANGELOG | done 04:20Z | | | closed (round-w2-r13-implreadiness-mutants.md) | |
 | a8904ec1 | PR89 builder r12 | done 04:09Z | | | closed (report 0cd10b9) | independent runner after reviews |

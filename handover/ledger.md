@@ -2405,3 +2405,8 @@
 | BL-core-a2-w2-r13-10 | handover/reviews/P89/round-w2-r13-codebase-keywordtests.md | Major | PR89 | fake credentials not built from parts, ~20 places (F4) | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r13-11 | handover/reviews/P89/round-w2-r13-codebase-keywordtests.md | Minor | PR89 | F5-F10 test gaps and wording | OPEN | 2026-11-11 |
 | BL-core-a2-w2-r13-12 | handover/reviews/P89/round-w2-r13-codebase-keywordtests.md | Major | PR89 | 47 deleted tests: 'never weakened' unverifiable from diff; independent check against b855a8f needed (deletion table withheld, gitleaks) | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r13-13 | handover/reviews/P89/round-w2-r13-implreadiness-mutants.md | Major | PR89 | password-word lookbehind has no mutant and hides sslpassword/dbpassword (M1; same as r13-04) | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r13-14 | handover/reviews/P89/round-w2-r13-implreadiness-mutants.md | Major | PR89 | CHANGELOG '10 s' bound not what tests check (M2) | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r13-15 | handover/reviews/P89/round-w2-r13-implreadiness-mutants.md | Major | PR89 | mutants header Windows paragraph false (M3) | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r13-16 | handover/reviews/P89/round-w2-r13-implreadiness-mutants.md | Major | PR89 | conftest guard mutants missing (M4) | OPEN | 2026-11-11 |
+| BL-core-a2-w2-r13-17 | handover/reviews/P89/round-w2-r13-implreadiness-mutants.md | Minor | PR89 | N5-N9 and CHANGELOG wording W10-W18 | OPEN | 2026-11-11 |
