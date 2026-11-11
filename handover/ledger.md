@@ -2564,3 +2564,8 @@
 | BL-core-q8a-plan-r1-B2 | Blocker | Q8a-plan | reviews/Q8a/plan-r1-summary.md | FIXED-VERIFIED | ticket rev 2 + errata rev 3 | plan r2 (facts checked true) | 2026-11-11 |
 | BL-core-q8a-plan-r1-B3 | Blocker | Q8a-plan | reviews/Q8a/plan-r1-summary.md | FIXED-VERIFIED | ticket rev 2 + errata rev 3 | plan r2 (facts checked true) | 2026-11-11 |
 | BL-core-q8a-plan-r2-B1 | Blocker | Q8a-plan | reviews/Q8a/plan-r2.md clock default | FIXED-UNVERIFIED | errata E1 | result review | 2026-11-11 |
+| BL-core-p3a2-r11-d01 | Major | P3a-2-rewritten | reviews/P3a-2/r11-design-8382bdd.md M1 | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r11-d02 | Major | P3a-2-rewritten | reviews/P3a-2/r11-design-8382bdd.md M2 | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r11-d03 | Major | P3a-2-rewritten | reviews/P3a-2/r11-design-8382bdd.md M3 | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r11-d04 | Major | P3a-2-rewritten | reviews/P3a-2/r11-design-8382bdd.md M4 | OPEN | | | 2026-11-11 |
+| BL-core-p3a2-r11-d05 | Major | P3a-2-rewritten | reviews/P3a-2/r11-design-8382bdd.md M5 | OPEN | | | 2026-11-11 |
