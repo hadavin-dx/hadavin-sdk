@@ -1,0 +1,24 @@
+OK                   pw-special-@/?#space%              secrets=9    max_line_s=0.0001   lines=44 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   pw-special-raw-value               secrets=1    max_line_s=0.0      lines=44 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   pw-2000-special-value              secrets=1    max_line_s=0.001    lines=59 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   dots-999-line                      secrets=2    max_line_s=0.0122   seconds=0.0122 out_len=1028
+OK                   dots-1000-line                     secrets=2    max_line_s=0.0063   seconds=0.0063 out_len=1029
+OK                   dots-1001-line                     secrets=2    max_line_s=0.0065   seconds=0.0065 out_len=1030
+OK                   dots-5000-line                     secrets=2    max_line_s=0.0002   seconds=0.0002 out_len=96
+OK                   special2000+dots1000-line          secrets=1    max_line_s=0.1206   seconds=0.1206 secrets=1
+OK                   repeat-aabaaab                     secrets=2    max_line_s=0.0      lines=17 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   repeat-raw-aabaaab                 secrets=1    max_line_s=0.0      lines=17 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   repeat-aabaaabaabaaab              secrets=2    max_line_s=0.0      lines=38 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   repeat-raw-aabaaabaabaaab          secrets=1    max_line_s=0.0      lines=38 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   repeat-ababababXq                  secrets=2    max_line_s=0.0001   lines=26 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   repeat-raw-ababababXq              secrets=1    max_line_s=0.0      lines=26 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   repeat-aaaaaaaa                    secrets=2    max_line_s=0.0001   lines=20 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   repeat-raw-aaaaaaaa                secrets=1    max_line_s=0.0      lines=20 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   repeat-abcabcabcabcZ               secrets=2    max_line_s=0.0001   lines=35 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   repeat-raw-abcabcabcabcZ           secrets=1    max_line_s=0.0      lines=35 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   urlpw-12                           secrets=2    max_line_s=0.0      lines=5 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   urlpw-45                           secrets=2    max_line_s=0.0      lines=5 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   urlpw-12/45                        secrets=4    max_line_s=0.0001   lines=11 whole_secret_in_output=0 lines_with_3plus_piece=0
+OK                   urlpw-12%2F45                      secrets=5    max_line_s=0.0      lines=17 whole_secret_in_output=0 lines_with_3plus_piece=0
+TOTAL 22 non-OK: 0
+exit=0
