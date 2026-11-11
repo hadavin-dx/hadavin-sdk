@@ -1359,3 +1359,4 @@ Heavy queue: 8 jobs for 3 slots at 15:54Z (load 10 on 4 cores): waits of 5-15 mi
 | R-P89-r21 design a91411ca | | | | 16:01Z | CLOSED: NOT CLEAN, 1 Major (reproduced by the lead), allow-list holds by reading; saved | wait for codebase + evidence |
 | R-P89-r21 codebase abd93594 | | | | 16:03Z | CLOSED: NOT CLEAN, 1 Major (same as design), saved | fix batch |
 | B-PR89-r22 a25ff55a | BUILDER (Fable, fresh) PR89 round 22: one code Major, four wording Majors, Minors; worktree /home/user/build/B-PR89-r20, pg 56132 | 16:03Z | +70m | 16:03Z | running | evidence + fresh reviewers round 23 |
+| EV-P3a2-r12 a10b6577 | | | | 16:04Z | report not yet handed back (mutant list still running); RESULTS.md read by the lead: 5 of 6 probed routes REPRODUCED (Blocker confirmed), one not reproducible, F8 confirmed, P1-P8 observed | wait for the mutant total |
