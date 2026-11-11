@@ -1,15 +1,19 @@
 hadavin_sdk loaded from /home/user/build/prh-author/main/src/hadavin_sdk/__init__.py
 == (a) main _keep_earlier_masks  |  (d) rev-3 mask_spans
-partial overlap, A listed first | main: LEAKED ['w4Xy'] 'id <SECRET_1>w4Xy9 end' | rev3: MASKED 'id <SECRET_1><SECRET_2> end'
-partial overlap, B listed first | main: LEAKED ['Qz7k'] 'id Qz7k<SECRET_2> end' | rev3: MASKED 'id <SECRET_1><SECRET_2> end'
-equal length overlap C|B | main: LEAKED ['w4Xy'] 'id <SECRET_1>w4Xy9 end' | rev3: MASKED 'id <SECRET_1><SECRET_2> end'
-nested, short first | main: LEAKED ['Qz7k'] 'id Qz7k<SECRET_3> end' | rev3: MASKED 'id <SECRET_1><SECRET_3> end'
-mixed domains: escaped short vs raw long | main: LEAKED ['kPQR'] 'id <SECRET_3>kPQRSTmn end' | rev3: MASKED 'id <SECRET_3><SECRET_1> end'
+partial overlap, A listed first | main: LEAKED ['w4Xy'] 'id <SECRET_1>w4Xy9 end' | rev3: MASKED 'id <MERGED_1> end' restore-exact=True
+partial overlap, B listed first | main: LEAKED ['Qz7k'] 'id Qz7k<SECRET_2> end' | rev3: MASKED 'id <MERGED_1> end' restore-exact=True
+equal length overlap C|B | main: LEAKED ['w4Xy'] 'id <SECRET_1>w4Xy9 end' | rev3: MASKED 'id <MERGED_1> end' restore-exact=True
+nested, short first | main: LEAKED ['Qz7k'] 'id Qz7k<SECRET_3> end' | rev3: MASKED 'id <SECRET_1> end' restore-exact=True
+three-chain overlap | main: MASKED 'id <SECRET_1><SECRET_4> end' | rev3: MASKED 'id <MERGED_1> end' restore-exact=True
+same start, equal length | main: MASKED 'id <SECRET_1> end' | rev3: MASKED 'id <SECRET_1> end' restore-exact=True
+mixed domains: escaped short vs raw long | main: LEAKED ['kPQR'] 'id <SECRET_3>kPQRSTmn end' | rev3: MASKED 'id <MERGED_1> end' restore-exact=True
 == (b) main redact() sweep of known values (run map pre-filled)
 partial overlap, A listed first | LEAKED ['Qz7k'] | 'id Qz7k<SECRET_2> end'
 partial overlap, B listed first | LEAKED ['Qz7k'] | 'id Qz7k<SECRET_2> end'
 equal length overlap C|B | MASKED | 'id Hh2<SECRET_2> end'
 nested, short first | MASKED | 'id <SECRET_1> end'
+three-chain overlap | LEAKED ['Qz7k'] | 'id Qz7k<SECRET_2>Zr8 end'
+same start, equal length | MASKED | 'id <SECRET_1> end'
 mixed domains: escaped short vs raw long | LEAKED ['x%3D'] | 'id x%3Dy<SECRET_1> end'
 == (c) main redact_text / redact_untrusted with the run map
 partial overlap, A listed first | redact_text | LEAKED ['Qz7k'] | 'id Qz7k<SECRET_2> end'
