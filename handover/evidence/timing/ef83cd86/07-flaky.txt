@@ -1,0 +1,10 @@
+head #1 exit=0 :: 1 passed in 1.28s
+head #2 exit=0 :: 1 passed in 1.33s
+head #3 exit=0 :: 1 passed in 1.31s
+head #4 exit=0 :: 1 passed in 1.27s
+head #5 exit=0 :: 1 passed in 1.29s
+main #1 exit=1 :: 1 failed in 0.68s
+main #2 exit=1 :: 1 failed in 0.61s
+main #3 exit=0 :: 1 passed in 0.62s
+main #4 exit=0 :: 1 passed in 0.66s
+main #5 exit=0 :: 1 passed in 0.63s
