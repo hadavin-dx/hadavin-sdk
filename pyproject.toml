@@ -5,7 +5,7 @@ description = "Shared building blocks for Hadavin's AI builds"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "LicenseRef-Proprietary"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "THIRD-PARTY-NOTICES.md"]
 authors = [{ name = "Hadavin" }]
 # PyPI refuses any upload carrying this classifier.
 classifiers = ["Private :: Do Not Upload"]

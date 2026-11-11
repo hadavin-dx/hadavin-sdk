@@ -129,3 +129,25 @@ K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is i
 K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
 K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
 K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
+
+# --- text folding (guard/textnorm.py) ---
+# The weighted size rule of the fold: a text whose weight W (the sum over its characters of the longest string the fold makes from
+# one character; an ASCII text has W = its length) is above this is refused with TextTooLong. Same number as the redaction cap.
+TEXTNORM_MAX_CHARS = MAX_REDACT_CHARS
+# The Unicode data version the fold's keys were made with; check_pinned_unidata compares the interpreter with it.
+TEXTNORM_PINNED_UNIDATA = "15.1.0"
+# Passes (the confirming pass included) of a scan-key reading before FoldNotConverged (read by guard/textnorm.py at the call).
+TEXTNORM_MAX_PASSES = 3
+
+# --- diagnostics (codes.py, guard/diagnostic.py): the safe text that replaces an error message in logs and stored fields ---
+DIAG_VERSION = 1  # the `diag_v=` field of a rendered line
+DIAG_LINE_CHARS = 400  # a rendered line is cut to this by dropping trailing facts
+DIAG_KEY_CHARS = 120  # longest value a SafeToken may hold
+DIAG_STEP_CHARS = 30  # longest step part of a rendered line
+DIAG_KIND_CHARS = 80  # longest kind part of a rendered line
+DIAG_MAX_FACTS = 12  # facts kept per diagnostic (the first by priority)
+# traceback links walked; a longer traceback gives locator '-' and, on the internal-bug path only, code foreign_exception
+# (an own class or a mapped built-in keeps its code)
+DIAG_TB_STEPS = 2000
+DIAG_MAX_FRAMES = 32  # innermost frames examined for the locator
+DIAG_MAX_ERRORS = 5  # validation error types printed before "+N more"
