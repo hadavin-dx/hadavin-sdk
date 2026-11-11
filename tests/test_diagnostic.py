@@ -490,10 +490,21 @@ def test_class_name_reads_the_module_name_once() -> None:
 
 
 def test_a_group_gives_the_code_of_its_first_member_and_no_member_facts() -> None:
-    """``ExceptionGroup("x", [OSError(5, "x")])`` is ``os_error``, and the member's errno is NOT read (a group never reads facts)."""
-    d = diagnose(ExceptionGroup("x", [OSError(5, "x")]), step=STEP)
+    """``ExceptionGroup("x", [OSError(5, "x")])`` is ``os_error``, with no errno fact, and the member's ``errno`` is never read."""
+    reads: list[str] = []
+
+    class Member(OSError):
+        @property
+        def errno(self) -> int:  # type: ignore[override]
+            reads.append("errno")
+            return 5
+
+    d = diagnose(ExceptionGroup("x", [Member(5, "x")]), step=STEP)
     assert d.code.value == "os_error", d.code
     assert FactKey.errno not in dict(d.facts), d.facts
+    assert reads == [], "the group's member had its errno read"
+    plain = diagnose(ExceptionGroup("x", [OSError(5, "x")]), step=STEP)
+    assert plain.code.value == "os_error" and FactKey.errno not in dict(plain.facts)
 
 
 def _traceback_of(n: int) -> types.TracebackType:
@@ -511,7 +522,9 @@ def test_links_keep_the_innermost_frames_only_up_to_the_step_cap(links: int) -> 
 
     exc = ValueError("x").with_traceback(_traceback_of(links))
     kept, too_long = dg._links(exc)
-    assert not too_long and len(kept) == min(links, defaults.DIAG_MAX_FRAMES), (links, len(kept))
+    assert not too_long and len(kept) == min(links, defaults.DIAG_MAX_FRAMES), (
+        f"{links} links: kept {len(kept)}, the frame cap is {defaults.DIAG_MAX_FRAMES}"
+    )
 
 
 def test_links_flag_a_traceback_over_the_step_cap_and_keep_nothing() -> None:
