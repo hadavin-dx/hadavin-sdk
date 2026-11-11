@@ -2618,3 +2618,11 @@
 | BL-core-a11a-w7-M7 | Major | PR77 | reviews/PR77/round7-design.md M7 (M3-M5 reproduced by lead) | OPEN | | | 2026-11-11 |
 | BL-core-a11a-w7-M8 | Major | PR77 | reviews/PR77/round7-design.md M8 (M3-M5 reproduced by lead) | OPEN | | | 2026-11-11 |
 | BL-core-tool-timeout-unbounded | Minor | core-main | config tool_timeout_s is only greater than 0 (config.py:349) and is used in pilot/prod (tools.py:495, 1127): no upper bound, infinity not refused (reviews/Q8a/result-r3-design-full.md N2) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-cB1 | Blocker | PR77 | reviews/PR77/round7-codebase.md B1 (same root as design B1) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-cM1 | Major | PR77 | reviews/PR77/round7-codebase.md M1 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-cM2 | Major | PR77 | reviews/PR77/round7-codebase.md M2 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-cM3 | Major | PR77 | reviews/PR77/round7-codebase.md M3 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-cM4 | Major | PR77 | reviews/PR77/round7-codebase.md M4 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-cM5 | Major | PR77 | reviews/PR77/round7-codebase.md M5 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-cM6 | Major | PR77 | reviews/PR77/round7-codebase.md M6 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |
+| BL-core-a11a-w7-cM7 | Major | PR77 | reviews/PR77/round7-codebase.md M7 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |

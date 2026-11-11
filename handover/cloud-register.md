@@ -1244,7 +1244,7 @@ Closed: aa9ad5da2e and a22357c6e0 (PR89 round-2 reviewers, saved). a4f0c2881c (e
 | EV-flaky, EV-Q8a1-r2 | 36 / 16 min | writing results (17 files across the four evidence folders) | on track |
 | B-PR89-r20, B-Q8c1, B-flaky fix, B-Q8a1 fix 2, B-Q8a2 fix 1, A-Q8b rev 3 | 6-35 min | building / writing | on track |
 | EV-P77 ab49c9d1 | EVIDENCE RUNNER (Fable) PR77 work head 97fd2028: full suite with Postgres, 93 mutants, fail-before on 3 bases, hostile probes, cost; heavy.sh, pg 56160 | 15:07Z | +90m | 15:07Z | running (queues for a slot) | read RESULTS.md |
-| R-P77-r7 a6a27c37 (design CLOSED: NOT CLEAN, 2 Blockers reproduced by lead), a1068d0f | egm design + codebase (Fable) RESULT review round 7 of PR77 (snapshot p77-97fd202) | 15:07Z | +30m | 15:07Z | codebase reviewer still running | save reviews/PR77/round7-*-full.md, ledger |
+| R-P77-r7 a6a27c37, a1068d0f | both CLOSED: NOT CLEAN (design 2 Blockers + 6 Majors; codebase 1 Blocker + 7 Majors; lead reproduced 2 Blockers and 8 Major inputs) | | | | closed | |
 
 ### Long-running check 15:13Z
 | agent | age | doing now | verdict |
