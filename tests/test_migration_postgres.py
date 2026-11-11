@@ -2872,15 +2872,15 @@ def test_a_role_that_owns_a_table_function_or_type_outside_a_scratch_schema_is_n
 
 @needs_pg
 def test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new(
-    scratch, monkeypatch, tmp_path
+    scratch, monkeypatch, tmp_path, second_schema
 ):
     """The text rules read only a `CREATE FUNCTION` at the start of a statement; here a function body makes the
-    function by `EXECUTE`. What is new in the schema after the files is looked at too. Killed by: mutant SD3 (only the
-    names in the file text are looked at)."""
+    function by `EXECUTE`, in a second schema (so no list of the run's own schema finds it). What is new in the database
+    after the files is looked at too. Killed by: mutant SD3 (only the names in the file text are looked at)."""
     dsn, _schema = scratch
     body = (
         "CREATE OR REPLACE FUNCTION hadavin_test_maker() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
-        "EXECUTE 'CREATE OR REPLACE FUNCTION hadavin_test_hidden() RETURNS int LANGUAGE sql SECURITY DEFINER AS $q$ SELECT 1 $q$'; "
+        f"EXECUTE 'CREATE OR REPLACE FUNCTION \"{second_schema}\".hadavin_test_hidden() RETURNS int LANGUAGE sql SECURITY DEFINER AS $q$ SELECT 1 $q$'; "
         "END $$;\nSELECT hadavin_test_maker();\n"
     )
     _with_files(monkeypatch, tmp_path, {"0006_dynamic.sql": body})
@@ -2921,6 +2921,7 @@ def second_schema():
     one where an administrator granted it)."""
     name = "hadavin_test_o_" + uuid.uuid4().hex[:10]
     with psycopg.connect(DSN, autocommit=True) as db:
+        ensure_plain_role(db)  # the role exists also when a test runs alone
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(name)))
         db.execute(
             sql.SQL("GRANT USAGE, CREATE ON SCHEMA {} TO {}").format(
@@ -2975,21 +2976,21 @@ def test_a_plain_function_in_another_schema_loses_the_default_right_for_everyone
 
 @needs_pg
 def test_a_function_replaced_with_the_same_id_and_made_security_definer_is_found(
-    scratch, monkeypatch, tmp_path
+    scratch, monkeypatch, tmp_path, second_schema
 ):
     """A function made by an earlier run (named in no file) keeps its id when a later file replaces it by dynamic SQL;
     what is compared is its state, not whether its id is new. Killed by: mutant SD5 (only new ids are looked at)."""
     dsn, _schema = scratch
     maker = (
         "CREATE OR REPLACE FUNCTION hadavin_test_maker2() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
-        "EXECUTE 'CREATE OR REPLACE FUNCTION hadavin_test_dyn() RETURNS int LANGUAGE sql AS $q$ SELECT 1 $q$'; "
+        f"EXECUTE 'CREATE OR REPLACE FUNCTION \"{second_schema}\".hadavin_test_dyn() RETURNS int LANGUAGE sql AS $q$ SELECT 1 $q$'; "
         "END $$;\nSELECT hadavin_test_maker2();\n"
     )
     _with_files(monkeypatch, tmp_path, {"0006_first.sql": maker})
     assert mig.migrate(dsn) == REAL + ["0006_first"]
     again = (
         "CREATE OR REPLACE FUNCTION hadavin_test_maker3() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
-        "EXECUTE 'CREATE OR REPLACE FUNCTION hadavin_test_dyn() RETURNS int LANGUAGE sql SECURITY DEFINER AS $q$ SELECT 1 $q$'; "
+        f"EXECUTE 'CREATE OR REPLACE FUNCTION \"{second_schema}\".hadavin_test_dyn() RETURNS int LANGUAGE sql SECURITY DEFINER AS $q$ SELECT 1 $q$'; "
         "END $$;\nSELECT hadavin_test_maker3();\n"
     )
     _with_files(monkeypatch, tmp_path, {"0007_second.sql": again})
@@ -3040,6 +3041,7 @@ def test_a_default_right_that_an_administrator_set_is_refused_and_the_message_sa
         "ALTER DEFAULT PRIVILEGES FOR ROLE {} {}REVOKE SELECT ON TABLES FROM PUBLIC"
     ).format(role, where)
     with psycopg.connect(DSN, autocommit=True) as db:
+        ensure_plain_role(db)  # the role exists also when this test runs alone
         db.execute(admin_sets)
     try:
         with pytest.raises(ConfigError, match="a default right") as e:
@@ -3178,8 +3180,15 @@ def test_the_lock_wait_has_an_upper_bound_that_the_server_accepts(scratch):
     """`lock_timeout` is a whole number of milliseconds in 32 bits; above 2147483 seconds the server answered with a raw
     driver error. Now a `ConfigError` before anything runs. Killed by: mutant LW4 (no upper bound)."""
     dsn, _schema = scratch
-    with pytest.raises(ConfigError, match="from 1 to 2147483"):
+    refused = driver_error = None
+    try:
         mig.migrate(dsn, lock_wait_seconds=mig.MAX_LOCK_WAIT_SECONDS + 1)
+    except ConfigError as e:
+        refused = str(e)
+    except psycopg.Error as e:
+        driver_error = str(e)
+    assert driver_error is None, f"a raw driver error instead of a ConfigError: {driver_error}"
+    assert refused is not None and "from 1 to 2147483" in refused, refused
     assert mig.MAX_LOCK_WAIT_SECONDS * 1000 <= 2**31 - 1 < (mig.MAX_LOCK_WAIT_SECONDS + 1) * 1000
 
 
@@ -3247,8 +3256,14 @@ def test_a_login_that_cannot_read_which_databases_hold_a_role_does_not_fail_the_
 
         monkeypatch.setattr(helper, "_databases_that_still_hold", refused)
         with psycopg.connect(make_conninfo(DSN, dbname=db_y), autocommit=True) as in_y:
-            assert name not in helper.sweep_stale_roles(in_y)
+            raised = dropped = None
+            try:
+                dropped = helper.sweep_stale_roles(in_y)
+            except psycopg.Error as e:
+                raised = str(e)
         out = capsys.readouterr().out
+        assert raised is None, f"the sweep raised: {raised}"
+        assert name not in dropped
         assert name in out and "this login cannot read pg_shdepend" in out, out
 
 
