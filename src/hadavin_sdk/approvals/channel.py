@@ -66,9 +66,18 @@ def _assignment_originals(mapping: dict[str, str]) -> set[str]:
     }
 
 
+DEFAULT_CALLBACK_PATH = "/channel/actions"  # the path of a kind whose vendor fixes none
+# A callback path: lower-case segments of letters and digits joined by `/` or `-` (a subset of the path characters
+# of RFC 3986 section 3.3: no query, no dot segment, no empty segment). `fullmatch` only: `$` would pass "/a\n".
+CALLBACK_PATH = re.compile(r"/[a-z0-9]+(?:[/-][a-z0-9]+)*")
+
+
 class Channel(Protocol):
     name: str
     max_card_chars: int  # the longest card text this channel posts; longer is `card_too_long`
+    callback_path: (
+        str  # the URL path this kind's callbacks are posted to; the receiver answers this path only
+    )
 
     def send(self, req: ApprovalRequest, approver_ids: list[str]) -> str: ...
     def update(self, req: ApprovalRequest) -> None: ...
@@ -88,6 +97,7 @@ class FakeChannel:
     ``fake:<id>``."""
 
     name = "fake"
+    callback_path = DEFAULT_CALLBACK_PATH
     header_prefix = "X-Hadavin"  # the shared hmac_v0 scheme under neutral header names
 
     max_card_chars = 3000

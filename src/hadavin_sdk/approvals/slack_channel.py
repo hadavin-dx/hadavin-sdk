@@ -32,6 +32,7 @@ class SlackError(RuntimeError):
 
 class SlackChannel:
     name = "slack"
+    callback_path = "/slack/actions"
     header_prefix = slack.HEADER_PREFIX
     max_card_chars = 2900  # a Slack section block holds 3000; the rest is margin
 

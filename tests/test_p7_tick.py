@@ -15,7 +15,7 @@ from hadavin_sdk import cli
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.app import build
 from hadavin_sdk.approvals import FakeChannel
-from hadavin_sdk.approvals.receiver import MAX_BODY, handle_slack_action, serve
+from hadavin_sdk.approvals.receiver import MAX_BODY, handle_action, serve
 from hadavin_sdk.approvals.slack_channel import SlackChannel, SlackError
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import SlackSettings
@@ -256,13 +256,13 @@ def test_stuck_threshold_follows_the_agent_and_llm_settings(app):
 def test_receiver_records_and_never_executes(app, fake_system):
     run, req = _waiting(app)
     now = int(app.approvals.clock().timestamp())
-    assert handle_slack_action(app.approvals, *_callback(req, "U1", now, secret=SIG[::-1])) == (
+    assert handle_action(app.approvals, *_callback(req, "U1", now, secret=SIG[::-1])) == (
         401,
         b"",
     )
-    assert handle_slack_action(app.approvals, {}, b"x" * (MAX_BODY + 1)) == (413, b"")
+    assert handle_action(app.approvals, {}, b"x" * (MAX_BODY + 1)) == (413, b"")
     # a verified click by someone who is not an approver: 200, recorded as refused, nothing decided
-    assert handle_slack_action(app.approvals, *_callback(req, "U1", now))[0] == 200
+    assert handle_action(app.approvals, *_callback(req, "U1", now))[0] == 200
     assert app.store.get_approval_request(req.approval_id).status == "PENDING"
     p = app.registry.principals
     from hadavin_sdk.identity import Principal
@@ -270,7 +270,7 @@ def test_receiver_records_and_never_executes(app, fake_system):
     p["fake:UAPPROVER"] = Principal(id="fake:UAPPROVER", kind="person", approver_of=[req.chain_id])
     req.steps[0].approver_ids.append("fake:UAPPROVER")
     app.store.save_approval_request(req)
-    assert handle_slack_action(app.approvals, *_callback(req, "UAPPROVER", now)) == (200, b"")
+    assert handle_action(app.approvals, *_callback(req, "UAPPROVER", now)) == (200, b"")
     assert app.store.get_approval_request(req.approval_id).status == "APPROVED"
     assert (
         app.store.get_run(run.run_id).state == S.WAITING_FOR_APPROVAL and fake_system.creates == 0
@@ -287,7 +287,7 @@ def test_the_approvals_server_answers_over_http(app):
         url = f"http://127.0.0.1:{server.server_address[1]}"
         headers, body = _callback(req, "U1", int(time.time()), secret=SIG[::-1])
         r = urllib.request.Request(  # noqa: S310 - loopback test server
-            url + "/slack/actions", data=body, headers=headers, method="POST"
+            url + "/channel/actions", data=body, headers=headers, method="POST"
         )
         with pytest.raises(urllib.error.HTTPError) as err:
             urllib.request.urlopen(r, timeout=5)  # noqa: S310 - loopback test server
