@@ -41,3 +41,6 @@ Every EGM skill and every egm:* reviewer agent runs on `claude-fable-5-2` (the t
 
 ## OVERRIDE 2 2026-11-11 (owner's direct order): Fable 5.2 for ALL agents
 Session model, builders, evidence runners and every EGM skill/agent run on `claude-fable-5-2` (Agent `model: "fable"`). The Agent hook's allowed-model list gained "fable". Agents started before this order (Sonnet) finish their current task; new agents use Fable.
+
+## REVERT 2026-11-11 16:09Z UTC (owner's direct order in the cloud session): back to the original routing
+The two Fable overrides above are withdrawn. Routing is again the table at the top: Opus 5.5 only for egm-brainstorm, egm-draft, egm-resolve; Sonnet 5.5 for every other EGM skill and every egm reviewer agent, builders, evidence runners and the session; Haiku 5.5 only for plain lookups. `handover/tools/egm_model_patch.py` is restored to its version before the override (OPUS = claude-opus-5-5, SONNET = claude-sonnet-5-5) and was run again: it rewrote 89 files in 3 plugin folders. The Agent hook's allowed-model list is again opus, sonnet, haiku ("fable" removed). Agents already running keep the model they were started with until they report; new Agent calls use Sonnet 5.5 (Opus 5.5 for planning skills). Start a NEW session so the skill list is read again.

@@ -17,9 +17,8 @@ import re
 import sys
 from pathlib import Path
 
-FABLE = "claude-fable-5-2"  # owner order 2026-11-11: every EGM skill and agent runs on Fable 5.2
-OPUS = FABLE
-SONNET = FABLE
+OPUS = "claude-opus-5-5"
+SONNET = "claude-sonnet-5-5"
 OPUS_SKILLS = {"egm-brainstorm", "egm-draft", "egm-resolve"}
 
 
