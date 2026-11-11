@@ -894,7 +894,7 @@ def _refused_by(monkeypatch, tmp_path, **db_args):
 def test_a_privileged_session_user_is_refused_even_when_the_current_user_is_plain(
     monkeypatch, tmp_path
 ):
-    """Killed by: mutants SU1 and SU2 (the second row of flags is not read)."""
+    """Killed by: mutants SU1 and SU2 (the second row of flags is not read). Pin: it also passes on the source before round 11 (42fc259), as the independent run of 8382bdd showed; it holds the behaviour in place."""
     db = _refused_by(monkeypatch, tmp_path)
     db.more_flags = [(True, False, False, False, False)]
     with pytest.raises(ConfigError, match="it holds: rolsuper"):
@@ -945,7 +945,7 @@ def test_there_is_no_switch_that_turns_the_role_check_off():
 
 
 def test_the_refusal_says_how_to_make_a_plain_migration_role(monkeypatch, tmp_path):
-    """The message names the flags held and gives one SQL example with no password or other secret."""
+    """The message names the flags held and gives one SQL example with no password or other secret. Pin: it also passes on the source before round 11 (42fc259), as the independent run of 8382bdd showed; it holds the behaviour in place."""
     files = _files(tmp_path, 1)
     db = _Db([START], [[]], flags=(True, False, False, False, False))
     monkeypatch.setattr(mig, "_migration_files", lambda: files)

@@ -290,7 +290,8 @@ def _run_plant(dsn, monkeypatch, tmp_path, body, item):
 @needs_pg
 def test_h11_a_function_owner_change_is_refused(scratch, monkeypatch, tmp_path):
     """The owner of the trigger function is read back: handing it to another role is a trigger change. Killed by: mutant T7
-    (function owner not compared) of tests/migrate_mutants.py."""
+    (function owner not compared) of tests/migrate_mutants.py.
+    Pin: it also passes on the source before round 11 (42fc259), as the independent run of 8382bdd showed; it holds the behaviour in place."""
     dsn, schema = scratch
     other = "hadavin_test_fo_" + uuid.uuid4().hex[:8]
     _create_roles(other)
@@ -3135,7 +3136,8 @@ def test_an_owner_a_file_handed_an_object_to_is_refused_even_when_the_migration_
 ):
     """An owner is accepted only when the object had it before the files. `ALTER TABLE audit_entries OWNER TO other`
     (the migration role is a member of `other`) made `other` the owner with every right, and the read-back treated an
-    owner as normal. Killed by: mutant OW2 (any owner is accepted)."""
+    owner as normal. Killed by: mutant OW2 (any owner is accepted).
+    Pin: it also passes on the source before round 11 (42fc259), as the independent run of 8382bdd showed; it holds the behaviour in place."""
     dsn, schema = scratch
     other = "hadavin_test_ow_" + uuid.uuid4().hex[:8]
     _create_roles(other)
@@ -3222,7 +3224,8 @@ def test_a_lock_holder_that_this_login_cannot_look_into_is_named_in_plain_words(
     """For the session of another user the server shows NULL in some columns of `pg_stat_activity`; the message said
     'state None, connected since None'. Killed by: mutant LW5 (NULL is printed as None). The holder logs in as a plain
     role of its own, so the migration (as the plain role of the helper, or as a login that is not a superuser) is another
-    user and the server hides those columns, whatever login the test database was given."""
+    user and the server hides those columns, whatever login the test database was given.
+    Pin: it also passes on the source before round 11 (42fc259), as the independent run of 8382bdd showed; it holds the behaviour in place."""
     dsn, _schema = scratch
     holder_role = "hadavin_test_lh_" + uuid.uuid4().hex[:8]
     made_up = "made-up-" + uuid.uuid4().hex  # new for each run; never a written value
