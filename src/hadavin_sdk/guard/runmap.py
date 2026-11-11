@@ -23,6 +23,7 @@ from urllib.parse import unquote
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, redact
+from hadavin_sdk.guard.textnorm import without_spacing_marks
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
 # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
@@ -407,7 +408,14 @@ def _views(text: str) -> list[str]:
     out = []
     # the layers undone to a fixed point (percent, entity, backslash, NFKC, any order, up to the depth cap; deeper
     # raises TooDeep and nothing is redacted or shown): `%41KIA...`, `&#65;KIA...`, `password%3Dx`
-    for view in (canonical(text), canonical(unescaped), fits_after_nfkc(undo(text))):
+    # and the canonical view of the text without its spacing marks, modifier letters and modifier symbols (textnorm, "MARKS AND SCANS": NFKC reads
+    # a modifier letter as a letter and keeps a spacing vowel sign, so "AKIA" + U+093E + "IOSFODNN7EXAMPLE" is not the key in `canonical` alone)
+    for view in (
+        canonical(text),
+        canonical(unescaped),
+        fits_after_nfkc(undo(text)),
+        canonical(without_spacing_marks(text)),
+    ):
         view = _clean(view)
         if view != text and view not in out:
             out.append(view)

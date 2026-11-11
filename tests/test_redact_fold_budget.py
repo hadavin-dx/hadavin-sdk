@@ -139,7 +139,9 @@ def test_the_cookie_line_really_takes_three_rounds(monkeypatch):
     calls = []
     real = _Redactor._aligned_fold
     monkeypatch.setattr(
-        _Redactor, "_aligned_fold", staticmethod(lambda b, d: calls.append(b) or real(b, d))
+        _Redactor,
+        "_aligned_fold",
+        staticmethod(lambda b, d, *view: calls.append(b) or real(b, d, *view)),
     )
     assert redact("Cookie: sid=josé@example.com; a=bé").text == "Cookie: <SECRET_1>"
     assert len(calls) >= 3, calls  # two rounds that change the text and one that finds nothing
@@ -345,3 +347,6 @@ def test_hostile_1_hostile_shapes_return_a_clean_text_or_refuse():
             continue
         assert KEY_[:12] not in out and attack_key not in out, name
         assert "exemple.fr" not in out.replace("<", ""), name
+        if name in {"lookalike key lines", "at-cap attack line", "4000 attack lines"}:
+            # a result that is not a refusal says what happened: the key is masked in place (a placeholder) or the line is withheld (the note)
+            assert "<APIKEY_" in out or redact_mod.FOLD_NOTE in out, name

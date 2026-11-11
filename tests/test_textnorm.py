@@ -1167,18 +1167,20 @@ def test_the_hidden_channel_signal_refuses_what_is_not_text():
 
 
 # ---- names ---------------------------------------------------------------------------------------------------------------------------------
-def test_the_public_names_are_exactly_the_listed_twenty():
+def test_the_public_names_are_exactly_the_listed_twenty_three():
     assert sorted(textnorm.__all__) == sorted(
         [
             "FILLERS",
             "FOLD_VERSION",
             "AllowVerdict",
             "NotText",
+            "SPACING_CATEGORIES",
             "TextTooLong",
             "TextnormError",
             "UnidataMismatch",
             "allow_equal",
             "fold",
+            "fold_view",
             "fold_views",
             "has_hidden_channel",
             "has_mixed_script",
@@ -1190,9 +1192,10 @@ def test_the_public_names_are_exactly_the_listed_twenty():
             "could_be_same_person",
             "squeeze",
             "squeeze_views",
+            "without_spacing_marks",
         ]
     )
-    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 20
+    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 23
 
 
 def test_every_name_the_module_defines_is_public_and_listed_or_private():

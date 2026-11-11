@@ -1,4 +1,9 @@
-"""The mutants of the fold scan (P2d-1): 21 redactor mutants of core PR #50 (748849c), re-pointed, and 21 new ones.
+"""The mutants of the fold scan (P2d-1): 21 redactor mutants of core PR #50 (748849c), re-pointed, 21 new ones and the 16 of review round w3
+(the views that drop spacing marks, the control-character gate, the block that grows over a second block, the line end of a withheld block).
+
+``tools.mutation_runner`` replaces EVERY occurrence of a mutant's ``old`` text. Mutant 21 therefore removes both
+``_deadline=started + defaults.REDACT_BUDGET_S`` arguments of ``runmap.redact_text`` (the first pass and the loop over the views), which is
+what its name says ("the views get no shared deadline"); its killer fails on either one alone.
 
 Each mutant reverts ONE guard in a temp copy of the package (``tools.mutation_runner``) and the named test must fail first, for the
 reason in ``expect``. Not collected by pytest. Run from the repo root:
@@ -22,12 +27,15 @@ from tools.mutation_runner import Mutant, run_mutants
 ROOT = Path(__file__).resolve().parents[1]
 S = "src/hadavin_sdk/"
 RD, GM, DF = S + "guard/redact.py", S + "guard/runmap.py", S + "defaults.py"
+TN = S + "guard/textnorm.py"
 F1 = "tests/test_redact_fold.py"
 FB = "tests/test_redact_fold_budget.py"
 FS = "tests/test_redact_fold_seams.py"
 FP = "tests/test_redact_fold_property.py"
 FZ = "tests/test_k5_round12_fuzz.py"
+FM = "tests/test_redact_marks.py"
 PREFIX = {
+    FM: "tests/test_redact_marks::",
     F1: "tests/test_redact_fold::",
     FB: "tests/test_redact_fold_budget::",
     FS: "tests/test_redact_fold_seams::",
@@ -55,7 +63,7 @@ def m(name, file, old, new, test_file, killer, expect, **kw):
 
 M = [
     # ---- the 21 existing redactor mutants (748849c tests/promoted_mutants.py), re-pointed ----
-    m("1 the folded pass never runs", RD, "        if not out.isascii():\n", "        if False:\n", F1,
+    m("1 the folded pass never runs", RD, "        if not _plain(out):\n", "        if False:\n", F1,
       "test_redact_masks_a_value_hidden_behind_look_alikes_on_the_line_and_leaves_other_text_alone", "ssert"),
     m("2 the folded line is emitted after a hit", RD, """        return f"{FOLD_NOTE} {' '.join""", """        return cur + eol if hits else line  # f"{FOLD_NOTE} {' '.join""", FP,
       "test_a_fold_on_hit_rewrite_never_emits_folded_text_so_nothing_goes_live_after_the_neutralising", "ssert"),
@@ -69,10 +77,10 @@ M = [
     m("6 a value hidden behind look-alikes is masked in place", RD, "if any(any(alike[s:e]) for s, e, _, _ in claims):", "if False:", F1,
       "test_attacks_are_still_withheld_whole_and_never_emitted_folded", "ssert"),
     m("7 accented and other-script lines are withheld whole again", RD,
-      'return (text, where, alike) if text == fold(body).replace("\\u2044", "/") else None', "return None", F1,
+      'return (text, where, alike) if text == whole else None', "return None", F1,
       "test_benign_multilingual_corpus_has_a_zero_false_withhold_rate", "ssert"),
-    m("8 a set compare hides a look-alike copy", RD, "if not (self._dry_hits(folded) - self._dry_hits(body)):",
-      "if set(self._dry_hits(folded)) <= set(self._dry_hits(body)):", F1,
+    m("8 a set compare hides a look-alike copy", RD, "if not any(self._dry_hits(f) - direct for f in folded):",
+      "if all(set(self._dry_hits(f)) <= set(direct) for f in folded):", F1,
       "test_a_lookalike_copy_of_a_value_that_also_stands_in_clear_is_still_a_hit", "ssert"),
     m("9 the offset after a masked value is off by one", RD, "prev = where[e - 1] + 1", "prev = where[e - 1]", F1,
       "test_the_malformed_offset_is_caught_by_a_value_in_front_of_and_behind_other_text", "ssert"),
@@ -104,7 +112,7 @@ M = [
     m("N1 U+2044 is no longer mapped to a slash", RD,
       '    if ch == "\\u2044":\n        return "/", 1  # a fraction slash spells a slash: masked around, never inside (SL-D)\n', "",
       F1, "test_d1_1_a_fraction_slash_beside_an_accented_address_is_masked_in_place", "ssert"),
-    m("N4 find enters the scan for ASCII text", RD, "        if not out.isascii():\n", "        if True:\n", F1,
+    m("N4 find enters the scan for ASCII text", RD, "        if not _plain(out):\n", "        if True:\n", F1,
       "test_ascii_1_an_ascii_text_with_no_non_ascii_value_never_enters_the_fold_scan", "ssert"),
     m("N5 _over_budget never raises", RD, "runmap imports this module\n\n            raise InputTooLarge(\"InputTooLarge\")",
       "runmap imports this module\n\n            return", FB,
@@ -118,15 +126,15 @@ M = [
     m("N9 the map stores the folded spelling again", RD, "written = body[where[s] : where[e - 1] + 1]", "written = folded[s:e]", F1,
       "test_map_1_the_map_holds_the_written_spelling", "ssert"),
     m("N10 the reverse-map key is the folded value", RD, "self.reverse[full] if full in self.reverse else self._place(label, full, written)",
-      "self.reverse[_alias_key(full)] if _alias_key(full) in self.reverse else self._place(label, full, written)", F1,
+      "self.reverse[fold(full)] if fold(full) in self.reverse else self._place(label, full, written)", F1,
       "test_map_4_two_occurrences_get_two_placeholders_in_both_orders", "ssert"),
     m("N11 the mid-line check reads only index 0", RD, "if not i & 4095:", "if i == 0:", FB,
       "test_mid_1_the_budget_is_checked_in_the_middle_of_a_line", "DID NOT RAISE"),
     m("N12 the alignment comparison is always true", RD,
-      'return (text, where, alike) if text == fold(body).replace("\\u2044", "/") else None', "return (text, where, alike)", F1,
+      'return (text, where, alike) if text == whole else None', "return (text, where, alike)", F1,
       "test_align_2_the_alignment_agrees_with_the_fold_or_steps_aside", "ssert"),
     m("N14 the slash replace is deleted from the alignment return", RD,
-      'if text == fold(body).replace("\\u2044", "/") else None', "if text == fold(body) else None", F1,
+      'whole = fold_view(body, marks_dropped=marks, iota=iota).replace("\\u2044", "/")', "whole = fold_view(body, marks_dropped=marks, iota=iota)", F1,
       "test_d1_1_a_fraction_slash_beside_an_accented_address_is_masked_in_place", "ssert"),
     m("N15 the alias build asks for no budget", RD, "            if self._deadline is not None:\n                self._over_budget(self._deadline)\n", "", FB,
       "test_budget_3_the_alias_build_is_budgeted", "DID NOT RAISE"),
@@ -156,8 +164,42 @@ M = [
       "test_sweep_1_a_clear_copy_after_a_written_variant_gets_the_same_placeholder", "ssert"),
     m("AL-3 _mask_in_place registers through the alias", RD,
       "self.reverse[full] if full in self.reverse else self._place(label, full, written)",
-      "self.reverse[full] if full in self.reverse else (self.alias.get(_alias_key(full)) or self._place(label, full, written))", F1,
+      "self.reverse[full] if full in self.reverse else (self.alias.get(fold(full)) or self._place(label, full, written))", F1,
       "test_map_4_two_occurrences_get_two_placeholders_in_both_orders", "ssert"),
+    # ---- review round w3: every view of a line is scanned (marks dropped, U+0345 dropped), control characters, grown blocks ----
+    m("W1 no marks-dropped or iota view is scanned by _fold_scan", RD, "all_specs = list(dict.fromkeys(sp for one in specs_of for sp in one))", "all_specs = []", FM,
+      "test_marks_1_the_four_review_inputs_leave_no_key", "ssert"),
+    m("W2 _view_specs never offers the marks-dropped views", RD, "    has_marks = any(f[0] for f in flags)\n", "    has_marks = False\n", FM,
+      "test_marks_1_the_four_review_inputs_leave_no_key", "ssert"),
+    m("W3 _view_specs never offers the iota-dropped view", RD, "    has_iota = any(f[1] for f in flags)\n", "    has_iota = False\n", FM,
+      "test_marks_4_a_greek_letter_with_the_subscript_iota_does_not_hide_a_key", "ssert"),
+    m("W4 the in-place rounds read the primary view only", RD, "for spec in (*reversed(_view_specs(cur)), _PRIMARY_VIEW):", "for spec in (_PRIMARY_VIEW,):", FM,
+      "test_marks_1_the_four_review_inputs_leave_no_key", "ssert"),
+    m("W5 the primary view masks before the marks-dropped ones", RD, "for spec in (*reversed(_view_specs(cur)), _PRIMARY_VIEW):", "for spec in (_PRIMARY_VIEW, *_view_specs(cur)):", FM,
+      "test_marks_1_the_four_review_inputs_leave_no_key", "ssert"),
+    m("W6 the withhold check reads the primary view only", RD, "if not any(self._dry_hits(f) - direct for f in folded):", "if not (self._dry_hits(folded[0]) - direct):", FM,
+      "test_marks_4_a_greek_letter_with_the_subscript_iota_does_not_hide_a_key", "ssert"),
+    m("W7 a withheld line reports the first view only", RD, "        for cur in views:\n", "        for cur in views[:1]:\n", FM,
+      "test_marks_4_a_greek_letter_with_the_subscript_iota_does_not_hide_a_key", "ssert"),
+    m("W8 a block that starts inside another does not extend it", RD, "                        end = max(end, reach.get(j, j))", "                        end = end", FM,
+      "test_marks_7_a_second_multi_line_value_that_starts_inside_the_first_is_withheld_to_its_end", "ssert"),
+    m("W9 a withheld block loses its line end", RD, 'self._withhold(blocks, "".join(lines[i : end + 1]), eol)', 'self._withhold(blocks, "".join(lines[i : end + 1]))', FM,
+      "test_marks_8_a_withheld_block_keeps_the_line_end_it_had", "ssert"),
+    m("W10 an ASCII control character does not send the line to the fold", RD, "    return text.isascii() and _HIDDEN_ASCII.search(text) is None", "    return text.isascii()", FM,
+      "test_marks_5_an_invisible_ascii_control_character_inside_a_value_is_masked", "ssert"),
+    m("W11 the alias index holds the written fold only", RD, "    keys += [fold_view(value, marks_dropped=m, iota=i) for m, i in _view_specs(value)]\n", "", FM,
+      "test_marks_6_a_clear_copy_of_a_value_masked_with_a_mark_inside_is_masked_too", "ssert"),
+    m("W12 the alignment keeps the marks of a marks-dropped view", RD, "            if marks and _is_spacing(ch):\n", "            if False:\n", FM,
+      "test_marks_1_the_four_review_inputs_leave_no_key", "ssert"),
+    m("W13 runmap reads no view without the marks", GM, "        canonical(without_spacing_marks(text)),\n", "", FM,
+      "test_marks_10_runmap_also_reads_the_text_without_its_marks", "ssert"),
+    m("W14 the PEM pattern runs before the PuTTY one", RD, "    # Account-less (`arn:aws:s3:::bucket`)",
+      "]\nPATTERNS[0], PATTERNS[1] = PATTERNS[1], PATTERNS[0]\nPATTERNS += [\n    # Account-less (`arn:aws:s3:::bucket`)", FM,
+      "test_marks_7_a_second_multi_line_value_that_starts_inside_the_first_is_withheld_to_its_end", "ssert"),
+    m("W15 the weight memo answers every long text with the first weight", TN, '    key = hashlib.sha256(text.encode("utf-8", "surrogatepass")).digest()\n', '    key = b"k"\n', FM,
+      "test_marks_12_the_weight_of_a_long_text_is_remembered_by_digest_and_never_wrong", "ssert"),
+    m("W16 the alignment ignores the view it is asked for", RD, "        marks, iota = spec\n", "        marks, iota = False, True\n", FM,
+      "test_marks_14_the_alignment_of_every_view_agrees_with_that_view_of_the_fold_or_steps_aside", "ssert"),
 ]  # fmt: skip
 
 if __name__ == "__main__":
@@ -179,7 +221,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [F1, FB, FS, FP, FZ],
+        [F1, FB, FS, FP, FZ, FM],
         extra_dirs=("tests/fixtures", "tools"),
         only=only,
         on_result=show,

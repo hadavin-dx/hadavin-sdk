@@ -360,7 +360,10 @@ def test_digits_1_digits_of_every_script_in_an_iban_and_a_card_leave_no_run_of_e
         for text in (iban, card):
             spelled = "".join(chr(base + int(c)) if c.isdigit() else c for c in text)
             out = redact("pay " + spelled + " now").text
-            assert not re.search(r"[0-9]{8}", textnorm.fold(out)), (hex(base), text, out)
+            digits_left = textnorm.fold(out).replace(
+                " ", ""
+            )  # the card is written in groups of four: no space, or no run of eight can exist
+            assert not re.search(r"[0-9]{8}", digits_left), (hex(base), text, out)
 
 
 def test_align_2_the_alignment_agrees_with_the_fold_or_steps_aside():
@@ -465,12 +468,19 @@ def test_sep_1_a_value_split_by_line_separators_is_masked_or_withheld_never_left
         text = f"password: {head}{sep}mail josé@exemple.fr{sep}note " + head
         out = redact(text).text
         assert "exemple.fr" not in textnorm.fold(out), (repr(text), out)
+        assert textnorm.fold(head) not in textnorm.fold(out), (
+            repr(text),
+            out,
+        )  # the password too, in every copy
 
 
 def test_pem_1_a_pem_block_with_a_lookalike_on_a_later_line_leaves_no_key_line():
     body = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASC"
     text = (
-        "before\n" + "-----BEGIN " + "PRIVATE KEY-----" + "\n"
+        "before\n"
+        + "-----BEGIN "
+        + "PRIVATE KEY-----"
+        + "\n"
         + body
         + "\n"
         + body[:14]
@@ -478,7 +488,10 @@ def test_pem_1_a_pem_block_with_a_lookalike_on_a_later_line_leaves_no_key_line()
         + body[15:]
         + "\n"
         + body
-        + "\n" + "-----END " + "PRIVATE KEY-----" + "\nafter"
+        + "\n"
+        + "-----END "
+        + "PRIVATE KEY-----"
+        + "\nafter"
     )
     out = redact(text).text
     assert body[:14] not in textnorm.fold(out), out
@@ -584,7 +597,15 @@ def test_map_6_a_clear_copy_of_the_folded_spelling_is_masked_by_the_alias_key():
         for w in written:
             copy = textnorm.fold(w)
             out = redact(t + "\nlater " + copy, mapping=dict(r.mapping)).text
-            assert copy not in out.split("later", 1)[1], (t, out)
+            later = out.split("later", 1)[1]
+            assert copy not in later, (t, out)
+            # An e-mail copy is plain ASCII, so a direct pass masks it under a fresh placeholder whatever the alias index does (stated limit 4
+            # in the CHANGELOG): for it, "gone from the text" is all this test can show. A copy that a direct pass leaves alone (the password
+            # values) can only be masked by the alias index, and it must get the placeholder the written spelling already has.
+            if redact(copy).text != copy:
+                continue
+            held = [k for k, v in r.mapping.items() if v == w]
+            assert held and any(k in later for k in held), (t, held, later)
 
 
 def test_fold_note_1_the_note_is_the_fixed_text():
@@ -638,7 +659,7 @@ def test_ctrl_1_the_outcome_helper_sees_a_masked_key_and_a_leaked_one():
     )  # the helper sees a leak when there is one
 
 
-V13 = "Tq7vK2xLa9pZw"  # a made-up secret of 13 characters, built for the tests
+V13 = "Tq7vK2x" + "La9pZw"  # a made-up secret of 13 characters, built from parts for the tests
 
 
 def _context_text(copy: str) -> str:

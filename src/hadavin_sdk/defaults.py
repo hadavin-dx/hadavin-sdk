@@ -43,14 +43,15 @@ MAX_BUNDLE_CHARS = 8 * MAX_REDACT_CHARS
 # part dropped, never shown.
 CUT_MARGIN = 8192
 # The most CPU seconds of the calling thread (`time.thread_time()`, not the wall clock) one `redact_text` call may spend
-# before it refuses (fail closed, `InputTooLarge`): a hostile text costs 1 to 4 s at the cap and every extra view repeats
+# before it refuses (fail closed, `InputTooLarge`): a hostile text costs 1 to 5 s at the cap (measured on the test machine,
+# 2026-11-11: up to about 5 s for a text that needs all four spellings of every line) and every extra view repeats
 # that. Checked between the stages, once per stored original in `_decoded_masks`, in the loop over the views and inside the
 # fold scan (once per pattern, per suspect line, per round, per non-ASCII stored value of the alias build, and every 4,096
 # characters of the alignment). NOT checked inside a direct pass of the pattern table, in `_views` (`neutralise`,
-# `canonical` and `undo` on the whole text), `_keep_earlier_masks`, the round in progress, the tail of `_folded_line`
-# (`fold(body)` and two dry runs), `_withhold`, the `find` loop, `sweep` and the per-line fold loops: one call can take
-# the budget plus about five full pattern passes plus the sweep (measured, see the CHANGELOG), and `clean()` makes two
-# calls (the text and its tag-stripped view).
+# `canonical`, `without_spacing_marks` and `undo` on the whole text), `_keep_earlier_masks`, the round in progress, the tail
+# of `_folded_line` (the fold of the body and the dry runs), `_withhold`, the `find` loop, `sweep` and the per-line fold
+# loops: one call can take the budget plus about five full pattern passes plus the sweep, and `clean()` makes two calls
+# (the text and its tag-stripped view).
 REDACT_BUDGET_S = 6.0
 
 
