@@ -294,3 +294,11 @@ Running (6): PR H b6 a86c8cbe; Q8a-1 b11 a637adb7; Q8b b7 a37560e1; PR89 EV aae3
 Resolved this window: Q8b r7, Q8c-1 r7b, P3a-2 3d round 3 (reports in reviews/<pkg>/goldfish_review_report-*.md). P3a-2 batch 3e (D1 Major + 6 fixes) waits for the 4/5 builder (same migrate.py lines). 40003 kept "unknown"; ticket F5 edit asked of the owner (default: code as is).
 Not started: Q8c PR 2 (needs its own ticket), PR85 variant, Q8a-2 nits, PR77 restart, PR74.
 Resume rule: read PULSE.md newest lines, ledger.md tail, reviews/<pkg> newest files; gitleaks before every push; no merge, no main, no spend.
+
+## Update 04:44Z (2026-11-12)
+Orders: 247 (GO, core lane) newest, no STOP after it; last pulled 04:44Z, next by 05:15Z.
+Running (5): PR H b7 builder a90f1a83 (core/prh-b7, interim, ends ~06:00Z); Q8c-1 b9 builder a020a517 (core/q8c1-b9, ends ~05:35Z); Q8b b7 evidence a3807351 (head b7d7cd18, check 05:10Z); Q8a-1 b12 builder ab5ee086 (core/q8a1-b12 from c6028abb, ends ~06:10Z); P3a-2 3e builder ac1f1227 (core/p3a2-3e from 7bc65cdc, ends ~06:15Z).
+State: Q8a-1 r11 resolved (1 Major + 9 accepted, Issue 12 owner question); Q8b b7 round 8 reviews saved (reviews/Q8b/q8bb7-*-r8.md), waiting for evidence then egm-resolve r8; PR H b6 resolved r6 and batch 7 running; Q8c-1 r8 resolved, batch 9 running; P3a-2 45 reported head 7bc65cdc (matrix only partly built, ledger P3a2-45-gap), 3e builder started.
+Next: collect builders, independent evidence per head, two egm:* reviewers each, egm-resolve; PR89 READY (wip/cloud-PR89-r27 ea29121e) waits for CI and the lead.
+Open owner items: q-q8a1-hide-ids, q-prh-spaced-secrets, q-p3a2-e1-extension-lockout, q-p3a2-o8-schema-owner, q-pr89-mypy-in-lock, q-p3a2-3b-decisions, 40003 ticket edit, Vault engine CI run before 2026-12-11, stray branch core/prh-b3-local.
+Resume rule: read PULSE.md newest lines, ledger.md tail, reviews/<pkg> newest files; gitleaks before every push; no merge, no main, no spend; worktrees in /home/user/build/B-*; briefs in /home/user/build/B-*-brief.md.
