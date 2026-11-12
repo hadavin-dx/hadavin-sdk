@@ -2809,3 +2809,9 @@
 | Q8bb8-r9-c2 | Major | Q8b | r9 D9-2/C2: 47 of 74 controls have no planted fault; lines file and mutant table disagree; tautological check; weak expects | OPEN | batch 9 | | 2026-11-12 |
 | Q8bb8-r9-minors | Minor | Q8b | r9 Issues 4-9: cookie2, >20 digits after key word, _AUTH_FLAG literal and untimed patterns, bypass names, wget cookie flags, compass/possession cells, mutant duplicates, 54 pass-on-old tests, cost ratios | OPEN | batch 9 | | 2026-11-12 |
 | Q8bb8-r9-deviation | Minor | Q8b | batch 8 builder edited tests/test_q8b_batch6.py outside its allowed list; reviewer judged narrow and acceptable | FIXED-VERIFIED | r9 codebase review, report Issue 10 | egm-resolve r9 | 2026-11-12 |
+| P3a2b3e-r14-d1 | Major | P3a-2 | r14 D1: PG17 transaction_timeout (25P04) or 25P03 inside a file is exit 3, not 2; `_is_a_files_own_error` | OPEN | batch 4 after r14 resolve | | 2026-11-12 |
+| P3a2b3e-r14-d2 | Major | P3a-2 | r14 D2: CHANGELOG says schema of the run must be family-owned; code accepts an owner-equal schema at the start (owner/lead choice q-p3a2-o8-schema-owner) | OPEN | batch 4 (reword) | | 2026-11-12 |
+| P3a2b3e-r14-d3 | Major | P3a-2 | r14 D3: CHANGELOG "Not proven yet" paragraph stale; limits unstated | OPEN | batch 4 | | 2026-11-12 |
+| P3a2b3e-r14-d456 | Major | P3a-2 | r14 D4/D5/D6 (+design D5): table 1 wrong for E22 and variants (O)/(C) not built; tables hide missing cells, counts hard-coded; step-0 refused cells counted | OPEN | batch 4 | | 2026-11-12 |
+| P3a2b3e-r14-d7 | Major | P3a-2 | r14 D7 + design D2: C6b asserts only the exception type; X01t reason wrong, family-owned third-role cell not run on a server | OPEN | batch 4 | | 2026-11-12 |
+| P3a2b3e-r14-minors | Minor | P3a-2 | r14 D8-D11 + evidence: K8 group-owns-schema untested, driver-error test gaps, pg_roles marker raw exit 3 untraced, wording, weak guards, 433 pass-on-old tests | OPEN | batch 4 | | 2026-11-12 |
