@@ -3101,6 +3101,11 @@ def test_a_spacing_mark_or_symbol_cannot_hide_a_mixed_word_and_a_mark_of_the_wor
         "\u0440\u0430\u00b4ypal",  # the same with the acute accent (Sk, a space under NFKC)
     ):
         assert has_mixed_script(text), f"the mixed word {_show([text])} is not flagged"
+    # rule (a) of P1b reads the script data, so a Latin letter with a Devanagari LETTER is flagged whatever mark follows (the P1a fix8 row said
+    # "Ramesh" + a syllable with its own sign was not flagged: that was true while rule (a) named only look-alike scripts)
+    assert has_mixed_script("Ramesh\u091c\u0940"), (
+        "a Latin letter next to a Devanagari letter is not flagged"
+    )
     mcs = _code_points_of("Mc")
     assert len(mcs) > 400
     missed = [c for c in mcs if not has_mixed_script("ali" + c + "ce")]
@@ -3113,7 +3118,6 @@ def test_a_spacing_mark_or_symbol_cannot_hide_a_mixed_word_and_a_mark_of_the_wor
         "caf\u00e9",
         "na\u00efve",
         "ok\ufe0f",
-        "Ramesh\u091c\u0940",  # Latin, then a Devanagari syllable with its own sign
         "al\u02b0ice",  # a modifier letter: NFKC makes it a Latin h
         "ali^ce",
         "x^y",
@@ -3224,7 +3228,7 @@ def test_every_key_and_view_of_seeded_multi_character_texts_is_within_the_weight
         )
         views = (
             *keys,
-            *textnorm.fold_views(text, casefold=True, collapse_ws=True),
+            *textnorm.fold_views(text, scripts=frozenset(), casefold=True, collapse_ws=True),
             *textnorm.squeeze_views(text, loose=True),
         )
         assert all(len(bare(v)) <= weight for v in views), (

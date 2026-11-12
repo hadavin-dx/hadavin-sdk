@@ -50,7 +50,7 @@ def test_the_pinned_unicode_guard_is_on_for_pilot_and_prod_configs(
     cfg = _prod_cfg(tmp_path) if environment == "prod" else pilot_cfg(tmp_path)
     assert app_mod.load_config(cfg).environment == environment
     with pytest.raises(UnidataMismatch, match="Unicode") as caught:
-        app_mod.build(cfg, ["ito-agent"], secrets=SECRETS)
+        app_mod.build(cfg, ["ito-agent"], secrets=SECRETS, allow_test_doubles=True)
     raised = caught.value
     message = str(raised)
     assert OTHER in message and defaults.TEXTNORM_PINNED_UNIDATA in message
@@ -69,7 +69,7 @@ def test_a_pilot_build_on_the_pinned_version_does_not_refuse_for_the_unicode_ver
     # The build gets past the Unicode check and stops at the first thing it needs from outside: the database secret, which this test does not give.
     # That one error is expected; any other error (and a build that succeeds) fails the test.
     with pytest.raises(ConfigError, match="'pg-dsn' cannot be read at start-up") as caught:
-        app_mod.build(cfg, ["ito-agent"], secrets=SECRETS)
+        app_mod.build(cfg, ["ito-agent"], secrets=SECRETS, allow_test_doubles=True)
     assert not isinstance(caught.value, UnidataMismatch)
 
 
