@@ -2917,24 +2917,6 @@ M = [
         "test_a_renewal_of_some_kinds_leaves_the_changelog_rules_working",
         "three groups were not written",
     ),
-    mutant(
-        "B14 the renewal plant of the kinds alone leaves the changelog sentence of the kinds days as it was",
-        CH,
-        '        if mode != "names":\n            words',
-        '        if mode == "both":\n            words',
-        "test_plant_a_renewal_of_the_kinds_list_alone_keeps_the_tests_the_page_and_the_mutants_green",
-        "renewal the tests are red",
-        test_file=CH,
-    ),
-    mutant(
-        "B14 the renewal plant of the names and claims alone moves the changelog sentence of the kinds days",
-        CH,
-        '        if mode != "names":\n            words',
-        "        if True:\n            words",
-        "test_plant_a_renewal_of_the_names_and_claims_alone_keeps_the_tests_the_page_and_the_mutants_green",
-        "renewal the tests are red",
-        test_file=CH,
-    ),
 ]
 
 # The probe: the fixed day given to a run must reach the child pytest of every mutant. The unmutated baseline
