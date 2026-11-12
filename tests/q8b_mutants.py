@@ -271,7 +271,7 @@ M = [
         BATCH4, 'test_j1_a_quoted_value_after_authorization_is_masked_whole', 'a word of the quoted value is readable'),
     mutant('M81 flags lose the glued ending branch', REDACT, '    + "|".join(BARE_ENDINGS)\n', '    + "zzqx"\n',
         BATCH4, 'test_j4_a_flag_with_a_word_glued_in_front_of_pass_or_auth_masks_its_value', 'a flag value is readable'),
-    mutant('M82 oauth is an ordinary word again', RED, '"bandpass", "obsession"', '"bandpass", "oauth", "obsession"',
+    mutant('M82 oauth is an ordinary word again', REDACT, '"bandpass", "obsession"', '"bandpass", "oauth", "obsession"',
         BATCH4, 'test_j2_oauth_is_a_credential_key_in_a_record_as_it_is_in_text', 'oauth is on the ordinary-word list'),
     mutant('M83 a word with a digit in front ends a value after a semicolon', REDACT, r'''(?![A-Za-z_][\w.\-]*[\"']?\s*[:=]))"''', r'''(?![\w.\-]+[\"']?\s*[:=]))"''',
         BATCH4, 'test_j3_a_semicolon_in_front_of_a_word_belongs_to_an_unquoted_value', 'the part after the `;` is readable'),
