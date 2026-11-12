@@ -1357,9 +1357,11 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
                 and name in _MATH_NUMBERS
             )
         )
-        return (
-            by_form or name.startswith("purge_") or name in declared or name in _NUMBER_FORMATTERS
-        )
+        if name.startswith(
+            "purge_"
+        ):  # decided by the store's contract alone, not by a name declared elsewhere
+            return _store_method_gives_a_number(name)
+        return by_form or name in declared or name in _NUMBER_FORMATTERS
     if isinstance(e, ast.Subscript) and isinstance(e.value, ast.Attribute):
         return (
             e.value.attr in _number_maps()
@@ -1422,6 +1424,21 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
                 )
         return e.id.isupper()  # a module constant written in capitals (`RESOLVE_TIMEOUT_S`)
     return False
+
+
+def _store_method_gives_a_number(name: str) -> bool:
+    """A `purge_*` call of the store is a number because the store's own contract says `-> int` (read from the contract,
+    not trusted from the spelling of the name)."""
+    if not name.startswith("purge_"):
+        return False
+    found = [
+        n
+        for n in ast.walk(_tree("store/protocol.py"))
+        if isinstance(n, ast.FunctionDef) and n.name == name
+    ]
+    return bool(found) and all(
+        n.returns is not None and ast.unparse(n.returns) == "int" for n in found
+    )
 
 
 def _numeric_site(rel: str, node: ast.AST, declared: set[str]) -> str | None:

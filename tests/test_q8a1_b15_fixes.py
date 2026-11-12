@@ -172,11 +172,16 @@ def test_check_config_opens_no_connection_and_writes_nothing(tmp_path, monkeypat
 
     before = tree()
 
+    opened: list[object] = []
+
     def no_connect(*a, **k):
-        raise AssertionError("check-config opened a connection")
+        opened.append(
+            a
+        )  # the command catches every error, so the call is recorded and checked below
 
     monkeypatch.setattr(socket.socket, "connect", no_connect)
     code = cli.main(["--config", str(d), "check-config"])
+    assert not opened, "check-config opened a connection"
     assert code == 0, capsys.readouterr().err
     assert tree() == before, "check-config changed the configuration folder"
 
@@ -200,7 +205,9 @@ def test_shown_id_shows_only_the_shape_of_an_id_the_code_makes():
 
         __format__ = lambda self, spec: text
 
-    assert shown_id(Odd(run)) == run and f"{shown_id(Odd(run))}" == run
+    assert shown_id(Odd(run)) == run and f"{shown_id(Odd(run))}" == run, (
+        "shown_id used the str or format hook of a str subclass (b15 odd subclass)"
+    )
     for bad in (
         text,
         "run-1",

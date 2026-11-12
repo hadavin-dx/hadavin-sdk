@@ -3532,6 +3532,8 @@ def test_the_guard_finds_each_way_of_printing_a_configured_name_and_a_stale_allo
 # One planted fault per row: a synthetic module with ONE shape of "a value that is not proven code-owned reaches a text a
 # person or a log can read". Round 12: the 25 shapes of the evidence probe 7 (F1-F10, X1-X15) and the extras that the two
 # reviewers named. Each must give exactly the number of sites in the second place (a site inside a site is part of it).
+_ERRORS_STUB = "def shown_name(x):\n    return 'fixed'\ndef status_text(x):\n    return 'fixed'\n"
+
 _PLANTED_FAULTS = {
     "R13a print of a name with file=": (
         "import sys\ndef f(self, name):\n    print(name, file=sys.stderr)",
@@ -3715,16 +3717,16 @@ _PLANTED_FAULTS = {
         1,
     ),
     "R15b a keyword made from the text of an error": (
-        "def f(exc):\n    return Result(error_code=str(exc))",
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return Result(error_code=exc)",
         1,
     ),
     "R15c an attribute set to the text of an error": (
-        "def f(self, exc):\n    self.error_code = str(exc)",
+        "def f(self, g):\n    try:\n        g()\n    except OSError as exc:\n        self.error_code = exc",
         1,
     ),
     "R15d an out-parameter list filled by a helper and joined by the caller": (
         (
-            "def _put(problems, exc):\n    problems.append(str(exc))\n"
+            "def _put(problems, detail):\n    problems.append(detail)\n"
             "def f(exc):\n    problems = []\n    _put(problems, exc)\n    raise A('; '.join(problems))"
         ),
         1,
@@ -3744,11 +3746,17 @@ _PLANTED_FAULTS = {
     "R15h sys.exit with a name": ("import sys\ndef f(name):\n    sys.exit(name)", 1),
     "R15i a path join handed to an error": ("def f(root, name):\n    raise A(root / name)", 1),
     "R15j a parameter that is called shown_name": (
-        "def f(shown_name, name):\n    raise A(shown_name(name))",
+        {
+            "errors.py": _ERRORS_STUB,
+            "m.py": "from hadavin_sdk.errors import shown_name\ndef f(shown_name, name):\n    raise A(shown_name(name))",
+        },
         1,
     ),
     "R15k a status_text imported from a library": (
-        "from lib import status_text\ndef f(x):\n    raise A(status_text(x))",
+        {
+            "errors.py": _ERRORS_STUB,
+            "m.py": "from lib import status_text\ndef f(x):\n    raise A(status_text(x))",
+        },
         1,
     ),
     "R15l an UPPER_CASE table filled at run time": (
@@ -3768,10 +3776,13 @@ _PLANTED_FAULTS = {
         "def f(self, exc):\n    text = str(exc)\n    self.error_code = text",
         2,
     ),
-    "R16b a positional argument of a class": ("def f(exc):\n    return Result(str(exc))", 1),
+    "R16b a positional argument of a class": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return Result(exc)",
+        1,
+    ),
     "R16c a dict value made from an error": ("def f(exc):\n    return {'error': str(exc)}", 2),
     "R16d a helper returns the text of an error": (
-        "def why(exc):\n    return str(exc)\ndef f(exc):\n    raise A(why(exc))",
+        "def why(g):\n    try:\n        g()\n    except OSError as exc:\n        return exc\ndef f(g):\n    raise A(why(g))",
         2,
     ),
     "R16e repr of an unproven value": ("def f(name):\n    return repr(name)", 1),
@@ -3788,11 +3799,11 @@ _PLANTED_FAULTS = {
         1,
     ),
     "R16i an error class derived from ValueError": (
-        "class DuplicateEvent(ValueError):\n    pass\ndef f(name):\n    raise DuplicateEvent(name)",
+        "class DuplicateEvent(Exception):\n    pass\ndef f(name):\n    raise DuplicateEvent(name)",
         1,
     ),
     "R16j a derived error built outside a raise": (
-        "class Unqualified(ValueError):\n    pass\ndef f(name):\n    err = Unqualified(name)\n    raise err",
+        "class Unqualified(KeyboardInterrupt):\n    pass\ndef f(name):\n    err = Unqualified(name)\n    raise err",
         1,
     ),
     "R16k an attribute of a library result": (
@@ -3820,7 +3831,6 @@ _PLANTED_FAULTS = {
         1,
     ),
 }
-_ERRORS_STUB = "def shown_name(x):\n    return 'fixed'\ndef status_text(x):\n    return 'fixed'\n"
 
 _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be found
     "R15 int() of a value that is a written number": "def f():\n    raise A(f'port {int(8080)}')",
@@ -3887,7 +3897,7 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
         "def bad(x):\n    raise A('fixed')\ndef f(g):\n    g()\n    bad(1)"
     ),
     "R16i a derived error class given a written text": (
-        "class DuplicateEvent(ValueError):\n    pass\ndef f():\n    raise DuplicateEvent('fixed')"
+        "class DuplicateEvent(Exception):\n    pass\ndef f():\n    raise DuplicateEvent('fixed')"
     ),
     "R16k an attribute of an object of the package": (
         "class K:\n    def __init__(self):\n        self.name = 'fixed'\ndef f(k):\n    raise A(k.name)"
@@ -3897,7 +3907,7 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
     ),
     "R16l the size of a set difference": "def f(done, files):\n    raise A(f'gone {len(done - files)}')",
     "R16n a number annotation on a number": "def f(names):\n    x: int = len(names)\n    raise A(f'{x}')",
-    "R16o a log call with a number directive": "def f(log, n: int):\n    log.warning('bad %d', n)",
+    "R16o a log call with a number directive": "def f(log, n):\n    log.warning('bad %d', n)",
 }
 
 
