@@ -2,7 +2,7 @@
 EVIDENCE RUNNER: records only, no judgement. Run 2026-11-12 on a clean detached worktree (`git rev-parse HEAD` = the sha above, `git status -s` empty). 7 commits on top of origin/main; the diff is one new file, tests/test_no_pglast_in_runtime.py (419 lines).
 
 ## Not run, or run differently (read first)
-1. Full pytest was NOT re-run by me. handover/core/run-ledger.tsv already holds an identical head + command row: `8b982dd3... pytest full -m "not live and not perf"  exit 0, 10233 passed 457 skipped, 312 s` (2026-11-12). I did not verify that run myself, so its result is the earlier runner's, not mine. No Postgres was started, so the dblink-connect question did not arise.
+1. (SUPERSEDED by the INDEPENDENT FULL PYTEST section below: I did run it.) Earlier text: full pytest was NOT re-run by me. handover/core/run-ledger.tsv already holds an identical head + command row: `8b982dd3... pytest full -m "not live and not perf"  exit 0, 10233 passed 457 skipped, 312 s` (2026-11-12). I did not verify that run myself, so its result is the earlier runner's, not mine. No Postgres was started, so the dblink-connect question did not arise.
 2. The unreadable-folder probe cannot raise as root (root ignores mode 000): exit shows no violation and no error. It was repeated as the `nobody` user with the system python and a 4-line stand-in for the `pytest` import: there it raised PermissionError. So the nobody run did not use the repo venv or real pytest.
 3. Gates were run as separate commands (not through heavy.sh): each took 0-2 s, so no heavy slot was needed.
 4. The planted-failure runs used `uv run`, which also rewrote uv.lock in the throwaway worktree when pyproject.toml changed; the failure text for the "runtime dependency" and "include-group" plants therefore also names a uv.lock hit. The test did fail for the plant in both cases, but I did not separate the two causes.
@@ -54,3 +54,9 @@ Items a reader may want to look at, stated without judgement: `pglast-extras` an
 
 ## Cleanup
 Both worktrees, /tmp/nbprobe and the venv listed below were created by me and removed after this commit.
+
+## INDEPENDENT FULL PYTEST (my own run, head 8b982dd3a06fa4c2ae9b728e0f38db2b5b2d8a69, clean detached worktree)
+Command: `uv run --no-sync pytest -p no:cacheprovider -q -m "not live and not perf" -rs` through /home/user/build/heavy.sh (priority 1 was taken by running from a folder symlink whose name matches the priority-1 pattern, EV-Q8a1-E-P0a). Own Postgres 16.15 on 127.0.0.1:56477 started as the postgres OS user with PGHOST, PGPORT, PGUSER in the server's own environment; HADAVIN_TEST_PG_DSN pointed at it.
+- Run 2 (valid): exit 0, 10689 passed, 1 skipped, 28 deselected, 0 failed, 0 errors, 256.43 s in pytest (329 s wall including queue). No dblink failure. Log: pytest-run2-UTF8-cluster.log.
+- Run 1 (my setup mistake, NOT a result for this head): exit 1, 147 failed, 30 errors, 10512 passed. Cause: I created the Postgres cluster with initdb default locale C, so its database encoding was SQL_ASCII and the driver returned bytes (errors "expected str instance, bytes found", "transaction is not read-only (SQLSTATE 25006)" in the askdata tests, test_benign_corpus_runs_on_the_ci_server). I recreated the cluster with -E UTF8 --locale=C.UTF-8 and re-ran; I did not investigate each failure separately. Log: pytest-run1-SQL_ASCII-cluster.log.
+- Skips differ from the builder's ledger row (1 skipped here vs 457 there) because this run had a working Postgres; I did not compare skip lists.
