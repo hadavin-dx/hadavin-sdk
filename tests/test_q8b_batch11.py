@@ -163,7 +163,8 @@ def test_b11_8_a_second_word_on_the_same_line_is_shown_as_after_a_credential_fla
 
 def test_b11_8_the_fold_run_has_no_upper_bound_so_an_indented_block_after_the_header_is_masked_the_stated_cost():
     tok = piece(51)
-    prose = "".join(f"  indented line number {i} of a log\n" for i in range(60))
+    # each line starts with a `name:`: the rule for ANY first word stops there (batch 13), so only the five named schemes read the block
+    prose = "".join(f"  entry{i}: indented line number {i} of a log\n" for i in range(60))
     out = clean(f"Authorization: Bearer {tok}\n{prose}Accept: text-shown\n")
     assert "indented line number 3 " not in out and "indented line number 59 " not in out, (
         f"the fold run has an upper bound: {out[:200]!r}"

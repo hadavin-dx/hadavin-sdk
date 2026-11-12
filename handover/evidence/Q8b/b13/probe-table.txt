@@ -1,0 +1,7 @@
+Probe table, a148bda6 (batch 12 head, "old") against origin/main 2a8c2aac ("main") and this head. Cells only; no values. Probes: the independent probe.py, probe12.py, probe_extra.py of handover/evidence/Q8b/a148bda6/ (run with PYTHONPATH on each tree), and repro1.py, repro2.py (written for this batch).
+probe        9330 cells: readable on head 2385, main 3392, old 2385. Readable on head and masked on main: 16 (old 16). Readable on main and masked on head: 1023.
+probe12     26481 cells: readable on head 5395, main 14382, old 7150. Readable on head and masked on main: 75 (old 75). Readable on main and masked on head: 9062.
+probe_extra  5961 cells: readable on head 2709, main 3943, old 2709. Readable on head and masked on main: 0 (old 0). Readable on main and masked on head: 1234.
+The 16 and 75 cells are the 15 bare ordinary words and the owner's question q-q8b-bare-bypass (group 9, not changed, default shown).
+repro1 (joins of two key words, 50 tried): readable on old 46, on main 20, on this head 20.
+repro2 (hyphenated token after Authorization, 1080 cells): token readable on old 285, on main 189, on this head 189.

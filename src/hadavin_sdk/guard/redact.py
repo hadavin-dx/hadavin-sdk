@@ -941,11 +941,11 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # digits, and the token behind it on the same line (batch 12, group 4; batch 13, group 2). The next rule reads the scheme word in
     # the letters-only form of main, so a hyphenated TOKEN (`Ab12-Cd34-Ef56`, a licence-style key) is masked as main masked it; this
     # rule masks the word BEHIND a hyphenated first word, so the credential behind a hyphenated scheme word is masked too. Both run: a
-    # hyphenated first word is never left readable (the batch 12 rule read it as the scheme and left such a token readable).
+    # hyphenated first word is never left readable (the batch 12 rule read it as the scheme and left such a token readable). This rule reads only a word with a hyphen (the look-ahead), so a letters-only word is read by the next rule alone and each rule has its own cases.
     (
         "SECRET",
         re.compile(
-            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?"
+            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?=[A-Za-z0-9]{0,18}-)"
             + _ANY_SCHEME_WORD
             + _SCHEME_GAP
             + "("
