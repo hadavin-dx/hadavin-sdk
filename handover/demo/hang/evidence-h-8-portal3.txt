@@ -1,2 +1,25 @@
 tree f5fe824 + patch (final conftest)
 $ run 1: timeout 900 pytest -q -p no:cacheprovider --durations=3 tests/test_portal_api.py tests/test_server_stop_guard.py tests/test_crm_hubspot.py tests/test_mode_safety.py
+........................................................................ [ 99%]
+..                                                                       [100%]
+============================= slowest 3 durations ==============================
+4.16s call     tests/test_portal_api.py::test_big_book_is_fast_and_cheap
+3.02s call     tests/test_portal_api.py::test_real_process_restart_x20
+2.53s call     tests/test_mode_safety.py::test_the_real_services_tone_goes_when_the_desk_comes_back_with_the_demo_tools
+290 passed in 154.22s (0:02:34)
+$ run 2: timeout 900 pytest -q -p no:cacheprovider --durations=3 tests/test_portal_api.py tests/test_server_stop_guard.py tests/test_crm_hubspot.py tests/test_mode_safety.py
+........................................................................ [ 99%]
+..                                                                       [100%]
+============================= slowest 3 durations ==============================
+3.98s call     tests/test_portal_api.py::test_big_book_is_fast_and_cheap
+3.05s call     tests/test_portal_api.py::test_real_process_restart_x20
+2.53s call     tests/test_mode_safety.py::test_the_real_services_tone_goes_when_the_desk_comes_back_with_the_demo_tools
+290 passed in 153.25s (0:02:33)
+$ run 3: timeout 900 pytest -q -p no:cacheprovider --durations=3 tests/test_portal_api.py tests/test_server_stop_guard.py tests/test_crm_hubspot.py tests/test_mode_safety.py
+........................................................................ [ 99%]
+..                                                                       [100%]
+============================= slowest 3 durations ==============================
+4.11s call     tests/test_portal_api.py::test_big_book_is_fast_and_cheap
+3.20s call     tests/test_portal_api.py::test_real_process_restart_x20
+2.48s call     tests/test_mode_safety.py::test_the_real_services_tone_goes_when_the_desk_comes_back_with_the_demo_tools
+290 passed in 153.65s (0:02:33)

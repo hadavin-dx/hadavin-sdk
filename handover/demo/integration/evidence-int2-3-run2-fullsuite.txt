@@ -1209,4 +1209,6 @@ tests/test_live_claude.py::test_5xx_names_the_error_type_only PASSED     [ 41%]
 tests/test_live_claude.py::test_worst_case_reserve_uses_max_tokens_as_output PASSED [ 41%]
 tests/test_live_claude.py::test_timeout_is_hard_and_short PASSED         [ 41%]
 tests/test_live_claude.py::test_slow_drip_hits_the_whole_call_deadline PASSED [ 41%]
-tests/test_live_claude.py::test_slow_three_seconds_still_answers_inside_the_limit 
+tests/test_live_claude.py::test_slow_three_seconds_still_answers_inside_the_limit exit 0
+Thu Nov 12 22:54:30 UTC 2026
+uptime after:  22:54:30 up  4:04,  0 user,  load average: 0.63, 1.00, 0.95
