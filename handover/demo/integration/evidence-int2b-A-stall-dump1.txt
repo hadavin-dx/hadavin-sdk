@@ -1,0 +1,50 @@
+Thu Nov 12 23:13:30 UTC 2026
+  309     1  0.0 S          06:25 bash -c cd /tmp/work/int2b-a; timeout 2700 python -u -m pytest tests -v -o faulthandler_timeout=300 -p no:cacheprovider -rs > /tmp/demo-wt/handover/demo/integration/e
+  311   309  0.0 S          06:25 timeout 2700 python -u -m pytest tests -v -o faulthandler_timeout=300 -p no:cacheprovider -rs
+  312   311  5.7 Sl         06:25 python -u -m pytest tests -v -o faulthandler_timeout=300 -p no:cacheprovider -rs
+ 7177  7172  0.0 S          00:45 timeout 590 /tmp/work/int2-venv/bin/python -m pytest -q -p no:cacheprovider tests/test_crm_hubspot.py tests/test_followup_edge_cases.py tests/test_hubspot_probe.py te
+ 7179  7177  5.9 Sl         00:45 /tmp/work/int2-venv/bin/python -m pytest -q -p no:cacheprovider tests/test_crm_hubspot.py tests/test_followup_edge_cases.py tests/test_hubspot_probe.py tests/test_liv
+Process 312: python -u -m pytest tests -v -o faulthandler_timeout=300 -p no:cacheprovider -rs
+Python v3.12.3 (/usr/bin/python3.12)
+
+Thread 312 (active): "MainThread"
+    Desk.close (lead_desk/desk.py:457)
+    Env.close (conftest.py:113)
+    env (conftest.py:124)
+    _teardown_yield_fixture (_pytest/fixtures.py:1083)
+    FixtureDef.finish (_pytest/fixtures.py:1225)
+    SetupState.teardown_exact (_pytest/runner.py:568)
+    pytest_runtest_teardown (_pytest/runner.py:199)
+    _multicall (pluggy/_execution.py:147)
+    PluginManager._hookexec (pluggy/_manager.py:183)
+    HookCaller.__call__ (pluggy/_caller.py:197)
+    call_and_report.<locals>.<lambda> (_pytest/runner.py:250)
+    CallInfo.from_call (_pytest/runner.py:361)
+    call_and_report (_pytest/runner.py:249)
+    runtestprotocol (_pytest/runner.py:144)
+    pytest_runtest_protocol (_pytest/runner.py:118)
+    _multicall (pluggy/_execution.py:147)
+    PluginManager._hookexec (pluggy/_manager.py:183)
+    HookCaller.__call__ (pluggy/_caller.py:197)
+    pytest_runtestloop (_pytest/main.py:411)
+    _multicall (pluggy/_execution.py:147)
+    PluginManager._hookexec (pluggy/_manager.py:183)
+    HookCaller.__call__ (pluggy/_caller.py:197)
+    _main (_pytest/main.py:387)
+    wrap_session (_pytest/main.py:333)
+    pytest_cmdline_main (_pytest/main.py:380)
+    _multicall (pluggy/_execution.py:147)
+    PluginManager._hookexec (pluggy/_manager.py:183)
+    HookCaller.__call__ (pluggy/_caller.py:197)
+    _main (_pytest/config/__init__.py:262)
+    _console_main (_pytest/config/__init__.py:286)
+    <module> (pytest/__main__.py:9)
+    _run_code (<frozen runpy>:88)
+    _run_module_as_main (<frozen runpy>:198)
+Thread 386 (idle): "desk-reaper"
+    Condition.wait (threading.py:359)
+    Event.wait (threading.py:655)
+    Desk._reaper_loop (lead_desk/desk.py:665)
+    Thread.run (threading.py:1010)
+    Thread._bootstrap_inner (threading.py:1073)
+    Thread._bootstrap (threading.py:1030)

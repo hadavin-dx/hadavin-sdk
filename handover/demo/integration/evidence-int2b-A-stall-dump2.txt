@@ -1,0 +1,23 @@
+Thu Nov 12 23:13:39 UTC 2026
+  PID %CPU STAT     ELAPSED
+  312  5.7 Sl         06:35
+Process 312: python -u -m pytest tests -v -o faulthandler_timeout=300 -p no:cacheprovider -rs
+Python v3.12.3 (/usr/bin/python3.12)
+
+Thread 312 (idle): "MainThread"
+    raw_http (support.py:357)
+    raw_exchange (support.py:366)
+    raw (test_portal_api.py:902)
+    test_oversize_decision_body_is_413_before_any_body_byte_is_read (test_later_approval.py:635)
+    test_mutant_resolve_size_check_removed (test_mutants_more.py:399)
+    pytest_pyfunc_call (_pytest/python.py:187)
+    _multicall (pluggy/_execution.py:147)
+    PluginManager._hookexec (pluggy/_manager.py:183)
+lrwx------ 1 root root 64 Nov 12 23:11 11 -> /tmp/pytest-of-root/pytest-484/test_mutant_resolve_size_check0/rig1/desk.sqlite3
+lrwx------ 1 root root 64 Nov 12 23:11 12 -> /tmp/pytest-of-root/pytest-484/test_mutant_resolve_size_check0/rig1/desk.sqlite3-wal
+lrwx------ 1 root root 64 Nov 12 23:13 13 -> /tmp/pytest-of-root/pytest-484/test_mutant_resolve_size_check0/rig1/desk.sqlite3-shm
+lrwx------ 1 root root 64 Nov 12 23:11 14 -> /tmp/pytest-of-root/pytest-484/test_exit_steps_run_when_one_r0/exit.sqlite3-shm
+lrwx------ 1 root root 64 Nov 12 23:11 15 -> /tmp/pytest-of-root/pytest-484/test_exit_steps_run_when_one_r0/exit.sqlite3-wal
+lrwx------ 1 root root 64 Nov 12 23:13 16 -> /tmp/pytest-of-root/pytest-484/test_mutant_resolve_size_check0/rig1/desk.sqlite3
+lrwx------ 1 root root 64 Nov 12 23:11 18 -> /tmp/pytest-of-root/pytest-484/test_exit_steps_run_when_one_r0/exit.sqlite3
+poll_schedule_timeout.constprop.0

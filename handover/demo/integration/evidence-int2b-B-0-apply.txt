@@ -1,0 +1,16 @@
+87e06a4d4448871585ee122174f36e09603a4c12a42b31c103abf0ba0fb89559  /tmp/demo-wt/handover/demo/speed/fake-hubspot-read-body-before-answer.patch
+APPLIED speed/fake-hubspot-read-body-before-answer
+705535cd3d888133bcbc2cc944ceb85b6d3363561443331373f62a6626d64a95  /tmp/demo-wt/handover/demo/triage/codeant2-desk.patch
+APPLIED triage/codeant2-desk
+b90e21d24bd7b7f0841b884354fba3ce98f070e3bd972785e45b905afcf23320  /tmp/demo-wt/handover/demo/triage/codeant2-portal-log.patch
+APPLIED triage/codeant2-portal-log
+d19eece2adce9990ba539004d55667350d3d268d2c057ea7adf28f98ad5b8726  /tmp/demo-wt/handover/demo/triage/codeant2-demo-only.patch
+APPLIED triage/codeant2-demo-only
+244acda4bcca3af178f0b7370057c020c8a0ed734c74d4fb18bb8c0bd7d70afc  /tmp/demo-wt/handover/demo/triage/codeant2-tests-hardening.patch
+APPLIED triage/codeant2-tests-hardening
+321c87d00ec18ba6ec72116dc33229375f01b19af89493d800936a8ef80098de  /tmp/demo-wt/handover/demo/triage/codeant2-fakes-body.patch
+APPLIED triage/codeant2-fakes-body
+0d29f51ad8d09b91280968f04ae5a183ac0d0e68dc2c928fd2a0b31e178e34bd  /tmp/demo-wt/handover/demo/triage/codeant2-standins-body.patch
+APPLIED triage/codeant2-standins-body
+1afc6709bab01f3b26fd0999fe28cc4c2078af7907c0a6bcaf2be77d3485e397  /tmp/demo-wt/handover/demo/hang/hang-fix-v2.patch
+APPLIED hang/hang-fix-v2

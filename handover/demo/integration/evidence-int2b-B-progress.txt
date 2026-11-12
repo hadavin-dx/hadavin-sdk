@@ -1,0 +1,6 @@
+23:32:34 mtime_age=0s lines=976 tests/test_hung_adapter_calls.py::test_reaper_survives_hung_crm_put 
+23:37:06 mtime_age=0s lines=1951 tests/test_portal_browser.py::test_escape_hides_a_reveal_while_the_eye_has_focus PASSED [ 62%]
+23:41:38 mtime_age=0s lines=2244 tests/test_portal_long_values.py::test_long_values_stay_inside_their_needs_a_person_cards[1280-light
+23:46:10 mtime_age=60s lines=2409 tests/test_real_check_dry.py::test_a_failed_crm_read_back_ends_with_counts_a_result_file_and_a_clean
+23:49:33 mtime_age=9s lines=3053 tests/test_stall_eviction.py::test_second_signal_is_harmless 
+23:50:11 mtime_age=10s lines=3544 ====== 8 failed, 3082 passed, 6 skipped, 6 warnings in 1333.39s (0:22:13) ======

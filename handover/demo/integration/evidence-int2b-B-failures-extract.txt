@@ -1,0 +1,11 @@
+tests/test_claim_checks_and_crm_mode.py::test_other_value_error_is_not_exit_4 FAILED [  1%]
+tests/test_later_approval.py::test_main_loads_approvers_and_refuses_bad_ones FAILED [ 35%]
+tests/test_server_main_reaper.py::test_main_runs_reaper_while_serving FAILED [ 90%]
+tests/test_server_main_reaper.py::test_main_reaper_sends_and_frees_lock FAILED [ 90%]
+tests/test_stall_eviction.py::test_sigterm_stops_like_ctrl_c FAILED      [ 98%]
+tests/test_stall_eviction.py::test_sigterm_handler_before_listening FAILED [ 98%]
+tests/test_stall_eviction.py::test_second_signal_is_harmless FAILED      [ 98%]
+tests/test_stall_eviction.py::test_sigterm_stuck_reaper_is_logged FAILED [ 98%]
+      4 E               AssertionError: timed out waiting for the SIGTERM handler was installed
+      2 E               AssertionError: timed out waiting for the desk was built and the reaper started
+      2 E       AttributeError: 'function' object has no attribute 'book_problem'

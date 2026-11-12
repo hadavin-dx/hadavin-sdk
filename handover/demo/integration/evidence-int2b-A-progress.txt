@@ -1,0 +1,7 @@
+23:11:26 mtime_age=197s lines=171 tests/test_crm_hubspot.py::test_listing_pages_are_followed_until_the_end PASSED [  5%]
+23:12:48 mtime_age=279s lines=171 tests/test_crm_hubspot.py::test_listing_pages_are_followed_until_the_end PASSED [  5%]
+NOTE 23:14 the evidence path was replaced by another actor at 23:08 (new inode 828234, 171 lines); the pytest still writes to the deleted original inode (/proc/312/fd/5, now ~53%). Captured with tail -f --pid=312 into evidence-int2b-A-fullsuite.txt. Stall dumps at 23:13 were a FALSE alarm: file stale but process progressing (different tests in dump1/dump2).
+23:18:27 mtime_age=2s lines=2019 tests/test_portal_layout.py::test_no_sideways_scroll_revealed_leads_search_and_drawers[light-1366] 
+23:22:30 mtime_age=14s lines=2269 tests/test_real_check_dry.py::test_dry_fakes_run_end_to_end 
+23:23:40 mtime_age=48s lines=2284 tests/test_real_check_dry.py::test_dry_fakes_leave_no_certificate_or_key_folder_behind 
+23:27:41 mtime_age=14s lines=3009 ================= 2988 passed, 6 skipped in 1222.25s (0:20:22) =================
