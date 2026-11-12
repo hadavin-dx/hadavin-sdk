@@ -355,9 +355,7 @@ def _own_secrets(secrets: SecretProvider, spec: tools_mod.ToolSpec) -> Callable[
 
     def read(name: str) -> str:
         if name not in allowed:
-            raise PermissionError(
-                f"that secret is not one of tool {shown_name(spec.name, [spec.name])}'s secrets"
-            )
+            raise PermissionError("that secret is not one of this tool's own secrets")
         return secrets.get(name)
 
     return read

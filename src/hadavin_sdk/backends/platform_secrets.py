@@ -12,14 +12,37 @@ from collections.abc import Callable, Iterable
 from pydantic import BaseModel
 
 from hadavin_sdk.actions.secrets import SecretProvider
-from hadavin_sdk.errors import ConfigError, shown_name
+from hadavin_sdk.errors import ConfigError
 
 
-def _names(names: Iterable[str]) -> str:
-    """Secret NAMES (never values) for an error text, each through `shown_name`. The names are the configured ones
-    (the caller passes the sets it just read), so each is a loaded name."""
-    names = sorted(names)
-    return ", ".join(shown_name(n, names) for n in names)
+def _labels(settings: Iterable[BaseModel]) -> dict[str, str]:
+    """Where each platform secret name is set: `<Settings class>.<field>` (words written in code), never the name."""
+    out: dict[str, str] = {}
+    for s in settings:
+        for k, v in s:
+            if k.endswith("_secret_name") and v:
+                out.setdefault(v, f"{type(s).__name__}.{k}")
+    return out
+
+
+def _place(
+    name: str, labels: dict[str, str], executors: Iterable[str], tools: Iterable[str]
+) -> str:
+    """The place of one secret for an error text: the settings field that names it, else its position among the
+    tool secrets or the action executor secrets (sorted). The name itself is configured text and is never printed:
+    a password pasted into a name field must not come back in a message."""
+    if name in labels:
+        return f"the secret set in {labels[name]}"
+    for group, word in ((sorted(tools), "read-tool"), (sorted(executors), "action executor")):
+        if name in group:
+            return f"{word} secret {group.index(name) + 1} of {len(group)} (sorted by name)"
+    return "a configured secret"
+
+
+def _places(
+    names: Iterable[str], labels: dict[str, str], executors: Iterable[str], tools: Iterable[str]
+) -> str:
+    return ", ".join(_place(n, labels, executors, tools) for n in sorted(names))
 
 
 def secret_names(settings: BaseModel) -> set[str]:
@@ -51,15 +74,16 @@ def check(
     settings = list(settings)
     backend: set[str] = set().union(*(secret_names(s) for s in settings))
     tools = tool_names or set()
+    labels = _labels(settings)
     if shared := backend & tools:
         raise ConfigError(
-            f"secret names used by both a backend and a read tool: {_names(shared)}; "
+            f"secret names used by both a backend and a read tool: {_places(shared, labels, executor_names, tools)}; "
             "give the tool its own secret"
         )
     platform = backend | tools
     if overlap := platform & executor_names:
         raise ConfigError(
-            f"secret names used by both a backend and an action executor: {_names(overlap)}; "
+            f"secret names used by both a backend and an action executor: {_places(overlap, labels, executor_names, tools)}; "
             "give the backend its own secret"
         )
     for name in sorted(platform | executor_names):
@@ -68,5 +92,5 @@ def check(
             provider.get(name)
         except Exception as exc:  # noqa: BLE001 - any provider failure stops start-up; the type is all that is kept
             raise ConfigError(
-                f"secret {shown_name(name, platform | executor_names)} cannot be read at start-up ({type(exc).__name__})"
+                f"{_place(name, labels, executor_names, tools)} cannot be read at start-up ({type(exc).__name__})"
             ) from None

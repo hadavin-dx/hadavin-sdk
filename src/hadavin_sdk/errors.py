@@ -120,11 +120,13 @@ def list_configured(path: object, what: str, suffix: str) -> list[Path]:
     return [Path(path) / n for n in names if n.endswith(suffix)]  # type: ignore[arg-type]
 
 
-def error_where(error: dict[str, Any]) -> str:
+def error_where(error: dict[str, Any], *, field_names: bool = False) -> str:
     """The place of one pydantic problem (an entry of `ValidationError.errors()`) as a dotted path. A key that the
     model does not know (`extra_forbidden`) is the pasted text itself, so it is replaced by `<unknown key>` and the
     parent path stays; any other name taken from the file (a mapping key) is shown only when `shown_name` allows it;
-    positions are numbers and stay."""
+    positions are numbers and stay. `field_names=True` is for a model whose own field names are code-owned text (a
+    tool manifest entry): a name is then shown on the word-like test alone, without the loaded-ids membership test
+    (the loaded set holds ids from the file, never the names of fields, so the test would hide every field)."""
     loc = list(error["loc"])
     parts = []
     for i, part in enumerate(loc):
@@ -132,6 +134,8 @@ def error_where(error: dict[str, Any]) -> str:
             parts.append(str(part))
         elif error["type"] == "extra_forbidden" and i == len(loc) - 1:
             parts.append(UNKNOWN_KEY)
+        elif field_names:
+            parts.append(str(part) if word_like(part) else NOT_SHOWN)
         else:
             parts.append(shown_name(part))
     return ".".join(parts)

@@ -90,7 +90,7 @@ def test_concurrent_misses_fetch_once_so_an_older_value_never_overwrites_a_newer
 
 def test_an_empty_env_secret_is_refused(monkeypatch):
     monkeypatch.setenv("HADAVIN_SECRET_EMPTY", "")
-    with pytest.raises(ConfigError, match="not found or empty"):
+    with pytest.raises(ConfigError, match="not set in the environment, or it is empty"):
         make("secrets", EnvSecretsSettings(kind="env")).get("empty")
 
 
@@ -99,8 +99,11 @@ def test_env_secrets_map_names_to_prefixed_variables(monkeypatch):
     provider = make("secrets", EnvSecretsSettings(kind="env"))
     assert isinstance(provider, EnvSecretProvider)
     assert provider.get("fixture-token") == VALUE
-    with pytest.raises(ConfigError, match="HADAVIN_SECRET_MISSING_ONE"):
+    with pytest.raises(ConfigError) as err:
         provider.get("missing.one")
+    assert "MISSING_ONE" not in str(err.value) and "missing" not in str(
+        err.value
+    )  # the name is not printed
 
 
 def _config(tmp_path, secrets, environment="demo"):

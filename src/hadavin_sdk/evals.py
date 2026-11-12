@@ -56,7 +56,7 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
     ]
     passed = run_passes = abstains = 0
     cost = Decimal(0)
-    for case in cases:
+    for position, case in enumerate(cases, start=1):
         # input_ref comes from a file: confined to inputs_dir (no "../" or absolute escapes).
         doc = read_configured(
             confined(cfg.inputs_dir, case["input_ref"]),
@@ -70,8 +70,8 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
             runmap.RedactionError
         ) as exc:  # too large for the redactor (or it failed): say which case, exit 2
             raise ConfigError(
-                f"golden case {case.get('id', case['input_ref'])!r}: input {case['input_ref']!r} cannot be "
-                f"redacted ({exc}); inputs are limited to {defaults.MAX_REDACT_CHARS} characters, views included"
+                f"golden case {position} (the non-empty line of that number in the golden file): its input cannot be "
+                f"redacted ({type(exc).__name__}); inputs are limited to {defaults.MAX_REDACT_CHARS} characters, views included"
             ) from None
         case_passes = 0
         for _ in range(k):

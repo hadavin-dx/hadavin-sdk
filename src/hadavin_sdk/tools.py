@@ -40,7 +40,7 @@ from urllib.parse import quote, quote_plus, urlunsplit
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from hadavin_sdk import defaults
-from hadavin_sdk.errors import ConfigError, digest_prefix, error_where, shown_name
+from hadavin_sdk.errors import ConfigError, digest_prefix, error_where, read_configured, shown_name
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
@@ -117,7 +117,9 @@ def parse_manifest(raw: Any, where: str) -> list[ToolSpec]:
                 ToolSpec(**entry) if isinstance(entry, dict) else ToolSpec.model_validate(entry)
             )
         except ValidationError as exc:
-            fields = ", ".join(error_where(e) or "?" for e in exc.errors(include_input=False))
+            fields = ", ".join(
+                error_where(e, field_names=True) or "?" for e in exc.errors(include_input=False)
+            )
             raise ConfigError(f"{where}: invalid tool entry ({fields})") from None
         except (
             TypeError,
@@ -362,7 +364,12 @@ def module_sha256(module: str) -> str:
     """The pin of a tool module: SHA-256 over its own file and its parent packages' `__init__.py` files (line
     endings folded to LF), computed WITHOUT importing any of them. It does not cover what the module imports,
     helper modules or data files: a pin is review of one file's text, not of a dependency tree."""
-    return _pin_digest([(n, p.read_bytes()) for n, p in _module_files(module)])
+    return _pin_digest(
+        [
+            (n, read_configured(p, "a tool module file (tool_modules)", binary=True))
+            for n, p in _module_files(module)
+        ]
+    )
 
 
 def load_tool_module(module: str, pins: Mapping[str, str] | None = None) -> types.ModuleType:
@@ -525,7 +532,7 @@ class ToolContext:
             value = secret_resolver(name)
             if len(value) < min_secret:
                 raise ToolRefused(
-                    f"secret {shown_name(name, spec.secret_names)} is shorter than {min_secret} characters and could not be scrubbed"
+                    f"secret {spec.secret_names.index(name) + 1} of this tool's secret_names is shorter than {min_secret} characters and could not be scrubbed"
                 )
             with self._lock:
                 self.handed_out.append(value)

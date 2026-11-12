@@ -23,7 +23,7 @@ from hadavin_sdk.approvals import cards
 from hadavin_sdk.approvals.cards import Card, Delivery
 from hadavin_sdk.audit.protocol import AuditSink, AuditUnavailable
 from hadavin_sdk.config import ConfigError, confined
-from hadavin_sdk.errors import read_configured
+from hadavin_sdk.errors import read_configured, shown_name
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.injection import Detector, injection_check
 from hadavin_sdk.identity import Principal
@@ -143,12 +143,14 @@ def _check_golden_refs(registry: Registry, agent_id: str) -> None:
     text = read_configured(path, "a golden set file (golden_dir)", missing_ok=True)
     if text is None:
         return
-    for line in text.splitlines():
+    for number, line in enumerate(text.splitlines(), start=1):
         if line.strip():
             try:
                 ref = json.loads(line)["input_ref"]
-            except (ValueError, KeyError, TypeError) as exc:
-                raise ConfigError(f"{path.name}: bad golden line") from exc
+            except (ValueError, KeyError, TypeError):
+                raise ConfigError(
+                    f"golden set of agent {shown_name(agent_id, registry.agents)}: bad golden line {number}"
+                ) from None
             confined(registry.config.inputs_dir, ref)
 
 
@@ -168,7 +170,7 @@ def assert_qualified(registry: Registry, agent_id: str) -> None:
             continue  # a k = 1 green record never qualifies a tooled agent
         if g.agent_id == agent_id and g.green and got == want:
             return
-    raise Unqualified(agent_id)
+    raise Unqualified(shown_name(agent_id, registry.agents))
 
 
 @dataclass
@@ -225,7 +227,7 @@ class Runtime:
                 for action in registry.agents[agent_id].scope_allowed:
                     if identifier_inputs(registry.contracts[action]):
                         raise ValueError(
-                            f"agent {agent_id}: action {action} has identifier inputs but hooks.validate_proposal "
+                            f"agent {shown_name(agent_id, registry.agents)}: action {shown_name(action, registry.contracts)} has identifier inputs but hooks.validate_proposal "
                             "is not set: its proposals would not be cited or grounded"
                         )
 
@@ -378,7 +380,7 @@ class Runtime:
         document and every tool result are redacted with this one map, which grows through the run and is saved
         after every redaction."""
         if agent_id not in self.agents:
-            raise Unqualified(agent_id)
+            raise Unqualified(shown_name(agent_id, self.registry.agents))
         agent = self.registry.agents[agent_id]
         extra = {} if run_id is None else {"run_id": _checked_run_id(run_id)}
         run = Run(

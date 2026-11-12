@@ -256,7 +256,7 @@ def test_audit_verify_that_cannot_build_its_store_could_not_verify(tmp_path, cap
     # The configured `fake` secrets are empty: the DSN cannot be read at the start-up probe.
     assert cli.main(["--config", str(cfg_dir), "audit", "verify"]) == 3
     assert (
-        "could not verify: secret pg-dsn cannot be read at start-up (KeyError)"
+        "could not verify: the secret set in PostgresSettings.dsn_secret_name cannot be read at start-up (KeyError)"
         in capsys.readouterr().err
     )
 

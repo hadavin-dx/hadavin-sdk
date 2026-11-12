@@ -430,8 +430,10 @@ def _module_pin_problems(config: Config) -> list[str]:
 def _principal_problems(principals: dict, chains: dict, contracts: dict) -> list[str]:
     """Every reference in `principals.yaml` and `chains.yaml` must name something that exists. Each of these would
     otherwise be a typo that no one sees at load: a right that names no action (that principal is refused, silently),
-    an `approver_of` that names no chain, an approver who is not a person (nobody could approve, or a service
-    identity would be one). A value is named by its position, never quoted."""
+    an `approver_of` that names no chain, and, for a chain that some principal names in `approver_of`, an approver id that
+    is not a person (a service identity would be one). A chain no principal names keeps the ids its channel understands;
+    this person check is advisory: who may decide is settled by the decision path, which authorises by membership of the
+    chain's approver list (`approvals/requests.py`). A value is named by its position, never quoted."""
     out = []
     for p in principals.values():
         name = shown_name(p.id)

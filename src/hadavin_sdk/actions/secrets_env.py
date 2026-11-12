@@ -10,7 +10,7 @@ import os
 import re
 from collections.abc import Mapping
 
-from hadavin_sdk.errors import NOT_SHOWN, ConfigError, shown_name
+from hadavin_sdk.errors import ConfigError
 
 
 class EnvSecretProvider:
@@ -23,9 +23,7 @@ class EnvSecretProvider:
     def get(self, name: str) -> str:
         value = self._environ.get(self.var(name))
         if not value:  # an empty value would pass the start-up probe and fail at call time
-            shown = shown_name(name)
-            where = f" (environment variable {self.var(name)})" if shown != NOT_SHOWN else ""
-            raise ConfigError(f"secret {shown} not found or empty{where}")
+            raise ConfigError("the secret is not set in the environment, or it is empty")
         return value
 
 

@@ -2,7 +2,7 @@
 
 A value is cached for `ttl_s` seconds (0 = no cache), so a rotated value is picked up within one TTL. Fetches
 run one at a time: two concurrent fetches straddling a rotation could otherwise let the older value land last
-and be cached for a whole TTL. Values are never logged; errors name the secret and the error class only.
+and be cached for a whole TTL. Values are never logged; errors name no secret and no value, only a fixed sentence and the error class.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import threading
 import time
 from collections.abc import Callable
 
-from hadavin_sdk.errors import ConfigError, shown_name
+from hadavin_sdk.errors import ConfigError
 
 
 class CachedSecrets:
@@ -32,7 +32,7 @@ class CachedSecrets:
                 return hit[1]
             value = self._fetch(name)
             if not value:  # an empty value would pass the start-up probe and fail at call time
-                raise ConfigError(f"secret {shown_name(name)} is empty")
+                raise ConfigError("the secret is empty")
             if self.ttl_s > 0:
                 self._cache[name] = (now + self.ttl_s, value)
             return value

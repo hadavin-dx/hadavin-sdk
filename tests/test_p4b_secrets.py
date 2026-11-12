@@ -48,7 +48,7 @@ def test_vault_token_auth_reads_kv_v2_with_the_token_from_the_environment(vault,
     provider = make("secrets", _settings(vault, namespace="team-a"))
     assert provider.get("db") == VALUE
     assert vault.seen_namespaces[-1] == "team-a"
-    with pytest.raises(ConfigError, match="not found in Vault"):
+    with pytest.raises(ConfigError, match="was not found in Vault"):
         provider.get("missing")
     monkeypatch.delenv("VAULT_TOKEN")
     with pytest.raises(ConfigError, match="the configured environment variable is not set"):
@@ -64,7 +64,9 @@ def test_vault_approle_signs_in_and_signs_in_again_after_a_403(vault, monkeypatc
     assert provider.get("db") == VALUE  # one re-login, then the read
     monkeypatch.setenv("VAULT_SECRET_ID", "wrong")
     vault.tokens.discard(provider._token)
-    with pytest.raises(ConfigError, match=r"the configured auth mount: sign-in refused \(400\)"):
+    with pytest.raises(
+        ConfigError, match=r"the configured auth mount \(approle\): sign-in refused \(400\)"
+    ):
         provider.get("db")
 
 
@@ -103,7 +105,7 @@ def test_vault_refuses_odd_names_missing_fields_and_reports_status_only(vault):
     for bad in ("../db", "a/b", "..", ""):
         with pytest.raises(ConfigError):
             provider.get(bad)
-    with pytest.raises(ConfigError, match="secret db has no field named by .field. in Vault"):
+    with pytest.raises(ConfigError, match="the secret has no field named by .field. in Vault"):
         provider.get("db")
     denied = VaultProvider(vault.address, lambda p: "not-a-token", renewable=False)
     with pytest.raises(VaultError, match="answered 403$"):

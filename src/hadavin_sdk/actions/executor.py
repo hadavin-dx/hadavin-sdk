@@ -33,7 +33,7 @@ _OPENER = http_guard.ENV_PROXY_OPENER
 def resolve(ref: str, allowed: list[str]) -> Callable[..., Any]:
     module, _, name = ref.partition(":")
     if module not in allowed:
-        raise PermissionError(f"{ref} is outside check_modules")
+        raise PermissionError("a configured function reference is outside check_modules")
     return getattr(importlib.import_module(module), name)
 
 

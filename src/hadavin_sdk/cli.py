@@ -38,7 +38,7 @@ from hadavin_sdk.audit import AuditUnavailable
 from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.config import load_config
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, shown_name
 from hadavin_sdk.guard.injection import combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.models import new_id
@@ -294,7 +294,8 @@ def _tick() -> int:
                 agents.append(agent_id)
             except Unqualified:
                 print(
-                    f"tick: {agent_id} is not qualified; its new runs are refused", file=sys.stderr
+                    f"tick: {shown_name(agent_id, reg.agents)} is not qualified; its new runs are refused",
+                    file=sys.stderr,
                 )
         app = build(None, agents)
     except StoreUnavailable as exc:

@@ -23,10 +23,10 @@ import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Literal
 
 from hadavin_sdk.actions.secrets_cache import CachedSecrets
-from hadavin_sdk.errors import ConfigError, read_configured, shown_name
+from hadavin_sdk.errors import ConfigError, read_configured
 from hadavin_sdk.guard.http import NoRedirect
 from hadavin_sdk.safe_url import safe_urlsplit
 
@@ -108,22 +108,18 @@ class VaultProvider(CachedSecrets):
             ".",
             "..",
         }:  # the name becomes part of the URL path
-            raise ConfigError(
-                f"secret {shown_name(name)}: Vault names here are letters, digits, '.', '_', '-'"
-            )
+            raise ConfigError("a secret name: Vault names here are letters, digits, '.', '_', '-'")
         status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")
         if status == 404:
-            raise ConfigError(f"secret {shown_name(name)} not found in Vault")
+            raise ConfigError("the secret was not found in Vault")
         if status != 200:
-            raise VaultError(f"secret {shown_name(name)}: Vault answered {status}")
+            raise VaultError(f"a secret: Vault answered {status}")
         fields = _mapping(_mapping(body.get("data")).get("data"))
         if self.field not in fields:
-            raise ConfigError(f"secret {shown_name(name)} has no field named by `field` in Vault")
+            raise ConfigError("the secret has no field named by `field` in Vault")
         value = fields[self.field]
         if not isinstance(value, str):  # never str(None) == "None"
-            raise ConfigError(
-                f"secret {shown_name(name)}: the field named by `field` is not a string in Vault"
-            )
+            raise ConfigError("the secret: the field named by `field` is not a string in Vault")
         return value
 
 
@@ -135,11 +131,18 @@ def _mapping(value: Any) -> dict:
     return value
 
 
-def _login_with(provider: VaultProvider, auth_mount: str, payload: dict[str, Any]) -> str:
+def _login_with(
+    provider: VaultProvider,
+    auth_mount: str,
+    payload: dict[str, Any],
+    kind: Literal["approle", "kubernetes"],
+) -> str:
     status, body = provider.call("POST", f"auth/{auth_mount}/login", payload)
     token = _mapping(body.get("auth")).get("client_token") if status == 200 else None
     if not isinstance(token, str) or not token:
-        raise ConfigError(f"secrets vault: the configured auth mount: sign-in refused ({status})")
+        raise ConfigError(
+            f"secrets vault: the configured auth mount ({kind}): sign-in refused ({status})"
+        )
     return token
 
 
@@ -171,7 +174,7 @@ def connect(settings, **kw: Any) -> VaultProvider:
 
         def login(p: VaultProvider) -> str:
             payload = {"role_id": settings.role_id, "secret_id": _env(settings.secret_id_env)}
-            return _login_with(p, settings.auth_mount or "approle", payload)
+            return _login_with(p, settings.auth_mount or "approle", payload, "approle")
     else:
 
         def login(p: VaultProvider) -> str:
@@ -180,7 +183,7 @@ def connect(settings, **kw: Any) -> VaultProvider:
                 "vault kubernetes sign-in: the service-account token file (jwt_path)",
             ).strip()
             payload = {"role": settings.role, "jwt": jwt}
-            return _login_with(p, settings.auth_mount or "kubernetes", payload)
+            return _login_with(p, settings.auth_mount or "kubernetes", payload, "kubernetes")
 
     try:
         context = ssl.create_default_context(

@@ -16,10 +16,33 @@ def test_a_missing_name_is_a_config_error_at_the_start_up_probe(secrets_factory,
     provider = secrets_factory({"known": VALUE})
     with caplog.at_level(logging.DEBUG):
         platform_secrets.check(provider, [], {"known"})
-        with pytest.raises(ConfigError, match=r"secret missing cannot be read at start-up \("):
+        with pytest.raises(
+            ConfigError,
+            match=r"action executor secret 2 of 2 \(sorted by name\) cannot be read at start-up \(",
+        ):
             platform_secrets.check(provider, [], {"known", "missing"})
         assert provider.get("known") == VALUE
     assert VALUE not in caplog.text  # a value is never logged
+
+
+def test_a_plain_word_in_a_secret_name_field_is_not_quoted_by_any_provider(secrets_factory):
+    """A password pasted where a secret name belongs can be a plain lower-case word, which looks like an id: no
+    provider says the name in a refusal, so the word never comes back in a message (Issue 2 of round 8)."""
+    plain = "swordfish" + "-pw"  # built from parts: a plain word, 12 characters, a letter first
+    provider = secrets_factory({"known": VALUE})
+    try:
+        provider.get(plain)
+    except (
+        KeyError
+    ):  # the in-memory test double is not a real provider: it has no message of its own
+        pass
+    except ConfigError as exc:
+        assert plain not in str(exc) and "swordfish" not in repr(exc) and exc.__cause__ is None
+    else:
+        raise AssertionError("a name that does not exist must be refused")
+    with pytest.raises(ConfigError) as err:
+        platform_secrets.check(provider, [], {plain})
+    assert "swordfish" not in str(err.value)
 
 
 @pytest.fixture(params=sorted(KINDS["secrets_ttl"]))

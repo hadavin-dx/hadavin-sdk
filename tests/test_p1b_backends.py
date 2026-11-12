@@ -161,13 +161,18 @@ def test_platform_and_executor_names_must_not_overlap(planted, cfg_dir):
 
 
 def test_missing_secret_fails_at_start_up(cfg_dir):
-    with pytest.raises(ConfigError, match="secret fixture-token cannot be read at start-up"):
+    with pytest.raises(
+        ConfigError,
+        match="action executor secret . of . .sorted by name. cannot be read at start-up",
+    ):
         _build(cfg_dir)  # configured `fake` secrets are empty: the executor's secret is missing
 
 
 def test_missing_platform_secret_fails_at_start_up(planted, cfg_dir):
     planted("chan-key", reads="chan-key")
-    with pytest.raises(ConfigError, match="secret chan-key cannot be read"):
+    with pytest.raises(
+        ConfigError, match="the secret set in _Planted.api_key_secret_name cannot be read"
+    ):
         _build(cfg_dir, secrets=FakeSecretProvider({"fixture-token": TOKEN}))
 
 

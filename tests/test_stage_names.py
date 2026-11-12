@@ -2510,11 +2510,11 @@ def test_a_secret_name_that_is_not_a_plain_name_is_not_shown_by_the_platform_sec
     for kwargs, said in (
         (
             {"executor_names": {PW}},
-            "secret names used by both a backend and an action executor: <not shown>;",
+            "secret names used by both a backend and an action executor: the secret set in Settings.token_secret_name;",
         ),
         (
             {"executor_names": set(), "tool_names": {PW}},
-            "secret names used by both a backend and a read tool: <not shown>;",
+            "secret names used by both a backend and a read tool: the secret set in Settings.token_secret_name;",
         ),
     ):
         with pytest.raises(ConfigError) as err:
@@ -2523,7 +2523,10 @@ def test_a_secret_name_that_is_not_a_plain_name_is_not_shown_by_the_platform_sec
         assert PW not in _everything_shown(err.value)
     with pytest.raises(ConfigError) as err:
         ps.check(Broken(), [both], set())
-    assert str(err.value) == "secret <not shown> cannot be read at start-up (RuntimeError)"
+    assert (
+        str(err.value)
+        == "the secret set in Settings.token_secret_name cannot be read at start-up (RuntimeError)"
+    )
     assert err.value.__cause__ is None and PW not in _everything_shown(err.value)
 
 
@@ -3043,13 +3046,13 @@ def test_a_vault_secret_name_and_field_are_not_quoted_in_vault_refusals(monkeypa
     )
     with pytest.raises(ConfigError) as err:
         provider.get(PW + "/bad name")  # not a legal Vault name
-    assert PW not in str(err.value) and "<not shown>" in str(err.value)
+    assert PW not in str(err.value) and "a secret name: Vault names here" in str(err.value)
     with pytest.raises(ConfigError) as err:
         provider.get("a" * 64)
-    assert "a" * 64 not in str(err.value) and "not found in Vault" in str(err.value)
+    assert "a" * 64 not in str(err.value) and "was not found in Vault" in str(err.value)
     with pytest.raises(ConfigError) as err:
         provider.get("good_name")  # a real name, but the field is absent
-    assert "good_name" in str(err.value) and "fld" + MARK[:6] not in str(err.value)
+    assert "good_name" not in str(err.value) and "fld" + MARK[:6] not in str(err.value)
 
 
 def test_an_alias_model_id_is_refused_without_quoting_the_model_id():
@@ -3086,7 +3089,7 @@ def test_a_source_and_a_tool_secret_are_named_only_by_the_loaded_filter(cfg_dir)
     read = app_mod._own_secrets(SimpleNamespace(get=lambda n: n), spec)
     with pytest.raises(PermissionError) as err:
         read(MARK)
-    assert str(err.value) == "that secret is not one of tool a_tool's secrets"
+    assert str(err.value) == "that secret is not one of this tool's own secrets"
     assert MARK not in _everything_shown(err.value)
 
 
@@ -3099,7 +3102,10 @@ def test_the_platform_secret_probe_shows_a_configured_name_and_hides_a_pasted_on
 
     with pytest.raises(ConfigError) as err:
         ps.check(Missing(), [], {"good_secret"})
-    assert str(err.value) == "secret good_secret cannot be read at start-up (KeyError)"
+    assert (
+        str(err.value)
+        == "action executor secret 1 of 1 (sorted by name) cannot be read at start-up (KeyError)"
+    )
     for pasted in (
         PW,
         SECRET_SHAPES["hex32"],
@@ -3108,48 +3114,43 @@ def test_the_platform_secret_probe_shows_a_configured_name_and_hides_a_pasted_on
     ):
         with pytest.raises(ConfigError) as err:
             ps.check(Missing(), [], {pasted})  # one name: the one that is refused first
-        assert str(err.value) == "secret <not shown> cannot be read at start-up (KeyError)", pasted
+        assert (
+            str(err.value)
+            == "action executor secret 1 of 1 (sorted by name) cannot be read at start-up (KeyError)"
+        ), pasted
         assert pasted not in str(err.value)
 
 
 # ---- the guard: no config-derived name is put in a message except through the one filter -------------------------------
-GUARDED_MODULES = (
-    "app.py",
-    "actions/secrets_vault.py",
-    "actions/secrets_aws.py",
-    "actions/secrets_azure.py",
-    "actions/secrets_cache.py",
-    "actions/secrets_env.py",
-    "actions/secrets_file.py",
-    "actions/secrets_gcp.py",
-    "actions/contract.py",
-    "llm/common.py",
-    "backends/table.py",
-    "backends/platform_secrets.py",
-    "audit/signer.py",
-    "tools.py",
-    "registry.py",
-    "config.py",
-    "deferred.py",
-    "sources/__init__.py",
-)
-# Spellings that, in these modules, hold text taken from a configuration file (a name, an id, a key, a path, a value).
+# Every module under src/hadavin_sdk is read (found by walking the folder, so a new module is covered at once), except
+# the ones in GUARD_EXEMPT_MODULES, each with the reason it holds no text taken from the client's configuration.
+GUARD_EXEMPT_MODULES = {
+    "k1b/": "the incident-investigation kernel reads case bundles and cause lists, never the client configuration",
+    "store/migrate.py": "names of SQL files and database objects of this repository, not configuration text",
+    "store/migration_numbers.py": "names of SQL files of this repository, not configuration text",
+    "testing/mutation.py": "test tooling that names test cases, not configuration text",
+}
+# Spellings that hold text taken from a configuration file (a name, an id, a key, a path, a value). The scan is a
+# list of KNOWN spellings: a value reached under a spelling not listed here is not seen (see the CHANGELOG).
 CONFIG_DERIVED = frozenset(
     {
         "name", "agent_id", "action", "key", "source", "module", "route", "field", "auth_mount",
         "token_env", "secret_id_env", "jwt_path", "role_id", "host", "operation", "method", "pin",
-        "named", "ca_file", "ca_cert", "model_id", "path",
+        "named", "ca_file", "ca_cert", "model_id", "path", "root", "case", "input_ref", "ref",
     }
 )  # fmt: skip
 CONFIG_DERIVED_ATTRS = frozenset(
-    {"name", "id", "model_id", "field", "auth_mount", "token_env", "secret_id_env", "jwt_path", "role_id", "hostname", "ca_file", "ca_cert", "private_key_path", "pin"}
+    {"name", "id", "model_id", "field", "auth_mount", "token_env", "secret_id_env", "jwt_path", "role_id", "hostname", "ca_file", "ca_cert", "private_key_path", "pin", "dir", "root", "path", "input_ref"}
 )  # fmt: skip
-# (module, source of the f-string or call) pairs that are allowed, each with the reason.
-# One entry per f-string that holds a configuration-looking spelling but is not config text, each with its reason.
+CONFIG_DERIVED_KEYS = frozenset({"id", "input_ref", "dir", "name", "path"})  # x["id"], x.get("id")
+LOG_METHODS = frozenset({"warning", "info", "error", "debug", "exception", "warn"})
+# (module, source of the f-string, concatenation or call) pairs that are allowed, each with the reason.
 _FILTERED = "the variable was set from shown_name / _named on an earlier line"
 _CODE_NAME = "the spelling is a constant or a keyword of the code, not a value read from a file"
 _NOT_TEXT = "a URL, a dictionary key or a file name being built, never put in a message"
 _OPERATOR = "an operator's own command-line key file (not a value read from the configuration file)"
+_HOST = "a hostname that spec_problems / safe_url already refused unless it is a bare hostname"
+_REQUEST = "text of a request or of the code's own data, not of the configuration"
 GUARD_ALLOWED = {
     ("app.py", "f'configure backends.{name} in pilot and prod'"): _CODE_NAME,
     ("app.py", "f'{name}= is for tests; {fix}'"): _CODE_NAME,
@@ -3164,6 +3165,34 @@ GUARD_ALLOWED = {
     ("audit/signer.py", "f'{source} is not an Ed25519 private key'"): "source is a fixed label chosen by build_local",
     ("audit/signer.py", "f'{path} is not an Ed25519 public key'"): _OPERATOR,
     ("audit/signer.py", "f'signer ed25519_local: cannot load {source} ({type(exc).__name__})'"): "source is a fixed label chosen by build_local",
+    ("audit/signer_vault.py", "f'{self.mount}/{path}'"): _NOT_TEXT,
+    ("approvals/hmac_v0.py", "f\"{channel}:{payload['user']['id']}\""): _REQUEST,
+    ("approvals/slack_channel.py", "f'{self.api_base}/{method}'"): _NOT_TEXT,
+    ("approvals/slack_channel.py", "f'{method}: {code}'"): "method is the code's own Slack API method name",
+    ("evals.py", "f'{agent_id}.jsonl'"): _NOT_TEXT,
+    ("guard/http.py", "f'{host}: too many name lookups are stuck'"): _HOST,
+    ("guard/http.py", "f'{host}: the name lookup took more than {RESOLVE_TIMEOUT_S} s'"): _HOST,
+    ("guard/http.py", "f'{host} did not resolve'"): _HOST,
+    ("guard/http.py", "f'{host} could not be reached'"): _HOST,
+    ("guard/http.py", "f'{host} resolves to a refused address'"): _HOST,
+    ("llm/fake.py", "UnknownRecording(path.name)"): "the file name is a SHA-256 digest of the request and an attempt number",
+    ("models.py", "f'float at {path}: use a decimal string'"): "a path inside a data object the code was handed",
+    ("models.py", "f'{path}.{k}'"): _NOT_TEXT,
+    ("models.py", "f'{path}[{i}]'"): _NOT_TEXT,
+    ("runtime/agent_loop.py", "f'tool:{call.name}'"): "the name of a tool call the model made, already matched to a loaded tool",
+    ("runtime/agent_loop.py", "f'tool {call.name} {shown}'"): "the name of a tool call the model made, already matched to a loaded tool",
+    ("runtime/agent_loop.py", "f'<<TOOL RESULT call_id={call_id} tool={call.name}>>\\n{out.text}\\n{END_MARKER}'"): "the name of a tool call the model made, already matched to a loaded tool",
+    ("runtime/plan.py", "f'{run.run_id}:{contract.id}'"): _NOT_TEXT,
+    ("runtime/tick.py", "f'tick step name must be [a-z_]+ and every_s >= 0: {self.name!r}'"): "the step name is written in code",
+    ("sources/kinds.py", "f'source kind {name!r}: prefix {kind.operation_prefix!r} overlaps {other_name!r}'"): "kind names are registered in code",
+    ("runtime/agent_loop.py", "_LOG.warning('run %s: audit write for card %s failed', run.run_id, operation)"): "operation is an audit operation name written in code",
+    ("runtime/tick.py", "_LOG.error('step=%s error_kind=%s message=%s', step.name, type(exc).__name__, _message(exc))"): "the step name is written in code",
+    ("runtime/tick.py", "_LOG.error('step=%s error_kind=%s message=tick_state not saved', step.name, type(exc).__name__)"): "the step name is written in code",
+    ("sources/kubernetes.py", "f\"deployment/{scope}/{meta.get('name', '?')}\""): "the name of an object in the cluster's own reply, used as an evidence label",
+    ("sources/kubernetes.py", "f\"event/{scope}/{meta.get('name', '?')}\""): "the name of an object in the cluster's own reply, used as an evidence label",
+    ("store/memory.py", "NotFound(key)"): _REQUEST,
+    ("store/memory.py", "f'decision exists: {key}'"): _REQUEST,
+    ("store/postgres.py", "f'{key} = %s'"): "a column name written in code, put in a query, not in a message",
     ("tools.py", "f'[{host}]'"): _NOT_TEXT,
     ("tools.py", "f'{where}: key {key!r} is not available until {phase}'"): "key is one of the code's own _DEFERRED_KEYS",
     ("registry.py", "f'{agent_id}.jsonl'"): _NOT_TEXT,
@@ -3179,73 +3208,158 @@ GUARD_ALLOWED = {
 
 
 def _config_derived(expr) -> bool:
+    """True when the expression is text from a configuration file under a known spelling: a name or attribute, a
+    subscript or `.get` of one (or with a key such as "id"), `str()` / `repr()` / `format()` of one, a `+` or `%` that
+    holds one. A call of anything else (`shown_name`, `_named`) is the filter and is not derived."""
     import ast
 
+    if isinstance(expr, ast.FormattedValue):
+        return _config_derived(expr.value)
     if isinstance(expr, ast.Name):
         return expr.id in CONFIG_DERIVED
     if isinstance(expr, ast.Attribute):
         return expr.attr in CONFIG_DERIVED_ATTRS
+    if isinstance(expr, ast.Subscript):
+        key = expr.slice
+        return _config_derived(expr.value) or (
+            isinstance(key, ast.Constant) and key.value in CONFIG_DERIVED_KEYS
+        )
+    if isinstance(expr, ast.Call):
+        f = expr.func
+        if isinstance(f, ast.Name) and f.id in {"str", "repr", "format"}:
+            return any(_config_derived(a) for a in expr.args)
+        if isinstance(f, ast.Attribute) and f.attr == "get":
+            return _config_derived(f.value) or any(
+                isinstance(a, ast.Constant) and a.value in CONFIG_DERIVED_KEYS
+                for a in expr.args[:1]
+            )
+        return False
+    if isinstance(expr, ast.BinOp):
+        return _config_derived(expr.left) or _config_derived(expr.right)
+    if isinstance(expr, ast.Tuple):
+        return any(_config_derived(e) for e in expr.elts)
     return False
 
 
-def _guard_violations() -> list[str]:
+def _is_text(expr) -> bool:
     import ast
 
-    found = []
-    for module in GUARDED_MODULES:
-        tree = ast.parse((ROOT / "src" / "hadavin_sdk" / module).read_text(encoding="utf-8"))
-        for node in ast.walk(tree):
-            if isinstance(node, ast.JoinedStr):
-                text = ast.unparse(node)
-                for part in node.values:
-                    if (
-                        isinstance(part, ast.FormattedValue)
-                        and _config_derived(part.value)
-                        and (module, text) not in GUARD_ALLOWED
-                    ):
-                        found.append(
-                            f"{module}:{node.lineno}: {{{ast.unparse(part.value)}}} in {text}"
-                        )
-            if (
-                isinstance(node, ast.Call)
-                and isinstance(node.func, ast.Attribute)
-                and node.func.attr in {"warning", "info", "error", "debug", "exception"}
-                and isinstance(node.func.value, ast.Name)
-                and node.func.value.id.lower().endswith("log")
-            ):
-                found += [
-                    f"{module}:{node.lineno}: log argument {ast.unparse(arg)}"
-                    for arg in node.args[1:]
-                    if _config_derived(arg)
-                ]
-    return found
+    return isinstance(expr, ast.Constant) and isinstance(expr.value, str)
+
+
+def _message_nodes(tree):
+    """Every place that builds message text: an f-string, `"..." % x`, `"...".format(x)`, `"..." + x`, `raise X(x)`
+    and an argument of a log call. Yields (node, derived_text_found)."""
+    import ast
+
+    for node in ast.walk(tree):
+        hit, site = False, node
+        if isinstance(node, ast.JoinedStr):
+            hit = any(isinstance(p, ast.FormattedValue) and _config_derived(p) for p in node.values)
+        elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mod) and _is_text(node.left):
+            hit = _config_derived(node.right)
+        elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+            hit = (_is_text(node.left) or _is_text(node.right)) and _config_derived(node)
+        elif (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "format"
+            and _is_text(node.func.value)
+        ):
+            hit = any(_config_derived(a) for a in [*node.args, *(k.value for k in node.keywords)])
+        elif isinstance(node, ast.Raise) and isinstance(node.exc, ast.Call):
+            # a `%`, `+` or f-string argument is its own site below; here only the bare value
+            hit = any(_config_derived(a) for a in node.exc.args if not isinstance(a, ast.BinOp))
+            site = node.exc  # the call is the unit that is allowed by its source text
+        elif (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr in LOG_METHODS
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id.lower().endswith("log")
+        ):
+            hit = any(_config_derived(a) for a in node.args[1:])
+        if hit:
+            yield site
+
+
+def _src_sources() -> dict[str, str]:
+    """Every module under src/hadavin_sdk, found by walking, as {relative path: text}."""
+    base = ROOT / "src" / "hadavin_sdk"
+    return {
+        p.relative_to(base).as_posix(): p.read_text(encoding="utf-8")
+        for p in sorted(base.rglob("*.py"))
+    }
+
+
+def _guard_violations(sources=None, allowed=None, exempt=None):
+    """(violations, stale): a message site that prints text from a configuration under a known spelling and is not
+    allowed, and an allowed entry that no longer matches any site. `sources` is {module path: source text}."""
+    import ast
+
+    sources = _src_sources() if sources is None else sources
+    allowed = GUARD_ALLOWED if allowed is None else allowed
+    exempt = GUARD_EXEMPT_MODULES if exempt is None else exempt
+    found, matched = [], set()
+    for module, text in sources.items():
+        if any(module.startswith(e) for e in exempt):
+            continue
+        for node in _message_nodes(ast.parse(text)):
+            key = (module, ast.unparse(node))
+            if key in allowed:
+                matched.add(key)
+            else:
+                found.append(f"{module}:{node.lineno}: {ast.unparse(node)}")
+    stale = [f"{k[0]}: {k[1]}" for k in allowed if k not in matched]
+    stale += [
+        f"exempt {e}: no such module" for e in exempt if not any(m.startswith(e) for m in sources)
+    ]
+    return found, stale
 
 
 def test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter():
-    """The class (Issue 4 of round 8): a name, id, key or path that a configuration file holds is printed only through
-    `shown_name` (or said by position or as the field). Looks at every f-string and every log argument of the modules
-    that build messages; the allowed exceptions are listed above with their reason."""
-    assert not (found := _guard_violations()), "\n".join(found)
+    """The class (Issue 4 of round 8): text that a configuration file holds is printed only through `shown_name` (or
+    said by position or as the field). Looks at every f-string, `%`, `.format`, `+`, `raise X(name)` and log argument
+    of every module under src, for the KNOWN spellings listed above; the allowed exceptions have a reason, and an
+    exception that no longer matches a site is itself a failure."""
+    found, stale = _guard_violations()
+    assert not found, "\n".join(found)
+    assert not stale, "stale GUARD_ALLOWED / GUARD_EXEMPT_MODULES entries:\n" + "\n".join(stale)
 
 
-def test_the_guard_sees_a_name_printed_outside_the_filter(tmp_path, monkeypatch):
-    """The guard fails on the pattern it is for: the same scan over a module with one raw name."""
-    import ast
-
-    bad = ast.parse('raise ValueError(f"secret {name} cannot be read")')
-    assert any(
-        isinstance(p, ast.FormattedValue) and _config_derived(p.value)
-        for n in ast.walk(bad)
-        if isinstance(n, ast.JoinedStr)
-        for p in n.values
+def test_the_guard_finds_each_way_of_printing_a_configured_name_and_a_stale_allowance():
+    """The self-test: the scan itself runs on a synthetic module holding one site of every kind the first guard
+    missed (the spelling `root` and `case`, a subscript, `%`, `.format`, `str()`, `+`, `raise X(name)`) and a log
+    argument, plus the filtered spellings that must pass; and a stale allowance is reported."""
+    lines = [
+        'raise A(f"dir {root} is bad")',
+        'raise A(f"case {case!r}")',
+        "raise A(f\"x {case['input_ref']}\")",
+        "raise A(f\"x {golden['id']}\")",
+        'raise A("x %s" % name)',
+        'raise A("x %s %s" % (path, 1))',
+        'raise A("x {}".format(agent_id))',
+        'raise A("x " + str(module))',
+        "raise A(name)",
+        '_LOG.warning("x %s", host)',
+        "raise A(f\"x {cfg.get('id')}\")",
+        # the filtered and the code-owned forms must pass:
+        'raise A(f"x {shown_name(name)}")',
+        'raise A("x " + shown_name(name))',
+        'raise A("x %s" % shown_name(name))',
+        'raise A("a fixed sentence")',
+        'raise A(f"position {i}")',
+    ]
+    synthetic = {"m.py": "\n".join(lines)}
+    found, stale = _guard_violations(synthetic, allowed={}, exempt={})
+    assert len(found) == 11, "\n".join(found)
+    found, stale = _guard_violations(
+        synthetic,
+        allowed={("m.py", "A(name)"): "r", ("m.py", "A(f'never printed {name}')"): "stale"},
+        exempt={"gone/": "a module that does not exist"},
     )
-    ok = ast.parse('raise ValueError(f"secret {shown_name(name)} cannot be read")')
-    assert not any(
-        isinstance(p, ast.FormattedValue) and _config_derived(p.value)
-        for n in ast.walk(ok)
-        if isinstance(n, ast.JoinedStr)
-        for p in n.values
-    )
+    assert len(found) == 10 and not any("A(name)" in f for f in found)
+    assert stale == ["m.py: A(f'never printed {name}')", "exempt gone/: no such module"], stale
 
 
 # ---- Issue 7: a library error out of a validator, and a configuration that cannot be read ---------------------------
@@ -3311,6 +3425,7 @@ def test_a_manifest_entry_with_a_non_text_key_is_a_config_error_and_ports_are_co
 def test_a_registry_file_entry_that_is_not_a_mapping_says_which_entry(cfg_dir):
     (cfg_dir / "chains.yaml").write_text("- just a text\n", encoding="utf-8")
     exc = _first_error(lambda: load_registry(load_config(cfg_dir)))
+    assert "entry 1" in str(exc), str(exc)
     assert str(exc) == "chains.yaml: entry 1 is not a mapping"
 
 
@@ -3368,4 +3483,224 @@ def test_a_kubernetes_api_url_with_a_login_does_not_put_the_url_in_the_raw_error
 
     with pytest.raises(ValidationError) as err:
         KubernetesSettings(api_url="https://" + USER + ":" + PW + "@h.example", namespaces=("a",))
-    assert PW not in str(err.value) and USER not in str(err.value)
+    assert PW not in str(err.value) and USER not in str(err.value), "a login in the URL is echoed"
+
+
+# ---- round 9: field names stay visible, references to secrets are never printed, the other message sites ---------------
+PLAIN = (
+    "swordfish" + "-pw"
+)  # a plain lower-case word: it passes the word-like test, so only position or field may be said
+
+
+def test_a_tool_manifest_field_name_is_shown_even_inside_the_loaded_ids_context():
+    """Issue 1 of round 8: `max_output_bytes` is a field of the code's own model, not a configured value; the loaded
+    set holds ids from the file, so the membership test must not be applied to it."""
+    from hadavin_sdk.errors import loaded_ids
+    from hadavin_sdk.tools import parse_manifest
+
+    entry = {"name": "a_tool", "function": "m:f", "description": "d", "input_schema": {}}
+    entry |= {"side_effect": "none", "max_output_bytes": 0}
+    with loaded_ids(["a_tool"]), pytest.raises(ConfigError) as err:
+        parse_manifest([entry], "tools/a.yaml")
+    assert "max_output_bytes" in str(err.value), str(err.value)
+    assert str(err.value) == "tools/a.yaml: invalid tool entry (max_output_bytes)"
+    with loaded_ids(["a_tool"]), pytest.raises(ConfigError) as err:
+        parse_manifest([{**entry, "max_output_bytes": 1, PLAIN: 1}], "tools/a.yaml")
+    assert PLAIN not in str(err.value) and "<unknown key>" in str(
+        err.value
+    )  # a pasted key is still hidden
+
+
+def test_the_mounted_folder_provider_never_says_a_name_or_the_configured_dir(tmp_path):
+    import os
+
+    from hadavin_sdk.actions import secrets_file
+
+    pasted = tmp_path / ("not-a-folder-" + PLAIN)
+    pasted.write_text("x", encoding="utf-8")
+    with pytest.raises(ConfigError) as err:
+        secrets_file.build(SimpleNamespace(dir=str(pasted), ttl_s=0), None)
+    assert "not-a-folder" not in str(err.value), str(err.value)
+    assert str(err.value) == "secrets mounted_file: the configured dir is not a folder"
+    root = tmp_path / "mount"
+    root.mkdir()
+    provider = secrets_file.build(SimpleNamespace(dir=str(root), ttl_s=0), None)
+    (root / PLAIN).mkdir()  # a folder, not a file
+    open_ok = root / (PLAIN + "-open")
+    open_ok.write_text("v", encoding="utf-8")
+    os.chmod(open_ok, 0o644)  # readable by every user
+    for name in (PLAIN, PLAIN + "-open", PLAIN + "-missing"):
+        with pytest.raises(ConfigError) as err:
+            provider.get(name)
+        assert "swordfish" not in _everything_shown(err.value), str(err.value)
+
+
+def test_a_plain_word_in_a_platform_secret_field_is_named_by_the_field(cfg_dir):
+    from hadavin_sdk.backends import platform_secrets as ps
+
+    field = "token_secret" + "_name"
+    Settings = __import__("pydantic").create_model("Settings", **{field: (str, PLAIN)})
+
+    class Missing:
+        def get(self, name):
+            raise KeyError(name)
+
+    with pytest.raises(ConfigError) as err:
+        ps.check(Missing(), [Settings()], set())
+    assert "swordfish" not in str(err.value), str(err.value)
+    assert (
+        str(err.value)
+        == f"the secret set in Settings.{field} cannot be read at start-up (KeyError)"
+    )
+    assert "swordfish" not in _everything_shown(err.value)
+    with pytest.raises(ConfigError) as err:
+        ps.check(Missing(), [Settings()], {PLAIN})  # also an executor's: said by field, not by name
+    assert "swordfish" not in str(err.value)
+    with pytest.raises(ConfigError) as err:
+        ps.check(Missing(), [], {PLAIN, "other-one"})
+    assert "swordfish" not in str(err.value) and "action executor secret" in str(err.value)
+
+
+def test_a_tool_secret_that_is_too_short_is_named_by_position_not_by_name():
+    from hadavin_sdk import tools as tools_mod
+
+    spec = tools_mod.ToolSpec(
+        name="a_tool", function="m:f", description="d", input_schema={"type": "object"},
+        side_effect="none", secret_names=("first-one", PLAIN),
+    )  # fmt: skip
+    ctx = tools_mod.ToolContext(spec, 3.0, secret_resolver=lambda n: "x")
+    with pytest.raises(tools_mod.ToolRefused) as err:
+        ctx.secret(PLAIN)
+    assert "swordfish" not in str(err.value), str(err.value)
+    assert str(err.value).startswith("secret 2 of this tool's secret_names is shorter than")
+
+
+def test_the_runtime_names_an_agent_and_an_action_only_through_the_filter(tmp_path, monkeypatch):
+    """Issue 5 of round 8: a loaded id that is not word-like (here 41 characters) is `<not shown>` in every message
+    of the runtime start-up and of the golden checks."""
+    from hadavin_sdk.runtime import agent_loop
+
+    long_id = "a" * 41
+    golden = tmp_path / "golden.jsonl"
+    golden.write_text('{"nothing": 1}\n', encoding="utf-8")
+    registry = SimpleNamespace(
+        golden_path=lambda a: golden,
+        agents={
+            long_id: SimpleNamespace(scope_allowed=[long_id], tools_allowed=[], model_route="r")
+        },
+        contracts={long_id: object()},
+        config=SimpleNamespace(
+            inputs_dir=tmp_path,
+            routes={"r": SimpleNamespace(model_id="m")},
+            evidence=SimpleNamespace(stored_kinds=[]),
+        ),
+        prompt_sha256=lambda a: "p",
+        config_hash=lambda a: "c",
+        golden_sha256=lambda a: "g",
+    )
+    with pytest.raises(ConfigError) as err:
+        agent_loop._check_golden_refs(registry, long_id)
+    assert str(err.value) == "golden set of agent <not shown>: bad golden line 1"
+    golden.unlink()
+    monkeypatch.setattr(agent_loop, "qualified_runs", lambda r: [])
+    with pytest.raises(agent_loop.Unqualified) as err:
+        agent_loop.assert_qualified(registry, long_id)
+    assert str(err.value) == "<not shown>"
+    monkeypatch.setattr(agent_loop, "assert_qualified", lambda r, a: None)
+    monkeypatch.setattr(agent_loop, "identifier_inputs", lambda c: ["host"])
+    with pytest.raises(ValueError) as err:
+        agent_loop.Runtime(registry, None, None, None, None, None, [long_id])
+    assert str(err.value).startswith("agent <not shown>: action <not shown> has identifier inputs")
+    assert long_id not in _everything_shown(err.value)
+
+
+def test_every_secret_provider_says_no_name_for_a_plain_word_and_imports_no_name_filter():
+    """Issue 2 of round 8 for each provider kind: a plain lower-case word pasted into a secret name field is never
+    quoted (the word-like test would let it through, and the loaded-ids test is vacuous for secret names)."""
+    from tests.contracts.kinds import KINDS, builtin, secrets_cloud, secrets_neutral  # noqa: F401 - they register the kinds
+
+    assert {
+        "aws_secrets_manager",
+        "azure_key_vault",
+        "gcp_secret_manager",
+        "mounted_file",
+        "vault",
+        "env",
+    } <= set(KINDS["secrets"]), sorted(KINDS["secrets"])
+    for kind, make_kind in sorted(KINDS["secrets"].items()):
+        provider = make_kind(Path(__import__("tempfile").mkdtemp()), {"known": "v" + "-value"})
+        try:
+            provider.get(PLAIN)
+        except KeyError:  # the in-memory test double
+            continue
+        except ConfigError as exc:
+            assert "swordfish" not in _everything_shown(exc), (kind, str(exc))
+        else:
+            raise AssertionError(f"{kind}: a name that does not exist must be refused")
+    for path in sorted((ROOT / "src" / "hadavin_sdk" / "actions").glob("secrets_*.py")):
+        assert "shown_name" not in path.read_text(encoding="utf-8"), (
+            f"{path.name}: a secret name is a reference field and is never printed, even when it looks plain"
+        )
+
+
+def test_a_golden_case_that_cannot_be_redacted_is_named_by_position_not_by_its_values(cfg_dir):
+    """Issue 4 of round 8: the id and the input_ref come from the golden file, so neither is printed."""
+    import json
+
+    from hadavin_sdk import defaults, evals
+
+    cfg = load_config(cfg_dir)
+    golden = cfg.golden_dir / "test-agent.jsonl"
+    lines = golden.read_text(encoding="utf-8").splitlines()
+    first = json.loads(lines[0])
+    first["id"], first["input_ref"] = "swordfish" + "-id", "swordfish" + "-ref.txt"
+    golden.write_text("\n".join([json.dumps(first), *lines[1:]]) + "\n", encoding="utf-8")
+    (cfg.inputs_dir / first["input_ref"]).write_bytes(b"x" * (defaults.MAX_REDACT_CHARS + 10))
+    reg = load_registry(cfg)
+
+    class Never:
+        def chat(self, *a, **k):
+            raise AssertionError("the model must not be reached")
+
+    with pytest.raises(ConfigError) as err:
+        evals.gate(reg, Never(), "test-agent")
+    text = str(err.value)
+    assert "swordfish" not in text, text
+    assert text.startswith("golden case 1 (the non-empty line of that number in the golden file)")
+    assert "swordfish" not in _everything_shown(err.value)
+
+
+def test_the_vault_sign_in_refusal_names_the_method_from_the_validated_kind_and_nothing_else():
+    from hadavin_sdk.actions import secrets_vault
+
+    provider = SimpleNamespace(call=lambda *a: (400, {"auth": {"client_token": PLAIN}}))
+    for kind in ("approle", "kubernetes"):
+        with pytest.raises(ConfigError) as err:
+            secrets_vault._login_with(provider, "mount-" + PLAIN, {"role_id": PLAIN}, kind)
+        assert f"({kind})" in str(err.value), str(err.value)
+        assert (
+            str(err.value)
+            == f"secrets vault: the configured auth mount ({kind}): sign-in refused (400)"
+        )
+
+
+def test_a_tool_module_file_that_cannot_be_read_is_refused_by_the_one_reader(tmp_path, monkeypatch):
+    from hadavin_sdk import tools as tools_mod
+
+    folder = tmp_path / ("swordfish" + "-dir")
+    folder.mkdir()  # a folder where the module file should be
+    monkeypatch.setattr(tools_mod, "_module_files", lambda module: [("m", folder)])
+    with pytest.raises(ConfigError) as err:
+        tools_mod.module_sha256("m")
+    assert str(err.value) == "a tool module file (tool_modules): cannot be read (IsADirectoryError)"
+    assert "swordfish" not in _everything_shown(err.value)
+
+
+def test_a_function_reference_outside_check_modules_is_refused_without_quoting_it():
+    """Round 9 sibling: the reference comes from an action's contract file, so it is never printed."""
+    from hadavin_sdk.actions import executor
+
+    with pytest.raises(PermissionError) as err:
+        executor.resolve(PLAIN + ":run", ["allowed_module"])
+    assert PLAIN not in str(err.value), str(err.value)
+    assert str(err.value) == "a configured function reference is outside check_modules"
