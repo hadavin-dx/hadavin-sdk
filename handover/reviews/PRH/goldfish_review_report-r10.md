@@ -43,8 +43,13 @@ Fix: take the rule from the placeholder the sweep uses (or show the map cannot b
 Scope: split texts, spaced values of no pattern shape, the extra false-withhold rate (126 of 7,950 against 69 on main), and the wrapper and `\e` shapes of group 1 insofar as covering them would withhold more ordinary text.
 AI Suggestion: ESCALATE-to-owner, kept OPEN as OWNER-ONLY. Both reviewers confirm the escalation is fair and found no change of it in batch 10; the fix of group 1 must not widen false withholds beyond what the owner accepts, so the builder reports the clean-corpus rate after the change.
 
+### [Group 8] [independent evidence, runner own fuzz on 9de76195; relates to codebase C5 and group 1] - Major (evidence finding, rated by the lead)
+Scope: `runmap.py:139-144` (`_HEX_ESCAPE`), `tools.py:979-981` (`_HIDDENISH`); runner files `handover/evidence/PRH/9de76195/` (`ownfuzz.py`, fuzz summaries; cells esc_mid/hand/11, esc_mid/shaped/11, esc_pre/shaped/11, esc_each/hand/11).
+Gap (class: batch 10 narrowed the backslash-e rule from "any `\e`" to "only before `[ ] ( )`", and a literal `\e` spelling inside a secret now breaks the masking): on the head a handed-out value with a backslash-e in the middle, or between every character, prints whole; a token-shaped value with a backslash-e in the middle or in front is readable. On `f01a9f8f` the same handed-out texts print the fixed redaction note (so the head is worse than the previous head); `origin/main` shows three of the four rows readable (the backslash-e-between-every-character handed-out row is not readable on main). Two rows are withheld on `f01a9f8f` but not on the head.
+Fix: decide at the choke point how a literal backslash-e inside a value is read (treat it as hidden-character glue inside a value, or keep the wide rule for text that holds a held or token-shaped value), show the four runner cells failing on `9de76195`, add rows and one mutant; state the clean-corpus withheld rate after the change (the old wide rule cost the Windows path `C:\env` the heavy scrub path: keep that fixed).
+
 ### [Group evidence] [independent evidence missing] - Minor
-- The independent runner has not finished: `RESULTS.md` for `9de76195` is a progress stub (queued behind other agents' heavy jobs). Every number above is the builder's own until it lands; its results are added as a follow-up row and may add findings.
+- (Superseded) The independent runner had not finished when this report was first written; its results are now in `RESULTS.md` and the ledger row below: `RESULTS.md` for `9de76195` is a progress stub (queued behind other agents' heavy jobs). Every number above is the builder's own until it lands; its results are added as a follow-up row and may add findings.
 - Builder gaps already listed: full pytest 1 environmental failure (dblink-connect, default socket) not reproduced on a default-socket server; perf timing test failure (known, untouched); `perf --compare-main`, bandit and scan_repo from b793e191 only; Python 3.12, semgrep, zizmor, trivy and pip-audit are IMPOSSIBLE-NOW; the studio bible is not in this environment.
 - The 184-row passing-on-old list is mostly "pin of behaviour" by class (about 113 rows); r8 group 11 and r9 group 2 asked for a reason per test; the builder restates one reason per test for the tests added or changed in batch 11.
 
@@ -54,4 +59,4 @@ One batch-11 builder (Sonnet 5.5) on a new branch `core/prh-b11` from `5c430b6a`
 ## Handoff
 - Accepted fixes (PROPOSE FIX): 6 groups (1 to 6) plus the evidence group, covering 5 Major (D1, D2, D3, C1, C2 merged with C3 to C5, C9, D4), the Minor items (D5 to D7, C3 to C8) and the Nit items (D8 to D10, C9).
 - Escalated: 1 group (7, OWNER-ONLY). Contested: 0. Declined: 0.
-- Remaining unaddressed: all of the above until batch 11 is built, run through independent evidence and reviewed (round 11, no cap on this path). Independent evidence for `9de76195` is still pending.
+- Remaining unaddressed: all of the above until batch 11 is built, run through independent evidence and reviewed (round 11, no cap on this path). Independent evidence for `9de76195` has landed (see group 8 and the evidence row).
