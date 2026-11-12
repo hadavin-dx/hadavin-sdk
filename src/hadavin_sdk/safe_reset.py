@@ -9,7 +9,7 @@ Run it as ``python -m hadavin_sdk.safe_reset --config reset.yaml`` (a dry run: i
 
 The ONE config (a YAML or JSON file; every relative path in it is relative to the data folder):
 
-    stage: demo                  # must be exactly demo; pilot and prod are refused
+    environment: demo            # the stage; must be exactly demo; pilot and prod are refused
     data_dir: ./data             # relative to the config file; the only place anything is deleted
     delete: [app.db, app.log]    # files to delete (names or sub-paths inside data_dir)
     pid_files: [app.pid]         # files holding one process id; a live process refuses the reset
@@ -76,18 +76,18 @@ class ResetConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
 
-    stage: str
+    environment: str
     data_dir: Path
     delete: tuple[str, ...] = Field(default=(), max_length=MAX_ENTRIES)
     pid_files: tuple[str, ...] = Field(default=(), max_length=MAX_ENTRIES)
     lock_files: tuple[str, ...] = Field(default=(), max_length=MAX_ENTRIES)
     ports: tuple[int, ...] = Field(default=(), max_length=MAX_ENTRIES)
 
-    @field_validator("stage")
+    @field_validator("environment")
     @classmethod
-    def _stage(cls, value: str) -> str:
+    def _environment(cls, value: str) -> str:
         if value not in STAGES:
-            raise ValueError(f"stage must be one of {', '.join(STAGES)}")
+            raise ValueError(f"environment must be one of {', '.join(STAGES)}")
         return value
 
     @field_validator("delete", "pid_files", "lock_files")
@@ -321,10 +321,10 @@ def run_reset(
     out = out or sys.stdout
     try:
         cfg, data = load_reset_config(config_path)
-        if is_live(cfg.stage):
+        if is_live(cfg.environment):
             raise Refusal(
                 EXIT_STAGE,
-                f"refused: stage is {cfg.stage}; only {STAGES[0]} may be reset; nothing was deleted",
+                f"refused: environment is {cfg.environment}; only {STAGES[0]} may be reset; nothing was deleted",
             )
         files = _inside(data, cfg.delete)
         pids = _inside(data, cfg.pid_files)

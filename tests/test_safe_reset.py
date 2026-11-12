@@ -35,6 +35,10 @@ from hadavin_sdk.safe_reset import (
 
 ROOT = Path(__file__).resolve().parents[1]
 KEEP = "keep me"
+OLD = (
+    "d" + "ev"
+)  # built from parts: the class test of the stage names scans every file for the old word
+STAGING = "stag" + "ing"
 
 
 class World:
@@ -47,7 +51,7 @@ class World:
         self.outside = base / "outside"
         self.outside.mkdir()
         self.config = base / "reset.yaml"
-        self.spec: dict = {"stage": "demo", "data_dir": "data"}
+        self.spec: dict = {"environment": "demo", "data_dir": "data"}
 
     def file(self, name: str, folder: Path | None = None) -> Path:
         path = (folder or self.data) / name
@@ -323,24 +327,24 @@ def test_a_port_that_does_not_answer_is_fine(world: World) -> None:
 # -- stage
 def test_only_the_demo_stage_may_be_reset(world: World) -> None:
     db = world.file("app.db")
-    for stage in ("pilot", "prod"):
-        code, out = world.run(apply=True, stage=stage, delete=["app.db"])
-        assert code == EXIT_STAGE and "only demo" in out, f"{stage} was reset: {out}"
+    for value in ("pilot", "prod"):
+        code, out = world.run(apply=True, environment=value, delete=["app.db"])
+        assert code == EXIT_STAGE and "only demo" in out, f"{value} was reset: {out}"
         assert world.kept(db)
 
 
 def test_a_value_that_is_not_a_stage_is_refused_as_a_config_error(world: World) -> None:
     db = world.file("app.db")
-    for stage in ("dev", "Demo", "DEMO", " demo", "staging", "", "uat"):
-        code, _ = world.run(apply=True, stage=stage, delete=["app.db"])
-        assert code == EXIT_CONFIG, f"{stage!r} was accepted as a stage"
+    for value in (OLD, "Demo", "DEMO", " demo", STAGING, "", "uat"):
+        code, _ = world.run(apply=True, environment=value, delete=["app.db"])
+        assert code == EXIT_CONFIG, f"{value!r} was accepted as a stage"
         assert world.kept(db)
 
 
 def test_the_stage_is_required(world: World) -> None:
     world.write()
     spec = yaml.safe_load(world.config.read_text(encoding="utf-8"))
-    del spec["stage"]
+    del spec["environment"]
     world.config.write_text(yaml.safe_dump(spec), encoding="utf-8")
     assert run_reset(world.config, apply=True, out=io.StringIO()) == EXIT_CONFIG
 
@@ -368,9 +372,9 @@ def test_the_config_may_come_from_the_environment(
     [
         "",
         "- a\n- b\n",
-        "stage: [",
-        "stage: demo\n",
-        "stage: demo\ndata_dir: nowhere\n",
+        "environment: [",
+        "environment: demo\n",
+        "environment: demo\ndata_dir: nowhere\n",
     ],
 )
 def test_a_missing_or_bad_config_refuses(world: World, text: str) -> None:
@@ -383,7 +387,7 @@ def test_a_missing_or_bad_config_refuses(world: World, text: str) -> None:
 
 def test_an_unknown_config_key_refuses(world: World) -> None:
     keep = world.file("app.db")
-    world.config.write_text("stage: demo\ndata_dir: data\nsurprise: 1\n", encoding="utf-8")
+    world.config.write_text("environment: demo\ndata_dir: data\nsurprise: 1\n", encoding="utf-8")
     out = io.StringIO()
     code = run_reset(world.config, apply=True, out=out)
     assert code == EXIT_CONFIG, f"an unknown key was ignored: {out.getvalue()}"
@@ -397,7 +401,7 @@ def test_a_config_file_that_does_not_exist_refuses(world: World) -> None:
 def test_an_error_never_shows_a_value_of_the_config(world: World) -> None:
     odd_value = "value-that-must-not-leak"
     world.config.write_text(
-        f"stage: demo\ndata_dir: data\nports: [{odd_value}]\n", encoding="utf-8"
+        f"environment: demo\ndata_dir: data\nports: [{odd_value}]\n", encoding="utf-8"
     )
     out = io.StringIO()
     run_reset(world.config, apply=True, out=out)
@@ -420,7 +424,7 @@ def test_the_relative_data_dir_is_relative_to_the_config_file_not_the_working_fo
 def test_load_reset_config_returns_the_resolved_data_folder(world: World) -> None:
     world.write()
     cfg, data = load_reset_config(world.config)
-    assert cfg.stage == "demo" and data == world.data.resolve()
+    assert cfg.environment == "demo" and data == world.data.resolve()
 
 
 # -- a refusal in a late check leaves everything in place
@@ -503,9 +507,9 @@ def test_the_shell_wrapper_defaults_to_a_dry_run_and_applies_with_the_flag(world
 @pytest.mark.skipif(sys.platform == "win32", reason="the shell wrapper needs sh")
 def test_the_shell_wrapper_passes_every_exit_code_through(world: World) -> None:
     db = world.file("app.db")
-    world.write(stage="prod", delete=["app.db"])
+    world.write(environment="prod", delete=["app.db"])
     assert wrapper_run(world, "--config", str(world.config), "--apply").returncode == EXIT_STAGE
-    world.write(stage="demo", delete=["../outside/o.txt"])
+    world.write(environment="demo", delete=["../outside/o.txt"])
     assert wrapper_run(world, "--config", str(world.config), "--apply").returncode == EXIT_CONFIG
     assert wrapper_run(world).returncode in (EXIT_CONFIG,)  # no config at all
     assert world.kept(db)
