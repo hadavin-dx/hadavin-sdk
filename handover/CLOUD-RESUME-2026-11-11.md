@@ -287,3 +287,10 @@ Branches pushed (all new wip refs, plain pushes): wip/cloud-q8a1-b10 f4acee28 (e
 Open owner questions: q-q8a1-hide-ids, q-p3a2-e1-extension-lockout, q-p3a2-o8-schema-owner, q-pr89-mypy-in-lock, q-p3a2-3b-decisions, Vault engine CI run, Q8b-before-PR77 order, stray branch core/prh-b3-local.
 Corrections: the earlier statement that main masked both words after --newpass/--oldpass/--postgresauth/--authorization was wrong: main never matched those flags; the head masks one word (design choice, documented in LIMITS).
 Resume rule: read PULSE.md top, ledger.md tail, reviews/<pkg> newest files; run gitleaks before every push; no merge, no main, no spend.
+
+## Update 03:54Z (2026-11-12)
+Orders: 247 (GO, core lane) newest; last pulled 03:43Z, next by 04:13Z. Owner message ~03:35Z: never defer worthy work for being long; reversed Q8b r7 Issues 10 and 12 (now evidence-runner tasks).
+Running (6): PR H b6 a86c8cbe; Q8a-1 b11 a637adb7; Q8b b7 a37560e1; PR89 EV aae3d1f2; P3a-2 commit 4/5 a6f66b04 (wip/cloud-p3a2-45); Q8c-1 b8 ad640036.
+Resolved this window: Q8b r7, Q8c-1 r7b, P3a-2 3d round 3 (reports in reviews/<pkg>/goldfish_review_report-*.md). P3a-2 batch 3e (D1 Major + 6 fixes) waits for the 4/5 builder (same migrate.py lines). 40003 kept "unknown"; ticket F5 edit asked of the owner (default: code as is).
+Not started: Q8c PR 2 (needs its own ticket), PR85 variant, Q8a-2 nits, PR77 restart, PR74.
+Resume rule: read PULSE.md newest lines, ledger.md tail, reviews/<pkg> newest files; gitleaks before every push; no merge, no main, no spend.
