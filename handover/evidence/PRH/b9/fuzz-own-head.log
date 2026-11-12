@@ -1,0 +1,5 @@
+tree /home/user/build/B-PRH-b9/src/hadavin_sdk/tools.py
+texts=4691 readable_stretch_leaks=306 withheld=454 redaction_errors=2
+leaks_by_category {'rand': 3, 'spaced': 1, 'spaced_esc': 1, 'spaced_unknown': 40, 'split': 261}
+withheld_by_category {'hand': 14, 'key': 30, 'long': 21, 'pw': 72, 'rand': 307, 'split': 10}
+rc=0

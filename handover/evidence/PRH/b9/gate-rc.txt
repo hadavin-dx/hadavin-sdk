@@ -1,4 +1,1 @@
-ruff check rc=0
-ruff format rc=0
-bandit rc=0
-scan_repo rc=0
+ruff=0 fmt=0 bandit=0 scan=0
