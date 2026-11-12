@@ -1,0 +1,12 @@
+    126 tests/test_stage_names.py::test_the_marker_is_in_no_error_text_in_any_probe_row
+     89 tests/test_stage_names.py::test_the_guard_finds_each_planted_fault_alone
+     50 tests/test_guard_reasons.py::test_the_claim_of_each_reason_holds_in_the_code
+     42 tests/test_stage_names.py::test_the_guard_passes_the_filtered_and_code_owned_forms
+     20 tests/test_stage_names.py::test_the_scanner_ignores_words_that_are_not_stage_positions
+     20 tests/test_stage_names.py::test_the_scanner_finds_each_shape_for_each_word
+      8 tests/test_stage_names.py::test_the_scanner_finds_each_old_word_only_shape
+      8 tests/test_stage_names.py::test_the_one_url_type_refuses_a_login_a_look_alike_host_and_a_bad_port_with_a_fixed_sentence
+      7 tests/test_stage_names.py::test_a_secret_shaped_text_typed_as_an_id_is_not_shown_by_any_loaded_id_message
+      6 tests/test_stage_names.py::test_the_reach_between_a_stage_name_and_the_old_word_is_four_characters
+      6 tests/test_stage_names.py::test_each_demo_only_pair_is_named_in_the_pilot_and_prod_refusal
+      6 tests/test_stage_names.py::test_a_stage_that_is_not_a_string_is_refused

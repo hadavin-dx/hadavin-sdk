@@ -1,0 +1,118 @@
+"""EVIDENCE RUNNER own probes (item 6). Markers are built from parts and never appear whole in this file."""
+import io, os, sys, tempfile, contextlib, traceback
+from pathlib import Path
+sys.path.insert(0, os.getcwd())
+from tests.conftest import make_cfg
+from hadavin_sdk import cli
+from hadavin_sdk.models import AuditEvent
+from hadavin_sdk.errors import shown_id
+from hadavin_sdk.audit.local_dir import LocalDirSink
+
+M = lambda tag: "zz" + tag + "Q9" + "x7" * 6          # made-up marker, shaped like a name or key
+rows = []
+def rec(probe, where, out, markers):
+    leaked = [m for m in markers if m in out]
+    rows.append((probe, where, "LEAK" if leaked else "no marker", out[:160].replace("\n", " | ")))
+
+# A: check-config with a configured name in model_id, several shapes
+for shape in ("{m}", "../{m}", "{m}/..\\x", "{m}:stream", "{m} {m}", "{m}‮"):
+    mk = M("A")
+    val = shape.format(m=mk)
+    tmp = Path(tempfile.mkdtemp())
+    d = make_cfg(tmp)
+    f = d / "config.yaml"
+    f.write_text(f.read_text(encoding="utf-8").replace("model_id: fake-model", 'model_id: "%s"' % val), encoding="utf-8")
+    o, e = io.StringIO(), io.StringIO()
+    with contextlib.redirect_stdout(o), contextlib.redirect_stderr(e):
+        try:
+            rc = cli.main(["--config", str(d), "check-config"])
+        except BaseException as exc:
+            rc = "EXC"; e.write(type(exc).__name__ + ": " + str(exc) + repr(exc) + "".join(traceback.format_exception(exc)))
+    rec("check-config model_id=" + shape.replace("{m}", "<M>"), "rc=%s stdout+stderr" % rc, o.getvalue() + e.getvalue(), [mk])
+
+# B: check-config where a library error text (made up) is raised inside the YAML reader
+import yaml
+mk = M("B")
+tmp = Path(tempfile.mkdtemp()); d = make_cfg(tmp)
+orig = yaml.safe_load
+def boom(*a, **k): raise yaml.YAMLError("library says path /srv/" + mk + "/secret.yaml line 3")
+yaml.safe_load = boom
+o, e = io.StringIO(), io.StringIO()
+with contextlib.redirect_stdout(o), contextlib.redirect_stderr(e):
+    try: rc = cli.main(["--config", str(d), "check-config"])
+    except BaseException as exc: rc = "EXC"; e.write(repr(exc) + "".join(traceback.format_exception(exc)))
+yaml.safe_load = orig
+rec("check-config yaml library error text", "rc=%s" % rc, o.getvalue() + e.getvalue(), [mk])
+
+# B2: OSError with made-up text on reading config.yaml
+mk = M("C")
+tmp = Path(tempfile.mkdtemp()); d = make_cfg(tmp)
+orig_rt = Path.read_text
+def rt(self, *a, **k):
+    if self.name == "config.yaml": raise OSError(13, "denied for /home/" + mk + "/config.yaml")
+    return orig_rt(self, *a, **k)
+Path.read_text = rt
+o, e = io.StringIO(), io.StringIO()
+with contextlib.redirect_stdout(o), contextlib.redirect_stderr(e):
+    try: rc = cli.main(["--config", str(d), "check-config"])
+    except BaseException as exc: rc = "EXC"; e.write(repr(exc) + "".join(traceback.format_exception(exc)))
+Path.read_text = orig_rt
+rec("check-config OSError text from read_text", "rc=%s" % rc, o.getvalue() + e.getvalue(), [mk])
+
+# C: AuditEvent event_id
+base = dict(run_id="run-" + "0" * 32, domain="d", operation="o", principal="p", source="s")
+import inspect
+for shape in ("{m}", "../{m}", "..\\{m}", "/etc/{m}", "{m}:ads", "{m} x", "{M}", "con", "nul", "com1", "{m}\n", "{m}\x00", "a" * 129, ".{m}", "{m}.json"):
+    mk = M("D"); val = shape.format(m=mk, M=mk.upper())
+    try:
+        ev = AuditEvent(event_id=val, **base)
+        res = "ACCEPTED"
+        out = res
+    except BaseException as exc:
+        out = type(exc).__name__ + " str=" + str(exc) + " repr=" + repr(exc) + " errors=" + (str(exc.errors()) if hasattr(exc, "errors") else "")
+    rec("AuditEvent event_id=" + shape.replace("{m}", "<M>").replace("{M}", "<M-upper>").encode("unicode_escape").decode(), "validation", out, [mk, mk.upper()])
+
+# D: shown_id
+for shape in ("{m}", "evt-" + "{m}", "evt-" + "0" * 32, "run-" + "0" * 32, "{m}\n", "evt-" + "0" * 32 + "\n", "../{m}", "evt-{m}"):
+    mk = M("E"); val = shape.format(m=mk)
+    r = shown_id(val)
+    rec("shown_id(%r)" % shape.replace("{m}", "<M>")[:50], "returns %r" % (r if mk not in r else "<contains marker>"), r, [mk])
+rec("shown_id(non-str 12345)", "returns %r" % shown_id(12345), shown_id(12345), [])
+class S(str):
+    def __str__(self): return "marker-in-str-override"
+rec("shown_id(str subclass overriding __str__)", "", shown_id(S("evt-" + "0" * 32)), ["marker-in-str-override"])
+
+# E: local_dir with an event that skipped validation
+for shape in ("../{m}", "{m}/x", "{m}", "{M}", "con"):
+    mk = M("F"); val = shape.format(m=mk, M=mk.upper())
+    root = Path(tempfile.mkdtemp())
+    ev = AuditEvent.model_construct(event_id=val, ts=None, **base)
+    sink = LocalDirSink(root)
+    try:
+        sink.write_intent(ev); out = "WRITTEN"
+    except BaseException as exc:
+        out = type(exc).__name__ + ": " + str(exc) + repr(exc)
+    files = sorted(str(p.relative_to(root.parent)) for p in root.parent.rglob("*") if p.is_file() and root in p.parents or p.parent == root)
+    made = [f for f in files if mk.lower() in f.lower()]
+    rec("local_dir write_intent event_id=" + shape.replace("{m}", "<M>").replace("{M}", "<M-upper>"), "files with marker made: %d; outside root escape: %s" % (len(made), any((root.parent / ".." ).exists() and False for _ in [0])), out, [mk, mk.upper()])
+    # also check nothing escaped to root's parent
+    esc = [p for p in root.parent.iterdir() if mk.lower() in p.name.lower()]
+    rows[-1] = rows[-1][:1] + (rows[-1][1] + "; escaped files in parent: %d" % len(esc),) + rows[-1][2:]
+
+# F: outbox path via a sink whose objects folder is unwritable (OSError text made up)
+mk = M("G")
+root = Path(tempfile.mkdtemp()); sink = LocalDirSink(root)
+ev = AuditEvent(**base)
+orig_mk = Path.mkdir
+def mkd(self, *a, **k): raise OSError(28, "no space at /mnt/" + mk)
+Path.mkdir = mkd
+try:
+    r = sink.write_intent(ev); out = "returned %r" % (r,)
+except BaseException as exc:
+    out = type(exc).__name__ + ": " + str(exc) + repr(exc)
+Path.mkdir = orig_mk
+rec("local_dir write_intent OSError text", "", out, [mk])
+
+w = max(len(r[0]) for r in rows)
+for r in rows: print("%s | %s | %s | %s" % (r[0], r[1], r[2], r[3]))
+print("TOTAL", len(rows), "LEAK rows:", sum(r[2] == "LEAK" for r in rows))
