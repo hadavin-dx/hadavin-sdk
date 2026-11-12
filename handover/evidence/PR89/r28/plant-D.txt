@@ -1,0 +1,3 @@
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_keywords.py::test_that_ci_does_not_run_the_mypy_count_is_true_of_the_workflow_and_the_lock_file
+1 failed, 1 passed, 301 deselected in 0.65s

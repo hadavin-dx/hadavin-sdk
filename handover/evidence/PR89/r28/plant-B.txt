@@ -1,0 +1,3 @@
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_meta.py::test_the_header_names_the_killers_that_drop_a_case_by_the_system_name_and_both_lists_are_checked
+1 failed, 13 deselected in 0.33s

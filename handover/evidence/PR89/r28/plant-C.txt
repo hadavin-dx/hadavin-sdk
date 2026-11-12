@@ -1,0 +1,4 @@
+tests/test_zz_old_reader_scratch.py:443: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_zz_old_reader_scratch.py::test_every_decorator_is_read_even_after_a_true_mark_and_an_unreadable_one_raises
+1 failed, 11 deselected in 0.07s

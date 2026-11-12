@@ -6021,7 +6021,7 @@ MYPY_FLAGS = (
 )
 @pytest.mark.parametrize("python_version", ["3.12", "3.13"])
 def test_mypy_for_win32_reports_the_errors_the_texts_count(python_version, tmp_path):
-    """RUNS mypy (the two Python versions the package supports) and compares: 12 errors are the POSIX-only names of the table, and one is the
+    """RUNS mypy (the two Python versions the package supports) and compares: 13 errors are the POSIX-only names of the table, and one is the
     import of ``hadavin_sdk.testing.mutation`` (untyped, or not found where the package is not installed). The count of the texts is the
     measured one, on both versions: ``os.fchmod`` would make it 15 on 3.12. CI does NOT run this test (mypy is not in the locked test
     environment), so the count is not checked there: ``test_a_new_os_or_signal_name_is_noticed...`` counts the places in CI. The output is read

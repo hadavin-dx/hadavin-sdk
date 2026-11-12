@@ -445,6 +445,24 @@ def test_the_header_names_the_killers_that_drop_a_case_by_the_system_name_and_bo
     assert len(set(named)) == len(named) == 2 and not set(named) & set(STILL_KILLED_ON_WINDOWS)
 
 
+def test_the_folder_link_killer_never_skips_and_the_header_says_so():
+    """The killer of "a link out of the tree is accepted" links a FOLDER through ``_dir_link`` (a junction on Windows, a symbolic link elsewhere), so the
+    skip of ``_symlink_or_skip`` cannot fire for it on any system. The header names it in the body-skip list only because the reader follows the helper
+    statically. The prose of the header must say that it never skips, and must not call it a survivor; the killer itself must hold no ``pytest.skip`` call."""
+    name = "runner: a link out of the tree is accepted"
+    killer = next(m for m in mm.M if m.name == name)
+    functions = _functions_of(RUNNER_TESTS)[0]
+    assert not any(
+        isinstance(node, ast.Call) and _dotted(node.func) == "pytest.skip"
+        for node in ast.walk(functions[killer.only_test])
+    ), "the killer calls pytest.skip itself"
+    paragraphs = [
+        p for p in (mm.__doc__ or "").split("\n- ") if f'"{name[len("runner: ") :]}"' in p
+    ]
+    assert len(paragraphs) == 1, f"the prose that names the killer: {len(paragraphs)} paragraphs"
+    assert "NEVER skips" in paragraphs[0] and "SURVIVES" not in paragraphs[0], paragraphs[0][:200]
+
+
 def test_every_decorator_is_read_even_after_a_true_mark_and_an_unreadable_one_raises():
     """The old reader stopped at the first mark that is true (``posix_only``), so an unreadable decorator after it was never read. Same for the parts of a module-level ``pytestmark``."""
     function = ast.parse("@posix_only\n@some.decorator\ndef test_a(): pass\n").body[0]
