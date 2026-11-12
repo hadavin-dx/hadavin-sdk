@@ -1,6 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## 19:13Z: status (ORDER 257 answered)
+- AK1-a: builder started (core/ak1-a from main 2a8c2aac, push wip/cloud-ak1-a). Q8b b14: gate-fix builder started (class: load-dependent kill; full gate at final head, then ONE evidence runner, then reviews; no review round before). Part 5: already pushed (wip/cloud-pd-reset 39434e8c); the two nosec comments are removed (not justified); gitleaks clean (I ran it); gates still queued in heavy.sh; EGM review owed.
+- CORRECTION to my READY-TO-MERGE item 1 (security job): see OQ-38. Real causes: draft PRs skip CI; stacked PRs get no run; #89 fails security on Semgrep chmod 0o700; gitleaks history scan may fail branches with handover strings (not seen in a log). #71/#72 pass because they branch from main.
+- Part 3 (kind classification, loopback stand-ins) review r1 codebase: 0 Blocker, 2 Major (loopback sets not consolidated; CHANGELOG lists 6 stand-ins, code has 7), 5 Minor. Design review pending. Saved handover/reviews/PD-standins/.
+- PRH b12 builder done: head 8f7c376a (wip/cloud-prh-b12); final-head gates NOT run (all 3 slots busy); issue 10 not built, issue 12 owner-only. Gate run then evidence runner needed.
+
 ## 19:08Z: status (ORDER 255/256)
 - READY-TO-MERGE.md exists (handover/core/READY-TO-MERGE.md): READY 2 (#71, #72), NEEDS-ROUND 8, NEEDS-REBASE 6, PARKED 14. Not yet verified by me beyond the helper's report.
 - ORDER 256 D: 3 stack rebase builders started 19:08Z (S1 money store, S2 text folding, S3 diagnostics); new refs wip/cloud-rebase-*, no force-push.
