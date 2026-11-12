@@ -121,8 +121,8 @@ def test_committed_table_is_in_canonical_form() -> None:
 # OPERATOR is a claim about the producers of a value that the scan cannot prove (every OPERATOR site is "unproven-origin" to
 # the scan, and the table has no proof column), so the SET of OPERATOR keys is pinned too: swapping one FOREIGN row for an
 # OPERATOR row keeps the counts but changes the fingerprint. To change a pin: review the row, then paste the printed value.
-PINNED_COUNTS = {"LITERAL": 42, "OPERATOR": 134, "FOREIGN": 27}
-PINNED_FINGERPRINTS = {"OPERATOR": "48b6d509d3bc13a8", "FOREIGN": "87305e2f9f6d5875"}
+PINNED_COUNTS = {"LITERAL": 42, "OPERATOR": 135, "FOREIGN": 27}
+PINNED_FINGERPRINTS = {"OPERATOR": "d7912f3d88148787", "FOREIGN": "87305e2f9f6d5875"}
 
 
 def pin_problems(rows: list[Any]) -> list[str]:

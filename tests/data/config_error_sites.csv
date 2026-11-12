@@ -30,6 +30,7 @@ app.py::_toolbox::4424acfc8d2dad46::1,OPERATOR,tool name from the tool manifest 
 app.py::build::036d0056cc1554c4::1,FOREIGN,scope_problems pastes resource names from the cluster rules-review answer (a response); only checked to be strings
 app.py::build::12e8ef4068fc91b0::1,LITERAL,
 app.py::build::241443c47ff280d7::1,LITERAL,
+app.py::build::689a416dabcc4512::1,OPERATOR,names of the keyword parameters of build() itself (its signature) plus fixed words; the tool cannot prove the origin
 app.py::build::8cbd8171129655b2::1,LITERAL,
 app.py::build::8ee4ab9f9d6da551::1,OPERATOR,_unprobed_tools: tool names from the manifest plus fixed words
 app.py::build::92f4ad4a6fc228e8::1,LITERAL,
