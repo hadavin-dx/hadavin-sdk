@@ -1,7 +1,7 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
 
-## 22:50Z / 04:20 IST (status on request; guard and timing fix NOT clean yet)
+## 22:46Z / 04:16 IST (status on request; guard and timing fix NOT clean yet)
 FAILED / UNCERTAIN FIRST: (1) Guard (wip/cloud-ci-guard-wip 0cd2af4e): NOT yet clean. Round 4 settled 0 Blocker, 0 Major; minors pushed; the builder's full suite at 0cd2af4e had 1 failure, the timing flake (also fails on origin/main). The independent delta run (0121aaa0 to 0cd2af4e) has NOT started: I am starting it now; I will say "guard clean" only when it is green on 0cd2af4e. Open item: probe P6b (ledger CIGUARD-r4-p6b, a commit on both a lane ref and a non-lane branch passes the range check; the HEAD check is the control; not fixed). (2) Timing fix (wip/cloud-timing-flake a3c94be5): NOT clean and NOT verified. Round 1 found 3 Majors; the fix builder (aa177c8e) has not pushed; the 30-of-30 busy-load runs, mutants and full suite have not run. (3) Part 2 batch 5 (ae9b4633), Part 6 batch 5 (a90e009f) and Q8c-1 batch 17 (ad6040de): builders running, nothing pushed; each needs round 5 (Q8c-1 round 17) after the push. Nothing is ready to merge.
 LEAD ACTIONS: guard PR CANDIDATE LIST, in order: (a) guard 0cd2af4e (needs delta evidence), (b) timing fix (needs fix push, gates, round 2), (c) Part 2 batch 5, (d) Part 6 batch 5, (e) Q8c-1 batch 17. Owner-only items unchanged (ruleset on wip/cloud-* and the three fixed names; tag-creation limit; CODEOWNERS). I will tell you the moment the guard and the timing fix are clean.
 
