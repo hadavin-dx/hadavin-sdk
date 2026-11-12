@@ -1,0 +1,51 @@
+code under test: 5c430b6a (the batch 10 head); tests/test_prh_b11.py as shipped at 242dfd66 (the batch 11 head). Output without local values (--tb=no) so no made-up secret-shaped value is printed.
+  warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+  FFFFFF.FFFFFFFFFFFFFFFFF..FFF.....F.............F.F.F.FFFFFFF.FF.FF..FFF [ 97%]
+  .F                                                                       [100%]
+  =========================== short test summary info ============================
+  FAILED tests/test_prh_b11.py::test_b11_g4_found_values_lets_a_crash_of_the_redactor_pass
+  FAILED tests/test_prh_b11.py::test_b11_g4_found_values_refuses_for_any_other_refusal_of_the_redactor
+  FAILED tests/test_prh_b11.py::test_b11_g4_a_crash_in_the_last_guard_stops_the_tool_path
+  FAILED tests/test_prh_b11.py::test_b11_g4_safe_head_lets_a_crash_pass_and_notes_a_refusal
+  FAILED tests/test_prh_b11.py::test_b11_g4_error_reason_lets_a_crash_pass_and_notes_a_refusal
+  FAILED tests/test_prh_b11.py::test_b11_g4_first_decoded_lets_a_crash_pass_and_reads_a_refusal_as_the_character
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[\u201c\u201d|201c]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[\u2018\u2019|2018]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[\xab\xbb|ab]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[\u300c\u300d|300c]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[$|24]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[#|23]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[@|40]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[%|25_0]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[&|26]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[+|2b]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[/|2f0]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[\\|5c]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[^|5e]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[!|21_0]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[?|3f0]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[-|2d]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[\u201d|201d]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[\xbb|bb]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[/|2f1]
+  FAILED tests/test_prh_b11.py::test_b11_g1_any_character_that_is_no_letter_digit_or_mark_glued_to_a_spaced_key_is_a_wrapper[%|25_1]
+  FAILED tests/test_prh_b11.py::test_b11_g1_the_word_class_is_every_letter_digit_and_mark_of_unicode
+  FAILED tests/test_prh_b11.py::test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these[abcdef\\eghijkl-True]
+  FAILED tests/test_prh_b11.py::test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these[\\eabcdefghijkl-True]
+  FAILED tests/test_prh_b11.py::test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these[q\\eZ\\e7-True]
+  FAILED tests/test_prh_b11.py::test_b11_g2_a_secret_that_is_only_a_piece_of_a_held_identifier_is_not_already_found
+  FAILED tests/test_prh_b11.py::test_b11_g2_a_copy_outside_every_held_value_is_not_covered_by_a_held_value_that_contains_it
+  FAILED tests/test_prh_b11.py::test_b11_g2_a_view_with_no_copy_of_the_value_is_not_proved_covered
+  FAILED tests/test_prh_b11.py::test_b11_g2_a_view_that_alone_found_the_only_spaced_copy_of_a_shorter_secret_is_not_dropped
+  FAILED tests/test_prh_b11.py::test_b11_g5_the_reads_of_every_view_are_counted_in_the_one_budget_of_the_call
+  FAILED tests/test_prh_b11.py::test_b11_g5_a_read_is_counted_against_the_call_and_the_clock_before_it_runs
+  FAILED tests/test_prh_b11.py::test_b11_g5_the_automaton_of_the_held_values_is_built_once_per_map_version
+  FAILED tests/test_prh_b11.py::test_b11_g6_a_value_under_two_placeholders_is_judged_by_the_one_the_sweep_uses[secret first: the sweep masks every copy]
+  FAILED tests/test_prh_b11.py::test_b11_g6_a_value_under_two_placeholders_is_judged_by_the_one_the_sweep_uses[identifier first: the sweep masks only standalone copies]
+  FAILED tests/test_prh_b11.py::test_b11_g8_a_value_with_a_literal_backslash_e_spelled_into_it_is_not_shown[hand-each]
+  FAILED tests/test_prh_b11.py::test_b11_g8_a_value_with_a_literal_backslash_e_spelled_into_it_is_not_shown[hand-mid]
+  FAILED tests/test_prh_b11.py::test_b11_g8_a_value_with_a_literal_backslash_e_spelled_into_it_is_not_shown[shaped-each]
+  FAILED tests/test_prh_b11.py::test_b11_g8_a_value_with_a_literal_backslash_e_spelled_into_it_is_not_shown[shaped-mid]
+  FAILED tests/test_prh_b11.py::test_b11_g8_a_value_with_a_literal_backslash_e_spelled_into_it_is_not_shown[shaped-pre]
+  FAILED tests/test_prh_b11.py::test_b11_g8_the_inside_rule_reads_six_token_characters_on_each_side_and_no_fewer
+  45 failed, 29 passed in 0.31s

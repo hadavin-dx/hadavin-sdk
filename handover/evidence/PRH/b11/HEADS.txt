@@ -10,7 +10,7 @@ clean-corpus-main.txt  tree=origin/main 2a8c2aac
 clean-corpus-old.txt  tree=5c430b6a (clean detached worktree)
 clean_corpus_b11.py  head=63525de6da3666d261cb2caafa7b5449b79bda16
 evidence_numbers.py  head=63525de6da3666d261cb2caafa7b5449b79bda16
-failbefore-b11-new-tests-on-5c430b6a.txt  head=63525de6da3666d261cb2caafa7b5449b79bda16
+failbefore-b11-new-tests-on-5c430b6a.txt  REMOVED in batch 12 (issue 9); regenerated as ../b12/failbefore-b11-new-tests-on-5c430b6a-regenerated.txt
 fuzz-b7-head.txt  head=63525de6da3666d261cb2caafa7b5449b79bda16
 fuzz-b7-main.txt  tree=origin/main 2a8c2aac
 fuzz-b7-old.txt  tree=5c430b6a (clean detached worktree)

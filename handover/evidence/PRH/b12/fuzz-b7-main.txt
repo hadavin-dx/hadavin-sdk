@@ -1,0 +1,1 @@
+tree /home/user/build/PRH-main | texts 3000 | strict withheld 0 | readable windows 1045 | exceptions 0

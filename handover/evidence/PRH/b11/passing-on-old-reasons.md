@@ -1,6 +1,6 @@
 # Tests of `tests/test_prh_b11.py` that PASS on 5c430b6a, with the reason each stays
 
-Raw output: `failbefore-b11-new-tests-on-5c430b6a.txt` (45 failed, 29 passed on a clean detached 5c430b6a plus only the new test file). The 29 passing tests, by id, are in `passed-on-old-list.txt`.
+Raw output: `../b12/failbefore-b11-new-tests-on-5c430b6a-regenerated.txt` (batch 12, issue 9: the first file held made-up token-shaped values in test ids and was removed; this one was regenerated from the shipped tests with no local values printed, same result: 45 failed, 29 passed) (45 failed, 29 passed on a clean detached 5c430b6a plus only the new test file). The 29 passing tests, by id, are in `passed-on-old-list.txt`.
 
 | Tests (id fragment) | Reason it passes on the old code and why it stays |
 |---|---|

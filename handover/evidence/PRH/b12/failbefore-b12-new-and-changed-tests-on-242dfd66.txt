@@ -1,0 +1,1810 @@
+head: 242dfd662227da9b609add230dd1e99e5af164ed
+  warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+  FFF.FFF.FFFFFFFFFFFFFFFFFFFFFFF...............FFFFF.......FFFFFFFFFFFFF. [ 31%]
+  ....FFFF...FF.FFFFFF............FFF.F................................... [ 62%]
+  F............F.F...F...................F................................ [ 93%]
+  ...............                                                          [100%]
+  =================================== FAILURES ===================================
+  ____ test_b12_i1_the_approval_summary_lets_a_crash_pass_and_notes_a_refusal ____
+  
+  monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f8b05c0e650>
+  
+      def test_b12_i1_the_approval_summary_lets_a_crash_pass_and_notes_a_refusal(monkeypatch):
+          """Issue 1 (class: a crash read as a limit; mutant 186). The summary of an approval card showed "(too large to show here)" for a
+          crash of the redactor and the approval went on."""
+          real = runmap.redact_text
+      
+          def crash_for_the_long_text(text, mapping, neutralise=None):
+              if (
+                  "Expected:" in text
+              ):  # only the full card text; the short fallback line would be accepted
+                  raise runmap.RedactorCrash("RuntimeError")
+              return real(text, mapping, neutralise=neutralise)
+      
+          monkeypatch.setattr(runmap, "redact_text", crash_for_the_long_text)
+  >       with pytest.raises(runmap.RedactorCrash):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  E       Failed: DID NOT RAISE RedactorCrash
+  
+  tests/test_prh_b12.py:79: Failed
+  ____ test_b12_i1_a_crash_while_the_card_is_made_stops_the_run_with_no_card _____
+  
+  live_cfg_dir = PosixPath('/home/user/build/b12p-tmp/pytest-of-root/pytest-15/test_b12_i1_a_crash_while_the_0/config')
+  fake_system = <tests.fixtures.fake_system.FakeSystem object at 0x7f8b05142a50>
+  monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f8b04f4cc30>
+  
+      def test_b12_i1_a_crash_while_the_card_is_made_stops_the_run_with_no_card(
+          live_cfg_dir, fake_system, monkeypatch
+      ):
+          """Issue 1 (mutant 187). The run waits for approval; the request hook raises `RedactorCrash`: the run goes to a person with the
+          reason `redaction_error`; nothing escapes the loop and no card is sent."""
+          from hadavin_sdk import app as app_mod
+          from hadavin_sdk.actions.secrets import FakeSecretProvider
+          from hadavin_sdk.approvals import FakeChannel
+          from tests.conftest import qualify
+          from tests.test_cuj import _doc
+      
+          qualify(load_registry(load_config(live_cfg_dir)))
+          channel = FakeChannel("sig" + "-b12")
+          app = app_mod.build(
+              live_cfg_dir,
+              ["test-agent"],
+              secrets=FakeSecretProvider({"fixture-token": fake_system.token}),
+              channel=channel,
+              timeout_s=0.5,
+          )
+          monkeypatch.setattr(app_mod, "summary", _crash)
+  >       run = app.runtime.handle("test-agent", "svc:test-agent", _doc(app, "create.txt"))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  
+  tests/test_prh_b12.py:114: 
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+  src/hadavin_sdk/runtime/agent_loop.py:499: in handle
+      return self._submit(run, call, reply.text, cited, safe_text, rmap)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  src/hadavin_sdk/runtime/agent_loop.py:763: in _submit
+      sent = self.hooks.request_approval(plan, decision, run.principal_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  src/hadavin_sdk/app.py:195: in request_approval
+      if len(summary(plan, summary_detector)) > channel.max_card_chars:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+  
+  a = (Plan(schema_version=1, plan_id='pln-6e4e8948c1ad4cd8b09e9d8bdcd8ea8a', run_id='run-10c8bf6cab9140f99acc02aa687cd55e',..., 45, 46, 940720, tzinfo=datetime.timezone.utc)), <hadavin_sdk.guard.injection.RegexDetector object at 0x7f8b04f00440>)
+  kw = {}
+  
+      def _crash(*a, **kw):
+  >       raise runmap.RedactorCrash("RuntimeError")
+  E       hadavin_sdk.guard.runmap.RedactorCrash: RuntimeError
+  
+  tests/test_prh_b12.py:50: RedactorCrash
+  ___ test_b12_i1_a_golden_input_with_a_crashed_redactor_is_not_a_config_error ___
+  
+  live_cfg_dir = PosixPath('/home/user/build/b12p-tmp/pytest-of-root/pytest-15/test_b12_i1_a_golden_input_wit0/config')
+  monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f8b050ce8d0>
+  
+      def test_b12_i1_a_golden_input_with_a_crashed_redactor_is_not_a_config_error(
+          live_cfg_dir, monkeypatch
+      ):
+          """Issue 1 (mutant 188): `evals.gate` told the operator the input "cannot be redacted" for a crash of the redactor."""
+          cfg = load_config(live_cfg_dir)
+          reg = load_registry(cfg)
+      
+          class Never:
+              def chat(self, *a, **k):
+                  raise AssertionError("the model must not be reached")
+      
+          monkeypatch.setattr(runmap, "redact_untrusted", _crash)
+          with pytest.raises(runmap.RedactorCrash):
+  >           evals.gate(reg, Never(), "test-agent")
+  
+  tests/test_prh_b12.py:137: 
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+  
+  registry = Registry(config=Config(environment='demo', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal(...est_rollback_delete_draft_record', undo_test=None, chain_id='chain-abc', expected_outcome='never executed')}, tools={})
+  llm = <tests.test_prh_b12.test_b12_i1_a_golden_input_with_a_crashed_redactor_is_not_a_config_error.<locals>.Never object at 0x7f8b051438c0>
+  agent_id = 'test-agent', k = 1
+  
+      def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
+          if k < 1:
+              raise ConfigError(f"gate k must be at least 1, got {k}")
+          cfg = registry.config
+          agent = registry.agents[agent_id]
+          # The golden set, its documents and judge.jsonl, hashed before the run and again after it: a file that
+          # changed while the run read it was not the set it qualifies on, so the run is never green.
+          golden_before = registry.golden_sha256(agent_id)
+          golden_path = confined(cfg.golden_dir, f"{agent_id}.jsonl")
+          golden_bytes = golden_path.read_bytes()
+          cases = [json.loads(line) for line in golden_bytes.decode("utf-8").splitlines() if line.strip()]
+          # What the runtime offers: a tooled agent's action tools carry the required `evidence` field.
+          tooled = bool(agent.tools_allowed)
+          tools = [
+              {
+                  "name": c.id,
+                  "description": c.description,
+                  "input_schema": with_evidence(c.input_schema) if tooled else c.input_schema,
+              }
+              for c in (registry.contracts[a] for a in agent.scope_allowed)
+          ]
+          passed = run_passes = abstains = 0
+          cost = Decimal(0)
+          for case in cases:
+              # input_ref comes from a file: confined to inputs_dir (no "../" or absolute escapes).
+              doc = confined(cfg.inputs_dir, case["input_ref"]).read_bytes()
+              # The model sees what the runtime sends it: the document redacted with a fresh per-run map (K5).
+              try:
+                  doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+              except (
+                  runmap.RedactionError
+              ) as exc:  # too large for the redactor (or it failed): say which case, exit 2
+  >               raise ConfigError(
+                      f"golden case {case.get('id', case['input_ref'])!r}: input {case['input_ref']!r} cannot be "
+                      f"redacted ({exc}); inputs are limited to {defaults.MAX_REDACT_CHARS} characters, views included"
+                  ) from None
+  E               hadavin_sdk.errors.ConfigError: golden case 'g01': input 'golden-01.txt' cannot be redacted (RuntimeError); inputs are limited to 262144 characters, views included
+  
+  src/hadavin_sdk/evals.py:67: ConfigError
+  _ test_b12_i1_a_crash_in_the_injection_screen_stops_the_run_as_redaction_error _
+  
+  self = <tests.test_prh_b12._BrokenDetector object at 0x7f8b04f00c20>
+  text = 'checkout 5xx from <IPV4_1>, revision 17', source = 'document'
+  
+      def check(self, text, source):
+  >       raise ValueError("a broken detector")
+  E       ValueError: a broken detector
+  
+  tests/test_prh_b12.py:163: ValueError
+  
+  During handling of the above exception, another exception occurred:
+  
+  tmp_path = PosixPath('/home/user/build/b12p-tmp/pytest-of-root/pytest-15/test_b12_i1_a_crash_in_the_inj0')
+  monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f8b0552a030>
+  
+      def test_b12_i1_a_crash_in_the_injection_screen_stops_the_run_as_redaction_error(
+          tmp_path, monkeypatch
+      ):
+          """Issue 1 (mutant 189). The check of the document (a detector that fails, a redactor that crashes while writing the log line)
+          escaped `Runtime.handle` with no handler. It is now the stop `redaction_error`."""
+          rt, _cards = build_runtime(k5_cfg(tmp_path), ScriptLLM([{"noaction": True}]))
+          rt.detector = _BrokenDetector()
+          real = runmap.redact_bounded
+      
+          def crash_for_the_log_line(text, mapping, neutralise=None):
+              if text == "a broken detector":
+                  raise runmap.RedactorCrash("RuntimeError")
+              return real(text, mapping, neutralise)
+      
+          monkeypatch.setattr(runmap, "redact_bounded", crash_for_the_log_line)
+  >       run = handle(rt)
+                ^^^^^^^^^^
+  
+  tests/test_prh_b12.py:181: 
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+  tests/k5_support.py:214: in handle
+      return rt.handle("test-agent", "svc:test-agent", document, **kw)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  src/hadavin_sdk/runtime/agent_loop.py:432: in handle
+      verdict = self._screen(run, safe_text, "document")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  src/hadavin_sdk/runtime/agent_loop.py:323: in _screen
+      verdict = injection_check(self.detector, text, source)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  src/hadavin_sdk/guard/injection.py:96: in injection_check
+      safe_head(str(exc), 300),
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+  src/hadavin_sdk/guard/runmap.py:1219: in safe_head
+      return redact_bounded(text, {} if mapping is None else mapping)[0][:limit]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+  
+  text = 'a broken detector', mapping = {}, neutralise = None
+  
+      def crash_for_the_log_line(text, mapping, neutralise=None):
+          if text == "a broken detector":
+  >           raise runmap.RedactorCrash("RuntimeError")
+  E           hadavin_sdk.guard.runmap.RedactorCrash: RuntimeError
+  
+  tests/test_prh_b12.py:177: RedactorCrash
+  _ test_b12_i1_a_crash_in_the_tool_result_screen_stops_the_run_as_redaction_error _
+  
+  self = <tests.test_prh_b12._BrokenDetector object at 0x7f8b04e78410>
+  text = 'ERROR upstream <IPV4_1> refused; rollout revision 17 failed'
+  source = 'tool:read_logs'
+  
+      def check(self, text, source):
+  >       raise ValueError("a broken detector")
+  E       ValueError: a broken detector
+  
+  tests/test_prh_b12.py:163: ValueError
+  
+  During handling of the above exception, another exception occurred:
+  
+  tmp_path = PosixPath('/home/user/build/b12p-tmp/pytest-of-root/pytest-15/test_b12_i1_a_crash_in_the_too0')
+  monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f8b050b7a50>
+  
+      def test_b12_i1_a_crash_in_the_tool_result_screen_stops_the_run_as_redaction_error(
+          tmp_path, monkeypatch
+      ):
+          """Issue 1 (mutant 190): the same rule for the screen of a tool result."""
+          from tests.fixtures import k5_tools
+      
+          k5_tools.RESULTS["app"] = "ERROR upstream 10.0.0.5 refused; rollout revision 17 failed"
+          rt, _cards = build_runtime(k5_cfg(tmp_path), ScriptLLM([{"tool": "app"}, {"noaction": True}]))
+          real_screen = rt._screen
+          seen = []
+      
+          def screen(run, text, source):
+              seen.append(source)
+              if source.startswith("tool:"):
+                  rt.detector = _BrokenDetector()
+                  real = runmap.redact_bounded
+      
+                  def crash(text2, mapping, neutralise=None):
+                      if text2 == "a broken detector":
+                          raise runmap.RedactorCrash("RuntimeError")
+                      return real(text2, mapping, neutralise)
+      
+                  monkeypatch.setattr(runmap, "redact_bounded", crash)
+              return real_screen(run, text, source)
+      
+          monkeypatch.setattr(rt, "_screen", screen)
+  >       run = handle(rt)
+                ^^^^^^^^^^
+  
+  tests/test_prh_b12.py:213: 
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+  tests/k5_support.py:214: in handle
+      return rt.handle("test-agent", "svc:test-agent", document, **kw)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  src/hadavin_sdk/runtime/agent_loop.py:565: in handle
+      verdict = self._screen(run, out.text, f"tool:{call.name}")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  tests/test_prh_b12.py:210: in screen
+      return real_screen(run, text, source)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  src/hadavin_sdk/runtime/agent_loop.py:323: in _screen
+      verdict = injection_check(self.detector, text, source)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  src/hadavin_sdk/guard/injection.py:96: in injection_check
+      safe_head(str(exc), 300),
+      ^^^^^^^^^^^^^^^^^^^^^^^^
+  src/hadavin_sdk/guard/runmap.py:1219: in safe_head
+      return redact_bounded(text, {} if mapping is None else mapping)[0][:limit]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+  
+  text2 = 'a broken detector', mapping = {}, neutralise = None
+  
+      def crash(text2, mapping, neutralise=None):
+          if text2 == "a broken detector":
+  >           raise runmap.RedactorCrash("RuntimeError")
+  E           hadavin_sdk.guard.runmap.RedactorCrash: RuntimeError
+  
+  tests/test_prh_b12.py:206: RedactorCrash
+  _ test_b12_i1_a_crash_of_the_redactor_does_not_stop_the_other_steps_of_the_tick _
+  
+  ctx = <tests.test_prh_b12.test_b12_i1_a_crash_of_the_redactor_does_not_stop_the_other_steps_of_the_tick.<locals>.Ctx object at 0x7f8b05141e80>
+  
+      def boom(ctx):
+  >       raise ValueError("a step failed")
+  E       ValueError: a step failed
+  
+  tests/test_prh_b12.py:239: ValueError
+  
+  During handling of the above exception, another exception occurred:
+  
+  monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f8b050b7550>
+  
+      def test_b12_i1_a_crash_of_the_redactor_does_not_stop_the_other_steps_of_the_tick(monkeypatch):
+          """Issue 1 (mutant 191). `_message` was called inside `except Exception` of `_run_step`: a crash escaped before the state of the
+          step was saved and stopped the rest of the tick. Now the message is a fixed note, the step is recorded as failed."""
+          from hadavin_sdk.runtime import tick
+      
+          saved = []
+      
+          class Store:
+              def get_tick_state(self, name):
+                  return None
+      
+              def save_tick_state(self, state):
+                  saved.append(state)
+      
+          class Ctx:
+              app = type("A", (), {"store": Store()})()
+              now = __import__("datetime").datetime(2026, 1, 1, tzinfo=__import__("datetime").UTC)
+      
+          def boom(ctx):
+              raise ValueError("a step failed")
+      
+          monkeypatch.setattr(runmap, "redact_bounded", _crash)
+  >       result = tick._run_step(Ctx(), tick.TickStep("probe", 0, boom))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  
+  tests/test_prh_b12.py:242: 
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+  src/hadavin_sdk/runtime/tick.py:316: in _run_step
+      error = f"{type(exc).__name__}: {_message(exc)}"
+                                       ^^^^^^^^^^^^^
+  src/hadavin_sdk/runtime/tick.py:292: in _message
+      return safe_head(str(exc), 500).replace("\n", " ")
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  src/hadavin_sdk/guard/runmap.py:1219: in safe_head
+      return redact_bounded(text, {} if mapping is None else mapping)[0][:limit]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+  
+  a = ('a step failed', {}), kw = {}
+  
+      def _crash(*a, **kw):
+  >       raise runmap.RedactorCrash("RuntimeError")
+  E       hadavin_sdk.guard.runmap.RedactorCrash: RuntimeError
+  
+  tests/test_prh_b12.py:50: RedactorCrash
+  _ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64/every2] _
+  
+  cell = 'b64/every2'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64/every2 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6/gH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  _ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64/every3] _
+  
+  cell = 'b64/every3'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64/every3 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6/gH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  _ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64/every4] _
+  
+  cell = 'b64/every4'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64/every4 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6/gH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  _ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64/every5] _
+  
+  cell = 'b64/every5'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64/every5 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6/gH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@1] ____
+  
+  cell = 'b64@1'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@1 is readable
+  E           assert not True
+  E            +  where True = stands('A\\eb3+dE6/gH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@10] ___
+  
+  cell = 'b64@10'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@10 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6/gH\\e9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@11] ___
+  
+  cell = 'b64@11'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@11 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6/gH9\\e&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@12] ___
+  
+  cell = 'b64@12'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@12 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6/gH9&\\ejK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@13] ___
+  
+  cell = 'b64@13'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@13 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6/gH9&j\\eK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@14] ___
+  
+  cell = 'b64@14'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@14 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6/gH9&jK\\e2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@15] ___
+  
+  cell = 'b64@15'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@15 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6/gH9&jK2\\em', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@2] ____
+  
+  cell = 'b64@2'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@2 is readable
+  E           assert not True
+  E            +  where True = stands('Ab\\e3+dE6/gH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@3] ____
+  
+  cell = 'b64@3'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@3 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3\\e+dE6/gH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@4] ____
+  
+  cell = 'b64@4'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@4 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+\\edE6/gH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@5] ____
+  
+  cell = 'b64@5'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@5 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+d\\eE6/gH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@6] ____
+  
+  cell = 'b64@6'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@6 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE\\e6/gH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@7] ____
+  
+  cell = 'b64@7'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@7 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6\\e/gH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@8] ____
+  
+  cell = 'b64@8'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@8 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6/\\egH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@9] ____
+  
+  cell = 'b64@9'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell b64@9 is readable
+  E           assert not True
+  E            +  where True = stands('Ab3+dE6/g\\eH9&jK2m', 'Ab3+dE6/gH9&jK2m', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  _ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28/every2] _
+  
+  cell = 'v28/every2'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v28/every2 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 'qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  _ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28/every3] _
+  
+  cell = 'v28/every3'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v28/every3 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 'qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  _ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28/every4] _
+  
+  cell = 'v28/every4'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v28/every4 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 'qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  _ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28/every5] _
+  
+  cell = 'v28/every5'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v28/every5 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 'qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28@23] ___
+  
+  cell = 'v28@23'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v28@23 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt9LxP2wBn5HcD8f\\eJs4Yg', 'qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28@24] ___
+  
+  cell = 'v28@24'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v28@24 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt9LxP2wBn5HcD8fJ\\es4Yg', 'qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28@25] ___
+  
+  cell = 'v28@25'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v28@25 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt9LxP2wBn5HcD8fJs\\e4Yg', 'qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28@26] ___
+  
+  cell = 'v28@26'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v28@26 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt9LxP2wBn5HcD8fJs4\\eYg', 'qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ___ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28@27] ___
+  
+  cell = 'v28@27'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v28@27 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt9LxP2wBn5HcD8fJs4Y\\eg', 'qZ7kM3vRt9LxP2wBn5HcD8fJs4Yg', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v6@1] ____
+  
+  cell = 'v6@1'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v6@1 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3', 'qZ7kM3', 6)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v6@2] ____
+  
+  cell = 'v6@2'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v6@2 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3', 'qZ7kM3', 6)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v6@3] ____
+  
+  cell = 'v6@3'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v6@3 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3', 'qZ7kM3', 6)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v6@4] ____
+  
+  cell = 'v6@4'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v6@4 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3', 'qZ7kM3', 6)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v6@5] ____
+  
+  cell = 'v6@5'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v6@5 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3', 'qZ7kM3', 6)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@1] ____
+  
+  cell = 'v9@1'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v9@1 is readable
+  E           assert not True
+  E            +  where True = stands('q\\eZ7kM3vRt', 'qZ7kM3vRt', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@2] ____
+  
+  cell = 'v9@2'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v9@2 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt', 'qZ7kM3vRt', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@3] ____
+  
+  cell = 'v9@3'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v9@3 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt', 'qZ7kM3vRt', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@4] ____
+  
+  cell = 'v9@4'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v9@4 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt', 'qZ7kM3vRt', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@5] ____
+  
+  cell = 'v9@5'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v9@5 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt', 'qZ7kM3vRt', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@6] ____
+  
+  cell = 'v9@6'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v9@6 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt', 'qZ7kM3vRt', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@7] ____
+  
+  cell = 'v9@7'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v9@7 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vRt', 'qZ7kM3vRt', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  ____ test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@8] ____
+  
+  cell = 'v9@8'
+  
+      @pytest.mark.parametrize("cell", sorted(ESC_CELLS))
+      def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
+          """Issue 2 (mutants 192 and 193; the grid of the review: every offset of a 28-, a 9- and a 6-character handed-out value and of a
+          value with base64 symbols, and a spelling every 2 to 5 characters). Whatever the redactor does with the text (mask it or withhold
+          it), no stretch of 8 characters of the value (the whole value if it has fewer) stands in the result, with or without the
+          backslash-e spellings in it. The value is also handed to the tool."""
+          value, text = ESC_CELLS[cell]
+          size = min(8, len(value))
+          out = tools.prepare_output(text, {}, 4000, [value])
+          for shown in (out, out.replace(BSL + "e", "")):
+  >           assert not stands(shown, value, size), (
+                  f"mutants 192/193: the value of cell {cell} is readable"
+              )
+  E           AssertionError: mutants 192/193: the value of cell v9@8 is readable
+  E           assert not True
+  E            +  where True = stands('qZ7kM3vR\\et', 'qZ7kM3vRt', 8)
+  
+  tests/test_prh_b12.py:319: AssertionError
+  _ test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc[ab\\eb] _
+  
+  text = 'ab\\eb'
+  
+      @pytest.mark.parametrize(
+          "text",
+          [
+              "ab" + BSL + "eb",
+              "q" + BSL + "eZ",
+              "abc+" + BSL + "e/def",
+              "key:" + BSL + "e" + "abcdef",  # a colon that is no drive letter
+              "x" + BSL + "e" + "y" * 13 + BSL,  # 12 or more token characters after, then a backslash
+          ],
+      )
+      def test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc(text):
+          """Issue 2 (mutant 192; fails on 242dfd66 for the first three rows; the last two pass there and are kept as the 12-after rule and the
+          colon rule, one reason each)."""
+  >       assert runmap.hex_unescape(text) == text.replace(BSL + "e", "\x1b"), (
+              f"mutant 192: {text!r} was not read"
+          )
+  E       AssertionError: mutant 192: 'ab\\eb' was not read
+  E       assert 'ab\\eb' == 'ab\x1bb'
+  E         
+  E         - abb
+  E         + ab\eb
+  
+  tests/test_prh_b12.py:356: AssertionError
+  _ test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc[q\\eZ] _
+  
+  text = 'q\\eZ'
+  
+      @pytest.mark.parametrize(
+          "text",
+          [
+              "ab" + BSL + "eb",
+              "q" + BSL + "eZ",
+              "abc+" + BSL + "e/def",
+              "key:" + BSL + "e" + "abcdef",  # a colon that is no drive letter
+              "x" + BSL + "e" + "y" * 13 + BSL,  # 12 or more token characters after, then a backslash
+          ],
+      )
+      def test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc(text):
+          """Issue 2 (mutant 192; fails on 242dfd66 for the first three rows; the last two pass there and are kept as the 12-after rule and the
+          colon rule, one reason each)."""
+  >       assert runmap.hex_unescape(text) == text.replace(BSL + "e", "\x1b"), (
+              f"mutant 192: {text!r} was not read"
+          )
+  E       AssertionError: mutant 192: 'q\\eZ' was not read
+  E       assert 'q\\eZ' == 'q\x1bZ'
+  E         
+  E         - qZ
+  E         + q\eZ
+  
+  tests/test_prh_b12.py:356: AssertionError
+  _ test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc[abc+\\e/def] _
+  
+  text = 'abc+\\e/def'
+  
+      @pytest.mark.parametrize(
+          "text",
+          [
+              "ab" + BSL + "eb",
+              "q" + BSL + "eZ",
+              "abc+" + BSL + "e/def",
+              "key:" + BSL + "e" + "abcdef",  # a colon that is no drive letter
+              "x" + BSL + "e" + "y" * 13 + BSL,  # 12 or more token characters after, then a backslash
+          ],
+      )
+      def test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc(text):
+          """Issue 2 (mutant 192; fails on 242dfd66 for the first three rows; the last two pass there and are kept as the 12-after rule and the
+          colon rule, one reason each)."""
+  >       assert runmap.hex_unescape(text) == text.replace(BSL + "e", "\x1b"), (
+              f"mutant 192: {text!r} was not read"
+          )
+  E       AssertionError: mutant 192: 'abc+\\e/def' was not read
+  E       assert 'abc+\\e/def' == 'abc+\x1b/def'
+  E         
+  E         - abc+/def
+  E         ?     ^
+  E         + abc+\e/def
+  E         ?     ^^
+  
+  tests/test_prh_b12.py:356: AssertionError
+  _ test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc[key:\\eabcdef] _
+  
+  text = 'key:\\eabcdef'
+  
+      @pytest.mark.parametrize(
+          "text",
+          [
+              "ab" + BSL + "eb",
+              "q" + BSL + "eZ",
+              "abc+" + BSL + "e/def",
+              "key:" + BSL + "e" + "abcdef",  # a colon that is no drive letter
+              "x" + BSL + "e" + "y" * 13 + BSL,  # 12 or more token characters after, then a backslash
+          ],
+      )
+      def test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc(text):
+          """Issue 2 (mutant 192; fails on 242dfd66 for the first three rows; the last two pass there and are kept as the 12-after rule and the
+          colon rule, one reason each)."""
+  >       assert runmap.hex_unescape(text) == text.replace(BSL + "e", "\x1b"), (
+              f"mutant 192: {text!r} was not read"
+          )
+  E       AssertionError: mutant 192: 'key:\\eabcdef' was not read
+  E       assert 'key:\\eabcdef' == 'key:\x1babcdef'
+  E         
+  E         - key:abcdef
+  E         ?     ^
+  E         + key:\eabcdef
+  E         ?     ^^
+  
+  tests/test_prh_b12.py:356: AssertionError
+  _ test_b12_i3_a_key_that_is_only_a_piece_of_a_held_identifier_is_new_to_the_consuming_reading _
+  
+      def test_b12_i3_a_key_that_is_only_a_piece_of_a_held_identifier_is_new_to_the_consuming_reading():
+          """Issue 3, site `_consuming_wins` (mutant 195; fails on 242dfd66). The held value is an ARN (not a secret kind) that holds the key; the
+          reading finds the key under a new placeholder: it is new, so the reading wins and the cut copy is judged."""
+          arn = "arn:aws:iam::123456789012:user/" + KEY12
+          known = {"<ARN_1>": arn}
+          new_map = {"<ARN_1>": arn, "<APIKEY_2>": KEY12}
+  >       assert runmap._consuming_wins("nothing of it left", new_map, known) is True, (
+              "mutant 195: a key that is a piece of a held identifier was called already found (consuming reading)"
+          )
+  E       AssertionError: mutant 195: a key that is a piece of a held identifier was called already found (consuming reading)
+  E       assert False is True
+  E        +  where False = <function _consuming_wins at 0x7f8b052dd3a0>('nothing of it left', {'<ARN_1>': 'arn:aws:iam::123456789012:user/AKIAIOSFODNN7EXAMPLE', '<APIKEY_2>': 'AKIAIOSFODNN7EXAMPLE'}, {'<ARN_1>': 'arn:aws:iam::123456789012:user/AKIAIOSFODNN7EXAMPLE'})
+  E        +    where <function _consuming_wins at 0x7f8b052dd3a0> = runmap._consuming_wins
+  
+  tests/test_prh_b12.py:384: AssertionError
+  _ test_b12_i3_a_key_that_is_only_a_piece_of_a_held_identifier_is_new_to_the_character_reading _
+  
+      def test_b12_i3_a_key_that_is_only_a_piece_of_a_held_identifier_is_new_to_the_character_reading():
+          """Issue 3, site `_char_reading_wins` (mutant 196; fails on 242dfd66)."""
+          arn = "arn:aws:iam::123456789012:user/" + KEY12
+          known = {"<ARN_1>": arn}
+          new_map = {"<ARN_1>": arn, "<APIKEY_2>": KEY12}
+  >       assert runmap._char_reading_wins("nothing of it left", new_map, known, {}, set(), "") is True, (
+              "mutant 196: a key that is a piece of a held identifier was called already found (character reading)"
+          )
+  E       AssertionError: mutant 196: a key that is a piece of a held identifier was called already found (character reading)
+  E       assert False is True
+  E        +  where False = <function _char_reading_wins at 0x7f8b052dd300>('nothing of it left', {'<ARN_1>': 'arn:aws:iam::123456789012:user/AKIAIOSFODNN7EXAMPLE', '<APIKEY_2>': 'AKIAIOSFODNN7EXAMPLE'}, {'<ARN_1>': 'arn:aws:iam::123456789012:user/AKIAIOSFODNN7EXAMPLE'}, {}, set(), '')
+  E        +    where <function _char_reading_wins at 0x7f8b052dd300> = runmap._char_reading_wins
+  E        +    and   set() = set()
+  
+  tests/test_prh_b12.py:394: AssertionError
+  _ test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late[fe0f] _
+  
+  gap = '️'
+  
+      @pytest.mark.parametrize("gap", GAPS, ids=[f"{ord(g):04x}" for g in GAPS])
+      def test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late(gap):
+          """Issue 6 (mutant 197; fails on 242dfd66: the run started at the third character, two tokens late). The word class that stops a run
+          from starting in the middle of a longer word held the gap characters, although the run rule itself treats them as gaps."""
+          runs = redact_mod._runs_of(gap + spaced(KEY12))
+  >       assert runs and runs[0][0] == 1, (
+              f"mutant 197: the run started at {runs[0][0] if runs else None}, not at the first token"
+          )
+  E       AssertionError: mutant 197: the run started at 3, not at the first token
+  E       assert ([(3, 40, ['K', 'I', 'A', 'I', 'O', 'S', ...], [3, 5, 7, 9, 11, 13, ...])] and 3 == 1)
+  
+  tests/test_prh_b12.py:420: AssertionError
+  _ test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late[3164] _
+  
+  gap = 'ㅤ'
+  
+      @pytest.mark.parametrize("gap", GAPS, ids=[f"{ord(g):04x}" for g in GAPS])
+      def test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late(gap):
+          """Issue 6 (mutant 197; fails on 242dfd66: the run started at the third character, two tokens late). The word class that stops a run
+          from starting in the middle of a longer word held the gap characters, although the run rule itself treats them as gaps."""
+          runs = redact_mod._runs_of(gap + spaced(KEY12))
+  >       assert runs and runs[0][0] == 1, (
+              f"mutant 197: the run started at {runs[0][0] if runs else None}, not at the first token"
+          )
+  E       AssertionError: mutant 197: the run started at 3, not at the first token
+  E       assert ([(3, 40, ['K', 'I', 'A', 'I', 'O', 'S', ...], [3, 5, 7, 9, 11, 13, ...])] and 3 == 1)
+  
+  tests/test_prh_b12.py:420: AssertionError
+  _ test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late[115f] _
+  
+  gap = 'ᅟ'
+  
+      @pytest.mark.parametrize("gap", GAPS, ids=[f"{ord(g):04x}" for g in GAPS])
+      def test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late(gap):
+          """Issue 6 (mutant 197; fails on 242dfd66: the run started at the third character, two tokens late). The word class that stops a run
+          from starting in the middle of a longer word held the gap characters, although the run rule itself treats them as gaps."""
+          runs = redact_mod._runs_of(gap + spaced(KEY12))
+  >       assert runs and runs[0][0] == 1, (
+              f"mutant 197: the run started at {runs[0][0] if runs else None}, not at the first token"
+          )
+  E       AssertionError: mutant 197: the run started at 3, not at the first token
+  E       assert ([(3, 40, ['K', 'I', 'A', 'I', 'O', 'S', ...], [3, 5, 7, 9, 11, 13, ...])] and 3 == 1)
+  
+  tests/test_prh_b12.py:420: AssertionError
+  _ test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late[1160] _
+  
+  gap = 'ᅠ'
+  
+      @pytest.mark.parametrize("gap", GAPS, ids=[f"{ord(g):04x}" for g in GAPS])
+      def test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late(gap):
+          """Issue 6 (mutant 197; fails on 242dfd66: the run started at the third character, two tokens late). The word class that stops a run
+          from starting in the middle of a longer word held the gap characters, although the run rule itself treats them as gaps."""
+          runs = redact_mod._runs_of(gap + spaced(KEY12))
+  >       assert runs and runs[0][0] == 1, (
+              f"mutant 197: the run started at {runs[0][0] if runs else None}, not at the first token"
+          )
+  E       AssertionError: mutant 197: the run started at 3, not at the first token
+  E       assert ([(3, 40, ['K', 'I', 'A', 'I', 'O', 'S', ...], [3, 5, 7, 9, 11, 13, ...])] and 3 == 1)
+  
+  tests/test_prh_b12.py:420: AssertionError
+  _ test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late[ffa0] _
+  
+  gap = 'ﾠ'
+  
+      @pytest.mark.parametrize("gap", GAPS, ids=[f"{ord(g):04x}" for g in GAPS])
+      def test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late(gap):
+          """Issue 6 (mutant 197; fails on 242dfd66: the run started at the third character, two tokens late). The word class that stops a run
+          from starting in the middle of a longer word held the gap characters, although the run rule itself treats them as gaps."""
+          runs = redact_mod._runs_of(gap + spaced(KEY12))
+  >       assert runs and runs[0][0] == 1, (
+              f"mutant 197: the run started at {runs[0][0] if runs else None}, not at the first token"
+          )
+  E       AssertionError: mutant 197: the run started at 3, not at the first token
+  E       assert ([(3, 40, ['K', 'I', 'A', 'I', 'O', 'S', ...], [3, 5, 7, 9, 11, 13, ...])] and 3 == 1)
+  
+  tests/test_prh_b12.py:420: AssertionError
+  _ test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late[034f] _
+  
+  gap = '͏'
+  
+      @pytest.mark.parametrize("gap", GAPS, ids=[f"{ord(g):04x}" for g in GAPS])
+      def test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late(gap):
+          """Issue 6 (mutant 197; fails on 242dfd66: the run started at the third character, two tokens late). The word class that stops a run
+          from starting in the middle of a longer word held the gap characters, although the run rule itself treats them as gaps."""
+          runs = redact_mod._runs_of(gap + spaced(KEY12))
+  >       assert runs and runs[0][0] == 1, (
+              f"mutant 197: the run started at {runs[0][0] if runs else None}, not at the first token"
+          )
+  E       AssertionError: mutant 197: the run started at 3, not at the first token
+  E       assert ([(3, 40, ['K', 'I', 'A', 'I', 'O', 'S', ...], [3, 5, 7, 9, 11, 13, ...])] and 3 == 1)
+  
+  tests/test_prh_b12.py:420: AssertionError
+  _____ test_b12_i11_the_word_class_scan_reaches_the_end_of_cjk_extension_j ______
+  
+      def test_b12_i11_the_word_class_scan_reaches_the_end_of_cjk_extension_j():
+          """Issue 11 (mutant 198). Unicode 17 added CJK Extension J (U+323B0 to U+3347F); the scan used to stop at U+323FF. The data of this
+          Python may not know the block yet (so the test derivation over all code points cannot see it): the scan bound is checked directly.
+          Fails on 242dfd66 (the bound was 0x32400)."""
+  >       assert redact_mod._WORD_PLANES[0].stop > 0x3347F, (
+              "mutant 198: the scan stops before the end of CJK Extension J"
+          )
+  E       AssertionError: mutant 198: the scan stops before the end of CJK Extension J
+  E       assert 205824 > 210047
+  E        +  where 205824 = range(0, 205824).stop
+  
+  tests/test_prh_b12.py:449: AssertionError
+  _ test_b12_i7_the_search_for_copies_of_a_value_inside_a_big_held_value_looks_at_the_clock _
+  
+      def test_b12_i7_the_search_for_copies_of_a_value_inside_a_big_held_value_looks_at_the_clock():
+          """Issue 7 (mutant 199; fails on 242dfd66: the function took no `work` and never looked at the clock). A 252,000-character text and a
+          held 1,801-character value that holds the small value 63,000 times: the clock is looked at every 4,096 hits, and the answer is
+          still True (every copy lies inside a held value)."""
+          _pem, current, text = _held_pem_and_text()
+          work = _CountingWork()
+  >       assert runmap._only_inside_held("Q7zQ7zQ7zQ7zQ7zQ7z", current, (text, text), work) is True
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  E       TypeError: _only_inside_held() takes 3 positional arguments but 4 were given
+  
+  tests/test_prh_b12.py:480: TypeError
+  _ test_b12_i7_a_held_value_shorter_than_the_spaced_minimum_does_not_cover_a_copy _
+  
+      def test_b12_i7_a_held_value_shorter_than_the_spaced_minimum_does_not_cover_a_copy():
+          """Issue 7 (mutant 200; fails on 242dfd66). The spaced sweep masks no spaced copy of a held value under
+          `defaults.SPACED_VALUE_MIN_CHARS`, so a match of it with the gaps taken out proves nothing."""
+          short = "abcdefghijk"  # 11 characters
+          assert len(short) < defaults.SPACED_VALUE_MIN_CHARS
+          current = {"<SECRET_1>": short}
+  >       assert runmap._only_inside_held("abcdefgh", current, ("a b c d e f g h i j k",)) is False, (
+              "mutant 200: a spaced copy inside a short held value was called covered"
+          )
+  E       AssertionError: mutant 200: a spaced copy inside a short held value was called covered
+  E       assert True is False
+  E        +  where True = <function _only_inside_held at 0x7f8b052dd580>('abcdefgh', {'<SECRET_1>': 'abcdefghijk'}, ('a b c d e f g h i j k',))
+  E        +    where <function _only_inside_held at 0x7f8b052dd580> = runmap._only_inside_held
+  
+  tests/test_prh_b12.py:490: AssertionError
+  _____________ test_b12_i8_waiting_does_not_use_up_the_work_budget ______________
+  
+  monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f8b04248140>
+  
+      def test_b12_i8_waiting_does_not_use_up_the_work_budget(monkeypatch):
+          """Issue 8 (mutant 201; fails on 242dfd66, where the budget was wall time: a call that waited 0.2 seconds was refused against a
+          budget of 0.05). The redactor does no input or output, so its work is CPU time; a slow or busy machine must not refuse an ordinary
+          text."""
+          import time
+      
+          monkeypatch.setattr(defaults, "REDACT_BUDGET_S", 0.05)
+          work = runmap._Work()
+          time.sleep(0.2)
+  >       work.check()  # no RedactionLimit: nothing was computed
+          ^^^^^^^^^^^^
+  
+  tests/test_prh_b12.py:517: 
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+  
+  self = <hadavin_sdk.guard.runmap._Work object at 0x7f8aff770940>
+  
+      def check(self) -> None:
+          if time.monotonic() - self.started > defaults.REDACT_BUDGET_S:
+  >           raise RedactionLimit("InputTooLarge")
+  E           hadavin_sdk.guard.runmap.RedactionLimit: InputTooLarge
+  
+  src/hadavin_sdk/guard/runmap.py:803: RedactionLimit
+  _____ test_b11_g1_the_word_class_is_every_letter_digit_and_mark_of_unicode _____
+  
+      def test_b11_g1_the_word_class_is_every_letter_digit_and_mark_of_unicode():
+          """Group 1 (mutant 170). The class is built from the planes that hold letters, digits and marks; derived here over ALL 1,114,112
+          code points and compared (a new Unicode version that adds letters to another plane fails this test). Passes on the batch 10 head
+          only by not existing (it has no such class): the check is on the new constant."""
+          word = re.compile(f"[{redact_mod._WORD_BODY}]")
+          wrong = [
+              c
+              for c in range(0x110000)
+              if (word.fullmatch(chr(c)) is not None)
+              != (
+                  unicodedata.category(chr(c))[0] in "LNM"
+  >               and not redact_mod._IGNORABLE_CHAR.fullmatch(chr(c))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+              )
+          ]  # batch 12, issue 6: a gap character is no part of a word even when it is a mark or a letter
+  E       AttributeError: module 'hadavin_sdk.guard.redact' has no attribute '_IGNORABLE_CHAR'
+  
+  tests/test_prh_b11.py:187: AttributeError
+  _ test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these[ab\\eb-True] _
+  
+  text = 'ab\\eb', read = True
+  
+      @pytest.mark.parametrize(
+          ("text", "read"),
+          [
+              (BSL + "e[", True),
+              (BSL + "e]", True),
+              (BSL + "e(", True),
+              (BSL + "e)", True),
+              (BSL + "eP", False),
+              (BSL + "eX", False),
+              (BSL + "e^", False),
+              (BSL + "e_", False),
+              (BSL + "en", False),
+              (BSL + "e", False),
+              ("C:" + BSL + "env", False),
+              ("C:" + BSL + "Users" + BSL + "err" + BSL + "x", False),
+              (
+                  "ab" + BSL + "eb",
+                  True,
+              ),  # batch 12, issue 2: glued inside a word is read (it was a length rule)
+              ("abcdef" + BSL + "eghijkl", True),
+              ("abcde" + BSL + "eghijkl", True),  # batch 12, issue 2: 5 characters in front are read too
+              (BSL + "eabcdefghijkl", True),
+              (BSL + "eabcdefghijk", False),
+              ("q" + BSL + "eZ" + BSL + "e7", True),
+              ("q" + BSL + "eZ", True),  # batch 12, issue 2: one character on each side is glue
+          ],
+      )
+      def test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these(text, read):
+          """Group 1, item C5 and group 8 (mutants 171, 142, 183, 184). Passes on the batch 10 head too; the one reason it exists: it lists the backslash-e shapes that are
+          read as ESC (before a bracket or a parenthesis; glued between two characters of one word; 12 or more token characters after it)
+          and the ones that are not (the string openers `P`, `X`, `^` and `_` standing alone, a letter standing alone, the end of the
+          text, a Windows path); SECURITY.md names the same list."""
+  >       assert (runmap.hex_unescape(text) != text) is read, (
+              f"mutant 171: {text!r} is {'not ' if read else ''}read as ESC"
+          )
+  E       AssertionError: mutant 171: 'ab\\eb' is not read as ESC
+  E       assert ('ab\\eb' != 'ab\\eb') is True
+  E        +  where 'ab\\eb' = <function hex_unescape at 0x7f8b052dc180>('ab\\eb')
+  E        +    where <function hex_unescape at 0x7f8b052dc180> = runmap.hex_unescape
+  
+  tests/test_prh_b11.py:227: AssertionError
+  _ test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these[abcde\\eghijkl-True] _
+  
+  text = 'abcde\\eghijkl', read = True
+  
+      @pytest.mark.parametrize(
+          ("text", "read"),
+          [
+              (BSL + "e[", True),
+              (BSL + "e]", True),
+              (BSL + "e(", True),
+              (BSL + "e)", True),
+              (BSL + "eP", False),
+              (BSL + "eX", False),
+              (BSL + "e^", False),
+              (BSL + "e_", False),
+              (BSL + "en", False),
+              (BSL + "e", False),
+              ("C:" + BSL + "env", False),
+              ("C:" + BSL + "Users" + BSL + "err" + BSL + "x", False),
+              (
+                  "ab" + BSL + "eb",
+                  True,
+              ),  # batch 12, issue 2: glued inside a word is read (it was a length rule)
+              ("abcdef" + BSL + "eghijkl", True),
+              ("abcde" + BSL + "eghijkl", True),  # batch 12, issue 2: 5 characters in front are read too
+              (BSL + "eabcdefghijkl", True),
+              (BSL + "eabcdefghijk", False),
+              ("q" + BSL + "eZ" + BSL + "e7", True),
+              ("q" + BSL + "eZ", True),  # batch 12, issue 2: one character on each side is glue
+          ],
+      )
+      def test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these(text, read):
+          """Group 1, item C5 and group 8 (mutants 171, 142, 183, 184). Passes on the batch 10 head too; the one reason it exists: it lists the backslash-e shapes that are
+          read as ESC (before a bracket or a parenthesis; glued between two characters of one word; 12 or more token characters after it)
+          and the ones that are not (the string openers `P`, `X`, `^` and `_` standing alone, a letter standing alone, the end of the
+          text, a Windows path); SECURITY.md names the same list."""
+  >       assert (runmap.hex_unescape(text) != text) is read, (
+              f"mutant 171: {text!r} is {'not ' if read else ''}read as ESC"
+          )
+  E       AssertionError: mutant 171: 'abcde\\eghijkl' is not read as ESC
+  E       assert ('abcde\\eghijkl' != 'abcde\\eghijkl') is True
+  E        +  where 'abcde\\eghijkl' = <function hex_unescape at 0x7f8b052dc180>('abcde\\eghijkl')
+  E        +    where <function hex_unescape at 0x7f8b052dc180> = runmap.hex_unescape
+  
+  tests/test_prh_b11.py:227: AssertionError
+  _ test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these[q\\eZ-True] _
+  
+  text = 'q\\eZ', read = True
+  
+      @pytest.mark.parametrize(
+          ("text", "read"),
+          [
+              (BSL + "e[", True),
+              (BSL + "e]", True),
+              (BSL + "e(", True),
+              (BSL + "e)", True),
+              (BSL + "eP", False),
+              (BSL + "eX", False),
+              (BSL + "e^", False),
+              (BSL + "e_", False),
+              (BSL + "en", False),
+              (BSL + "e", False),
+              ("C:" + BSL + "env", False),
+              ("C:" + BSL + "Users" + BSL + "err" + BSL + "x", False),
+              (
+                  "ab" + BSL + "eb",
+                  True,
+              ),  # batch 12, issue 2: glued inside a word is read (it was a length rule)
+              ("abcdef" + BSL + "eghijkl", True),
+              ("abcde" + BSL + "eghijkl", True),  # batch 12, issue 2: 5 characters in front are read too
+              (BSL + "eabcdefghijkl", True),
+              (BSL + "eabcdefghijk", False),
+              ("q" + BSL + "eZ" + BSL + "e7", True),
+              ("q" + BSL + "eZ", True),  # batch 12, issue 2: one character on each side is glue
+          ],
+      )
+      def test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these(text, read):
+          """Group 1, item C5 and group 8 (mutants 171, 142, 183, 184). Passes on the batch 10 head too; the one reason it exists: it lists the backslash-e shapes that are
+          read as ESC (before a bracket or a parenthesis; glued between two characters of one word; 12 or more token characters after it)
+          and the ones that are not (the string openers `P`, `X`, `^` and `_` standing alone, a letter standing alone, the end of the
+          text, a Windows path); SECURITY.md names the same list."""
+  >       assert (runmap.hex_unescape(text) != text) is read, (
+              f"mutant 171: {text!r} is {'not ' if read else ''}read as ESC"
+          )
+  E       AssertionError: mutant 171: 'q\\eZ' is not read as ESC
+  E       assert ('q\\eZ' != 'q\\eZ') is True
+  E        +  where 'q\\eZ' = <function hex_unescape at 0x7f8b052dc180>('q\\eZ')
+  E        +    where <function hex_unescape at 0x7f8b052dc180> = runmap.hex_unescape
+  
+  tests/test_prh_b11.py:227: AssertionError
+  _ test_b11_g8_the_inside_rule_reads_six_token_characters_on_each_side_and_no_fewer _
+  
+      def test_b11_g8_the_inside_rule_reads_six_token_characters_on_each_side_and_no_fewer():
+          """Group 8 (mutant 183; the cell grid cannot reach it because every cell has 12 or more characters after the spelling or a
+          bracket or a chain). Exactly 6 token characters on each side is read as ESC. Batch 12 (issue 2) changed the second half of this
+          test: 5 on either side is read too (the glued rule; the name keeps "no fewer" because mutant 183 names this test); it was left as
+          written under batch 11's length rule. The 6-and-6 alternative still reads a spelling that a backslash follows within 12 characters
+          (the glued rule leaves that shape as a path name)."""
+          left, right = "abcdef", "ghijkl"
+          assert runmap.hex_unescape(left + BSL + "e" + right) == left + "\x1b" + right, (
+              "mutant 183: the inside rule of backslash-e is gone"
+          )
+          assert (
+              runmap.hex_unescape(left + BSL + "e" + right + BSL + "x")
+              == left + "\x1b" + right + BSL + "x"
+          ), (
+              "mutant 183: the inside rule of backslash-e is gone (6 token characters on each side, a backslash after)"
+          )
+  >       assert runmap.hex_unescape(left[:5] + BSL + "e" + right) == left[:5] + "\x1b" + right
+  E       AssertionError: assert 'abcde\\eghijkl' == 'abcde\x1bghijkl'
+  E         
+  E         - abcdeghijkl
+  E         ?      ^
+  E         + abcde\eghijkl
+  E         ?      ^^
+  
+  tests/test_prh_b11.py:453: AssertionError
+  =========================== short test summary info ============================
+  FAILED tests/test_prh_b12.py::test_b12_i1_the_approval_summary_lets_a_crash_pass_and_notes_a_refusal
+  FAILED tests/test_prh_b12.py::test_b12_i1_a_crash_while_the_card_is_made_stops_the_run_with_no_card
+  FAILED tests/test_prh_b12.py::test_b12_i1_a_golden_input_with_a_crashed_redactor_is_not_a_config_error
+  FAILED tests/test_prh_b12.py::test_b12_i1_a_crash_in_the_injection_screen_stops_the_run_as_redaction_error
+  FAILED tests/test_prh_b12.py::test_b12_i1_a_crash_in_the_tool_result_screen_stops_the_run_as_redaction_error
+  FAILED tests/test_prh_b12.py::test_b12_i1_a_crash_of_the_redactor_does_not_stop_the_other_steps_of_the_tick
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64/every2]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64/every3]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64/every4]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64/every5]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@1]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@10]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@11]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@12]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@13]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@14]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@15]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@2]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@3]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@4]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@5]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@6]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@7]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@8]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[b64@9]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28/every2]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28/every3]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28/every4]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28/every5]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28@23]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28@24]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28@25]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28@26]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v28@27]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v6@1]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v6@2]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v6@3]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v6@4]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v6@5]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@1]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@2]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@3]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@4]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@5]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@6]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@7]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown[v9@8]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc[ab\\eb]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc[q\\eZ]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc[abc+\\e/def]
+  FAILED tests/test_prh_b12.py::test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc[key:\\eabcdef]
+  FAILED tests/test_prh_b12.py::test_b12_i3_a_key_that_is_only_a_piece_of_a_held_identifier_is_new_to_the_consuming_reading
+  FAILED tests/test_prh_b12.py::test_b12_i3_a_key_that_is_only_a_piece_of_a_held_identifier_is_new_to_the_character_reading
+  FAILED tests/test_prh_b12.py::test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late[fe0f]
+  FAILED tests/test_prh_b12.py::test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late[3164]
+  FAILED tests/test_prh_b12.py::test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late[115f]
+  FAILED tests/test_prh_b12.py::test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late[1160]
+  FAILED tests/test_prh_b12.py::test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late[ffa0]
+  FAILED tests/test_prh_b12.py::test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late[034f]
+  FAILED tests/test_prh_b12.py::test_b12_i11_the_word_class_scan_reaches_the_end_of_cjk_extension_j
+  FAILED tests/test_prh_b12.py::test_b12_i7_the_search_for_copies_of_a_value_inside_a_big_held_value_looks_at_the_clock
+  FAILED tests/test_prh_b12.py::test_b12_i7_a_held_value_shorter_than_the_spaced_minimum_does_not_cover_a_copy
+  FAILED tests/test_prh_b12.py::test_b12_i8_waiting_does_not_use_up_the_work_budget
+  FAILED tests/test_prh_b11.py::test_b11_g1_the_word_class_is_every_letter_digit_and_mark_of_unicode
+  FAILED tests/test_prh_b11.py::test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these[ab\\eb-True]
+  FAILED tests/test_prh_b11.py::test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these[abcde\\eghijkl-True]
+  FAILED tests/test_prh_b11.py::test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these[q\\eZ-True]
+  FAILED tests/test_prh_b11.py::test_b11_g8_the_inside_rule_reads_six_token_characters_on_each_side_and_no_fewer
+  68 failed, 163 passed in 35.07s
+rc via tail

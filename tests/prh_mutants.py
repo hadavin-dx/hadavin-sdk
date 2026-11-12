@@ -1761,6 +1761,14 @@ M = [
         crash="ValueError",
     ),
     mutant(
+        "202 the reason shown for a failed tool call turns a crash of the redactor into the fixed note",
+        T,
+        "[0]\n    except runmap.RedactorCrash:\n        raise  # one rule at every catcher: a crash of the redactor stops the run",
+        "[0]\n    except KeyError:\n        raise  # one rule at every catcher: a crash of the redactor stops the run",
+        B11,
+        "test_b11_g4_error_reason_lets_a_crash_pass_and_notes_a_refusal",
+    ),
+    mutant(
         "192 the glued rule of backslash-e is gone (a character on each side)",
         R,
         '    rf"|(?<=[^\\s\\\\]\\\\e)(?=[^\\s\\\\])(?![^\\s\\\\]{{0,12}}\\\\)"\n',

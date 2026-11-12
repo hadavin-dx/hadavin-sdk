@@ -72,7 +72,7 @@ def test_b11_g4_safe_head_lets_a_crash_pass_and_notes_a_refusal(monkeypatch):
 
 
 def test_b11_g4_error_reason_lets_a_crash_pass_and_notes_a_refusal(monkeypatch):
-    """Group 4 (mutant 164): the reason shown for a failed tool call; a crash of the redactor stops the run, a refusal is the note."""
+    """Group 4 (mutant 202, added in batch 12; the number 164 was never used): the reason shown for a failed tool call; a crash of the redactor stops the run, a refusal is the note."""
     monkeypatch.setattr(runmap, "redact_bounded", _crash)
     with pytest.raises(runmap.RedactorCrash):
         tools.error_reason(ValueError("bad value"))

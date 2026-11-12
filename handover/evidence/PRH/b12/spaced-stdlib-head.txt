@@ -1,0 +1,4 @@
+tree /home/user/build/B-PRH-b12/src/hadavin_sdk/guard/redact.py
+files=4695 lines=1933591 lines_with_a_spaced_run_at_all=75 lines_changed=0 changed_outside_handover=0
+positive control (example key spaced out) runs found: 1
+ordinary spaced texts changed: [False, False, False, False, False, False, False]

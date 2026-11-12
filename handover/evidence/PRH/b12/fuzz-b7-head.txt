@@ -1,0 +1,1 @@
+tree /home/user/build/B-PRH-b12 | texts 3000 | strict withheld 161 | readable windows 0 | exceptions 0

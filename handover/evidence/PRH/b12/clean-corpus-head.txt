@@ -1,0 +1,5 @@
+A no copy: texts=22935 withheld_or_error=83 share=0.00362
+B one copy: texts=22935 withheld_or_error=83 share=0.00362
+C opener + copy: texts=22935 withheld_or_error=22935 share=1.00000
+D opener + copy, everyday secret: texts=22935 withheld_or_error=283 share=0.01234
+tree /home/user/build/B-PRH-b12

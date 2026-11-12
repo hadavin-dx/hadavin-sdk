@@ -33,22 +33,6 @@ def test_b9_g6_the_spaced_out_numbers_in_security_are_the_live_constants():
         assert str(live) in phrase, f"{phrase!r} is not the live value {live}"
 
 
-def _whole(number: int | str, text: str) -> bool:
-    """Is `number` in `text` as a whole number (not a part of a longer one)?"""
-    return re.search(rf"(?<![\d,.]){re.escape(str(number))}(?![\d,])", text) is not None
-
-
-def _evidence_number(path: Path, key: str) -> int:
-    """The whole number after `key=` in an evidence file (`texts=7950 withheld_or_error=126 ...`)."""
-    found = re.search(rf"\b{re.escape(key)}=(\d+)\b", path.read_text(encoding="utf-8"))
-    assert found is not None, f"{key} is not in {path}"
-    return int(found.group(1))
-
-
-def _percent(part: int, whole: int) -> str:
-    return f"{100 * part / whole:.2f}"
-
-
 def test_b10_the_pass_counts_in_the_documents_are_the_ones_the_tests_pin():
     """Batch 10 (finding M2): the seeded worst (`16`) and the most any recorded row needs (`8`) are read from the tests that assert them;
     CHANGELOG.md and defaults.py state those numbers, and the old ones (14 and 7) are not stated as current."""
@@ -65,94 +49,8 @@ def test_b10_the_pass_counts_in_the_documents_are_the_ones_the_tests_pin():
     assert "their worst is 14" not in CHANGELOG and "needs more than 7;" not in CHANGELOG
 
 
-def _tree_counts(ev: Path, tree: str) -> tuple[int, int, int, int]:
-    """(texts, readable, withheld, errors) of one tree in the one-line-per-text file of the hostile set."""
-    import json
-
-    rows = [
-        json.loads(line)
-        for line in (ev / f"cells-{tree}.jsonl").read_text(encoding="utf-8").splitlines()
-    ]
-    return (
-        len(rows),
-        sum(1 for r in rows if r["readable"]),
-        sum(1 for r in rows if r["withheld"]),
-        sum(1 for r in rows if r["err"]),
-    )
-
-
-def _clean_line(ev: Path, tree: str, label: str) -> tuple[int, int]:
-    """(texts, withheld) of the clean-corpus line that starts with `label` (A, B, C or D)."""
-    text = (ev / f"clean-corpus-{tree}.txt").read_text(encoding="utf-8")
-    found = re.search(rf"^{label} .*?texts=(\d+) withheld_or_error=(\d+)", text, re.MULTILINE)
-    assert found is not None, (tree, label)
-    return int(found.group(1)), int(found.group(2))
-
-
-def test_b10_the_numbers_in_security_are_the_recorded_evidence():
-    """Batch 10 (findings M2, M4), moved to the files of batch 11 (round 10, group 3): every figure SECURITY.md gives for ordinary text,
-    hostile text and the spaced-out rule is read from the evidence files in `handover/evidence/PRH/b11/` and compared as a whole number.
-    The trees are `head` (this head), `old` (5c430b6a, the batch 10 head), `ea6` (ea6dbdaf) and `main`."""
-    ev = ROOT / "handover/evidence/PRH/b11"
-    trees = ("head", "old", "ea6", "main")
-    total = {t: _clean_line(ev, t, "A")[0] for t in trees}
-    assert len(set(total.values())) == 1, "the four trees were not run on one corpus"
-    n = total["head"]
-    assert _whole(f"{n:,}", SECURITY), "the corpus size is not in SECURITY.md"
-    bad = {t: _clean_line(ev, t, "A")[1] for t in trees}
-    for tree in ("head", "main"):
-        assert f"{bad[tree]} ({_percent(bad[tree], n)} percent)" in SECURITY, (tree, bad[tree])
-    assert (
-        f"the tool path withholds {bad['head']} (" in SECURITY
-        and f"{bad['old']} on the previous head (5c430b6a), {bad['ea6']} on ea6dbdaf and {bad['main']} ("
-        in SECURITY
-    )
-    assert f"{bad['head'] - bad['main']} texts more than main" in SECURITY
-    # one copy of the secret appended, then an opener and one copy, then the same with a secret of everyday letter groups
-    for label, tree in (("C", "head"), ("C", "old"), ("C", "ea6"), ("C", "main")):
-        assert _whole(f"{_clean_line(ev, tree, label)[1]:,}", SECURITY), (label, tree)
-    d = {t: _clean_line(ev, t, "D")[1] for t in ("head", "old", "main")}
-    assert f"{d['head']} ({_percent(d['head'], n)} percent)" in SECURITY
-    assert f"against {_clean_line(ev, 'head', 'B')[1]} without the opener" in SECURITY
-    assert f"main {d['main']}" in SECURITY
-    hostile = {t: _tree_counts(ev, t) for t in trees}
-    assert _whole(f"{hostile['head'][0]:,}", SECURITY)
-    order = ("main", "ea6", "old", "head")
-    withheld = [hostile[t][2] for t in order]
-    errors = [hostile[t][3] for t in order]
-    readable = [hostile[t][1] for t in order]
-    assert (
-        f"withheld: {withheld[0]}, {withheld[1]}, {withheld[2]} and {withheld[3]} (main, ea6dbdaf, 5c430b6a and this head, in that order)"
-        in SECURITY
-    )
-    assert f"errors raised: {errors[0]}, {errors[1]}, {errors[2]} and {errors[3]}" in SECURITY
-    assert (
-        f"{readable[0]:,} texts on main, {readable[1]} on ea6dbdaf, {readable[2]} on 5c430b6a and {readable[3]} on this head"
-        in SECURITY
-    )
-    for tree, name in (("stdlib", "the Python 3.13 library"), ("repo", "the repository's own")):
-        text = (ev / f"spaced-{tree}-head.txt").read_text(encoding="utf-8")
-        found = re.search(
-            r"files=(\d+) lines=(\d+) lines_with_a_spaced_run_at_all=(\d+) lines_changed=(\d+)",
-            text,
-        )
-        files, lines, runs, changed = (int(x) for x in found.groups())
-        if tree == "stdlib":
-            want = f"{lines:,} lines of the Python 3.13 library ({files:,} files), {runs} hold such a stretch and {changed} change"
-        else:
-            want = f"{lines:,} lines of the repository's own text and saved evidence ({files} files, the tree at 5c430b6a), {runs} hold a stretch of spaced single characters and {changed} change"
-        assert want in SECURITY, name
-    seeded = {
-        t: re.search(
-            r"strict withheld (\d+) \| readable windows (\d+)",
-            (ev / f"fuzz-b7-{t}.txt").read_text(encoding="utf-8"),
-        ).groups()
-        for t in ("head", "old", "main")
-    }
-    assert (
-        f"strict withheld {seeded['head'][0]} on this head, {seeded['old'][0]} on 5c430b6a and {seeded['main'][0]} on main; readable windows {seeded['head'][1]}, {seeded['old'][1]} and {int(seeded['main'][1]):,}"
-        in SECURITY
-    )
+# The batch 10 and 11 test that compared SECURITY.md with the batch 11 evidence files was replaced in batch 12 by the figure tests below,
+# which read every figure of the paragraph and of the CHANGELOG item against numbers.txt, itself rebuilt from the raw files of batch 12.
 
 
 # Batch 12 (round 11, issue 4): EVERY figure (one digit or more, a thousands comma, a decimal, a percent) of the SECURITY.md paragraph on
@@ -163,8 +61,8 @@ _FIGURE = re.compile(r"(?<![\w.+\\/#:-])(\d[\d,]*(?:\.\d+)?)(?![\w])(?! ?(?:-|/)
 # 24 passes, ...), the 2026 date, the Python version, the file and mutant numbers the text names
 _CODE_NUMBERS = {
     *map(str, range(1, 13)),
-    "14", "16", "17", "24", "60", "64", "2026", "3.13", "15.1",
-    "186", "187", "188", "189", "190", "191", "192", "193", "194", "195", "196", "197", "198", "199", "200",
+    "14", "16", "17", "24", "60", "63", "64", "4096", "2026", "3.13", "15.1",
+    "186", "187", "188", "189", "190", "191", "192", "193", "194", "195", "196", "197", "198", "199", "200", "201", "202",
     "161", "162", "163", "165", "167", "168", "170", "171", "172", "173", "174", "175", "176", "178", "180", "181", "182", "183", "184",
 }  # fmt: skip
 _PARAGRAPH_START = "- Hidden-character and spaced-out redaction: what it costs"
@@ -219,7 +117,9 @@ def test_b12_every_figure_in_security_and_the_changelog_is_in_the_numbers_file()
     missing = _missing_figures(figures, known)
     assert missing == [], f"figures with no line in numbers.txt and no code meaning: {missing}"
     assert not re.search(r"\b898\b", SECURITY), "SECURITY.md states the withdrawn figure 898"
-    assert "30 percent" not in SECURITY
+    assert not re.search(r"(?<![\d.])30 percent", SECURITY), (
+        "SECURITY.md states the withdrawn 30 percent"
+    )
     for match in re.finditer(r"\b898\b", CHANGELOG):
         near = CHANGELOG[max(0, match.start() - 250) : match.end() + 250]
         assert "withdrawn" in near, "CHANGELOG.md states 898 without saying it is withdrawn"

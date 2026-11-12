@@ -1,0 +1,5 @@
+A no copy: texts=22935 withheld_or_error=83 share=0.00362
+B one copy: texts=22935 withheld_or_error=83 share=0.00362
+C opener + copy: texts=22935 withheld_or_error=107 share=0.00467
+D opener + copy, everyday secret: texts=22935 withheld_or_error=107 share=0.00467
+tree /home/user/build/b12p-ea6
