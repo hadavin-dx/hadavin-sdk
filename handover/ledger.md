@@ -3039,3 +3039,13 @@
 | P3a2b8-r19-8 | Nit | P3a-2 | r19 note: malformed DSN at postgres.py:236 may raise raw ProgrammingError quoting the DSN | OPEN | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
 | P3a2b8-r19-9 | Minor | P3a-2 | r19 evidence: 39th old-source failure unnamed; timing test fails on both heads; PG17 and 3.12 impossible-now | OPEN | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
 | P3a2b8-r19-10 | Minor | P3a-2 | r19 owner item O8 q-p3a2-o8-schema-owner stays OFF | OWNER-ONLY | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
+| Q8c1b15-r15-1 | Major | Q8c-1 | r15 N1: unreadable run-time import name lists no test when the file imports any tests package; keyword name= not read; __init__ prefix; alias call | OPEN | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
+| Q8c1b15-r15-2 | Minor | Q8c-1 | r15 notes-check links not followed or stated: indirect=True, fixture name=, non-literal getfixturevalue, lazy_fixture, entry-point plugins, walrus in defaults | OPEN | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
+| Q8c1b15-r15-3 | Minor | Q8c-1 | r15 renewal row counts 36/35/1 not pinned (plant asserts asked > 0) | OPEN | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
+| Q8c1b15-r15-4 | Minor | Q8c-1 | r15 eight untested branches of the new notes-check rules | OPEN | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
+| Q8c1b15-r15-5 | Minor | Q8c-1 | r15 extra_files in mutation_runner: no link test, no mkdir parents, no mutant | OPEN | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
+| Q8c1b15-r15-6 | Minor | Q8c-1 | r15 CHANGELOG:325 names the wrong file for the four fast tests | OPEN | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
+| Q8c1b15-r15-7 | Minor | Q8c-1 | r15 evidence at older heads; policy_mutants --day runs and B15 set not run; GATES.md lines 13 and 16 | OPEN | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
+| Q8c1b15-r15-8 | Minor | Q8c-1 | r15 kubernetes.py:6-9 states an unverified claim as fact | OPEN | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
+| Q8c1b15-r15-9 | Nit | Q8c-1 | r15 nits: dead docstring, redundant expected -=, CLI refusal test covers tick only, stale docstring | OPEN | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
+| Q8c1b15-r15-10 | Minor | Q8c-1 | r15 lead item: re-sync mutation_runner into demos; 12 Vault tests impossible-now; Kubernetes over-broad read owner-only | OWNER-ONLY | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
