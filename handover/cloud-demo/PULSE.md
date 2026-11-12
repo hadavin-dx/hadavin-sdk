@@ -2,3 +2,7 @@ cloud-demo PULSE (not started)
 cloud-demo PULSE 2026-11-12 18:08Z reply written, pushing; nothing running
 cloud-demo PULSE 2026-11-12 18:12Z ORDER 250 patch applied, Skill still refused until reload/new session; nothing running
 cloud-demo PULSE 2026-11-12T18:17:27Z retry refused (stale skill list); nothing running
+cloud-demo PULSE 2026-11-12T18:20:37Z r1 style done, waiting design
+cloud-demo PULSE 2026-11-12T18:20:56Z r1 both reviews done, resolve running (opus)
+cloud-demo PULSE 2026-11-12T18:21:56Z r1 resolve done, waiting user decision gate; nothing running
+cloud-demo PULSE 2026-11-12T18:23:03Z r1 fixes applied, nothing running

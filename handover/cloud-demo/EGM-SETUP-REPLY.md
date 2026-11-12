@@ -46,3 +46,6 @@ I did not edit any repo file, settings or hook, nor the demo repo. Test doc is i
 
 ### Retry after sdk repo attached (2026-11-12T18:17:27Z)
 Skill(egm:egm-review-loop) refused again: "cannot be used with Skill tool due to disable-model-invocation". On disk: 0 SKILL.md files carry the flag, so the refusal comes from the session start list. Needs owner /reload-skills in a session that has it, or a NEW cloud session. Test doc deleted.
+
+### Full dry run, round 1 (2026-11-12T18:23:03Z)
+User typed /egm:egm-review-loop (Skill tool still refuses). Reviewers egm:egm-design and egm:egm-style ran on sonnet; egm-resolve (opus agent) merged 18 findings into 10 PROPOSE FIX; user chose "auto accept"; a second opus agent applied all 10 (3 lines became 34). Round 2 not started (needs user confirm; converge needs two clean rounds, cap 5). Test doc deleted; final copy kept only in scratchpad. Both reviewers reported my brief named wrong persona files (agents/egm-design.md, egm-style.md); they used design_critic.md and style.md.
