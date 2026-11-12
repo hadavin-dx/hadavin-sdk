@@ -34,6 +34,9 @@ Which mutants need what on Windows (only Linux is run in CI; nobody has run this
   FILE link; they skip there, and only there (error 1314), when the account lacks the privilege, and a skipped killer makes the
   mutant SURVIVE in that run). The folder-link case (a junction on Windows, no privilege needed) is a separate test with no mutant:
   on Linux ``os.walk`` never enters a symlinked folder, so that test cannot tell the mutant from the original there.
+- Skips only where a link cannot be made: "a link out of the tree is accepted" (its killer links a FOLDER through the helper ``_dir_link``: a junction on Windows, which
+  needs no privilege and never skips, and a symbolic link elsewhere, which skips only where the account may not make one). So on Windows this mutant is killed, and
+  elsewhere it SURVIVES only on such an account.
 - Killers that skip through a MARK (``posix_only``, or ``skipif`` on ``sys.platform`` or ``os.name``): the mutants below SURVIVE on Windows. This list is
   derived, not typed: ``tests/test_mutation_runner_meta.py`` reads the decorators of every killer and fails when the list between the two marker
   lines differs from what it reads. A condition of a ``skipif`` that the reader cannot evaluate, and a decorator it cannot read, are errors of that test,
@@ -93,6 +96,8 @@ runner: a temp folder is not put back to 0700 when a umask took owner bits
 runner: a refused temp folder is left behind
 runner: the folders between are made without the private helper
 runner: a private file is emptied before it is checked
+runner: a file with a second name is narrowed before it is checked
+runner: a named pipe under the name of a made file blocks the open
 POSIX-ONLY-MUTANTS-END
 - Killers that skip INSIDE their body (a ``pytest.skip(...)`` in the killer or in a helper of its file; some skip only on Windows, some only where
   the account has no symbolic link privilege or the system has no named pipes). They have no mark, so they are not in the list above, and on
@@ -113,10 +118,20 @@ runner: a lock file with two names is accepted
 runner: the lock file is opened for writing on POSIX
 runner: a FIFO lock file blocks the open
 BODY-SKIP-MUTANTS-END
-- Every killer that is in neither of the two lists above carries no skip on Windows (a mark or a ``pytest.skip`` call). The tree-kill killers use ``taskkill /T`` on Windows; the
+- Killers that skip nothing but drop the case that tests the guard where ``os.name`` is ``"nt"`` (no mark and no ``pytest.skip`` call, so neither list above finds them), and
+  the mutant SURVIVES on Windows because the guard is a POSIX branch: "the descriptor of the lock folder leaks" (Windows has no lock folder, so only the file's
+  descriptor is opened) and "a JUnit symbolic link is followed" (the symbolic-link case is left out on Windows). This third list is KEPT BY HAND between the marker lines
+  below. ``tests/test_mutation_runner_meta.py`` checks it in both directions against the killers that read ``os.name`` or ``sys.platform`` in their body and are in neither list above
+  (the two others it finds, "the descriptor leaks when no file object is made" and "a JUnit path that is no regular file is read", still have a case that kills them on Windows;
+  they are named in that test). It follows no helper: a killer that reads the system only inside a helper of another file is NOT found.
+OS-BRANCH-MUTANTS-BEGIN
+runner: the descriptor of the lock folder leaks
+runner: a JUnit symbolic link is followed
+OS-BRANCH-MUTANTS-END
+- Every other killer, in none of the three lists above, carries no skip on Windows and no case left out there by the system name. The tree-kill killers use ``taskkill /T`` on Windows; the
   Windows branch after a normal exit is run on any system with the Windows flag faked.
 
-Keyword tests (``tests/test_mutation_runner_keywords.py``): 265 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
+Keyword tests (``tests/test_mutation_runner_keywords.py``): 267 mutants there (conftest, ``pass_env``, masking, canary, ``forbid_skips``,
 fixture errors, the snapshot of the environment, the lock name). Many tests of that file have no mutant of their own, and this header does NOT
 list them all: a test either guards the test code itself (the guard test of the database address), an old behaviour that no replacement
 can bring back (the check that the old text is gone), a place that one replacement cannot move ("a missing conftest is noticed only at the
@@ -660,7 +675,7 @@ M = [
     kmutant('runner: a file in the way of a part is accepted', MR, '            if not here.is_dir():\n                raise', '            if False:\n                raise', 'test_the_parts_between_are_made_private_too_and_a_file_in_the_way_is_refused', 'a file in the way of a part was accepted'),
     kmutant('runner: emptying a folder follows a link', MR, '        if child.is_dir(follow_symlinks=False):', '        if child.is_dir():', 'test_emptying_a_folder_keeps_the_folder_and_its_mode_and_follows_no_link', 'was not emptied'),
     kmutant('runner: emptying a folder removes the folder', MR, '            with contextlib.suppress(OSError):\n                os.unlink(child.path)', '            with contextlib.suppress(OSError):\n                os.unlink(child.path)\n    os.rmdir(folder)', 'test_emptying_a_folder_keeps_the_folder_and_its_mode_and_follows_no_link', 'folder itself was removed'),
-    kmutant('runner: a private file is not put back to 0600', MR, '            os.chmod(fd, 0o600)\n            problem = _file_problem(os.fstat(fd))', '            problem = _file_problem(os.fstat(fd))', 'test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_no_link', 'had mode'),
+    kmutant('runner: a private file is not put back to 0600', MR, '            if _narrowable(os.fstat(fd)):\n                os.chmod(fd, 0o600)\n', '', 'test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_no_link', 'had mode'),
     kmutant('runner: a private file is not emptied', MR, '        if not problem:\n            os.ftruncate(fd, 0)\n', '', 'test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_no_link', 'was not made private and empty'),
     kmutant('runner: a private file follows a link', MR, '    flags |= getattr(os, "O_NOFOLLOW", 0)\n', '    flags |= 0\n', 'test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_no_link', 'a link under the name of the file was followed'),
     kmutant('runner: a private file is made with a wide mode first', MR, '    fd = os.open(path, flags, 0o600)\n    try:', '    fd = os.open(path, flags, 0o666)\n    try:', 'test_a_private_file_is_mode_0600_whatever_the_umask_is_emptied_and_follows_no_link', 'before it was made private'),
@@ -692,7 +707,7 @@ M = [
     kmutant('runner: the tests folder of the copy is made without the private helper', MR, '        _make_private_dir(tmp / "tests", "tests folder")', '        os.mkdir(tmp / "tests", 0o700)', 'test_the_temp_folder_the_tests_folder_and_the_settings_folder_are_made_by_the_helpers', 'folders made by the helper'),
     kmutant('runner: the temp folder is made without the private helper', MR, '            made.append(_make_private_temp_dir("mutants_", "temp folder"))', '            made.append(Path(tempfile.mkdtemp(prefix="mutants_")))', 'test_the_temp_folder_the_tests_folder_and_the_settings_folder_are_made_by_the_helpers', 'mkdtemp was called outside the helper'),
     kmutant('runner: a creation site moved out of the helpers', MR, '    os.mkdir(path, 0o700)\n    if not _IS_WINDOWS:\n        os.chmod(path, 0o700)\n    _refuse_unless_private(path, what)\n\n\ndef _make_private_temp_dir', '    os.mkdir(path, 0o700)\n    if not _IS_WINDOWS:\n        os.chmod(path, 0o700)\n    _refuse_unless_private(path, what)\n    Path(path).joinpath("note").write_text("x", encoding="utf-8")\n\n\ndef _make_private_temp_dir', 'test_every_folder_and_file_the_runner_creates_is_made_by_one_of_the_helpers', 'a creation site that is not a private helper'),
-    kmutant('runner: os.fchmod is used again', MR, '            # ``chmod`` on the descriptor: ``os.fchmod`` is unknown to mypy on Windows before Python 3.13\n            os.chmod(fd, 0o600)', '            os.fchmod(fd, 0o600)', 'test_the_runner_does_not_call_os_fchmod_which_mypy_does_not_know_on_windows_before_python_3_13', 'was used again'),
+    kmutant('runner: os.fchmod is used again', MR, '            if _narrowable(os.fstat(fd)):\n                os.chmod(fd, 0o600)', '            if _narrowable(os.fstat(fd)):\n                os.fchmod(fd, 0o600)', 'test_the_runner_does_not_call_os_fchmod_which_mypy_does_not_know_on_windows_before_python_3_13', 'was used again'),
     kmutant('runner: a built-in class name equal to a secret is shown', MR, '    folded = head.casefold()  # ONE rule for every name of ``shown.classes``: equal to a secret up to letter case hides the name\n    if any(secret.casefold() == folded for secret in shown.secrets):\n        return CLASS_HIDDEN\n', '', 'test_a_password_equal_to_a_built_in_class_name_is_not_shown_as_the_class', 'was shown as the class:'),
     kmutant('runner: a built-in class name equal to a secret in another letter case is shown', MR, 'secret.casefold() == folded for secret in shown.secrets', 'secret == head for secret in shown.secrets', 'test_a_password_equal_to_a_built_in_class_name_is_not_shown_as_the_class', 'in lower case was shown as the class'),
     kmutant('runner: a built-in class name is hidden for any secret that holds it', MR, 'secret.casefold() == folded for secret in shown.secrets', 'folded in secret.casefold() for secret in shown.secrets', 'test_a_password_that_holds_a_whole_class_name_does_not_hide_the_class', 'was hidden for a password that holds it'),
@@ -707,6 +722,8 @@ M = [
     kmutant('runner: the address check gets no class name of the caller', MR, '                (*classes, *(m.crash_type for m in mutants if m.crash_type)),\n', '                (),\n', 'test_run_mutants_gives_its_crash_types_and_shown_classes_to_the_address_check', 'accepted a password equal to a name of the call'),
     kmutant('runner: the folders between are made without the private helper', MR, '            _make_private_dir(here, "folder of the copy")\n', '            os.mkdir(here, 0o700)\n', 'test_the_parts_between_are_made_by_the_private_helper_also_under_umask_0277', 'under umask 0277 the part'),
     kmutant('runner: a private file is emptied before it is checked', MR, '    flags = os.O_WRONLY | os.O_CREAT\n', '    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC\n', 'test_a_file_with_a_second_name_keeps_its_content_when_it_is_refused', 'was emptied before it was refused'),
+    kmutant('runner: a file with a second name is narrowed before it is checked', MR, '            if _narrowable(os.fstat(fd)):\n', '            if True:\n', 'test_a_file_with_a_second_name_keeps_its_mode_when_it_is_refused', 'was narrowed before it was refused'),
+    kmutant('runner: a named pipe under the name of a made file blocks the open', MR, '    flags |= getattr(os, "O_NONBLOCK", 0)\n', '    flags |= 0\n', 'test_a_named_pipe_under_the_name_of_a_made_file_does_not_block_the_open', 'blocked the open for writing'),
     kmutant('runner: a built-in class name is hidden for a password that is a piece of it', MR, 'secret.casefold() == folded for secret in shown.secrets', 'secret.casefold() in folded for secret in shown.secrets', 'test_a_password_that_is_only_a_piece_of_a_class_name_does_not_hide_the_class', 'was hidden for a password that is a piece of it'),
 ]  # fmt: skip
 

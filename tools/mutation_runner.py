@@ -43,13 +43,12 @@ Every pytest run has a timeout, and a timeout stops the whole process tree of th
 The limit on names: a path may not contain ':' (a Windows drive or an NTFS stream name), so a file or folder whose name holds a colon cannot be named to this tool at all, on any system.
 
 Windows and macOS. The runner has not been run on Windows or macOS at this version; CI runs Linux only. What this text says about Windows
-and macOS is written from reading the code, not from a run. ``mypy --platform win32 tools/mutation_runner.py`` reports 13 errors at this version (measured with mypy 2.4.1, for Python 3.12 and for
-3.13): 12 are POSIX-only functions and constants (``getuid``, ``O_DIRECTORY``, ``O_NOFOLLOW``, the ``waitid`` constants, ``killpg``,
+and macOS is written from reading the code, not from a run. ``mypy --platform win32 tools/mutation_runner.py`` reports 14 errors at this version (measured in round 27 by running the repo test with mypy 2.4.1 added for that run only, on Python 3.12 and 3.13; the repo test is skipped where mypy is not installed): 13 are POSIX-only functions and constants (``getuid``, ``O_DIRECTORY``, ``O_NOFOLLOW``, the ``waitid`` constants, ``killpg``,
 ``SIGKILL``) and 1 is the missing type information of ``hadavin_sdk.testing.mutation`` (the one error that Linux shows too; where the package
 is not installed it reads "cannot find"). The file does not call ``os.fchmod``: mypy does not know it on Windows before Python 3.13, so the
-count would be 14 on 3.12. CI does not run the mypy count: mypy is not in the locked test environment (adding it to the lock file is left to the lead: a
+count would be 15 on 3.12. CI does not run the mypy count: mypy is not in the locked test environment (adding it to the lock file is a separate decision of the owner: a
 plain ``uv lock`` of this tool chain also rewrites the format revision and the platform markers of ``uv.lock``, so it is not a plain addition). What CI does run is the table test of the keyword
-test file, which counts the places of the POSIX-only names in this file (12 places, plus the one import error). A test of the same file runs mypy itself and compares
+test file, which counts the places of the POSIX-only names in this file (13 places, plus the one import error). A test of the same file runs mypy itself and compares
 (it is skipped, with its reason, where mypy is not installed; on a developer machine, install mypy 2.4.1 and run it).
 
 Limits, stated plainly. Stopping the process tree reaches the processes that stay in the run's process group (POSIX) or the parent chain
@@ -184,7 +183,10 @@ cover tests that need more. ``forbid_skips`` switches itself on when you list a 
                                         secret value in any letter case (one rule for every name: a built-in one, a ``crash_type``, a
                                         ``shown_classes`` entry; a password that is ``TimeoutError`` or ``timeouterror``) is ``[class not shown]`` too.
                                         A password that is only a PIECE of a name of Python does not hide it; a piece of a name of the caller
-                                        hides it (the caller's names are caller text, see the second layer below): this difference is on purpose.
+                                        hides it (the caller's names are caller text, see the second layer below): this difference is on purpose. What a reader can learn from it: a
+                                        name equal to the password is hidden, so the password cannot be read from the name; a hidden name of the caller
+                                        may also be one that only HOLDS a piece of the password, and the hiding itself shows that (one bit per row,
+                                        the same channel as a test id or an ``expect`` slot).
     the rest of the failing line        Never shown. In its place: the fixed words ``[expect found]`` or ``[expect not found]``, then the
                                         caller's ``expect`` text.
     a test id                           The file part is shown when it equals one of the caller's ``tests`` entries. The caller's text is
@@ -233,10 +235,10 @@ cover tests that need more. ``forbid_skips`` switches itself on when you list a 
     true), and the snapshot folder and ``base.xml`` of the run. The folders and files of the run are private to the user, not to the tests.
   - A test can choose which allowed name it shows (one of about 70 exception class names of Python, one of the caller's function names).
     A hostile test could pass a few bits per row that way. The counts and the exit code are numbers the child chooses, too.
-  - The JUnit files hold the child's real text. Every folder the runner makes, the folders between the temp folder and a copied test file included
+  - The JUnit files hold the child's real text. Every folder the runner makes by the helper, the folders between the temp folder and a copied test file included
     (a part that was already there is left as it is), is created with mode 0700 whatever the umask and is checked (a real
-    folder of this user with no access for group or others, ``lstat``) when it is made and checked again after every rebuild of the temp copy:
-    the temp folder of the run, its ``tests`` folder, its snapshot folder (next to it in the temp folder), the folder of the pytest settings file and the lock folder.
+    folder of this user with no access for group or others, ``lstat``) when it is made. The temp folder and the snapshot folder are checked again after every rebuild of the temp copy; the
+    others once, when made (the parent is re-checked and gates the way in). The folders are: the temp folder of the run, its ``tests`` folder, its snapshot folder (next to it in the temp folder), the folder of the pytest settings file and the lock folder.
     The temp folder is emptied and kept, never removed and made again with the default mode. The settings file and every result file are made by
     the runner with mode 0600 before the child gets their path, and checked on the open descriptor (a regular file of this user with one name and no access for
     group or others, ``_file_problem``), and an old file is emptied only after that check (a file with a second name keeps its content when it is
@@ -245,7 +247,9 @@ cover tests that need more. ``forbid_skips`` switches itself on when you list a 
     of the snapshot and of every rebuild copy the caller's tree and keep its modes, and ``write_text`` replaces the text of one file of the copy with the mutant. A test pins
     every creation site of the listed spellings (``tempfile.mkdtemp``, ``mkstemp``, ``NamedTemporaryFile``, ``TemporaryFile``, ``SpooledTemporaryFile``, ``TemporaryDirectory``,
     ``os.mkdir``, ``makedirs``, ``open``, ``rename``, ``replace``, ``symlink``, ``link``, ``mkfifo``, ``shutil.copytree``, ``copy``, ``copy2``, ``copyfile``, ``move``, ``open``, and the methods
-    ``mkdir``, ``touch``, ``write_text``, ``write_bytes``, ``open``), also under an alias and in module-level code; a spelling that is not listed is not found. On Windows nothing is checked: mode bits mean nothing there. The runner removes the folders at the end. After SIGKILL, which cannot be
+    ``mkdir``, ``touch``, ``write_text``, ``write_bytes``, ``open``), also under an alias and in module-level code. The test pins each (spelling, owner function, count) in this file; a spelling that
+    is not listed is NOT found: a name assigned to a variable first, ``getattr``, ``map`` or ``functools.partial`` of a creating function, ``os.fdopen``, ``io.open``, ``codecs.open``, other ``Path`` methods
+    and ``shutil.copyfileobj``. The intermediate parents of the destination of an ``extra_dirs`` copy are made by ``copytree`` and ``makedirs`` and keep the caller's modes. On Windows nothing is checked: mode bits mean nothing there. The runner removes the folders at the end. After SIGKILL, which cannot be
     caught, they stay on disk (``mutants_*`` in the temp folder): delete it by hand.
   - A traceback of an error the runner raises holds the address in its local variables. A tool that prints local variables (pytest
     ``--showlocals``, an error tracker) prints the address with its password. The messages of the errors never hold it.
@@ -1092,7 +1096,9 @@ def _shown_class(raw: str, shown: _Shown) -> str:
     the password, and hiding every name that holds a short password would blank all of them. A name the caller owns also goes through the
     second layer (``_own_text``): when it HOLDS a secret (a piece of the name does too), ``CLASS_HIDDEN`` is given, never a part of the name. So
     a piece of a name hides a caller's name and does not hide a name of Python: that difference is on purpose (the caller's names are the caller's
-    own text, which the second layer treats like every other caller text)."""
+    own text, which the second layer treats like every other caller text). One bit is left on purpose: a hidden name of the caller shows that
+    the name equals the password or holds a piece of it (the same channel as a test id or an ``expect`` slot); a reader cannot read the password
+    from an equal name, and the hiding of a name that holds only a piece tells that the piece is in that name."""
     if _BARE_ASSERT.match(raw.strip()):
         return ASSERT_SHOWN
     head = _leading_class(raw) if raw else ""
@@ -1290,20 +1296,33 @@ def _file_problem(info: os.stat_result) -> str:
     return ""
 
 
+def _narrowable(info: os.stat_result) -> bool:
+    """Whether a file that was opened (``fstat``) may be put back to mode 0600: it is a regular file, it is ours and it has no second name. A file
+    that fails one of these three is only refused (``_file_problem``): a mode change on it would reach a file that is not ours alone (a hard link
+    shares its inode with the other name). POSIX only."""
+    return stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and info.st_nlink == 1
+
+
 def _make_private_file(path: Path, what: str = "private file") -> None:
     """Make (or empty) the file ``path`` (``what`` of this run) with mode 0600 whatever the umask, without following a link, then check it
     (``_file_problem``, on the open descriptor, so the file that was checked is the file that was made), and only THEN empty it (``ftruncate``): a
-    file that fails the check (a second name, another owner) keeps its content. A result file or a settings file that the runner names is
-    made here before the child gets its path."""
+    file that fails the check (a second name, another owner) keeps its content and its mode (the mode is changed only on a regular file of this
+    user with one name, ``_narrowable``). The open does not wait for a reader (``O_NONBLOCK``): a named pipe under the name fails at once (no
+    reader) or is refused as not a regular file (a reader), where a plain open for writing would block for ever. The refusal for a file of another
+    user is reached only by root or when that file is writable by this user: any other caller already fails at the open with ``PermissionError``.
+    A result file or a settings file that the runner names is made here before the child gets its path."""
     problem = ""
     flags = os.O_WRONLY | os.O_CREAT
     # a link under the name is refused (``ELOOP``), not followed
     flags |= getattr(os, "O_NOFOLLOW", 0)
+    # a named pipe under the name must not block the open (POSIX only: Windows has no such flag and no named pipes here)
+    flags |= getattr(os, "O_NONBLOCK", 0)
     fd = os.open(path, flags, 0o600)
     try:
         if not _IS_WINDOWS:
             # ``chmod`` on the descriptor: ``os.fchmod`` is unknown to mypy on Windows before Python 3.13
-            os.chmod(fd, 0o600)
+            if _narrowable(os.fstat(fd)):
+                os.chmod(fd, 0o600)
             problem = _file_problem(os.fstat(fd))
         if not problem:
             os.ftruncate(fd, 0)

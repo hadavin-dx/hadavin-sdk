@@ -80,7 +80,7 @@ MOVED = (
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 327
+EXPECTED_MUTANTS = 329
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
@@ -263,15 +263,20 @@ def _module_marks(tree: ast.Module) -> tuple[dict[str, bool], bool]:
         value = node.value
         if name == "pytestmark":
             parts = value.elts if isinstance(value, (ast.List, ast.Tuple)) else [value]
-            whole = any(_mark_true_on_windows(part, marks) for part in parts)
+            read = [
+                _mark_true_on_windows(part, marks) for part in parts
+            ]  # EVERY part is read: an unreadable one raises
+            whole = any(read)
         elif isinstance(value, ast.Call) and _dotted(value.func).startswith("pytest.mark."):
             marks[name] = _mark_true_on_windows(value, marks)
     return marks, whole
 
 
 def _windows_skip_mark(function: ast.FunctionDef, marks: dict[str, bool], whole: bool) -> bool:
-    """True when the module's ``pytestmark`` (``whole``) or a decorator of ``function`` makes pytest skip it on Windows."""
-    return whole or any(_mark_true_on_windows(d, marks) for d in function.decorator_list)
+    """True when the module's ``pytestmark`` (``whole``) or a decorator of ``function`` makes pytest skip it on Windows. EVERY decorator is read, also
+    after one that is already true (``posix_only``), so an unreadable decorator anywhere in the list raises ``ValueError``."""
+    read = [_mark_true_on_windows(d, marks) for d in function.decorator_list]
+    return whole or any(read)
 
 
 def _functions_of(path: Path) -> tuple[dict[str, ast.FunctionDef], dict[str, bool], bool]:
@@ -369,9 +374,20 @@ def test_a_module_level_pytestmark_and_a_named_mark_are_read_and_an_unknown_deco
         assert "cannot be read for Windows" in str(exc)
     else:
         raise AssertionError("a decorator that cannot be read was taken as no skip")
-    assert _windows_skip_mark(function, {}, True) is True, (
+    plain_function = ast.parse("def test_a(): pass\n").body[0]
+    assert _windows_skip_mark(plain_function, {}, True) is True, (
         "the module-level pytestmark was not applied to a test"
     )
+    try:
+        _windows_skip_mark(
+            function, {}, True
+        )  # the whole-file mark does not excuse an unreadable decorator
+    except ValueError as exc:
+        assert "cannot be read for Windows" in str(exc)
+    else:
+        raise AssertionError(
+            "an unreadable decorator was not read because the whole file is marked"
+        )
 
 
 def test_the_header_names_every_mutant_whose_killer_skips_inside_its_body_and_each_skip_is_there():
@@ -387,6 +403,64 @@ def test_the_header_names_every_mutant_whose_killer_skips_inside_its_body_and_ea
     assert len(set(named)) == len(named), (
         "a mutant is named twice in the body-skip list of the header"
     )
+
+
+# killers that read ``os.name`` in their body and are in no derived list, but still kill their mutant on Windows (another case of the same test does)
+STILL_KILLED_ON_WINDOWS = (
+    "runner: the descriptor leaks when no file object is made",
+    "runner: a JUnit path that is no regular file is read",
+)
+
+
+def _system_name_killers() -> list[str]:
+    """The names of the mutants whose killer reads ``os.name`` or ``sys.platform`` in its own body (not in a helper) and that no mark and no ``pytest.skip`` call names."""
+    found = {
+        file: _functions_of(path)[0]
+        for file, path in ((mm.TEST, RUNNER_TESTS), (mm.KW, KEYWORD_TESTS))
+    }
+    listed = set(_windows_skip_killers()) | set(_body_skip_killers())
+    out = []
+    for m in mm.M:
+        if m.name in listed:
+            continue
+        if any(
+            isinstance(node, ast.Attribute) and ast.unparse(node) in ("os.name", "sys.platform")
+            for node in ast.walk(found[m.test_file][m.only_test])
+        ):
+            out.append(m.name)
+    return out
+
+
+def test_the_header_names_the_killers_that_drop_a_case_by_the_system_name_and_both_lists_are_checked():
+    """Two killers drop a case by ``os.name`` and have no mark and no ``pytest.skip``: the header names them between a third pair of marker lines, which is kept by
+    hand. This test reads the killers that use ``os.name`` or ``sys.platform`` in their body and compares: every killer found is in the hand list or in
+    ``STILL_KILLED_ON_WINDOWS``, and every name in either list is a mutant whose killer is found."""
+    named = _named_between("OS-BRANCH-MUTANTS-BEGIN", "OS-BRANCH-MUTANTS-END")
+    found = _system_name_killers()
+    assert len(found) >= 2, f"the system-name killers were not read: {found}"
+    assert sorted(found) == sorted([*named, *STILL_KILLED_ON_WINDOWS]), (
+        f"found only: {sorted(set(found) - set(named) - set(STILL_KILLED_ON_WINDOWS))}; "
+        f"listed only: {sorted((set(named) | set(STILL_KILLED_ON_WINDOWS)) - set(found))}"
+    )
+    assert len(set(named)) == len(named) == 2 and not set(named) & set(STILL_KILLED_ON_WINDOWS)
+
+
+def test_every_decorator_is_read_even_after_a_true_mark_and_an_unreadable_one_raises():
+    """The old reader stopped at the first mark that is true (``posix_only``), so an unreadable decorator after it was never read. Same for the parts of a module-level ``pytestmark``."""
+    function = ast.parse("@posix_only\n@some.decorator\ndef test_a(): pass\n").body[0]
+    try:
+        _windows_skip_mark(function, {"posix_only": True}, False)
+    except ValueError as exc:
+        assert "cannot be read for Windows" in str(exc)
+    else:
+        raise AssertionError("an unreadable decorator after a true mark was not read")
+    both = ast.parse("pytestmark = [pytest.mark.skip, some.thing]\n")
+    try:
+        _module_marks(both)
+    except ValueError as exc:
+        assert "cannot be read for Windows" in str(exc)
+    else:
+        raise AssertionError("an unreadable part of pytestmark after a true one was not read")
 
 
 def test_the_header_names_every_mutant_whose_killer_is_skipped_on_windows_derived_from_the_skip_marks():

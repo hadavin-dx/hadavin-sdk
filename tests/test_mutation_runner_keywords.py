@@ -5423,21 +5423,31 @@ def test_the_parts_between_are_made_by_the_private_helper_also_under_umask_0277(
 ):
     top = tmp_path / "top"
     os.mkdir(top, 0o700)
-    with _umask(
-        0o277
-    ):  # a mask that takes owner bits away: ``os.mkdir(path, 0o700)`` alone gives 0400
-        mr._make_dirs(top, top.resolve() / "a" / "b" / "c")
-    for part in ("a", "a/b", "a/b/c"):
-        assert _mode(top / part) == 0o700, (
-            f"under umask 0277 the part {part} had mode {_mode(top / part):o}"
-        )
+    # The helper spy comes FIRST and runs under the normal mask: a part made by a bare ``os.mkdir(path, 0o700)`` is caught here
+    # for its own reason, whoever runs the list (a non-root user would otherwise fail later with a PermissionError).
     whats: list[str] = []
     real = mr._make_private_dir
     monkeypatch.setattr(
         mr, "_make_private_dir", lambda path, what: (whats.append(what), real(path, what))[1]
     )
-    mr._make_dirs(top, top.resolve() / "a" / "x" / "y")
-    assert whats == ["folder of the copy"] * 3, f"the parts were not made by the helper: {whats}"
+    mr._make_dirs(top, top.resolve() / "s1" / "s2" / "s3")
+    assert whats == ["folder of the copy"] * 3, (
+        f"under umask 0277 the parts would not be made by the helper (it was called for: {whats})"
+    )
+    monkeypatch.setattr(mr, "_make_private_dir", real)
+    # A mask that takes owner bits away: ``os.mkdir(path, 0o700)`` alone gives 0500 (``0o700 & ~0o277``); a user who is not
+    # root then cannot make a folder inside it. That OSError is turned into a failure that names the guard.
+    try:
+        with _umask(0o277):
+            mr._make_dirs(top, top.resolve() / "a" / "b" / "c")
+    except OSError as err:
+        raise AssertionError(
+            f"under umask 0277 the part could not be made or entered: {type(err).__name__}"
+        ) from err
+    for part in ("a", "a/b", "a/b/c"):
+        assert _mode(top / part) == 0o700, (
+            f"under umask 0277 the part {part} had mode {_mode(top / part):o}"
+        )
     assert "the folders between the temp folder and a copied test file included" in _doc()
 
 
@@ -5464,6 +5474,74 @@ def test_a_file_with_a_second_name_keeps_its_content_when_it_is_refused(tmp_path
     mr._make_private_file(made, "result file")
     assert made.read_text(encoding="utf-8") == "", "an accepted old file was not emptied"
     assert "only after that check" in _doc()
+
+
+@posix_only
+def test_a_file_with_a_second_name_keeps_its_mode_when_it_is_refused(tmp_path):
+    """The mode is changed only on a file that passes the kind, owner and names check (``_narrowable``): a second name shares its inode, so a ``chmod`` would reach the other name too."""
+    made = tmp_path / "result.xml"
+    made.write_text("old text of the file", encoding="utf-8")
+    os.chmod(made, 0o640)
+    other_name = tmp_path / "other_name.xml"
+    os.link(made, other_name)
+    with pytest.raises(RuntimeError):
+        mr._make_private_file(made, "result file")
+    assert _mode(made) == 0o640 and _mode(other_name) == 0o640, (
+        f"a file with a second name was narrowed before it was refused: {_mode(made):o}"
+    )
+    other_name.unlink()
+    mr._make_private_file(
+        made, "result file"
+    )  # one name now: the mode is put back to 0600 and the file is emptied
+    assert _mode(made) == 0o600 and made.read_text(encoding="utf-8") == ""
+
+
+@posix_only
+def test_a_named_pipe_under_the_name_of_a_made_file_does_not_block_the_open(tmp_path):
+    """``_make_private_file`` on a FIFO (not only ``_file_problem`` on its stat). With no reader the open fails at once (``ENXIO``); with a reader the
+    file is refused as not a regular file. Without ``O_NONBLOCK`` the open for writing waits for a reader for ever: the call runs in a thread
+    that is given 5 seconds, and a reader is opened afterwards to let a blocked thread end (nothing is killed)."""
+    fifo = tmp_path / "result.xml"
+    os.mkfifo(fifo, 0o600)
+    outcome: dict[str, BaseException] = {}
+
+    def call() -> None:
+        try:
+            mr._make_private_file(fifo, "result file")
+        except BaseException as exc:  # noqa: BLE001  # whatever it raises is read below
+            outcome["exc"] = exc
+
+    worker = threading.Thread(target=call, daemon=True)
+    worker.start()
+    worker.join(5)
+    if worker.is_alive():
+        release = os.open(
+            fifo, os.O_RDONLY | os.O_NONBLOCK
+        )  # a reader: the blocked open goes on and the thread ends
+        try:
+            worker.join(10)
+        finally:
+            os.close(release)
+        raise AssertionError(
+            "a named pipe under the name of a made file blocked the open for writing"
+        )
+    exc = outcome.get("exc")
+    assert isinstance(exc, OSError) and exc.errno == errno.ENXIO, (
+        f"a named pipe with no reader gave {exc!r}, not an error at once"
+    )
+    reader = os.open(fifo, os.O_RDONLY | os.O_NONBLOCK)
+    try:
+        _must_raise(
+            "a named pipe with a reader was accepted",
+            RuntimeError,
+            mr._make_private_file,
+            fifo,
+            "result file",
+            match="is not a regular file",
+        )
+    finally:
+        os.close(reader)
+    assert "O_NONBLOCK" in (mr._make_private_file.__doc__ or "")
 
 
 @posix_only
@@ -5842,9 +5920,9 @@ def test_with_no_passed_variable_nothing_is_replaced_and_a_failing_line_is_shown
 # ---- the count of POSIX-only names that the texts give for ``mypy --platform win32`` -----------------------------------------------
 
 # each ``os.`` or ``signal.`` name that mypy reports for ``--platform win32`` (it does not know the name there), with the number of places the
-# runner uses it: 12 places, which with the one untyped import of ``hadavin_sdk.testing.mutation`` are the "13 errors" of the texts
+# runner uses it: 13 places, which with the one untyped import of ``hadavin_sdk.testing.mutation`` are the "14 errors" of the texts
 POSIX_ONLY_NAMES = {
-    "os.getuid": 4,
+    "os.getuid": 5,
     "os.O_DIRECTORY": 1,
     "os.O_NOFOLLOW": 1,
     "os.P_PID": 1,
@@ -5893,7 +5971,7 @@ OTHER_NAMES = frozenset(
 
 
 def test_a_new_os_or_signal_name_is_noticed_so_the_win32_error_count_in_the_texts_stays_true():
-    """The texts say ``mypy --platform win32`` gives 13 errors (12 places of POSIX-only names and 1 untyped import). Running mypy is not part of
+    """The texts say ``mypy --platform win32`` gives 14 errors (13 places of POSIX-only names and 1 untyped import). Running mypy is not part of
     the suite, so the places are counted here: a new ``os.`` or ``signal.`` name, or one more place of a POSIX-only name, fails this test until
     the table above, the module docstring and the CHANGELOG are made to agree."""
     tree = ast.parse(Path(mr.__file__).read_text(encoding="utf-8"))
@@ -5912,10 +5990,10 @@ def test_a_new_os_or_signal_name_is_noticed_so_the_win32_error_count_in_the_text
     )
     posix = {name: used.get(name, 0) for name in POSIX_ONLY_NAMES}
     assert posix == POSIX_ONLY_NAMES, f"the places of POSIX-only names changed: {posix}"
-    assert sum(posix.values()) + 1 == 13, (
-        "the sum of the places is no longer the 13 errors of the texts"
+    assert sum(posix.values()) + 1 == 14, (
+        "the sum of the places is no longer the 14 errors of the texts"
     )
-    assert "13 errors" in _doc(), "the module docstring does not give the count of mypy errors"
+    assert "14 errors" in _doc(), "the module docstring does not give the count of mypy errors"
 
 
 # ---- round 24: the win32 count is measured, files are checked like folders, the creation sites are the helpers, class names -------
@@ -5945,7 +6023,7 @@ MYPY_FLAGS = (
 def test_mypy_for_win32_reports_the_errors_the_texts_count(python_version, tmp_path):
     """RUNS mypy (the two Python versions the package supports) and compares: 12 errors are the POSIX-only names of the table, and one is the
     import of ``hadavin_sdk.testing.mutation`` (untyped, or not found where the package is not installed). The count of the texts is the
-    measured one, on both versions: ``os.fchmod`` would make it 14 on 3.12. CI does NOT run this test (mypy is not in the locked test
+    measured one, on both versions: ``os.fchmod`` would make it 15 on 3.12. CI does NOT run this test (mypy is not in the locked test
     environment), so the count is not checked there: ``test_a_new_os_or_signal_name_is_noticed...`` counts the places in CI. The output is read
     by fixed flags (``MYPY_FLAGS``: no summary line, no colour, no settings file) and every line that says ``: error:`` must be one the pattern reads."""
     command = [
@@ -5984,12 +6062,36 @@ def test_mypy_for_win32_reports_the_errors_the_texts_count(python_version, tmp_p
     assert len(other) == 1 and other[0]["code"] in ("import-untyped", "import-not-found"), (
         f"mypy reports something else than the one import error: {[m['text'] for m in other]}"
     )
-    assert len(errors) == 13, (
-        f"mypy --platform win32 gives {len(errors)} errors, the texts say 13 (python {python_version})"
+    assert len(errors) == 14, (
+        f"mypy --platform win32 gives {len(errors)} errors, the texts say 14 (python {python_version})"
     )
-    assert "measured with mypy" in _doc() and "13 errors" in _doc()
+    assert "14 errors" in _doc() and "measured in round 27 by running the repo test" in _doc()
+
+
+def test_the_docstring_says_that_ci_does_not_run_the_mypy_count():
+    """ALWAYS RUNS, in a mutant copy too (it reads only the docstring): the mypy test above is skipped where mypy is not installed, which is the CI case, so a
+    sentence asserted only there is not checked in CI."""
     assert "CI does not run the mypy count" in _doc(), (
         "the docstring does not say that CI does not run mypy"
+    )
+    assert "mypy is not in the locked test environment" in _doc()
+    assert "the repo test is skipped where mypy is not installed" in _doc()
+    assert "left to the lead" not in _doc()
+
+
+@pytest.mark.skipif(
+    not _CI_FILE.is_file(), reason="the workflow file is not in a mutant copy of the tree"
+)
+def test_that_ci_does_not_run_the_mypy_count_is_true_of_the_workflow_and_the_lock_file():
+    """The sentence of the docstring is true while the workflow file does not name mypy and the lock file has no package of that name. When mypy is added to
+    either, this test fails and the text (and the count test) must be revised. It runs in CI (the workflow file is there); a mutant copy has no workflow file."""
+    root = _CI_FILE.parents[2]
+    lock = (root / "uv.lock").read_text(encoding="utf-8")
+    assert "mypy" not in _CI_FILE.read_text(encoding="utf-8").lower(), (
+        "the CI workflow names mypy: the text 'CI does not run the mypy count' is out of date"
+    )
+    assert 'name = "mypy"' not in lock, (
+        "mypy is in the lock file: the text 'mypy is not in the locked test environment' is out of date"
     )
 
 
@@ -6127,8 +6229,8 @@ CREATING_CALLS = frozenset(
 CREATING_METHODS = frozenset({"mkdir", "touch", "write_text", "write_bytes", "open"})
 
 
-def creation_sites(source: str) -> dict[str, set[str]]:
-    """``{spelling: {the outermost function, class or "<module>" that holds the call}}`` for every call of a creating function of the list above
+def creation_sites(source: str) -> dict[str, dict[str, int]]:
+    """``{spelling: {the outermost function, class or "<module>" that holds the call: how many calls it holds}}`` for every call of a creating function of the list above
     (``CREATING_CALLS``, a method of ``CREATING_METHODS`` on anything). The walk covers the whole module (code outside any function included),
     and a name imported with an alias (``import os as o``, ``from shutil import copytree as ct``) is read as the name it stands for."""
     tree = ast.parse(source)
@@ -6152,7 +6254,7 @@ def creation_sites(source: str) -> dict[str, set[str]]:
             parts.append(alias.get(node.id, node.id))
         return ".".join(reversed(parts))
 
-    sites: dict[str, set[str]] = {}
+    sites: dict[str, dict[str, int]] = {}
     for top in tree.body:
         owner = top.name if isinstance(top, (ast.FunctionDef, ast.ClassDef)) else "<module>"
         for node in ast.walk(top):
@@ -6161,26 +6263,30 @@ def creation_sites(source: str) -> dict[str, set[str]]:
             name = dotted(node.func)
             method = node.func.attr if isinstance(node.func, ast.Attribute) else ""
             if name in CREATING_CALLS or (method in CREATING_METHODS and name != "os.open"):
-                sites.setdefault(name or method, set()).add(owner)
+                counts = sites.setdefault(name or method, {})
+                counts[owner] = counts.get(owner, 0) + 1
     return sites
 
 
 def test_every_folder_and_file_the_runner_creates_is_made_by_one_of_the_helpers():
     """The class: a creation site that is not one of the private helpers makes a folder or file with the mode of the umask and no check. Every
     call of a function in ``CREATING_CALLS`` (and of a method in ``CREATING_METHODS``) is found in the whole module, aliased imports included,
-    and pinned: the spellings of those lists, not every way to make a file. The sites that are NOT helpers, and why each is on purpose:
+    and pinned as (spelling, owner function, COUNT of calls): a second call of the same spelling in the same function changes the count and fails. The pin
+    covers the spellings of those lists, not every way to make a file; the spellings that it does NOT find are a name assigned to a variable first,
+    ``getattr``, ``map`` or ``partial`` of a creating function, ``os.fdopen``, ``io.open``, ``codecs.open``, other ``Path`` methods and ``shutil.copyfileobj``.
+    The sites that are NOT helpers, and why each is on purpose:
     ``shutil.copytree`` and ``shutil.copy`` of ``_run_mutants`` copy the CALLER's tree (``src``, the listed tests, the listed folders) into the
     private folders of the run and keep the caller's modes (the module docstring says so: only the private folder protects them); making them
     0700 or 0600 would change what the tests see. ``p.write_text`` of ``_run_mutants`` replaces the text of one file of that copy (it exists,
     and keeps its mode: the mutant is the point)."""
     sites = creation_sites(Path(mr.__file__).read_text(encoding="utf-8"))
     assert sites == {
-        "tempfile.mkdtemp": {"_make_private_temp_dir"},
-        "os.mkdir": {"_make_private_dir", "_open_lock_dir"},
-        "os.open": {"_make_private_file", "_open_lock_dir", "_one_run_per_database"},
-        "shutil.copytree": {"_run_mutants"},
-        "shutil.copy": {"_run_mutants"},
-        "p.write_text": {"_run_mutants"},
+        "tempfile.mkdtemp": {"_make_private_temp_dir": 1},
+        "os.mkdir": {"_make_private_dir": 1, "_open_lock_dir": 1},
+        "os.open": {"_make_private_file": 1, "_open_lock_dir": 1, "_one_run_per_database": 2},
+        "shutil.copytree": {"_run_mutants": 4},
+        "shutil.copy": {"_run_mutants": 2},
+        "p.write_text": {"_run_mutants": 1},
     }, f"a creation site that is not a private helper (or a helper that moved): {sites}"
 
 
@@ -6192,15 +6298,17 @@ def test_the_creation_site_walk_sees_aliases_module_level_code_and_the_other_cre
         "class C:\n    def m(self):\n        o.link('a', 'b'); o.replace('a', 'b'); mkfifo('x'); shutil.copytree('a', 'b')\n"
     )
     assert creation_sites(source) == {
-        "os.rename": {"<module>"},
-        "shutil.copy2": {"f"},
-        "os.symlink": {"f"},
-        "tempfile.TemporaryDirectory": {"f"},
-        "shutil.copytree": {"f", "C"},
-        "os.link": {"C"},
-        "os.replace": {"C"},
-        "os.mkfifo": {"C"},
+        "os.rename": {"<module>": 1},
+        "shutil.copy2": {"f": 1},
+        "os.symlink": {"f": 1},
+        "tempfile.TemporaryDirectory": {"f": 1},
+        "shutil.copytree": {"f": 1, "C": 1},
+        "os.link": {"C": 1},
+        "os.replace": {"C": 1},
+        "os.mkfifo": {"C": 1},
     }, creation_sites(source)
+    twice = "import os\ndef f():\n    os.mkdir('a'); os.mkdir('b')\n"  # a second call in the same function is counted
+    assert creation_sites(twice) == {"os.mkdir": {"f": 2}}
 
 
 def test_the_temp_folder_the_tests_folder_and_the_settings_folder_are_made_by_the_helpers(
