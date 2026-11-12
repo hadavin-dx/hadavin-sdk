@@ -1,0 +1,11 @@
+pydantic 2.14.1 python 3.13.18
+HiddenInputModel classes probed (itself plus transitive subclasses): 77
+other hadavin_sdk BaseModel classes (not HiddenInputModel): 0
+classes 77 shapes 15 runs 1155 no-error runs 5 runs with canary in some channel 0
+outcome kinds: {'ValidationError': 1150, 'NO-ERROR': 5}
+ROW ('HiddenInputModel', 'validate_json_obj_badvalue', 'NO-ERROR', [])
+ROW ('HiddenInputModel', 'dict_text_key_canary', 'NO-ERROR', [])
+ROW ('HiddenInputModel', 'dict_nested_canary', 'NO-ERROR', [])
+ROW ('HiddenInputModel', 'ctor_kwargs_canary', 'NO-ERROR', [])
+ROW ('HiddenInputModel', 'validate_strings_dict', 'NO-ERROR', [])
+ToolSpec in set: True

@@ -1,5 +1,36 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## Block 20:27Z / 01:57 IST (part 6 reviewed and resolved; fix builder started; queue cleanup)
+**Failed or uncertain first.** (1) Part 6 (banner): independent evidence is clean except one unrelated environment failure (dblink needs the default Postgres socket; that file passed after the runner set PGHOST/PGPORT, whole suite not re-run). BUT both reviewers found real mode-safety gaps: 1 Blocker (the demo-only guard does not scan symlinks and misses templates/, tools/, demos/ and many file types), 4+ Majors (banner choice depends on a hand-supplied real list and defaults to the made-up sentence; page script can throw and paint nothing, and paints inconsistent banners; the build-without-folder run may import the original tree; banner mutants not run in CI). Not close to merge. (2) I cleaned five leftover waiting gate jobs of parked or duplicate runs with SIGKILL after SIGTERM failed (24816 duplicate Z193, AK1-a base pytest 19774/19775, inbound_ledger_mutants 31399, ak1a_mutants 31621); all started by my own agents, none held a slot. (3) My earlier resolve call for Q8c-1 r15 was redundant (report existed); no harm. (4) Stack 2: still not verified or pushed as final; WIP commits are on wip refs. ORDER 260 builder: no push yet (checkpoint due 20:26Z; not yet read).
+**Done now.** Part 6 r1 reviews saved, resolve report written with 6 classes and FIX BRIEFs, ledger rows PDBANNER-r1-1..6 (OPEN); fix builder aa0cfcdf started (targeted tests only, gates owed to the session). Lead decision flagged: banner_from_config as the only public entry (signature change, recommended).
+
+### LIVE ITEMS
+| id | purpose | started UTC | running | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| aa0cfcdf | part 6 fix batch 2 | 20:26 | 1 min | 21:26 | running | wip/cloud-pd-banner push, gate owed list | just started |
+| a13583cf | part 2 fix batch 2 | 20:11 | 16 min | 21:11 | running | wip/cloud-pd-bind push | none yet |
+| a96da480 | ORDER 260 builder | 19:56 | 31 min | 20:56 | running | wip/cloud-sonar-path | checkpoint overdue, reading now |
+| aa62f462 | evidence runner Q8a-1 b19 | earlier | long | 20:50 | running (Z193 done 1 of 1 good; more mutants owed) | RESULTS.md | Z193 done |
+| aeec4228 | AK1-a builder (parked) | earlier | | | interim notice only, parked | none | parked |
+Heavy jobs: 3 running (Q8c-1 b16 policy mutants, part 6 evidence pytest done, ORDER 260 builder pytest) and 5 waiting (cap 6). Totals: 4 live agents, 0 over box except aa62f462 (long box, tracked).
+
+### ROUNDS
+| package | round | blockers/majors | WHY another round |
+|---|---|---|---|
+| part 6 (banner) | 1 done | 1 B / 4 M (+ codebase 5 M) | mode-safety: fix batch 2 running, confirming round after |
+| part 2 (bind) | 1 done | 1 B / 2 M | mode-safety: fix batch 2 running |
+| Q8c-1 | 15 done, evidence clean | 0 B / 1 M | security: fix batch 16 gates running |
+| Q8a-1 | 19 done, evidence pending | 1 B / 3 M | security: b19 fix under evidence |
+| ORDER 260 | design r1 done, build running | - | security: build then review |
+
+### FINISHED SINCE LAST BLOCK
+| item | result | evidence |
+|---|---|---|
+| part 6 independent evidence | done, 1 unrelated env failure | evidence/PD-banner/dd5c7242/RESULTS.md |
+| part 6 reviews (2) and resolve | done, 6 ledger rows | reviews/PD-banner/ |
+| part 3 builder hand-back | head 8ebdcc27, gates owed | PARKED behind part 2 |
+| queue cleanup | 5 stale waiters killed | ps and /tmp/heavy-wait |
+
 ## Block 20:19Z / 01:49 IST (deadlock I caused fixed; part 3 hand-back; resolve of Q8c-1 r15 and Q8a-1 r19 next)
 **Failed or uncertain first.** (1) I caused a queue deadlock at about 19:50Z: I renamed a waiter file in /tmp/heavy-wait to priority 1 while its live heavy.sh process still held priority 5, so it blocked itself and every other waiter; load fell from 9 to 1.5 with 6 waiters and nothing running. Fixed 20:17Z: killed only that waiter (started by my own evidence runner), requeued the same command through the corrected heavy.sh (now runs: stage_mutants Z193 for Q8a-1 b19). Rule for me: never rename waiter files. (2) Part 3 (stand-ins) full pytest at 08b8361c found 4 failures caused by the builder's change (a planted channel kind without a role); fixed in 8ebdcc27 (that test file 25 passed). NOT yet re-run: full pytest and standin_mutants on 8ebdcc27; tag push failed ("remote hung up"), tag only local; PR body Measured-results section still old. (3) Q8c-1 r15: independent evidence at ccb63021 is clean (full pytest 11000 passed, 37/37 stage and 350/350 policy mutants, ruff, bandit, gitleaks), but both reviewers report Major N1 (run-time import name rule half-fixed). Q8a-1 r19: Blocker B1 confirmed by my probe. Neither is close to merge.
 **Done now.** Queue back to 5 waiters + 1 running. Resolve for Q8c-1 r15 and Q8a-1 r19 is being run now (Opus, automated). Part 3 stays parked behind part 2 batch 2 (it re-merges once, then gates once).
