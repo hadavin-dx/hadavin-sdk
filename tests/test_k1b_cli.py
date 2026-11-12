@@ -201,7 +201,7 @@ def test_report_write_failure_leaves_started_then_failed_and_no_score_run(
     assert _replay(cfg_dir, export) == 0
     from hadavin_sdk.k1b import atomic
 
-    def boom(path, text):
+    def boom(base, name, text):
         raise OSError("disk full")
 
     monkeypatch.setattr(atomic, "atomic_write", boom)

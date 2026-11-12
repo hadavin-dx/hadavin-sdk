@@ -13,6 +13,7 @@ import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
+from hadavin_sdk import pathguard
 from hadavin_sdk.errors import ConfigError
 
 MAX_SERVICES = 200  # a sanity bound, not a contract number
@@ -34,7 +35,15 @@ class CauseList:
         return norm(service) in self.services and norm(fault_type) in self.fault_types
 
 
-def _load(path: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
+def _load(directory: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
+    """Read ``DIR/name`` (``name`` is a constant of ours). The path is resolved once and the file read is that resolved
+    path, so a swap after the check cannot redirect it; containment is ``pathguard.join``."""
+    try:
+        path = pathguard.join(directory, name, what="cause list file", must_exist=True, kind="file")
+    except pathguard.PathRefused as exc:
+        if exc.rule == "R10":  # missing file, symlink loop, permission
+            raise ConfigError(f"cause list: {name} is missing or not readable") from exc
+        raise ConfigError(f"cause list: {name} must be a file inside the directory") from exc
     try:
         raw = path.read_bytes()
         data = json.loads(raw.decode("utf-8-sig"))
@@ -62,26 +71,11 @@ def _load(path: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
     return frozenset(values), hashlib.sha256(raw).hexdigest()
 
 
-def _inside(directory: Path, fname: str) -> Path:
-    """Resolve once; the file read later is this resolved path, so a swap after the check cannot redirect it."""
-    try:
-        target = (directory / fname).resolve(strict=True)
-    except (OSError, RuntimeError) as exc:  # missing file, symlink loop, permission
-        raise ConfigError(f"cause list: {fname} is missing or not readable") from exc
-    if not target.is_relative_to(directory) or not target.is_file():
-        raise ConfigError(f"cause list: {fname} must be a file inside the directory")
-    return target
-
-
 def load_cause_list(directory: Path) -> CauseList:
     try:
-        directory = Path(directory).resolve(strict=True)
-    except (OSError, RuntimeError) as exc:
+        directory = pathguard.operator_dir(directory, what="cause list folder")
+    except pathguard.PathRefused as exc:
         raise ConfigError("cause list: directory not found") from exc
-    if not directory.is_dir():
-        raise ConfigError("cause list: directory not found")
-    services, s_hash = _load(_inside(directory, "services.json"), "services.json", MAX_SERVICES)
-    faults, f_hash = _load(
-        _inside(directory, "fault_types.json"), "fault_types.json", MAX_FAULT_TYPES
-    )
+    services, s_hash = _load(directory, "services.json", MAX_SERVICES)
+    faults, f_hash = _load(directory, "fault_types.json", MAX_FAULT_TYPES)
     return CauseList(services, faults, s_hash, f_hash)

@@ -24,7 +24,7 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from hadavin_sdk import defaults, deferred
+from hadavin_sdk import defaults, deferred, pathguard
 from hadavin_sdk.backends.table import (
     DEFAULTS,
     DEMO_ONLY,
@@ -495,11 +495,12 @@ def _read_yaml(path: Path) -> dict:
 
 def confined(base: Path, relative: str) -> Path:
     """``base / relative``, refused if it resolves outside ``base`` (no ``..`` or absolute escapes)."""
-    root = Path(base).resolve()
-    path = (root / relative).resolve()
-    if not path.is_relative_to(root):
-        raise ConfigError(f"path escapes its folder: {relative}")
-    return path
+    try:
+        return pathguard.inside(base, Path(base) / relative, what="path")
+    except pathguard.PathRefused as exc:
+        if exc.rule == "R8":  # the old text is pinned by tests and read by operators
+            raise ConfigError(f"path escapes its folder: {relative}") from None
+        raise
 
 
 def _validation_text(exc: ValidationError) -> str:
