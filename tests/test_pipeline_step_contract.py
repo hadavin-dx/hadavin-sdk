@@ -533,6 +533,10 @@ def test_s8_tenant_key_is_one_to_one_over_2000_seeded_tuples():
             for _ in range(rng.randint(0, 3))
         )
         tuples.add((tenant, *parts))
+        # the same names cut at every "/" (the pair a plain "/" join cannot tell apart)
+        pieces = tuple(piece for part in parts for piece in part.split("/") if piece)
+        if pieces != parts and len(tuples) < 2000:
+            tuples.add((tenant, *pieces))
     keys = {t: tenant_key(*t) for t in tuples}
     assert len(set(keys.values())) == 2000, "two different argument lists gave one key"
     if S is not None:
