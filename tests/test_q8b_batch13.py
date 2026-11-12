@@ -479,21 +479,38 @@ def wall_clock_tests() -> dict[str, str]:
     return found
 
 
-def collected_ids(files: set[str]) -> list[str]:
-    """The pytest ids (with the parameter in brackets) of every test of the given files, as pytest itself collects them (in this process,
-    with a plugin that records the names: no sub-process)."""
-    names: list[str] = []
-
-    class Recorder:
-        def pytest_collection_modifyitems(self, items):
-            names.extend(item.name for item in items)
-
-    code = pytest.main(
-        ["--collect-only", "-q", "-p", "no:cacheprovider", *sorted(str(HERE / f) for f in files)],
-        plugins=[Recorder()],
+def _param_id(value) -> str:
+    """The id pytest gives a plain value: a string with its non-printable characters written as escapes, a number or a boolean as `str`."""
+    assert isinstance(value, (str, int, float, bool)), (
+        f"a parameter of a wall-clock test is no plain value: {value!r}"
     )
-    assert code == 0, f"pytest could not collect {sorted(files)} (exit {code})"
-    return names
+    if isinstance(value, str):
+        return "".join(
+            c if c.isprintable() else c.encode("unicode_escape").decode("ascii") for c in value
+        )
+    return str(value)
+
+
+def collected_ids(found: dict[str, str]) -> list[str]:
+    """The pytest ids of the wall-clock tests: the name alone, or the name with the parameter in brackets, one per case. Read from the marks of the
+    imported test function (no nested pytest run: inside the mutant runner a nested run would write over its report). One `parametrize` on one
+    argument with plain values; anything else fails loudly here, it is never skipped."""
+    ids: list[str] = []
+    for name, file in sorted(found.items()):
+        module = importlib.import_module(f"tests.{file.removesuffix('.py')}")
+        marks = [
+            m for m in getattr(getattr(module, name), "pytestmark", []) if m.name == "parametrize"
+        ]
+        if not marks:
+            ids.append(name)
+            continue
+        assert len(marks) == 1, f"{name} has more than one parametrize: extend collected_ids"
+        argnames, values = marks[0].args[0], list(marks[0].args[1])
+        assert "," not in argnames and not marks[0].kwargs, (
+            f"{name}: parametrize with several arguments or options"
+        )
+        ids += [f"{name}[{_param_id(v)}]" for v in values]
+    return ids
 
 
 def test_b13_4_the_wall_clock_tests_are_found_by_reading_the_files_and_include_the_known_ones():
@@ -513,7 +530,7 @@ def test_b13_4_the_wall_clock_tests_are_found_by_reading_the_files_and_include_t
 def test_b13_4_every_wall_clock_test_and_every_case_of_a_parametrized_one_has_a_planted_fault():
     kills = planted_killers()
     found = wall_clock_tests()
-    ids = [i for i in collected_ids(set(found.values())) if i.split("[")[0] in found]
+    ids = collected_ids(found)
     assert len(ids) >= len(found), (
         "the collection of the wall-clock tests found fewer ids than tests"
     )
