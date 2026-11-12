@@ -43,3 +43,6 @@ grep -rh "^model:" ~/.claude/plugins/*/egm* | sort | uniq -c:
 (no inherit; 3 opus per copy x 3 copies.)
 grep -rl disable-model-invocation ~/.claude/plugins/ : 0 files in any SKILL.md; remaining hits are docs/*.md, TESTING.md and tests/unit/*.py only (documentation/tests, not skills).
 I did not edit any repo file, settings or hook, nor the demo repo. Test doc is in my scratchpad only (made-up).
+
+### Retry after sdk repo attached (2026-11-12T18:17:27Z)
+Skill(egm:egm-review-loop) refused again: "cannot be used with Skill tool due to disable-model-invocation". On disk: 0 SKILL.md files carry the flag, so the refusal comes from the session start list. Needs owner /reload-skills in a session that has it, or a NEW cloud session. Test doc deleted.
