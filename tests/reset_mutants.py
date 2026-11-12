@@ -35,7 +35,7 @@ M = [
     mutant(
         "M1 pilot and prod may be reset",
         SR,
-        "if is_live(cfg.stage):",
+        "if is_live(cfg.environment):",
         "if False:",
         "test_only_the_demo_stage_may_be_reset",
         "was reset",
