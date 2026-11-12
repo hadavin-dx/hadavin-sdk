@@ -5,3 +5,4 @@
 19:18Z part2 head e75f9f25 pushed, evidence runner started; part3 batch2 builder started; part5 gates queued
 19:23Z no builder pushes; stack 2 resumed; OQ-39; part5 gates still queued
 19:27Z ORDER 259 handled: OQ-39 answer relayed, priority heavy queue installed
+19:32Z AK1-a b95e1853 and banner 3c3cb553 pushed (unreviewed); Q8c-1 b16 resumed; priority queue works

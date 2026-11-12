@@ -1,6 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## 19:32Z (01:02 IST): status
+- New pushes seen: AK1-a head b95e1853 (wip/cloud-ak1-a; builder not yet final; unverified), part 6 banner head 3c3cb553 (wip/cloud-pd-banner; builder not yet final; unverified). Nothing of these is reviewed.
+- Q8c-1 b16: builder had handed back early with nothing committed; resumed to commit, run all gates once and push (priority 1 in the heavy queue).
+- Priority queue is working: two priority-2 waiters (parts 2 and 6) are registered in /tmp/heavy-wait. Load 6.7 (was 9).
+- Still waiting: part 2 independent evidence, part 3 batch 2, stack rebasers, #71 fix, #72 nits, Q8a-1 b19 evidence, part 5 gates.
+
 ## 19:27Z (00:57 IST): status (ORDER 259 handled)
 - OQ-39 answered by the lead: do not rename around a ban. I read the ban text (pyproject.toml, banned-api) and the fold_view docstring (textnorm.py lines 837-841: names the redactor as the caller that asks for one view). Told the stack 2 builder: keep fold_view only if redact.py really walks every view one by one (cite the line in the P2d-1 notes); otherwise use the allowed forms; no exemption unless case (b), which the lead granted for redact.py only. PR 63 py312 test bug: derive the key from the pinned data, no weakening.
 - Heavy queue is now a PRIORITY queue: /home/user/build/heavy.sh reads priority from the folder name (1 #71/#72/Q8a-1/Q8c-1; 2 parts 2, 6, 3; 3 rebase stacks; 4 part 5; 5 AK1-a/AK-G2-a; 6 Q8b; 7 PRH/P3a-2) and waits while a higher-priority waiter lives; still at most 3 jobs. Old copy kept as heavy.sh.old-20261112. Limits: jobs already waiting under the old script keep their place; I tested only syntax (a smoke run waited because all 3 slots were busy), so a bug is possible: I will watch /tmp/heavy-wait.
