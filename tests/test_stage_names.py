@@ -3846,6 +3846,78 @@ _PLANTED_FAULTS = {
         "def count(x):\n    return x\ndef f(log, name):\n    n = count(name)\n    log.warning('bad %d', n)",
         1,
     ),
+    "R17d a tuple that holds an error": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return (exc, 1)",
+        1,
+    ),
+    "R17e a list that holds an error": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return [exc]",
+        1,
+    ),
+    "R17f a set that holds an error": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return {exc}",
+        1,
+    ),
+    "R17g a starred error text in a tuple": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return (*exc.args, 1)",
+        1,
+    ),
+    "R17h an error given to update": (
+        "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.update(exc)",
+        1,
+    ),
+    "R17i an error given to put": (
+        "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.put(exc)",
+        1,
+    ),
+    "R17j an error given to execute in a tuple": (
+        "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.execute('q', (exc,))",
+        1,
+    ),
+    "R17k an error given to insert": (
+        "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.insert(exc)",
+        1,
+    ),
+    "R17l an error given to write": (
+        "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.write(exc)",
+        1,
+    ),
+    "R17m an assert message": (
+        "def f(name):\n    assert name, name",
+        1,
+    ),
+    "R17n writelines to stderr": (
+        "import sys\ndef f(name):\n    sys.stderr.writelines([name])",
+        1,
+    ),
+    "R17o a stream held in a name": (
+        "import sys\ndef f(name):\n    s = sys.stderr\n    s.write(name)",
+        1,
+    ),
+    "R17p exit with a text": (
+        "def f(name):\n    exit(name)",
+        1,
+    ),
+    "R17q quit with a text": (
+        "def f(name):\n    quit(name)",
+        1,
+    ),
+    "R17r a logger named by a text": (
+        "import logging\ndef f(name):\n    logging.getLogger(name)",
+        1,
+    ),
+    "R17s a thread named by a text": (
+        "import threading\ndef f(name):\n    threading.Thread(name=name)",
+        1,
+    ),
+    "R17t a name matched by a case pattern": (
+        "def f(name):\n    match name:\n        case str(text):\n            raise A(text)",
+        1,
+    ),
+    "R17u a lambda that holds the name does not prove the outer one": (
+        "def f(name):\n    g = lambda name: 'x'\n    raise A(name)",
+        1,
+    ),
 }
 
 _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be found
@@ -3925,6 +3997,14 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
     "R16n a number annotation on a number": "def f(names):\n    x: int = len(names)\n    raise A(f'{x}')",
     "R16o a log call with a number directive": "def f(log, n: int):\n    log.warning('bad %d', n)",
     "R17c a log call with a number directive of a function declared as an int": "def count() -> int:\n    return 1\ndef f(log):\n    n = count()\n    log.warning('bad %d', n)",
+    "R17d a tuple of a class name": "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return (type(exc).__name__, 1)",
+    "R17h a class name given to update": "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.update(type(exc).__name__)",
+    "R17m an assert message written in code": "def f(name):\n    assert name, 'fixed'",
+    "R17p exit with a written text": "def f():\n    exit('fixed')",
+    "R17r a logger named in code": "import logging\ndef f():\n    logging.getLogger('fixed')",
+    "R17s a thread named in code": "import threading\ndef f():\n    threading.Thread(name='worker')",
+    "R17t a name matched in a case of a written value": "def f(x):\n    match x:\n        case 1:\n            name = 'fixed'\n    raise A(name)",
+    "R17u a lambda that shadows a written name": "def f():\n    name = 'fixed'\n    g = lambda name: name\n    raise A(name)",
 }
 
 

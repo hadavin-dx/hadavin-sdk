@@ -90,7 +90,7 @@ def test_the_fixed_word_replaces_the_input_and_the_title_is_kept():
 
     with pytest.raises(ValidationError) as raised:
         AuditEvent(event_id="../x", **_EVENT)
-    assert raised.value.errors()[0]["input"] == HIDDEN
+    assert raised.value.errors()[0]["input"] == HIDDEN, "the input of a rebuilt line is not the fixed word"
     assert raised.value.title == "AuditEvent"
     assert raised.value.__context__ is None and raised.value.__cause__ is None, (
         "the first error is kept as the context of the new one, and it still holds the id"
