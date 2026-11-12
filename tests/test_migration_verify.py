@@ -5,6 +5,7 @@ printed statements, and the checks on the query texts (ticket P3a-2, section 3).
 from __future__ import annotations
 
 import ast
+import os
 import re
 from collections import namedtuple
 from pathlib import Path
@@ -1509,15 +1510,14 @@ def test_on_a_real_server_connect_sends_exactly_one_statement_through_any_driver
     """Real-server form: every statement the driver sends on a real connection goes through `Cursor.execute` (a
     `Connection.execute` calls it, and so does an explicit `cursor()`); counting there sees every form at once. The count
     is taken while `connect` runs against the real server of the tests."""
-    import os
-
     import psycopg
 
     from hadavin_sdk.store import postgres as pg
 
-    dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
-    if not dsn:
+    DSN = os.environ.get("HADAVIN_TEST_PG_DSN")
+    if not DSN:
         pytest.skip("HADAVIN_TEST_PG_DSN not set")
+    dsn = DSN
     sent: list[str] = []
     real_execute = psycopg.Cursor.execute
 
