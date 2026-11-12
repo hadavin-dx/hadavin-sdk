@@ -16,4 +16,5 @@ Environment: own venv, own Postgres 16 (UTF8, user postgres, `PGHOST`/`PGPORT` i
 | `diff` of the per-mutant result lines, real clock against each faked day | 0 lines for both days |
 | `pytest -m "not live and not perf" -p no:cacheprovider -q` (one full run, `HADAVIN_TEST_PG_DSN` set) | **1 failed, 10891 passed, 13 skipped, 28 deselected, exit 1.** The failure is `tests/demo_askdata/test_validate_harm.py::...[dblink-connect]`: the server I started first had no `PGHOST`/`PGPORT` in its own environment (my setup slip), so dblink looked for the default socket. After restarting the server with them set, that file alone: 253 passed, exit 0 (`dblink-rerun.log`). The full run was not repeated. |
 | Date guard at a faked day for `--check` itself | NOT RUN in this batch (the day shim for the script is outside the repository); the real-clock exit 0 and the test `test_the_check_command_uses_the_tools_own_clock_when_no_day_is_given` (own clock at 2026-12-11 and 2026-12-12) stand in for it |
-| gitleaks | see the report (run before the push) |
+| gitleaks | exit 0, no leaks found (see the last line) |
+gitleaks (git, origin/main..HEAD, head 8c8b6338): exit 0, no leaks found
