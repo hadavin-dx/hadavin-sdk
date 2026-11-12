@@ -1829,3 +1829,6 @@ Two parts. (1) Plain-shaped defining ids of agent, action, chain, principal prin
 ## P3a-2 result review round 1 (head ee831364, 2026-11-12 01:35Z)
 - q-p3a2-e1-extension-lockout: an extension that leaves objects readable by everyone in the run schema (e.g. pg_stat_statements views) makes step 2 refuse on every run when the run schema is public, with no statement printed. Ticket stricter default (10.3 item 13) is built. Safe default: keep strict; fix CHANGELOG text; refusal text names the move-the-extension remedy. Your call: keep strict, or exempt extension members read-only.
 - q-p3a2-o8-schema-owner: a run schema owned by the same non-family owner seen at step 1 is accepted (ticket rule O8 says refuse); a changed owner is still refused. Safe default: keep the exemption, record as errata and CHANGELOG deviation. Your call: keep, or enforce O8.
+
+## Q-2026-11-12-p3a2-f5-40003 (ticket edit, safe default recorded)
+Ticket F5 lists all of SQLSTATE class 40 as "refused"; the 3d builder and the design reviewer say 40003 (statement completion unknown) must be "unknown" (exit 5). Question: may the ticket line read "class 40 except 40003"? Safe default if no answer: the code stays as is (unknown), the ticket is not edited. Source: reviews/P3a-2/goldfish_review_report-3d.md Issue 7.

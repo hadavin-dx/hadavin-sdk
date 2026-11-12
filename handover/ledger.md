@@ -2753,3 +2753,7 @@
 | Q8c1-r7b-N3 | reviews/Q8c-1/goldfish_review_report-r7b.md Issue 4 | Nit | Q8c-1 | hard-coded 2026-12-12 in docstring and CHANGELOG | OPEN | batch 8 | | 2026-11-12
 | Q8c1-r7b-failbefore | reviews/Q8c-1/goldfish_review_report-r7b.md Issue 6 | Minor | Q8c-1 | per-test fail-before table and must-fail-on-main proofs missing | OPEN | batch 8 | | 2026-11-12
 | Q8c1-vault-engine-gate | reviews/Q8c-1/goldfish_review_report-r7b.md Issue 7 | Major | Q8c-1 | 12 Vault engine tests never run; needs a CI run before 2026-12-11 | IMPOSSIBLE-NOW | CI run | | 2026-11-12
+| P3a2-3d-D1 | reviews/P3a-2/goldfish_review_report-3d.md Issue 1 | Major | P3a-2 | planted-fault test never runs the CHANGELOG message-form checker; "has" piece never checked | OPEN | batch 3e | | 2026-11-12
+| P3a2-3d-wrap | reviews/P3a-2/goldfish_review_report-3d.md Issue 2 | Minor | P3a-2 | transaction_timeout/driver errors before commit outside the check give exit 3, not 2 | OPEN | batch 3e | | 2026-11-12
+| P3a2-3d-nits | reviews/P3a-2/goldfish_review_report-3d.md Issues 3-6 | Nit | P3a-2 | grantor from current_user; O8 wording; sql_words docstring and awkward args; autocommit and sleeper filter | OPEN | batch 3e | | 2026-11-12
+| P3a2-3d-evidence | reviews/P3a-2/goldfish_review_report-3d.md Issue 8 | Minor | P3a-2 | 352 mutants not re-run; 29 retired ids; PG17 unrun | OPEN | final evidence run | | 2026-11-12

@@ -485,3 +485,6 @@ The owner said: never skip or leave for later a task only because it is long or 
 
 ## 2026-11-12 03:39Z P3a-2 3d: SQLSTATE 40003 (decision pending reviews, safe default recorded)
 The 3d builder classes 40003 (statement completion unknown) as "unknown" (exit 5) where ticket F5 lists all of class 40 as refused. Safe default: keep "unknown" (an unknown outcome must not be reported as a clean refusal). Both reviewers are asked to judge it; the ticket text is not edited by me. If a reviewer finds the ticket right, the builder follows the ticket.
+
+## 2026-11-12 D-40003 (P3a-2 3d): SQLSTATE 40003 stays "unknown" (exit 5)
+The design reviewer (read-only) judged the builder right: 40003 after a proxy leaves the session idle and the commit may have happened; refusing all of class 40 would give exit 2 and skip step 8. Code stays as built. Ticket F5 should read "class 40 except 40003"; the ticket edit is for the owner (question added, safe default: code as is).
