@@ -1,0 +1,13 @@
+tests/test_p3b_neutral_audit.py:40:from tests.contracts.http_fake import azure_container, azure_key_clients, gcp_kms_client, gcs_bucket
+tests/test_p4b_secrets.py:87:    from tests.contracts.http_fake import gcp_secret_client
+tests/test_k5_tools.py:228:    from tests.fixtures.http_fake import Replay
+tests/contracts/kinds/audit_neutral.py:7:  in-process HTTP fakes in tests/contracts/http_fake.py.
+tests/contracts/kinds/audit_neutral.py:26:from tests.contracts.http_fake import (
+tests/contracts/kinds/secrets_neutral.py:7:* `azure_key_vault`, `gcp_secret_manager`: the real SDK clients over `tests/contracts/http_fake.py`.
+tests/contracts/kinds/secrets_neutral.py:19:from tests.contracts.http_fake import azure_secret_client, gcp_secret_client
+tests/contracts/kinds/secrets_neutral.py:85:    provider = AzureKeyVaultProvider(azure_secret_client(VAULT_URL, values), TTL_S, clock)
+tests/contracts/kinds/detectors.py:24:from tests.fixtures.http_fake import fixture
+tests/contracts/kinds/llm_wire.py:17:from tests.fixtures.http_fake import Replay, fixture
+tests/test_p6_detectors.py:299:        from tests.fixtures.http_fake import fixture
+tests/test_p6_detectors.py:317:    from tests.fixtures.http_fake import fixture
+b3 distinct usage lines: 2
