@@ -1,6 +1,43 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 22:39Z / 04:09 IST - SEMGREP SET IS CLEAN (apply semgrep-on-head.patch); SECURITY NITS PATCH CLEAN; **THE FULL SUITE HANGS ON YOUR HEAD 40d5668** (INT-2 run 1); runtime set not clean yet (2 Majors) -> builder 10c-2c
+FAILED / UNCERTAIN first:
+1. **INT-2 RUN 1 HUNG on pr-3-tests 40d5668 itself (not on any pending patch).** Full serial suite stopped at test 867 of 2922 collected (~29.7%, no F/E before it) at 22:31Z; I found it stuck 5+ minutes at ~0% CPU, took a py-spy dump (evidence: integration/evidence-int2-HANG-pyspy-dump.txt) and killed it. The main thread is blocked in `BaseServer.shutdown()` (socketserver.py:255) called from **tests/test_portal_api.py::test_restart_same_port_portal_open, line 1475** (`srv.shutdown()` in the `finally` of the 20-restart loop), with two `serve_forever` threads still alive. Run alone that test passed 3 of 3 (~10.7 s each): so it is order- or load-dependent, a real race in the test's start/stop (thread started, `get()` fails or races, `shutdown()` waits for a `serve_forever` that never reaches its exit flag). This is very probably the same hang 10c-2b saw earlier on 0841f36 at 'about 38%' (a different count because collect/ordering differ). It is a HEAD bug and will hang CI: please decide: I propose a small fix patch (wait for the server to be serving before shutdown; join with a timeout; `faulthandler_timeout` in the pytest config so a future hang prints its stack). I will not touch it without your yes; the INT-2 runner now reruns the full suite WITH `faulthandler_timeout=300` and that one test deselected, then the whole test_portal_api.py file, then that test 5 more times.
+2. Runtime set (10c-2b) round-3 reviews: NOT clean: A: 1 Major: the `file:` refusal has no real fault behind it (head desk.py:365 resolves the path to a plain absolute file before SQLite sees it: `file::memory:` is NOT a private memory book on the desk path, and a valid POSIX name `file:x.db` is refused); builder 10c-2b claimed they are memory books (unproven). B: 2 Majors: (a) the full-suite hang unexplained (now explained above: it is not in the pending patches), (b) main() tests have no timeout (a regression would hang). Also unbounded Barrier/join/subprocess waits in new tests. Builder 10c-2c now fixing: drop `file:` (unless it proves a real memory book), main tests with join timeout, `faulthandler_timeout`, a 4300-digit Content-Length case, timeouts on the Barrier/join/node subprocess, doc nits. Core touches stay as approved; new one: `main` refusal + `Desk.book_problem()`.
+3. The runtime set needs the speed patch FIRST (it is not in 40d5668) and ends in seven patches: speed, desk, portal-log, demo-only, tests-hardening, fakes-body, standins-body.
+4. Stand-in sweep done (your order): every other test/demo stand-in already reads the body before every answer path; none needed a fix; new guard tests (7) + mutants; two stand-ins inside test functions not probed. Table in triage/SUMMARY-codeant3-rt.md.
+5. Not run anywhere: PowerShell/Windows, a real n8n, Python 3.13, the Windows lock install.
+READY FOR YOU NOW:
+- **Semgrep: semgrep/semgrep-on-head.patch (sha256 7c8633cad5216c78...)**: re-cut of the reviewed round-4-clean patch for 40d5668 (I diffed it: 8 files byte-identical, only the .gitleaks.toml context line and the blob index differ; apply check OK on a fresh 40d5668 clone; lock byte-identical a791abb7..., 1130 lines). 80 focused tests, gitleaks 0, ruff/mypy/bandit clean. Needs your yes on the `concurrency:` group. Full suite not run on it.
+- **Security nits: triage/codeant3-sec-nits.patch (sha256 84c3f1526cc6...)** on top of the applied set (review: 0 Blocker, 0 Major, 6 Nits: 3 doc sentences, a boundary test, a test mask, an over-stated doc claim). 421 focused tests passed, 1 skipped (chmod-000 key-file test skipped as root: never ran).
+
+TABLE 1 - LIVE ITEMS (load 0.6)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| INT-2 runner | full integration check on 40d5668 | 22:20 | 19 min | 23:20 | running again after the hang (re-run with the hanging test deselected) | integration/INT-2.md + evidence-int2-* | lint, gitleaks, hygiene(15 passed) done; full suite run 1 HUNG |
+| 10c-2c | runtime fixes round 3 | 22:36 | 3 min | 23:20 | running | six regenerated codeant2 patches + evidence-codeant4-rt | started |
+Totals: agents 2, shells 0, containers 0, heavy pytest 1, load 0.6 of 4.
+Flags: none over time box; the INT-2 first run was stuck 5+ min with no progress and I intervened (dump + kill).
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| Semgrep | 4 done | R1 1B+3M, R2 1M, R3 1M, R4 0B/0M | guard gap, evidence gap | none | YES: clean (head re-cut checked by diff) | apply semgrep-on-head |
+| CodeAnt security + nits | 6 done | R5 0B/0M/7N, nits patch review 0B/0M/6N | tracebacks, scrub holes | none | YES: clean | apply; optional doc follow-up |
+| CodeAnt runtime | 4 (build 10c-2c) | R1 5M, R2 4M, R3 A 1M + B 2M | overreach of the refusal (`file:`), unbounded waits in tests | Majors real | no | fresh review clean |
+| layout, docs-and-deps | done, applied by you | - | - | - | YES | - |
+Waste check: the runtime loop rounds each found a real problem; its 'full-suite hang' Major is answered by INT-2 (head bug), not by more rounds on the patches.
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (22:17Z)
+| item | result |
+|---|---|
+| Semgrep round-4 review | 0B/0M/3N: CLEAN; 14d re-cut for 40d5668 (semgrep-on-head.patch), checked by diff + apply check |
+| security nits patch (10c-1e) + review | built; 0B/0M/6N: CLEAN |
+| 10c-2b rebase + stand-in sweep | no stand-in needed a fix; 7 guard tests; hand-back saved |
+| runtime reviews A and B (round 3) | A 0B/1M/4N; B 0B/2M/nits; saved REVIEW-codeant3-rt-A/B.md |
+| INT-2 steps 1-2 | venv, lint (ruff, mypy linux+win32), gitleaks, hygiene with gitleaks 15 passed: all green |
+
 ## 2026-11-12 22:17Z / 03:47 IST - LAYOUT + CODEANT SECURITY SET REVIEWED CLEAN (0 Blocker, 0 Major); BATCH 2 PARTLY READY: layout (2 patches) and CodeAnt security (4 patches) can be applied now; runtime and Semgrep still in fix/review
 FAILED / UNCERTAIN first:
 - READY (reviewed clean, see APPLY-LIST.md status sections 22:12Z and 22:25Z): (a) layout: drawer-long-name2.patch (sha 1b9fce74...) then mobile-cascade.patch (sha 66eb4d26...): needs YOUR approval of core CSS (app.css, pages/leads.css, needs.css, overview.css) and the browser minimum in the PR text (Chrome 104, Firefox 63, Safari 16.4: range media queries); the two sidebar tests in that tree need docs-and-deps v4 (no Pillow). (b) CodeAnt security: triage/codeant3-gitleaks.patch (apply FIRST; sha256 starts 26b74f3cf8ef) + codeant3-scripts (04ec9607f4e1) + codeant3-n8n-proof + codeant3-docs (2c203a9a2cf0). VERIFY THE SHAS ON DISK: the builder summary quoted two wrong ones (91e385e6b39b, c1b69d553c7e); I corrected APPLY-LIST and the summary. The key-leak Major is fixed (a malformed key file used to print the key in a traceback).

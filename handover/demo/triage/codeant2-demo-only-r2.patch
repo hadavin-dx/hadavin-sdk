@@ -1,0 +1,899 @@
+diff --git a/demo_only/fake_model_server.py b/demo_only/fake_model_server.py
+index 4945383..1adc3bb 100644
+--- a/demo_only/fake_model_server.py
++++ b/demo_only/fake_model_server.py
+@@ -31,6 +31,9 @@ from typing import Any
+ MODES = ("ok", "mixed", "slow", "timeout", "r429", "malformed", "refusal", "r5xx", "badlabel", "drip")
+ ALIASES = {"rate_limit": "r429", "malformed_json": "malformed", "malformed_label": "badlabel", "server_error": "r5xx"}
+ CYCLE = ("hot", "warm", "cold")
++MAX_CONTROL_SECONDS = (
++    86_400.0  # the longest slow/hang a control call may ask for (Event.wait(inf) raises OverflowError)
++)
+ FAKE_IN_TOKENS = 40
+ FAKE_OUT_TOKENS = 2
+ LEAD_ID_LINE = re.compile(r"^lead id: (.*)$", re.MULTILINE)
+@@ -70,7 +73,8 @@ class ModelState:
+             try:
+                 text = self.control_file.read_text(encoding="utf-8").strip()
+                 word = json.loads(text).get("mode") if text.startswith("{") else text
+-                word = ALIASES.get(word, word)
++                if isinstance(word, str):  # {"mode": []} is JSON but not a mode word
++                    word = ALIASES.get(word, word)
+                 if word in MODES:
+                     return str(word)
+             except (OSError, ValueError, AttributeError):
+@@ -127,16 +131,28 @@ def _handler(state: ModelState) -> type[BaseHTTPRequestHandler]:
+             n = int(self.headers.get("Content-Length") or 0)
+             raw = self.rfile.read(n)
+             if self.path == "/control":
+-                obj = json.loads(raw or b"{}")
+-                if "mode" in obj:
++                try:
++                    obj = json.loads(raw or b"{}")
++                except ValueError:
++                    obj = None
++                if not isinstance(obj, dict):  # a list, a string, a number or no JSON at all
++                    self._send(400, b"{}")
++                    return
++                if isinstance(obj.get("mode"), str):
+                     obj["mode"] = ALIASES.get(obj["mode"], obj["mode"])
++                keys = [k for k in ("mode", "label", "slow_seconds", "hang_seconds", "retry_after") if k in obj]
++                for k in keys:  # the whole body is checked first: one bad key changes nothing
++                    seconds_bad = k in ("slow_seconds", "hang_seconds") and not (
++                        isinstance(obj[k], int | float)
++                        and not isinstance(obj[k], bool)
++                        and 0 <= obj[k] <= MAX_CONTROL_SECONDS  # False for `Infinity`, `NaN` (both parse) and 10**400
++                    )
++                    if (k == "mode" and obj[k] not in MODES) or seconds_bad:
++                        self._send(400, b"{}")
++                        return
+                 with state.lock:
+-                    for k in ("mode", "label", "slow_seconds", "hang_seconds", "retry_after"):
+-                        if k in obj:
+-                            if k == "mode" and obj[k] not in MODES:
+-                                self._send(400, b"{}")
+-                                return
+-                            setattr(state, k, obj[k])
++                    for k in keys:
++                        setattr(state, k, obj[k])
+                 self._send(200, b"{}")
+                 return
+             if self.path != "/v1/messages":
+@@ -189,9 +205,11 @@ def _handler(state: ModelState) -> type[BaseHTTPRequestHandler]:
+             elif mode == "malformed":
+                 self._send(200, b"{not json")
+             else:
+-                text = {"mixed": CYCLE[call_no % 3], "refusal": "I can't help with that.", "badlabel": "maybe"}.get(
+-                    mode, label
+-                )
++                text = {
++                    "mixed": CYCLE[(call_no - 1) % 3],
++                    "refusal": "I can't help with that.",
++                    "badlabel": "maybe",
++                }.get(mode, label)
+                 body = {
+                     "type": "message",
+                     "content": [{"type": "thinking", "thinking": "hmm"}, {"type": "text", "text": text}],
+diff --git a/demo_only/portal_demo.js b/demo_only/portal_demo.js
+index 7c7c463..9c2a708 100644
+--- a/demo_only/portal_demo.js
++++ b/demo_only/portal_demo.js
+@@ -121,9 +121,10 @@
+   // ---- Demo controls page
+   function describe(r, label) {
+     var answers = (r.data && r.data.answers) || [];
+-    var n = { 'new': 0, duplicate: 0, replayed: 0, refused: 0 };
++    var n = { 'new': 0, duplicate: 0, replayed: 0, refused: 0, noanswer: 0 };
+     answers.forEach(function (a) {
+-      if (a.status >= 400) n.refused += 1;
++      if (typeof a.status !== 'number') n.noanswer += 1; // 'timeout' or 'error': the request never got an HTTP answer
++      else if (a.status >= 400) n.refused += 1;
+       else if (a.replayed) n.replayed += 1;
+       else if (a.verdict === 'new') n['new'] += 1;
+       else if (a.verdict === 'duplicate') n.duplicate += 1;
+@@ -133,6 +134,7 @@
+     if (n.duplicate) pills.appendChild(h('span', { 'class': 'pill pill-neutral' }, h('span', { 'class': 'dot', 'aria-hidden': 'true' }), n.duplicate + (n.duplicate === 1 ? ' repeat' : ' repeats')));
+     if (n.replayed) pills.appendChild(h('span', { 'class': 'pill pill-info' }, h('span', { 'class': 'dot', 'aria-hidden': 'true' }), n.replayed + ' already known: nothing changed'));
+     if (n.refused) pills.appendChild(h('span', { 'class': 'pill pill-bad' }, P.icon('alert'), n.refused + ' refused'));
++    if (n.noanswer) pills.appendChild(h('span', { 'class': 'pill pill-bad' }, P.icon('alert'), n.noanswer + ' without an answer'));
+     var list = h('ul', { 'class': 'dm-answers mono' }, answers.map(function (a) { return h('li', null, P.shownRef(a.ref) + '  ' + a.status + '  ' + (a.replayed ? 'replayed ' : '') + (a.verdict || '–')); }));
+     return h('div', { 'class': 'stack' }, h('div', { 'class': 'dm-result-title' }, label), pills,
+       answers.length ? h('details', { 'class': 'details' }, h('summary', null, 'Each answer'), list) : null);
+@@ -263,6 +265,7 @@
+         var d = r.data || {};
+         return 'refused (' + (d.hint || (d.error ? (P.labels.error[d.error] || P.words(d.error)).toLowerCase() : r.status)) + ')';
+       }
++      function dblFail() { P.ui.toast('Desk stopped. The page will reconnect.', 'warn'); dblBusy = false; paintDbl(); } // any request of the press that gets no answer frees the button
+       dbl.addEventListener('click', function () {
+         var it = items.filter(function (i) { return i.item_id === itemSel.value; })[0];
+         if (!it) return;
+@@ -283,10 +286,10 @@
+                 var n = st.data && st.data.fakes && st.data.fakes.reachable ? st.data.fakes.outbox.count : null;
+                 show(h('b', null, n === null ? 'The demo mail cannot be read.' : 'Emails in demo mail now: ' + n));
+                 dblBusy = false; paintDbl();
+-              });
+-            });
++              }, dblFail);
++            }, dblFail);
+           })();
+-        }, function () { P.ui.toast('Desk stopped. The page will reconnect.', 'warn'); dblBusy = false; paintDbl(); });
++        }, dblFail);
+       });
+       var retryCard = P.ui.card({
+         title: 'Retry twice test', why: 'Presses Retry twice in the same instant on a failed follow-up. The desk must accept one press and refuse the other, so at most one email is sent.', testid: 'demo-retry-card',
+diff --git a/demo_only/portal_demo.py b/demo_only/portal_demo.py
+index a7857a7..018776b 100644
+--- a/demo_only/portal_demo.py
++++ b/demo_only/portal_demo.py
+@@ -272,10 +272,19 @@ class PortalDemo:
+         cfg = self._desk.config
+         if cfg.port == 0:
+             return None
+-        host = WILDCARD_BINDS.get(cfg.bind, cfg.bind)
++        return self._url_for(cfg.bind, cfg.port)
++
++    @staticmethod
++    def _url_for(bind: str, port: int) -> str:
++        host = WILDCARD_BINDS.get(bind, bind)
+         if ":" in host and not host.startswith("["):
+             host = f"[{host}]"
+-        return f"http://{host}:{cfg.port}"
++        return f"http://{host}:{port}"
++
++    def set_bound_address(self, bind: str, port: int) -> None:
++        """Called by the server once it is bound: with a configured port 0 the real port is only known now."""
++        if self.desk_url is None and port:
++            self.desk_url = self._url_for(bind, port)
+ 
+     # -- entry point
+     def handle(self, method: str, path: str, body: bytes) -> tuple[int, Any]:
+diff --git a/src/lead_desk/loader.py b/src/lead_desk/loader.py
+index 726504e..72af087 100644
+--- a/src/lead_desk/loader.py
++++ b/src/lead_desk/loader.py
+@@ -5,7 +5,7 @@ from __future__ import annotations
+ import importlib
+ from collections.abc import Mapping
+ from pathlib import Path
+-from typing import TYPE_CHECKING, Any, Protocol, cast
++from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
+ 
+ from lead_desk.adapters import HttpCrm, HttpOutbox
+ from lead_desk.config import Config, read_approvers
+@@ -28,6 +28,15 @@ class DemoPortal(Protocol):
+     def handle(self, method: str, path: str, body: bytes) -> tuple[int, Any]: ...
+ 
+ 
++@runtime_checkable
++class KnowsBoundAddress(Protocol):
++    """The OPTIONAL part of DemoPortal (a Protocol cannot mark a member optional, so it is a second one, checked with
++    isinstance): an extension that aims at the desk itself learns the real address once the server is bound (with a
++    configured port 0 the port is only known then)."""
++
++    def set_bound_address(self, bind: str, port: int) -> None: ...
++
++
+ def load_demo_portal(desk: Desk) -> DemoPortal | None:
+     """None ONLY when the demo module is absent: ModuleNotFoundError whose .name is "demo_only" or
+     "demo_only.portal_demo". Also None unless the desk runs with the demo adapters (config.adapters == "demo") and
+diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
+index c2ed0a4..dddb32f 100644
+--- a/src/lead_desk/server.py
++++ b/src/lead_desk/server.py
+@@ -87,7 +87,7 @@ from lead_desk.contract import is_fd_exhaustion
+ from lead_desk.desk import Desk, DeskSettingRefused, Reply
+ from lead_desk.envnum import SettingRefused
+ from lead_desk.hooks import Hooks
+-from lead_desk.loader import DemoPortal, load_approvers, load_demo_adapters, load_demo_portal
++from lead_desk.loader import DemoPortal, KnowsBoundAddress, load_approvers, load_demo_adapters, load_demo_portal
+ 
+ try:
+     import resource  # not on Windows
+@@ -1005,6 +1005,8 @@ def make_server(desk: Desk, config: Config) -> ThreadingHTTPServer:
+     server.started_at = desk.now()  # the desk's clock, like every other time the portal shows
+     server.allowed_hosts = _allowed_hosts(config)
+     server.demo = demo
++    if isinstance(demo, KnowsBoundAddress):  # optional: a demo extension that aims at the desk needs the real port
++        demo.set_bound_address(str(server.server_address[0]), int(server.server_address[1]))
+     return server
+ 
+ 
+diff --git a/tests/test_codeant_demo_only.py b/tests/test_codeant_demo_only.py
+new file mode 100644
+index 0000000..62766cf
+--- /dev/null
++++ b/tests/test_codeant_demo_only.py
+@@ -0,0 +1,87 @@
++"""Findings about demo_only/ from the CodeAnt review: the demo extension learns the desk's real port when the desk
++listens on port 0. Made-up data, loopback only."""
++
++from __future__ import annotations
++
++from dataclasses import replace
++from typing import Any
++
++import pytest
++from test_portal_demo import wired
++
++from lead_desk import server
++from lead_desk.loader import KnowsBoundAddress
++
++
++def test_the_demo_extension_gets_the_real_port_when_the_desk_listens_on_port_zero(env: Any) -> None:
++    _, furl = env.fakes("blind", "keyed")
++    rig = wired(env, furl)
++    srv = server.make_server(rig.desk, replace(rig.desk.config, port=0, bind="127.0.0.1"))
++    try:
++        demo = srv.demo
++        assert demo is not None
++        assert isinstance(demo, KnowsBoundAddress)  # the optional part of the DemoPortal contract (loader.py)
++        assert demo.desk_url == f"http://127.0.0.1:{srv.server_address[1]}"
++    finally:
++        srv.server_close()
++
++
++def test_a_fixed_port_keeps_the_address_from_the_settings(env: Any) -> None:
++    _, furl = env.fakes("blind", "keyed")
++    rig = wired(env, furl)
++    from demo_only.portal_demo import make
++
++    d = make(rig.desk)
++    d.desk_url = "http://127.0.0.1:1"
++    d.set_bound_address("127.0.0.1", 55555)
++    assert d.desk_url == "http://127.0.0.1:1"  # an address that is already known is never replaced
++
++
++def test_the_burst_summary_counts_slots_that_got_no_http_answer() -> None:
++    """demo_only/portal_demo.js `describe` is cut out of the file and run in node: a slot that ended as 'timeout' or
++    'error' (a word, not a status number) must show in the pills, not vanish."""
++    import json
++    import re
++    import shutil
++    import subprocess
++    from pathlib import Path
++
++    if shutil.which("node") is None:
++        pytest.skip("node is not installed")
++    src = (Path(__file__).resolve().parents[1] / "demo_only" / "portal_demo.js").read_text(encoding="utf-8")
++    start = src.index("  function describe(r, label) {")
++    end = src.index("\n  }\n", start) + 4
++    answers = [
++        {"ref": "a", "status": 201, "verdict": "new", "replayed": False},
++        {"ref": "b", "status": 200, "verdict": "duplicate", "replayed": False},
++        {"ref": "c", "status": "timeout", "verdict": None, "replayed": False},
++        {"ref": "d", "status": "error", "verdict": None, "replayed": False},
++        {"ref": "e", "status": 400, "verdict": None, "replayed": False},
++    ]
++    js = (
++        "function h(tag, attrs) { const k = []; for (let i = 2; i < arguments.length; i++) { const x = arguments[i];"
++        " if (Array.isArray(x)) k.push(...x); else if (x !== null && x !== undefined) k.push(x); } return { tag, k,"
++        " appendChild(x) { k.push(x); return x; } }; }\n"
++        "const P = { icon: () => '', shownRef: (r) => r };\n"
++        + src[start:end]
++        + "\nconst text = (n) => typeof n === 'string' ? n : (n && n.k ? n.k.map(text).join(' ') : '');\n"
++        "const out = describe({ data: { answers: JSON.parse(process.argv[1]) } }, 'x');\n"
++        "console.log(JSON.stringify(text(out.k[1])));\n"
++    )
++    done = subprocess.run(["node", "-e", js, json.dumps(answers)], capture_output=True, text=True, check=True)  # noqa: S603, S607
++    pills = re.sub(r"\s+", " ", json.loads(done.stdout))
++    assert "1 refused" in pills and "2 without an answer" in pills, pills
++
++
++def test_every_request_of_the_double_press_check_frees_the_button_when_it_gets_no_answer() -> None:
++    """Source check, not a browser run: each P.api call inside the double-press click handler (the two presses, the
++    desk summary poll and the demo state read) must have a rejection handler that frees the button (dblFail)."""
++    from pathlib import Path
++
++    src = (Path(__file__).resolve().parents[1] / "demo_only" / "portal_demo.js").read_text(encoding="utf-8")
++    block = src[src.index("dbl.addEventListener('click'") :]
++    block = block[: block.index("\n      });\n") + 1]
++    assert block.count("P.api(") == 4  # the two presses (one Promise.all), the summary poll, the state read
++    assert block.count(", dblFail)") == 3, block.count(
++        ", dblFail)"
++    )  # the Promise.all, the summary poll, the state read
+diff --git a/tests/test_codeant_fakes.py b/tests/test_codeant_fakes.py
+new file mode 100644
+index 0000000..1b842cf
+--- /dev/null
++++ b/tests/test_codeant_fakes.py
+@@ -0,0 +1,407 @@
++"""Findings about the stand-in servers of demo_only/ (made-up data, loopback only): the fake HubSpot reads and changes
++its contacts only under its lock (every handler, not only the search); its fault counters count exactly, also for
++requests that arrive together; the fake AI server answers a bad control value with a 400 and starts "mixed" with hot."""
++
++from __future__ import annotations
++
++import json
++import socket
++import sys
++import threading
++import urllib.error
++import urllib.request
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from demo_only import fake_hubspot as fh
++from demo_only import fake_model_server as fm
++
++KEY = "k" + "e" * 15 + "-for-tests-0002"  # built from parts; not a real key
++OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
++SEARCH = {"filterGroups": [{"filters": [{"propertyName": "hadavin_lead_id", "operator": "EQ", "value": "L1"}]}]}
++BASE = "/crm/v3/objects/contacts"
++
++
++def _call(method: str, url: str, body: Any = None, timeout: float = 10) -> tuple[int, Any]:
++    data = None if body is None else json.dumps(body).encode()
++    req = urllib.request.Request(  # noqa: S310 (loopback)
++        url, data, {"Content-Type": "application/json", "Authorization": "Bearer " + KEY}, method=method
++    )
++    try:
++        with OPENER.open(req, timeout=timeout) as r:
++            raw = r.read()
++            return r.status, (json.loads(raw) if raw else None)
++    except urllib.error.HTTPError as e:
++        return e.code, None
++
++
++class _OwnerLock:
++    """A lock that knows which thread holds it (threading.Lock cannot say)."""
++
++    def __init__(self) -> None:
++        self._lock = threading.Lock()
++        self.owner: int | None = None
++
++    def acquire(self, blocking: bool = True, timeout: float = -1) -> bool:
++        got = self._lock.acquire(blocking, timeout)
++        if got:
++            self.owner = threading.get_ident()
++        return got
++
++    def release(self) -> None:
++        self.owner = None
++        self._lock.release()
++
++    def __enter__(self) -> bool:
++        return self.acquire()
++
++    def __exit__(self, *exc: object) -> None:
++        self.release()
++
++    def held_by_me(self) -> bool:
++        return self.owner == threading.get_ident()
++
++
++class _WatchedDict(dict):  # type: ignore[type-arg]
++    """A dict that notes every read or change made by a thread that does NOT hold its owner's lock."""
++
++    def __init__(self, lock: _OwnerLock) -> None:
++        super().__init__()
++        self._owner_lock = lock
++        self.unlocked: list[str] = []
++
++    def _note(self, what: str) -> None:
++        if not self._owner_lock.held_by_me():
++            self.unlocked.append(what)
++
++    def __getitem__(self, k: Any) -> Any:
++        self._note("getitem")
++        return super().__getitem__(k)
++
++    def __contains__(self, k: object) -> bool:
++        self._note("contains")
++        return super().__contains__(k)
++
++    def __iter__(self) -> Any:
++        self._note("iter")
++        return super().__iter__()
++
++    def items(self) -> Any:
++        self._note("items")
++        return super().items()
++
++    def get(self, k: Any, default: Any = None) -> Any:
++        self._note("get")
++        return super().get(k, default)
++
++    def pop(self, *a: Any) -> Any:
++        self._note("pop")
++        return super().pop(*a)
++
++
++def _watched_state(mode: str = "ok") -> tuple[fh.HubspotState, _WatchedDict]:
++    state = fh.HubspotState(KEY, mode)
++    lock = _OwnerLock()
++    state.lock = lock  # type: ignore[assignment]
++    state.contacts = watched = _WatchedDict(lock)
++    return state, watched
++
++
++def test_every_read_and_change_of_the_contacts_holds_the_lock() -> None:
++    """Get by id, get by email, list, search, patch and delete over HTTP: no handler touches the contact dict while
++    its lock is not held (the old get, list and patch handlers did, and the search read its hits after the lock)."""
++    state, watched = _watched_state()
++    srv, th, url = fh.serve(state, "127.0.0.1")
++    try:
++        for n in (1, 2):
++            state.create_if_absent({"email": f"a{n}@example.test", "hadavin_lead_id": "L1"})
++        (first, second) = list(dict.keys(watched))
++        statuses = [
++            _call("GET", f"{url}{BASE}/{first}")[0],
++            _call("GET", f"{url}{BASE}/a2@example.test?idProperty=email")[0],
++            _call("GET", f"{url}{BASE}/{first}-gone")[0],
++            _call("GET", f"{url}{BASE}?limit=1")[0],
++            _call("POST", f"{url}{BASE}/search", SEARCH)[0],
++            _call("PATCH", f"{url}{BASE}/a1@example.test?idProperty=email", {"properties": {"hs_lead_status": "X"}})[0],
++            _call(
++                "PATCH", f"{url}{BASE}/nobody@example.test?idProperty=email", {"properties": {"hs_lead_status": "X"}}
++            )[0],
++            _call("DELETE", f"{url}{BASE}/{second}")[0],
++        ]
++        assert statuses == [200, 200, 404, 200, 200, 200, 404, 204]
++        assert watched.unlocked == []
++    finally:
++        fh.stop(srv, th, state)
++
++
++def test_a_delete_between_the_find_and_the_answer_cannot_break_a_read() -> None:
++    """The old search and get found an id and read the contact again after the lock was released: a delete in between
++    raised KeyError in the handler. The locked view finds and copies in one step, and its copy does not change later."""
++    state, _ = _watched_state()
++    cid, _ = state.create_if_absent({"email": "a@example.test", "hadavin_lead_id": "L1"})
++    view = state.search("L1")[0]
++    with state.lock:
++        state.bin[cid] = state.contacts.pop(cid)
++    assert view["properties"]["email"] == "a@example.test"  # a copy: still whole after the delete
++    assert state.public(cid, by_email=False) is None  # and a read of the deleted id is a clean "not there"
++    assert state.search("L1") == [] and state.patch("a@example.test", {"hs_lead_status": "X"}) is None
++
++
++class _BarrierFields(fh.HubspotState):
++    """Two threads that read a counter together both see the old value (a barrier holds the first reader until the
++    second arrives). Under the lock only one thread is ever inside, so the barrier times out instead and the second
++    thread then sees the new value."""
++
++    def __init__(self, *a: Any) -> None:
++        super().__init__(*a)
++        self._gate = threading.Barrier(2)
++        self._raw_failed = 0
++        self._raw_hung = False
++
++    def _meet(self) -> None:
++        try:
++            self._gate.wait(0.4)
++        except threading.BrokenBarrierError:
++            pass
++
++    @property  # type: ignore[override]
++    def failed(self) -> int:
++        value = self._raw_failed
++        self._meet()
++        return value
++
++    @failed.setter
++    def failed(self, v: int) -> None:
++        self._raw_failed = v
++
++    @property  # type: ignore[override]
++    def hung_once(self) -> bool:
++        value = self._raw_hung
++        self._meet()
++        return value
++
++    @hung_once.setter
++    def hung_once(self, v: bool) -> None:
++        self._raw_hung = v
++
++
++def _two_creates_at_once(state: fh.HubspotState, url: str) -> list[int]:
++    out: list[int] = []
++    gate = threading.Barrier(2)
++
++    def one(n: int) -> None:
++        gate.wait()
++        try:
++            out.append(_call("POST", url + BASE, {"properties": {"email": f"p{n}@example.test"}}, timeout=2.5)[0])
++        except OSError:  # a hung request is cut by the client's own timeout
++            out.append(0)
++
++    threads = [threading.Thread(target=one, args=(n,)) for n in (1, 2)]
++    for t in threads:
++        t.start()
++    for t in threads:
++        t.join(10)
++    return sorted(out)
++
++
++def test_two_creates_that_arrive_together_get_exactly_one_fault_when_one_is_configured() -> None:
++    state = _BarrierFields(KEY, "r429")
++    state.times = 1
++    srv, th, url = fh.serve(state, "127.0.0.1")
++    try:
++        assert _two_creates_at_once(state, url) == [201, 429]
++    finally:
++        fh.stop(srv, th, state)
++
++
++def test_two_creates_that_arrive_together_get_exactly_one_fault_after_the_store() -> None:
++    state = _BarrierFields(KEY, "r5xx_after_store")
++    state.times = 1
++    srv, th, url = fh.serve(state, "127.0.0.1")
++    try:
++        assert _two_creates_at_once(state, url) == [201, 500]
++    finally:
++        fh.stop(srv, th, state)
++
++
++def test_only_one_of_two_creates_that_arrive_together_hangs() -> None:
++    state = _BarrierFields(KEY, "timeout_after_create")
++    srv, th, url = fh.serve(state, "127.0.0.1")
++    try:
++        assert _two_creates_at_once(state, url) == [0, 201]  # one is held (cut by the client at 2.5 s), one answers
++    finally:
++        fh.stop(srv, th, state)
++
++
++@pytest.mark.parametrize("mode", ["r429", "r5xx", "r5xx_after_store", "timeout_after_create"])
++def test_the_create_handler_asks_the_state_for_its_fault(mode: str) -> None:
++    """The handler must go through take_failure / take_hang (a revert to the old inline check, which has no lock, leaves
++    these calls out)."""
++    asked: list[str] = []
++
++    class Spy(fh.HubspotState):
++        def take_failure(self) -> bool:
++            asked.append("failure")
++            return super().take_failure()
++
++        def take_hang(self) -> bool:
++            asked.append("hang")
++            return super().take_hang()
++
++    state = Spy(KEY, mode)
++    state.times = 1
++    state.release.set()  # a hold ends at once
++    srv, th, url = fh.serve(state, "127.0.0.1")
++    try:
++        _call(
++            "POST", url + BASE, {"properties": {"email": "q@example.test"}}, timeout=3
++        ) if mode != "timeout_after_create" else None
++        if mode == "timeout_after_create":
++            try:
++                _call("POST", url + BASE, {"properties": {"email": "q@example.test"}}, timeout=3)
++            except OSError:
++                pass
++    finally:
++        fh.stop(srv, th, state)
++    assert asked == (["hang"] if mode == "timeout_after_create" else ["failure"])
++
++
++def test_the_counters_are_exact_for_many_threads_under_a_tiny_switch_interval() -> None:
++    old = sys.getswitchinterval()
++    sys.setswitchinterval(1e-6)
++    try:
++        for _ in range(100):
++            state = fh.HubspotState(KEY, "r429")
++            state.times = 2
++            took: list[bool] = []
++            hung: list[bool] = []
++            gate = threading.Barrier(16)
++
++            def one(state: fh.HubspotState = state, took: list[bool] = took, hung: list[bool] = hung) -> None:
++                gate.wait()
++                took.append(state.take_failure())
++                hung.append(state.take_hang())
++
++            threads = [threading.Thread(target=one) for _ in range(16)]
++            for t in threads:
++                t.start()
++            for t in threads:
++                t.join()
++            assert took.count(True) == 2 and state.failed == 2
++            assert hung.count(True) == 1
++    finally:
++        sys.setswitchinterval(old)
++
++
++@pytest.mark.parametrize("length", ["-1", "-5", "x", "1e3", "99999999999", "1048577", "\u00b2"])
++def test_the_hubspot_fake_refuses_a_content_length_that_is_not_a_usable_count(length: str) -> None:
++    """A negative length used to make the fake read until the client closed, a huge one read for as long as the
++    client sent: both are a 400 now, answered at once, without reading a byte of the body."""
++    state = fh.HubspotState(KEY, "ok")
++    srv, th, url = fh.serve(state, "127.0.0.1")
++    try:
++        head = (
++            f"POST {BASE} HTTP/1.1\r\nHost: x\r\nAuthorization: Bearer {KEY}\r\n"
++            f"Content-Length: {length}\r\nConnection: close\r\n\r\n"
++        ).encode()
++        with socket.create_connection(srv.server_address[:2], timeout=5) as c:
++            c.sendall(head)  # no body follows: a fake that tried to read one would wait until the 5 s run out
++            reply = b""
++            while chunk := c.recv(4096):
++                reply += chunk
++        assert reply.startswith(b"HTTP/1.1 400 "), reply[:60]
++    finally:
++        fh.stop(srv, th, state)
++
++
++def _ai_call(url: str) -> tuple[int, Any]:
++    body = {"messages": [{"role": "user", "content": "lead id: L1\ne-mail: x@example.test\nAnswer?"}]}
++    req = urllib.request.Request(  # noqa: S310 (loopback)
++        url + "/v1/messages", json.dumps(body).encode(), {"x-api-key": "fake", "Content-Type": "application/json"}
++    )
++    with OPENER.open(req, timeout=10) as r:
++        return r.status, json.loads(r.read())
++
++
++def _control(url: str, body: Any) -> int:
++    data = body if isinstance(body, bytes) else json.dumps(body).encode()
++    req = urllib.request.Request(url + "/control", data, {"Content-Type": "application/json"})  # noqa: S310
++    try:
++        with OPENER.open(req, timeout=10) as r:
++            return int(r.status)
++    except urllib.error.HTTPError as e:
++        return e.code
++
++
++@pytest.fixture
++def ai(tmp_path: Path):
++    srv, state = fm.make_model_server(control_file=tmp_path / "mode.json")
++    th = threading.Thread(target=srv.serve_forever, daemon=True)
++    th.start()
++    yield f"http://127.0.0.1:{srv.server_address[1]}", state, tmp_path / "mode.json"
++    state.stop.set()
++    srv.shutdown()
++    srv.server_close()
++    th.join(5)
++
++
++def test_a_list_as_mode_in_the_control_file_falls_back_to_the_port_mode(ai: Any) -> None:
++    url, state, control_file = ai
++    control_file.write_text('{"mode": []}', encoding="utf-8")
++    assert state.current_mode() == state.mode
++    assert _ai_call(url)[0] == 200  # the request is answered, not dropped
++
++
++@pytest.mark.parametrize(
++    "bad",
++    [
++        {"mode": []},
++        {"mode": {"a": 1}},
++        {"slow_seconds": "3"},
++        {"hang_seconds": None},
++        {"slow_seconds": -1},
++        {"hang_seconds": True},
++        b'{"hang_seconds": Infinity}',  # json.loads accepts it; Event.wait(inf) would raise OverflowError
++        b'{"slow_seconds": NaN}',
++        b'{"hang_seconds": -Infinity}',
++        {"slow_seconds": 10**400},
++        {"hang_seconds": 86_401},
++        [],
++        ["mode"],
++        "mode",
++        b"not json",
++    ],
++)
++def test_a_control_value_of_the_wrong_kind_is_a_400_not_a_dropped_connection(ai: Any, bad: Any) -> None:
++    url, state, _ = ai
++    assert _control(url, bad) == 400
++    assert isinstance(state.slow_seconds, float) and isinstance(state.hang_seconds, float)
++    assert state.slow_seconds == 3.0 and state.hang_seconds == 30.0  # nothing was changed
++
++
++@pytest.mark.parametrize("bad", [{"slow_seconds": "x"}, {"hang_seconds": -1}, {"mode": "nonsense"}])
++def test_a_control_body_with_one_bad_key_changes_none_of_its_keys(ai: Any, bad: Any) -> None:
++    """The keys are applied one by one only after every key has been checked: `mode` used to be set before a later bad
++    key made the answer a 400."""
++    url, state, _ = ai
++    before = (state.mode, state.label, state.slow_seconds, state.hang_seconds, state.retry_after)
++    assert _control(url, {"mode": "slow", "label": "changed", "retry_after": 7, **bad}) == 400
++    assert (state.mode, state.label, state.slow_seconds, state.hang_seconds, state.retry_after) == before
++
++
++def test_the_largest_allowed_wait_is_accepted(ai: Any) -> None:
++    url, state, _ = ai
++    assert _control(url, {"hang_seconds": fm.MAX_CONTROL_SECONDS, "slow_seconds": 0}) == 200
++    assert state.hang_seconds == fm.MAX_CONTROL_SECONDS
++
++
++def test_mixed_mode_starts_with_hot(ai: Any) -> None:
++    url, state, _ = ai
++    assert _control(url, {"mode": "mixed"}) == 200
++    labels = []
++    for _ in range(4):
++        _, answer = _ai_call(url)
++        labels.append(next(c["text"] for c in answer["content"] if c["type"] == "text"))
++    assert labels == ["hot", "warm", "cold", "hot"]
+diff --git a/demo_only/fake_hubspot.py b/demo_only/fake_hubspot.py
+index 799bacc..095f2e8 100644
+--- a/demo_only/fake_hubspot.py
++++ b/demo_only/fake_hubspot.py
+@@ -26,3 +26,5 @@ a GET of that id answers 404. That is how this demo stand-in behaves (an assumpt
+ not taken from HubSpot's documentation).
+-A create checks the email and stores under ONE lock.
++A create checks the email and stores under ONE lock. Every other read or change of `state.contacts` (get, list, search,
++patch) also goes through a method of HubspotState that holds the same lock for the whole step and hands out a COPY, so
++a handler never touches the shared dict outside the lock (a delete or create from another thread cannot break it).
+ `state.key` is the expected bearer key; a wrong key always answers 401. `state.calls` lists (method, path) of every
+@@ -87,2 +89,3 @@ class HubspotState:
+     def by_email(self, email: str) -> str | None:
++        """Call with the lock held (the handlers use the locked methods below)."""
+         return next((i for i, c in self.contacts.items() if c["properties"].get("email") == email), None)
+@@ -111,2 +114,66 @@ class HubspotState:
+ 
++    def take_failure(self) -> bool:
++        """True while fewer than `times` faults were answered; the check and the count are one step under the lock."""
++        with self.lock:
++            if self.failed < self.times:
++                self.failed += 1
++                return True
++            return False
++
++    def take_hang(self) -> bool:
++        """True exactly once: the first create that gets here is the one that hangs."""
++        with self.lock:
++            if self.hung_once:
++                return False
++            self.hung_once = True
++            return True
++
++    # -- the locked "public view": the ONLY way a handler reads or changes the contacts. Each method holds the lock for
++    # the whole step (find and copy together) and returns copies, so what the handler then serializes cannot change.
++    def _view(self, cid: str) -> dict[str, Any]:
++        """Call with the lock held."""
++        return {
++            **self.contacts[cid],
++            "properties": dict(self.contacts[cid]["properties"]),
++            "createdAt": "x",
++            "updatedAt": "x",
++            "archived": False,
++        }
++
++    def public(self, ident: str, by_email: bool) -> dict[str, Any] | None:
++        """One contact as the API shows it, found by id or by email; None when there is none (or it was deleted)."""
++        with self.lock:
++            cid = self.by_email(ident) if by_email else ident
++            return self._view(cid) if cid in self.contacts else None
++
++    def contacts_page(self, limit: int, after: int) -> tuple[list[dict[str, Any]], str | None]:
++        """(rows of one LIST page, the `after` cursor of the next page or None)."""
++        with self.lock:
++            ids = sorted(self.contacts, key=int)
++            rows = [i for i in ids if int(i) > after][:limit]
++            more = len(rows) == limit and any(int(i) > int(rows[-1]) for i in ids)
++            return [self._view(i) for i in rows], (rows[-1] if more else None)
++
++    def search(self, want: str) -> list[dict[str, Any]]:
++        with self.lock:
++            now = time.monotonic()
++            return [
++                self._view(i)
++                for i, c in self.contacts.items()
++                if c["properties"].get("hadavin_lead_id") == want
++                and (self.mode != "search_lag" or now - self.created_at[i] >= self.lag)
++            ]
++
++    def patch(self, email: str, props: dict[str, str]) -> dict[str, Any] | None:
++        """Change the properties of the contact with this email; the changed contact, or None when there is none."""
++        with self.lock:
++            cid = self.by_email(email)
++            if cid is None:
++                return None
++            self.contacts[cid]["properties"].update(props)
++            return self._view(cid)
++
++
++MAX_BODY_BYTES = 1_048_576  # a request body above this (or a Content-Length that is not a plain count) is a 400
++
+ 
+@@ -119,2 +186,8 @@ class _Handler(BaseHTTPRequestHandler):
+ 
++    def _length(self) -> int | None:
++        """The body size the client announced: None for a value that is not a plain count (negative, text) or is above
++        MAX_BODY_BYTES (the fake would read it all, or until the client closes)."""
++        text = self.headers.get("Content-Length") or "0"
++        return int(text) if text.isascii() and text.isdigit() and int(text) <= MAX_BODY_BYTES else None
++
+     def _send(
+@@ -127,3 +200,3 @@ class _Handler(BaseHTTPRequestHandler):
+             self._body_read = True
+-            n = int(self.headers.get("Content-Length") or 0)
++            n = self._length()  # None: not read (the answer is a 400 and the connection closes anyway)
+             if n:
+@@ -143,3 +216,3 @@ class _Handler(BaseHTTPRequestHandler):
+     def _json(self) -> Any:
+-        n = int(self.headers.get("Content-Length") or 0)
++        n = self._length() or 0  # _gate has already refused a length that is not usable
+         self._body_read = True
+@@ -147,7 +220,7 @@ class _Handler(BaseHTTPRequestHandler):
+ 
+-    def _public(self, cid: str) -> dict[str, Any]:
+-        return {**self.state.contacts[cid], "createdAt": "x", "updatedAt": "x", "archived": False}
+-
+     def _gate(self) -> bool:
+         st = self.state
++        if self._length() is None:
++            self._send(400, {"status": "error", "message": "bad Content-Length"})
++            return False
+         auth = self.headers.get("Authorization", "")
+@@ -172,9 +245,6 @@ class _Handler(BaseHTTPRequestHandler):
+                 return
+-            ids = sorted(st.contacts, key=int)
+             limit = min(int((q.get("limit") or ["100"])[0]), st.page_max)
+             after = int((q.get("after") or ["0"])[0])
+-            page = [i for i in ids if int(i) > after][:limit]
+-            more = len(page) == limit and any(int(i) > int(page[-1]) for i in ids)
+-            paging = {"next": {"after": page[-1]}} if more else None
+-            self._send(200, {"results": [self._public(i) for i in page], "paging": paging})
++            rows, next_after = st.contacts_page(limit, after)
++            self._send(200, {"results": rows, "paging": {"next": {"after": next_after}} if next_after else None})
+             return
+@@ -182,5 +252,5 @@ class _Handler(BaseHTTPRequestHandler):
+             ident = unquote(parts.path[len(_BASE) + 1 :])
+-            cid = st.by_email(ident) if q.get("idProperty") == ["email"] else ident
+-            if cid in st.contacts:
+-                self._send(200, self._public(cid))
++            found = st.public(ident, q.get("idProperty") == ["email"])
++            if found is not None:
++                self._send(200, found)
+                 return
+@@ -230,10 +300,7 @@ class _Handler(BaseHTTPRequestHandler):
+                 return
+-        with st.lock:
+-            cid = st.by_email(unquote(parts.path[len(_BASE) + 1 :]))
+-            if cid is not None:
+-                st.contacts[cid]["properties"].update(props)
+-        if cid is None:
++        changed = st.patch(unquote(parts.path[len(_BASE) + 1 :]), props)
++        if changed is None:
+             self._send(404, {"status": "error", "message": "not found"})
+         else:
+-            self._send(200, self._public(cid))
++            self._send(200, changed)
+ 
+@@ -252,10 +319,4 @@ class _Handler(BaseHTTPRequestHandler):
+         want = self._json()["filterGroups"][0]["filters"][0]["value"]
+-        now = time.monotonic()
+-        hits = [
+-            i
+-            for i, c in st.contacts.items()
+-            if c["properties"].get("hadavin_lead_id") == want
+-            and (st.mode != "search_lag" or now - st.created_at[i] >= st.lag)
+-        ]
+-        self._send(200, {"total": len(hits), "results": [self._public(i) for i in hits]})
++        hits = st.search(want)
++        self._send(200, {"total": len(hits), "results": hits})
+ 
+@@ -275,4 +336,3 @@ class _Handler(BaseHTTPRequestHandler):
+             return
+-        if st.mode in ("r429", "r5xx") and st.failed < st.times:
+-            st.failed += 1
++        if st.mode in ("r429", "r5xx") and st.take_failure():
+             if st.mode == "r429":
+@@ -287,4 +347,3 @@ class _Handler(BaseHTTPRequestHandler):
+             return
+-        if st.mode == "timeout_after_create" and not st.hung_once:
+-            st.hung_once = True
++        if st.mode == "timeout_after_create" and st.take_hang():
+             st.release.wait(HANG_SECONDS)
+@@ -292,4 +351,3 @@ class _Handler(BaseHTTPRequestHandler):
+             return
+-        if st.mode == "r5xx_after_store" and st.failed < st.times:
+-            st.failed += 1
++        if st.mode == "r5xx_after_store" and st.take_failure():
+             self._send(500, {"status": "error"})
+@@ -301,3 +359,4 @@ class _Handler(BaseHTTPRequestHandler):
+             return
+-        self._send(201, self._public(cid))
++        # a contact deleted by another thread in the meantime still gets its 201 (as a real create that was answered)
++        self._send(201, st.public(cid, by_email=False) or {"id": cid, "properties": dict(props)})
+ 
+diff --git a/tests/test_crm_hubspot.py b/tests/test_crm_hubspot.py
+index 2612c7a..b41410a 100644
+--- a/tests/test_crm_hubspot.py
++++ b/tests/test_crm_hubspot.py
+@@ -230,3 +230,3 @@ def test_not_reached_is_stored_nothing(tmp_path: Path) -> None:
+ def test_a_rejected_call_still_gets_its_answer_when_the_body_arrives_after_the_close(rig: Rig) -> None:
+-    """http.client sends the headers first and the body after. The fake answers a rejected call (401) at once and closes;
++    """http.client sends the headers first, the body after. The fake answers a rejected call (401) at once and closes;
+     if the body is then still unread, the system resets the connection and the client loses the answer (Windows:
