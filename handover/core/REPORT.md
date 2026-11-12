@@ -1,6 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## ORDER 255 received, promotion started - 2026-11-12 19:00Z / 00:30 IST (next block by 19:05Z)
+- Running agents: 10. Review-fix: PRH b12, P3a-2 b9, Q8b b14c builders; Q8c-1 b15 and Q8a-1 b19 evidence runners. NEW promotion builders: part 2 public-bind refusal (core/promote-demo-bind -> wip/cloud-pd-bind), part 3 stand-in hosts and kind-registry test (core/promote-demo-standins -> wip/cloud-pd-standins; builds on part 2's shared loopback helper), part 6 mode banner and demo-only guard (core/promote-demo-banner -> wip/cloud-pd-banner). 90-minute boxes.
+- Pushed: Q8a-1 b19 design and codebase reviews r20 (0 Blocker, 0 Major each). Not yet pushed by builders: nothing.
+- Next in queue (dependency-free): AK-G2-a (parts 1+4) builder brief, then part 5 (safe reset); both launch as soon as a heavy slot and an agent slot allow. Q8a-1 b19 resolve waits for its evidence runner.
+- Stuck: nothing. Needs from the lead: nothing.
+
 ## ORDER 254 step (a): overlap search - 2026-11-12 19:05Z / 00:35 IST
 - Method: read-only search of hadavin-sdk against the demo head 43110e7 (agent report, ranges verified except part 1 symbols and lint.yml lines; I have NOT yet re-read the demo bodies myself).
 - Part 2 refuse public bind: NO equivalent in core (no bind concept, no is_loopback_host). Promote whole. Demo: config.py 63-77, 449-474, tests test_bind_refusals.py, test_mode_safety.py 202-250.

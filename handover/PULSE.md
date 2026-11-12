@@ -212,3 +212,4 @@ PULSE 11:39Z: no change in results. Waiting: EV runners PRH b9 and Q8b b11 (no R
 - 18:38Z P3a-2 b8 resolved (r19: 9 fix groups, O8 owner-only); b9 builder a785524079e4ae693 started on core/p3a2-b9 from 6a25ae5d. Q8c-1 b15: both reviews saved, evidence runner ab688232cbc862722 running. PRH b12 builder a52d6f8b1f93cba06 running. Q8a-1 b19 and Q8b b14c builders waiting on their own queued jobs.
 18:52Z core: Q8a-1 b19 codebase r20 saved (0B/0M/3m); ORDER 254 overlap list written; waiting on b19 evidence+design, Q8c-1 b15 evidence, 3 builders
 18:53Z core: Q8a-1 b19 design r20 saved (0B/0M/6m/2nit); waiting for b19 evidence runner before resolve
+18:55Z core: ORDER 255: 3 promotion builders started (parts 2,3,6); AK-G2-a and part 5 next
