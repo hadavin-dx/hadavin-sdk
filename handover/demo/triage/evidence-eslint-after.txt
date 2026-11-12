@@ -1,0 +1,72 @@
+=== AFTER (js-portal.patch applied)
+
+/tmp/work/apply-check/demo_only/portal_demo.js
+
+/tmp/work/apply-check/src/lead_desk/portal/pages/data.js
+
+/tmp/work/apply-check/src/lead_desk/portal/pages/leads.js
+
+/tmp/work/apply-check/src/lead_desk/portal/pages/log.js
+
+/tmp/work/apply-check/src/lead_desk/portal/pages/needs.js
+
+/tmp/work/apply-check/src/lead_desk/portal/pages/overview.js
+
+/tmp/work/apply-check/src/lead_desk/portal/portal.js
+
+/tmp/work/apply-check/src/lead_desk/portal/theme.js
+
+/tmp/work/apply-check/tests/portal_demo_probe.js
+   3:12  error  'require' is not defined                                                                                                                    no-undef
+   3:32  error  'require' is not defined                                                                                                                    no-undef
+   4:24  error  'process' is not defined                                                                                                                    no-undef
+   5:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  10:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  17:33  error  'process' is not defined                                                                                                                    no-undef
+
+/tmp/work/apply-check/tests/portal_probe.js
+   1:12   error  'require' is not defined                                                                                                                    no-undef
+   1:32   error  'require' is not defined                                                                                                                    no-undef
+   2:25   error  'process' is not defined                                                                                                                    no-undef
+   4:1    error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  26:33   error  'process' is not defined                                                                                                                    no-undef
+  29:5    error  'process' is not defined                                                                                                                    no-undef
+  34:3    error  'process' is not defined                                                                                                                    no-undef
+  36:5    error  'process' is not defined                                                                                                                    no-undef
+  52:3    error  'process' is not defined                                                                                                                    no-undef
+  54:5    error  'process' is not defined                                                                                                                    no-undef
+  78:3    error  'process' is not defined                                                                                                                    no-undef
+  82:231  error  'process' is not defined                                                                                                                    no-undef
+
+/tmp/work/apply-check/tests/portal_proof_probe.js
+   3:12  error  'require' is not defined                                                                                                                    no-undef
+   3:32  error  'require' is not defined                                                                                                                    no-undef
+   4:24  error  'process' is not defined                                                                                                                    no-undef
+   5:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  10:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  20:33  error  'process' is not defined                                                                                                                    no-undef
+
+/tmp/work/apply-check/tests/portal_state_probe.js
+   11:12  error  'require' is not defined                                                                                                                    no-undef
+   11:32  error  'require' is not defined                                                                                                                    no-undef
+   11:54  error  'require' is not defined                                                                                                                    no-undef
+   12:13  error  'process' is not defined                                                                                                                    no-undef
+   12:41  error  'process' is not defined                                                                                                                    no-undef
+   14:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   15:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   30:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   38:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   55:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   56:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   71:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   99:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  100:73  error  function inside loop                                                                                                                        no-restricted-syntax
+  103:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  104:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  105:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  124:48  error  function inside loop                                                                                                                        no-restricted-syntax
+  172:3   error  'process' is not defined                                                                                                                    no-undef
+
+✖ 582 problems (548 errors, 34 warnings)
+  503 errors and 0 warnings potentially fixable with the `--fix` option.
+

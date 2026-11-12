@@ -1,6 +1,12 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 19:00Z / 00:30 IST - lane 2 builder done, EGM review of it running; lanes 1 and 3 still running (3 agents)
+- Lane 2 (drift): 3 doc-wrong, 0 code-wrong, 1 both-fine, 4 groups unverified. Files: drift/DRIFT-REPORT-1.md, drift/docs-fixes.patch (3 one-line hunks, git apply --check passed on a scratch copy). The lane agent had no Agent tool, so the egm reviewer agents inside the drift skill did NOT run; the Skill call itself was accepted ("Launching skill: egm:egm-drift-report"). Its own full pytest run was stopped at about 35 percent (no count claimed).
+- Now running: egm:egm-codebase-details reviewer (sonnet) checking the drift report and patch against the code and hunting for missed drift; I will save its report to drift/REVIEW-1.md.
+- Lane 1 outsider and lane 3 triage: files are appearing in outsider/ and triage/, not finished yet; no claim until they report.
+- Pushed: lane output files so far (this commit). Stuck: nothing. Needs from lead: nothing.
+
 ## 2026-11-12 18:54Z / 00:24 IST - ORDER D2 started: 3 agents running (all model sonnet)
 - Lane 1 outsider test (EVIDENCE RUNNER): clone of public repo branch initial-code, setup from README/docs only, 60 min box. Output handover/demo/outsider/.
 - Lane 2 drift report (egm:egm-drift-report via Skill tool, run by the lane agent; if it is refused it must stop and say so): output handover/demo/drift/.

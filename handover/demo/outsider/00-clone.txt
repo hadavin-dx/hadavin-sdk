@@ -1,0 +1,8 @@
+Cloning into 'outsider'...
+Switched to a new branch 'initial-code'
+branch 'initial-code' set up to track 'origin/initial-code'.
+43110e7
+
+real	0m0.860s
+user	0m0.106s
+sys	0m0.031s

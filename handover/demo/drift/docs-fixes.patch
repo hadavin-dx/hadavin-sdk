@@ -1,0 +1,39 @@
+diff --git a/contract.md b/contract.md
+index 055933e..3b9409f 100644
+--- a/contract.md
++++ b/contract.md
+@@ -140,7 +140,7 @@ Pages for a person (the pages only read; the buttons write: Retry and the “I c
+   * The soft limit is raised to exactly the need, not to the hard limit, when the hard limit is unlimited or at least that. The refusal message names the open-file limit in force and what the desk needs.
+ * (2) The lock file (exit 2, "another desk is using this database").
+ * (3) The adapters (exit 1 if `/fake/info` cannot be read).
+-* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or not below the stuck grace minus its margin; the message is printed and nothing is served; this code differs from exit 1 on purpose).
++* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s; the message is printed and nothing is served; this code differs from exit 1 on purpose).
+ * (5) The bind (retried for `BIND_RETRY_SECONDS`, then exit 5).
+ * (6) The SIGTERM and SIGINT handler is installed, after the bind and before `desk.start_background()`, inside the `try` that holds the shutdown steps.
+ * (7) `desk.start_background()` (starts the reaper).
+diff --git a/docs/portal.md b/docs/portal.md
+index a023192..1f9f1f4 100644
+--- a/docs/portal.md
++++ b/docs/portal.md
+@@ -2,7 +2,7 @@
+ 
+ Two words to keep apart: the **lead stage** shown in the portal (New, Contacted and so on) is the stage of a lead, from the lead flow file (`DESK_LEADFLOW_FILE`) and is not a stage of any deployment.
+ 
+-Open http://127.0.0.1:8765/ui/ in a browser while the desk runs. It shows the desk's records on these pages: **Overview** (a summary that adds up: every received request is counted once, as New, Repeat, Request to check or Not decided yet), **Leads** (the leads, with a "Hide names and email addresses" switch that only changes the display: lead names, email addresses, phone numbers and messages are masked on screen by default, and the switch, remembered for that browser tab's session only, turns the masking off to see them and to search by name or address; while they are masked the search does not match names or address text (only the company, the lead number and request numbers without an "@"), and a small eye button beside a masked value shows that one value for up to 30 seconds without turning the name or address search on. The JSON replies still carry the values, so a person with the browser's developer tools can read them, and the desk's logs never hold them), **Needs a person** (incomplete requests, and follow-ups that failed or whose outcome is unknown; tabs for items that are only waiting and for information), **Request log** and **Data and AI** (what the desk stores and what the AI step receives); a lead's side panel shows a "Next step:" line for a failed or unknown follow-up and lists the lead's later messages: each new request from the same email address, when it came, how long after the first one, and what it says differently.
++Open http://127.0.0.1:8765/ui/ in a browser while the desk runs. It shows the desk's records on these pages: **Overview** (a summary that adds up: every received request is counted once, as New, Repeat, Request to check or Not decided yet), **Leads** (the leads, with a "Hide names and email addresses" switch that only changes the display: lead names, email addresses, phone numbers and messages are masked on screen by default, and the switch, remembered for that browser tab's session only, turns the masking off to see them and to search by name or address; while they are masked the search does not match names or address text (only the company and the lead number; request numbers are not searched while masked), and a small eye button beside a masked value shows that one value for up to 30 seconds without turning the name or address search on. The JSON replies still carry the values, so a person with the browser's developer tools can read them, and the desk's logs never hold them), **Needs a person** (incomplete requests, and follow-ups that failed or whose outcome is unknown; tabs for items that are only waiting and for information), **Request log** and **Data and AI** (what the desk stores and what the AI step receives); a lead's side panel shows a "Next step:" line for a failed or unknown follow-up and lists the lead's later messages: each new request from the same email address, when it came, how long after the first one, and what it says differently.
+ 
+ When every kind is a stand-in (no real CRM, no real mail sender, no live AI step) but the demo tools are not installed, a banner reads "Every lead is demo data. The demo CRM and demo mail are not connected. Nothing here is sent to real customers or real systems."
+ 
+diff --git a/docs/tests.md b/docs/tests.md
+index e5a7bad..2f0e627 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -24,7 +24,7 @@ The automatic checks in `.github/workflows/lint.yml` are: ruff (style), mypy (ty
+ 
+ ## Browser tests
+ 
+-The tests that drive the portal in a real browser need Playwright and a browser (`pip install playwright`, then `playwright install chromium`) and are skipped without them. They are in `tests/test_portal_browser.py`, `tests/test_portal_lead_pages.py`, three in `tests/test_portal_wording_and_masking.py`, a few in `tests/test_mode_safety.py`, and the layout and look tests (`tests/test_portal_layout.py`, `tests/test_portal_look.py`), which use the same browser helpers. **The checks in `.github/workflows/lint.yml` do not install Playwright, so they do not run the browser tests;** the masking promise P10 rests on them, so run them on your own computer. To see why any test was skipped, run `python -m pytest -q -rs`.
++The tests that drive the portal in a real browser need Playwright and a browser (`pip install playwright`, then `playwright install chromium`) and are skipped without them. They are in `tests/test_portal_browser.py`, `tests/test_portal_lead_pages.py`, `tests/test_stage_confirm_browser.py`, three in `tests/test_portal_wording_and_masking.py`, a few in `tests/test_mode_safety.py`, and the layout and look tests (`tests/test_portal_layout.py`, `tests/test_portal_look.py`), which use the same browser helpers. **The checks in `.github/workflows/lint.yml` do not install Playwright, so they do not run the browser tests;** the masking promise P10 rests on them, so run them on your own computer. To see why any test was skipped, run `python -m pytest -q -rs`.
+ 
+ ## What each promise rests on
+ 

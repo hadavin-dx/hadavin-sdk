@@ -1,0 +1,93 @@
+tool: /opt/node22/bin/eslint v10.1.0 (preinstalled in /opt/node-tools, not installed by me), config: eslint.config.mjs next to this file (written by me, flat config, rules only, no plugins)
+=== BEFORE (43110e7) src/lead_desk/portal demo_only tests/*.js
+
+/tmp/work/ro-clone/demo_only/portal_demo.js
+
+/tmp/work/ro-clone/src/lead_desk/portal/pages/data.js
+
+/tmp/work/ro-clone/src/lead_desk/portal/pages/leads.js
+
+/tmp/work/ro-clone/src/lead_desk/portal/pages/log.js
+   68:74  error    function inside loop                                               no-restricted-syntax
+
+/tmp/work/ro-clone/src/lead_desk/portal/pages/needs.js
+
+/tmp/work/ro-clone/src/lead_desk/portal/pages/overview.js
+  122:34  error    Function declared in a loop contains unsafe references to variable(s) 'grp'  no-loop-func
+  122:34  error    function inside loop                                                         no-restricted-syntax
+
+/tmp/work/ro-clone/src/lead_desk/portal/portal.js
+  471:62   error    'booted' was used before it was defined                           no-use-before-define
+  474:5    error    'Portal' is not defined                                           no-undef
+  474:19   error    'Portal' is not defined                                           no-undef
+  498:9    error    'booted' was used before it was defined                           no-use-before-define
+  498:43   error    'routeForce' was used before it was defined                       no-use-before-define
+  550:49   error    'routeForce' was used before it was defined                       no-use-before-define
+  551:5    error    'routeForce' was used before it was defined                       no-use-before-define
+  572:9    error    'booted' was used before it was defined                           no-use-before-define
+  572:19   error    'routed' was used before it was defined                           no-use-before-define
+  573:5    error    'routed' was used before it was defined                           no-use-before-define
+  640:9    error    'stopDemo' was used before it was defined                         no-use-before-define
+  640:21   error    'stopDemo' was used before it was defined                         no-use-before-define
+  640:33   error    'stopDemo' was used before it was defined                         no-use-before-define
+  641:5    error    'demoKnown' was used before it was defined                        no-use-before-define
+  643:18   error    'demoLoaded' was used before it was defined                       no-use-before-define
+  643:78   error    'Portal' is not defined                                           no-undef
+  643:92   error    'Portal' is not defined                                           no-undef
+
+/tmp/work/ro-clone/src/lead_desk/portal/theme.js
+
+/tmp/work/ro-clone/tests/portal_demo_probe.js
+   3:12  error  'require' is not defined                                                                                                                    no-undef
+   3:32  error  'require' is not defined                                                                                                                    no-undef
+   4:24  error  'process' is not defined                                                                                                                    no-undef
+   5:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  10:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  17:33  error  'process' is not defined                                                                                                                    no-undef
+
+/tmp/work/ro-clone/tests/portal_probe.js
+   1:12   error  'require' is not defined                                                                                                                    no-undef
+   1:32   error  'require' is not defined                                                                                                                    no-undef
+   2:25   error  'process' is not defined                                                                                                                    no-undef
+   4:1    error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  26:33   error  'process' is not defined                                                                                                                    no-undef
+  29:5    error  'process' is not defined                                                                                                                    no-undef
+  34:3    error  'process' is not defined                                                                                                                    no-undef
+  36:5    error  'process' is not defined                                                                                                                    no-undef
+  52:3    error  'process' is not defined                                                                                                                    no-undef
+  54:5    error  'process' is not defined                                                                                                                    no-undef
+  78:3    error  'process' is not defined                                                                                                                    no-undef
+  82:231  error  'process' is not defined                                                                                                                    no-undef
+
+/tmp/work/ro-clone/tests/portal_proof_probe.js
+   3:12  error  'require' is not defined                                                                                                                    no-undef
+   3:32  error  'require' is not defined                                                                                                                    no-undef
+   4:24  error  'process' is not defined                                                                                                                    no-undef
+   5:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  10:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  20:33  error  'process' is not defined                                                                                                                    no-undef
+
+/tmp/work/ro-clone/tests/portal_state_probe.js
+   11:12  error  'require' is not defined                                                                                                                    no-undef
+   11:32  error  'require' is not defined                                                                                                                    no-undef
+   11:54  error  'require' is not defined                                                                                                                    no-undef
+   12:13  error  'process' is not defined                                                                                                                    no-undef
+   12:41  error  'process' is not defined                                                                                                                    no-undef
+   14:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   15:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   30:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   38:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   55:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   56:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   71:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+   99:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  100:73  error  function inside loop                                                                                                                        no-restricted-syntax
+  103:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  104:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  105:1   error  Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  124:48  error  function inside loop                                                                                                                        no-restricted-syntax
+  172:3   error  'process' is not defined                                                                                                                    no-undef
+
+✖ 601 problems (567 errors, 34 warnings)
+  499 errors and 0 warnings potentially fixable with the `--fix` option.
+

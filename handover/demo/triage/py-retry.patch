@@ -1,0 +1,262 @@
+diff --git a/demo_only/fake_imap.py b/demo_only/fake_imap.py
+index 8e37076..c7995e4 100644
+--- a/demo_only/fake_imap.py
++++ b/demo_only/fake_imap.py
+@@ -110,7 +110,7 @@ class FakeImap:
+                     return
+                 else:
+                     f.write(f"{tag} BAD\r\n".encode())
+-        except (OSError, ssl.SSLError, ValueError, IndexError, KeyError):
++        except (OSError, ValueError, IndexError, KeyError):
+             return
+         finally:
+             raw.close()
+diff --git a/demo_only/fake_smtp_tls.py b/demo_only/fake_smtp_tls.py
+index 12a8763..66fccb5 100644
+--- a/demo_only/fake_smtp_tls.py
++++ b/demo_only/fake_smtp_tls.py
+@@ -86,7 +86,7 @@ class FakeSmtp:
+     def _serve(self, raw: socket.socket) -> None:
+         try:
+             self._dialogue(raw)
+-        except (OSError, ssl.SSLError, ValueError):
++        except (OSError, ValueError):
+             pass
+         finally:
+             try:
+diff --git a/load_tools/catcher.py b/load_tools/catcher.py
+index 92e9981..aad65f8 100644
+--- a/load_tools/catcher.py
++++ b/load_tools/catcher.py
+@@ -88,7 +88,7 @@ class Catcher:
+     async def handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+         try:
+             await self._session(reader, writer)
+-        except (OSError, asyncio.IncompleteReadError, asyncio.LimitOverrunError, TimeoutError):
++        except (OSError, asyncio.IncompleteReadError, asyncio.LimitOverrunError):
+             pass
+         finally:
+             writer.close()
+diff --git a/load_tools/load_driver.py b/load_tools/load_driver.py
+index 5b24847..3a9a750 100644
+--- a/load_tools/load_driver.py
++++ b/load_tools/load_driver.py
+@@ -235,7 +235,7 @@ def build_schedule(scenario: str, t0: float, prefix: str, seed: int) -> list[dic
+             raise ValueError("dupmix needs at least one first request")
+         for i in range(firsts):
+             items.append(_item(DOORS[i % len(DOORS)], f"{prefix}-{i}", t0 + i / rate, scenario, "first"))
+-        for j in range(repeats):
++        for _ in range(repeats):
+             base = items[rng.randrange(firsts)] if firsts else items[0]
+             if rng.random() < DUP_BOTH_DOORS_SHARE:
+                 other = DOORS[1 - DOORS.index(base["door"])]
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 840a80d..5ec5672 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -263,7 +263,7 @@ def read_approvers(path: Path) -> tuple[tuple[tuple[str, str], ...], str]:
+         raise SettingRefused("the approvers file is too big")
+     try:
+         data = json.loads(raw.decode("utf-8"))
+-    except (UnicodeError, ValueError, RecursionError):
++    except (ValueError, RecursionError):  # UnicodeError is a ValueError
+         raise SettingRefused("the approvers file is not valid JSON text") from None
+     listed = data.get("approvers") if isinstance(data, dict) else None
+     label = data.get("label", "") if isinstance(data, dict) else ""
+@@ -386,7 +386,7 @@ def _read_leadflow(path: Path) -> Leadflow:
+         raise SettingRefused("DESK_LEADFLOW_FILE is too big")
+     try:
+         data = json.loads(raw.decode("utf-8"))
+-    except (UnicodeError, ValueError, RecursionError):
++    except (ValueError, RecursionError):  # UnicodeError is a ValueError
+         raise SettingRefused("DESK_LEADFLOW_FILE is not valid JSON text") from None
+     if not isinstance(data, dict) or not _LEADFLOW_NEEDED <= set(data) <= _LEADFLOW_TOP_KEYS:
+         raise SettingRefused(
+diff --git a/src/lead_desk/crm_hubspot.py b/src/lead_desk/crm_hubspot.py
+index 782794c..89e6f8a 100644
+--- a/src/lead_desk/crm_hubspot.py
++++ b/src/lead_desk/crm_hubspot.py
+@@ -323,9 +323,7 @@ class HubspotCrm:
+             if isinstance(e.reason, (ConnectionRefusedError, socket.gaierror, ssl.SSLCertVerificationError)):
+                 raise CrmNothingStored(type(e.reason).__name__) from None  # no request reached HubSpot
+             raise CrmError(type(e.reason).__name__) from None
+-        except CrmError:
+-            raise
+-        except (OSError, ValueError, http.client.HTTPException) as e:
++        except (OSError, ValueError, http.client.HTTPException) as e:  # a CrmError is none of these: it passes through
+             raise CrmError(type(e).__name__) from None
+ 
+     @staticmethod
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index 83d540a..e42afbc 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -5,6 +5,7 @@ transaction is open. Logs carry exception class names only (no addresses, no nam
+ 
+ from __future__ import annotations
+ 
++import functools
+ import json
+ import logging
+ import re
+@@ -770,7 +771,7 @@ class Desk:
+             )
+             .fetchall()
+         )
+-        for lead_id, email_key, owner_id, step, rank_sent, tries_before in rows:
++        for lead_id, email_key, owner_id, step, rank_sent, _tries_before in rows:
+             if self._stopping() or time.monotonic() - started >= MIRROR_PASS_SECONDS:
+                 return
+             owner_sent = crm_owner_of.get(owner_id, "") if owner_id in json.loads(copyable) else ""
+@@ -778,7 +779,7 @@ class Desk:
+             try:
+                 self._bounded(
+                     "crm",
+-                    lambda: self.crm.set_fields(lead_id, email_key, owner_sent, status_sent),
++                    functools.partial(self.crm.set_fields, lead_id, email_key, owner_sent, status_sent),  # binds now
+                     self._call_deadline(),
+                     lambda: CrmTimeout("no answer in time"),
+                     tag=f"mirror:{lead_id}",
+diff --git a/src/lead_desk/live_claude.py b/src/lead_desk/live_claude.py
+index 424380f..177c552 100644
+--- a/src/lead_desk/live_claude.py
++++ b/src/lead_desk/live_claude.py
+@@ -31,7 +31,6 @@ import http.client
+ import json
+ import os
+ import re
+-import socket
+ import sys
+ import threading
+ import time
+@@ -244,8 +243,7 @@ class SpendLedger:
+             if len(raw) > LIVE_LEDGER_FILE_MAX_BYTES:
+                 raise LiveCapReached(_TOO_BIG_FILE)
+             return self._sum(raw, run, reserved, settled)
+-        except LiveCapReached:
+-            raise
++        # (a LiveCapReached raised above is none of these kinds, so it passes through unchanged)
+         except (ValueError, KeyError, TypeError, ArithmeticError, RecursionError, OSError, MemoryError) as e:
+             raise LiveCapReached(_UNREADABLE) from e  # a broken ledger must stop spending, not reset it
+ 
+@@ -480,7 +478,7 @@ class LiveQualifier:
+             except (OSError, http.client.HTTPException):
+                 kind = None
+             raise LiveTransport(f"the model service answered {e.code}" + (f" ({kind})" if kind else "")) from None
+-        except (urllib.error.URLError, OSError, socket.timeout, ValueError, http.client.HTTPException):
++        except (OSError, ValueError, http.client.HTTPException):  # URLError and socket.timeout are OSError
+             raise LiveTransport("the model service could not be reached in time") from None
+         if len(raw) > LIVE_REPLY_MAX_BYTES:
+             raise LiveBadReply("the reply is too long")
+diff --git a/src/lead_desk/portal_api.py b/src/lead_desk/portal_api.py
+index 97546bb..9cf7bac 100644
+--- a/src/lead_desk/portal_api.py
++++ b/src/lead_desk/portal_api.py
+@@ -490,10 +490,10 @@ def _lead_detail(desk: Desk, lead_id: str) -> tuple[int, dict[str, Any]]:
+     lead_row = dict(zip(_LEAD_FIELDS, lead, strict=True))
+     followup_row = dict(zip(_FOLLOWUP_KEYS, followup, strict=True))
+     labels = _step_labels(desk)
+-    owner, step, step_rank, owner_done, step_done, tries, reminder = (None,) * 7
++    owner, step, reminder = (None,) * 3
+     owner_id = None
+     if state is not None:
+-        owner_id, owner, step, step_rank, owner_done, step_done, tries, reminder = state
++        owner_id, owner, step, _step_rank, _owner_done, _step_done, _tries, reminder = state
+     approval = None
+     if desk.config.later_mode == "approval":  # the names come from the list the desk was started with
+         approval = {
+diff --git a/src/lead_desk/smtp_outbox.py b/src/lead_desk/smtp_outbox.py
+index 7fe1cc9..54a4da2 100644
+--- a/src/lead_desk/smtp_outbox.py
++++ b/src/lead_desk/smtp_outbox.py
+@@ -221,7 +221,7 @@ class SmtpOutbox:
+             raise SendRefused("empty send key")
+         try:
+             wire = _dot_stuff(self._build(send_key, to, subject, body))
+-        except (ValueError, UnicodeError, MessageError) as e:  # ValueError covers UnicodeError; MessageError: refused
++        except (ValueError, MessageError) as e:  # ValueError covers UnicodeError; MessageError: refused
+             raise SendRefused(type(e).__name__) from e
+         budget = _Budget(timeout if timeout > 0 else self._s.timeout_seconds)
+         sock = self._connect(budget)
+@@ -289,7 +289,7 @@ class SmtpOutbox:
+         try:  # polite goodbye; its failure changes nothing
+             sock.settimeout(min(budget.left(), 0.2))
+             sock.sendall(b"QUIT" + _CRLF)
+-        except (OSError, TimeoutError):
++        except OSError:  # TimeoutError is an OSError
+             pass
+ 
+     @staticmethod
+diff --git a/src/lead_desk/smtp_provider.py b/src/lead_desk/smtp_provider.py
+index dbb9300..a60f7f5 100644
+--- a/src/lead_desk/smtp_provider.py
++++ b/src/lead_desk/smtp_provider.py
+@@ -231,7 +231,7 @@ class SmtpProviderOutbox:
+         password = read_secret_file(self._s.password_file)  # before any network use
+         try:
+             wire = _dot_stuff(self._build(send_key, subject, body))
+-        except (ValueError, UnicodeError, MessageError) as e:
++        except (ValueError, MessageError) as e:
+             raise SendRefused(type(e).__name__) from e
+         with self._lock:
+             if self.attempts >= self._s.max_sends:
+@@ -310,7 +310,7 @@ class SmtpProviderOutbox:
+         try:
+             conn.settimeout(min(budget.left(), 0.2))
+             conn.sendall(b"QUIT" + _CRLF)
+-        except (OSError, TimeoutError):
++        except OSError:  # TimeoutError is an OSError
+             pass
+ 
+ 
+diff --git a/tests/test_except_clause_hierarchy.py b/tests/test_except_clause_hierarchy.py
+new file mode 100644
+index 0000000..04728ee
+--- /dev/null
++++ b/tests/test_except_clause_hierarchy.py
+@@ -0,0 +1,45 @@
++"""Pins the class relationships that the shortened `except` clauses rely on (made-up data only).
++
++Several clauses used to name both a class and its parent (UnicodeError and ValueError, TimeoutError and OSError, ...)
++or re-raised one class by hand just before a broader clause. They were shortened because the parent already catches
++the child and the re-raised class is not caught by the broader clause. If a class below ever moves, these tests
++fail and the clauses must be looked at again."""
++
++import http.client
++import socket
++import ssl
++import urllib.error
++
++import pytest
++
++from lead_desk import crm_hubspot, live_claude
++
++
++def test_children_are_caught_by_the_parent_named_in_the_shortened_clauses() -> None:
++    assert issubclass(UnicodeError, ValueError)  # config.py, smtp_outbox.py, smtp_provider.py
++    assert issubclass(TimeoutError, OSError)  # smtp_outbox.py, smtp_provider.py, load_tools/catcher.py
++    assert issubclass(urllib.error.URLError, OSError)  # live_claude.py
++    assert issubclass(socket.timeout, OSError)  # live_claude.py
++    assert issubclass(ssl.SSLError, OSError)  # demo_only/fake_imap.py, demo_only/fake_smtp_tls.py
++
++
++@pytest.mark.parametrize("error", [crm_hubspot.CrmError, live_claude.LiveCapReached])
++def test_the_handed_on_errors_are_not_caught_by_the_broader_clause_after_them(error: type[BaseException]) -> None:
++    broader = {
++        crm_hubspot.CrmError: (OSError, ValueError, http.client.HTTPException),
++        live_claude.LiveCapReached: (
++            ValueError,
++            KeyError,
++            TypeError,
++            ArithmeticError,
++            RecursionError,
++            OSError,
++            MemoryError,
++        ),
++    }[error]
++    assert not issubclass(error, broader)
++    with pytest.raises(error):
++        try:
++            raise error("x")
++        except broader:  # would swallow the error if the classes were related
++            pytest.fail("the broader clause caught it")

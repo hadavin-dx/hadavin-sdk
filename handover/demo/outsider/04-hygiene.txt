@@ -1,0 +1,6 @@
+$ python -m pytest -q tests/test_hygiene.py -rs
+...s......                                                               [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_hygiene.py:128: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+9 passed, 1 skipped in 3.97s
+EXIT=0 WALL=5s

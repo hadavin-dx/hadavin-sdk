@@ -1,0 +1,6 @@
+...                                                                      [100%]
+3 passed in 0.02s
+--- (above: OLD code 43110e7 + new test)
+...                                                                      [100%]
+3 passed in 0.01s
+--- (above: PATCHED code + new test)
