@@ -63,11 +63,12 @@ class Approvals:
     again (tests move time). ``__setattr__`` refuses every other assignment (a plain ``a._channel = x``, a private
     slot name that is already set, ``a.__class__ = Other``, any new name) with an ``AttributeError``. The attributes
     are slots, so ``vars(a)`` raises ``TypeError`` and the object cannot be weakly referenced (``weakref.ref(a)``
-    raises ``TypeError``: there is no ``__weakref__`` slot). ``object.__setattr__(a, "_channel", x)`` is the one way
-    left; it is caught by the receiver, which asks again at every request on a bind other computers can reach with
-    no reason given: the exact class of ``a`` and what it holds now (``real_now``). A copy of an ``Approvals``
-    (``copy.copy``, ``copy.deepcopy``, pickle) is refused with a ``TypeError``: a copy would duplicate the frozen
-    facts and the set-once objects."""
+    raises ``TypeError``: there is no ``__weakref__`` slot). ``del a._channel`` is refused too (``__delattr__``
+    always raises). ``object.__setattr__(a, "_channel", x)`` and ``object.__delattr__(a, "_channel")`` are the ways left; they
+    are caught by the receiver, which asks again at every request on a bind other computers can reach with no reason
+    given: the exact class of ``a``, that the ``Approvals`` class is unchanged since it was pinned, and what it holds
+    now (``real_now``; a missing slot is answered 503). A copy of an ``Approvals`` (``copy.copy``, ``copy.deepcopy``,
+    pickle) is refused with a ``TypeError``: a copy would duplicate the frozen facts and the set-once objects."""
 
     __slots__ = (
         "_audit_sink",
@@ -164,6 +165,10 @@ class Approvals:
             f"an Approvals is set once: {name!r} cannot be set (only 'clock' can be set again)"
         )
 
+    def __delattr__(self, name: str) -> None:
+        """Nothing is ever deleted: ``del a._channel`` followed by a new assignment would undo the set-once rule."""
+        raise AttributeError(f"an Approvals is set once: {name!r} cannot be deleted")
+
     @property
     def config(self) -> Config | None:
         return self._config
@@ -183,22 +188,24 @@ class Approvals:
         channel, the detector and the store as they are now. The bind guard (``bindguard.held_services_found``)
         counts each one that is not one of the core's own stand-ins. Approvals made by hand (not by ``build()``)
         also name their audit sink and registry: nothing says those are stand-ins."""
-        held: dict[str, object] = dict(self._overrides)
-        live = {"channel": self._channel, "detector": self._detector, "store": self._store}
+        # read through the same accessors the runtime uses (``self.channel`` and so on), never through the private
+        # slots: a replaced accessor and the slot behind it cannot give two answers
+        held: dict[str, object] = dict(self.overrides)
+        live = {"channel": self.channel, "detector": self.detector, "store": self.store}
         for name, obj in live.items():
             # a given object and a different one now in its place are both counted (neither hides the other)
             if name in held and held[name] is not obj:
                 held[f"{name} (given to build)"] = held[name]
             held[name] = obj
         if self._hand_built:
-            held["audit"], held["registry"] = self._audit_sink, self._registry
+            held["audit"], held["registry"] = self.audit, self.registry
         return held
 
     def real_now(self) -> tuple[str, ...]:
         """What these approvals reach that is real, now: the facts of the config frozen at construction, and the held
         objects as they are at this moment. The receiver asks this at every request on a bind other computers can
         reach with no reason given (called as ``Approvals.real_now(a)``, so a subclass cannot answer for itself)."""
-        return self._config_facts + held_services_found(Approvals.held_services(self))
+        return self.config_facts + held_services_found(Approvals.held_services(self))
 
     def __deepcopy__(self, memo: object) -> object:
         raise TypeError("an Approvals cannot be copied: it holds set-once objects and frozen facts")

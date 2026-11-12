@@ -18,23 +18,53 @@ Who may be a stand-in is decided HERE, from two literals, never from what a clas
   question the class must still match the pin: a replaced or added method, a changed base class or a rebinding of
   the module name reads as real. A missing or cleared pin of a class that was seen before reads as real (fail
   closed);
-* the instance is scanned too, to a depth of ``SCAN_DEPTH`` (4) levels and at most ``SCAN_NODES`` values: a
-  function, method or class held in its own attributes or inside a dict, list, tuple, set or deque held there
-  reads as real. Containers deeper than the limit are not entered (the limit is stated, not hidden); an instance
-  that holds more than the node budget reads as real;
+* the instance is scanned too, by an ALLOWLIST (deny by default): every value it holds must be plain data, judged
+  by its EXACT type (``type(v) is T``, never ``isinstance``): str, bytes, int, float, bool, None, Decimal, date,
+  datetime, timedelta, Path, a lock, and the builtin containers dict, list, tuple, set, frozenset and deque
+  (entered; for a dict its keys are judged too), a ``Counter``, a ``defaultdict`` whose factory is one of
+  ``list``, ``dict``, ``set``, ``int``, ``float`` or ``Decimal``, and the model types the five stand-ins really hold
+  (the literal list ``_DATA_CLASSES``, found in their module dictionaries; each one is judged by exact type and its
+  own attributes are entered; the class of a data type is NOT pinned, because those types hold no code the guard
+  runs). Anything else reads as real: a function, a method, a class, a subclass of dict or list, a ``defaultdict``
+  with another factory, ``UserDict``, ``ChainMap``, ``MappingProxyType``, ``SimpleNamespace``, a client or session
+  object, an object with ``__enter__``, a generator, an iterator, a ``memoryview`` or a ``bytearray``. A value whose
+  type is itself one of the pinned stand-in classes (a nested stand-in) is judged by the same pin and scanned in
+  turn. The scan enters ``SCAN_DEPTH`` (4) levels of containers (the instance's own attribute dictionary is level
+  1) and looks at no more than ``SCAN_NODES`` values. Both limits FAIL CLOSED: a container that is still
+  unexplored after the last level and holds anything but plain atoms (str, int, ...) reads as real, and so does an
+  instance that holds more than the budget;
 * a detector list (``AnyOf``) is pinned the same way, its ``detectors`` must be a plain ``tuple``, and every
   member must itself be a stand-in (nesting at most ``SCAN_DEPTH`` deep, cycles refused by an id set);
 * any error while asking reads as "not a stand-in".
 
-Not promised: the pin is taken at the first question, so a change made before it is not seen; and code that runs in
-the same process and rewrites this module, ``sys.modules`` or the guard itself is outside what Python can stop. A
-stand-in fed real secret values or pointed at a real address through its own plain data is still the class of a
-stand-in: the check reads classes, not what a person puts in them."""
+The pins are taken EAGERLY: ``pin_all`` runs when the approvals receiver is imported (it imports the five classes
+and ``Approvals`` and pins them all), so a change made after that import is seen. A class that could not be
+imported then is pinned at the first question instead (a fail-closed fallback: a change made before that first
+question is not seen; a test fixture that patches a class before the receiver is imported is outside the model).
+The scan runs at every question and its answer is NOT cached: a cache would have to read the whole structure to see
+that a function was put inside a held container, which costs what the scan costs. The cost is bounded by
+``SCAN_NODES`` (an instance over the budget reads as real, so the receiver answers 503 to every request until it
+is smaller).
+
+Fragile on purpose: touching ``cls.__annotations__`` adds an empty entry to the class dictionary on Python 3.10 to
+3.13, so the pin touches it at pin time and at every comparison; a class whose dictionary changes in any other way
+(for example ``importlib.reload``) reads as real (fail closed).
+
+Not promised: code that runs in the same process and rewrites this module, ``sys.modules`` or the guard itself is
+outside what Python can stop. A stand-in fed real secret values or pointed at a real address through its own plain
+data is still the class of a stand-in: the check reads classes and the types of what they hold, not what a person
+puts in the strings."""
 
 from __future__ import annotations
 
+import contextlib
+import importlib
 import sys
-from collections import deque
+import threading
+from collections import Counter, defaultdict, deque
+from datetime import date, datetime, timedelta
+from decimal import Decimal
+from pathlib import Path
 from types import ModuleType
 
 SCAN_DEPTH = 4  # levels of containers entered inside an instance (and of nested detector lists)
@@ -49,11 +79,58 @@ _ALLOWED: tuple[tuple[str, str], ...] = (
     ("hadavin_sdk.store.memory", "MemoryStore"),
 )
 _DETECTOR_LIST = ("hadavin_sdk.guard.injection", "AnyOf")
+# the approvals object the receiver serves is pinned in the same way (``is_pinned_instance``)
+APPROVALS = ("hadavin_sdk.approvals.requests", "Approvals")
+_PINNED_KEYS = (*_ALLOWED, _DETECTOR_LIST, APPROVALS)
+
+# The plain-data types the five stand-ins really hold (found by reading their class bodies and by scanning every
+# stand-in the test suite makes; each is judged by exact type and its own attributes are entered). Reason per
+# group: the models are the rows MemoryStore keeps (runs, plans, gate answers, approval requests and decisions, dead
+# letters, the kill switch, tick state, tool-call records), ``Route`` is what FakeLLM reads its prices from, ``Card``
+# is what FakeChannel records.
+_MODELS = "hadavin_sdk.models"
+_DATA_CLASSES: tuple[tuple[str, str], ...] = (
+    (_MODELS, "Run"),
+    (_MODELS, "Target"),
+    (_MODELS, "Plan"),
+    (_MODELS, "GateDecision"),
+    (_MODELS, "ChainStep"),
+    (_MODELS, "ApprovalRequest"),
+    (_MODELS, "ApprovalDecision"),
+    (_MODELS, "DeadLetter"),
+    (_MODELS, "TickState"),
+    (_MODELS, "ToolCallRecord"),
+    (_MODELS, "KillSwitch"),
+    ("hadavin_sdk.config", "Route"),
+    ("hadavin_sdk.approvals.cards", "Card"),
+)
+# plain values that are NOT entered (an enum member holds its own class): the state of a run
+_LEAF_CLASSES: tuple[tuple[str, str], ...] = ((_MODELS, "RunState"),)
+
+_ATOMS: frozenset[type] = frozenset(
+    {
+        str,
+        bytes,
+        int,
+        float,
+        bool,
+        type(None),
+        Decimal,
+        date,
+        datetime,
+        timedelta,
+        type(Path()),
+        type(threading.Lock()),  # held by MemoryStore and FakeLLM; it holds no code
+    }
+)
+_PLAIN_CONTAINERS: tuple[type, ...] = (dict, list, tuple, set, frozenset, deque)
+_DEFAULT_FACTORIES: tuple[object, ...] = (list, dict, set, int, float, Decimal)
 
 # (module, name) -> pin taken at the first question; _SEEN names the keys that were pinned (a key that was seen
 # and has no pin any more reads as real)
 _PINNED: dict[tuple[str, str], tuple[object, ...]] = {}
 _SEEN: frozenset[tuple[str, str]] = frozenset()
+_PIN_LOCK = threading.Lock()
 
 
 def _live_class(key: tuple[str, str]) -> type | None:
@@ -66,9 +143,24 @@ def _live_class(key: tuple[str, str]) -> type | None:
     return cls if isinstance(cls, type) else None
 
 
+_CLASS_ANNOTATIONS = vars(type)[
+    "__annotations__"
+]  # ``type``'s own getter: a metaclass cannot answer for it
+
+
+def _touch_annotations(cls: type) -> None:
+    """Python 3.10 to 3.13 add an empty ``__annotations__`` to a class dictionary the first time it is read, and
+    3.12 fills some entries lazily: read it now, through ``type``'s own descriptor, so the pin includes it."""
+    with contextlib.suppress(Exception):  # a class without one (3.14 reads it differently) is fine
+        _CLASS_ANNOTATIONS.__get__(cls)
+
+
 def _shape(cls: type) -> tuple[object, ...]:
     """(metaclass, mro, then per class of the mro except ``object``: its (name, object) pairs in order)."""
     mro = cls.__mro__
+    for c in mro:
+        if c is not object:
+            _touch_annotations(c)
     return (type(cls), mro, *(tuple(vars(c).items()) for c in mro if c is not object))
 
 
@@ -93,59 +185,130 @@ def _class_ok(key: tuple[str, str], cls: type) -> bool:
     global _SEEN
     pin = _PINNED.get(key)
     if pin is None:
-        if key in _SEEN:
-            return False  # seen before and the pin is gone: fail closed
-        _PINNED[key] = _shape(cls)
-        _SEEN = _SEEN | {key}
-        return True
+        with _PIN_LOCK:
+            pin = _PINNED.get(key)
+            if pin is None:
+                if key in _SEEN:
+                    return False  # seen before and the pin is gone: fail closed
+                _PINNED[key] = _shape(cls)
+                _SEEN = _SEEN | {key}
+                return True
     return _same_shape(cls, pin)
 
 
+def pin_all() -> None:
+    """Import and pin the five stand-in classes, the detector list and ``Approvals`` now (called when the approvals
+    receiver is imported). A class that cannot be imported is left for the first question (fail closed: the
+    first question pins it)."""
+    for key in _PINNED_KEYS:
+        with contextlib.suppress(Exception):  # the lazy path pins it at the first question
+            importlib.import_module(key[0])
+            cls = _live_class(key)
+            if cls is not None:
+                _class_ok(key, cls)
+
+
+def is_pinned_instance(obj: object, key: tuple[str, str] = APPROVALS) -> bool:
+    """True when ``obj`` is an instance of exactly the class found under ``key`` and that class is unchanged since
+    it was pinned. Never raises."""
+    try:
+        cls = _live_class(key)
+        return cls is not None and type(obj) is cls and _class_ok(key, cls)
+    except Exception:  # noqa: BLE001 - anything unreadable is not the pinned class
+        return False
+
+
 def _values(container: object) -> tuple[object, ...]:
-    """The values of a dict, list, tuple, set, frozenset or deque (or a subclass), read with the builtin's own
-    method, so a subclass's ``__iter__`` is never run; ``()`` for anything else."""
+    """What a dict (its keys, then its values), list, tuple, set, frozenset or deque (or a subclass) holds, read
+    with the builtin's own method, so a subclass's ``__iter__`` is never run; ``()`` for anything else."""
     kind = type(container)
     if issubclass(kind, dict):
-        return tuple(dict.values(container))  # type: ignore[arg-type]
+        return (*dict.keys(container), *dict.values(container))  # type: ignore[arg-type]
     for base in (list, tuple, set, frozenset, deque):
         if issubclass(kind, base):
             return tuple(base.__iter__(container))  # type: ignore[arg-type]
     return ()
 
 
-def _holds_a_function(own: object) -> bool:
-    """True when the values of ``own`` (an instance dict) include a callable (function, method, class, anything
-    with ``__call__``) at any of the first ``SCAN_DEPTH`` levels of containers, or more than ``SCAN_NODES`` values."""
+def _classes(keys: tuple[tuple[str, str], ...]) -> frozenset[type]:
+    found = (_live_class(key) for key in keys)
+    return frozenset(c for c in found if c is not None)
+
+
+def _stand_in_key(kind: type) -> tuple[str, str] | None:
+    """The key of the listed class that ``kind`` IS (identity), or None."""
+    for key in (*_ALLOWED, _DETECTOR_LIST):
+        cls = _live_class(key)
+        if cls is not None and kind is cls:
+            return key
+    return None
+
+
+def _entered(
+    value: object, data: frozenset[type], leaf: frozenset[type]
+) -> tuple[object, ...] | None:
+    """What to enter inside ``value``: ``()`` for a plain atom, the values of a plain container, a data object or a
+    pinned stand-in; ``None`` when the value is not plain data (it reads as real)."""
+    kind = type(value)
+    if kind in _ATOMS or kind in leaf:
+        return ()
+    if kind in _PLAIN_CONTAINERS or kind is Counter:
+        return _values(value)
+    if kind is defaultdict:
+        factory = value.default_factory  # type: ignore[attr-defined]
+        return _values(value) if any(factory is f for f in _DEFAULT_FACTORIES) else None
+    if kind in data:
+        return _values(object.__getattribute__(value, "__dict__"))
+    key = _stand_in_key(kind)
+    if key is not None and _class_ok(key, kind):
+        return _values(object.__getattribute__(value, "__dict__"))
+    return None
+
+
+def _holds_real(own: object) -> bool:
+    """True when the values of ``own`` (an instance dict) are not all plain data (see the module text), or when
+    a container left unexplored after ``SCAN_DEPTH`` levels holds anything but plain atoms, or when there are more
+    than ``SCAN_NODES`` values. The instance's own dictionary is level 1."""
     budget = SCAN_NODES
-    level: list[object] = [own]
+    data, leaf = _classes(_DATA_CLASSES), _classes(_LEAF_CLASSES)
+    level: list[tuple[object, ...]] = [_values(own)]
     for _ in range(SCAN_DEPTH):
-        nxt: list[object] = []
-        for container in level:
-            for value in _values(container):
+        nxt: list[tuple[object, ...]] = []
+        for values in level:
+            for value in values:
                 budget -= 1
-                if budget < 0 or callable(value):
+                if budget < 0:
                     return True
-                if _values(value):
-                    nxt.append(value)
+                inner = _entered(value, data, leaf)
+                if inner is None:
+                    return True
+                if inner:
+                    nxt.append(inner)
         level = nxt
+    # fail closed: what is still unexplored after the last level may only be plain atoms (which cannot hide anything)
+    for values in level:
+        for value in values:
+            budget -= 1
+            if budget < 0 or type(value) not in _ATOMS:
+                return True
     return False
 
 
 def _instance_ok(obj: object) -> bool:
     # no instance dictionary is an error here, and an error reads as "not a stand-in"
-    return not _holds_a_function(object.__getattribute__(obj, "__dict__"))
+    return not _holds_real(object.__getattribute__(obj, "__dict__"))
 
 
 def _check(obj: object, depth: int, seen: frozenset[int]) -> bool:
     kind = type(obj)
-    for key in _ALLOWED:
-        cls = _live_class(key)
-        if cls is not None and kind is cls:
-            return _class_ok(key, cls) and _instance_ok(obj)
-    cls = _live_class(_DETECTOR_LIST)
-    if cls is None or kind is not cls or depth >= SCAN_DEPTH or id(obj) in seen:
+    key = _stand_in_key(kind)
+    if key is None:
         return False
-    if not (_class_ok(_DETECTOR_LIST, cls) and _instance_ok(obj)):
+    if key != _DETECTOR_LIST:
+        return _class_ok(key, kind) and _instance_ok(obj)
+    if depth >= SCAN_DEPTH or id(obj) in seen:
+        return False
+    if not (_class_ok(_DETECTOR_LIST, kind) and _instance_ok(obj)):
         return False
     members = dict.get(object.__getattribute__(obj, "__dict__"), "detectors")
     if type(members) is not tuple:

@@ -62,6 +62,7 @@ def stand_in_kinds() -> frozenset[tuple[str, str]]:
 
 # The core's own stand-in classes are the literal list in ``hadavin_sdk.standins`` (looked up in the module that holds
 # them, exact class only, pinned; never a name, never a subclass).
+
 # held services whose emptiness decides: an empty ``tools`` or ``sources`` mapping holds nothing
 _COUNTED_WHEN_NOT_EMPTY = frozenset({"tools", "sources"})
 
@@ -146,7 +147,8 @@ def held_services_found(held: Mapping[str, object] | None) -> tuple[str, ...]:
                 not _is_empty_mapping(obj) if counted_if_not_empty else not is_stand_in_object(obj)
             )
         except Exception:  # noqa: BLE001 - an object or a key that cannot be read is not a stand-in
-            label, counts = f"held {_shown(name)}", True
+            # a fixed label: the key is hostile, so nothing is called on it again (not even ``_shown``)
+            label, counts = "held (unreadable)", True
         if counts:
             found.append(label)
     return tuple(found)

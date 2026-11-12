@@ -140,7 +140,7 @@ BIND_REASON_MAX_CHARS = (
 BIND_SHOWN_MAX_CHARS = (
     80  # longest part of a refused bind text that is shown back (the rest is cut with "...")
 )
-BIND_REFUSAL_LOG_INTERVAL_S = 60  # a refused request on a public bind is logged at most once per this many seconds for each set of services
+BIND_REFUSAL_LOG_INTERVAL_S = 60  # a refused request on a public bind is logged at most once per this many seconds per set of services
 BIND_REFUSAL_LOG_KEYS = (
     64  # sets of services remembered for that limit (the oldest is forgotten past this)
 )

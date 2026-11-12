@@ -1001,13 +1001,17 @@ def test_the_listener_reaches_the_approvals_only_through_the_signature_check() -
         "approvals.config",
         "approvals.config_facts",
     }, "the listener reaches more of the approvals than receive (and the config identity check)"
-    assert _calls_given(receiver, "approvals") == {
-        "handle_slack_action",
-        "Approvals.held_services",
-        "Approvals.real_now",
-        "_recheck",
-        "type",
-    }, (
+    assert (
+        _calls_given(receiver, "approvals")
+        == {
+            "handle_slack_action",
+            "Approvals.held_services",
+            "Approvals.real_now",
+            "_recheck",
+            "standins.is_pinned_instance",  # reads only the class of the object (the pin), never the object
+            "type",
+        }
+    ), (
         "the listener hands the approvals to more callees than the ones named here (argument position)"
     )
     (handler,) = [
@@ -1636,7 +1640,10 @@ def test_a_base_swapped_for_a_copy_with_the_same_attributes_reads_as_real(
 ) -> None:
     """The mro itself is pinned, not only the attributes of its classes: a clone with the very same objects in it
     leaves every attribute check equal."""
-    go = lambda self: 1
+
+    def go(self: object) -> int:
+        return 1
+
     namespace = {"go": go, "__slots__": (), "__module__": "tests_clone", "__doc__": None}
     base, clone = type("Base", (), dict(namespace)), type("Base", (), dict(namespace))
 
@@ -1647,7 +1654,7 @@ def test_a_base_swapped_for_a_copy_with_the_same_attributes_reads_as_real(
     home.put(Child)
     assert is_stand_in_object(Child())
     Child.__bases__ = (clone,)
-    assert [vars(c) for c in Child.__mro__[1:2]] and not is_stand_in_object(Child()), (
+    assert not is_stand_in_object(Child()), (
         "a base class swapped for a clone was not noticed (the mro is not pinned)"
     )
 
@@ -2168,10 +2175,14 @@ def test_a_function_hidden_inside_a_stand_in_reads_as_real_up_to_the_depth_limit
     store = MemoryStore()
     store._runs["x"] = (lambda: None,)  # type: ignore[assignment]
     assert not is_stand_in_object(store)
-    # the limit is real and stated: a function in the fifth level is not entered
+    # the limit FAILS CLOSED: a function below the last level that is entered is not seen, but a container left
+    # unexplored that holds anything but plain atoms reads as real; plain atoms there are fine
     far = FakeLLM(tmp_path, {})
     far.routes["x"] = {"k": [(lambda: None,)]}  # type: ignore[assignment]
-    assert is_stand_in_object(far), "the stated depth limit changed without the text"
+    assert not is_stand_in_object(far), "a container past the depth limit was trusted"
+    atoms = FakeLLM(tmp_path, {})
+    atoms.routes["x"] = {"k": [(1, "two", None)]}  # type: ignore[assignment]
+    assert is_stand_in_object(atoms), "a plain-data container at the depth limit was refused"
     for obj in (FakeChannel("sig" + "-b5-d"), MemoryStore(), FakeSecretProvider({"a": "b"})):
         assert is_stand_in_object(obj)
 
@@ -2383,3 +2394,502 @@ def test_a_run_host_is_read_with_the_rule_of_the_guard_and_hex_words_are_not_hos
         assert server_scan.resolved_forms(f"app.run({host!r})\n"), f"{host!r} is a host"
     for word in ("add", "bad", "cafe", "dead", "1", "a.b", "5"):
         assert server_scan.resolved_forms(f"db.run({word!r})\n") == [], f"{word!r} is not a host"
+
+
+# --- round 5, batch 6 ------------------------------------------------------------------------------------------------
+# class A: a held value is judged by an allowlist of exact types, not by "is it callable"
+
+
+def _populated_store() -> MemoryStore:
+    """A store filled through its own methods (rows of the models it keeps): plain data, still a stand-in."""
+    from hadavin_sdk.models import Run
+
+    store = MemoryStore()
+    store.create_run(Run(agent_id="a", principal_id="p", trigger_kind="user", trigger_ref="r"))
+    return store
+
+
+class _Plain:
+    """A client-like object that is not callable and has no code of its own on the instance."""
+
+    def __enter__(self) -> object:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+
+class _DictWithCode(dict):
+    def __getitem__(self, key: object) -> object:
+        return key
+
+
+class _ListWithCode(list):
+    def __iter__(self):  # type: ignore[no-untyped-def]
+        return iter(())
+
+
+class _TextWithCode(str):
+    def __eq__(self, other: object) -> bool:
+        return True
+
+    __hash__ = str.__hash__
+
+
+class _NumberWithCode(int):
+    pass
+
+
+def _real_factory() -> list[int]:
+    return []
+
+
+def _held_shapes() -> dict[str, object]:
+    import types
+    from collections import ChainMap, UserDict, defaultdict, deque
+
+    return {
+        "dict_subclass_with_getitem": _DictWithCode(a=1),
+        "list_subclass": _ListWithCode([1]),
+        "defaultdict_real_factory": defaultdict(_real_factory),
+        "object_with_enter_and_exit": _Plain(),
+        "simple_namespace": types.SimpleNamespace(a=1),
+        "mapping_proxy": MappingProxyType({"a": 1}),
+        "user_dict": UserDict({"a": 1}),
+        "chain_map": ChainMap({"a": 1}),
+        "deque_subclass": type("D", (deque,), {})([1]),
+        "generator": (x for x in range(3)),
+        "iterator": iter([1, 2]),
+        "memoryview": memoryview(b"ab"),
+        "bytearray": bytearray(b"ab"),
+        "plain_foreign_object": _Opaque(),
+        "str_subclass": _TextWithCode("a"),
+        "int_subclass": _NumberWithCode(1),
+    }
+
+
+def test_a_held_value_that_is_not_plain_data_reads_as_real_whatever_it_is(tmp_path: Path) -> None:
+    """The scan is an allowlist of exact types: every shape below passed when only ``callable`` was refused."""
+    for shape in sorted(_held_shapes()):
+        for make in (
+            lambda: FakeLLM(tmp_path, {}),
+            lambda: FakeChannel("sig" + "-b6-a"),
+            _populated_store,
+            lambda: FakeSecretProvider({"a": "b"}),
+            lambda: RegexDetector(0.5),
+        ):
+            obj = make()
+            assert is_stand_in_object(obj), "control: the untouched stand-in reads as a stand-in"
+            obj.extra = _held_shapes()[shape]  # type: ignore[attr-defined]
+            assert not is_stand_in_object(obj), (
+                f"a held {shape} was trusted by {type(obj).__name__}"
+            )
+            obj.extra = [[_held_shapes()[shape]]]  # type: ignore[attr-defined]
+            assert not is_stand_in_object(obj), f"a held {shape} inside lists was trusted"
+
+
+def test_a_dict_key_is_judged_like_a_value_and_a_container_is_read_with_the_builtin_iterator(
+    tmp_path: Path,
+) -> None:
+    from hadavin_sdk import standins
+
+    llm = FakeLLM(tmp_path, {})
+    llm.routes[_Plain()] = 1  # type: ignore[index]
+    assert not is_stand_in_object(llm), "a foreign object used as a dict key was trusted"
+    # ``_values`` never runs a subclass's own iteration or lookup
+    assert standins._values(_ListWithCode([1, 2])) == (1, 2), "a subclass's own iteration was run"
+    assert standins._values(_DictWithCode(k="v")) == ("k", "v")
+    assert standins._values(42) == ()
+
+
+def test_a_populated_store_and_the_real_models_still_read_as_stand_ins(tmp_path: Path) -> None:
+    from decimal import Decimal
+
+    store = _populated_store()
+    store.add_cost(next(iter(store._runs)), Decimal("0.5"))
+    assert is_stand_in_object(store), "plain rows of the store's own models were refused"
+    store._runs["x"] = _Plain()  # type: ignore[assignment]
+    assert not is_stand_in_object(store), "a foreign object among the rows was trusted"
+
+
+def test_the_five_stand_in_classes_hold_no_class_level_container() -> None:
+    """The pin compares class attributes by identity, so a list or dict that lives on the class could be changed
+    in place without the pin noticing; none of the five classes (nor ``Approvals``) has one."""
+    from collections import Counter, defaultdict, deque
+
+    from hadavin_sdk import standins
+
+    mutable = (dict, list, set, bytearray, deque, defaultdict, Counter)
+    classes = [standins._live_class(key) for key in standins._PINNED_KEYS]
+    assert all(classes) and len(classes) == 7
+    for cls in classes:
+        for base in cls.__mro__:  # type: ignore[union-attr]
+            if base is object:
+                continue
+            for name, value in vars(base).items():
+                if (
+                    name == "__annotations__"
+                ):  # the empty one the pin itself adds; nothing runs from it
+                    continue
+                assert not isinstance(value, mutable), (
+                    f"{base.__name__}.{name} is a mutable container"
+                )
+
+
+# class B: the depth limit fails closed, and the answer is not cached
+
+
+def test_a_container_left_unexplored_at_the_depth_limit_reads_as_real(tmp_path: Path) -> None:
+    from hadavin_sdk import standins
+
+    llm = FakeLLM(tmp_path, {})
+    assert is_stand_in_object(llm), "control"
+    llm.routes = [[[[lambda: None]]]]  # type: ignore[assignment]
+    assert not is_stand_in_object(llm), "a function four lists down was trusted"
+    llm.routes = [[[[1, "plain"]]]]  # type: ignore[assignment]
+    assert is_stand_in_object(llm), "a depth-four list of plain data was refused"
+    llm.routes = [[[[_Plain()]]]]  # type: ignore[assignment]
+    assert not standins.is_stand_in(llm), "a foreign object at the depth limit was trusted"
+    # what is left unexplored counts against the node budget too
+    llm.routes = [[[[1] * 50]]]  # type: ignore[assignment]
+    with pytest.MonkeyPatch.context() as m:
+        m.setattr(standins, "SCAN_NODES", 20)
+        assert not standins.is_stand_in(llm), "an unexplored container past the node budget passed"
+
+
+def test_a_function_put_in_after_an_earlier_question_is_seen_at_the_next_one(
+    tmp_path: Path,
+) -> None:
+    """The answer is not cached: a cache that looks at the top level only would miss this (a change inside a held
+    container leaves the object's own attributes as they were)."""
+    llm = FakeLLM(tmp_path, {})
+    for _ in range(3):
+        assert is_stand_in_object(llm)
+    llm.routes["x"] = {"k": [lambda: None]}  # type: ignore[assignment]
+    assert not is_stand_in_object(llm), "a change inside a held container was not seen"
+
+
+# class C: Approvals is pinned and its slots cannot be undone
+
+
+def test_an_approvals_slot_cannot_be_deleted_or_deleted_and_set_again(tmp_path: Path) -> None:
+    app = _built(tmp_path)
+    a = app.approvals  # type: ignore[attr-defined]
+    channel = a.channel
+    with pytest.raises(AttributeError, match="cannot be deleted"):
+        del a._channel
+    with pytest.raises(AttributeError, match="cannot be deleted"):
+        del a.clock
+    with pytest.raises(AttributeError):
+        del a.channel
+    assert a.channel is channel, "a refused delete still changed the object"
+    with pytest.raises(AttributeError):
+        a._channel = _RealChannel("sig" + "-b6-del")  # type: ignore[assignment]
+    assert a.channel is channel
+
+
+def _serve_public(
+    app: object, monkeypatch: pytest.MonkeyPatch
+) -> tuple[http.server.HTTPServer, Approvals]:
+    a = app.approvals  # type: ignore[attr-defined]
+    _stand_in_bind_lands_on_loopback(monkeypatch)
+    return serve(a, config=app.config, host=ALL_ZEROS, port=0), a  # type: ignore[attr-defined]
+
+
+def test_a_patched_approvals_class_is_answered_503(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    from hadavin_sdk.approvals import receiver
+
+    patches: dict[str, object] = {
+        "channel": property(lambda self: FakeChannel("sig" + "-b6-p")),
+        "held_services": lambda self: {},
+        "real_now": lambda self: (),
+        "receive": lambda self, *args, **kw: (True, "ok"),
+        "detector": property(lambda self: None),
+        "store": property(lambda self: MemoryStore()),
+    }
+    for name, patch in patches.items():
+        with monkeypatch.context() as m:
+            m.setattr(receiver, "_LAST_LOGGED", {})  # one line a minute per set: start with none
+            app = _built(tmp_path / name)
+            server, _a = _serve_public(app, m)
+            try:
+                assert _post(server, close=False) != 503, "control: the untouched server refused"
+                m.setattr(Approvals, name, patch)
+                caplog.clear()
+                with caplog.at_level(logging.WARNING, logger="hadavin_sdk.receiver"):
+                    assert _post(server, close=False) == 503, (
+                        f"a patched Approvals.{name} was served"
+                    )
+            finally:
+                server.server_close()
+            assert any("Approvals class was changed" in r.getMessage() for r in caplog.records)
+
+
+def test_a_slot_deleted_with_the_object_level_call_is_answered_503_not_dropped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    app = _built(tmp_path)
+    server, a = _serve_public(app, monkeypatch)
+    saved = a.channel
+    object.__delattr__(a, "_channel")
+    try:
+        try:
+            status = _post(server, close=False)
+        except Exception as exc:  # noqa: BLE001 - a dropped connection shows as an http.client error
+            pytest.fail(f"a missing slot dropped the connection instead of a 503: {exc!r}")
+        assert status == 503, "a missing slot gave no 503"
+    finally:
+        object.__setattr__(a, "_channel", saved)
+        server.server_close()
+
+
+def test_the_classes_are_pinned_when_the_receiver_is_imported_not_at_the_first_question() -> None:
+    """In a fresh interpreter: after the import and before any question, all seven pins exist."""
+    import subprocess
+    import sys
+
+    code = (
+        "import hadavin_sdk.approvals.receiver\n"
+        "from hadavin_sdk import standins\n"
+        "assert len(standins._PINNED) == 7, sorted(standins._PINNED)\n"
+        "print('pinned', len(standins._PINNED))\n"
+    )
+    done = subprocess.run(  # noqa: S603 - our own interpreter, a fixed program
+        [sys.executable, "-c", code], capture_output=True, text=True, timeout=120, check=False
+    )
+    assert done.returncode == 0 and "pinned 7" in done.stdout, (
+        f"the pins were not all taken at import: {done.stderr[-300:]}"
+    )
+
+
+# class D: small defects in the same files
+
+
+class _BoomStr(str):
+    def isprintable(self) -> bool:
+        raise RuntimeError("no text for this key")
+
+
+def test_a_hostile_text_key_gets_a_fixed_label_and_nothing_is_called_on_it_again() -> None:
+    found = held_services_found({_BoomStr("ch"): _Opaque()})  # type: ignore[dict-item]
+    assert found == ("held (unreadable)",), found
+    found = held_services_found({_BoomStr("tools"): {"a": 1}})  # type: ignore[dict-item]
+    assert found == ("held (unreadable)",), found
+
+
+def test_one_hundred_threads_logging_one_hundred_sets_each_raise_nothing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import threading
+
+    from hadavin_sdk.approvals import receiver
+
+    monkeypatch.setattr(receiver, "_LAST_LOGGED", {})
+    monkeypatch.setattr(receiver._LOG, "warning", lambda *a, **k: None)
+    errors: list[BaseException] = []
+    start = threading.Barrier(100)
+
+    def work(n: int) -> None:
+        start.wait()
+        try:
+            for i in range(100):
+                receiver._refused((f"held channel: T{n}-{i}",))
+        except BaseException as exc:  # noqa: BLE001 - the test records anything
+            errors.append(exc)
+
+    threads = [threading.Thread(target=work, args=(n,)) for n in range(100)]
+    import sys
+
+    interval = sys.getswitchinterval()
+    sys.setswitchinterval(1e-6)  # switch threads very often, so a race between two steps shows
+    try:
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=60)
+    finally:
+        sys.setswitchinterval(interval)
+    assert not errors, f"{len(errors)} threads raised: {errors[:1]!r}"
+    assert len(receiver._LAST_LOGGED) <= 64
+
+
+def test_a_set_of_services_used_again_is_remembered_longer_than_ones_used_once(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """The one forgotten first is the one used longest ago (not the first one stored)."""
+    from hadavin_sdk.approvals import receiver
+
+    monkeypatch.setattr(receiver.time, "monotonic", lambda: 1000.0)
+    monkeypatch.setattr(receiver, "_LAST_LOGGED", {})
+    with caplog.at_level(logging.WARNING, logger="hadavin_sdk.receiver"):
+        receiver._refused(("held channel: Keep",))
+        for i in range(30):
+            receiver._refused((f"held channel: A{i}",))
+        receiver._refused(
+            ("held channel: Keep",)
+        )  # used again within the minute: no new line, moved to the end
+        for i in range(40):
+            receiver._refused((f"held channel: B{i}",))
+        before = len(caplog.records)
+        receiver._refused(("held channel: Keep",))
+        assert len(caplog.records) == before, "a set used again was forgotten before older ones"
+
+
+def test_the_refusal_log_never_lets_an_error_out(monkeypatch: pytest.MonkeyPatch) -> None:
+    from hadavin_sdk.approvals import receiver
+
+    monkeypatch.setattr(receiver, "_LAST_LOGGED", {})
+
+    def boom(*a: object, **k: object) -> None:
+        raise RuntimeError("log failure")
+
+    monkeypatch.setattr(receiver._LOG, "warning", boom)
+    receiver._refused(("held channel: X",))  # must not raise
+
+
+def test_the_classes_still_read_as_stand_ins_after_their_annotations_are_read() -> None:
+    """A fresh interpreter: reading ``__annotations__`` of a pinned class (it adds an entry to the class
+    dictionary on some Python versions) must not make the class read as real."""
+    import subprocess
+    import sys
+
+    code = (
+        "from hadavin_sdk.actions.secrets import FakeSecretProvider\n"
+        "from hadavin_sdk.approvals import Approvals, FakeChannel\n"
+        "from hadavin_sdk.guard.injection import AnyOf, RegexDetector\n"
+        "from hadavin_sdk.llm.fake import FakeLLM\n"
+        "from hadavin_sdk.store.memory import MemoryStore\n"
+        "from hadavin_sdk import standins\n"
+        "objs = [FakeSecretProvider({}), FakeChannel('s'), RegexDetector(0.5), MemoryStore(), AnyOf([])]\n"
+        "assert all(standins.is_stand_in(o) for o in objs)\n"
+        "for cls in (FakeSecretProvider, FakeChannel, RegexDetector, FakeLLM, MemoryStore, AnyOf, Approvals):\n"
+        "    for base in cls.__mro__:\n"
+        "        if base is not object:\n"
+        "            base.__annotations__\n"
+        "            vars(base)\n"
+        "assert all(standins.is_stand_in(o) for o in objs), 'a read of __annotations__ changed the verdict'\n"
+        "print('ok')\n"
+    )
+    done = subprocess.run(  # noqa: S603 - our own interpreter, a fixed program
+        [sys.executable, "-c", code], capture_output=True, text=True, timeout=120, check=False
+    )
+    assert done.returncode == 0 and "ok" in done.stdout, (
+        f"a read of __annotations__ changed the verdict: {done.stderr[-300:]}"
+    )
+
+
+def test_a_class_attribute_equal_to_the_pinned_one_but_not_the_same_object_reads_as_real(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A pin (not a new rule): attributes are compared by identity, not by equality."""
+    assert is_stand_in_object(FakeChannel("sig" + "-b6-id")), "control"
+    monkeypatch.setattr(FakeChannel, "max_card_chars", int(str(FakeChannel.max_card_chars)))
+    assert not is_stand_in_object(FakeChannel("sig" + "-b6-id2")), (
+        "an equal but different class attribute was read as the pinned one"
+    )
+
+
+def test_a_class_dictionary_key_that_is_a_text_subclass_is_not_the_pinned_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A pin: the comparison needs the key to be a plain ``str``."""
+    from hadavin_sdk import standins
+
+    cls = FakeChannel
+    pin = standins._shape(cls)
+
+    class Key(str):
+        pass
+
+    forged = list(pin)
+    forged[2] = tuple((Key(k), v) for k, v in pin[2])  # type: ignore[union-attr]
+    monkeypatch.setattr(standins, "_shape", lambda c: tuple(forged))
+    assert not standins._same_shape(cls, pin), "a key of another type was read as the pinned key"
+
+
+def test_a_nested_stand_in_is_judged_by_its_pin_and_scanned_in_turn(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    llm = FakeLLM(tmp_path, {})
+    llm.child = FakeChannel("sig" + "-b6-nest")  # type: ignore[attr-defined]
+    assert is_stand_in_object(llm), "control: a stand-in inside a stand-in is plain data"
+    llm.child.hook = lambda: None  # type: ignore[attr-defined]
+    assert not is_stand_in_object(llm), "a function held by a nested stand-in was not seen"
+    llm.child = FakeChannel("sig" + "-b6-nest2")  # type: ignore[attr-defined]
+    monkeypatch.setattr(FakeChannel, "send", lambda self, *a: None)
+    assert not is_stand_in_object(llm), "a changed class of a nested stand-in was trusted"
+
+
+def test_a_model_row_holding_a_foreign_object_reads_as_real() -> None:
+    from hadavin_sdk.models import Run
+
+    store = MemoryStore()
+    run = Run(agent_id="a", principal_id="p", trigger_kind="user", trigger_ref="r")
+    store._runs["r"] = run
+    assert is_stand_in_object(store), "control"
+    run.__dict__["extra"] = _Plain()
+    assert not is_stand_in_object(store), "a foreign object inside a model row was trusted"
+
+
+def test_the_guard_reads_the_approvals_through_the_accessors_the_runtime_uses(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    app = _built(tmp_path)
+    a = app.approvals  # type: ignore[attr-defined]
+    real = _RealChannel("sig" + "-b6-acc")
+    monkeypatch.setattr(Approvals, "channel", property(lambda self: real))
+    held = Approvals.held_services(a)
+    assert held["channel"] is real, "held_services read the private slot, not the accessor"
+    assert Approvals.real_now(a), "real_now did not see what the accessor returns"
+
+
+def test_the_refusal_memory_is_changed_under_its_lock(monkeypatch: pytest.MonkeyPatch) -> None:
+    from hadavin_sdk.approvals import receiver
+
+    entered: list[int] = []
+
+    class Recording:
+        def __enter__(self) -> None:
+            entered.append(1)
+
+        def __exit__(self, *exc: object) -> None:
+            return None
+
+    monkeypatch.setattr(receiver, "_LAST_LOGGED", {})
+    monkeypatch.setattr(receiver, "_LAST_LOGGED_LOCK", Recording())
+    monkeypatch.setattr(receiver._LOG, "warning", lambda *a, **k: None)
+    receiver._refused(("held channel: Locked",))
+    assert entered == [1], "the memory of logged sets was changed without its lock"
+
+
+def test_the_lists_of_trusted_classes_are_exactly_these_literals() -> None:
+    """A sixth stand-in, a new plain-data type, or an eighth pinned class is a visible edit of this test."""
+    from hadavin_sdk import standins
+
+    assert standins._ALLOWED == (
+        ("hadavin_sdk.actions.secrets", "FakeSecretProvider"),
+        ("hadavin_sdk.approvals.channel", "FakeChannel"),
+        ("hadavin_sdk.guard.injection", "RegexDetector"),
+        ("hadavin_sdk.llm.fake", "FakeLLM"),
+        ("hadavin_sdk.store.memory", "MemoryStore"),
+    ), "the list of the five stand-in classes changed"
+    models = "hadavin_sdk.models"
+    assert standins._DATA_CLASSES == (
+        (models, "Run"),
+        (models, "Target"),
+        (models, "Plan"),
+        (models, "GateDecision"),
+        (models, "ChainStep"),
+        (models, "ApprovalRequest"),
+        (models, "ApprovalDecision"),
+        (models, "DeadLetter"),
+        (models, "TickState"),
+        (models, "ToolCallRecord"),
+        (models, "KillSwitch"),
+        ("hadavin_sdk.config", "Route"),
+        ("hadavin_sdk.approvals.cards", "Card"),
+    ), "the list of plain-data types changed"
+    assert standins._LEAF_CLASSES == ((models, "RunState"),)
+    assert len(standins._PINNED_KEYS) == 7

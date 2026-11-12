@@ -8,12 +8,13 @@ Production hosting is decided at S11; ``serve`` is a stdlib server for developme
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler
 from socketserver import BaseServer
 
-from hadavin_sdk import defaults
+from hadavin_sdk import defaults, standins
 from hadavin_sdk.approvals.requests import Approvals
 from hadavin_sdk.bindguard import BindRefused, listen
 from hadavin_sdk.config import Config
@@ -45,29 +46,43 @@ def handle_slack_action(
 
 def _recheck(approvals: object) -> tuple[str, ...]:
     """What makes this request refused on a bind other computers can reach with no reason given: the object is no
-    longer an exact ``Approvals`` (its class was swapped), or it holds a real service now. Empty: serve it."""
-    if type(approvals) is not Approvals:
-        return ("the approvals object is no longer an exact Approvals",)
-    return Approvals.real_now(approvals)
+    longer an exact ``Approvals`` (its class was swapped), the ``Approvals`` class itself was changed since it was
+    pinned, a slot is missing (``object.__delattr__``), or it holds a real service now. Empty: serve it. Never
+    raises: any error reads as a refusal (the request is answered 503, not dropped)."""
+    try:
+        if type(approvals) is not Approvals:
+            return ("the approvals object is no longer an exact Approvals",)
+        if not standins.is_pinned_instance(approvals):
+            return ("the Approvals class was changed after it was pinned",)
+        return Approvals.real_now(approvals)
+    except Exception:  # noqa: BLE001 - a deleted slot or any unreadable state is refused, never dropped
+        return ("the approvals object could not be read (a slot is missing)",)
 
 
 _LAST_LOGGED: dict[str, float] = {}
+_LAST_LOGGED_LOCK = threading.Lock()
 
 
 def _refused(now_real: tuple[str, ...]) -> None:
     """One WARNING line for a refused request, at most one per ``BIND_REFUSAL_LOG_INTERVAL_S`` seconds for each
-    set of services named (a client that keeps calling cannot fill the log). The clock is ``time.monotonic``."""
-    key = ", ".join(now_real)
-    now = time.monotonic()
-    last = _LAST_LOGGED.get(key)
-    if last is not None and now - last < defaults.BIND_REFUSAL_LOG_INTERVAL_S:
+    set of services named (a client that keeps calling cannot fill the log). The clock is ``time.monotonic``.
+    Every call moves its set to the end of the memory (the one forgotten first is the one used longest ago), under
+    a lock; nothing raised here can stop the 503 from being written."""
+    try:
+        key = ", ".join(now_real)
+        now = time.monotonic()
+        with _LAST_LOGGED_LOCK:
+            last = _LAST_LOGGED.pop(key, None)
+            quiet = last is not None and now - last < defaults.BIND_REFUSAL_LOG_INTERVAL_S
+            while len(_LAST_LOGGED) >= defaults.BIND_REFUSAL_LOG_KEYS:  # bounded: forget the oldest
+                _LAST_LOGGED.pop(next(iter(_LAST_LOGGED)), None)
+            _LAST_LOGGED[key] = last if quiet and last is not None else now
+        if not quiet:
+            _LOG.warning(
+                "request refused: a real service is held on a public bind with no reason (%s)", key
+            )
+    except Exception:  # noqa: BLE001 - a log failure must not turn the 503 into a dropped connection
         return
-    if len(_LAST_LOGGED) >= defaults.BIND_REFUSAL_LOG_KEYS:  # bounded: forget the oldest entries
-        _LAST_LOGGED.pop(next(iter(_LAST_LOGGED)))
-    _LAST_LOGGED[key] = now
-    _LOG.warning(
-        "request refused: a real service is held on a public bind with no reason (%s)", key
-    )
 
 
 def serve(
@@ -93,8 +108,10 @@ def serve(
     why it must be (the usual setup is an HTTPS reverse proxy in front; the reason is logged). On such a bind with
     no reason the question is asked again at every request (answer 503, empty body, one log line): the objects the
     approvals hold can be replaced after the server started. The request check also refuses an object that
-    is no longer an exact ``Approvals`` (a swapped ``__class__``); the private slots are set once by ``__setattr__``,
-    and a person who writes them with ``object.__setattr__`` is caught by that request check."""
+    is no longer an exact ``Approvals`` (a swapped ``__class__``), an ``Approvals`` class that changed since it was
+    pinned, and a missing slot (answered 503 too); the private slots are set once by ``__setattr__`` and cannot be
+    deleted by ``__delattr__``, and a person who writes or deletes them with ``object.__setattr__`` or
+    ``object.__delattr__`` is caught by that request check."""
     if type(approvals) is not Approvals:
         raise BindRefused(
             "serve needs an Approvals made by the core (not a subclass or a look-alike): the guard cannot trust "
@@ -152,3 +169,8 @@ def serve(
         held=Approvals.held_services(approvals),
         frozen=approvals.config_facts,
     )
+
+
+# Pin the classes the guard trusts NOW (at import), not at the first question: a change made after this import is
+# seen. (A test fixture that patches one of them before this module is imported is outside the model.)
+standins.pin_all()
