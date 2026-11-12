@@ -105,3 +105,168 @@ def test_check_config_exit_codes_are_those_of_main_and_tick(tmp_path, monkeypatc
     assert cli.main(["--config", str(make_cfg(tmp_path)), "check-config"]) == 3
     seen = capsys.readouterr()
     assert "RuntimeError" in seen.err and _marker("exit") not in seen.err + seen.out
+
+
+# ---- Issue 6: ids and file names ---------------------------------------------------------------------------------------
+
+_EVENT = {"run_id": "r", "domain": "d", "operation": "o", "principal": "p", "source": "s"}
+# the six inputs of the independent evidence (probe 5) and the siblings found in this round
+_HOSTILE_EVENT_IDS = ("../x", "..\\x", "/etc/x", "a/b", ".hidden", "a b", "a:b", "ABC", "nul", "com1", "abc\n")
+
+
+@pytest.mark.parametrize("hostile", _HOSTILE_EVENT_IDS)
+def test_the_refusal_of_a_bad_event_id_does_not_quote_the_id(hostile):
+    from pydantic import ValidationError
+
+    from hadavin_sdk.models import AuditEvent
+
+    with pytest.raises(ValidationError) as raised:
+        AuditEvent(event_id=hostile, **_EVENT)
+    text = str(raised.value) + repr(raised.value)
+    assert "input_value" not in text, "the refusal of a bad event id quotes the id: input_value is printed"
+    assert hostile.strip() not in text or len(hostile.strip()) < 3, "the refusal of a bad event id quotes the id"
+    assert "plain file name" in text
+
+
+def test_an_event_id_with_a_colon_a_capital_or_a_device_name_is_refused_and_a_generated_id_is_not():
+    from hadavin_sdk.models import AuditEvent, new_id
+
+    for ok in (new_id("evt"), "evt-ok_1", "con-x", "a"):
+        AuditEvent(event_id=ok, **_EVENT)
+    for bad in ("a:b", "Abc", "NUL", "nul", "com9", "lpt1", "aux", "prn", "con"):
+        with pytest.raises(ValueError, match="plain file name"):
+            AuditEvent(event_id=bad, **_EVENT)
+
+
+def test_the_local_audit_folder_never_makes_a_file_from_an_event_that_skipped_the_model_check(tmp_path):
+    """`model_construct` skips validation: the folder's own test refuses the name before any path is made."""
+    from hadavin_sdk.audit.local_dir import LocalDirSink
+    from hadavin_sdk.models import AuditEvent
+
+    audit = LocalDirSink(tmp_path / "audit")
+    evil = AuditEvent.model_construct(event_id="../../escaped", ts=None, **_EVENT)
+    with pytest.raises(ValueError, match="plain file name"):
+        audit.write_intent(evil)
+    assert audit.write_outcome(evil) is None  # kept in memory, no file
+    assert not (tmp_path / "escaped.json").exists() and not (tmp_path.parent / "escaped.json").exists()
+    assert not list((tmp_path / "audit").rglob("*escaped*")), "a file was made from the hostile id"
+
+
+def test_shown_id_shows_only_ids_of_the_prefixes_the_code_makes():
+    from hadavin_sdk.errors import ID_PREFIXES, shown_id
+
+    tail = "a1" * 16
+    for prefix in ID_PREFIXES:
+        assert shown_id(f"{prefix}-{tail}") == f"{prefix}-{tail}"
+    assert shown_id(f"run-{tail}:12") == f"run-{tail}:12"
+    for refused in (f"key-{tail}", f"cfg-{tail}", f"abc-{tail}", f"run-{tail}x", f"RUN-{tail}", f"x-{tail}"):
+        assert shown_id(refused) == "?", f"an id with a prefix the code does not make is shown: {refused[:8]}"
+
+
+def test_every_prefix_given_to_new_id_in_the_package_is_in_the_shown_list():
+    import ast
+    from pathlib import Path
+
+    from hadavin_sdk.errors import ID_PREFIXES
+
+    src = Path(__file__).resolve().parent.parent / "src" / "hadavin_sdk"
+    seen = set()
+    for path in src.rglob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.Call) and getattr(node.func, "id", getattr(node.func, "attr", "")) == "new_id":
+                arg = node.args[0] if node.args else None
+                assert isinstance(arg, ast.Constant) and isinstance(arg.value, str), (
+                    f"{path.name}:{node.lineno}: new_id is called with a prefix that is not a written word"
+                )
+                seen.add(arg.value)
+    assert seen, "no new_id call was found: the scan is empty"
+    assert seen <= set(ID_PREFIXES), f"new_id prefixes missing from ID_PREFIXES: {sorted(seen - set(ID_PREFIXES))}"
+
+
+# ---- Issue 5: the executor call sites are tested through `execute`, not through the helper -------------------------------
+
+
+def _executor_answering(status, *, lookup=None):
+    from types import SimpleNamespace
+
+    from hadavin_sdk.actions.contract import HttpExecutor
+    from hadavin_sdk.actions.executor import Executor
+
+    contract = SimpleNamespace(
+        executor=HttpExecutor(kind="http", operation="POST /records", lookup_operation=lookup, secret_name="tok"),
+        idempotency_header="Idempotency-Key",
+    )
+    ex = Executor.__new__(Executor)
+    ex.registry = SimpleNamespace(contracts={"act": contract})
+    ex._caller = lambda contract, heartbeat: (lambda method, path, body, headers: (status, None))
+    return ex
+
+
+def _approved_plan():
+    from hadavin_sdk.models import ApprovalDecision, GateDecision, Plan, Target
+
+    plan = Plan(
+        run_id="run-1", agent_id="a", action_id="act", action_version=1, risk_class="reversible", inputs={"x": 1},
+        target=Target(system="s"), idempotency_key="run-1:act", expected_outcome="x",
+    )  # fmt: skip
+    gd = GateDecision(run_id="run-1", plan_hash=plan.hash(), outcome="needs_approval", rule_id="r")
+    ad = ApprovalDecision(
+        approval_id="apr-1", plan_hash=plan.hash(), step=0, decision="approve", approver_id="user:a", channel="fake"
+    )
+    return plan, gd, ad
+
+
+@pytest.mark.parametrize(("code", "outcome"), [(404, "failed"), (503, "unknown"), (408, "unknown")])
+def test_execute_reports_an_error_status_as_its_digits_and_never_through_the_text_of_the_status(code, outcome):
+    text = _marker("status")
+
+    class Odd(int):
+        def __str__(self) -> str:
+            return text
+
+        __repr__ = __str__
+
+    plan, gd, ad = _approved_plan()
+    result = _executor_answering(Odd(code)).execute(plan, gd, ad)
+    assert result.outcome == outcome and result.error_code == f"http_{code}"
+    assert text not in str(result.error_code), "execute built its error code from the text of the status"
+
+
+# ---- Issue 5: `_port` of a tool names the port by digits only ----------------------------------------------------------------
+
+
+def test_a_refused_port_is_shown_by_its_digits_never_by_the_text_of_the_value():
+    from types import SimpleNamespace
+
+    from hadavin_sdk.tools import ToolRefused
+
+    from hadavin_sdk import tools as tools_mod
+
+    text = _marker("port")
+
+    class Odd(int):
+        def __str__(self) -> str:
+            return text
+
+        __repr__ = __str__
+
+    tool = tools_mod.ToolContext.__new__(tools_mod.ToolContext)
+    tool.spec = SimpleNamespace(ports=[443])
+    tool._cluster_ports, tool._https_ports = set(), {443}
+    parts = SimpleNamespace(port=Odd(8081))
+    with pytest.raises(ToolRefused) as raised:
+        tool._port(parts, "https")
+    assert "8081" in str(raised.value) and text not in str(raised.value)
+
+
+# ---- Issue 3: ledger names read from the database are shown only in the shape of a migration file name ------------------------
+
+
+def test_the_refusal_of_a_ledger_row_without_a_file_shows_only_names_shaped_like_ours():
+    from hadavin_sdk.store.migrate import _shown_ledger_names
+
+    text = _marker("ledger")
+    got = _shown_ledger_names(["0006_evidence", text, "0009_z", "../etc/passwd", "payments-prod"])
+    assert got == ["0006_evidence", "0009_z", "3 other(s)"], "a ledger name of another shape is shown"
+    assert _shown_ledger_names(["0006_evidence"]) == ["0006_evidence"]
+    assert _shown_ledger_names(["a" * 90, "0001_x\nsecret"]) == ["2 other(s)"]

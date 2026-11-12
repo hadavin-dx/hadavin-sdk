@@ -19,7 +19,7 @@ from pathlib import Path
 
 from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
 from hadavin_sdk.errors import read_configured, shown_id
-from hadavin_sdk.models import AuditEvent
+from hadavin_sdk.models import AuditEvent, plain_event_name
 
 
 class LocalDirSink:
@@ -80,6 +80,8 @@ class LocalDirSink:
         self._fsync_dir(self.root)
 
     def _write(self, event: AuditEvent) -> str:
+        if not plain_event_name(event.event_id):  # an event built without validation must not name a file
+            raise ValueError("event_id is not a plain file name")
         body = event.model_dump_json().encode("utf-8")
         key = f"{event.event_id}.json"
         entry = {"key": key, "run_id": event.run_id, "sha256": hashlib.sha256(body).hexdigest()}
@@ -122,10 +124,13 @@ class LocalDirSink:
             return f"{event.event_id}.json"
         except Exception:  # noqa: BLE001 - disk errors, a corrupt index line: the contract is "never raises"
             try:
-                self.outbox.mkdir(parents=True, exist_ok=True)
-                tmp = self.outbox / f".tmp-{event.event_id}"
-                tmp.write_text(event.model_dump_json(), encoding="utf-8")
-                os.replace(tmp, self.outbox / f"{event.event_id}.json")  # never a half file
+                if plain_event_name(event.event_id):  # otherwise the event stays in memory: it never names a file
+                    self.outbox.mkdir(parents=True, exist_ok=True)
+                    tmp = self.outbox / f".tmp-{event.event_id}"
+                    tmp.write_text(event.model_dump_json(), encoding="utf-8")
+                    os.replace(tmp, self.outbox / f"{event.event_id}.json")  # never a half file
+                else:
+                    self._pending.append(event)
             except Exception:  # noqa: BLE001
                 self._pending.append(event)
             return None

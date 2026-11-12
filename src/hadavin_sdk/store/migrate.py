@@ -68,6 +68,17 @@ GRANTS: dict[str, Grant] = {
 }
 _LOCK = int.from_bytes(b"hadvnmig", "big") >> 1  # one fixed key for every migrate run
 _LEDGER_NAME = re.compile(r"\d{3,4}_[a-z0-9_]{1,60}")  # the shape of a shipped migration file name
+
+
+def _shown_ledger_names(gone: list[str]) -> list[str]:
+    """Ledger rows come from the database, not from our files: a name is shown only if it has the shape of a migration
+    file name of this package; every other name is only counted."""
+    shown = [g for g in gone if _LEDGER_NAME.fullmatch(g)]
+    if len(shown) < len(gone):
+        shown.append(f"{len(gone) - len(shown)} other(s)")
+    return shown
+
+
 _ROLE = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 _FILE = re.compile(r"(\d{4})_[a-z0-9_]+\.sql")
 _CREATE = re.compile(
@@ -335,10 +346,7 @@ def migrate(
         )
         done = {r[0] for r in db.execute("SELECT version FROM schema_migrations").fetchall()}
         if gone := sorted(done - {p.stem for p in files}):
-            # ledger rows come from the database, not from our files: show only names shaped like ours
-            shown = [g for g in gone if _LEDGER_NAME.fullmatch(g)]
-            if len(shown) < len(gone):
-                shown.append(f"{len(gone) - len(shown)} other(s)")
+            shown = _shown_ledger_names(gone)
             raise ConfigError(
                 f"applied migrations have no file in this release: {', '.join(shown)}. If a migration file was renamed "
                 "and its tables already exist, rename the ledger row by hand (change the version of that row in the "

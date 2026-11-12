@@ -58,7 +58,7 @@ ERROR_SUFFIXES = (
 )
 # `.exception(...)`, `traceback.print_exc()` and `exc_info=True` print the whole chain, including the library text
 CHAIN_PRINTERS = frozenset(
-    {"print_exc", "format_exc", "print_exception", "format_exception", "format_exception_only", "TracebackException"}
+    {"print_exc", "format_exc", "print_exception", "format_exception", "format_exception_only", "TracebackException", "from_exception", "print_last"}
 )
 MUTATORS = frozenset(
     {"update", "append", "extend", "add", "insert", "pop", "popitem", "clear", "remove", "discard", "setdefault", "sort", "reverse"}
@@ -427,6 +427,14 @@ class Analysis:
                 fn = self.scope_of.get(id(fn))
         if cls:
             self.cls_attrs.setdefault(cls, set()).add(attr)
+
+    def _enclosing_def(self, node):
+        fn = self.scope_of.get(id(node))
+        while fn is not None and not isinstance(fn, ast.Module):
+            if isinstance(fn, FUNCS):
+                return fn
+            fn = self.scope_of.get(id(fn))
+        return None
 
     def _enclosing_class(self, node):
         fn = self.scope_of.get(id(node))
@@ -1318,6 +1326,13 @@ class Analysis:
                 hit = self._tainted(
                     node.value, self.taint_of(self.scope_of.get(id(node), tree)), env
                 )
+                if not hit and module == FILTER_MODULE and isinstance(node, ast.Return):
+                    # the body of a text filter is read like any other code: it returns text that is not proven code-owned
+                    # when `return x` gives back its argument (`def shown_name(x): return x`)
+                    fn_def = self._enclosing_def(node)
+                    hit = fn_def is not None and fn_def.name in FILTERS and not safe(node.value, env)
+                    if hit:
+                        site = node.value  # the value is the site: the one row of a filter body names the value
             elif isinstance(node, ast.Raise) and isinstance(node.exc, ast.Call):
                 args = [*node.exc.args, *(k.value for k in node.exc.keywords)]
                 hit = bare_unsafe(args, env)

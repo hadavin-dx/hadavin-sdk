@@ -27,6 +27,22 @@ def new_id(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex}"
 
 
+# The id of an audit event is a file name (audit/local_dir.py): see `AuditEvent`.
+EVENT_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9_-]{0,127}")
+_RESERVED_NAMES = frozenset(
+    {"con", "prn", "aux", "nul", *(f"com{n}" for n in range(1, 10)), *(f"lpt{n}" for n in range(1, 10))}
+)
+
+def plain_event_name(value: object) -> bool:
+    """Is this an event id that is safe as a file name on every file system (see `AuditEvent`)? The one test: the model
+    uses it, and the local audit folder uses it again before it makes a file (a model built without validation)."""
+    return (
+        isinstance(value, str)
+        and EVENT_ID_PATTERN.fullmatch(value) is not None
+        and value not in _RESERVED_NAMES  # no dot is allowed, so a device name is the whole id
+    )
+
+
 # The shape of `new_id("run")`: a caller-chosen run id must have it (checked in `Runtime.handle`).
 RUN_ID_PATTERN = re.compile(r"run-[0-9a-f]{32}")
 
@@ -195,11 +211,23 @@ class ApprovalDecision(Shape):
 class AuditEvent(Shape):
     """Hashes and codes only: never payload text."""
 
-    # Round 15: the id is a file name in the local audit folder and a key in the audit table, so it has the shape of a name:
-    # letters, digits, dash, underscore, colon; no dot, no slash, no backslash, no space, at most 128, first character a letter or digit.
-    event_id: str = Field(
-        default_factory=lambda: new_id("evt"), pattern=r"^[A-Za-z0-9][A-Za-z0-9_:-]{0,127}$"
-    )
+    # Round 16: the id is a file name in the local audit folder and a key in the audit table, so it has the shape of a name that
+    # every file system treats alike: lower-case letters, digits, dash, underscore (no colon: a Windows file name with a colon
+    # is an alternate data stream; no capital: "A" and "a" are one file on Windows and macOS); no dot, no slash, no backslash,
+    # no space, at most 128, first character a letter or digit, and not a reserved Windows device name (`con`, `nul`, `com1`...).
+    # A refusal says one fixed sentence: it never quotes the id (`hide_input_in_errors`, and the validator below).
+    model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
+    event_id: str = Field(default_factory=lambda: new_id("evt"))
+
+    @field_validator("event_id", mode="before")
+    @classmethod
+    def _event_id_is_a_plain_name(cls, value: object) -> object:
+        if not plain_event_name(value):
+            raise ValueError(
+                "event_id must be a plain file name: lower-case letters, digits, dash and underscore, "
+                "at most 128 characters, starting with a letter or digit, and not a reserved device name"
+            )
+        return value
     ts: datetime = Field(default_factory=now)
     run_id: str
     domain: str

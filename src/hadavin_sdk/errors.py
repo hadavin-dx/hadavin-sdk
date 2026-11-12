@@ -128,9 +128,11 @@ def status_text(status: object) -> str:
     return int.__repr__(status) if isinstance(status, int) and not isinstance(status, bool) else "?"
 
 
-# The shape of an id that the code makes: a short lower-case prefix, a dash, 32 hex digits (`new_id`), and for a tool call
-# a colon and a counter (`<run id>:<n>`).
-_ID_SHAPE = re.compile(r"[a-z]{2,8}-[0-9a-f]{32}(?::[0-9]{1,6})?")
+# The ids the code makes (`new_id(prefix)`): ONLY these prefixes, then a dash and 32 hex digits; for a tool call a colon and a
+# counter (`<run id>:<n>`). A test reads every `new_id(...)` call of the package and fails if its prefix is not in this list,
+# so a new kind of id is added here on purpose. Any other id (a legacy key, a caller's text, `key-` and 32 hex digits) is `?`.
+ID_PREFIXES = ("run", "pln", "apr", "evt", "k1b")
+_ID_SHAPE = re.compile(rf"(?:{'|'.join(ID_PREFIXES)})-[0-9a-f]{{32}}(?::[0-9]{{1,6}})?")
 
 
 def shown_id(value: object) -> str:

@@ -3758,6 +3758,53 @@ _PLANTED_FAULTS = {
         "def f(status):\n    raise A(f'answered {int(status)}')",
         1,
     ),
+    # ---- round 16 (Issues 2 and 3): sinks and proofs the round-15 reviewers named ----
+    "R16a a local text of an error set on an attribute": (
+        "def f(self, exc):\n    text = str(exc)\n    self.error_code = text",
+        2,
+    ),
+    "R16b a positional argument of a class": ("def f(exc):\n    return Result(str(exc))", 1),
+    "R16c a dict value made from an error": ("def f(exc):\n    return {'error': str(exc)}", 2),
+    "R16d a helper returns the text of an error": (
+        "def why(exc):\n    return str(exc)\ndef f(exc):\n    raise A(why(exc))",
+        2,
+    ),
+    "R16e repr of an unproven value": ("def f(name):\n    return repr(name)", 1),
+    "R16f a helper that raises, called in an except": (
+        "def bad(x):\n    raise A('fixed')\ndef f(g):\n    try:\n        g()\n    except OSError:\n        bad(1)",
+        1,
+    ),
+    "R16g format_exception_only": (
+        "import traceback\ndef f(exc):\n    return traceback.format_exception_only(exc)",
+        1,
+    ),
+    "R16h TracebackException.from_exception": (
+        "import traceback\ndef f(exc):\n    return traceback.TracebackException.from_exception(exc)",
+        1,
+    ),
+    "R16i an error class derived from ValueError": (
+        "class DuplicateEvent(ValueError):\n    pass\ndef f(name):\n    raise DuplicateEvent(name)",
+        1,
+    ),
+    "R16j a derived error built outside a raise": (
+        "class Unqualified(ValueError):\n    pass\ndef f(name):\n    err = Unqualified(name)\n    raise err",
+        1,
+    ),
+    "R16k an attribute of a library result": (
+        "import lib\nclass K:\n    def __init__(self):\n        self.name = 'fixed'\ndef f(x):\n    raise A(lib.thing(x).name)",
+        1,
+    ),
+    "R16p a self attribute that only another class writes": (
+        "class K:\n    def __init__(self):\n        self.msg = 'fixed'\nclass L:\n    def f(self):\n        raise A(self.msg)",
+        1,
+    ),
+    "R16l a set difference in a message": ("def f(done, files):\n    raise A(f'gone {sorted(done - files)}')", 1),
+    "R16m a text filter that returns its argument": ({"errors.py": "def shown_name(x):\n    return x\n"}, 1),
+    "R16n a number annotation on a text": (
+        "def f(exc):\n    x: int = str(exc)\n    raise A(f'{x}')",
+        2,
+    ),
+    "R16o a log call with a text directive": ("def f(log, name):\n    log.warning('bad %s', name)", 1),
 }
 _ERRORS_STUB = "def shown_name(x):\n    return 'fixed'\ndef status_text(x):\n    return 'fixed'\n"
 
@@ -3809,6 +3856,28 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
     "R15 a class tuple handed to a function": (
         "def f(c):\n    raise A(f'{(ValueError, KeyError)}')"
     ),
+    "R16a a written text set on an attribute": "def f(self):\n    text = 'fixed'\n    self.error_code = text",
+    "R16b a class given a written text": "def f():\n    return Result('fixed')",
+    "R16c a dict value that is the class name of an error": "def f(exc):\n    return {'error': type(exc).__name__}",
+    "R16d a helper returns the class name of an error": (
+        "def why(exc):\n    return type(exc).__name__\ndef f(exc):\n    raise A(why(exc))"
+    ),
+    "R16e repr of a counter": "def f(n: int):\n    return repr(n)",
+    "R16f a helper that raises, called outside an except": (
+        "def bad(x):\n    raise A('fixed')\ndef f(g):\n    g()\n    bad(1)"
+    ),
+    "R16i a derived error class given a written text": (
+        "class DuplicateEvent(ValueError):\n    pass\ndef f():\n    raise DuplicateEvent('fixed')"
+    ),
+    "R16k an attribute of an object of the package": (
+        "class K:\n    def __init__(self):\n        self.name = 'fixed'\ndef f(k):\n    raise A(k.name)"
+    ),
+    "R16p a self attribute that the class writes": (
+        "class K:\n    def __init__(self):\n        self.msg = 'fixed'\n    def f(self):\n        raise A(self.msg)"
+    ),
+    "R16l the size of a set difference": "def f(done, files):\n    raise A(f'gone {len(done - files)}')",
+    "R16n a number annotation on a number": "def f(names):\n    x: int = len(names)\n    raise A(f'{x}')",
+    "R16o a log call with a number directive": "def f(log, n: int):\n    log.warning('bad %d', n)",
 }
 
 
@@ -3817,7 +3886,7 @@ def test_the_guard_finds_each_planted_fault_alone(shape):
     """One planted fault per shape (the 25 of the evidence probe 7 and the reviewers' extras): the guard reports exactly
     the stated number of sites, so a guard that lost a shape fails here by the shape's name."""
     code, count = _PLANTED_FAULTS[shape]
-    found, _ = _guard_violations({"m.py": code}, allowed={}, exempt={})
+    found, _ = _guard_violations(code if isinstance(code, dict) else {"m.py": code}, allowed={}, exempt={})
     assert len(found) == count, (shape, found)
 
 
