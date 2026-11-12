@@ -21,7 +21,7 @@ dependencies = [
 # Optional extras: install only the backends a client uses (design 12.5). `gemini` and `openai_compat` use
 # the standard library and need none.
 [project.optional-dependencies]
-anthropic = ["anthropic[vertex]==2.1.0"]
+anthropic = ["anthropic[vertex]==2.4.0"]
 aws = ["boto3==1.43.122", "cryptography==50.0.2"]
 signer = ["cryptography==50.0.2"]
 pg = ["psycopg[binary]==3.3.6"]
