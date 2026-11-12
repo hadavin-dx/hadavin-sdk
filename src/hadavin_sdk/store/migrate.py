@@ -700,12 +700,6 @@ def _fold(name: str) -> str:
     return "".join(c.lower() if "A" <= c <= "Z" else c for c in name)
 
 
-_GRANT_MAP_WORDS = (
-    " (the grant map is the list in the code of the tables each role of this package may use, and the rights each "
-    "may have on each: for the portal role SELECT only)"
-)
-
-
 def _name_of(quoted: str | None, plain: str | None) -> str | None:
     """A name as the server stores it: a quoted one keeps its case (`""` is one quote), a plain one is folded."""
     if quoted is not None:

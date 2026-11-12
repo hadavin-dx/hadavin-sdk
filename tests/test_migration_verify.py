@@ -1094,3 +1094,124 @@ def test_no_statement_is_printed_for_a_right_on_a_system_object():
     )
     assert [p.kind for p in got] == ["right"], [p.line() for p in got]
     assert got[0].fix == "" and got[0].by_hand == "system"
+
+
+def test_pinned_read_sets_the_two_limits_and_the_path_before_any_read_and_always_rolls_back():
+    """The limits are set first, then the search path, then the caller reads; the block ends by rolling back (V48)."""
+    from contextlib import contextmanager
+
+    from hadavin_sdk.store import postgres as pg
+
+    log: list[str] = []
+
+    class _Db:
+        @contextmanager
+        def transaction(self):
+            log.append("begin")
+            try:
+                yield
+            except pg.Rollback:
+                log.append("rollback")
+
+        def execute(self, text):
+            log.append(text)
+
+    limits = ["SET LOCAL lock_timeout = '1s'", "SET LOCAL statement_timeout = '2s'"]
+    with v.pinned_read(_Db(), limits):
+        log.append("the read")
+    assert log == [
+        "begin",
+        *limits,
+        "SET LOCAL search_path = pg_catalog, pg_temp",
+        "the read",
+        "rollback",
+    ]
+
+
+def test_the_revoke_of_a_right_that_another_role_granted_acts_as_that_role():
+    """A right recorded as granted by someone other than the owner is removed by the grantor (`SET ROLE <grantor>`), not
+    by the owner, who would revoke nothing (V45)."""
+    got = judge(
+        rows(
+            items=[
+                item(
+                    name="secret",
+                    grantee="rt",
+                    grantee_is_subject=True,
+                    grantee_is_named=True,
+                    grantor="third",
+                    grantor_is_owner=False,
+                    privilege_type="UPDATE",
+                )
+            ]
+        )
+    )
+    assert [p.kind for p in got] == ["right"], [p.line() for p in got]
+    assert got[0].fix.startswith('SET ROLE "third";') and got[0].fix.endswith("RESET ROLE;"), got[
+        0
+    ].fix
+    owner_form = judge(
+        rows(
+            items=[
+                item(
+                    name="secret",
+                    grantee="rt",
+                    grantee_is_subject=True,
+                    grantee_is_named=True,
+                    privilege_type="UPDATE",
+                )
+            ]
+        )
+    )
+    assert "SET ROLE" not in owner_form[0].fix, owner_form[0].fix
+
+
+@pytest.mark.parametrize(("right", "refused"), [("USAGE", False), ("CREATE", True)])
+def test_a_named_role_may_use_the_schema_but_not_create_in_it(right, refused):
+    """The grant map gives a named role USAGE on a schema and nothing more. (SC9: USAGE refused too; SC14: CREATE let
+    through.)"""
+    got = judge(
+        rows(
+            items=[
+                item(
+                    kind="schema",
+                    relkind="",
+                    name="",
+                    grantee="rt",
+                    grantee_is_subject=True,
+                    grantee_is_named=True,
+                    privilege_type=right,
+                )
+            ]
+        )
+    )
+    assert (kinds(got) == ["right"]) is refused, [p.line() for p in got]
+
+
+def test_a_right_of_a_named_role_on_a_column_of_another_schema_is_refused():
+    """The subject side is judged in every schema, columns included. (RA4: only the schema of the run.)"""
+    got = judge(
+        rows(
+            items=[
+                item(
+                    kind="column",
+                    schema="other",
+                    name="secret",
+                    sub="c",
+                    grantee="rt",
+                    grantee_is_subject=True,
+                    grantee_is_named=True,
+                )
+            ]
+        )
+    )
+    assert kinds(got) == ["right"], [p.line() for p in got]
+
+
+def test_a_default_right_for_everyone_is_skipped_only_when_it_is_the_servers_own_pair():
+    """For all schemas the server writes EXECUTE on functions and USAGE on types for everyone; those two pairs are not
+    refused, any other pair is. (DP9: every right on a function or type is skipped.)"""
+    own_pair = judge(rows(defaults=[dflt(kind="f", grantee=None, privilege_type="EXECUTE")]))
+    assert "default_for_everyone" not in kinds(own_pair), [p.line() for p in own_pair]
+    other_pair = judge(rows(defaults=[dflt(kind="f", grantee=None, privilege_type="USAGE")]))
+    assert kinds(other_pair) == ["default_for_everyone"], [p.line() for p in other_pair]

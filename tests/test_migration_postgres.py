@@ -3978,6 +3978,32 @@ def test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migratio
 
 
 @needs_pg
+def test_a_default_right_that_a_group_of_the_migration_role_sets_for_a_third_role_is_refused(
+    scratch, named_role
+):
+    """`ALTER DEFAULT PRIVILEGES FOR ROLE <group> ... GRANT ... TO <third role>`, where the migration role belongs to the
+    group, gives a third role rights on every table the group makes later. Only the entries of the roles the migration
+    role belongs to are read for a grantee that is neither a named role nor everyone. Killed by: mutant DP3."""
+    dsn, schema = scratch
+    group = "hadavin_test_dg_" + uuid.uuid4().hex[:8]
+    third = "hadavin_test_dt_" + uuid.uuid4().hex[:8]
+    _create_roles(group, third)
+    try:
+        _let_the_plain_role_belong_to(group)
+        _admin(
+            sql.SQL(
+                f'ALTER DEFAULT PRIVILEGES FOR ROLE {{}} IN SCHEMA "{schema}" GRANT SELECT ON TABLES TO {{}}'
+            ).format(sql.Identifier(group), sql.Identifier(third))
+        )
+        with pytest.raises(ConfigError, match="on every new table that") as e:
+            mig.migrate(dsn, runtime_role=named_role)
+        assert f"{third} gets SELECT on every new table that {group} makes in " in str(e.value)
+        assert _kept_nothing(e.value)
+    finally:
+        _drop_roles(group, third)
+
+
+@needs_pg
 def test_a_named_role_that_may_pass_a_function_right_on_is_refused(
     scratch, monkeypatch, tmp_path, named_role, second_schema
 ):

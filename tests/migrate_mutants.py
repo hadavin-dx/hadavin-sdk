@@ -179,7 +179,6 @@ BATCH_2_IDS: frozenset[str] = frozenset(
             "R7",
             "CL1",
             "CL2",
-            "GM1",
             "MC1",
             "OA4",
         ),
@@ -1999,14 +1998,6 @@ M: list[Mutant] = [
         ),
     ),
     Mutant(
-        "GM1",
-        "the words after a refusal of the portal role do not say what the grant map is",
-        MIG,
-        "for the portal role SELECT only)",
-        "the one right it may have on each)",
-        k(T_PG, "test_the_portal_role_is_refused_what_the_other_roles_are_refused"),
-    ),
-    Mutant(
         "GD1",
         "one test login loses its password",
         "tests/test_migration_postgres.py",
@@ -2190,10 +2181,7 @@ M: list[Mutant] = [
         VERIFY,
         '    if it.kind == "schema":\n        return it.privilege_type == "USAGE"\n',
         '    if it.kind == "schema":\n        return False\n',
-        k(
-            T_PG,
-            "test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_look_is_not",
-        ),
+        k(T_VERIFY, "test_a_named_role_may_use_the_schema_but_not_create_in_it") + "[USAGE-False]",
     ),
     Mutant(
         "GO4",
@@ -2316,7 +2304,7 @@ M: list[Mutant] = [
         VERIFY,
         "        if it.grantee is not None and it.grantee_is_subject:\n",
         '        if it.grantee is not None and it.grantee_is_subject:\n            if not in_run and it.kind in ("table", "view", "sequence"):\n                continue\n',
-        k(T_PG, "test_a_right_given_on_a_table_of_another_schema_is_refused"),
+        k(T_VERIFY, "test_the_grant_map_is_what_a_named_role_may_hold"),
     ),
     Mutant(
         "RK1",
@@ -2409,9 +2397,8 @@ M: list[Mutant] = [
         "WHERE a.grantee IN (SELECT role FROM subj) OR a.grantee = 0 OR d.defaclrole = (SELECT r.oid FROM pg_catalog.pg_roles r WHERE r.rolname = current_user)\n",
         k(
             T_PG,
-            "test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migration_role_belongs_to",
-        )
-        + "[member_role]",
+            "test_a_default_right_that_a_group_of_the_migration_role_sets_for_a_third_role_is_refused",
+        ),
     ),
     Mutant(
         "DP4",
@@ -2608,7 +2595,7 @@ M: list[Mutant] = [
         VERIFY,
         '        if rows.database_owner in closure[n] and "pg_database_owner" not in closure[n]:\n',
         '        if False and rows.database_owner in closure[n] and "pg_database_owner" not in closure[n]:\n',
-        (k(T_PG, "test_the_database_owner_pseudo_role_is_refused_on_a_schema_it_does_not_own"),),
+        k(T_VERIFY, "test_the_database_owner_reaches_pg_database_owner_and_gets_no_statement"),
     ),
     Mutant(
         "RO3",
@@ -2699,12 +2686,9 @@ M: list[Mutant] = [
         VERIFY,
         '            built_in = d.kind in "fT" and not d.schema and (d.kind, right) in _BUILT_IN_DEFAULT\n',
         '            built_in = d.kind in "fT" and not d.schema\n',
-        (
-            k(
-                T_PG,
-                "test_a_default_right_for_a_named_role_or_for_everyone_is_refused_for_functions_sequences_and_types",
-            )
-            + "[everyone_sequences_everywhere]",
+        k(
+            T_VERIFY,
+            "test_a_default_right_for_everyone_is_skipped_only_when_it_is_the_servers_own_pair",
         ),
     ),
     Mutant(
@@ -2812,11 +2796,7 @@ M: list[Mutant] = [
         VERIFY,
         "        if it.grantee is not None and it.grantee_is_subject:\n",
         '        if it.grantee is not None and it.grantee_is_subject:\n            if not in_run and it.kind == "column":\n                continue\n',
-        (
-            k(T_PG, "test_a_right_given_on_a_table_that_existed_before_the_run_is_refused")
-            + "[column]",
-            k(T_PG, "test_a_second_right_on_a_column_that_already_had_one_is_refused"),
-        ),
+        k(T_VERIFY, "test_a_right_of_a_named_role_on_a_column_of_another_schema_is_refused"),
     ),
     Mutant(
         "IM1",
@@ -2862,10 +2842,7 @@ M: list[Mutant] = [
         VERIFY,
         '    if it.kind == "schema":\n        return it.privilege_type == "USAGE"\n',
         '    if it.kind == "schema":\n        return True\n',
-        k(
-            T_PG,
-            "test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_look_is_not",
-        ),
+        k(T_VERIFY, "test_a_named_role_may_use_the_schema_but_not_create_in_it") + "[CREATE-True]",
     ),
     Mutant(
         "SH1",
@@ -3113,8 +3090,8 @@ M: list[Mutant] = [
         "V25",
         "D1: a default right of an unknown kind is not refused",
         VERIFY,
-        "        if d.kind not in _DEFAULT_WORDS:\n",
-        "        if False:\n",
+        '            out.append(_default("default_unknown_kind", d, "", ""))\n',
+        "            pass\n",
         "tests/test_migration_verify.py::test_judge_makes_the_problem_kind[default_unknown_kind]",
     ),
     Mutant(
@@ -3287,7 +3264,7 @@ M: list[Mutant] = [
         VERIFY,
         '    if not grantor_is_owner:\n        text = f"SET ROLE',
         '    if False:\n        text = f"SET ROLE',
-        "tests/test_migration_verify_pg.py::test_printed_statements_remove_every_problem_for_every_grantor_form",
+        "tests/test_migration_verify.py::test_the_revoke_of_a_right_that_another_role_granted_acts_as_that_role",
     ),
     Mutant(
         "V46",
@@ -3317,7 +3294,7 @@ M: list[Mutant] = [
         VERIFY,
         "        for line in limits:\n            db.execute(line)\n",
         "        for line in ():\n            db.execute(line)\n",
-        "tests/test_migration_postgres.py::test_a_procedure_and_an_aggregate_get_their_own_words_and_the_printed_lines_run",
+        "tests/test_migration_verify.py::test_pinned_read_sets_the_two_limits_and_the_path_before_any_read_and_always_rolls_back",
     ),
     Mutant(
         "V49",
