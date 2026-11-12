@@ -1,0 +1,270 @@
+# NOTE (final): the changed first runs in this file were on 558d37f-based copies; the final patch is based on 0841f36. Only the css/mutation results matter here; the css file is unchanged by batches 1 and 2a.
+# C1 (review M1): CSS mutation. COPY of the tree: /tmp/work/fix-tree4-mut (cp -a of /tmp/work/fix-tree4 = 558d37f + docs-and-deps v2 + the two assert messages).
+# FINDING ABOUT THE RECIPE: deleting the gradient on line 164 ALONE does not change the page: later rules repaint the same strip
+# (.shell at line 372 with --rail-bot, and at 1100 px wide the media rule at line 617). The 1st run below shows that: both tests still PASS.
+# The effective mutation deletes the `background: linear-gradient(...)` declaration of .shell in ALL THREE rules that apply at 1100 px (164, 372, 617).
+
+## run A: only line 164 deleted (cp original; sed on line 164): expected by the review recipe, but it does not fail
+--- /tmp/work/c/app.css.orig	2026-11-12 20:31:09.622247524 +0000
++++ src/lead_desk/portal/app.css	2026-11-12 20:31:34.953375773 +0000
+@@ -161,7 +161,7 @@
+ .spacer { flex: 1; }
+ 
+ /* shell */
+-.shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; background: linear-gradient(to right, var(--surface) 239px, var(--border-soft) 239px 240px, transparent 240px);
++.shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; }
+ .rail { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: var(--s5); padding: var(--s4) var(--s3); background: var(--surface); border-right: 1px solid var(--border-
+ .brand { display: flex; align-items: center; gap: var(--s3); padding: var(--s1) var(--s2); }
+ .mark { width: 32px; height: 32px; border-radius: var(--r-ctl); display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, #224bb2, #0b764d); flex: none; }
+$ cd /tmp/work/fix-tree4-mut; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers PATH=/opt/node22/bin:$PATH /tmp/work/fresh-venv4/bin/python -m pytest -q --no-header -p no:cacheprovider tests/test_portal_lead_pages.py::test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100
+..                                                                       [100%]
+2 passed in 3.17s
+
+## run B: the gradient declaration deleted from .shell at lines 164, 372 and 617 (diff -u original mutated)
+--- /tmp/work/c/app.css.orig	2026-11-12 20:31:09.622247524 +0000
++++ src/lead_desk/portal/app.css	2026-11-12 20:31:43.399969682 +0000
+@@ -161,7 +161,7 @@
+ .spacer { flex: 1; }
+ 
+ /* shell */
+-.shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; background: linear-gradient(to right, var(--surface) 239px, var(--border-soft) 239px 240px, transparent 240px); }
++.shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; }
+ .rail { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: var(--s5); padding: var(--s4) var(--s3); background: var(--surface); border-right: 1px solid var(--border-soft); }
+ .brand { display: flex; align-items: center; gap: var(--s3); padding: var(--s1) var(--s2); }
+ .mark { width: 32px; height: 32px; border-radius: var(--r-ctl); display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, #224bb2, #0b764d); flex: none; }
+@@ -369,7 +369,7 @@
+ :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; box-shadow: 0 0 0 5px var(--focus-halo); }
+ 
+ /* ---------- shell: rail, top bar, page glow ---------- */
+-.shell { background: linear-gradient(to right, var(--rail-bot) 239px, var(--border-soft) 239px 240px, transparent 240px); }
++.shell { }
+ .rail { background: linear-gradient(180deg, var(--rail-top) 0%, var(--rail-bot) 100%); }
+ .mark { background: var(--grad-mark); box-shadow: 0 4px 12px -4px rgba(34, 75, 178, .5); border-radius: 10px; }
+ .nav a { transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
+@@ -614,7 +614,7 @@
+ 
+ /* 1200 and below: a slimmer rail and page margin give the tables room; Received stacks its two lines */
+ @media (max-width: 1200px) {
+-  .shell { grid-template-columns: 208px minmax(0, 1fr); background: linear-gradient(to right, var(--rail-bot) 207px, var(--border-soft) 207px 208px, transparent 208px); }
++  .shell { grid-template-columns: 208px minmax(0, 1fr); }
+   .page { padding-left: var(--s5); padding-right: var(--s5); }
+   .strip { padding-left: var(--s5); padding-right: var(--s5); }
+   .log-when { flex-direction: column; align-items: flex-start; gap: 0; }
+$ (same pytest command; no debug prints in the mutated copy; the shipped asserts are at tests/test_portal_lead_pages.py:458 and :459-463)
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+____ test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[dark] ____
+
+env = <conftest.Env object at 0x7fe97b83c1a0>, scheme = 'dark'
+
+    @pytest.mark.parametrize("scheme", ["light", "dark"])
+    def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, scheme: str) -> None:
+        """At 1200 px and below the strip under the sidebar was the page colour, not the sidebar's: a white block under
+        the sidebar when the page is taller than the window. Measured on a full-page screenshot."""
+        rig, base = _flow_rig(env)
+        for i in range(12):
+            _new(rig, f"s-{i}", f"Sidney Hart{i}", f"s{i}@example.test")
+    
+        def body(page: Any, base: str) -> None:
+            import base64
+    
+            page.goto(base + "/ui/#/leads")
+            page.wait_for_selector("[data-lead-id]")
+            page.wait_for_timeout(500)
+            height = page.evaluate("() => document.documentElement.scrollHeight")
+            assert height > 900, height  # the page really is taller than the window
+            # The browser reads the screenshot's pixels itself (no image library): a blank page in the same browser
+            # decodes the PNG onto a canvas. A blank page, because the portal page's own rules could refuse a data: image.
+            shot = "data:image/png;base64," + base64.b64encode(page.screenshot(full_page=True)).decode()
+            reader = page.context.new_page()
+            try:
+                got = reader.evaluate(
+                    """async ([src, points]) => {
+                        const img = new Image();
+                        img.src = src;
+                        await img.decode();
+                        const canvas = document.createElement("canvas");
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0);
+                        return {size: [canvas.width, canvas.height],
+                                px: points.map(([x, y]) => Array.from(ctx.getImageData(x, y, 1, 1).data))};
+                    }""",
+                    [shot, [[60, 880], [60, height - 40]]],
+                )
+            finally:
+                reader.close()
+            assert got["size"][1] > height - 40, got["size"]  # both sample points lie inside the screenshot
+            above, below = got["px"]
+            assert above[3] == below[3] == 255, ("not opaque", above, below)  # opaque: the PNG's own colours
+            assert all(abs(a - b) <= 6 for a, b in zip(above[:3], below[:3], strict=True)), (
+                "sidebar and strip differ",
+                above,
+                below,
+            )
+    
+>       _browse(base, body, width=1100, scheme=scheme)
+
+tests/test_portal_lead_pages.py:465: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_lead_pages.py:124: in _browse
+    fn(page, base)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+page = <Page url='http://127.0.0.1:34075/ui/#/leads'>
+base = 'http://127.0.0.1:34075'
+
+    def body(page: Any, base: str) -> None:
+        import base64
+    
+        page.goto(base + "/ui/#/leads")
+        page.wait_for_selector("[data-lead-id]")
+        page.wait_for_timeout(500)
+        height = page.evaluate("() => document.documentElement.scrollHeight")
+        assert height > 900, height  # the page really is taller than the window
+        # The browser reads the screenshot's pixels itself (no image library): a blank page in the same browser
+        # decodes the PNG onto a canvas. A blank page, because the portal page's own rules could refuse a data: image.
+        shot = "data:image/png;base64," + base64.b64encode(page.screenshot(full_page=True)).decode()
+        reader = page.context.new_page()
+        try:
+            got = reader.evaluate(
+                """async ([src, points]) => {
+                    const img = new Image();
+                    img.src = src;
+                    await img.decode();
+                    const canvas = document.createElement("canvas");
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0);
+                    return {size: [canvas.width, canvas.height],
+                            px: points.map(([x, y]) => Array.from(ctx.getImageData(x, y, 1, 1).data))};
+                }""",
+                [shot, [[60, 880], [60, height - 40]]],
+            )
+        finally:
+            reader.close()
+        assert got["size"][1] > height - 40, got["size"]  # both sample points lie inside the screenshot
+        above, below = got["px"]
+        assert above[3] == below[3] == 255, ("not opaque", above, below)  # opaque: the PNG's own colours
+>       assert all(abs(a - b) <= 6 for a, b in zip(above[:3], below[:3], strict=True)), (
+            "sidebar and strip differ",
+            above,
+            below,
+        )
+E       AssertionError: ('sidebar and strip differ', [16, 15, 32, 255], [9, 13, 22, 255])
+E       assert False
+E        +  where False = all(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7fe979e2cba0>)
+
+tests/test_portal_lead_pages.py:459: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_portal_lead_pages.py::test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[dark]
+1 failed, 1 passed in 3.02s
+
+## run B result above: the DARK test fails (two different colours), the LIGHT test PASSES: with the gradient deleted the page colour (243,245,251) shows under the rail instead of the rail-bottom colour (246,244,254): max difference 3 <= tolerance 6 (the tolerance is the same 6 as the old Pillow test). So deleting the gradient is NOT detectable in light: by design of the shipped tolerance, not a reader fault.
+
+## run C: a CSS regression that is visible in both schemes: the strip gradient painted with the accent colour (var(--accent)) instead of the rail colour, at lines 164, 372, 617 (diff -u)
+--- /tmp/work/c/app.css.orig	2026-11-12 20:31:09.622247524 +0000
++++ src/lead_desk/portal/app.css	2026-11-12 20:31:57.166905864 +0000
+@@ -161,7 +161,7 @@
+ .spacer { flex: 1; }
+ 
+ /* shell */
+-.shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; background: linear-gradient(to right, var(--surface) 239px, var(--border-soft) 239px 240px, transparent 240px); }
++.shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; background: linear-gradient(to right, var(--accent) 239px, var(--border-soft) 239px 240px, transparent 240px); }
+ .rail { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: var(--s5); padding: var(--s4) var(--s3); background: var(--surface); border-right: 1px solid var(--border-soft); }
+ .brand { display: flex; align-items: center; gap: var(--s3); padding: var(--s1) var(--s2); }
+ .mark { width: 32px; height: 32px; border-radius: var(--r-ctl); display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, #224bb2, #0b764d); flex: none; }
+@@ -369,7 +369,7 @@
+ :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; box-shadow: 0 0 0 5px var(--focus-halo); }
+ 
+ /* ---------- shell: rail, top bar, page glow ---------- */
+-.shell { background: linear-gradient(to right, var(--rail-bot) 239px, var(--border-soft) 239px 240px, transparent 240px); }
++.shell { background: linear-gradient(to right, var(--accent) 239px, var(--border-soft) 239px 240px, transparent 240px); }
+ .rail { background: linear-gradient(180deg, var(--rail-top) 0%, var(--rail-bot) 100%); }
+ .mark { background: var(--grad-mark); box-shadow: 0 4px 12px -4px rgba(34, 75, 178, .5); border-radius: 10px; }
+ .nav a { transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
+@@ -614,7 +614,7 @@
+ 
+ /* 1200 and below: a slimmer rail and page margin give the tables room; Received stacks its two lines */
+ @media (max-width: 1200px) {
+-  .shell { grid-template-columns: 208px minmax(0, 1fr); background: linear-gradient(to right, var(--rail-bot) 207px, var(--border-soft) 207px 208px, transparent 208px); }
++  .shell { grid-template-columns: 208px minmax(0, 1fr); background: linear-gradient(to right, var(--accent) 207px, var(--border-soft) 207px 208px, transparent 208px); }
+   .page { padding-left: var(--s5); padding-right: var(--s5); }
+   .strip { padding-left: var(--s5); padding-right: var(--s5); }
+   .log-when { flex-direction: column; align-items: flex-start; gap: 0; }
+$ (same pytest command)
+                }""",
+                [shot, [[60, 880], [60, height - 40]]],
+            )
+        finally:
+            reader.close()
+        assert got["size"][1] > height - 40, got["size"]  # both sample points lie inside the screenshot
+        above, below = got["px"]
+        assert above[3] == below[3] == 255, ("not opaque", above, below)  # opaque: the PNG's own colours
+>       assert all(abs(a - b) <= 6 for a, b in zip(above[:3], below[:3], strict=True)), (
+            "sidebar and strip differ",
+            above,
+            below,
+        )
+E       AssertionError: ('sidebar and strip differ', [246, 244, 254, 255], [34, 75, 178, 255])
+E       assert False
+E        +  where False = all(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7fc516d5a880>)
+
+tests/test_portal_lead_pages.py:459: AssertionError
+____ test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[dark] ____
+
+env = <conftest.Env object at 0x7fc517dbc140>, scheme = 'dark'
+                }""",
+                [shot, [[60, 880], [60, height - 40]]],
+            )
+        finally:
+            reader.close()
+        assert got["size"][1] > height - 40, got["size"]  # both sample points lie inside the screenshot
+        above, below = got["px"]
+        assert above[3] == below[3] == 255, ("not opaque", above, below)  # opaque: the PNG's own colours
+>       assert all(abs(a - b) <= 6 for a, b in zip(above[:3], below[:3], strict=True)), (
+            "sidebar and strip differ",
+            above,
+            below,
+        )
+E       AssertionError: ('sidebar and strip differ', [16, 15, 32, 255], [129, 170, 247, 255])
+E       assert False
+E        +  where False = all(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7fc514a867a0>)
+
+tests/test_portal_lead_pages.py:459: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_portal_lead_pages.py::test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[light]
+FAILED tests/test_portal_lead_pages.py::test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[dark]
+2 failed in 3.07s
+cmp mutated-copy-restored vs original: identical (exit 0)
+cmp restored copy vs the real tree's app.css: identical (exit 0)
+..                                                                       [100%]
+2 passed in 3.16s
+
+## run D: READER-BUG mutation: the in-browser reader samples the SAME point twice (second point y = 880 instead of height - 40). First on the UNMUTATED css (honest expected result: passes), then with the run C css mutation re-applied
+$ diff -u (real tree vs mutated copy) of the test file:
+--- /tmp/work/fix-tree4/tests/test_portal_lead_pages.py	2026-11-12 20:30:59.745494547 +0000
++++ tests/test_portal_lead_pages.py	2026-11-12 20:32:15.784097580 +0000
+@@ -449,7 +449,7 @@
+                     return {size: [canvas.width, canvas.height],
+                             px: points.map(([x, y]) => Array.from(ctx.getImageData(x, y, 1, 1).data))};
+                 }""",
+-                [shot, [[60, 880], [60, height - 40]]],
++                [shot, [[60, 880], [60, 880]]],
+             )
+         finally:
+             reader.close()
+$ pytest (css restored)
+..                                                                       [100%]
+2 passed in 3.14s
+$ pytest (reader bug + run C css regression together: the reader cannot see the strip)
+..                                                                       [100%]
+2 passed in 2.99s
+final cmp: css and test file of the copy identical to the real tree (exit 0)
+
+## Reading of run D (honest): a reader that returns the same pixel for both points PASSES, even with a real CSS regression in the page. The test cannot detect that reader bug by itself.
+## Why run C is the right proof and what it covers: it shows that the real reader reads the page (two different colours print, light and dark, from the strip and the rail), i.e. the reader is wired to the screenshot and
+## the two points are really different places. It does not cover a reader that returns the same pixel twice; that bug would have to be caught by review or by run C being repeated after any change of the reader code.
+## The same-point bug is not in the shipped code (the shipped points are [60, 880] and [60, height - 40], visible in the diff above).

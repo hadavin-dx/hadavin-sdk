@@ -1,0 +1,33 @@
+# C2 M2 evidence (a),(b),(e)
+Thu Nov 12 20:32:28 UTC 2026
+## (a) Playwright 1.65.1 wheel
+$ pip download playwright==1.65.1 --no-deps -d /tmp/work/pw165
+  Using cached playwright-1.65.1-py3-none-manylinux1_x86_64.whl.metadata (3.3 kB)
+Using cached playwright-1.65.1-py3-none-manylinux1_x86_64.whl (53.5 MB)
+Saved /tmp/work/pw165/playwright-1.65.1-py3-none-manylinux1_x86_64.whl
+Successfully downloaded playwright
+total 52232
+drwxr-xr-x  2 root root     4096 Nov 12 20:32 .
+drwxr-xr-x 78 root root     4096 Nov 12 20:32 ..
+-rw-r--r--  1 root root 53474168 Nov 12 20:32 playwright-1.65.1-py3-none-manylinux1_x86_64.whl
+$ unzip -p /tmp/work/pw165/playwright-1.65.1-py3-none-manylinux1_x86_64.whl playwright/driver/package/browsers.json (chromium entries)
+chromium 1254 158.0.8127.18
+chromium-headless-shell 1254 158.0.8127.18
+## Playwright 1.63.0 (installed in /tmp/work/fresh-venv4)
+$ pip show playwright | head -3
+Name: playwright
+Version: 1.63.0
+Summary: A high-level API to automate web browsers
+ERROR: Pipe to stdout was broken
+$ cat <venv>/lib/python3.12/site-packages/playwright/driver/package/browsers.json (chromium entries)
+chromium 1243 153.0.8010.12
+chromium-headless-shell 1243 153.0.8010.12
+$ ls /opt/pw-browsers
+chromium
+chromium-1243
+chromium_headless_shell-1243
+ffmpeg-1011
+## (b) node
+$ PATH=/opt/node22/bin:$PATH node --version
+v22.23.4
+/opt/node22/bin/node

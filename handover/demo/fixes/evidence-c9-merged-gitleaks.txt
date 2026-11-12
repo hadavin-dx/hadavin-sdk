@@ -1,0 +1,16 @@
+# C9 M3: merged tree = pr-3-tests head 0841f36 (contains doc fixes, gitleaks v2, coverage patch) + this patch (committed in a scratch clone so the git scan sees it), real gitleaks
+8.30.1
+1322530 merged
+0841f36 Batch 2a: Sonar coverage (separate hashed lock, coverage.xml, reviewed 3 rounds clean)
+$ gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+8:55PM INF scanned ~2745078 bytes (2.75 MB) in 399ms
+8:55PM INF no leaks found
+dir exit code: 0
+$ gitleaks git . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+8:55PM INF 12 commits scanned.
+8:55PM INF scanned ~2758032 bytes (2.76 MB) in 451ms
+8:55PM INF no leaks found
+git exit code: 0
+# control: the same two scans on 0841f36 alone
+dir exit 0
+git exit 0

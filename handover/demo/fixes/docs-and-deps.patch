@@ -2,81 +2,45 @@ diff --git a/.codeant/configuration.json b/.codeant/configuration.json
 index 0b7d518..305c176 100644
 --- a/.codeant/configuration.json
 +++ b/.codeant/configuration.json
-@@ -15,6 +15,8 @@
-         "demo_only/**",
-         "requirements-dev.txt",
+@@ -17,2 +17,4 @@
          "requirements-dev-win.txt",
 +        "requirements-browser.txt",
 +        "requirements-browser-win.txt",
          "**/*.png"
-       ]
-     }
 diff --git a/.gitleaks.toml b/.gitleaks.toml
-index c6f07f8..1c6db23 100644
+index 4fad96b..0c5716d 100644
 --- a/.gitleaks.toml
 +++ b/.gitleaks.toml
-@@ -52,7 +52,7 @@ paths = ['''(^|[/\\])(README|SECURITY)\.md$''']
+@@ -51,2 +51,5 @@ paths = ['''(^|[/\\])(README|SECURITY)\.md$''']
+ [[rules.allowlists]]
++regexTarget = "match"  # the file name requirements-browser.in (the browser test lock input) ends like a host name; its own entry, not part of the list below
++regexes = ['''^requirements-browser\.in[^A-Za-z0-9_-]?$''']
++[[rules.allowlists]]
  paths = ['''(^|[/\\])src/lead_desk/constants\.py$''']  # the one home of the vendor host names; this rule only
+@@ -87,2 +90,7 @@ regex = '''\b[A-Fa-f0-9]{32,}\b'''
  [[rules.allowlists]]
- regexTarget = "match"  # file names and code words that end like a host name (same list as exceptions.txt)
--regexes = ['''^requirements-dev\.in[^A-Za-z0-9_-]?$''', '''^(start_all|reset|all)\.sh[^A-Za-z0-9-]?$''', '''^log\.info\($''', '''^P\.page\($''', '''^counts\.info[^A-Za-z0-9_-]?$''']
-+regexes = ['''^requirements-(dev|browser)\.in[^A-Za-z0-9_-]?$''', '''^(start_all|reset|all)\.sh[^A-Za-z0-9-]?$''', '''^log\.info\($''', '''^P\.page\($''', '''^counts\.info[^A-Za-z0-9_-]?$''']
- [[rules.allowlists]]
- condition = "AND"
- regexTarget = "match"
-@@ -88,7 +88,7 @@ regex = '''\b[A-Fa-f0-9]{32,}\b'''
++condition = "AND"  # the hash lines of the browser lock files (a SHA-256 in requirements-browser.txt or requirements-browser-win.txt); its own entry, the entry below stays as it is
++regexTarget = "match"
++regexes = ['''^[0-9a-f]{64}$''']
++paths = ['''(^|[/\\])requirements-browser(-win)?\.txt$''']
++[[rules.allowlists]]
  condition = "AND"  # a git id or checksum is accepted only in the lock files and the workflow files, nowhere else
- regexTarget = "match"
- regexes = ['''^([0-9a-f]{40}|[0-9a-f]{64})$''']
--paths = ['''requirements-dev(-win)?\.txt$''', '''\.github[/\\]workflows[/\\][a-z]+\.yml$''']
-+paths = ['''(^|[/\\])requirements-(dev|browser)(-win)?\.txt$''', '''\.github[/\\]workflows[/\\][a-z]+\.yml$''']
- 
- # Global allowlist: none by path. Add an entry here only as regex plus a stated reason, never a whole file.
- [[allowlists]]
 diff --git a/contract.md b/contract.md
-index 055933e..d5578fe 100644
+index 3b9409f..d5578fe 100644
 --- a/contract.md
 +++ b/contract.md
-@@ -68,7 +68,7 @@ Exact `hint` text for 409 `not_actionable` (same text for retry and resolve), by
- There is no build-system. Scripts set `PYTHONPATH=src` (and run from the repo root): `PYTHONPATH=src python -m lead_desk.server`, `PYTHONPATH=src:. python -m demo_only.fakes_server --outbox keyed --port 8766`, `PYTHONPATH=src:. python -m demo_only.burst ...`. (On Windows `;` separates the paths; the run scripts set it.) pytest sets the same paths itself (`pythonpath = ["src", "."]`) for its own process, but NOT for child processes: any test that starts a subprocess (`tests/crash_launcher.py`, the fakes server, `lead_desk.server`) passes `env["PYTHONPATH"]` (src and repo root joined with `os.pathsep`) to it. `schema.sql` is read with `importlib.resources` from the `lead_desk` package, so it is found relative to the package wherever `src` is on the path.
- 
+@@ -70,3 +70,3 @@ There is no build-system. Scripts set `PYTHONPATH=src` (and run from the repo ro
  ### Dev tools: which lock file for which OS
 -`requirements-dev.txt` is the authority: Linux x86_64, Python 3.12 (CI and containers). `requirements-dev-win.txt` is the Windows lock (Python 3.13, made with `uv pip compile requirements-dev.in --generate-hashes --python-version 3.13 --python-platform windows --no-strip-extras`); it has the same pins plus `colorama`. Install with `pip install --require-hashes -r <that file>`. Both files are regenerated together when `requirements-dev.in` changes. Quality commands (all must pass): `ruff check .`, `ruff format --check .`, `mypy --platform linux`, `mypy --platform win32`, `bandit -ll -r src tools scripts -c pyproject.toml`, `python scripts/check_schema.py`.
 +`requirements-dev.txt` is the authority: Linux x86_64, Python 3.12 (CI and containers). `requirements-dev-win.txt` is the Windows lock (Python 3.13, made with `uv pip compile requirements-dev.in --generate-hashes --python-version 3.13 --python-platform windows --no-strip-extras`); it has the same pins plus `colorama`. Install with `pip install --require-hashes -r <that file>`. Both files are regenerated together when `requirements-dev.in` changes. The browser tests have their own optional lock files, `requirements-browser.txt` and `requirements-browser-win.txt` (made from `requirements-browser.in`, see `versions.md`), installed after the development lock. Quality commands (all must pass): `ruff check .`, `ruff format --check .`, `mypy --platform linux`, `mypy --platform win32`, `bandit -ll -r src tools scripts -c pyproject.toml`, `python scripts/check_schema.py`.
  
- ## Config environment names
- `Config.fakes_url` is a read-only property built from `fakes_host` and `fakes_port`.
-@@ -140,7 +140,7 @@ Pages for a person (the pages only read; the buttons write: Retry and the “I c
-   * The soft limit is raised to exactly the need, not to the hard limit, when the hard limit is unlimited or at least that. The refusal message names the open-file limit in force and what the desk needs.
- * (2) The lock file (exit 2, "another desk is using this database").
- * (3) The adapters (exit 1 if `/fake/info` cannot be read).
--* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or not below the stuck grace minus its margin; the message is printed and nothing is served; this code differs from exit 1 on purpose).
-+* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s; the message is printed and nothing is served; this code differs from exit 1 on purpose).
- * (5) The bind (retried for `BIND_RETRY_SECONDS`, then exit 5).
- * (6) The SIGTERM and SIGINT handler is installed, after the bind and before `desk.start_background()`, inside the `try` that holds the shutdown steps.
- * (7) `desk.start_background()` (starts the reaper).
-diff --git a/docs/portal.md b/docs/portal.md
-index a023192..1f9f1f4 100644
---- a/docs/portal.md
-+++ b/docs/portal.md
-@@ -2,7 +2,7 @@
- 
- Two words to keep apart: the **lead stage** shown in the portal (New, Contacted and so on) is the stage of a lead, from the lead flow file (`DESK_LEADFLOW_FILE`) and is not a stage of any deployment.
- 
--Open http://127.0.0.1:8765/ui/ in a browser while the desk runs. It shows the desk's records on these pages: **Overview** (a summary that adds up: every received request is counted once, as New, Repeat, Request to check or Not decided yet), **Leads** (the leads, with a "Hide names and email addresses" switch that only changes the display: lead names, email addresses, phone numbers and messages are masked on screen by default, and the switch, remembered for that browser tab's session only, turns the masking off to see them and to search by name or address; while they are masked the search does not match names or address text (only the company, the lead number and request numbers without an "@"), and a small eye button beside a masked value shows that one value for up to 30 seconds without turning the name or address search on. The JSON replies still carry the values, so a person with the browser's developer tools can read them, and the desk's logs never hold them), **Needs a person** (incomplete requests, and follow-ups that failed or whose outcome is unknown; tabs for items that are only waiting and for information), **Request log** and **Data and AI** (what the desk stores and what the AI step receives); a lead's side panel shows a "Next step:" line for a failed or unknown follow-up and lists the lead's later messages: each new request from the same email address, when it came, how long after the first one, and what it says differently.
-+Open http://127.0.0.1:8765/ui/ in a browser while the desk runs. It shows the desk's records on these pages: **Overview** (a summary that adds up: every received request is counted once, as New, Repeat, Request to check or Not decided yet), **Leads** (the leads, with a "Hide names and email addresses" switch that only changes the display: lead names, email addresses, phone numbers and messages are masked on screen by default, and the switch, remembered for that browser tab's session only, turns the masking off to see them and to search by name or address; while they are masked the search does not match names or address text (only the company and the lead number; request numbers are not searched while masked), and a small eye button beside a masked value shows that one value for up to 30 seconds without turning the name or address search on. The JSON replies still carry the values, so a person with the browser's developer tools can read them, and the desk's logs never hold them), **Needs a person** (incomplete requests, and follow-ups that failed or whose outcome is unknown; tabs for items that are only waiting and for information), **Request log** and **Data and AI** (what the desk stores and what the AI step receives); a lead's side panel shows a "Next step:" line for a failed or unknown follow-up and lists the lead's later messages: each new request from the same email address, when it came, how long after the first one, and what it says differently.
- 
- When every kind is a stand-in (no real CRM, no real mail sender, no live AI step) but the demo tools are not installed, a banner reads "Every lead is demo data. The demo CRM and demo mail are not connected. Nothing here is sent to real customers or real systems."
- 
 diff --git a/docs/tests.md b/docs/tests.md
-index 2fb4069..d2704ee 100644
+index 7061956..27550c3 100644
 --- a/docs/tests.md
 +++ b/docs/tests.md
-@@ -24,7 +24,31 @@ The automatic checks in `.github/workflows/lint.yml` are: ruff (style), mypy (ty
+@@ -33,3 +33,38 @@ The automatic checks in `.github/workflows/lint.yml` are: ruff (style), mypy (ty
  
- ## Browser tests
- 
--The tests that drive the portal in a real browser need Playwright and a browser (`pip install playwright`, then `playwright install chromium`) and are skipped without them. They are in `tests/test_portal_browser.py`, `tests/test_portal_lead_pages.py`, three in `tests/test_portal_wording_and_masking.py`, a few in `tests/test_mode_safety.py`, and the layout and look tests (`tests/test_portal_layout.py`, `tests/test_portal_look.py`), which use the same browser helpers. **The checks in `.github/workflows/lint.yml` do not install Playwright, so they do not run the browser tests;** the masking promise P10 rests on them, so run them on your own computer. To see why any test was skipped, run `python -m pytest -q -rs`.
+-The tests that drive the portal in a real browser need Playwright and a browser (`pip install playwright`, then `playwright install chromium`) and are skipped without them. They are in `tests/test_portal_browser.py`, `tests/test_portal_lead_pages.py`, `tests/test_stage_confirm_browser.py`, three in `tests/test_portal_wording_and_masking.py`, a few in `tests/test_mode_safety.py`, and the layout and look tests (`tests/test_portal_layout.py`, `tests/test_portal_look.py`), which use the same browser helpers. **The checks in `.github/workflows/lint.yml` do not install Playwright, so they do not run the browser tests;** the masking promise P10 rests on them, so run them on your own computer. To see why any test was skipped, run `python -m pytest -q -rs`.
 +Some tests drive the portal in a real web browser. For that they need Playwright (a Python package that remote-controls a browser) and a copy of the Chromium browser. Without them these tests are skipped, not failed. They are in `tests/test_portal_browser.py`, `tests/test_portal_lead_pages.py`, `tests/test_stage_confirm_browser.py`, three in `tests/test_portal_wording_and_masking.py`, a few in `tests/test_mode_safety.py`, and the layout and look tests (`tests/test_portal_layout.py`, `tests/test_portal_look.py`), which use the same browser helpers. **The checks in `.github/workflows/lint.yml` install only `requirements-dev.txt` and there is no browser job yet, so they do not run the browser tests;** the masking promise P10 rests on them, so run them on your own computer.
 +
 +Playwright is not in the development lock files. It has its own optional lock file, `requirements-browser.txt` (Linux x86_64, Python 3.12) or `requirements-browser-win.txt` (Windows, Python 3.13), with hashes. It holds Playwright 1.63.0 and the three packages Playwright needs (greenlet, pyee and typing-extensions; typing-extensions has the same version as in the development lock). Nothing else is needed: the two sidebar tests read the colours of a screenshot inside the browser itself, so no image library such as Pillow is required. Install it after the development lock, in the same `.venv`:
@@ -84,17 +48,28 @@ index 2fb4069..d2704ee 100644
 +    python -m pip install --require-hashes -r requirements-dev.txt
 +    python -m pip install --require-hashes -r requirements-browser.txt      # on Windows: requirements-browser-win.txt
 +    playwright install chromium
-+    export PLAYWRIGHT_BROWSERS_PATH=<folder that holds the browser>        # only if the browser is not in its default place
-+    export PATH=<folder that holds node>:$PATH                              # Node is a program that runs JavaScript; some tests run the portal's script with it
++
++Two settings you may need before the tests run, only if the browser or Node is not in its default place (Node is a program that runs JavaScript; some tests run the portal's script with it). Linux (bash):
++
++    export PLAYWRIGHT_BROWSERS_PATH=<folder that holds the browser>
++    export PATH=<folder that holds node>:$PATH
++
++Windows (PowerShell):
++
++    $env:PLAYWRIGHT_BROWSERS_PATH = "<folder that holds the browser>"
++    $env:Path = "<folder that holds node>;" + $env:Path
++
++Then run the tests (the `-rs` option prints one line for each reason a test was skipped):
++
 +    python -m pytest -q -rs
 +
-+Measured on Linux with Python 3.12: a new `.venv` with both lock files installed with `--require-hashes`, Chromium build 1243 and Node 22 already present in folders of their own (written as placeholders above), so `playwright install chromium` itself was not run there. That step on a computer without a browser was not measured, and Windows was not measured.
++Measured on Linux with Python 3.12, one run, 2026-11-12: a new `.venv` with both lock files installed with `--require-hashes`, Chromium build 1243 and Node 22 (v22.23.4) already present in folders of their own (written as placeholders above), so `playwright install chromium` itself was not run there. That step on a computer without a browser was not measured, and Windows was not measured (the Windows lock file was made but never installed).
 +
-+* **The Chromium build must match the Playwright version.** A "build" is the numbered release of the browser that Playwright downloads. Playwright 1.63.0, the version in the lock, looks for build 1243, which is what `playwright install chromium` fetches for it. A newer Playwright wants a newer build (the Playwright 1.65.1 package lists build 1254); if only build 1243 is installed, it is not found and every browser test is skipped with a "BrowserType.launch: Executable doesn't exist" message. Keep the Playwright version in the lock and the installed build together.
++* **The Chromium build must match the Playwright version.** A "build" is the numbered release of the browser that Playwright downloads. Playwright 1.63.0, the version in the lock, looks for build 1243, which is what `playwright install chromium` fetches for it. A newer Playwright wants a newer build: the Playwright 1.65.1 package names build 1254 (both build numbers were read from the `playwright/driver/package/browsers.json` file inside each package on 2026-11-12). If only build 1243 is installed, a newer Playwright does not find its build and every browser test is skipped with a "BrowserType.launch: Executable doesn't exist" message. Keep the Playwright version in the lock and the installed build together.
 +* **Where the browser is not in the default place,** set `PLAYWRIGHT_BROWSERS_PATH` to the folder that holds it: the tests start the browser with no path of their own.
 +* **Counts from earlier full runs, each on its own commit (Linux, Python 3.12):** without Playwright, 2349 passed and 116 skipped (two earlier review runs, on commits bee6fff4 and 43110e7). With Playwright 1.63.0, the run on commit 43110e7 got 2 failed, 2460 passed and 3 skipped; the 2 failures were the two sidebar tests, which needed Pillow, so 2462 passed and 3 skipped is that run's expected figure with Pillow installed, not a measured run. The 3 skipped are: the secret scan in `tests/test_hygiene.py` (no `gitleaks` program installed), the load measurement (it runs only when `LEAD_DESK_LOAD_N` is set), and one test that runs only on Windows.
-+* **A full run on this lock (Linux, Python 3.12, commit b29bb1f plus the two browser lock files, Playwright 1.63.0, Chromium build 1243, Node 22, one serial process, 2465 tests):** 2462 passed and 3 skipped in 17 minutes, no failure. The 3 skips are the same three as above. This is the measured figure for the sidebar tests too: with the browser reading the pixels no image library is installed, and they pass.
-+* **Skips reported without Playwright:** 113 of the 116 are browser tests, counted by the line where the skip is reported, not by test file (22 at lines in `test_mode_safety.py`, 28 in `test_portal_browser.py`, 60 in `test_portal_lead_pages.py`, 3 in `test_portal_wording_and_masking.py`; the helper functions that skip sit in those files, so tests from other browser files are counted there too).
++* **A full run on this lock:** Linux, Python 3.12, commit 2ce1f98 (the head of the branch `pr-3-tests` on 2026-11-12) plus this change (the two browser lock files, the sidebar test change and the allowance lines), Playwright 1.63.0, Chromium build 1243, Node 22 (v22.23.4), no `gitleaks` program on the path, one serial process, 2516 tests: 2513 passed and 3 skipped in 16 minutes 33 seconds (993 s), no failure. The 3 skipped are the same three as above. This is a measured figure for the two sidebar tests too: the browser reads the screenshot's pixels itself, no image library is installed, and they pass. The later commit that added the coverage settings (0841f36) was not run in full: it changes no test file and no test setting that a plain `python -m pytest` reads, but that is stated from its file list, not from a run.
++* **Skips reported without Playwright:** 113 of the 116 are browser tests, counted by the line where the skip is reported, not by test file (22 at lines in `test_mode_safety.py`, 28 in `test_portal_browser.py`, 60 in `test_portal_lead_pages.py`, 3 in `test_portal_wording_and_masking.py`; the helper functions that skip sit in those files, so tests from other browser files are counted there too). The 113 and the 134 below were measured again on 2026-11-12 on this commit and this change, in a run without Playwright of eight test files (the files named above plus `test_portal_mode.py`, `test_portal_layout.py`, `test_portal_look.py` and `test_stage_confirm_browser.py`).
 +* **A count of 2329 passed and 135 skipped (from the project owner's own computer):** its cause is not known. What fits the numbers, as an inference only: a run without Node on the path. Node missing makes 21 tests that run the portal's JavaScript skip (1 in `test_mode_safety.py`, 2 in `test_portal_lead_pages.py`, 18 in `test_portal_mode.py`; measured in a browserless run of those eight files here: 134 skipped with Node missing, 113 with Node present). Moving those 21 from passed to skipped on a full run of this commit gives 2328 passed and 137 skipped, against 2329 and 135: one more passed and two fewer skipped. What is unknown: that computer's operating system, whether `gitleaks` was installed there, whether Node was present, and the exact commit. Neither "one test fewer" nor "gitleaks installed" alone fits both numbers. The 2462 passed with 2 skipped reported for that computer with Playwright is not explained either (with `gitleaks` installed it would be 2463 passed here). The 2349/116 run on 43110e7 did have Node (its log has no "node is not installed" skip), even though its summary says otherwise. If you see a count near 2329/135, run `python -m pytest -q -rs` and look for "node is not installed".
 +
 +## Quality checks and what to do when a check fails
@@ -103,22 +78,15 @@ index 2fb4069..d2704ee 100644
 +
 +When a check fails: read the last lines of its output first; they name the file and line. For a test, run it alone (`python -m pytest -q tests/test_name.py::test_name`). A test that did not run is not a pass: to see why tests were skipped, run `python -m pytest -q -rs`, which prints one line per skip reason (for example "could not import 'playwright.sync_api'", "node is not installed", "no gitleaks program on PATH"). To make a missing secret scan a failure instead of a skip, set `DPLD_REQUIRE_SCAN=1` and `GITLEAKS_BIN` to the program's path.
  
- ## What each promise rests on
- 
 diff --git a/exceptions.txt b/exceptions.txt
-index 8a85359..742ffb2 100644
+index 749fb72..53f06aa 100644
 --- a/exceptions.txt
 +++ b/exceptions.txt
-@@ -6,7 +6,8 @@
- ^[^:]+:[0-9]+:https:/{2}(github\.com/(gitleaks/gitleaks|actions)|docs\.github\.com|docs\.n8n\.io)([:/].*)?$
- ^[^:]+:[0-9]+:(localhost|github\.com|docs\.github\.com|docs\.n8n\.io|example\.com|example\.test|example\.invalid)[^A-Za-z0-9-]?$
- ^\.github/workflows/[a-z]+\.yml:[0-9]+:([0-9a-f]{40}|[0-9a-f]{64})$
--^requirements-dev(-win)?\.txt:[0-9]+:[0-9a-f]{64}$
-+^requirements-(dev|browser)(-win)?\.txt:[0-9]+:[0-9a-f]{64}$
+@@ -17,2 +17,4 @@
+ ^tests/test_portal_api\.py:[0-9]+:0\.0\.0\.0$
++^requirements-browser(-win)?\.txt:[0-9]+:[0-9a-f]{64}$
 +^[^:]+:[0-9]+:requirements-browser\.in[^A-Za-z0-9_-]?$
- ^src/lead_desk/desk\.py:[0-9]+:threading\.local[^A-Za-z0-9_-]?$
- ^tests/[a-z_0-9]+\.py:[0-9]+:test_[a-z0-9]{1,12}(_[a-z0-9]{1,12}){0,8}$
- ^tests/test_server_hardening\.py:[0-9]+:http:/{2}[a]:[b]:[c]/$
+ ^tests/test_portal_api\.py:[0-9]+:http:/{2}a$
 diff --git a/requirements-browser-win.txt b/requirements-browser-win.txt
 new file mode 100644
 index 0000000..c469d28
@@ -344,23 +312,42 @@ index 0000000..eabc1df
 +    # via
 +    #   -c requirements-dev.txt
 +    #   pyee
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index 3b324e3..dc17674 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -195,2 +195,5 @@ def test_exceptions_narrow(tmp_path: Path) -> None:
+         "requirements-dev.txt": h40,  # a 40-hex id is not a hash line
++        "requirements-browser.txt": h40,  # the same for the browser lock
++        "docs/requirements-browser.txt": h64,  # a hash line counts only in the file in the repository root
++        "old-requirements-browser.txt": h64,  # a name that only ends like a lock file
+         "README.md": h64,
+@@ -209,3 +212,12 @@ def test_exceptions_narrow(tmp_path: Path) -> None:
+     reported = {ln.split(":", 1)[0] for ln in left}
+-    expected = {"requirements-dev.txt", "README.md", "src/x.py", "tests/t.py", "docs/h.md"}
++    expected = {
++        "requirements-dev.txt",
++        "requirements-browser.txt",
++        "docs/requirements-browser.txt",
++        "old-requirements-browser.txt",
++        "README.md",
++        "src/x.py",
++        "tests/t.py",
++        "docs/h.md",
++    }
+     assert reported == expected, sorted(reported)
 diff --git a/tests/test_portal_lead_pages.py b/tests/test_portal_lead_pages.py
-index 88e8c3f..28ade0e 100644
+index 88e8c3f..59c7de7 100644
 --- a/tests/test_portal_lead_pages.py
 +++ b/tests/test_portal_lead_pages.py
-@@ -424,18 +424,39 @@ def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, s
-         _new(rig, f"s-{i}", f"Sidney Hart{i}", f"s{i}@example.test")
- 
+@@ -426,5 +426,3 @@ def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, s
      def body(page: Any, base: str) -> None:
 -        import io
 -
 -        from PIL import Image
 +        import base64
  
-         page.goto(base + "/ui/#/leads")
-         page.wait_for_selector("[data-lead-id]")
-         page.wait_for_timeout(500)
-         height = page.evaluate("() => document.documentElement.scrollHeight")
+@@ -435,5 +433,32 @@ def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, s
          assert height > 900, height  # the page really is taller than the window
 -        img = Image.open(io.BytesIO(page.screenshot(full_page=True))).convert("RGB")
 -        above, below = img.getpixel((60, 880)), img.getpixel((60, height - 40))
@@ -389,21 +376,23 @@ index 88e8c3f..28ade0e 100644
 +            reader.close()
 +        assert got["size"][1] > height - 40, got["size"]  # both sample points lie inside the screenshot
 +        above, below = got["px"]
-+        assert above[3] == below[3] == 255, (above, below)  # opaque: the canvas then returns the PNG's own colours
-+        assert all(abs(a - b) <= 6 for a, b in zip(above[:3], below[:3], strict=True)), (above, below)
- 
-     _browse(base, body, width=1100, scheme=scheme)
++        assert above[3] == below[3] == 255, ("not opaque", above, below)  # opaque: the PNG's own colours
++        assert all(abs(a - b) <= 6 for a, b in zip(above[:3], below[:3], strict=True)), (
++            "sidebar and strip differ",
++            above,
++            below,
++        )
  
 diff --git a/versions.md b/versions.md
-index f0e3aef..d47829a 100644
+index f0e3aef..ef18016 100644
 --- a/versions.md
 +++ b/versions.md
-@@ -51,6 +51,17 @@ Direct pins live in `requirements-dev.in`. Two lock files, same versions: `requi
- | typing-extensions 4.16.0 | | PSF-2.0 | transitive |
- | pathspec 1.1.1 | | **MPL-2.0** (classifier) | transitive of mypy. MPL-2.0 is file-level copyleft, not GPL, AGPL, SSPL or BUSL; used only as a development tool and not shipped. |
+@@ -53,2 +53,15 @@ Direct pins live in `requirements-dev.in`. Two lock files, same versions: `requi
  
 +### Browser tests (optional, a separate lock)
 +`requirements-browser.in` lists one direct pin: `playwright==1.63.0`. Two lock files made with uv 0.11.32, each with hashes and each held to the pins of the matching development lock (`-c`), so installing it after the development lock changes no development pin: `requirements-browser.txt` (`uv pip compile requirements-browser.in --generate-hashes --python-version 3.12 --python-platform linux --no-strip-extras --exclude-newer 2026-11-12 -c requirements-dev.txt -o requirements-browser.txt`) and `requirements-browser-win.txt` (the same with `--python-version 3.13 --python-platform windows`, `-c requirements-dev-win.txt` and `-o requirements-browser-win.txt`). `--exclude-newer` ignores any release uploaded after that date, so the same command gives the same lock later. Install: `pip install --require-hashes -r requirements-browser.txt` after `requirements-dev.txt`. The checks in `.github/workflows/lint.yml` do not install it (no browser job yet).
++
++Side effect of the review-tool settings: `.codeant/configuration.json` lists both browser lock files (`requirements-browser.txt`, `requirements-browser-win.txt`) among the files its review bot skips, next to the two development locks, because their content is hash lines. So the bot's check of dependencies for known vulnerabilities no longer reads these two files; it still reads `requirements-browser.in`, which names `playwright==1.63.0`, but not the three packages that only the lock lists (greenlet, pyee; typing-extensions is also in the development lock).
 +
 +| Package | Version | Licence (the package's own metadata) | Used for |
 +|---|---|---|---|
@@ -411,8 +400,6 @@ index f0e3aef..d47829a 100644
 +| greenlet 3.5.6, pyee 13.0.1 | | MIT AND PSF-2.0 (greenlet), MIT (pyee classifier) | transitive of playwright |
 +| typing-extensions 4.16.0 | | PSF-2.0 | transitive of pyee; the same pin as in the development lock |
 +
-+These licences were read from the installed packages' metadata on 2026-11-12; the full licence scan described below was not repeated for this file.
++These licences were read from the installed packages' metadata on 2026-11-12; the full licence scan described below was not repeated for this file. Playwright's package also contains a bundled Node program (its driver) with its own third-party notices; those were not examined.
 +
  Licences were scanned on 2026-11-12 with `pip-licenses` 5.5.5 (`--from=mixed`: the package's own licence field, and its Trove classifier where the field is empty), once for each lock file, each installed with `--require-hashes` into a clean environment: `requirements-dev-win.txt` into a Python 3.13.3 environment on Windows (19 packages, all listed above), and `requirements-dev.txt` into the `python:3.12-slim` container (Python 3.12.16, 18 packages: the same minus `colorama`). `pip-licenses` itself is installed separately for the scan and is not in either lock file. In both runs every package matched this table, `ast-serialize` and `librt` are MIT, and the only copyleft-family licence is `pathspec` (MPL-2.0, file-level, development tool only, not shipped). The scan reads each package's own metadata, not its project page. The raw outputs are kept with the author's records and are not shipped.
- 
- ## Not checked

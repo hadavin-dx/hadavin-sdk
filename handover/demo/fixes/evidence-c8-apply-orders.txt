@@ -1,0 +1,33 @@
+# C8 M3 (re-done on the new base): git apply in every order, plain and --3way, on a fresh clone of pr-3-tests head 2ce1f98 (batch 1: contains the 3 doc fixes AND the gitleaks allowlist v2, so X = gitleaks-toml-fix-v2.patch is already in; applying X again is expected to fail: shown as control)
+C = coverage/sonar-coverage.patch sha256 c3b3ad47e319, mtime 2026-11-12 20:41:53; Y = this patch v3 draft (the final file is identical except the filled-in run line of docs/tests.md: re-checked at the end)
+order [C Y] mode plain: exit codes C=0 Y=0
+order [C Y] mode 3way: exit codes C=0 Y=0
+order [Y C] mode plain: exit codes Y=0 C=0
+order [Y C] mode 3way: exit codes Y=0 C=0
+control: X alone on 2ce1f98: exit 1 (expected 1: already applied by batch 1)
+control: Y on 558d37f WITHOUT the doc fixes: exit 1 (expected 1: docs/tests.md hunk is written against the fixed line 27)
+## second base for the record: base = 558d37f + drift/docs-fixes.patch COMMITTED in a scratch clone (so --3way has its blobs): X C Y in all 6 orders
+558d37f+D order [X C Y] plain: X=0 C=0 Y=0
+558d37f+D order [X C Y] 3way: X=0 C=0 Y=0
+558d37f+D order [X Y C] plain: X=0 Y=0 C=0
+558d37f+D order [X Y C] 3way: X=0 Y=0 C=0
+558d37f+D order [C X Y] plain: C=0 X=0 Y=0
+558d37f+D order [C X Y] 3way: C=0 X=0 Y=0
+558d37f+D order [C Y X] plain: C=0 Y=0 X=0
+558d37f+D order [C Y X] 3way: C=0 Y=0 X=0
+558d37f+D order [Y X C] plain: Y=0 X=0 C=0
+558d37f+D order [Y X C] 3way: Y=0 X=0 C=0
+558d37f+D order [Y C X] plain: Y=0 C=0 X=0
+558d37f+D order [Y C X] 3way: Y=0 C=0 X=0
+# C8b: apply checks on a fresh clone of pr-3-tests head 0841f36 (batch 1 + batch 2a: doc fixes, gitleaks v2 and the coverage patch are IN the tree). Y = this patch (v3 draft), S = semgrep-pr-diff-lead.patch (read-only; sha256 74b4bb0edcdd, mtime 2026-11-12 20:41:53)
+plain [Y]: Y=0
+plain [S]: S=1
+plain [Y S]: Y=0 S=1
+plain [S Y]: S=1 Y=0
+3way [Y S]: Y=0 S=1
+3way [S Y]: S=1 Y=1
+## S against the older heads, to separate S-vs-coverage from S-vs-Y overlaps
+plain on 2ce1f98 [S]: S=1
+plain on 2ce1f98 [S Y]: S=1 Y=0
+plain on 2ce1f98 [Y S]: Y=0 S=1
+plain on 558d37f [S]: S=1

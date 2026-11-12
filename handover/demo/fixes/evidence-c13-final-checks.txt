@@ -1,0 +1,25 @@
+# C13 final checks on the final tree = fresh clone of pr-3-tests 0841f36 + docs-and-deps.patch (v3)
+0841f36d1edf381b67a0da4793afacf834a36707
+ M .codeant/configuration.json
+ M .gitleaks.toml
+ M contract.md
+ M docs/tests.md
+ M exceptions.txt
+ M tests/test_hygiene.py
+ M tests/test_portal_lead_pages.py
+ M versions.md
+?? requirements-browser-win.txt
+?? requirements-browser.in
+?? requirements-browser.txt
+$ ruff check . ; ruff format --check .
+All checks passed!
+128 files already formatted
+$ pytest tests/test_hygiene.py with the real gitleaks (GITLEAKS_BIN) and DPLD_REQUIRE_SCAN=1 (today's absolute-path scan mode)
+..........                                                               [100%]
+10 passed in 11.41s
+$ the two sidebar tests (shipped file)
+..                                                                       [100%]
+2 passed in 3.72s
+$ gitleaks dir . (root, lint.yml flags) on this tree
+9:11PM INF scanned ~2745867 bytes (2.75 MB) in 267ms
+9:11PM INF no leaks found

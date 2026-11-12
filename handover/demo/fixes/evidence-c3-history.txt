@@ -1,0 +1,24 @@
+# C3 M2(e) and N4: public history checks (full clone, all branches fetched)
+$ git fetch origin "+refs/heads/*:refs/remotes/origin/*"
+$ git rev-parse --is-shallow-repository
+false
+$ git cat-file -e bee6fff4^{commit}
+bee6fff4 EXISTS: bee6fff4a47ffefa34c3470190104a11a0e4cb82 Add the tests ; branches:   origin/pr-3-tests
+$ git cat-file -e 43110e7^{commit}
+43110e7 EXISTS: 43110e75b8ad96da306d5f8bb66a47ce9fa4323e portal: route ids from the address bar cannot reach Object.prototype ; branches:   origin/initial-code
+$ git cat-file -e b29bb1f^{commit}
+b29bb1f EXISTS: b29bb1f5b1c0b702e37198120d08b080861006fc Merge pr-2-demo-folder into pr-3-tests (quality-tool settings from main) ; branches:   origin/pr-3-tests
+$ git cat-file -e 558d37f^{commit}
+558d37f EXISTS: 558d37fe5372f8c378e7ea07c6193a738f4497ed Merge pr-2-demo-folder into pr-3-tests ; branches:   origin/pr-3-tests
+$ git diff --stat b29bb1f 558d37f
+ .gitleaks.toml | 7 +++++++
+ 1 file changed, 7 insertions(+)
+$ git diff --name-only b29bb1f 558d37f
+.gitleaks.toml
+$ git log --oneline b29bb1f..558d37f
+558d37f Merge pr-2-demo-folder into pr-3-tests
+f31e261 Merge pr-1-code into pr-2-demo-folder
+d23cf8f gitleaks: fix the path regex (a broken character class would not have matched)
+177b8b7 gitleaks: allow the SonarQube project key (an identifier, not a secret) for the built-in generic-api-key rule, one file, one line
+$ git merge-base --is-ancestor b29bb1f 558d37f; echo $?
+0

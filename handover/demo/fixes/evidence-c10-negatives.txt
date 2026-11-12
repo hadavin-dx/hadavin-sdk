@@ -1,0 +1,15 @@
+# C10 M3 negatives on the merged tree copy (0841f36 + this patch); made-up 64-hex = "a1b2c3d4e5f6a7b8" x4, 40-hex = "a1b2c3d4e5" x4; "gitleaks dir ." as lint.yml does
+baseline (nothing planted): exit=0 findings=0  []
+N-a docs/requirements-browser.txt + 64-hex: exit=0 findings=0  []
+N-b old-requirements-browser.txt + 64-hex: exit=1 findings=1  [('old-requirements-browser.txt', 'long-hex-token')]
+N-c requirements-planted.txt + 64-hex: exit=1 findings=1  [('requirements-planted.txt', 'long-hex-token')]
+N-d requirements-browser.txt.bak + 64-hex: exit=1 findings=1  [('requirements-browser.txt.bak', 'long-hex-token')]
+N-e sub/requirements-browser-win.txt + 64-hex (sub-folder, real name): exit=0 findings=0  []
+N-f real root requirements-browser.txt + a 40-hex line: exit=1 findings=1  [('requirements-browser.txt', 'long-hex-token')]
+N-g real root requirements-browser.txt + one extra 64-hex line (BY DESIGN accepted: it looks like a hash line): exit=0 findings=0  []
+N-h requirements-dev.txt + 64-hex (existing entry, comparison): exit=0 findings=0  []
+N-h2 requirements-coverage.txt + 64-hex (lane 7 entry, comparison): exit=0 findings=0  []
+N-i notes.md mentioning requirements-browser.in (file-name mention allowed, as for requirements-dev.in): exit=0 findings=0  []
+N-j control: notes.md with foo.bar.io: exit=1 findings=1  [('notes.md', 'hardcoded-hostname')]
+(empty status above = planted files removed)
+absolute-path scan (as tests/test_hygiene.py does), docs/requirements-browser.txt + 64-hex: exit=0  (0 = gitleaks does not report it: it cannot tell the repository root from a sub-folder, and an absolute scan needs (^|[/\\]); the second layer reports it, see c11)

@@ -1,0 +1,17 @@
+# C12 (convention note, codeant2-gitleaks): both scan modes. Tree = 0841f36 + this patch + triage/codeant2-gitleaks.patch (applied in a scratch clone; the triage files are read-only and untouched). gitleaks dir . from the root, as lint.yml
+## step 1: shipped form of my entry, path regex (^|[/\\])requirements-browser(-win)?\.txt$ (works under both scan modes)
+clean tree: exit=0 findings=0 []
+plant docs/requirements-browser.txt: exit=0 findings=0 []
+## step 2: TIGHTENED form (the one-line change PLAN.md tells to make after codeant2-gitleaks): path regex ^requirements-browser(-win)?\.txt$
+94:paths = ['''(^|[/\\])requirements-browser(-win)?\.txt$''']
+-paths = ['''(^|[/\\])requirements-browser(-win)?\.txt$''']
++paths = ['''^requirements-browser(-win)?\.txt$''']
+-paths = ['''(^|[/\\])requirements-(dev(-win)?|coverage)\.txt$''', '''\.github[/\\]workflows[/\\][a-z]+\.yml$''']
++paths = ['''^requirements-(dev(-win)?|coverage)\.txt$''', '''^\.github[/\\]workflows[/\\][a-z]+\.yml$''']
+tightened: clean tree: exit=0 findings=0 []
+tightened: plant docs/requirements-browser.txt: exit=1 findings=1 [('docs/requirements-browser.txt', 'long-hex-token')]
+tightened: plant sub/requirements-browser-win.txt: exit=1 findings=1 [('sub/requirements-browser-win.txt', 'long-hex-token')]
+tightened: plant old-requirements-browser.txt: exit=1 findings=1 [('old-requirements-browser.txt', 'long-hex-token')]
+## step 3: tightened form + today's absolute-path scan (the hygiene test BEFORE codeant2-gitleaks): expected to report the real lock files (that is why the tightening waits for codeant2-gitleaks)
+absolute scan exit=1
+1051 ['codeql.yml', 'lint.yml', 'requirements-browser-win.txt', 'requirements-browser.txt', 'requirements-coverage.txt', 'requirements-dev-win.txt']
