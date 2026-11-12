@@ -280,11 +280,24 @@ class _VaultConnection(KindSettings):
         return self
 
 
+VAULT_EMPTY_PREFIX = (
+    "path_prefix must not be empty: an empty prefix would let this kind read every secret directly under the "
+    "mount; name the folder of this deployment, for example hadavin/acme/"
+)
+
+
 class VaultSettings(_VaultConnection):
     mount: str = Field(default="secret", pattern=_PATH)
+    # the pattern admits an empty value so that the refusal below can say why in one sentence
     path_prefix: str = Field(default="", pattern=r"^([A-Za-z0-9_.-]+/)*$")  # e.g. "hadavin/acme/"
     field: str = "value"
     ttl_s: float = _TTL
+
+    @model_validator(mode="after")
+    def _prefix_is_named(self) -> VaultSettings:
+        if not self.path_prefix:
+            raise ValueError(VAULT_EMPTY_PREFIX)
+        return self
 
     def _paths(self) -> list[str]:
         return [self.auth_mount or "", self.mount, self.path_prefix]

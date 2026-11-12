@@ -93,7 +93,7 @@ code needs (one reason each), the requests that need no permission, and what the
 
 ## vault (secrets)
 
-Read first: the `path_prefix` setting is empty by default, and with an empty prefix this kind can read every secret at the top level of the mount. Set a prefix. No copy-ready text is produced for an empty prefix.
+Read first: the `path_prefix` setting must name a folder. The settings, the start-up and every read refuse an empty one, because with an empty prefix this kind could read every secret at the top level of the mount. No copy-ready text is produced for an empty prefix.
 
 Declared in `src/hadavin_sdk/actions/secrets_vault.py`.
 
@@ -102,7 +102,7 @@ Declared in `src/hadavin_sdk/actions/secrets_vault.py`.
 
 | id | permission | on what | what limits a wildcard | the call it serves | why | when | name and form found in a vendor source | accepted by a real account | claims not checked |
 |---|---|---|---|---|---|---|---|---|---|
-| R17 | `read` | `{mount}/data/{path_prefix}+` | the `+` stands for exactly one path part, the secret's name, directly under this deployment's `path_prefix` setting (which must not be empty); nothing deeper is covered. Allows more than the reason says: the right covers every secret directly under the prefix, not only the one the code asks for; it may also cover every older version of each (not yet checked against the vendor: the claims cell lists the claim that a `read` on a secret's path also serves a request for an older version); the right cannot name one secret because the secret's name is not known when the policy is written | `GET {self.mount}/data/{self.path_prefix}{name}` | reads one named secret; the right also covers every secret directly under the prefix; it may also cover every older version of each (not yet checked against the vendor, see the claims cell) | always | 2026-11-11, sources V-KV (the passage behind the claim: see claims), V-POL (the passage behind the claim: see claims), V-ACL (builder only), V-PARSE (builder only), B-KV (the passage behind the claim: see claims), B-POL (the passage behind the claim: see claims), B-ACL (builder only) | no | the + matches exactly one whole path part, nothing deeper (builder read the passage); a `read` on a secret's path also serves a request for an older version of that secret (nobody has read the passage) |
+| R17 | `read` | `{mount}/data/{path_prefix}+` | the `+` stands for exactly one path part, the secret's name, directly under this deployment's `path_prefix` setting (which must not be empty: the settings, the start-up and every read refuse an empty one); nothing deeper is covered. Allows more than the reason says: the right covers every secret directly under the prefix, not only the one the code asks for; it may also cover every older version of each (not yet checked against the vendor: the claims cell lists the claim that a `read` on a secret's path also serves a request for an older version); the right cannot name one secret because the secret's name is not known when the policy is written | `GET {self.mount}/data/{self.path_prefix}{name}` | reads one named secret; the right also covers every secret directly under the prefix; it may also cover every older version of each (not yet checked against the vendor, see the claims cell) | always | 2026-11-11, sources V-KV (the passage behind the claim: see claims), V-POL (the passage behind the claim: see claims), V-ACL (builder only), V-PARSE (builder only), B-KV (the passage behind the claim: see claims), B-POL (the passage behind the claim: see claims), B-ACL (builder only) | no | the + matches exactly one whole path part, nothing deeper (builder read the passage); a `read` on a secret's path also serves a request for an older version of that secret (nobody has read the passage) |
 
 Requests that need no permission:
 
@@ -174,6 +174,8 @@ Not covered by any test: the open alternative OpenBao (not yet run); sign-in thr
 No copy-ready text: at least one permission or claim of this kind is not yet checked against the vendor's own sources.
 
 ## kubernetes (source)
+
+What the start-up check does not see: it refuses write verbs, wildcard verbs, access to shells and reading secrets, but it does not refuse a read of other things such as `configmaps`, `pods` or `nodes`. Give the ServiceAccount a role that lists only what this source reads.
 
 Declared in `src/hadavin_sdk/sources/kubernetes.py`.
 

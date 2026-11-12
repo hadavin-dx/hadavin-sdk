@@ -329,10 +329,14 @@ def _assert_the_copy_follows_the_steps(
         )
     got = _day_in(copy, "tools/policy_page.py", "DECIDED")
     want = new_decided if moved_names else pp.DECIDED
-    assert got == want, f"DECIDED in the {mode} copy is {got}, expected {want}"
+    assert got == want, (
+        f"the decision day of the tool in the copy is {got}, expected {want} ({mode})"
+    )
     got = _day_in(copy, "tests/test_policy_guard.py", "KINDS_DECIDED")
     want = new_decided if moved_kinds else KINDS_DECIDED
-    assert got == want, f"KINDS_DECIDED in the {mode} copy is {got}, expected {want}"
+    assert got == want, (
+        f"the decision day of the kinds in the copy is {got}, expected {want} ({mode})"
+    )
 
 
 def _commit_the_copy(copy: Path, message: str) -> str:
@@ -540,3 +544,55 @@ def test_plant_a_renewal_of_the_names_and_claims_alone_keeps_the_tests_the_page_
         pp.DECIDED + timedelta(days=20),
         os.environ.get(FULL_RENEWAL_ENV) == "1",
     )
+
+
+# --- the fast half of the renewal plants: the copy is made by the printed steps and compared with them (no tests run
+# in the copy), and step (5), the notes check of CI on the renewed copy, is rehearsed ------------------------
+
+
+def _fast_renewal(mode: str) -> None:
+    """The fast part of a renewal plant: the copy is made and edited by the printed steps of `mode`, and its files
+    and days are compared with the steps (no tests run in the copy)."""
+    from tests.test_policy_guard import KINDS_DECIDED, pp
+
+    old = pp.DECIDED
+    new = {
+        "both": pp.DECIDED + timedelta(days=31),
+        "kinds": KINDS_DECIDED + timedelta(days=20),
+        "names": pp.DECIDED + timedelta(days=20),
+    }[mode]
+    with tempfile.TemporaryDirectory() as tmp:
+        copy = Path(tmp) / "renewed"
+        edited, _ = _make_renewed_copy(copy, mode, old, new)
+        _assert_the_copy_follows_the_steps(copy, mode, edited, new)
+
+
+def test_the_copy_of_the_full_renewal_plant_changes_each_file_the_printed_steps_name():
+    _fast_renewal("both")
+
+
+def test_the_copy_of_the_kinds_alone_plant_changes_each_file_the_printed_steps_name():
+    _fast_renewal("kinds")
+
+
+def test_the_copy_of_the_names_and_claims_alone_plant_changes_each_file_the_printed_steps_name():
+    _fast_renewal("names")
+
+
+def test_the_notes_check_of_a_renewed_copy_asks_for_rows_that_can_be_written_and_then_passes():
+    """Step (5) of the printed steps, rehearsed: the renewed copy is committed on the base, the notes check of CI
+    reads that change, a row is written for each line it prints, and it then passes. The count is printed (it is the
+    number a person doing the first renewal should expect)."""
+    from tests.test_policy_guard import pp
+
+    with tempfile.TemporaryDirectory() as tmp:
+        copy = Path(tmp) / "renewed"
+        new = pp.DECIDED + timedelta(days=31)
+        _, base = _make_renewed_copy(copy, "both", pp.DECIDED, new, commit_base=True)
+        env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG", "TMPDIR")}
+        env.update(PYTHONDONTWRITEBYTECODE="1", PYTHONNOUSERSITE="1")
+        asked = _rows_for_the_renewal(copy, base, env)
+        print(f"the notes check asked for {asked} rows after the full renewal")
+        assert asked > 0, (
+            "a full renewal changes a day that tests use, so the notes check must ask for rows"
+        )

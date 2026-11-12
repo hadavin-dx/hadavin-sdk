@@ -264,10 +264,16 @@ def reserved_problem(key: str, part: str) -> str | None:
     return None
 
 
+KUBE_PROBE_LIMIT = (
+    "What the start-up check does not see: it refuses write verbs, wildcard verbs, access to shells and reading "
+    "secrets, but it does not refuse a read of other things such as `configmaps`, `pods` or `nodes`. Give the "
+    "ServiceAccount a role that lists only what this source reads."
+)
+
 WHOLE_MOUNT = (
-    "Read first: the `path_prefix` setting is empty by default, and with an empty prefix this kind can read "
-    "every secret at the top level of the mount. Set a prefix. No copy-ready text is produced for an empty "
-    "prefix."
+    "Read first: the `path_prefix` setting must name a folder. The settings, the start-up and every read "
+    "refuse an empty one, because with an empty prefix this kind could read every secret at the top level of "
+    "the mount. No copy-ready text is produced for an empty prefix."
 )
 
 
@@ -1723,6 +1729,8 @@ def _kind_section(kind: str, rel: str, policy: Policy, marks: Marks) -> list[str
     out = [f"## {kind.split('/')[1]} ({kind.split('/')[0]})", ""]
     if any("{path_prefix}" in g.resource for g in policy.grants):
         out += [WHOLE_MOUNT, ""]
+    if kind == "source/kubernetes":
+        out += [KUBE_PROBE_LIMIT, ""]
     out += [f"Declared in `{rel}`.", ""]
     out += [f"- {note}{_sources_suffix(kind, note, marks)}" for note in policy.notes] + (
         [""] if policy.notes else []

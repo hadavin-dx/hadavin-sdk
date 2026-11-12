@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from hadavin_sdk.actions.secrets_cache import CachedSecrets
+from hadavin_sdk.backends.table import VAULT_EMPTY_PREFIX
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.http import NoRedirect
 
@@ -112,6 +113,8 @@ class VaultProvider(CachedSecrets):
             raise ConfigError(
                 f"secret {name!r}: Vault names here are letters, digits, '.', '_', '-'"
             )
+        if not self.path_prefix:  # an empty prefix would read the whole mount
+            raise ConfigError(f"secrets vault: {VAULT_EMPTY_PREFIX}")
         status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")
         if status == 404:
             raise ConfigError(f"secret {name!r} not found in Vault")
@@ -150,6 +153,8 @@ def _env(name: str) -> str:
 
 
 def build(settings, deps) -> VaultProvider:
+    if not settings.path_prefix:  # settings made without their checks are refused too
+        raise ConfigError(f"secrets vault: {VAULT_EMPTY_PREFIX}")
     return connect(
         settings,
         ttl_s=settings.ttl_s,
@@ -237,7 +242,8 @@ POLICY = {
             "resource": "{mount}/data/{path_prefix}+",
             "bound": (
                 "the `+` stands for exactly one path part, the secret's name, directly under this "
-                "deployment's `path_prefix` setting (which must not be empty); nothing deeper is covered. "
+                "deployment's `path_prefix` setting (which must not be empty: the settings, the start-up and every read "
+                "refuse an empty one); nothing deeper is covered. "
                 "Allows more than the reason says: the right covers every secret directly under the prefix, "
                 "not only the one the code asks for; it may also cover every older version of each (not yet "
                 "checked against the vendor: the claims cell lists the claim that a `read` on a secret's path "

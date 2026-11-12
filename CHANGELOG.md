@@ -210,6 +210,10 @@
   before starting the runtime; until then start-up raises `Unqualified`. After this one re-gate, adding an optional
   field with a default no longer un-qualifies agents, and swapping the llm backend does.
 
+- **Behaviour change: a Vault secrets kind with an empty `path_prefix` is refused.** Before, an empty prefix was accepted and let the kind read every secret directly under the mount. Now the settings, the start-up and every read refuse it with the sentence "path_prefix must not be empty: ... name the folder of this deployment, for example hadavin/acme/", and the commands that load the config exit 2. An existing config that left the prefix out must name the folder of its deployment. The Vault signing kind (transit) has no prefix and is not changed.
+- **The notes check: more reading rules and one stated limit.** It now follows a constant bound by a walrus inside another assignment, the set-up and tear-down of a unittest case, a fixture named as text (`usefixtures`, `getfixturevalue`), a module named in `pytest_plugins` or in the `-p` options, a module imported by a name built at run time, and a star import of a test module. Limit, stated in the tool and pinned by a test: the rows of all notes files of the change are read as one table, so a row of an older notes file counts for a unit of this one.
+- **Corrected count (batch 14 notes).** The lines added to `secrets_vault.py`, `signer_vault.py` and `kubernetes.py` against main hold 7, 5 and 1 lines with a `*`; each is a path named in the `never` list of the kind's policy (what must not be granted) or one docstring line, none is a grant (counted, see `handover/evidence/Q8c-1/b15/NOTES.md`).
+
 ### Added
 - **Declared permissions for three backend kinds** (ticket Q8c, part 1): `vault` (secrets), `vault_transit` (signer)
   and `kubernetes` (source). Each of the three kind modules now carries a `POLICY` literal: the permissions its
@@ -317,8 +321,8 @@
     (`test_plant_a_full_renewal_...`, one for the kinds list alone and one for the names and claims alone) renew a temporary copy
     with an edit list that the test builds from the live days and the printed steps (the list is written in the test, it is not
     read out of the printed text), and then, on the new decision day and on the day after it, run in that copy: the page check
-    (`python tools/policy_page.py --check`), the guard, changelog, docs and notes tests, the check that every search text of the
-    mutants is found, and the mutants B8 and B9. With the variable `HADAVIN_POLICY_FULL_RENEWAL_RUN` set to 1 they run the whole
+    (`python tools/policy_page.py --check`), the four policy test files (`tests/test_policy_guard.py`, `tests/test_policy_changelog.py`, `tests/test_policy_docs.py`, `tests/test_notes_lines_check.py`; the plants do not run the whole suite: no other test file reads a decision day, and `tests/test_policy_engine.py` only reads the Vault server switch), the notes check on the copy (the plant writes the rows it asks for, then the check passes; a rehearsal asked 36 rows for a full renewal, 35 for the kinds alone and 1 for the names and claims alone), the check that every search text of the
+    mutants is found, and the mutants B8 and B9. Four fast tests in `tests/test_policy_changelog.py` check without running those tests that each plant edits every file its printed steps name, and ten mutants of the plant helpers are killed by them. With the variable `HADAVIN_POLICY_FULL_RENEWAL_RUN` set to 1 they run the whole
     mutant list in the copy on both days (the rehearsal does this; it takes several minutes, so it is not part of a normal run).
     A step that the printed lists leave out shows as a red test only when the plant makes that edit; a file that a renewal must
     touch and that the plant does not edit would not be seen by the plant. A renewal made twice in a row is not a case the

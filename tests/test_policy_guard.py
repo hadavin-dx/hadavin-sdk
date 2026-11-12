@@ -293,7 +293,7 @@ SHAPES: dict[str, Shape] = {
     "src/hadavin_sdk/actions/secrets_vault.py": Shape(
         "vault",
         {"call": 1, "authed": 1},
-        frozenset({("authed", 101, "call"), ("authed", 104, "call")}),
+        frozenset({("authed", 102, "call"), ("authed", 105, "call")}),
         frozenset({"__init__", "call"}),
         frozenset(
             {
@@ -310,6 +310,7 @@ SHAPES: dict[str, Shape] = {
                 "pathlib:Path",
                 "typing:Any",
                 f"{_SDK}.actions.secrets_cache:CachedSecrets",
+                f"{_SDK}.backends.table:VAULT_EMPTY_PREFIX",
                 f"{_SDK}.errors:ConfigError",
                 f"{_SDK}.guard.http:NoRedirect",
             }
@@ -339,7 +340,7 @@ SHAPES: dict[str, Shape] = {
     "src/hadavin_sdk/sources/kubernetes.py": Shape(
         "kubernetes_rbac",
         {"_fetch": None, "_call": 1, "_get": 1, "_items": 1},
-        frozenset({("_call", 168, "_fetch"), ("_get", 184, "_call"), ("_items", 203, "_get")}),
+        frozenset({("_call", 171, "_fetch"), ("_get", 187, "_call"), ("_items", 206, "_get")}),
         imports=frozenset(
             {
                 "__future__:annotations",
@@ -1785,6 +1786,30 @@ def test_vault_text_in_page_mode_and_with_values():
     assert "*" not in text  # the Transit policy has no wildcard at all
 
 
+def test_the_page_says_that_the_kubernetes_start_up_check_does_not_refuse_an_over_broad_read():
+    """The limit is real: a rule that reads configmaps, pods and nodes gives no problem, and the page must say so."""
+    assert (
+        k8s.rules_problems(
+            "ns",
+            [
+                {
+                    "verbs": ["get", "list"],
+                    "resources": ["configmaps", "pods", "nodes"],
+                    "apiGroups": [""],
+                }
+            ],
+        )
+        == []
+    ), "the start-up check now refuses an over-broad read: change the sentence"
+    section = pp._kind_section(
+        "source/kubernetes", KUBE, _policies()["source/kubernetes"], pp.read_marks(ROOT)
+    )
+    assert pp.KUBE_PROBE_LIMIT in section, (
+        "the page does not say what the start-up check does not see"
+    )
+    assert "configmaps" in pp.KUBE_PROBE_LIMIT and "does not refuse a read" in pp.KUBE_PROBE_LIMIT
+
+
 def test_an_empty_vault_prefix_is_refused_and_the_page_says_so_first():
     policy = _policies()["secrets/vault"]
     assert _refused_with(
@@ -1905,7 +1930,7 @@ def test_plant_p04b_an_added_request_through_getattr_with_a_literal_name_is_caug
     same(
         problems,
         [
-            f"{VAULT}:115: banned `getattr` of `authed`: only no name may be read this way in this module"
+            f"{VAULT}:118: banned `getattr` of `authed`: only no name may be read this way in this module"
         ],
         what="the check reports: banned `getattr` of `authed`",
     )
@@ -1926,7 +1951,7 @@ def test_plant_p09a_a_kubernetes_request_with_watch_in_its_query_is_caught():
         carried,
         [
             (
-                f"{KUBE}:247: query parameter `watch` is not one that `k8s.list_events` may carry (none): it "
+                f"{KUBE}:250: query parameter `watch` is not one that `k8s.list_events` may carry (none): it "
                 "could change the verb the request needs"
             )
         ],
@@ -1936,7 +1961,7 @@ def test_plant_p09a_a_kubernetes_request_with_watch_in_its_query_is_caught():
         listed,
         [
             (
-                f"{KUBE}:247: query parameter `watch` is written in the module and is not on the list "
+                f"{KUBE}:250: query parameter `watch` is written in the module and is not on the list "
                 "['continue', 'limit', 'limitBytes', 'sinceTime', 'timestamps']"
             )
         ],
@@ -2204,7 +2229,7 @@ def test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught(cod
 )
 def test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught(call, message):
     problems = _planted(KUBE, _EVENTS_LINE, f"        {call}\n" + _EVENTS_LINE)
-    assert any(p.startswith(f"{KUBE}:247: ") and message in p for p in problems), problems
+    assert any(p.startswith(f"{KUBE}:250: ") and message in p for p in problems), problems
 
 
 def test_the_query_parameters_the_kubernetes_module_writes_are_exactly_the_listed_ones():
@@ -2512,6 +2537,56 @@ def test_the_secret_name_is_one_path_part_checked_before_any_request():
         with pytest.raises(ConfigError, match="Vault names here are"):
             provider._fetch(name)
     assert sent == []
+
+
+def _refusal(call) -> str | None:
+    """The text of the refusal `call` raises for an empty Vault prefix, or None when it raised nothing."""
+    from hadavin_sdk.errors import ConfigError
+
+    try:
+        call()
+    except (ConfigError, ValueError) as exc:
+        return str(exc)
+    return None
+
+
+EMPTY_PREFIX_WORDS = "path_prefix must not be empty: an empty prefix would let this kind read every secret directly under the mount"
+
+
+def test_vault_settings_with_an_empty_path_prefix_are_refused_and_a_named_one_is_taken():
+    """Class: a setting that widens a grant to the whole mount by being left out. Refused where the settings are made."""
+    from hadavin_sdk.backends.table import VaultSettings
+
+    text = _refusal(lambda: VaultSettings(kind="vault", address="https://vault.example"))
+    assert text is not None, "the settings with an empty prefix were taken"
+    assert EMPTY_PREFIX_WORDS in text, "the refusal of the empty prefix is not the plain sentence"
+    named = VaultSettings(kind="vault", address="https://vault.example", path_prefix="a/")
+    assert named.path_prefix == "a/", "a named prefix was not kept"
+
+
+def test_building_the_vault_kind_from_settings_that_skipped_their_checks_refuses_an_empty_prefix():
+    from hadavin_sdk.backends.factory import make
+    from hadavin_sdk.backends.table import VaultSettings
+
+    skipped = VaultSettings.model_construct(
+        kind="vault", address="https://vault.example", path_prefix=""
+    )
+    text = _refusal(lambda: make("secrets", skipped))
+    assert text is not None, "the start-up built the kind with an empty prefix"
+    assert EMPTY_PREFIX_WORDS in text, "the refusal at start-up is not the plain sentence"
+
+
+def test_a_vault_read_with_an_empty_prefix_is_refused_before_any_request_and_a_bad_name_is_refused_first():
+    from hadavin_sdk.actions.secrets_vault import VaultProvider
+
+    sent = []
+    provider = VaultProvider("http://127.0.0.1:9", lambda p: sent.append("login") or "t")
+    text = _refusal(lambda: provider._fetch("pg_dsn"))
+    assert text is not None, "a read with an empty prefix was tried"
+    assert EMPTY_PREFIX_WORDS in text, "the refusal of the read is not the plain sentence"
+    assert sent == [], "a sign-in was sent before the empty prefix was refused"
+    bad = _refusal(lambda: provider._fetch("a/b"))
+    assert bad is not None and "Vault names here are" in bad, "a bad name was not refused first"
 
 
 @pytest.mark.parametrize(
@@ -3509,7 +3584,7 @@ def test_plant_a_kubernetes_path_that_is_not_the_bound_one_is_caught():
     )
     same(
         _planted(KUBE, _EVENTS_LINE, planted),
-        [f"{KUBE}:247: the path does not fit the one bound to `k8s.list_events`"],
+        [f"{KUBE}:250: the path does not fit the one bound to `k8s.list_events`"],
         what="the check reports: the path does not fit",
     )
 

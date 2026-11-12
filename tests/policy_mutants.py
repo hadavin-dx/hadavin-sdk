@@ -50,9 +50,10 @@ TEST = "tests/test_policy_guard.py"
 PIN = "tests/test_policy_guard::"
 TOOL = "tools/policy_page.py"
 RUN = "tests/policy_mutants.py"
-RENEWAL_TEST = "tests/test_policy_renewal_copy.py"  # the fast half of the renewal plants: it kills the mutants of the plant helpers
+RENEWAL_TEST = "tests/test_policy_changelog.py"  # the fast half of the renewal plants: it kills the mutants of the plant helpers
 NOTES_TEST = "tests/test_notes_lines_check.py"  # the killer file of the mutants of tools/notes_lines_check.py
 NTOOL = "tools/notes_lines_check.py"
+VAULT_FILE = "src/hadavin_sdk/actions/secrets_vault.py"
 CH = "tests/test_policy_changelog.py"  # the pin of the kinds days; its mutants are killed by a test of the guard file
 
 
@@ -1633,7 +1634,7 @@ M = [
         '        old_decided, new_decided, mode in ("both", "names"), mode in ("both", "kinds")\n',
         '        old_decided, new_decided, mode in ("none",), mode in ("both", "kinds")\n',
         "test_the_copy_of_the_full_renewal_plant_changes_each_file_the_printed_steps_name",
-        "the both renewal edited",
+        "renewal edited",
         test_file=RENEWAL_TEST,
     ),
     mutant(
@@ -1655,6 +1656,38 @@ M = [
         test_file=RENEWAL_TEST,
     ),
     mutant(
+        "B15 the Vault settings take an empty path prefix",
+        "src/hadavin_sdk/backends/table.py",
+        "        if not self.path_prefix:\n            raise ValueError(VAULT_EMPTY_PREFIX)\n",
+        "        if False:\n            raise ValueError(VAULT_EMPTY_PREFIX)\n",
+        "test_vault_settings_with_an_empty_path_prefix_are_refused_and_a_named_one_is_taken",
+        "the settings with an empty prefix were taken",
+    ),
+    mutant(
+        "B15 the Vault start-up builds the kind with an empty path prefix",
+        VAULT_FILE,
+        "    if not settings.path_prefix:",
+        "    if False:",
+        "test_building_the_vault_kind_from_settings_that_skipped_their_checks_refuses_an_empty_prefix",
+        "the start-up built the kind with an empty prefix",
+    ),
+    mutant(
+        "B15 a Vault read with an empty path prefix is sent",
+        VAULT_FILE,
+        "        if not self.path_prefix:",
+        "        if False:",
+        "test_a_vault_read_with_an_empty_prefix_is_refused_before_any_request_and_a_bad_name_is_refused_first",
+        "a read with an empty prefix was tried",
+    ),
+    mutant(
+        "B15 the page leaves out what the Kubernetes start-up check does not see",
+        "tools/policy_page.py",
+        '    if kind == "source/kubernetes":\n        out += [KUBE_PROBE_LIMIT, ""]\n',
+        '    if kind == "source/none":\n        out += [KUBE_PROBE_LIMIT, ""]\n',
+        "test_the_page_says_that_the_kubernetes_start_up_check_does_not_refuse_an_over_broad_read",
+        "the page does not say what the start-up check does not see",
+    ),
+    mutant(
         "B15 the renewal edit list is empty",
         CH,
         "    return edits\n\n\nRENEWED_TREES",
@@ -1669,7 +1702,7 @@ M = [
         '                f"KINDS_DECIDED = {call(new_decided)}",\n',
         '                f"KINDS_DECIDED = {call(KINDS_DECIDED)}",\n',
         "test_the_copy_of_the_kinds_alone_plant_changes_each_file_the_printed_steps_name",
-        "KINDS_DECIDED in the kinds copy is",
+        "the decision day of the kinds in the copy is",
         test_file=RENEWAL_TEST,
     ),
     mutant(
@@ -1678,7 +1711,7 @@ M = [
         '        edits.append((tool, f"DECIDED = {call(old_decided)}", f"DECIDED = {call(new_decided)}"))\n',
         '        edits.append((tool, f"DECIDED = {call(old_decided)}", f"DECIDED = {call(old_decided)}"))\n',
         "test_the_copy_of_the_names_and_claims_alone_plant_changes_each_file_the_printed_steps_name",
-        "DECIDED in the names copy is",
+        "the decision day of the tool in the copy is",
         test_file=RENEWAL_TEST,
     ),
     mutant(
@@ -1687,7 +1720,7 @@ M = [
         '    if mode != "names":\n        words =',
         "    if False:\n        words =",
         "test_the_copy_of_the_kinds_alone_plant_changes_each_file_the_printed_steps_name",
-        "the kinds renewal edited",
+        "renewal edited",
         test_file=RENEWAL_TEST,
     ),
     mutant(
@@ -1828,7 +1861,7 @@ M = [
     mutant(
         "B12 notes check does not follow a from-import of a test module",
         NTOOL,
-        "                out.update({a.asname or a.name: (stem, a.name) for a in n.names})\n",
+        '                out.update({a.asname or a.name: (stem, a.name) for a in n.names if a.name != "*"})\n',
         "                pass\n",
         "test_a_helper_imported_from_another_tests_module_lists_each_test_that_uses_it",
         "by a test through a from-import was not listed",
@@ -2726,8 +2759,8 @@ M = [
     mutant(
         "B14 notes check does not follow a changed teardown_module to the tests of the file",
         NTOOL,
-        '    "teardown_module",\n    "setup_function",\n',
-        '    "setup_function",\n',
+        '    "teardown_module",\n    "setUpModule",\n',
+        '    "setUpModule",\n',
         "test_each_way_a_file_or_a_class_is_switched_off_or_changed_lists_the_tests_it_acts_on",
         "a changed teardown_module listed",
         test_file=NOTES_TEST,
@@ -2780,8 +2813,8 @@ M = [
     mutant(
         "B14 notes check does not list a changed setup method of a test class",
         NTOOL,
-        '        m for m in helpers.values() if m.name.startswith(("setup", "teardown")) or _is_fixture(m)\n',
-        "        m for m in helpers.values() if _is_fixture(m)\n",
+        '        if m.name.lower().startswith(("setup", "teardown", "asyncsetup", "asynctear"))\n        or _is_fixture(m)\n',
+        "        if _is_fixture(m)\n",
         "test_each_way_a_file_or_a_class_is_switched_off_or_changed_lists_the_tests_it_acts_on",
         "a changed setup_method listed",
         test_file=NOTES_TEST,
@@ -2789,8 +2822,8 @@ M = [
     mutant(
         "B14 notes check does not list a changed fixture of a test class",
         NTOOL,
-        '        m for m in helpers.values() if m.name.startswith(("setup", "teardown")) or _is_fixture(m)\n',
-        '        m for m in helpers.values() if m.name.startswith(("setup", "teardown"))\n',
+        '        if m.name.lower().startswith(("setup", "teardown", "asyncsetup", "asynctear"))\n        or _is_fixture(m)\n',
+        '        if m.name.lower().startswith(("setup", "teardown", "asyncsetup", "asynctear"))\n',
         "test_each_way_a_file_or_a_class_is_switched_off_or_changed_lists_the_tests_it_acts_on",
         "a changed autouse fixture of a test class listed",
         test_file=NOTES_TEST,
@@ -2798,8 +2831,8 @@ M = [
     mutant(
         "B14 notes check lists a class helper method that the test does not reach",
         NTOOL,
-        '        m for m in helpers.values() if m.name.startswith(("setup", "teardown")) or _is_fixture(m)\n',
-        "        m for m in helpers.values()\n",
+        '        if m.name.lower().startswith(("setup", "teardown", "asyncsetup", "asynctear"))\n        or _is_fixture(m)\n',
+        "        if True\n",
         "test_each_way_a_file_or_a_class_is_switched_off_or_changed_lists_the_tests_it_acts_on",
         "a helper method that the test does not reach listed",
         test_file=NOTES_TEST,

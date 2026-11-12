@@ -434,7 +434,12 @@ def test_the_other_network_kinds_name_their_hosts():
     found = hosts(
         [
             ("channel", slack),
-            ("secrets", VaultSettings(kind="vault", address="https://vault.example:8200")),
+            (
+                "secrets",
+                VaultSettings(
+                    kind="vault", address="https://vault.example:8200", path_prefix="app/"
+                ),
+            ),
             (
                 "secrets",
                 AzureKeyVaultSettings(kind="azure_key_vault", vault_url="https://kv.example"),

@@ -288,3 +288,23 @@ def test_cli_refuses_redact_false_without_the_flag_and_records_it_with(cfg_dir, 
     assert _replay(cfg_dir, export, "--i-know-data-is-already-masked") == 0
     run = json.loads((export["out"] / "run1" / "run.json").read_text(encoding="utf-8"))
     assert run["redaction"]["mode"] == "off_acknowledged"
+
+
+def test_a_config_with_an_empty_vault_path_prefix_is_refused_with_exit_2_and_one_plain_sentence(
+    cfg_dir, capsys
+):
+    path = cfg_dir / "config.yaml"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            "  secrets: fake\n", "  secrets: {kind: vault, address: 'https://vault.example'}\n"
+        ),
+        encoding="utf-8",
+    )
+    assert cli.main(["--config", str(cfg_dir), "tick"]) == 2
+    err = capsys.readouterr().err
+    assert err.startswith("tick: config error: backends.secrets (vault): ")
+    assert (
+        "path_prefix must not be empty: an empty prefix would let this kind read every secret"
+        in err
+    )
+    assert "name the folder of this deployment, for example hadavin/acme/" in err
