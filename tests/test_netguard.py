@@ -82,19 +82,19 @@ NOT_LOOPBACK = [
 ]
 
 
-@pytest.mark.parametrize("host", LOOPBACK)
-def test_loopback_spellings(host: str) -> None:
-    assert is_loopback_host(host) is True, repr(host)
+def test_loopback_spellings() -> None:
+    for host in LOOPBACK:
+        assert is_loopback_host(host) is True, f"should be loopback: {host!r}"
 
 
-@pytest.mark.parametrize("host", NOT_LOOPBACK)
-def test_everything_else_is_not_loopback(host: str) -> None:
-    assert is_loopback_host(host) is False, repr(host)
+def test_everything_else_is_not_loopback() -> None:
+    for host in NOT_LOOPBACK:
+        assert is_loopback_host(host) is False, f"should not be loopback: {host!r}"
 
 
-@pytest.mark.parametrize("value", [None, 0, 1, b"localhost", [LOOP_1], ("::1",), object()])
-def test_a_non_string_is_not_loopback(value: object) -> None:
-    assert is_loopback_host(value) is False
+def test_a_non_string_is_not_loopback() -> None:
+    for value in [None, 0, 1, b"localhost", [LOOP_1], ("::1",), object()]:
+        assert is_loopback_host(value) is False, f"non-text taken as loopback: {type(value)}"
 
 
 def test_the_check_never_resolves_a_name(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -165,16 +165,16 @@ def test_seeded_fuzz_against_an_independent_reading() -> None:
     assert seen_true > 500 and seen_false > 500  # the generator reaches both answers
 
 
-@pytest.mark.parametrize("host", sorted(LOOPBACK_LITERALS))
-def test_the_exact_literals_are_loopback_hosts_too(host: str) -> None:
-    assert is_loopback_literal(host) is True
-    assert is_loopback_host(host) is True
+def test_the_exact_literals_are_loopback_hosts_too() -> None:
+    for host in sorted(LOOPBACK_LITERALS):
+        assert is_loopback_literal(host) is True
+        assert is_loopback_host(host) is True
 
 
-@pytest.mark.parametrize(
-    "host", [LOOP_2, "LOCALHOST", "[::1]", "::ffff:" + LOOP_1, "", None, ALL_ZEROS]
-)
-def test_the_literal_list_stays_exact(host: object) -> None:
+def test_the_literal_list_stays_exact() -> None:
     """The request code allows plain http only to these three spellings; the wider host check must not widen it."""
-    assert is_loopback_literal(host) is False
-    assert netguard.LOOPBACK_LITERALS == frozenset({LOOP_1, "localhost", "::1"})
+    assert netguard.LOOPBACK_LITERALS == frozenset({LOOP_1, "localhost", "::1"}), (
+        "the literal list changed"
+    )
+    for host in [LOOP_2, "LOCALHOST", "[::1]", "::ffff:" + LOOP_1, "", None, ALL_ZEROS]:
+        assert is_loopback_literal(host) is False, f"literal list widened to {host!r}"

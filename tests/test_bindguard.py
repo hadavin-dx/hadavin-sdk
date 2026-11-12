@@ -100,29 +100,27 @@ def test_in_process_is_exactly_these_five_pairs_and_each_is_a_kind_of_the_table(
     assert not IN_PROCESS & (DEMO_ONLY | NOT_PROD), "a kind is listed twice"
 
 
-@pytest.mark.parametrize("bind", PUBLIC)
-def test_a_real_service_refuses_every_public_spelling(
-    stand_in_config: Config, bind: object
-) -> None:
+def test_a_real_service_refuses_every_public_spelling(stand_in_config: Config) -> None:
     for cap, kind in (("llm", "anthropic"), ("store", "postgres"), ("channel", "slack")):
         cfg = _with_kind(stand_in_config, cap, kind)
-        problem = public_bind_problem(bind, cfg)
-        assert problem is not None, (bind, cap, kind)
-        assert f"backends.{cap}: {kind}" in problem
-        with pytest.raises(BindRefused):
-            require_safe_bind(bind, cfg)
+        for bind in PUBLIC:
+            problem = public_bind_problem(bind, cfg)
+            assert problem is not None, f"public bind {bind!r} accepted with {cap}/{kind}"
+            assert f"backends.{cap}: {kind}" in problem
+            with pytest.raises(BindRefused):
+                require_safe_bind(bind, cfg)
 
 
-@pytest.mark.parametrize("bind", LOOPBACK)
-def test_a_real_service_accepts_every_loopback_spelling(stand_in_config: Config, bind: str) -> None:
+def test_a_real_service_accepts_every_loopback_spelling(stand_in_config: Config) -> None:
     cfg = _with_kind(stand_in_config, "llm", "anthropic")
-    assert public_bind_problem(bind, cfg) is None
-    require_safe_bind(bind, cfg)
+    for bind in LOOPBACK:
+        assert public_bind_problem(bind, cfg) is None, f"loopback bind {bind!r} refused"
+        require_safe_bind(bind, cfg)
 
 
-@pytest.mark.parametrize("bind", PUBLIC + LOOPBACK)
-def test_stand_ins_only_accept_any_bind(stand_in_config: Config, bind: object) -> None:
-    assert public_bind_problem(bind, stand_in_config) is None
+def test_stand_ins_only_accept_any_bind(stand_in_config: Config) -> None:
+    for bind in PUBLIC + LOOPBACK:
+        assert public_bind_problem(bind, stand_in_config) is None, f"stand-ins refused {bind!r}"
 
 
 def test_a_detector_that_is_real_counts(stand_in_config: Config) -> None:
