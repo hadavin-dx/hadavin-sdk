@@ -4241,10 +4241,10 @@ def test_a_call_is_resolved_by_its_real_definition_and_not_by_its_name():
     fixed = "def clean(x):\n    return 'fixed'\n"
     use = "def f(self, name):\n    raise A(clean(name))\n"
     outside = {"a.py": fixed, "b.py": "from lib import clean\n" + use}
-    assert len(_guard_violations(outside, allowed={}, exempt={})[0]) == 1
+    assert len(_guard_violations(outside, allowed={}, exempt={})[0]) == 1, "a call of a library function is proved by a tree function of its name"
     inside = {"a.py": fixed, "b.py": "from hadavin_sdk.a import clean\n" + use}
-    assert _guard_violations(inside, allowed={}, exempt={})[0] == []
+    assert _guard_violations(inside, allowed={}, exempt={})[0] == [], "an imported tree function is not judged by its definition"
     other = {"a.py": "def clean(x):\n    return x\n", "b.py": fixed + use}
-    assert _guard_violations(other, allowed={}, exempt={})[0] == []
+    assert _guard_violations(other, allowed={}, exempt={})[0] == [], "a function of another module with the same name proves the call"
     local = {"a.py": fixed, "b.py": "def f(self, name, clean):\n    raise A(clean(name))\n"}
     assert len(_guard_violations(local, allowed={}, exempt={})[0]) == 1

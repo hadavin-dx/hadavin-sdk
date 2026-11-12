@@ -31,7 +31,9 @@ def test_a_failing_detector_is_logged_by_class_only(caplog):
         verdict = injection_check(Broken(), "hello", "tool")
     assert verdict.flagged and verdict.reason_code == "guard_unavailable"
     shown = " ".join(r.getMessage() for r in caplog.records)
-    assert "Broken" in shown and "ValueError" in shown and text not in shown
+    assert "Broken" in shown and "ValueError" in shown and text not in shown, (
+        "the failing detector is logged with its text or without its class"
+    )
 
 
 def test_the_bedrock_detector_logs_the_class_of_a_cloud_error_never_its_text(caplog):
@@ -71,7 +73,9 @@ def test_the_bedrock_error_has_no_cause_and_no_context():
     with pytest.raises(RuntimeError) as raised:
         GuardrailDetector(Client(), "g", "1", 0.5).check("some text", "tool")
     assert raised.value.__cause__ is None and raised.value.__context__ is None
-    assert secret not in str(raised.value) and "OSError" in str(raised.value)
+    assert secret not in str(raised.value) and "OSError" in str(raised.value), (
+        "the cloud text is in the error, or its class is not"
+    )
 
 
 _ = SimpleNamespace  # kept for the tests that follow
@@ -121,7 +125,7 @@ def test_a_sentence_in_a_provider_error_detail_is_dropped_by_describe():
     sentence = (
         "your key " + _marker("detail") + " ran out of quota"
     )  # 80 characters or fewer, with spaces
-    assert describe(Boom("q"), lambda e: sentence) == "Boom 429"
+    assert describe(Boom("q"), lambda e: sentence) == "Boom 429", "a sentence in the provider detail is shown"
     # Round 15: at most 32 characters, and never a run of 32 letters or digits (the shape of a key)
     assert describe(Boom("q"), lambda e: "x" * 33) == "Boom 429"
     assert describe(Boom("q"), lambda e: "x" * 32) == "Boom 429"
@@ -220,7 +224,7 @@ def test_status_text_of_an_int_subclass_prints_the_number():
         def __repr__(self):
             return text
 
-    assert status_text(Sneaky(404)) == "404"
+    assert status_text(Sneaky(404)) == "404", "an int subclass prints its own text"
 
 
 # ---- Issue 8 (e): every strict model of the package hides an unknown key ----------------------------------------------------
@@ -254,12 +258,18 @@ def _all_strict_models():
     return found, skipped
 
 
+# A module of the package that cannot be imported in the test environment is listed here with the reason. Empty today:
+# every extra is installed by the test group. The list may only shrink.
+NOT_IMPORTED: dict[str, str] = {}
+
 _ALL, _SKIPPED = _all_strict_models()
 
 
 def test_the_walk_over_the_package_finds_the_strict_models_and_skips_nothing():
     assert len(_ALL) >= 9
-    assert _SKIPPED == [], f"modules that could not be imported (an extra is missing?): {_SKIPPED}"
+    assert _SKIPPED == sorted(NOT_IMPORTED), (
+        f"modules that could not be imported (an extra is missing?): {_SKIPPED}"
+    )
 
 
 @pytest.mark.parametrize("name", sorted(_ALL))
@@ -287,7 +297,9 @@ def test_a_bundle_folder_name_that_is_a_sentence_is_not_printed(tmp_path):
     (tmp_path / name).mkdir()
     with pytest.raises(BundleError) as raised:
         load_bundle(tmp_path / name)
-    assert _marker("folder") not in str(raised.value) and "<not shown>" in str(raised.value)
+    assert _marker("folder") not in str(raised.value) and "<not shown>" in str(raised.value), (
+        "a folder name that is a sentence is printed"
+    )
 
 
 def test_a_bundle_folder_name_that_is_word_like_is_shown(tmp_path):
@@ -434,6 +446,8 @@ def test_tick_message_withholds_the_text_of_an_error_of_a_library_whatever_the_l
         assert marker not in tick._message(sub(marker)), (
             "a hadavin class with a library base shows the text"
         )
+    os_own = type("OwnFileError", (OSError,), {"__module__": "hadavin_sdk.fake_os"})  # an OSError can quote a path
+    assert marker not in tick._message(os_own(marker)), "an OSError of the package shows its text"
     own = tick.ConfigError(marker)
     assert tick._message(own) == marker  # the package's own sentence is shown (cut and redacted)
 
@@ -451,5 +465,5 @@ def test_each_logs_the_class_of_a_lost_race_at_debug_and_never_its_text(caplog):
     with caplog.at_level(logging.DEBUG, logger=tick._LOG.name):
         tick._each([1], fn, "step label")
     seen = [r for r in caplog.records if "skipped" in r.getMessage()]
-    assert len(seen) == 1 and "StaleState" in seen[0].getMessage()
-    assert marker not in caplog.text
+    assert len(seen) == 1 and "StaleState" in seen[0].getMessage(), "the lost race is logged without its class"
+    assert marker not in caplog.text, "the lost race is logged with its text"
