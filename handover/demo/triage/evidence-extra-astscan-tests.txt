@@ -1,0 +1,72 @@
+EXCEPT-PASS tests/conftest.py:108
+EXCEPT-PASS tests/conftest.py:114
+EXCEPT-PASS tests/support.py:261
+EXCEPT-PASS tests/support.py:354
+EXCEPT-PASS tests/support.py:359
+NEXT tests/support.py:48 next(counter)
+NEXT tests/test_burst_retry.py:75 next(seen)
+NEXT tests/test_crash_points.py:35 next((p for p in ALL_HOOK_POINTS if p != point))
+EXCEPT-PASS tests/test_crm_hubspot.py:534
+NEXT tests/test_crm_hubspot.py:141 next(iter(rig.state.contacts.values()))
+EXCEPT-PASS tests/test_desk_edge_cases.py:537
+EXCEPT-PASS tests/test_desk_http_edge_cases.py:66
+NEXT tests/test_flow.py:501 next((r for r in res if r.status == 409))
+NEXT tests/test_flow.py:537 next((x for x in stalled if x['item_type'] == 'receipt'))
+NEXT tests/test_flow.py:538 next((x for x in stalled if x['item_type'] == 'followup'))
+EMPTY tests/test_followup_edge_cases.py:448 log_message
+NEXT tests/test_http_guard.py:40 next((ln for ln in config.splitlines() if ln.startswith('exclude_dirs')))
+NEXT tests/test_hubspot_probe.py:292 next((b for m, p, b in s.bodies if m == 'POST' and p.endswith('/contacts')))
+NEXT tests/test_hubspot_probe.py:386 next((x for x in out.splitlines() if x.startswith('read-back equal')))
+EMPTY tests/test_hubspot_probe.py:71 log_message
+NEXT tests/test_hung_adapter_calls.py:759 next((i for i in body['items'] if i['lead_id'] == lid))
+NEXT tests/test_hung_adapter_calls.py:771 next((i for i in body['items'] if i['lead_id'] == lid))
+NEXT tests/test_hung_adapter_calls.py:802 next(answers)
+NEXT tests/test_hung_model_call.py:316 next((i for i in body['items'] if i['lead_id'] == lid))
+NEXT tests/test_later_messages.py:169 next((d for d in _detail(base, first)['duplicates'] if d['source_ref'] == 'h-1'))
+NEXT tests/test_lead_crm_copy.py:88 next(iter(hs.state.contacts))
+NEXT tests/test_lead_crm_copy.py:131 next(iter(hs.state.contacts))
+NEXT tests/test_load_tools.py:769 next((c for c in res['checks'] if c['id'] == 2))
+NEXT tests/test_load_tools.py:483 next((i for i in firsts if i['request_id'] == b['request_id']))
+EMPTY tests/test_load_tools.py:527 log_message
+NEXT tests/test_mode_safety.py:475 next((r['purpose'] for r in out['stored'] if r['field'] == 'lead_stage'))
+EXEC tests/test_mutants.py:108 exec(compile(src, f'<mutant {name}>', 'exec'), ns)
+NEXT tests/test_portal_api.py:341 next((r for r in out['rows'] if r['lead_id'] == ids['grace']))
+NEXT tests/test_portal_api.py:343 next((r for r in out['rows'] if r['lead_id'] == ids['ada']))
+NEXT tests/test_portal_api.py:469 next((i for i in out['items'] if i['reason'].startswith('incomplete:')))
+NEXT tests/test_portal_api.py:471 next((i for i in out['items'] if i['reason'] == 'internal_error'))
+NEXT tests/test_portal_api.py:494 next((i for i in get(base, '/api/ui/review')[1]['items'] if i['item_id'] == 'F' + lid))
+NEXT tests/test_portal_api.py:584 next((i for i in get(base, '/api/ui/review')[1]['items'] if i['item_id'] == 'F' + lid))
+NEXT tests/test_portal_api.py:611 next((i for i in get(base, '/api/ui/review')[1]['items'] if i['item_id'] == 'F' + lid))
+NEXT tests/test_portal_api.py:659 next((i for i in get(base, '/api/ui/review')[1]['items'] if i['item_id'] == 'F' + lid))
+NEXT tests/test_portal_api.py:684 next((i for i in out['items'] if i['reason'] == reason))
+NEXT tests/test_portal_api.py:1713 next((i for i in get(base, '/api/ui/review')[1]['items'] if i['lead_id'] == ids['alan']))
+NEXT tests/test_portal_api.py:1752 next((i for i in get(base, '/api/ui/review')[1]['items'] if i['lead_id'] == ids['alan']))
+NEXT tests/test_portal_api.py:1800 next((r for r in portal_api._data_map(rig.desk)['stored'] if r['field'] == 'lead_id'))
+NEXT tests/test_portal_api.py:1690 next((i for i in get(base, '/api/ui/review')[1]['items'] if i['item_id'] == 'F' + ids[key]))
+NEXT tests/test_portal_api.py:476 next((i for i in out['items'] if i['item_id'][0] == 'O'))
+NEXT tests/test_portal_api.py:479 next((i for i in info if i['kind'] == 'duplicate_with_new_info'))
+NEXT tests/test_portal_api.py:635 next((i for i in get(base, '/api/ui/review')[1]['items'] if i['item_id'] == 'F' + lid))
+EXCEPT-PASS tests/test_portal_api.py:1643
+EXCEPT-PASS tests/test_portal_demo.py:201
+EMPTY tests/test_real_check_dry.py:727 logout
+EMPTY tests/test_real_check_dry.py:730 shutdown
+EMPTY tests/test_real_check_dry.py:584 __init__
+NEXT tests/test_real_check_dry.py:710 next((c for c in checks if c['id'] == 'F6'))
+NEXT tests/test_real_check_dry.py:566 next(results)
+NEXT tests/test_reminder_email.py:392 next((m for m in seen if m[0].startswith('nudge:')))
+NEXT tests/test_review_item_edge_cases.py:127 next((i for i in rig.desk.review().body if i['item_id'] == f'R{rid}'))
+NEXT tests/test_review_item_edge_cases.py:181 next((i for i in rig.desk.review().body if i['item_id'] == f'F{lid}'))
+EMPTY tests/test_server_main_reaper.py:29 server_close
+EMPTY tests/test_slow_sender.py:751 flush
+EMPTY tests/test_slow_sender.py:756 settimeout
+EXCEPT-PASS tests/test_slow_sender.py:284
+EMPTY tests/test_slow_sender.py:768 release
+SELF-CMP tests/test_slow_sender.py:911 value != value
+EXEC tests/test_slow_sender.py:917 exec(compile(patched, str(src), 'exec'), {'__name__': 'constants_probe'})
+EXCEPT-PASS tests/test_smtp_outbox.py:97
+SELF-CMP tests/test_smtp_provider.py:110 ob.recipient_for('RUN1-L7') == ob.recipient_for('RUN1-L7')
+EMPTY tests/test_stall_eviction.py:50 shutdown
+EMPTY tests/test_stall_eviction.py:53 close
+EMPTY tests/test_stall_eviction.py:166 release
+EXCEPT-PASS tests/test_stall_eviction.py:508
+EXCEPT-PASS tests/test_stall_eviction.py:145

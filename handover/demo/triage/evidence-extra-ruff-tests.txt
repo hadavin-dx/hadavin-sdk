@@ -1,0 +1,41 @@
+tests/test_crm_hubspot.py:442:28: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_desk_http_edge_cases.py:1214:13: PT017 Found assertion on exception `e` in `except` block, use `pytest.raises()` instead
+tests/test_env_numbers.py:104:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_env_numbers.py:199:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_followup_edge_cases.py:477:32: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_http.py:442:28: PT011 `pytest.raises(OSError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_hung_adapter_calls.py:537:5: PT012 `pytest.raises()` block should contain a single simple statement
+tests/test_infra.py:171:24: PT011 `pytest.raises(OSError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_infra.py:175:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_lead_step_route.py:108:14: C416 Unnecessary dict comprehension (rewrite using `dict()`)
+tests/test_lead_step_route.py:534:13: PT017 Found assertion on exception `e` in `except` block, use `pytest.raises()` instead
+tests/test_ledger_amounts.py:290:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_ledger_amounts.py:432:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_ledger_amounts.py:562:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_ledger_amounts.py:622:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_live_claude.py:207:28: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_live_claude.py:289:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_live_claude.py:291:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_live_claude.py:560:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_load_tools.py:457:28: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_load_tools.py:706:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_load_tools.py:730:24: PT011 `pytest.raises(OSError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_load_tools.py:918:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_load_tools.py:924:28: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_portal_api.py:166:9: PT012 `pytest.raises()` block should contain a single simple statement
+tests/test_portal_api.py:215:16: C416 Unnecessary set comprehension (rewrite using `set()`)
+tests/test_portal_api.py:1584:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_portal_demo.py:294:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_portal_lead_pages.py:258:18: RUF015 Prefer `next(x for x in m["th"] if x[0] == "Source")` over single element slice
+tests/test_portal_lead_pages.py:260:16: RUF015 Prefer `next(x for x in m["th"] if x[0] == "Last change")` over single element slice
+tests/test_portal_mode.py:317:16: C416 Unnecessary list comprehension (rewrite using `list()`)
+tests/test_slow_sender.py:911:33: PLR0124 Name compared with itself, consider replacing `value != value`
+tests/test_smtp_outbox.py:308:28: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_smtp_outbox.py:310:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_smtp_provider.py:251:28: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_smtp_provider.py:501:24: PT011 `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_smtp_provider.py:668:28: PT011 `pytest.raises(OSError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_stamp_locks_and_budget.py:403:28: PT011 `pytest.raises(OSError)` is too broad, set the `match` parameter or use a more specific exception
+tests/test_stamp_locks_and_budget.py:414:28: PT011 `pytest.raises(OSError)` is too broad, set the `match` parameter or use a more specific exception
+Found 4749 errors.
+701 unsafe fixes available with `--fix --unsafe-fixes`.

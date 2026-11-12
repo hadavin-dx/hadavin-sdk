@@ -1,0 +1,8 @@
+************* Module demo_only.portal_demo
+demo_only/portal_demo.py:136:0: W0613: Unused argument 'args' (unused-argument)
+demo_only/portal_demo.py:136:0: W0613: Unused argument 'kwargs' (unused-argument)
+************* Module demo_only.fakes
+demo_only/fakes.py:43:39: W0613: Unused argument 'email_key' (unused-argument)
+demo_only/fakes.py:81:57: W0613: Unused argument 'body' (unused-argument)
+demo_only/fakes.py:81:68: W0613: Unused argument 'timeout' (unused-argument)
+demo_only/fakes.py:130:22: W0613: Unused argument 'lead_id' (unused-argument)

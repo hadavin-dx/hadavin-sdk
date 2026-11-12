@@ -1,0 +1,1 @@
+No patch needed: no REAL (behaviour-risk) item found in tests; STYLE items are listed, not patched, by instruction. See DEEPSOURCE-COVERAGE.md.

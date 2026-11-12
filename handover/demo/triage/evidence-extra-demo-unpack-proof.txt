@@ -1,0 +1,4 @@
+all answer -> {'reachable': True, 'outbox_mode': 'unknown', 'crm_mode': 'unknown', 'outbox': {'count': 0, 'reminders': 0, 'followups': 0, 'messages': []}, 'crm': {'count': 0, 'rows': []}}
+one unreachable -> {'reachable': False, 'error': 'unreachable'}
+all None -> {'reachable': False, 'error': 'unreachable'}
+deadline passed -> {'reachable': False, 'error': 'unreachable'}

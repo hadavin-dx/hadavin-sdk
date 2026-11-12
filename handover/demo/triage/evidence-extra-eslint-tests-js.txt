@@ -1,0 +1,34 @@
+
+/tmp/work/ds-extra/tests/portal_contrast_probe.js
+   7:24  error  'document' is not defined          no-undef
+   7:55  error  'document' is not defined          no-undef
+  10:18  error  'document' is not defined          no-undef
+  10:51  error  'NodeFilter' is not defined        no-undef
+  16:16  error  'getComputedStyle' is not defined  no-undef
+  20:81  error  'getComputedStyle' is not defined  no-undef
+  23:59  error  'getComputedStyle' is not defined  no-undef
+
+/tmp/work/ds-extra/tests/portal_demo_probe.js
+  19:1  warning  Unexpected console statement  no-console
+
+/tmp/work/ds-extra/tests/portal_probe.js
+  33:3   warning  Unexpected console statement  no-console
+  51:3   warning  Unexpected console statement  no-console
+  77:3   warning  Unexpected console statement  no-console
+  82:20  warning  Unexpected console statement  no-console
+
+/tmp/work/ds-extra/tests/portal_proof_probe.js
+  23:1  warning  Unexpected console statement  no-console
+
+/tmp/work/ds-extra/tests/portal_state_probe.js
+  118:7   warning  Unexpected console statement  no-console
+  128:7   warning  Unexpected console statement  no-console
+  130:7   warning  Unexpected console statement  no-console
+  141:7   warning  Unexpected console statement  no-console
+  145:7   warning  Unexpected console statement  no-console
+  161:7   warning  Unexpected console statement  no-console
+  169:7   warning  Unexpected console statement  no-console
+  171:17  warning  Unexpected console statement  no-console
+
+✖ 21 problems (7 errors, 14 warnings)
+

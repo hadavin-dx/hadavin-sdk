@@ -1,0 +1,657 @@
+************* Module conftest
+tests/conftest.py:24: [W0613(unused-argument), pytest_sessionstart] Unused argument 'session'
+tests/conftest.py:43: [R6301(no-self-use), _NeedsDemoItem.runtest] Method could be a function
+************* Module support
+tests/support.py:84: [W0621(redefined-outer-name), sql_exec] Redefining name 'sql' from outer scope (line 94)
+tests/support.py:188: [W0613(unused-argument), BlockAt.crash_point] Unused argument 'conn'
+tests/support.py:245: [W0621(redefined-outer-name), Rig.query] Redefining name 'sql' from outer scope (line 94)
+tests/support.py:252: [W0621(redefined-outer-name), Rig.state] Redefining name 'sql' from outer scope (line 94)
+tests/support.py:271: [W0621(redefined-outer-name), rows] Redefining name 'sql' from outer scope (line 94)
+************* Module test_ai_after_claim
+tests/test_ai_after_claim.py:26: [W0613(unused-argument), SlowQualifier.qualify] Unused argument 'lead_id'
+tests/test_ai_after_claim.py:26: [W0613(unused-argument), SlowQualifier.qualify] Unused argument 'email_key'
+************* Module test_burst_retry
+tests/test_burst_retry.py:49: [W0621(redefined-outer-name), test_a_busy_desk_is_retried_for_the_whole_deadline_not_for_a_count] Redefining name 'clock' from outer scope (line 30)
+tests/test_burst_retry.py:59: [W0621(redefined-outer-name), test_waits_double_and_stop_growing_at_the_maximum] Redefining name 'clock' from outer scope (line 30)
+tests/test_burst_retry.py:65: [W0621(redefined-outer-name), test_the_desks_retry_after_is_honoured_up_to_the_maximum] Redefining name 'clock' from outer scope (line 30)
+tests/test_burst_retry.py:73: [W0621(redefined-outer-name), test_an_answer_that_is_not_busy_ends_the_retries] Redefining name 'clock' from outer scope (line 30)
+tests/test_burst_retry.py:81: [W0621(redefined-outer-name), test_max_retries_zero_means_no_retry_at_all] Redefining name 'clock' from outer scope (line 30)
+tests/test_burst_retry.py:81: [W0613(unused-argument), test_max_retries_zero_means_no_retry_at_all] Unused argument 'clock'
+tests/test_burst_retry.py:88: [W0621(redefined-outer-name), test_stop_ends_the_loop_and_every_busy_answer_is_counted] Redefining name 'clock' from outer scope (line 30)
+tests/test_burst_retry.py:88: [W0613(unused-argument), test_stop_ends_the_loop_and_every_busy_answer_is_counted] Unused argument 'clock'
+tests/test_burst_retry.py:101: [W0621(redefined-outer-name), test_a_forward_step_of_the_wall_clock_changes_nothing] Redefining name 'clock' from outer scope (line 30)
+tests/test_burst_retry.py:101: [W0613(unused-argument), test_a_forward_step_of_the_wall_clock_changes_nothing] Unused argument 'clock'
+tests/test_burst_retry.py:139: [R6301(no-self-use), test_a_cut_off_reply_is_a_network_error_not_a_dead_thread.Opener.open] Method could be a function
+tests/test_burst_retry.py:147: [W0621(redefined-outer-name), test_a_tiny_wait_still_moves_the_fake_clock] Redefining name 'clock' from outer scope (line 30)
+************* Module test_claim_checks_and_crm_mode
+tests/test_claim_checks_and_crm_mode.py:104: [R6301(no-self-use), DownCrm.refresh] Method could be a function
+tests/test_claim_checks_and_crm_mode.py:135: [R6301(no-self-use), test_exit_steps_run_when_one_raises.Stub.serve_forever] Method could be a function
+tests/test_claim_checks_and_crm_mode.py:138: [R6301(no-self-use), test_exit_steps_run_when_one_raises.Stub.server_close] Method could be a function
+tests/test_claim_checks_and_crm_mode.py:142: [R6301(no-self-use), test_exit_steps_run_when_one_raises.Failing.stop_background] Method could be a function
+************* Module test_clock_steps
+tests/test_clock_steps.py:80: [W0613(unused-argument), test_retry_deadline_and_latency_ignore_a_wall_clock_step.post] Unused argument 'url'
+tests/test_clock_steps.py:80: [W0613(unused-argument), test_retry_deadline_and_latency_ignore_a_wall_clock_step.post] Unused argument 'body'
+tests/test_clock_steps.py:195: [W0613(unused-argument), test_the_logged_lag_ignores_a_wall_clock_step.fake_send] Unused argument 'url'
+************* Module test_crash_points
+tests/test_crash_points.py:74: [W0613(unused-argument), _Recorder.crash_point] Unused argument 'conn'
+************* Module test_crm_hubspot
+tests/test_crm_hubspot.py:43: [W0621(redefined-outer-name), Rig.__init__] Redefining name 'mode' from outer scope (line 70)
+tests/test_crm_hubspot.py:76: [W0621(redefined-outer-name), test_put_creates_one_contact_with_our_property] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:92: [W0621(redefined-outer-name), test_second_put_same_lead_is_already_present_without_a_second_contact] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:100: [W0621(redefined-outer-name), test_409_without_an_id_is_confirmed_by_email] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:109: [W0621(redefined-outer-name), test_real_409_wording_is_read_back_by_the_named_id] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:127: [W0621(redefined-outer-name), test_the_fake_refuses_dot_test_like_the_real_crm_when_asked] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:135: [W0621(redefined-outer-name), test_same_email_other_lead_id_is_taken_and_nothing_is_changed] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:144: [W0621(redefined-outer-name), test_same_person_different_email_makes_a_second_contact] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:152: [W0621(redefined-outer-name), test_timeout_after_create_then_retry_finds_it_and_does_not_double] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:163: [W0621(redefined-outer-name), test_slow_answer_inside_budget_is_ok_and_beyond_it_is_unclear] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:173: [W0621(redefined-outer-name), test_5xx_is_unclear_and_the_retry_is_safe] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:183: [W0621(redefined-outer-name), test_429_waits_the_named_seconds_then_succeeds] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:190: [W0621(redefined-outer-name), test_429_uses_the_backoff_without_retry_after_and_gives_up_busy] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:199: [W0621(redefined-outer-name), test_429_with_a_wait_longer_than_the_budget_does_not_sleep] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:207: [W0621(redefined-outer-name), test_4xx_is_refused_and_stored_nothing] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:215: [W0621(redefined-outer-name), test_malformed_201_is_unclear] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:229: [W0621(redefined-outer-name), test_call_cap_stops_before_the_network] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:239: [W0621(redefined-outer-name), test_key_file_missing_or_empty_is_a_classed_config_error_without_the_path] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:252: [W0621(redefined-outer-name), test_key_is_read_at_call_time_and_never_appears_in_errors_or_logs] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:265: [W0621(redefined-outer-name), test_lead_id_outside_the_allowed_set_is_refused_before_the_network] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:271: [W0621(redefined-outer-name), test_read_back_list_search_lag_and_archive] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:287: [W0621(redefined-outer-name), test_concurrent_puts_of_one_lead_make_one_contact] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:315: [W0621(redefined-outer-name), test_config_and_loader_select_hubspot_and_default_stays_fake] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:335: [W0621(redefined-outer-name), test_a_redirect_to_another_host_is_never_followed_and_the_key_never_leaves] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:351: [W0621(redefined-outer-name), test_rotated_key_never_appears_in_errors_or_logs] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:361: [W0621(redefined-outer-name), test_429_waits_at_least_the_named_seconds] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:368: [W0621(redefined-outer-name), test_listing_pages_are_followed_until_the_end] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:379: [W0621(redefined-outer-name), test_a_hanging_listing_ends_inside_one_budget_not_fifty] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:390: [W0621(redefined-outer-name), test_recycle_bin_makes_the_conflict_loud_and_unclear] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:447: [W0621(redefined-outer-name), test_the_adapter_budget_is_clamped_to_the_desks_send_timeout] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:470: [W0621(redefined-outer-name), test_key_file_formats] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:485: [W0621(redefined-outer-name), test_a_409_whose_lead_id_matches_but_whose_email_differs_is_not_this_leads_contact] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:499: [W0621(redefined-outer-name), test_the_read_back_asks_for_the_email_property_too] Redefining name 'rig' from outer scope (line 64)
+tests/test_crm_hubspot.py:506: [W0621(redefined-outer-name), test_archive_is_counted_as_an_archive_not_as_a_read] Redefining name 'rig' from outer scope (line 64)
+************* Module test_desk_edge_cases
+tests/test_desk_edge_cases.py:113: [W0613(unused-argument), BlindCrm.put] Unused argument 'record'
+tests/test_desk_edge_cases.py:189: [W0613(unused-argument), test_unstorable_gets_verdict.lenient] Unused argument 'obj'
+tests/test_desk_edge_cases.py:203: [W0621(redefined-outer-name), test_integrity_error_is_visible_and_counted_not_hidden] Redefining name 'sqlite3' from outer scope (line 11)
+tests/test_desk_edge_cases.py:203: [W0404(reimported), test_integrity_error_is_visible_and_counted_not_hidden] Reimport 'sqlite3' (imported line 11)
+tests/test_desk_edge_cases.py:230: [W0613(unused-argument), test_integrity_error_through_a_real_constraint_is_stored_apart.too_long] Unused argument 'obj'
+tests/test_desk_edge_cases.py:369: [W0613(unused-argument), _http_desk] Unused argument 'env'
+************* Module test_desk_http_edge_cases
+tests/test_desk_http_edge_cases.py:55: [W0613(unused-argument), bg] Unused argument 'env'
+tests/test_desk_http_edge_cases.py:83: [W0621(redefined-outer-name), reaper_rig] Redefining name 'bg' from outer scope (line 55)
+tests/test_desk_http_edge_cases.py:122: [W0621(redefined-outer-name), test_reaper_decides_stalled] Redefining name 'bg' from outer scope (line 55)
+tests/test_desk_http_edge_cases.py:145: [W0621(redefined-outer-name), test_reaper_requeues_keyed_sending] Redefining name 'bg' from outer scope (line 55)
+tests/test_desk_http_edge_cases.py:164: [W0621(redefined-outer-name), test_reaper_blind_sending_unknown] Redefining name 'bg' from outer scope (line 55)
+tests/test_desk_http_edge_cases.py:205: [W0613(unused-argument), test_decision_write_retries_7s.HoldAtA.crash_point] Unused argument 'conn'
+tests/test_desk_http_edge_cases.py:284: [W0621(redefined-outer-name), test_outage_is_retried_automatically] Redefining name 'bg' from outer scope (line 55)
+tests/test_desk_http_edge_cases.py:294: [W0621(redefined-outer-name), test_failed_only_after_cap] Redefining name 'bg' from outer scope (line 55)
+tests/test_desk_http_edge_cases.py:310: [W0621(redefined-outer-name), test_person_retry_resets_the_count] Redefining name 'bg' from outer scope (line 55)
+tests/test_desk_http_edge_cases.py:339: [W0613(unused-argument), BlindCrm.put] Unused argument 'record'
+tests/test_desk_http_edge_cases.py:449: [W0621(redefined-outer-name), test_startup_50_pending] Redefining name 'bg' from outer scope (line 55)
+tests/test_desk_http_edge_cases.py:468: [W0612(unused-variable), test_startup_50_pending] Unused variable 'body'
+tests/test_desk_http_edge_cases.py:490: [W0621(redefined-outer-name), _server_env] Redefining name 'db' from outer scope (line 42)
+tests/test_desk_http_edge_cases.py:506: [W0621(redefined-outer-name), test_symlinked_second_desk] Redefining name 'db' from outer scope (line 42)
+tests/test_desk_http_edge_cases.py:538: [W0621(redefined-outer-name), test_lock_file_unopenable] Redefining name 'db' from outer scope (line 42)
+tests/test_desk_http_edge_cases.py:557: [W0621(redefined-outer-name), test_lock_file_replaced] Redefining name 'db' from outer scope (line 42)
+tests/test_desk_http_edge_cases.py:1266: [C1803(use-implicit-booleaness-not-comparison), test_failed_internal_row_gets_crm] "crm.rows == []" can be simplified to "not crm.rows", if it is strictly a sequence, as an empty list is falsey
+tests/test_desk_http_edge_cases.py:1332: [W0613(unused-argument), test_poison_receipt_ends_in_review.boom] Unused argument 'obj'
+************* Module test_env_numbers
+tests/test_env_numbers.py:406: [W0613(unused-argument), test_each_refusal_rule_is_pinned] Unused argument 'rule'
+************* Module test_hubspot_probe
+tests/test_hubspot_probe.py:115: [W0621(redefined-outer-name), test_happy_path_count_matches_plan] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:162: [W0621(redefined-outer-name), test_cleanup_after_failure_at_each_step] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:175: [W0621(redefined-outer-name), test_token_echoed_in_a_4xx_message_is_masked] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:182: [W0621(redefined-outer-name), test_delete_falls_back_to_normal_delete] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:188: [W0621(redefined-outer-name), test_both_deletes_fail_warns_and_fails] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:195: [W0621(redefined-outer-name), test_429_retries_are_counted_and_the_budget_stops_the_run] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:209: [W0621(redefined-outer-name), test_budget_stop_still_deletes_with_reserve] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:216: [W0621(redefined-outer-name), test_gdpr_429_forever_stays_inside_budget] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:239: [W0621(redefined-outer-name), test_unknown_create_outcome_deletes_by_email] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:250: [W0621(redefined-outer-name), test_unknown_create_outcome_that_cannot_be_deleted_warns_with_the_email] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:258: [W0621(redefined-outer-name), test_create_id_missing_deletes_by_email] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:265: [W0621(redefined-outer-name), test_unknown_create_but_gdpr_404_is_not_needed] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:272: [W0621(redefined-outer-name), test_create_403_says_not_needed] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:279: [W0621(redefined-outer-name), test_owner_and_lead_status_are_written_in_separate_calls] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:289: [W0621(redefined-outer-name), test_tag_property_present_is_written] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:297: [W0621(redefined-outer-name), test_no_owner_skips_owner_write_and_still_passes] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:304: [W0621(redefined-outer-name), test_redirect_is_not_followed] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:311: [W0621(redefined-outer-name), test_proxy_environment_is_ignored] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:329: [W0621(redefined-outer-name), test_odd_retry_after_does_not_crash] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:382: [W0621(redefined-outer-name), test_read_back_with_different_values_fails_and_names_the_field] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:392: [W0621(redefined-outer-name), test_lost_create_then_successful_delete_says_create_outcome_unknown] Redefining name 'make' from outer scope (line 94)
+tests/test_hubspot_probe.py:400: [W0621(redefined-outer-name), test_lost_create_never_uses_a_by_email_normal_delete] Redefining name 'make' from outer scope (line 94)
+************* Module test_hung_adapter_calls
+tests/test_hung_adapter_calls.py:130: [W0621(redefined-outer-name), test_reaper_survives_hung_crm_put] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:130: [W0613(unused-argument), test_reaper_survives_hung_crm_put] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:150: [W0621(redefined-outer-name), test_reaper_survives_hung_send] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:150: [W0613(unused-argument), test_reaper_survives_hung_send] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:170: [W0621(redefined-outer-name), test_reaper_survives_hung_refresh] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:170: [W0613(unused-argument), test_reaper_survives_hung_refresh] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:186: [W0621(redefined-outer-name), test_hung_read_means_unreadable] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:186: [W0613(unused-argument), test_hung_read_means_unreadable] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:202: [W0621(redefined-outer-name), test_blind_send_timeout_is_unknown] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:202: [W0613(unused-argument), test_blind_send_timeout_is_unknown] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:224: [W0621(redefined-outer-name), test_blind_retry_waits_for_old_send] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:224: [W0613(unused-argument), test_blind_retry_waits_for_old_send] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:276: [W0621(redefined-outer-name), test_keyed_send_timeout_same_key] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:276: [W0613(unused-argument), test_keyed_send_timeout_same_key] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:293: [W0621(redefined-outer-name), test_late_send_writes_nothing] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:293: [W0613(unused-argument), test_late_send_writes_nothing] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:307: [W0621(redefined-outer-name), test_blind_crm_timeout_is_unknown] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:307: [W0613(unused-argument), test_blind_crm_timeout_is_unknown] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:325: [W0621(redefined-outer-name), test_keyed_crm_timeout_same_key] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:325: [W0613(unused-argument), test_keyed_crm_timeout_same_key] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:341: [W0621(redefined-outer-name), test_late_crm_put_writes_nothing] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:341: [W0613(unused-argument), test_late_crm_put_writes_nothing] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:368: [W0613(unused-argument), test_workers_stay_within_the_cap.Counted.qualify] Unused argument 'lead_id'
+tests/test_hung_adapter_calls.py:368: [W0613(unused-argument), test_workers_stay_within_the_cap.Counted.qualify] Unused argument 'email_key'
+tests/test_hung_adapter_calls.py:368: [R6301(no-self-use), test_workers_stay_within_the_cap.Counted.qualify] Method could be a function
+tests/test_hung_adapter_calls.py:405: [W0613(unused-argument), test_busy_give_back_keeps_the_age] Unused argument 'monkeypatch'
+tests/test_hung_adapter_calls.py:473: [W0621(redefined-outer-name), test_full_send_cap_gives_back] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:473: [W0613(unused-argument), test_full_send_cap_gives_back] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:540: [W0108(unnecessary-lambda), test_thread_start_failure_is_busy.<lambda>] Lambda may not be necessary
+tests/test_hung_adapter_calls.py:544: [W0621(redefined-outer-name), test_hung_workers_are_counted] Redefining name 'quick' from outer scope (line 111)
+tests/test_hung_adapter_calls.py:544: [W0613(unused-argument), test_hung_workers_are_counted] Unused argument 'quick'
+tests/test_hung_adapter_calls.py:726: [W0621(redefined-outer-name), test_answer_lost_real_lock_keeps_try] Redefining name 'locked_after_answer' from outer scope (line 690)
+tests/test_hung_adapter_calls.py:748: [W0621(redefined-outer-name), test_answer_lost_card_not_email_left] Redefining name 'locked_after_answer' from outer scope (line 690)
+tests/test_hung_adapter_calls.py:794: [W0621(redefined-outer-name), test_late_refresh_keeps_newer_mode] Redefining name 'clock_kind' from outer scope (line 786)
+tests/test_hung_adapter_calls.py:801: [W0613(unused-argument), test_late_refresh_keeps_newer_mode.exchange] Unused argument 'url'
+tests/test_hung_adapter_calls.py:801: [W0613(unused-argument), test_late_refresh_keeps_newer_mode.exchange] Unused argument 'payload'
+tests/test_hung_adapter_calls.py:801: [W0613(unused-argument), test_late_refresh_keeps_newer_mode.exchange] Unused argument 'timeout'
+tests/test_hung_adapter_calls.py:794: [W0613(unused-argument), test_late_refresh_keeps_newer_mode] Unused argument 'clock_kind'
+tests/test_hung_adapter_calls.py:820: [W0621(redefined-outer-name), test_late_put_keeps_newer_mode] Redefining name 'clock_kind' from outer scope (line 786)
+tests/test_hung_adapter_calls.py:824: [W0621(redefined-outer-name), test_late_put_keeps_newer_mode] Redefining name 'gate' from outer scope (line 19)
+tests/test_hung_adapter_calls.py:827: [W0613(unused-argument), test_late_put_keeps_newer_mode.exchange] Unused argument 'url'
+tests/test_hung_adapter_calls.py:827: [W0613(unused-argument), test_late_put_keeps_newer_mode.exchange] Unused argument 'timeout'
+tests/test_hung_adapter_calls.py:820: [W0613(unused-argument), test_late_put_keeps_newer_mode] Unused argument 'clock_kind'
+tests/test_hung_adapter_calls.py:846: [W0621(redefined-outer-name), test_late_outbox_refresh_keeps_newer] Redefining name 'clock_kind' from outer scope (line 786)
+tests/test_hung_adapter_calls.py:855: [W0613(unused-argument), test_late_outbox_refresh_keeps_newer.exchange] Unused argument 'url'
+tests/test_hung_adapter_calls.py:855: [W0613(unused-argument), test_late_outbox_refresh_keeps_newer.exchange] Unused argument 'payload'
+tests/test_hung_adapter_calls.py:855: [W0613(unused-argument), test_late_outbox_refresh_keeps_newer.exchange] Unused argument 'timeout'
+tests/test_hung_adapter_calls.py:846: [W0613(unused-argument), test_late_outbox_refresh_keeps_newer] Unused argument 'clock_kind'
+************* Module test_hung_model_call
+tests/test_hung_model_call.py:84: [W0621(redefined-outer-name), test_reaper_survives_hung_model] Redefining name 'hung' from outer scope (line 70)
+tests/test_hung_model_call.py:111: [W0621(redefined-outer-name), test_hung_model_spends_the_try] Redefining name 'hung' from outer scope (line 70)
+tests/test_hung_model_call.py:127: [W0621(redefined-outer-name), test_late_answer_writes_nothing] Redefining name 'hung' from outer scope (line 70)
+tests/test_hung_model_call.py:144: [W0621(redefined-outer-name), test_hung_calls_are_capped] Redefining name 'hung' from outer scope (line 70)
+tests/test_hung_model_call.py:168: [W0621(redefined-outer-name), test_hung_tries_end_in_failed] Redefining name 'hung' from outer scope (line 70)
+tests/test_hung_model_call.py:181: [W0621(redefined-outer-name), test_model_error_reaches_the_drive] Redefining name 'hung' from outer scope (line 70)
+tests/test_hung_model_call.py:315: [W0612(unused-variable), test_crm_down_runs_to_failed] Unused variable 'status'
+tests/test_hung_model_call.py:387: [R6301(no-self-use), test_requeued_counts_changed_rows.Unreadable.refresh] Method could be a function
+************* Module test_later_approval
+tests/test_later_approval.py:151: [C1803(use-implicit-booleaness-not-comparison), test_decided_item_409_never_takes_the_write_gate] "taken == []" can be simplified to "not taken", if it is strictly a sequence, as an empty list is falsey
+tests/test_later_approval.py:190: [W0640(cell-var-from-loop), test_ten_racing_decisions_one_row.<lambda>] Cell variable rig defined in loop
+tests/test_later_approval.py:190: [W0640(cell-var-from-loop), test_ten_racing_decisions_one_row.<lambda>] Cell variable rid defined in loop
+tests/test_later_approval.py:255: [W0613(unused-argument), test_kept_book_gets_the_decision_table] Unused argument 'tmp_path'
+tests/test_later_approval.py:486: [W0613(unused-argument), test_main_loads_approvers_and_refuses_bad_ones.capture] Unused argument 'a'
+tests/test_later_approval.py:486: [W0613(unused-argument), test_main_loads_approvers_and_refuses_bad_ones.capture] Unused argument 'k'
+tests/test_later_approval.py:582: [W0621(redefined-outer-name), test_resolve_413_drains_the_unread_body_like_post_leads] Redefining name 'server' from outer scope (line 18)
+tests/test_later_approval.py:582: [W0404(reimported), test_resolve_413_drains_the_unread_body_like_post_leads] Reimport 'server' (imported line 18)
+tests/test_later_approval.py:606: [W0613(unused-argument), _gate_order_and_length_rules] Unused argument 'env'
+************* Module test_later_messages
+tests/test_later_messages.py:133: [C1803(use-implicit-booleaness-not-comparison), test_later_messages_never_call_the_ai] "seen == []" can be simplified to "not seen", if it is strictly a sequence, as an empty list is falsey
+************* Module test_lead_crm_copy
+tests/test_lead_crm_copy.py:50: [W0621(redefined-outer-name), test_set_fields_on_every_crm_class] Redefining name 'hs' from outer scope (line 39)
+tests/test_lead_crm_copy.py:127: [W0621(redefined-outer-name), test_hubspot_patch_mapping] Redefining name 'hs' from outer scope (line 39)
+tests/test_lead_crm_copy.py:168: [W0621(redefined-outer-name), test_mirror_subcap_never_starves_put] Redefining name 'hs' from outer scope (line 39)
+tests/test_lead_crm_copy.py:218: [C1803(use-implicit-booleaness-not-comparison), test_mirror_waits_for_crm_done] "crm.set_fields_calls == []" can be simplified to "not crm.set_fields_calls", if it is strictly a sequence, as an empty list is falsey
+tests/test_lead_crm_copy.py:397: [W0621(redefined-outer-name), test_mutant_copy_share_not_checked] Redefining name 'hs' from outer scope (line 39)
+************* Module test_lead_owner_assignment
+tests/test_lead_owner_assignment.py:87: [W0613(unused-argument), test_reaper_part_failure_does_not_starve_the_next.mirror] Unused argument 'self'
+tests/test_lead_owner_assignment.py:87: [W0613(unused-argument), test_reaper_part_failure_does_not_starve_the_next.mirror] Unused argument 'done'
+tests/test_lead_owner_assignment.py:91: [W0613(unused-argument), test_reaper_part_failure_does_not_starve_the_next.nudge] Unused argument 'self'
+tests/test_lead_owner_assignment.py:91: [W0613(unused-argument), test_reaper_part_failure_does_not_starve_the_next.nudge] Unused argument 'done'
+tests/test_lead_owner_assignment.py:170: [C1803(use-implicit-booleaness-not-comparison), test_a_kill_at_a2_then_replay_does_not_skip_an_owner] "hooks.fired == []" can be simplified to "not hooks.fired", if it is strictly a sequence, as an empty list is falsey
+************* Module test_lead_step_route
+tests/test_lead_step_route.py:108: [R1721(unnecessary-comprehension), _balanced_body] Unnecessary use of a comprehension, use dict(rig.query('SELECT owner_name, count(*) FROM lead_state GROUP BY owner_name')) instead.
+tests/test_lead_step_route.py:203: [W0613(unused-argument), test_old_book_gets_new_tables_and_old_leads_stay_unassigned] Unused argument 'env'
+tests/test_lead_step_route.py:499: [C1803(use-implicit-booleaness-not-comparison), test_step_route_never_reaches_resolve] "calls == []" can be simplified to "not calls", if it is strictly a sequence, as an empty list is falsey
+tests/test_lead_step_route.py:503: [C1803(use-implicit-booleaness-not-comparison), test_step_route_never_reaches_resolve] "calls == []" can be simplified to "not calls", if it is strictly a sequence, as an empty list is falsey
+************* Module test_ledger_and_bind_retry
+tests/test_ledger_and_bind_retry.py:80: [W0613(unused-argument), _Replying._post] Unused argument 'body'
+tests/test_ledger_and_bind_retry.py:80: [W0613(unused-argument), _Replying._post] Unused argument 'key'
+tests/test_ledger_and_bind_retry.py:80: [W0613(unused-argument), _Replying._post] Unused argument 'timeout'
+************* Module test_live_claude
+tests/test_live_claude.py:81: [W0621(redefined-outer-name), test_ok_label_and_cost_log] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:109: [W0621(redefined-outer-name), test_failure_modes_raise_classed_errors] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:129: [W0621(redefined-outer-name), test_5xx_names_the_error_type_only] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:136: [W0621(redefined-outer-name), test_worst_case_reserve_uses_max_tokens_as_output] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:141: [W0621(redefined-outer-name), test_timeout_is_hard_and_short] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:151: [W0621(redefined-outer-name), test_slow_drip_hits_the_whole_call_deadline] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:160: [W0621(redefined-outer-name), test_slow_three_seconds_still_answers_inside_the_limit] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:166: [W0621(redefined-outer-name), test_key_never_leaks] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:295: [W0621(redefined-outer-name), test_loader_picks_live_and_smtp] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:310: [W0621(redefined-outer-name), test_cap_survives_restart_and_counts_worst_case] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:328: [W0621(redefined-outer-name), test_total_cap_spans_runs_and_crash_keeps_reserve] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:341: [W0621(redefined-outer-name), test_broken_ledger_stops_spending] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:349: [W0621(redefined-outer-name), test_ledger_concurrent_reserves_never_pass_the_cap] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:393: [W0621(redefined-outer-name), test_desk_failure_ends_in_failed_never_lost] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:412: [W0621(redefined-outer-name), test_desk_slow_model_works] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:421: [W0621(redefined-outer-name), test_duplicates_never_call_the_model] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:432: [W0621(redefined-outer-name), test_cap_holds_with_five_refusals] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:478: [R6301(no-self-use), test_trace_records_a_failure_and_reraises.Boom.qualify] Method could be a function
+tests/test_live_claude.py:565: [W0621(redefined-outer-name), _run_runner] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:584: [W0621(redefined-outer-name), test_runner_prints_counts_only_and_asks_first] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:600: [W0621(redefined-outer-name), test_runner_refuses_without_caps_or_prices] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:609: [W0621(redefined-outer-name), test_runner_counts_failures_by_class] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:617: [W0621(redefined-outer-name), test_live_adapter_declares_its_limit_for_the_desk_check] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:629: [W0621(redefined-outer-name), test_header_trickle_hits_the_total_deadline] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:676: [W0613(unused-argument), test_trace_write_failure_does_not_change_the_call.Inner.put] Unused argument 'lead_id'
+tests/test_live_claude.py:676: [W0613(unused-argument), test_trace_write_failure_does_not_change_the_call.Inner.put] Unused argument 'record'
+tests/test_live_claude.py:676: [R6301(no-self-use), test_trace_write_failure_does_not_change_the_call.Inner.put] Method could be a function
+tests/test_live_claude.py:684: [W0621(redefined-outer-name), test_busy_ledger_counts_against_the_call_limit] Redefining name 'model' from outer scope (line 47)
+tests/test_live_claude.py:697: [W0621(redefined-outer-name), test_no_request_after_ledger_used_the_limit] Redefining name 'model' from outer scope (line 47)
+************* Module test_load_tools
+tests/test_load_tools.py:111: [W0621(redefined-outer-name), make_world] Redefining name 'model' from outer scope (line 660)
+tests/test_load_tools.py:490: [W0621(redefined-outer-name), test_retry_503_then_ok] Redefining name 'desk_url' from outer scope (line 443)
+tests/test_load_tools.py:641: [W0621(redefined-outer-name), test_burst_run_logs_every_request] Redefining name 'desk_url' from outer scope (line 443)
+tests/test_load_tools.py:671: [W0621(redefined-outer-name), ask] Redefining name 'model' from outer scope (line 660)
+tests/test_load_tools.py:684: [W0621(redefined-outer-name), calls] Redefining name 'model' from outer scope (line 660)
+tests/test_load_tools.py:688: [W0621(redefined-outer-name), test_mode_ok_logs_the_lead] Redefining name 'model' from outer scope (line 660)
+tests/test_load_tools.py:698: [W0621(redefined-outer-name), test_load_run_mode_names_work] Redefining name 'model' from outer scope (line 660)
+tests/test_load_tools.py:705: [W0621(redefined-outer-name), test_unknown_mode_refused] Redefining name 'model' from outer scope (line 660)
+tests/test_load_tools.py:705: [W0613(unused-argument), test_unknown_mode_refused] Unused argument 'model'
+tests/test_load_tools.py:710: [W0621(redefined-outer-name), test_control_file_wins_and_aliases] Redefining name 'model' from outer scope (line 660)
+tests/test_load_tools.py:721: [W0621(redefined-outer-name), test_slow_mode_waits] Redefining name 'model' from outer scope (line 660)
+tests/test_load_tools.py:728: [W0621(redefined-outer-name), test_timeout_mode_is_logged_after_the_hold] Redefining name 'model' from outer scope (line 660)
+tests/test_load_tools.py:739: [W0621(redefined-outer-name), test_model_log_feeds_check_5] Redefining name 'model' from outer scope (line 660)
+tests/test_load_tools.py:931: [W0621(redefined-outer-name), test_broken_error_body_is_a_code] Redefining name 'socket' from outer scope (line 8)
+tests/test_load_tools.py:931: [W0404(reimported), test_broken_error_body_is_a_code] Reimport 'socket' (imported line 8)
+tests/test_load_tools.py:956: [W0613(unused-argument), test_driver_failure_still_writes_a_log_line] Unused argument 'monkeypatch'
+************* Module test_mirror_gate
+tests/test_mirror_gate.py:260: [R6301(no-self-use), test_the_gate_lets_one_thread_in_at_a_time.Watching._touch] Method could be a function
+************* Module test_mode_safety
+tests/test_mode_safety.py:40: [W0613(unused-argument), _crm_rows] Unused argument 'rig'
+tests/test_mode_safety.py:443: [W0612(unused-variable), test_a_stand_in_crm_stage_move_is_one_click] Unused variable 'rig'
+************* Module test_model_stamp_and_reaper
+tests/test_model_stamp_and_reaper.py:170: [R6301(no-self-use), NoHandleOutbox.refresh] Method could be a function
+tests/test_model_stamp_and_reaper.py:186: [R6301(no-self-use), UnreadableOutbox.refresh] Method could be a function
+************* Module test_mutants
+tests/test_mutants.py:38: [W0613(unused-argument), test_mutant_no_unique_key.no_such_lead] Unused argument 'self'
+tests/test_mutants.py:38: [W0613(unused-argument), test_mutant_no_unique_key.no_such_lead] Unused argument 'conn'
+tests/test_mutants.py:38: [W0613(unused-argument), test_mutant_no_unique_key.no_such_lead] Unused argument 'email_key'
+tests/test_mutants.py:108: [W0122(exec-used), weaken] Use of exec
+************* Module test_mutation_guards
+tests/test_mutation_guards.py:303: [R6301(no-self-use), NothingStoredCrm.put] Method could be a function
+************* Module test_portal_api
+tests/test_portal_api.py:215: [R1721(unnecessary-comprehension), test_every_reply_comes_from_one_transaction] Unnecessary use of a comprehension, use set(log[1:-2]) instead.
+tests/test_portal_api.py:417: [C1803(use-implicit-booleaness-not-comparison), test_lead_id_grammar_checked_before_db] "opened == []" can be simplified to "not opened", if it is strictly a sequence, as an empty list is falsey
+tests/test_portal_api.py:1113: [W0612(unused-variable), test_same_origin_and_no_origin_pass] Unused variable 'rig'
+tests/test_portal_api.py:1131: [W0612(unused-variable), test_extra_allowed_host_from_config] Unused variable 'rig'
+tests/test_portal_api.py:1261: [C1803(use-implicit-booleaness-not-comparison), test_demo_posts_refuse_text_plain_and_foreign_origin] "demo.calls == []" can be simplified to "not demo.calls", if it is strictly a sequence, as an empty list is falsey
+tests/test_portal_api.py:1280: [C1803(use-implicit-booleaness-not-comparison), test_demo_door_408_when_body_stalls] "demo.calls == []" can be simplified to "not demo.calls", if it is strictly a sequence, as an empty list is falsey
+tests/test_portal_api.py:1416: [W0612(unused-variable), test_burst_while_summary_is_polled] Unused variable 'rig'
+************* Module test_portal_browser
+tests/test_portal_browser.py:26: [W0613(unused-argument), _run] Unused argument 'blocked'
+************* Module test_portal_demo
+tests/test_portal_demo.py:106: [W0621(redefined-outer-name), fakes_config] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:268: [W0621(redefined-outer-name), test_make_protocol] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:341: [W0621(redefined-outer-name), test_not_wired_reads_nothing] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:348: [W0621(redefined-outer-name), test_wired_demo_is_wired] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:353: [W0621(redefined-outer-name), test_unknown_path_and_wrong_method] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:363: [W0621(redefined-outer-name), test_state_shape_matches_fixture] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:420: [W0621(redefined-outer-name), test_state_writes_nothing] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:433: [W0613(unused-argument), silent_crm] Unused argument 'data'
+tests/test_portal_demo.py:433: [W0613(unused-argument), silent_crm] Unused argument 'n'
+tests/test_portal_demo.py:441: [W0621(redefined-outer-name), test_crm_tile_follows_adapter_mode] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:448: [W0621(redefined-outer-name), test_crm_mode_unknown_when_nobody_knows] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:457: [W0621(redefined-outer-name), test_crm_mode_named_by_sender_wins] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:458: [W0613(unused-argument), test_crm_mode_named_by_sender_wins.script] Unused argument 'data'
+tests/test_portal_demo.py:458: [W0613(unused-argument), test_crm_mode_named_by_sender_wins.script] Unused argument 'n'
+tests/test_portal_demo.py:471: [W0621(redefined-outer-name), reads_offline] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:479: [W0621(redefined-outer-name), test_state_one_read_fails] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:480: [W0613(unused-argument), test_state_one_read_fails.script] Unused argument 'data'
+tests/test_portal_demo.py:480: [W0613(unused-argument), test_state_one_read_fails.script] Unused argument 'n'
+tests/test_portal_demo.py:490: [W0621(redefined-outer-name), test_state_odd_reply] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:491: [W0613(unused-argument), test_state_odd_reply.script] Unused argument 'data'
+tests/test_portal_demo.py:491: [W0613(unused-argument), test_state_odd_reply.script] Unused argument 'n'
+tests/test_portal_demo.py:500: [W0621(redefined-outer-name), test_state_over_limit_reply] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:501: [W0613(unused-argument), test_state_over_limit_reply.script] Unused argument 'data'
+tests/test_portal_demo.py:501: [W0613(unused-argument), test_state_over_limit_reply.script] Unused argument 'n'
+tests/test_portal_demo.py:510: [W0621(redefined-outer-name), test_state_truncated_reply] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:511: [W0613(unused-argument), test_state_truncated_reply.script] Unused argument 'data'
+tests/test_portal_demo.py:511: [W0613(unused-argument), test_state_truncated_reply.script] Unused argument 'n'
+tests/test_portal_demo.py:524: [W0621(redefined-outer-name), test_state_redirect_is_not_followed] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:527: [W0613(unused-argument), test_state_redirect_is_not_followed.script] Unused argument 'data'
+tests/test_portal_demo.py:527: [W0613(unused-argument), test_state_redirect_is_not_followed.script] Unused argument 'n'
+tests/test_portal_demo.py:537: [W0621(redefined-outer-name), test_state_one_overall_deadline] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:540: [W0613(unused-argument), test_state_one_overall_deadline.script] Unused argument 'data'
+tests/test_portal_demo.py:540: [W0613(unused-argument), test_state_one_overall_deadline.script] Unused argument 'n'
+tests/test_portal_demo.py:552: [W0621(redefined-outer-name), test_state_clips_long_text] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:555: [W0613(unused-argument), test_state_clips_long_text.script] Unused argument 'data'
+tests/test_portal_demo.py:555: [W0613(unused-argument), test_state_clips_long_text.script] Unused argument 'n'
+tests/test_portal_demo.py:571: [W0621(redefined-outer-name), test_burst_matches_fixture] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:583: [W0621(redefined-outer-name), test_burst_asks_the_ai_once] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:590: [W0621(redefined-outer-name), test_burst_replay] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:606: [W0621(redefined-outer-name), test_burst_door_person] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:644: [W0621(redefined-outer-name), test_burst_bad_bodies] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:651: [W0621(redefined-outer-name), test_burst_upper_limit] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:658: [W0621(redefined-outer-name), test_second_burst_refused] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:670: [W0621(redefined-outer-name), test_burst_cooldown] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:680: [W0621(redefined-outer-name), test_two_bursts_no_overlap] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:684: [W0613(unused-argument), test_two_bursts_no_overlap.script] Unused argument 'key'
+tests/test_portal_demo.py:684: [W0613(unused-argument), test_two_bursts_no_overlap.script] Unused argument 'data'
+tests/test_portal_demo.py:729: [W0621(redefined-outer-name), test_burst_busy_then_created] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:732: [W0613(unused-argument), test_burst_busy_then_created.script] Unused argument 'key'
+tests/test_portal_demo.py:732: [W0613(unused-argument), test_burst_busy_then_created.script] Unused argument 'n'
+tests/test_portal_demo.py:746: [W0621(redefined-outer-name), test_burst_busy_forever] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:758: [W0621(redefined-outer-name), test_burst_honours_the_desks_retry_after] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:763: [W0613(unused-argument), test_burst_honours_the_desks_retry_after.script] Unused argument 'key'
+tests/test_portal_demo.py:763: [W0613(unused-argument), test_burst_honours_the_desks_retry_after.script] Unused argument 'n'
+tests/test_portal_demo.py:758: [W0613(unused-argument), test_burst_honours_the_desks_retry_after] Unused argument 'monkeypatch'
+tests/test_portal_demo.py:778: [W0613(unused-argument), hang_up] Unused argument 'key'
+tests/test_portal_demo.py:778: [W0613(unused-argument), hang_up] Unused argument 'data'
+tests/test_portal_demo.py:778: [W0613(unused-argument), hang_up] Unused argument 'n'
+tests/test_portal_demo.py:782: [W0613(unused-argument), cut_body] Unused argument 'key'
+tests/test_portal_demo.py:782: [W0613(unused-argument), cut_body] Unused argument 'data'
+tests/test_portal_demo.py:782: [W0613(unused-argument), cut_body] Unused argument 'n'
+tests/test_portal_demo.py:790: [W0613(unused-argument), cut_error_body] Unused argument 'key'
+tests/test_portal_demo.py:790: [W0613(unused-argument), cut_error_body] Unused argument 'data'
+tests/test_portal_demo.py:790: [W0613(unused-argument), cut_error_body] Unused argument 'n'
+tests/test_portal_demo.py:803: [W0621(redefined-outer-name), test_burst_keeps_every_answer] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:814: [W0621(redefined-outer-name), test_burst_deadline] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:817: [W0613(unused-argument), test_burst_deadline.slow] Unused argument 'key'
+tests/test_portal_demo.py:817: [W0613(unused-argument), test_burst_deadline.slow] Unused argument 'data'
+tests/test_portal_demo.py:817: [W0613(unused-argument), test_burst_deadline.slow] Unused argument 'n'
+tests/test_portal_demo.py:828: [W0621(redefined-outer-name), test_burst_busy_fixture] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:893: [C1803(use-implicit-booleaness-not-comparison), test_crash_off_list] "list(...) == []" can be simplified to "not list(...)", if it is strictly a sequence, as an empty list is falsey
+tests/test_portal_demo.py:950: [W0621(redefined-outer-name), test_wording_pinned] Redefining name 'parts' from outer scope (line 167)
+tests/test_portal_demo.py:1036: [C1803(use-implicit-booleaness-not-comparison), test_crash_failed_replace_cleans_up] "list(...) == []" can be simplified to "not list(...)", if it is strictly a sequence, as an empty list is falsey
+tests/test_portal_demo.py:1039: [W0621(redefined-outer-name), test_straggler_extends_cooldown] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:1042: [W0613(unused-argument), test_straggler_extends_cooldown.slow] Unused argument 'key'
+tests/test_portal_demo.py:1042: [W0613(unused-argument), test_straggler_extends_cooldown.slow] Unused argument 'data'
+tests/test_portal_demo.py:1042: [W0613(unused-argument), test_straggler_extends_cooldown.slow] Unused argument 'n'
+tests/test_portal_demo.py:1087: [W0621(redefined-outer-name), test_burst_http_protocol_errors] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:1095: [W0621(redefined-outer-name), test_state_http_protocol_errors] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:1096: [W0613(unused-argument), test_state_http_protocol_errors.script] Unused argument 'data'
+tests/test_portal_demo.py:1096: [W0613(unused-argument), test_state_http_protocol_errors.script] Unused argument 'n'
+tests/test_portal_demo.py:1105: [W0621(redefined-outer-name), test_barrier_abort_when_thread_fails] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:1146: [W0621(redefined-outer-name), test_burst_budget] Redefining name 'stub' from outer scope (line 233)
+tests/test_portal_demo.py:1202: [W0621(redefined-outer-name), test_ai_replies_survive_a_desk_restart] Redefining name 'parts' from outer scope (line 167)
+************* Module test_portal_layout
+tests/test_portal_layout.py:51: [W0613(unused-argument), _set] Unused argument 'hide'
+tests/test_portal_layout.py:148: [W0613(unused-argument), _DemoStub.handle] Unused argument 'body'
+tests/test_portal_layout.py:440: [W0612(unused-variable), test_request_number_masking_is_in_the_shared_rule_not_in_one_page] Unused variable 'rig'
+************* Module test_portal_lead_pages
+tests/test_portal_lead_pages.py:81: [W0612(unused-variable), test_fakes_outbox_counts_reminders_apart] Unused variable 'srv'
+tests/test_portal_lead_pages.py:383: [W0612(unused-variable), test_a_losing_decision_shows_who_was_first] Unused variable 'rig'
+tests/test_portal_lead_pages.py:508: [W0612(unused-variable), test_demo_pick_lists_neutral] Unused variable 'srv'
+tests/test_portal_lead_pages.py:553: [W0612(unused-variable), test_step_and_approval_buttons_wake_up_when_the_desk_answers_again] Unused variable 'rig'
+tests/test_portal_lead_pages.py:553: [W0612(unused-variable), test_step_and_approval_buttons_wake_up_when_the_desk_answers_again] Unused variable 'rid'
+************* Module test_portal_log
+tests/test_portal_log.py:292: [W0613(unused-argument), test_new_ai_input_is_refused.qualify] Unused argument 'self'
+tests/test_portal_log.py:292: [W0613(unused-argument), test_new_ai_input_is_refused.qualify] Unused argument 'lead_id'
+tests/test_portal_log.py:292: [W0613(unused-argument), test_new_ai_input_is_refused.qualify] Unused argument 'email_key'
+tests/test_portal_log.py:292: [W0613(unused-argument), test_new_ai_input_is_refused.qualify] Unused argument 'name'
+tests/test_portal_log.py:304: [W0613(unused-argument), test_variable_ai_inputs_are_refused.qualify] Unused argument 'self'
+tests/test_portal_log.py:304: [W0613(unused-argument), test_variable_ai_inputs_are_refused.qualify] Unused argument 'args'
+tests/test_portal_log.py:317: [W0613(unused-argument), test_loaded_step_must_match_contract.Wider.qualify] Unused argument 'lead_id'
+tests/test_portal_log.py:317: [W0613(unused-argument), test_loaded_step_must_match_contract.Wider.qualify] Unused argument 'email_key'
+tests/test_portal_log.py:317: [W0613(unused-argument), test_loaded_step_must_match_contract.Wider.qualify] Unused argument 'company'
+tests/test_portal_log.py:317: [R6301(no-self-use), test_loaded_step_must_match_contract.Wider.qualify] Method could be a function
+tests/test_portal_log.py:330: [W0613(unused-argument), test_data_map_mode.Silent.qualify] Unused argument 'lead_id'
+tests/test_portal_log.py:330: [W0613(unused-argument), test_data_map_mode.Silent.qualify] Unused argument 'email_key'
+tests/test_portal_log.py:330: [R6301(no-self-use), test_data_map_mode.Silent.qualify] Method could be a function
+************* Module test_portal_look
+tests/test_portal_look.py:137: [W0612(unused-variable), test_ring_slices_have_a_visible_gap] Unused variable 'rig'
+tests/test_portal_look.py:189: [W0612(unused-variable), test_needs_cards_of_one_row_are_equally_high_and_none_is_left_alone] Unused variable 'rig'
+tests/test_portal_look.py:216: [W0612(unused-variable), test_demo_controls_text_has_enough_contrast] Unused variable 'rig'
+tests/test_portal_look.py:230: [W0612(unused-variable), test_every_badge_text_has_enough_contrast_including_the_hot_rating] Unused variable 'rig'
+************* Module test_portal_mode
+tests/test_portal_mode.py:31: [W0613(unused-argument), _run_portal] Unused argument 'tmp_path'
+tests/test_portal_mode.py:317: [R1721(unnecessary-comprehension), test_actions_pause_while_the_desk_is_offline_or_answers_with_a_problem] Unnecessary use of a comprehension, use list(phases[name]['notes']) instead.
+************* Module test_portal_wording_and_masking
+tests/test_portal_wording_and_masking.py:291: [W0612(unused-variable), test_desk_logs_never_carry_a_request_value] Unused variable 'rig'
+************* Module test_real_check_dry
+tests/test_real_check_dry.py:434: [C1803(use-implicit-booleaness-not-comparison), test_a_lower_case_setting_name_is_refused_and_never_reaches_a_live_call] "started == []" can be simplified to "not started", if it is strictly a sequence, as an empty list is falsey
+tests/test_real_check_dry.py:587: [R6301(no-self-use), test_a_failed_crm_read_back_ends_with_counts_a_result_file_and_a_clean_up_note.Broken.rows_with_prefix] Method could be a function
+tests/test_real_check_dry.py:792: [W0613(unused-argument), test_drain_is_measured_from_the_real_send_not_from_plan_creation.fake_send] Unused argument 'url'
+************* Module test_reaper_start_stop
+tests/test_reaper_start_stop.py:57: [W0621(redefined-outer-name), test_stop_leaves_background_mode] Redefining name 'rig_desk' from outer scope (line 47)
+tests/test_reaper_start_stop.py:65: [W0621(redefined-outer-name), test_second_start_is_a_noop] Redefining name 'rig_desk' from outer scope (line 47)
+tests/test_reaper_start_stop.py:74: [W0621(redefined-outer-name), test_simultaneous_starts_one_reaper] Redefining name 'rig_desk' from outer scope (line 47)
+tests/test_reaper_start_stop.py:94: [W0621(redefined-outer-name), test_start_after_stop_waits_for_old] Redefining name 'rig_desk' from outer scope (line 47)
+tests/test_reaper_start_stop.py:115: [W0621(redefined-outer-name), test_stop_start_stop_start_one_pass] Redefining name 'rig_desk' from outer scope (line 47)
+tests/test_reaper_start_stop.py:138: [W0621(redefined-outer-name), test_start_during_a_stop_waits] Redefining name 'rig_desk' from outer scope (line 47)
+tests/test_reaper_start_stop.py:160: [W0621(redefined-outer-name), test_reaper_outlives_a_base_exception_and_shows_on_counts] Redefining name 'rig_desk' from outer scope (line 47)
+************* Module test_reminder_email
+tests/test_reminder_email.py:429: [R6301(no-self-use), test_mutant_nudge_pk_removed.Weak.rig] Method could be a function
+tests/test_reminder_email.py:460: [W0621(redefined-outer-name), test_a_desk_refuses_reminders_without_an_address_and_an_address_without_reminders] Redefining name 'copy' from outer scope (line 6)
+tests/test_reminder_email.py:462: [W0621(redefined-outer-name), test_a_desk_refuses_reminders_without_an_address_and_an_address_without_reminders] Redefining name 'DEMO_LEADFLOW' from outer scope (line 14)
+tests/test_reminder_email.py:462: [W0621(redefined-outer-name), test_a_desk_refuses_reminders_without_an_address_and_an_address_without_reminders] Redefining name 'NUDGE_TO_TEST' from outer scope (line 14)
+tests/test_reminder_email.py:460: [W0404(reimported), test_a_desk_refuses_reminders_without_an_address_and_an_address_without_reminders] Reimport 'copy' (imported line 6)
+tests/test_reminder_email.py:462: [W0404(reimported), test_a_desk_refuses_reminders_without_an_address_and_an_address_without_reminders] Reimport 'DEMO_LEADFLOW' (imported line 14)
+tests/test_reminder_email.py:462: [W0404(reimported), test_a_desk_refuses_reminders_without_an_address_and_an_address_without_reminders] Reimport 'NUDGE_TO_TEST' (imported line 14)
+************* Module test_reset_scripts
+tests/test_reset_scripts.py:84: [W0621(redefined-outer-name), test_reset_refuses_when_something_answers_on_the_desk_port] Redefining name 'book' from outer scope (line 64)
+tests/test_reset_scripts.py:94: [W0621(redefined-outer-name), test_reset_refuses_when_a_process_holds_the_database] Redefining name 'book' from outer scope (line 64)
+tests/test_reset_scripts.py:106: [W0621(redefined-outer-name), test_reset_refuses_a_pid_file_of_another_program] Redefining name 'book' from outer scope (line 64)
+tests/test_reset_scripts.py:115: [W0621(redefined-outer-name), test_reset_sh_refuses_when_the_desk_does_not_stop] Redefining name 'book' from outer scope (line 64)
+tests/test_reset_scripts.py:136: [W0621(redefined-outer-name), test_reset_sh_waits_for_a_desk_that_needs_a_few_seconds_to_stop] Redefining name 'book' from outer scope (line 64)
+tests/test_reset_scripts.py:163: [W0621(redefined-outer-name), test_reset_sh_treats_a_pid_file_of_an_ended_but_uncollected_process_as_gone] Redefining name 'book' from outer scope (line 64)
+tests/test_reset_scripts.py:188: [W0621(redefined-outer-name), test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number] Redefining name 'book' from outer scope (line 64)
+tests/test_reset_scripts.py:209: [W0621(redefined-outer-name), test_reset_accepts_a_plain_whole_number_of_seconds] Redefining name 'book' from outer scope (line 64)
+tests/test_reset_scripts.py:217: [W0621(redefined-outer-name), test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at] Redefining name 'book' from outer scope (line 64)
+tests/test_reset_scripts.py:229: [R6301(no-self-use), test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at.Unreadable.exists] Method could be a function
+tests/test_reset_scripts.py:239: [W0621(redefined-outer-name), test_reset_refuses_when_the_lock_file_cannot_be_tested_and_creates_none_on_a_refusal] Redefining name 'book' from outer scope (line 64)
+************* Module test_review_item_edge_cases
+tests/test_review_item_edge_cases.py:139: [W0613(unused-argument), test_failure_count_cleared_after_unstorable.flaky] Unused argument 'self'
+tests/test_review_item_edge_cases.py:139: [W0613(unused-argument), test_failure_count_cleared_after_unstorable.flaky] Unused argument 'rid'
+************* Module test_server_main_reaper
+tests/test_server_main_reaper.py:76: [W0108(unnecessary-lambda), test_main_runs_reaper_while_serving.<lambda>] Lambda may not be necessary
+tests/test_server_main_reaper.py:94: [W0108(unnecessary-lambda), test_main_reaper_sends_and_frees_lock.<lambda>] Lambda may not be necessary
+tests/test_server_main_reaper.py:92: [W0612(unused-variable), test_main_reaper_sends_and_frees_lock] Unused variable 'calls'
+************* Module test_slow_sender
+tests/test_slow_sender.py:101: [W0613(unused-argument), post_head] Unused argument 'ref'
+tests/test_slow_sender.py:181: [R6301(no-self-use), Live.free] Method could be a function
+tests/test_slow_sender.py:207: [W0621(redefined-outer-name), test_slow_request_line_closed] Redefining name 'short' from outer scope (line 120)
+tests/test_slow_sender.py:207: [W0613(unused-argument), test_slow_request_line_closed] Unused argument 'short'
+tests/test_slow_sender.py:214: [W0621(redefined-outer-name), test_slow_headers_closed] Redefining name 'short' from outer scope (line 120)
+tests/test_slow_sender.py:214: [W0613(unused-argument), test_slow_headers_closed] Unused argument 'short'
+tests/test_slow_sender.py:230: [W0621(redefined-outer-name), test_slow_body_closed_with_408] Redefining name 'short' from outer scope (line 120)
+tests/test_slow_sender.py:230: [W0613(unused-argument), test_slow_body_closed_with_408] Unused argument 'short'
+tests/test_slow_sender.py:259: [W0621(redefined-outer-name), test_stall_gives_the_same_408] Redefining name 'short' from outer scope (line 120)
+tests/test_slow_sender.py:259: [W0613(unused-argument), test_stall_gives_the_same_408] Unused argument 'short'
+tests/test_slow_sender.py:276: [W0621(redefined-outer-name), test_busy_503_is_complete_and_clean] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:307: [W0621(redefined-outer-name), test_busy_503_silent_client_is_quick] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:318: [W0621(redefined-outer-name), test_busy_503_trickler_no_stall] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:366: [W0621(redefined-outer-name), test_place_released_exactly_once] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:385: [W0621(redefined-outer-name), test_evicted_released_abandoned] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:406: [W0621(redefined-outer-name), test_slot_survives_every_end] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:433: [W0621(redefined-outer-name), test_cap_closes_oldest_header_sender] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:449: [W0621(redefined-outer-name), test_many_stalled_senders_cannot_block] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:477: [W0621(redefined-outer-name), full_post] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:483: [W0621(redefined-outer-name), test_processing_is_never_closed] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:501: [W0621(redefined-outer-name), test_body_reader_closed_work_stays] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:517: [W0621(redefined-outer-name), test_body_phase_crowd_cannot_block] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:545: [W0621(redefined-outer-name), evict_once] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:561: [W0621(redefined-outer-name), test_evicted_request_buffered] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:577: [W0621(redefined-outer-name), test_evicted_after_body_no_store] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:600: [W0613(unused-argument), BlockFollowUps.crash_point] Unused argument 'conn'
+tests/test_slow_sender.py:644: [W0621(redefined-outer-name), test_no_shutdown_after_close] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:683: [R6301(no-self-use), _TimesOut.handle] Method could be a function
+tests/test_slow_sender.py:687: [W0621(redefined-outer-name), test_drain_expiry_is_not_a_408_later] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:700: [W0621(redefined-outer-name), test_drain_phase_expiry_is_quiet] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:715: [W0621(redefined-outer-name), test_demo_body_stall_gives_408] Redefining name 'short' from outer scope (line 120)
+tests/test_slow_sender.py:715: [W0613(unused-argument), test_demo_body_stall_gives_408] Unused argument 'short'
+tests/test_slow_sender.py:727: [W0621(redefined-outer-name), test_reply_timeout_restored] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:801: [W0621(redefined-outer-name), test_read_reset_is_quiet] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:816: [W0621(redefined-outer-name), test_thread_start_failure_answers_busy] Redefining name 'live' from outer scope (line 196)
+tests/test_slow_sender.py:911: [R0124(comparison-with-itself), test_import_refuses_a_bad_constant] Redundant comparison - value != value
+tests/test_slow_sender.py:917: [W0122(exec-used), test_import_refuses_a_bad_constant] Use of exec
+tests/test_slow_sender.py:927: [W0621(redefined-outer-name), test_vanished_client_logs_no_failure] Redefining name 'live' from outer scope (line 196)
+************* Module test_smtp_outbox
+tests/test_smtp_outbox.py:84: [R6301(no-self-use), Script._dribble] Method could be a function
+tests/test_smtp_outbox.py:175: [W0621(redefined-outer-name), test_sent_headers_and_utf8] Redefining name 'catch' from outer scope (line 45)
+tests/test_smtp_outbox.py:186: [W0621(redefined-outer-name), test_blind_two_sends_two_messages] Redefining name 'catch' from outer scope (line 45)
+tests/test_smtp_outbox.py:200: [W0621(redefined-outer-name), test_rcpt_550_is_refused] Redefining name 'catch' from outer scope (line 45)
+tests/test_smtp_outbox.py:207: [W0621(redefined-outer-name), test_mail_from_450_is_refused] Redefining name 'script' from outer scope (line 153)
+tests/test_smtp_outbox.py:212: [W0621(redefined-outer-name), test_greeting_554_is_refused] Redefining name 'script' from outer scope (line 153)
+tests/test_smtp_outbox.py:217: [W0621(redefined-outer-name), test_drop_after_data_is_ambiguous] Redefining name 'catch' from outer scope (line 45)
+tests/test_smtp_outbox.py:225: [W0621(redefined-outer-name), test_slow_final_reply_is_ambiguous] Redefining name 'catch' from outer scope (line 45)
+tests/test_smtp_outbox.py:234: [W0621(redefined-outer-name), test_final_550_and_garbage_ambiguous] Redefining name 'script' from outer scope (line 153)
+tests/test_smtp_outbox.py:240: [W0621(redefined-outer-name), test_silent_before_text_is_unreachable] Redefining name 'script' from outer scope (line 153)
+tests/test_smtp_outbox.py:248: [W0621(redefined-outer-name), test_deadline_dribbled_greeting] Redefining name 'script' from outer scope (line 153)
+tests/test_smtp_outbox.py:255: [W0621(redefined-outer-name), test_deadline_dribbled_final_reply] Redefining name 'script' from outer scope (line 153)
+tests/test_smtp_outbox.py:279: [W0621(redefined-outer-name), test_50_concurrent_sends_all_land] Redefining name 'catch' from outer scope (line 45)
+tests/test_smtp_outbox.py:288: [W0621(redefined-outer-name), test_catcher_takes_200_connections] Redefining name 'catch' from outer scope (line 45)
+tests/test_smtp_outbox.py:315: [W0612(unused-variable), test_loader_swaps_in_smtp_outbox] Unused variable 'srv'
+tests/test_smtp_outbox.py:369: [W0621(redefined-outer-name), test_bare_three_digit_reply_is_a_reply] Redefining name 'script' from outer scope (line 153)
+tests/test_smtp_outbox.py:373: [W0621(redefined-outer-name), test_ehlo_5xx_falls_back_to_helo] Redefining name 'script' from outer scope (line 153)
+tests/test_smtp_outbox.py:377: [W0621(redefined-outer-name), test_helo_refusal_is_a_refusal] Redefining name 'script' from outer scope (line 153)
+tests/test_smtp_outbox.py:382: [W0621(redefined-outer-name), test_data_5xx_is_a_refusal_not_ambiguous] Redefining name 'script' from outer scope (line 153)
+tests/test_smtp_outbox.py:387: [W0621(redefined-outer-name), test_unexpected_error_before_the_text_is_unreachable] Redefining name 'catch' from outer scope (line 45)
+tests/test_smtp_outbox.py:412: [W0621(redefined-outer-name), test_unexpected_error_after_the_text_began_is_ambiguous] Redefining name 'catch' from outer scope (line 45)
+tests/test_smtp_outbox.py:419: [W0621(redefined-outer-name), test_memory_error_is_never_swallowed] Redefining name 'catch' from outer scope (line 45)
+tests/test_smtp_outbox.py:434: [W0621(redefined-outer-name), test_no_file_handle_is_no_descriptors_not_unreachable] Redefining name 'catch' from outer scope (line 45)
+************* Module test_smtp_provider
+tests/test_smtp_provider.py:61: [W0621(redefined-outer-name), start] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:61: [W0621(redefined-outer-name), start] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:67: [W0621(redefined-outer-name), outbox] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:67: [W0621(redefined-outer-name), outbox] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:83: [W0621(redefined-outer-name), test_starttls_login_and_one_message_to_a_test_inbox_never_to_the_lead] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:83: [W0621(redefined-outer-name), test_starttls_login_and_one_message_to_a_test_inbox_never_to_the_lead] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:83: [W0621(redefined-outer-name), test_starttls_login_and_one_message_to_a_test_inbox_never_to_the_lead] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:100: [W0621(redefined-outer-name), test_implicit_tls_port] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:100: [W0621(redefined-outer-name), test_implicit_tls_port] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:100: [W0621(redefined-outer-name), test_implicit_tls_port] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:106: [W0621(redefined-outer-name), test_recipients_are_spread_and_stable] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:106: [W0621(redefined-outer-name), test_recipients_are_spread_and_stable] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:106: [W0621(redefined-outer-name), test_recipients_are_spread_and_stable] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:114: [W0621(redefined-outer-name), test_certificate_not_trusted_is_unreachable_and_nothing_is_sent] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:114: [W0621(redefined-outer-name), test_certificate_not_trusted_is_unreachable_and_nothing_is_sent] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:114: [W0621(redefined-outer-name), test_certificate_not_trusted_is_unreachable_and_nothing_is_sent] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:126: [W0621(redefined-outer-name), test_certificate_for_another_name_is_unreachable] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:126: [W0621(redefined-outer-name), test_certificate_for_another_name_is_unreachable] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:126: [W0621(redefined-outer-name), test_certificate_for_another_name_is_unreachable] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:126: [W0613(unused-argument), test_certificate_for_another_name_is_unreachable] Unused argument 'certs'
+tests/test_smtp_provider.py:144: [W0621(redefined-outer-name), test_starttls_not_offered_is_refused_and_no_password_goes_in_clear] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:144: [W0621(redefined-outer-name), test_starttls_not_offered_is_refused_and_no_password_goes_in_clear] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:144: [W0621(redefined-outer-name), test_starttls_not_offered_is_refused_and_no_password_goes_in_clear] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:152: [W0621(redefined-outer-name), test_bad_login_is_refused_without_the_password_in_the_error] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:152: [W0621(redefined-outer-name), test_bad_login_is_refused_without_the_password_in_the_error] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:152: [W0621(redefined-outer-name), test_bad_login_is_refused_without_the_password_in_the_error] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:159: [W0621(redefined-outer-name), test_recipient_refused_before_the_text_is_refused] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:159: [W0621(redefined-outer-name), test_recipient_refused_before_the_text_is_refused] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:159: [W0621(redefined-outer-name), test_recipient_refused_before_the_text_is_refused] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:168: [W0621(redefined-outer-name), test_any_doubt_after_the_text_started_is_ambiguous] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:168: [W0621(redefined-outer-name), test_any_doubt_after_the_text_started_is_ambiguous] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:168: [W0621(redefined-outer-name), test_any_doubt_after_the_text_started_is_ambiguous] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:175: [W0621(redefined-outer-name), test_silent_greeting_is_unreachable_inside_the_budget] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:175: [W0621(redefined-outer-name), test_silent_greeting_is_unreachable_inside_the_budget] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:175: [W0621(redefined-outer-name), test_silent_greeting_is_unreachable_inside_the_budget] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:181: [W0621(redefined-outer-name), test_connection_refused_is_unreachable] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:181: [W0621(redefined-outer-name), test_connection_refused_is_unreachable] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:181: [W0621(redefined-outer-name), test_connection_refused_is_unreachable] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:200: [W0621(redefined-outer-name), test_header_injection_and_odd_keys_are_refused_before_the_network] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:200: [W0621(redefined-outer-name), test_header_injection_and_odd_keys_are_refused_before_the_network] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:200: [W0621(redefined-outer-name), test_header_injection_and_odd_keys_are_refused_before_the_network] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:211: [W0621(redefined-outer-name), test_password_file_missing_or_empty_is_refused_without_path_or_network] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:211: [W0621(redefined-outer-name), test_password_file_missing_or_empty_is_refused_without_path_or_network] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:211: [W0621(redefined-outer-name), test_password_file_missing_or_empty_is_refused_without_path_or_network] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:225: [W0621(redefined-outer-name), test_send_cap_stops_before_the_network] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:225: [W0621(redefined-outer-name), test_send_cap_stops_before_the_network] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:225: [W0621(redefined-outer-name), test_send_cap_stops_before_the_network] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:234: [W0621(redefined-outer-name), test_body_with_a_leading_dot_line_is_not_cut] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:234: [W0621(redefined-outer-name), test_body_with_a_leading_dot_line_is_not_cut] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:234: [W0621(redefined-outer-name), test_body_with_a_leading_dot_line_is_not_cut] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:268: [W0621(redefined-outer-name), test_loader_selects_the_provider_outbox] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:288: [W0621(redefined-outer-name), test_imap_counts_exact_keys_per_folder_and_prints_nothing] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:288: [W0621(redefined-outer-name), test_imap_counts_exact_keys_per_folder_and_prints_nothing] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:288: [W0621(redefined-outer-name), test_imap_counts_exact_keys_per_folder_and_prints_nothing] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:303: [W0621(redefined-outer-name), test_imap_failures_are_classed_without_secrets] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:303: [W0621(redefined-outer-name), test_imap_failures_are_classed_without_secrets] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:303: [W0621(redefined-outer-name), test_imap_failures_are_classed_without_secrets] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:315: [W0621(redefined-outer-name), test_imap_counts_by_inbox_keeps_mailboxes_apart] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:315: [W0621(redefined-outer-name), test_imap_counts_by_inbox_keeps_mailboxes_apart] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:315: [W0621(redefined-outer-name), test_imap_counts_by_inbox_keeps_mailboxes_apart] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:316: [W0621(redefined-outer-name), test_imap_counts_by_inbox_keeps_mailboxes_apart] Redefining name 'counts_by_inbox' from outer scope (line 19)
+tests/test_smtp_provider.py:316: [W0404(reimported), test_imap_counts_by_inbox_keeps_mailboxes_apart] Reimport 'counts_by_inbox' (imported line 19)
+tests/test_smtp_provider.py:332: [W0621(redefined-outer-name), test_imap_default_trust_rejects_an_untrusted_certificate_and_sends_no_password] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:332: [W0621(redefined-outer-name), test_imap_default_trust_rejects_an_untrusted_certificate_and_sends_no_password] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:332: [W0621(redefined-outer-name), test_imap_default_trust_rejects_an_untrusted_certificate_and_sends_no_password] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:346: [W0621(redefined-outer-name), test_imap_certificate_for_another_name_is_rejected] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:346: [W0621(redefined-outer-name), test_imap_certificate_for_another_name_is_rejected] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:346: [W0621(redefined-outer-name), test_imap_certificate_for_another_name_is_rejected] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:361: [W0621(redefined-outer-name), test_smtp_implicit_tls_with_an_untrusted_certificate_is_unreachable_and_sends_nothing] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:361: [W0621(redefined-outer-name), test_smtp_implicit_tls_with_an_untrusted_certificate_is_unreachable_and_sends_nothing] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:361: [W0621(redefined-outer-name), test_smtp_implicit_tls_with_an_untrusted_certificate_is_unreachable_and_sends_nothing] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:375: [W0621(redefined-outer-name), test_every_attempt_has_its_own_message_id_and_attempt_header_but_the_same_count_key] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:375: [W0621(redefined-outer-name), test_every_attempt_has_its_own_message_id_and_attempt_header_but_the_same_count_key] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:375: [W0621(redefined-outer-name), test_every_attempt_has_its_own_message_id_and_attempt_header_but_the_same_count_key] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:411: [W0621(redefined-outer-name), test_a_multi_line_password_file_is_refused_before_the_network] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:411: [W0621(redefined-outer-name), test_a_multi_line_password_file_is_refused_before_the_network] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:411: [W0621(redefined-outer-name), test_a_multi_line_password_file_is_refused_before_the_network] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:421: [W0621(redefined-outer-name), test_imap_password_file_problems_are_count_errors_without_the_path] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:421: [W0621(redefined-outer-name), test_imap_password_file_problems_are_count_errors_without_the_path] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:434: [W0621(redefined-outer-name), test_counts_for_keys_are_exact_and_summed_per_key_across_both_inboxes] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:434: [W0621(redefined-outer-name), test_counts_for_keys_are_exact_and_summed_per_key_across_both_inboxes] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:434: [W0621(redefined-outer-name), test_counts_for_keys_are_exact_and_summed_per_key_across_both_inboxes] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:453: [W0621(redefined-outer-name), test_counts_for_keys_fall_back_to_the_fetched_headers_when_the_search_finds_nothing] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:453: [W0621(redefined-outer-name), test_counts_for_keys_fall_back_to_the_fetched_headers_when_the_search_finds_nothing] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:453: [W0621(redefined-outer-name), test_counts_for_keys_fall_back_to_the_fetched_headers_when_the_search_finds_nothing] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:466: [W0621(redefined-outer-name), test_counts_for_keys_refuse_bad_keys] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:466: [W0621(redefined-outer-name), test_counts_for_keys_refuse_bad_keys] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:473: [W0621(redefined-outer-name), test_make_outbox_budget_is_clamped_to_the_desks_send_timeout] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:509: [W0621(redefined-outer-name), _imap] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:509: [W0621(redefined-outer-name), _imap] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:515: [W0621(redefined-outer-name), test_a_folder_the_server_does_not_have_is_left_out_not_shown_as_empty] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:515: [W0621(redefined-outer-name), test_a_folder_the_server_does_not_have_is_left_out_not_shown_as_empty] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:515: [W0621(redefined-outer-name), test_a_folder_the_server_does_not_have_is_left_out_not_shown_as_empty] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:525: [W0621(redefined-outer-name), test_a_key_the_search_misses_triggers_the_scan_and_the_larger_count_wins] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:525: [W0621(redefined-outer-name), test_a_key_the_search_misses_triggers_the_scan_and_the_larger_count_wins] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:525: [W0621(redefined-outer-name), test_a_key_the_search_misses_triggers_the_scan_and_the_larger_count_wins] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:540: [W0621(redefined-outer-name), test_one_call_is_bounded_in_total_not_only_per_step] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:540: [W0621(redefined-outer-name), test_one_call_is_bounded_in_total_not_only_per_step] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:540: [W0621(redefined-outer-name), test_one_call_is_bounded_in_total_not_only_per_step] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:550: [W0621(redefined-outer-name), test_a_non_ascii_user_is_a_clear_fixed_error_not_a_crash] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:550: [W0621(redefined-outer-name), test_a_non_ascii_user_is_a_clear_fixed_error_not_a_crash] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:550: [W0621(redefined-outer-name), test_a_non_ascii_user_is_a_clear_fixed_error_not_a_crash] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:571: [W0621(redefined-outer-name), test_the_larger_count_wins_and_a_scan_never_replaces_the_search_result] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:571: [W0621(redefined-outer-name), test_the_larger_count_wins_and_a_scan_never_replaces_the_search_result] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:571: [W0621(redefined-outer-name), test_the_larger_count_wins_and_a_scan_never_replaces_the_search_result] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:584: [W0621(redefined-outer-name), test_a_key_that_belongs_to_the_other_mailbox_does_not_trigger_a_scan] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:584: [W0621(redefined-outer-name), test_a_key_that_belongs_to_the_other_mailbox_does_not_trigger_a_scan] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:584: [W0621(redefined-outer-name), test_a_key_that_belongs_to_the_other_mailbox_does_not_trigger_a_scan] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:596: [W0621(redefined-outer-name), test_a_key_missing_from_its_own_mailbox_still_triggers_the_scan] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:596: [W0621(redefined-outer-name), test_a_key_missing_from_its_own_mailbox_still_triggers_the_scan] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:596: [W0621(redefined-outer-name), test_a_key_missing_from_its_own_mailbox_still_triggers_the_scan] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:605: [W0621(redefined-outer-name), test_after_the_total_limit_the_connection_is_closed_without_a_logout] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:605: [W0621(redefined-outer-name), test_after_the_total_limit_the_connection_is_closed_without_a_logout] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:605: [W0621(redefined-outer-name), test_after_the_total_limit_the_connection_is_closed_without_a_logout] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:624: [W0621(redefined-outer-name), test_a_folder_name_the_program_cannot_send_is_a_clear_fixed_error] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:624: [W0621(redefined-outer-name), test_a_folder_name_the_program_cannot_send_is_a_clear_fixed_error] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:624: [W0621(redefined-outer-name), test_a_folder_name_the_program_cannot_send_is_a_clear_fixed_error] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:634: [W0621(redefined-outer-name), test_scan_false_never_runs_the_slow_scan_even_when_an_expected_key_is_missing] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:634: [W0621(redefined-outer-name), test_scan_false_never_runs_the_slow_scan_even_when_an_expected_key_is_missing] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:634: [W0621(redefined-outer-name), test_scan_false_never_runs_the_slow_scan_even_when_an_expected_key_is_missing] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:646: [W0621(redefined-outer-name), test_the_total_time_limit_counts_from_before_the_connection_and_the_greeting] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:646: [W0621(redefined-outer-name), test_the_total_time_limit_counts_from_before_the_connection_and_the_greeting] Redefining name 'pwfile' from outer scope (line 45)
+tests/test_smtp_provider.py:646: [W0621(redefined-outer-name), test_the_total_time_limit_counts_from_before_the_connection_and_the_greeting] Redefining name 'servers' from outer scope (line 54)
+tests/test_smtp_provider.py:656: [W0621(redefined-outer-name), test_a_closed_fake_server_refuses_new_connections] Redefining name 'certs' from outer scope (line 40)
+tests/test_smtp_provider.py:656: [W0621(redefined-outer-name), test_a_closed_fake_server_refuses_new_connections] Redefining name 'servers' from outer scope (line 54)
+************* Module test_stage_confirm_browser
+tests/test_stage_confirm_browser.py:118: [W0612(unused-variable), test_arming_moves_nothing_and_says_how_long_the_question_lasts] Unused variable 'rig'
+tests/test_stage_confirm_browser.py:157: [W0612(unused-variable), test_the_confirm_button_has_readable_text_and_stands_out_from_the_note] Unused variable 'rig'
+tests/test_stage_confirm_browser.py:193: [W0612(unused-variable), test_the_warning_is_fully_in_view_in_the_panel_and_the_confirm_button_is_amber] Unused variable 'rig'
+tests/test_stage_confirm_browser.py:241: [W0106(expression-not-assigned), test_the_note_after_a_give_up_promises_only_what_the_lead_can_do.body] Expression "_open_panel(page, base, lid) if to != 'closed' else _open_closed(page, base, lid)" is assigned to nothing
+************* Module test_stall_eviction
+tests/test_stall_eviction.py:42: [W0613(unused-argument), _Res.setrlimit] Unused argument 'which'
+tests/test_stall_eviction.py:67: [W0621(redefined-outer-name), test_full_cap_sending_slots_stay] Redefining name 'small_server' from outer scope (line 58)
+tests/test_stall_eviction.py:76: [W0621(redefined-outer-name), test_stalled_slot_is_closed_for_room] Redefining name 'small_server' from outer scope (line 58)
+tests/test_stall_eviction.py:85: [W0621(redefined-outer-name), test_working_slot_is_never_closed] Redefining name 'small_server' from outer scope (line 58)
+tests/test_stall_eviction.py:156: [W0613(unused-argument), test_reply_to_a_non_reader_ends_in_time] Unused argument 'env'
+tests/test_stall_eviction.py:229: [W0612(unused-variable), _outbox_rig] Unused variable 'srv'
+tests/test_stall_eviction.py:276: [W0612(unused-variable), test_adapter_maps_emfile_to_no_descriptors] Unused variable 'srv'
+tests/test_stall_eviction.py:305: [R6301(no-self-use), _Refuser.shutdown_request] Method could be a function
+tests/test_stall_eviction.py:438: [W0612(unused-variable), test_sigterm_stuck_reaper_is_logged] Unused variable 'calls'
+************* Module test_stamp_locks_and_budget
+tests/test_stamp_locks_and_budget.py:84: [W0613(unused-argument), test_stamp_not_ours_stays_silent] Unused argument 'monkeypatch'
+tests/test_stamp_locks_and_budget.py:158: [W0613(unused-argument), NoHandleOutbox.send] Unused argument 'a'
+tests/test_stamp_locks_and_budget.py:158: [W0613(unused-argument), NoHandleOutbox.send] Unused argument 'k'
+tests/test_stamp_locks_and_budget.py:183: [W0613(unused-argument), test_crm_no_handle_is_nothing_stored] Unused argument 'env'
+tests/test_stamp_locks_and_budget.py:212: [R6301(no-self-use), BrokenQualifier.qualify] Method could be a function
+tests/test_stamp_locks_and_budget.py:369: [W0613(unused-argument), test_accept_pauses_on_no_file_handle.refuse] Unused argument 'self'
+tests/test_stamp_locks_and_budget.py:407: [C1803(use-implicit-booleaness-not-comparison), test_accept_other_errors_do_not_pause] "slept == []" can be simplified to "not slept", if it is strictly a sequence, as an empty list is falsey
+tests/test_stamp_locks_and_budget.py:428: [R6301(no-self-use), _Res.getrlimit] Method could be a function
+tests/test_stamp_locks_and_budget.py:431: [R6301(no-self-use), _Res.setrlimit] Method could be a function

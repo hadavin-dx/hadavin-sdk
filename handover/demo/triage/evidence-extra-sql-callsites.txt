@@ -1,0 +1,6 @@
+NONCONST tests/test_hung_adapter_calls.py:301 follow(rig, lid, cols)
+NONCONST tests/test_hung_adapter_calls.py:349 follow(rig, lid, cols)
+NONCONST tests/test_hung_adapter_calls.py:304 follow(rig, lid, cols)
+NONCONST tests/test_hung_adapter_calls.py:352 follow(rig, lid, cols)
+NONCONST tests/test_load_tools.py:840 _set_outcome(db, where, outcome)
+125 calls checked 5 non-constant
