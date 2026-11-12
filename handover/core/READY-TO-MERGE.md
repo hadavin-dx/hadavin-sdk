@@ -2,7 +2,7 @@
 
 Written 2026-11-12 19:05 UTC / 2026-11-13 00:35 IST (lead ORDER 256 item C). Read-only snapshot: no pull request was changed, commented on or merged. Current main is `2a8c2aac` (committed 2026-11-09 08:56 UTC). 30 pull requests are open.
 
-## UPDATE 20:15Z (ORDER 262; closest to merge, with what is missing)
+## UPDATE 20:08Z (ORDER 262; closest to merge, with what is missing)
 - **#71 (P0a):** fix pushed on `wip/cloud-p0a-fix` 8b982dd3 (one test file, 419 lines added; builder: full pytest 10233 passed, lint, bandit, gitleaks clean, 22 of 62 tests fail on the old guard). Missing: independent evidence run (not done); the lead merges the fix ref onto core/P0a. Builder-stated risk: a pglast folder with an unusual suffix is missed. **I call it READY for the lead's decision.**
 - **#72 nits (`wip/cloud-p6a-nits` 7a6eb4e9):** missing independent evidence (only 6 of 93 mutants run) and one fresh review.
 - **Q8a-1 b19:** NOT close: r19 found a Blocker (non-dict input bypass), a fix batch is owed.

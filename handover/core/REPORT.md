@@ -1,6 +1,6 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
-## Block 20:15Z / 01:45 IST (ORDER 262 done: parking; ORDER 261 tables)
+## Block 20:08Z / 01:38 IST (ORDER 262 done: parking; ORDER 261 tables)
 **Failed or uncertain first.** (1) Q8c-1 round 15 and Q8a-1 round 19 reports show new Blockers/Majors in the same class as earlier rounds (Q8c-1 N1: run-time import name; Q8a-1 B1: non-dict input bypasses the hidden-input guard, confirmed by my own probe). I have not yet run the resolve step for Q8a-1 b19 (evidence runner aa62f462 still waiting on a slot). (2) Stack 3 rebase: one regression found and fixed by the rebaser (CORPUS_STEP); full suite NOT re-run on the final head 5aac4ea5; P5b1 is a squash; a possible coverage loss (noqa_sites check removed) and one OPERATOR classification need a reviewer. (3) #71 fix 8b982dd3: builder evidence only (full pytest 10233 passed); I have not run an independent evidence pass; the guard now matches `pglast` names by a regex that misses an unusual suffix such as `pglast-extras` (builder's own stated risk).
 **Done now.** Parked AK1-a, AK-G2-a b2, Q8b b14 gate-fix (builder told to push and stop), PRH b12, P3a-2 b9: `handover/core/PARKED.md` (refs, heads, owed gates, where to run). Removed their waiting gate jobs; queue went from 13 to 4 waiters. Fixed heavy.sh: (a) the Q8a-1 evidence runner was queued at priority 5 because its folder was not recognised; now priority 1; (b) the old "after 90 minutes run anyway" fallback (a cause of load above 3 jobs) now exits 75 with "GATE OWED". Created `handover/core/run-ledger.tsv` (5 rows so far). Part 2 reviewers launched (design, codebase).
 **Which branches to gate on the laptop (Windows/6 cores):** PRH b12 (perf timing, alone). Everything else needs Linux/Postgres or the root/nobody variants: cloud only. Closest to merge: #71 (8b982dd3, waits only for the lead), part 2 (reviews now), part 6 (evidence runner running), Q8a-1 (needs fix for B1, so NOT close), Q8c-1 (round 15 Major N1, NOT close).
@@ -8,8 +8,8 @@
 ### LIVE ITEMS
 | id | purpose | started UTC | running | expected end | state | must produce | last progress |
 |---|---|---|---|---|---|---|---|
-| aad30370 | design review, part 2 | 20:13 | 2 min | 20:25 | running | review text | launched |
-| a4074192 | codebase review, part 2 | 20:13 | 2 min | 20:25 | running | review text | launched |
+| aad30370 | design review, part 2 | 20:07 | 1 min | 20:20 | running | review text | launched |
+| a4074192 | codebase review, part 2 | 20:07 | 1 min | 20:20 | running | review text | launched |
 | a96da480 | ORDER 260 builder (path containment) | 19:56 | 19 min | 20:56 | running, no push yet (not a heavy waiter) | wip/cloud-sonar-path push | checkpoint due 20:26 |
 | aae188b2 | part 3 batch 2 builder | before 19:30 | over 60 min box | late | standin_mutants / slots | wip push | no new push seen: OVER BOX, I ask it to hand back at its next gate |
 | aabeb61f | part 6 evidence runner | about 19:40 | about 35 min | 20:30 | waiting on slots | evidence file | none seen |
