@@ -361,5 +361,5 @@ def test_every_prh_mutant_still_applies():
     each killer test still exists."""
     from tests import prh_mutants
 
-    assert len(prh_mutants.M) >= 79
+    assert len(prh_mutants.M) >= 81
     assert prh_mutants.check_applies() == []
