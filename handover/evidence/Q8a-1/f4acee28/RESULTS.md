@@ -4,9 +4,9 @@ Recorded, not judged. Nothing was fixed, committed or pushed. No ticket file for
 
 ## Failed or not run (first)
 
-1. `tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in` FAILED 6 of 6 runs (3 on head, 3 on main), each with `AssertionError: a quadratic function must be flagged` (`is_superlinear(...)` returned False), through the three slot locks, each run 0.6 s. Machine was shared with other agents' jobs. This is a plain failure, not an intermittent one, in this session (see table item 9).
+1. `tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in` FAILED 6 of 6 runs (3 on head, 3 on main), each with `AssertionError: a quadratic function must be flagged` (`is_superlinear(...)` returned False), through the three slot locks, each run 0.6 s. Machine was shared with other agents' jobs. See table item 9.
 2. Full pytest took four runs; only the last passed. Run 0 (my slip): my script started in the wrong folder, "no tests ran", exit 5. Run 1: 2 failed (`test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]` and `[copy-to-file]`), because my Postgres server did not have PGUSER in its own environment (dblink-connect: `role "nobody" does not exist`). Run 2: 1 failed (`[copy-to-file]`: server could not overwrite `/tmp/askdata_p2_copy.csv`, a file owned by another agent's postgres user; my server ran as user nobody). Run 3, server run as user postgres with PGHOST, PGPORT, PGUSER in the server environment: 11043 passed, 1 skipped, 28 deselected, exit 0. All four logs kept. The two failures were in my environment set-up, not in the code under test, but I did not run the head on a differently set-up server to prove it beyond run 3.
-3. Fail-before on old code: two of the four changed or new test functions pass on f0febfb6 src (listed in item 7). Also 63 passing instances (listed in `new-tests-pass-on-main.txt`) of new test names pass on main src (most are tests of features that main lacks only in part).
+3. Fail-before on old code: two of the four changed or new test functions pass on f0febfb6 src (listed in item 7). Also 63 passing instances (listed in `new-tests-pass-on-main.txt`) of new test names pass on main src.
 4. Not run: ticket file (does not exist), perf run beyond item 9 (the brief names none), `pip-audit`, Semgrep, zizmor, Trivy, Python 3.12 job (not requested by the brief; the CI steps relevant to this package are the stage-rename mutants and the redaction perf step).
 5. Not read, as instructed: `handover/evidence/Q8a-1/b10/` (builder notes).
 
@@ -39,7 +39,7 @@ Test functions changed between f0febfb6 and head (from `git diff`): 2 new, 1 ren
   - FAILED `test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter` (existing; its guard lists changed)
   - PASSED `test_the_platform_secret_probe_names_a_secret_by_position_and_never_by_name` (renamed from `..._shows_a_configured_name_and_hides_a_pasted_one`)
   - PASSED `test_every_secret_provider_says_no_name_for_a_plain_word_and_imports_no_name_filter` (body changed, same name)
-- On main src: the same four names did not pass (they are in the 279 failures); the 63 new-name instances that pass on main are in `new-tests-pass-on-main.txt` (tests/test_k3_pilot_env.py 1, tests/test_q8a_live_overrides.py about 45, tests/test_stage_names.py about 17).
+- On main src: the same four names did not pass (they are in the 279 failures); the 63 new-name instances that pass on main are in `new-tests-pass-on-main.txt` (tests/test_k3_pilot_env.py 1, tests/test_q8a_live_overrides.py 44, tests/test_stage_names.py 18).
 - `tests/stage_mutants.py` is not collected by pytest; it was copied with the tests and run separately (4b, on head).
 
 ## 8(c) Probe of my own (marker value written as `<made-up-value>`)
