@@ -42,7 +42,7 @@ class Budget:
 
     def __init__(self, limit: Decimal) -> None:
         self.limit = limit
-        self.spent = Decimal(0)
+        self.spent: Decimal = Decimal(0)
 
     def charge(self, usd: Decimal) -> None:
         self.spent += usd

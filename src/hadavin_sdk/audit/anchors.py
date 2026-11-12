@@ -39,4 +39,4 @@ def parse(raw: bytes) -> tuple[int, tuple[str, str]]:
 
 def already_there(existing: bytes, wanted: bytes, seq: int) -> None:
     if existing != wanted:
-        raise AnchorConflict(f"anchor {seq} already holds a different checkpoint")
+        raise AnchorConflict(f"anchor {seq:d} already holds a different checkpoint")

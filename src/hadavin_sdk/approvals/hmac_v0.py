@@ -31,7 +31,7 @@ def _sig(body: bytes, ts: str, secret: str) -> str:
 def sign(body: bytes, ts: int, secret: str, prefix: str) -> dict[str, str]:
     """The headers a sender attaches (tests and channels that relay callbacks)."""
     ts_name, sig_name = _names(prefix)
-    return {ts_name: str(ts), sig_name: _sig(body, str(ts), secret)}
+    return {ts_name: f"{ts:d}", sig_name: _sig(body, f"{ts:d}", secret)}
 
 
 def verify(

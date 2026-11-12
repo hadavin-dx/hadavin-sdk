@@ -125,7 +125,7 @@ def test_check_config_accepts_a_good_configuration_and_exits_0(tmp_path, capsys)
     from hadavin_sdk import cli
 
     assert cli.main(["--config", str(_config_dir(tmp_path)), "check-config"]) == 0
-    assert "the configuration is accepted" in capsys.readouterr().out
+    assert "the configuration files are accepted" in capsys.readouterr().out
 
 
 def test_check_config_refuses_a_key_shaped_model_id_by_field_and_rule_never_the_value(
@@ -135,27 +135,34 @@ def test_check_config_refuses_a_key_shaped_model_id_by_field_and_rule_never_the_
 
     value = "zq" + "A1" * 16
     d = _config_dir(tmp_path, model_id=value)
-    assert cli.main(["--config", str(d), "check-config"]) == 1
+    assert cli.main(["--config", str(d), "check-config"]) == 2, "check-config must exit 2 for a refused configuration"
     seen = capsys.readouterr()
     assert "refused" in seen.err and "model_id" in seen.err
     assert value not in seen.err and value not in seen.out and "accepted" not in seen.out
 
 
-def test_check_config_opens_no_connection_and_writes_nothing(tmp_path, monkeypatch):
+def test_check_config_opens_no_connection_and_writes_nothing(tmp_path, monkeypatch, capsys):
     import socket
 
     from hadavin_sdk import cli
 
     d = _config_dir(tmp_path)
-    before = sorted((p.relative_to(tmp_path), p.stat().st_mtime_ns) for p in tmp_path.rglob("*"))
+
+    def tree():
+        return sorted(
+            (p.relative_to(tmp_path).as_posix(), p.stat().st_mtime_ns, p.stat().st_size)
+            for p in tmp_path.rglob("*")
+        )
+
+    before = tree()
 
     def no_connect(*a, **k):
         raise AssertionError("check-config opened a connection")
 
     monkeypatch.setattr(socket.socket, "connect", no_connect)
-    assert cli.main(["--config", str(d), "check-config"]) == 0
-    after = sorted((p.relative_to(tmp_path), p.stat().st_mtime_ns) for p in tmp_path.rglob("*"))
-    assert before == after
+    code = cli.main(["--config", str(d), "check-config"])
+    assert code == 0, capsys.readouterr().err
+    assert tree() == before, "check-config changed the configuration folder"
 
 
 # ---- Issue 4: an id that a caller hands in never reaches a message -------------------------------------------------------

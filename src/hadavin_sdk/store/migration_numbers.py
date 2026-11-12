@@ -250,7 +250,7 @@ def hand_recipe(entries: Sequence[tuple[str, str]], schema: str, lock: int = MIG
         RECIPE_FIRST_LINE,
         f'SET search_path TO "{schema}";',
         "BEGIN;",
-        f"SELECT pg_advisory_xact_lock({int(lock)});",
+        f"SELECT pg_advisory_xact_lock({lock:d});",
     ]
     for stem, text in entries:
         lines.append(text)
@@ -403,7 +403,7 @@ def _ident_start(ch: str) -> bool:
 def _line_of(text: str, pos: int) -> int:
     """1-based line of `pos`: a line ends at LF, CR or CRLF, counted once."""
     head = text[:pos]
-    return 1 + head.count("\n") + head.count("\r") - head.count("\r\n")
+    return 1 + len(re.findall(r"\r\n|\r|\n", head))
 
 
 _SPECIAL = re.compile(r"[-/'\"$]")

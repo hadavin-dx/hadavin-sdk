@@ -979,6 +979,11 @@ def check_mignames() -> list[str]:
         for n in names
         if not re.fullmatch(r"\d{3,4}_[a-z0-9_]+\.sql", n)
     ]
+    # ledger rows come from the database: only a name shaped like a shipped file is shown, the rest is counted
+    ledger = migrate._LEDGER_NAME
+    bad += [f"{n}: a shipped name is not accepted as a ledger name" for n in names if not ledger.fullmatch(n[:-4])]
+    hostile = ["0001_x" + "\n" + "secret", "../etc", "payments-prod", "0001_x y", "a" * 90, "0001_" + "A" * 3]
+    bad += [f"a hostile ledger name is accepted: {h[:10]!r}" for h in hostile if ledger.fullmatch(h)]
     return bad
 
 
@@ -1105,6 +1110,16 @@ def _declared_numbers() -> set[str]:
                         and ast.unparse(n.returns) in _NUMERIC_NOTES
                     ):
                         names.add(n.name)  # a property or a method that returns a number
+                    if isinstance(n, FUNCS):  # `self.x: Decimal = ...` in a method declares the field too
+                        for m in ast.walk(n):
+                            if (
+                                isinstance(m, ast.AnnAssign)
+                                and isinstance(m.target, ast.Attribute)
+                                and isinstance(m.target.value, ast.Name)
+                                and m.target.value.id == "self"
+                                and ast.unparse(m.annotation) in _NUMERIC_NOTES
+                            ):
+                                names.add(m.target.attr)
     return names
 
 
@@ -1158,11 +1173,13 @@ def _own_declaration(cls: ast.ClassDef, name: str) -> bool | None:
     return None
 
 
-_NUMBER_FUNCS = {
-    "len", "int", "round", "abs", "float", "count", "log", "comb", "Decimal", "start", "end",
-}  # fmt: skip
-# `min`, `max` and `sum` are numbers only when their arguments are numbers (`_numeric` reads them); `index`, `find` and
-# `rfind` are not listed (a method of that name can return anything).
+# Round 16 (Issue 3e): a number function is told by what it is, not by its name alone. A built-in that always gives a
+# number (`len`, `int`, `round`, `abs`, `float`, `ord`) when it is called as a bare name; `Decimal` when the module
+# imports it from `decimal`; `math.log`, `math.comb` and the like through the module `math`. A method called `count`,
+# `start`, `end`, `index`, `find` is not a number by its name (a method of that name can return anything).
+_NUMBER_BUILTINS = {"len", "int", "round", "abs", "float", "ord"}
+_MATH_NUMBERS = {"log", "comb", "ceil", "floor", "sqrt", "log2", "log10"}
+# `min`, `max` and `sum` are numbers only when their arguments are numbers (`_numeric` reads them).
 
 
 def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0) -> bool:
@@ -1205,8 +1222,18 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
                 )
                 for a in e.args
             )
+        by_form = (
+            (isinstance(e.func, ast.Name) and name in _NUMBER_BUILTINS)
+            or (isinstance(e.func, ast.Name) and name == "Decimal")
+            or (
+                isinstance(e.func, ast.Attribute)
+                and isinstance(e.func.value, ast.Name)
+                and e.func.value.id == "math"
+                and name in _MATH_NUMBERS
+            )
+        )
         return (
-            name in _NUMBER_FUNCS
+            by_form
             or name.startswith("purge_")
             or name in declared
             or name in _NUMBER_FORMATTERS
@@ -1278,7 +1305,19 @@ def _numeric_site(rel: str, node: ast.AST, declared: set[str]) -> str | None:
     parts: list[ast.AST] = []
     if isinstance(node, ast.Expr):
         node = node.value
-    if isinstance(node, ast.AugAssign):
+    if isinstance(node, ast.Return) and node.value is not None:
+        node = node.value
+    if (
+        isinstance(node, ast.Call)
+        and getattr(node.func, "id", "") == "format"
+        and len(node.args) == 2
+        and isinstance(node.args[1], ast.Constant)
+        and node.args[1].value == "f"
+    ):
+        parts = [node.args[0]]  # `format(number, "f")` shows a number in fixed-point form
+    elif isinstance(node, ast.Call) and getattr(node.func, "id", "") == "str" and len(node.args) == 1:
+        parts = [node.args[0]]  # `str(number)`
+    elif isinstance(node, ast.AugAssign):
         parts = [node.value]
     elif isinstance(node, ast.JoinedStr):
         for v in node.values:
@@ -1915,7 +1954,88 @@ def check_filename() -> list[str]:
     return bad
 
 
+def check_handoff() -> list[str]:
+    """A HANDOFF row stores an error object in a local dict. In the function that owns the dict, the key that holds the
+    error is read only by a `raise` (directly, or through a name that is only raised, tested by `isinstance` or named
+    by `type(...).__name__`); the dict is not printed, logged, formatted or returned whole."""
+    bad = []
+    for m, k in _rows("HANDOFF"):
+        found = _sites(m, k)
+        if not found:
+            bad.append(f"{m}: {k[:60]} is not found in the module")
+        for node in found:
+            if not (
+                isinstance(node, ast.Assign)
+                and isinstance(node.targets[0], ast.Subscript)
+                and isinstance(node.targets[0].value, ast.Name)
+                and isinstance(node.targets[0].slice, ast.Constant)
+            ):
+                bad.append(f"{m}: {k[:50]} is not a store into a keyed local dict")
+                continue
+            box, key = node.targets[0].value.id, node.targets[0].slice.value
+            owner = [a for a in _up(m, node) if isinstance(a, FUNCS)][-1]
+            for n in ast.walk(owner):
+                if not (isinstance(n, ast.Name) and n.id == box and isinstance(n.ctx, ast.Load)):
+                    continue
+                par = next(_up(m, n))
+                if isinstance(par, ast.Compare):
+                    continue  # `"error" in box`
+                if not isinstance(par, ast.Subscript):
+                    bad.append(f"{m}:{n.lineno}: {box} is used as {ast.unparse(par)[:40]}")
+                    continue
+                if not (isinstance(par.slice, ast.Constant) and par.slice.value == key):
+                    continue  # another key: not the error
+                if isinstance(par.ctx, ast.Store):
+                    continue  # the store itself
+                use = next(_up(m, par))
+                if isinstance(use, ast.Raise):
+                    continue
+                if isinstance(use, ast.Assign) and isinstance(use.targets[0], ast.Name):
+                    held = use.targets[0].id
+                    for u in ast.walk(owner):
+                        if isinstance(u, ast.Name) and u.id == held and isinstance(u.ctx, ast.Load):
+                            up = next(_up(m, u))
+                            ok = (
+                                isinstance(up, ast.Raise)
+                                or (isinstance(up, ast.Call) and getattr(up.func, "id", "") in {"isinstance", "type"})
+                                or (isinstance(up, ast.Attribute) and up.attr == "__name__")
+                            )
+                            if not ok:
+                                bad.append(f"{m}:{u.lineno}: {held} (the stored error) is used as {ast.unparse(up)[:40]}")
+                    continue
+                bad.append(f"{m}:{n.lineno}: the stored error is used as {ast.unparse(use)[:40]}")
+    return bad
+
+
+def check_filter() -> list[str]:
+    """A FILTER row is the return of `shown_name`: the first statement of the function refuses (returns the sentence
+    `NOT_SHOWN`) every name that `word_like` does not accept, so only a word-like name reaches the row."""
+    bad = []
+    for m, k in _rows("FILTER"):
+        if not _sites(m, k):
+            bad.append(f"{m}: {k[:50]} is not found in the module")
+        for node in _sites(m, k):
+            fn = _enclosing(m, node)
+            body = [s for s in fn.body if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))]
+            first = body[0] if body else None
+            ok = (
+                isinstance(first, ast.If)
+                and isinstance(first.test, ast.UnaryOp)
+                and isinstance(first.test.op, ast.Not)
+                and isinstance(first.test.operand, ast.Call)
+                and getattr(first.test.operand.func, "id", "") == "word_like"
+                and len(first.body) == 1
+                and isinstance(first.body[0], ast.Return)
+                and ast.unparse(first.body[0].value) == "NOT_SHOWN"
+            )
+            if not ok:
+                bad.append(f"{m}: {fn.name} does not start by refusing a name that is not word-like")
+    return bad
+
+
 CHECKS = {
+    "HANDOFF": check_handoff,
+    "FILTER": check_filter,
     "STOREID": check_storeid,
     "URL": check_url,
     "KEPTID": check_keptid,

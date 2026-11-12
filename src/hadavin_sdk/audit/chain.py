@@ -329,7 +329,7 @@ class ChainAudit:
                 self.anchor.put(seq, head, signature)
         except Exception as exc:  # noqa: BLE001 - an anchor outage must not stop the recording
             _LOG.error(
-                "audit checkpoint %s not anchored (%s); retried next time", seq, type(exc).__name__
+                "audit checkpoint %d not anchored (%s); retried next time", seq, type(exc).__name__
             )
             self._unanchored[seq] = (head, signature)
         else:

@@ -241,7 +241,10 @@ def _nested_identifier(sub: dict[str, Any]) -> bool:
     return any(walk(v) for k, v in sub.items() if k != "identifier")
 
 
-def load_registry(config: Config) -> Registry:
+def load_registry(config: Config, *, import_tools: bool = True) -> Registry:
+    """Read and check the whole configuration. `import_tools=False` (used by `check-config`) never runs a tool
+    module: the read-operation binding of a tool's `operations` is then not checked, because the binding is declared
+    inside the module's own code. Every other check, the module pins included, still runs."""
     root = config.root
     try:
         raw_agents = _yaml(root / "agents.yaml", "agents.yaml")
@@ -286,7 +289,7 @@ def load_registry(config: Config) -> Registry:
         )
         if problems:
             raise ConfigError("; ".join(problems))
-        tools = _load_tools(config, agents, contracts)
+        tools = _load_tools(config, agents, contracts, import_tools)
         reg = Registry(config, agents, principals, chains, contracts, tools)
         if problems := deferred.check(reg):
             raise ConfigError("; ".join(problems))
@@ -300,7 +303,9 @@ def _input_names(contract: ActionContract) -> list[str]:
     ]
 
 
-def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict[str, ToolSpec]]:
+def _load_tools(
+    config: Config, agents: dict, contracts: dict, import_tools: bool = True
+) -> dict[str, dict[str, ToolSpec]]:
     """Read `tools/<agent>.yaml` for every agent and check each entry (K5). Every problem fails at start-up."""
     # Pins first, and fatal at once: nothing below may import a tool module that is unpinned or does not match.
     if pin_problems := _module_pin_problems(config):
@@ -328,7 +333,7 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
             stack.enter_context(
                 loaded_ids(sp.name for sp in specs)
             )  # the manifest's own tool names
-            if specs and read_ops is None:
+            if import_tools and specs and read_ops is None:
                 read_ops = read_operations(config.tool_modules, config.tool_module_hashes)
             found[agent_id] = {}
             # With a manifest the manifest is the whole list of tools: an entry of `tools_allowed` with no tool in it would
@@ -387,7 +392,7 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
                 problems += [
                     f"{where}: tool {shown_name(spec.name)}: operations entry {i} is not on the read list of tool_modules"
                     for i, op in enumerate(spec.operations, start=1)
-                    if op not in (read_ops or set())
+                    if import_tools and op not in (read_ops or set())
                 ]
                 problems += [  # a POST read (a review, a query body) is named in the config, not only in tool code
                     f"{where}: tool {shown_name(spec.name)}: operations entry {i} is bound to {read_ops[op][0]}; "

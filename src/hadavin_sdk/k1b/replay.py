@@ -144,7 +144,7 @@ def _replay(
         rdir = out / f"run{run_index}"
         rdir.mkdir()
         counts = dict.fromkeys(_COUNT_KEYS, 0)
-        run_usd = Decimal(0)
+        run_usd: Decimal = Decimal(0)
         issue_cases: dict[str, list[str]] = {k: [] for k in _ISSUES}
         masked: Counter[str] = Counter()
         masked_cases = 0

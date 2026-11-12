@@ -117,7 +117,7 @@ def _main(argv: list[str] | None = None) -> int:
     sub.add_parser("tick", help="one pass of the housekeeping steps (run every 30-60 s)")
     sub.add_parser(
         "check-config",
-        help="read the configuration the way tick does and say whether it is accepted (reads files only; never connects or writes)",
+        help="check the configuration files (reads files only: runs no tool module, never connects, never writes); exit 0 accepted, 2 refused",
     )
     mig = sub.add_parser("migrate", help="apply the postgres store schema (migration role)")
     mig.add_argument("--runtime-role", help="grant this database role what the runtime needs")
@@ -305,16 +305,18 @@ def score_cmd(audit, args) -> int:
 
 
 def _check_config() -> int:
-    """Round 15 (Issue 5): load the configuration and the registry exactly as `tick` does, and nothing else: it reads the
-    configuration folder, opens no connection and writes nothing. Exit 0 if accepted, 1 if refused; a refusal names the
-    field and the rule (`config_error_text`), never a value. Run it before an upgrade: a configuration this command
-    refuses will be refused by the running system after the upgrade."""
-    try:
-        load_registry(load_config())
-    except ConfigError as exc:
-        print(f"refused: {exc}", file=sys.stderr)
-        return 1
-    print("the configuration is accepted")
+    """Round 16 (Issue 1): read the configuration folder and check it, and nothing else. It never runs a tool module
+    (client code), opens no connection and writes nothing. Exit 0 accepted, 2 refused (the same code `main` and `tick`
+    give a `ConfigError`), 3 any other failure. A refusal names the field and the rule, never a value.
+    What it does NOT check, said in its own output: the operations a tool's manifest lists must be bound inside the
+    tool module's code, and only `tick` (which runs that code and builds the backends) can see that. A configuration
+    this command refuses will be refused by `tick`; a configuration it accepts can still be refused by `tick` for
+    those two reasons."""
+    load_registry(load_config(), import_tools=False)
+    print(
+        "the configuration files are accepted. Not checked: tool module code is not run, so the operations "
+        "bound inside a tool module, and the start-up of the backends, are checked only by tick"
+    )
     return 0
 
 

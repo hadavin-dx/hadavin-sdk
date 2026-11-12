@@ -664,7 +664,7 @@ class ToolContext:
             raise
         if len(buf) > cap:
             if max_bytes:
-                err = ToolRefused(f"the response is larger than {cap} bytes")
+                err = ToolRefused(f"the response is larger than {cap:d} bytes")
                 err.too_large = True
                 raise err
             del buf[cap:]
