@@ -275,3 +275,8 @@ Nothing merged, nothing spent, no live call, no PR state change. Owner-needed it
 - P3a-2: ee831364 is commit 3b WIP (not a finished build). r1 resolved (handover/reviews/P3a-2-ee831364/goldfish_review_report-r1.md); 3c builder a62fbfe6 running (box ends ~02:59Z) on core/p3a2-3c, pushes wip/cloud-p3a2-3c only. q-p3a2-e1-extension-lockout and q-p3a2-o8-schema-owner for the lead. core/P3a-2-clean NOT pushed.
 - Q8c-1: ledger reconciled (20 rows edited, 4 added); no reviewer has read ad588599; Vault engine CI run (12 tests) still outstanding (gate before 2026-12-11).
 - Not started: Q8c PR 2, PR85 variant, Q8a-2 nits, PR77 restart, PR74.
+
+## Update 02:22Z (2026-11-12)
+Order in force: 247 (GO core lane). Branches pushed this window (all `wip/cloud-*`, plain push): q8a1-b9 (f0febfb6, r9 resolved), q8a1-b10 (f4acee28, round 10 review running), PR89-r27 (cc1f6228; r27 resolved, r28 builder running), prh-b5 (3db0d34d; r5 resolved), prh-b6 builder running, q8b-b5 (6f32f0a8; round 6 reviews in, Blocker F1 session_cookie `&` regression, evidence running), p3a2-3c builder running.
+Open: Q8a-1 C1 closes only after a probe on f4acee28; PR H H1 Blocker/H2 Major open until batch 6; Q8b F1 Blocker open; PR89 r27-1 Major open until r28; Q8c-1 Vault engine CI gate before 2026-12-11; q-q8a1-hide-ids, q-p3a2-e1-extension-lockout, q-p3a2-o8-schema-owner, q-pr89-mypy-in-lock open owner questions.
+Resume rule: read PULSE.md newest lines, ListAgents is empty after a restart: re-launch from the handover/reviews and handover/evidence folders (round reports are named goldfish_review_report-r<N>.md).
