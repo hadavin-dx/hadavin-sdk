@@ -1,0 +1,7 @@
+head: fd85c0bf08a8223e2b70d5ed8b04161e0e65c54d
+$ ruff check src tests demos tools
+All checks passed!
+exit 0
+$ ruff format --check src tests demos tools
+327 files already formatted
+exit 0

@@ -68,6 +68,7 @@ MOVED = (
     "test_a_signal_while_the_temp_folders_are_removed_leaves_none",
     "test_the_process_group_is_killed_while_its_leader_is_not_yet_reaped",
     "test_the_pytest_run_writes_no_file_into_its_working_folder_and_leaves_no_temp_folder",
+    "test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_one_is_not",
     "test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_signalled",
     "test_run_mutants_is_not_re_entrant_and_a_nested_call_leaves_the_outer_one_alone",
     "test_a_relative_link_that_points_out_of_the_tree_is_refused_at_snapshot_time",

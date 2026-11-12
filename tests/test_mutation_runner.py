@@ -1530,29 +1530,6 @@ def test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused(tmp_pa
         )  # fmt: skip
 
 
-# last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin
-def test_the_manifest_pins_the_files_a_demo_copies():
-    root = Path(__file__).resolve().parents[1]
-    manifest = json.loads((FIX / "mutation_manifest.json").read_text(encoding="utf-8"))
-    for rel, sha in manifest["files"].items():
-        data = (root / rel).read_bytes().replace(b"\r\n", b"\n")
-        assert hashlib.sha256(data).hexdigest() == sha, (
-            rel,
-            "changed: re-sync the demos and update the manifest and the CHANGELOG",
-        )
-    assert set(manifest["files"]) == {
-        "src/hadavin_sdk/testing/__init__.py",
-        "src/hadavin_sdk/testing/mutation.py",
-        "tools/__init__.py",
-        "tools/mutation_runner.py",
-    }
-    log = root / "CHANGELOG.md"
-    if log.exists():  # the mutation copies do not carry it
-        text = log.read_text(encoding="utf-8")
-        for rel, sha in manifest["files"].items():
-            assert sha in text, rel  # the CHANGELOG re-copy list names every pinned hash
-
-
 def test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_one_is_not(tmp_path):
     """`extra_files` carries a root file (a changelog) into the copies: a test that reads it passes only when it is
     there (the copy of a mutant run holds `src`, the tests and the named folders, nothing else)."""
@@ -1585,3 +1562,26 @@ def test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_o
         extra_dirs=(),
         extra_files=("../x.md",),
     )
+
+
+# last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin
+def test_the_manifest_pins_the_files_a_demo_copies():
+    root = Path(__file__).resolve().parents[1]
+    manifest = json.loads((FIX / "mutation_manifest.json").read_text(encoding="utf-8"))
+    for rel, sha in manifest["files"].items():
+        data = (root / rel).read_bytes().replace(b"\r\n", b"\n")
+        assert hashlib.sha256(data).hexdigest() == sha, (
+            rel,
+            "changed: re-sync the demos and update the manifest and the CHANGELOG",
+        )
+    assert set(manifest["files"]) == {
+        "src/hadavin_sdk/testing/__init__.py",
+        "src/hadavin_sdk/testing/mutation.py",
+        "tools/__init__.py",
+        "tools/mutation_runner.py",
+    }
+    log = root / "CHANGELOG.md"
+    if log.exists():  # the mutation copies do not carry it
+        text = log.read_text(encoding="utf-8")
+        for rel, sha in manifest["files"].items():
+            assert sha in text, rel  # the CHANGELOG re-copy list names every pinned hash

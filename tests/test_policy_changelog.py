@@ -367,9 +367,12 @@ def _renew_and_check(mode: str, old_decided: date, new_decided: date, full_mutan
         write = page(new_decided, "--write")
         assert write.returncode == 0, f"the page was not rewritten: {write.stderr[-600:]}"
         docs = [f for f in sorted((ROOT / "docs").rglob("*")) if f.is_file()]
-        assert any((copy / f.relative_to(ROOT)).read_bytes() != f.read_bytes() for f in docs), (
-            f"step (4): `--write` left every file of docs/ as it was in the {mode} copy"
-        )
+        if (
+            mode != "kinds"
+        ):  # the page shows the days of the names and claims, not those of the kinds
+            assert any((copy / f.relative_to(ROOT)).read_bytes() != f.read_bytes() for f in docs), (
+                f"step (4): `--write` left every file of docs/ as it was in the {mode} copy"
+            )
         for day in (new_decided, new_decided + timedelta(days=1)):
             check = page(day, "--check")
             assert check.returncode == 0, (
