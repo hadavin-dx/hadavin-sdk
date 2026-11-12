@@ -1,0 +1,18 @@
+tree /home/user/build/EV-PRHb6-c802cc0f/wt-main/src/hadavin_sdk/tools.py
+row | untrusted | tool | error | head | redact()   (R = readable window; sq = readable only after removing spaces/controls; - = none; E = exception)
+X1 capital hex under ENCRYPTION_KEY= | - | - | - | - | - || t-out=<omitted>
+X1b lowercase hex control | - | - | - | - | - || t-out=<omitted>
+X2 capital hex cut by ZW | - | - | - | - | R || t-out=<omitted>
+X3 capital hex cut by RLO and LRI+PDI | - | - | - | - | R || t-out=<omitted>
+X4 hex ZW+bidi+ESC[0m+BEL mix | R | R | R | R | R || t-out=<omitted>
+X5 KEY 2 copies plain + ZW-cut | - | - | - | - | R || t-out=<omitted>
+X6 KEY 3 copies plain, ZW, ESC[0m | R | R | R | R | R || t-out=<omitted>
+X7 KEY 3 copies all cut differently (ZW, RLO, BOM) | - | - | - | - | R || t-out=<omitted>
+X8 KEY spaced out | sq | sq | sq | sq | sq || t-out=<omitted>
+X9 KEY spaced out with ZW | sq | sq | sq | sq | sq || t-out=<omitted>
+X10 KEY spaced + copy ESC-cut | R | R | R | R | R || t-out=<omitted>
+X11 HAND 3 copies (plain, ESC-prefix, ESC(B ESC[m cut) | R | R | R | R | R || t-out=<omitted>
+X12 HAND ZW-cut + bidi-cut | R | - | - | R | R || t-out=<omitted>
+X13 HAND spaced out | sq | sq | sq | sq | sq || t-out=<omitted>
+X14 mixed: HAND x2 + KEY x2 + HEXC cut | R | R | R | R | R || t-out=<omitted>
+X15 HAND cut by ZW at end, TRUNCATED tail | R | - | - | R | R || t-out=<omitted>

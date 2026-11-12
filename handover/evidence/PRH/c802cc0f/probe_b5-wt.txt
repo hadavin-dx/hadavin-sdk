@@ -1,0 +1,37 @@
+python 3.13.18 tree /home/user/build/EV-PRHb6-c802cc0f/wt/src/hadavin_sdk/guard/redact.py
+table: row | untrusted | tool | error | head   (any=yes: a named piece stands in the output)
+L1 || untrusted: any=no {KEY=no,tail=no} | tool: any=no {KEY=no,tail=no} | error: any=no {KEY=no,tail=no} | head: any=no {KEY=no,tail=no}
+L2 || untrusted: any=no {KEY=no,tail=no} | tool: any=no {KEY=no,tail=no} | error: any=no {KEY=no,tail=no} | head: any=no {KEY=no,tail=no}
+L3 || untrusted: any=no {KEY=no,tail=no} | tool: any=no {KEY=no,tail=no} | error: any=no {KEY=no,tail=no} | head: any=no {KEY=no,tail=no}
+L4 || untrusted: any=no {MAIL=no,tail=no} | tool: any=no {MAIL=no,tail=no} | error: any=no {MAIL=no,tail=no} | head: any=no {MAIL=no,tail=no}
+L5 || untrusted: any=no {PW=no} | tool: any=no {PW=no} | error: any=no {PW=no} | head: any=no {PW=no}
+L6 || untrusted: any=yes [no list on this path] {HAND=yes,tail=yes} | tool: any=no {HAND=no,tail=no} | error: any=no {HAND=no,tail=no} | head: any=yes [no list on this path] {HAND=yes,tail=yes}
+L7 || untrusted: any=no {PW=no,tail=no} | tool: any=no {PW=no,tail=no} | error: any=no {PW=no,tail=no} | head: any=no {PW=no,tail=no}
+L8 || untrusted: any=no {KEY=no,tail=no} | tool: any=no {KEY=no,tail=no} | error: any=no {KEY=no,tail=no} | head: any=no {KEY=no,tail=no}
+L9 || untrusted: any=no {KEY=no,tail=no} | tool: any=no {KEY=no,tail=no} | error: any=no {KEY=no,tail=no} | head: any=no {KEY=no,tail=no}
+L10 || untrusted: any=no {KEY=no,tail=no} | tool: any=no {KEY=no,tail=no} | error: any=no {KEY=no,tail=no} | head: any=no {KEY=no,tail=no}
+L11 || untrusted: any=no {KEY=no,tail=no} | tool: any=no {KEY=no,tail=no} | error: any=no {KEY=no,tail=no} | head: any=no {KEY=no,tail=no}
+L12 || untrusted: any=yes [no list on this path] {HAND=no,tail=yes} | tool: any=no {HAND=no,tail=no} | error: any=no {HAND=no,tail=no} | head: any=yes [no list on this path] {HAND=no,tail=yes}
+M2a || untrusted: any=no {KEY=no,tail=no} | tool: any=no {KEY=no,tail=no} | error: any=no {KEY=no,tail=no} | head: any=no {KEY=no,tail=no}
+M2b || untrusted: any=no {KEY=no,tail=no} | tool: any=no {KEY=no,tail=no} | error: any=no {KEY=no,tail=no} | head: any=no {KEY=no,tail=no}
+G1 || untrusted: any=no {KEY=no,tail=no} | tool: any=no {KEY=no,tail=no} | error: any=no {KEY=no,tail=no} | head: any=no {KEY=no,tail=no}
+G2 || untrusted: any=no {KEY=no,tail=no} | tool: any=no {KEY=no,tail=no} | error: any=no {KEY=no,tail=no} | head: any=no {KEY=no,tail=no}
+G3 || untrusted: any=no {KEY=no,tail=no,KEY2=no,tail2=no} | tool: any=no {KEY=no,tail=no,KEY2=no,tail2=no} | error: any=no {KEY=no,tail=no,KEY2=no,tail2=no} | head: any=no {KEY=no,tail=no,KEY2=no,tail2=no}
+a(char-reading) || untrusted: any=no [no list on this path] {HAND=no,KEY=no,tail=no} | tool: any=no {HAND=no,KEY=no,tail=no} | error: any=no {HAND=no,KEY=no,tail=no} | head: any=no [no list on this path] {HAND=no,KEY=no,tail=no}
+b(consuming) || untrusted: any=yes [no list on this path] {HAND=no,tailH=yes,KEY=no,tail=no} | tool: any=no {HAND=no,tailH=no,KEY=no,tail=no} | error: any=no {HAND=no,tailH=no,KEY=no,tail=no} | head: any=yes [no list on this path] {HAND=no,tailH=yes,KEY=no,tail=no}
+b2(cut HAND by ESC(B ESC[m, no list) || untrusted: any=no {KEY=no,tail=no} | tool: any=no {KEY=no,tail=no} | error: any=no {KEY=no,tail=no} | head: any=no {KEY=no,tail=no}
+ctl-plain-key || untrusted: any=no {KEY=no} | tool: any=no {KEY=no} | error: any=no {KEY=no} | head: any=no {KEY=no}
+ctl-plain-hand || untrusted: any=yes [no list on this path] {HAND=yes} | tool: any=no {HAND=no} | error: any=no {HAND=no} | head: any=yes [no list on this path] {HAND=yes}
+ctl-tab-cut(not hidden) || untrusted: any=yes {KEY=no,tail=yes} | tool: any=yes {KEY=no,tail=yes} | error: any=yes {KEY=no,tail=yes} | head: any=yes {KEY=no,tail=yes}
+--- (d) redact() direct call (guard.redact.redact)
+d1 key cut by ESC[0m -> withheld=False readable_pieces=0 esc_left=False out='id <APIKEY_1>'
+d2 user BEL key + key cut -> withheld=False readable_pieces=0 esc_left=False out='user\x07<APIKEY_1> and <APIKEY_2>'
+d3 key cut by ESC(B ESC[m -> withheld=False readable_pieces=0 esc_left=False out='id <APIKEY_1>'
+d4 key cut by title string -> withheld=False readable_pieces=0 esc_left=False out='id <APIKEY_1>'
+d5 key cut, escape touches non-word -> withheld=False readable_pieces=0 esc_left=False out='id =<APIKEY_1>'
+d6 key cut next to combining mark -> withheld=False readable_pieces=1 esc_left=False out='id AKIÁIOSFODNN7EXAMPLE'
+d7 email cut at the dot -> withheld=False readable_pieces=0 esc_left=False out='to <EMAIL_1>'
+d8 key twice cut, one gap on a digit -> withheld=False readable_pieces=0 esc_left=False out='id <APIKEY_1>'
+d9 300 distinct valid-shaped keys each cut -> withheld=True tails_readable=0 esc_left=False
+d10 seeded mapping value cut -> withheld=False HAND_readable=False tail_readable=False out='id <SECRET_1>'
+d11 seeded mapping value, escape then letter -> withheld=True HAND_readable=False tail_readable=False out='(details withheld)'
