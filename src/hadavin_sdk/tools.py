@@ -628,7 +628,7 @@ class ToolContext:
         self._port(parts, parts.scheme)
         if self._on_fetch is not None:
             self._on_fetch()  # every request to the client's system counts toward the box's rate cap
-        cap = min(max_bytes or spec.max_output_bytes, self._fetch_ceiling)
+        cap: int = min(max_bytes or spec.max_output_bytes, self._fetch_ceiling)
         # The request carries the host the checks read (lower case, no trailing dot), never the spelling that was
         # sent in: the Host header, SNI and the certificate name are the checked name.
         shown = f"[{host}]" if ":" in host else host

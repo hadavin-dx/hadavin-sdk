@@ -97,7 +97,7 @@ def contains(text: str, value: str, *, casefold: bool = False, suffix: str | Non
     if casefold:
         want, hay = want.casefold(), hay.casefold()
     tail = _suffix_rx(suffix) if suffix else None
-    i = hay.find(want)
+    i: int = hay.find(want)
     while i != -1:
         j = i + len(want)
         if _before_ok(hay, i):

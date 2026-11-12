@@ -174,6 +174,29 @@ def check_literal() -> list[str]:
     return bad
 
 
+def _package_functions() -> set[str]:
+    return {
+        n.name
+        for p in SRC.rglob("*.py")
+        for n in ast.walk(ast.parse(p.read_text(encoding="utf-8")))
+        if isinstance(n, FUNCS)
+    }
+
+
+def _own_sentence(arg: ast.AST) -> bool:
+    """A sentence of this package: a constant, an f-string, a list or a `+` of those, or a call of a function that this
+    package defines (never `str(exc)`, `repr(x)` or another builtin: those pass a typed value through). An f-string's
+    values are read by the guard at that site (every message site of `src/` is proven or has a checked reason)."""
+    if isinstance(arg, ast.Constant | ast.JoinedStr):
+        return True
+    if isinstance(arg, ast.BinOp) and isinstance(arg.op, ast.Add):
+        return _own_sentence(arg.left) and _own_sentence(arg.right)
+    if isinstance(arg, ast.Call):
+        name = getattr(arg.func, "id", getattr(arg.func, "attr", ""))
+        return name in _package_functions() and name not in {"str", "repr", "format", "ascii"}
+    return False
+
+
 def check_listed() -> list[str]:
     """A joined list is built only from sentences of this package: every list that a LISTED row joins is, in its
     function, filled by f-strings, constants or calls of functions of this package (never by a raw name from a file)."""
@@ -189,6 +212,7 @@ def check_listed() -> list[str]:
     for rel, name, var in (
         ("app.py", "build", "problems"),
         ("registry.py", "load_registry", "problems"),
+        ("registry.py", "_load_tools", "problems"),
         ("config.py", "_anchor_refusals", "refused"),
         ("registry.py", "_module_pin_problems", "out"),
     ):
@@ -199,13 +223,13 @@ def check_listed() -> list[str]:
             if (
                 isinstance(n, ast.Call)
                 and isinstance(n.func, ast.Attribute)
-                and n.func.attr == "append"
+                and n.func.attr in {"append", "extend", "add", "insert"}
                 and isinstance(n.func.value, ast.Name)
                 and n.func.value.id == var
             ):
-                arg = n.args[0]
-                if not isinstance(arg, ast.JoinedStr | ast.Constant | ast.Call):
-                    bad.append(f"{rel}:{n.lineno}: {var}.append of {ast.unparse(arg)[:50]}")
+                arg = n.args[-1]
+                if not _own_sentence(arg):
+                    bad.append(f"{rel}:{n.lineno}: {var}.{n.func.attr} of {ast.unparse(arg)[:50]}")
     return bad
 
 
@@ -830,7 +854,20 @@ def check_sign() -> list[str]:
 
 def check_classnames() -> list[str]:
     bad = []
+    # the title of a pydantic error is the name of a model class: no model of the package is built from a configured name
+    for path in SRC.rglob("*.py"):
+        for n in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if (
+                isinstance(n, ast.Call)
+                and getattr(n.func, "id", getattr(n.func, "attr", "")) == "create_model"
+                and not (n.args and isinstance(n.args[0], ast.Constant))
+            ):
+                bad.append(
+                    f"{path.name}:{n.lineno}: create_model with a name that is not a literal"
+                )
     for mod, site in _rows("CLASSNAMES"):
+        if not _sites(mod, site):
+            bad.append(f"{mod}: {site[:50]} is not found in the module")
         text = site
         if "str(exc)" in text or "safe_head" in text or "exc.args" in text:
             bad.append(f"{mod}: {site}: prints the text of an error")
@@ -1059,10 +1096,61 @@ def _declared_numbers() -> set[str]:
     return names
 
 
+_CTX: dict[str, ast.ClassDef | None] = {"cls": None}
+
+
+@functools.cache
+def _non_numeric_names() -> frozenset[str]:
+    """Attribute names that some class of the package declares with a type that is not a number (`key_version: str`,
+    `step: str`): a field of that name is a number only where its own class says so."""
+    names: set[str] = set()
+    for p in SRC.rglob("*.py"):
+        for c in ast.walk(ast.parse(p.read_text(encoding="utf-8"))):
+            if isinstance(c, ast.ClassDef):
+                for n in c.body:
+                    if (
+                        isinstance(n, ast.AnnAssign)
+                        and isinstance(n.target, ast.Name)
+                        and ast.unparse(n.annotation) not in _NUMERIC_NOTES
+                    ):
+                        names.add(n.target.id)
+    return frozenset(names)
+
+
+def _own_declaration(cls: ast.ClassDef, name: str) -> bool | None:
+    """Does the class itself declare `self.<name>` a number? True or False; None when the class does not say."""
+    for n in cls.body:
+        if isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name) and n.target.id == name:
+            return ast.unparse(n.annotation) in _NUMERIC_NOTES
+    for init in (n for n in cls.body if isinstance(n, FUNCS) and n.name == "__init__"):
+        notes = {
+            a.arg: ast.unparse(a.annotation) for a in init.args.args if a.annotation is not None
+        }
+        for n in ast.walk(init):
+            if isinstance(n, ast.Assign):
+                for t in n.targets:
+                    pairs = (
+                        zip(t.elts, n.value.elts, strict=False)
+                        if isinstance(t, ast.Tuple) and isinstance(n.value, ast.Tuple)
+                        else [(t, n.value)]
+                    )
+                    for tt, vv in pairs:
+                        if (
+                            isinstance(tt, ast.Attribute)
+                            and tt.attr == name
+                            and isinstance(tt.value, ast.Name)
+                            and tt.value.id == "self"
+                            and isinstance(vv, ast.Name)
+                        ):
+                            return notes.get(vv.id) in _NUMERIC_NOTES
+    return None
+
+
 _NUMBER_FUNCS = {
-    "len", "int", "min", "max", "sum", "round", "abs", "float", "count", "log", "comb", "Decimal", "find", "rfind",
-    "index", "start", "end",
+    "len", "int", "round", "abs", "float", "count", "log", "comb", "Decimal", "start", "end",
 }  # fmt: skip
+# `min`, `max` and `sum` are numbers only when their arguments are numbers (`_numeric` reads them); `index`, `find` and
+# `rfind` are not listed (a method of that name can return anything).
 
 
 def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0) -> bool:
@@ -1096,6 +1184,15 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
         )
     if isinstance(e, ast.Call):
         name = getattr(e.func, "id", getattr(e.func, "attr", ""))
+        if name in {"min", "max", "sum"}:
+            return bool(e.args) and all(
+                _numeric(a, fn, declared, depth + 1)
+                or (
+                    isinstance(a, ast.GeneratorExp | ast.ListComp)
+                    and _numeric(a.elt, fn, declared, depth + 1)
+                )
+                for a in e.args
+            )
         return (
             name in _NUMBER_FUNCS
             or name.startswith("purge_")
@@ -1103,7 +1200,12 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
             or name in _NUMBER_FORMATTERS
         )
     if isinstance(e, ast.Attribute):
-        return e.attr in declared
+        cls = _CTX["cls"]
+        if cls is not None and isinstance(e.value, ast.Name) and e.value.id == "self":
+            own = _own_declaration(cls, e.attr)
+            if own is not None:
+                return own
+        return e.attr in declared and e.attr not in _non_numeric_names()
     if isinstance(e, ast.Name):
         if fn is not None:
             for a in [*fn.args.args, *fn.args.kwonlyargs, *fn.args.posonlyargs]:  # type: ignore[attr-defined]
@@ -1113,9 +1215,16 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
                 n
                 for n in ast.walk(fn)
                 if isinstance(n, ast.For)
-                and e.id in _names_in(n.target)
                 and isinstance(n.iter, ast.Call)
-                and getattr(n.iter.func, "id", "") in {"range", "enumerate"}
+                and (
+                    (getattr(n.iter.func, "id", "") == "range" and e.id in _names_in(n.target))
+                    or (  # `enumerate`: only the first of the pair is a counter, the item is not
+                        getattr(n.iter.func, "id", "") == "enumerate"
+                        and isinstance(n.target, ast.Tuple)
+                        and isinstance(n.target.elts[0], ast.Name)
+                        and n.target.elts[0].id == e.id
+                    )
+                )
             ]
             if loops:  # a counter of a `range` or `enumerate` loop
                 return True
@@ -1134,6 +1243,13 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
                     and n.target.id == e.id
                 )
             ]
+            if any(
+                isinstance(n, ast.AnnAssign) and ast.unparse(n.annotation) in _NUMERIC_NOTES
+                for n in bound
+            ):
+                return (
+                    True  # declared as a number: a type checker holds every value of the name to it
+                )
             if bound:
                 return all(
                     _numeric(getattr(n, "value", None) or ast.Constant(0), fn, declared, depth + 1)
@@ -1146,6 +1262,7 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
 def _numeric_site(rel: str, node: ast.AST, declared: set[str]) -> str | None:
     """None when every value the site mentions is a number by form, else the first value that is not."""
     fn = _enclosing(rel, node)
+    _CTX["cls"] = next((a for a in _up(rel, node) if isinstance(a, ast.ClassDef)), None)
     parts: list[ast.AST] = []
     if isinstance(node, ast.Expr):
         node = node.value
@@ -1238,12 +1355,38 @@ def check_kind() -> list[str]:
 def check_pkgerr() -> list[str]:
     """Each row prints an error that was caught as a class of this package (never a builtin or library class): the
     sentence is one that this package wrote where it raised the error, and that raise is a site read by the guard."""
-    own = {
-        c.name
-        for p in SRC.rglob("*.py")
-        for c in ast.walk(ast.parse(p.read_text(encoding="utf-8")))
-        if isinstance(c, ast.ClassDef)
-    }
+    import builtins
+
+    classes: dict[str, list[ast.ClassDef]] = {}
+    for p in SRC.rglob("*.py"):
+        for c in ast.walk(ast.parse(p.read_text(encoding="utf-8"))):
+            if isinstance(c, ast.ClassDef):
+                classes.setdefault(c.name, []).append(c)
+
+    def pure(name: str, seen: frozenset = frozenset()) -> bool:
+        """A class of the package whose every base is a class of the package that is pure itself, or a builtin."""
+        if name in seen:
+            return True
+        found = classes.get(name)
+        if not found:
+            return False
+        for c in found:
+            for base in c.bases:
+                b = ast.unparse(base).split(".")[-1]
+                if b in classes:
+                    if not pure(b, seen | {name}):
+                        return False
+                elif not isinstance(getattr(builtins, b, None), type):
+                    return False  # a base from a library
+        return True
+
+    def imported_from_outside(rel: str, name: str) -> bool:
+        for n in _tree(rel).body:
+            if isinstance(n, ast.ImportFrom) and any((a.asname or a.name) == name for a in n.names):
+                return not (n.module or "").startswith("hadavin_sdk") and n.level == 0
+        return False
+
+    own = {n for n in classes if pure(n)}
     bad = []
     for m, k in _rows("PKGERR"):
         found = _sites(m, k)
@@ -1258,7 +1401,7 @@ def check_pkgerr() -> list[str]:
                 continue
             kinds = handler.type.elts if isinstance(handler.type, ast.Tuple) else [handler.type]
             names = {ast.unparse(t).split(".")[-1] for t in kinds if t is not None}
-            if not names or not names <= own:
+            if not names or not names <= own or any(imported_from_outside(m, n) for n in names):
                 bad.append(
                     f"{m}: {k[:50]}: caught {sorted(names - own) or 'anything'}, not only classes of the package"
                 )
@@ -1597,6 +1740,10 @@ def _shown_unfiltered(node: ast.AST) -> set[str]:
     return out
 
 
+def _callee(c: ast.Call) -> str:
+    return getattr(c.func, "id", getattr(c.func, "attr", ""))
+
+
 def _flow_check(reason: str) -> list[str]:
     """Data flow, by function: the value of the row is put in a query, a list, a name or a request, never in a message. No
     name that carries it (a local name or a dotted attribute such as `req.approval_id`) is in a raise, a print or a log call
@@ -1613,11 +1760,23 @@ def _flow_check(reason: str) -> list[str]:
             carried = {
                 c for c in _carriers(node) if not c[:1].isupper() and c not in {"self", "sql"}
             }
+            # a call that hands out a secret (`self._key()`) is a carrier by its name too
+            keyed = {
+                _callee(c)
+                for c in ast.walk(node)
+                if isinstance(c, ast.Call) and re.search(r"key|secret|token", _callee(c))
+            }
             for n in ast.walk(scope):
                 if _is_shown(n) and (hit := carried & _shown_unfiltered(n)):
                     bad.append(
                         f"{m}:{n.lineno}: {sorted(hit)} (carried by {k[:40]}) is in a raise, a print or a log call"
                     )
+                if _is_shown(n) and keyed:
+                    called = {_callee(c) for c in ast.walk(n) if isinstance(c, ast.Call)}
+                    if called & keyed:
+                        bad.append(
+                            f"{m}:{n.lineno}: {sorted(called & keyed)} (carried by {k[:40]}) is called inside a raise, a print or a log call"
+                        )
     return bad
 
 

@@ -519,14 +519,14 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
     (
         "llm/gemini.py",
         "f\"{self.base_url}/models/{quote(route.model_id, safe='')}:generateContent\"",
-    ): "LLMREQ",
+    ): "URL",
     ("llm/gemini.py", "system + json.dumps(body['contents'])"): "LLMREQ",
     (
         "llm/openai_compat.py",
         "([{'role': 'system', 'content': system}] if system else []) + [{'role': role, 'content': '\\n\\n'.join(texts)} for role, texts in turns]",
     ): "LLMREQ",
-    ("llm/openai_compat.py", "base_url.rstrip('/') + '/chat/completions'"): "LLMREQ",
-    ("llm/openai_compat.py", "f'Bearer {self._key()}'"): "LLMREQ",
+    ("llm/openai_compat.py", "base_url.rstrip('/') + '/chat/completions'"): "URL",
+    ("llm/openai_compat.py", "f'Bearer {self._key()}'"): "URL",
     ("llm/openai_compat.py", "json.dumps(body['messages'])"): "LLMREQ",
     ("llm/openai_compat.py", "used[0] + (got.tokens[0] or 0)"): "LLMREQ",
     ("llm/openai_compat.py", "used[1] + (got.tokens[1] or 0)"): "LLMREQ",
@@ -672,7 +672,6 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
     ("store/migration_numbers.py", "cases[1].append(o)"): "MIGNAMES",
     ("store/migration_numbers.py", "cases[2].append(o)"): "MIGNAMES",
     ("store/migration_numbers.py", "cases[3].append(o)"): "MIGNAMES",
-    ("store/migration_numbers.py", "end + len(tag)"): "NUM",
     (
         "store/migration_numbers.py",
         "f'applied migrations have no file in this release: {_names(orphans)}.'",
@@ -809,7 +808,6 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
     ("tools.py", "bytes(buf).decode('utf-8', 'replace') + (TRUNCATED if cut else '')"): "PROC",
     ("tools.py", "cut[:_boundary(cut, tail)].decode('utf-8', 'ignore') + TRUNCATED"): "PROC",
     ("tools.py", "data[:limit].decode('utf-8', 'ignore') + TRUNCATED"): "PROC",
-    ("tools.py", "f'the response is larger than {cap} bytes'"): "NUM",
     ("tools.py", "f'{type(exc).__name__}: {message[:160]}'"): "REDACTED",
     ("tools.py", "json.dumps(secret)"): "PROC",
     ("tools.py", "json.dumps(secret, ensure_ascii=False)"): "PROC",

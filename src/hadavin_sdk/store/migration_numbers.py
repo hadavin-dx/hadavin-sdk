@@ -601,7 +601,7 @@ def lex(text: str, keep_quoted: bool = False) -> tuple[str, str]:
                 fail("unrecognised $", j)
                 break
             tag = text[j : k + 1]
-            end = text.find(tag, k + 1)
+            end: int = text.find(tag, k + 1)
             if end == -1:
                 fail("dollar body not closed", j)
                 out.append(tag if keep_quoted else "$$")
