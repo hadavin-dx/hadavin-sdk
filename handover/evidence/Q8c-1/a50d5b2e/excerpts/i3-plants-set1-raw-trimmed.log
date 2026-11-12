@@ -1,0 +1,450 @@
+## as1: plain constant behind `SIZE = BASE + 1`
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_assign.py: the test test_as_base is new or changed and has no row of its own in the notes
+
+
+## as2: annotated assignment
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_assign.py: the test test_as_lim is new or changed and has no row of its own in the notes
+
+
+## as3: augmented assignment
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_assign.py: the test test_as_items is new or changed and has no row of its own in the notes
+
+
+## as4: tuple target
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_assign.py: the test test_as_tuple is new or changed and has no row of its own in the notes
+
+
+## as5: value behind a call `V = leaf_build()`, body in another module
+exit 1; lines 4
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_assign.py: the test test_as_call is new or changed and has no row of its own in the notes
+tests/zzev/test_deep.py: the test test_deep_alias is new or changed and has no row of its own in the notes
+tests/zzev/test_deep.py: the test test_deep_attr is new or changed and has no row of its own in the notes
+   ... (1 more lines in the raw log, not kept)
+
+## as6: subscript assignment at module level
+exit 1; lines 14
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_assign.py: the test test_as_attr is new or changed and has no row of its own in the notes
+tests/zzev/test_assign.py: the test test_as_base is new or changed and has no row of its own in the notes
+tests/zzev/test_assign.py: the test test_as_call is new or changed and has no row of its own in the notes
+   ... (11 more lines in the raw log, not kept)
+
+## as7: chained assignment
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_assign.py: the test test_as_chain is new or changed and has no row of its own in the notes
+
+
+## as8 PLANT NOT APPLIED (old text count 0)
+
+## as9: assignment inside a `for` at module level
+exit 1; lines 14
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_assign.py: the test test_as_attr is new or changed and has no row of its own in the notes
+tests/zzev/test_assign.py: the test test_as_base is new or changed and has no row of its own in the notes
+tests/zzev/test_assign.py: the test test_as_call is new or changed and has no row of its own in the notes
+   ... (11 more lines in the raw log, not kept)
+
+## as10: walrus assignment at module level
+exit 0; lines 0
+
+
+
+## as11: attribute assignment on a module-level object
+exit 1; lines 14
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_assign.py: the test test_as_attr is new or changed and has no row of its own in the notes
+tests/zzev/test_assign.py: the test test_as_base is new or changed and has no row of its own in the notes
+tests/zzev/test_assign.py: the test test_as_call is new or changed and has no row of its own in the notes
+   ... (11 more lines in the raw log, not kept)
+
+## as12: constant read through a non-test helper function
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_assign.py: the test test_as_viahelper is new or changed and has no row of its own in the notes
+
+
+## hh1: helper of helper of helper (f -> g -> leaf1, three modules)
+exit 1; lines 4
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_deep.py: the test test_deep_alias is new or changed and has no row of its own in the notes
+tests/zzev/test_deep.py: the test test_deep_attr is new or changed and has no row of its own in the notes
+tests/zzev/test_deep.py: the test test_deep_chain is new or changed and has no row of its own in the notes
+   ... (1 more lines in the raw log, not kept)
+
+## hh2: middle helper g changed
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_deep.py: the test test_deep_chain is new or changed and has no row of its own in the notes
+
+
+## hh3: `from tests.zzev import h_c` then `h_c.leaf2()`
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_deep.py: the test test_deep_alias is new or changed and has no row of its own in the notes
+tests/zzev/test_deep.py: the test test_deep_attr is new or changed and has no row of its own in the notes
+
+
+## hh4: `import tests.zzev.h_c as hc` then `hc.leaf3()`
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_deep.py: the test test_deep_alias is new or changed and has no row of its own in the notes
+tests/zzev/test_deep.py: the test test_deep_attr is new or changed and has no row of its own in the notes
+
+
+## hh5: relative import `from .h_c import leaf4`
+exit 1; lines 4
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_deep.py: the test test_deep_alias is new or changed and has no row of its own in the notes
+tests/zzev/test_deep.py: the test test_deep_attr is new or changed and has no row of its own in the notes
+tests/zzev/test_deep.py: the test test_deep_rel is new or changed and has no row of its own in the notes
+   ... (1 more lines in the raw log, not kept)
+
+## hh6: import inside the test function
+exit 1; lines 4
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_deep.py: the test test_deep_alias is new or changed and has no row of its own in the notes
+tests/zzev/test_deep.py: the test test_deep_attr is new or changed and has no row of its own in the notes
+tests/zzev/test_deep.py: the test test_deep_inner is new or changed and has no row of its own in the notes
+   ... (1 more lines in the raw log, not kept)
+
+## hh7: control: leaf6 used by no test (nothing should need a row)
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_deep.py: the test test_deep_alias is new or changed and has no row of its own in the notes
+tests/zzev/test_deep.py: the test test_deep_attr is new or changed and has no row of its own in the notes
+
+
+## su1: setup_module body
+exit 1; lines 6
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_setup.py: the test TestOther::test_other_a is new or changed and has no row of its own in the notes
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_a is new or changed and has no row of its own in the notes
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_b is new or changed and has no row of its own in the notes
+   ... (3 more lines in the raw log, not kept)
+
+## su2: teardown_module body
+exit 1; lines 6
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_setup.py: the test TestOther::test_other_a is new or changed and has no row of its own in the notes
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_a is new or changed and has no row of its own in the notes
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_b is new or changed and has no row of its own in the notes
+   ... (3 more lines in the raw log, not kept)
+
+## su3: setup_function body
+exit 1; lines 6
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_setup.py: the test TestOther::test_other_a is new or changed and has no row of its own in the notes
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_a is new or changed and has no row of its own in the notes
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_b is new or changed and has no row of its own in the notes
+   ... (3 more lines in the raw log, not kept)
+
+## su4: teardown_function body
+exit 1; lines 6
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_setup.py: the test TestOther::test_other_a is new or changed and has no row of its own in the notes
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_a is new or changed and has no row of its own in the notes
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_b is new or changed and has no row of its own in the notes
+   ... (3 more lines in the raw log, not kept)
+
+## su5: setup_method of a class
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_a is new or changed and has no row of its own in the notes
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_b is new or changed and has no row of its own in the notes
+
+
+## su6: teardown_method of a class
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_a is new or changed and has no row of its own in the notes
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_b is new or changed and has no row of its own in the notes
+
+
+## su7: setup_class of a class
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_a is new or changed and has no row of its own in the notes
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_b is new or changed and has no row of its own in the notes
+
+
+## su8: teardown_class of a class
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_a is new or changed and has no row of its own in the notes
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_b is new or changed and has no row of its own in the notes
+
+
+## su9: non-test helper method of a class
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_setup.py: the test TestSetupCls::test_cls_a is new or changed and has no row of its own in the notes
+
+
+## ut1: unittest setUp
+exit 0; lines 0
+
+
+
+## ut2: unittest setUpClass
+exit 0; lines 0
+
+
+
+## ut3: unittest class helper method
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_ut.py: the test TestUt::test_ut_a is new or changed and has no row of its own in the notes
+
+
+## ut4: constant used by a TestCase not named Test*
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_ut.py: the test PlainUt::test_plain_ut is new or changed and has no row of its own in the notes
+tests/zzev/test_ut.py: the test TestUt::test_ut_a is new or changed and has no row of its own in the notes
+
+
+## ut5: method of a mixin base in the same file
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_ut.py: the test TestMix::test_mix is new or changed and has no row of its own in the notes
+
+
+## ut6: inherited method; base class in another module; class named Test* but not a TestCase
+exit 1; lines 4
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_deep.py: the test test_deep_alias is new or changed and has no row of its own in the notes
+tests/zzev/test_deep.py: the test test_deep_attr is new or changed and has no row of its own in the notes
+tests/zzev/test_ut.py: the test TestInh::test_inh is new or changed and has no row of its own in the notes
+   ... (1 more lines in the raw log, not kept)
+
+## fx1: fixture used by a fixture chain, by usefixtures, and by request.getfixturevalue
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_fx.py: the test test_fx_chain is new or changed and has no row of its own in the notes
+
+
+## fx2: autouse fixture of the file
+exit 1; lines 10
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_fx.py: the test TestFxClass::test_fx_in_cls is new or changed and has no row of its own in the notes
+tests/zzev/test_fx.py: the test TestFxClass::test_fx_in_cls2 is new or changed and has no row of its own in the notes
+tests/zzev/test_fx.py: the test test_fx_chain is new or changed and has no row of its own in the notes
+   ... (7 more lines in the raw log, not kept)
+
+## fx3: autouse fixture of a class
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_fx.py: the test TestFxClass::test_fx_in_cls is new or changed and has no row of its own in the notes
+tests/zzev/test_fx.py: the test TestFxClass::test_fx_in_cls2 is new or changed and has no row of its own in the notes
+
+
+## fx4: fixture used by parametrize(indirect=True)
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_fx.py: the test test_fx_indirect is new or changed and has no row of its own in the notes
+
+
+## fx5: constant behind skipif
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_fx.py: the test test_fx_skipif is new or changed and has no row of its own in the notes
+
+
+## fx6: parametrize values
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_fx.py: the test test_fx_param is new or changed and has no row of its own in the notes
+
+
+## cf1: autouse fixture of a conftest (also a test in a sub folder)
+exit 1; lines 11
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/cf/conftest.py: the test COLLECT_CONST is new or changed and has no row of its own in the notes
+tests/zzev/cf/conftest.py: the test auto_fx is new or changed and has no row of its own in the notes
+tests/zzev/cf/conftest.py: the test named_fx is new or changed and has no row of its own in the notes
+   ... (8 more lines in the raw log, not kept)
+
+## cf2: named fixture of a conftest
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/cf/conftest.py: the test named_fx is new or changed and has no row of its own in the notes
+tests/zzev/cf/test_cf.py: the test test_cf_a is new or changed and has no row of its own in the notes
+
+
+## cf3: collection hook of a conftest
+exit 1; lines 5
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/cf/conftest.py: the test pytest_collection_modifyitems is new or changed and has no row of its own in the notes
+tests/zzev/cf/sub/test_sub.py: the test test_sub is new or changed and has no row of its own in the notes
+tests/zzev/cf/test_cf.py: the test test_cf_a is new or changed and has no row of its own in the notes
+   ... (2 more lines in the raw log, not kept)
+
+## cf4: run hook of a conftest
+exit 1; lines 5
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/cf/conftest.py: the test pytest_runtest_setup is new or changed and has no row of its own in the notes
+tests/zzev/cf/sub/test_sub.py: the test test_sub is new or changed and has no row of its own in the notes
+tests/zzev/cf/test_cf.py: the test test_cf_a is new or changed and has no row of its own in the notes
+   ... (2 more lines in the raw log, not kept)
+
+## cf5: configure hook of a conftest
+exit 1; lines 5
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/cf/conftest.py: the test pytest_configure is new or changed and has no row of its own in the notes
+tests/zzev/cf/sub/test_sub.py: the test test_sub is new or changed and has no row of its own in the notes
+tests/zzev/cf/test_cf.py: the test test_cf_a is new or changed and has no row of its own in the notes
+   ... (2 more lines in the raw log, not kept)
+
+## cf6: generate hook of a conftest
+exit 1; lines 5
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/cf/conftest.py: the test pytest_generate_tests is new or changed and has no row of its own in the notes
+tests/zzev/cf/sub/test_sub.py: the test test_sub is new or changed and has no row of its own in the notes
+tests/zzev/cf/test_cf.py: the test test_cf_a is new or changed and has no row of its own in the notes
+   ... (2 more lines in the raw log, not kept)
+
+## cf7: control: constant of a conftest that nothing names
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/cf/conftest.py: the test COLLECT_CONST is new or changed and has no row of its own in the notes
+
+
+## cf8: pytest_generate_tests in a test file
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_gen.py: the test test_gen_a is new or changed and has no row of its own in the notes
+tests/zzev/test_gen.py: the test test_gen_b is new or changed and has no row of its own in the notes
+
+
+## cf9: pytest_plugins list of a conftest gains a module
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/pp/conftest.py: the test pytest_plugins is new or changed and has no row of its own in the notes
+tests/zzev/pp/test_pp.py: the test test_pp is new or changed and has no row of its own in the notes
+
+
+## cf10: autouse fixture inside a module named by pytest_plugins
+exit 0; lines 0
+
+
+
+## cf11: collection hook inside a module named by pytest_plugins
+exit 0; lines 0
+
+
+
+## rt1: importlib.import_module with a text
+exit 1; lines 6
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_dyn.py: the test test_dyn_computed is new or changed and has no row of its own in the notes
+tests/zzev/test_dyn.py: the test test_dyn_dunder is new or changed and has no row of its own in the notes
+tests/zzev/test_dyn.py: the test test_dyn_import_module is new or changed and has no row of its own in the notes
+   ... (3 more lines in the raw log, not kept)
+
+## rt2: __import__ with a text
+exit 1; lines 6
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_dyn.py: the test test_dyn_computed is new or changed and has no row of its own in the notes
+tests/zzev/test_dyn.py: the test test_dyn_dunder is new or changed and has no row of its own in the notes
+tests/zzev/test_dyn.py: the test test_dyn_import_module is new or changed and has no row of its own in the notes
+   ... (3 more lines in the raw log, not kept)
+
+## rt3: import_module with a name worked out at run time (f-string)
+exit 0; lines 0
+
+
+
+## rt4: module found by pkgutil.iter_modules
+exit 1; lines 6
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_dyn.py: the test test_dyn_computed is new or changed and has no row of its own in the notes
+tests/zzev/test_dyn.py: the test test_dyn_dunder is new or changed and has no row of its own in the notes
+tests/zzev/test_dyn.py: the test test_dyn_import_module is new or changed and has no row of its own in the notes
+   ... (3 more lines in the raw log, not kept)
+
+## sk1: module-level pytestmark skip
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_skip.py: the test test_sk_a is new or changed and has no row of its own in the notes
+tests/zzev/test_skip.py: the test test_sk_b is new or changed and has no row of its own in the notes
+
+
+## sk2: module-level pytestmark xfail
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_skip.py: the test test_sk_a is new or changed and has no row of its own in the notes
+tests/zzev/test_skip.py: the test test_sk_b is new or changed and has no row of its own in the notes
+
+
+## sk3: __test__ = False
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_skip.py: the test test_sk_a is new or changed and has no row of its own in the notes
+tests/zzev/test_skip.py: the test test_sk_b is new or changed and has no row of its own in the notes
+
+
+## sk4: module-level importorskip of a missing module
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_skip.py: the test test_sk_a is new or changed and has no row of its own in the notes
+tests/zzev/test_skip.py: the test test_sk_b is new or changed and has no row of its own in the notes
+
+
+## sk5: pytestmark inside an `if`
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_skip.py: the test test_sk_a is new or changed and has no row of its own in the notes
+tests/zzev/test_skip.py: the test test_sk_b is new or changed and has no row of its own in the notes
+
+
+## sk6: skip decorator on one test
+exit 1; lines 2
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/test_skip.py: the test test_sk_a is new or changed and has no row of its own in the notes
+
+
+## sk7: NEW tests/zzev/conftest.py with collect_ignore (the file is no longer collected)
+exit 1; lines 54
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/cf/sub/test_sub.py: the test test_sub is new or changed and has no row of its own in the notes
+tests/zzev/cf/test_cf.py: the test test_cf_a is new or changed and has no row of its own in the notes
+tests/zzev/cf/test_cf.py: the test test_cf_b is new or changed and has no row of its own in the notes
+   ... (51 more lines in the raw log, not kept)
+
+## sk8: NEW conftest with a skip-everything collection hook
+exit 1; lines 54
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/cf/sub/test_sub.py: the test test_sub is new or changed and has no row of its own in the notes
+tests/zzev/cf/test_cf.py: the test test_cf_a is new or changed and has no row of its own in the notes
+tests/zzev/cf/test_cf.py: the test test_cf_b is new or changed and has no row of its own in the notes
+   ... (51 more lines in the raw log, not kept)
+
+## sk9: NEW conftest with an xfail-everything collection hook
+exit 1; lines 54
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/cf/sub/test_sub.py: the test test_sub is new or changed and has no row of its own in the notes
+tests/zzev/cf/test_cf.py: the test test_cf_a is new or changed and has no row of its own in the notes
+tests/zzev/cf/test_cf.py: the test test_cf_b is new or changed and has no row of its own in the notes
+   ... (51 more lines in the raw log, not kept)
+
+## sk10: NEW conftest in the folder of one test: collect_ignore_glob = ['*']
+exit 1; lines 3
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/zzev/other/conftest.py: the test collect_ignore_glob is new or changed and has no row of its own in the notes
+tests/zzev/other/test_other.py: the test test_other is new or changed and has no row of its own in the notes
+
+
+## sk11: control: a new helper function that nothing calls
+exit 0; lines 0
+
+

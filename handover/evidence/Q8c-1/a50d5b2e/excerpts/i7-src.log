@@ -1,0 +1,15 @@
+## git diff --stat origin/main..HEAD -- src
+ src/hadavin_sdk/actions/secrets_vault.py | 137 +++++++++++++++++
+ src/hadavin_sdk/audit/signer_vault.py    | 156 ++++++++++++++++++++
+ src/hadavin_sdk/sources/kubernetes.py    | 243 +++++++++++++++++++++++++++++++
+ 3 files changed, 536 insertions(+)
+## git diff --stat origin/main..HEAD -- tools/mutation_runner.py (empty = unchanged)
+## git diff --stat c65d9c27..HEAD -- src tools/mutation_runner.py (empty = unchanged)
+## numstat origin/main..HEAD -- src
+137	0	src/hadavin_sdk/actions/secrets_vault.py
+156	0	src/hadavin_sdk/audit/signer_vault.py
+243	0	src/hadavin_sdk/sources/kubernetes.py
+## status per file
+M	src/hadavin_sdk/actions/secrets_vault.py
+M	src/hadavin_sdk/audit/signer_vault.py
+M	src/hadavin_sdk/sources/kubernetes.py

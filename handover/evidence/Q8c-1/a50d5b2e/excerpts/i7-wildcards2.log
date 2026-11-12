@@ -1,0 +1,29 @@
+## src/hadavin_sdk/actions/secrets_vault.py total added (incl blank) 137; added lines containing '*': 7; in whole file now: 14
+4:* `token`: the token in the environment variable `token_env` (default `VAULT_TOKEN`);
+5:* `approle`: `role_id` from config, the secret id in the environment variable `secret_id_env`;
+6:* `kubernetes`: `role` from config, the pod's service-account token from `jwt_path`.
+46:        *,
+69:        self._opener = urllib.request.build_opener(*handlers)
+162:def connect(settings, **kw: Any) -> VaultProvider:
+194:        **kw,
+290:            "name": "sys/*",
+296:            "name": "{mount}/data/*",
+303:            "name": "{mount}/delete/*",
+309:            "name": "{mount}/undelete/*",
+315:            "name": "{mount}/subkeys/*",
+321:            "name": "{mount}/metadata/*",
+327:            "name": "{mount}/destroy/*",
+## src/hadavin_sdk/audit/signer_vault.py total added (incl blank) 156; added lines containing '*': 5; in whole file now: 5
+177:            "name": "sys/*",
+196:            "name": "{transit_mount}/export/*",
+202:            "name": "{transit_mount}/byok-export/*",
+226:            "name": "{transit_mount}/restore/*",
+232:            "name": "{transit_mount}/backup/*",
+## src/hadavin_sdk/sources/kubernetes.py total added (incl blank) 243; added lines containing '*': 1; in whole file now: 7
+26:_NS = r"[a-z0-9]([a-z0-9.\-]*[a-z0-9])?"
+69:    (`ResourceMatches`): `*` covers everything, `res/*` every subresource of `res`, `*/sub` that subresource of
+71:    if entry == "*":
+77:    return res in ("*", t_res) and sub in ("*", t_sub) and bool(t_sub)
+114:        any_verb = "*" in verbs
+269:                        "note": f"more than {self._cfg.page_size * self._cfg.max_pages} {kind}; the list is cut",
+383:            "the wildcard verb `*`, shell subresources and any read of `secrets`. It does not report the "
