@@ -528,7 +528,7 @@ def _nested(cwd, extra_env, args):
     }
     env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(ROOT / "src"), env.get("PYTHONPATH")]))
     env.update(extra_env)
-    return subprocess.run(
+    return subprocess.run(  # noqa: S603 - our own interpreter and a fixed command
         [sys.executable, "-m", "pytest", *args],
         cwd=cwd,
         env=env,
