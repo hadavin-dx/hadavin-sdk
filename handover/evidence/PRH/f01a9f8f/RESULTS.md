@@ -64,7 +64,11 @@ Clean corpus (one shared corpus for all trees: README, CHANGELOG, SECURITY, docs
 Spaced-run rule (`redact.spaced_unknown`): Python 3.13 standard library (4695 files, 1,933,591 lines): 71 lines hold a spaced run, 0 changed. Head repository including handover (494 files, 89,815 lines): 29 lines hold a spaced run, 11 changed; none of the 11 is outside `handover/` (they are lines of saved test-failure logs). Positive control: 1 run found.
 
 ## Item 9: the known timing test, alone
-Head: failed, failed, failed (0.58 s, 0.58 s, 0.60 s). Main 2a8c2aac: see the addendum at the end of this file.
+Head: failed x3 (0.58, 0.58, 0.60 s). Main 2a8c2aac: failed x3 (0.64, 0.65, 0.69 s), see the addendum.
 
 ## Cleanup and counts
 See the end of this file.
+
+## Addendum: item 9 on main and cleanup
+Main 2a8c2aac, alone through heavy.sh, three runs: failed (0.64 s), failed (0.65 s), failed (0.69 s). Head: failed x3 (0.58, 0.58, 0.60 s). (An earlier attempt to hold all three slots for the main runs waited about 12 minutes behind another agent; I stopped it, ran one slot each, and one run that timed out in the queue was repeated.) Mutant-free: the head worktree stayed clean (`git status --short` empty).
+Cleanup: own Postgres (port 56941) stopped, its folder removed; my three worktrees (head, main, ea6dbdaf) and /tmp copy removed; no shell, job or container of mine remains (0 processes mention PRHb9). Agents spawned: none.

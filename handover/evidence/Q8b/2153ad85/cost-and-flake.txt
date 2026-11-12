@@ -1,0 +1,12 @@
+wt hostile {"60000": [0.291, 0.302, 0.308]}
+wt prose {"60000": [0.31, 0.32, 0.301]}
+wt-old hostile {"60000": [0.245, 0.268, 0.245]}
+wt-old prose {"60000": [0.241, 0.239, 0.239]}
+wt-main hostile {"60000": [0.142, 0.167, 0.146]}
+wt-main prose {"60000": [0.133, 0.154, 0.168]}
+flake wt run1: 1 failed in 0.67s
+flake wt run2: 1 failed in 0.64s
+flake wt run3: 1 passed in 0.68s
+flake wt-main run1: 1 failed in 0.65s
+flake wt-main run2: 1 failed in 0.71s
+flake wt-main run3: 1 failed in 0.79s
