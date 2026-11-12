@@ -196,8 +196,8 @@ M = [
     ),
     gd(
         "G5 the folder inside a product root is not a hit",
-        "any((repo / r / cfg.folder).exists() for r in cfg.product_roots)",
-        "False",
+        "(repo / r / cfg.folder).exists() for r in cfg.product_roots",
+        "False for r in cfg.product_roots",
         "test_the_folder_inside_a_product_root_is_a_hit",
         "assert",
     ),
