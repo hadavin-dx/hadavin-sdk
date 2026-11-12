@@ -75,6 +75,11 @@ def _edit(path: Path, fn) -> None:
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
 
 
+def edit_config(cfg_dir: Path, fn, name: str = "config.yaml") -> None:
+    """Edit `<cfg_dir>/<name>` (a YAML file of a config folder) in place; `_edit` takes the file itself."""
+    _edit(cfg_dir / name, fn)
+
+
 def k5_cfg(
     tmp_path: Path,
     *,

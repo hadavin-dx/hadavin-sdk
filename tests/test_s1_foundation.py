@@ -4,22 +4,15 @@ from datetime import timedelta
 from decimal import Decimal
 
 import pytest
-import yaml
 
 from hadavin_sdk.config import ConfigError, load_config
 from hadavin_sdk.models import Plan, Run, RunState, Target, canonical_json, now, sha256_hex
 from hadavin_sdk.runtime.runs import ALLOWED, FINAL, IllegalTransition, advance
 from hadavin_sdk.store import MemoryStore, StaleState
 from hadavin_sdk.store.protocol import NotFound
+from tests.k5_support import edit_config as _edit
 
 S = RunState
-
-
-def _edit(cfg_dir, fn, name="config.yaml"):
-    path = cfg_dir / name
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    fn(data)
-    path.write_text(yaml.safe_dump(data), encoding="utf-8")
 
 
 # --- config -------------------------------------------------------------------

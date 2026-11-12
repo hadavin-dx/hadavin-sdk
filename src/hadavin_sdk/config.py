@@ -17,6 +17,7 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
+    StrictBool,
     ValidationError,
     field_validator,
     model_validator,
@@ -24,7 +25,14 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hadavin_sdk import defaults, deferred
-from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
+from hadavin_sdk.backends.table import (
+    DEFAULTS,
+    DEMO_ONLY,
+    LOCAL_DETECTORS,
+    NOT_PROD,
+    TABLE,
+    KindSettings,
+)
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.scrub_settings import ScrubSettings
 from hadavin_sdk.stages import STAGES, is_live, is_prod
@@ -360,6 +368,12 @@ class Config(_Strict):
     executor_timeout_s: float = Field(
         default=defaults.EXECUTOR_TIMEOUT_S, gt=0
     )  # demo executor only
+    # A `demo` config is taken to hold client data unless it says, in the operator's own word, that every input is
+    # made up. Only then may it name a real model, the vendor detector or a real approval channel (they may send
+    # text to a service outside the process: a vendor, or a model you host). It is not a lock: the code cannot check
+    # it. Pilot and prod hold client data, so a config for either (or for any environment that is not `demo`) that
+    # sets it is refused.
+    made_up_data_only: StrictBool = False  # strict: "yes" or 1 must not switch it on
     root: Path
 
     @field_validator("environment", mode="before")
@@ -391,15 +405,42 @@ class Config(_Strict):
                     f"(http only for loopback with allow_insecure_loopback): {system.base_url}"
                 )
         refused = []  # environment table, design 4.6: every refusal at once, so one fix round is enough
-        if is_live(self.environment):
+        live = is_live(self.environment)
+        if live:
             refused = [
                 f"{c}: {s.kind}" for c, s in self.backends.entries() if (c, s.kind) in DEMO_ONLY
             ]
             refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []
+        refused += (
+            ["made_up_data_only (for demo configs only)"] if live and self.made_up_data_only else []
+        )
+        sends_text_out = []
+        if not live and not self.made_up_data_only:
+            sends_text_out = _sends_text_out(self.backends)
+        refused += sends_text_out
         refused += _anchor_refusals(self.environment, self.backends)
         if refused:
-            raise ValueError(f"environment {self.environment}: refused: {', '.join(refused)}")
+            tail = (
+                "; a demo config that names a real model, a vendor detector or a real approval channel "
+                "may send text to a service outside the process (a vendor, or a model you host): set "
+                "made_up_data_only: true only when every input is made up; client data runs only in pilot or prod"
+                if sends_text_out
+                else ""
+            )
+            raise ValueError(f"environment {self.environment}: refused: {', '.join(refused)}{tail}")
         return self
+
+
+def _sends_text_out(b: Backends) -> list[str]:
+    """Kinds that may send case text to a service outside the process (a vendor, or a model you host; the check is by
+    kind, so a self-hosted `openai_compat` counts): any llm or channel kind that is not demo-only (so a kind added
+    later is refused too, until its package decides otherwise) and every detector kind not in the local allow-list
+    `LOCAL_DETECTORS` (a vendor detector such as `bedrock_guardrail` sends text outside the llm kind; `llm_judge`
+    uses the llm kind, which is covered above)."""
+    out = [f"llm: {b.llm.kind}"] if ("llm", b.llm.kind) not in DEMO_ONLY else []
+    out += [f"detector: {d.kind}" for d in b.detector if d.kind not in LOCAL_DETECTORS]
+    out += [f"channel: {b.channel.kind}"] if ("channel", b.channel.kind) not in DEMO_ONLY else []
+    return out
 
 
 def _anchor_refusals(environment: str, b: Backends) -> list[str]:

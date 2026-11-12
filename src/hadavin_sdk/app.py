@@ -5,6 +5,7 @@ This is the only place that hands the secret provider to the executor; runtime g
 
 from __future__ import annotations
 
+import inspect
 import logging
 import re
 import ssl
@@ -59,6 +60,32 @@ class App:
     purge_store: Store | None = None
 
 
+# Build keywords a production operator needs and that replace no configured part: the purge hold (held at
+# runtime/agent_loop.py) and the executor timeout (the executor is None when live). Every other keyword of `build`
+# replaces a configured part, so a client profile refuses it unless `allow_test_doubles=True` is passed. A keyword
+# added later is refused by default (fail closed) until a reviewed change lists it here.
+_LIVE_HOOKS: tuple[str, ...] = ("hold_run_ids", "timeout_s")
+# `sources` and `tools` keep their own, older refusals (and messages).
+_OWN_REFUSAL = ("sources", "tools")
+
+
+def _test_doubles_given(
+    params: Mapping[str, inspect.Parameter], given: Mapping[str, object]
+) -> list[str]:
+    """Names, in signature order, of the keyword-only parameters (other than the switch, `sources`, `tools` and
+    the live hooks) whose given value is not that parameter's default. Compared by identity, never by truth value
+    (an empty stub is still a stub). A name missing from `given` counts as its default."""
+    skip = {"allow_test_doubles", *_OWN_REFUSAL, *_LIVE_HOOKS}
+    return [
+        name
+        for name, p in params.items()
+        if p.kind is p.KEYWORD_ONLY
+        and name not in skip
+        and name in given
+        and given[name] is not p.default
+    ]
+
+
 def build(
     config_dir: Path | None,
     agents: list[str],
@@ -72,15 +99,35 @@ def build(
     hold_run_ids: Callable[[], set[str] | frozenset[str]] | None = None,
     clock: Callable[[], datetime] = now,
     timeout_s: float | None = None,
+    allow_test_doubles: bool = False,
 ) -> App:
     """Build every backend from the config's table entries, in the design 4.2 order. The keyword overrides
-    replace one configured backend (tests); `secrets` replaces the configured provider for both the executor
-    and the backends' own secrets. Missing or shared secret names fail here, before the first run."""
+    replace one configured backend (tests) and, except the live hooks, are refused in pilot and prod unless
+    allow_test_doubles=True (an accident guard, not a lock); `secrets` replaces the configured provider for both
+    the executor and the backends' own secrets. Missing or shared secret names fail here, before the first run."""
+    # The keyword values as passed, read before any name is rebound (`secrets` is rebound below). This must stay the
+    # first statement; a test reads the function and fails if another statement comes before it.
+    given = dict(locals())
     cfg = load_config(config_dir)
+    live = is_live(cfg.environment)
+    # Before any backend is built, so a refusal reads no secret, opens no connection and no folder. Only the
+    # value True is the switch (a string or a number is not).
+    live_doubles = _test_doubles_given(_BUILD_PARAMS, given) if live else []
+    if live_doubles and allow_test_doubles is True:
+        # A client app that starts with test objects must leave a trace in the log (names only, no values).
+        _LOG.warning(
+            "allow_test_doubles=True in %s: test objects replace configured parts: %s",
+            cfg.environment,
+            ", ".join(live_doubles),
+        )
+    elif live_doubles:
+        raise ConfigError(
+            f"{', '.join(f'{n}=' for n in live_doubles)} replace configured parts and are for tests; "
+            "in pilot and prod pass allow_test_doubles=True only from a test"
+        )
     reg = load_registry(cfg)
     b = cfg.backends
     secrets = secrets or make("secrets", b.secrets)
-    live = is_live(cfg.environment)
     if live and not cfg.evidence.restored_hash_key_secret_name:
         raise ConfigError("evidence.restored_hash_key_secret_name is required in pilot and prod")
     if live and getattr(b.store, "kind", "") == "postgres" and not b.store.purge_dsn_secret_name:
@@ -249,6 +296,9 @@ def build(
         disabled_sources=disabled_sources,
         purge_store=purge_store,
     )
+
+
+_BUILD_PARAMS = inspect.signature(build).parameters
 
 
 def _own_secrets(secrets: SecretProvider, spec: tools_mod.ToolSpec) -> Callable[[str], str]:

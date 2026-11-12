@@ -38,7 +38,12 @@ def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path):
             }
         )
         app = app_mod.build(
-            cfg, ["ito-agent"], secrets=secrets, channel=FakeChannel(), llm=ScriptedLLM()
+            cfg,
+            ["ito-agent"],
+            secrets=secrets,
+            channel=FakeChannel(),
+            llm=ScriptedLLM(),
+            allow_test_doubles=True,
         )
         assert app.purge_store is not app.store
         with pytest.raises(Exception, match="rivilege|ermission|denied|navailable"):

@@ -600,5 +600,9 @@ DEMO_ONLY: frozenset[tuple[str, str]] = frozenset(
         ("audit", "local_dir"),
     }
 )
+# Detector kinds that send no text out of the process (an allow-list: a detector kind added later is treated as
+# sending text out, and so needs made_up_data_only in a demo config, until it is listed here on review).
+# `llm_judge` sends text only through the llm kind, whose own rule covers it.
+LOCAL_DETECTORS: frozenset[str] = frozenset({"regex", "llm_judge"})
 # Kinds refused only in `prod` (design 4.6); the anchor rules are in config.py.
 NOT_PROD: frozenset[tuple[str, str]] = frozenset({("signer", "none"), ("anchor", "none")})

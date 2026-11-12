@@ -188,6 +188,7 @@ def test_k3_pilot_app_has_no_executor(tmp_path):
             secrets=spy,
             channel=channel,
             llm=ScriptedLLM(reply(PROPOSE), reply()),
+            allow_test_doubles=True,
         )
         assert app.executor is None
         assert app.runtime.hooks.execute is None and app.runtime.hooks.verify is None
