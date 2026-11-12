@@ -1,0 +1,8 @@
+$ curl /api/ui/leads?limit=200
+{"error": "bad_query", "field": "limit"} [HTTP 400]
+$ curl /api/ui/leads?limit=100&q=script
+{"now": 1794515982, "rows": [{"lead_id": "Lf583f8b37a19", "name": "<script>alert(1)</script><img src=x onerror=alert(2)>", "email": "xss@example.com", "company": null, "source": "form", "first_request_id": "hx-22", "created_at": 1794515937, "state": "sent", "ai_label": "warm", "attempts": 1, "arrivals": 1, "updated_at": 1794515937, "owner": "Asha", "step": "contacted", "step_label": "Contacted", "
+$ outbox subjects for hostile-name leads
+12
+'sql@example.com' "Thanks for getting in touch, Robert'); DROP TABLE leads;--"
+'xss@example.com' 'Thanks for getting in touch, <script>alert(1)</script><img src=x onerror=alert(2)>'

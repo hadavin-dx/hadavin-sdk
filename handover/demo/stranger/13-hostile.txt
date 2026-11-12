@@ -1,0 +1,55 @@
+$ python /tmp/work/l11-hostile.py  (raw-socket hostile cases, one per line: name | status line | seconds | body<=200 chars)
+body cap+1 (65537 B)               HTTP/1.0 413 Request Entity Too   0.00s | {"error": "too_large", "receipt_id": null}
+body 65536 exactly valid-ish       HTTP/1.0 202 Accepted             0.01s | {"receipt_id": 122, "verdict": "review", "reason": "bad_field:message", "replayed": false}
+body 1 MB                          HTTP/1.0 413 Request Entity Too   0.00s | {"error": "too_large", "receipt_id": null}
+body 10 MB                         [err BrokenPipeError(32, 'Broken  0.00s | [err BrokenPipeError(32, 'Broken pipe')]
+field 10MB message (valid JSON)    [err BrokenPipeError(32, 'Broken  0.00s | [err BrokenPipeError(32, 'Broken pipe')]
+invalid JSON                       HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_envelope", "receipt_id": null}
+empty body                         HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_envelope", "receipt_id": null}
+JSON array                         HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_envelope", "receipt_id": null}
+wrong ctype text/plain valid json  HTTP/1.0 201 Created              0.00s | {"receipt_id": 123, "verdict": "new", "lead_id": "L8b05be029c13", "replayed": false}
+no content-type valid json         HTTP/1.0 201 Created              0.00s | {"receipt_id": 124, "verdict": "new", "lead_id": "Ladeb31224775", "replayed": false}
+ctype xml                          HTTP/1.0 201 Created              0.00s | {"receipt_id": 125, "verdict": "new", "lead_id": "L637ee8c3a2e3", "replayed": false}
+missing source                     HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_envelope", "receipt_id": null}
+missing source_ref                 HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_envelope", "receipt_id": null}
+missing payload                    HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_envelope", "receipt_id": null}
+payload empty {}                   HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 126, "verdict": "review", "reason": "incomplete:name,email", "replayed": false}
+payload no email                   HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 127, "verdict": "review", "reason": "incomplete:email", "replayed": false}
+payload no name                    HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 128, "verdict": "review", "reason": "incomplete:name", "replayed": false}
+unknown source                     HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_envelope", "receipt_id": null}
+email NUL byte                     HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 129, "verdict": "review", "reason": "bad_field:email", "replayed": false}
+email control chars \x01\x07       HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 130, "verdict": "review", "reason": "bad_field:email", "replayed": false}
+email U+200B                       HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 131, "verdict": "review", "reason": "invalid_email", "replayed": false}
+email U+200B (same again, new ref) HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 132, "verdict": "review", "reason": "invalid_email", "replayed": false}
+email 1000 chars                   HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 133, "verdict": "review", "reason": "invalid_email", "replayed": false}
+email 254 chars ok?                HTTP/1.0 201 Created              0.00s | {"receipt_id": 134, "verdict": "new", "lead_id": "L4c502186b0f1", "replayed": false}
+CRLF in name                       HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 135, "verdict": "review", "reason": "bad_field:name", "replayed": false}
+CRLF in email                      HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 136, "verdict": "review", "reason": "bad_field:email", "replayed": false}
+CRLF in source_ref                 HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_envelope", "receipt_id": null}
+SQL string in name                 HTTP/1.0 201 Created              0.00s | {"receipt_id": 137, "verdict": "new", "lead_id": "L47d47862609e", "replayed": false}
+SQL string in email                HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 138, "verdict": "review", "reason": "invalid_email", "replayed": false}
+HTML/script in name                HTTP/1.0 201 Created              0.00s | {"receipt_id": 139, "verdict": "new", "lead_id": "Lf583f8b37a19", "replayed": false}
+name non-string (number)           HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 140, "verdict": "review", "reason": "bad_field:name", "replayed": false}
+deep nesting 100000                HTTP/1.0 413 Request Entity Too   0.00s | {"error": "too_large", "receipt_id": null}
+lone surrogate in message          HTTP/1.0 202 Accepted             0.00s | {"receipt_id": 141, "verdict": "review", "reason": "bad_field:message", "replayed": false}
+method GET /leads                  HTTP/1.0 405 Method Not Allowed   0.00s | {"error": "method_not_allowed"}
+method PUT /leads                  HTTP/1.0 405 Method Not Allowed   0.00s | {"error": "method_not_allowed"}
+method DELETE /leads               HTTP/1.0 405 Method Not Allowed   0.00s | {"error": "method_not_allowed"}
+method PATCH /leads                HTTP/1.0 405 Method Not Allowed   0.00s | {"error": "method_not_allowed"}
+method HEAD /leads                 HTTP/1.0 405 Method Not Allowed   0.00s | 
+method OPTIONS /leads              HTTP/1.0 405 Method Not Allowed   0.00s | {"error": "method_not_allowed"}
+method TRACE /leads                HTTP/1.0 501 Not Implemented      0.00s | {"error": "not_implemented"}
+method CONNECT /leads              HTTP/1.0 501 Not Implemented      0.00s | {"error": "not_implemented"}
+method BREW                        HTTP/1.0 501 Not Implemented      0.00s | {"error": "not_implemented"}
+garbage request line               HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_request"}
+Host: evil.example.com             HTTP/1.0 403 Forbidden            0.00s | {"error": "forbidden_host"}
+Origin: evil                       HTTP/1.0 403 Forbidden            0.00s | {"error": "forbidden_origin"}
+CL 100 body 7, conn open (stall body) HTTP/1.0 408 Request Timeout     10.01s | {"error": "request_timeout", "receipt_id": null}
+CL 100 body 7, client closes       HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_envelope", "receipt_id": null}
+two Content-Length                 HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_envelope", "receipt_id": null}
+CL huge number                     HTTP/1.0 413 Request Entity Too   0.00s | {"error": "too_large", "receipt_id": null}
+CL negative                        HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_envelope", "receipt_id": null}
+chunked no CL                      HTTP/1.0 400 Bad Request          0.00s | {"error": "bad_envelope", "receipt_id": null}
+half headers, hold open            HTTP/1.0 408 Request Timeout     10.01s | {"error": "request_timeout", "receipt_id": null}
+connect, send nothing              HTTP/1.0 408 Request Timeout     10.01s | {"error": "request_timeout", "receipt_id": null}
+[exit 0]

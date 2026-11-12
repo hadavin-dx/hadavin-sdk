@@ -1,0 +1,7 @@
+$ bash scripts/reset.sh  (venv active, PYTHONPATH=src)
+reset done
+[exit 0]
+$ pgrep
+pgrep rc=1
+curl8765 rc=7
+curl8766 rc=7

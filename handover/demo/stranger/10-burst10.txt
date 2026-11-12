@@ -1,0 +1,7 @@
+$ python -m demo_only.burst --url http://127.0.0.1:8765/leads --n 10 --email burst10@example.com --ref-prefix run1 --source form; curl -s -m5 http://127.0.0.1:8765/counts; echo; curl -s -m5 http://127.0.0.1:8766/fake/outbox | head -c 600
+SENT n=10
+STATUS 201=1 200=9
+RETRIES busy503=0 refused=0
+RESULT sent=10 expected=10
+{"received": 20, "new": 4, "duplicate": 15, "review": 1, "open": 0, "rejected_envelopes": 0, "pending_followups": 1, "failed_followups": 0, "unknown_followups": 0, "sending_followups": 1, "hung_workers": {"model": 0, "crm": 0, "send": 0, "refresh": 0}, "decide_integrity_errors": 0, "decide_transient_errors": 0, "reaper_running": true, "last_reaper_pass_at": 1794515905, "expected_match": null, "ok": null}
+{"mode": "keyed", "count": 4, "reminders": 0, "messages": [{"key": "L092cf0d80638", "to": "Ada@example.com", "subject": "Thanks for getting in touch, Ada Example"}, {"key": "L95ff18433aeb", "to": "grace@example.com", "subject": "Thanks for getting in touch, Test Person"}, {"key": "L21108f7c7e39", "to": "gr\u0430ce@example.com", "subject": "Thanks for getting in touch, Test Person"}, {"key": "L7fbd9b4803b9", "to": "burst10@example.com", "subject": "Thanks for getting in touch, Ada Example"}]}[exit 0]

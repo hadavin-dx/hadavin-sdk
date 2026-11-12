@@ -1,0 +1,5 @@
+$ curl -m 5 http://127.0.0.1:8766/fake/outbox
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   165  100   165    0     0   209k      0 --:--:-- --:--:-- --:--:--  161k
+{"mode": "keyed", "count": 1, "reminders": 0, "messages": [{"key": "L092cf0d80638", "to": "Ada@example.com", "subject": "Thanks for getting in touch, Ada Example"}]}[exit 0]

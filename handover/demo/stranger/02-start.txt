@@ -1,0 +1,5 @@
+$ bash scripts/start_all.sh keyed
+started: demo servers (keyed outbox) pid 16672, desk pid 16673
+ports: desk 8765, demo CRM and outbox 8766 (check with: curl http://127.0.0.1:8765/counts)
+logs: data/fakes.log and data/desk.log
+[exit 0]

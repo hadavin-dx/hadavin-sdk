@@ -1,0 +1,9 @@
+$ python /tmp/work/l11-par.py valid 50   (50 simultaneous valid POSTs, same email, different request ids)
+kind valid N 50 wall 0.13s
+Counter({'HTTP/1.0 200 OK': 49, 'HTTP/1.0 201 Created': 1})
+max time 0.11s min 0.05s
+0 ('HTTP/1.0 200 OK', '{"receipt_id": 149, "verdict": "duplicate", "lead_id": "Ld60158ba5b8d", "differing_fields": [], "replayed": false}', 0.07341742515563965)
+1 ('HTTP/1.0 200 OK', '{"receipt_id": 146, "verdict": "duplicate", "lead_id": "Ld60158ba5b8d", "differing_fields": [], "replayed": false}', 0.06870722770690918)
+49 ('HTTP/1.0 200 OK', '{"receipt_id": 189, "verdict": "duplicate", "lead_id": "Ld60158ba5b8d", "differing_fields": [], "replayed": false}', 0.10996627807617188)
+body variants [('{"receipt_id": 142, "verdict": "new", "lead_id": "Ld60158ba5', 1), ('{"receipt_id": 143, "verdict": "duplicate", "lead_id": "Ld60', 1), ('{"receipt_id": 144, "verdict": "duplicate", "lead_id": "Ld60', 1), ('{"receipt_id": 145, "verdict": "duplicate", "lead_id": "Ld60', 1)]
+{"received": 190, "new": 12, "duplicate": 163, "review": 15, "open": 0, "rejected_envelopes": 22, "pending_followups": 0, "failed_followups": 0, "unknown_followups": 0, "sending_followups": 0, "hung_workers": {"model": 0, "crm": 0, "send": 0, "refresh": 0}, "decide_integrity_errors": 0, "decide_transient_errors": 0, "reaper_running": true, "last_reaper_pass_at": 1794515988, "expected_match": null, "ok": null}

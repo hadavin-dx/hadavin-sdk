@@ -1,0 +1,10 @@
+$ curl --data-binary @10MB-json (field message 10 MB)
+{"error": "too_large", "receipt_id": null}
+[HTTP 413 0.001079s]
+$ curl --data-binary @10MB raw
+{"error": "too_large", "receipt_id": null}
+[HTTP 413 0.000823s]
+$ body exactly 65536 bytes (valid JSON, unknown field)
+{"error": "bad_envelope", "receipt_id": null}
+[HTTP 400]
+$ GET /api/ui/leads?q=  rows for hostile names

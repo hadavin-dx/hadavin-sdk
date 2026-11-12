@@ -1,0 +1,32 @@
+$ curl -s /api/ui/leads?limit=200 | rows with hostile names/emails
+Traceback (most recent call last):
+  File "<string>", line 4, in <module>
+    for r in d['rows']:
+             ~^^^^^^^^
+KeyError: 'rows'
+--- one lead detail: XSS
+Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+    print([r['lead_id'] for r in json.load(sys.stdin)['rows'] if '<script' in r['name']][0])
+                                 ~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'rows'
+{"now": 1794515978, "rows": [{"lead_id": "Lf583f8b37a19", "name": "<script>alert(1)</script><img src=x onerror=alert(2)>", "email": "xss@example.com", "company": null, "source": "form", "first_request_id": "hx-22", "created_at": 1794515937, "state": "sent", "ai_label": "warm", "attempts": 1, "arrivals": 1, "updated_at": 1794515937, "owner": "Asha", "step": "contacted", "step_label": "Contacted", "state_view": "sent", "repeats": 0}, {"lead_id": "Ladeb31224775", "name": "Hostile T", "email": "noctype@example.com", "company": null, "source": "form", "first_request_id": "hx-4", "created_at": 1794515937, "state": "sent", "ai_label": "warm", "attempts": 1, "arrivals": 1, "updated_at": 1794515937, 
+--- raw bytes check (is < escaped as < or literal?)
+a19", "name": "<script>alert(1)</script><i
+--- review list
+{'action': 15, 'waiting': 0, 'info': 0}
+R8 bad_field:email | Incomplete request: email has a value the desk cannot accept
+R122 bad_field:message | Incomplete request: message has a value the desk cannot accept
+R126 incomplete:name,email | Incomplete request: name and email are missing
+R127 incomplete:email | Incomplete request: email is missing
+R128 incomplete:name | Incomplete request: name is missing
+R129 bad_field:email | Incomplete request: email has a value the desk cannot accept
+R130 bad_field:email | Incomplete request: email has a value the desk cannot accept
+R131 invalid_email | Incomplete request: the email address is not valid
+R132 invalid_email | Incomplete request: the email address is not valid
+R133 invalid_email | Incomplete request: the email address is not valid
+R135 bad_field:name | Incomplete request: name has a value the desk cannot accept
+R136 bad_field:email | Incomplete request: email has a value the desk cannot accept
+R138 invalid_email | Incomplete request: the email address is not valid
+R140 bad_field:name | Incomplete request: name has a value the desk cannot accept
+R141 bad_field:message | Incomplete request: message has a value the desk cannot accept

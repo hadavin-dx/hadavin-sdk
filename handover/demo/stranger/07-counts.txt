@@ -1,0 +1,5 @@
+$ curl -m 5 http://127.0.0.1:8765/counts
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   405  100   405    0     0   319k      0 --:--:-- --:--:-- --:--:--  395k
+{"received": 2, "new": 1, "duplicate": 1, "review": 0, "open": 0, "rejected_envelopes": 0, "pending_followups": 0, "failed_followups": 0, "unknown_followups": 0, "sending_followups": 0, "hung_workers": {"model": 0, "crm": 0, "send": 0, "refresh": 0}, "decide_integrity_errors": 0, "decide_transient_errors": 0, "reaper_running": true, "last_reaper_pass_at": 1794515884, "expected_match": null, "ok": null}[exit 0]

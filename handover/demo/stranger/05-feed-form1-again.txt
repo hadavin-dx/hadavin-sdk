@@ -1,0 +1,3 @@
+$ python scripts/feed.py --source form --index 1
+canned-1 form -> 201 {"receipt_id": 1, "verdict": "new", "lead_id": "L092cf0d80638", "replayed": true, "payload_matches": true}
+[exit 0]

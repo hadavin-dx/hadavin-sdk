@@ -2,7 +2,7 @@
 Stack heads (public repo hadavin-dx/duplicate-proof-lead-desk-n8n, verified with git ls-remote at 2026-11-12 20:38Z): pr-1-code d23cf8f, pr-2-demo-folder f31e261, pr-3-tests 558d37f, initial-code 43110e7 (pr-4-extras does not exist on origin).
 All patch paths are relative to handover/demo/ on branch demo/handover of hadavin-sdk. 'Reviewed' = a fresh egm:egm-codebase-details review with no Blocker and no Major (review file cited). The apply check of the WHOLE list on the stack heads is run by the integration evidence runner: integration/INT-1.md (running; result below is filled in when it lands).
 
-## BATCH 1: reviewed clean (apply in THIS order; one push)
+## BATCH 1: reviewed clean (apply in THIS order; one push; #6 is independent of the others: any position)
 | # | patch | written against | touches | reviewed (file) | open decision / caveat |
 |---|---|---|---|---|---|
 | 1 | drift/docs-fixes.patch | 43110e7 | contract.md, docs/portal.md, docs/tests.md (3 one-line fixes; all three still true on 558d37f: checked in fixes/REVIEW-2.md section 4) | drift/REVIEW-1.md (0B/0M/3N) + fixes/REVIEW-2.md section 4 | lane 8's docs patch will be rebased onto it (do NOT also apply the lane 8 patch's copy of these hunks) |
@@ -10,6 +10,7 @@ All patch paths are relative to handover/demo/ on branch demo/handover of hadavi
 | 3 | triage/py-retry.patch | 43110e7 | 13 files: src/lead_desk/{desk,crm_hubspot,live_claude,smtp_outbox,smtp_provider,config,portal_api}.py, load_tools/ files, fakes, tests/test_except_clause_hierarchy.py (49 cases), tests/test_lead_crm_copy.py | triage/REVIEW-py-2.md (0B/0M/3N) | the retry-path files are in pr-1-code: the lead decides where to apply the test files (pr-3-tests); apply check on each stack branch: see INT-1 placement table |
 | 4 | triage/extra-demo-only.patch | 43110e7 | demo_only/portal_demo.py (1 line: `got[0], got[1], got[2]`) | triage/REVIEW-extra.md (0B/0M/4N) | COSMETIC and optional: a false positive silenced; DeepSource may not flag it at all (rule id unknown): keep or drop |
 | 5 | gitleaks/gitleaks-toml-fix-v2.patch | 558d37f | .gitleaks.toml (regexTarget "match" + exact key), exceptions.txt (bracketed exact key) | gitleaks/REVIEW-1.md (v1) and REVIEW-2.md (v2: 0B/1M/3m): the Major is stale merge evidence about the coverage patch, closed by the integration check (INT-1) | FIXES the red gitleaks step (the 558d37f allowlist does not work: proven with the real binary 8.30.1, tarball sha256 = lint.yml pin: gitleaks/evidence-lead-provenance.txt). Apply FIRST or LAST? INT-1 tests both orders. |
+| 6 | stranger/limits-burst-doc.patch | 558d37f | docs/limits.md (one sentence: the burst script prints SENT/STATUS/RETRIES/RESULT and NO lead count; read /counts; a follow-up can show pending ~3 s after a burst) | EGM skipped: one-line mechanical doc edit (preamble rule 13); the mismatch was observed by lane 11 (stranger/SUMMARY.md item 1: docs/limits.md says 'read the counts it prints' but demo_only.burst prints only SENT / STATUS / RETRIES / RESULT; N=10 and N=100 both gave 201=1 and 200=N-1, 1 new lead and 1 email); `git apply --check` OK on 558d37f (verified by me) | independent of #1 (different file) |
 
 ## BATCH 2: reviewed but a Major is open, or fix round running (do NOT apply yet)
 | # | patch | status | what blocks it |

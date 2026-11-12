@@ -1,6 +1,40 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:41Z / 02:11 IST - LANE 11 DONE (stranger end-to-end on pr-3-tests 558d37f): no crash, no hang, no 5xx; 1 doc mismatch (patch ready), 6 surprises; lane 12 (browser check of hostile text) started; 5 agents live
+FAILED / MISMATCH first (EVIDENCE RUNNER; stranger/SUMMARY.md + 21 raw files; pushed with this block):
+1. **MISMATCH in docs/limits.md ('Load and limits', first bullet):** it says after a burst 'Read the counts it prints ... the lead count and the follow-up count should each be 1'. `demo_only.burst` prints only `SENT`, `STATUS`, `RETRIES`, `RESULT`: NO counts. The README 'Try it' never mentions the burst. N=10 (contract.md) and N=100 (limits.md) both gave 201=1 and 200=N-1 with no retries; 1 new lead and 1 email each (checked in /counts and the outbox). **I wrote the fix: stranger/limits-burst-doc.patch (one sentence in docs/limits.md; `git apply --check` OK on 558d37f; added to APPLY-LIST batch 1 as #6, independent of the others; EGM skipped: one-line mechanical doc edit).**
+2. SURPRISE for the VIDEO: a Cyrillic look-alike email (U+0430 for the 'a' in grace) is a SEPARATE new lead with its own email. It follows the README rule ('trimmed of spaces and lower-cased, nothing more') but will NOT look like a duplicate on screen: avoid it in the demo or explain it (matches the lane 5 finding about identity.py).
+3. SURPRISES: an email with a TAB or newline around it goes to review (`bad_field:email`, HTTP 202); plain spaces and upper case merge as duplicates; receipt numbers skip (the replayed request used up number 2; counts still add up); right after the 10-burst /counts shows pending_followups 1 and sending_followups 1 for about 3 s before it settles to 0 (a video showing counts instantly after a burst may show this; I put it in the doc patch).
+4. SURPRISE (open question, lane 12 started): `<script>` text in a name comes back UNESCAPED in the portal JSON and in the demo mail subject (`Thanks for getting in touch, <script>...`). Browser rendering was NOT checked by lane 11 (curl only). Lane 12 checks it in a real headless chromium (Playwright 1.63.0, build 1243).
+5. After the hostile inputs `rejected_envelopes` was 22, which makes `ok` false by the docs (contract: a refused body makes ok false until restart); /counts shows `ok: null` only because no `expected` was passed.
+OK: hostile inputs all got JSON answers and a sensible status (413 / 400 / 405 / 501 / 403 / 408 match the docs; details in SUMMARY.md); 50 parallel valid requests: 49 x 200 and 1 x 201 in 0.13 s; 50 idle connections each got 408 at 10 s; afterwards /counts still 200 in 1 ms and the desk log held one line; Overview numbers add up (120 = 5+114+1+0, then 190 = 12+163+15+0); reset exited 0; `pgrep` found nothing of lane 11's; ports 8765 and 8766 refuse connections. Not checked: browser rendering, Windows, real services, n8n, `blind` and approval modes.
+- Lane 12 (sonnet EVIDENCE RUNNER, 35 min box): hostile name/company/message payloads (script, img onerror, svg onload, iframe srcdoc, javascript:, SQL text, RTL override and zero-width characters, a 2000-char name, template text, spaces-only, emoji) through the public endpoint, every portal page in headless chromium with masking on and off, light and dark: dialogs, console and page errors, `window.__xss`, text-vs-elements in the DOM, layout overflow, a screenshot, the demo email subject/body, response security headers, and a read-only table of every DOM write-sink in the portal JS (innerHTML etc.). If ANY script executes it stops at once and says so first.
+- INT-1 (integration check, batch 1): running since 20:41; the placement/apply parts are due first; I post them at once.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:41Z / 02:11 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a03bfbfb75bd4ec81 (agent, sonnet builder) | lane 10b CodeAnt triage | 20:15 | 25 min | 21:15 | running | CODEANT-COVERAGE.md, codeant-*.patch | evidence-codeant-* files only |
+| a6163bda862313baa (agent, sonnet builder) | lane 7c | 20:31 | 9 min | 21:11 | running | coverage patch v3 | working |
+| a48557818ee7cad44 (agent, sonnet builder) | lane 8c | 20:34 | 6 min | 21:34 | running | docs-and-deps patch v3 | working |
+| ad08257c8fb71e8e6 (agent, sonnet evidence runner) | INT-1 integration check batch 1 | 20:37 | 4 min | 21:20 | running | integration/INT-1.md | no file yet |
+| (new) lane 12 evidence runner, sonnet | portal hostile text in a real browser | 20:41 | 0 min | +35 min | running | xss/SUMMARY.md | started |
+Totals: agents live 5; shells 0; pytest runs 0 now; one browser at a time (lane 12); containers 0; load average 1.70, 1.16, 1.67; nothing past its time box.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| lane 11 stranger run | 1 (done) | n/a | n/a | one round; its open item (browser rendering of hostile text) became lane 12 | yes | lane 12 answer |
+| batch 1 | INT-1 running | n/a | n/a | D13 rule | n/a | INT-1 passes, you apply |
+| lane 7, lane 8, gitleaks | see earlier | | | | | |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| afcb39b8ea66fe867 (lane 11, sonnet evidence runner) | about 4 min (20:37 to 20:41) | no crash/hang/5xx; 1 doc mismatch (patch written); 6 surprises; stranger/SUMMARY.md | yes |
+| ac3a511599cfd9d0d (lane 8b duplicate) | stopped by me | closed to prevent it overwriting 8c | yes |
+
 ## 2026-11-12 20:38Z / 02:08 IST - ORDER D13: APPLY-LIST.md written (batch 1 = 5 reviewed-clean patches); integration check INT-1 and lane 11 (stranger end-to-end) started; 6 agents live
 Status lines:
 - **APPLY-LIST.md is on origin demo/handover (handover/demo/APPLY-LIST.md).** BATCH 1, in this order: (1) drift/docs-fixes.patch (3 doc fixes; reviewed), (2) triage/js-portal.patch (reviewed, 0B/0M), (3) triage/py-retry.patch (reviewed, 0B/0M), (4) triage/extra-demo-only.patch (cosmetic, optional, reviewed 0B/0M), (5) gitleaks/gitleaks-toml-fix-v2.patch (reviewed: its round-2 Major is the stale merge evidence that INT-1 closes). BATCH 2 (not yet): lane 8's docs/browser patch (review 2 had 3 Majors; 8c rewriting; rebasing onto #1 and #5 so the doc hunks are not applied twice), lane 7's coverage patch (review 2: 1 Major; 7c rewriting), lane 10b CodeAnt hunks (not produced).

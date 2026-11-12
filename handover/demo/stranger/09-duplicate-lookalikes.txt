@@ -1,0 +1,11 @@
+$ python /tmp/work/l11-post.py  (same lead twice by new request ids, case, spaces, Cyrillic a U+0430)
+'grace@example.com' dup-1 201 {"receipt_id": 4, "verdict": "new", "lead_id": "L95ff18433aeb", "replayed": false}
+'grace@example.com' dup-2 200 {"receipt_id": 5, "verdict": "duplicate", "lead_id": "L95ff18433aeb", "differing_fields": [], "replayed": false}
+'GRACE@EXAMPLE.COM' dup-3 200 {"receipt_id": 6, "verdict": "duplicate", "lead_id": "L95ff18433aeb", "differing_fields": [], "replayed": false}
+'  grace@example.com  ' dup-4 200 {"receipt_id": 7, "verdict": "duplicate", "lead_id": "L95ff18433aeb", "differing_fields": [], "replayed": false}
+'\tGrace@Example.com\n' dup-5 202 {"receipt_id": 8, "verdict": "review", "reason": "bad_field:email", "replayed": false}
+'gr\u0430ce@example.com' dup-6 201 {"receipt_id": 9, "verdict": "new", "lead_id": "L21108f7c7e39", "replayed": false}
+'gr\u0430ce@example.com' dup-7 200 {"receipt_id": 10, "verdict": "duplicate", "lead_id": "L21108f7c7e39", "differing_fields": [], "replayed": false}
+'grace@example.com ' dup-8 200 {"receipt_id": 11, "verdict": "duplicate", "lead_id": "L95ff18433aeb", "differing_fields": [], "replayed": false}
+{"received": 10, "new": 3, "duplicate": 6, "review": 1, "open": 0, "rejected_envelopes": 0, "pending_followups": 0, "failed_followups": 0, "unknown_followups": 0, "sending_followups": 0, "hung_workers": {"model": 0, "crm": 0, "send": 0, "refresh": 0}, "decide_integrity_errors": 0, "decide_transient_errors": 0, "reaper_running": true, "last_reaper_pass_at": 1794515899, "expected_match": null, "ok": null}
+{"mode": "keyed", "count": 3, "reminders": 0, "messages": [{"key": "L092cf0d80638", "to": "Ada@example.com", "subject": "Thanks for getting in touch, Ada Example"}, {"key": "L95ff18433aeb", "to": "grace@example.com", "subject": "Thanks for getting in touch, Test Person"}, {"key": "L21108f7c7e39", "to": "gr\u0430ce@example.com", "subject": "Thanks for getting in touch, Test Person"}]}

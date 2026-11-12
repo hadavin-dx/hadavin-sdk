@@ -1,0 +1,11 @@
+$ tail data/desk.log; wc -l data/*.log; tail data/fakes.log
+ 1 data/desk.log
+ 1 data/fakes.log
+ 2 total
+desk listening on http://127.0.0.1:8765
+---
+fakes server keyed on port 8766
+--- desk pid alive?
+16673
+  PID     ELAPSED   RSS NLWP CMD
+16673       02:01 47056    2 python -m lead_desk.server

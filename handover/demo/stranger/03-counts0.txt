@@ -1,0 +1,17 @@
+$ curl -i -m 5 http://127.0.0.1:8765/counts
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   405  100   405    0     0   317k      0 --:--:-- --:--:-- --:--:--  395k
+HTTP/1.0 200 OK
+Server: lead-desk Python/3.12.3
+Date: Thu, 12 Nov 2026 20:38:04 GMT
+Content-Type: application/json
+Content-Length: 405
+Connection: close
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
+Cross-Origin-Resource-Policy: same-origin
+Cache-Control: no-store
+
+{"received": 0, "new": 0, "duplicate": 0, "review": 0, "open": 0, "rejected_envelopes": 0, "pending_followups": 0, "failed_followups": 0, "unknown_followups": 0, "sending_followups": 0, "hung_workers": {"model": 0, "crm": 0, "send": 0, "refresh": 0}, "decide_integrity_errors": 0, "decide_transient_errors": 0, "reaper_running": true, "last_reaper_pass_at": 1794515883, "expected_match": null, "ok": null}[exit 0]

@@ -1,0 +1,91 @@
+$ curl -si http://127.0.0.1:8765/ui | head -c 700
+HTTP/1.0 308 Permanent Redirect
+Server: lead-desk Python/3.12.3
+Date: Thu, 12 Nov 2026 20:38:37 GMT
+Content-Type: text/plain
+Content-Length: 0
+Connection: close
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
+Cross-Origin-Resource-Policy: same-origin
+Cache-Control: no-store
+Location: /ui/
+
+
+---
+$ curl -si http://127.0.0.1:8765/ui/ | head -c 700
+HTTP/1.0 200 OK
+Server: lead-desk Python/3.12.3
+Date: Thu, 12 Nov 2026 20:38:37 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 5156
+Connection: close
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
+Cross-Origin-Resource-Policy: same-origin
+Cache-Control: no-store
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Lead Desk</title>
+<link rel="icon" type="image/png" href="icon.png">
+<script src="theme.js"></script>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="pages/overview.css">
+<link rel="stylesheet" href="pages/leads.c
+---
+$ title:
+<title>Lead Desk</title>
+$ files linked:
+href="icon.png"
+src="theme.js"
+href="app.css"
+href="pages/overview.css"
+href="pages/leads.css"
+href="pages/needs.css"
+href="pages/log.css"
+href="pages/data.css"
+href="#main"
+src="portal.js"
+src="pages/overview.js"
+src="pages/leads.js"
+src="pages/needs.js"
+src="pages/log.js"
+src="pages/data.js"
+GET icon.png -> 200 image/png
+GET theme.js -> 200 text/javascript; charset=utf-8
+GET app.css -> 200 text/css; charset=utf-8
+GET pages/overview.css -> 200 text/css; charset=utf-8
+GET pages/leads.css -> 200 text/css; charset=utf-8
+GET pages/needs.css -> 200 text/css; charset=utf-8
+GET pages/log.css -> 200 text/css; charset=utf-8
+GET pages/data.css -> 200 text/css; charset=utf-8
+GET #main -> 200 text/html; charset=utf-8
+GET portal.js -> 200 text/javascript; charset=utf-8
+GET pages/overview.js -> 200 text/javascript; charset=utf-8
+GET pages/leads.js -> 200 text/javascript; charset=utf-8
+GET pages/needs.js -> 200 text/javascript; charset=utf-8
+GET pages/log.js -> 200 text/javascript; charset=utf-8
+GET pages/data.js -> 200 text/javascript; charset=utf-8
+--- GET /api/ui/summary
+{"now": 1794515917, "desk_started_at": 1794515883, "mode": {"demo_tools": true, "sample_data": true, "real_services": []}, "counts": {"received": 120, "new": 5, "duplicate": 114, "review": 1, "open": 0}, "reconciled": true, "refused_at_door": 0, "hung_workers": {"model": 0, "crm": 0, "send": 0, "refresh": 0}, "needs_action": 1, "waiting": 0, "followups": {"pending": 0, "sending": 0, "sent": 5, "failed": 0, "unknown": 0, "did_not_finish": 0, "crm_unconfirmed": 0}, "doors": [{"source": "form", "received": 119, "last_seen": 1794515909}, {"source": "webhook", "received": 1, "last_seen": 1794515885}], "series": {"bucket_seconds": 5, "time_field": "decided_at", "buckets": [{"t": 1794515620, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515625, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515630, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515635, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515640, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515645, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515650, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515655, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515660, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515665, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515670, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515675, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515680, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515685, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515690, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515695, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515700, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515705, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515710, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515715, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515720, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515725, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515730, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515735, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515740, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515745, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515750, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515755, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515760, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515765, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515770, "new": 0, "duplicate": 0, "review": 0}, {"t": 1794515775, "new": 0
+--- GET /api/ui/leads?limit=3
+{"now": 1794515917, "rows": [{"lead_id": "L8916a649ca14", "name": "Ada Example", "email": "ada100@example.com", "company": null, "source": "form", "first_request_id": "run2-12", "created_at": 1794515907, "state": "sent", "ai_label": "warm", "attempts": 1, "arrivals": 1, "updated_at": 1794515907, "owner": "Asha", "step": "contacted", "step_label": "Contacted", "state_view": "sent", "repeats": 99}, {"lead_id": "L7fbd9b4803b9", "name": "Ada Example", "email": "burst10@example.com", "company": null, "source": "form", "first_request_id": "run1-1", "created_at": 1794515906, "state": "sent", "ai_label": "warm", "attempts": 1, "arrivals": 1, "updated_at": 1794515906, "owner": "Ravi", "step": "contacted", "step_label": "Contacted", "state_view": "sent", "repeats": 9}, {"lead_id": "L95ff18433aeb", "name": "Test Person", "email": "grace@example.com", "company": null, "source": "form", "first_request_id": "dup-1", "created_at": 1794515900, "state": "sent", "ai_label": "warm", "attempts": 1, "arrivals": 1, "updated_at": 1794515900, "owner": "Ravi", "step": "contacted", "step_label": "Contacted", "state_view": "sent", "repeats": 4}], "total": 5, "offset": 0, "limit": 3}
+[HTTP 200]
+
+--- GET /api/ui/review
+{"now": 1794515917, "items": [{"item_id": "R8", "item_type": "receipt", "kind": "review", "reason": "bad_field:email", "lead_id": null, "since": 1794515900, "source": "form", "lead_name": null, "tab": "action", "title": "Incomplete request: email has a value the desk cannot accept", "reason_text": "Send a corrected submission with a NEW request number.", "actions": [], "state_view": "review"}], "tabs": {"action": 1, "waiting": 0, "info": 0}}
+[HTTP 200]
+
+--- GET /api/ui/log?limit=3
+{"items": [{"request_id": "run2-66", "received_at": 1794515909, "door": "form", "result": "duplicate", "lead_id": "L8916a649ca14", "lead_name": "Ada Example", "followup_state": "sent", "new_details": false, "state_view": "sent"}, {"request_id": "run2-88", "received_at": 1794515909, "door": "form", "result": "duplicate", "lead_id": "L8916a649ca14", "lead_name": "Ada Example", "followup_state": "sent", "new_details": false, "state_view": "sent"}, {"request_id": "run2-62", "received_at": 1794515909, "door": "form", "result": "duplicate", "lead_id": "L8916a649ca14", "lead_name": "Ada Example", "followup_state": "sent", "new_details": false, "state_view": "sent"}], "next": "1794515909:119", "total": 120}
+[HTTP 200]
+
+--- GET /api/ui/data-map
+{"mail_sender": null, "ai_step": {"receives": ["lead_id", "email_key"], "never_receives": ["name", "phone", "company", "message"], "mode": "recorded", "note": "lists the inputs the AI is given, derived from its signature; it does not prove what a live AI looks up by id"}, "stored": [{"field": "lead_id", "where": "desk records", "purpose": "number each lead, on every page; the AI is given it", "sent_to": ["Mail step", "CRM (stand-in)", "AI"]}, {"field": "name", "where": "desk records", "purpose": "show who the lead is", "sent_to": ["Mail step", "CRM (stand-in)"]}, {"field": "email", "where": "desk records", "purpose": "identify the lead and send the follow-up", "sent_to": ["Mail step", "CRM (stand-in)", "AI"]}, {"field": "phone", "where": "desk records", "purpose": "a number a person could call; the desk makes no phone calls (kept when given)", "sent_to": []}, {"field": "company", "where": "desk records", "purpose": "show who the lead works for (kept when given)", "sent_to": ["CRM (stand-in)"]}, {"field": "message", "where": "desk records", "purpose": "keep what the lead wrote (kept when given)", "sent_to": []}, {"field": "request_payload", "where": "desk records", "purpose": "keep the whole request as it arrived, to show what a repeat changed", "sent_to": []}, {"field": "request_id", "where": "desk records", "purpose": "recognise a request that arrives again", "sent_to": []}, {"field": "door", "where": "desk records", "purpose": "show which source the request came through", "sent_to": ["CRM (stand-in)"]}, {"field": "times", "where": "desk records", "purpose": "show when each request arrived and when each step happened", "sent_to": []}, {"field": "follow_up_state", "where": "desk records", "purpose": "show whether the follow-up was sent", "sent_to": []}, {"field": "ai_label", "where": "desk records", "purpose": "keep the AI's answer: hot, warm or cold", "sent_to": ["CRM (stand-in)"]}, {"field": "later_decision", "where": "desk records", "purpose": "keep who approved or denied a later message, through which channel and when (approval mode only)", "sent_to": []}, {"field": "lead_owner", "where": "desk records", "purpose": "show which person on the list owns a new lead; named in the reminder email", "sent_to": ["Mail step", "CRM (stand-in)"]}, {"field": "lead_stage", "where": "desk records", "purpose": "show how far a new lead has come; named in the reminder email; copied to the stand-in CRM, where nothing reacts to it", "sent_to": ["Mail step", "CRM (stand-in
