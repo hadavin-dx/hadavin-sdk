@@ -17,3 +17,4 @@
 20:19Z deadlock I caused fixed; part 3 hand-back 8ebdcc27; resolve Q8c-1 r15 + Q8a-1 r19 starting
 20:27Z part 6 reviewed+resolved, fix builder aa0cfcdf started; stale waiters cleaned
 21:22Z ORDER 266: guard PR branch wip/cloud-ci-guard-wip at 956bac0f is READY for you to open (see REPORT.md top block); reviews and independent evidence running.
+21:27Z ORDER 266 guard PR (wip/cloud-ci-guard-wip 956bac0f): design review found 1 Major (open wip/cloud-* name in the ignore-entry check lets a writer hide a secret) -> DO NOT MERGE as is; fix batch follows the codebase review; see handover/reviews/ci-guard/.
