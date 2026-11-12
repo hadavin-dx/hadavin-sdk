@@ -13,7 +13,9 @@ How strong the kill check is: the first failing line must hold ``expect``. A mut
 in none of the killer's own words, counted from the syntax tree: the message of an ``assert``, the ``match=`` of
 ``pytest.raises`` and the ``what`` of a ``same()`` call (a comment, a loop literal, a predicate or the ``def`` line
 do not count, and pytest's own "DID NOT RAISE" does not name a call; only DIRECT string pieces count: a text inside a
-dict, a subscript, a call or a ternary is a union of texts and is not counted). The run prints the weak mutants and
+dict, a subscript, a call or a ternary is a union of texts and is not counted). The messages of the helper functions
+the killer calls are counted too, so the number of weak mutants the run prints is a LOWER bound: a helper text can
+carry the expect text for a killer that never reaches it. The run prints the weak mutants and
 exits 1 when there is one. Two
 mutants may share one killer (the run prints which).
 

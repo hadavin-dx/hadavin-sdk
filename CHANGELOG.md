@@ -310,25 +310,46 @@
     The steps are printed in the overdue message of each group (the names and claims: the day `DECIDED` and every `decided` and `review_by` in
     `tools/policy_page.py`, the pin test of that day, the page rewritten, one notes row for each changed test; the 16 kinds: `KINDS_DECIDED`,
     `_PR2` and the `review_by` days in the guard test, the pin `KINDS_LITERAL` and `KINDS_GROUPS` in `tests/test_policy_changelog.py`, and the
-    sentence of this entry that gives the days the kinds start to fail). `tests/policy_mutants.py` is not edited by a renewal: its search texts
-    take their days from the live lists. A test plants the whole renewal in a temporary copy and shows that the tests, the page check and the
-    mutants stay green. When the last unchecked claim is checked, its entries are deleted, its marker line becomes `none`, and its class in
+    sentence of this entry that gives the days the kinds start to fail). `tests/policy_mutants.py` is not edited by a renewal: every day in it comes from the live lists, the day that the
+    B13 mutant plants included (it is built from `DECIDED`), and the search texts are found again after a renewal. Three tests
+    (`test_plant_a_full_renewal_...`, one for the kinds list alone and one for the names and claims alone) renew a temporary copy
+    with an edit list that the test builds from the live days and the printed steps (the list is written in the test, it is not
+    read out of the printed text), and then, on the new decision day and on the day after it, run in that copy: the page check
+    (`python tools/policy_page.py --check`), the guard, changelog, docs and notes tests, the check that every search text of the
+    mutants is found, and the mutants B8 and B9. With the variable `HADAVIN_POLICY_FULL_RENEWAL_RUN` set to 1 they run the whole
+    mutant list in the copy on both days (the rehearsal does this; it takes several minutes, so it is not part of a normal run).
+    A step that the printed lists leave out shows as a red test only when the plant makes that edit; a file that a renewal must
+    touch and that the plant does not edit would not be seen by the plant. A renewal made twice in a row is not a case the
+    plant plants: the order of the kinds groups no longer depends on the day. When the last unchecked claim is checked, its entries are deleted, its marker line becomes `none`, and its class in
     `NOTE_CLASSES` is moved off the claim lists.
   - **What the builder-notes check now sees, and what it cannot see.** `tools/notes_lines_check.py` runs on every
     pull request (`--auto`, from the common ancestor of the base branch and the pull request head, read from the
     head commit, never from the merge commit). A new or changed test or mutant needs its own row in the notes with a
     reason that names a killing mutant, a failing run, a plant or a control and something to look up after it. What it
     sees: every test file of the head commit is read whenever a file under `tests/` changed, so a change to a helper
-    (a file under `tests/` that is not a test, or a function, constant or fixture of a test file) lists every test that
-    imports or uses it, also through `import tests.x` with no alias; module-level code that runs when a file is
-    collected (an `if`, a call, a `pytestmark`) and the marks and body of a test class count as part of every test of
-    the file; each name a conftest assigns is a unit; a row names its file by the whole path (a bare file name serves
-    only a file that no other path shares the name of); a mutant row is found by its whole cell or an exact `;` item,
-    never by a part of one; and the tests, mutants and log files a reason names must exist in the head commit. What it
-    cannot see: a test written or collected another way (generated, or by a plugin), a change in `src/` or `tools/`
-    that a test reads (those have their own mutants), and a text a test reads from a file at run time (except the
-    sources file). It cannot tell whether a reason is true: that stays with the reviewer and the logs the row names.
-    The step has not yet run on GitHub.
+    lists every test that reaches it, through any number of imports (helper to helper to test file) and in the other
+    direction too. A value is followed through the code behind it: `SKIP = False` read by a `pytestmark`, a constant built
+    by a function, a constant built from another (`B = A + 1`), a tuple or annotated target. The ways a file or a class is
+    switched off or changed list every test they act on: `__test__`, `setup_module`, `teardown_module`, `setup_function`,
+    `teardown_function`, `pytest_generate_tests`, `pytest_collection_modifyitems`, module-level code (an `if`, a `for`, a
+    call, a mark), and in a test class its marks, helper methods, `setup_method`, `setup_class` and fixtures; a
+    `unittest.TestCase` class and a file ending in `_test.py` are read as tests. A conftest counts: its functions, each
+    name it assigns, and all its other module-level code (a `for` loop, `collect_ignore.append(...)`) are units, and a fixture
+    it holds lists the tests that take it from the nearest conftest. A mutant counts the helpers of its own file that its
+    call reaches. A change to `pytest.ini`, `tox.ini`, `setup.cfg`, the pytest tables of `pyproject.toml` (not a
+    dependency), the conftest at the root, or any file under `tests/` that is not Python, needs a row too. A row names its
+    file by the whole path (a bare file name serves only a file that no other path shares the name of); a mutant row is
+    found by its whole cell or an exact `;` item, never by a part of one. The unit cell of a row must name a test, a mutant or
+    a unit that exists. The tests, mutants and log files a reason names must exist in the head commit: a mutant name
+    is checked when it starts with a code (`B12 `) or with the first word of a mutant of the tree (`Kinds:`); a log is found in
+    the logs folder of the notes that name it, or by the end of its path (`b12/logs/x.log`). A new function or constant
+    that nothing reaches (no test, fixture, conftest, import or mutant) needs no row, because it changes no run; the change
+    that makes something use it lists the user. What it cannot see: a test written or collected another way (generated at
+    run time, or by a plugin that is not in a conftest), a name built at run time (`getattr`, `importlib`, `exec`), a change in
+    `src/` or `tools/` that a test reads (those have their own mutants), a change to a workflow, a lock file or a command
+    line option, and a text a test reads from a file outside `tests/` at run time. A backticked text in a reason that starts
+    with another word than a mutant code or the first word of a mutant is read as a quote and not checked. It cannot tell
+    whether a reason is true: that stays with the reviewer and the logs the row names. The step has not yet run on GitHub.
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.
   - It covers AWS, gcloud/gsutil/bq, az, azcopy and PowerShell Az, kubectl/oc, helm, terraform/tofu/pulumi,

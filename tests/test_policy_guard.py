@@ -4958,11 +4958,14 @@ def _end_state(monkeypatch, root: Path) -> None:
     kind modules of today still hold unchecked entries, that is what the dated lists are for); and the notes of
     class claim or pending, whose claim or pending name is gone, moved to class code. `read_marks`,
     `claim_mark_problems`, `note_problems`, `name_pending_problems`, `claim_pending_problems`, `--check` and
-    `--write` all run for real on that data. What IS replaced (four things, each by `monkeypatch`): `pp.ROOT` and
-    `pp.DATA_ROOT` point at the temporary copy; `pp.PENDING_NAMES` and `pp.PENDING_CLAIMS` are empty; `pp.load` returns
-    each kind module's policy through `_cleared_policy` (a `verified` made of a day and the real source id
-    `END_STATE_SOURCE`, no unchecked claim; the policies are built here, not read by the loader, so the loader's
-    own checks of `verified` do not run on them); `pp.NOTE_CLASSES` has the claim and pending classes moved to code."""
+    `--write` all run for real on that data. What IS replaced (six things, each by `monkeypatch`): `pp.ROOT` and
+    `pp.DATA_ROOT` point at the temporary copy; `pp.PENDING_NAMES` and `pp.PENDING_CLAIMS` are empty; `pp.NOTE_CLASSES`
+    has the claim and pending classes moved to code; `pp.load` (the sixth) calls the real loader first, so the
+    loader reads each kind module of today and runs its own checks on it, and only then returns the policy through
+    `_cleared_policy` (a `verified` made of a day and the real source id `END_STATE_SOURCE`, no unchecked claim): the
+    loader's checks of `verified` therefore run on the entries as the kind modules hold them today, not on the
+    cleared ones. The sources file of the copy is rewritten on disk (the four lists written as the empty
+    marker), not replaced by `monkeypatch`."""
     classes = {
         k: ("code",) if v and v[0] in ("claim", "pending") else v
         for k, v in pp.NOTE_CLASSES.items()

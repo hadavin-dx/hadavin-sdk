@@ -839,7 +839,8 @@ RENEWAL_STEPS = (
     "refuses a written day), so nothing is changed there for them; (4) the page, rewritten with "
     "`python tools/policy_page.py --write`; (5) one row for each test that changed, in the builder notes of the "
     "change (`python tools/notes_lines_check.py --auto`); (6) the mutants in tests/policy_mutants.py take every day "
-    "from the live lists, so nothing is edited there: run `python tests/policy_mutants.py` and again with `--day` "
+    "from the live lists (the day that the B13 mutant plants too), so nothing is edited there: run "
+    "`python tests/policy_mutants.py` and again with `--day` "
     "set to the new decision day and to the day after it. "
     "An emptying also touches: (7) `verified` and `claims_unverified` in the kind modules; (8) the four lists "
     "at the head of the sources file (a list that is now empty is written as the one word "
@@ -861,7 +862,8 @@ KINDS_RENEWAL_STEPS = (
     "to fail); (3) the sentence of the changelog entry that gives those days (CHANGELOG.md); (4) the page, "
     "rewritten with `python tools/policy_page.py --write`; (5) one row for each test that changed, in the builder "
     "notes of the change (`python tools/notes_lines_check.py --auto`); (6) the mutants in tests/policy_mutants.py "
-    "read these days from the guard file, so nothing is edited there: run `python tests/policy_mutants.py`."
+    "read these days from the guard file, so nothing is edited there: run `python tests/policy_mutants.py` and "
+    "again with `--day` set to the new decision day of the kinds and to the day after it."
 )
 
 
