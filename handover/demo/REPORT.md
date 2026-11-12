@@ -1,6 +1,33 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:13Z / 01:43 IST - LANE 7 review 1 done (security path): 0 Blocker, 1 Major (the pre-existing gitleaks failure), 8 Nits; lane 7b fixes started; 3 agents live (lane 9, lane 8b, lane 7b)
+Status lines:
+- coverage/REVIEW-1.md saved. The MAJOR is the pre-existing one I reported: lint.yml's gitleaks step fails on sonar-project.properties:4 (projectKey): confirmed true by reading (exceptions.txt:27 is only the git-grep allowlist; .gitleaks.toml has no allowlist for the built-in generic-api-key rule; evidence-gitleaks.txt: 1 finding with the patched config, 134 with the original: 1 + 131 lock hash lines + 2 name mentions the patch's allowances cover). Rule 5 (fix, do not defer): lane 7b writes it as a SEPARATE small patch gitleaks-projectkey.patch (one narrow allowlist: path sonar-project.properties AND match `^sonar\.projectKey=`, not global) with real-gitleaks proof before, after and a NEGATIVE test (a made-up key-like value on another line and in another file must still be reported). Needs YOUR decision only to apply it: it is independent of the coverage patch.
+- Everything else passed: workflow security (permissions top-level read-only, trigger pull_request not pull_request_target so fork PRs get no secrets and the `if:` skips forks and Dependabot, persist-credentials false, the token only in the scan step's env, no `${ }` in `run:`, checkout and setup-python SHAs identical to lint.yml, all pins 40 characters, `--require-hashes` for both lock files), the lock (131 hash lines all sha256 + 64 hex, adds only coverage 7.17.2 and pytest-cov 7.1.0, the 5 shared pins equal the dev lock, dev lock untouched, no addopts so plain `pytest -q` is unaffected), the numbers (35 files, 6542/7067 = 92.57 percent, worst case 89.69 percent). Not verifiable offline (still UNVERIFIED): sonar-scanner accepting the report, the SHAs belonging to the named actions, real package hashes, the empty `<source/>` entry in coverage.xml.
+- NITS being fixed by lane 7b: (2) test code shares the runner with the scan step (can write $GITHUB_ENV/$GITHUB_PATH, ~/.sonar/cache, plant files): same-repo PR authors only (forks and Dependabot skipped, and such an author could already edit the workflow): comment in sonar.yml corrected, two-job split written up as an OWNER DECISION, not implemented; (3) timeout 35 to 60 (same as lint.yml until a real run; the 21 minute figure was an estimate); (4) coverage lock repeats 5 dev-lock pins and would silently downgrade pytest after a dev-lock bump: a tiny test comparing shared pins (or a header instruction if it does not fit cheaply); (5) anchor the .gitleaks.toml path regex; (6) save the missing raw evidence (mypy, check_schema, lock regenerated twice identical, both installs, subprocess experiment or drop the claim); (7) tests/test_no_placeholders.py reads any untracked `.venv-x` or `venv/` folder inside the tree (uses git ls-files --others --exclude-standard; .gitignore only lists `.venv/`): a pre-existing test behaviour, NOT changed: precise wording and two fix options for you; (8) scan skipped when any test fails: owner decision written up; (9) coverage `omit` patterns tested with real coverage.py on a nested file (tests/x/y.py) and fixed if `tests/*` does not cover it.
+- Pre-existing, for the owner: docs/tests.md:30 and lint.yml:4 say 'no repository secrets exist' and '.env files are never used' while sonar.yml uses SONAR_TOKEN.
+- Lane 9 and lane 8b have not handed back yet.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:13Z / 01:43 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a1efeaddf3232ebcb (agent, sonnet evidence runner) | lane 9 hang reproduction + memory | 19:50 | 25 min | 20:50 | running (busy loops + repeat runs) | hang/RESULTS.md, memory-*.txt | per-run files up to run-load-alone-08 at about 20:10; no hand-back |
+| ac3a511599cfd9d0d (agent, sonnet builder) | lane 8b: playwright-only hashed file + decode-in-Chromium test + docs | 20:01 | 15 min | 20:50 | running | docs-and-deps.patch v2, PLAN.md | pytest in /tmp/work/fresh-venv3; PLAN.md rewritten for D11 not yet confirmed |
+| (new) lane 7b builder, sonnet | lane 7 fixes after the review | 20:13 | 0 min | +50 min | running | coverage/sonar-coverage.patch v2, gitleaks-projectkey.patch, PLAN.md, evidence-r2-*.txt | started |
+Totals: agents live 3; shells 0; pytest runs 1 to 2 plus lane 9's short runs; 2 busy loops (lane 9); containers 0; load see below.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| lane 7 Sonar | review 1 done, fix round 7b running, review 2 follows | r1 0B/1M/8N | pre-existing gitleaks failure (outside lane 7, rule 5); design (shared runner); proof gaps (missing raw evidence, unverified glob semantics); sizing | security path: no cap; review 2 is needed because lane 7b changes the workflow comment, the lock allowances and may add a test | no cap | a fresh review finds no Major or Blocker |
+| lane 8 browser tests | v3 design in build | v1 0B/3M/8N | rule-20 own code; counts not measured on the final tree | two design reversals by decision (D10, D11) | none | fresh review of v2 without Major or Blocker |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| adfc10760dcfcce60 (lane 7 review, sonnet read-only) | about 6 min | 0B/1M/8N, saved coverage/REVIEW-1.md | yes |
+
 ## 2026-11-12 20:09Z / 01:39 IST - LANE 7 builder DONE (coverage/sonar-coverage.patch + PLAN.md); security-path review started; 3 agents live (lane 9, lane 8b, lane 7 review)
 FAILED / OPEN first (builder's words, unreviewed):
 1. **PRE-EXISTING BUG FOUND, needs you (outside lane 7): on UNMODIFIED pr-3-tests b29bb1f the real gitleaks 8.30.1 (`gitleaks dir`) reports 1 `generic-api-key` finding at `sonar-project.properties:4` (the projectKey line). `exceptions.txt` has an entry for that line but `.gitleaks.toml` does not, so lint.yml's gitleaks step will FAIL after the stack merges.** Not fixed (not lane 7's job); PLAN.md section 1 gives the fix; the lane 7 patch adds no new finding. The reviewer is asked to confirm it by reading both files.
