@@ -18,3 +18,4 @@
 20:27Z part 6 reviewed+resolved, fix builder aa0cfcdf started; stale waiters cleaned
 21:22Z ORDER 266: guard PR branch wip/cloud-ci-guard-wip at 956bac0f is READY for you to open (see REPORT.md top block); reviews and independent evidence running.
 21:27Z ORDER 266 guard PR (wip/cloud-ci-guard-wip 956bac0f): design review found 1 Major (open wip/cloud-* name in the ignore-entry check lets a writer hide a secret) -> DO NOT MERGE as is; fix batch follows the codebase review; see handover/reviews/ci-guard/.
+21:24Z Q8b gate-fix builder a1950c03 handed back GATE OWED: wip/cloud-q8b-b14g head 19694984 (class: load-dependent kill; ratio tests now CPU time + measure_ratio helper; test-only). NOT run at that head: mutant tables, full pytest, M257 on new code; its own pkill of nobody mutant runs may have killed another run (mrm 65/66 invalid). Parked under ORDER 264; gates owed when a slot frees.
