@@ -1,0 +1,82 @@
+TOTAL probes: 66  canary-visible: 3
+
+== PROBES WHERE THE CANARY OR MADE-UP LIBRARY TEXT APPEARED ==
+- AuditEvent(extra key = canary) | RAISED ValidationError | surfaces: ['str', 'repr', 'traceback', 'errors(include_input=True)', 'errors(include_input=False)', 'json()']
+    str: '1 validation error for AuditEvent\nQZcanary-7F3a9_Xk\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pyd'
+    repr: '1 validation error for AuditEvent\nQZcanary-7F3a9_Xk\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pyd'
+    traceback: 'Traceback (most recent call last):\n  File "/home/user/build/EV-Q8a1b17-b5b6c9fd/probes/probe6.py", line 37, in attempt\n    r = fn()\n  File "/home/user/build/EV-'
+    errors(include_input=True): "[{'type': 'extra_forbidden', 'loc': ('QZcanary-7F3a9_Xk',), 'msg': 'Extra inputs are not permitted', 'input': '<hidden>', 'ctx': {}}]"
+    errors(include_input=False): "[{'type': 'extra_forbidden', 'loc': ('QZcanary-7F3a9_Xk',), 'msg': 'Extra inputs are not permitted', 'ctx': {}}]"
+    json(): '[{"type":"extra_forbidden","loc":["QZcanary-7F3a9_Xk"],"msg":"Extra inputs are not permitted","input":"<hidden>","ctx":{},"url":"https://errors.pydantic.dev/2.1'
+- shown_name(wordlike) | returned 'zqwordcanary-lower' | surfaces: ['ret']
+    ret: 'zqwordcanary-lower'
+- shown_name(wordlike, loaded=[itself]) | returned 'zqwordcanary-lower' | surfaces: ['ret']
+    ret: 'zqwordcanary-lower'
+
+== ALL PROBES ==
+hidden | AuditEvent(event_id=canary) | RAISED ValidationError
+hidden | AuditEvent.model_validate(event_id=canary) | RAISED ValidationError
+hidden | AuditEvent(event_id=wordlike) | no error; returned AuditEvent
+hidden | AuditEvent.model_validate(event_id=wordlike) | no error; returned AuditEvent
+hidden | AuditEvent(event_id=libtext) | RAISED ValidationError
+hidden | AuditEvent.model_validate(event_id=libtext) | RAISED ValidationError
+hidden | AuditEvent(event_id=strsub-__str__=canary) | no error; returned AuditEvent
+hidden | AuditEvent.model_validate(event_id=strsub-__str__=canary) | no error; returned AuditEvent
+hidden | AuditEvent(event_id=strsub-text=canary) | RAISED ValidationError
+hidden | AuditEvent.model_validate(event_id=strsub-text=canary) | RAISED ValidationError
+hidden | AuditEvent(event_id=path-ish) | RAISED ValidationError
+hidden | AuditEvent.model_validate(event_id=path-ish) | RAISED ValidationError
+hidden | AuditEvent(event_id=long) | RAISED ValidationError
+hidden | AuditEvent.model_validate(event_id=long) | RAISED ValidationError
+hidden | AuditEvent(event_id=nonstr-int) | RAISED ValidationError
+hidden | AuditEvent.model_validate(event_id=nonstr-int) | RAISED ValidationError
+hidden | AuditEvent(event_id=nonstr-bytes) | RAISED ValidationError
+hidden | AuditEvent.model_validate(event_id=nonstr-bytes) | RAISED ValidationError
+hidden | AuditEvent.model_validate_json(event_id=canary) | RAISED ValidationError
+hidden | AuditEvent.model_validate_strings(event_id=canary) | RAISED ValidationError
+SHOWN  | AuditEvent(extra key = canary) | RAISED ValidationError
+hidden | AuditEvent(run_id=canary-wrong-type, ts=canary) | RAISED ValidationError
+hidden | TypeAdapter(AuditEvent) (documented as NOT covered) | RAISED ValidationError
+hidden | shown_id(canary) | returned '?'
+hidden | shown_name(canary) | returned '<not shown>'
+hidden | shown_name(canary, loaded=[itself]) | returned '<not shown>'
+hidden | shown_id(wordlike) | returned '?'
+SHOWN  | shown_name(wordlike) | returned 'zqwordcanary-lower'
+SHOWN  | shown_name(wordlike, loaded=[itself]) | returned 'zqwordcanary-lower'
+hidden | shown_id(libtext) | returned '?'
+hidden | shown_name(libtext) | returned '<not shown>'
+hidden | shown_name(libtext, loaded=[itself]) | returned '<not shown>'
+hidden | shown_id(strsub-__str__=canary) | returned '?'
+hidden | shown_name(strsub-__str__=canary) | returned '<not shown>'
+hidden | shown_name(strsub-__str__=canary, loaded=[itself]) | returned '<not shown>'
+hidden | shown_id(strsub-text=canary) | returned '?'
+hidden | shown_name(strsub-text=canary) | returned '<not shown>'
+hidden | shown_name(strsub-text=canary, loaded=[itself]) | returned '<not shown>'
+hidden | LocalDirSink.write_intent(model_construct event_id=canary) | RAISED AuditUnavailable
+hidden | LocalDirSink.write_outcome(model_construct event_id=canary) | returned None
+hidden | LocalDirSink.write_intent(event_id=path-ish) | RAISED AuditUnavailable
+hidden | LocalDirSink.write_intent(event_id=strsub) | no error; returned str
+hidden | LocalDirSink(root under a FILE named canary).write_intent(valid event) | RAISED AuditUnavailable
+hidden | log output of local_dir probes (root logger, DEBUG) | captured 176 chars
+hidden | check-config: baseline (no change) | exit 0 first-line: the configuration files are accepted. Not checked: tool module code is not run, so the ope
+hidden | check-config: unknown top-level key = canary | exit 2 first-line: refused: 1 validation error for Config
+hidden | check-config: unknown top-level key = wordlike | exit 2 first-line: refused: 1 validation error for Config
+hidden | check-config: environment = canary | exit 2 first-line: refused: 1 validation error for Config
+hidden | check-config: environment = libtext | exit 2 first-line: refused: 1 validation error for Config
+hidden | check-config: route max_tokens = canary | exit 2 first-line: refused: 1 validation error for Config
+hidden | check-config: route price = libtext | exit 2 first-line: refused: 1 validation error for Config
+hidden | check-config: route name = canary (route key) | exit 2 first-line: refused: agent test-agent: model_route is not one of the configured routes
+hidden | check-config: route name = wordlike | exit 2 first-line: refused: agent test-agent: model_route is not one of the configured routes
+hidden | check-config: systems base_url = libtext | exit 2 first-line: refused: 1 validation error for Config
+hidden | check-config: backends.audit.dir = canary type error | exit 2 first-line: refused: backend audit: unknown kind; known: chain, local_dir
+hidden | check-config: agents: id = canary | exit 0 first-line: the configuration files are accepted. Not checked: tool module code is not run, so the ope
+hidden | check-config: agents: model_route = canary (matches nothing) | exit 2 first-line: refused: agent test-agent: model_route is not one of the configured routes
+hidden | check-config: agents: model_route = wordlike (matches nothing) | exit 2 first-line: refused: agent test-agent: model_route is not one of the configured routes
+hidden | check-config: agents: scope_allowed has canary | exit 2 first-line: refused: agent test-agent: scope_allowed entry 1 has no contract
+hidden | check-config: agents: budget daily = libtext | exit 2 first-line: refused: 1 validation error for AgentRecord
+hidden | check-config: agents: unknown key = canary | exit 2 first-line: refused: 1 validation error for AgentRecord
+hidden | check-config: principals file: canary key | exit 2 first-line: refused: 1 validation error for Principal
+hidden | check-config: chains.yaml malformed YAML containing canary | exit 2 first-line: refused: not valid YAML (line 2, column 3)
+hidden | check-config: agents.yaml bytes not UTF-8 with canary | exit 2 first-line: refused: agents.yaml: cannot be read (UnicodeDecodeError)
+hidden | check-config: agents prompt_file path = canary | exit 2 first-line: refused: agent test-agent: prompt_file missing
+hidden | check-config: actions/<canary>.yaml malformed | exit 2 first-line: refused: not valid YAML (line 2, column 7)

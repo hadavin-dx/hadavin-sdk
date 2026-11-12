@@ -1,0 +1,9 @@
+event_id type kept: str | repr: 'abc' | str: abc
+write_intent returned: 'abc.json'
+  file: audit | holds canary in name: False
+  file: audit/index.jsonl | holds canary in name: False
+  file: audit/objects | holds canary in name: False
+  file: audit/objects/abc.json | holds canary in name: False
+  canary inside index.jsonl : False
+  canary inside abc.json : False
+model_dump_json event_id: abc
