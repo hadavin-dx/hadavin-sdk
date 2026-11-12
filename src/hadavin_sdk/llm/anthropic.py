@@ -22,6 +22,13 @@ from hadavin_sdk.models import Reply, ToolCall
 
 API_BASE_URL = "https://api.anthropic.com"
 
+# The variable that makes the client library refuse an explicit base URL, by platform (words written in code).
+_ENV_HINT = {
+    "api": "a variable such as ANTHROPIC_BASE_URL",
+    "vertex": "a variable such as ANTHROPIC_VERTEX_BASE_URL",
+    "foundry": "a variable such as ANTHROPIC_FOUNDRY_RESOURCE or ANTHROPIC_FOUNDRY_BASE_URL",
+}
+
 
 def _vertex_base_url(region: str) -> str:
     """As the SDK derives it. Passed explicitly because, given none, the SDK reads ANTHROPIC_VERTEX_BASE_URL
@@ -57,8 +64,7 @@ def client(settings: Any, key: str | None) -> Any:
         # configured region or resource. `from None`: the cause is not chained either.
         raise ConfigError(
             f"backend llm 'anthropic' ({settings.platform}): the client refused the settings "
-            f"({type(exc).__name__}); a variable such as ANTHROPIC_FOUNDRY_RESOURCE or ANTHROPIC_BASE_URL set beside "
-            "the explicit base URL is the usual cause"
+            f"({type(exc).__name__}); {_ENV_HINT[settings.platform]} set beside the explicit base URL is the usual cause"
         ) from None
 
 

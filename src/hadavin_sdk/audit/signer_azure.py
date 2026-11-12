@@ -44,7 +44,7 @@ class AzureKeyVaultSigner:
             kty, crv = (getattr(v, "value", v) for v in (jwk.kty, jwk.crv))
             if kty not in {"EC", "EC-HSM"} or crv != "P-256":
                 raise ConfigError(
-                    f"signer azure_key_vault_key: {self.key_id} is not an EC P-256 key"
+                    "signer azure_key_vault_key: the key is not an EC P-256 key (name not shown)"
                 )
             self._public = b"\x04" + jwk.x.rjust(32, b"\0") + jwk.y.rjust(32, b"\0")
         return self._public

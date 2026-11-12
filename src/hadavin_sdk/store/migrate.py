@@ -304,9 +304,9 @@ def migrate(
     relations marked `portal` and nothing else. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database."""
     for option, role in (
-        ("runtime_role", runtime_role),
-        ("portal_role", portal_role),
-        ("purge_role", purge_role),
+        ("runtime_role (--runtime-role)", runtime_role),
+        ("portal_role (--portal-role)", portal_role),
+        ("purge_role (--purge-role)", purge_role),
     ):
         if role is not None and not _ROLE.fullmatch(role):
             # said by the option, never by the text: a credential can be pasted where a role name belongs

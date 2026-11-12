@@ -132,7 +132,7 @@ class Analysis:
             self._walk(module, tree, tree, None)
         names = {d["name"] for d in self.defs}
         classes = {d["cls"] for d in self.defs if d["cls"]}
-        for module, tree in self.trees.items():
+        for tree in self.trees.values():
             for n in ast.walk(tree):
                 # a function used as a value (a callback, a decorator argument) has callers we cannot see
                 if (
@@ -176,9 +176,12 @@ class Analysis:
                     for t in ch.targets:
                         for a in self._attr_targets(t):
                             self.attr_assigns.setdefault(a, []).append((ch.value, scope))
-                elif isinstance(ch, ast.AugAssign) and isinstance(ch.target, ast.Attribute):
-                    self.attr_assigns.setdefault(ch.target.attr, []).append((ch.value, scope))
-                elif isinstance(ch, ast.AnnAssign) and isinstance(ch.target, ast.Attribute):
+                elif (
+                    isinstance(ch, ast.AugAssign)
+                    and isinstance(ch.target, ast.Attribute)
+                    or isinstance(ch, ast.AnnAssign)
+                    and isinstance(ch.target, ast.Attribute)
+                ):
                     self.attr_assigns.setdefault(ch.target.attr, []).append((ch.value, scope))
                 elif isinstance(ch, ast.AnnAssign) and isinstance(ch.target, ast.Name):
                     if isinstance(
@@ -237,7 +240,7 @@ class Analysis:
         by_name = self._def_candidates()
         self.by_name = by_name
         callers: dict[int, list[tuple]] = {}
-        for module, call, scope in self.calls:
+        for _module, call, scope in self.calls:
             f = call.func
             fname = (
                 f.id
@@ -286,10 +289,7 @@ class Analysis:
             for a in sorted(self.attr_safe):
                 if not all(
                     self.safe(v, self.env_of(s)) for v, s in self.attr_assigns[a] if v is not None
-                ):
-                    self.attr_safe.discard(a)
-                    changed = True
-                elif any(v is None for v, _ in self.attr_assigns[a]):
+                ) or any(v is None for v, _ in self.attr_assigns[a]):
                     self.attr_safe.discard(a)
                     changed = True
         self._envs.clear()
@@ -377,12 +377,16 @@ class Analysis:
                 else:
                     unsafe.add(arg.arg)
         for n in _own(scope):
-            if isinstance(n, ast.Call) and _recv(n.func) == "call_class_only" and len(n.args) >= 2:
-                # `call_class_only(call, make_error)` hands `make_error` the CLASS NAME of the library error only
-                # (errors.py): the parameter of that lambda is code-owned text
-                if isinstance(n.args[1], ast.Lambda):
-                    for arg in n.args[1].args.args:
-                        bindings.setdefault(arg.arg, [])
+            # `call_class_only(call, make_error)` hands `make_error` the CLASS NAME of the library error only
+            # (errors.py): the parameter of that lambda is code-owned text
+            if (
+                isinstance(n, ast.Call)
+                and _recv(n.func) == "call_class_only"
+                and len(n.args) >= 2
+                and isinstance(n.args[1], ast.Lambda)
+            ):
+                for arg in n.args[1].args.args:
+                    bindings.setdefault(arg.arg, [])
             if isinstance(n, ast.Assign):
                 for t in n.targets:
                     for nm in _targets(t):
@@ -595,12 +599,14 @@ class Analysis:
                     hit = not safe(f.value, env) or any(not safe(a, env) for a in args)
                 elif fn == "Template" or fa in {"substitute", "safe_substitute"}:
                     hit = any(not safe(a, env) for a in args)
-                elif fa in LOG_METHODS or fa == "add_note" or fn == "print":
-                    hit = bare_unsafe(args, env)
-                elif fa == "write" and _recv(f.value) in {"stderr", "stdout"}:
-                    hit = bare_unsafe(args, env)
-                elif fa in {"append", "extend", "add", "insert"} and PROBLEM_LIST.search(
-                    _recv(f.value)
+                elif (
+                    fa in LOG_METHODS
+                    or fa == "add_note"
+                    or fn == "print"
+                    or fa == "write"
+                    and _recv(f.value) in {"stderr", "stdout"}
+                    or fa in {"append", "extend", "add", "insert"}
+                    and PROBLEM_LIST.search(_recv(f.value))
                 ):
                     hit = bare_unsafe(args, env)
                 elif fa in {"dumps", "dump"} and _recv(f.value) == "json":

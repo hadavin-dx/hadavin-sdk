@@ -3013,7 +3013,7 @@ def test_a_tool_module_pin_must_be_a_sha256_and_none_of_it_is_printed(cfg_dir):
         assert not is_digest(bad) and digest_prefix(bad) == NOT_SHOWN
     _edit(cfg_dir, lambda d: d.update(tool_modules=["m"], tool_module_hashes={"m": MARK + "-pin"}))
     exc = _first_error(lambda: load_config(cfg_dir))
-    assert "tool_module_hashes: entries 1 are not a SHA-256" in str(exc), str(exc)
+    assert "tool_module_hashes: entry 1 (counted from 1) is not a SHA-256" in str(exc), str(exc)
     assert MARK not in _everything_shown(exc) and exc.__cause__ is None
 
 
@@ -3179,10 +3179,22 @@ def test_the_rules_problems_function_takes_a_position_and_never_a_label():
 
     rule = {"verbs": ["patch"], "resources": ["deployments"]}
     assert rules_problems(4, [rule]) == ["namespace entry 4: write verb patch on ['deployments']"]
-    for label in (PW, PLAIN, "namespace prod", None, 1.0, True):
+    for label in (
+        PW,
+        PLAIN,
+        "namespace prod",
+        None,
+        1.0,
+        True,
+        0,
+        -3,
+    ):  # 0 and below: counted from 1
         with pytest.raises(TypeError) as err:
             rules_problems(label, [rule])  # type: ignore[arg-type]
-        assert str(err.value) == "rules_problems takes the position of the namespace as a number"
+        assert (
+            str(err.value)
+            == "rules_problems takes the position of the namespace as a number from 1"
+        )
         assert PW not in str(err.value) and PLAIN not in str(err.value)
 
 
@@ -3513,6 +3525,14 @@ def test_the_guard_finds_each_way_of_printing_a_configured_name_and_a_stale_allo
 # person or a log can read". Round 12: the 25 shapes of the evidence probe 7 (F1-F10, X1-X15) and the extras that the two
 # reviewers named. Each must give exactly the number of sites in the second place (a site inside a site is part of it).
 _PLANTED_FAULTS = {
+    "I5a an inner function reads a variable bound to a configured value in the outer function": (
+        'def f(self):\n    other = self.namespaces[0]\n    def g():\n        raise A(f"{other}")\n    g()',
+        1,
+    ),
+    "I5b an inner function takes a parameter that its caller fills with a configured value": (
+        'def f(self):\n    def g(other):\n        raise A(f"{other}")\n    g(self.namespaces[0])',
+        1,
+    ),
     "F1 a renamed variable": (
         'def f(self):\n    val = self.namespaces[0]\n    raise A(f"bad {val}")',
         1,
@@ -3651,6 +3671,9 @@ _PLANTED_FAULTS = {
     "I3 text plus a text": ("def f(self, name):\n    return name + 'x'", 1),
 }
 _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be found
+    "I5f the parameter of the class-name lambda of call_class_only": 'def f(c):\n    call_class_only(c, lambda cls: A(f"{cls}"))',
+    "I5d an inner function reads a variable bound to a written word in the outer function": 'def f():\n    other = "x"\n    def g():\n        raise A(f"{other}")\n    g()',
+    "I5e a name plus a number is a number": 'def f(name):\n    raise A(f"{name + 1}")',
     "shown_name in a loop": 'def f(options):\n    for entry in options:\n        raise A(f"source {shown_name(entry)}")',
     "a position counted by enumerate": 'def f(options):\n    for i, entry in enumerate(options, start=1):\n        raise A(f"entry {i}")',
     "a range counter": 'for i in range(3):\n    raise A(f"try {i}")',
@@ -3729,7 +3752,7 @@ def test_the_unread_sites_are_counted_and_listed():
     assert len(unread) <= UNREAD_LIMIT, f"{len(unread)} unread sites; the limit is {UNREAD_LIMIT}"
 
 
-UNREAD_LIMIT = 10_000  # set to the real count by the last line of this batch
+UNREAD_LIMIT = 164  # the real count at the end of batch 12; it may only go down (the sites are listed in tests/_guard_allowances.py)
 
 
 def test_the_guard_reads_the_two_migration_modules_and_every_other_module_but_the_exempt_ones():

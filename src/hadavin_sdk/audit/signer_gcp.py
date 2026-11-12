@@ -45,7 +45,9 @@ class GcpKmsSigner:
             out = self._kms.get_public_key(request={"name": self.key_id}, **_BOUNDED)
             key = serialization.load_pem_public_key(out.pem.encode("utf-8"))
             if out.algorithm != _ED25519 or not isinstance(key, ed25519.Ed25519PublicKey):
-                raise ConfigError(f"signer gcp_kms: {self.key_id} is not an EC_SIGN_ED25519 key")
+                raise ConfigError(
+                    "signer gcp_kms: the key is not an EC_SIGN_ED25519 key (name not shown)"
+                )
             self._public = key.public_bytes(*_RAW)
         return self._public
 

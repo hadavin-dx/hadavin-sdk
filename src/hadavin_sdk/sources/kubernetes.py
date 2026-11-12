@@ -124,8 +124,8 @@ def rules_problems(position: int, rules: list[dict[str, Any]]) -> list[str]:
     the place of the configured namespace in the `namespaces` list, counted from 1; the problems say "namespace entry
     <position>". The namespace text itself is configuration and is never put in a message, and a caller cannot hand
     this function a label: it takes a number."""
-    if not isinstance(position, int) or isinstance(position, bool):
-        raise TypeError("rules_problems takes the position of the namespace as a number")
+    if not isinstance(position, int) or isinstance(position, bool) or position < 1:
+        raise TypeError("rules_problems takes the position of the namespace as a number from 1")
     where = f"namespace entry {position}"
     out: list[str] = []
     for rule in rules:

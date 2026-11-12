@@ -225,7 +225,7 @@ def test_kubernetes_needs_a_namespace_and_an_endpoint():
     ],
 )
 def test_the_rules_probe_names_each_forbidden_grant(rules, needle):
-    assert any(needle in p for p in rules_problems(1, rules)), rules_problems("prod", rules)
+    assert any(needle in p for p in rules_problems(1, rules)), rules_problems(1, rules)
 
 
 def test_a_read_only_rule_set_passes_the_probe():

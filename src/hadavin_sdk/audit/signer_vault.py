@@ -40,7 +40,7 @@ class VaultTransitSigner:
             status, answer = self._vault.authed(method, f"{self.mount}/{path}", body)
         if status != 200:
             raise VaultError(
-                f"transit {path.split('/')[0]} {self.key_name}: Vault answered {status}"
+                f"transit {path.split('/')[0]}: Vault answered {status} (key name not shown)"
             )
         data = answer.get("data")
         if not isinstance(data, dict):
@@ -53,7 +53,7 @@ class VaultTransitSigner:
         prefix = f"vault:v{self.key_version}:"
         if not isinstance(signature, str) or not signature.startswith(prefix):
             raise VaultError(
-                f"transit sign {self.key_name}: not signed by version {self.key_version}"
+                f"transit sign: not signed by version {self.key_version} (key name not shown)"
             )
         return base64.b64decode(signature.removeprefix(prefix))
 
@@ -63,12 +63,12 @@ class VaultTransitSigner:
             version = (data.get("keys") or {}).get(str(self.key_version))
             if data.get("type") != "ed25519" or not isinstance(version, dict):
                 raise ConfigError(
-                    f"signer vault_transit: {self.key_name} v{self.key_version} is not an ed25519 key"
+                    f"signer vault_transit: key version {self.key_version} is not an ed25519 key (name not shown)"
                 )
             raw = base64.b64decode(version.get("public_key") or "")
             if len(raw) != 32:
                 raise ConfigError(
-                    f"signer vault_transit: {self.key_name} has no ed25519 public key"
+                    "signer vault_transit: the key has no ed25519 public key (name not shown)"
                 )
             self._public = raw
         return self._public

@@ -183,9 +183,9 @@ def test_a_database_role_option_that_is_not_a_plain_name_is_refused_by_option_ne
     for option in ("runtime_role", "portal_role", "purge_role"):
         with pytest.raises(ConfigError) as err:
             migrate("dsn-not-used", **{option: SECRET_LOOKING})
-        assert str(err.value).startswith(f"{option}: not a plain database role name"), str(
-            err.value
-        )
+        assert str(err.value).startswith(
+            f"{option} (--{option.replace('_', '-')}): not a plain database role name"
+        ), str(err.value)
         assert SECRET_LOOKING not in _everything_shown(err.value)
 
 
@@ -427,16 +427,19 @@ def test_every_wrapped_library_error_in_src_is_raised_without_a_cause():
     left = []
     for path in sorted(root.rglob("*.py")):
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-            if isinstance(node, ast.Raise) and node.cause is not None:
-                if not (isinstance(node.cause, ast.Constant) and node.cause.value is None):
-                    left.append(f"{path.relative_to(root)}:{node.lineno}")
+            if (
+                isinstance(node, ast.Raise)
+                and node.cause is not None
+                and not (isinstance(node.cause, ast.Constant) and node.cause.value is None)
+            ):
+                left.append(f"{path.relative_to(root)}:{node.lineno}")
     assert left == [], left
 
 
 # ---- Issue 4 of round 11: an unknown setting key was named in pydantic's "extra forbidden" text --------------------
 def _every_settings_class():
     """Every class that inherits `KindSettings` (all backend kinds), found by walking the subclasses."""
-    import hadavin_sdk.backends.table as table
+    from hadavin_sdk.backends import table
 
     found, todo = {}, [table.KindSettings]
     while todo:
@@ -485,3 +488,125 @@ def test_the_models_built_straight_from_a_section_share_the_base_class():
     for cls in (KindSettings, kube.KubernetesSettings):
         assert issubclass(cls, StrictConfigModel), cls
         assert cls.model_config.get("hide_input_in_errors") is True, cls
+
+
+# ---- round 12, Issue 7: an agent id that matched no loaded agent was printed by `replay` --------------------------
+def test_replay_says_unknown_agent_without_the_text_of_an_id_that_matched_nothing(tmp_path):
+    from decimal import Decimal
+
+    from hadavin_sdk.k1b.replay import _replay
+
+    registry = SimpleNamespace(config=SimpleNamespace(), agents={})
+    for agent_id in (MARKER, SECRET_LOOKING):
+        with pytest.raises(ConfigError) as err:
+            _replay(
+                registry, None, None, None, agent_id=agent_id, bundles_dir=tmp_path,
+                cause_list_dir=tmp_path, k=1, max_usd=Decimal(1), out=tmp_path / "o",
+            )  # fmt: skip
+        assert str(err.value) == "unknown agent <not shown>", str(err.value)
+
+
+# ---- round 12, Issue 8: the shared secret base, the hint words and the mounted folder ------------------------------
+def _failing_provider(error):
+    from hadavin_sdk.actions.secrets_cache import CachedSecrets
+
+    class Failing(CachedSecrets):  # a subclass of the shared base: it needs no cloud extra
+        def _fetch(self, name):
+            raise error
+
+    return Failing()
+
+
+_HINT_CASES = [  # (a class name chain of the library error, the word the message must carry)
+    ("TimeoutError", ", timeout"),
+    ("SSLError", ", TLS"),
+    ("PermissionError", ", access denied"),
+    ("FileNotFoundError", ", not found"),
+    ("ConnectionError", ", network"),
+    ("RuntimeError", ""),
+]
+
+
+@pytest.mark.parametrize(("cls_name", "word"), _HINT_CASES)
+def test_the_hint_word_comes_from_the_class_of_the_library_error_never_from_its_text(
+    cls_name, word, caplog
+):
+    import builtins
+    import ssl
+
+    cls = getattr(builtins, cls_name, None) or getattr(ssl, cls_name)
+    error = cls(f"quotes {MARKER}")
+    with caplog.at_level(logging.DEBUG), pytest.raises(ConfigError) as err:
+        _failing_provider(error).get("x")
+    assert str(err.value) == f"secrets: reading a secret failed ({cls_name}{word})", str(err.value)
+    assert err.value.__cause__ is None and err.value.__context__ is None
+    assert MARKER not in _seen(err.value, caplog)
+
+
+def test_a_hint_is_found_in_the_error_a_library_error_wraps():
+    import urllib.error
+
+    err = urllib.error.URLError(TimeoutError())  # urllib puts the real error in `reason`
+    with pytest.raises(ConfigError) as caught:
+        _failing_provider(err).get("x")
+    assert str(caught.value).endswith("(URLError, timeout)"), str(caught.value)
+
+
+def test_the_mounted_file_kind_leaves_no_context_when_the_read_fails(tmp_path, monkeypatch, caplog):
+    import os
+
+    from hadavin_sdk.actions.secrets_file import MountedFileProvider
+
+    target = tmp_path / "s"
+    target.write_bytes(b"\xff\xfe")  # not UTF-8
+    os.chmod(target, 0o400)
+    provider = MountedFileProvider(tmp_path, 0)
+    with caplog.at_level(logging.DEBUG), pytest.raises(ConfigError) as err:
+        provider.get("s")
+    assert "UnicodeDecodeError" in str(err.value)
+    assert err.value.__cause__ is None and err.value.__context__ is None
+
+
+# ---- round 12: the signer messages named the configured key (id or transit key name) -------------------------------
+def test_a_vault_transit_refusal_does_not_name_the_configured_key():
+    from hadavin_sdk.audit.signer_vault import VaultTransitSigner
+
+    class Client:
+        def authed(self, method, path, body=None):
+            return 500, {}
+
+    signer = VaultTransitSigner(Client(), "transit", MARKER, 1)
+    with pytest.raises(Exception) as err:  # noqa: PT011 - a VaultError, said by its text below
+        signer.sign(b"x")
+    assert MARKER not in _everything_shown(err.value), str(err.value)
+    assert "Vault answered 500" in str(err.value)
+
+
+# ---- round 12, Issue 6: three messages that printed a key or a role they were handed -------------------------------
+def test_a_float_inside_a_data_object_says_the_path_without_the_text_of_a_key():
+    from hadavin_sdk.models import canonical_json
+
+    with pytest.raises(ValueError) as err:  # noqa: PT011 - the text is checked below
+        canonical_json({SECRET_LOOKING: {"a": 1.5}})
+    assert str(err.value) == "float at $.<not shown>.a: use a decimal string", str(err.value)
+
+
+def test_an_input_key_the_schema_does_not_list_is_said_as_not_shown():
+    from hadavin_sdk.actions.contract import schema_errors
+
+    problems = schema_errors(
+        {"type": "object", "properties": {}, "additionalProperties": False}, {SECRET_LOOKING: 1}
+    )
+    assert problems == ["unexpected <not shown>"], problems
+
+
+def test_the_effective_privilege_check_refuses_a_role_that_is_not_a_plain_name_without_printing_it():
+    from hadavin_sdk.store.migrate import effective_problems
+
+    def execute(*args, **kwargs):
+        raise AssertionError("the privilege read ran for a role that is not a plain name")
+
+    with pytest.raises(ConfigError) as err:
+        effective_problems(SimpleNamespace(execute=execute), SECRET_LOOKING, lambda g: "")
+    assert SECRET_LOOKING not in _everything_shown(err.value), str(err.value)
+    assert "not a plain database role name" in str(err.value)

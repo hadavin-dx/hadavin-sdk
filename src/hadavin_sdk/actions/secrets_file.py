@@ -61,12 +61,14 @@ class MountedFileProvider(CachedSecrets):
                     "a secret: the file is readable by every user or writable by others; "
                     "mount it 0400 or 0440"
                 )
+            text = ""
+            failure = None
             try:
                 text = f.read().decode("utf-8")
             except (OSError, UnicodeDecodeError) as exc:
-                raise ConfigError(
-                    f"a secret: the mounted file cannot be read ({type(exc).__name__})"
-                ) from None
+                failure = f"a secret: the mounted file cannot be read ({type(exc).__name__})"
+            if failure is not None:  # raised after the block: no cause and no context
+                raise ConfigError(failure)
         return text.removesuffix("\n").removesuffix("\r")
 
 

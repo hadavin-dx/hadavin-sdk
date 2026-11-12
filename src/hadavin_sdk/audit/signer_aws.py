@@ -42,7 +42,7 @@ class KmsSigner:
             key = serialization.load_der_public_key(der)
             if not isinstance(key, ed25519.Ed25519PublicKey):
                 raise ConfigError(
-                    f"signer aws_kms: {self.key_id} is not an ECC_NIST_EDWARDS25519 key"
+                    "signer aws_kms: the key is not an ECC_NIST_EDWARDS25519 key (name not shown)"
                 )
             self._public = key.public_bytes(*_RAW)
         return self._public

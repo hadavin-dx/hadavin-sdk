@@ -398,7 +398,7 @@ class Config(_Strict):
         refused here with a fixed sentence, by position, so no part of it is ever printed."""
         if bad := [i for i, pin in enumerate(value.values(), start=1) if not is_digest(pin)]:
             raise ConfigValueError(
-                f"tool_module_hashes: entries {', '.join(str(i) for i in bad)} are not a SHA-256 (64 lower-case hex digits)"
+                f"tool_module_hashes: entry {', '.join(str(i) for i in bad)} (counted from 1) is not a SHA-256 (64 lower-case hex digits)"
             )
         return value
 
