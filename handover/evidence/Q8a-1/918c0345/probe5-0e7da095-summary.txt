@@ -1,0 +1,27 @@
+module: /home/user/build/EV-Q8a1b13-918c0345/wt-old/src/hadavin_sdk/__init__.py
+rows 718 LEAK rows 0
+  anthropic.client             leak=False 12
+  k8s.probe_scope              leak=False 252
+  k8s.rules_problems_direct    leak=False 9
+  k8s.scope_problems           leak=False 252
+  k8s.settings_form            leak=False 27
+  migrate.role                 leak=False 21
+  secrets.aws                  leak=False 28
+  secrets.azure                leak=False 27
+  secrets.gcp                  leak=False 27
+  settings                     leak=False 63
+  outcome anthropic.client raised ConfigError 9
+  outcome anthropic.client returned  3
+  outcome k8s.probe_scope raised SourceError 30
+  outcome k8s.probe_scope raised ValidationError 112
+  outcome k8s.probe_scope returned  110
+  outcome k8s.rules_problems_direct raised TypeError 9
+  outcome k8s.scope_problems raised ValidationError 112
+  outcome k8s.scope_problems returned  140
+  outcome k8s.settings_form raised ValidationError 27
+  outcome migrate.role raised ConfigError 21
+  outcome secrets.aws raised ConfigError 28
+  outcome secrets.azure raised ConfigError 27
+  outcome secrets.gcp raised ConfigError 27
+  outcome settings raised ValidationError 63
+LEAK EXAMPLES:

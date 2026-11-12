@@ -1,0 +1,39 @@
+module: /home/user/build/EV-Q8a1b13-918c0345/wt/src/hadavin_sdk/runtime/tick.py
+SHOWS tick._run_step step raises | ValueError marker=0 | marker 0 | returned | exc/tb False log True returned False
+SHOWS tick._run_step step raises | ValueError marker=0 -> stored last_error | marker 0 | failed | exc/tb False log False returned True
+SHOWS tick._run_step step raises | KeyError marker=0 | marker 0 | returned | exc/tb False log True returned False
+SHOWS tick._run_step step raises | KeyError marker=0 -> stored last_error | marker 0 | failed | exc/tb False log False returned True
+SHOWS tick._run_step get_tick_state raises | marker=0 | marker 0 | returned | exc/tb False log True returned False
+SHOWS tick._each item raises | marker=0 | marker 0 | raised ValueError | exc/tb True log False returned False
+SHOWS tick._run_step step raises | ValueError marker=1 | marker 1 | returned | exc/tb False log True returned False
+SHOWS tick._run_step step raises | ValueError marker=1 -> stored last_error | marker 1 | failed | exc/tb False log False returned True
+SHOWS tick._run_step step raises | KeyError marker=1 | marker 1 | returned | exc/tb False log True returned False
+SHOWS tick._run_step step raises | KeyError marker=1 -> stored last_error | marker 1 | failed | exc/tb False log False returned True
+SHOWS tick._run_step get_tick_state raises | marker=1 | marker 1 | returned | exc/tb False log True returned False
+SHOWS tick._each item raises | marker=1 | marker 1 | raised ValueError | exc/tb True log False returned False
+SHOWS tick._run_step step raises | ValueError marker=2 | marker 2 | returned | exc/tb False log True returned False
+SHOWS tick._run_step step raises | ValueError marker=2 -> stored last_error | marker 2 | failed | exc/tb False log False returned True
+SHOWS tick._run_step step raises | KeyError marker=2 | marker 2 | returned | exc/tb False log True returned False
+SHOWS tick._run_step step raises | KeyError marker=2 -> stored last_error | marker 2 | failed | exc/tb False log False returned True
+SHOWS tick._run_step get_tick_state raises | marker=2 | marker 2 | returned | exc/tb False log True returned False
+SHOWS tick._each item raises | marker=2 | marker 2 | raised ValueError | exc/tb True log False returned False
+SHOWS injection_check detector raises | exc text marker=0 | marker 0 | returned | exc/tb False log True returned False
+SHOWS injection_check detector.backend=marker | marker=0 | marker 0 | returned | exc/tb False log False returned True
+SHOWS injection_check detector raises | exc text marker=1 | marker 1 | returned | exc/tb False log True returned False
+SHOWS injection_check detector.backend=marker | marker=1 | marker 1 | returned | exc/tb False log False returned True
+SHOWS injection_check detector raises | exc text marker=2 | marker 2 | returned | exc/tb False log True returned False
+SHOWS injection_check detector.backend=marker | marker=2 | marker 2 | returned | exc/tb False log False returned True
+rows 147
+  injection_check detector raises shows=False 6
+  injection_check detector raises shows=True 3
+  injection_check detector.backend=marker shows=False 6
+  injection_check detector.backend=marker shows=True 3
+  signer_vault._call shows=False 45
+  tick._each CAS loser shows=False 9
+  tick._each item raises shows=False 6
+  tick._each item raises shows=True 3
+  tick._run_step get_tick_state raises shows=False 6
+  tick._run_step get_tick_state raises shows=True 3
+  tick._run_step save raises shows=False 9
+  tick._run_step step raises shows=False 36
+  tick._run_step step raises shows=True 12

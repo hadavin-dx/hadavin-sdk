@@ -1,0 +1,53 @@
+baseline on real sources: violations 11 stale 3
+FOUND    F1 renamed variable (val = self.namespaces[0]; f-string of val)
+          -> [message] f'bad {val}'
+FOUND    F2 + with a variable prefix (prefix + self.namespaces[0])
+          -> [message] prefix + self.namespaces[0]
+FOUND    F3 "%s" % name
+          -> [message] 'bad %s' % name
+FOUND    F4 .format with a variable template
+          -> [message] tmpl.format(name)
+FOUND    F5 ", ".join(names)
+          -> [message] ', '.join(names)
+FOUND    F6 msg += name
+          -> [message] msg += name
+FOUND    F7 a logger not named log (audit.warning)
+          -> [message] audit.warning('x %s', host)
+FOUND    F8 a comprehension variable
+          -> [message] '; '.join((f'{t} bad' for t in self._cfg.namespaces))
+FOUND    F9 attribute of an object not named settings (self._cfg.api_url)
+          -> [message] f'bad {self._cfg.api_url}'
+FOUND    F10 pass-through f'{exc}'
+          -> [message] f'kubernetes: {exc}'
+FOUND    X1 rename through an unlisted loop-free assignment of a listed name (label = name; f'{label}')
+          -> [message] f'bad {label}'
+FOUND    X2 value through a helper function (def fmt(v): return f'bad {v}'; raise E(fmt(name)))
+          -> [message] SourceError(fmt(name))
+FOUND    X3 percent with a dict (%(a)s % {'a': name})
+          -> [message] 'bad %(a)s' % {'a': name}
+FOUND    X4 string.Template substitute
+          -> [message] SourceError(Template('bad $n').substitute(n=name))
+FOUND    X5 print(name)
+          -> [message] print(name)
+FOUND    X6 warnings.warn(name)
+          -> [message] warnings.warn(name)
+FOUND    X7 sys.stderr.write(name)
+          -> [message] sys.stderr.write(name)
+FOUND    X8 logging with extra={'n': name}
+          -> [message] audit.warning('x', extra={'n': name})
+FOUND    X9 raise with the value as a non-first argument (raise E('x', name))
+          -> [message] SourceError('x', name)
+FOUND    X10 exception notes (exc.add_note(name))
+          -> [message] e.add_note(name)
+FOUND    X11 str(exc) into a variable then a message (m = str(exc); raise E(m))
+          -> [message] SourceError(m)
+FOUND    X12 format_map
+          -> [message] 'bad {n}'.format_map({'n': name})
+FOUND    X13 f-string with an unlisted variable (f'bad {thing}')
+          -> [message] f'bad {thing}'
+FOUND    X14 dict/JSON body printed (json.dumps({'ns': name}))
+          -> [message] SourceError(json.dumps({'ns': name}))
+FOUND    X15 f-string of a listed name inside a nested call (f'{len(name)} {name!r}' via repr)
+          -> [message] SourceError(repr(name))
+
+found 25 of 25 ; not seen: []
