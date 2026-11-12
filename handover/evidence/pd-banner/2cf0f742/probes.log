@@ -1,0 +1,63 @@
+== baseline
+EXIT=0
+== P1 symlink in src -> demo_only
+tools/demo_only_guard.copy_run: copy-run-not-wired (the folder exists, so CI must run the copy run and the marker file must say so)
+src/hadavin_sdk/linkto_demo: symlink-in-product-root
+EXIT=1
+== P2a UPPER case folder name in templates file
+tools/demo_only_guard.copy_run: copy-run-not-wired (the folder exists, so CI must run the copy run and the marker file must say so)
+templates/mode-banner/probe_upper.txt:1: names-demo-only-folder
+EXIT=1
+== P2b backslash path in templates file
+load demo_only\\fixtures\\a.json
+tools/demo_only_guard.copy_run: copy-run-not-wired (the folder exists, so CI must run the copy run and the marker file must say so)
+templates/mode-banner/probe_bs.txt:1: names-demo-only-folder
+EXIT=1
+== P2c Demo_Only mixed
+tools/demo_only_guard.copy_run: copy-run-not-wired (the folder exists, so CI must run the copy run and the marker file must say so)
+templates/mode-banner/probe_mix.txt:1: names-demo-only-folder
+EXIT=1
+== P2a' UPPER, folder absent
+templates/mode-banner/p.txt:1: names-demo-only-folder
+EXIT=1
+== P2b' backslash, folder absent
+templates/mode-banner/p.txt:1: names-demo-only-folder
+EXIT=1
+== P2d backslash UPPER file NAME in templates
+templates/DEMO_ONLY: folder-inside-product-root
+EXIT=1
+== P3 banner_from_config unknown kind + 1000-char name
+unknown kind (never-seen) -> RAISED ValueError a component without a name or a kind cannot be placed in the banner: 'signer'
+unknown kind, demo stage -> RAISED ValueError a component without a name or a kind cannot be placed in the banner: 'signer'
+empty kind -> RAISED ValueError a component without a name or a kind cannot be placed in the banner: 'signer'
+unknown stage 'dev' -> RAISED ValueError mode 'dev' is not one of demo, pilot, prod
+1000-char name -> RAISED ValueError a component without a name or a kind cannot be placed in the banner: 'signer'
+reserved word name -> RAISED ValueError a component without a name or a kind cannot be placed in the banner: 'signer'
+EXIT=0
+== P4 page script throwing document
+-- throwing-doc
+{"lines":[],"tone":"unconfirmed","mode":"","hidden":false,"text":"UNCONFIRMED The mode of this system could not be confirmed. Treat everything here as real.","notConfirmed":{"mode":"","tone":"unconfirmed","tag":"UNCONFIRMED","text":"The mode of this system could not be confirmed. Treat everything here as real.","standins":"","real":[],"stand_ins":[]},"shownTone":"unconfirmed","modes":["demo","pilot","prod"],"tones":["demo","real","quiet","unconfirmed"],"maxText":600,"htmlWrites":[],"threw":"","usableThrew":""}
+EXIT=0
+-- throwing-getter
+{"lines":[{"cls":"mode-banner__tag","text":"UNCONFIRMED"},{"cls":"mode-banner__text","text":" The mode of this system could not be confirmed. Treat everything here as real."}],"tone":"unconfirmed","mode":"","hidden":false,"text":"","notConfirmed":{"mode":"","tone":"unconfirmed","tag":"UNCONFIRMED","text":"The mode of this system could not be confirmed. Treat everything here as real.","standins":"","real":[],"stand_ins":[]},"shownTone":"unconfirmed","modes":["demo","pilot","prod"],"tones":["demo","real","quiet","unconfirmed"],"maxText":600,"htmlWrites":[],"threw":"","usableThrew":""}
+EXIT=0
+-- proxy
+{"lines":[{"cls":"mode-banner__tag","text":"UNCONFIRMED"},{"cls":"mode-banner__text","text":" The mode of this system could not be confirmed. Treat everything here as real."}],"tone":"unconfirmed","mode":"","hidden":false,"text":"","notConfirmed":{"mode":"","tone":"unconfirmed","tag":"UNCONFIRMED","text":"The mode of this system could not be confirmed. Treat everything here as real.","standins":"","real":[],"stand_ins":[]},"shownTone":"unconfirmed","modes":["demo","pilot","prod"],"tones":["demo","real","quiet","unconfirmed"],"maxText":600,"htmlWrites":[],"threw":"","usableThrew":""}
+EXIT=0
+-- throwing-list
+{"lines":[{"cls":"mode-banner__tag","text":"UNCONFIRMED"},{"cls":"mode-banner__text","text":" The mode of this system could not be confirmed. Treat everything here as real."}],"tone":"unconfirmed","mode":"","hidden":false,"text":"","notConfirmed":{"mode":"","tone":"unconfirmed","tag":"UNCONFIRMED","text":"The mode of this system could not be confirmed. Treat everything here as real.","standins":"","real":[],"stand_ins":[]},"shownTone":"unconfirmed","modes":["demo","pilot","prod"],"tones":["demo","real","quiet","unconfirmed"],"maxText":600,"htmlWrites":[],"threw":"","usableThrew":""}
+EXIT=0
+-- failing-append
+{"lines":[],"tone":"unconfirmed","mode":"","hidden":false,"text":"UNCONFIRMED The mode of this system could not be confirmed. Treat everything here as real.","notConfirmed":{"mode":"","tone":"unconfirmed","tag":"UNCONFIRMED","text":"The mode of this system could not be confirmed. Treat everything here as real.","standins":"","real":[],"stand_ins":[]},"shownTone":"unconfirmed","modes":["demo","pilot","prod"],"tones":["demo","real","quiet","unconfirmed"],"maxText":600,"htmlWrites":[],"threw":"","usableThrew":""}
+EXIT=0
+-- null-el
+{"lines":[],"tone":null,"mode":null,"hidden":null,"text":null,"notConfirmed":{"mode":"","tone":"unconfirmed","tag":"UNCONFIRMED","text":"The mode of this system could not be confirmed. Treat everything here as real.","standins":"","real":[],"stand_ins":[]},"shownTone":"demo","modes":["demo","pilot","prod"],"tones":["demo","real","quiet","unconfirmed"],"maxText":600,"htmlWrites":[],"threw":"","usableThrew":""}
+EXIT=0
+== P3 (rerun with real setting objects)
+unknown kind (never-seen) -> OK tone=real real=('component signer',) text='Real services are connected: component signer. Data this system handles may be s'
+unknown kind, demo stage -> OK tone=real real=('component signer',) text='Real services are connected: component signer. Data this system handles may be s'
+empty kind -> RAISED ValueError a component without a name or a kind cannot be placed in the banner: 'signer'
+unknown stage 'dev' -> RAISED ValueError mode 'dev' is not one of demo, pilot, prod
+1000-char name -> RAISED ValueError real_services: the name shown for a service must be plain words (letters, digits, . _ - and single spaces, at most 40 characters, and none of the words made-up,
+reserved word name -> RAISED ValueError real_services: the name shown for a service must be plain words (letters, digits, . _ - and single spaces, at most 40 characters, and none of the words made-up,
+EXIT=0

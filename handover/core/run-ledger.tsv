@@ -20,3 +20,7 @@ ddf1d584c280593d4db82e81489b440fae3b876f	9a79548c419949c0bd0e501dbc8d4788834d3dd
 6e6ae21124f5b77231c6dd1a99a11b4c4bfb1ee3	a49770b106a9bac3e7d5e18d6b107240e6e31017	linux	ruff check+format+bandit+scan_repo+gitleaks	default	0	all clean	3	2026-11-12
 8b982dd3a06fa4c2ae9b728e0f38db2b5b2d8a69	-	linux	ruff check+format+bandit+scan_repo+gitleaks (evidence)	default	0	all clean	5	2026-11-12
 8b982dd3a06fa4c2ae9b728e0f38db2b5b2d8a69	-	linux	tests/test_no_pglast_in_runtime.py -v	default	0	62 passed	1	2026-11-12
+2cf0f742b107e48226e1f66e5368bca7c982015d	4b790ce58c46369d76e69cb2d8b92fc90e342cbf	linux	pytest full (own PG 16 port 57332, PGHOST set)	-m not live and not perf	1	225 failed 10363 passed 1 skipped 28 deselected 30 errors (76 ci.yml YAML invalid, 1 test_stage_names, rest Postgres env same on dd5c7242)	253	2026-11-12
+2cf0f742b107e48226e1f66e5368bca7c982015d	4b790ce58c46369d76e69cb2d8b92fc90e342cbf	linux	tests/stage_mutants.py	default	1	unmutated copy does not pass its tests (test_stage_names fails)	2	2026-11-12
+2cf0f742b107e48226e1f66e5368bca7c982015d	4b790ce58c46369d76e69cb2d8b92fc90e342cbf	linux	tests/banner_mutants.py	default	1	78 of 79 good; G6 snippet not found	46	2026-11-12
+2cf0f742b107e48226e1f66e5368bca7c982015d	4b790ce58c46369d76e69cb2d8b92fc90e342cbf	linux	ruff check + format --check + bandit -ll + scan_repo + demo_only_guard (+copy run) + gitleaks origin/main..HEAD	src tests demos tools	0	all clean	4	2026-11-12
