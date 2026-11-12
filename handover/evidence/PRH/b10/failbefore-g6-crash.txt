@@ -1,0 +1,4 @@
+tests/test_prh_b10_tmp.py:402: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_prh_b10_tmp.py::test_b10_g6_a_crash_of_the_redactor_stops_the_run_and_is_never_shown_as_a_limit
+1 failed, 38 deselected in 0.12s
