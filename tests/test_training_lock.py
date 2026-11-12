@@ -20,7 +20,7 @@ import yaml
 from pydantic import ValidationError
 
 import hadavin_sdk.config as config_mod
-from hadavin_sdk.backends.table import DEV_ONLY, TABLE
+from hadavin_sdk.backends.table import DEMO_ONLY, TABLE
 from hadavin_sdk.config import ConfigError, load_config
 from tests.test_k3_pilot_env import pilot_cfg
 
@@ -96,6 +96,8 @@ def _write_llm(root: Path, llm: dict) -> None:
 
 
 def _make(tmp_path: Path, env: str, llm: dict, config: dict | None = None) -> Path:
+    if env == "demo":  # a demo config that names a real model is refused unless every input is made up
+        config = {**(config or {}), "made_up_data_only": True}
     root = pilot_cfg(tmp_path / f"c{next(_COUNTER)}", env=env, config=config)
     _write_llm(root, llm)
     return root
@@ -133,7 +135,7 @@ def _refused(tmp_path: Path, env: str, llm: dict, config: dict | None = None) ->
 def _no_training_error(tmp_path: Path, llm: dict) -> ConfigError:
     """A statement-level refusal: the first error is under `no_training` and is not the old unknown-key error."""
     with pytest.raises(ConfigError) as ei:
-        _load(tmp_path, "dev", llm)
+        _load(tmp_path, "demo", llm)
     loc, typ = _field_error(ei)
     assert loc[0] == "no_training", (loc, typ)
     assert typ != "extra_forbidden" or len(loc) >= 2, (loc, typ)
@@ -195,8 +197,8 @@ def test_t1_no_statement_is_refused_in_pilot_and_prod(tmp_path, kind, env):
 
 
 @pytest.mark.parametrize("env", ["pilot", "prod"])
-def test_t1b_fake_keeps_its_own_dev_only_refusal(tmp_path, env):
-    assert ("llm", "fake") in DEV_ONLY
+def test_t1b_fake_keeps_its_own_demo_only_refusal(tmp_path, env):
+    assert ("llm", "fake") in DEMO_ONLY
     text = _refused(tmp_path, env, SAMPLES["fake"])
     assert re.search(r"refused: (.*, )?llm: fake(, |$)", text), text
     assert "declares no" not in text
@@ -298,17 +300,17 @@ def test_t5_future_dates_at_load_use_the_seam(tmp_path, clock):
 
 
 @pytest.mark.parametrize("kind", REAL)
-def test_t6_dev_without_a_statement_loads(tmp_path, kind):
-    assert _load(tmp_path, "dev", SAMPLES[kind])
+def test_t6_demo_without_a_statement_loads(tmp_path, kind):
+    assert _load(tmp_path, "demo", SAMPLES[kind])
 
 
-def test_t6b_dev_validates_a_present_statement(tmp_path):
+def test_t6b_demo_validates_a_present_statement(tmp_path):
     old = _st("openai_compat", _real_today() - dt.timedelta(days=400))
-    cfg = _load(tmp_path, "dev", {**SAMPLES["openai_compat"], "no_training": old})
+    cfg = _load(tmp_path, "demo", {**SAMPLES["openai_compat"], "no_training": old})
     assert cfg.backends.llm.no_training.checked_on == old["checked_on"]
     bad = {**SAMPLES["openai_compat"], "no_training": _st("openai_compat", "x", basis="nope")}
     with pytest.raises(ConfigError) as ei:
-        _load(tmp_path, "dev", bad)
+        _load(tmp_path, "demo", bad)
     loc, _ = _field_error(ei)
     assert loc[0] == "no_training" and len(loc) >= 2
 
@@ -454,7 +456,7 @@ def test_t7_boundaries_are_accepted():
 def test_t7_statement_on_fake_is_refused_as_an_unknown_key(tmp_path):
     llm = {**SAMPLES["fake"], "no_training": _st("openai_compat", dt.date(2027, 1, 1))}
     with pytest.raises(ConfigError) as ei:
-        _load(tmp_path, "dev", llm)
+        _load(tmp_path, "demo", llm)
     assert _field_error(ei) == (("no_training",), "extra_forbidden")
 
 
@@ -470,7 +472,7 @@ def _duplicate_line(root: Path, key: str, value: str) -> None:
 
 @pytest.mark.parametrize(("key", "value"), [("no_training", "{}"), ("checked_on", "2020-01-01")])
 def test_t7_duplicate_yaml_key_is_refused(tmp_path, key, value):
-    root = _make(tmp_path, "dev", _with_statement())
+    root = _make(tmp_path, "demo", _with_statement())
     _duplicate_line(root, key, value)
     with pytest.raises(ConfigError, match="duplicate key"):
         load_config(root)
@@ -479,7 +481,7 @@ def test_t7_duplicate_yaml_key_is_refused(tmp_path, key, value):
 def test_t7b_checked_on_loads_as_a_yaml_date_or_a_quoted_text(tmp_path):
     day = dt.date(2026, 11, 5)
     for value in (day, "2026-11-05"):  # safe_dump writes the first unquoted and the second quoted
-        root = _make(tmp_path, "dev", _with_statement(checked_on=value))
+        root = _make(tmp_path, "demo", _with_statement(checked_on=value))
         text = (root / "config.yaml").read_text(encoding="utf-8")
         assert ("checked_on: '2026-11-05'" in text) == isinstance(value, str)
         assert load_config(root).backends.llm.no_training.checked_on == day
@@ -547,7 +549,7 @@ def test_t8_refusals_never_hold_the_reference(tmp_path):
 def test_t9b_every_real_kind_declares_a_subset_of_the_three_bases():
     allowed = {"contract_terms", "account_setting", "self_hosted"}
     for kind, entry in TABLE["llm"].items():
-        if ("llm", kind) in DEV_ONLY:
+        if ("llm", kind) in DEMO_ONLY:
             assert entry.no_training == frozenset()
             continue
         assert entry.no_training, kind
@@ -572,7 +574,7 @@ def test_t10_the_statement_is_not_in_the_agent_hash(tmp_path):
     from hadavin_sdk.registry import load_registry
 
     def digest(llm: dict) -> str:
-        return load_registry(load_config(_make(tmp_path, "dev", llm))).config_hash("ito-agent")
+        return load_registry(load_config(_make(tmp_path, "demo", llm))).config_hash("ito-agent")
 
     plain = digest(SAMPLES["openai_compat"])
     day_a = digest(_with_statement(checked_on=dt.date(2026, 1, 1)))
@@ -784,8 +786,8 @@ def test_t16_rows_5_and_6_wrong_basis_comes_first(kind):
     )
 
 
-def test_t16_dev_and_fake_are_never_checked():
-    assert _call("dev", "anthropic", None) == []
+def test_t16_demo_and_fake_are_never_checked():
+    assert _call("demo", "anthropic", None) == []
     assert (
         _call("pilot", "fake", None, settings=TABLE["llm"]["fake"].settings(**SAMPLES["fake"]))
         == []

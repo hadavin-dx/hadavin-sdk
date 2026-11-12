@@ -45,7 +45,7 @@ What this release does and does not promise, in one place.
 
 Words first. A **no-training statement** is a short, dated note in the client's config saying why the operator believes the model provider does not train on our requests. **This records a promise by the operator; it does not stop a provider from training.** The code checks that the note is present, well formed, allowed for that backend, written for the servers the config really talks to, and not older than 90 days. It does not check that the note is true.
 
-In `pilot` and `prod`, a real model backend (`anthropic`, `bedrock`, `openai_compat`, `gemini`) does not start without one. `dev` is unchanged: the statement is optional there, but a statement that is present must still be well formed.
+In `pilot` and `prod`, a real model backend (`anthropic`, `bedrock`, `openai_compat`, `gemini`) does not start without one. `demo` is unchanged: the statement is optional there, but a statement that is present must still be well formed.
 
 ```yaml
 backends:
@@ -69,7 +69,7 @@ What the code does NOT check:
 - That the statement is true.
 - The key or account tier behind a key. Two keys on the same host can fall under different data terms; the hosts field cannot see that.
 - Whether `self_hosted` really is a server the client runs.
-- The `dev` label. `environment` is written by the operator. A config labelled `dev` can name a real model backend and send real text to it with no statement at all. This check does not stop that. Client data must never run in a `dev` config.
+- The `demo` label. `environment` is written by the operator. A config labelled `demo` can name a real model backend (it needs `made_up_data_only: true`, the operator's own word, which the code cannot check) and send text to it with no statement at all. This check does not stop that. Client data must never run in a `demo` config.
 - The model behind a host. The statement is bound to host names only, but terms can differ per model or product on one host (partner models, preview models), and a gateway can forward to upstream providers whose terms the statement does not cover.
 - Port, scheme and path. The statement is bound to the host name only, so two endpoints on one host (two ports, or `/v1` and `/v2` on one gateway) share one statement.
 - The guardrail detector `bedrock_guardrail`, which sends client text to a cloud call, has no statement in this version.
