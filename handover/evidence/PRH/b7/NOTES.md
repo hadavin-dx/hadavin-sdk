@@ -71,3 +71,24 @@ Command (from the repo root): `PYTHONPATH=src python handover/evidence/PRH/b7/eq
 `texts 7000 | outputs differing with the extra view 0`
 
 It runs the tool path (`prepare_output`) and the error path (`error_reason`) on 7000 texts (the 3000 fuzz texts, plus 4000 texts with a secret cut by an ignorable character and written in plain, percent, entity or JSON form), once with the code mutant 100 removes and once without it, and compares both outputs per text. The script is the reviewer's check; to re-test, put the line back and run it. The same check for the old form of mutant 90 (`has_seq` only for ESC) gave 0 differing outputs in 9000 direct `redact()` texts with the 8-bit string openers (script kept in the scratchpad, not committed: the replacement mutant 90 and its killer test are what the repository keeps).
+
+## Gate record (builder's own runs; exit codes)
+
+Head sha: see the last commit of `wip/cloud-prh-b7`. Heads: full pytest ran at a3843e6c (a later commit changed only `tests/prh_mutants.py`: the killer of mutant 21 and nothing else); the nobody run, mutant 21 and the later gates ran at 7ee7b133.
+
+| Gate | Exit | Result |
+|---|---|---|
+| ruff check | 0 | All checks passed! |
+| ruff format --check src tests demos tools | 0 | 334 files already formatted |
+| bandit -ll (`uv run --with bandit`, `-r src`) | 0 | only the nosec B102 warning at tools.py:389 |
+| tools/scan_repo.py | 0 | no output |
+| stage_mutants | 0 | 37 of 37 good; problems: [] |
+| prh mutants as root, all 100 | 0 | first run at a3843e6c: 99 of 100 good, only mutant 21 BAD (OTHER_TEST: its killer was a parametrized test); killer changed; mutant 21 alone: 1 of 1 good |
+| prh mutants as user nobody, all 100 (7ee7b133) | 0 | 100 of 100 good; problems: [] |
+| full pytest -m "not live and not perf" (own Postgres 16, UTF8, PGHOST/PGPORT/PGUSER in the server environment) | 0 | 13058 passed, 1 skipped, 62 deselected in 466.44s |
+| perf --compare-main (main 2a8c2aac) | 0 | S1 1.00, S2 0.98, S3 0.93, S4 1.06, S5 0.97; H1 2.65, H2 3.27, H3 4.57, H4 3.27 (batch 6: H 2.70, 3.26, 4.72, 3.38: no worse) |
+| fuzz on the final tree | 0 | 0 exceptions, 0 readable windows, strict withheld 143 (4.8%), clean corpus 0 withheld of 60 runs |
+| gitleaks origin/main..HEAD | 0 | no leaks found (21 commits scanned at the first push) |
+
+Not run: the timing-harness flake test (not touched), Python 3.12, CodeQL, SonarCloud, CodeRabbit (CI only). The mutant run as root ran once over all 100 at a3843e6c, not again in full after the mutant 21 re-point (only that mutant was re-run): a one-mutant killer change.
+Commit-attribution note: `tests/test_prh_b7.py` and `handover/evidence/PRH/b7/fuzz_classify.py` carry one `# noqa: S311` each (the seeded generator of the independent evidence; the repo's tests already do the same). That is a suppression; if the lead rejects it the fix is a hand-written seeded generator, which changes the fuzz sequence.
