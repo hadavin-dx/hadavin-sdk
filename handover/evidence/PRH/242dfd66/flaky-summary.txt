@@ -1,0 +1,6 @@
+wt run1 rc=0 1 passed in 0.91s
+wt run2 rc=0 1 passed in 0.65s
+wt run3 rc=1 1 failed in 0.59s
+wt-main run1 rc=0 1 passed in 0.69s
+wt-main run2 rc=0 1 passed in 0.63s
+wt-main run3 rc=0 1 passed in 0.71s
