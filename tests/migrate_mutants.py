@@ -4122,8 +4122,8 @@ M: list[Mutant] = [
         "V122",
         "Round 17 group 3: the refusal for a failed cloud sign-in (token step) prints the SDK's own words",
         "src/hadavin_sdk/store/auth_aws.py",
-        "            failed = type(exc).__name__\n        raise _refused(failed)\n",
-        "            failed = str(exc)\n        raise _refused(failed)\n",
+        "            failed = type(exc).__name__\n            transient = is_transient(exc)\n",
+        "            failed = str(exc)\n            transient = is_transient(exc)\n",
         (
             k(
                 T_VERIFY,
@@ -4946,8 +4946,8 @@ M: list[Mutant] = [
         "V176",
         "Round 19 group 8: `connect` reads the DSN with the driver directly",
         PGS,
-        "    parts = dsn_parts(dsn)  # read once",
-        "    parts = conninfo_to_dict(dsn)  # read once",
+        "    parts = dsn_parts(\n        dsn\n    )  # read once (r19 group 8): an address that cannot be read is refused before anything else\n",
+        "    parts = conninfo_to_dict(dsn)\n",
         (
             k(
                 T_CHAN,
