@@ -10,3 +10,7 @@ standins-body: applies in order
 All checks passed!
 143 files already formatted
 Success: no issues found in 26 source files
+........................................................................ [ 93%]
+................                                                         [100%]
+232 passed in 103.01s (0:01:43)
+$ test_hygiene (with gitleaks) + test_load_tools + test_hubspot_probe on the same tree

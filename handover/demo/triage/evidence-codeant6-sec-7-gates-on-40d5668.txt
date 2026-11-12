@@ -25,3 +25,22 @@ $ pytest focused (hygiene, n8n_api_url, scrub, reset_ps1_links, n8n proof)
 =========================== short test summary info ============================
 SKIPPED [1] tests/test_n8n_api_url.py:516: root (and Windows) can read a file with no permissions
 421 passed, 1 skipped in 53.92s
+gitleaks on fresh 40d5668 + patch (tool caches deleted first: an earlier scan counted 4 hits in .ruff_cache/.mypy_cache CACHEDIR.TAG files created by my own ruff/mypy runs, untracked)
+[90m10:30PM[0m [33mWRN[0m [1mleaks found: 38[0m
+[90m10:30PM[0m [32mINF[0m [1mno leaks found[0m
+[90m10:30PM[0m [33mWRN[0m [1mleaks found: 38[0m
+$ bandit -ll
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 9
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+(second try: all __pycache__ and tool caches removed; they hold build paths of this scratch machine, are untracked and not in the patch)
+$ gitleaks dir .
+10:30PM INF no leaks found
+$ gitleaks git .
+10:30PM INF no leaks found
