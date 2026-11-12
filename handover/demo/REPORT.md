@@ -1,6 +1,41 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 22:07Z / 03:37 IST - 3 REVIEWS DONE SINCE 21:55Z (each found a real Major), 3 FIX BUILDS + 1 NEW REVIEW RUNNING; NO BATCH 2 READY YET
+FAILED / UNCERTAIN first:
+- CodeAnt security round 4 review: 1 Major, and it is a REAL KEY LEAK: scripts/n8n_api.py prints the n8n key in a traceback if the key file has two lines or a non-latin-1 character (http.client's ValueError message contains the header value; the script catches only HTTPError/OSError). Builder 10c-1d (round 5) fixing, with a test that shows the old code leaking a made-up key. Also: the check 'http only to loopback' for the proxy bypass rests on a failed address lookup, not on a rule (userinfo `evil.com@127.0.0.1`): fix = refuse '@' and control characters. Saved: triage/REVIEW-codeant4-sec.md.
+- Semgrep round 3 review: 1 Major: 'uv 0.13.8 lock identical' has no evidence file (may be true); plus a tab-after-colon shape and Unicode folding never tested in real Semgrep. Builder 14c fixing. Saved: semgrep/REVIEW-3.md. Hunk arithmetic for semgrep-on-v4 against codeant3-gitleaks + docs-and-deps v4 is clean by reading (never run).
+- Layout (13c) handed back: the 390 px 'overflow' in round 2 was an INTERMEDIATE-state screenshot (patch 1 + part of patch 2). Final tree: 0 boxes past the window edge at 390/700 light+dark; full portal browser regression 595 passed, 0 failed, 0 skipped (with docs-and-deps v4 applied; no Pillow). The two half-pixel tests pass on the OLD CSS too (Chromium rounds the width before the query); the text test catches the gap instead. 6 of the 12 final screenshots were not looked at by the builder. A fresh round-3 reviewer is looking at all 12 now. Builder also found and fixed a header bug: with a 200-char name the chip/close button sat mid-header (align-items).
+- CodeAnt runtime (10c-2b) not back yet (started 21:43, box 60 min).
+- Never run anywhere: PowerShell/Windows, a real n8n, Python 3.13, Windows lock install, the full suite on the combined stack (INT-2).
+NEEDS FROM LEAD: nothing new. FYI for the PR text: core CSS touched by layout (app.css, pages/leads.css, needs.css, overview.css) needs your approval after its review.
+
+TABLE 1 - LIVE ITEMS (load ~2)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| 10c-1d | codeant3 security round 5 (key leak, proxy bypass check, scrub tab hole, docs) | 21:57 | 10 min | 22:42 | running | regenerated codeant3-*.patch + evidence-codeant5-sec | working |
+| 10c-2b | runtime fixes after reviews A and B | 21:43 | 24 min | 22:45 | running | codeant2-*.patch regenerated + evidence-codeant3-rt | no output yet visible; watch at 22:30 |
+| 14c | Semgrep fixes round 4 | 22:03 | 4 min | 22:45 | running | semgrep-rebased.patch + semgrep-on-v4.patch + evidence-sg-17 | started |
+| rev layout-3 | fresh review of layout patches (all 12 screenshots) | 22:06 | 1 min | 22:30 | running | report | started |
+Totals: agents 4, shells 0, containers 0, heavy pytest: 1-2 at a time, load ~2 of 4.
+Flags: none over time box.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| CodeAnt security | 5 (build 10c-1d) | R1 2B+1M, R2 2M, R3 1M, R4 1M | scrub, then a script error path leaking a key: real security bugs | R4 Major prints a key: no cap on security paths | no | fresh review with no Blocker/Major |
+| CodeAnt runtime | 3 (build 10c-2b) | R1 5M, R2 4M | stray lock file, weak tests | Majors real | no | fresh review clean |
+| Semgrep PR | 4 (build 14c) | R1 1B+3M, R2 1M, R3 1M | R3 Major is a claim without evidence | claim must be proven or reworded | no | fresh review clean; the claim is cheap to close |
+| layout | 3 (review) | R1 2M, R2 2M, R3 pending | claim vs screenshots; regression missing: both now answered | review decides | pending | fresh review clean |
+Waste check: no round is waste, but the Semgrep R3 and lane-8 R4 Majors were evidence gaps, not code bugs: those loops should end in one more round.
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (21:55Z)
+| item | result |
+|---|---|
+| 10c-1c build + round-4 review | build: 949 passed/3 skipped, gitleaks 0; review 0B/1M (key leak)/6N; saved |
+| 14b build + round-3 review | patches built (alone + on-v4); review 0B/1M/5N; saved |
+| 13c build | layout fixes: 595 portal browser tests pass; new tests 54 (38 fail on old CSS); patches pushed (1d2c97fd) |
+
 ## 2026-11-12 21:55Z / 03:25 IST - 4 FIX BUILDERS RUNNING (every package has a real finding to fix); Semgrep run result taken in; NO BATCH 2 READY YET
 FAILED / UNCERTAIN first:
 - Nothing is ready to apply. Every package that came back from a build got a fresh review and every review found at least one Major:
