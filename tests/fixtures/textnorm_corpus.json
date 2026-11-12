@@ -1,0 +1,1561 @@
+[
+ {
+  "id": "r001",
+  "class": "zero-width",
+  "source": "DENY view: an invisible character is ignored",
+  "a": "alice\u200b.ng",
+  "b": "alice.ng",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r002",
+  "class": "zero-width",
+  "source": "DENY view: an invisible character is ignored",
+  "a": "alice\u200c.ng",
+  "b": "alice.ng",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r003",
+  "class": "zero-width",
+  "source": "DENY view: an invisible character is ignored",
+  "a": "alice\u200d.ng",
+  "b": "alice.ng",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r004",
+  "class": "zero-width",
+  "source": "DENY view: an invisible character is ignored",
+  "a": "alice\u2060.ng",
+  "b": "alice.ng",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r005",
+  "class": "zero-width",
+  "source": "DENY view: an invisible character is ignored",
+  "a": "alice\ufeff.ng",
+  "b": "alice.ng",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r006",
+  "class": "zero-width",
+  "source": "DENY view: an invisible character is ignored",
+  "a": "alice\u00ad.ng",
+  "b": "alice.ng",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r007",
+  "class": "zero-width",
+  "source": "DENY view: an invisible character is ignored",
+  "a": "ali\u200bce\u200b",
+  "b": "alice",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r008",
+  "class": "zero-width",
+  "source": "DENY view: a different letter stays different",
+  "a": "alice",
+  "b": "alicf",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r009",
+  "class": "bidi controls",
+  "source": "DENY view: a bidi control is a format character and is dropped",
+  "a": "pay\u202epal",
+  "b": "paypal",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r010",
+  "class": "bidi controls",
+  "source": "DENY view: a bidi control is a format character and is dropped",
+  "a": "pay\u202dpal",
+  "b": "paypal",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r011",
+  "class": "bidi controls",
+  "source": "DENY view: a bidi control is a format character and is dropped",
+  "a": "pay\u202apal",
+  "b": "paypal",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r012",
+  "class": "bidi controls",
+  "source": "DENY view: a bidi control is a format character and is dropped",
+  "a": "pay\u2066pal",
+  "b": "paypal",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r013",
+  "class": "bidi controls",
+  "source": "DENY view: a bidi control is a format character and is dropped",
+  "a": "pay\u200epal",
+  "b": "paypal",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r014",
+  "class": "bidi controls",
+  "source": "DENY view: a bidi control is a format character and is dropped",
+  "a": "pay\u200fpal",
+  "b": "paypal",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r015",
+  "class": "bidi controls",
+  "source": "DENY view: logical order is kept",
+  "a": "paypal",
+  "b": "palpay",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r016",
+  "class": "tag characters",
+  "source": "DENY view: identity_key drops tag characters",
+  "a": "alice\udb40\udc61\udb40\udc70\udb40\udc70\udb40\udc72\udb40\udc6f\udb40\udc76\udb40\udc65\udb40\udc64",
+  "b": "alice",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r017",
+  "class": "tag characters",
+  "source": "DENY view: identity_key drops tag characters",
+  "a": "ali\udb40\udc78ce",
+  "b": "alice",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r018",
+  "class": "tag characters",
+  "source": "DENY view: a text of tag characters only has an empty key",
+  "a": "\udb40\udc61\udb40\udc6c\udb40\udc69\udb40\udc63\udb40\udc65",
+  "b": "",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r019",
+  "class": "tag characters",
+  "source": "DENY view: language tag and cancel tag are dropped",
+  "a": "alice\udb40\udc01\udb40\udc7f",
+  "b": "alice",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r020",
+  "class": "tag characters",
+  "source": "DENY view: a tag letter is not a visible letter in identity_key",
+  "a": "alice\udb40\udc78",
+  "b": "alicex",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r021",
+  "class": "variation selectors",
+  "source": "DENY view: a variation selector is a mark and is dropped",
+  "a": "bob\ufe00",
+  "b": "bob",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r022",
+  "class": "variation selectors",
+  "source": "DENY view: a variation selector is a mark and is dropped",
+  "a": "bob\ufe0d",
+  "b": "bob",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r023",
+  "class": "variation selectors",
+  "source": "DENY view: a variation selector is a mark and is dropped",
+  "a": "bob\u180b",
+  "b": "bob",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r024",
+  "class": "variation selectors",
+  "source": "DENY view: a variation selector is a mark and is dropped",
+  "a": "bob\u180f",
+  "b": "bob",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r025",
+  "class": "variation selectors",
+  "source": "DENY view: a variation selector is a mark and is dropped",
+  "a": "bob\udb40\udd00",
+  "b": "bob",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r026",
+  "class": "variation selectors",
+  "source": "DENY view: a variation selector is a mark and is dropped",
+  "a": "bob\udb40\uddef",
+  "b": "bob",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r027",
+  "class": "variation selectors",
+  "source": "DENY view: an emoji selector is a mark and is dropped",
+  "a": "bob\ufe0f",
+  "b": "bob",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r028",
+  "class": "variation selectors",
+  "source": "DENY view: a different letter stays different",
+  "a": "bob",
+  "b": "bobb",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r029",
+  "class": "emoji sequences and keycaps",
+  "source": "DENY view: the emoji selector is dropped",
+  "a": "\u2764\ufe0f",
+  "b": "\u2764",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r030",
+  "class": "emoji sequences and keycaps",
+  "source": "DENY view: the keycap mark and selector are dropped",
+  "a": "1\ufe0f\u20e3",
+  "b": "1",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r031",
+  "class": "emoji sequences and keycaps",
+  "source": "DENY view: a zero-width joiner is dropped",
+  "a": "\ud83d\udc68\u200d\ud83d\udc69",
+  "b": "\ud83d\udc68\ud83d\udc69",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r032",
+  "class": "emoji sequences and keycaps",
+  "source": "DENY view: tag characters of a flag are dropped",
+  "a": "\ud83c\udff4\udb40\udc67\udb40\udc62\udb40\udc7f",
+  "b": "\ud83c\udff4",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r033",
+  "class": "emoji sequences and keycaps",
+  "source": "DENY view: another digit stays different",
+  "a": "1\ufe0f\u20e3",
+  "b": "2\ufe0f\u20e3",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r034",
+  "class": "full-width",
+  "source": "DENY view: NFKC folds full-width forms",
+  "a": "\uff41\uff4c\uff49\uff43\uff45",
+  "b": "alice",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r035",
+  "class": "full-width",
+  "source": "DENY view: NFKC and case",
+  "a": "\uff21\uff2c\uff29\uff23\uff25",
+  "b": "alice",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r036",
+  "class": "full-width",
+  "source": "DENY view: NFKC folds full-width digits",
+  "a": "\uff11\uff12\uff13",
+  "b": "123",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r037",
+  "class": "full-width",
+  "source": "DENY view: NFKC folds a full-width at and dot",
+  "a": "\uff41dmin@bank\uff0eexample",
+  "b": "admin@bank.example",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r038",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "\u0430lice",
+  "b": "alice",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r039",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "al\u0456ce",
+  "b": "alice",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r040",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "b\u043eb",
+  "b": "bob",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r041",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "b\u03bfb",
+  "b": "bob",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r042",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "\u03b1lice",
+  "b": "alice",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r043",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "b\u0585b",
+  "b": "bob",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r044",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "\u13a0\u13aa\u13a2",
+  "b": "DAT",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r045",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter and DENY view: upper and lower case are one",
+  "a": "\u0421\u0415O-1",
+  "b": "ceo-1",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r046",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: Cyrillic ze reads as the digit 3 (generator supplement)",
+  "a": "\u0437",
+  "b": "3",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r047",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a different letter stays different",
+  "a": "alice",
+  "b": "alicf",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r048",
+  "class": "combining marks",
+  "source": "DENY view: a combining mark is dropped",
+  "a": "a\u0301lice",
+  "b": "alice",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r049",
+  "class": "combining marks",
+  "source": "DENY view: 1,000 combining marks on one letter are dropped",
+  "a": "alice\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301",
+  "b": "alice",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r050",
+  "class": "combining marks",
+  "source": "DENY view: NFKD splits the accent and the mark is dropped",
+  "a": "e\u0301",
+  "b": "\u00e9",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r051",
+  "class": "combining marks",
+  "source": "DENY view: marks are dropped, so accented and plain letters collide (the safe side)",
+  "a": "\u00fcber",
+  "b": "uber",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r052",
+  "class": "combining marks",
+  "source": "DENY view: a different letter stays different",
+  "a": "alice",
+  "b": "alica",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r053",
+  "class": "filler letters",
+  "source": "DENY view: an invisible filler letter is dropped",
+  "a": "bank\u316412345",
+  "b": "bank12345",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r054",
+  "class": "filler letters",
+  "source": "DENY view: an invisible filler letter is dropped",
+  "a": "bank\u115f12345",
+  "b": "bank12345",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r055",
+  "class": "filler letters",
+  "source": "DENY view: an invisible filler letter is dropped",
+  "a": "bank\u116012345",
+  "b": "bank12345",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r056",
+  "class": "filler letters",
+  "source": "DENY view: an invisible filler letter is dropped",
+  "a": "bank\uffa012345",
+  "b": "bank12345",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r057",
+  "class": "filler letters",
+  "source": "DENY view: an invisible filler letter is dropped",
+  "a": "bank\u280012345",
+  "b": "bank12345",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r058",
+  "class": "filler letters",
+  "source": "DENY view: an invisible filler letter is dropped",
+  "a": "bank\ud80d\udc4112345",
+  "b": "bank12345",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r059",
+  "class": "filler letters",
+  "source": "DENY view: an invisible filler letter is dropped",
+  "a": "bank\ud80d\udc4212345",
+  "b": "bank12345",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r060",
+  "class": "filler letters",
+  "source": "DENY view: identity_key keeps a visible space",
+  "a": "bank 12345",
+  "b": "bank12345",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r061",
+  "class": "NFKC expansion",
+  "source": "DENY view: NFKC expands a ligature",
+  "a": "\ufb03",
+  "b": "ffi",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r062",
+  "class": "NFKC expansion",
+  "source": "DENY view: NFKC expands a ligature",
+  "a": "\ufb01le",
+  "b": "file",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r063",
+  "class": "NFKC expansion",
+  "source": "DENY view: NFKC expands U+FDFA to 18 characters",
+  "a": "\ufdfa",
+  "b": "\u0635\u0644\u0649 \u0627\u0644\u0644\u0647 \u0639\u0644\u064a\u0647 \u0648\u0633\u0644\u0645",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r064",
+  "class": "NFKC expansion",
+  "source": "DENY view: casefold maps sharp s to ss",
+  "a": "stra\u00dfe",
+  "b": "STRASSE",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r065",
+  "class": "NFKC expansion",
+  "source": "DENY view: NFKC maps a circled digit",
+  "a": "\u2460",
+  "b": "1",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r066",
+  "class": "other-script digits",
+  "source": "DENY view: Arabic-Indic digits read as ASCII digits",
+  "a": "\u0661\u0662\u0663",
+  "b": "123",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r067",
+  "class": "other-script digits",
+  "source": "DENY view: Devanagari digits read as ASCII digits",
+  "a": "\u0967\u0968\u0969",
+  "b": "123",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r068",
+  "class": "other-script digits",
+  "source": "DENY view: Bengali digits read as ASCII digits",
+  "a": "\u09e7\u09e8",
+  "b": "12",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r069",
+  "class": "other-script digits",
+  "source": "DENY view: mathematical digits read as ASCII digits",
+  "a": "\ud835\udfce\ud835\udfcf",
+  "b": "01",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r070",
+  "class": "other-script digits",
+  "source": "DENY view: a different digit stays different",
+  "a": "123",
+  "b": "124",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r071",
+  "class": "Unicode whitespace",
+  "source": "DENY view: any Unicode space is one space",
+  "a": "ab\u00a0cd",
+  "b": "ab cd",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r072",
+  "class": "Unicode whitespace",
+  "source": "DENY view: any Unicode space is one space",
+  "a": "ab\u2003cd",
+  "b": "ab cd",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r073",
+  "class": "Unicode whitespace",
+  "source": "DENY view: any Unicode space is one space",
+  "a": "ab\u3000cd",
+  "b": "ab cd",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r074",
+  "class": "Unicode whitespace",
+  "source": "DENY view: any Unicode space is one space",
+  "a": "ab\u2028cd",
+  "b": "ab cd",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r075",
+  "class": "Unicode whitespace",
+  "source": "DENY view: any Unicode space is one space",
+  "a": "ab\u0085cd",
+  "b": "ab cd",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r076",
+  "class": "Unicode whitespace",
+  "source": "DENY view: any Unicode space is one space",
+  "a": "ab\u1680cd",
+  "b": "ab cd",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r077",
+  "class": "Unicode whitespace",
+  "source": "DENY view: whitespace runs collapse (collapse_ws)",
+  "a": "a  \t\n b",
+  "b": "a b",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r078",
+  "class": "Unicode whitespace",
+  "source": "DENY view: identity_key keeps one space",
+  "a": "ab cd",
+  "b": "abcd",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r079",
+  "class": "private use",
+  "source": "DENY view: private-use characters are dropped (icon-font line, 5 glyphs)",
+  "a": "icon\ue000\ue000\ue000\ue000\ue000",
+  "b": "icon",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r080",
+  "class": "private use",
+  "source": "DENY view: plane 15 private use is dropped",
+  "a": "\udb80\udc00x",
+  "b": "x",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r081",
+  "class": "private use",
+  "source": "DENY view: plane 16 private use is dropped",
+  "a": "x\udbff\udffd",
+  "b": "x",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r082",
+  "class": "unassigned code points",
+  "source": "DENY view: 8 unassigned code points in a row are dropped",
+  "a": "ab\u0378\u0378\u0378\u0378\u0378\u0378\u0378\u0378cd",
+  "b": "abcd",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r083",
+  "class": "unassigned code points",
+  "source": "DENY view: an unassigned code point is dropped",
+  "a": "a\u0378b",
+  "b": "ab",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r084",
+  "class": "unassigned code points",
+  "source": "DENY view: an unassigned code point after the tag block is dropped",
+  "a": "a\udb40\udc80b",
+  "b": "ab",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r085",
+  "class": "unassigned code points",
+  "source": "DENY view: a code point unassigned in Unicode 15.1 reads as nothing (the pinned 15.1.0 table has no unassigned source; a newer table that maps one is read before the drop, gap 2, tested with a stubbed table)",
+  "a": "p\ud804\udfd4",
+  "b": "pl",
+  "relation": "different",
+  "status": "not_taken"
+ },
+ {
+  "id": "r086",
+  "class": "ideographic variation selector",
+  "source": "DENY view: an ideographic variation selector is dropped (has_hidden_channel reports it)",
+  "a": "\u8fbb\udb40\udd00",
+  "b": "\u8fbb",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r087",
+  "class": "ideographic variation selector",
+  "source": "DENY view: two selectors of one name are one name",
+  "a": "\u8fbb\udb40\udd01",
+  "b": "\u8fbb\udb40\udd02",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r088",
+  "class": "ideographic variation selector",
+  "source": "DENY view: another ideograph stays different",
+  "a": "\u8fbb",
+  "b": "\u8fbc",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r089",
+  "class": "controls",
+  "source": "DENY view: a control character is dropped",
+  "a": "a\u0000b",
+  "b": "ab",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r090",
+  "class": "controls",
+  "source": "DENY view: a control character is dropped",
+  "a": "a\u0007b",
+  "b": "ab",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r091",
+  "class": "controls",
+  "source": "DENY view: a control character is dropped",
+  "a": "a\u001bb",
+  "b": "ab",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r092",
+  "class": "controls",
+  "source": "DENY view: a control character is dropped",
+  "a": "a\u007fb",
+  "b": "ab",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r093",
+  "class": "controls",
+  "source": "DENY view: a control character is dropped",
+  "a": "a\u009bb",
+  "b": "ab",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r094",
+  "class": "controls",
+  "source": "DENY view: a control is dropped, not turned into a space",
+  "a": "a\u0000b",
+  "b": "a b",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r095",
+  "class": "lone surrogates",
+  "source": "DENY view: a lone surrogate is dropped",
+  "a": "a\ud800b",
+  "b": "ab",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r096",
+  "class": "lone surrogates",
+  "source": "DENY view: lone surrogates only have an empty key",
+  "a": "\udc00\udfff",
+  "b": "",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r097",
+  "class": "lone surrogates",
+  "source": "DENY view: lone surrogates between letters are dropped",
+  "a": "x\ud800x\ud800x\ud800x\ud800x\ud800x\ud800x\ud800x\ud800x\ud800x\ud800",
+  "b": "xxxxxxxxxx",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r098",
+  "class": "mixed scripts",
+  "source": "DENY view: a look-alike letter reads as the Latin letter (Cyrillic u reads as y)",
+  "a": "pa\u0443pal",
+  "b": "paypal",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r099",
+  "class": "mixed scripts",
+  "source": "DENY view: a look-alike letter reads as the Latin letter (Greek alpha)",
+  "a": "b\u03b1nk",
+  "b": "bank",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r100",
+  "class": "mixed scripts",
+  "source": "DENY view: whole Cyrillic words fold letter by letter; this one reads copee not core",
+  "a": "\u0441\u043e\u0440\u0435",
+  "b": "core",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r101",
+  "class": "mixed scripts",
+  "source": "DENY view: a look-alike letter reads as the Latin letter (a whole word in look-alike Cyrillic)",
+  "a": "\u0430\u0440\u0440\u04cf\u0435",
+  "b": "apple",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r102",
+  "class": "unlisted script",
+  "source": "DENY view: identical Tamil text is equal",
+  "a": "\u0b85\u0b86",
+  "b": "\u0b85\u0b86",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r103",
+  "class": "unlisted script",
+  "source": "DENY view: a Runic letter beside Latin is neither folded nor dropped (stated limit)",
+  "a": "a\u16b1b",
+  "b": "ab",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r104",
+  "class": "unlisted script",
+  "source": "DENY view: a Tamil letter has no table entry and stays itself (stated limit)",
+  "a": "\u0b85",
+  "b": "a",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r105",
+  "class": "cap, empty and whitespace-only",
+  "source": "empty text has the empty key",
+  "a": "",
+  "b": "",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r106",
+  "class": "cap, empty and whitespace-only",
+  "source": "whitespace-only text collapses to the empty key",
+  "a": " \t\n",
+  "b": "",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r107",
+  "class": "cap, empty and whitespace-only",
+  "source": "invisible-only text has the empty key",
+  "a": "\u200b\u200c",
+  "b": "",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r108",
+  "class": "cap, empty and whitespace-only",
+  "source": "size rule: one character over the cap is refused (TextTooLong)",
+  "a": {
+   "repeat": [
+    "a",
+    262145
+   ]
+  },
+  "b": "a",
+  "relation": "refused",
+  "status": "current"
+ },
+ {
+  "id": "r109",
+  "class": "cap, empty and whitespace-only",
+  "source": "size rule: weight 262,146 is refused (SEAM-1)",
+  "a": {
+   "repeat": [
+    "\ud83d\udf5c",
+    87382
+   ]
+  },
+  "b": "a",
+  "relation": "refused",
+  "status": "current"
+ },
+ {
+  "id": "r110",
+  "class": "cap, empty and whitespace-only",
+  "source": "size rule: exactly the cap is accepted",
+  "a": {
+   "repeat": [
+    "a",
+    262144
+   ]
+  },
+  "b": {
+   "repeat": [
+    "a",
+    262144
+   ]
+  },
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r111",
+  "class": "case",
+  "source": "DENY view: upper and lower case are one",
+  "a": "ALICE",
+  "b": "alice",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r112",
+  "class": "case",
+  "source": "DENY view: upper and lower case are one (capital Greek Eta and small eta fold together; the small eta reads n, so the capital's own look-alike h is given up for case symmetry)",
+  "a": "\u0397\u0397",
+  "b": "\u03b7\u03b7",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r113",
+  "class": "case",
+  "source": "DENY view: upper and lower case are one",
+  "a": "Alice.NG",
+  "b": "alice.ng",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r114",
+  "class": "dashes, slashes and quotes",
+  "source": "DENY view: a Unicode hyphen reads as the hyphen-minus (gap 4)",
+  "a": "INV-2026",
+  "b": "INV\u20102026",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r115",
+  "class": "dashes, slashes and quotes",
+  "source": "DENY view: the minus sign reads as the hyphen-minus (gap 4)",
+  "a": "INV-2026",
+  "b": "INV\u22122026",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r116",
+  "class": "dashes, slashes and quotes",
+  "source": "DENY view: the division slash reads as the slash (gap 4)",
+  "a": "a/b",
+  "b": "a\u2215b",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r117",
+  "class": "dashes, slashes and quotes",
+  "source": "DENY view: a curly apostrophe reads as the apostrophe (gap 4)",
+  "a": "it's",
+  "b": "it\u2019s",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r118",
+  "class": "dashes, slashes and quotes",
+  "source": "DENY view: a different digit stays different",
+  "a": "INV-2026",
+  "b": "INV-2027",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r119",
+  "class": "letters written as digits",
+  "source": "stated limit: 0 for o is not folded in v1 (leetspeak is a v1.1 row)",
+  "a": "b0b",
+  "b": "bob",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r120",
+  "class": "letters written as digits",
+  "source": "stated limit: 1 for l is not folded in v1",
+  "a": "a1ice",
+  "b": "alice",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r121",
+  "class": "letters written as digits",
+  "source": "stated limit: 1 for i is not folded in v1",
+  "a": "al1ce",
+  "b": "alice",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r122",
+  "class": "allow side",
+  "source": "ALLOW view: only identical strings are equal (allow_equal)",
+  "a": "alice@bank.example",
+  "b": "alice@bank.example",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r123",
+  "class": "allow side",
+  "source": "DENY view: case is ignored (allow_equal says VARIANT)",
+  "a": "Alice@bank.example",
+  "b": "alice@bank.example",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r124",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u0430n",
+  "b": "man",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r125",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u0435n",
+  "b": "men",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r126",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u043en",
+  "b": "mon",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r127",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u0440n",
+  "b": "mpn",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r128",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u0441n",
+  "b": "mcn",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r129",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u0443n",
+  "b": "myn",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r130",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u0445n",
+  "b": "mxn",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r131",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u03b9n",
+  "b": "min",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r132",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u03ban",
+  "b": "mkn",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r133",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u03c1n",
+  "b": "mpn",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r134",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u03c5n",
+  "b": "mun",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r135",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u03bfn",
+  "b": "mon",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r136",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u057dn",
+  "b": "mun",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r137",
+  "class": "Cyrillic, Greek, Armenian and Cherokee look-alikes",
+  "source": "DENY view: a look-alike letter reads as the Latin letter",
+  "a": "m\u0585n",
+  "b": "mon",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r138",
+  "class": "allow side",
+  "source": "DENY view: a Cyrillic a in a domain reads as the Latin a (allow_equal says LOOKALIKE)",
+  "a": "alice@bank.ex\u0430mple",
+  "b": "alice@bank.example",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r139",
+  "class": "allow side",
+  "source": "different local parts stay different",
+  "a": "alice@bank.example",
+  "b": "bob@bank.example",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r140",
+  "class": "allow side",
+  "source": "a trailing dot is a different address",
+  "a": "alice@bank.example",
+  "b": "alice@bank.example.",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r141",
+  "class": "allow side",
+  "source": "a shorter domain is a different address",
+  "a": "alice@bank.example",
+  "b": "alice@bank.exampl",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r142",
+  "class": "Intake invoice steps",
+  "source": "an invoice number keeps O and 0 apart (the steps read the number as it is written)",
+  "a": "INV-0O1",
+  "b": "INV-001",
+  "relation": "different",
+  "status": "not_taken"
+ },
+ {
+  "id": "r143",
+  "class": "Intake invoice steps",
+  "source": "an invoice number keeps l and 1 apart",
+  "a": "INV-1l",
+  "b": "INV-11",
+  "relation": "different",
+  "status": "not_taken"
+ },
+ {
+  "id": "r144",
+  "class": "Intake invoice steps",
+  "source": "an invoice number keeps S and 5 apart",
+  "a": "INV-5",
+  "b": "INV-S",
+  "relation": "different",
+  "status": "not_taken"
+ },
+ {
+  "id": "r145",
+  "class": "Intake invoice steps",
+  "source": "an invoice number keeps B and 8 apart",
+  "a": "INV-8",
+  "b": "INV-B",
+  "relation": "different",
+  "status": "not_taken"
+ },
+ {
+  "id": "r146",
+  "class": "Intake invoice steps",
+  "source": "two invoice numbers one digit apart stay different",
+  "a": "INV-2026-001",
+  "b": "INV-2026-002",
+  "relation": "different",
+  "status": "not_taken"
+ },
+ {
+  "id": "r147",
+  "class": "Intake invoice steps",
+  "source": "an extra digit makes another number",
+  "a": "ACME-100",
+  "b": "ACME-1000",
+  "relation": "different",
+  "status": "not_taken"
+ },
+ {
+  "id": "r148",
+  "class": "case",
+  "source": "DENY view: upper and lower case are one (casefold maps sharp s to ss)",
+  "a": "Stra\u00dfe",
+  "b": "strasse",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r149",
+  "class": "case",
+  "source": "DENY view: upper and lower case are one",
+  "a": "I",
+  "b": "i",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r150",
+  "class": "case",
+  "source": "DENY view: capital dotted I decomposes to i and a mark, and the mark is dropped",
+  "a": "\u0130",
+  "b": "i\u0307",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r151",
+  "class": "combining marks",
+  "source": "DENY view: a tilde mark is dropped",
+  "a": "n\u0303",
+  "b": "n",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r152",
+  "class": "combining marks",
+  "source": "DENY view: three marks on one letter are dropped",
+  "a": "x\u0300\u0301\u0302",
+  "b": "x",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r153",
+  "class": "full-width",
+  "source": "DENY view: full-width capitals read as lower-case Latin",
+  "a": "\uff21\uff22\uff23",
+  "b": "abc",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r154",
+  "class": "full-width",
+  "source": "DENY view: a full-width zero reads as 0",
+  "a": "\uff10",
+  "b": "0",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r155",
+  "class": "zero-width",
+  "source": "DENY view: an invisible character is ignored",
+  "a": "\u200b",
+  "b": "",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r156",
+  "class": "zero-width",
+  "source": "DENY view: an invisible character is ignored",
+  "a": "a\u200bb\u200cc\u200dd",
+  "b": "abcd",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r157",
+  "class": "tag characters",
+  "source": "DENY view: a hidden message in tag characters is dropped",
+  "a": "x\udb40\udc73\udb40\udc65\udb40\udc63\udb40\udc72\udb40\udc65\udb40\udc74y",
+  "b": "xy",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r158",
+  "class": "variation selectors",
+  "source": "DENY view: both emoji selectors are dropped",
+  "a": "\u2764\ufe0e",
+  "b": "\u2764\ufe0f",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r159",
+  "class": "bidi controls",
+  "source": "DENY view: a leading right-to-left override is dropped",
+  "a": "\u202eabc",
+  "b": "abc",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r160",
+  "class": "controls",
+  "source": "DENY view: only controls have an empty key",
+  "a": "\u0000\u0001\u0002",
+  "b": "",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r161",
+  "class": "private use",
+  "source": "DENY view: only private-use characters have an empty key",
+  "a": "\ue000\ue001",
+  "b": "",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r162",
+  "class": "unlisted script",
+  "source": "DENY view: identical Thai text is equal",
+  "a": "\u0e01\u0e32",
+  "b": "\u0e01\u0e32",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r163",
+  "class": "unlisted script",
+  "source": "DENY view: two Tamil letters differ from one",
+  "a": "\u0b85\u0b86",
+  "b": "\u0b85",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r164",
+  "class": "letters written as digits",
+  "source": "stated limit: 0 for o is not folded in v1",
+  "a": "0",
+  "b": "o",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r165",
+  "class": "lone surrogates",
+  "source": "DENY view: a lone high surrogate has an empty key",
+  "a": "\ud83d",
+  "b": "",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r166",
+  "class": "mixed scripts",
+  "source": "DENY view: Greek alpha and Cyrillic a both read as a",
+  "a": "b\u03b1nk",
+  "b": "b\u0430nk",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r167",
+  "class": "Unicode whitespace",
+  "source": "DENY view: one space collapses to the empty key",
+  "a": " ",
+  "b": "",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r168",
+  "class": "emoji sequences and keycaps",
+  "source": "DENY view: a skin-tone modifier is a symbol, not a mark, and stays",
+  "a": "\ud83d\udc4d\ud83c\udffd",
+  "b": "\ud83d\udc4d",
+  "relation": "different",
+  "status": "current"
+ },
+ {
+  "id": "r169",
+  "class": "NFKC expansion",
+  "source": "DENY view: the ohm sign is canonically the Greek capital omega",
+  "a": "\u2126",
+  "b": "\u03a9",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r170",
+  "class": "other-script digits",
+  "source": "DENY view: Thai digits read as ASCII digits",
+  "a": "\u0e51\u0e52",
+  "b": "12",
+  "relation": "equal",
+  "status": "current"
+ },
+ {
+  "id": "r171",
+  "class": "other-script digits",
+  "source": "DENY view: full-width digits read as ASCII digits",
+  "a": "\uff11\uff12",
+  "b": "12",
+  "relation": "equal",
+  "status": "current"
+ }
+]

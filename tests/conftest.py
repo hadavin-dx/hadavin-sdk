@@ -88,3 +88,21 @@ def fake_system():
 @pytest.fixture
 def live_cfg_dir(tmp_path: Path, fake_system) -> Path:
     return make_cfg(tmp_path, port=fake_system.port)
+
+
+@pytest.fixture(autouse=True)
+def _pilot_builds_on_an_interpreter_with_other_unicode_data(request, monkeypatch):
+    """Pilot and prod refuse to start on Unicode data other than the pin (``textnorm.require_pinned_unidata``). The oldest supported
+    Python (3.12) carries older data, so a test of anything else that builds a pilot app would stop at that guard. Those tests get
+    the guard switched off here; the tests of the guard itself (``tests/test_textnorm*``) never do, and they run on both interpreters."""
+    import unicodedata
+
+    from hadavin_sdk import defaults
+    from hadavin_sdk.guard import textnorm
+
+    if (
+        unicodedata.unidata_version != defaults.TEXTNORM_PINNED_UNIDATA
+        and not request.module.__name__.rsplit(".", 1)[-1].startswith("test_textnorm")
+    ):
+        monkeypatch.setattr(textnorm, "require_pinned_unidata", lambda *a, **k: None)
+    yield
