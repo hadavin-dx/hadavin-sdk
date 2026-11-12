@@ -33,6 +33,7 @@ from typing import Any
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard import runmap
+from hadavin_sdk.guard.redact import BARE_ENDINGS, ORDINARY_WORDS
 from hadavin_sdk.k1b.bundle import Bundle, parse_ts
 
 SCHEME = (
@@ -64,6 +65,7 @@ LIMITS = (
     "`possession`). `oauth`, `oauth_scopes` and `oauthProvider` are masked: `oauth` may hold a token. A harmless word that ends that way and is not on the list is hidden too, although it holds no "
     "credential. The record rule also masks some other keys that hold no credential "
     "(`session_duration`, `auth_method`, `pass_rate`, `tokenCount`, `tokenType`).\n"
+    "- A flag that names a credential (`--password`, `--newpass`, `--dbpass`, `--oauth`) takes the one word after a space as its value, on a card, in a tool result and in a log line: in `--newpass a b` the word `a` is masked and `b` is shown, because `b` may be a file name or another argument of the command. Written `--newpass=a b`, both words are masked.\n"
     "Masking is a first filter, not proof that no client data reached the model."
 )
 KINDS_NOTE = "Counts are distinct values masked per class (EMAIL, IPV4, ARN, ...), summed over the cases; no values."
@@ -149,13 +151,6 @@ GLUED_ENDINGS = (
 # fails closed (a harmless value is hidden). So a word that ends with one of them is a credential unless the whole
 # word is in `ORDINARY_WORDS`. After `_`, `-` or a capital letter they are words of their own (`CREDENTIAL_WORDS`).
 # Measured on `tests/q8b_key_corpus.py` (made up by the builder, so the numbers hold for that corpus only).
-BARE_ENDINGS = ("pass", "auth", "session")
-ORDINARY_WORDS = frozenset(
-    [
-        "bypass", "compass", "encompass", "overpass", "underpass", "surpass", "trespass", "impass", "lowpass", "highpass",
-        "bandpass", "obsession", "possession", "repossession", "supersession",
-    ]
-)  # fmt: skip
 # The words in front of `key` or `keys` that make a credential: `api_key`, `dbaccess_key` (the word BEFORE ends with one of
 # them), and the exact pairs (word before, word) `client-key-data`, `connect.sid`.
 KEY_QUALIFIERS = ("api", "private", "access", "secret", "signing", "encryption", "account")

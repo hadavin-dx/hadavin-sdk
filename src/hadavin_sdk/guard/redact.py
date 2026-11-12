@@ -170,20 +170,42 @@ KEY_WORDS = "|".join(KEY_ALTERNATIVES)
 # Written once; both quoted-value rules read this one name. (`auth` and `bearer` are not bare prefixes: `author="Priya"`. `authorization` is: a quoted value with spaces after it was half readable.)
 QUOTED_KEY_WORDS = KEY_WORDS + "|pass|session|authorization"
 # The flag rules read the same list (round 4, `--client_secret hunter22` and `--api_key hunter22` were not matched by a hand
-# list of hyphen spellings): every spelling of it that stands alone, plus flag names that are no key of the list (`--pass`,
-# `--secret-key`, `--authorization`, and the glued `--newpass`, `--oldpass`, `--postgresauth`: round 5, they were readable); a word may be glued to its neighbours with `-` or `_` (`--db_password`, `--x-api-key`). The look-ahead
-# entries (`pass` only before `=` or `:`) are for text, not for a flag name. EXACT names: `--secret-name`, `--token-file`
-# and `--token-ttl` are not credentials, and the `(?![\w-])` that ends the flag keeps them out.
+# list of hyphen spellings): every spelling of it that stands alone, plus the flag names that are no key of the list
+# (`--secret-key`, `--authorization`, `--bearer`, `--credentials`); the bare words `pass`, `auth` and `session`, and every
+# word glued in front of them (`--newpass`, `--postgresauth`, `--oauth`), come from `BARE_ENDINGS` and `ORDINARY_WORDS` below.
+# A word may be glued to its neighbours with `-` or `_` (`--db_password`, `--x-api-key`). The look-ahead entries (`pass` only
+# before `=` or `:`) are for text, not for a flag name. EXACT names: `--secret-name`, `--token-file` and `--token-ttl` are
+# not credentials, and the `(?![\w-])` that ends the flag keeps them out.
 FLAG_ONLY_WORDS = (
-    "pass",
     r"secret[_\-]?key",
-    "newpass",
-    "oldpass",
-    "postgresauth",
     "authorization",
+    "bearer",
+    "credentials",
 )
 FLAG_WORDS = "|".join([a for a in KEY_ALTERNATIVES if "(?=" not in a] + list(FLAG_ONLY_WORDS))
-FLAG_NAME = r"(?:[a-z0-9]+[_\-]){0,2}(?:" + FLAG_WORDS + ")"
+# A word that ends in `pass`, `auth` or `session` is a credential unless the whole word is an ordinary English word. The two
+# lists are written HERE once and the record walk (`k1b/redaction.py`) reads them: a key is masked the same way as a record
+# key, as `key=value` and as a flag (`--dbpass v`, `--rootauth v`, `--oauth v`; `--bypass`, `--compass`, `--obsession` and
+# `--author` stay readable). `oauth` is not ordinary: it may hold a token. Neither list holds a credential word.
+BARE_ENDINGS = ("pass", "auth", "session")
+ORDINARY_WORDS = frozenset(
+    [
+        "bypass", "compass", "encompass", "overpass", "underpass", "surpass", "trespass", "impass", "lowpass", "highpass",
+        "bandpass", "obsession", "possession", "repossession", "supersession",
+    ]
+)  # fmt: skip
+# Up to 40 letters or digits may be glued in front of a flag word or ending (`--dbpassword`, `--mytoken`, `--confirmpass`),
+# unless the whole glued word is ordinary (the look-ahead is read ONCE, at the start of the word).
+_FLAG_NOT_ORDINARY = r"(?!(?:" + "|".join(sorted(ORDINARY_WORDS)) + r")(?![a-z0-9]))"
+FLAG_NAME = (
+    r"(?:[a-z0-9]+[_\-]){0,2}"
+    + _FLAG_NOT_ORDINARY
+    + "(?:[a-z0-9]{0,40}(?:"
+    + FLAG_WORDS
+    + ")|[a-z0-9]{0,40}(?:"
+    + "|".join(BARE_ENDINGS)
+    + "))"
+)
 _CRED_FLAG = r"(?i)(?<![\w-])(?:--" + FLAG_NAME + r"|-(?:password|passwd))(?![\w-])"
 # How far the ARN rule looks ahead for a key it must not swallow. The generic key rule has no prefix bound (it starts at
 # the key word), so any distance works for the guard; one named number keeps the look-ahead short.
@@ -231,9 +253,12 @@ _GUARDED_DOMAIN = (
 # until the end of the line or one of these stops, and the stop itself stays readable:
 #   - a flag: `--` and a letter (`--force`, `--target`), or `-` and ONE letter (`-f`, `-y`);
 #   - the next key: a word that starts with a letter or `_` and ends in `:` or `=` (`user=bob`, `port:`, `http://`);
-#   - a quote or `&`; a `,` or `;` that is followed by a space, by the end of the text, by a quote, a `&`, another `,` or `;`,
-#     or by a new `key=` (`Password=ab;Server=x` keeps `;Server=x`; `cookie=ab; path=/` keeps `; path=/`; a link right
-#     after a `;` also starts like a key, so `password=ab;http://x` keeps `;http://x`).
+#   - a quote or `&`;
+#   - a `,` only in front of a new `key=` or `key:` (`a=1,password=x,user=bob` keeps `,user=bob`; `password=ab,cd ef` is masked
+#     whole, and so is `password=<SECRET_1>, retry later`);
+#   - a `;` that is followed by a space, by the end of the text, by a quote, a `&`, a `,`, another `;` or a new `key=` (`Password=ab;Server=x`
+#     keeps `;Server=x`; `cookie=ab; path=/` keeps `; path=/`; a link right after a `;` also starts like a key, so
+#     `password=ab;http://x` keeps `;http://x`).
 # So `--force --target prod` after a value is kept, and a word with a dash or a colon INSIDE a value is part of it:
 # `password=correct -horse battery staple` (a dash and several letters is no flag: it may be a word of a passphrase, and a
 # leaked passphrase word is worse than a lost option) and `password=correct 12:30 horse` (a word that starts with a digit
@@ -290,13 +315,16 @@ _VALUE_WITH_TAIL = (
 # rule on main took whole (`session_cookie=a; csrf=b; user=c` is one secret, Q8b round 5). A value that is only
 # placeholders is masked already, as in `_VALUE_WITH_TAIL`.
 _JAR_PAIR = r";\s*[^\s;=]+=[^\s;]*"
+# One character of a session cookie's value: a character of the generic value, and a bare `&` (main's cookie rule took
+# `[^\s;,"'\[{]+`, which holds `&`; a cookie value is no query string, so `session_cookie=a&b=c` is ONE secret, Q8b round 6).
+_COOKIE_VALUE_CHAR = r"(?:" + _VALUE_CHAR + "|&)"
 _SESSION_COOKIE_VALUE = (
     r"(?:(?:<(?:"
     + "|".join(sorted(SECRET_KINDS))
     + r")_\d+>)+(?!"
-    + _VALUE_CHAR
+    + _COOKIE_VALUE_CHAR
     + ")|"
-    + _VALUE_CHAR
+    + _COOKIE_VALUE_CHAR
     + "+(?:"
     + _JAR_PAIR
     + "|[ \t]+(?!"
@@ -304,7 +332,7 @@ _SESSION_COOKIE_VALUE = (
     + "|"
     + _KEY_STOP
     + ")"
-    + _VALUE_CHAR
+    + _COOKIE_VALUE_CHAR
     + "+)*)"
 )
 # A key, the sign, and the value (the text after a scheme word such as `Bearer`): the Bearer and Authorization rules
@@ -682,7 +710,8 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "SECRET",
         re.compile(
-            _COOKIE_ASSIGN_KEY + r"(?:=>|=(?!>))\s*+([^\s;,\"'\[{]+(?:;\s*[^\s;=]+=[^\s;]*)*)"
+            _COOKIE_ASSIGN_KEY
+            + r"(?:=>|=(?!>))\s*+([^\s;,\"'\[{][^\s;,\"']*(?:;\s*[^\s;=]+=[^\s;]*)*)"
         ),
     ),
     # `session_cookie=`: the rule above leaves it to this one (several words, and the jar pairs the rule above took).

@@ -20,7 +20,7 @@ from psycopg.conninfo import make_conninfo
 
 from tests.demo_askdata.attackrun import outcome
 from tests.demo_askdata.conftest import Db
-from tests.demo_askdata.corpus import ATTACKS, Attack
+from tests.demo_askdata.corpus import ATTACKS, COPY_TARGET, Attack
 
 HARMFUL = [a for a in ATTACKS if a.harm != "none"]
 EVIL_ROLE = "askdata_p2_evil"
@@ -37,6 +37,10 @@ def template(make_db) -> Iterator[Db]:
     yield d
     with d.admin() as conn:
         conn.execute(f'DROP ROLE IF EXISTS "{EVIL_ROLE}"')
+    try:  # the file the `copy-to-file` attack made (this run's own name); the server's user may own it
+        COPY_TARGET.unlink(missing_ok=True)
+    except OSError:
+        pass
 
 
 @pytest.fixture

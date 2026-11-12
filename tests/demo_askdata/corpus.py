@@ -14,6 +14,9 @@ would do if it reached a privileged session; and benign statements that must be 
 
 from __future__ import annotations
 
+import tempfile
+import uuid
+from pathlib import Path
 from typing import NamedTuple
 
 NUL = chr(0)
@@ -30,6 +33,9 @@ GREEK_QUESTION = chr(0x37E)  # looks like a semicolon
 CYR_I = chr(0x0456)  # looks like Latin i
 FULLWIDTH_S = chr(0xFF33)
 EACUTE = chr(0xE9)
+# The file the `copy-to-file` attack asks the database server to write: a name made per run (a fixed name collided between
+# concurrent runs: a file left by another run, owned by another database user, made the server refuse with "Permission denied").
+COPY_TARGET = Path(tempfile.gettempdir()) / f"askdata_p2_copy_{uuid.uuid4().hex}.csv"
 
 O = "analytics.orders_v"  # short names keep the table readable
 C = "analytics.customers_v"
@@ -94,7 +100,7 @@ ATTACKS: list[Attack] = [
     A("alter-table", "ALTER TABLE shop.orders ADD COLUMN x integer", "V03", "writes", "write"),
     A("grant", "GRANT ALL ON ALL TABLES IN SCHEMA shop TO PUBLIC", "V03", "writes", "write"),
     A("copy-program", "COPY (SELECT 1) TO PROGRAM 'cat > /dev/null'", "V03", "writes", "exec"),
-    A("copy-to-file", "COPY shop.customers TO '/tmp/askdata_p2_copy.csv'", "V03", "writes", "exec"),
+    A("copy-to-file", f"COPY shop.customers TO '{COPY_TARGET}'", "V03", "writes", "exec"),
     A("call", "CALL shop.purge()", "V03", "writes", "write"),
     A("do-block", "DO 'BEGIN DELETE FROM shop.order_items; END'", "V03", "writes", "write"),
     A("set-role", "SET ROLE postgres", "V03", "session-state", "exec"),

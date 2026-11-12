@@ -33,6 +33,7 @@ SLACK = "approvals/slack_channel.py"
 BATCH = "test_q8b_batch2.py"
 BATCH3 = "test_q8b_batch3.py"
 BATCH4 = "test_q8b_batch4.py"
+BATCH6 = "test_q8b_batch6.py"
 # What the mutation copy holds besides src: a test reads CHANGELOG.md from the repo root (tests/test_q8b_batch3.py checks this list).
 EXTRA_DIRS = ("tests", "tools", "demos", "docs")
 EXTRA_FILES = ("CHANGELOG.md",)
@@ -236,7 +237,9 @@ M = [
         BATCH4, 'test_j3_a_semicolon_in_front_of_a_word_belongs_to_an_unquoted_value', 'the part after the `;` is readable'),
     mutant('M70 a semicolon in front of a key does not end the value', REDACT, r'''|;(?=[^\s\"';,&])(?![A-Za-z_][\w.\-]*[\"']?\s*[:=]))"''', r'''|;(?=[^\s\"';,&]))"''',
         BATCH4, 'test_j3_a_semicolon_in_front_of_a_key_a_space_or_the_end_stops_the_value', "expected 'Password=<SECRET_1>;Server=db1'"),
-    mutant('M71 flag prefix joined by hyphens only', REDACT, r'''FLAG_NAME = r"(?:[a-z0-9]+[_\-]){0,2}(?:" + FLAG_WORDS + ")"''', r'''FLAG_NAME = r"(?:[a-z0-9]+\-){0,2}(?:" + FLAG_WORDS + ")"''',
+    mutant('M71 flag prefix joined by hyphens only', REDACT, r'''FLAG_NAME = (
+    r"(?:[a-z0-9]+[_\-]){0,2}"''', r'''FLAG_NAME = (
+    r"(?:[a-z0-9]+\-){0,2}"''',
         BATCH4, 'test_j4_a_flag_with_an_underscore_or_a_hyphen_masks_its_value', 'a flag value is readable'),
     mutant('M72 flag words are a hand list', REDACT, r'''[a for a in KEY_ALTERNATIVES if "(?=" not in a] + list(FLAG_ONLY_WORDS)''',
         r'''[r"password", r"passwd", r"pwd", r"secret", r"token", r"api[_\-]?key", "pass"]''',
@@ -250,10 +253,10 @@ M = [
         BATCH4, 'test_j1_the_d1_keys_are_masked_in_every_style_on_every_path', 'stayed readable'),
     mutant('M76 session cookie rule loses the jar pairs', REDACT, '    + "+(?:"\n    + _JAR_PAIR\n    + "|[ \\t]+(?!"', '    + "+(?:"\n    + "|[ \\t]+(?!"',
         BATCH4, 'test_j1_a_session_cookie_keeps_its_whole_jar_masked', 'a pair of the cookie jar is readable'),
-    mutant('M77 cookie assignment rule loses the jar pairs', REDACT, r'''([^\s;,\"'\[{]+(?:;\s*[^\s;=]+=[^\s;]*)*)"
+    mutant('M77 cookie assignment rule loses the jar pairs', REDACT, r'''([^\s;,\"'\[{][^\s;,\"']*(?:;\s*[^\s;=]+=[^\s;]*)*)"
         ),
     ),
-    # `session_cookie=`''', r'''([^\s;,\"'\[{]+)"
+    # `session_cookie=`''', r'''([^\s;,\"'\[{][^\s;,\"']*)"
         ),
     ),
     # `session_cookie=`''',
@@ -266,7 +269,7 @@ M = [
         BATCH4, 'test_j1_every_key_the_older_rule_masked_is_still_masked', 'the older rule masks it and this one does not'),
     mutant('M80 authorization is no bare prefix of the quoted rules', REDACT, 'QUOTED_KEY_WORDS = KEY_WORDS + "|pass|session|authorization"', 'QUOTED_KEY_WORDS = KEY_WORDS + "|pass|session"',
         BATCH4, 'test_j1_a_quoted_value_after_authorization_is_masked_whole', 'a word of the quoted value is readable'),
-    mutant('M81 flags lose the glued names', REDACT, '    "newpass",\n    "oldpass",\n    "postgresauth",\n    "authorization",\n', '',
+    mutant('M81 flags lose the glued ending branch', REDACT, '    + "|".join(BARE_ENDINGS)\n', '    + "zzqx"\n',
         BATCH4, 'test_j4_a_flag_with_a_word_glued_in_front_of_pass_or_auth_masks_its_value', 'a flag value is readable'),
     mutant('M82 oauth is an ordinary word again', RED, '"bandpass", "obsession"', '"bandpass", "oauth", "obsession"',
         BATCH4, 'test_j2_oauth_is_a_credential_key_in_a_record_as_it_is_in_text', 'oauth is on the ordinary-word list'),
@@ -280,6 +283,16 @@ M = [
         BATCH4, 'test_j6_the_comma_pin_matches_the_code', 'a comma ended the value'),
     mutant('M87 a bearer key is not a key', REDACT, 'r"auth(?=[\\"\']?\\s*[:=])", r"session(?=[\\"\']?\\s*[:=])", r"bearer(?=[\\"\']?\\s*[:=])",', 'r"auth(?=[\\"\']?\\s*[:=])", r"session(?=[\\"\']?\\s*[:=])",',
         BATCH4, 'test_j6_the_whole_line_after_a_bearer_key_is_masked', 'a word after a bearer key is readable'),
+    mutant('M88 a session cookie value stops at an ampersand', REDACT, '_COOKIE_VALUE_CHAR = r"(?:" + _VALUE_CHAR + "|&)"', '_COOKIE_VALUE_CHAR = r"(?:" + _VALUE_CHAR + ")"',
+        BATCH6, 'test_k1_a_session_cookie_value_keeps_the_part_after_an_ampersand_masked', 'the part after the ampersand is readable'),
+    mutant('M89 the cookie rule stops at a bracket again', REDACT, r"""([^\s;,\"'\[{][^\s;,\"']*(?:;""", r"""([^\s;,\"'\[{]+(?:;""",
+        BATCH6, 'test_k1_a_cookie_key_value_with_a_bracket_after_its_first_character_is_masked_whole', 'a bracket ended the cookie value'),
+    mutant('M90 the record walk keeps its own ordinary words', RED, 'from hadavin_sdk.guard.redact import BARE_ENDINGS, ORDINARY_WORDS', 'from hadavin_sdk.guard.redact import BARE_ENDINGS\nORDINARY_WORDS = frozenset(["bypass"])',
+        BATCH6, 'test_d6_the_record_walk_reads_the_one_list_of_ordinary_words_and_endings', 'the record walk keeps its own list of ordinary words'),
+    mutant('M91 a glued flag is read through an ordinary word', REDACT, '    + _FLAG_NOT_ORDINARY\n    + "(?:[a-z0-9]{0,40}(?:"', '    + "(?:[a-z0-9]{0,40}(?:"',
+        BATCH6, 'test_d6_a_flag_with_an_ordinary_word_stays_readable', 'an ordinary word was masked as a flag'),
+    mutant('M92 the bare words are no flag names', REDACT, '    "bearer",\n    "credentials",\n)', ')',
+        BATCH6, 'test_d6_a_flag_with_a_word_glued_in_front_masks_its_value_like_the_record_key', 'a glued flag value is readable'),
 ]  # fmt: skip
 
 
@@ -310,6 +323,7 @@ if __name__ == "__main__":
             "tests/" + BATCH,
             "tests/" + BATCH3,
             "tests/" + BATCH4,
+            "tests/" + BATCH6,
         ],
         extra_dirs=EXTRA_DIRS,
         extra_files=EXTRA_FILES,
