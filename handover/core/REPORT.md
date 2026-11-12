@@ -1,6 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## Status - 19:02Z (next block by +5 min)
+- Q8c-1 b15 round 15 resolved (1 Major group, 7 Minor, 1 Nit; ledger Q8c1b15-r15-1..10) and batch-16 builder started (core/q8c1-b16 -> wip/cloud-q8c1-b16). Stop rule: one confirming round after b16, then READY.
+- Running agents: 15 (builders: PRH b12, P3a-2 b9, Q8b b14c, Q8c-1 b16, promotion parts 2, 3, 5, 6, AK-G2-a; evidence runner Q8a-1 b19; helpers: ledger triage, open questions, READY-TO-MERGE table). Pushed: Q8c-1 b15 evidence and resolve report, part 2 helper commit on wip/cloud-pd-bind.
+- Not started yet: the stack rebase builders (ORDER 256 D); waiting for the READY-TO-MERGE table to show which stacks are really behind main.
+- Stuck: nothing. Needs from the lead: nothing.
+
 ## ORDER 256 received - 2026-11-12 19:02Z / 00:32 IST (next block by 19:07Z)
 - Clock correction: my last three block titles said 19:05Z to 19:10Z; the machine clock read 18:55-19:00Z then. Times from now are read from `date -u`. Honest slip, no work affected.
 - Applying: (A) stop rule. Q8a-1 b19 round 20 had 0 Blocker and 0 Major in BOTH reviews: no further review of minors; batch 20 will fix the r20 minors in one push, then ONE more round because it is a security path (the first clean round was r20). Q8c-1 b15 still has a Major (N1): batch 16 then continue. (B) class first in every new brief. (C) READY-TO-MERGE.md: agent ad5f13... building it now from the PR list. (E) ledger triage and (F) open questions: two agents started, both write only under handover/core/ and change no existing file. (D) rebase builders for the stacks start next, after the PR table shows the real state (queue by heavy slot).

@@ -215,3 +215,4 @@ PULSE 11:39Z: no change in results. Waiting: EV runners PRH b9 and Q8b b11 (no R
 18:55Z core: ORDER 255: 3 promotion builders started (parts 2,3,6); AK-G2-a and part 5 next
 18:55Z core: 5 promotion builders running (parts 2,3,6,5 and AK-G2-a); 12 agents
 19:00Z core: ORDER 256 applied (stop rule, triage agents, READY-TO-MERGE building); Q8c-1 b15 evidence committed; part 2 helper pushed
+19:02Z core: Q8c-1 b15 resolved, b16 builder started; 15 agents
