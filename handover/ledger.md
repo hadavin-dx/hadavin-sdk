@@ -3029,3 +3029,13 @@
 | PRHb11-r11-11 | Minor | PR H | r11 F7/F10: SECURITY overstates backslash-e rule; CJK Ext J gap; docstring and mutant message nits | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
 | PRHb11-r11-12 | Major | PR H | r11 owner items q-prh-piece-masking and q-prh-spaced-secrets: not built; do not report closed | OWNER-ONLY | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
 | PRHb11-r11-13 | Major | PR H | r11 evidence gate: b10 wrapper test cause unexamined, docs failures runner artefact, timing flake, probes miss catchers and glued marks | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| P3a2b8-r19-1 | Minor | P3a-2 | r19 C1/D1: migrate step 8 keeps the driver error as cause; CHANGELOG scope wrong | OPEN | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
+| P3a2b8-r19-2 | Minor | P3a-2 | r19 C2/D2: no written rule for the 11 from-e sites; cause may hold row values | OPEN | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
+| P3a2b8-r19-3 | Minor | P3a-2 | r19 C3/D3: widened sign-in catch turns transient failure into ConfigError exit 2 not 4 | OPEN | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
+| P3a2b8-r19-4 | Nit | P3a-2 | r19 D4: test docstring names V131 but kills V133 | OPEN | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
+| P3a2b8-r19-5 | Nit | P3a-2 | r19 D5: V132 V133 V146 read not run; close with independent run evidence | OPEN | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
+| P3a2b8-r19-6 | Nit | P3a-2 | r19 C4/D6: copy-program Broken pipe and dblink-connect fixed-socket failure not proven unrelated | OPEN | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
+| P3a2b8-r19-7 | Nit | P3a-2 | r19 C5: sign-in channels test imports helper from another test module | OPEN | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
+| P3a2b8-r19-8 | Nit | P3a-2 | r19 note: malformed DSN at postgres.py:236 may raise raw ProgrammingError quoting the DSN | OPEN | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
+| P3a2b8-r19-9 | Minor | P3a-2 | r19 evidence: 39th old-source failure unnamed; timing test fails on both heads; PG17 and 3.12 impossible-now | OPEN | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
+| P3a2b8-r19-10 | Minor | P3a-2 | r19 owner item O8 q-p3a2-o8-schema-owner stays OFF | OWNER-ONLY | reviews/P3a-2/goldfish_review_report-r19.md | - | 2026-11-12 |
