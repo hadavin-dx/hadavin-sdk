@@ -3,3 +3,7 @@
 | PRHb6-C1C2 | prhb6-codebase-r6.md C1, C2 + design F3 | Major | PR H | direct redact(): U+009B cut not covered; consuming reading chosen by placeholder count with no lost-letter refusal; tie keeps grammar output | OPEN | batch 7 | | 2026-11-12
 | PRHb6-C3 | prhb6-codebase-r6.md C3 + design F4/F5 | Major | PR H | CHANGELOG claim wider than code (raw returned when nothing found; sampled window above 132 chars; hex case; availability cost unsaid) | OPEN | batch 7 | | 2026-11-12
 | PRHb6-nits | prhb6-codebase-r6.md C4-C6 | Nit | PR H | stale "13 and 7" docstring; mutant 79 thin killer; piece_min not in CHANGELOG settings list | OPEN | batch 7 | | 2026-11-12
+| Q8a1b11-D1 | reviews/Q8a-1/q8a1b11-design-r11.md D1 | Minor | Q8a-1 | allowance reason and trace docstring say region/bucket validated by pattern: false for S3 and AWS (backends/table.py:166-167, :149, :238-239) | OPEN | batch 12 | | 2026-11-12
+| Q8a1b11-D2 | q8a1b11-design-r11.md D2 | Minor | Q8a-1 | guard misses shapes (Div, split/partition, nested tuple targets, append/print/log extra, _settings, parameters); no planted fault | OPEN | batch 12 | | 2026-11-12
+| Q8a1b11-D3 | q8a1b11-design-r11.md D3 | Minor | Q8a-1 | cause chain: audit/signer.py:87 and audit/local_dir.py:112 raise ... from exc carry library text; use from None | OPEN | batch 12 | | 2026-11-12
+| Q8a1b11-nits | q8a1b11-design-r11.md D4-D6 | Nit | Q8a-1 | clean-form row cannot fail; importorskip leaves M21a unkillable without extras; false allowance reasons; test_sources.py:285 assert message TypeError | OPEN | batch 12 | | 2026-11-12
