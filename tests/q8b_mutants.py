@@ -274,7 +274,7 @@ M = [
         BATCH4, 'test_j3_a_semicolon_in_front_of_a_word_belongs_to_an_unquoted_value', 'the part after the `;` is readable'),
     mutant('M84 a word with a digit in front ends a value after a comma', REDACT, r'''|,(?!\s*[A-Za-z_][\w.\-]*\s*[:=])|;(?=''', r'''|,(?!\s*[\w.\-]+\s*[:=])|;(?=''',
         BATCH4, 'test_j3_a_semicolon_in_front_of_a_word_belongs_to_an_unquoted_value', 'the part after the `;` is readable'),
-    mutant('M85 a flag name is read up to its first word', REDACT, r'''|-(?:password|passwd))(?![\w-])"''', r'''|-(?:password|passwd))"''',
+    mutant('M85 a flag name is read through the rest of its word', REDACT, r'''|-(?:password|passwd))(?![\w-])"''', r'''|-(?:password|passwd))[\w-]*"''',
         BATCH4, 'test_j4_names_that_are_no_credential_stay_readable', 'a name that is no credential was masked'),
     mutant('M86 a comma always ends an unquoted value', REDACT, r'''|,(?!\s*[A-Za-z_][\w.\-]*\s*[:=])|;(?=''', r'''|;(?=''',
         BATCH4, 'test_j6_the_comma_pin_matches_the_code', 'a comma ended the value'),
