@@ -3083,8 +3083,8 @@ M = [
     mutant(
         "B14 notes check ignores the module named as text in an import_module call",
         NTOOL,
-        "if isinstance(a, ast.Constant) and isinstance(a.value, str)",
-        "if False",
+        "                    if isinstance(a, ast.Constant) and isinstance(a.value, str)\n                ]",
+        "                    if False\n                ]",
         "test_a_file_that_imports_modules_by_a_name_worked_out_at_run_time_lists_what_it_reaches",
         "named as text in an import_module call listed",
         test_file=NOTES_TEST,
