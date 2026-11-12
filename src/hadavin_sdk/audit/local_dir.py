@@ -80,7 +80,8 @@ class LocalDirSink:
         self._fsync_dir(self.root)
 
     def _write(self, event: AuditEvent) -> str:
-        if not plain_event_name(event.event_id):  # an event built without validation must not name a file
+        # an event built without validation must not name a file
+        if not plain_event_name(event.event_id):
             raise ValueError("event_id is not a plain file name")
         body = event.model_dump_json().encode("utf-8")
         key = f"{event.event_id}.json"
@@ -124,7 +125,8 @@ class LocalDirSink:
             return f"{event.event_id}.json"
         except Exception:  # noqa: BLE001 - disk errors, a corrupt index line: the contract is "never raises"
             try:
-                if plain_event_name(event.event_id):  # otherwise the event stays in memory: it never names a file
+                # otherwise the event stays in memory: it never names a file
+                if plain_event_name(event.event_id):
                     self.outbox.mkdir(parents=True, exist_ok=True)
                     tmp = self.outbox / f".tmp-{event.event_id}"
                     tmp.write_text(event.model_dump_json(), encoding="utf-8")

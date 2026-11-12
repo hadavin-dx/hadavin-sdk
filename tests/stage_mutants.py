@@ -1058,9 +1058,9 @@ M = [
     other_mutant('Z171 round 16: the refusal of an event id quotes the id again (models.py)', 'src/hadavin_sdk/models.py',
         'model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)', 'model_config = ConfigDict(extra="forbid", hide_input_in_errors=False)', B, 'test_the_refusal_of_a_bad_event_id_does_not_quote_the_id', 'input_value', '[../x]'),
     other_mutant('Z172 round 16: the local audit folder trusts the id of an event (local_dir.py, intent)', 'src/hadavin_sdk/audit/local_dir.py',
-        '        if not plain_event_name(event.event_id):  # an event built without validation must not name a file', '        if False:  # an event built without validation must not name a file', B, 'test_the_local_audit_folder_never_makes_a_file_from_an_event_that_skipped_the_model_check', 'wrote an event'),
+        '        if not plain_event_name(event.event_id):', '        if False:', B, 'test_the_local_audit_folder_never_makes_a_file_from_an_event_that_skipped_the_model_check', 'wrote an event'),
     other_mutant('Z173 round 16: the outbox trusts the id of an event (local_dir.py)', 'src/hadavin_sdk/audit/local_dir.py',
-        '                if plain_event_name(event.event_id):  # otherwise', '                if True:  # otherwise', B, 'test_the_outbox_never_makes_a_file_from_an_event_id_that_is_not_a_plain_name', 'made a file from an event id'),
+        '                if plain_event_name(event.event_id):', '                if True:', B, 'test_the_outbox_never_makes_a_file_from_an_event_id_that_is_not_a_plain_name', 'made a file from an event id'),
     other_mutant('Z174 round 16: shown_id shows an id of a prefix the code does not make (errors.py)', 'src/hadavin_sdk/errors.py',
         'ID_PREFIXES = ("run", "pln", "apr", "evt", "k1b")', 'ID_PREFIXES = ("run", "pln", "apr", "evt", "k1b", "key")', B, 'test_shown_id_shows_only_ids_of_the_prefixes_the_code_makes', 'a prefix the code does not make'),
     other_mutant('Z175 round 16: shown_id drops a prefix the code makes (errors.py)', 'src/hadavin_sdk/errors.py',
@@ -1077,6 +1077,8 @@ M = [
         '        return RunResult(outcome="failed", error_code=_http_code(status))', '        return RunResult(outcome="failed", error_code=f"http_{status}")', 'tests/test_q8a1_b16_fixes.py', 'test_execute_reports_an_error_status_as_its_digits_and_never_through_the_text_of_the_status', 'built its error code from the text', '[404-failed]'),
     other_mutant('Z181 round 16: a refused port is shown as written (tools.py)', 'src/hadavin_sdk/tools.py',
         'raise ToolRefused(f"port {status_text(port)} is not allowed for this tool")', 'raise ToolRefused(f"port {port} is not allowed for this tool")', 'tests/test_q8a1_b16_fixes.py', 'test_a_refused_port_is_shown_by_its_digits_never_by_the_text_of_the_value', 'by the text of the value'),
+    other_mutant('Z182 round 16: a failure that is not a refusal exits 1 (cli.py main, check-config)', 'src/hadavin_sdk/cli.py',
+        '            _print_frames(exc)\n        return 3\n', '            _print_frames(exc)\n        return 1\n', B, 'test_check_config_exit_codes_are_those_of_main_and_tick', 'failure that is not a refusal (it must be 3'),
 ]  # fmt: skip
 
 

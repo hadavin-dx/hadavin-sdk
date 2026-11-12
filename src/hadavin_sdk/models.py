@@ -30,8 +30,16 @@ def new_id(prefix: str) -> str:
 # The id of an audit event is a file name (audit/local_dir.py): see `AuditEvent`.
 EVENT_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9_-]{0,127}")
 _RESERVED_NAMES = frozenset(
-    {"con", "prn", "aux", "nul", *(f"com{n}" for n in range(1, 10)), *(f"lpt{n}" for n in range(1, 10))}
+    {
+        "con",
+        "prn",
+        "aux",
+        "nul",
+        *(f"com{n}" for n in range(1, 10)),
+        *(f"lpt{n}" for n in range(1, 10)),
+    }
 )
+
 
 def plain_event_name(value: object) -> bool:
     """Is this an event id that is safe as a file name on every file system (see `AuditEvent`)? The one test: the model
@@ -228,6 +236,7 @@ class AuditEvent(Shape):
                 "at most 128 characters, starting with a letter or digit, and not a reserved device name"
             )
         return value
+
     ts: datetime = Field(default_factory=now)
     run_id: str
     domain: str

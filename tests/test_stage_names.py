@@ -3496,7 +3496,12 @@ def _guard_violations(sources=None, allowed=None, exempt=None, callers=None):
     sources = _src_sources() if sources is None else sources
     allowed = ALL_ALLOWED if allowed is None else allowed
     exempt = GUARD_EXEMPT_MODULES if exempt is None else exempt
-    return _text_guard.violations(sources, allowed, exempt, _caller_sources() if callers is None and sources is None else (callers or {}))
+    return _text_guard.violations(
+        sources,
+        allowed,
+        exempt,
+        _caller_sources() if callers is None and sources is None else (callers or {}),
+    )
 
 
 def test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter():
@@ -3798,26 +3803,41 @@ _PLANTED_FAULTS = {
         "class K:\n    def __init__(self):\n        self.msg = 'fixed'\nclass L:\n    def f(self):\n        raise A(self.msg)",
         1,
     ),
-    "R16l a set difference in a message": ("def f(done, files):\n    raise A(f'gone {sorted(done - files)}')", 1),
-    "R16m a text filter that returns its argument": ({"errors.py": "def shown_name(x):\n    return x\n"}, 1),
+    "R16l a set difference in a message": (
+        "def f(done, files):\n    raise A(f'gone {sorted(done - files)}')",
+        1,
+    ),
+    "R16m a text filter that returns its argument": (
+        {"errors.py": "def shown_name(x):\n    return x\n"},
+        1,
+    ),
     "R16n a number annotation on a text": (
         "def f(exc):\n    x: int = str(exc)\n    raise A(f'{x}')",
         2,
     ),
-    "R16o a log call with a text directive": ("def f(log, name):\n    log.warning('bad %s', name)", 1),
+    "R16o a log call with a text directive": (
+        "def f(log, name):\n    log.warning('bad %s', name)",
+        1,
+    ),
 }
 _ERRORS_STUB = "def shown_name(x):\n    return 'fixed'\ndef status_text(x):\n    return 'fixed'\n"
 
 _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be found
     "R15 int() of a value that is a written number": "def f():\n    raise A(f'port {int(8080)}')",
-    "R13e a status through status_text": {"errors.py": _ERRORS_STUB, "m.py": "from hadavin_sdk.errors import status_text\ndef f(status):\n    raise A(f'answered {status_text(status)}')"},
+    "R13e a status through status_text": {
+        "errors.py": _ERRORS_STUB,
+        "m.py": "from hadavin_sdk.errors import status_text\ndef f(status):\n    raise A(f'answered {status_text(status)}')",
+    },
     "R13a print of a constant sentence with file=": "import sys\nprint('a sentence', file=sys.stderr, flush=True)",
     "R13c a comprehension variable over a tuple of words": "def f():\n    return [f'bad {x}' for x in ('a', 'b')]",
     "R13d a comprehension counter by enumerate": "def f(items):\n    return [f'entry {i}' for i, _ in enumerate(items, start=1)]",
     "I5f the parameter of the class-name lambda of call_class_only": 'def f(c):\n    call_class_only(c, lambda cls: A(f"{cls}"))',
     "I5d an inner function reads a variable bound to a written word in the outer function": 'def f():\n    other = "x"\n    def g():\n        raise A(f"{other}")\n    g()',
     "I5e a name plus a number is a number": 'def f(name):\n    raise A(f"{name + 1}")',
-    "shown_name in a loop": {"errors.py": _ERRORS_STUB, "m.py": 'from hadavin_sdk.errors import shown_name\ndef f(options):\n    for entry in options:\n        raise A(f"source {shown_name(entry)}")'},
+    "shown_name in a loop": {
+        "errors.py": _ERRORS_STUB,
+        "m.py": 'from hadavin_sdk.errors import shown_name\ndef f(options):\n    for entry in options:\n        raise A(f"source {shown_name(entry)}")',
+    },
     "a position counted by enumerate": 'def f(options):\n    for i, entry in enumerate(options, start=1):\n        raise A(f"entry {i}")',
     "a range counter": 'for i in range(3):\n    raise A(f"try {i}")',
     "a number with a number format": 'def f(n: int):\n    raise A(f"{n:04d} is missing")',
@@ -3886,7 +3906,9 @@ def test_the_guard_finds_each_planted_fault_alone(shape):
     """One planted fault per shape (the 25 of the evidence probe 7 and the reviewers' extras): the guard reports exactly
     the stated number of sites, so a guard that lost a shape fails here by the shape's name."""
     code, count = _PLANTED_FAULTS[shape]
-    found, _ = _guard_violations(code if isinstance(code, dict) else {"m.py": code}, allowed={}, exempt={})
+    found, _ = _guard_violations(
+        code if isinstance(code, dict) else {"m.py": code}, allowed={}, exempt={}
+    )
     assert len(found) == count, (shape, found)
 
 

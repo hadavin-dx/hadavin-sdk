@@ -32,7 +32,8 @@ def test_every_test_name_in_the_changelog_is_defined_in_tests():
 def test_every_repository_path_in_the_changelog_exists():
     paths = set(
         re.findall(
-            r"`((?:[A-Za-z0-9_.-]+/)+[A-Za-z0-9_.-]+\.(?:py|md|yaml|yml|sql|toml|txt|json|sh))`", TEXT
+            r"`((?:[A-Za-z0-9_.-]+/)+[A-Za-z0-9_.-]+\.(?:py|md|yaml|yml|sql|toml|txt|json|sh))`",
+            TEXT,
         )
     )
     # a path under the package is written without the `src/hadavin_sdk/` prefix in prose, and a few are examples
@@ -53,7 +54,9 @@ def _computed_counts() -> dict[str, int]:
 
     handlers = 0
     for path in (ROOT / "src").rglob("*.py"):
-        handlers += sum(1 for line in path.read_text(encoding="utf-8").splitlines() if "noqa: BLE001" in line)
+        handlers += sum(
+            1 for line in path.read_text(encoding="utf-8").splitlines() if "noqa: BLE001" in line
+        )
     own = len(allowances.NEW_ALLOWED)
     return {
         "REASONS": len(allowances.REASONS),
@@ -73,5 +76,11 @@ def test_the_counts_of_the_batch_16_entry_are_the_counts_of_this_head():
         TEXT,
     )
     assert claim, "the batch 16 entry has no sentence of counts in the written form"
-    said = dict(zip(("REASONS", "CHECKED", "OWN", "ALL", "MUTANTS", "HANDLERS"), map(int, claim.groups()), strict=True))
+    said = dict(
+        zip(
+            ("REASONS", "CHECKED", "OWN", "ALL", "MUTANTS", "HANDLERS"),
+            map(int, claim.groups()),
+            strict=True,
+        )
+    )
     assert said == got, f"the CHANGELOG counts {said} are not the counts of this head {got}"

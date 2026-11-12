@@ -41,7 +41,9 @@ FILTERS = frozenset(
         "shown_name", "_named", "shown_names", "digest_prefix", "error_where", "word_like", "is_digest", "status_text", "shown_id",
     }
 )  # fmt: skip
-FILTER_MODULE = "errors.py"  # the module that defines the package's text filters (Round 16, Issue 3c)
+FILTER_MODULE = (
+    "errors.py"  # the module that defines the package's text filters (Round 16, Issue 3c)
+)
 LITERAL_BUILDERS = frozenset(
     {"frozenset", "tuple", "set", "list", "dict", "sorted", "str", "int", "float", "bytes", "len", "compile",
      "MappingProxyType", "Template", "Literal", "Decimal", "re", "escape", "range", "max", "min", "sum"}
@@ -59,7 +61,16 @@ ERROR_SUFFIXES = (
 )
 # `.exception(...)`, `traceback.print_exc()` and `exc_info=True` print the whole chain, including the library text
 CHAIN_PRINTERS = frozenset(
-    {"print_exc", "format_exc", "print_exception", "format_exception", "format_exception_only", "TracebackException", "from_exception", "print_last"}
+    {
+        "print_exc",
+        "format_exc",
+        "print_exception",
+        "format_exception",
+        "format_exception_only",
+        "TracebackException",
+        "from_exception",
+        "print_last",
+    }
 )
 MUTATORS = frozenset(
     {"update", "append", "extend", "add", "insert", "pop", "popitem", "clear", "remove", "discard", "setdefault", "sort", "reverse"}
@@ -203,7 +214,9 @@ class Analysis:
         self.attr_number: set[str] = set()
         self.attr_safe: set[str] = set()
         self._with_cache: dict = {}
-        self.cls_attrs: dict[str, set[str]] = {}  # class name -> attribute names it assigns or declares
+        self.cls_attrs: dict[
+            str, set[str]
+        ] = {}  # class name -> attribute names it assigns or declares
         self.cls_bases: dict[str, list[str]] = {}  # class name -> names of its bases
         self._envs: dict[int, frozenset[str]] = {}
         self.changed_in_function: set[str] = (
@@ -465,7 +478,9 @@ class Analysis:
         if not isinstance(root, ast.Name):
             return False
         scope = self.scope_of.get(id(e))
-        if root.id in self.taint_of(scope if scope is not None else next(iter(self.trees.values()))):
+        if root.id in self.taint_of(
+            scope if scope is not None else next(iter(self.trees.values()))
+        ):
             return True
         module = self.module_of.get(id(e))
         if root.id in self.imports.get(module, {}):
@@ -516,7 +531,9 @@ class Analysis:
                 # a module outside the package (a demo): only its calls are read, to see what it passes to a parameter
                 if isinstance(ch, ast.Call):
                     self.calls.append((module, ch, scope))
-                self._walk(module, ch, ch if isinstance(ch, (*FUNCS, ast.ClassDef)) else scope, None)
+                self._walk(
+                    module, ch, ch if isinstance(ch, (*FUNCS, ast.ClassDef)) else scope, None
+                )
                 continue
             if isinstance(ch, FUNCS):
                 params = [a.arg for a in [*ch.args.posonlyargs, *ch.args.args]]
@@ -955,7 +972,9 @@ class Analysis:
 
     # ---- Round 16: values that are numbers by their form ----------------------------------------------------------
     _NUMBER_METHODS = frozenset({"find", "rfind", "index", "rindex", "count", "total_seconds"})
-    _NUMBER_CALLS = frozenset({"len", "abs", "round", "ord", "hash", "id", "min", "max", "sum", "int", "float", "divmod"})
+    _NUMBER_CALLS = frozenset(
+        {"len", "abs", "round", "ord", "hash", "id", "min", "max", "sum", "int", "float", "divmod"}
+    )
 
     def number_valued(self, e, env) -> bool:
         """True when the expression is a number whatever its operands hold: a number literal, a name proven code-owned or
@@ -1006,7 +1025,9 @@ class Analysis:
         pos = d["params"].index(p) if p in d["params"] else None
         is_method = len(d["params"]) < len([*fn.args.posonlyargs, *fn.args.args])
         for call, scope in getattr(self, "callers", {}).get(i, []):
-            if any(isinstance(a, ast.Starred) for a in call.args) or any(k.arg is None for k in call.keywords):
+            if any(isinstance(a, ast.Starred) for a in call.args) or any(
+                k.arg is None for k in call.keywords
+            ):
                 return False
             arg = (
                 call.args[pos]
@@ -1084,7 +1105,9 @@ class Analysis:
             ):
                 # Round 16 (Issue 3b): these make no text, but `set(names) - ALLOWED` and `a | b` of sets make a collection
                 # that a message can show: safe only when both operands are proven or are numbers
-                return all(self.safe(x, env) or self.number_valued(x, env) for x in (e.left, e.right))
+                return all(
+                    self.safe(x, env) or self.number_valued(x, env) for x in (e.left, e.right)
+                )
             if isinstance(e.op, ast.Add) and (_is_number(e.left) or _is_number(e.right)):
                 return True  # `name + 1` is a number sum
             if isinstance(e.op, ast.Mod) and _is_number(e.left):
@@ -1166,7 +1189,11 @@ class Analysis:
         return all(self._is_wrapper(d) for d in mine) and all(d["module"] == module for d in mine)
 
     def _is_wrapper(self, d, depth=0) -> bool:
-        body = [b for b in d["node"].body if not (isinstance(b, ast.Expr) and isinstance(b.value, ast.Constant))]
+        body = [
+            b
+            for b in d["node"].body
+            if not (isinstance(b, ast.Expr) and isinstance(b.value, ast.Constant))
+        ]
         if depth > 2 or len(body) != 1 or not isinstance(body[0], ast.Return):
             return False
         v = body[0].value
@@ -1296,9 +1323,16 @@ class Analysis:
                     # a keyword that carries text of an error or made on the spot: `Result(error_code=str(exc))`, or
                     # through a local name bound to it (Round 16, Issue 2)
                     hit = any(
-                        self._tainted(k.value, tn, env) for k in node.keywords if k.arg not in _PRINT_HOW
+                        self._tainted(k.value, tn, env)
+                        for k in node.keywords
+                        if k.arg not in _PRINT_HOW
                     )
-                if not hit and fn is not None and fn[:1].isupper() and not isinstance(self.parent.get(id(node)), ast.Raise):
+                if (
+                    not hit
+                    and fn is not None
+                    and fn[:1].isupper()
+                    and not isinstance(self.parent.get(id(node)), ast.Raise)
+                ):
                     # a positional argument of a class of the package: `Result(str(exc))` (Round 16, Issue 2)
                     hit = any(self._tainted(a, tn, env) for a in node.args)
                 if not hit and fa in COLLECTORS:
@@ -1323,7 +1357,9 @@ class Analysis:
                 for v in node.values:  # the value is the site, not the whole dict
                     if v is not None and self._tainted(v, tn, env):
                         out.append((v, "message"))
-            elif isinstance(node, (ast.Return, ast.Yield, ast.YieldFrom)) and node.value is not None:
+            elif (
+                isinstance(node, (ast.Return, ast.Yield, ast.YieldFrom)) and node.value is not None
+            ):
                 hit = self._tainted(
                     node.value, self.taint_of(self.scope_of.get(id(node), tree)), env
                 )
@@ -1331,9 +1367,13 @@ class Analysis:
                     # the body of a text filter is read like any other code: it returns text that is not proven code-owned
                     # when `return x` gives back its argument (`def shown_name(x): return x`)
                     fn_def = self._enclosing_def(node)
-                    hit = fn_def is not None and fn_def.name in FILTERS and not safe(node.value, env)
+                    hit = (
+                        fn_def is not None and fn_def.name in FILTERS and not safe(node.value, env)
+                    )
                     if hit:
-                        site = node.value  # the value is the site: the one row of a filter body names the value
+                        site = (
+                            node.value
+                        )  # the value is the site: the one row of a filter body names the value
             elif isinstance(node, ast.Raise) and isinstance(node.exc, ast.Call):
                 args = [*node.exc.args, *(k.value for k in node.exc.keywords)]
                 hit = bare_unsafe(args, env)
@@ -1378,9 +1418,9 @@ class Analysis:
                 pairs = []
                 if isinstance(n, ast.Assign):
                     pairs = [(nm.id, n.value) for t in n.targets for nm in _targets(t)]
-                elif isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name) and n.value:
-                    pairs = [(n.target.id, n.value)]
-                elif isinstance(n, ast.NamedExpr) and isinstance(n.target, ast.Name):
+                elif (
+                    (isinstance(n, ast.AnnAssign) and n.value) or isinstance(n, ast.NamedExpr)
+                ) and isinstance(n.target, ast.Name):
                     pairs = [(n.target.id, n.value)]
                 for name, val in pairs:
                     if name not in tainted and self._tainted(val, frozenset(tainted), env):
@@ -1421,13 +1461,17 @@ class Analysis:
             return False
         for i in found:
             for r in _own(self.defs[i]["node"]):
-                if isinstance(r, ast.Raise) and isinstance(r.exc, ast.Call) and not (
-                    isinstance(r.cause, ast.Constant) and r.cause.value is None
+                if (
+                    isinstance(r, ast.Raise)
+                    and isinstance(r.exc, ast.Call)
+                    and not (isinstance(r.cause, ast.Constant) and r.cause.value is None)
                 ):
                     return True
         return False
 
-    _DIRECTIVE = re.compile(r"%(?:\([^)]*\))?[#0\- +]*(?:\*|\d+)?(?:\.(?:\*|\d+))?[hlL]?([a-zA-Z%])")
+    _DIRECTIVE = re.compile(
+        r"%(?:\([^)]*\))?[#0\- +]*(?:\*|\d+)?(?:\.(?:\*|\d+))?[hlL]?([a-zA-Z%])"
+    )
 
     def _without_number_directives(self, call, args):
         """A logging call `log.error("seq %d", seq)`: an argument that meets a number directive (`%d`, `%i`, `%f`...) is
@@ -1437,7 +1481,9 @@ class Analysis:
             if isinstance(a, ast.Constant) and isinstance(a.value, str):
                 kinds = [m for m in self._DIRECTIVE.findall(a.value) if m != "%"]
                 rest = pos[k + 1 :]
-                drop = {id(rest[j]) for j, c in enumerate(kinds) if j < len(rest) and c in "dixXofeEgG"}
+                drop = {
+                    id(rest[j]) for j, c in enumerate(kinds) if j < len(rest) and c in "dixXofeEgG"
+                }
                 return [x for x in args if id(x) not in drop]
         return args
 
@@ -1451,7 +1497,11 @@ class Analysis:
         for t in self.trees.values():
             for n in ast.walk(t):
                 if isinstance(n, ast.ClassDef):
-                    names = [b.id if isinstance(b, ast.Name) else b.attr for b in n.bases if isinstance(b, (ast.Name, ast.Attribute))]
+                    names = [
+                        b.id if isinstance(b, ast.Name) else b.attr
+                        for b in n.bases
+                        if isinstance(b, (ast.Name, ast.Attribute))
+                    ]
                     bases.setdefault(n.name, []).extend(names)
         errs: set[str] = set()
         changed = True
@@ -1462,7 +1512,10 @@ class Analysis:
                     continue
                 if any(
                     b in errs
-                    or (isinstance(getattr(builtins, b, None), type) and issubclass(getattr(builtins, b), BaseException))
+                    or (
+                        isinstance(getattr(builtins, b, None), type)
+                        and issubclass(getattr(builtins, b), BaseException)
+                    )
                     or (b not in bases and b.endswith(ERROR_SUFFIXES))
                     for b in bs
                 ):
@@ -1479,7 +1532,10 @@ class Analysis:
             return True
         if self._defined is None:
             self._defined = frozenset(
-                n.name for t in self.trees.values() for n in ast.walk(t) if isinstance(n, ast.ClassDef)
+                n.name
+                for t in self.trees.values()
+                for n in ast.walk(t)
+                if isinstance(n, ast.ClassDef)
             )
         return name not in self._defined and name.endswith(ERROR_SUFFIXES)
 

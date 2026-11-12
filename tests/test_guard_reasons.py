@@ -245,7 +245,11 @@ def _returns_own_sentence(fn: ast.AST, depth: int = 0) -> bool:
         if isinstance(v, ast.Call):
             nm = getattr(v.func, "id", getattr(v.func, "attr", ""))
             defs = _package_functions().get(nm)
-            if nm in {"str", "repr", "format", "ascii"} or not defs or not all(_returns_own_sentence(d, depth + 1) for d in defs):
+            if (
+                nm in {"str", "repr", "format", "ascii"}
+                or not defs
+                or not all(_returns_own_sentence(d, depth + 1) for d in defs)
+            ):
                 return False
         elif not _own_sentence(v):
             return False
@@ -279,7 +283,9 @@ def check_listed() -> list[str]:
                 v = node.value
                 if isinstance(v, ast.Name):  # `found += problems`: the other list is read too
                     names.add(v.id)
-                if isinstance(v, ast.Call):  # `refused += _anchor_refusals(...)`: the list that function returns
+                if isinstance(
+                    v, ast.Call
+                ):  # `refused += _anchor_refusals(...)`: the list that function returns
                     for d in _package_functions().get(_callee(v), []):
                         for r in (n for n in ast.walk(d) if isinstance(n, ast.Return)):
                             if isinstance(r.value, ast.Name):
@@ -289,7 +295,9 @@ def check_listed() -> list[str]:
     if not lists:
         bad.append("no list was found in the LISTED rows: the check would pass by being empty")
     for rel, name, var in sorted(lists):
-        fn = _fn(rel, name)  # a missing function fails the check: the list it guards is no longer read
+        fn = _fn(
+            rel, name
+        )  # a missing function fails the check: the list it guards is no longer read
         for n in ast.walk(fn):
             if (
                 isinstance(n, ast.Call)
@@ -307,7 +315,9 @@ def check_listed() -> list[str]:
                 and n.target.id == var
                 and not _own_sentence(n.value)
                 and not isinstance(n.value, ast.Name)  # another list: read by its own name (above)
-                and not _returns_a_named_list(n.value)  # a package function that returns a list: read in that function
+                and not _returns_a_named_list(
+                    n.value
+                )  # a package function that returns a list: read in that function
             ):
                 bad.append(f"{rel}:{n.lineno}: {var} += {ast.unparse(n.value)[:50]}")
     return bad
@@ -1049,9 +1059,22 @@ def check_mignames() -> list[str]:
     ]
     # ledger rows come from the database: only a name shaped like a shipped file is shown, the rest is counted
     ledger = migrate._LEDGER_NAME
-    bad += [f"{n}: a shipped name is not accepted as a ledger name" for n in names if not ledger.fullmatch(n[:-4])]
-    hostile = ["0001_x" + "\n" + "secret", "../etc", "payments-prod", "0001_x y", "a" * 90, "0001_" + "A" * 3]
-    bad += [f"a hostile ledger name is accepted: {h[:10]!r}" for h in hostile if ledger.fullmatch(h)]
+    bad += [
+        f"{n}: a shipped name is not accepted as a ledger name"
+        for n in names
+        if not ledger.fullmatch(n[:-4])
+    ]
+    hostile = [
+        "0001_x" + "\n" + "secret",
+        "../etc",
+        "payments-prod",
+        "0001_x y",
+        "a" * 90,
+        "0001_" + "A" * 3,
+    ]
+    bad += [
+        f"a hostile ledger name is accepted: {h[:10]!r}" for h in hostile if ledger.fullmatch(h)
+    ]
     return bad
 
 
@@ -1069,7 +1092,9 @@ def check_fields() -> list[str]:
         return (
             []
             if (marker not in shown and "position 2" in shown and "alpha" in shown)
-            else [f"FIELDS: an unknown setting shows its key, or the position is missing: {shown[:200]}"]
+            else [
+                f"FIELDS: an unknown setting shows its key, or the position is missing: {shown[:200]}"
+            ]
         )
     return ["an unknown setting was accepted"]
 
@@ -1095,7 +1120,19 @@ def check_arg() -> list[str]:
 # --- round 14: the reasons that had no check, and the checks that read text instead of the tree ------------------------
 
 FUNCS = (ast.FunctionDef, ast.AsyncFunctionDef)
-SHOWN = {"print", "debug", "info", "warning", "warn", "error", "exception", "critical", "fatal", "log", "add_note"}
+SHOWN = {
+    "print",
+    "debug",
+    "info",
+    "warning",
+    "warn",
+    "error",
+    "exception",
+    "critical",
+    "fatal",
+    "log",
+    "add_note",
+}
 _SITE_CACHE: dict[str, tuple[dict, dict]] = {}
 
 
@@ -1178,7 +1215,9 @@ def _declared_numbers() -> set[str]:
                         and ast.unparse(n.returns) in _NUMERIC_NOTES
                     ):
                         names.add(n.name)  # a property or a method that returns a number
-                    if isinstance(n, FUNCS):  # `self.x: Decimal = ...` in a method declares the field too
+                    if isinstance(
+                        n, FUNCS
+                    ):  # `self.x: Decimal = ...` in a method declares the field too
                         for m in ast.walk(n):
                             if (
                                 isinstance(m, ast.AnnAssign)
@@ -1221,7 +1260,10 @@ def _number_maps() -> frozenset[str]:
             if (
                 isinstance(n, ast.AnnAssign)
                 and isinstance(n.target, ast.Attribute)
-                and re.fullmatch(r"(?:dict|defaultdict)\[.*,\s*(?:int|float|Decimal)\]", ast.unparse(n.annotation))
+                and re.fullmatch(
+                    r"(?:dict|defaultdict)\[.*,\s*(?:int|float|Decimal)\]",
+                    ast.unparse(n.annotation),
+                )
             ):
                 names.add(n.target.attr)
     return frozenset(names)
@@ -1316,13 +1358,12 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
             )
         )
         return (
-            by_form
-            or name.startswith("purge_")
-            or name in declared
-            or name in _NUMBER_FORMATTERS
+            by_form or name.startswith("purge_") or name in declared or name in _NUMBER_FORMATTERS
         )
     if isinstance(e, ast.Subscript) and isinstance(e.value, ast.Attribute):
-        return e.value.attr in _number_maps()  # an item of a table declared as one of numbers or money
+        return (
+            e.value.attr in _number_maps()
+        )  # an item of a table declared as one of numbers or money
     if isinstance(e, ast.Attribute):
         cls = _CTX["cls"]
         if cls is not None and isinstance(e.value, ast.Name) and e.value.id == "self":
@@ -1400,7 +1441,9 @@ def _numeric_site(rel: str, node: ast.AST, declared: set[str]) -> str | None:
         and node.args[1].value == "f"
     ):
         parts = [node.args[0]]  # `format(number, "f")` shows a number in fixed-point form
-    elif isinstance(node, ast.Call) and getattr(node.func, "id", "") == "str" and len(node.args) == 1:
+    elif (
+        isinstance(node, ast.Call) and getattr(node.func, "id", "") == "str" and len(node.args) == 1
+    ):
         parts = [node.args[0]]  # `str(number)`
     elif isinstance(node, ast.AugAssign):
         parts = [node.value]
@@ -1908,7 +1951,21 @@ def _callee(c: ast.Call) -> str:
     return getattr(c.func, "id", getattr(c.func, "attr", ""))
 
 
-_PASS_THROUGH = {"str", "repr", "format", "ascii", "bytes", "bytearray", "encode", "decode", "strip", "lower", "upper", "join", "quote"}
+_PASS_THROUGH = {
+    "str",
+    "repr",
+    "format",
+    "ascii",
+    "bytes",
+    "bytearray",
+    "encode",
+    "decode",
+    "strip",
+    "lower",
+    "upper",
+    "join",
+    "quote",
+}
 
 
 def _flowing(value: ast.AST) -> set[str]:
@@ -1947,11 +2004,7 @@ def _aliases(scope: ast.AST, carried: set[str]) -> set[str]:
             pairs: list[tuple[ast.AST, ast.AST | None]] = []
             if isinstance(n, ast.Assign):
                 pairs = [(t, n.value) for t in n.targets]
-            elif isinstance(n, ast.AnnAssign):
-                pairs = [(n.target, n.value)]
-            elif isinstance(n, ast.NamedExpr):
-                pairs = [(n.target, n.value)]
-            elif isinstance(n, ast.AugAssign):
+            elif isinstance(n, ast.AnnAssign | ast.NamedExpr | ast.AugAssign):
                 pairs = [(n.target, n.value)]
             elif isinstance(n, ast.For):
                 pairs = [(n.target, n.iter)]
@@ -2097,7 +2150,9 @@ def check_closed() -> list[str]:
                     if typing.get_origin(hint) is typing.Literal:
                         closed = all(isinstance(a, str) for a in typing.get_args(hint))
                     if not closed:
-                        bad.append(f"{m}: {k[:40]}: {cname}.{attr} is declared {hint}, not a closed set or an int")
+                        bad.append(
+                            f"{m}: {k[:40]}: {cname}.{attr} is declared {hint}, not a closed set or an int"
+                        )
     return bad
 
 
@@ -2173,11 +2228,16 @@ def check_handoff() -> list[str]:
                             up = next(_up(m, u))
                             ok = (
                                 isinstance(up, ast.Raise)
-                                or (isinstance(up, ast.Call) and getattr(up.func, "id", "") in {"isinstance", "type"})
+                                or (
+                                    isinstance(up, ast.Call)
+                                    and getattr(up.func, "id", "") in {"isinstance", "type"}
+                                )
                                 or (isinstance(up, ast.Attribute) and up.attr == "__name__")
                             )
                             if not ok:
-                                bad.append(f"{m}:{u.lineno}: {held} (the stored error) is used as {ast.unparse(up)[:40]}")
+                                bad.append(
+                                    f"{m}:{u.lineno}: {held} (the stored error) is used as {ast.unparse(up)[:40]}"
+                                )
                     continue
                 bad.append(f"{m}:{n.lineno}: the stored error is used as {ast.unparse(use)[:40]}")
     return bad
@@ -2212,7 +2272,9 @@ def _filter_behaviour(name: str) -> list[str]:
         good = "run-" + "a" * 32
         if errors.shown_id(good) != good:
             bad.append("shown_id does not show an id of the shape the code makes")
-        got = errors.shown_id(Loud(good))  # the shape is the content; a subclass's own text methods are not used
+        got = errors.shown_id(
+            Loud(good)
+        )  # the shape is the content; a subclass's own text methods are not used
         if got != good or type(got) is not str:
             bad.append(f"shown_id uses the text methods of a str subclass: {got[:20]!r}")
         for v in ("secret text", good + " x", "RUN-" + "a" * 32, good + "\n", None, 7):
@@ -2234,7 +2296,11 @@ def check_filter() -> list[str]:
             if fn.name in {"status_text", "shown_id"}:
                 bad += _filter_behaviour(fn.name)
                 continue
-            body = [s for s in fn.body if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))]
+            body = [
+                s
+                for s in fn.body
+                if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))
+            ]
             first = body[0] if body else None
             ok = (
                 isinstance(first, ast.If)
@@ -2247,7 +2313,9 @@ def check_filter() -> list[str]:
                 and ast.unparse(first.body[0].value) == "NOT_SHOWN"
             )
             if not ok:
-                bad.append(f"{m}: {fn.name} does not start by refusing a name that is not word-like")
+                bad.append(
+                    f"{m}: {fn.name} does not start by refusing a name that is not word-like"
+                )
     return bad
 
 
@@ -2265,8 +2333,23 @@ def check_card() -> list[str]:
     from hadavin_sdk.approvals.slack_channel import SlackChannel
     from hadavin_sdk.models import GateDecision, Plan, Target
 
-    shown_plan = {"run_id", "action_id", "action_version", "inputs", "target", "expected_outcome", "risk_class"}
-    shown_decision = {"run_id", "rule_id", "outcome"}
+    shown_plan = {
+        "run_id",
+        "action_id",
+        "action_version",
+        "inputs",
+        "target",
+        "expected_outcome",
+        "risk_class",
+    }
+    shown_decision = {
+        "run_id",
+        "plan_hash",
+        "outcome",
+        "rule_id",
+        "ts",
+        "schema_version",
+    }  # every field the check fills or ignores
     canary = "zq-card-" + "Kx7" + "-canary"
     plan_fields: dict = {
         "run_id": "run-" + "a" * 32,
@@ -2282,18 +2365,20 @@ def check_card() -> list[str]:
     }
     bad = []
     extra = {n for n in Plan.model_fields if n not in plan_fields and n not in shown_plan}
-    extra -= {"created_at", "schema_version"}  # filled by the model itself (a clock, a number written in code)
+    extra -= {
+        "created_at",
+        "schema_version",
+    }  # filled by the model itself (a clock, a number written in code)
     if extra:
         bad.append(f"Plan has fields the check does not fill: {sorted(extra)}")
     plan = Plan(**plan_fields)
     decision = GateDecision(
-        run_id=plan.run_id, plan_hash="h" * 8 + canary, outcome="needs_approval", rule_id="class.reversible"
+        run_id=plan.run_id,
+        plan_hash="h" * 8 + canary,
+        outcome="needs_approval",
+        rule_id="class.reversible",
     )
-    extra = {
-        n
-        for n in GateDecision.model_fields
-        if n not in {"run_id", "plan_hash", "outcome", "rule_id", "ts", "schema_version"}
-    }
+    extra = {n for n in GateDecision.model_fields if n not in shown_decision}
     if extra:
         bad.append(f"GateDecision has fields the check does not fill: {sorted(extra)}")
 
@@ -2314,11 +2399,19 @@ def check_card() -> list[str]:
             bad.append(f"the {label} card was not posted")
         body = json.dumps([card.text, card.blocks, sent[-1] if sent else None], default=str)
         if canary in body:
-            bad.append(f"the {label} card or its channel message holds a field that is not shown on purpose")
-        if label == "shadow" and not ("create_draft_record" in card.text and "one draft record" in card.text):
-            bad.append("the shadow card does not show the action and the expected outcome: the check would pass by being empty")
+            bad.append(
+                f"the {label} card or its channel message holds a field that is not shown on purpose"
+            )
+        if label == "shadow" and not (
+            "create_draft_record" in card.text and "one draft record" in card.text
+        ):
+            bad.append(
+                "the shadow card does not show the action and the expected outcome: the check would pass by being empty"
+            )
         if plan.run_id in card.text:
-            bad.append(f"the {label} card text shows the run id (it belongs in the button values only)")
+            bad.append(
+                f"the {label} card text shows the run id (it belongs in the button values only)"
+            )
     # the approval request: the summary shows the plan's agent, class, action, inputs and outcome (the approver reads who
     # asks, so this plan's agent is a plain name); the request's chain id and requester, and the plan's id, key and target ref, are not shown
     from datetime import UTC, datetime
@@ -2334,7 +2427,9 @@ def check_card() -> list[str]:
         steps=[ChainStep(approver_ids=["slack:U123ABC"], timeout_s=60)],
         step_expires_at=datetime(2030, 1, 1, tzinfo=UTC),
         requested_by="svc:" + canary,
-        summary=summary(Plan(**{**plan_fields, "agent_id": "test-agent"})),  # the summary names the agent on purpose
+        summary=summary(
+            Plan(**{**plan_fields, "agent_id": "test-agent"})
+        ),  # the summary names the agent on purpose
         channel_ref="C0|1.2",  # the channel's own address of the message: it is what `update` sends
     )
     extra = {
@@ -2351,8 +2446,12 @@ def check_card() -> list[str]:
     sent.clear()
     ch.send(req, ["slack:U123ABC"])
     ch.update(req)
-    if canary in json.dumps(sent, default=str).replace("tok-" + canary, "").replace("sig-" + canary, ""):
-        bad.append("the approval request or its channel message holds a field that is not shown on purpose")
+    if canary in json.dumps(sent, default=str).replace("tok-" + canary, "").replace(
+        "sig-" + canary, ""
+    ):
+        bad.append(
+            "the approval request or its channel message holds a field that is not shown on purpose"
+        )
     if "asks to run create_draft_record" not in req.summary:
         bad.append("the summary does not show the action: the check would pass by being empty")
     # every CARD row is a line of one of the two producers: not found means the row is stale
@@ -2426,7 +2525,9 @@ def test_every_reason_has_a_check_or_is_in_the_pinned_unchecked_list():
     assert used <= set(REASONS), used - set(REASONS)
     unchecked = {r for r in REASONS if r not in CHECKS}
     assert unchecked == UNCHECKED, unchecked ^ UNCHECKED
-    assert len(UNCHECKED) <= 1  # may only go down (round 16: 1, round 15: 2, round 14: 4, round 13: 12)
+    assert (
+        len(UNCHECKED) <= 1
+    )  # may only go down (round 16: 1, round 15: 2, round 14: 4, round 13: 12)
 
 
 @pytest.mark.parametrize("reason", sorted(CHECKS))
