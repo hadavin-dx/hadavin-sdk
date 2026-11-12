@@ -3979,7 +3979,7 @@ _PLANTED_FAULTS = {
         1,
     ),
     "R19j a lambda parameter that shares the name of a written value": (
-        "def f():\n    name = 'fixed'\n    g = lambda name: str(name)\n    return g",
+        "def f():\n    name = 'fixed'\n    g = lambda name: 'x' + name\n    return g",
         1,
     ),
     "R19k an error held as the key of a dict that is returned": (
