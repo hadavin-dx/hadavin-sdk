@@ -2777,3 +2777,11 @@
 | PRHb6-r6-E3 | Major | PRH | Issue 8: public redact() leaves ZW/bidi-cut keys readable (existing gap) | OPEN | | | 2026-11-12 |
 | PRHb6-r6-rest | Minor | PRH | Issues 10, 12, 13, 14: withheld-share by cause, docstring 14/mutant 79 row/setting clause, nobody mutant run and timing 3x3 in next evidence, fail-before lines per test | OPEN | | | 2026-11-12 |
 | PRHb6-r6-spaced | Minor | PRH | Issue 9: visible-space-spaced secrets readable (also on main); product choice | OWNER-ONLY | q-prh-spaced-secrets, default not masked and stated in LIMITS | | 2026-11-12 |
+| Q8c1b8-r8-N1 | Nit | Q8c-1 | reviews/Q8c-1/goldfish_review_report-r8.md Issue 1: review date hard-coded in page template, docs and CHANGELOG; build from min(review_by) | OPEN | | | 2026-11-12 |
+| Q8c1b8-r8-N2 | Nit | Q8c-1 | Issue 2: no mutants for CI-step, CHANGELOG-wording, docstring-date pins; weak list (40 of 111) not in any artifact | OPEN | | | 2026-11-12 |
+| Q8c1b8-r8-N3 | Nit | Q8c-1 | Issue 3: mutant for tool DECIDED independence of 16 kinds | OPEN | | | 2026-11-12 |
+| Q8c1b8-r8-N4 | Nit | Q8c-1 | Issue 4: _killers_using_same still counts D1/D3/D7 weak; second same() calls unmapped | OPEN | | | 2026-11-12 |
+| Q8c1b8-r8-N5 | Nit | Q8c-1 | Issue 5: duplicate pin in test_policy_changelog.py; 92-day assertion unreachable from mutant runner | OPEN | | | 2026-11-12 |
+| Q8c1b8-r8-E2 | Nit | Q8c-1 | Issue 6: fixed day reaching the mutant runner child not proven in-run | OPEN | | | 2026-11-12 |
+| Q8c1b8-r8-E3 | Minor | Q8c-1 | Issue 7: per-test fail-before classification and ticket 6.4 must-fail-on-main mapping (supersedes Q8c1-b8-issue6) | OPEN | | | 2026-11-12 |
+| Q8c1b8-r8-vault | Major | Q8c-1 | Issue 8: 12 Vault engine tests never run here; CI run with HADAVIN_REQUIRE_VAULT_ENGINE=1 before 2026-12-11 | IMPOSSIBLE-NOW | needs CI | | 2026-11-12 |
