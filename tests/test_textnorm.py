@@ -2961,7 +2961,9 @@ def test_the_deny_check_false_matches_on_the_names_lists_are_exactly_the_listed_
     ):
         assert could_be_same_person(a, b), f"{_show([a, b])} do not match"
     # a text made only of spacing marks has the empty check name from its marks-dropped text: it matches any other text whose check name is empty
-    assert "" in textnorm.identity_keys("\u0903") and "" in textnorm.identity_keys("\u200b")
+    assert textnorm.key_tag() in textnorm.identity_keys(
+        "\u0903"
+    ) and textnorm.key_tag() in textnorm.identity_keys("\u200b")
     assert could_be_same_person("\u0903", "\u200b"), "the empty check names do not match"
     assert not could_be_same_person("\u0903", "a"), "the empty check name matches a letter"
 
