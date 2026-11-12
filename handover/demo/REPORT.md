@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:01Z / 01:31 IST - ORDER D10 applied: decoder REJECTED, lane 8b started; memory facts for the hang; 6 agents live
+Status lines:
+- D10(1) PILLOW: lane 8's own PNG decoder is rejected as ordered (CODE-LAST). Lane 8b builder started: `requirements-browser.in` (playwright==1.63.0, pillow pinned) + hashed `requirements-browser.txt` (pinned uv 0.11.32, --exclude-newer as in requirements-semgrep.in, Linux and Windows hashes following requirements-dev.txt/-win.txt), the lint locks must stay byte-identical (proof by git diff), `_png_pixels` and every test edit reverted (tests/test_portal_lead_pages.py byte-identical to b29bb1f), docs/tests.md with ONE install line plus the `playwright install chromium` step (build 1243 matches 1.63.0), 'CI runs no browser tests (no browser job yet)', counts kept with the honest 'not explained' remainder and the laptop difference worded as an inference; proof in a fresh venv from the hashed locks, the two sidebar tests and all browser files pass. It also quotes the Pillow licence identifier from the wheel metadata. The lane 8 reviewer (running since 19:58) is still reviewing the OLD patch; if it names a concrete reason against the Pillow route (hash or licence) I report it and you decide; none so far.
+- D10(3) HANG HYPOTHESIS, first facts I measured myself (hang/memory-lead-session-1.txt, 20:00Z): firecracker VM 16 GiB, no swap; cgroup v1: memory.oom_control `oom_kill 0`, `under_oom 0`, memory.failcnt 0, limit unlimited, max_usage 5.3 GB (page cache included); `dmesg` works and holds the whole boot (starts at 166 s, uptime 69 min): ZERO oom or killed-process lines. So an OOM kill is NOT supported by the counters so far (a pytest process is about 160 MB RSS; free 11 GiB). BUT dmesg has 4 lines `TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:<port>. Sending cookies.` at about 19:05, 19:07, 19:27 and 19:55 UTC (tests open many loopback connections; tcp_max_syn_backlog 1024, somaxconn 4096): a loopback SYN-queue or accept-queue overflow makes a connect stall for 1, 3, 7 s and so on. That is a LEAD, not a conclusion. Lane 9 got both the OOM checks (peak RSS of one full serial run, counters at batch start and end) and the SYN lead (correlate new dmesg lines with slow runs by kernel timestamp; mark loopback connect/accept waits in its wait table). Lane 4's early end and lane 1's stall have no matching OOM line.
+- D10(2): lane 8b keeps the 'not explained' remainder; no cause of the laptop difference stated as fact.
+- Earlier open question still open: PR 89 singular branch name.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:01Z / 01:31 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| abc77f40d2e06cb94 (agent, sonnet builder) | DeepSource clusters PR 3 and PR 4 | 19:17 | 44 min | 20:07 box (asked for hand-back by 20:10) | running; wrap-up message queued 20:00 | DEEPSOURCE-COVERAGE.md, extra patches | its pytest pid 1849 still running (13 min); files last written 19:23: FLAG; I cut it at 20:15 if no hand-back |
+| a28f5af6a766a1b53 (agent, sonnet builder) | lane 7 Sonar coverage | 19:45 | 17 min | about 20:35 (box ends 21:00) | running its pytest --cov (pid 5362) | coverage patch, PLAN.md | pytest RSS 160 MB; evidence-pytest-coverage.txt updated 20:00 |
+| a1efeaddf3232ebcb (agent, sonnet evidence runner) | lane 9 hang reproduction + memory check | 19:50 | 11 min | 20:50 (box) | running; D10 and SYN messages queued | hang/RESULTS.md, memory-*.txt | batch-log.txt 19:59 (nl-alone batch) |
+| a3e7ca5b01fc09496 (agent, sonnet egm reviewer, read-only) | review of the OLD lane 8 patch | 19:58 | 3 min | about 20:08 | running | review report (saved as fixes/REVIEW-1.md) | none yet |
+| ac3a511599cfd9d0d (agent, sonnet builder) | lane 8b: hashed browser requirements + docs | 20:01 | under 1 min | about 20:50 (50 min box) | running | docs-and-deps.patch (new), PLAN.md, evidence-b*.txt | started |
+| pid 5362 (+timeout 2400 pid 5361) | lane 7 pytest --cov | 19:50 | 11 min | about 20:08 | running | coverage.xml | 20:00 |
+| pid 1849 | DeepSource builder's pytest (triage-copy) | 19:48 | 13 min | unknown | running | evidence-extra-after-full.txt | none |
+| lane 9 pytest (short runs, pids change) | hang runs | 19:50 | continuous | 20:50 | running | run-*.txt | 19:59 |
+Totals: agents live 5 (DeepSource builder, lane 7, lane 9, lane 8 reviewer, lane 8b); shells I hold 0; long processes 3 pytest plus lane 9's short runs (heavy slots 3 to 4 of 4 cores); containers 0 (no docker daemon; the whole machine is one firecracker VM); load about 0.9 (1 min); nothing past its time box.
+
+### (2) ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends the loop |
+|---|---|---|---|---|---|---|
+| lane 8 fixes (Pillow + docs) | review 1 of the OLD patch running; fix round 2 (8b) started | r1 not yet | n/a | NOT a review finding: the lead's decision (D10 rejects the own decoder, rung 5 code) | n/a | a fresh review of the 8b patch with no Major or Blocker; new dependency in a public repo: no round cap |
+| lane 7 Sonar | 0 reviews | n/a | n/a | security path: no cap | no cap | fresh review finds no Major or Blocker |
+Rounds closed earlier: lane 5 (4 reviews, 3 resolves: done), lane 3 JS (2 reviews, done), lane 3 Python (2 reviews, done), lane 2 (1 review, done). No round exists because of a gate that could not run or an early hand-back in the live packages; lane 8b exists because the lead rejected a design (not a defect class).
+
+### (3) FINISHED SINCE LAST BLOCK
+None (no agent or shell ended in the last 2 minutes). Previous block finished list: lane 8 builder a14d24d23eb7fe1d1.
+
 ## 2026-11-12 20:00Z / 01:30 IST - ORDER D9 format: 4 agents live; lanes 1 to 6 done, lane 8 builder done (review running), lane 7, lane 9 and DeepSource builder running
 Status lines: nothing pushed beyond the files named in earlier blocks; no new failure since the lane 8 block. Open question for the lead still unanswered: PR 89 singular branch name (only core/mutation-runner-keywords exists on origin). Lane 9 has run its first batches (no-load: nl-together-2 = 880 passed in 230 s flagged SLOW only because it is 20 files plus the target file; no hang seen yet; details in hang/ when it hands back). Lane 7's pytest is at ~65 percent of its first coverage run (8.7 minutes in).
 

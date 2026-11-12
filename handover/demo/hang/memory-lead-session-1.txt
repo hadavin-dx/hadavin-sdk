@@ -1,0 +1,62 @@
+# memory facts taken by the lead session (not lane 9) at 2026-11-12T20:00:42Z
+               total        used        free      shared  buff/cache   available
+Mem:           16086         937       11235          16        4229       15148
+Swap:              0           0           0
+
+9:name=systemd:/
+8:pids:/process_api
+7:blkio:/
+6:freezer:/
+5:devices:/
+4:memory:/process_api/01a1d118-cde0-7347-869a-8ce67623eecf/claude-code-bash
+3:cpuset:/
+2:cpuacct:/
+1:cpu:/
+0::/
+== /sys/fs/cgroup/memory.max
+cat: /sys/fs/cgroup/memory.max: No such file or directory
+== /sys/fs/cgroup/memory.current
+cat: /sys/fs/cgroup/memory.current: No such file or directory
+== /sys/fs/cgroup/memory.peak
+cat: /sys/fs/cgroup/memory.peak: No such file or directory
+== /sys/fs/cgroup/memory.events
+cat: /sys/fs/cgroup/memory.events: No such file or directory
+== /sys/fs/cgroup/memory.swap.max
+cat: /sys/fs/cgroup/memory.swap.max: No such file or directory
+
+== dmesg
+[  166.247750] idle-reclaim (85): drop_caches: 1
+[  740.554034] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:41867. Sending cookies.
+[  852.010054] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:32851. Sending cookies.
+[ 2051.693994] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:34351. Sending cookies.
+[ 3755.657994] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:36811. Sending cookies.
+
+== top RSS now
+  PID   RSS ELAPSED COMMAND
+  101 433440   4216 /opt/claude-code/bin/claude --preload /home/claude/.claude/remote/spare.sock
+ 5362 162656    603 python -m pytest -q -rs --cov --cov-report=xml:coverage.xml
+   93 46376    4216 /usr/local/bin/environment-manager task-run --stdin --session cse_014pRo36uYfYwuEDby9epxu8 --session-mode resume --upgra
+ 4009 42924       6 python -X faulthandler -m pytest -p no:randomly -o faulthandler_timeout=120 -q --durations=5 tests/test_hung_adapter_cal
+ 4192 16712       0 /usr/lib/git-core/git-remote-https origin https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n.git
+23626 12432     240 /tmp/work/cov-tree/.venv-cov/bin/python -c from multiprocessing.resource_tracker import main;main(20)
+    1  7552    4217 /process_api --firecracker-init --addr 0.0.0.0:2024 --max-ws-buffer-size 32768 --block-local-connections --log-vsock-por
+
+# dmesg grep (lead session) 2026-11-12T20:00:49Z
+[  740.554034] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:41867. Sending cookies.
+[  852.010054] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:32851. Sending cookies.
+[ 2051.693994] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:34351. Sending cookies.
+[ 3755.657994] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:36811. Sending cookies.
+---count oom-ish: 0
+---cgroup v1 memory:
+cgroup.clone_children
+cgroup.event_control
+cgroup.procs
+cgroup.sane_behavior
+memory.failcnt
+== memory.limit_in_bytes: 9223372036854771712 
+== memory.max_usage_in_bytes: 5307736064 
+== memory.usage_in_bytes: 4725919744 
+== memory.oom_control: oom_kill_disable 0 under_oom 0 oom_kill 0 
+== memory.failcnt: 0 
+4096
+1024
