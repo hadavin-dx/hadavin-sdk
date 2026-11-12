@@ -1,0 +1,15 @@
+base f5fe824 (+ speed 87e06a4d4448); plain git apply
+84c3f1526cc6  triage/codeant3-sec-nits.patch
+7c8633cad521  semgrep/semgrep-on-head.patch
+705535cd3d88  triage/codeant2-desk.patch
+b90e21d24bd7  triage/codeant2-portal-log.patch
+d19eece2adce  triage/codeant2-demo-only.patch
+244acda4bcca  triage/codeant2-tests-hardening.patch
+321c87d00ec1  triage/codeant2-fakes-body.patch
+0d29f51ad8d0  triage/codeant2-standins-body.patch
+mine(6) alone                        OK
+semgrep alone                        OK
+semgrep then mine(6)                 OK
+mine(6) then semgrep                 OK
+nits on head (expected FAIL: in head) FAIL at codeant3-sec-nits.patch: error: patch failed: docs/settings.md:118
+mine(6) then nits (in head)          FAIL at codeant3-sec-nits.patch: error: patch failed: docs/settings.md:118

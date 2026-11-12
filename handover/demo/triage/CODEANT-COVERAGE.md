@@ -98,7 +98,7 @@ Columns: id | PR | file:line at 558d37f | what CodeAnt says | class | reason che
 | N4-06 | `tests/test_input_edge_cases.py:60` | the input is rejected by `_lower_keeps_ascii_apart` first, so the test passes without the length limit | **REAL** (test gap) | proved by mutation: removing `len(normalise_email(e)) <= EMAIL_MAX` leaves the old test GREEN; only U+0130 lowercases to two characters (checked over all of Unicode: `['0x130']`) and `_lower_keeps_ascii_apart` rejects it first. Patched test switches that check off so the length check is the only guard: the mutant now FAILS the test | `tests-hardening` | The test could not notice the length check being deleted; now it can. (The length check only matters if a future Unicode version adds another expanding letter.) |
 | N4-07 | `tests/test_load_tools.py:678` | `urlopen` honours `HTTP_PROXY`, loopback may go through a proxy | **STYLE** (environment) | run with `HTTP_PROXY` set to a dead proxy and no `NO_PROXY`: old code fails (`Connection refused`), patched (`ProxyHandler({})`) passes | `tests-hardening` | The test no longer breaks on a machine with a proxy setting. |
 | N4-08 | `tests/test_migration_triggers.py:54` | `make_book_at_schema_version_1` leaves `send_started` intact, so a migration that forgets it is not caught | **REAL** (test gap) | mutation: remove `send_started` from `db._ADDED_COLUMNS`: old helper 34 passed (undetected), patched helper (also drops the column) 18 failed | `tests-hardening` (one line in `tests/test_desk_http_edge_cases.py`) | The old-book tests now also cover the newest column. |
-| N4-09 | `tests/test_model_stamp_and_reaper.py:319-320` | `server.main()` reads inherited `DESK_*` settings | **STYLE** (environment) | true (`main` reads `Config.from_env`); not demonstrated with a hostile value (not run) | `tests-hardening` (all `DESK_*` removed first) | The test no longer depends on the person's own settings. |
+| N4-09 | `tests/test_model_stamp_and_reaper.py:319-320` | `server.main()` reads inherited `DESK_*` settings | **STYLE** (environment) | true (`main` reads `Config.from_env`); demonstrated: `tests/test_codeant_hygiene.py` starts a subprocess with a hostile `DESK_*` value and fails on the old `conftest.py`, passes with the autouse fixture | `tests-hardening` (an autouse fixture in `tests/conftest.py` removes every `DESK_*` first; the test-local loop was removed as redundant, shown by running the file without it) | The test no longer depends on the person's own settings. |
 | N4-10 | `tests/test_mutants_more.py:283-285` | the replacement returns the literal `email`, not `mailSender` | **STYLE** | the mutant only has to break the text the scanner `_sender_masked` looks for, so either value passes; made faithful anyway | `tests-hardening` | The planted fault now really shows the address. |
 | N4-11 | `tests/test_portal_demo.py:48-50` | a missing `demo_only.*` import inside an existing module is treated as the deleted-folder case and skips the tests | **REAL** (test guard hole) | `e.name.split(".")[0] == "demo_only"` also matches `demo_only.gone`. New test: before the patch the module is SKIPPED, after it raises. `loader.py` is already strict (`e.name in ("demo_only", "demo_only.portal_demo")`) | `tests-hardening` | A broken import in the demo folder is now an error, not a silent skip. |
 | N4-12 | `tests/test_portal_wording_and_masking.py:114-121` | scans whole files, not only comments, for `we/our/us` | **STYLE** | true (the test name says comments); passes today | none | A future harmless word could fail it. |
@@ -143,18 +143,22 @@ All patches were applied to a FRESH clone at 558d37f (`evidence-codeant-apply-ch
 | `exceptions.txt` | `docs-and-deps.patch` and `sonar-coverage-v1.patch` both edit `exceptions.txt` lines 6 and 21 to 24; I do not touch it | the two lanes conflict, not mine |
 | DeepSource clusters (retry paths J1 to J9, P1 to P14) | cross-reference only: CA-07 vs P2 and P3, CA-09 vs J6 | not duplicated |
 
-## 6. Patches (all in this folder, apply on 558d37f)
+## 6. Patches (all in this folder; current names, apply on public head 40d5668 after `speed/fake-hubspot-read-body-before-answer.patch`)
+
+The ids and line numbers in the table above are those of the first look at 558d37f (the findings did not move; the files were re-checked on 40d5668). The first-round patches `codeant-*.patch` are replaced by the ones below. Apply order of the runtime and test patches: desk, portal-log, demo-only, tests-hardening, fakes-body, standins-body.
 
 | patch | contents | tests it adds |
 |---|---|---|
-| `codeant-gitleaks.patch` (+ two variants) | CA-01 | evidence script only (gitleaks run) |
-| `codeant-scripts.patch` | CA-02, CA-03, CA-04, CA-08 | `tests/test_n8n_api_url.py`, `tests/test_scrub_n8n_export.py`, `tests/test_reset_ps1_links.py` |
-| `codeant-docs.patch` | CA-05 | none (words only) |
-| `codeant-n8n-proof.patch` | CA-12 | `tests/test_n8n_proof_result.py` |
-| `codeant-desk.patch` | CA-06, CA-07 | `tests/test_codeant_desk.py` |
-| `codeant-portal-log.patch` | CA-09 | `tests/portal_log_poll_probe.js`, `tests/test_portal_log_poll.py` |
-| `codeant-demo-only.patch` | CA-13, N3-03 to N3-08, N3-10, N3-12 | `tests/test_codeant_demo_only.py`, `tests/test_codeant_fakes.py` |
-| `codeant-tests-hardening.patch` | CA-15, CA-17, N4-04, N4-06 to N4-11, N4-16 | `tests/test_codeant_hygiene.py` and edits to 10 existing test files |
+| `codeant3-gitleaks.patch` (in the head since 5947364; later `-r3`, `-r4`) | CA-01 | evidence script only (gitleaks run) |
+| `codeant3-scripts.patch` (`-r3`, `-r4`) | CA-02, CA-03, CA-04, CA-08 | `tests/test_n8n_api_url.py`, `tests/test_scrub_n8n_export.py`, `tests/test_reset_ps1_links.py` |
+| `codeant3-docs.patch` (`-r3`, `-r4`) | CA-05 | none (words only) |
+| `codeant3-n8n-proof.patch` (`-r3`, `-r4`) | CA-12 | `tests/test_n8n_proof_result.py` |
+| `codeant2-desk.patch` | CA-06 (only the literal `:memory:` is refused: a SQLite `file:` name is resolved to an absolute plain file by the desk before SQLite sees it, proved on the old code, so it is not a memory book), CA-07 | `tests/test_codeant_desk.py` |
+| `codeant2-portal-log.patch` | CA-09 | `tests/portal_log_poll_probe.js`, `tests/test_portal_log_poll.py` |
+| `codeant2-demo-only.patch` | CA-13, N3-03 to N3-08, N3-10, N3-12 | `tests/test_codeant_demo_only.py`, `tests/test_codeant_fakes.py` |
+| `codeant2-tests-hardening.patch` | CA-15, CA-17, N4-04, N4-06 to N4-11, N4-16 | `tests/test_codeant_hygiene.py` and edits to existing test files |
+| `codeant2-fakes-body.patch` | the late-body (answer before read) class in the server | `tests/test_fakes_body_before_answer.py` |
+| `codeant2-standins-body.patch` | the same class in the test stand-in servers | `tests/test_standins_body_before_answer.py` |
 
 Lint on the patched copy: ruff check, ruff format --check, mypy (linux and win32) and bandit -ll are clean (`evidence-codeant-lint.txt`).
 

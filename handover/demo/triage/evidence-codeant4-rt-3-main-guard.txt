@@ -1,0 +1,15 @@
+# B-MAJOR 2 mutant: main() refusal replaced by a 600 s sleep, MAIN_WAIT_SECONDS=2 -> fails in ~2 s instead of hanging
+E        +    where is_alive = <Thread(Thread-1 (run), started daemon 140462224914112)>.is_alive
+
+/tmp/work/c4-base/tests/test_codeant_desk.py:49: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_codeant_desk.py::test_main_refuses_a_memory_book_before_the_lock_step_and_makes_no_file
+1 failed, 5 deselected in 2.05s
+
+real	0m2.284s
+user	0m0.249s
+sys	0m0.032s
+tests/test_codeant_desk.py:195: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_codeant_desk.py::test_busy_count_of_another_stage_is_not_carried_over
+1 failed, 5 passed in 1.46s

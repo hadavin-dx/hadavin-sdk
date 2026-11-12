@@ -1,0 +1,44 @@
+tree f5fe824 + guard tests, support.stop_within reverted to the old unbounded call (copy /tmp/work/h1-old)
+$ timeout 60 python -m pytest -q -p no:cacheprovider tests/test_server_stop_guard.py::test_a_stop_that_never_returns_fails_fast_with_a_message
+22570 timeout 60 /tmp/work/int2-venv/bin/python -m pytest -q -p no:cacheprovider tests/test_server_stop_guard.py::test_a_stop_that_never_returns_fails_fast_with_a_message
+22572 /tmp/work/int2-venv/bin/python -m pytest -q -p no:cacheprovider tests/test_server_stop_guard.py::test_a_stop_that_never_returns_fails_fast_with_a_message
+--- py-spy dump 22570
+Error: Failed to find python version from target process
+
+Stack backtrace:
+   0: anyhow::error::<impl anyhow::Error>::msg
+   1: py_spy::python_process_info::get_python_version
+   2: py_spy::python_spy::PythonSpy::new
+   3: py_spy::dump::write_traces
+   4: py_spy::dump::print_traces
+   5: py_spy::run_spy_command
+   6: py_spy::main
+   7: std::sys::backtrace::__rust_begin_short_backtrace
+   8: std::rt::lang_start::{{closure}}
+   9: std::rt::lang_start_internal
+  10: main
+--- py-spy dump 22572
+Process 22572: /tmp/work/int2-venv/bin/python -m pytest -q -p no:cacheprovider tests/test_server_stop_guard.py::test_a_stop_that_never_returns_fails_fast_with_a_message
+Python v3.12.3 (/usr/bin/python3.12)
+
+Thread 22572 (idle): "MainThread"
+    Condition.wait (threading.py:355)
+    Event.wait (threading.py:655)
+    BaseServer.shutdown (socketserver.py:255)
+    stop_serving.<locals>.stop (support.py:479)
+    stop_within (support.py:469)
+    stop_serving (support.py:485)
+    test_a_stop_that_never_returns_fails_fast_with_a_message (test_server_stop_guard.py:29)
+    pytest_pyfunc_call (_pytest/python.py:187)
+    _multicall (pluggy/_execution.py:147)
+    PluginManager._hookexec (pluggy/_manager.py:183)
+    HookCaller.__call__ (pluggy/_caller.py:197)
+    Function.runtest (_pytest/python.py:1798)
+    pytest_runtest_call (_pytest/runner.py:184)
+    _multicall (pluggy/_execution.py:147)
+    PluginManager._hookexec (pluggy/_manager.py:183)
+    HookCaller.__call__ (pluggy/_caller.py:197)
+    call_and_report.<locals>.<lambda> (_pytest/runner.py:250)
+    CallInfo.from_call (_pytest/runner.py:361)
+[1]+  Exit 124                timeout 60 $V/python -m pytest -q -p no:cacheprovider tests/test_server_stop_guard.py::test_a_stop_that_never_returns_fails_fast_with_a_message > /tmp/work/h1-old.out 2>&1
+exit=0

@@ -1,0 +1,6 @@
+# focused pytest, one run, GITLEAKS_BIN=gitleaks DPLD_REQUIRE_SCAN=1, files: tests/test_clock_steps.py tests/test_codeant_demo_only.py tests/test_codeant_desk.py tests/test_codeant_fakes.py tests/test_codeant_hygiene.py tests/test_crm_hubspot.py tests/test_desk_http_edge_cases.py tests/test_env_numbers.py tests/test_fakes_body_before_answer.py tests/test_followup_edge_cases.py tests/test_hubspot_probe.py tests/test_hygiene.py tests/test_input_edge_cases.py tests/test_lead_crm_copy.py tests/test_load_tools.py tests/test_mode_safety.py tests/test_model_stamp_and_reaper.py tests/test_mutants_more.py tests/test_n8n_api_url.py tests/test_portal_demo.py tests/test_portal_log_poll.py tests/test_reset_scripts.py tests/test_slow_sender.py tests/test_standins_body_before_answer.py tests/test_vendor_hosts.py 
+........................................................................ [ 88%]
+........................................................................ [ 93%]
+........................................................................ [ 99%]
+..........                                                               [100%]
+1305 passed, 1 skipped in 405.50s (0:06:45)

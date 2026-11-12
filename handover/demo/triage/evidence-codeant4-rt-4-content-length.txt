@@ -1,0 +1,7 @@
+# A-nit: 5000-digit Content-Length, mutant = len(text) check removed
+ValueError: Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; use sys.set_int_max_str_digits() to increase the limit
+----------------------------------------
+=========================== short test summary info ============================
+FAILED tests/test_codeant_fakes.py::test_the_hubspot_fake_refuses_a_content_length_that_is_not_a_usable_count[length7]
+FAILED tests/test_codeant_fakes.py::test_the_hubspot_fake_refuses_a_content_length_that_is_not_a_usable_count[length8]
+2 failed, 7 passed, 31 deselected in 4.58s

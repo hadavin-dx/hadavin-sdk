@@ -147,6 +147,18 @@ index a7857a7..018776b 100644
  
      # -- entry point
      def handle(self, method: str, path: str, body: bytes) -> tuple[int, Any]:
+diff --git a/docs/limits.md b/docs/limits.md
+index 33b94a9..fc0dfec 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -93,6 +93,7 @@ Rules of the desk's records (the database refuses these, for a database created
+   * So beyond about 150 simultaneous connections on that computer a sender that cannot retry may see "connection refused" for part of the burst, and nothing in the desk records it, because the desk never saw it.
+ * **Retry rule of the senders in this repository.** The burst script, the portal demo's burst and the load driver (`load_tools/load_driver.py`) retry a refused connection or a 503 by TIME, not by count: the first wait is 0.1 s, each wait doubles up to 1 s, the desk's `Retry-After` is honoured up to that 1 s, and no new try starts more than 30 s after the first (`BURST_BACKOFF_SECONDS`, `BURST_BACKOFF_MAX_SECONDS`, `BURST_RETRY_DEADLINE_SECONDS` in `constants.py`; tests in `tests/test_burst_retry.py`). `max_retries=0` in the burst script means no retry at all.
+ * Of the connections the desk did receive in the larger bursts, some were answered 503 `busy` (database lock wait over). A 503 from a lock wait may have left an open receipt; a 503 from the connection limit never does. In both cases send the same request number again. The desk answered every received connection with JSON, and the burst command and `tests/test_http.py::test_ten_parallel` check that only one email is sent for the lead.
++* The demo HubSpot stand-in (`demo_only/fake_hubspot.py`, made-up data) reads a request body before it answers, so a late body is not reset on Windows. The exception is a Content-Length that is negative, not a plain number, longer than 7 digits or above 1 MiB: it answers 400 at once WITHOUT reading the body (reading would mean reading until the client stops); a client that really sends 1 MiB or more may therefore see a connection reset instead of the 400. A 5000-digit Content-Length is such a 400 (a digit string that long cannot be turned into a number by Python). Tests: `tests/test_codeant_fakes.py`.
+ * A request body shorter than the Content-Length it announced: the desk answers 408 `request_timeout` when the body has not fully arrived 10 seconds after the headers ended (`BODY_READ_DEADLINE_SECONDS`) if the sender keeps the connection open, or 400 if the sender closes it; the 408 and the 400 are both counted in `rejected_envelopes` when the stall or close happens in the body of `POST /leads`; a stall while the headers are still arriving gets 408 but is not counted. A Content-Length over the size cap, however long the number, is answered 413 straight away; this holds for the decision body of `POST /review/<id>/resolve` too (after the Host and Origin check). Two different Content-Length values in one request are answered 400. A request target that cannot be parsed is answered 400.
+ * **Known gaps in these figures.** The larger bursts depend on the machine and were not repeated for every version of the desk or with every sender retry rule; treat them as indications for the machine they ran on.
+ 
 diff --git a/src/lead_desk/loader.py b/src/lead_desk/loader.py
 index 726504e..72af087 100644
 --- a/src/lead_desk/loader.py
@@ -177,7 +189,7 @@ index 726504e..72af087 100644
      """None ONLY when the demo module is absent: ModuleNotFoundError whose .name is "demo_only" or
      "demo_only.portal_demo". Also None unless the desk runs with the demo adapters (config.adapters == "demo") and
 diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
-index c2ed0a4..dddb32f 100644
+index 5304783..bda83f5 100644
 --- a/src/lead_desk/server.py
 +++ b/src/lead_desk/server.py
 @@ -87,7 +87,7 @@ from lead_desk.contract import is_fd_exhaustion
@@ -200,10 +212,10 @@ index c2ed0a4..dddb32f 100644
  
 diff --git a/tests/test_codeant_demo_only.py b/tests/test_codeant_demo_only.py
 new file mode 100644
-index 0000000..62766cf
+index 0000000..25f7546
 --- /dev/null
 +++ b/tests/test_codeant_demo_only.py
-@@ -0,0 +1,87 @@
+@@ -0,0 +1,93 @@
 +"""Findings about demo_only/ from the CodeAnt review: the demo extension learns the desk's real port when the desk
 +listens on port 0. Made-up data, loopback only."""
 +
@@ -274,7 +286,13 @@ index 0000000..62766cf
 +        "const out = describe({ data: { answers: JSON.parse(process.argv[1]) } }, 'x');\n"
 +        "console.log(JSON.stringify(text(out.k[1])));\n"
 +    )
-+    done = subprocess.run(["node", "-e", js, json.dumps(answers)], capture_output=True, text=True, check=True)  # noqa: S603, S607
++    done = subprocess.run(  # noqa: S603
++        ["node", "-e", js, json.dumps(answers)],  # noqa: S607
++        capture_output=True,
++        text=True,
++        check=True,
++        timeout=60,
++    )
 +    pills = re.sub(r"\s+", " ", json.loads(done.stdout))
 +    assert "1 refused" in pills and "2 without an answer" in pills, pills
 +
@@ -293,10 +311,10 @@ index 0000000..62766cf
 +    )  # the Promise.all, the summary poll, the state read
 diff --git a/tests/test_codeant_fakes.py b/tests/test_codeant_fakes.py
 new file mode 100644
-index 0000000..1b842cf
+index 0000000..91fa455
 --- /dev/null
 +++ b/tests/test_codeant_fakes.py
-@@ -0,0 +1,407 @@
+@@ -0,0 +1,410 @@
 +"""Findings about the stand-in servers of demo_only/ (made-up data, loopback only): the fake HubSpot reads and changes
 +its contacts only under its lock (every handler, not only the search); its fault counters count exactly, also for
 +requests that arrive together; the fake AI server answers a bad control value with a 400 and starts "mixed" with hot."""
@@ -488,7 +506,7 @@ index 0000000..1b842cf
 +
 +def _two_creates_at_once(state: fh.HubspotState, url: str) -> list[int]:
 +    out: list[int] = []
-+    gate = threading.Barrier(2)
++    gate = threading.Barrier(2, timeout=10)
 +
 +    def one(n: int) -> None:
 +        gate.wait()
@@ -497,7 +515,7 @@ index 0000000..1b842cf
 +        except OSError:  # a hung request is cut by the client's own timeout
 +            out.append(0)
 +
-+    threads = [threading.Thread(target=one, args=(n,)) for n in (1, 2)]
++    threads = [threading.Thread(target=one, args=(n,), daemon=True) for n in (1, 2)]
 +    for t in threads:
 +        t.start()
 +    for t in threads:
@@ -576,28 +594,31 @@ index 0000000..1b842cf
 +            state.times = 2
 +            took: list[bool] = []
 +            hung: list[bool] = []
-+            gate = threading.Barrier(16)
++            gate = threading.Barrier(16, timeout=10)
 +
 +            def one(state: fh.HubspotState = state, took: list[bool] = took, hung: list[bool] = hung) -> None:
 +                gate.wait()
 +                took.append(state.take_failure())
 +                hung.append(state.take_hang())
 +
-+            threads = [threading.Thread(target=one) for _ in range(16)]
++            threads = [threading.Thread(target=one, daemon=True) for _ in range(16)]
 +            for t in threads:
 +                t.start()
 +            for t in threads:
-+                t.join()
++                t.join(30)
++            assert not any(t.is_alive() for t in threads), "a counter thread did not finish"
 +            assert took.count(True) == 2 and state.failed == 2
 +            assert hung.count(True) == 1
 +    finally:
 +        sys.setswitchinterval(old)
 +
 +
-+@pytest.mark.parametrize("length", ["-1", "-5", "x", "1e3", "99999999999", "1048577", "\u00b2"])
++@pytest.mark.parametrize("length", ["-1", "-5", "x", "1e3", "99999999999", "1048577", "\u00b2", "9" * 5000, "0" * 5000])
 +def test_the_hubspot_fake_refuses_a_content_length_that_is_not_a_usable_count(length: str) -> None:
 +    """A negative length used to make the fake read until the client closed, a huge one read for as long as the
-+    client sent: both are a 400 now, answered at once, without reading a byte of the body."""
++    client sent: both are a 400 now, answered at once, without reading a byte of the body (a deliberate trade-off: a
++    client that really sends 1 MiB or more may see a reset instead). A digit string of 5000 characters is a 400 too:
++    `int()` of it raises ValueError in Python, which would have killed the handler with no answer."""
 +    state = fh.HubspotState(KEY, "ok")
 +    srv, th, url = fh.serve(state, "127.0.0.1")
 +    try:
@@ -705,7 +726,7 @@ index 0000000..1b842cf
 +        labels.append(next(c["text"] for c in answer["content"] if c["type"] == "text"))
 +    assert labels == ["hot", "warm", "cold", "hot"]
 diff --git a/demo_only/fake_hubspot.py b/demo_only/fake_hubspot.py
-index 799bacc..095f2e8 100644
+index 799bacc..cd809f9 100644
 --- a/demo_only/fake_hubspot.py
 +++ b/demo_only/fake_hubspot.py
 @@ -26,3 +26,5 @@ a GET of that id answers 404. That is how this demo stand-in behaves (an assumpt
@@ -786,26 +807,38 @@ index 799bacc..095f2e8 100644
 +MAX_BODY_BYTES = 1_048_576  # a request body above this (or a Content-Length that is not a plain count) is a 400
 +
  
-@@ -119,2 +186,8 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -119,2 +186,17 @@ class _Handler(BaseHTTPRequestHandler):
  
 +    def _length(self) -> int | None:
 +        """The body size the client announced: None for a value that is not a plain count (negative, text) or is above
-+        MAX_BODY_BYTES (the fake would read it all, or until the client closes)."""
++        MAX_BODY_BYTES (the fake would read it all, or until the client closes). The length of the text is compared
++        first: Python refuses `int()` of a digit string of more than 4300 characters, and that error would kill the
++        handler thread with no answer."""
 +        text = self.headers.get("Content-Length") or "0"
-+        return int(text) if text.isascii() and text.isdigit() and int(text) <= MAX_BODY_BYTES else None
++        return (
++            int(text)
++            if len(text) <= len(str(MAX_BODY_BYTES))
++            and text.isascii()
++            and text.isdigit()
++            and int(text) <= MAX_BODY_BYTES
++            else None
++        )
 +
      def _send(
-@@ -127,3 +200,3 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -127,3 +209,6 @@ class _Handler(BaseHTTPRequestHandler):
              self._body_read = True
 -            n = int(self.headers.get("Content-Length") or 0)
-+            n = self._length()  # None: not read (the answer is a 400 and the connection closes anyway)
++            # None (negative, not a number, above 1 MiB): the 400 is sent WITHOUT reading the body. A deliberate
++            # trade-off: reading it would mean reading until the client stops; a client that really sends 1 MiB or
++            # more may therefore see a connection reset instead of the 400.
++            n = self._length()
              if n:
-@@ -143,3 +216,3 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -143,3 +228,3 @@ class _Handler(BaseHTTPRequestHandler):
      def _json(self) -> Any:
 -        n = int(self.headers.get("Content-Length") or 0)
 +        n = self._length() or 0  # _gate has already refused a length that is not usable
          self._body_read = True
-@@ -147,7 +220,7 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -147,7 +232,7 @@ class _Handler(BaseHTTPRequestHandler):
  
 -    def _public(self, cid: str) -> dict[str, Any]:
 -        return {**self.state.contacts[cid], "createdAt": "x", "updatedAt": "x", "archived": False}
@@ -816,7 +849,7 @@ index 799bacc..095f2e8 100644
 +            self._send(400, {"status": "error", "message": "bad Content-Length"})
 +            return False
          auth = self.headers.get("Authorization", "")
-@@ -172,9 +245,6 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -172,9 +257,6 @@ class _Handler(BaseHTTPRequestHandler):
                  return
 -            ids = sorted(st.contacts, key=int)
              limit = min(int((q.get("limit") or ["100"])[0]), st.page_max)
@@ -828,7 +861,7 @@ index 799bacc..095f2e8 100644
 +            rows, next_after = st.contacts_page(limit, after)
 +            self._send(200, {"results": rows, "paging": {"next": {"after": next_after}} if next_after else None})
              return
-@@ -182,5 +252,5 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -182,5 +264,5 @@ class _Handler(BaseHTTPRequestHandler):
              ident = unquote(parts.path[len(_BASE) + 1 :])
 -            cid = st.by_email(ident) if q.get("idProperty") == ["email"] else ident
 -            if cid in st.contacts:
@@ -837,7 +870,7 @@ index 799bacc..095f2e8 100644
 +            if found is not None:
 +                self._send(200, found)
                  return
-@@ -230,10 +300,7 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -230,10 +312,7 @@ class _Handler(BaseHTTPRequestHandler):
                  return
 -        with st.lock:
 -            cid = st.by_email(unquote(parts.path[len(_BASE) + 1 :]))
@@ -851,7 +884,7 @@ index 799bacc..095f2e8 100644
 -            self._send(200, self._public(cid))
 +            self._send(200, changed)
  
-@@ -252,10 +319,4 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -252,10 +331,4 @@ class _Handler(BaseHTTPRequestHandler):
          want = self._json()["filterGroups"][0]["filters"][0]["value"]
 -        now = time.monotonic()
 -        hits = [
@@ -864,25 +897,25 @@ index 799bacc..095f2e8 100644
 +        hits = st.search(want)
 +        self._send(200, {"total": len(hits), "results": hits})
  
-@@ -275,4 +336,3 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -275,4 +348,3 @@ class _Handler(BaseHTTPRequestHandler):
              return
 -        if st.mode in ("r429", "r5xx") and st.failed < st.times:
 -            st.failed += 1
 +        if st.mode in ("r429", "r5xx") and st.take_failure():
              if st.mode == "r429":
-@@ -287,4 +347,3 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -287,4 +359,3 @@ class _Handler(BaseHTTPRequestHandler):
              return
 -        if st.mode == "timeout_after_create" and not st.hung_once:
 -            st.hung_once = True
 +        if st.mode == "timeout_after_create" and st.take_hang():
              st.release.wait(HANG_SECONDS)
-@@ -292,4 +351,3 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -292,4 +363,3 @@ class _Handler(BaseHTTPRequestHandler):
              return
 -        if st.mode == "r5xx_after_store" and st.failed < st.times:
 -            st.failed += 1
 +        if st.mode == "r5xx_after_store" and st.take_failure():
              self._send(500, {"status": "error"})
-@@ -301,3 +359,4 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -301,3 +371,4 @@ class _Handler(BaseHTTPRequestHandler):
              return
 -        self._send(201, self._public(cid))
 +        # a contact deleted by another thread in the meantime still gets its 201 (as a real create that was answered)

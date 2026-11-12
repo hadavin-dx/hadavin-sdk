@@ -1,0 +1,2 @@
+tree f5fe824 + patch
+$ timeout 1200 pytest -q -p no:cacheprovider --durations=5 <11 touched files>

@@ -1,0 +1,17 @@
+$ timeout 20 pytest -o faulthandler_timeout=3 (scratch hanging test, not committed); config key is faulthandler_timeout in pyproject.toml
+Timeout (0:00:03)!
+Thread 0x00007fabe55de080 (most recent call first):
+  File "/usr/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/lib/python3.12/threading.py", line 655 in wait
+  File "/tmp/work/h1-fh/test_hang.py", line 3 in test_hangs
+  File "/tmp/work/int2-venv/lib/python3.12/site-packages/_pytest/python.py", line 187 in pytest_pyfunc_call
+  File "/tmp/work/int2-venv/lib/python3.12/site-packages/pluggy/_execution.py", line 147 in _multicall
+  File "/tmp/work/int2-venv/lib/python3.12/site-packages/pluggy/_manager.py", line 183 in _hookexec
+  File "/tmp/work/int2-venv/lib/python3.12/site-packages/pluggy/_caller.py", line 197 in __call__
+  File "/tmp/work/int2-venv/lib/python3.12/site-packages/_pytest/python.py", line 1798 in runtest
+  File "/tmp/work/int2-venv/lib/python3.12/site-packages/_pytest/runner.py", line 184 in pytest_runtest_call
+  File "/tmp/work/int2-venv/lib/python3.12/site-packages/pluggy/_execution.py", line 147 in _multicall
+  File "/tmp/work/int2-venv/lib/python3.12/site-packages/pluggy/_manager.py", line 183 in _hookexec
+  File "/tmp/work/int2-venv/lib/python3.12/site-packages/pluggy/_caller.py", line 197 in __call__
+exit=124
+14:faulthandler_timeout = 300

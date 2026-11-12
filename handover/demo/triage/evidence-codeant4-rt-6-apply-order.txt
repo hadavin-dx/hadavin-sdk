@@ -1,0 +1,8 @@
+# round 4 final tree = f5fe824 + speed + six patches (git add -N). tests-hardening no longer touches pyproject.toml (H1 owns faulthandler)
+speed OK
+desk applies OK on f5fe824
+portal-log applies OK on f5fe824
+demo-only applies OK on f5fe824
+tests-hardening applies OK on f5fe824
+fakes-body applies OK on f5fe824
+standins-body applies OK on f5fe824

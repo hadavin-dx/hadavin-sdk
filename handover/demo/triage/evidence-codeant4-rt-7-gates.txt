@@ -1,0 +1,12 @@
+== gitleaks dir
+10:43PM INF no leaks found
+== gitleaks git
+10:43PM INF no leaks found
+== ruff
+All checks passed!
+143 files already formatted
+== mypy
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+== bandit
+ Total issues (by severity): Undefined: 0 Low: 9 Medium: 0 

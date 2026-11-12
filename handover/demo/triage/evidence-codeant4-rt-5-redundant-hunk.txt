@@ -1,0 +1,15 @@
+# redundant hunk in test_model_stamp_and_reaper.py
+== hunk removed, hostile DESK_ vars in environment:
+...................                                                      [100%]
+19 passed in 1.18s
+== negative control: same env, hunk removed AND conftest fixture disabled (-p no:... n/a; use git stash of conftest):
+.                                                                        [100%]
+1 passed, 18 deselected in 0.04s
+== no fixture (old conftest), no hunk, DESK_LEADFLOW_FILE=/nope:
+tests/test_model_stamp_and_reaper.py:328: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_model_stamp_and_reaper.py::test_main_exits_4_when_the_desk_refuses
+1 failed, 18 deselected in 0.04s
+== with fixture (current conftest), no hunk, same env:
+.                                                                        [100%]
+1 passed, 18 deselected in 0.03s

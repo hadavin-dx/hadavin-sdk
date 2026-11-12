@@ -1,0 +1,15 @@
+tree f5fe824 + patch (git diff of the working tree)
+$ timeout 60 python -m pytest -q -p no:cacheprovider tests/test_server_stop_guard.py -v
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /tmp/work/int2-venv/bin/python
+rootdir: /tmp/work/h1-base
+configfile: pyproject.toml
+collecting ... collected 5 items
+
+tests/test_server_stop_guard.py::test_a_stop_that_never_returns_fails_fast_with_a_message PASSED [ 20%]
+tests/test_server_stop_guard.py::test_the_stack_of_every_thread_is_printed_when_a_stop_hangs PASSED [ 40%]
+tests/test_server_stop_guard.py::test_start_serving_returns_only_when_the_loop_runs PASSED [ 60%]
+tests/test_server_stop_guard.py::test_start_serving_fails_when_the_loop_never_starts PASSED [ 80%]
+tests/test_server_stop_guard.py::test_a_stop_that_works_returns_at_once_and_passes_on_errors PASSED [100%]
+
+============================== 5 passed in 1.73s ===============================
+exit=0
