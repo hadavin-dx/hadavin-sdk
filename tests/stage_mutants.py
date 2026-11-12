@@ -1168,7 +1168,7 @@ M = [
     other_mutant('Z236 round 18: a mapping key is shown in the place line (hidden_input.py)', 'src/hadavin_sdk/hidden_input.py',
         'out.append(shown_name(part))', 'out.append(part)', 'tests/test_q8a1_b18_fixes.py', 'test_the_place_line_of_a_mapping_key_is_not_shown_unless_it_is_a_loaded_id', 'no loader loaded is shown'),
     other_mutant('Z237 round 18: a foreign error text is kept in the context (hidden_input.py)', 'src/hadavin_sdk/hidden_input.py',
-        'out[key] = _without_chain(value) if isinstance(value, ConfigValueError) else ConfigValueError(REFUSED)', 'out[key] = value', 'tests/test_q8a1_b18_fixes.py', 'test_a_fixed_sentence_of_the_package_is_kept_and_any_other_exception_text_is_not', 'a foreign exception text is shown'),
+        '            out[key] = (\n                _without_chain(value)\n                if isinstance(value, ConfigValueError)\n                else ConfigValueError(REFUSED)\n            )', '            out[key] = value', 'tests/test_q8a1_b18_fixes.py', 'test_a_fixed_sentence_of_the_package_is_kept_and_any_other_exception_text_is_not', 'a foreign exception text is shown'),
     other_mutant('Z238 round 18: a library text of the context is kept (hidden_input.py)', 'src/hadavin_sdk/hidden_input.py',
         '        else:\n            out[key] = HIDDEN\n    return out', '        else:\n            out[key] = value\n    return out', 'tests/test_q8a1_b18_fixes.py', 'test_a_ctx_text_of_a_library_is_the_fixed_word_and_a_limit_is_kept', 'text of a UUID error is shown'),
     other_mutant('Z239 round 18: a bad context falls back to the library text (hidden_input.py)', 'src/hadavin_sdk/hidden_input.py',
