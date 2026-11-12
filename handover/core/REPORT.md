@@ -1,6 +1,11 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## 19:42Z (01:12 IST): status
+- #71 fix (pglast guard test) pushed by its builder: wip/cloud-p0a-fix f0de7b75, based on main a8b4d8e8; builder's own evidence (unverified by me): 10 of 11 new planted cases fail on the old guard, 90 tests pass in two files, lint/bandit/gitleaks clean, NO full pytest (no heavy slot for 20 min). ONE confirming round (design + codebase reviewers) started. Note: the fix lives on a wip ref, not on PR 71's own branch core/P0a (977c214f); the lead decides how it reaches the PR.
+- No other new pushes since 19:37Z. Load 4.3. Heavy queue: 13 waiter files (some may be dead pids; I check them next tick).
+- Running: part 2 and part 6 evidence runners, part 3 batch 2, stack 2 and stack 3 rebasers, #72 nits, AK1-a, AK-G2-a b2, Q8b gate-fix, Q8c-1 b16 gates, Q8a-1 b19 evidence, P3a-2 b9, part 5 gates.
+
 ## 19:37Z (01:07 IST): status
 - Load 4.1 (was 9). Priority queue holds 9 waiters.
 - Part 6 (banner) final head dd5c7242 pushed; builder gates: full pytest 10115 passed, stage_mutants 37/37, banner mutants 28 (27 rerun after a one-line snippet fix); gitleaks by me on its commits: clean. Independent evidence runner started. Part 2 evidence runner still working.
