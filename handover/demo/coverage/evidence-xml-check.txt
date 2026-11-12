@@ -1,0 +1,10 @@
+root attrs: {'line-rate': '0.9257', 'branch-rate': '0', 'lines-valid': '7067', 'lines-covered': '6542', 'branches-valid': '0'}
+sources: [None, '.']
+class entries: 35 unique files: 35
+not repo-relative or not on disk: 0
+by top folder: {'src': 22, 'load_tools': 4, 'tools': 3, 'scripts': 6}
+  load_tools: 621/717 = 0.8661
+  scripts: 887/992 = 0.8942
+  src: 4961/5271 = 0.9412
+  tools: 73/87 = 0.8391
+tracked .py outside tests/demo_only: 38 absent from report (Sonar counts these as 0 covered): ['scripts/check_schema.py', 'scripts/crash_desk.py', 'scripts/n8n_api.py']

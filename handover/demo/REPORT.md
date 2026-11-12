@@ -1,6 +1,38 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:09Z / 01:39 IST - LANE 7 builder DONE (coverage/sonar-coverage.patch + PLAN.md); security-path review started; 3 agents live (lane 9, lane 8b, lane 7 review)
+FAILED / OPEN first (builder's words, unreviewed):
+1. **PRE-EXISTING BUG FOUND, needs you (outside lane 7): on UNMODIFIED pr-3-tests b29bb1f the real gitleaks 8.30.1 (`gitleaks dir`) reports 1 `generic-api-key` finding at `sonar-project.properties:4` (the projectKey line). `exceptions.txt` has an entry for that line but `.gitleaks.toml` does not, so lint.yml's gitleaks step will FAIL after the stack merges.** Not fixed (not lane 7's job); PLAN.md section 1 gives the fix; the lane 7 patch adds no new finding. The reviewer is asked to confirm it by reading both files.
+2. UNVERIFIED: whether sonar-scanner accepts coverage.xml via `sonar.python.coverage.reportPaths`: docs.sonarsource.com returns 403 through the proxy and no scanner is installed. Only checked: the report is standard coverage.py Cobertura XML and all 35 `filename` values are repo-relative and exist on disk (0 bad). The first real run on the PR shows it.
+3. Deviation from your brief: the repo has NO Semgrep requirements pair (no requirements-semgrep.in); the only Semgrep pattern the builder found is a `uvx` call in the other studio repo. So the coverage lock follows requirements-dev.txt's own style instead. Tell me if requirements-semgrep.in lives on another branch.
+4. The full local coverage run: 1 failed, 2348 passed, 116 skipped in 894.68 s. The 1 failure, test_no_placeholder_text_ships, was caused by the builder's `.venv-cov` sitting INSIDE the tree; it passes with the venv outside (18 passed, 1 skipped), so it cannot happen in CI (a stranger with a `.venv` inside the tree may hit the same: the reviewer is asked if that is a defect worth reporting).
+5. Timing: uptime 0.64 0.51 0.71 before the run, 2.91 2.05 1.32 after; 894.68 s equals lane 1 (886 s) and lane 4 (894.6 s): the coverage overhead was not visible.
+NUMBERS: line-rate 0.9257 (6542 of 7067 lines): src 94.1 percent, scripts 89.4, load_tools 86.6, tools 83.9. Branch coverage OFF (kept the change minimal). Three never-imported scripts (check_schema.py, crash_desk.py, n8n_api.py) are absent from the report: Sonar counts them uncovered: about 89.7 percent worst case. The 113 Playwright skips count as uncovered (browser-only Python is uncovered); demo_only/ and tests/ excluded.
+PATCH: 9 files vs b29bb1f, `git apply --check` passes on a fresh copy: sonar.yml (setup-python with the same SHA as lint.yml, `--require-hashes` installs, a test step WITHOUT the secret, SONAR_TOKEN only in the scan step, timeout-minutes 35 = expected about 21 min plus about 60 percent; set to 1.6 x the observed run after the first real run); new requirements-coverage.in/.txt (uv 0.11.32, --exclude-newer 2026-11-09 as a date because a time string fails the literal scan, Python 3.12, Linux, constrained to the dev lock; adds coverage 7.17.2 and pytest-cov 7.1.0; the other 5 pins are pytest's dependencies at the SAME versions as the dev lock; dev lock untouched); pyproject.toml `relative_files = true`, `source = ["."]` plus an omit list; entries in exceptions.txt and .gitleaks.toml for the new lock (the reviewer checks how narrow); the reportPaths line; .gitignore; 7 lines in docs/tests.md. Command: bare `--cov` with `source = ["."]` instead of four `--cov=<folder>` flags (with the flags, filenames come out relative to each folder and would not match sonar.sources=.). No coverage.py subprocess patching (+5 lines but 114 s instead of 49 s on 2 test files). Fork and Dependabot PRs skip the whole job through the existing `if` (no tests, no scan). xdist `-n auto` only noted. Owner-side Sonar settings (quality gate coverage condition, new-code definition, Automatic Analysis off) in PLAN.md section 6.
+- One fresh egm review started: SECURITY PATH (secret in a workflow, new lock, scanner allowlist): adversarial, no round cap; report goes to coverage/REVIEW-1.md.
+- Capacity: lane 7's own pytest is finished; the machine now carries lane 9's busy loops and tests and lane 8b's tests.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:09Z / 01:39 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a1efeaddf3232ebcb (agent, sonnet evidence runner) | lane 9 hang reproduction + memory | 19:50 | 21 min | 20:50 | running (busy loops pids 24367/24368 and its pytests) | hang/RESULTS.md, memory-*.txt | batch files; no hand-back yet |
+| ac3a511599cfd9d0d (agent, sonnet builder) | lane 8b: playwright-only hashed file + decode-in-Chromium test + docs | 20:01 | 11 min | 20:50 | running (fresh-venv3 pytest pid 26149; D11 design message sent 20:07) | docs-and-deps.patch v2, PLAN.md | pytest alive; I could not yet see PLAN.md changes for D11 |
+| (new, started at the end of this block) egm reviewer, lane 7 security review | review | 20:09 | 0 min | +10 min | running | coverage/REVIEW-1.md | started |
+Totals: agents live 3; shells 0; pytest runs about 2 plus lane 9's short runs; 2 busy loops (lane 9, on purpose); containers 0; nothing past its time box.
+Correction to my earlier tables: lane 7's pytest (pid 5362) ended before this block; it was shown as running in the previous block.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| lane 7 Sonar | review 1 starting | n/a | n/a | security path (secret in a workflow, new lock, scanner allowlist): no cap by your D7 | not applicable to security paths | a fresh review finds no Major or Blocker |
+| lane 8 browser tests | v3 design in build | v1 0B/3M/8N | rule-20 own code; counts not measured on the final tree | two design reversals by decision (D10, D11) | none | fresh review of v2 without Major or Blocker |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| a28f5af6a766a1b53 (lane 7 builder, sonnet) | 26 min (19:45 to about 20:11) | patch built and proven locally; Sonar acceptance UNVERIFIED; found the pre-existing gitleaks failure | yes |
+
 ## 2026-11-12 20:07Z / 01:37 IST - DeepSource extra work DONE (review: no Blocker, no Major); 3 agents live (lane 7, lane 9, lane 8b)
 Status lines:
 - triage/REVIEW-extra.md: the one fresh review (D5 rule) found no Blocker and no Major in the classifications or the one cosmetic patch. It confirmed: demo_only/portal_demo.py:326 FALSE POSITIVE (`got` always has 3 items on every path incl. unreachable and deadline-passed); 'redefining format' is the stdlib `log_message(self, format, ...)` signature (6 sites in demo_only and tests plus a 4th in src/lead_desk/server.py:588: renaming would break the override); tests/support.py SQL builds nothing from non-constants (125 call sites: 120 literals, 5 locals assigned from literals); the other patterns (exec, next(), except-pass, JS catch, empty bodies, no-self, comprehensions) sampled (15+ instances): none REAL. Its only weak spot: test_desk_http_edge_cases.py:1213-1214 passes if no exception is raised (STYLE, noted).

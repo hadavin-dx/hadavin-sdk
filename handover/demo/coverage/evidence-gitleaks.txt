@@ -1,0 +1,9 @@
+== gitleaks dir on a copy of the tree (venv, coverage.xml and .git left out), as lint.yml
+[90m8:07PM[0m [32mINF[0m [1mscanned ~2695833 bytes (2.70 MB) in 329ms[0m
+[90m8:07PM[0m [33mWRN[0m [1mleaks found: 1[0m
+exit 1
+== same with the ORIGINAL .gitleaks.toml (proves the edit is needed)
+      1 [90m8:07PM[0m [33mWRN[0m [1mleaks found: 134[0m
+RuleID:      generic-api-key
+File:        /tmp/work/gl-base/sonar-project.properties
+8:07PM WRN leaks found: 1

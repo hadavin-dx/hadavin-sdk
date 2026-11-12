@@ -1,0 +1,12 @@
+== ruff check
+All checks passed!
+== ruff format
+127 files already formatted
+== literal scan left (lint.yml step, new files staged)
+0
+== bandit exit
+0
+== hash check
+Requirement already satisfied: pytest==9.2.0 in ./.venv-cov/lib/python3.12/site-packages (from -r requirements-coverage.txt (line 149)) (9.2.0)
+Requirement already satisfied: pytest-cov==7.1.0 in ./.venv-cov/lib/python3.12/site-packages (from -r requirements-coverage.txt (line 155)) (7.1.0)
+== workflow pin test + literal scan tests ran in evidence-rerun-failed-test.txt

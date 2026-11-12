@@ -1,0 +1,10 @@
+ .github/workflows/sonar.yml |  17 ++++-
+ .gitignore                  |   2 +
+ .gitleaks.toml              |   4 +-
+ docs/tests.md               |   7 ++
+ exceptions.txt              |   4 +-
+ pyproject.toml              |  10 +++
+ requirements-coverage.in    |   5 ++
+ requirements-coverage.txt   | 158 ++++++++++++++++++++++++++++++++++++++++++++
+ sonar-project.properties    |   2 +
+ 9 files changed, 203 insertions(+), 6 deletions(-)

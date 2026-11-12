@@ -1,0 +1,71 @@
+........................................................................ [  2%]
+........................................................................ [  5%]
+........................................................................ [  8%]
+........................................................................ [ 11%]
+........................................................................ [ 14%]
+........................................................................ [ 17%]
+........................................................................ [ 20%]
+........................................................................ [ 23%]
+........................................................................ [ 26%]
+........................................................................ [ 29%]
+........................................................................ [ 32%]
+........................................................................ [ 35%]
+.............................................s.......................... [ 37%]
+........................................................................ [ 40%]
+........................................................................ [ 43%]
+........................................................................ [ 46%]
+........................................................................ [ 49%]
+........................................................................ [ 52%]
+...............ss...............................sssss....s.............. [ 55%]
+........................................................................ [ 58%]
+..................................F..................................... [ 61%]
+........................................................................ [ 64%]
+........................................................................ [ 67%]
+ssssssssssssssss........................................................ [ 70%]
+........................................................................ [ 73%]
+.ssssssssssssss..........sssssssssssssssssssssss......sssssss.ssssssssss [ 75%]
+sss..sss......................................................ssssssssss [ 78%]
+ss................................................ss..s................. [ 81%]
+........................................................................ [ 84%]
+........................................................................ [ 87%]
+............................s........................................... [ 90%]
+........................................................................ [ 93%]
+........................................................................ [ 96%]
+.............ssssssssssssss..................................s.......... [ 99%]
+.................                                                        [100%]
+=================================== FAILURES ===================================
+________________________ test_no_placeholder_text_ships ________________________
+
+    def test_no_placeholder_text_ships() -> None:
+        hits, unreadable = [], []
+        for path in _files():
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                if path.suffix.lower() not in BINARY_SUFFIXES:
+                    unreadable.append(path.relative_to(REPO).as_posix())  # not a picture: it was not checked
+                continue
+            for n, line in enumerate(text.splitlines(), 1):
+                if FOUND.search(line):
+                    hits.append(f"{path.relative_to(REPO).as_posix()}:{n}")
+>       assert not hits, hits
+E       AssertionError: ['.venv-cov/lib/python3.12/site-packages/_pytest/_code/code.py:100', '.venv-cov/lib/python3.12/site-packages/_pytest/_...thon3.12/site-packages/_pytest/_py/path.py:222', '.venv-cov/lib/python3.12/site-packages/_pytest/_py/path.py:232', ...]
+E       assert not ['.venv-cov/lib/python3.12/site-packages/_pytest/_code/code.py:100', '.venv-cov/lib/python3.12/site-packages/_pytest/_...thon3.12/site-packages/_pytest/_py/path.py:222', '.venv-cov/lib/python3.12/site-packages/_pytest/_py/path.py:232', ...]
+
+tests/test_no_placeholders.py:43: AssertionError
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.3-final-0 ________________
+
+Coverage XML written to file coverage.xml
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_hygiene.py:128: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [22] tests/test_mode_safety.py:109: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [60] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
+SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
+1 failed, 2348 passed, 116 skipped in 894.68s (0:14:54)
+exit 1
