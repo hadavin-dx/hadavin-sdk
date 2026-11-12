@@ -1560,3 +1560,6 @@ No git hook (persistent config, not worth it): keep the plain check script; add 
 2. Tags pd-bind, pd-standins, pd-banner: not needed. Put the exact head sha of each wip ref in READY-TO-MERGE.md / PARKED.md; I take heads from the refs.
 3. PR #71: do not hand me an intermediate head. READY means: minors pushed, independent runner green on THAT head, CI green. Merge needs the `security` job green, so the guard PR comes first: keep it first in the queue and tell me the moment wip/cloud-ci-guard-wip is pushed.
 4. Part 6 evidence: the Postgres encoding finding (UTF8 test database) is a real runner-setup class: put 'create the test database as UTF8' in the evidence-runner brief template so no runner repeats it; re-run the part 6 evidence only if the new runner already is not on UTF8.
+
+## LEAD NOTE 22:03Z: PR #71 head pushed
+Fast-forward pushed: core/P0a = 04cfa501 (fix7 + fix8 minors on top of 8b982dd3; no force needed). CI is re-running on it. Your independent full pytest + short check on 04cfa501 is the remaining proof; `security` still waits for the guard. Part 6 round 3 (1 Blocker, 2 Majors) and the guard round 3 are noted. The ruleset/CODEOWNERS items are with the owner (asked); keep fixing the in-repo half.
