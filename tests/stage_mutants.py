@@ -698,7 +698,7 @@ M = [
         'f"{label}: {describe(exc, detail)} after {max_attempts} attempts"\n            )', 'f"{label}: {describe(exc, detail)} after {max_attempts} attempts"\n            ) from exc',
         TRACE, "test_a_provider_error_that_quotes_the_request_leaves_no_trace", "still the cause", "[1]"),
     other_mutant("Z12 a failing audit folder raises inside the except block again (local_dir.py)", "src/hadavin_sdk/audit/local_dir.py",
-        '            failure = f"intent {event.event_id}: {exc.__class__.__name__}"', '            raise AuditUnavailable(f"intent {event.event_id}: {exc.__class__.__name__}")',
+        '            failure = f"intent {shown_id(event.event_id)}: {exc.__class__.__name__}"', '            raise AuditUnavailable(f"intent {shown_id(event.event_id)}: {exc.__class__.__name__}")',
         TRACE, "test_a_failing_audit_folder_says_the_class_only_and_leaves_no_trace", "still the context", ""),
     other_mutant("Z13 an unknown agent id is printed again (replay.py)", "src/hadavin_sdk/k1b/replay.py",
         'f"unknown agent {shown_name(agent_id, registry.agents)}"', 'f"unknown agent {agent_id}"',
