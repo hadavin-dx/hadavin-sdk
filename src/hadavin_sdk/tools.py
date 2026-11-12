@@ -976,7 +976,7 @@ def _ordinary_word(body: str, start: int, end: int, cut_end: bool) -> bool:
 
 
 # a text that holds a hidden item, or a spelled-out one (`%1b`, `\\u001b`, `&#27;`, `%C2%9B`, `\\x1b`)
-_HIDDENISH = re.compile(r"%(?:[01][0-9a-f]|7f|c2)|\\u00[01]|\\x[01]|&#", re.IGNORECASE)
+_HIDDENISH = re.compile(r"%(?:[01][0-9a-f]|7f|c2)|\\u00[01]|\\x[01]|\\e|&#", re.IGNORECASE)
 
 
 def _remnant_stands(original: str, out: str, scrub: ScrubSettings) -> bool:
@@ -1038,7 +1038,7 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
     inside an ordinary word of letters only. NOT promised: a text where nothing was found and no reading changed is returned
     as written (a piece of a secret in plain coloured text stays); a secret of letters only that stands alone as a word and
     was cut by a hidden item is not withheld by the piece check; a found secret plus a non-word piece of it elsewhere withholds
-    the whole result (the availability cost). Secrets written with a space between their characters are not read (LIMITS). The character reading is a result only when the text holds no control sequence
+    the whole result (the availability cost). A handed-out secret of 12 or more characters written with a space between its characters (any spaces, tabs or line breaks, hidden characters too) IS read (`_mask_spaced_out`); a shorter one is not. The character reading is a result only when the text holds no control sequence
     whose body it would show as text (`[0m` after a deleted ESC: `hidden.leaves_text`); otherwise a find in it only
     withholds the text. A result that still holds a spelling of a handed-out secret is withheld too."""
     try:
@@ -1055,6 +1055,13 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
         # longest first: a short value that is a front of a longer one (`AKIAIOSFODNN` inside the whole key) masked first would
         # leave the longer one's tail standing, which the piece check then reads as a leak and withholds the result
         long_enough = sorted([*long_enough, *found_values], key=len, reverse=True)
+        # a string opener that no terminator closes swallows the rest of its line in the grammar's reading, the tail of a value
+        # with it: no reading then holds the value whole, and its front stands in the output. A stretch of a handed-out or found
+        # value that stands in a reading of such a text withholds it (class: a front left by a swallowed tail, PR H batch 9)
+        if hidden.has_open_string(raw):
+            piece_forms = sorted({f for x in long_enough for f in _secret_forms(x)})
+            if any(_has_piece(t, piece_forms, scrub.piece_min) for t in (rd.joined, rd.spaced)):
+                return MARKER + TRUNCATED
         # (joined, spaced, is the character reading) of each distinct reading, the grammar's first
         triples = list(
             dict.fromkeys(

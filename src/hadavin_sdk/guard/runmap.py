@@ -29,6 +29,7 @@ from hadavin_sdk.guard.redact import (
     PATTERNS,
     SECRET_KINDS,
     WITHHELD_NOTE,
+    SpacedRunLimit,
     collapse_runs,
     gap_pattern,
     kind_of,
@@ -130,7 +131,9 @@ def nfkc(text: str) -> str:
     return canonical(fits_after_nfkc(text))
 
 
-_HEX_ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|U([0-9a-fA-F]{8})|([0-3][0-7]{2}))")
+# `\e` is ESC in shell and logging dialects, read like `\x1b` (batch 9, class: a spelled-out ESC the decoder did not know). It only
+# adds a reading: a path such as `C:\env` is returned as written unless the reading finds a value
+_HEX_ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|U([0-9a-fA-F]{8})|([0-3][0-7]{2})|(e))")
 _PCT_U = re.compile(r"%u([0-9a-fA-F]{4})")
 _BRACE_U = re.compile(r"\\u\{([0-9a-fA-F]{1,6})\}")
 
@@ -141,12 +144,14 @@ def _one_escape(m: re.Match[str]) -> str:
     if m.group(2):
         cp = int(m.group(2), 16)
         return chr(cp) if cp <= 0x10FFFF else m.group(0)
+    if m.group(4):
+        return "\x1b"
     return chr(int(m.group(3), 8))
 
 
 def hex_unescape(text: str) -> str:
     """Backslash escapes a log pipeline or a language writes for one character: backslash-x and two hex digits,
-    backslash-U and eight hex digits, and a three-digit octal escape (backslash and 000 to 377). NOT decoded: a one- or
+    backslash-U and eight hex digits, a three-digit octal escape (backslash and 000 to 377), and backslash-e. NOT decoded: a one- or
     two-digit octal escape and named escapes (`\1` and Windows paths would decode wrongly)."""
     if "%u" in text:
         text = _PCT_U.sub(lambda m: chr(int(m.group(1), 16)), text)
@@ -1022,11 +1027,17 @@ def redact_text(
         # an UNKNOWN secret written with a space between its characters (`A K I A ...`): the text with the spaces of such a run
         # taken out is one more view (the check is `redact.spaced_unknown`: a run of ten or more single-character tokens that
         # the patterns read as a secret once collapsed; it changed 0 of 83,589 ordinary lines, `defaults.READ_SPACED_OUT_UNKNOWN`)
-        if (
-            defaults.READ_SPACED_OUT_UNKNOWN
-            and " " in e_spaced
-            and (runs := spaced_unknown(e_spaced))
-        ):
+        try:
+            runs = (
+                spaced_unknown(e_spaced)
+                if defaults.READ_SPACED_OUT_UNKNOWN
+                and len(e_spaced) >= 2 * defaults.SPACED_RUN_MIN_TOKENS - 1
+                else []
+            )
+        except SpacedRunLimit:
+            # too many runs of spaced-out characters to read each one: nothing is shown, never a skip (cost bound, batch 9 group 7)
+            raise RedactionLimit("InputTooLarge") from None
+        if runs:
             collapsed = collapse_runs(e_spaced, runs)
             if collapsed not in (e_joined, e_spaced) and collapsed not in cleaned + views:
                 cleaned.append(collapsed)
@@ -1088,6 +1099,16 @@ def redact_text(
                 try:
                     _refuse_remnant(again, again_map)
                 except InputTooLarge:
+                    # a view that found NO value the readings before it did not hold may be dropped (they judge the remnant); a
+                    # view that alone found a value must not be dropped: the value would stay readable, so the text is refused
+                    # (class: a find dropped silently, PR H batch 9, group 9)
+                    held = [v for v in current.values() if not v.startswith("\0seed")]
+                    if any(
+                        not any(v in k for k in held)
+                        for v in again_map.values()
+                        if v not in current.values() and not v.startswith("\0seed")
+                    ):
+                        raise
                     wins = False
             if wins:
                 out, current = again, again_map

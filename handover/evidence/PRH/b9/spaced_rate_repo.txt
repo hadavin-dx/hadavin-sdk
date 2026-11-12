@@ -1,0 +1,9 @@
+tree /home/user/build/B-PRH-b9/src/hadavin_sdk/guard/redact.py
+files=471 lines=86698 lines_with_a_spaced_run_at_all=19 lines_changed=4
+positive control (example key spaced out) runs found: 1
+ordinary spaced texts changed: [False, False, False, False, False, False, False]
+  changed: /home/user/build/B-PRH-b9/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:157: 'E       AssertionError: key: A K I A I O S F O D N N 7 E X A M P L E end'
+  changed: /home/user/build/B-PRH-b9/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:161: "E        +      where <built-in method replace of str object at 0x7fc0aa4c94d0> = 'key: A K I A I O "
+  changed: /home/user/build/B-PRH-b9/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:222: 'E       AssertionError: key: A K I A I O S F O D N N 7 E X A M P L E end'
+  changed: /home/user/build/B-PRH-b9/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:226: 'E         + key: A K I A I O S F O D N N 7 E X A M P L E end'
+rc=0

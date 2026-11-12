@@ -1,0 +1,5 @@
+seconds=50.0 seed=1 texts_tried=1920 worst_passes_incl_refused=24 worst_passes_of_texts_not_refused_by_the_bound=24 cap=24 reached_bound=821
+seconds=50.0 seed=2 texts_tried=2100 worst_passes_incl_refused=24 worst_passes_of_texts_not_refused_by_the_bound=24 cap=24 reached_bound=874
+seconds=50.0 seed=1 texts_tried=2010 worst_passes_incl_refused=24 worst_passes_of_texts_not_refused_by_the_bound=24 cap=24 reached_bound=858
+
+[exited with code 0]

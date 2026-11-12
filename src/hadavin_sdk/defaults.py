@@ -51,11 +51,11 @@ MAX_SWALLOWED_CHARS = (
 )
 REDACT_BUDGET_S = 6.0
 # The most passes (one pass = all patterns of `redact` over one reading) one `redact_text` call may make; one more is refused
-# (`InputTooLarge`, nothing shown), counted in `runmap._Work.count_pass`. Measured once on 2026-11-11 (not repeated by any
-# test): a 60 second hill-climb over texts mixing ESC ( B, colour codes, percent, entity and backslash-u spellings, non-ASCII,
-# a placeholder look-alike and values reached 17 passes. What the tests assert on every run (`tests/test_prh_steps.py`): the
-# 600 seeded texts of `test_pass_bound_holds_for_a_seeded_search` never reach the bound (their worst is 16 since batch 8, 14 before: the keeping reading is one more pair; 13 before batch 6: the character reading is read as a pair), and every row of
-# `tests/fixtures/prh_regressions.json` makes 8 passes or fewer on every path of the row (7 before batch 8).
+# (`InputTooLarge`, nothing shown), counted in `runmap._Work.count_pass`. Measured on 2026-11-12 (`handover/evidence/PRH/b9/hillclimb.py`,
+# 50 seconds of mutating texts that mix ESC ( B, colour codes, percent, entity and backslash-u spellings, non-ASCII, a placeholder
+# look-alike and values): two runs reached the bound (24) with 821 of 1,920 and 874 of 2,100 mutated texts (43 and 42 percent; the previous head ea6dbdaf: 858 of 2,010, 43 percent), so a dense hostile text IS refused (nothing shown, never shown unmasked) and the real worst need is above 24; the cap is a cost bound, not a measured maximum. What the tests assert on every run (`tests/test_prh_steps.py`): the
+# 600 seeded texts of `test_pass_bound_holds_for_a_seeded_search` never reach the bound (their worst is 16), and every row of
+# `tests/fixtures/prh_regressions.json` makes 8 passes or fewer on every path of the row.
 MAX_REDACT_PASSES = 24
 
 
@@ -83,8 +83,9 @@ SCRUB_MAX_LAYERS = (
 )
 SPACED_VALUE_MIN_CHARS = 12  # the shortest KNOWN secret (a value the run holds, or one handed to a tool) that is also looked for with a space between its characters (`A K I A ...`); shorter ones would match ordinary text
 SPACED_RUN_MIN_TOKENS = 10  # a run of at least this many single-character tokens, one space apart, is read with its spaces taken out
+SPACED_RUN_MAX_RUNS = 32  # the most candidate runs (10 or more spaced single characters, 6 or more different ones) one text may hold; more and the text is withheld, never skipped (cost bound: each run is read by the patterns)
 SPACED_RUN_MIN_DISTINCT = 6  # and those tokens must hold at least this many different characters (`x x x x ...` is not a secret)
-READ_SPACED_OUT_UNKNOWN = True  # the check that finds an UNKNOWN secret written with spaces between its characters (`redact.spaced_unknown`); shipped ON because it changed 0 of 83,589 ordinary lines (`handover/evidence/PRH/b8/spaced_unknown_rate.py`); set False to turn it off (`q-prh-spaced-secrets`)
+READ_SPACED_OUT_UNKNOWN = True  # the check that finds an UNKNOWN secret written with spaces between its characters (`redact.spaced_unknown`); shipped ON because it changed 0 of 1,933,591 lines of the Python 3.13 library and only the example key in 86,698 lines of the repository (`handover/evidence/PRH/b9/spaced_rate.py`); set False to turn it off (`q-prh-spaced-secrets`)
 SCRUB_PIECE_MIN = 6  # width of the stretch the piece check looks for (exact; see `tools._has_piece` for what it does not promise)
 SCRUB_PARTIAL_END = 10  # the longest half-written escape a cut can leave; added to the look-back
 SOURCE_REPROBE_S = 3600  # how often the scope of a configured source is probed again while running

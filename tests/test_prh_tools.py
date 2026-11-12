@@ -296,10 +296,12 @@ def test_scrub_character_reading_with_a_sequence_is_withheld():
     text = "a " + ESC + HAND + BOUNDARIES["sgr"]
     assert hidden.leaves_text(text)
     out = tools._scrub(text, [HAND])
+    # the first check names the planted fault of mutant 59: the character reading was taken as a result and showed `[0m`
+    assert "[0m" not in out, f"a character reading with a sequence body was shown: {out!r}"
     assert out == "a " + tools.MARKER + " ; INFO user " + tools.MARKER, (
-        f"the secret stood, or a sequence body was shown: {out!r}"
+        f"the secret stood, or the text changed: {out!r}"
     )
-    assert HAND not in out and "[0m" not in out
+    assert HAND not in out
 
 
 def test_leaves_text():

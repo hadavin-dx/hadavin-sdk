@@ -1,0 +1,8 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+[manager]	WARNING	Test in comment: SafeLoader is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: subclass is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: the is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: pinned is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: bytes is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:390
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:390

@@ -301,7 +301,10 @@ def strip_keeping(text: str) -> tuple[str, str]:
     byte after it stays as text (`ESC K` + `I...` keeps the `K`, which `strip` eats as a C1 function). Control sequences and
     strings are removed whole, as in `strip`. It is the third way an ESC can cut a value (the grammar's `strip` eats an
     upper-case letter, `strip_consuming` eats every final byte, this reading eats none); a value cut by several ESC, one that
-    needs its letter eaten and one that needs it kept, is found in one of the three. It never shows a swallowed body."""
+    needs its letter eaten and one that needs it kept, is found in one of the three. It never shows the body of a control
+    sequence or of a string. It DOES show the bytes of a charset sequence: `ESC ( B` reads as a lone ESC (taken out) followed
+    by the text `(B`, which is why this reading is only a soft one (`Redactor.find`: it adds a mask, never causes a refusal
+    alone, and its output is not shown unless it masks every value the grammar's reading masks)."""
     return _scan(text, False, False, True)
 
 

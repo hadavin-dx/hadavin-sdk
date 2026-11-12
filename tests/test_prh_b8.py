@@ -11,36 +11,9 @@ import pytest
 from hadavin_sdk import tools
 from hadavin_sdk.guard import hidden, runmap
 from hadavin_sdk.guard.redact import spaced_unknown
+from tests.seeded import rng
 
 R = importlib.import_module("hadavin_sdk.guard.redact")
-
-
-class _Lcg:
-    """A seeded generator written out (no `random` module: the suppression for a non-secret use is not needed)."""
-
-    def __init__(self, seed: int) -> None:
-        self.x = seed % (1 << 61)
-
-    def next(self) -> int:
-        self.x = (self.x * 6364136223846793005 + 1442695040888963407) % (1 << 61)
-        return self.x >> 17
-
-    def randrange(self, a: int, b: int | None = None) -> int:
-        if b is None:
-            a, b = 0, a
-        return a + self.next() % (b - a)
-
-    def randint(self, a: int, b: int) -> int:
-        return self.randrange(a, b + 1)
-
-    def choice(self, seq):
-        return seq[self.randrange(len(seq))]
-
-    def sample(self, seq, k: int) -> list:
-        pool, out = list(seq), []
-        for _ in range(k):
-            out.append(pool.pop(self.randrange(len(pool))))
-        return out
 
 
 ESC = "\x1b"
@@ -104,7 +77,7 @@ def test_b8_i4_runner_rows_leave_no_readable_stretch(name, path):
 @pytest.mark.parametrize("path", ["run", "tool"])
 def test_b8_i4_seeded_multi_cut_property(path):
     """Issue 4 (mutants 102-104, 113): 400 seeded values, each cut at 1 to 3 places by a mix of the cut grammar; no 8-stretch stands."""
-    rnd = _Lcg(8008)
+    rnd = rng(8008)
     for n in range(400):
         pos = sorted(rnd.sample(range(1, len(KEY)), rnd.randint(1, 3)))
         out, last = "", 0
@@ -168,8 +141,10 @@ def test_b8_i1_ordinary_spaced_text_is_unchanged():
         "note: "
         + "hello world this is plain text again and again please and then some more words"
         + " end"
+        + " a b c d e f g h i j k l m n o p q"  # single-character words: the spaced-run reader is reached
     )
     assert R.redact(text).text == text
+    assert tools.prepare_output(text, {}, 4000, []) == text
 
 
 def test_b8_i1_unknown_secret_shape_typed_with_spaces_is_masked_on_the_run_path():
@@ -206,7 +181,7 @@ def test_b8_i1_a_repeated_letter_run_is_not_read_as_a_spaced_out_secret():
     """Issue 1 (mutant 115): `x x x x ...` collapses to one letter repeated, which the patterns call high entropy by length;
     full-suite tests `test_k5_truncation_follows_redaction` and `test_m3_bytes_sent...` caught it after the first gate run."""
     assert spaced_unknown("x " * 5000) == []
-    assert tools.prepare_output("x " * 400, {}, 10000).count("x") > 300
+    assert tools.prepare_output("x " * 400, {}, 10000) == "x " * 400
 
 
 # ---- Issue 4: the evidence runner's own generator (seed 777), all 3096 texts -------------------------------------------
@@ -227,7 +202,7 @@ def _runner_cases(rnd=None):
         for h in _RUNNER_HIDDEN.values():
             for i in range(1, len(s)):
                 yield s, "log: " + s[:i] + h + s[i:] + " end"
-    r = rnd or _Lcg(777)
+    r = rnd or rng(777)
     names = list(_RUNNER_HIDDEN)
     for _ in range(1500):
         s = r.choice([_RUNNER_HAND, KEY, _RUNNER_PW])
@@ -237,20 +212,6 @@ def _runner_cases(rnd=None):
             out += s[p:c] + _RUNNER_HIDDEN[r.choice(names)]
             p = c
         yield s, "x " + out + s[p:] + " y"
-
-
-def test_b8_i4_the_lcg_generator_leaves_no_readable_stretch():
-    """Issue 4 (mutants 102-104, 114): the evidence runner's generator written with a seeded LCG (3096 texts, seed 777):
-    on the old code some left an 8-character stretch of the handed-out value. None may now (withheld is allowed)."""
-    leaks = []
-    n = 0
-    for s, t in _runner_cases():
-        n += 1
-        o = tools.prepare_output(t, {}, 4000, [_RUNNER_HAND])
-        if stands(o, s.replace("password=", ""), 8):
-            leaks.append(ascii(t))
-    assert n == 3096
-    assert not leaks, leaks[:3]
 
 
 def test_b8_i3_direct_redact_keeping_row():
@@ -291,15 +252,15 @@ def test_b8_i4_one_key_cut_twice_is_one_placeholder():
 
 
 def test_b8_i4_the_runner_exact_generator_leaves_no_readable_stretch():
-    """Issue 4 (mutants 102, 103): the evidence runner's OWN 3096 texts (`random.Random(777)`, as in its script): 9 left an
-    8-character stretch on the old code. The one suppression of the rule S311 is here: a seed reproduced, not a secret."""
-    import random
-
-    leaks = [
-        ascii(t)
-        for s, t in _runner_cases(random.Random(777))  # noqa: S311 - reproduces the evidence runner's seed exactly
-        if stands(tools.prepare_output(t, {}, 4000, [_RUNNER_HAND]), s.replace("password=", ""), 8)
-    ]
+    """Issue 4 (mutants 102, 103, 114): the evidence runner's OWN 3096 texts (`random.Random(777)`, as in its script; the one
+    corpus of this file, batch 9 group 10): 9 left an 8-character stretch on the old code. None may now (withheld is allowed)."""
+    leaks = []
+    n = 0
+    for s, t in _runner_cases(rng(777)):
+        n += 1
+        if stands(tools.prepare_output(t, {}, 4000, [_RUNNER_HAND]), s.replace("password=", ""), 8):
+            leaks.append(ascii(t))
+    assert n == 3096
     assert not leaks, leaks[:3]
 
 
@@ -338,7 +299,7 @@ def test_b8_i5_no_decoded_reading_holds_an_ignorable_character():
     holds an ignorable character (every one is non-ASCII and `nfkc` removes it each round). 3000 seeded texts that spell an
     ignorable character as a percent token, an entity or a JSON escape, beside the key (the committed script for the old
     mutant 90 claim)."""
-    rnd = _Lcg(5005)
+    rnd = rng(5005)
     hid = [
         c
         for c in "\u200b\u200c\u200d\u2060\ufeff\u034f\ufe0f\u180e\u00ad"
@@ -361,8 +322,9 @@ def test_b8_i5_no_decoded_reading_holds_an_ignorable_character():
 
 def test_b8_i6_the_withheld_share_is_bounded():
     """Issue 6: over-withholding is measured on both paths (the 3000 seeded texts of `tests/test_prh_b7.py`): the tool path
-    withholds 155 (5.2 percent) and direct `redact()` 22 (0.7 percent) at the head of batch 8; the bounds leave room for a
-    few more and fail on a redactor that withholds every text that holds a hidden item."""
+    withholds 155 (5.2 percent) and direct `redact()` 14 (0.5 percent), measured at the head of batch 9 (155 and 22 at batch 8;
+    on the same seeded texts the old bound of 200 passed with 143 too). The bounds ARE the measured values: one more withheld
+    text fails them, so a change that withholds more must say so here."""
     from tests import test_prh_b7 as b7
 
     tool = direct = n = 0
@@ -372,5 +334,5 @@ def test_b8_i6_the_withheld_share_is_bounded():
         tool += "withheld" in o or o.startswith(tools.MARKER + tools.TRUNCATED)
         direct += R.redact(t).text == R.WITHHELD_NOTE
     assert n == 3000
-    assert tool <= 200, tool
-    assert direct <= 40, direct
+    assert tool <= 155, tool
+    assert direct <= 14, direct

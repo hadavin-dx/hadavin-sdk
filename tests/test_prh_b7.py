@@ -11,6 +11,7 @@ import pytest
 from hadavin_sdk import tools
 from hadavin_sdk.guard import hidden, runmap
 from hadavin_sdk.guard.redact import WITHHELD_NOTE, redact
+from tests.seeded import rng
 
 # looked up by name so that the file can be run on the tree before batch 7 (the new names are missing there: those tests fail)
 compare_readings = getattr(
@@ -139,7 +140,7 @@ def _piece(r: random.Random) -> str:
 
 
 def _fuzz_texts(n: int):
-    r = random.Random(20261112)  # noqa: S311 - the seeded generator of the independent evidence, not a secret
+    r = rng(20261112)  # the seeded generator of the independent evidence
     for _ in range(n):
         yield " ".join(_piece(r) for _ in range(r.randrange(2, 9)))
 
