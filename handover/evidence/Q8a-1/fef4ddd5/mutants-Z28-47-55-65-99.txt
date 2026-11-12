@@ -1,0 +1,38 @@
+ok  KILLED       Z28 a status that is not a number is printed (errors.py status_text)  [test_status_text_shows_only_a_real_number]
+ok  KILLED       Z47 reason LABEL: a label that is a path (registry.py)  [test_the_claim_of_each_reason_holds_in_the_code[LABEL]]
+ok  KILLED       Z55 reason REPORT: the hit count is a text field (score.py)  [test_the_claim_of_each_reason_holds_in_the_code[NUMFIELD]]
+ok  KILLED       Z65 reason NUM: a counter starts as text (tick.py)  [test_the_claim_of_each_reason_holds_in_the_code[NUM]]
+ok  KILLED       Z66 reason NUMFIELD: the charge is added as text (loop.py)  [test_the_claim_of_each_reason_holds_in_the_code[NUMFIELD]]
+ok  KILLED       Z67 reason KIND: the refusal of an unknown kind shows it (config.py)  [test_the_claim_of_each_reason_holds_in_the_code[KIND
+ok  KILLED       Z68 reason PKGERR: a package error has its own __str__ (errors.py)  [test_the_claim_of_each_reason_holds_in_the_code[PKGERR
+ok  KILLED       Z69 reason PROC: the data being worked on is raised (redact.py)  [test_the_claim_of_each_reason_holds_in_the_code[PROC]]
+ok  KILLED       Z70 reason LLMREQ: the request text is printed (loop.py)  [test_the_claim_of_each_reason_holds_in_the_code[LLMREQ]]
+ok  KILLED       Z71 reason BUNDLE: a bundle message shows the case folder (bundle.py)  [test_the_claim_of_each_reason_holds_in_the_code[BUN
+ok  KILLED       Z72 reason MODELTEXT: the error text goes back unredacted (extract.py)  [test_the_claim_of_each_reason_holds_in_the_code[MO
+ok  KILLED       Z73 reason PATH: the message shows the manifest path (registry.py)  [test_the_claim_of_each_reason_holds_in_the_code[PATH]]
+ok  KILLED       Z74 reason MIGSQL: another module uses the migration checker (errors.py)  [test_the_claim_of_each_reason_holds_in_the_code[
+ok  KILLED       Z75 reason THREAD: the join waits for a text (http.py)  [test_the_claim_of_each_reason_holds_in_the_code[THREAD]]
+ok  KILLED       Z76 reason OBJECTS: the gathered items are printed (kubernetes.py)  [test_the_claim_of_each_reason_holds_in_the_code[OBJECT
+ok  KILLED       Z77 reason LABEL: a label is built from a raw name (registry.py)  [test_the_claim_of_each_reason_holds_in_the_code[LABEL]]
+ok  KILLED       Z78 reason KEYVER: key_version is a plain string (signer_vault.py)  [test_the_claim_of_each_reason_holds_in_the_code[KEYVER
+ok  KILLED       Z79 reason LISTED: the pin-problem list function is gone (registry.py)  [test_the_claim_of_each_reason_holds_in_the_code[LI
+ok  KILLED       Z80 reason TIME: the sum is changed, its row no longer matches (secrets_cache.py)  [test_the_claim_of_each_reason_holds_in_
+ok  KILLED       Z81 reason SEQ: the integer check is not on seq (chain.py)  [test_the_claim_of_each_reason_holds_in_the_code[SEQ]]
+ok  KILLED       Z82 reason WORDS: a tick step name is computed (tick.py)  [test_the_claim_of_each_reason_holds_in_the_code[WORDS]]
+ok  KILLED       Z83 reason HOST: a host with other characters is shown (egress.py)  [test_the_claim_of_each_reason_holds_in_the_code[HOST]]
+ok  KILLED       Z84 round 14: zip is a safe call again (guard)  [test_the_guard_finds_each_planted_fault_alone[R14d round 14:]
+ok  KILLED       Z85 round 14: the items of enumerate are code-owned whatever they are (guard)  [test_the_guard_finds_each_planted_fault_alo
+ok  KILLED       Z86 round 14: no call collects (guard)  [test_the_guard_finds_each_planted_fault_alone[R11 an append ]
+ok  KILLED       Z87 round 14: a call is resolved by its bare name (guard)  [test_a_call_is_resolved_by_its_real_definition_and_not_by_it]
+ok  KILLED       Z88 round 14: an appended value does not bind the collection (guard)  [test_the_guard_finds_each_planted_fault_alone[R14c r
+ok  KILLED       Z89 round 14: a returned collection is a site only for text (guard)  [test_the_guard_finds_each_planted_fault_alone[R11 an 
+ok  KILLED       Z90 a failing detector is logged with its text (injection.py)  [test_a_failing_detector_is_logged_by_class_only]
+ok  KILLED       Z91 the cloud text is put into the class-only error (errors.py call_class_only)  [test_the_bedrock_error_has_no_cause_and_n
+ok  KILLED       Z92 an error of another library shows its text in the tick (tick.py)  [test_tick_message_withholds_the_text_of_an_error_of_
+ok  KILLED       Z93 any sslmode word is printed (postgres.py)  [test_an_odd_sslmode_inside_the_dsn_is_never_printed_in_a_ref]
+ok  KILLED       Z94 a provider error detail is any text (retry.py)  [test_a_sentence_in_a_provider_error_detail_is_dropped_by_des]
+ok  KILLED       Z95 a host with no dot is shown whatever it is (egress.py)  [test_a_refused_host_without_a_dot_that_is_no_address_is_not_]
+ok  KILLED       Z96 a bundle folder name is printed whole (bundle.py)  [test_a_bundle_folder_name_that_is_a_sentence_is_not_printed]
+ok  KILLED       Z97 an int subclass prints its own text (errors.py)  [test_status_text_of_an_int_subclass_prints_the_number]
+ok  KILLED       Z98 a lost race is logged with its text (tick.py)  [test_each_logs_the_class_of_a_lost_race_at_debug_and_never_i]
+ok  KILLED       Z99 a model id with a run of 32 letters or digits is accepted (config.py)  [test_a_model_id_refuses_a_long_run_and_keeps_ev

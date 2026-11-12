@@ -1,0 +1,31 @@
+ROUTE bare bedrock-shaped id: ACCEPTED 'anthropic.claude-sonnet-5-5-v1:0' len=32
+ROUTE bare bedrock-shaped id w/ region prefix: ACCEPTED 'us.anthropic.claude-haiku-5-5-v1:0' len=34
+ROUTE with space: REFUSED len=17 ::     For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+   echoes value in message: False
+ROUTE 129 chars: REFUSED len=129 ::     For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+   echoes value in message: False
+ROUTE 128 chars: REFUSED len=128 ::     For further information visit https://errors.pydantic.dev/2.14/v/value_error
+   echoes value in message: False
+ROUTE 32 alnum run: REFUSED len=32 ::     For further information visit https://errors.pydantic.dev/2.14/v/value_error
+   echoes value in message: False
+ROUTE 32 alnum run in middle: REFUSED len=36 ::     For further information visit https://errors.pydantic.dev/2.14/v/value_error
+   echoes value in message: False
+ROUTE 31 alnum run: ACCEPTED 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' len=31
+ROUTE empty: REFUSED len=0 ::     For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+   echoes value in message: True
+ROUTE newline: REFUSED len=9 ::     For further information visit https://errors.pydantic.dev/2.14/v/string_pattern_mismatch
+   echoes value in message: False
+TICK _message RuntimeError: '(details withheld)'
+TICK _message ValueError: '(details withheld)'
+TICK _message ConfigError: 'zq-probe-Kx7-marker'
+TICK _each raised RuntimeError 'zq-probe-Kx7-marker'
+LOG OUTPUT:
+WARNING hadavin_sdk.tick probe step: RuntimeError
+
+marker in log: False
+DSN odd sslmode, iam_auth -> ConfigError: store postgres: iam_auth needs a verified server (sslmode verify-full or verify-ca), not <not shown> | odd echoed: False
+DSN odd sslmode, no iam -> 'zq-probe-ssl-Wm4'
+DSN sslmode=require, iam -> ConfigError: store postgres: iam_auth needs a verified server (sslmode verify-full or verify-ca), not require | odd echoed: False
+DSN sslmode=disable, iam -> ConfigError: store postgres: iam_auth needs a verified server (sslmode verify-full or verify-ca), not disable | odd echoed: False
+DSN sslmode=verify-full, iam -> ConfigError: store postgres: sslmode verify-full needs the server's CA bundle: set sslrootcert (a file) or sslrootcert_secret_name (a PEM in the secrets backend), or opt down with sslmode for demo | odd echoed: False
+DSN URI sslmode odd, iam -> ConfigError: store postgres: iam_auth needs a verified server (sslmode verify-full or verify-ca), not <not shown> | odd echoed: False
