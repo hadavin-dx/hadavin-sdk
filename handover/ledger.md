@@ -3164,3 +3164,4 @@
 | PDBANNER-r4-3 | Major | PD-banner | Codebase M1: bare-host path looser than URL path (NFKC, padding, non-ASCII read as this machine) | OPEN | handover/reviews/PD-banner/pdbanner-a16b7635-codebase-r4.md | pending | 2026-11-12 |
 | PDBANNER-r4-4 | Major | PD-banner | Codebase M2: E402 mid-file import tests/test_mode_banner.py:722 | OPEN | handover/reviews/PD-banner/pdbanner-a16b7635-codebase-r4.md | pending | 2026-11-12 |
 | PDBANNER-r4-5 | Major | PD-banner | Codebase M3: mutant search strings G5c and G14b not unique | OPEN | handover/reviews/PD-banner/pdbanner-a16b7635-codebase-r4.md | pending | 2026-11-12 |
+| PDBANNER-r4-6 | Minor | PD-banner | Resolve decision r4: six classes (one host validator, strict tool_specs, parity pinned, lint and mutant hygiene, claims narrowed, guard fails closed); 30 fixes accepted, 3 declined; round 5 required | OPEN | handover/reviews/PD-banner/goldfish_review_report-r4.md | pending | 2026-11-12 |
