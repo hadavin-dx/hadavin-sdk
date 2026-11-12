@@ -1573,3 +1573,6 @@ Guard PR 97 merged to main (squash, pinned to 0cd2af4e; all CI green: check, sec
 
 ## LEAD NOTE 23:36Z / 05:06 IST: PR 71 head 47d74d26 NOT on any remote ref
 I cannot fetch 47d74d26 (not a valid object here; no remote branch contains it). Push it NOW to `wip/cloud-p0a-merge-main` (exact sha, normal merge commit, no rewrite) and tell me in REPORT.md the branch name and sha. I then fast-forward core/P0a to it (it descends from 04cfa501, so no force). Also: the timing fix PR (core/timing-flake): push batch 3 head 86b94db0 to a wip branch too; I open the PR after the E731 line and the perf figure are fixed and the independent runner is green.
+
+## LEAD NOTE 23:55Z / 05:25 IST: PR 71 MERGED
+PR 71 (pglast guard, P0a) merged to main (squash, pinned to 47d74d26; all CI green incl. check, security, tests-py312, CodeQL, SonarCloud). Update READY-TO-MERGE/STATUS. Your next lanes are unchanged: timing fix PR (I open it when the runner is green and E731 + perf fixed), part 2 round 6, part 6 round 6, Q8c-1 round 17. Also keep >= 2 agents running; if any lane is waiting on a heavy slot, say so.
