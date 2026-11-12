@@ -1,0 +1,3 @@
+head: 878a2b871eb60f1cc4fabb67a0da7e6845beff2a
+ok  KILLED       B14 notes check ignores the module named as text in an import_module call  [test_a_file_that_imports_modules_by_a_name_worked_out_at_run]
+1 of 1 good; problems: []

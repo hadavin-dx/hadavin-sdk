@@ -1,0 +1,8 @@
+head: 3ad1cc45a1ebe33ec41143f9351415efe2aa938b
+command: HADAVIN_POLICY_FULL_RENEWAL_RUN=1 pytest the three renewal plants of tests/test_policy_changelog.py
+renewal plant (both): the notes check asked for 36 rows
+.renewal plant (kinds): the notes check asked for 35 rows
+.renewal plant (names): the notes check asked for 1 rows
+.
+3 passed, 6 deselected in 2516.98s (0:41:56)
+rc=0
