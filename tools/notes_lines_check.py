@@ -681,6 +681,8 @@ def _refs(tree: list[str], load: Loader) -> Refs:
             tests.update(
                 re.findall(r"^[ \t]*(?:async[ \t]+)?def[ \t]+(test_\w+)", load(rel), re.MULTILINE)
             )
+            # the name of a test file (`test_policy_guard`) names a file, not a test: a reason may say it
+            tests.add(rel.rsplit("/", 1)[-1].removesuffix(".py"))
         elif kind == "mutants":
             mutants.update(units_of(rel, load(rel), load))
     logs = {rel.rsplit("/", 1)[-1] for rel in tree if "/logs/" in rel}

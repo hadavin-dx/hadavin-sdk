@@ -722,7 +722,9 @@ def test_the_refs_of_a_tree_are_its_tests_its_mutant_names_and_the_files_of_its_
     }
     tree = [*files, "handover/evidence/x/logs/run.log", "handover/evidence/x/NOTES.md"]
     refs = nlc._refs(tree, _loader(files))
-    assert refs.tests == {"test_one", "test_two"}, f"the tests of the tree are {sorted(refs.tests)}"
+    assert refs.tests == {"test_one", "test_two", "test_a"}, (
+        f"the tests of the tree and the names of its test files are {sorted(refs.tests)}"
+    )
     assert refs.mutants == {"B1 first"}, f"the mutants of the tree are {sorted(refs.mutants)}"
     assert refs.logs == {"run.log"}, f"the logs of the tree are {sorted(refs.logs)}"
 

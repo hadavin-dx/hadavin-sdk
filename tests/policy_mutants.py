@@ -2322,6 +2322,15 @@ M = [
         test_file=NOTES_TEST,
     ),
     mutant(
+        "B13 the references of a tree leave out the names of the test files",
+        NTOOL,
+        '            tests.add(rel.rsplit("/", 1)[-1].removesuffix(".py"))\n',
+        "            pass\n",
+        "test_the_refs_of_a_tree_are_its_tests_its_mutant_names_and_the_files_of_its_logs_folders",
+        "the names of its test files",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
         "B13 the check does not build the references of the tree",
         NTOOL,
         "    refs = _refs(tree, new_load) if cross else None\n",
