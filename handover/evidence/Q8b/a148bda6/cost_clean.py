@@ -29,6 +29,10 @@ for n in sizes:
     t = (hostile if mode == "hostile" else prose)(n)
     ts = []
     for _ in range(int(sys.argv[4])):
-        a = time.perf_counter(); redact(t); ts.append(round(time.perf_counter() - a, 3))
+        a = time.perf_counter()
+        try:
+            redact(t); ts.append(round(time.perf_counter() - a, 3))
+        except Exception as e:
+            ts.append('ERR ' + type(e).__name__ + ' after ' + str(round(time.perf_counter() - a, 3)))
     res[n] = ts
 print(json.dumps(res))
