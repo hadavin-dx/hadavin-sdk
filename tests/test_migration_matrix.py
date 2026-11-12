@@ -805,6 +805,7 @@ C10_STATEMENTS = {
     "O14-usage-with-grant-option": "GRANT USAGE ON SCHEMA {o} TO {rt} WITH GRANT OPTION",
     "O15-create-on-schema-everyone": "GRANT CREATE ON SCHEMA {o} TO PUBLIC",
     "O16-default-right-named": "ALTER DEFAULT PRIVILEGES IN SCHEMA {o} GRANT SELECT ON TABLES TO {rt}",
+    "O17-default-right-everyone": "ALTER DEFAULT PRIVILEGES IN SCHEMA {o} GRANT USAGE ON SEQUENCES TO PUBLIC",
     "O19-select-on-a-table-outside-the-map-named": "CREATE TABLE {o}.zz_t (a int); GRANT SELECT ON {o}.zz_t TO {rt}",
     "O20-select-on-a-table-outside-the-map-everyone": "CREATE TABLE {o}.zz_t (a int); GRANT SELECT ON {o}.zz_t TO PUBLIC",
     "O21-usage-on-a-sequence-outside-the-map-named": "CREATE SEQUENCE {o}.zz_q; GRANT USAGE ON SEQUENCE {o}.zz_q TO {rt}",
@@ -830,6 +831,7 @@ C10_NAMED = {
 }
 C10_EVERYONE = {
     "O15-create-on-schema-everyone",
+    "O17-default-right-everyone",
     "O20-select-on-a-table-outside-the-map-everyone",
     "O22-select-on-a-view-outside-the-map-everyone",
     # measured: a SECURITY DEFINER function in another schema that everyone may execute IS found (E13); the reading query
@@ -861,24 +863,28 @@ O_CONTROLS = ["K-clean-no-roles", "K-clean-with-roles"]
 # Table 2: pairs that are empty by logic, one written reason per effect (round 15: the reason is the true one for each effect,
 # and the list of effect ids is written out; the count test compares it with the effects that have no C10 statement).
 # O13-O16 are built under C10 (a right on another schema, a default right limited to another schema): they are not here.
-_MAP_REASON = "a map table, sequence, function or column lives in the schema of the run only, so there is none in another schema"
+_MAP_REASON = (
+    "the map's own object lives in the schema of the run only; aimed at another schema the same statement fails (measured "
+    "on PostgreSQL 16.15: %s), and an equally named object made there by hand is the case of effects O19 to O27"
+)
+_NO_RELATION = _MAP_REASON % 'ERROR 42P01 relation "<schema>.<name>" does not exist'
 _C10_EMPTY_REASONS: dict[str, str] = {
-    "O01-select-other": _MAP_REASON,
-    "O02-select-everyone": _MAP_REASON,
-    "O03-column-other": "a column of a map table: " + _MAP_REASON,
-    "O04-sequence-other": "a sequence of the map: " + _MAP_REASON,
-    "O05-function-other": "the one function of the map: " + _MAP_REASON,
-    "O06-delete-runtime": _MAP_REASON,
-    "O07-everyone-delete-runs": _MAP_REASON,
-    "O08-everyone-truncate-runs": _MAP_REASON,
-    "O09-everyone-column-select": "a column of a map table: " + _MAP_REASON,
-    "O10-third-column-update": "a column of a map table: " + _MAP_REASON,
-    "O11-everyone-setval": "a sequence of the map: " + _MAP_REASON,
-    "O12-grant-option": _MAP_REASON,
-    "O17-default-right-everyone": "this default right names no schema (it holds for every schema of the database), so the place of an object does not change it",
-    "O18-select-third-tool-calls": _MAP_REASON,
-    "O28-select-on-a-large-object-everyone": "a large object belongs to the database and has no schema, so it cannot be put in another schema",
-    "O29-select-on-a-large-object-named": "a large object belongs to the database and has no schema, so it cannot be put in another schema",
+    "O01-select-other": _NO_RELATION,
+    "O02-select-everyone": _NO_RELATION,
+    "O03-column-other": "a column of a map table: " + _NO_RELATION,
+    "O04-sequence-other": "a sequence of the map: " + _NO_RELATION,
+    "O05-function-other": "the one function of the map: "
+    + _MAP_REASON % "ERROR 42883 function <schema>.<name>() does not exist",
+    "O06-delete-runtime": _NO_RELATION,
+    "O07-everyone-delete-runs": _NO_RELATION,
+    "O08-everyone-truncate-runs": _NO_RELATION,
+    "O09-everyone-column-select": "a column of a map table: " + _NO_RELATION,
+    "O10-third-column-update": "a column of a map table: " + _NO_RELATION,
+    "O11-everyone-setval": "a sequence of the map: " + _NO_RELATION,
+    "O12-grant-option": _NO_RELATION,
+    "O18-select-third-tool-calls": _NO_RELATION,
+    "O28-select-on-a-large-object-everyone": 'a large object has no schema; measured: GRANT ... ON LARGE OBJECT <schema>.<number> is a syntax error at or near "<schema>"',
+    "O29-select-on-a-large-object-named": 'a large object has no schema; measured: GRANT ... ON LARGE OBJECT <schema>.<number> is a syntax error at or near "<schema>"',
 }
 O_EMPTY_BY_LOGIC: dict[tuple[str, str], str] = {
     (eid, "C10-another-schema"): why for eid, why in _C10_EMPTY_REASONS.items()
@@ -908,6 +914,23 @@ O_PINNED_RETURNS: dict[tuple[str, str, str], str] = {
         "looks at the schema of the run only (ticket 7.4, not promised)"
     ),
 }
+
+
+def test_c10_every_effect_with_a_statement_is_in_one_set_or_is_the_one_refused_default_right():
+    """The three sets are a partition of the written statements: a statement that is in none of them has no decision in the
+    ticket (7.4), and one in two of them is decided twice."""
+    assert (
+        not (C10_NAMED & C10_EVERYONE)
+        and not (C10_NAMED & C10_NOT_PROMISED)
+        and not (C10_EVERYONE & C10_NOT_PROMISED)
+    )
+    decided = C10_NAMED | C10_EVERYONE | C10_NOT_PROMISED
+    # O16 (a default right of a named role limited to another schema) is the one statement outside the three sets: its
+    # cells end refused in both variants (no pinned return in O_PINNED_RETURNS), so it needs no named/everyone split.
+    assert set(C10_STATEMENTS) - decided == {"O16-default-right-named"}
+    assert decided <= set(C10_STATEMENTS)
+
+
 for _eid in sorted(C10_NAMED):
     O_PINNED_RETURNS[(_eid, "C10-another-schema", "no-roles")] = (
         "a right of a named role on an object of another schema, with no role argument: no role is named, so none is "
@@ -1071,6 +1094,7 @@ def test_the_matrix_has_exactly_the_planned_cells():
         + len(C6B_CELLS)
         + pre_existing
         + len(C8_CELLS)
+        + len(C8_SCHEMA_CELLS)
         + len(C9_CELLS)
         + len(C13_CELLS)
         + len(VARIANT_O_CELLS)
@@ -1083,7 +1107,7 @@ def test_the_matrix_has_exactly_the_planned_cells():
         f"expected refused {refused}; expected to return (pinned, table 3) {pinned_returns}"
     )
     print(
-        f"other carriers: C6b {len(C6B_CELLS)}; C8 {len(C8_CELLS)}; C9 {len(C9_CELLS)}; C13 {len(C13_CELLS)}; "
+        f"other carriers: C6b {len(C6B_CELLS)}; C8 {len(C8_CELLS)} + {len(C8_SCHEMA_CELLS)} (schema as member); C9 {len(C9_CELLS)}; C13 {len(C13_CELLS)}; "
         f"variant (O) {len(VARIANT_O_CELLS)}; "
         f"pre-existing (C12, administrator) {len(X_EFFECTS)} x {len(O_VARIANTS)} = {pre_existing}; controls {controls}; "
         f"compositions {COMPOSITION_COUNT} (seed {COMPOSITION_SEED}); total cells and controls {total}"
@@ -1107,7 +1131,7 @@ def test_the_matrix_has_exactly_the_planned_cells():
     assert set(_C10_EMPTY_REASONS) == {
         "O01-select-other", "O02-select-everyone", "O03-column-other", "O04-sequence-other", "O05-function-other",
         "O06-delete-runtime", "O07-everyone-delete-runs", "O08-everyone-truncate-runs", "O09-everyone-column-select",
-        "O10-third-column-update", "O11-everyone-setval", "O12-grant-option", "O17-default-right-everyone",
+        "O10-third-column-update", "O11-everyone-setval", "O12-grant-option",
         "O18-select-third-tool-calls", "O28-select-on-a-large-object-everyone", "O29-select-on-a-large-object-named",
     }  # fmt: skip
     assert set(_C10_EMPTY_REASONS) | set(C10_STATEMENTS) == {e[0] for e in O_EFFECTS}
@@ -1132,7 +1156,9 @@ def test_the_matrix_has_exactly_the_planned_cells():
     assert len(C8_CELLS) == len(C8_OBJECT) * len(O_VARIANTS) and len(C9_CELLS) == len(
         O_EFFECTS
     ) * len(O_VARIANTS)
-    assert len(C13_CELLS) == (len(C13_FORMS) + len(C13_TABLE_EFFECTS)) * len(O_VARIANTS)
+    assert len(C13_CELLS) == (
+        len(C13_FORMS) + len(C13_TABLE_EFFECTS) + len(C13_OTHER_MOVES) + len(C13_SCHEMA_EFFECTS) + 1
+    ) * len(O_VARIANTS)
     assert len(VARIANT_O_CELLS) == len(VARIANT_O_EFFECTS) * len(VARIANT_O_CARRIERS) * len(
         O_VARIANTS
     )
@@ -1657,17 +1683,13 @@ C8_OBJECT = {
     "O26-execute-on-a-procedure-named": "PROCEDURE zz_p()",
     "O27-usage-on-a-type-named": "TYPE zz_ty",
 }
+_C8_DEFAULT = 'a default right is not an object; measured: ALTER EXTENSION ... ADD DEFAULT PRIVILEGES is a syntax error at or near "DEFAULT"'
+_C8_LO = 'a large object cannot be added to an extension; measured: ALTER EXTENSION ... ADD LARGE OBJECT is a syntax error at or near "LARGE"'
 C8_EMPTY_BY_LOGIC = {
-    e: "a right on the schema, a default right or a large object: none of them is an object that can be an extension member"
-    for e in (
-        "O13-create-on-schema-other",
-        "O14-usage-with-grant-option",
-        "O15-create-on-schema-everyone",
-        "O16-default-right-named",
-        "O17-default-right-everyone",
-        "O28-select-on-a-large-object-everyone",
-        "O29-select-on-a-large-object-named",
-    )
+    "O16-default-right-named": _C8_DEFAULT,
+    "O17-default-right-everyone": _C8_DEFAULT,
+    "O28-select-on-a-large-object-everyone": _C8_LO,
+    "O29-select-on-a-large-object-named": _C8_LO,
 }
 C8_CELLS = [(e, v) for e in C8_OBJECT for v in O_VARIANTS]
 
@@ -1712,18 +1734,109 @@ def test_c8_an_object_that_is_an_extension_member_is_still_judged(
     assert outcome == expected, f"{effect_id}/C8/{variant}: outcome {outcome}, expected {expected}"
 
 
+# r16 group 2: a SCHEMA can be an extension member (`ALTER EXTENSION x ADD SCHEMA s` is valid; measured on PostgreSQL 16 as the
+# superuser). The right on the schema of the run is then given while the schema is a member, so that a check that skips
+# extension members would miss it. Two forms of the setup: the printed one (the schema is owned by an administrator: the
+# server refuses the membership to the migration role) and the one where the migration role owns the schema of the run.
+C8_SCHEMA_EFFECTS = (
+    "O13-create-on-schema-other",
+    "O14-usage-with-grant-option",
+    "O15-create-on-schema-everyone",
+)
+C8_SCHEMA_OWNERS = ("administrator-owns-the-schema", "migration-role-owns-the-schema")
+C8_SCHEMA_CELLS = [
+    (e, o, v) for e in C8_SCHEMA_EFFECTS for o in C8_SCHEMA_OWNERS for v in O_VARIANTS
+]
+
+
+@needs_pg
+@pytest.mark.real_connect
+@pytest.mark.parametrize(
+    "effect_id, owner, variant",
+    C8_SCHEMA_CELLS,
+    ids=[f"{e}/C8/{o}/{v}" for e, o, v in C8_SCHEMA_CELLS],
+)
+def test_c8_the_schema_of_the_run_as_an_extension_member_is_still_judged(
+    effect_id, owner, variant, case, monkeypatch, tmp_path
+):
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+
+    effect = next(e for e in O_EFFECTS if e[0] == effect_id)
+    case.db.execute("GRANT USAGE ON LANGUAGE plpgsql TO PUBLIC")
+    dsn = _migration_login(case)
+    if owner == "migration-role-owns-the-schema":
+        case.db.execute(
+            sql.SQL("ALTER SCHEMA {} OWNER TO {}").format(
+                sql.Identifier(APP), sql.Identifier(case.role["m"])
+            )
+        )
+    roles = {"runtime_role": case.role["n"]} if variant == "with-roles" else {}
+    text = effect[1].format(lo=LO_NUMBER, **_case_names(case))
+    # the extension lives in its own schema: a schema cannot be added to an extension that is in it
+    statements = [
+        "CREATE SCHEMA zz_ext",
+        "CREATE EXTENSION citext SCHEMA zz_ext",
+        f"ALTER EXTENSION citext ADD SCHEMA {APP}",
+        text,
+    ]
+    tp._with_files(
+        monkeypatch,
+        tmp_path,
+        {"0006_member.sql": "".join(_split_function(st) for st in statements)},
+    )
+    kept = (
+        "SELECT (SELECT count(*) FROM pg_catalog.pg_namespace WHERE nspname = 'zz_ext'), "
+        "(SELECT count(*) FROM pg_catalog.pg_extension WHERE extname = 'citext')"
+    )
+    if owner == "administrator-owns-the-schema":
+        # measured on PostgreSQL 16: the server itself refuses the membership to a role that does not own the schema, and
+        # the run stops with the server's own error and keeps nothing (the extension and its schema are rolled back)
+        with pytest.raises(
+            psycopg.errors.InsufficientPrivilege, match="must be owner of schema app"
+        ):
+            mig.migrate(dsn, **roles)
+        assert case.db.execute(kept).fetchone() == (0, 0), (
+            "the refused run kept the extension or its schema"
+        )
+        return
+    with pytest.raises(errors.ConfigError) as caught:
+        mig.migrate(dsn, **roles)
+    text = str(caught.value)
+    assert _kept_nothing(text) and "migrations are inconsistent" not in text, text[:500]
+    assert case.db.execute(kept).fetchone() == (0, 0), (
+        "the refused run kept the extension or its schema"
+    )
+    assert _C8_SCHEMA_FINDING[effect_id] in text, (
+        f"{effect_id}: the schema is an extension member and the refusal must still name the right: {text[:500]}"
+    )
+
+
+_C8_SCHEMA_FINDING = {
+    "O13-create-on-schema-other": "has CREATE on the schema of the run",
+    "O14-usage-with-grant-option": "may pass USAGE on to others",
+    "O15-create-on-schema-everyone": "everyone (PUBLIC) has CREATE on the schema of the run",
+}
+
+
 def test_c13_every_effect_has_a_table_to_move_or_a_reason_it_has_none():
     ids = {e[0] for e in O_EFFECTS}
-    assert set(C13_TABLE_EFFECTS) | set(C13_EMPTY_BY_LOGIC) == ids
-    assert not set(C13_TABLE_EFFECTS) & set(C13_EMPTY_BY_LOGIC)
+    built = (
+        set(C13_TABLE_EFFECTS)
+        | set(C13_OTHER_MOVES)
+        | set(C13_SCHEMA_EFFECTS)
+        | {C13_FUNCTION_EFFECT}
+    )
+    assert built | set(C13_EMPTY_BY_LOGIC) == ids
+    assert not built & set(C13_EMPTY_BY_LOGIC)
     assert all(len(why) > 40 for why in C13_EMPTY_BY_LOGIC.values())
 
 
 def test_c8_every_effect_has_an_object_or_a_reason_it_has_none():
     ids = {e[0] for e in O_EFFECTS}
-    assert set(C8_OBJECT) | set(C8_EMPTY_BY_LOGIC) == ids and not set(C8_OBJECT) & set(
-        C8_EMPTY_BY_LOGIC
-    )
+    built = set(C8_OBJECT) | set(C8_SCHEMA_EFFECTS)
+    assert built | set(C8_EMPTY_BY_LOGIC) == ids and not built & set(C8_EMPTY_BY_LOGIC)
 
 
 @needs_pg
@@ -1907,18 +2020,18 @@ C13_TABLE_EFFECTS = {
     "O12-grant-option": "runs",
     "O18-select-third-tool-calls": "tool_calls",
 }
-_C13_NO_TABLE = "there is no map table behind this effect, so there is no map table to move"
+# Every reason below carries the text the real server answered (r16 groups 1 and 2: a reason that stays is the server's own
+# answer, never a thought). `test_every_empty_reason_is_the_answer_of_a_real_server` runs each statement and compares.
+_MOVED_OBJECT_REASON = (
+    "the object the file makes itself can be moved (measured on PostgreSQL 16.15: ALTER ... SET SCHEMA runs without an "
+    "error for a table, a sequence, a view, a function, a procedure and a type), but it is then an object of another schema, "
+    "which the C10 cell of the same effect judges"
+)
 C13_EMPTY_BY_LOGIC: dict[str, str] = {
-    "O04-sequence-other": "a right on a sequence of the map: " + _C13_NO_TABLE,
-    "O05-function-other": "a right on the function of the map: " + _C13_NO_TABLE,
-    "O11-everyone-setval": "a right on a sequence of the map: " + _C13_NO_TABLE,
-    "O13-create-on-schema-other": "a right on the schema: " + _C13_NO_TABLE,
-    "O14-usage-with-grant-option": "a right on the schema: " + _C13_NO_TABLE,
-    "O15-create-on-schema-everyone": "a right on the schema: " + _C13_NO_TABLE,
-    "O16-default-right-named": "a default right: " + _C13_NO_TABLE,
-    "O17-default-right-everyone": "a default right: " + _C13_NO_TABLE,
+    "O16-default-right-named": 'a default right has no object to move; measured: ALTER DEFAULT PRIVILEGES ... SET SCHEMA is a syntax error at or near "SET"',
+    "O17-default-right-everyone": 'a default right has no object to move; measured: ALTER DEFAULT PRIVILEGES ... SET SCHEMA is a syntax error at or near "SET"',
     **{
-        e: "an object the file makes itself, outside the map: " + _C13_NO_TABLE
+        e: _MOVED_OBJECT_REASON
         for e in (
             "O19-select-on-a-table-outside-the-map-named",
             "O20-select-on-a-table-outside-the-map-everyone",
@@ -1931,12 +2044,158 @@ C13_EMPTY_BY_LOGIC: dict[str, str] = {
             "O27-usage-on-a-type-named",
         )
     },
-    "O28-select-on-a-large-object-everyone": "a large object: " + _C13_NO_TABLE,
-    "O29-select-on-a-large-object-named": "a large object: " + _C13_NO_TABLE,
+    "O28-select-on-a-large-object-everyone": 'a large object has no schema; measured: ALTER LARGE OBJECT ... SET SCHEMA is a syntax error at or near "SET"',
+    "O29-select-on-a-large-object-named": 'a large object has no schema; measured: ALTER LARGE OBJECT ... SET SCHEMA is a syntax error at or near "SET"',
 }
-C13_CELLS = [(f, v) for f in C13_FORMS for v in O_VARIANTS] + [
-    (e, v) for e in C13_TABLE_EFFECTS for v in O_VARIANTS
+# r16 group 2: C13 for the map objects that are not tables. Measured on PostgreSQL 16.15: a sequence made by BIGSERIAL cannot
+# be moved alone ("cannot move an owned sequence into another schema") but it moves WITH its table (`ALTER TABLE ... SET
+# SCHEMA`), and a function can be moved (`ALTER FUNCTION ... SET SCHEMA`), so these effects do have something to move.
+# effect -> (the move and recreate text, the right on the moved object); `{m}` is the schema it moves to
+C13_OTHER_MOVES = {
+    "O04-sequence-other": (
+        "ALTER TABLE approval_decisions SET SCHEMA {m}; CREATE TABLE approval_decisions (seq BIGSERIAL PRIMARY KEY); ",
+        "GRANT USAGE ON SEQUENCE {m}.approval_decisions_seq_seq TO {rt}",
+        "approval_decisions_seq_seq",
+    ),
+    "O11-everyone-setval": (
+        "ALTER TABLE dead_letters SET SCHEMA {m}; CREATE TABLE dead_letters (seq BIGSERIAL PRIMARY KEY); ",
+        "GRANT UPDATE ON SEQUENCE {m}.dead_letters_seq_seq TO PUBLIC",
+        "dead_letters_seq_seq",
+    ),
+}
+
+
+C13_OTHER_MOVES_THAT_RETURN = {("O04-sequence-other", "no-roles")}
+
+
+C13_SCHEMA_EFFECTS = [
+    "O13-create-on-schema-other",
+    "O14-usage-with-grant-option",
+    "O15-create-on-schema-everyone",
 ]
+C13_FUNCTION_EFFECT = "O05-function-other"  # measured: refused by the trigger rule (see its test), so it has no right to judge
+
+C13_CELLS = (
+    [(f, v) for f in C13_FORMS for v in O_VARIANTS]
+    + [(e, v) for e in C13_TABLE_EFFECTS for v in O_VARIANTS]
+    + [(e, v) for e in C13_OTHER_MOVES for v in O_VARIANTS]  # r16 group 2
+    + [(e, v) for e in C13_SCHEMA_EFFECTS for v in O_VARIANTS]
+    + [(C13_FUNCTION_EFFECT, v) for v in O_VARIANTS]
+)
+
+
+# --- r16 groups 1 and 2: every empty-by-logic reason is the answer of a real server --------------------------------------------
+# (carrier, effect) -> (statement run as the superuser in the scratch database of a `case`, sqlstate or None for "no error",
+# text the server's message must contain). `s` and `s2` exist in the scratch database; `s2` stands for "another schema".
+_MAP_NAMES = {
+    "O01-select-other": "GRANT SELECT ON s2.audit_entries TO PUBLIC",
+    "O02-select-everyone": "GRANT SELECT ON s2.audit_entries TO PUBLIC",
+    "O03-column-other": "GRANT SELECT (seq) ON s2.audit_entries TO PUBLIC",
+    "O04-sequence-other": "GRANT USAGE ON SEQUENCE s2.approval_decisions_seq_seq TO PUBLIC",
+    "O06-delete-runtime": "GRANT DELETE ON s2.audit_entries TO PUBLIC",
+    "O07-everyone-delete-runs": "GRANT DELETE ON s2.runs TO PUBLIC",
+    "O08-everyone-truncate-runs": "GRANT TRUNCATE ON s2.runs TO PUBLIC",
+    "O09-everyone-column-select": "GRANT SELECT (seq) ON s2.audit_entries TO PUBLIC",
+    "O10-third-column-update": "GRANT UPDATE (state) ON s2.runs TO PUBLIC",
+    "O11-everyone-setval": "GRANT UPDATE ON SEQUENCE s2.dead_letters_seq_seq TO PUBLIC",
+    "O12-grant-option": "GRANT SELECT ON s2.runs TO PUBLIC WITH GRANT OPTION",
+    "O18-select-third-tool-calls": "GRANT SELECT ON s2.tool_calls TO PUBLIC",
+}
+EMPTY_PROBES: dict[tuple[str, str], tuple[str, str | None, str]] = {
+    **{("C10-another-schema", e): (st, "42P01", "does not exist") for e, st in _MAP_NAMES.items()},
+    ("C10-another-schema", "O05-function-other"): (
+        "GRANT EXECUTE ON FUNCTION s2.hadavin_audit_append_only() TO PUBLIC", "42883", "does not exist",
+    ),
+    **{
+        ("C10-another-schema", e): ("GRANT SELECT ON LARGE OBJECT s2.70001 TO PUBLIC", "42601", 'syntax error at or near "s2"')
+        for e in ("O28-select-on-a-large-object-everyone", "O29-select-on-a-large-object-named")
+    },
+    **{
+        (C8_CARRIER, e): ("ALTER EXTENSION file_fdw ADD DEFAULT PRIVILEGES", "42601", 'syntax error at or near "DEFAULT"')
+        for e in ("O16-default-right-named", "O17-default-right-everyone")
+    },
+    **{
+        (C8_CARRIER, e): ("ALTER EXTENSION file_fdw ADD LARGE OBJECT 70001", "42601", 'syntax error at or near "LARGE"')
+        for e in ("O28-select-on-a-large-object-everyone", "O29-select-on-a-large-object-named")
+    },
+    **{
+        ("C13-move-and-recreate", e): ("ALTER DEFAULT PRIVILEGES IN SCHEMA s SET SCHEMA s2", "42601", 'syntax error at or near "SET"')
+        for e in ("O16-default-right-named", "O17-default-right-everyone")
+    },
+    **{
+        ("C13-move-and-recreate", e): ("ALTER LARGE OBJECT 70001 SET SCHEMA s2", "42601", 'syntax error at or near "SET"')
+        for e in ("O28-select-on-a-large-object-everyone", "O29-select-on-a-large-object-named")
+    },
+    ("C13-move-and-recreate", "O19-select-on-a-table-outside-the-map-named"): ("CREATE TABLE s.zz_t (a int); ALTER TABLE s.zz_t SET SCHEMA s2", None, ""),
+    ("C13-move-and-recreate", "O21-usage-on-a-sequence-outside-the-map-named"): ("CREATE SEQUENCE s.zz_q; ALTER SEQUENCE s.zz_q SET SCHEMA s2", None, ""),
+    ("C13-move-and-recreate", "O22-select-on-a-view-outside-the-map-everyone"): ("CREATE VIEW s.zz_v AS SELECT 1 AS a; ALTER VIEW s.zz_v SET SCHEMA s2", None, ""),
+    ("C13-move-and-recreate", "O23-execute-on-a-function-named"): ("CREATE FUNCTION s.zz_f() RETURNS int LANGUAGE sql AS 'SELECT 1'; ALTER FUNCTION s.zz_f() SET SCHEMA s2", None, ""),
+    ("C13-move-and-recreate", "O26-execute-on-a-procedure-named"): ("CREATE PROCEDURE s.zz_p() LANGUAGE sql AS ''; ALTER PROCEDURE s.zz_p() SET SCHEMA s2", None, ""),
+    ("C13-move-and-recreate", "O27-usage-on-a-type-named"): ("CREATE TYPE s.zz_ty AS (a int); ALTER TYPE s.zz_ty SET SCHEMA s2", None, ""),
+}  # fmt: skip
+# the effects whose moved object is the same kind as another effect's: the one probe of the kind stands for the rest
+for _e, _like in (
+    (
+        "O20-select-on-a-table-outside-the-map-everyone",
+        "O19-select-on-a-table-outside-the-map-named",
+    ),
+    ("O24-function-of-the-family-left-callable-by-everyone", "O23-execute-on-a-function-named"),
+    ("O25-security-definer-function-in-the-schema-of-the-run", "O23-execute-on-a-function-named"),
+):
+    EMPTY_PROBES[("C13-move-and-recreate", _e)] = EMPTY_PROBES[("C13-move-and-recreate", _like)]
+
+
+def _empty_pairs() -> dict[tuple[str, str], str]:
+    pairs = {(c, e): why for (e, c), why in O_EMPTY_BY_LOGIC.items()}
+    pairs.update({(C8_CARRIER, e): why for e, why in C8_EMPTY_BY_LOGIC.items()})
+    pairs.update({("C13-move-and-recreate", e): why for e, why in C13_EMPTY_BY_LOGIC.items()})
+    return pairs
+
+
+def test_every_empty_pair_has_a_probe_and_its_reason_carries_the_measured_text():
+    pairs = _empty_pairs()
+    assert set(pairs) == set(EMPTY_PROBES), (
+        f"an empty pair without a probe, or a probe without an empty pair: {set(pairs) ^ set(EMPTY_PROBES)}"
+    )
+    for key, why in pairs.items():
+        assert "measured" in why or "ALTER ... SET SCHEMA runs without an error" in why, (
+            f"{key}: the reason is not the server's answer: {why}"
+        )
+
+
+@needs_pg
+def test_every_empty_reason_is_the_answer_of_a_real_server(case):
+    """Each statement of the table runs on a real server, as the superuser, in a scratch database. A reason that says
+    "the server refuses it" must be refused with that sqlstate and text; one that says "it runs" must run without an error."""
+    from hadavin_sdk.store import migrate as mig  # noqa: F401  (the server version is printed with the result)
+
+    version = case.db.execute("SHOW server_version").fetchone()[0]
+    failures = []
+    for key, (statement, state, text) in sorted(EMPTY_PROBES.items()):
+        try:
+            for part in statement.split("; "):
+                case.db.execute(part)
+        except psycopg.Error as exc:
+            if state is None:
+                failures.append(
+                    f"{key}: expected no error, the server {version} said {exc.sqlstate} {exc}"
+                )
+            elif exc.sqlstate != state or text not in exc.diag.message_primary:
+                failures.append(
+                    f"{key}: expected {state} with {text!r}, the server {version} said {exc.sqlstate} {exc.diag.message_primary!r}"
+                )
+        else:
+            if state is not None:
+                failures.append(
+                    f"{key}: expected {state}, the server {version} ran it without an error"
+                )
+        for undo in (
+            "DROP TABLE IF EXISTS s.zz_t, s2.zz_t", "DROP SEQUENCE IF EXISTS s.zz_q, s2.zz_q",
+            "DROP VIEW IF EXISTS s.zz_v, s2.zz_v", "DROP FUNCTION IF EXISTS s.zz_f(), s2.zz_f()",
+            "DROP PROCEDURE IF EXISTS s.zz_p(), s2.zz_p()", "DROP TYPE IF EXISTS s.zz_ty, s2.zz_ty",
+        ):  # fmt: skip
+            case.db.execute(undo)
+    assert not failures, "\n".join(failures)
 
 
 @needs_pg
@@ -1982,6 +2241,142 @@ def test_c13_every_right_on_a_moved_table_is_judged_like_one_outside_the_map(
         assert outcome == "i", f"{effect_id}/C13/{variant}: {outcome}"
     finally:
         _forget_default_rights(dsn)
+        tp._drop_roles(other, rt)
+
+
+@needs_pg
+@pytest.mark.parametrize("variant", O_VARIANTS)
+@pytest.mark.parametrize("effect_id", list(C13_OTHER_MOVES))
+def test_c13_a_sequence_or_function_moved_out_of_the_map_is_judged_like_one_outside_the_map(
+    effect_id, variant, ocell, monkeypatch, tmp_path
+):
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+    from tests.fixtures import migration_role as helper
+
+    dsn, schema = ocell
+    other = "hadavin_test_mx_" + uuid.uuid4().hex[:8]
+    rt = "hadavin_test_mxr_" + uuid.uuid4().hex[:8]
+    moved_to = schema + "_m"
+    move, grant, name = C13_OTHER_MOVES[effect_id]
+    tp._create_roles(other, rt)
+    try:
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            helper.ensure_plain_role(admin)
+            admin.execute(
+                sql.SQL("CREATE SCHEMA {} AUTHORIZATION {}").format(
+                    sql.Identifier(moved_to), sql.Identifier(helper.PLAIN_ROLE)
+                )
+            )
+            admin.execute(
+                sql.SQL("GRANT USAGE ON SCHEMA {} TO PUBLIC").format(sql.Identifier(moved_to))
+            )
+        m = sql.Identifier(moved_to).as_string()
+        text = (move + grant).replace("{m}", m).replace("{rt}", rt)
+        tp._with_files(monkeypatch, tmp_path, {"0006_move.sql": _split_function(text)})
+        roles = {"runtime_role": rt} if variant == "with-roles" else {}
+        if (effect_id, variant) in C13_OTHER_MOVES_THAT_RETURN:
+            # the decision of B5, the same pin as carrier C10: the right is the named runtime role's and no role is named
+            assert mig.migrate(dsn, **roles)[-1] == "0006_move"
+            return
+        with pytest.raises(errors.ConfigError) as seen:
+            mig.migrate(dsn, **roles)
+        message = str(seen.value)
+        assert _kept_nothing(message) and "inconsistent" not in message, message[:500]
+        assert moved_to in message and name in message, (
+            f"{effect_id}/C13/{variant}: the refusal must name the moved object in the other schema: {message[:600]}"
+        )
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            admin.execute(
+                sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(moved_to))
+            )
+        tp._drop_roles(other, rt)
+
+
+@needs_pg
+@pytest.mark.parametrize("variant", O_VARIANTS)
+@pytest.mark.parametrize("effect_id", C13_SCHEMA_EFFECTS)
+def test_c13_the_schema_of_the_run_renamed_and_made_again_is_refused_by_the_server(
+    effect_id, variant, ocell, monkeypatch, tmp_path
+):
+    """The move and recreate of the schema of the run itself (r16 group 2, measured on PostgreSQL 16.15): the migration role
+    may not rename the schema, so the server stops the file with its own error and the run keeps nothing."""
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+
+    effect = next(e for e in O_EFFECTS if e[0] == effect_id)
+    dsn, schema = ocell
+    rt = "hadavin_test_mxr_" + uuid.uuid4().hex[:8]
+    other = "hadavin_test_mx_" + uuid.uuid4().hex[:8]
+    tp._create_roles(other, rt)
+    old = schema + "_old"
+    try:
+        q = sql.Identifier(schema).as_string()
+        qo = sql.Identifier(old).as_string()
+        right = _effect_text(effect, other, rt, schema).replace(q.strip('"'), old)
+        text = f"ALTER SCHEMA {q} RENAME TO {qo}; CREATE SCHEMA {q}; {right}"
+        tp._with_files(monkeypatch, tmp_path, {"0006_move.sql": _split_function(text)})
+        roles = {"runtime_role": rt} if variant == "with-roles" else {}
+        with pytest.raises(
+            psycopg.errors.InsufficientPrivilege, match="permission denied for database"
+        ):
+            mig.migrate(dsn, **roles)
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            assert admin.execute(
+                "SELECT count(*) FROM pg_catalog.pg_namespace WHERE nspname = %s", (old,)
+            ).fetchone() == (0,), "the refused run kept the renamed schema"
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            admin.execute(sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(old)))
+        tp._drop_roles(other, rt)
+
+
+@needs_pg
+def test_c13_the_function_of_the_map_moved_is_refused_by_the_trigger_rule_before_any_right_is_judged(
+    ocell, monkeypatch, tmp_path
+):
+    """O05 under C13 (r16 group 2): the function can be moved, but four triggers of the package call it, so the move is
+    refused as a trigger change (another rule); no right on the moved function is ever judged. Measured text pinned."""
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+    from tests.fixtures import migration_role as helper
+
+    dsn, schema = ocell
+    rt = "hadavin_test_mxr_" + uuid.uuid4().hex[:8]
+    other = "hadavin_test_mx_" + uuid.uuid4().hex[:8]
+    tp._create_roles(other, rt)
+    moved_to = schema + "_m"
+    try:
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            helper.ensure_plain_role(admin)
+            admin.execute(
+                sql.SQL("CREATE SCHEMA {} AUTHORIZATION {}").format(
+                    sql.Identifier(moved_to), sql.Identifier(helper.PLAIN_ROLE)
+                )
+            )
+            admin.execute(
+                sql.SQL("GRANT USAGE ON SCHEMA {} TO PUBLIC").format(sql.Identifier(moved_to))
+            )
+        m = sql.Identifier(moved_to).as_string()
+        text = (
+            f"ALTER FUNCTION hadavin_audit_append_only() SET SCHEMA {m}; "
+            "CREATE FUNCTION hadavin_audit_append_only() RETURNS int LANGUAGE sql AS 'SELECT 1'; "
+            f"GRANT EXECUTE ON FUNCTION {m}.hadavin_audit_append_only() TO {rt}"
+        )
+        tp._with_files(monkeypatch, tmp_path, {"0006_move.sql": _split_function(text)})
+        with pytest.raises(
+            errors.ConfigError, match=r"changed a trigger: .*changed: definition"
+        ) as seen:
+            mig.migrate(dsn, runtime_role=rt)
+        assert "hadavin_audit_append_only" not in str(seen.value).split("changed a trigger")[0]
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            admin.execute(
+                sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(moved_to))
+            )
         tp._drop_roles(other, rt)
 
 
@@ -2492,7 +2887,8 @@ def test_o8_a_schema_owned_outside_the_family_at_the_start_is_refused_only_with_
     schema of the run before the run starts, and one new file is pending. Switch ON (the strict reading of ticket rule O8):
     `migrate` refuses, keeps nothing (the file did not run and is still pending). Switch OFF (the shipped default, which is
     LESS strict than the ticket until the lead answers q-p3a2-o8-schema-owner): the file runs and `migrate` returns.
-    Killed by V101 (switch ON by default) and V102 (switch ignored)."""
+    Killed by V102 (switch ignored). The switch is patched here, so the default is pinned elsewhere (V101 is killed by
+    test_the_strict_reading_of_rule_o8_is_off_by_default)."""
     from hadavin_sdk import errors
     from hadavin_sdk.store import migrate as mig
     from tests import test_migration_postgres as tp

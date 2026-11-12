@@ -1317,8 +1317,9 @@ def test_every_sentence_form_the_changelog_quotes_is_in_the_code_and_is_what_a_l
 
 
 def test_a_sentence_the_changelog_quotes_but_the_code_does_not_write_is_found():
-    """The checker is not blind: it is run on planted blocks and returns the stale form. Killed by: V84 (the code writes
-    "holds" where the CHANGELOG says "has")."""
+    """The checker is not blind: it is run on planted blocks and returns the stale form. Not killed by a planted mutant of its own (V84 is
+    killed by test_every_sentence_form_the_changelog_quotes_is_in_the_code_and_is_what_a_line_says); it shows the checker
+    can fail."""
     source = (
         Path(__file__).resolve().parents[1] / "src/hadavin_sdk/store/migration_verify.py"
     ).read_text(encoding="utf-8")
@@ -1429,3 +1430,108 @@ def test_connect_runs_exactly_one_statement_so_the_exit_2_promise_starts_after_i
     assert executed == ["SET TIME ZONE 'UTC'"], (
         f"connect now runs {executed}: the exit-2 promise would start later than the CHANGELOG says"
     )
+
+
+# --- Group 4 of round 16: the one-statement pin, at the level of the driver and for every form of "one more setup" -------------
+# The earlier pin counts `conn.execute` on a stand-in. A setup could also run through `conn.cursor()`, through a connection
+# option (`-c name=value` in `options`, which the server applies at once) or in the sign-in branch of IAM. Each form is pinned.
+class _Recorder:
+    """A stand-in connection that records every way a statement or a setting could be sent."""
+
+    def __init__(self) -> None:
+        self.statements: list[str] = []
+        self.cursors = 0
+
+    def execute(self, statement, *args, **kwargs):
+        self.statements.append(str(statement))
+
+    def cursor(self, *args, **kwargs):
+        self.cursors += 1
+        raise AssertionError("connect must not open a cursor of its own")
+
+    def close(self):
+        pass
+
+
+def _connect_with_a_recorder(monkeypatch, dsn="host=made-up dbname=made-up", **options):
+    from hadavin_sdk.store import postgres as pg
+
+    seen = {"conn": _Recorder(), "args": None, "kwargs": None}
+
+    def fake(*args, **kwargs):
+        seen["args"], seen["kwargs"] = args, kwargs
+        return seen["conn"]
+
+    monkeypatch.setattr(pg.psycopg, "connect", fake)
+    pg.connect(dsn, **options)
+    return seen
+
+
+def test_connect_opens_no_cursor_and_sends_no_connection_option(monkeypatch):
+    """Cursor form and options form: `cursor()` is never used and the keyword arguments given to the driver are exactly the
+    four that `connect` owns (no `options` string, which would set a server variable at connect time)."""
+    seen = _connect_with_a_recorder(monkeypatch, sslmode="disable")
+    assert seen["conn"].cursors == 0
+    assert seen["args"] == ("host=made-up dbname=made-up",), (
+        "the connection string must reach the driver unchanged"
+    )
+    assert set(seen["kwargs"]) == {"autocommit", "connect_timeout", "sslmode"}, (
+        f"connect gave the driver more than it owns: {sorted(seen['kwargs'])}; a connection option would act like a second "
+        "setup statement outside every wrapper"
+    )
+
+
+def test_connect_with_the_iam_sign_in_runs_one_statement_and_adds_only_the_password(monkeypatch):
+    """IAM form: the sign-in branch adds a short-lived password and a verified TLS mode and nothing else (no statement, no
+    option). The sign-in helper is replaced by a stand-in that returns a made-up value built from parts."""
+    from hadavin_sdk.store import postgres as pg
+
+    parts = ["made", "up", "token"]  # built from parts: no secret-shaped literal in the file
+    made_up = "-".join(parts)
+    monkeypatch.setattr(pg, "password_source", lambda iam, region: lambda host, port, user: made_up)
+    seen = _connect_with_a_recorder(
+        monkeypatch,
+        "host=made-up.example dbname=made-up user=made-up",
+        iam_auth=True,
+        region="made-up-region-1",
+        sslmode="verify-full",
+        sslrootcert="/made/up/ca.pem",
+    )
+    assert seen["conn"].statements == ["SET TIME ZONE 'UTC'"]
+    assert seen["conn"].cursors == 0
+    assert set(seen["kwargs"]) == {
+        "autocommit", "connect_timeout", "sslmode", "sslrootcert", "password",
+    }, sorted(seen["kwargs"])  # fmt: skip
+    assert seen["kwargs"]["password"] == made_up
+
+
+def test_on_a_real_server_connect_sends_exactly_one_statement_through_any_driver_path():
+    """Real-server form: every statement the driver sends on a real connection goes through `Cursor.execute` (a
+    `Connection.execute` calls it, and so does an explicit `cursor()`); counting there sees every form at once. The count
+    is taken while `connect` runs against the real server of the tests."""
+    import os
+
+    import psycopg
+
+    from hadavin_sdk.store import postgres as pg
+
+    dsn = os.environ.get("HADAVIN_TEST_PG_DSN")
+    if not dsn:
+        pytest.skip("HADAVIN_TEST_PG_DSN not set")
+    sent: list[str] = []
+    real_execute = psycopg.Cursor.execute
+
+    def counting(self, query, *args, **kwargs):
+        sent.append(str(query))
+        return real_execute(self, query, *args, **kwargs)
+
+    psycopg.Cursor.execute = counting
+    try:
+        conn = pg.connect(dsn)
+    finally:
+        psycopg.Cursor.execute = real_execute
+    try:
+        assert sent == ["SET TIME ZONE 'UTC'"], f"connect sent {sent}"
+        assert conn.execute("SHOW TimeZone").fetchone()[0] == "UTC"
+    finally:
+        conn.close()

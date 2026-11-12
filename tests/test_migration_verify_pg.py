@@ -485,7 +485,7 @@ def test_a_connection_lost_at_any_step_before_the_commit_gives_exit_2_and_keeps_
     """Issue 2 of round 3 on 3d. A second session ends the run's backend just before one named step of `migrate` reads or
     writes (the lock, the privileged-role check, the owner check, the read-back, the read-back after a file, the role
     re-check, the grants, the default-EXECUTE revoke). Each gives exit 2 "kept nothing", never exit 3; the ledger is
-    empty; the same run on a healthy connection then applies every file. Killed by: V80 and V81."""
+    empty; the same run on a healthy connection then applies every file. Killed by: V80."""
     real = getattr(mig, target)
     seen = {"n": 0}
 
@@ -515,6 +515,28 @@ def test_a_connection_lost_at_any_step_before_the_commit_gives_exit_2_and_keeps_
         tp._drop_roles(runtime)
 
 
+def test_the_grant_step_is_not_called_without_a_role_argument_so_a_kill_planted_there_is_never_sent(
+    mrun, monkeypatch
+):
+    """Group 3 of round 16. The independent probe ended the session "before `_apply_grants`" with no role argument and the
+    run RETURNED 5 versions. The measured reason: `_apply_grants` is called only for a named role, so with no role argument
+    it is never called and the planted kill never happened (nothing was ended). With a role argument the same kill is
+    exit 2 (the cell `_apply_grants` of `test_a_connection_lost_at_any_step_before_the_commit_...`). This passes on 989c02a3
+    for the same reason: the code was right, the probe never reached the step."""
+    real = mig._apply_grants
+    calls: list[str] = []
+
+    def count(db, *a, **kw):
+        calls.append("called")
+        return real(db, *a, **kw)
+
+    monkeypatch.setattr(mig, "_apply_grants", count)
+    assert mig.migrate(mrun.dsn) == REAL_FILES
+    assert calls == [], (
+        "the grant step ran with no role argument: the reason written above is no longer true"
+    )
+
+
 # Issue 7 of round 14: the statements that `migrate` sends itself and that no named function wraps. Each is the first
 # statement of its kind on the run's connection that holds the marker text.
 _INLINE_STATEMENTS = [
@@ -536,7 +558,7 @@ def test_a_connection_lost_at_a_statement_the_runner_sends_itself_gives_exit_2_a
     the statements that `migrate` sends inline (the limits, the version read, the identity read, the ledger table, the
     ledger read, the ledger write, step 5). Each gives exit 2 "kept nothing", never exit 3 and never the wording of a
     failed deferred check; the ledger is empty. Together with the named steps this is the whole list that the CHANGELOG
-    means by "every step before the commit". Killed by: V80 (every cell) and V90 (the step-5 wording)."""
+    means by "every step before the commit". Killed by: V90 (the step-5 wording); V80 is killed by the test of the named steps above."""
     seen = {"conn": None, "done": False}
     mrun.after_call[1] = lambda conn: seen.update(conn=conn)
     real = psycopg.Connection.execute
@@ -603,23 +625,83 @@ def test_a_connection_lost_at_any_read_of_pg_roles_gives_exit_2_and_keeps_nothin
     assert mig.migrate(mrun.dsn) == REAL_FILES
 
 
-def test_a_failure_to_connect_at_the_start_is_the_one_exit_3_before_any_step(
+def test_a_failure_to_connect_at_the_start_is_refused_with_exit_2_and_keeps_nothing(
     mrun, cfg_dir, monkeypatch, capsys
 ):
-    """Issue 7 of round 14, `connect()` and its `SET TIME ZONE` sit outside the steps: a connection that cannot be made
-    at all is exit 3 ("failed"), nothing ran and nothing was kept. This is pinned as the intended outcome (the claim
-    "exit 2 at every step" starts after the connection is open). The test passes on the old code too: it pins a
-    behaviour that was already right and has no branch of its own to plant a fault in."""
+    """Group 3 of round 16 (changes the pin of round 14, which said exit 3 "failed"): a connection that cannot be made at
+    all is the same refusal as at any later step before the commit, exit 2, nothing kept, and the driver's own words (which
+    can hold a host name) are not printed. The one place is `_connected_before_commit`; on the old code this was exit 3."""
 
     def cannot_connect():
         raise psycopg.OperationalError("made-up: the server is not reachable")
 
     mrun.before_call[1] = cannot_connect
-    assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 3
+    assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2
     _out, err = capsys.readouterr()
-    assert err.startswith("failed: OperationalError"), err
+    assert (
+        "kept nothing" in err and "connecting to the database" in err and "OperationalError" in err
+    ), err
     assert "made-up: the server" not in err
     assert _ledger_of(mrun.dsn) == []
+
+
+def _the_setup_statement_fails_on_connection(monkeypatch, nth: int, closed: list[int]) -> None:
+    """The `nth` connection of the run is made, then its one setup statement (`SET TIME ZONE`) fails with a driver error.
+    The test helper first connects as the login and then as the plain role (two connections for one connection of the run),
+    so only the connections of the plain role are counted."""
+    from hadavin_sdk.store import postgres as pg
+
+    real = pg.psycopg.connect
+    count = {"n": 0}
+
+    class _FailsOnSetup:
+        def __init__(self, conn, number):
+            self._conn, self._number = conn, number
+
+        def execute(self, statement, *args, **kwargs):
+            raise psycopg.OperationalError("made-up: the setup statement failed")
+
+        def close(self):
+            closed.append(self._number)
+            self._conn.close()
+
+    def connect(dsn, *args, **kwargs):
+        conn = real(dsn, *args, **kwargs)
+        if f"user={helper.PLAIN_ROLE}" not in str(dsn):
+            return conn
+        count["n"] += 1
+        return _FailsOnSetup(conn, count["n"]) if count["n"] == nth else conn
+
+    monkeypatch.setattr(pg.psycopg, "connect", connect)
+
+
+def test_a_setup_statement_that_fails_on_the_first_connection_is_refused_with_exit_2_and_closed(
+    mrun, cfg_dir, monkeypatch, capsys
+):
+    """Group 3 of round 16: `SET TIME ZONE` is the one statement `connect` runs; a driver error there is exit 2 with nothing
+    kept (on 989c02a3 it came out as the raw driver error, exit 3), and the half-made connection is closed."""
+    closed: list[int] = []
+    _the_setup_statement_fails_on_connection(monkeypatch, 1, closed)
+    assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2
+    _out, err = capsys.readouterr()
+    assert "kept nothing" in err and "connecting to the database" in err, err
+    assert "made-up: the setup" not in err
+    assert closed == [1], "the connection whose setup statement failed was not closed"
+    assert _ledger_of(mrun.dsn) == []
+
+
+def test_a_setup_statement_that_fails_on_the_connection_of_step_8_gives_exit_5(
+    mrun, cfg_dir, monkeypatch, capsys
+):
+    """Group 3 of round 16: the same failure on the second connection (after the commit) is "applied, not verified", exit 5:
+    the files are kept, so it must never be called a refusal."""
+    closed: list[int] = []
+    _the_setup_statement_fails_on_connection(monkeypatch, 2, closed)
+    assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 5
+    _out, err = capsys.readouterr()
+    assert "the check after the commit could not run" in err and "(OperationalError)" in err, err
+    assert closed == [2]
+    assert _ledger_of(mrun.dsn) == REAL_FILES
 
 
 def test_an_error_of_the_runner_after_the_last_file_is_never_taken_as_the_files_own(
@@ -672,7 +754,7 @@ def test_a_connection_lost_while_a_file_runs_is_refused_with_exit_2(
 
 def test_a_files_own_error_is_raised_as_it_is(mrun, monkeypatch):
     """The error of the text of a file keeps its own words (here a division by zero) and is not turned into the "database
-    returned an error" refusal; nothing is kept. Killed by: V81 and V82."""
+    returned an error" refusal; nothing is kept. Killed by: V82."""
     with psycopg.connect(DSN, autocommit=True) as adm:
         helper.ensure_plain_role(adm)
         adm.execute(
@@ -694,7 +776,8 @@ def test_a_files_own_error_is_raised_as_it_is(mrun, monkeypatch):
 
 def test_a_bug_before_the_commit_stays_loud_and_a_files_own_error_stays_its_own(mrun, monkeypatch):
     """A `RuntimeError` is not a driver error: it is raised as it is. A syntax error of a file is the file's own error and
-    is not turned into the "database returned an error" refusal (its text is what the person needs). Killed by: V81."""
+    is not turned into the "database returned an error" refusal (its text is what the person needs). Killed by: no planted mutant of its own (V81 is killed by
+    test_a_connection_lost_while_a_file_runs_is_refused_with_exit_2); it pins the two sides of the split."""
 
     def a_bug(db, *a, **kw):
         raise RuntimeError("a bug in the runner")
@@ -716,7 +799,8 @@ def test_a_saved_transaction_timeout_stops_the_check_and_migrate_refuses_with_ex
     cannot: it ends the session). On a server below 17 the setting does not exist, so below 17 this test is a VISIBLE SKIP naming "UNRUN: PostgreSQL 17 only" (three tests in this
     file need 17: this one, the next one and the one for a timeout inside a file). On 17 the setting is applied inside
     the run just before the first `verify` (a role-saved value could end the run anywhere, including inside a file,
-    which is not the path under test) and a later statement runs into it. Killed by: V67."""
+    which is not the path under test) and a later statement runs into it. PG17 only (a visible skip below 17); no planted mutant kills it on 16 (V67 is killed by
+    the two tests of the check that loses its connection)."""
     if mrun_server_version() < 170000:
         pytest.skip(
             "UNRUN: PostgreSQL 17 only (`transaction_timeout` does not exist below 17); the PostgreSQL 16 fact it rests on "
@@ -769,7 +853,7 @@ def test_a_role_saved_transaction_timeout_gives_exit_2_wherever_it_strikes(
     the lock, the version read, a refusal check, a file's read-back or the grants. On PostgreSQL 17 and later the run ends
     with exit 2 and keeps nothing, whichever step it was. THIS TEST IS UNRUN ON ANY SERVER HERE (only PostgreSQL 16 is
     installed): below 17 it is a visible skip; CI is configured to run it on 17.10 (not yet seen).
-    Killed by: V80."""
+    No planted mutant of its own (V80 is killed by the test of every step before the commit)."""
     if mrun_server_version() < 170000:
         pytest.skip(
             "UNRUN: PostgreSQL 17 only (`transaction_timeout` does not exist below 17); the PostgreSQL 16 fact it rests on "
@@ -834,7 +918,9 @@ def test_a_session_ended_by_the_idle_in_transaction_timeout_while_a_file_runs_is
         _out, err = capsys.readouterr()
         assert seen["n"] == 1, "the wait never ran: the cell tests nothing"
         assert err.startswith("refused: migrate stopped and kept nothing"), err
-        assert "25P03" in err, f"the refusal must name the session-ending code 25P03: {err}"
+        # The outcome is what is pinned (exit 2, "kept nothing", not a failure of the file, ledger empty). The refusal's own
+        # wording for the server's code is pinned by the classifier unit tests, not here: it depends on how the driver
+        # reports a session the server ended, which is not what a timing-based cell should assert.
         assert "failed:" not in err, (
             f"a lost session must not be reported as a failure of the file: {err}"
         )
@@ -936,7 +1022,9 @@ def test_pg17_a_role_saved_transaction_timeout_that_strikes_inside_a_file_gives_
     below 17 (only PostgreSQL 16 is installed), and it is listed UNRUN in the CHANGELOG until the CI job on 17 runs it.
     The role saves a `transaction_timeout` that is longer than the steps before the first file and shorter than a
     `pg_sleep` inside the first file, so the timeout strikes while the file runs (the earlier test of this kind set 1 ms,
-    which strikes before any file). Exit 2, nothing kept. It does not discriminate V88 or V89 (see the PostgreSQL 16 test of the same class); no mutant is tied to it."""
+    which strikes before any file). Exit 2, nothing kept. It does not
+    discriminate V88 or V89 (see the PostgreSQL 16 test of the same class); no mutant is tied to it. Next step: the first
+    CI run on 17.10 must show this test passing before merge."""
     if mrun_server_version() < 170000:
         pytest.skip(
             "UNRUN: PostgreSQL 17 only (`transaction_timeout` does not exist below 17); "
@@ -954,13 +1042,10 @@ def test_pg17_a_role_saved_transaction_timeout_that_strikes_inside_a_file_gives_
         assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2
         _out, err = capsys.readouterr()
         assert err.startswith("refused: migrate stopped and kept nothing"), err
-        # What the refusal names was never observed on a server (UNRUN): the code writes the server's SQLSTATE when the driver
-        # gives one (25P04), else the driver's class name for the error (psycopg's `TransactionTimeout`, or `OperationalError`
-        # if the server's message arrives as a lost connection). The promise under test is exit 2, nothing kept, not a failure.
-        assert any(w in err for w in ("25P04", "TransactionTimeout", "OperationalError")), (
-            f"the refusal names none of the three spellings the code can write for a PostgreSQL 17 transaction timeout; the "
-            f"first observation on 17 shows which one it is, then this line names it: {err}"
-        )
+        # The code writes the server's SQLSTATE when the driver gives one. For a transaction timeout that is 25P04 (PostgreSQL
+        # 17 errcodes.txt). This test has never run on a server here (UNRUN); if the first run on 17.10 shows another
+        # spelling, this line is the one to correct with the observed text, not to widen.
+        assert "25P04" in err, f"the refusal must name the session-ending code 25P04: {err}"
         assert "failed:" not in err, (
             f"a lost session must not be reported as a failure of the file: {err}"
         )
@@ -1218,8 +1303,8 @@ def _end_the_sleeping_session(mrun, cfg_dir, monkeypatch, how: str):
 def test_a_lost_connection_at_commit_gives_exit_5(mrun, cfg_dir, monkeypatch, capsys):
     """D-M3: the second firing sleeps; a second session ends that backend while it sleeps. The wording is asserted, not
     the outcome (here the commit did not happen; a cut after the server finished gives the same error). Round 2 of 3c
-    (N8): the classifier saw exactly 57P01 and answered "unknown". Killed by: V58 and V59 (classes), and the `asked` line
-    by V69 (the error is classed without asking)."""
+    (N8): the classifier saw exactly 57P01 and answered "unknown". Killed by: V58 (classes) and the `asked` line
+    by V69 (the error is classed without asking); V59 is killed by the classifier tests in test_migration_steps.py."""
     _late(mrun, monkeypatch, "PERFORM pg_sleep(5);")
     rc, killed, asked = _end_the_sleeping_session(
         mrun, cfg_dir, monkeypatch, "pg_terminate_backend"

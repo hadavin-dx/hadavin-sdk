@@ -1248,6 +1248,21 @@ def _driver_error_before_commit(e: psycopg.Error, step: str) -> ConfigError:
 
 
 @contextmanager
+def _connected_before_commit(dsn: str, **options):
+    """The connection of the run itself (before anything is kept). A driver error while the connection is made, at the
+    connect or at its one setup statement (`SET TIME ZONE`), is the same refusal as at any later step before the commit:
+    `ConfigError` (exit 2), nothing kept (`_driver_error_before_commit`, the one place for all of them). The body of the
+    `with` is outside the `try`, so an error of the run itself is not taken for an error of the connect. The connection
+    of step 8 does not use this: after the commit a failure is "applied, not verified" (exit 5), never "kept nothing"."""
+    try:
+        db = connect(dsn, **options)
+    except psycopg.Error as e:
+        raise _driver_error_before_commit(e, "connecting to the database") from e
+    with db:
+        yield db
+
+
+@contextmanager
 def _check_could_not_run(step: str):
     """Around a `verify` call BEFORE the commit (steps 2 and 6): a driver error the check raises (a saved
     `transaction_timeout` of PostgreSQL 17 and later that ends the session, a lost connection, any other `psycopg.Error`)
@@ -1482,7 +1497,7 @@ def migrate(
         if role is not None
     }
     try:
-        with connect(
+        with _connected_before_commit(
             dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
         ) as db:
             reached_commit = False
