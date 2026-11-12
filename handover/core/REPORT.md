@@ -1,6 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## ORDER 256 received - 2026-11-12 19:02Z / 00:32 IST (next block by 19:07Z)
+- Clock correction: my last three block titles said 19:05Z to 19:10Z; the machine clock read 18:55-19:00Z then. Times from now are read from `date -u`. Honest slip, no work affected.
+- Applying: (A) stop rule. Q8a-1 b19 round 20 had 0 Blocker and 0 Major in BOTH reviews: no further review of minors; batch 20 will fix the r20 minors in one push, then ONE more round because it is a security path (the first clean round was r20). Q8c-1 b15 still has a Major (N1): batch 16 then continue. (B) class first in every new brief. (C) READY-TO-MERGE.md: agent ad5f13... building it now from the PR list. (E) ledger triage and (F) open questions: two agents started, both write only under handover/core/ and change no existing file. (D) rebase builders for the stacks start next, after the PR table shows the real state (queue by heavy slot).
+- Running agents: 15. Review-fix builders PRH b12, P3a-2 b9, Q8b b14c; evidence runner Q8a-1 b19; promotion builders parts 2, 3, 6, 5 and AK-G2-a; helpers: ledger triage, open questions, READY-TO-MERGE table. Q8c-1 b15 evidence landed (full suite 11000 passed 13 skipped; stage 37/37; policy 350/350; fail-before 41 failed on old code), committed now.
+- Pushed: part 2 first commit on wip/cloud-pd-bind (34ff7bf7). Stuck: nothing. Needs from the lead: nothing.
+
 ## Status - 2026-11-12 19:10Z / 00:40 IST (next block by 19:15Z)
 - Running agents: 12. Review-fix: PRH b12, P3a-2 b9, Q8b b14c builders; Q8c-1 b15 and Q8a-1 b19 evidence runners. Promotion builders (all 5 started, 90-minute boxes, worktrees under /home/user/build): part 2 bind (wip/cloud-pd-bind), part 3 stand-ins (wip/cloud-pd-standins, waits for part 2's loopback helper), part 6 banner and demo-only guard (wip/cloud-pd-banner), part 5 reset (wip/cloud-pd-reset), AK-G2-a ledger = parts 1+4 (wip/cloud-ak-g2-a; ticket wins over demo code; it will not finish in one box).
 - Pushed: only reports so far. No builder has pushed yet.

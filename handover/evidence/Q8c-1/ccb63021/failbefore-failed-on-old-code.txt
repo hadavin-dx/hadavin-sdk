@@ -1,0 +1,41 @@
+FAILED tests/test_k1b_cli.py::test_a_config_with_an_empty_vault_path_prefix_is_refused_with_exit_2_and_one_plain_sentence
+FAILED tests/test_mutation_runner.py::test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_one_is_not
+FAILED tests/test_mutation_runner.py::test_the_manifest_pins_the_files_a_demo_copies
+FAILED tests/test_notes_lines_check.py::test_a_constant_bound_by_a_walrus_inside_another_assignment_lists_the_test_that_reads_it
+FAILED tests/test_notes_lines_check.py::test_a_fixture_named_as_a_text_by_usefixtures_or_getfixturevalue_lists_the_test
+FAILED tests/test_notes_lines_check.py::test_a_module_imported_by_a_name_built_at_run_time_lists_every_test_that_could_reach_it
+FAILED tests/test_notes_lines_check.py::test_a_module_named_in_pytest_plugins_or_in_addopts_acts_on_the_tests_below_the_conftest
+FAILED tests/test_notes_lines_check.py::test_a_row_of_any_notes_file_of_the_change_counts_for_a_unit_and_the_tool_says_so
+FAILED tests/test_notes_lines_check.py::test_a_star_import_of_a_test_module_makes_every_name_of_it_part_of_the_file
+FAILED tests/test_notes_lines_check.py::test_the_set_up_and_tear_down_methods_of_a_unittest_case_list_its_tests
+FAILED tests/test_policy_changelog.py::test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tests_the_page_and_the_mutants_green
+FAILED tests/test_policy_changelog.py::test_plant_a_renewal_of_the_kinds_list_alone_keeps_the_tests_the_page_and_the_mutants_green
+FAILED tests/test_policy_changelog.py::test_plant_a_renewal_of_the_names_and_claims_alone_keeps_the_tests_the_page_and_the_mutants_green
+FAILED tests/test_policy_guard.py::test_a_request_named_only_in_a_docstring_changes_nothing
+FAILED tests/test_policy_guard.py::test_a_vault_read_with_an_empty_prefix_is_refused_before_any_request_and_a_bad_name_is_refused_first
+FAILED tests/test_policy_guard.py::test_building_the_vault_kind_from_settings_that_skipped_their_checks_refuses_an_empty_prefix
+FAILED tests/test_policy_guard.py::test_every_import_of_a_declared_module_is_on_its_list_and_no_entry_is_stale
+FAILED tests/test_policy_guard.py::test_plant_a_banned_name_that_arrives_through_an_import_alias_is_caught
+FAILED tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._call(f"/api/v1/namespaces/{ns}/pods/{ns}/log?follow=true", "k8s.pod_log")-query parameter `follow` is not one that `k8s.pod_log` may carry]
+FAILED tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/events" + "?watch=1", "k8s.list_events")-the path of `k8s.list_events` is not a literal]
+FAILED tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/events?", "k8s.list_events")-query parameter `` is not one that `k8s.list_events` may carry]
+FAILED tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/events?limit=5", "k8s.list_events")-query parameter `limit` is not one that `k8s.list_events` may carry]
+FAILED tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/secrets", "k8s.list_events")-the path does not fit the one bound to `k8s.list_events`]
+FAILED tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}x/events", "k8s.list_events")-the path does not fit the one bound to `k8s.list_events`]
+FAILED tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{scope}/events", "k8s.list_events")-holds a value that is neither `quote(name, safe='')` nor a setting]
+FAILED tests/test_policy_guard.py::test_plant_a_kubernetes_path_that_is_not_the_bound_one_is_caught
+FAILED tests/test_policy_guard.py::test_plant_a_local_variable_named_like_a_setting_is_not_taken_for_the_setting
+FAILED tests/test_policy_guard.py::test_plant_a_new_kubernetes_operation_is_caught
+FAILED tests/test_policy_guard.py::test_plant_a_new_request_with_no_grant_is_caught
+FAILED tests/test_policy_guard.py::test_plant_a_path_built_by_a_call_is_not_foldable_and_is_caught
+FAILED tests/test_policy_guard.py::test_plant_a_request_that_is_not_a_literal_is_caught
+FAILED tests/test_policy_guard.py::test_plant_a_sink_taken_as_a_value_is_caught
+FAILED tests/test_policy_guard.py::test_plant_attrgetter_on_a_sink_is_caught
+FAILED tests/test_policy_guard.py::test_plant_p04b_an_added_request_through_getattr_with_a_literal_name_is_caught
+FAILED tests/test_policy_guard.py::test_plant_p09a_a_kubernetes_request_with_watch_in_its_query_is_caught
+FAILED tests/test_policy_guard.py::test_plant_the_http_opener_used_outside_the_one_sender_is_caught
+FAILED tests/test_policy_guard.py::test_plant_the_old_star_form_of_the_vault_secrets_grant_is_caught
+FAILED tests/test_policy_guard.py::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/actions/secrets_vault.py]
+FAILED tests/test_policy_guard.py::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/sources/kubernetes.py]
+FAILED tests/test_policy_guard.py::test_the_page_says_that_the_kubernetes_start_up_check_does_not_refuse_an_over_broad_read
+FAILED tests/test_policy_guard.py::test_vault_settings_with_an_empty_path_prefix_are_refused_and_a_named_one_is_taken
