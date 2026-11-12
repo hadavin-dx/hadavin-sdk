@@ -134,8 +134,12 @@ def test_an_event_id_with_a_colon_a_capital_or_a_device_name_is_refused_and_a_ge
     for ok in (new_id("evt"), "evt-ok_1", "con-x", "a"):
         AuditEvent(event_id=ok, **_EVENT)
     for bad in ("a:b", "Abc", "NUL", "nul", "com9", "lpt1", "aux", "prn", "con"):
-        with pytest.raises(ValueError, match="plain file name"):
+        try:
             AuditEvent(event_id=bad, **_EVENT)
+        except ValueError as refused:
+            assert "plain file name" in str(refused), f"the refusal of the event id {bad!r} has another sentence"
+        else:
+            raise AssertionError(f"an event id that is not a plain file name was accepted: {bad!r}")
 
 
 def test_the_local_audit_folder_never_makes_a_file_from_an_event_that_skipped_the_model_check(tmp_path):
@@ -145,8 +149,12 @@ def test_the_local_audit_folder_never_makes_a_file_from_an_event_that_skipped_th
 
     audit = LocalDirSink(tmp_path / "audit")
     evil = AuditEvent.model_construct(event_id="../../escaped", ts=None, **_EVENT)
-    with pytest.raises(ValueError, match="plain file name"):
+    try:
         audit.write_intent(evil)
+    except ValueError as refused:
+        assert "plain file name" in str(refused), "the folder refused the hostile event id with another sentence"
+    else:
+        raise AssertionError("the local audit folder wrote an event whose id is not a plain file name")
     assert audit.write_outcome(evil) is None  # kept in memory, no file
     assert not (tmp_path / "escaped.json").exists() and not (tmp_path.parent / "escaped.json").exists()
     assert not list((tmp_path / "audit").rglob("*escaped*")), "a file was made from the hostile id"
@@ -228,8 +236,9 @@ def test_execute_reports_an_error_status_as_its_digits_and_never_through_the_tex
 
     plan, gd, ad = _approved_plan()
     result = _executor_answering(Odd(code)).execute(plan, gd, ad)
-    assert result.outcome == outcome and result.error_code == f"http_{code}"
     assert text not in str(result.error_code), "execute built its error code from the text of the status"
+    assert result.outcome == outcome, f"execute gave outcome {result.outcome!r} for status {code}"
+    assert result.error_code == f"http_{code}", "execute gave an error code that is not the digits of the status"
 
 
 # ---- Issue 5: `_port` of a tool names the port by digits only ----------------------------------------------------------------
@@ -256,7 +265,8 @@ def test_a_refused_port_is_shown_by_its_digits_never_by_the_text_of_the_value():
     parts = SimpleNamespace(port=Odd(8081))
     with pytest.raises(ToolRefused) as raised:
         tool._port(parts, "https")
-    assert "8081" in str(raised.value) and text not in str(raised.value)
+    assert text not in str(raised.value), "the refusal shows the port by the text of the value"
+    assert "8081" in str(raised.value), "the refusal does not show the digits of the port"
 
 
 # ---- Issue 3: ledger names read from the database are shown only in the shape of a migration file name ------------------------
@@ -270,3 +280,14 @@ def test_the_refusal_of_a_ledger_row_without_a_file_shows_only_names_shaped_like
     assert got == ["0006_evidence", "0009_z", "3 other(s)"], "a ledger name of another shape is shown"
     assert _shown_ledger_names(["0006_evidence"]) == ["0006_evidence"]
     assert _shown_ledger_names(["a" * 90, "0001_x\nsecret"]) == ["2 other(s)"]
+
+
+def test_the_outbox_never_makes_a_file_from_an_event_id_that_is_not_a_plain_name(tmp_path):
+    from hadavin_sdk.audit.local_dir import LocalDirSink
+    from hadavin_sdk.models import AuditEvent
+
+    audit = LocalDirSink(tmp_path / "audit")
+    odd = AuditEvent.model_construct(event_id="Upper-Case", ts=None, **_EVENT)  # a valid file name on most systems
+    assert audit.write_outcome(odd) is None
+    made = [p.name for p in (tmp_path / "audit").rglob("*") if p.is_file()]
+    assert not made, f"the outbox made a file from an event id that is not a plain name: {made}"

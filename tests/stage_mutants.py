@@ -66,6 +66,7 @@ def crash_mutant(name, file, old, new, killer, crash_type, param=""):
 
 
 TRACE = "tests/test_q8a1_f_string_trace.py"
+B = "tests/test_q8a1_b16_fixes.py"
 
 
 def trace_mutant(name, file, old, new, killer, expect):
@@ -1048,6 +1049,34 @@ M = [
         '            f"Expected: {plan.expected_outcome}. Plan {plan.hash()[:12]}."\n        )\n    except', '            f"Expected: {plan.expected_outcome}. Plan {plan.hash()[:12]}. {plan.idempotency_key}"\n        )\n    except', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'holds a field that is not shown on purpose', '[CARD]'),
     other_mutant('Z167 round 16: the channel message names the requester (slack_channel.py), CARD check', 'src/hadavin_sdk/approvals/slack_channel.py',
         '"text": "Approval needed",', '"text": f"Approval needed {req.requested_by}",', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'holds a field that is not shown on purpose', '[CARD]'),
+    other_mutant('Z168 round 16: a ledger name of any shape is shown (migrate.py)', 'src/hadavin_sdk/store/migrate.py',
+        '    shown = [g for g in gone if _LEDGER_NAME.fullmatch(g)]', '    shown = list(gone)', B, 'test_the_refusal_of_a_ledger_row_without_a_file_shows_only_names_shaped_like_ours', 'a ledger name of another shape is shown'),
+    other_mutant('Z169 round 16: an event id may hold a colon (models.py)', 'src/hadavin_sdk/models.py',
+        'EVENT_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9_-]{0,127}")', 'EVENT_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9_:-]{0,127}")', B, 'test_an_event_id_with_a_colon_a_capital_or_a_device_name_is_refused_and_a_generated_id_is_not', 'was accepted'),
+    other_mutant('Z170 round 16: a device name is allowed as an event id (models.py)', 'src/hadavin_sdk/models.py',
+        '        and value not in _RESERVED_NAMES  # no dot is allowed, so a device name is the whole id\n', '', B, 'test_an_event_id_with_a_colon_a_capital_or_a_device_name_is_refused_and_a_generated_id_is_not', 'was accepted'),
+    other_mutant('Z171 round 16: the refusal of an event id quotes the id again (models.py)', 'src/hadavin_sdk/models.py',
+        'model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)', 'model_config = ConfigDict(extra="forbid", hide_input_in_errors=False)', B, 'test_the_refusal_of_a_bad_event_id_does_not_quote_the_id', 'input_value', '[../x]'),
+    other_mutant('Z172 round 16: the local audit folder trusts the id of an event (local_dir.py, intent)', 'src/hadavin_sdk/audit/local_dir.py',
+        '        if not plain_event_name(event.event_id):  # an event built without validation must not name a file', '        if False:  # an event built without validation must not name a file', B, 'test_the_local_audit_folder_never_makes_a_file_from_an_event_that_skipped_the_model_check', 'wrote an event'),
+    other_mutant('Z173 round 16: the outbox trusts the id of an event (local_dir.py)', 'src/hadavin_sdk/audit/local_dir.py',
+        '                if plain_event_name(event.event_id):  # otherwise', '                if True:  # otherwise', B, 'test_the_outbox_never_makes_a_file_from_an_event_id_that_is_not_a_plain_name', 'made a file from an event id'),
+    other_mutant('Z174 round 16: shown_id shows an id of a prefix the code does not make (errors.py)', 'src/hadavin_sdk/errors.py',
+        'ID_PREFIXES = ("run", "pln", "apr", "evt", "k1b")', 'ID_PREFIXES = ("run", "pln", "apr", "evt", "k1b", "key")', B, 'test_shown_id_shows_only_ids_of_the_prefixes_the_code_makes', 'a prefix the code does not make'),
+    other_mutant('Z175 round 16: shown_id drops a prefix the code makes (errors.py)', 'src/hadavin_sdk/errors.py',
+        'ID_PREFIXES = ("run", "pln", "apr", "evt", "k1b")', 'ID_PREFIXES = ("run", "pln", "apr", "k1b")', B, 'test_every_prefix_given_to_new_id_in_the_package_is_in_the_shown_list', 'missing from ID_PREFIXES'),
+    other_mutant('Z176 round 16: the debug traceback prints the text of each error (cli.py, FRAMES)', 'src/hadavin_sdk/cli.py',
+        '        print(f"{type(err).__name__}", file=sys.stderr)', '        print(f"{type(err).__name__} {err}", file=sys.stderr)', 'tests/test_stage_names.py', 'test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter', 'cli.py'),
+    other_mutant('Z177 round 16: a log call of the approval store names the id as written (requests.py, STOREID)', 'src/hadavin_sdk/approvals/requests.py',
+        '                shown_id(req.approval_id),\n                type(exc).__name__,', '                req.approval_id,\n                type(exc).__name__,', 'tests/test_stage_names.py', 'test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter', 'requests.py'),
+    other_mutant('Z178 round 16: a text field is added into a cost (evals.py, NUM)', 'src/hadavin_sdk/evals.py',
+        '            cost += reply.cost_usd', '            cost += reply.text', 'tests/test_stage_names.py', 'test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter', 'evals.py'),
+    other_mutant('Z179 round 16: a refused anchor kind is listed as written, not through the closed list (config.py, LISTED)', 'src/hadavin_sdk/config.py',
+        '        refused.append(f"anchor {anchor.kind} needs backends.audit kind chain")', '        refused.append(str(anchor.kind))', 'tests/test_stage_names.py', 'test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter', 'config.py'),
+    other_mutant('Z180 round 16: a failed call is reported with the text of the status (executor.py)', 'src/hadavin_sdk/actions/executor.py',
+        '        return RunResult(outcome="failed", error_code=_http_code(status))', '        return RunResult(outcome="failed", error_code=f"http_{status}")', 'tests/test_q8a1_b16_fixes.py', 'test_execute_reports_an_error_status_as_its_digits_and_never_through_the_text_of_the_status', 'built its error code from the text', '[404-failed]'),
+    other_mutant('Z181 round 16: a refused port is shown as written (tools.py)', 'src/hadavin_sdk/tools.py',
+        'raise ToolRefused(f"port {status_text(port)} is not allowed for this tool")', 'raise ToolRefused(f"port {port} is not allowed for this tool")', 'tests/test_q8a1_b16_fixes.py', 'test_a_refused_port_is_shown_by_its_digits_never_by_the_text_of_the_value', 'by the text of the value'),
 ]  # fmt: skip
 
 
