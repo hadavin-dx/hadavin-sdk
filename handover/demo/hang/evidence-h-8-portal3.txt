@@ -1,0 +1,2 @@
+tree f5fe824 + patch (final conftest)
+$ run 1: timeout 900 pytest -q -p no:cacheprovider --durations=3 tests/test_portal_api.py tests/test_server_stop_guard.py tests/test_crm_hubspot.py tests/test_mode_safety.py

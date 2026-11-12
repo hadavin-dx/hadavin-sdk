@@ -1,15 +1,13 @@
-base f5fe824 (archive); hang-fix.patch sha256 7b035250e9a8caf739ec2b97d0f7b20848c92615b8832e7762a37034375eb0ef
-speed patch: 87e06a4d4448871585ee122174f36e09603a4c12a42b31c103abf0ba0fb89559 fake-hubspot-read-body-before-answer.patch
---- hang alone on head:
-rc=0
-speed applied
---- hang after speed:
-codeant2-demo-only (d19eece2adce): after-speed alone=[ok]  X then hang=[ok]  hang then X=[ok]
-codeant2-demo-only-r2 (ea2712db164e): after-speed alone=[ok]  X then hang=[ok]  hang then X=[ok]
-codeant2-scripts (fef759ee6699): after-speed alone=[error: patch failed: scripts/http_guard.py:10]  X then hang=[(X alone failed)]  hang then X=[error: patch failed: scripts/http_guard.py:10 error: scripts/http_guard.py: patch does not apply ]
-codeant2-tests-hardening (244acda4bcca): after-speed alone=[ok]  X then hang=[error: patch failed: tests/conftest.py:113 error: tests/conftest.py: patch does not apply ]  hang then X=[error: patch failed: tests/conftest.py:115 error: tests/conftest.py: patch does not apply ]
-codeant2-tests-hardening-r2 (363baca0c301): after-speed alone=[ok]  X then hang=[error: patch failed: tests/conftest.py:113 error: tests/conftest.py: patch does not apply ]  hang then X=[error: patch failed: tests/conftest.py:115 error: tests/conftest.py: patch does not apply ]
-codeant2-desk (705535cd3d88): after-speed alone=[ok]  X then hang=[ok]  hang then X=[ok]
-codeant2-portal-log (b90e21d24bd7): after-speed alone=[ok]  X then hang=[ok]  hang then X=[ok]
-codeant2-fakes-body (321c87d00ec1): after-speed alone=[ok]  X then hang=[ok]  hang then X=[ok]
-codeant2-standins-body (0d29f51ad8d0): after-speed alone=[ok]  X then hang=[ok]  hang then X=[ok]
+base f5fe824 (archive); hang-fix.patch sha256 2335ae73e6189715d120899b006f82e76c0ae948219e73c6d1294051f2c3c4f8
+speed patch (applied first in every row): 87e06a4d4448871585ee122174f36e09603a4c12a42b31c103abf0ba0fb89559 fake-hubspot-read-body-before-answer.patch
+--- hang alone on the head: rc-ok-if-blank
+--- hang after speed: rc-ok-if-blank
+codeant2-demo-only (d19eece2adce): X alone after speed=[ok] | speed,X,hang=[ok] | speed,hang,X=[ok]
+codeant2-demo-only-r2 (ea2712db164e): X alone after speed=[ok] | speed,X,hang=[ok] | speed,hang,X=[ok]
+codeant2-tests-hardening (244acda4bcca): X alone after speed=[ok] | speed,X,hang=[ok] | speed,hang,X=[ok]
+codeant2-tests-hardening-r2 (363baca0c301): X alone after speed=[ok] | speed,X,hang=[ok] | speed,hang,X=[ok]
+codeant2-desk (705535cd3d88): X alone after speed=[ok] | speed,X,hang=[ok] | speed,hang,X=[ok]
+codeant2-portal-log (b90e21d24bd7): X alone after speed=[ok] | speed,X,hang=[ok] | speed,hang,X=[ok]
+codeant2-fakes-body (321c87d00ec1): X alone after speed=[ok] | speed,X,hang=[ok] | speed,hang,X=[ok]
+codeant2-standins-body (0d29f51ad8d0): X alone after speed=[ok] | speed,X,hang=[ok] | speed,hang,X=[ok]
+codeant2-scripts (fef759ee6699): X alone after speed=[error: patch failed: scripts/http_guard.py:10] | speed,X,hang=[n/a] | speed,hang,X=[error: patch failed: scripts/http_guard.py:10 error: scripts/http_guard.py: patch does not apply ]

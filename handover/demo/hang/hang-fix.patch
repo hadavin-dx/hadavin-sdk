@@ -13,7 +13,7 @@ index 02a9b4a..2b49700 100644
  # Run commands set PYTHONPATH=src (there is no build-system); see contract.md, Run commands.
  
 diff --git a/tests/conftest.py b/tests/conftest.py
-index 2635950..677eeee 100644
+index 2635950..1cbf750 100644
 --- a/tests/conftest.py
 +++ b/tests/conftest.py
 @@ -29,7 +29,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
@@ -25,7 +25,15 @@ index 2635950..677eeee 100644
  
      from demo_only.fakes_server import FakesServer, serve_fakes_in_thread, stop_fakes
  
-@@ -90,21 +90,24 @@ class Env:
+@@ -78,6 +78,7 @@ class Env:
+         self._n = 0
+         self.rigs: list[Rig] = []
+         self._stops: list[Callable[[], None]] = []
++        self.stuck: list[ServerDidNotStop] = []  # servers that did not stop in time; the env fixture fails the test
+ 
+     def rig(self, **kw: Any) -> Rig:
+         self._n += 1
+@@ -90,12 +91,12 @@ class Env:
      def serve(self, r: Rig) -> str:
          """Start the real HTTP server (port 0) around r.desk; returns the base URL."""
          base, stop = serve_in_thread(r.desk, port=0)
@@ -40,27 +48,21 @@ index 2635950..677eeee 100644
          return srv, url
  
      def stop_on_close(self, stop: Callable[[], None]) -> None:
-         self._stops.append(stop)
- 
-     def close(self) -> None:
-+        stuck: list[ServerDidNotStop] = []
+@@ -105,6 +106,8 @@ class Env:
          for stop in reversed(self._stops):
              try:
                  stop()
 +            except ServerDidNotStop as e:  # reported after every other item is closed
-+                stuck.append(e)
++                self.stuck.append(e)
              except Exception:  # noqa: BLE001, S110 (teardown must reach every item)
                  pass
          for r in self.rigs:
-@@ -113,6 +116,8 @@ class Env:
-                     d.close()
-                 except Exception:  # noqa: BLE001, S110
-                     pass
-+        if stuck:
-+            raise stuck[0]
- 
- 
- @pytest.fixture
+@@ -122,3 +125,5 @@ def env(tmp_path: Path) -> Iterator[Env]:
+         yield e
+     finally:
+         e.close()
++        if e.stuck:
++            raise e.stuck[0]
 diff --git a/tests/support.py b/tests/support.py
 index aedca61..c31bd62 100644
 --- a/tests/support.py
@@ -566,10 +568,10 @@ index 88b7435..c6a4462 100644
  def send(h: BaseHTTPRequestHandler, status: int, obj: Any, headers: dict[str, str] | None = None) -> None:
 diff --git a/tests/test_server_stop_guard.py b/tests/test_server_stop_guard.py
 new file mode 100644
-index 0000000..333d3c3
+index 0000000..1b1cde0
 --- /dev/null
 +++ b/tests/test_server_stop_guard.py
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,98 @@
 +"""A test server that cannot stop must fail its test fast, with a message, never stall the whole run.
 +
 +The standard library's BaseServer.shutdown() waits, without a time limit, for the serve_forever loop to finish; when
@@ -655,6 +657,19 @@ index 0000000..333d3c3
 +
 +    with pytest.raises(ValueError, match="kept"):
 +        stop_within(boom)
++
++
++def test_the_env_fixture_reports_a_server_that_did_not_stop_after_closing_the_rest(env) -> None:
++    release = threading.Event()
++    closed: list[str] = []
++    env.stop_on_close(lambda: closed.append("first"))  # stopped last: must still run
++    env.stop_on_close(lambda: stop_within(release.wait, "stuck stand-in", seconds=0.2))
++    try:
++        env.close()
++        assert closed == ["first"] and len(env.stuck) == 1 and "stuck stand-in" in str(env.stuck[0])
++    finally:
++        release.set()
++        env.stuck.clear()  # the fixture teardown would otherwise (rightly) fail this test
 diff --git a/tests/test_slow_sender.py b/tests/test_slow_sender.py
 index 33a1f8c..199e750 100644
 --- a/tests/test_slow_sender.py
