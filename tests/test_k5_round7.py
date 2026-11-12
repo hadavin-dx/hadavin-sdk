@@ -39,7 +39,7 @@ def test_safe_head_bounds_the_work_and_never_raises():
 
 
 def test_the_tick_message_and_the_detector_log_are_redacted_before_the_cut(caplog):
-    assert "eyJhbGci" not in tick_mod._message(ValueError(_msg(500)))
+    assert "eyJhbGci" not in tick_mod._message(tick_mod.ConfigError(_msg(500)))
 
     class Boom:
         def check(self, text, source):

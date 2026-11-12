@@ -7,7 +7,6 @@ before any cut, whatever the prefix in front of it."""
 from __future__ import annotations
 
 import base64
-import logging
 
 import pytest
 
@@ -15,7 +14,6 @@ from hadavin_sdk import defaults
 from hadavin_sdk import tools as tools_mod
 from hadavin_sdk.approvals import channel as channel_mod
 from hadavin_sdk.guard import runmap
-from hadavin_sdk.guard.injection import injection_check
 from hadavin_sdk.guard.judge import JudgeDetector
 from hadavin_sdk.runtime import tick as tick_mod
 
@@ -52,16 +50,6 @@ def _bundle_text(text: str) -> str:
     return repr(redact_bundle(_bundle(**_log(f"x {text} y")))[0].logs)
 
 
-def _log_line(text: str, caplog) -> str:
-    class Boom:
-        def check(self, t, s):
-            raise ValueError(text)
-
-    with caplog.at_level(logging.WARNING):
-        injection_check(Boom(), "x", "t")
-    return caplog.text
-
-
 # every row of guard/producers.py, by the function the producer calls (the registry test asserts the rows)
 PRODUCER_CALLS = {
     "redact_text": lambda t, c: runmap.redact_text(f"a {t} b", {}),
@@ -70,11 +58,10 @@ PRODUCER_CALLS = {
     "safe_head": lambda t, c: runmap.safe_head(f"a {t} b", 300),
     "prepare_output": lambda t, c: tools_mod.prepare_output(f"a {t} b", {}, 16384, []),
     "error_reason": lambda t, c: tools_mod.error_reason(ValueError(f"a {t} b"), []),
-    "tick": lambda t, c: tick_mod._message(ValueError(f"a {t} b")),
+    "tick": lambda t, c: tick_mod._message(tick_mod.ConfigError(f"a {t} b")),
     "card": lambda t, c: channel_mod.clean(f"a {t} b"),
     "judge": lambda t, c: _judge(f"a {t} b"),
     "bundle": lambda t, c: _bundle_text(t),
-    "injection log": lambda t, c: _log_line(f"a {t} b", c),
 }
 
 

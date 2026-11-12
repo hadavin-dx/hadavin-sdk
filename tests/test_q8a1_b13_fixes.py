@@ -63,10 +63,11 @@ def test_a_provider_error_code_with_other_characters_is_dropped_by_describe():
 
     nums = _numbers(7)
     for _ in range(200):
-        code = "".join("ab-_. /?=&%\n\"'é"[next(nums) % 14] for _ in range(1 + next(nums) % 99))
+        alphabet = "ab-_. /?=&%\n\"'é"
+        code = "".join(alphabet[next(nums) % len(alphabet)] for _ in range(1 + next(nums) % 99))
         out = describe(Boom("q"), lambda e, c=code: c)
         assert out == "Boom 429" or (
-            code and len(code) <= 80 and all(c in "ab-_. " for c in code) and out.endswith(code)
+            code and len(code) <= 48 and all(c in "ab-_." for c in code) and out.endswith(code)
         ), (code, out)
     assert describe(Boom("q"), lambda e: "rate_limit") == "Boom 429 rate_limit"
 
@@ -156,21 +157,7 @@ def test_every_model_of_a_whole_file_hides_an_unknown_key_in_its_error_text(mode
 # ---- runtime/tick.py: no blind handler and no suppression comment (round 13) ----
 
 
-def test_tick_has_no_blind_handler_and_no_suppression_comment():
-    import ast
-    from pathlib import Path
-
-    from hadavin_sdk.runtime import tick
-
-    text = Path(tick.__file__).read_text(encoding="utf-8")
-    assert "BLE001" not in text and "S110" not in text
-    broad = [
-        n.lineno
-        for n in ast.walk(ast.parse(text))
-        if isinstance(n, ast.ExceptHandler)
-        and (n.type is None or ast.unparse(n.type) in {"Exception", "BaseException"})
-    ]
-    assert broad == []
+# (the tree-based test of the tick handlers is in test_q8a1_b14_fixes.py)
 
 
 def test_each_skips_a_lost_race_runs_every_item_and_raises_the_first_other_error():

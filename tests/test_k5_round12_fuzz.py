@@ -129,7 +129,7 @@ PRODUCERS = {
     "safe_head": lambda t: runmap.safe_head(t, 10**6),
     "prepare_output": lambda t: tools_mod.prepare_output(t, {}, 262144, []),
     "error_reason": lambda t: tools_mod.error_reason(ValueError(t), []),
-    "tick": lambda t: tick_mod._message(ValueError(t)).replace("\n", " "),
+    "tick": lambda t: tick_mod._message(tick_mod.ConfigError(t)).replace("\n", " "),
     "slack": _slack,
 }
 

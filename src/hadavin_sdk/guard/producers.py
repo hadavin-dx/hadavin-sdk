@@ -27,12 +27,6 @@ PRODUCERS: tuple[tuple[str, str, str, frozenset[str]], ...] = (
     ),
     ("judge input", "guard/judge.py", "check", frozenset({"redact_text"})),
     ("vendor guardrail input", "guard/bedrock_guardrail.py", "check", frozenset({"redact_text"})),
-    (
-        "injection screen log line",
-        "guard/injection.py",
-        "injection_check",
-        frozenset({"safe_head"}),
-    ),
     ("extract validation errors", "extract.py", "extract", frozenset({"safe_head"})),
     ("tick error message", "runtime/tick.py", "_message", frozenset({"safe_head"})),
     ("approval card text", "approvals/channel.py", "clean", frozenset({"redact_text"})),

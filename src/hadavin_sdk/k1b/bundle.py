@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from hadavin_sdk.config import confined
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, shown_name
 from hadavin_sdk.hashing import hash_files
 from hadavin_sdk.k1b.diagnosis import Diagnosis, strict_json_loads
 
@@ -104,7 +104,9 @@ class Bundle:
 
 
 def _fail(case: str, msg: str) -> BundleError:
-    return BundleError(f"bundle {case}: {msg}")
+    # `case` is the folder name the operator typed on the command line: shown only when `shown_name` allows it (word-like
+    # and not too long), never unchecked (round 14)
+    return BundleError(f"bundle {shown_name(case)}: {msg}")
 
 
 def _load_json(case: str, root: Path, rel: str) -> Any:
@@ -234,7 +236,9 @@ def load_bundle(path: Path) -> Bundle:
             if not ok:
                 raise _fail(case, "alert labels must be strings of at most 200 characters")
         elif not isinstance(val, str) or (key == "fired_by" and len(val) > MAX_SHORT):
-            raise _fail(case, f"alert {key} must be a string (fired_by at most 200 characters)")
+            raise _fail(
+                case, f"alert {shown_name(key)} must be a string (fired_by at most 200 characters)"
+            )
     _scan(case, "incident.json", alert, alert_time)
 
     ids: set[str] = set()

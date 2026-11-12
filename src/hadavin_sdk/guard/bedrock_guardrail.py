@@ -101,11 +101,18 @@ class GuardrailDetector:
         text = runmap.redact_text(
             text, {}
         )  # sent to a vendor service: redacted even if the caller did already
-        resp = self._client.apply_guardrail(
-            guardrailIdentifier=self.guardrail_id,
-            guardrailVersion=self.version,
-            source="INPUT",
-            content=[{"text": {"text": text}}],
+        # The cloud error quotes the guardrail id or ARN, a role and an account: only its class is kept, and the new
+        # error has no cause and no context (`injection_check` turns it into a flag and logs the class only).
+        resp = call_class_only(
+            lambda: self._client.apply_guardrail(
+                guardrailIdentifier=self.guardrail_id,
+                guardrailVersion=self.version,
+                source="INPUT",
+                content=[{"text": {"text": text}}],
+            ),
+            lambda cls: RuntimeError(
+                f"backend detector 'bedrock_guardrail': the call failed ({cls})"
+            ),
         )
         score = 1.0 if _prompt_attack(resp) else 0.0
         flagged = score >= self.threshold

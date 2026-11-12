@@ -10,7 +10,6 @@ import re
 from decimal import Decimal
 from typing import Protocol
 
-from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.models import Verdict
 
 _LOG = logging.getLogger("hadavin_sdk.guard")
@@ -87,13 +86,14 @@ def injection_check(detector: Detector, text: str, source: str) -> Verdict:
     try:
         return detector.check(text, source)
     except Exception as exc:  # noqa: BLE001 - fail closed on anything
-        # The cause is logged (class and message, never the text checked) so a broken detector is
-        # diagnosable, e.g. a custom detector returning a score outside 0..1.
+        # Only the CLASS of the detector and of the error is logged (round 14, Issue 1): the error text of a cloud
+        # detector holds a guardrail id, a role or an account, and a custom detector's text is the operator's own
+        # code writing whatever it likes. The class is enough to find a broken detector (a score outside 0..1 is a
+        # `ValidationError`).
         _LOG.warning(
-            "detector %s failed, run flagged: %s: %s",
+            "detector %s failed, run flagged: %s",
             type(detector).__name__,
             type(exc).__name__,
-            safe_head(str(exc), 300),
         )
         # Named after the detector that failed, so a list's verdict says which one.
         name = getattr(detector, "backend", None)

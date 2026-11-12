@@ -24,9 +24,11 @@ from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted
 BASE_DELAY_S = 0.5
 MAX_DELAY_S = 8.0
 
-# What `describe` keeps of a kind's `detail`: a short code (letters, digits, dot, dash, underscore, space). A kind's
-# error code can come from the provider's own answer, so anything longer or with other characters is dropped.
-_DETAIL = re.compile(r"[A-Za-z0-9._ -]{0,80}")
+# What `describe` keeps of a kind's `detail`: ONE short code (letters, digits, dot, dash, underscore, at most 48),
+# optionally after a three-digit status and one space (`403 AccessDeniedException`, the form Bedrock gives). A kind's
+# error code can come from the provider's own answer, so anything longer or with other characters (a space inside the
+# code, which makes a sentence) is dropped. Round 14: the old pattern let a sentence of 80 characters through.
+_DETAIL = re.compile(r"(?:[0-9]{3} )?[A-Za-z0-9._-]{1,48}")
 
 Retryable = Callable[[BaseException], "bool | None"]
 

@@ -117,5 +117,5 @@ def test_a_tick_error_message_is_redacted_then_cut_and_the_work_is_bounded(monke
         "redact_text",
         lambda text, m, *a, **k: seen.append(len(text)) or real(text, m, *a, **k),
     )
-    assert len(tick_mod._message(ValueError("e" * 1_000_000))) <= 500
+    assert len(tick_mod._message(tick_mod.ConfigError("e" * 1_000_000))) <= 500
     assert seen and max(seen) <= defaults.MAX_REDACT_CHARS

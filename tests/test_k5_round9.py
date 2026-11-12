@@ -13,7 +13,6 @@ from hadavin_sdk import tools as tools_mod
 from hadavin_sdk.approvals import channel as channel_mod
 from hadavin_sdk.approvals.requests import summary
 from hadavin_sdk.guard import runmap
-from hadavin_sdk.guard.injection import injection_check
 from hadavin_sdk.guard.judge import JudgeDetector
 from hadavin_sdk.guard.producers import PRODUCERS
 from hadavin_sdk.models import Plan, Reply, Target, ToolCall
@@ -73,19 +72,6 @@ def _guardrail(s, rq):
 
     GuardrailDetector(Client(), "g", "1", 0.5).check(f"a {s} b", "t")
     return seen["text"]
-
-
-def _log_line(s, rq):
-    import logging
-
-    class Boom:
-        def check(self, t, src):
-            raise ValueError(f"a {s} b")
-
-    cap = rq.getfixturevalue("caplog")
-    with cap.at_level(logging.WARNING):
-        injection_check(Boom(), "x", "t")
-    return cap.text
 
 
 def _extract(s, rq):
@@ -191,9 +177,8 @@ DRIVERS = {
     ),
     "judge input": _judge,
     "vendor guardrail input": _guardrail,
-    "injection screen log line": _log_line,
     "extract validation errors": _extract,
-    "tick error message": lambda s, rq: tick_mod._message(ValueError(f"a {s} b")),
+    "tick error message": lambda s, rq: tick_mod._message(tick_mod.ConfigError(f"a {s} b")),
     "approval card text": lambda s, rq: channel_mod.clean(f"a {s} b"),
     "approval summary": lambda s, rq: summary(_plan({"note": f"a {s} b"})),
     "eval case document": _gate,

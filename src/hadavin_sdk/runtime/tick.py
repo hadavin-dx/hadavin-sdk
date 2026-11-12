@@ -128,12 +128,14 @@ def _each(items: list[Any], fn: Callable[[Any], None], what: str) -> None:
     end, after every item had its turn (one bad row never blocks the rest)."""
     first: Exception | None = None
     for item in items:
-        # a CAS loser passes `Failed` and is dropped by `suppress`; any other error is kept in `caught.error`
-        with (
-            suppress(StaleState, IllegalTransition),
-            Failed((StaleState, IllegalTransition)) as caught,
-        ):
-            fn(item)
+        try:
+            # why: any error but a lost race is kept (class only) and raised after every item had its turn
+            with Failed((StaleState, IllegalTransition)) as caught:
+                fn(item)
+        except (StaleState, IllegalTransition) as lost:
+            # a lost race (another worker moved the row first) is expected, not an error: one debug line, no more
+            _LOG.debug("%s: skipped, moved by another worker (%s)", what, type(lost).__name__)
+            continue
         if (exc := caught.error) is not None:
             _LOG.warning("%s: %s", what, type(exc).__name__)
             first = first or exc
@@ -269,6 +271,7 @@ def purge_evidence(ctx: TickContext) -> None:
     )
     hook = app.runtime.hooks.hold_run_ids
     held: frozenset[str] = frozenset()
+    # why: the hook is the operator's code; any error is turned into a logged class and a failed step, below
     with Failed() as hook_failed:
         held = frozenset(hook() or ()) if keep.hold_labelled and hook is not None else frozenset()
     if hook_failed.error is not None:
@@ -365,7 +368,7 @@ STORE_NOT_READY = (
 
 def _safe_log(msg: str, *args: object) -> None:
     """Log an error line; a failing log handler must never change the exit code."""
-    # safe to swallow: this IS the error report, so there is nowhere left to report to; the caller still returns its exit code
+    # why: this IS the error report, so there is nowhere left to report to; the caller still returns its exit code
     with suppress(Exception):
         _LOG.error(msg, *args)
 
@@ -373,13 +376,29 @@ def _safe_log(msg: str, *args: object) -> None:
 _PROBE = "heartbeat"  # the tick_state key read once, to find out whether the store answers
 
 
-_DRIVERS = ("psycopg", "urllib", "http", "botocore", "boto3", "socket", "ssl")
+def _own_error(exc: BaseException) -> bool:
+    """Is this an error that THIS package defines and raises with a sentence it wrote itself? True only when the class
+    is defined under `hadavin_sdk` and every class it inherits from is a built-in or also defined here. (Round 14,
+    Issue 2: the earlier test listed seven libraries whose text was withheld, so the text of any other library error,
+    such as azure, google, hvac, kubernetes, httpx, requests or anthropic, was stored and logged. The rule is turned
+    round: text is shown for the package's own classes, and the class name alone for everything else.)"""
+    return (
+        type(exc).__module__.split(".")[0] == "hadavin_sdk"
+        and not isinstance(exc, OSError)
+        and all(
+            cls.__module__ == "builtins" or cls.__module__.split(".")[0] == "hadavin_sdk"
+            for cls in type(exc).__mro__
+        )
+    )
 
 
 def _message(exc: Exception) -> str:
-    """Redacted and one line. Driver and network errors carry hosts and users: their type says enough."""
-    if type(exc).__module__.split(".")[0] in _DRIVERS or isinstance(exc, OSError):
-        return "(driver error; details withheld)"
+    """One line for `tick_state.last_error` and the log. The text of an error is shown only for this package's own
+    errors (`_own_error`); anything else (a driver, a network library, a cloud library, a tool, any other code)
+    can quote a host, a user, a namespace or a resource name that the configuration holds, so its class name
+    (which the caller prints before this text) is all that is kept."""
+    if not _own_error(exc):
+        return "(details withheld)"
     # redact first, then keep the first 500 characters (a cut first splits a secret); `safe_head` bounds the work
     return safe_head(str(exc), 500).replace("\n", " ")
 
@@ -387,6 +406,7 @@ def _message(exc: Exception) -> str:
 def _run_step(ctx: TickContext, step: TickStep) -> str:
     store = ctx.app.store
     prev, error = None, None
+    # why: a step is any function; its error is kept (class, and the text only of this package's own errors) in the row
     with Failed() as caught:
         prev = store.get_tick_state(step.name)
         every = step.interval(ctx) if step.interval else step.every_s
@@ -408,6 +428,7 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
         exc = caught.error
         error = f"{type(exc).__name__}: {_message(exc)}"
         _LOG.error("step=%s error_kind=%s message=%s", step.name, type(exc).__name__, _message(exc))
+    # why: a store that cannot save the row is reported by class and the step counts as failed; it never raises here
     with Failed() as saved:
         store.save_tick_state(
             TickState(
@@ -471,6 +492,7 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
     if live and (repeated := _repeated_step_names(own_steps)):
         raise ConfigError(f"a tick step name is used twice: {', '.join(repeated)}")
     ctx = TickContext(app, now)
+    # why: the probe of the store; any failure is classified (unreachable or not ready) and decides the exit code
     with Failed() as store_answer:
         app.store.get_tick_state(_PROBE)  # the store answers, or nothing runs
     if (exc := store_answer.error) is not None:  # any store failure: change nothing
@@ -485,7 +507,8 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
         return STORE_NOT_READY
     for step in own_steps if steps is None else steps:
         ctx.results[step.name] = _run_step(ctx, step)
-    with Failed() as beat:  # a log line never changes the exit code
+    # why: a heartbeat log line never changes the exit code
+    with Failed() as beat:
         heartbeat(ctx)
     if beat.error is not None:
         _safe_log(
@@ -493,6 +516,7 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
         )
     if FAILED in ctx.results.values():
         # A scheduler must tell "the store went away" (4) from "a step failed with the store up" (1).
+        # why: the same probe again, to tell "the store went away" (4) from "a step failed" (1)
         with Failed() as again:
             app.store.get_tick_state(_PROBE)
         # any store failure; one that answers but is not ready lets the step failures stand: exit 1

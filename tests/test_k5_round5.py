@@ -586,7 +586,9 @@ def test_r1_hold_run_ids_is_wired_by_build_and_a_raising_hook_halts_purging(tmp_
     _age(app, other.run_id, 40)
     assert tick_mod.run_tick(app, now=now() + timedelta(days=2)) == 1  # the step failed, loudly
     assert len(app.store.list_tool_calls(other.run_id)) == 1  # and nothing was purged
-    assert "hook down" in app.store.get_tick_state("purge_evidence").last_error
+    # round 14: the text of an error that this package does not define is never stored; the class name is
+    last_error = app.store.get_tick_state("purge_evidence").last_error
+    assert "RuntimeError" in last_error and "hook down" not in last_error
 
 
 def test_r2_inputs_view_is_public_and_restores(tmp_path):

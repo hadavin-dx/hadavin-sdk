@@ -27,7 +27,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel
 
-from hadavin_sdk.errors import ConfigError, read_configured
+from hadavin_sdk.errors import NOT_SHOWN, ConfigError, read_configured
 from hadavin_sdk.models import (
     OPEN_STATES,
     ApprovalDecision,
@@ -67,6 +67,16 @@ def _is_local(parts: dict) -> bool:
     return True
 
 
+_LIBPQ_SSLMODES = ("disable", "allow", "prefer", "require", "verify-ca", "verify-full")
+
+
+def _shown_mode(mode: str) -> str:
+    """The sslmode for a message: one of the six words libpq knows, else `<not shown>`. The setting `sslmode` is a
+    `Literal`, but the fallback `sslmode=` inside the DSN (a platform secret, the most sensitive text of the store) is
+    not checked by the settings model, so an odd value there must not reach a refusal that the command line shows."""
+    return mode if mode in _LIBPQ_SSLMODES else NOT_SHOWN
+
+
 def tls_mode(
     dsn: str, *, iam_auth: bool = False, sslmode: str | None = None, sslrootcert: str | None = None
 ) -> str | None:
@@ -82,11 +92,11 @@ def tls_mode(
     if iam_auth and mode not in _VERIFIED_TLS:
         raise ConfigError(
             "store postgres: iam_auth needs a verified server "
-            f"(sslmode verify-full or verify-ca), not {mode}"
+            f"(sslmode verify-full or verify-ca), not {_shown_mode(mode)}"
         )
     if mode in _VERIFIED_TLS and not (sslrootcert or parts.get("sslrootcert")):
         raise ConfigError(
-            f"store postgres: sslmode {mode} needs the server's CA bundle: set sslrootcert (a file) or "
+            f"store postgres: sslmode {_shown_mode(mode)} needs the server's CA bundle: set sslrootcert (a file) or "
             "sslrootcert_secret_name (a PEM in the secrets backend), or opt down with sslmode for demo"
         )
     return mode

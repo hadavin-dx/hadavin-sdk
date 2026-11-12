@@ -3647,6 +3647,26 @@ _PLANTED_FAULTS = {
         1,
     ),
     "R14 an empty-separator join": ("def f(self, chars):\n    raise A(''.join(chars))", 1),
+    "R14b round 14: a collecting call on a receiver named out": (
+        "def f(self, name):\n    out = []\n    out.append(name)\n    return out",
+        1,
+    ),
+    "R14c round 14: a collecting call on a receiver named line, then joined": (
+        "def f(self, name):\n    line = []\n    line.append(name)\n    raise A(', '.join(line))",
+        2,
+    ),
+    "R14d round 14: zip passes an unproven value on": (
+        "def f(self, name):\n    for a, b in zip(name, name):\n        raise A(a)",
+        1,
+    ),
+    "R14e round 14: enumerate passes an unproven value on": (
+        "def f(self, name):\n    for i, a in enumerate(name):\n        raise A(a)",
+        1,
+    ),
+    "R14f round 14: an unproven value appended makes the list unproven": (
+        "def f(self, name):\n    alts = []\n    alts.append(name)\n    raise A(alts[0])",
+        2,
+    ),
     "R15 attribute names _settings and _cfg": (
         "def f(self):\n    raise A(f'x {self._settings.value} {self._cfg.other}')",
         1,
@@ -3701,6 +3721,12 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
     "text built from an UPPER_CASE constant": 'PREFIX = "x"\ndef f():\n    raise A(PREFIX + ": bad")',
     "a name bound in the outer function to a written word": 'def f():\n    kind = "a"\n    def g():\n        raise A(f"{kind}")\n    return g',
     "a number from len": "def f(names):\n    raise A(f'{len(names)} names')",
+    "round 14: enumerate gives a counter and a code-owned value": (
+        "def f(self, name):\n    for i, a in enumerate('abc'):\n        raise A(f'{i} {a}')"
+    ),
+    "round 14: only code-owned values are appended": (
+        "def f(self):\n    alts = []\n    alts.append('x')\n    raise A(alts[0])"
+    ),
 }
 
 
@@ -4136,3 +4162,19 @@ def test_a_function_reference_outside_check_modules_is_refused_without_quoting_i
         executor.resolve(PLAIN + ":run", ["allowed_module"])
     assert PLAIN not in str(err.value), str(err.value)
     assert str(err.value) == "a configured function reference is outside check_modules"
+
+
+def test_a_call_is_resolved_by_its_real_definition_and_not_by_its_name():
+    """Round 14 (Issue 6): a function that the tree defines and returns a fixed sentence does not make a call of an imported
+    library function of the same name proven; a function of another module with the same name does not either; a call that
+    reaches the tree's own definition by an import is judged by that definition."""
+    fixed = "def clean(x):\n    return 'fixed'\n"
+    use = "def f(self, name):\n    raise A(clean(name))\n"
+    outside = {"a.py": fixed, "b.py": "from lib import clean\n" + use}
+    assert len(_guard_violations(outside, allowed={}, exempt={})[0]) == 1
+    inside = {"a.py": fixed, "b.py": "from hadavin_sdk.a import clean\n" + use}
+    assert _guard_violations(inside, allowed={}, exempt={})[0] == []
+    other = {"a.py": "def clean(x):\n    return x\n", "b.py": fixed + use}
+    assert _guard_violations(other, allowed={}, exempt={})[0] == []
+    local = {"a.py": fixed, "b.py": "def f(self, name, clean):\n    raise A(clean(name))\n"}
+    assert len(_guard_violations(local, allowed={}, exempt={})[0]) == 1

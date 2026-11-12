@@ -417,8 +417,12 @@ def _module_pin_problems(config: Config) -> list[str]:
             continue
         try:
             actual = module_sha256(module)  # reads files, imports nothing
-        except ConfigError as exc:
-            out.append(str(exc))
+        except (
+            ConfigError
+        ):  # why: the sentence of the error is not copied; the problem is stated by this line only
+            out.append(
+                f"tool module {shown_name(module)}: its file cannot be found or read, so its pin cannot be checked"
+            )
             continue
         if actual != pin:
             out.append(

@@ -509,7 +509,7 @@ def verify_anchor_bodies(
             problems.append(f"anchor {seq} has an invalid signature")
     if len(labels) > 1:
         problems.append(
-            f"anchors report {len(labels)} different key labels: {sorted(labels)} (a relabelled or rotated key)"
+            f"anchors report {len(labels)} different key labels (a relabelled or rotated key)"
         )
     return problems
 

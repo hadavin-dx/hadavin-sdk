@@ -13,6 +13,7 @@ from typing import Annotated, Any, Literal, get_args
 
 import yaml
 from pydantic import (
+    AfterValidator,
     BaseModel,
     BeforeValidator,
     ConfigDict,
@@ -68,6 +69,14 @@ def _money(v: object) -> object:
 Money = Annotated[Decimal, BeforeValidator(_money)]
 
 
+def _no_key_shaped_run(value: str) -> str:
+    """A run of 32 or more letters and digits is the shape of a pasted key (the regex engine of pydantic has no
+    look-ahead, so this is a validator). The message does not hold the value."""
+    if re.search(r"[A-Za-z0-9]{32}", value):
+        raise ConfigValueError("a model id has no run of 32 or more letters and digits")
+    return value
+
+
 class _Strict(BaseModel):
     # A mistyped key may hold a secret: an error names the field (an unknown key shows as `<unknown key>`), never the
     # value; `config_error_text` is the one place that decides what text of a problem is shown.
@@ -76,8 +85,14 @@ class _Strict(BaseModel):
 
 class Route(_Strict):
     # a model id is a short token (`claude-sonnet-5-5`, `us.anthropic.claude-...-v1:0`, `claude-...@20250514`); it
-    # is written into the replay report, so anything else (a pasted key, a sentence) is refused at load
-    model_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$")
+    # is written into the replay report. Refused at load: a sentence (a space), any other character, more than 128
+    # characters, and a run of 32 or more letters and digits (a pasted key has one; a real id has runs of at most 12).
+    # NOT refused: a key cut into short pieces by `-`, `.` or `_` (every piece under 32 characters).
+    model_id: Annotated[
+        str,
+        Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$"),
+        AfterValidator(_no_key_shaped_run),
+    ]
     input_usd_per_mtok: Money
     output_usd_per_mtok: Money
     max_tokens: int = Field(gt=0)

@@ -124,7 +124,8 @@ def call_class_only[T](
 def status_text(status: object) -> str:
     """An HTTP status for a message: the number if it is an `int`, else `?`. (`int(x)` would raise a `ValueError` that
     quotes a text; a status that a custom provider returns as a text must not reach a message either.)"""
-    return str(status) if isinstance(status, int) and not isinstance(status, bool) else "?"
+    # `int.__repr__`, not `str`: an `int` subclass may define its own `__str__` and print any text
+    return int.__repr__(status) if isinstance(status, int) and not isinstance(status, bool) else "?"
 
 
 def unreadable(what: str, exc: BaseException) -> ConfigError:

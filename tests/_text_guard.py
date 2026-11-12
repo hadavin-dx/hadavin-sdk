@@ -28,14 +28,14 @@ import re
 SAFE_CALLS = frozenset(
     {
         "len", "int", "float", "bool", "round", "abs", "ord", "id", "hash", "isinstance", "any", "all",
-        "callable", "hasattr", "range", "enumerate", "zip", "divmod", "chr", "type", "isfinite",
+        "callable", "hasattr", "range", "divmod", "chr", "type", "isfinite",
         "shown_name", "_named", "shown_names", "digest_prefix", "error_where", "word_like", "is_digest", "status_text",
     }
 )  # fmt: skip
 PASS_CALLS = frozenset(
     {
         "sorted", "list", "tuple", "set", "frozenset", "reversed", "min", "max", "str", "repr", "format",
-        "ascii", "iter", "next", "dict", "sum", "filter", "map",
+        "ascii", "iter", "next", "dict", "sum", "filter", "map", "zip", "enumerate",
     }
 )  # fmt: skip
 # a method of text or of a mapping returns (a part of) its receiver or its arguments, or a number or a truth value
@@ -54,11 +54,13 @@ NUMBER_ANNOTATIONS = frozenset({"int", "float", "bool", "Literal"})
 LOG_METHODS = frozenset(
     {"warning", "info", "error", "debug", "exception", "warn", "critical", "fatal", "log"}
 )
-# the receivers of `.append(...)`, `.extend(...)`, `.add(...)` that collect text for a person
-PROBLEM_LIST = re.compile(
-    r"problem|error|err|issue|message|msg|note|warn|reason|finding|violation|fail|detail|lines|refus",
-    re.IGNORECASE,
-)
+# `.append(...)`, `.extend(...)`, `.add(...)`, `.insert(...)` collect values into a list that may be joined, printed or
+# raised later. Round 14 (Issue 6): the receiver's NAME no longer decides (a list called `out` was not seen). A call is a
+# site when it is given a value that is not proven code-owned and the collection REACHES a message: the same collection
+# (a local name in its function, an attribute anywhere in its module) is read inside a join, a format, an f-string, a
+# `%`, a `+`, a log call, a print, a write to stderr or stdout, or a raise; or it is returned and the value added is text
+# made by `str`, `repr`, an f-string, a format or a sum. A list of data objects that is only returned is not a message.
+COLLECTORS = frozenset({"append", "extend", "add", "insert"})
 UPPER = re.compile(r"^_*[A-Z][A-Z0-9_]*$")
 NUMBER_SPEC = re.compile(r"[0-9.,_<>^+ -]*[dfxXeEgGbo%]")
 FUNCS = (ast.FunctionDef, ast.AsyncFunctionDef)
@@ -101,6 +103,44 @@ def _own(root):
             todo.extend(ast.iter_child_nodes(n))
 
 
+def _root(v):
+    """The collection a receiver stands for: `a[k]`, `a.setdefault(k, [])` and `a.b[k]` are all `a` or `a.b`."""
+    while True:
+        if isinstance(v, ast.Subscript):
+            v = v.value
+        elif isinstance(v, ast.Call) and isinstance(v.func, ast.Attribute):
+            v = v.func.value
+        else:
+            return v
+
+
+NUMBER_CALLS = frozenset(
+    {"len", "int", "float", "bool", "sum", "any", "all", "isinstance", "round", "abs"}
+)
+
+
+def _read_parts(n):
+    """The nodes under `n`, except what is only counted or tested (`len(x)`, `bool(x)`, `x is None`): a collection that
+    is only counted does not put its values into text."""
+    todo = [n]
+    while todo:
+        x = todo.pop()
+        yield x
+        if isinstance(x, ast.Call) and isinstance(x.func, ast.Name) and x.func.id in NUMBER_CALLS:
+            continue
+        if isinstance(x, ast.Compare):
+            continue
+        todo.extend(ast.iter_child_nodes(x))
+
+
+def _adds_to(call) -> bool:
+    """`x.append(v)`, `x.extend(v)`, `x.add(v)`, `x.insert(i, v)`, `x.update(v)`, `x.setdefault(k, v)`: values go into x."""
+    return isinstance(call.func, ast.Attribute) and call.func.attr in COLLECTORS | {
+        "update",
+        "setdefault",
+    }
+
+
 def _recv(v) -> str:
     if isinstance(v, ast.Name):
         return v.id
@@ -120,7 +160,12 @@ class Analysis:
         self.calls: list[tuple] = []  # (module, call node, scope)
         self.escaped: set[str] = set()
         self.psafe: set[tuple[int, str]] = set()
-        self.fsafe: set[str] = set()  # function names whose every return is code-owned
+        self.fsafe: set[int] = set()  # indexes of `defs` whose every return is code-owned
+        self.module_of: dict[int, str] = {}
+        self.imports: dict[
+            str, dict[str, set]
+        ] = {}  # module -> local name -> {(module key or None, name)}
+        self._shadow: dict[int, frozenset[str]] = {}
         self.attr_assigns: dict[str, list] = {}  # attribute name -> [(value expr, scope)]
         self.attr_unsafe: set[str] = set()
         self.attr_number: set[str] = set()
@@ -132,7 +177,9 @@ class Analysis:
     # ---- collecting ---------------------------------------------------------------------------------------------
     def _collect(self):
         for module, tree in self.trees.items():
+            self.module_of[id(tree)] = module
             self._walk(module, tree, tree, None)
+            self._read_imports(module, tree)
         names = {d["name"] for d in self.defs}
         classes = {d["cls"] for d in self.defs if d["cls"]}
         for tree in self.trees.values():
@@ -157,6 +204,7 @@ class Analysis:
         for ch in ast.iter_child_nodes(node):
             self.parent[id(ch)] = node
             self.scope_of[id(ch)] = scope
+            self.module_of[id(ch)] = module
             if isinstance(ch, FUNCS):
                 params = [a.arg for a in [*ch.args.posonlyargs, *ch.args.args]]
                 is_method = isinstance(node, ast.ClassDef) and params[:1] in (["self"], ["cls"])
@@ -198,6 +246,11 @@ class Analysis:
                     for t in ch.targets:
                         for nm in _targets(t):
                             self.attr_assigns.setdefault(nm.id, []).append((ch.value, scope))
+                if isinstance(ch, ast.Call) and _adds_to(ch):
+                    root = _root(ch.func.value)
+                    if isinstance(root, ast.Attribute):
+                        for a in [*ch.args, *(k.value for k in ch.keywords)]:
+                            self.attr_assigns.setdefault(root.attr, []).append((a, scope))
                 if (
                     isinstance(ch, ast.Call)
                     and isinstance(ch.func, ast.Attribute)
@@ -219,6 +272,124 @@ class Analysis:
                     else:
                         self.attr_unsafe.add("*")
                 self._walk(module, ch, scope, cls)
+
+    def _module_key(self, dotted: str, level: int, module: str) -> str | None:
+        """The key in `self.trees` of the module that an import names, or None when it is outside the scanned tree."""
+        parts = dotted.split(".") if dotted else []
+        if level:  # a relative import: the folder of the importing module, `level - 1` folders up
+            here = module.split("/")[:-1]
+            here = here[: len(here) - (level - 1)] if level > 1 else here
+            parts = [*here, *parts]
+        elif parts[:1] == ["hadavin_sdk"]:
+            parts = parts[1:]
+        else:
+            return None
+        for cand in ("/".join(parts) + ".py", "/".join([*parts, "__init__.py"])):
+            if cand in self.trees:
+                return cand
+        return None
+
+    def _read_imports(self, module, tree):
+        """Which tree definition a local name stands for. A name imported from outside the scanned tree maps to
+        `(None, name)`: a call of it is not a call of a function of the tree, whatever a tree function is called."""
+        table = self.imports.setdefault(module, {})
+        for n in ast.walk(tree):
+            if isinstance(n, ast.ImportFrom):
+                key = self._module_key(n.module or "", n.level, module)
+                for al in n.names:
+                    local = al.asname or al.name
+                    if key is None:
+                        table.setdefault(local, set()).add((None, al.name))
+                    else:
+                        sub = self._module_key(
+                            f"{n.module or ''}.{al.name}".strip("."), n.level, module
+                        )
+                        table.setdefault(local, set()).add((sub or key, None if sub else al.name))
+            elif isinstance(n, ast.Import):
+                for al in n.names:
+                    local = (al.asname or al.name).split(".")[0]
+                    table.setdefault(local, set()).add((None, al.name))
+
+    def _shadowed(self, node, name) -> bool:
+        """Is `name` bound by a parameter, an assignment, a loop, a `with`, an `except` or a local import in a function
+        around `node`? Then a call of it is not a call of the function of that name."""
+        scope = self.scope_of.get(id(node))
+        while scope is not None and not isinstance(scope, ast.Module):
+            if isinstance(scope, FUNCS):
+                key = id(scope)
+                if key not in self._shadow:
+                    a = scope.args
+                    names = {x.arg for x in [*a.posonlyargs, *a.args, *a.kwonlyargs] if x}
+                    names |= {x.arg for x in (a.vararg, a.kwarg) if x}
+                    for n in _own(scope):
+                        if isinstance(n, ast.Assign):
+                            names |= {t.id for tt in n.targets for t in _targets(tt)}
+                        elif isinstance(n, (ast.AnnAssign, ast.AugAssign)) and isinstance(
+                            n.target, ast.Name
+                        ):
+                            names.add(n.target.id)
+                        elif isinstance(n, (ast.For, ast.AsyncFor, ast.comprehension)):
+                            names |= {t.id for t in _targets(n.target)}
+                        elif isinstance(n, ast.NamedExpr):
+                            names.add(n.target.id)
+                        elif isinstance(n, ast.ExceptHandler) and n.name:
+                            names.add(n.name)
+                        elif isinstance(n, (ast.With, ast.AsyncWith)):
+                            for it in n.items:
+                                if it.optional_vars is not None:
+                                    names |= {t.id for t in _targets(it.optional_vars)}
+                    self._shadow[key] = frozenset(names)
+                if name in self._shadow[key]:
+                    return True
+            scope = self.scope_of.get(id(scope))
+        return False
+
+    def resolve(self, call) -> list[int] | None:
+        """The indexes of the definitions that this call can reach, found by the REAL definition (the module that
+        defines it, or the module it is imported from) and not by the bare name; None when the call may reach code
+        outside the scanned tree (an imported library function that has the same name as a function of the tree is
+        not that function)."""
+        module = self.module_of.get(id(call))
+        f = call.func
+        if module is None:
+            return None
+        if isinstance(f, ast.Name):
+            if self._shadowed(call, f.id):
+                return None
+            found: list[int] = []
+            for i, d in enumerate(self.defs):
+                if d["name"] == f.id and d["cls"] is None and d["module"] == module:
+                    found.append(i)
+            for key, orig in self.imports.get(module, {}).get(f.id, ()):
+                if key is None or orig is None:
+                    return None
+                found += [
+                    i
+                    for i, d in enumerate(self.defs)
+                    if d["name"] == orig and d["cls"] is None and d["module"] == key
+                ]
+            return found or None
+        if (
+            isinstance(f, ast.Attribute)
+            and isinstance(f.value, ast.Name)
+            and f.value.id in {"self", "cls"}
+        ):
+            scope, klass = self.scope_of.get(id(call)), None
+            while scope is not None and not isinstance(scope, ast.Module):
+                if isinstance(scope, ast.ClassDef):
+                    klass = scope.name
+                    break
+                scope = self.scope_of.get(id(scope))
+            mine = [
+                i
+                for i, d in enumerate(self.defs)
+                if d["name"] == f.attr and d["cls"] == klass and d["module"] == module
+            ]
+            if mine:
+                return mine
+            # inherited or mixed in: every method of that name in the tree must be proven
+            return [i for i, d in enumerate(self.defs) if d["name"] == f.attr and d["cls"]] or None
+        return None
 
     @staticmethod
     def _attr_targets(t):
@@ -273,7 +444,7 @@ class Analysis:
             for p in d["params"]:
                 cand.add((i, p))
         self.psafe = cand
-        self.fsafe = {d["name"] for d in self.defs}
+        self.fsafe = set(range(len(self.defs)))
         self.attr_safe = set(self.attr_assigns) - self.attr_unsafe
         if "*" in self.attr_unsafe:
             self.attr_safe = set()
@@ -285,9 +456,9 @@ class Analysis:
                 if not self._param_ok(i, p):
                     self.psafe.discard((i, p))
                     changed = True
-            for name in sorted(self.fsafe):
-                if not self._func_ok(name):
-                    self.fsafe.discard(name)
+            for i in sorted(self.fsafe):
+                if not self._func_ok(i):
+                    self.fsafe.discard(i)
                     changed = True
             for a in sorted(self.attr_safe):
                 if not all(
@@ -340,16 +511,11 @@ class Analysis:
                 return dv
         return None
 
-    def _func_ok(self, name) -> bool:
-        for d in self.defs:
-            if d["name"] != name:
-                continue
-            fn = d["node"]
-            env = self.env_of(fn)
-            rets = [r.value for r in _own(fn) if isinstance(r, ast.Return)]
-            if not rets or any(v is None or not self.safe(v, env) for v in rets):
-                return False
-        return True
+    def _func_ok(self, i) -> bool:
+        fn = self.defs[i]["node"]
+        env = self.env_of(fn)
+        rets = [r.value for r in _own(fn) if isinstance(r, ast.Return)]
+        return bool(rets) and all(v is not None and self.safe(v, env) for v in rets)
 
     def env_of(self, scope) -> frozenset[str]:
         key = id(scope)
@@ -390,10 +556,18 @@ class Analysis:
             ):
                 for arg in n.args[1].args.args:
                     bindings.setdefault(arg.arg, [])
+            if isinstance(n, ast.Call) and _adds_to(n):
+                # `x.append(v)`, `x[k].extend(v)`, `x.add(v)`: the list is as safe as what is added to it (round 14)
+                root = _root(n.func.value)
+                if isinstance(root, ast.Name):
+                    for a in [*n.args, *(k.value for k in n.keywords)]:
+                        bindings.setdefault(root.id, []).append(("assign", a))
             if isinstance(n, ast.Assign):
                 for t in n.targets:
                     for nm in _targets(t):
                         bindings.setdefault(nm.id, []).append(("assign", n.value))
+                    if isinstance(t, ast.Subscript) and isinstance(_root(t), ast.Name):
+                        bindings.setdefault(_root(t).id, []).append(("assign", n.value))
             elif isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name):
                 if _is_number_annotation(n.annotation):
                     bindings.setdefault(n.target.id, [])
@@ -403,6 +577,8 @@ class Analysis:
                     unsafe.add(n.target.id)
             elif isinstance(n, ast.AugAssign) and isinstance(n.target, ast.Name):
                 bindings.setdefault(n.target.id, []).append(("aug", n.value))
+            elif isinstance(n, ast.AugAssign) and isinstance(_root(n.target), ast.Name):
+                bindings.setdefault(_root(n.target).id, []).append(("aug", n.value))
             elif isinstance(n, (ast.For, ast.AsyncFor, ast.comprehension)):
                 # a comprehension's `for` binds like a loop's (`for i, op in enumerate(x, start=1)`)
                 for nm in _targets(n.target):
@@ -551,16 +727,21 @@ class Analysis:
                 return True
             if f.id in PASS_CALLS:
                 return all(self.safe(a, env) for a in args)
-            return f.id in self.fsafe and f.id not in self.escaped
+            return self._resolved_safe(e)
         if isinstance(f, ast.Attribute):
             if f.attr in TEXT_METHODS:
                 return self.safe(f.value, env) and all(self.safe(a, env) for a in args)
-            return (
-                f.attr in self.fsafe
-                and isinstance(f.value, ast.Name)
-                and f.value.id in {"self", "cls"}
-            )
+            return self._resolved_safe(e)
         return False
+
+    def _resolved_safe(self, call) -> bool:
+        """Every definition the call can reach (by module and class, see `resolve`) returns code-owned text."""
+        f = call.func
+        name = f.id if isinstance(f, ast.Name) else f.attr
+        if name in self.escaped:
+            return False
+        found = self.resolve(call)
+        return bool(found) and all(i in self.fsafe for i in found)
 
     # ---- the sites ----------------------------------------------------------------------------------------------
     def sites(self, module):
@@ -598,7 +779,8 @@ class Analysis:
                 f = node.func
                 args = [*node.args, *(k.value for k in node.keywords)]
                 if isinstance(f, ast.Name) and f.id == "print":
-                    # `file=`, `sep=`, `end=` and `flush=` of print say where and how, never what: not text
+                    # `file=` and `flush=` of print say where and how, never what: not text. `sep=` and `end=` are put between and after
+                    # the text, so they ARE scanned (a name as the separator is a site; pinned by mutant Z34)
                     args = [
                         *node.args,
                         *(k.value for k in node.keywords if k.arg not in _PRINT_HOW),
@@ -609,14 +791,32 @@ class Analysis:
                     hit = not safe(f.value, env) or any(not safe(a, env) for a in args)
                 elif fn == "Template" or fa in {"substitute", "safe_substitute"}:
                     hit = any(not safe(a, env) for a in args)
+                elif fa in COLLECTORS:
+                    # an f-string, a sum, a `%`, a format or a join that is not proven is a site of its own (read there)
+                    unsafe = [
+                        a
+                        for a in args
+                        if not safe(a, env)
+                        and not isinstance(a, (ast.JoinedStr, ast.BinOp))
+                        and not self._is_text_call(a)
+                    ]
+                    hit = bool(unsafe) and (
+                        self._reaches_message(node, tree)
+                        or (
+                            self._returned(node, tree)
+                            and any(
+                                self._is_texty(a)
+                                or isinstance(a, (ast.Name, ast.Attribute, ast.Subscript))
+                                for a in unsafe
+                            )
+                        )
+                    )
                 elif (
                     fa in LOG_METHODS
                     or fa == "add_note"
                     or fn == "print"
                     or fa == "write"
                     and _recv(f.value) in {"stderr", "stdout"}
-                    or fa in {"append", "extend", "add", "insert"}
-                    and PROBLEM_LIST.search(_recv(f.value))
                 ):
                     hit = bare_unsafe(args, env)
                 elif fa in {"dumps", "dump"} and _recv(f.value) == "json":
@@ -635,6 +835,78 @@ class Analysis:
             ):
                 out.append((node, "cause"))
         return out
+
+    def _reaches_message(self, call, tree) -> bool:
+        """Is the collection that `call` adds to read, in the same scope, by something that makes or shows text."""
+        recv = _root(call.func.value)
+        if isinstance(recv, ast.Name):
+            nodes = _own(self.scope_of.get(id(call), tree))
+
+            def mentioned(n):
+                return any(isinstance(x, ast.Name) and x.id == recv.id for x in _read_parts(n))
+        elif isinstance(recv, ast.Attribute):
+            nodes = ast.walk(tree)
+
+            def mentioned(n):
+                return any(
+                    isinstance(x, ast.Attribute) and x.attr == recv.attr for x in _read_parts(n)
+                )
+        else:
+            return True  # a collection we cannot name: assume it reaches a message
+        for n in nodes:
+            if n is call:
+                continue
+            if isinstance(n, ast.Raise) and n.exc is not None and mentioned(n.exc):
+                return True
+            if isinstance(n, ast.JoinedStr) and mentioned(n):
+                return True
+            if (
+                isinstance(n, ast.BinOp)
+                and isinstance(n.op, (ast.Mod, ast.Add))
+                and mentioned(n)
+                and not _is_number(n.left)
+                and not _is_number(n.right)
+            ):
+                return True
+            if isinstance(n, ast.Call):
+                f = n.func
+                fa = f.attr if isinstance(f, ast.Attribute) else None
+                fn = f.id if isinstance(f, ast.Name) else None
+                sink = (
+                    fa in {"format", "format_map", "join", "add_note"}
+                    or fa in LOG_METHODS
+                    or fn == "print"
+                    or (fa == "write" and _recv(f.value) in {"stderr", "stdout"})
+                )
+                if sink and mentioned(n):
+                    return True
+        return False
+
+    def _returned(self, call, tree) -> bool:
+        recv = _root(call.func.value)
+        if not isinstance(recv, ast.Name):
+            return False
+        for n in _own(self.scope_of.get(id(call), tree)):
+            if (
+                isinstance(n, (ast.Return, ast.Yield))
+                and n.value is not None
+                and any(isinstance(x, ast.Name) and x.id == recv.id for x in ast.walk(n.value))
+            ):
+                return True
+        return False
+
+    @staticmethod
+    def _is_texty(a) -> bool:
+        """A value that is text made on the spot: `str(x)`, `repr(x)`, an f-string, a format, a join, a sum, a `%`."""
+        if isinstance(a, (ast.JoinedStr, ast.BinOp)):
+            return True
+        return isinstance(a, ast.Call) and (
+            (isinstance(a.func, ast.Name) and a.func.id in {"str", "repr", "format", "ascii"})
+            or (
+                isinstance(a.func, ast.Attribute)
+                and a.func.attr in {"format", "format_map", "join"}
+            )
+        )
 
     @staticmethod
     def _is_text_call(a) -> bool:
