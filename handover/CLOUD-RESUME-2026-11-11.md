@@ -302,3 +302,11 @@ State: Q8a-1 r11 resolved (1 Major + 9 accepted, Issue 12 owner question); Q8b b
 Next: collect builders, independent evidence per head, two egm:* reviewers each, egm-resolve; PR89 READY (wip/cloud-PR89-r27 ea29121e) waits for CI and the lead.
 Open owner items: q-q8a1-hide-ids, q-prh-spaced-secrets, q-p3a2-e1-extension-lockout, q-p3a2-o8-schema-owner, q-pr89-mypy-in-lock, q-p3a2-3b-decisions, 40003 ticket edit, Vault engine CI run before 2026-12-11, stray branch core/prh-b3-local.
 Resume rule: read PULSE.md newest lines, ledger.md tail, reviews/<pkg> newest files; gitleaks before every push; no merge, no main, no spend; worktrees in /home/user/build/B-*; briefs in /home/user/build/B-*-brief.md.
+
+## Update 05:31Z (2026-11-12)
+Orders: 247 (GO, core lane) newest, no STOP; last pulled 05:14Z, next by 05:44Z.
+Running (5): Q8a-1 b12 ab5ee086 (core/q8a1-b12 -> wip/cloud-q8a1-b12, ends ~06:10Z); P3a-2 3e ac1f1227 (core/p3a2-3e, ends ~06:00Z); Q8b b8 a0d5ea4d (core/q8b-b8 -> wip/cloud-q8b-b8, started 04:57Z, ends ~06:25Z); PR H b7 RESUME a6601de0 (same worktree /home/user/build/B-PRH-b7, first builder ended unfinished, nothing committed; started 04:58Z); Q8c-1 b10 adc01cd2 (core/q8c1-b10 -> wip/cloud-q8c1-b10, interim, ends ~06:15Z).
+State: Q8b r8 resolved (reviews/Q8b/goldfish_review_report-r8.md, 12 accepted, 1 contested = generic second word). Q8c-1 b9 independent evidence 0 failed; r9 resolved (2 Major: fixed-day proof does not reach real-clock tests, review_date() crashes on empty lists; 7 Minor/Nit). Load 4.6 at 05:30Z: do not launch more until it is at or below 4.
+Next: collect builders, independent evidence per head, two egm:* reviewers each, egm-resolve; PR89 READY (wip/cloud-PR89-r27 ea29121e) waits for CI and the lead. Not started: Q8c PR 2 (needs ticket), PR85 variant, Q8a-2 nits, PR77, PR74.
+Open owner items: q-q8a1-hide-ids, q-prh-spaced-secrets, q-p3a2-e1-extension-lockout, q-p3a2-o8-schema-owner, q-pr89-mypy-in-lock, q-p3a2-3b-decisions, 40003 ticket edit, Vault engine CI run before 2026-12-11, stray branch core/prh-b3-local.
+Resume rule: read PULSE.md newest lines, ledger.md tail, reviews/<pkg> newest files; gitleaks before every push; no merge, no main, no spend.
