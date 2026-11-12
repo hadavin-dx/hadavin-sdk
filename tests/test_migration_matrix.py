@@ -693,7 +693,46 @@ O_EFFECTS = [
     ),
     ("O06-delete-runtime", "GRANT DELETE ON audit_entries TO {rt}", True),
 ]
-O_CARRIERS = ["C1-plain-file", "C2-dynamic-sql", "C12-by-hand-then-migrate"]
+O_EFFECTS += [
+    ("O07-everyone-delete-runs", "GRANT DELETE ON runs TO PUBLIC", False),  # E02, everyone
+    ("O08-everyone-truncate-runs", "GRANT TRUNCATE ON runs TO PUBLIC", False),  # E03
+    ("O09-everyone-column-select", "GRANT SELECT (seq) ON audit_entries TO PUBLIC", False),  # E04
+    ("O10-third-column-update", "GRANT UPDATE (state) ON runs TO {other}", False),  # E05
+    (
+        "O11-everyone-setval",
+        "GRANT UPDATE ON SEQUENCE dead_letters_seq_seq TO PUBLIC",
+        False,
+    ),  # E07
+    ("O12-grant-option", "GRANT SELECT ON runs TO {other} WITH GRANT OPTION", False),  # E26
+    ("O13-create-on-schema-other", "GRANT CREATE ON SCHEMA {schema} TO {other}", False),  # E15
+    (
+        "O14-usage-with-grant-option",
+        "GRANT USAGE ON SCHEMA {schema} TO {other} WITH GRANT OPTION",
+        False,
+    ),  # E16
+    ("O15-create-on-schema-everyone", "GRANT CREATE ON SCHEMA {schema} TO PUBLIC", False),  # E15
+    (
+        "O16-default-right-named",
+        "ALTER DEFAULT PRIVILEGES IN SCHEMA {schema} GRANT SELECT ON TABLES TO {other}",
+        False,
+    ),  # E34
+    (
+        "O17-default-right-everyone",
+        "ALTER DEFAULT PRIVILEGES GRANT USAGE ON SEQUENCES TO PUBLIC",
+        False,
+    ),  # E35
+    ("O18-select-third-tool-calls", "GRANT SELECT ON tool_calls TO {other}", False),  # E37
+]
+# Carriers whose file text is built from the effect (C1, C2) or whose effect runs inside the run as a trigger, a deferred
+# trigger or a rule on the ledger (C4, C6, C7), or is done by hand before the run (C12).
+O_CARRIERS = [
+    "C1-plain-file",
+    "C2-dynamic-sql",
+    "C4-ledger-trigger",
+    "C6-deferred-ledger-trigger",
+    "C7-ledger-rule",
+    "C12-by-hand-then-migrate",
+]
 O_VARIANTS = ["no-roles", "with-roles"]
 O_CONTROLS = ["K-clean-no-roles", "K-clean-with-roles"]
 
@@ -702,24 +741,59 @@ def _cells() -> list[tuple[str, str, str]]:
     return [(e[0], c, v) for e in O_EFFECTS for c in O_CARRIERS for v in O_VARIANTS]
 
 
+# What the ticket plans (7.3, 7.4) and this matrix does not build yet, written as tables so that the count test prints them
+# and nobody reads the matrix as the full one. Each line says why.
+O_NOT_BUILT_EFFECTS = {
+    "E01 E06 E08 E09 E12 E14": "need a relation, sequence or function outside the map; `check_grants` refuses a file that makes one",
+    "E10 E11 E13 E20 E21": "functions, types and languages outside the map or in another schema (carrier C10 and a family function)",
+    "E17 E18 E19 E28": "need CREATE or TEMPORARY on the database or schema ownership the plain role does not hold (built by the superuser under C12)",
+    "E22 E23 E24 E25": "large objects, foreign servers, tablespaces and parameters: server-wide, built by the superuser under C12",
+    "E27": "a control, not a promise",
+    "E29 E30 E31 E32 E33 E36 E39": "role memberships and flags: the server refuses them to a plain role, so C12 only",
+    "E38": "a right granted by a grant-option holder: C12 only",
+}
+O_NOT_BUILT_CARRIERS = {
+    "C3": "a string-bodied SQL function cannot run a GRANT",
+    "C5 C6b": "a trigger on a grant-map table fired by a later file; a trigger that defers itself again",
+    "C8 C9 C10 C11 C13": "extension member, role switch, another schema, temporary table named like a catalog table, move and recreate",
+}
+O_NOT_BUILT_CONTROLS = "K2 to K12 (public schema, another application's schema, live temporary table, database owned by the migration role, ...)"
+
+
 def test_the_matrix_has_exactly_the_planned_cells():
     cells = _cells()
     total = len(cells) + len(O_CONTROLS)
     print(
         f"matrix cells: {len(O_EFFECTS)} effects x {len(O_CARRIERS)} carriers x {len(O_VARIANTS)} variants = "
-        f"{len(cells)}; controls {len(O_CONTROLS)}; total {total}"
+        f"{len(cells)}; controls {len(O_CONTROLS)}; total {total}; compositions {COMPOSITION_COUNT} (seed {COMPOSITION_SEED})"
     )
-    assert (len(O_EFFECTS), len(O_CARRIERS), len(O_VARIANTS)) == (6, 3, 2)
-    assert len(cells) == 36 and len(set(cells)) == 36
-    assert len(O_CONTROLS) == 2 and total == 38
+    for ids, why in O_NOT_BUILT_EFFECTS.items():
+        print(f"not built, effects {ids}: {why}")
+    for ids, why in O_NOT_BUILT_CARRIERS.items():
+        print(f"not built, carriers {ids}: {why}")
+    print(f"not built, controls: {O_NOT_BUILT_CONTROLS}")
+    assert (len(O_EFFECTS), len(O_CARRIERS), len(O_VARIANTS)) == (18, 6, 2)
+    assert len(cells) == 216 and len(set(cells)) == 216
+    assert len(O_CONTROLS) == 2 and total == 218
     assert [e[0] for e in O_EFFECTS] == sorted(e[0] for e in O_EFFECTS)
+    # no row of the ticket is left out unlisted: the ids built plus the ids listed as not built cover E01 to E39
+    planned = {f"E{n:02d}" for n in range(1, 40)}
+    listed = {w for key in O_NOT_BUILT_EFFECTS for w in key.split()}
+    built = {"E02", "E03", "E04", "E05", "E07", "E15", "E16", "E26", "E34", "E35", "E37"}
+    assert planned - built - listed == set(), sorted(planned - built - listed)
+    assert built & listed == set()
 
 
 def _kept_nothing(text) -> bool:
     """The refusal says the run kept nothing: at step 2 "Nothing was changed. No file ran.", later "The whole run is
     rolled back"."""
     text = str(text)
-    return "Nothing was changed." in text or "The whole run is rolled back" in text
+    return (
+        "Nothing was changed." in text
+        or "The whole run is rolled back" in text
+        or "migrations are inconsistent"
+        in text  # step 0: refused by the text rules before it connects, no file ran
+    )
 
 
 @pytest.fixture
@@ -748,42 +822,115 @@ def _has(db_role: str, schema: str, table: str, right: str) -> bool:
 
 
 def _no_excess_rights(schema: str, other: str, rt: str | None) -> list[str]:
-    """What is wrong in the schema afterwards, read from the access lists with no help from `verify`: a right for the
-    other role or for everyone on the table, the column or the sequence the effects touch, or a right for the runtime
-    role that the grant map does not give. [] means "applied with excess: 0"."""
+    """What is wrong in the schema afterwards, read from the access lists with no help from `verify`: any right for the
+    other role or for everyone on a table, a column, a sequence, the function or the schema itself (CREATE, or USAGE
+    with the grant option), and, for the runtime role, any right the grant map does not give it. [] means "applied with
+    excess: 0"."""
     found: list[str] = []
+    table_rights = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER")
+    column_rights = ("SELECT", "INSERT", "UPDATE", "REFERENCES")
     with psycopg.connect(DSN, autocommit=True) as db:
+        columns: dict[str, list[str]] = {}
+        for rel, col in db.execute(
+            "SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = %s",
+            (schema,),
+        ).fetchall():
+            columns.setdefault(rel, []).append(col)
         for who in (other, "public"):
-            for table in ("audit_entries",):
-                for right in ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES"):
+            for name, g in GRANTS.items():
+                if g.kind == "sequence":
+                    for right in ("USAGE", "SELECT", "UPDATE"):
+                        if db.execute(
+                            "SELECT has_sequence_privilege(%s, %s, %s)",
+                            (who, f"{schema}.{name}", right),
+                        ).fetchone()[0]:
+                            found.append(f"{who} {right} on {name}")
+                    continue
+                for right in table_rights:
                     if db.execute(
-                        "SELECT has_table_privilege(%s, %s, %s)",
-                        (who, f"{schema}.{table}", right),
+                        "SELECT has_table_privilege(%s, %s, %s)", (who, f"{schema}.{name}", right)
                     ).fetchone()[0]:
-                        found.append(f"{who} {right} on {table}")
-            if db.execute(
-                "SELECT has_column_privilege(%s, %s, 'seq', 'SELECT')",
-                (who, f"{schema}.audit_entries"),
-            ).fetchone()[0]:
-                found.append(f"{who} SELECT (seq) on audit_entries")
-            if db.execute(
-                "SELECT has_sequence_privilege(%s, %s, 'USAGE')",
-                (who, f"{schema}.approval_decisions_seq_seq"),
-            ).fetchone()[0]:
-                found.append(f"{who} USAGE on approval_decisions_seq_seq")
+                        found.append(f"{who} {right} on {name}")
+                for col in columns.get(name, []):
+                    for right in column_rights:
+                        if db.execute(
+                            "SELECT has_column_privilege(%s, %s, %s, %s)",
+                            (who, f"{schema}.{name}", col, right),
+                        ).fetchone()[0]:
+                            found.append(f"{who} {right} ({col}) on {name}")
             if db.execute(
                 "SELECT has_function_privilege(%s, %s, 'EXECUTE')",
                 (who, f"{schema}.hadavin_audit_append_only()"),
             ).fetchone()[0]:
                 found.append(f"{who} EXECUTE on hadavin_audit_append_only")
-        if (
-            rt
-            and db.execute(
-                "SELECT has_table_privilege(%s, %s, 'DELETE')", (rt, f"{schema}.audit_entries")
-            ).fetchone()[0]
-        ):
-            found.append(f"{rt} DELETE on audit_entries")
+            for right in ("CREATE", "USAGE WITH GRANT OPTION"):
+                if db.execute(
+                    "SELECT has_schema_privilege(%s, %s, %s)", (who, schema, right)
+                ).fetchone()[0]:
+                    found.append(f"{who} {right} on the schema")
+        if rt:
+            for name, g in GRANTS.items():
+                if g.kind == "sequence":
+                    continue
+                wanted = {r.strip() for r in g.runtime.split(",") if r.strip()}
+                for right in table_rights:
+                    if (
+                        right not in wanted
+                        and db.execute(
+                            "SELECT has_table_privilege(%s, %s, %s)",
+                            (rt, f"{schema}.{name}", right),
+                        ).fetchone()[0]
+                    ):
+                        found.append(f"{rt} {right} on {name}")
     return found
+
+
+_LEDGER_CARRIERS = ("C4-ledger-trigger", "C6-deferred-ledger-trigger", "C7-ledger-rule")
+
+
+def _split(statement: str) -> str:
+    """The statement as an SQL expression of pieces of three characters joined with `||`, so that no word is whole in the
+    file text and the text rules (which read words) cannot read it; the server joins the pieces when the function runs."""
+    pieces = [statement[i : i + 3] for i in range(0, len(statement), 3)]
+    return " || ".join("'" + piece.replace("'", "''") + "'" for piece in pieces)
+
+
+def _split_function(statement: str) -> str:
+    """C2: a function that runs the effect from two string pieces, and the call."""
+    return (
+        "CREATE OR REPLACE FUNCTION hadavin_test_dyn_runner() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+        f"EXECUTE {_split(statement)}; END $$;\nSELECT hadavin_test_dyn_runner();\n"
+    )
+
+
+def _ledger_file(carrier: str, statement: str, tag: str = "") -> str:
+    """A file whose effect runs when the runner writes its own row in the ledger `schema_migrations`: an AFTER INSERT
+    trigger (C4), a constraint trigger that is deferred to the end (C6), a rule (C7). The function runs the effect as the
+    migration role. The text rules refuse a trigger or a rule written in the open, so the object is made by dynamic SQL
+    (the file's own statements are only the function and the call)."""
+    if carrier == "C7-ledger-rule":
+        make = "CREATE RULE hadavin_test_rule AS ON INSERT TO schema_migrations DO ALSO SELECT hadavin_test_eff()"
+        returns, tail = "int", "RETURN 1;"
+    else:
+        kind = "CONSTRAINT TRIGGER" if carrier.startswith("C6") else "TRIGGER"
+        timing = " DEFERRABLE INITIALLY DEFERRED" if carrier.startswith("C6") else ""
+        make = (
+            f"CREATE {kind} hadavin_test_trg AFTER INSERT ON schema_migrations{timing} FOR EACH ROW "
+            "EXECUTE FUNCTION hadavin_test_eff()"
+        )
+        returns, tail = "trigger", "RETURN NULL;"
+    text = (
+        f"CREATE OR REPLACE FUNCTION hadavin_test_eff() RETURNS {returns} LANGUAGE plpgsql AS $$ BEGIN "
+        f"EXECUTE {_split(statement)}; {tail} END $$;\n"
+        # the word is split so that the text rules cannot read it (ticket 7.4, C2)
+        "CREATE OR REPLACE FUNCTION hadavin_test_mk() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+        f"EXECUTE 'CRE' || 'ATE {make[7:].replace(chr(39), chr(39) * 2)}'; END $$;\nSELECT hadavin_test_mk();\n"
+    )
+    for name in ("hadavin_test_eff", "hadavin_test_rule", "hadavin_test_trg", "hadavin_test_mk"):
+        text = text.replace(
+            name, name + tag
+        )  # the names of one file differ from another's in a composition
+    return text
 
 
 @pytest.mark.parametrize("cell", _cells(), ids=["/".join(c) for c in _cells()])
@@ -812,18 +959,23 @@ def test_every_matrix_cell_ends_in_one_of_the_three_outcomes(cell, ocell, monkey
     rt = "hadavin_test_mxr_" + uuid.uuid4().hex[:8]
     tp._create_roles(other, rt)
     roles = {"runtime_role": rt} if variant == "with-roles" else {}
-    statement = effect[1].format(other=other, rt=rt)
+    statement = effect[1].format(other=other, rt=rt, schema=schema)
     repaired = effect[2] and variant == "with-roles"
     try:
         if carrier == "C1-plain-file":
             tp._with_files(monkeypatch, tmp_path, {"0006_effect.sql": statement + ";\n"})
         elif carrier == "C2-dynamic-sql":
-            tp._with_files(monkeypatch, tmp_path, {"0006_effect.sql": tp._dynamic(statement)})
+            tp._with_files(monkeypatch, tmp_path, {"0006_effect.sql": _split_function(statement)})
+        elif carrier in _LEDGER_CARRIERS:
+            tp._with_files(
+                monkeypatch, tmp_path, {"0006_effect.sql": _ledger_file(carrier, statement)}
+            )
         else:
             assert mig.migrate(dsn, **roles) == tp.REAL  # a clean run first
             with mig.connect(dsn) as db:  # then the effect by hand, as the owner of the tables
                 db.execute(statement)
         outcome = None
+        detail = ""
         try:
             applied = mig.migrate(dsn, **roles)
             outcome = "iii" if not _no_excess_rights(schema, other, rt if roles else None) else "ii"
@@ -832,15 +984,38 @@ def test_every_matrix_cell_ends_in_one_of_the_three_outcomes(cell, ocell, monkey
             outcome = "ii"
         except ConfigError as e:
             outcome = "i"
+            detail = str(e)
             assert _kept_nothing(e), str(e)
+            # Only the plain file may be stopped by the text rules at step 0; every other carrier hides its statement from
+            # them, so its refusal must come from the checks of the data (else the cell proves nothing about them).
+            assert carrier == "C1-plain-file" or "migrations are inconsistent" not in str(e), str(e)
             if carrier.startswith("C12"):
                 assert "No file ran" in str(e), str(e)
-        expected = "iii" if repaired else "i"
-        assert outcome == expected, f"{cell}: outcome {outcome}, expected {expected}"
+        # step 4 repairs only what exists when it runs; a deferred trigger acts after it
+        expected = "iii" if repaired and carrier != "C6-deferred-ledger-trigger" else "i"
+        assert outcome == expected, (
+            f"{cell}: outcome {outcome}, expected {expected}; {detail[:600]}"
+        )
         if outcome == "iii":
             assert _no_excess_rights(schema, other, rt) == [], "applied with excess: not 0"
     finally:
+        _forget_default_rights(dsn)
         tp._drop_roles(other, rt)
+
+
+def _forget_default_rights(dsn: str) -> None:
+    """A default right for everyone on sequences (E35) belongs to no schema, so dropping the schema does not remove it;
+    take it away so that the next cell starts as the first one did."""
+    from hadavin_sdk.store import migrate as mig
+
+    with mig.connect(dsn) as db:
+        me = db.execute("SELECT current_user").fetchone()[0]
+    with psycopg.connect(DSN, autocommit=True) as admin:
+        admin.execute(
+            sql.SQL(
+                "ALTER DEFAULT PRIVILEGES FOR ROLE {} REVOKE USAGE ON SEQUENCES FROM PUBLIC"
+            ).format(sql.Identifier(me))
+        )
 
 
 @needs_pg
@@ -969,3 +1144,91 @@ def test_the_shipped_files_give_each_role_exactly_the_map(case):
         == []
     )
     judge("after the second run")
+
+
+# --- 8. seeded compositions: two or three effects in one run, each brought by its own carrier -------------------------------
+COMPOSITION_SEED = 20261112
+COMPOSITION_COUNT = 200
+_COMPOSITION_CARRIERS = ("C1-plain-file", "C2-dynamic-sql", "C4-ledger-trigger", "C7-ledger-rule")
+
+
+class _Seeded:
+    """A small repeatable number generator (a linear congruential one) for the fixed seed; nothing here is secret."""
+
+    def __init__(self, seed: int) -> None:
+        self.state = seed
+
+    def below(self, n: int) -> int:
+        self.state = (self.state * 6364136223846793005 + 1442695040888963407) % (1 << 64)
+        return (self.state >> 33) % n
+
+    def sample(self, items: tuple[str, ...], k: int) -> list[str]:
+        left = list(items)
+        return [left.pop(self.below(len(left))) for _ in range(k)]
+
+
+def _compositions() -> list[list[tuple[str, str]]]:
+    """200 lists of 2 or 3 (effect id, carrier) pairs with different carriers, from a fixed seed. The repaired effect (O06)
+    is left out: a composition is expected to be refused by the rule, never repaired."""
+    rng = _Seeded(COMPOSITION_SEED)
+    pool = [e[0] for e in O_EFFECTS if not e[2]]
+    out = []
+    for _ in range(COMPOSITION_COUNT):
+        size = 2 + rng.below(2)
+        carriers = rng.sample(_COMPOSITION_CARRIERS, size)
+        out.append([(pool[rng.below(len(pool))], c) for c in carriers])
+    return out
+
+
+def test_the_compositions_are_the_planned_200_with_different_carriers():
+    comps = _compositions()
+    print(f"compositions: {len(comps)} (seed {COMPOSITION_SEED})")
+    assert len(comps) == COMPOSITION_COUNT == 200
+    assert all(2 <= len(c) <= 3 and len({x[1] for x in c}) == len(c) for c in comps)
+    assert len({tuple(c) for c in comps}) > 150, "the seed must give a wide spread"
+
+
+@needs_pg
+@pytest.mark.parametrize("n", range(COMPOSITION_COUNT), ids=lambda n: f"comp{n:03d}")
+def test_every_composition_of_effects_is_refused_and_keeps_nothing(n, ocell, monkeypatch, tmp_path):
+    """Two or three effects, each by its own carrier and in its own file, in one run: the rule says the run is refused and
+    keeps nothing (outcome i), whichever role arguments it has; no composition hides one effect behind another."""
+    import uuid
+
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+
+    ConfigError = errors.ConfigError
+    dsn, schema = ocell
+    other = "hadavin_test_mx_" + uuid.uuid4().hex[:8]
+    rt = "hadavin_test_mxr_" + uuid.uuid4().hex[:8]
+    tp._create_roles(other, rt)
+    roles = {"runtime_role": rt} if n % 2 else {}
+    files = {}
+    try:
+        for i, (eid, carrier) in enumerate(_compositions()[n]):
+            effect = next(e for e in O_EFFECTS if e[0] == eid)
+            statement = effect[1].format(other=other, rt=rt, schema=schema)
+            if carrier == "C1-plain-file":
+                text = statement + ";\n"
+            elif carrier == "C2-dynamic-sql":
+                text = _split_function(statement).replace(
+                    "hadavin_test_dyn_runner", f"hadavin_test_dyn_runner{i}"
+                )
+            else:
+                text = _ledger_file(carrier, statement, tag=str(i))
+            files[f"{6 + i:04d}_effect{i}.sql"] = text
+        tp._with_files(monkeypatch, tmp_path, files)
+        outcome = None
+        try:
+            outcome = "returned"
+            mig.migrate(dsn, **roles)
+        except (ConfigError, errors.AppliedNotVerifiedError) as e:
+            outcome = e
+        assert isinstance(outcome, ConfigError), f"{_compositions()[n]}: {outcome!r}"
+        assert _kept_nothing(outcome), str(outcome)
+        assert "The check after the commit" not in str(outcome)
+    finally:
+        _forget_default_rights(dsn)
+        tp._drop_roles(other, rt)

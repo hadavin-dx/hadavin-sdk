@@ -25,10 +25,14 @@ Why row 3 cannot be better: the file runs as the owner of every table. The real 
 elsewhere: a person reviews every file, each released file's fingerprint is recorded and checked, and a separate
 read-only login that only checks is a later ticket.
 
-Not proven yet: until the full test matrix is built (commit 5 of this package), rows 1 and 2 are backed only by unit tests of
-the rules and a few real-server tests, not by a real-server test of every kind of change, for these kinds: role
-memberships, handing an object to another owner, default rights, large objects, SECURITY DEFINER functions and a few
-rarer cases of the ticket. The package must not be called done without that matrix.
+Not proven yet: rows 1 and 2 are backed by unit tests of the rules, by the real-server test of the five shipped files,
+and by a generated test matrix of 18 kinds of excess (rights on tables, columns, sequences, a function and the schema,
+and default rights) brought in 6 ways (a plain file, dynamic SQL, a trigger on the ledger, a deferred trigger, a rule,
+and the state made by hand before the run), with and without the role arguments, plus 200 seeded compositions of two
+or three of them. The matrix does not yet cover: role memberships, handing an object to another owner, large objects,
+SECURITY DEFINER functions, a role switch, move-and-recreate, an extension member, foreign servers, languages,
+tablespaces, parameters, and clean controls K2 to K12 of the ticket (7.4). The package must not be called done
+without them.
 
 What `migrate` does, in order (step 0 before it connects, then steps 1 to 8; the numbers are the ones of the ticket and of
 the comments in `migrate()`; each refusal before the commit keeps nothing):

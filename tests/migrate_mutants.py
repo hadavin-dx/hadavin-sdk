@@ -3575,6 +3575,25 @@ M: list[Mutant] = [
         "db, schema, purge_role, lambda g: g.purge, None\n",
         k(T_MX, "test_the_shipped_files_give_each_role_exactly_the_map"),
     ),
+    Mutant(
+        "V78",
+        "7.5: the deferred checks and triggers are not run early (a deferred trigger acts after the check)",
+        MIG,
+        '                        db.execute("SET CONSTRAINTS ALL IMMEDIATE")\n',
+        "                        pass\n",
+        k(
+            T_MX,
+            "test_every_matrix_cell_ends_in_one_of_the_three_outcomes[O01-select-other/C6-deferred-ledger-trigger/no-roles]",
+        ),
+    ),
+    Mutant(
+        "V79",
+        "7.5: the check before the commit is removed (a composition of effects is then found only after the commit)",
+        MIG,
+        STEP6_CALL,
+        STEP6_CALL.replace("if problems:", "if False:", 1),
+        k(T_MX, "test_every_composition_of_effects_is_refused_and_keeps_nothing[comp000]"),
+    ),
 ]
 M.extend(STEP_MUTANTS)
 
