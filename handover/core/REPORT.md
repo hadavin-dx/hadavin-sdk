@@ -1,5 +1,45 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 20:04Z UTC / 01:34 IST: status
+- FAILED / PARTIAL first: P3a-2 b9 builder (a785524) ended PARTIAL after ~85 min: groups 1, 2, 3, 8 built, tests pass (95 + fail-before 94 of 108 new ids fail on old code), lint, scan, gitleaks exit 0; NO mutant result (30 mutants), no full pytest, no group 6 / 9 / 5, because its heavy jobs sat at the lowest queue priority (7) behind higher ones for the whole time box. Pushed `wip/cloud-p3a2-b9` 15ef17e6. AK-G2-a b2: pass 3 gave 62 of 69, seven fixed (one real survivor, P11), final mutants + gates + full suite running via its own script (not finished); head 3073bf75 pushed to `wip/cloud-ak-g2-a`.
+- #71 fix: builder pushed `wip/cloud-p0a-fix` 8b982dd3 (hand-back pending; not yet verified by me). ORDER 260 builder a96da480 running (7 min, reading and writing code; no push yet).
+- Not verified: everything above is builder-reported except the pushed shas. Load 9.2 (target 4), 16 heavy waiters.
+
+### (1) Live items (now 20:04Z UTC)
+| id | purpose | started | running | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| a96da4801deea19ad | ORDER 260 builder (path containment) | ~19:56 | ~7 min | ~20:55 | running | pathguard, tests, mutants, PR body, push wip/cloud-sonar-path | none pushed yet |
+| a7e8d078cab3db826 | #71 minors/nits builder | ~19:15 | ~48 min | ~20:05 | hand-back pending | push done (8b982dd3) | pushed 8b982dd3 ~20:00 |
+| acf6ab7497d4b97ab | AK-G2-a batch 2 builder | ~19:06 | ~57 min | late | interim: waits on its own final.sh | final mutants, gates, full pytest, PR body, cleanup | 3073bf75 pushed by me 20:02; final.done not yet |
+| ac7c9ed782e7c9ddf | stack 1 rebaser (money store) | ~19:08 | ~55 min | ~20:15 | waiting on its full pytest (heavy, RB-S1) | wip refs, report | no push seen; at box limit: asked next tick |
+| a2c5746dc5ffca713 | stack 3 rebaser (diagnostics) | ~19:08 | ~55 min | ~20:15 | waiting on full pytest (RB-S3, running 35+ min) | wip refs (P5a/P5b1/P5b2 exist) | no new push |
+| a9b2336922157b089 | stack 2 rebaser (text folding) | ~19:08 | ~55 min | ~20:20 | interim, waiting for a slot | wip refs, report | no push seen |
+| a70bb036d553f1e80 | Q8c-1 b16 builder | ~19:03 | ~60 min | ~20:15 | interim: gates (policy_mutants B8 B9 running) | gates.done, push | head still 44f42c64 (WIP) |
+| aeec42285844139e0 | AK1-a builder | ~19:13 | ~50 min | ~20:15 | interim, priority 5 | hand-back | no push (b95e1853) |
+| a1950c031533c18be | Q8b b14 gate-fix builder | ~19:13 | ~50 min | ~20:15 | running, own PG 56931 | full gate result | no push |
+| aae188b2f3449ccfe | part 3 (standins) batch 2 builder | ~19:19 | ~44 min | ~20:20 | waiting (standin_mutants running 35 min) | pushed batch 2 | no push (9c831f70) |
+| a9d4815dd4835a848 | evidence runner part 2 (bind) | ~19:19 | ~44 min | ~20:15 | running | RESULTS.md e75f9f25 | none committed |
+| aabeb61f9e2ebf14d | evidence runner part 6 (banner) | ~19:34 | ~29 min | ~20:25 | running (full pytest wait) | RESULTS.md dd5c7242 | none committed |
+| aa62f462bca62fc62 | evidence runner Q8a-1 b19 | ~18:50 | ~75 min | ~20:15 | running, full pytest | RESULTS.md a24d98ae | over 60 min (waiting on slot) |
+Totals: agents 13 rows (4 running, 9 interim or pending), watcher shells about 6, Postgres servers 4-5, heavy waiters 16, heavy slots 3 of 3, load 9.2/9.7/8.7. Flags: builders over 60 min (a70bb036, ac7c9ed7, a2c5746d, a9b23369, acf6ab74, aa62f462) are waiting for heavy slots, not stuck; no progress 15 min: stacks 1, 2, 3 (nothing pushed yet), part 3 b2. Action: no new heavy builders; stacks keep their gates; at 20:15 I resume any that handed back without a push.
+
+### (2) Rounds
+| package | round now | findings per round | class | WHY another round | stop rule says | ends the loop |
+|---|---|---|---|---|---|---|
+| P3a-2 (#73) | 9th fix batch (review r19) | I earlier noted r18/r19 as 0B/0M; the b9 batch shows 10 finding groups from a later round (error chaining class: driver words in refusals, retry-vs-refuse for sign-in, DSN). I have NOT re-read those reports to give B/M counts: to verify | new defect class (Python error chaining) | security path (no cap) + builder returned partial | continue (security) | mutants + full suite + one clean round |
+| Q8c-1 | 16 | r13..r15 each 0B and 1-2M | notes-check run-time import names | security path, same class, partial fixes | continue | clean fresh round |
+| Q8a-1 | 20 | r19 1B/3M (design 0B/3M, codebase 1B/3M) | non-dict input bypass | previous fix wrong | continue | clean fresh round |
+| PD-standins (part 3) | 2 | r1 8M | choke point, sibling sets, mutants, docs | fix | one confirming round then READY | clean round |
+| #71 (P0a) | fix push done | r1 2M, r2 0B/0M | normalisation, Windows test | minors only | stop after the push | my check of 8b982dd3 then READY |
+| ORDER 260 | build | design r1 5B/14M | call shape, sinks, grammar, proof, Sonar claim | new design | one confirming round after build | clean round |
+Waste: rounds caused only by a gate that could not run or a builder returning partial: P3a-2 b9 (priority 7 starvation), Q8c-1 b16, AK-G2-a b2, stack 2. Cause: 3 heavy slots, 16 waiters, load 9. I do not start new heavy builders; at 20:15 I check whether I should raise P3a-2's queue priority (lead's order says 7).
+
+### (3) Finished since last block (19:59Z)
+| id | ran | result | row closed |
+|---|---|---|---|
+| a785524079e4ae693 | ~85 min | P3a-2 b9: partial, pushed 15ef17e6; no mutants, no full suite | yes (needs a gate-only run + evidence runner later) |
+| (none else) | | | |
+
 ## 19:59Z UTC / 01:29 IST: status (ORDER 261 tables start here)
 - ORDER 260: builder a96da480 started 3 min ago on `core/sonar-path-traversal` (design v2 resolved; ledger SONARPATH-r1-1..7 OPEN). #72 nits pushed (`wip/cloud-p6a-nits` 7a6eb4e9; 6 of 93 mutants run only). AK-G2-a b2 builder keeps handing back INCOMPLETE (its own mutant pass 3 still runs; nothing new to push; gates not run).
 - Failed or unverified: AK-G2-a b2 has no gate or full-suite result; Q8c-1 b16 and stack 2 hand-backs were interim only; nothing from ORDER 260 is built yet; Sonar result unknown (no local run). Load 10.9 (target 4): no new heavy job beyond the priority-2 builder.
