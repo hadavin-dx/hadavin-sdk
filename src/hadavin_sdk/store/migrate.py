@@ -196,6 +196,10 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
     more than `expected_table(grant)` (and, for columns, `expected_cols(grant)`). A superuser, a role that can
     create roles or databases or bypass row security, a role that owns a relation or can CREATE in the schema is a
     problem too. The grants above are made first and this runs in the same transaction, so a problem rolls them back."""
+    if not _ROLE.fullmatch(
+        role
+    ):  # for every caller: a role name is said only after the plain-name pattern accepted it
+        raise ConfigError("the role is not a plain database role name")
     problems: list[str] = []
     row = db.execute(
         "SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls FROM pg_roles WHERE rolname = %s",
@@ -264,6 +268,10 @@ def effective_problems(db, role: str, expected_table, expected_cols=None) -> lis
 
 def _excess_privileges(db, role: str) -> list[str]:
     """Effective privileges (inherited ones too) the role holds beyond SELECT on the `portal` relations."""
+    if not _ROLE.fullmatch(
+        role
+    ):  # the same check as `effective_problems`: nothing else is ever said about a role name
+        raise ConfigError("the role is not a plain database role name")
     extra = []
     for name, grant in GRANTS.items():
         if grant.kind == "sequence":

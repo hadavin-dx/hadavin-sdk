@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from hadavin_sdk import __version__
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, shown_name
 from hadavin_sdk.guard.injection import Detector
 from hadavin_sdk.hashing import hash_files
 from hadavin_sdk.k1b import loop
@@ -114,7 +114,7 @@ def _replay(
     if not max_usd.is_finite() or max_usd <= 0:
         raise ConfigError("replay --max-usd must be above zero")
     if agent_id not in registry.agents:
-        raise ConfigError(f"unknown agent {agent_id!r}")
+        raise ConfigError(f"unknown agent {shown_name(agent_id, registry.agents)}")
     _refuse_zero_price(registry, agent_id, llm_kind or cfg.backends.llm.kind)
     if not cfg.k1b.redact and not acknowledge_masked:
         raise ConfigError(

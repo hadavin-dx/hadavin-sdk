@@ -100,8 +100,8 @@ def load_answers(path: Path, cause: CauseList) -> tuple[dict[str, Answer], str]:
     try:
         raw = Path(path).read_bytes()  # NOSONAR S8707: the operator's own --answers file
         data = strict_json_loads(raw.decode("utf-8-sig"))
-    except (OSError, ValueError, RecursionError) as exc:
-        raise ConfigError("answers file is missing or not valid JSON") from exc
+    except (OSError, ValueError, RecursionError):
+        raise ConfigError("answers file is missing or not valid JSON") from None
     if not isinstance(data, dict) or not set(data) <= {"sealed", "cases"}:
         raise ConfigError("answers file must be an object with the keys sealed and cases")
     cases = data.get("cases")
@@ -165,8 +165,8 @@ def _recorded_digest(sha_file: Path) -> str | None:
 def _read_json(path: Path, what: str) -> Any:
     try:
         return strict_json_loads(path.read_bytes().decode("utf-8-sig"))
-    except (OSError, ValueError, RecursionError) as exc:
-        raise ConfigError(f"{what} is missing or not valid JSON") from exc
+    except (OSError, ValueError, RecursionError):
+        raise ConfigError(f"{what} is missing or not valid JSON") from None
 
 
 def _record(path: Path, case_id: str, ordinal: int) -> dict[str, Any]:
@@ -349,8 +349,8 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
 def _dec(value: Any) -> Decimal:
     try:
         d = Decimal(str(value))
-    except InvalidOperation as exc:
-        raise ConfigError("a run.json usd value is not a number") from exc
+    except InvalidOperation:
+        raise ConfigError("a run.json usd value is not a number") from None
     if not d.is_finite():
         raise ConfigError("a run.json usd value is not a number")
     return d

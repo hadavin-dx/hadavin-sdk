@@ -248,7 +248,7 @@ def schema_errors(schema: dict[str, Any], value: Any) -> list[str]:
         props = schema.get("properties", {})
         errs += [f"missing {k}" for k in schema.get("required", []) if k not in value]
         if schema.get("additionalProperties") is False:
-            errs += [f"unexpected {k}" for k in value if k not in props]
+            errs += [f"unexpected {shown_name(k)}" for k in value if k not in props]
         for k, sub in props.items():
             if k in value:
                 errs += [f"{k}: {e}" for e in schema_errors(sub, value[k])]

@@ -122,7 +122,7 @@ def password_source(iam_auth: bool, region: str | None) -> PasswordSource | None
             raise
         raise ConfigError(
             "store postgres with iam_auth needs: pip install hadavin-sdk[aws]"
-        ) from exc
+        ) from None
     return auth_aws.rds_iam(region)
 
 

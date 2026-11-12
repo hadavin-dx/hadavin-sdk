@@ -37,14 +37,17 @@ class MountedFileProvider(CachedSecrets):
         # O_NONBLOCK: a FIFO planted in the folder must not hang the open (S_ISREG below then refuses it).
         flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
         flags |= getattr(os, "O_BINARY", 0)
+        failure = None
         try:
             fd = os.open(path, flags)
         except FileNotFoundError:
-            raise ConfigError("the secret was not found in the mounted folder") from None
+            failure = "the secret was not found in the mounted folder"
         except OSError as exc:  # e.g. PermissionError (wrong owner or fsGroup), ELOOP (a link)
-            raise ConfigError(
-                f"a secret: the mounted file cannot be read ({type(exc).__name__})"
-            ) from None
+            failure = f"a secret: the mounted file cannot be read ({type(exc).__name__})"
+        if (
+            failure is not None
+        ):  # raised after the `except` blocks: the OS error (it quotes the path) is no context
+            raise ConfigError(failure)
         # Checked on the open file itself, so nothing can change between the check and the read. The kind is read
         # before `fdopen`: a folder opens with O_RDONLY, and `fdopen` would then raise a bare IsADirectoryError.
         mode = os.fstat(fd).st_mode

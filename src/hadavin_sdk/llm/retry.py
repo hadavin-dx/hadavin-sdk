@@ -90,19 +90,25 @@ def with_retry[T](
     detail: Callable[[BaseException], str] | None = None,
 ) -> T:
     for attempt in range(1, max_attempts + 1):
+        failure: ProviderError | None = None
         try:
             return call()
         except ProviderError:
             raise
-        except Exception as exc:  # every failure is classified below, never swallowed
+        except Exception as exc:  # noqa: BLE001 - every failure is classified below, never swallowed
+            # An SDK error quotes the request (its URL holds the region or resource). The new error is raised after
+            # this block, so it carries neither a cause nor a context; `describe` says the class and status.
             if not transient(exc, retryable):
-                raise ProviderError(f"{label}: {describe(exc, detail)}") from exc
-            if attempt == max_attempts:
-                raise ProviderExhausted(
+                failure = ProviderError(f"{label}: {describe(exc, detail)}")
+            elif attempt == max_attempts:
+                failure = ProviderExhausted(
                     f"{label}: {describe(exc, detail)} after {max_attempts} attempts"
-                ) from exc
-            # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
-            # sooner than the server asked.
-            jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311
-            sleep(max(jitter, retry_after(exc)))
+                )
+            else:
+                # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
+                # sooner than the server asked.
+                jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311
+                sleep(max(jitter, retry_after(exc)))
+        if failure is not None:
+            raise failure
     raise AssertionError("unreachable")  # max_attempts >= 1 (settings)

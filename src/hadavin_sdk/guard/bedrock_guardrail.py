@@ -18,7 +18,7 @@ from typing import Any
 import boto3  # the extra: a missing install fails at start-up with the hint (backends.make)
 from botocore.config import Config
 
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, call_class_only
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import Verdict
 
@@ -42,11 +42,14 @@ def _client(service: str, region: str) -> Any:
 
 def check_filter(control: Any, guardrail_id: str, version: str) -> None:
     """Start-up: the guardrail has a PROMPT_ATTACK input filter that is on, else ConfigError."""
-    label = f"backend detector 'bedrock_guardrail' {guardrail_id}:{version}"
-    try:
-        resp = control.get_guardrail(guardrailIdentifier=guardrail_id, guardrailVersion=version)
-    except Exception as exc:
-        raise ConfigError(f"{label}: cannot read the guardrail ({type(exc).__name__})") from exc
+    # The guardrail id and version come from the configuration, so the label does not say them (round 12: a name
+    # from a file is not put in a message); the kind is enough to find the entry.
+    label = "backend detector 'bedrock_guardrail'"
+    # The cloud error quotes the guardrail id or ARN: only its class is kept, no cause or context.
+    resp = call_class_only(
+        lambda: control.get_guardrail(guardrailIdentifier=guardrail_id, guardrailVersion=version),
+        lambda cls: ConfigError(f"{label}: cannot read the guardrail ({cls})"),
+    )
     filters = (resp.get("contentPolicy") or {}).get("filters") or []
     if not any(
         f.get("type") == "PROMPT_ATTACK"

@@ -21,7 +21,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, ed25519
 from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 
-from hadavin_sdk.errors import ConfigError, read_configured
+from hadavin_sdk.errors import ConfigError, call_class_only, read_configured
 
 _RAW = (serialization.Encoding.Raw, serialization.PublicFormat.Raw)
 
@@ -79,12 +79,12 @@ class LocalSigner:
 def probe(signer: Signer, label: str) -> Signer:
     """Start-up: sign a test message and verify it, so an unreachable or wrong key fails before the first run."""
     message = b"hadavin-signer-probe"
-    try:
-        ok = verify_signature(signer.public_key(), signer.sign(message), message, signer.alg)
-    except ConfigError:
-        raise
-    except Exception as exc:
-        raise ConfigError(f"{label}: cannot sign at start-up ({exc.__class__.__name__})") from exc
+    # The library error can quote the key id or ARN: only its class is kept, and the new error has no cause or context.
+    ok = call_class_only(
+        lambda: verify_signature(signer.public_key(), signer.sign(message), message, signer.alg),
+        lambda cls: ConfigError(f"{label}: cannot sign at start-up ({cls})"),
+        passthrough=(ConfigError,),
+    )
     if not ok:
         raise ConfigError(f"{label}: the key's signature does not verify with its public key")
     return signer
@@ -196,7 +196,7 @@ def generate_key(
 
 
 def load_private_key(path: Path, passphrase: bytes | None = None) -> ed25519.Ed25519PrivateKey:
-    return _private_key(path.read_bytes(), passphrase, str(path))
+    return _private_key(path.read_bytes(), passphrase, "the key file")
 
 
 def _private_key(pem: bytes, passphrase: bytes | None, source: str) -> ed25519.Ed25519PrivateKey:
@@ -210,5 +210,5 @@ def load_public_key(path: Path) -> bytes:
     """A PEM public key file as the raw 32 bytes (what `verify_signature` takes)."""
     key = serialization.load_pem_public_key(path.read_bytes())
     if not isinstance(key, ed25519.Ed25519PublicKey):
-        raise TypeError(f"{path} is not an Ed25519 public key")
+        raise TypeError("the key file is not an Ed25519 public key")
     return key.public_bytes(*_RAW)

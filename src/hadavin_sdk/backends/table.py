@@ -13,14 +13,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from hadavin_sdk.config_url import ConfigUrl
 from hadavin_sdk.errors import ConfigValueError
 from hadavin_sdk.safe_url import safe_urlsplit
+from hadavin_sdk.strict_model import StrictConfigModel
 
 
-class KindSettings(BaseModel):
+class KindSettings(StrictConfigModel):
     """One backend entry, ``{kind: <name>, …settings}``. A typo in a setting fails at start-up."""
 
     # A mistyped key may hold a secret: errors name the field, never its value.
@@ -34,6 +35,11 @@ class FakeLLMSettings(KindSettings):
 
 # A name that becomes part of a host name: letters, digits and dashes only.
 _NAME = r"^[A-Za-z0-9-]+$"
+# A region of AWS or of an S3-compatible store: lower-case letters, digits and dashes (it becomes part of a host name).
+_REGION = r"^[a-z0-9-]+$"
+# An S3 bucket name (AWS naming rules): 3 to 63 lower-case letters, digits, dots and dashes; it starts and ends with a
+# letter or a digit. It becomes part of a host name.
+_S3_BUCKET = r"^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$"
 
 
 class _LLMSettings(KindSettings):
@@ -124,7 +130,7 @@ class PostgresSettings(KindSettings):
     iam_auth: bool = (
         False  # RDS IAM login: no database password anywhere (needs the `aws` extra too)
     )
-    region: str | None = None
+    region: str | None = Field(default=None, pattern=_REGION)
     # None: `verify-full` for any non-local host; loopback and sockets keep the DSN's. Setting a weaker mode
     # (`require`, `disable`) is an explicit opt-down for demo, refused with iam_auth.
     sslmode: SslMode | None = None
@@ -146,7 +152,7 @@ class EnvSecretsSettings(KindSettings):
 
 
 class AwsSecretsManagerSettings(KindSettings):
-    region: str
+    region: str = Field(pattern=_REGION)
     ttl_s: float = Field(default=300, ge=0)  # 0 = no cache
 
 
@@ -163,8 +169,8 @@ class S3ObjectLockSettings(_AnchorSettings):
     """AWS S3, or any S3-compatible store with Object Lock (MinIO, Ceph RGW) through `endpoint_url`."""
 
     kind: Literal["s3_object_lock"]
-    bucket: str
-    region: str
+    bucket: str = Field(pattern=_S3_BUCKET)
+    region: str = Field(pattern=_REGION)
     endpoint_url: ConfigUrl | None = None  # https; plain http only to this machine (a local MinIO)
 
     @model_validator(mode="after")
@@ -236,7 +242,7 @@ class Ed25519LocalSettings(_SignerSettings):
 
 class AwsKmsSettings(_SignerSettings):
     key_id: str
-    region: str
+    region: str = Field(pattern=_REGION)
 
 
 class AzureKeyVaultKeySettings(_SignerSettings):

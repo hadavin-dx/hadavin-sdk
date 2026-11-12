@@ -104,12 +104,15 @@ class LocalDirSink:
         return key
 
     def write_intent(self, event: AuditEvent) -> str:
+        failure = None
         try:
             return self._write(event)
         except DuplicateEvent:
             raise
         except OSError as exc:
-            raise AuditUnavailable(f"intent {event.event_id}: {exc.__class__.__name__}") from exc
+            # The OS error quotes the configured path; raised after this block so no cause or context carries it.
+            failure = f"intent {event.event_id}: {exc.__class__.__name__}"
+        raise AuditUnavailable(failure)
 
     def write_outcome(self, event: AuditEvent) -> str | None:
         """Never raises: object store, then outbox, then memory (drained by reconcile)."""

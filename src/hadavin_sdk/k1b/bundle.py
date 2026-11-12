@@ -110,8 +110,8 @@ def _fail(case: str, msg: str) -> BundleError:
 def _load_json(case: str, root: Path, rel: str) -> Any:
     try:
         obj = strict_json_loads((root / rel).read_bytes().decode("utf-8-sig"))
-    except (OSError, ValueError, RecursionError) as exc:  # UnicodeDecodeError is a ValueError
-        raise _fail(case, f"{rel} is not valid JSON") from exc
+    except (OSError, ValueError, RecursionError):  # UnicodeDecodeError is a ValueError
+        raise _fail(case, f"{rel} is not valid JSON") from None
     _no_surrogates(case, rel, obj)
     return obj
 
@@ -121,8 +121,8 @@ def _no_surrogates(case: str, rel: str, obj: Any) -> None:
     if isinstance(obj, str):
         try:
             obj.encode("utf-8")
-        except UnicodeEncodeError as exc:
-            raise _fail(case, f"{rel} holds an invalid character") from exc
+        except UnicodeEncodeError:
+            raise _fail(case, f"{rel} holds an invalid character") from None
     elif isinstance(obj, dict):
         for k, v in obj.items():
             _no_surrogates(case, rel, k)
@@ -135,8 +135,8 @@ def _no_surrogates(case: str, rel: str, obj: Any) -> None:
 def _text(case: str, path: Path, rel: str) -> str:
     try:
         return (path / rel).read_bytes().decode("utf-8-sig")
-    except (OSError, ValueError) as exc:
-        raise _fail(case, f"{rel} is not valid UTF-8 text") from exc
+    except (OSError, ValueError):
+        raise _fail(case, f"{rel} is not valid UTF-8 text") from None
 
 
 def _keys(case: str, rel: str, obj: Any, allowed: set[str]) -> dict[str, Any]:
@@ -263,8 +263,8 @@ def load_bundle(path: Path) -> Bundle:
                     continue
                 try:
                     rec = strict_json_loads(raw)
-                except (ValueError, RecursionError) as exc:
-                    raise _fail(case, f"{rel} has a line that is not valid JSON") from exc
+                except (ValueError, RecursionError):
+                    raise _fail(case, f"{rel} has a line that is not valid JSON") from None
                 rec = _keys(case, rel, rec, {"ts", "level", "message", "service"})
                 _no_surrogates(case, rel, rec)
                 _scan(case, rel, rec, alert_time)

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import os
 import re
-from collections.abc import Collection, Iterable, Iterator
+from collections.abc import Callable, Collection, Iterable, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
@@ -82,6 +82,27 @@ def digest_prefix(value: object) -> str:
     """The first 12 characters of a digest for an error text, only when `value` really is a digest; a pasted credential
     in a pin position is `<not shown>` (its first characters are never printed)."""
     return f"{value[:12]}..." if isinstance(value, str) and is_digest(value) else NOT_SHOWN
+
+
+def call_class_only[T](
+    call: Callable[[], T],
+    make_error: Callable[[str], BaseException],
+    *,
+    passthrough: tuple[type[BaseException], ...] = (),
+) -> T:
+    """Round 12, Issue 3 of Q8a-1: run `call`; if it fails, raise `make_error(<class name of the failure>)`. The new
+    error is raised AFTER the `except` block, so it has no cause and no context: nothing the library said (it can
+    quote a key id, an ARN, a path or a host that the configuration named) can be reached from it, not by its text,
+    its repr, its traceback or a debugger. (`raise ... from None` inside the block hides the old error from the
+    printed traceback but leaves it in `__context__`.) An error of a class in `passthrough` is raised as it is."""
+    failure = None
+    try:
+        return call()
+    except passthrough:
+        raise
+    except Exception as exc:  # noqa: BLE001 - THE one place that turns any library failure into its class name only
+        failure = type(exc).__name__
+    raise make_error(failure)
 
 
 def unreadable(what: str, exc: BaseException) -> ConfigError:

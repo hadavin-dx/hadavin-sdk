@@ -807,7 +807,7 @@ TRANSIT = {
     "key_name": "k",
     "key_version": 1,
 }
-PROD_ANCHOR = {"kind": "s3_object_lock", "bucket": "b", "region": "r", "retention_ack": True}
+PROD_ANCHOR = {"kind": "s3_object_lock", "bucket": "bkt", "region": "r", "retention_ack": True}
 KEY_FROM_SECRETS = {"kind": "ed25519_local", "private_key_secret_name": "audit-key"}
 VAULT_CASES = {"secrets": VAULT, "signer": TRANSIT}
 TOKEN_FORMS = [{"auth": "token"}, {}]

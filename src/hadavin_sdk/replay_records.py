@@ -56,15 +56,15 @@ def read_records(root: Path) -> list[ReplayRecord]:
             continue
         try:
             data = json.loads(line)
-        except ValueError as exc:
+        except ValueError:
             if i != last:  # only the final line can be a torn append
-                raise ConfigError(f"{FILE} line {i}: not valid JSON") from exc
+                raise ConfigError(f"{FILE} line {i}: not valid JSON") from None
             _LOG.warning("%s line %d is not valid JSON (torn append): skipped", FILE, i)
             continue
         try:
             out.append(ReplayRecord.model_validate(data))
-        except ValidationError as exc:
-            raise ConfigError(f"{FILE} line {i}: not a replay record this version reads") from exc
+        except ValidationError:
+            raise ConfigError(f"{FILE} line {i}: not a replay record this version reads") from None
     return out
 
 

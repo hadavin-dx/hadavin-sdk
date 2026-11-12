@@ -128,12 +128,12 @@ def qualified_runs(registry: Registry) -> list[GateRun]:
             continue
         try:
             runs.append(GateRun.model_validate(data))
-        except ValidationError as exc:
+        except ValidationError:
             # Whole JSON of the wrong shape is a format mismatch (say a newer line read by an older image
             # after a rollback): fail closed rather than silently disqualify.
             raise ConfigError(
                 f"qualified.jsonl line {i}: not a gate run this version reads"
-            ) from exc
+            ) from None
     return runs
 
 

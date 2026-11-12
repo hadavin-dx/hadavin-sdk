@@ -23,10 +23,13 @@ def hash_files(root: Path, rel_paths: list[str]) -> str:
         path = confined(root, rel)
         if not path.is_file():
             raise ConfigError(f"not a file: {rel}")
+        failed = False
         try:
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        except OSError as exc:
-            raise ConfigError(f"cannot read: {rel}") from exc
+        except OSError:
+            failed = True  # the OS error quotes the full path; raised after this block, so nothing carries it
+        if failed:
+            raise ConfigError(f"cannot read: {rel}")
         entries[path.relative_to(base).as_posix()] = digest
     outer = hashlib.sha256()
     for name, digest in sorted((k.encode("utf-8"), v) for k, v in entries.items()):

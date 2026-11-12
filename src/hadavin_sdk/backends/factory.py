@@ -45,7 +45,7 @@ def make(
             raise
         raise ConfigError(
             f"backend {capability} {settings.kind!r} needs: pip install hadavin-sdk[{entry.extra}]"
-        ) from exc
+        ) from None
     label = f"backend {capability} {settings.kind!r}"
     deps = Deps(
         resolve=bound(FakeSecretProvider({}) if provider is None else provider, settings, label),

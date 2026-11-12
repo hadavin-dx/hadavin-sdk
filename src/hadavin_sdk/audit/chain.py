@@ -38,7 +38,7 @@ from typing import Any
 from hadavin_sdk.audit import anchors
 from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
 from hadavin_sdk.audit.signer import Alg, Signer, verify_signature
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, call_class_only
 from hadavin_sdk.models import AuditEvent
 
 GENESIS = "0" * 64
@@ -205,12 +205,12 @@ class ChainAudit:
         return event.event_id
 
     def write_intent(self, event: AuditEvent) -> str:
-        try:
-            return self._append(event)
-        except DuplicateEvent:
-            raise
-        except Exception as exc:
-            raise AuditUnavailable(f"intent {event.event_id}: {exc.__class__.__name__}") from exc
+        # A database error can quote the host, user or table: only its class is kept, no cause or context.
+        return call_class_only(
+            lambda: self._append(event),
+            lambda cls: AuditUnavailable(f"intent {event.event_id}: {cls}"),
+            passthrough=(DuplicateEvent,),
+        )
 
     def write_outcome(self, event: AuditEvent) -> str | None:
         """Never raises: the chain, then the outbox table, then memory (all drained by reconcile)."""
@@ -499,7 +499,9 @@ def verify_anchor_bodies(
             )
             continue
         if names is not None and names[i] != anchors.key(seq):
-            problems.append(f"anchor object {names[i]!r} holds seq {seq}: the name does not match")
+            problems.append(
+                f"anchor object {i + 1} (counted from 1) holds seq {seq}: the name does not match"
+            )
         if seq in seqs:
             problems.append(f"anchor {seq} appears twice")
         seqs.add(seq)

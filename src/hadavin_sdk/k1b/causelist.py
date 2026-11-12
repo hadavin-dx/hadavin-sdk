@@ -43,16 +43,16 @@ def _load(path: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
         ValueError,
         RecursionError,
         RuntimeError,
-    ) as exc:  # missing file, bad UTF-8, bad JSON
-        raise ConfigError(f"cause list: {name} is missing or not valid JSON") from exc
+    ):  # missing file, bad UTF-8, bad JSON
+        raise ConfigError(f"cause list: {name} is missing or not valid JSON") from None
     if not isinstance(data, list) or not all(isinstance(v, str) for v in data):
         raise ConfigError(f"cause list: {name} must be a list of strings")
     values = [norm(v) for v in data]
     try:
         for v in values:
             v.encode("utf-8")
-    except UnicodeEncodeError as exc:  # a lone surrogate would crash later writes
-        raise ConfigError(f"cause list: {name} has an invalid character") from exc
+    except UnicodeEncodeError:  # a lone surrogate would crash later writes
+        raise ConfigError(f"cause list: {name} has an invalid character") from None
     if not 1 <= len(values) <= limit:
         raise ConfigError(f"cause list: {name} must hold 1 to {limit} entries, has {len(values)}")
     if "" in values:
@@ -66,8 +66,8 @@ def _inside(directory: Path, fname: str) -> Path:
     """Resolve once; the file read later is this resolved path, so a swap after the check cannot redirect it."""
     try:
         target = (directory / fname).resolve(strict=True)
-    except (OSError, RuntimeError) as exc:  # missing file, symlink loop, permission
-        raise ConfigError(f"cause list: {fname} is missing or not readable") from exc
+    except (OSError, RuntimeError):  # missing file, symlink loop, permission
+        raise ConfigError(f"cause list: {fname} is missing or not readable") from None
     if not target.is_relative_to(directory) or not target.is_file():
         raise ConfigError(f"cause list: {fname} must be a file inside the directory")
     return target
@@ -76,8 +76,8 @@ def _inside(directory: Path, fname: str) -> Path:
 def load_cause_list(directory: Path) -> CauseList:
     try:
         directory = Path(directory).resolve(strict=True)
-    except (OSError, RuntimeError) as exc:
-        raise ConfigError("cause list: directory not found") from exc
+    except (OSError, RuntimeError):
+        raise ConfigError("cause list: directory not found") from None
     if not directory.is_dir():
         raise ConfigError("cause list: directory not found")
     services, s_hash = _load(_inside(directory, "services.json"), "services.json", MAX_SERVICES)

@@ -16,6 +16,8 @@ from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from hadavin_sdk.errors import shown_name
+
 
 def now() -> datetime:
     return datetime.now(UTC)
@@ -34,7 +36,7 @@ def _no_floats(obj: Any, path: str = "$") -> None:
         raise ValueError(f"float at {path}: use a decimal string")  # noqa: TRY004 - a bad value
     if isinstance(obj, dict):
         for k, v in obj.items():
-            _no_floats(v, f"{path}.{k}")
+            _no_floats(v, f"{path}.{shown_name(k)}")
     elif isinstance(obj, list | tuple):
         for i, v in enumerate(obj):
             _no_floats(v, f"{path}[{i}]")

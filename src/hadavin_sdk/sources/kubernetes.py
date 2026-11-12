@@ -17,12 +17,13 @@ from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import quote
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from hadavin_sdk import defaults
 from hadavin_sdk.config_url import ConfigUrl
 from hadavin_sdk.errors import ConfigValueError
 from hadavin_sdk.sources import Record, SourceError
+from hadavin_sdk.strict_model import StrictConfigModel
 
 # The operation ids a manifest may list for this source, each bound to one method and one path (design 6.4): a
 # call that fits no binding is refused by `ToolContext.fetch`, so an id is never just a label.
@@ -55,7 +56,7 @@ _SHELL_RESOURCES = frozenset(
 Fetch = Callable[..., str]
 
 
-class KubernetesSettings(BaseModel):
+class KubernetesSettings(StrictConfigModel):
     """Where the cluster is and how much to read. Normally a tool manifest's `options`; defaults in
     `hadavin_sdk/defaults.py`. `api_url` has no default: the endpoint is the deployment's, never the code's. It is scheme and host only, no
     path: the operation paths are absolute (`/api/v1/...`), so a base path would silently shift every call."""
@@ -211,8 +212,8 @@ class KubernetesSource:
         text = self._call(path, operation, method, body)
         try:
             decoded = json.loads(text)
-        except ValueError as exc:
-            raise SourceError("kubernetes: malformed answer") from exc
+        except ValueError:
+            raise SourceError("kubernetes: malformed answer") from None
         if not isinstance(decoded, dict):
             raise SourceError("kubernetes: malformed answer")
         return decoded
@@ -245,8 +246,8 @@ class KubernetesSource:
     def recent_changes(self, scope: str, start: str, end: str) -> list[Record]:
         try:
             return self._recent_changes(scope, start, end)
-        except (AttributeError, TypeError) as exc:  # a JSON value of an unexpected shape
-            raise SourceError("kubernetes: malformed answer") from exc
+        except (AttributeError, TypeError):  # a JSON value of an unexpected shape
+            raise SourceError("kubernetes: malformed answer") from None
 
     def _recent_changes(self, scope: str, start: str, end: str) -> list[Record]:
         """Deployments (with their rollout revision and images) and events of one namespace. `scope` is the
@@ -346,8 +347,8 @@ class KubernetesSource:
     def probe_scope(self) -> list[str]:
         try:
             return self._probe_scope()
-        except (AttributeError, TypeError) as exc:
-            raise SourceError("kubernetes: malformed answer") from exc
+        except (AttributeError, TypeError):
+            raise SourceError("kubernetes: malformed answer") from None
 
     def _probe_scope(self) -> list[str]:
         problems: list[str] = []
