@@ -1,0 +1,30 @@
+| case | gitleaks dir | gitleaks git |
+|---|---|---|
+| k1-control: 'sonar.projectKey=hadavin-dx_'+random 40 lowercase in config.properties (not allowlisted path) | dir: NOT reported | git: NOT reported |
+| k2-control: 'sonar.projectKey=hadavin-dx_other-project-<22 lowercase>' in config.properties | dir: NOT reported | git: NOT reported |
+| k3-control: 'sonar.projectKey=hadavin-dx_'+random 40 MIXED in config.properties | dir: REPORTED generic-api-key config.properties:1 | git: REPORTED generic-api-key config.properties:1 |
+| k4-'hadavin-dx_'+random 40 MIXED on line 4 of sonar-project.properties | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+
+(?m) variant: regexTarget = "line", regexes = ['''(?m)^sonar\.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n$''']
+| case | gitleaks dir | gitleaks git |
+|---|---|---|
+| m0-(?m)+line: real tree (exact key line 4) | dir: NOT reported | git: NOT reported |
+| m1-(?m)+line: different random 40 mixed key on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| m2-(?m)+line: exact key + space + plant on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| m3-(?m)+line: exact key extended '-x' | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| m4-(?m)+line: exact key + ';' + plant | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/b34836a1-affe-5ae5-ba66-3c71b6499c1e/scratchpad/matrix2.py", line 23, in <module>
+    case("m5-(?m)+line: exact key in docs/x.properties", docs, toml=mline)
+                                                         ^^^^
+NameError: name 'docs' is not defined
+
+## rerun of the tail (first run stopped at m5 with a script name error)
+(?m) rerun of the tail (m5, o0 failed in the first run because of a script name error)
+| m0-(?m)+line: real tree (exact key line 4) | dir: NOT reported | git: NOT reported |
+| m1-(?m)+line: different random 40 mixed key on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| m2-(?m)+line: exact key + space + plant on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| m3-(?m)+line: exact key extended '-x' | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| m4-(?m)+line: exact key + ';' + plant | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| m5-(?m)+line: exact key in docs/x.properties | dir: REPORTED generic-api-key docs/x.properties:4 | git: REPORTED generic-api-key docs/x.properties:4 |
+| o0-ORIGINAL 558d37f toml (no fix), real tree | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |

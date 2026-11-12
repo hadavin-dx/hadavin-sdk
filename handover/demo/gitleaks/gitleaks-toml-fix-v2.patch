@@ -1,0 +1,19 @@
+diff --git a/.gitleaks.toml b/.gitleaks.toml
+index c6f07f8..1a1f919 100644
+--- a/.gitleaks.toml
++++ b/.gitleaks.toml
+@@ -97,4 +97,4 @@ targetRules = ["generic-api-key"]
+ condition = "AND"
+-regexTarget = "line"
+-regexes = ['''^sonar\.projectKey=hadavin-dx_[a-z0-9-]+$''']
++regexTarget = "match"  # the matched text only: "line" carries the line break before it, so ^ fails on every line but the first
++regexes = ['''^sonar\.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n$''']
+ paths = ['''(^|[/\\])sonar-project\.properties$''']
+diff --git a/exceptions.txt b/exceptions.txt
+index 8a85359..3a99fef 100644
+--- a/exceptions.txt
++++ b/exceptions.txt
+@@ -26,2 +26,2 @@
+ ^SECURITY\.md:[0-9]+:sales@hadavin\.com$
+-^sonar-project\.properties:[0-9]+:projectKey=hadavin-dx_[a-z0-9-]+$
++^(sonar-project\.properties|\.gitleaks\.toml):[0-9]+:projectKey=hadavin-dx_[d]uplicate-proof-lead-desk-n8n$

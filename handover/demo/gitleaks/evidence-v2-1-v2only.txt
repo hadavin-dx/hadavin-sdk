@@ -1,0 +1,9 @@
+# tree=t-v2 head=a68d5af v2 only (committed in scratch)
+8:23PM INF scanned ~2681157 bytes (2.68 MB) in 288ms
+8:23PM INF no leaks found
+dir EXIT 0
+8:23PM INF scanned ~2686752 bytes (2.69 MB) in 454ms
+8:23PM INF no leaks found
+git EXIT 0
+..........                                                               [100%]
+10 passed in 10.61s

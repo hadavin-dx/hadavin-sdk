@@ -1,0 +1,6 @@
+hygiene with exact-key-derived text in sonar-project.properties (exact key plus -x):
+E         sonar-project.properties:13:projectKey=<k>
+1 failed, 9 passed in 4.03s
+hygiene with exact-key-derived text in docs/x.properties (exact key, other file):
+E         docs/x.properties:1:projectKey=<k>
+1 failed, 9 passed in 4.06s

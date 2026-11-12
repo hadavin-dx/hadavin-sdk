@@ -1,0 +1,28 @@
+| case | gitleaks dir | gitleaks git (history incl. plant commit) |
+|---|---|---|
+| C0-clean v2 tree (no plant) | dir: NOT reported | git: NOT reported |
+| C1-control plant alone in config.properties (generic key=value) | dir: REPORTED generic-api-key config.properties:1 | git: REPORTED generic-api-key config.properties:1 |
+| C2-control plant alone appended to sonar-project.properties line 13 | dir: REPORTED generic-api-key sonar-project.properties:13 | git: REPORTED generic-api-key sonar-project.properties:13 |
+| i1-exact key + space + plant on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| i2-exact key + ' # ' + plant on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| i3-exact key + ';' + plant on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| i4-exact key + '#' (no space) + plant on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| i5-exact key extended '-x' on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| i6-exact key extended '_x' on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| i7-exact key extended '-'+30 random on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| i8-exact key extended '_'+30 random on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| i9-exact key + tab + plant on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| i10-exact key + '"' + plant on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| ii1-exact key line also at line 20 (line 4 kept; file has it twice) | dir: NOT reported | git: NOT reported |
+| ii2-exact key line moved to line 20 only | dir: NOT reported | git: NOT reported |
+| iii1-sonar-project.properties all lines CRLF | dir: REPORTED generic-api-key sonar-project.properties:4 | git: NOT reported |
+| iii2-only the key line CRLF | dir: REPORTED generic-api-key sonar-project.properties:4 | git: NOT reported |
+| iii3-CRLF file + plant (control: still reported with CRLF) | dir: REPORTED generic-api-key sonar-project.properties:4; generic-api-key sonar-project.properties:13 | git: REPORTED generic-api-key sonar-project.properties:13 |
+| iv1-exact key line in sub/sonar-project.properties line 4 | dir: NOT reported | git: NOT reported |
+| iv2-exact key line in docs/x.properties line 4 | dir: REPORTED generic-api-key docs/x.properties:4 | git: REPORTED generic-api-key docs/x.properties:4 |
+| iv3-exact key line in old-sonar-project.properties line 4 | dir: REPORTED generic-api-key old-sonar-project.properties:4 | git: REPORTED generic-api-key old-sonar-project.properties:4 |
+| iv4-different key (random 40) in sub/sonar-project.properties line 4 | dir: REPORTED generic-api-key sub/sonar-project.properties:4 | git: REPORTED generic-api-key sub/sonar-project.properties:4 |
+| v1-different random 40 key on line 4 of sonar-project.properties | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |
+| v2-hadavin-dx_ + random 40 lowercase on line 4 | dir: NOT reported | git: NOT reported |
+| v3-hadavin-dx_other-project-<22 lowercase> on line 4 | dir: NOT reported | git: NOT reported |
+| v4-near-miss key (last char changed) on line 4 | dir: REPORTED generic-api-key sonar-project.properties:4 | git: REPORTED generic-api-key sonar-project.properties:4 |

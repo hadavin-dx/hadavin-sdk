@@ -1,0 +1,49 @@
+# git apply --check on a fresh clone at 558d37f (second clone from GitHub, head 558d37fe)
+v2 alone check rc=0
+ .gitleaks.toml |    4 ++--
+ exceptions.txt |    2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+## plain git apply, two orders, two coverage patches (coverage/sonar-coverage-v1.patch mtime 20:07; coverage/sonar-coverage.patch mtime 20:19)
+== sonar-coverage-v1.patch then v2 (plain apply)
+check cov OK
+apply cov rc=0
+check v2 after cov rc=0
+== v2 then sonar-coverage-v1.patch (plain apply)
+apply v2 rc=0
+error: patch failed: exceptions.txt:21
+error: exceptions.txt: patch does not apply
+check cov after v2 rc=1
+== sonar-coverage.patch then v2 (plain apply)
+check cov OK
+apply cov rc=0
+check v2 after cov rc=0
+== v2 then sonar-coverage.patch (plain apply)
+apply v2 rc=0
+check cov after v2 rc=0
+
+## git apply --3way on a git clone --local at 558d37f (an earlier 3way attempt on a cp -r copy failed with 'does not match index' because of stale stat data, not because of the patches; dropped)
+== --3way order: cov v2 (sonar-coverage-v1.patch)
+  cov rc=0
+  v2 rc=0
+ .gitleaks.toml | 8 ++++----
+ exceptions.txt | 6 +++---
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+== --3way order: v2 cov (sonar-coverage-v1.patch)
+  v2 rc=0
+  cov rc=0
+ .gitleaks.toml | 8 ++++----
+ exceptions.txt | 6 +++---
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+== --3way order: cov v2 (sonar-coverage.patch)
+  cov rc=0
+  v2 rc=0
+ .gitleaks.toml | 8 ++++----
+ exceptions.txt | 6 +++---
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+== --3way order: v2 cov (sonar-coverage.patch)
+  v2 rc=0
+  cov rc=0
+ .gitleaks.toml | 8 ++++----
+ exceptions.txt | 6 +++---
+ 2 files changed, 7 insertions(+), 7 deletions(-)

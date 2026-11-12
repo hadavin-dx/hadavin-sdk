@@ -1,0 +1,19 @@
+# hygiene exceptions narrowness (tests/test_hygiene.py test_hygiene_scan_public); plants: 'projectKey=hadavin-dx_other-project-' + 22 random lowercase letters (value never printed; shown as <redacted>); toml plant is a TOML comment line so the file still parses
+[v2] plant at sonar-project.properties:13 =>
+E       AssertionError: hardcoded literals found (file:line:match):
+E         sonar-project.properties:13:projectKey=<redacted>
+E       assert not ['sonar-project.properties:13:projectKey=<redacted>']
+tests/test_hygiene.py:124: AssertionError
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: hard...
+1 failed, 9 passed in 6.25s
+[v2] plant at .gitleaks.toml:101 =>
+E       AssertionError: hardcoded literals found (file:line:match):
+E         .gitleaks.toml:101:projectKey=<redacted>
+E       assert not ['.gitleaks.toml:101:projectKey=<redacted>']
+tests/test_hygiene.py:124: AssertionError
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: hard...
+1 failed, 9 passed in 7.86s
+[v1] plant at sonar-project.properties:13 =>
+10 passed in 11.34s
+[v1] plant at .gitleaks.toml:101 =>
+10 passed in 10.14s
