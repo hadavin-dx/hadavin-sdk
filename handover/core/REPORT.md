@@ -1,5 +1,42 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## Block 20:39Z / 02:09 IST (ORDER 264: scanner-bug work parked; main work first)
+**Failed or uncertain first.** (1) ORDER 264 applied: ORDER 263 (CodeAnt) builder stopped at wip/cloud-codeant 0b8b390d; ORDER 260 (path traversal) parked after round 1. The CodeAnt branch holds UNREVIEWED changes in a security file (redaction.py except clause) and in 5 demo files; the order for ORDER 263 said "only if behaviour identical" and demos are outside our scope: a reviewer must check both before it is ever used (noted in PARKED.md). (2) ORDER 260 round 1: reviews found 0 Blocker and 6 Major (unrouted config and signer and audit-folder sites, mutants that cannot show a call site fails, replay can leave a half-written folder without FAILED.txt); resolve report and ledger rows SONARPATH-r1-1..8 written; NO fix batch; the independent evidence runner is still mid-flight (not landed). Not independently verified: the 22 mutants. (3) Q8c-1 batch 16: two of the builder's mutant rows were its own regressions (fixed locally 43be04de, not pushed); gates at the new head are running; I stopped the stale gate driver on the old head 44f42c64. (4) AK-G2-a: mutants now 69 of 69 (heavy.sh run on aba26c69, pushed to wip/cloud-ak-g2-a by me); second full pytest still running in its own job. (5) Tags pd-bind and pd-standins cannot be pushed (proxy), branches are on origin.
+**Done now.** Parked ORDER 263 and 260 in PARKED.md with heads and owed steps. Freed capacity went to MAIN WORK item 3(a): one evidence-and-gate runner (a0a97309) for part 2 (bind, head 6e6ae211): full pytest, stage_mutants, all 39 bind mutants, fail-before, hostile inputs (priority 2). Part 6 fix builder aa0cfcdf got the lead answers (banner_from_config only public entry; symlink and folder coverage Blocker is a security path). Q8c-1 b16 builder resumed and running its gates. Q8a-1 b20 builder running.
+**Plan.** Part 2: evidence then two mode-safety reviewers then resolve. Part 6: wait for the fix builder, then one gate run, evidence, confirming round. Q8a-1: b20 push, one confirming round. Q8c-1: finish gates, evidence, two reviewers. Part 3 (standins) waits for part 2 to settle, then one re-merge.
+
+### Table 1: LIVE ITEMS (20:39Z / 02:09 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| aa0cfcdf | part 6 fix builder (banner, 6 classes plus lead answers) | 20:27 | 12 min | 21:27 | running | wip/cloud-pd-banner, owed gates list | lead answer delivered 20:34 |
+| a797f9e1 | Q8a-1 batch 20 minors builder | 20:29 | 10 min | 21:29 | running | wip/cloud-q8a1-b20 | started |
+| a70bb036 | Q8c-1 batch 16 builder (resumed) | 20:35 | 4 min this run | 21:35 | running, its gates driver `b16-gates2.sh` waiting for slots | push wip/cloud-q8c1-b16 | gates at 43be04de queued or running |
+| a0a97309 | part 2 evidence and gate runner | 20:38 | 1 min | 21:50 | running | RESULTS.md, ledger rows | started |
+| EV-260 runner | ORDER 260 independent gates (mid-flight, allowed by ORDER 264) | 20:32 | 7 min | 21:40 | running / waiting for slot | RESULTS.md | no result yet |
+| AK-G2-a final3 pytest (builder closed, job still mine) | full suite on aba26c69 | about 20:33 | 6 min | 20:45 | running | rc line in h-pytest.log | running |
+| AK-G2-a Postgres port 5447 | its test database | hours | hours | stop after pytest | running | none | stop after pytest |
+Totals: agents 5 (aa0cfcdf, a797f9e1, a70bb036, a0a97309, EV-260), shells 0, containers 0, my Postgres instances 2 (AK-G2-a 5447, Q8c-1 b16 56516, more by runners), load average 4.7 at 20:38Z, heavy slots 3 of 3, waiters 0 to 1. No item over its time box; none silent over 15 minutes.
+
+### Table 2: ROUNDS
+| package | round now | findings so far | class found | why another round | stop rule says | what ends the loop |
+|---|---|---|---|---|---|---|
+| ORDER 260 | 1 resolved, PARKED | r1 0B/6M | unrouted sites, per-site mutants, replay invariant | security path; fix batch plus a second round are REQUIRED after resume | not stop (6 Major) | lead resumes it |
+| Q8a-1 | 20 clean, confirming round next | r19 1B/3M, r20 0B/0M (minors only) | hidden-input guard, non-dict input | security path: one confirming round after the minors batch | one clean round done | confirming round with 0 Blocker 0 Major |
+| Q8c-1 | 16 | r14 and r15 one Major each (run-time import name class) | notes-check reach | previous fix half-done (class not closed) | not stop | batch 16 gates, one fresh round |
+| Part 6 (banner) | 2 | r1 1B/5M | symlink and folder coverage, public entry | first review found defects | not stop | fix, gates, confirming round |
+| Part 2 (bind) | 2 | r1 13 issues | one listen choke point, signature | first review found defects | not stop | gates, mode-safety round |
+| CodeAnt (263) | none, PARKED | none | | | n/a | lead resumes |
+Round that exists only because a gate or a builder return was incomplete: Q8c-1 b16 (two own regressions and an interim return); AK-G2-a and AK1-a (gates owed). Cause: heavy-slot queue. Fix: one gate-runner agent per branch (ORDER 262), applied to part 2.
+
+### Table 3: FINISHED SINCE LAST BLOCK
+| id | ran | result | rows closed |
+|---|---|---|---|
+| ade8ff63 CodeAnt builder | 8 min | parked per ORDER 264 at 0b8b390d, pushed wip/cloud-codeant, nothing running | yes |
+| a96da480 ORDER 260 builder | 36 min | ddf1d584 built (reported in the 20:33Z block) | yes |
+| a1cd7094 and aeb6a54d ORDER 260 reviewers (design, codebase) | 3 min each | reports saved in handover/reviews/sonar-path, resolve report written | yes |
+| acf6ab74 AK-G2-a builder | closed | 69 of 69 mutants; pytest job still running | row stays for its pytest and Postgres |
+| stale gate driver b16-gates.sh (pid 2121) and its policy_mutants child | stopped by me 20:36Z | tree clean after the stop | yes |
+
 ## Block 20:33Z / 02:03 IST (ORDER 263 started; ORDER 260 built and in review; part 2 batch 2 built; AK1-a built)
 **Failed or uncertain first.** (1) The tags `pd-bind` and `pd-standins` still cannot be pushed ("remote end hung up", tried again 20:32Z); the branches are on origin: wip/cloud-pd-bind 6e6ae211 and wip/cloud-pd-standins 8ebdcc27; the lead can take the heads from those refs. (2) Full pytest owed on part 2 (6e6ae211), part 6 (fix in progress), AK1-a (0a887a8b: 148 failed and 30 errors were Postgres-backed tests in the builder's own sandbox database; shown identical on base for a sample of 7 files only, NOT proven for all; must be re-run on a clean database) and AK-G2-a (3073bf75: mutant run died with rc 137 and an empty log, no 69-of-69 run exists; full pytest unfinished). (3) ORDER 260: full suite was run by the builder on b096ad48, not on the last commit ddf1d584 (test helper only); Sonar result and Windows behaviour NOT checked. (4) Nothing is READY except #71 at 8b982dd3 (lead decision, unchanged).
 **Done now.** ORDER 263 (CodeAnt triage): one builder ade8ff63 started 20:31Z in worktree B-CODEANT (branch core/codeant-triage), full gate owed to the session; no heavy slot. ORDER 260: builder finished (head ddf1d584 on wip/cloud-sonar-path: pathguard.py plus six call sites converted, 22 mutants, 47 new tests failed before on old main with a stub); snapshot taken, independent evidence runner and two fresh security reviewers (design, codebase) started 20:32Z. Part 2 batch 2: builder done (6e6ae211): `serve(approvals, *, config, ...)` signature change stays LEAD DECIDES; gates owed (full pytest, stage_mutants, bind_mutants). AK1-a: built to 0a887a8b, wip/cloud-ak1-a; mutants 40 of 40 killed; its full suite is owed. Part 6: lead answered YES to `banner_from_config` as the only public entry and the symlink/folder-coverage Blocker is a security path; I will pass that answer to the fix builder aa0cfcdf (it is running).
@@ -24,7 +61,7 @@ Totals: agents 6 (aa0cfcdf, a797f9e1, ade8ff63, EV-260, a3aeb8a0, a1cd7094), she
 |---|---|---|---|---|---|---|
 | Q8c-1 | 16 | r14, r15 1 Major each (run-time import name) | notes-check reach rules | security path: previous fix half-done | not stop (1 Major open) | batch 16 gates, then fresh round |
 | Q8a-1 | 20 (confirming round next) | r19 1B/3M, r20 0B/0M | hidden-input guard shapes (non-dict input) | security path | clean round once; confirming round after batch 20 | one clean confirming round |
-| Part 6 (banner) | 2 | r1 1B/5M? six classes | symlink and folder coverage, public entry | first review found defects | not stop | fix, gates, confirming round |
+| Part 6 (banner) | 2 | r1 1B/5M, six classes (class count from the resolve report) | symlink and folder coverage, public entry | first review found defects | not stop | fix, gates, confirming round |
 | Part 2 (bind) | 2 | r1 13 issues | one listen choke point, signature | first review found defects | not stop | gates, mode-safety round |
 | ORDER 260 | 1 | none yet | | first round | n/a | clean security round(s) |
 Round-count waste: none this block exists only because a gate could not run, except AK-G2-a and AK1-a (gates owed, not review rounds).
