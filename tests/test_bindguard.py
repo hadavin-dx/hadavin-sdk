@@ -789,10 +789,12 @@ def test_a_real_source_or_tools_dict_handed_in_is_counted_and_an_empty_one_is_no
                 serve(approvals, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
     empty = _by_hand(app, channel, config=app.config, overrides={"sources": {}, "tools": {}})  # type: ignore[attr-defined]
     _stand_in_bind_lands_on_loopback(monkeypatch)
+    refusal = ""
     try:
         serve(empty, config=app.config, host=ALL_ZEROS, port=0).server_close()  # type: ignore[attr-defined]
     except BindRefused as exc:
-        pytest.fail(f"an empty tools or sources mapping was counted: {exc}")
+        refusal = str(exc)
+    assert not refusal, f"an empty tools or sources mapping was counted: {refusal}"
 
 
 def test_approvals_built_by_hand_with_a_real_channel_and_a_stand_in_config_are_refused(
