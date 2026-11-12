@@ -213,7 +213,7 @@ def pg_driver(*, module_level=False):
         """The cluster administrator on the schema of a fixture DSN: only for a test that must switch triggers off
         to plant damage (`session_replication_role`); everything else uses the non-superuser owner."""
         owner = conninfo_to_dict(OWNER_DSN.get(dsn, dsn))
-        admin = conninfo_to_dict(os.environ["HADAVIN_TEST_PG_DSN"])
+        admin = conninfo_to_dict(pg_test_dsn())
         admin["options"] = owner.get("options", "")
         return psycopg.connect(make_conninfo(**admin), autocommit=autocommit)
 

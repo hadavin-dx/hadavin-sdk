@@ -208,12 +208,6 @@ class NotMigrated(RuntimeError):
     """The stop or reset function does not exist (SQLSTATE 42883): the database is not migrated."""
 
 
-class StoreBusy(RuntimeError):
-    """The database answered "busy" (lock timeout 55P03, statement timeout 57014, deadlock victim 40P01, too many
-    connections for the role 53300): the call was NOT done and may be retried. Not a connectivity error: the
-    store is reachable (`is_connectivity_error` is false for it)."""
-
-
 class StoreUnavailable(ConfigError):
     """The store cannot be reached (`tick` exits 4; nothing was changed)."""
 
@@ -224,7 +218,9 @@ class NotFound(KeyError):
 
 class StoreBusy(RuntimeError):
     """A write could not finish in time: a lock wait, the call budget, or retries on a deadlock or a serialization
-    failure ran out. The call changed nothing; a caller may send the same call again. Not a connectivity error."""
+    failure ran out, or the database answered "busy" to a stop or reset (lock timeout 55P03, statement timeout
+    57014, deadlock victim 40P01, too many connections for the role 53300). The call was NOT done; a caller may send
+    the same call again. Not a connectivity error: the store is reachable (`is_connectivity_error` is false)."""
 
 
 _STEP_RE = re.compile(r"[a-z_]+")
