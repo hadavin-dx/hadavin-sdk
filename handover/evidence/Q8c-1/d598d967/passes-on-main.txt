@@ -1,0 +1,119 @@
+tests/test_policy_engine.py::test_a_failing_assertion_cannot_print_a_token
+tests/test_policy_engine.py::test_clean_up_sends_every_undo_request_and_survives_a_failure
+tests/test_policy_engine.py::test_the_admin_control_fails_on_an_answer_that_is_not_200_or_204
+tests/test_policy_engine.py::test_the_engine_tests_run_skip_or_fail_by_the_environment
+tests/test_policy_engine.py::test_the_hash_path_control_also_accepts_400_but_never_403_or_404_and_no_other_request_accepts_400
+tests/test_policy_engine.py::test_the_longer_sign_path_is_sent_for_the_signing_key_and_listed_on_the_page
+tests/test_policy_guard.py::test_a_claim_text_that_ends_in_two_semicolons_or_repeats_is_refused
+tests/test_policy_guard.py::test_a_claim_text_under_both_marks_is_refused
+tests/test_policy_guard.py::test_a_module_with_no_policy_loads_as_none
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[%]
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[*]
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[+]
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[?]
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a b]
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a#b]
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a%2Fb]
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a%2fb]
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a%b]
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a*b]
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a+b]
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a?b]
+tests/test_policy_guard.py::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a\nb]
+tests/test_policy_guard.py::test_each_grammar_is_the_settings_own_pattern
+tests/test_policy_guard.py::test_each_mapped_setting_reaches_its_attribute_through_build[src/hadavin_sdk/actions/secrets_vault.py]
+tests/test_policy_guard.py::test_each_mapped_setting_reaches_its_attribute_through_build[src/hadavin_sdk/audit/signer_vault.py]
+tests/test_policy_guard.py::test_every_declared_kind_module_has_a_call_shape
+tests/test_policy_guard.py::test_every_import_of_a_declared_module_is_on_its_list_and_no_entry_is_stale
+tests/test_policy_guard.py::test_only_the_declared_modules_use_the_vault_client
+tests/test_policy_guard.py::test_plant_a_banned_indirect_call_is_caught[getattr(p, name)('GET', 'sys/mounts')-banned `getattr` with a name that is not a literal]
+tests/test_policy_guard.py::test_plant_a_banned_indirect_call_is_caught[operator.methodcaller('authed', 'GET', 'sys/mounts')(p)-banned indirect call `methodcaller`]
+tests/test_policy_guard.py::test_plant_a_banned_indirect_call_is_caught[p.__getattribute__('authed')-banned indirect call `__getattribute__`]
+tests/test_policy_guard.py::test_plant_a_banned_indirect_call_is_caught[p._make_api_call('GetSecretValue', {})-banned indirect call `_make_api_call`]
+tests/test_policy_guard.py::test_plant_a_banned_indirect_call_is_caught[p.meta.client.get_waiter('x')-banned indirect call `.meta.client`]
+tests/test_policy_guard.py::test_plant_a_bare_watch_in_the_paging_query_is_the_class_caught
+tests/test_policy_guard.py::test_plant_a_call_of_the_vault_client_in_another_module_is_the_class_caught
+tests/test_policy_guard.py::test_plant_a_change_inside_the_one_sending_function_is_caught[            with self._opener.open(req, timeout=self.timeout_s) as r:-new2-must hold exactly one `Request` and one `open` (found 1 and 2)]
+tests/test_policy_guard.py::test_plant_a_change_inside_the_one_sending_function_is_caught[f"{self.address}/v1/{path}"-f"{self.address}/v1/{path}?list=true"-is not sent to `<address>/v1/<path>`]
+tests/test_policy_guard.py::test_plant_a_change_inside_the_one_sending_function_is_caught[headers=headers, method=method-headers=headers, method="LIST"-does not use the method it was given]
+tests/test_policy_guard.py::test_plant_a_change_inside_the_one_sending_function_is_caught[with self._opener.open(req, timeout=self.timeout_s) as r:-with self._opener.open(urllib.request.Request(self.address), timeout=self.timeout_s) as r:-must hold exactly one `Request` and one `open` (found 2 and 1)]
+tests/test_policy_guard.py::test_plant_a_continue_token_quoted_in_another_way_is_caught
+tests/test_policy_guard.py::test_plant_a_declared_kind_left_on_the_pending_list_is_caught
+tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._call(f"/api/v1/namespaces/{ns}/pods/{ns}/log?follow=true", "k8s.pod_log")-query parameter `follow` is not one that `k8s.pod_log` may carry]
+tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/events" + "?watch=1", "k8s.list_events")-the path of `k8s.list_events` is not a literal]
+tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/events?", "k8s.list_events")-query parameter `` is not one that `k8s.list_events` may carry]
+tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/events?limit=5", "k8s.list_events")-query parameter `limit` is not one that `k8s.list_events` may carry]
+tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/secrets", "k8s.list_events")-the path does not fit the one bound to `k8s.list_events`]
+tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}x/events", "k8s.list_events")-the path does not fit the one bound to `k8s.list_events`]
+tests/test_policy_guard.py::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{scope}/events", "k8s.list_events")-holds a value that is neither `quote(name, safe='')` nor a setting]
+tests/test_policy_guard.py::test_plant_a_new_kind_on_no_list_is_caught
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-from http import client-import `http:client` is not on this module's import list]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-from operator import attrgetter-banned indirect call `attrgetter` (imported)]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-from operator import methodcaller as mc-banned indirect call `methodcaller` (imported)]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-from typing import Any as A-import `typing:Any` is renamed to `A`]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-import httpx-import `httpx` is not on this module's import list]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-import socket-import `socket` is not on this module's import list]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-from http import client-import `http:client` is not on this module's import list]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-from operator import attrgetter-banned indirect call `attrgetter` (imported)]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-from operator import methodcaller as mc-banned indirect call `methodcaller` (imported)]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-from typing import Any as A-import `typing:Any` is renamed to `A`]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-import httpx-import `httpx` is not on this module's import list]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-import socket-import `socket` is not on this module's import list]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-from http import client-import `http:client` is not on this module's import list]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-from operator import attrgetter-banned indirect call `attrgetter` (imported)]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-from operator import methodcaller as mc-banned indirect call `methodcaller` (imported)]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-from typing import Any as A-import `typing:Any` is renamed to `A`]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-import httpx-import `httpx` is not on this module's import list]
+tests/test_policy_guard.py::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-import socket-import `socket` is not on this module's import list]
+tests/test_policy_guard.py::test_plant_a_query_the_paging_wrapper_could_send_beyond_paging_is_caught[page = self._get(path + query, operation)-page = self._get(path + query + "&watch=true", operation)-calls `_get` with something other than `path + query`]
+tests/test_policy_guard.py::test_plant_a_query_the_paging_wrapper_could_send_beyond_paging_is_caught[query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "")-query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "") + "&watch=true"-holds the text '&watch=true']
+tests/test_policy_guard.py::test_plant_a_query_the_paging_wrapper_could_send_beyond_paging_is_caught[query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "")-query = f"?limit={limit}" + (f"&{token}=1" if token else "")-holds the text '&']
+tests/test_policy_guard.py::test_plant_a_query_the_paging_wrapper_could_send_beyond_paging_is_caught[query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "")-query = f"?limit={limit}&watch" + (f"&continue={quote(token, safe='')}" if token else "")-holds the text '&watch']
+tests/test_policy_guard.py::test_plant_a_second_send_in_the_sending_function_is_the_class_caught
+tests/test_policy_guard.py::test_plant_a_setting_handed_to_the_wrong_parameter_is_the_class_caught
+tests/test_policy_guard.py::test_plant_a_setting_that_reaches_the_request_through_another_attribute_is_caught[src/hadavin_sdk/actions/secrets_vault.py-mount=settings.mount,-mount=settings.field,-`build` does not hand the setting `mount`]
+tests/test_policy_guard.py::test_plant_a_setting_that_reaches_the_request_through_another_attribute_is_caught[src/hadavin_sdk/actions/secrets_vault.py-path_prefix=settings.path_prefix,-path_prefix=settings.field,-`build` does not hand the setting `path_prefix` to the parameter `path_prefix`]
+tests/test_policy_guard.py::test_plant_a_setting_that_reaches_the_request_through_another_attribute_is_caught[src/hadavin_sdk/actions/secrets_vault.py-self.mount, self.path_prefix, self.field = mount, path_prefix, field-self.mount, self.path_prefix, self.field = mount, field, path_prefix-`build` does not hand the setting `path_prefix`]
+tests/test_policy_guard.py::test_plant_a_setting_that_reaches_the_request_through_another_attribute_is_caught[src/hadavin_sdk/audit/signer_vault.py-VaultTransitSigner(client, settings.transit_mount, settings.key_name, version)-VaultTransitSigner(client, settings.key_name, settings.key_name, version)-`build` does not hand the setting `transit_mount`]
+tests/test_policy_guard.py::test_plant_a_source_row_that_names_a_branch_is_refused
+tests/test_policy_guard.py::test_plant_an_allowlisted_line_that_stops_passing_its_parameter_is_caught
+tests/test_policy_guard.py::test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far
+tests/test_policy_guard.py::test_plant_an_overdue_pending_kind_is_caught
+tests/test_policy_guard.py::test_plant_another_module_importing_the_vault_client_is_caught
+tests/test_policy_guard.py::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[class Wide(VaultProvider):\n    pass\n-class Wide extends a Vault client class]
+tests/test_policy_guard.py::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[def f(c):\n    return c.authed('LIST', 'sys/mounts')\n-uses `.authed` of the Vault client outside a declared module]
+tests/test_policy_guard.py::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[def f(c):\n    return c.call('GET', 'sys/mounts')\n-uses `.call` of the Vault client outside a declared module]
+tests/test_policy_guard.py::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[from hadavin_sdk.actions import secrets_vault\n-imports ['<the module>'] from the Vault client module]
+tests/test_policy_guard.py::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[from hadavin_sdk.actions.secrets_vault import connect\n-imports ['connect'] from the Vault client module]
+tests/test_policy_guard.py::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[import hadavin_sdk.actions.secrets_vault\n-imports ['<the module>'] from the Vault client module]
+tests/test_policy_guard.py::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[import importlib\nm = importlib.import_module('hadavin_sdk.actions.secrets_vault')\n-names the Vault client module in a text]
+tests/test_policy_guard.py::test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run[POLICY = dict(platform='vault')]
+tests/test_policy_guard.py::test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run[POLICY = {'platform': PLATFORM}]
+tests/test_policy_guard.py::test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run[POLICY = {**BASE}]
+tests/test_policy_guard.py::test_plant_each_indirect_way_to_a_request_is_caught[__import__('operator').methodcaller('authed', 'GET', 'sys/mounts')(p)-banned indirect call `__import__`]
+tests/test_policy_guard.py::test_plant_each_indirect_way_to_a_request_is_caught[functools.partial(p.authed, 'GET')('sys/mounts')-banned indirect call `partial`]
+tests/test_policy_guard.py::test_plant_each_indirect_way_to_a_request_is_caught[getattr(p, '_opener').open('https://x')-banned `getattr` of `_opener`]
+tests/test_policy_guard.py::test_plant_each_indirect_way_to_a_request_is_caught[getattr(p, 'authed')('GET', 'sys/mounts')-banned `getattr` of `authed`]
+tests/test_policy_guard.py::test_plant_each_indirect_way_to_a_request_is_caught[operator.attrgetter('authed')(p)('GET', 'sys/mounts')-banned indirect call `attrgetter`]
+tests/test_policy_guard.py::test_plant_each_indirect_way_to_a_request_is_caught[p.__dict__['_opener']-banned indirect call `__dict__`]
+tests/test_policy_guard.py::test_plant_each_indirect_way_to_a_request_is_caught[p._opener-the HTTP opener `._opener` is used outside]
+tests/test_policy_guard.py::test_plant_each_indirect_way_to_a_request_is_caught[p._opener.open('https://x/v1/sys/mounts')-raw HTTP call `open` outside]
+tests/test_policy_guard.py::test_plant_each_indirect_way_to_a_request_is_caught[urllib.request.urlretrieve('https://x')-raw HTTP call `urlretrieve` outside]
+tests/test_policy_guard.py::test_plant_each_indirect_way_to_a_request_is_caught[vars(p)['authed']('GET', 'sys/mounts')-banned indirect call `vars`]
+tests/test_policy_guard.py::test_plant_removing_the_namespace_check_is_caught[_recent_changes]
+tests/test_policy_guard.py::test_plant_removing_the_namespace_check_is_caught[query_logs]
+tests/test_policy_guard.py::test_template_folds_only_names_and_attributes
+tests/test_policy_guard.py::test_the_bare_query_name_regex_sees_a_name_with_no_equals_sign
+tests/test_policy_guard.py::test_the_builder_marks_refuse_a_missing_line_an_unknown_id_and_a_second_line
+tests/test_policy_guard.py::test_the_builder_only_marks_are_read_from_the_head_of_the_sources_file_and_match_its_list
+tests/test_policy_guard.py::test_the_extracted_requests_are_the_ones_the_ticket_lists
+tests/test_policy_guard.py::test_the_fixture_head_names_the_builder_read_claims_as_they_are
+tests/test_policy_guard.py::test_the_kubernetes_namespace_check_is_present_in_both_readers
+tests/test_policy_guard.py::test_the_limit_of_a_dated_entry_is_one_number_in_the_tool
+tests/test_policy_guard.py::test_the_page_and_the_fixture_agree_on_which_rows_are_abbreviated_and_what_is_unpinned
+tests/test_policy_guard.py::test_the_page_head_lists_the_claims_of_each_mark_from_the_sources_file_not_from_prose
+tests/test_policy_guard.py::test_the_path_overlap_automaton_agrees_with_a_brute_force_search_on_every_small_pattern_pair
+tests/test_policy_guard.py::test_the_path_overlap_with_a_prefix_setting_agrees_with_a_brute_force_search_over_its_values
+tests/test_policy_guard.py::test_the_path_prefix_setting_is_read_as_one_or_more_parts_each_ending_in_a_slash
+tests/test_policy_guard.py::test_the_query_parameters_the_kubernetes_module_writes_are_exactly_the_listed_ones
+tests/test_policy_guard.py::test_the_secret_name_is_one_path_part_checked_before_any_request

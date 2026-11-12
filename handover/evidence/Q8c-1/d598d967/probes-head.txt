@@ -1,0 +1,100 @@
+### baseline
+exit=0
+
+
+### a1 R17 claim in module gets extra clause
+exit=1
+policy page: secrets/vault: claim 'the + matches exactly one whole path part, nothing deeper, a' has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one
+policy page: secrets/vault R17: names B-ACL, V-ACL, V-PARSE, which only the builder has read, but none of its claims is marked 'builder read the passage'
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the claim text 'the + matches exactly one whole path part, nothing deeper' matches no claim: delete it
+
+### a2 R17 claim in head line gets extra clause
+exit=1
+policy page: secrets/vault: claim 'the + matches exactly one whole path part, nothing deeper' has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one
+policy page: secrets/vault R17: names B-ACL, V-ACL, V-PARSE, which only the builder has read, but none of its claims is marked 'builder read the passage'
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the claim text 'the + matches exactly one whole path part, nothing deeper, and never a prefix of a longer part' matches no claim: delete it
+
+### b swap marks R17<->R18
+exit=1
+policy page: secrets/vault R17: names B-ACL, V-ACL, V-PARSE, which only the builder has read, but none of its claims is marked 'builder read the passage'
+policy page: signer/vault_transit R18: a claim is marked 'builder read the passage', but the entry names none of the sources only the builder has read (V-ACL, V-PARSE, B-ACL): the mark is on the wrong claim
+
+### c1 start of R17 claim also under NOBODY
+exit=1
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the claim text 'the + matches exactly one whole path part' matches no claim: delete it
+
+### c2 start of R18 claim also under BUILDER
+exit=1
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the claim text 'the exact path R18 does not also allow' matches no claim: delete it
+
+### c3 full R17 text under both marks
+exit=1
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the claim text 'the + matches exactly one whole path part, nothing deeper' is under both marks
+
+### d0 BOM at file start
+exit=0
+
+
+### d1 BOM before first data row only
+exit=1
+policy page: tests/fixtures/policy_sources_2026-11-11.txt:69: id '\ufeffV-POL' is not a source id or is used twice
+
+### d2 BOM before BUILDER-ONLY line
+exit=1
+policy page: tests/fixtures/policy_sources_2026-11-11.txt:52: a row has five columns: id | url | commit | sha256 | note
+
+### d3 BOM before CLAIM-READ-BY-BUILDER line
+exit=1
+policy page: tests/fixtures/policy_sources_2026-11-11.txt:66: a row has five columns: id | url | commit | sha256 | note
+
+### d4 BOM before CLAIM-READ-BY-NOBODY line
+exit=1
+policy page: tests/fixtures/policy_sources_2026-11-11.txt:67: a row has five columns: id | url | commit | sha256 | note
+
+### d5 BOM before PARTLY-BUILDER-ONLY line
+exit=1
+policy page: tests/fixtures/policy_sources_2026-11-11.txt:53: a row has five columns: id | url | commit | sha256 | note
+
+### e1 trailing ' ;;' on BUILDER line
+exit=1
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the `# CLAIM-READ-BY-BUILDER:` line holds `;;` inside a claim text (the separator is a space, two semicolons and a space)
+
+### e2 trailing ' ;;' on NOBODY line
+exit=1
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the `# CLAIM-READ-BY-NOBODY:` line holds `;;` inside a claim text (the separator is a space, two semicolons and a space)
+
+### e3 trailing ' ;; ' (with space) on NOBODY line
+exit=1
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the `# CLAIM-READ-BY-NOBODY:` line holds an empty claim text
+
+### e4 trailing ';;' no space on NOBODY line
+exit=1
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the `# CLAIM-READ-BY-NOBODY:` line holds `;;` inside a claim text (the separator is a space, two semicolons and a space)
+
+### f1 NOTE_CLASSES empty tuple
+exit=1
+policy page: NOTE_CLASSES entry ('secrets/vault', 'zzz probe note'): its class is not a non-empty tuple
+policy page: NOTE_CLASSES entry ('secrets/vault', 'zzz probe note') matches no note: delete it
+
+### f2 NOTE_CLASSES (claim,5)
+exit=1
+policy page: NOTE_CLASSES entry ('secrets/vault', 'zzz probe note'): its class claim needs exactly one non-empty text (a fragment of a claim)
+policy page: NOTE_CLASSES entry ('secrets/vault', 'zzz probe note') matches no note: delete it
+
+### f3 NOTE_CLASSES (claim,'')
+exit=1
+policy page: NOTE_CLASSES entry ('secrets/vault', 'zzz probe note'): its class claim needs exactly one non-empty text (a fragment of a claim)
+policy page: NOTE_CLASSES entry ('secrets/vault', 'zzz probe note') matches no note: delete it
+
+### f4 NOTE_CLASSES key not a pair
+exit=1
+policy page: NOTE_CLASSES entry ('secrets/vault',): its key is not a tuple of two texts (kind, note)
+
+### g1 R17 grant verified None, no pending row
+exit=1
+policy page: secrets/vault R17: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry
+policy page: secrets/vault R17: a claim is marked 'builder read the passage', but the entry names none of the sources only the builder has read (V-ACL, V-PARSE, B-ACL): the mark is on the wrong claim
+
+### g2 R18 grant verified None, no pending row
+exit=1
+policy page: signer/vault_transit R18: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry

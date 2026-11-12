@@ -1,0 +1,5 @@
+
+tests/test_k5_fixes3.py:48: AssertionError
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+2 failed, 12895 passed, 1 skipped, 62 deselected in 332.23s (0:05:32)

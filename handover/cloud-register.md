@@ -1482,3 +1482,10 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a5ed25d778cfd9b0e / aec21ef8590d94516 / a09a63245f27bf7de | Q8c-1 r7 EV runner / egm-design / egm-codebase-details on d598d967 | 23:57Z | +55m | 23:57Z | running | save reports, resolve r7 |
 | ab258684d1aeda457 | Q8b r4 EV runner | - | - | 23:57Z | closed | - |
 | aca3636534ceda296 | Q8c-1 b6 builder | - | - | 23:57Z | closed (d598d967, WIP wip/cloud-q8c1-b6, full suite NOT run) | - |
+| aa2ebad93874e35c9 | Q8a-1 b8 evidence runner (18741c8c) | 00:20Z | ~01:15Z | 00:20Z | running | on report: resolve with reviewers |
+| a31d480cb706fe8b3 | Q8a-1 b8 design reviewer (snap q8a1b8-18741c8c) | 00:20Z | ~00:45Z | 00:20Z | running | save report |
+| aeab4879fab409f48 | Q8a-1 b8 codebase reviewer | 00:20Z | ~00:45Z | 00:20Z | running | save report |
+| ac419a5a8d38adea3 | Q8c-1 r7 nit fix builder b7 (wip/cloud-q8c1-b7) | 00:20Z | ~01:30Z | 00:20Z | running | snapshot, EV, reviewers (light) |
+| ad452b86c1faa4ce7 | PR H b4 evidence runner (d08ec151) | 00:20Z | ~01:15Z | 00:20Z | running | on report: resolve |
+| ab4275eca45865271 | PR H b4 design reviewer (snap prhb4-d08ec151) | 00:20Z | ~00:45Z | 00:20Z | running | save report |
+| abf45cc4361f96c6c | PR H b4 codebase reviewer | 00:20Z | ~00:45Z | 00:20Z | running | save report |
