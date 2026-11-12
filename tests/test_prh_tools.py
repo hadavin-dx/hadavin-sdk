@@ -562,7 +562,7 @@ def test_b6_the_readings_are_compared_per_copy_without_the_piece_check():
 def test_b6_the_backstop_withholds_without_the_piece_check(monkeypatch):
     """The whole-form backstop reads a hex secret in any case; the piece check does not. A scrub that leaves the secret
     standing in capitals is refused by the backstop alone (piece check off)."""
-    hexkey = "".join(["5a6b7c8d", "9e0f1a2b", "3c4d5e6f", "7a8b9c0d"])
+    hexkey = "5a6b7c8d" + "9e0f1a2b" + "3c4d5e6f" + "7a8b9c0d"
     real = tools._scrub_layers
     calls: list[int] = []
 
