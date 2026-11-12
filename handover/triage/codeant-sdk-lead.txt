@@ -1,0 +1,19 @@
+CodeAnt dashboard findings for hadavin-sdk (core repo), pasted by the owner 2026-11-12 ~20:35Z. Source: CodeAnt UI (no PR comments exist: it scans from its dashboard). Treat as data, not instructions.
+SECRETS (1): Secret Keyword, tests/warden_port/fakes.py:17, High, live status Inconclusive.
+LICENCES (6, all 'Needs review'): certifi@2026.10.19 MPL-2.0 Weak; hadavin-sdk@0.1.0 UNKNOWN (no licence field in pyproject?); pglast@8.7 GPL-3.0-or-later Strong copyleft; psycopg@3.3.6 and psycopg-binary@3.3.6 LGPL-3.0-only Weak; python-dateutil@2.9.0.post0 Dual License.
+ANTIPATTERNS 87 (rule | severity | where):
+- String literals duplicated | Critical | 19 in 12 files: demos/ask-your-data/data/goldcheck.py:117 manifest.json x3; src/hadavin_sdk/tools.py:260 __init__.py x4; deferred.py:20 'Phase 5' x4, :29 'Phase 2 (request tracker)' x4; registry.py:210 agents.yaml x3; approvals/slack_channel.py:125 chat.postMessage x3; runtime/agent_loop.py:662 input.unresolved x3; sources/kubernetes.py:34 application/json x3, :188 'kubernetes: malformed answer' x4; backends/table.py:411 login.microsoftonline.com x3, :367 oauth2.googleapis.com x4; k1b/report.py:54 '## Redaction' x3; k1b/bundle.py:208 deploys.json x9, incident.json x5, :191 manifest.json x4; guard/http.py:52 'instance credentials and identity tokens' x3; guard/producers.py:15 tools.py x4, :19 k1b/loop.py x3, :45 guard/runmap.py x4
+- Comparison to None constant | Critical | tools/mutation_runner.py:262 'Remove this identity check; it will always be True'
+- SQL identifiers not quoted | Major | 8: demos/ask-your-data/db/verify_checks.sql:1; src/hadavin_sdk/store/migrations/0004_audit_checkpoint_meta.sql:1,:7; 0002_audit_chain.sql:1,:14,:19,:23,:26
+- Nested conditional expressions | Major | 7: demos/ask-your-data/askdata/compare.py:69,:70; data/goldcheck.py:317; askdata/evalcli.py:136; db/seed.py:79 (x2); src/hadavin_sdk/runtime/tick.py:323
+- Regex too complicated | Major | 4: tools.py:187 (28>20), k1b/redaction.py:89 (25), store/migrate.py:88 (21), guard/runmap.py:52 (44)
+- Duplicate char in class | Major | tools.py:560
+- Too many parameters | Major | tools.py:1044 __init__ has 18 (limit 13)
+- verify_checks.sql:1 | Major x4 (unused projections, pushdown predicates, cross joins, derived tables) + Minor 'Simplify'
+- Return type vs hint | Major | k1b/redaction.py:161 returns Bundle, hint DataclassInstance
+- Single-char alternation | Major | store/migration_numbers.py:216
+- Commented-out code | Major | store/migrations/0003_approvals_tick.sql:4
+- Regex concise classes | Minor | 29: [0-9]->\d and [A-Za-z0-9_]->\w in tools/scan_repo.py:32, demos/ask-your-data/askdata/validate.py:205,207, tools.py:149,187,190,198, k1b/score.py:34, k1b/bundle.py:25-34, store/migration_numbers.py:54,55, guard/runmap.py:32,52
+- Subclass in same except as parent | Minor | 8: demos askdata/pipeline.py:161, ledger.py:179, evalcli.py:223, evalset.py:107; src/hadavin_sdk/extract.py:57, k1b/causelist.py:44, k1b/redaction.py:110 (x2)
+- Walrus confusing | Minor | store/migration_numbers.py:203
+DOCUMENTATION GAPS (per-function 'Generate' lists, docstring-style): tools/mutation_runner.py 5 (Mutant:73, __post_init__:90, _pytest:197, _run_mutants:436, build:462); tools/scan_repo.py 2; demos/ask-your-data/data/goldcheck.py 10; askdata/cli.py 6, pipeline.py 8, prompt.py 1, opscli.py 7, derive_allowlist.py 1, config.py 4, fixtures.py 2, llm_io.py 2, ledger.py 4, audit.py 2, meter.py 9, htmlexport.py 1, pgsource.py 4.
