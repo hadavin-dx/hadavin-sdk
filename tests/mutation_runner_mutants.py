@@ -102,8 +102,10 @@ runner: a named pipe under the name of a made file blocks the open
 POSIX-ONLY-MUTANTS-END
 - Killers that skip INSIDE their body (a ``pytest.skip(...)`` in the killer or in a helper of its file; some skip only on Windows, some only where
   the account has no symbolic link privilege or the system has no named pipes). They have no mark, so they are not in the list above, and on
-  such a system the mutant SURVIVES. The second list between the marker lines below is read by the same test file in both directions: it fails when a
-  named killer has no ``pytest.skip`` call or when a killer with one is not named. The prose above says why each one skips.
+  such a system the mutant SURVIVES, with ONE exception: the folder-link killer is named only because its helper holds a skip that can never fire for it
+  (see the paragraph that begins "Named in the second list below"), so that mutant is killed on every system. The second list between the marker lines below is read by
+  the same test file in both directions: it fails when a named killer has no ``pytest.skip`` call, in its body or in a helper of its file that it calls (the follow is static: it does not look at
+  the system), or when a killer with one is not named. The prose above says why each one skips, or, for that one killer, why it does not.
 BODY-SKIP-MUTANTS-BEGIN
 runner: a link out of the tree is accepted
 runner: a relative link out of the tree is copied

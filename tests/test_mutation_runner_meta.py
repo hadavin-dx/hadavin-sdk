@@ -461,6 +461,14 @@ def test_the_folder_link_killer_never_skips_and_the_header_says_so():
     ]
     assert len(paragraphs) == 1, f"the prose that names the killer: {len(paragraphs)} paragraphs"
     assert "NEVER skips" in paragraphs[0] and "SURVIVES" not in paragraphs[0], paragraphs[0][:200]
+    intro = [
+        p
+        for p in (mm.__doc__ or "").split("\n- ")
+        if p.startswith("Killers that skip INSIDE their body")
+    ]
+    assert len(intro) == 1 and "ONE exception" in intro[0], (
+        "the intro of the body-skip list does not name the exception"
+    )
 
 
 def test_every_decorator_is_read_even_after_a_true_mark_and_an_unreadable_one_raises():

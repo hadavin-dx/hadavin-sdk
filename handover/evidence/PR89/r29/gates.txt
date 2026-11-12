@@ -1,0 +1,7 @@
+== ruff-check exit=0 | All checks passed!
+== ruff-format exit=0 | 319 files already formatted
+== bandit exit=0 | [tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+== scan_repo exit=0 | 
+== stage_mutants exit=0 | 37 of 37 good; problems: []
+== mutation_runner_mutants (heavy.sh, root) exit=0 | 329 of 329 good; problems: []
+== full pytest -m "not live and not perf" (heavy.sh, own Postgres 16, PGHOST/PGPORT in server env) exit=0 | 10833 passed, 3 skipped, 28 deselected in 348.86s
