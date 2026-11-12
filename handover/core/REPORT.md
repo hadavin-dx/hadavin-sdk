@@ -1,6 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## Status - 19:05Z
+- AK-G2-a batch 1 returned PARTIAL (head 40c565e6, pushed to wip/cloud-ak-g2-a): migration 0006, ledger store (memory and Postgres), keys, Inbox.receive, 30 ledger tests plus contract tests, 89 passed with real Postgres. NOT done: mutants, gates, full suite, several Postgres rows. BLOCKER found: AK1-a (tenant and key work) is not on main; Dispatch, classify and StartRun wait for it (stand-ins in place). Batch 2 builder started for every dependency-free item. Lead decision needed: AK1-a order (recorded in OPEN-QUESTIONS and a questions line).
+- Part 5 (safe reset) built and committed locally (019edbed): 56 tests, 19 of 19 mutants, lint clean; full suite result and push still pending from that builder.
+- OPEN-QUESTIONS.md written and pushed (34 open questions, 263 of 299 old headings judged answered; weakest part: 6-9 Nov entries judged by heading).
+- Running agents: 12. Builders: PRH b12, P3a-2 b9, Q8b b14c, Q8c-1 b16, parts 2, 3, 5, 6, AK-G2-a b2; evidence runner Q8a-1 b19; helpers: ledger triage, READY-TO-MERGE table.
+- Stuck: AK1-a missing on main. Needs from the lead: say whether AK1-a goes before AK-G2-a dispatch (default: yes, I queue AK1-a after the READY-TO-MERGE table).
+
 ## Status - 19:02Z (next block by +5 min)
 - Q8c-1 b15 round 15 resolved (1 Major group, 7 Minor, 1 Nit; ledger Q8c1b15-r15-1..10) and batch-16 builder started (core/q8c1-b16 -> wip/cloud-q8c1-b16). Stop rule: one confirming round after b16, then READY.
 - Running agents: 15 (builders: PRH b12, P3a-2 b9, Q8b b14c, Q8c-1 b16, promotion parts 2, 3, 5, 6, AK-G2-a; evidence runner Q8a-1 b19; helpers: ledger triage, open questions, READY-TO-MERGE table). Pushed: Q8c-1 b15 evidence and resolve report, part 2 helper commit on wip/cloud-pd-bind.
