@@ -1,5 +1,48 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 19:59Z UTC / 01:29 IST: status (ORDER 261 tables start here)
+- ORDER 260: builder a96da480 started 3 min ago on `core/sonar-path-traversal` (design v2 resolved; ledger SONARPATH-r1-1..7 OPEN). #72 nits pushed (`wip/cloud-p6a-nits` 7a6eb4e9; 6 of 93 mutants run only). AK-G2-a b2 builder keeps handing back INCOMPLETE (its own mutant pass 3 still runs; nothing new to push; gates not run).
+- Failed or unverified: AK-G2-a b2 has no gate or full-suite result; Q8c-1 b16 and stack 2 hand-backs were interim only; nothing from ORDER 260 is built yet; Sonar result unknown (no local run). Load 10.9 (target 4): no new heavy job beyond the priority-2 builder.
+
+### (1) Live items (now 19:59Z UTC; started times are about, from the agent list)
+| id | purpose | started | running | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| a785524079e4ae693 | P3a-2 b9 builder (#73) | ~18:50 | ~70 min | overdue (box 60) | waiting for a heavy slot (own dblink gate running, pid 3525) | final-head gate run, hand-back | gate run queued/running since ~19:30; no new push seen. Over its box: will resume or replace after the gate ends |
+| aa62f462bca62fc62 | Q8a-1 b19 evidence runner | ~18:50 | ~70 min | ~20:15 | running (full pytest, own Postgres 56620) | RESULTS.md for a24d98ae | full-pytest.rc awaited (19:58). Over 60 min: waiting on a slot, not stuck |
+| acf6ab7497d4b97ab | AK-G2-a batch 2 builder | ~19:06 | 53 min | now late | hand-back pending / own mutant pass 3 running (pids 29702.., pytest 12569) | final mutants, gates, push, cleanup | no result; I pushed a4fe48bb. Will resume when pass 3 ends |
+| ac7c9ed782e7c9ddf | stack 1 rebaser (money store) | ~19:08 | 51 min | ~20:10 | waiting for a slot (RB-S1 full pytest running 2.6 min) | wip refs, report | full suite started 19:57 |
+| a2c5746dc5ffca713 | stack 3 rebaser (diagnostics) | ~19:08 | 51 min | ~20:10 | waiting (RB-S3-P5b2 pytest running 33 min) | wip refs, report | full suite since ~19:26 |
+| a9b2336922157b089 | stack 2 rebaser (text folding) | ~19:08 | 51 min | ~20:15 | interim hand-back, waiting for a slot | wip refs, report | queued behind priority 1-2 |
+| aeec42285844139e0 | AK1-a builder | ~19:13 | 46 min | ~20:15 | running (priority 5 queue) | hand-back | no push yet |
+| a1950c031533c18be | Q8b b14 gate-fix builder | ~19:13 | 46 min | ~20:15 | running (own PG 56931) | full gate result | no push yet |
+| a7e8d078cab3db826 | #71 minors/nits fix builder | ~19:15 | 44 min | ~20:00 | running | one push on wip/cloud-p0a-fix | none seen yet; check next tick |
+| aae188b2f3449ccfe | part 3 (standins) batch 2 builder | ~19:19 | 40 min | ~20:20 | waiting (standin_mutants running 31 min, pid 939) | pushed batch 2 | none yet |
+| a9d4815dd4835a848 | evidence runner, part 2 (bind) | ~19:19 | 40 min | ~20:15 | running | RESULTS.md for e75f9f25 | none committed yet |
+| aabeb61f9e2ebf14d | evidence runner, part 6 (banner) | ~19:34 | 25 min | ~20:25 | running (full pytest wait, own PG 57213) | RESULTS.md for dd5c7242 | full-pytest.log awaited |
+| a96da4801deea19ad | ORDER 260 builder | ~19:56 | 3 min | ~20:56 | running | pathguard, tests, mutants, PR body, push wip/cloud-sonar-path | reading the design |
+| a70bb036d553f1e80 | Q8c-1 b16 builder | ~19:03 | 56 min | ~20:10 | interim hand-back, gates queued (policy_mutants pid 11663) | gates.done, push | gates running |
+Totals: agents 14 rows (12 running, 2 interim), watcher shells about 6 (monitors with 5-min timeouts, mine and builders'), Postgres servers 4-5 (p3a2d 56093, EV-Q8a1b19 56620, q8bgate 56931, er-pdbanner 57213, AK-G2-a 5447), heavy.sh waiters 18, heavy slots 3 of 3 used, load average 10.9/10.1/8.4. Flags: a785524079e4ae693 over 60 min (waiting on the gate it started); aa62f462bca62fc62 over 60 min (waiting for the full suite); no item without progress for 15 minutes that I can see except AK-G2-a b2 (no output, its own mutant job runs). Action: none stopped; the over-time ones are waiting for slots, and load is the cause, so I add no new heavy work.
+
+### (2) Rounds (packages with more than one review or fix round)
+| package | round now | findings per round | class of each round | WHY another round | stop rule says | ends the loop |
+|---|---|---|---|---|---|---|
+| Q8c-1 (policy page, notes check, Vault) | 16 (b16 fixing r15) | r13/r14/r15 each 0B and 1 to 2M; r15 0B/1M (design) and 0B/1M (codebase) | same class each time: the notes-check rule for run-time import names and other unread test links | security-path rule (no cap) plus the previous fix covered only part of the class | security path: continue until a fresh round finds nothing real | a fresh round with 0 real findings after b16; b16 builder returned incomplete twice (that part is waste: slots) |
+| Q8a-1 (hidden-input, text guard) | 20 (b19 evidence now) | r19 1B/3M design and 1B(confirmed)/3M codebase | new defect: removing the three model_validate overrides in b18 reopened non-dict and invalid-JSON input (lead probe confirmed) | previous fix was wrong | security path: continue | one clean fresh round after b19 |
+| PD-standins (part 3) | 2 (batch 2 fixing r1) | r1 8M, 0B (4 classes) | registry rules not enforced at the choke point; sibling loopback sets; weak mutants; docs disagree | fixes of r1; builder not finished | ORDER 256: ONE confirming round then READY | confirming round clean |
+| #71 pglast guard (P0a) | 2 done, fix push pending | r1 2M (lead's reviewer), r2 0B/0M | pglast name normalisation; Windows symlink test | r2 found only minors | stop: fix minors in one push, no new round | the one push, then READY |
+| P3a-2 (#73) | 19 done | r18 and r19 0B/0M | (old rounds: AskData validation classes) | none by the stop rule; waiting only for the final-head gate (flaky/slow dblink gate) | stop | gate result |
+| PD-bind (part 2), PD-banner (part 6) | 1 pending | not reviewed yet | | evidence first | mode safety: confirming round required after fixes | clean round |
+| ORDER 260 design | 1 done | r1 5B/14M across two reviewers | call shape, sinks, rule grammar, proof, Sonar claim, race, rung table | new design: first review, as expected | one confirming round after the build (security) | clean fresh round on the built code |
+Rounds that exist only because a gate could not run or a builder returned early: Q8c-1 b16, AK-G2-a b2, stack 2 (hand-backs while queued). Cause: heavy-slot queue and load 10; fix: priority queue is in place; I start no new heavy builders except ORDER 260.
+
+### (3) Finished since last block (19:51Z)
+| id | ran | result | row closed |
+|---|---|---|---|
+| a10c7e5939d5436d0 | ~2 min | design review of the ORDER 260 plan: 2B/7M, saved | yes |
+| a1ab4ddeb7d484d2b | ~2.5 min | readiness review of the plan: 3B/7M, saved | yes |
+| abb110afed7bdcea9 | ~37 min | #72 nits builder: pushed 7a6eb4e9, full suite passed, 6 of 93 mutants | yes (evidence and one review still to do) |
+| egm resolve for ORDER 260 (inline, Opus) | ~3 min | design v2, report, 7 ledger rows | yes |
+
 ## 19:55Z UTC / 01:25 IST: ORDER 260 builder running; other items
 - ORDER 260: design v2 written after EGM round 1 (design and readiness reviewers: 5 Blocker, 14 Major between them; resolve report and 7 ledger rows SONARPATH-r1-1..7, OPEN). Builder started on `core/sonar-path-traversal` (worktree B-SONARPATH, push ref `wip/cloud-sonar-path`, heavy-queue priority 2). One reviewer finding was contested in part: the reviewer read this checkout, but main has the mutation runner.
 - Honest Sonar claim in the plan: an operator-typed folder cannot be sanitised; the PR will say what is contained (names from data) and what the lead must check or accept in SonarQube. Nothing is verified against Sonar (no local run).
