@@ -154,7 +154,7 @@ M = [
         'if result == "never":',
         CONTRACT_T,
         "test_l20_a_changed_key_refuses_a_message_that_was_already_accepted_and_the_store_is_asked_once",
-        "assert counted.calls == 2",
+        "a changed key must stop the receive at the first store call",
         "[memory]",
     ),
     mu(
@@ -185,6 +185,7 @@ M = [
         CONTRACT_T,
         "test_l20_key_change_writes_nothing_and_only_dispatch_changes_the_check",
         "DID NOT RAISE InboundKeyChanged",
+        "[memory]",
     ),
     mu(
         "L14 memory: same id with other text is a duplicate",
@@ -275,7 +276,7 @@ M = [
         CONTRACT_T,
         "test_l9_finish_refuses_a_bad_state_or_reason_and_writes_nothing",
         "DID NOT RAISE ValueError",
-        "[memory-received-None]",
+        "[memory-done-policy]",
     ),
     mu(
         "L23 memory: audit_unavailable counts a try as well",
@@ -446,7 +447,7 @@ M = [
         CONTRACT_T,
         "test_l20_key_change_writes_nothing_and_only_dispatch_changes_the_check",
         "permission denied for table inbound_key_checks",
-        "",
+        "[postgres]",
         crash="InsufficientPrivilege",
     ),
     mu(
@@ -454,10 +455,9 @@ M = [
         PG,
         'if stored is None or stored["key_check"] != rec.key_check:',
         "if stored is None:",
-        CONTRACT_T,
-        "test_l20_a_changed_key_refuses_a_message_that_was_already_accepted_and_the_store_is_asked_once",
-        "DID NOT RAISE InboundKeyChanged",
-        "[postgres]",
+        PG_T,
+        "test_l25_v_a_changed_key_is_refused_by_the_read_before_any_insert_is_tried",
+        "the key check read must stop the receive before the insert trigger is reached",
     ),
     mu(
         "P12 pg: a missing receipt is reported as a stale claim",
@@ -477,8 +477,9 @@ M = [
         "raise",
         CONTRACT_T,
         "test_l16_a_final_receipt_cannot_be_finished_or_released_and_reopen_is_refused",
-        "DID NOT RAISE RerunRefused",
+        "permission denied for table inbound_receipts",
         "[postgres]",
+        crash="InsufficientPrivilege",
     ),
     # --- migration 0006 (the database rules) -------------------------------------------------------------------------
     mu(
@@ -638,7 +639,7 @@ M = [
         PG_T,
         "test_l24_each_login_holds_exactly_its_rights_on_the_four_inbound_tables",
         "another role can re-run an inbound message",
-        "[dispatch]",
+        "[door]",
         crash="ConfigError",
     ),
     mu(
