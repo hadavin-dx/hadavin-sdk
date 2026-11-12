@@ -848,3 +848,16 @@ Rev 2 and earlier:
 - Whether the `_keep_earlier_masks` order problem can be triggered on main itself (main's pairs list has the same shape: raw spellings, then escaped spellings); the author did not find a main input; the fix applies to main's lists too.
 - Every input of rounds 5 and 6; the pull request head 76adadb (not opened); the full call chains of the six callers without the escaping step; `demos/` (not searched for direct `redact()` callers).
 - That no ready-made library fits (no live research possible from this machine).
+
+### 8.7 ERRATA rev 4 (batch 6, 2026-11-12): files outside the allowed list of 6.1 item 1 (review round 5, finding R5-2)
+
+The regular expression in 6.1 item 1 is stale. Five files changed by the branch are not on it; each is legitimate. The expression for the check now reads (the old one plus these five):
+`... |src/hadavin_sdk/defaults\.py|src/hadavin_sdk/scrub_settings\.py|tests/fixtures/(prh_accidental_pairs|prh_main_passes)\.json|tests/test_k5_fixes3\.py`
+
+| File | Why it had to change |
+|---|---|
+| `src/hadavin_sdk/defaults.py` | The core keeps every limit in this one file (no hard-coded numbers): the new constants `MAX_SWALLOWED_CHARS`, `MAX_REDACT_PASSES` and (batch 6) `SCRUB_PIECE_MIN` live here. |
+| `src/hadavin_sdk/scrub_settings.py` | Batch 6 only: the validated setting `piece_min` (the shortest stretch of a handed-out secret that may not stand in a result that held hidden items) is read from here, like the other scrub limits. |
+| `tests/fixtures/prh_accidental_pairs.json` | The list of inputs main masked and the branch does not, read by `tests/test_prh_contract.py`; the ticket's own T-section needs it, but its file name was not on the list. |
+| `tests/fixtures/prh_main_passes.json` | The pass counts recorded from main, read by `tests/test_prh_perf.py` (gate G1); recorded by `--record-main-passes`. |
+| `tests/test_k5_fixes3.py` | One existing test counted calls of `tools._decoded`; the scrub now calls `tools._decoded_readings`, so the spy was pointed at the new name (2 lines, same assertion). |
