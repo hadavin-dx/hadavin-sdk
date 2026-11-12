@@ -913,6 +913,25 @@ def _holds(text: str, secret: str, scrub: ScrubSettings) -> bool:
     return _scrub_layers(text, [secret], scrub).count(MARKER) > text.count(MARKER)
 
 
+def _count_in(text: str, secret: str, scrub: ScrubSettings) -> int:
+    """How many times `text` holds `secret` in any spelling the scrub reads (one mark per copy). One secret, one scrub run."""
+    return _scrub_layers(text, [secret], scrub).count(MARKER) - text.count(MARKER)
+
+
+_PIECE_WINDOWS = 64  # the most stretches tried per form: a longer form is sampled at a step, never scanned quadratically
+
+
+def _has_piece(text: str, forms: list[str], piece: int) -> bool:
+    """Does `text` hold a stretch of `piece` characters of one of the `forms`? Stretches are tried at a step that keeps
+    their number at `_PIECE_WINDOWS` or fewer per form, so a piece of `piece` + step - 1 characters is always seen."""
+    for form in forms:
+        w = min(piece, len(form))
+        step = max(1, (len(form) - w + 1) // _PIECE_WINDOWS)
+        if any(form[i : i + w] in text for i in range(0, len(form) - w + 1, step)):
+            return True
+    return False
+
+
 def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCRUB) -> str:
     """See `_scrub_layers`. A text nested deeper than the layer cap cannot be read: it is not shown at all.
 
@@ -921,12 +940,15 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
     whole again. When nothing is found the text is returned as written, so the choke point still sees the hidden items and
     keeps the word boundaries they made. When a secret is found, it is replaced in the SPACED copy of the reading that holds
     it (a space stands where a run of hidden items stood between two word characters) with the gap pattern, never in a
-    joined reading: a key glued to the text before it by a hidden item stays separated. No step returns a joined reading.
+    joined reading: a key glued to the text before it by a hidden item stays separated. No step returns a joined reading (the
+    value returned is always a spaced copy, the marker alone, or the text as written when nothing at all changed).
 
     The readings cannot be merged: the character reading has the letter after an ESC that the grammar's reading eats, the
     grammar's reading has the letter after `ESC (` that the consuming reading eats. So the secrets found in ALL readings
     (the union) must stand whole in ONE reading; when no reading holds the whole union (`ESC e` + `yJ...` next to a secret
-    cut by `ESC ( B`) nothing is shown. The character reading is a result only when the text holds no control sequence
+    cut by `ESC ( B`) nothing is shown. The readings are compared by how many copies of each secret they hold (a reading that
+    holds one copy of a secret another reading holds twice is not the result), and no stretch of `piece_min` characters of a
+    handed-out secret may stand in the result (else nothing is shown). The character reading is a result only when the text holds no control sequence
     whose body it would show as text (`[0m` after a deleted ESC: `hidden.leaves_text`); otherwise a find in it only
     withholds the text. A result that still holds a spelling of a handed-out secret is withheld too."""
     try:
@@ -948,23 +970,43 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
         if all(found == joined for joined, found in scrubbed.items()):
             return raw
         marks = {j: f.count(MARKER) - j.count(MARKER) for j, f in scrubbed.items()}
-        # the handed-out secrets each reading holds (an exact string: a find is never a false one); the grammar's reading
-        # first, and the others only when they found more marks than that reading's own text held
+        # the handed-out secrets each reading holds, COUNTED per secret (an exact string: a find is never a false one): a
+        # secret found in the grammar's reading once and in the character reading twice (`HAND` + `ESC HAND`: the ESC takes
+        # the first letter of the second copy in the grammar's reading) is not the same find. The readings are compared by
+        # these counts, never as sets.
         held = {
-            j: {x for x in long_enough if _holds(j, x, scrub)} if marks[j] > 0 else set()
+            j: {x: n for x in long_enough if (n := _count_in(j, x, scrub)) > 0}
+            if marks[j] > 0
+            else {}
             for j, _ in pairs
         }
-        union = set().union(*held.values())
-        if not union and scrubbed[pairs[0][0]] == pairs[0][0]:
-            return raw  # only a cut tail or a half-written spelling changed in another reading: nothing was found
-        # the character reading shows the body of a control sequence as text (`[0m` after a deleted ESC), so it can hold a
-        # secret but must not be the result when the text holds such a sequence: it stands in for the grammar's reading only
-        # when the one thing they differ in is a letter after an ESC (`hidden.leaves_text`)
+        union = {
+            x: max(h.get(x, 0) for h in held.values())
+            for x in {x for h in held.values() for x in h}
+        }
         faithful = not hidden.leaves_text(raw)
-        chosen = next(
-            ((j, sp) for j, sp, chars in triples if held[j] == union and (faithful or not chars)),
-            None,
-        )
+        usable = [(j, sp) for j, sp, chars in triples if faithful or not chars]
+        if not union:
+            if scrubbed[pairs[0][0]] == pairs[0][0]:
+                # nothing was found as a whole secret, but another reading's text changed (a cut that starts a secret was
+                # taken off its end): that reading, in its spaced copy, is the result; never the text as written, which
+                # still shows what that reading cut
+                chosen = next(((j, sp) for j, sp in usable if scrubbed[j] != j), None)
+            else:
+                chosen = usable[0] if usable and usable[0][0] == pairs[0][0] else None
+        else:
+            # a reading is the result only when it holds every secret as often as any reading does; the character reading
+            # shows the body of a control sequence as text (`[0m` after a deleted ESC), so it stands in for the grammar's
+            # reading only when the one thing they differ in is a letter after an ESC (`hidden.leaves_text`)
+            chosen = next(
+                (
+                    (j, sp)
+                    for j, sp in usable
+                    if all(held[j].get(x, 0) >= n for x, n in union.items())
+                    and held[j].keys() == union.keys()
+                ),
+                None,
+            )
         if chosen is None:
             return MARKER + TRUNCATED
         joined, spaced = chosen
@@ -973,9 +1015,16 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
         for form in forms:
             spaced = runmap.gap_pattern(form).sub(MARKER, spaced)
         result = _scrub_layers(spaced, long_enough, scrub)
+        # a fragment at the cut end that an ESC took the first letter of (`ESC` + `Tr0ub4` + the marker reads `r0ub4` in the
+        # grammar's reading, which is no form's start): the front of every form, less its first letter, is cut as well
+        result = _strip_fragment(result, sorted({f[1:] for f in forms if len(f) > 1}), scrub)
         left = hidden.strip(result)[0]
         decoded = _decoded_readings(left)
         if any(_has_form(left, f) or any(_has_form(d, f) for d in decoded) for f in forms):
+            return MARKER + TRUNCATED
+        # whatever the readings found, no stretch of a handed-out secret may stand in a text that held hidden items: a copy
+        # one reading could not read whole (an ESC took its first letter, a sequence cut it in two) leaves one
+        if any(_has_piece(t, forms, scrub.piece_min) for t in (left, *decoded)):
             return MARKER + TRUNCATED
         # a secret found in the chosen reading that left no mark in its spaced copy (a percent token a hidden item cut:
         # the spaced copy reads `%7 8`, which no spelling matches) is withheld too, never shown

@@ -287,10 +287,11 @@ def strip_sequences(text: str) -> str:
     return _scan(text, True)[1]
 
 
-def sequence_readings(text: str) -> tuple[str, str]:
+def sequence_readings(text: str, consume: bool = False) -> tuple[str, str]:
     """The joined and the spaced reading of `text` with ONLY the escape sequences removed (the same two readings as
-    `strip`, for the callers that read sequences and nothing else). The same object twice when they are equal."""
-    return _scan(text, True)
+    `strip`, for the callers that read sequences and nothing else). With `consume` every sequence takes its final byte, a
+    letter or digit too (`ESC ( B`), as in `strip_consuming`. The same object twice when they are equal."""
+    return _scan(text, True, consume)
 
 
 _CHAR_TABLE = {**dict.fromkeys(map(ord, REMOVED_CHARS)), **dict.fromkeys(map(ord, SPACE_LIKE), " ")}

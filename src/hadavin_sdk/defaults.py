@@ -54,7 +54,7 @@ REDACT_BUDGET_S = 6.0
 # (`InputTooLarge`, nothing shown), counted in `runmap._Work.count_pass`. Measured once on 2026-11-11 (not repeated by any
 # test): a 60 second hill-climb over texts mixing ESC ( B, colour codes, percent, entity and backslash-u spellings, non-ASCII,
 # a placeholder look-alike and values reached 17 passes. What the tests assert on every run (`tests/test_prh_steps.py`): the
-# 600 seeded texts of `test_pass_bound_holds_for_a_seeded_search` never reach the bound (their worst is 13), and every row of
+# 600 seeded texts of `test_pass_bound_holds_for_a_seeded_search` never reach the bound (their worst is 14 since batch 6, 13 before: the character reading is now read as a pair), and every row of
 # `tests/fixtures/prh_regressions.json` makes 7 passes or fewer on every path of the row.
 MAX_REDACT_PASSES = 24
 
@@ -80,6 +80,9 @@ SCRUB_FRAGMENT_SCAN = (
 SCRUB_FRAGMENT_MIN = 1  # characters of a secret's front that are removed next to a cut
 SCRUB_MAX_LAYERS = (
     8  # nested encodings (percent, entity, backslash) undone before the scrub fails closed
+)
+SCRUB_PIECE_MIN = (
+    6  # a stretch of a handed-out secret this long may not stand in a text that held hidden items
 )
 SCRUB_PARTIAL_END = 10  # the longest half-written escape a cut can leave; added to the look-back
 SOURCE_REPROBE_S = 3600  # how often the scope of a configured source is probed again while running

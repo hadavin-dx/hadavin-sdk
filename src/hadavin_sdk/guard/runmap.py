@@ -844,6 +844,7 @@ def redact_text(
         # its line, an ESC that takes the letter after it) is found there. It is used only under the rule of
         # `_char_reading_wins`. PR H: no step back from main.
         char_views: dict[str, tuple[str, str]] = {}
+        char_pairs: dict[str, tuple[str, str]] = {}
         # The consuming reading (`Readings.consuming_joined` and `consuming_spaced`: an escape sequence takes its final byte,
         # a letter too) finds a value that `ESC ( B` (what `tput sgr0` writes) cut: the conservative reading keeps that
         # final byte (D-029). Each is a PAIR (found in the joined, masked in the spaced reading, as for the text itself)
@@ -855,6 +856,10 @@ def redact_text(
             if (c := esc(r.characters)) not in (e_joined, e_spaced) and c not in cleaned + views:
                 key = _no_created_shapes(source, c)
                 char_views[key] = (c, found_in)
+                # a PAIR as for the consuming reading: the output is the SPACED character reading (`user` + BEL + an
+                # address stays two words), the values are found in the joined one (batch 6, H3)
+                cs = esc(r.characters_spaced)
+                char_pairs[key] = (key, key if cs == c else _no_created_shapes(source, cs))
                 cleaned.append(key)
             if r.consuming_joined is r.joined and r.consuming_spaced is r.spaced:
                 return  # no sequence takes a letter here: the grammar's reading is the consuming one
@@ -920,6 +925,8 @@ def redact_text(
             _check_budget(work_done)  # a hostile text: fail closed, nothing shown
             if view in consuming:
                 vj, vs = consuming[view]
+            elif view in char_pairs:
+                vj, vs = char_pairs[view]
             else:
                 vj, vs = hidden.strip(view)
                 if vj is not view:

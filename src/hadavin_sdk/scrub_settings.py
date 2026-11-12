@@ -23,4 +23,5 @@ class ScrubSettings(_Strict):
     min_secret: int = Field(default=defaults.SCRUB_MIN_SECRET, ge=4, le=64)
     fragment_scan: int = Field(default=defaults.SCRUB_FRAGMENT_SCAN, ge=64, le=16384)
     fragment_min: int = Field(default=defaults.SCRUB_FRAGMENT_MIN, ge=1, le=8)
+    piece_min: int = Field(default=defaults.SCRUB_PIECE_MIN, ge=4, le=32)
     partial_end: int = Field(default=defaults.SCRUB_PARTIAL_END, ge=10, le=64)

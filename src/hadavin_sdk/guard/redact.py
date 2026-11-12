@@ -881,6 +881,11 @@ def redact(
     Passing an existing `mapping` keeps placeholders stable across many strings in one run, so the
     model still sees that two log lines refer to the same host. `near`: related texts redacted apart
     (a record's other fields) whose bank words still count as bank context here, as in redact_many.
+
+    A text with escape sequences is read in the readings `_Redactor.find` lists (PR H): a key cut by `ESC ( B ESC [ m` is
+    masked, and a value the map already holds that an ESC cut in one copy (`ESC` + value) returns `WITHHELD_NOTE` (batch 6:
+    both used to leave the value's tail readable, as on main). Control characters other than escape sequences are not read
+    here; `runmap.redact_text` reads those too and is the entry point for text that goes to a model.
     """
     r = _Redactor(mapping, _cache)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
@@ -937,13 +942,38 @@ class _Redactor:
         * the *joined* reading (sequences removed, nothing left in their place): values are FOUND in it;
         * the *spaced* reading (one space where a sequence stood between two word characters): the text the reader is
           given, so values the joined reading found are MASKED in it, by their gap pattern;
+        * the same two readings when every sequence takes its final byte (`ESC ( B`): used when they mask more values
+          (batch 6: a key cut by `ESC ( B ESC [ m` is masked, it used to stay readable);
+        * a value the map held before this call that the character reading or the consuming reading shows more often than
+          the joined reading (an ESC took the first letter of one copy) cannot be masked there: `WITHHELD_NOTE`;
 
         A value found in the joined reading that the spaced reading cannot show whole (or more than `MAX_DECODED_MASKS` of
         them) fails closed: `WITHHELD_NOTE` is returned, never the joined text (it has lost the word boundaries the
         sequences made, so a key glued to the word before it would read as part of that word). Inside `redact_text` no
         escape sequence is left, so this is reached only by a direct caller of `redact()` or `redact_many()`."""
         joined, spaced = hidden.sequence_readings(text)
-        return self._patterns(spaced) if joined == spaced else self._find_readings(joined, spaced)
+        known = (
+            [v for v in self.mapping.values() if len(v) >= 4 and not v.startswith("\0seed")]
+            if "\x1b" in text
+            else []
+        )
+        out = self._patterns(spaced) if joined == spaced else self._find_readings(joined, spaced)
+        if "\x1b" not in text:
+            return out
+        # the consuming reading (a sequence takes its final byte, a letter too: `ESC ( B ESC [ m` is what `tput sgr0` writes)
+        # finds a value the grammar's reading cannot join (it keeps the `B`): when it masks more values, its output is the
+        # result. Never the joined text of either reading.
+        cj, cs = hidden.sequence_readings(text, consume=True)
+        if (cj, cs) != (joined, spaced):
+            alt = self._patterns(cs) if cj == cs else self._find_readings(cj, cs)
+            if len(_PLACEHOLDER.findall(alt)) > len(_PLACEHOLDER.findall(out)):
+                out = alt
+        # a value the map already held that another reading shows more often than the grammar's reading (an ESC that takes
+        # the letter after it cut one copy: `ESC` + value) is not masked in either output: nothing is shown
+        others = (hidden.characters_readings(text)[0], cj)
+        if any(r.count(v) > joined.count(v) for v in known for r in others):
+            return WITHHELD_NOTE
+        return out
 
     def _find_readings(self, joined: str, spaced: str) -> str:
         found = self._patterns(joined)

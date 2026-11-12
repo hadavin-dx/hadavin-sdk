@@ -215,7 +215,7 @@ def _seeded_text(g) -> str:
 
 
 SEARCH_TEXTS = 600
-SEARCH_FLOOR = 11  # the worst found by these 600 seeds is 13 on this code; a search that finds fewer than 11 is too weak
+SEARCH_FLOOR = 11  # the worst found by these 600 seeds is 14 on this code; a search that finds fewer than 11 is too weak
 
 
 def test_pass_bound_holds_for_a_seeded_search(monkeypatch):
@@ -244,6 +244,9 @@ def test_pass_bound_holds_for_a_seeded_search(monkeypatch):
             pass  # a refusal (lost letter, held value lost) shows nothing; only the bound is checked here
     assert not state["bound"], f"{len(state['bound'])} texts reached the pass bound"
     assert SEARCH_FLOOR <= state["peak"] <= runmap.defaults.MAX_REDACT_PASSES, state["peak"]
+    assert state["peak"] == 14, state[
+        "peak"
+    ]  # the worst of these 600 seeds is pinned (defaults.py says "their worst is 14")
 
 
 def test_every_regression_row_needs_at_most_seven_passes(monkeypatch):
