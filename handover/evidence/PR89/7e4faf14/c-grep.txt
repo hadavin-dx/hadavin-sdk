@@ -1,0 +1,19 @@
+tests/mutation_runner_mutants.py:37:- Named in the second list below although it NEVER skips: "a link out of the tree is accepted". Its killer links a FOLDER through the helper ``_dir_link``, which ma
+CHANGELOG.md:62:  - The CHANGELOG and the header say the same thing about the lists: two derived lists, compared both ways, and one hand-kept list of two killers (below); the prose gives the reason fo
+CHANGELOG.md:74:  - The test that derives the Windows skips from the skip marks raises on a `skipif` condition it cannot read (it used to read such a condition as "no skip"), reads the module-level `p
+---
+tests/mutation_runner_mutants.py:18:- POSIX only (the killer skips on Windows, so the mutant SURVIVES there): "a finished run's background process lives on"
+tests/mutation_runner_mutants.py:32:  (Two more mutants that survive on Windows are in none of these two kinds of list: their killers drop a case by the system name. See the third list below.)
+tests/mutation_runner_mutants.py:35:  mutant SURVIVE in that run). The folder-link case (a junction on Windows, no privilege needed) is a separate test with no mutant:
+tests/mutation_runner_mutants.py:41:- Killers that skip through a MARK (``posix_only``, or ``skipif`` on ``sys.platform`` or ``os.name``): the mutants below SURVIVE on Windows. This list is
+tests/mutation_runner_mutants.py:105:  such a system the mutant SURVIVES. The second list between the marker lines below is read by the same test file in both directions: it fails when a
+tests/mutation_runner_mutants.py:123:  the mutant SURVIVES on Windows because the guard is a POSIX branch: "the descriptor of the lock folder leaks" (Windows has no lock folder, so only the file's
+tests/mutation_runner_mutants.py:330:        TREE, "the grandchild survived the timeout"),
+tests/mutation_runner_mutants.py:497:    kmutant('runner: the edge minimum is longer than what pytest shows', MR, 'EDGE_MIN = 2  #', 'EDGE_MIN = 14  #', 'test_a_shortened_value_is_masked_by_its_fragments', 'a fragment of the shortened value survived the maskin
+CHANGELOG.md:23:  4. **Windows and macOS.** Only Linux is run in CI. We have not run the runner on Windows or macOS, with or without `pass_env`, and we have not run the mutant list of this tool (`tests/mutation_runner_mutants.py`, 329 mutants of the runner and
+CHANGELOG.md:510:  a process that survives; the signal test ends a runner that never started its child with SIGTERM before it kills the leftovers; the
+---
+tests/mutation_runner_mutants.py:37:- Named in the second list below although it NEVER skips: "a link out of the tree is
+CHANGELOG.md:55:  - The text said that the killer of "a link out of the tree is accepted" can skip on an account without
+CHANGELOG.md:62:  - The CHANGELOG and the header say the same thing about the lists: two derived lists, compared both wa
+CHANGELOG.md:74:  - The test that derives the Windows skips from the skip marks raises on a `skipif` condition it cannot

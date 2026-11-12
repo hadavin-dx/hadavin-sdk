@@ -1,0 +1,15 @@
+head f4acee28:
+module file: wt/src/hadavin_sdk/sources/kubernetes.py
+has scope_problems: False ['rules_problems']
+rows 196 LEAK rows 0
+Counter({('list_one', 'settings-accepted'): 1, ('list_pos2', 'settings-accepted'): 1, ('dup', 'settings-accepted'): 1, ('twenty', 'settings-accepted'): 1, ('empty_list', 'settings-refused'): 1, ('empty_str', 'settings-accepted'): 1, ('dict_form', 'settings-refused'): 1, ('dict_in_list_with_str', 'settings-refused'): 1, ('plain_string_not_list', 'settings-refused'): 1, ('dict_value', 'settings-refused'): 1, ('int_entry', 'settings-refused'): 1})
+scope_problems route head:
+scope_problems rows 100 LEAK 0
+
+f0febfb6:
+module file: wt-old/src/hadavin_sdk/sources/kubernetes.py
+has scope_problems: False ['rules_problems']
+rows 196 LEAK rows 112
+Counter({('list_one', 'settings-accepted'): 1, ('list_pos2', 'settings-accepted'): 1, ('dup', 'settings-accepted'): 1, ('twenty', 'settings-accepted'): 1, ('empty_list', 'settings-refused'): 1, ('empty_str', 'settings-accepted'): 1, ('dict_form', 'settings-refused'): 1, ('dict_in_list_with_str', 'settings-refused'): 1, ('plain_string_not_list', 'settings-refused'): 1, ('dict_value', 'settings-refused'): 1, ('int_entry', 'settings-refused'): 1})
+scope_problems route f0febfb6:
+scope_problems rows 100 LEAK 72
