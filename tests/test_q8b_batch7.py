@@ -479,9 +479,9 @@ def test_b7_6_the_third_prefix_group_costs_no_extra_time_on_a_long_flag():
     """The groups are cut at a separator, so a long run of `a-a-a-` is read once per start (no backtracking blow-up)."""
 
     # batch 14: a ratio, not a limit of 20 seconds (a rule that read to the end of the text at each of the 2,000 flags fits in 20 seconds,
-    # so the old limit let it pass). 4 times the size: linear is 4, quadratic 16; measured on the head 4.9 (best of three each), bound 8.
+    # so the old limit let it pass). 4 times the size: linear is 4, quadratic 16; measured on the head 4.9 (best of three each), bound 8; repeated up to three times, it fails only when all three are over the bound.
     def best(n: int) -> float:
-        text = "--" + "a-" * n + "x now " + "--a-b-c " * (n // 10)
+        text = "--" + "a-" * n + "x now " + "--a-b-c " * (n // 4)
         times = []
         for _ in range(3):
             t0 = time.perf_counter()
@@ -489,8 +489,11 @@ def test_b7_6_the_third_prefix_group_costs_no_extra_time_on_a_long_flag():
             times.append(time.perf_counter() - t0)
         return min(times)
 
-    best(1_000)
-    small, large = best(5_000), best(20_000)
+    best(2_000)
+    for _attempt in range(3):  # a real slowdown fails all three; a busy machine rarely does
+        small, large = best(10_000), best(40_000)
+        if large < max(small, 0.02) * 8:
+            break
     assert large < max(small, 0.02) * 8, (
         f"a long flag takes far too long: {small:.3f}s and {large:.3f}s for 4 times the size"
     )

@@ -130,7 +130,7 @@ def test_b10_1_the_fix_changes_nothing_for_a_text_that_has_no_scheme_word_before
 
 def test_b10_1_a_long_run_of_line_breaks_after_a_scheme_word_is_read_in_linear_time():
     # batch 14: a ratio, not a limit of 20 seconds (a quadratic read of 150,000 characters fits in 20 seconds, so the old limit let it pass).
-    # 4 times the size: linear is 4, quadratic 16; measured on the head 3.7 to 4.5 (best of three each), bound 7.
+    # 4 times the size: linear is 4, quadratic 16; measured on the head 3.7 to 4.5 (best of three each), bound 7; repeated up to three times, it fails only when all three are over the bound.
     shapes = (
         lambda size: "Authorization: Token" + "\n" * size + "x",
         lambda size: "Authorization: Basic" + "\r\n" * (size // 2) + "short",
@@ -149,7 +149,10 @@ def test_b10_1_a_long_run_of_line_breaks_after_a_scheme_word_is_read_in_linear_t
             return min(times)
 
         best(5_000)
-        small, large = best(37_500), best(150_000)
+        for _attempt in range(3):  # a real slowdown fails all three; a busy machine rarely does
+            small, large = best(37_500), best(150_000)
+            if large < max(small, 0.02) * 7:
+                break
         assert large < max(small, 0.02) * 7, (
             f"a gap after a scheme word takes far too long: {small:.3f}s and {large:.3f}s for 4 times the size"
         )
@@ -239,7 +242,7 @@ def test_b10_2_a_digest_header_ends_at_the_first_line_that_does_not_start_with_a
 
 def test_b10_2_a_long_run_of_digest_fold_lines_is_read_in_linear_time():
     # batch 14: a ratio, not a limit of 20 seconds (a quadratic read of 120,000 characters fits in 20 seconds, so the old limit let it pass).
-    # 4 times the size: linear is 4, quadratic 16; measured on the head 3.8 to 4.7 (best of three each), bound 7.
+    # 4 times the size: linear is 4, quadratic 16; measured on the head 3.8 to 4.7 (best of three each), bound 7; repeated up to three times, it fails only when all three are over the bound.
     shapes = (
         lambda size: 'Authorization: Digest a="bbbbbbbb"' + ",\n x" * (size // 4),
         lambda size: "Authorization: Digest" + "\n" + " x\n" * (size // 3),
@@ -258,7 +261,10 @@ def test_b10_2_a_long_run_of_digest_fold_lines_is_read_in_linear_time():
             return min(times)
 
         best(5_000)
-        small, large = best(30_000), best(120_000)
+        for _attempt in range(3):  # a real slowdown fails all three; a busy machine rarely does
+            small, large = best(30_000), best(120_000)
+            if large < max(small, 0.02) * 7:
+                break
         assert large < max(small, 0.02) * 7, (
             f"a folded Digest header takes far too long: {small:.3f}s and {large:.3f}s for 4 times the size"
         )

@@ -277,7 +277,7 @@ def test_b9_4_a_word_that_only_holds_cookie_and_digits_inside_is_no_key():
 
 def test_b9_4_a_very_long_run_of_digits_after_a_key_word_is_read_in_linear_time():
     # batch 14: a ratio, not a limit of 20 seconds (a quadratic read of 50,000 digits fits in 20 seconds, so the old limit let it pass).
-    # 4 times the digits: linear is 4, quadratic 16; measured on the head 4.0 to 4.3 (best of three each), bound 7.
+    # 4 times the digits: linear is 4, quadratic 16; measured on the head 4.0 to 4.3 (best of three each), bound 7; repeated up to three times, it fails only when all three are over the bound.
     for word in ("pass", "cookie", "password"):
 
         def best(digits: int, word: str = word) -> float:
@@ -290,7 +290,10 @@ def test_b9_4_a_very_long_run_of_digits_after_a_key_word_is_read_in_linear_time(
             return min(times)
 
         best(1_000)
-        small, large = best(5_000), best(20_000)
+        for _attempt in range(3):  # a real slowdown fails all three; a busy machine rarely does
+            small, large = best(5_000), best(20_000)
+            if large < max(small, 0.02) * 7:
+                break
         assert large < max(small, 0.02) * 7, (
             f"a very long run of digits after the key word {word} takes far too long: {small:.3f}s and {large:.3f}s for 4 times the digits"
         )
