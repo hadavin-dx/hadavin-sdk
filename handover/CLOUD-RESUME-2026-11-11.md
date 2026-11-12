@@ -310,3 +310,10 @@ State: Q8b r8 resolved (reviews/Q8b/goldfish_review_report-r8.md, 12 accepted, 1
 Next: collect builders, independent evidence per head, two egm:* reviewers each, egm-resolve; PR89 READY (wip/cloud-PR89-r27 ea29121e) waits for CI and the lead. Not started: Q8c PR 2 (needs ticket), PR85 variant, Q8a-2 nits, PR77, PR74.
 Open owner items: q-q8a1-hide-ids, q-prh-spaced-secrets, q-p3a2-e1-extension-lockout, q-p3a2-o8-schema-owner, q-pr89-mypy-in-lock, q-p3a2-3b-decisions, 40003 ticket edit, Vault engine CI run before 2026-12-11, stray branch core/prh-b3-local.
 Resume rule: read PULSE.md newest lines, ledger.md tail, reviews/<pkg> newest files; gitleaks before every push; no merge, no main, no spend.
+
+## Update 06:42Z (2026-11-12)
+Orders: 247 (GO, core lane) newest, no STOP (last pulled 06:14Z; LEAD-ORDERS.md in this branch unchanged at 06:42Z).
+Running: Q8b b9 builder a412f92b76866e9ba (core/q8b-b9 -> wip/cloud-q8b-b9, from 3eaae7c1, started 06:41Z, ends ~08:10Z); Q8c-1 b11 builder a599038e4ad336a81 (-> wip/cloud-q8c1-b11, ends ~07:20Z); Q8a-1 b13 builder ad204261aa93acbdd (-> wip/cloud-q8a1-b13); evidence runners P3a-2 ace4a695d6593a3b9 (f1ec83a8) and PR H a6d0281a1dd5d0113 (5f9df48e).
+Resolved this window: Q8c-1 r10 (goldfish_review_report-r10.md), Q8b r9 (goldfish_review_report-r9.md; ledger Q8bb8-r9-*). Reviews saved, resolve pending evidence: P3a-2 3e (design r14 D1-D5 Major; codebase r14 D1-D7 Major), PR H b7 (codebase r7 F1-F4 Major; design r7 D1-D3 Major).
+Next: resolve P3a-2 3e and PR H b7 when evidence lands, then batch-4 and batch-8 builders; Q8c-1 b11 and Q8a-1 b13 snapshots, evidence, reviewers.
+New owner/lead items: P3a-2 schema-owner choice (D2: must the schema be family-owned at the start?), P3a-2 Issue 7 K8/O5 ticket edit, PR H spaced-out unknown secrets (measure first), any Q8b `bypass` name left readable by choice.
