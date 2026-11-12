@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.test_ci_gitleaks_scope import _load, _step
+from tests.test_ci_gitleaks_scope import CI, _load, _step
 
 STEP = "Stale gitleaks ignore entries"
 HANDOVER_FILE = "handover/reviews/x/round1.md"
@@ -89,7 +89,7 @@ def _lane_branch(repo, branch):
     return sha
 
 
-def _run_guard(repo):
+def _run_guard(repo, path_prefix=""):
     script = repo / "step.sh"
     script.write_text(_step(_load(), STEP)["run"])
     res = subprocess.run(  # noqa: S603 (fixed argv, no shell string)
@@ -98,7 +98,7 @@ def _run_guard(repo):
         capture_output=True,
         text=True,
         env={
-            "PATH": "/usr/bin:/bin",
+            "PATH": f"{path_prefix}:/usr/bin:/bin" if path_prefix else "/usr/bin:/bin",
             "GIT_CONFIG_GLOBAL": "/dev/null",
             "GIT_CONFIG_SYSTEM": "/dev/null",
         },
@@ -138,7 +138,7 @@ def test_any_other_branch_with_a_handover_file_still_fails(repo, branch):
     _lane_branch(repo, branch)
     rc, out = _run_guard(repo)
     assert rc == 1, out
-    assert "files under handover/ exist in the history" in out
+    assert "handover notes exist in the history" in out
 
 
 def test_a_head_built_on_a_lane_commit_still_fails_even_if_a_lane_ref_has_it(repo):
@@ -344,10 +344,141 @@ def test_a_merge_of_a_side_branch_with_a_handover_note_fails_even_if_the_merge_r
     assert "history of HEAD itself" in out
 
 
-def test_the_step_name_is_a_plain_string_without_a_colon_and_space():
+def _fake_git_failing_merge_base(tmp_path):
+    bin_dir = tmp_path / "fakebin"
+    bin_dir.mkdir()
+    fake = bin_dir / "git"
+    fake.write_text(
+        '#!/bin/sh\nif [ "$1" = merge-base ]; then echo "fatal: simulated failure" >&2; exit 128; fi\nexec /usr/bin/git "$@"\n'
+    )
+    fake.chmod(0o755)
+    return str(bin_dir)
+
+
+def _entry_line(sha):
+    return f"{sha}:src/a.py:generic-api-key:3"
+
+
+def test_an_entry_for_a_commit_in_the_pull_requests_own_history_is_refused_unless_main_has_the_line(
+    repo,
+):
+    """A forged fixed-name branch at a commit of this pull request would otherwise make its entry acceptable."""
+    c = _commit(repo, "src/a.py", "x = 1\n", "a commit of this pull request")
+    _ref(repo, "core/P2d-1", c)
+    _commit(repo, ".gitleaksignore", f"{_expires()}{_entry_line(c)}\n", "entry")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "ignore entry hides a commit in this pull request's own history" in out
+
+
+def test_an_entry_for_a_commit_in_the_own_history_is_accepted_when_main_has_the_identical_line(
+    repo,
+):
+    base = _git(repo, "rev-parse", "HEAD")
+    c = _commit(repo, "src/a.py", "x = 1\n", "fixture commit on the P2d-1 branch")
+    _ref(repo, "core/P2d-1", c)
+    _git(repo, "reset", "-q", "--hard", base)
+    # main's file in its real shape: comments, EXPIRES, then the entry
+    text = f"# header\n{_expires()}# why: fake values\n{_entry_line(c)}\n"
+    m2 = _commit(repo, ".gitleaksignore", text, "main takes the entry")
+    _ref(repo, "main", m2)
+    _git(repo, "merge", "-q", "--no-edit", c)  # the pull request head now holds both
+    rc, out = _run_guard(repo)
+    assert rc == 0, out
+    # a different line for the same commit (other path) is not the identical line
+    _commit(
+        repo, ".gitleaksignore", text.replace("src/a.py", "src/b.py"), "pull request edits the line"
+    )
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "own history" in out
+
+
+def test_an_entry_for_a_commit_outside_the_head_history_keeps_the_old_rule(repo):
+    base = _git(repo, "rev-parse", "HEAD")
+    c = _commit(repo, "src/a.py", "x = 1\n", "commit on another branch")
+    _ref(repo, "core/P2d-1", c)
+    _git(repo, "reset", "-q", "--hard", base)
+    _commit(repo, ".gitleaksignore", f"{_expires()}{_entry_line(c)}\n", "entry")
+    rc, out = _run_guard(repo)
+    assert rc == 0, out
+
+
+def test_a_missing_origin_main_is_reported_even_if_a_tag_has_that_name(repo):
+    root = _git(repo, "rev-list", "--max-parents=0", "HEAD")
+    _git(repo, "tag", "origin/main", root)
+    _git(repo, "update-ref", "-d", "refs/remotes/origin/main")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "origin/main is missing" in out
+
+
+def test_an_evil_merge_on_another_branch_that_introduces_a_note_is_listed_by_the_range_check(repo):
+    base = _git(repo, "rev-parse", "HEAD")
+    s1 = _commit(repo, "src/s1.py", "x = 1\n", "side one")
+    _git(repo, "reset", "-q", "--hard", base)
+    _commit(repo, "src/s2.py", "x = 2\n", "side two")
+    _git(repo, "merge", "-q", "--no-commit", "--no-ff", s1)
+    (repo / HANDOVER_FILE).parent.mkdir(parents=True, exist_ok=True)
+    (repo / HANDOVER_FILE).write_text("note\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "merge that adds a note")
+    _ref(repo, "core/other", _git(repo, "rev-parse", "HEAD"))  # neither HEAD nor a lane
+    _git(repo, "reset", "-q", "--hard", base)
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "a branch other than core/cloud-handover" in out
+
+
+def test_an_error_of_git_merge_base_fails_the_step_with_a_message(repo, tmp_path):
+    keep = _git(repo, "rev-parse", "HEAD")
+    c = _commit(repo, "notes/x.txt", "x\n", "commit on a fixed branch")
+    _ref(repo, "core/cloud-handover", c)
+    _git(repo, "reset", "-q", "--hard", keep)
+    _commit(repo, ".gitleaksignore", f"{_expires()}{_entry_line(c)}\n", "entry")
+    rc, out = _run_guard(repo)
+    assert rc == 0, out  # control: real git, the entry is fine
+    rc, out = _run_guard(repo, path_prefix=_fake_git_failing_merge_base(tmp_path))
+    assert rc == 1, out
+    assert "git merge-base failed (exit 128)" in out
+
+
+def test_the_failure_message_names_the_refs_that_hold_the_notes(repo):
+    _lane_branch(repo, "core/other")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert f"{HANDOVER_FILE} (on: origin/core/other" in out
+
+
+def test_the_head_failure_message_names_the_refs_that_hold_the_notes(repo):
+    _commit(repo, HANDOVER_FILE, "note\n", "lane commit adds the file")
+    _remove(repo, HANDOVER_FILE, "lane commit deletes it again")
+    _ref(repo, "wip/cloud-x", _git(repo, "rev-parse", "HEAD"))
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert f"{HANDOVER_FILE} (on: origin/wip/cloud-x" in out
+
+
+def test_the_old_allowlist_wording_is_gone_and_the_new_rule_is_stated():
+    run = _step(_load(), STEP)["run"]
+    assert "would hide generic keys" not in run
+    assert "does not run this step as a pull request head" not in run
+    assert "they may live only" in run
+
+
+def test_the_step_name_is_a_plain_string_that_yaml_cannot_misread():
     name = _step(_load(), STEP)["name"]
     assert isinstance(name, str)
-    assert ": " not in name
+    assert ": " not in name  # a mapping
+    assert " #" not in name  # a comment
+    assert name[0] not in "-?:,[]{}#&*!|>'\"%@`", name  # a YAML indicator character
+    assert name == name.strip()
+    # the raw text of the line too: " #" would start a YAML comment and silently shorten the parsed name
+    raw = [
+        ln for ln in CI.read_text().splitlines() if ln.strip().startswith("- name: " + name[:20])
+    ]
+    assert len(raw) == 1
+    assert raw[0].strip() == "- name: " + name
 
 
 if __name__ == "__main__":
