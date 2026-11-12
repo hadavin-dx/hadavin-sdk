@@ -9,3 +9,8 @@ dd5c7242	-	linux	stage_mutants + banner_mutants	default	0	37/37 and 28/28 good	-
 a24d98ae	-	linux (nobody)	full pytest (own PG)	-m not live and not perf	0	11617 passed 1 skipped 28 deselected	523	2026-11-12
 a24d98ae	-	linux	stage_mutants	default	0	445 of 445 good	-	2026-11-12
 a24d98ae	-	linux	migration_numbers_mutants	default	0	36 of 36 good	-	2026-11-12
+ddf1d584c280593d4db82e81489b440fae3b876f	9a79548c419949c0bd0e501dbc8d4788834d3dd7	linux	pytest full (own PG 16 port 34871)	-m not live and not perf	1	1 failed 10686 passed 1 skipped 28 deselected (dblink-connect: server env socket); that file alone 253 passed after server env fix; whole suite not re-run	271	2026-11-12
+ddf1d584c280593d4db82e81489b440fae3b876f	9a79548c419949c0bd0e501dbc8d4788834d3dd7	linux	tests/pathguard_mutants.py	default	0	22 of 22 good	21	2026-11-12
+ddf1d584c280593d4db82e81489b440fae3b876f	9a79548c419949c0bd0e501dbc8d4788834d3dd7	linux	tests/stage_mutants.py	default	0	37 of 37 good	41	2026-11-12
+ddf1d584c280593d4db82e81489b440fae3b876f	9a79548c419949c0bd0e501dbc8d4788834d3dd7	linux	fail-before pathguard tests + test_k1b_cli on main a8b4d8e8 with name-only stub	4 files	1	37 failed 36 passed (test_pathguard_callers 5 passed)	10	2026-11-12
+ddf1d584c280593d4db82e81489b440fae3b876f	9a79548c419949c0bd0e501dbc8d4788834d3dd7	linux	ruff check + format --check + bandit 1.9.4 (uvx) + scan_repo + gitleaks	src tests demos tools	0	all clean	3	2026-11-12
