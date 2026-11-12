@@ -128,6 +128,18 @@ def status_text(status: object) -> str:
     return int.__repr__(status) if isinstance(status, int) and not isinstance(status, bool) else "?"
 
 
+# The shape of an id that the code makes: a short lower-case prefix, a dash, 32 hex digits (`new_id`), and for a tool call
+# a colon and a counter (`<run id>:<n>`).
+_ID_SHAPE = re.compile(r"[a-z]{2,8}-[0-9a-f]{32}(?::[0-9]{1,6})?")
+
+
+def shown_id(value: object) -> str:
+    """An id for a message: the id itself if it has the shape of an id this code makes, else `?`. A caller can hand the
+    store any text as an id (an argument of the command line, a field of a signed answer); that text must never reach a
+    message, so only the shape the code itself makes is shown."""
+    return str.__str__(value) if isinstance(value, str) and _ID_SHAPE.fullmatch(value) else "?"
+
+
 def unreadable(what: str, exc: BaseException) -> ConfigError:
     """The one refusal for a file that exists but cannot be read: a fixed sentence, the place (`what`, a fixed label
     written in code) and the error TYPE only (the error's own text holds the path or the bytes). Raise it `from None`."""

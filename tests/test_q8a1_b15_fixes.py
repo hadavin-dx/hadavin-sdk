@@ -156,3 +156,100 @@ def test_check_config_opens_no_connection_and_writes_nothing(tmp_path, monkeypat
     assert cli.main(["--config", str(d), "check-config"]) == 0
     after = sorted((p.relative_to(tmp_path), p.stat().st_mtime_ns) for p in tmp_path.rglob("*"))
     assert before == after
+
+
+# ---- Issue 4: an id that a caller hands in never reaches a message -------------------------------------------------------
+
+
+def test_shown_id_shows_only_the_shape_of_an_id_the_code_makes():
+    import re
+
+    from hadavin_sdk.errors import shown_id
+    from hadavin_sdk.models import new_id
+
+    run = new_id("run")
+    assert shown_id(run) == run and shown_id(run + ":12") == run + ":12"
+    text = _marker("id")
+
+    class Odd(str):
+        def __str__(self) -> str:
+            return text
+
+        __format__ = lambda self, spec: text  # noqa: E731
+
+    assert shown_id(Odd(run)) == run and f"{shown_id(Odd(run))}" == run
+    for bad in (
+        text,
+        "run-1",
+        run.upper(),
+        run[:-1],
+        run + "x",
+        run + ":",
+        "../" + run,
+        run + "\n",
+        "",
+        None,
+        7,
+        b"x",
+    ):
+        assert shown_id(bad) == "?", bad
+    # a fuzz: whatever comes out is "?" or the shape
+    state = 5
+    alphabet = "run-0123456789abcdefABCDEF:/ .?\n"
+    for _ in range(3000):
+        state = (state * 1103515245 + 12345) % 2**31
+        value = "".join(
+            alphabet[(state >> (i % 17) + i) % len(alphabet)] for i in range(state % 60)
+        )
+        out = shown_id(value)
+        assert out == "?" or (
+            out == value and re.fullmatch(r"[a-z]{2,8}-[0-9a-f]{32}(:[0-9]{1,6})?", out)
+        )
+
+
+def test_not_found_keeps_the_id_and_shows_one_fixed_sentence():
+    from hadavin_sdk.store import MemoryStore, NotFound
+
+    text = _marker("notfound")
+    err = NotFound(text)
+    assert err.key == text and text not in str(err) and text not in repr(err)
+    with pytest.raises(NotFound) as raised:
+        MemoryStore().get_run(text)
+    assert text not in str(raised.value) and text not in repr(raised.value)
+    assert raised.value.key == text
+
+
+def test_a_stale_state_message_shows_a_caller_chosen_id_as_a_question_mark():
+    from hadavin_sdk.models import Run
+    from hadavin_sdk.store import MemoryStore, StaleState
+
+    text = _marker("stale")
+    store = MemoryStore()
+    run = Run(run_id=text, agent_id="a", principal_id="p", trigger_kind="user", trigger_ref="t")
+    store.create_run(run)
+    with pytest.raises(StaleState) as raised:
+        store.create_run(run)
+    assert text not in str(raised.value) and "?" in str(raised.value)
+
+
+def test_an_audit_event_id_is_a_plain_name_so_it_can_be_a_file_name():
+    from pydantic import ValidationError
+
+    from hadavin_sdk.models import AuditEvent, new_id
+
+    base = {"run_id": "r", "domain": "d", "operation": "o", "principal": "p", "source": "s"}
+    assert AuditEvent(event_id=new_id("evt"), **base).event_id.startswith("evt-")
+    for hostile in (
+        "../x",
+        "a/b",
+        "a\\b",
+        ".hidden",
+        "a b",
+        "",
+        "x" * 129,
+        "a\x00b",
+        "a.json",
+        "x\n",
+    ):
+        with pytest.raises(ValidationError):
+            AuditEvent(event_id=hostile, **base)

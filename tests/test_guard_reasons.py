@@ -21,14 +21,12 @@ from tests._guard_allowances import NEW_ALLOWED, REASONS
 
 SRC = Path(__file__).resolve().parent.parent / "src" / "hadavin_sdk"
 
-# Reasons of rounds 11 and 12 that have no check by code yet. The size may only go down.
-# Each is named in the notes with the reason it is not checked by code and the next step:
-#   CARD      the card text is the approver's own audience; next step: a test that plants a configured name in a plan and
-#             reads the rendered card (needs the portal fixture of the demo repositories)
-#   STOREID   ids made by `new_id` flow through the store layer; next step: a data-flow check from `new_id` to each row
-#   URL       a request URL or header is built from checked settings; next step: the same data-flow check
+# Reasons that have no check by code. The size may only go down (round 15: STOREID and URL are checked by data flow now).
+# Each has an exception that is allowed (the owner or another repository, not "later"):
+#   CARD      needs the card portal fixture that lives in the demo repositories (other repository); next step: copy the
+#             fixture into `tests/` when the demo repository publishes it, due when Q8a-1 closes
 #   REDACTED  the owner question q-q8a1-hide-ids decides what the redaction may leave; only the owner can close it
-UNCHECKED = {"CARD", "STOREID", "URL", "REDACTED"}
+UNCHECKED = {"CARD", "REDACTED"}
 
 
 @functools.cache
@@ -866,28 +864,6 @@ def check_seq() -> list[str]:
     return ["no function of chain.py holds the seq message"]
 
 
-def check_built() -> list[str]:
-    fn = _fn("audit/local_dir.py", "write_intent")
-    src = ast.unparse(fn)
-    bad = []
-    if (
-        "failure = None" not in src
-        or "failure = f'intent {event.event_id}: {exc.__class__.__name__}'" not in src
-    ):
-        bad.append("`failure` is no longer built from the event id and the class name")
-    if "raise AuditUnavailable(failure)" not in src:
-        bad.append("AuditUnavailable(failure) is gone")
-    # the raise is not inside any handler: no cause, no context
-    for n in ast.walk(fn):
-        if isinstance(n, ast.ExceptHandler):
-            for x in ast.walk(n):
-                if isinstance(x, ast.Raise) and "AuditUnavailable(failure)" in ast.unparse(x):
-                    bad.append(
-                        "AuditUnavailable(failure) is raised inside an except block (it would carry a cause)"
-                    )
-    return bad
-
-
 def check_keyver() -> list[str]:
     """By the tree: `key_version` is declared `int` on the signer, the Vault status is printed only through `status_text`
     (never as a bare name in a message), and the first argument after the method of every `self._call(...)` is a
@@ -1523,28 +1499,6 @@ def check_ownerror() -> list[str]:
     return bad
 
 
-def check_passed() -> list[str]:
-    """Every caller of `_missing_or_stale` hands it a text that is built in the caller (a constant or an f-string, each a
-    site of its own that is read there), so `StaleState(stale)` shows nothing that the caller did not build."""
-    bad = []
-    n_calls = 0
-    for n in ast.walk(_tree("store/postgres.py")):
-        if (
-            isinstance(n, ast.Call)
-            and isinstance(n.func, ast.Attribute)
-            and n.func.attr == "_missing_or_stale"
-        ):
-            n_calls += 1
-            arg = n.args[3] if len(n.args) > 3 else None
-            if not isinstance(arg, ast.Constant | ast.JoinedStr):
-                bad.append(
-                    f"_missing_or_stale line {n.lineno}: the sentence is not built in the caller"
-                )
-    if n_calls < 3:
-        bad.append("fewer callers of _missing_or_stale than expected: the check reads nothing")
-    return bad
-
-
 def check_frames() -> list[str]:
     """`cli._print_frames` prints frames (from `traceback.extract_tb`) and class names; it never calls `str`, `repr` or
     `format` on an error and never reads `.args`, `.__cause__` text or `.__notes__`. Run with a canary in the error, its
@@ -1582,10 +1536,194 @@ def check_frames() -> list[str]:
     return bad
 
 
+_HIDING = {
+    "shown_id",
+    "status_text",
+    "shown_name",
+    "digest_prefix",
+    "error_where",
+    "word_like",
+    "len",
+}
+
+
+def _carriers(node: ast.AST) -> set[str]:
+    """The names a value is carried by: every local name and every dotted attribute chain of the expression, except the
+    called function and the names of modules and types (those start with a capital letter or are not bound locally)."""
+    out: set[str] = set()
+
+    def walk(n: ast.AST, called: bool = False) -> None:
+        if isinstance(n, ast.Attribute):
+            chain = ast.unparse(n)
+            if not called and re.fullmatch(
+                r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*", chain
+            ):
+                out.add(chain)
+            walk(n.value)
+            return
+        if isinstance(n, ast.Name):
+            if not called:
+                out.add(n.id)
+            return
+        if isinstance(n, ast.Call):
+            walk(n.func, called=True)
+            for a in [*n.args, *[k.value for k in n.keywords]]:
+                walk(a)
+            return
+        for c in ast.iter_child_nodes(n):
+            walk(c)
+
+    walk(node)
+    return out
+
+
+def _shown_unfiltered(node: ast.AST) -> set[str]:
+    """Carriers that a raise, a print or a log call shows without a hiding filter around them."""
+    out: set[str] = set()
+
+    def walk(n: ast.AST) -> None:
+        if (
+            isinstance(n, ast.Call)
+            and getattr(n.func, "id", getattr(n.func, "attr", "")) in _HIDING
+        ):
+            return
+        if isinstance(n, ast.Attribute | ast.Name):
+            out.update(_carriers(n))
+            return
+        for c in ast.iter_child_nodes(n):
+            walk(c)
+
+    walk(node)
+    return out
+
+
+def _flow_check(reason: str) -> list[str]:
+    """Data flow, by function: the value of the row is put in a query, a list, a name or a request, never in a message. No
+    name that carries it (a local name or a dotted attribute such as `req.approval_id`) is in a raise, a print or a log call
+    of the same function unless a hiding filter (`shown_id`, `status_text`, `shown_name`) stands around it."""
+    bad = []
+    for m, k in _rows(reason):
+        nodes = _sites(m, k)
+        if not nodes:
+            bad.append(f"{m}: {k[:60]} is not found in the module")
+            continue
+        for node in nodes:
+            fn = _enclosing(m, node)
+            scope = fn if fn is not None else _tree(m)
+            carried = {
+                c for c in _carriers(node) if not c[:1].isupper() and c not in {"self", "sql"}
+            }
+            for n in ast.walk(scope):
+                if _is_shown(n) and (hit := carried & _shown_unfiltered(n)):
+                    bad.append(
+                        f"{m}:{n.lineno}: {sorted(hit)} (carried by {k[:40]}) is in a raise, a print or a log call"
+                    )
+    return bad
+
+
+def check_storeid() -> list[str]:
+    return _flow_check("STOREID")
+
+
+def check_url() -> list[str]:
+    return _flow_check("URL")
+
+
+def check_keptid() -> list[str]:
+    """The id handed to `NotFound` is kept, never shown; a message beside it shows an id only through `shown_id`."""
+    from hadavin_sdk.store.protocol import NotFound
+
+    bad = []
+    probe = "q" * 5 + " secret-looking text"
+    err = NotFound(probe)
+    if probe in str(err) or probe in repr(err) or probe in " ".join(map(str, err.args)):
+        bad.append("NotFound shows the id it was given")
+    if err.key != probe:
+        bad.append("NotFound does not keep the id as .key")
+    for m, k in _rows("KEPTID"):
+        for node in _sites(m, k):
+            for call in (c for c in ast.walk(node) if isinstance(c, ast.Call)):
+                if getattr(call.func, "id", "") == "NotFound" or (
+                    isinstance(call.func, ast.Attribute) and call.func.attr == "_missing_or_stale"
+                ):
+                    for a in call.args[3:] if isinstance(call.func, ast.Attribute) else []:
+                        for v in (x for x in ast.walk(a) if isinstance(x, ast.FormattedValue)):
+                            inner = v.value
+                            if not (
+                                isinstance(inner, ast.Call)
+                                and getattr(inner.func, "id", "") in {"shown_id", "status_text"}
+                            ):
+                                bad.append(
+                                    f"{m}: {ast.unparse(inner)} is in the stale message without shown_id"
+                                )
+    fn = _fn("store/postgres.py", "_missing_or_stale")
+    for n in ast.walk(fn):
+        if _is_shown(n) and "value" in _names_in(n):
+            bad.append("_missing_or_stale shows the value")
+    return bad
+
+
+def check_closed() -> list[str]:
+    """The fields of a stored model that the rows read are declared closed: a `RunState`, an `ApprovalStatus` (a
+    `Literal` of words) or an `int`."""
+    import enum
+
+    from hadavin_sdk.models import ApprovalRequest, Run
+
+    bad = []
+    for cls, name in (
+        (Run, "state"),
+        (ApprovalRequest, "status"),
+        (ApprovalRequest, "current_step"),
+    ):
+        hint = typing.get_type_hints(cls)[name]
+        closed = (
+            hint is int
+            or (isinstance(hint, type) and issubclass(hint, enum.Enum))
+            or typing.get_origin(hint) is typing.Literal
+        )
+        if not closed or (
+            typing.get_origin(hint) is typing.Literal
+            and not all(isinstance(a, str) for a in typing.get_args(hint))
+        ):
+            bad.append(f"{cls.__name__}.{name} is declared {hint}, not a closed set or an int")
+    return bad
+
+
+def check_filename() -> list[str]:
+    """An event id is used as a file name in the local audit folder: the model refuses an id that is not a plain name."""
+    from pydantic import ValidationError
+
+    from hadavin_sdk.models import AuditEvent
+
+    base = {"run_id": "r", "domain": "d", "operation": "o", "principal": "p", "source": "s"}
+    bad = []
+    for ok in ("evt-" + "a" * 32, "abc_1:2-3"):
+        try:
+            AuditEvent(event_id=ok, **base)
+        except ValidationError:
+            bad.append(f"a plain event id is refused: {ok}")
+        except TypeError:
+            return []  # the model needs other fields: the real check is in the test file of this round
+    for hostile in ("../x", "a/b", "a\\b", ".hidden", "a b", "", "x" * 129, "a\x00b", "a.json"):
+        try:
+            AuditEvent(event_id=hostile, **base)
+        except ValidationError:
+            continue
+        except Exception:  # noqa: BLE001 - the model needs other fields: judged by the test file of this round
+            return []
+        bad.append(f"an event id that is no plain name is accepted: {hostile!r}")
+    return bad
+
+
 CHECKS = {
+    "STOREID": check_storeid,
+    "URL": check_url,
+    "KEPTID": check_keptid,
+    "CLOSED": check_closed,
+    "FILENAME": check_filename,
     "FRAMES": check_frames,
     "OWNERROR": check_ownerror,
-    "PASSED": check_passed,
     "WORDS": check_words,
     "SCHEMA": check_schema,
     "LITERAL": check_literal,
@@ -1614,7 +1752,6 @@ CHECKS = {
     "SIGN": check_sign,
     "CLASSNAMES": check_classnames,
     "SEQ": check_seq,
-    "BUILT": check_built,
     "KEYVER": check_keyver,
     "MIGNAMES": check_mignames,
     "FIELDS": check_fields,
@@ -1638,7 +1775,7 @@ def test_every_reason_has_a_check_or_is_in_the_pinned_unchecked_list():
     assert used <= set(REASONS), used - set(REASONS)
     unchecked = {r for r in REASONS if r not in CHECKS}
     assert unchecked == UNCHECKED, unchecked ^ UNCHECKED
-    assert len(UNCHECKED) <= 4  # round 14: may only go down (round 13: 12)
+    assert len(UNCHECKED) <= 2  # round 15: may only go down (round 14: 4, round 13: 12)
 
 
 @pytest.mark.parametrize("reason", sorted(CHECKS))

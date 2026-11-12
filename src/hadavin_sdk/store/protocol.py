@@ -43,7 +43,15 @@ class StoreUnavailable(ConfigError):
 
 
 class NotFound(KeyError):
-    pass
+    """No row has this id. The id is a caller's value (an argument of the command line, a field of a signed answer), so it
+    is kept as `.key` and is never part of the text: the text of this error is one fixed sentence (Round 15)."""
+
+    def __init__(self, key: object = "") -> None:
+        super().__init__("no row has this id")
+        self.key = key
+
+    def __str__(self) -> str:
+        return "no row has this id"
 
 
 class Store(Protocol):

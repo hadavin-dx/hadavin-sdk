@@ -27,7 +27,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel
 
-from hadavin_sdk.errors import NOT_SHOWN, ConfigError, read_configured
+from hadavin_sdk.errors import NOT_SHOWN, ConfigError, read_configured, shown_id, status_text
 from hadavin_sdk.models import (
     OPEN_STATES,
     ApprovalDecision,
@@ -253,7 +253,7 @@ class PostgresStore:
         try:
             self._insert("runs", run)
         except psycopg.errors.UniqueViolation:
-            raise StaleState(f"run exists: {run.run_id}") from None
+            raise StaleState(f"run exists: {shown_id(run.run_id)}") from None
 
     def get_run(self, run_id: str) -> Run:
         return self._one(Run, "runs", "run_id", run_id)
@@ -278,7 +278,9 @@ class PostgresStore:
                 (new.value, reason_code, now(), run_id, expected.value),
             ).fetchone()
         if row is None:
-            raise self._missing_or_stale("runs", "run_id", run_id, f"{run_id}: expected {expected}")
+            raise self._missing_or_stale(
+                "runs", "run_id", run_id, f"{shown_id(run_id)}: not in the expected state"
+            )
         return self.get_run(run_id)
 
     def _update_run(self, query: str, value: Any, run_id: str) -> None:
@@ -314,7 +316,7 @@ class PostgresStore:
         try:
             self._insert("gate_decisions", decision)  # append-only: the runtime role has no UPDATE
         except psycopg.errors.UniqueViolation:
-            raise StaleState(f"gate decision exists: {decision.run_id}") from None
+            raise StaleState(f"gate decision exists: {shown_id(decision.run_id)}") from None
 
     def get_gate_decision(self, run_id: str) -> GateDecision:
         return self._one(GateDecision, "gate_decisions", "run_id", run_id)
@@ -345,7 +347,7 @@ class PostgresStore:
                 "approval_requests",
                 "approval_id",
                 req.approval_id,
-                f"{req.approval_id}: not {expected_status}/{expected_step}",
+                f"{shown_id(req.approval_id)}: not at the expected status and step",
             )
 
     def record_decision(
@@ -383,7 +385,7 @@ class PostgresStore:
                 "approval_requests",
                 "approval_id",
                 req.approval_id,
-                f"{req.approval_id}: not {expected_status}/{expected_step}",
+                f"{shown_id(req.approval_id)}: not at the expected status and step",
             )
 
     def list_due_approvals(self, now: datetime) -> list[ApprovalRequest]:
@@ -398,7 +400,9 @@ class PostgresStore:
         try:
             self._insert("approval_decisions", decision)
         except psycopg.errors.UniqueViolation:
-            raise StaleState(f"decision exists: {decision.approval_id}/{decision.step}") from None
+            raise StaleState(
+                f"decision exists: {shown_id(decision.approval_id)}/{status_text(decision.step)}"
+            ) from None
 
     def get_approval_decision(self, approval_id: str) -> ApprovalDecision | None:
         found = self._select(
@@ -490,7 +494,7 @@ class PostgresStore:
         try:
             self._insert("tool_calls", call)
         except psycopg.errors.UniqueViolation:
-            raise StaleState(f"tool call exists: {call.call_id}") from None
+            raise StaleState(f"tool call exists: {shown_id(call.call_id)}") from None
 
     def list_tool_calls(self, run_id: str) -> list[ToolCallRecord]:
         return self._select(

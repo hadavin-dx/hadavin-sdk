@@ -195,7 +195,11 @@ class ApprovalDecision(Shape):
 class AuditEvent(Shape):
     """Hashes and codes only: never payload text."""
 
-    event_id: str = Field(default_factory=lambda: new_id("evt"))
+    # Round 15: the id is a file name in the local audit folder and a key in the audit table, so it has the shape of a name:
+    # letters, digits, dash, underscore, colon; no dot, no slash, no backslash, no space, at most 128, first character a letter or digit.
+    event_id: str = Field(
+        default_factory=lambda: new_id("evt"), pattern=r"^[A-Za-z0-9][A-Za-z0-9_:-]{0,127}$"
+    )
     ts: datetime = Field(default_factory=now)
     run_id: str
     domain: str

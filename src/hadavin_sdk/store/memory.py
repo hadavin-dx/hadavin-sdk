@@ -7,6 +7,7 @@ from collections import defaultdict
 from datetime import date, datetime
 from decimal import Decimal
 
+from hadavin_sdk.errors import shown_id, status_text
 from hadavin_sdk.models import (
     OPEN_STATES,
     ApprovalDecision,
@@ -51,7 +52,7 @@ class MemoryStore:
     def create_run(self, run: Run) -> None:
         with self._lock:
             if run.run_id in self._runs:
-                raise StaleState(f"run exists: {run.run_id}")
+                raise StaleState(f"run exists: {shown_id(run.run_id)}")
             self._runs[run.run_id] = run.model_copy(deep=True)
 
     def get_run(self, run_id: str) -> Run:
@@ -66,7 +67,7 @@ class MemoryStore:
             if run is None:
                 raise NotFound(run_id)
             if run.state != expected:
-                raise StaleState(f"{run_id}: state is {run.state}, expected {expected}")
+                raise StaleState(f"{shown_id(run_id)}: state is {run.state}")
             run = run.model_copy(
                 update={"state": new, "reason_code": reason_code, "updated_at": now()}
             )
@@ -113,7 +114,7 @@ class MemoryStore:
     def save_gate_decision(self, decision: GateDecision) -> None:
         with self._lock:
             if decision.run_id in self._gates:
-                raise StaleState(f"gate decision exists: {decision.run_id}")
+                raise StaleState(f"gate decision exists: {shown_id(decision.run_id)}")
             self._gates[decision.run_id] = decision.model_copy(deep=True)
 
     def get_gate_decision(self, run_id: str) -> GateDecision:
@@ -136,7 +137,9 @@ class MemoryStore:
             if cur is None:
                 raise NotFound(req.approval_id)
             if cur.status != expected_status or cur.current_step != expected_step:
-                raise StaleState(f"{req.approval_id}: {cur.status}/{cur.current_step}")
+                raise StaleState(
+                    f"{shown_id(req.approval_id)}: {cur.status}/{status_text(cur.current_step)}"
+                )
             self._approvals[req.approval_id] = req.model_copy(deep=True)
 
     def record_decision(
@@ -153,7 +156,9 @@ class MemoryStore:
             key = (decision.approval_id, decision.step)
             stale = cur.status != expected_status or cur.current_step != expected_step
             if stale or any((d.approval_id, d.step) == key for d in self._decisions):
-                raise StaleState(f"{req.approval_id}: {cur.status}/{cur.current_step}")
+                raise StaleState(
+                    f"{shown_id(req.approval_id)}: {cur.status}/{status_text(cur.current_step)}"
+                )
             self._decisions.append(decision.model_copy(deep=True))
             self._approvals[req.approval_id] = req.model_copy(deep=True)
 
@@ -169,7 +174,9 @@ class MemoryStore:
         with self._lock:
             key = (decision.approval_id, decision.step)
             if any((d.approval_id, d.step) == key for d in self._decisions):
-                raise StaleState(f"decision exists: {key}")
+                raise StaleState(
+                    f"decision exists: {shown_id(decision.approval_id)}/{status_text(decision.step)}"
+                )
             self._decisions.append(decision.model_copy(deep=True))
 
     def get_approval_decision(self, approval_id: str) -> ApprovalDecision | None:
@@ -235,7 +242,7 @@ class MemoryStore:
     def add_tool_call(self, call: ToolCallRecord) -> None:
         with self._lock:
             if call.call_id in self._tool_calls:
-                raise StaleState(f"tool call exists: {call.call_id}")
+                raise StaleState(f"tool call exists: {shown_id(call.call_id)}")
             self._tool_calls[call.call_id] = call.model_copy(deep=True)
 
     def list_tool_calls(self, run_id: str) -> list[ToolCallRecord]:

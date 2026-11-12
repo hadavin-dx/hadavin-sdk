@@ -38,7 +38,7 @@ from typing import Any
 from hadavin_sdk.audit import anchors
 from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
 from hadavin_sdk.audit.signer import Alg, Signer, verify_signature
-from hadavin_sdk.errors import ConfigError, call_class_only
+from hadavin_sdk.errors import ConfigError, call_class_only, shown_id
 from hadavin_sdk.models import AuditEvent
 
 GENESIS = "0" * 64
@@ -183,7 +183,7 @@ class ChainAudit:
         kind = f"{event.domain}.{event.operation}"
         with self._db.transaction() as q:
             if q("SELECT 1 FROM audit_entries WHERE event_id = ?", (event.event_id,)):
-                raise DuplicateEvent(event.event_id)
+                raise DuplicateEvent(shown_id(event.event_id))
             last = q("SELECT seq, hash FROM audit_entries ORDER BY seq DESC LIMIT 1")
             seq, prev = (last[0][0] + 1, last[0][1]) if last else (1, GENESIS)
             q(
@@ -208,7 +208,7 @@ class ChainAudit:
         # A database error can quote the host, user or table: only its class is kept, no cause or context.
         return call_class_only(
             lambda: self._append(event),
-            lambda cls: AuditUnavailable(f"intent {event.event_id}: {cls}"),
+            lambda cls: AuditUnavailable(f"intent {shown_id(event.event_id)}: {cls}"),
             passthrough=(DuplicateEvent,),
         )
 

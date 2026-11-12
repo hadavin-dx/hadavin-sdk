@@ -18,7 +18,7 @@ import threading
 from pathlib import Path
 
 from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
-from hadavin_sdk.errors import read_configured
+from hadavin_sdk.errors import read_configured, shown_id
 from hadavin_sdk.models import AuditEvent
 
 
@@ -97,7 +97,7 @@ class LocalDirSink:
                 except FileExistsError:
                     # Same bytes and no index line = a half-finished earlier write: finish it.
                     if self._indexed(key) or (self.objects / key).read_bytes() != body:
-                        raise DuplicateEvent(event.event_id) from None
+                        raise DuplicateEvent(shown_id(event.event_id)) from None
             finally:
                 Path(tmp).unlink(missing_ok=True)
             self._append_index(entry)
@@ -111,7 +111,7 @@ class LocalDirSink:
             raise
         except OSError as exc:
             # The OS error quotes the configured path; raised after this block so no cause or context carries it.
-            failure = f"intent {event.event_id}: {exc.__class__.__name__}"
+            failure = f"intent {shown_id(event.event_id)}: {exc.__class__.__name__}"
         raise AuditUnavailable(failure)
 
     def write_outcome(self, event: AuditEvent) -> str | None:

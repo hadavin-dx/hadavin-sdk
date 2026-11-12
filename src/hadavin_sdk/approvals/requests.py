@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 from hadavin_sdk.approvals.channel import Channel, clean
 from hadavin_sdk.audit.protocol import AuditSink
+from hadavin_sdk.errors import shown_id
 from hadavin_sdk.guard.injection import Detector, injection_check
 from hadavin_sdk.guard.runmap import RedactionError
 from hadavin_sdk.models import (
@@ -117,7 +118,7 @@ class Approvals:
         except Exception as exc:  # noqa: BLE001 - any channel failure: keep the request, resend later
             _LOG.warning(
                 "approval %s: channel send failed (%s); tick will resend",
-                req.approval_id,
+                shown_id(req.approval_id),
                 type(exc).__name__,
             )
             return req
@@ -188,7 +189,9 @@ class Approvals:
             self.channel.update(req)
         except Exception as exc:  # noqa: BLE001 - a stale message is cosmetic
             _LOG.warning(
-                "approval %s: channel update failed (%s)", req.approval_id, type(exc).__name__
+                "approval %s: channel update failed (%s)",
+                shown_id(req.approval_id),
+                type(exc).__name__,
             )
 
     def sweep(self, at: datetime | None = None) -> list[str]:
@@ -230,7 +233,7 @@ class Approvals:
                 except Exception as exc:  # noqa: BLE001 - tick reconcile ends the run if this failed
                     _LOG.warning(
                         "approval %s: expiry follow-up failed (%s)",
-                        req.approval_id,
+                        shown_id(req.approval_id),
                         type(exc).__name__,
                     )
             touched.append(req.approval_id)

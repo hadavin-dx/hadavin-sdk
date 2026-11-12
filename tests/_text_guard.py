@@ -30,14 +30,14 @@ SAFE_CALLS = frozenset(
     {
         "len", "bool", "round", "abs", "ord", "id", "hash", "isinstance", "any", "all",
         "callable", "hasattr", "range", "divmod", "chr", "type", "isfinite",
-        "shown_name", "_named", "shown_names", "digest_prefix", "error_where", "word_like", "is_digest", "status_text",
+        "shown_name", "_named", "shown_names", "digest_prefix", "error_where", "word_like", "is_digest", "status_text", "shown_id",
     }
 )  # fmt: skip
 # Round 15 (Issue 1e): these names are filters of this package. A call of one of them is trusted only when the name is the
 # package's own function: not a parameter or a local name, and not imported from outside the scanned tree.
 FILTERS = frozenset(
     {
-        "shown_name", "_named", "shown_names", "digest_prefix", "error_where", "word_like", "is_digest", "status_text",
+        "shown_name", "_named", "shown_names", "digest_prefix", "error_where", "word_like", "is_digest", "status_text", "shown_id",
     }
 )  # fmt: skip
 LITERAL_BUILDERS = frozenset(

@@ -972,6 +972,22 @@ M = [
         '    print("the configuration is accepted")', '    (load_config().root / "zz.txt").write_text("x")\n    print("the configuration is accepted")', 'tests/test_q8a1_b15_fixes.py', 'test_check_config_opens_no_connection_and_writes_nothing', 'assert [(PosixPath', ''),
     other_mutant('Z123 round 15: int() and float() are safe calls again (guard)', 'tests/_text_guard.py',
         'if f.id in SAFE_CALLS:', 'if f.id in SAFE_CALLS or f.id in ("int", "float"):', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R15n', '[R15n int() of an unproven value in a message]'),
+    other_mutant('Z124 round 15: an id carried into a list is also logged (requests.py), STOREID data flow', 'src/hadavin_sdk/approvals/requests.py',
+        '                sent.append(req.approval_id)', '                sent.append(req.approval_id)\n                _LOG.warning("sent %s", req.approval_id)', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'carried by', '[STOREID]'),
+    other_mutant('Z125 round 15: a vault key name is printed (signer_vault.py), URL data flow', 'src/hadavin_sdk/audit/signer_vault.py',
+        'data = self._call("GET", f"keys/{self.key_name}")', 'data = self._call("GET", f"keys/{self.key_name}") or print(self.key_name)', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'carried by', '[URL]'),
+    other_mutant('Z126 round 15: NotFound shows the id it was given (protocol.py)', 'src/hadavin_sdk/store/protocol.py',
+        'return "no row has this id"\n', 'return f"{self.key}"\n', 'tests/test_q8a1_b15_fixes.py', 'test_not_found_keeps_the_id_and_shows_one_fixed_sentence', 'zq-b15-notfound', ''),
+    other_mutant('Z127 round 15: the audit event id may be any text (models.py)', 'src/hadavin_sdk/models.py',
+        'default_factory=lambda: new_id("evt"), pattern=r"^[A-Za-z0-9][A-Za-z0-9_:-]{0,127}$"', 'default_factory=lambda: new_id("evt")', 'tests/test_q8a1_b15_fixes.py', 'test_an_audit_event_id_is_a_plain_name_so_it_can_be_a_file_name', 'DID NOT RAISE', ''),
+    other_mutant('Z128 round 15: shown_id shows any text (errors.py)', 'src/hadavin_sdk/errors.py',
+        'return str.__str__(value) if isinstance(value, str) and _ID_SHAPE.fullmatch(value) else "?"', 'return str(value)', 'tests/test_q8a1_b15_fixes.py', 'test_shown_id_shows_only_the_shape_of_an_id_the_code_makes', 'zq-b15-id', ''),
+    other_mutant('Z129 round 15: shown_id shows an id followed by other text (errors.py)', 'src/hadavin_sdk/errors.py',
+        '_ID_SHAPE.fullmatch(value)', '_ID_SHAPE.match(value)', 'tests/test_q8a1_b15_fixes.py', 'test_shown_id_shows_only_the_shape_of_an_id_the_code_makes', 'AssertionError: run-', ''),
+    other_mutant('Z130 round 15: a stale-state message shows the id as it is (memory.py)', 'src/hadavin_sdk/store/memory.py',
+        'f"run exists: {shown_id(run.run_id)}"', 'f"run exists: {run.run_id}"', 'tests/test_q8a1_b15_fixes.py', 'test_a_stale_state_message_shows_a_caller_chosen_id_as_a_question_mark', 'zq-b15-stale', ''),
+    other_mutant('Z131 round 15: the run state field is a plain text (models.py), CLOSED', 'src/hadavin_sdk/models.py',
+        '    state: RunState = RunState.RECEIVED\n    reason_code', '    state: str = RunState.RECEIVED\n    reason_code', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'is declared', '[CLOSED]'),
 ]  # fmt: skip
 
 
