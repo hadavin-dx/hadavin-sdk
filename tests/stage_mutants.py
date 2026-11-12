@@ -1204,7 +1204,7 @@ M = [
     other_mutant('Z255 round 18: write_intent says a failed write is a name problem (local_dir.py)', 'src/hadavin_sdk/audit/local_dir.py',
         'the event could not be written ({exc.__class__.__name__})', 'the event id is not a plain file name', 'tests/test_q8a1_b18_fixes.py', 'test_write_intent_says_a_plain_name_problem_only_for_a_name_and_the_class_for_a_failed_write', 'not a plain file name'),
     other_mutant('Z256 round 18: the HTTPCODE check takes any class that ends in HTTPError (guard)', 'tests/test_guard_reasons.py',
-        'if type_text != "urllib.error.HTTPError":', 'if not type_text.endswith("HTTPError"):', 'tests/test_q8a1_b18_fixes.py', 'test_the_httpcode_check_accepts_only_the_library_class_with_its_import', 'assert'),
+        'if type_text != "urllib.error.HTTPError":', 'if not type_text.endswith("HTTPError"):', 'tests/test_q8a1_b18_fixes.py', 'test_the_httpcode_check_accepts_only_the_library_class_with_its_import', 'another class that ends in HTTPError'),
     other_mutant('Z257 round 18: the HTTPCODE check does not need the import (guard)', 'tests/test_guard_reasons.py',
         'if isinstance(n, ast.Import) and any(a.name == "urllib.error" for a in n.names):', 'if False:', 'tests/test_q8a1_b18_fixes.py', 'test_the_httpcode_check_accepts_only_the_library_class_with_its_import', 'assert'),
 ]  # fmt: skip
