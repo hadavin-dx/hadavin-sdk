@@ -576,7 +576,7 @@ def test_a_vault_transit_refusal_does_not_name_the_configured_key():
             return 500, {}
 
     signer = VaultTransitSigner(Client(), "transit", MARKER, 1)
-    with pytest.raises(Exception) as err:  # noqa: PT011 - a VaultError, said by its text below
+    with pytest.raises(Exception) as err:
         signer.sign(b"x")
     assert MARKER not in _everything_shown(err.value), str(err.value)
     assert "Vault answered 500" in str(err.value)
@@ -586,7 +586,7 @@ def test_a_vault_transit_refusal_does_not_name_the_configured_key():
 def test_a_float_inside_a_data_object_says_the_path_without_the_text_of_a_key():
     from hadavin_sdk.models import canonical_json
 
-    with pytest.raises(ValueError) as err:  # noqa: PT011 - the text is checked below
+    with pytest.raises(ValueError) as err:
         canonical_json({SECRET_LOOKING: {"a": 1.5}})
     assert str(err.value) == "float at $.<not shown>.a: use a decimal string", str(err.value)
 
