@@ -39,6 +39,7 @@ BATCH7 = "test_q8b_batch7.py"
 BATCH8 = "test_q8b_batch8.py"
 LINES8 = "test_q8b_batch8_lines.py"
 BATCH9 = "test_q8b_batch9.py"
+B10 = "test_q8b_batch10.py"
 K5R11 = "test_k5_round11.py"
 K5PROD = "test_k5_producers.py"
 META = "test_mutation_runner_meta.py"
@@ -325,7 +326,9 @@ M = [
         BATCH6, 'test_k1_a_cookie_key_value_with_a_bracket_after_its_first_character_is_masked_whole', 'a bracket ended the cookie value'),
     mutant('M90 the record walk keeps its own ordinary words', RED, r'''    ORDINARY_WORDS,
     is_count_run,
+    is_ordinary_pair,
 )''', r'''    is_count_run,
+    is_ordinary_pair,
 )
 ORDINARY_WORDS = frozenset(["bypass"])''',
         BATCH6, 'test_d6_the_record_walk_reads_the_one_list_of_ordinary_words_and_endings', 'the record walk keeps its own list of ordinary words'),
@@ -381,12 +384,12 @@ ORDINARY_WORDS = frozenset(["bypass"])''',
     mutant('M109 an ordinary flag word with digits is a credential flag', REDACT, '(?![a-z]|[0-9]+[a-z])', '(?![a-z0-9])',
         BATCH7, 'test_b7_5_an_ordinary_word_stays_readable_in_every_form_on_every_path', 'an ordinary word was masked'),
     mutant('M110 the record walk keeps its own count words', RED, r'''    COUNT_WORDS_BEFORE_TOKENS,
-    GUARDED_GLUED,
     ORDINARY_WORDS,
     is_count_run,
-)''', r'''    GUARDED_GLUED,
-    ORDINARY_WORDS,
+    is_ordinary_pair,
+)''', r'''    ORDINARY_WORDS,
     is_count_run,
+    is_ordinary_pair,
 )
 COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
         BATCH7, 'test_b7_2_the_record_walk_reads_the_one_list_of_count_words', 'the record walk keeps its own list of count words'),
@@ -415,10 +418,10 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
         BATCH8, 'test_b8_1_a_plural_tokens_flag_after_a_glued_or_camel_case_word_is_masked_on_every_path', 'the record walk does not mask'),
     mutant('M119 a cookie flag may have prefix words and a plural', REDACT, r'''FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie", r"session[_\-]?cookie")''', r'''FLAG_EXACT_WORDS = (r"(?:[a-z0-9]+[_\-])*cookies?", r"session[_\-]?cookie")''',
         BATCH8, 'test_b8_2_a_switch_or_a_file_flag_of_the_cookie_family_leaves_the_next_word_readable', 'a cookie switch or file flag masked the next word'),
-    mutant('M120 the guarded pairs have no ordinary-word look-behind (card)', REDACT, r'''    return bare + _not_ordinary_ending(bare) + r"[_\-]?" + second''', r'''    return bare + r"[_\-]?" + second''',
-        BATCH8, 'test_b8_3_an_ordinary_word_with_one_more_word_stays_readable_in_every_form_on_every_path', 'an ordinary word was masked'),
-    mutant('M121 the record walk counts a guarded glued ending behind an ordinary word', RED, r'''and (w[: -len(ending)] + bare) in ORDINARY_WORDS''', r'''and False''',
-        BATCH8, 'test_b8_3_an_ordinary_word_with_one_more_word_stays_readable_in_every_form_on_every_path', 'the record walk masks'),
+    mutant('M120 a bare credential word has no ordinary-word look-behind (card)', REDACT, r'''    guard = _not_after_ordinary_word(word) if word in BARE_ENDINGS else ""''', r'''    guard = ""''',
+        B10, 'test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[bandpass]', 'an ordinary name was masked'),
+    mutant('M121 the record walk skips a glued ending behind an ordinary word', RED, r'''    return w.endswith(GLUED_ENDINGS)''', r'''    return w.endswith(GLUED_ENDINGS) and not any(w.startswith(o) for o in ORDINARY_WORDS)''',
+        B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[bandpass]', 'the record walk shows the key'),
     mutant('M122 the scheme word and its token after --authorization are no rule', REDACT, r'''(?![-\"'])([A-Za-z]+{_SP}+(?:{_QUOTED_TEXT}''', r'''(?![-\"'])(?!)([A-Za-z]+{_SP}+(?:{_QUOTED_TEXT}''',
         BATCH8, 'test_b8_4_any_scheme_word_and_its_token_are_masked_after_the_authorization_and_bearer_flags', 'a token after a scheme word is readable'),
     mutant('M123 a Digest value after --authorization is no rule', REDACT, r'''rf"{_SP}+(?:(digest{_SP}+{_DIGEST_WORD}''', r'''rf"{_SP}+(?!)(?:(digest{_SP}+{_DIGEST_WORD}''',
@@ -439,14 +442,14 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
     + "))[0-9]{0,9}"
 ''',
         BATCH8, 'test_b8_8_nine_ten_and_forty_digits_behind_a_bare_credential_word_are_masked_like_the_record_key', 'a bare word with many digits leaves a value readable'),
-    mutant('M129 a line break does not end a Digest header value', REDACT, r'''+ r"[ \t]++)([^\r\n]{8,}))"''', r'''+ r"[ \t]*+)([^\r\n]{8,}))"''',
+    mutant('M129 a line break does not end a Digest header value', REDACT, r'''+ r"[ \t]++)([^\r\n]{8,}+"''', r'''+ r"[ \t]*+)([^\r\n]{8,}+"''',
         BATCH8, 'test_b8_10_a_line_break_ends_a_digest_header_and_a_scheme_word', 'a line break after Digest does not end the header value'),
     mutant('M130 a line break does not end a Basic header value', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})"''',
         BATCH8, 'test_b8_10_a_line_break_ends_a_digest_header_and_a_scheme_word', 'a line break after Basic does not end the header value'),
     mutant('M131 a cookie word key in text has no more words', REDACT, r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]|(?-i:(?=[A-Z])))[A-Za-z0-9]+(?:[_.\-][A-Za-z0-9]+){0,5})?"''', r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+"''',
         BATCH8, 'test_b8_12_a_key_with_the_word_cookie_and_more_words_is_masked_in_text_as_the_record_walk_masks_it', 'a cookie word key leaves a value readable in text'),
-    mutant('M132 the ordinary look-behind of a guarded pair need not start a word (a real key turns readable)', REDACT, r'''r"(?<!(?<![a-z0-9])" + w + ")"''', r'''r"(?<!" + w + ")"''',
-        BATCH8, 'test_b8_3_a_real_two_word_credential_key_is_never_hidden_by_the_ordinary_look_behind', 'a credential key became readable'),
+    mutant('M132 the ordinary look-behind of a bare word need not start a word (a real key turns readable)', REDACT, r'''r"(?<!(?<![a-z0-9])" + w[: -len(ending)] + ")"''', r'''r"(?<!" + w[: -len(ending)] + ")"''',
+        B10, 'test_b10_6_an_ordinary_word_must_start_a_word_to_stay_readable_so_xcompass_key_is_a_key_as_before', 'an ordinary word that does not start a word'),
     mutant('M158 the curl cookie flag does not take the session spelling', REDACT, r'''FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie", r"session[_\-]?cookie")''', r'''FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie",)''',
         BATCH8, 'test_b8_2_the_cookie_flag_with_its_exact_name_still_masks_its_value', 'an exact cookie flag leaves its value readable'),
     # M145, M150 and M151 were never assigned in batch 8 (no mutant has those numbers; the controls file reads the table, not the numbers).
@@ -517,44 +520,35 @@ def _neutralise(text: str) -> str:
     # ---- batch 9: one planted fault for each new branch (rounds 9, Issues 1, 4, 5, 6) ----
     mutant('M159 a same-line gap is a space or a tab only', REDACT, r'''_LINE_SPACE = r"[^\S\r\n]"''', r'''_LINE_SPACE = r"[ \t]"''',
         BATCH9, 'test_b9_1_a_scheme_word_and_its_token_are_masked_across_every_gap_that_main_read[Basic]', 'leaves its token readable'),
-    mutant('M160 a line fold does not continue a wrapped header', REDACT, r'''r"(?:[ \t]++|\s*+(?=["''', r'''r"(?:(?!)|\s*+(?=["''',
-        BATCH9, 'test_b9_1_a_line_fold_continues_the_header_whatever_the_token_looks_like[Basic]', 'a short token after a fold leaves it readable'),
-    mutant('M161 a wrapped token needs 64 characters, not 16', REDACT, r'''WRAPPED_TOKEN_MIN = 16''', r'''WRAPPED_TOKEN_MIN = 64''',
-        BATCH9, 'test_b9_1_a_scheme_word_and_its_token_are_masked_across_every_gap_that_main_read[Basic]', 'leaves its token readable'),
-    mutant('M162 a wrapped token may be a plain lower-case word', REDACT, r'''r",})(?=(?-i:[a-z\-]*+[A-Z0-9+/_=<>]))))"''', r'''r",})))"''',
-        BATCH9, 'test_b9_1_a_prose_line_after_a_scheme_word_stays_readable_and_so_does_a_short_word', 'a line after the scheme word was masked'),
-    mutant('M163 a Digest header does not go on after a line fold', REDACT, r'''            + "*+"
-            + _LINE_BREAK
-            + r"[ \t]++)([^\r\n]{8,}))"''', r'''            + "*+"
-            + _LINE_BREAK
-            + r"(?!)[ \t]++)([^\r\n]{8,}))"''',
-        BATCH9, 'test_b9_1_a_digest_header_goes_on_after_a_line_fold_and_a_no_break_space_but_not_after_a_plain_line_break', 'a Digest value after'),
-    mutant('M164 a plain line break does not end a Digest header', REDACT, r'''            + "*+"
-            + _LINE_BREAK
-            + r"[ \t]++)([^\r\n]{8,}))"''', r'''            + "*+"
-            + _LINE_BREAK
-            + r"[ \t]*+)([^\r\n]{8,}))"''',
-        BATCH9, 'test_b9_1_a_digest_header_goes_on_after_a_line_fold_and_a_no_break_space_but_not_after_a_plain_line_break', 'a plain line break after Digest does not end the header'),
+    mutant('M160 a line break is no gap after a scheme word', REDACT, r'''_SCHEME_GAP = r"\s++"''', r'''_SCHEME_GAP = r"[^\S\r\n]++"''',
+        B10, 'test_b10_1_a_wrapped_authorization_token_of_8_or_more_characters_is_masked_after_any_line_break[Basic]', 'leaves a token of 8 or more characters readable'),
+    mutant('M161 the Basic rule needs a token of 16 characters, not 8', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{16,}={0,2})"''',
+        B10, 'test_b10_1_the_basic_rule_alone_masks_a_bare_wrapped_value_of_8_to_15_characters', 'a short wrapped Basic value is readable'),
+    mutant('M162 the generic Authorization rule needs a token of 16 characters, not 8', REDACT, r'''            + r"|[^\s\"']{8,})"''', r'''            + r"|[^\s\"']{16,})"''',
+        B10, 'test_b10_1_a_wrapped_authorization_token_of_8_or_more_characters_is_masked_after_any_line_break[Basic]', 'leaves a token of 8 or more characters readable'),
+    mutant('M163 a Digest header does not go on over folded lines', REDACT, r'''            + _DIGEST_FOLDS
+            + "))"''', r'''            + "))"''',
+        B10, 'test_b10_2_a_digest_header_folded_over_three_lines_is_masked_whole[\\n]', 'a folded Digest header leaves a hash readable'),
+    mutant('M164 a Digest header goes on over a line that does not start with a space or a tab', REDACT, r'''_DIGEST_FOLDS = r"(?:" + _LINE_BREAK + r"[ \t]++[^\r\n]*+)*+"''', r'''_DIGEST_FOLDS = r"(?:" + _LINE_BREAK + r"[ \t]*+[^\r\n]*+)*+"''',
+        B10, 'test_b10_2_a_digest_header_ends_at_the_first_line_that_does_not_start_with_a_space_or_a_tab', 'a Digest header goes on over a line that does not start'),
     mutant('M165 the Basic rule has no wrapped gap (the batch 8 text)', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic[ \t]+([a-z0-9+/<>_]{8,}={0,2})"''',
         BATCH9, 'test_b9_1_the_basic_rule_alone_masks_a_bare_wrapped_value_as_main_did', 'curl -H Basic'),
     mutant('M166 the generic Authorization rule has the batch 8 gap', REDACT, r'''[\"']?(?:[a-z]+"
             + _SCHEME_GAP''', r'''[\"']?(?:[a-z]+"
             + r"[ \t]+"''',
         BATCH9, 'test_b9_1_every_shape_that_main_masked_is_masked_now_a_differential_against_the_main_rules', 'main masked'),
-    mutant('M167 the record walk does not read a bypass name as a credential', RED, r'''            or (before == BYPASS_WORD and w in BYPASS_SECOND_WORDS)''', r'''            or False''',
-        BATCH9, 'test_b9_6_a_bypass_name_that_holds_a_secret_is_masked_in_every_form_on_every_path[bypass_key]', 'bypass_key'),
-    mutant('M168 a flag with an ordinary word and a second word of pass is no flag', REDACT, r'''    + r")(?![a-z]|[0-9]+[a-z])(?![_\-](?:"
-    + "|".join(BYPASS_SECOND_WORDS)
-    + r")(?![a-z0-9])))"''', r'''    + r")(?![a-z]|[0-9]+[a-z]))"''',
-        BATCH9, 'test_b9_6_a_bypass_name_that_holds_a_secret_is_masked_in_every_form_on_every_path[bypass_key]', 'bypass_key'),
+    mutant('M167 the record walk does not read an ordinary word and its second word as a credential', RED, r'''            or is_ordinary_pair(before, w)''', r'''            or False''',
+        B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[bandpass]', 'the record walk shows the key'),
+    mutant('M168 a flag with an ordinary word and a second word of its family is no flag', REDACT, r'''        w + r"(?![a-z]|[0-9]+[a-z])(?![_\-](?:" + "|".join(ordinary_second_words(w)) + r")(?![a-z0-9]))"''', r'''        w + r"(?![a-z]|[0-9]+[a-z])"''',
+        B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[bandpass]', 'an ordinary word and a second word of its family is readable'),
     mutant('M169 a protection-bypass key is no text rule', REDACT, r'''    r"protection[_\-]?bypass",
 ''', r'''''',
         BATCH9, 'test_b9_6_a_bypass_name_that_holds_a_secret_is_masked_in_every_form_on_every_path[x-vercel-protection-bypass]', 'protection-bypass'),
     mutant('M170 the record walk does not read protection and bypass as one name', RED, r'''        ("protection", "bypass"),
     }''', r'''    }''',
         BATCH9, 'test_b9_6_a_bypass_name_that_holds_a_secret_is_masked_in_every_form_on_every_path[x-vercel-protection-bypass]', 'protection-bypass'),
-    mutant('M171 the glued ending of a bypass name is skipped as an ordinary word', REDACT, r'''if w.endswith(ending) and w != BYPASS_WORD''', r'''if w.endswith(ending)''',
-        BATCH9, 'test_b9_6_a_bypass_name_that_holds_a_secret_is_masked_in_every_form_on_every_path[bypass_key]', 'bypass_key'),
+    mutant('M171 the glued ending of a bypass name is skipped as an ordinary word', RED, r'''    return w.endswith(GLUED_ENDINGS)''', r'''    return w.endswith(GLUED_ENDINGS) and not w.startswith("bypass")''',
+        BATCH9, 'test_b9_6_the_second_words_of_a_bypass_name_are_the_pass_pairs_read_from_one_list', 'a bypass name with the second word'),
     mutant('M172 a key tail reads at most 20 digits', REDACT, r'''KEY_TAIL = r"[0-9]*+[\w.\-]{0,20}"''', r'''KEY_TAIL = r"[0-9]{0,20}+[\w.\-]{0,20}"''',
         BATCH9, 'test_b9_4_any_run_of_digits_after_a_key_word_still_masks_the_value_as_text_and_as_a_record_key[200-pass]', 'a value is readable'),
     mutant('M173 a cookie word takes no digits', REDACT, r'''cookies?[0-9]*+(?:(?:[_.\-]''', r'''cookies?(?:(?:[_.\-]''',
@@ -577,6 +571,17 @@ def _neutralise(text: str) -> str:
         BATCH9, 'test_b9_5_a_flag_other_than_the_authorization_flags_keeps_the_one_word_rule[password]', 'a flag other than the authorization flags takes a scheme word'),
     mutant('M178 a cookie key needs no boundary in front of the word', REDACT, r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]''', r'''r"(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]''',
         BATCH8, 'test_b8_12_a_word_that_only_holds_cookie_inside_is_no_key_in_text_and_none_for_the_record_walk', 'mycookie was masked as text'),
+    # ---- batch 10: one planted fault for each new branch (round 10, Issues 1, 2, 6) ----
+    mutant('M179 the second words of an ordinary word are those of the pass pairs only', REDACT, r'''if word.endswith(bare))''', r'''if bare == "pass")''',
+        B10, 'test_b10_6_every_ordinary_word_has_the_second_words_of_its_family_from_the_one_table', 'are not those of its bare word'),
+    mutant('M180 the record walk does not read a key in capitals with cookie and more letters', RED, r'''    if _CAPITALS_COOKIE.search(key):
+        return True
+''', r'''''',
+        B10, 'test_b10_6_the_text_rule_and_the_record_walk_agree_for_a_cookie_word_and_one_more_word', 'the text rule and the record walk disagree'),
+    mutant('M181 a guarded pair needs its separator in the card rule', REDACT, r'''    return bare + r"[_\-]?" + second''', r'''    return bare + r"[_\-]" + second''',
+        B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[bandpass]', 'an ordinary word and a second word of its family is readable'),
+    mutant('M182 an ordinary word and a second word of its family is read as a pair only for pass words', REDACT, r'''    return second in ordinary_second_words(first)''', r'''    return second in ordinary_second_words(first) and first.endswith("pass")''',
+        B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[obsession]', 'the record walk shows the key'),
 ]  # fmt: skip
 
 
@@ -611,6 +616,7 @@ if __name__ == "__main__":
             "tests/" + BATCH7,
             "tests/" + BATCH8,
             "tests/" + BATCH9,
+            "tests/" + B10,
             "tests/" + LINES8,
             "tests/" + K5R11,
             "tests/" + K5PROD,

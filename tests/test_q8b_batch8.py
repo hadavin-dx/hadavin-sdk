@@ -163,9 +163,12 @@ def test_b8_2_the_cookie_flag_with_its_exact_name_still_masks_its_value():
 
 # ---- Issue 3: a key of two words (a bare word and one more) with an ordinary word in it ---------------------------------
 
+# Round 10 (Issue 6): an ordinary word and a second word of ITS OWN family is a credential name (`compass_key`, `possession_id`); the
+# keys below keep an ordinary word and a second word that is no word of its family: they stay readable (the table is
+# `ordinary_second_words`; `tests/test_q8b_batch10.py` pins both sides for every word).
 ORDINARY_TWO_WORD_KEYS = (
-    "possession_id", "obsession_id", "compass_code", "obsession_key", "possession_value", "compasscode",
-    "compass_key", "overpass_value", "encompass_phrase",
+    "compass_direction", "possession_name", "obsession_level", "overpass_name", "bypass_id", "compass_id", "possession_code",
+    "encompass_name", "obsession_phrase",
 )  # fmt: skip
 TWO_WORD_CREDENTIALS = (
     "xbypass_key", "bypasspass_key", "xbypasskey", "xcompass_code", "session_id", "sessionid", "pass_code",
@@ -174,6 +177,9 @@ TWO_WORD_CREDENTIALS = (
     # (they were pinned readable here in round 8: a deployment bypass secret was shown). A bare `bypass` stays readable (see below).
     "bypass_key", "bypass_value", "bypass-code", "bypasskey", "bypassphrase", "bypass_phrase", "bypasscode",
     "x-vercel-protection-bypass", "protection-bypass", "protectionBypass",
+    # Round 10 (Issue 6): the same rule for every ordinary word (they were pinned readable in rounds 8 and 9).
+    "compass_key", "compass_code", "compasscode", "overpass_value", "encompass_phrase", "possession_id", "obsession_id",
+    "obsession_key", "possession_value", "compass-key", "possessionid",
 )  # fmt: skip
 
 
@@ -359,7 +365,9 @@ def test_b8_7_an_unquoted_digest_header_is_masked_to_the_end_of_the_line_json_st
 
 
 def test_b8_10_a_line_break_ends_a_digest_header_and_a_scheme_word():
-    prose = "readable-prose-line here"
+    # Round 10 (Issue 1): a first word of 8 or more characters on the next line is read as the token again (as main did); the
+    # prose of this pin starts with short words (`tests/test_q8b_batch10.py` pins the cost).
+    prose = "a plain line of prose here"
     assert clean(f"Authorization: Digest\n{prose}") == f"Authorization: Digest\n{prose}", (
         "a line break after Digest does not end the header value"
     )

@@ -35,12 +35,10 @@ from hadavin_sdk import defaults
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.redact import (
     BARE_ENDINGS,
-    BYPASS_SECOND_WORDS,
-    BYPASS_WORD,
     COUNT_WORDS_BEFORE_TOKENS,
-    GUARDED_GLUED,
     ORDINARY_WORDS,
     is_count_run,
+    is_ordinary_pair,
 )
 from hadavin_sdk.k1b.bundle import Bundle, parse_ts
 
@@ -69,11 +67,17 @@ LIMITS = (
     "- A setting about a credential (a key that ends in enabled, policy, count, expiry and the like) is shown only "
     "when its value is a yes or no word, a number or a time.\n"
     "- A record key with a word that ends in `pass`, `auth` or `session` (`newpass`, `postgresauth`) is masked unless that "
-    "whole word is an ordinary English word from a short list (`bypass`, `compass`, `obsession`, "
-    "`possession`); `bypass` with a second word `key`, `code`, `value` or `phrase`, and `protection-bypass`, are masked (a bypass secret). `oauth`, `oauth_scopes` and `oauthProvider` are masked: `oauth` may hold a token. A harmless word that ends that way and is not on the list is hidden too, although it holds no "
+    "whole word is an ordinary English word from a short list (`bypass`, `compass`, `encompass`, `overpass`, `possession`, "
+    "`obsession` and the like). An ordinary word with a second word of its own family is masked, written with `_`, `-` or "
+    "nothing between: after `pass` words (`compass_key`, `compass_code`, `compass_value`, `compass_phrase`, `bypass_key`) "
+    "and after `session` words (`possession_id`, `possession_key`, `possession_cookie`, `obsession_id`); `protection-bypass` "
+    "is masked (a bypass secret). One table serves the key=value rule, the record walk and the flag rule. A bare `bypass`, "
+    "`compass` or `possession` and a name such as `compass_direction` or `compass_id` are shown (an ordinary word, not a credential name); "
+    "whether a bare `bypass` should be masked is the owner question `q-q8b-bare-bypass` (built: shown). `oauth`, `oauth_scopes` and `oauthProvider` are masked: `oauth` may hold a token. A harmless word that ends that way and is not on the list is hidden too, although it holds no "
     "credential. The record rule also masks some other keys that hold no credential "
-    "(`session_duration`, `auth_method`, `pass_rate`, `tokenCount`, `tokenType`).\n"
-    "- A flag that names a credential (`--password`, `--newpass`, `--dbpass`, `--oauth`) takes the one word after a space as its value, on a card, in a tool result and in a log line: in `--newpass a b` the word `a` is masked and `b` is shown, because `b` may be a file name or another argument of the command (this second word is shown after every credential flag: a stated design choice). After the flags `--authorization` and `--bearer` the scheme word and the token after it are both masked (any scheme word, quoted or not; a Digest value to the next flag or the end of the line); in `Authorization: Token <t>` the scheme word stays readable and the token is masked. A second word after any other credential flag is shown (`--pass2 a b`, `authorization=a b`: pinned for nine flags in `tests/test_q8b_batch9.py`). The flags `--cookie`, `--set-cookie` and `--session-cookie` take a value; `--no-cookies`, `--load-cookies`, `--save-cookies`, `--keep-session-cookies`, `--junk-session-cookies` and `--cookies` are not known to take a credential (switches or file names), so the word after them is shown. Written `--newpass=a b`, both words are masked. A flag with seven or more words joined by `-` or `_` in front of the credential word (`--a-b-c-d-e-f-g-password v`) keeps its value readable: the flag rule reads at most six words in front. In a `key=value` the key rule reads any run of digits after a key word (`pass` and 40 digits are masked) and then at most 20 more key characters, so a key word followed by digits and more than 20 other key characters (letters, `_`, `-`, `.`) keeps its value readable there. A header wrapped over lines: after `Basic`, `Token` or `ApiKey` a line break is a gap only in front of a space or a tab (a line fold) or in front of a token of 16 or more characters that holds a capital, a digit or one of `+/_=<>`; a lower-case word of 16 or more letters alone on the next line is shown (it cannot be told from prose), and `Authorization: Digest` followed by a line break and a line that does not start with a space or a tab is shown. After `--authorization` and a scheme word a quoted text is read to 512 characters; a longer one is left to the other rules (a long text of ordinary words is shown). A bare `bypass`, `compass_code`, `possession_id` and `obsession_id` are shown as record keys and as `key=value` (an ordinary word, not a credential name).\n"
+    "(`session_duration`, `auth_method`, `pass_rate`, `tokenCount`, `tokenType`). A key written in capitals "
+    "(`COOKIEJAR`, `COOKIESTORE`) is masked as a record key, as in a `key=value`; in lower case (`cookiejar`) it is shown on both sides.\n"
+    "- A flag that names a credential (`--password`, `--newpass`, `--dbpass`, `--oauth`) takes the one word after a space as its value, on a card, in a tool result and in a log line: in `--newpass a b` the word `a` is masked and `b` is shown, because `b` may be a file name or another argument of the command (this second word is shown after every credential flag: a stated design choice). After the flags `--authorization` and `--bearer` the scheme word and the token after it are both masked (any scheme word, quoted or not; a Digest value to the next flag or the end of the line); in `Authorization: Token <t>` the scheme word stays readable and the token is masked. A second word after any other credential flag is shown (`--pass2 a b`: pinned for the flags in `tests/test_q8b_batch9.py`); `authorization=a b` is a `key=value`, not a flag: its first word is masked and `b` is shown, not a flag rule. The flags `--cookie`, `--set-cookie` and `--session-cookie` take a value; `--no-cookies`, `--load-cookies`, `--save-cookies`, `--keep-session-cookies`, `--junk-session-cookies` and `--cookies` are not known to take a credential (switches or file names), so the word after them is shown. Written `--newpass=a b`, both words are masked. A flag with seven or more words joined by `-` or `_` in front of the credential word (`--a-b-c-d-e-f-g-password v`) keeps its value readable: the flag rule reads at most six words in front. In a `key=value` the key rule reads any run of digits after a key word (`pass` and 40 digits are masked) and then at most 20 more key characters, so a key word followed by digits and more than 20 other key characters (letters, `_`, `-`, `.`) keeps its value readable there. A header wrapped over lines: after `Basic`, `Token`, `ApiKey`, `Digest` or `Bearer` any line break and white space is a gap, as in a single line, and the next word of 8 or more characters (any letters, digits, `.`, `~`, `:`, `-`) is read as the token; a line that starts with a word of fewer than 8 characters is shown, and a line of prose that starts with a word of 8 or more characters is masked too (cost). A `Digest` header that is folded over several lines (each next line starts with a space or a tab, a line fold) is masked to its last folded line, and a line that does not start with a space or a tab ends it. After `--authorization` and a scheme word a quoted text is read to 512 characters; a longer one is left to the other rules (a long text of ordinary words is shown).\n"
     "Masking is a first filter, not proof that no client data reached the model."
 )
 KINDS_NOTE = "Counts are distinct values masked per class (EMAIL, IPV4, ARN, ...), summed over the cases; no values."
@@ -218,21 +222,18 @@ def _key_words(key: str) -> list[str]:
     return [_TRAILING_DIGITS.sub("", w) for w in _SPLIT.split(plain) if w]
 
 
+# A key written in capitals with `COOKIE` and more letters glued behind it (`COOKIEJAR`, `COOKIESTORE`): the card rule reads `cookie`
+# followed by a capital letter as a cookie key (`_COOKIE_KEY` in `guard/redact.py`); the word cut below does not split capitals
+# from capitals, so the record walk reads the one word `cookiejar` and left it readable (round 10, Issue 6: text and record drift).
+# `cookiejar` in lower case stays readable on both sides (pinned).
+_CAPITALS_COOKIE = re.compile(r"(?<![A-Za-z])COOKIES?[0-9]*+[A-Z]")
+
+
 def _glued_ending(w: str) -> bool:
     """Does the word end with one of `GLUED_ENDINGS`? An ending that is a bare word and one more word (`passcode`, `sessionid`,
-    `authvalue`: `GUARDED_GLUED`) does not count when the letters in front of its bare word make an ordinary word with it
-    (`bypasscode` is `bypass` + `code`; `xbypasscode` is a credential key). The card rules read the same list."""
-    for ending in GLUED_ENDINGS:
-        if w.endswith(ending):
-            bare = GUARDED_GLUED.get(ending)
-            if (
-                bare is not None
-                and (w[: -len(ending)] + bare) in ORDINARY_WORDS
-                and (w[: -len(ending)] + bare) != BYPASS_WORD
-            ):
-                continue
-            return True
-    return False
+    `authvalue`) counts after an ordinary word too (`bypasscode`, `compasskey`, `possessionid` are credential
+    names, round 10 Issue 6): only the bare ordinary word is no key. The card rules read the same list."""
+    return w.endswith(GLUED_ENDINGS)
 
 
 def sensitive(key: object) -> bool:
@@ -252,6 +253,8 @@ def sensitive(key: object) -> bool:
     i written as plain letters, as the older `re.IGNORECASE` rule read it."""
     if not isinstance(key, str):
         return False
+    if _CAPITALS_COOKIE.search(key):
+        return True
     words = _key_words(key)
     for i, w in enumerate(words):
         before = words[i - 1] if i else ""
@@ -262,7 +265,7 @@ def sensitive(key: object) -> bool:
             or (w.endswith(BARE_ENDINGS) and w not in ORDINARY_WORDS)
             or (w in ("key", "keys") and before.endswith(KEY_QUALIFIERS))
             or (before, w) in WORD_PAIRS
-            or (before == BYPASS_WORD and w in BYPASS_SECOND_WORDS)
+            or is_ordinary_pair(before, w)
         ):
             return True
         if (

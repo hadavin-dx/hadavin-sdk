@@ -39,29 +39,20 @@ from typing import Any
 # a single `-` only password/passwd, since `-token` or `-secret` is as often a word in a message as a flag.
 # Space between a flag and its value: a no-break space (and the other Unicode spaces) as well.
 _SP = "[ \t\u00a0\u2000-\u200a\u202f\u205f\u3000]"
-# Between a scheme word (`Basic`, `Token`, `ApiKey`) and its token: a space of ANY kind that does not end the line (the `\s` of main
-# less the line breaks: tab, no-break space, `\x0b`, `\x0c`, `\x1c`-`\x1f`, `\x85`, U+2028 and U+2029 stay separators), or ONE line
-# break followed by a space or a tab (the obsolete line fold of RFC 9112 section 5.2: the header goes on), or ONE line break followed
-# by a token of at least `WRAPPED_TOKEN_MIN` base64 or base64url characters that is no plain lower-case word (it holds a capital, a digit
-# or one of `+/_=<>`): a wrapped header, as main read it with `\s+`, while a prose line after the header stays readable. Possessive, so
-# a long run of spaces is read once (round 9, Issue 1).
+# Between a scheme word (`Basic`, `Token`, `ApiKey`) and its token: any white space at all, the `\s+` of main, one run of it
+# (a line break, a blank line, a line fold, a tab, a no-break space, `\x0b`, `\x0c`, `\x1c`-`\x1f`, `\x85`, U+2028, U+2029).
+# Round 9 narrowed this to a line fold or a token of 16 or more characters and so left every wrapped token of 8 to 15 characters
+# and every lower-case one readable that main masked (round 10, Issue 1: 810 of 2000 probe cells); the rules that use it carry the
+# token's own minimum (8), so a gap that reads all white space gives main's reach again. Cost: a line of prose right after a
+# scheme word and a line break is masked when its first word has 8 or more characters (measured, CHANGELOG round 10).
+# Possessive, so a long run of white space is read once.
 _LINE_SPACE = r"[^\S\r\n]"
 _LINE_BREAK = r"(?:\r\n|\r|\n)"
-WRAPPED_TOKEN_MIN = 16
-_B64URL = r"A-Za-z0-9+/_=<>\-"
-_SCHEME_GAP = (
-    "(?:"
-    + _LINE_SPACE
-    + "++|"
-    + _LINE_SPACE
-    + "*+"
-    + _LINE_BREAK
-    + r"(?:[ \t]++|\s*+(?=["
-    + _B64URL
-    + "]{"
-    + str(WRAPPED_TOKEN_MIN)
-    + r",})(?=(?-i:[a-z\-]*+[A-Z0-9+/_=<>]))))"
-)
+_SCHEME_GAP = r"\s++"
+# The lines that go on after the first line of a folded header: each starts with a space or a tab (the line fold of RFC 9112
+# section 5.2; `Authorization: Digest username="u",<LF> realm="r",<LF> response="<hash>"` is ONE header). Possessive and
+# linear: a line is read once, and the group ends at the first line that does not start with a space or a tab (round 10, Issue 2).
+_DIGEST_FOLDS = r"(?:" + _LINE_BREAK + r"[ \t]++[^\r\n]*+)*+"
 
 
 # Bank details (owner, 2026-10-28): a number is masked by its SHAPE next to a bank word, never by its checksum -
@@ -233,37 +224,38 @@ def _bare_word(word: str) -> str:
     return guard + word + r"(?=[0-9]*[\"']?\s*[:=])"
 
 
-# `bypass` is an ordinary word alone (`bypass=true`, `--bypass`: a switch) but the name of a credential when a second word of the `pass`
-# pairs follows (`bypass_key`, `bypass-code`, `bypass_value`, `bypass_phrase`: a deployment bypass secret), and so is `protection-bypass`
-# (a protection-bypass header). The second words are those of `_GUARDED_PAIRS` for `pass`, read there, so the lists cannot drift
-# (round 9, Issue 6). Both stay readable alone; `compass`, `possession` and the rest of `ORDINARY_WORDS` stay ordinary with any second word.
-BYPASS_WORD = "bypass"
-
-
-def _not_ordinary_ending(ending: str) -> str:
-    """Look-behinds to put RIGHT AFTER the ending's own letters (the letters match first, so a position that does not hold them
-    costs nothing): the text before the ending must not be an ordinary word that starts a word and ends with `ending`
-    (`bypass` before `_code`). The look-behind of `_not_after_ordinary_word`, for a key that is more than the bare word."""
-    return "".join(
-        r"(?<!(?<![a-z0-9])" + w + ")"
-        for w in sorted(ORDINARY_WORDS)
-        if w.endswith(ending) and w != BYPASS_WORD
-    )
-
-
+# An ordinary word is no credential name ALONE (`bypass=true`, `--compass`: a switch, a direction), but it is the name of a credential
+# when a second word of its own family follows, as for every other word that ends in `pass` or `session`: `bypass_key`,
+# `compass_key`, `overpass_code`, `possession_id`, `obsession_cookie` (round 10, Issue 6: round 9 gave the second-word rule to `bypass`
+# alone, so `compass_key` was readable while `bypass_key` was masked, on every path). The second words come from the ONE table
+# below: the key rules, the flag guard and the record walk read it, so the three cannot disagree. `_secret`, `_token`, `_password`
+# and the other credential words need no entry: they are credential words after any word. `protection-bypass` is a key of its own.
 # The keys that are a bare word (`pass`, `session`, `auth`) and one more word: written once as (bare word, second word). The
 # regex alternatives below and the record walk's glued endings (`GUARDED_GLUED`) are both built from this list.
 _GUARDED_PAIRS = (
     ("pass", "phrase"), ("pass", "code"), ("pass", "key"), ("pass", "value"), ("session", "id"),
     ("session", "key"), ("session", "cookie"), ("session", "value"), ("auth", "value"),
 )  # fmt: skip
-BYPASS_SECOND_WORDS = tuple(second for bare, second in _GUARDED_PAIRS if bare == "pass")
 # glued ending -> its bare word (`passcode` -> `pass`): the record walk reads a word `bypasscode` as `bypass` + `code`.
 GUARDED_GLUED = {bare + second: bare for bare, second in _GUARDED_PAIRS}
 
 
+def ordinary_second_words(word: str) -> tuple[str, ...]:
+    """The second words that turn the ordinary word `word` into a credential name: those of the pairs of the bare word it ends
+    with (`compass` ends with `pass`: `phrase`, `code`, `key`, `value`; `possession` ends with `session`: `id`, `key`, `cookie`,
+    `value`). The one table the key rules, the flag guard and the record walk read. A word that is no ordinary word has none."""
+    if word not in ORDINARY_WORDS:
+        return ()
+    return tuple(second for bare, second in _GUARDED_PAIRS if word.endswith(bare))
+
+
+def is_ordinary_pair(first: str, second: str) -> bool:
+    """Is `first` + `second` (`compass`, `key`) an ordinary word and a second word that makes it a credential name?"""
+    return second in ordinary_second_words(first)
+
+
 def _guarded_key(bare: str, second: str) -> str:
-    return bare + _not_ordinary_ending(bare) + r"[_\-]?" + second
+    return bare + r"[_\-]?" + second
 
 
 # The words of the generic `key=value` rule further down, one regex fragment each (kubeconfig secrets: client-key-data,
@@ -346,14 +338,15 @@ _PLURAL_TOKENS = (
     + _COUNT_RUN
     + "tokens)[a-z0-9]{1,40}tokens)"
 )
-# An ordinary word is no flag name by itself (`--bypass`); `--bypass-key`, `--bypass_code` (`BYPASS_WORD` and a second word) are
-# read on by the flag words below, which decide (`--compass-key` stays readable there, `--bypass-key` is masked).
+# An ordinary word is no flag name by itself (`--bypass`, `--compass`); `--bypass-key`, `--compass_code`, `--possession-id` (an ordinary
+# word and a second word of its own family, `ordinary_second_words`) are read on by the flag words below, which decide.
 _FLAG_NOT_ORDINARY = (
     r"(?!(?:"
-    + "|".join(sorted(ORDINARY_WORDS))
-    + r")(?![a-z]|[0-9]+[a-z])(?![_\-](?:"
-    + "|".join(BYPASS_SECOND_WORDS)
-    + r")(?![a-z0-9])))"
+    + "|".join(
+        w + r"(?![a-z]|[0-9]+[a-z])(?![_\-](?:" + "|".join(ordinary_second_words(w)) + r")(?![a-z0-9]))"
+        for w in sorted(ORDINARY_WORDS)
+    )
+    + r"))"
 )
 # How many words may stand in front of the credential word of a flag, joined by `-` or `_` (`--db-root-user-password`): six. The
 # bound keeps the read linear on a hostile line of `a-a-a-...`; `tests/test_q8b_batch8.py` times it.
@@ -883,7 +876,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             + _LINE_SPACE
             + "*+"
             + _LINE_BREAK
-            + r"[ \t]++)([^\r\n]{8,}))"
+            + r"[ \t]++)([^\r\n]{8,}+"
+            + _DIGEST_FOLDS
+            + "))"
         ),
     ),
     (

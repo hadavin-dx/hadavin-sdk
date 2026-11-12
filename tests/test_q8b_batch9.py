@@ -72,15 +72,15 @@ def test_b9_1_the_basic_rule_alone_masks_a_bare_wrapped_value_as_main_did():
         assert not readable_on(text, TOKEN), f"{text!r}"
 
 
-def test_b9_1_a_prose_line_after_a_scheme_word_stays_readable_and_so_does_a_short_word():
-    """Controls (they pass on the old code too): the line break ends the header when no token follows. Prose, a short word and a
-    lower-case word of 16 or more letters are no token (the stated cost: such a wrapped token is shown)."""
+def test_b9_1_a_prose_line_after_a_scheme_word_stays_readable_when_its_first_word_is_short():
+    """Controls (they pass on the old code too): the line after a scheme word stays readable when its first word has fewer than 8
+    characters (main read `\\s+` and a token of 8 or more; round 10 Issue 1 restored that reach, so a first word of 8 or more
+    characters is masked again: pinned in `tests/test_q8b_batch10.py`)."""
     for scheme in ("Basic", "Token", "ApiKey", "Digest"):
         for line in (
-            "readable-prose-line here",
             "short",
             "an ordinary sentence follows here",
-            "abcdefghijklmnopqrstuvwx",
+            "the line of prose",
         ):
             text = f"Authorization: {scheme}\n{line}"
             assert clean(text) == text, f"a line after the scheme word was masked: {clean(text)!r}"
@@ -102,7 +102,7 @@ def test_b9_1_a_digest_header_goes_on_after_a_line_fold_and_a_no_break_space_but
     for gap in (" ", "\t", " ", "\x0b", "\x0c", "\x85", " ", "\n ", "\r\n\t"):
         out = clean(f"Authorization: Digest{gap}username=u, response={secret}")
         assert secret not in out, f"a Digest value after {gap!r} is readable: {out!r}"
-    prose = "readable-prose-line here"
+    prose = "a plain line of prose here"
     assert clean(f"Authorization: Digest\n{prose}") == f"Authorization: Digest\n{prose}", (
         "a plain line break after Digest does not end the header (a header ends at a line break unless it is folded)"
     )
@@ -110,7 +110,8 @@ def test_b9_1_a_digest_header_goes_on_after_a_line_fold_and_a_no_break_space_but
 
 def test_b9_1_every_shape_that_main_masked_is_masked_now_a_differential_against_the_main_rules():
     """The two rules of main written out as they were (`\\s+` between the scheme word and the token); any generated text that
-    they mask, with a token of 16 or more characters holding a capital or a digit, is masked by the redactor too."""
+    they mask, with a token of 16 or more characters holding a capital or a digit, is masked by the redactor too. (Batch 10 widens
+    this to every length from 8 and every shape: `test_b10_1_the_differential_against_main...`.)"""
     main_basic = re.compile(r"(?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})")
     main_auth = re.compile(r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+\s+)?([^\s\"']{8,})")
     tokens = (
@@ -191,16 +192,14 @@ def test_b9_8_the_text_of_a_flag_that_batch_8_called_an_exception_is_pinned_both
 
 
 def test_b9_8_a_cookie_jar_name_in_capitals_is_masked_and_in_lower_case_it_is_not():
-    """`COOKIEJAR=v` and `COOKIESTORE=v` are masked (a capital after the word `cookie` starts a new word: an over-mask); the lower
-    case words are one word and stay readable. Pinned lower case only as the review asked; the capital rows pin the cost."""
+    """`COOKIEJAR=v` and `COOKIESTORE=v` are masked as text and, since batch 10, as record keys too (a capital after the word
+    `cookie` starts a new word); the lower case words are one word and stay readable."""
     for key in ("cookiejar", "cookiestore"):
         assert clean(f"cfg {key}={ORDINARY_VALUE} end") == f"cfg {key}={ORDINARY_VALUE} end"
         assert not R.sensitive(key)
     for key in ("COOKIEJAR", "COOKIESTORE"):
         assert ORDINARY_VALUE not in clean(f"cfg {key}={ORDINARY_VALUE} end"), key
-        assert R.sensitive(key) is False, (
-            "the record walk reads one lower-case word; the text rule masks it (a stated cost)"
-        )
+        assert R.sensitive(key) is True, "the record walk shows COOKIEJAR that the text rule masks"
 
 
 def test_b9_8_a_quoted_text_after_an_authorization_flag_is_read_to_512_characters():
@@ -400,33 +399,28 @@ def test_b9_6_a_bypass_name_that_holds_a_secret_is_masked_in_every_form_on_every
 
 
 def test_b9_6_a_bare_bypass_and_the_other_ordinary_words_stay_readable_by_choice_the_owner_list():
-    """Not masked on purpose, and listed for the owner (the lead's question): `bypass=<v>` (a switch such as `bypass=true`),
-    `compass_code`, `possession_id`, `obsession_id` (an ordinary word and a second word: a bearing code, an id of an owned thing).
-    Both sides are pinned: the credential neighbours of each are masked (`session_id`, `xcompass_code`, `bypass_key`)."""
-    for key in (
-        "bypass",
-        "compass_code",
-        "compass_key",
-        "possession_id",
-        "obsession_id",
-        "encompass_phrase",
-        "overpass_value",
-    ):
+    """Not masked on purpose (question `q-q8b-bare-bypass` for the bare `bypass`; a bare ordinary word holds nothing):
+    `bypass=<v>` (a switch such as `bypass=true`), `compass`, `possession`. Batch 10 masks the second-word names this test
+    listed in batch 9 (`compass_code`, `possession_id`, `obsession_id`: see `tests/test_q8b_batch10.py`). Both sides pinned."""
+    for key in ("bypass", "compass", "possession", "compass_id", "compass_direction"):
         assert not R.sensitive(key), key
         for tmpl in ("cfg {k}={v} end", "cfg {k}: {v} end", "ran --{k} {v} --verbose"):
             text = tmpl.format(k=key, v=ORDINARY_VALUE)
             assert clean(text) == text, f"{key}: {clean(text)!r}"
-    for key in ("session_id", "xcompass_code", "xpossession_id", "bypass_key"):
+    for key in ("session_id", "xcompass_code", "xpossession_id", "bypass_key", "compass_code", "possession_id"):
         assert R.sensitive(key), key
         assert not readable_on(f"cfg {key}={V} end", V), key
 
 
 def test_b9_6_the_second_words_of_a_bypass_name_are_the_pass_pairs_read_from_one_list():
-    assert redact.BYPASS_SECOND_WORDS == ("phrase", "code", "key", "value")
-    assert redact.BYPASS_WORD in redact.ORDINARY_WORDS
-    for second in redact.BYPASS_SECOND_WORDS:
-        assert R.sensitive(f"bypass_{second}") and R.sensitive(f"bypass{second}")
-        assert not R.sensitive(f"compass_{second}") and not R.sensitive(f"compass{second}")
+    assert redact.ordinary_second_words("bypass") == ("phrase", "code", "key", "value")
+    for second in redact.ordinary_second_words("bypass"):
+        assert R.sensitive(f"bypass_{second}") and R.sensitive(f"bypass{second}"), (
+            f"a bypass name with the second word {second} is readable as a record key"
+        )
+        assert R.sensitive(f"compass_{second}") and R.sensitive(f"compass{second}"), (
+            f"a compass name with the second word {second} is readable as a record key"
+        )
 
 
 WGET_FLAGS = (
