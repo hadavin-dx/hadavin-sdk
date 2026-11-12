@@ -168,7 +168,7 @@ M = [
         GLUED_TESTS, 'test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote', 'glued to a credential key is readable'),
     mutant("M28 ARN guard case-sensitive", REDACT, '    r"(?:(?i:(?![\\w.\\-*+@]{0,"', '    r"(?:(?:(?![\\w.\\-*+@]{0,"',
         GLUED_TESTS, "test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote", "glued to a credential key is readable"),
-    mutant("M29 ARN guard ignores a quote", REDACT, '[\\w.\\-]{0,20}(?:=|[\\"\']\\s*[:=])))"', '[\\w.\\-]{0,20}(?:=)))"',
+    mutant("M29 ARN guard ignores a quote", REDACT, r'''(?:=|[\"']\s*[:=])))"''', r'''(?:=)))"''',
         GLUED_TESTS, "test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote", "glued to a credential key is readable"),
     mutant("M30 words after a value not masked", REDACT,
         'r"(?:[ \\t]+(?!"', 'r"(?:(?!)[ \\t]+(?!"',
@@ -199,7 +199,7 @@ M = [
         CARD_TESTS, "test_n6_a_domain_after_a_placeholder", "bare domain is outside code"),
     mutant("M45 wide dots not folded", GATE, "    return _WIDE_DOTS.sub(\".\", part)", "    return part",
         CARD_TESTS, "test_n6_f6b_a_domain_outside_code_is_bracketed", "bare domain is outside code"),
-    mutant('M46 key rule bounded by a prefix again', REDACT, 'r"(?i)(?:" + KEY_WORDS + r")[\\w.\\-]{0,20}"', 'r"(?i)(?<![\\w.\\-])[\\w.\\-]{0,40}(?:" + KEY_WORDS + r")[\\w.\\-]{0,20}"',
+    mutant('M46 key rule bounded by a prefix again', REDACT, r'''r"(?i)(?:" + KEY_WORDS + r")" + KEY_TAIL +''', r'''r"(?i)(?<![\w.\-])[\w.\-]{0,40}(?:" + KEY_WORDS + r")" + KEY_TAIL +''',
         BATCH, 'test_a_key_glued_to_a_long_identifier_keeps_its_value_masked', 'behind a'),
     mutant('M47 link not stopped at a key', GATE, '(?:(?!" + GLUED_KEY + r")[^\\s)>\\]\'\\"`])*",', '(?:[^\\s)>\\]\'\\"`])*",',
         BATCH, 'test_a_link_glued_to_a_credential_key_keeps_the_value_masked', 'card:'),
@@ -217,9 +217,15 @@ M = [
         BATCH3, 'test_i4_the_tag_stripped_view_starts_from_the_first_views_masks', 'readable in the returned text'),
     mutant('M53 decoded value keeps the seed mark', RUNMAP, '        original = original.replace("\\0seed", "")\n', '',
         BATCH3, 'test_i4_a_decoded_value_that_holds_a_shown_placeholder_is_one_masked_value', 'stayed readable'),
-    mutant('M54 double-quote rule has its own key list', REDACT, '(?:" + QUOTED_KEY_WORDS + r")"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\\"([^\\"]', '(?:password|token)"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\\"([^\\"]',
+    mutant('M54 double-quote rule has its own key list', REDACT, r'''+ QUOTED_KEY_WORDS
+            + r")"
+            + KEY_TAIL
+            + r"[\"']?\s*[:=]\s*\"([^\"]''', r'''+ "password|token"
+            + r")"
+            + KEY_TAIL
+            + r"[\"']?\s*[:=]\s*\"([^\"]''',
         BATCH4, 'test_j1_a_key_the_older_rule_masked_only_by_a_bare_prefix_is_still_masked', 'a bare prefix key stayed readable'),
-    mutant('M55 single-quote rule has its own key list', REDACT, '(?:" + QUOTED_KEY_WORDS + r")"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\'([^\']', '(?:password|token)"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\'([^\']',
+    mutant('M55 single-quote rule has its own key list', REDACT, r'''+ QUOTED_KEY_WORDS + r")" + KEY_TAIL + r"[\"']?\s*[:=]\s*'([^']''', r'''+ "password|token" + r")" + KEY_TAIL + r"[\"']?\s*[:=]\s*'([^']''',
         BATCH4, 'test_j1_a_key_the_older_rule_masked_only_by_a_bare_prefix_is_still_masked', 'a bare prefix key stayed readable'),
     mutant('M56 tool phrase not recognised', REDACT, '(_says_no_value(original) or _SAYS_NONE.fullmatch(original))', '(_SAYS_NONE.fullmatch(original))',
         BATCH3, 'test_i1_a_tool_phrase_after_a_key_is_kept_on_every_path', 'a tool phrase was masked'),
@@ -252,9 +258,13 @@ M = [
     mutant('M66 allow-list of words in front is back', RED, 'or (w.endswith(BARE_ENDINGS) and w not in ORDINARY_WORDS)',
         'or (w.endswith(BARE_ENDINGS) and w[:-4] in ("db", "user", "admin", "root", "api", "mysql"))',
         BATCH4, 'test_j2_a_key_with_any_word_in_front_is_masked_in_a_record_and_as_text', 'is shown as written in a record'),
-    mutant('M67 the key list is not read by the key rule', REDACT, r'''            r"(?i)(?:" + QUOTED_KEY_WORDS + r")"
-            r"[\w.\-]{0,20}[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""''', r'''            r"(?i)(?:password|token)"
-            r"[\w.\-]{0,20}[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""''',
+    mutant('M67 the key list is not read by the key rule', REDACT, r'''            + QUOTED_KEY_WORDS
+            + r")"
+            + KEY_TAIL
+            + r"[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""''', r'''            + "password|token"
+            + r")"
+            + KEY_TAIL
+            + r"[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""''',
         BATCH4, 'test_j1_every_credential_of_the_corpus_is_masked_in_every_style_on_every_path', 'left a value readable'),
     mutant('M68 card second view only for the five assignment kinds', CHANNEL, 'and m.group(1) in runmap.SECRET_KINDS',
         'and m.group(1) in {"SECRET", "APIKEY", "BEARER", "BASIC", "URLCRED"}',
@@ -287,9 +297,9 @@ M = [
         BATCH4, 'test_j1_every_cookie_key_the_older_cookie_rule_masked_is_still_masked_with_its_jar', 'the older cookie rule masks it and this one does not'),
     mutant('M78 a placeholder ends a value even before a value character', REDACT, '    + r")_\\d+>)+(?!"\n    + _VALUE_CHAR\n    + ")|"\n    + _VALUE_CHAR\n    + "+"\n    + _VALUE_TAIL', '    + r")_\\d+>)+(?![^\\s\\"\';,&])|"\n    + _VALUE_CHAR\n    + "+"\n    + _VALUE_TAIL',
         BATCH4, 'test_j1_every_key_the_older_rule_masked_is_still_masked', 'the older rule masks it and this one does not'),
-    mutant('M79 a quoted value is masked only up to its first space', REDACT, r'''(?:" + QUOTED_KEY_WORDS + r")"
-            r"[\w.\-]{0,20}[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""''', r'''(?:" + QUOTED_KEY_WORDS + r")"
-            r"[\w.\-]{0,20}[\"']?\s*[:=]\s*\"([^\"\s]+)[^\"]*\""''',
+    mutant('M79 a quoted value is masked only up to its first space', REDACT, r'''            + KEY_TAIL
+            + r"[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""''', r'''            + KEY_TAIL
+            + r"[\"']?\s*[:=]\s*\"([^\"\s]+)[^\"]*\""''',
         BATCH4, 'test_j1_every_key_the_older_rule_masked_is_still_masked', 'the older rule masks it and this one does not'),
     mutant('M80 authorization is no bare prefix of the quoted rules', REDACT, r'''    + "session|authorization"
 )''', r'''    + "session"
@@ -352,11 +362,11 @@ ORDINARY_WORDS = frozenset(["bypass"])''',
         BATCH7, 'test_b7_3_a_record_key_named_for_a_cookie_is_masked_whatever_its_letter_case', 'a cookie record key is not sensitive'),
     mutant('M100 cookie is no exact flag word', REDACT, r'''FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie", r"session[_\-]?cookie")''', r'''FLAG_EXACT_WORDS = (r"session[_\-]?cookie",)''',
         BATCH7, 'test_b7_3_a_cookie_key_in_text_is_masked_on_every_path_in_every_letter_case', 'a cookie key in text leaves a value readable'),
-    mutant('M101 the cookie flag rule reads one letter case', REDACT, r'''(?:(?i:--(?:(?:set|session)[_\-])?cookie)|-b)''', r'''(?:--cookie|-b)''',
+    mutant('M101 the cookie flag rule reads one letter case', REDACT, r'''(?:(?i:--(?:"''', r'''(?:(?:--(?:"''',
         BATCH7, 'test_b7_3_a_cookie_key_in_text_is_masked_on_every_path_in_every_letter_case', 'a cookie key in text leaves a value readable'),
     mutant('M102 a word glued behind a semicolon is no part of a cookie value', REDACT, '|;[^\\s;,\\"\'=]+(?![^\\s;,\\"\']*=))*)"', ')*)"',
         BATCH7, 'test_b7_3_a_cookie_value_split_by_a_semicolon_with_no_space_is_one_secret', 'Qw8tail'),
-    mutant('M103 a Digest header is no credential', REDACT, r'''|[\"']?digest[ \t]+([^\r\n]{8,}))''', r'''|[\"']?digest[ \t]+(?!)([^\r\n]{8,}))''',
+    mutant('M103 a Digest header is no credential', REDACT, r'''|[\"']?digest(?:"''', r'''|[\"']?digest(?!)(?:"''',
         BATCH7, 'test_b7_4_a_digest_header_is_masked_to_the_end_of_the_line', 'a Digest header value is readable'),
     mutant('M104 a scheme word after a credential flag is no part of the value', REDACT, '(?![-\\"\'])({_AUTH_SCHEME_WORD}?[^\\s\\"\']{{3,}}))"', '(?![-\\"\'])([^\\s\\"\']{{3,}}))"',
         BATCH8, 'test_b8_4_the_generic_flag_takes_a_scheme_word_with_its_token', 'the scheme word is not masked with its token'),
@@ -407,7 +417,7 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
         BATCH8, 'test_b8_2_a_switch_or_a_file_flag_of_the_cookie_family_leaves_the_next_word_readable', 'a cookie switch or file flag masked the next word'),
     mutant('M120 the guarded pairs have no ordinary-word look-behind (card)', REDACT, r'''    return bare + _not_ordinary_ending(bare) + r"[_\-]?" + second''', r'''    return bare + r"[_\-]?" + second''',
         BATCH8, 'test_b8_3_an_ordinary_word_with_one_more_word_stays_readable_in_every_form_on_every_path', 'an ordinary word was masked'),
-    mutant('M121 the record walk counts a guarded glued ending behind an ordinary word', RED, r'''            if bare is not None and (w[: -len(ending)] + bare) in ORDINARY_WORDS:''', r'''            if False:''',
+    mutant('M121 the record walk counts a guarded glued ending behind an ordinary word', RED, r'''and (w[: -len(ending)] + bare) in ORDINARY_WORDS''', r'''and False''',
         BATCH8, 'test_b8_3_an_ordinary_word_with_one_more_word_stays_readable_in_every_form_on_every_path', 'the record walk masks'),
     mutant('M122 the scheme word and its token after --authorization are no rule', REDACT, r'''(?![-\"'])([A-Za-z]+{_SP}+(?:{_QUOTED_TEXT}''', r'''(?![-\"'])(?!)([A-Za-z]+{_SP}+(?:{_QUOTED_TEXT}''',
         BATCH8, 'test_b8_4_any_scheme_word_and_its_token_are_masked_after_the_authorization_and_bearer_flags', 'a token after a scheme word is readable'),
@@ -419,7 +429,7 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
     + str(FLAG_PREFIX_WORDS)
     + "}"''', r'''    + r"|(?:[a-z0-9]+[_\-])*"''',
         BATCH8, 'test_b8_5_a_flag_with_up_to_six_words_in_front_masks_its_value_and_a_seventh_word_is_the_stated_limit', 'the flag rule reads more than six words in front'),
-    mutant('M126 a quoted Digest header runs to the end of the line', REDACT, r'''(?:\"digest[ \t]+((?:\\.|[^\"\\\r\n]){8,})\""''', r'''(?:\"digest[ \t]+(?!)((?:\\.|[^\"\\\r\n]){8,})\""''',
+    mutant('M126 a quoted Digest header runs to the end of the line', REDACT, r'''(?:\"digest"''', r'''(?:\"digest(?!)"''',
         BATCH8, 'test_b8_7_a_quoted_digest_header_is_masked_to_its_closing_quote_and_the_json_stays_whole', 'the JSON structure after a quoted Digest value was masked'),
     mutant('M127 a bare credential word takes at most nine digits (text)', REDACT, r'''return guard + word + r"(?=[0-9]*[\"']?\s*[:=])"''', r'''return guard + word + r"(?=[0-9]{0,9}[\"']?\s*[:=])"''',
         BATCH8, 'test_b8_8_nine_ten_and_forty_digits_behind_a_bare_credential_word_are_masked_like_the_record_key', 'a bare word with many digits leaves a value readable'),
@@ -429,13 +439,13 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
     + "))[0-9]{0,9}"
 ''',
         BATCH8, 'test_b8_8_nine_ten_and_forty_digits_behind_a_bare_credential_word_are_masked_like_the_record_key', 'a bare word with many digits leaves a value readable'),
-    mutant('M129 a line break does not end a Digest header value', REDACT, r'''|[\"']?digest[ \t]+([^\r\n]{8,}))''', r'''|[\"']?digest\s+([^\r\n]{8,}))''',
+    mutant('M129 a line break does not end a Digest header value', REDACT, r'''+ r"[ \t]++)([^\r\n]{8,}))"''', r'''+ r"[ \t]*+)([^\r\n]{8,}))"''',
         BATCH8, 'test_b8_10_a_line_break_ends_a_digest_header_and_a_scheme_word', 'a line break after Digest does not end the header value'),
     mutant('M130 a line break does not end a Basic header value', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})"''',
         BATCH8, 'test_b8_10_a_line_break_ends_a_digest_header_and_a_scheme_word', 'a line break after Basic does not end the header value'),
-    mutant('M131 a cookie word key in text has no more words', REDACT, r'''r"(?<![A-Za-z])(?:set-)?cookies?(?:(?:[_.\-]|(?-i:(?=[A-Z])))[A-Za-z0-9]+(?:[_.\-][A-Za-z0-9]+){0,5})?"''', r'''r"(?<![A-Za-z])(?:set-)?cookies?"''',
+    mutant('M131 a cookie word key in text has no more words', REDACT, r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]|(?-i:(?=[A-Z])))[A-Za-z0-9]+(?:[_.\-][A-Za-z0-9]+){0,5})?"''', r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+"''',
         BATCH8, 'test_b8_12_a_key_with_the_word_cookie_and_more_words_is_masked_in_text_as_the_record_walk_masks_it', 'a cookie word key leaves a value readable in text'),
-    mutant('M132 the ordinary look-behind of a guarded pair need not start a word (a real key turns readable)', REDACT, r'''        r"(?<!(?<![a-z0-9])" + w + ")" for w in sorted(ORDINARY_WORDS) if w.endswith(ending)''', r'''        r"(?<!" + w + ")" for w in sorted(ORDINARY_WORDS) if w.endswith(ending)''',
+    mutant('M132 the ordinary look-behind of a guarded pair need not start a word (a real key turns readable)', REDACT, r'''r"(?<!(?<![a-z0-9])" + w + ")"''', r'''r"(?<!" + w + ")"''',
         BATCH8, 'test_b8_3_a_real_two_word_credential_key_is_never_hidden_by_the_ordinary_look_behind', 'a credential key became readable'),
     mutant('M158 the curl cookie flag does not take the session spelling', REDACT, r'''FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie", r"session[_\-]?cookie")''', r'''FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie",)''',
         BATCH8, 'test_b8_2_the_cookie_flag_with_its_exact_name_still_masks_its_value', 'an exact cookie flag leaves its value readable'),
