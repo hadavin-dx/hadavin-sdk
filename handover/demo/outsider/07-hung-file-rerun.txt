@@ -1,0 +1,52 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /tmp/work/outsider/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /tmp/work/outsider
+configfile: pyproject.toml
+collecting ... collected 42 items
+
+tests/test_hung_adapter_calls.py::test_reaper_survives_hung_crm_put PASSED [  2%]
+tests/test_hung_adapter_calls.py::test_reaper_survives_hung_send PASSED  [  4%]
+tests/test_hung_adapter_calls.py::test_reaper_survives_hung_refresh PASSED [  7%]
+tests/test_hung_adapter_calls.py::test_hung_read_means_unreadable PASSED [  9%]
+tests/test_hung_adapter_calls.py::test_blind_send_timeout_is_unknown PASSED [ 11%]
+tests/test_hung_adapter_calls.py::test_blind_retry_waits_for_old_send PASSED [ 14%]
+tests/test_hung_adapter_calls.py::test_blind_call_for_lead_blocks_claim PASSED [ 16%]
+tests/test_hung_adapter_calls.py::test_full_healthy_cap_closes_the_row_without_a_claim PASSED [ 19%]
+tests/test_hung_adapter_calls.py::test_keyed_send_timeout_same_key PASSED [ 21%]
+tests/test_hung_adapter_calls.py::test_late_send_writes_nothing PASSED   [ 23%]
+tests/test_hung_adapter_calls.py::test_blind_crm_timeout_is_unknown PASSED [ 26%]
+tests/test_hung_adapter_calls.py::test_keyed_crm_timeout_same_key PASSED [ 28%]
+tests/test_hung_adapter_calls.py::test_late_crm_put_writes_nothing PASSED [ 30%]
+tests/test_hung_adapter_calls.py::test_workers_stay_within_the_cap PASSED [ 33%]
+tests/test_hung_adapter_calls.py::test_busy_give_back_keeps_the_age PASSED [ 35%]
+tests/test_hung_adapter_calls.py::test_full_model_cap_shows_the_row PASSED [ 38%]
+tests/test_hung_adapter_calls.py::test_busy_give_back_race_keeps_age PASSED [ 40%]
+tests/test_hung_adapter_calls.py::test_full_send_cap_gives_back PASSED   [ 42%]
+tests/test_hung_adapter_calls.py::test_full_cap_logs_once PASSED         [ 45%]
+tests/test_hung_adapter_calls.py::test_thread_start_failure_is_busy PASSED [ 47%]
+tests/test_hung_adapter_calls.py::test_hung_workers_are_counted PASSED   [ 50%]
+tests/test_hung_adapter_calls.py::test_stop_waits_only_its_timeout PASSED [ 52%]
+tests/test_hung_adapter_calls.py::test_declared_above_budget_is_refused PASSED [ 54%]
+tests/test_hung_adapter_calls.py::test_huge_number_is_a_refusal PASSED   [ 57%]
+tests/test_hung_adapter_calls.py::test_call_deadline_follows_the_config PASSED [ 59%]
+tests/test_hung_adapter_calls.py::test_deadline_fits_the_grace PASSED    [ 61%]
+tests/test_hung_adapter_calls.py::test_fd_reserve_counts_abandoned PASSED [ 64%]
+tests/test_hung_adapter_calls.py::test_worker_caps_are_checked PASSED    [ 66%]
+tests/test_hung_adapter_calls.py::test_answer_lost_real_lock_keeps_try PASSED [ 69%]
+tests/test_hung_adapter_calls.py::test_answer_lost_card_not_email_left PASSED [ 71%]
+tests/test_hung_adapter_calls.py::test_may_have_left_card_stays PASSED   [ 73%]
+tests/test_hung_adapter_calls.py::test_main_exit_text_names_both_cases PASSED [ 76%]
+tests/test_hung_adapter_calls.py::test_late_refresh_keeps_newer_mode[real_clock] PASSED [ 78%]
+tests/test_hung_adapter_calls.py::test_late_refresh_keeps_newer_mode[frozen_clock] PASSED [ 80%]
+tests/test_hung_adapter_calls.py::test_late_put_keeps_newer_mode[real_clock] PASSED [ 83%]
+tests/test_hung_adapter_calls.py::test_late_put_keeps_newer_mode[frozen_clock] PASSED [ 85%]
+tests/test_hung_adapter_calls.py::test_late_outbox_refresh_keeps_newer[real_clock] PASSED [ 88%]
+tests/test_hung_adapter_calls.py::test_late_outbox_refresh_keeps_newer[frozen_clock] PASSED [ 90%]
+tests/test_hung_adapter_calls.py::test_send_timeout_must_be_finite_and_positive[nan] PASSED [ 92%]
+tests/test_hung_adapter_calls.py::test_send_timeout_must_be_finite_and_positive[inf] PASSED [ 95%]
+tests/test_hung_adapter_calls.py::test_send_timeout_must_be_finite_and_positive[0.0] PASSED [ 97%]
+tests/test_hung_adapter_calls.py::test_send_timeout_must_be_finite_and_positive[-1.0] PASSED [100%]
+
+============================= 42 passed in 13.81s ==============================
+EXIT=0 WALL=14s
