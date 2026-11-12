@@ -1136,8 +1136,8 @@ M = [
     mutant(
         "115 a run of one repeated letter is read as a spaced-out secret",
         X,
-        "        if len(set(toks)) < defaults.SPACED_RUN_MIN_DISTINCT:\n            continue\n        if start not in counted:",
-        "        if start not in counted:",
+        "        if len(set(toks)) < defaults.SPACED_RUN_MIN_DISTINCT:\n            continue\n",
+        "",
         B9,
         "test_b9_g7_runs_with_too_few_different_characters_do_not_count_toward_the_cap",
         "counted toward the cap",
@@ -1226,8 +1226,8 @@ M = [
     mutant(
         "126 the run needs one distinct character fewer",
         X,
-        "        if len(set(toks)) < defaults.SPACED_RUN_MIN_DISTINCT:\n            continue\n        if start not in counted:",
-        "        if len(set(toks)) < defaults.SPACED_RUN_MIN_DISTINCT - 1:\n            continue\n        if start not in counted:",
+        "        if len(set(toks)) < defaults.SPACED_RUN_MIN_DISTINCT:\n            continue\n",
+        "        if len(set(toks)) < defaults.SPACED_RUN_MIN_DISTINCT - 1:\n            continue\n",
         B9,
         "test_b9_g7_runs_with_too_few_different_characters_do_not_count_toward_the_cap",
         "counted toward the cap",
@@ -1253,8 +1253,8 @@ M = [
     mutant(
         "129 backslash-e is not read as ESC (the shell spelling of an escape)",
         R,
-        '|([0-3][0-7]{2})|(e(?=[\\[\\]()])))")',
-        '|([0-3][0-7]{2}))")',
+        '|([0-3][0-7]{2})|(e(?=[\\[\\]()])))"\n)',
+        '|([0-3][0-7]{2}))"\n)',
         B9,
         "test_b9_e1_a_key_cut_by_a_backslash_e_spelling_of_esc_is_masked",
         "AssertionError",
@@ -1334,7 +1334,7 @@ M = [
     mutant(
         "139 the final guard never counts a copy the sweep cannot mask",
         X,
-        "return len(_occurrences(shown, value, ph, True)) > len(_occurrences(shown, value, ph, every))",
+        "return len(_occurrences(shown, value, ph, True)) > len(\n            _occurrences(shown, value, ph, every)\n        )",
         "return False",
         B10,
         "test_b10_g4_a_copy_the_sweep_cannot_mask_still_withholds",
@@ -1380,7 +1380,7 @@ M = [
     mutant(
         "144 a run matched by both spellings of the separator is counted twice",
         X,
-        "        if start not in counted:  # one run that BOTH spellings of the separator match (`A - K - I`) counts once (batch 10, group 6)\n            counted.add(start)",
+        "        if start not in counted:\n            counted.add(start)",
         "        if True:\n            counted.add(len(counted))",
         B10,
         "test_b10_g6_a_run_that_both_spellings_match_counts_once",
@@ -1407,8 +1407,8 @@ M = [
     mutant(
         "147 the unknown spaced value is read on the joined view only, not on the decoded views",
         R,
-        "for source in dict.fromkeys([e_spaced, *(v for v in views if v not in (e_joined, e_spaced))]):",
-        "for source in dict.fromkeys([e_spaced]):",
+        "[e_spaced, *(v for v in views if v not in (e_joined, e_spaced))]\n",
+        "[e_spaced]\n",
         B10,
         "test_b10_g5_a_pattern_shaped_value_with_an_encoded_gap_is_masked",
         "AssertionError",

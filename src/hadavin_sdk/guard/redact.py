@@ -860,7 +860,7 @@ class _SpacedIndex:
     bucket size when many values share their first 12 characters (batch 9 review, finding F6). Built once per set of values;
     `bool(index)` is False when no value is looked for."""
 
-    __slots__ = ("_go", "_fail", "_term", "_link")
+    __slots__ = ("_fail", "_go", "_link", "_term")
 
     def __init__(self, values: Iterable[str]) -> None:
         go: list[dict[str, int]] = [{}]
@@ -880,7 +880,8 @@ class _SpacedIndex:
         fail = [0] * len(go)
         link = [0] * len(go)  # the nearest proper-suffix node that ends a value (0 = none)
         queue = list(go[0].values())
-        for node in queue:  # breadth first: a node's failure node is shallower, so it is done already
+        # breadth first: a node's failure node is shallower, so it is done already
+        for node in queue:
             for c, child in go[node].items():
                 f = fail[node]
                 while f and c not in go[f]:
@@ -1006,12 +1007,14 @@ def spaced_unknown(text: str) -> list[tuple[int, int, str]]:
     the caller decides whether to act (`defaults.READ_SPACED_OUT_UNKNOWN`). Cost: one regular-expression pass per spelling, and
     at most `defaults.SPACED_DROP_MAX` reads of each run, all counted in characters against the budget BEFORE they run."""
     out: list[tuple[int, int, str]] = []
-    counted: set[int] = set()  # the starts of the candidate runs counted against `SPACED_RUN_MAX_RUNS`
+    # the starts of the candidate runs counted against `SPACED_RUN_MAX_RUNS`
+    counted: set[int] = set()
     work = 0  # characters the pattern reads below will scan (`defaults.SPACED_READ_MAX_CHARS`)
     for start, end, toks, starts in sorted(_runs_of(text)):
         if len(set(toks)) < defaults.SPACED_RUN_MIN_DISTINCT:
             continue
-        if start not in counted:  # one run that BOTH spellings of the separator match (`A - K - I`) counts once (batch 10, group 6)
+        # one run that BOTH spellings of the separator match (`A - K - I`) counts once (batch 10, group 6)
+        if start not in counted:
             counted.add(start)
             if len(counted) > defaults.SPACED_RUN_MAX_RUNS:
                 raise SpacedRunLimit
@@ -1062,7 +1065,12 @@ def collapse_runs(text: str, runs: list[tuple[int, int, str]]) -> str:
     for a, b, token in runs:
         # an underscore next to the run is a word character: glued to the collapsed value it would hide the value from the patterns'
         # word boundary (`_A K I A ... E_` italic), so a space stands between them in this view (batch 10, group 5)
-        out += [text[at:a], " " if text[a - 1 : a] == "_" else "", token, " " if text[b : b + 1] == "_" else ""]
+        out += [
+            text[at:a],
+            " " if text[a - 1 : a] == "_" else "",
+            token,
+            " " if text[b : b + 1] == "_" else "",
+        ]
         at = b
     out.append(text[at:])
     return "".join(out)
@@ -1292,7 +1300,9 @@ class _Redactor:
                 # made the difference empty, so the front standing before the opener was kept
                 held_alt, held_verdict = self._held_values(alt), self._held_values(verdict)
                 seen_by_both = {
-                    v for v in held_alt & held_verdict if _kind(self.reverse.get(v, "")) in SECRET_KINDS
+                    v
+                    for v in held_alt & held_verdict
+                    if _kind(self.reverse.get(v, "")) in SECRET_KINDS
                 }
                 if self._stands_in((held_alt - held_verdict) | seen_by_both, verdict, 4):
                     return WITHHELD_NOTE
@@ -1329,7 +1339,9 @@ class _Redactor:
         if rule is None:
             return True
         every = rule is _EVERY_COPY
-        return len(_occurrences(shown, value, ph, True)) > len(_occurrences(shown, value, ph, every))
+        return len(_occurrences(shown, value, ph, True)) > len(
+            _occurrences(shown, value, ph, every)
+        )
 
     @staticmethod
     def _stands_in(values: set[str], shown: str, width: int = 8) -> bool:

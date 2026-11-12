@@ -134,7 +134,9 @@ def nfkc(text: str) -> str:
 # `\e` is ESC in shell and logging dialects, read like `\x1b` (batch 9, class: a spelled-out ESC the decoder did not know), but only
 # directly before `[`, `]`, `(` or `)` (the characters that start the sequences this reader knows; batch 10, group 6: a Windows path
 # such as `C:\env` is not read as an ESC and takes no heavier path). It only adds a reading
-_HEX_ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|U([0-9a-fA-F]{8})|([0-3][0-7]{2})|(e(?=[\[\]()])))")
+_HEX_ESCAPE = re.compile(
+    r"\\(?:x([0-9a-fA-F]{2})|U([0-9a-fA-F]{8})|([0-3][0-7]{2})|(e(?=[\[\]()])))"
+)
 _PCT_U = re.compile(r"%u([0-9a-fA-F]{4})")
 _BRACE_U = re.compile(r"\\u\{([0-9a-fA-F]{1,6})\}")
 
@@ -1030,7 +1032,9 @@ def redact_text(
         # the patterns read as a secret once collapsed; its measured rate on ordinary text is in SECURITY.md,
         # `defaults.READ_SPACED_OUT_UNKNOWN`). Batch 10, group 5: also in each DECODED view, so a gap spelled `%20` or `&#32;` is a
         # gap too (`A%20K%20I%20A...`); the work budget of `spaced_unknown` counts each view's runs on their own
-        for source in dict.fromkeys([e_spaced, *(v for v in views if v not in (e_joined, e_spaced))]):
+        for source in dict.fromkeys(
+            [e_spaced, *(v for v in views if v not in (e_joined, e_spaced))]
+        ):
             try:
                 runs = (
                     spaced_unknown(source)
@@ -1045,7 +1049,9 @@ def redact_text(
                 collapsed = collapse_runs(source, runs)
                 if collapsed not in (e_joined, e_spaced) and collapsed not in cleaned + views:
                     cleaned.append(collapsed)
-                    mixed_keys.add(collapsed)  # a soft view: no refusal of its own (see `mixed_keys`)
+                    mixed_keys.add(
+                        collapsed
+                    )  # a soft view: no refusal of its own (see `mixed_keys`)
         views += [c for c in dict.fromkeys(cleaned) if c not in views]
 
         def make_pairs(cur: dict[str, str], bases: tuple[str, ...]) -> list[tuple[str, str]]:
