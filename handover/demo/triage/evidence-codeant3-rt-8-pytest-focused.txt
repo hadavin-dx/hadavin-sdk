@@ -1,3 +1,19 @@
 $ cd /tmp/work/c3-final; GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 python -m pytest -q -p no:cacheprovider <touched files + test_hygiene + test_crm_hubspot + test_lead_crm_copy>
 date: 2026-11-12T21:48:53Z  21:48:53 up  2:58,  0 user,  load average: 4.15, 1.80, 1.60
 files: tests/test_clock_steps.py tests/test_codeant_demo_only.py tests/test_codeant_desk.py tests/test_codeant_fakes.py tests/test_codeant_hygiene.py tests/test_crm_hubspot.py tests/test_desk_http_edge_cases.py tests/test_env_numbers.py tests/test_fakes_body_before_answer.py tests/test_followup_edge_cases.py tests/test_hygiene.py tests/test_input_edge_cases.py tests/test_lead_crm_copy.py tests/test_load_tools.py tests/test_mode_safety.py tests/test_model_stamp_and_reaper.py tests/test_mutants_more.py tests/test_portal_demo.py tests/test_portal_log_poll.py tests/test_reset_scripts.py tests/test_slow_sender.py tests/test_vendor_hosts.py
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+>       assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+E       AssertionError: hardcoded literals found (file:line:match):
+E         docs/limits.md:51:test_a_lead_that_stays_busy_waits_longer_each_time_and_a_copy_resets_it
+E       assert not ['docs/limits.md:51:test_a_lead_that_stays_busy_waits_longer_each_time_and_a_copy_resets_it']
+
+tests/test_hygiene.py:124: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: hard...
+1 failed, 1111 passed in 401.78s (0:06:41)
+date: 2026-11-12T21:55:35Z

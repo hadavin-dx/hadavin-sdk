@@ -1,0 +1,11 @@
+$ cd /tmp/work/c3-oldcore (final tree with src/lead_desk/server.py and loader.py put back to 0841f36): pytest -q tests/test_fakes_body_before_answer.py tests/test_codeant_demo_only.py tests/test_codeant_desk.py
+ERROR tests/test_codeant_demo_only.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.12s
+(1) tests/test_codeant_demo_only.py imports KnowsBoundAddress: collection error on old loader.py (shown above). (2) the body-drain tests on old server.py:
+FAILED tests/test_fakes_body_before_answer.py::test_the_desks_early_replies_leave_no_reset_under_a_late_body
+FAILED tests/test_codeant_desk.py::test_main_refuses_a_memory_book_before_the_lock_step_and_makes_no_file
+FAILED tests/test_codeant_desk.py::test_a_sqlite_file_uri_book_is_refused_before_the_lock_step_and_by_the_desk[file::memory:]
+FAILED tests/test_codeant_desk.py::test_a_sqlite_file_uri_book_is_refused_before_the_lock_step_and_by_the_desk[file:x?mode=memory]
+FAILED tests/test_codeant_desk.py::test_a_sqlite_file_uri_book_is_refused_before_the_lock_step_and_by_the_desk[FILE:y.db?mode=memory&cache=shared]
+5 failed, 20 passed in 23.80s

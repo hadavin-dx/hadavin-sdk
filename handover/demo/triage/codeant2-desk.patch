@@ -21,7 +21,7 @@ index 3b9409f..0a5b3d0 100644
  - The lead-book path is resolved once in `Desk.__init__` (`Desk._db_path`) and used for the connections and the write gate, so a later chdir cannot send a new thread to another file.
  
 diff --git a/docs/limits.md b/docs/limits.md
-index fac9d6c..ea6b9a3 100644
+index fac9d6c..eb47030 100644
 --- a/docs/limits.md
 +++ b/docs/limits.md
 @@ -43,13 +43,19 @@ This page holds the detail behind the short "What is not claimed" list in the RE
@@ -33,7 +33,7 @@ index fac9d6c..ea6b9a3 100644
 +  180, then 420 s between looks (the wait grows with every refusal in a row; it is kept in memory, a restart starts it afresh), the other
 +  leads are copied meanwhile, and the lead is copied once the old call ends. A call that never ends keeps that lead's CRM status behind
 +  for good (the `crm_error` stays on the lead and the desk never shows "given up"); it also holds one of the 8 CRM places until the desk restarts
-+  (`test_a_lead_that_stays_busy_waits_longer_each_time_and_a_copy_resets_it`).
++  (`test_busy_lead_waits_longer_each_time`).
  * **A person cannot answer `not_sent` while a call for that lead is still running** (409 `call_still_running`): the old call may still
    land, so "nothing there yet" proves nothing. Wait until `hung_workers` is back to 0, look again, then answer (`test_blind_retry_waits_for_old_send`).
  * **Time budget.** A `sending` row is put back by the reaper only when it is strictly older than the stuck grace: the send timeout plus 5
@@ -172,7 +172,7 @@ index c2ed0a4..5304783 100644
          lock = lockfile.acquire(config.db_path)
 diff --git a/tests/test_codeant_desk.py b/tests/test_codeant_desk.py
 new file mode 100644
-index 0000000..a94b652
+index 0000000..8b31f84
 --- /dev/null
 +++ b/tests/test_codeant_desk.py
 @@ -0,0 +1,185 @@
@@ -338,7 +338,7 @@ index 0000000..a94b652
 +    assert [x for x, _ in crm.started] == [a, b, a]
 +
 +
-+def test_a_lead_that_stays_busy_waits_longer_each_time_and_a_copy_resets_it(env: Any) -> None:
++def test_busy_lead_waits_longer_each_time(env: Any) -> None:
 +    """Refused again and again because its own old call still hangs: the wait grows (10, 60, 180 s ...) instead of
 +    staying at the first step, so a call that never ends is looked at ever less often."""
 +    crm = _HangingFirstCrm()
