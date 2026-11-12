@@ -1,0 +1,7 @@
+COMMAND: (tracked files of c11-fin copied to /tmp/work/c11-tracked, cd there && /tmp/work/gl/gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow --exit-code 1)
+TREE: fresh 0841f36 + four codeant3 patches (r5)
+DATE: 2026-11-12T22:05:41Z
+---
+[90m10:05PM[0m [32mINF[0m [1mscanned ~2795335 bytes (2.80 MB) in 374ms[0m
+[90m10:05PM[0m [32mINF[0m [1mno leaks found[0m
+EXIT 0

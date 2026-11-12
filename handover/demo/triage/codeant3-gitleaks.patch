@@ -14,10 +14,10 @@ index 4fad96b..44b9832 100644
  # Global allowlist: none by path. Add an entry here only as regex plus a stated reason, never a whole file.
  [[allowlists]]
 diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
-index 3b324e3..e1f6b32 100644
+index 3b324e3..13a3057 100644
 --- a/tests/test_hygiene.py
 +++ b/tests/test_hygiene.py
-@@ -25,6 +25,18 @@ FILL_TOKEN = "<<" + "FILL"
+@@ -25,6 +25,22 @@ FILL_TOKEN = "<<" + "FILL"
  REQUIRE_SCAN_ENV = "DPLD_REQUIRE_SCAN"  # when set (CI), a missing gitleaks program fails instead of skipping
  
  
@@ -25,18 +25,22 @@ index 3b324e3..e1f6b32 100644
 +    """The gitleaks program as an absolute path, or None. A bare name (GITLEAKS_BIN=gitleaks) is looked up on PATH, like
 +    a shell would; a name with a folder part (./gl/gitleaks) is made absolute from the current folder. Neither is
 +    resolved through symbolic links (a shim or link stays the program that was named). Absolute because the scans run
-+    with cwd=<another folder>, where a relative path would not be found."""
++    with cwd=<another folder>, where a relative path would not be found. A value with a folder part that names nothing
++    is a ValueError that names the variable (not a FileNotFoundError from deep inside the scan)."""
 +    raw = os.environ.get(GITLEAKS_ENV) or "gitleaks"
 +    if not os.path.dirname(raw):
 +        found = shutil.which(raw)
 +        return os.path.abspath(found) if found else None
-+    return os.path.abspath(raw)
++    path = os.path.abspath(raw)
++    if not (os.path.exists(path) or (os.name == "nt" and os.path.exists(path + ".exe"))):
++        raise ValueError(f"{GITLEAKS_ENV}={raw!r} does not exist (looked for {path}); fix the path or unset it")
++    return path
 +
 +
  def _git(cwd: Path, *args: str) -> str:
      p = subprocess.run(  # noqa: S603
          ["git", *args],  # noqa: S607
-@@ -123,7 +135,7 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
+@@ -123,7 +139,7 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
      left = hygiene.pipeline(REPO, patterns, exceptions)
      assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
      # 3. gitleaks (release binary; CI installs it with a checked SHA-256)
@@ -45,7 +49,7 @@ index 3b324e3..e1f6b32 100644
      if not exe and not os.environ.get(REQUIRE_SCAN_ENV):
          pytest.skip(
              f"no gitleaks program on PATH (set {GITLEAKS_ENV}); set {REQUIRE_SCAN_ENV}=1 to make this a failure"
-@@ -173,8 +185,9 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
+@@ -173,8 +189,9 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
      scans = [("dir", tree), ("git", REPO)] if os.environ.get(REQUIRE_SCAN_ENV) else [("dir", tree)]
      if len(scans) == 1:
          warnings.warn(f"gitleaks history scan skipped: set {REQUIRE_SCAN_ENV}=1 to scan the history", stacklevel=1)
@@ -57,7 +61,7 @@ index 3b324e3..e1f6b32 100644
          assert p.returncode == 0, f"gitleaks {sub} reported findings (values are redacted)"
  
  
-@@ -330,3 +343,108 @@ def test_workflows_are_pinned_and_limited() -> None:
+@@ -330,3 +347,119 @@ def test_workflows_are_pinned_and_limited() -> None:
      assert _workflow_problems(good.replace("contents: read", "contents: write")) != []  # write at the top
      assert _workflow_problems(good.replace(perm, "permissions: write-all" + NL)) != []
      assert _workflow_problems(good + NL.join(["on:", "  pull_request_target:", ""])) != []
@@ -166,3 +170,14 @@ index 3b324e3..e1f6b32 100644
 +    monkeypatch.setenv(GITLEAKS_ENV, os.path.join(".", "gl-link"))
 +    assert _gitleaks_exe() == os.path.abspath(link)
 +    assert _gitleaks_exe() != str(real.resolve())
++
++
++def test_a_gitleaks_bin_path_that_does_not_exist_is_a_clear_error_naming_the_variable(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    """Not a None (that would skip the scan unless it is required) and not a FileNotFoundError from the scan itself."""
++    for raw in (str(tmp_path / "no-such-dir" / "gitleaks"), os.path.join(".", "no-such-gl")):
++        monkeypatch.setenv(GITLEAKS_ENV, raw)
++        with pytest.raises(ValueError, match=GITLEAKS_ENV) as e:
++            _gitleaks_exe()
++        assert "does not exist" in str(e.value)

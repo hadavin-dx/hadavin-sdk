@@ -1,0 +1,8 @@
+COMMAND: (cd /tmp/work/c11-git && /tmp/work/gl/gitleaks git . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow --exit-code 1)  [local scratch commit of the four patches on 0841f36; nothing pushed]
+DATE: 2026-11-12T22:05:57Z
+---
+[90m10:05PM[0m [32mINF[0m [1mUnknown SCM platform. Use --platform to include links in findings.[0m [36mhost=[0m
+[90m10:05PM[0m [32mINF[0m [1m12 commits scanned.[0m
+[90m10:05PM[0m [32mINF[0m [1mscanned ~2811840 bytes (2.81 MB) in 327ms[0m
+[90m10:05PM[0m [32mINF[0m [1mno leaks found[0m
+EXIT 0

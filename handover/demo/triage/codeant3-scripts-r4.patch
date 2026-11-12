@@ -1,0 +1,1159 @@
+diff --git a/scripts/http_guard.py b/scripts/http_guard.py
+index 362ae0e..79b500d 100644
+--- a/scripts/http_guard.py
++++ b/scripts/http_guard.py
+@@ -10,9 +10,27 @@ from urllib.parse import urlsplit
+ ALLOWED_SCHEMES = ("http", "https")
+ 
+ 
+-def open_http(req: urllib.request.Request | str, timeout: float) -> Any:
+-    """urllib.request.urlopen after a scheme check; raises ValueError for any scheme but http and https."""
++class _NoRedirect(urllib.request.HTTPRedirectHandler):
++    """Refuses to follow a redirect: the 3xx answer is raised as urllib.error.HTTPError instead."""
++
++    def redirect_request(self, *args: Any, **kwargs: Any) -> None:
++        return None
++
++
++def open_http(
++    req: urllib.request.Request | str, timeout: float, follow_redirects: bool = True, use_proxy: bool = True
++) -> Any:
++    """urllib.request.urlopen after a scheme check; raises ValueError for any scheme but http and https.
++    With follow_redirects=False a redirect is not followed (urllib would send every request header, an API key
++    included, to the new address): the 3xx answer is raised as urllib.error.HTTPError.
++    With use_proxy=False the proxy settings of the environment (HTTP_PROXY, HTTPS_PROXY, no_proxy) are ignored and the
++    request goes straight to the address (for a request to this computer that carries a key in a header)."""
+     url = req if isinstance(req, str) else req.full_url
+     if urlsplit(url).scheme.lower() not in ALLOWED_SCHEMES:
+         raise ValueError("only http and https addresses are opened")
++    if not follow_redirects or not use_proxy:
++        handlers: list[Any] = [] if follow_redirects else [_NoRedirect]
++        if not use_proxy:
++            handlers.append(urllib.request.ProxyHandler({}))  # an empty map: no proxy for any address
++        return urllib.request.build_opener(*handlers).open(req, timeout=timeout)  # noqa: S310  # nosec B310
+     return urllib.request.urlopen(req, timeout=timeout)  # noqa: S310  # nosec B310  (scheme checked just above)
+diff --git a/scripts/n8n_api.py b/scripts/n8n_api.py
+index bce502b..48d8041 100644
+--- a/scripts/n8n_api.py
++++ b/scripts/n8n_api.py
+@@ -4,6 +4,15 @@ Run from the repository root with N8N_URL (default http://127.0.0.1:5679) and N8
+   python scripts/n8n_api.py import file.json | activate NAME | deactivate NAME | list
+ Workflows are addressed by NAME so no id is printed.
+ The key is read from the file, sent as a header, never printed.
++
++N8N_URL must be an https address, or http to this computer (127.0.0.1, ::1, localhost): the key travels in a header and
++plain http to another computer would send it unencrypted. Anything else (and an address that cannot be read) is refused
++at start, before the key file is opened. To reach an n8n on another computer use https, or an SSH tunnel to 127.0.0.1.
++A redirect answer is never followed (the header with the key would go to the new address); it is reported as an error.
++For http to this computer the proxy settings of the environment (HTTP_PROXY, no_proxy) are ignored: the key header goes
++straight to this computer, never to a proxy. For https they are used as usual.
++Every failure ends with a short message and exit code 1 or 2, never a Python traceback, and never prints the key or an
++answer body.
+ """
+ 
+ from __future__ import annotations
+@@ -15,11 +24,51 @@ import urllib.error
+ import urllib.request
+ from http import HTTPStatus
+ from pathlib import Path
++from urllib.parse import urlsplit
++
++REPO = Path(__file__).resolve().parents[1]
++if str(REPO / "src") not in sys.path:
++    sys.path.insert(0, str(REPO / "src"))
++
++from http_guard import open_http  # noqa: E402
++
++from lead_desk.config import is_loopback_host  # noqa: E402
++from lead_desk.envnum import SettingRefused, split_url  # noqa: E402
++
++REFUSED = (
++    "N8N_URL must be an https address, or http to this computer (127.0.0.1, ::1 or localhost); "
++    "for an n8n on another computer use https, or an SSH tunnel to 127.0.0.1"
++)
++
++
++def checked_base(url: str) -> str:
++    """The n8n address, only when the API key may travel to it: https, or http to this computer. Uses the repository's
++    own readers (split_url, is_loopback_host). Anything else is a SystemExit that says what to do."""
++    try:
++        parts = split_url("N8N_URL", url)
++    except SettingRefused as e:
++        raise SystemExit(f"{e}; {REFUSED}") from None
++    scheme, host = parts.scheme.lower(), parts.hostname or ""
++    if host and (scheme == "https" or (scheme == "http" and is_loopback_host(host))):
++        return url.rstrip("/")
++    raise SystemExit(REFUSED)
++
++
++BASE = checked_base(os.environ.get("N8N_URL", "http://127.0.0.1:5679"))
++PROXY_ALLOWED = urlsplit(BASE).scheme.lower() == "https"  # http is only ever to this computer: no proxy for the key
+ 
+-from http_guard import open_http
+ 
+-BASE = os.environ.get("N8N_URL", "http://127.0.0.1:5679").rstrip("/")
+-KEY = Path(os.environ["N8N_API_KEY_FILE"]).read_text(encoding="utf-8").strip()
++def _read_key() -> str:
++    name = os.environ.get("N8N_API_KEY_FILE")
++    if not name:
++        raise SystemExit("N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key")
++    try:
++        return Path(name).read_text(encoding="utf-8").strip()
++    except (OSError, ValueError) as e:  # a missing or unreadable file, or bytes that are not text
++        raise SystemExit(f"cannot read the n8n API key file ({type(e).__name__})") from None
++
++
++KEY = _read_key()
+ KEEP = ("name", "nodes", "connections", "settings")  # the create call refuses other top-level keys
+ 
+ 
+@@ -32,40 +81,68 @@ def call(method: str, path: str, body: object = None) -> tuple[int, object]:
+         headers={"X-N8N-API-KEY": KEY, "Content-Type": "application/json"},
+     )
+     try:
+-        with open_http(req, 60) as r:
++        with open_http(req, 60, follow_redirects=False, use_proxy=PROXY_ALLOWED) as r:
+             raw = r.read()
+-            return r.status, (json.loads(raw) if raw else {})
++            if r.status != HTTPStatus.OK:  # any other success answer (201, 204 ...): same as an error answer
++                return r.status, "(no body kept)"
++            try:
++                return r.status, (json.loads(raw) if raw else {})
++            except ValueError:  # JSONDecodeError and UnicodeDecodeError: n8n (or something in front of it) sent no JSON
++                raise SystemExit("n8n answered 200 with a body that is not JSON (not shown)") from None
+     except urllib.error.HTTPError as e:
+         e.read()  # the body is not kept: an error page could echo a header
+         return e.code, "(no body kept)"
++    except OSError as e:  # refused, no route, timeout, TLS fault: the address and the key are not printed
++        raise SystemExit(f"cannot reach n8n ({type(e).__name__}: {getattr(e, 'reason', e)})") from None
++
++
++def workflows() -> list[dict[str, object]]:
++    """The workflow list, or a clean SystemExit when n8n did not answer 200 (a redirect, a refused key, an error) or
++    sent a list whose entries are not workflows (an entry without a text name, an id or an active flag)."""
++    code, res = call("GET", "/workflows?limit=250")
++    if code != HTTPStatus.OK:
++        raise SystemExit(f"n8n answered {code} to the workflow list ({res})")  # res is "(no body kept)" here
++    items = res.get("data") if isinstance(res, dict) else None
++    if not isinstance(items, list):
++        raise SystemExit(f"n8n answered {code} to the workflow list (unexpected body)")
++    for w in items:
++        if not (isinstance(w, dict) and isinstance(w.get("name"), str) and "id" in w and "active" in w):
++            raise SystemExit(f"n8n answered {code} to the workflow list (an entry without name, id or active flag)")
++    return items
+ 
+ 
+ def find(name: str) -> str:
+-    _, res = call("GET", "/workflows?limit=250")
+-    hits = [w["id"] for w in res["data"] if w["name"] == name]  # type: ignore[index]
++    hits = [str(w["id"]) for w in workflows() if w["name"] == name]
+     if len(hits) != 1:
+         raise SystemExit(f"{len(hits)} workflows named {name!r}")
+     return hits[0]
+ 
+ 
++USAGE = "usage: python scripts/n8n_api.py import FILE | activate NAME | deactivate NAME | list"
++
++
+ def main(a: list[str]) -> int:
+-    cmd = a[1]
++    cmd = a[1] if len(a) > 1 else ""
++    if cmd not in ("list", "import", "activate", "deactivate") or (cmd != "list" and not a[2:]):
++        print(USAGE, file=sys.stderr)
++        return 2
+     if cmd == "list":
+-        _, res = call("GET", "/workflows?limit=250")
+-        for w in res["data"]:  # type: ignore[index]
++        for w in workflows():
+             print(w["name"], "active" if w["active"] else "inactive")
+     elif cmd == "import":
+-        wf = json.loads(Path(a[2]).read_text(encoding="utf-8"))
+-        wf.setdefault("settings", {})
++        try:
++            wf = json.loads(Path(a[2]).read_text(encoding="utf-8"))
++            wf.setdefault("settings", {})
++            str(wf["name"])  # a workflow file without a name is refused here, not after the call
++        except (OSError, ValueError, KeyError, AttributeError) as e:  # no file, not JSON, not an object, no name
++            raise SystemExit(f"cannot read a workflow from {a[2]} ({type(e).__name__})") from None
+         code, res = call("POST", "/workflows", {k: wf[k] for k in KEEP if k in wf})
+         print(wf["name"], code, "" if code == HTTPStatus.OK else res)
+         return 0 if code == HTTPStatus.OK else 1
+-    elif cmd in ("activate", "deactivate"):
++    else:  # activate or deactivate
+         code, res = call("POST", f"/workflows/{find(a[2])}/{cmd}")
+         print(a[2], cmd, code, "" if code == HTTPStatus.OK else res)
+         return 0 if code == HTTPStatus.OK else 1
+-    else:
+-        return 2
+     return 0
+ 
+ 
+diff --git a/scripts/reset.ps1 b/scripts/reset.ps1
+index 49906ed..42bdfc0 100644
+--- a/scripts/reset.ps1
++++ b/scripts/reset.ps1
+@@ -14,10 +14,9 @@ if ($env:RESET_STOP_WAIT_SECONDS) {
+ }
+ $db = (python -c "from lead_desk.config import Config; print(Config.from_env().db_path)").Trim()
+ $dataDir = Split-Path -Parent $db
+-$allowed = [System.IO.Path]::GetFullPath((Join-Path (Get-Location).Path 'data'))
+-if ([System.IO.Path]::IsPathRooted($dataDir)) { $abs = $dataDir } else { $abs = Join-Path (Get-Location).Path $dataDir }
+-$actual = [System.IO.Path]::GetFullPath($abs)
+-if (-not ($actual -ieq $allowed -or $actual.StartsWith($allowed + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase))) {
++# real paths: a junction or symlink inside data\ that points elsewhere is followed (same check as reset.sh)
++$inside = python -c "import os, sys; d = os.path.normcase(os.path.realpath(sys.argv[1])); r = os.path.normcase(os.path.realpath('data')); print(d == r or d.startswith(r + os.sep))" $dataDir
++if ("$inside".Trim() -ne 'True') {
+     Write-Host "refused: the database path is not inside this repository's data folder, so nothing was stopped or deleted"
+     exit 2
+ }
+diff --git a/tests/test_n8n_api_url.py b/tests/test_n8n_api_url.py
+new file mode 100644
+index 0000000..c0fc9f2
+--- /dev/null
++++ b/tests/test_n8n_api_url.py
+@@ -0,0 +1,390 @@
++"""scripts/n8n_api.py sends the n8n API key in a header: it must only go to https, or to http on this computer, and
++never follow a redirect. Look-alike and unreadable addresses are built from parts so that this file holds no host name
++or address of its own (the repository's own scans read every tracked file)."""
++
++from __future__ import annotations
++
++import importlib
++import json
++import socket
++import sys
++import threading
++from http import HTTPStatus
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++from pathlib import Path
++
++import pytest
++
++REPO = Path(__file__).resolve().parents[1]
++RESERVED = "example" + "." + "test"  # the reserved test domain, as the repository's own rules allow it
++DOC_IP = "198.51.100." + "7"  # a documentation address (RFC 5737)
++
++
++def _u(scheme: str, rest: str) -> str:
++    return scheme + ":" + "//" + rest
++
++
++def _load(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, url: str | None, key_exists: bool = True):
++    key = tmp_path / "key.txt"
++    if key_exists:
++        key.write_text("made-up-key-for-the-test\n", encoding="utf-8")
++    monkeypatch.setenv("N8N_API_KEY_FILE", str(key))
++    if url is None:
++        monkeypatch.delenv("N8N_URL", raising=False)
++    else:
++        monkeypatch.setenv("N8N_URL", url)
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    sys.modules.pop("n8n_api", None)
++    return importlib.import_module("n8n_api")
++
++
++@pytest.mark.parametrize(
++    "url",
++    [
++        None,
++        _u("http", "127.0.0.1:5679/"),
++        _u("http", "localhost:5678"),
++        _u("http", "[::1]:5678"),
++        _u(
++            "http", "[::ffff:" + "127.0.0.1]:5678"
++        ),  # an IPv4-mapped loopback address is loopback (same answer as the desk)
++        _u("https", RESERVED),
++        _u("HTTPS", RESERVED.upper() + "/x/"),
++    ],
++)
++def test_these_addresses_are_accepted(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, url: str | None) -> None:
++    mod = _load(monkeypatch, tmp_path, url)
++    assert not mod.BASE.endswith("/")
++
++
++REFUSED = [
++    _u("http", RESERVED + ":5678"),
++    _u("http", DOC_IP),
++    _u("http", "localhost." + RESERVED),
++    _u("http", "localhost@" + RESERVED),  # user name "localhost", host elsewhere
++    _u("http", "127.0.0.1@" + RESERVED),
++    _u("http", "localhost:x@" + RESERVED),
++    _u("http", "127.0.0.1." + RESERVED),  # a name that only starts like an address
++    _u("http", "localhost.:5678/"),  # trailing dot: a name, not the loopback name the repository accepts
++    _u("http", "[::ffff:" + DOC_IP + "]:5678"),  # an IPv4-mapped address that is NOT loopback
++    _u("http", "[::1%25eth0]:5678"),  # a scope id is not a plain loopback address
++    _u("http", "0." * 3 + "0:5678"),
++    _u("ftp", "127.0.0.1"),
++    "file:" + "///x",
++    RESERVED,
++    "",
++    _u("https", ""),
++]
++
++
++@pytest.mark.parametrize("url", REFUSED)
++def test_these_addresses_are_refused_before_the_key_file_is_opened(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, url: str
++) -> None:
++    """The key file does not exist: a refusal that comes first is a SystemExit with our message, a late one would be
++    a FileNotFoundError."""
++    with pytest.raises(SystemExit, match="N8N_URL must be") as e:
++        _load(monkeypatch, tmp_path, url, key_exists=False)
++    assert "https" in str(e.value)
++    assert "tunnel" in str(e.value) and "127.0.0.1" in str(e.value), "the refusal must say what to do instead"
++
++
++@pytest.mark.parametrize("url", ["http://[", _u("http", "[::1"), _u("https", "[")])
++def test_an_address_that_cannot_be_read_is_a_clean_refusal_not_a_traceback(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, url: str
++) -> None:
++    with pytest.raises(SystemExit) as e:
++        _load(monkeypatch, tmp_path, url, key_exists=False)
++    assert "N8N_URL is not a valid address" in str(e.value)
++    assert "tunnel" in str(e.value)
++
++
++class _Recorder(BaseHTTPRequestHandler):
++    log: list[dict[str, str]]
++    redirect_to: str | None = None
++
++    def do_GET(self) -> None:
++        type(self).log.append({k.lower(): v for k, v in self.headers.items()})
++        if self.redirect_to:
++            self.send_response(302)
++            self.send_header("Location", self.redirect_to)
++            self.send_header("Content-Length", "0")
++        else:
++            self.send_response(200)
++            self.send_header("Content-Length", "2")
++        self.end_headers()
++        if not self.redirect_to:
++            self.wfile.write(b"{}")
++
++    do_POST = do_GET
++
++    def log_message(self, *args: object) -> None:
++        pass
++
++
++class _ListThenRedirect(BaseHTTPRequestHandler):
++    """GET answers a one-workflow list (200); a POST (activate, deactivate) answers a redirect."""
++
++    def do_GET(self) -> None:
++        body = b'{"data": [{"id": "7", "name": "W", "active": false}]}'
++        self.send_response(200)
++        self.send_header("Content-Length", str(len(body)))
++        self.end_headers()
++        self.wfile.write(body)
++
++    def do_POST(self) -> None:
++        self.send_response(302)
++        self.send_header("Location", "http://127.0.0.1:9/elsewhere")
++        self.send_header("Content-Length", "0")
++        self.end_headers()
++
++    def log_message(self, *args: object) -> None:
++        pass
++
++
++def _server(redirect_to: str | None) -> tuple[ThreadingHTTPServer, type[_Recorder]]:
++    handler = type("H", (_Recorder,), {"log": [], "redirect_to": redirect_to})
++    srv = ThreadingHTTPServer(("127.0.0.1", 0), handler)
++    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    return srv, handler
++
++
++def test_a_redirect_is_not_followed_so_the_key_never_reaches_the_new_address(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    target, target_log = _server(None)
++    first, first_log = _server(_u("http", f"127.0.0.1:{target.server_address[1]}/elsewhere"))
++    try:
++        mod = _load(monkeypatch, tmp_path, None)
++        monkeypatch.setattr(mod, "BASE", _u("http", f"127.0.0.1:{first.server_address[1]}"))
++        code, _body = mod.call("GET", "/workflows")
++    finally:
++        for s in (first, target):
++            s.shutdown()
++            s.server_close()
++    assert code == 302, "a redirect is reported as an error answer"
++    assert first_log.log[0]["x-n8n-api-key"] == "made-up-key-for-the-test"  # the first address did get the key
++    assert target_log.log == [], "the redirect target was called: the key header would have gone with it"
++
++
++def _run_against(
++    handler: type[BaseHTTPRequestHandler], monkeypatch: pytest.MonkeyPatch, tmp_path: Path, argv: list[str]
++):
++    srv = ThreadingHTTPServer(("127.0.0.1", 0), handler)
++    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    try:
++        mod = _load(monkeypatch, tmp_path, None)
++        monkeypatch.setattr(mod, "BASE", _u("http", f"127.0.0.1:{srv.server_address[1]}"))
++        return mod.main(["n8n_api.py", *argv])
++    finally:
++        srv.shutdown()
++        srv.server_close()
++
++
++@pytest.mark.parametrize("cmd", ["list", "activate", "deactivate"])
++def test_a_redirect_on_the_list_ends_in_a_clean_message_not_a_traceback(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, cmd: str
++) -> None:
++    handler = type("H", (_Recorder,), {"log": [], "redirect_to": "http://127.0.0.1:9/elsewhere"})
++    argv = [cmd] if cmd == "list" else [cmd, "W"]
++    with pytest.raises(SystemExit) as e:
++        _run_against(handler, monkeypatch, tmp_path, argv)
++    assert isinstance(e.value.code, str), "a TypeError traceback would not be a SystemExit message"
++    assert "302" in e.value.code and "workflow list" in e.value.code and "no body kept" in e.value.code
++
++
++@pytest.mark.parametrize("cmd", ["activate", "deactivate"])
++def test_a_redirect_on_activate_and_deactivate_is_an_error_exit_not_a_traceback(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, cmd: str, capsys: pytest.CaptureFixture[str]
++) -> None:
++    assert _run_against(_ListThenRedirect, monkeypatch, tmp_path, [cmd, "W"]) == 1
++    assert "302" in capsys.readouterr().out
++
++
++def test_a_list_answer_without_a_data_list_is_a_clean_message(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
++    class Odd(_Recorder):
++        redirect_to = None
++        log: list[dict[str, str]] = []  # noqa: RUF012
++
++    with pytest.raises(SystemExit) as e:
++        _run_against(Odd, monkeypatch, tmp_path, ["list"])  # the stand-in answers {} with no "data"
++    assert isinstance(e.value.code, str) and "unexpected body" in e.value.code
++
++
++# --- clean ends instead of tracebacks; no body of another answer shown; no proxy for the key ----------------
++KEY_TEXT = "made-up-key-for-the-test"  # what _load writes into the key file
++ECHO = "ECHOED-BODY-TEXT"  # a body text that must never be printed
++
++
++def _fixed(status: int, body: bytes) -> type[BaseHTTPRequestHandler]:
++    """A stand-in n8n that answers every GET and POST with this status and body."""
++
++    class Fixed(BaseHTTPRequestHandler):
++        def _answer(self) -> None:
++            self.send_response(status)
++            self.send_header("Content-Length", str(len(body)))
++            self.end_headers()
++            self.wfile.write(body)
++
++        do_GET = _answer
++        do_POST = _answer
++
++        def log_message(self, *args: object) -> None:
++            pass
++
++    return Fixed
++
++
++def _list_body(*items: object) -> bytes:
++    return json.dumps({"data": list(items)}).encode()
++
++
++def _message(e: pytest.ExceptionInfo[SystemExit]) -> str:
++    assert isinstance(e.value.code, str), "a traceback (or a bare exit code) instead of a message"
++    return e.value.code
++
++
++def test_a_200_answer_that_is_not_json_is_a_clean_message_without_the_body(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    with pytest.raises(SystemExit) as e:
++        _run_against(_fixed(200, b"<html>" + ECHO.encode() + b"</html>"), monkeypatch, tmp_path, ["list"])
++    msg = _message(e)
++    assert "not JSON" in msg and ECHO not in msg and KEY_TEXT not in msg
++
++
++def test_a_200_answer_with_bytes_that_are_not_text_is_a_clean_message(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    with pytest.raises(SystemExit) as e:
++        _run_against(_fixed(200, b"\xff\xfe\x00{"), monkeypatch, tmp_path, ["list"])
++    assert "not JSON" in _message(e)
++
++
++def test_an_unreachable_n8n_is_a_clean_message_without_the_key(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
++    with socket.socket() as s:  # a local port that nothing listens on: bind, read the number, close
++        s.bind(("127.0.0.1", 0))
++        port = s.getsockname()[1]
++    mod = _load(monkeypatch, tmp_path, None)
++    monkeypatch.setattr(mod, "BASE", _u("http", f"127.0.0.1:{port}"))
++    with pytest.raises(SystemExit) as e:
++        mod.main(["n8n_api.py", "list"])
++    msg = _message(e)
++    assert "cannot reach n8n" in msg and KEY_TEXT not in msg and str(port) not in msg
++
++
++ODD_ITEMS = [
++    {"id": "1", "active": False},  # no name
++    {"id": "1", "name": "W"},  # no active flag
++    {"name": "W", "active": False},  # no id
++    {"id": "1", "name": 5, "active": False},  # a name that is not text
++    "a text",
++    None,
++]
++
++
++@pytest.mark.parametrize("item", ODD_ITEMS, ids=range(len(ODD_ITEMS)))
++@pytest.mark.parametrize("cmd", ["list", "activate", "deactivate"])
++def test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, cmd: str, item: object
++) -> None:
++    argv = [cmd] if cmd == "list" else [cmd, "W"]
++    with pytest.raises(SystemExit) as e:
++        _run_against(_fixed(200, _list_body(item)), monkeypatch, tmp_path, argv)
++    assert "without name, id or active flag" in _message(e)
++
++
++@pytest.mark.parametrize("argv", [[], ["import"], ["activate"], ["deactivate"], ["frobnicate"], ["frobnicate", "x"]])
++def test_missing_or_unknown_arguments_print_the_usage_and_exit_2(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str], argv: list[str]
++) -> None:
++    mod = _load(monkeypatch, tmp_path, None)
++    assert mod.main(["n8n_api.py", *argv]) == 2
++    assert "usage:" in capsys.readouterr().err
++
++
++@pytest.mark.parametrize(
++    "content", [None, "not json", "[1, 2]", '{"nodes": []}'], ids=["no-file", "text", "list", "no-name"]
++)
++def test_an_unreadable_workflow_file_is_a_clean_message(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, content: str | None
++) -> None:
++    target = tmp_path / "wf.json"
++    if content is not None:
++        target.write_text(content, encoding="utf-8")
++    with pytest.raises(SystemExit) as e:
++        _run_against(_fixed(200, b"{}"), monkeypatch, tmp_path, ["import", str(target)])
++    assert "cannot read a workflow" in _message(e)
++
++
++def test_a_missing_or_unreadable_key_file_is_a_clean_message(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    monkeypatch.delenv("N8N_URL", raising=False)
++    for value in (None, str(tmp_path / "no-such-file")):
++        if value is None:
++            monkeypatch.delenv("N8N_API_KEY_FILE", raising=False)
++        else:
++            monkeypatch.setenv("N8N_API_KEY_FILE", value)
++        sys.modules.pop("n8n_api", None)
++        with pytest.raises(SystemExit) as e:
++            importlib.import_module("n8n_api")
++        assert "key" in _message(e)
++
++
++@pytest.mark.parametrize("status", [201, 202, 204])
++def test_another_success_answer_is_reported_without_its_body(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str], status: int
++) -> None:
++    body = b"" if status == HTTPStatus.NO_CONTENT else b'{"echo": "' + ECHO.encode() + b'"}'
++    with pytest.raises(SystemExit) as e:  # the list
++        _run_against(_fixed(status, body), monkeypatch, tmp_path, ["list"])
++    msg = _message(e)
++    assert str(status) in msg and "no body kept" in msg and ECHO not in msg
++    wf = tmp_path / "wf.json"
++    wf.write_text('{"name": "W", "nodes": [], "connections": {}}', encoding="utf-8")
++    assert _run_against(_fixed(status, body), monkeypatch, tmp_path, ["import", str(wf)]) == 1  # not a 200: a failure
++    out = capsys.readouterr().out
++    assert str(status) in out and "no body kept" in out and ECHO not in out
++
++
++def test_the_key_header_goes_straight_to_this_computer_never_to_a_proxy_of_the_environment(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    target, target_log = _server(None)
++    proxy, proxy_log = _server(None)
++    try:
++        for name in ("HTTP_PROXY", "http_proxy"):
++            monkeypatch.setenv(name, _u("http", f"127.0.0.1:{proxy.server_address[1]}"))
++        for name in ("NO_PROXY", "no_proxy"):
++            monkeypatch.delenv(name, raising=False)
++        mod = _load(monkeypatch, tmp_path, None)
++        monkeypatch.setattr(mod, "BASE", _u("http", f"127.0.0.1:{target.server_address[1]}"))
++        code, _body = mod.call("GET", "/workflows")
++    finally:
++        for s in (target, proxy):
++            s.shutdown()
++            s.server_close()
++    assert code == HTTPStatus.OK
++    assert proxy_log.log == [], "the request (and the key header) went to the proxy of the environment"
++    assert target_log.log[0]["x-n8n-api-key"] == KEY_TEXT
++
++
++def test_the_shared_opener_still_uses_the_proxy_of_the_environment_unless_told_not_to(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    """Only the n8n script turns the proxy off (for its key); the other users of open_http are unchanged."""
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    from http_guard import open_http
++
++    proxy, proxy_log = _server(None)
++    try:
++        for name in ("HTTP_PROXY", "http_proxy"):
++            monkeypatch.setenv(name, _u("http", f"127.0.0.1:{proxy.server_address[1]}"))
++        for name in ("NO_PROXY", "no_proxy"):
++            monkeypatch.delenv(name, raising=False)
++        with open_http(_u("http", f"{RESERVED}:81/x"), 5):
++            pass
++    finally:
++        proxy.shutdown()
++        proxy.server_close()
++    assert len(proxy_log.log) == 1, "open_http no longer honours the proxy settings by default"
+diff --git a/tests/test_reset_ps1_links.py b/tests/test_reset_ps1_links.py
+new file mode 100644
+index 0000000..4213919
+--- /dev/null
++++ b/tests/test_reset_ps1_links.py
+@@ -0,0 +1,120 @@
++"""scripts/reset.ps1 must judge the database folder by its REAL path (a symlink or a Windows junction inside data/ that
++points elsewhere must be refused), like scripts/reset.sh does with realpath. NOT run here: PowerShell, Windows, a real
++Windows junction and the Windows CI job. What runs: the Python check that reset.ps1 hands to `python -c` is cut out of
++the file and run on a POSIX symlink."""
++
++from __future__ import annotations
++
++import os
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++
++REPO = Path(__file__).resolve().parents[1]
++
++
++def _strip_comments(text: str) -> str:
++    text = re.sub(r"<#.*?#>", "", text, flags=re.DOTALL)  # block comments
++    return "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))  # whole-line comments
++
++
++ACTIONS = ("Get-Content", "Stop-Process", "Remove-Item")  # what reads a pid file, stops a program, deletes a file
++# The short names PowerShell also accepts for the same three cmdlets (built in aliases, case does not matter).
++ALIASES = {
++    "Get-Content": ("gc", "cat", "type"),
++    "Stop-Process": ("kill", "spps"),
++    "Remove-Item": ("rm", "del", "ri", "rmdir", "erase", "rd"),
++}
++
++
++def _first_use(text: str, name: str) -> int:
++    """Index of the first place where `name` is used as a command word (not inside a longer word, a variable, a
++    parameter such as -Force, a dotted name or $env:name); -1 when there is none."""
++    found = re.search(rf"(?<![\w$.:\-]){re.escape(name)}(?![\w\-])", text, flags=re.IGNORECASE)
++    return found.start() if found else -1
++
++
++def _check_code(text: str | None = None) -> str:
++    code = _strip_comments((REPO / "scripts" / "reset.ps1").read_text(encoding="utf-8") if text is None else text)
++    # the old guard compared text only: [IO.Path]::GetFullPath / IsPathRooted / StartsWith do not follow a link
++    assert not re.search(r"GetFullPath|IsPathRooted", code), "reset.ps1 still compares paths that were not resolved"
++    found = re.search(r'python\s+-c\s+"(?P<code>[^"]*)"\s+\$dataDir\b', code)
++    assert found, "reset.ps1 does not hand the database folder to a python real-path check"
++    snippet = found.group("code")
++    assert re.search(r"os\.path\.realpath\(\s*sys\.argv\[1\]\s*\)", snippet), "the folder is not resolved with realpath"
++    assert "startswith" in snippet, "the check does not compare against the data folder"
++    # the result of that check must decide: anything but True is refused with exit code 2 before anything is stopped
++    after = code[found.end() :]
++    refusal = re.search(r"if\s*\(.*\$inside.*\)\s*\{[^}]*exit\s+2", after, flags=re.DOTALL)
++    assert refusal, "no refusal on a failed check"
++    for action in ACTIONS:  # the refusal comes before the first read of a pid file, the first stop and the first delete
++        assert action in after, f"{action} is not in reset.ps1: the order check would prove nothing"
++        assert after.index(action) > refusal.end(), f"{action} comes before the refusal on a failed check"
++    # the same for the short names, and from the top of the file (not only after the check): none may come earlier
++    before = re.sub(r"'[^']*'|\"[^\"]*\"", '""', code[: found.end() + refusal.end()])  # text in quotes is not a command
++    for action in ACTIONS:
++        for name in (action, *ALIASES[action]):
++            assert _first_use(before, name) == -1, f"{name} comes before the refusal on a failed check ({action})"
++    return snippet
++
++
++def _inside(folder: Path, cwd: Path) -> str:
++    done = subprocess.run(  # noqa: S603 (our own snippet and a path made by the test)
++        [sys.executable, "-c", _check_code(), str(folder)], cwd=cwd, capture_output=True, text=True, check=True
++    )
++    return done.stdout.strip()
++
++
++def test_the_real_path_check_accepts_a_folder_inside_data_and_refuses_a_link_out_of_it(tmp_path: Path) -> None:
++    (tmp_path / "data" / "run").mkdir(parents=True)
++    outside = tmp_path / "elsewhere"
++    outside.mkdir()
++    assert _inside(tmp_path / "data" / "run", tmp_path) == "True"
++    assert _inside(Path("data") / "run", tmp_path) == "True"
++    try:
++        os.symlink(outside, tmp_path / "data" / "link", target_is_directory=True)
++    except (OSError, NotImplementedError):
++        pytest.skip("this computer cannot make a symbolic link")
++    assert _inside(tmp_path / "data" / "link", tmp_path) == "False"
++    assert _inside(outside, tmp_path) == "False"
++
++
++def test_a_comment_that_names_the_old_call_does_not_fail_the_text_check() -> None:
++    sample = "# GetFullPath is not used any more\n<# GetFullPath\n IsPathRooted #>\nx = 1\n"
++    assert not re.search(r"GetFullPath|IsPathRooted", _strip_comments(sample))
++    assert re.search(r"GetFullPath", _strip_comments("x = [IO.Path]::GetFullPath($p)  \n"))  # real code is still seen
++
++
++def test_the_refusal_must_come_before_every_read_stop_and_delete() -> None:
++    """The order check sees each of the three actions placed before the refusal (a change that moves one of them up)."""
++    text = (REPO / "scripts" / "reset.ps1").read_text(encoding="utf-8")
++    _check_code(text)  # the real file is in order
++    marker = 'if ("$inside".Trim()'
++    assert marker in text
++    for action in ACTIONS:
++        early = text.replace(marker, f"{action} -Path x{chr(10)}{marker}", 1)
++        with pytest.raises(AssertionError, match=f"{action} comes before the refusal"):
++            _check_code(early)
++
++
++@pytest.mark.parametrize("name", [a for names in ALIASES.values() for a in names])
++def test_a_short_name_of_a_read_stop_or_delete_before_the_refusal_is_seen_too(name: str) -> None:
++    """kill, rm, del, cat, gc, spps, ri ... do the same as the full cmdlet names: the order check must see them."""
++    text = (REPO / "scripts" / "reset.ps1").read_text(encoding="utf-8")
++    marker = 'if ("$inside".Trim()'
++    for variant in (name, name.upper()):  # PowerShell does not care about case
++        early = text.replace(marker, f"{variant} x{chr(10)}{marker}", 1)
++        with pytest.raises(AssertionError, match=f"(?i){variant} comes before the refusal"):
++            _check_code(early)
++    late = text.replace(marker, f"# {name} x{chr(10)}{marker}", 1)  # only in a comment: not code, not a fault
++    _check_code(late)
++
++
++def test_the_short_name_check_does_not_mistake_parts_of_other_words_for_a_command() -> None:
++    text = (REPO / "scripts" / "reset.ps1").read_text(encoding="utf-8")
++    marker = 'if ("$inside".Trim()'
++    harmless = "$rm = 1; $kill = 2; Write-Host 'a cat and a del and a gc'; -rm; x.del; $env:cat"
++    _check_code(text.replace(marker, harmless + chr(10) + marker, 1))
+diff --git a/tests/test_scrub_n8n_export.py b/tests/test_scrub_n8n_export.py
+new file mode 100644
+index 0000000..4cf15b3
+--- /dev/null
++++ b/tests/test_scrub_n8n_export.py
+@@ -0,0 +1,293 @@
++"""tools/scrub_n8n_export.py: addresses of any scheme, look-alike and non-ASCII e-mail domains, and the connections of a
++workflow. Every value that the repository's own scans would flag is built from parts at run time, so this file holds
++no host name, address or e-mail of its own."""
++
++from __future__ import annotations
++
++import json
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++
++from tools.scrub_n8n_export import _clean, scrub
++
++REPO = Path(__file__).resolve().parents[1]
++
++RESERVED = "example" + "." + "test"
++REPLACEMENT_MAIL = "someone" + "@" + RESERVED  # what the scrub writes in place of an address
++
++
++def _j(*labels: str) -> str:
++    return ".".join(labels)
++
++
++def _u(scheme: str, rest: str) -> str:
++    return scheme + ":" + "//" + rest
++
++
++def _at(user: str, domain: str) -> str:
++    return user + "@" + domain
++
++
++CORP = _j("files", "corp", "example", "org")
++DB = _j("db", "internal", "corp")
++KEPT = [
++    "write to a@example.com",
++    "a@sub.example.test",
++    "end of sentence a@example.invalid.",
++    "http://localhost:5678/webhook/x",
++    "https://127.0.0.1/x",
++    "http://localhost",
++    "http://localhost/ok.",
++    "ws://localhost:5678/socket",
++    "{data: 1}",
++    "use javascript: it works",
++    "see data: below",
++]
++SECRETLIKE = "api_" + "key=" + "SOME" + "THING"  # a fake secret in a query: built from parts
++# A localhost web address keeps scheme, host, port and path; the query and the fragment are dropped (an API key can sit
++# in either): (input, what must be left)
++QUERY_DROPPED = [
++    ("http://localhost:5678/webhook/x?" + SECRETLIKE, "http://localhost:5678/webhook/x"),
++    ("http://127.0.0.1:5679?x=1", "http://127.0.0.1:5679"),
++    (_u("http", "localhost#top"), "http://localhost"),
++    ("see https://127.0.0.1/p#access_token=abc end", "see https://127.0.0.1/p end"),
++    ("ws://localhost:1/a?" + SECRETLIKE + "#f", "ws://localhost:1/a"),
++    ("wss://localhost/s/?" + SECRETLIKE, "wss://localhost/s/"),
++]
++GONE = [
++    # any scheme but http, https, ws and wss with a localhost host goes whole (once only a web address was thought of)
++    ("file:" + "//localhost/home/someone/.ssh/id_rsa", ["someone", "id_rsa", "home"]),
++    (_u("postgres", "localhost:5432/leads"), ["5432", "leads"]),
++    (_u("ftp", "localhost/in/x.csv"), ["x.csv", "in/"]),
++    (_u("ssh", "127.0.0.1:22/repo.git"), ["22", "repo"]),
++    (_u("redis", "localhost"), ["redis"]),
++    ("file:" + "//127.0.0.1/etc/passwd", ["etc", "passwd"]),
++    # JSON-escaped slashes (a JSON text kept inside a string): the address is read as an address
++    ("https:" + "\\/\\/" + CORP + "\\/x", [CORP, "corp"]),
++    ("http:" + "\\/\\/localhost\\/x?" + SECRETLIKE, ["SOMETHING"]),
++    (_u("ftp", "user:secretword@" + CORP + "/in/x.csv"), [CORP, "secretword", "user:", "in/x.csv", "corp"]),
++    ("file:" + "///home/someone/.ssh/id_rsa", ["someone", "id_rsa"]),
++    # the user name, the password, the host, the port and the database name must all be gone
++    (_u("postgres", "app:pw1234@" + DB + ":5432/leads"), ["app:", "pw1234", DB, "5432", "leads"]),
++    (_u("wss", _j("stream", "vendor", "net") + "/live"), [_j("vendor", "net"), "stream"]),
++    (
++        f"mail {_at('bob', _j('example', 'com', 'au'))} and {_at('jane', _j('example', 'com', 'evil', 'net'))}",
++        [_j("example", "com", "au"), _j("evil", "net"), "bob@", "jane@"],
++    ),
++    (_at("x", _j("example", "com-evil", "org")), ["evil", "x@"]),  # the allowed name followed by - and more letters
++    # localhost or 127.0.0.1 as a USER NAME or with a text port: the host is another one
++    (_u("http", "localhost:x@" + RESERVED + "/p"), ["x@", RESERVED, "localhost:x"]),
++    (_u("http", "127.0.0.1:pw@" + RESERVED + "/x"), ["pw@", RESERVED, "127.0.0.1:pw"]),
++    (_u("http", "localhost@" + RESERVED + "/x"), ["@", RESERVED]),
++    (_u("http", "127.0.0.1." + RESERVED + "/x"), [RESERVED]),
++    (_u("http", "localhost:80@" + RESERVED), ["80@", RESERVED]),
++    # the same with one slash (a browser reads it as the same address)
++    ("https:" + "/" + CORP + "/x", [CORP, "corp"]),
++    ("http:" + "/" + "localhost:x@" + RESERVED, ["x@", RESERVED]),
++    # links that carry code or content
++    ("open javascript:alert(document.cookie) now", ["alert", "cookie"]),
++    ("data:text/plain;base64,QUJDREVGRw== end", ["QUJDREVGRw"]),
++    # e-mail addresses with letters outside a-z: nothing of the address may stay
++    (_at("josé", _j("corp", "example")), ["jos", "corp", "@" + _j("corp", "example")]),
++    (_at("a", "exämple" + ".com"), ["ämple", "ä", "a@", ".com"]),
++    (_at("用户", _j("corp", "example")), ["用", "corp"]),
++    (_at("a", "例え" + _j("", "jp")), ["例", "jp"]),
++    ("a＠" + _j("corp", "example"), ["corp", "＠"]),
++    # an address right after a digit, "-", "+" or "." (a start look-behind once let these through whole)
++    ("5" + _u("http", CORP + "/x"), [CORP, "corp"]),
++    ("-" + _u("https", CORP + "/x"), [CORP, "corp"]),
++    ("." + _u("ftp", CORP + "/x"), [CORP, "corp"]),
++    ("+" + _u("http", CORP + "/x"), [CORP, "corp"]),
++    ("a-" + _u("http", CORP + "/x"), [CORP, "corp"]),
++    ("5" + _u("ftp", "user:secretword@" + CORP), [CORP, "secretword", "user:"]),
++]
++# What the scrub does NOT touch (stated in the module text): kept on purpose in these rows so that a change shows up.
++LIMITS = [
++    "//" + CORP + "/x",  # no scheme at all
++    CORP + ":5432",  # a bare host and port
++    "http%3A%2F%2F" + CORP + "%2Fx",  # the scheme with percent signs
++    "http:" + "\\\\" + CORP + "\\x",  # the scheme with backslashes
++    "data:,hello",  # data: without a media type
++    "data:;base64,QUJD",
++    "a" + "\ufe6b" + CORP,  # small at-sign (U+FE6B): not read as an at-sign
++]
++
++
++@pytest.mark.parametrize(("text", "left"), QUERY_DROPPED)
++def test_a_localhost_web_address_loses_its_query_and_fragment(text: str, left: str) -> None:
++    assert _clean(text) == left
++
++
++@pytest.mark.parametrize("text", KEPT)
++def test_allowed_values_are_kept(text: str) -> None:
++    assert _clean(text) == text
++
++
++@pytest.mark.parametrize(("text", "must_not_remain"), GONE)
++def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
++    out = _clean(text)
++    assert not [w for w in must_not_remain if w in out], out
++
++
++def test_a_non_ascii_address_becomes_the_plain_stand_in_and_nothing_of_it_stays() -> None:
++    assert _clean(_at("a", "exämple" + ".com")) == REPLACEMENT_MAIL
++    assert _clean("x " + _at("josé", _j("corp", "example")) + " y") == "x " + REPLACEMENT_MAIL + " y"
++
++
++@pytest.mark.parametrize("text", LIMITS)
++def test_limit_an_address_without_a_scheme_is_not_cleaned(text: str) -> None:
++    """A stated limit of the module (see its text), pinned: free text is not parsed for bare hosts."""
++    assert _clean(text) == text
++
++
++def test_limit_an_ideographic_full_stop_ends_the_domain_of_an_address() -> None:
++    """Stated limit: only the part up to the ideographic full stop (U+3002) is read as the domain."""
++    stop = "\u3002"
++    assert _clean("a@corp" + stop + "example") == REPLACEMENT_MAIL + stop + "example"
++
++
++def test_limit_the_keys_of_a_dictionary_inside_node_parameters_are_not_cleaned() -> None:
++    """Stated limit: only the values are cleaned. A key that is an address stays (a made-up name for the test)."""
++    key = _u("http", CORP + "/k")
++    out = scrub({"nodes": [{"name": "n", "parameters": {key: _u("http", CORP + "/v")}}]})
++    assert out["nodes"][0]["parameters"] == {key: "http://localhost/REPLACE-ME"}
++
++
++def _workflow(names: list[str]) -> dict[str, object]:
++    link = [{"node": names[1], "type": "main", "index": 0}, {"node": names[2], "type": "main", "index": 0}]
++    return {
++        "name": "w " + _at("x", _j("corp", "example")),
++        "nodes": [{"name": n, "type": "n8n-nodes-base.set", "parameters": {}} for n in names],
++        "connections": {
++            names[0]: {"main": [link]},
++            names[1]: {"main": [[{"node": names[2], "type": "main", "index": 0}]]},
++        },
++    }
++
++
++def test_connections_use_the_cleaned_node_names_and_leak_nothing() -> None:
++    names = ["Start", "Mail " + _at("bob", _j("corp", "example")), "Mail " + _at("eve", _j("corp", "example"))]
++    original = _workflow(names)
++    snapshot = json.dumps(original, sort_keys=True)
++    out = scrub(original)
++    assert json.dumps(original, sort_keys=True) == snapshot, "the input must not be changed"
++    text = json.dumps(out, ensure_ascii=False)
++    assert "bob" not in text and "eve" not in text and "corp" not in text, text
++    node_names = [n["name"] for n in out["nodes"]]
++    assert len(set(node_names)) == 3, "two cleaned names must not be the same name"
++    refs = set(out["connections"]) | {
++        c["node"] for src in out["connections"].values() for branch in src["main"] for link in branch for c in [link]
++    }
++    assert refs <= set(node_names), f"dangling references: {sorted(refs - set(node_names))}"
++    # the shape is the same: Start leads to both mails, the first mail leads to the second
++    assert [c["node"] for c in out["connections"]["Start"]["main"][0]] == node_names[1:]
++    assert [c["node"] for c in out["connections"][node_names[1]]["main"][0]] == [node_names[2]]
++
++
++# every start character that is part of a scheme or a local part, in front of each form that must go
++PREFIXES = ["", "5", "-", ".", "+", "_", "a", "a-", "a.", "9a", "--", "..", "5-", "(", "[", "="]
++
++
++@pytest.mark.parametrize("prefix", PREFIXES)
++@pytest.mark.parametrize(
++    ("form", "must_not_remain"),
++    [
++        (_u("http", CORP + "/x"), [CORP]),
++        (_u("ftp", CORP + "/x"), [CORP]),
++        (_u("ssh", "git@" + CORP), [CORP, "git@"]),
++        ("https:" + "/" + CORP + "/x", [CORP]),
++        ("javascript:alert(document.cookie)", ["alert", "cookie"]),
++        ("vbscript:msgbox", ["msgbox"]),
++        ("data:text/plain;base64,QUJDREVGRw==", ["QUJDREVGRw"]),
++        (_at("jane", CORP), ["jane@", CORP]),
++        (_at("josé", CORP), ["jos", CORP]),
++    ],
++)
++def test_a_prefix_in_front_of_an_address_does_not_let_it_through(
++    prefix: str, form: str, must_not_remain: list[str]
++) -> None:
++    out = _clean(prefix + form)
++    assert not [w for w in must_not_remain if w in out], out
++
++
++@pytest.mark.parametrize("prefix", ["5", "-", ".", "+"])
++def test_the_character_in_front_of_a_scheme_may_stay_but_the_address_goes(prefix: str) -> None:
++    """A chosen result: the scheme must start with a letter, so a leading digit, "-", "." or "+" is not part of the
++    address and stays; everything from the scheme on is replaced."""
++    assert _clean(prefix + _u("http", CORP + "/x")) == prefix + "http://localhost/REPLACE-ME"
++
++
++# --- linearity: a 1 MB string of the worst shape for each pattern must be scanned in a fixed small time ----------
++BIG = 1_000_000
++# Measured 0.02 to 0.10 s per pattern on a 2026 development machine (see the evidence file); 2 s is a limit with more
++# than ten times the margin for a slow runner. A pattern that backtracks badly takes minutes, not seconds.
++LIMIT_SECONDS = 2.0
++
++
++def _worst_shapes(n: int) -> dict[str, str]:
++    return {
++        "letters": "a" * n,
++        "dots": "." * n,
++        "hyphens": "-" * n,
++        "a.a.a. chain": "a." * (n // 2),
++        "a-a-a- chain": "a-" * (n // 2),
++        "many http prefixes without a host": "http" * (n // 4),
++        "http: without slashes": "http:" * (n // 5),
++        "http:// repeated": "http:// " * (n // 8),
++        "long word run, then a character that does not match": "a" * (n - 1) + " ",
++        "word-and-hyphen run, then !": "a-" * (n // 2 - 1) + "!",
++        "many @": "a@" * (n // 2),
++        "one @ then dotted labels": "a@" + "a." * (n // 2 - 1),
++        "one @ then a long run": "x@" + "a" * (n - 2),
++        "label chain that nearly is the allowed domain": "a@" + "example." * (n // 8),
++        "scheme names without a colon": "javascript" * (n // 10),
++        "data: prefixes": "data:a/" * (n // 7),
++        "non-ASCII letters": "é" * n,
++        "escaped slashes after a scheme-like word": "a:" + "\\/" * (n // 2),
++        "scheme-like words with escaped slashes": "a:\\/\\" * (n // 5),
++        "localhost address with a very long path": "http://localhost/" + "a" * (n - 17),
++        "localhost address, then many ? and #": "http://localhost/" + "?#" * ((n - 17) // 2),
++        "many localhost addresses": "http://localhost/ " * (n // 18),
++        "many localhost-like hosts": ("http" + "://localhost.a ") * (n // 19),
++    }
++
++
++# The scan runs in its own Python process: a pattern that backtracks badly would otherwise hang the whole test run (a
++# regex call cannot be interrupted); here the process is stopped at the hard limit and the test fails with a message.
++_PROBE = """
++import json, sys, time
++sys.path.insert(0, sys.argv[1])
++import tools.scrub_n8n_export as m
++shapes = json.loads(sys.stdin.read())
++pattern = getattr(m, sys.argv[2])
++run = pattern if sys.argv[2] == "_clean" else (lambda text: pattern.sub("x", text))
++slow = []
++for shape, text in shapes.items():
++    start = time.perf_counter()
++    run(text)
++    took = time.perf_counter() - start
++    if took > float(sys.argv[3]):
++        slow.append(shape + ": " + format(took, ".2f") + " s")
++print(json.dumps(slow))
++"""
++
++
++@pytest.mark.parametrize("name", ["URL", "MAIL", "ACTIVE_LINK", "_clean"])
++def test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time(name: str) -> None:
++    hard_stop = LIMIT_SECONDS * len(_worst_shapes(0)) + 30  # the sum of all limits and the start of Python
++    try:
++        done = subprocess.run(  # noqa: S603 (our own interpreter and our own probe text)
++            [sys.executable, "-c", _PROBE, str(REPO), name, str(LIMIT_SECONDS)],
++            input=json.dumps(_worst_shapes(BIG)),
++            capture_output=True,
++            text=True,
++            timeout=hard_stop,
++            check=True,
++        )
++    except subprocess.TimeoutExpired:  # pragma: no cover - only when a pattern backtracks without bound
++        pytest.fail(f"{name} did not finish 1 MB of its worst shapes in {hard_stop:.0f} s: it is not linear")
++    slow = json.loads(done.stdout)
++    assert not slow, f"{name} takes more than {LIMIT_SECONDS} s on 1 MB of: {slow}"
+diff --git a/tools/scrub_n8n_export.py b/tools/scrub_n8n_export.py
+index 2b16b6d..21b18f1 100644
+--- a/tools/scrub_n8n_export.py
++++ b/tools/scrub_n8n_export.py
+@@ -2,8 +2,24 @@
+ 
+ Allow-list by key name: a key that is not listed is dropped, so a field n8n adds later cannot leak.
+ Never kept: ids, instance id, credentials, webhook ids, pinData, tags, project owner, timestamps.
+-Inside node parameters (free-form) strings are cleaned: absolute URLs other than localhost, and e-mail
+-addresses other than example.test / example.com / example.invalid, are replaced.
++Inside node parameters (free-form) strings are cleaned: absolute URLs (any scheme; JSON-escaped slashes as in
++https:\\/\\/host too), data: and javascript: links, and e-mail addresses (letters of any alphabet) other than
++example.test / example.com / example.invalid, are replaced. Node names are cleaned too, and the "connections" part is
++rewritten with the cleaned names, so the references stay consistent.
++One exception: a plain web address (scheme http, https, ws or wss) to localhost or 127.0.0.1 (a port may follow;
++user:password in front of the host is never allowed) is kept, but only up to the end of its path: the query string
++(?...) and the fragment (#...) are dropped, because an API key can sit in a query. Every other scheme with a localhost
++host (file://localhost/..., postgres://localhost/..., ftp://localhost/...) is replaced whole.
++What is NOT cleaned (the free text of a name or a parameter is not parsed), stated plainly:
++ - an address without a scheme, such as //host/path or host:5432; a bare host name or IP address; a path that is not
++   a URL; the scheme's colon and slashes written with percent signs (%3A%2F%2F) or with backslashes (http:\\\\host);
++ - a data: link without a media type (data:,text and data:;base64,...), and U+FE6B (small at-sign) or an ideographic
++   full stop in an e-mail address (only the ASCII "@" and the full-width "@" are read as the at-sign);
++ - the KEYS of a dictionary inside node parameters (only the values are cleaned; node names and the keys of the
++   "connections" part are cleaned);
++ - an expression inside a node name that refers to another node by an old name when two names became the same (the
++   second gets " (2)").
++Check the output by eye before it goes into a public repo.
+ 
+ Usage: python -m tools.scrub_n8n_export in.json out.json
+ The webhook path is kept (a plain word); n8n creates its own ids on import.
+@@ -37,13 +53,41 @@ NODE = (
+     "alwaysOutputData",
+     "continueOnFail",  # node settings that change what a run does
+ )
+-URL = re.compile(r"https?://(?!(?:localhost|127\.0\.0\.1)(?:[:/]|$))[^\s\"'<>]+")
+-MAIL = re.compile(r"[A-Za-z0-9._%+-]+@(?!(?:[A-Za-z0-9-]+\.)*example\.(?:com|test|invalid)\b)[A-Za-z0-9.-]+")
++# No look-behind in front of the scheme: a look-behind made an address right after a digit, "-", "+" or "." (a digit,
++# then http, then the rest of the address) survive whole. The scheme is at most 32 characters, so the search stays
++# linear. The leftmost match starts at the true start of the scheme, so a character in front of it (a digit, "-")
++# stays and the address after it goes. The slashes may be JSON-escaped (:\/\/).
++# Any scheme (http, https, ftp, ssh, postgres, file, ...) is matched whole: a host, a path or a user:password part must
++# not survive. The one exception is decided in _url_replacement, not in the pattern (a pattern with the exception in
++# it would also match from the middle of a scheme).
++URL = re.compile(r"(?:[A-Za-z][A-Za-z0-9+.-]{0,31}:(?:\\?/){2}|(?:https?|ftps?|wss?):/(?!/))[^\s\"'<>]+")
++# What may stay: http, https, ws or wss to localhost or 127.0.0.1 (optionally :digits, and the host must END there:
++# localhost:x@host and 127.0.0.1.host are other hosts). Only up to the end of the path: no query, no fragment.
++_LOCAL_WEB = re.compile(
++    r"((?:https?|wss?)://(?:localhost|127\.0\.0\.1)(?::[0-9]+)?)(?=[/?#]|\Z)([^?#]*)[?#]?.*\Z", re.DOTALL
++)
++# links that carry content or code instead of a host
++ACTIVE_LINK = re.compile(
++    r"(?:(?:javascript|vbscript):[^\s\"'<>]+|data:[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+[;,][^\s\"'<>]*)", re.IGNORECASE
++)
++# letters of any alphabet (\w is Unicode for str patterns) in the local part and the domain; @ or its full-width form.
++# The allowed domain must END there: the allowed name with more labels or letters after it is another, real domain.
++MAIL = re.compile(
++    r"(?<![\w.%+-])[\w.%+-]+[@\uFF20](?!(?:[\w-]+\.)*example\.(?:com|test|invalid)(?![\w-]|\.[\w-]))[\w.-]+"
++)
++REPLACEMENT_URL = "http://localhost/REPLACE-ME"
++REPLACEMENT_MAIL = "someone@example.test"
++
++
++def _url_replacement(m: re.Match[str]) -> str:
++    """A web address to this computer keeps scheme, host, port and path (no query, no fragment); all others go."""
++    local = _LOCAL_WEB.fullmatch(m.group(0))
++    return local.group(1) + local.group(2) if local else REPLACEMENT_URL
+ 
+ 
+ def _clean(v: Any) -> Any:
+     if isinstance(v, str):
+-        return MAIL.sub("someone@example.test", URL.sub("http://localhost/REPLACE-ME", v))
++        return MAIL.sub(REPLACEMENT_MAIL, ACTIVE_LINK.sub(REPLACEMENT_URL, URL.sub(_url_replacement, v)))
+     if isinstance(v, list):
+         return [_clean(x) for x in v]
+     if isinstance(v, dict):
+@@ -51,15 +95,49 @@ def _clean(v: Any) -> Any:
+     return v
+ 
+ 
++def _rename(value: Any, names: dict[str, str]) -> Any:
++    """The connections part: every key and every "node" value is a node name; use the cleaned name."""
++    if isinstance(value, list):
++        return [_rename(x, names) for x in value]
++    if isinstance(value, dict):
++        return {
++            names.get(k, _clean(k)): (
++                names.get(x, _clean(x)) if k == "node" and isinstance(x, str) else _rename(x, names)
++            )
++            for k, x in value.items()
++        }
++    return _clean(value)
++
++
++def _unique(name: str, taken: set[str]) -> str:
++    """A cleaned name that no other node has (two different addresses clean to the same text)."""
++    out, n = name, 1
++    while out in taken:
++        n += 1
++        out = f"{name} ({n})"
++    taken.add(out)
++    return out
++
++
+ def scrub(workflow: dict[str, Any]) -> dict[str, Any]:
+     """Return a new, scrubbed workflow; the input is not changed."""
+     wf = copy.deepcopy(workflow)
+-    out: dict[str, Any] = {k: wf[k] for k in TOP if k in wf and k != "nodes"}
++    out: dict[str, Any] = {k: wf[k] for k in TOP if k in wf and k not in ("nodes", "connections")}
+     if isinstance(wf.get("settings"), dict):
+         out["settings"] = {k: v for k, v in wf["settings"].items() if k in SETTINGS}
+-    out["nodes"] = [
+-        {"id": f"node-{i}", **{k: _clean(n[k]) for k in NODE if k in n}} for i, n in enumerate(wf.get("nodes", []), 1)
+-    ]
++    names: dict[str, str] = {}
++    taken: set[str] = set()
++    nodes = []
++    for i, n in enumerate(wf.get("nodes", []), 1):
++        node = {"id": f"node-{i}", **{k: _clean(n[k]) for k in NODE if k in n}}
++        if isinstance(n.get("name"), str):
++            if n["name"] not in names:
++                names[n["name"]] = _unique(node["name"], taken)
++            node["name"] = names[n["name"]]
++        nodes.append(node)
++    out["nodes"] = nodes
++    if "connections" in wf:
++        out["connections"] = _rename(wf["connections"], names)
+     out["name"] = _clean(out.get("name", "workflow"))
+     return out
+ 

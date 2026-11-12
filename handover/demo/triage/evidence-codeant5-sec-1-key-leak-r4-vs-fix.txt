@@ -1,0 +1,43 @@
+# r4 state (two-line key file, made-up key)
+Traceback (most recent call last):
+  File "/tmp/work/c11-r4/scripts/n8n_api.py", line 150, in <module>
+    sys.exit(main(sys.argv))
+             ^^^^^^^^^^^^^^
+  File "/tmp/work/c11-r4/scripts/n8n_api.py", line 130, in main
+    for w in workflows():
+             ^^^^^^^^^^^
+  File "/tmp/work/c11-r4/scripts/n8n_api.py", line 102, in workflows
+    code, res = call("GET", "/workflows?limit=250")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/c11-r4/scripts/n8n_api.py", line 84, in call
+    with open_http(req, 60, follow_redirects=False, use_proxy=PROXY_ALLOWED) as r:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/c11-r4/scripts/http_guard.py", line 35, in open_http
+    return urllib.request.build_opener(*handlers).open(req, timeout=timeout)  # noqa: S310  # nosec B310
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1373, in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1344, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+  File "/usr/lib/python3.12/http/client.py", line 1365, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "/usr/lib/python3.12/http/client.py", line 1406, in _send_request
+    self.putheader(hdr, value)
+  File "/usr/lib/python3.12/http/client.py", line 1343, in putheader
+    raise ValueError('Invalid header value %r' % (values[i],))
+ValueError: Invalid header value b'made-up-key-LINE-ONE\nmade-up-key-LINE-TWO'
+EXIT 1
+
+# fixed state
+the n8n API key file must hold one word of printable ASCII (no space, second line or control character)
+EXIT 1

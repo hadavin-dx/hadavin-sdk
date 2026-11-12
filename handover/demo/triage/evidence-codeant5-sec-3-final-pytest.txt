@@ -1,0 +1,2 @@
+COMMAND: (cd /tmp/work/c11-fin && GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 python -m pytest -p no:cacheprovider -q -rs <13 files>)  fresh 0841f36 + four codeant3 patches, git add -N
+DATE: 2026-11-12T22:06:04Z

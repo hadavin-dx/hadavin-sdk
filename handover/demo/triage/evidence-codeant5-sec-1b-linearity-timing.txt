@@ -1,0 +1,164 @@
+COMMAND: python3 /tmp/work/c11-time.py (1,000,000-character strings, 30 worst shapes per regex incl. 5 new tab/line-break shapes, and through the whole _clean; one run each)
+TREE: /tmp/work/c11-fin = fresh 0841f36 + the four codeant3 patches
+DATE: 2026-11-12T22:05:29Z
+---
+URL letters 0.076
+URL dots 0.013
+URL hyphens 0.013
+URL a.a.a. 0.046
+URL a-a-a- 0.047
+URL http no host 0.091
+URL http:/ no host 0.049
+URL http://  0.054
+URL w-run then space 0.081
+URL w-run then @-less 0.048
+URL many @ 0.021
+URL a@a.a.a.a 0.048
+URL @ + long run 0.08
+URL mail example chain 0.075
+URL javascript no colon 0.079
+URL data:  0.037
+URL scheme-ish 0.046
+URL digits 0.013
+URL unicode 0.013
+URL schemes/ 0.003
+URL escaped slashes 0.003
+URL escaped words 0.025
+URL local long path 0.003
+URL local ?# 0.003
+URL many local 0.011
+URL local-like 0.01
+URL local+only tabs 0.015
+URL local+tab+long run 0.081
+URL many local+tab 0.016
+URL many local+LF 0.013
+URL long scheme-ish run 0.08
+URL WORST 0.091
+MAIL letters 0.02
+MAIL dots 0.016
+MAIL hyphens 0.016
+MAIL a.a.a. 0.019
+MAIL a-a-a- 0.019
+MAIL http no host 0.02
+MAIL http:/ no host 0.025
+MAIL http://  0.026
+MAIL w-run then space 0.02
+MAIL w-run then @-less 0.018
+MAIL many @ 0.043
+MAIL a@a.a.a.a 0.05
+MAIL @ + long run 0.005
+MAIL mail example chain 0.02
+MAIL javascript no colon 0.02
+MAIL data:  0.025
+MAIL scheme-ish 0.018
+MAIL digits 0.022
+MAIL unicode 0.02
+MAIL schemes/ 0.025
+MAIL escaped slashes 0.026
+MAIL escaped words 0.026
+MAIL local long path 0.02
+MAIL local ?# 0.025
+MAIL many local 0.026
+MAIL local-like 0.026
+MAIL local+only tabs 0.025
+MAIL local+tab+long run 0.02
+MAIL many local+tab 0.028
+MAIL many local+LF 0.03
+MAIL long scheme-ish run 0.02
+MAIL WORST 0.05
+ACTIVE letters 0.022
+ACTIVE dots 0.022
+ACTIVE hyphens 0.022
+ACTIVE a.a.a. 0.022
+ACTIVE a-a-a- 0.023
+ACTIVE http no host 0.022
+ACTIVE http:/ no host 0.023
+ACTIVE http://  0.022
+ACTIVE w-run then space 0.023
+ACTIVE w-run then @-less 0.023
+ACTIVE many @ 0.022
+ACTIVE a@a.a.a.a 0.022
+ACTIVE @ + long run 0.022
+ACTIVE mail example chain 0.022
+ACTIVE javascript no colon 0.028
+ACTIVE data:  0.043
+ACTIVE scheme-ish 0.022
+ACTIVE digits 0.022
+ACTIVE unicode 0.022
+ACTIVE schemes/ 0.022
+ACTIVE escaped slashes 0.022
+ACTIVE escaped words 0.022
+ACTIVE local long path 0.023
+ACTIVE local ?# 0.022
+ACTIVE many local 0.023
+ACTIVE local-like 0.022
+ACTIVE local+only tabs 0.022
+ACTIVE local+tab+long run 0.022
+ACTIVE many local+tab 0.025
+ACTIVE many local+LF 0.026
+ACTIVE long scheme-ish run 0.022
+ACTIVE WORST 0.043
+LOCAL_BROKEN letters 0.249
+LOCAL_BROKEN dots 0.006
+LOCAL_BROKEN hyphens 0.006
+LOCAL_BROKEN a.a.a. 0.121
+LOCAL_BROKEN a-a-a- 0.128
+LOCAL_BROKEN http no host 0.245
+LOCAL_BROKEN http:/ no host 0.044
+LOCAL_BROKEN http://  0.045
+LOCAL_BROKEN w-run then space 0.242
+LOCAL_BROKEN w-run then @-less 0.135
+LOCAL_BROKEN many @ 0.013
+LOCAL_BROKEN a@a.a.a.a 0.132
+LOCAL_BROKEN @ + long run 0.248
+LOCAL_BROKEN mail example chain 0.224
+LOCAL_BROKEN javascript no colon 0.243
+LOCAL_BROKEN data:  0.035
+LOCAL_BROKEN scheme-ish 0.13
+LOCAL_BROKEN digits 0.008
+LOCAL_BROKEN unicode 0.007
+LOCAL_BROKEN schemes/ 0.023
+LOCAL_BROKEN escaped slashes 0.006
+LOCAL_BROKEN escaped words 0.016
+LOCAL_BROKEN local long path 0.24
+LOCAL_BROKEN local ?# 0.006
+LOCAL_BROKEN many local 0.058
+LOCAL_BROKEN local-like 0.063
+LOCAL_BROKEN local+only tabs 0.001
+LOCAL_BROKEN local+tab+long run 0.003
+LOCAL_BROKEN many local+tab 0.012
+LOCAL_BROKEN many local+LF 0.009
+LOCAL_BROKEN long scheme-ish run 0.249
+LOCAL_BROKEN WORST 0.249
+_clean letters 0.37
+_clean dots 0.063
+_clean hyphens 0.059
+_clean a.a.a. 0.216
+_clean a-a-a- 0.217
+_clean http no host 0.463
+_clean http:/ no host 0.15
+_clean http://  0.149
+_clean w-run then space 0.381
+_clean w-run then @-less 0.264
+_clean many @ 0.129
+_clean a@a.a.a.a 0.266
+_clean @ + long run 0.368
+_clean mail example chain 0.345
+_clean javascript no colon 0.39
+_clean data:  0.147
+_clean scheme-ish 0.232
+_clean digits 0.066
+_clean unicode 0.067
+_clean schemes/ 0.026
+_clean escaped slashes 0.009
+_clean escaped words 0.091
+_clean local long path 0.294
+_clean local ?# 0.011
+_clean many local 0.143
+_clean local-like 0.166
+_clean local+only tabs 0.001
+_clean local+tab+long run 0.003
+_clean many local+tab 0.159
+_clean many local+LF 0.113
+_clean long scheme-ish run 0.43
+_clean WORST 0.463

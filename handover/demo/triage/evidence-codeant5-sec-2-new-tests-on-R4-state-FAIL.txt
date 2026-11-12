@@ -1,0 +1,42 @@
+# new tests (files from the fixed tree) run against the r4 code (fresh archive of the r4 patches on 0841f36)
+# date 2026-11-12T22:03:19Z
+>           raise RuntimeError(f"git grep failed ({p.returncode}): {p.stderr[-300:]}")
+E           RuntimeError: git grep failed (128): fatal: not a git repository (or any of the parent directories): .git
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://example.test@127.0.0.1]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://example.test\t@127.0.0.1]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://example.test\n@127.0.0.1]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://example.test\r\n@127.0.0.1:5678/x]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1\t:5678]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:5678/x\ny]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:5678\n]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[https://user@example.test]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[two-lines]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[non-latin-1]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[trailing-nul]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[tab-inside]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[space-inside]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[empty]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[only-blanks]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[delete-char]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[latin-1-letter]
+FAILED tests/test_n8n_api_url.py::test_an_invalid_address_inside_http_client_prints_the_error_type_only[non-numeric-port]
+FAILED tests/test_n8n_api_url.py::test_an_invalid_address_inside_http_client_prints_the_error_type_only[control-char]
+FAILED tests/test_n8n_api_url.py::test_an_invalid_address_inside_http_client_prints_the_error_type_only[bad-bracket]
+FAILED tests/test_n8n_api_url.py::test_a_body_that_is_cut_off_is_a_clean_message_with_the_error_type_only
+FAILED tests/test_n8n_api_url.py::test_an_error_page_that_is_cut_off_still_gives_the_status_not_a_traceback
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost\t@example.test-must_not_remain21]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost\n.example.test-must_not_remain22]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://127.0.0.1\r\n@example.test/x-must_not_remain23]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost:80\t@example.test-must_not_remain24]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[HTTPS://LOCALHOST\t@EXAMPLE.TEST-must_not_remain25]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[a ws://localhost\t\t@example.test b-must_not_remain26]
+FAILED tests/test_scrub_n8n_export.py::test_a_line_break_right_after_a_localhost_host_costs_only_the_next_word
+FAILED tests/test_scrub_n8n_export.py::test_the_docs_list_of_limits_equals_the_module_list
+FAILED tests/test_scrub_n8n_export.py::test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time[_LOCAL_BROKEN]
+FAILED tests/test_hygiene.py::test_no_control_characters_in_markdown
+FAILED tests/test_hygiene.py::test_hygiene_scan_public
+FAILED tests/test_hygiene.py::test_sh_blobs_no_cr
+34 failed, 316 passed in 31.28s
+# (second run, tree made a git repo so the hygiene git-based tests can run) hygiene + reset tests on r4 code
+FAILED tests/test_hygiene.py::test_hygiene_scan_public
+1 failed, 29 passed in 6.03s

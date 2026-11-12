@@ -4,4 +4,40 @@ start 21:56:50  21:56:50 up  3:06,  0 user,  load average: 1.52, 2.45, 2.11
 ........................................................................ [  5%]
 ........................................................................ [  8%]
 ........................................................................ [ 11%]
-.
+........................................................................ [ 13%]
+........................................................................ [ 16%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 24%]
+........................................................................ [ 27%]
+................................................................----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 47380)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/tmp/work/c3-final/demo_only/fake_hubspot.py", line 308, in do_POST
+    if not self._gate():
+           ^^^^^^^^^^^^
+  File "/tmp/work/c3-final/demo_only/fake_hubspot.py", line 231, in _gate
+    self._send(401, {"status": "error", "message": "bad key", "category": "INVALID_AUTHENTICATION"})
+  File "/tmp/work/c3-final/demo_only/fake_hubspot.py", line 212, in _send
+    self.wfile.write(data)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+...----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 43940)
+.----------------------------------------.... [ 30%]
+........................................................................ [ 33%]
+........................................................................ [ 35%]
+........................................................................ [ 38%]
+......................................

@@ -1,0 +1,64 @@
+# mutants: each edit is applied to a copy of the fixed tree; the named tests must FAIL. date 2026-11-12T22:04:44Z
+# script: /tmp/work/c11-mut.sh
+=== MUTANT A: _gitleaks_exe without the does-not-exist check
+_ test_a_gitleaks_bin_path_that_does_not_exist_is_a_clear_error_naming_the_variable _
+    def test_a_gitleaks_bin_path_that_does_not_exist_is_a_clear_error_naming_the_variable(
+FAILED tests/test_hygiene.py::test_a_gitleaks_bin_path_that_does_not_exist_is_a_clear_error_naming_the_variable
+1 failed, 2 passed, 12 deselected in 0.14s
+=== MUTANT B: shared opener without the proxy handler for https
+FAILED tests/test_n8n_api_url.py::test_the_shared_opener_still_uses_the_proxy_of_the_environment_for_https_too
+1 failed, 1 passed, 93 deselected in 1.09s
+=== MUTANT C1: checked_base without the user-name (@) check
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://example.test@127.0.0.1]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[https://user@example.test]
+2 failed, 23 passed, 70 deselected in 0.10s
+=== MUTANT C2: checked_base without the blank/control check
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1\t:5678]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:5678/x\ny]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:5678\n]
+3 failed, 22 passed, 70 deselected in 0.12s
+=== MUTANT D1: call() without HTTPException/ValueError
+_ test_an_invalid_address_inside_http_client_prints_the_error_type_only[non-numeric-port] _
+    def test_an_invalid_address_inside_http_client_prints_the_error_type_only(
+_ test_an_invalid_address_inside_http_client_prints_the_error_type_only[control-char] _
+    def test_an_invalid_address_inside_http_client_prints_the_error_type_only(
+_ test_an_invalid_address_inside_http_client_prints_the_error_type_only[bad-bracket] _
+    def test_an_invalid_address_inside_http_client_prints_the_error_type_only(
+___ test_a_body_that_is_cut_off_is_a_clean_message_with_the_error_type_only ____
+    def test_a_body_that_is_cut_off_is_a_clean_message_with_the_error_type_only(
+FAILED tests/test_n8n_api_url.py::test_an_invalid_address_inside_http_client_prints_the_error_type_only[non-numeric-port]
+FAILED tests/test_n8n_api_url.py::test_an_invalid_address_inside_http_client_prints_the_error_type_only[control-char]
+FAILED tests/test_n8n_api_url.py::test_an_invalid_address_inside_http_client_prints_the_error_type_only[bad-bracket]
+FAILED tests/test_n8n_api_url.py::test_a_body_that_is_cut_off_is_a_clean_message_with_the_error_type_only
+4 failed, 1 passed, 90 deselected in 1.27s
+=== MUTANT D2: call() prints str(e) instead of the type name
+_ test_an_invalid_address_inside_http_client_prints_the_error_type_only[non-numeric-port] _
+    def test_an_invalid_address_inside_http_client_prints_the_error_type_only(
+_ test_an_invalid_address_inside_http_client_prints_the_error_type_only[control-char] _
+    def test_an_invalid_address_inside_http_client_prints_the_error_type_only(
+FAILED tests/test_n8n_api_url.py::test_an_invalid_address_inside_http_client_prints_the_error_type_only[non-numeric-port]
+FAILED tests/test_n8n_api_url.py::test_an_invalid_address_inside_http_client_prints_the_error_type_only[control-char]
+2 failed, 4 passed, 89 deselected in 1.16s
+=== MUTANT D3: error-page read not guarded
+__ test_an_error_page_that_is_cut_off_still_gives_the_status_not_a_traceback ___
+    response = self.parent.error(
+/usr/lib/python3.12/urllib/request.py:559: in error
+    def http_error_default(self, req, fp, code, msg, hdrs):
+E       urllib.error.HTTPError: HTTP Error 500: Internal Server Error
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-401/test_an_error_page_that_is_cut0')
+    def test_an_error_page_that_is_cut_off_still_gives_the_status_not_a_traceback(
+    e.read()  # the body is not kept: an error page could echo a header
+FAILED tests/test_n8n_api_url.py::test_an_error_page_that_is_cut_off_still_gives_the_status_not_a_traceback
+1 failed, 94 deselected in 0.64s
+=== MUTANT E: scrub without the tab/line-break rule
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost\t@example.test-must_not_remain21]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost\n.example.test-must_not_remain22]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://127.0.0.1\r\n@example.test/x-must_not_remain23]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost:80\t@example.test-must_not_remain24]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[HTTPS://LOCALHOST\t@EXAMPLE.TEST-must_not_remain25]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[a ws://localhost\t\t@example.test b-must_not_remain26]
+FAILED tests/test_scrub_n8n_export.py::test_a_line_break_right_after_a_localhost_host_costs_only_the_next_word
+7 failed, 34 passed, 184 deselected in 0.09s
+=== MUTANT F: docs list lacks one limit phrase
+FAILED tests/test_scrub_n8n_export.py::test_the_docs_list_of_limits_equals_the_module_list
+1 failed, 224 deselected in 0.05s

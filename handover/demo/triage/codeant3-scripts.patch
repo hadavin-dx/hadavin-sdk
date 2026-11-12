@@ -33,10 +33,10 @@ index 362ae0e..79b500d 100644
 +        return urllib.request.build_opener(*handlers).open(req, timeout=timeout)  # noqa: S310  # nosec B310
      return urllib.request.urlopen(req, timeout=timeout)  # noqa: S310  # nosec B310  (scheme checked just above)
 diff --git a/scripts/n8n_api.py b/scripts/n8n_api.py
-index bce502b..48d8041 100644
+index bce502b..8980829 100644
 --- a/scripts/n8n_api.py
 +++ b/scripts/n8n_api.py
-@@ -4,6 +4,15 @@ Run from the repository root with N8N_URL (default http://127.0.0.1:5679) and N8
+@@ -4,10 +4,22 @@ Run from the repository root with N8N_URL (default http://127.0.0.1:5679) and N8
    python scripts/n8n_api.py import file.json | activate NAME | deactivate NAME | list
  Workflows are addressed by NAME so no id is printed.
  The key is read from the file, sent as a header, never printed.
@@ -47,12 +47,19 @@ index bce502b..48d8041 100644
 +A redirect answer is never followed (the header with the key would go to the new address); it is reported as an error.
 +For http to this computer the proxy settings of the environment (HTTP_PROXY, no_proxy) are ignored: the key header goes
 +straight to this computer, never to a proxy. For https they are used as usual.
-+Every failure ends with a short message and exit code 1 or 2, never a Python traceback, and never prints the key or an
-+answer body.
++The key file must hold one printable ASCII word (no space, no second line, no control character); anything else is
++refused at start with a fixed message that does not show the file text.
++Every failure ends with a short message and exit code 1 or 2, never a Python traceback, and never prints the key, the
++address, a header or an answer body: a network or protocol fault prints only the name of its error type.
  """
  
  from __future__ import annotations
-@@ -15,11 +24,51 @@ import urllib.error
+ 
++import http.client
+ import json
+ import os
+ import sys
+@@ -15,57 +27,143 @@ import urllib.error
  import urllib.request
  from http import HTTPStatus
  from pathlib import Path
@@ -80,6 +87,10 @@ index bce502b..48d8041 100644
 +        parts = split_url("N8N_URL", url)
 +    except SettingRefused as e:
 +        raise SystemExit(f"{e}; {REFUSED}") from None
++    # urlsplit drops tabs and line breaks and reads the host after the last "@"; urllib dials the whole text between
++    # "//" and the next "/". So a user name part or a blank/control character is refused here, by a check.
++    if "@" in parts.netloc or any(c.isspace() or not c.isprintable() for c in url):
++        raise SystemExit(REFUSED)
 +    scheme, host = parts.scheme.lower(), parts.hostname or ""
 +    if host and (scheme == "https" or (scheme == "http" and is_loopback_host(host))):
 +        return url.rstrip("/")
@@ -98,20 +109,38 @@ index bce502b..48d8041 100644
 +    if not name:
 +        raise SystemExit("N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key")
 +    try:
-+        return Path(name).read_text(encoding="utf-8").strip()
++        key = Path(name).read_text(encoding="utf-8").strip()
 +    except (OSError, ValueError) as e:  # a missing or unreadable file, or bytes that are not text
 +        raise SystemExit(f"cannot read the n8n API key file ({type(e).__name__})") from None
++    # Printable ASCII without a blank: a second line, a tab or NUL inside, or a non-latin-1 letter would make the header
++    # call fail with a message that holds the key. The text of the file is never part of the message.
++    if not key or not all(c.isascii() and c.isprintable() and not c.isspace() for c in key):
++        raise SystemExit(
++            "the n8n API key file must hold one word of printable ASCII (no space, second line or control character)"
++        )
++    return key
 +
 +
 +KEY = _read_key()
  KEEP = ("name", "nodes", "connections", "settings")  # the create call refuses other top-level keys
  
  
-@@ -32,40 +81,68 @@ def call(method: str, path: str, body: object = None) -> tuple[int, object]:
-         headers={"X-N8N-API-KEY": KEY, "Content-Type": "application/json"},
-     )
+ def call(method: str, path: str, body: object = None) -> tuple[int, object]:
+     data = None if body is None else json.dumps(body).encode()
+-    req = urllib.request.Request(  # noqa: S310 - local n8n, http by design
+-        BASE + "/api/v1" + path,
+-        data=data,
+-        method=method,
+-        headers={"X-N8N-API-KEY": KEY, "Content-Type": "application/json"},
+-    )
      try:
 -        with open_http(req, 60) as r:
++        req = urllib.request.Request(  # noqa: S310 - local n8n, http by design
++            BASE + "/api/v1" + path,
++            data=data,
++            method=method,
++            headers={"X-N8N-API-KEY": KEY, "Content-Type": "application/json"},
++        )
 +        with open_http(req, 60, follow_redirects=False, use_proxy=PROXY_ALLOWED) as r:
              raw = r.read()
 -            return r.status, (json.loads(raw) if raw else {})
@@ -122,10 +151,18 @@ index bce502b..48d8041 100644
 +            except ValueError:  # JSONDecodeError and UnicodeDecodeError: n8n (or something in front of it) sent no JSON
 +                raise SystemExit("n8n answered 200 with a body that is not JSON (not shown)") from None
      except urllib.error.HTTPError as e:
-         e.read()  # the body is not kept: an error page could echo a header
+-        e.read()  # the body is not kept: an error page could echo a header
++        try:
++            e.read()  # the body is not kept: an error page could echo a header
++        except (OSError, http.client.HTTPException, ValueError):
++            pass  # a reset or a cut-off while reading an error page changes nothing: the status is what counts
          return e.code, "(no body kept)"
-+    except OSError as e:  # refused, no route, timeout, TLS fault: the address and the key are not printed
-+        raise SystemExit(f"cannot reach n8n ({type(e).__name__}: {getattr(e, 'reason', e)})") from None
++    except (OSError, http.client.HTTPException, ValueError) as e:
++        # refused, no route, timeout, TLS fault, a bad address, a cut-off answer: only the NAME of the error type is
++        # printed (the text of such an error can hold the address or, for a bad header, the key).
++        reason = getattr(e, "reason", None)
++        detail = f": {type(reason).__name__}" if isinstance(e, urllib.error.URLError) and reason is not None else ""
++        raise SystemExit(f"cannot reach n8n ({type(e).__name__}{detail})") from None
 +
 +
 +def workflows() -> list[dict[str, object]]:
@@ -208,10 +245,10 @@ index 49906ed..42bdfc0 100644
  }
 diff --git a/tests/test_n8n_api_url.py b/tests/test_n8n_api_url.py
 new file mode 100644
-index 0000000..c0fc9f2
+index 0000000..fed0cd3
 --- /dev/null
 +++ b/tests/test_n8n_api_url.py
-@@ -0,0 +1,390 @@
+@@ -0,0 +1,559 @@
 +"""scripts/n8n_api.py sends the n8n API key in a header: it must only go to https, or to http on this computer, and
 +never follow a redirect. Look-alike and unreadable addresses are built from parts so that this file holds no host name
 +or address of its own (the repository's own scans read every tracked file)."""
@@ -283,6 +320,19 @@ index 0000000..c0fc9f2
 +    _u("http", "[::ffff:" + DOC_IP + "]:5678"),  # an IPv4-mapped address that is NOT loopback
 +    _u("http", "[::1%25eth0]:5678"),  # a scope id is not a plain loopback address
 +    _u("http", "0." * 3 + "0:5678"),
++    # a user name part or a blank/control character: urlsplit reads these one way, urllib dials another (the old
++    # guarantee rested on the failure of a name lookup, not on a check)
++    _u("http", RESERVED + "@127.0.0.1"),
++    _u("http", RESERVED + "\t@127.0.0.1"),
++    _u("http", RESERVED + "\n@127.0.0.1"),
++    _u("http", RESERVED + "\r\n@127.0.0.1:5678/x"),
++    _u(
++        "http", "127.0.0.1\t:5678"
++    ),  # urlsplit drops the tab and reads loopback; urllib would dial the text with the tab
++    _u("http", "127.0.0.1:5678/x\ny"),
++    _u("http", "127.0.0.1:5678\n"),
++    _u("http", " 127.0.0.1:5678"),
++    _u("https", "user@" + RESERVED),
 +    _u("ftp", "127.0.0.1"),
 +    "file:" + "///x",
 +    RESERVED,
@@ -588,8 +638,11 @@ index 0000000..c0fc9f2
 +) -> None:
 +    """Only the n8n script turns the proxy off (for its key); the other users of open_http are unchanged."""
 +    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    import urllib.request
++
 +    from http_guard import open_http
 +
++    monkeypatch.setattr(urllib.request, "_opener", None)  # urlopen caches its opener, with the proxies of that moment
 +    proxy, proxy_log = _server(None)
 +    try:
 +        for name in ("HTTP_PROXY", "http_proxy"):
@@ -602,12 +655,165 @@ index 0000000..c0fc9f2
 +        proxy.shutdown()
 +        proxy.server_close()
 +    assert len(proxy_log.log) == 1, "open_http no longer honours the proxy settings by default"
++
++
++def test_what_is_accepted_is_exactly_what_urllib_would_dial() -> None:
++    """The proxy bypass rests on this: for every accepted address the host text urllib dials equals the netloc we
++    judged (no user name part, no hidden character), so the check is a check and not a failed name lookup."""
++    import urllib.request
++    from urllib.parse import urlsplit
++
++    for url in (
++        _u("http", "127.0.0.1:5679/"),
++        _u("http", "localhost:5678"),
++        _u("http", "[::1]:5678"),
++        _u("https", RESERVED + "/x/"),
++    ):
++        assert urllib.request.Request(url).host == urlsplit(url).netloc  # noqa: S310 - never opened
++
++
++# --- the key file and network faults: never a traceback that holds the key or the address -----------------
++BAD_KEYS = {
++    "two-lines": "made-up-key-LINE-ONE\nmade-up-key-LINE-TWO\n",
++    "non-latin-1": "made-up-key-\u4e2d\u6587-end",
++    "trailing-nul": "made-up-key-NUL\x00",
++    "tab-inside": "made-up-key-\tTAB-inside",
++    "space-inside": "made-up-key SPACE-inside",
++    "empty": "",
++    "only-blanks": "  \n\t \n",
++    "delete-char": "made-up-key-\x7f-del",
++    "latin-1-letter": "made-up-key-\u00e9-latin1",  # latin-1 can send it, but it is not printable ASCII: refused too
++}
++
++
++@pytest.mark.parametrize("name", list(BAD_KEYS))
++def test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str
++) -> None:
++    text = BAD_KEYS[name]
++    (tmp_path / "bad-key.txt").write_bytes(text.encode("utf-8"))
++    monkeypatch.setenv("N8N_API_KEY_FILE", str(tmp_path / "bad-key.txt"))
++    monkeypatch.delenv("N8N_URL", raising=False)
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    sys.modules.pop("n8n_api", None)
++    with pytest.raises(SystemExit) as e:
++        importlib.import_module("n8n_api")
++    shown = _message(e) + capsys.readouterr().out + capsys.readouterr().err
++    assert "key file" in shown
++    for piece in ("made-up-key", "LINE-", "SPACE", "TAB", "NUL", "latin1"):
++        assert piece not in shown, f"the key text {piece!r} is in the message"
++
++
++def _call_with_base(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, base: str) -> str:
++    mod = _load(monkeypatch, tmp_path, None)
++    monkeypatch.setattr(mod, "BASE", base)  # a base that checked_base would refuse: what call() does with it is tested
++    with pytest.raises(SystemExit) as e:
++        mod.call("GET", "/workflows")
++    return _message(e)
++
++
++@pytest.mark.parametrize(
++    "base",
++    [_u("http", "127.0.0.1:99x"), _u("http", "127.0.0.1:1/\x00hidden"), _u("http", "[::1:5678")],
++    ids=["non-numeric-port", "control-char", "bad-bracket"],
++)
++def test_an_invalid_address_inside_http_client_prints_the_error_type_only(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, base: str
++) -> None:
++    msg = _call_with_base(monkeypatch, tmp_path, base)
++    assert "cannot reach n8n" in msg
++    for piece in (KEY_TEXT, "99x", "hidden", "127.0.0.1", "::1"):
++        assert piece not in msg, f"{piece!r} leaked into: {msg}"
++
++
++def _short_body(status: int) -> type[BaseHTTPRequestHandler]:
++    """Announces 100 bytes, sends 5 and closes the connection: the client reads IncompleteRead."""
++
++    class Short(BaseHTTPRequestHandler):
++        def _answer(self) -> None:
++            self.send_response(status)
++            self.send_header("Content-Length", "100")
++            self.end_headers()
++            self.wfile.write(b"short")
++            self.close_connection = True
++
++        do_GET = _answer
++        do_POST = _answer
++
++        def log_message(self, *args: object) -> None:
++            pass
++
++    return Short
++
++
++def test_a_body_that_is_cut_off_is_a_clean_message_with_the_error_type_only(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    with pytest.raises(SystemExit) as e:
++        _run_against(_short_body(200), monkeypatch, tmp_path, ["list"])
++    msg = _message(e)
++    assert "IncompleteRead" in msg
++    assert KEY_TEXT not in msg and "short" not in msg and "127.0.0.1" not in msg
++
++
++def test_an_error_page_that_is_cut_off_still_gives_the_status_not_a_traceback(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    srv = ThreadingHTTPServer(("127.0.0.1", 0), _short_body(500))
++    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    try:
++        mod = _load(monkeypatch, tmp_path, None)
++        monkeypatch.setattr(mod, "BASE", _u("http", f"127.0.0.1:{srv.server_address[1]}"))
++        code, body = mod.call("GET", "/workflows")
++    finally:
++        srv.shutdown()
++        srv.server_close()
++    assert code == 500 and body == "(no body kept)"
++
++
++def test_the_shared_opener_still_uses_the_proxy_of_the_environment_for_https_too(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    """The https half of the guard: an opener built without the proxy handler would dial the host directly. A stand-in
++    proxy records the CONNECT request that a proxy-aware opener sends it."""
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    import urllib.request
++
++    from http_guard import open_http
++
++    seen: list[str] = []
++
++    class Connect(BaseHTTPRequestHandler):
++        def do_CONNECT(self) -> None:
++            seen.append(self.path)
++            self.send_response(502)
++            self.send_header("Content-Length", "0")
++            self.end_headers()
++
++        def log_message(self, *args: object) -> None:
++            pass
++
++    monkeypatch.setattr(urllib.request, "_opener", None)  # urlopen caches its opener, with the proxies of that moment
++    proxy = ThreadingHTTPServer(("127.0.0.1", 0), Connect)
++    threading.Thread(target=proxy.serve_forever, daemon=True).start()
++    try:
++        for name in ("HTTPS_PROXY", "https_proxy"):
++            monkeypatch.setenv(name, _u("http", f"127.0.0.1:{proxy.server_address[1]}"))
++        for name in ("NO_PROXY", "no_proxy"):
++            monkeypatch.delenv(name, raising=False)
++        for follow in (True, False):
++            with pytest.raises(OSError):  # the stand-in proxy refuses the tunnel
++                open_http(_u("https", f"{RESERVED}:8443/x"), 5, follow_redirects=follow)
++    finally:
++        proxy.shutdown()
++        proxy.server_close()
++    assert seen == [f"{RESERVED}:8443"] * 2, "open_http did not send the https request through the environment proxy"
 diff --git a/tests/test_reset_ps1_links.py b/tests/test_reset_ps1_links.py
 new file mode 100644
-index 0000000..4213919
+index 0000000..82821f4
 --- /dev/null
 +++ b/tests/test_reset_ps1_links.py
-@@ -0,0 +1,120 @@
+@@ -0,0 +1,127 @@
 +"""scripts/reset.ps1 must judge the database folder by its REAL path (a symlink or a Windows junction inside data/ that
 +points elsewhere must be refused), like scripts/reset.sh does with realpath. NOT run here: PowerShell, Windows, a real
 +Windows junction and the Windows CI job. What runs: the Python check that reset.ps1 hands to `python -c` is cut out of
@@ -712,7 +918,14 @@ index 0000000..4213919
 +
 +@pytest.mark.parametrize("name", [a for names in ALIASES.values() for a in names])
 +def test_a_short_name_of_a_read_stop_or_delete_before_the_refusal_is_seen_too(name: str) -> None:
-+    """kill, rm, del, cat, gc, spps, ri ... do the same as the full cmdlet names: the order check must see them."""
++    """kill, rm, del, cat, gc, spps, ri ... do the same as the full cmdlet names: the order check must see them.
++
++    This is a LINT-STYLE ORDER GUARD, not a security boundary: it reads text and cannot run PowerShell. Known bypasses
++    it does not see: a name built at run time (&('Stop-'+'Process'), &$cmd), Invoke-Expression, a .NET call such as
++    [Diagnostics.Process]::Kill() or .Kill(), the program taskkill (or any other program), a command word inside quotes
++    (the check blanks quoted text so that a message is not mistaken for a command), and a name this list does not hold.
++    What really protects the data folder is the real-path check that runs before the refusal (tested above on a
++    symlink)."""
 +    text = (REPO / "scripts" / "reset.ps1").read_text(encoding="utf-8")
 +    marker = 'if ("$inside".Trim()'
 +    for variant in (name, name.upper()):  # PowerShell does not care about case
@@ -730,10 +943,10 @@ index 0000000..4213919
 +    _check_code(text.replace(marker, harmless + chr(10) + marker, 1))
 diff --git a/tests/test_scrub_n8n_export.py b/tests/test_scrub_n8n_export.py
 new file mode 100644
-index 0000000..4cf15b3
+index 0000000..d222688
 --- /dev/null
 +++ b/tests/test_scrub_n8n_export.py
-@@ -0,0 +1,293 @@
+@@ -0,0 +1,357 @@
 +"""tools/scrub_n8n_export.py: addresses of any scheme, look-alike and non-ASCII e-mail domains, and the connections of a
 +workflow. Every value that the repository's own scans would flag is built from parts at run time, so this file holds
 +no host name, address or e-mail of its own."""
@@ -823,6 +1036,13 @@ index 0000000..4cf15b3
 +    # the same with one slash (a browser reads it as the same address)
 +    ("https:" + "/" + CORP + "/x", [CORP, "corp"]),
 +    ("http:" + "/" + "localhost:x@" + RESERVED, ["x@", RESERVED]),
++    # a tab, CR or LF right after a localhost host: a browser drops it, what follows is the same address
++    (_u("http", "localhost\t@" + RESERVED), ["@", RESERVED, "\t"]),
++    (_u("http", "localhost\n." + RESERVED), [RESERVED, "\n"]),
++    (_u("http", "127.0.0.1\r\n@" + RESERVED + "/x"), ["@", RESERVED, "\r"]),
++    (_u("http", "localhost:80\t@" + RESERVED), ["80", "@", RESERVED]),
++    (_u("HTTPS", "LOCALHOST\t@" + RESERVED.upper()), [RESERVED.upper(), "@"]),
++    ("a " + _u("ws", "localhost\t\t@" + RESERVED) + " b", [RESERVED, "@"]),
 +    # links that carry code or content
 +    ("open javascript:alert(document.cookie) now", ["alert", "cookie"]),
 +    ("data:text/plain;base64,QUJDREVGRw== end", ["QUJDREVGRw"]),
@@ -877,6 +1097,58 @@ index 0000000..4cf15b3
 +def test_limit_an_address_without_a_scheme_is_not_cleaned(text: str) -> None:
 +    """A stated limit of the module (see its text), pinned: free text is not parsed for bare hosts."""
 +    assert _clean(text) == text
++
++
++def test_a_line_break_right_after_a_localhost_host_costs_only_the_next_word() -> None:
++    """The smaller safe change: the break and the next run of non-blank characters go, the text after that stays."""
++    assert _clean(_u("http", "localhost") + "\nnext line") == "http://localhost/REPLACE-ME line"
++
++
++def test_limit_a_secret_inside_the_path_of_a_kept_address_stays() -> None:
++    """Stated limit (docstring and docs/settings.md): only a real ? or # ends the path, so a token written inside the
++    path, or a %3F-encoded query inside it, is kept."""
++    token = "tok" + "en123"
++    assert _clean("http://localhost:5678/webhook/" + token) == "http://localhost:5678/webhook/" + token
++    assert _clean("http://localhost/x%3Fkey=" + token) == "http://localhost/x%3Fkey=" + token
++
++
++def test_limit_an_address_that_an_expression_completes_loses_its_question_mark() -> None:
++    """Stated over-cleaning: the string is read as a plain address and cut at the question mark."""
++    assert _clean('"http://localhost:5678/x?" + $json.q') == '"http://localhost:5678/x" + $json.q'
++
++
++# Short phrases that the module text and docs/settings.md must BOTH carry: the two lists of what is not cleaned
++# (and of the over-cleaning) are one list.
++LIMIT_PHRASES = (
++    "an address without a scheme",
++    "a bare host name",
++    "a path that is not a URL",
++    "percent signs",
++    "a secret inside the path",
++    "%3F",
++    "a data: link without a media type",
++    "U+FE6B",
++    "ideographic full stop",
++    "the keys of a dictionary",
++    "refers to another node by an old name",
++    "an address that an expression completes",
++    "a tab, a carriage return or a line feed",
++)
++
++
++def test_the_docs_list_of_limits_equals_the_module_list() -> None:
++    import re
++
++    import tools.scrub_n8n_export as module
++
++    doc = re.sub(r"\s+", " ", module.__doc__ or "").lower()
++    settings = re.sub(r"\s+", " ", (REPO / "docs" / "settings.md").read_text(encoding="utf-8")).lower()
++    missing = [
++        (p, "module" if p.lower() not in doc else "docs")
++        for p in LIMIT_PHRASES
++        if p.lower() not in doc or p.lower() not in settings
++    ]
++    assert not missing, f"stated in only one of the module text and docs/settings.md: {missing}"
 +
 +
 +def test_limit_an_ideographic_full_stop_ends_the_domain_of_an_address() -> None:
@@ -988,6 +1260,11 @@ index 0000000..4cf15b3
 +        "localhost address, then many ? and #": "http://localhost/" + "?#" * ((n - 17) // 2),
 +        "many localhost addresses": "http://localhost/ " * (n // 18),
 +        "many localhost-like hosts": ("http" + "://localhost.a ") * (n // 19),
++        "localhost, then only tabs": "http" + "://localhost" + "\t" * (n - 16),
++        "localhost, a tab, then a long run": "http" + "://localhost\t" + "a" * (n - 17),
++        "many localhost addresses with a tab": ("http" + "://localhost\t@a ") * (n // 18),
++        "many localhost addresses with a line break": ("http" + "://127.0.0.1:1\n") * (n // 16),
++        "long scheme-like word run before localhost": "a" * (n - 20) + "://localhost\t",
 +    }
 +
 +
@@ -1011,7 +1288,7 @@ index 0000000..4cf15b3
 +"""
 +
 +
-+@pytest.mark.parametrize("name", ["URL", "MAIL", "ACTIVE_LINK", "_clean"])
++@pytest.mark.parametrize("name", ["URL", "MAIL", "ACTIVE_LINK", "_LOCAL_BROKEN", "_clean"])
 +def test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time(name: str) -> None:
 +    hard_stop = LIMIT_SECONDS * len(_worst_shapes(0)) + 30  # the sum of all limits and the start of Python
 +    try:
@@ -1028,10 +1305,10 @@ index 0000000..4cf15b3
 +    slow = json.loads(done.stdout)
 +    assert not slow, f"{name} takes more than {LIMIT_SECONDS} s on 1 MB of: {slow}"
 diff --git a/tools/scrub_n8n_export.py b/tools/scrub_n8n_export.py
-index 2b16b6d..21b18f1 100644
+index 2b16b6d..3c21ce5 100644
 --- a/tools/scrub_n8n_export.py
 +++ b/tools/scrub_n8n_export.py
-@@ -2,8 +2,24 @@
+@@ -2,8 +2,32 @@
  
  Allow-list by key name: a key that is not listed is dropped, so a field n8n adds later cannot leak.
  Never kept: ids, instance id, credentials, webhook ids, pinData, tags, project owner, timestamps.
@@ -1045,20 +1322,28 @@ index 2b16b6d..21b18f1 100644
 +user:password in front of the host is never allowed) is kept, but only up to the end of its path: the query string
 +(?...) and the fragment (#...) are dropped, because an API key can sit in a query. Every other scheme with a localhost
 +host (file://localhost/..., postgres://localhost/..., ftp://localhost/...) is replaced whole.
++A tab, a carriage return or a line feed right after a localhost host (a browser ignores
++it, so `http://localhost<TAB>@host` reads as user localhost at host) makes the address a look-alike: that address, the
++break and the next run of non-blank characters are replaced whole.
++Never kept: webhook ids (the id field). The webhook PATH is kept as it is, so a secret written inside a path stays.
 +What is NOT cleaned (the free text of a name or a parameter is not parsed), stated plainly:
-+ - an address without a scheme, such as //host/path or host:5432; a bare host name or IP address; a path that is not
-+   a URL; the scheme's colon and slashes written with percent signs (%3A%2F%2F) or with backslashes (http:\\\\host);
++ - an address without a scheme, such as //host/path or host:5432; a bare host name or IP address; a path that is not a
++   URL; the scheme's colon and slashes written with percent signs (%3A%2F%2F) or with backslashes (http:\\\\host);
++ - a secret inside the path of a kept localhost address (/webhook/<token>); a secret inside a path as a %3F-encoded
++   query (only a real ? or # ends the path);
 + - a data: link without a media type (data:,text and data:;base64,...), and U+FE6B (small at-sign) or an ideographic
 +   full stop in an e-mail address (only the ASCII "@" and the full-width "@" are read as the at-sign);
-+ - the KEYS of a dictionary inside node parameters (only the values are cleaned; node names and the keys of the
++ - the keys of a dictionary inside node parameters (only the values are cleaned; node names and the keys of the
 +   "connections" part are cleaned);
 + - an expression inside a node name that refers to another node by an old name when two names became the same (the
 +   second gets " (2)").
++Over-cleaning, also by design: an address that an expression completes, such as "http://localhost:5678/x?" + $json.q,
++is read as a plain address and loses its "?" and what follows on the same run of characters.
 +Check the output by eye before it goes into a public repo.
  
  Usage: python -m tools.scrub_n8n_export in.json out.json
  The webhook path is kept (a plain word); n8n creates its own ids on import.
-@@ -37,13 +53,41 @@ NODE = (
+@@ -37,13 +61,48 @@ NODE = (
      "alwaysOutputData",
      "continueOnFail",  # node settings that change what a run does
  )
@@ -1076,6 +1361,12 @@ index 2b16b6d..21b18f1 100644
 +# localhost:x@host and 127.0.0.1.host are other hosts). Only up to the end of the path: no query, no fragment.
 +_LOCAL_WEB = re.compile(
 +    r"((?:https?|wss?)://(?:localhost|127\.0\.0\.1)(?::[0-9]+)?)(?=[/?#]|\Z)([^?#]*)[?#]?.*\Z", re.DOTALL
++)
++# A tab, CR or LF right after a local host: browsers drop it, so what follows reads as part of the same address.
++# The whole thing (scheme, host, the break and the next run of non-blank characters) is replaced; linear: no
++# nested repetition, fixed prefix.
++_LOCAL_BROKEN = re.compile(
++    r"[A-Za-z][A-Za-z0-9+.-]{0,31}:(?:\\?/){2}(?:localhost|127\.0\.0\.1)(?::[0-9]*)?[\t\r\n]+[^\s\"'<>]*", re.IGNORECASE
 +)
 +# links that carry content or code instead of a host
 +ACTIVE_LINK = re.compile(
@@ -1099,11 +1390,12 @@ index 2b16b6d..21b18f1 100644
  def _clean(v: Any) -> Any:
      if isinstance(v, str):
 -        return MAIL.sub("someone@example.test", URL.sub("http://localhost/REPLACE-ME", v))
-+        return MAIL.sub(REPLACEMENT_MAIL, ACTIVE_LINK.sub(REPLACEMENT_URL, URL.sub(_url_replacement, v)))
++        broken = _LOCAL_BROKEN.sub(REPLACEMENT_URL, v)
++        return MAIL.sub(REPLACEMENT_MAIL, ACTIVE_LINK.sub(REPLACEMENT_URL, URL.sub(_url_replacement, broken)))
      if isinstance(v, list):
          return [_clean(x) for x in v]
      if isinstance(v, dict):
-@@ -51,15 +95,49 @@ def _clean(v: Any) -> Any:
+@@ -51,15 +110,49 @@ def _clean(v: Any) -> Any:
      return v
  
  
