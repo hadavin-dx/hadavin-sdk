@@ -3055,3 +3055,4 @@
 | PDst-r1-4 | Major | PD-standins | r1 docs disagree with code (six versus seven stand-ins, pilot refusal sentence, netguard credit) | OPEN | reviews/PD-standins/goldfish_review_report-r1.md | - | 2026-11-12 |
 | PDst-r1-5 | Minor | PD-standins | r1 never-echo claim and loopback limits (name not resolved, port ignored) | OPEN | reviews/PD-standins/goldfish_review_report-r1.md | - | 2026-11-12 |
 | PDst-r1-6 | Nit | PD-standins | r1 nits (dead n != kind, stray docstring, try/except) | OPEN | reviews/PD-standins/goldfish_review_report-r1.md | - | 2026-11-12 |
+| P0a-fix-r2-1 | Minor | P0a | PR 71 round 2 minors m1-m4 and nits (docstring limits list, vendored prefix over-match, archives by name, shebang scripts, group key collision, os.name skip) | OPEN | reviews/P0a/p0afix-f0de7b75-design-r2.md and -codebase-r2.md (fix in progress on wip/cloud-p0a-fix) | - | 2026-11-12 |
