@@ -1,2 +1,136 @@
 $ cd /tmp/work/c2-gl (0841f36 + speed patch + codeant2-desk/portal-log/demo-only/tests-hardening/fakes-body, tracked scratch commit); GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 timeout 2700 python3.12 -m pytest -q -p no:cacheprovider -rs tests   (full serial suite, one process)
 start 2026-11-12T21:17:59Z  21:17:59 up  2:27,  0 user,  load average: 0.48, 1.25, 1.58
+........................................................................ [  2%]
+........................................................................ [  5%]
+........................................................................ [  8%]
+........................................................................ [ 11%]
+........................................................................ [ 13%]
+........................................................................ [ 16%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 25%]
+........................................................................ [ 27%]
+.....................................................----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 46004)
+Traceback (most recent call last):
+.----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 57720)
+Traceback (most recent call last):
+.................. [ 30%]
+........................................................................ [ 33%]
+........................................................................ [ 36%]
+........................................................................ [ 39%]
+........................................................................ [ 41%]
+........................................................................ [ 44%]
+........................................................................ [ 47%]
+........................................................................ [ 50%]
+........................................................................ [ 52%]
+........................................................................ [ 55%]
+........................................................................ [ 58%]
+........................................................................ [ 61%]
+........................................................................ [ 64%]
+........................................................................ [ 66%]
+........................................................................ [ 69%]
+........................................................................ [ 72%]
+........................................................................ [ 75%]
+............................................FF.......................... [ 78%]
+........................................................................ [ 80%]
+........................................................................ [ 83%]
+........................................................................ [ 86%]
+........................................................................ [ 89%]
+..s..................................................................... [ 91%]
+........................................................................ [ 94%]
+........................................................................ [ 97%]
+...................................s...........................          [100%]
+=================================== FAILURES ===================================
+___ test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[light] ____
+
+env = <conftest.Env object at 0x7ff494f639e0>, scheme = 'light'
+
+    @pytest.mark.parametrize("scheme", ["light", "dark"])
+    def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, scheme: str) -> None:
+        """At 1200 px and below the strip under the sidebar was the page colour, not the sidebar's: a white block under
+        the sidebar when the page is taller than the window. Measured on a full-page screenshot."""
+        rig, base = _flow_rig(env)
+        for i in range(12):
+            _new(rig, f"s-{i}", f"Sidney Hart{i}", f"s{i}@example.test")
+    
+        def body(page: Any, base: str) -> None:
+            import io
+    
+            from PIL import Image
+    
+            page.goto(base + "/ui/#/leads")
+            page.wait_for_selector("[data-lead-id]")
+            page.wait_for_timeout(500)
+            height = page.evaluate("() => document.documentElement.scrollHeight")
+            assert height > 900, height  # the page really is taller than the window
+            img = Image.open(io.BytesIO(page.screenshot(full_page=True))).convert("RGB")
+            above, below = img.getpixel((60, 880)), img.getpixel((60, height - 40))
+            assert all(abs(a - b) <= 6 for a, b in zip(above, below, strict=True)), (above, below)
+    
+>       _browse(base, body, width=1100, scheme=scheme)
+
+tests/test_portal_lead_pages.py:440: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_lead_pages.py:124: in _browse
+    fn(page, base)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+page = <Page url='about:blank'>, base = 'http://127.0.0.1:33997'
+
+    def body(page: Any, base: str) -> None:
+        import io
+    
+>       from PIL import Image
+E       ModuleNotFoundError: No module named 'PIL'
+
+tests/test_portal_lead_pages.py:429: ModuleNotFoundError
+____ test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[dark] ____
+
+env = <conftest.Env object at 0x7ff494ce7e90>, scheme = 'dark'
+
+    @pytest.mark.parametrize("scheme", ["light", "dark"])
+    def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, scheme: str) -> None:
+        """At 1200 px and below the strip under the sidebar was the page colour, not the sidebar's: a white block under
+        the sidebar when the page is taller than the window. Measured on a full-page screenshot."""
+        rig, base = _flow_rig(env)
+        for i in range(12):
+            _new(rig, f"s-{i}", f"Sidney Hart{i}", f"s{i}@example.test")
+    
+        def body(page: Any, base: str) -> None:
+            import io
+    
+            from PIL import Image
+    
+            page.goto(base + "/ui/#/leads")
+            page.wait_for_selector("[data-lead-id]")
+            page.wait_for_timeout(500)
+            height = page.evaluate("() => document.documentElement.scrollHeight")
+            assert height > 900, height  # the page really is taller than the window
+            img = Image.open(io.BytesIO(page.screenshot(full_page=True))).convert("RGB")
+            above, below = img.getpixel((60, 880)), img.getpixel((60, height - 40))
+            assert all(abs(a - b) <= 6 for a, b in zip(above, below, strict=True)), (above, below)
+    
+>       _browse(base, body, width=1100, scheme=scheme)
+
+tests/test_portal_lead_pages.py:440: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_lead_pages.py:124: in _browse
+    fn(page, base)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+page = <Page url='about:blank'>, base = 'http://127.0.0.1:34253'
+
+    def body(page: Any, base: str) -> None:
+        import io
+    
+>       from PIL import Image
+E       ModuleNotFoundError: No module named 'PIL'
+
+tests/test_portal_lead_pages.py:429: ModuleNotFoundError
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
+SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
+2 failed, 2579 passed, 2 skipped in 1070.34s (0:17:50)
+end 2026-11-12T21:35:49Z
