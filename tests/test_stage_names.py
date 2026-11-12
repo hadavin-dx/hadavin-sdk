@@ -3459,7 +3459,6 @@ GUARD_ALLOWED = {
     ('backends/table.py', "f'aiplatform.{region}.rep.googleapis.com'"): _HOST_LIST,
     ('backends/table.py', "f'{region}-aiplatform.googleapis.com'"): _HOST_LIST,
     ('backends/table.py', "f'{s.bucket}.s3'"): _HOST_LIST,
-    ('backends/table.py', "f'{service}.{region}.amazonaws.com'"): _HOST_LIST,
     ('cli.py', "f'PROBLEM: {problem}'"): _SENTENCES,
     ('cli.py', "f'warning: {w}'"): _SENTENCES,
     ('config.py', "'; '.join([*(str(r) for r in renamed), *others])"): _CODE_TABLE,
@@ -3477,7 +3476,6 @@ GUARD_ALLOWED = {
     ('guard/injection.py', "'+'.join((v.backend for v in flagged or verdicts))"): _PATTERN,
     ('guard/injection.py', "'|'.join((f'(?:{p})' for p in _PATTERNS))"): _PATTERN,
     ('guard/judge.py', '_ASK.format(source=source)'): _MODEL_PROMPT,
-    ('guard/redact.py', "f'(?:{_SP}*={_SP}*|{_SP}+){_quote}[^{_quote}\\\\n]{{256}}[^{_quote}\\\\n]*{_quote}?'"): _PATTERN,
     ('guard/redact.py', "f'<{label}_{self.counters[label]}>'"): _PATTERN,
     ('guard/runmap.py', 'pairs += [(ph, n) for ph, d in pairs if (n := fits_after_nfkc(neutralise(d))) != d and len(n) >= 4]'): _PATTERN,
     ('hashing.py', "f'cannot read: {rel}'"): _K1B_FILE,
@@ -3511,7 +3509,6 @@ GUARD_ALLOWED = {
     ('store/migrate.py', "f'{path.name}: statement the guard does not read: {snippet!r}'"): _REPO_NAMES,
     ('store/migrate.py', "f'{role}: can CREATE in schema {schema}'"): _ROLE_CLI,
     ('store/migrate.py', "f'{role}: can {p} sequence {name}'"): _ROLE_CLI,
-    ('store/migrate.py', "f'{role}: can {p} {name}'"): _ROLE_CLI,
     ('store/migrate.py', "f'{role}: can {p} {name}.{col}'"): _ROLE_CLI,
     ('store/migrate.py', "f'{role}: is a superuser or can create roles or databases or bypass row security'"): _ROLE_CLI,
     ('store/migrate.py', "f'{role}: owns {name}'"): _ROLE_CLI,
@@ -3529,6 +3526,17 @@ GUARD_ALLOWED = {
     ('store/migration_numbers.py', "f'{name}: number 0000 is not allowed, numbers start at 0001'"): _REPO_NAMES,
     ('store/postgres.py', "query += sql.SQL(' ON CONFLICT ({}) DO UPDATE SET {}').format(sql.Identifier(upsert_on), sql.SQL(', ').join((sql.SQL('{0} = EXCLUDED.{0}').format(c) for c in cols)))"): _SQL,
     ('store/postgres.py', "sql.SQL('INSERT INTO kill_switch ({}) VALUES ({}) ON CONFLICT (id) DO UPDATE SET {}').format(sql.SQL(', ').join(cols), sql.SQL(', ').join(sql.Placeholder() * len(row)), sql.SQL(', ').join((sql.SQL('{0} = EXCLUDED.{0}').format(c) for c in cols[1:])))"): _SQL,
+    # --- round 11 follow-up: a sum no longer needs a string literal on one side (found by the spot check)
+    ('actions/executor.py', 'base + path'): _URL_BUILD,
+    ('backends/table.py', "f'{service}.{region}.amazonaws.com' + ('.cn' if region.startswith('cn-') else '')"): _HOST_LIST,
+    ('config.py', "out + [('detector', d) for d in self.detector]"): "two lists of (kind, name) pairs joined into one list, not text",
+    ('guard/redact.py', "_CRED_FLAG + f'(?:{_SP}*={_SP}*|{_SP}+){_quote}[^{_quote}\\\\n]{{256}}[^{_quote}\\\\n]*{_quote}?'"): _PATTERN,
+    ('hashing.py', "name + b'\\x00' + digest.encode('ascii')"): "a byte string put together as the input of a digest (never text, never printed)",
+    ('sources/kubernetes.py', 'self._api + path'): _URL_BUILD,
+    ('sources/kubernetes.py', 'path + query'): _URL_BUILD,
+    ('stats.py', 'lc + i * math.log(p) + (n - i) * math.log1p(-p)'): _NUMBER,
+    ('store/migrate.py', "f'{role}: can {p} {name}' + ('' if grant else ' (not in the grant map)')"): _ROLE_CLI,
+    ('tools.py', "name.encode() + b'\\x00' + _normalised(data)"): "a byte string put together as the input of a digest (never text, never printed)",
 }  # fmt: skip
 
 
@@ -3681,7 +3689,12 @@ def _message_nodes(tree):
             numeric = isinstance(node.left, ast.Constant) and not _is_text(node.left)
             hit = not numeric and _config_derived(node.right, b)
         elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
-            hit = (_is_text(node.left) or _is_text(node.right)) and _config_derived(node, b)
+            # Text on either side is not required to be a literal: `prefix + name`, `f"..." + name` and `name + other`
+            # are all messages. Only a sum with a number written in the code (`name_count + 1`) is left out.
+            numeric = any(
+                isinstance(o, ast.Constant) and not _is_text(o) for o in (node.left, node.right)
+            )
+            hit = not numeric and _config_derived(node, b)
         elif isinstance(node, ast.AugAssign) and isinstance(node.op, ast.Add):
             hit = _config_derived(node.value, b)
         elif (
@@ -3812,6 +3825,8 @@ _PLANTED_FAULTS = {  # one planted fault per shape (round 10, Issue 1): each alo
     "an attribute of a settings object two levels deep": 'raise A(f"x {self.settings.anything}")',
     "a plural attribute": 'raise A(f"x {self.namespaces}")',
     "a secret-name attribute": 'raise A(f"x {self.api_key_secret_name}")',
+    "a variable prefix plus a configured name": 'msg = prefix + name\nraise A(msg)',
+    "an f-string plus a configured name": 'raise A(f"source {kind}: " + name)',
     "join of a configured list": 'raise A(", ".join(names))',
     "join of a sorted configured list": 'msg = "; ".join(sorted(names))',
     "sorted inside an f-string": 'raise A(f"x {sorted(names)}")',

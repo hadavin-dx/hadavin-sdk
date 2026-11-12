@@ -82,6 +82,20 @@ def trace_mutant(name, file, old, new, killer, expect):
     )
 
 
+def other_mutant(name, file, old, new, test_file, killer, expect, param=""):
+    """A mutant killed by a test in another file of `tests` (it must be listed in the copied tests below)."""
+    return Mutant(
+        name,
+        file,
+        old,
+        new,
+        expect,
+        test_file=test_file,
+        only_test=killer,
+        pinned=test_file[:-3] + "::" + killer + param,
+    )
+
+
 OBJECT = "test_pilot_and_prod_refuse_a_test_object_handed_to_build"
 VAULT = "test_pilot_and_prod_refuse_a_static_vault_token"
 TICK_TEST = "test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick"
@@ -620,6 +634,16 @@ M = [
     mutant("M21e rules_problems takes a label again (kubernetes.py)", "src/hadavin_sdk/sources/kubernetes.py",
         "if not isinstance(position, int) or isinstance(position, bool):", "if False:",
         "test_the_rules_problems_function_takes_a_position_and_never_a_label", "DID NOT RAISE"),
+    # Round 11 follow-up (Issue 10): killers of tests that passed on old code.
+    other_mutant("Y3 a live App builds an executor (app.py)", APP,
+        "executor = None if live else Executor(reg, secrets, timeout_s=timeout_s)", "executor = Executor(reg, secrets, timeout_s=timeout_s)",
+        "tests/test_q8a_live_overrides.py", "test_a_live_build_with_no_test_keyword_is_not_refused", "is None", "[pilot]"),
+    other_mutant("Y4 a built-in tick step is renamed (tick.py)", TICK,
+        '"purge_evidence"', '"purge_evidences"',
+        "tests/test_q8a_live_overrides.py", "test_the_step_functions_checked_here_are_the_built_in_steps", "assert ['sweep'"),
+    other_mutant("Y5 VaultSettings is no longer on the Vault base class (table.py)", TBL,
+        "class VaultSettings(VaultConnection):", "class VaultSettings(KindSettings):",
+        "tests/test_q8a_live_overrides.py", "test_every_kind_with_a_vault_sign_in_field_is_built_on_the_vault_settings_class", "Vault"),
 ]  # fmt: skip
 
 
@@ -642,7 +666,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [TEST, TRACE],
+        [TEST, TRACE, "tests/test_q8a_live_overrides.py"],
         extra_dirs=("tests", "tools", "demos", "docs"),
         only=only,
         on_result=show,
