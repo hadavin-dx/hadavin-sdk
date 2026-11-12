@@ -26,7 +26,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from hadavin_sdk import defaults, deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.netguard import is_loopback_host
+from hadavin_sdk.netguard import is_loopback_host, is_loopback_literal
 from hadavin_sdk.scrub_settings import ScrubSettings
 from hadavin_sdk.stages import STAGES, is_live, is_prod
 
@@ -183,16 +183,15 @@ def parse_backends(raw: Any, root: Path) -> Backends:
     return Backends(**built)
 
 
-_LOOPBACK = {"127.0.0.1", "localhost", "::1"}
-
-
 def url_allowed(url: str, allow_insecure_loopback: bool) -> bool:
     """The bearer token travels with every call: https only. Plain http only to this machine, and only when
     the config sets ``allow_insecure_loopback: true`` (the local test fixture). Used at load and at call time."""
     parts = urlsplit(url)
     if parts.scheme == "https":
         return True
-    return parts.scheme == "http" and allow_insecure_loopback and parts.hostname in _LOOPBACK
+    return (
+        parts.scheme == "http" and allow_insecure_loopback and is_loopback_literal(parts.hostname)
+    )
 
 
 class System(_Strict):

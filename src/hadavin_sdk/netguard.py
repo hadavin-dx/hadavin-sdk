@@ -35,17 +35,15 @@ def is_loopback_host(name: object) -> bool:
     non-loopback IPv4 address. Square brackets round an IPv6 address are accepted (the URL form)."""
     if not isinstance(name, str):
         return False
-    if (
-        name.lower() == "localhost"
-    ):  # str.lower, not casefold: casefold would also read the long-s letter as "s"
+    # str.lower, not casefold: casefold would also read the long-s letter as "s"
+    if name.lower() == "localhost":
         return True
     bare = name
     bracketed = name.startswith("[") and name.endswith("]")
     if bracketed:
         bare = name[1:-1]
-    if (
-        "[" in bare or "]" in bare or "%" in bare
-    ):  # one bracket only, or a scope id: not a plain address
+    # one bracket only, or a scope id: not a plain address
+    if "[" in bare or "]" in bare or "%" in bare:
         return False
     try:
         ip = ipaddress.ip_address(bare)
@@ -54,7 +52,6 @@ def is_loopback_host(name: object) -> bool:
     if bracketed and ip.version != 6:
         return False  # brackets belong to IPv6 only
     if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped is not None:
-        ip = (
-            ip.ipv4_mapped
-        )  # the same answer on every Python version (3.13 changed is_loopback for mapped forms)
+        # read the address inside: the same answer on every Python version (3.13 changed is_loopback for mapped forms)
+        ip = ip.ipv4_mapped
     return ip.is_loopback

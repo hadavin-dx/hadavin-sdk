@@ -94,6 +94,8 @@ jobs:
         run: python tests/stage_mutants.py
       - name: Stand-in rule mutants (each reverted guard must be killed by its named test) (blocks)
         run: python tests/standin_mutants.py
+      - name: Public-bind and loopback mutants (each reverted guard must be killed by its named test) (blocks)
+        run: python tests/bind_mutants.py
       # Timing tests have their own step and it blocks: the check is a ratio (4x text, limit 12x time) with wall
       # clock, so a noisy runner moves both runs alike; a real super-linear pattern is a merge blocker.
       - name: Performance of the redaction patterns (blocks)
