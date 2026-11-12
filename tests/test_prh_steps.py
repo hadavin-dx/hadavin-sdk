@@ -244,14 +244,14 @@ def test_pass_bound_holds_for_a_seeded_search(monkeypatch):
             pass  # a refusal (lost letter, held value lost) shows nothing; only the bound is checked here
     assert not state["bound"], f"{len(state['bound'])} texts reached the pass bound"
     assert SEARCH_FLOOR <= state["peak"] <= runmap.defaults.MAX_REDACT_PASSES, state["peak"]
-    assert state["peak"] == 14, state[
+    assert state["peak"] == 16, state[
         "peak"
-    ]  # the worst of these 600 seeds is pinned (defaults.py says "their worst is 14")
+    ]  # the worst of these 600 seeds is pinned (defaults.py says "their worst is 16")
 
 
-def test_every_regression_row_needs_at_most_seven_passes(monkeypatch):
-    """Every row of `fixtures/prh_regressions.json`, on every path of the row, makes at most 7 passes (the figure the
-    CHANGELOG states for the recorded inputs)."""
+def test_every_regression_row_needs_at_most_eight_passes(monkeypatch):
+    """Every row of `fixtures/prh_regressions.json`, on every path of the row, makes at most 8 passes (the figure the
+    CHANGELOG states for the recorded inputs; 7 before batch 8 added the keeping reading)."""
     from tests import test_prh_regressions as reg
 
     real = runmap._Work.count_pass
@@ -270,8 +270,8 @@ def test_every_regression_row_needs_at_most_seven_passes(monkeypatch):
             peak["n"] = 0
             reg.run_path(path, text, handed)
             worst = max(worst, peak["n"])
-            assert peak["n"] <= 7, (row["id"], path, peak["n"])
-    assert worst == 7, worst  # the figure is the true maximum, not a loose upper bound
+            assert peak["n"] <= 8, (row["id"], path, peak["n"])
+    assert worst == 8, worst  # the figure is the true maximum, not a loose upper bound
 
 
 def test_cut_key_with_a_tail_is_masked_by_the_consuming_reading():

@@ -44,7 +44,7 @@ def piece(r):
 
 
 def texts(n=3000):
-    r = random.Random(20261112)  # noqa: S311 - the seeded generator of the independent evidence, not a secret
+    r = random.Random(20261112)
     for _ in range(n):
         yield " ".join(piece(r) for _ in range(r.randrange(2, 9)))
 

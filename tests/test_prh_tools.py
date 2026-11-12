@@ -289,14 +289,17 @@ def test_mf_scrub_consuming_reading_keeps_boundary(boundary):
 
 
 def test_scrub_character_reading_with_a_sequence_is_withheld():
-    """The character reading holds the secret, and the text holds a control sequence it would show as text: nothing is
-    shown (never the character reading with `[0m` standing before the key)."""
+    """The character reading holds the secret, and the text holds a control sequence it would show as text: that reading is
+    never the result (`[0m` standing before the key). Batch 8: the KEEPING reading (an ESC that opens no sequence takes nothing
+    after it, sequences removed whole) holds the secret too and shows no body, so the text is MASKED in both places instead
+    of withheld; the old withheld note was the best answer only while no reading was faithful and whole."""
     text = "a " + ESC + HAND + BOUNDARIES["sgr"]
     assert hidden.leaves_text(text)
     out = tools._scrub(text, [HAND])
-    assert out == tools.MARKER + tools.TRUNCATED, (
-        f"a character reading with a sequence body was shown: {out!r}"
+    assert out == "a " + tools.MARKER + " ; INFO user " + tools.MARKER, (
+        f"the secret stood, or a sequence body was shown: {out!r}"
     )
+    assert HAND not in out and "[0m" not in out
 
 
 def test_leaves_text():

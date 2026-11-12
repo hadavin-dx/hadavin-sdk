@@ -1,0 +1,22 @@
+shape | chars | head | main | head/main | old
+S1 plain ASCII log | 65536 | 0.099 | 0.098 | 1.00 | 0.108
+S1 plain ASCII log | 262144 | 0.409 | 0.415 | 0.99 | 0.398
+S2 tab table | 65536 | 0.102 | 0.101 | 1.01 | 0.119
+S2 tab table | 262144 | 0.411 | 0.420 | 0.98 | 0.409
+S3 JSON lines | 65536 | 0.101 | 0.098 | 1.04 | 0.099
+S3 JSON lines | 262144 | 0.430 | 0.392 | 1.10 | 0.394
+S4 Hindi | 65536 | 0.191 | 0.199 | 0.96 | 0.191
+S4 Hindi | 262144 | 0.801 | 0.831 | 0.96 | 0.754
+S5 Persian ZWNJ emoji | 65536 | 0.357 | 0.348 | 1.02 | 0.333
+S5 Persian ZWNJ emoji | 262144 | 1.490 | 1.691 | 0.88 | 1.414
+H1 coloured output | 65536 | 0.183 | 0.060 | 3.04 | 0.165
+H1 coloured output | 262144 | 0.693 | 0.246 | 2.82 | 0.643
+H2 colour inside a word | 65536 | 0.320 | 0.081 | 3.93 | 0.270
+H2 colour inside a word | 262144 | 1.179 | 0.330 | 3.57 | 1.093
+H3 sgr0 inside a word | 65536 | 0.475 | 0.093 | 5.09 | 0.438
+H3 sgr0 inside a word | 262144 | 1.857 | 0.385 | 4.82 | 1.727
+H4 colourised log with sgr0 | 65536 | 0.269 | 0.076 | 3.51 | 0.257
+H4 colourised log with sgr0 | 262144 | 1.079 | 0.307 | 3.51 | 1.011
+W worst: Persian + colour inside a word + percent | 65536 | 0.969 | 0.383 | 2.53 | 0.831
+W worst: Persian + colour inside a word + percent | 262144 | 3.741 | 1.578 | 2.37 | 3.441
+done

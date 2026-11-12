@@ -35,11 +35,12 @@ SPANS = "tests/test_prh_spans.py"
 TOOLS_T = "tests/test_prh_tools.py"
 STEPS = "tests/test_prh_steps.py"
 B7 = "tests/test_prh_b7.py"
+B8 = "tests/test_prh_b8.py"
 H = "src/hadavin_sdk/guard/hidden.py"
 R = "src/hadavin_sdk/guard/runmap.py"
 X = "src/hadavin_sdk/guard/redact.py"
 T = "src/hadavin_sdk/tools.py"
-TEST_FILES = [UNIT, CONTRACT, REG, SPANS, TOOLS_T, STEPS, B7]
+TEST_FILES = [UNIT, CONTRACT, REG, SPANS, TOOLS_T, STEPS, B7, B8]
 
 
 def mutant(name, src, old, new, test_file, killer, expect="AssertionError", pinned=False, crash=""):
@@ -489,8 +490,8 @@ M = [
     mutant(
         "47 the consuming reading not computed (hidden.readings)",
         H,
-        "cj, cs = strip_consuming(text) if _ESC in text else (joined, spaced)",
-        "cj, cs = (joined, spaced)",
+        "cj, cs = strip_consuming(text)\n        kj, ks = strip_keeping(text)",
+        "cj, cs = (joined, spaced)\n        kj, ks = strip_keeping(text)",
         UNIT,
         "test_readings_are_the_same_set_everywhere",
         expect="AKIAIOSFODNN7EXAMPLE",
@@ -627,8 +628,8 @@ M = [
     mutant(
         "61 the spaced character reading is the joined one (hidden.readings)",
         H,
-        "return Readings(joined, spaced, chars, chars_spaced, cj, cs)",
-        "return Readings(joined, spaced, chars, chars, cj, cs)",
+        "return Readings(joined, spaced, chars, chars_spaced, cj, cs, kj, ks)",
+        "return Readings(joined, spaced, chars, chars, cj, cs, kj, ks)",
         TOOLS_T,
         "test_scrub_result_is_the_spaced_copy_of_the_reading_that_holds_the_secret",
         expect="result with no gap before the key",
@@ -697,7 +698,7 @@ M = [
         "MAX_REDACT_PASSES = 24",
         "MAX_REDACT_PASSES = 6",
         STEPS,
-        "test_every_regression_row_needs_at_most_seven_passes",
+        "test_every_regression_row_needs_at_most_eight_passes",
         expect="AssertionError: 6",
         pinned=True,
     ),
@@ -807,7 +808,7 @@ M = [
         "        self.passes += 1\n        if self.passes > defaults.MAX_REDACT_PASSES:",
         "        self.passes += 2\n        if self.passes > defaults.MAX_REDACT_PASSES:",
         STEPS,
-        "test_every_regression_row_needs_at_most_seven_passes",
+        "test_every_regression_row_needs_at_most_eight_passes",
         expect="AssertionError",
     ),
     mutant(
@@ -851,8 +852,8 @@ M = [
     mutant(
         "84 the scrub's decoded readings lack the character reading (batch 7)",
         T,
-        "runmap.decodes(text, characters=True)",
-        "runmap.decodes(text)",
+        "runmap.decodes(text, characters=True, keeping=True)",
+        "runmap.decodes(text, keeping=True)",
         B7,
         "test_b7_i1_encoded_escape_and_encoded_first_letter",
         expect="AssertionError",
@@ -1000,6 +1001,136 @@ M = [
         B7,
         "test_b7_i10_a_short_value_that_fronts_a_longer_one_is_masked_after_the_longer",
         expect="AssertionError",
+    ),
+    # ---- batch 8 (round 7): several cuts in one value, direct redact, spaced-out values
+    mutant(
+        "102 the keeping reading is off (a lone ESC eats the byte after it again)",
+        H,
+        "        keep is True\n",
+        "        keep is None\n",
+        B8,
+        "test_b8_i4_a_lone_escape_eats_nothing_after_it",
+        "AssertionError",
+        pinned=True,
+    ),
+    mutant(
+        "103 the run path does not read the keeping reading",
+        R,
+        "                (r.keeping_joined, r.keeping_spaced, False),\n",
+        "",
+        B8,
+        "test_b8_i4_the_runner_exact_generator_leaves_no_readable_stretch",
+        "AssertionError",
+        pinned=True,
+    ),
+    mutant(
+        "104 a cut reading is searched with its ignorable characters left in",
+        R,
+        'return hidden.IGNORABLE_RE.sub("", t)',
+        "return t",
+        B8,
+        "test_b8_i4_one_key_cut_twice_is_one_placeholder",
+        "AssertionError",
+        pinned=True,
+    ),
+    mutant(
+        "105 direct redact does not read the keeping reading (soft list)",
+        X,
+        "            kj, ks = hidden.strip_keeping(plain_text)\n            if (kj, ks) != (joined, spaced) and (kj, ks) not in folded:\n                soft.append((kj, ks))",
+        "            pass",
+        B8,
+        "test_b8_i3_direct_redact_keeping_row",
+        "AssertionError",
+        pinned=True,
+    ),
+    mutant(
+        "106 a soft conflict is always a refusal in direct redact",
+        X,
+        "                if self._stands_in(self._held_values(alt), verdict):\n                    return WITHHELD_NOTE\n                continue",
+        "                return WITHHELD_NOTE",
+        B8,
+        "test_b8_i3_a_soft_conflict_is_not_a_refusal",
+        "AssertionError",
+        pinned=True,
+    ),
+    mutant(
+        "107 a known value typed with spaces is not looked for (sweep)",
+        X,
+        "for a, b, v in spaced_spans(segment, spaced_values)",
+        "for a, b, v in spaced_spans(segment, [])",
+        B8,
+        "test_b8_i1_known_value_with_spaces_is_masked_on_the_direct_call",
+        "AssertionError",
+        pinned=True,
+    ),
+    mutant(
+        "108 the tool scrub does not mask a spaced-out handed-out value",
+        T,
+        "    raw = _mask_spaced_out(raw, long_enough)\n",
+        "",
+        B8,
+        "test_b8_i1_known_value_written_with_spaces_is_masked",
+        "AssertionError",
+        pinned=True,
+    ),
+    mutant(
+        "109 the spaced-out floor is one character (ordinary text is masked)",
+        "src/hadavin_sdk/defaults.py",
+        "SPACED_VALUE_MIN_CHARS = 12",
+        "SPACED_VALUE_MIN_CHARS = 1",
+        B8,
+        "test_b8_i1_the_switch_is_a_named_constant",
+        "AssertionError",
+        pinned=True,
+    ),
+    mutant(
+        "110 the unknown spaced run is not collapsed",
+        R,
+        '            defaults.READ_SPACED_OUT_UNKNOWN\n            and " " in e_spaced',
+        '            False\n            and " " in e_spaced',
+        B8,
+        "test_b8_i1_unknown_secret_shape_typed_with_spaces_is_masked_on_the_run_path",
+        "AssertionError",
+        pinned=True,
+    ),
+    mutant(
+        "111 the collapsed spaced run may refuse a text on its own (no soft rule)",
+        R,
+        "            if wins and view in mixed_keys:",
+        "            if False and wins and view in mixed_keys:",
+        REG,
+        "test_tail_row_long_tail_is_masked",
+        "b4_1_longtail",
+        pinned=True,
+    ),
+    mutant(
+        "112 the mixed reading keeps the byte of a charset sequence too",
+        H,
+        '        keep == "mixed"\n',
+        '        keep == "never"\n',
+        B8,
+        "test_b8_i4_the_mixed_reading_keeps_a_lone_escape_byte_and_drops_a_charset_sequence",
+        "AssertionError",
+        pinned=True,
+    ),
+    mutant(
+        "113 the mixed reading is not read on the run path",
+        R,
+        "                (*mixed_reading(source, r), True),\n",
+        "",
+        B8,
+        "test_b8_i4_seeded_multi_cut_property",
+        "AssertionError",
+    ),
+    mutant(
+        "114 the tool scrub returns the text as written when only the mixed reading holds a value",
+        T,
+        "        if not mixed_held and all(found == joined for joined, found in scrubbed.items()):",
+        "        if all(found == joined for joined, found in scrubbed.items()):",
+        B8,
+        "test_b8_i4_the_lcg_generator_leaves_no_readable_stretch",
+        "AssertionError",
+        pinned=True,
     ),
 ]
 

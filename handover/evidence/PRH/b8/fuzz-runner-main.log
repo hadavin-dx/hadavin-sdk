@@ -1,0 +1,2 @@
+tree /tmp/b8-main/src/hadavin_sdk/tools.py
+texts=3096 readable_stretch_leaks=1607 withheld=0 redaction_errors=0 leaks_by_secret={'hand': 280, 'key': 240, 'pw': 230, 'rand': 857}

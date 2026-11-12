@@ -44,6 +44,7 @@ from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import hidden, runmap
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
+from hadavin_sdk.guard.redact import spaced_spans
 from hadavin_sdk.scrub_settings import ScrubSettings
 
 DEFAULT_MAX_OUTPUT_BYTES = defaults.MAX_OUTPUT_BYTES  # the manifest field's default
@@ -728,7 +729,7 @@ def _decoded_readings(text: str) -> tuple[str, ...]:
     or a decoder wrote one, the consuming reading: `runmap.decodes`), so a handed-out secret cut by a percent-encoded
     escape, by an escape that cuts a percent token, or by `ESC ( B` written as `%1B%28B`, is found."""
     # `decodes` strips at the end of every round, in each reading
-    views = runmap.decodes(text, characters=True)
+    views = runmap.decodes(text, characters=True, keeping=True)
     return tuple(dict.fromkeys(views))
 
 
@@ -1061,12 +1062,23 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
                     (rd.joined, rd.spaced, False),
                     (rd.characters, rd.characters_spaced, True),
                     (rd.consuming_joined, rd.consuming_spaced, False),
+                    (rd.keeping_joined, rd.keeping_spaced, False),
                 ]
             )
         )
         pairs = [(j, sp) for j, sp, _ in triples]
         scrubbed = {joined: _scrub_layers(joined, long_enough, scrub) for joined, _ in pairs}
-        if all(found == joined for joined, found in scrubbed.items()):
+        # the mixed reading (a lone ESC keeps its byte, a charset sequence goes whole: `hidden.strip_mixed`) is a check only: a
+        # handed-out secret it holds means the text is not returned as written; the text then goes through the choice below,
+        # which shows a reading only when it holds every secret as often as any reading does (else nothing is shown)
+        # (class: several cuts in one value, PR H batch 8, issue 4)
+        mixed = hidden.strip_mixed(raw)[0]
+        mixed_held = (
+            {}
+            if mixed in {j for j, _ in pairs}
+            else {x: n for x in long_enough if (n := _count_in(mixed, x, scrub)) > 0}
+        )
+        if not mixed_held and all(found == joined for joined, found in scrubbed.items()):
             return raw
         marks = {j: f.count(MARKER) - j.count(MARKER) for j, f in scrubbed.items()}
         # the handed-out secrets each reading holds, COUNTED per secret (an exact string: a find is never a false one): a
@@ -1141,6 +1153,24 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
 _VIEW_ROUNDS = 4  # the most times one form is looked for in the decoded readings of a text that changed under it
 
 
+def _mask_spaced_out(text: str, secrets: list[str]) -> str:
+    """Each copy of a handed-out secret that is written with a space between its characters (`redact.spaced_spans`: the
+    secret is known, so no product choice exists) is replaced by the marker. Overlapping copies become one marker."""
+    spans = sorted((a, b) for a, b, _ in spaced_spans(text, secrets))
+    if not spans:
+        return text
+    out: list[str] = []
+    at = 0
+    for a, b in spans:
+        if a < at:  # overlaps the copy before: the marker already stands there
+            at = max(at, b)
+            continue
+        out += [text[at:a], MARKER]
+        at = b
+    out.append(text[at:])
+    return "".join(out)
+
+
 def _scrub_layers(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCRUB) -> str:
     """Replace every spelling of the handed-out secrets in `raw` (already cut to the redactor's window). Every cut
     that happens here, and the cut the caller made before, is followed by `_strip_fragment` on the text as it is
@@ -1154,6 +1184,7 @@ def _scrub_layers(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFA
 
     raw = _strip_fragment(raw, forms, scrub)
     raw = fit(_derived(raw, long_enough))
+    raw = _mask_spaced_out(raw, long_enough)
     seen: tuple[str, tuple[str, ...]] | None = (
         None  # (raw, its decoded readings): decoded once per distinct raw, not per form
     )

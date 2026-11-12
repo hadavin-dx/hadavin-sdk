@@ -29,11 +29,12 @@ from hadavin_sdk.guard.redact import (
     PATTERNS,
     SECRET_KINDS,
     WITHHELD_NOTE,
-    compare_readings,
+    collapse_runs,
     gap_pattern,
     kind_of,
     mask_spans,
     redact,
+    spaced_unknown,
 )
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
@@ -192,6 +193,7 @@ def undo(
     consume: bool = False,
     escapes: list[bool] | None = None,
     characters: bool = False,
+    keep: bool = False,
 ) -> str:
     """The text with the encodings an attacker or a log pipeline layers over a value undone: JSON string escapes
     (backslash-u with surrogate pairs joined, and the one-character escapes: PHP writes every slash as backslash-slash),
@@ -212,13 +214,16 @@ def undo(
     well, the removal reads every escape sequence with its final byte, a letter or digit too (`hidden.strip_consuming`,
     the consuming reading: `%4` + `ESC ( B` + `1KIA...` needs it). With `characters`, the removal deletes every hidden character on
     its own and reads no sequence (`hidden.strip_characters`, the character reading): the letter after a decoded ESC stays
-    (`%1b%54r0ub...` is `Tr0ub...`, not `r0ub...`). The default keeps every existing caller unchanged."""
+    (`%1b%54r0ub...` is `Tr0ub...`, not `r0ub...`). With `keep`, an ESC that opens no sequence takes nothing after it
+    (`hidden.strip_keeping`: `ESC K` + `I...` keeps the `K`). The default keeps every existing caller unchanged."""
     cur = text
     strip_fn = (
         (lambda t: (hidden.strip_characters(t), ""))
         if characters
         else hidden.strip_consuming
         if consume
+        else hidden.strip_keeping
+        if keep
         else hidden.strip
     )
     for _ in range(defaults.SCRUB_MAX_LAYERS + 1):
@@ -512,7 +517,7 @@ def _decode_views(text: str) -> tuple[list[str], str]:
     return out, decoded
 
 
-def decodes(text: str, characters: bool = False) -> tuple[str, ...]:
+def decodes(text: str, characters: bool = False, keeping: bool = False) -> tuple[str, ...]:
     """The layers of `text` undone with the hidden items removed at the end of every round, in each reading that can differ:
     the grammar's (`undo(strip_hidden=True)`) and, only when an escape character stood in the text or a decoder wrote one
     (`%1B`, `\\u001b`, `&#27;`), the consuming reading (`undo(strip_hidden=True, consume=True)`: `ESC ( B` takes its letter).
@@ -529,6 +534,10 @@ def decodes(text: str, characters: bool = False) -> tuple[str, ...]:
     consuming = undo(text, strip_hidden=True, consume=True)
     if consuming != plain:
         out.append(consuming)
+    if keeping:  # an ESC that opens no sequence takes nothing after it (`ESC K` keeps the `K`)
+        kept = undo(text, strip_hidden=True, keep=True)
+        if kept not in out:
+            out.append(kept)
     if characters:
         chars = undo(text, strip_hidden=True, characters=True)
         if chars not in out:
@@ -624,13 +633,10 @@ def _consuming_wins(shown: str, new_map: dict[str, str], known: dict[str, str]) 
     novel = any(not any(v in k for k in values) for ph, v in new_map.items() if ph not in known)
     if not novel:
         return False
-    # the one rule of the direct `redact()` too (`redact.compare_readings`): a reading that does not hold every value the
-    # output holds cannot replace it
-    if (
-        compare_readings(set(values), {v for v in new_map.values() if not v.startswith("\0seed")})
-        == "conflict"
-    ):
-        raise RedactionLimit("InputTooLarge")
+    # No `compare_readings` call here (batch 8, issue 2): `new_map` is built from the map the earlier readings made and nothing
+    # removes an entry, so it always holds every value of `known` and the call could only answer "same" or "second"
+    # (7413 calls over 6,000+ texts: 6307 "same", 1106 "second", 0 "conflict"; `handover/evidence/PRH/b8/consuming_conflict_dead.py`).
+    # The real refusal is the window check below.
     if any(v[i : i + _PIECE] in shown for v in values for i in range(len(v) - _PIECE + 1)):
         raise RedactionLimit("InputTooLarge")
     return True
@@ -923,6 +929,9 @@ def redact_text(
         # `_char_reading_wins`. PR H: no step back from main.
         char_views: dict[str, tuple[str, str]] = {}
         char_pairs: dict[str, tuple[str, str]] = {}
+        mixed_keys: set[str] = (
+            set()
+        )  # soft views (the mixed reading, the collapsed spaced run): used only when they leave no remnant
         # The consuming reading (`Readings.consuming_joined` and `consuming_spaced`: an escape sequence takes its final byte,
         # a letter too) finds a value that `ESC ( B` (what `tput sgr0` writes) cut: the conservative reading keeps that
         # final byte (D-029). Each is a PAIR (found in the joined, masked in the spaced reading, as for the text itself)
@@ -930,13 +939,41 @@ def redact_text(
         # reading that holds a hidden item.
         consuming: dict[str, tuple[str, str]] = {}
 
+        def ignoring(t: str) -> str:
+            # a cut reading is searched with the ignorable characters out, as the text itself is (its `canonical` view): a key
+            # an ESC cut AND a zero-width joiner cut is whole only then (class: several cuts in one value, PR H batch 8)
+            return hidden.IGNORABLE_RE.sub("", t)
+
+        def mixed_reading(source: str, r: hidden.Readings) -> tuple[str, str] | tuple[None, None]:
+            # the mixed reading (a lone ESC keeps its byte, a charset sequence goes whole) only when it is a NEW text: when it
+            # equals a reading that has its own rule (the consuming one, the grammar's), that rule judges it
+            if "\x1b" in source:
+                m = hidden.strip_mixed(source)
+                if m[0] not in (r.joined, r.characters, r.consuming_joined, r.keeping_joined):
+                    return m
+            return (None, None)
+
         def add_readings(source: str, r: hidden.Readings, found_in: str) -> None:
-            if (c := esc(r.characters)) not in (e_joined, e_spaced) and c not in cleaned + views:
+            found_in = ignoring(found_in)
+            for chars, spaced_chars, is_mixed in (
+                (r.characters, r.characters_spaced, False),
+                (r.keeping_joined, r.keeping_spaced, False),
+                (*mixed_reading(source, r), True),
+            ):
+                if chars is None:
+                    continue
+                # the character reading (every control character deleted on its own) and the keeping reading (an ESC that opens
+                # no sequence takes nothing after it): pairs judged by the character reading's rule. The output is the SPACED
+                # reading (`user` + BEL + an address stays two words), the values are found in the joined one (batch 6, H3)
+                if (c := ignoring(esc(chars))) in (e_joined, e_spaced) or c in cleaned + views:
+                    continue
                 key = _no_created_shapes(source, c)
+                if key in char_views:
+                    continue
                 char_views[key] = (c, found_in)
-                # a PAIR as for the consuming reading: the output is the SPACED character reading (`user` + BEL + an
-                # address stays two words), the values are found in the joined one (batch 6, H3)
-                cs = esc(r.characters_spaced)
+                if is_mixed:
+                    mixed_keys.add(key)
+                cs = ignoring(esc(spaced_chars))
                 char_pairs[key] = (key, key if cs == c else _no_created_shapes(source, cs))
                 cleaned.append(key)
             if r.consuming_joined is r.joined and r.consuming_spaced is r.spaced:
@@ -967,6 +1004,13 @@ def redact_text(
                 if cv not in (e_joined, e_spaced, csrc) and cv not in views + cleaned:
                     consuming[cv] = (cv, cv)
                     cleaned.append(cv)
+            # and the same with an ESC that opens no sequence taking nothing after it (`ESC K` + `I...` next to `&#x1b;[0m`)
+            ksrc = base if joined is text else esc(_no_created_shapes(text, rd.keeping_joined))
+            if ksrc != base or hidden.ANY.search(decoded):
+                kv = _clean(fits_after_nfkc(undo(ksrc, strip_hidden=True, keep=True)))
+                if kv not in (e_joined, e_spaced, csrc) and kv not in views + cleaned:
+                    consuming[kv] = (kv, kv)
+                    cleaned.append(kv)
         if neutralise is not None:
             for v in views:
                 if (
@@ -975,6 +1019,18 @@ def redact_text(
                     and hidden.strip(c)[0] not in hidden.strip(v)
                 ):
                     cleaned.append(_no_created_shapes(v, c))
+        # an UNKNOWN secret written with a space between its characters (`A K I A ...`): the text with the spaces of such a run
+        # taken out is one more view (the check is `redact.spaced_unknown`: a run of ten or more single-character tokens that
+        # the patterns read as a secret once collapsed; it changed 0 of 83,589 ordinary lines, `defaults.READ_SPACED_OUT_UNKNOWN`)
+        if (
+            defaults.READ_SPACED_OUT_UNKNOWN
+            and " " in e_spaced
+            and (runs := spaced_unknown(e_spaced))
+        ):
+            collapsed = collapse_runs(e_spaced, runs)
+            if collapsed not in (e_joined, e_spaced) and collapsed not in cleaned + views:
+                cleaned.append(collapsed)
+                mixed_keys.add(collapsed)  # a soft view: no refusal of its own (see `mixed_keys`)
         views += [c for c in dict.fromkeys(cleaned) if c not in views]
 
         def make_pairs(cur: dict[str, str], bases: tuple[str, ...]) -> list[tuple[str, str]]:
@@ -1026,6 +1082,13 @@ def redact_text(
                 )
             else:
                 wins = again_map != current or _held(again) > _held(out)
+            if wins and view in mixed_keys:
+                # the mixed reading is one more way to read a cut value; it may add a mask but never causes a refusal the
+                # other readings would not (a tail it cannot join stays for them to judge)
+                try:
+                    _refuse_remnant(again, again_map)
+                except InputTooLarge:
+                    wins = False
             if wins:
                 out, current = again, again_map
                 # the values this reading found are carried into the readings still to come, so a later reading that

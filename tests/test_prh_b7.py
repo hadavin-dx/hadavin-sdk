@@ -4,6 +4,7 @@ that reverts the guard."""
 
 import importlib
 import random
+import re
 
 import pytest
 
@@ -66,7 +67,9 @@ def test_b7_i2_a_limit_is_its_own_class_and_is_still_an_input_too_large():
 def test_b7_i2_tools_catch_a_limit_and_withhold():
     text = SEVEN[0].replace("{H}", HAND).replace("{K}", KEY)
     out = tools.prepare_output(text, {}, 4000, [HAND])
-    assert out  # not an exception; whatever is shown holds no readable window (checked above)
+    # not an exception: the limit makes the whole handed-out result a marker plus a truncation note (exact, batch 8)
+    assert out == tools.MARKER + "\n[truncated]"
+    assert not stands(out, HAND, 6)
 
 
 # ---- Issue 1: an encoded escape followed by an encoded first letter ---------------------------------------------------
@@ -163,7 +166,9 @@ def test_b7_i4_a_cut_copy_beside_a_masked_copy_is_not_left():
 def test_b7_i5_a_known_value_cut_by_any_opener_is_withheld(opener):
     """Issue 5 (mutant 91): the guard is any sequence opener, not only ESC (ECMA-48 8-bit C1 controls, from memory)."""
     out = redact(opener + HAND + " x", mapping={"<SECRET_1>": HAND}).text
-    assert out == WITHHELD_NOTE or not stands(out, HAND, 6), repr(out)
+    assert out == WITHHELD_NOTE, repr(
+        out
+    )  # exact (batch 8): all five openers withhold on the direct path
 
 
 @pytest.mark.parametrize("opener", ["\x9b", "\x90", "\x9d", "\x9e", "\x9f"])
@@ -209,7 +214,7 @@ def test_b7_i6_two_readings_that_mask_different_values_are_withheld():
 
 
 def test_b7_i6_compare_readings_is_the_one_rule():
-    """Issue 6 (mutant 93): the rule shared by `redact()` and `runmap._consuming_wins`."""
+    """Issue 6 (mutant 93): the rule the direct `redact()` folds its readings by (`runmap._consuming_wins` does not use it: batch 8 issue 2)."""
     assert compare_readings({"a"}, {"a", "b"}) == "second"
     assert compare_readings({"a", "b"}, {"a"}) == "first"
     assert compare_readings({"a"}, {"a"}) == "same"
@@ -237,19 +242,20 @@ def test_b7_i8_direct_redact_masks_a_key_cut_by_a_hidden_or_ignorable_character(
     soft hyphen, bell): direct `redact()` reads the text as `runmap.canonical` does and masks the key or withholds."""
     for i in (3, 8, 12):
         out = redact("k " + KEY[:i] + cut + KEY[i:] + " y").text
-        assert out == WITHHELD_NOTE or not stands(out, KEY, 6), (i, repr(out))
+        # exact shape (batch 8): masked as one placeholder, never withheld, for every cut character
+        assert re.fullmatch(r"k <APIKEY_\d> y", out), (i, repr(out))
 
 
 def test_b7_i8_hex_value_cut_by_a_bidirectional_character():
     value = "9F3AC7B2E1D04" + "A6B55C8F0123456789A"
     out = redact("ENCRYPTION_KEY=" + value[:13] + "\u202e" + value[13:] + " z").text
-    assert out == WITHHELD_NOTE or value[:10] not in out, repr(out)
+    assert out == "ENCRYPTION_KEY=<SECRET_1> z", repr(out)
 
 
 def test_b7_i8_d6_a_combining_mark_is_not_a_hidden_item():
     """Decision d6: U+0301 changes the character it follows (the string is a different string, NFKC keeps it), so it is not
     removed and a key with one inside is left as written. Pinned as documented behaviour, not a promise to mask it."""
-    text = "k " + KEY[:8] + "́" + KEY[8:] + " y"
+    text = "k " + KEY[:8] + "\u0301" + KEY[8:] + " y"
     assert redact(text).text == text
 
 
@@ -261,8 +267,9 @@ def test_b7_i8_plain_text_with_a_zero_width_joiner_is_unchanged():
 
 # ---- Issue 9: spaced-out secrets are documented behaviour, not a promise ---------------------------------------------
 def test_b7_i9_spaced_out_secret_is_documented_behaviour():
-    """Issue 9: a value written with a visible space between its characters is not masked (a product decision for the
-    owner: `q-prh-spaced-secrets`). Pinned so a change is a decision, not an accident."""
+    """Issue 9 (still true in batch 8): a pattern-only find (no known value, no run of 10 or more spaced tokens in a
+    secret-looking shape) does not mask a key typed with spaces. Known values and long spaced runs are covered by
+    tests/test_prh_b8.py; the owner decision is `q-prh-spaced-secrets`. Pinned so a change is a decision, not an accident."""
     spaced = " ".join(KEY)
     assert redact("k " + spaced + " y").text == "k " + spaced + " y"
 
@@ -372,9 +379,12 @@ def test_b7_i5_a_string_opener_ended_by_a_bell_does_not_hide_the_key_in_the_dire
     key; a line end really breaks the key (the text shows it broken), so only the bell rows must not show a window."""
     out = redact("key " + KEY[:8] + opener + "x" + end + KEY[8:] + " end").text
     if end == "\x07":
-        assert out == WITHHELD_NOTE or not stands(out, KEY, 8), repr(out)
+        # exact (batch 8): U+009D (an OSC) is closed by the bell, so the key is whole and masked; the other string openers
+        # are not closed by it and the text is withheld
+        assert out == ("key <APIKEY_1> end" if opener == "\x9d" else WITHHELD_NOTE), repr(out)
     else:
-        assert KEY not in out
+        # as-written control: a line end really breaks the key in the INPUT, so the text shows it broken; nothing to mask
+        assert out == "key " + KEY[:8] + "\n" + KEY[8:] + " end", repr(out)
 
 
 # ---- Issue 10: the withheld share, by cause; the clean corpus ----------------------------------------------------------
@@ -408,7 +418,7 @@ def test_b7_i10_the_clean_corpus_is_never_withheld():
             for out in both(t, HAND):
                 runs += 1
                 assert HAND not in out, (name, out)
-                assert (MARKER in out) is with_copy or with_copy is False, (name, out)
+                assert (MARKER in out) is with_copy, (name, out)
                 assert out.replace(MARKER, "").replace(TRUNCATED, "").strip() != "" or with_copy, (
                     name,
                     out,

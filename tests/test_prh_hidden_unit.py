@@ -341,12 +341,12 @@ def test_strip_consuming():
 def test_readings_are_the_same_set_everywhere():
     """`hidden.readings` is the helper that `redact_text` and the scrub of tool results both take their readings from (a
     decoded view that holds a hidden item, the result check of the scrub and public `redact()` call `strip` or
-    `sequence_readings` themselves, on the same scan): no hidden item is the one text six times; a text with an escape sequence has the grammar's, the character and the consuming readings; a
+    `sequence_readings` themselves, on the same scan): no hidden item is the one text eight times; a text with an escape sequence has the grammar's, the character, the consuming and the keeping readings; a
     text with a hidden item and no ESC has no consuming reading of its own."""
     esc = "\x1b"
     plain = "no hidden item here"
     r = hidden.readings(plain)
-    assert r == (plain,) * 6 and r.joined is plain
+    assert r == (plain,) * 8 and r.joined is plain
     cut = "AKIA" + esc + "(B" + esc + "[m" + "IOSFODNN7EXAMPLE"
     r = hidden.readings(cut)
     assert r.joined == "AKIA(BIOSFODNN7EXAMPLE"
@@ -361,6 +361,8 @@ def test_readings_are_the_same_set_everywhere():
                 r.characters_spaced,
                 r.consuming_joined,
                 r.consuming_spaced,
+                r.keeping_joined,
+                r.keeping_spaced,
             )
         )
     )

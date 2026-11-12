@@ -37,7 +37,7 @@ def _chars(*spans: tuple[int, int]) -> frozenset[str]:
     return frozenset(chr(c) for lo, hi in spans for c in range(lo, hi + 1))
 
 
-# C0 except tab, line feed, carriage return and the four space-like ones; DEL; C1 except U+0085. ESC, CAN and SUB are
+# C0 except tab, line feed, carriage return and the six space-like ones (U+000B, U+000C, U+001C to U+001F); DEL; C1 except U+0085. ESC, CAN and SUB are
 # members. In all: 55 single characters.
 REMOVED_CHARS: frozenset[str] = _chars(
     (0x00, 0x08), (0x0E, 0x1B), (0x7F, 0x7F), (0x80, 0x84), (0x86, 0x9F)
@@ -177,10 +177,13 @@ def _string_end(text: str, k: int, osc: bool) -> int:
     return m.end()
 
 
-def _item_end(text: str, i: int, consume: bool = False) -> int:
+def _item_end(text: str, i: int, consume: bool = False, keep: bool | str = False) -> int:
     """The end of the sequence item that starts with ESC or a C1 opener at `i` (ground state of the table). With `consume`
     the final byte of an nF, Fp, Fe or Fs sequence always goes with it, a letter or digit too (the ticket grammar, the
-    reading of a terminal; `strip_consuming`)."""
+    reading of a terminal; `strip_consuming`). With `keep` an ESC that opens no sequence with a body (a control
+    sequence, a string, or intermediates plus a final byte) takes nothing after it: the byte after it stays as text
+    (`strip_keeping`). With `keep` set to "mixed" the same holds, except that a charset sequence (intermediates plus a final
+    byte) goes whole: one value can hold both kinds of cut (`strip_mixed`)."""
     c = text[i]
     n = len(text)
     if c == _C1_CSI:
@@ -195,6 +198,16 @@ def _item_end(text: str, i: int, consume: bool = False) -> int:
         return _csi_end(text, j + 1)
     if d in _ESC_STRING:
         return _string_end(text, j + 1, _ESC_STRING[d])
+    if (
+        keep is True
+    ):  # a lone ESC: the byte after it is text (a letter or digit of a value, ESC `K` + `I...`)
+        return i + 1
+    if (
+        keep == "mixed"
+    ):  # the mixed reading: a lone ESC keeps its next byte, but a charset sequence goes whole
+        if not "\x20" <= d <= "\x2f":
+            return i + 1
+        consume = True
     if (
         "\x20" <= d <= "\x2f"
     ):  # nF: intermediates, then one final byte 0x30-0x7E (kept as text when a letter or digit, D-026)
@@ -214,7 +227,9 @@ def _item_end(text: str, i: int, consume: bool = False) -> int:
     return i + 1  # a lone ESC; the next character is read afresh
 
 
-def _scan(text: str, sequences_only: bool, consume: bool = False) -> tuple[str, str]:
+def _scan(
+    text: str, sequences_only: bool, consume: bool = False, keep: bool | str = False
+) -> tuple[str, str]:
     """(joined, spaced) of `text`; the same object twice when they are equal. With `sequences_only` only the items
     that start with ESC or a C1 opener are hidden items: every other character stays as written."""
     pattern = _SEQ_ANY if sequences_only else _ANY
@@ -254,7 +269,7 @@ def _scan(text: str, sequences_only: bool, consume: bool = False) -> tuple[str, 
             i = start + 1
         else:
             end = (
-                _item_end(text, start, consume)
+                _item_end(text, start, consume, keep)
                 if (c == _ESC or c == _C1_CSI or c in _C1_STRING)
                 else start + 1
             )
@@ -279,6 +294,22 @@ def strip_consuming(text: str) -> tuple[str, str]:
     `ESC e`): what a terminal does. Main-compatible `strip` keeps such a letter (D-026, D-029) because it may start a
     value; this reading is searched as one more reading, so a value cut by `tput sgr0` (`ESC ( B ESC [ m`) is found."""
     return _scan(text, False, True)
+
+
+def strip_keeping(text: str) -> tuple[str, str]:
+    """The joined and spaced reading when an ESC that opens no control sequence and no string takes NOTHING after it: the
+    byte after it stays as text (`ESC K` + `I...` keeps the `K`, which `strip` eats as a C1 function). Control sequences and
+    strings are removed whole, as in `strip`. It is the third way an ESC can cut a value (the grammar's `strip` eats an
+    upper-case letter, `strip_consuming` eats every final byte, this reading eats none); a value cut by several ESC, one that
+    needs its letter eaten and one that needs it kept, is found in one of the three. It never shows a swallowed body."""
+    return _scan(text, False, False, True)
+
+
+def strip_mixed(text: str) -> tuple[str, str]:
+    """The joined and spaced reading of a value cut by BOTH kinds of escape: a lone ESC that keeps the byte after it
+    (`ESC K` + `I...`) and a charset sequence that goes whole (`ESC ( B`). `strip_keeping` keeps the final byte of the
+    charset sequence, `strip_consuming` eats the byte after the lone ESC; this one does neither."""
+    return _scan(text, False, False, "mixed")
 
 
 def strip_sequences(text: str) -> str:
@@ -378,14 +409,17 @@ class Readings(NamedTuple):
     """Every reading of one text that a searcher must look in. `readings` is where the redactor (the original text and
     each decoded view that holds a hidden item) and the scrub of handed-out secrets (`tools._scrub`) take them from. Three
     places still read a text with `strip` on their own, for a different purpose: `runmap` strips a decoded view before the
-    pass over it, `tools._scrub` strips its own result once to check it, and `Redactor.find` (public `redact()`) reads only
-    escape sequences (`sequence_readings`); all use the same `_scan`, so they agree:
+    pass over it, `tools._scrub` strips its own result once to check it, and `Redactor.find` (public `redact()`) reads the
+    grammar's, consuming, keeping and character readings itself (`strip`, `strip_consuming`, `strip_keeping`,
+    `characters_readings`) on the text with only its escape sequences removed (`sequence_readings`); all use the same `_scan`, so they agree:
 
     * `joined`, `spaced`: the grammar's two readings (`strip`);
     * `characters`, `characters_spaced`: every removed character deleted on its own, no sequence read, without and with the
       glue space (`characters_readings`, what main saw);
     * `consuming_joined`, `consuming_spaced`: the two readings when every escape sequence takes its final byte, a letter
-      or digit too (`strip_consuming`, what a terminal does: `ESC ( B`).
+      or digit too (`strip_consuming`, what a terminal does: `ESC ( B`);
+    * `keeping_joined`, `keeping_spaced`: the two readings when an ESC that opens no sequence takes nothing after it
+      (`strip_keeping`: `ESC K` keeps the `K`), with control sequences and strings removed whole.
 
     A reading that equals another is the SAME object, so a caller finds the distinct ones with `distinct`."""
 
@@ -395,6 +429,8 @@ class Readings(NamedTuple):
     characters_spaced: str
     consuming_joined: str
     consuming_spaced: str
+    keeping_joined: str
+    keeping_spaced: str
 
     def distinct(self) -> tuple[str, ...]:
         """The readings that differ from each other, in the order above."""
@@ -407,7 +443,11 @@ def readings(text: str) -> Readings:
     pay for a second scan."""
     joined, spaced = strip(text)
     if joined is text:
-        return Readings(text, text, text, text, text, text)
-    cj, cs = strip_consuming(text) if _ESC in text else (joined, spaced)
+        return Readings(text, text, text, text, text, text, text, text)
+    if _ESC in text:
+        cj, cs = strip_consuming(text)
+        kj, ks = strip_keeping(text)
+    else:
+        cj, cs, kj, ks = joined, spaced, joined, spaced
     chars, chars_spaced = characters_readings(text)
-    return Readings(joined, spaced, chars, chars_spaced, cj, cs)
+    return Readings(joined, spaced, chars, chars_spaced, cj, cs, kj, ks)

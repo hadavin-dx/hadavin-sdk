@@ -54,8 +54,8 @@ REDACT_BUDGET_S = 6.0
 # (`InputTooLarge`, nothing shown), counted in `runmap._Work.count_pass`. Measured once on 2026-11-11 (not repeated by any
 # test): a 60 second hill-climb over texts mixing ESC ( B, colour codes, percent, entity and backslash-u spellings, non-ASCII,
 # a placeholder look-alike and values reached 17 passes. What the tests assert on every run (`tests/test_prh_steps.py`): the
-# 600 seeded texts of `test_pass_bound_holds_for_a_seeded_search` never reach the bound (their worst is 14 since batch 6, 13 before: the character reading is now read as a pair), and every row of
-# `tests/fixtures/prh_regressions.json` makes 7 passes or fewer on every path of the row.
+# 600 seeded texts of `test_pass_bound_holds_for_a_seeded_search` never reach the bound (their worst is 16 since batch 8, 14 before: the keeping reading is one more pair; 13 before batch 6: the character reading is read as a pair), and every row of
+# `tests/fixtures/prh_regressions.json` makes 8 passes or fewer on every path of the row (7 before batch 8).
 MAX_REDACT_PASSES = 24
 
 
@@ -81,6 +81,9 @@ SCRUB_FRAGMENT_MIN = 1  # characters of a secret's front that are removed next t
 SCRUB_MAX_LAYERS = (
     8  # nested encodings (percent, entity, backslash) undone before the scrub fails closed
 )
+SPACED_VALUE_MIN_CHARS = 12  # the shortest KNOWN secret (a value the run holds, or one handed to a tool) that is also looked for with a space between its characters (`A K I A ...`); shorter ones would match ordinary text
+SPACED_RUN_MIN_TOKENS = 10  # a run of at least this many single-character tokens, one space apart, is read with its spaces taken out
+READ_SPACED_OUT_UNKNOWN = True  # the check that finds an UNKNOWN secret written with spaces between its characters (`redact.spaced_unknown`); shipped ON because it changed 0 of 83,589 ordinary lines (`handover/evidence/PRH/b8/spaced_unknown_rate.py`); set False to turn it off (`q-prh-spaced-secrets`)
 SCRUB_PIECE_MIN = 6  # width of the stretch the piece check looks for (exact; see `tools._has_piece` for what it does not promise)
 SCRUB_PARTIAL_END = 10  # the longest half-written escape a cut can leave; added to the look-back
 SOURCE_REPROBE_S = 3600  # how often the scope of a configured source is probed again while running

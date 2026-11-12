@@ -26,6 +26,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
+from hadavin_sdk import defaults
 from hadavin_sdk.guard import hidden
 from hadavin_sdk.guard.hidden import strip_sequences
 
@@ -847,6 +848,60 @@ def gap_pattern(value: str) -> re.Pattern[str]:
     return re.compile(body if len(value) >= 4 else r"(?<!\w)" + body + r"(?!\w)")
 
 
+def spaced_spans(text: str, values: Iterable[str]) -> list[tuple[int, int, str]]:
+    """The copies of each KNOWN value in `text` that are written with a space between characters (`A K I A ...`, a hyphen
+    value too): (start, end, value) in `text`. A value is known when the run holds it (the map) or it was handed to a tool, so
+    no product choice exists: with the spaces taken out of the text, the only way to hold a value of `SPACED_VALUE_MIN_CHARS`
+    or more characters is to be that value. Only copies that hold at least one space are returned (a copy without a space is
+    found by the plain search). The text is compacted once (linear), each value is one `str.find` loop over it; the
+    positions of the compact text are mapped back to `text`. A value that holds a space itself is not looked for here."""
+    if " " not in text:
+        return []
+    wanted = [v for v in values if len(v) >= defaults.SPACED_VALUE_MIN_CHARS and " " not in v]
+    if not wanted:
+        return []
+    pos = [i for i, c in enumerate(text) if c != " "]
+    compact = "".join(text[i] for i in pos)
+    found: list[tuple[int, int, str]] = []
+    for v in wanted:
+        n = len(v)
+        j = compact.find(v)
+        while j >= 0:
+            a, b = pos[j], pos[j + n - 1] + 1
+            if b - a > n:  # a space stands inside the copy
+                found.append((a, b, v))
+            j = compact.find(v, j + 1)
+    return found
+
+
+_SPACED_RUN = re.compile(rf"(?<!\S)(?:\S ){{{defaults.SPACED_RUN_MIN_TOKENS - 1},}}\S(?!\S)")
+
+
+def spaced_unknown(text: str) -> list[tuple[int, int, str]]:
+    """The runs of `SPACED_RUN_MIN_TOKENS` or more single-character tokens, one space apart, whose collapsed text (spaces out)
+    the patterns read as a secret of a SECRET kind: (start, end, collapsed text) in `text`. CHECK-ONLY reading of an unknown
+    secret (`A K I A ...`): the caller decides whether to act (`defaults.READ_SPACED_OUT_UNKNOWN`, off: the rate on ordinary
+    text is in the batch 8 notes). Linear: one regular-expression pass, each run read once."""
+    out: list[tuple[int, int, str]] = []
+    for m in _SPACED_RUN.finditer(text):
+        token = m.group().replace(" ", "")
+        found = redact(token, _readings=False)
+        if any(_kind(ph) in SECRET_KINDS for ph in found.mapping):
+            out.append((m.start(), m.end(), token))
+    return out
+
+
+def collapse_runs(text: str, runs: list[tuple[int, int, str]]) -> str:
+    """`text` with each run of `spaced_unknown` replaced by its collapsed text (the spaces out)."""
+    out: list[str] = []
+    at = 0
+    for a, b, token in runs:
+        out += [text[at:a], token]
+        at = b
+    out.append(text[at:])
+    return "".join(out)
+
+
 @dataclass
 class RedactionResult:
     text: str
@@ -899,8 +954,8 @@ def redact(
 
 
 def compare_readings(first: set[str], second: set[str]) -> str:
-    """The ONE rule that folds two readings of a text, each masked on its own (the direct `redact()` and
-    `runmap._consuming_wins` both ask it). `first` and `second` are the sets of VALUES each reading masked. A reading COVERS
+    """The ONE rule that folds two readings of a text, each masked on its own (the direct `redact()` asks it; `runmap._consuming_wins`
+    does not: its call could never answer "conflict", batch 8 issue 2). `first` and `second` are the sets of VALUES each reading masked. A reading COVERS
     the other when every value the other masks stands inside (or is) a value this one masks: a reading that glued a word to
     a key finds a few digits of the key as a phone number; the reading that found the whole key covers it.
     * "same": equal sets, or each covers the other (the caller keeps the one that masks more copies);
@@ -996,39 +1051,66 @@ class _Redactor:
         if out == WITHHELD_NOTE:
             return WITHHELD_NOTE
         verdict = out
-        # the readings, each masked on its own, are folded by ONE rule (`compare_readings`, shared with
-        # `runmap._consuming_wins`): the one that masks more values wins when it masks every value the other masks; two
+        # the readings, each masked on its own, are folded by ONE rule (`compare_readings`; `runmap._consuming_wins`
+        # has its own window rule): the one that masks more values wins when it masks every value the other masks; two
         # readings that mask different values, or a tie with different values, are not merged: `WITHHELD_NOTE`
-        readings: list[tuple[str, str]] = []
+        folded: list[tuple[str, str]] = []
         if has_seq:
             # the consuming reading (a sequence takes its final byte, a letter too: `ESC ( B ESC [ m` is what `tput sgr0` writes)
             cj, cs = hidden.strip_consuming(plain_text)
             if (cj, cs) != (joined, spaced):
-                readings.append((cj, cs))
+                folded.append((cj, cs))
+        # the SOFT readings: the keeping reading (an ESC that opens no sequence takes nothing after it: `ESC` + a key keeps its
+        # first letter, which the grammar's reading eats as a C1 function), and the character reading when the text holds no
+        # sequence body for it to show (`hidden.leaves_text`: `U+009B` + a key). Neither shows a body. They are folded by the
+        # same rule, except that a CONFLICT is not a refusal: the grammar's output stays unless a stretch of a value the soft
+        # reading masks still stands in it (an ordinary text with `ESC M` in it is not withheld for the letter it kept)
+        chars_j, chars_s = hidden.characters_readings(
+            text
+        )  # computed once; the soft rule below reads it too
+        soft: list[tuple[str, str]] = []
+        if has_seq:
+            kj, ks = hidden.strip_keeping(plain_text)
+            if (kj, ks) != (joined, spaced) and (kj, ks) not in folded:
+                soft.append((kj, ks))
+        if not hidden.leaves_text(text):
+            cj_, cs_ = (
+                (chars_j, chars_s) if plain_text is text else hidden.characters_readings(plain_text)
+            )
+            if (
+                (cj_, cs_) != (joined, spaced)
+                and (cj_, cs_) not in folded
+                and (cj_, cs_) not in soft
+            ):
+                soft.append((cj_, cs_))
+        folded += soft
         if (
             (plain_text != text or hidden.ANY.search(text) is not None)
             and (fj, fs) != (joined, spaced)
-            and (fj, fs) not in readings
+            and (fj, fs) not in folded
         ):
-            readings.append((fj, fs))
+            folded.append((fj, fs))
         # the character reading (every hidden character deleted on its own, no sequence read as one): a string sequence a bell
         # or a line end does not close (`U+0090` ... `BEL`) swallows the rest of the line in the grammar's reading, and a key
         # cut by it shows only its front there (batch 7 resume). It is a CHECK, never the result: a value only it can read
         # withholds the text; a text with no open string sequence is not read in it (a closed one is `ESC [ 0 m`: ordinary).
-        chars_j, chars_s = hidden.characters_readings(text)
         open_string = hidden.has_open_string(text)
         check_only = (
             (chars_j, chars_s)
-            if open_string and (chars_j, chars_s) not in [(joined, spaced), *readings]
+            if open_string and (chars_j, chars_s) not in [(joined, spaced), *folded]
             else None
         )
         if check_only is not None:
-            readings.append(check_only)
-        for rj, rs in readings:
+            folded.append(check_only)
+        for rj, rs in folded:
             alt = self._patterns(rs) if rj == rs else self._find_readings(rj, rs)
             if alt == WITHHELD_NOTE:
                 return WITHHELD_NOTE
             choice = compare_readings(self._held_values(verdict), self._held_values(alt))
+            if choice == "conflict" and (rj, rs) in soft:
+                if self._stands_in(self._held_values(alt), verdict):
+                    return WITHHELD_NOTE
+                continue
             if choice == "conflict":
                 return WITHHELD_NOTE
             if (rj, rs) == check_only and choice == "second":
@@ -1045,10 +1127,20 @@ class _Redactor:
                 verdict = alt
         # a value the map already held that another reading shows more often than the grammar's reading (an ESC that takes
         # the letter after it cut one copy: `ESC` + value) is not masked in either output: nothing is shown
-        others = (hidden.characters_readings(text)[0], *(r[0] for r in readings), fj)
+        others = (chars_j, *(r[0] for r in folded), fj)
         if any(r.count(v) > joined.count(v) for v in known for r in others):
             return WITHHELD_NOTE
         return verdict
+
+    @staticmethod
+    def _stands_in(values: set[str], shown: str, width: int = 8) -> bool:
+        """Does a stretch of `width` characters of any of `values` stand in `shown`? (linear in the text for each value)"""
+        return any(
+            v[i : i + width] in shown
+            for v in values
+            if len(v) >= width
+            for i in range(len(v) - width + 1)
+        )
 
     def _held_values(self, shown: str) -> set[str]:
         """The values whose placeholders stand in `shown` (the readings are compared by what they mask)."""
@@ -1064,7 +1156,14 @@ class _Redactor:
         needed = [
             self.mapping[ph]
             for ph in held
-            if not self.mapping[ph].startswith("\0seed") and self.mapping[ph] not in spaced
+            if not self.mapping[ph].startswith("\0seed")
+            and (
+                self.mapping[ph] not in spaced
+                # a value that stands whole in one place and cut in another (`AK` + `ESC I` + `AIOS...` next to a plain copy):
+                # the sweep masks the whole copy only, so the cut one is needed too (counted per copy, not per value, as
+                # `runmap._redact_stripped` does; class: a cut copy beside a plain one, PR H batch 8 issue 3)
+                or spaced.count(self.mapping[ph]) < joined.count(self.mapping[ph])
+            )
         ]
         if len(needed) > MAX_DECODED_MASKS:
             return WITHHELD_NOTE
@@ -1185,6 +1284,7 @@ class _Redactor:
         parts = _PLACEHOLDER.split(
             out
         )  # even indices = free text, odd indices = whole placeholders
+        spaced_values = self._secret_values() if " " in out else []
         for i in range(0, len(parts), 2):
             segment = parts[i]
             if not segment:
@@ -1201,9 +1301,27 @@ class _Redactor:
             spans: list[tuple[int, int, str]] = []
             for original, placeholder, rule in todo:
                 spans.extend(_occurrences(segment, original, placeholder, rule is _EVERY_COPY))
+            # the copies of a known secret written with a space between its characters (`spaced_spans`)
+            spans += [
+                (a, b, ph)
+                for a, b, v in spaced_spans(segment, spaced_values)
+                for ph in [self.reverse[v]]
+            ]
             if spans:
                 parts[i] = mask_spans(segment, spans, self.mapping, _redactor=self)
         return "".join(parts)
+
+    def _secret_values(self) -> list[str]:
+        """The values of a secret kind the map holds that are long enough to be looked for spaced out (every copy of them is
+        swept, so a spaced copy is swept too)."""
+        return [
+            v
+            for ph, v in self.mapping.items()
+            if not v.startswith("\0seed")
+            and _kind(ph) in SECRET_KINDS
+            and len(v) >= defaults.SPACED_VALUE_MIN_CHARS
+            and self.reverse.get(v) == ph
+        ]
 
 
 _MAX_NESTING = 200

@@ -21,7 +21,7 @@ ENC = [
 
 
 def second_set():
-    r = random.Random(3)  # noqa: S311 - a seeded evidence generator
+    r = random.Random(3)
     for _ in range(4000):
         sec = r.choice([KEY, HAND])
         k = r.randrange(1, len(sec))
