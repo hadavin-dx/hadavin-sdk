@@ -95,6 +95,8 @@ jobs:
         run: python tests/stage_mutants.py
       - name: Declared-permission mutants (each reverted guard rule must be killed by its named test) (blocks)
         run: python tests/policy_mutants.py
+      - name: Declared-permission page and dated lists (fails from the day after the earliest review date, until renewed) (blocks)
+        run: python tools/policy_page.py --check
       # Timing tests have their own step and it blocks: the check is a ratio (4x text, limit 12x time) with wall
       # clock, so a noisy runner moves both runs alike; a real super-linear pattern is a merge blocker.
       - name: Performance of the redaction patterns (blocks)

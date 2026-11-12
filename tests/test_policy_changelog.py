@@ -24,3 +24,15 @@ def test_the_changelog_gives_the_days_the_kinds_list_starts_to_fail():
     assert "7 of them from 2026-12-12 and the other 9 from 2027-02-01" in changelog, (
         "the changelog does not give the days the kinds list starts to fail"
     )
+
+
+def test_the_sixteen_pending_kinds_each_stand_on_the_day_they_were_decided():
+    # `decided` is pinned apart from the tool's own date: moving that date to renew the names and claims must
+    # not renew these kinds, and the 92-day cap compares `review_by` with `decided`.
+    assert len(PENDING_KINDS) == 16, "the number of pending kinds is not 16"
+    assert {p.decided for p in PENDING_KINDS.values()} == {date(2026, 11, 11)}, (
+        "a pending kind has a `decided` day other than 2026-11-11"
+    )
+    assert max((p.review_by - p.decided).days for p in PENDING_KINDS.values()) <= 92, (
+        "a pending kind is more than 92 days from its decision to its review day"
+    )

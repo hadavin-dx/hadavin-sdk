@@ -23,7 +23,9 @@ What this file does:
   `--check` ask for a builder-read one; the mark must be on the claim the builder really read, and no code
   can check that. The dated-list rules: an entry that is missing, stale, overdue (past `review_by`), too far
   out (`review_by` more than `MAX_PENDING_DAYS` after `decided`) or decided in the future is a problem. From
-  2026-12-12 the dated entries are overdue, so `--write` and `--check` both stop until the dates are renewed.
+  the day after the earliest `review_by` the dated entries are overdue, so `--write` and `--check` both stop
+  until the dates are renewed. This is a reminder, not a check that anyone re-read the names: it stops the
+  page and the tests, and a person must renew it with a dated decision.
 
 What it does not do: it does not prove that a permission name is right, and it never contacts a server. Some
 checks need this package imported or a server running and so live only in the tests (tests/test_policy_guard.py

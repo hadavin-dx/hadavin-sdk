@@ -91,6 +91,34 @@ def test_m14_ci_runs_the_policy_mutants_next_to_the_stage_mutants():
     )
 
 
+def test_ci_runs_the_policy_page_check_right_after_the_policy_mutants():
+    # `--check` is the command people run; only it uses the tool's own clock, so it must also run on its own in CI
+    steps = _yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))[
+        "jobs"
+    ]["check"]["steps"]
+    runs = [s.get("run", "") for s in steps]
+    assert "python tools/policy_page.py --check" in runs, (
+        "ci.yml has no step `python tools/policy_page.py --check`"
+    )
+    assert (
+        runs.index("python tools/policy_page.py --check")
+        == runs.index("python tests/policy_mutants.py") + 1
+    ), "the step `python tools/policy_page.py --check` is not right after the policy mutants"
+
+
+def test_the_changelog_names_the_start_of_the_date_guard_by_rule_and_calls_it_a_reminder():
+    flat = " ".join(_changelog_entry().split())
+    assert "fail from the day after the earliest `review_by`" in flat, (
+        "the changelog entry does not say the date guard starts the day after the earliest review_by"
+    )
+    assert "is a reminder, not a check that anyone re-read the names" in flat, (
+        "the changelog entry does not say the date guard is a reminder"
+    )
+    assert "from 2026-12-12" not in flat.replace("7 of them from 2026-12-12", ""), (
+        "the changelog entry hard-codes the start day of the names and claims guard"
+    )
+
+
 def test_the_changelog_says_seven_rows_are_abbreviated_and_the_openbao_release_is_not_pinned():
     flat = " ".join(_changelog_entry().split())
     assert "seven rows carry a 7-character abbreviated id" in flat

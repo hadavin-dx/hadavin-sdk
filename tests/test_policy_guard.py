@@ -22,7 +22,7 @@ import copy
 import dataclasses
 import re
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -43,28 +43,32 @@ MAX_PENDING_DAYS = pp.MAX_PENDING_DAYS
 
 # ------------------------------------------------------------------------------------- kinds: who is covered
 
+# The day the 16 kinds below were put on the pending list. A literal of its own, NOT `pp.DECIDED`: the tool's
+# date is the day of the last decision about the names and claims, and renewing that must not silently renew
+# these kinds as well (the 92-day cap compares `review_by` with `decided`, so a shared date could dodge it).
+KINDS_DECIDED = date(2026, 11, 11)
 _PR2 = ("the permission names of this kind are not all checked yet", "Q8c PR 2", date(2026, 12, 11))
 _SLICE2 = ("slice 2 of Q8c: names not checked, owner questions O2 and O3 open", "Q8c slice 2")
 # A kind that signs in to an outside system and has no POLICY yet. Overdue and stale entries fail.
 PENDING_KINDS: dict[str, Pending] = {
-    "secrets/aws_secrets_manager": Pending(_PR2[0], _PR2[1], DECIDED, _PR2[2]),
-    "signer/aws_kms": Pending(_PR2[0], _PR2[1], DECIDED, _PR2[2]),
-    "anchor/s3_object_lock": Pending(_PR2[0], _PR2[1], DECIDED, _PR2[2]),
-    "store/postgres": Pending(_PR2[0], _PR2[1], DECIDED, _PR2[2]),
-    "llm/bedrock": Pending(_PR2[0], _PR2[1], DECIDED, _PR2[2]),
-    "detector/bedrock_guardrail": Pending(_PR2[0], _PR2[1], DECIDED, _PR2[2]),
+    "secrets/aws_secrets_manager": Pending(_PR2[0], _PR2[1], KINDS_DECIDED, _PR2[2]),
+    "signer/aws_kms": Pending(_PR2[0], _PR2[1], KINDS_DECIDED, _PR2[2]),
+    "anchor/s3_object_lock": Pending(_PR2[0], _PR2[1], KINDS_DECIDED, _PR2[2]),
+    "store/postgres": Pending(_PR2[0], _PR2[1], KINDS_DECIDED, _PR2[2]),
+    "llm/bedrock": Pending(_PR2[0], _PR2[1], KINDS_DECIDED, _PR2[2]),
+    "detector/bedrock_guardrail": Pending(_PR2[0], _PR2[1], KINDS_DECIDED, _PR2[2]),
     "channel/slack": Pending(
-        "no Slack page could be read, so no scope name is checked", _PR2[1], DECIDED, _PR2[2]
+        "no Slack page could be read, so no scope name is checked", _PR2[1], KINDS_DECIDED, _PR2[2]
     ),
-    "secrets/azure_key_vault": Pending(*_SLICE2, DECIDED, date(2027, 1, 31)),
-    "secrets/gcp_secret_manager": Pending(*_SLICE2, DECIDED, date(2027, 1, 31)),
-    "signer/azure_key_vault_key": Pending(*_SLICE2, DECIDED, date(2027, 1, 31)),
-    "signer/gcp_kms": Pending(*_SLICE2, DECIDED, date(2027, 1, 31)),
-    "anchor/azure_immutable_blob": Pending(*_SLICE2, DECIDED, date(2027, 1, 31)),
-    "anchor/gcs_retention_lock": Pending(*_SLICE2, DECIDED, date(2027, 1, 31)),
-    "llm/anthropic": Pending(*_SLICE2, DECIDED, date(2027, 1, 31)),
-    "llm/openai_compat": Pending(*_SLICE2, DECIDED, date(2027, 1, 31)),
-    "llm/gemini": Pending(*_SLICE2, DECIDED, date(2027, 1, 31)),
+    "secrets/azure_key_vault": Pending(*_SLICE2, KINDS_DECIDED, date(2027, 1, 31)),
+    "secrets/gcp_secret_manager": Pending(*_SLICE2, KINDS_DECIDED, date(2027, 1, 31)),
+    "signer/azure_key_vault_key": Pending(*_SLICE2, KINDS_DECIDED, date(2027, 1, 31)),
+    "signer/gcp_kms": Pending(*_SLICE2, KINDS_DECIDED, date(2027, 1, 31)),
+    "anchor/azure_immutable_blob": Pending(*_SLICE2, KINDS_DECIDED, date(2027, 1, 31)),
+    "anchor/gcs_retention_lock": Pending(*_SLICE2, KINDS_DECIDED, date(2027, 1, 31)),
+    "llm/anthropic": Pending(*_SLICE2, KINDS_DECIDED, date(2027, 1, 31)),
+    "llm/openai_compat": Pending(*_SLICE2, KINDS_DECIDED, date(2027, 1, 31)),
+    "llm/gemini": Pending(*_SLICE2, KINDS_DECIDED, date(2027, 1, 31)),
 }
 # A kind that holds no identity at an outside system, and why. A new kind must be put in one of the three lists.
 NO_IDENTITY: dict[str, str] = {
@@ -119,10 +123,14 @@ def kind_problems(
     return out + _pending_problems("PENDING_KINDS", pending, kinds - declared, today)
 
 
-def same(found: object, expected: object) -> None:
+def same(found: object, expected: object, what: str = "") -> None:
     """`found == expected`, with both written out in full in the failure message (pytest shortens a long
-    list in the first line, and the mutant runner reads that line)."""
-    assert found == expected, f"reported {found!r}, expected {expected!r}"
+    list in the first line, and the mutant runner reads that line). `what` names the check in words and
+    starts the message: a test with several `same()` calls gives each its own, so that the line the mutant
+    runner reads says WHICH call failed (the expected text alone is the same in two calls that look alike)."""
+    assert found == expected, (
+        f"{what + ': ' if what else ''}reported {found!r}, expected {expected!r}"
+    )
 
 
 def _marks_for(policy: pp.Policy) -> pp.Marks:
@@ -1298,12 +1306,14 @@ def test_plant_d1_a_wildcard_resource_with_no_bound_is_caught():
                 "limits it"
             )
         ],
+        "a blank `bound` on the wildcard resource of the Vault secrets grant is not reported",
     )
     same(
         _grant_changed("signer/vault_transit", resource="{transit_mount}/sign/?"),
         [
             "grant R18: resource '{transit_mount}/sign/?' holds a wildcard, so `bound` must say what limits it"
         ],
+        "a wildcard resource with no bound on the Transit signing grant is not reported",
     )
 
 
@@ -1341,10 +1351,18 @@ def test_plant_d2_a_field_that_is_no_setting_is_caught():
 
 
 def test_plant_d3_an_empty_reason_is_caught():
-    same(_grant_changed("source/kubernetes", reason="  "), ["grant R20: reason is empty"])
+    same(
+        _grant_changed("source/kubernetes", reason="  "),
+        ["grant R20: reason is empty"],
+        "a blank reason on the Kubernetes grant is not reported",
+    )
     raw = _raw("secrets/vault")
     raw["never"] = ({**raw["never"][0], "reason": ""},)
-    same(pp.problems(raw), ["never entry 0: reason is empty"])
+    same(
+        pp.problems(raw),
+        ["never entry 0: reason is empty"],
+        "an empty reason on a never-list line is not reported",
+    )
 
 
 def test_plant_d4_a_grant_that_names_no_call_is_caught():
@@ -1406,11 +1424,27 @@ def test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run(v
 
 def test_plant_d7_unknown_keys_platform_and_never_type_are_refused():
     raw = _raw("secrets/vault")
-    same(pp.problems({**raw, "deny": ()}), ["POLICY: unknown key 'deny'"])
-    same(pp.problems({**raw, "platform": "aws_iam"}), ["POLICY: unknown platform 'aws_iam'"])
-    same(_grant_changed("secrets/vault", no_wire="x"), ["grant R17: unknown key 'no_wire'"])
+    same(
+        pp.problems({**raw, "deny": ()}),
+        ["POLICY: unknown key 'deny'"],
+        "an extra top-level key `deny` of the policy is not reported",
+    )
+    same(
+        pp.problems({**raw, "platform": "aws_iam"}),
+        ["POLICY: unknown platform 'aws_iam'"],
+        "a platform name outside the list is not reported",
+    )
+    same(
+        _grant_changed("secrets/vault", no_wire="x"),
+        ["grant R17: unknown key 'no_wire'"],
+        "an extra key `no_wire` on a grant is not reported",
+    )
     never = ({**raw["never"][0], "type": "deny"},)
-    same(pp.problems({**raw, "never": never}), ["never entry 0: unknown never type 'deny'"])
+    same(
+        pp.problems({**raw, "never": never}),
+        ["never entry 0: unknown never type 'deny'"],
+        "a never-list type outside the list is not reported",
+    )
     with pytest.raises(pp.PolicyError, match="unknown key 'deny'"):
         pp.parse(f"POLICY = { ({**raw, 'deny': ()})!r}", "planted.py")
     with pytest.raises(pp.PolicyError, match="exactly once"):
@@ -3879,24 +3913,44 @@ def test_the_check_command_reports_a_name_or_claim_with_no_dated_entry_and_a_sta
     assert pp.data_problems(ROOT, today=date(2026, 12, 11)) == []
 
 
-def test_from_the_review_date_the_write_command_and_the_check_command_both_stop(
+def test_from_the_review_date_the_write_command_stops_and_writes_nothing(
     tmp_path, monkeypatch, capsys
 ):
-    # The dated entries are overdue the day after `review_by`: `--write` and `--check` then refuse with the
-    # overdue lines (the red signal that the dates must be renewed); the day before they pass.
+    # The dated entries are overdue the day after `review_by`: `--write` then refuses with the overdue lines
+    # (the red signal that the dates must be renewed); the day before it passes. Every call gives `today`, so no
+    # result here depends on the real date.
     root = _tree(tmp_path)
     monkeypatch.setattr(pp, "ROOT", root)
     monkeypatch.setattr(pp, "DATA_ROOT", root)
     day_before, day_of = date(2026, 12, 11), date(2026, 12, 12)
-    assert pp.main(["--write"], today=day_before) == 0 and (root / pp.PAGE).is_file()
-    assert pp.main(["--check"], today=day_before) == 0
+    assert pp.main(["--write"], today=day_before) == 0 and (root / pp.PAGE).is_file(), (
+        "the write command did not write the page the day before the review date"
+    )
     capsys.readouterr()
     (root / pp.PAGE).unlink()
-    assert pp.main(["--write"], today=day_of) == 1
+    assert pp.main(["--write"], today=day_of) == 1, (
+        "the write command did not stop on the review date it was given"
+    )
     assert not (root / pp.PAGE).exists(), (
         "`--write` wrote the page although the dated entries are overdue"
     )
-    assert pp.main(["--check"], today=day_of) == 1
+    err = capsys.readouterr().err
+    assert "is overdue (review_by 2026-12-11)" in err, err
+
+
+def test_from_the_review_date_the_check_command_stops(tmp_path, monkeypatch, capsys):
+    root = _tree(tmp_path)
+    monkeypatch.setattr(pp, "ROOT", root)
+    monkeypatch.setattr(pp, "DATA_ROOT", root)
+    day_before, day_of = date(2026, 12, 11), date(2026, 12, 12)
+    assert pp.main(["--write"], today=day_before) == 0
+    assert pp.main(["--check"], today=day_before) == 0, (
+        "the check command stopped the day before the review date"
+    )
+    capsys.readouterr()
+    assert pp.main(["--check"], today=day_of) == 1, (
+        "the check command did not stop on the review date it was given"
+    )
     err = capsys.readouterr().err
     assert "is overdue (review_by 2026-12-11)" in err, err
 
@@ -4075,3 +4129,48 @@ def test_a_kind_whose_module_could_not_be_read_adds_no_stale_class_line():
     assert not [p for p in found if kube in p], (
         f"a kind that was not loaded is reported as stale class lines: {found}"
     )
+
+
+def test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date():
+    assert {p.decided for p in PENDING_KINDS.values()} == {date(2026, 11, 11)}, (
+        "the pending kinds do not all stand on the literal day 2026-11-11"
+    )
+    assert len(PENDING_KINDS) == 16, "the number of pending kinds is not 16"
+
+
+def test_the_tool_docstring_holds_no_date_that_is_not_in_the_dated_lists():
+    dated = (*pp.PENDING_NAMES.values(), *pp.PENDING_CLAIMS.values())
+    allowed = {str(d) for p in dated for d in (p.decided, p.review_by)}
+    stray = set(re.findall(r"\d{4}-\d{2}-\d{2}", pp.__doc__)) - allowed
+    assert not stray, f"the tool docstring holds a date that is in no dated list: {sorted(stray)}"
+
+
+def _fixed_clock(day: date):
+    """A `datetime` look-alike for `pp.datetime`: its `now()` is `day` at noon UTC (as the evidence plugin does)."""
+    fixed = datetime(day.year, day.month, day.day, 12, tzinfo=UTC)
+
+    class Fixed(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return fixed if tz is None else fixed.astimezone(tz)
+
+    return Fixed
+
+
+def test_the_check_command_uses_the_tools_own_clock_when_no_day_is_given(
+    tmp_path, monkeypatch, capsys
+):
+    # `python tools/policy_page.py --check` passes no `today`: every other test gives one, so a default fixed to
+    # a day would keep the command green after the review date and no test would notice.
+    root = _tree(tmp_path)
+    monkeypatch.setattr(pp, "ROOT", root)
+    monkeypatch.setattr(pp, "DATA_ROOT", root)
+    assert pp.main(["--write"], today=date(2026, 12, 11)) == 0
+    capsys.readouterr()
+    monkeypatch.setattr(pp, "datetime", _fixed_clock(date(2026, 12, 11)))
+    assert pp.main(["--check"]) == 0, "the check command stopped on 2026-12-11 by its own clock"
+    monkeypatch.setattr(pp, "datetime", _fixed_clock(date(2026, 12, 12)))
+    assert pp.main(["--check"]) == 1, (
+        "the check command did not stop on 2026-12-12 by its own clock (no day given)"
+    )
+    assert "is overdue (review_by 2026-12-11)" in capsys.readouterr().err

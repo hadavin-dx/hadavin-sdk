@@ -297,9 +297,11 @@
     (the AWS, Azure and Google Cloud kinds, Slack, Postgres, the API-key model kinds) have no declared permission
     set yet; a dated list in the guard test names them, and that test fails for 7 of them from 2026-12-12 and
     the other 9 from 2027-02-01, unless the second pull request has landed or the dates were decided again (at
-    most 92 days at a time). The dated lists of names and claims (13 entries, review by 2026-12-11) fail from
-    2026-12-12 in the tests and in `python tools/policy_page.py --check`; from that day `--write` stops too,
-    until the dates are renewed.
+    most 92 days at a time). The dated lists of names and claims (13 entries) fail from the day after the
+    earliest `review_by` in the tests and in `python tools/policy_page.py --check` (a blocking CI step); from
+    that day `--write` stops too, until the dates are renewed. The date guard is a reminder, not a check that
+    anyone re-read the names: it stops the page and the tests, and a person must renew it with a dated
+    decision.
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.
   - It covers AWS, gcloud/gsutil/bq, az, azcopy and PowerShell Az, kubectl/oc, helm, terraform/tofu/pulumi,
