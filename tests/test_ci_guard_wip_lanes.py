@@ -80,8 +80,8 @@ def repo(tmp_path):
     return r
 
 
-def _lane_branch(repo, branch, ignore_line=None):
-    """A remote branch `branch` off main that carries the handover file (and optionally an ignore line for its commit)."""
+def _lane_branch(repo, branch):
+    """A remote branch `branch` off main that carries the handover file."""
     keep = _git(repo, "rev-parse", "HEAD")
     sha = _commit(repo, HANDOVER_FILE, "note two\n", f"handover on {branch}")
     _ref(repo, branch, sha)
@@ -121,7 +121,18 @@ def test_a_wip_cloud_lane_branch_with_a_handover_file_passes(repo, branch):
 
 
 @pytest.mark.parametrize(
-    "branch", ["core/other", "wip/other", "wip/cloudx", "wip", "cloud-x", "feature/wip/cloud-x"]
+    "branch",
+    [
+        "core/other",
+        "wip/other",
+        "wip/cloudx",
+        "wip",
+        "cloud-x",
+        "feature/wip/cloud-x",
+        "wip/cloud-x/y",  # a slash: the git glob would match it, the pattern does not
+        "wip/cloud-",  # an empty suffix
+        "wip/cloud-a+b",
+    ],
 )
 def test_any_other_branch_with_a_handover_file_still_fails(repo, branch):
     _lane_branch(repo, branch)
@@ -131,13 +142,39 @@ def test_any_other_branch_with_a_handover_file_still_fails(repo, branch):
 
 
 def test_a_head_built_on_a_lane_commit_still_fails_even_if_a_lane_ref_has_it(repo):
-    """The lane refs are subtracted from the range, so only the separate check of HEAD's own history sees this."""
-    sha = _lane_branch(repo, "wip/cloud-x")
-    _git(repo, "merge", "-q", "--no-edit", sha)  # HEAD now contains the lane commit
-    _remove(repo, HANDOVER_FILE, "delete the file again: the tree is clean, the history is not")
+    """The lane ref holds both the commit that adds the file and the commit that deletes it, so no commit in the subtracted
+    range touches it and the tree is clean: only the separate check of HEAD's own history can see it."""
+    _commit(repo, HANDOVER_FILE, "note\n", "lane commit adds the file")
+    _remove(repo, HANDOVER_FILE, "lane commit deletes it again")
+    _ref(repo, "wip/cloud-x", _git(repo, "rev-parse", "HEAD"))
     rc, out = _run_guard(repo)
     assert rc == 1, out
     assert "history of HEAD itself" in out
+
+
+def test_a_lane_ref_pointing_at_another_branchs_commits_cannot_excuse_them_in_head(repo):
+    keep = _git(repo, "rev-parse", "HEAD")
+    other = _commit(repo, HANDOVER_FILE, "note\n", "handover file on another branch")
+    _ref(repo, "core/other", other)
+    _ref(repo, "wip/cloud-y", other)  # a writer points a lane name at that branch's tip
+    _git(repo, "reset", "-q", "--hard", keep)
+    # outside HEAD the range is hygiene only: the lane ref hides the other branch's file there (the repository ruleset is the answer)
+    rc, out = _run_guard(repo)
+    assert rc == 0, out
+    # but once HEAD contains those commits the control reports them
+    _git(repo, "merge", "-q", "--no-edit", other)
+    _remove(repo, HANDOVER_FILE, "delete the file again")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "history of HEAD itself" in out
+
+
+def test_a_missing_core_cloud_handover_ref_is_reported_without_a_git_error(repo):
+    _git(repo, "update-ref", "-d", "refs/remotes/origin/core/cloud-handover")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "outlived branch core/cloud-handover" in out
+    assert "fatal" not in out
 
 
 def test_a_head_tree_with_a_handover_file_fails(repo):
@@ -151,27 +188,71 @@ def _ignore_entry(sha):
     return f"{_expires()}{sha}:handover/reviews/x/round1.md:generic-api-key:3\n"
 
 
-def test_an_ignore_entry_on_a_wip_cloud_branch_is_accepted_and_on_another_branch_is_stale(repo):
+NOTE = "handover/reviews/round1.md"
+
+
+@pytest.mark.parametrize(
+    ("path", "rule", "accepted"),
+    [
+        (NOTE, "generic-api-key", True),
+        ("handover/tickets/t1.md", "generic-api-key", True),
+        ("handover/evidence/e1.md", "generic-api-key", True),
+        (
+            "src/app.py",
+            "generic-api-key",
+            False,
+        ),  # a real file: a lane ref could hide a secret there
+        ("src/app.py", "private-key", False),
+        (NOTE, "private-key", False),
+        (NOTE, "curl-auth-user", False),
+        ("handover/reviews/x/round1.md", "generic-api-key", False),  # not directly under the folder
+        ("handover/reviews/round1.py", "generic-api-key", False),
+        ("handover/other/round1.md", "generic-api-key", False),
+        ("xhandover/reviews/round1.md", "generic-api-key", False),
+    ],
+)
+def test_an_ignore_entry_on_a_lane_only_commit_needs_a_handover_note_and_the_generic_rule(
+    repo, path, rule, accepted
+):
     lane = _lane_branch(repo, "wip/cloud-x")
+    _commit(repo, ".gitleaksignore", f"{_expires()}{lane}:{path}:{rule}:3\n", "ignore entry")
+    rc, out = _run_guard(repo)
+    assert rc == (0 if accepted else 1), out
+    if not accepted:
+        assert "must be a handover note" in out
+
+
+def test_an_ignore_entry_on_a_fixed_named_branch_keeps_any_path_and_rule(repo):
+    keep = _git(repo, "rev-parse", "HEAD")
+    sha = _commit(repo, "notes/x.txt", "x\n", "a commit outside handover/")
+    _ref(repo, "core/cloud-handover", sha)  # the fixed name carries it
+    _git(repo, "reset", "-q", "--hard", keep)
+    _commit(repo, ".gitleaksignore", f"{_expires()}{sha}:src/app.py:private-key:3\n", "entry")
+    rc, out = _run_guard(repo)
+    assert rc == 0, out
+
+
+def test_an_ignore_entry_on_another_branch_is_stale(repo):
     keep = _git(repo, "rev-parse", "HEAD")
     other = _commit(repo, "notes/x.txt", "x\n", "a commit on another branch, outside handover/")
     _ref(repo, "core/other", other)
     _git(repo, "reset", "-q", "--hard", keep)
-    # the ignore list must exist in the tree of HEAD: commit it on the clean branch
-    _commit(repo, ".gitleaksignore", _ignore_entry(lane), "ignore entry on a lane commit")
-    rc, out = _run_guard(repo)
-    assert rc == 0, out
-    _commit(repo, ".gitleaksignore", _ignore_entry(other), "ignore entry on another branch")
+    _commit(repo, ".gitleaksignore", f"{_expires()}{other}:{NOTE}:generic-api-key:3\n", "entry")
     rc, out = _run_guard(repo)
     assert rc == 1, out
     assert "stale ignore entry" in out
 
 
-def test_the_step_text_has_no_unquoted_glob_and_a_valid_name():
-    step = _step(_load(), STEP)
-    assert ": " not in step["name"]
-    assert "'--remotes=origin/wip/cloud-*'" in step["run"]
-    assert "wip/cloud-[A-Za-z0-9._-]+" in step["run"]
+@pytest.mark.parametrize("branch", ["wip/cloud-x/y", "wip/cloud-", "wip/cloud-a+b"])
+def test_an_ignore_entry_on_a_non_matching_lane_name_is_stale(repo, branch):
+    keep = _git(repo, "rev-parse", "HEAD")
+    sha = _commit(repo, "notes/x.txt", "x\n", "commit")
+    _ref(repo, branch, sha)
+    _git(repo, "reset", "-q", "--hard", keep)
+    _commit(repo, ".gitleaksignore", f"{_expires()}{sha}:{NOTE}:generic-api-key:3\n", "entry")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "stale ignore entry" in out
 
 
 if __name__ == "__main__":
