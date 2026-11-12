@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:31Z / 02:01 IST - gitleaks v2 review 2: 0 Blocker, 1 Major (stale merge evidence), 3 Minor; binary provenance NOW PROVEN; 3 agents live
+FAILED / OPEN first:
+- MAJOR (evidence staleness): the coverage patch that the v2 evidence tested is NOT the file now called sonar-coverage.patch: coverage/ holds THREE versions; the tested one (exceptions hunks edit lines 9 and 24, plus a hygiene test: 11 passed) is now sonar-coverage-v2.patch; the current sonar-coverage.patch ADDS two exceptions lines near line 9 and edits no existing lines (no hygiene test hunk: would give 10 passed). By reading it has no line overlap with the gitleaks v2 patch, but nobody ran `git apply --check`, `--3way`, gitleaks or hygiene on THIS file together with v2. This is exactly the moving-target class I flagged: lane 7c is about to replace the coverage patch AGAIN (v3) and lane 8c a third patch on the same two files: so I run ONE final INTEGRATION CHECK myself (or by a short evidence runner) AFTER 7c and 8c finish: gitleaks v2 + coverage v3 + browser v3, every apply order, `--3way`, real gitleaks `dir` and `git` on the merged tree (0 findings), hygiene, look-alike negatives.
+- MINOR: no committed regression test: the narrowness proof (a different lowercase key must fail hygiene) exists only as scratch runs; a future widening of exceptions.txt line 27 back to `[a-z0-9-]+` would pass silently; suggest one committed negative test in tests/test_hygiene.py (planted text built from parts): that is a code addition in the public repo: your decision.
+- MINOR: untested edge cases (safe direction by reading): the exact key followed by `=`, `.` or `+`, and a prefix like `xsonar.projectKey=...`.
+- PROVENANCE (finding 4) CLOSED BY ME with raw output (gitleaks/evidence-lead-provenance.txt): I downloaded gitleaks_8.30.1_linux_x64.tar.gz from the release URL lint.yml uses: its sha256 = 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb = lint.yml's pin; the binary extracted from it (sha256 88f91962aa2f93ac6ab281d553b9e125f5197bbbce38f9f2437f7299c32e5509) is byte-identical to the binary every lane used (/tmp/work/gl/gitleaks), version 8.30.1. (My first download attempt used an unexpanded ${GITLEAKS_VERSION} in the URL: HTTP 404, my script's mistake; the second used the literal URL.) So every 'real gitleaks 8.30.1' result in this report used the CI binary.
+- FOR THE OWNER (the reviewer's real-hole finding, in two parts): (a) the allowlist line already at pr-3-tests 558d37f (`[a-z0-9-]+`) and v1 hid a lowercase made-up `projectKey=hadavin-dx_...` key from the hygiene test: v2 closes it; (b) INDEPENDENT of this patch, gitleaks 8.30.1 with this config does NOT flag a lowercase-only high-entropy value after `hadavin-dx_`-shaped keys anywhere (reason unknown: entropy or stop-word; found by experiment only); the hygiene pattern 9 (40 or more characters of `[A-Za-z0-9+/=_-]`) is the only guard; values under 40 characters are caught by neither layer: a general detector gap, not a regression; worth a rule or a note in the security docs: your call.
+- CONFIRMED by the review: the bracket trick `[d]uplicate` works in both Python `re` and git grep -E and matches exactly the one 51-character key; `$` anchors cleanly; the narrowness matrix rows all hold; 'allowed by design' (exact public key at another line or in a subfolder) is safe; the (?m) variant evidence exists (5 cases).
+- Decision for you: apply gitleaks-toml-fix-v2.patch to pr-3-tests (it is on origin demo/handover, file handover/demo/gitleaks/gitleaks-toml-fix-v2.patch) INSTEAD of v1: the 558d37f allowlist is still broken on the PR until then (your lint.yml gitleaks step is red).
+
+### (1) LIVE ITEMS (now 2026-11-12 20:31Z / 02:01 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a03bfbfb75bd4ec81 (agent, sonnet builder) | lane 10b CodeAnt triage | 20:15 | 33 min | 21:15 | running | CODEANT-COVERAGE.md, codeant-*.patch | evidence-codeant-* files; the main file not yet |
+| a6163bda862313baa (agent, sonnet builder) | lane 7c fixes after review 2 | 20:31 | 17 min | 21:11 | running | coverage patch v3, PLAN.md | working |
+| a48557818ee7cad44 (agent, sonnet builder) | lane 8c fixes after review 2 | 20:44 | 4 min | 21:44 | running | docs-and-deps.patch v3, PLAN.md | started |
+Totals: agents live 3; shells 0; pytest runs 0 to 2; containers 0; load average 1.14, 1.98, 2.40; nothing past its time box. Below the 'at least 2 agents' floor? No: 3. Next: the integration check after 7c/8c.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| gitleaks allowlist (lead's 558d37f, then v1, v2) | review 2 done; final integration check pending | lead's 558d37f: failed the real-binary check; v1 0B/1M/2m/2N; v2 0B/1M/3m | allowlist did not work; v1 a real hole (wider exception); v2: stale merge evidence (moving coverage patch) | review 2 existed because v2 changed the part that failed review 1; the v2 Major is a coordination artifact (coverage patch kept moving), not a defect of v2 | no cap | the integration check passes and you apply it |
+| lane 7 Sonar | fix round 7c; review 3 follows | r1 0B/1M/8N; r2 0B/1M/7N | see earlier | security path | no cap | review without Major/Blocker |
+| lane 8 browser tests | fix round 8c; review 3 follows | v1 0B/3M/8N; v2 0B/3M/8N | see earlier | no cap | | review without Major/Blocker |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| a6b5ce5db824e1a85 (gitleaks v2 review 2, sonnet read-only) | about 4 min of agent time (20:37 to 20:46) | 0B/1M/3m/1N, saved gitleaks/REVIEW-2.md | yes |
+
 ## 2026-11-12 20:30Z / 02:00 IST - LANE 8 review 2 done (the decode-in-Chromium test + browser locks): 0 Blocker, 3 Majors, 8 Nits; lane 8c started; 4 agents live
 FAILED / OPEN first:
 - **M1 (missing proof): the new pixel reader has only been broken at the TOLERANCE, never shown to fail on two DIFFERENT colours.** The tolerance -1 mutation proves the assertion runs and prints the real colours (light [246,244,254,255] twice, dark [16,15,32,255] twice) but not that the reader can tell a white strip from the sidebar colour; the Pillow cross-check matches only in a passing state (both points the same colour); evidence-b2 has no command, diff or restore `cmp`. The reviewer's recipe (which 8c runs): delete the `.shell` `background: linear-gradient(...)` in src/lead_desk/portal/app.css (~164), the rule that paints the strip under the `.rail` (`height: 100vh`), run both sidebar tests, expect two clearly different colours in the failure, restore and `cmp`. First review's N2 asked for exactly this and it was not done.

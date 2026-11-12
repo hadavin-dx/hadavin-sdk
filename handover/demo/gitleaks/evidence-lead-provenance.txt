@@ -1,0 +1,13 @@
+# Binary provenance, checked by the lead session 2026-11-12 ~20:31Z (answers gitleaks REVIEW-2 finding 4)
+# lint.yml pins (read from the public repo's .github/workflows/lint.yml lines 21-24, 38-39):
+#   GITLEAKS_VERSION "8.30.1"; GITLEAKS_SHA256 "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb" (of gitleaks_8.30.1_linux_x64.tar.gz)
+# command: curl -sSfL -o gl.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+tarball sha256 = 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+lint.yml pin   = 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+result: TARBALL_MATCHES_PIN
+# command: tar -xzf gl.tgz gitleaks ; sha256sum ex/gitleaks /tmp/work/gl/gitleaks
+88f91962aa2f93ac6ab281d553b9e125f5197bbbce38f9f2437f7299c32e5509  ex/gitleaks (extracted from the verified tarball)
+88f91962aa2f93ac6ab281d553b9e125f5197bbbce38f9f2437f7299c32e5509  /tmp/work/gl/gitleaks (the binary every lane used)
+ex/gitleaks version = 8.30.1
+result: the binary used by lanes 7b, 10a, 10a2 and 8b IS byte-identical to the binary in the tarball that lint.yml pins (SHA-256 verified above).
+# NOTE: the first download attempt used an unexpanded ${GITLEAKS_VERSION} in the URL (HTTP 404, my script's mistake); the second used the literal v8.30.1 URL.
