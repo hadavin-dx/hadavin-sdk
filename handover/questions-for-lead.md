@@ -1838,3 +1838,7 @@ Ticket F5 lists all of SQLSTATE class 40 as "refused"; the 3d builder and the de
 - Evidence: handover/evidence/PR89/ea29121e/RESULTS.md (independent runner): ruff, format, bandit, scan_repo, gitleaks exit 0; stage_mutants 37/37; mutant runner 329/329 as root and as user nobody; full pytest 10833 passed, 3 skipped (2 need mypy, which is not in the lock: q-pr89-mypy-in-lock).
 - Not as expected: the known timing flake failed once alone (fix on core/fix-timing-harness-flake); hand-run mypy shows 14 errors (the CHANGELOG now says 14 total) while the repo mypy test passes; not run: perf tests, Semgrep, zizmor, Trivy, pip-audit, Vault jobs, 3.12 job. A CI run on the head is the remaining check.
 - Ledger: R27-1 FIXED-VERIFIED. The lead merges; I do not.
+
+### q-prh-spaced-secrets (2026-11-12, PR H round 6, Issue 9)
+Question: a key or handed-out value written with a visible space between every character (`A K I A ...`) is readable after removing the spaces. Same on main. Masking it needs a space-tolerant matcher that may hide ordinary text. Do you want it masked?
+Default (used now): not masked; stated plainly in LIMITS and CHANGELOG, three rows pinned as documented behaviour. Cost of yes: a new matcher, a false-positive test on the clean corpus, one more review round.

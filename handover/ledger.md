@@ -2767,3 +2767,13 @@
 | Q8a1b11-cD5 | Minor | Q8a-1 | codebase D5: k1b exemption reason false; replay.py:117 prints raw agent id vs CHANGELOG | OPEN | | | 2026-11-12 |
 | Q8a1b11-cD6 | Minor | Q8a-1 | codebase D6: CachedSecrets scope undersold in CHANGELOG; branch tested only with extras; add extras-free test | OPEN | | | 2026-11-12 |
 | Q8a1b11-cnits | Nit | Q8a-1 | codebase D7 (TypeError in assert message test_sources.py:228) and D8 small points | OPEN | | | 2026-11-12 |
+| PRHb6-r6-F1 | Blocker | PRH | reviews/PRH/goldfish_review_report-r6.md Issue 1: encoded ESC plus encoded first letter hides a handed-out secret (CONFIRMED BY PROBE, regression vs main) | OPEN | | | 2026-11-12 |
+| PRHb6-r6-E2 | Major | PRH | Issue 2: InputTooLarge on small input (7 of 3000 fuzz texts; 0 on main) | OPEN | | | 2026-11-12 |
+| PRHb6-r6-F2 | Major | PRH | Issue 3: piece check withholds whole result after every copy was masked (word-like secret; secret containing SECRET) | OPEN | | | 2026-11-12 |
+| PRHb6-r6-E6 | Major | PRH | Issue 4: 226 fuzz outputs keep a readable key or secret window with no spelled-out escape | OPEN | | | 2026-11-12 |
+| PRHb6-r6-C1 | Major | PRH | Issue 5: direct redact() gated on ESC only; U+009B tail readable | OPEN | | | 2026-11-12 |
+| PRHb6-r6-C2 | Major | PRH | Issue 6: direct redact() picks consuming reading by placeholder count; tie keeps key tail | OPEN | | | 2026-11-12 |
+| PRHb6-r6-C3 | Major | PRH | Issue 7: CHANGELOG piece claim wider than code; sampling gap above 132 chars; case-sensitive hex | OPEN | | | 2026-11-12 |
+| PRHb6-r6-E3 | Major | PRH | Issue 8: public redact() leaves ZW/bidi-cut keys readable (existing gap) | OPEN | | | 2026-11-12 |
+| PRHb6-r6-rest | Minor | PRH | Issues 10, 12, 13, 14: withheld-share by cause, docstring 14/mutant 79 row/setting clause, nobody mutant run and timing 3x3 in next evidence, fail-before lines per test | OPEN | | | 2026-11-12 |
+| PRHb6-r6-spaced | Minor | PRH | Issue 9: visible-space-spaced secrets readable (also on main); product choice | OWNER-ONLY | q-prh-spaced-secrets, default not masked and stated in LIMITS | | 2026-11-12 |
