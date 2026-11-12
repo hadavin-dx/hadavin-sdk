@@ -1,6 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## Status - 2026-11-12 19:10Z / 00:40 IST (next block by 19:15Z)
+- Running agents: 12. Review-fix: PRH b12, P3a-2 b9, Q8b b14c builders; Q8c-1 b15 and Q8a-1 b19 evidence runners. Promotion builders (all 5 started, 90-minute boxes, worktrees under /home/user/build): part 2 bind (wip/cloud-pd-bind), part 3 stand-ins (wip/cloud-pd-standins, waits for part 2's loopback helper), part 6 banner and demo-only guard (wip/cloud-pd-banner), part 5 reset (wip/cloud-pd-reset), AK-G2-a ledger = parts 1+4 (wip/cloud-ak-g2-a; ticket wins over demo code; it will not finish in one box).
+- Pushed: only reports so far. No builder has pushed yet.
+- Heavy slots: 3 max, queued through heavy.sh; load average about 3 at launch.
+- Stuck: nothing. Needs from the lead: nothing.
+
 ## ORDER 255 received, promotion started - 2026-11-12 19:00Z / 00:30 IST (next block by 19:05Z)
 - Running agents: 10. Review-fix: PRH b12, P3a-2 b9, Q8b b14c builders; Q8c-1 b15 and Q8a-1 b19 evidence runners. NEW promotion builders: part 2 public-bind refusal (core/promote-demo-bind -> wip/cloud-pd-bind), part 3 stand-in hosts and kind-registry test (core/promote-demo-standins -> wip/cloud-pd-standins; builds on part 2's shared loopback helper), part 6 mode banner and demo-only guard (core/promote-demo-banner -> wip/cloud-pd-banner). 90-minute boxes.
 - Pushed: Q8a-1 b19 design and codebase reviews r20 (0 Blocker, 0 Major each). Not yet pushed by builders: nothing.

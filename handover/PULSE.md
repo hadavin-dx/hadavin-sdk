@@ -213,3 +213,4 @@ PULSE 11:39Z: no change in results. Waiting: EV runners PRH b9 and Q8b b11 (no R
 18:52Z core: Q8a-1 b19 codebase r20 saved (0B/0M/3m); ORDER 254 overlap list written; waiting on b19 evidence+design, Q8c-1 b15 evidence, 3 builders
 18:53Z core: Q8a-1 b19 design r20 saved (0B/0M/6m/2nit); waiting for b19 evidence runner before resolve
 18:55Z core: ORDER 255: 3 promotion builders started (parts 2,3,6); AK-G2-a and part 5 next
+18:55Z core: 5 promotion builders running (parts 2,3,6,5 and AK-G2-a); 12 agents
