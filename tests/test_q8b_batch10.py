@@ -143,9 +143,9 @@ def test_b10_1_a_long_run_of_line_breaks_after_a_scheme_word_is_read_in_linear_t
             text = shape(size)
             times = []
             for _ in range(3):
-                t0 = time.perf_counter()
+                t0 = time.process_time()
                 clean(text)
-                times.append(time.perf_counter() - t0)
+                times.append(time.process_time() - t0)
             return min(times)
 
         best(5_000)
@@ -254,9 +254,9 @@ def test_b10_2_a_long_run_of_digest_fold_lines_is_read_in_linear_time():
             times = []
             for _ in range(3):
                 text = shape(size)
-                t0 = time.perf_counter()
+                t0 = time.process_time()
                 out = clean(text)
-                times.append(time.perf_counter() - t0)
+                times.append(time.process_time() - t0)
                 assert "bbbbbbbb" not in out
             return min(times)
 

@@ -484,9 +484,9 @@ def test_b7_6_the_third_prefix_group_costs_no_extra_time_on_a_long_flag():
         text = "--" + "a-" * n + "x now " + "--a-b-c " * (n // 4)
         times = []
         for _ in range(3):
-            t0 = time.perf_counter()
+            t0 = time.process_time()
             clean(text)
-            times.append(time.perf_counter() - t0)
+            times.append(time.process_time() - t0)
         return min(times)
 
     best(2_000)

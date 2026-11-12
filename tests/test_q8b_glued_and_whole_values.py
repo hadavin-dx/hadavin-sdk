@@ -118,9 +118,9 @@ def test_r1_the_guard_in_front_of_the_address_pattern_is_bounded():
         text = ("a@" + "b" * 250 + ".") * n + "\n" + ("x@y." * n)
         times = []
         for _ in range(3):
-            started = time.perf_counter()
+            started = time.process_time()
             runmap.redact_untrusted(text, runmap.RunMap())
-            times.append(time.perf_counter() - started)
+            times.append(time.process_time() - started)
         return min(times)
 
     small, large = best(100), best(400)

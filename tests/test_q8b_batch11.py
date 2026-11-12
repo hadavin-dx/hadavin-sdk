@@ -175,9 +175,9 @@ def test_b11_8_the_fold_run_has_no_upper_bound_so_an_indented_block_after_the_he
 def test_b11_8_a_long_run_of_folded_lines_is_read_in_linear_time():
     def took(n: int) -> float:
         text = "Authorization: Bearer " + piece(61, 12) + "\n" + " abcdefgh1234\n" * n + "end"
-        t0 = time.perf_counter()
+        t0 = time.process_time()
         redact.redact(text)
-        return time.perf_counter() - t0
+        return time.process_time() - t0
 
     took(500)
     # batch 14: the bound is 8 (it was 12, which a rule that is only a little worse than linear in the exponent passed; pure quadratic is 16);
@@ -229,9 +229,9 @@ def test_b11_8_a_line_of_repeated_headers_is_read_in_linear_time():
 
     def took(n: int) -> float:
         text = "Authorization: Bearer x " * n
-        t0 = time.perf_counter()
+        t0 = time.process_time()
         redact.redact(text)
-        return time.perf_counter() - t0
+        return time.process_time() - t0
 
     took(500)
     small = min(took(3_000) for _ in range(3))

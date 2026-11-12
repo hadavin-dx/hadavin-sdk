@@ -216,9 +216,9 @@ GLUED = (
 def test_b13_3_a_glued_run_of_headers_is_read_in_linear_time(unit):
     def took(chars: int) -> float:
         text = unit * (chars // len(unit))
-        t0 = time.perf_counter()
+        t0 = time.process_time()
         redact_module.redact(text)
-        return time.perf_counter() - t0
+        return time.process_time() - t0
 
     took(5_000)
     # 4 times the size: linear is 4, pure quadratic 16. Batch 14: the bound is 6 (an exponent up to 1.29 passes); the measurement is repeated up to three times and the test fails only when all three are over the bound (a clean run measured 3.8 to 7.8 once under heavy load).
@@ -427,7 +427,7 @@ _CLOCK_FUNCTIONS = frozenset(
 
 
 def _reads_the_clock(node: ast.AST, helpers: set[str], names: set[str]) -> bool:
-    """True when the code under `node` reads the clock: `time.perf_counter()` and the like, a name imported from `time`, `timeit`, or a
+    """True when the code under `node` reads the clock: `time.process_time()` and the like, a name imported from `time`, `timeit`, or a
     module-level helper of the same file that does (`_clock_functions_of` finds the helpers, transitively)."""
     for n in ast.walk(node):
         if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name):

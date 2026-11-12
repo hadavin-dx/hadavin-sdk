@@ -148,9 +148,9 @@ def test_b9_1_a_long_run_of_gaps_and_wrapped_headers_is_read_in_linear_time():
         "Authorization: Token\n " * (size // 22),
         "Authorization: ApiKey" + " " * size + "\n" + "a" * size,
     ):
-        t0 = time.perf_counter()
+        t0 = time.process_time()
         clean(text)
-        assert time.perf_counter() - t0 < 20, "a gap after a scheme word takes far too long"
+        assert time.process_time() - t0 < 20, "a gap after a scheme word takes far too long"
 
 
 # ---- Issue 2 and 8: pins for the claims that had none --------------------------------------------------------------------
@@ -284,9 +284,9 @@ def test_b9_4_a_very_long_run_of_digits_after_a_key_word_is_read_in_linear_time(
             text = (word + "1" * digits + " ") * 2 + ("pass" + "1" * digits + "x ") * 2
             times = []
             for _ in range(3):
-                t0 = time.perf_counter()
+                t0 = time.process_time()
                 clean(text)
-                times.append(time.perf_counter() - t0)
+                times.append(time.process_time() - t0)
             return min(times)
 
         best(1_000)
@@ -378,9 +378,9 @@ def test_b9_5_the_rules_that_batch_8_added_are_timed_on_hostile_text():
         "protection": "protection-" * (size // 11),
     }
     for name, text in hostile.items():
-        t0 = time.perf_counter()
+        t0 = time.process_time()
         redact.redact(text)
-        took = time.perf_counter() - t0
+        took = time.process_time() - t0
         assert took < 15, f"{name}: redact() takes {took:.1f} s on 200 kB"
     for pattern in (
         redact._AUTH_FLAG,
@@ -390,9 +390,9 @@ def test_b9_5_the_rules_that_batch_8_added_are_timed_on_hostile_text():
     ):
         r = re.compile(pattern)
         for name, text in hostile.items():
-            t0 = time.perf_counter()
+            t0 = time.process_time()
             sum(1 for _ in r.finditer(text))
-            took = time.perf_counter() - t0
+            took = time.process_time() - t0
             assert took < 10, f"{name}: {pattern[:40]!r} takes {took:.1f} s"
 
 

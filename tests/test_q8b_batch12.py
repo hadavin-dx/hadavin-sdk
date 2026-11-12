@@ -222,9 +222,9 @@ def test_b12_4_a_header_with_many_extra_words_and_folds_is_read_in_linear_time()
         text = (
             "Authorization: Custom-Scheme x " * n
         )  # one long line of repeated headers, no fold: a read to the line end is quadratic
-        t0 = time.perf_counter()
+        t0 = time.process_time()
         redact_module.redact(text)
-        return time.perf_counter() - t0
+        return time.process_time() - t0
 
     took(500)
     small = min(took(3_000) for _ in range(3))

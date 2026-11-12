@@ -351,19 +351,19 @@ def test_b8_5_the_timing_of_the_flag_rule_on_hostile_text_is_bounded_and_close_t
     }
     worst = 0.0
     for name, text in texts.items():
-        t0 = time.perf_counter()
+        t0 = time.process_time()
         n6 = sum(1 for _ in r6.finditer(text))
-        t6 = time.perf_counter() - t0
-        t0 = time.perf_counter()
+        t6 = time.process_time() - t0
+        t0 = time.process_time()
         n3 = sum(1 for _ in r3.finditer(text))
-        t3 = time.perf_counter() - t0
+        t3 = time.process_time() - t0
         assert t6 < 8.0, f"{name}: the flag rule takes {t6:.2f} s on 200 kB"
         assert t6 < 6 * t3 + 1.0, f"{name}: bound 6 takes {t6:.2f} s, bound 3 {t3:.2f} s"
         assert n6 >= n3, name
         worst = max(worst, t6)
-    t0 = time.perf_counter()
+    t0 = time.process_time()
     redact.redact(texts["many starts"])
-    assert time.perf_counter() - t0 < 30, "redact() on 200 kB of flag starts takes far too long"
+    assert time.process_time() - t0 < 30, "redact() on 200 kB of flag starts takes far too long"
 
 
 # ---- Issue 7: a Digest header inside JSON is masked to its closing quote; Issue 10: a line break ends it ------------------
@@ -414,9 +414,9 @@ def test_b8_10_a_long_run_of_white_space_after_a_scheme_word_is_read_in_linear_t
         "Authorization: Digest" + " \t" * 100_000 + "\nx",
         "Authorization: Basic" + " " * 200_000 + "\nx",
     ):
-        t0 = time.perf_counter()
+        t0 = time.process_time()
         clean(text)
-        assert time.perf_counter() - t0 < 20, "white space after a scheme word takes far too long"
+        assert time.process_time() - t0 < 20, "white space after a scheme word takes far too long"
 
 
 # ---- Issue 8: digits glued behind a bare credential word, however many ---------------------------------------------------
@@ -448,9 +448,9 @@ def test_b8_8_a_very_long_run_of_digits_is_read_once():
         text = ("pass" + "1" * digits + " ") * 4
         times = []
         for _ in range(3):
-            t0 = time.perf_counter()
+            t0 = time.process_time()
             clean(text)
-            times.append(time.perf_counter() - t0)
+            times.append(time.process_time() - t0)
         return min(times)
 
     best(1_000)
