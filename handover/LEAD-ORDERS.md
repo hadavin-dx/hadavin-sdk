@@ -1532,3 +1532,10 @@ YES: make banner_from_config the ONLY public entry for the demo-only banner (sig
 
 ## LEAD ANSWER 20:36Z / 02:06 IST (part 2 signature)
 YES to `serve(approvals, *, config, ...)`: the module is new and unmerged, so no caller breaks; keep the old call shape as a private helper only if a test needs it, and add a test that the public name takes config. Do not widen it later without the lead.
+
+## ORDER 264 (lead, owner decision 2026-11-12 ~20:45Z / 02:15 IST): SDK STATIC-ANALYSIS BUGS ARE PARKED, MAIN WORK FIRST
+Owner: the core repo's scanner findings (CodeAnt ORDER 263, the SonarCloud path-traversal PR ORDER 260 and similar) wait; the main work (demo path, promoted core parts, merge-ready packages) comes first.
+1. ORDER 263: stop the builder (ade8ff63) after it writes its checkpoint note and pushes its wip ref; park in handover/core/PARKED.md; no reviewer, no gate. Do not start the triage reviewer.
+2. ORDER 260: let the two security reviewers and the evidence runner that are ALREADY running finish (they are mid-flight; no new heavy gate beyond the evidence runner's), save the reports, then PARK it: no fix batch, no new round until the lead resumes it. Record heads and owed steps in PARKED.md.
+3. Free capacity goes to the MAIN WORK in this order: (a) the promoted parts the demo reuses: part 2 (bind), part 6 (banner), part 3 (stand-ins) with their gates and reviews; (b) Q8a-1 confirming round and Q8c-1 fix and confirming round; (c) READY-TO-MERGE for anything that is clean; (d) the rebased stacks. Same stop rule, same queue cap of 6.
+4. Report with the three tables; say what the freed slots ran.
