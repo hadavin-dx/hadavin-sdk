@@ -1,4 +1,4 @@
-"""Made-up key names for the Q8b key rule (batch 3, decision D-032): the benign keys hold no credential, the credential keys do.
+"""Made-up key names for the Q8b key rule (batches 3 and 4): the benign keys hold no credential, the credential keys do.
 
 Used by `tests/test_q8b_batch3.py` to measure the record-walk rule (`k1b.redaction.sensitive`) and the card rule (the
 `key=value` rules of `guard.redact`) on the SAME names. No real names, no values.
@@ -78,6 +78,16 @@ BENIGN = [
     "bypass_enabled",
     "pass_rate",
     "passRate",
+    "impass",
+    "possession",
+    "obsession",
+    "supersession",
+    "procession",
+    "concession",
+    "succession",
+    "recession",
+    "lowpass",
+    "bandpass",
     "pass_count",
     "pass_fail",
     "unpassworded",
@@ -257,11 +267,58 @@ CREDENTIAL = [
     "USERSESSION",
     "tokens",
     "MYSQL_PASS",
+    # round 4: the keys the older rule masked by its bare `pass` and `session` prefixes, the `_value` forms, the hyphen forms
+    "passcode",
+    "passkey",
+    "pass_code",
+    "pass-code",
+    "passKey",
+    "session_key",
+    "sessionkey",
+    "session-key",
+    "session_cookie",
+    "pass_value",
+    "PASS_value",
+    "Pass_value",
+    "session_value",
+    "SESSION_value",
+    "Session_value",
+    "auth_value",
+    "AUTH_value",
+    "Auth_value",
+    "bearer_value",
+    "BEARER_value",
+    "Bearer_value",
+    "key-data",
+    "cert-data",
+    "KEY-DATA",
+    "My-Certificate-Data",
+    # round 4: a word in front of `pass`, `auth` or `session` that no list could hold
+    "newpass",
+    "oldpass",
+    "confirmpass",
+    "defaultpass",
+    "postgresauth",
+    "jenkinssession",
+    "zzzpass",
+    "warehouseauth",
+    "xyzsession",
+    "ordersqpass",
+    "lunchauth",
 ]
 
-# Credential keys written with a word in front that is NOT in `k1b.redaction.GLUED_PREFIXES`: the card rule masks them as
-# `key=value` text, the record walk does not (LIMITS names this; a test pins it).
-UNLISTED_PREFIX = ["zzzpass", "warehouseauth", "xyzsession", "ordersqpass", "lunchauth"]
+# Credential keys written as one word with a word in front that no list could hold (round 4: the record walk masks them,
+# as the card rule masks them as text); the whole list of ordinary words that end in `pass`, `auth` or `session` is
+# `k1b.redaction.ORDINARY_WORDS`.
+UNLISTED_PREFIX = [
+    "zzzpass",
+    "warehouseauth",
+    "xyzsession",
+    "ordersqpass",
+    "lunchauth",
+    "newpass",
+    "postgresauth",
+]
 
 # Benign keys the record walk masks ON PURPOSE (the word `session`, `auth`, `pass`, `secrets` or a `tokens` key that is not a
 # count): the cost the docstring of `sensitive` names. Measured on this corpus; the test compares the set exactly.
@@ -285,6 +342,7 @@ WALK_COST = [
     "tokenType",
     "token_type",
     "tokenUsage",
+    "passkeyCount",
 ]
 
 # Benign keys the CARD rule (`key=value` text) masks too: a word that merely contains `pass`, `token`, `secret` or `auth`,
@@ -320,4 +378,11 @@ CARD_COST = [
     "monkey_data",
     "concert_data",
     "account_id",
+    "passkeyCount",
+    "impass",
+    "possession",
+    "obsession",
+    "supersession",
+    "lowpass",
+    "bandpass",
 ]

@@ -85,27 +85,48 @@ def test_every_spelling_of_every_key_masks_a_value_with_spaces_on_every_path():
 
 
 def test_no_file_of_the_redaction_code_keeps_its_own_list_of_credential_keys():
-    """A hand-kept key list is a line of the code that names both `password` and `passwd` as alternatives of a key=value
-    rule. The only lines allowed to: the key list itself, the two command-line flag rules (`--password` is a flag name, not a
-    key), `htpasswd`, and the lists of WORDS (`_NOT_A_VALUE`, the case rule's `CREDENTIAL_WORDS`, one per line). Fails on the
-    code before batch 3, where the quoted-value rules carried a third list."""
+    """A second key list is a collection literal (one entry per line or not) or a `a|b|c` string that names three or more
+    credential words, anywhere in the package (an AST scan: not tied to two words on one line). Allowed, each for its reason:
+    the one list, the words a tool prints after a key, the record walk's words and endings (compared with the one list by
+    test_r7), and the HTTP header-name filter of the tool path (broader than the key list on purpose). Fails on the code before
+    batch 3, where the quoted-value rules carried a third list."""
+    import ast
+    import re
+
     root = Path(__file__).resolve().parents[1] / "src/hadavin_sdk"
-    allowed = (
+    words = {"password", "passwd", "pwd", "secret", "token", "passphrase", "credential", "apikey"}
+    allowed = {
         "KEY_ALTERNATIVES",
-        'r"password", r"passwd"',  # the list itself
-        "htpasswd",
-        "api-?key",  # the command-line flag rule: a flag NAME
-        "-(?:password|passwd)",  # its second line
-        '"password", "passwd", "pwd", "passphrase"',  # the case rule's endings, compared with the list by test_r7
-    )
+        "_NOT_A_VALUE",
+        "CREDENTIAL_WORDS",
+        "GLUED_ENDINGS",
+        "_CREDENTIAL_HEADER",
+    }
     bad = []
-    for rel in ("guard/redact.py", "approvals/channel.py", "approvals/gate.py", "k1b/redaction.py"):
-        for n, line in enumerate((root / rel).read_text(encoding="utf-8").splitlines(), 1):
-            code = line.split("  #")[0]
-            if code.lstrip().startswith("#"):
+    for path in sorted(root.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        skip: set[int] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Assign | ast.AnnAssign):
+                target = node.targets[0] if isinstance(node, ast.Assign) else node.target
+                if isinstance(target, ast.Name) and target.id in allowed:
+                    skip.update(id(c) for c in ast.walk(node))
+        for node in ast.walk(tree):
+            if id(node) in skip:
                 continue
-            if "password" in code and "passwd" in code and not any(a in code for a in allowed):
-                bad.append(f"{rel}:{n}: {line.strip()[:90]}")
+            hits: set[str] = set()
+            if isinstance(node, ast.Tuple | ast.List | ast.Set):
+                hits = {
+                    e.value.lower()
+                    for e in node.elts
+                    if isinstance(e, ast.Constant) and isinstance(e.value, str)
+                } & words
+            elif (
+                isinstance(node, ast.Constant) and isinstance(node.value, str) and "|" in node.value
+            ):
+                hits = {re.sub(r"[^a-z]", "", p.lower()) for p in node.value.split("|")} & words
+            if len(hits) >= 3:
+                bad.append(f"{path.relative_to(root.parent.parent)}:{node.lineno}: {sorted(hits)}")
     assert not bad, f"a second list of credential keys: {bad}"
 
 

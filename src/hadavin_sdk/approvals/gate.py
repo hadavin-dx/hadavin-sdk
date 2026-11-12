@@ -84,10 +84,12 @@ _MDLINK = re.compile(_LABEL + r"\(\s*[^)\s]+[^)]*\)")
 # label - CommonMark accepts all three (independent review 2026-09-28: `- [r]: h&#116;tps://...`
 # plus `![x][r]` rendered a zero-click image with verdict PASS).
 _REFDEF = re.compile(r"^\s{0,3}(?:(?:[-*+]|\d{1,9}[.)])\s+|>\s*)*" + _LABEL + r":\s*\S")
-# Any scheme with `//`, the schemes that act without one, and protocol-relative `//host.`.
+# Any scheme with `//`, the schemes that act without one, and protocol-relative `//host.`. A scheme that acts without `//`
+# is not read in the middle of a word with `-`, `.` or `+` in front of it: `key-data: V` named a key, and the old `\b`
+# read `data:` as a link and removed it, so the redactor never saw the key and `V` stayed readable (round 4).
 # Any scheme, one letter too (`p://evil.com` - ninth review), and a bare `://host`.
 _URL = re.compile(
-    r"(?:\b[a-z][a-z0-9+.\-]{0,30}://|(?<![\w:])://[\w-]+(?:\.|%2e)|\b(?:https?|mailto|data|javascript|vbscript|tel|slack|"
+    r"(?:\b[a-z][a-z0-9+.\-]{0,30}://|(?<![\w:])://[\w-]+(?:\.|%2e)|(?<![\w+.\-])(?:https?|mailto|data|javascript|vbscript|tel|slack|"
     r"ms-teams|vscode|ssh|smb|file|sms|facetime|skype|zoommtg|itms-services):"
     r"|(?<![\w:/])//[\w-]+(?:\.|%2e))(?:(?!" + GLUED_KEY + r")[^\s)>\]'\"`])*",
     re.IGNORECASE,

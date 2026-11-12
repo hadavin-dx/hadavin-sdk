@@ -130,10 +130,9 @@ def test_i2_there_is_one_key_list_and_every_rule_reads_it():
     assert code.count('"|".join(KEY_ALTERNATIVES)') == 1, (
         "KEY_WORDS must be the only place the list is joined"
     )
-    assert code.count("signing[_") == 1, (
-        "a second hand-kept key list holds a key spelling of the first"
-    )
-    assert code.count("KEY_WORDS") >= 6, "the key rules must read KEY_WORDS"
+    # Behaviour, not string counts (round 4): a quoted value with a separator is masked under every spelling of the list
+    # on every path (the test above), and a second hand-written list is found by the scan of
+    # `tests/test_q8b_batch2.py::test_no_file_of_the_redaction_code_keeps_its_own_list_of_credential_keys`.
 
 
 # ---- Issue 3: the record-walk key rule, measured --------------------------------------------------------------------------
@@ -168,14 +167,13 @@ def test_i3_the_card_masks_exactly_the_named_cost_among_benign_keys():
     assert masked == sorted(CARD_COST), f"the benign over-mask set of the card changed: {masked}"
 
 
-def test_i3_a_pass_auth_or_session_key_with_an_unlisted_word_in_front_is_the_named_limit():
-    on_walk = [k for k in UNLISTED_PREFIX if R.sensitive(k)]
-    on_card = [k for k in UNLISTED_PREFIX if VALUE not in clean(f"{k}={VALUE}")]
-    assert on_walk == [], f"the limit shrank: update LIMITS and D-032: {on_walk}"
-    assert on_card == UNLISTED_PREFIX, "the card path must still mask these as text"
-    assert "unlisted" in R.LIMITS.lower(), (
-        "LIMITS must name the unlisted word in front of a glued key"
-    )
+def test_i3_a_pass_auth_or_session_key_with_a_word_in_front_is_masked_on_every_path():
+    """Round 4 (D2): an allow-list of words in front of `pass` failed open; no word in front keeps a key readable."""
+    on_walk = [k for k in UNLISTED_PREFIX if not R.sensitive(k)]
+    on_card = [k for k in UNLISTED_PREFIX if VALUE in clean(f"{k}={VALUE}")]
+    assert on_walk == [], f"a record key was left readable: {on_walk}"
+    assert on_card == [], f"a card key was left readable: {on_card}"
+    assert "ordinary" in R.LIMITS.lower(), "LIMITS must name the short list of ordinary words"
 
 
 def test_i3_the_six_keys_of_the_review_are_masked_in_a_record():
@@ -236,7 +234,10 @@ def test_i6_an_escaped_placeholder_is_not_read_as_a_token():
     out = log_text("Authorization: Bearer bob.smith@example.com tail")
     again = log_text(out)
     assert again.replace("‹", "<").replace("›", ">") == out.replace("‹", "<").replace("›", ">")
-    assert re.search(r"<SECRET_\d+>", again) is None or "EMAIL" not in out
+    shape = r"<SECRET_\d+>"
+    assert len(re.findall(shape, again)) == len(re.findall(shape, out)), (
+        f"the second pass made another secret placeholder: {out!r} then {again!r}"
+    )
 
 
 # ---- Issue 7: where an unquoted value ends --------------------------------------------------------------------------------

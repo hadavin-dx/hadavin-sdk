@@ -158,3 +158,68 @@ def slack_notice(text: str) -> str:
     ch._call = lambda method, body: posted.append(body) or {}  # type: ignore[method-assign]
     ch.notify("U0000000", text)
     return posted[0]["text"]
+
+
+# ---- every path a credential key can take (round 4) ---------------------------------------------------------------------
+
+P1, P2, P3 = "Zq7" + "xV", "Kp9" + "wT", "Hn4" + "bL"  # made-up pieces of a value, built from parts
+VALUE_STYLES = {  # style -> (the text after the sign, the raw value written under the key in a record)
+    "dq": (f'"{P1};{P2} {P3}"', f"{P1};{P2} {P3}"),
+    "sq": (f"'{P1} {P2} {P3}'", f"{P1} {P2} {P3}"),
+    "semicolon": (f"{P1};{P2}{P3}", f"{P1};{P2}{P3}"),
+    "plain": (f"{P1}{P2}{P3}", f"{P1}{P2}{P3}"),
+}
+
+
+def _case_bundle(**records):
+    from datetime import UTC, datetime
+
+    from hadavin_sdk.k1b.bundle import Bundle
+
+    base = {
+        "case_id": "case-q8b",
+        "alert_time": datetime(2026, 1, 1, 10, tzinfo=UTC),
+        "alert_time_text": "2026-01-01T10:00:00Z",
+        "alert": {},
+        "metrics": (),
+        "logs": (),
+        "deploys": (),
+        "k8s": (),
+        "runbooks": (),
+        "ids": frozenset(),
+        "manifest_sha256": "0" * 64,
+    }
+    base.update(records)
+    return Bundle(**base)
+
+
+def path_outputs(key: str, style: str) -> dict[str, str]:
+    """What the four paths show for `key` with a value of `style`: the card (`key=v` and `key: v`), a tool result (as
+    text and as JSON), a log record of a case bundle, and a record key of a case bundle (nested too)."""
+    import json
+
+    from hadavin_sdk.approvals.channel import clean
+    from hadavin_sdk.k1b.redaction import redact_bundle
+    from hadavin_sdk.tools import redact_layered
+
+    text, raw = VALUE_STYLES[style]
+    logs = (
+        (
+            "app.log",
+            ({"ts": "2026-01-01T09:00:00Z", "msg": f"{key}={text} end"},),
+        ),
+    )
+    out = redact_bundle(_case_bundle(logs=logs))[0]
+    rec = redact_bundle(_case_bundle(deploys=({key: raw, "n": {key: raw}},), alert={key: [raw]}))[0]
+    return {
+        "card": clean(f"set {key}={text} now") + "\n" + clean(f"{key}: {text}"),
+        "tool": redact_layered(f"{key}={text} tail", {})
+        + "\n"
+        + redact_layered(json.dumps({key: raw}), {}),
+        "log": json.dumps(out.logs, default=str, ensure_ascii=False),
+        "walk": json.dumps(rec.deploys, default=str) + json.dumps(rec.alert, default=str),
+    }
+
+
+def readable_pieces(out: str) -> list[str]:
+    return [p for p in (P1, P2, P3) if p in out]

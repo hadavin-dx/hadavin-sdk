@@ -1531,6 +1531,41 @@ def test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused(tmp_pa
 
 
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin
+def _extra_file_seen(tmp_path, monkeypatch):
+    """Run the baseline of a tiny tree with ``extra_files=("NOTE.md",)`` and report, at the moment the baseline tests would run,
+    whether the file is in the snapshot (the copy of the tree made once) and in the temp tree the tests run in."""
+    root = _pk_tree(tmp_path, "def test_a():\n    assert True\n")
+    (root / "NOTE.md").write_text("one\n", encoding="utf-8")
+    seen = {}
+
+    def fake_pytest(cwd, operands, junit, timeout):
+        cwd = Path(cwd)
+        snap = cwd.with_name(cwd.name + "_snap")
+        seen["snapshot"] = (snap / "NOTE.md").is_file() and (snap / "NOTE.md").read_text(
+            encoding="utf-8"
+        ) == "one\n"
+        seen["temp tree"] = (cwd / "NOTE.md").is_file() and (cwd / "NOTE.md").read_text(
+            encoding="utf-8"
+        ) == "one\n"
+        return 0
+
+    monkeypatch.setattr(mr, "_pytest", fake_pytest)
+    assert (
+        run_mutants(root, [], ["tests/test_core.py"], extra_dirs=(), extra_files=("NOTE.md",)) == []
+    )
+    return seen
+
+
+def test_an_extra_file_is_copied_into_the_snapshot(tmp_path, monkeypatch):
+    assert _extra_file_seen(tmp_path, monkeypatch)["snapshot"], "the snapshot lacks the extra file"
+
+
+def test_an_extra_file_is_copied_into_the_temp_tree_the_tests_run_in(tmp_path, monkeypatch):
+    assert _extra_file_seen(tmp_path, monkeypatch)["temp tree"], (
+        "the temp tree lacks the extra file"
+    )
+
+
 def test_the_manifest_pins_the_files_a_demo_copies():
     root = Path(__file__).resolve().parents[1]
     manifest = json.loads((FIX / "mutation_manifest.json").read_text(encoding="utf-8"))

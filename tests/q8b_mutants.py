@@ -32,6 +32,7 @@ GLUED_TESTS = "test_q8b_glued_and_whole_values.py"
 SLACK = "approvals/slack_channel.py"
 BATCH = "test_q8b_batch2.py"
 BATCH3 = "test_q8b_batch3.py"
+BATCH4 = "test_q8b_batch4.py"
 # What the mutation copy holds besides src: a test reads CHANGELOG.md from the repo root (tests/test_q8b_batch3.py checks this list).
 EXTRA_DIRS = ("tests", "tools", "demos", "docs")
 EXTRA_FILES = ("CHANGELOG.md",)
@@ -196,26 +197,57 @@ M = [
         BATCH3, 'test_i4_the_tag_stripped_view_starts_from_the_first_views_masks', 'readable in the returned text'),
     mutant('M53 decoded value keeps the seed mark', RUNMAP, '        original = original.replace("\\0seed", "")\n', '',
         BATCH3, 'test_i4_a_decoded_value_that_holds_a_shown_placeholder_is_one_masked_value', 'stayed readable'),
-    mutant('M54 double-quote rule has its own key list', REDACT, '(?:" + KEY_WORDS + r")"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\\"([^\\"]', '(?:password|token)"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\\"([^\\"]',
-        BATCH3, 'test_i2_every_key_spelling_masks_a_quoted_value_with_a_separator', 'stayed readable'),
-    mutant('M55 single-quote rule has its own key list', REDACT, '(?:" + KEY_WORDS + r")"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\'([^\']', '(?:password|token)"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\'([^\']',
-        BATCH3, 'test_i2_every_key_spelling_masks_a_quoted_value_with_a_separator', 'stayed readable'),
+    mutant('M54 double-quote rule has its own key list', REDACT, '(?:" + QUOTED_KEY_WORDS + r")"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\\"([^\\"]', '(?:password|token)"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\\"([^\\"]',
+        BATCH4, 'test_j1_a_key_the_older_rule_masked_only_by_a_bare_prefix_is_still_masked', 'a bare prefix key stayed readable'),
+    mutant('M55 single-quote rule has its own key list', REDACT, '(?:" + QUOTED_KEY_WORDS + r")"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\'([^\']', '(?:password|token)"\n            r"[\\w.\\-]{0,20}[\\"\']?\\s*[:=]\\s*\'([^\']',
+        BATCH4, 'test_j1_a_key_the_older_rule_masked_only_by_a_bare_prefix_is_still_masked', 'a bare prefix key stayed readable'),
     mutant('M56 tool phrase not recognised', REDACT, '(_says_no_value(original) or _SAYS_NONE.fullmatch(original))', '(_SAYS_NONE.fullmatch(original))',
         BATCH3, 'test_i1_a_tool_phrase_after_a_key_is_kept_on_every_path', 'a tool phrase was masked'),
     mutant('M57 one known word makes a phrase a tool phrase', REDACT, 'return all(w in _NOT_A_VALUE or w in _PROSE_WORDS for w in words)', 'return any(w in _NOT_A_VALUE or w in _PROSE_WORDS for w in words)',
         BATCH3, 'test_i1_one_unknown_word_makes_the_phrase_a_value', 'stayed readable'),
-    mutant('M58 listed prefixes dropped', RED, '            or w.endswith(PREFIXED_ENDINGS)\n', '',
-        BATCH3, 'test_i3_every_credential_key_is_masked_on_the_walk_card_and_log_paths', 'left readable in a record'),
     mutant('M59 qualifier must be the whole word', RED, 'before.endswith(KEY_QUALIFIERS)', 'before in KEY_QUALIFIERS',
         BATCH3, 'test_i3_every_credential_key_is_masked_on_the_walk_card_and_log_paths', 'left readable in a record'),
-    mutant('M60 bare pass ending added', RED, 'PREFIXED_ENDINGS = tuple(p + e for p in GLUED_PREFIXES for e in ("pass", "auth", "session"))', 'PREFIXED_ENDINGS = ("pass", "auth", "session")',
-        BATCH3, 'test_i3_the_walk_masks_exactly_the_named_cost_among_benign_keys', 'benign false-mask set changed'),
     mutant('M61 shown placeholder read as a token', REDACT, 'if _SHOWN_PLACEHOLDER.search(original) and not re.search(', 'if False and not re.search(',
         BATCH3, 'test_i6_a_second_pass_changes_nothing_but_the_escape_of_shown_placeholders', 'changed the output'),
     mutant('M62 single-letter flag does not stop a value', REDACT, '|-[A-Za-z](?![A-Za-z0-9])', '',
         BATCH3, 'test_i7_a_flag_or_a_key_ends_the_value', 'expected'),
     mutant('M63 a time counts as a key', REDACT, '_KEY_STOP = r"[A-Za-z_][\\w.\\-]*[', '_KEY_STOP = r"[\\w.\\-]+[',
         BATCH3, 'test_i7_later_words_of_a_value_are_masked_with_it', 'stayed readable'),
+    mutant('M58 bare ending rule dropped', RED, r'''            or (w.endswith(BARE_ENDINGS) and w not in ORDINARY_WORDS)
+''', '',
+        BATCH4, 'test_j2_a_key_with_any_word_in_front_is_masked_in_a_record_and_as_text', 'is shown as written in a record'),
+    mutant('M60 ordinary words ignored', RED, 'or (w.endswith(BARE_ENDINGS) and w not in ORDINARY_WORDS)', 'or (w.endswith(BARE_ENDINGS))',
+        BATCH4, 'test_j2_ordinary_words_stay_readable_in_a_record', 'an ordinary word is taken for a credential key'),
+    mutant('M64 quoted rules lose the bare prefixes', REDACT, 'QUOTED_KEY_WORDS = KEY_WORDS + "|pass|session|authorization"', 'QUOTED_KEY_WORDS = KEY_WORDS',
+        BATCH4, 'test_j1_a_key_the_older_rule_masked_only_by_a_bare_prefix_is_still_masked', 'a bare prefix key stayed readable'),
+    mutant('M65 a new key is dropped from the one list', REDACT, 'r"pass[_\\-]?code", ', '',
+        BATCH4, 'test_j1_the_d1_keys_are_masked_in_every_style_on_every_path', 'stayed readable'),
+    mutant('M66 allow-list of words in front is back', RED, 'or (w.endswith(BARE_ENDINGS) and w not in ORDINARY_WORDS)',
+        'or (w.endswith(BARE_ENDINGS) and w[:-4] in ("db", "user", "admin", "root", "api", "mysql"))',
+        BATCH4, 'test_j2_a_key_with_any_word_in_front_is_masked_in_a_record_and_as_text', 'is shown as written in a record'),
+    mutant('M67 the key list is not read by the key rule', REDACT, r'''            r"(?i)(?:" + QUOTED_KEY_WORDS + r")"
+            r"[\w.\-]{0,20}[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""''', r'''            r"(?i)(?:password|token)"
+            r"[\w.\-]{0,20}[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""''',
+        BATCH4, 'test_j1_every_credential_of_the_corpus_is_masked_in_every_style_on_every_path', 'left a value readable'),
+    mutant('M68 card second view only for the five assignment kinds', CHANNEL, 'and m.group(1) in runmap.SECRET_KINDS',
+        'and m.group(1) in {"SECRET", "APIKEY", "BEARER", "BASIC", "URLCRED"}',
+        BATCH4, 'test_j5_a_secret_split_by_a_tag_is_masked_on_a_card', 'a secret split by a tag is readable'),
+    mutant('M69 a semicolon always ends an unquoted value', REDACT, r'''|,(?!\s*[\w.\-]+\s*[:=])|;(?=[^\s\"';,&])(?![\w.\-]+[\"']?\s*[:=]))"''', r'''|,(?!\s*[\w.\-]+\s*[:=]))"''',
+        BATCH4, 'test_j3_a_semicolon_in_front_of_a_word_belongs_to_an_unquoted_value', 'readable'),
+    mutant('M70 a semicolon in front of a key does not end the value', REDACT, r'''|;(?=[^\s\"';,&])(?![\w.\-]+[\"']?\s*[:=]))"''', r'''|;(?=[^\s\"';,&]))"''',
+        BATCH4, 'test_j3_a_semicolon_in_front_of_a_key_a_space_or_the_end_stops_the_value', 'expected'),
+    mutant('M71 flag prefix joined by hyphens only', REDACT, r'''FLAG_NAME = r"(?:[a-z0-9]+[_\-]){0,2}(?:" + FLAG_WORDS + ")"''', r'''FLAG_NAME = r"(?:[a-z0-9]+\-){0,2}(?:" + FLAG_WORDS + ")"''',
+        BATCH4, 'test_j4_a_flag_with_an_underscore_or_a_hyphen_masks_its_value', 'a flag value is readable'),
+    mutant('M72 flag words are a hand list', REDACT, r'''    [a for a in KEY_ALTERNATIVES if "(?=" not in a] + ["pass", r"secret[_\-]?key"]''',
+        r'''    [r"password", r"passwd", r"pwd", r"secret", r"token", r"api[_\-]?key", "pass"]''',
+        BATCH4, 'test_j4_every_spelling_of_the_key_list_is_a_flag', 'a flag of the key list is not masked'),
+    mutant('M73 cookie rule takes a session cookie key', REDACT, '_COOKIE_ASSIGN_KEY = r"(?i)(?<!session[_\\-])" + _COOKIE_KEY_BODY', '_COOKIE_ASSIGN_KEY = r"(?i)" + _COOKIE_KEY_BODY',
+        BATCH4, 'test_j1_a_cookie_key_with_a_session_word_in_front_masks_a_value_with_spaces', 'a word of the cookie value is readable'),
+    mutant('M74 link scheme read inside a word', GATE, r'''(?<![\w+.\-])(?:https?|mailto|data|''', r'''\b(?:https?|mailto|data|''',
+        BATCH4, 'test_j1_a_credential_key_ending_in_a_link_scheme_word_keeps_its_value_masked_after_a_colon', 'a key ending in a link scheme word'),
+    mutant('M75 new walk endings dropped', RED, r'''    "passcode", "passkey", "passvalue", "sessionkey", "sessioncookie", "sessionvalue", "authvalue", "bearervalue",
+''', '',
+        BATCH4, 'test_j1_the_d1_keys_are_masked_in_every_style_on_every_path', 'stayed readable'),
 ]  # fmt: skip
 
 
@@ -245,6 +277,7 @@ if __name__ == "__main__":
             "tests/" + GLUED_TESTS,
             "tests/" + BATCH,
             "tests/" + BATCH3,
+            "tests/" + BATCH4,
         ],
         extra_dirs=EXTRA_DIRS,
         extra_files=EXTRA_FILES,

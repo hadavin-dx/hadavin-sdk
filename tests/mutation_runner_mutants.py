@@ -303,6 +303,12 @@ M = [
         "                shutil.rmtree(ini_dir, ignore_errors=True)", "                pass",
         "test_the_pytest_run_writes_no_file_into_its_working_folder_and_leaves_no_temp_folder",
         "was left behind"),
+    mutant("runner: an extra file is not copied into the snapshot", MR,
+        "            if _inside(root, f).is_file():", "            if False:",
+        "test_an_extra_file_is_copied_into_the_snapshot", "the snapshot lacks the extra file"),
+    mutant("runner: an extra file is not copied into the temp tree", MR,
+        "            if _inside(snap, f).is_file():", "            if False:",
+        "test_an_extra_file_is_copied_into_the_temp_tree_the_tests_run_in", "the temp tree lacks the extra file"),
 ]  # fmt: skip
 
 

@@ -35,13 +35,8 @@ from typing import Any
 # already and left alone; one that holds a placeholder AND more (`password=<UUID_1>.more`) is masked whole and
 # stored restored, so restore() gives it back in one step. Value classes used to stop at `<` instead, and left
 # whatever followed a placeholder in clear (eighth review, 2026-10-01).
-# A credential command-line flag: any name with `--`; with a single `-` only password/passwd, since
-# `-token` or `-secret` is as often a word in a message as a flag.
-_CRED_FLAG = (
-    r"(?i)(?<![\w-])(?:--(?:[a-z0-9]+-){0,2}"
-    r"(?:password|passwd|pass|pwd|secret|token|api-?key|access-key|secret-key|private-key|"
-    r"auth-token|access-token)|-(?:password|passwd))(?![\w-])"
-)
+# A credential command-line flag (`_CRED_FLAG`, defined after the key list below, which it reads): any name with `--`; with
+# a single `-` only password/passwd, since `-token` or `-secret` is as often a word in a message as a flag.
 # Space between a flag and its value: a no-break space (and the other Unicode spaces) as well.
 _SP = "[ \t\u00a0\u2000-\u200a\u202f\u205f\u3000]"
 
@@ -114,7 +109,12 @@ def _bank_context(m: re.Match[str]) -> bool:
 
 
 # A key that names a cookie: `Cookie`, `Set-Cookie`, `X-Auth-Cookie`, `HTTP_COOKIE`, `"http_cookie"`, `cookies`.
-_COOKIE_KEY = r"(?i)(?<![A-Za-z])(?:set-)?cookies?[\"'\]]*\s*"
+_COOKIE_KEY_BODY = r"(?<![A-Za-z])(?:set-)?cookies?[\"'\]]*\s*"
+_COOKIE_KEY = r"(?i)" + _COOKIE_KEY_BODY
+# `session_cookie=` names a session credential whose WHOLE value is secret (it is in the key list below): the cookie
+# assignment rule takes one word, or `;`-joined `name=value` pairs, and ran first, so `session_cookie=a b c` left `b c`
+# readable and the key rule then saw a placeholder in front of them (round 4). The key rule masks that one.
+_COOKIE_ASSIGN_KEY = r"(?i)(?<!session[_\-])" + _COOKIE_KEY_BODY
 # API key prefixes, one per vendor shape, tried in this order (regex fragments). A new shape is one more entry.
 _KEY_PREFIXES = (
     r"sk-ant-",
@@ -156,10 +156,29 @@ KEY_ALTERNATIVES = (
     r"session[_\-]?id", r"jsessionid", r"phpsessid", r"sessid", r"connect\.sid", r"client[_\-]?secret",
     r"credential", r"token", r"signing[_\-]?key", r"encryption[_\-]?key", r"pass(?=[\"']?\s*[:=])",
     r"auth(?=[\"']?\s*[:=])", r"session(?=[\"']?\s*[:=])", r"bearer(?=[\"']?\s*[:=])",
+    # Round 4 (D1): the keys the older rule masked by its bare `pass` and `session` prefixes, written out so that the
+    # unquoted rule and every other reader of this list masks them too, and the `_value` forms of the four bare words.
+    r"pass[_\-]?code", r"pass[_\-]?key", r"pass[_\-]?value", r"session[_\-]?key", r"session[_\-]?cookie",
+    r"session[_\-]?value", r"auth[_\-]?value", r"bearer[_\-]?value",
 )  # fmt: skip
 # The same list as ONE regex fragment: the generic key rule and both quoted-value rules are built from it (a hand-kept copy
 # in the quoted rules left `access_key="abc;def ghi"` half readable).
 KEY_WORDS = "|".join(KEY_ALTERNATIVES)
+# The words that start a key in front of a QUOTED value (`session_cookie="a b"`, `passcode="hunter 2"`): everything of
+# `KEY_WORDS`, and the bare words `pass` and `session` followed by up to 20 key characters (the older rule's two prefixes:
+# the list above is a superset of the keys the older rule masked, pinned by `tests/test_q8b_batch4.py` against that rule).
+# Written once; both quoted-value rules read this one name. (`auth` and `bearer` are not bare prefixes: `author="Priya"`. `authorization` is: a quoted value with spaces after it was half readable.)
+QUOTED_KEY_WORDS = KEY_WORDS + "|pass|session|authorization"
+# The flag rules read the same list (round 4, `--client_secret hunter22` and `--api_key hunter22` were not matched by a hand
+# list of hyphen spellings): every spelling of it that stands alone, plus two flag names that are no key (`--pass`,
+# `--secret-key`); a word may be glued to its neighbours with `-` or `_` (`--db_password`, `--x-api-key`). The look-ahead
+# entries (`pass` only before `=` or `:`) are for text, not for a flag name. EXACT names: `--secret-name`, `--token-file`
+# and `--token-ttl` are not credentials, and the `(?![\w-])` that ends the flag keeps them out.
+FLAG_WORDS = "|".join(
+    [a for a in KEY_ALTERNATIVES if "(?=" not in a] + ["pass", r"secret[_\-]?key"]
+)
+FLAG_NAME = r"(?:[a-z0-9]+[_\-]){0,2}(?:" + FLAG_WORDS + ")"
+_CRED_FLAG = r"(?i)(?<![\w-])(?:--" + FLAG_NAME + r"|-(?:password|passwd))(?![\w-])"
 # How far the ARN rule looks ahead for a key it must not swallow. The generic key rule has no prefix bound (it starts at
 # the key word), so any distance works for the guard; one named number keeps the look-ahead short.
 KEY_PREFIX_MAX = 40
@@ -201,19 +220,25 @@ _GUARDED_DOMAIN = (
     + "))"
 )
 # What a value is: one character of it (a numeric HTML entity is ONE character, not the `&` of a query separator; a comma
-# that does not begin a new `key=value` pair belongs to the value), and the words that follow it after spaces or tabs.
-# An unquoted value that holds spaces (`password=correct horse battery staple`) is masked whole. The words go on until the
-# end of the line or one of these stops, and the stop itself stays readable:
+# or a `;` that does not begin a new `key=value` pair belongs to the value), and the words that follow it after spaces or
+# tabs. An unquoted value that holds spaces (`password=correct horse battery staple`) is masked whole. The words go on
+# until the end of the line or one of these stops, and the stop itself stays readable:
 #   - a flag: `--` and a letter (`--force`, `--target`), or `-` and ONE letter (`-f`, `-y`);
 #   - the next key: a word that starts with a letter or `_` and ends in `:` or `=` (`user=bob`, `port:`, `http://`);
-#   - a quote, `;`, `,` (when a new `key=value` follows) or `&`.
+#   - a quote or `&`; a `,` or `;` that is followed by a space, by the end of the text, by another `,` or `;`, or by a
+#     new `key=` (`Password=ab;Server=x` keeps `;Server=x`; `cookie=ab; path=/` keeps `; path=/`).
 # So `--force --target prod` after a value is kept, and a word with a dash or a colon INSIDE a value is part of it:
 # `password=correct -horse battery staple` (a dash and several letters is no flag: it may be a word of a passphrase, and a
 # leaked passphrase word is worse than a lost option) and `password=correct 12:30 horse` (a word that starts with a digit
-# is no key) are masked whole. Cost, named: a short option with its value glued on (`-uroot`, `-p3306`) and prose right
-# after an unquoted credential value on the same line (`token=abc12345 failed for bob`, `token=<A> on the primary`) are
-# masked with it. Pinned by tests and written in `CHANGELOG.md`.
-_VALUE_CHAR = r"(?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|[^\s\"';,&]|,(?!\s*[\w.\-]+\s*[:=]))"
+# is no key) are masked whole. A `;` directly in front of a word that is no key belongs to the value
+# (`password=ab;cd` is masked whole: the part after the `;` is a password too). Cost, named: a short option with its value
+# glued on (`-uroot`, `-p3306`), prose right after an unquoted credential value on the same line
+# (`token=abc12345 failed for bob`, `token=<SECRET_1> on the primary`) and a word glued behind a `;`
+# (`sessionid=abc;Secure`) are masked with it. Pinned by tests and written in `CHANGELOG.md`.
+_VALUE_CHAR = (
+    r"(?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|[^\s\"';,&]"
+    r"|,(?!\s*[\w.\-]+\s*[:=])|;(?=[^\s\"';,&])(?![\w.\-]+[\"']?\s*[:=]))"
+)
 _FLAG_STOP = (
     r"--[A-Za-z]|-[A-Za-z](?![A-Za-z0-9])"  # `--force`, or one letter such as `-f` (not `-horse`)
 )
@@ -623,7 +648,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ),
     (
         "SECRET",
-        re.compile(_COOKIE_KEY + r"(?:=>|=(?!>))\s*+([^\s;,\"'\[{]+(?:;\s*[^\s;=]+=[^\s;]*)*)"),
+        re.compile(
+            _COOKIE_ASSIGN_KEY + r"(?:=>|=(?!>))\s*+([^\s;,\"'\[{]+(?:;\s*[^\s;=]+=[^\s;]*)*)"
+        ),
     ),
     # A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie jar's repr.
     (
@@ -662,10 +689,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ),
     (
         "SECRET",
-        re.compile(
-            r"(?i)\"--?(?:[a-z0-9]+-){0,2}(?:password|passwd|pass|pwd|api-?key|apikey|token|secret)"
-            r"\"\s*,\s*\"([^\"]{1,256})\""
-        ),
+        re.compile(r"(?i)\"--?" + FLAG_NAME + r"\"\s*,\s*\"([^\"]{1,256})\""),
     ),
     # Client tools whose short flag carries the password (same line only).
     ("SECRET", re.compile(r"\bredis-cli\b[^\r\n]{0,1024}?[ \t]-a[ \t]+([^\s\"']{3,})")),
@@ -697,14 +721,14 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "SECRET",
         re.compile(
-            r"(?i)(?:" + KEY_WORDS + r")"
+            r"(?i)(?:" + QUOTED_KEY_WORDS + r")"
             r"[\w.\-]{0,20}[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""
         ),
     ),
     (
         "SECRET",
         re.compile(
-            r"(?i)(?:" + KEY_WORDS + r")"
+            r"(?i)(?:" + QUOTED_KEY_WORDS + r")"
             r"[\w.\-]{0,20}[\"']?\s*[:=]\s*'([^'][^']{0,255})'"
         ),
     ),
