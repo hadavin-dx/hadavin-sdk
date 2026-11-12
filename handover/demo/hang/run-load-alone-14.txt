@@ -1,0 +1,10 @@
+# uptime before:  20:02:52 up  1:12,  0 user,  load average: 2.75, 1.56, 1.05
+..........................................                               [100%]
+============================= slowest 5 durations ==============================
+1.54s call     tests/test_hung_adapter_calls.py::test_stop_waits_only_its_timeout
+1.11s call     tests/test_hung_adapter_calls.py::test_reaper_survives_hung_send
+1.07s call     tests/test_hung_adapter_calls.py::test_reaper_survives_hung_crm_put
+1.05s call     tests/test_hung_adapter_calls.py::test_full_send_cap_gives_back
+1.04s call     tests/test_hung_adapter_calls.py::test_full_cap_logs_once
+42 passed in 13.09s
+# exit=0 seconds=13.413693676 uptime after:  20:03:05 up  1:12,  0 user,  load average: 2.58, 1.58, 1.06

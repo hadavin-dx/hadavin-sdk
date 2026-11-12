@@ -1,0 +1,40 @@
+--- dmesg oom grep
+(none above = no oom lines)
+--- v1 files
+== /sys/fs/cgroup/memory/memory.limit_in_bytes
+9223372036854771712
+== /sys/fs/cgroup/memory/memory.usage_in_bytes
+4727050240
+== /sys/fs/cgroup/memory/memory.max_usage_in_bytes
+5307736064
+== /sys/fs/cgroup/memory/memory.oom_control
+oom_kill_disable 0
+under_oom 0
+oom_kill 0
+== /sys/fs/cgroup/memory/memory.failcnt
+0
+== /sys/fs/cgroup/memory/process_api/memory.limit_in_bytes
+9223372036854771712
+== /sys/fs/cgroup/memory/process_api/memory.usage_in_bytes
+4968529920
+== /sys/fs/cgroup/memory/process_api/memory.max_usage_in_bytes
+5306789888
+== /sys/fs/cgroup/memory/process_api/memory.oom_control
+oom_kill_disable 0
+under_oom 0
+oom_kill 0
+== /sys/fs/cgroup/memory/process_api/memory.failcnt
+0
+--- ps
+  PID  PPID   RSS ELAPSED COMMAND
+  101    93 439932   4219 /opt/claude-code/bin/claude --preload /home/claude/.claude/remote/spare.sock
+ 5362  5361 162764    607 python -m pytest -q -rs --cov --cov-report=xml:coverage.xml
+   93    90 46376    4219 /usr/local/bin/environment-manager task-run --stdin --session cse_014pRo36uYfYwuEDby9epxu8 --session-mode resume --upgrade-claude-code=False
+ 4009  4008 43024       9 python -X faulthandler -m pytest -p no:randomly -o faulthandler_timeout=120 -q --durations=5 tests/test_hung_adapter_calls.py
+23626  5362 12432     243 /tmp/work/cov-tree/.venv-cov/bin/python -c from multiprocessing.resource_tracker import main;main(20)
+    1     0  7552    4220 /process_api --firecracker-init --addr 0.0.0.0:2024 --max-ws-buffer-size 32768 --block-local-connections --log-vsock-port 5002 --control-vsock-port 5001 --listen-vsock-port 2024 --tcp-readiness-only
+ 4350  4333  4132       0 ps -eo pid,ppid,rss,etimes,args --sort=-rss
+30869   101  3440      90 /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-1794509432161-mtow3q.sh 2>/dev/null || true && \builtin export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OPTIONS}" && shopt -u extglob 2>/dev/null || true && { \builtin unalias -- 'which'; \builtin unset -f -- 'which'; } >/dev/null 2>&1 || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'cd /tmp/work && ./scripts/batch.sh nl-alone alone 3 0 && ./scripts/batch.sh load-alone alone 30 2' < /dev/null && pwd -P >| /tmp/claude-cf2a-cwd
+ 3062   101  3432      38 /bin/bash -c { \builtin typeset +x '__CLAUDE_CC_COMMAND_TEXT' 2>/dev/null || \builtin true; } && source /root/.claude/shell-snapshots/snapshot-bash-1794509432161-mtow3q.sh 2>/dev/null || true && \builtin export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OPTIONS}" && shopt -u extglob 2>/dev/null || true && { \builtin unalias -- 'which'; \builtin unset -f -- 'which'; } >/dev/null 2>&1 || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && { \builtin [ -n "${__CLAUDE_CC_COMMAND_TEXT:+1}" ] || { \builtin echo '__CLAUDE_CC_COMMAND_TEXT?' >&2; \builtin exit 126; }; } && 'eval' "\builtin 'unset' -v '__CLAUDE_CC_COMMAND_TEXT'; 'eval' $__CLAUDE_CC_COMMAND_TEXT" && pwd -P >| /tmp/claude-5dc1-cwd
+10171   101  3408     495 /bin/bash -c { \builtin typeset +x '__CLAUDE_CC_COMMAND_TEXT' 2>/dev/null || \builtin true; } && source /root/.claude/shell-snapshots/snapshot-bash-1794509432161-mtow3q.sh 2>/dev/null || true && \builtin export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OPTIONS}" && shopt -u extglob 2>/dev/null || true && { \builtin unalias -- 'which'; \builtin unset -f -- 'which'; } >/dev/null 2>&1 || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && { \builtin [ -n "${__CLAUDE_CC_COMMAND_TEXT:+1}" ] || { \builtin echo '__CLAUDE_CC_COMMAND_TEXT?' >&2; \builtin exit 126; }; } && 'eval' "\builtin 'unset' -v '__CLAUDE_CC_COMMAND_TEXT'; 'eval' $__CLAUDE_CC_COMMAND_TEXT" && pwd -P >| /tmp/claude-4d74-cwd
+27076   101  3408     166 /bin/bash -c { \builtin typeset +x '__CLAUDE_CC_COMMAND_TEXT' 2>/dev/null || \builtin true; } && source /root/.claude/shell-snapshots/snapshot-bash-1794509432161-mtow3q.sh 2>/dev/null || true && \builtin export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OPTIONS}" && shopt -u extglob 2>/dev/null || true && { \builtin unalias -- 'which'; \builtin unset -f -- 'which'; } >/dev/null 2>&1 || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && { \builtin [ -n "${__CLAUDE_CC_COMMAND_TEXT:+1}" ] || { \builtin echo '__CLAUDE_CC_COMMAND_TEXT?' >&2; \builtin exit 126; }; } && 'eval' "\builtin 'unset' -v '__CLAUDE_CC_COMMAND_TEXT'; 'eval' $__CLAUDE_CC_COMMAND_TEXT" && pwd -P >| /tmp/claude-299a-cwd

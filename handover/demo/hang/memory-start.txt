@@ -1,0 +1,100 @@
+Thu Nov 12 20:00:41 UTC 2026
+--- free -m
+               total        used        free      shared  buff/cache   available
+Mem:           16086         942       11229          16        4229       15143
+Swap:              0           0           0
+--- cgroup
+9:name=systemd:/
+8:pids:/process_api
+7:blkio:/
+6:freezer:/
+5:devices:/
+4:memory:/process_api/01a1d118-cde0-7347-869a-8ce67623eecf/claude-code-bash
+3:cpuset:/
+2:cpuacct:/
+1:cpu:/
+0::/
+== memory.events
+cat: /sys/fs/cgroup/memory.events: No such file or directory
+== memory.max
+cat: /sys/fs/cgroup/memory.max: No such file or directory
+== memory.current
+cat: /sys/fs/cgroup/memory.current: No such file or directory
+== memory.peak
+cat: /sys/fs/cgroup/memory.peak: No such file or directory
+== memory.high
+cat: /sys/fs/cgroup/memory.high: No such file or directory
+== memory.swap.max
+cat: /sys/fs/cgroup/memory.swap.max: No such file or directory
+--- dmesg
+[    0.538582] page_reporting: free-page bitmap set aside: bytes=557064 pfns=4456448 alloc_us=78
+[    0.538585] clk: Disabling unused clocks
+[    0.559338] Freeing initrd memory: 16768K
+[    0.568498] Freeing unused kernel image (initmem) memory: 3728K
+[    0.568509] Write protecting the kernel read-only data: 32768k
+[    0.574538] Freeing unused kernel image (text/rodata gap) memory: 2024K
+[    0.580862] Freeing unused kernel image (rodata/data gap) memory: 2016K
+[    0.580868] Run /process_api as init process
+[    0.580869]   with arguments:
+[    0.580869]     /process_api
+[    0.580870]     --firecracker-init
+[    0.580870]     --addr
+[    0.580870]     0.0.0.0:2024
+[    0.580871]     --max-ws-buffer-size
+[    0.580871]     32768
+[    0.580871]     --block-local-connections
+[    0.580872]     --log-vsock-port
+[    0.580872]     5002
+[    0.580873]     --control-vsock-port
+[    0.580873]     5001
+[    0.580873]     --listen-vsock-port
+[    0.580874]     2024
+[    0.580874]     --tcp-readiness-only
+[    0.580874]   with environment:
+[    0.580875]     HOME=/
+[    0.580875]     TERM=linux
+[    0.644652] page_reporting_drain_all: err=0
+[    0.644655] process_api (1): drop_caches: 10
+[    1.219132] virtio_blk virtio6: [vdf] new size: 11944 512-byte logical blocks (6.12 MB/5.83 MiB)
+[    1.219132] virtio_blk virtio3: [vdc] new size: 733960 512-byte logical blocks (376 MB/358 MiB)
+[    1.219175] vdc: detected capacity change from 536870912 to 733960
+[    1.219176] vdf: detected capacity change from 536870912 to 11944
+[    1.219185] virtio_blk virtio4: [vdd] new size: 101376 512-byte logical blocks (51.9 MB/49.5 MiB)
+[    1.219189] vdd: detected capacity change from 536870912 to 101376
+[    1.219264] virtio_blk virtio2: [vdb] new size: 19320 512-byte logical blocks (9.89 MB/9.43 MiB)
+[    1.219265] vdb: detected capacity change from 536870912 to 19320
+[    1.219311] virtio_blk virtio5: [vde] new size: 1464 512-byte logical blocks (750 kB/732 KiB)
+[    1.219317] vde: detected capacity change from 536870912 to 1464
+[    1.219389] virtio_blk virtio1: [vda] new size: 536870912 512-byte logical blocks (275 GB/256 GiB)
+[    1.219775] random: crng reseeded due to virtual machine fork
+[    1.221893] tokio-rt-worker (81): drop_caches: 3
+[    1.224412] EXT4-fs (vda): warning: mounting unchecked fs, running e2fsck is recommended
+[    1.225457] EXT4-fs (vda): mounted filesystem 29be7b76-405b-446c-aa62-c853b3975805 r/w without journal. Quota mode: none.
+[    1.230466] EXT4-fs (vdc): mounted filesystem 00000000-0000-4000-8000-000000000000 ro without journal. Quota mode: none.
+[    1.230967] EXT4-fs (vdd): mounted filesystem 00000000-0000-4000-8000-000000000000 ro without journal. Quota mode: none.
+[  166.247750] idle-reclaim (85): drop_caches: 1
+[  740.554034] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:41867. Sending cookies.
+[  852.010054] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:32851. Sending cookies.
+[ 2051.693994] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:34351. Sending cookies.
+[ 3755.657994] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:36811. Sending cookies.
+--- ps by rss
+  PID  PPID   RSS ELAPSED COMMAND
+  101    93 439120   4215 /opt/claude-code/bin/claude --preload /home/claude/.claude/remote/spare.sock
+ 5362  5361 162672    603 python -m pytest -q -rs --cov --cov-report=xml:coverage.xml
+   93    90 46376    4215 /usr/local/bin/environment-manager task-run --stdin --session cse_014pRo36uYfYwuEDby9epxu8 --session-mode resume --upgrade-claude-code=False
+ 4009  4008 42920       6 python -X faulthandler -m pytest -p no:randomly -o faulthandler_timeout=120 -q --durations=5 tests/test_hung_adapter_calls.py
+23626  5362 12432     240 /tmp/work/cov-tree/.venv-cov/bin/python -c from multiprocessing.resource_tracker import main;main(20)
+ 4192  4191  8796       0 /usr/lib/git-core/git-remote-https origin https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n.git
+    1     0  7552    4216 /process_api --firecracker-init --addr 0.0.0.0:2024 --max-ws-buffer-size 32768 --block-local-connections --log-vsock-port 5002 --control-vsock-port 5001 --listen-vsock-port 2024 --tcp-readiness-only
+ 4182  4176  4512       0 git clone -q https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n.git /tmp/work/fix-tree2
+ 4195  4179  4160       0 ps -eo pid,ppid,rss,etimes,args --sort=-rss
+ 4191  4182  3648       0 /usr/lib/git-core/git remote-https origin https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n.git
+ 4176   101  3444       0 /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-1794509432161-mtow3q.sh 2>/dev/null || true && \builtin export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OPTIONS}" && shopt -u extglob 2>/dev/null || true && { \builtin unalias -- 'which'; \builtin unset -f -- 'which'; } >/dev/null 2>&1 || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'rm -rf /tmp/work/fix-tree2; mkdir -p /tmp/work && git clone -q https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n.git /tmp/work/fix-tree2 && cd /tmp/work/fix-tree2 && git checkout -q pr-3-tests && git rev-parse --short HEAD && ls && cat requirements-semgrep.in; head -20 requirements-semgrep.txt; ls requirements*; head -15 requirements-dev.txt; head -15 requirements-dev-win.txt' < /dev/null && pwd -P >| /tmp/claude-4ba1-cwd
+30869   101  3440      86 /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-1794509432161-mtow3q.sh 2>/dev/null || true && \builtin export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OPTIONS}" && shopt -u extglob 2>/dev/null || true && { \builtin unalias -- 'which'; \builtin unset -f -- 'which'; } >/dev/null 2>&1 || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'cd /tmp/work && ./scripts/batch.sh nl-alone alone 3 0 && ./scripts/batch.sh load-alone alone 30 2' < /dev/null && pwd -P >| /tmp/claude-cf2a-cwd
+ 3062   101  3432      34 /bin/bash -c { \builtin typeset +x '__CLAUDE_CC_COMMAND_TEXT' 2>/dev/null || \builtin true; } && source /root/.claude/shell-snapshots/snapshot-bash-1794509432161-mtow3q.sh 2>/dev/null || true && \builtin export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OPTIONS}" && shopt -u extglob 2>/dev/null || true && { \builtin unalias -- 'which'; \builtin unset -f -- 'which'; } >/dev/null 2>&1 || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && { \builtin [ -n "${__CLAUDE_CC_COMMAND_TEXT:+1}" ] || { \builtin echo '__CLAUDE_CC_COMMAND_TEXT?' >&2; \builtin exit 126; }; } && 'eval' "\builtin 'unset' -v '__CLAUDE_CC_COMMAND_TEXT'; 'eval' $__CLAUDE_CC_COMMAND_TEXT" && pwd -P >| /tmp/claude-5dc1-cwd
+10171   101  3408     491 /bin/bash -c { \builtin typeset +x '__CLAUDE_CC_COMMAND_TEXT' 2>/dev/null || \builtin true; } && source /root/.claude/shell-snapshots/snapshot-bash-1794509432161-mtow3q.sh 2>/dev/null || true && \builtin export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OPTIONS}" && shopt -u extglob 2>/dev/null || true && { \builtin unalias -- 'which'; \builtin unset -f -- 'which'; } >/dev/null 2>&1 || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && { \builtin [ -n "${__CLAUDE_CC_COMMAND_TEXT:+1}" ] || { \builtin echo '__CLAUDE_CC_COMMAND_TEXT?' >&2; \builtin exit 126; }; } && 'eval' "\builtin 'unset' -v '__CLAUDE_CC_COMMAND_TEXT'; 'eval' $__CLAUDE_CC_COMMAND_TEXT" && pwd -P >| /tmp/claude-4d74-cwd
+--- pytest/playwright procs
+ 4008  1820 timeout 300 python -X faulthandler -m pytest -p no:randomly -o faulthandler_timeout=120 -q --durations=5 tests/test_hung_adapter_calls.py
+ 4009 42920 python -X faulthandler -m pytest -p no:randomly -o faulthandler_timeout=120 -q --durations=5 tests/test_hung_adapter_calls.py
+ 5361  1820 timeout 2400 python -m pytest -q -rs --cov --cov-report=xml:coverage.xml
+ 5362 162672 python -m pytest -q -rs --cov --cov-report=xml:coverage.xml

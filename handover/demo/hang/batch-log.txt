@@ -1,0 +1,48 @@
+batch nl-together mode=together n=2 load=0 busy_pids= nproc=4 start:  19:50:56 up  1:00,  0 user,  load average: 0.57, 0.50, 0.70
+nl-together-1 rc=0 sec=259.738685651 SLOW | 880 passed in 259.41s (0:04:19)
+nl-together-2 rc=0 sec=230.095073116 SLOW | 880 passed in 229.78s (0:03:49)
+batch nl-together end:  19:59:05 up  1:08,  0 user,  load average: 0.82, 0.70, 0.72
+batch nl-alone mode=alone n=3 load=0 busy_pids= nproc=4 start:  19:59:15 up  1:08,  0 user,  load average: 0.70, 0.67, 0.71
+nl-alone-1 rc=0 sec=13.592569357  | 42 passed in 13.26s
+nl-alone-2 rc=0 sec=13.363947760  | 42 passed in 13.09s
+nl-alone-3 rc=0 sec=13.353401385  | 42 passed in 13.03s
+batch nl-alone end:  19:59:55 up  1:09,  0 user,  load average: 0.46, 0.62, 0.69
+batch load-alone mode=alone n=30 load=2 busy_pids=2563 2564 nproc=4 start:  19:59:55 up  1:09,  0 user,  load average: 0.46, 0.62, 0.69
+load-alone-01 rc=0 sec=13.424883481  | 42 passed in 13.13s
+load-alone-02 rc=0 sec=13.417027470  | 42 passed in 13.09s
+load-alone-03 rc=0 sec=13.399329489  | 42 passed in 13.07s
+load-alone-04 rc=0 sec=14.445718250  | 42 passed in 14.09s
+load-alone-05 rc=0 sec=13.382001225  | 42 passed in 13.08s
+load-alone-06 rc=0 sec=13.418455404  | 42 passed in 13.14s
+load-alone-07 rc=0 sec=13.420294781  | 42 passed in 13.13s
+load-alone-08 rc=0 sec=13.323405700  | 42 passed in 13.04s
+load-alone-09 rc=0 sec=13.359030304  | 42 passed in 13.04s
+load-alone-10 rc=0 sec=13.942260287  | 42 passed in 13.70s
+load-alone-11 rc=0 sec=13.826954061  | 42 passed in 13.44s
+load-alone-12 rc=0 sec=13.447533043  | 42 passed in 13.16s
+load-alone-13 rc=0 sec=13.449416878  | 42 passed in 13.11s
+load-alone-14 rc=0 sec=13.413693676  | 42 passed in 13.09s
+load-alone-15 rc=0 sec=13.401208253  | 42 passed in 13.09s
+load-alone-16 rc=0 sec=13.393760260  | 42 passed in 13.08s
+load-alone-17 rc=0 sec=13.385782747  | 42 passed in 13.11s
+load-alone-18 rc=0 sec=13.436773895  | 42 passed in 13.14s
+load-alone-19 rc=0 sec=13.459816072  | 42 passed in 13.11s
+load-alone-20 rc=0 sec=13.330420233  | 42 passed in 13.03s
+load-alone-21 rc=0 sec=13.345015432  | 42 passed in 13.00s
+load-alone-22 rc=0 sec=13.366756910  | 42 passed in 13.02s
+load-alone-23 rc=0 sec=14.267610880  | 42 passed in 14.01s
+load-alone-24 rc=0 sec=13.429221482  | 42 passed in 13.09s
+load-alone-25 rc=0 sec=14.203740976  | 42 passed in 13.97s
+load-alone-26 rc=0 sec=13.393932245  | 42 passed in 13.14s
+load-alone-27 rc=0 sec=13.355298005  | 42 passed in 13.09s
+load-alone-28 rc=0 sec=13.621938509  | 42 passed in 13.37s
+load-alone-29 rc=0 sec=13.728333559  | 42 passed in 13.48s
+load-alone-30 rc=0 sec=14.804967422  | 42 passed in 14.54s
+batch load-alone end:  20:06:43 up  1:16,  0 user,  load average: 2.73, 2.17, 1.41
+batch load-together mode=together n=5 load=2 busy_pids=24367 24368 nproc=4 start:  20:06:52 up  1:16,  0 user,  load average: 2.77, 2.20, 1.43
+load-together-1 rc=0 sec=289.482593535 SLOW | 880 passed in 289.08s (0:04:49)
+load-together-2 rc=0 sec=202.819740411 SLOW | 880 passed in 202.43s (0:03:22)
+load-together-3 rc=0 sec=237.970699068 SLOW | 880 passed in 237.44s (0:03:57)
+load-together-4 rc=0 sec=207.528812178 SLOW | 880 passed in 207.05s (0:03:27)
+load-together-5 rc=0 sec=239.330858530 SLOW | 880 passed in 238.97s (0:03:58)
+batch load-together end:  20:26:30 up  1:36,  0 user,  load average: 4.13, 3.82, 2.99

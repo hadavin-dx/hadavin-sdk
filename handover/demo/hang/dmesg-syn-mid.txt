@@ -1,0 +1,7 @@
+uptime_s=4261.10
+[Thu Nov 12 19:02:45 2026] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:41867. Sending cookies.
+[Thu Nov 12 19:04:36 2026] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:32851. Sending cookies.
+[Thu Nov 12 19:24:36 2026] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:34351. Sending cookies.
+[Thu Nov 12 19:53:00 2026] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:36811. Sending cookies.
+4096
+1024
