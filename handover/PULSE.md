@@ -103,3 +103,4 @@ PULSE 01:19Z: Q8a-1 r9 codebase reviewer done (1 Major: sources/kubernetes.py na
 - 01:53Z Q8a-1 b10 builder a60c6f41 started (box to 03:08Z, check ~02:50Z), worktree B-Q8a1-b10, push wip/cloud-q8a1-b10 only. Waiting: PR89 EV a8b70b47, PRH EV ac4f5786, P3a-2 3c a62fbfe6, Q8b b5 aca1e828. Load 4.0.
 - 01:58Z PR89 r27 EV closed (a8b70b47): full pytest 10832 passed 3 skipped (run1 failed from runner's own Postgres env slip); mutants 329/329 as root AND as nobody; mypy 14 errors on 3.12+3.13; 3 new tests pass on old code; probes refused. Resolve r27 next.
 - 02:01Z PR89 r27 resolved (goldfish_review_report-r27.md): 5 PROPOSE FIX, 1 DECLINE. Fix builder queued; heavy load 4.
+- 01:57Z (correction: the 02:01Z label on the previous line is my typo; real time 01:56Z) PR89 r28 fix builder a9d1dcc2 started (box to ~02:57Z, check ~02:50Z), worktree B-PR89-r28, push wip/cloud-PR89-r28. Agents running: Q8a-1 b10, PR89 r28, PRH EV, P3a-2 3c, Q8b b5.
