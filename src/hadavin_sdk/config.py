@@ -26,6 +26,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from hadavin_sdk import defaults, deferred
 from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.netguard import is_loopback_host
 from hadavin_sdk.scrub_settings import ScrubSettings
 from hadavin_sdk.stages import STAGES, is_live, is_prod
 
@@ -131,9 +132,28 @@ def _one(cap: str, raw: Any, root: Path) -> KindSettings:
         ):
             data[name] = root / data[name]
     try:
-        return model(**data)
+        settings = model(**data)
     except ValidationError as exc:
         raise ConfigError(f"backends.{cap} ({kind}): {exc}") from exc
+    if problem := stand_in_host_problem(cap, kind, settings):
+        raise ConfigError(problem)
+    return settings
+
+
+def stand_in_host_problem(cap: str, kind: str, settings: KindSettings) -> str | None:
+    """The one rule about stand-ins (local imitations of a service): they may only be reached on this computer.
+    Every host the kind says it connects to must be localhost or a loopback address (`is_loopback_host`, which never
+    looks a name up). None = fine (a real kind, or a stand-in with no host). The text names the capability and the
+    kind and never the host or any other setting value: a mistyped setting can hold a secret."""
+    entry = TABLE[cap][kind]
+    if entry.role != "stand_in" or entry.hosts is None:
+        return None
+    if all(is_loopback_host(host) for host in entry.hosts(settings)):
+        return None
+    return (
+        f"backends.{cap} ({kind}): a stand-in kind may only be reached on this computer "
+        "(localhost or a loopback address); set a loopback host, or use a real kind"
+    )
 
 
 def parse_backends(raw: Any, root: Path) -> Backends:
