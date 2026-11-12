@@ -1079,6 +1079,16 @@ M = [
         'raise ToolRefused(f"port {status_text(port)} is not allowed for this tool")', 'raise ToolRefused(f"port {port} is not allowed for this tool")', 'tests/test_q8a1_b16_fixes.py', 'test_a_refused_port_is_shown_by_its_digits_never_by_the_text_of_the_value', 'by the text of the value'),
     other_mutant('Z182 round 16: a failure that is not a refusal exits 1 (cli.py main, check-config)', 'src/hadavin_sdk/cli.py',
         '            _print_frames(exc)\n        return 3\n', '            _print_frames(exc)\n        return 1\n', B, 'test_check_config_exit_codes_are_those_of_main_and_tick', 'failure that is not a refusal (it must be 3'),
+    other_mutant('Z183 round 16: the box that hands an error to the caller thread is formatted (guard/http.py), HANDOFF check', 'src/hadavin_sdk/guard/http.py',
+        '        raise box["error"]', '        raise ValueError(f"{box}")', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'is used as', '[HANDOFF]'),
+    other_mutant('Z184 round 16: shown_name returns the name without the word-like test (errors.py), FILTER check', 'src/hadavin_sdk/errors.py',
+        '    if not word_like(name):\n        return NOT_SHOWN\n    names = loaded', '    if False:\n        return NOT_SHOWN\n    names = loaded', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'does not start by refusing a name that is not word-like', '[FILTER]'),
+    other_mutant('Z185 round 16: an OSError of the package shows its text through the tick (tick.py), OWNERROR check', 'src/hadavin_sdk/runtime/tick.py',
+        '        and not isinstance(exc, OSError)\n', '', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', '_message shows the text of PkgOs', '[OWNERROR]'),
+    other_mutant('Z186 round 16: an event id may hold a dot (models.py), FILENAME check', 'src/hadavin_sdk/models.py',
+        'EVENT_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9_-]{0,127}")', 'EVENT_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}")', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'an event id that is no plain name is accepted', '[FILENAME]'),
+    other_mutant('Z187 round 16: NotFound passes the id to the base class (protocol.py), KEPTID', 'src/hadavin_sdk/store/protocol.py',
+        '        super().__init__("no row has this id")', '        super().__init__(key)', 'tests/test_q8a1_b15_fixes.py', 'test_not_found_keeps_the_id_and_shows_one_fixed_sentence', 'shows the id it was given (b15 notfound marker)', ''),
 ]  # fmt: skip
 
 
