@@ -1,0 +1,43 @@
+err cells {'wt': 0, 'wt-main': 0, 'wt-old': 0}
+wt cookie cells 408 readable 12
+wt flag_mask cells 272 readable 45
+wt flag_keep cells 136 readable 76
+wt-main cookie cells 408 readable 88
+wt-main flag_mask cells 272 readable 190
+wt-main flag_keep cells 136 readable 106
+wt-old cookie cells 408 readable 37
+wt-old flag_mask cells 272 readable 65
+wt-old flag_keep cells 136 readable 76
+
+== readable on head but masked on main: 0
+== masked on head but readable on main: 251
+Counter({('flag_mask', 'card'): 23, ('flag_mask', 'tool'): 23, ('flag_mask', 'run'): 23, ('flag_mask', 'log'): 23, ('flag_mask', 'record_msg'): 23, ('cookie', 'record_key_log'): 18, ('cookie', 'record_key_alert'): 18, ('flag_mask', 'record_key_log'): 15, ('flag_mask', 'record_key_alert'): 15, ('cookie', 'card'): 8, ('cookie', 'tool'): 8, ('cookie', 'run'): 8, ('cookie', 'log'): 8, ('cookie', 'record_msg'): 8, ('flag_keep', 'card'): 6, ('flag_keep', 'tool'): 6, ('flag_keep', 'run'): 6, ('flag_keep', 'log'): 6, ('flag_keep', 'record_msg'): 6})
+
+== readable on head but masked on 6f32f0a8: 0
+== masked on head but readable on 6f32f0a8: 45
+Counter({('cookie', 'card'): 5, ('cookie', 'tool'): 5, ('cookie', 'run'): 5, ('cookie', 'log'): 5, ('cookie', 'record_msg'): 5, ('flag_mask', 'card'): 4, ('flag_mask', 'tool'): 4, ('flag_mask', 'run'): 4, ('flag_mask', 'log'): 4, ('flag_mask', 'record_msg'): 4})
+
+flag_keep masked on head 60
+flag_keep masked on main 30
+on old 60
+('bypass|one|eq', 'card') 'ran tool --bypass=<SECRET_1> --verbose'
+('bypass|one|eq', 'tool') 'ran tool --bypass=<SECRET_1> --verbose'
+('bypass|one|eq', 'run') 'ran tool --bypass=<SECRET_1> --verbose'
+('bypass|one|eq', 'log') 'ran tool --bypass=<SECRET_1> --verbose'
+('bypass|one|eq', 'record_msg') 'ran tool --bypass=<SECRET_1> --verbose'
+('bypass|one|bare', 'card') 'cfg bypass=<SECRET_1>'
+('bypass|one|bare', 'tool') 'cfg bypass=<SECRET_1>'
+('bypass|one|bare', 'run') 'cfg bypass=<SECRET_1>'
+('bypass|one|bare', 'log') 'cfg bypass=<SECRET_1>'
+('bypass|one|bare', 'record_msg') 'cfg bypass=<SECRET_1>'
+('bypass|two|eq', 'card') 'ran tool --bypass=<SECRET_1> --verbose'
+('bypass|two|eq', 'tool') 'ran tool --bypass=<SECRET_1> --verbose'
+== wt
+ flag_keep masked (cell:count of paths) {'bypass|one|bare': 5, 'bypass|one|eq': 5, 'bypass|two|bare': 5, 'bypass|two|eq': 5, 'compass|one|bare': 5, 'compass|one|eq': 5, 'compass|two|bare': 5, 'compass|two|eq': 5, 'obsession|one|bare': 5, 'obsession|one|eq': 5, 'obsession|two|bare': 5, 'obsession|two|eq': 5}
+ still readable (group,key/flag,form):count {('cookie', 'Cookie', 'record'): 12, ('flag_mask', 'authorization', 'bare'): 5, ('flag_mask', 'authorization', 'space'): 5, ('flag_mask', 'confirmpass', 'space'): 5, ('flag_mask', 'dbpass', 'space'): 5, ('flag_mask', 'newpass', 'space'): 5, ('flag_mask', 'oauth', 'space'): 5, ('flag_mask', 'oldpass', 'space'): 5, ('flag_mask', 'postgresauth', 'space'): 5, ('flag_mask', 'rootauth', 'space'): 5}
+== wt-main
+ flag_keep masked (cell:count of paths) {'bypass|one|bare': 5, 'bypass|one|eq': 5, 'compass|one|bare': 5, 'compass|one|eq': 5, 'obsession|one|bare': 5, 'obsession|one|eq': 5}
+ still readable (group,key/flag,form):count {('cookie', 'Cookie', 'eq'): 10, ('cookie', 'Cookie', 'record'): 12, ('cookie', 'session-cookie', 'eq'): 10, ('cookie', 'session-cookie', 'record'): 12, ('cookie', 'session_cookie', 'eq'): 10, ('cookie', 'session_cookie', 'record'): 12, ('cookie', 'x_session_cookie', 'eq'): 10, ('cookie', 'x_session_cookie', 'record'): 12, ('flag_mask', 'authorization', 'bare'): 5, ('flag_mask', 'authorization', 'eq'): 5, ('flag_mask', 'authorization', 'record'): 2, ('flag_mask', 'authorization', 'space'): 10, ('flag_mask', 'confirmpass', 'bare'): 5, ('flag_mask', 'confirmpass', 'eq'): 5, ('flag_mask', 'confirmpass', 'record'): 4, ('flag_mask', 'confirmpass', 'space'): 10, ('flag_mask', 'dbpass', 'bare'): 5, ('flag_mask', 'dbpass', 'eq'): 5, ('flag_mask', 'dbpass', 'record'): 4, ('flag_mask', 'dbpass', 'space'): 10, ('flag_mask', 'newpass', 'bare'): 5, ('flag_mask', 'newpass', 'eq'): 5, ('flag_mask', 'newpass', 'record'): 4, ('flag_mask', 'newpass', 'space'): 10, ('flag_mask', 'oauth', 'bare'): 5, ('flag_mask', 'oauth', 'eq'): 5, ('flag_mask', 'oauth', 'record'): 4, ('flag_mask', 'oauth', 'space'): 10, ('flag_mask', 'oldpass', 'bare'): 5, ('flag_mask', 'oldpass', 'eq'): 5, ('flag_mask', 'oldpass', 'record'): 4, ('flag_mask', 'oldpass', 'space'): 10, ('flag_mask', 'postgresauth', 'bare'): 5, ('flag_mask', 'postgresauth', 'eq'): 5, ('flag_mask', 'postgresauth', 'record'): 4, ('flag_mask', 'postgresauth', 'space'): 10, ('flag_mask', 'rootauth', 'bare'): 5, ('flag_mask', 'rootauth', 'eq'): 5, ('flag_mask', 'rootauth', 'record'): 4, ('flag_mask', 'rootauth', 'space'): 10}
+== wt-old
+ flag_keep masked (cell:count of paths) {'bypass|one|bare': 5, 'bypass|one|eq': 5, 'bypass|two|bare': 5, 'bypass|two|eq': 5, 'compass|one|bare': 5, 'compass|one|eq': 5, 'compass|two|bare': 5, 'compass|two|eq': 5, 'obsession|one|bare': 5, 'obsession|one|eq': 5, 'obsession|two|bare': 5, 'obsession|two|eq': 5}
+ still readable (group,key/flag,form):count {('cookie', 'Cookie', 'eq'): 10, ('cookie', 'Cookie', 'record'): 12, ('cookie', 'session-cookie', 'eq'): 5, ('cookie', 'session_cookie', 'eq'): 5, ('cookie', 'x_session_cookie', 'eq'): 5, ('flag_mask', 'authorization', 'bare'): 5, ('flag_mask', 'authorization', 'space'): 5, ('flag_mask', 'confirmpass', 'space'): 10, ('flag_mask', 'dbpass', 'space'): 10, ('flag_mask', 'newpass', 'space'): 5, ('flag_mask', 'oauth', 'space'): 10, ('flag_mask', 'oldpass', 'space'): 5, ('flag_mask', 'postgresauth', 'space'): 5, ('flag_mask', 'rootauth', 'space'): 10}
