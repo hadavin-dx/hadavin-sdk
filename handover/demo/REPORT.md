@@ -1,6 +1,39 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 23:42Z / 05:12 IST - RUN B (stack) AT 70%: **TWO REAL FAILURES, both in the runtime set** (not in the hang guard); builder 10c-2d fixing both; NOTHING NEW IS READY TO APPLY
+FAILED / UNCERTAIN first:
+1. INT-2b run B (f5fe824 + speed + six codeant2 + hang-fix-v2, unbuffered, `-v`): 2165 PASSED, **2 FAILED**, 0 hang, at 70% after 13 min (file mtime fresh):
+ - FAILED #1 (reported 23:30Z): tests/test_claim_checks_and_crm_mode.py::test_other_value_error_is_not_exit_4: `AttributeError: 'function' object has no attribute 'book_problem'` at src/lead_desk/server.py:1120: the new `main` refusal reaches `Desk.book_problem` through the name `server.Desk`, which that test replaces with a plain function.
+ - FAILED #2 (new, test at 35%): tests/test_later_approval.py::test_main_loads_approvers_and_refuses_bad_ones. Cause NOT yet known to me (probably the same class: the new refusal runs earlier in `main` than that test expects, or an exit/order change). I sent it to builder 10c-2d with the instruction to find the cause, fix it in the same patch without editing the test and sweep the class (every test that monkeypatches names `main()` uses).
+ - Pristine f5fe824 (run A) has neither failure: 2988 passed, 0 failed. So both are caused by the runtime set (very likely `codeant2-desk.patch`: the `main` refusal + `Desk.book_problem` core touch).
+2. 10c-2d state: it has already written codeant2-desk-r3.patch (the previous version) and a regenerated codeant2-desk.patch is on disk, but NO hand-back yet and unreviewed: I do not know if it fixes #2. After its hand-back: fresh core-path review (reading + I will have the runner re-run B).
+3. Runtime set (7 patches) is therefore NOT READY. Do not apply it. The Semgrep PR patch and the hang-guard v2 are independent of it (hang-guard v2 is in run B: no failure so far points at it; run B must finish to say).
+4. Not run anywhere: PowerShell/Windows, a real n8n, Python 3.13, Windows lock install.
+READY TO APPLY NOW: nothing new. Clean and independent: semgrep/semgrep-on-head.patch (own PR). Optional safety net clean by review: hang/hang-fix-v2.patch (full-run verdict pending run B end).
+NEEDS FROM LEAD: nothing new (Semgrep `concurrency:` and hang-guard yes/no still open).
+
+TABLE 1 - LIVE ITEMS (load 1.6)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| INT-2b runner | run B full suite (stack), then lints/hygiene/gitleaks/restart x5/node-off | 23:07 (run B 23:27) | 34 min (run B 14 min) | 00:10 | running, run B 70%, 2 failures, mtime 23:40:53 | integration/INT-2b.md + evidence-int2b-B-* | test_portal_lead_pages |
+| 10c-2d | fix `book_problem` regression + failure #2 + docs drift | 23:31 | 11 min | 00:05 | running (codeant2-desk.patch regenerated on disk, not handed back) | codeant2-desk.patch + evidence-codeant5-rt | patch written |
+Totals: agents 2, shells 0, containers 0, heavy pytest 2 (run B + one builder file run), load 1.6 of 4.
+Flags: none over time box.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| CodeAnt runtime | 5 (fix 10c-2d) | R1 5M, R2 4M, R3 3M, R4 0B/0M/5N, INT-2b B: 2 real failures | the core `main` refusal changes what tests that monkeypatch `server.*` see | real failures in the full run | no | green full run B + fresh review of the fix |
+| hang guard v2, Semgrep, security, layout | done | - | - | - | YES: clean | - |
+Waste check: this round is not waste: it is the full run doing what reviews cannot. The class-level fix rule applies: the builder must sweep all `main()`-using tests, not just the two found.
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (23:30Z)
+| item | result |
+|---|---|
+| INT-2b run B (in progress) | 70%: 2165 passed, 2 failed (runtime set), no hang |
+| 10c-2d | regenerated codeant2-desk.patch on disk (unreviewed), second failure forwarded |
+
 ## 2026-11-12 23:30Z / 05:00 IST - INT-2b RUN A (pristine f5fe824): **2988 PASSED, 6 SKIPPED, 0 FAILED, 20:22 min: NO HANG**; RUN B (stack) CAUGHT A REAL REGRESSION in the runtime set; hang-guard v2 review CLEAN
 FAILED / UNCERTAIN first:
 1. **RUN B FAILURE (real, caused by the runtime set, missed by every focused run and by 4 review rounds):** `tests/test_claim_checks_and_crm_mode.py::test_other_value_error_is_not_exit_4` FAILS on the stack tree (f5fe824 + speed + six codeant2 + hang-fix-v2) with `AttributeError: 'function' object has no attribute 'book_problem'` at src/lead_desk/server.py:1120. Cause: the new `main()` refusal calls `Desk.book_problem(config.db_path)` BEFORE the desk is built; that test replaces `server.Desk` with a plain function (`monkeypatch.setattr(server, "Desk", broken)`) to check that a ValueError from the Desk constructor is a traceback not an exit-4 refusal; the classmethod no longer exists on the stand-in. I reproduced it alone in the stack tree (1 failed in 1.08 s). It is the NEW core touch (`main` refusal + `Desk.book_problem`). Fix (builder 10c-2d, starting now): make the check not depend on the name `server.Desk` (a module-level function in desk.py imported by server.py) with the failing test as the fails-before proof; then a fresh review (core path) and a re-run of INT-2b run B. Run B continues meanwhile so I get its COMPLETE failure list (it was at 72 tests / 1 failure after 1 minute); the runtime set stays NOT READY until it is green.
