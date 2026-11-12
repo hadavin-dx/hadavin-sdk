@@ -1,0 +1,8 @@
+...                                                                      [100%]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_policy_changelog.py::test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tests_the_page_and_the_mutants_green
+PASSED tests/test_policy_changelog.py::test_plant_a_renewal_of_the_kinds_list_alone_keeps_the_tests_the_page_and_the_mutants_green
+PASSED tests/test_policy_changelog.py::test_plant_a_renewal_of_the_names_and_claims_alone_keeps_the_tests_the_page_and_the_mutants_green
+3 passed, 6 deselected in 1536.55s (0:25:36)
+rc=0
