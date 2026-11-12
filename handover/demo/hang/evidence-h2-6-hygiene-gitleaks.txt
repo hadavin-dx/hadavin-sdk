@@ -1,0 +1,4 @@
+tree f5fe824 + hang-fix-v2 sha 1afc6709bab0
+$ GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 pytest -q tests/test_hygiene.py
+...............                                                          [100%]
+15 passed in 12.88s

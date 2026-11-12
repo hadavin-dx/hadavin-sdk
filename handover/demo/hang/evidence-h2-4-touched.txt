@@ -1,0 +1,11 @@
+tree f5fe824 + hang-fix-v2 (sha 1afc6709bab0)
+$ timeout 590 python -m pytest -q -p no:cacheprovider tests/test_crm_hubspot.py tests/test_followup_edge_cases.py tests/test_hubspot_probe.py tests/test_live_claude.py tests/test_load_tools.py tests/test_mode_safety.py tests/test_n8n_api_url.py tests/test_portal_api.py tests/test_portal_demo.py tests/test_server_stop_guard.py tests/test_slow_sender.py tests/test_stamp_locks_and_budget.py 
+..........................s............................................. [ 57%]
+........................................................................ [ 65%]
+........................................................................ [ 73%]
+........................................................................ [ 81%]
+........................................................................ [ 90%]
+........................................................................ [ 98%]
+................                                                         [100%]
+879 passed, 1 skipped in 301.56s (0:05:01)
+exit=0

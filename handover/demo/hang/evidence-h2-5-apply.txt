@@ -1,0 +1,14 @@
+tree f5fe824; hang-fix-v2 sha256 1afc6709bab01f3b26fd0999fe28cc4c2078af7907c0a6bcaf2be77d3485e397
+applied fake-hubspot-read-body-before-answer.patch
+applied codeant2-desk.patch
+applied codeant2-portal-log.patch
+applied codeant2-demo-only.patch
+applied codeant2-tests-hardening.patch
+applied codeant2-fakes-body.patch
+applied codeant2-standins-body.patch
+hang-fix-v2 after speed + six codeant2: ok
+xdist CI patch after stack + v2: ok
+v2 alone on f5fe824: ok
+v2 then xdist on f5fe824: ok
+xdist then v2 on f5fe824: ok
+speed then v2: ok

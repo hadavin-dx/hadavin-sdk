@@ -1,0 +1,11 @@
+tree f5fe824 + hang-fix-v2 sha 1afc6709bab0 (scratch test NOT in the patch)
+$ pytest -q -s tests/test_h2_measure.py  x4 (real desk server, 3 body-stalled + 1 header-stalled clients, then stop())
+src _Server: daemon_threads=True block_on_close=True; REQUEST_TIMEOUT_SECONDS=30.0
+MEASURED stop() with 4 stalled clients: 0.00 s; live threads=5
+1 passed in 1.06s
+MEASURED stop() with 4 stalled clients: 0.00 s; live threads=5
+1 passed in 1.65s
+MEASURED stop() with 4 stalled clients: 0.00 s; live threads=5
+1 passed in 1.10s
+MEASURED stop() with 4 stalled clients: 0.00 s; live threads=5
+1 passed in 1.06s

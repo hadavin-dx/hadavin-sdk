@@ -1,0 +1,8 @@
+tree: f5fe824 + hang-fix-v2 working tree (git add -N); diff sha 668a3dd8f51011c4
+$ ruff check . ; ruff format --check . ; mypy --platform linux ; mypy --platform win32 ; mypy tests/support.py tests/test_server_stop_guard.py
+All checks passed!
+136 files already formatted
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+tests/test_server_stop_guard.py:129: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+Found 5 errors in 3 files (checked 3 source files)

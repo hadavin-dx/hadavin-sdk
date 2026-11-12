@@ -1,0 +1,7 @@
+tree f5fe824 + hang-fix-v2 sha 1afc6709bab0
+$ NEW helper: timeout 60 pytest -q tests/test_server_stop_guard.py::test_a_stop_that_never_returns_fails_fast_with_a_message
+.                                                                        [100%]
+1 passed in 0.53s
+exit=0 wall=0.8 s
+$ OLD unbounded helper (stop_within = plain stop() call): same command (exit 124 = killed by timeout 60 while hanging)
+exit=124 wall=60.0 s

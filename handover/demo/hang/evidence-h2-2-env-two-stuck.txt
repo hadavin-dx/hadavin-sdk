@@ -1,0 +1,4 @@
+tree f5fe824 + hang-fix-v2 sha 1afc6709bab0 (scratch test, not in the patch: a real env test with two stuck stops)
+$ pytest -q tests/test_h2_scratch.py
+E           support.ServerDidNotStop: stuck B did not stop within 0.2 s; stuck A did not stop within 0.2 s
+1 passed, 1 error in 0.44s

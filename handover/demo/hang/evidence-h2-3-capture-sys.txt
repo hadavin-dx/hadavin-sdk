@@ -1,0 +1,6 @@
+tree f5fe824 + hang-fix-v2 sha 1afc6709bab0
+$ pytest -q --capture=sys tests/test_server_stop_guard.py   (NEW code)
+8 passed in 2.75s
+$ same with the OLD dump call (faulthandler.dump_traceback(sys.stderr) unguarded): the error is replaced
+E               io.UnsupportedOperation: fileno
+1 failed, 7 deselected in 0.25s
