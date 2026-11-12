@@ -1,0 +1,10 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+
+==================================== ERRORS ====================================
+_________________ ERROR collecting tests/test_policy_guard.py __________________
+tests/test_policy_guard.py:38: in <module>
+    DECIDED = pp.DECIDED
+              ^^^^^^^^^^
+E   AttributeError: module 'tools.policy_page' has no attribute 'DECIDED'
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.16s
