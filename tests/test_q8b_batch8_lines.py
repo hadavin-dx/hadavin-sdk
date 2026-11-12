@@ -7,12 +7,13 @@ table `tests/q8b_mutants.py` (one source). A control is in exactly one of three 
 * PLANTED: at least one mutant of the table names this test as its killer (the check is that mutant, run by the mutant runner);
 * NO_FAULT: no fault can be planted for this test; a written reason that names an existing file (empty since batch 11: a test of a test file
   has a `test_file_mutant`);
-* UNPLANTED: no planted fault yet. The group is listed in full below, its size is pinned (it can only shrink), and it is a
-  defect to fix (a planted fault or a true reason): batch 11 left three, see the constant `UNPLANTED_MAX` below.
+* UNPLANTED: no planted fault. The group must be EMPTY (batch 14: the three that batch 11 left, the digits run, the white space after a
+  scheme word and the guard of the address pattern, have a planted fault now, M261, M263 and M267); a control in it fails `_problems`.
 A line that is missing, a test that does not exist, a line in two groups or a group name that has no line fails `_problems`."""
 
 from __future__ import annotations
 
+import ast
 import pathlib
 import re
 
@@ -174,22 +175,48 @@ EXPECTED_IDS = {
 
 
 def planted_killers() -> dict[str, list[str]]:
-    """test function name -> the mutants of the table that name it as their killer (the table is the one source)."""
-    src = (HERE / "q8b_mutants.py").read_text(encoding="utf-8")
+    """test function name (and the pytest id with its parameter) -> the mutants of the table that name it as their killer.
+
+    The table is read as CODE with `ast` (batch 14: a regular expression read only the rows written with a single quote and a lazy match could credit
+    a later row's killer): every call of `mutant(...)` or `test_file_mutant(...)` in the list `M`, its name is the first argument and its killer the
+    sixth, both written as string constants. The result has two keys for a killer written with a parameter, `name[param]` and `name`, so a caller
+    can ask for either. A row that is not a call with string constants fails here, it is never skipped."""
+    tree = ast.parse((HERE / "q8b_mutants.py").read_text(encoding="utf-8"))
+    table = next(
+        n.value
+        for n in tree.body
+        if isinstance(n, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "M" for t in n.targets)
+    )
+    assert isinstance(table, ast.List), "the mutant table M is no list"
     kills: dict[str, list[str]] = {}
-    for m in re.finditer(r"mutant\('(M\d+) .*?\n\s+\w+, '([^']+)'", src, re.DOTALL):
-        kills.setdefault(m.group(2).split("[")[0], []).append(m.group(1))
+    for row in table.elts:
+        if (
+            isinstance(row, ast.Call)
+            and isinstance(row.func, ast.Name)
+            and row.func.id == "replace"
+        ):
+            row = row.args[
+                0
+            ]  # a row wrapped to allow a crash: the mutant call is the first argument
+        assert (
+            isinstance(row, ast.Call)
+            and isinstance(row.func, ast.Name)
+            and row.func.id in ("mutant", "test_file_mutant")
+        ), f"a row of the mutant table is no call of mutant or test_file_mutant (line {row.lineno})"
+        name, killer = row.args[0], row.args[5]
+        assert isinstance(name, ast.Constant) and isinstance(killer, ast.Constant), (
+            f"the name or the killer of the row at line {row.lineno} is no string constant"
+        )
+        mid = str(name.value).split(" ")[0]
+        for key in {str(killer.value), str(killer.value).split("[")[0]}:
+            kills.setdefault(key, []).append(mid)
     return kills
 
 
 # NO_FAULT is empty since batch 11: the seven tests that held "no product line can be faulted" check a test file or a helper, and a fault
 # of that file is planted by a `test_file_mutant` (M227 to M233, like M136 and M142); the old reason was untrue.
 NO_FAULT: dict[str, str] = {}
-# The real size of the group without a planted fault at the head of batch 11: three wall-clock tests (the white space after a scheme word,
-# a very long run of digits, the guard of the address pattern, which runs in the perf step). Each fails only on a super-linear regex; the
-# planted fault found for the digits (a bare word that may start at every digit) runs longer than five minutes, so it was not put in the table
-# in batch 11 (NOT DONE; the next builder plants a smaller one). The number is a gate: a count ABOVE it fails the test below, and the number only falls.
-UNPLANTED_MAX = 3
 
 
 def _group_of(test_id: str, kills: dict[str, list[str]]) -> str:
@@ -238,9 +265,9 @@ def _problems(lines: str | None = None) -> list[str]:
         if kills.get(n):
             bad.append(f"{n} has a planted fault and a NO_FAULT reason: drop the reason")
     unplanted = [i for i in ids if _group_of(i, kills) == "UNPLANTED"]
-    if len(unplanted) > UNPLANTED_MAX:
+    if unplanted:
         bad.append(
-            f"{len(unplanted)} controls have neither a planted fault nor a reason (at most {UNPLANTED_MAX})"
+            f"{len(unplanted)} controls have neither a planted fault nor a reason: {unplanted[:3]}"
         )
     return bad
 
@@ -260,6 +287,7 @@ def test_a_planted_fault_is_read_from_the_mutant_table_and_the_pinned_killer_is_
     assert len(kills) >= 25, "the mutant table was not read"
     src = (HERE / "q8b_mutants.py").read_text(encoding="utf-8")
     for name in kills:
+        name = name.split("[")[0]
         assert f"def {name}(" in "".join(
             p.read_text(encoding="utf-8") for p in HERE.glob("test_*.py")
         ), f"the mutant table names a killer that does not exist: {name}"
@@ -277,14 +305,11 @@ def test_the_check_itself_fails_when_a_line_is_missing_a_line_is_doubled_or_a_te
     assert _problems("\n".join([renamed, *rows[1:]])), "a renamed test was not found by the check"
 
 
-def test_the_group_without_a_planted_fault_is_listed_and_its_size_is_pinned():
+def test_no_control_is_without_a_planted_fault():
     kills = planted_killers()
-    unplanted = sorted(
-        {i.split("::")[1].split("[")[0] for i in EXPECTED_IDS if _group_of(i, kills) == "UNPLANTED"}
-    )
-    count = sum(1 for i in EXPECTED_IDS if _group_of(i, kills) == "UNPLANTED")
-    assert count <= UNPLANTED_MAX, (
-        f"{count} controls have no planted fault and no reason: {unplanted}"
+    unplanted = sorted(i for i in EXPECTED_IDS if _group_of(i, kills) == "UNPLANTED")
+    assert not unplanted, (
+        f"{len(unplanted)} controls have no planted fault and no reason: {unplanted}"
     )
 
 
@@ -314,10 +339,19 @@ def test_every_planted_fault_is_in_its_product_file_once_and_names_a_killer_that
     assert not bad, bad[:5]
 
 
-def test_the_ceiling_is_the_real_number_and_a_larger_group_fails():
-    kills = planted_killers()
-    count = sum(1 for i in EXPECTED_IDS if _group_of(i, kills) == "UNPLANTED")
-    assert count == UNPLANTED_MAX, (
-        f"{count} controls have no planted fault and no reason, the ceiling says {UNPLANTED_MAX}: lower the ceiling to the real number"
-    )
+def test_the_lines_have_no_problem_and_a_control_without_a_fault_would_be_one():
     assert _problems() == [] and _problems(None) == []
+    rows = LINES.strip().splitlines()
+    # a control line for a test that no mutant names, added to the real lines, is a problem (the group has no size any more)
+    extra = "tests/test_q8b_batch8_lines.py::test_no_control_is_without_a_planted_fault | control | a stand-in for a control with no planted fault"
+    assert any("neither a planted fault" in p for p in _problems_with_expected_extra(extra, rows))
+
+
+def _problems_with_expected_extra(extra: str, rows: list[str]) -> list[str]:
+    global EXPECTED_IDS
+    saved = EXPECTED_IDS
+    EXPECTED_IDS = saved | {extra.split(" | ")[0]}
+    try:
+        return _problems("\n".join([*rows, extra]))
+    finally:
+        EXPECTED_IDS = saved

@@ -181,13 +181,9 @@ def test_b12_4_a_folded_authorization_header_is_masked_for_any_scheme_word_and_e
         for nl in G4_BREAKS:
             a, b = LOW_ENTROPY_PIECES[0] + str(i), LOW_ENTROPY_PIECES[1] + str(i)
             text = f"Authorization: {scheme} {a}{nl} {b}{nl}Accept: shown\n"
-            # The card path turns a rare break into a space before the rules run (so the folded line is a second word on one line:
-            # the stated owner choice); the rule path itself reads every break, so the raw rule output is the check for the rare ones.
-            outs = (
-                [clean(text), redact_module.redact(text).text]
-                if nl in ("\n", "\r\n")
-                else [redact_module.redact(text).text]
-            )
+            # The card path writes a rare break that a space or a tab follows as a LINE FEED before the rules run (batch 13, group 7), so
+            # a header folded over it is read as a folded header there too; every break is checked on the card path and the rule path.
+            outs = [clean(text), redact_module.redact(text).text]
             left += [
                 f"{scheme} {nl!r}: {g!r}"
                 for p in (a, b)

@@ -232,11 +232,15 @@ def is_count_run(prefix: str) -> bool:
 
 def _not_after_ordinary_word(ending: str) -> str:
     """Look-behinds (one per ordinary word that ends in `ending`) that stop a bare ending from matching INSIDE an ordinary word:
-    `by` + `pass` is `bypass`. The ordinary word must start the KEY (`xbypass`, `new_bypass`, `x-bypass`, `my.compass` are credential keys, as on main: a
-    `_`, `.`, a digit, or a `-` that follows a word character in front is no start; a bare flag `--bypass` still starts the word; batch 13, group 5).
+    `by` + `pass` is `bypass`. The ordinary word must be the WHOLE key. It starts a key when no key character stands in front of it (a letter,
+    a digit, `_`, `.` or `-`, the characters of main's key class), or when exactly two hyphens stand in front of it and no key character
+    stands in front of those (the flag `--bypass=v`, which stays shown with the bare word: owner question `q-q8b-bare-bypass`).
+    So `xbypass`, `new_bypass`, `x-bypass`, `x--bypass`, `-bypass`, `---bypass`, `.--bypass` and `my.compass` are credential keys, as on main
+    (batch 14, group 1: batch 13 let ONE `-` before the word count as a start whatever stood before it, and left `x--bypass=v` and `-bypass=v`
+    readable that main masked). The flag rule (`--bypass v`) is a separate rule and stays as it was.
     Python has no look-behind of varying width, so each ordinary word gets its own fixed-width one."""
     return "".join(
-        r"(?<!(?<![\w.])(?<![\w.]-)" + w[: -len(ending)] + ")"
+        r"(?<!(?:(?<![\w.\-])|(?<=(?<![\w.\-])--))" + w[: -len(ending)] + ")"
         for w in sorted(ORDINARY_WORDS)
         if w.endswith(ending)
     )

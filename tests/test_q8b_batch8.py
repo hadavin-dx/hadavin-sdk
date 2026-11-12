@@ -445,7 +445,9 @@ def test_b8_8_a_very_long_run_of_digits_is_read_once():
     text = ("pass" + "1" * 50_000 + " ") * 4
     t0 = time.perf_counter()
     clean(text)
-    assert time.perf_counter() - t0 < 20
+    assert time.perf_counter() - t0 < 20, (
+        "a very long run of digits after a bare credential word is read many times"
+    )
 
 
 # ---- Issue 12: a key with the word `cookie` and more words, in text ----------------------------------------------------

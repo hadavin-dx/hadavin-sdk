@@ -280,7 +280,9 @@ def test_b9_4_a_very_long_run_of_digits_after_a_key_word_is_read_in_linear_time(
         text = (word + "1" * 50_000 + " ") * 2 + ("pass" + "1" * 50_000 + "x ") * 2
         t0 = time.perf_counter()
         clean(text)
-        assert time.perf_counter() - t0 < 20, word
+        assert time.perf_counter() - t0 < 20, (
+            f"a very long run of digits after the key word {word} takes far too long"
+        )
 
 
 # ---- Issue 5: copies tied to one list, and rules that were not timed -----------------------------------------------------

@@ -221,9 +221,11 @@ def test_b13_3_a_glued_run_of_headers_is_read_in_linear_time(unit):
         return time.perf_counter() - t0
 
     took(5_000)
+    # 4 times the size: linear is 4, pure quadratic 16. Batch 14 tightens the bound from 9 (an exponent up to 1.58 passed) to 6 (up to 1.29);
+    # measured on the head for the nine units under the load of other jobs: 3.8 to 4.9 (best of three each).
     small = min(took(20_000) for _ in range(3))
     big = min(took(80_000) for _ in range(3))
-    assert big < max(small, 0.02) * 9, (
+    assert big < max(small, 0.02) * 6, (
         f"a glued run of `{unit}` is read in more than linear time (the first word of the folded-header rule reads the rest of the run): "
         f"{small:.3f}s and {big:.3f}s for 4 times the size"
     )
@@ -321,10 +323,25 @@ def test_b13_7_the_siblings_of_an_authorization_key_stay_shown_in_pretty_printed
 RARE = {
     "vertical tab": "\x0b",
     "form feed": "\x0c",
+    "file separator": "\x1c",
+    "group separator": "\x1d",
+    "record separator": "\x1e",
     "next line": "\x85",
-    "line separator": " ",
-    "paragraph separator": " ",
+    "line separator": "\u2028",
+    "paragraph separator": "\u2029",
 }
+
+
+def test_b14_3_the_rare_breaks_are_every_break_that_str_splitlines_knows_besides_the_line_feed_and_the_carriage_return():
+    # derived by brute force over every code point (as `test_b13_8` does), so a break the standard library knows and this table does not fails here
+    breaks = {c for c in map(chr, range(0x110000)) if len(("a" + c + "b").splitlines()) == 2} - {
+        "\n",
+        "\r",
+    }
+    assert breaks == set(RARE.values()), (
+        f"RARE (every rare break, run through all five paths below) is not the set of breaks of str.splitlines: "
+        f"missing {sorted(hex(ord(c)) for c in breaks - set(RARE.values()))}, extra {sorted(hex(ord(c)) for c in set(RARE.values()) - breaks)}"
+    )
 
 
 @pytest.mark.parametrize("name", sorted(RARE))
@@ -382,30 +399,101 @@ def test_b13_8_every_character_that_splitlines_reads_as_a_break_is_known_to_the_
 
 # ---- Group 4: the wall-clock tests of the Q8b files, counted from the files, not from a list --------------------------------------------
 
-import re
+import ast
 from pathlib import Path
 
 from tests.test_q8b_batch8_lines import planted_killers
 
 HERE = Path(__file__).resolve().parent
-# The wall-clock tests of the Q8b files that no mutant of `tests/q8b_mutants.py` names as its killer: a regression to quadratic time of
-# the rule each one times would pass it (found by the round 13 review: the CHANGELOG of batch 12 said 4, then 3; the true count at the head
-# of batch 12 was 11; batch 13 plants two of them, M256 and M257, so 9 are left). The number is a gate: a new wall-clock test without a planted fault, or a planted fault that is dropped, changes the
-# count and fails `test_b13_4_...`; the number only falls. The list is printed in the failure.
-WALL_CLOCK_UNPLANTED_MAX = 9
+# Every wall-clock test of the Q8b files has a planted fault, and so has every case of a parametrized one (batch 14: the ceiling
+# `WALL_CLOCK_UNPLANTED_MAX`, 9 at batch 13, is gone; the number of unplanted ones is zero and it is not a constant any more). A regression to
+# quadratic time of the rule a test times would otherwise pass it.
+_CLOCK_FUNCTIONS = frozenset(
+    {
+        "perf_counter",
+        "perf_counter_ns",
+        "time",
+        "time_ns",
+        "monotonic",
+        "monotonic_ns",
+        "process_time",
+        "process_time_ns",
+        "thread_time",
+    }
+)
+
+
+def _reads_the_clock(node: ast.AST, helpers: set[str], names: set[str]) -> bool:
+    """True when the code under `node` reads the clock: `time.perf_counter()` and the like, a name imported from `time`, `timeit`, or a
+    module-level helper of the same file that does (`_clock_functions_of` finds the helpers, transitively)."""
+    for n in ast.walk(node):
+        if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name):
+            if n.value.id == "time" and n.attr in _CLOCK_FUNCTIONS:
+                return True
+            if n.value.id == "timeit":
+                return True
+        if isinstance(n, ast.Name) and (n.id in names or n.id in helpers):
+            return True
+    return False
+
+
+def _clock_functions_of(tree: ast.Module) -> tuple[set[str], set[str]]:
+    """(names imported from `time` or `timeit` that read the clock, module-level helper functions that read it, transitively)."""
+    names: set[str] = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.ImportFrom) and n.module in ("time", "timeit"):
+            names |= {
+                a.asname or a.name
+                for a in n.names
+                if n.module == "timeit" or a.name in _CLOCK_FUNCTIONS
+            }
+    helpers: set[str] = set()
+    functions = [f for f in tree.body if isinstance(f, ast.FunctionDef)]
+    changed = True
+    while changed:
+        changed = False
+        for f in functions:
+            if (
+                f.name not in helpers
+                and not f.name.startswith("test_")
+                and _reads_the_clock(f, helpers, names)
+            ):
+                helpers.add(f.name)
+                changed = True
+    return names, helpers
 
 
 def wall_clock_tests() -> dict[str, str]:
-    """test name -> file, for every test of the Q8b test files whose body reads the clock."""
+    """test name -> file, for every test of the Q8b test files whose code reads the clock (read with `ast`, helpers included)."""
     found: dict[str, str] = {}
     for path in sorted(HERE.glob("test_q8b_*.py")):
-        src = path.read_text(encoding="utf-8")
-        for m in re.finditer(
-            r"^def (test_\w+)\(.*?(?=^def |^@pytest|\Z)", src, re.DOTALL | re.MULTILINE
-        ):
-            if "perf_counter" in m.group(0) or "time.time()" in m.group(0):
-                found[m.group(1)] = path.name
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        names, helpers = _clock_functions_of(tree)
+        for f in tree.body:
+            if (
+                isinstance(f, ast.FunctionDef)
+                and f.name.startswith("test_")
+                and _reads_the_clock(f, helpers, names)
+            ):
+                found[f.name] = path.name
     return found
+
+
+def collected_ids(files: set[str]) -> list[str]:
+    """The pytest ids (with the parameter in brackets) of every test of the given files, as pytest itself collects them (in this process,
+    with a plugin that records the names: no sub-process)."""
+    names: list[str] = []
+
+    class Recorder:
+        def pytest_collection_modifyitems(self, items):
+            names.extend(item.name for item in items)
+
+    code = pytest.main(
+        ["--collect-only", "-q", "-p", "no:cacheprovider", *sorted(str(HERE / f) for f in files)],
+        plugins=[Recorder()],
+    )
+    assert code == 0, f"pytest could not collect {sorted(files)} (exit {code})"
+    return names
 
 
 def test_b13_4_the_wall_clock_tests_are_found_by_reading_the_files_and_include_the_known_ones():
@@ -415,16 +503,19 @@ def test_b13_4_the_wall_clock_tests_are_found_by_reading_the_files_and_include_t
         "test_b10_1_a_long_run_of_line_breaks_after_a_scheme_word_is_read_in_linear_time",
         "test_b8_8_a_very_long_run_of_digits_is_read_once",
         "test_b13_3_a_glued_run_of_headers_is_read_in_linear_time",
+        "test_r1_the_guard_in_front_of_the_address_pattern_is_bounded",
     }
     assert known <= set(found) and len(found) >= 14, (
         f"the scan of the test files found {sorted(found)}"
     )
 
 
-def test_b13_4_the_number_of_wall_clock_tests_without_a_planted_fault_is_the_pinned_number():
+def test_b13_4_every_wall_clock_test_and_every_case_of_a_parametrized_one_has_a_planted_fault():
     kills = planted_killers()
-    unplanted = sorted(n for n in wall_clock_tests() if n not in kills)
-    assert len(unplanted) == WALL_CLOCK_UNPLANTED_MAX, (
-        f"{len(unplanted)} wall-clock tests have no planted fault, the pinned number is {WALL_CLOCK_UNPLANTED_MAX}: plant a fault for the "
-        f"new one, or lower the pinned number to the real one: {unplanted}"
+    found = wall_clock_tests()
+    ids = [i for i in collected_ids(set(found.values())) if i.split("[")[0] in found]
+    assert len(ids) >= len(found), (
+        "the collection of the wall-clock tests found fewer ids than tests"
     )
+    unplanted = sorted(i for i in ids if i not in kills)
+    assert not unplanted, f"{len(unplanted)} wall-clock cases have no planted fault: {unplanted}"
