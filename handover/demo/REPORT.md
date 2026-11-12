@@ -1,6 +1,41 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 22:17Z / 03:47 IST - LAYOUT + CODEANT SECURITY SET REVIEWED CLEAN (0 Blocker, 0 Major); BATCH 2 PARTLY READY: layout (2 patches) and CodeAnt security (4 patches) can be applied now; runtime and Semgrep still in fix/review
+FAILED / UNCERTAIN first:
+- READY (reviewed clean, see APPLY-LIST.md status sections 22:12Z and 22:25Z): (a) layout: drawer-long-name2.patch (sha 1b9fce74...) then mobile-cascade.patch (sha 66eb4d26...): needs YOUR approval of core CSS (app.css, pages/leads.css, needs.css, overview.css) and the browser minimum in the PR text (Chrome 104, Firefox 63, Safari 16.4: range media queries); the two sidebar tests in that tree need docs-and-deps v4 (no Pillow). (b) CodeAnt security: triage/codeant3-gitleaks.patch (apply FIRST; sha256 starts 26b74f3cf8ef) + codeant3-scripts (04ec9607f4e1) + codeant3-n8n-proof + codeant3-docs (2c203a9a2cf0). VERIFY THE SHAS ON DISK: the builder summary quoted two wrong ones (91e385e6b39b, c1b69d553c7e); I corrected APPLY-LIST and the summary. The key-leak Major is fixed (a malformed key file used to print the key in a traceback).
+- 7 Nits left on the security set, 3 cheap and security-adjacent (a space/NBSP after localhost in the scrub = same class as the fixed tab hole; netloc/port shape check; RecursionError/UnicodeEncodeError tracebacks): builder 10c-1e builds a follow-up patch triage/codeant3-sec-nits.patch ON TOP (not in the reviewed set; reviewed separately).
+- NOT ready: CodeAnt runtime (10c-2b: its first full-suite run HUNG at 38% in a Playwright test; it re-ran; no hand-back yet, 55 min in: at 22:30 I will ask for a hand-back); Semgrep (14c built both patch forms: round-4 review running; a bare-`nosem`, tab and long-s `noſem` suppression are now guarded; the 'uv lock identical' claim is now evidenced).
+- After codeant3-gitleaks: YOU tighten two path lines in .gitleaks.toml: docs-and-deps v4 `(^|[/\\])requirements-browser(-win)?\.txt$` -> `^requirements-browser(-win)?\.txt$` (semgrep-on-v4 already tightens its own).
+- Never run anywhere: PowerShell/Windows, a real n8n, Python 3.13, Windows lock install, full suite on the combined stack (INT-2 comes when runtime + Semgrep land).
+NEEDS FROM LEAD: approve core CSS for the PR text (layout); tell me whether to apply-check a combined 'batch 2a = codeant3 security + layout + docs-and-deps v4' now (I can run INT-2a on it while runtime/Semgrep finish).
+
+TABLE 1 - LIVE ITEMS (load 0.3)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| 10c-2b | runtime fixes after reviews A and B | 21:43 | 34 min | 22:45 | running (final full pytest) | codeant2-*.patch regenerated + evidence-codeant3-rt | evidence-codeant3-rt-12 written 22:1x |
+| 10c-1e | security nits follow-up patch | 22:15 | 2 min | 22:55 | running | triage/codeant3-sec-nits.patch + evidence-codeant6 | started |
+| rev sg-4 | fresh review Semgrep round 4 | 22:15 | 2 min | 22:35 | running | report | started |
+Totals: agents 3, shells 0, containers 0, heavy pytest 1, load 0.3 of 4 (machine is idle: room for INT-2a).
+Flags: none over time box.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| layout | 3 done | R1 2M, R2 2M, R3 0B/0M/4N | claim vs screenshots; missing regression | none | YES: clean | done: apply |
+| CodeAnt security | 5 done | R1 2B+1M, R2 2M, R3 1M, R4 1M, R5 0B/0M/7N | scrub holes; key leak in error path | none for the set; follow-up patch for 3 cheap nits is optional | YES: clean | done: apply; follow-up reviewed separately |
+| CodeAnt runtime | 3 (build) | R1 5M, R2 4M | stray lock, weak tests | Majors real, fixes not yet reviewed | no | fresh review clean |
+| Semgrep | 4 (review) | R1 1B+3M, R2 1M, R3 1M | guard gap; claim without evidence | confirm fixes | no | fresh review clean |
+| lane 8 docs-and-deps | done | R4 0B/1M (evidence) fixed | - | - | YES | apply |
+Waste check: the security loop took 5 rounds; each found a new real hole of the same class (blank characters in URLs): a class-level follow-up (nit 5) is being built instead of another round of luck.
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (22:07Z)
+| item | result |
+|---|---|
+| layout round-3 review | 0B/0M/4N: CLEAN (REVIEW-3.md) |
+| 10c-1d build + round-5 review | review 0B/0M/7N: CLEAN (REVIEW-codeant5-sec.md) |
+| 14c build | two patch forms; uv claim evidenced; 75/80 tests green; gitleaks 0 |
+
 ## 2026-11-12 22:07Z / 03:37 IST - 3 REVIEWS DONE SINCE 21:55Z (each found a real Major), 3 FIX BUILDS + 1 NEW REVIEW RUNNING; NO BATCH 2 READY YET
 FAILED / UNCERTAIN first:
 - CodeAnt security round 4 review: 1 Major, and it is a REAL KEY LEAK: scripts/n8n_api.py prints the n8n key in a traceback if the key file has two lines or a non-latin-1 character (http.client's ValueError message contains the header value; the script catches only HTTPError/OSError). Builder 10c-1d (round 5) fixing, with a test that shows the old code leaking a made-up key. Also: the check 'http only to loopback' for the proxy bypass rests on a failed address lookup, not on a rule (userinfo `evil.com@127.0.0.1`): fix = refuse '@' and control characters. Saved: triage/REVIEW-codeant4-sec.md.
