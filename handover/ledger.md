@@ -2747,3 +2747,9 @@
 | Q8bb6-r7-passold | reviews/Q8b/goldfish_review_report-r7.md Issue 11 | Minor | Q8b | 3 new tests + 139 ids pass on old code, need mutant or control reason | OPEN | batch 7 | | 2026-11-12
 | Q8bb6-r7-oracle | reviews/Q8b/goldfish_review_report-r7.md addendum (a) | Minor | Q8b | cookie test oracle older.masked_parts never read by a reviewer or EV | OPEN | b7 evidence run | | 2026-11-12
 | Q8bb6-r7-appendix | same addendum (b) | Major | Q8b | ticket appendix A1-A5 and X1-X9 never run in any evidence | OPEN | b7 evidence run | | 2026-11-12
+| Q8c1-r7b-F1 | reviews/Q8c-1/goldfish_review_report-r7b.md Issue 1 | Minor | Q8c-1 | default clock of policy_page untested; no CI --check step | OPEN | batch 8 | | 2026-11-12
+| Q8c1-r7b-mutclass | reviews/Q8c-1/goldfish_review_report-r7b.md Issue 2 | Minor | Q8c-1 | mutants depend on real date / weak expect (B7) | OPEN | batch 8 | | 2026-11-12
+| Q8c1-r7b-N1 | reviews/Q8c-1/goldfish_review_report-r7b.md Issue 3 | Minor | Q8c-1 | DECIDED shared with PENDING_KINDS | OPEN | batch 8 | | 2026-11-12
+| Q8c1-r7b-N3 | reviews/Q8c-1/goldfish_review_report-r7b.md Issue 4 | Nit | Q8c-1 | hard-coded 2026-12-12 in docstring and CHANGELOG | OPEN | batch 8 | | 2026-11-12
+| Q8c1-r7b-failbefore | reviews/Q8c-1/goldfish_review_report-r7b.md Issue 6 | Minor | Q8c-1 | per-test fail-before table and must-fail-on-main proofs missing | OPEN | batch 8 | | 2026-11-12
+| Q8c1-vault-engine-gate | reviews/Q8c-1/goldfish_review_report-r7b.md Issue 7 | Major | Q8c-1 | 12 Vault engine tests never run; needs a CI run before 2026-12-11 | IMPOSSIBLE-NOW | CI run | | 2026-11-12
