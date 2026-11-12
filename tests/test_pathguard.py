@@ -41,14 +41,21 @@ def _link(target: Path, link: Path, *, directory: bool = False) -> None:
 
 def _must_refuse(rule: str, label: str, fn, *args, **kwargs) -> PathRefused:
     """Call ``fn``; it must raise ``PathRefused`` with exactly ``rule``. The text starts "<rule> not refused" for every miss."""
+    refused: PathRefused | None = None
+    other = ""
     try:
         fn(*args, **kwargs)
     except PathRefused as exc:
-        assert exc.rule == rule, f"{rule} not refused ({label}): the rule was {exc.rule}"
-        return exc
+        refused = exc
     except (OSError, ValueError, RuntimeError, TypeError, IndexError) as exc:
-        raise AssertionError(f"{rule} not refused ({label}): {type(exc).__name__}") from None
-    raise AssertionError(f"{rule} not refused ({label})")
+        other = type(exc).__name__
+    # The checks sit outside the handlers so the first error line is ours, not a chained earlier error.
+    if other:
+        raise AssertionError(f"{rule} not refused ({label}): {other}")
+    if refused is None:
+        raise AssertionError(f"{rule} not refused ({label})")
+    assert refused.rule == rule, f"{rule} not refused ({label}): the rule was {refused.rule}"
+    return refused
 
 
 def _comp(name: str):
