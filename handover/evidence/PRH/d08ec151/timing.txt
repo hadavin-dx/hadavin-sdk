@@ -1,0 +1,6 @@
+wt run 1 rc=1 1 failed in 0.58s
+wt run 2 rc=1 1 failed in 0.60s
+wt run 3 rc=1 1 failed in 0.59s
+main run 1 rc=1 1 failed in 0.65s
+main run 2 rc=1 1 failed in 0.60s
+main run 3 rc=1 1 failed in 0.58s

@@ -1,0 +1,3 @@
+tests/test_prh_regressions.py::test_named_ids_exist_and_the_converse_holds
+tests/test_prh_regressions.py::test_pinned_secret_rows_count
+tests/test_prh_regressions.py::test_regression_row[b4_ctl_colour]

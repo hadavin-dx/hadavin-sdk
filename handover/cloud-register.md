@@ -1505,3 +1505,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a7443cef105437a21 | Q8b b4 EV (999ed05b) | 00:48Z | 50 min | 00:48Z | running | then egm-resolve r5 |
 | a147b438068dda7c9 | Q8c-1 light EV ad588599 | | | 00:50Z | CLOSED, evidence saved handover/evidence/Q8c-1/ad588599 (suite 10878 passed 13 skipped, policy_mutants 108/108 rc 0, fake clock 2026-12-12 head 346 passed) | Q8c-1 ledger rows still OPEN from earlier rounds, reconcile before any READY; Vault engine run IMPOSSIBLE-NOW |
 | a29df2677cc87fd98 | Q8c-1 ledger reconciliation table (read-only) | 00:50Z | 40 min | 00:50Z | running | check table, then edit ledger rows with evidence, push |
+| aea99c4308ed1d4fa | PR H fix batch 5 builder | 00:54Z | 90 min | running | check at 02:14Z |
