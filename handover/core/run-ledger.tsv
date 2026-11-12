@@ -18,3 +18,5 @@ ddf1d584c280593d4db82e81489b440fae3b876f	9a79548c419949c0bd0e501dbc8d4788834d3dd
 6e6ae21124f5b77231c6dd1a99a11b4c4bfb1ee3	a49770b106a9bac3e7d5e18d6b107240e6e31017	linux	tests/stage_mutants.py	default	0	37 of 37 good	92	2026-11-12
 6e6ae21124f5b77231c6dd1a99a11b4c4bfb1ee3	a49770b106a9bac3e7d5e18d6b107240e6e31017	linux	tests/bind_mutants.py	default	0	39 of 39 good	26	2026-11-12
 6e6ae21124f5b77231c6dd1a99a11b4c4bfb1ee3	a49770b106a9bac3e7d5e18d6b107240e6e31017	linux	ruff check+format+bandit+scan_repo+gitleaks	default	0	all clean	3	2026-11-12
+8b982dd3a06fa4c2ae9b728e0f38db2b5b2d8a69	-	linux	ruff check+format+bandit+scan_repo+gitleaks (evidence)	default	0	all clean	5	2026-11-12
+8b982dd3a06fa4c2ae9b728e0f38db2b5b2d8a69	-	linux	tests/test_no_pglast_in_runtime.py -v	default	0	62 passed	1	2026-11-12
