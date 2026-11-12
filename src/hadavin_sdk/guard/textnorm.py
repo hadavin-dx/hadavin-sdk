@@ -4,7 +4,7 @@ A kind or demo that needs a check name or a scan imports ``identity_keys`` / ``c
 here instead of keeping its own table. The public names are listed once, with one line each, under "THE PUBLIC NAMES" below.
 Do not use ``fold`` to display or store text: it drops the non-spacing marks (category Mn: the breve of Cyrillic short i, accents, the
 Hindi and Thai vowel signs that sit above or below a letter) and so over-collides, which is the safe side for a DENY. It KEEPS the spacing
-marks (Mc: the Hindi vowel signs aa and i, visarga), the modifier letters (Lm) and the modifier symbols (Sk); see "MARKS AND SCANS" below.
+marks (Mc: the Hindi vowel signs aa and i, visarga), the modifier letters (Lm, kept or read as the letter they look like) and the modifier symbols (Sk); see "MARKS AND SCANS" below.
 The DENY check (``identity_keys``, ``could_be_same_person``) DROPS those three kinds in one of its readings, so it still matches two names that differ
 only by such a mark.
 
@@ -177,6 +177,9 @@ MARKS AND SCANS. Three categories are NOT dropped by the spelling variants of ``
   NOT caught, it is pinned as a limit by a test, and a caller who must catch it needs its own rule.
   At most six views per call of ``squeeze_views`` (three spelling variants, each with and without the marks); ``fold_views`` adds the script views below
   when it is given ``scripts``, so at most nine.
+  A caller that must cut the ORIGINAL text at the place a view found a value (the redactor) builds the views one by one with ``fold_view(raw,
+  marks_dropped=..., iota=...)`` (``fold_view(raw)`` is ``fold(raw)``; without ``casefold`` the two switches name every view ``fold_views`` returns),
+  drops the marks of a text of its own with ``without_spacing_marks``, and reads ``SPACING_CATEGORIES`` (Mc, Lm, Sk) instead of keeping its own list.
   THE RULE FOR A SCAN (redaction, blocklist, has-secret): call ``scan_holds(text, value)``. It looks through BOTH the ``fold_views`` AND the
   ``squeeze_views`` of the text (and the scan keys), reads the text with the scripts of the VALUE (``scan_views(text, value)`` takes them from the
   value itself, so a caller cannot forget them), and takes the needles of the value with ``scan_needles``, which refuses a value without a long
@@ -275,9 +278,10 @@ Unicode 15.1.0, so look-alike pairs that Unicode added in later versions are not
 minus sign, the division slash and the typographic quotes ARE read as ``-``, ``/``, ``'`` and ``"`` (P1b, gap 4: "INV-2026" and "INV" + U+2212 +
 "2026" are one check name). ``has_mixed_script`` is the fail-closed backstop: a word that mixes Latin
 with Cyrillic, Greek, Armenian, Cherokee, Coptic, Georgian, Hebrew, Lisu, Runic, Tamil or any other non-East-Asian script is a deny signal whatever the
-table knows (every script in the Unicode data except Common, Inherited and the East Asian scripts counts). Property: ``fold(x + mark) == fold(x) == fold(mark + x)`` for any non-spacing or enclosing mark (Mn, Me), format, control,
-private-use, surrogate or unassigned character that is not a table source (the nine dropped categories; no unassigned code point is a table source on the pinned version), with the one exception above (U+0345 after a Greek letter, for
-the single spelling variant (b) only); for the spelling variants, any such mark, U+0345 included, leaves a shared spelling variant
+table knows (every script in the Unicode data except Common, Inherited and the East Asian scripts counts). Property: ``fold(x + mark) == fold(x) == fold(mark + x)`` for any non-spacing or enclosing mark (Mn, Me), format, private-use, surrogate or unassigned character that is not a table source (no unassigned code point is a table source on the pinned version) and any control character that is not
+white space, with two exceptions: the one above (U+0345 after a Greek letter, for the single spelling variant (b) only) and a white-space control
+(tab, line feed, vertical tab, form feed, carriage return, U+001C to U+001F, U+0085) or a line or paragraph separator (Zl, Zp), which becomes a
+space (``fold("admin\\n") == "admin "``); ``identity_key``, ``squeeze`` and ``could_be_same_person`` are unaffected by those; for the spelling variants, any such mark, U+0345 included, leaves a shared spelling variant
 (``could_be_same_person(x + mark, x)``). The property does NOT hold for a spacing mark (Mc), a modifier letter (Lm) or a modifier symbol (Sk) in the
 spelling variants of ``fold``; the marks-dropped views of ``fold_views`` and ``squeeze_views`` hold it for those, and so does
 ``could_be_same_person`` (through the marks-dropped check names of ``identity_keys``).
@@ -288,6 +292,7 @@ from __future__ import annotations
 import bisect
 import contextlib
 import contextvars
+import functools
 import hashlib
 import logging
 import re
@@ -306,6 +311,7 @@ from hadavin_sdk.guard._confusables import TABLE as _CONFUSABLES
 __all__ = [
     "FILLERS",
     "FOLD_VERSION",
+    "SPACING_CATEGORIES",
     "AllowVerdict",
     "Coverage",
     "CoverageRefused",
@@ -319,6 +325,7 @@ __all__ = [
     "allow_equal",
     "could_be_same_person",
     "fold",
+    "fold_view",
     "fold_views",
     "has_hidden_channel",
     "has_mixed_script",
@@ -337,6 +344,7 @@ __all__ = [
     "squeeze",
     "squeeze_views",
     "value_scripts",
+    "without_spacing_marks",
 ]
 
 
@@ -380,7 +388,7 @@ class EmptyView(TextnormError):
 
 
 _DROP_CATEGORIES = frozenset({"Cc", "Cf", "Mn", "Me", "Zl", "Zp", "Co", "Cs", "Cn"})
-_SPACING_CATEGORIES = frozenset(
+SPACING_CATEGORIES = frozenset(
     {"Mc", "Lm", "Sk"}
 )  # kept by the spelling variants, removed by the marks-dropped views of a scan
 # Categories of a code point this Python cannot name: unassigned (Cn), private use (Co), surrogate (Cs). The fold DROPS them, so one that
@@ -462,6 +470,9 @@ _DIGITS = types.MappingProxyType(
 )  # built once at import: no lazy fill, so no thread can see a half-filled table
 
 
+@functools.lru_cache(
+    maxsize=8192
+)  # a pure function of the character; a text of one script repeats a few dozen of them thousands of times
 def _char_weight(c: str) -> int:
     """The weight of ``c``: the larger of the single-pass weight of ``c`` and of its case fold (the case-folding path folds case first).
 
@@ -494,11 +505,31 @@ def _pass_weight(c: str) -> int:
     )
 
 
+_WEIGHT_MEMO_MIN = 1024  # a shorter text is weighed again each time (a few dozen distinct characters at most is cheaper than a digest)
+_WEIGHT_MEMO_MAX = 32
+_WEIGHT_MEMO: dict[
+    bytes, int
+] = {}  # SHA-256 of a long text -> its weight (no text is kept); a caller that folds one line several times weighs it once
+
+
 def _weight(text: str) -> int:
-    """W(text): the sum of the character weights. An ASCII text has W = its length. Computed once per DISTINCT character of the text."""
+    """W(text): the sum of the character weights. An ASCII text has W = its length. Computed once per DISTINCT character of the text. The weight of
+    a LONG text is remembered under its SHA-256 digest (measured: 0.41 s for 200,000 distinct characters; the redactor folds one line several
+    times), at most 32 entries, so no text is kept in memory by this function."""
     if text.isascii():
         return len(text)
-    return sum(_char_weight(c) * n for c, n in Counter(text).items())
+    if len(text) < _WEIGHT_MEMO_MIN:
+        return sum(_char_weight(c) * n for c, n in Counter(text).items())
+    key = hashlib.sha256(text.encode("utf-8", "surrogatepass")).digest()
+    weight = _WEIGHT_MEMO.get(key)
+    if weight is None:
+        weight = sum(_char_weight(c) * n for c, n in Counter(text).items())
+        if len(_WEIGHT_MEMO) >= _WEIGHT_MEMO_MAX:
+            _WEIGHT_MEMO.pop(
+                next(iter(_WEIGHT_MEMO)), None
+            )  # the oldest entry (dicts keep the order of insertion)
+        _WEIGHT_MEMO[key] = weight
+    return weight
 
 
 def _checked(*texts: str) -> None:
@@ -576,7 +607,7 @@ _READINGS = (
 def _without_spacing_marks(text: str) -> str:
     """``text`` without any Mc, Lm or Sk character. It runs on the RAW text, before the first normalisation: NFKD and NFKC read a modifier
     letter such as U+02B0 as the letter h, so a mark must be gone before they run."""
-    return "".join(ch for ch in text if unicodedata.category(ch) not in _SPACING_CATEGORIES)
+    return "".join(ch for ch in text if unicodedata.category(ch) not in SPACING_CATEGORIES)
 
 
 # Two or more words of a Unicode character name are the script for these first words ("OLD TURKIC" and "OLD ITALIC" are two scripts).
@@ -634,7 +665,7 @@ def _prefix(nfkd: str, *, iota: bool, marks: bool = False) -> str:
     s = "".join(
         " " if ch.isspace() else ch
         for ch in s
-        if _kept(ch) and not (marks and unicodedata.category(ch) in _SPACING_CATEGORIES)
+        if _kept(ch) and not (marks and unicodedata.category(ch) in SPACING_CATEGORIES)
     )
     s = unicodedata.normalize("NFKC", s)
     return s.translate(_DIGITS).translate(_PUNCT)
@@ -793,6 +824,33 @@ def value_scripts(raw: str) -> frozenset[str]:
     ``fold_views`` so that a letter of any OTHER script in the text is dropped from its script views."""
     _checked(raw)
     return _value_scripts(raw)
+
+
+def fold_view(
+    raw: str,
+    *,
+    marks_dropped: bool = False,
+    iota: bool = True,
+    casefold: bool = False,
+    collapse_ws: bool = False,
+) -> str:
+    """ONE named view of ``raw`` (one of the strings ``fold_views`` returns): ``iota`` False drops U+0345 everywhere (spelling variant (a)),
+    True reads it as an iota after a Greek letter (spelling variant (b), what ``fold`` returns); ``marks_dropped`` builds the view from the text
+    without its Mc, Lm and Sk characters. A caller that must know WHICH view found a value (the redactor cuts the original text with a
+    position map of one view) asks for the views one by one; ``fold_view(raw)`` is ``fold(raw)``. Without ``casefold`` there is no
+    upper-side spelling variant, so these two switches name every view ``fold_views`` returns."""
+    _checked(raw)
+    text = _without_spacing_marks(raw) if marks_dropped else raw
+    prefix = _prefix(unicodedata.normalize("NFKD", text), iota=iota, marks=marks_dropped)
+    return _finish(prefix, casefold=casefold, table_first=False, collapse_ws=collapse_ws)
+
+
+def without_spacing_marks(raw: str) -> str:
+    """``raw`` without any spacing mark (Mc), modifier letter (Lm) or modifier symbol (Sk) character (ASCII ``^`` and the backtick are modifier
+    symbols too): the text the marks-dropped views are made from. A caller that needs the same drop on a text of its own (a second-pass view)
+    uses this function and keeps one definition."""
+    _checked(raw)
+    return _without_spacing_marks(raw)
 
 
 def fold_views(
@@ -1027,7 +1085,7 @@ def _keys(raw: str) -> tuple[str, ...]:
 
 def _holds_spacing(text: str) -> bool:
     """True when ``text`` holds an Mc, Lm or Sk character."""
-    return any(unicodedata.category(ch) in _SPACING_CATEGORIES for ch in set(text))
+    return any(unicodedata.category(ch) in SPACING_CATEGORIES for ch in set(text))
 
 
 def _holds_unnamed(text: str) -> bool:

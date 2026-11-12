@@ -121,6 +121,29 @@ def test_fold_is_stable_under_combining_marks_format_unassigned_and_tag_characte
     )
 
 
+def test_a_white_space_control_or_separator_becomes_a_space_and_every_other_control_is_dropped():
+    """Derived from ``str.isspace`` over every control character and every line or paragraph separator, not from a list: step 5 turns a white-space
+    one into a space (``fold("admin\\n") == "admin "``), every other one is dropped (``fold(x + c) == fold(x) == fold(c + x)``). identity_key,
+    squeeze and could_be_same_person ignore them."""
+    import unicodedata
+
+    seen = 0
+    for cp in range(0x110000):
+        c = chr(cp)
+        if unicodedata.category(c) not in ("Cc", "Zl", "Zp"):
+            continue
+        seen += 1
+        if c.isspace():
+            assert fold("admin" + c) == "admin " != fold("admin"), f"U+{cp:04X}"
+            assert fold(c + "admin") == " admin", f"U+{cp:04X}"
+            assert identity_key("admin" + c) == identity_key("admin")
+            assert squeeze("admin" + c) == squeeze("admin")
+            assert could_be_same_person("admin" + c, "admin")
+        else:
+            assert fold("admin" + c) == fold("admin") == fold(c + "admin"), f"U+{cp:04X}"
+    assert seen == 65 + 2, seen  # 65 control characters (C0, DEL, C1) and U+2028, U+2029
+
+
 def test_fold_covers_the_listed_look_alikes_and_all_map_to_ascii():
     listed = {0x405: "S", 0x406: "I", 0x408: "J", 0x423: "Y", 0x41E: "O", 0x455: "s", 0x3B9: "i", 0x3BA: "k", 0x3C1: "p", 0x3C4: "t",
               0x3C5: "u", 0x3C7: "x", 0x501: "d", 0x131: "i", 0x130: "I", 0x585: "o", 0x57D: "u", 0x555: "O", 0x54D: "U", 0x3BF: "o",
@@ -1197,7 +1220,7 @@ def test_the_hidden_channel_signal_refuses_what_is_not_text():
 
 
 # ---- names ---------------------------------------------------------------------------------------------------------------------------------
-def test_the_public_names_are_exactly_the_listed_thirty_three():
+def test_the_public_names_are_exactly_the_listed_thirty_six():
     assert sorted(textnorm.__all__) == sorted(
         [
             "FILLERS",
@@ -1208,6 +1231,7 @@ def test_the_public_names_are_exactly_the_listed_thirty_three():
             "EmptyView",
             "FoldNotConverged",
             "NotText",
+            "SPACING_CATEGORIES",
             "TextTooLong",
             "TextnormError",
             "UnidataMismatch",
@@ -1215,6 +1239,7 @@ def test_the_public_names_are_exactly_the_listed_thirty_three():
             "allow_equal",
             "could_be_same_person",
             "fold",
+            "fold_view",
             "fold_views",
             "has_hidden_channel",
             "has_mixed_script",
@@ -1233,9 +1258,10 @@ def test_the_public_names_are_exactly_the_listed_thirty_three():
             "squeeze",
             "squeeze_views",
             "value_scripts",
+            "without_spacing_marks",
         ]
     )
-    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 33
+    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 36
 
 
 def test_every_name_the_module_defines_is_public_and_listed_or_private():

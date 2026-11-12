@@ -20,10 +20,18 @@ it was removed - second review, 2026-09-30.)
 
 from __future__ import annotations
 
+import functools
 import re
 import string
+import time
+import unicodedata
+from bisect import bisect_right
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any
+
+from hadavin_sdk import defaults
+from hadavin_sdk.guard.textnorm import SPACING_CATEGORIES, fold_view
 
 # Ordered deliberately: the greedy/most-specific patterns run before the narrow ones, otherwise a
 # narrow pattern eats part of a broader secret (a UUID inside an ARN, an EMAIL inside a connection
@@ -151,6 +159,13 @@ ARN_TAIL = r"[A-Za-z0-9_\-./:*+@]"
 _KV_WORD = r"(?:password|passwd|pwd|secret|token|api[_\-]?key|apikey|access[_\-]?key|private[_\-]?key|credential|auth)"
 ARN_CHAR = r"(?:(?![\w.\-*+@]{0,40}?" + _KV_WORD + r"[\w.\-]{0,20}=)" + ARN_TAIL + ")"
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    # PuTTY FIRST (hadavin-sdk edit): its value runs to the end of the text, so a PuTTY block that starts inside a PEM block must be cut before the PEM
+    # pattern shortens the text; the PEM pattern then masks the rest (its unterminated form runs to the end). The other order left the lines after the PEM END in clear.
+    # PuTTY: the key lines - at least one character, then up to the Private-MAC line or the end of the text.
+    (
+        "PRIVKEY",
+        re.compile(r"Private-Lines:[ \t]*\d+[ \t]*\r?\n([\s\S](?:(?!\r?\nPrivate-MAC)[\s\S])*)"),
+    ),
     # A whole PEM private key block — the highest-value secret that turns up in a misconfig dump.
     # PEM and PGP. A key cut off by a line-length limit has no END line: mask to the end.
     (
@@ -159,11 +174,6 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             r"-----BEGIN[A-Z0-9 ]*PRIVATE KEY(?: BLOCK)?-----[\s\S]*?"
             r"(?:-----END[A-Z0-9 ]*PRIVATE KEY(?: BLOCK)?-----|\Z)"
         ),
-    ),
-    # PuTTY: the key lines - at least one character, then up to the Private-MAC line or the end of the text.
-    (
-        "PRIVKEY",
-        re.compile(r"Private-Lines:[ \t]*\d+[ \t]*\r?\n([\s\S](?:(?!\r?\nPrivate-MAC)[\s\S])*)"),
     ),
     # Account-less (`arn:aws:s3:::bucket`) and other partitions (`aws-cn`, `aws-us-gov`) too (lock-in audit row 14).
     ("ARN", re.compile(r"arn:aws[a-z-]*:[a-z0-9\-]*:[a-z0-9\-]*:(?:\d{12})?:" + ARN_CHAR + r"+")),
@@ -833,6 +843,10 @@ def strip_ansi(text: str) -> str:
             and (text[s - 1].isalnum() or text[s - 1] == "_")
             and (text[e].isalnum() or text[e] == "_")
         )
+        if glued and e - s == 2 and text[s + 1].isalpha():
+            return m.group(
+                0
+            )  # ESC or U+009B with ONE letter: that letter may belong to a key cut by the control (the fold drops the control)
         return " " if glued else ""
 
     return _ANSI.sub(cut, text) if "\x1b" in text or "\x9b" in text else text
@@ -866,6 +880,7 @@ def redact(
     near: tuple[str, ...] = (),
     _sweep_copies: bool = True,
     _cache: dict | None = None,
+    _deadline: float | None = None,
 ) -> RedactionResult:
     """Scrub `text`, then prove the scrub worked.
 
@@ -873,7 +888,7 @@ def redact(
     model still sees that two log lines refer to the same host. `near`: related texts redacted apart
     (a record's other fields) whose bank words still count as bank context here, as in redact_many.
     """
-    r = _Redactor(mapping, _cache)
+    r = _Redactor(mapping, _cache, _deadline)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
     out = r.find(text)
     if _sweep_copies:  # redact_many's first pass only FINDS values; its second pass masks
@@ -887,10 +902,315 @@ def _countable(suffix: str) -> bool:
     return suffix.isascii() and suffix.isdigit() and len(suffix) <= 18
 
 
+# patterns whose match depends on what stands around them, or on placeholders already placed: they take a full round whatever the scan found
+_CONTEXT_LABELS = frozenset({"BANKACCT", "BANKCODE"})
+MAX_FOLD_ROUNDS = 4  # rounds of in-place masking per line before the line is withheld
+FOLD_NOTE = "[line withheld: look-alike text hid a protected value]"  # fixed text: the folded line is never emitted
+
+
+@functools.lru_cache(maxsize=65536)
+def _char_class(ch: str) -> tuple[str, int] | None:
+    """What the fold does to ONE non-ASCII-printable character: (its folded text, 1 if it is a look-alike or sign that must not sit inside a
+    masked value else 0), or ``None`` when the fold does something a legitimate text does not (see ``_Redactor._aligned_fold``)."""
+    f = fold_view(ch)
+    flag = 0
+    if ch == "\u2044":
+        return "/", 1  # a fraction slash spells a slash: masked around, never inside (SL-D)
+    if f == ch or f == "":
+        pass
+    elif ch.isspace():
+        if f != " ":
+            return None
+    elif unicodedata.category(ch) == "Nd":
+        if not (len(f) == 1 and f.isascii() and f.isdigit()):
+            return None
+    elif len(f) == 1 and f.isalpha():
+        nfd = unicodedata.normalize("NFD", ch)
+        if nfd[0] == f and all(unicodedata.category(c) == "Mn" for c in nfd[1:]):
+            flag = (
+                0 if f.isascii() else 1
+            )  # a letter that lost its accent or mark (e -> e, the Japanese de -> te)
+        elif f.isascii() and ch.isalpha() and unicodedata.normalize("NFKC", ch) == ch:
+            flag = 1  # a look-alike letter of another script
+        else:
+            return None  # a full-width or compatibility letter: live ASCII after the fold
+    elif (g := f.replace("\u2044", "/")).isascii() and all(
+        c.isalnum() or c == "." or (c == "/" and "\u2044" in f) for c in g
+    ):
+        f = g  # a fraction slash (U+2044, as in a one-half sign) is a plain slash here; any other character that folds to "/" is refused
+        flag = 1  # a sign that spells letters, digits or dots (an ellipsis, TM, a ligature, a superscript digit): masked around, never inside
+    else:
+        return None
+    return f, flag
+
+
+_HIDDEN_ASCII = re.compile(
+    "[\x00-\x08\x0e-\x1b\x7f]|[\t\x0b\x0c\x1c-\x1f]"
+)  # ASCII control characters the fold drops, and a white-space-like one (see _JOIN_CTLS) ANYWHERE: whatever stands beside it, a secret may be cut by it
+# The white-space-like control characters the fold reads as a space: tab, vertical tab, form feed, U+001C to U+001F and NEL (U+0085). A reader sees
+# a separator, so a key cut by one is two words; but a key in the text is a key whatever a character inside it looks like, so the views that
+# drop spacing marks drop these too, and a fixed-shape value found that way is masked whole, with the control characters inside it. (A new line
+# and a carriage return are line ends, not read this way.)
+_JOIN_CTLS = "\t\x0b\x0c\x1c\x1d\x1e\x1f\x85"
+JOIN_RE = re.compile("[" + _JOIN_CTLS + "]")
+_LINES = re.compile(r"[^\r\n]*(?:\r\n|\r|\n)|[^\r\n]+")
+
+
+# GAP: the character that stands in a gap-tolerant view for one run of HIDDEN items (white-space-like control characters, escape sequences,
+# spacing marks and modifier letters of a marks view, characters the fold drops). It is a private-use character, so it is no word character and
+# no white space: a word boundary next to it holds. The patterns of such a view are the ordinary patterns rewritten (``_tolerant``) so that
+# every item they read may be followed by any number of GAPs: a secret is found with any number of hidden items of any kind inside it, and
+# each EDGE of a match decides for itself whether it is a boundary (a gap beside the edge counts as the space it may stand for).
+GAP = "\ue000"
+_JOIN_RUN = re.compile("[" + _JOIN_CTLS + "]+")
+
+
+_fold_char = fold_view  # the fold of ONE character, for the view code (a name of its own: callers count the folds of whole values)
+
+
+@functools.lru_cache(maxsize=65536)
+def _is_dropped(ch: str) -> bool:
+    """True for a character the fold removes without a trace (zero-width and format characters, ASCII controls other than the white-space-like
+    ones): in a gap-tolerant view it is a gap."""
+    return not (" " <= ch <= "~") and ch not in _JOIN_CTLS and _fold_char(ch) == ""
+
+
+def _gap_spans(text: str, read: int, marks: bool) -> list[tuple[int, int]]:
+    """The runs of hidden items of ``text`` as (start, stop), merged when they touch. ``read`` 1: every white-space-like control character,
+    every whole escape sequence and every character the fold drops; ``read`` 2: the same, except that the LAST character of an escape
+    sequence is a real character (the letter of ``AKIAIOS<ESC>[FODNN7...`` may be the key's own); with ``marks`` the spacing marks, modifier
+    letters and modifier symbols too."""
+    spans: list[tuple[int, int]] = [m.span() for m in _JOIN_RUN.finditer(text)]
+    if "\x1b" in text or "\x9b" in text:
+        for m in _ANSI.finditer(text):
+            s, e = m.span()
+            if read == 2:
+                if (
+                    text[s] == "\x1b" and text[s + 1 : s + 2] == "]"
+                ):  # a title string: only its frame goes, its text is read
+                    spans.append((s, s + 2))
+                    if text[e - 1] == "\x07":
+                        spans.append((e - 1, e))
+                else:
+                    spans.append((s, e - 1))
+            else:
+                spans.append((s, e))
+    if not text.isascii() or not text.isprintable():
+        for i, ch in enumerate(text):
+            if _is_dropped(ch) or (marks and unicodedata.category(ch) in SPACING_CATEGORIES):
+                spans.append((i, i + 1))
+    spans = [sp for sp in spans if sp[0] < sp[1]]
+    spans.sort()
+    merged: list[tuple[int, int]] = []
+    for s, e in spans:
+        if merged and s <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], e))
+        else:
+            merged.append((s, e))
+    return merged
+
+
+def _view(text: str, marks: bool, iota: bool, read: int = 0) -> str:
+    """One view of ``text`` (``fold_view``). ``read`` 0: as written (the views that drop spacing marks drop the white-space-like control
+    characters first). ``read`` 1 or 2: the gap-tolerant view, every run of hidden items (``_gap_spans``) is one ``GAP`` between the folded
+    pieces of text on both sides of it."""
+    if not read:
+        return fold_view(JOIN_RE.sub("", text) if marks else text, marks_dropped=marks, iota=iota)
+    parts, prev = [], 0
+    for s, e in _gap_spans(text, read, marks):
+        parts.append(fold_view(text[prev:s], marks_dropped=marks, iota=iota))
+        parts.append(GAP)
+        prev = e
+    parts.append(fold_view(text[prev:], marks_dropped=marks, iota=iota))
+    return "".join(parts)
+
+
+def _plain(text: str) -> bool:
+    """True for a text the fold leaves alone: ASCII with no control character in it. A control character inside a value hides it as well as any
+    non-ASCII mark does (``sk-`` + ten letters + DEL + ten letters), so such a line takes the fold scan too."""
+    return text.isascii() and _HIDDEN_ASCII.search(text) is None
+
+
+_PRIMARY_VIEW = (
+    False,
+    True,
+    0,
+)  # (marks dropped, U+0345 read as an iota, how escape sequences are read): what ``fold`` returns
+_IOTA_MARK = "\u0345"
+
+
+@functools.lru_cache(maxsize=65536)
+def _mark_flags(ch: str) -> tuple[bool, bool]:
+    """(is a spacing mark, modifier letter or modifier symbol: the characters the marks-dropped views remove, ASCII ``^`` and the backtick
+    too (both are category Sk); has a U+0345 in its NFKD form, as U+0345 itself and U+037A do). Per character, so a line costs its distinct characters."""
+    return unicodedata.category(
+        ch
+    ) in SPACING_CATEGORIES or ch in _JOIN_CTLS, _IOTA_MARK in unicodedata.normalize("NFKD", ch)
+
+
+def _is_edge_mark(ch: str) -> bool:
+    """A spacing mark, modifier letter or modifier symbol (not a control character): the characters a masked value takes with it at its edge."""
+    return unicodedata.category(ch) in SPACING_CATEGORIES
+
+
+def _is_spacing(ch: str) -> bool:
+    return _mark_flags(ch)[0]
+
+
+def _view_specs(line: str) -> tuple[tuple[bool, bool, int], ...]:
+    """The views of ``line`` that can differ from the primary one (``fold``), as (marks dropped, iota, read) triples. A scan MUST look through
+    all of them (textnorm, "MARKS AND SCANS"): a mark inserted into a protected value hides it from ``fold`` alone. ``read`` 0 is the text as
+    written; 1 and 2 are the gap-tolerant views (``GAP``): ONE view holds every hidden item of the line (white-space-like controls, escape
+    sequences, characters the fold drops, and with ``marks`` the spacing marks), however many there are and in whatever order, and the
+    patterns decide the boundary of each edge of a match themselves. Two readings exist only for a line with an escape sequence (2: its last
+    character is a real one). A plain line (ASCII, no control character) has no view: its characters are read as written."""
+    if _plain(line):
+        return ()
+    chars = set(line)
+    flags = {c: _mark_flags(c) for c in chars}
+    has_iota = any(f[1] for f in flags.values())
+    real_marks = any(f[0] and c not in _JOIN_CTLS for c, f in flags.items())
+    ansi = _ANSI.search(line) is not None
+    has_gap = ansi or any(c in _JOIN_CTLS or _is_dropped(c) for c in chars)
+    reads = (1, 2) if ansi else (1,)
+    specs: list[tuple[bool, bool, int]] = []
+    if has_iota:
+        specs += [(False, False, r) for r in (reads if has_gap else (0,))]
+    if has_gap:
+        specs += [(False, True, r) for r in reads]
+    if real_marks:
+        specs += [(True, True, r) for r in reads]
+        if has_iota:
+            specs += [(True, False, r) for r in reads]
+    return tuple(dict.fromkeys(specs))
+
+
+def _alias_keys(value: str) -> tuple[str, ...]:
+    """The folded spellings that key the alias index: every view of the value (a clear copy of a value written with a mark inside must be masked)."""
+    keys = [fold_view(value)]
+    keys += [_view(value, *spec).replace(GAP, "") for spec in _view_specs(value)]
+    return tuple(dict.fromkeys(keys))
+
+
+def _reads_gap(op: Any, av: Any, state: Any) -> bool:
+    """True when the single parse item ``(op, av)`` would match the ``GAP`` character (compiled and tried once, so the answer is the regex
+    engine's own, flags included)."""
+    from re import _compiler as comp
+    from re import _parser as sp
+
+    return comp.compile(sp.SubPattern(state, [(op, av)]), state.flags).match(GAP) is not None  # type: ignore[arg-type]
+
+
+def _tolerate(items: Any, state: Any) -> list[Any]:
+    """The parse of a pattern with every item it reads made to accept any number of ``GAP`` after it. An item never takes a GAP itself (a
+    guard in front of it), so a GAP is read in exactly one way and the match stays linear. Boundary assertions (``\\b``, ``^``, look-behinds)
+    are left alone: they see the GAP, a non-word non-space character, where the hidden items stand; look-aheads are rewritten like the rest."""
+    from re import _constants as c  # the parser's own names; the repo runs on Python 3.12 and later
+    from re import _parser as sp
+
+    def sub(data: Any) -> Any:
+        return sp.SubPattern(state, data)
+
+    gap = (c.LITERAL, ord(GAP))
+    out: list[Any] = []
+    for op, av in items:
+        if op in (c.LITERAL, c.NOT_LITERAL, c.IN, c.ANY):
+            # The guard is only needed where the item itself could read a GAP (``.``, ``[^x]``, ``\\W``); a literal or a plain set cannot, and
+            # without a guard the compiled pattern keeps its literal prefix, which is what lets the scan skip along a long text.
+            guard = [(c.ASSERT_NOT, (1, sub([gap])))] if _reads_gap(op, av, state) else []
+            out.append(
+                (
+                    c.SUBPATTERN,
+                    (
+                        None,
+                        0,
+                        0,
+                        sub([*guard, (op, av), (c.MAX_REPEAT, (0, c.MAXREPEAT, sub([gap])))]),
+                    ),
+                )
+            )
+        elif op in (c.MAX_REPEAT, c.MIN_REPEAT, c.POSSESSIVE_REPEAT):
+            lo, hi, body = av
+            one = list(body)
+            if (
+                op == c.MAX_REPEAT
+                and lo <= 1
+                and hi == c.MAXREPEAT
+                and len(one) == 1
+                and one[0][0] in (c.LITERAL, c.IN)
+                and not _reads_gap(one[0][0], one[0][1], state)
+            ):
+                # ``X+`` / ``X*`` with a GAP allowed after each X, written so the engine keeps its fast loop over X: ``X+(?:GAP+X+)*GAP*``
+                # (the same strings; every GAP-run starts with a GAP, so no string can be read two ways and the match stays linear)
+                run = sub([(c.MAX_REPEAT, (1, c.MAXREPEAT, sub(one)))])
+                more = sub(
+                    [
+                        (
+                            c.MAX_REPEAT,
+                            (
+                                0,
+                                c.MAXREPEAT,
+                                sub([(c.MAX_REPEAT, (1, c.MAXREPEAT, sub([gap]))), *run]),
+                            ),
+                        )
+                    ]
+                )
+                whole = [*run, *more, (c.MAX_REPEAT, (0, c.MAXREPEAT, sub([gap])))]
+                out.append(
+                    (c.SUBPATTERN, (None, 0, 0, sub(whole)))
+                    if lo == 1
+                    else (c.MAX_REPEAT, (0, 1, sub([(c.SUBPATTERN, (None, 0, 0, sub(whole)))])))
+                )
+            else:
+                out.append((op, (lo, hi, sub(_tolerate(body, state)))))
+        elif op == c.SUBPATTERN:
+            group, add, delete, body = av
+            out.append((op, (group, add, delete, sub(_tolerate(body, state)))))
+        elif op == c.ATOMIC_GROUP:
+            out.append((op, sub(_tolerate(av, state))))
+        elif op == c.BRANCH:
+            out.append((op, (av[0], [sub(_tolerate(b, state)) for b in av[1]])))
+        elif op in (c.ASSERT, c.ASSERT_NOT) and av[0] > 0:
+            out.append((op, (av[0], sub(_tolerate(av[1], state)))))
+        else:
+            out.append((op, av))
+    return out
+
+
+def _tolerant(pattern: re.Pattern[str]) -> re.Pattern[str]:
+    """``pattern`` rewritten for the gap-tolerant views (see ``GAP``)."""
+    from re import _compiler as comp
+    from re import _parser as sp
+
+    parsed = sp.parse(pattern.pattern, pattern.flags)
+    return comp.compile(
+        sp.SubPattern(parsed.state, _tolerate(parsed.data, parsed.state)), pattern.flags
+    )  # type: ignore[arg-type]
+
+
+@functools.lru_cache(maxsize=1)
+def _tolerant_patterns() -> tuple[tuple[str, re.Pattern[str]], ...]:
+    """The gap-tolerant twin of ``PATTERNS`` (same order, same labels and groups)."""
+    return tuple((label, _tolerant(p)) for label, p in PATTERNS)
+
+
+def _patterns_for(text: str) -> Any:
+    """The patterns to run on ``text``: the gap-tolerant ones when it holds a GAP, the ordinary ones otherwise."""
+    return _tolerant_patterns() if GAP in text else PATTERNS
+
+
 class _Redactor:
     """One placeholder namespace (map, reverse map, counters) shared by every text of one call."""
 
-    def __init__(self, mapping: dict[str, str] | None, cache: dict | None = None) -> None:
+    def __init__(
+        self,
+        mapping: dict[str, str] | None,
+        cache: dict | None = None,
+        deadline: float | None = None,
+    ) -> None:
+        # the time.thread_time() value (CPU seconds of the calling thread, so load from other threads cannot change the outcome) the folded scan must finish by; runmap passes ONE deadline for a text and all its views
+        self._deadline = deadline
+        self._scan_deadline = float("inf")
         self._cache = (
             cache  # a run's built finders, reused while its map is unchanged (see runmap.RunMap)
         )
@@ -907,53 +1227,468 @@ class _Redactor:
                     self.counters[kind] + 1, int(suffix) if _countable(suffix) else 0
                 )
         self._built_for = -1
+        self.alias: dict[
+            str, str
+        ] = {}  # folded spelling -> placeholder, for written slices that differ from their fold (internal)
+        self._journal: list[tuple[str, str, str | None]] | None = (
+            None  # registrations of the line in progress
+        )
         self._rules: dict[str, tuple[int, str, Any]] = {}
         self._finders: list[tuple[re.Pattern[str], dict[str, list[str]]]] = []
         self._slow: list[str] = []  # values checked one by one: nested too deep for the finder
         self._ordered: list[tuple[str, str]] = []
         self.bank_near = False  # redact_many: a bank word in some string of the batch
         if cache and cache.get("map") == self.mapping:  # nothing new since the last build: skip it
-            self._ordered, self._rules, self._finders, self._slow = cache["state"]
+            self._ordered, self._rules, self._finders, self._slow, self.alias = cache["state"]
             self._built_for = len(self.mapping)
 
     def find(self, text: str) -> str:
-        out = strip_ansi(text)
+        out = text
+        if type(out) is not str:
+            out = str.__add__(out, "")  # an exact str: `fold` refuses a subclass as NotText
+        if not _plain(out):
+            # The folded scan runs FIRST, on the text as written: a direct pass first could mask only the ASCII tail of a value hidden behind
+            # look-alike letters (``al<look-alike>ce@example.com`` -> ``al<look-alike><EMAIL_1>``) and leave its head in the text.
+            out = self._fold_scan(out)
+        # An escape sequence is read by the folded scan above (inside the one gap-tolerant view, whatever else is hidden beside it); only then are
+        # the ones left removed, so the direct patterns see a word boundary where one stood. A placeholder is never cut: ``ESC`` or U+009B in
+        # front of ``<APIKEY_1>`` would otherwise take its first letters for the rest of a sequence.
+        if "\x1b" in out or "\x9b" in out:
+            out = "".join(strip_ansi(part) for part in _PLACEHOLDER.split(out))
         for label, pattern in PATTERNS:
             out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
         return out
 
+    @staticmethod
+    def _over_budget(deadline: float) -> None:
+        """Fail closed (``InputTooLarge``) when the folded scan is past its deadline; checked per pattern, per line, per round and per 4096
+        characters of the alignment."""
+        if time.thread_time() > deadline:
+            from hadavin_sdk.guard.runmap import InputTooLarge  # runmap imports this module
+
+            raise InputTooLarge("InputTooLarge")
+
+    @staticmethod
+    def _dry_hits(text: str) -> Counter[str]:
+        """What the patterns would match in ``text`` (counted after the fold, copies counted: a look-alike copy of a value that also
+        appears in clear is a second hit), without registering any placeholder."""
+        found: Counter[str] = Counter()
+
+        def note(m: re.Match[str]) -> str:
+            found[fold_view(m.group(0).replace(GAP, ""))] += 1
+            return "\0"
+
+        for _label, pattern in _patterns_for(text):
+            text = pattern.sub(note, text)
+        return found
+
+    def _line_hits(
+        self, text: str, starts: list[int], started: float
+    ) -> tuple[dict[int, Counter[tuple[str, str]]], dict[int, int], dict[int, set[int]]]:
+        """Per line (the line holding the start of the match): the (pattern, folded value) of every match, and for a match that runs over
+        several lines the last line it reaches. One pass of each pattern over the whole text, not one run of every pattern per line."""
+        per: dict[int, Counter[tuple[str, str]]] = {}
+        reach: dict[int, int] = {}
+        which: dict[int, set[int]] = {}
+        for n, (label, pattern) in enumerate(_patterns_for(text)):
+            self._over_budget(started)
+            for m in pattern.finditer(text):
+                line = bisect_right(starts, m.start()) - 1
+                per.setdefault(line, Counter())[
+                    (label, fold_view(m.group(0).replace(GAP, "")))
+                ] += 1
+                which.setdefault(line, set()).add(n)
+                last = bisect_right(starts, max(m.end() - 1, m.start())) - 1
+                if last > line:
+                    reach[line] = max(reach.get(line, line), last)
+        self._over_budget(started)
+        return per, reach, which
+
+    def _fold_scan(self, text: str) -> str:
+        """The fold pass over a text with non-ASCII characters. A cheap whole-text scan first finds the lines whose FOLDED form holds a match
+        the line itself does not (one pattern pass over the text and one over its folded form, matches counted per line); only those lines
+        get the exact per-line treatment of ``_folded_line``. Many short non-ASCII lines (``é`` x 130,000) therefore cost two passes, not
+        two pattern runs per line. The work is bounded by ``defaults.REDACT_BUDGET_S`` (``InputTooLarge``, checked inside the passes)."""
+        started = (
+            self._deadline
+            if self._deadline is not None
+            else time.thread_time() + defaults.REDACT_BUDGET_S
+        )
+        self._scan_deadline = started
+        lines = _LINES.findall(
+            text
+        )  # lines end at \n, \r\n or \r only: ``splitlines`` also cuts at a vertical tab, form feed, U+001C to U+001E and NEL, inside a key
+        specs_of = [_view_specs(ln) for ln in lines]
+        all_specs = list(dict.fromkeys(sp for one in specs_of for sp in one))
+        views: dict[tuple[bool, bool, int], list[str]] = {_PRIMARY_VIEW: []}
+        for ln in lines:
+            if _plain(ln):
+                views[_PRIMARY_VIEW].append(ln)
+            else:
+                body = ln.rstrip("\r\n")
+                views[_PRIMARY_VIEW].append(fold_view(body) + ln[len(body) :])
+        for (
+            spec
+        ) in all_specs:  # a line without this view's characters reads the same in the primary view
+            views[spec] = [
+                (_view(ln.rstrip("\r\n"), *spec) + ln[len(ln.rstrip("\r\n")) :])
+                if spec in one
+                else views[_PRIMARY_VIEW][n]
+                for n, (ln, one) in enumerate(zip(lines, specs_of, strict=True))
+            ]
+        self._over_budget(started)
+
+        def starts_of(group: list[str]) -> list[int]:
+            starts, at = [], 0
+            for ln in group:
+                starts.append(at)
+                at += len(ln)
+            return starts
+
+        direct, _, _ = self._line_hits(text, starts_of(lines), started)
+        folded: dict[int, Counter[tuple[str, str]]] = {}
+        reach: dict[int, int] = {}
+        which: dict[int, set[int]] = {}
+        for group in views.values():
+            joined = "".join(group)
+            per, rch, wh = self._line_hits(joined, starts_of(group), started)
+            for i, c in per.items():
+                folded.setdefault(i, Counter()).update(
+                    c
+                )  # the lines' hits of every view (a hit in two views counts twice: only the excess over the direct hits matters, never less)
+            for i, r in rch.items():
+                reach[i] = max(reach.get(i, i), r)
+            for i, w in wh.items():
+                which.setdefault(i, set()).update(w)
+            if _has_bank_word(joined):
+                # a bank word anywhere in the FOLDED text counts as bank context for every line treated here (over-masking is the safe side):
+                # without this, an account number below a keyword spelled with an accent or full-width letters stayed in clear
+                self.bank_near = True
+        suspects = {i for i, c in folded.items() if c - direct.get(i, Counter())}
+        if not suspects:
+            return text
+        out = []
+        skip_to = -1
+        for i, ln in enumerate(lines):
+            if i <= skip_to:
+                continue  # inside a multi-line value already replaced
+            if i in suspects:
+                self._over_budget(started)
+                if reach.get(i, i) > i:
+                    # a fold-only value that runs over several lines (a PEM block with a look-alike inside): the lines it covers are
+                    # replaced together by the note and the placeholders of its hits, folded text never emitted. A second multi-line value
+                    # that STARTS inside the block and runs past its end extends it (the block grows to the last line any of them reaches).
+                    end, j = reach[i], i
+                    while j < end:
+                        j += 1
+                        end = max(end, reach.get(j, j))
+                    blocks = list(dict.fromkeys("".join(g[i : end + 1]) for g in views.values()))
+                    last = lines[end]
+                    eol = last[
+                        len(last.rstrip("\r\n")) :
+                    ]  # the line end the block really has (none at the end of the text)
+                    out.append(self._withhold(blocks, "".join(lines[i : end + 1]), eol))
+                    skip_to = end
+                    continue
+                ln = self._folded_line(ln, which.get(i))
+            out.append(ln)
+        return "".join(out)
+
+    @staticmethod
+    def _aligned_fold(
+        body: str, deadline: float, spec: tuple[bool, bool, int | tuple[int, ...]] = _PRIMARY_VIEW
+    ) -> tuple[str, list[int], bytearray] | None:
+        """``fold_view(body)``, the index in ``body`` of every character it keeps, and a flag per kept character that marks a LOOK-ALIKE LETTER
+        (a letter of another script that the fold turns into an ASCII letter, as in ordinary Cyrillic or Arabic words). Returned when the fold
+        only does what a legitimate text can contain: decimal digits of another script to ASCII digits (Arabic-Indic, Devanagari, full-width
+        ...), an accented Latin letter to its base letter, a Unicode space to a space, a look-alike letter (flagged), and dropping of marks,
+        format and control characters. ``None`` when any character is folded in another way (a full-width or compatibility letter or
+        punctuation mark that becomes live ASCII, a symbol): such a line is an attack signal and ``_folded_line`` withholds it whole."""
+        marks, iota, read = spec
+        gaps = _gap_spans(body, read, marks) if read else []
+        parts, where, alike = [], [], bytearray()
+        g, i, n, check = 0, 0, len(body), 0
+        while i < n:
+            if i >= check:
+                _Redactor._over_budget(deadline)
+                check = i + 4096
+            if (
+                g < len(gaps) and gaps[g][0] == i
+            ):  # a run of hidden items: ONE gap, whatever it holds
+                parts.append(GAP)
+                where.append(i)
+                alike.append(0)
+                i = gaps[g][1]
+                g += 1
+                continue
+            ch = body[i]
+            i += 1
+            if marks and not read and _is_spacing(ch):
+                continue  # this view is the text without its spacing marks, modifier letters and modifier symbols
+            if " " <= ch <= "~":
+                parts.append(ch)
+                where.append(i - 1)
+                alike.append(0)
+                continue
+            cls = _char_class(ch)
+            if cls is None:
+                return None
+            f, flag = cls
+            if not iota:  # the spelling that drops a subscript iota: a letter with one (U+1FB3) is its base letter alone, not base letter + "i"
+                own = fold_view(ch, marks_dropped=marks, iota=False).replace("\u2044", "/")
+                if own != f and own.isascii():
+                    f = own
+            if f:
+                parts.append(f)
+                where.extend([i - 1] * len(f))
+                alike.extend([flag] * len(f))
+        text = "".join(parts)
+        whole = _view(body, marks, iota, read).replace("\u2044", "/")
+        return (text, where, alike) if text == whole else None
+
+    def _mask_in_place(
+        self,
+        body: str,
+        folded: str,
+        where: list[int],
+        alike: bytearray,
+        only: set[int] | None = None,
+        marks: bool = False,
+    ) -> list[tuple[int, int, str, bool]]:
+        """The matches found in ``folded`` as (start, stop, label, hidden) in ``body`` itself (the characters the view dropped inside a value
+        are inside its span); nothing is registered. ``hidden`` is true when the matched value contains a look-alike letter: that is a value
+        HIDDEN behind look-alikes (an attack), not an ordinary word of another script next to it, unless another view finds the whole of it."""
+        taken = bytearray(len(folded))
+        claims: list[tuple[int, int, str, str]] = []
+        for n, (label, pattern) in enumerate(_patterns_for(folded)):
+            if only is not None and n not in only and label not in _CONTEXT_LABELS:
+                continue  # a pattern that matched nowhere in this line's folded text (the whole-text scan said so)
+            self._over_budget(self._scan_deadline)
+            for m in pattern.finditer(folded):
+                if any(taken[m.start() : m.end()]):
+                    continue  # overlaps a value masked by an earlier pattern; the next round sees it
+                original = self._decide(m, label)  # the decision only: nothing is registered yet
+                if not original:
+                    continue
+                group = m.group(0)
+                i = group.find(original)
+                while i >= 0:
+                    s = m.start() + i
+                    # a GAP the match took in at its end is not part of the value: the hidden items beside it stay in the text (a match
+                    # never begins with one: every item has a guard in front of it)
+                    hi = s + len(original)
+                    while hi > s and folded[hi - 1] == GAP:
+                        hi -= 1
+                    if hi > s:  # a value of nothing but hidden items is no value
+                        claims.append((s, hi, label, original))
+                    taken[s : s + len(original)] = b"\x01" * len(original)
+                    i = group.find(original, i + len(original))
+        spans = []
+        for s, e, label, _ in sorted(claims):
+            hidden = any(alike[s:e])
+            start, stop = where[s], where[e - 1] + 1
+            if marks:
+                # This view has no spacing marks, modifier letters or modifier symbols, so a value that begins or ends beside some would be cut short
+                # and the mark left in clear. Take in the run of them on both sides.
+                while start > 0 and _is_edge_mark(body[start - 1]):
+                    start -= 1
+                while stop < len(body) and _is_edge_mark(body[stop]):
+                    stop += 1
+            spans.append((start, stop, label, hidden))
+        return spans
+
+    def _apply_claims(self, body: str, spans: list[tuple[int, int, str, bool]]) -> str:
+        """``body`` with every span replaced by its placeholder. Spans that touch or overlap (the same value found in two views, or a piece
+        of it found in one view and the whole of it in another) are ONE value: the union, under the label of the longest of them."""
+        merged: list[list[Any]] = []
+        for start, stop, label, _ in sorted(spans):
+            if merged and start < merged[-1][1]:
+                if stop - start > merged[-1][3]:
+                    merged[-1][2], merged[-1][3] = label, stop - start
+                merged[-1][1] = max(merged[-1][1], stop)
+            else:
+                merged.append([start, stop, label, stop - start])
+        out, prev = [], 0
+        for start, stop, label, _ in merged:
+            out += [body[prev:start], self._register_written(label, body[start:stop])]
+            prev = stop
+        return "".join(out) + body[prev:] if merged else body
+
+    def _register_written(self, label: str, written: str) -> str:
+        """The placeholder of a value masked in place: found by its WRITTEN spelling (two spellings of one folded value get two
+        placeholders), a new one when it is new, whose map value is the written slice. The alias index learns the folded spelling."""
+        full = _PLACEHOLDER.sub(lambda p: self.mapping.get(p.group(1), p.group(1)), written)
+        placeholder = (
+            self.reverse[full] if full in self.reverse else self._place(label, full, written)
+        )
+        if not _plain(full):
+            for key in _alias_keys(full):
+                self._over_budget(self._scan_deadline)
+                if key and key != full and key not in self.alias:
+                    self.alias[key] = placeholder
+                    if self._journal is not None:
+                        self._journal.append(("alias", key, None))
+        return placeholder
+
+    def _folded_line(self, line: str, only: set[int] | None = None) -> str:
+        """Fail-closed fold: a value hidden behind look-alike letters, another script's digits, accents or invisible characters does not
+        match the patterns above. For a line with non-ASCII text, run the patterns again on its FOLDED form (``textnorm.fold``), BEFORE the
+        direct patterns run; a hit is a match the line itself does not give (copies are counted, so a look-alike copy of a value that also
+        stands in clear is a hit).
+
+        * If the fold only turns other scripts' digits into ASCII digits, accented Latin letters into their base letters, Unicode spaces into
+          spaces, look-alike letters of other scripts into ASCII letters (ordinary Cyrillic or Arabic words) or drops marks and invisible
+          characters (``_aligned_fold``), and no matched value contains a look-alike letter, only the matched VALUES are replaced by their
+          placeholders, in the line as written (``josé@example.com`` becomes ``<EMAIL_1>`` and the rest of the line stays). This repeats
+          (at most 4 rounds) until the fold finds nothing more; a line that still hits then is withheld.
+        * Otherwise (a value written with look-alike letters, or a full-width or compatibility character: the signals of an attack) the
+          WHOLE LINE is replaced by
+          ``FOLD_NOTE`` plus the placeholders of the hits, and the folded text is NEVER emitted: the fold turns full-width and look-alike
+          characters into live ASCII (a mention, a link, a command, a fence), and a caller that neutralises text before calling ``redact``
+          last (``approvals.channel.clean``) would send that live text to a person. The map holds the WRITTEN slice for an in-place mask and the folded spelling for a withheld line, so ``restore`` gives the written
+          value back for the first and the folded value for the second (open hole, closed by the redactor marker of a later package).
+
+        A line with no hit is returned unchanged."""
+        if _plain(line):
+            return line
+        body = line.rstrip("\r\n")
+        eol = line[len(body) :]
+        cur = body
+        counters = self._open_journal()
+        try:
+            # each round is ONE sweep of the patterns over the folded text; a round that changes nothing ends the loop
+            for _ in range(MAX_FOLD_ROUNDS):
+                self._over_budget(self._scan_deadline)
+                odd = False
+                spans: list[tuple[int, int, str, bool]] = []
+                for spec in (
+                    *_view_specs(cur),
+                    _PRIMARY_VIEW,
+                ):  # every view finds its matches in the SAME text; they are applied together below (a piece found in one view and the whole of the value in another are one value)
+                    # one view of a long line can take a large share of the budget: look at the clock per view
+                    self._over_budget(self._scan_deadline)
+                    aligned = self._aligned_fold(cur, self._scan_deadline, spec)
+                    if aligned is None:
+                        odd = True  # not an ordinary fold: judged again after this round's masks (the value may be cut out whole by another view)
+                        continue
+                    spans += self._mask_in_place(cur, *aligned, only=only, marks=spec[0])
+                whole = [(a, b) for a, b, _, hidden in spans if not hidden]
+                if any(
+                    hidden and not any(c <= a and b <= d for c, d in whole)
+                    for a, b, _, hidden in spans
+                ):
+                    break  # a value hidden behind look-alikes that no other view reads whole: withhold below
+                new = self._apply_claims(cur, [x for x in spans if not x[3]])
+                changed = new != cur
+                cur = new
+                if odd and not changed:
+                    break  # a view that is not an ordinary fold and no mask to make it one: withhold below
+                if not changed:
+                    self._journal = None  # the in-place masks stand: keep their registrations
+                    return cur + eol if cur != body else line  # nothing (more) to mask in place
+        except BaseException:
+            self._rollback(counters)
+            raise
+        # the line is withheld or left as it is: the registrations of its in-place rounds are discarded
+        self._rollback(counters)
+        folded = [
+            fold_view(body),
+            *(_view(body, *spec) for spec in _view_specs(body)),
+        ]
+        direct = self._dry_hits(body)
+        new_hit = False
+        for f in folded:
+            self._over_budget(self._scan_deadline)
+            if self._dry_hits(f) - direct:
+                new_hit = True
+                break
+        if not new_hit:
+            return line  # no view finds anything the direct patterns do not (``‹IPV4_2›`` only folds to ``<IPV4_2>``): the direct pass handles it
+        return self._withhold(folded, line, eol)
+
+    def _open_journal(self) -> dict[str, int]:
+        """Start recording the registrations of one line (placeholders, alias keys), with the counters as they were."""
+        self._journal = []
+        return dict(self.counters)
+
+    def _rollback(self, counters: dict[str, int]) -> None:
+        """Undo the registrations recorded since `_open_journal`: no placeholder of a discarded or withheld round stays in the map."""
+        journal, self._journal = self._journal or [], None
+        for kind, a, b in reversed(journal):
+            if kind == "alias":
+                self.alias.pop(a, None)
+            else:
+                self.mapping.pop(a, None)
+                if self.reverse.get(b) == a:
+                    del self.reverse[b]
+        self.counters = counters
+
+    def _withhold(self, views: list[str], line: str, eol: str = "") -> str:
+        """The fixed note plus the placeholders of the hits found in any of the ``views`` (the folded texts, never emitted); ``line`` (what
+        stands there) when the patterns mask nothing. ``eol`` is the line end to write: none by default, the caller passes the one it cut."""
+        hits: list[str] = []
+
+        def mask(m: re.Match[str], label: str) -> str:
+            masked = self._mask(m, label)
+            if masked != m.group(0):
+                hits.append(masked)
+            return masked
+
+        for cur in views:
+            for label, pattern in _patterns_for(cur):
+                self._over_budget(self._scan_deadline)
+                cur = pattern.sub(lambda m, label=label: mask(m, label), cur)
+        return f"{FOLD_NOTE} {' '.join(dict.fromkeys(hits))}{eol}" if hits else line
+
     def _mask(self, m: re.Match[str], label: str) -> str:
-        """One match of `label`'s pattern, its value replaced by its placeholder (a new one when it is new)."""
+        """One match of `label`'s pattern, its value replaced by its placeholder (a new one when it is new). Registers the
+        FOLDED spelling: used by the direct pass and by `_withhold` (the written spelling of a withheld line cannot be located)."""
+        res = self._mask_ex(m, label)
+        return m.group(0) if res is None else m.group(0).replace(*res)
+
+    def _decide(self, m: re.Match[str], label: str) -> str | None:
+        """Is this match a hit? The sensitive value, or ``None`` when the match is left alone. Registers nothing."""
         # group(1) exists for TENANT, where only the value is sensitive, not the key name.
         # The first group that took part: a pattern may offer the value in several written forms.
         original = next((g for g in m.groups() if g is not None), m.group(0))
+        clean = original.replace(
+            GAP, ""
+        )  # the value as the checks below read it; ``original`` keeps its GAPs (it is found again in the match)
         if label == "SECRET" and (
-            original.lower().strip(".,;:)(<>") in _NOT_A_VALUE or _SAYS_NONE.fullmatch(original)
+            clean.lower().strip(".,;:)(<>") in _NOT_A_VALUE or _SAYS_NONE.fullmatch(clean)
         ):
-            return m.group(0)
+            return None
         if label == "HOSTNAME" and _KEPT_HOST.search(
-            original
+            clean
         ):  # a name WARDEN reads and acts on, or AWS's own
-            return m.group(0)
+            return None
         # An account is a bank's only beside a bank word; a grouped card number is left to CREDITCARD (a secret).
         if label == "BANKACCT" and (
-            _CARD_SHAPE.fullmatch(original) or not (self.bank_near or _bank_context(m))
+            _CARD_SHAPE.fullmatch(clean) or not (self.bank_near or _bank_context(m))
         ):
-            return m.group(0)
+            return None
         # A value holding placeholders already placed (`Cookie: a=<JWT_1>; sid=...`) is stored restored,
         # so restore() gives the original back in one step; one that is nothing but placeholders is
         # masked already (seventh review: excluding `<` instead left the cookies after it in clear).
-        full = _PLACEHOLDER.sub(lambda p: self.mapping.get(p.group(1), p.group(1)), original)
         # By its shape, not the map: the gate re-scans with a fresh one, and took `Cookie: <SECRET_1>` for a
         # new secret - every report quoting a masked cookie was withheld (eighth review, 2026-10-01).
-        if _PLACEHOLDER.search(original) and not re.search(
-            r"[A-Za-z0-9]", _PLACEHOLDER.sub("", original)
+        if _PLACEHOLDER.search(clean) and not re.search(
+            r"[A-Za-z0-9]", _PLACEHOLDER.sub("", clean)
         ):
-            return m.group(0)
+            return None
+        return original
+
+    def _mask_ex(self, m: re.Match[str], label: str) -> tuple[str, str] | None:
+        """``_mask`` without the replacing: (the sensitive value, its placeholder), or ``None`` when the match is left alone."""
+        original = self._decide(m, label)
+        if original is None:
+            return None
+        clean = original.replace(GAP, "")  # what is registered never holds a GAP
+        full = _PLACEHOLDER.sub(lambda p: self.mapping.get(p.group(1), p.group(1)), clean)
         placeholder = (
-            self.reverse[full] if full in self.reverse else self._place(label, full, original)
+            self.reverse[full] if full in self.reverse else self._place(label, full, clean)
         )
-        return m.group(0).replace(original, placeholder)
+        return original, placeholder
 
     def _place(self, label: str, full: str, original: str) -> str:
         """A new placeholder for `full`; for a secret kind, one too for each secret-shaped piece of it."""
@@ -961,6 +1696,8 @@ class _Redactor:
         placeholder = f"<{label}_{self.counters[label]}>"
         self.mapping[placeholder] = full
         self.reverse[full] = placeholder
+        if self._journal is not None:
+            self._journal.append(("map", placeholder, full))
         for piece in (
             _PIECE.findall(_PLACEHOLDER.sub(" ", original)) if label in SECRET_KINDS else ()
         ):
@@ -968,10 +1705,28 @@ class _Redactor:
                 self.counters[label] += 1
                 self.mapping[f"<{label}_{self.counters[label]}>"] = piece
                 self.reverse[piece] = f"<{label}_{self.counters[label]}>"
+                if self._journal is not None:
+                    self._journal.append(("map", f"<{label}_{self.counters[label]}>", piece))
         return placeholder
 
     def _build(self) -> None:
-        self._ordered = sorted(self.mapping.items(), key=lambda kv: -len(kv[1]))
+        # the alias index: the folded spelling of every stored value that is not ASCII and differs from its fold; its keys
+        # become sweep rules too, so a clear copy of a masked written variant is masked (one fold per stored value)
+        alias: dict[str, str] = {}
+        for placeholder, original in self.mapping.items():
+            if _plain(original):
+                continue
+            if self._deadline is not None:
+                self._over_budget(self._deadline)
+            for key in _alias_keys(original):
+                if key and key != original:
+                    alias.setdefault(key, placeholder)
+        self.alias = alias
+        stored = set(self.mapping.values())
+        self._ordered = sorted(
+            [*self.mapping.items(), *((ph, k) for k, ph in alias.items() if k not in stored)],
+            key=lambda kv: -len(kv[1]),
+        )
         self._rules = {}
         for n, (placeholder, original) in enumerate(self._ordered):
             rule = _sweep(placeholder, original)
@@ -1006,7 +1761,13 @@ class _Redactor:
         self._built_for = len(self.mapping)
         if self._cache is not None:
             self._cache["map"] = dict(self.mapping)
-            self._cache["state"] = (self._ordered, self._rules, self._finders, self._slow)
+            self._cache["state"] = (
+                self._ordered,
+                self._rules,
+                self._finders,
+                self._slow,
+                self.alias,
+            )
 
     def sweep(self, out: str) -> str:
         # Final literal sweep. The patterns FIND values; this masks the copies a regex boundary missed,

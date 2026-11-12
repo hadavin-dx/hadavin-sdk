@@ -22,7 +22,16 @@ from typing import Any
 from urllib.parse import unquote
 
 from hadavin_sdk import defaults
-from hadavin_sdk.guard.redact import ARN_TAIL, PATTERNS, SECRET_KINDS, kind_of, redact
+from hadavin_sdk.guard.redact import (
+    _ANSI,
+    ARN_TAIL,
+    JOIN_RE,
+    PATTERNS,
+    SECRET_KINDS,
+    kind_of,
+    redact,
+)
+from hadavin_sdk.guard.textnorm import without_spacing_marks
 
 # Identifier kinds a fix or a read may need back (M14): the spec list plus the other identifier kinds the
 # redactor emits (IPV6 beside IPV4, hostnames, UUIDs, GCP and Azure resource ids). Anything not listed (every
@@ -104,7 +113,8 @@ def nfkc(text: str) -> str:
     """NFKC and invisible characters. It runs INSIDE every round: a full-width `%` or `&` is an escape character
     only after NFKC, and NFKC expands some characters (U+FDFA becomes 18), so a text whose canonical form would pass
     the redactor's cap is refused first (InputTooLarge, a RedactionError), as redact_text does for its own views."""
-    if text.isascii():  # NFKC leaves ASCII alone, and ASCII has no invisible format characters
+    # NFKC leaves ASCII alone; a control character or an escape in it is removed by ``canonical``
+    if text.isascii() and not _HIDDEN_ASCII.search(text):
         return text
     return canonical(fits_after_nfkc(text))
 
@@ -273,26 +283,72 @@ def storable(mapping: dict[str, str], kinds: frozenset[str] | None = None) -> di
     }
 
 
+# The characters a reader does not see (and a terminal or a browser drops): UAX #44 (Unicode Standard Annex 44, "Unicode Character
+# Database"), DerivedCoreProperties.txt, property Default_Ignorable_Code_Point (Unicode 15.1 / 16.0 list, unchanged between them), plus
+# every control character (category Cc) except tab, line feed and carriage return, plus the escape sequences of ECMA-48 (5th ed. 1991,
+# 5.4 control sequences: ESC [ or U+009B, parameter bytes 0x30-0x3F, intermediate bytes 0x20-0x2F, a final byte 0x40-0x7E; the string
+# forms ESC ] ... BEL or ST) that ``redact._ANSI`` reads. ONE definition: ``canonical`` (so ``neutralise`` and every decoded view)
+# reads text without them.
+_DEFAULT_IGNORABLE = (
+    (0x00AD, 0x00AD),
+    (0x034F, 0x034F),
+    (0x061C, 0x061C),
+    (0x115F, 0x1160),
+    (0x17B4, 0x17B5),
+    (0x180B, 0x180F),
+    (0x200B, 0x200F),
+    (0x202A, 0x202E),
+    (0x2060, 0x206F),
+    (0x3164, 0x3164),
+    (0xFE00, 0xFE0F),
+    (0xFEFF, 0xFEFF),
+    (0xFFA0, 0xFFA0),
+    (0xFFF0, 0xFFF8),
+    (0x1BCA0, 0x1BCA3),
+    (0x1D173, 0x1D17A),
+    (0xE0000, 0xE0FFF),
+)
+_HIDDEN_ASCII = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+
+@functools.lru_cache(maxsize=65536)
+def is_hidden(char: str) -> bool:
+    """True for a character that is not shown and that a reader or a parser drops: a format character (Cf), a control character other than
+    tab, line feed and carriage return, or a Default_Ignorable_Code_Point (UAX #44). An ordinary mark (an accent, a vowel sign) is NOT hidden."""
+    cat = unicodedata.category(char)
+    if cat == "Cf" or (cat == "Cc" and char not in "\t\n\r"):
+        return True
+    cp = ord(char)
+    return any(lo <= cp <= hi for lo, hi in _DEFAULT_IGNORABLE)
+
+
 def canonical(text: str) -> str:
     """Untrusted text in one canonical form before it is escaped, redacted or compared: Unicode NFKC (a
-    full-width `＜ＩＰＶ４＿２＞` becomes `<IPV4_2>`) with the invisible format characters removed (a zero-width
-    space inside a token no longer hides it). It is THE SAME TEXT as the first result of `_canonical_view`: NFKC is applied one
+    full-width `＜ＩＰＶ４＿２＞` becomes `<IPV4_2>`) with the hidden characters (``is_hidden``) and the escape sequences removed (a
+    zero-width space, a variation selector, a backspace or `ESC [ 0 m` inside a token no longer hides it, and removing them can no longer
+    assemble a placeholder or result marker that `neutralise` did not see). It is THE SAME TEXT as the first result of `_canonical_view`: NFKC is applied one
     character at a time, so the text a match is searched in and the text the match positions refer to never differ (they did when
     the whole text was composed: a + U+0301 became U+00E1 here and not in the view). A base letter and a combining mark are therefore
     not composed."""
     if text.isascii():
-        return text  # NFKC changes nothing and ASCII has no format character
+        return text  # NFKC changes nothing and ASCII has no hidden character or escape sequence
     return _canonical_view(text)[0]
 
 
 def _canonical_view(text: str) -> tuple[str, list[int]]:
-    """The canonical form of `text` (NFKC, invisible format characters removed) and, for each canonical
-    character, the index of the original character it came from."""
+    """The canonical form of `text` (see ``canonical``) and, for each canonical character, the index of the original character it came
+    from."""
+    cut: set[int] = set()
+    if "\x1b" in text or "\x9b" in text:
+        for m in _ANSI.finditer(text):
+            cut.update(range(m.start(), m.end()))
     chars: list[str] = []
     index: list[int] = []
     for i, c in enumerate(text):
+        if i in cut:
+            continue
         for d in unicodedata.normalize("NFKC", c):
-            if unicodedata.category(d) != "Cf":
+            if not is_hidden(d):
                 chars.append(d)
                 index.append(i)
     return "".join(chars), index
@@ -305,7 +361,7 @@ def replace_canonical(
     The model keeps seeing the text as it was written (accents, CJK, emoji, joiners untouched); only a stretch
     that, once folded, is the thing being guarded (a placeholder, a result marker) is rewritten. All-ASCII text
     is its own canonical form."""
-    if text.isascii():
+    if text.isascii() and not _HIDDEN_ASCII.search(text):
         return pattern.sub(repl, text)
     canon, index = _canonical_view(text)
     out: list[str] = []
@@ -413,6 +469,11 @@ def composed(text: str) -> str:
     return unicodedata.normalize("NFKC", kept)
 
 
+# The three characters a host name treats as a full stop: UTS #46 (Unicode IDNA Compatibility Processing) section 4, mapping step: U+3002,
+# U+FF0E and U+FF61 map to U+002E (NFKC already reads U+FF0E; the other two it keeps).
+_DOTS = {0x3002: ".", 0xFF0E: ".", 0xFF61: "."}
+
+
 def _views(text: str) -> list[str]:
     """Other forms a secret can hide in: the canonical view (NFKC one character at a time, invisible characters removed), the same
     with JSON `\\uXXXX` escapes decoded, and for each of them the COMPOSED view (`composed`: base letters joined with their marks).
@@ -425,10 +486,14 @@ def _views(text: str) -> list[str]:
     # the layers undone to a fixed point (percent, entity, backslash, NFKC, any order, up to the depth cap; deeper
     # raises TooDeep and nothing is redacted or shown): `%41KIA...`, `&#65;KIA...`, `password%3Dx`
     undone = fits_after_nfkc(undo(text))
+    # and the canonical view of the text without its spacing marks, modifier letters and modifier symbols (textnorm, "MARKS AND SCANS": NFKC reads
+    # a modifier letter as a letter and keeps a spacing vowel sign, so "AKIA" + U+093E + "IOSFODNN7EXAMPLE" is not the key in `canonical` alone)
     for view in (
         canonical(text),
+        canonical(text.translate(_DOTS)),
         canonical(unescaped),
         undone,
+        canonical(without_spacing_marks(JOIN_RE.sub("", text))),
         composed(text),
         composed(unescaped),
         composed(undone),
@@ -437,6 +502,17 @@ def _views(text: str) -> list[str]:
         if view != text and view not in out:
             out.append(view)
     return out
+
+
+def _view_covers(view_text: str, out: str) -> bool:
+    """True when a redacted VIEW may replace the text redacted so far although it found no new value: it holds MORE placeholders AND every
+    placeholder the text holds, as often (the choice is on what stays masked, not on a count: a view that masks other things and
+    leaves a value the text had masked must not win)."""
+    have, want = (
+        collections.Counter(PLACEHOLDER.findall(view_text)),
+        collections.Counter(PLACEHOLDER.findall(out)),
+    )
+    return sum(have.values()) > sum(want.values()) and all(have[k] >= n for k, n in want.items())
 
 
 def _held(text: str) -> int:
@@ -448,15 +524,22 @@ _ENCODED_MARKS = ("%", chr(92), "&")
 MAX_DECODED_MASKS = 256
 
 
-def _decoded_masks(current: dict[str, str], text: str) -> list[tuple[str, str]]:
+def _decoded_masks(
+    current: dict[str, str], text: str, deadline: float | None = None
+) -> list[tuple[str, str]]:
     """(placeholder, decoded original) for the values pass one masked WHOLE whose decoded spelling would stop a value
     pattern early (the decoded text holds white space of any kind, or `;`, `&`, `,` or a quote): `password=ab%3Bzq9` is
     one value in pass one and `password=ab;zq9` in the decoded view, which would mask only `ab`. Only entries whose
     original occurs in THIS text and holds an encoding character are considered (so earlier junk in the run's map cannot
     use up the slots); more than `MAX_DECODED_MASKS` of them, or one that cannot be decoded (nested too deep), cannot be
-    paired and the text is refused (`InputTooLarge`, nothing shown), never skipped. Computed once per call."""
+    paired and the text is refused (`InputTooLarge`, nothing shown), never skipped. Computed once per call.
+    `deadline` (a `time.thread_time()` value, shared with stage 1 and every view) is checked once per stored original, before
+    any skip; a spent deadline raises `InputTooLarge`.
+    """
     out = []
     for ph, original in current.items():
+        if deadline is not None and time.thread_time() > deadline:
+            raise InputTooLarge("InputTooLarge")  # one check per stored original, before any skip
         if original.startswith("\0seed") or not (
             any(c in original for c in _ENCODED_MARKS) or not original.isascii()
         ):
@@ -508,7 +591,7 @@ def redact_text(
     vendor guardrail input); the registry (`guard/producers.py`) lists them. No bare `redact()` call remains outside
     this module: the second pass of `approvals/channel.py` `clean` is this function too."""
     _within_cap(text)
-    started = time.monotonic()
+    started = time.thread_time()
     try:
         text = fits_after_nfkc(_clean(text))
         if neutralise is not None:
@@ -516,11 +599,13 @@ def redact_text(
         scan = not text.isascii() or any(c in text for c in "\\%&")
         views = _views(text) if scan else []  # _views refuses a view that would pass the cap
         cache = getattr(mapping, "redact_cache", None)
-        result = redact(text, mapping=mapping, _cache=cache)
+        result = redact(
+            text, mapping=mapping, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
+        )
         out, current = result.text, result.mapping
-        if views and time.monotonic() - started > defaults.REDACT_BUDGET_S:
+        if views and time.thread_time() - started > defaults.REDACT_BUDGET_S:
             raise InputTooLarge("InputTooLarge")
-        pairs = _decoded_masks(current, text) if views else []
+        pairs = _decoded_masks(current, text, started + defaults.REDACT_BUDGET_S) if views else []
         if (
             neutralise is not None
         ):  # the view is neutralised before it is redacted: pair the neutralised spelling too
@@ -531,17 +616,21 @@ def redact_text(
             ]
         for view in views:
             if (
-                time.monotonic() - started > defaults.REDACT_BUDGET_S
+                time.thread_time() - started > defaults.REDACT_BUDGET_S
             ):  # a hostile text: fail closed, nothing shown
                 raise InputTooLarge("InputTooLarge")
             if neutralise is not None:
                 view = fits_after_nfkc(neutralise(view))
             view = _keep_earlier_masks(view, pairs)
-            again = redact(view, mapping=current, _cache=cache)
+            again = redact(
+                view, mapping=current, _cache=cache, _deadline=started + defaults.REDACT_BUDGET_S
+            )
             # a new value, or a known one only the view spells in a way pass one could not read
-            if again.mapping != current or _held(again.text) > _held(out):
+            if again.mapping != current or _view_covers(again.text, out):
                 out, current = again.text, again.mapping
         out = _clean(out)
+        if neutralise is not None:
+            _refuse_forgery(out, current)
     except (InputTooLarge, TooDeep):
         raise
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
@@ -549,6 +638,16 @@ def redact_text(
     mapping.clear()
     mapping.update(current)
     return out
+
+
+def _refuse_forgery(out: str, issued: dict[str, str]) -> None:
+    """The last check of an UNTRUSTED text (one with a ``neutralise`` step): what comes out holds no result marker and no placeholder this
+    call did not issue. ``neutralise`` ran on every text and view before it was redacted, and a hidden character or escape sequence is
+    read through by it (``canonical``), so this cannot fire unless a step after it assembled such a shape: it then fails closed
+    (``RedactionError``, nothing shown) instead of handing a forged marker or placeholder on."""
+    seen = canonical(out)
+    if _MARKER.search(seen) or any(m.group(0) not in issued for m in PLACEHOLDER.finditer(seen)):
+        raise RedactionError("forged_marker")
 
 
 SAFE_HEAD_NOTE = "(details withheld)"
