@@ -244,18 +244,15 @@ def test_b12_the_numbers_file_is_what_the_raw_files_give(tmp_path):
     """Batch 12 (issue 4; the b11 test of this name loaded a spec it never ran). `evidence_numbers.py` is RUN here on a copy of the raw files
     of the folder and its output must equal the committed `numbers.txt` line for line: a raw file changed after the numbers file was
     written, or a numbers file edited by hand, fails."""
+    import runpy
     import shutil
-    import subprocess
-    import sys
 
     ev = ROOT / "handover/evidence/PRH/b12"
     work = tmp_path / "b12"
     shutil.copytree(ev, work, ignore=shutil.ignore_patterns("numbers.txt", "__pycache__"))
-    done = subprocess.run(
-        [sys.executable, "-I", str(work / "evidence_numbers.py")],
-        capture_output=True, text=True, timeout=120, check=False,
-    )  # fmt: skip
-    assert done.returncode == 0, done.stderr[-400:]
+    runpy.run_path(
+        str(work / "evidence_numbers.py"), run_name="__main__"
+    )  # writes work / "numbers.txt"
     made = (work / "numbers.txt").read_text(encoding="utf-8")
     assert made == (ev / "numbers.txt").read_text(encoding="utf-8"), (
         "numbers.txt is not what the raw files give"
