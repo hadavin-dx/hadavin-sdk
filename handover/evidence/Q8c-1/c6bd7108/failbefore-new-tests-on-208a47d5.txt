@@ -1,0 +1,8 @@
+test_the_changelog_entry_for_the_page_names_no_review_by_day_as_text | tests/test_policy_changelog.py | 1 failed, 1 deselected in 0.09s
+test_plant_a_ci_step_list_without_or_with_a_moved_check_step_is_refused | tests/test_policy_docs.py | 1 passed, 7 deselected in 0.10s
+test_plant_a_changelog_entry_that_loses_the_reminder_sentence_or_fixes_a_day_is_refused | tests/test_policy_docs.py | 1 passed, 7 deselected in 0.06s
+test_the_kinds_decision_day_is_a_literal_date_call_not_a_name_of_the_tools_date | tests/test_policy_guard.py | 1 passed, 349 deselected in 0.13s
+test_the_tools_decision_day_is_the_day_the_names_and_claims_were_decided | tests/test_policy_guard.py | 1 passed, 349 deselected in 0.09s
+test_the_page_names_the_review_day_of_the_dated_lists_and_follows_a_renewal | tests/test_policy_guard.py | 1 failed, 349 deselected in 0.21s
+test_the_docs_page_names_the_review_day_of_the_dated_lists_only | tests/test_policy_guard.py | 1 failed, 349 deselected in 0.20s
+test_the_day_the_tool_sees_is_the_fixed_day_the_run_was_given | tests/test_policy_guard.py | 1 passed, 349 deselected in 0.10s
