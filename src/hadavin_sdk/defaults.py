@@ -129,3 +129,14 @@ K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is i
 K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
 K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
 K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
+
+# --- pipeline step contract (AK1-a) -----------------------------------------------------------------------------------
+PIPELINE_MAX_READERS = (
+    1000  # most readers one item may name (a step may narrow the readers, never widen them)
+)
+PIPELINE_KEY_PART_MAX_CHARS = (
+    512  # longest one part of a `tenant_key` (a source name, an item id, a sender id)
+)
+PIPELINE_LABEL_MAX_CHARS = (
+    256  # longest run id, agent id or principal a step contract carries (labels, not item text)
+)
