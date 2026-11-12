@@ -189,8 +189,8 @@ def _state(pid: int) -> str:
     except (OSError, IndexError):
         pass
     try:
-        out = subprocess.run(  # noqa: S603  # nosec B603 - fixed argv, a number made here
-            ["ps", "-p", str(pid), "-o", "stat="],  # noqa: S607  # nosec B607
+        out = subprocess.run(  # noqa: S603
+            ["ps", "-p", str(pid), "-o", "stat="],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=10,
@@ -203,8 +203,8 @@ def _state(pid: int) -> str:
 
 def _alive_windows(pid: int) -> bool:
     try:
-        out = subprocess.run(  # noqa: S603  # nosec B603 - fixed argv, a number made here
-            ["tasklist", "/FI", f"PID eq {pid}", "/NH", "/FO", "CSV"],  # noqa: S607  # nosec B607
+        out = subprocess.run(  # noqa: S603
+            ["tasklist", "/FI", f"PID eq {pid}", "/NH", "/FO", "CSV"],  # noqa: S607
             capture_output=True,
             text=True,
             timeout=30,
