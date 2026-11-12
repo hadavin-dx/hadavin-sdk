@@ -253,6 +253,7 @@ def test_a_refused_value_is_in_no_channel_of_the_error_for_each_shape(shape):
         assert err.__cause__ is None and err.__context__ is None, (
             f"{shape} via {how}: the first error is kept as the cause or context"
         )
+        assert "input_value" not in str(err), f"{shape} via {how}: input_value is printed"
 
 
 def test_the_place_line_keeps_a_field_name_and_hides_a_pasted_key():
@@ -331,6 +332,23 @@ def test_a_problem_with_a_bad_context_becomes_one_fixed_refusal():
     rebuilt = without_input(raw, None)
     assert c not in _everything(rebuilt), "the exception of a value_error was kept"
     assert rebuilt.errors()[0]["loc"] == ("<not shown>",), "without a model no name is kept"
+
+
+def test_a_context_the_library_cannot_use_becomes_the_fixed_refusal_with_no_text_of_the_input(
+    monkeypatch,
+):
+    """The rebuild's own fallback: when the cleaned context of a problem is refused by the library, the problem is one fixed
+    refusal and the first error's text (which holds the input) is not used."""
+    from hadavin_sdk import hidden_input
+
+    c = _canary("fallback")
+    raw = ValidationError.from_exception_data(
+        "T", [{"type": "greater_than", "loc": ("a",), "input": c, "ctx": {"gt": 1}}]
+    )
+    monkeypatch.setattr(hidden_input, "_context", lambda kind, ctx: {})
+    rebuilt = without_input(raw, None)
+    assert c not in _everything(rebuilt), "the fallback kept the text of the input"
+    assert rebuilt.errors()[0]["type"] == "value_error", "the fallback is not the fixed refusal"
 
 
 def test_code_words_lists_fields_aliases_tags_enums_and_class_names_and_nothing_from_input():

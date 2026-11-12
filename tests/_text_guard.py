@@ -1448,8 +1448,6 @@ class Analysis:
                     # Round 17 (Issue 1b): a positional argument of `update`, `insert`, `write`, `execute`, `append`, `put` and their
                     # relatives (`updatemany`, `put_nowait`, `executemany`) that is made from an error
                     hit = any(self._tainted(a, tn, env) for a in node.args)
-                    if not hit:  # batch 18 (Issue 6a): a keyword of a store call too (`store.add_dead_letter(reason=...)`)
-                        hit = any(self._tainted(k.value, tn, env) for k in node.keywords)
                 if not hit and self._is_conversion(node):
                     # `str(x)`, `repr(x)`, `format(x)`, `ascii(x)` of a value not proven code-owned makes text on the spot
                     hit = any(not safe(a, env) for a in node.args)

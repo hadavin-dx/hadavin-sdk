@@ -3879,7 +3879,7 @@ _PLANTED_FAULTS = {
         1,
     ),
     "R18d a number directive of a library call that returns text": (
-        "def f(log, client, name):\n    log.warning('bad %d', client.count(name))",
+        "def count(x) -> int:\n    return 1\ndef f(log, client, name):\n    log.warning('bad %d', client.count(name))",
         1,
     ),
     "R17c a number directive of a function that returns text": (
