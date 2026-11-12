@@ -12,10 +12,12 @@ runner that was lost (what was known of it: names, one-line descriptions and kil
 rewritten and proven by running) and were extended for the trigger read-back, the role check and the allow list.
 
 Run from the repository root (needs the Postgres tests' variable HADAVIN_TEST_PG_DSN pointing at a scratch server whose
-login may create schemas and roles; about 10 minutes):
+login may create schemas and roles; the whole list takes 30 minutes or more, so the final head runs it in four batches):
 
     HADAVIN_TEST_PG_DSN=postgresql://... uv run python tests/migrate_mutants.py            # all; exit 1 if any is not killed
     HADAVIN_TEST_PG_DSN=postgresql://... uv run python tests/migrate_mutants.py M88,R4      # only these ids (comma-separated)
+    uv run python tests/migrate_mutants.py --list-batch 1                                   # the ids of batch 1 to 4 (comma-separated, needs no server)
+    HADAVIN_TEST_PG_DSN=postgresql://... uv run python tests/migrate_mutants.py $(uv run python tests/migrate_mutants.py --list-batch 1)
 
 Each killer id runs on its own (no -x) so a killer that does not fail shows; only the failing ones are printed. The last line is `N of N killed`; the lines before it count the three kinds. A cheap check that runs with the ordinary tests,
 `test_every_migrate_mutant_still_applies_to_the_source` (tests/test_migration_rules.py), fails when a mutant's `old`
@@ -3505,11 +3507,11 @@ M: list[Mutant] = [
         "V71",
         "6.1: the prepared transactions are listed the old way (every one of the database) and not joined to the lock",
         MIG,
-        '    "JOIN pg_catalog.pg_locks t ON t.locktype = \'transactionid\' AND t.pid IS NULL AND t.granted "\n'
+        "    \"JOIN pg_catalog.pg_locks t ON t.locktype = 'transactionid' AND t.pid IS NULL AND t.granted \"\n"
         '    "AND t.virtualtransaction = l.virtualtransaction "\n'
         '    "JOIN pg_catalog.pg_prepared_xacts x ON x.transaction = t.transactionid "\n',
-        '    "JOIN pg_catalog.pg_locks t ON l.locktype = \'advisory\' "\n'
-        '    "JOIN pg_catalog.pg_prepared_xacts x ON t.locktype = \'advisory\' "\n',
+        "    \"JOIN pg_catalog.pg_locks t ON l.locktype = 'advisory' \"\n"
+        "    \"JOIN pg_catalog.pg_prepared_xacts x ON t.locktype = 'advisory' \"\n",
         (
             k(T_PG, "test_a_prepared_transaction_that_holds_the_migration_lock_is_named_as_one"),
             k(T_VERIFY_PG, "test_the_lock_queries_tell_a_live_session_from_a_prepared_transaction"),
@@ -3538,17 +3540,23 @@ M: list[Mutant] = [
         "V74",
         "6.2: the user name of the session that holds the lock is written without the escape of control characters",
         MIG,
-        "            f\"the session of {_label(_seen(row[1]))} (process",
-        "            f\"the session of {_seen(row[1])} (process",
-        k(T_CMP, "test_the_name_of_the_session_that_holds_the_lock_is_written_without_control_characters"),
+        '            f"the session of {_label(_seen(row[1]))} (process',
+        '            f"the session of {_seen(row[1])} (process',
+        k(
+            T_CMP,
+            "test_the_name_of_the_session_that_holds_the_lock_is_written_without_control_characters",
+        ),
     ),
     Mutant(
         "V75",
         "6.1: a list of several prepared transactions is not named",
         MIG,
-        "            elif named:\n                finish = (\n                    f\"One of these",
-        "            elif False:\n                finish = (\n                    f\"One of these",
-        k(T_CMP, "test_two_prepared_transactions_that_could_hold_the_lock_are_all_named_and_none_is_picked"),
+        '            elif named:\n                finish = (\n                    f"One of these',
+        '            elif False:\n                finish = (\n                    f"One of these',
+        k(
+            T_CMP,
+            "test_two_prepared_transactions_that_could_hold_the_lock_are_all_named_and_none_is_picked",
+        ),
     ),
 ]
 M.extend(STEP_MUTANTS)
@@ -3714,7 +3722,29 @@ def _stale_ids(root: Path, known: set[str]) -> list[str]:
     return problems
 
 
+_V_ID = re.compile(r"V[0-9]+")
+
+
+def batches() -> list[list[str]]:
+    """The whole list of mutant ids in four disjoint batches that together cover it (ticket P3a-2, 7.10), so the four runs
+    of the final head can follow one another and each stays under the time limit of a heavy slot. Batch 1: the `V` mutants
+    of the new check (`V01` and on). Batch 2: `BATCH_2_IDS` (the re-pointed and re-checked ones) that are not in batch 1.
+    Batches 3 and 4: every other id, in the order of the list, the first half and the second half."""
+    names = [m.name for m in M]
+    first = [n for n in names if _V_ID.fullmatch(n)]
+    second = [n for n in names if n in BATCH_2_IDS and n not in first]
+    rest = [n for n in names if n not in first and n not in second]
+    half = (len(rest) + 1) // 2
+    return [first, second, rest[:half], rest[half:]]
+
+
 def main(argv: list[str]) -> int:
+    if argv and argv[0] == "--list-batch":
+        if len(argv) != 2 or argv[1] not in {"1", "2", "3", "4"}:
+            print("STOP: --list-batch needs one number from 1 to 4")
+            return 2
+        print(",".join(batches()[int(argv[1]) - 1]))
+        return 0
     only = argv[0] if argv else ""
     if unknown := unknown_ids(only):
         print(f"STOP: no mutant has the id {', '.join(unknown)} (several: comma-separated)")

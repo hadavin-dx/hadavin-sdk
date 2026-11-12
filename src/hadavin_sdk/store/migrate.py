@@ -897,7 +897,10 @@ def _take_the_lock(db, wait_seconds: int) -> None:
         try:
             row = db.execute(_LOCK_HOLDER_SQL, (MIGRATE_LOCK,)).fetchone()
             prepared = None
-            if row is None and (db.execute(_LOCK_PREPARED_SQL, (MIGRATE_LOCK,)).fetchone() or (0,))[0]:
+            if (
+                row is None
+                and (db.execute(_LOCK_PREPARED_SQL, (MIGRATE_LOCK,)).fetchone() or (0,))[0]
+            ):
                 prepared = db.execute(_PREPARED_SQL, (MIGRATE_LOCK,)).fetchall()
         except psycopg.Error as exc:
             # Ticket 6.2: a view this login cannot read is a plain configuration error, never a driver traceback.

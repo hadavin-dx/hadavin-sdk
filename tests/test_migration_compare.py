@@ -83,7 +83,9 @@ class _LockDb(_Db):
 
 
 def _prepared_db(rows):
-    return _LockDb({mig._LOCK_HOLDER_SQL: [], mig._LOCK_PREPARED_SQL: [(1,)], mig._PREPARED_SQL: rows})
+    return _LockDb(
+        {mig._LOCK_HOLDER_SQL: [], mig._LOCK_PREPARED_SQL: [(1,)], mig._PREPARED_SQL: rows}
+    )
 
 
 def test_a_lock_held_by_a_prepared_transaction_is_said_so_with_what_finishes_it():
@@ -101,9 +103,13 @@ def test_a_lock_held_by_a_prepared_transaction_is_said_so_with_what_finishes_it(
     )
     assert "(owner etl, prepared 2026-01-01 00:00:00+00)" in text
     assert "THAT one" in text and "do not finish any other" in text
-    assert "ROLLBACK PREPARED '<its name>'" in text, "a name with a control character is never printed as a statement"
+    assert "ROLLBACK PREPARED '<its name>'" in text, (
+        "a name with a control character is never printed as a statement"
+    )
     assert "Nothing was changed." in text and "pg_terminate_backend" not in text
-    assert (mig._PREPARED_SQL, (mig.MIGRATE_LOCK,)) in db.log, "the key of the lock goes to the query"
+    assert (mig._PREPARED_SQL, (mig.MIGRATE_LOCK,)) in db.log, (
+        "the key of the lock goes to the query"
+    )
 
 
 def test_a_plain_name_of_the_prepared_transaction_goes_into_the_printed_statements():
@@ -148,14 +154,18 @@ def test_an_unreadable_lock_view_is_a_plain_config_error_whichever_query_fails(f
     class Failing(_LockDb):
         def execute(self, query, params=None):
             if query == texts[failing]:
-                raise pg_errors.InsufficientPrivilege("permission denied for view pg_stat_activity\nsecond line")
+                raise pg_errors.InsufficientPrivilege(
+                    "permission denied for view pg_stat_activity\nsecond line"
+                )
             return super().execute(query, params)
 
     db = Failing({mig._LOCK_HOLDER_SQL: [], mig._LOCK_PREPARED_SQL: [(1,)], mig._PREPARED_SQL: []})
     outcome = None
     try:
         mig._take_the_lock(db, 3)
-    except Exception as exc:  # judged below, outside the handler, so a failure is an assertion and not a chain
+    except (
+        Exception
+    ) as exc:  # judged below, outside the handler, so a failure is an assertion and not a chain
         outcome = exc
     assert isinstance(outcome, ConfigError), f"expected the refusal, got {outcome!r}"
     text = str(outcome)
@@ -168,7 +178,9 @@ def test_an_unreadable_lock_view_is_a_plain_config_error_whichever_query_fails(f
 def test_the_name_of_the_session_that_holds_the_lock_is_written_without_control_characters():
     """`usename` and `application_name` are chosen by the other session: a newline or an escape in them is written as
     an escape (ticket 6.2). Killed by: mutant V74 (the user name goes in without the escape)."""
-    db = _LockDb({mig._LOCK_HOLDER_SQL: [(4242, "bo\nb", "app\x1b[2J", "idle", "2026-01-01 00:00:00+00")]})
+    db = _LockDb(
+        {mig._LOCK_HOLDER_SQL: [(4242, "bo\nb", "app\x1b[2J", "idle", "2026-01-01 00:00:00+00")]}
+    )
     with pytest.raises(ConfigError) as e:
         mig._take_the_lock(db, 3)
     text = str(e.value)

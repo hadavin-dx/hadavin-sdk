@@ -1132,3 +1132,44 @@ def test_the_early_return_check_sees_a_planted_early_return(tmp_path, monkeypatc
     monkeypatch.setattr(sys.modules[__name__], "ROOT", tmp_path)
     got = _early_returns("sample.py")
     assert sorted(g.split(" in ")[1] for g in got) == ["test_a", "test_e"], got
+
+
+def test_the_four_batches_are_disjoint_and_cover_the_whole_list(capsys):
+    """`--list-batch N` (ticket P3a-2, 7.10): four batches with no id twice and no id left out, batch 1 the `V` mutants,
+    batch 2 `BATCH_2_IDS` without the `V` ones, batches 3 and 4 the rest in list order, and what the command prints is the
+    same comma list that `batches()` returns."""
+    from tests import migrate_mutants as mm
+
+    got = mm.batches()
+    names = [m.name for m in mm.M]
+    flat = [n for b in got for n in b]
+    assert len(got) == 4 and all(got), "four batches, none empty"
+    assert len(flat) == len(set(flat)), "an id sits in two batches"
+    assert sorted(flat) == sorted(names), "an id is left out of every batch (or one is made up)"
+    assert got[0] == [n for n in names if re.fullmatch(r"V[0-9]+", n)]
+    assert set(got[1]) == mm.BATCH_2_IDS - set(got[0])
+    rest = [n for n in names if n not in got[0] and n not in got[1]]
+    assert got[2] + got[3] == rest and abs(len(got[2]) - len(got[3])) <= 1
+    for number in (1, 2, 3, 4):
+        assert mm.main(["--list-batch", str(number)]) == 0
+        assert capsys.readouterr().out.strip() == ",".join(got[number - 1])
+    assert mm.unknown_ids(",".join(got[0])) == [], (
+        "what the command prints is accepted by the runner"
+    )
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["--list-batch"],
+        ["--list-batch", "0"],
+        ["--list-batch", "5"],
+        ["--list-batch", "x"],
+        ["--list-batch", "1", "2"],
+    ],
+)
+def test_list_batch_refuses_anything_but_one_number_from_1_to_4(argv, capsys):
+    from tests import migrate_mutants as mm
+
+    assert mm.main(argv) == 2
+    assert "needs one number from 1 to 4" in capsys.readouterr().out
