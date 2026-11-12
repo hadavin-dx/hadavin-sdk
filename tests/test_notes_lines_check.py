@@ -999,6 +999,7 @@ def test_a_file_that_imports_modules_by_a_name_worked_out_at_run_time_lists_what
     assert got == ["test_a"], (
         f"a module named as text in an import_module call listed {got}, not test_a"
     )
+    base["tests/contracts/conftest.py"] = conftest
     elsewhere = _Tree({**base, "tests/other/k.py": kind.format(1)})
     moved = _Tree({**base, "tests/other/k.py": kind.format(2)})
     assert _changed(test, test, "tests/contracts/test_k.py", elsewhere, moved) == [], (
