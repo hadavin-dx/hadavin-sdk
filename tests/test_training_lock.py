@@ -96,7 +96,9 @@ def _write_llm(root: Path, llm: dict) -> None:
 
 
 def _make(tmp_path: Path, env: str, llm: dict, config: dict | None = None) -> Path:
-    if env == "demo":  # a demo config that names a real model is refused unless every input is made up
+    if (
+        env == "demo"
+    ):  # a demo config that names a real model is refused unless every input is made up
         config = {**(config or {}), "made_up_data_only": True}
     root = pilot_cfg(tmp_path / f"c{next(_COUNTER)}", env=env, config=config)
     _write_llm(root, llm)
