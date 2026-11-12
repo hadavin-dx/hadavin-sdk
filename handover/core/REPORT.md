@@ -1,6 +1,11 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## 19:23Z (00:53 IST): status
+- Nothing new pushed by builders since the last block; load about 6.4 (heavy runs still queued). Running: part 3 batch 2, part 2 evidence runner, stack rebasers (stack 2 resumed after a partial hand-back: no rebased branch is pushed or tested yet), AK1-a, Q8b gate-fix, #71 fix, #72 nits, part 6 banner, AK-G2-a b2, Q8c-1 b16, P3a-2 b9, Q8a-1 b19 and Q8c-1 b15 evidence runners.
+- New lead question OQ-39 (fold vs fold_view ban, plus the cause of the PR 63 py312 CI failure: a test bug).
+- Part 5 head 89ef13c9: full pytest and stage_mutants not finished, so still unverified.
+
 ## 19:18Z (00:48 IST): status
 - Part 2 (public-bind refusal) builder reported: head e75f9f25 pushed to wip/cloud-pd-bind; its own gates: full pytest 10187 passed, stage_mutants 37/37, bind_mutants 18/18 (builder numbers, not yet checked by an independent runner). It added an IN_PROCESS list of 5 backend kinds to backends/table.py: that is the builder's reading and needs a reviewer. Independent evidence runner started; then two reviewers, resolve (mode-safety, no round cap).
 - Part 3 (stand-ins) batch-2 builder started (merges the part-2 head first; stage_mutants must stay 37/37).
