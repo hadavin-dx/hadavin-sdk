@@ -393,6 +393,8 @@ def _cfg(tmp_path, llm_line, inp="3.00", out="15.00"):
     path = root / "config.yaml"
     text = path.read_text(encoding="utf-8")
     text = text.replace("llm: {kind: fake, recorded_dir: ../recorded}", f"llm: {llm_line}")
+    # a demo config that names a real model is refused unless every input is made up (these tests load price lines only)
+    text = text.replace("environment: demo\n", "environment: demo\nmade_up_data_only: true\n", 1)
     text = text.replace('input_usd_per_mtok: "3.00"', f'input_usd_per_mtok: "{inp}"')
     text = text.replace('output_usd_per_mtok: "15.00"', f'output_usd_per_mtok: "{out}"')
     path.write_text(text, encoding="utf-8")

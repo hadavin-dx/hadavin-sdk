@@ -148,7 +148,6 @@ class _PricedLLM:
             usage=build_usage(*self.tokens),
             stop="end_turn",
             started=0.0,
-            sent="s",
         )
 
 
