@@ -8,7 +8,8 @@ purpose:
 Question | function | who asks it:
 
 * Is this exact text one of the three spellings a plain-http endpoint may use? | ``is_loopback_literal`` | the
-  settings checks and the model clients; ``guard/http.py`` asks the same list after its own
+  settings checks and the model clients; ``guard/http.py`` and ``llm/common.py`` do not ask the function: they
+  share the one list (``guard.http.LOOPBACK`` is the same object) and look a host up in it after their own
   ``normalise_host`` step.
 * Is this bind host this computer (any 127.x.x.x address, ``::1`` with or without brackets, a mapped loopback
   address, ``localhost`` in any letter case)? | ``is_loopback_host`` | ``bindguard`` (a bind a stranger could

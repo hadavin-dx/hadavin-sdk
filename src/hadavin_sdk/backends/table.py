@@ -606,7 +606,10 @@ DEMO_ONLY: frozenset[tuple[str, str]] = frozenset(
 # act on, so `bindguard` does not count them. Any kind in none of DEMO_ONLY, NOT_PROD and this set reaches a real
 # service. `llm_judge` is listed because it only asks a route; the route's own `llm` kind is counted.
 # Why a bind does not widen what each one holds (the only route the receiver serves is `POST /slack/actions`, which
-# reaches the signer only through a signature check; `tests/test_bindguard.py` pins the route list):
+# reaches the signer only through a signature check). Three tests in `tests/test_bindguard.py` pin that claim: the
+# route list, the receiver's calls (only `receive`, which hands a decision on only after the channel's signature
+# check), and the held services (a real channel, store, model or source put beside a stand-in config is counted);
+# the claim does not rest on the config alone:
 IN_PROCESS: frozenset[tuple[str, str]] = frozenset(
     {
         # holds only patterns; reads text and returns a verdict, reaches nothing

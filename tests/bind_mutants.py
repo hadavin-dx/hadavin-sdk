@@ -1,4 +1,4 @@
-"""The mutants of the public-bind refusal and the shared loopback check (named B1 to B39), run by the mutation runner
+"""The mutants of the public-bind refusal and the shared loopback check (named B1 to B52), run by the mutation runner
 (``tools/mutation_runner.py``), in the same way as ``tests/stage_mutants.py``. Each mutant reverts ONE guard in a temp
 copy of the package; the test in ``killer`` must fail first, and its first failing line must hold ``expect`` (a fragment
 of the assertion MESSAGE). Not collected by pytest. Run from the repo root:
@@ -22,6 +22,9 @@ BG = "src/hadavin_sdk/bindguard.py"
 RC = "src/hadavin_sdk/approvals/receiver.py"
 TBL = "src/hadavin_sdk/backends/table.py"
 HTTP = "src/hadavin_sdk/guard/http.py"
+APP = "src/hadavin_sdk/app.py"
+RQ = "src/hadavin_sdk/approvals/requests.py"
+DF = "src/hadavin_sdk/defaults.py"
 T_NG = "tests/test_netguard.py"
 T_BG = "tests/test_bindguard.py"
 T_SITES = "tests/test_loopback_sites.py"
@@ -36,7 +39,7 @@ def _between(path, start, end):
     return text[i:j]
 
 
-_ASK = "    require_safe_bind(host, config, allow_public_bind_reason=allow_public_bind_reason)\n"
+_ASK = "    require_safe_bind(host, config, allow_public_bind_reason=allow_public_bind_reason, held=held)\n"
 _LISTEN_ASK_FIRST = _between(BG, _ASK, "    server = _Server((address, port), handler)\n")
 _LISTEN_BUILD_FIRST = _LISTEN_ASK_FIRST.replace(_ASK, "") + _ASK
 
@@ -121,7 +124,7 @@ M = [
         "if True",
         T_BG,
         "test_the_fixture_config_holds_only_stand_ins",
-        "== ()",
+        "the stand-in fixture config counts a real service",
     ),
     mutant(
         "B9 the in-process kinds are counted as real",
@@ -130,7 +133,7 @@ M = [
         "DEMO_ONLY | NOT_PROD",
         T_BG,
         "test_the_fixture_config_holds_only_stand_ins",
-        "== ()",
+        "the stand-in fixture config counts a real service",
     ),
     mutant(
         "B10 a system on this computer is real without the allow switch",
@@ -180,7 +183,7 @@ M = [
     mutant(
         "B15 listen does not ask when the host is text",
         BG,
-        "    require_safe_bind(host, config, allow_public_bind_reason=allow_public_bind_reason)\n",
+        _ASK,
         "    if not isinstance(host, str):\n        require_safe_bind(host, config)\n",
         T_BG,
         "test_listen_refuses_before_any_server_exists",
@@ -229,7 +232,7 @@ M = [
         '    host: str = "0.0.0.0",',
         T_BG,
         "test_the_receiver_default_host_is_this_computer",
-        "assert",
+        "the receiver default host is not this computer",
     ),
     mutant(
         "B21 the receiver does not check that the config is the approvals' own",
@@ -254,7 +257,7 @@ M = [
     mutant(
         "B23 an empty reason is accepted",
         BG,
-        "    if not text:\n",
+        "    if len(text) < defaults.BIND_REASON_MIN_CHARS:\n",
         "    if False:\n",
         T_BG,
         "test_an_empty_reason_is_refused_with_a_sentence_that_asks_for_one",
@@ -303,7 +306,7 @@ M = [
         "        for host in sorted(config.egress_hosts)\n",
         T_BG,
         "test_loopback_egress_hosts_and_empty_lists_pass",
-        "== ()",
+        "a loopback egress host was counted as a live one",
     ),
     mutant(
         "B29 a long bind text is not cut",
@@ -332,7 +335,7 @@ M = [
         "    if not isinstance(bind, str):",
         T_BG,
         "test_the_refusal_is_one_plain_sentence_with_no_value_of_the_bind_leaking_control_text",
-        "evil",
+        "control text was shown in the refusal",
     ),
     mutant(
         "B32 localhost is bound by name, not as the literal",
@@ -400,11 +403,132 @@ M = [
     mutant(
         "B39 the receiver builds its own server instead of calling listen",
         RC,
-        "    return listen(config, host, port, Handler, allow_public_bind_reason=allow_public_bind_reason)",
+        "    return listen(\n        config,\n        host,\n        port,\n        Handler,\n        allow_public_bind_reason=allow_public_bind_reason,\n        held=approvals.held_services(),\n    )",
         "    import http.server\n\n    return http.server.ThreadingHTTPServer((host, port), Handler)",
         T_BG,
         "test_only_listen_creates_a_server_socket",
         "another server socket outside listen",
+    ),
+    mutant(
+        "B40 build() does not record what it was handed",
+        APP,
+        "        overrides=overrides,\n    )",
+        "    )",
+        T_BG,
+        "test_the_config_and_the_overrides_of_the_approvals_cannot_be_assigned_or_edited",
+        "the overrides were not recorded on the approvals",
+    ),
+    mutant(
+        "B41 every held object is read as a stand-in",
+        BG,
+        "        elif not is_stand_in_object(obj):\n",
+        "        elif False:\n",
+        T_BG,
+        "test_real_services_counts_held_objects_in_words_and_ignores_none",
+        "a held object was not counted",
+    ),
+    mutant(
+        "B42 the approvals' config can be assigned again",
+        RQ,
+        "    @property\n    def config(self) -> Config | None:\n        return self._config\n",
+        "    @property\n    def config(self) -> Config | None:\n        return self._config\n\n"
+        "    @config.setter\n    def config(self, value: Config | None) -> None:\n        self._config = value\n",
+        T_BG,
+        "test_the_config_and_the_overrides_of_the_approvals_cannot_be_assigned_or_edited",
+        "DID NOT RAISE",
+    ),
+    mutant(
+        "B43 the receiver does not pass what the approvals hold",
+        RC,
+        "        held=approvals.held_services(),\n",
+        "",
+        T_BG,
+        "test_approvals_built_by_hand_with_a_real_channel_and_a_stand_in_config_are_refused",
+        "a server was built before the refusal",
+    ),
+    mutant(
+        "B44 the held channel is left out of what the approvals hold",
+        RQ,
+        '            "channel": self.channel,\n',
+        "",
+        T_BG,
+        "test_a_channel_replaced_after_the_build_is_seen_when_the_server_starts",
+        "a server was built before the refusal",
+    ),
+    mutant(
+        "B45 approvals without a config are refused with the wrong words",
+        RC,
+        '            "serve needs approvals built with a config (Approvals(..., config=config), or build()); "\n            "these were built by hand with no config"',
+        '            "serve needs approvals built with a config (Approvals(..., config=config), or build()); "\n            "these were made some other way"',
+        T_BG,
+        "test_approvals_built_by_hand_without_a_config_are_refused_and_the_text_says_so",
+        "Regex pattern did not match",
+    ),
+    mutant(
+        "B46 a reason of one letter is accepted",
+        DF,
+        "BIND_REASON_MIN_CHARS = 10",
+        "BIND_REASON_MIN_CHARS = 1",
+        T_BG,
+        "test_a_reason_shorter_than_ten_characters_is_refused_and_ten_are_accepted",
+        "DID NOT RAISE",
+    ),
+    mutant(
+        "B47 the receiver gets a second route that decides on its own",
+        RC,
+        "        def log_message(self, format: str, *args: object) -> None:",
+        "        def do_GET(self) -> None:\n            approvals.decide(None)\n\n"
+        "        def log_message(self, format: str, *args: object) -> None:",
+        T_BG,
+        "test_the_listener_reaches_the_approvals_only_through_the_signature_check",
+        "the listener calls more of the approvals than receive",
+    ),
+    mutant(
+        "B48 a mapped address is judged by the Python version, not by the address inside",
+        NG,
+        "        ip = ip.ipv4_mapped\n",
+        "        pass\n",
+        T_NG,
+        "test_a_mapped_address_is_judged_by_the_address_inside_on_every_python",
+        "mapped loopback not read",
+    ),
+    mutant(
+        "B49 the address check after binding ignores what the approvals hold",
+        BG,
+        "        and real_services(config, held)\n        and not is_loopback_host(server.server_address[0])",
+        "        and real_services(config)\n        and not is_loopback_host(server.server_address[0])",
+        T_BG,
+        "test_the_post_bind_check_counts_held_objects_too",
+        "DID NOT RAISE",
+    ),
+    mutant(
+        "B50 an empty tools or sources mapping is counted",
+        BG,
+        "            if obj:\n                found.append",
+        "            if True:\n                found.append",
+        T_BG,
+        "test_a_real_source_or_tools_dict_handed_in_is_counted_and_an_empty_one_is_not",
+        "BindRefused",
+        allow_crash=True,
+        crash_type="BindRefused",
+    ),
+    mutant(
+        "B51 a subclass of a stand-in is read as a stand-in",
+        BG,
+        "    if type(obj) in _STAND_IN_CLASSES:\n",
+        "    if isinstance(obj, tuple(_STAND_IN_CLASSES)):\n",
+        T_BG,
+        "test_only_the_cores_own_stand_in_classes_are_stand_ins_and_a_subclass_is_not",
+        "a subclass of a stand-in was read as a stand-in",
+    ),
+    mutant(
+        "B52 a detector list with a real entry is read as a stand-in",
+        BG,
+        "        return all(is_stand_in_object(d) for d in obj.detectors)\n",
+        "        return True\n",
+        T_BG,
+        "test_only_the_cores_own_stand_in_classes_are_stand_ins_and_a_subclass_is_not",
+        "a detector list with a real entry was read as a stand-in",
     ),
 ]
 

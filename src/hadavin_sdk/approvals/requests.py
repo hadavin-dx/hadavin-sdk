@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Mapping
 from datetime import datetime, timedelta
+from types import MappingProxyType
 
 from hadavin_sdk.approvals.channel import Channel, clean
 from hadavin_sdk.audit.protocol import AuditSink
@@ -66,12 +67,36 @@ class Approvals:
         clock: Callable[[], datetime] = now,
         detector: Detector | None = None,
         config: Config | None = None,
+        overrides: Mapping[str, object] | None = None,
     ) -> None:
         self.store, self.audit, self.registry, self.channel = store, audit, registry, channel
         self.on_decided, self.clock, self.detector = on_decided, clock, detector
-        # the deployment config these approvals were built from: ``receiver.serve`` checks it is the config it was
-        # given, so the bind check reads the services these approvals really hold (None: built by hand, not served)
-        self.config = config
+        # The deployment config these approvals were built from, and the objects ``build()`` was handed in place of
+        # configured ones (name -> object). Both are set once and read-only (no setter): ``receiver.serve`` checks
+        # the config is the one it was given and counts what the approvals really hold, so neither can be swapped
+        # for a stand-in after construction (None: built by hand, never served).
+        self._config = config
+        self._overrides = MappingProxyType(dict(overrides or {}))
+
+    @property
+    def config(self) -> Config | None:
+        return self._config
+
+    @property
+    def overrides(self) -> Mapping[str, object]:
+        """The objects ``build()`` was handed in place of configured ones (read-only)."""
+        return self._overrides
+
+    def held_services(self) -> dict[str, object]:
+        """What these approvals really hold that can reach a service, read when asked (so a replaced attribute is
+        seen): the build overrides, and the channel, the detector and the store as they are now. The bind guard
+        (``bindguard.real_services``) counts each one that is not one of the core's own stand-ins."""
+        return {
+            **self._overrides,
+            "channel": self.channel,
+            "detector": self.detector,
+            "store": self.store,
+        }
 
     def receive(
         self, headers: Mapping[str, str], body: bytes, *, record_only: bool = False

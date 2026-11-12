@@ -48,14 +48,23 @@ def serve(
     host: str = LOOPBACK_V4,
     port: int = 8080,
     allow_public_bind_reason: str | None = None,
-) -> BaseServer:
+) -> BaseServer:  # not the concrete class: the repo scan reads that name as a server made here
     """A development server for ``POST /slack/actions``; call ``serve_forever()`` on the result.
 
     ``config`` is required and must be the deployment's own (the one ``approvals`` was built from: the check is
-    ``approvals.config is config``, so a stand-in config cannot be put beside real approvals). The server is made by
+    ``approvals.config is config``; ``Approvals.config`` and ``Approvals.overrides`` cannot be assigned after
+    construction). The services the approvals really hold are counted too (``approvals.held_services()``): a real
+    channel, store, model or source handed to ``build()`` or to ``Approvals(...)`` makes a public bind refused even
+    beside a stand-in config, and the refusal names it. Approvals built by hand have no config and are refused. The
+    server is made by
     ``bindguard.listen``, the only place that creates a server socket: a ``host`` that other computers can reach is
     refused while any real service is configured, unless ``allow_public_bind_reason`` says why it must be (the usual
     setup is an HTTPS reverse proxy in front; the reason is logged)."""
+    if approvals.config is None:
+        raise BindRefused(
+            "serve needs approvals built with a config (Approvals(..., config=config), or build()); "
+            "these were built by hand with no config"
+        )
     if approvals.config is not config:
         raise BindRefused(
             "serve needs the config the approvals were built with (Approvals(..., config=config)); "
@@ -84,4 +93,11 @@ def serve(
         def log_message(self, format: str, *args: object) -> None:
             _LOG.debug(format, *args)
 
-    return listen(config, host, port, Handler, allow_public_bind_reason=allow_public_bind_reason)
+    return listen(
+        config,
+        host,
+        port,
+        Handler,
+        allow_public_bind_reason=allow_public_bind_reason,
+        held=approvals.held_services(),
+    )

@@ -76,6 +76,20 @@ def build(
     """Build every backend from the config's table entries, in the design 4.2 order. The keyword overrides
     replace one configured backend (tests); `secrets` replaces the configured provider for both the executor
     and the backends' own secrets. Missing or shared secret names fail here, before the first run."""
+    # every object handed in place of a configured one, by name: the bind guard counts each one that is not a
+    # stand-in (``Approvals.overrides``); taken before the names below are rebound to the built objects
+    overrides = {
+        name: obj
+        for name, obj in (
+            ("secrets", secrets),
+            ("channel", channel),
+            ("detector", detector),
+            ("llm", llm),
+            ("tools", tools),
+            ("sources", sources),
+        )
+        if obj is not None
+    }
     cfg = load_config(config_dir)
     reg = load_registry(cfg)
     b = cfg.backends
@@ -182,6 +196,7 @@ def build(
         clock,
         summary_detector,
         config=cfg,
+        overrides=overrides,
     )
 
     def post_card(card: Card) -> Delivery:

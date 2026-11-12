@@ -131,6 +131,9 @@ K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line frami
 K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
 
 # --- bindguard (the only place a server socket is made) ----------------------------------------------------------
+BIND_REASON_MIN_CHARS = (
+    10  # shortest reason (after trimming) for a bind that other computers can reach
+)
 BIND_REASON_MAX_CHARS = (
     200  # longest reason a person may give for a bind that other computers can reach
 )

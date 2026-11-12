@@ -204,6 +204,36 @@ def test_a_leading_zero_is_refused_by_our_own_check_not_by_the_python_version(
     assert is_loopback_host(LOOP_1) is True and is_loopback_host("::ffff:" + LOOP_1) is True
 
 
+def test_a_mapped_address_is_judged_by_the_address_inside_on_every_python(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Python 3.12 and 3.13 differ: ``IPv6Address.is_loopback`` is false for ``::ffff:127.0.0.1`` before 3.13 and
+    reads the address inside from 3.13. Both rules are put in place by turns, and both spellings of a mapped address
+    (dotted and hex) must still be judged by the address inside, so the answer does not depend on the interpreter."""
+    import ipaddress
+
+    loop6 = ipaddress.IPv6Address("::1")
+
+    def old(self: ipaddress.IPv6Address) -> bool:
+        return self == loop6
+
+    def new(self: ipaddress.IPv6Address) -> bool:
+        inside = self.ipv4_mapped
+        return inside.is_loopback if inside is not None else self == loop6
+
+    for rule in (old, new):
+        monkeypatch.setattr(ipaddress.IPv6Address, "is_loopback", property(rule))
+        for host in (
+            "::ffff:" + LOOP_1,
+            "::ffff:7f00:1",
+            "[::ffff:" + LOOP_1 + "]",
+            "::ffff:127.9.9.9",
+        ):
+            assert is_loopback_host(host) is True, f"mapped loopback not read: {host!r}"
+        for host in ("::ffff:" + PRIVATE, "::ffff:a00:1", "::ffff:0.0.0.0", "::ffff:0:0"):
+            assert is_loopback_host(host) is False, f"mapped non-loopback accepted: {host!r}"
+
+
 def test_parse_ip_literal_and_localhost_name() -> None:
     assert str(netguard.parse_ip_literal("[::1]")) == "::1"
     assert str(netguard.parse_ip_literal(LOOP_1)) == LOOP_1
