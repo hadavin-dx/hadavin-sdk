@@ -230,7 +230,8 @@ def scan(repo: Path, cfg: GuardConfig) -> list[str]:
         full = repo / rel
         try:
             is_link = full.is_symlink()
-            is_folder = not is_link and full.is_dir()  # git lists a submodule (git link) as a folder
+            # git lists a submodule (a git link) as a folder
+            is_folder = not is_link and full.is_dir()
             if not is_link and not is_folder and not full.is_file():
                 continue  # listed by git but gone from the disk
         except OSError:
