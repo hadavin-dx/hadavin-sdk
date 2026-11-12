@@ -846,7 +846,10 @@ def test_lexer_property_never_raises_and_cr_equals_lf(mn):
         if not problem:
             assert "--" not in cleaned and "/*" not in cleaned, msg
         swapped = text.replace(LF, CR)
-        strip = lambda rs: [r.split(" at line ")[0] for r in rs]
+
+        def strip(rs):
+            return [r.split(" at line ")[0] for r in rs]
+
         assert strip(mn.refused_statements(swapped)) == strip(mn.refused_statements(text)), msg
 
 

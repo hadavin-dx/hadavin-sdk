@@ -21,7 +21,7 @@ stay below the smallest small run a fast CPU can make, or the limit grows and a 
 (`test_fast_cpu_simulation_*` pins this: a 2.5 ms small run is flagged at 1 ms and not at 4 ms).
 
 Repeats trade-off: the sweep tests use 2 or 3 repeats per size (`REPEATS` is 5) to keep the `perf` group short (the
-figure is in the notes of the change). With fewer repeats, noise has fewer chances to be dropped: a neighbour that slows
+`perf` group took 51 s and 58 s in two measured runs on 4 shared cores, not 30 s). With fewer repeats, noise has fewer chances to be dropped: a neighbour that slows
 EVERY small run raises the limit and can hide a quadratic (the test `repeats=1` case in `test_timing_fixture.py` shows
 it), and one that slows every big run can raise a false red. On a fine CPU clock a neighbour adds almost nothing, so 2 or 3
 suffice; on the wall-clock path (Windows) the margin is thinner and a red there is worth one re-run by hand."""

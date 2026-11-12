@@ -1,6 +1,6 @@
 """The shared linear-time rule (`tests/fixtures/timing.py`) itself. Most tests use made-up timings or a fake clock, so a
-loaded machine cannot change the result. Two tests measure a real call with the real clock while every CPU is busy, and
-the two tests of the busy workers start real processes (about 1 s); the two real-clock ones are marked `perf`."""
+loaded machine cannot change the result. Two tests measure a real call with the real clock while every CPU is busy and are
+marked `perf`; the two tests of the busy workers start real processes (about 1 s) and are not."""
 
 from __future__ import annotations
 
@@ -368,7 +368,7 @@ def test_the_harness_flags_a_real_quadratic_while_every_cpu_is_busy(busy_cpus):
     t_small, t_big = _measured(
         lambda t: timing.block_seconds(timing.quadratic_stand_in, t), "a", small, big
     )
-    # the gap is pinned, not claimed: the small run is well above the floor and the big run well above the limit
+    # the gap is pinned by the ratio assertions below, not claimed
     # the floor itself, not a multiple of it: a CPU that makes the small run shorter than the floor would make the limit use
     # the floor, and the ratio check below is the real pin. (4x the floor needed a small run of 4 ms; this run is about 6 ms,
     # so a CPU 1.6x faster would have failed on a margin the harness does not need.)
