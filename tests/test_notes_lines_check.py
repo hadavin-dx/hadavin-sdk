@@ -384,6 +384,7 @@ def test_a_conftest_function_and_a_fixture_file_are_units_and_a_file_outside_the
         f"a changed conftest function was not the only unit: {changed}"
     )
     rel = "tests/fixtures/policy_sources_2026-11-11.txt"
+    assert nlc.kind_of(rel) == "fixture", "a changed fixture file was not of the fixture kind"
     assert nlc.changed_tests("a\n", "a\nb\n", rel) == (["policy_sources_2026-11-11.txt"], []), (
         "a changed fixture file was not one unit named by its file name"
     )
@@ -763,3 +764,290 @@ def test_auto_refuses_a_row_whose_reason_names_a_test_or_a_log_file_that_is_in_n
     assert "test_gone is in no test file" in out and "gone.log is in no logs/ folder" in out, (
         f"the missing test and the missing log file were not each named: {out}"
     )
+
+
+# ------------------------------------------------------------------ every link between code and tests (batch 14)
+
+_BODY = "\n\ndef test_a():\n    assert 1\n\n\ndef test_b():\n    assert 2\n"
+
+
+def _changed(old, new, rel="tests/test_x.py", before=None, after=None):
+    """The changed units of a file; `before` and `after` are the files around it (path -> text) before and after."""
+    if before is None and after is None:
+        return nlc.changed_tests(old, new, rel)[0]
+    return nlc.changed_tests(
+        old, new, rel, lambda r: (before or {}).get(r, ""), lambda r: (after or {}).get(r, "")
+    )[0]
+
+
+def test_a_constant_is_followed_through_the_value_behind_it():
+    skip = "import pytest\nSKIP = {}\npytestmark = pytest.mark.skipif(SKIP, reason='r')\n" + _BODY
+    got = _changed(skip.format("False"), skip.format("True"))
+    assert got == ["test_a", "test_b"], (
+        f"a changed SKIP read by pytestmark listed {got}, not both tests"
+    )
+    chain = "A = {}\nB = A + 1\n\n\ndef test_a():\n    assert B\n\n\ndef test_b():\n    assert 2\n"
+    got = _changed(chain.format(1), chain.format(2))
+    assert got == ["test_a"], f"a change of A, read through B = A + 1, listed {got}, not test_a"
+    built = "def _build():\n    return {}\n\n\nX = _build()\n\n\ndef test_a():\n    assert X\n\n\ndef test_b():\n    assert 2\n"
+    got = _changed(built.format(1), built.format(2))
+    assert got == ["test_a"], (
+        f"a change of the function that builds a constant listed {got}, not test_a"
+    )
+    pair = "A, B = 1, {}\n\n\ndef test_a():\n    assert B\n\n\ndef test_b():\n    assert 2\n"
+    got = _changed(pair.format(2), pair.format(3))
+    assert got == ["test_a"], f"a change of a tuple target listed {got}, not test_a"
+    typed = (
+        "LIMIT: int = {}\n\n\ndef test_a():\n    assert LIMIT\n\n\ndef test_b():\n    assert 2\n"
+    )
+    got = _changed(typed.format(1), typed.format(2))
+    assert got == ["test_a"], f"a change of an annotated constant listed {got}, not test_a"
+    assert _changed(skip.format("False"), skip.format("False")) == [], (
+        "an unchanged constant listed a test"
+    )
+
+
+def test_each_way_a_file_or_a_class_is_switched_off_or_changed_lists_the_tests_it_acts_on():
+    both = ["test_a", "test_b"]
+    k = "import pytest\n\n\nclass TestK:\n{}\n    def test_m(self):\n        assert 1\n"
+    fn = "def {}(x):\n    {}\n" + _BODY
+    got = _changed("__test__ = True" + _BODY, "__test__ = False" + _BODY)
+    assert got == both, f"a changed __test__ listed {got}, expected both tests"
+    assert _changed("__test__ = True" + _BODY, "__test__ = True" + _BODY) == [], (
+        "an unchanged __test__ listed a test"
+    )
+    got = _changed(fn.format("setup_module", "pass"), fn.format("setup_module", "raise SystemExit"))
+    assert got == both, f"a changed setup_module listed {got}, expected both tests"
+    got = _changed(
+        fn.format("teardown_module", "pass"), fn.format("teardown_module", "raise SystemExit")
+    )
+    assert got == both, f"a changed teardown_module listed {got}, expected both tests"
+    got = _changed(
+        fn.format("setup_function", "pass"), fn.format("setup_function", "raise SystemExit")
+    )
+    assert got == both, f"a changed setup_function listed {got}, expected both tests"
+    got = _changed(
+        fn.format("teardown_function", "pass"), fn.format("teardown_function", "raise SystemExit")
+    )
+    assert got == both, f"a changed teardown_function listed {got}, expected both tests"
+    got = _changed(
+        fn.format("pytest_generate_tests", "pass"), fn.format("pytest_generate_tests", "return 0")
+    )
+    assert got == both, f"a changed pytest_generate_tests listed {got}, expected both tests"
+    got = _changed(
+        fn.format("pytest_collection_modifyitems", "pass"),
+        fn.format("pytest_collection_modifyitems", "return 0"),
+    )
+    assert got == both, f"a changed pytest_collection_modifyitems listed {got}, expected both tests"
+    helper = "    def _h(self):\n        return {}\n"
+    with_h = k.format(helper).replace("assert 1", "assert self._h()")
+    got = _changed(with_h.format(1), with_h.format(0))
+    assert got == ["TestK::test_m"], f"a changed helper method of a test class listed {got}"
+    setup = "    def setup_method(self, m):\n        {}\n"
+    got = _changed(k.format(setup.format("pass")), k.format(setup.format("pytest.skip('s')")))
+    assert got == ["TestK::test_m"], f"a changed setup_method listed {got}"
+    klass = "    @classmethod\n    def setup_class(cls):\n        {}\n"
+    got = _changed(k.format(klass.format("pass")), k.format(klass.format("pytest.skip('s')")))
+    assert got == ["TestK::test_m"], f"a changed setup_class listed {got}"
+    fixture = "    @pytest.fixture(autouse=True)\n    def f(self):\n        yield {}\n"
+    got = _changed(k.format(fixture.format(1)), k.format(fixture.format(2)))
+    assert got == ["TestK::test_m"], f"a changed autouse fixture of a test class listed {got}"
+    unreached = k.format(helper)
+    assert _changed(unreached.format(1), unreached.format(0)) == [], (
+        "a helper method that the test does not reach listed a test through self"
+    )
+
+
+def test_a_unittest_class_and_a_file_ending_in_test_are_read_like_a_test_class_and_a_test_file():
+    case = "import unittest\n\n\nclass Foo(unittest.TestCase):\n    def test_m(self):\n        self.assertTrue({})\n"
+    got = _changed(case.format(1), case.format(0))
+    assert got == ["Foo::test_m"], f"a changed method of a unittest.TestCase listed {got}"
+    for rel in ("tests/x_test.py", "tests/sub/deep/test_y.py", "tests/sub/z_test.py"):
+        assert nlc.kind_of(rel) == "test", f"{rel} is a test file of pytest and was not read as one"
+    assert nlc.kind_of("tests/helper.py") is None, (
+        "a plain python file under tests was read as a test"
+    )
+
+
+def test_module_code_and_a_fixture_of_a_conftest_list_what_they_act_on():
+    rel = "tests/conftest.py"
+    loop = "import os\nfor k in ('A',):\n    os.environ.pop(k, None)\n\n\ndef fx():\n    return 1\n"
+    no_loop = "import os\n\n\ndef fx():\n    return 1\n"
+    _, gone = nlc.changed_tests(loop, no_loop, rel)
+    assert gone == [nlc.CONFTEST_CODE], (
+        f"a deleted `for` block of a conftest left {gone}, not its code unit"
+    )
+    appended = "collect_ignore = []\ncollect_ignore.append('a.py')\n"
+    assert nlc.changed_tests(appended, "collect_ignore = []\n", rel)[1] == [nlc.CONFTEST_CODE], (
+        "a deleted collect_ignore.append call of a conftest was not seen as a gone unit"
+    )
+    sub = "import os\nos.environ['A'] = {}\n"
+    assert nlc.CONFTEST_CODE in nlc.changed_tests(sub.format("'x'"), sub.format("'y'"), rel)[0], (
+        "a changed subscript assignment of a conftest is not part of its code unit"
+    )
+    fixture = "import pytest\n\n\n@pytest.fixture\ndef thing():\n    return {}\n"
+    uses = "def test_a(thing):\n    assert thing\n\n\ndef test_b():\n    assert 1\n"
+    before, after = {rel: fixture.format(1)}, {rel: fixture.format(0)}
+    assert _changed(uses, uses, "tests/test_x.py", before, after) == ["test_a"], (
+        "a changed conftest fixture did not list the test that takes it as a parameter"
+    )
+    deeper = {"tests/sub/conftest.py": fixture.format(5)}
+    assert (
+        _changed(uses, uses, "tests/sub/test_x.py", {**before, **deeper}, {**after, **deeper}) == []
+    ), "a fixture of a conftest further away listed a test that a nearer conftest serves"
+
+
+def test_a_pytest_settings_file_a_root_conftest_and_a_data_file_are_units_and_a_dependency_change_is_not():
+    ini = "[tool.pytest.ini_options]\naddopts = '{}'\n\n[project]\ndependencies = ['{}']\n"
+    got = nlc.changed_tests(
+        ini.format("-q", "a"), ini.format("-q --ignore=tests", "a"), "pyproject.toml"
+    )
+    assert got == (["pyproject.toml"], []), (
+        f"a changed pytest option of pyproject.toml listed {got}"
+    )
+    got = nlc.changed_tests(ini.format("-q", "a"), ini.format("-q", "b"), "pyproject.toml")
+    assert got == ([], []), f"a changed dependency of pyproject.toml listed {got}"
+    old, new = "[pytest]\naddopts = -q\n", "[pytest]\naddopts = -x\n"
+    got = nlc.changed_tests(old, new, "pytest.ini")
+    assert got == (["pytest.ini"], []), f"a changed pytest.ini listed {got}"
+    got = nlc.changed_tests(old, new, "tox.ini")
+    assert got == (["tox.ini"], []), f"a changed tox.ini listed {got}"
+    got = nlc.changed_tests(old, new, "setup.cfg")
+    assert got == (["setup.cfg"], []), f"a changed setup.cfg listed {got}"
+    got = nlc.changed_tests("def fx():\n    return 1\n", "def fx():\n    return 2\n", "conftest.py")
+    assert got == (["fx"], []), f"a changed conftest at the root listed {got}"
+    got = nlc.changed_tests("a\n", "b\n", "tests/data/cases.json")
+    assert got == (["cases.json"], []), f"a changed data file under tests listed {got}"
+    assert nlc.kind_of("src/hadavin_sdk/x.json") is None, (
+        "a file outside tests was read as a data file"
+    )
+
+
+def test_a_helper_two_imports_away_lists_the_test_that_reaches_it_in_each_direction():
+    use = "from tests.helpers import helper\n\n\ndef test_uses():\n    assert helper()\n\n\ndef test_free():\n    assert 1\n"
+    middle = "from tests.contracts.kinds.deep import deep\n\n\ndef helper():\n    return deep()\n"
+    deep = "def deep():\n    return {}\n"
+    files = {"tests/helpers.py": middle}
+    before = {**files, "tests/contracts/kinds/deep.py": deep.format(1)}
+    after = {**files, "tests/contracts/kinds/deep.py": deep.format(2)}
+    got = _changed(use, use, "tests/test_x.py", before, after)
+    assert got == ["test_uses"], (
+        f"a helper reached through another helper listed {got}, not test_uses"
+    )
+    got = _changed(use, use, "tests/test_x.py", before, before)
+    assert got == [], "an unchanged helper of a second level listed a test"
+    middle_plain = (
+        "import tests.contracts.kinds.deep as d\n\n\ndef helper():\n    return d.deep()\n"
+    )
+    files = {"tests/helpers.py": middle_plain}
+    before = {**files, "tests/contracts/kinds/deep.py": deep.format(1)}
+    after = {**files, "tests/contracts/kinds/deep.py": deep.format(2)}
+    assert _changed(use, use, "tests/test_x.py", before, after) == ["test_uses"], (
+        "a helper reached through an import as of another helper was not followed"
+    )
+
+
+def test_a_new_function_that_nothing_uses_needs_no_row_and_the_one_that_a_test_uses_does():
+    # the rule written in the module docstring: a unit that no test, fixture, conftest, import or mutant reaches
+    # changes no run, so it has no row; the change that makes a test use it lists that test
+    helper = "VALUE = 1\n\n\ndef helper():\n    return VALUE\n"
+    plus = helper + "\n\ndef unused():\n    return 5\n"
+    use = "from tests.helpers import helper\n\n\ndef test_uses():\n    assert helper()\n\n\ndef test_free():\n    assert 1\n"
+    got = _changed(
+        use, use, "tests/test_x.py", {"tests/helpers.py": helper}, {"tests/helpers.py": plus}
+    )
+    assert got == [], f"a new function that nothing uses listed {got}"
+    uses_new = use.replace("assert helper()", "assert helper() and unused()").replace(
+        "import helper", "import helper, unused"
+    )
+    got = _changed(
+        use, uses_new, "tests/test_x.py", {"tests/helpers.py": plus}, {"tests/helpers.py": plus}
+    )
+    assert got == ["test_uses"], f"a test that began to use the new function listed {got}"
+    assert "needs no row" in nlc.__doc__, (
+        "the rule for a new unused function is not written in the docstring"
+    )
+
+
+def test_a_row_whose_unit_cell_names_a_mutant_or_a_test_that_exists_nowhere_is_a_problem():
+    refs = nlc.Refs(
+        frozenset({"test_real"}),
+        frozenset({"B1 real one"}),
+        frozenset(),
+        {
+            "tests/policy_mutants.py": frozenset({"B1 real one"}),
+            "tests/test_x.py": frozenset({"test_real"}),
+        },
+    )
+    reason = "killing mutant `B1 real one` here"
+    notes = (
+        f"| policy_mutants.py | `B99 no such mutant exists here` | new | {reason} |\n"
+        f"| test_x.py | `test_gone` | new | {reason} |\n"
+        f"| test_x.py | `test_real` | new | {reason} |\n"
+        f"| policy_mutants.py | B1 real one | new | {reason} |\n"
+    )
+    found = nlc.stale_row_problems(notes, refs)
+    assert len(found) == 2, (
+        f"a row naming a mutant and a row naming a test that exist nowhere gave {found}"
+    )
+    assert any("B99 no such mutant" in f for f in found), (
+        f"the unit cell with a mutant that exists nowhere: {found}"
+    )
+    assert any("test_gone" in f for f in found), (
+        f"the unit cell with a test that exists nowhere: {found}"
+    )
+
+
+def test_a_helper_that_a_mutant_call_reaches_is_part_of_the_mutant():
+    src = "def helper():\n    return {}\n\n\ndef other():\n    return 1\n\n\nM = [mutant('B1 n', f, 'a', helper(), 't', 'e'), mutant('B2 m', f, 'a', 'b', 't', 'e')]\n"
+    got = nlc.changed_tests(src.format(1), src.format(2), "tests/policy_mutants.py")
+    assert got == (["B1 n"], []), (
+        f"a changed helper that one mutant calls listed {got}, not only B1"
+    )
+
+
+# ------------------------------------------------------------------ the reference check (batch 14)
+
+
+def test_a_mutant_name_without_a_code_is_checked_and_a_quote_of_a_message_is_not():
+    refs = nlc.Refs(
+        frozenset({"test_real"}),
+        frozenset({"B1 real one", "Kinds: a kind moved", "m6 a key twice"}),
+        frozenset(),
+    )
+    for name in ("Kinds: a kind moved", "m6 a key twice", "B1 real one"):
+        found = nlc.reference_problems(f"killing mutant `{name}`", refs)
+        assert found == [], "a mutant name that exists was refused"
+    found = nlc.reference_problems("killing mutant `Kinds: a kind nowhere`", refs)
+    assert found and "is in no mutant file" in found[0], (
+        f"a mutant name without a code that exists nowhere was accepted: {found}"
+    )
+    found = nlc.reference_problems("killing mutant `m6 a wrong name`", refs)
+    assert found and "is in no mutant file" in found[0], (
+        f"a mutant name with a lower-case code that exists nowhere was accepted: {found}"
+    )
+    found = nlc.reference_problems("killing mutant `B99 no such mutant`", refs)
+    assert found and "is in no mutant file" in found[0], (
+        f"a mutant name with a code that no mutant has was accepted: {found}"
+    )
+    quote = "killing mutant `B1 real one`, killed by test_real with `the empty change was not said`"
+    assert nlc.reference_problems(quote, refs) == [], (
+        "a quote of a message was read as a mutant name"
+    )
+
+
+def test_a_log_is_found_in_the_folder_of_the_notes_that_names_it_or_by_the_end_of_its_path():
+    refs = nlc.Refs(
+        frozenset(),
+        frozenset(),
+        frozenset({"handover/evidence/x/logs/a.log", "handover/evidence/y/logs/b.log"}),
+    )
+    reason = "fails on abc1234 with the output in {}"
+    ok = nlc.reference_problems(reason.format("a.log"), refs, "handover/evidence/x")
+    assert ok == [], f"a log in the folder of its notes was refused: {ok}"
+    wrong = nlc.reference_problems(reason.format("b.log"), refs, "handover/evidence/x")
+    assert wrong and "b.log" in wrong[0], "a log of another folder served the notes of this folder"
+    by_path = nlc.reference_problems(reason.format("y/logs/b.log"), refs, "handover/evidence/x")
+    assert by_path == [], f"a log written with the end of its path was refused: {by_path}"
+    gone = nlc.reference_problems(reason.format("x/logs/b.log"), refs, "handover/evidence/x")
+    assert gone, "a log written with a path that holds no such file was accepted"

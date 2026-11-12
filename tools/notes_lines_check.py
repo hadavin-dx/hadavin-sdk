@@ -599,7 +599,9 @@ def _mutant_units(mod: _Module) -> dict[str, str]:
             and isinstance(n.args[0].value, str)
         ):
             out[n.args[0].value] = (
-                out.get(n.args[0].value, "") + ast.dump(n) + _reached(mod, _used(n))
+                out.get(n.args[0].value, "")
+                + ast.dump(n)
+                + _reached(mod, _used(n) - set(_MUTANT_CALLS))
             )
     return {k: v + "|" + builder for k, v in out.items()}
 
@@ -832,19 +834,6 @@ def rows_of(notes: str) -> list[tuple[str, list[str], str, str, str | None]]:
     return out
 
 
-def lines_of(notes: str) -> dict[tuple[str, str], tuple[str, str]]:
-    """(file cell, unit id) -> (the reason cell (the last cell), the second cell), for every row of `rows_of`. Only
-    those two cells are read for the key."""
-    out: dict[tuple[str, str], tuple[str, str]] = {}
-    for file_cell, names, reason, cell, _ in rows_of(notes):
-        for name in names:
-            out[(file_cell, name)] = (reason, cell)
-        # the whole cell is a key too: the names of two mutants that hold the same backticked word each keep their
-        # own row (the backticked word alone would be one key and the second row would replace the first)
-        out[(file_cell, cell)] = (reason, cell)
-    return out
-
-
 def _row_names_a_unit(cell: str, names: list[str], units: frozenset[str]) -> bool:
     """True when the second cell of a row names a unit: the whole cell, one `;` item of it (a backticked item is read
     without its backticks), or, when the cell holds backticked ids, every one of them."""
@@ -905,10 +894,9 @@ def problems(
     rows: dict[str, tuple[str, str, str | None]] = {}
     for file_cell, names, reason, cell, folder in rows_of(notes):
         if _file_matches(file_cell, label, known):
-            for name in (
-                *names,
-                cell,
-            ):  # the whole cell is a key too (see `lines_of`); the last row wins
+            # the whole cell is a key too: the names of two mutants that hold the same backticked word each keep
+            # their own row (the backticked word alone would be one key); the last row wins
+            for name in (*names, cell):
                 rows[name] = (reason, cell, folder)
     word = "mutant" if kind_of(label) == "mutants" else "test"
     out = []
