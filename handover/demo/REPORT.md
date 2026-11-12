@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:15Z / 01:45 IST - ORDER D12 applied: lane 10a (gitleaks verify) and lane 10b (CodeAnt triage) started; bases moved to pr-3-tests 558d37f; 5 agents live
+Status lines:
+- D12(1) ACKNOWLEDGED: my gitleaks finding was right and the lead fixed it in pr-3-tests 558d37f (new top-level `[[allowlists]]`). Told lane 7b to drop its separate gitleaks-projectkey.patch (not duplicated), rebase onto 558d37f, and confirm with the real gitleaks that 558d37f + the coverage patch still gives 0 findings. Told lane 8b the same base change (must apply on 558d37f; its lock allowance lines follow the lead's allowlist style).
+- Lane 10a (sonnet EVIDENCE RUNNER, short, 25 min box): clone pr-3-tests 558d37f, REAL gitleaks 8.30.1 with the exact lint.yml commands (`gitleaks dir` and `gitleaks git`), expect 0 findings; hygiene test with GITLEAKS_BIN (should run, not skip); NARROWNESS negative tests in a scratch copy: a different made-up key-like value on another line of sonar-project.properties, a key-like value on a projectKey-looking line, the real projectKey line in another file and in path look-alikes (old-sonar-project.properties, sub/sonar-project.properties): all must still be reported; regexes tested with python re; if the allowlist does not work as written, a corrected TOML patch and an immediate report. Output handover/demo/gitleaks/.
+- Lane 10b (sonnet builder + one fresh egm reviewer after): the 25 CodeAnt findings from triage/codeant-comments-lead.txt (57 KB): parse every finding; each checked against the code at 558d37f (the bot's commit may differ: mapped by content); REAL/STYLE/FALSE POSITIVE/INTENTIONAL with the reason; a patch hunk and a fails-before test for every REAL one; the items you named (.gitleaks.toml:91, docs/settings.md:120, scripts/n8n_api.py:32, tools/scrub_n8n_export.py:40-41, scripts/reset.ps1:20, desk.py:397 and :785) each with a concrete attack or failure scenario or a reason none exists; an OVERLAP table against the lane 3 patches (js-portal.patch, py-retry.patch: it touches desk.py near :773-788), the DeepSource work, lane 7 (sonar.yml, .gitleaks.toml, exceptions.txt, pyproject) and lane 8 (docs/tests.md, locks) so nothing is fixed twice, with `git apply --check` of everything together and a re-base check of the lane 3 patches against 558d37f. Output triage/CODEANT-COVERAGE.md and triage/codeant-*.patch.
+- Lane 9 (hang): the hypotheses I sent are queued with it (memory counters, SYN-flooding correlation, repeat runs under load, wait table); per-run files are being written; no hand-back and no root cause yet. Nothing claimed.
+- Lane 7b and lane 8b are building on the new base. The core session gates on its own machine (D12): no action for me.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:15Z / 01:45 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a1efeaddf3232ebcb (agent, sonnet evidence runner) | lane 9 hang reproduction + memory | 19:50 | 26 min | 20:50 | running | hang/RESULTS.md | newest file in hang/ about 1 min old |
+| ac3a511599cfd9d0d (agent, sonnet builder) | lane 8b playwright-only hashed file + decode-in-Chromium test + docs | 20:01 | 15 min | 20:50 | running (base change message sent) | docs-and-deps.patch v2, PLAN.md | pytest in fresh-venv3 |
+| ad3dab9715b1335af (agent, sonnet builder) | lane 7b fixes after the security review | 20:12 | 4 min | 21:02 | running (base change message sent) | coverage patch v2, PLAN.md, evidence-r2-* | started |
+| a4d247151b6e20e65 (agent, sonnet evidence runner) | lane 10a gitleaks allowlist verification | 20:15 | 1 min | 20:40 | running | gitleaks/SUMMARY.md + raw files | started |
+| a03bfbfb75bd4ec81 (agent, sonnet builder) | lane 10b CodeAnt 25 findings triage | 20:15 | 1 min | 21:15 | running | triage/CODEANT-COVERAGE.md, codeant-*.patch | started |
+| `yes` x2 + lane 9 pytest runs | lane 9's deliberate CPU load | | | | running | | |
+Totals: agents live 5 (the machine runs lane 9's busy loops, so 5 builders and a load experiment share 4 vCPUs; load average 1/5/15 min: 3.04, 2.61, 1.94); shells I hold 0; pytest runs 1 to 3; containers 0; nothing past its time box.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| lane 7 Sonar | fix round 7b (review 2 follows) | r1 0B/1M/8N | pre-existing gitleaks failure; shared-runner design; evidence gaps; sizing | security path, no cap | no cap | fresh review without Major or Blocker |
+| lane 8 browser tests | v3 design in build | v1 0B/3M/8N | own decoder (rule 20); counts on the wrong commit | design reversals D10 and D11 | none | fresh review of v2 without Major or Blocker |
+| lane 10a / 10b | round 1 starting | n/a | n/a | new lanes | n/a | 10a: SUMMARY; 10b: one fresh review (D5 rule) then fixes in one push |
+Waste check: nothing in rounds exists because a gate could not run or a builder returned early; the base moving three times (bee6fff4, b29bb1f, 558d37f) forces re-apply checks on lanes 7 and 8: that is a cost of the moving final tree, not a defect.
+
+### (3) FINISHED SINCE LAST BLOCK
+None since the previous block except what it listed (lane 7 review adfc10760dcfcce60 and lane 7 builder a28f5af6a766a1b53 were closed there).
+
 ## 2026-11-12 20:13Z / 01:43 IST - LANE 7 review 1 done (security path): 0 Blocker, 1 Major (the pre-existing gitleaks failure), 8 Nits; lane 7b fixes started; 3 agents live (lane 9, lane 8b, lane 7b)
 Status lines:
 - coverage/REVIEW-1.md saved. The MAJOR is the pre-existing one I reported: lint.yml's gitleaks step fails on sonar-project.properties:4 (projectKey): confirmed true by reading (exceptions.txt:27 is only the git-grep allowlist; .gitleaks.toml has no allowlist for the built-in generic-api-key rule; evidence-gitleaks.txt: 1 finding with the patched config, 134 with the original: 1 + 131 lock hash lines + 2 name mentions the patch's allowances cover). Rule 5 (fix, do not defer): lane 7b writes it as a SEPARATE small patch gitleaks-projectkey.patch (one narrow allowlist: path sonar-project.properties AND match `^sonar\.projectKey=`, not global) with real-gitleaks proof before, after and a NEGATIVE test (a made-up key-like value on another line and in another file must still be reported). Needs YOUR decision only to apply it: it is independent of the coverage patch.
