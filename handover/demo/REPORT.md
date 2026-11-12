@@ -1,6 +1,40 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 22:54Z / 04:24 IST - D14 HANG FIX BUILT (builder H1 nearly done, patch on disk); RUNTIME SET REBUILT (10c-2c) AND UNDER REVIEW; INT-2 RUN 2 AT 41% WITH NO FAILURE YET
+FAILED / UNCERTAIN first:
+- NOTHING IS VERIFIED ON A COMPLETE FULL RUN YET. INT-2 run 2 (40d5668, the hanging test deselected, `faulthandler_timeout=300`, -v): 41% done, 1198 passed, 0 failed/error so far (it is in tests/test_live_claude.py). Run 1 stays recorded as HUNG (evidence-int2-3-run1-HUNG.txt + py-spy dump). INT-2 is on 40d5668, NOT on the new head f5fe824: it must be repeated on f5fe824 + hang fix.
+- D14 (builder H1, hand-back not in yet; files in hang/): hang-fix.patch (736 lines, 15 files: pyproject.toml, tests/conftest.py, tests/support.py, test_portal_api.py + the other test files with the same serve_forever/shutdown shape: test_crm_hubspot, test_followup_edge_cases, test_hubspot_probe, test_live_claude, test_load_tools, test_mode_safety, test_n8n_api_url, test_portal_demo, test_slow_sender, test_stamp_locks_and_budget; new tests/test_server_stop_guard.py). Evidence 1-7 on disk: evidence-h-1 shows the OLD unbounded stop hanging under `timeout 60` with a py-spy stack identical to the INT-2 one (MainThread in BaseServer.shutdown <- support stop); 3 faulthandler; 4 lint; 5 gitleaks; 7 apply. I have NOT read its root-cause verdict yet (test race vs product code): waiting for the hand-back; I will not call it clean before a fresh review.
+- Runtime set (10c-2c, 7 patches with the speed patch first, base f5fe824): the over-broad `file:` refusal is DROPPED (the builder proved `file::memory:` opens a plain file on the old code); main() tests bounded by a 30 s thread join; `Content-Length` of 5000 digits gets 400; unbounded waits bounded; 1305 focused tests passed, 1 skipped; gitleaks 0; ruff/mypy/bandit clean. A fresh round-4 reviewer is running (code + tests, one reviewer). NOT run: full suite, Windows.
+- Never run anywhere: PowerShell/Windows, a real n8n, Python 3.13, Windows lock install.
+INT-2 PLAN ON f5fe824 (after the reviews): INT-2b = fresh clone of pr-3-tests f5fe824 + hang-fix.patch + speed patch + the six runtime patches (+ standins) in order; steps: venv from locks, lints (ruff, mypy x2, bandit, schemas), hygiene WITH gitleaks, gitleaks dir/git, FULL serial suite with `-o faulthandler_timeout=300 -v` (no deselect: the fixed test must pass), then test_portal_api.py 3 times and the restart test 5 times alone, node-off pass of the 8 browser files; one py-spy dump if any test runs >5 min. Semgrep PR stays out of INT-2b (your order); I can run a separate INT-2c with semgrep-on-head if you want.
+NEEDS FROM LEAD: (1) yes/no on the `concurrency:` group in the Semgrep workflow; (2) approval of the hang fix's PRODUCT-code part, if H1 reports one (I will say so plainly the moment it hands back).
+
+TABLE 1 - LIVE ITEMS (load 0.9)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| INT-2 runner | full integration check, run 2 (40d5668, hang test deselected) | 22:34 | 20 min | 23:20 | running, 41%, 0 failures | integration/INT-2.md | test_live_claude |
+| H1 | D14 hang fix + sweep + faulthandler guard | 22:43 | 11 min | 23:40 | nearly done (patch + 7 evidence files exist) | hang/hang-fix.patch + PLAN.md + hand-back | evidence-h-7-apply written |
+| rev rt-4 | fresh review of the runtime set (7 patches) | 22:49 | 5 min | 23:15 | running | report | started |
+Totals: agents 3, shells 0, containers 0, heavy pytest 2 (INT-2 full run + one builder file run), load 0.9 of 4.
+Flags: none over time box.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| D14 hang fix | 1 (build done, review next) | - | test race in start/stop of local servers (head bug) | not reviewed yet | no | fresh review clean + INT-2b full run passes without hang |
+| CodeAnt runtime | 4 (review running) | R1 5M, R2 4M, R3 A 1M+B 2M | over-broad refusal, unbounded waits | fixes unreviewed | no | fresh review clean |
+| Semgrep PR | done | 4 rounds | - | - | YES: clean | own PR after #2-#4 |
+| security + nits, layout, docs-and-deps | done, applied | - | - | - | YES | - |
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (22:39Z)
+| item | result |
+|---|---|
+| hang root-cause evidence | py-spy dump of run 1; the hanging test passed alone 3 of 3; lead ordered D14 |
+| 10c-2c build (runtime fixes round 3) | 6 patches rebuilt on f5fe824; 1305 focused passed; summary saved (e4f2ed64) |
+| H1 build | hang-fix.patch + evidence 1-7 on disk (unreviewed) |
+| INT-2 run 2 (in progress) | 41%: 1198 passed, 0 failed |
+
 ## 2026-11-12 22:39Z / 04:09 IST - SEMGREP SET IS CLEAN (apply semgrep-on-head.patch); SECURITY NITS PATCH CLEAN; **THE FULL SUITE HANGS ON YOUR HEAD 40d5668** (INT-2 run 1); runtime set not clean yet (2 Majors) -> builder 10c-2c
 FAILED / UNCERTAIN first:
 1. **INT-2 RUN 1 HUNG on pr-3-tests 40d5668 itself (not on any pending patch).** Full serial suite stopped at test 867 of 2922 collected (~29.7%, no F/E before it) at 22:31Z; I found it stuck 5+ minutes at ~0% CPU, took a py-spy dump (evidence: integration/evidence-int2-HANG-pyspy-dump.txt) and killed it. The main thread is blocked in `BaseServer.shutdown()` (socketserver.py:255) called from **tests/test_portal_api.py::test_restart_same_port_portal_open, line 1475** (`srv.shutdown()` in the `finally` of the 20-restart loop), with two `serve_forever` threads still alive. Run alone that test passed 3 of 3 (~10.7 s each): so it is order- or load-dependent, a real race in the test's start/stop (thread started, `get()` fails or races, `shutdown()` waits for a `serve_forever` that never reaches its exit flag). This is very probably the same hang 10c-2b saw earlier on 0841f36 at 'about 38%' (a different count because collect/ordering differ). It is a HEAD bug and will hang CI: please decide: I propose a small fix patch (wait for the server to be serving before shutdown; join with a timeout; `faulthandler_timeout` in the pytest config so a future hang prints its stack). I will not touch it without your yes; the INT-2 runner now reruns the full suite WITH `faulthandler_timeout=300` and that one test deselected, then the whole test_portal_api.py file, then that test 5 more times.

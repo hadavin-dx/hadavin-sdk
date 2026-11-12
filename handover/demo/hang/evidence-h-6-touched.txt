@@ -1,2 +1,16 @@
 tree f5fe824 + patch
 $ timeout 1200 pytest -q -p no:cacheprovider --durations=5 <11 touched files>
+........................................................................ [ 41%]
+............s........................................................... [ 51%]
+........................................................................ [ 61%]
+........................................................................ [ 72%]
+........................................................................ [ 82%]
+........................................................................ [ 92%]
+.................................................                        [100%]
+============================= slowest 5 durations ==============================
+3.00s call     tests/test_live_claude.py::test_slow_three_seconds_still_answers_inside_the_limit
+2.81s call     tests/test_load_tools.py::test_burst_run_logs_every_request
+2.59s call     tests/test_portal_demo.py::test_burst_busy_then_created[5]
+2.56s call     tests/test_portal_demo.py::test_state_one_overall_deadline
+2.53s call     tests/test_live_claude.py::test_desk_failure_ends_in_failed_never_lost[timeout-internal:LiveTransport]
+696 passed, 1 skipped in 190.01s (0:03:10)

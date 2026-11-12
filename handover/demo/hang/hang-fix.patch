@@ -1,0 +1,736 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index 02a9b4a..2b49700 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -9,6 +9,9 @@ dependencies = []
+ [tool.pytest.ini_options]
+ pythonpath = ["src", "."]
+ testpaths = ["tests"]
++# A test stuck for 5 minutes prints the stack of every thread (the run is not stopped; a hung server shutdown
++# shows up as BaseServer.shutdown in the dump). No new dependency: this is built into pytest.
++faulthandler_timeout = 300
+ # test command: python -m pytest -q
+ # Run commands set PYTHONPATH=src (there is no build-system); see contract.md, Run commands.
+ 
+diff --git a/tests/conftest.py b/tests/conftest.py
+index 2635950..677eeee 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -29,7 +29,7 @@ def pytest_sessionstart(session: pytest.Session) -> None:
+ 
+ 
+ if DEMO_PRESENT:
+-    from support import Rig, build_rig
++    from support import Rig, ServerDidNotStop, build_rig, stop_within
+ 
+     from demo_only.fakes_server import FakesServer, serve_fakes_in_thread, stop_fakes
+ 
+@@ -90,21 +90,24 @@ class Env:
+     def serve(self, r: Rig) -> str:
+         """Start the real HTTP server (port 0) around r.desk; returns the base URL."""
+         base, stop = serve_in_thread(r.desk, port=0)
+-        self._stops.append(stop)
++        self._stops.append(lambda: stop_within(stop, "desk server"))
+         return base
+ 
+     def fakes(self, mode: str = "keyed", crm_mode: str = "keyed") -> tuple[FakesServer, str]:
+         srv, url, th = serve_fakes_in_thread(mode, 0, crm_mode)
+-        self._stops.append(lambda: stop_fakes(srv, th))
++        self._stops.append(lambda: stop_within(lambda: stop_fakes(srv, th), "fakes server"))
+         return srv, url
+ 
+     def stop_on_close(self, stop: Callable[[], None]) -> None:
+         self._stops.append(stop)
+ 
+     def close(self) -> None:
++        stuck: list[ServerDidNotStop] = []
+         for stop in reversed(self._stops):
+             try:
+                 stop()
++            except ServerDidNotStop as e:  # reported after every other item is closed
++                stuck.append(e)
+             except Exception:  # noqa: BLE001, S110 (teardown must reach every item)
+                 pass
+         for r in self.rigs:
+@@ -113,6 +116,8 @@ class Env:
+                     d.close()
+                 except Exception:  # noqa: BLE001, S110
+                     pass
++        if stuck:
++            raise stuck[0]
+ 
+ 
+ @pytest.fixture
+diff --git a/tests/support.py b/tests/support.py
+index aedca61..c31bd62 100644
+--- a/tests/support.py
++++ b/tests/support.py
+@@ -2,6 +2,7 @@
+ 
+ from __future__ import annotations
+ 
++import faulthandler
+ import itertools
+ import json
+ import os
+@@ -427,14 +428,79 @@ class StubSender:
+         self.behaviour, self.status, self.body = behaviour, status, body
+         self.srv = ThreadingHTTPServer((HOST, 0), H)
+         self.srv.daemon_threads = True
+-        self.thread = threading.Thread(target=self.srv.serve_forever, daemon=True)
+-        self.thread.start()
++        self.thread = start_serving(self.srv)
+         self.url = f"http://{HOST}:{self.srv.server_address[1]}"
+ 
+     def stop(self) -> None:
+-        self.srv.shutdown()
+-        self.srv.server_close()
+-        self.thread.join(timeout=5)
++        stop_serving(self.srv, self.thread, "stub server")
++
++
++STOP_SECONDS = 20.0  # a server that has not stopped by then is stuck: fail the test, never wait forever
++_POLL_SECONDS = 0.05  # serve_forever polls for a stop request this often (the library default is 0.5 s)
++
++
++class ServerDidNotStop(AssertionError):
++    """A test server did not stop in time (a deadlock in the server or a stuck request thread)."""
++
++
++def start_serving(srv: Any, *, ready_within: float = WAIT_SECONDS) -> threading.Thread:
++    """Run srv.serve_forever in a daemon thread and return only once its loop has really started.
++
++    shutdown() waits for the loop to finish; a loop that has not started yet, or is stuck, made that wait endless
++    and stalled the whole test run. The loop calls service_actions() after every poll, so the first call proves it
++    is serving."""
++    serving = threading.Event()
++    inner = srv.service_actions
++
++    def service_actions() -> None:
++        serving.set()
++        inner()
++
++    srv.service_actions = service_actions
++    thread = threading.Thread(target=srv.serve_forever, args=(_POLL_SECONDS,), daemon=True, name="test-serve")
++    srv.serve_thread = thread
++    thread.start()
++    if not serving.wait(ready_within):
++        raise ServerDidNotStop(f"the server loop did not start within {ready_within} s (alive={thread.is_alive()})")
++    return thread
++
++
++def stop_within(stop: Callable[[], object], what: str = "server", *, seconds: float = STOP_SECONDS) -> None:
++    """Call stop() (a shutdown, a server_close, a join) on a helper thread and fail with a message, and with the
++    stack of every thread on stderr, when it has not returned after `seconds`; the test run goes on."""
++    done = threading.Event()
++    problem: list[BaseException] = []
++
++    def run() -> None:
++        try:
++            stop()
++        except BaseException as e:  # noqa: BLE001 (handed to the calling thread below)
++            problem.append(e)
++        finally:
++            done.set()
++
++    threading.Thread(target=run, daemon=True, name=f"stop-{what}").start()
++    if not done.wait(seconds):
++        faulthandler.dump_traceback(all_threads=True)
++        raise ServerDidNotStop(f"{what} did not stop within {seconds} s")
++    if problem:
++        raise problem[0]
++
++
++def stop_serving(
++    srv: Any, thread: threading.Thread | None = None, what: str = "server", *, seconds: float = STOP_SECONDS
++) -> None:
++    """Stop a server started with start_serving (or any serve_forever thread): shutdown, close, join, all bounded."""
++    thread = thread or srv.serve_thread
++
++    def stop() -> None:
++        srv.shutdown()
++        srv.server_close()
++        thread.join(timeout=seconds)
++        if thread.is_alive():
++            raise ServerDidNotStop(f"{what}: the serve_forever thread is still alive after the shutdown")
++
++    stop_within(stop, what, seconds=seconds)
+ 
+ 
+ # -- subprocess helpers
+diff --git a/tests/test_crm_hubspot.py b/tests/test_crm_hubspot.py
+index 5701fa8..4669e3a 100644
+--- a/tests/test_crm_hubspot.py
++++ b/tests/test_crm_hubspot.py
+@@ -11,7 +11,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import HOST
++from support import HOST, stop_within
+ 
+ from demo_only import fake_hubspot as fh
+ from lead_desk.adapters import CrmError, CrmNothingStored, HttpCrm
+@@ -57,7 +57,7 @@ class Rig:
+         return HubspotCrm(HubspotSettings(**(s | kw)))
+ 
+     def stop(self) -> None:
+-        fh.stop(self.srv, self.th, self.state)
++        stop_within(lambda: fh.stop(self.srv, self.th, self.state), "fake HubSpot server")
+ 
+ 
+ @pytest.fixture
+@@ -345,7 +345,7 @@ def test_a_redirect_to_another_host_is_never_followed_and_the_key_never_leaves(r
+         assert other.calls == [] and other.auth_seen == []  # the other host saw no request, so no Authorization
+         assert len(rig.state.calls) == 1  # asked once, not retried
+     finally:
+-        fh.stop(srv, th, other)
++        stop_within(lambda: fh.stop(srv, th, other), "fake HubSpot server")
+ 
+ 
+ def test_rotated_key_never_appears_in_errors_or_logs(rig: Rig, caplog: pytest.LogCaptureFixture) -> None:
+diff --git a/tests/test_followup_edge_cases.py b/tests/test_followup_edge_cases.py
+index d6b39eb..4ad2c47 100644
+--- a/tests/test_followup_edge_cases.py
++++ b/tests/test_followup_edge_cases.py
+@@ -9,7 +9,7 @@ import time
+ from typing import Any
+ 
+ import pytest
+-from support import CrashAt, lead
++from support import CrashAt, lead, start_serving, stop_serving
+ 
+ from lead_desk import db, gate, identity
+ from lead_desk import desk as desk_module
+@@ -466,8 +466,7 @@ def test_a_redirect_is_not_followed_and_a_long_reply_is_cut() -> None:
+ 
+     with socketserver.TCPServer(("127.0.0.1", 0), H) as srv:
+         port = srv.server_address[1]
+-        t = threading.Thread(target=srv.serve_forever, daemon=True)
+-        t.start()
++        start_serving(srv)
+         try:
+             import urllib.error
+ 
+@@ -477,4 +476,4 @@ def test_a_redirect_is_not_followed_and_a_long_reply_is_cut() -> None:
+             with pytest.raises(ValueError):
+                 _exchange(f"http://127.0.0.1:{port}/big", {"a": 1}, 5)
+         finally:
+-            srv.shutdown()
++            stop_serving(srv)
+diff --git a/tests/test_hubspot_probe.py b/tests/test_hubspot_probe.py
+index d3f0f05..87e0fa3 100644
+--- a/tests/test_hubspot_probe.py
++++ b/tests/test_hubspot_probe.py
+@@ -5,13 +5,13 @@ from __future__ import annotations
+ import importlib
+ import json
+ import sys
+-import threading
+ from collections.abc import Callable, Iterator
+ from http.server import BaseHTTPRequestHandler, HTTPServer
+ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
++from support import start_serving, stop_serving
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+ import hubspot_probe as hp  # noqa: E402
+@@ -73,11 +73,10 @@ class Stub:
+ 
+         self.srv = HTTPServer(("127.0.0.1", 0), H)
+         self.url = f"http://127.0.0.1:{self.srv.server_port}"
+-        threading.Thread(target=self.srv.serve_forever, daemon=True).start()
++        start_serving(self.srv)
+ 
+     def close(self) -> None:
+-        self.srv.shutdown()
+-        self.srv.server_close()
++        stop_serving(self.srv)
+ 
+ 
+ HAPPY: dict[str, list[tuple[int, Any]]] = {
+diff --git a/tests/test_live_claude.py b/tests/test_live_claude.py
+index f62c16f..7b9d857 100644
+--- a/tests/test_live_claude.py
++++ b/tests/test_live_claude.py
+@@ -17,7 +17,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import REPO, lead
++from support import REPO, lead, start_serving, stop_serving
+ 
+ from demo_only.fake_model_server import ModelState, make_model_server
+ from lead_desk import live_claude as lc
+@@ -46,15 +46,12 @@ class Model:
+ @pytest.fixture
+ def model() -> Iterator[Model]:
+     srv, state = make_model_server(port=0, mode="ok", key=FAKE_KEY)
+-    th = threading.Thread(target=srv.serve_forever, daemon=True)
+-    th.start()
++    th = start_serving(srv)
+     try:
+         yield Model(state, f"http://127.0.0.1:{srv.server_address[1]}")
+     finally:
+         state.stop.set()
+-        srv.shutdown()
+-        srv.server_close()
+-        th.join(timeout=5)
++        stop_serving(srv, th)
+ 
+ 
+ def settings(tmp_path: Path, m: Model, **over: Any) -> LiveSettings:
+diff --git a/tests/test_load_tools.py b/tests/test_load_tools.py
+index 8f322c9..49d523f 100644
+--- a/tests/test_load_tools.py
++++ b/tests/test_load_tools.py
+@@ -18,7 +18,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import FakeClock
++from support import FakeClock, start_serving, stop_serving
+ 
+ from demo_only import fake_model_server
+ from lead_desk.constants import FOLLOWUP_BODY_TEMPLATE, FOLLOWUP_SUBJECT_TEMPLATE
+@@ -443,10 +443,9 @@ class _Desk(BaseHTTPRequestHandler):
+ def desk_url() -> Any:
+     _Desk.seen = {}
+     srv = ThreadingHTTPServer(("127.0.0.1", 0), _Desk)
+-    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    start_serving(srv)
+     yield f"http://127.0.0.1:{srv.server_address[1]}"
+-    srv.shutdown()
+-    srv.server_close()
++    stop_serving(srv)
+ 
+ 
+ def test_scenario_parsing() -> None:
+@@ -528,13 +527,12 @@ class _Flaky:
+                 pass
+ 
+         self._srv = ThreadingHTTPServer(("127.0.0.1", self.port), H)
+-        threading.Thread(target=self._srv.serve_forever, daemon=True).start()
++        start_serving(self._srv)
+ 
+     def close(self) -> None:
+         self._timer.cancel()
+         if self._srv:
+-            self._srv.shutdown()
+-            self._srv.server_close()
++            stop_serving(self._srv)
+ 
+ 
+ def _one_item() -> dict[str, Any]:
+@@ -660,12 +658,11 @@ def test_burst_run_logs_every_request(desk_url: str, tmp_path: Path) -> None:
+ def model(tmp_path: Path) -> Any:
+     srv, state = fake_model_server.make_model_server(port=0, call_log=tmp_path / "calls.jsonl")
+     state.slow_seconds, state.hang_seconds = 0.4, 3.0
+-    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    start_serving(srv)
+     state.url = f"http://127.0.0.1:{srv.server_address[1]}"  # type: ignore[attr-defined]
+     yield state
+     state.stop.set()
+-    srv.shutdown()
+-    srv.server_close()
++    stop_serving(srv)
+ 
+ 
+ def ask(model: Any, lead_id: str, timeout: float = 2.0) -> tuple[int, bytes]:
+diff --git a/tests/test_mode_safety.py b/tests/test_mode_safety.py
+index 7e426c3..5086d0d 100644
+--- a/tests/test_mode_safety.py
++++ b/tests/test_mode_safety.py
+@@ -15,7 +15,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import DEMO_LEADFLOW, REPO, KeyedOutbox, build_rig, call, lead
++from support import DEMO_LEADFLOW, REPO, KeyedOutbox, build_rig, call, lead, stop_within
+ from test_portal_api import fresh, get
+ 
+ from demo_only import fake_hubspot as fh
+@@ -88,7 +88,7 @@ def test_data_map_matches_what_hubspot_put_really_sends(tmp_path: Path) -> None:
+         crm.put("L-1", {**record, "source": "form", "ai_label": "hot"})
+         (row,) = state.contacts.values()
+     finally:
+-        fh.stop(srv, th, state)
++        stop_within(lambda: fh.stop(srv, th, state), "fake HubSpot server")
+     sent = set(row["properties"])
+     assert sent == {"email", "hadavin_lead_id", "firstname", "lastname", "company"}
+     from lead_desk import portal_api
+diff --git a/tests/test_n8n_api_url.py b/tests/test_n8n_api_url.py
+index 57752d7..28d26b8 100644
+--- a/tests/test_n8n_api_url.py
++++ b/tests/test_n8n_api_url.py
+@@ -10,12 +10,12 @@ import os
+ import socket
+ import subprocess
+ import sys
+-import threading
+ from http import HTTPStatus
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from pathlib import Path
+ 
+ import pytest
++from support import start_serving, stop_serving
+ 
+ REPO = Path(__file__).resolve().parents[1]
+ RESERVED = "example" + "." + "test"  # the reserved test domain, as the repository's own rules allow it
+@@ -199,7 +199,7 @@ class _ListThenRedirect(BaseHTTPRequestHandler):
+ def _server(redirect_to: str | None) -> tuple[ThreadingHTTPServer, type[_Recorder]]:
+     handler = type("H", (_Recorder,), {"log": [], "redirect_to": redirect_to})
+     srv = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+-    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    start_serving(srv)
+     return srv, handler
+ 
+ 
+@@ -214,8 +214,7 @@ def test_a_redirect_is_not_followed_so_the_key_never_reaches_the_new_address(
+         code, _body = mod.call("GET", "/workflows")
+     finally:
+         for s in (first, target):
+-            s.shutdown()
+-            s.server_close()
++            stop_serving(s)
+     assert code == 302, "a redirect is reported as an error answer"
+     assert first_log.log[0]["x-n8n-api-key"] == "made-up-key-for-the-test"  # the first address did get the key
+     assert target_log.log == [], "the redirect target was called: the key header would have gone with it"
+@@ -225,14 +224,13 @@ def _run_against(
+     handler: type[BaseHTTPRequestHandler], monkeypatch: pytest.MonkeyPatch, tmp_path: Path, argv: list[str]
+ ):
+     srv = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+-    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    start_serving(srv)
+     try:
+         mod = _load(monkeypatch, tmp_path, None)
+         monkeypatch.setattr(mod, "BASE", _u("http", f"127.0.0.1:{srv.server_address[1]}"))
+         return mod.main(["n8n_api.py", *argv])
+     finally:
+-        srv.shutdown()
+-        srv.server_close()
++        stop_serving(srv)
+ 
+ 
+ @pytest.mark.parametrize("cmd", ["list", "activate", "deactivate"])
+@@ -417,8 +415,7 @@ def test_the_key_header_goes_straight_to_this_computer_never_to_a_proxy_of_the_e
+         code, _body = mod.call("GET", "/workflows")
+     finally:
+         for s in (target, proxy):
+-            s.shutdown()
+-            s.server_close()
++            stop_serving(s)
+     assert code == HTTPStatus.OK
+     assert proxy_log.log == [], "the request (and the key header) went to the proxy of the environment"
+     assert target_log.log[0]["x-n8n-api-key"] == KEY_TEXT
+@@ -443,8 +440,7 @@ def test_the_shared_opener_still_uses_the_proxy_of_the_environment_unless_told_n
+         with open_http(_u("http", f"{RESERVED}:81/x"), 5):
+             pass
+     finally:
+-        proxy.shutdown()
+-        proxy.server_close()
++        stop_serving(proxy)
+     assert len(proxy_log.log) == 1, "open_http no longer honours the proxy settings by default"
+ 
+ 
+@@ -587,14 +583,13 @@ def test_an_error_page_that_is_cut_off_still_gives_the_status_not_a_traceback(
+     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+ ) -> None:
+     srv = ThreadingHTTPServer(("127.0.0.1", 0), _short_body(500))
+-    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    start_serving(srv)
+     try:
+         mod = _load(monkeypatch, tmp_path, None)
+         monkeypatch.setattr(mod, "BASE", _u("http", f"127.0.0.1:{srv.server_address[1]}"))
+         code, body = mod.call("GET", "/workflows")
+     finally:
+-        srv.shutdown()
+-        srv.server_close()
++        stop_serving(srv)
+     assert code == 500 and body == "(no body kept)"
+ 
+ 
+@@ -622,7 +617,7 @@ def test_the_shared_opener_still_uses_the_proxy_of_the_environment_for_https_too
+ 
+     monkeypatch.setattr(urllib.request, "_opener", None)  # urlopen caches its opener, with the proxies of that moment
+     proxy = ThreadingHTTPServer(("127.0.0.1", 0), Connect)
+-    threading.Thread(target=proxy.serve_forever, daemon=True).start()
++    start_serving(proxy)
+     try:
+         for name in ("HTTPS_PROXY", "https_proxy"):
+             monkeypatch.setenv(name, _u("http", f"127.0.0.1:{proxy.server_address[1]}"))
+@@ -632,8 +627,7 @@ def test_the_shared_opener_still_uses_the_proxy_of_the_environment_for_https_too
+             with pytest.raises(OSError):  # the stand-in proxy refuses the tunnel
+                 open_http(_u("https", f"{RESERVED}:8443/x"), 5, follow_redirects=follow)
+     finally:
+-        proxy.shutdown()
+-        proxy.server_close()
++        stop_serving(proxy)
+     assert seen == [f"{RESERVED}:8443"] * 2, "open_http did not send the https request through the environment proxy"
+ 
+ 
+@@ -701,12 +695,11 @@ def test_a_workflow_name_that_a_strict_cp1252_pipe_cannot_encode_is_listed_with_
+ ) -> None:
+     body = ('{"data": [{"id": "1", "active": true, "name": "' + UNSHOWABLE[which] + '"}]}').encode("ascii")
+     srv = ThreadingHTTPServer(("127.0.0.1", 0), _fixed(200, body))
+-    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    start_serving(srv)
+     try:
+         done = _run_script(tmp_path, srv.server_address[1], "list")
+     finally:
+-        srv.shutdown()
+-        srv.server_close()
++        stop_serving(srv)
+     assert done.returncode == 0, done.stderr
+     assert "Traceback" not in done.stderr and done.stdout.startswith("w-") and "-end active" in done.stdout
+     assert "?" in done.stdout and KEY_TEXT not in done.stdout + done.stderr
+@@ -717,11 +710,10 @@ def test_importing_a_workflow_with_such_a_name_also_ends_cleanly(tmp_path: Path)
+         '{"name": "w-\\ud83d\\ude00-end", "nodes": [], "connections": {}}', encoding="ascii"
+     )
+     srv = ThreadingHTTPServer(("127.0.0.1", 0), _fixed(200, b"{}"))
+-    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    start_serving(srv)
+     try:
+         done = _run_script(tmp_path, srv.server_address[1], "import", str(tmp_path / "w.json"))
+     finally:
+-        srv.shutdown()
+-        srv.server_close()
++        stop_serving(srv)
+     assert done.returncode == 0, done.stderr
+     assert "Traceback" not in done.stderr and "w-?-end 200" in done.stdout.replace("??", "?")
+diff --git a/tests/test_portal_api.py b/tests/test_portal_api.py
+index 4a5ac4f..f6e3cda 100644
+--- a/tests/test_portal_api.py
++++ b/tests/test_portal_api.py
+@@ -28,7 +28,9 @@ from support import (
+     raw_exchange,
+     run_threads,
+     start_proc,
++    start_serving,
+     stop_proc,
++    stop_serving,
+     wait_until,
+ )
+ 
+@@ -1464,17 +1466,14 @@ def test_restart_same_port_portal_open(env) -> None:
+         t0 = time.monotonic()
+         srv = make_server(rig.desk, cfg)  # raises OSError when the port cannot be bound
+         seconds.append(time.monotonic() - t0)
+-        thread = threading.Thread(target=srv.serve_forever, daemon=True)
+-        thread.start()
++        start_serving(srv)  # returns once the loop really runs: a shutdown can never wait on a loop not yet started
+         url = f"http://{HOST}:{port}"
+         try:
+             for _poll in range(3):  # the open page: connections that end in TIME_WAIT on this port
+                 status, out = get(url, "/api/ui/summary")
+                 assert status == 200 and out["counts"]["received"] == 1
+         finally:
+-            srv.shutdown()
+-            srv.server_close()
+-            thread.join(timeout=30)
++            stop_serving(srv, what="restart test server")
+     print(f"restart x{RESTARTS}: bind seconds max={max(seconds):.4f} mean={sum(seconds) / len(seconds):.4f}")
+     assert max(seconds) < server.REQUEST_TIMEOUT_SECONDS
+ 
+diff --git a/tests/test_portal_demo.py b/tests/test_portal_demo.py
+index 88b7435..c6a4462 100644
+--- a/tests/test_portal_demo.py
++++ b/tests/test_portal_demo.py
+@@ -21,7 +21,7 @@ from urllib.parse import urlsplit
+ 
+ import pytest
+ from conftest import Env
+-from support import HOST, REPO, Rig, free_port, wait_until
++from support import HOST, REPO, Rig, free_port, start_serving, stop_serving, wait_until
+ 
+ from lead_desk.adapters import HttpCrm, HttpOutbox
+ from lead_desk.config import Config
+@@ -209,14 +209,11 @@ class Stub:
+ 
+         self.srv = ThreadingHTTPServer((HOST, 0), H)
+         self.srv.daemon_threads = True
+-        self.thread = threading.Thread(target=self.srv.serve_forever, daemon=True)
+-        self.thread.start()
++        self.thread = start_serving(self.srv)
+         self.url = f"http://{HOST}:{self.srv.server_address[1]}"
+ 
+     def stop(self) -> None:
+-        self.srv.shutdown()
+-        self.srv.server_close()
+-        self.thread.join(timeout=5)
++        stop_serving(self.srv, self.thread)
+ 
+ 
+ def send(h: BaseHTTPRequestHandler, status: int, obj: Any, headers: dict[str, str] | None = None) -> None:
+diff --git a/tests/test_server_stop_guard.py b/tests/test_server_stop_guard.py
+new file mode 100644
+index 0000000..333d3c3
+--- /dev/null
++++ b/tests/test_server_stop_guard.py
+@@ -0,0 +1,85 @@
++"""A test server that cannot stop must fail its test fast, with a message, never stall the whole run.
++
++The standard library's BaseServer.shutdown() waits, without a time limit, for the serve_forever loop to finish; when
++that loop is not running (not started yet, stuck, or gone) the wait never ends. The helpers in support.py wait
++until the loop runs and bound every stop. Made-up data only."""
++
++from __future__ import annotations
++
++import threading
++import time
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++
++import pytest
++from support import HOST, ServerDidNotStop, start_serving, stop_serving, stop_within
++
++
++def _server(cls: type[ThreadingHTTPServer] = ThreadingHTTPServer) -> ThreadingHTTPServer:
++    return cls((HOST, 0), BaseHTTPRequestHandler)
++
++
++def test_a_stop_that_never_returns_fails_fast_with_a_message(capfd: pytest.CaptureFixture[str]) -> None:
++    srv = _server()  # no loop is running: the plain srv.shutdown() would wait for ever (the hang seen in the full run)
++    dead = threading.Thread(target=lambda: None)
++    dead.start()
++    dead.join()
++    t0 = time.monotonic()
++    try:
++        with pytest.raises(ServerDidNotStop, match=r"stuck server did not stop within 0\.5 s"):
++            stop_serving(srv, dead, "stuck server", seconds=0.5)
++    finally:
++        srv.server_close()
++    assert time.monotonic() - t0 < 5
++    assert "socketserver.py" in capfd.readouterr().err  # the stack of every thread goes to stderr
++
++
++def test_the_stack_of_every_thread_is_printed_when_a_stop_hangs(capfd: pytest.CaptureFixture[str]) -> None:
++    release = threading.Event()
++    try:
++        with pytest.raises(ServerDidNotStop):
++            stop_within(release.wait, "blocked stop", seconds=0.3)
++    finally:
++        release.set()
++    err = capfd.readouterr().err
++    assert "most recent call first" in err and "in wait" in err  # the stuck stop thread is in the dump
++
++
++def test_start_serving_returns_only_when_the_loop_runs() -> None:
++    class Late(ThreadingHTTPServer):
++        def serve_forever(self, poll_interval: float = 0.5) -> None:
++            time.sleep(0.4)  # the thread has started, the loop has not
++            super().serve_forever(poll_interval)
++
++    srv = _server(Late)
++    t0 = time.monotonic()
++    thread = start_serving(srv)
++    assert time.monotonic() - t0 >= 0.4 and thread.is_alive()
++    stop_serving(srv)
++    assert not thread.is_alive()
++
++
++def test_start_serving_fails_when_the_loop_never_starts() -> None:
++    class Never(ThreadingHTTPServer):
++        def serve_forever(self, poll_interval: float = 0.5) -> None:
++            threading.Event().wait()
++
++    srv = _server(Never)
++    try:
++        with pytest.raises(ServerDidNotStop, match="did not start"):
++            start_serving(srv, ready_within=0.3)
++    finally:
++        srv.server_close()
++
++
++def test_a_stop_that_works_returns_at_once_and_passes_on_errors() -> None:
++    srv = _server()
++    thread = start_serving(srv)
++    t0 = time.monotonic()
++    stop_serving(srv, thread)
++    assert time.monotonic() - t0 < 2 and not thread.is_alive()
++
++    def boom() -> None:
++        raise ValueError("kept")
++
++    with pytest.raises(ValueError, match="kept"):
++        stop_within(boom)
+diff --git a/tests/test_slow_sender.py b/tests/test_slow_sender.py
+index 33a1f8c..199e750 100644
+--- a/tests/test_slow_sender.py
++++ b/tests/test_slow_sender.py
+@@ -16,7 +16,7 @@ from dataclasses import replace
+ from typing import Any
+ 
+ import pytest
+-from support import HOST, BlockAt, addr, call, lead, post_lead, reset_on_close, wait_until
++from support import HOST, BlockAt, addr, call, lead, post_lead, reset_on_close, start_serving, stop_serving, wait_until
+ 
+ from lead_desk import constants, server
+ from lead_desk.hooks import Hooks
+@@ -129,7 +129,6 @@ class Live:
+         self.rig = env.rig(hooks=hooks)
+         cfg = replace(self.rig.desk.config, port=0)
+         self.srv = server.make_server(self.rig.desk, cfg)
+-        self.thread = threading.Thread(target=self.srv.serve_forever, daemon=True)
+         self.taken = 0  # places handed out so far (a count that never goes down)
+         real_take = self.srv._take_slot  # type: ignore[attr-defined]
+ 
+@@ -139,7 +138,7 @@ class Live:
+             return slot
+ 
+         self.srv._take_slot = counting_take  # type: ignore[attr-defined]
+-        self.thread.start()
++        self.thread = start_serving(self.srv)
+         host, port = self.srv.server_address[0], self.srv.server_address[1]
+         self.base = f"http://{host}:{port}"
+ 
+@@ -188,8 +187,7 @@ class Live:
+         return int(self.srv.handler_threads())  # type: ignore[attr-defined]
+ 
+     def stop(self) -> None:
+-        self.srv.shutdown()
+-        self.srv.server_close()
++        stop_serving(self.srv)
+ 
+ 
+ @pytest.fixture
+diff --git a/tests/test_stamp_locks_and_budget.py b/tests/test_stamp_locks_and_budget.py
+index a40d0f8..9abb514 100644
+--- a/tests/test_stamp_locks_and_budget.py
++++ b/tests/test_stamp_locks_and_budget.py
+@@ -7,7 +7,6 @@ import errno
+ import logging
+ import socket
+ import sqlite3
+-import threading
+ import time
+ import urllib.error
+ from contextlib import contextmanager
+@@ -15,7 +14,7 @@ from dataclasses import replace
+ from typing import Any
+ 
+ import pytest
+-from support import HOST, is_write, lead, sql_exec
++from support import HOST, is_write, lead, sql_exec, start_serving, stop_serving
+ 
+ from demo_only.fakes import BlindOutbox, RecordedQualifier
+ from lead_desk import adapters, constants, db, gate, server
+@@ -372,15 +371,13 @@ def test_accept_pauses_on_no_file_handle(env, monkeypatch) -> None:
+ 
+     monkeypatch.setattr("socketserver.TCPServer.get_request", refuse)
+     host, port = srv.server_address[0], srv.server_address[1]
+-    thread = threading.Thread(target=srv.serve_forever, daemon=True)
+-    thread.start()
++    thread = start_serving(srv)
+     try:
+         client = socket.create_connection((str(host), int(port)), timeout=5)  # stays in the listen queue, unaccepted
+         time.sleep(0.5)
+         client.close()
+     finally:
+-        srv.shutdown()
+-        srv.server_close()
++        stop_serving(srv)
+         thread.join(timeout=5)
+     assert 1 <= calls["n"] <= 25, calls  # a spinning loop makes thousands of calls in half a second
+ 
