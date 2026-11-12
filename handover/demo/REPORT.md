@@ -12,6 +12,40 @@ FIXED (with proofs): A2 the new test literals built from parts (`_u`, `_j`, `_at
 - Apply: the four codeant2 patches REPLACE the old codeant-gitleaks/-scripts/-n8n-proof/-docs (the old ones conflict with them); order among the four does not matter; apply in both orders with the old codeant-desk/-demo-only/-portal-log/-tests-hardening (those four are being rewritten by 10c-2).
 - Review (fresh, read-only, adversarial, no cap): verifies each claimed fix against the A and C findings; asks whether scanning root-relative in the repo's own test is a legitimate change (what else scans absolute paths), whether the planting test can pass vacuously, ReDoS check of the scrub regexes by reading, the redirect change's default for feed.py/run_real_check.py, the proof.json expression, hygiene flags of the new test literals when tracked, hunk overlap with 10c-2's patches on tests/test_hygiene.py. Report to triage/REVIEW-codeant2-sec.md.
 
+## 2026-11-12 21:20Z / 02:50 IST - LANE 8 REVIEW 3 SAVED (2 Majors, 0 Blocker) -> BUILDER 8d STARTED; CodeAnt security review 2 saved; 5 builders live
+FAILED / UNCERTAIN first:
+- Lane 8 (docs-and-deps v3) is NOT clean: round-3 reviewer found 2 Majors in docs/tests.md numbers (the 'Node missing' 2328/137 arithmetic is the OLD 2465-test total, this commit has 2516; the 113/134 skip counts were measured on 558d37f not on the shipped base). No Blocker, test not weakened, locks and allowlists confirmed. Saved as fixes/REVIEW-3.md. Builder 8d now re-measures on 0841f36 + change, adds the cheap `height - 40 > 900` guard, and fixes the nits. Another fresh review follows (changed test + new lock in a public repo: no round cap).
+- Lead answers (21:06Z) taken: Semgrep uses only p/python and p/javascript; limits-burst-doc.patch goes into batch 2 (APPLY-LIST updated next push); heavy pytest one at a time.
+- Not yet reviewed: 10c-1b, 10c-2, lane 14 and lane 13b outputs. No new batch is ready; I will tell you the moment one is.
+Pushed: fixes/REVIEW-3.md, triage/REVIEW-codeant2-sec.md (commit 00e330d9).
+
+TABLE 1 - LIVE ITEMS (box 60 min each; load 1.8)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| 10c-1b | CodeAnt security fixes after review 2 (11 items) | 21:11 | 9 min | 21:50 | running | triage/codeant3-*.patch + SUMMARY-codeant3-sec.md | started |
+| 10c-2 | CodeAnt runtime/test fixes + fakes body-read sweep | 20:50 | 30 min | 21:50 | running | triage/codeant2-{desk,portal-log,demo-only,tests-hardening,fakes-body}.patch | no hand-back yet |
+| lane 14 | Semgrep PR rebase + fixes | 20:45 | 35 min | 21:45 | running (semgrep-rebased.patch already in folder, not reviewed) | semgrep/ patch + evidence | files appearing |
+| lane 13b | drawer siblings + 390px cascade | 20:50 | 30 min | 21:40 | running | layout/*2.patch, mobile-cascade.patch | no hand-back yet |
+| 8d | lane 8 fixes after review 3 | 21:19 | 1 min | 22:19 | running | fixes/docs-and-deps.patch v4 + evidence-d* | started |
+Totals: agents 5, shells 0, containers 0 (no docker), reviewers 0 (waiting for builders), load 1.8 of 4, heavy pytest slots 1 allowed at a time (8d and 10c-2 must take turns).
+Items over time box or without progress for 15 min: none flagged; 10c-2 and 13b have not reported for 30 min, watching.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| lane 8 docs-and-deps | 4 (build after review 3) | R1 1B+3M, R2 0B+2M, R3 0B+2M+nits | numbers stated for the wrong commit (measured vs stated) | round 3 Majors are real: doc states figures for a commit they were not measured on | no | fresh review with no Blocker/Major |
+| CodeAnt security (10c-1) | 3 (build 10c-1b) | R1 2B+1M, R2 0B+2M+8N | regex/test gaps in scrub + script handling | round 2 Majors real; security path: no cap | no | fresh review clean |
+| CodeAnt runtime (10c-2) | 2 (first build not back) | R1 reviewer B 2M, C 3M on old patches | return-vs-continue, unlocked sibling reads | first build still running | no | review clean |
+| Semgrep PR | 2 (rebase) | R1 1B+3M | missing gitleaks allowances, vacuous test, no clean-scan evidence | rebased patch unreviewed | no | review clean |
+| layout (13b) | 2 | R1 2M | sibling dialog, cascade bug | siblings + cascade fix unreviewed | no | review clean |
+Waste check: no round is waste; each is a real Major from a fresh reviewer.
+
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| lane 8c review 3 (a4f6c8d5e09f81074) | 0 Blocker, 2 Major, nits; saved fixes/REVIEW-3.md |
+| CodeAnt security reviewer round 2 (a150996e8633c3c0d) | 0B/2M/8N; saved earlier; acted on by 10c-1b |
+
 ### (1) LIVE ITEMS (now 2026-11-12 21:10Z / 02:40 IST)
 | id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
 |---|---|---|---|---|---|---|---|
