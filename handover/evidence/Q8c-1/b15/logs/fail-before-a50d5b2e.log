@@ -1,0 +1,78 @@
+head (tests copied from): 49c874e5abfccafd3fabc01a1f78d11df63e3ec4
+tree: a50d5b2e detached worktree, the 8 changed test files copied in, src and tools as on a50d5b2e
+command: /tmp/b15fb.sh (pytest, 17 test ids, PYTHONPATH=worktree src)
+FFFFFFFFFFFFF....                                                        [100%]
+=================================== FAILURES ===================================
+E   AssertionError: a changed walrus constant listed [], expected only test_a
+    assert [] == ['test_a']
+      
+      Right contains one more item: 'test_a'
+      Use -v to get more diff
+/tmp/b15fb/tests/test_notes_lines_check.py:1137: AssertionError: a changed walrus constant listed [], expected only test_a
+E   AssertionError: a changed setUp listed [], expected Case::test_one
+    assert [] == ['Case::test_one']
+      
+      Right contains one more item: 'Case::test_one'
+      Use -v to get more diff
+/tmp/b15fb/tests/test_notes_lines_check.py:1157: AssertionError: a changed setUp listed [], expected Case::test_one
+E   AssertionError: a fixture named by usefixtures listed [], expected test_use
+    assert [] == ['test_use']
+      
+      Right contains one more item: 'test_use'
+      Use -v to get more diff
+/tmp/b15fb/tests/test_notes_lines_check.py:1171: AssertionError: a fixture named by usefixtures listed [], expected test_use
+E   AssertionError: a changed autouse fixture of a pytest_plugins module listed []
+    assert [] == ['test_pp']
+      
+      Right contains one more item: 'test_pp'
+      Use -v to get more diff
+/tmp/b15fb/tests/test_notes_lines_check.py:1200: AssertionError: a changed autouse fixture of a pytest_plugins module listed []
+E   AssertionError: f"tests.zz.dyn_{n}": a changed module listed []
+    assert [] == ['test_dyn', 'test_other']
+      
+      Right contains 2 more items, first extra item: 'test_dyn'
+      Use -v to get more diff
+/tmp/b15fb/tests/test_notes_lines_check.py:1233: AssertionError: f"tests.zz.dyn_{n}": a changed module listed []
+E   AssertionError: a changed helper behind a star import listed [], not test_a
+    assert [] == ['test_a']
+      
+      Right contains one more item: 'test_a'
+      Use -v to get more diff
+/tmp/b15fb/tests/test_notes_lines_check.py:1252: AssertionError: a changed helper behind a star import listed [], not test_a
+E   AssertionError: the limit of the one table is not stated
+    assert 'ONE table' in (('List the tests (and the files that make tests pass or fail) that are new or changed against a base commit and check\n...is a problem (no row). It runs `git` only, with a fixed argument list and no shell, and reads\nfiles; it never writes.'))
+     +  where 'List the tests (and the files that make tests pass or fail) that are new or changed against a base commit and check\n...is a problem (no row). It runs `git` only, with a fixed argument list and no shell, and reads\nfiles; it never writes.' = nlc.__doc__
+/tmp/b15fb/tests/test_notes_lines_check.py:1267: AssertionError: the limit of the one table is not stated
+E   TypeError: run_mutants() got an unexpected keyword argument 'extra_files'. Did you mean 'extra_dirs'?
+/tmp/b15fb/tests/test_mutation_runner.py:1569: TypeError: run_mutants() got an unexpected keyword argument 'extra_files'. Did you mean 'extra_dirs'?
+E   assert False
+     +  where False = <built-in method startswith of str object at 0x7f7788e44190>('tick: config error: backends.secrets (vault): ')
+     +    where <built-in method startswith of str object at 0x7f7788e44190> = "tick: test-agent is not qualified; its new runs are refused\ntick: config error: secret 'fixture-token' cannot be read at start-up\n".startswith
+/tmp/b15fb/tests/test_k1b_cli.py:305: assert False
+E   AssertionError: the settings with an empty prefix were taken
+    assert None is not None
+/tmp/b15fb/tests/test_policy_guard.py:2563: AssertionError: the settings with an empty prefix were taken
+E   AssertionError: the start-up built the kind with an empty prefix
+    assert None is not None
+/tmp/b15fb/tests/test_policy_guard.py:2577: AssertionError: the start-up built the kind with an empty prefix
+E   AssertionError: a read with an empty prefix was tried
+    assert None is not None
+/tmp/b15fb/tests/test_policy_guard.py:2587: AssertionError: a read with an empty prefix was tried
+E   AttributeError: module 'tools.policy_page' has no attribute 'KUBE_PROBE_LIMIT'
+/tmp/b15fb/tests/test_policy_guard.py:1807: AttributeError: module 'tools.policy_page' has no attribute 'KUBE_PROBE_LIMIT'
+=========================== short test summary info ============================
+FAILED tests/test_notes_lines_check.py::test_a_constant_bound_by_a_walrus_inside_another_assignment_lists_the_test_that_reads_it
+FAILED tests/test_notes_lines_check.py::test_the_set_up_and_tear_down_methods_of_a_unittest_case_list_its_tests
+FAILED tests/test_notes_lines_check.py::test_a_fixture_named_as_a_text_by_usefixtures_or_getfixturevalue_lists_the_test
+FAILED tests/test_notes_lines_check.py::test_a_module_named_in_pytest_plugins_or_in_addopts_acts_on_the_tests_below_the_conftest
+FAILED tests/test_notes_lines_check.py::test_a_module_imported_by_a_name_built_at_run_time_lists_every_test_that_could_reach_it
+FAILED tests/test_notes_lines_check.py::test_a_star_import_of_a_test_module_makes_every_name_of_it_part_of_the_file
+FAILED tests/test_notes_lines_check.py::test_a_row_of_any_notes_file_of_the_change_counts_for_a_unit_and_the_tool_says_so
+FAILED tests/test_mutation_runner.py::test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_one_is_not
+FAILED tests/test_k1b_cli.py::test_a_config_with_an_empty_vault_path_prefix_is_refused_with_exit_2_and_one_plain_sentence
+FAILED tests/test_policy_guard.py::test_vault_settings_with_an_empty_path_prefix_are_refused_and_a_named_one_is_taken
+FAILED tests/test_policy_guard.py::test_building_the_vault_kind_from_settings_that_skipped_their_checks_refuses_an_empty_prefix
+FAILED tests/test_policy_guard.py::test_a_vault_read_with_an_empty_prefix_is_refused_before_any_request_and_a_bad_name_is_refused_first
+FAILED tests/test_policy_guard.py::test_the_page_says_that_the_kubernetes_start_up_check_does_not_refuse_an_over_broad_read
+13 failed, 4 passed in 32.20s
+rc=1
