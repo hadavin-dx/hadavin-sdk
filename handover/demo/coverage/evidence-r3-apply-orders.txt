@@ -1,0 +1,170 @@
+# fresh clones of 558d37f under /tmp/work/r3/orders; patches: v3=/tmp/demo-wt/handover/demo/coverage/sonar-coverage.patch fix1=/tmp/demo-wt/handover/demo/gitleaks/gitleaks-toml-fix.patch fix2=/tmp/demo-wt/handover/demo/gitleaks/gitleaks-toml-fix-v2.patch
+
+## 1_v3_alone
+$ git apply --check sonar-coverage.patch -> exit 0
+$ git apply sonar-coverage.patch -> exit 0
+ M .github/workflows/sonar.yml
+ M .gitignore
+ M .gitleaks.toml
+ M docs/tests.md
+ M exceptions.txt
+ M pyproject.toml
+ M sonar-project.properties
+?? requirements-coverage.in
+?? requirements-coverage.txt
+
+## 2_fix1_then_v3
+$ git apply gitleaks-toml-fix.patch -> exit 0
+$ git apply --check sonar-coverage.patch -> exit 0
+$ git apply sonar-coverage.patch -> exit 0
+ M .github/workflows/sonar.yml
+ M .gitignore
+ M .gitleaks.toml
+ M docs/tests.md
+ M exceptions.txt
+ M pyproject.toml
+ M sonar-project.properties
+?? requirements-coverage.in
+?? requirements-coverage.txt
+
+## 3_v3_then_fix1
+$ git apply sonar-coverage.patch -> exit 0
+$ git apply --check gitleaks-toml-fix.patch -> exit 0
+$ git apply gitleaks-toml-fix.patch -> exit 0
+ M .github/workflows/sonar.yml
+ M .gitignore
+ M .gitleaks.toml
+ M docs/tests.md
+ M exceptions.txt
+ M pyproject.toml
+ M sonar-project.properties
+?? requirements-coverage.in
+?? requirements-coverage.txt
+
+## 4_fix2_then_v3
+$ git apply gitleaks-toml-fix-v2.patch -> exit 0
+$ git apply --check sonar-coverage.patch -> exit 0
+$ git apply sonar-coverage.patch -> exit 0
+ M .github/workflows/sonar.yml
+ M .gitignore
+ M .gitleaks.toml
+ M docs/tests.md
+ M exceptions.txt
+ M pyproject.toml
+ M sonar-project.properties
+?? requirements-coverage.in
+?? requirements-coverage.txt
+
+## 5_v3_then_fix2
+$ git apply sonar-coverage.patch -> exit 0
+$ git apply --check gitleaks-toml-fix-v2.patch -> exit 0
+$ git apply gitleaks-toml-fix-v2.patch -> exit 0
+ M .github/workflows/sonar.yml
+ M .gitignore
+ M .gitleaks.toml
+ M docs/tests.md
+ M exceptions.txt
+ M pyproject.toml
+ M sonar-project.properties
+?? requirements-coverage.in
+?? requirements-coverage.txt
+
+## (3way cases 6-8 redone below with the first patch staged: `git add -A` before --3way, which needs a clean index; my first attempt skipped the staging and failed with "does not match index")
+
+## 9_both_fixes_not_applicable_old_v2_for_contrast
+$ git apply sonar-coverage-v2.patch -> exit 0
+error: patch failed: exceptions.txt:24
+error: exceptions.txt: patch does not apply
+$ git apply --check gitleaks-toml-fix.patch -> exit 1
+ M .github/workflows/sonar.yml
+ M .gitignore
+ M .gitleaks.toml
+ M docs/tests.md
+ M exceptions.txt
+ M pyproject.toml
+ M sonar-project.properties
+ M tests/test_hygiene.py
+?? requirements-coverage.in
+?? requirements-coverage.txt
+
+## 6_v3_then_fix1_3way
+$ git apply sonar-coverage.patch -> exit 0
+Applied patch to '.gitleaks.toml' cleanly.
+Applied patch to 'exceptions.txt' cleanly.
+$ git add -A; git apply --3way gitleaks-toml-fix.patch -> exit 0
+M  .github/workflows/sonar.yml
+M  .gitignore
+M  .gitleaks.toml
+M  docs/tests.md
+M  exceptions.txt
+M  pyproject.toml
+A  requirements-coverage.in
+A  requirements-coverage.txt
+M  sonar-project.properties
+.gitleaks.toml:0
+exceptions.txt:0
+
+## 7_fix1_then_v3_3way
+$ git apply gitleaks-toml-fix.patch -> exit 0
+Applied patch to '.github/workflows/sonar.yml' cleanly.
+Applied patch to '.gitignore' cleanly.
+Applied patch to '.gitleaks.toml' cleanly.
+Applied patch to 'docs/tests.md' cleanly.
+Applied patch to 'exceptions.txt' cleanly.
+Applied patch to 'pyproject.toml' cleanly.
+Falling back to direct application...
+Falling back to direct application...
+Applied patch to 'sonar-project.properties' cleanly.
+$ git add -A; git apply --3way sonar-coverage.patch -> exit 0
+M  .github/workflows/sonar.yml
+M  .gitignore
+M  .gitleaks.toml
+M  docs/tests.md
+M  exceptions.txt
+M  pyproject.toml
+A  requirements-coverage.in
+A  requirements-coverage.txt
+M  sonar-project.properties
+.gitleaks.toml:0
+exceptions.txt:0
+
+## 8_v3_then_fix2_3way
+$ git apply sonar-coverage.patch -> exit 0
+Applied patch to '.gitleaks.toml' cleanly.
+Applied patch to 'exceptions.txt' cleanly.
+$ git add -A; git apply --3way gitleaks-toml-fix-v2.patch -> exit 0
+M  .github/workflows/sonar.yml
+M  .gitignore
+M  .gitleaks.toml
+M  docs/tests.md
+M  exceptions.txt
+M  pyproject.toml
+A  requirements-coverage.in
+A  requirements-coverage.txt
+M  sonar-project.properties
+.gitleaks.toml:0
+exceptions.txt:0
+
+## 10_fix2_then_v3_3way
+$ git apply gitleaks-toml-fix-v2.patch -> exit 0
+Applied patch to '.github/workflows/sonar.yml' cleanly.
+Applied patch to '.gitignore' cleanly.
+Applied patch to '.gitleaks.toml' cleanly.
+Applied patch to 'docs/tests.md' cleanly.
+Applied patch to 'exceptions.txt' cleanly.
+Applied patch to 'pyproject.toml' cleanly.
+Falling back to direct application...
+Falling back to direct application...
+Applied patch to 'sonar-project.properties' cleanly.
+$ git add -A; git apply --3way sonar-coverage.patch -> exit 0
+M  .github/workflows/sonar.yml
+M  .gitignore
+M  .gitleaks.toml
+M  docs/tests.md
+M  exceptions.txt
+M  pyproject.toml
+A  requirements-coverage.in
+A  requirements-coverage.txt
+M  sonar-project.properties
+.gitleaks.toml:0
+exceptions.txt:0

@@ -1,0 +1,9 @@
+# tree w_11 = 558d37f + v3 + fix v2; no Python file differs from 558d37f (evidence-r3-base-diff.txt), so these are a confirmation
+$ mypy --platform linux
+Success: no issues found in 26 source files
+$ mypy --platform win32
+Success: no issues found in 26 source files
+$ bandit -ll -r src tools scripts -c pyproject.toml
+exit 0
+$ python scripts/check_schema.py
+RESULT ALL PASS

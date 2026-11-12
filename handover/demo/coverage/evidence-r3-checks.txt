@@ -1,0 +1,24 @@
+# tree: fresh clone 558d37f + sonar-coverage.patch (v3) + gitleaks-toml-fix-v2.patch; venv /tmp/work/venv-cov2 (outside the tree); one process at a time; gitleaks run BEFORE ruff/pytest so no cache folders exist (an earlier run in a used tree reported ruff/pytest cache files: tool artefacts, not the patch)
+== uptime before
+ 20:30:22 up  1:39,  0 user,  load average: 0.80, 2.17, 2.49
+== $ gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+[90m8:30PM[0m [32mINF[0m [1mno leaks found[0m
+exit 0
+== $ gitleaks git . (full history + scratch commit)
+[90m8:30PM[0m [32mINF[0m [1mno leaks found[0m
+exit 0
+== $ git grep -n -o -I -E -f patterns.txt -- . | grep -v -E -f exceptions.txt   (lint.yml literal scan; expect 0 left)
+raw hits 2150, left after exceptions: 0
+== $ ruff check .
+All checks passed!
+== $ ruff format --check .
+127 files already formatted
+== $ GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 DPLD_REQUIRE_DEMO=1 python -m pytest -q tests/test_hygiene.py tests/test_no_placeholders.py
+............                                                             [100%]
+12 passed in 8.20s
+== same pytest command WITHOUT the gitleaks fix patch (v3 only) fresh tree: expect test_hygiene_scan_public to fail (the lead decides on the fix)
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: gitl...
+1 failed, 9 passed in 7.91s
+== uptime after
+ 20:30:42 up  1:40,  0 user,  load average: 1.25, 2.19, 2.49

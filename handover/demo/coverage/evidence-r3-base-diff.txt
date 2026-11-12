@@ -1,0 +1,8 @@
+$ git diff --stat b29bb1f 558d37f
+ .gitleaks.toml | 7 +++++++
+ 1 file changed, 7 insertions(+)
+$ git diff --stat b29bb1f 558d37f -- "*.py"  (empty = no Python file changed)
+$ git diff 558d37f -- .github/workflows/sonar.yml | grep runs-on  (main had ubuntu-latest; lint.yml has ubuntu-24.04)
+1:# SonarQube Cloud analysis (CI-based). Runs on Linux (ubuntu-latest) only: the analysis reads source files and needs no Windows.
+22:    runs-on: ubuntu-latest
+18:    runs-on: ubuntu-24.04

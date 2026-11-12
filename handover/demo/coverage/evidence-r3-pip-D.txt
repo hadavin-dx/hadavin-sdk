@@ -1,0 +1,39 @@
+# pip 24.0 / python 3.12.3, fresh venv /tmp/work/r3/x, --dry-run
+## D1. -c dev.txt, real cov.txt (identical pins)
+
+$ ./x/bin/pip install --dry-run --require-hashes -c dev.txt -r cov.txt
+  Using cached pluggy-1.7.0-py3-none-any.whl (27 kB)
+Collecting pygments==2.21.0 (from -r cov.txt (line 143))
+  Using cached pygments-2.21.0-py3-none-any.whl (1.3 MB)
+Collecting pytest==9.2.0 (from -r cov.txt (line 149))
+  Using cached pytest-9.2.0-py3-none-any.whl (411 kB)
+Collecting pytest-cov==7.1.0 (from -r cov.txt (line 155))
+  Using cached pytest_cov-7.1.0-py3-none-any.whl (22 kB)
+Would install Pygments-2.21.0 coverage-7.17.2 iniconfig-2.3.1 packaging-26.3 pluggy-1.7.0 pytest-9.2.0 pytest-cov-7.1.0
+exit=0
+
+## D2. -c dev.txt, drifted cov-b1.txt (pytest==9.1.0)
+
+$ ./x/bin/pip install --dry-run --require-hashes -c dev.txt -r cov-b1.txt
+    The user requested pytest==9.1.0
+    The user requested (constraint) pytest==9.2.0
+
+To fix this you could try to:
+1. loosen the range of package versions you've specified
+2. remove package versions to allow pip attempt to solve the dependency conflict
+
+ERROR: ResolutionImpossible: for help visit https://pip.pypa.io/en/latest/topics/dependency-resolution/#dealing-with-dependency-conflicts
+exit=1
+
+## D3. same with --no-deps (rules out the dependency walk as the cause)
+
+$ ./x/bin/pip install --dry-run --require-hashes -c dev.txt -r cov-b1.txt --no-deps
+    The user requested pytest==9.1.0
+    The user requested (constraint) pytest==9.2.0
+
+To fix this you could try to:
+1. loosen the range of package versions you've specified
+2. remove package versions to allow pip attempt to solve the dependency conflict
+
+ERROR: ResolutionImpossible: for help visit https://pip.pypa.io/en/latest/topics/dependency-resolution/#dealing-with-dependency-conflicts
+exit=1

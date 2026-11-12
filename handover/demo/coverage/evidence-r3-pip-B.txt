@@ -1,0 +1,54 @@
+## B1. conflicting pins, both with VALID hashes: dev.txt pytest==9.2.0, cov-b1.txt pytest==9.1.0 (real sha256 of the pytest-9.1.0 wheel, computed from a download)
+149:pytest==9.1.0 \
+150-    --hash=sha256:8ebb0e7888bdf2bdfc602ec51f8f62d50200af37356c74e503c79a94f5c81f32
+
+$ ./v/bin/pip install --dry-run --require-hashes -r dev.txt -r cov-b1.txt
+  Using cached coverage-7.17.2-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (263 kB)
+ERROR: Cannot install pytest==9.1.0 and pytest==9.2.0 because these package versions have conflicting dependencies.
+
+The conflict is caused by:
+    The user requested pytest==9.2.0
+    The user requested pytest==9.1.0
+
+To fix this you could try to:
+1. loosen the range of package versions you've specified
+2. remove package versions to allow pip attempt to solve the dependency conflict
+
+ERROR: ResolutionImpossible: for help visit https://pip.pypa.io/en/latest/topics/dependency-resolution/#dealing-with-dependency-conflicts
+exit=1
+
+## B1b. same, reverse -r order
+
+$ ./v/bin/pip install --dry-run --require-hashes -r cov-b1.txt -r dev.txt
+  Using cached pathspec-1.1.1-py3-none-any.whl (57 kB)
+ERROR: Cannot install pytest==9.1.0 and pytest==9.2.0 because these package versions have conflicting dependencies.
+
+The conflict is caused by:
+    The user requested pytest==9.1.0
+    The user requested pytest==9.2.0
+
+To fix this you could try to:
+1. loosen the range of package versions you've specified
+2. remove package versions to allow pip attempt to solve the dependency conflict
+
+ERROR: ResolutionImpossible: for help visit https://pip.pypa.io/en/latest/topics/dependency-resolution/#dealing-with-dependency-conflicts
+exit=1
+
+## B2. version edited only, hashes of 9.2.0 kept
+
+$ ./v/bin/pip install --dry-run --require-hashes -r dev.txt -r cov-b2.txt
+  Using cached coverage-7.17.2-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (263 kB)
+ERROR: Cannot install pytest==9.1.0 and pytest==9.2.0 because these package versions have conflicting dependencies.
+
+The conflict is caused by:
+    The user requested pytest==9.2.0
+    The user requested pytest==9.1.0
+
+To fix this you could try to:
+1. loosen the range of package versions you've specified
+2. remove package versions to allow pip attempt to solve the dependency conflict
+
+ERROR: ResolutionImpossible: for help visit https://pip.pypa.io/en/latest/topics/dependency-resolution/#dealing-with-dependency-conflicts
+exit=1
+
+## C. two separate calls as in sonar.yml today, second one is the conflicting copy (real installs into a fresh venv, to see what stays)

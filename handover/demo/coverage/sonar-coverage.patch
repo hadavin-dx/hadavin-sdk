@@ -1,7 +1,11 @@
 diff --git a/.github/workflows/sonar.yml b/.github/workflows/sonar.yml
-index e851736..c809989 100644
+index e851736..ee242cd 100644
 --- a/.github/workflows/sonar.yml
 +++ b/.github/workflows/sonar.yml
+@@ -1,2 +1,2 @@
+-# SonarQube Cloud analysis (CI-based). Runs on Linux (ubuntu-latest) only: the analysis reads source files and needs no Windows.
++# SonarQube Cloud analysis (CI-based). Runs on Linux (ubuntu-24.04, the same runner image as lint.yml) only: the analysis reads source files and needs no Windows.
+ # One method per project: turn OFF "Automatic Analysis" in SonarQube Cloud (project -> Administration -> Analysis Method),
 @@ -4,3 +4,10 @@
  # The token is the repository secret SONAR_TOKEN (owner-created, read-only to this file; never printed).
 -# Coverage is not collected here yet: Sonar shows no coverage numbers until a test run writes coverage.xml.
@@ -12,22 +16,25 @@ index e851736..c809989 100644
 +# (the repository's own tests) could write to $GITHUB_ENV or $GITHUB_PATH, to ~/.sonar/cache, or plant a sonar-project.properties or
 +# coverage.xml that the later scan step then reads. This is accepted because a pull request from a fork or from Dependabot never
 +# runs this job (the `if:` below) and an author of a same-repo pull request can already edit this workflow file itself.
-+# A two-job split (tests without the secret, scan in a second job) is described in the lane 7 plan as an owner decision.
++# A two-job split (tests without the secret, scan in a second job) is an open owner decision (see the pull request description).
  name: SonarQube
-@@ -22,3 +29,3 @@ jobs:
-     runs-on: ubuntu-latest
+@@ -21,4 +28,4 @@ jobs:
+     name: Build and analyze
+-    runs-on: ubuntu-latest
 -    timeout-minutes: 20
++    runs-on: ubuntu-24.04
 +    timeout-minutes: 60  # same as lint.yml until a real run on a hosted runner shows the duration; then 1.6 times the longest observed run
      # A pull request from a fork or from Dependabot gets no repository secret: skip it instead of failing.
-@@ -30,2 +37,14 @@ jobs:
+@@ -30,2 +37,15 @@ jobs:
            persist-credentials: false
 +      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0 (same pin as lint.yml)
 +        with:
 +          python-version: "3.12"
 +      - name: Install the pinned dev tools and the coverage tools (hashes are checked)
-+        run: |
-+          python -m pip install --require-hashes -r requirements-dev.txt
-+          python -m pip install --require-hashes -r requirements-coverage.txt
++        # ONE pip call with both locks: pip refuses to run when a package is pinned to two versions (tested, pip 24.0);
++        # two separate calls would silently let the second lock replace the first one's pin. --only-binary: wheels only, so no
++        # package build script runs before the test step.
++        run: python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt -r requirements-coverage.txt
 +      - name: Tests with coverage (no secrets in this step)
 +        env:
 +          # the demo_only folder must be in the checkout: without it most test files would skip and the figure would be wrong
@@ -57,33 +64,28 @@ index c6f07f8..0d1681b 100644
 +paths = ['''(^|[/\\])requirements-(dev(-win)?|coverage)\.txt$''', '''\.github[/\\]workflows[/\\][a-z]+\.yml$''']
  
 diff --git a/docs/tests.md b/docs/tests.md
-index 2fb4069..944b741 100644
+index 2fb4069..f430aee 100644
 --- a/docs/tests.md
 +++ b/docs/tests.md
 @@ -18,2 +18,9 @@ Linux (Python 3.12 matches the lock file), with the `.venv` folder switched on a
  
-+The SonarQube job (`.github/workflows/sonar.yml`) also measures how much of the code the tests run. On Linux, after the line above, install the coverage tools from their own lock file (it adds `pytest-cov` and `coverage` and changes no version of the dev lock) and add the coverage options:
++The SonarQube job (`.github/workflows/sonar.yml`) also measures how much of the code the tests run. On Linux, instead of the install line above, install the dev lock and the coverage lock (it adds `pytest-cov` and `coverage`) in one pip call, as the job does; pip stops with an error if a package is pinned to two different versions in the two files. Then add the coverage options:
 +
-+    python -m pip install --require-hashes -r requirements-coverage.txt
++    python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt -r requirements-coverage.txt
 +    python -m pytest -q --cov --cov-report=xml:coverage.xml
 +
 +The settings are in `pyproject.toml` (`[tool.coverage.run]`); the report `coverage.xml` is read by the SonarQube scan through `sonar.python.coverage.reportPaths`. The browser tests skip without Playwright, so the figure counts code that only they reach as not run.
 +
  The desk alone: `PYTHONPATH=src python -m lead_desk.server`. The crash scene: `PYTHONPATH=src python scripts/crash_desk.py`, then write a point name (for example `D2`) into the flag file it prints, and the next time the desk reaches that point it ends at once. On Windows set `PYTHONPATH` with `;` between entries when two are needed (`src;.`). The tests set the path for their own processes. Writing `blind` instead of `keyed` in the start command starts a mail system that cannot recognise repeats.
 diff --git a/exceptions.txt b/exceptions.txt
-index 8a85359..65431aa 100644
+index 8a85359..fd65efe 100644
 --- a/exceptions.txt
 +++ b/exceptions.txt
-@@ -8,3 +8,3 @@
- ^\.github/workflows/[a-z]+\.yml:[0-9]+:([0-9a-f]{40}|[0-9a-f]{64})$
--^requirements-dev(-win)?\.txt:[0-9]+:[0-9a-f]{64}$
-+^requirements-(dev(-win)?|coverage)\.txt:[0-9]+:[0-9a-f]{64}$
+@@ -9,2 +9,4 @@
+ ^requirements-dev(-win)?\.txt:[0-9]+:[0-9a-f]{64}$
++^requirements-coverage\.txt:[0-9]+:[0-9a-f]{64}$
++^[^:]+:[0-9]+:requirements-coverage\.in[^A-Za-z0-9_-]?$
  ^src/lead_desk/desk\.py:[0-9]+:threading\.local[^A-Za-z0-9_-]?$
-@@ -23,3 +23,3 @@
- ^[^:]+:[0-9]+:https:/{2}github\.com/n8n-io/n8n/blob/master/LICENSE\.md$
--^[^:]+:[0-9]+:(requirements-dev\.in|(start_all|reset|all)\.sh|log\.info\(|P\.page\(|counts\.info)[^A-Za-z0-9_-]?$
-+^[^:]+:[0-9]+:(requirements-(dev|coverage)\.in|(start_all|reset|all)\.sh|log\.info\(|P\.page\(|counts\.info)[^A-Za-z0-9_-]?$
- ^README\.md:[0-9]+:hadavin\.com[^A-Za-z0-9-]?$
 diff --git a/pyproject.toml b/pyproject.toml
 index 79fdb4e..02a9b4a 100644
 --- a/pyproject.toml
@@ -102,15 +104,15 @@ index 79fdb4e..02a9b4a 100644
 +omit = ["tests/**", "demo_only/**", ".venv*/**"]
 diff --git a/requirements-coverage.in b/requirements-coverage.in
 new file mode 100644
-index 0000000..960196a
+index 0000000..b0b2cc6
 --- /dev/null
 +++ b/requirements-coverage.in
 @@ -0,0 +1,6 @@
 +# Extra tools for the coverage run of the SonarQube job (.github/workflows/sonar.yml) only. Linux, Python 3.12.
-+# Installed with --require-hashes ON TOP of requirements-dev.txt; the lint job and the Windows lock never see it.
++# Installed together with requirements-dev.txt in ONE pip call (-r requirements-dev.txt -r requirements-coverage.txt, --require-hashes); the lint job and the Windows lock never see it.
 +# The lock is built against requirements-dev.txt (-c), so pytest and its helpers keep the versions of that lock.
 +# Regenerate with uv 0.11.32 (command in the header of requirements-coverage.txt), and regenerate requirements-coverage.txt whenever
-+# requirements-dev.txt changes (tests/test_hygiene.py fails if a package pinned in both has two different versions).
++# requirements-dev.txt changes (if a package is pinned to two versions in the two files, the pip call in sonar.yml stops with "conflicting dependencies").
 +pytest-cov
 diff --git a/requirements-coverage.txt b/requirements-coverage.txt
 new file mode 100644
@@ -284,25 +286,3 @@ index 1f57193..524882a 100644
  sonar.exclusions=demo_only/**,tests/portal_fixtures/**,**/*.png,.git/**
 +# Python coverage: the report written by the test step in sonar.yml (pytest-cov, paths relative to the repository root).
 +sonar.python.coverage.reportPaths=coverage.xml
-diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
-index 3b324e3..1d8a4ba 100644
---- a/tests/test_hygiene.py
-+++ b/tests/test_hygiene.py
-@@ -332 +332,17 @@ def test_workflows_are_pinned_and_limited() -> None:
-     assert _workflow_problems(good + NL.join(["on:", "  pull_request_target:", ""])) != []
-+
-+
-+def _pins(text: str) -> dict[str, str]:
-+    """name -> version of every `name==version` line of a pip lock file."""
-+    return {m[1].lower(): m[2] for m in re.finditer(r"^([A-Za-z0-9._-]+)==([^\s;\\]+)", text, re.MULTILINE)}
-+
-+
-+def test_coverage_lock_agrees_with_dev_lock() -> None:
-+    """A package pinned in both requirements-dev.txt and requirements-coverage.txt has the same version in both:
-+    the sonar.yml job installs the dev lock, then the coverage lock: a drifted pin silently replaces the dev pin."""
-+    dev = _pins((REPO / "requirements-dev.txt").read_text(encoding="utf-8"))
-+    cov = _pins((REPO / "requirements-coverage.txt").read_text(encoding="utf-8"))
-+    shared = sorted(dev.keys() & cov.keys())
-+    assert "pytest" in shared, "the two locks share no pytest pin: the test would prove nothing"
-+    assert [(n, dev[n], cov[n]) for n in shared if dev[n] != cov[n]] == []
-+    assert _pins("pytest==1.0 \\\n    --hash=sha256:aa") == {"pytest": "1.0"}  # the parser itself

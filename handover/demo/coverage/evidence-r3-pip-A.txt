@@ -1,0 +1,12 @@
+# commands: pip 24.0, python 3.12.3, throwaway venv /tmp/work/r3/v, files copied from patched tree (558d37f + v2 patch), --dry-run (no install) unless said
+## A. real case: identical pins in both -r files
+$ pip install --dry-run --require-hashes -r dev.txt -r cov.txt
+  Using cached stevedore-5.9.1-py3-none-any.whl (54 kB)
+Collecting typing-extensions==4.16.0 (from -r dev.txt (line 404))
+  Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Collecting coverage==7.17.2 (from -r cov.txt (line 3))
+  Using cached coverage-7.17.2-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (263 kB)
+Collecting pytest-cov==7.1.0 (from -r cov.txt (line 155))
+  Using cached pytest_cov-7.1.0-py3-none-any.whl (22 kB)
+Would install PyYAML-6.0.3 Pygments-2.21.0 ast_serialize-0.13.1 bandit-1.9.4 coverage-7.17.2 iniconfig-2.3.1 librt-0.16.0 markdown-it-py-4.2.0 mdurl-0.1.2 mypy-2.4.1 mypy_extensions-1.2.0 packaging-26.3 pathspec-1.1.1 pluggy-1.7.0 pytest-9.2.0 pytest-cov-7.1.0 rich-15.0.0 ruff-0.17.4 stevedore-5.9.1 typing_extensions-4.16.0
+exit=0

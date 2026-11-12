@@ -1,0 +1,4 @@
+$ python -I (xml parse) on evidence-r3-coverage.xml
+line-rate 0.9253 valid 7067 covered 6539 branch-rate 0
+files 35 missing on disk 0 {'load_tools': 4, 'scripts': 6, 'src': 22, 'tools': 3}
+sources [None, '.']

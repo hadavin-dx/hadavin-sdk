@@ -1,0 +1,4 @@
+# tree w_11 = 558d37f + v3 + gitleaks-toml-fix-v2; same four files the round-1/2 hygiene count used (v2 count: 20 passed incl. the lock-drift test, which v3 deletes, so 19 expected)
+$ GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 DPLD_REQUIRE_DEMO=1 python -m pytest -q tests/test_hygiene.py tests/test_no_placeholders.py tests/test_http_guard.py tests/test_demo_folder_guard.py
+...................                                                      [100%]
+19 passed in 9.62s

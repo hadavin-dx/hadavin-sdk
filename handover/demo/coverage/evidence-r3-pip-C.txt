@@ -1,0 +1,29 @@
+# pip 24.0 / python 3.12.3, fresh venv /tmp/work/r3/w (real installs), files in /tmp/work/r3 (dev.txt, cov.txt = patched tree; cov-b1.txt = conflicting pytest==9.1.0 with its real hash)
+## C1. the proposed single call with --only-binary=:all: (real install)
+
+$ ./w/bin/pip install --require-hashes --only-binary=:all: -r dev.txt -r cov.txt
+Collecting coverage==7.17.2 (from -r cov.txt (line 3))
+  Using cached coverage-7.17.2-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (263 kB)
+Collecting pytest-cov==7.1.0 (from -r cov.txt (line 155))
+  Using cached pytest_cov-7.1.0-py3-none-any.whl (22 kB)
+Installing collected packages: typing-extensions, stevedore, ruff, pyyaml, pygments, pluggy, pathspec, packaging, mypy-extensions, mdurl, librt, iniconfig, coverage, ast-serialize, pytest, mypy, markdown-it-py, rich, pytest-cov, bandit
+Successfully installed ast-serialize-0.13.1 bandit-1.9.4 coverage-7.17.2 iniconfig-2.3.1 librt-0.16.0 markdown-it-py-4.2.0 mdurl-0.1.2 mypy-2.4.1 mypy-extensions-1.2.0 packaging-26.3 pathspec-1.1.1 pluggy-1.7.0 pygments-2.21.0 pytest-9.2.0 pytest-cov-7.1.0 pyyaml-6.0.3 rich-15.0.0 ruff-0.17.4 stevedore-5.9.1 typing-extensions-4.16.0
+exit=0
+
+$ pip list | grep -i -E "^(pytest|coverage|pytest-cov) "
+coverage          7.17.2
+pytest            9.2.0
+pytest-cov        7.1.0
+
+## C2. TODAY (two separate calls): second call with the drifted copy cov-b1.txt, on top of the installed dev lock
+
+$ ./w/bin/pip install --require-hashes -r cov-b1.txt
+Installing collected packages: pytest
+  Attempting uninstall: pytest
+    Found existing installation: pytest 9.2.0
+    Uninstalling pytest-9.2.0:
+      Successfully uninstalled pytest-9.2.0
+Successfully installed pytest-9.1.0
+exit=0
+$ pip list | grep pytest
+pytest            9.1.0
