@@ -2,7 +2,7 @@
 
 Factories are ``"module:function"`` strings, imported only when that kind is built, so a kind whose optional
 extra is not installed fails at start-up with the install hint, and nothing else pays for it. This module
-imports no other Hadavin module (``config`` imports it).
+imports no other Hadavin module except the leaf ``netguard`` (``config`` imports it).
 """
 
 from __future__ import annotations
@@ -15,6 +15,8 @@ from typing import Any, Literal
 from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from hadavin_sdk.netguard import is_loopback_literal
 
 
 class KindSettings(BaseModel):
@@ -65,9 +67,6 @@ class BedrockSettings(_LLMSettings):
     region: str = Field(pattern=_NAME)
 
 
-_LOOPBACK = {"127.0.0.1", "localhost", "::1"}
-
-
 class OpenAICompatSettings(_LLMSettings):
     base_url: str
     api_key_secret_name: str | None = None  # a local Ollama needs none
@@ -77,7 +76,7 @@ class OpenAICompatSettings(_LLMSettings):
     @model_validator(mode="after")
     def _https_or_keyless_loopback(self) -> OpenAICompatSettings:
         url = urlsplit(self.base_url)
-        local = url.scheme == "http" and url.hostname in _LOOPBACK
+        local = url.scheme == "http" and is_loopback_literal(url.hostname)
         if url.scheme != "https" and not (local and not self.api_key_secret_name):
             raise ValueError(
                 "base_url must be https (plain http only to this machine, with no key)"
@@ -168,7 +167,7 @@ class S3ObjectLockSettings(_AnchorSettings):
     def _endpoint(self) -> S3ObjectLockSettings:
         if self.endpoint_url is not None:
             url = urlsplit(self.endpoint_url)
-            local = url.scheme == "http" and url.hostname in _LOOPBACK
+            local = url.scheme == "http" and is_loopback_literal(url.hostname)
             if url.scheme != "https" and not local:
                 raise ValueError("endpoint_url must be https (plain http only to this machine)")
         return self
@@ -270,7 +269,9 @@ class _VaultConnection(KindSettings):
     @model_validator(mode="after")
     def _checks(self) -> _VaultConnection:
         url = urlsplit(self.address)
-        if url.scheme != "https" and not (url.scheme == "http" and url.hostname in _LOOPBACK):
+        if url.scheme != "https" and not (
+            url.scheme == "http" and is_loopback_literal(url.hostname)
+        ):
             raise ValueError("address must be https (plain http only to this machine)")
         if {".", ".."} & {seg for p in self._paths() for seg in p.split("/")}:
             raise ValueError("mount, path_prefix and auth_mount may not hold '.' or '..' segments")
@@ -598,6 +599,19 @@ DEMO_ONLY: frozenset[tuple[str, str]] = frozenset(
         ("secrets", "env"),
         ("store", "memory"),
         ("audit", "local_dir"),
+    }
+)
+# Kinds that run inside the process or on this computer's own files and reach no other service. They are real
+# kinds (allowed in every stage), but a server that holds only these (and stand-ins) holds nothing a stranger could
+# act on, so `bindguard` does not count them. Any kind in none of DEMO_ONLY, NOT_PROD and this set reaches a real
+# service. `llm_judge` is listed because it only asks a route; the route's own `llm` kind is counted.
+IN_PROCESS: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("detector", "regex"),
+        ("detector", "llm_judge"),
+        ("secrets", "mounted_file"),
+        ("signer", "ed25519_local"),
+        ("audit", "chain"),
     }
 )
 # Kinds refused only in `prod` (design 4.6); the anchor rules are in config.py.

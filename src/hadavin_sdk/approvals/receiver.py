@@ -12,6 +12,8 @@ from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from hadavin_sdk.approvals.requests import Approvals
+from hadavin_sdk.bindguard import require_safe_bind
+from hadavin_sdk.config import Config
 from hadavin_sdk.store.protocol import NotFound
 
 MAX_BODY = 64 * 1024  # Slack interactive payloads are a few KB
@@ -37,8 +39,21 @@ def handle_slack_action(
     return 200, b""
 
 
-def serve(approvals: Approvals, host: str = "127.0.0.1", port: int = 8080) -> ThreadingHTTPServer:
-    """A development server for ``POST /slack/actions``; call ``serve_forever()`` on the result."""
+def serve(
+    approvals: Approvals,
+    host: str = "127.0.0.1",
+    port: int = 8080,
+    *,
+    config: Config | None = None,
+) -> ThreadingHTTPServer:
+    """A development server for ``POST /slack/actions``; call ``serve_forever()`` on the result.
+
+    Pass the deployment's ``config`` and a ``host`` that other computers can reach is refused while any real
+    service is configured (``bindguard``). Without ``config`` nothing is checked: every request here must carry
+    a valid channel signature, so a public host is the caller's decision (the usual setup is an HTTPS
+    reverse proxy in front)."""
+    if config is not None:
+        require_safe_bind(host, config)
 
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:

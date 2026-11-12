@@ -29,12 +29,12 @@ from hadavin_sdk.llm.common import (
     stop_reason,
 )
 from hadavin_sdk.models import Reply, ToolCall
+from hadavin_sdk.netguard import is_loopback_literal
 
 # OpenAI's own family names without a dated snapshot (`gpt-4o`, `o3`, `chatgpt-4o-latest`) move to new models;
 # `gpt-4o-2024-08-06` does not. Other servers name models their own way and are left to `latest`.
 _OPENAI_ALIAS = re.compile(r"^(?:gpt-[\w.-]+|o\d[\w.-]*|chatgpt-[\w.-]+)$")
 _DATED = re.compile(r"-\d{4}-\d{2}-\d{2}$")
-_LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
 def floating(model_id: str, base_url: str) -> bool:
@@ -46,7 +46,7 @@ def floating(model_id: str, base_url: str) -> bool:
     name = model_name(model_id)  # `openai/gpt-4o` on a router is still the moving `gpt-4o`
     if _OPENAI_ALIAS.match(name) and not _DATED.search(name):
         return True
-    return urlsplit(base_url).hostname in _LOOPBACK and ":" not in model_id
+    return is_loopback_literal(urlsplit(base_url).hostname) and ":" not in model_id
 
 
 def make(settings: Any, deps: Any) -> OpenAICompatLLM:

@@ -18,8 +18,9 @@ import urllib.request
 from dataclasses import dataclass
 
 from hadavin_sdk.guard.egress import EgressRefused, normalise_host
+from hadavin_sdk.netguard import LOOPBACK_LITERALS
 
-LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
+LOOPBACK = LOOPBACK_LITERALS  # the one list lives in netguard
 
 
 def _v4(*octets: int) -> ipaddress.IPv4Address:

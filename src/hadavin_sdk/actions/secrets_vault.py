@@ -30,6 +30,7 @@ from typing import Any
 from hadavin_sdk.actions.secrets_cache import CachedSecrets
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.http import NoRedirect
+from hadavin_sdk.netguard import is_loopback_literal
 
 _NAME = re.compile(r"[A-Za-z0-9_.-]{1,255}")
 
@@ -64,7 +65,7 @@ class VaultProvider(CachedSecrets):
         # Never follow a redirect (a standby node's 307 would carry the token to an address nobody configured,
         # maybe over plain http); a loopback server is reached directly, never through HTTP(S)_PROXY.
         handlers: list = [NoRedirect(), urllib.request.HTTPSHandler(context=self._context)]
-        if urllib.parse.urlsplit(self.address).hostname in {"127.0.0.1", "localhost", "::1"}:
+        if is_loopback_literal(urllib.parse.urlsplit(self.address).hostname):
             handlers.append(urllib.request.ProxyHandler({}))
         self._opener = urllib.request.build_opener(*handlers)
 
