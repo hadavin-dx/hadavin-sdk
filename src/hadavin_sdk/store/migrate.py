@@ -1268,10 +1268,14 @@ def _check_could_not_run(step: str):
         ) from e
 
 
-# Rule O8 for the schema of the run (ticket 3.3): what is enforced today is that the OWNER OF THE SCHEMA DOES NOT CHANGE
-# DURING THE RUN. A schema that a role outside the family already owned when the run started is accepted. Setting this to
-# True refuses such a schema too (the stricter reading of O8). It is OFF on purpose: the choice is the lead's open question
-# q-p3a2-o8-schema-owner, and a plain switch of this value, with the tests that already cover it, is all that choice needs.
+# Rule O8 for the schema of the run (ticket 3.3). Ticket rule O8 says: refuse a schema of the run that a role outside the
+# migration role family owns. What is enforced TODAY is less: the OWNER OF THE SCHEMA DOES NOT CHANGE DURING THE RUN. A schema
+# that a role outside the family already owned when the run started is ACCEPTED, and that role can then drop or change the
+# package's tables: until the lead answers q-p3a2-o8-schema-owner this default is a recorded gap against the ticket, not a safe
+# choice. Setting this to True refuses such a schema too (the strict reading of O8). It is a source constant, not
+# configuration, so only the owner or the lead changes it, in a commit. It is False because the printed setup
+# (`PLAIN_MIGRATION_ROLE_SQL`: an administrator-owned schema with CREATE granted to the migration role) is exactly such a
+# schema, and True would refuse it. Real-server cells for both values: `test_o8_a_schema_owned_outside_the_family_...`.
 ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START = False
 
 

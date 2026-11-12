@@ -713,24 +713,15 @@ def test_a_saved_transaction_timeout_stops_the_check_and_migrate_refuses_with_ex
     mrun, cfg_dir, monkeypatch, capsys
 ):
     """Round 2 of 3c, M4. PostgreSQL 17 and later have `transaction_timeout`, and `verify` does not neutralise it (it
-    cannot: it ends the session). On a server below 17 the setting does not exist, so this test pins that fact and says
-    on which server it cannot run (the independent evidence run and CI run it on 17). On 17 the setting is applied inside
+    cannot: it ends the session). On a server below 17 the setting does not exist, so below 17 this test is a VISIBLE SKIP naming "UNRUN: PostgreSQL 17 only" (three tests in this
+    file need 17: this one, the next one and the one for a timeout inside a file). On 17 the setting is applied inside
     the run just before the first `verify` (a role-saved value could end the run anywhere, including inside a file,
     which is not the path under test) and a later statement runs into it. Killed by: V67."""
-    version = mrun_server_version()
-    if version < 170000:
-        with psycopg.connect(DSN, autocommit=True) as adm:
-            helper.ensure_plain_role(adm)
-            with pytest.raises(pge.UndefinedObject, match="transaction_timeout"):
-                adm.execute(
-                    sql.SQL("ALTER ROLE {} SET transaction_timeout = '1s'").format(
-                        sql.Identifier(helper.PLAIN_ROLE)
-                    )
-                )
-        # nothing could be saved, so the run is not stopped by it: it goes through (this keeps the branch from being a
-        # test that returns without running `migrate`)
-        assert mig.migrate(mrun.dsn) == REAL_FILES
-        return
+    if mrun_server_version() < 170000:
+        pytest.skip(
+            "UNRUN: PostgreSQL 17 only (`transaction_timeout` does not exist below 17); the PostgreSQL 16 fact it rests on "
+            "is pinned by test_the_server_version_decides_whether_a_role_can_save_a_transaction_timeout"
+        )
     real = mig.verify
     seen = {"n": 0}
 
@@ -749,26 +740,41 @@ def test_a_saved_transaction_timeout_stops_the_check_and_migrate_refuses_with_ex
     assert _ledger_of(mrun.dsn) == []
 
 
+def test_the_server_version_decides_whether_a_role_can_save_a_transaction_timeout(mrun):
+    """The version fact the three PostgreSQL 17 tests rest on (moved here from the old PostgreSQL 16 branches of two of them,
+    so that those are visible skips and the fact is a test of its own that runs on every server). Below 17,
+    `transaction_timeout` does not exist: no role can save it. On 17 and later a role can save it (the value is reset
+    here). On both, a clean `migrate` then runs through."""
+    with psycopg.connect(DSN, autocommit=True) as adm:
+        helper.ensure_plain_role(adm)
+        role = sql.Identifier(helper.PLAIN_ROLE)
+        for value in ("1s", "1ms"):
+            save = sql.SQL("ALTER ROLE {} SET transaction_timeout = {}").format(
+                role, sql.Literal(value)
+            )
+            if mrun_server_version() >= 170000:
+                adm.execute(save)
+                adm.execute(sql.SQL("ALTER ROLE {} RESET transaction_timeout").format(role))
+            else:
+                with pytest.raises(pge.UndefinedObject, match="transaction_timeout"):
+                    adm.execute(save)
+    assert mig.migrate(mrun.dsn) == REAL_FILES
+
+
 def test_a_role_saved_transaction_timeout_gives_exit_2_wherever_it_strikes(
     mrun, cfg_dir, monkeypatch, capsys
 ):
     """Issue 2 of round 3 on 3d, the case that `SET LOCAL` before the first `verify` does not cover: the value is saved
     for the migration role (`ALTER ROLE ... SET transaction_timeout`), so it counts from BEGIN and can end the session at
     the lock, the version read, a refusal check, a file's read-back or the grants. On PostgreSQL 17 and later the run ends
-    with exit 2 and keeps nothing, whichever step it was. THIS BRANCH IS UNRUN ON ANY SERVER HERE (only PostgreSQL 16 is
-    installed): on 16 the setting does not exist, the test pins that and runs the plain `migrate`; CI runs it on 17.
+    with exit 2 and keeps nothing, whichever step it was. THIS TEST IS UNRUN ON ANY SERVER HERE (only PostgreSQL 16 is
+    installed): below 17 it is a visible skip; CI is configured to run it on 17.10 (not yet seen).
     Killed by: V80."""
     if mrun_server_version() < 170000:
-        with psycopg.connect(DSN, autocommit=True) as adm:
-            helper.ensure_plain_role(adm)
-            with pytest.raises(pge.UndefinedObject, match="transaction_timeout"):
-                adm.execute(
-                    sql.SQL("ALTER ROLE {} SET transaction_timeout = '1ms'").format(
-                        sql.Identifier(helper.PLAIN_ROLE)
-                    )
-                )
-        assert mig.migrate(mrun.dsn) == REAL_FILES
-        return
+        pytest.skip(
+            "UNRUN: PostgreSQL 17 only (`transaction_timeout` does not exist below 17); the PostgreSQL 16 fact it rests on "
+            "is pinned by test_the_server_version_decides_whether_a_role_can_save_a_transaction_timeout"
+        )
     with psycopg.connect(DSN, autocommit=True) as adm:
         helper.ensure_plain_role(adm)
         adm.execute(
@@ -799,11 +805,16 @@ def test_a_session_ended_by_the_idle_in_transaction_timeout_while_a_file_runs_is
     role saves `idle_in_transaction_session_timeout` (SQLSTATE 25P03, a FATAL error of class 25 that ends the session).
     The runner waits longer than the limit just before the first file runs, so the file's statement is the first one to
     meet the dead session. That is not the file's own error: exit 2, nothing kept, never the raw driver error (exit 3).
-    The same class on PostgreSQL 17 is `transaction_timeout` (25P04), see the PG17-only test below. Killed by: V88 and V89."""
+    The same class on PostgreSQL 17 is `transaction_timeout` (25P04), see the PG17-only test below. This real-server test
+    does NOT discriminate V88 or V89 (the check that the connection is still usable also catches a dead session, so with
+    the two codes taken out of the list the run still ends in exit 2); the two unit tests below kill them: V88 by
+    `test_the_classifier_knows_which_sqlstates_are_not_a_files_own`, V89 by
+    `test_the_classifier_never_calls_an_error_on_a_dead_connection_the_files_own`. What THIS test proves: on a real
+    server the end of the session is exit 2 and the ledger stays empty."""
     with psycopg.connect(DSN, autocommit=True) as adm:
         helper.ensure_plain_role(adm)
         adm.execute(
-            sql.SQL("ALTER ROLE {} SET idle_in_transaction_session_timeout = '150ms'").format(
+            sql.SQL("ALTER ROLE {} SET idle_in_transaction_session_timeout = '200ms'").format(
                 sql.Identifier(helper.PLAIN_ROLE)
             )
         )
@@ -813,8 +824,8 @@ def test_a_session_ended_by_the_idle_in_transaction_timeout_while_a_file_runs_is
     def waits(saved):
         seen["n"] += 1
         time.sleep(
-            0.6
-        )  # longer than the limit: the server ends the session while the runner thinks
+            1.5
+        )  # 7.5 times the limit (round 15: the margin was 4 times): the server ends the session while the runner thinks
         return real(saved)
 
     monkeypatch.setattr(mig, "_refuse_unusual_strings", waits)
@@ -823,7 +834,10 @@ def test_a_session_ended_by_the_idle_in_transaction_timeout_while_a_file_runs_is
         _out, err = capsys.readouterr()
         assert seen["n"] == 1, "the wait never ran: the cell tests nothing"
         assert err.startswith("refused: migrate stopped and kept nothing"), err
-        assert "25P03" in err and "failed:" not in err, err
+        assert "25P03" in err, f"the refusal must name the session-ending code 25P03: {err}"
+        assert "failed:" not in err, (
+            f"a lost session must not be reported as a failure of the file: {err}"
+        )
         assert _ledger_of(mrun.dsn) == []
     finally:
         with psycopg.connect(DSN, autocommit=True) as adm:
@@ -864,7 +878,10 @@ def test_the_classifier_knows_which_sqlstates_are_not_a_files_own(code, own):
     a stand-in that is usable, so only the SQLSTATE decides. Class 25 is not excluded as a whole (25001 and 25P02 are a
     file's own errors); the two session-ending codes are named. Killed by: V88."""
     e = psycopg.errors.lookup(code)("made-up")
-    assert mig._is_a_files_own_error(e, _UsableConnection()) is own
+    got = mig._is_a_files_own_error(e, _UsableConnection())
+    assert got is own, (
+        f"{code} must {'be' if own else 'not be'} a file's own error on a usable connection; the classifier said {got}"
+    )
 
 
 class _UsableConnection:
@@ -890,7 +907,9 @@ def test_the_classifier_never_calls_an_error_on_a_dead_connection_the_files_own(
             transaction_status = psycopg.pq.TransactionStatus.UNKNOWN
 
         conn.info = info
-    assert mig._is_a_files_own_error(pge.SyntaxError("x"), conn) is False
+    assert mig._is_a_files_own_error(pge.SyntaxError("x"), conn) is False, (
+        f"an error on a {state} connection must not be a file's own error (the session is gone)"
+    )
 
 
 def test_a_real_files_own_error_leaves_the_connection_usable_and_is_the_files_own(mrun):
@@ -917,7 +936,7 @@ def test_pg17_a_role_saved_transaction_timeout_that_strikes_inside_a_file_gives_
     below 17 (only PostgreSQL 16 is installed), and it is listed UNRUN in the CHANGELOG until the CI job on 17 runs it.
     The role saves a `transaction_timeout` that is longer than the steps before the first file and shorter than a
     `pg_sleep` inside the first file, so the timeout strikes while the file runs (the earlier test of this kind set 1 ms,
-    which strikes before any file). Exit 2, nothing kept. Killed by: V88 and V89 (once it runs on 17)."""
+    which strikes before any file). Exit 2, nothing kept. It does not discriminate V88 or V89 (see the PostgreSQL 16 test of the same class); no mutant is tied to it."""
     if mrun_server_version() < 170000:
         pytest.skip(
             "UNRUN: PostgreSQL 17 only (`transaction_timeout` does not exist below 17); "
@@ -935,7 +954,16 @@ def test_pg17_a_role_saved_transaction_timeout_that_strikes_inside_a_file_gives_
         assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2
         _out, err = capsys.readouterr()
         assert err.startswith("refused: migrate stopped and kept nothing"), err
-        assert "25P04" in err and "failed:" not in err, err
+        # What the refusal names was never observed on a server (UNRUN): the code writes the server's SQLSTATE when the driver
+        # gives one (25P04), else the driver's class name for the error (psycopg's `TransactionTimeout`, or `OperationalError`
+        # if the server's message arrives as a lost connection). The promise under test is exit 2, nothing kept, not a failure.
+        assert any(w in err for w in ("25P04", "TransactionTimeout", "OperationalError")), (
+            f"the refusal names none of the three spellings the code can write for a PostgreSQL 17 transaction timeout; the "
+            f"first observation on 17 shows which one it is, then this line names it: {err}"
+        )
+        assert "failed:" not in err, (
+            f"a lost session must not be reported as a failure of the file: {err}"
+        )
         assert _ledger_of(mrun.dsn) == []
     finally:
         with psycopg.connect(DSN, autocommit=True) as adm:

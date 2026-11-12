@@ -144,6 +144,10 @@ def connect(
                 parts["host"], int(parts.get("port") or 5432), parts["user"]
             )
     conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)
+    # This is the ONLY statement `connect` runs (pinned by `test_connect_runs_exactly_one_statement_...`). It runs on its own
+    # outside every wrapper of the migration runner, so the runner's promise "a session ended by the server during the run
+    # is exit 2, nothing kept" starts AFTER `connect` returns. A role-saved `transaction_timeout` (PostgreSQL 17) that is
+    # shorter than this one statement would show here as a driver error; that case was never observed (no server 17 here).
     # Plan hashes include created_at: datetimes must come back in UTC whatever the server's TimeZone is.
     conn.execute("SET TIME ZONE 'UTC'")
     return conn

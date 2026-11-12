@@ -800,6 +800,11 @@ def _effect_text(effect: tuple, other: str, rt: str, schema: str) -> str:
 # plain role; everyone may use it, so the rights are judged and not the schema's USAGE). `{o}` is that schema. Only the
 # effects of objects outside the map exist there: a map table lives in the schema of the run only (empty by logic).
 C10_STATEMENTS = {
+    # O13-O16 (round 15): a right on ANOTHER schema than the schema of the run (`{o}` in place of the schema of the run)
+    "O13-create-on-schema-other": "GRANT CREATE ON SCHEMA {o} TO {rt}",
+    "O14-usage-with-grant-option": "GRANT USAGE ON SCHEMA {o} TO {rt} WITH GRANT OPTION",
+    "O15-create-on-schema-everyone": "GRANT CREATE ON SCHEMA {o} TO PUBLIC",
+    "O16-default-right-named": "ALTER DEFAULT PRIVILEGES IN SCHEMA {o} GRANT SELECT ON TABLES TO {rt}",
     "O19-select-on-a-table-outside-the-map-named": "CREATE TABLE {o}.zz_t (a int); GRANT SELECT ON {o}.zz_t TO {rt}",
     "O20-select-on-a-table-outside-the-map-everyone": "CREATE TABLE {o}.zz_t (a int); GRANT SELECT ON {o}.zz_t TO PUBLIC",
     "O21-usage-on-a-sequence-outside-the-map-named": "CREATE SEQUENCE {o}.zz_q; GRANT USAGE ON SEQUENCE {o}.zz_q TO {rt}",
@@ -815,6 +820,8 @@ C10_STATEMENTS = {
 # schema (the check of the default execute right looks at the schema of the run only; measured: a SECURITY DEFINER function
 # of another schema is found anyway).
 C10_NAMED = {
+    "O13-create-on-schema-other",
+    "O14-usage-with-grant-option",
     "O19-select-on-a-table-outside-the-map-named",
     "O21-usage-on-a-sequence-outside-the-map-named",
     "O23-execute-on-a-function-named",
@@ -822,6 +829,7 @@ C10_NAMED = {
     "O27-usage-on-a-type-named",
 }
 C10_EVERYONE = {
+    "O15-create-on-schema-everyone",
     "O20-select-on-a-table-outside-the-map-everyone",
     "O22-select-on-a-view-outside-the-map-everyone",
     # measured: a SECURITY DEFINER function in another schema that everyone may execute IS found (E13); the reading query
@@ -850,15 +858,30 @@ O_CONTROLS = ["K-clean-no-roles", "K-clean-with-roles"]
 
 # --- the tables of the matrix (batch 4b): every pair that is not a generated cell is a row with its reason -----------------
 # A cell is (effect, carrier, variant). The matrix is every effect x every carrier x both variants, minus the pairs of table 2.
-# Table 2: pairs that are empty by logic. A map table lives in the schema of the run only, so it cannot exist in another
-# schema (carrier C10).
+# Table 2: pairs that are empty by logic, one written reason per effect (round 15: the reason is the true one for each effect,
+# and the list of effect ids is written out; the count test compares it with the effects that have no C10 statement).
+# O13-O16 are built under C10 (a right on another schema, a default right limited to another schema): they are not here.
+_MAP_REASON = "a map table, sequence, function or column lives in the schema of the run only, so there is none in another schema"
+_C10_EMPTY_REASONS: dict[str, str] = {
+    "O01-select-other": _MAP_REASON,
+    "O02-select-everyone": _MAP_REASON,
+    "O03-column-other": "a column of a map table: " + _MAP_REASON,
+    "O04-sequence-other": "a sequence of the map: " + _MAP_REASON,
+    "O05-function-other": "the one function of the map: " + _MAP_REASON,
+    "O06-delete-runtime": _MAP_REASON,
+    "O07-everyone-delete-runs": _MAP_REASON,
+    "O08-everyone-truncate-runs": _MAP_REASON,
+    "O09-everyone-column-select": "a column of a map table: " + _MAP_REASON,
+    "O10-third-column-update": "a column of a map table: " + _MAP_REASON,
+    "O11-everyone-setval": "a sequence of the map: " + _MAP_REASON,
+    "O12-grant-option": _MAP_REASON,
+    "O17-default-right-everyone": "this default right names no schema (it holds for every schema of the database), so the place of an object does not change it",
+    "O18-select-third-tool-calls": _MAP_REASON,
+    "O28-select-on-a-large-object-everyone": "a large object belongs to the database and has no schema, so it cannot be put in another schema",
+    "O29-select-on-a-large-object-named": "a large object belongs to the database and has no schema, so it cannot be put in another schema",
+}
 O_EMPTY_BY_LOGIC: dict[tuple[str, str], str] = {
-    (
-        e[0],
-        "C10-another-schema",
-    ): "a map table lives in the schema of the run only, so there is none in another schema"
-    for e in O_EFFECTS
-    if e[0] not in C10_STATEMENTS
+    (eid, "C10-another-schema"): why for eid, why in _C10_EMPTY_REASONS.items()
 }
 
 
@@ -982,7 +1005,11 @@ O_SERVER_REFUSED_EFFECTS: dict[str, str] = {
 O_NOT_BUILT: dict[str, str] = {
     "E21 under variant (C)": "USAGE on a language needs a trusted language that an extension makes; measured: this server has no trusted-language extension (pg_language holds internal, c, sql, plpgsql only), so there is nothing to grant on",
     "E19-E21 under variants (T) and (U)": "the same reason: (T) and (U) need a trusted-language extension",
-    "E28-schema, owner outside the family, at the start of the run": "a schema that another role outside the family owns before the run starts is NOT refused (the strict reading of rule O8 is OFF behind a named switch; the choice is the lead's question q-p3a2-o8-schema-owner); a schema owned by a role of the family's group is control K8 (fourth form); a named role that takes the schema over during the run is refused (test_e28_...)",
+}
+# Where the code is LESS strict than the ticket, said plainly (round 15). Printed by the count test; the real-server cells for
+# both values of the switch are `test_o8_a_schema_owned_outside_the_family_at_the_start_is_refused_only_with_the_switch_on`.
+O_DEVIATIONS_FROM_THE_TICKET: dict[str, str] = {
+    "E28-schema, owner outside the family, at the start of the run (ticket rule O8)": "a schema that a role outside the family owns before the run starts is ACCEPTED while the switch is OFF (the shipped default); the ticket says refuse. ON refuses it and keeps nothing. The choice is the lead's question q-p3a2-o8-schema-owner. A schema owned by a role of the family's group is control K8 (fourth form); a named role that takes the schema over during the run is refused (test_e28_...)",
 }
 # Table 3 also holds pairs that are not promised in carrier C12, see `X_NOT_PROMISED_BOTH_VARIANTS`.
 O_NOT_PROMISED = {
@@ -1065,6 +1092,8 @@ def test_the_matrix_has_exactly_the_planned_cells():
         print(f"server refuses it to a plain role (C12 only), effects {ids}: {why}")
     for key, why in O_NOT_BUILT.items():
         print(f"NOT BUILT, {key}: {why}")
+    for ids, why in O_DEVIATIONS_FROM_THE_TICKET.items():
+        print(f"DEVIATION FROM THE TICKET, {ids}: {why}")
     for ids, why in O_NOT_PROMISED.items():
         print(f"not promised, {ids}: {why}")
     for ids, why in O_NOT_BUILT_CARRIERS.items():
@@ -1073,12 +1102,30 @@ def test_the_matrix_has_exactly_the_planned_cells():
         print(f"NOT BUILT, control {ids}: {why}")
     # the numbers are computed from the tables, so each assert compares two different computations
     assert len(cells) == len(set(cells)) == possible - empty
-    assert len(O_EMPTY_BY_LOGIC) == len(O_EFFECTS) - len(C10_STATEMENTS)
+    # written out, not derived from the table it checks: the effects that are empty at C10 are exactly these, each with a
+    # reason, and together with the effects that have a C10 statement they are every effect
+    assert set(_C10_EMPTY_REASONS) == {
+        "O01-select-other", "O02-select-everyone", "O03-column-other", "O04-sequence-other", "O05-function-other",
+        "O06-delete-runtime", "O07-everyone-delete-runs", "O08-everyone-truncate-runs", "O09-everyone-column-select",
+        "O10-third-column-update", "O11-everyone-setval", "O12-grant-option", "O17-default-right-everyone",
+        "O18-select-third-tool-calls", "O28-select-on-a-large-object-everyone", "O29-select-on-a-large-object-named",
+    }  # fmt: skip
+    assert set(_C10_EMPTY_REASONS) | set(C10_STATEMENTS) == {e[0] for e in O_EFFECTS}
+    assert not set(_C10_EMPTY_REASONS) & set(C10_STATEMENTS)
+    assert all(len(why) > 40 for why in _C10_EMPTY_REASONS.values()), (
+        "every empty pair needs a written reason"
+    )
+    assert len(set(_C10_EMPTY_REASONS.values())) > 1, (
+        "one reason for every pair is how r15 found a false one"
+    )
     assert all(c in O_CARRIERS for _, c in O_EMPTY_BY_LOGIC) and {
         e for e, _ in O_EMPTY_BY_LOGIC
     } <= {e[0] for e in O_EFFECTS}
     assert not set(C10_STATEMENTS) & {e for e, _ in O_EMPTY_BY_LOGIC}
     assert len(C6B_CELLS) == len(O_EFFECTS) * len(O_VARIANTS)
+    assert all(len(w) > 40 for w in C8_EMPTY_BY_LOGIC.values()) and all(
+        len(w) > 40 for w in C13_EMPTY_BY_LOGIC.values()
+    ), "every empty pair of C8 and C13 needs a written reason"
     assert all(name in globals() for name in OWN_CONTROL_TESTS), (
         "a control that the count lists is not defined"
     )
@@ -1665,11 +1712,80 @@ def test_c8_an_object_that_is_an_extension_member_is_still_judged(
     assert outcome == expected, f"{effect_id}/C8/{variant}: outcome {outcome}, expected {expected}"
 
 
+def test_c13_every_effect_has_a_table_to_move_or_a_reason_it_has_none():
+    ids = {e[0] for e in O_EFFECTS}
+    assert set(C13_TABLE_EFFECTS) | set(C13_EMPTY_BY_LOGIC) == ids
+    assert not set(C13_TABLE_EFFECTS) & set(C13_EMPTY_BY_LOGIC)
+    assert all(len(why) > 40 for why in C13_EMPTY_BY_LOGIC.values())
+
+
 def test_c8_every_effect_has_an_object_or_a_reason_it_has_none():
     ids = {e[0] for e in O_EFFECTS}
     assert set(C8_OBJECT) | set(C8_EMPTY_BY_LOGIC) == ids and not set(C8_OBJECT) & set(
         C8_EMPTY_BY_LOGIC
     )
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_c9_a_table_owned_by_the_login_is_the_familys_own_so_a_third_role_right_on_it_is_refused(
+    case,
+):
+    """Carrier C9, the family of a login that differs from the role (round 15, Issue 6). The DSN logs in as L and switches to
+    the migration role M; L is part of the family (it can act as M). A table in the schema of the run that L owns, with a
+    right for a third role (no role argument names it), is a table of the family: refused before any file runs (rule O1),
+    keeping nothing. With the right revoked the run returns. Killed by V107 (L not counted in the family: the table would
+    be 'another application's' and the right is not judged)."""
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp  # noqa: F401
+    from tests.fixtures import migration_role as helper
+
+    case.db.execute("GRANT USAGE ON LANGUAGE plpgsql TO PUBLIC")
+    _migration_login(case)
+    login = "hadavin_test_lg_" + uuid.uuid4().hex[:8]
+    case.admin.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(login)))
+    case.admin.execute(
+        sql.SQL("GRANT {} TO {}").format(sql.Identifier(case.role["m"]), sql.Identifier(login))
+    )
+    helper.set_login_password(case.db, login)
+    dsn = helper.login_dsn(
+        make_conninfo(
+            case._dsn,
+            dbname=case.db_name,
+            options=f"-c search_path={APP} -c role={case.role['m']}",
+        ),
+        login,
+    )
+    third = case.role["o"]
+    try:
+        case.db.execute(sql.SQL("CREATE TABLE {}.zz_login (a int)").format(sql.Identifier(APP)))
+        case.db.execute(
+            sql.SQL("ALTER TABLE {}.zz_login OWNER TO {}").format(
+                sql.Identifier(APP), sql.Identifier(login)
+            )
+        )
+        case.db.execute(
+            sql.SQL("GRANT SELECT ON {}.zz_login TO {}").format(
+                sql.Identifier(APP), sql.Identifier(third)
+            )
+        )
+        with pytest.raises(errors.ConfigError) as seen:
+            mig.migrate(dsn)
+        text = str(seen.value)
+        assert _kept_nothing(text) and third in text and f"{APP}.zz_login" in text, (
+            f"the right of the third role {third} on {APP}.zz_login (a table the login owns) must be refused and named: "
+            f"{text[:500]}"
+        )
+        case.db.execute(
+            sql.SQL("REVOKE SELECT ON {}.zz_login FROM {}").format(
+                sql.Identifier(APP), sql.Identifier(third)
+            )
+        )
+        assert mig.migrate(dsn) == [p.stem for p in mig._migration_files()]
+    finally:
+        case.db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(login)))
+        case.admin.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(login)))
 
 
 # K10 (fact 33): a file makes one object of every relation kind a plain role can make (a standalone type is no relation: its
@@ -1791,7 +1907,33 @@ C13_TABLE_EFFECTS = {
     "O12-grant-option": "runs",
     "O18-select-third-tool-calls": "tool_calls",
 }
-C13_EMPTY_BY_LOGIC = "a right on a sequence, a function, the schema, a default right, a large object or an object made by the file: there is no map table to move"
+_C13_NO_TABLE = "there is no map table behind this effect, so there is no map table to move"
+C13_EMPTY_BY_LOGIC: dict[str, str] = {
+    "O04-sequence-other": "a right on a sequence of the map: " + _C13_NO_TABLE,
+    "O05-function-other": "a right on the function of the map: " + _C13_NO_TABLE,
+    "O11-everyone-setval": "a right on a sequence of the map: " + _C13_NO_TABLE,
+    "O13-create-on-schema-other": "a right on the schema: " + _C13_NO_TABLE,
+    "O14-usage-with-grant-option": "a right on the schema: " + _C13_NO_TABLE,
+    "O15-create-on-schema-everyone": "a right on the schema: " + _C13_NO_TABLE,
+    "O16-default-right-named": "a default right: " + _C13_NO_TABLE,
+    "O17-default-right-everyone": "a default right: " + _C13_NO_TABLE,
+    **{
+        e: "an object the file makes itself, outside the map: " + _C13_NO_TABLE
+        for e in (
+            "O19-select-on-a-table-outside-the-map-named",
+            "O20-select-on-a-table-outside-the-map-everyone",
+            "O21-usage-on-a-sequence-outside-the-map-named",
+            "O22-select-on-a-view-outside-the-map-everyone",
+            "O23-execute-on-a-function-named",
+            "O24-function-of-the-family-left-callable-by-everyone",
+            "O25-security-definer-function-in-the-schema-of-the-run",
+            "O26-execute-on-a-procedure-named",
+            "O27-usage-on-a-type-named",
+        )
+    },
+    "O28-select-on-a-large-object-everyone": "a large object: " + _C13_NO_TABLE,
+    "O29-select-on-a-large-object-named": "a large object: " + _C13_NO_TABLE,
+}
 C13_CELLS = [(f, v) for f in C13_FORMS for v in O_VARIANTS] + [
     (e, v) for e in C13_TABLE_EFFECTS for v in O_VARIANTS
 ]
@@ -2340,6 +2482,52 @@ def test_control_k8_fourth_form_the_group_owns_the_schema_of_the_run_and_the_run
     assert owner == g, "the table was not handed to the group: the cell tests nothing"
 
 
+@needs_pg
+@pytest.mark.real_connect
+@pytest.mark.parametrize("switch", [True, False], ids=["switch-on", "switch-off"])
+def test_o8_a_schema_owned_outside_the_family_at_the_start_is_refused_only_with_the_switch_on(
+    switch, case, monkeypatch, tmp_path
+):
+    """Rule O8, real server, round 15 (Issue 2). A role OUTSIDE the migration role family (`o`, nobody named it) owns the
+    schema of the run before the run starts, and one new file is pending. Switch ON (the strict reading of ticket rule O8):
+    `migrate` refuses, keeps nothing (the file did not run and is still pending). Switch OFF (the shipped default, which is
+    LESS strict than the ticket until the lead answers q-p3a2-o8-schema-owner): the file runs and `migrate` returns.
+    Killed by V101 (switch ON by default) and V102 (switch ignored)."""
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+
+    case.db.execute("GRANT USAGE ON LANGUAGE plpgsql TO PUBLIC")
+    dsn = _migration_login(case)
+    shipped = [p.stem for p in mig._migration_files()]
+    assert mig.migrate(dsn) == shipped  # a clean run first, as the migration role owns the schema
+    outsider = case.role["o"]
+    case.db.execute(
+        sql.SQL("ALTER SCHEMA {} OWNER TO {}").format(sql.Identifier(APP), sql.Identifier(outsider))
+    )
+    tp._with_files(
+        monkeypatch, tmp_path, {"0006_o8.sql": _split_function("CREATE TABLE zz_o8 (a int)")}
+    )
+    monkeypatch.setattr(
+        mig, "ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START", switch
+    )
+    if switch:
+        with pytest.raises(errors.ConfigError) as seen:
+            mig.migrate(dsn)
+        text = str(seen.value)
+        assert _kept_nothing(text), text[:500]
+        assert f"{outsider} is owned by {outsider}" in text and "No file ran" in text, text[:500]
+        monkeypatch.setattr(
+            mig, "ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START", False
+        )
+        # nothing was kept: the same file is still pending and now runs
+        assert mig.migrate(dsn) == ["0006_o8"]
+    else:
+        assert mig.migrate(dsn) == ["0006_o8"]
+    assert case.db.execute("SELECT to_regclass(%s)", (f"{APP}.zz_o8",)).fetchone()[0] is not None
+    assert mig.migrate(dsn) == []
+
+
 # --- 7. the shipped files give each role exactly the map (ticket 7.7) --------------------------------------------------
 
 APP = "app"  # the schema of the run in the 7.7 test and in the matrix
@@ -2685,6 +2873,40 @@ def test_variant_o_the_database_owner_gives_a_right_on_the_database_or_a_new_sch
         assert _kept_nothing(e), str(e)[:400]
         assert ("migrations are inconsistent" in str(e)) == stopped_at_step_0, str(e)[:400]
     assert outcome == expected, f"{cell}: outcome {outcome}, expected {expected}"
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_o8_switch_on_the_public_schema_is_family_owned_only_when_the_database_owner_is_the_migration_role(
+    case, monkeypatch, tmp_path
+):
+    """Variant (O) and rule O8 together (round 15, Issue 6). The schema of the run is `public`, which PostgreSQL 16 gives to
+    the built-in role `pg_database_owner`, that is, to whoever owns the database. With the strict switch ON: while an
+    administrator owns the database the schema is owned outside the family and the run is refused, keeping nothing; once the
+    migration role owns the database the same schema is the family's own and the run returns. Killed by V108 (a database
+    owned by a role of the family is not seen as the family's)."""
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import migrate as mig
+
+    case.db.execute("GRANT USAGE ON LANGUAGE plpgsql TO PUBLIC")
+    dsn = _migration_login(case, schema="public")
+    monkeypatch.setattr(
+        mig, "ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START", True
+    )
+    with pytest.raises(errors.ConfigError) as seen:
+        mig.migrate(dsn)
+    text = str(seen.value)
+    assert _kept_nothing(text) and "pg_database_owner" in text, (
+        f"an administrator-owned database makes `public` owned outside the family: the strict switch must refuse it: {text[:500]}"
+    )
+    case.db.execute(
+        sql.SQL("ALTER DATABASE {} OWNER TO {}").format(
+            sql.Identifier(case.db_name), sql.Identifier(case.role["m"])
+        )
+    )
+    assert mig.migrate(dsn) == [p.stem for p in mig._migration_files()], (
+        "the database is owned by the migration role, so `public` is the family's own and the strict switch must accept it"
+    )
 
 
 # --- 9. states an administrator makes before the run (carrier C12), for the kinds a plain migration role cannot make ----------
@@ -3045,8 +3267,10 @@ def test_the_pre_existing_cells_are_counted():
 def test_a_third_role_right_on_a_table_the_family_owns_is_refused_with_no_role_argument(ocell):
     """The promised case that X01t is not (batch 4b, on a real server): the table is owned by the family (the migration
     files made it), a third role that no argument names holds a right on it, and `migrate` is called with no role argument.
-    It is refused before any file runs (rule O1) and names the table and the role. The paired control: the same right on a
-    table that a role OUTSIDE the family owns (X01t) is not judged and the run returns."""
+    It is refused before any file runs (rule O1) and names the table and the role. Killed by V104 (the third-role refusal
+    removed). The case beside it, the same right on a table that a role OUTSIDE the family owns, is the pre-existing cell
+    X01t (`test_a_state_made_before_the_run_is_refused_and_no_file_runs`): not judged, the run returns; it is not part of
+    this test."""
     import uuid
 
     from hadavin_sdk import errors
@@ -3068,7 +3292,9 @@ def test_a_third_role_right_on_a_table_the_family_owns_is_refused_with_no_role_a
         with pytest.raises(errors.ConfigError) as seen:
             mig.migrate(dsn)
         text = str(seen.value)
-        assert "No file ran" in text and other in text and "runs" in text, text[:500]
+        assert "No file ran" in text and other in text and f"{schema}.runs" in text, (
+            f"the refusal must name the third role {other} and the table {schema}.runs: {text[:500]}"
+        )
     finally:
         tp._drop_roles(other, rt)
 

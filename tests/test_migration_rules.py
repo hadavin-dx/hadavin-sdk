@@ -1204,3 +1204,53 @@ def test_list_batch_refuses_anything_but_one_number_from_1_to_4(argv, capsys):
 
     assert mm.main(argv) == 2
     assert "needs one number from 1 to 4" in capsys.readouterr().out
+
+
+# --- 5b. the CHANGELOG states rule O8 as the code keeps it (round 15, Issue 1) ---------------------------------------------
+_O8_PHRASES = ("must be owned", "owned by a role of the migration role family")
+_O8_CONDITIONS = (
+    "ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START",
+    "must not change owner",
+    "during the run",
+)
+
+
+def o8_sentences(text: str) -> list[str]:
+    """Every sentence (split at a full stop followed by a space) that states who must own something."""
+    return [s for s in re.split(r"(?<=\.)\s+", text) if any(p in s for p in _O8_PHRASES)]
+
+
+def unconditional_o8_sentences(text: str, switch_is_on: bool) -> list[str]:
+    """The sentences that state the owner rule without its condition while the switch is OFF: while OFF, a schema owned from
+    the start by a role outside the family is accepted, so a sentence that says it 'must be owned' by the family has to say
+    that it is the change of owner during the run, or that the switch decides."""
+    if switch_is_on:
+        return []
+    return [s for s in o8_sentences(text) if not any(c in s for c in _O8_CONDITIONS)]
+
+
+def test_the_changelog_does_not_state_rule_o8_more_strictly_than_the_code_keeps_it():
+    from hadavin_sdk.store import migrate as mig
+
+    switch = mig.ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START
+    assert o8_sentences(CHANGELOG), (
+        "the check found no sentence about the owner rule: its phrases are out of date"
+    )
+    assert unconditional_o8_sentences(CHANGELOG, switch) == [], (
+        "a CHANGELOG sentence says the schema of the run 'must be owned' by the family without saying that the code only "
+        "refuses a change of owner during the run (the switch is OFF)"
+    )
+
+
+def test_the_o8_wording_check_sees_a_planted_unconditional_sentence():
+    planted = "The schema of the run must be owned by a role of the migration role family; this is judged in the schema of the run only."
+    assert unconditional_o8_sentences(planted, switch_is_on=False) == [planted]
+    assert unconditional_o8_sentences(planted, switch_is_on=True) == []
+    ok = "The schema of the run must not change owner during the run, and must be owned by a role of the migration role family."
+    assert unconditional_o8_sentences(ok, switch_is_on=False) == []
+
+
+def test_the_changelog_does_not_state_a_postgresql_17_run_as_fact():
+    assert not re.search(r"runs in CI on PostgreSQL 17", CHANGELOG), (
+        "CI is configured for 17.10 but no run has been seen: say 'is configured to run'"
+    )

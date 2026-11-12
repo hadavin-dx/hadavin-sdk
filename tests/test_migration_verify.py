@@ -1398,7 +1398,10 @@ def test_the_owner_of_the_schema_of_the_run_must_not_change_and_the_strict_readi
     expected_kept = (
         True if kept else enforce
     )  # an unchanged owner is kept only when the strict reading is on
-    assert bool(left) == expected_kept, (enforce, owner_now, owner_at_start, left)
+    assert bool(left) == expected_kept, (
+        f"switch {'ON' if enforce else 'OFF'}, owner now {owner_now}, owner at the start {owner_at_start}: the schema-owner "
+        f"problem must be {'kept' if expected_kept else 'dropped'}, but {'a problem was kept' if left else 'it was dropped'}"
+    )
 
 
 def test_the_strict_reading_of_rule_o8_is_off_by_default():
@@ -1406,3 +1409,23 @@ def test_the_strict_reading_of_rule_o8_is_off_by_default():
     from hadavin_sdk.store import migrate as mig
 
     assert mig.ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START is False
+
+
+def test_connect_runs_exactly_one_statement_so_the_exit_2_promise_starts_after_it(monkeypatch):
+    """Round 15 (Issue 3): the runner promises exit 2 and "kept nothing" for a session the server ends during the run. That
+    promise starts after `store.postgres.connect` returns, because `connect` runs its setup statement outside every wrapper.
+    This pins that the setup is exactly one statement, so the sentence in the CHANGELOG stays true; a second statement added
+    there would need the promise to be restated (or the statement moved inside the wrapper)."""
+    from hadavin_sdk.store import postgres as pg
+
+    executed: list[str] = []
+
+    class _Conn:
+        def execute(self, statement, *args, **kwargs):
+            executed.append(str(statement))
+
+    monkeypatch.setattr(pg.psycopg, "connect", lambda *a, **k: _Conn())
+    pg.connect("host=made-up dbname=made-up", sslmode="disable")
+    assert executed == ["SET TIME ZONE 'UTC'"], (
+        f"connect now runs {executed}: the exit-2 promise would start later than the CHANGELOG says"
+    )

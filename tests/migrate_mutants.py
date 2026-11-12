@@ -3894,9 +3894,15 @@ M: list[Mutant] = [
         MIG,
         "        if ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START\n        or not (",
         "        if not (",
-        k(
-            T_VERIFY,
-            "test_the_owner_of_the_schema_of_the_run_must_not_change_and_the_strict_reading_is_a_named_switch[admin_x-admin_x-None-True]",
+        (
+            k(
+                T_VERIFY,
+                "test_the_owner_of_the_schema_of_the_run_must_not_change_and_the_strict_reading_is_a_named_switch[admin_x-admin_x-None-True]",
+            ),
+            k(
+                T_MX,
+                "test_o8_a_schema_owned_outside_the_family_at_the_start_is_refused_only_with_the_switch_on[switch-on]",
+            ),
         ),
     ),
     Mutant(
@@ -3914,6 +3920,106 @@ M: list[Mutant] = [
                 T_VERIFY,
                 "test_every_sentence_form_the_changelog_quotes_is_in_the_code_and_is_what_a_line_says",
             ),
+        ),
+    ),
+    # --- round 15 (batch 5): one mutant for each new family of cells, each killed by the real-server test that is named ---
+    Mutant(
+        "V104",
+        "Issue 6 of batch 5: a right of a third role on a table the family owns is no longer refused (rule O1, third-role refusal removed)",
+        VERIFY,
+        '        elif fam_owned:\n            out.append(make("other_grantee", it.grantee, it.privilege_type))',
+        '        elif False:\n            out.append(make("other_grantee", it.grantee, it.privilege_type))',
+        k(
+            T_MX,
+            "test_a_third_role_right_on_a_table_the_family_owns_is_refused_with_no_role_argument",
+        ),
+    ),
+    Mutant(
+        "V105",
+        "Issue 6 of batch 5: the grant map is matched by name only, so a map table moved to another schema counts as the map table (carrier C13)",
+        VERIFY,
+        "    if it.schema != schema or it.name not in grant_map:",
+        "    if it.name not in grant_map:",
+        k(
+            T_MX,
+            "test_c13_a_map_table_moved_or_renamed_and_made_again_is_refused_and_nothing_is_kept[move-to-another-schema-with-roles]",
+        ),
+    ),
+    Mutant(
+        "V106",
+        "Issue 6 of batch 5: the rows of an object that is an extension member are skipped (the planted skip; carrier C8 says a member is judged like any object)",
+        VERIFY,
+        '        in_run = (not it.system) and it.schema == schema\n        ext = it.extension if (it.extension and not it.extension_family_owned) else ""\n        outside',
+        '        in_run = (not it.system) and it.schema == schema\n        ext = it.extension if (it.extension and not it.extension_family_owned) else ""\n        if it.extension:\n            continue\n        outside',
+        k(
+            T_MX,
+            "test_c8_an_object_that_is_an_extension_member_is_still_judged[O04-sequence-other/C8/with-roles]",
+        ),
+    ),
+    Mutant(
+        "V107",
+        "Issue 6 of batch 5: the login that differs from the role is not part of the migration role family (carrier C9)",
+        VERIFY,
+        "        [login_role] if login_role and login_role != migration_role else []",
+        "        []",
+        k(
+            T_MX,
+            "test_c9_a_table_owned_by_the_login_is_the_familys_own_so_a_third_role_right_on_it_is_refused",
+        ),
+    ),
+    Mutant(
+        "V108",
+        "Issue 6 of batch 5: a database owned by a role of the family is not seen as family-owned (variant O)",
+        VERIFY,
+        "    fam_has_db_owner = rows.database_owner in fam_roles",
+        "    fam_has_db_owner = False",
+        k(
+            T_MX,
+            "test_o8_switch_on_the_public_schema_is_family_owned_only_when_the_database_owner_is_the_migration_role",
+        ),
+    ),
+    Mutant(
+        "V109",
+        "Issue 4 of batch 5: a right for everyone on ANOTHER schema than the schema of the run is not judged (carrier C10, effect O15)",
+        VERIFY,
+        '            if kind == "schema":\n                if right != "USAGE":',
+        '            if kind == "schema":\n                if right != "USAGE" and in_run:',
+        k(
+            T_MX,
+            "test_every_matrix_cell_ends_in_one_of_the_three_outcomes[O15-create-on-schema-everyone/C10-another-schema/no-roles]",
+        ),
+    ),
+    Mutant(
+        "V110",
+        "Issue 4 of batch 5: a named role may hold any right on a schema (carrier C10, effect O13)",
+        VERIFY,
+        '    if it.kind == "schema":\n        return it.privilege_type == "USAGE"',
+        '    if it.kind == "schema":\n        return True',
+        k(
+            T_MX,
+            "test_every_matrix_cell_ends_in_one_of_the_three_outcomes[O13-create-on-schema-other/C10-another-schema/with-roles]",
+        ),
+    ),
+    Mutant(
+        "V111",
+        "Issue 4 of batch 5: a default right set for a named role is not refused (carrier C10, effect O16)",
+        VERIFY,
+        '            out.append(_default("default_for_named", d, right, d.grantee))',
+        "            pass",
+        k(
+            T_MX,
+            "test_every_matrix_cell_ends_in_one_of_the_three_outcomes[O16-default-right-named/C10-another-schema/with-roles]",
+        ),
+    ),
+    Mutant(
+        "V112",
+        "Issue 3 of batch 5: `connect` runs a second setup statement outside every wrapper (the exit-2 promise would start later than the CHANGELOG says)",
+        "src/hadavin_sdk/store/postgres.py",
+        "    conn.execute(\"SET TIME ZONE 'UTC'\")\n    return conn",
+        '    conn.execute("SET TIME ZONE \'UTC\'")\n    conn.execute("SELECT 1")\n    return conn',
+        k(
+            T_VERIFY,
+            "test_connect_runs_exactly_one_statement_so_the_exit_2_promise_starts_after_it",
         ),
     ),
 ]
