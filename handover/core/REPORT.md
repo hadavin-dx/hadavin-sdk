@@ -1,5 +1,14 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+
+## 22:00Z / 03:30 IST (guard and banner in round 3; fix batches running; report overdue)
+FAILED / UNCERTAIN FIRST: (1) The CI guard (b8ea4f69) is NOT safe to merge: round 3 found 0 Blocker and 2 conditional Majors. The claim "every PR fails" does not reproduce on live refs (new range lists 0 files); an entry on a fixed-name branch is still trusted by name (needs the repository ruleset, owner-only). Fix batch a806b862 is running; a fourth round follows. (2) Part 6 (banner, mode-safety) round 3 found 1 Blocker and 2 Majors; batch a43a4fca is running; its evidence runner was stopped (head superseded; full pytest 10640 passed, 1 skipped; mutants NOT run). (3) Q8c-1 round 15 found 1 Major (a run-time import name lists no test when the file imports any tests package); evidence at ccb63021 is green (11000 passed; stage 37/37; policy 350/350); batch 16 a70bb036 is running its gates. (4) PR 71 still needs your push of 04cfa501 and the guard merged for the `security` job.
+LEAD ACTIONS (owner-only): repository ruleset on wip/cloud-* and on core/cloud-handover, handover-src/c1a-8460813, core/P2d-1; limit tag creation for names starting origin/ or wip/; CODEOWNERS on .github/**, .gitleaks.toml, .gitleaksignore. Next step for each: the owner applies them in repository settings.
+
+LIVE ITEMS: a806b862 guard fix batch; a2e85079 guard evidence runner (b8ea4f69, will be stale); a43a4fca part 6 batch; a1a94207 part 2 batch 4; a70bb036 Q8c-1 batch 16. 5 agents; heavy jobs at most 3.
+ROUNDS: guard round 3 done (WHY: security path, round 2 had 2 Majors), round 4 after the fix. Part 6 round 3 done (WHY: mode-safety, 1 Blocker), round 4 after the fix. Part 2 round 4 after batch 4. Q8c-1 round 16 after batch 16.
+FINISHED SINCE LAST BLOCK: guard round 3 reviews and resolve (ledger CIGUARD-r3-1..5); part 6 round 3 reviews and resolve (PDBANNER-r3-1..4); part 6 runner stopped clean (no stray processes); part 6 evidence file pushed.
+
 ## 21:42Z / 03:12 IST (CI guard branch pushed; round 2 found 2 Majors; fix batch sent)
 FAILED / UNCERTAIN FIRST: (1) The guard (wip/cloud-ci-guard-wip at a001174b) is NOT safe to merge yet: round 2 found 2 Majors. The history, tree and lane checks sit behind a grep of the PR's own .gitleaks.toml (a PR can switch them off), and bare `origin/main` names can be shadowed by a pushed tag. Both are fixed in the batch now with the builder; no independent evidence for a001174b yet (runner a5ee9050 still running). (2) PR 71 still waits for you: core/P0a is at 8b982dd3; head to take is 04cfa501 (see READY-TO-MERGE.md); its `security` job needs the guard merged.
 Part 2 round 3 resolved (4 classes, fourth round after batch 4). Q8c-1 round 15 reviews saved (1 Major: run-time import names); evidence at ccb63021 green.
