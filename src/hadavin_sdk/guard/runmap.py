@@ -10,11 +10,11 @@ Pure functions over a plain ``dict[str, str]`` (placeholder -> original). Stdlib
 
 from __future__ import annotations
 
+import bisect
 import collections
 import functools
 import hashlib
 import html
-import bisect
 import re
 import time
 import unicodedata

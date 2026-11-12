@@ -280,7 +280,7 @@ def test_b12_i1_extract_and_the_k1b_loop_let_a_crash_of_the_redactor_stop_the_ru
 
 # ---- issue 2: a backslash-e inside a value, decided by the shape of the word (a Windows path is the control) -----------------
 
-from tests.test_prh_b10 import BSL, stands  # noqa: E402
+from tests.test_prh_b10 import BSL, stands
 
 
 def _glue(*parts):
@@ -407,7 +407,7 @@ def test_b12_i3_a_key_that_is_a_piece_of_a_held_secret_is_still_not_new():
 
 # ---- issue 6: a gap character glued in front of a spaced run does not start the run late ---------------------------------------
 
-from tests.test_prh_b10 import on_the_run_path, spaced  # noqa: E402
+from tests.test_prh_b10 import on_the_run_path, spaced
 
 GAPS = ["️", "ㅤ", "ᅟ", "ᅠ", "ﾠ", "͏"]  # variation selector, fillers, combining grapheme joiner
 
@@ -475,7 +475,7 @@ def test_b12_i7_the_search_for_copies_of_a_value_inside_a_big_held_value_looks_a
     """Issue 7 (mutant 199; fails on 242dfd66: the function took no `work` and never looked at the clock). A 252,000-character text and a
     held 1,801-character value that holds the small value 63,000 times: the clock is looked at every 4,096 hits, and the answer is
     still True (every copy lies inside a held value)."""
-    pem, current, text = _held_pem_and_text()
+    _pem, current, text = _held_pem_and_text()
     work = _CountingWork()
     assert runmap._only_inside_held("Q7zQ7zQ7zQ7zQ7zQ7z", current, (text, text), work) is True
     assert work.checks >= 20, f"mutant 199: the clock was looked at {work.checks} times"
