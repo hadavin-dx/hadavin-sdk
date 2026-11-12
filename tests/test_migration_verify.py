@@ -1255,14 +1255,24 @@ def test_an_unknown_right_word_is_refused_whole_never_by_prefix(word):
 def test_an_item_with_no_right_is_never_read_as_a_right_for_everyone():
     """Q2 returns an object with an empty access list as one row with `privilege_type` None and no grantee (Issue 11).
     The row must not become an `everyone` or `right` problem, and must still be judged for its owner and its SECURITY
-    DEFINER flag. Killed by: V62 (the guard on a null right is removed)."""
-    table = item(name="runs", grantee=None, privilege_type=None)
-    assert judge(rows(items=[table])) == []
+    DEFINER flag. A crash of `_judge` on such a row is a failure of this test as well (it is reported as a plain
+    failure, not as an error of the test). Killed by: V62 (the guard on a null right is removed)."""
+
+    def judged(one):
+        crash, out = None, None
+        try:
+            out = judge(rows(items=[one]))
+        except (TypeError, AttributeError, KeyError, ValueError) as e:
+            crash = type(e).__name__
+        assert crash is None, f"_judge crashed on a row with no right: {crash}"
+        return out
+
+    assert judged(item(name="runs", grantee=None, privilege_type=None)) == []
     fn = item(kind="function", relkind="", name="door", sub="q text", definer=True, grantee=None,
               privilege_type=None)  # fmt: skip
-    assert kinds(judge(rows(items=[fn]))) == ["definer_unreviewed"]
+    assert kinds(judged(fn)) == ["definer_unreviewed"]
     other = item(name="runs", owner="boss", family_owned=False, grantee=None, privilege_type=None)
-    assert kinds(judge(rows(items=[other]))) == ["foreign_owner"]
+    assert kinds(judged(other)) == ["foreign_owner"]
 
 
 # --- the words of the message lines in the CHANGELOG are the words of the code (Issue 4) -----------------------------------
