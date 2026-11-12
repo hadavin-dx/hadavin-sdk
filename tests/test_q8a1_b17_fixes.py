@@ -232,3 +232,107 @@ def test_check_config_shows_no_text_of_a_failure_of_the_yaml_reader(
 
 def test_the_module_search_path_is_not_changed_by_these_tests():
     assert "zq-b17" not in " ".join(sys.path)
+
+
+# ---- Issue 6: the local audit folder and the reserved names ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize("name", ["com0", "lpt0", "com1", "lpt9", "con", "nul"])
+def test_every_device_name_with_a_digit_is_refused_as_an_event_id(name):
+    from hadavin_sdk.models import AuditEvent, plain_event_name
+
+    assert not plain_event_name(name), f"{name} is accepted as a plain file name"
+    with pytest.raises(ValidationError):
+        AuditEvent(event_id=name, **_EVENT)
+
+
+def _poison_event():
+    from hadavin_sdk.models import AuditEvent
+
+    return AuditEvent.model_construct(event_id="../" + _marker("poison"), **_EVENT)
+
+
+def test_write_intent_of_an_unplain_event_id_raises_audit_unavailable_without_the_id(tmp_path):
+    from hadavin_sdk.audit.local_dir import LocalDirSink
+    from hadavin_sdk.audit.protocol import AuditUnavailable
+
+    sink = LocalDirSink(tmp_path)
+    with pytest.raises(AuditUnavailable) as raised:
+        sink.write_intent(_poison_event())
+    assert _marker("poison") not in _everything_a_caller_can_print(raised.value), (
+        "the refused id is in the error"
+    )
+    assert not list(tmp_path.rglob("*poison*")), "a file was named after the poison id"
+
+
+def test_a_poison_event_stays_in_memory_is_said_once_and_names_no_file(tmp_path, caplog):
+    import logging
+
+    from hadavin_sdk.audit.local_dir import LocalDirSink
+
+    sink = LocalDirSink(tmp_path)
+    assert sink.write_outcome(_poison_event()) is None
+    with caplog.at_level(logging.WARNING, logger="hadavin_sdk.audit.local_dir"):
+        for _ in range(3):
+            assert sink.reconcile() == 0
+    said = [r for r in caplog.records if "not a plain file name" in r.getMessage()]
+    assert len(said) == 1, f"the poison event was said {len(said)} times (once expected)"
+    assert _marker("poison") not in caplog.text, "the id is in the log"
+    assert len(sink._pending) == 1, "the poison event was dropped: an audit event is lost"
+    assert not list(tmp_path.rglob("*poison*"))
+
+
+def test_the_read_paths_refuse_an_index_key_that_is_not_a_plain_name(tmp_path):
+    from hadavin_sdk.audit.local_dir import LocalDirSink
+    from hadavin_sdk.audit.protocol import AuditUnavailable
+
+    sink = LocalDirSink(tmp_path)
+    outside = tmp_path / "outside.json"
+    from hadavin_sdk.models import AuditEvent
+
+    outside.write_text(AuditEvent(event_id="evt-" + "a" * 32, **_EVENT).model_dump_json(), encoding="utf-8")
+    sink.objects.mkdir(parents=True)
+    sink.index.write_text(json.dumps({"key": "../outside.json", "run_id": "r", "sha256": "0"}) + "\n")
+    assert sink.verify_object("../outside.json") is False, "a key outside the objects folder was read"
+    with pytest.raises(AuditUnavailable):
+        sink.events()
+
+
+# ---- Issue 4: the guard's allowance rows ------------------------------------------------------------------------------------
+
+
+def test_a_parameter_borne_value_is_a_carrier_of_a_proc_site():
+    import ast
+
+    sys.path.insert(0, "tests")
+    from tests import test_guard_reasons as reasons
+
+    fn = ast.parse("def f(path):\n    x = str(path)\n    raise A(path)").body[0]
+    node = fn.body[0].value
+    assert reasons._proc_carriers(node, fn) == {"path"}, (
+        "a parameter is not a carrier of the PROC site (check_proc cannot fail for a parameter-borne value)"
+    )
+
+
+def test_a_scoped_allowance_allows_one_function_and_a_count_and_nothing_else():
+    from tests import _text_guard
+
+    same = "def one(name):\n    raise A(f'{name}')\ndef two(name):\n    raise A(f'{name}')\n"
+    site = "f'{name}'"
+    # one row for `one`: the same text in `two` is a finding
+    found, stale = _text_guard.violations({"m.py": same}, {("m.py", site, "one", 1): "r"}, {})
+    assert len(found) == 1 and stale == [], (found, stale)
+    assert [f for f in found if "m.py:4" in f], "the site of `two` is not the one found"
+    # the right count in one function: both sites of the text in that function are allowed, no more
+    twice = "def one(name):\n    raise A(f'{name}')\n    raise A(f'{name}')\n"
+    found, stale = _text_guard.violations({"m.py": twice}, {("m.py", site, "one", 2): "r"}, {})
+    assert found == [] and stale == [], (found, stale)
+    found, stale = _text_guard.violations({"m.py": twice}, {("m.py", site, "one", 1): "r"}, {})
+    assert len(found) == 1, "a second site of the same text in the function was allowed by a row that counts one"
+    # a row that counts more than there are is stale
+    found, stale = _text_guard.violations({"m.py": same}, {("m.py", site, "one", 2): "r"}, {})
+    assert len(stale) == 1 and "x2" in stale[0], (
+        "a row that counts more sites than there are is not stale",
+        found,
+        stale,
+    )

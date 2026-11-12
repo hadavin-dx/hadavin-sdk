@@ -30,7 +30,7 @@ from hadavin_sdk.config import Config, ConfigError, _anchor_refusals, load_confi
 from hadavin_sdk.registry import _module_pin_problems, load_registry
 from hadavin_sdk.stages import STAGES, is_live, is_prod
 from tests import _text_guard
-from tests._guard_allowances import NEW_ALLOWED, REASONS
+from tests._guard_allowances import NEW_ALLOWED, REASONS, SCOPED_ALLOWED
 from tests.conftest import make_cfg, qualify
 from tests.test_k3_pilot_env import pilot_cfg
 
@@ -3469,7 +3469,11 @@ GUARD_ALLOWED = {
 
 
 # the old allowances (reasons written out) and the round 12 ones (a short name of a reason in `_guard_allowances.py`)
-ALL_ALLOWED = {**GUARD_ALLOWED, **{k: REASONS[v] for k, v in NEW_ALLOWED.items()}}
+ALL_ALLOWED = {
+    **GUARD_ALLOWED,
+    **{k: REASONS[v] for k, v in NEW_ALLOWED.items()},
+    **{k: REASONS[v] for k, v in SCOPED_ALLOWED.items()},
+}
 
 
 def _src_sources() -> dict[str, str]:
@@ -4073,6 +4077,7 @@ def test_no_allowance_row_is_left_unread():
     `UNREAD` (a site nobody had read) is gone and cannot come back."""
     assert "UNREAD" not in REASONS
     assert not [k for k, r in NEW_ALLOWED.items() if r not in REASONS]
+    assert not [k for k, r in SCOPED_ALLOWED.items() if r not in REASONS]
 
 
 def test_the_guard_reads_the_two_migration_modules_and_every_other_module_but_the_exempt_ones():

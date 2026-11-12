@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from tests._guard_allowances import NEW_ALLOWED, REASONS
+from tests._guard_allowances import NEW_ALLOWED, REASONS, SCOPED_ALLOWED
 
 SRC = Path(__file__).resolve().parent.parent / "src" / "hadavin_sdk"
 
@@ -40,7 +40,10 @@ def _fn(rel: str, name: str) -> ast.AST:
 
 
 def _rows(reason: str) -> list[tuple[str, str]]:
-    return sorted(k for k, r in NEW_ALLOWED.items() if r == reason)
+    return sorted(
+        {k for k, r in NEW_ALLOWED.items() if r == reason}
+        | {k[:2] for k, r in SCOPED_ALLOWED.items() if r == reason}
+    )
 
 
 def _names(text: str) -> set[str]:
@@ -1681,6 +1684,38 @@ def check_pkgerr() -> list[str]:
     return bad
 
 
+_FILTERS = {"shown_name", "shown_id", "status_text", "error_where", "shown_name_or_position"}
+
+
+def _names_outside_filters(node: ast.AST) -> set[str]:
+    """The names inside `node`, leaving out what is handed to a filter of `errors.py` (it decides what is shown)."""
+    out: set[str] = set()
+
+    def walk(n: ast.AST) -> None:
+        if isinstance(n, ast.Call) and getattr(n.func, "id", getattr(n.func, "attr", "")) in _FILTERS:
+            return
+        if isinstance(n, ast.Name):
+            out.add(n.id)
+        for c in ast.iter_child_nodes(n):
+            walk(c)
+
+    walk(node)
+    return out
+
+
+def _proc_carriers(node: ast.AST, fn: ast.AST) -> set[str]:
+    """The names that a PROC site puts data in: a name the function stores, or a PARAMETER of the function (a value that
+    comes in as an argument is data being worked on just as a stored one is: round 17, Issue 4)."""
+    held = _stored(fn) | {
+        a.arg
+        for a in [*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs]  # type: ignore[attr-defined]
+    }
+    carriers = _names_in(node) & held
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        carriers |= _names_in(node.func.value) & held
+    return carriers
+
+
 def check_proc() -> list[str]:
     """A PROC site is data being worked on, never a message: the site is not inside a raise, a print or a log call, and
     no name that the function assigns and the site uses is used inside a raise, a print or a log call of that function."""
@@ -1696,13 +1731,11 @@ def check_proc() -> list[str]:
             fn = _enclosing(m, node)
             if fn is None:
                 continue
-            carriers = _names_in(node) & _stored(fn)
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
-                carriers |= _names_in(node.func.value) & _stored(fn)
+            carriers = _proc_carriers(node, fn)
             for s in ast.walk(fn):
-                if _is_shown(s) and (carriers & _names_in(s)):
+                if _is_shown(s) and (carriers & _names_outside_filters(s)):
                     bad.append(
-                        f"{m}:{getattr(s, 'lineno', 0)}: {sorted(carriers & _names_in(s))} is shown while {k[:40]} puts data in it"
+                        f"{m}:{getattr(s, 'lineno', 0)}: {sorted(carriers & _names_outside_filters(s))} is shown while {k[:40]} puts data in it"
                     )
     return bad
 
@@ -2591,13 +2624,18 @@ CHECKS = {
 
 
 def test_every_reason_has_a_check_or_is_in_the_pinned_unchecked_list():
-    used = set(NEW_ALLOWED.values())
+    used = set(NEW_ALLOWED.values()) | set(SCOPED_ALLOWED.values())
     assert used <= set(REASONS), used - set(REASONS)
     unchecked = {r for r in REASONS if r not in CHECKS}
     assert unchecked == UNCHECKED, unchecked ^ UNCHECKED
     assert (
         len(UNCHECKED) <= 1
     )  # may only go down (round 16: 1, round 15: 2, round 14: 4, round 13: 12)
+    # Round 17 (Issue 4): the rows of the one reason that is not checked by code (`REDACTED`, the open owner question
+    # q-q8a1-hide-ids) may not grow without a decision: five sites, each one a place where `error_reason` is the filter
+    assert len(_rows("REDACTED")) == 5, (
+        "the number of REDACTED rows changed: a new site of an unchecked reason needs the owner's answer first"
+    )
 
 
 @pytest.mark.parametrize("reason", sorted(CHECKS))

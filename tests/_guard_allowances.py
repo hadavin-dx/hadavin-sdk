@@ -57,7 +57,7 @@ REASONS = {
     "TAGS": "the allowed kind words that pydantic lists for a union (its `expected_tags`, written in code), never the typed one",
     "OWNERROR": "the class name of an error, and its text only if THIS package wrote the error (`_own_error`: the class is defined under `hadavin_sdk`, is no `OSError` and has only built-in or package base classes); every other error shows `(details withheld)`; the package's own sentences are each a site of their own, read where they are raised",
     "FRAMES": "the file name, the line number, the function name and the line of code of a stack frame, printed by the debug traceback (`cli._print_frames`); frames describe code, never an error's text (the error text and its cause and context are not printed, only their class names)",
-    "HANDOFF": "an error object kept in a local dict by a worker thread so that the caller thread raises it again (`raise box[...]`): it is raised as the same object, so what a person reads is the message of its raise site, never a new text; the name that holds the dict is used for nothing else (checked)",
+    "HANDOFF": "an error object kept in a local dict by a worker thread so that the caller thread raises it again (`raise box[...]`): it is raised as the same object, so what a person reads is the message of its raise site, never a new text; the name that holds the dict is used for nothing else (checked). What a person reads is the message of the raise site, and the safety of that message rests on `error_reason` (the open owner question q-q8a1-hide-ids), not on this reason",
     "FILTER": "the return of one of the package's own text filters (`shown_name`, `status_text`, `shown_id`): `shown_name` after the filter's own first test refused every name that is not word-like; this is the one place where a name is let through, so it is read once here (checked)",
     "PYDANTICTYPE": "the error type word of pydantic (`missing`, `int_parsing`, ...): a library constant, not text from the file",
 }
@@ -847,9 +847,6 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
         "errors.py",
         "str.__str__(value) if type(value) is str and _ID_SHAPE.fullmatch(value) else '?'",
     ): "FILTER",
-    ("guard/http.py", "box['error'] = exc"): "HANDOFF",
-    ("k1b/loop.py", "box['exc'] = exc"): "HANDOFF",
-    ("tools.py", "box['error'] = exc"): "HANDOFF",
     ("tools.py", "box['value'] = str(self._fns[name](restored, ctx))"): "PROC",
     ("k1b/replay.py", "format(run_usd, 'f')"): "NUMFIELD",
     ("k1b/report.py", "return format(value, 'f')"): "NUMFIELD",
@@ -857,13 +854,11 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
         "llm/bedrock.py",
         "return str(response.get('Error', {}).get('Code', '')) if isinstance(response, dict) else ''",
     ): "DESCRIBE",
-    ("tools.py", "return message[:200]"): "REDACTED",
     ("actions/executor.py", "str(v)"): "URL",
     ("app.py", "str(sc.ca_file)"): "PROC",
     ("app.py", "str(spec.options.get('source', ''))"): "PROC",
     ("app.py", "str(t.options.get('source', ''))"): "PROC",
     ("audit/signer_vault.py", "str(self.key_version)"): "NUMFIELD",
-    ("k1b/bundle.py", "str(key)"): "PROC",
     ("llm/common.py", "str(m['content'])"): "LLMREQ",
     ("registry.py", "str(ca_file)"): "PROC",
     (
@@ -875,10 +870,7 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
         "store/postgres.py",
         "str(parts.get('host') or parts.get('hostaddr') or os.environ.get('PGHOST') or '')",
     ): "PROC",
-    ("tools.py", "str(exc)"): "REDACTED",
-    ("tools.py", "str(path)"): "PROC",
     ("tools.py", "str(path.parent)"): "PROC",
-    ("tools.py", "str(raw)"): "PROC",
     ("runtime/tick.py", "str(exc)"): "OWNERROR",
     # batch 17 (Issue 1a): an attribute is trusted only through `self`, a name bound to a call of its class, or a parameter
     # declared as that class; these reads go through a local or a loop variable, so each is a row checked by its reason
@@ -916,4 +908,18 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
         "registry.py",
         "{'eval_threshold': str(self.config.eval_threshold)} if self.config.eval_threshold < 1.0 else {}",
     ): "NUMFIELD",
+}
+
+
+# Rows scoped to one function and a number of sites (module, site text, enclosing function, number of sites): a new site
+# with the same text elsewhere is a finding. Round 17 (Issue 4).
+SCOPED_ALLOWED: dict[tuple[str, str, str, int], str] = {
+    ("guard/http.py", "box['error'] = exc", "lookup", 1): "HANDOFF",
+    ("k1b/bundle.py", "str(key)", "_scan", 1): "PROC",
+    ("k1b/loop.py", "box['exc'] = exc", "work", 1): "HANDOFF",
+    ("tools.py", "box['error'] = exc", "work", 1): "HANDOFF",
+    ("tools.py", "return message[:200]", "error_reason", 1): "REDACTED",
+    ("tools.py", "str(exc)", "error_reason", 1): "REDACTED",
+    ("tools.py", "str(path)", "load_tool_module", 2): "PROC",
+    ("tools.py", "str(raw)", "invoke", 1): "PROC",
 }

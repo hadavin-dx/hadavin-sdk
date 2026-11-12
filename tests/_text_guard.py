@@ -1728,14 +1728,33 @@ def violations(sources, allowed, exempt, callers=None):
     # are read for what they pass to a parameter, but no site is looked for in them
     an = Analysis({**sources, **{f"~callers/{m}": t for m, t in (callers or {}).items()}})
     found, matched = [], set()
+    # Round 17 (Issue 4): a row may be scoped, a key of four parts (module, site text, enclosing function, number of
+    # sites): it allows exactly that many sites of that text inside that function, so a new site with the same short text
+    # elsewhere in the module (or one more in the same function) is a finding, and a row whose count is wrong is stale
+    scoped = {k[:3]: k[3] for k in allowed if len(k) == 4}
+    seen: dict[tuple, int] = {}
     for module in sources:
         for node, kind in an.sites(module):
-            key = (module, ast.unparse(node))
+            text = ast.unparse(node)
+            key = (module, text)
+            fn = an._enclosing_def(node)
+            where = (module, text, fn.name if fn is not None else "<module>")
             if key in allowed:
                 matched.add(key)
+            elif where in scoped:
+                seen[where] = seen.get(where, 0) + 1
+                if seen[where] <= scoped[where]:
+                    matched.add((*where, scoped[where]))
+                else:
+                    found.append(
+                        f"{module}:{node.lineno}: [{kind}] {text} (more sites of this text in {where[2]} than the row allows)"
+                    )
             else:
-                found.append(f"{module}:{node.lineno}: [{kind}] {ast.unparse(node)}")
-    stale = [f"{k[0]}: {k[1]}" for k in allowed if k not in matched]
+                found.append(f"{module}:{node.lineno}: [{kind}] {text}")
+    for where, n in scoped.items():
+        if seen.get(where, 0) != n:
+            matched.discard((*where, n))
+    stale = [f"{k[0]}: {k[1]}" + (f" in {k[2]} x{k[3]}" if len(k) == 4 else "") for k in allowed if k not in matched]
     stale += [
         f"exempt {e}: no such module" for e in exempt if not any(m.startswith(e) for m in every)
     ]

@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import logging
 import tempfile
 import threading
 from pathlib import Path
@@ -20,6 +21,8 @@ from pathlib import Path
 from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
 from hadavin_sdk.errors import read_configured, shown_id
 from hadavin_sdk.models import AuditEvent, plain_event_name
+
+_LOG = logging.getLogger(__name__)
 
 
 class LocalDirSink:
@@ -31,6 +34,7 @@ class LocalDirSink:
         self._lock = threading.Lock()
         # Last resort when even the outbox folder cannot be written: kept in memory for reconcile.
         self._pending: list[AuditEvent] = []
+        self._poison_said: set[int] = set()
 
     def _entries(self) -> list[dict]:
         """Index lines, skipping a torn one (disk full mid-append): it records nothing, and must not block
@@ -112,6 +116,9 @@ class LocalDirSink:
             return self._write(event)
         except DuplicateEvent:
             raise
+        except ValueError:
+            # an event built without the model check whose id is not a plain file name: it can never be written here
+            failure = f"intent {shown_id(event.event_id)}: the event id is not a plain file name"
         except OSError as exc:
             # The OS error quotes the configured path; raised after this block so no cause or context carries it.
             failure = f"intent {shown_id(event.event_id)}: {exc.__class__.__name__}"
@@ -142,6 +149,15 @@ class LocalDirSink:
         person, counted nowhere) so it can never block the files after it."""
         done = 0
         for event in list(self._pending):
+            if not plain_event_name(event.event_id):
+                # a poison event (built with `model_construct`): it can never name a file, so it stays in memory (never
+                # dropped: that would lose an audit event) and is said once, by a fixed sentence without the id
+                if id(event) not in self._poison_said:
+                    self._poison_said.add(id(event))
+                    _LOG.warning(
+                        "audit: an event whose id is not a plain file name stays in memory and cannot be written"
+                    )
+                continue
             try:
                 self._write(event)
             except DuplicateEvent:
@@ -169,7 +185,15 @@ class LocalDirSink:
             done += 1
         return done
 
+    @staticmethod
+    def _plain_key(key: object) -> bool:
+        """A key read from the index is `<plain event name>.json`: the read paths test it as `_write` does, so an edited
+        index line cannot point a read outside the objects folder."""
+        return type(key) is str and key.endswith(".json") and plain_event_name(key[: -len(".json")])
+
     def verify_object(self, key: str) -> bool:
+        if not self._plain_key(key):
+            return False
         body = (self.objects / key).read_bytes()
         digest = hashlib.sha256(body).hexdigest()
         for entry in self._entries():
@@ -181,6 +205,8 @@ class LocalDirSink:
         """Read back, in write order (index order)."""
         out = []
         for entry in self._entries():
+            if not self._plain_key(entry.get("key")):
+                raise AuditUnavailable("the audit index holds a key that is not a plain file name")
             if run_id is None or entry.get("run_id") == run_id:
                 out.append(
                     AuditEvent.model_validate_json(
