@@ -641,6 +641,15 @@ NOT_PROD: frozenset[tuple[str, str]] = frozenset({("signer", "none"), ("anchor",
 _HOST_LIKE = re.compile(r"(host|url|address|endpoint)", re.IGNORECASE)
 
 
+def _unclassified(table: dict[str, dict[str, Entry]]) -> list[str]:
+    return [
+        f"backend {cap} kind {kind}: not classified; give it role stand_in or real"
+        for cap, kinds in table.items()
+        for kind, entry in kinds.items()
+        if entry.role not in ("stand_in", "real")
+    ]
+
+
 def registry_problems(
     table: dict[str, dict[str, Entry]],
     demo_only: frozenset[tuple[str, str]] = DEMO_ONLY,
@@ -648,15 +657,13 @@ def registry_problems(
 ) -> list[str]:
     """Plain sentences, one per broken rule; empty when the registry is sound. The rules: (1) every kind is exactly
     one of "stand_in" or "real"; (2) a stand-in is also marked demo-only or not-for-prod, so a client profile
-    refuses it; (3) a stand-in whose settings can name a machine declares the hosts it reaches. Run when this module
-    is imported, and by the tests on planted copies."""
-    out = []
+    refuses it; (3) a stand-in whose settings can name a machine declares the hosts it reaches. Rule 1 also runs
+    when this module is imported (`assert_registry_sound`); all three run in the tests, on the real table and on
+    planted copies."""
+    out = _unclassified(table)
     for cap, kinds in table.items():
         for kind, entry in kinds.items():
             where = f"backend {cap} kind {kind}"
-            if entry.role not in ("stand_in", "real"):
-                out.append(f"{where}: not classified; give it role stand_in or real")
-                continue
             if entry.role != "stand_in":
                 continue
             if (cap, kind) not in demo_only and (cap, kind) not in not_prod:
@@ -670,8 +677,9 @@ def registry_problems(
 
 
 def assert_registry_sound(table: dict[str, dict[str, Entry]]) -> None:
-    """Raise RuntimeError naming every broken rule (see `registry_problems`)."""
-    if problems := registry_problems(table):
+    """Raise RuntimeError naming every kind with no role (rule 1 of `registry_problems`). Rules 2 and 3 are checked by
+    the tests, so a mistake in DEMO_ONLY is reported by the test that pins that list and not by every import."""
+    if problems := _unclassified(table):
         raise RuntimeError("backend table: " + "; ".join(problems))
 
 

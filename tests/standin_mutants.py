@@ -39,9 +39,9 @@ def mutant(name, file, old, new, test_file, killer, expect):
 
 
 M = [
-    mutant("S1 a kind with no role is no longer reported", TBL, "if entry.role not in (\"stand_in\", \"real\"):", "if False:",
+    mutant("S1 a kind with no role is no longer reported", TBL, 'if entry.role not in ("stand_in", "real")', "if False",
         REG_TEST, "test_plant_an_unclassified_kind_is_caught", "an unclassified kind was not reported"),
-    mutant("S2 a misspelt role counts as a real kind", TBL, "if entry.role not in (\"stand_in\", \"real\"):", "if entry.role is None:",
+    mutant("S2 a misspelt role counts as a real kind", TBL, 'if entry.role not in ("stand_in", "real")', "if entry.role is None",
         REG_TEST, "test_plant_a_misspelt_role_is_caught", "a misspelt role was not reported"),
     mutant("S3 a stand-in outside DEMO_ONLY and NOT_PROD is no longer reported", TBL,
         "if (cap, kind) not in demo_only and (cap, kind) not in not_prod:", "if False:",
@@ -53,7 +53,7 @@ M = [
         REG_TEST, "test_seeded_fuzz_of_role_marks_and_listings_agrees_with_the_rules", "the checker disagrees with the rules"),
     mutant("S6 the import-time guard is dropped", TBL, "assert_registry_sound(TABLE)  #", "pass  #",
         REG_TEST, "test_the_table_module_runs_the_guard_on_its_own_table_at_import", "no longer runs the registry guard"),
-    mutant("S7 the guard collects no problem sentence into the error", TBL, "if problems := registry_problems(table):", "if False:",
+    mutant("S7 the guard collects no problem sentence into the error", TBL, "if problems := _unclassified(table):", "if False:",
         REG_TEST, "test_the_import_time_guard_raises_naming_the_unclassified_kind", "DID NOT RAISE"),
     mutant("S8 the stand-in host rule is never applied", CFG, 'if entry.role != "stand_in" or entry.hosts is None:', "if True:",
         HOST_TEST, "test_a_stand_in_on_another_computer_is_refused", "DID NOT RAISE"),
