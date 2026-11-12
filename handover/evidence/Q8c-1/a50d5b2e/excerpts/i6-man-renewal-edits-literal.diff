@@ -1,0 +1,99 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 7d1f33b0..eb0c33c0 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -295,7 +295,7 @@
+     the role and identity groups can add policies.
+   - No behaviour change: no kind sends a different request. The other 16 kinds that sign in to an outside system
+     (the AWS, Azure and Google Cloud kinds, Slack, Postgres, the API-key model kinds) have no declared permission
+-    set yet; a dated list in the guard test names them, and that test fails for 7 of them from 2026-12-12 and
++    set yet; a dated list in the guard test names them, and that test fails for 7 of them from 2027-01-12 and
+     the other 9 from 2027-02-01, unless the second pull request has landed or the dates were decided again (at
+     most 92 days at a time). The dated lists of names and claims (13 entries) fail from the day after the
+     earliest `review_by` in the tests and in `python tools/policy_page.py --check` (a blocking CI step); from
+diff --git a/tests/test_policy_changelog.py b/tests/test_policy_changelog.py
+index 88f0e433..9b4803b8 100644
+--- a/tests/test_policy_changelog.py
++++ b/tests/test_policy_changelog.py
+@@ -24,8 +24,8 @@ from tests.test_policy_guard import (
+ ROOT = Path(__file__).resolve().parents[1]
+ 
+ 
+-KINDS_GROUPS = [(7, "2026-12-12"), (9, "2027-02-01")]
+-KINDS_LITERAL = "7 of them from 2026-12-12 and the other 9 from 2027-02-01"
++KINDS_GROUPS = [(7, "2027-01-12"), (9, "2027-02-01")]
++KINDS_LITERAL = "7 of them from 2027-01-12 and the other 9 from 2027-02-01"
+ 
+ 
+ def _groups_text(groups: list[tuple[int, str]]) -> str:
+diff --git a/tests/test_policy_guard.py b/tests/test_policy_guard.py
+index 81b559dc..5be0f094 100644
+--- a/tests/test_policy_guard.py
++++ b/tests/test_policy_guard.py
+@@ -49,11 +49,11 @@ MAX_PENDING_DAYS = pp.MAX_PENDING_DAYS
+ # The day the 16 kinds below were put on the pending list. A literal of its own, NOT `pp.DECIDED`: the tool's
+ # date is the day of the last decision about the names and claims, and renewing that must not silently renew
+ # these kinds as well (the 92-day cap compares `review_by` with `decided`, so a shared date could dodge it).
+-KINDS_DECIDED = date(2026, 11, 11)
++KINDS_DECIDED = date(2026, 12, 12)
+ # The latest decision day of the dated lists: the day a clock must show for every list to exist (a renewal of the
+ # kinds alone moves the kinds past the names and claims, and the other way round).
+ LATEST_DAY = max(DECIDED, KINDS_DECIDED)
+-_PR2 = ("the permission names of this kind are not all checked yet", "Q8c PR 2", date(2026, 12, 11))
++_PR2 = ("the permission names of this kind are not all checked yet", "Q8c PR 2", date(2027, 1, 11))
+ _SLICE2 = ("slice 2 of Q8c: names not checked, owner questions O2 and O3 open", "Q8c slice 2")
+ # A kind that signs in to an outside system and has no POLICY yet. Overdue and stale entries fail.
+ PENDING_KINDS: dict[str, Pending] = {
+@@ -4364,7 +4364,7 @@ def test_a_kind_whose_module_could_not_be_read_adds_no_stale_class_line():
+ 
+ 
+ def test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date():
+-    assert {p.decided for p in PENDING_KINDS.values()} == {date(2026, 11, 11)}, (
++    assert {p.decided for p in PENDING_KINDS.values()} == {date(2026, 12, 12)}, (
+         "the pending kinds do not all stand on the literal day 2026-11-11"
+     )
+     assert len(PENDING_KINDS) == 16, "the number of pending kinds is not 16"
+@@ -4460,7 +4460,7 @@ def test_the_tools_decision_day_is_the_day_the_names_and_claims_were_decided():
+     # `pp.DECIDED` is the decision day of the two dated lists of the tool. It is pinned here apart from the
+     # kinds (their own literal above): a renewal moves this day and the `review_by` days together, on purpose,
+     # in the tool and in this test, and never moves the 16 kinds with it.
+-    assert pp.DECIDED == date(2026, 11, 11), "the tool's decision day moved without this test"
++    assert pp.DECIDED == date(2026, 12, 12), "the tool's decision day moved without this test"
+     left_behind = _left_behind(
+         {"PENDING_NAMES": pp.PENDING_NAMES, "PENDING_CLAIMS": pp.PENDING_CLAIMS}, pp.DECIDED
+     )
+diff --git a/tools/policy_page.py b/tools/policy_page.py
+index 2524760f..b23b0526 100644
+--- a/tools/policy_page.py
++++ b/tools/policy_page.py
+@@ -737,18 +737,18 @@ class Pending:
+     review_by: date  # the check fails after this date
+ 
+ 
+-DECIDED = date(2026, 11, 11)
++DECIDED = date(2026, 12, 12)
+ _ROLE_NAMES = Pending(
+     "the built-in role name was not among the names the evidence runner looked for",
+     "an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry",
+     DECIDED,
+-    date(2026, 12, 11),
++    date(2027, 1, 11),
+ )
+ _BUILDER_ONLY = Pending(
+     "the path was read in the vendor source by the builder of a fix only, not by an evidence runner",
+     "an evidence run that finds the path in the listed sources, then set `verified` and delete this entry",
+     DECIDED,
+-    date(2026, 12, 11),
++    date(2027, 1, 11),
+ )
+ # (kind, entry) -> a name not yet found in a vendor source by the evidence runner. The entry is a grant id,
+ # `free:<n>` or `never:<name>`. All six grants are found (the claims of R17, R18, R20 to R22 are separate: see
+@@ -767,7 +767,7 @@ _CLAIM_PENDING = Pending(
+     "an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and "
+     "delete this entry",
+     DECIDED,
+-    date(2026, 12, 11),
++    date(2027, 1, 11),
+ )
+ # (kind, grant id | `free:<n>` | `never:<name>`) -> a statement about how the vendor's server or API behaves that
+ # nobody but the builder of a fix has read, or that nobody has checked. Every entry with a `claims_unverified`
