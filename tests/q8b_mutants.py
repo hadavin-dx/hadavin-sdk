@@ -797,12 +797,12 @@ def _neutralise(text: str) -> str:
     mutant('M251 the folded lines of the any-word rule do not stop at a `name:` line [b13]', REDACT, r'''r"(?:" + _FOLD_BREAK + r"[ \t]++(?![\w\-\"']{1,64}+[\"']?[ \t]*+:)" + _LINE_TEXT + ")++"''', r'''r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")++"''',
         B13, 'test_b13_7_the_siblings_of_an_authorization_key_stay_shown_in_pretty_printed_json', 'masked the siblings of an Authorization key'),
     mutant('M252 a rare line break ends the text of a folded line [b13]', REDACT, r'''_LINE_TEXT = r"[^\r\n]*+"''', r'''_LINE_TEXT = r"[^\r\n" + _OTHER_BREAKS + "]*+"''',
-        B13, 'test_b13_7_a_rare_line_break_inside_a_folded_line_does_not_end_the_masked_value[form feed]', 'the second part of a folded line after'),
+        B13, 'test_b13_7_a_rare_line_break_inside_a_folded_line_does_not_end_the_masked_value[file separator]', 'the second part of a folded line after'),
     mutant('M253 the fold rules do not know the information separators as line breaks [b13]', REDACT, r'''_OTHER_BREAKS = "\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029"''', r'''_OTHER_BREAKS = "\x0b\x0c\x85\u2028\u2029"''',
         B13, 'test_b13_8_every_character_that_splitlines_reads_as_a_break_is_known_to_the_fold_rules', 'str.splitlines breaks the fold rules do not know'),
     mutant('M254 the card path writes a rare line break as a space, not a line feed [b13]', CHANNEL, r"""    text = _LINE_BREAK_CONTROLS.sub("\n", text)
 """, r"""""",
-        B13, 'test_b13_7_a_header_folded_over_a_rare_line_break_is_masked_on_every_path[form feed]', 'leaves the next line readable'),
+        B13, 'test_b13_7_a_header_folded_over_a_rare_line_break_is_masked_on_every_path[file separator]', 'leaves the next line readable'),
     mutant('M256 the folded lines are read again from every line to the end of the text (not in linear time) [b13]', REDACT, r'''_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")++"''', r'''_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")+(?=[\s\S]*QQQ)"''',
         B11, 'test_b11_8_a_long_run_of_folded_lines_is_read_in_linear_time', 'folded lines are not read in linear time'),
     mutant('M257 the gap after a scheme word is read again up to 40000 characters ahead (not in linear time) [b13]', REDACT, r'''_SCHEME_GAP = r"\s++"''', r'''_SCHEME_GAP = r"\s+(?=[\s\S]{0,40000}QQQ)"''',
@@ -846,7 +846,7 @@ def _neutralise(text: str) -> str:
     mutant('M270 the card path does not write the record separator U+001E as a line feed [b14]', CHANNEL, r'''_LINE_BREAK_CONTROLS = re.compile("[\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029](?=[ \t])")''', r'''_LINE_BREAK_CONTROLS = re.compile("[\x0b\x0c\x1c\x1d\x85\u2028\u2029](?=[ \t])")''',
         B13, 'test_b13_7_a_header_folded_over_a_rare_line_break_is_masked_on_every_path[record separator]', 'leaves the next line readable'),
     mutant('M271 the card path does not write the next line U+0085, the line separator U+2028 and the paragraph separator U+2029 as a line feed [b14]', CHANNEL, r'''_LINE_BREAK_CONTROLS = re.compile("[\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029](?=[ \t])")''', r'''_LINE_BREAK_CONTROLS = re.compile("[\x0b\x0c\x1c\x1d\x1e](?=[ \t])")''',
-        B13, 'test_b13_7_a_header_folded_over_a_rare_line_break_is_masked_on_every_path[paragraph separator]', 'leaves the next line readable'),
+        B13, 'test_b13_7_a_header_folded_over_a_rare_line_break_is_masked_on_every_path[line separator]', 'leaves the next line readable'),
     mutant('M272 the tail words of a value are read again to the end of the text (a glued run of key=value is not read in linear time) [b14]', REDACT, r'''_VALUE_TAIL = r"(?:[ \t]+(?!" + _FLAG_STOP + "|" + _KEY_STOP + ")" + _VALUE_CHAR + "+)*"''', r'''_VALUE_TAIL = r"(?:[ \t]+(?!" + _FLAG_STOP + "|" + _KEY_STOP + ")" + _VALUE_CHAR + "+)*(?=[^\x00]*)"''',
         B13, r'''test_b13_3_a_glued_run_of_headers_is_read_in_linear_time[authorization=a]''', 'is read in more than linear time'),
     mutant('M273 the keyed value is looked ahead to the end of the text from every key (a glued run of headers with a space after is not read in linear time) [b14]', REDACT, r'''_KEYED_VALUE = (
@@ -868,7 +868,7 @@ def _neutralise(text: str) -> str:
     mutant('M279 a word that looks like a key is looked ahead to the end of the text (a glued run of Digest headers is not read in linear time) [b14]', REDACT, r'''_KEY_STOP = r"[A-Za-z_][\w.\-]*[\"']?\s*[:=]"''', r'''_KEY_STOP = r"[A-Za-z_][\w.\-]*[\"']?\s*[:=](?=[^\x00]*)"''',
         B13, r'''test_b13_3_a_glued_run_of_headers_is_read_in_linear_time[authorization:Digest a="b",]''', 'is read in more than linear time'),
     mutant('M280 the exemption of the flag `--word` is dropped: the bare flag `--bypass=v` is masked, the owner pin of the bare word breaks [b14]', REDACT, r'''r"(?<!(?:(?<![\w.\-])|(?<=(?<![\w.\-])--))" + w[: -len(ending)] + ")"''', r'''r"(?<!(?<![\w.\-])" + w[: -len(ending)] + ")"''',
-        B14, 'test_b14_1_the_bare_flag_shows_the_ordinary_word_and_a_prefixed_flag_is_masked[bypass]', 'the owner decision is shown (pinned)'),
+        B14, 'test_b14_1_the_bare_flag_shows_the_ordinary_word_and_a_prefixed_flag_is_masked[bandpass]', 'the owner decision is shown (pinned)'),
     mutant('M281 two hyphens in front count as the start whatever stands before them (`x--bypass=v` is readable) [b14]', REDACT, r'''r"(?<!(?:(?<![\w.\-])|(?<=(?<![\w.\-])--))" + w[: -len(ending)] + ")"''', r'''r"(?<!(?:(?<![\w.\-])|(?<=--))" + w[: -len(ending)] + ")"''',
         B14, 'test_b14_1_an_ordinary_word_behind_any_key_character_is_a_credential_key_in_every_form_as_on_main', 'an ordinary word behind key characters is read as the bare ordinary word'),
 ]  # fmt: skip
