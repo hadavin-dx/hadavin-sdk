@@ -2626,17 +2626,17 @@
 | BL-core-a11a-w7-cM5 | Major | PR77 | reviews/PR77/round7-codebase.md M5 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |
 | BL-core-a11a-w7-cM6 | Major | PR77 | reviews/PR77/round7-codebase.md M6 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |
 | BL-core-a11a-w7-cM7 | Major | PR77 | reviews/PR77/round7-codebase.md M7 (M1, M2, M4 reproduced by lead) | OPEN | | | 2026-11-11 |
-| BL-core-q8c1-r1-d01 | Major | Q8c-1 | reviews/Q8c/result-r1-design-full.md Major 1 | OPEN | | | 2026-11-11 |
-| BL-core-q8c1-r1-d02 | Major | Q8c-1 | reviews/Q8c/result-r1-design-full.md Major 2 | OPEN | | | 2026-11-11 |
-| BL-core-q8c1-r1-d03 | Major | Q8c-1 | reviews/Q8c/result-r1-design-full.md Major 3 | OPEN | | | 2026-11-11 |
-| BL-core-q8c1-r1-c02 | Minor(sec) | Q8c-1 | reviews/Q8c/result-r1-codebase-full.md m2 | OPEN | | | 2026-11-11 |
-| BL-core-q8c1-r1-c07 | Minor(sec) | Q8c-1 | reviews/Q8c/result-r1-codebase-full.md m7 | OPEN | | | 2026-11-11 |
-| BL-core-q8c1-r1-c11 | Minor(sec) | Q8c-1 | reviews/Q8c/result-r1-codebase-full.md m11 | OPEN | | | 2026-11-11 |
+| BL-core-q8c1-r1-d01 | Major | Q8c-1 | reviews/Q8c/result-r1-design-full.md Major 1 | IMPOSSIBLE-NOW |  | reviews/Q8c-1/ledger-reconciliation-r7.md (2026-11-12 reconciliation; closes only with CI run of the 12 Vault tests) | 2026-11-11 |
+| BL-core-q8c1-r1-d02 | Major | Q8c-1 | reviews/Q8c/result-r1-design-full.md Major 2 | FIXED-VERIFIED | fix batch 2 (R17 resource +) | reviews/Q8c-1/result-r2-design-full.md:18-19 ; reviews/Q8c-1/ledger-reconciliation-r7.md | 2026-11-11 |
+| BL-core-q8c1-r1-d03 | Major | Q8c-1 | reviews/Q8c/result-r1-design-full.md Major 3 | FIXED-VERIFIED | fix batch 2 (guard) | reviews/Q8c-1/result-r2-design-full.md:24-25 ; reviews/Q8c-1/ledger-reconciliation-r7.md | 2026-11-11 |
+| BL-core-q8c1-r1-c02 | Minor(sec) | Q8c-1 | reviews/Q8c/result-r1-codebase-full.md m2 | FIXED-VERIFIED | repr=False | reviews/Q8c-1/result-r2-codebase-full.md:21 ; reviews/Q8c-1/ledger-reconciliation-r7.md | 2026-11-11 |
+| BL-core-q8c1-r1-c07 | Minor(sec) | Q8c-1 | reviews/Q8c/result-r1-codebase-full.md m7 | FIXED-VERIFIED | _unprintable | result-r2-codebase-full.md:26 + evidence/Q8c-1/a77fab7/07-renderer-probes.txt ; reviews/Q8c-1/ledger-reconciliation-r7.md | 2026-11-11 |
+| BL-core-q8c1-r1-c11 | Minor(sec) | Q8c-1 | reviews/Q8c/result-r1-codebase-full.md m11 | FIXED-VERIFIED | wording fix, re-read in r5 | result-r2-codebase-full.md:30; r5-design-summary.md:2 ; reviews/Q8c-1/ledger-reconciliation-r7.md | 2026-11-11 |
 | BL-core-p77-split-f712912 | Major | redaction | D-018 split ticket: F7 scrub compares in two domains | OPEN | | | 2026-11-11 |
 | BL-core-p77-split-design16229 | Major | redaction | D-018 split ticket: design M6 cover rule (which text wins) | OPEN | | | 2026-11-11 |
 | BL-core-p77-split-vendor10255 | Major | redaction | D-018 split ticket: vendor key glued to a word in plain ASCII | OPEN | | | 2026-11-11 |
 | BL-core-p77-split-f1026044 | Major | redaction | D-018 split ticket: F10 fragment map entries | OPEN | | | 2026-11-11 |
-| BL-core-q8c1-r1-ev1 | Major | Q8c-1 | evidence/Q8c-1/7af1380 renderer accepts privileged or reserved values | OPEN | | | 2026-11-11 |
+| BL-core-q8c1-r1-ev1 | Major | Q8c-1 | evidence/Q8c-1/7af1380 renderer accepts privileged or reserved values | FIXED-VERIFIED | policy_page.py:191-230 | result-r2-codebase-full.md:36; evidence/Q8c-1/a77fab7/RESULTS.md:29 ; reviews/Q8c-1/ledger-reconciliation-r7.md | 2026-11-11 |
 | BL-core-q8a2-r2-d01 | Major | Q8a-2 | reviews/Q8a-2/result-r2-design-full.md M1 string-scan boundary set | OPEN | | | 2026-11-11 |
 | BL-core-q8a2-r2-c01 | Major | Q8a-2 | reviews/Q8a-2/result-r2-codebase-full.md F1 aliased from-import (lead reproduced) | OPEN | | | 2026-11-11 |
 | BL-core-q8a2-r2-c02 | Minor(sec, on main) | Q8a-2 | result-r2-codebase-full.md F2 Content-Length digits before the path check | OPEN | | | 2026-11-11 |
@@ -2668,16 +2668,16 @@
 | BL-core-prh-plan-r1-b01 | Blocker(plan) | PR H | reviews/PRH/plan-r1-readiness-full.md B1 | OPEN | | | 2026-11-11 |
 | BL-core-prh-plan-r1-b02 | Blocker(plan) | PR H | reviews/PRH/plan-r1-readiness-full.md B2 | OPEN | | | 2026-11-11 |
 | BL-core-q8a1-r4-d01 | Major(sec) | Q8a-1 | reviews/Q8a/result-r4-delta-full.md M1 isinstance lets Mock(spec) or a subclass hand a made-up time to the purge (language fact verified by the lead) | OPEN | | | 2026-11-11 |
-| Q8c-1-r2-M1 | reviews/Q8c-1/result-r2-design-full.md | Major | Q8c-1 | 12 Vault server tests have no run on record at a77fab72 | OPEN | CI run at final head with -rs | - | 2026-11-11 |
-| Q8c-1-r2-M2 | same | Major | Q8c-1 | R17 + claim shown as verified; only builder read sources; set claims_unverified until evidence runner re-reads | OPEN | - | - | 2026-11-11 |
+| Q8c-1-r2-M1 | reviews/Q8c-1/result-r2-design-full.md | Major | Q8c-1 | IMPOSSIBLE-NOW | OPEN | reviews/Q8c-1/ledger-reconciliation-r7.md (2026-11-12 reconciliation; closes only with CI run of the 12 Vault tests) | - | 2026-11-11 |
+| Q8c-1-r2-M2 | same | Major | Q8c-1 | FIXED-VERIFIED | claims_unverified (labelling only) | result-r3-design-full.md:11 ; reviews/Q8c-1/ledger-reconciliation-r7.md | - | 2026-11-11 |
 | Q8a-1-r4-M1 | reviews/Q8a/result-r4-0b97d55.md | Major | Q8a-1 | isinstance check on TickContext (Mock/subclass bypass) | OPEN | fix batch 4 | - | 2026-11-11 |
 | Q8a-2-r3-M1 | reviews/Q8a-2/result-r3-codebase-full.md | Major | Q8a-2 | Server.handle_error untested (log levels, no request text) though CHANGELOG states it | OPEN | fix batch | - | 2026-11-11 |
 | Q8b-r1-M1 | reviews/Q8b/result-r1-design-full.md | Major | Q8b | card path: key glued to e-mail/host leaves assignment value readable (87 vs 38 of 3000 on main) | OPEN | fix batch | - | 2026-11-11 |
 | Q8b-r1-M2 | same | Major | Q8b | approver cannot read target host on card (owner question open) | OWNER-ONLY | questions-for-lead | - | 2026-11-11 |
 | Q8b-r1-F1 | reviews/Q8b/result-r1-codebase-full.md | Major | Q8b | _named takes first of name/key: {"name":"db","key":"password","value":..} shows the secret | OPEN | fix batch | - | 2026-11-11 |
 | Q8b-r1-F2 | same | Major | Q8b | LIMITS text says always masked but UTC-time and setting-key exceptions exist (ticket text; fix on ticket side) | OPEN | fix batch | - | 2026-11-11 |
-| Q8c-1-r2-cb-M1 | reviews/Q8c-1/result-r2-codebase-full.md | Major | Q8c-1 | same as r2-M2: + claim builder-only, claims_unverified empty, copy-ready text offered | OPEN | fix batch | - | 2026-11-11 |
-| BL-core-q8c1-lifetime | reviews/Q8c-1/result-r2-design-full.md Minor 8 | Minor(sec) | Q8c-1 | all three kinds hold long-lived credentials (Vault token or AppRole secret id from the environment; Kubernetes ServiceAccount token); no ticket removes them (Q8a-1 does not: its branch is live-override-refusals); the kind texts now say so and point here | OPEN | next step: a ticket for short-lived sign-in (workload identity) per kind, owner to prioritise | - | 2026-11-11 |
+| Q8c-1-r2-cb-M1 | reviews/Q8c-1/result-r2-codebase-full.md | Major | Q8c-1 | FIXED-VERIFIED | claims_unverified (labelling only) | result-r3-codebase-full.md:12 ; reviews/Q8c-1/ledger-reconciliation-r7.md | - | 2026-11-11 |
+| BL-core-q8c1-lifetime | reviews/Q8c-1/result-r2-design-full.md Minor 8 | Minor(sec) | Q8c-1 | OWNER-ONLY | OPEN | reviews/Q8c-1/ledger-reconciliation-r7.md | - | 2026-11-11 |
 | BL-core-q8c1-openbao | reviews/Q8c-1/result-r2-design-full.md Minor 9 | Minor | Q8c-1 | the Vault server tests run against one source-available image only; OpenBao (MPL-2.0) not run. Trigger: a deployment chooses OpenBao, or review date 2026-12-11, whichever first | OPEN | next step: run tests/test_policy_engine.py against an OpenBao service in CI | - | 2026-11-11 |
 | Q8c-1-r2-fb2 | fix batch 2 on a77fab72 | Major | Q8c-1 | r2-M2 / r2-cb-M1: R17 claims_unverified set, copy-ready withheld, undelete/subkeys/byok-export shown "not yet checked" with dated PENDING_NAMES; closes when an evidence runner re-reads V-POL, V-ACL, V-PARSE, B-ACL and the 12 Vault server tests show 12 passed 0 skipped in CI | FIXED-UNVERIFIED | pending evidence run + CI run | - | 2026-11-11 |
 | Q8a-1-r5-M1 | reviews/Q8a/result-r5-delta-full.md | Major | Q8a-1 | CHANGELOG/errata say config error never shows the refused value, but custom validator messages (base_url etc) still echo values | OPEN | fix batch 5 (wording or value-free messages) | - | 2026-11-11 |
@@ -2689,14 +2689,14 @@
 | PRH-r2-R-M1 | reviews/PRH/plan-r2-readiness-full.md | Major | PRH | W3 says _first_decoded NO change but main calls _decoded (regression) | OPEN | ticket rev 3 | - | 2026-11-11 |
 | PRH-r2-R-M2 | same | Major | PRH | reader grammar 4.1: string sequence end rule, ESC inside string, strip_sequences scope, oracle | OPEN | ticket rev 3 | - | 2026-11-11 |
 | PRH-r2-R-M3..M9 | same | Major | PRH | T5 sources not in ticket; tests not mapped to files/killers (35,36,31 unkillable?); cost gate four shapes undefined (Hindi 1.59x); env setup/uv offline/heavy.sh form; 60-min box vs green-per-commit; invisible chars as escapes + scan_repo early; oracle Other_Default_Ignorable ranges not in ticket | OPEN | ticket rev 3 | - | 2026-11-11 |
-| Q8c-1-r3-d-m1 | reviews/Q8c-1/result-r3-design-full.md | minor | Q8c-1 | R17 verified cell lists builder-only sources (cosmetic) | OPEN | batch 3 | - | 2026-11-11 |
-| Q8c-1-r3-d-m2 | same | minor | Q8c-1 | R17 claims_unverified has no dated pending entry; fixture header contradicts itself | OPEN | batch 3 | - | 2026-11-11 |
-| Q8c-1-r3-d-m3 | same | minor | Q8c-1 | no automated Vault never-path vs grant cross-check (manual check consistent) | OPEN | batch 3 | - | 2026-11-11 |
-| Q8c-1-r3-d-OPEN | same | Major(evidence) | Q8c-1 | 12 Vault engine tests never run; R17 + reading needs re-read/re-fetch (needs CI run / third party) | OWNER-ONLY | CI run with HADAVIN_REQUIRE_VAULT_ENGINE=1 | - | 2026-11-11 |
-| Q8c-1-r3-cb-m1 | reviews/Q8c-1/result-r3-codebase-full.md | minor | Q8c-1 | R18 hash-suffix non-match claim and Kubernetes query-param claim shown in copy-ready rows without claims_unverified/source | OPEN | batch 3 | - | 2026-11-11 |
-| Q8c-1-r3-cb-m2 | same | minor | Q8c-1 | Kubernetes credential text says ServiceAccount token; code attaches any named secret, only if token_secret_name set; fetch is in app.py | OPEN | batch 3 | - | 2026-11-11 |
-| Q8c-1-r3-cb-m3 | same | minor | Q8c-1 | page head/CHANGELOG say every row pinned; 7-char ids and unpinned OpenBao not mentioned; len(rows)==19 brittle | OPEN | batch 3 | - | 2026-11-11 |
-| Q8c-1-r3-cb-m4 | same | minor | Q8c-1 | allowlist hint, partial E2 revert not a mutant, K create self-review cites K-AUTHZ only, tautology pins | OPEN | batch 3 | - | 2026-11-11 |
+| Q8c-1-r3-d-m1 | reviews/Q8c-1/result-r3-design-full.md | minor | Q8c-1 | FIXED-VERIFIED | _checked_cell (builder only) | result-r4-codebase-full.md:41 ; reviews/Q8c-1/ledger-reconciliation-r7.md | - | 2026-11-11 |
+| Q8c-1-r3-d-m2 | same | minor | Q8c-1 | FIXED-VERIFIED | PENDING_CLAIMS | result-r4-design-full.md:9-13 ; reviews/Q8c-1/ledger-reconciliation-r7.md | - | 2026-11-11 |
+| Q8c-1-r3-d-m3 | same | minor | Q8c-1 | FIXED-VERIFIED | never-vs-grant check + mutants | result-r4-design-full.md:15-19; evidence/Q8c-1/ad588599/RESULTS.md ; reviews/Q8c-1/ledger-reconciliation-r7.md | - | 2026-11-11 |
+| Q8c-1-r3-d-OPEN | same | Major(evidence) | Q8c-1 | IMPOSSIBLE-NOW | OWNER-ONLY | reviews/Q8c-1/ledger-reconciliation-r7.md (2026-11-12 reconciliation; closes only with CI run of the 12 Vault tests) | - | 2026-11-11 |
+| Q8c-1-r3-cb-m1 | reviews/Q8c-1/result-r3-codebase-full.md | minor | Q8c-1 | FIXED-VERIFIED | claims_unverified on R18/K params | result-r4-codebase-full.md:47 ; reviews/Q8c-1/ledger-reconciliation-r7.md | - | 2026-11-11 |
+| Q8c-1-r3-cb-m2 | same | minor | Q8c-1 | FIXED-VERIFIED | kubernetes.py:363-368 | result-r4-design-full.md:14 ; reviews/Q8c-1/ledger-reconciliation-r7.md | - | 2026-11-11 |
+| Q8c-1-r3-cb-m3 | same | minor | Q8c-1 | FIXED-VERIFIED | abbreviated ids, row count | result-r4-design-full.md:15-17 ; reviews/Q8c-1/ledger-reconciliation-r7.md | - | 2026-11-11 |
+| Q8c-1-r3-cb-m4 | same | minor | Q8c-1 | FIXED-UNVERIFIED | OPEN | reviews/Q8c-1/ledger-reconciliation-r7.md | - | 2026-11-11 |
 | P3a2-r2-R-M1..M8 | reviews/P3a-2/plan-r2-readiness-full.md | Major | P3a-2 | M1 commit 1 not green/no test->commit table; M2 env+commands not runnable (DSN var, PG16 start, uv offline); M3 commit 3 too big for 60-min box, red WIP rule, B2 depends on C1; M4 heavy.sh not named; M5 interfaces A1 must invent (_read row shape, Problem.line for 25 kinds, S5 group role, statement order, KNOWN_ACL_COLUMNS); M6 matrix cells under-specified, C10 carrier contradicts rules; M7 mutant lists not closed (15 ids, prefix edits); M8 Q0/version read not backed, qualified-names rule contradicts Q1 text | OPEN | ticket rev 3 | - | 2026-11-11 |
 | P3a2-r2-D-F1 | reviews/P3a-2/plan-r2-design-full.md | Major | P3a-2 | oracle attempts inconclusive/wrong (E03 temp table FK, E20/E21 need TEMPORARY, relkind-specific DML, schema USAGE confounder) | OPEN | ticket rev 3 + probes | - | 2026-11-11 |
 | P3a2-r2-D-F2 | same | Major | P3a-2 | six-commit order not green per commit (tests in commit 1 need later code) | OPEN | rev 3 | - | 2026-11-11 |
@@ -2708,7 +2708,11 @@
 | Q8a-2-r4-m1 | reviews/Q8a-2/result-r4-codebase-full.md | minor | Q8a-2 | handler failure that is a builtin ConnectionError logged only at DEBUG (receiver.py:198) | OPEN | batch 4 | - | 2026-11-11 |
 | Q8a-2-r4-m2 | same | minor | Q8a-2 | write timeout in _answer after handler failure loses the ERROR line | OPEN | batch 4 | - | 2026-11-11 |
 | Q8a-2-r4-m3m4 | same | minor | Q8a-2 | _plain tests miss \x7f, U+2029, bidi, U+200B; error-kind chain unbounded (cycle) | OPEN | batch 4 | - | 2026-11-11 |
-| Q8c-1-r3-resolve | reviews/Q8c-1/goldfish_review_report-r3.md | minor x7 | Q8c-1 | 7 valid minors PROPOSE FIX (batch 3), 1 ESCALATE engine run, 1 DECLINE | OPEN | batch 3 | - | 2026-11-11 |
+| Q8c-1-r3-resolve | reviews/Q8c-1/goldfish_review_report-r3.md | minor x7 | Q8c-1 | FIXED-VERIFIED | batch 3 items closed above | rows 14-16, 18-20 ; reviews/Q8c-1/ledger-reconciliation-r7.md | - | 2026-11-11 |
+| Q8c-1-r4-F1 | Major | Q8c-1 | reviews/Q8c-1/goldfish_review_report-r4.md Issue 1 (free self-review shown as checked) | FIXED-VERIFIED | batch 4 | r5-design-summary.md:2 "Issues 1-5 fixed at the lines" ; reviews/Q8c-1/ledger-reconciliation-r7.md | 2026-11-12 |
+| Q8c-1-r5-C1 | Major | Q8c-1 | reviews/Q8c-1/goldfish_review_report-r5.md Issue 1 (claim marks) | FIXED-VERIFIED | 5015c990 | goldfish_review_report-r6.md:5 ; reviews/Q8c-1/ledger-reconciliation-r7.md | 2026-11-12 |
+| Q8c-1-r6-I1-3 | Major | Q8c-1 | reviews/Q8c-1/goldfish_review_report-r6.md Issues 1-3 (claim_mark startswith, hedge R17 text, --check vs tests data rules) | FIXED-VERIFIED | d598d967 | goldfish_review_report-r7.md:5 (both reviewers read as fixed) ; evidence/Q8c-1/d598d967/RESULTS.md ; reviews/Q8c-1/ledger-reconciliation-r7.md | 2026-11-12 |
+| Q8c-1-r7-nits | Minor | Q8c-1 | reviews/Q8c-1/goldfish_review_report-r7.md Issues 1-7 (Nits) | FIXED-UNVERIFIED | ad588599 | light evidence only (evidence/Q8c-1/ad588599/RESULTS.md); no reviewer has read ad588599 | 2026-11-12 |
 | timing-r1-D-M1/C-M1 | reviews/timing/r1-*-full.md | Major | timing harness | wait guard false Untimeable on tiny preempted batches | OPEN | fix batch 1 | - | 2026-11-11 |
 | timing-r1-D-M2 | reviews/timing/r1-design-full.md | Major | timing harness | real-clock tests not marked perf | OPEN | fix batch 1 | - | 2026-11-11 |
 | timing-r1-D-M3 | reviews/timing/r1-design-full.md | Major | timing harness | guard tests cannot pass on win32 | OPEN | fix batch 1 | - | 2026-11-11 |

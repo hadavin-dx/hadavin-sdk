@@ -1,0 +1,38 @@
+GM1 | behaviour | the words after a refusal of the portal role do not say what the grant map is | SURVIVED | - | 2.4s
+AC1 | behaviour | the rights on tables, views and sequences are not read back | SURVIVED | - | 3.4s
+AC2 | behaviour | the rights on single columns are not read back | SURVIVED | - | 3.4s
+AC3 | behaviour | the rights on functions are not read back | SURVIVED | - | 3.4s
+AC4 | behaviour | PUBLIC (everyone) is allowed to hold a right | SURVIVED | - | 3.4s
+AC5 | behaviour | the default 'everyone may call it' of a function is not removed | SURVIVED | - | 1.9s
+SD1 | behaviour | a SECURITY DEFINER function is not looked at | SURVIVED | - | 2.1s
+SD2 | behaviour | the reviewed list of SECURITY DEFINER functions is not read | SURVIVED | - | 2.2s
+RN6 | behaviour | relations that changed during the run are not read | SURVIVED | - | 2.0s
+DP1 | behaviour | the default rights are not read | SURVIVED | - | 2.3s
+SC8 | behaviour | the rights on the schemas are not read | SURVIVED | - | 2.3s
+SC9 | behaviour | a role that may only use the schema is refused too | SURVIVED | - | 2.2s
+OW4 | behaviour | any owner is accepted (an owner a file handed an object to too) | SURVIVED | - | 2.3s
+OW3 | behaviour | a relation that kept the owner it had before the files is refused for that owner | SURVIVED | - | 2.0s
+WD1 | behaviour | the refusal blames the file when an earlier run gave the right | SURVIVED | - | 2.0s
+GO4 | behaviour | a function right that may be passed on is accepted | SURVIVED | - | 3.6s
+RA1 | behaviour | the rights of a table are not part of its state (a right given later is not seen) | SURVIVED | - | 2.1s
+RA2 | behaviour | only the relations of the schema of the run are read back (for the table rights) | SURVIVED | - | 1.8s
+RK1 | behaviour | a foreign table is not read back (the kind 'f' is left out) | SURVIVED | - | 1.7s
+SC10 | behaviour | a schema that a file changed is not read back unless it is the schema of the run | SURVIVED | - | 1.8s
+SC11 | behaviour | the owner of a changed schema is not read | SURVIVED | - | 1.9s
+GO5 | behaviour | the grant option on a table or column right is ignored | SURVIVED | - | 3.8s
+GO6 | behaviour | the grant option on a schema right is ignored | SURVIVED | - | 1.7s
+DP2 | behaviour | default rights are read only for the schema of the run and for all schemas | SURVIVED | - | 1.7s
+DP3 | behaviour | default rights are read only for the migration role itself, not for the roles it belongs to | SURVIVED | - | 1.6s
+DP4 | behaviour | a named role may have a default right | SURVIVED | - | 5.0s
+DP5 | behaviour | the default rights of the role they are set for are read as rights of a stranger | SURVIVED | - | 1.8s
+RF5 | behaviour | the replication flag of a named role is not read | SURVIVED | - | 1.7s
+RO3 | behaviour | a named role may SELECT a relation that is not in the grant map (the rule of round 11) | SURVIVED | - | 5.4s
+RO5 | behaviour | a named role may use a sequence that is not in the grant map (the rule of round 11) | SURVIVED | - | 1.9s
+DP6 | behaviour | a default right for the migration role itself is read as a right of a stranger | SURVIVED | - | 3.5s
+DP7 | behaviour | the server's own default for functions and types is refused | SURVIVED | - | 3.5s
+SD6 | behaviour | a SECURITY DEFINER function of the migration role that no file touched is not looked at (the rule of round 11) | SURVIVED | - | 3.5s
+RA4 | behaviour | only the relations of the schema of the run are read back (for the column rights) | SURVIVED | - | 3.7s
+IM1 | behaviour | no relation counts as one of the grant map in the rights check (is_managed is always false) | SURVIVED | - | 1.8s
+RK2 | behaviour | a foreign table is not read by the check of what a named role can do | SURVIVED | - | 1.8s
+SC12 | behaviour | the migration role's own right on a schema it does not own is read as a right of a stranger | SURVIVED | - | 1.9s
+SC13 | behaviour | the owner's right on a schema is read as a right of a stranger | SURVIVED | - | 2.2s
