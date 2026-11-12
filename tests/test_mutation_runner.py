@@ -1551,3 +1551,37 @@ def test_the_manifest_pins_the_files_a_demo_copies():
         text = log.read_text(encoding="utf-8")
         for rel, sha in manifest["files"].items():
             assert sha in text, rel  # the CHANGELOG re-copy list names every pinned hash
+
+
+def test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_one_is_not(tmp_path):
+    """`extra_files` carries a root file (a changelog) into the copies: a test that reads it passes only when it is
+    there (the copy of a mutant run holds `src`, the tests and the named folders, nothing else)."""
+    root = tmp_path / "pkg"
+    (root / "src").mkdir(parents=True)
+    (root / "tests").mkdir()
+    (root / "NOTE.md").write_text("hello\n", encoding="utf-8")
+    (root / "tests" / "test_a.py").write_text(
+        "from pathlib import Path\n\n\ndef test_a():\n"
+        "    assert (Path(__file__).parents[1] / 'NOTE.md').read_text() == 'hello\\n'\n",
+        encoding="utf-8",
+    )
+    kwargs = {"extra_dirs": (), "timeout": 120}
+    with_file = run_mutants(root, [], ["tests/test_a.py"], extra_files=("NOTE.md",), **kwargs)
+    assert with_file == [], (
+        "a run with the root file named in extra_files did not pass its baseline"
+    )
+    try:
+        run_mutants(root, [], ["tests/test_a.py"], **kwargs)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("the copy held a root file that extra_files did not name")
+    _must_refuse(
+        "an extra file that leaves the tree",
+        run_mutants,
+        root,
+        [],
+        ["tests/test_a.py"],
+        extra_dirs=(),
+        extra_files=("../x.md",),
+    )

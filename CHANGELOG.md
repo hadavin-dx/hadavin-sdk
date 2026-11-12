@@ -310,8 +310,10 @@
     The steps are printed in the overdue message of each group (the names and claims: the day `DECIDED` and every `decided` and `review_by` in
     `tools/policy_page.py`, the pin test of that day, the page rewritten, one notes row for each changed test; the 16 kinds: `KINDS_DECIDED`,
     `_PR2` and the `review_by` days in the guard test, the pin `KINDS_LITERAL` and `KINDS_GROUPS` in `tests/test_policy_changelog.py`, and the
-    sentence of this entry that gives the days the kinds start to fail). `tests/policy_mutants.py` is not edited by a renewal: every day in it comes from the live lists, the day that the
-    B13 mutant plants included (it is built from `DECIDED`), and the search texts are found again after a renewal. Three tests
+    sentence of this entry that gives the days the kinds start to fail). `tests/policy_mutants.py` is not edited by a renewal: every day that must follow a renewal comes from the live lists (the
+    day that the B13 mutant plants is built from `DECIDED`); the seven days written in the file (the clock day in the search texts of
+    three mutants and the literal days that B9 and B10 plant in a docstring) stand for a planted defect, not for the decision day, and
+    the search texts are found again after a renewal. Three tests
     (`test_plant_a_full_renewal_...`, one for the kinds list alone and one for the names and claims alone) renew a temporary copy
     with an edit list that the test builds from the live days and the printed steps (the list is written in the test, it is not
     read out of the printed text), and then, on the new decision day and on the day after it, run in that copy: the page check

@@ -838,7 +838,9 @@ RENEWAL_STEPS = (
     "(the day written there); (3) CHANGELOG.md: its entry writes no review day of the names and claims (a test "
     "refuses a written day), so nothing is changed there for them; (4) the page, rewritten with "
     "`python tools/policy_page.py --write`; (5) one row for each test that changed, in the builder notes of the "
-    "change (`python tools/notes_lines_check.py --auto`); (6) the mutants in tests/policy_mutants.py take every day "
+    "change (`python tools/notes_lines_check.py --auto` prints one line for each; a changed day that many tests use "
+    "lists all of them: rehearsed on 2026-11-12, a renewal of both lists asked for 36 rows and a renewal of the names "
+    "and claims alone asked for 1); (6) the mutants in tests/policy_mutants.py take every day "
     "from the live lists (the day that the B13 mutant plants too), so nothing is edited there: run "
     "`python tests/policy_mutants.py` and again with `--day` "
     "set to the new decision day and to the day after it. "
@@ -856,12 +858,14 @@ KINDS_RENEWAL_RULE = (
 )
 KINDS_RENEWAL_STEPS = (
     "A renewal of the kinds list touches, all in tests/test_policy_guard.py unless said: (1) `KINDS_DECIDED`, "
-    "`_PR2` and the `review_by` day of every kind of PENDING_KINDS (the groups of days are kept apart on "
+    "`_PR2` (the `review_by` day of the earliest group of kinds; a later group keeps its own day while that day is "
+    "inside the longest window after the new decision day, and the groups of days are kept apart on "
     "purpose), and the day written in test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date; "
     "(2) `KINDS_LITERAL` and `KINDS_GROUPS` in tests/test_policy_changelog.py (the pin of the days the kinds start "
     "to fail); (3) the sentence of the changelog entry that gives those days (CHANGELOG.md); (4) the page, "
     "rewritten with `python tools/policy_page.py --write`; (5) one row for each test that changed, in the builder "
-    "notes of the change (`python tools/notes_lines_check.py --auto`); (6) the mutants in tests/policy_mutants.py "
+    "notes of the change (`python tools/notes_lines_check.py --auto` prints one line for each; rehearsed on "
+    "2026-11-12, a renewal of the kinds alone asked for 35 rows); (6) the mutants in tests/policy_mutants.py "
     "read these days from the guard file, so nothing is edited there: run `python tests/policy_mutants.py` and "
     "again with `--day` set to the new decision day of the kinds and to the day after it."
 )

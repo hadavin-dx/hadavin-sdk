@@ -368,6 +368,7 @@ def run_mutants(
     tests: Sequence[str],
     *,
     extra_dirs: Sequence[str] = ("tests/fixtures",),
+    extra_files: Sequence[str] = (),
     only: Sequence[str] = (),
     timeout: float = DEFAULT_TIMEOUT,
     baseline_timeout: float | None = None,
@@ -378,7 +379,8 @@ def run_mutants(
     ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. The unmutated baseline run gets ``baseline_timeout`` (default: ``timeout``; 0 is a real, immediate timeout and not "unset"),
     so a test can use a short mutant timeout without failing a slow baseline. ``on_result`` is called with each result as soon as that mutant
     finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
-    must name a file inside its tree (``ValueError``). ``first_lines``, if given, is emptied at the start and then filled with the first ``E`` line
+    must name a file inside its tree (``ValueError``); ``extra_files`` are single files (a changelog, a settings file) that every copy also holds
+    when they exist (a missing one or a link is left out). ``first_lines``, if given, is emptied at the start and then filled with the first ``E`` line
     of each judged kill (mutant name -> line; diagnostics, and what ``crash_type`` is checked against): it belongs to this call, so two
     runs in two threads never share it. A SIGTERM or SIGHUP during the call ends it like Ctrl-C (see the module docstring).
     NOT re-entrant: the signal state is one module-level record, so on POSIX in the main thread a ``run_mutants`` call made while another is
@@ -387,7 +389,7 @@ def run_mutants(
     with _terminations_raise():
         return _run_mutants(
             root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
-            {} if first_lines is None else first_lines,
+            {} if first_lines is None else first_lines, extra_files,
         )  # fmt: skip
 
 
@@ -443,11 +445,12 @@ def _run_mutants(
     baseline_timeout: float | None,
     on_result: Callable[[tuple[str, Verdict, str, bool]], None] | None,
     first_lines: dict[str, str],
+    extra_files: Sequence[str] = (),
 ) -> list[tuple[str, Verdict, str, bool]]:
     first_lines.clear()  # the diagnostics of an earlier run must not answer for this one
     root = Path(root)
     mutants = list(mutants)
-    for t in (*tests, *extra_dirs):
+    for t in (*tests, *extra_dirs, *extra_files):
         _relative(t)
     for m in mutants:  # before anything runs: a bad `test_file` must not surface after earlier mutants were already run
         if m.test_file and m.test_file not in tests:
@@ -472,6 +475,9 @@ def _run_mutants(
                 shutil.copytree(
                     _inside(snap, d), _inside(tmp, d), symlinks=True, dirs_exist_ok=True
                 )
+        for f in extra_files:
+            if _inside(snap, f).is_file():
+                shutil.copy(_inside(snap, f), _inside(tmp, f))
 
     def fresh() -> None:
         """Rebuild the temp copy: retried ``SETUP_TRIES`` times, then the last ``OSError`` is raised (never swallowed)."""
@@ -514,6 +520,10 @@ def _run_mutants(
                 shutil.copytree(
                     _inside(root, d), _inside(snap, d), symlinks=True, dirs_exist_ok=True
                 )
+        for f in extra_files:  # single files at the root of the tree (a changelog, a settings file)
+            if _inside(root, f).is_file() and not _inside(root, f).is_symlink():
+                _inside(snap, f).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(_inside(root, f), _inside(snap, f))
         _refuse_links_out(snap)
         fresh()
         base_rc = _pytest(

@@ -232,34 +232,193 @@ def _renewal_edits(
     return edits
 
 
+RENEWED_TREES = ("src", "tests", "tools", "docs", ".github")  # the folders a renewed copy holds
+RENEWED_FILES = ("CHANGELOG.md", "pyproject.toml", "README.md")  # and the files at its root
+GIT = shutil.which("git") or "git"  # the git of this machine, found once
+NOT_EDITED = (
+    "tests/policy_mutants.py",
+)  # a file the steps name only to say that nothing is edited there
+
+
+def _steps_of(mode: str) -> str:
+    """The printed steps a renewal of `mode` follows ('both' groups, the 'names' and claims alone, the 'kinds'
+    alone), up to the emptying steps (the emptying is not a renewal)."""
+    from tools import policy_page as pp
+
+    names = pp.RENEWAL_STEPS.split("An emptying also touches")[0]
+    return {
+        "both": names + pp.KINDS_RENEWAL_STEPS,
+        "names": names,
+        "kinds": pp.KINDS_RENEWAL_STEPS,
+    }[mode]
+
+
+def _make_renewed_copy(
+    copy: Path, mode: str, old_decided: date, new_decided: date, commit_base: bool = False
+) -> tuple[list[str], str]:
+    """Copy the repository into `copy` and apply the edits of the printed steps of `mode`: (the files edited, the
+    commit of the copy before the first edit when `commit_base` is set, else ''). A renewal with no edit at all is
+    refused here: a plant with nothing to apply would pass whatever the steps say."""
+    root = Path(__file__).resolve().parents[1]
+    copy.mkdir(parents=True, exist_ok=True)
+    for name in RENEWED_TREES:
+        shutil.copytree(
+            root / name, copy / name, ignore=shutil.ignore_patterns("__pycache__", "*.pyc")
+        )
+    for name in RENEWED_FILES:
+        shutil.copy(root / name, copy / name)
+    base = _commit_the_copy(copy, "the repository before the renewal") if commit_base else ""
+    edits = _renewal_edits(
+        old_decided, new_decided, mode in ("both", "names"), mode in ("both", "kinds")
+    )
+    assert edits, "the renewal has no edit at all: a plant with nothing to apply passes vacuously"
+    edited: set[str] = set()
+    for rel, old, new in edits:
+        text = (copy / rel).read_text(encoding="utf-8")
+        assert old in text, f"the renewal step does not apply: {old!r} is not in {rel}"
+        (copy / rel).write_text(text.replace(old, new), encoding="utf-8", newline="\n")
+        edited.add(rel)
+    # the changelog sentence that gives the days the kinds fail (CHANGELOG.md; the text may wrap)
+    if mode != "names":
+        words = re.escape(kinds_sentence()).replace("\\ ", r"\s+")
+        text = (copy / "CHANGELOG.md").read_text(encoding="utf-8")
+        moved, n = re.subn(words, kinds_sentence(_renewed_kinds(new_decided)), text)
+        assert n == 1, "the changelog sentence of the kinds days was not found exactly once"
+        (copy / "CHANGELOG.md").write_text(moved, encoding="utf-8", newline="\n")
+        edited.add("CHANGELOG.md")
+    return sorted(edited), base
+
+
+def _day_in(copy: Path, rel: str, name: str) -> date:
+    """The day a copy writes as `name = date(Y, M, D)` in the file `rel`."""
+    text = (copy / rel).read_text(encoding="utf-8")
+    found = re.findall(rf"^{name} = date\((\d+), (\d+), (\d+)\)", text, re.MULTILINE)
+    assert len(found) == 1, f"{rel} has {len(found)} lines `{name} = date(...)`, expected one"
+    return date(*map(int, found[0]))
+
+
+def _assert_the_copy_follows_the_steps(
+    copy: Path, mode: str, edited: list[str], new_decided: date
+) -> None:
+    """The fast checks of a renewed copy (they come before the slow ones): every file the printed steps of `mode`
+    name is edited (a step the plant does not do is a step nobody rehearsed), nothing else is, the changelog
+    only when the kinds are renewed, and the decision days of the copy are the new day where the steps move them
+    and the old day where they do not."""
+    from tests.test_policy_guard import KINDS_DECIDED, pp
+
+    named = set(
+        re.findall(r"(?<!python )(?:(?:tests|tools)/\w+\.py|CHANGELOG\.md)", _steps_of(mode))
+    )
+    expected = (named - set(NOT_EDITED)) | ({"CHANGELOG.md"} if mode != "names" else set())
+    if mode == "names":
+        expected -= {"CHANGELOG.md"}
+    assert set(edited) == expected, (
+        f"the {mode} renewal edited {edited}, the printed steps name {sorted(expected)}"
+    )
+    for rel in edited:
+        assert (copy / rel).read_bytes() != (ROOT / rel).read_bytes(), f"{rel} is the same file"
+    moved_names = mode in ("both", "names")
+    moved_kinds = mode in ("both", "kinds")
+    if (
+        moved_kinds
+    ):  # step (1): a later group keeps its day only while it is inside the longest window
+        late = max(p.review_by for p in _renewed_kinds(new_decided).values())
+        assert (late - new_decided).days <= pp.MAX_PENDING_DAYS, (
+            f"after the {mode} renewal a later group of kinds is {(late - new_decided).days} days after "
+            f"the new decision day, more than {pp.MAX_PENDING_DAYS}: step (1) must move it too"
+        )
+    got = _day_in(copy, "tools/policy_page.py", "DECIDED")
+    want = new_decided if moved_names else pp.DECIDED
+    assert got == want, f"DECIDED in the {mode} copy is {got}, expected {want}"
+    got = _day_in(copy, "tests/test_policy_guard.py", "KINDS_DECIDED")
+    want = new_decided if moved_kinds else KINDS_DECIDED
+    assert got == want, f"KINDS_DECIDED in the {mode} copy is {got}, expected {want}"
+
+
+def _commit_the_copy(copy: Path, message: str) -> str:
+    """A commit of the whole copy (a throwaway repository inside the temporary folder); its id."""
+    env = {
+        **{k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG", "TMPDIR")},
+        "GIT_AUTHOR_NAME": "renewal plant",
+        "GIT_AUTHOR_EMAIL": "plant@example.invalid",
+        "GIT_COMMITTER_NAME": "renewal plant",
+        "GIT_COMMITTER_EMAIL": "plant@example.invalid",
+    }
+    if not (copy / ".git").exists():
+        subprocess.run(  # noqa: S603
+            [GIT, "init", "-q", "-b", "base"], cwd=copy, env=env, capture_output=True, check=True
+        )
+    for args in (["add", "-A"], ["commit", "-q", "-m", message]):
+        done = subprocess.run(  # noqa: S603  (fixed git argv, a temporary copy, no shell)
+            [GIT, *args], cwd=copy, env=env, capture_output=True, text=True, check=False
+        )
+        assert done.returncode == 0, f"git {args[0]} failed in the copy: {done.stderr[-400:]}"
+    head = subprocess.run(  # noqa: S603
+        [GIT, "rev-parse", "HEAD"], cwd=copy, env=env, capture_output=True, text=True, check=False
+    )
+    return head.stdout.strip()
+
+
+NO_ROW = re.compile(
+    r"^(\S+): the (?:test|mutant) (.+) is new or changed and has no row of its own in the notes$"
+)
+
+
+def _rows_for_the_renewal(copy: Path, base: str, env: dict) -> int:
+    """Step (5) of the printed steps, done the way a builder does it: the copy (already edited and rewritten) is
+    committed on top of `base`, `notes_lines_check.py --auto base` is run as CI runs it, a row is written for each
+    line it prints, and the check must then pass. Returns the number of rows it asked for. A line that is not a
+    plain 'new or changed and has no row' line cannot be answered with a row and fails here with its text."""
+    _commit_the_copy(copy, "the renewal by the printed steps")
+    notes = copy / "handover/evidence/Q8c-1/renewal/NOTES.md"
+    command = [sys.executable, "tools/notes_lines_check.py", "--auto", base]
+
+    def run() -> subprocess.CompletedProcess:
+        return subprocess.run(  # noqa: S603  (argv list of this test, a temporary copy, no shell)
+            command, cwd=copy, env=env, capture_output=True, text=True, timeout=900, check=False
+        )
+
+    first = run()
+    if first.returncode == 0:
+        return 0
+    lines = [ln for ln in (first.stdout + first.stderr).splitlines() if ln.strip()]
+    reason = (
+        "plant: the renewal moves a day by the printed steps, see "
+        "test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tests_the_page_and_the_mutants_green"
+    )
+    rows = []
+    for line in lines:
+        if line.startswith("the change has no builder notes file"):
+            continue  # the file is written below
+        found = NO_ROW.match(line)
+        assert found, f"step (5): the notes check prints a line a row cannot answer: {line[:300]}"
+        file, unit = found.groups()
+        rows.append(f"| {file} | `{unit}` | changed | {reason} |")
+    notes.parent.mkdir(parents=True, exist_ok=True)
+    notes.write_text(
+        "| file | unit | what | reason |\n|---|---|---|---|\n" + "\n".join(rows) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    _commit_the_copy(copy, "the rows the notes check asked for")
+    second = run()
+    assert second.returncode == 0, (
+        f"step (5): with {len(rows)} generated rows the notes check is still red: "
+        f"{(second.stdout + second.stderr)[-800:]}"
+    )
+    return len(rows)
+
+
 def _renew_and_check(mode: str, old_decided: date, new_decided: date, full_mutants: bool) -> None:
     """Renew a temporary copy of the repository by the printed steps (`mode` 'both' groups or 'kinds' only) and
-    check it on the new decision day and on the day after: the page check, the policy tests, the search texts of
-    the mutants, a sample of the mutants that build their days from the live lists, and, when `full_mutants` is
-    set, the whole mutant list."""
-    root = Path(__file__).resolve().parents[1]
+    check it on the new decision day and on the day after: the fast checks of the copy against the printed steps,
+    the page check, the notes check of CI on the renewed copy (rows generated from its own lines), the policy
+    tests, the search texts of the mutants, a sample of the mutants that build their days from the live lists,
+    and, when `full_mutants` is set, the whole mutant list."""
     with tempfile.TemporaryDirectory() as tmp:
         copy = Path(tmp) / "renewed"
-        copy.mkdir()
-        for name in ("src", "tests", "tools", "docs", ".github"):
-            shutil.copytree(
-                root / name, copy / name, ignore=shutil.ignore_patterns("__pycache__", "*.pyc")
-            )
-        for name in ("CHANGELOG.md", "pyproject.toml", "README.md"):
-            shutil.copy(root / name, copy / name)
-        for rel, old, new in _renewal_edits(
-            old_decided, new_decided, mode in ("both", "names"), mode in ("both", "kinds")
-        ):
-            text = (copy / rel).read_text(encoding="utf-8")
-            assert old in text, f"the renewal step does not apply: {old!r} is not in {rel}"
-            (copy / rel).write_text(text.replace(old, new), encoding="utf-8", newline="\n")
-        # the changelog sentence that gives the days the kinds fail (CHANGELOG.md; the text may wrap)
-        if mode != "names":
-            words = re.escape(kinds_sentence()).replace("\\ ", r"\s+")
-            text = (copy / "CHANGELOG.md").read_text(encoding="utf-8")
-            moved, n = re.subn(words, kinds_sentence(_renewed_kinds(new_decided)), text)
-            assert n == 1, "the changelog sentence of the kinds days was not found exactly once"
-            (copy / "CHANGELOG.md").write_text(moved, encoding="utf-8", newline="\n")
+        edited, base = _make_renewed_copy(copy, mode, old_decided, new_decided, commit_base=True)
+        _assert_the_copy_follows_the_steps(copy, mode, edited, new_decided)
         base_env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG", "TMPDIR")}
 
         def run(day: date, *args: str) -> subprocess.CompletedProcess:
@@ -267,6 +426,7 @@ def _renew_and_check(mode: str, old_decided: date, new_decided: date, full_mutan
                 base_env,
                 PYTHONPATH=os.pathsep.join([str(copy / "src"), str(copy)]),
                 PYTHONNOUSERSITE="1",
+                PYTHONDONTWRITEBYTECODE="1",
                 HADAVIN_POLICY_FIXED_DAY=str(day),
                 HADAVIN_POLICY_MUTANT_RUN="1",
             )
@@ -290,12 +450,19 @@ def _renew_and_check(mode: str, old_decided: date, new_decided: date, full_mutan
 
         write = page(new_decided, "--write")
         assert write.returncode == 0, f"the page was not rewritten: {write.stderr[-600:]}"
+        docs = [f for f in sorted((ROOT / "docs").rglob("*")) if f.is_file()]
+        assert any((copy / f.relative_to(ROOT)).read_bytes() != f.read_bytes() for f in docs), (
+            f"step (4): `--write` left every file of docs/ as it was in the {mode} copy"
+        )
         for day in (new_decided, new_decided + timedelta(days=1)):
             check = page(day, "--check")
             assert check.returncode == 0, (
                 f"after the {mode} renewal the page check is red on {day}: "
                 f"{(check.stdout + check.stderr)[-800:]}"
             )
+        notes_env = {**base_env, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1"}
+        asked = _rows_for_the_renewal(copy, base, notes_env)
+        print(f"renewal plant ({mode}): the notes check asked for {asked} rows")
         tests = run(
             new_decided,
             "-m",
