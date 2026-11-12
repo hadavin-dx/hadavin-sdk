@@ -803,9 +803,9 @@ def _neutralise(text: str) -> str:
     mutant('M254 the card path writes a rare line break as a space, not a line feed [b13]', CHANNEL, r"""    text = _LINE_BREAK_CONTROLS.sub("\n", text)
 """, r"""""",
         B13, 'test_b13_7_a_header_folded_over_a_rare_line_break_is_masked_on_every_path[form feed]', 'leaves the next line readable'),
-    mutant('M256 the folded lines are read again from every line to the end of the text (not in linear time) [b13]', REDACT, r'''_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")++"''', r'''_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")+(?=[^\x00]*)"''',
+    mutant('M256 the folded lines are read again from every line to the end of the text (not in linear time) [b13]', REDACT, r'''_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")++"''', r'''_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")+(?=[\s\S]*QQQ)"''',
         B11, 'test_b11_8_a_long_run_of_folded_lines_is_read_in_linear_time', 'folded lines are not read in linear time'),
-    mutant('M257 the gap after a scheme word is read again up to 40000 characters ahead (not in linear time) [b13]', REDACT, r'''_SCHEME_GAP = r"\s++"''', r'''_SCHEME_GAP = r"\s+(?=[^\x00]{0,40000})"''',
+    mutant('M257 the gap after a scheme word is read again up to 40000 characters ahead (not in linear time) [b13]', REDACT, r'''_SCHEME_GAP = r"\s++"''', r'''_SCHEME_GAP = r"\s+(?=[\s\S]{0,40000}QQQ)"''',
         B10, 'test_b10_1_a_long_run_of_line_breaks_after_a_scheme_word_is_read_in_linear_time', 'a gap after a scheme word takes far too long'),
     mutant('M255 the second rule for a hyphenated scheme word is missing (the credential behind the scheme word stays readable) [b13]', REDACT, r"""            + _ANY_SCHEME_WORD
             + _SCHEME_GAP
