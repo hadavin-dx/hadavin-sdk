@@ -1,0 +1,290 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /tmp/work/outsider2/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /tmp/work/outsider2
+configfile: pyproject.toml
+collecting ... collected 187 items
+
+tests/test_portal_browser.py::test_hidden_words_are_not_visible_and_card_lines_are PASSED [  0%]
+tests/test_portal_browser.py::test_escape_hides_a_reveal_while_the_eye_has_focus PASSED [  1%]
+tests/test_portal_browser.py::test_switch_on_with_a_typed_address_and_the_panel_open_shows_the_masked_list PASSED [  1%]
+tests/test_portal_browser.py::test_switch_on_without_the_panel_shows_the_masked_list PASSED [  2%]
+tests/test_portal_browser.py::test_switch_with_the_panel_open_changes_the_table_behind_it_at_once PASSED [  2%]
+tests/test_portal_browser.py::test_a_later_message_exactly_a_minute_later_says_one_minute PASSED [  3%]
+tests/test_portal_browser.py::test_a_later_message_with_a_lower_receipt_number_says_so PASSED [  3%]
+tests/test_portal_browser.py::test_request_log_chip_is_masked_then_shows_its_real_short_form PASSED [  4%]
+tests/test_portal_browser.py::test_no_attribute_or_title_holds_a_masked_value PASSED [  4%]
+tests/test_portal_browser.py::test_leads_page_has_no_sideways_scroll_at_1100[light-1] PASSED [  5%]
+tests/test_portal_browser.py::test_leads_page_has_no_sideways_scroll_at_1100[light-0] PASSED [  5%]
+tests/test_portal_browser.py::test_leads_page_has_no_sideways_scroll_at_1100[dark-1] PASSED [  6%]
+tests/test_portal_browser.py::test_leads_page_has_no_sideways_scroll_at_1100[dark-0] PASSED [  6%]
+tests/test_portal_browser.py::test_the_hide_switch_and_the_table_keep_their_place_in_both_states[1100] PASSED [  7%]
+tests/test_portal_browser.py::test_the_hide_switch_and_the_table_keep_their_place_in_both_states[1280] PASSED [  8%]
+tests/test_portal_browser.py::test_the_more_below_bar_does_not_cover_the_panel_text PASSED [  8%]
+tests/test_portal_lead_pages.py::test_leads_rows_carry_owner_step_and_label_and_are_null_when_the_flow_is_off PASSED [  9%]
+tests/test_portal_lead_pages.py::test_lead_detail_carries_flow_keys_and_steps_in_order PASSED [  9%]
+tests/test_portal_lead_pages.py::test_lead_detail_shows_approval_list_and_the_stored_decision PASSED [ 10%]
+tests/test_portal_lead_pages.py::test_fakes_outbox_counts_reminders_apart PASSED [ 10%]
+tests/test_portal_lead_pages.py::test_demo_state_splits_follow_up_emails_from_reminders PASSED [ 11%]
+tests/test_portal_lead_pages.py::test_lead_names_are_masked_by_default_on_every_page_and_an_eye_shows_one[overview-[data-testid="feed-item"]] PASSED [ 11%]
+tests/test_portal_lead_pages.py::test_lead_names_are_masked_by_default_on_every_page_and_an_eye_shows_one[leads-[data-lead-id]] PASSED [ 12%]
+tests/test_portal_lead_pages.py::test_lead_names_are_masked_by_default_on_every_page_and_an_eye_shows_one[log-[data-testid="log-row"]] PASSED [ 12%]
+tests/test_portal_lead_pages.py::test_lead_names_are_masked_by_default_on_every_page_and_an_eye_shows_one[needs-[data-testid="needs-card"]] PASSED [ 13%]
+tests/test_portal_lead_pages.py::test_the_lead_panel_header_masks_the_name_and_follows_the_eye PASSED [ 13%]
+tests/test_portal_lead_pages.py::test_a_shown_state_does_not_outlive_the_session_and_old_local_storage_is_ignored PASSED [ 14%]
+tests/test_portal_lead_pages.py::test_the_switch_says_names_too PASSED   [ 14%]
+tests/test_portal_lead_pages.py::test_ui_bodies_hold_raw_values_because_masking_is_on_screen_only PASSED [ 15%]
+tests/test_portal_lead_pages.py::test_leads_table_shows_owner_and_step_inside_the_card_and_source_hides_up_to_1300[1100] PASSED [ 16%]
+tests/test_portal_lead_pages.py::test_leads_table_shows_owner_and_step_inside_the_card_and_source_hides_up_to_1300[1280] PASSED [ 16%]
+tests/test_portal_lead_pages.py::test_leads_table_shows_owner_and_step_inside_the_card_and_source_hides_up_to_1300[1366] PASSED [ 17%]
+tests/test_portal_lead_pages.py::test_leads_table_shows_owner_and_step_inside_the_card_and_source_hides_up_to_1300[1440] PASSED [ 17%]
+tests/test_portal_lead_pages.py::test_leads_table_shows_owner_and_step_inside_the_card_and_source_hides_up_to_1300[1920] PASSED [ 18%]
+tests/test_portal_lead_pages.py::test_the_step_control_moves_a_lead_forward_only PASSED [ 18%]
+tests/test_portal_lead_pages.py::test_the_panel_fills_even_when_the_lead_answer_comes_after_the_old_panel_closed PASSED [ 19%]
+tests/test_portal_lead_pages.py::test_the_reminder_card_has_one_seen_action_and_the_ledger_names_the_reminder PASSED [ 19%]
+tests/test_portal_lead_pages.py::test_approve_and_deny_live_in_the_lead_drawer_with_a_confirm_dialog_and_a_decided_line PASSED [ 20%]
+tests/test_portal_lead_pages.py::test_a_losing_decision_shows_who_was_first PASSED [ 20%]
+tests/test_portal_lead_pages.py::test_mode_off_shows_no_approval_and_no_step_control PASSED [ 21%]
+tests/test_portal_lead_pages.py::test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[light] FAILED [ 21%]
+tests/test_portal_lead_pages.py::test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[dark] FAILED [ 22%]
+tests/test_portal_lead_pages.py::test_proof_panel_compares_follow_ups_only_and_shows_reminders_on_their_own_line PASSED [ 22%]
+tests/test_portal_lead_pages.py::test_proof_panel_still_flags_a_real_difference_and_an_older_fakes_server_works PASSED [ 23%]
+tests/test_portal_lead_pages.py::test_name_search_needs_reveal PASSED    [ 24%]
+tests/test_portal_lead_pages.py::test_demo_pick_lists_neutral PASSED     [ 24%]
+tests/test_portal_lead_pages.py::test_step_and_approval_buttons_wake_up_when_the_desk_answers_again PASSED [ 25%]
+tests/test_portal_wording_and_masking.py::test_contract_field_lists_match_the_code PASSED [ 25%]
+tests/test_portal_wording_and_masking.py::test_contract_and_readme_say_what_the_pause_covers_and_what_a_crash_row_shows PASSED [ 26%]
+tests/test_portal_wording_and_masking.py::test_a_crash_row_that_never_reached_the_send_says_nothing_was_sent PASSED [ 26%]
+tests/test_portal_wording_and_masking.py::test_did_not_finish_says_what_happened_then_what_retry_does_and_checks_once PASSED [ 27%]
+tests/test_portal_wording_and_masking.py::test_one_verb_for_the_email_going_out_and_one_phrase_for_the_crm_wait PASSED [ 27%]
+tests/test_portal_wording_and_masking.py::test_screen_and_doc_words PASSED [ 28%]
+tests/test_portal_wording_and_masking.py::test_no_first_person_plural_in_comments_of_the_listed_files PASSED [ 28%]
+tests/test_portal_wording_and_masking.py::test_layout_rules_for_the_strip_the_drawer_the_cards_and_the_tiles PASSED [ 29%]
+tests/test_portal_wording_and_masking.py::test_a_page_that_cannot_load_keeps_its_rows_dimmed_and_disables_its_controls PASSED [ 29%]
+tests/test_portal_wording_and_masking.py::test_hide_switch_masks_email_phone_and_message_everywhere_in_the_lead_panel PASSED [ 30%]
+tests/test_portal_wording_and_masking.py::test_flipping_the_hide_switch_repaints_an_open_lead_panel PASSED [ 31%]
+tests/test_portal_wording_and_masking.py::test_masking_is_one_shared_rule_and_on_by_default PASSED [ 31%]
+tests/test_portal_wording_and_masking.py::test_search_by_address_is_off_while_masked PASSED [ 32%]
+tests/test_portal_wording_and_masking.py::test_personal_values_are_masked_by_default_in_a_real_browser PASSED [ 32%]
+tests/test_portal_wording_and_masking.py::test_desk_logs_never_carry_a_request_value PASSED [ 33%]
+tests/test_portal_wording_and_masking.py::test_no_pipeline_step_wording_in_the_shipped_tree PASSED [ 33%]
+tests/test_portal_wording_and_masking.py::test_lead_status_write_warning_is_in_the_docs PASSED [ 34%]
+tests/test_mode_safety.py::test_data_map_stand_in_crm_is_called_a_stand_in PASSED [ 34%]
+tests/test_mode_safety.py::test_data_map_hubspot_lists_exactly_what_the_adapter_sends PASSED [ 35%]
+tests/test_mode_safety.py::test_data_map_hubspot_without_a_lead_flow_sends_no_status_and_no_owner PASSED [ 35%]
+tests/test_mode_safety.py::test_data_map_hubspot_matches_its_fixture PASSED [ 36%]
+tests/test_mode_safety.py::test_data_map_matches_what_hubspot_put_really_sends PASSED [ 36%]
+tests/test_mode_safety.py::test_lead_detail_warns_about_the_crm_stage_write_only_for_a_real_crm PASSED [ 37%]
+tests/test_mode_safety.py::test_the_warning_is_beside_the_move_control_only_for_a_real_crm[fake-False] PASSED [ 37%]
+tests/test_mode_safety.py::test_the_warning_is_beside_the_move_control_only_for_a_real_crm[hubspot-True] PASSED [ 38%]
+tests/test_mode_safety.py::test_summary_mode_says_which_kinds_are_real[over0-real0] PASSED [ 39%]
+tests/test_mode_safety.py::test_summary_mode_says_which_kinds_are_real[over1-real1] PASSED [ 39%]
+tests/test_mode_safety.py::test_summary_mode_says_which_kinds_are_real[over2-real2] PASSED [ 40%]
+tests/test_mode_safety.py::test_summary_mode_says_which_kinds_are_real[over3-real3] PASSED [ 40%]
+tests/test_mode_safety.py::test_summary_mode_says_which_kinds_are_real[over4-real4] PASSED [ 41%]
+tests/test_mode_safety.py::test_a_live_ai_step_counts_as_a_real_service PASSED [ 41%]
+tests/test_mode_safety.py::test_the_banner_says_real_services_are_connected_and_not_demo_data PASSED [ 42%]
+tests/test_mode_safety.py::test_demo_controls_are_off_with_a_real_kind[over0] PASSED [ 42%]
+tests/test_mode_safety.py::test_demo_controls_are_off_with_a_real_kind[over1] PASSED [ 43%]
+tests/test_mode_safety.py::test_demo_controls_stay_with_the_stand_ins PASSED [ 43%]
+tests/test_mode_safety.py::test_main_refuses_a_public_bind_with_any_real_service[setting0-crm] PASSED [ 44%]
+tests/test_mode_safety.py::test_main_refuses_a_public_bind_with_any_real_service[setting1-mail] PASSED [ 44%]
+tests/test_mode_safety.py::test_a_live_ai_step_on_a_public_bind_is_refused PASSED [ 45%]
+tests/test_mode_safety.py::test_main_still_starts_on_loopback_and_with_the_stand_ins PASSED [ 45%]
+tests/test_mode_safety.py::test_the_smtp_test_server_must_be_on_this_computer[192.0.2.1] PASSED [ 46%]
+tests/test_mode_safety.py::test_the_smtp_test_server_must_be_on_this_computer[::2] PASSED [ 47%]
+tests/test_mode_safety.py::test_the_smtp_test_server_must_be_on_this_computer[::] PASSED [ 47%]
+tests/test_mode_safety.py::test_the_smtp_test_server_must_be_on_this_computer[mail.example.test] PASSED [ 48%]
+tests/test_mode_safety.py::test_the_smtp_test_server_on_loopback_is_accepted[127.0.0.1] PASSED [ 48%]
+tests/test_mode_safety.py::test_the_smtp_test_server_on_loopback_is_accepted[::1] PASSED [ 49%]
+tests/test_mode_safety.py::test_the_demo_servers_must_be_on_this_computer[192.0.2.1] PASSED [ 49%]
+tests/test_mode_safety.py::test_the_demo_servers_must_be_on_this_computer[remote.example.test] PASSED [ 50%]
+tests/test_mode_safety.py::test_the_demo_servers_must_be_on_this_computer[[::2]] PASSED [ 50%]
+tests/test_mode_safety.py::test_the_demo_servers_on_this_computer_are_accepted[127.0.0.1] PASSED [ 51%]
+tests/test_mode_safety.py::test_the_demo_servers_on_this_computer_are_accepted[localhost] PASSED [ 51%]
+tests/test_mode_safety.py::test_the_demo_servers_on_this_computer_are_accepted[[::1]] PASSED [ 52%]
+tests/test_mode_safety.py::test_follow_up_text_keeps_the_demo_marker_for_the_stand_in_sender PASSED [ 52%]
+tests/test_mode_safety.py::test_follow_up_text_has_no_stand_in_marker_for_the_mail_provider_kind PASSED [ 53%]
+tests/test_mode_safety.py::test_the_owner_note_names_the_real_reason_not_the_demo_crm PASSED [ 54%]
+tests/test_mode_safety.py::test_reset_sh_refuses_when_ps_is_missing PASSED [ 54%]
+tests/test_mode_safety.py::test_the_data_page_does_not_call_the_desk_a_demo_in_every_mode PASSED [ 55%]
+tests/test_mode_safety.py::test_the_real_services_banner_is_warm_and_the_demo_banner_is_not[light] PASSED [ 55%]
+tests/test_mode_safety.py::test_the_real_services_banner_is_warm_and_the_demo_banner_is_not[dark] PASSED [ 56%]
+tests/test_mode_safety.py::test_a_real_crm_stage_move_needs_a_second_click PASSED [ 56%]
+tests/test_mode_safety.py::test_a_stand_in_crm_stage_move_is_one_click PASSED [ 57%]
+tests/test_mode_safety.py::test_the_rendered_stage_warning_names_the_automatic_writes_and_says_may PASSED [ 57%]
+tests/test_mode_safety.py::test_the_stage_row_says_nothing_about_a_copy_when_no_lead_flow_is_set PASSED [ 58%]
+tests/test_mode_safety.py::test_a_new_stage_starts_the_copy_again_after_a_give_up PASSED [ 58%]
+tests/test_mode_safety.py::test_every_kind_is_listed_in_the_places_that_describe_it PASSED [ 59%]
+tests/test_mode_safety.py::test_a_copy_the_desk_gave_up_on_is_shown_in_the_warn_tone PASSED [ 59%]
+tests/test_mode_safety.py::test_the_real_services_tone_goes_when_the_desk_comes_back_with_the_demo_tools PASSED [ 60%]
+tests/test_portal_layout.py::test_no_sideways_scroll_revealed_leads_search_and_drawers[light-1100] PASSED [ 60%]
+tests/test_portal_layout.py::test_no_sideways_scroll_revealed_leads_search_and_drawers[light-1366] PASSED [ 61%]
+tests/test_portal_layout.py::test_no_sideways_scroll_revealed_leads_search_and_drawers[dark-1100] PASSED [ 62%]
+tests/test_portal_layout.py::test_no_sideways_scroll_revealed_leads_search_and_drawers[dark-1366] PASSED [ 62%]
+tests/test_portal_layout.py::test_requests_column_is_back_at_1440[light] PASSED [ 63%]
+tests/test_portal_layout.py::test_requests_column_is_back_at_1440[dark] PASSED [ 63%]
+tests/test_portal_layout.py::test_masked_email_and_last_change_stay_on_one_line[light] PASSED [ 64%]
+tests/test_portal_layout.py::test_masked_email_and_last_change_stay_on_one_line[dark] PASSED [ 64%]
+tests/test_portal_layout.py::test_overview_proof_strip_layout[1100-light] PASSED [ 65%]
+tests/test_portal_layout.py::test_overview_proof_strip_layout[1100-dark] PASSED [ 65%]
+tests/test_portal_layout.py::test_overview_proof_strip_layout[1280-light] PASSED [ 66%]
+tests/test_portal_layout.py::test_overview_proof_strip_layout[1280-dark] PASSED [ 66%]
+tests/test_portal_layout.py::test_overview_proof_strip_layout[1920-light] PASSED [ 67%]
+tests/test_portal_layout.py::test_overview_proof_strip_layout[1920-dark] PASSED [ 67%]
+tests/test_portal_layout.py::test_masked_search_matches_no_name_email_or_request_number[Alexandria] PASSED [ 68%]
+tests/test_portal_layout.py::test_masked_search_matches_no_name_email_or_request_number[alexandria] PASSED [ 68%]
+tests/test_portal_layout.py::test_masked_search_matches_no_name_email_or_request_number[s-0007] PASSED [ 69%]
+tests/test_portal_layout.py::test_masked_search_matches_no_name_email_or_request_number[s-00] PASSED [ 70%]
+tests/test_portal_layout.py::test_masked_search_matches_no_name_email_or_request_number[extra.long] PASSED [ 70%]
+tests/test_portal_layout.py::test_masked_search_matches_no_name_email_or_request_number[example.test] PASSED [ 71%]
+tests/test_portal_layout.py::test_masked_search_matches_no_name_email_or_request_number[Ada Sa] PASSED [ 71%]
+tests/test_portal_layout.py::test_masked_search_matches_no_name_email_or_request_number[ada.sample] PASSED [ 72%]
+tests/test_portal_layout.py::test_masked_search_finds_a_lead_number_by_design PASSED [ 72%]
+tests/test_portal_layout.py::test_demo_data_holds_no_name_derived_request_number PASSED [ 73%]
+tests/test_portal_layout.py::test_every_visible_text_has_aa_contrast[overview-light] PASSED [ 73%]
+tests/test_portal_layout.py::test_every_visible_text_has_aa_contrast[overview-dark] PASSED [ 74%]
+tests/test_portal_layout.py::test_every_visible_text_has_aa_contrast[leads-light] PASSED [ 74%]
+tests/test_portal_layout.py::test_every_visible_text_has_aa_contrast[leads-dark] PASSED [ 75%]
+tests/test_portal_layout.py::test_every_visible_text_has_aa_contrast[needs-light] PASSED [ 75%]
+tests/test_portal_layout.py::test_every_visible_text_has_aa_contrast[needs-dark] PASSED [ 76%]
+tests/test_portal_layout.py::test_every_visible_text_has_aa_contrast[log-light] PASSED [ 77%]
+tests/test_portal_layout.py::test_every_visible_text_has_aa_contrast[log-dark] PASSED [ 77%]
+tests/test_portal_layout.py::test_every_visible_text_has_aa_contrast[data-light] PASSED [ 78%]
+tests/test_portal_layout.py::test_every_visible_text_has_aa_contrast[data-dark] PASSED [ 78%]
+tests/test_portal_layout.py::test_needs_cards_with_their_lead_number_have_aa_contrast[light-1] PASSED [ 79%]
+tests/test_portal_layout.py::test_needs_cards_with_their_lead_number_have_aa_contrast[light-0] PASSED [ 79%]
+tests/test_portal_layout.py::test_needs_cards_with_their_lead_number_have_aa_contrast[dark-1] PASSED [ 80%]
+tests/test_portal_layout.py::test_needs_cards_with_their_lead_number_have_aa_contrast[dark-0] PASSED [ 80%]
+tests/test_portal_layout.py::test_masked_values_and_their_eye_buttons_do_not_overlap[1100-light] PASSED [ 81%]
+tests/test_portal_layout.py::test_masked_values_and_their_eye_buttons_do_not_overlap[1100-dark] PASSED [ 81%]
+tests/test_portal_layout.py::test_masked_values_and_their_eye_buttons_do_not_overlap[1280-light] PASSED [ 82%]
+tests/test_portal_layout.py::test_masked_values_and_their_eye_buttons_do_not_overlap[1280-dark] PASSED [ 82%]
+tests/test_portal_layout.py::test_masked_values_and_their_eye_buttons_do_not_overlap[1300-light] PASSED [ 83%]
+tests/test_portal_layout.py::test_masked_values_and_their_eye_buttons_do_not_overlap[1300-dark] PASSED [ 83%]
+tests/test_portal_layout.py::test_a_name_like_request_number_is_never_in_a_masked_page_and_its_eye_shows_it[light] PASSED [ 84%]
+tests/test_portal_layout.py::test_a_name_like_request_number_is_never_in_a_masked_page_and_its_eye_shows_it[dark] PASSED [ 85%]
+tests/test_portal_layout.py::test_request_number_masking_is_in_the_shared_rule_not_in_one_page PASSED [ 85%]
+tests/test_portal_layout.py::test_the_contract_names_the_width_the_leads_table_drops_columns_at PASSED [ 86%]
+tests/test_portal_look.py::test_one_colour_per_follow_up_state_in_ring_legend_timeline_and_badge[light] PASSED [ 86%]
+tests/test_portal_look.py::test_one_colour_per_follow_up_state_in_ring_legend_timeline_and_badge[dark] PASSED [ 87%]
+tests/test_portal_look.py::test_ring_slices_have_a_visible_gap[light] PASSED [ 87%]
+tests/test_portal_look.py::test_ring_slices_have_a_visible_gap[dark] PASSED [ 88%]
+tests/test_portal_look.py::test_overview_cards_of_one_row_are_equally_high[1280] PASSED [ 88%]
+tests/test_portal_look.py::test_overview_cards_of_one_row_are_equally_high[1920] PASSED [ 89%]
+tests/test_portal_look.py::test_needs_cards_of_one_row_are_equally_high_and_none_is_left_alone[1280] PASSED [ 89%]
+tests/test_portal_look.py::test_needs_cards_of_one_row_are_equally_high_and_none_is_left_alone[1920] PASSED [ 90%]
+tests/test_portal_look.py::test_demo_controls_text_has_enough_contrast[light] PASSED [ 90%]
+tests/test_portal_look.py::test_demo_controls_text_has_enough_contrast[dark] PASSED [ 91%]
+tests/test_portal_look.py::test_every_badge_text_has_enough_contrast_including_the_hot_rating[light] PASSED [ 91%]
+tests/test_portal_look.py::test_every_badge_text_has_enough_contrast_including_the_hot_rating[dark] PASSED [ 92%]
+tests/test_stage_confirm_browser.py::test_closing_and_reopening_the_panel_asks_again_from_the_start PASSED [ 93%]
+tests/test_stage_confirm_browser.py::test_a_double_click_does_not_answer_the_question PASSED [ 93%]
+tests/test_stage_confirm_browser.py::test_a_click_after_the_pause_answers_the_question PASSED [ 94%]
+tests/test_stage_confirm_browser.py::test_the_question_lapses_after_eight_seconds PASSED [ 94%]
+tests/test_stage_confirm_browser.py::test_a_question_asked_for_one_lead_does_not_survive_a_look_at_another_lead PASSED [ 95%]
+tests/test_stage_confirm_browser.py::test_arming_moves_nothing_and_says_how_long_the_question_lasts PASSED [ 95%]
+tests/test_stage_confirm_browser.py::test_the_confirm_button_has_readable_text_and_stands_out_from_the_note[light] PASSED [ 96%]
+tests/test_stage_confirm_browser.py::test_the_confirm_button_has_readable_text_and_stands_out_from_the_note[dark] PASSED [ 96%]
+tests/test_stage_confirm_browser.py::test_the_warning_is_fully_in_view_in_the_panel_and_the_confirm_button_is_amber[1100-light] PASSED [ 97%]
+tests/test_stage_confirm_browser.py::test_the_warning_is_fully_in_view_in_the_panel_and_the_confirm_button_is_amber[1100-dark] PASSED [ 97%]
+tests/test_stage_confirm_browser.py::test_the_warning_is_fully_in_view_in_the_panel_and_the_confirm_button_is_amber[1440-light] PASSED [ 98%]
+tests/test_stage_confirm_browser.py::test_the_warning_is_fully_in_view_in_the_panel_and_the_confirm_button_is_amber[1440-dark] PASSED [ 98%]
+tests/test_stage_confirm_browser.py::test_the_note_after_a_give_up_promises_only_what_the_lead_can_do[closed-The desk gave up after several tries. A lead already at the last stage is not copied again.] PASSED [ 99%]
+tests/test_stage_confirm_browser.py::test_the_note_after_a_give_up_promises_only_what_the_lead_can_do[contacted-The desk gave up after several tries. Moving the lead to a later stage starts the copy afresh.] PASSED [100%]
+
+=================================== FAILURES ===================================
+___ test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[light] ____
+
+env = <conftest.Env object at 0x7f1c190eb9e0>, scheme = 'light'
+
+    @pytest.mark.parametrize("scheme", ["light", "dark"])
+    def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, scheme: str) -> None:
+        """At 1200 px and below the strip under the sidebar was the page colour, not the sidebar's: a white block under
+        the sidebar when the page is taller than the window. Measured on a full-page screenshot."""
+        rig, base = _flow_rig(env)
+        for i in range(12):
+            _new(rig, f"s-{i}", f"Sidney Hart{i}", f"s{i}@example.test")
+    
+        def body(page: Any, base: str) -> None:
+            import io
+    
+            from PIL import Image
+    
+            page.goto(base + "/ui/#/leads")
+            page.wait_for_selector("[data-lead-id]")
+            page.wait_for_timeout(500)
+            height = page.evaluate("() => document.documentElement.scrollHeight")
+            assert height > 900, height  # the page really is taller than the window
+            img = Image.open(io.BytesIO(page.screenshot(full_page=True))).convert("RGB")
+            above, below = img.getpixel((60, 880)), img.getpixel((60, height - 40))
+            assert all(abs(a - b) <= 6 for a, b in zip(above, below, strict=True)), (above, below)
+    
+>       _browse(base, body, width=1100, scheme=scheme)
+
+tests/test_portal_lead_pages.py:440: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_lead_pages.py:124: in _browse
+    fn(page, base)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+page = <Page url='about:blank'>, base = 'http://127.0.0.1:38059'
+
+    def body(page: Any, base: str) -> None:
+        import io
+    
+>       from PIL import Image
+E       ModuleNotFoundError: No module named 'PIL'
+
+tests/test_portal_lead_pages.py:429: ModuleNotFoundError
+____ test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[dark] ____
+
+env = <conftest.Env object at 0x7f1c18857ad0>, scheme = 'dark'
+
+    @pytest.mark.parametrize("scheme", ["light", "dark"])
+    def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, scheme: str) -> None:
+        """At 1200 px and below the strip under the sidebar was the page colour, not the sidebar's: a white block under
+        the sidebar when the page is taller than the window. Measured on a full-page screenshot."""
+        rig, base = _flow_rig(env)
+        for i in range(12):
+            _new(rig, f"s-{i}", f"Sidney Hart{i}", f"s{i}@example.test")
+    
+        def body(page: Any, base: str) -> None:
+            import io
+    
+            from PIL import Image
+    
+            page.goto(base + "/ui/#/leads")
+            page.wait_for_selector("[data-lead-id]")
+            page.wait_for_timeout(500)
+            height = page.evaluate("() => document.documentElement.scrollHeight")
+            assert height > 900, height  # the page really is taller than the window
+            img = Image.open(io.BytesIO(page.screenshot(full_page=True))).convert("RGB")
+            above, below = img.getpixel((60, 880)), img.getpixel((60, height - 40))
+            assert all(abs(a - b) <= 6 for a, b in zip(above, below, strict=True)), (above, below)
+    
+>       _browse(base, body, width=1100, scheme=scheme)
+
+tests/test_portal_lead_pages.py:440: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_lead_pages.py:124: in _browse
+    fn(page, base)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+page = <Page url='about:blank'>, base = 'http://127.0.0.1:38233'
+
+    def body(page: Any, base: str) -> None:
+        import io
+    
+>       from PIL import Image
+E       ModuleNotFoundError: No module named 'PIL'
+
+tests/test_portal_lead_pages.py:429: ModuleNotFoundError
+============================= slowest 5 durations ==============================
+6.28s call     tests/test_portal_look.py::test_one_colour_per_follow_up_state_in_ring_legend_timeline_and_badge[light]
+6.08s call     tests/test_portal_look.py::test_one_colour_per_follow_up_state_in_ring_legend_timeline_and_badge[dark]
+5.08s call     tests/test_portal_layout.py::test_no_sideways_scroll_revealed_leads_search_and_drawers[dark-1366]
+5.04s call     tests/test_portal_layout.py::test_no_sideways_scroll_revealed_leads_search_and_drawers[dark-1100]
+4.97s call     tests/test_portal_layout.py::test_no_sideways_scroll_revealed_leads_search_and_drawers[light-1100]
+================== 2 failed, 185 passed in 225.07s (0:03:45) ===================
+exit 1 elapsed 226s

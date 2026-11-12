@@ -1,0 +1,12 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /tmp/work/outsider2/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /tmp/work/outsider2
+configfile: pyproject.toml
+collecting ... collected 2 items
+
+tests/test_portal_lead_pages.py::test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[light] PASSED [ 50%]
+tests/test_portal_lead_pages.py::test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[dark] PASSED [100%]
+
+============================== 2 passed in 3.58s ===============================
+exit 0
