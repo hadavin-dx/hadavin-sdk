@@ -1493,3 +1493,7 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a5e56b1945a203c61 | PR89 r26 design reviewer (snap pr89r26-916c71ea) | 00:22Z | ~00:50Z | 00:22Z | running | save report |
 | a6ae758dd03c4aaa0 | PR89 r26 codebase reviewer | 00:22Z | ~00:50Z | 00:22Z | running | save report |
 | a246cb8eb1388b501 | Q8a-1 fix batch 9 builder (from 18741c8c, branch core/q8a-1-b9, wip/cloud-q8a1-b9) | 00:30Z | 75 min box | 00:30Z | running | check checkpoint note B-Q8a1-b9-checkpoint.md; then snapshot, EV, reviewers r9 |
+| ac419a5a8d38adea3 | Q8c-1 b7 builder | | | 00:39Z | CLOSED, pushed ad588599 on wip/cloud-q8c1-b7 (builder-reported gates; independent light EV still to run) | EV light check (today/DECIDED change) |
+| a84305a6190d1191f | Q8b b4 builder | | | 00:39Z | waiting on own job, no report | check at 00:46Z |
+| a147b438068dda7c9 | Q8c-1 light EV on ad588599 | 00:39Z | 50 min | 00:39Z | running | save evidence, then decide on reviewers (behaviour delta small) |
+| a4ca07c5379925d8a | P3a-2 EV on ee831364 | 00:39Z | 50 min | 00:39Z | running | list survivors; then egm reviewers |
