@@ -1,6 +1,14 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 19:29Z - ORDER D5 read and applied; 6 agents running (lanes 1, 4; JS resolver; Python resolver; DeepSource extra builder; lane 5 resolver 3)
+- D5 facts sent to the lane 5 resolver (it will fix the PR names, mark them 'per lead' and list any open Major). PR 89, 91, 90, 72 as the lead stated.
+- DISCREPANCY for the lead: your PR 89 branch name is core/mutation-runner-keyword (singular). On origin I can see only core/mutation-runner-keywords (PLURAL, head 4cc427b5, commits 'Mutation runner round 23 ...'); `git ls-remote origin 'core/mutation*'` returns only the plural. The lane 5 claims about PR 89 therefore rest on the plural branch. Tell me if the singular branch lives elsewhere or if it is a typo.
+- NEW: core/ci-scan-config-guard-fix1 (3ad76e11) exists, newer than the guard branch 61cf2bea (PR 91 draft). The resolver was told to read it and say whether it changes any PR 91 claim.
+- P6a: PR 72 is main commit a8b4d8e8 (squash); P6a branch head ec76c739 is NOT an ancestor of main (content merged, history not). I exported main a8b4d8e8 as plain files; the resolver updates pair (e) to cite merged files.
+- Round cap applied: round 3 is the last review for lane 5 (the resolver must put any unclosed Major under 'Open'); lane 3: after the two resolvers finish, ONE fresh confirming review per patch, then stop. DeepSource export not coming: the cluster builder continues.
+- Lanes 1, 4: raw Playwright and re-run outputs are still being written (07-hung-file-rerun.txt, 08-full-with-playwright-rerun.txt, 13-collect.txt exist): a lane 1 test file hung and was re-run, details when its summary is final. Stuck: nothing. Needs: the singular-branch answer above.
+
 ## 2026-11-12 19:22Z - lane 5 resolve 2 done (8 of 8 findings fixed), fresh round-3 review running; 6 agents (lanes 1, 4; JS resolver; Python resolver; DeepSource extra builder; lane 5 review 3)
 - reuse/RESOLVE-2.md: all 8 review-2 findings were real (0 contested, 0 escalated); no verdict, recommendation or severity changed; findings 2, 4 and 7 make the reasons for NO stronger. The demo's 'no source edits' claim was false: 29 of its 68 mutant test functions text-edit function source or schema in memory (`weaken`, `schema_with`).
 - Ancestry checked read-only by git: none of the nine core branches is merged into origin/main (2a8c2aac); PR 90's commit 2742c1bf is in main. Still UNCONFIRMED (needs GitHub access): whether core/ci-scan-config-guard is PR 91, whether PR 89 is mutation-runner-keywords (only commit messages say 'PR89'), and the open or closed state of PRs 89 and 91.
