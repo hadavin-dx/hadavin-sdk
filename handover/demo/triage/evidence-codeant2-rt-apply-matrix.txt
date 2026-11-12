@@ -1,0 +1,65 @@
+$ python3 /tmp/work/c2-matrix.py  (git apply --cached on a temporary index of a clone of the base; bases: /tmp/work/c2-speed = 0841f36 + speed patch committed; /tmp/work/c2-tree = 0841f36)
+# patch file/hunk map (old-file line ranges)
+M1 desk {'contract.md': ['140,7', '274,7'], 'docs/limits.md': ['49,7'], 'docs/settings.md': ['4,7'], 'src/lead_desk/desk.py': ['360,9', '771,7', '785,9'], 'tests/test_codeant_desk.py': ['0,0']}
+M2 portal-log {'src/lead_desk/portal/pages/log.js': ['116,8'], 'tests/portal_log_poll_probe.js': ['0,0'], 'tests/test_portal_log_poll.py': ['0,0']}
+M3 demo-only {'demo_only/fake_model_server.py': ['31,6', '70,7', '127,13', '189,9'], 'demo_only/portal_demo.js': ['121,9', '133,6', '263,6', '283,10'], 'demo_only/portal_demo.py': ['272,10'], 'src/lead_desk/loader.py': ['5,7', '28,6'], 'src/lead_desk/server.py': ['87,7', '1005,6'], 'tests/test_codeant_demo_only.py': ['0,0'], 'tests/test_codeant_fakes.py': ['0,0'], 'demo_only/fake_hubspot.py': ['26,3', '87,2', '111,2', '147,5', '172,9', '182,5', '230,10', '252,10', '275,4', '287,4', '292,4', '301,3']}
+M4 tests-hardening {'tests/test_clock_steps.py': ['39,6', '129,13'], 'tests/test_codeant_hygiene.py': ['0,0'], 'tests/test_desk_http_edge_cases.py': ['613,6'], 'tests/test_env_numbers.py': ['521,8', '679,6', '746,8', '795,6'], 'tests/test_followup_edge_cases.py': ['6,6', '54,20', '89,10'], 'tests/test_hygiene.py': ['309,7'], 'tests/test_input_edge_cases.py': ['53,8'], 'tests/test_load_tools.py': ['674,8'], 'tests/test_mode_safety.py': ['10,6', '330,8'], 'tests/test_model_stamp_and_reaper.py': ['316,6'], 'tests/test_mutants_more.py': ['282,7'], 'tests/test_portal_demo.py': ['46,7'], 'tests/test_reset_scripts.py': ['8,6', '47,8', '62,8'], 'tests/test_vendor_hosts.py': ['9,16', '34,7']}
+M5 fakes-body {'src/lead_desk/server.py': ['637,6', '904,6'], 'tests/test_fakes_body_before_answer.py': ['0,0']}
+Q1 10c1-docs {'docs/n8n-recipe.md': ['1,7', '67,7', '76,7'], 'docs/settings.md': ['117,8']}
+Q2 10c1-gitleaks {'.gitleaks.toml': ['88,7'], 'tests/test_hygiene.py': ['173,8', '330,3']}
+Q3 10c1-n8n-proof {'n8n/proof.json': ['269,7'], 'tests/test_n8n_proof_result.py': ['0,0']}
+Q4 10c1-scripts {'scripts/http_guard.py': ['10,9'], 'scripts/n8n_api.py': ['4,6', '16,9', '32,7'], 'scripts/reset.ps1': ['14,10'], 'tests/test_n8n_api_url.py': ['0,0'], 'tests/test_reset_ps1_links.py': ['0,0'], 'tests/test_scrub_n8n_export.py': ['0,0'], 'tools/scrub_n8n_export.py': ['2,8', '37,13', '51,15']}
+O1 docs-and-deps {'.codeant/configuration.json': ['15,6'], '.gitleaks.toml': ['52,7', '88,7'], 'contract.md': ['68,7', '140,7'], 'docs/portal.md': ['2,7'], 'docs/tests.md': ['24,7'], 'exceptions.txt': ['6,7'], 'requirements-browser-win.txt': ['0,0'], 'requirements-browser.in': ['0,0'], 'requirements-browser.txt': ['0,0'], 'tests/test_portal_lead_pages.py': ['424,18'], 'versions.md': ['51,6']}
+O2 limits-burst-doc {'docs/limits.md': ['82,7']}
+O3 drawer-long-name {'src/lead_desk/portal/app.css': ['328,7'], 'tests/test_portal_drawer_long_name.py': ['0,0']}
+O4 sonar-coverage(v3, in base) {'.github/workflows/sonar.yml': ['1,2', '4,3', '21,4', '30,2'], '.gitignore': ['34'], '.gitleaks.toml': ['54,3', '90,3'], 'docs/tests.md': ['18,2'], 'exceptions.txt': ['9,2'], 'pyproject.toml': ['42'], 'requirements-coverage.in': ['0,0'], 'requirements-coverage.txt': ['0,0'], 'sonar-project.properties': ['12']}
+O5 speed-fake-hubspot {'demo_only/fake_hubspot.py': ['120,6', '134,6'], 'tests/test_crm_hubspot.py': ['4,6', '226,6']}
+
+## BASE A 0841f36+speed: each patch alone (git apply --cached on a temp index)
+  M1 desk: OK
+  M2 portal-log: OK
+  M3 demo-only: OK
+  M4 tests-hardening: OK
+  M5 fakes-body: OK
+  Q1 10c1-docs: OK
+  Q2 10c1-gitleaks: OK
+  Q3 10c1-n8n-proof: OK
+  Q4 10c1-scripts: OK
+  O1 docs-and-deps: FAIL [['error: patch failed: .gitleaks.toml:52']]
+  O2 limits-burst-doc: OK
+  O3 drawer-long-name: OK
+  O4 sonar-coverage(v3, in base): FAIL [['error: patch failed: .github/workflows/sonar.yml:1']]
+  O5 speed-fake-hubspot: FAIL [['error: patch failed: demo_only/fake_hubspot.py:120']]
+## BASE A 0841f36+speed: pairs that touch the same file (both orders, plain apply; 3way when plain fails)
+  M1 desk + Q1 10c1-docs: A,B ok / B,A ok  shared: docs/settings.md ['4,7'] vs ['117,8']
+  M1 desk + O2 limits-burst-doc: A,B ok / B,A ok  shared: docs/limits.md ['49,7'] vs ['82,7']
+  M3 demo-only + M5 fakes-body: A,B ok / B,A ok  shared: src/lead_desk/server.py ['87,7', '1005,6'] vs ['637,6', '904,6']
+  M4 tests-hardening + Q2 10c1-gitleaks: A,B ok / B,A ok  shared: tests/test_hygiene.py ['309,7'] vs ['173,8', '330,3']
+## BASE A 0841f36+speed: all five of mine together in order M1..M5: [True, True, True, True, True]
+## BASE A 0841f36+speed: M1..M5 then Q1..Q4: [True, True, True, True, True, True, True, True, True]
+## BASE A 0841f36+speed: M, Q and O1..O3: [True, True, True, True, True, True, True, True, True, False, ['error: patch failed: .gitleaks.toml:52']]
+
+## BASE B 0841f36 alone: each patch alone (git apply --cached on a temp index)
+  M1 desk: OK
+  M2 portal-log: OK
+  M3 demo-only: OK
+  M4 tests-hardening: OK
+  M5 fakes-body: OK
+  Q1 10c1-docs: OK
+  Q2 10c1-gitleaks: OK
+  Q3 10c1-n8n-proof: OK
+  Q4 10c1-scripts: OK
+  O1 docs-and-deps: FAIL [['error: patch failed: .gitleaks.toml:52']]
+  O2 limits-burst-doc: OK
+  O3 drawer-long-name: OK
+  O4 sonar-coverage(v3, in base): FAIL [['error: patch failed: .github/workflows/sonar.yml:1']]
+  O5 speed-fake-hubspot: OK
+## BASE B 0841f36 alone: pairs that touch the same file (both orders, plain apply; 3way when plain fails)
+  M1 desk + Q1 10c1-docs: A,B ok / B,A ok  shared: docs/settings.md ['4,7'] vs ['117,8']
+  M1 desk + O2 limits-burst-doc: A,B ok / B,A ok  shared: docs/limits.md ['49,7'] vs ['82,7']
+  M3 demo-only + M5 fakes-body: A,B ok / B,A ok  shared: src/lead_desk/server.py ['87,7', '1005,6'] vs ['637,6', '904,6']
+  M3 demo-only + O5 speed-fake-hubspot: A,B FAIL / B,A ok  shared: demo_only/fake_hubspot.py ['26,3', '87,2', '111,2', '147,5', '172,9', '182,5', '230,10', '252,10', '275,4', '287,4', '292,4', '301,3'] vs ['120,6', '134,6']  | 3way: ok/ok
+  M4 tests-hardening + Q2 10c1-gitleaks: A,B ok / B,A ok  shared: tests/test_hygiene.py ['309,7'] vs ['173,8', '330,3']
+## BASE B 0841f36 alone: all five of mine together in order M1..M5: [True, True, True, True, True]
+## BASE B 0841f36 alone: M1..M5 then Q1..Q4: [True, True, True, True, True, True, True, True, True]
+## BASE B 0841f36 alone: M, Q and O1..O3: [True, True, True, True, True, True, True, True, True, False, ['error: patch failed: .gitleaks.toml:52']]

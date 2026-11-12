@@ -1,0 +1,10 @@
+COMMAND: (cd /tmp/work/c10-old && GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 /tmp/work/int1-venv/bin/python -m pytest -p no:cacheprovider -q tests/test_hygiene.py | grep -E 'passed|failed|FAILED|leaks found: [0-9]{3}|AssertionError: gitl')
+TREE: 2ce1f98 + OLD codeant-gitleaks.patch
+DATE: 2026-11-12T20:54:15Z
+-----
+E           AssertionError: gitleaks dir reported findings (values are redacted)
+E            +  where 1 = CompletedProcess(args=['/tmp/work/gl/gitleaks', 'dir', '--no-banner', '--redact', '--ignore-gitleaks-allow', '--config...d ~2701652 bytes (2.70 MB) in 372ms\x1b[0m\n\x1b[90m8:54PM\x1b[0m \x1b[33mWRN\x1b[0m \x1b[1mleaks found: 737\x1b[0m\n').returncode
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: gitl...
+1 failed, 9 passed in 8.50s
+-----
+EXIT: 0

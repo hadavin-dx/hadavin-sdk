@@ -1,0 +1,80 @@
+base: 0841f36
+=== other: /tmp/demo-wt/handover/demo/triage/codeant-desk.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant2-gitleaks.patch: ok (plain)
+order other then codeant2-scripts.patch: ok (plain)
+order other then codeant2-n8n-proof.patch: ok (plain)
+order other then codeant2-docs.patch: ok (plain)
+  other then codeant2-gitleaks.patch --3way: ok
+  other then codeant2-scripts.patch --3way: ok
+  other then codeant2-n8n-proof.patch --3way: ok
+  other then codeant2-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/triage/codeant-demo-only.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant2-gitleaks.patch: ok (plain)
+order other then codeant2-scripts.patch: ok (plain)
+order other then codeant2-n8n-proof.patch: ok (plain)
+order other then codeant2-docs.patch: ok (plain)
+  other then codeant2-gitleaks.patch --3way: ok
+  other then codeant2-scripts.patch --3way: ok
+  other then codeant2-n8n-proof.patch --3way: ok
+  other then codeant2-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/triage/codeant-portal-log.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant2-gitleaks.patch: ok (plain)
+order other then codeant2-scripts.patch: ok (plain)
+order other then codeant2-n8n-proof.patch: ok (plain)
+order other then codeant2-docs.patch: ok (plain)
+  other then codeant2-gitleaks.patch --3way: ok
+  other then codeant2-scripts.patch --3way: ok
+  other then codeant2-n8n-proof.patch --3way: ok
+  other then codeant2-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/triage/codeant-tests-hardening.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant2-gitleaks.patch: ok (plain)
+order other then codeant2-scripts.patch: ok (plain)
+order other then codeant2-n8n-proof.patch: ok (plain)
+order other then codeant2-docs.patch: ok (plain)
+  other then codeant2-gitleaks.patch --3way: ok
+  other then codeant2-scripts.patch --3way: ok
+  other then codeant2-n8n-proof.patch --3way: ok
+  other then codeant2-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/triage/codeant-docs.patch
+other alone on base: ok
+order mine then other: FAILS plain: error: patch failed: docs/settings.md:117 error: docs/settings.md: patch does not apply 
+  mine then other with --3way: FAILS Applied patch to 'docs/settings.md' with conflicts. U docs/settings.md 
+order other then codeant2-gitleaks.patch: ok (plain)
+order other then codeant2-scripts.patch: ok (plain)
+order other then codeant2-n8n-proof.patch: ok (plain)
+order other then codeant2-docs.patch: FAILS plain: error: patch failed: docs/settings.md:117
+  other then codeant2-gitleaks.patch --3way: ok
+  other then codeant2-scripts.patch --3way: ok
+  other then codeant2-n8n-proof.patch --3way: ok
+  other then codeant2-docs.patch --3way: FAILS Applied patch to 'docs/n8n-recipe.md' cleanly.
+=== other: /tmp/demo-wt/handover/demo/triage/codeant-scripts.patch
+other alone on base: ok
+order mine then other: FAILS plain: error: patch failed: scripts/n8n_api.py:15 error: scripts/n8n_api.py: patch does not apply 
+  mine then other with --3way: FAILS Applied patch to 'scripts/n8n_api.py' with conflicts. Applied patch to 'scripts/reset.ps1' cleanly. 
+order other then codeant2-gitleaks.patch: ok (plain)
+order other then codeant2-scripts.patch: FAILS plain: error: patch failed: scripts/n8n_api.py:16
+order other then codeant2-n8n-proof.patch: ok (plain)
+order other then codeant2-docs.patch: ok (plain)
+  other then codeant2-gitleaks.patch --3way: ok
+  other then codeant2-scripts.patch --3way: FAILS Applied patch to 'scripts/http_guard.py' cleanly.
+  other then codeant2-n8n-proof.patch --3way: ok
+  other then codeant2-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/fixes/docs-and-deps-v2.patch
+other alone on base: FAILS
+order mine then other: FAILS plain: error: patch failed: .gitleaks.toml:52 error: .gitleaks.toml: patch does not apply 
+  mine then other with --3way: FAILS Applied patch to '.codeant/configuration.json' cleanly. Applied patch to '.gitleaks.toml' with conflicts. 
+=== other: /tmp/demo-wt/handover/demo/semgrep-pr-diff-lead.patch
+other alone on base: FAILS
+order mine then other: FAILS plain: error: patch failed: docs/tests.md:20 error: docs/tests.md: patch does not apply 

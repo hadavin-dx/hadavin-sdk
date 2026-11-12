@@ -1,0 +1,26 @@
+$ MUTANT 1: the old codeant-portal-log.patch condition `extra.length && first` (no in-flight window), cursor line as in 0841f36
++          if (extra.length && first) { // older rows are loaded, or on their way (the click on Load more was 
++            var inNew = {};
++            d.items.forEach(function (r) { inNew[r.request_id + '|' + r.received_at] = 1; });
++            d = Object.assign({}, d, { items: d.items.concat(first.items.filter(function (r) { return !inNew[
++          }
+-          if (!extra.length) cursor = d.next;
++          if (!extra.length) cursor = d.next; // while older rows are loading the answer brings the cursor
+E   AssertionError: {'before': ['••••••', '••••••', '••••••'], 'during': ['••••••', '••••••', '••••••'], 'after': ['••••••', '••••••', '••••••', '••••••', '••••••']}
+/tmp/work/c2-work/tests/test_portal_log_poll.py:43: AssertionError: {'before': ['••••••', '••••••', '••••••'], 'during': ['••••••', '••••••', '••••••'], 'after': ['••••••', '••••••', '••••••', '••••••', '••••••']}
+FAILED tests/test_portal_log_poll.py::test_a_row_pushed_out_of_page_one_stays_on_screen_when_the_poll_comes_while_older_rows_are_loading
+1 failed, 1 passed in 0.37s
+
+$ MUTANT 0: 0841f36 log.js (no merge at all)
+E   AssertionError: {'before': ['••••••', '••••••', '••••••', '••••••', '••••••'], 'after': ['••••••', '••••••', '••••••', '••••••', '••••••']}
+/tmp/work/c2-work/tests/test_portal_log_poll.py:34: AssertionError: {'before': ['••••••', '••••••', '••••••', '••••••', '••••••'], 'after': ['••••••', '••••••', '••••••', '••••••', '••••••']}
+E   AssertionError: {'before': ['••••••', '••••••', '••••••'], 'during': ['••••••', '••••••', '••••••'], 'after': ['••••••', '••••••', '••••••', '••••••', '••••••']}
+/tmp/work/c2-work/tests/test_portal_log_poll.py:43: AssertionError: {'before': ['••••••', '••••••', '••••••'], 'during': ['••••••', '••••••', '••••••'], 'after': ['••••••', '••••••', '••••••', '••••••', '••••••']}
+FAILED tests/test_portal_log_poll.py::test_a_row_pushed_out_of_page_one_stays_on_screen_after_older_rows_were_loaded
+FAILED tests/test_portal_log_poll.py::test_a_row_pushed_out_of_page_one_stays_on_screen_when_the_poll_comes_while_older_rows_are_loading
+2 failed in 0.37s
+
+$ NEW log.js
+..                                                                       [100%]
+2 passed in 0.35s
+node --check ok

@@ -1,0 +1,37 @@
+$ python3 /tmp/work/c2-mut-fh.py   (each mutant edits demo_only/fake_hubspot.py of 0841f36+speed patch+codeant2 changes; then restored)
+
+$ MUTANT A take_failure without the lock: pytest tests/test_codeant_fakes.py -q -x-less
+FAILED tests/test_codeant_fakes.py::test_two_creates_that_arrive_together_get_exactly_one_fault_when_one_is_configured
+FAILED tests/test_codeant_fakes.py::test_two_creates_that_arrive_together_get_exactly_one_fault_after_the_store
+2 failed, 26 passed in 15.34s
+
+$ MUTANT B take_hang without the lock: pytest tests/test_codeant_fakes.py -q -x-less
+FAILED tests/test_codeant_fakes.py::test_only_one_of_two_creates_that_arrive_together_hangs
+1 failed, 27 passed in 14.84s
+
+$ MUTANT C _create reverted to the old inline check for r429/r5xx: pytest tests/test_codeant_fakes.py -q -x-less
+FAILED tests/test_codeant_fakes.py::test_two_creates_that_arrive_together_get_exactly_one_fault_when_one_is_configured
+FAILED tests/test_codeant_fakes.py::test_the_create_handler_asks_the_state_for_its_fault[r429]
+FAILED tests/test_codeant_fakes.py::test_the_create_handler_asks_the_state_for_its_fault[r5xx]
+3 failed, 25 passed in 14.32s
+
+$ MUTANT D _create reverted to the old inline hang check: pytest tests/test_codeant_fakes.py -q -x-less
+FAILED tests/test_codeant_fakes.py::test_only_one_of_two_creates_that_arrive_together_hangs
+FAILED tests/test_codeant_fakes.py::test_the_create_handler_asks_the_state_for_its_fault[timeout_after_create]
+2 failed, 26 passed in 15.82s
+
+$ MUTANT E public view `public` without the lock: pytest tests/test_codeant_fakes.py -q -x-less
+FAILED tests/test_codeant_fakes.py::test_every_read_and_change_of_the_contacts_holds_the_lock
+1 failed, 27 passed in 15.34s
+
+$ MUTANT E public view `page` without the lock: pytest tests/test_codeant_fakes.py -q -x-less
+FAILED tests/test_codeant_fakes.py::test_every_read_and_change_of_the_contacts_holds_the_lock
+1 failed, 27 passed in 14.96s
+
+$ MUTANT E public view `search` without the lock: pytest tests/test_codeant_fakes.py -q -x-less
+FAILED tests/test_codeant_fakes.py::test_every_read_and_change_of_the_contacts_holds_the_lock
+1 failed, 27 passed in 15.32s
+
+$ MUTANT E public view `patch` without the lock: pytest tests/test_codeant_fakes.py -q -x-less
+FAILED tests/test_codeant_fakes.py::test_every_read_and_change_of_the_contacts_holds_the_lock
+1 failed, 27 passed in 14.68s

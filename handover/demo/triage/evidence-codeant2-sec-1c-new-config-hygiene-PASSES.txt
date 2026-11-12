@@ -1,0 +1,8 @@
+COMMAND: (cd /tmp/work/c10-new && GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 /tmp/work/int1-venv/bin/python -m pytest -p no:cacheprovider -q tests/test_hygiene.py 2>&1 | tail -3)
+TREE: 0841f36 + codeant2-gitleaks.patch (final)
+DATE: 2026-11-12T21:08:02Z
+-----
+...........                                                              [100%]
+11 passed in 10.38s
+-----
+EXIT: 0

@@ -1,0 +1,13 @@
+$ PYTHONPATH=src:. python -m demo_only.burst --url http://127.0.0.1:9/leads --n 0 --email ada@example.test --ref-prefix r --source form   (tree 0841f36 + speed + codeant2 changes; Python 3.12.3 only; 3.13 was not run for this)
+SENT n=0
+STATUS 
+RETRIES busy503=0 refused=0
+RESULT sent=0 expected=0
+exit=0
+
+$ same with --expect 0
+SENT n=0
+STATUS 
+RETRIES busy503=0 refused=0
+RESULT sent=0 expected=0
+exit=0

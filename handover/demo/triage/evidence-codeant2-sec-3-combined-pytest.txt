@@ -1,0 +1,12 @@
+COMMAND: (cd /tmp/work/c10-fresh && GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 timeout 900 /tmp/work/int1-venv/bin/python -m pytest -p no:cacheprovider -q -rs tests/test_n8n_api_url.py tests/test_scrub_n8n_export.py tests/test_reset_ps1_links.py tests/test_n8n_proof_result.py tests/test_hygiene.py tests/test_http_guard.py tests/test_infra.py tests/test_reset_scripts.py tests/test_portal_api.py tests/test_vendor_hosts.py)
+TREE: 0841f36 + codeant2-{gitleaks,scripts,n8n-proof,docs}.patch (scratch commit 1066165); python 3.12.3 pytest 9.2.0; node v22.23.4; gitleaks 8.30.1, DPLD_REQUIRE_SCAN=1 (hygiene not skipped)
+DATE: 2026-11-12T21:05:08Z
+-----
+........................................................................ [ 23%]
+........................................................................ [ 47%]
+........................................................................ [ 70%]
+........................................................................ [ 94%]
+..................                                                       [100%]
+306 passed in 152.52s (0:02:32)
+-----
+EXIT: 0

@@ -1,0 +1,60 @@
+COMMAND: (cd /tmp/work/c10-oc && /tmp/work/int1-venv/bin/python -m pytest -p no:cacheprovider -q -rf tests/test_n8n_api_url.py tests/test_scrub_n8n_export.py tests/test_reset_ps1_links.py tests/test_n8n_proof_result.py 2>&1 | grep -E 'passed|failed|^FAILED' | cut -c1-170)
+TREE: 0841f36 UNPATCHED code (scripts, tools, n8n/proof.json, reset.ps1 as in the public branch) + the 4 NEW test files
+DATE: 2026-11-12T21:04:22Z
+-----
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://example.test:5678]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://198.51.100.7]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://localhost.example.test]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://localhost@example.test]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1@example.test]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://localhost:x@example.test]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1.example.test]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://localhost.:5678/]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://[::ffff:198.51.100.7]:5678]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://[::1%25eth0]:5678]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://0.0.0.0:5678]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[ftp://127.0.0.1]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[file:///x]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[example.test]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[https://]
+FAILED tests/test_n8n_api_url.py::test_an_address_that_cannot_be_read_is_a_clean_refusal_not_a_traceback[http://[]
+FAILED tests/test_n8n_api_url.py::test_an_address_that_cannot_be_read_is_a_clean_refusal_not_a_traceback[http://[::1]
+FAILED tests/test_n8n_api_url.py::test_an_address_that_cannot_be_read_is_a_clean_refusal_not_a_traceback[https://[]
+FAILED tests/test_n8n_api_url.py::test_a_redirect_is_not_followed_so_the_key_never_reaches_the_new_address
+FAILED tests/test_scrub_n8n_export.py::test_allowed_values_are_kept[http://localhost#top]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[ftp://user:secretword@files.corp.example.org/in/x.csv-must_not_remain0]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[file:///home/someone/.ssh/id_rsa-must_not_remain1]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[postgres://app:pw1234@db.internal.corp:5432/leads-must_not_remain2]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[wss://stream.vendor.net/live-must_not_remain3]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[mail bob@example.com.au and jane@example.com.evil.net-must_not_remain4]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[x@example.com-evil.org-must_not_remain5]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost:x@example.test/p-must_not_remain6]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://127.0.0.1:pw@example.test/x-must_not_remain7]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost:80@example.test-must_not_remain10]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[https:/files.corp.example.org/x-must_not_remain11]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http:/localhost:x@example.test-must_not_remain12]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[open javascript:alert(document.cookie) now-must_not_remain13]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[data:text/plain;base64,QUJDREVGRw== end-must_not_remain14]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[jos\xe9@corp.example-must_not_remain15]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[a@ex\xe4mple.com-must_not_remain16]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[\u7528\u6237@corp.example-must_not_remain17]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[a@\u4f8b\u3048.jp-must_not_remain18]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[a\uff20corp.example-must_not_remain19]
+FAILED tests/test_scrub_n8n_export.py::test_a_non_ascii_address_becomes_the_plain_stand_in_and_nothing_of_it_stays
+FAILED tests/test_scrub_n8n_export.py::test_connections_use_the_cleaned_node_names_and_leak_nothing
+FAILED tests/test_reset_ps1_links.py::test_the_real_path_check_accepts_a_folder_inside_data_and_refuses_a_link_out_of_it
+FAILED tests/test_n8n_proof_result.py::test_the_expression_names_only_nodes_that_exist
+FAILED tests/test_n8n_proof_result.py::test_any_other_set_of_answers_is_a_mismatch_even_with_one_email_and_one_crm_row[statuses0]
+FAILED tests/test_n8n_proof_result.py::test_any_other_set_of_answers_is_a_mismatch_even_with_one_email_and_one_crm_row[statuses1]
+FAILED tests/test_n8n_proof_result.py::test_any_other_set_of_answers_is_a_mismatch_even_with_one_email_and_one_crm_row[new,duplicate]
+FAILED tests/test_n8n_proof_result.py::test_any_other_set_of_answers_is_a_mismatch_even_with_one_email_and_one_crm_row[statuses3]
+FAILED tests/test_n8n_proof_result.py::test_any_other_set_of_answers_is_a_mismatch_even_with_one_email_and_one_crm_row[review,review,review,review,review,review,review,re
+FAILED tests/test_n8n_proof_result.py::test_any_other_set_of_answers_is_a_mismatch_even_with_one_email_and_one_crm_row[new,new,duplicate,duplicate,duplicate,duplicate,dup
+FAILED tests/test_n8n_proof_result.py::test_any_other_set_of_answers_is_a_mismatch_even_with_one_email_and_one_crm_row[duplicate,duplicate,duplicate,duplicate,duplicate,d
+FAILED tests/test_n8n_proof_result.py::test_any_other_set_of_answers_is_a_mismatch_even_with_one_email_and_one_crm_row[new,duplicate,duplicate,duplicate,duplicate,duplica
+FAILED tests/test_n8n_proof_result.py::test_any_other_set_of_answers_is_a_mismatch_even_with_one_email_and_one_crm_row[new,duplicate,duplicate,duplicate,duplicate,duplica
+FAILED tests/test_n8n_proof_result.py::test_any_other_set_of_answers_is_a_mismatch_even_with_one_email_and_one_crm_row[]
+53 failed, 24 passed in 1.59s
+-----
+EXIT: 0

@@ -1,0 +1,9 @@
+COMMAND: (cd /tmp/work/c10-new && GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 /tmp/work/int1-venv/bin/python -m pytest -p no:cacheprovider -q tests/test_hygiene.py 2>&1 | grep -E 'passed|failed|^FAILED|^E  .*not reported' | cut -c1-300)
+TREE: 0841f36 .gitleaks.toml (unanchored) + FINAL tests/test_hygiene.py of codeant2-gitleaks.patch
+DATE: 2026-11-12T21:07:52Z
+-----
+E               AssertionError: not reported (must be): ['docs/.github/workflows/no.yml', 'docs/requirements-dev.txt', 'sub/requirements-dev-win.txt']; unexpected: []
+FAILED tests/test_hygiene.py::test_lock_file_hashes_are_allowed_only_at_the_root
+1 failed, 10 passed in 10.48s
+-----
+EXIT: 0

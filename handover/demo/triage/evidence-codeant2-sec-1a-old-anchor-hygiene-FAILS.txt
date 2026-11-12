@@ -1,0 +1,9 @@
+COMMAND: (cd /tmp/work/c10-old && GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 /tmp/work/int1-venv/bin/python -m pytest -p no:cacheprovider -q tests/test_hygiene.py 2>&1 | grep -E 'passed|failed|^FAILED|AssertionError: gitl')
+TREE: 0841f36 + old codeant idea (^ anchors, test scan with absolute path unchanged)
+DATE: 2026-11-12T20:55:04Z
+-----
+E           AssertionError: gitleaks dir reported findings (values are redacted)
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: gitl...
+1 failed, 9 passed in 7.93s
+-----
+EXIT: 0

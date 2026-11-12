@@ -1,0 +1,14 @@
+$ cd /tmp/work/c2-old   (0841f36 ALONE, no speed patch, no codeant2 code) + the two new test files; pytest tests/test_fakes_body_before_answer.py
+FAILED tests/test_fakes_body_before_answer.py::test_fake_hubspot_takes_the_body_in_before_it_closes[POST /crm/v3/objects/contacts-Bearer wrong]
+FAILED tests/test_fakes_body_before_answer.py::test_fake_hubspot_takes_the_body_in_before_it_closes[POST /crm/v3/objects/contacts/search-Bearer wrong]
+FAILED tests/test_fakes_body_before_answer.py::test_fake_hubspot_takes_the_body_in_before_it_closes[PATCH /crm/v3/objects/contacts/a@example.test?idProperty=email-Bearer wrong]
+FAILED tests/test_fakes_body_before_answer.py::test_fake_hubspot_takes_the_body_in_before_it_closes[DELETE /crm/v3/objects/contacts/1000-Bearer wrong]
+FAILED tests/test_fakes_body_before_answer.py::test_fake_hubspot_takes_the_body_in_before_it_closes[POST /crm/v3/objects/nothing-Bearer keeeeeeeeeeeeeee-for-tests-0002]
+FAILED tests/test_fakes_body_before_answer.py::test_fake_hubspot_takes_the_body_in_before_it_closes[PATCH /crm/v3/objects/contacts/a@example.test-Bearer keeeeeeeeeeeeeee-for-tests-0002]
+FAILED tests/test_fakes_body_before_answer.py::test_the_desks_early_replies_leave_no_reset_under_a_late_body
+7 failed, 10 passed in 21.95s
+
+$ same tree with the speed patch applied (c2-speed = 0841f36 + fake-hubspot-read-body-before-answer.patch): the desk probe cases stay failing, hubspot ones pass
+E   AssertionError: {'POST /leads over the cap (413)': False, 'POST /leads/<id>/step over the cap (413)': True, 'POST /review/<id>/resolve over the cap (413)': False, 'PUT /leads (405)': False, ...}
+FAILED tests/test_fakes_body_before_answer.py::test_the_desks_early_replies_leave_no_reset_under_a_late_body
+1 failed, 16 passed in 22.90s

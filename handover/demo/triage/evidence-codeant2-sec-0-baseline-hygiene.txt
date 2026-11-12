@@ -1,0 +1,8 @@
+COMMAND: (cd /tmp/work/c1-tree && GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 /tmp/work/int1-venv/bin/python -m pytest -p no:cacheprovider -q tests/test_hygiene.py | tail -3)
+TREE: 2ce1f98 clean
+DATE: 2026-11-12T20:54:23Z
+-----
+..........                                                               [100%]
+10 passed in 9.69s
+-----
+EXIT: 0
