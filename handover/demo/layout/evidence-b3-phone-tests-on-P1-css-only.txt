@@ -1,0 +1,32 @@
+cmd: [css state: P1-css] python -m pytest tests/test_portal_phone_layout.py -q -p no:cacheprovider --tb=line
+head: 0841f36d1edf381b67a0da4793afacf834a36707
+E   AssertionError: {'page': 423, 'window': 390}
+    assert 423 <= 390
+/tmp/work/l13b-tree/tests/test_portal_phone_layout.py:35: AssertionError: {'page': 423, 'window': 390}
+E   AssertionError: {'page': 423, 'window': 390}
+    assert 423 <= 390
+/tmp/work/l13b-tree/tests/test_portal_phone_layout.py:35: AssertionError: {'page': 423, 'window': 390}
+E   AssertionError: {'rail': 208, 'margin': 24}
+    assert 208 == 64
+/tmp/work/l13b-tree/tests/test_portal_phone_layout.py:51: AssertionError: {'rail': 208, 'margin': 24}
+E   AssertionError: {'rail': 208, 'margin': 24}
+    assert 208 == 64
+/tmp/work/l13b-tree/tests/test_portal_phone_layout.py:51: AssertionError: {'rail': 208, 'margin': 24}
+E   AssertionError: {'rail': 208, 'margin': 24}
+    assert 208 == 64
+/tmp/work/l13b-tree/tests/test_portal_phone_layout.py:51: AssertionError: {'rail': 208, 'margin': 24}
+=========================== short test summary info ============================
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[overview-light]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[overview-dark]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[leads-light]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[leads-dark]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[needs-light]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[needs-dark]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[log-light]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[log-dark]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[data-light]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[data-dark]
+FAILED tests/test_portal_phone_layout.py::test_the_rail_is_icon_only_up_to_860_px_and_the_page_margin_follows[390-64]
+FAILED tests/test_portal_phone_layout.py::test_the_rail_is_icon_only_up_to_860_px_and_the_page_margin_follows[700-64]
+FAILED tests/test_portal_phone_layout.py::test_the_rail_is_icon_only_up_to_860_px_and_the_page_margin_follows[860-64]
+13 failed, 3 passed in 16.09s

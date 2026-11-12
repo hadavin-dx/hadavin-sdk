@@ -1,0 +1,161 @@
+DBG overview 390
+DBG leads 390
+DBG needs 390
+DBG log 390
+DBG data 390
+DBG demo 390
+DBG lead-panel 390
+DBG confirm-dialog 390
+DBG overview 700
+DBG leads 700
+DBG needs 700
+DBG log 700
+DBG data 700
+DBG demo 700
+DBG lead-panel 700
+DBG confirm-dialog 700
+DBG overview 900
+DBG leads 900
+DBG needs 900
+DBG log 900
+DBG data 900
+DBG demo 900
+DBG lead-panel 900
+DBG confirm-dialog 900
+DBG overview 1100
+DBG leads 1100
+DBG needs 1100
+DBG log 1100
+DBG data 1100
+DBG demo 1100
+DBG lead-panel 1100
+DBG confirm-dialog 1100
+DBG overview 1280
+DBG leads 1280
+DBG needs 1280
+DBG log 1280
+DBG data 1280
+DBG demo 1280
+DBG lead-panel 1280
+DBG confirm-dialog 1280
+DBG overview 390
+DBG leads 390
+DBG needs 390
+DBG log 390
+DBG data 390
+DBG demo 390
+DBG lead-panel 390
+DBG confirm-dialog 390
+DBG overview 700
+DBG leads 700
+DBG needs 700
+DBG log 700
+DBG data 700
+DBG demo 700
+DBG lead-panel 700
+DBG confirm-dialog 700
+DBG overview 900
+DBG leads 900
+DBG needs 900
+DBG log 900
+DBG data 900
+DBG demo 900
+DBG lead-panel 900
+DBG confirm-dialog 900
+DBG overview 1100
+DBG leads 1100
+DBG needs 1100
+DBG log 1100
+DBG data 1100
+DBG demo 1100
+DBG lead-panel 1100
+DBG confirm-dialog 1100
+DBG overview 1280
+DBG leads 1280
+DBG needs 1280
+DBG log 1280
+DBG data 1280
+DBG demo 1280
+DBG lead-panel 1280
+DBG confirm-dialog 1280
+page|scheme|w : docSW/CW  nOutside(window or clipped)  first offenders | shell cols
+overview|light|390 390 / 390 0 [] 64px 326px |scrolls []
+leads|light|390 390 / 390 0 [] 64px 326px |scrolls [('div.table-wrap', 696, 292)]
+needs|light|390 390 / 390 0 [] 64px 326px |scrolls [('div.tabs', 376, 294)]
+log|light|390 390 / 390 0 [] 64px 326px |scrolls [('div.table-wrap', 760, 292)]
+data|light|390 390 / 390 0 [] 64px 326px |scrolls [('div.table-wrap', 468, 242)]
+demo|light|390 390 / 390 0 [] 64px 326px |scrolls []
+lead-panel|light|390 390 / 390 0 [] 64px 326px |scrolls []
+confirm-dialog|light|390 390 / 390 0 [] 64px 326px |scrolls []
+overview|light|700 700 / 700 0 [] 64px 636px |scrolls []
+leads|light|700 700 / 700 0 [] 64px 636px |scrolls [('div.table-wrap', 696, 602)]
+needs|light|700 700 / 700 0 [] 64px 636px |scrolls []
+log|light|700 700 / 700 0 [] 64px 636px |scrolls [('div.table-wrap', 760, 602)]
+data|light|700 700 / 700 0 [] 64px 636px |scrolls []
+demo|light|700 700 / 700 0 [] 64px 636px |scrolls []
+lead-panel|light|700 700 / 700 0 [] 64px 636px |scrolls []
+confirm-dialog|light|700 700 / 700 0 [] 64px 636px |scrolls []
+overview|light|900 900 / 900 0 [] 208px 692px |scrolls []
+leads|light|900 900 / 900 0 [] 208px 692px |scrolls [('div.table-wrap', 696, 642)]
+needs|light|900 900 / 900 0 [] 208px 692px |scrolls []
+log|light|900 900 / 900 0 [] 208px 692px |scrolls [('div.table-wrap', 760, 642)]
+data|light|900 900 / 900 0 [] 208px 692px |scrolls []
+demo|light|900 900 / 900 0 [] 208px 692px |scrolls []
+lead-panel|light|900 900 / 900 0 [] 208px 692px |scrolls []
+confirm-dialog|light|900 900 / 900 0 [] 208px 692px |scrolls []
+overview|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+leads|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+needs|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+log|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+data|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+demo|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+lead-panel|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+confirm-dialog|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+overview|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+leads|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+needs|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+log|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+data|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+demo|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+lead-panel|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+confirm-dialog|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+overview|dark|390 390 / 390 0 [] 64px 326px |scrolls []
+leads|dark|390 390 / 390 0 [] 64px 326px |scrolls [('div.table-wrap', 696, 292)]
+needs|dark|390 390 / 390 0 [] 64px 326px |scrolls [('div.tabs', 376, 294)]
+log|dark|390 390 / 390 0 [] 64px 326px |scrolls [('div.table-wrap', 760, 292)]
+data|dark|390 390 / 390 0 [] 64px 326px |scrolls [('div.table-wrap', 468, 242)]
+demo|dark|390 390 / 390 0 [] 64px 326px |scrolls []
+lead-panel|dark|390 390 / 390 0 [] 64px 326px |scrolls []
+confirm-dialog|dark|390 390 / 390 0 [] 64px 326px |scrolls []
+overview|dark|700 700 / 700 0 [] 64px 636px |scrolls []
+leads|dark|700 700 / 700 0 [] 64px 636px |scrolls [('div.table-wrap', 696, 602)]
+needs|dark|700 700 / 700 0 [] 64px 636px |scrolls []
+log|dark|700 700 / 700 0 [] 64px 636px |scrolls [('div.table-wrap', 760, 602)]
+data|dark|700 700 / 700 0 [] 64px 636px |scrolls []
+demo|dark|700 700 / 700 0 [] 64px 636px |scrolls []
+lead-panel|dark|700 700 / 700 0 [] 64px 636px |scrolls []
+confirm-dialog|dark|700 700 / 700 0 [] 64px 636px |scrolls []
+overview|dark|900 900 / 900 0 [] 208px 692px |scrolls []
+leads|dark|900 900 / 900 0 [] 208px 692px |scrolls [('div.table-wrap', 696, 642)]
+needs|dark|900 900 / 900 0 [] 208px 692px |scrolls []
+log|dark|900 900 / 900 0 [] 208px 692px |scrolls [('div.table-wrap', 760, 642)]
+data|dark|900 900 / 900 0 [] 208px 692px |scrolls []
+demo|dark|900 900 / 900 0 [] 208px 692px |scrolls []
+lead-panel|dark|900 900 / 900 0 [] 208px 692px |scrolls []
+confirm-dialog|dark|900 900 / 900 0 [] 208px 692px |scrolls []
+overview|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+leads|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+needs|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+log|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+data|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+demo|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+lead-panel|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+confirm-dialog|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+overview|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+leads|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+needs|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+log|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+data|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+demo|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+lead-panel|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+confirm-dialog|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []

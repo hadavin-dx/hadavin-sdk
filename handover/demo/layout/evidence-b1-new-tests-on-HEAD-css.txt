@@ -1,0 +1,47 @@
+cmd: [css state: HEAD-css] python -m pytest tests/test_portal_drawer_long_name.py tests/test_portal_long_values.py tests/test_portal_phone_layout.py -q -p no:cacheprovider --tb=line
+head: 0841f36d1edf381b67a0da4793afacf834a36707
+/tmp/work/l13b-tree/tests/test_portal_phone_layout.py:35: AssertionError: {'page': 423, 'window': 390}
+E   AssertionError: {'rail': 208, 'margin': 24}
+    assert 208 == 64
+/tmp/work/l13b-tree/tests/test_portal_phone_layout.py:51: AssertionError: {'rail': 208, 'margin': 24}
+E   AssertionError: {'rail': 208, 'margin': 24}
+    assert 208 == 64
+/tmp/work/l13b-tree/tests/test_portal_phone_layout.py:51: AssertionError: {'rail': 208, 'margin': 24}
+E   AssertionError: {'rail': 208, 'margin': 24}
+    assert 208 == 64
+/tmp/work/l13b-tree/tests/test_portal_phone_layout.py:51: AssertionError: {'rail': 208, 'margin': 24}
+=========================== short test summary info ============================
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[1280-light]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[1280-dark]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[1100-light]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[1100-dark]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[390-light]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[390-dark]
+FAILED tests/test_portal_long_values.py::test_a_long_name_stays_inside_the_confirm_question[1280-light]
+FAILED tests/test_portal_long_values.py::test_a_long_name_stays_inside_the_confirm_question[1280-dark]
+FAILED tests/test_portal_long_values.py::test_a_long_name_stays_inside_the_confirm_question[390-light]
+FAILED tests/test_portal_long_values.py::test_a_long_name_stays_inside_the_confirm_question[390-dark]
+FAILED tests/test_portal_long_values.py::test_a_long_desk_note_stays_inside_the_message_at_the_corner[1280-light]
+FAILED tests/test_portal_long_values.py::test_a_long_desk_note_stays_inside_the_message_at_the_corner[1280-dark]
+FAILED tests/test_portal_long_values.py::test_a_long_desk_note_stays_inside_the_message_at_the_corner[390-light]
+FAILED tests/test_portal_long_values.py::test_a_long_desk_note_stays_inside_the_message_at_the_corner[390-dark]
+FAILED tests/test_portal_long_values.py::test_long_values_stay_inside_their_needs_a_person_cards[1280-light]
+FAILED tests/test_portal_long_values.py::test_long_values_stay_inside_their_needs_a_person_cards[1280-dark]
+FAILED tests/test_portal_long_values.py::test_long_values_stay_inside_their_needs_a_person_cards[390-light]
+FAILED tests/test_portal_long_values.py::test_long_values_stay_inside_their_needs_a_person_cards[390-dark]
+FAILED tests/test_portal_long_values.py::test_a_long_company_does_not_squeeze_the_leads_table[light]
+FAILED tests/test_portal_long_values.py::test_a_long_company_does_not_squeeze_the_leads_table[dark]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[overview-light]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[overview-dark]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[leads-light]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[leads-dark]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[needs-light]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[needs-dark]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[log-light]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[log-dark]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[data-light]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window[data-dark]
+FAILED tests/test_portal_phone_layout.py::test_the_rail_is_icon_only_up_to_860_px_and_the_page_margin_follows[390-64]
+FAILED tests/test_portal_phone_layout.py::test_the_rail_is_icon_only_up_to_860_px_and_the_page_margin_follows[700-64]
+FAILED tests/test_portal_phone_layout.py::test_the_rail_is_icon_only_up_to_860_px_and_the_page_margin_follows[860-64]
+33 failed, 3 passed in 37.06s

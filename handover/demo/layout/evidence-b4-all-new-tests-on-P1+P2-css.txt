@@ -1,0 +1,4 @@
+cmd: [css state: P1+P2-css] python -m pytest tests/test_portal_drawer_long_name.py tests/test_portal_long_values.py tests/test_portal_phone_layout.py -q -p no:cacheprovider --tb=line
+head: 0841f36d1edf381b67a0da4793afacf834a36707
+....................................                                     [100%]
+36 passed in 39.82s

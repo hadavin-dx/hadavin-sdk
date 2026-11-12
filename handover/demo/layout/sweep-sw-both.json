@@ -1,0 +1,1094 @@
+{
+ "confirm|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   410,
+   870
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "confirm-box|light|1280": {
+  "dialog": [
+   410,
+   870
+  ],
+  "dSW": [
+   458,
+   458
+  ],
+  "p": [
+   410,
+   410,
+   435,
+   845
+  ],
+  "ok": [
+   724,
+   845
+  ],
+  "cancel": [
+   635,
+   716
+  ],
+  "vw": 1280
+ },
+ "confirm-extra|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   410,
+   870
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "toast|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   836,
+   1256
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "toast-box|light|1280": {
+  "toast": [
+   836,
+   1256
+  ],
+  "text": [
+   883,
+   1203
+  ],
+  "x": [
+   1215,
+   1239
+  ],
+  "xw": 24,
+  "vw": 1280
+ },
+ "toast-extra|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   836,
+   1256
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "needs-action|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "needs-info|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "needs-waiting|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "leads-table|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "drawer-later|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   680,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "later-values-only|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   680,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "overview|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "log-real|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "log-longnames|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "data|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "data2|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "demo|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "confirm|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   17,
+   373
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "confirm-box|light|390": {
+  "dialog": [
+   17,
+   373
+  ],
+  "dSW": [
+   354,
+   354
+  ],
+  "p": [
+   306,
+   306,
+   42,
+   348
+  ],
+  "ok": [
+   227,
+   348
+  ],
+  "cancel": [
+   138,
+   219
+  ],
+  "vw": 390
+ },
+ "confirm-extra|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   17,
+   373
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "toast|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   8,
+   366
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "toast-box|light|390": {
+  "toast": [
+   8,
+   366
+  ],
+  "text": [
+   55,
+   313
+  ],
+  "x": [
+   325,
+   349
+  ],
+  "xw": 24,
+  "vw": 390
+ },
+ "toast-extra|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   8,
+   366
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "needs-action|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.tabs",
+    "sw": 376,
+    "cw": 294
+   }
+  ]
+ },
+ "needs-info|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.tabs",
+    "sw": 376,
+    "cw": 294
+   }
+  ]
+ },
+ "needs-waiting|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.tabs",
+    "sw": 376,
+    "cw": 294
+   }
+  ]
+ },
+ "leads-table|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 746,
+    "cw": 292
+   }
+  ]
+ },
+ "drawer-later|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "later-values-only|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "overview|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "log-real|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 910,
+    "cw": 292
+   }
+  ]
+ },
+ "log-longnames|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 877,
+    "cw": 292
+   }
+  ]
+ },
+ "data|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 468,
+    "cw": 242
+   }
+  ]
+ },
+ "data2|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 468,
+    "cw": 242
+   }
+  ]
+ },
+ "demo|light|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "confirm|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   410,
+   870
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "confirm-box|dark|1280": {
+  "dialog": [
+   410,
+   870
+  ],
+  "dSW": [
+   458,
+   458
+  ],
+  "p": [
+   410,
+   410,
+   435,
+   845
+  ],
+  "ok": [
+   724,
+   845
+  ],
+  "cancel": [
+   635,
+   716
+  ],
+  "vw": 1280
+ },
+ "confirm-extra|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   410,
+   870
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "toast|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   836,
+   1256
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "toast-box|dark|1280": {
+  "toast": [
+   836,
+   1256
+  ],
+  "text": [
+   883,
+   1203
+  ],
+  "x": [
+   1215,
+   1239
+  ],
+  "xw": 24,
+  "vw": 1280
+ },
+ "toast-extra|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   836,
+   1256
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "needs-action|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "needs-info|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "needs-waiting|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "leads-table|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "drawer-later|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   680,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "later-values-only|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   680,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "overview|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "log-real|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "log-longnames|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "data|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "data2|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "demo|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   240,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "confirm|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   17,
+   373
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "confirm-box|dark|390": {
+  "dialog": [
+   17,
+   373
+  ],
+  "dSW": [
+   354,
+   354
+  ],
+  "p": [
+   306,
+   306,
+   42,
+   348
+  ],
+  "ok": [
+   227,
+   348
+  ],
+  "cancel": [
+   138,
+   219
+  ],
+  "vw": 390
+ },
+ "confirm-extra|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   17,
+   373
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "toast|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   8,
+   366
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "toast-box|dark|390": {
+  "toast": [
+   8,
+   366
+  ],
+  "text": [
+   55,
+   313
+  ],
+  "x": [
+   325,
+   349
+  ],
+  "xw": 24,
+  "vw": 390
+ },
+ "toast-extra|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   8,
+   366
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "needs-action|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.tabs",
+    "sw": 376,
+    "cw": 294
+   }
+  ]
+ },
+ "needs-info|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.tabs",
+    "sw": 376,
+    "cw": 294
+   }
+  ]
+ },
+ "needs-waiting|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.tabs",
+    "sw": 376,
+    "cw": 294
+   }
+  ]
+ },
+ "leads-table|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 746,
+    "cw": 292
+   }
+  ]
+ },
+ "drawer-later|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "later-values-only|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "overview|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ },
+ "log-real|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 910,
+    "cw": 292
+   }
+  ]
+ },
+ "log-longnames|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 877,
+    "cw": 292
+   }
+  ]
+ },
+ "data|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 468,
+    "cw": 242
+   }
+  ]
+ },
+ "data2|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 468,
+    "cw": 242
+   }
+  ]
+ },
+ "demo|dark|390": {
+  "doc": [
+   390,
+   390
+  ],
+  "scope": [
+   64,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": []
+ }
+}

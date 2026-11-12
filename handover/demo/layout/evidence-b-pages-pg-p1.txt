@@ -1,0 +1,161 @@
+DBG overview 754
+DBG leads 632
+DBG needs 608
+DBG log 803
+DBG data 423
+DBG demo 477
+DBG lead-panel 632
+DBG confirm-dialog 608
+DBG overview 754
+DBG leads 700
+DBG needs 700
+DBG log 803
+DBG data 700
+DBG demo 700
+DBG lead-panel 700
+DBG confirm-dialog 700
+DBG overview 900
+DBG leads 900
+DBG needs 900
+DBG log 900
+DBG data 900
+DBG demo 900
+DBG lead-panel 900
+DBG confirm-dialog 900
+DBG overview 1100
+DBG leads 1100
+DBG needs 1100
+DBG log 1100
+DBG data 1100
+DBG demo 1100
+DBG lead-panel 1100
+DBG confirm-dialog 1100
+DBG overview 1280
+DBG leads 1280
+DBG needs 1280
+DBG log 1280
+DBG data 1280
+DBG demo 1280
+DBG lead-panel 1280
+DBG confirm-dialog 1280
+DBG overview 754
+DBG leads 632
+DBG needs 608
+DBG log 803
+DBG data 423
+DBG demo 477
+DBG lead-panel 632
+DBG confirm-dialog 608
+DBG overview 754
+DBG leads 700
+DBG needs 700
+DBG log 803
+DBG data 700
+DBG demo 700
+DBG lead-panel 700
+DBG confirm-dialog 700
+DBG overview 900
+DBG leads 900
+DBG needs 900
+DBG log 900
+DBG data 900
+DBG demo 900
+DBG lead-panel 900
+DBG confirm-dialog 900
+DBG overview 1100
+DBG leads 1100
+DBG needs 1100
+DBG log 1100
+DBG data 1100
+DBG demo 1100
+DBG lead-panel 1100
+DBG confirm-dialog 1100
+DBG overview 1280
+DBG leads 1280
+DBG needs 1280
+DBG log 1280
+DBG data 1280
+DBG demo 1280
+DBG lead-panel 1280
+DBG confirm-dialog 1280
+page|scheme|w : docSW/CW  nOutside(window or clipped)  first offenders | shell cols
+overview|light|390 754 / 390 79 [('div.ov', 232, 754), ('div.ov-kpis', 232, 754)] 208px 182px |scrolls []
+leads|light|390 632 / 390 16 [('div.sumstrip[leads-summary]', 232, 632), ('div.sumstat', 366, 498)] 208px 182px |scrolls [('div.table-wrap', 696, 398)]
+needs|light|390 608 / 390 29 [('div.tabs', 232, 608), ('button.tab[needs-tab-waiting]', 347, 462)] 208px 182px |scrolls []
+log|light|390 803 / 390 7 [('p.note[log-note]', 232, 434), ('span.', 279, 417)] 208px 182px |scrolls [('div.table-wrap', 760, 200)]
+data|light|390 423 / 390 8 [('div.card-head', 257, 423), ('h2.', 257, 423)] 208px 182px |scrolls [('div.table-wrap', 468, 121)]
+demo|light|390 477 / 390 11 [('div.card-head', 257, 477), ('h2.', 257, 477)] 208px 182px |scrolls []
+lead-panel|light|390 632 / 390 0 [] 208px 182px |scrolls []
+confirm-dialog|light|390 608 / 390 0 [] 208px 182px |scrolls []
+overview|light|700 754 / 700 55 [('div.ov', 232, 754), ('div.ov-kpis', 232, 754)] 208px 492px |scrolls []
+leads|light|700 700 / 700 0 [] 208px 492px |scrolls [('div.table-wrap', 696, 442)]
+needs|light|700 700 / 700 0 [] 208px 492px |scrolls []
+log|light|700 803 / 700 0 [] 208px 492px |scrolls [('div.table-wrap', 760, 442)]
+data|light|700 700 / 700 0 [] 208px 492px |scrolls [('div.table-wrap', 468, 392)]
+demo|light|700 700 / 700 0 [] 208px 492px |scrolls []
+lead-panel|light|700 700 / 700 0 [] 208px 492px |scrolls []
+confirm-dialog|light|700 700 / 700 0 [] 208px 492px |scrolls []
+overview|light|900 900 / 900 0 [] 208px 692px |scrolls []
+leads|light|900 900 / 900 0 [] 208px 692px |scrolls [('div.table-wrap', 696, 642)]
+needs|light|900 900 / 900 0 [] 208px 692px |scrolls []
+log|light|900 900 / 900 0 [] 208px 692px |scrolls [('div.table-wrap', 760, 642)]
+data|light|900 900 / 900 0 [] 208px 692px |scrolls []
+demo|light|900 900 / 900 0 [] 208px 692px |scrolls []
+lead-panel|light|900 900 / 900 0 [] 208px 692px |scrolls []
+confirm-dialog|light|900 900 / 900 0 [] 208px 692px |scrolls []
+overview|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+leads|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+needs|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+log|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+data|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+demo|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+lead-panel|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+confirm-dialog|light|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+overview|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+leads|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+needs|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+log|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+data|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+demo|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+lead-panel|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+confirm-dialog|light|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+overview|dark|390 754 / 390 79 [('div.ov', 232, 754), ('div.ov-kpis', 232, 754)] 208px 182px |scrolls []
+leads|dark|390 632 / 390 16 [('div.sumstrip[leads-summary]', 232, 632), ('div.sumstat', 366, 498)] 208px 182px |scrolls [('div.table-wrap', 696, 398)]
+needs|dark|390 608 / 390 29 [('div.tabs', 232, 608), ('button.tab[needs-tab-waiting]', 347, 462)] 208px 182px |scrolls []
+log|dark|390 803 / 390 7 [('p.note[log-note]', 232, 434), ('span.', 279, 417)] 208px 182px |scrolls [('div.table-wrap', 760, 200)]
+data|dark|390 423 / 390 8 [('div.card-head', 257, 423), ('h2.', 257, 423)] 208px 182px |scrolls [('div.table-wrap', 468, 121)]
+demo|dark|390 477 / 390 11 [('div.card-head', 257, 477), ('h2.', 257, 477)] 208px 182px |scrolls []
+lead-panel|dark|390 632 / 390 0 [] 208px 182px |scrolls []
+confirm-dialog|dark|390 608 / 390 0 [] 208px 182px |scrolls []
+overview|dark|700 754 / 700 54 [('div.ov', 232, 754), ('div.ov-kpis', 232, 754)] 208px 492px |scrolls []
+leads|dark|700 700 / 700 0 [] 208px 492px |scrolls [('div.table-wrap', 696, 442)]
+needs|dark|700 700 / 700 0 [] 208px 492px |scrolls []
+log|dark|700 803 / 700 0 [] 208px 492px |scrolls [('div.table-wrap', 760, 442)]
+data|dark|700 700 / 700 0 [] 208px 492px |scrolls [('div.table-wrap', 468, 392)]
+demo|dark|700 700 / 700 0 [] 208px 492px |scrolls []
+lead-panel|dark|700 700 / 700 0 [] 208px 492px |scrolls []
+confirm-dialog|dark|700 700 / 700 0 [] 208px 492px |scrolls []
+overview|dark|900 900 / 900 0 [] 208px 692px |scrolls []
+leads|dark|900 900 / 900 0 [] 208px 692px |scrolls [('div.table-wrap', 696, 642)]
+needs|dark|900 900 / 900 0 [] 208px 692px |scrolls []
+log|dark|900 900 / 900 0 [] 208px 692px |scrolls [('div.table-wrap', 760, 642)]
+data|dark|900 900 / 900 0 [] 208px 692px |scrolls []
+demo|dark|900 900 / 900 0 [] 208px 692px |scrolls []
+lead-panel|dark|900 900 / 900 0 [] 208px 692px |scrolls []
+confirm-dialog|dark|900 900 / 900 0 [] 208px 692px |scrolls []
+overview|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+leads|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+needs|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+log|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+data|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+demo|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+lead-panel|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+confirm-dialog|dark|1100 1100 / 1100 0 [] 208px 892px |scrolls []
+overview|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+leads|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+needs|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+log|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+data|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+demo|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+lead-panel|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []
+confirm-dialog|dark|1280 1280 / 1280 0 [] 240px 1040px |scrolls []

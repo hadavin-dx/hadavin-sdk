@@ -1,0 +1,4 @@
+cmd: [css state: P2-only-css] python -m pytest tests/test_portal_phone_layout.py -q -p no:cacheprovider --tb=line
+head: 0841f36d1edf381b67a0da4793afacf834a36707
+................                                                         [100%]
+16 passed in 16.15s

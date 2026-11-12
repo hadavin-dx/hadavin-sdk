@@ -1,0 +1,34 @@
+cmd: for each pending patch X (every *.patch under triage/ fixes/ semgrep/ and layout/ at the time of the run): on a fresh clone of 0841f36: git apply --check ALONE; then X then (P1|P2) and (P1|P2) then X, each step git apply --check before git apply; exit codes
+0841f36d1edf381b67a0da4793afacf834a36707
+P1 alone: ok
+P2 alone: ok
+P1 then P2: ok
+P2 then P1: ok
+codeant-demo-only.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant-desk.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant-docs.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant-gitleaks-after-docs-and-deps.patch | alone:FAIL(codeant-gitleaks-after-docs-and-deps.patch)  | X>P1:FAIL(codeant-gitleaks-after-docs-and-deps.patch)  P1>X:FAIL(codeant-gitleaks-after-docs-and-deps.patch)  all3(X,P1,P2):FAIL(codeant-gitleaks-after-docs-and-deps.patch)  | X>P2:FAIL(codeant-gitleaks-after-docs-and-deps.patch)  P2>X:FAIL(codeant-gitleaks-after-docs-and-deps.patch)  all3(X,P1,P2):
+codeant-gitleaks-after-sonar-coverage.patch | alone:FAIL(codeant-gitleaks-after-sonar-coverage.patch)  | X>P1:FAIL(codeant-gitleaks-after-sonar-coverage.patch)  P1>X:FAIL(codeant-gitleaks-after-sonar-coverage.patch)  all3(X,P1,P2):FAIL(codeant-gitleaks-after-sonar-coverage.patch)  | X>P2:FAIL(codeant-gitleaks-after-sonar-coverage.patch)  P2>X:FAIL(codeant-gitleaks-after-sonar-coverage.patch)  all3(X,P1,P2):
+codeant-gitleaks.patch | alone:FAIL(codeant-gitleaks.patch)  | X>P1:FAIL(codeant-gitleaks.patch)  P1>X:FAIL(codeant-gitleaks.patch)  all3(X,P1,P2):FAIL(codeant-gitleaks.patch)  | X>P2:FAIL(codeant-gitleaks.patch)  P2>X:FAIL(codeant-gitleaks.patch)  all3(X,P1,P2):
+codeant-n8n-proof.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant-portal-log.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant-scripts.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant-tests-hardening.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant2-demo-only.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant2-desk.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant2-docs.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant2-fakes-body.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant2-gitleaks.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant2-n8n-proof.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant2-portal-log.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant2-scripts.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+codeant2-tests-hardening.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+extra-demo-only.patch | alone:FAIL(extra-demo-only.patch)  | X>P1:FAIL(extra-demo-only.patch)  P1>X:FAIL(extra-demo-only.patch)  all3(X,P1,P2):FAIL(extra-demo-only.patch)  | X>P2:FAIL(extra-demo-only.patch)  P2>X:FAIL(extra-demo-only.patch)  all3(X,P1,P2):
+js-portal.patch | alone:FAIL(js-portal.patch)  | X>P1:FAIL(js-portal.patch)  P1>X:FAIL(js-portal.patch)  all3(X,P1,P2):FAIL(js-portal.patch)  | X>P2:FAIL(js-portal.patch)  P2>X:FAIL(js-portal.patch)  all3(X,P1,P2):
+py-retry.patch | alone:FAIL(py-retry.patch)  | X>P1:FAIL(py-retry.patch)  P1>X:FAIL(py-retry.patch)  all3(X,P1,P2):FAIL(py-retry.patch)  | X>P2:FAIL(py-retry.patch)  P2>X:FAIL(py-retry.patch)  all3(X,P1,P2):
+docs-and-deps-v1-own-decoder.patch | alone:FAIL(docs-and-deps-v1-own-decoder.patch)  | X>P1:FAIL(docs-and-deps-v1-own-decoder.patch)  P1>X:FAIL(docs-and-deps-v1-own-decoder.patch)  all3(X,P1,P2):FAIL(docs-and-deps-v1-own-decoder.patch)  | X>P2:FAIL(docs-and-deps-v1-own-decoder.patch)  P2>X:FAIL(docs-and-deps-v1-own-decoder.patch)  all3(X,P1,P2):
+docs-and-deps-v2-pillow-draft.patch | alone:FAIL(docs-and-deps-v2-pillow-draft.patch)  | X>P1:FAIL(docs-and-deps-v2-pillow-draft.patch)  P1>X:FAIL(docs-and-deps-v2-pillow-draft.patch)  all3(X,P1,P2):FAIL(docs-and-deps-v2-pillow-draft.patch)  | X>P2:FAIL(docs-and-deps-v2-pillow-draft.patch)  P2>X:FAIL(docs-and-deps-v2-pillow-draft.patch)  all3(X,P1,P2):
+docs-and-deps-v2.patch | alone:FAIL(docs-and-deps-v2.patch)  | X>P1:FAIL(docs-and-deps-v2.patch)  P1>X:FAIL(docs-and-deps-v2.patch)  all3(X,P1,P2):FAIL(docs-and-deps-v2.patch)  | X>P2:FAIL(docs-and-deps-v2.patch)  P2>X:FAIL(docs-and-deps-v2.patch)  all3(X,P1,P2):
+docs-and-deps-v3.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+docs-and-deps.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):
+semgrep-rebased.patch | alone:ok | X>P1:ok P1>X:ok all3(X,P1,P2):ok | X>P2:ok P2>X:ok all3(X,P1,P2):

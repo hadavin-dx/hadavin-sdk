@@ -1,0 +1,3346 @@
+{
+ "overview|light|390": {
+  "doc": [
+   754,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [
+   {
+    "el": "div.ov",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.ov-kpis",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "article.kpi[kpi-outbox]",
+    "why": "outside window",
+    "l": 339,
+    "r": 434,
+    "w": 95
+   },
+   {
+    "el": "div.kpi-label",
+    "why": "outside window",
+    "l": 356,
+    "r": 417,
+    "w": 61
+   },
+   {
+    "el": "span.",
+    "why": "outside window",
+    "l": 368,
+    "r": 417,
+    "w": 49
+   },
+   {
+    "el": "div.kpi-value[kpi-outbox-value]",
+    "why": "outside window",
+    "l": 356,
+    "r": 417,
+    "w": 61
+   },
+   {
+    "el": "div.kpi-caption",
+    "why": "outside window",
+    "l": 356,
+    "r": 417,
+    "w": 61
+   },
+   {
+    "el": "article.kpi[kpi-duplicates]",
+    "why": "outside window",
+    "l": 446,
+    "r": 540,
+    "w": 95
+   },
+   {
+    "el": "span.dot",
+    "why": "outside window",
+    "l": 463,
+    "r": 471,
+    "w": 8
+   },
+   {
+    "el": "section.dm-strip[connections-strip]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.dm-cell",
+    "why": "outside window",
+    "l": 233,
+    "r": 493,
+    "w": 260
+   },
+   {
+    "el": "div.eyebrow",
+    "why": "outside window",
+    "l": 249,
+    "r": 477,
+    "w": 228
+   },
+   {
+    "el": "div.dm-cell-main",
+    "why": "outside window",
+    "l": 249,
+    "r": 477,
+    "w": 228
+   },
+   {
+    "el": "div.dm-cell-sub",
+    "why": "outside window",
+    "l": 249,
+    "r": 477,
+    "w": 228
+   },
+   {
+    "el": "span.dm-dot",
+    "why": "outside window",
+    "l": 510,
+    "r": 518,
+    "w": 8
+   },
+   {
+    "el": "b.num[conn-crm-count]",
+    "why": "outside window",
+    "l": 526,
+    "r": 536,
+    "w": 10
+   },
+   {
+    "el": "span.dm-dot",
+    "why": "outside window",
+    "l": 510,
+    "r": 518,
+    "w": 8
+   },
+   {
+    "el": "div.ov-proof",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.dm-proof[proof]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.dm-proof-row",
+    "why": "outside window",
+    "l": 249,
+    "r": 737,
+    "w": 488
+   },
+   {
+    "el": "div.dm-figure",
+    "why": "outside window",
+    "l": 249,
+    "r": 425,
+    "w": 176
+   },
+   {
+    "el": "div.dm-figure-value[proof-desk]",
+    "why": "outside window",
+    "l": 249,
+    "r": 425,
+    "w": 176
+   },
+   {
+    "el": "div.dm-figure-label",
+    "why": "outside window",
+    "l": 249,
+    "r": 425,
+    "w": 176
+   },
+   {
+    "el": "span.dm-vs",
+    "why": "outside window",
+    "l": 449,
+    "r": 537,
+    "w": 88
+   },
+   {
+    "el": "span.pill",
+    "why": "outside window",
+    "l": 609,
+    "r": 737,
+    "w": 128
+   },
+   {
+    "el": "svg.[object",
+    "why": "outside window",
+    "l": 619,
+    "r": 631,
+    "w": 12
+   },
+   {
+    "el": "div.grid",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.span-5",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "section.card[reconcile]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.card-head",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "h2.",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "span.info-tip",
+    "why": "outside window",
+    "l": 568,
+    "r": 582,
+    "w": 14
+   },
+   {
+    "el": "p.why",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "div.ov-eq[reconcile-sentence]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "div.ov-eqtext",
+    "why": "outside window",
+    "l": 303,
+    "r": 426,
+    "w": 123
+   },
+   {
+    "el": "b.",
+    "why": "outside window",
+    "l": 303,
+    "r": 426,
+    "w": 123
+   },
+   {
+    "el": "div.splitbar[reconcile-bar]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "ul.legend",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "li.",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "p.muted[open-explained]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   }
+  ],
+  "nOff": 79,
+  "scrolls": [],
+  "shell": "208px 182px"
+ },
+ "leads|light|390": {
+  "doc": [
+   632,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [
+   {
+    "el": "div.sumstrip[leads-summary]",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   },
+   {
+    "el": "div.sumstat",
+    "why": "outside window",
+    "l": 366,
+    "r": 498,
+    "w": 133
+   },
+   {
+    "el": "div.sumstat-value",
+    "why": "outside window",
+    "l": 391,
+    "r": 474,
+    "w": 84
+   },
+   {
+    "el": "div.eyebrow",
+    "why": "outside window",
+    "l": 391,
+    "r": 474,
+    "w": 84
+   },
+   {
+    "el": "div.toolbar-block",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   },
+   {
+    "el": "div.toolbar",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   },
+   {
+    "el": "label.search",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   },
+   {
+    "el": "input.input[leads-search]",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   },
+   {
+    "el": "select.select[leads-state-filter]",
+    "why": "outside window",
+    "l": 232,
+    "r": 421,
+    "w": 189
+   },
+   {
+    "el": "span.spacer",
+    "why": "outside window",
+    "l": 433,
+    "r": 620,
+    "w": 187
+   },
+   {
+    "el": "label.hide-switch",
+    "why": "outside window",
+    "l": 232,
+    "r": 585,
+    "w": 353
+   },
+   {
+    "el": "span.",
+    "why": "outside window",
+    "l": 274,
+    "r": 477,
+    "w": 203
+   },
+   {
+    "el": "span.faint",
+    "why": "outside window",
+    "l": 485,
+    "r": 585,
+    "w": 100
+   },
+   {
+    "el": "span.faint[leads-search-hint]",
+    "why": "outside window",
+    "l": 232,
+    "r": 582,
+    "w": 350
+   },
+   {
+    "el": "div.leads-out",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   },
+   {
+    "el": "div.table-wrap[leads-table]",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   }
+  ],
+  "nOff": 16,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 696,
+    "cw": 398
+   }
+  ],
+  "shell": "208px 182px"
+ },
+ "needs|light|390": {
+  "doc": [
+   608,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [
+   {
+    "el": "div.tabs",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "button.tab[needs-tab-waiting]",
+    "why": "outside window",
+    "l": 347,
+    "r": 462,
+    "w": 115
+   },
+   {
+    "el": "span.tab-count[needs-tab-count-waiting]",
+    "why": "outside window",
+    "l": 422,
+    "r": 446,
+    "w": 24
+   },
+   {
+    "el": "div.needs-list",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "div.needs-lead[needs-lead]",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "p.",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "ul.needs-define[needs-define]",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "li.",
+    "why": "outside window",
+    "l": 256,
+    "r": 608,
+    "w": 352
+   },
+   {
+    "el": "details.note[unknown-explainer]",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "summary.",
+    "why": "outside window",
+    "l": 249,
+    "r": 591,
+    "w": 342
+   },
+   {
+    "el": "article.card[needs-card]",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "div.need-main",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "div.need-meta",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "span.faint[need-lead-number]",
+    "why": "outside window",
+    "l": 358,
+    "r": 437,
+    "w": 79
+   },
+   {
+    "el": "span.faint",
+    "why": "outside window",
+    "l": 453,
+    "r": 564,
+    "w": 111
+   },
+   {
+    "el": "div.need-head",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "h2.",
+    "why": "outside window",
+    "l": 340,
+    "r": 583,
+    "w": 243
+   },
+   {
+    "el": "p.need-why",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "details.details",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "dl.kv",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "dt.",
+    "why": "outside window",
+    "l": 257,
+    "r": 415,
+    "w": 158
+   },
+   {
+    "el": "dd.",
+    "why": "outside window",
+    "l": 439,
+    "r": 583,
+    "w": 144
+   },
+   {
+    "el": "div.need-actions",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "span.need-check[need-check-first]",
+    "why": "outside window",
+    "l": 335,
+    "r": 503,
+    "w": 169
+   },
+   {
+    "el": "span.pill",
+    "why": "outside window",
+    "l": 257,
+    "r": 402,
+    "w": 145
+   },
+   {
+    "el": "button.btn[action-resolve-sent]",
+    "why": "outside window",
+    "l": 257,
+    "r": 436,
+    "w": 179
+   },
+   {
+    "el": "span.pill",
+    "why": "outside window",
+    "l": 257,
+    "r": 405,
+    "w": 148
+   },
+   {
+    "el": "p.need-next[need-next]",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "article.card[needs-card]",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   }
+  ],
+  "nOff": 29,
+  "scrolls": [],
+  "shell": "208px 182px"
+ },
+ "log|light|390": {
+  "doc": [
+   803,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [
+   {
+    "el": "p.note[log-note]",
+    "why": "outside window",
+    "l": 232,
+    "r": 434,
+    "w": 202
+   },
+   {
+    "el": "span.",
+    "why": "outside window",
+    "l": 279,
+    "r": 417,
+    "w": 138
+   },
+   {
+    "el": "div.toolbar",
+    "why": "outside window",
+    "l": 232,
+    "r": 434,
+    "w": 202
+   },
+   {
+    "el": "select.select[log-result-filter]",
+    "why": "outside window",
+    "l": 232,
+    "r": 434,
+    "w": 202
+   },
+   {
+    "el": "span.muted",
+    "why": "outside window",
+    "l": 369,
+    "r": 434,
+    "w": 65
+   },
+   {
+    "el": "div.log-out",
+    "why": "outside window",
+    "l": 232,
+    "r": 434,
+    "w": 202
+   },
+   {
+    "el": "div.table-wrap[log-table]",
+    "why": "outside window",
+    "l": 232,
+    "r": 434,
+    "w": 202
+   }
+  ],
+  "nOff": 7,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 760,
+    "cw": 200
+   }
+  ],
+  "shell": "208px 182px"
+ },
+ "data|light|390": {
+  "doc": [
+   423,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [
+   {
+    "el": "div.card-head",
+    "why": "outside window",
+    "l": 257,
+    "r": 423,
+    "w": 166
+   },
+   {
+    "el": "h2.",
+    "why": "outside window",
+    "l": 257,
+    "r": 423,
+    "w": 166
+   },
+   {
+    "el": "p.why",
+    "why": "outside window",
+    "l": 257,
+    "r": 423,
+    "w": 166
+   },
+   {
+    "el": "ul.list",
+    "why": "outside window",
+    "l": 257,
+    "r": 423,
+    "w": 166
+   },
+   {
+    "el": "li.dt-acc",
+    "why": "outside window",
+    "l": 257,
+    "r": 423,
+    "w": 166
+   },
+   {
+    "el": "span.pill",
+    "why": "outside window",
+    "l": 385,
+    "r": 423,
+    "w": 38
+   },
+   {
+    "el": "li.dt-acc",
+    "why": "outside window",
+    "l": 257,
+    "r": 423,
+    "w": 166
+   },
+   {
+    "el": "span.pill",
+    "why": "outside window",
+    "l": 386,
+    "r": 423,
+    "w": 37
+   }
+  ],
+  "nOff": 8,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 468,
+    "cw": 121
+   }
+  ],
+  "shell": "208px 182px"
+ },
+ "demo|light|390": {
+  "doc": [
+   477,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [
+   {
+    "el": "div.card-head",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "h2.",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "p.why",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "div.dm-form",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "label.field",
+    "why": "outside window",
+    "l": 375,
+    "r": 477,
+    "w": 102
+   },
+   {
+    "el": "select.select[demo-door]",
+    "why": "outside window",
+    "l": 375,
+    "r": 477,
+    "w": 102
+   },
+   {
+    "el": "div.dm-actions",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "div.dm-action",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "button.btn[demo-send]",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "p.muted",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "button.btn[demo-send-again]",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   }
+  ],
+  "nOff": 11,
+  "scrolls": [],
+  "shell": "208px 182px"
+ },
+ "lead-panel|light|390": {
+  "doc": [
+   632,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 182px"
+ },
+ "confirm-dialog|light|390": {
+  "doc": [
+   608,
+   390
+  ],
+  "scope": [
+   17,
+   373
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 182px"
+ },
+ "overview|light|700": {
+  "doc": [
+   754,
+   700
+  ],
+  "scope": [
+   0,
+   700
+  ],
+  "off": [
+   {
+    "el": "div.ov",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.ov-kpis",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "article.kpi[kpi-ai-calls]",
+    "why": "outside window",
+    "l": 659,
+    "r": 754,
+    "w": 95
+   },
+   {
+    "el": "div.kpi-label",
+    "why": "outside window",
+    "l": 676,
+    "r": 737,
+    "w": 61
+   },
+   {
+    "el": "span.",
+    "why": "outside window",
+    "l": 688,
+    "r": 737,
+    "w": 49
+   },
+   {
+    "el": "div.kpi-value[kpi-ai-calls-value]",
+    "why": "outside window",
+    "l": 676,
+    "r": 737,
+    "w": 61
+   },
+   {
+    "el": "div.kpi-caption",
+    "why": "outside window",
+    "l": 676,
+    "r": 737,
+    "w": 61
+   },
+   {
+    "el": "section.dm-strip[connections-strip]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.dm-cell",
+    "why": "outside window",
+    "l": 493,
+    "r": 753,
+    "w": 260
+   },
+   {
+    "el": "div.eyebrow",
+    "why": "outside window",
+    "l": 510,
+    "r": 737,
+    "w": 227
+   },
+   {
+    "el": "div.dm-cell-main",
+    "why": "outside window",
+    "l": 510,
+    "r": 737,
+    "w": 227
+   },
+   {
+    "el": "div.dm-cell-sub",
+    "why": "outside window",
+    "l": 510,
+    "r": 737,
+    "w": 227
+   },
+   {
+    "el": "div.ov-proof",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.dm-proof[proof]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.dm-proof-row",
+    "why": "outside window",
+    "l": 249,
+    "r": 737,
+    "w": 488
+   },
+   {
+    "el": "div.dm-figure",
+    "why": "outside window",
+    "l": 561,
+    "r": 737,
+    "w": 176
+   },
+   {
+    "el": "div.dm-figure-value[proof-outbox]",
+    "why": "outside window",
+    "l": 561,
+    "r": 737,
+    "w": 176
+   },
+   {
+    "el": "div.dm-figure-label",
+    "why": "outside window",
+    "l": 561,
+    "r": 737,
+    "w": 176
+   },
+   {
+    "el": "span.pill",
+    "why": "outside window",
+    "l": 609,
+    "r": 737,
+    "w": 128
+   },
+   {
+    "el": "div.grid",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.span-5",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "section.card[reconcile]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.card-head",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "h2.",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "p.why",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "div.ov-eq[reconcile-sentence]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "div.splitbar[reconcile-bar]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "svg.[object",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "ul.legend",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "li.",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "b.",
+    "why": "outside window",
+    "l": 721,
+    "r": 729,
+    "w": 8
+   },
+   {
+    "el": "p.muted[open-explained]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "div.span-7",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "section.card[doors]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.donut[doors-bar]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "ul.legend",
+    "why": "outside window",
+    "l": 421,
+    "r": 729,
+    "w": 308
+   },
+   {
+    "el": "span.faint",
+    "why": "outside window",
+    "l": 673,
+    "r": 729,
+    "w": 56
+   },
+   {
+    "el": "ul.list",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "time.num",
+    "why": "outside window",
+    "l": 687,
+    "r": 729,
+    "w": 42
+   },
+   {
+    "el": "p.ov-refused[refused-count]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   }
+  ],
+  "nOff": 55,
+  "scrolls": [],
+  "shell": "208px 492px"
+ },
+ "leads|light|700": {
+  "doc": [
+   700,
+   700
+  ],
+  "scope": [
+   0,
+   700
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 696,
+    "cw": 442
+   }
+  ],
+  "shell": "208px 492px"
+ },
+ "needs|light|700": {
+  "doc": [
+   700,
+   700
+  ],
+  "scope": [
+   0,
+   700
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 492px"
+ },
+ "log|light|700": {
+  "doc": [
+   803,
+   700
+  ],
+  "scope": [
+   0,
+   700
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 760,
+    "cw": 442
+   }
+  ],
+  "shell": "208px 492px"
+ },
+ "data|light|700": {
+  "doc": [
+   700,
+   700
+  ],
+  "scope": [
+   0,
+   700
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 468,
+    "cw": 392
+   }
+  ],
+  "shell": "208px 492px"
+ },
+ "demo|light|700": {
+  "doc": [
+   700,
+   700
+  ],
+  "scope": [
+   0,
+   700
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 492px"
+ },
+ "lead-panel|light|700": {
+  "doc": [
+   700,
+   700
+  ],
+  "scope": [
+   100,
+   700
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 492px"
+ },
+ "confirm-dialog|light|700": {
+  "doc": [
+   700,
+   700
+  ],
+  "scope": [
+   120,
+   580
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 492px"
+ },
+ "overview|light|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   0,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 692px"
+ },
+ "leads|light|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   0,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 696,
+    "cw": 642
+   }
+  ],
+  "shell": "208px 692px"
+ },
+ "needs|light|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   0,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 692px"
+ },
+ "log|light|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   0,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 760,
+    "cw": 642
+   }
+  ],
+  "shell": "208px 692px"
+ },
+ "data|light|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   0,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 692px"
+ },
+ "demo|light|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   0,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 692px"
+ },
+ "lead-panel|light|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   300,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 692px"
+ },
+ "confirm-dialog|light|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   220,
+   680
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 692px"
+ },
+ "overview|light|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   0,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "leads|light|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   0,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "needs|light|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   0,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "log|light|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   0,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "data|light|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   0,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "demo|light|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   0,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "lead-panel|light|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   500,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "confirm-dialog|light|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   320,
+   780
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "overview|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   0,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "leads|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   0,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "needs|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   0,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "log|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   0,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "data|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   0,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "demo|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   0,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "lead-panel|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   680,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "confirm-dialog|light|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   410,
+   870
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "overview|dark|390": {
+  "doc": [
+   754,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [
+   {
+    "el": "div.ov",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.ov-kpis",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "article.kpi[kpi-outbox]",
+    "why": "outside window",
+    "l": 339,
+    "r": 434,
+    "w": 95
+   },
+   {
+    "el": "div.kpi-label",
+    "why": "outside window",
+    "l": 356,
+    "r": 417,
+    "w": 61
+   },
+   {
+    "el": "span.",
+    "why": "outside window",
+    "l": 368,
+    "r": 417,
+    "w": 49
+   },
+   {
+    "el": "div.kpi-value[kpi-outbox-value]",
+    "why": "outside window",
+    "l": 356,
+    "r": 417,
+    "w": 61
+   },
+   {
+    "el": "div.kpi-caption",
+    "why": "outside window",
+    "l": 356,
+    "r": 417,
+    "w": 61
+   },
+   {
+    "el": "article.kpi[kpi-duplicates]",
+    "why": "outside window",
+    "l": 446,
+    "r": 540,
+    "w": 95
+   },
+   {
+    "el": "span.dot",
+    "why": "outside window",
+    "l": 463,
+    "r": 471,
+    "w": 8
+   },
+   {
+    "el": "section.dm-strip[connections-strip]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.dm-cell",
+    "why": "outside window",
+    "l": 233,
+    "r": 493,
+    "w": 260
+   },
+   {
+    "el": "div.eyebrow",
+    "why": "outside window",
+    "l": 249,
+    "r": 477,
+    "w": 228
+   },
+   {
+    "el": "div.dm-cell-main",
+    "why": "outside window",
+    "l": 249,
+    "r": 477,
+    "w": 228
+   },
+   {
+    "el": "div.dm-cell-sub",
+    "why": "outside window",
+    "l": 249,
+    "r": 477,
+    "w": 228
+   },
+   {
+    "el": "span.dm-dot",
+    "why": "outside window",
+    "l": 510,
+    "r": 518,
+    "w": 8
+   },
+   {
+    "el": "b.num[conn-crm-count]",
+    "why": "outside window",
+    "l": 526,
+    "r": 536,
+    "w": 10
+   },
+   {
+    "el": "span.dm-dot",
+    "why": "outside window",
+    "l": 510,
+    "r": 518,
+    "w": 8
+   },
+   {
+    "el": "div.ov-proof",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.dm-proof[proof]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.dm-proof-row",
+    "why": "outside window",
+    "l": 249,
+    "r": 737,
+    "w": 488
+   },
+   {
+    "el": "div.dm-figure",
+    "why": "outside window",
+    "l": 249,
+    "r": 425,
+    "w": 176
+   },
+   {
+    "el": "div.dm-figure-value[proof-desk]",
+    "why": "outside window",
+    "l": 249,
+    "r": 425,
+    "w": 176
+   },
+   {
+    "el": "div.dm-figure-label",
+    "why": "outside window",
+    "l": 249,
+    "r": 425,
+    "w": 176
+   },
+   {
+    "el": "span.dm-vs",
+    "why": "outside window",
+    "l": 449,
+    "r": 537,
+    "w": 88
+   },
+   {
+    "el": "span.pill",
+    "why": "outside window",
+    "l": 609,
+    "r": 737,
+    "w": 128
+   },
+   {
+    "el": "svg.[object",
+    "why": "outside window",
+    "l": 619,
+    "r": 631,
+    "w": 12
+   },
+   {
+    "el": "div.grid",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.span-5",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "section.card[reconcile]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.card-head",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "h2.",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "span.info-tip",
+    "why": "outside window",
+    "l": 568,
+    "r": 582,
+    "w": 14
+   },
+   {
+    "el": "p.why",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "div.ov-eq[reconcile-sentence]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "div.ov-eqtext",
+    "why": "outside window",
+    "l": 303,
+    "r": 426,
+    "w": 123
+   },
+   {
+    "el": "b.",
+    "why": "outside window",
+    "l": 303,
+    "r": 426,
+    "w": 123
+   },
+   {
+    "el": "div.splitbar[reconcile-bar]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "ul.legend",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "li.",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "p.muted[open-explained]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   }
+  ],
+  "nOff": 79,
+  "scrolls": [],
+  "shell": "208px 182px"
+ },
+ "leads|dark|390": {
+  "doc": [
+   632,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [
+   {
+    "el": "div.sumstrip[leads-summary]",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   },
+   {
+    "el": "div.sumstat",
+    "why": "outside window",
+    "l": 366,
+    "r": 498,
+    "w": 133
+   },
+   {
+    "el": "div.sumstat-value",
+    "why": "outside window",
+    "l": 391,
+    "r": 474,
+    "w": 84
+   },
+   {
+    "el": "div.eyebrow",
+    "why": "outside window",
+    "l": 391,
+    "r": 474,
+    "w": 84
+   },
+   {
+    "el": "div.toolbar-block",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   },
+   {
+    "el": "div.toolbar",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   },
+   {
+    "el": "label.search",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   },
+   {
+    "el": "input.input[leads-search]",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   },
+   {
+    "el": "select.select[leads-state-filter]",
+    "why": "outside window",
+    "l": 232,
+    "r": 421,
+    "w": 189
+   },
+   {
+    "el": "span.spacer",
+    "why": "outside window",
+    "l": 433,
+    "r": 620,
+    "w": 187
+   },
+   {
+    "el": "label.hide-switch",
+    "why": "outside window",
+    "l": 232,
+    "r": 585,
+    "w": 353
+   },
+   {
+    "el": "span.",
+    "why": "outside window",
+    "l": 274,
+    "r": 477,
+    "w": 203
+   },
+   {
+    "el": "span.faint",
+    "why": "outside window",
+    "l": 485,
+    "r": 585,
+    "w": 100
+   },
+   {
+    "el": "span.faint[leads-search-hint]",
+    "why": "outside window",
+    "l": 232,
+    "r": 582,
+    "w": 350
+   },
+   {
+    "el": "div.leads-out",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   },
+   {
+    "el": "div.table-wrap[leads-table]",
+    "why": "outside window",
+    "l": 232,
+    "r": 632,
+    "w": 400
+   }
+  ],
+  "nOff": 16,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 696,
+    "cw": 398
+   }
+  ],
+  "shell": "208px 182px"
+ },
+ "needs|dark|390": {
+  "doc": [
+   608,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [
+   {
+    "el": "div.tabs",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "button.tab[needs-tab-waiting]",
+    "why": "outside window",
+    "l": 347,
+    "r": 462,
+    "w": 115
+   },
+   {
+    "el": "span.tab-count[needs-tab-count-waiting]",
+    "why": "outside window",
+    "l": 422,
+    "r": 446,
+    "w": 24
+   },
+   {
+    "el": "div.needs-list",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "div.needs-lead[needs-lead]",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "p.",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "ul.needs-define[needs-define]",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "li.",
+    "why": "outside window",
+    "l": 256,
+    "r": 608,
+    "w": 352
+   },
+   {
+    "el": "details.note[unknown-explainer]",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "summary.",
+    "why": "outside window",
+    "l": 249,
+    "r": 591,
+    "w": 342
+   },
+   {
+    "el": "article.card[needs-card]",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   },
+   {
+    "el": "div.need-main",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "div.need-meta",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "span.faint[need-lead-number]",
+    "why": "outside window",
+    "l": 358,
+    "r": 437,
+    "w": 79
+   },
+   {
+    "el": "span.faint",
+    "why": "outside window",
+    "l": 453,
+    "r": 564,
+    "w": 111
+   },
+   {
+    "el": "div.need-head",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "h2.",
+    "why": "outside window",
+    "l": 340,
+    "r": 583,
+    "w": 243
+   },
+   {
+    "el": "p.need-why",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "details.details",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "dl.kv",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "dt.",
+    "why": "outside window",
+    "l": 257,
+    "r": 415,
+    "w": 158
+   },
+   {
+    "el": "dd.",
+    "why": "outside window",
+    "l": 439,
+    "r": 583,
+    "w": 144
+   },
+   {
+    "el": "div.need-actions",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "span.need-check[need-check-first]",
+    "why": "outside window",
+    "l": 335,
+    "r": 503,
+    "w": 169
+   },
+   {
+    "el": "span.pill",
+    "why": "outside window",
+    "l": 257,
+    "r": 402,
+    "w": 145
+   },
+   {
+    "el": "button.btn[action-resolve-sent]",
+    "why": "outside window",
+    "l": 257,
+    "r": 436,
+    "w": 179
+   },
+   {
+    "el": "span.pill",
+    "why": "outside window",
+    "l": 257,
+    "r": 405,
+    "w": 148
+   },
+   {
+    "el": "p.need-next[need-next]",
+    "why": "outside window",
+    "l": 257,
+    "r": 583,
+    "w": 326
+   },
+   {
+    "el": "article.card[needs-card]",
+    "why": "outside window",
+    "l": 232,
+    "r": 608,
+    "w": 376
+   }
+  ],
+  "nOff": 29,
+  "scrolls": [],
+  "shell": "208px 182px"
+ },
+ "log|dark|390": {
+  "doc": [
+   803,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [
+   {
+    "el": "p.note[log-note]",
+    "why": "outside window",
+    "l": 232,
+    "r": 434,
+    "w": 202
+   },
+   {
+    "el": "span.",
+    "why": "outside window",
+    "l": 279,
+    "r": 417,
+    "w": 138
+   },
+   {
+    "el": "div.toolbar",
+    "why": "outside window",
+    "l": 232,
+    "r": 434,
+    "w": 202
+   },
+   {
+    "el": "select.select[log-result-filter]",
+    "why": "outside window",
+    "l": 232,
+    "r": 434,
+    "w": 202
+   },
+   {
+    "el": "span.muted",
+    "why": "outside window",
+    "l": 369,
+    "r": 434,
+    "w": 65
+   },
+   {
+    "el": "div.log-out",
+    "why": "outside window",
+    "l": 232,
+    "r": 434,
+    "w": 202
+   },
+   {
+    "el": "div.table-wrap[log-table]",
+    "why": "outside window",
+    "l": 232,
+    "r": 434,
+    "w": 202
+   }
+  ],
+  "nOff": 7,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 760,
+    "cw": 200
+   }
+  ],
+  "shell": "208px 182px"
+ },
+ "data|dark|390": {
+  "doc": [
+   423,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [
+   {
+    "el": "div.card-head",
+    "why": "outside window",
+    "l": 257,
+    "r": 423,
+    "w": 166
+   },
+   {
+    "el": "h2.",
+    "why": "outside window",
+    "l": 257,
+    "r": 423,
+    "w": 166
+   },
+   {
+    "el": "p.why",
+    "why": "outside window",
+    "l": 257,
+    "r": 423,
+    "w": 166
+   },
+   {
+    "el": "ul.list",
+    "why": "outside window",
+    "l": 257,
+    "r": 423,
+    "w": 166
+   },
+   {
+    "el": "li.dt-acc",
+    "why": "outside window",
+    "l": 257,
+    "r": 423,
+    "w": 166
+   },
+   {
+    "el": "span.pill",
+    "why": "outside window",
+    "l": 385,
+    "r": 423,
+    "w": 38
+   },
+   {
+    "el": "li.dt-acc",
+    "why": "outside window",
+    "l": 257,
+    "r": 423,
+    "w": 166
+   },
+   {
+    "el": "span.pill",
+    "why": "outside window",
+    "l": 386,
+    "r": 423,
+    "w": 37
+   }
+  ],
+  "nOff": 8,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 468,
+    "cw": 121
+   }
+  ],
+  "shell": "208px 182px"
+ },
+ "demo|dark|390": {
+  "doc": [
+   477,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [
+   {
+    "el": "div.card-head",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "h2.",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "p.why",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "div.dm-form",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "label.field",
+    "why": "outside window",
+    "l": 375,
+    "r": 477,
+    "w": 102
+   },
+   {
+    "el": "select.select[demo-door]",
+    "why": "outside window",
+    "l": 375,
+    "r": 477,
+    "w": 102
+   },
+   {
+    "el": "div.dm-actions",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "div.dm-action",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "button.btn[demo-send]",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "p.muted",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   },
+   {
+    "el": "button.btn[demo-send-again]",
+    "why": "outside window",
+    "l": 257,
+    "r": 477,
+    "w": 220
+   }
+  ],
+  "nOff": 11,
+  "scrolls": [],
+  "shell": "208px 182px"
+ },
+ "lead-panel|dark|390": {
+  "doc": [
+   632,
+   390
+  ],
+  "scope": [
+   0,
+   390
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 182px"
+ },
+ "confirm-dialog|dark|390": {
+  "doc": [
+   608,
+   390
+  ],
+  "scope": [
+   17,
+   373
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 182px"
+ },
+ "overview|dark|700": {
+  "doc": [
+   754,
+   700
+  ],
+  "scope": [
+   0,
+   700
+  ],
+  "off": [
+   {
+    "el": "div.ov",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.ov-kpis",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "article.kpi[kpi-ai-calls]",
+    "why": "outside window",
+    "l": 659,
+    "r": 754,
+    "w": 95
+   },
+   {
+    "el": "div.kpi-label",
+    "why": "outside window",
+    "l": 676,
+    "r": 737,
+    "w": 61
+   },
+   {
+    "el": "span.",
+    "why": "outside window",
+    "l": 688,
+    "r": 737,
+    "w": 49
+   },
+   {
+    "el": "div.kpi-value[kpi-ai-calls-value]",
+    "why": "outside window",
+    "l": 676,
+    "r": 737,
+    "w": 61
+   },
+   {
+    "el": "div.kpi-caption",
+    "why": "outside window",
+    "l": 676,
+    "r": 737,
+    "w": 61
+   },
+   {
+    "el": "section.dm-strip[connections-strip]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.dm-cell",
+    "why": "outside window",
+    "l": 493,
+    "r": 753,
+    "w": 260
+   },
+   {
+    "el": "div.eyebrow",
+    "why": "outside window",
+    "l": 510,
+    "r": 737,
+    "w": 227
+   },
+   {
+    "el": "div.dm-cell-main",
+    "why": "outside window",
+    "l": 510,
+    "r": 737,
+    "w": 227
+   },
+   {
+    "el": "div.dm-cell-sub",
+    "why": "outside window",
+    "l": 510,
+    "r": 737,
+    "w": 227
+   },
+   {
+    "el": "div.ov-proof",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.dm-proof[proof]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.dm-proof-row",
+    "why": "outside window",
+    "l": 249,
+    "r": 737,
+    "w": 488
+   },
+   {
+    "el": "div.dm-figure",
+    "why": "outside window",
+    "l": 561,
+    "r": 737,
+    "w": 176
+   },
+   {
+    "el": "div.dm-figure-value[proof-outbox]",
+    "why": "outside window",
+    "l": 561,
+    "r": 737,
+    "w": 176
+   },
+   {
+    "el": "div.dm-figure-label",
+    "why": "outside window",
+    "l": 561,
+    "r": 737,
+    "w": 176
+   },
+   {
+    "el": "span.pill",
+    "why": "outside window",
+    "l": 609,
+    "r": 737,
+    "w": 128
+   },
+   {
+    "el": "div.grid",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.span-5",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "section.card[reconcile]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.card-head",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "h2.",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "p.why",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "div.ov-eq[reconcile-sentence]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "div.splitbar[reconcile-bar]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "svg.[object",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "ul.legend",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "li.",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "b.",
+    "why": "outside window",
+    "l": 721,
+    "r": 729,
+    "w": 8
+   },
+   {
+    "el": "p.muted[open-explained]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "div.span-7",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "section.card[doors]",
+    "why": "outside window",
+    "l": 232,
+    "r": 754,
+    "w": 522
+   },
+   {
+    "el": "div.donut[doors-bar]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "ul.legend",
+    "why": "outside window",
+    "l": 421,
+    "r": 729,
+    "w": 308
+   },
+   {
+    "el": "span.faint",
+    "why": "outside window",
+    "l": 673,
+    "r": 729,
+    "w": 56
+   },
+   {
+    "el": "ul.list",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   },
+   {
+    "el": "time.num",
+    "why": "outside window",
+    "l": 679,
+    "r": 729,
+    "w": 50
+   },
+   {
+    "el": "p.ov-refused[refused-count]",
+    "why": "outside window",
+    "l": 257,
+    "r": 729,
+    "w": 472
+   }
+  ],
+  "nOff": 54,
+  "scrolls": [],
+  "shell": "208px 492px"
+ },
+ "leads|dark|700": {
+  "doc": [
+   700,
+   700
+  ],
+  "scope": [
+   0,
+   700
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 696,
+    "cw": 442
+   }
+  ],
+  "shell": "208px 492px"
+ },
+ "needs|dark|700": {
+  "doc": [
+   700,
+   700
+  ],
+  "scope": [
+   0,
+   700
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 492px"
+ },
+ "log|dark|700": {
+  "doc": [
+   803,
+   700
+  ],
+  "scope": [
+   0,
+   700
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 760,
+    "cw": 442
+   }
+  ],
+  "shell": "208px 492px"
+ },
+ "data|dark|700": {
+  "doc": [
+   700,
+   700
+  ],
+  "scope": [
+   0,
+   700
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 468,
+    "cw": 392
+   }
+  ],
+  "shell": "208px 492px"
+ },
+ "demo|dark|700": {
+  "doc": [
+   700,
+   700
+  ],
+  "scope": [
+   0,
+   700
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 492px"
+ },
+ "lead-panel|dark|700": {
+  "doc": [
+   700,
+   700
+  ],
+  "scope": [
+   100,
+   700
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 492px"
+ },
+ "confirm-dialog|dark|700": {
+  "doc": [
+   700,
+   700
+  ],
+  "scope": [
+   120,
+   580
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 492px"
+ },
+ "overview|dark|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   0,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 692px"
+ },
+ "leads|dark|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   0,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 696,
+    "cw": 642
+   }
+  ],
+  "shell": "208px 692px"
+ },
+ "needs|dark|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   0,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 692px"
+ },
+ "log|dark|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   0,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [
+   {
+    "el": "div.table-wrap",
+    "sw": 760,
+    "cw": 642
+   }
+  ],
+  "shell": "208px 692px"
+ },
+ "data|dark|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   0,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 692px"
+ },
+ "demo|dark|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   0,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 692px"
+ },
+ "lead-panel|dark|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   300,
+   900
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 692px"
+ },
+ "confirm-dialog|dark|900": {
+  "doc": [
+   900,
+   900
+  ],
+  "scope": [
+   220,
+   680
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 692px"
+ },
+ "overview|dark|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   0,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "leads|dark|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   0,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "needs|dark|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   0,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "log|dark|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   0,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "data|dark|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   0,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "demo|dark|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   0,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "lead-panel|dark|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   500,
+   1100
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "confirm-dialog|dark|1100": {
+  "doc": [
+   1100,
+   1100
+  ],
+  "scope": [
+   320,
+   780
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "208px 892px"
+ },
+ "overview|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   0,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "leads|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   0,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "needs|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   0,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "log|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   0,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "data|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   0,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "demo|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   0,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "lead-panel|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   680,
+   1280
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ },
+ "confirm-dialog|dark|1280": {
+  "doc": [
+   1280,
+   1280
+  ],
+  "scope": [
+   410,
+   870
+  ],
+  "off": [],
+  "nOff": 0,
+  "scrolls": [],
+  "shell": "240px 1040px"
+ }
+}
