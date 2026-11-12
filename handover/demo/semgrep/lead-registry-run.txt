@@ -1,0 +1,5 @@
+LEAD REGISTRY RUN 2026-11-12 ~21:46Z (laptop, throwaway Docker container, no secrets, made-up data only)
+Tree: pr-3-tests at origin head 0841f36 (batch 1 + coverage applied), mounted read-only.
+Command: docker run --rm -v <tree>:/src:ro -w /src semgrep/semgrep:1.185.0 semgrep scan --config p/python --config p/javascript --metrics=off --severity ERROR --error --quiet src scripts load_tools tools n8n
+Result: exit code 0, no output (quiet mode prints only findings). Meaning: the scan ran (registry rules fetched; a registry or config failure exits non-zero) and reported NO finding of severity ERROR in those folders.
+NOT checked: that the container really fetched both packs (--quiet hides it: lane 14 should say whether the workflow log shows the pack list), tests/ and demo_only/ (not scanned by the workflow), WARNING-level findings, other Semgrep versions.

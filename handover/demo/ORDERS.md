@@ -102,3 +102,6 @@ Batch 1 (items 1-5) applied on pr-3-tests and pushed: new head 2ce1f98. Lint, fo
 3. 10c-2 M2 (E501 over 120 chars in the speed patch test line): fix by wrapping the line in the patch (ruff format); M1 (`:memory:.lock` stray file): fix, the refusal must happen BEFORE the lock is taken, with a test that no file is left.
 4. Browser-lock allowance tightening: the lead owns it (one line after codeant2-gitleaks is applied). PR 89 branch name: drop it for good. Semgrep rules in the public log: already decided yes (p/python, p/javascript).
 5. Lane 13b: if still silent at 21:55Z stop it, take what exists, start a fresh builder from its files.
+
+## LEAD NOTE 21:48Z: SEMGREP RUN DONE
+handover/demo/semgrep/lead-registry-run.txt: the real scan with p/python + p/javascript, severity ERROR, on the stack head: exit 0, no findings. Update lane 14's SUMMARY/workflow text to say 'ERROR-level clean on the stack head at 0841f36 as of this run' (and no more), keep the first live CI run as the check. The `--quiet` hides the pack list: have the workflow print the version and the pack names once (not rule bodies).
