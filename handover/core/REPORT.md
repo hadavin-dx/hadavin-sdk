@@ -1,6 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## 19:15Z: status (ORDER 258)
+- #72 MERGED (lead). READY-TO-MERGE.md updated at the top: #71 NEEDS-FIX, #72 MERGED, security-check correction, main now a8b4d8e8.
+- Started: #71 fix builder (2 Majors + nits; ref wip/cloud-p0a-fix) and #72 nits builder (4 nits, one change from main; ref wip/cloud-p6a-nits). Stack rebase builders told to use a8b4d8e8.
+- Part 3 (stand-ins) resolve r1 done: 8 Majors in 4 classes, 0 contested; batch-2 builder NOT started yet (waits for a free agent slot and the part-2 head; part 2 builder still running). Report handover/reviews/PD-standins/goldfish_review_report-r1.md.
+- Running now (about 9): 3 stack rebasers, AK1-a, Q8b gate-fix, #71 fix, #72 nits, part 2 bind, part 6 banner, AK-G2-a b2, Q8c-1 b16, P3a-2 b9, evidence runners for Q8a-1 b19 and Q8c-1.
+
 ## 19:13Z: status (ORDER 257 answered)
 - AK1-a: builder started (core/ak1-a from main 2a8c2aac, push wip/cloud-ak1-a). Q8b b14: gate-fix builder started (class: load-dependent kill; full gate at final head, then ONE evidence runner, then reviews; no review round before). Part 5: already pushed (wip/cloud-pd-reset 39434e8c); the two nosec comments are removed (not justified); gitleaks clean (I ran it); gates still queued in heavy.sh; EGM review owed.
 - CORRECTION to my READY-TO-MERGE item 1 (security job): see OQ-38. Real causes: draft PRs skip CI; stacked PRs get no run; #89 fails security on Semgrep chmod 0o700; gitleaks history scan may fail branches with handover strings (not seen in a log). #71/#72 pass because they branch from main.
