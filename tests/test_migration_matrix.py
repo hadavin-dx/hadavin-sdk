@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import os
 import re
+import uuid
 from pathlib import Path
 
 import pytest
@@ -855,22 +856,17 @@ O_NOT_PROMISED = {
     "X01t X11 X12": "a right of a third role on a table outside the map; a function of another application left callable by everyone; a SECURITY DEFINER function of another application: pinned as returning normally in both variants",
 }
 # The carriers still missing and the controls still missing, each with the reason; the lead decides the next round.
-O_NOT_BUILT_CARRIERS = {
-    "C8": "an object made a member of an extension the migration role owns: needs a trusted extension and CREATE on the database for a plain role (ticket fact 14)",
-    "C9": "a login that differs from the role (`options=-c role=M`): needs a second login; not built in batch 3e (time box)",
-    "C13": "move a map table to another schema and recreate it: not built in batch 3e (time box)",
-}
-O_NOT_BUILT_CONTROLS = {
-    "K2": "the schema of the run is `public` with the server's own access list: needs a database of its own (a `case`)",
-    "K10": "every relation kind with its row type (fact 33): not built in batch 3e (time box)",
-}
+O_NOT_BUILT_CARRIERS: dict[str, str] = {}
+O_NOT_BUILT_CONTROLS: dict[str, str] = {}
+# Carriers and controls built as their own tests, not as generated cells: C8 (2 cells), C9 (2), C13 (4: two forms x two
+# variants), controls K2, K5 to K8, K10 (2); each carries the reason it is not a generated cell in its own docstring.
 
 
 def test_the_matrix_has_exactly_the_planned_cells():
     cells = _cells()
     controls = (
-        len(O_CONTROLS) + len(O_CONTROLS_BUILT) * len(O_VARIANTS) + 2 + 4
-    )  # K1, K3/K11/K12 x 2, K4, K9, and the four real-login controls K5, K6, K7, K8 (K8 pinned as three refusals)
+        len(O_CONTROLS) + len(O_CONTROLS_BUILT) * len(O_VARIANTS) + 2 + 7
+    )  # K1, K3/K11/K12 x 2, K4, K9, K10 x 2, and the four real-login controls K5, K6, K7, K8 (K8 pinned as three refusals)
     total = len(cells) + controls
     print(
         f"matrix cells: {len(O_EFFECTS)} effects x {len(O_CARRIERS)} carriers x {len(O_VARIANTS)} variants minus the "
@@ -890,7 +886,7 @@ def test_the_matrix_has_exactly_the_planned_cells():
     assert (len(O_EFFECTS), len(O_CARRIERS), len(O_VARIANTS), len(C10_STATEMENTS)) == (27, 10, 2, 9)
     assert len(cells) == 27 * 10 * 2 - (27 - 9) * 2 == 504 and len(set(cells)) == 504
     assert len(C6B_CELLS) == 54
-    assert controls == 14 and len(O_CONTROLS_BUILT) == 3 and total == 518
+    assert controls == 17 and len(O_CONTROLS_BUILT) == 3 and total == 521
     assert len(X_EFFECTS) == 36
     assert [e[0] for e in O_EFFECTS] == sorted(e[0] for e in O_EFFECTS)
     # no row of the ticket is left out unlisted: the ids built (generated, or pre-existing under C12) plus the ids of the
@@ -1236,6 +1232,204 @@ def test_c5_the_trigger_of_a_later_file_really_runs_the_effect(ocell, monkeypatc
             mig.migrate(dsn)
         assert other in str(seen.value), str(seen.value)[:400]
     finally:
+        tp._drop_roles(other, rt)
+
+
+# C9 (ticket 7.4): the login differs from the role. The DSN logs in as L and carries `options=-c role=M`, so every statement of
+# the run, and the check after the commit, runs as M. Two cells: a clean run returns, keeps the switch (the check after the
+# commit reads `current_user` = M) and the oracle finds no excess right; a file that gives a right to everyone is refused (i)
+# and nothing is kept, so the switch does not hide the effect.
+@needs_pg
+@pytest.mark.real_connect
+@pytest.mark.parametrize("effect", ["clean", "select-on-a-map-table-to-everyone"])
+def test_c9_a_login_that_differs_from_the_role_is_judged_like_the_role(
+    effect, case, monkeypatch, tmp_path
+):
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+    from tests.fixtures import migration_role as helper
+
+    case.db.execute("GRANT USAGE ON LANGUAGE plpgsql TO PUBLIC")
+    m_dsn = _migration_login(case)
+    login = "hadavin_test_lg_" + uuid.uuid4().hex[:8]
+    case.admin.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(login)))
+    case.admin.execute(
+        sql.SQL("GRANT {} TO {}").format(sql.Identifier(case.role["m"]), sql.Identifier(login))
+    )
+    helper.set_login_password(case.db, login)
+    dsn = helper.login_dsn(
+        make_conninfo(
+            case._dsn,
+            dbname=case.db_name,
+            options=f"-c search_path={APP} -c role={case.role['m']}",
+        ),
+        login,
+    )
+    try:
+        if effect == "select-on-a-map-table-to-everyone":
+            tp._with_files(
+                monkeypatch,
+                tmp_path,
+                {"0006_effect.sql": _split_function("GRANT SELECT ON spend TO PUBLIC")},
+            )
+            with pytest.raises(errors.ConfigError) as seen:
+                mig.migrate(dsn, runtime_role=case.role["n"])
+            assert "inconsistent" not in str(seen.value), str(seen.value)[:300]
+        else:
+            assert mig.migrate(dsn, runtime_role=case.role["n"]) == [
+                p.stem for p in mig._migration_files()
+            ]
+            assert mig.migrate(dsn, runtime_role=case.role["n"]) == []
+    finally:
+        case.admin.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(login)))
+        case.admin.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(login)))
+    assert m_dsn
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_control_k2_the_schema_of_the_run_is_public_with_the_servers_own_access_list(case):
+    """K2: the run uses `public`, whose access list is the server's own (USAGE for everyone). That default is not an excess."""
+    from hadavin_sdk.store import migrate as mig
+
+    case.db.execute("GRANT USAGE ON LANGUAGE plpgsql TO PUBLIC")
+    dsn = _migration_login(case, "public")
+    assert mig.migrate(dsn, runtime_role=case.role["n"]) == [p.stem for p in mig._migration_files()]
+    assert mig.migrate(dsn, runtime_role=case.role["n"]) == []
+
+
+# C8 (ticket 7.4, fact 14): the object is made a member of an extension the migration role owns, then the effect. `citext` is a
+# trusted extension, so a plain role that holds CREATE on the database may make it (a `case`: the real plain login). The extension
+# is made by dynamic SQL (a written CREATE EXTENSION is refused by the text rules). The object is not skipped for being an
+# extension member: the right to everyone is found, outcome (i), nothing kept.
+@needs_pg
+@pytest.mark.real_connect
+@pytest.mark.parametrize("variant", O_VARIANTS)
+def test_c8_an_object_that_is_an_extension_member_is_still_judged(
+    variant, case, monkeypatch, tmp_path
+):
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+
+    case.db.execute("GRANT USAGE ON LANGUAGE plpgsql TO PUBLIC")
+    dsn = _migration_login(case)
+    rt = case.role["n"] if variant == "with-roles" else None
+    roles = {"runtime_role": rt} if rt else {}
+    statements = [
+        "CREATE TABLE zz_member (a int)",
+        "CREATE EXTENSION citext",
+        "ALTER EXTENSION citext ADD TABLE zz_member",
+        "GRANT SELECT ON zz_member TO PUBLIC",
+    ]
+    body = "".join(_split_function(st) for st in statements)
+    tp._with_files(monkeypatch, tmp_path, {"0006_member.sql": body})
+    with pytest.raises(errors.ConfigError) as seen:
+        mig.migrate(dsn, **roles)
+    assert "inconsistent" not in str(seen.value) and "zz_member" in str(seen.value), str(
+        seen.value
+    )[:500]
+
+
+# K10 (fact 33): a file makes one object of every relation kind a plain role can make (a standalone type is no relation: its
+# default PUBLIC USAGE is an excess and is refused, see the C1 cells of the type effect). Each has a row type that PUBLIC may use
+# by default; that is not an excess right and the run must return with no excess for named roles and for everyone.
+@needs_pg
+@pytest.mark.parametrize("variant", O_VARIANTS)
+def test_control_k10_every_relation_kind_with_its_row_type_is_not_an_excess(
+    variant, ocell, monkeypatch, tmp_path
+):
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+
+    dsn, schema = ocell
+    other = "hadavin_test_mx_" + uuid.uuid4().hex[:8]
+    rt = "hadavin_test_mxr_" + uuid.uuid4().hex[:8]
+    tp._create_roles(other, rt)
+    try:
+        kinds = [
+            "CREATE TABLE zz_table (a int)",
+            "CREATE TABLE zz_part (a int) PARTITION BY RANGE (a)",
+            "CREATE TABLE zz_part_1 PARTITION OF zz_part FOR VALUES FROM (0) TO (10)",
+            "CREATE VIEW zz_view AS SELECT 1 AS a",
+            "CREATE MATERIALIZED VIEW zz_matview AS SELECT 1 AS a",
+            "CREATE SEQUENCE zz_seq",
+            "CREATE INDEX zz_idx ON zz_table (a)",
+        ]
+        body = "".join(_split_function(k) for k in kinds)
+        tp._with_files(monkeypatch, tmp_path, {"0006_kinds.sql": body})
+        roles = {"runtime_role": rt} if variant == "with-roles" else {}
+        assert mig.migrate(dsn, **roles) == tp.REAL + ["0006_kinds"]
+        assert _no_excess_rights(schema, other, rt if roles else None) == []
+        assert mig.migrate(dsn, **roles) == []
+    finally:
+        tp._drop_roles(other, rt)
+
+
+# C13 (ticket 7.4): move and recreate. A map table is moved to another schema (or renamed) and a table of the same name is made
+# again; the role that is not allowed anything holds a right on the moved table, which now lies outside the map. The map is
+# matched by schema, name and kind, so the moved table is judged like any table outside the map: outcome (i), nothing kept.
+C13_FORMS = {
+    "move-to-another-schema": (
+        "ALTER TABLE spend SET SCHEMA {o}x;\nCREATE TABLE spend (a int);\nGRANT SELECT ON {o}x.spend TO {who};\n"
+    ),
+    "plain-rename": "ALTER TABLE spend RENAME TO spend_old;\nCREATE TABLE spend (a int);\nGRANT SELECT ON spend_old TO {who};\n",
+}
+
+
+@needs_pg
+@pytest.mark.parametrize("variant", O_VARIANTS)
+@pytest.mark.parametrize("form", list(C13_FORMS))
+def test_c13_a_map_table_moved_or_renamed_and_made_again_is_refused_and_nothing_is_kept(
+    form, variant, ocell, monkeypatch, tmp_path
+):
+    import uuid
+
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+
+    dsn, schema = ocell
+    other = "hadavin_test_mx_" + uuid.uuid4().hex[:8]
+    rt = "hadavin_test_mxr_" + uuid.uuid4().hex[:8]
+    from tests.fixtures import migration_role as helper
+
+    moved_to = schema + "_m"
+    tp._create_roles(other, rt)
+    try:
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            helper.ensure_plain_role(admin)
+            admin.execute(
+                sql.SQL("CREATE SCHEMA {} AUTHORIZATION {}").format(
+                    sql.Identifier(moved_to), sql.Identifier(helper.PLAIN_ROLE)
+                )
+            )
+            admin.execute(
+                sql.SQL("GRANT USAGE ON SCHEMA {} TO PUBLIC").format(sql.Identifier(moved_to))
+            )
+        text = (
+            C13_FORMS[form]
+            .replace("{o}x", sql.Identifier(moved_to).as_string())
+            .replace("{who}", rt if variant == "with-roles" else "PUBLIC")
+        )
+        tp._with_files(monkeypatch, tmp_path, {"0006_move.sql": text})
+        roles = {"runtime_role": rt} if variant == "with-roles" else {}
+        with pytest.raises(errors.ConfigError) as seen:
+            mig.migrate(dsn, **roles)
+        assert "inconsistent" not in str(seen.value), str(seen.value)[:400]
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            kept = admin.execute(
+                "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
+                "WHERE n.nspname = %s AND c.relname = 'spend_old'",
+                (schema,),
+            ).fetchone()[0]
+        assert kept == 0
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            admin.execute(
+                sql.SQL("DROP SCHEMA IF EXISTS {} CASCADE").format(sql.Identifier(moved_to))
+            )
         tp._drop_roles(other, rt)
 
 
@@ -1608,7 +1802,8 @@ def _migration_login(case: Case, schema: str = APP) -> str:
 
     m = case.role["m"]
     case.admin.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(m)))
-    case.db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+    if schema != "public":
+        case.db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
     printed = mig.PLAIN_MIGRATION_ROLE_SQL.replace("migration_role", m).replace(
         "<schema>", sql.Identifier(schema).as_string()
     )

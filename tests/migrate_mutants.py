@@ -3666,6 +3666,30 @@ M: list[Mutant] = [
             "test_a_state_made_before_the_run_is_refused_and_no_file_runs[X28-named-role-owns-a-table/with-roles]",
         ),
     ),
+    Mutant(
+        "V86",
+        "B4 of batch 3e: the all-schema oracle leaves one schema out, so a right on an object of another schema is not seen",
+        "tests/fixtures/oracle.py",
+        "        for schema in self.schemas():\n            one = self.can(role, schema, **merged)\n",
+        '        for schema in [s for s in self.schemas() if s != "s"]:\n            one = self.can(role, schema, **merged)\n',
+        (
+            k(
+                T_MX,
+                "test_direction_2_sees_an_extra_right_on_an_object_outside_the_schema_of_the_run",
+            ),
+        ),
+    ),
+    Mutant(
+        "V87",
+        "C8 of batch 3e: an object that is a member of an extension is skipped by the check",
+        VERIFY,
+        '        ext = it.extension if (it.extension and not it.extension_family_owned) else ""\n        outside =',
+        '        ext = it.extension if (it.extension and not it.extension_family_owned) else ""\n        if it.extension:\n            continue\n        outside =',
+        (
+            k(T_MX, "test_c8_an_object_that_is_an_extension_member_is_still_judged[no-roles]"),
+            k(T_MX, "test_c8_an_object_that_is_an_extension_member_is_still_judged[with-roles]"),
+        ),
+    ),
 ]
 M.extend(STEP_MUTANTS)
 
