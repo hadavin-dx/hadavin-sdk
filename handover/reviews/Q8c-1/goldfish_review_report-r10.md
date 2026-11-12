@@ -19,7 +19,7 @@ Status: resolved
 
 ### [Issue 2] [`design` D10-1, `codebase` C10-3: one finding] - Severity: Major
 *   **Scope:** `tools/notes_lines_check.py:24-30, :41-51, :54-65, :85-92`; `tests/test_notes_lines_check.py`; `NOTES.md:29, :76-84, :88`; `.github/workflows/ci.yml`.
-*   **Description:** The check can pass with a missing id: an id is found in any cell, the file part is dropped from the key, `MIN_REASON=12`, only top-level sync tests are read, helpers and constants are not compared, a mistyped base commit makes every test new, and the tool is not in CI. The words "every test" and "no test weakened" are not shown by it.
+*   **Description:** The check can pass with a missing id: an id is found in any cell, the file part is dropped from the key, the reason length limit (12 characters), only top-level sync tests are read, helpers and constants are not compared, a mistyped base commit makes every test new, and the tool is not in CI. The words "every test" and "no test weakened" are not shown by it.
 *   ***AI Suggestion:*** PROPOSE FIX
 *   ***Justification:*** Valid; checked against the line ranges.
 *   ***Proposed Edit:*** Key on (file, id) read from the first two cells only; read `AsyncFunctionDef` and class methods; exit 1 when the base commit does not resolve; compare, for each test, the helpers, fixtures and constants it calls (same-file, one level at least) so a helper change lists its tests; raise the reason check to a real predicate (not just length); run it in CI on the files the PR touches. Drop "every" and "no test weakened" from docstring and NOTES wherever the tool cannot show them. Plants: id only in another row's reason cell, same name in two files, an async test, a method, a helper change, a bad base. A mutant for each new branch.
