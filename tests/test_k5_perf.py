@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import importlib
 import re
-import statistics
 import sys
 import time
 
@@ -30,13 +29,7 @@ def _redact_module():
 
 
 def _cpu(pattern: re.Pattern[str], text: str) -> float:
-    runs = []
-    for _ in range(3):
-        t0 = time.perf_counter()
-        for _match in pattern.finditer(text):
-            pass
-        runs.append(time.perf_counter() - t0)
-    return statistics.median(runs)
+    return timing.cpu_seconds(lambda t: [None for _match in pattern.finditer(t)], text)
 
 
 def _is_superlinear(measure, unit: str, small: int, big: int) -> bool:
@@ -95,12 +88,7 @@ E2E_UNITS = [
 def _e2e(text: str) -> float:
     from hadavin_sdk.guard import runmap
 
-    runs = []
-    for _ in range(3):
-        t0 = time.perf_counter()
-        runmap.redact_untrusted(text, {})
-        runs.append(time.perf_counter() - t0)
-    return statistics.median(runs)
+    return timing.cpu_seconds(lambda t: runmap.redact_untrusted(t, {}), text)
 
 
 @pytest.mark.perf

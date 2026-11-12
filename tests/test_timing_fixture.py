@@ -3,6 +3,9 @@ cannot change the result. The tests that use it with a real clock are marked `pe
 
 from __future__ import annotations
 
+import multiprocessing
+import os
+
 import pytest
 
 from tests.fixtures import timing
@@ -46,3 +49,71 @@ def test_there_is_no_fixed_seconds_floor_on_the_big_run():
     assert not hasattr(timing, "FLOOR_S")
     # 0.5 s on the big run after 0.01 s on the small run (4x the size) is 50x: flagged, however "fast" 0.5 s is
     assert timing.grows_faster_than_size(0.01, 0.5, 1000, 4000)
+
+
+def test_the_fastest_run_ignores_one_inflated_small_sample():
+    """A busy moment that slows ONE small run must not hide a real quadratic: noise only adds time, so the best of the runs
+    stands. With a single run per size (`repeats=1`) the same inflated sample hides it, which shows the test can fail."""
+
+    def measure_with_one_slow_first_small_run():
+        calls = {"small": 0}
+
+        def measure(text: str) -> float:
+            t = 1e-7 * len(text) ** 2
+            if len(text) == SMALL:
+                calls["small"] += 1
+                if calls["small"] == 1:
+                    return t * 50  # the first small run lands on a busy moment
+            return t
+
+        return measure
+
+    assert timing.is_superlinear(measure_with_one_slow_first_small_run(), "a", SMALL, BIG)
+    assert not timing.is_superlinear(
+        measure_with_one_slow_first_small_run(), "a", SMALL, BIG, repeats=1
+    )
+
+
+def test_the_best_of_is_the_minimum():
+    assert timing.best_of([0.5, 0.2, 9.0]) == 0.2
+
+
+def _spin() -> None:
+    while True:
+        pass
+
+
+@pytest.fixture
+def busy_cpus():
+    """One busy-loop process per CPU for the length of the test, always stopped afterwards."""
+    workers = [
+        multiprocessing.get_context("spawn").Process(target=_spin, daemon=True)
+        for _ in range(os.cpu_count() or 1)
+    ]
+    try:
+        for w in workers:
+            w.start()
+        yield
+    finally:
+        for w in workers:
+            w.terminate()
+        for w in workers:
+            w.join(timeout=10)
+
+
+def _linear_stand_in(text: str) -> int:
+    return sum(ord(c) for c in text)
+
+
+@pytest.mark.perf
+def test_the_harness_flags_a_real_quadratic_while_every_cpu_is_busy(busy_cpus):
+    assert timing.is_superlinear(
+        lambda t: timing.cpu_seconds(timing.quadratic_stand_in, t), "a", 16 * 1024, 128 * 1024
+    )
+
+
+@pytest.mark.perf
+def test_the_harness_passes_a_linear_cost_while_every_cpu_is_busy(busy_cpus):
+    assert not timing.is_superlinear(
+        lambda t: timing.cpu_seconds(_linear_stand_in, t), "a", 256 * 1024, 2048 * 1024
+    )
