@@ -58,7 +58,6 @@ puts in the strings."""
 from __future__ import annotations
 
 import contextlib
-import importlib
 import sys
 import threading
 from collections import Counter, defaultdict, deque
@@ -197,12 +196,11 @@ def _class_ok(key: tuple[str, str], cls: type) -> bool:
 
 
 def pin_all() -> None:
-    """Import and pin the five stand-in classes, the detector list and ``Approvals`` now (called when the approvals
-    receiver is imported). A class that cannot be imported is left for the first question (fail closed: the
-    first question pins it)."""
+    """Pin the five stand-in classes, the detector list and ``Approvals`` now (called when the approvals receiver
+    is imported, which imports their modules first). A class whose module is not loaded is left for the first
+    question (fail closed: the first question pins it)."""
     for key in _PINNED_KEYS:
         with contextlib.suppress(Exception):  # the lazy path pins it at the first question
-            importlib.import_module(key[0])
             cls = _live_class(key)
             if cls is not None:
                 _class_ok(key, cls)
