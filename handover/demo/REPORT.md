@@ -1,6 +1,33 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:07Z / 01:37 IST - DeepSource extra work DONE (review: no Blocker, no Major); 3 agents live (lane 7, lane 9, lane 8b)
+Status lines:
+- triage/REVIEW-extra.md: the one fresh review (D5 rule) found no Blocker and no Major in the classifications or the one cosmetic patch. It confirmed: demo_only/portal_demo.py:326 FALSE POSITIVE (`got` always has 3 items on every path incl. unreachable and deadline-passed); 'redefining format' is the stdlib `log_message(self, format, ...)` signature (6 sites in demo_only and tests plus a 4th in src/lead_desk/server.py:588: renaming would break the override); tests/support.py SQL builds nothing from non-constants (125 call sites: 120 literals, 5 locals assigned from literals); the other patterns (exec, next(), except-pass, JS catch, empty bodies, no-self, comprehensions) sampled (15+ instances): none REAL. Its only weak spot: test_desk_http_edge_cases.py:1213-1214 passes if no exception is raised (STYLE, noted).
+- Nits: (1) 'mypy 7 errors before and after' had no raw file: FIXED (evidence-extra-mypy-base.txt and -extra.txt: both 'Found 7 errors in 2 files', mypy 2.4.1); (2) the unpack proof had no script or command: PARTLY FIXED (note appended pointing at extra-tools/prove_unpack.py; the builder's original command and tree path were not recorded: reconstruction, not a re-run); (3) the table misses 3 more harmless except-pass in demo_only/fake_model_server.py and `except KeyboardInterrupt: pass` in two fakes: left; (4) the `time.sleep` sites in demo_only/scripts were not read by anyone: left, disclosed.
+- tests/support.py:441 `start_proc` pipe-drain lead: by reading NOT reachable in the current tests (tests/test_hung_adapter_calls.py does not use start_proc at all; the other users run lead_desk.server which prints a few one-line messages, far below a 64 KiB pipe). Told lane 9 to confirm with one grep and keep its focus on memory counters, repeated runs under load, the SYN-flooding correlation and the wait table. Nothing was run by the reviewer.
+- The one cosmetic patch (extra-demo-only.patch, `got[0], got[1], got[2]`) is not needed: it only silences a pylint inference weakness; whether DeepSource flags the same thing is UNPROVEN (rule id unknown). Keep or drop is your call; a `# skipcq` comment is the alternative but needs the rule id. Lane 3 and the DeepSource work are DONE: nothing is left in the DeepSource queue.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:07Z / 01:37 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a28f5af6a766a1b53 (agent, sonnet builder) | lane 7 Sonar coverage | 19:45 | 24 min | about 20:35; box ends 21:00 | running; pytest --cov (pid 5362) about 18 min in of a 40 min limit | coverage patch, PLAN.md | evidence-pytest-coverage.txt updating |
+| a1efeaddf3232ebcb (agent, sonnet evidence runner) | lane 9 hang reproduction + memory | 19:50 | 18 min | 20:50 | running with 2 busy loops (pids 2563, 2564, lane 9's own) and a full-suite RSS run | hang/RESULTS.md, memory-*.txt | batch files |
+| ac3a511599cfd9d0d (agent, sonnet builder) | lane 8b: playwright-only hashed file + decode-in-Chromium test + docs | 20:01 | 8 min | 20:50 | running; D11 design message queued 20:07 (not yet confirmed read) | docs-and-deps.patch v2, PLAN.md | fresh-venv2 pytest (pid 11404) running |
+Totals: agents live 3; shells I hold 0; pytest runs 3 plus lane 9's short runs and 2 busy loops (the machine is deliberately loaded by lane 9; load shown above); containers 0; nothing past its time box; no item without progress for 15 minutes (lane 8b's last file write is more than 5 minutes old but its pytest is alive: watching).
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| DeepSource extra work | 1 review done (closed) | r1 0B/0M/4N | evidence hygiene (missing raw files), table completeness | n/a (no second round) | YES (D5: one confirming review) | done |
+| lane 8 browser tests | v3 design in build | v1 review 0B/3M/8N | rule-20 own code; counts not measured on the final tree; Node hypothesis as fact | two design reversals by decision (D10, D11), not defect rounds | none (public repo dependency/test) | fresh review of v2 with no Major or Blocker |
+| lane 7 | 0 reviews | n/a | n/a | security path | no cap | fresh review without Major/Blocker |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| a23c0d1d4ac50ff68 (DeepSource review, sonnet read-only) | 3 min (20:06 to 20:09; 99 s of agent time) | 0B/0M/4N, saved triage/REVIEW-extra.md | yes |
+
 ## 2026-11-12 20:06Z / 01:36 IST - ORDER D11 applied to lane 8b; DeepSource builder done, its review running; 5 agents live
 Status lines:
 - D11 (decode the screenshot INSIDE Chromium, no Pillow, no own decoder): sent to lane 8b with the full design: canvas getImageData via page.evaluate; requirements-browser.in/.txt hold ONLY playwright==1.63.0 (+ its dependencies, hashed, Linux and Windows); the old and the new assertion shown SIDE BY SIDE (same sample points (60,880) and (60,height-40), tolerance 6, light and dark, loud failure on a short screenshot); mutation proof in light AND dark with the real colours in the message; a throwaway Pillow cross-check (in-browser pixels equal Pillow's at the same two points; not shipped); docs say Pillow is not needed; honest counts by commit; 'fits/likely' Node wording; things to check: canvas colour management and alpha (assert alpha 255), data-URL size for a full-page screenshot, async image decode, tainted canvas. A fresh egm reviewer reads v2 (it changes a test).

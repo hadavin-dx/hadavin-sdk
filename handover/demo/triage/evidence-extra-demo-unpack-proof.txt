@@ -2,3 +2,9 @@ all answer -> {'reachable': True, 'outbox_mode': 'unknown', 'crm_mode': 'unknown
 one unreachable -> {'reachable': False, 'error': 'unreachable'}
 all None -> {'reachable': False, 'error': 'unreachable'}
 deadline passed -> {'reachable': False, 'error': 'unreachable'}
+
+# Added by the lead session after the review (nit 2): how these 4 lines were produced
+# script: extra-tools/prove_unpack.py (in this folder); run from the repo root of the UNPATCHED tree (the scratch copy of 43110e7), e.g.
+#   cd <unpatched tree> && python3 <path to>/extra-tools/prove_unpack.py
+# (it stubs `_fetch_json` and calls PortalDemo._fakes() for: all adapters answer, one unreachable, all None, deadline already passed).
+# The command line and the tree path were not recorded by the builder; this note is the reconstruction, not a re-run.

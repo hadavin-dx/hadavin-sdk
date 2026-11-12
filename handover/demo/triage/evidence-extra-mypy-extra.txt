@@ -1,0 +1,13 @@
+demo_only/fakes_server.py:126: error: Invalid index type "Any | None" for "dict[str, list[Any]]"; expected type "str"  [index]
+demo_only/fakes_server.py:229: error: If x = b'abc' then f"{x}" or "{}".format(x) produces "b'abc'", not "abc". If this is desired behavior, use f"{x!r}" or "{!r}".format(x). Otherwise, decode the bytes  [str-bytes-safe]
+demo_only/portal_demo.py:455: error: Unsupported operand types for <= ("int" and "None")  [operator]
+demo_only/portal_demo.py:455: note: Right operand is of type "Any | None"
+demo_only/portal_demo.py:455: error: Unsupported operand types for >= ("int" and "None")  [operator]
+demo_only/portal_demo.py:455: note: Left operand is of type "Any | None"
+demo_only/portal_demo.py:472: error: Unsupported operand types for + ("int" and "None")  [operator]
+demo_only/portal_demo.py:472: note: Right operand is of type "Any | None"
+demo_only/portal_demo.py:474: error: Unsupported operand types for + ("int" and "None")  [operator]
+demo_only/portal_demo.py:474: note: Right operand is of type "Any | None"
+demo_only/portal_demo.py:477: error: Argument 2 to "_fire" of "PortalDemo" has incompatible type "Any | None"; expected "int"  [arg-type]
+Found 7 errors in 2 files (checked 9 source files)
+exit=1
