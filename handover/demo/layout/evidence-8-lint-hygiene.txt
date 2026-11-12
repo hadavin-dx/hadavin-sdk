@@ -1,0 +1,6 @@
+cmd: bash -c ruff check tests/test_portal_drawer_long_name.py; ruff format --check tests/test_portal_drawer_long_name.py; python -m pytest tests/test_hygiene.py -q -p no:cacheprovider
+head: 0841f36d1edf381b67a0da4793afacf834a36707; css: NEW
+All checks passed!
+1 file already formatted
+...s......                                                               [100%]
+9 passed, 1 skipped in 4.68s

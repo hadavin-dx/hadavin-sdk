@@ -1,0 +1,27 @@
+cmd: python -m pytest tests/test_portal_drawer_long_name.py -q -p no:cacheprovider
+head: 0841f36d1edf381b67a0da4793afacf834a36707; css: MUTATED-fix-reverted
+
+page = <Page url='http://127.0.0.1:36279/ui/#/leads'>
+base = 'http://127.0.0.1:36279'
+
+    def body(page: Any, base: str) -> None:
+        page.goto(base + "/ui/#/leads")
+        page.wait_for_selector("[data-lead-id]")
+        page.locator('[data-testid="leads-hide-personal"]').uncheck()  # names shown: the long text is on screen
+        page.click(f'[data-lead-id="{lead_id}"]')
+        page.wait_for_selector(HEAD + " h2")
+        assert LONG_NAME in page.inner_text(HEAD + " h2")
+        page.wait_for_timeout(400)  # the panel slides in; measure after it stopped
+        m = page.evaluate(MEASURE)
+>       assert m["scroll"] <= m["client"] + 1, m  # the header does not run out of its own box
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: {'scroll': 4366, 'client': 599, 'vw': 1100, 'close': [1067.5, 1099.5, 32], ...}
+E       assert 4366 <= (599 + 1)
+
+tests/test_portal_drawer_long_name.py:39: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[1280-light]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[1280-dark]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[1100-light]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[1100-dark]
+4 failed in 6.97s

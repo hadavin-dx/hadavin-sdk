@@ -1,0 +1,248 @@
+{
+ "light-1280-leadspage-all": [
+  1280,
+  1280
+ ],
+ "light-1280-drawer-normal": {
+  "head": [
+   599,
+   599
+  ],
+  "h2": [
+   705,
+   832,
+   30
+  ],
+  "close": [
+   1220,
+   1256
+  ],
+  "pill": [
+   844,
+   900
+  ],
+  "vw": 1280,
+  "docSW": 1280,
+  "docCW": 1280,
+  "drawerSW": [
+   599,
+   599
+  ],
+  "closeInside": true
+ },
+ "light-1280-normal": 1,
+ "light-1280-drawer-long": {
+  "head": [
+   4346,
+   599
+  ],
+  "h2": [
+   -3042,
+   1156,
+   30
+  ],
+  "close": [
+   1248,
+   1280
+  ],
+  "pill": [
+   1168,
+   1224
+  ],
+  "vw": 1280,
+  "docSW": 1280,
+  "docCW": 1280,
+  "drawerSW": [
+   4346,
+   599
+  ],
+  "closeInside": false
+ },
+ "light-390-leadspage-all": [
+  632,
+  390
+ ],
+ "light-390-drawer-normal": {
+  "head": [
+   389,
+   389
+  ],
+  "h2": [
+   25,
+   152,
+   30
+  ],
+  "close": [
+   330,
+   366
+  ],
+  "pill": [
+   164,
+   220
+  ],
+  "vw": 390,
+  "docSW": 632,
+  "docCW": 390,
+  "drawerSW": [
+   389,
+   389
+  ],
+  "closeInside": true
+ },
+ "light-390-normal": 1,
+ "light-390-drawer-long": {
+  "head": [
+   4346,
+   389
+  ],
+  "h2": [
+   -3932,
+   266,
+   30
+  ],
+  "close": [
+   358,
+   390
+  ],
+  "pill": [
+   278,
+   334
+  ],
+  "vw": 390,
+  "docSW": 632,
+  "docCW": 390,
+  "drawerSW": [
+   4346,
+   389
+  ],
+  "closeInside": false
+ },
+ "dark-1280-leadspage-all": [
+  1280,
+  1280
+ ],
+ "dark-1280-drawer-normal": {
+  "head": [
+   599,
+   599
+  ],
+  "h2": [
+   705,
+   832,
+   30
+  ],
+  "close": [
+   1220,
+   1256
+  ],
+  "pill": [
+   844,
+   900
+  ],
+  "vw": 1280,
+  "docSW": 1280,
+  "docCW": 1280,
+  "drawerSW": [
+   599,
+   599
+  ],
+  "closeInside": true
+ },
+ "dark-1280-normal": 1,
+ "dark-1280-drawer-long": {
+  "head": [
+   4346,
+   599
+  ],
+  "h2": [
+   -3042,
+   1156,
+   30
+  ],
+  "close": [
+   1248,
+   1280
+  ],
+  "pill": [
+   1168,
+   1224
+  ],
+  "vw": 1280,
+  "docSW": 1280,
+  "docCW": 1280,
+  "drawerSW": [
+   4346,
+   599
+  ],
+  "closeInside": false
+ },
+ "dark-390-leadspage-all": [
+  632,
+  390
+ ],
+ "dark-390-drawer-normal": {
+  "head": [
+   389,
+   389
+  ],
+  "h2": [
+   25,
+   152,
+   30
+  ],
+  "close": [
+   330,
+   366
+  ],
+  "pill": [
+   164,
+   220
+  ],
+  "vw": 390,
+  "docSW": 632,
+  "docCW": 390,
+  "drawerSW": [
+   389,
+   389
+  ],
+  "closeInside": true
+ },
+ "dark-390-normal": 1,
+ "dark-390-drawer-long": {
+  "head": [
+   4346,
+   389
+  ],
+  "h2": [
+   -3932,
+   266,
+   30
+  ],
+  "close": [
+   358,
+   390
+  ],
+  "pill": [
+   278,
+   334
+  ],
+  "vw": 390,
+  "docSW": 632,
+  "docCW": 390,
+  "drawerSW": [
+   4346,
+   389
+  ],
+  "closeInside": false
+ },
+ "light-390-leadspage-harmless-only(long row removed from DOM)": [
+  632,
+  390,
+  3
+ ],
+ "dark-390-leadspage-harmless-only(long row removed from DOM)": [
+  632,
+  390,
+  3
+ ]
+}

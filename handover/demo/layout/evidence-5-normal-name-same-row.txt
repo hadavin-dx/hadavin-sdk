@@ -1,0 +1,13 @@
+cmd: same-page A/B: new css loaded; per normal name, measure h2/pill/close, then override the two new rules inline back to the old values and measure again
+light NEW "Wenda Hart" [705,818.5,30] [830.5,886.984375] [1220,1256]
+light OLD "Wenda Hart" [705,818.5,30] [830.5,886.984375] [1220,1256] SAME
+light NEW "Sidney Brook" [705,831.53125,30] [843.53125,900.015625] [1220,1256]
+light OLD "Sidney Brook" [705,831.53125,30] [843.53125,900.015625] [1220,1256] SAME
+light NEW "Orla Quinn" [705,806.953125,30] [818.953125,875.4375] [1220,1256]
+light OLD "Orla Quinn" [705,806.953125,30] [818.953125,875.4375] [1220,1256] SAME
+dark NEW "Wenda Hart" [705,818.5,30] [830.5,886.984375] [1220,1256]
+dark OLD "Wenda Hart" [705,818.5,30] [830.5,886.984375] [1220,1256] SAME
+dark NEW "Sidney Brook" [705,831.53125,30] [843.53125,900.015625] [1220,1256]
+dark OLD "Sidney Brook" [705,831.53125,30] [843.53125,900.015625] [1220,1256] SAME
+dark NEW "Orla Quinn" [705,806.953125,30] [818.953125,875.4375] [1220,1256]
+dark OLD "Orla Quinn" [705,806.953125,30] [818.953125,875.4375] [1220,1256] SAME

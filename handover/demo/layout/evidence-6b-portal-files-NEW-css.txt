@@ -1,0 +1,27 @@
+cmd: python -m pytest tests/test_portal_lead_pages.py tests/test_portal_layout.py tests/test_portal_look.py tests/test_portal_drawer_long_name.py -q -p no:cacheprovider
+head: 0841f36d1edf381b67a0da4793afacf834a36707; css: NEW
+            img = Image.open(io.BytesIO(page.screenshot(full_page=True))).convert("RGB")
+            above, below = img.getpixel((60, 880)), img.getpixel((60, height - 40))
+            assert all(abs(a - b) <= 6 for a, b in zip(above, below, strict=True)), (above, below)
+    
+>       _browse(base, body, width=1100, scheme=scheme)
+
+tests/test_portal_lead_pages.py:440: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_lead_pages.py:124: in _browse
+    fn(page, base)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+page = <Page url='about:blank'>, base = 'http://127.0.0.1:33931'
+
+    def body(page: Any, base: str) -> None:
+        import io
+    
+>       from PIL import Image
+E       ModuleNotFoundError: No module named 'PIL'
+
+tests/test_portal_lead_pages.py:429: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_portal_lead_pages.py::test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[light]
+FAILED tests/test_portal_lead_pages.py::test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[dark]
+2 failed, 93 passed in 142.45s (0:02:22)

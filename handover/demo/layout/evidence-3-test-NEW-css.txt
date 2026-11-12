@@ -1,0 +1,4 @@
+cmd: python -m pytest tests/test_portal_drawer_long_name.py -q -p no:cacheprovider
+head: 0841f36d1edf381b67a0da4793afacf834a36707; css: NEW
+....                                                                     [100%]
+4 passed in 6.55s

@@ -1,0 +1,22 @@
+cmd: for each pending patch X: (reset --hard + clean -fd; apply X; git apply --check mine) and (apply mine; git apply --check X); fresh clone of pr-3-tests
+0841f36d1edf381b67a0da4793afacf834a36707
+mine alone: OK
+codeant-demo-only.patch: X alone on head exit=0 | after X, mine check exit=0 | after mine, X check exit=0
+codeant-desk.patch: X alone on head exit=0 | after X, mine check exit=0 | after mine, X check exit=0
+codeant-docs.patch: X alone on head exit=0 | after X, mine check exit=0 | after mine, X check exit=0
+codeant-gitleaks-after-docs-and-deps.patch: X alone on head exit=1 | after X, mine check exit=0 | after mine, X check exit=1
+codeant-gitleaks-after-sonar-coverage.patch: X alone on head exit=1 | after X, mine check exit=0 | after mine, X check exit=1
+codeant-gitleaks.patch: X alone on head exit=1 | after X, mine check exit=0 | after mine, X check exit=1
+codeant-n8n-proof.patch: X alone on head exit=0 | after X, mine check exit=0 | after mine, X check exit=0
+codeant-portal-log.patch: X alone on head exit=0 | after X, mine check exit=0 | after mine, X check exit=0
+codeant-scripts.patch: X alone on head exit=0 | after X, mine check exit=0 | after mine, X check exit=0
+codeant-tests-hardening.patch: X alone on head exit=0 | after X, mine check exit=0 | after mine, X check exit=0
+codeant2-docs.patch: X alone on head exit=0 | after X, mine check exit=0 | after mine, X check exit=0
+codeant2-gitleaks.patch: X alone on head exit=0 | after X, mine check exit=0 | after mine, X check exit=0
+codeant2-n8n-proof.patch: X alone on head exit=0 | after X, mine check exit=0 | after mine, X check exit=0
+codeant2-scripts.patch: X alone on head exit=0 | after X, mine check exit=0 | after mine, X check exit=0
+extra-demo-only.patch: X alone on head exit=1 | after X, mine check exit=0 | after mine, X check exit=1
+js-portal.patch: X alone on head exit=1 | after X, mine check exit=0 | after mine, X check exit=1
+py-retry.patch: X alone on head exit=1 | after X, mine check exit=0 | after mine, X check exit=1
+docs-and-deps.patch: X alone on head exit=1 | after X, mine check exit=0 | after mine, X check exit=1
+docs-and-deps-v2.patch: X alone on head exit=1 | after X, mine check exit=0 | after mine, X check exit=1

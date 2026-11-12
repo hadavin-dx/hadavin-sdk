@@ -1,0 +1,66 @@
+diff --git a/src/lead_desk/portal/app.css b/src/lead_desk/portal/app.css
+index d7acc7c..0d609de 100644
+--- a/src/lead_desk/portal/app.css
++++ b/src/lead_desk/portal/app.css
+@@ -328,7 +328,8 @@ dialog::backdrop { background: var(--scrim); }
+ .drawer { margin: 0 0 0 auto; height: 100vh; max-height: none; width: min(600px, 100vw); max-width: 100vw; border-width: 0 0 0 1px; box-shadow: var(--shadow-pop); }
+ .drawer[open] { display: flex; flex-direction: column; animation: slide-in var(--dur) ease-out; }
+ .drawer-head { display: flex; align-items: center; gap: var(--s3); padding: var(--s4) var(--s5); border-bottom: 1px solid var(--border-soft); }
+-.drawer-head h2 { font-size: var(--t-lg); font-weight: 650; letter-spacing: -0.01em; }
++.drawer-head h2 { font-size: var(--t-lg); font-weight: 650; letter-spacing: -0.01em; min-width: 0; overflow-wrap: anywhere; }
++.drawer-head .pill, .drawer-head .icon-btn { flex: none; }
+ .drawer-body { padding: var(--s5); overflow: auto; display: grid; gap: var(--s5); align-content: start; flex: 1; }
+ .dialog { margin: auto; width: min(460px, calc(100vw - var(--s6))); border-radius: var(--r-card); box-shadow: var(--shadow-pop); padding: var(--s5); }
+ .dialog[open] { display: grid; gap: var(--s4); animation: pop var(--dur) ease-out; }
+diff --git a/tests/test_portal_drawer_long_name.py b/tests/test_portal_drawer_long_name.py
+new file mode 100644
+index 0000000..e4e6017
+--- /dev/null
++++ b/tests/test_portal_drawer_long_name.py
+@@ -0,0 +1,46 @@
++"""The lead panel's header keeps its close button and status chip on screen when a name is one long unbroken
++string (a real browser; skipped when playwright or its browser is missing). Made-up data only."""
++
++from __future__ import annotations
++
++from typing import Any
++
++import pytest
++from test_portal_lead_pages import _browse, _flow_rig, _new
++
++LONG_NAME = "W" * 200  # no space or hyphen anywhere: the browser has no natural place to break it
++HEAD = '[data-testid="lead-drawer"] .drawer-head'
++MEASURE = """() => {
++  const head = document.querySelector('[data-testid="lead-drawer"] .drawer-head');
++  const box = document.querySelector('[data-testid="lead-drawer"]').getBoundingClientRect();
++  const close = document.querySelector('[data-testid="drawer-close"]').getBoundingClientRect();
++  return {
++    scroll: head.scrollWidth, client: head.clientWidth, vw: innerWidth,
++    close: [close.left, close.right, close.width], box: [box.left, box.right],
++  };
++}"""
++
++
++@pytest.mark.parametrize("scheme", ["light", "dark"])
++@pytest.mark.parametrize("width", [1280, 1100])
++def test_a_long_unbroken_name_stays_inside_the_lead_panel_header(env: Any, scheme: str, width: int) -> None:
++    rig, base = _flow_rig(env)
++    lead_id = _new(rig, "long-1", LONG_NAME, "long@example.test")
++
++    def body(page: Any, base: str) -> None:
++        page.goto(base + "/ui/#/leads")
++        page.wait_for_selector("[data-lead-id]")
++        page.locator('[data-testid="leads-hide-personal"]').uncheck()  # names shown: the long text is on screen
++        page.click(f'[data-lead-id="{lead_id}"]')
++        page.wait_for_selector(HEAD + " h2")
++        assert LONG_NAME in page.inner_text(HEAD + " h2")
++        page.wait_for_timeout(400)  # the panel slides in; measure after it stopped
++        m = page.evaluate(MEASURE)
++        assert m["scroll"] <= m["client"] + 1, m  # the header does not run out of its own box
++        left, right, w = m["close"]
++        assert w >= 35, m  # the close button keeps its size (a squeezed button is 32 wide or less)
++        assert m["box"][0] - 1 <= left and right <= min(m["box"][1], m["vw"]) + 1, m  # inside panel and window
++        page.click('[data-testid="drawer-close"]')  # and it can be clicked
++        page.wait_for_selector('[data-testid="lead-drawer"]', state="detached")
++
++    _browse(base, body, width=width, scheme=scheme)
