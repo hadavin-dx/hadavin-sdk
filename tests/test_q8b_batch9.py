@@ -24,6 +24,7 @@ import pytest
 
 from hadavin_sdk.approvals.channel import clean
 from hadavin_sdk.k1b import redaction as R
+from tests.q8b_helpers import measure_ratio
 from tests.test_q8b_batch7 import (
     CHANGELOG,
     ORDINARY_VALUE,
@@ -290,10 +291,7 @@ def test_b9_4_a_very_long_run_of_digits_after_a_key_word_is_read_in_linear_time(
             return min(times)
 
         best(1_000)
-        for _attempt in range(3):  # a real slowdown fails all three; a busy machine rarely does
-            small, large = best(5_000), best(20_000)
-            if large < max(small, 0.02) * 7:
-                break
+        small, large = measure_ratio(best, 5_000, 20_000, 7, 0.02)
         assert large < max(small, 0.02) * 7, (
             f"a very long run of digits after the key word {word} takes far too long: {small:.3f}s and {large:.3f}s for 4 times the digits"
         )

@@ -334,3 +334,31 @@ def second_key_lists(tree, allowed: set[str]) -> list[tuple[int, list[str]]]:
         if id(node) not in skip and len(hits := key_list_words(node)) >= 3:
             found.append((node.lineno, sorted(hits)))
     return found
+
+
+def measure_ratio(best, small_n, big_n, bound, floor=0.0, rounds=3):
+    """Time `best(n)` (the least CPU time of a few runs, read by the test itself with `time.process_time()`) for a small and a size
+    4 times as large, in turns, and keep the least time seen of each over up to `rounds` turns; stop at the first turn where
+    `big < max(small, floor) * bound`. Returns `(small, big)`.
+
+    Why: a busy machine slows the process down in stretches (a shared cache, a shared core), and the CPU time of one run then
+    counts more than the same work costs on a quiet machine. Measuring the small and the large size one straight after the other
+    in each turn, with the collector off, gives both sizes the same stretches, and the least time of each is the nearest to the
+    quiet cost. A real slowdown (a quadratic read: the ratio is 16, a read to the end of the text at every start: far more) is
+    over the bound in every turn, so it still fails."""
+    import gc
+
+    was_enabled = gc.isenabled()
+    gc.collect()
+    gc.disable()
+    small = big = float("inf")
+    try:
+        for _ in range(rounds):
+            small = min(small, best(small_n))
+            big = min(big, best(big_n))
+            if big < max(small, floor) * bound:
+                break
+    finally:
+        if was_enabled:
+            gc.enable()
+    return small, big

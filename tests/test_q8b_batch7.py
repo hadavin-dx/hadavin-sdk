@@ -26,6 +26,7 @@ from hadavin_sdk.guard import runmap
 from hadavin_sdk.k1b import redaction as R
 from hadavin_sdk.k1b.bundle import Bundle
 from hadavin_sdk.tools import redact_layered
+from tests.q8b_helpers import measure_ratio
 
 redact = importlib.import_module("hadavin_sdk.guard.redact")
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -490,10 +491,7 @@ def test_b7_6_the_third_prefix_group_costs_no_extra_time_on_a_long_flag():
         return min(times)
 
     best(2_000)
-    for _attempt in range(3):  # a real slowdown fails all three; a busy machine rarely does
-        small, large = best(10_000), best(40_000)
-        if large < max(small, 0.02) * 8:
-            break
+    small, large = measure_ratio(best, 10_000, 40_000, 8, 0.02)
     assert large < max(small, 0.02) * 8, (
         f"a long flag takes far too long: {small:.3f}s and {large:.3f}s for 4 times the size"
     )

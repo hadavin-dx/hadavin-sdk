@@ -21,6 +21,7 @@ import pytest
 
 from hadavin_sdk.approvals.channel import clean
 from hadavin_sdk.k1b import redaction as R
+from tests.q8b_helpers import measure_ratio
 from tests.test_q8b_batch7 import (
     CHANGELOG,
     ORDINARY_VALUE,
@@ -149,10 +150,7 @@ def test_b10_1_a_long_run_of_line_breaks_after_a_scheme_word_is_read_in_linear_t
             return min(times)
 
         best(5_000)
-        for _attempt in range(3):  # a real slowdown fails all three; a busy machine rarely does
-            small, large = best(37_500), best(150_000)
-            if large < max(small, 0.02) * 7:
-                break
+        small, large = measure_ratio(best, 37_500, 150_000, 7, 0.02)
         assert large < max(small, 0.02) * 7, (
             f"a gap after a scheme word takes far too long: {small:.3f}s and {large:.3f}s for 4 times the size"
         )
@@ -261,10 +259,7 @@ def test_b10_2_a_long_run_of_digest_fold_lines_is_read_in_linear_time():
             return min(times)
 
         best(5_000)
-        for _attempt in range(3):  # a real slowdown fails all three; a busy machine rarely does
-            small, large = best(30_000), best(120_000)
-            if large < max(small, 0.02) * 7:
-                break
+        small, large = measure_ratio(best, 30_000, 120_000, 7, 0.02)
         assert large < max(small, 0.02) * 7, (
             f"a folded Digest header takes far too long: {small:.3f}s and {large:.3f}s for 4 times the size"
         )

@@ -16,6 +16,7 @@ import zlib
 import pytest
 
 from hadavin_sdk.approvals.channel import clean
+from tests.q8b_helpers import measure_ratio
 from tests.test_q8b_batch7 import readable_on
 
 redact_module = importlib.import_module("hadavin_sdk.guard.redact")
@@ -227,8 +228,7 @@ def test_b12_4_a_header_with_many_extra_words_and_folds_is_read_in_linear_time()
         return time.process_time() - t0
 
     took(500)
-    small = min(took(3_000) for _ in range(3))
-    big = min(took(12_000) for _ in range(3))
+    small, big = measure_ratio(lambda n: min(took(n) for _ in range(3)), 3_000, 12_000, 9)
     assert big < small * 9, (
         f"the wide folded-header rule is not linear: {small:.3f}s and {big:.3f}s (4 times the size)"
     )

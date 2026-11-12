@@ -21,6 +21,7 @@ import zlib
 import pytest
 
 from hadavin_sdk.approvals.channel import clean
+from tests.q8b_helpers import measure_ratio
 from tests.test_q8b_batch7 import five_paths
 
 redact_module = importlib.import_module("hadavin_sdk.guard.redact")
@@ -223,11 +224,7 @@ def test_b13_3_a_glued_run_of_headers_is_read_in_linear_time(unit):
     took(5_000)
     # 4 times the size: linear is 4, pure quadratic 16. Batch 14: the bound is 6 (an exponent up to 1.29 passes); the measurement is repeated up to three times and the test fails only when all three are over the bound (a clean run measured 3.8 to 7.8 once under heavy load).
     # measured on the head for the nine units under the load of other jobs: 3.8 to 4.9 (best of three each).
-    for _attempt in range(3):  # a real slowdown fails all three; a busy machine rarely does
-        small = min(took(20_000) for _ in range(3))
-        big = min(took(80_000) for _ in range(3))
-        if big < max(small, 0.02) * 6:
-            break
+    small, big = measure_ratio(lambda n: min(took(n) for _ in range(3)), 20_000, 80_000, 6, 0.02)
     assert big < max(small, 0.02) * 6, (
         f"a glued run of `{unit}` is read in more than linear time (the first word of the folded-header rule reads the rest of the run): "
         f"{small:.3f}s and {big:.3f}s for 4 times the size"

@@ -21,6 +21,7 @@ import pytest
 
 from hadavin_sdk.approvals.channel import clean
 from hadavin_sdk.k1b import redaction as R
+from tests.q8b_helpers import measure_ratio
 from tests.test_q8b_batch7 import readable_on
 
 redact = importlib.import_module("hadavin_sdk.guard.redact")
@@ -182,11 +183,7 @@ def test_b11_8_a_long_run_of_folded_lines_is_read_in_linear_time():
     took(500)
     # batch 14: the bound is 8 (it was 12, which a rule that is only a little worse than linear in the exponent passed; pure quadratic is 16);
     # measured on the head 5.3 under the load of another job; repeated up to three times, it fails only when all three are over the bound
-    for _attempt in range(3):
-        small = min(took(5_000) for _ in range(3))
-        big = min(took(20_000) for _ in range(3))
-        if big < small * 8:
-            break
+    small, big = measure_ratio(lambda n: min(took(n) for _ in range(3)), 5_000, 20_000, 8)
     assert big < small * 8, (
         f"folded lines are not read in linear time: {small:.3f}s for 5000, {big:.3f}s for 20000"
     )
@@ -234,8 +231,7 @@ def test_b11_8_a_line_of_repeated_headers_is_read_in_linear_time():
         return time.process_time() - t0
 
     took(500)
-    small = min(took(3_000) for _ in range(3))
-    big = min(took(12_000) for _ in range(3))
+    small, big = measure_ratio(lambda n: min(took(n) for _ in range(3)), 3_000, 12_000, 9)
     assert big < small * 9, (
         f"a line of repeated headers is not read in linear time: {small:.3f}s and {big:.3f}s (4 times the size)"
     )
