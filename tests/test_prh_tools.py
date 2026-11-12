@@ -560,20 +560,24 @@ def test_b6_the_readings_are_compared_per_copy_without_the_piece_check():
 
 
 def test_b6_the_backstop_withholds_without_the_piece_check(monkeypatch):
-    """The same leak as `test_scrub_backstop_withholds`, with the piece check off: the whole-form backstop alone refuses."""
+    """The whole-form backstop reads a hex secret in any case; the piece check does not. A scrub that leaves the secret
+    standing in capitals is refused by the backstop alone (piece check off)."""
+    hexkey = "".join(["5a6b7c8d", "9e0f1a2b", "3c4d5e6f", "7a8b9c0d"])
     real = tools._scrub_layers
     calls: list[int] = []
 
     def later_calls_leak(raw, long_enough, scrub=tools._DEFAULT_SCRUB):
         calls.append(1)
         out = real(raw, long_enough, scrub)
-        return out + " leak " + HAND if len(calls) >= 2 else out
+        return out + " leak " + hexkey.upper() if len(calls) >= 2 else out
 
     monkeypatch.setattr(tools, "_scrub_layers", later_calls_leak)
     out = tools._scrub(
-        "auth failed for " + HAND + " end" + ESC + "[0m", [HAND], tools.ScrubSettings(piece_min=32)
+        "auth failed for " + hexkey + " end" + ESC + "[0m",
+        [hexkey],
+        tools.ScrubSettings(piece_min=32),
     )
-    assert HAND not in out and tools.MARKER in out, out
+    assert hexkey.upper() not in out and tools.MARKER in out, out
 
 
 def test_b6_the_union_is_the_most_any_reading_holds_without_the_piece_check():
