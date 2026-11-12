@@ -1,0 +1,27 @@
+## commit 558d37f: /tmp/work/l8d-nopw python -m pytest --collect-only -q -p no:cacheprovider tests | tail -2
+
+2465 tests collected in 2.91s
+## commit 2ce1f98: /tmp/work/l8d-nopw python -m pytest --collect-only -q -p no:cacheprovider tests | tail -2
+
+2516 tests collected in 2.87s
+## commit 0841f36: /tmp/work/l8d-nopw python -m pytest --collect-only -q -p no:cacheprovider tests | tail -2
+
+2516 tests collected in 2.90s
+## git diff --stat 558d37f 2ce1f98 -- tests
+ tests/portal_log_probe.js             |  82 +++++++++++++
+ tests/test_except_clause_hierarchy.py | 216 ++++++++++++++++++++++++++++++++++
+ tests/test_lead_crm_copy.py           |  22 ++++
+ tests/test_portal_mode.py             |  26 ++++
+ 4 files changed, 346 insertions(+)
+## test_except_clause_hierarchy at 558d37f
+
+## test_except_clause_hierarchy at 2ce1f98
+49 tests collected in 0.04s
+## test_lead_crm_copy at 558d37f
+18 tests collected in 0.02s
+## test_lead_crm_copy at 2ce1f98
+19 tests collected in 0.02s
+## test_portal_mode at 558d37f
+39 tests collected in 0.03s
+## test_portal_mode at 2ce1f98
+40 tests collected in 0.03s

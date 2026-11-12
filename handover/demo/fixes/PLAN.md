@@ -62,3 +62,10 @@ Patch: docs-and-deps.patch = v4 = docs-and-deps-v4.patch (v3 kept as docs-and-de
 
 | Rebases D13 / batch 1 / batch 2a | patch rebuilt three times; final base 0841f36; new lines only in .gitleaks.toml (2 blocks) and exceptions.txt (2 lines), so the coverage patch's edits and mine coexist | evidence-c8, c8b, c13 |
 | Convention note (codeant2-gitleaks) | see item 7 | evidence-c12 |
+
+
+## Round 4 review (fresh reviewer): 0 Blocker, 1 Major, 3 Nit; all handled
+- Major M1 (no raw evidence for the collect-only counts): fixed by the session lead: evidence-d7-collect-counts.txt (558d37f 2465, 2ce1f98 2516, 0841f36 2516; test_except_clause_hierarchy.py 0->49, test_lead_crm_copy.py 18->19, test_portal_mode.py 39->40 = +51).
+- Nit N1 (private file names in public docs): fixed: the patch no longer names evidence-d5-hygiene.txt or triage/codeant2-gitleaks.patch (apply check on 0841f36 re-run: OK).
+- Nit N2 (no named owner/tracker): open, needs the repository owner: the follow-up is assigned to 'the person who applies the secret-scan patch'.
+- Nit N3 (licence strings vs evidence-d4c): not re-checked by the reviewer; evidence-d4c-licences.txt holds the metadata.
