@@ -193,7 +193,7 @@ def test_the_notes_check_of_a_renewed_copy_asks_for_rows_that_can_be_written_and
         env.update(PYTHONDONTWRITEBYTECODE="1", PYTHONNOUSERSITE="1")
         asked = _rows_for_the_renewal(copy, base, env)
         print(f"the notes check asked for {asked} rows after the full renewal")
-        _assert_the_asked_rows_match_the_printed_figure("both", asked)
         assert asked > 0, (
             "a full renewal changes a day that tests use, so the notes check must ask for rows"
         )
+        _assert_the_asked_rows_match_the_printed_figure("both", asked)

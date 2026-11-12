@@ -1828,7 +1828,7 @@ M = [
         "            if prefix:\n                found |=",
         "            if False:\n                found |=",
         "test_a_module_imported_by_a_name_built_at_run_time_lists_every_test_that_could_reach_it",
-        "a changed module listed",
+        "a module outside the text the name starts with listed",
         test_file=NOTES_TEST,
     ),
     mutant(
