@@ -167,10 +167,10 @@ def test_b11_g1_a_letter_or_a_digit_glued_in_front_makes_the_run_part_of_a_longe
 
 
 def test_b11_g1_a_combining_mark_glued_in_front_makes_the_run_part_of_a_longer_word():
-    """Group 1 (mutants 168, 169). Passes on the batch 10 head too; the one reason it exists: a combining mark (category M) is part of a
+    """Group 1 (mutant 168). Passes on the batch 10 head too; the one reason it exists: a combining mark (category M) is part of a
     word like a letter (`e` + U+0301 in front), so the run is not started there."""
     text = "key: é" + spaced(KEY) + " end"
-    assert on_the_run_path(text) == text, "mutant 169: a combining mark was read as a wrapper"
+    assert on_the_run_path(text) == text, "mutant 168: a combining mark was read as a wrapper"
 
 
 def test_b11_g1_the_word_class_is_every_letter_digit_and_mark_of_unicode():
@@ -182,7 +182,10 @@ def test_b11_g1_the_word_class_is_every_letter_digit_and_mark_of_unicode():
         c
         for c in range(0x110000)
         if (word.fullmatch(chr(c)) is not None)
-        != (unicodedata.category(chr(c))[0] in "LNM" and not redact_mod._IGNORABLE_CHAR.fullmatch(chr(c)))
+        != (
+            unicodedata.category(chr(c))[0] in "LNM"
+            and not redact_mod._IGNORABLE_CHAR.fullmatch(chr(c))
+        )
     ]  # batch 12, issue 6: a gap character is no part of a word even when it is a mark or a letter
     assert wrong == [], (
         f"mutant 170: {len(wrong)} code points are in the wrong class, first U+{wrong[0]:04X}"
@@ -204,7 +207,10 @@ def test_b11_g1_the_word_class_is_every_letter_digit_and_mark_of_unicode():
         (BSL + "e", False),
         ("C:" + BSL + "env", False),
         ("C:" + BSL + "Users" + BSL + "err" + BSL + "x", False),
-        ("ab" + BSL + "eb", True),  # batch 12, issue 2: glued inside a word is read (it was a length rule)
+        (
+            "ab" + BSL + "eb",
+            True,
+        ),  # batch 12, issue 2: glued inside a word is read (it was a length rule)
         ("abcdef" + BSL + "eghijkl", True),
         ("abcde" + BSL + "eghijkl", True),  # batch 12, issue 2: 5 characters in front are read too
         (BSL + "eabcdefghijkl", True),
@@ -438,7 +444,10 @@ def test_b11_g8_the_inside_rule_reads_six_token_characters_on_each_side_and_no_f
     assert runmap.hex_unescape(left + BSL + "e" + right) == left + "\x1b" + right, (
         "mutant 183: the inside rule of backslash-e is gone"
     )
-    assert runmap.hex_unescape(left + BSL + "e" + right + BSL + "x") == left + "\x1b" + right + BSL + "x", (
+    assert (
+        runmap.hex_unescape(left + BSL + "e" + right + BSL + "x")
+        == left + "\x1b" + right + BSL + "x"
+    ), (
         "mutant 183: the inside rule of backslash-e is gone (6 token characters on each side, a backslash after)"
     )
     assert runmap.hex_unescape(left[:5] + BSL + "e" + right) == left[:5] + "\x1b" + right

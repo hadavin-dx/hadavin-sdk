@@ -738,37 +738,68 @@ def _held(text: str) -> int:
 _GAPS = re.compile(rf"[\s{hidden.IGNORABLE_RE.pattern[1:-1]}]")
 
 
-def _only_inside_held(value: str, current: dict[str, str], readings: tuple[str, ...]) -> bool:
+_HOLDER_CHECK_EVERY = (
+    4096  # hits between two looks at the clock while the copies of a value are counted
+)
+
+
+def _only_inside_held(
+    value: str,
+    current: dict[str, str],
+    readings: tuple[str, ...],
+    work: _Work | None = None,
+) -> bool:
     """Is EVERY copy of `value` in the readings of a view part of a value of a SECRET kind that the run already holds (`current`:
     a secret that is only a piece of a held identifier is not "already found", batch 10 group 5; batch 11, group 2:
     the batch 10 test was `value in held value`, which says "already found" for a shorter secret whose only copy this view
     found, because a longer held value happens to contain it)? Copies are counted in the reading with the gaps taken out (a copy
     written with spaces is a copy), overlapping ones too; a copy is covered when it lies inside one occurrence of a held value
-    that contains `value`. A reading with no copy of `value` at all (it was found in a spelling no gap rule can see) is not
-    proved covered: False, so the view is not dropped. Work: one search per held value that contains `value`, over a text that
-    is within the redactor's size cap."""
+    that contains `value`. Only a held value of `defaults.SPACED_VALUE_MIN_CHARS` or more characters can cover a copy: the spaced
+    sweep masks no spaced copy of a shorter one, so a gap-stripped match of it proves nothing (batch 12, issue 7). A reading with no copy of `value` at all
+    (it was found in a spelling no gap rule can see) is not proved covered: False, so the view is not dropped.
+    Work (batch 12, issue 7): each reading is searched once per held value that contains `value`, plus once for `value`; every hit is
+    one interval comparison (no slice is filled), and with `work` the clock is looked at every `_HOLDER_CHECK_EVERY` hits, so a
+    262,144-character text with a PEM-size held value cannot keep the call busy past `defaults.REDACT_BUDGET_S`."""
     holders = [
         k
         for ph, k in current.items()
-        if value in k and not k.startswith("\0seed") and kind_of(ph) in SECRET_KINDS
+        if value in k
+        and len(k) >= defaults.SPACED_VALUE_MIN_CHARS
+        and not k.startswith("\0seed")
+        and kind_of(ph) in SECRET_KINDS
     ]
     if not holders:
         return False
     saw_a_copy = False
+    hits = 0
+
+    def occurrences(text: str, needle: str) -> list[int]:
+        nonlocal hits
+        out, i = [], text.find(needle)
+        while i >= 0:
+            out.append(i)
+            hits += 1
+            if work is not None and hits % _HOLDER_CHECK_EVERY == 0:
+                work.check()
+            i = text.find(needle, i + 1)
+        return out
+
     for reading in readings:
         compact = _GAPS.sub("", reading)
-        covered = bytearray(len(compact) + 1)  # a 1 where an occurrence of a holder stands
-        for k in holders:
-            i = compact.find(k)
-            while i >= 0:
-                covered[i : i + len(k)] = b"\x01" * len(k)
-                i = compact.find(k, i + 1)
-        i = compact.find(value)
-        while i >= 0:
+        merged: list[
+            list[int]
+        ] = []  # the stretches the occurrences of the holders cover, sorted and joined where they touch
+        for lo, hi in sorted((i, i + len(k)) for k in holders for i in occurrences(compact, k)):
+            if merged and lo <= merged[-1][1]:
+                merged[-1][1] = max(merged[-1][1], hi)
+            else:
+                merged.append([lo, hi])
+        starts = [m[0] for m in merged]
+        for i in occurrences(compact, value):
             saw_a_copy = True
-            if not all(covered[i : i + len(value)]):
+            j = bisect.bisect_right(starts, i) - 1
+            if j < 0 or i + len(value) > merged[j][1]:
                 return False
-            i = compact.find(value, i + 1)
     return saw_a_copy
 
 
@@ -1226,7 +1257,7 @@ def redact_text(
                     # only a held value of a SECRET kind can hold the new value (a secret that is a piece of a held identifier is
                     # not "already found"; batch 10, group 5)
                     if any(
-                        not _only_inside_held(v, current, (vj, vs))
+                        not _only_inside_held(v, current, (vj, vs), work)
                         for v in again_map.values()
                         if v not in current.values() and not v.startswith("\0seed")
                     ):

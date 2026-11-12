@@ -69,7 +69,9 @@ def test_b12_i1_the_approval_summary_lets_a_crash_pass_and_notes_a_refusal(monke
     real = runmap.redact_text
 
     def crash_for_the_long_text(text, mapping, neutralise=None):
-        if "Expected:" in text:  # only the full card text; the short fallback line would be accepted
+        if (
+            "Expected:" in text
+        ):  # only the full card text; the short fallback line would be accepted
             raise runmap.RedactorCrash("RuntimeError")
         return real(text, mapping, neutralise=neutralise)
 
@@ -88,7 +90,9 @@ def test_b12_i1_the_approval_summary_lets_a_crash_pass_and_notes_a_refusal(monke
     )
 
 
-def test_b12_i1_a_crash_while_the_card_is_made_stops_the_run_with_no_card(live_cfg_dir, fake_system, monkeypatch):
+def test_b12_i1_a_crash_while_the_card_is_made_stops_the_run_with_no_card(
+    live_cfg_dir, fake_system, monkeypatch
+):
     """Issue 1 (mutant 187). The run waits for approval; the request hook raises `RedactorCrash`: the run goes to a person with the
     reason `redaction_error`; nothing escapes the loop and no card is sent."""
     from hadavin_sdk import app as app_mod
@@ -112,10 +116,14 @@ def test_b12_i1_a_crash_while_the_card_is_made_stops_the_run_with_no_card(live_c
     assert (state.state, state.reason_code) == (S.NEEDS_PERSON, "redaction_error"), (
         f"mutant 187: the run ended as {state.state} / {state.reason_code}"
     )
-    assert channel.sent == [], "mutant 187: an approval was sent although the card could not be made"
+    assert channel.sent == [], (
+        "mutant 187: an approval was sent although the card could not be made"
+    )
 
 
-def test_b12_i1_a_golden_input_with_a_crashed_redactor_is_not_a_config_error(live_cfg_dir, monkeypatch):
+def test_b12_i1_a_golden_input_with_a_crashed_redactor_is_not_a_config_error(
+    live_cfg_dir, monkeypatch
+):
     """Issue 1 (mutant 188): `evals.gate` told the operator the input "cannot be redacted" for a crash of the redactor."""
     cfg = load_config(live_cfg_dir)
     reg = load_registry(cfg)
@@ -132,7 +140,9 @@ def test_b12_i1_a_golden_input_with_a_crashed_redactor_is_not_a_config_error(liv
         evals.gate(reg, Never(), "test-agent")
 
 
-def test_b12_i1_the_injection_check_stops_the_run_when_the_log_line_crashes_the_redactor(monkeypatch):
+def test_b12_i1_the_injection_check_stops_the_run_when_the_log_line_crashes_the_redactor(
+    monkeypatch,
+):
     """Issue 1 (no mutant of its own: the rule lives in `safe_head`, mutant 163). A detector that fails is a flag; if the redactor
     crashes while the cause is written to the log, `RedactorCrash` leaves the check (nothing passes)."""
 
@@ -153,7 +163,9 @@ class _BrokenDetector:
         raise ValueError("a broken detector")
 
 
-def test_b12_i1_a_crash_in_the_injection_screen_stops_the_run_as_redaction_error(tmp_path, monkeypatch):
+def test_b12_i1_a_crash_in_the_injection_screen_stops_the_run_as_redaction_error(
+    tmp_path, monkeypatch
+):
     """Issue 1 (mutant 189). The check of the document (a detector that fails, a redactor that crashes while writing the log line)
     escaped `Runtime.handle` with no handler. It is now the stop `redaction_error`."""
     rt, _cards = build_runtime(k5_cfg(tmp_path), ScriptLLM([{"noaction": True}]))
@@ -172,7 +184,9 @@ def test_b12_i1_a_crash_in_the_injection_screen_stops_the_run_as_redaction_error
     )
 
 
-def test_b12_i1_a_crash_in_the_tool_result_screen_stops_the_run_as_redaction_error(tmp_path, monkeypatch):
+def test_b12_i1_a_crash_in_the_tool_result_screen_stops_the_run_as_redaction_error(
+    tmp_path, monkeypatch
+):
     """Issue 1 (mutant 190): the same rule for the screen of a tool result."""
     from tests.fixtures import k5_tools
 
@@ -234,7 +248,9 @@ def test_b12_i1_a_crash_of_the_redactor_does_not_stop_the_other_steps_of_the_tic
     assert tick._message(ValueError("x")) == runmap.SAFE_HEAD_NOTE
 
 
-def test_b12_i1_extract_and_the_k1b_loop_let_a_crash_of_the_redactor_stop_the_run(monkeypatch, tmp_path, cfg_dir):
+def test_b12_i1_extract_and_the_k1b_loop_let_a_crash_of_the_redactor_stop_the_run(
+    monkeypatch, tmp_path, cfg_dir
+):
     """Issue 1 (no mutant of its own: both call `safe_head`, mutant 163; passes on 242dfd66, the one reason it exists is that the two
     sibling callers named by the review were never run with a crashing redactor). `extract` and the replay loop raise
     `RedactorCrash`; the replay writes FAILED.txt."""
@@ -274,7 +290,9 @@ def _glue(*parts):
 V28 = _glue("qZ7k", "M3vR", "t9Lx", "P2wB", "n5Hc", "D8fJ", "s4Yg")  # made-up, 28 characters
 V9 = _glue("qZ7k", "M3vR", "t")  # a handed-out value of 9 characters
 V6 = _glue("qZ7k", "M3")  # 6 characters
-B64 = _glue("Ab3+", "dE6/", "gH9&", "jK2m")  # made-up, symbols of the base64 and form alphabets inside the window
+B64 = _glue(
+    "Ab3+", "dE6/", "gH9&", "jK2m"
+)  # made-up, symbols of the base64 and form alphabets inside the window
 
 ESC_CELLS = {}
 for _name, _value in (("v28", V28), ("v9", V9), ("v6", V6), ("b64", B64)):
@@ -298,7 +316,9 @@ def test_b12_i2_a_value_with_a_backslash_e_at_any_place_is_not_shown(cell):
     size = min(8, len(value))
     out = tools.prepare_output(text, {}, 4000, [value])
     for shown in (out, out.replace(BSL + "e", "")):
-        assert not stands(shown, value, size), f"mutants 192/193: the value of cell {cell} is readable"
+        assert not stands(shown, value, size), (
+            f"mutants 192/193: the value of cell {cell} is readable"
+        )
 
 
 @pytest.mark.parametrize(
@@ -338,12 +358,16 @@ def test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_
     )
 
 
-@pytest.mark.parametrize("text", ["q" + BSL + "eZ" + BSL + "e7", "a" + BSL + "eb" + BSL + "ec" + BSL + "ed"])
+@pytest.mark.parametrize(
+    "text", ["q" + BSL + "eZ" + BSL + "e7", "a" + BSL + "eb" + BSL + "ec" + BSL + "ed"]
+)
 def test_b12_i2_the_chain_rule_reads_a_backslash_e_one_character_from_the_next_one(text):
     """Issue 2 (mutant 182). A spelling with another one a single token character away is read, also the first of the pair (the glued
     rule leaves it out because a backslash follows within 12 characters). Passes on 242dfd66; the one reason it exists: it is the
     only direct test of the chain rule after batch 12 moved the glued rule next to it."""
-    assert runmap.hex_unescape(text) == text.replace(BSL + "e", "\x1b"), f"mutant 182: {text!r} was not read"
+    assert runmap.hex_unescape(text) == text.replace(BSL + "e", "\x1b"), (
+        f"mutant 182: {text!r} was not read"
+    )
 
 
 # ---- issue 3: "is this value new" asks the SECRET holders only, at both sites that ask it --------------------------------------
@@ -393,15 +417,86 @@ def test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_th
     """Issue 6 (mutant 197; fails on 242dfd66: the run started at the third character, two tokens late). The word class that stops a run
     from starting in the middle of a longer word held the gap characters, although the run rule itself treats them as gaps."""
     runs = redact_mod._runs_of(gap + spaced(KEY12))
-    assert runs and runs[0][0] == 1, f"mutant 197: the run started at {runs[0][0] if runs else None}, not at the first token"
+    assert runs and runs[0][0] == 1, (
+        f"mutant 197: the run started at {runs[0][0] if runs else None}, not at the first token"
+    )
 
 
 @pytest.mark.parametrize("gap", GAPS, ids=[f"{ord(g):04x}" for g in GAPS])
 @pytest.mark.parametrize("where", ["head", "tail"])
-def test_b12_i6_a_spaced_key_with_a_gap_character_glued_at_the_head_or_the_tail_is_masked(gap, where):
+def test_b12_i6_a_spaced_key_with_a_gap_character_glued_at_the_head_or_the_tail_is_masked(
+    gap, where
+):
     """Issue 6 (mutant 197). Passes on 242dfd66 end to end (the hidden-character strip runs first there, measured); the one reason it exists is
     that it pins the result for the rows the review named, beside the run-level test above that fails there."""
     text = "key: " + (gap + spaced(KEY12) if where == "head" else spaced(KEY12) + gap) + " end"
     out = on_the_run_path(text)
-    assert not stands(out.replace(" ", "").replace(gap, ""), KEY12, 6), f"mutant 197: the key stands in {out!r}"
-    assert not stands(tools.prepare_output(text, {}, 4000, []).replace(" ", "").replace(gap, ""), KEY12, 6)
+    assert not stands(out.replace(" ", "").replace(gap, ""), KEY12, 6), (
+        f"mutant 197: the key stands in {out!r}"
+    )
+    assert not stands(
+        tools.prepare_output(text, {}, 4000, []).replace(" ", "").replace(gap, ""), KEY12, 6
+    )
+
+
+# ---- issue 11: the word-class scan reaches the end of CJK Extension J ----------------------------------------------------------
+
+
+def test_b12_i11_the_word_class_scan_reaches_the_end_of_cjk_extension_j():
+    """Issue 11 (mutant 198). Unicode 17 added CJK Extension J (U+323B0 to U+3347F); the scan used to stop at U+323FF. The data of this
+    Python may not know the block yet (so the test derivation over all code points cannot see it): the scan bound is checked directly.
+    Fails on 242dfd66 (the bound was 0x32400)."""
+    assert redact_mod._WORD_PLANES[0].stop > 0x3347F, (
+        "mutant 198: the scan stops before the end of CJK Extension J"
+    )
+
+
+# ---- issue 7: `_only_inside_held` is inside the work budget ------------------------------------------------------------------
+
+
+class _CountingWork:
+    def __init__(self):
+        self.checks = 0
+
+    def check(self):
+        self.checks += 1
+
+
+def _held_pem_and_text():
+    pem = "k" + "Q7z" * 600  # a held value of 1,801 characters (PEM size)
+    current = {"<SECRET_1>": pem}
+    text = (
+        pem * 140
+    )  # about 252,000 characters: many overlapping copies of the small value, all inside the held value
+    return pem, current, text
+
+
+def test_b12_i7_the_search_for_copies_of_a_value_inside_a_big_held_value_looks_at_the_clock():
+    """Issue 7 (mutant 199; fails on 242dfd66: the function took no `work` and never looked at the clock). A 252,000-character text and a
+    held 1,801-character value that holds the small value 63,000 times: the clock is looked at every 4,096 hits, and the answer is
+    still True (every copy lies inside a held value)."""
+    pem, current, text = _held_pem_and_text()
+    work = _CountingWork()
+    assert runmap._only_inside_held("Q7zQ7zQ7zQ7zQ7zQ7z", current, (text, text), work) is True
+    assert work.checks >= 20, f"mutant 199: the clock was looked at {work.checks} times"
+
+
+def test_b12_i7_a_held_value_shorter_than_the_spaced_minimum_does_not_cover_a_copy():
+    """Issue 7 (mutant 200; fails on 242dfd66). The spaced sweep masks no spaced copy of a held value under
+    `defaults.SPACED_VALUE_MIN_CHARS`, so a match of it with the gaps taken out proves nothing."""
+    short = "abcdefghijk"  # 11 characters
+    assert len(short) < defaults.SPACED_VALUE_MIN_CHARS
+    current = {"<SECRET_1>": short}
+    assert runmap._only_inside_held("abcdefgh", current, ("a b c d e f g h i j k",)) is False, (
+        "mutant 200: a spaced copy inside a short held value was called covered"
+    )
+
+
+def test_b12_i7_a_long_held_value_still_covers_a_spaced_copy_inside_it():
+    """Issue 7 control (mutant 200). Passes on 242dfd66; the one reason it exists: the 12-character limit does not break the case
+    batch 11 built (a spaced copy of a value inside a long held value is covered)."""
+    long_ = "abcdefghijklmnop"
+    current = {"<SECRET_1>": long_}
+    assert (
+        runmap._only_inside_held("abcdefgh", current, ("a b c d e f g h i j k l m n o p",)) is True
+    )

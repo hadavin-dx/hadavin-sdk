@@ -966,7 +966,10 @@ _SEP = rf"[\s{_IGN}]+"
 # rule, not a list of characters (batch 11, group 1: the batch 10 list of 9 wrapper characters ended the run one token early for
 # every character it did not hold, and a spaced value stayed readable). Letters exist only in planes 0 to 3 and 14: only those
 # are scanned (a test derives the set over all code points and compares).
-_WORD_PLANES = (range(0x32400), range(0xE0000, 0xE1000))
+_WORD_PLANES = (
+    range(0x33480),
+    range(0xE0000, 0xE1000),
+)  # 0x33480 ends CJK Ext J (U+323B0-U+3347F, Unicode 17)
 _IGNORABLE_CHAR = re.compile(hidden.IGNORABLE_RE.pattern)
 
 

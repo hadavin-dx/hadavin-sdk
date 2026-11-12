@@ -768,7 +768,9 @@ class Runtime:
             run = self._to(run, S.WAITING_FOR_APPROVAL)
             try:
                 sent = self.hooks.request_approval(plan, decision, run.principal_id)
-            except runmap.RedactorCrash:  # no approval card is made from a crashed redactor (batch 12, issue 1)
+            except (
+                runmap.RedactorCrash
+            ):  # no approval card is made from a crashed redactor (batch 12, issue 1)
                 self._note(run, "guard", "redaction", result="failed", error_code="redaction_error")
                 return self._to(run, S.NEEDS_PERSON, "redaction_error")
             if isinstance(sent, Delivery) and not sent.ok:
