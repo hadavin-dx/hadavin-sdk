@@ -2760,3 +2760,10 @@
 | PR89-r27-1 | reviews/PR89/goldfish_review_report-r27.md R27-1 | Major | PR89 | header/CHANGELOG prose on the folder-link killer skipping was false; corrected in r28/r29 | FIXED-VERIFIED | evidence/PR89/ea29121e/RESULTS.md item 11 (header lines 103-108 read raw: exception named) and item 10 (new header test fails on the r28 header) | independent evidence runner aae3d1f2 | 2026-11-12
 | Q8c1-b8-issue6 | builder report b8 (Q8c-1 r7b Issue 6) | Minor | Q8c-1 | per-test fail-before table covers batch-8 tests only; batch-7 changed tests not re-run or classified one by one | OPEN | batch 9 (do now with any findings, not deferred) | | 2026-11-12
 | Q8c1-b8-fullrun | builder report b8 | Minor | Q8c-1 | builder full pytest had 1 failure (shared /tmp/askdata_p2_copy.csv owned by another session's Postgres); file re-run alone 253 passed; no clean full run by the builder | OPEN | independent evidence 208a47d5 | evidence runner | 2026-11-12
+| Q8a1b11-cD1 | Major | Q8a-1 | reviews/Q8a-1/q8a1b11-codebase-r11.md D1: region/bucket not patterned for AWS and S3 settings; allowance reason and trace-test docstring false; botocore may quote the value | OPEN | | | 2026-11-12 |
+| Q8a1b11-cD2 | Minor | Q8a-1 | codebase D2: planted-fault tests that cannot fail (scope/entry already derived, fixed-sentence case, no sum carve-out test) | OPEN | | | 2026-11-12 |
+| Q8a1b11-cD3 | Minor | Q8a-1 | codebase D3: guard blind spots (nested tuple, with/except/walrus, blank-separator join, dead branch) | OPEN | | | 2026-11-12 |
+| Q8a1b11-cD4 | Minor | Q8a-1 | codebase D4: eight false or too-wide allowance reasons | OPEN | | | 2026-11-12 |
+| Q8a1b11-cD5 | Minor | Q8a-1 | codebase D5: k1b exemption reason false; replay.py:117 prints raw agent id vs CHANGELOG | OPEN | | | 2026-11-12 |
+| Q8a1b11-cD6 | Minor | Q8a-1 | codebase D6: CachedSecrets scope undersold in CHANGELOG; branch tested only with extras; add extras-free test | OPEN | | | 2026-11-12 |
+| Q8a1b11-cnits | Nit | Q8a-1 | codebase D7 (TypeError in assert message test_sources.py:228) and D8 small points | OPEN | | | 2026-11-12 |
