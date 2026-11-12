@@ -1,0 +1,8 @@
+ruff check rc=0 All checks passed!
+ruff format rc=0 330 files already formatted
+bandit rc=0 0 issues; last: [tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+scan_repo rc=0 last: 
+gitleaks rc=0 last: [90m2:41AM[0m [32mINF[0m [1mno leaks found[0m
+stage_mutants rc=0
+q8b_mutants rc=1
+ALLDONE

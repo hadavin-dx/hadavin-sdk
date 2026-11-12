@@ -1,0 +1,13 @@
+== machinery mutation A (tests/test_q8b_batch4.py: _older_rule_left_readable ignores a half-masked value's other pieces)
+tests/test_q8b_batch4.py:232: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_q8b_batch4.py::test_j1_the_older_rule_check_fails_when_only_the_first_word_of_a_value_is_masked
+1 failed in 0.25s
+== machinery mutation B (tests/q8b_helpers.py: second_key_lists needs four credential words, not three)
+tests/test_q8b_batch4.py:499: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_q8b_batch4.py::test_j4_the_scan_finds_every_shape_of_a_second_list
+1 failed in 0.21s
+== unmutated control
+..                                                                       [100%]
+2 passed in 0.22s
