@@ -966,6 +966,29 @@ def check_classnames() -> list[str]:
     return bad
 
 
+def check_httpcode() -> list[str]:
+    """By the tree: every row of this reason is a `return (exc.code, ...)` inside `except urllib.error.HTTPError as exc`
+    (the status code of the library's HTTP error is an `int` by its own definition; the library's text is not used)."""
+    bad = []
+    for m, k in _rows("HTTPCODE"):
+        found = _sites(m, k)
+        if not found:
+            bad.append(f"{m}: {k[:60]} is not found in the module")
+        for node in found:
+            handler = next((a for a in _up(m, node) if isinstance(a, ast.ExceptHandler)), None)
+            ok = (
+                handler is not None
+                and handler.name is not None
+                and ast.unparse(handler.type or ast.Constant(None)).endswith("HTTPError")
+                and isinstance(node, ast.Return)
+                and isinstance(node.value, ast.Tuple)
+                and ast.unparse(node.value.elts[0]) == f"{handler.name}.code"
+            )
+            if not ok:
+                bad.append(f"{m}:{node.lineno}: not a status code of an HTTPError handler")
+    return bad
+
+
 def check_seq() -> list[str]:
     """By the tree: in the function that holds the message `holds seq`, an `if type(seq) is not int` that raises comes
     on an earlier line than the message."""
@@ -1230,7 +1253,7 @@ def _declared_numbers() -> set[str]:
     return names
 
 
-_CTX: dict[str, ast.ClassDef | None] = {"cls": None}
+_CTX: dict[str, typing.Any] = {"cls": None, "rel": ""}
 
 
 @functools.cache
@@ -1351,6 +1374,9 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
             (isinstance(e.func, ast.Name) and name in _NUMBER_BUILTINS)
             or (isinstance(e.func, ast.Name) and name == "Decimal")
             or (
+                isinstance(e.func, ast.Attribute) and name in {"index", "count"}
+            )  # a position or a tally: an `int`
+            or (
                 isinstance(e.func, ast.Attribute)
                 and isinstance(e.func.value, ast.Name)
                 and e.func.value.id == "math"
@@ -1372,6 +1398,8 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
             own = _own_declaration(cls, e.attr)
             if own is not None:
                 return own
+        if e.attr.isupper() and isinstance(e.value, ast.Name) and e.value.id == "defaults":
+            return True  # a constant of `defaults.py` written in capitals (every one is a number or a word written in code)
         return e.attr in declared and e.attr not in _non_numeric_names()
     if isinstance(e, ast.Name):
         if fn is not None:
@@ -1422,6 +1450,12 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
                     _numeric(getattr(n, "value", None) or ast.Constant(0), fn, declared, depth + 1)
                     for n in bound
                 )
+            # a name of the enclosing function that a nested function reads (a closure): the enclosing function decides
+            outer = next(
+                (a for a in _up(_CTX["rel"], fn) if isinstance(a, FUNCS) and a is not fn), None
+            )
+            if outer is not None and depth < 8:
+                return _numeric(e, outer, declared, depth + 1)
         return e.id.isupper()  # a module constant written in capitals (`RESOLVE_TIMEOUT_S`)
     return False
 
@@ -1445,6 +1479,7 @@ def _numeric_site(rel: str, node: ast.AST, declared: set[str]) -> str | None:
     """None when every value the site mentions is a number by form, else the first value that is not."""
     fn = _enclosing(rel, node)
     _CTX["cls"] = next((a for a in _up(rel, node) if isinstance(a, ast.ClassDef)), None)
+    _CTX["rel"] = rel
     parts: list[ast.AST] = []
     if isinstance(node, ast.Expr):
         node = node.value
@@ -1464,6 +1499,13 @@ def _numeric_site(rel: str, node: ast.AST, declared: set[str]) -> str | None:
         parts = [node.args[0]]  # `str(number)`
     elif isinstance(node, ast.AugAssign):
         parts = [node.value]
+    elif isinstance(node, ast.IfExp) and isinstance(node.body, ast.Dict):
+        # `{"key": str(number)} if number < 1.0 else {}`: every value is `str(number)` of a number
+        for v in node.body.values:
+            inner = v.args[0] if isinstance(v, ast.Call) and getattr(v.func, "id", "") == "str" and len(v.args) == 1 else v
+            parts.append(inner)
+        if isinstance(node.test, ast.Compare):
+            parts.append(node.test.left)  # the number that is compared
     elif isinstance(node, ast.JoinedStr):
         for v in node.values:
             if isinstance(v, ast.FormattedValue):
@@ -2529,6 +2571,7 @@ CHECKS = {
     "SIGN": check_sign,
     "CLASSNAMES": check_classnames,
     "SEQ": check_seq,
+    "HTTPCODE": check_httpcode,
     "KEYVER": check_keyver,
     "MIGNAMES": check_mignames,
     "FIELDS": check_fields,

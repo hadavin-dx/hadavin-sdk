@@ -3842,6 +3842,10 @@ _PLANTED_FAULTS = {
         "def f(log, name):\n    log.warning('bad %s', name)",
         1,
     ),
+    "R17c a number directive of a function that returns text": (
+        "def count(x):\n    return x\ndef f(log, name):\n    n = count(name)\n    log.warning('bad %d', n)",
+        1,
+    ),
 }
 
 _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be found
@@ -3912,14 +3916,15 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
         "class DuplicateEvent(Exception):\n    pass\ndef f():\n    raise DuplicateEvent('fixed')"
     ),
     "R16k an attribute of an object of the package": (
-        "class K:\n    def __init__(self):\n        self.name = 'fixed'\ndef f(k):\n    raise A(k.name)"
+        "class K:\n    def __init__(self):\n        self.name = 'fixed'\ndef f():\n    k = K()\n    raise A(k.name)"
     ),
     "R16p a self attribute that the class writes": (
         "class K:\n    def __init__(self):\n        self.msg = 'fixed'\n    def f(self):\n        raise A(self.msg)"
     ),
     "R16l the size of a set difference": "def f(done, files):\n    raise A(f'gone {len(done - files)}')",
     "R16n a number annotation on a number": "def f(names):\n    x: int = len(names)\n    raise A(f'{x}')",
-    "R16o a log call with a number directive": "def f(log, n):\n    log.warning('bad %d', n)",
+    "R16o a log call with a number directive": "def f(log, n: int):\n    log.warning('bad %d', n)",
+    "R17c a log call with a number directive of a function declared as an int": "def count() -> int:\n    return 1\ndef f(log):\n    n = count()\n    log.warning('bad %d', n)",
 }
 
 

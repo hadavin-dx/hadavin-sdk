@@ -102,6 +102,9 @@ FUNCS = (ast.FunctionDef, ast.AsyncFunctionDef)
 
 
 _PRINT_HOW = {"file", "flush"}
+# Round 17 (Issue 1b): a call whose name starts with one of these puts its positional arguments into a store, a queue, a file or a
+# query. An argument made from an error (`rec.update(exc)`, `q.put(exc)`, `cur.execute(sql, (exc,))`) is a site.
+STORE_CALL_PREFIXES = ("update", "insert", "write", "execute", "append", "put")
 
 
 def _is_number(e) -> bool:
@@ -126,6 +129,11 @@ def _targets(t):
             yield from _targets(x)
     elif isinstance(t, ast.Starred):
         yield from _targets(t.value)
+
+
+def _all_args(args):
+    """Every parameter of a function: positional only, positional, keyword only, `*args` and `**kwargs`."""
+    return [*args.posonlyargs, *args.args, *args.kwonlyargs, *(a for a in (args.vararg, args.kwarg) if a)]
 
 
 def _own(root):
@@ -501,7 +509,44 @@ class Analysis:
         if isinstance(e.value, ast.Name) and e.value.id in {"self", "cls"}:
             cls = self._enclosing_class(e)
             return cls is not None and self._class_has_attr(cls, a)
-        return True
+        # Round 17 (Issue 1a): any other receiver is trusted only when it is a name bound, in the same function, to a call of a
+        # class of the package that writes the attribute (`k = K()` then `k.name`). A parameter, a call result or an object of
+        # a library (a caught exception handed on as a parameter has a `.reason`) is not proven by a write elsewhere.
+        return isinstance(e.value, ast.Name) and self._bound_to_class_with(e, e.value.id, a)
+
+    def _bound_to_class_with(self, e, name, attr) -> bool:
+        scope = self.scope_of.get(id(e))
+        if scope is None:
+            return False
+        if isinstance(scope, FUNCS):
+            for arg in _all_args(scope.args):
+                if arg.arg == name:
+                    # a parameter declared as a class of the package that holds the attribute (a declaration, not a run-time
+                    # check: the same trust as a number annotation); any other parameter is not proven
+                    ann = arg.annotation
+                    cname = (
+                        ann.id
+                        if isinstance(ann, ast.Name)
+                        else ann.value.split(".")[-1]
+                        if isinstance(ann, ast.Constant) and isinstance(ann.value, str)
+                        else ann.attr
+                        if isinstance(ann, ast.Attribute)
+                        else None
+                    )
+                    return cname in self.cls_attrs and self._class_has_attr(cname, attr)
+        seen = False
+        for n in _own(scope):
+            if isinstance(n, ast.Assign) and any(name in {t.id for t in _targets(tt)} for tt in n.targets):
+                f = n.value.func if isinstance(n.value, ast.Call) else None
+                cname = f.id if isinstance(f, ast.Name) else None
+                if cname is None or cname not in self.cls_attrs or not self._class_has_attr(cname, attr):
+                    return False
+                seen = True
+            elif isinstance(n, (ast.AugAssign, ast.AnnAssign, ast.NamedExpr, ast.For, ast.AsyncFor)) and name in {
+                t.id for t in _targets(n.target)
+            }:
+                return False
+        return seen
 
     def _upper_ok(self, name, node) -> bool:
         """An UPPER_CASE name that is bound only to written values in the tree (see `_scan_upper`)."""
@@ -947,6 +992,9 @@ class Analysis:
                         ok = self._for_binds(val, name, frozenset(env))
                     elif kind == "number":
                         ok = self.number_valued(val, frozenset(env))
+                    elif kind == "aug":
+                        # `text += number` is a TypeError: an added number puts no text in the name
+                        ok = self.safe(val, frozenset(env)) or self.number_valued(val, frozenset(env))
                     else:
                         ok = self.safe(val, frozenset(env))
                     if not ok:
@@ -1000,7 +1048,17 @@ class Analysis:
                 )
             if isinstance(f, ast.Attribute) and f.attr in self._NUMBER_METHODS:
                 return True
+            if self._declared_number_function(f.id if isinstance(f, ast.Name) else getattr(f, "attr", "")):
+                return True  # a function of the tree whose every definition is declared `-> int` or `-> float`
         return self.safe(e, env) and not self._is_texty(e)
+
+    def _declared_number_function(self, name) -> bool:
+        """Round 17 (Issue 1d): every function of the scanned tree with this name is declared to return `int` or `float`
+        (`purge_tool_calls(...) -> int`). At least one definition must exist."""
+        found = [d["node"] for d in self.defs if d["name"] == name]
+        return bool(name) and bool(found) and all(
+            n.returns is not None and ast.unparse(n.returns) in {"int", "float"} for n in found
+        )
 
     def _callers_pass_numbers(self, i, p) -> bool:
         """Every caller in the scanned tree gives the parameter a number (or a proven value). No caller: True."""
@@ -1188,7 +1246,11 @@ class Analysis:
         if name in self.escaped:
             return False
         found = self.resolve(call)
-        return bool(found) and all(i in self.fsafe for i in found)
+        # a function declared `-> int`, `-> float`, `-> bool` or `-> Literal[...]` makes no text: a declaration, not a run-time
+        # check (batch 17: the exit code of `main`, which was proven through an attribute read the guard no longer trusts)
+        return bool(found) and all(
+            i in self.fsafe or _is_number_annotation(self.defs[i]["node"].returns) for i in found
+        )
 
     # ---- the sites ----------------------------------------------------------------------------------------------
     def sites(self, module):
@@ -1224,7 +1286,8 @@ class Analysis:
             elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
                 hit = not (_is_number(node.left) or _is_number(node.right)) and not safe(node, env)
             elif isinstance(node, ast.AugAssign) and isinstance(node.op, ast.Add):
-                hit = not safe(node.value, env)
+                # `text += number` is a TypeError, so an added value that is a number (a count) puts no text in the target
+                hit = not (safe(node.value, env) or self.number_valued(node.value, env))
             elif isinstance(node, ast.Call):
                 f = node.func
                 args = [*node.args, *(k.value for k in node.keywords)]
@@ -1265,16 +1328,26 @@ class Analysis:
                     fa in LOG_METHODS
                     or fa == "add_note"
                     or fn == "print"
-                    or fa == "write"
-                    and _recv(f.value) in {"stderr", "stdout"}
+                    or fa in {"write", "writelines"}
+                    and (
+                        _recv(f.value) in {"stderr", "stdout"}
+                        or (isinstance(f.value, ast.Name) and f.value.id in self._streams(node))
+                    )
                 ):
                     if fa in LOG_METHODS:
-                        args = self._without_number_directives(node, args)
+                        args = self._without_number_directives(node, args, env)
                     hit = bare_unsafe(args, env)
                 elif fa in {"dumps", "dump"} and _recv(f.value) == "json":
                     hit = any(not safe(a, env) for a in args)
                 elif fa == "exit" and _recv(f.value) == "sys":
                     hit = bare_unsafe(args, env)  # `sys.exit(text)` prints the text
+                elif fn in {"exit", "quit"}:
+                    hit = bare_unsafe(args, env)  # the builtins `exit(text)` and `quit(text)` print the text like `sys.exit`
+                elif fn == "getLogger" or fa == "getLogger":
+                    hit = any(not safe(a, env) for a in args)  # the logger's name is on every line it writes
+                elif fn == "Thread" or fa == "Thread":
+                    # the thread's name is in every log line that has `%(threadName)s` and in every thread dump
+                    hit = any(not safe(k.value, env) for k in node.keywords if k.arg == "name")
                 if not hit and (
                     fa == "exception"
                     or fa in CHAIN_PRINTERS
@@ -1306,6 +1379,10 @@ class Analysis:
                     hit = any(self._tainted(a, tn, env) for a in node.args)
                 if not hit and fa in COLLECTORS:
                     hit = any(self._tainted(a, tn, env) for a in args)
+                if not hit and fa is not None and fa.startswith(STORE_CALL_PREFIXES):
+                    # Round 17 (Issue 1b): a positional argument of `update`, `insert`, `write`, `execute`, `append`, `put` and their
+                    # relatives (`updatemany`, `put_nowait`, `executemany`) that is made from an error
+                    hit = any(self._tainted(a, tn, env) for a in node.args)
                 if not hit and self._is_conversion(node):
                     # `str(x)`, `repr(x)`, `format(x)`, `ascii(x)` of a value not proven code-owned makes text on the spot
                     hit = any(not safe(a, env) for a in node.args)
@@ -1341,6 +1418,10 @@ class Analysis:
                 args = [*node.exc.args, *(k.value for k in node.exc.keywords)]
                 hit = bare_unsafe(args, env)
                 site = node.exc
+            elif isinstance(node, ast.Assert) and node.msg is not None:
+                # `assert ok, name`: the message is the text of the AssertionError that the traceback prints (Round 17, Issue 1c)
+                hit = bare_unsafe([node.msg], env)
+                site = node.msg
             if hit:
                 inside.update(id(n) for n in ast.walk(site) if n is not site)
                 out.append((site, "message"))
@@ -1410,6 +1491,19 @@ class Analysis:
             return self._tainted(e.body, tainted, env) or self._tainted(e.orelse, tainted, env)
         if isinstance(e, ast.BoolOp):
             return any(self._tainted(v, tainted, env) for v in e.values)
+        # Round 17 (Issue 1b): a collection that holds a tainted value is tainted: the wrapper hides nothing
+        if isinstance(e, ast.Tuple):
+            return any(self._tainted(x, tainted, env) for x in e.elts)
+        if isinstance(e, ast.List):
+            return any(self._tainted(x, tainted, env) for x in e.elts)
+        if isinstance(e, ast.Set):
+            return any(self._tainted(x, tainted, env) for x in e.elts)
+        if isinstance(e, ast.Dict):
+            return any(
+                v is not None and self._tainted(v, tainted, env) for v in [*e.keys, *e.values]
+            )
+        if isinstance(e, ast.Starred):
+            return self._tainted(e.value, tainted, env)
         return False
 
     def _raising_helper_in_handler(self, call) -> bool:
@@ -1430,7 +1524,22 @@ class Analysis:
 
     _DIRECTIVE = re.compile(r"%(?:\([^)]*\))?[#0\- +]*(?:\*|\d+)?(?:\.(?:\*|\d+))?[hlL]?([a-zA-Z%])")
 
-    def _without_number_directives(self, call, args):
+    def _streams(self, node) -> frozenset[str]:
+        """Names of the scope around `node` that are bound to `sys.stderr` or `sys.stdout` (`err = sys.stderr`), and names
+        imported from `sys` (`from sys import stderr as err`): writing to them is printing (Round 17, Issue 1c)."""
+        scope = self.scope_of.get(id(node))
+        names: set[str] = set()
+        for sc in {id(scope): scope, id(self.trees.get(self.module_of.get(id(node)))): self.trees.get(self.module_of.get(id(node)))}.values():
+            if sc is None:
+                continue
+            for n in _own(sc):
+                if isinstance(n, ast.Assign) and isinstance(n.value, ast.Attribute) and n.value.attr in {"stderr", "stdout"} and _recv(n.value.value) == "sys":
+                    names |= {t.id for tt in n.targets for t in _targets(tt)}
+                elif isinstance(n, ast.ImportFrom) and n.module == "sys":
+                    names |= {al.asname or al.name for al in n.names if al.name in {"stderr", "stdout"}}
+        return frozenset(names)
+
+    def _without_number_directives(self, call, args, env=frozenset()):
         """A logging call `log.error("seq %d", seq)`: an argument that meets a number directive (`%d`, `%i`, `%f`...) is
         shown as a number or the call fails with the class of the error, never with the value (Round 16)."""
         pos = [a for a in call.args]
@@ -1438,7 +1547,13 @@ class Analysis:
             if isinstance(a, ast.Constant) and isinstance(a.value, str):
                 kinds = [m for m in self._DIRECTIVE.findall(a.value) if m != "%"]
                 rest = pos[k + 1 :]
-                drop = {id(rest[j]) for j, c in enumerate(kinds) if j < len(rest) and c in "dixXofeEgG"}
+                # Round 17 (Issue 1d): an argument is dropped only when it is PROVEN a number: a `%d` of a text makes the logging
+                # module fail, and its failure handler prints the message and the arguments (`Message:` and `Arguments:`)
+                drop = {
+                    id(rest[j])
+                    for j, c in enumerate(kinds)
+                    if j < len(rest) and c in "dixXofeEgG" and self.number_valued(rest[j], env)
+                }
                 return [x for x in args if id(x) not in drop]
         return args
 

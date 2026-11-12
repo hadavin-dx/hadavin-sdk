@@ -261,12 +261,12 @@ def purge_evidence(ctx: TickContext) -> None:
     app = ctx.app
     keep = app.config.retention
     store = app.purge_store or app.store  # the deleting identity, when one is configured
-    maps = store.purge_redaction_maps(
+    maps: int = store.purge_redaction_maps(
         _now(ctx) - timedelta(days=keep.held_maps_max_days),
         keep_run_ids=frozenset(),
         keep_open=False,
     )
-    calls = store.purge_tool_calls(
+    calls: int = store.purge_tool_calls(
         _now(ctx) - timedelta(days=keep.held_tool_calls_max_days), keep_run_ids=frozenset()
     )
     hook = app.runtime.hooks.hold_run_ids

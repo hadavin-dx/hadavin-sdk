@@ -22,6 +22,7 @@ REASONS = {
     "CLASSNAMES": "the class names of exceptions (`type(x).__name__`); the library's text is not included",
     "BUNDLE": "a message about a file or folder of an incident case bundle (the client's incident data handed to the investigation tool by the operator, whose names the bundle check refuses unless they fit a fixed layout): not text of the configuration file",
     "KIND": "a backend kind word that the configuration loader already checked against the registered kinds (a word written in code)",
+    "HTTPCODE": "the status code of a library HTTP error (`HTTPError.code`, an `int`), returned with no body; checked by the tree: each row is `return (exc.code, ...)` inside `except urllib.error.HTTPError as exc`, so the library text is not used",
     "SEQ": "a position number counted by the code and `seq`, which the lines above check with `type(seq) is int` (the scan cannot follow that check)",
     "PKGERR": "the text of an error of this package (`ConfigError`, `StoreUnavailable`): a sentence written in code where the error is raised; each of those raise sites is a site of its own and is read there",
     "MODELTEXT": "text made from the model's own reply (the parse error of what the model wrote), sent back to the model and kept in the run record; it is not configuration, and the schema names in it are written in code",
@@ -327,7 +328,6 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
     ): "PROC",
     ("guard/runmap.py", "''.join(chars)"): "PROC",
     ("guard/runmap.py", "''.join(out)"): "PROC",
-    ("guard/runmap.py", "_chars(k) + _chars(v)"): "PROC",
     ("guard/runmap.py", "chars.append(d)"): "PROC",
     ("guard/runmap.py", "f'{kind}\\x00{original}'"): "PROC",
     ("guard/runmap.py", "f'‹{m.group(1)}_{m.group(2)}›'"): "PROC",
@@ -611,17 +611,9 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
         "_LOG.info('tick ok=%s failed=%s', not failed, ','.join(failed) or '-')",
     ): "WORDS",
     ("runtime/tick.py", "_LOG.warning('%s: %s', what, type(exc).__name__)"): "LABEL",
-    (
-        "runtime/tick.py",
-        "calls += store.purge_tool_calls(_now(ctx) - timedelta(days=keep.tool_calls_days), keep_run_ids=held)",
-    ): "NUM",
     ("runtime/tick.py", "f\"a tick step name is used twice: {', '.join(repeated)}\""): "WORDS",
     ("runtime/tick.py", "f'{type(exc).__name__}: {_message(exc)}'"): "OWNERROR",
     ("runtime/tick.py", "found += problems"): "LISTED",
-    (
-        "runtime/tick.py",
-        "maps += store.purge_redaction_maps(_now(ctx) - timedelta(days=keep.redaction_maps_days), keep_run_ids=held)",
-    ): "NUM",
     ("runtime/tick.py", "repeated.append(step.name)"): "WORDS",
     (
         "sources/kubernetes.py",
@@ -888,4 +880,40 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
     ("tools.py", "str(path.parent)"): "PROC",
     ("tools.py", "str(raw)"): "PROC",
     ("runtime/tick.py", "str(exc)"): "OWNERROR",
+    # batch 17 (Issue 1a): an attribute is trusted only through `self`, a name bound to a call of its class, or a parameter
+    # declared as that class; these reads go through a local or a loop variable, so each is a row checked by its reason
+    ("approvals/requests.py", "f'step{new.current_step}'"): "NUMFIELD",
+    (
+        "audit/anchor_gcs.py",
+        "f'audit anchor gcs_retention_lock: the bucket needs a retention policy of at least {settings.retain_days} day(s)'",
+    ): "NUMFIELD",
+    ("cli.py", "f'{run.passed}/{run.n}'"): "NUMFIELD",
+    ("cli.py", "f'{round(run.pass_rate * pairs)}/{pairs}'"): "NUMFIELD",
+    (
+        "deferred.py",
+        "f'agent {a_name}: data_class {a.data_class} is not available until Phase 3'",
+    ): "LITERAL",
+    (
+        "llm/anthropic.py",
+        "f\"backend llm 'anthropic' ({settings.platform}): the client refused the settings ({type(exc).__name__}); {_ENV_HINT[settings.platform]} set beside the explicit base URL is the usual cause\"",
+    ): "LITERAL",
+    ("registry.py", "str(d.threshold)"): "NUMFIELD",
+    ("registry.py", "str(self.config.eval_threshold)"): "NUMFIELD",
+    ("sources/kubernetes.py", "self._cfg.log_bytes + defaults.K8S_LOG_SLACK_BYTES"): "NUMFIELD",
+    (
+        "sources/kubernetes.py",
+        "f'the log was cut at {self._cfg.log_bytes} bytes; later lines are missing'",
+    ): "NUMFIELD",
+    (
+        "tools.py",
+        'f"secret {spec.secret_names.index(name) + 1} of this tool\'s secret_names is shorter than {min_secret} characters and could not be scrubbed"',
+    ): "NUMFIELD",
+    ("actions/executor.py", "return (exc.code, None)"): "HTTPCODE",
+    ("actions/secrets_vault.py", "return (exc.code, {})"): "HTTPCODE",
+    ("audit/chain.py", "_LOG.error('audit checkpoint %d not anchored (%s); retried next time', seq, type(exc).__name__)"): "ROWID",
+    ("llm/common.py", "out.append((m['role'], texts))"): "LLMREQ",
+    (
+        "registry.py",
+        "{'eval_threshold': str(self.config.eval_threshold)} if self.config.eval_threshold < 1.0 else {}",
+    ): "NUMFIELD",
 }
