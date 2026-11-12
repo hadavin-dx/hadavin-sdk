@@ -2,7 +2,7 @@
 
 EVIDENCE RUNNER: results are recorded, not judged. Nothing was fixed, committed on the branch or pushed.
 Tag Q8c1b14, previous reviewed head c65d9c27. `git rev-parse HEAD` in the evidence worktree = a50d5b2e..., tree clean.
-Run 2026-11-12 13:41 to about 14:45 UTC (19:11 to 20:15 IST). Raw logs: `/home/user/build/evidence-raw/Q8c1b14-a50d5b2e/`
+Run 2026-11-12 13:41 to 14:46 UTC (19:11 to 20:16 IST). Raw logs: `/home/user/build/evidence-raw/Q8c1b14-a50d5b2e/`
 (outside the repository). Small excerpts and the plant scripts: `excerpts/` here.
 
 ## What failed, was different from the builder's claim, or was not run (first)
@@ -23,8 +23,8 @@ Run 2026-11-12 13:41 to about 14:45 UTC (19:11 to 20:15 IST). Raw logs: `/home/u
      in `pytest_plugins = [...]`; the test under that conftest was not listed.
    - `rt3`: `importlib.import_module(f"tests.zzev.dyn_{n}")` with the name made from a variable; the module changed; not listed.
    Everything else I planted was listed (tables below). The tool's own docstring says a name built at run time is not followed.
-3. **Item 6, the builder's rehearsal command** (3 plants, each runs a renewed copy with the whole mutant list): see item 6, it
-   waited about 30 minutes for a heavy slot and RESULT-PENDING-REHEARSAL.
+3. **Item 6, the builder's rehearsal command** (3 plants, each runs a renewed copy with the whole mutant list): it passed (3 passed,
+   6 deselected, exit 0). It waited about 30 minutes for a heavy slot first. Nothing failed there.
 4. **Environment facts, same as batch 13:** `uv sync --locked --no-build` (the CI command) fails here ("hadavin-sdk==0.1.0 @
    editable+. ... is marked as --no-build but has no binary distribution"); I used `uv sync --locked --all-extras --group test`.
    `bandit` is not in the venv; I ran `uv run --with bandit bandit -q -r src demos tools -ll`.
@@ -129,7 +129,7 @@ I changed NO day that the steps did not name.
 *After the renewal*: the four policy test files at 2026-12-12: **447 passed, 4 deselected**; at 2026-12-13: **447 passed, 4 deselected** (`i6-man-renewed-*.log`). `notes_lines_check.py --auto origin/main` and `--auto c65d9c27` on the renewed copy (committed in the scratch worktree): both exit 0, no output. `policy_mutants.py --day 2026-12-12` on the renewed copy: **324 of 324 good**, exit 0 (`i6-man-mutants-renewed-2026-12-12.log`); `--day 2026-12-13`: **324 of 324 good**, exit 0.
 Day or file the steps did NOT name that still failed: none found in this run. The slow plants (a nested renewal of a renewed copy, with the whole mutant list) are not in my manual run; they are the builder's command below.
 
-**The builder's command** (`HADAVIN_POLICY_FULL_RENEWAL_RUN=1 HADAVIN_POLICY_FIXED_DAY=2026-12-12 pytest tests/test_policy_changelog.py -k "plant_a_full or plant_a_renewal_of"`, heavy.sh, own worktree): RESULT-PENDING-REHEARSAL.
+**The builder's command** (`HADAVIN_POLICY_FULL_RENEWAL_RUN=1 HADAVIN_POLICY_FIXED_DAY=2026-12-12 pytest tests/test_policy_changelog.py -k "plant_a_full or plant_a_renewal_of"`, heavy.sh, own worktree): exit 0, **3 passed, 6 deselected in 1603.17s (0:26:43)** (the full renewal, the renewal of the kinds alone, the renewal of the names and claims alone); tail in `excerpts/i6-builder-rehearsal-tail.txt`. Matches the builder's "3 passed".
 
 ## Item 7: src (`excerpts/i7-src.log`, `i7-wildcards2.log`)
 
