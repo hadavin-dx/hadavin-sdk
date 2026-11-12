@@ -2739,3 +2739,9 @@
 | Q8a1-r9-C1-verified | reviews/Q8a-1/goldfish_review_report-r10.md | Major | Q8a-1 | round 9 C1 (configured Kubernetes namespace printed): planted-namespace probe on f4acee28, marker in no message/exception/traceback over 296 rows (112 of 196 and 72 of 100 on f0febfb6) | FIXED-VERIFIED | handover/evidence/Q8a-1/f4acee28/probe-summary.txt | evidence runner a01df54d | 2026-11-12
 | Q8a1-r10-G1 | same report Issue 1 | Minor | Q8a-1 | message guard is a list of spellings; empty-string namespace accepted | OPEN | batch 11 | | 2026-11-12
 | Q8a1-r10-fstr | same report Issue 2 | Minor | Q8a-1 | 11 f-string hits of configured names not traced to messages | OPEN | batch 11 | | 2026-11-12
+| Q8bb6-r7-M1 | reviews/Q8b/goldfish_review_report-r7.md Issue 1 | Major | Q8b | digit-suffix credential keys (pass2, session2, --pass2) stay readable; auth0/oauth2 exceptions too wide | OPEN | batch 7 | | 2026-11-12
+| Q8bb6-r7-M2 | reviews/Q8b/goldfish_review_report-r7.md Issue 2 | Major | Q8b | drift test skips keys silently; plural flags (--secrets, --passwords) readable | OPEN | batch 7 | | 2026-11-12
+| Q8bb6-r7-cookie | reviews/Q8b/goldfish_review_report-r7.md Issue 3 | Major | Q8b | record key Cookie (capital) leaves any value readable (also on main) | OPEN | batch 7 | | 2026-11-12
+| Q8bb6-r7-auth | reviews/Q8b/goldfish_review_report-r7.md Issue 4 | Major | Q8b | authorization scheme+token second word readable | OPEN | batch 7 | | 2026-11-12
+| Q8bb6-r7-overmask | reviews/Q8b/goldfish_review_report-r7.md Issue 5 | Minor | Q8b | bypass/compass/obsession masked in =value forms | OPEN | batch 7 | | 2026-11-12
+| Q8bb6-r7-passold | reviews/Q8b/goldfish_review_report-r7.md Issue 11 | Minor | Q8b | 3 new tests + 139 ids pass on old code, need mutant or control reason | OPEN | batch 7 | | 2026-11-12

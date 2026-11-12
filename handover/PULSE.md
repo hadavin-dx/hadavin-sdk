@@ -133,3 +133,4 @@ PULSE 01:19Z: Q8a-1 r9 codebase reviewer done (1 Major: sources/kubernetes.py na
 - 03:03Z PULSE: Q8b b6 codebase review in (0 Blocker/Major, 4 Nit; second-word flag NOT a regression, my earlier 'main masked both' reading was wrong: main never matched those flags). Waiting on Q8b EV a10840d2 (full pytest at head, probes) then resolve r7.
 - 03:06Z PULSE: CLOUD-RESUME updated. 5 agents running (PRH b6 a86c8cbe due ~03:20Z, P3a-2 3d, Q8b b6 EV, PR89 r29, Q8a-1 b11). Load 2.9.
 - 03:18Z PULSE: 5 agents running (PRH b6, P3a-2 3d, Q8b b6 EV, PR89 r29, Q8a-1 b11), load 2.1, LEAD-ORDERS newest still 247, nothing to collect yet.
+- 03:24Z PULSE: Q8b b6 EV in (all gates 0, full pytest 10786 passed, 0 regressions vs main); r7 resolved (4 Major: digit suffix, plurals/drift test, Cookie, Authorization scheme; Minor over-masking); b7 builder a37560e1 started (box 75 min, check ~04:40Z). Agents 5 running: PRH b6, P3a-2 3d, PR89 r29, Q8a-1 b11, Q8b b7.
