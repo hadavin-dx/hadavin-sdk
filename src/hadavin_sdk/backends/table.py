@@ -342,6 +342,10 @@ class Entry:
     # Built on an open standard or on self-hostable open source: a client on any cloud or on-prem can run it
     # in prod. `tests/test_lockin_guard.py` needs one per capability (or a dated exception).
     neutral: bool = False
+    # What the kind IS: "stand_in" (a local imitation that replaces a service, for demo and tests; it may only be
+    # reached on this computer) or "real" (the kind does the job itself or talks to a real service). Every kind
+    # has exactly one; `registry_problems` below names any that has none or breaks the rules for its role.
+    role: Literal["stand_in", "real"] | None = None
 
 
 def _aws_host(service: str, region: str) -> str:
@@ -385,9 +389,12 @@ _ACTIONS = "hadavin_sdk.actions"
 # Build order (design §4.2): each capability may use only what is built before it, as ALLOWED says.
 TABLE: dict[str, dict[str, Entry]] = {
     "secrets": {
-        "fake": Entry(KindSettings, f"{_BUILTIN}:fake_secrets"),
+        "fake": Entry(KindSettings, f"{_BUILTIN}:fake_secrets", role="stand_in"),
         "env": Entry(
-            EnvSecretsSettings, "hadavin_sdk.actions.secrets_env:build", status=_UNVERIFIED
+            EnvSecretsSettings,
+            "hadavin_sdk.actions.secrets_env:build",
+            status=_UNVERIFIED,
+            role="real",
         ),
         "aws_secrets_manager": Entry(
             AwsSecretsManagerSettings,
@@ -395,6 +402,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             extra="aws",
             status=_UNVERIFIED,
             hosts=_aws("secretsmanager"),
+            role="real",
         ),
         "vault": Entry(
             VaultSettings,
@@ -402,6 +410,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             status=_UNVERIFIED,
             hosts=lambda s: [urlsplit(s.address).hostname or ""],
             neutral=True,
+            role="real",
         ),
         "azure_key_vault": Entry(
             AzureKeyVaultSettings,
@@ -409,6 +418,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             extra="azure",
             status=_UNVERIFIED,
             hosts=lambda s: [urlsplit(s.vault_url).hostname or "", "login.microsoftonline.com"],
+            role="real",
         ),
         "gcp_secret_manager": Entry(
             GcpSecretManagerSettings,
@@ -416,22 +426,25 @@ TABLE: dict[str, dict[str, Entry]] = {
             extra="gcp",
             status=_UNVERIFIED,
             hosts=lambda s: ["secretmanager.googleapis.com", "oauth2.googleapis.com"],
+            role="real",
         ),
         "mounted_file": Entry(
             MountedFileSettings,
             f"{_ACTIONS}.secrets_file:build",
             status=_UNVERIFIED,
             neutral=True,
+            role="real",
         ),
     },
     "signer": {
-        "none": Entry(KindSettings, f"{_BUILTIN}:no_signer"),
+        "none": Entry(KindSettings, f"{_BUILTIN}:no_signer", role="stand_in"),
         "ed25519_local": Entry(
             Ed25519LocalSettings,
             f"{_SIGNER}:build_local",
             extra="signer",
             status=_UNVERIFIED,
             neutral=True,
+            role="real",
         ),
         "aws_kms": Entry(
             AwsKmsSettings,
@@ -439,6 +452,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             extra="aws",
             status=_UNVERIFIED,
             hosts=_aws("kms"),
+            role="real",
         ),
         "azure_key_vault_key": Entry(
             AzureKeyVaultKeySettings,
@@ -446,6 +460,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             extra="azure",
             status=_UNVERIFIED,
             hosts=lambda s: [urlsplit(s.key_id).hostname or "", "login.microsoftonline.com"],
+            role="real",
         ),
         "gcp_kms": Entry(
             GcpKmsSettings,
@@ -453,6 +468,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             extra="gcp",
             status=_UNVERIFIED,
             hosts=lambda s: ["cloudkms.googleapis.com", "oauth2.googleapis.com"],
+            role="real",
         ),
         "vault_transit": Entry(
             VaultTransitSettings,
@@ -461,11 +477,12 @@ TABLE: dict[str, dict[str, Entry]] = {
             status=_UNVERIFIED,
             hosts=lambda s: [urlsplit(s.address).hostname or ""],
             neutral=True,
+            role="real",
         ),
     },
     # Where each signed checkpoint is also written, out of the runtime's reach (WORM).
     "anchor": {
-        "none": Entry(KindSettings, f"{_BUILTIN}:no_anchor"),
+        "none": Entry(KindSettings, f"{_BUILTIN}:no_anchor", role="stand_in"),
         "s3_object_lock": Entry(
             S3ObjectLockSettings,
             f"{_AUDIT}.anchor_s3:build",
@@ -473,6 +490,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             status=_UNVERIFIED,
             hosts=_s3_anchor_hosts,
             neutral=True,
+            role="real",
         ),
         "azure_immutable_blob": Entry(
             AzureImmutableBlobSettings,
@@ -480,6 +498,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             extra="azure",
             status=_UNVERIFIED,
             hosts=lambda s: [urlsplit(s.account_url).hostname or "", "login.microsoftonline.com"],
+            role="real",
         ),
         "gcs_retention_lock": Entry(
             GcsRetentionLockSettings,
@@ -487,30 +506,33 @@ TABLE: dict[str, dict[str, Entry]] = {
             extra="gcp",
             status=_UNVERIFIED,
             hosts=lambda s: ["storage.googleapis.com", "oauth2.googleapis.com"],
+            role="real",
         ),
     },
     "store": {
-        "memory": Entry(KindSettings, f"{_BUILTIN}:memory_store"),
+        "memory": Entry(KindSettings, f"{_BUILTIN}:memory_store", role="stand_in"),
         "postgres": Entry(
             PostgresSettings,
             "hadavin_sdk.store.postgres:build",
             extra="pg",
             status=_UNVERIFIED,
             neutral=True,
+            role="real",
         ),
     },
     "audit": {
-        "local_dir": Entry(LocalDirSettings, f"{_BUILTIN}:local_dir_audit"),
+        "local_dir": Entry(LocalDirSettings, f"{_BUILTIN}:local_dir_audit", role="stand_in"),
         "chain": Entry(
             ChainSettings,
             "hadavin_sdk.audit.chain:build",
             extra="signer",
             status=_UNVERIFIED,
             neutral=True,
+            role="real",
         ),
     },
     "llm": {
-        "fake": Entry(FakeLLMSettings, f"{_BUILTIN}:fake_llm"),
+        "fake": Entry(FakeLLMSettings, f"{_BUILTIN}:fake_llm", role="stand_in"),
         # Every kind below is slice2-unverified until its P9 live run (design 12.1).
         "anthropic": Entry(
             AnthropicSettings,
@@ -518,6 +540,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             "anthropic",
             status=_UNVERIFIED,
             hosts=_anthropic_hosts,
+            role="real",
         ),
         "bedrock": Entry(
             BedrockSettings,
@@ -525,6 +548,7 @@ TABLE: dict[str, dict[str, Entry]] = {
             "aws",
             status=_UNVERIFIED,
             hosts=_aws("bedrock-runtime"),
+            role="real",
         ),
         "openai_compat": Entry(
             OpenAICompatSettings,
@@ -532,19 +556,25 @@ TABLE: dict[str, dict[str, Entry]] = {
             status=_UNVERIFIED,
             hosts=lambda s: [urlsplit(s.base_url).hostname or ""],
             neutral=True,
+            role="real",
         ),
         "gemini": Entry(
             GeminiSettings,
             "hadavin_sdk.llm.gemini:make",
             status=_UNVERIFIED,
             hosts=lambda s: ["generativelanguage.googleapis.com"],
+            role="real",
         ),
     },
     "detector": {
-        "regex": Entry(RegexSettings, f"{_BUILTIN}:regex_detector", neutral=True),
+        "regex": Entry(RegexSettings, f"{_BUILTIN}:regex_detector", neutral=True, role="real"),
         # llm_judge connects through the configured llm kind (its hosts are the llm's).
         "llm_judge": Entry(
-            JudgeSettings, "hadavin_sdk.guard.judge:make", status=_UNVERIFIED, neutral=True
+            JudgeSettings,
+            "hadavin_sdk.guard.judge:make",
+            status=_UNVERIFIED,
+            neutral=True,
+            role="real",
         ),
         "bedrock_guardrail": Entry(
             GuardrailSettings,
@@ -553,15 +583,17 @@ TABLE: dict[str, dict[str, Entry]] = {
             status=_UNVERIFIED,
             # The runtime screens; the control plane reads the guardrail's filters once at start-up.
             hosts=_aws("bedrock-runtime", "bedrock"),
+            role="real",
         ),
     },
     "channel": {
-        "fake": Entry(FakeChannelSettings, f"{_BUILTIN}:fake_channel"),
+        "fake": Entry(FakeChannelSettings, f"{_BUILTIN}:fake_channel", role="stand_in"),
         "slack": Entry(
             SlackSettings,
             "hadavin_sdk.approvals.slack_channel:build",
             status=_UNVERIFIED,
             hosts=lambda s: [urlsplit(s.api_base).hostname or ""],
+            role="real",
         ),
     },
 }
@@ -602,3 +634,45 @@ DEMO_ONLY: frozenset[tuple[str, str]] = frozenset(
 )
 # Kinds refused only in `prod` (design 4.6); the anchor rules are in config.py.
 NOT_PROD: frozenset[tuple[str, str]] = frozenset({("signer", "none"), ("anchor", "none")})
+
+
+# A settings field whose name says it points at a machine. A stand-in with one must say which hosts it reaches
+# (`hosts`), so the loopback-only rule in config.py can test them.
+_HOST_LIKE = re.compile(r"(host|url|address|endpoint)", re.IGNORECASE)
+
+
+def registry_problems(
+    table: dict[str, dict[str, Entry]],
+    demo_only: frozenset[tuple[str, str]] = DEMO_ONLY,
+    not_prod: frozenset[tuple[str, str]] = NOT_PROD,
+) -> list[str]:
+    """Plain sentences, one per broken rule; empty when the registry is sound. The rules: (1) every kind is exactly
+    one of "stand_in" or "real"; (2) a stand-in is also marked demo-only or not-for-prod, so a client profile
+    refuses it; (3) a stand-in whose settings can name a machine declares the hosts it reaches. Run when this module
+    is imported, and by the tests on planted copies."""
+    out = []
+    for cap, kinds in table.items():
+        for kind, entry in kinds.items():
+            where = f"backend {cap} kind {kind}"
+            if entry.role not in ("stand_in", "real"):
+                out.append(f"{where}: not classified; give it role stand_in or real")
+                continue
+            if entry.role != "stand_in":
+                continue
+            if (cap, kind) not in demo_only and (cap, kind) not in not_prod:
+                out.append(f"{where}: a stand-in must be listed in DEMO_ONLY or NOT_PROD")
+            named = [n for n in entry.settings.model_fields if n != "kind" and _HOST_LIKE.search(n)]
+            if named and entry.hosts is None:
+                out.append(
+                    f"{where}: a stand-in with a host setting ({', '.join(named)}) must declare hosts"
+                )
+    return out
+
+
+def assert_registry_sound(table: dict[str, dict[str, Entry]]) -> None:
+    """Raise RuntimeError naming every broken rule (see `registry_problems`)."""
+    if problems := registry_problems(table):
+        raise RuntimeError("backend table: " + "; ".join(problems))
+
+
+assert_registry_sound(TABLE)  # a new kind cannot be added without saying what it is
