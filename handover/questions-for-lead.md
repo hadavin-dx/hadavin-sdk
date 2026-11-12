@@ -1832,3 +1832,9 @@ Two parts. (1) Plain-shaped defining ids of agent, action, chain, principal prin
 
 ## Q-2026-11-12-p3a2-f5-40003 (ticket edit, safe default recorded)
 Ticket F5 lists all of SQLSTATE class 40 as "refused"; the 3d builder and the design reviewer say 40003 (statement completion unknown) must be "unknown" (exit 5). Question: may the ticket line read "class 40 except 40003"? Safe default if no answer: the code stays as is (unknown), the ticket is not edited. Source: reviews/P3a-2/goldfish_review_report-3d.md Issue 7.
+
+## READY candidate: PR89 mutation runner (03:56Z, 2026-11-12)
+- Branch wip/cloud-PR89-r29, head ea29121e9c1fc070acd55cf4bae9b9c613f55535 (non-security path; rounds 27-29 were prose and tests only, nothing under src/ or tools/ in the last delta).
+- Evidence: handover/evidence/PR89/ea29121e/RESULTS.md (independent runner): ruff, format, bandit, scan_repo, gitleaks exit 0; stage_mutants 37/37; mutant runner 329/329 as root and as user nobody; full pytest 10833 passed, 3 skipped (2 need mypy, which is not in the lock: q-pr89-mypy-in-lock).
+- Not as expected: the known timing flake failed once alone (fix on core/fix-timing-harness-flake); hand-run mypy shows 14 errors (the CHANGELOG now says 14 total) while the repo mypy test passes; not run: perf tests, Semgrep, zizmor, Trivy, pip-audit, Vault jobs, 3.12 job. A CI run on the head is the remaining check.
+- Ledger: R27-1 FIXED-VERIFIED. The lead merges; I do not.
