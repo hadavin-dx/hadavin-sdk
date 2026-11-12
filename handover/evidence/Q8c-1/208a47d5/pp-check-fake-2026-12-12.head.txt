@@ -1,0 +1,14 @@
+[fake-clock] datetime.datetime replaced globally, now() = 2026-12-12T12:00:00+00:00
+policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evidence run that finds the p
+policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/subkeys/*') is overdue (review_by 2026-12-11): an evidence run that finds the pa
+policy page: PENDING_NAMES ('signer/vault_transit', 'never:{transit_mount}/byok-export/*') is overdue (review_by 2026-12-11): an evidence ru
+policy page: PENDING_NAMES ('source/kubernetes', 'never:cluster-admin') is overdue (review_by 2026-12-11): an evidence run that finds the na
+policy page: PENDING_NAMES ('source/kubernetes', 'never:admin') is overdue (review_by 2026-12-11): an evidence run that finds the name in so
+policy page: PENDING_NAMES ('source/kubernetes', 'never:edit') is overdue (review_by 2026-12-11): an evidence run that finds the name in sou
+policy page: PENDING_CLAIMS ('secrets/vault', 'R17') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the 
+policy page: PENDING_CLAIMS ('signer/vault_transit', 'R18') is overdue (review_by 2026-12-11): an evidence run that reads the sources named 
+policy page: PENDING_CLAIMS ('source/kubernetes', 'R20') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in 
+policy page: PENDING_CLAIMS ('source/kubernetes', 'R21') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in 
+policy page: PENDING_CLAIMS ('source/kubernetes', 'R22') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in 
+policy page: PENDING_CLAIMS ('source/kubernetes', 'free:0') is overdue (review_by 2026-12-11): an evidence run that reads the sources named 
+policy page: PENDING_CLAIMS ('source/kubernetes', 'never:create') is overdue (review_by 2026-12-11): an evidence run that reads the sources 

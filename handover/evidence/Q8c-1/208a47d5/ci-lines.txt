@@ -1,0 +1,33 @@
+        run: ruff check src tests demos tools
+      - name: Format
+        run: ruff format --check src tests demos tools
+      - name: Secrets and banned names in the tracked files (the repo is public)
+        run: python tools/scan_repo.py
+      - name: The postgres client the database tests shell out to is present (else they would skip silently)
+        run: psql --version
+      - name: Tests (no live calls)
+        env:
+          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
+          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
+          HADAVIN_REQUIRE_VAULT_ENGINE: "1"  # the generated Vault policies must be refused by this real server: a skip of tests/test_policy_engine.py fails
+          HADAVIN_REQUIRE_PINNED_UNIDATA: "1"  # the text-folding tables are built for Unicode 15.1.0 (Python 3.13); another interpreter must fail, not skip
+        run: pytest -q -m "not live and not perf" -rs
+      - name: Stage-rename mutants (each reverted guard must be killed by its named test) (blocks)
+        run: python tests/stage_mutants.py
+      - name: Declared-permission mutants (each reverted guard rule must be killed by its named test) (blocks)
+        run: python tests/policy_mutants.py
+      - name: Declared-permission page and dated lists (fails from the day after the earliest review date, until renewed) (blocks)
+        run: python tools/policy_page.py --check
+      # Timing tests have their own step and it blocks: the check is a ratio (4x text, limit 12x time) with wall
+      # clock, so a noisy runner moves both runs alike; a real super-linear pattern is a merge blocker.
+      - name: Performance of the redaction patterns (blocks)
+        env:
+          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres  # one perf test needs the postgres service
+        run: pytest -q -m perf -rs
+
+  # The tests again on the oldest supported Python (pyproject: requires-python >=3.12); everything else runs once, on 3.13. A separate
+  # job and not a matrix of "check": a matrix would rename the required check "check" to "check (3.13)". Python 3.12.3 differs from
+  # 3.13 in how argparse treats a word after "--" (a mutation-runner test failed there only), which is why this job exists.
+  tests-py312:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-24.04
