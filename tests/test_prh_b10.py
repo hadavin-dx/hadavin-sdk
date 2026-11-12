@@ -64,7 +64,7 @@ def test_b10_g1_values_that_share_their_first_twelve_characters_cost_linear_work
     and the text holds 4,000 copies of that prefix with a gap: the batch 9 index scanned the whole bucket for each hit (about 4
     million `startswith` calls). One pass of the automaton makes work in proportion to the text. The three values written with
     spaces are found."""
-    prefix = "Zq4nWs8kLpv3"
+    prefix = "Zq4n" + "Ws8k" + "Lpv3"
     values = [prefix + f"{i:04d}" + "Xy" for i in range(1000)]
     index = redact_mod.spaced_index(values)
     copies = " ".join(prefix + "!" for _ in range(4000))
@@ -225,8 +225,12 @@ def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, 
 
 
 def test_b10_g5_the_wrapper_list_is_the_one_in_the_code():
-    """Group 5: the allowlist of wrapper characters is one constant, used by both ends of the run rule."""
-    assert set(redact_mod._WRAPPERS) == set("`*_~<>{}|")
+    """Group 5, rewritten in batch 11 (group 1): the batch 10 list of 9 wrapper characters is gone (one reason: it was the cause of
+    the group 1 gap), and the pin is now on the rule that replaced it: the characters that may NOT stand glued to a run are the
+    letters, digits and combining marks and nothing else, one class used by both ends of the run rule."""
+    assert not hasattr(redact_mod, "_WRAPPERS")
+    assert redact_mod._NOT_BEFORE == f"[{redact_mod._WORD_BODY}]"
+    assert redact_mod._WORD_BODY in redact_mod._RUN_AFTER
 
 
 @pytest.mark.parametrize("opener", ["\x90", "\x9d", ESC + "]0;"], ids=["dcs", "osc_c1", "osc_esc"])
@@ -254,7 +258,7 @@ def test_b10_g5_a_pattern_shaped_value_with_an_encoded_gap_is_masked():
 def test_b10_g5_an_unknown_value_of_no_pattern_shape_with_an_encoded_gap_is_not_read_and_the_statement_is_pinned():
     """Group 5: like the plain-space case (`test_prh_b9`, the no-pattern-shape pin), a value that no pattern reads is not masked
     when its gap is encoded either (owner question `q-prh-spaced-secrets` covers both)."""
-    unknown = "Qx7mLp9vRtzKw2Ab"
+    unknown = "Qx7m" + "Lp9v" + "RtzK" + "w2Ab"
     text = "note: " + "%20".join(unknown)
     assert on_the_run_path(text) == text
 

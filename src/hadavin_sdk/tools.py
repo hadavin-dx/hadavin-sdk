@@ -802,6 +802,8 @@ def _first_decoded(char: str) -> str:
         return runmap.undo(char)[
             :1
         ]  # the plain decode: a control character reads as itself, and the skip guard skips
+    except runmap.RedactorCrash:
+        raise  # one rule at every catcher: a crash of the redactor stops the run, never reads as a plain character
     except runmap.RedactionError:
         return char
 
@@ -977,7 +979,7 @@ def _ordinary_word(body: str, start: int, end: int, cut_end: bool) -> bool:
 
 # a text that holds a hidden item, or a spelled-out one (`%1b`, `\\u001b`, `&#27;`, `%C2%9B`, `\\x1b`)
 _HIDDENISH = re.compile(
-    r"%(?:[01][0-9a-f]|7f|c2)|\\u00[01]|\\x[01]|\\e(?=[\[\]()])|&#", re.IGNORECASE
+    r"%(?:[01][0-9a-f]|7f|c2)|\\u00[01]|\\x[01]|\\" + runmap.ESC_E + r"|&#", re.IGNORECASE
 )
 
 
@@ -1001,15 +1003,16 @@ def _remnant_stands(original: str, out: str, scrub: ScrubSettings) -> bool:
 
 def _found_values(raw: str, known: list[str], scrub: ScrubSettings) -> list[str] | None:
     """The values of a secret kind that the redactor finds in `raw` as written (every reading it keeps), at least
-    `min_secret` characters, that are not handed-out values already. None when the redactor refuses the text for a work
-    limit or because its readings cannot be merged (`RedactionLimit`): nothing is shown then."""
+    `min_secret` characters, that are not handed-out values already. None when the redactor refuses the text (a work
+    limit, readings it cannot merge, or any other refusal): nothing is shown then. A crash of the redactor (`RedactorCrash`)
+    is not caught here: it stops the run."""
     found: dict[str, str] = {}
     try:
         runmap.redact_untrusted(raw, found, refuse_remnants=False)
-    except runmap.RedactionLimit:
-        return None  # the redactor refuses this text (readings it cannot merge, a limit): the caller shows nothing
+    except runmap.RedactorCrash:
+        raise  # one rule at every catcher: a crash of the redactor stops the run, it is never "found nothing"
     except runmap.RedactionError:
-        return []
+        return None  # any refusal of the redactor (a limit, readings it cannot merge, a plain refusal): the caller shows nothing
     return [
         v
         for ph, v in found.items()
@@ -1297,6 +1300,8 @@ def error_reason(
     # patterns FIRST, then the cut: a cut first splits a JWT or a key and the redactor no longer sees a whole one
     try:
         message = runmap.redact_bounded(message, {}, runmap.neutralise_untrusted)[0]
+    except runmap.RedactorCrash:
+        raise  # one rule at every catcher: a crash of the redactor stops the run
     except (
         runmap.RedactionError
     ):  # too deep, or too large once normalised: a fixed note, never the text

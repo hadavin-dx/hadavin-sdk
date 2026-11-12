@@ -324,7 +324,9 @@ def test_b8_i6_the_withheld_share_is_bounded():
     """Issue 6: over-withholding is measured on both paths (the 3000 seeded texts of `tests/test_prh_b7.py`): the tool path
     withholds 155 (5.2 percent) and direct `redact()` 14 (0.5 percent), measured at the head of batch 9 (155 and 22 at batch 8;
     on the same seeded texts the old bound of 200 passed with 143 too). The bounds ARE the measured values: one more withheld
-    text fails them, so a change that withholds more must say so here."""
+    text fails them, so a change that withholds more must say so here. Batch 11 (group 1: any character that is no letter, digit or
+    mark glued to a spaced run is a wrapper) widened what is read as a spaced run: the tool path withholds 156 of the same 3000 texts
+    (one more than 155; owner item q-prh-piece-masking), direct `redact()` is unchanged."""
     from tests import test_prh_b7 as b7
 
     tool = direct = n = 0
@@ -334,5 +336,5 @@ def test_b8_i6_the_withheld_share_is_bounded():
         tool += "withheld" in o or o.startswith(tools.MARKER + tools.TRUNCATED)
         direct += R.redact(t).text == R.WITHHELD_NOTE
     assert n == 3000
-    assert tool <= 155, tool
+    assert tool <= 156, tool
     assert direct <= 14, direct

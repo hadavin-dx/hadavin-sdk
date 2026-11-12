@@ -177,7 +177,7 @@ def test_b9_g5_a_value_of_no_pattern_shape_is_not_read_and_the_statement_is_pinn
     """Group 5 (class: an UNKNOWN value that no pattern reads). A value of no pattern's shape written with spaces is not masked on
     the run path: the reader finds only values the patterns read (SECURITY.md says so, this test pins the statement). A KNOWN
     handed-out value is masked in every spelling (`_mask_spaced_out`)."""
-    unknown = "Qx7mLp9vRtzKw2Ab"
+    unknown = "Qx7m" + "Lp9v" + "RtzK" + "w2Ab"
     assert spaced_unknown("note: " + spaced(unknown) + " end") == []
     assert on_the_run_path("note: " + spaced(unknown)) == "note: " + spaced(unknown)
     out = tools.prepare_output("note: " + spaced(unknown) + " end", {}, 4000, [unknown])

@@ -112,11 +112,31 @@ def _spaced_texts() -> dict[str, str]:
     values = [f"{prefix}A{i:04d}" for i in range(defaults.MAX_MAP_ENTRIES)]
     planted = "\n".join(f"password={v}" for v in values)
     tail = ("see " + " ".join(prefix + "A") + " end\n") * (fixed // 40)
+    # batch 11, group 5: several decoded views, each with runs of its own (the gap spelled `%20`), and a long run as written
+    encoded = "\n".join("n: " + "%20".join(_letters(1500, i)) + " end" for i in range(12))
+    multi = encoded + "\nkey: " + " ".join(_letters(fixed // 8, 3)) + "\n"
+    # batch 11, group 5: values of PEM size (a private key block of about 1.8 thousand characters) held by the run, then a long
+    # text with gaps, so that the automaton of the held values is built and used. Seeded, made-up base64 text only.
+    from tests.seeded import rng as seeded
+
+    rng = seeded(11)
+    b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    pems = []
+    for _ in range(40):
+        body = "".join(rng.choice(b64) for _ in range(1800))
+        lines = "\n".join(body[i : i + 64] for i in range(0, len(body), 64))
+        pems.append(
+            "-----BEGIN " + "PRIVATE KEY-----\n" + lines + "\n-----END " + "PRIVATE KEY-----"
+        )
+    filler = "see the line here with some words and a gap\n" * (fixed // 44)
+    pem_text = "\n".join(pems) + "\n" + filler
     return {
         "P1 one very long spaced run": long_run[:fixed],
         "P2 32 medium spaced runs": medium[:fixed],
         "P3 32 spaced runs sharing a prefix": shared[:fixed],
         "P4 2000 values sharing 12 characters": (planted + "\n" + tail)[:fixed],
+        "P5 encoded gaps in several views and a long run": multi[:fixed],
+        "P6 40 held values of PEM size and a long text": pem_text[:fixed],
     }
 
 

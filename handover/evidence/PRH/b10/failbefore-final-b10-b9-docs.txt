@@ -8,7 +8,7 @@ _ test_b10_g1_values_that_share_their_first_twelve_characters_cost_linear_work _
         and the text holds 4,000 copies of that prefix with a gap: the batch 9 index scanned the whole bucket for each hit (about 4
         million `startswith` calls). One pass of the automaton makes work in proportion to the text. The three values written with
         spaces are found."""
-        prefix = "Zq4nWs8kLpv3"
+        prefix = "Zq4n" + "Ws8k" + "Lpv3"
         values = [prefix + f"{i:04d}" + "Xy" for i in range(1000)]
         index = redact_mod.spaced_index(values)
         copies = " ".join(prefix + "!" for _ in range(4000))

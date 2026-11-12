@@ -55,7 +55,9 @@ class RedactionError(RuntimeError):
 
 class RedactorCrash(RedactionError):
     """The redactor itself raised something that is not one of its own refusals (a bug or a broken stand-in). Nothing
-    is sent, and no caller turns it into a withheld note: a crash must stop the run, not be shown as an ordinary limit."""
+    is sent, and every catcher of `RedactionError` in the tool and logging path (`tools.redact_layered`, `tools._found_values`,
+    `tools._first_decoded`, `tools.error_reason`, `safe_head`) lets it pass: a crash must stop the run, not be shown as an
+    ordinary limit (batch 11, group 4). The agent loop turns it into the stop `redaction_error`."""
 
 
 class InputTooLarge(RedactionError):
@@ -136,11 +138,20 @@ def nfkc(text: str) -> str:
     return canonical(fits_after_nfkc(text))
 
 
-# `\e` is ESC in shell and logging dialects, read like `\x1b` (batch 9, class: a spelled-out ESC the decoder did not know), but only
-# directly before `[`, `]`, `(` or `)` (the characters that start the sequences this reader knows; batch 10, group 6: a Windows path
-# such as `C:\env` is not read as an ESC and takes no heavier path). It only adds a reading
+# `\e` is ESC in shell and logging dialects, read like `\x1b` (batch 9, class: a spelled-out ESC the decoder did not know). It is read
+# as ESC in two kinds of place only (batch 10 narrowed it to the first, batch 11 group 8 added the second): (1) directly before `[`,
+# `]`, `(` or `)` (the characters that start the sequences this reader knows); (2) INSIDE a value: with 6 or more token characters
+# (letters, digits, `_`, `-`) on each side, or 12 or more token characters after it, or next to another `\e` that is one token
+# character away (`q\eZ\e7`). A Windows path such as `C:\env` or `C:\Users\err` has none of these, so it is left as written and takes no
+# heavier path. A `\e` that is read adds one reading, never removes one. Batch 10's rule (1) alone left a secret with a literal `\e`
+# spelled into it readable.
+_T = "[A-Za-z0-9_-]"
+ESC_E = (
+    rf"e(?:(?=[\[\]()])|(?=(?:{_T}){{12}})|(?<=(?:{_T}){{6}}\\e)(?=(?:{_T}){{6}})"
+    rf"|(?<=\\e{_T}\\e)|(?={_T}\\e))"
+)
 _HEX_ESCAPE = re.compile(
-    r"\\(?:x([0-9a-fA-F]{2})|U([0-9a-fA-F]{8})|([0-3][0-7]{2})|(e(?=[\[\]()])))"
+    rf"\\(?:x([0-9a-fA-F]{{2}})|U([0-9a-fA-F]{{8}})|([0-3][0-7]{{2}})|({ESC_E}))"
 )
 _PCT_U = re.compile(r"%u([0-9a-fA-F]{4})")
 _BRACE_U = re.compile(r"\\u\{([0-9a-fA-F]{1,6})\}")
@@ -677,6 +688,43 @@ def _held(text: str) -> int:
     return len(PLACEHOLDER.findall(text))
 
 
+_GAPS = re.compile(rf"[\s{hidden.IGNORABLE_RE.pattern[1:-1]}]")
+
+
+def _only_inside_held(value: str, current: dict[str, str], readings: tuple[str, ...]) -> bool:
+    """Is EVERY copy of `value` in the readings of a view part of a value of a SECRET kind that the run already holds (`current`:
+    a secret that is only a piece of a held identifier is not "already found", batch 10 group 5; batch 11, group 2:
+    the batch 10 test was `value in held value`, which says "already found" for a shorter secret whose only copy this view
+    found, because a longer held value happens to contain it)? Copies are counted in the reading with the gaps taken out (a copy
+    written with spaces is a copy), overlapping ones too; a copy is covered when it lies inside one occurrence of a held value
+    that contains `value`. A reading with no copy of `value` at all (it was found in a spelling no gap rule can see) is not
+    proved covered: False, so the view is not dropped. Work: one search per held value that contains `value`, over a text that
+    is within the redactor's size cap."""
+    holders = [
+        k
+        for ph, k in current.items()
+        if value in k and not k.startswith("\0seed") and kind_of(ph) in SECRET_KINDS
+    ]
+    if not holders:
+        return False
+    saw_a_copy = False
+    for reading in readings:
+        compact = _GAPS.sub("", reading)
+        covered = bytearray(len(compact) + 1)  # a 1 where an occurrence of a holder stands
+        for k in holders:
+            i = compact.find(k)
+            while i >= 0:
+                covered[i : i + len(k)] = b"\x01" * len(k)
+                i = compact.find(k, i + 1)
+        i = compact.find(value)
+        while i >= 0:
+            saw_a_copy = True
+            if not all(covered[i : i + len(value)]):
+                return False
+            i = compact.find(value, i + 1)
+    return saw_a_copy
+
+
 _VALUE_END = frozenset(" \t\n;&,\"'")
 _ENCODED_MARKS = ("%", chr(92), "&")
 
@@ -733,11 +781,22 @@ class _Work:
     a hostile text must not keep the process busy. `defaults.REDACT_BUDGET_S` is checked before every pass, so one call
     overruns it by at most one pass; `defaults.MAX_REDACT_PASSES` is counted in `count_pass`, which every pass goes through."""
 
-    __slots__ = ("passes", "started")
+    __slots__ = ("passes", "spaced_chars", "started")
 
     def __init__(self) -> None:
         self.started = time.monotonic()
         self.passes = 0
+        self.spaced_chars = (
+            0  # characters the reads of spaced-out runs will scan, over every view of the call
+        )
+
+    def charge_spaced(self, chars: int) -> None:
+        """Count the characters of one read of a spaced-out run BEFORE it runs (`redact.spaced_unknown`): over
+        `defaults.SPACED_READ_MAX_CHARS` for the whole call, or past the time budget, the call is refused (batch 11, group 5)."""
+        self.spaced_chars += chars
+        if self.spaced_chars > defaults.SPACED_READ_MAX_CHARS:
+            raise SpacedRunLimit
+        self.check()
 
     def check(self) -> None:
         if time.monotonic() - self.started > defaults.REDACT_BUDGET_S:
@@ -1033,7 +1092,7 @@ def redact_text(
                 ):
                     cleaned.append(_no_created_shapes(v, c))
         # an UNKNOWN secret written with a space between its characters (`A K I A ...`): the text with the spaces of such a run
-        # taken out is one more view (the check is `redact.spaced_unknown`: a run of ten or more single-character tokens that
+        # taken out is one more view (the check is `redact.spaced_unknown`, its reads counted in the call's own work count: a run of ten or more single-character tokens that
         # the patterns read as a secret once collapsed; its measured rate on ordinary text is in SECURITY.md,
         # `defaults.READ_SPACED_OUT_UNKNOWN`). Batch 10, group 5: also in each DECODED view, so a gap spelled `%20` or `&#32;` is a
         # gap too (`A%20K%20I%20A...`); the work budget of `spaced_unknown` counts each view's runs on their own
@@ -1042,7 +1101,7 @@ def redact_text(
         ):
             try:
                 runs = (
-                    spaced_unknown(source)
+                    spaced_unknown(source, work_done.charge_spaced)
                     if defaults.READ_SPACED_OUT_UNKNOWN
                     and len(source) >= 2 * defaults.SPACED_RUN_MIN_TOKENS - 1
                     else []
@@ -1119,13 +1178,8 @@ def redact_text(
                     # (class: a find dropped silently, PR H batch 9, group 9)
                     # only a held value of a SECRET kind can hold the new value (a secret that is a piece of a held identifier is
                     # not "already found"; batch 10, group 5)
-                    held = [
-                        v
-                        for ph, v in current.items()
-                        if not v.startswith("\0seed") and kind_of(ph) in SECRET_KINDS
-                    ]
                     if any(
-                        not any(v in k for k in held)
+                        not _only_inside_held(v, current, (vj, vs))
                         for v in again_map.values()
                         if v not in current.values() and not v.startswith("\0seed")
                     ):
@@ -1159,10 +1213,12 @@ def safe_head(text: str, limit: int, mapping: dict[str, str] | None = None) -> s
     (an exception text, a validation error, a card line) needs, because a cut first splits a secret and the
     redactor no longer sees a whole one. The text is redacted up to the redactor's cap (`redact_bounded`: past the
     cap it is cut for bounded work and the end of the result is dropped), then the head is kept.
-    Never raises: a text the redactor refuses (too large after NFKC, nested too deep, or any failure) becomes a
-    fixed note."""
+    Raises only `RedactorCrash` (the redactor itself failed: a bug stops the run, it is never turned into a note); a
+    text the redactor refuses (too large after NFKC, nested too deep, a work limit, a plain refusal) becomes a fixed note."""
     try:
         return redact_bounded(text, {} if mapping is None else mapping)[0][:limit]
+    except RedactorCrash:
+        raise  # one rule at every catcher: a crash of the redactor stops the run (batch 11, group 4)
     except RedactionError:
         return SAFE_HEAD_NOTE
 

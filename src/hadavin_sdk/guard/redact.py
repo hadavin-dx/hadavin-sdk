@@ -22,7 +22,8 @@ from __future__ import annotations
 
 import re
 import string
-from collections.abc import Iterable
+import unicodedata
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -913,6 +914,9 @@ class _SpacedIndex:
         return found
 
 
+_NO_SPACED = _SpacedIndex(())
+
+
 def spaced_index(values: Iterable[str]) -> _SpacedIndex:
     """The values `spaced_spans` looks for (built once for many texts): a value of fewer than `SPACED_VALUE_MIN_CHARS`
     characters, or one that holds a space, is not looked for spaced out."""
@@ -955,12 +959,34 @@ class SpacedRunLimit(Exception):
 _IGN = hidden.IGNORABLE_RE.pattern[1:-1]  # the body of the class: ranges only
 _TOK = rf"[^\s{_IGN}]"
 _SEP = rf"[\s{_IGN}]+"
-# what may stand right before a run: a separator, the start of the text, or a character that glues a value to its key
-# (a wrapper glued to the first character is no part of the value: `\`A K I A ...`, `*A K I A ...`, `<A K I A ...`; batch 10, group 5)
-_WRAPPERS = "`*_~<>{}|"  # what a chat or a document puts around a value: code span, bold, italic, strike, angle, brace, pipe
-_NOT_BEFORE = rf"[^\s{_IGN}=:\"'(\[,;{re.escape(_WRAPPERS)}]"
-# what may follow a run: sentence punctuation, then a separator or the end of the text (never a longer word)
-_RUN_AFTER = rf"(?=[.,;:)\]\"'!?{re.escape(_WRAPPERS)}]*(?:[\s{_IGN}]|$))"
+# A "word character" here is a letter, a digit or a combining mark (Unicode categories L, N and M). A run of single characters may
+# not stand glued to one (`ab c d e ...` is the end of a longer word, not a spaced value), but EVERY other character glued to
+# its first or last character is a wrapper that is no part of the value: a code span, bold, quotes of any language (curly,
+# angle, corner), a currency sign or a hash or an at sign, a slash, a backslash, a percent sign, a dash, a bracket. One category
+# rule, not a list of characters (batch 11, group 1: the batch 10 list of 9 wrapper characters ended the run one token early for
+# every character it did not hold, and a spaced value stayed readable). Letters exist only in planes 0 to 3 and 14: only those
+# are scanned (a test derives the set over all code points and compares).
+_WORD_PLANES = (range(0x32400), range(0xE0000, 0xE1000))
+
+
+def _word_class_body() -> str:
+    spans: list[list[int]] = []
+    for plane in _WORD_PLANES:
+        for c in plane:
+            if unicodedata.category(chr(c))[0] not in "LNM":
+                continue
+            if spans and spans[-1][1] == c - 1:
+                spans[-1][1] = c
+            else:
+                spans.append([c, c])
+    return "".join(rf"\U{lo:08x}-\U{hi:08x}" for lo, hi in spans)
+
+
+_WORD_BODY = _word_class_body()
+_NOT_BEFORE = f"[{_WORD_BODY}]"  # what may NOT stand right before a run (a lookbehind)
+# what may follow a run: any characters that are no word character and no separator, then a separator or the end of the text
+# (never a longer word)
+_RUN_AFTER = rf"(?=[^\s{_IGN}{_WORD_BODY}]*(?:[\s{_IGN}]|$))"
 _SPACED_RUN = re.compile(
     rf"(?<!{_NOT_BEFORE}){_TOK}(?:{_SEP}{_TOK}){{{defaults.SPACED_RUN_MIN_TOKENS - 1},}}{_RUN_AFTER}"
 )
@@ -993,7 +1019,9 @@ def _runs_of(text: str) -> list[tuple[int, int, list[str], list[int]]]:
     return found
 
 
-def spaced_unknown(text: str) -> list[tuple[int, int, str]]:
+def spaced_unknown(
+    text: str, charge: Callable[[int], None] | None = None
+) -> list[tuple[int, int, str]]:
     """The runs of `SPACED_RUN_MIN_TOKENS` or more single-character tokens whose collapsed text (the separators out) the
     patterns read as a secret of a SECRET kind: (start, end, collapsed text) in `text`. The separator is any white space or
     ignorable character, one or more (two spaces, a tab, a new line, a no-break space, a zero-width character), or a visible
@@ -1005,7 +1033,9 @@ def spaced_unknown(text: str) -> list[tuple[int, int, str]]:
     `defaults.SPACED_RUN_MAX_RUNS` candidate runs, or more than `defaults.SPACED_READ_MAX_CHARS` characters to read in all
     (a run is long, or there are many), in one text raise `SpacedRunLimit` (the text is withheld; batch 10, group 1). CHECK-ONLY reading:
     the caller decides whether to act (`defaults.READ_SPACED_OUT_UNKNOWN`). Cost: one regular-expression pass per spelling, and
-    at most `defaults.SPACED_DROP_MAX` reads of each run, all counted in characters against the budget BEFORE they run."""
+    at most `defaults.SPACED_DROP_MAX` reads of each run, all counted in characters against the budget BEFORE they run. `charge`
+    (the caller's running count of the whole call, over every view) is told the characters of each read before it runs and may
+    raise `SpacedRunLimit`."""
     out: list[tuple[int, int, str]] = []
     # the starts of the candidate runs counted against `SPACED_RUN_MAX_RUNS`
     counted: set[int] = set()
@@ -1029,9 +1059,14 @@ def spaced_unknown(text: str) -> list[tuple[int, int, str]]:
             context = text[max(0, start - defaults.SPACED_CONTEXT_CHARS) : start]
             # the work budget counts what the reads below will scan, BEFORE they run: the token alone, and with a context the
             # context alone and the context plus the token (`_reads_as_secret`); over the budget the text is withheld
-            work += len(token) + (2 * len(context) + len(token) if context else 0)
+            cost = len(token) + (2 * len(context) + len(token) if context else 0)
+            work += cost
             if work > defaults.SPACED_READ_MAX_CHARS:
                 raise SpacedRunLimit
+            if charge is not None:
+                charge(
+                    cost
+                )  # the call's own work count and clock (batch 11, group 5): it may raise `SpacedRunLimit`
             if _reads_as_secret(token, context):
                 out.append((starts[drop], end, token))
                 break
@@ -1180,9 +1215,15 @@ class _Redactor:
         self._finders: list[tuple[re.Pattern[str], dict[str, list[str]]]] = []
         self._slow: list[str] = []  # values checked one by one: nested too deep for the finder
         self._ordered: list[tuple[str, str]] = []
+        self._spaced: _SpacedIndex | None = (
+            None  # the automaton of the known secrets, built when a sweep first needs it
+        )
         self.bank_near = False  # redact_many: a bank word in some string of the batch
         if cache and cache.get("map") == self.mapping:  # nothing new since the last build: skip it
             self._ordered, self._rules, self._finders, self._slow = cache["state"]
+            self._spaced = cache.get(
+                "spaced"
+            )  # built once per map version, like the finders (batch 11, group 5)
             self._built_for = len(self.mapping)
 
     def _patterns(self, text: str) -> str:
@@ -1334,10 +1375,15 @@ class _Redactor:
             return False
         if not swept:
             return True
-        ph = self.reverse.get(value)
-        rule = _sweep(ph, value) if ph else None
-        if rule is None:
+        # the rule of the placeholder the sweep itself uses for this value (`_build`: the first one in the map order that has a
+        # rule), not the last one of the reverse map: a value held under two placeholders of different kinds is swept by one
+        # of them only (batch 11, group 6)
+        if self._built_for != len(self.mapping):
+            self._build()
+        entry = self._rules.get(value)
+        if entry is None:
             return True
+        _, ph, rule = entry
         every = rule is _EVERY_COPY
         return len(_occurrences(shown, value, ph, True)) > len(
             _occurrences(shown, value, ph, every)
@@ -1467,9 +1513,11 @@ class _Redactor:
         except (RecursionError, re.error, OverflowError):
             self._finders, self._slow = [], list(self._rules)  # the exact per-value loop
         self._built_for = len(self.mapping)
+        self._spaced = None  # a new map version: the automaton is built again when a sweep needs it
         if self._cache is not None:
             self._cache["map"] = dict(self.mapping)
             self._cache["state"] = (self._ordered, self._rules, self._finders, self._slow)
+            self._cache.pop("spaced", None)
 
     def sweep(self, out: str) -> str:
         # Final literal sweep. The patterns FIND values; this masks the copies a regex boundary missed,
@@ -1492,7 +1540,11 @@ class _Redactor:
         parts = _PLACEHOLDER.split(
             out
         )  # even indices = free text, odd indices = whole placeholders
-        spaced_index_ = spaced_index(self._secret_values() if _GAP.search(out) else ())
+        if self._spaced is None and _GAP.search(out):
+            self._spaced = spaced_index(self._secret_values())
+            if self._cache is not None and self._cache.get("map") == self.mapping:
+                self._cache["spaced"] = self._spaced
+        spaced_index_ = self._spaced if self._spaced is not None else _NO_SPACED
         for i in range(0, len(parts), 2):
             segment = parts[i]
             if not segment:
