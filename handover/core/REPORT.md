@@ -1,5 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 19:55Z UTC / 01:25 IST: ORDER 260 builder running; other items
+- ORDER 260: design v2 written after EGM round 1 (design and readiness reviewers: 5 Blocker, 14 Major between them; resolve report and 7 ledger rows SONARPATH-r1-1..7, OPEN). Builder started on `core/sonar-path-traversal` (worktree B-SONARPATH, push ref `wip/cloud-sonar-path`, heavy-queue priority 2). One reviewer finding was contested in part: the reviewer read this checkout, but main has the mutation runner.
+- Honest Sonar claim in the plan: an operator-typed folder cannot be sanitised; the PR will say what is contained (names from data) and what the lead must check or accept in SonarQube. Nothing is verified against Sonar (no local run).
+- #72 nits: pushed `wip/cloud-p6a-nits` 7a6eb4e9; only 6 of 93 mutants run; independent evidence and one review still to do.
+- AK-G2-a batch 2: builder stopped INCOMPLETE (final mutants, gates and push not done); I pushed its local head a4fe48bb to `wip/cloud-ak-g2-a` and sent it back to finish (survivor P11, gates once, cleanup of its Postgres).
+- Not verified: Q8c-1 b16 and stack 2 hand-backs were interim only. Load about 9; no extra heavy job started beyond the priority-2 builder.
+
 ## 19:51Z UTC / 01:21 IST: ORDER 260 started (SonarCloud path traversal)
 - STARTED: design note `handover/design/sonar-path-traversal-design.md` pushed (one new stdlib helper `pathguard.py`; `config.confined`, `causelist._inside`, `signer.key_path` become callers; `atomic_write` gets a required `base`; NOSONAR lines removed). EGM review-loop round 1 (design + implementation-readiness reviewers) running now. Builder starts after resolve, on `core/sonar-path-traversal` from main.
 - Not verified: nothing built yet. Windows junction and `\\?\` behaviour cannot run on this Linux box.
