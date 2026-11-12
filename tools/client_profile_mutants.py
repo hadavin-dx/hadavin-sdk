@@ -68,9 +68,7 @@ CHAN_LINE = '    out += [f"channel: {b.channel.kind}"] if ("channel", b.channel.
 S2_MSG = "            f\"{', '.join(f'{n}=' for n in live_doubles)} replace configured parts and are for tests; \"\n"
 SIG = "    timeout_s: float | None = None,\n    allow_test_doubles: bool = False,\n"
 BLOCK_START = "    # Before any backend is built, so a refusal reads no secret"
-BLOCK_END = (
-    '            "in pilot and prod pass allow_test_doubles=True only from a test"\n        )\n'
-)
+BLOCK_END = '            "only from a test"\n        )\n'
 
 
 # Settings that point a test at a cloud account or a model provider. The runner refuses to start when one is set in
@@ -672,8 +670,8 @@ m(
     "test-double rule message no longer names the switch",
     APP,
     rep(
-        '"in pilot and prod pass allow_test_doubles=True only from a test"\n        )\n    reg',
-        '"in pilot and prod pass the switch only from a test"\n        )\n    reg',
+        '"in every environment other than demo (pilot and prod included) pass allow_test_doubles=True "\n            "only from a test"\n        )\n    reg',
+        '"in every environment other than demo (pilot and prod included) pass the switch "\n            "only from a test"\n        )\n    reg',
     ),
     [CP],
     r"tests/test_client_profile.py::test_each_test_double_is_refused_alone\[",
@@ -871,6 +869,34 @@ m(
     rep("CLOUD_NAMES = " + '("DATABASE_URL", "KUBECONFIG")', "CLOUD_NAMES = ()"),
     [CP],
     r"tests/test_client_profile.py::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting\[DATABASE_URL\]",
+)
+
+m(
+    "refusal text names only pilot and prod again",
+    APP,
+    rep(
+        '"in every environment other than demo (pilot and prod included) pass allow_test_doubles=True "',
+        '"in pilot and prod pass allow_test_doubles=True "',
+    ),
+    [CP],
+    "tests/test_client_profile.py::test_the_refusal_text_is_true_for_every_value_that_reaches_it$",
+)
+m(
+    "build params snapshot taken from another function",
+    APP,
+    rep(
+        "_BUILD_PARAMS = inspect.signature(build).parameters",
+        "_BUILD_PARAMS = inspect.signature(_test_doubles_given).parameters",
+    ),
+    [CP],
+    "tests/test_client_profile.py::test_the_build_params_snapshot_is_the_signature_of_build$",
+)
+m(
+    "test-double rule runs in demo too",
+    APP,
+    rep(S2_GIVEN, "_test_doubles_given(_BUILD_PARAMS, given)"),
+    [CP],
+    "tests/test_client_profile.py::test_demo_ignores_the_switch_and_the_doubles\\[",
 )
 
 

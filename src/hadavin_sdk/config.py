@@ -423,7 +423,7 @@ class Config(_Strict):
             tail = (
                 "; a demo config that names a real model, a vendor detector or a real approval channel "
                 "may send text to a service outside the process (a vendor, or a model you host): set "
-                "made_up_data_only: true only when every input is made up; client data runs only in pilot or prod"
+                "made_up_data_only: true only when every input is made up; client data belongs only in a pilot or prod config"
                 if sends_text_out
                 else ""
             )

@@ -342,8 +342,11 @@ def test_tools_keeps_its_own_refusal(tmp_path, made):
 
 
 def _door_problems(root: Path) -> list[str]:
-    """Calls that pass `allow_test_doubles` in any way: a keyword in any call (covers `partial(build, ...)`), or a
-    `**` expansion in a call whose function is named `build`."""
+    """A tripwire, not a proof: it reports a call with an `allow_test_doubles=` keyword (any function, so it covers
+    `partial(build, allow_test_doubles=True)`) and a `**` expansion in a call whose function is named `build`. It
+    misses every other way to reach the switch: `getattr(app, "build")(..., **opts)` or a `**` call through an
+    alias (`b = build; b(**opts)`), a `partial` that gets the keyword from a `**` dict, and the switch passed
+    positionally to a wrapper. It catches the plain copy-and-paste door only."""
     out = []
     for py in sorted(root.rglob("*.py")):
         for node in ast.walk(ast.parse(py.read_text(encoding="utf-8"), filename=str(py))):
@@ -377,6 +380,37 @@ def test_no_door_in_src_or_demos():
 def test_planted_doors_are_reported(tmp_path, code):
     (tmp_path / "planted.py").write_text(code, encoding="utf-8")
     assert len(_door_problems(tmp_path)) == 1
+
+
+def test_the_refusal_text_is_true_for_every_value_that_reaches_it(tmp_path, made, monkeypatch):
+    """The refusal fires for every environment value that is not `demo` (`uat`, an empty value, `Demo` included), so
+    its text must say that and not name only the two real stages."""
+    copied = load_config(pilot_cfg(tmp_path)).model_copy(update={"environment": "uat"})
+    monkeypatch.setattr(app_mod, "load_config", lambda _dir: copied)
+    with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+        app_mod.build(tmp_path, ["ito-agent"], llm=ScriptedLLM())
+    assert "every environment other than demo" in str(err.value)
+    assert "in pilot and prod pass" not in str(err.value)
+
+
+def test_the_build_params_snapshot_is_the_signature_of_build():
+    """`_BUILD_PARAMS` is read once, at import, from `build`; it must be `build`'s own signature (a signature of
+    another function would make the check judge the wrong keywords, and nothing else would notice)."""
+    assert list(app_mod._BUILD_PARAMS) == list(inspect.signature(app_mod.build).parameters)
+    assert dict(app_mod._BUILD_PARAMS) == dict(inspect.signature(app_mod.build).parameters)
+
+
+@pytest.mark.parametrize("switch", [False, True], ids=["no_switch", "switch_true"])
+def test_demo_ignores_the_switch_and_the_doubles(tmp_path, made, caplog, switch):
+    """In `demo` the check does not run: every test double passes with or without the switch, and no warning line is
+    written (the switch changes nothing there)."""
+    root = pilot_cfg(tmp_path, env="demo")
+    _edit(root, lambda d: d.update(made_up_data_only=True))
+    doubles = {k: SAMPLES[k] for k in REFUSED}
+    with caplog.at_level("WARNING", logger="hadavin_sdk.app"), pytest.raises(_Reached):
+        app_mod.build(root, ["ito-agent"], allow_test_doubles=switch, **doubles)
+    assert made  # the build went on past the check and reached the first backend it makes
+    assert [r for r in caplog.records if r.name == "hadavin_sdk.app"] == []
 
 
 def test_a_falsy_double_is_refused(tmp_path, made):

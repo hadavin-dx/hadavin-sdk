@@ -102,9 +102,10 @@ def build(
     allow_test_doubles: bool = False,
 ) -> App:
     """Build every backend from the config's table entries, in the design 4.2 order. The keyword overrides
-    replace one configured backend (tests) and, except the live hooks, are refused in pilot and prod unless
-    allow_test_doubles=True (an accident guard, not a lock); `secrets` replaces the configured provider for both
-    the executor and the backends' own secrets. Missing or shared secret names fail here, before the first run."""
+    replace one configured backend (tests) and, except the live hooks, are refused in every environment other than
+    demo (pilot and prod included) unless allow_test_doubles=True (an accident guard, not a lock); `secrets`
+    replaces the configured provider for both the executor and the backends' own secrets. Missing or shared secret
+    names fail here, before the first run."""
     # The keyword values as passed, read before any name is rebound (`secrets` is rebound below). This must stay the
     # first statement; a test reads the function and fails if another statement comes before it.
     given = dict(locals())
@@ -123,7 +124,8 @@ def build(
     elif live_doubles:
         raise ConfigError(
             f"{', '.join(f'{n}=' for n in live_doubles)} replace configured parts and are for tests; "
-            "in pilot and prod pass allow_test_doubles=True only from a test"
+            "in every environment other than demo (pilot and prod included) pass allow_test_doubles=True "
+            "only from a test"
         )
     reg = load_registry(cfg)
     b = cfg.backends
