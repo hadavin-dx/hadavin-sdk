@@ -50,7 +50,7 @@ TEST = "tests/test_policy_guard.py"
 PIN = "tests/test_policy_guard::"
 TOOL = "tools/policy_page.py"
 RUN = "tests/policy_mutants.py"
-RENEWAL_TEST = "tests/test_policy_changelog.py"  # the fast half of the renewal plants: it kills the mutants of the plant helpers
+RENEWAL_TEST = "tests/test_policy_renewal_copy.py"  # the fast half of the renewal plants: it kills the mutants of the plant helpers
 NOTES_TEST = "tests/test_notes_lines_check.py"  # the killer file of the mutants of tools/notes_lines_check.py
 NTOOL = "tools/notes_lines_check.py"
 VAULT_FILE = "src/hadavin_sdk/actions/secrets_vault.py"
@@ -1725,7 +1725,7 @@ M = [
     ),
     mutant(
         "B15 the renewal plant writes no row for a line of the notes check",
-        CH,
+        RENEWAL_TEST,
         '        rows.append(f"| {file} | `{unit}` | changed | {reason} |")\n',
         "        pass\n",
         "test_the_notes_check_of_a_renewed_copy_asks_for_rows_that_can_be_written_and_then_passes",
@@ -1734,7 +1734,7 @@ M = [
     ),
     mutant(
         "B15 the renewal plant reads the change against its own head",
-        CH,
+        RENEWAL_TEST,
         '    command = [sys.executable, "tools/notes_lines_check.py", "--auto", base]\n',
         '    command = [sys.executable, "tools/notes_lines_check.py", "--auto", "HEAD"]\n',
         "test_the_notes_check_of_a_renewed_copy_asks_for_rows_that_can_be_written_and_then_passes",
@@ -1743,7 +1743,7 @@ M = [
     ),
     mutant(
         "B15 the renewal plant writes its notes where the check does not read them",
-        CH,
+        RENEWAL_TEST,
         '    notes = copy / "handover/evidence/Q8c-1/renewal/NOTES.md"\n',
         '    notes = copy / "renewal/NOTES.md"\n',
         "test_the_notes_check_of_a_renewed_copy_asks_for_rows_that_can_be_written_and_then_passes",
