@@ -318,7 +318,11 @@ FLAG_EXACT_WORDS = (
     r"(?:set[_\-])?cookie",
     _guarded_key("session", "cookie"),
     # `--possession_cookie`, `--obsession-cookie`: an ordinary word of the session family and its second word `cookie`, from the one table
-    *(w + _guarded_key("", "cookie") for w in sorted(ORDINARY_WORDS) if "cookie" in ordinary_second_words(w)),
+    *(
+        w + _guarded_key("", "cookie")
+        for w in sorted(ORDINARY_WORDS)
+        if "cookie" in ordinary_second_words(w)
+    ),
 )
 _EXACT_FLAG_KEYS = frozenset({_guarded_key("session", "cookie")})
 FLAG_WORDS = "|".join(

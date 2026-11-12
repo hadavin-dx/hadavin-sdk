@@ -26,7 +26,14 @@ from tests.test_q8b_batch7 import readable_on
 redact = importlib.import_module("hadavin_sdk.guard.redact")
 
 SCHEMES = ("Basic", "Token", "ApiKey", "Bearer", "Digest")
-HEADERS = ("Authorization: ", "Proxy-Authorization: ", "X-Api-Key: ", "token=", "secret: ", "passwd=")
+HEADERS = (
+    "Authorization: ",
+    "Proxy-Authorization: ",
+    "X-Api-Key: ",
+    "token=",
+    "secret: ",
+    "passwd=",
+)
 BREAKS = ("\n", "\r\n")
 INDENTS = (" ", "    ", "\t")
 _ALPHA = "xkvmzwhtrpnqbdfglscyaeuJQKZ"  # made-up letters; no real value
@@ -34,7 +41,7 @@ _ALPHA = "xkvmzwhtrpnqbdfglscyaeuJQKZ"  # made-up letters; no real value
 
 def piece(seed: int, n: int = 32) -> str:
     """A made-up token piece of n characters (letters and digits), different for each seed."""
-    rnd = random.Random(seed)
+    rnd = random.Random(seed)  # noqa: S311 - a seeded test generator, not a secret
     return "".join(rnd.choice(_ALPHA + "0123456789") for _ in range(n))
 
 
@@ -66,7 +73,9 @@ def test_b11_8_the_folded_lines_of_a_header_are_masked_for_every_scheme_and_head
         for g in left_readable(text, parts):
             left.append(f"{head!r} {nl!r} {ind!r} {lines}: {g}")
         assert "Accept: text-shown" in clean(text), "the line after the header was masked"
-    assert not left, f"a folded {scheme} header leaves its next lines readable: {left[:4]} ({len(left)})"
+    assert not left, (
+        f"a folded {scheme} header leaves its next lines readable: {left[:4]} ({len(left)})"
+    )
 
 
 @pytest.mark.parametrize("scheme", ("Basic", "Token", "ApiKey", "Bearer"))
@@ -99,7 +108,9 @@ def test_b11_8_a_credential_key_a_scheme_word_a_break_with_no_indent_and_the_tok
         }[shape]
         text = f"{key}{eq}{scheme}{brk}{tok}\nnext line ok\n"
         left += [f"{text!r}: {g}" for g in left_readable(text, [tok])[:1]]
-    assert not left, f"a token after {scheme} and a line break is readable: {left[:4]} ({len(left)})"
+    assert not left, (
+        f"a token after {scheme} and a line break is readable: {left[:4]} ({len(left)})"
+    )
 
 
 @pytest.mark.parametrize("scheme", SCHEMES)
@@ -136,7 +147,9 @@ def test_b11_8_a_line_that_does_not_start_with_a_space_or_a_tab_ends_the_header(
         )
         assert not left_readable(text, [a, b])
         unindented = f"Authorization: {scheme} {a}{nl}{b}{nl}"
-        assert b[:8] in clean(unindented), "a line with no indent was masked: it is a new line (stated limit)"
+        assert b[:8] in clean(unindented), (
+            "a line with no indent was masked: it is a new line (stated limit)"
+        )
 
 
 @pytest.mark.parametrize("scheme", ("Basic", "Token", "ApiKey", "Bearer"))
@@ -168,7 +181,9 @@ def test_b11_8_a_long_run_of_folded_lines_is_read_in_linear_time():
     took(500)
     small = min(took(5_000) for _ in range(3))
     big = min(took(20_000) for _ in range(3))
-    assert big < small * 12, f"folded lines are not read in linear time: {small:.3f}s for 5000, {big:.3f}s for 20000"
+    assert big < small * 12, (
+        f"folded lines are not read in linear time: {small:.3f}s for 5000, {big:.3f}s for 20000"
+    )
 
 
 # ---- Issue 8: the fuzz of the evidence, every shape that is not a stated limit ------------------------------------------
@@ -177,7 +192,7 @@ def test_b11_8_a_long_run_of_folded_lines_is_read_in_linear_time():
 def test_b11_8_fuzz_a_credential_wrapped_over_folds_is_never_left_readable():
     """The evidence fuzz restricted to the shapes that are not a stated limit: pieces of one secret joined by line folds
     (a break and an indent), after any scheme and header name, plus a break with no indent right after the scheme word."""
-    rnd = random.Random(11)
+    rnd = random.Random(11)  # noqa: S311 - a seeded test generator, not a secret
     left = []
     for i in range(400):
         scheme = rnd.choice(SCHEMES)
@@ -186,7 +201,11 @@ def test_b11_8_fuzz_a_credential_wrapped_over_folds_is_never_left_readable():
         parts = [piece(1000 * i + j, rnd.randint(16, 40)) for j in range(n)]
         nl, ind = rnd.choice(BREAKS), rnd.choice(INDENTS)
         gap = rnd.choice((" ", nl, nl + ind))
-        text = f"{head}{scheme}{gap}{parts[0]}" + "".join(f"{nl}{ind}{p}" for p in parts[1:]) + "\nnext line ok\n"
+        text = (
+            f"{head}{scheme}{gap}{parts[0]}"
+            + "".join(f"{nl}{ind}{p}" for p in parts[1:])
+            + "\nnext line ok\n"
+        )
         for g in left_readable(text, parts)[:1]:
             left.append(f"{text!r}: {g}")
     assert not left, f"a folded credential is readable: {left[:3]} ({len(left)})"
@@ -211,11 +230,15 @@ def test_b11_8_a_line_of_repeated_headers_is_read_in_linear_time():
     took(500)
     small = min(took(3_000) for _ in range(3))
     big = min(took(12_000) for _ in range(3))
-    assert big < small * 9, f"a line of repeated headers is not read in linear time: {small:.3f}s and {big:.3f}s (4 times the size)"
+    assert big < small * 9, (
+        f"a line of repeated headers is not read in linear time: {small:.3f}s and {big:.3f}s (4 times the size)"
+    )
 
 
 @pytest.mark.parametrize("scheme", SCHEMES)
-def test_b11_8_after_a_scheme_word_and_a_break_a_first_word_of_fewer_than_8_characters_is_shown_the_stated_cost(scheme):
+def test_b11_8_after_a_scheme_word_and_a_break_a_first_word_of_fewer_than_8_characters_is_shown_the_stated_cost(
+    scheme,
+):
     """Both sides of the cost for a credential key (as for `Authorization` in batch 10): a line that starts with a word of fewer than 8
     characters after `token=<scheme><LF>` is read as prose and shown; one that starts with 8 or more is masked."""
     shown = f"token={scheme}\nshort words only\n"
@@ -244,7 +267,11 @@ PAIR_DECISIONS = {
     "possession.id": (True, True, True),
     "compass-key": (True, True, True),
     "obsession_id": (True, True, True),
-    "possession_cookie": (True, True, True),  # CHANGELOG lists `--possession_cookie` as masked in a flag
+    "possession_cookie": (
+        True,
+        True,
+        True,
+    ),  # CHANGELOG lists `--possession_cookie` as masked in a flag
     # a second word that only starts with a pair word: the key rule reads up to 20 more key characters, so the text is masked and the
     # record key is too; a flag name is exact (`--password-file` is no credential either), so the flag shows its value (stated)
     "compass_keyboard": (False, True, True),
@@ -288,7 +315,9 @@ def test_b11_3_the_record_path_reads_the_pair_as_decided(name):
 
 
 def test_b11_3_a_cookie_key_in_full_width_capitals_is_read_after_nfkc_in_the_record_walk():
-    assert R.sensitive("\uff23\uff2f\uff2f\uff2b\uff29\uff25\uff2a\uff21\uff32"), "a full-width COOKIEJAR key is shown by the record walk"
+    assert R.sensitive("\uff23\uff2f\uff2f\uff2b\uff29\uff25\uff2a\uff21\uff32"), (
+        "a full-width COOKIEJAR key is shown by the record walk"
+    )
     assert not R.sensitive("cookiejar")
 
 
@@ -314,13 +343,25 @@ def test_b11_4_the_bare_scheme_rules_differ_by_scheme_as_on_main_the_stated_limi
     (8 or more), `Bearer` needs 12 characters, and `Token`, `ApiKey` and `Digest` have no rule (the owner question
     `q-q8b-bare-bypass`, built: shown). Pinned on both sides so that a change of any is seen."""
     t12 = "abcdefghij" + "kl"
-    assert t12 not in clean(f"x Basic\n{t12} y"), "a bare Basic and a base64 token of 12 characters is readable"
-    assert "ab.cdefghijkl" in redact.redact("x Basic\nab.cdefghijkl y").text, "a bare Basic read a dot (it reads base64 letters only)"
-    assert "abcdefghijk" in clean("x Bearer abcdefghijk y"), "a bare Bearer read a token of 11 characters"
-    assert "abcdefghijkl" not in clean("x Bearer abcdefghijkl y"), "a bare Bearer and 12 characters is readable"
+    assert t12 not in clean(f"x Basic\n{t12} y"), (
+        "a bare Basic and a base64 token of 12 characters is readable"
+    )
+    assert "ab.cdefghijkl" in redact.redact("x Basic\nab.cdefghijkl y").text, (
+        "a bare Basic read a dot (it reads base64 letters only)"
+    )
+    assert "abcdefghijk" in clean("x Bearer abcdefghijk y"), (
+        "a bare Bearer read a token of 11 characters"
+    )
+    assert "abcdefghijkl" not in clean("x Bearer abcdefghijkl y"), (
+        "a bare Bearer and 12 characters is readable"
+    )
     for scheme in ("Token", "ApiKey", "Digest"):
-        assert t12 in clean(f"x {scheme}\n{t12} y"), f"a bare {scheme} has a rule: update the owner question and LIMITS"
-        assert t12 not in clean(f"Authorization: {scheme}\n{t12} y"), f"{scheme} with a header name in front is readable"
+        assert t12 in clean(f"x {scheme}\n{t12} y"), (
+            f"a bare {scheme} has a rule: update the owner question and LIMITS"
+        )
+        assert t12 not in clean(f"Authorization: {scheme}\n{t12} y"), (
+            f"{scheme} with a header name in front is readable"
+        )
 
 
 def test_b11_4_the_limits_name_both_sides_of_the_fold_and_the_bare_forms():

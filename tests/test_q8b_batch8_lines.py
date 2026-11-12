@@ -301,7 +301,9 @@ def test_every_planted_fault_is_in_its_product_file_once_and_names_a_killer_that
         path = HERE.parent / m.file
         text = path.read_text(encoding="utf-8")
         if text.count(m.old) < 1:
-            bad.append(f"{m.name}: its fault text is in {m.file} {text.count(m.old)} times, not at least once")
+            bad.append(
+                f"{m.name}: its fault text is in {m.file} {text.count(m.old)} times, not at least once"
+            )
         tests = (HERE.parent / m.test_file).read_text(encoding="utf-8")
         if re.search(rf"^def {re.escape(m.only_test)}\(", tests, re.MULTILINE) is None:
             bad.append(f"{m.name}: its killer {m.only_test} is not a test of {m.test_file}")

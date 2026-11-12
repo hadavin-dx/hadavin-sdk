@@ -387,10 +387,12 @@ ORDINARY_WORDS = frozenset(["bypass"])''',
     mutant('M109 an ordinary flag word with digits is a credential flag', REDACT, '(?![a-z]|[0-9]+[a-z])', '(?![a-z0-9])',
         BATCH7, 'test_b7_5_an_ordinary_word_stays_readable_in_every_form_on_every_path', 'an ordinary word was masked'),
     mutant('M110 the record walk keeps its own count words', RED, r'''    COUNT_WORDS_BEFORE_TOKENS,
+    GUARDED_ENDINGS,
     ORDINARY_WORDS,
     is_count_run,
     is_ordinary_pair,
-)''', r'''    ORDINARY_WORDS,
+)''', r'''    GUARDED_ENDINGS,
+    ORDINARY_WORDS,
     is_count_run,
     is_ordinary_pair,
 )
@@ -635,7 +637,11 @@ def _neutralise(text: str) -> str:
         B11, 'test_b11_3_the_record_path_reads_the_pair_as_decided[compass_keyboard]', 'the record walk reads the key `compass_keyboard` differently'),
     mutant('M201 the record walk reads the capitals cookie on the raw key [b11]', RED, r'''_CAPITALS_COOKIE.search(unicodedata.normalize("NFKC", key).translate(_FOLD))''', r'''_CAPITALS_COOKIE.search(key)''',
         B11, 'test_b11_3_a_cookie_key_in_full_width_capitals_is_read_after_nfkc_in_the_record_walk', 'a full-width COOKIEJAR key is shown by the record walk'),
-    mutant('M202 the cookie flag of an ordinary session word is not generated [b11]', REDACT, r'''    *(w + _guarded_key("", "cookie") for w in sorted(ORDINARY_WORDS) if "cookie" in ordinary_second_words(w)),''', r'''    *(),''',
+    mutant('M202 the cookie flag of an ordinary session word is not generated [b11]', REDACT, r'''    *(
+        w + _guarded_key("", "cookie")
+        for w in sorted(ORDINARY_WORDS)
+        if "cookie" in ordinary_second_words(w)
+    ),''', r'''    *(),''',
         B11, 'test_b11_3_the_flag_path_reads_the_pair_as_decided[possession_cookie]', 'the flag path reads `--possession_cookie` differently'),
     mutant('M203 a wrapped flag token needs 3 characters, not 8 [b11]', REDACT, r'''+ rf"|{_SP}*{_LINE_BREAK}\s*+[^\s\"'\-][^\s\"']{{7,}}))"''', r'''+ rf"|{_SP}*{_LINE_BREAK}\s*+[^\s\"'\-][^\s\"']{{2,}}))"''',
         B11, 'test_b11_3_a_flag_authorization_with_the_token_on_the_next_line_is_masked[Token]', 'a first word of fewer than 8 characters after the break was masked'),

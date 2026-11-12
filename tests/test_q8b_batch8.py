@@ -229,7 +229,11 @@ def test_b8_3_the_guarded_endings_of_the_record_walk_are_the_pairs_of_the_card_l
         assert redact._guarded_key(bare, second) in redact.KEY_ALTERNATIVES, (
             f"the pair {bare} + {second} is no key alternative of the card rules"
         )
-    generated = [a for a in redact.KEY_ALTERNATIVES if a.startswith(tuple(b for b, _ in redact._GUARDED_PAIRS)) and "(?:[0-9]*[_.\\-])?" in a]
+    generated = [
+        a
+        for a in redact.KEY_ALTERNATIVES
+        if a.startswith(tuple(b for b, _ in redact._GUARDED_PAIRS)) and "(?:[0-9]*[_.\\-])?" in a
+    ]
     assert len(generated) == len(redact._GUARDED_PAIRS)
 
 

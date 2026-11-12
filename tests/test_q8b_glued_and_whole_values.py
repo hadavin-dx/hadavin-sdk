@@ -354,7 +354,9 @@ def _expand(fragment):
     fragment = strip_look_arounds(fragment)
     spellings = [""]
     for part in re.split(r"(\[_\\-\]\?|\(\?:ificate\)\?|\(\?:\[0-9\]\*\[_\.\\-\]\)\?)", fragment):
-        if part == r"(?:[0-9]*[_.\-])?":  # a pair: glued or with a separator, dot included (round 11)
+        if (
+            part == r"(?:[0-9]*[_.\-])?"
+        ):  # a pair: glued or with a separator, dot included (round 11)
             spellings = [s + sep for s in spellings for sep in ("", "_", "-", ".")]
         elif part == r"[_\-]?":
             spellings = [s + sep for s in spellings for sep in ("", "_", "-")]
