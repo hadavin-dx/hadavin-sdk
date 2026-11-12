@@ -84,7 +84,7 @@ jobs:
         run: python tools/scan_repo.py
       - name: Demo-only folder guard (product code names neither the demo-only folder nor a fake record id)
         run: python tools/demo_only_guard.py
-      - name: Demo-only folder copy run (only when the repository has the folder: tests must pass without it)
+      - name: Demo-only folder copy run (only when the repository has the folder; tests must pass without it)
         run: python tools/demo_only_guard.py --without-folder-if-present
       - name: The node program the mode-banner page tests run in is present (else they would skip silently)
         run: node --version

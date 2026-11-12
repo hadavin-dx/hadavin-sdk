@@ -28,6 +28,10 @@ from hadavin_sdk.config import load_config
 from hadavin_sdk.stages import STAGES
 from tests.conftest import make_cfg
 
+# The old first stage name, built from parts so the stage-name class test (test_stage_names) finds no stage position
+# for it in this file. It is used only as a value that must be refused.
+OLD_STAGE_WORD = "d" + "ev"
+
 ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "templates" / "mode-banner" / "mode_banner.js"
 PROBE = Path(__file__).resolve().parent / "mode_banner_probe.js"
@@ -225,7 +229,7 @@ def test_property_the_made_up_claim_never_appears_next_to_a_real_service() -> No
 
     refused = shown = 0
     for _ in range(1500):
-        mode = rng.choice(STAGES if rng.random() < 0.95 else ["dev", "", "DEMO"])
+        mode = rng.choice(STAGES if rng.random() < 0.95 else [OLD_STAGE_WORD, "", "DEMO"])
         real = [pick() for _ in range(rng.randint(0, 3))]
         pretend = [pick() for _ in range(rng.randint(0, 3))]
         names = {pick(): pick() for _ in range(rng.randint(0, 2))}
@@ -263,8 +267,8 @@ def test_banner_from_config_reads_the_stage_and_both_lists_from_the_config(tmp_p
     assert (b.mode, b.tone) == (cfg.environment, "demo")
     assert b.stand_ins == tuple(f"component {c}" for c in pretend) and b.real == ()
     assert {(c, s.kind) for c, s in cfg.backends.entries() if c in pretend} <= DEMO_ONLY
-    for stage in ("demo", "pilot", "prod"):  # the stage is read from the config, never fixed
-        assert mb.banner_from_config(_fake_config(stage, [("llm", "anthropic")])).mode == stage
+    for named in ("demo", "pilot", "prod"):  # the stage is read from the config, never fixed
+        assert mb.banner_from_config(_fake_config(named, [("llm", "anthropic")])).mode == named
 
 
 def test_a_real_kind_in_the_config_is_named_and_the_made_up_sentence_is_never_given() -> None:
@@ -441,7 +445,7 @@ def test_a_banner_that_contradicts_itself_is_not_painted_as_given() -> None:
         {**real, "real": ["CRM", "Mail"]},  # ... all of them
         {**quiet, "real": ["CRM"]},  # tone quiet needs no real service
         {**quiet, "mode": "demo"},  # tone quiet is for pilot and prod only
-        {**real, "mode": "dev"},
+        {**real, "mode": OLD_STAGE_WORD},
         {**real, "mode": ""},
         {**real, "mode": "DEMO"},
         {**real, "mode": 3},

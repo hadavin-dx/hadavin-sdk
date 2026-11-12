@@ -455,8 +455,8 @@ M = [
     ),
     gd(
         "G6 a missing product root is not a hit",
-        "        elif not top.is_dir():",
-        "        elif False:",
+        "        if not top.is_dir():",
+        "        if False:",
         "test_a_missing_product_root_is_a_hit_not_a_silent_pass",
         "assert",
     ),
