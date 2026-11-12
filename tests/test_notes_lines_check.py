@@ -1265,3 +1265,322 @@ def test_a_row_of_any_notes_file_of_the_change_counts_for_a_unit_and_the_tool_sa
         "a row of an older notes file was refused"
     )
     assert "ONE table" in (nlc.__doc__ or ""), "the limit of the one table is not stated"
+
+
+# ------------------------------------------------------------------------------------------------ batch 16 (round 15)
+
+_DYN_TEST = "import importlib\n{}\n\ndef test_dyn(n=1):\n    assert {}.run()\n\n\ndef test_other():\n    assert 1\n"
+_DYN_MOD = "def run():\n    return {}\n"
+
+
+def _dyn_listed(src: str, changed: str, extra: dict | None = None) -> list[str]:
+    """The tests of `tests/test_d.py` (text `src`) that a change of the module file `changed` lists."""
+    base = {"tests/test_d.py": src, **(extra or {})}
+    before = _Tree({**base, changed: _DYN_MOD.format(1)})
+    after = _Tree({**base, changed: _DYN_MOD.format(2)})
+    return _changed(src, src, "tests/test_d.py", before, after)
+
+
+def test_an_unreadable_run_time_import_name_lists_every_test_even_when_the_file_imports_a_package_of_tests():
+    # the one rule: a name that cannot be read lists every test of the file, whatever else the file imports
+    src = _DYN_TEST.format("from tests.helpers import make", "make(importlib.import_module(name))")
+    helpers = {"tests/helpers.py": "def make(m):\n    return m\n"}
+    got = _dyn_listed(src, "tests/zz/dyn_c.py", helpers)
+    assert got == ["test_dyn", "test_other"], (
+        f"a file that imports a package of tests and a run-time name: a changed module listed {got}"
+    )
+    # the name of an imported package IS readable: it is that package's folder, reached through the import
+    pkg = _DYN_TEST.format("from tests import yy", "importlib.import_module(f'{yy.__name__}.{n}')")
+    folder = {"tests/yy/__init__.py": ""}
+    got = _dyn_listed(pkg, "tests/zz/other_c.py", folder)
+    assert got == [], (
+        f"a module outside the imported package listed {got} for a package-named import"
+    )
+    got = _dyn_listed(pkg, "tests/yy/k.py", folder)
+    assert got == ["test_dyn", "test_other"], f"a module inside the imported package listed {got}"
+    joined = _DYN_TEST.format(
+        "from tests import yy", "importlib.import_module(yy.__name__ + '.' + n)"
+    )
+    assert _dyn_listed(joined, "tests/zz/other_c.py", folder) == [], (
+        "a module outside the imported package listed a test for a package name joined with +"
+    )
+
+
+def test_a_run_time_import_name_given_as_the_keyword_name_is_read_like_the_first_argument():
+    for call in (
+        'importlib.import_module(name=f"tests.zz.dyn_{n}")',
+        'importlib.import_module(name="tests.zz.dyn_c")',
+    ):
+        src = _DYN_TEST.format("", call)
+        got = _dyn_listed(src, "tests/zz/dyn_c.py")
+        assert got == ["test_dyn", "test_other"], f"{call}: a changed module listed {got}"
+        got = _dyn_listed(src, "tests/zz/other_c.py")
+        assert got == [], (
+            f"{call}: a module outside the text the keyword name starts with listed {got}"
+        )
+    # a call with no readable name at all (`**kw`, or no argument) reaches every Python file under tests
+    for call in ("importlib.import_module(**{'name': n})", "importlib.import_module()"):
+        src = _DYN_TEST.format("", call)
+        got = _dyn_listed(src, "tests/zz/dyn_c.py")
+        assert got == ["test_dyn", "test_other"], (
+            f"{call}: a call with no readable name listed {got}"
+        )
+
+
+def test_a_package_is_reached_by_the_text_that_a_run_time_import_name_starts_with():
+    # the package `tests.zz` is the file tests/zz/__init__.py: the text `tests.zz.` starts the names of its modules
+    # and is the start of the name of the package itself
+    src = _DYN_TEST.format("", "importlib.import_module('tests.zz.' + str(n))")
+    got = _dyn_listed(src, "tests/zz/__init__.py")
+    assert got == ["test_dyn", "test_other"], f"a changed package file listed {got}"
+    assert _dyn_listed(src, "tests/yy/__init__.py") == [], (
+        "the package file of another package listed a test"
+    )
+
+
+def test_a_call_through_another_name_of_import_module_or_a_function_handed_on_is_the_same_call():
+    forms = (
+        ("imp = importlib.import_module\n", "imp(f'tests.zz.dyn_{n}')"),
+        ("from importlib import import_module as imp\n", "imp(f'tests.zz.dyn_{n}')"),
+        ("imp = importlib.import_module\nimp2 = imp\n", "imp2(f'tests.zz.dyn_{n}')"),
+    )
+    for head, call in forms:
+        src = _DYN_TEST.format(head, call)
+        got = _dyn_listed(src, "tests/zz/dyn_c.py")
+        assert got == ["test_dyn", "test_other"], (
+            f"{head.strip()!r}: a call by the alias listed {got}"
+        )
+        got = _dyn_listed(src, "tests/zz/other_c.py")
+        assert got == [], (
+            f"{head.strip()!r}: a module outside the text the alias call starts with listed {got}"
+        )
+    # the function handed on as a value is called somewhere we cannot see, with names we cannot read
+    src = _DYN_TEST.format(
+        "NAMES = ['tests.zz.dyn_c']", "list(map(importlib.import_module, NAMES))[0]"
+    )
+    got = _dyn_listed(src, "tests/zz/other_c.py")
+    assert got == ["test_dyn", "test_other"], f"a function handed on as a value listed {got}"
+    # a function of another name that is no import call is no import call
+    src = _DYN_TEST.format("def load(x):\n    return x\n", "load(f'tests.zz.dyn_{n}')")
+    assert _dyn_listed(src, "tests/zz/dyn_c.py") == [], (
+        "a call of a function that imports nothing listed a test"
+    )
+
+
+def test_a_name_built_at_run_time_with_a_percent_format_or_through_dunder_import_is_read_like_the_others():
+    for call in (
+        'importlib.import_module("tests.zz.dyn_%s" % n)',
+        '__import__(f"tests.zz.dyn_{n}")',
+    ):
+        src = _DYN_TEST.format("", call)
+        got = _dyn_listed(src, "tests/zz/dyn_c.py")
+        assert got == ["test_dyn", "test_other"], f"{call}: a changed module listed {got}"
+        got = _dyn_listed(src, "tests/zz/other_c.py")
+        assert got == [], f"{call}: a module outside the text the name starts with listed {got}"
+
+
+_FX = (
+    "import pytest\n\n\n@pytest.fixture\ndef fx_a():\n    return {}\n\n\n{}\n\n\n"
+    "def test_dyn(request):\n    {}\n\n\ndef test_free():\n    assert 1\n"
+)
+
+
+def test_a_fixture_registered_under_an_alias_lists_the_test_that_takes_the_alias():
+    own = (
+        "import pytest\n\n\n@pytest.fixture(name='alias')\ndef _impl():\n    return {}\n\n\n"
+        "def test_use(alias):\n    assert alias\n\n\ndef test_free():\n    assert 1\n"
+    )
+    got = _changed(own.format(1), own.format(2))
+    assert got == ["test_use"], f"a changed fixture with an alias listed {got}, not test_use"
+    conf = "import pytest\n\n\n@pytest.fixture(name='alias')\ndef _impl():\n    return {}\n"
+    test = "def test_use(alias):\n    assert alias\n\n\ndef test_free():\n    assert 1\n"
+    got = _changed(
+        test,
+        test,
+        "tests/test_u.py",
+        {"tests/conftest.py": conf.format(1)},
+        {"tests/conftest.py": conf.format(2)},
+    )
+    assert got == ["test_use"], (
+        f"a changed conftest fixture with an alias listed {got}, not test_use"
+    )
+
+
+def test_a_fixture_named_by_a_text_that_cannot_be_read_lists_the_test_for_every_fixture_in_reach():
+    fx_b = "@pytest.fixture\ndef fx_b():\n    return 5\n"
+    for body in (
+        "assert request.getfixturevalue(NAME)",
+        "assert request.getfixturevalue('fx_%s' % NAME)",
+    ):
+        src = _FX.format("{}", fx_b, body)
+        got = _changed(src.format(1), src.format(2))
+        assert got == ["test_dyn"], f"{body}: a changed fixture listed {got}, not test_dyn"
+    # a fixture of a conftest above the file is in reach too
+    conf = "import pytest\n\n\n@pytest.fixture\ndef fx_c():\n    return {}\n"
+    test = "def test_dyn(request):\n    assert request.getfixturevalue(NAME)\n\n\ndef test_free():\n    assert 1\n"
+    got = _changed(
+        test,
+        test,
+        "tests/test_u.py",
+        {"tests/conftest.py": conf.format(1)},
+        {"tests/conftest.py": conf.format(2)},
+    )
+    assert got == ["test_dyn"], f"a changed conftest fixture listed {got}, not test_dyn"
+    # `usefixtures(*names)` cannot be read either
+    mark = "@pytest.mark.usefixtures(*NAMES)\ndef test_dyn(request):\n    {}\n"
+    src = _FX.format("{}", fx_b, "assert 1").replace(
+        "def test_dyn(request):\n    assert 1\n", mark.format("assert 1")
+    )
+    got = _changed(src.format(1), src.format(2))
+    assert got == ["test_dyn"], f"usefixtures(*names) listed {got}, not test_dyn"
+    # a fixture that no call reaches does not list a test that reads no fixture by text
+    plain = _FX.format("{}", fx_b, "assert 1")
+    assert _changed(plain.format(1), plain.format(2)) == [], (
+        "a changed fixture nobody names listed a test"
+    )
+
+
+def test_a_fixture_named_by_lazy_fixture_or_by_parametrize_indirect_lists_the_test():
+    lazy = (
+        "import pytest\nfrom pytest_lazyfixture import lazy_fixture\n\n\n@pytest.fixture\ndef fx_a():\n    return {}\n\n\n"
+        "@pytest.mark.parametrize('v', [lazy_fixture('fx_a')])\ndef test_lazy(v):\n    assert v\n\n\n"
+        "def test_free():\n    assert 1\n"
+    )
+    got = _changed(lazy.format(1), lazy.format(2))
+    assert got == ["test_lazy"], f"a fixture named by lazy_fixture listed {got}, not test_lazy"
+    ind = (
+        "import pytest\n\n\n@pytest.fixture\ndef fx_a(request):\n    return {}\n\n\n"
+        "pytestmark = pytest.mark.parametrize({}, [1, 2], indirect=True)\n\n\n"
+        "def test_ind():\n    assert 1\n\n\ndef test_free():\n    assert 1\n"
+    )
+    # (the tests below name no fixture themselves: only the text of the mark names it)
+    for names in ("'fx_a'", "'fx_a,other'", "['fx_a']", "('fx_a',)"):
+        src = ind.replace("{}, [1", names + ", [1").replace("return {}", "return {n}")
+        got = _changed(src.format(n=1), src.format(n=2))
+        assert sorted(got) == ["test_free", "test_ind"], (
+            f"parametrize({names}, indirect=True) listed {got}"
+        )
+    unreadable = ind.replace("{}, [1", "NAMES, [1").replace("return {}", "return {n}")
+    got = _changed(unreadable.format(n=1), unreadable.format(n=2))
+    assert sorted(got) == ["test_free", "test_ind"], (
+        f"parametrize(NAMES, indirect=True) listed {got}"
+    )
+    plain = unreadable.replace(", indirect=True", "")
+    assert _changed(plain.format(n=1), plain.format(n=2)) == [], (
+        "a parametrize with names that cannot be read and no indirect listed a fixture nobody takes"
+    )
+
+
+def test_a_name_bound_by_a_walrus_in_a_definition_header_or_behind_an_assignment_is_followed():
+    src = (
+        "def deco(fn):\n    return fn{d}\n\n\ndef helper():\n    return {h}\n\n\nW = (X := helper())\n\n\n"
+        "def f(a=(LIMIT := {l})):\n    return a\n\n\n@(D := deco)\ndef g():\n    return 1\n\n\n"
+        "def test_x():\n    assert X\n\n\ndef test_limit():\n    assert LIMIT\n\n\n"
+        "def test_d():\n    assert D\n\n\ndef test_free():\n    assert 1\n"
+    )
+    base = {"d": "", "h": "1", "l": "5"}
+    got = _changed(src.format(**base), src.format(**{**base, "h": "2"}))
+    assert got == ["test_x"], (
+        f"a walrus behind an assignment: a change of helper listed {got}, not test_x"
+    )
+    got = _changed(src.format(**base), src.format(**{**base, "l": "6"}))
+    assert got == ["test_limit"], (
+        f"a walrus in a default argument: a change listed {got}, not test_limit"
+    )
+    got = _changed(src.format(**base), src.format(**{**base, "d": " + 1"}))
+    assert got == ["test_d"], f"a walrus in a decorator: a change of deco listed {got}, not test_d"
+    aug = "X = 1\nX += (Y := helper())\n\n\ndef helper():\n    return {}\n\n\ndef test_y():\n    assert Y\n\n\ndef test_free():\n    assert 1\n"
+    got = _changed(aug.format(1), aug.format(2))
+    assert got == ["test_y"], f"a walrus in an augmented assignment listed {got}, not test_y"
+    ann = "X: int = 1\nZ: int = (V := helper())\n\n\ndef helper():\n    return {}\n\n\ndef test_v():\n    assert V\n\n\ndef test_free():\n    assert 1\n"
+    got = _changed(ann.format(1), ann.format(2))
+    assert got == ["test_v"], f"a walrus behind an annotated assignment listed {got}, not test_v"
+
+
+def test_the_name_of_a_fixture_that_the_call_getfuncargvalue_names_lists_the_test():
+    src = _FX.format("{}", "", "assert request.getfuncargvalue('fx_a')")
+    got = _changed(src.format(1), src.format(2))
+    assert got == ["test_dyn"], f"getfuncargvalue listed {got}, not test_dyn"
+
+
+_PLUG = "import pytest\n\n\n@pytest.fixture(autouse=True)\ndef pm_fx():\n    yield {}\n"
+
+
+def test_a_plugin_is_followed_through_the_attached_p_option_and_through_each_settings_file_and_an_annotated_list():
+    test = "def test_pp():\n    assert 1\n"
+    for name, text in (
+        ("pyproject.toml", '[tool.pytest.ini_options]\naddopts = "-q -ptests.plugmod"\n'),
+        ("pytest.ini", "[pytest]\naddopts = -q -p tests.plugmod\n"),
+        ("tox.ini", "[pytest]\naddopts = -q -p tests.plugmod\n"),
+        ("setup.cfg", "[tool:pytest]\naddopts = -q -p tests.plugmod\n"),
+    ):
+        files = {name: text, "tests/test_pp.py": test}
+        got = _changed(
+            test,
+            test,
+            "tests/test_pp.py",
+            _Tree({**files, "tests/plugmod.py": _PLUG.format(1)}),
+            _Tree({**files, "tests/plugmod.py": _PLUG.format(2)}),
+        )
+        assert got == ["test_pp"], (
+            f"{name}: a plugin named by -p in addopts listed {got}, not test_pp"
+        )
+    conf = "pytest_plugins: list[str] = ['tests.plugmod']\n"
+    files = {"tests/conftest.py": conf, "tests/test_pp.py": test}
+    got = _changed(
+        test,
+        test,
+        "tests/test_pp.py",
+        _Tree({**files, "tests/plugmod.py": _PLUG.format(1)}),
+        _Tree({**files, "tests/plugmod.py": _PLUG.format(2)}),
+    )
+    assert got == ["test_pp"], (
+        f"a plugin named by an annotated pytest_plugins listed {got}, not test_pp"
+    )
+
+
+def test_a_star_import_is_followed_in_its_relative_form_and_through_a_module_that_only_re_exports():
+    test = "from .helpers import *\n\n\ndef test_a():\n    assert LIMIT\n"
+    helper = "LIMIT = {}\n"
+    got = _changed(
+        test,
+        test,
+        "tests/test_a.py",
+        _Tree({"tests/helpers.py": helper.format(1), "tests/test_a.py": test}),
+        _Tree({"tests/helpers.py": helper.format(2), "tests/test_a.py": test}),
+    )
+    assert got == ["test_a"], (
+        f"a changed helper behind a relative star import listed {got}, not test_a"
+    )
+    test = "from tests.h1 import *\n\n\ndef test_a():\n    assert LIMIT\n"
+    reexport = "from tests.h2 import *\n"
+    files = {"tests/h1.py": reexport, "tests/test_a.py": test}
+    got = _changed(
+        test,
+        test,
+        "tests/test_a.py",
+        _Tree({**files, "tests/h2.py": helper.format(1)}),
+        _Tree({**files, "tests/h2.py": helper.format(2)}),
+    )
+    assert got == ["test_a"], (
+        f"a helper behind a module that only re-exports listed {got}, not test_a"
+    )
+
+
+def test_the_limits_of_the_notes_check_are_stated_in_its_docstring_and_in_the_changelog():
+    from pathlib import Path
+
+    changelog = (Path(__file__).resolve().parents[1] / "CHANGELOG.md").read_text(encoding="utf-8")
+    flat = " ".join((nlc.__doc__ or "").split())
+    for limit in ("entry point", "PYTEST_ADDOPTS", "spec_from_file_location", "`getattr`"):
+        assert limit in flat, f"the limit `{limit}` is not stated in the tool docstring"
+        assert limit in changelog, f"the limit `{limit}` is not stated in the changelog"
+    doc = " ".join(
+        (nlc.__doc__ or "").split()
+    )  # the line breaks of the docstring are not part of the wording
+    assert "starts with a value" in doc and "every Python file under `tests`" in doc, (
+        "the rule for a name that cannot be read is not stated in the tool docstring"
+    )
+    assert "in a file that imports no package of `tests`" not in (nlc.__doc__ or ""), (
+        "the docstring still says that a file that imports a package of tests is exempt"
+    )

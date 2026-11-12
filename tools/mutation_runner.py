@@ -135,6 +135,17 @@ def _inside(base: Path, rel: str) -> Path:
     return path
 
 
+def _through_a_link(base: Path, rel: str) -> bool:
+    """True when ``rel`` or a folder on its way is a link under ``base`` (looked at as written, not resolved: ``_inside`` resolves a
+    link to its target, so a link would be copied as the file it points to)."""
+    path = base
+    for part in Path(rel).parts:
+        path = path / part
+        if path.is_symlink():
+            return True
+    return False
+
+
 _IS_WINDOWS = (
     os.name == "nt"
 )  # one place to ask (tests set it to check the Windows branch of the tree kill on any system)
@@ -477,6 +488,8 @@ def _run_mutants(
                 )
         for f in extra_files:
             if _inside(snap, f).is_file():
+                # a file in a folder of the tree: the snapshot made the folder, this copy must too
+                _inside(tmp, f).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(_inside(snap, f), _inside(tmp, f))
 
     def fresh() -> None:
@@ -521,7 +534,7 @@ def _run_mutants(
                     _inside(root, d), _inside(snap, d), symlinks=True, dirs_exist_ok=True
                 )
         for f in extra_files:  # single files at the root of the tree (a changelog, a settings file)
-            if _inside(root, f).is_file() and not _inside(root, f).is_symlink():
+            if _inside(root, f).is_file() and not _through_a_link(root, f):
                 _inside(snap, f).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(_inside(root, f), _inside(snap, f))
         _refuse_links_out(snap)

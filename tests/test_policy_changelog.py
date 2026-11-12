@@ -321,16 +321,17 @@ def _day_in(copy: Path, rel: str, name: str) -> date:
 
 
 def _renew_and_check(mode: str, old_decided: date, new_decided: date, full_mutants: bool) -> None:
-    from tests.test_policy_renewal_copy import (
-        _assert_the_copy_follows_the_steps,
-        _rows_for_the_renewal,
-    )
-
     """Renew a temporary copy of the repository by the printed steps (`mode` 'both' groups or 'kinds' only) and
     check it on the new decision day and on the day after: the fast checks of the copy against the printed steps,
     the page check, the notes check of CI on the renewed copy (rows generated from its own lines), the policy
     tests, the search texts of the mutants, a sample of the mutants that build their days from the live lists,
     and, when `full_mutants` is set, the whole mutant list."""
+    from tests.test_policy_renewal_copy import (
+        _assert_the_asked_rows_match_the_printed_figure,
+        _assert_the_copy_follows_the_steps,
+        _rows_for_the_renewal,
+    )
+
     with tempfile.TemporaryDirectory() as tmp:
         copy = Path(tmp) / "renewed"
         edited, base = _make_renewed_copy(copy, mode, old_decided, new_decided, commit_base=True)
@@ -382,6 +383,7 @@ def _renew_and_check(mode: str, old_decided: date, new_decided: date, full_mutan
         notes_env = {**base_env, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1"}
         asked = _rows_for_the_renewal(copy, base, notes_env)
         print(f"renewal plant ({mode}): the notes check asked for {asked} rows")
+        _assert_the_asked_rows_match_the_printed_figure(mode, asked)
         tests = run(
             new_decided,
             "-m",

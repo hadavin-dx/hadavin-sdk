@@ -62,15 +62,22 @@ of it, never by a part. A unit that existed in the base and is gone now is a pro
 What it does NOT show. It does not show that a test was not weakened: it lists the changed units and checks that a
 reason with something to look up was written; whether the reason is true is for the reviewer reading the diff. It
 reads only the syntax of Python files, the settings files named above and the text of the other files under
-`tests/`: a test written another way (generated at run time, or collected by a plugin that is not in a conftest), a
-change in `src/` or `tools/` that a test uses (those have their own mutants), a change to a file outside the kinds
-above (a workflow, a lock file, an environment variable of the test run, a `-p` plugin named only on the command
-line) and a dependency version are not seen. A name built at run time with `getattr` or `exec` is not followed. A
+`tests/`: a test written another way (generated at run time, or collected by a plugin that is installed as a
+package and found through its entry point), a change in `src/` or `tools/` that a test uses (those have their own
+mutants), a change to a file outside the kinds above (a workflow, a lock file, an environment variable of the test
+run such as `PYTEST_ADDOPTS`, a `-p` plugin named only on the command line) and a dependency version are not seen.
+A name built at run time with `getattr` or `exec`, and a module loaded from a path (`runpy`,
+`importlib.util.spec_from_file_location`), are not followed. A fixture whose name is built at run time
+(`request.getfixturevalue(name)`, `usefixtures(*names)`, `parametrize(names, indirect=True)`, `lazy_fixture`) is read as
+every fixture the file and the conftests above it hold; `@pytest.fixture(name="alias")` is the name `alias`. A
 file that imports with `importlib`, `pkgutil` or `__import__` is read as reaching the modules it names as text and
 every Python file below each package folder it imports from; a module name built at run time (`import_module(f"tests.x.
 dyn_{n}")`) reaches every Python file whose dotted name starts with the text the name starts with, and a name that starts
-with a value (`import_module(name)`) in a file that imports no package of `tests` reaches every Python file under
-`tests` (the one rule: a name that cannot be read lists every test of the file). The notes files of the change are read
+with a value (`import_module(name)`, or no name at all) reaches every Python file under `tests` (the one rule: a name
+that cannot be read lists every test of the file); a name that starts with the `__name__` of a package of `tests` that
+the file imports is the exception, it is that package's folder. The name is the first argument or `name=`, and
+another name of the function (`imp = importlib.import_module`, `from importlib import import_module as imp`) is the
+same call; the function handed on as a value (`map(import_module, names)`) is a call with a name that cannot be read. The notes files of the change are read
 as ONE table (rows of all of them, the last row of a name wins), because the change is read against the merge base and
 not against the last batch: a row of an older batch's notes file serves a unit that a later batch changed again, and
 the tool cannot tell; the reviewer reading the diff of the batch does. A text a function reads from a file at run time is seen only through the fixture and data file kinds. A
@@ -225,6 +232,70 @@ def _walrus_names(node: ast.AST) -> list[str]:
     return sorted({n.target.id for n in ast.walk(node) if isinstance(n, ast.NamedExpr)})
 
 
+def _header_nodes(n: ast.AST) -> list[ast.AST]:
+    """The parts of a function or class definition that run when the definition itself runs (the decorators, the
+    default values, the annotations, the bases): a walrus in one of them binds a module name; the body does not."""
+    out: list[ast.AST] = list(getattr(n, "decorator_list", []))
+    if isinstance(n, ast.ClassDef):
+        out += [*n.bases, *(k.value for k in n.keywords)]
+    elif isinstance(n, _FUNCS):
+        a = n.args
+        out += [*a.defaults, *(d for d in a.kw_defaults if d is not None)]
+        out += [x.annotation for x in (*a.posonlyargs, *a.args, *a.kwonlyargs) if x.annotation]
+        out += [x for x in (n.returns,) if x is not None]
+    return out
+
+
+def _fixture_alias(fn: ast.AST) -> str | None:
+    """The name a fixture is registered under when it is written `@pytest.fixture(name="alias")`, else None."""
+    for d in getattr(fn, "decorator_list", []):
+        if isinstance(d, ast.Call):
+            callee = d.func.attr if isinstance(d.func, ast.Attribute) else getattr(d.func, "id", "")
+            if callee == "fixture":
+                for k in d.keywords:
+                    if (
+                        k.arg == "name"
+                        and isinstance(k.value, ast.Constant)
+                        and isinstance(k.value.value, str)
+                    ):
+                        return k.value.value
+    return None
+
+
+def _text_names(exprs: list[ast.AST]) -> set[str]:
+    """The fixture names a call spells as texts; an argument that is no text (a variable, an f-string, `*names`)
+    cannot be read, so the name `DYNAMIC_FIXTURE` stands for every fixture in reach."""
+    out: set[str] = set()
+    for e in exprs:
+        if isinstance(e, ast.Constant):
+            if isinstance(e.value, str):
+                out.add(e.value)
+        else:
+            out.add(DYNAMIC_FIXTURE)
+    return out
+
+
+def _parametrize_names(call: ast.Call) -> set[str]:
+    """The fixtures `parametrize("a,b", ..., indirect=True)` hands its values to: the argument names it spells (a
+    text, or a list or tuple of texts). Names that are no test parameter are the same names a test already uses, so
+    reading them without looking at `indirect` lists the same tests; names that cannot be read count only with
+    `indirect` (without it they are plain parameters of the test)."""
+    first = call.args[0] if call.args else None
+    out: set[str] = set()
+    readable = False
+    if isinstance(first, ast.Constant) and isinstance(first.value, str):
+        out |= {x.strip() for x in first.value.split(",") if x.strip()}
+        readable = True
+    elif isinstance(first, (ast.List, ast.Tuple)) and all(
+        isinstance(e, ast.Constant) and isinstance(e.value, str) for e in first.elts
+    ):
+        out |= {e.value for e in first.elts if isinstance(e, ast.Constant)}
+        readable = True
+    if not readable and any(k.arg == "indirect" for k in call.keywords):
+        out.add(DYNAMIC_FIXTURE)
+    return out
+
+
 def _stem(rel: str, level: int, module: str | None) -> str | None:
     """The path stem of the module an import names, or None when it is not under `tests`. `from tests.x import a`
     names tests/x; `from . import x` or `from .x import a` in tests/y.py names tests/x."""
@@ -280,6 +351,13 @@ SWITCH_NAMES = (
 DYNAMIC_IMPORTS = (["import_module"], ["iter_modules"], ["walk_packages"], ["__import__"])
 # The calls that name a fixture as a text, not as a parameter.
 FIXTURE_BY_TEXT = (["usefixtures"], ["getfixturevalue"], ["getfuncargvalue"])
+# The plugin calls that name a fixture as a text (`lazy_fixture("x")`, the short form `lf("x")`) and the call that
+# can name a fixture as the name of a parameter (`parametrize("x", ..., indirect=True)`).
+LAZY_FIXTURES = (["lazy_fixture"], ["lf"])
+PARAMETRIZE = ["parametrize"]
+# The name a fixture text that cannot be read stands for: every fixture the file and the conftests above it hold
+# (`request.getfixturevalue(f"fx_{n}")`, `request.getfixturevalue(name)`, `usefixtures(*names)`).
+DYNAMIC_FIXTURE = "<a fixture named at run time>"
 
 
 def _dotted_path(rel: str) -> str:
@@ -302,16 +380,29 @@ class _Module:
             if isinstance(n, (*_FUNCS, ast.ClassDef)):
                 names = [n.name]
                 self.nodes[n.name] = n
+                # `def f(a=(X := 1))` and `@(D := deco)` bind X and D at module level
+                for header in _header_nodes(n):
+                    bound = _walrus_names(header)
+                    self._value(bound, header)
+                    names += bound
+                alias = _fixture_alias(n)
+                if alias:
+                    names.append(alias)
+                    self.nodes[alias] = n
             elif isinstance(n, ast.Assign) and _is_declaration(n):
                 names = [name for t in n.targets for name in _target_names(t)]
                 self._value(names, n.value)
                 names += _walrus_names(n.value)
+                self._value(
+                    _walrus_names(n.value), n.value
+                )  # a name a walrus binds is built from the same value
             elif isinstance(n, (ast.AnnAssign, ast.AugAssign)) and _is_declaration(n):
                 # `X += ...` changes what X is, so it is joined to the dump of X
                 names = _target_names(n.target)
                 if n.value is not None:
                     self._value(names, n.value)
                     names += _walrus_names(n.value)
+                    self._value(_walrus_names(n.value), n.value)
             elif isinstance(n, (ast.Import, ast.ImportFrom)):
                 names = [_bound(a) for a in n.names]
             else:
@@ -345,18 +436,45 @@ class _Module:
         # a name built at run time (`import_module(f"tests.x.dyn_{n}")`, `import_module("tests.x." + n)`): the text it
         # starts with ("tests.x.dyn_"), or "" when it starts with a value (`import_module(name)`)
         self.dynamic_prefixes: list[str] = []
+        aliases = _dynamic_aliases(self.tree)
+        called = {id(n.func) for n in ast.walk(self.tree) if isinstance(n, ast.Call)}
+        # the right side of `imp = importlib.import_module` only gives the function another name: no call, no hand-on
+        called |= {
+            id(n.value)
+            for n in ast.walk(self.tree)
+            if isinstance(n, (ast.Assign, ast.AnnAssign, ast.NamedExpr))
+            and n.value is not None
+            and isinstance(n.value, (ast.Name, ast.Attribute))
+        }
         for n in ast.walk(self.tree):
-            if isinstance(n, ast.Call) and _dotted(n.func)[-1:] in DYNAMIC_IMPORTS:
+            callee = _callee(n.func if isinstance(n, ast.Call) else n, aliases)
+            if isinstance(n, ast.Call) and callee in DYNAMIC_IMPORTS:
                 self.dynamic = True
+                # the module name is the first argument or the keyword `name=`
+                named = [k.value for k in n.keywords if k.arg == "name"]
                 self.dynamic_names += [
                     a.value
-                    for a in n.args
+                    for a in (*n.args, *named)
                     if isinstance(a, ast.Constant) and isinstance(a.value, str)
                 ]
-                if _dotted(n.func)[-1:] in (["import_module"], ["__import__"]) and n.args:
-                    prefix = _literal_start(n.args[0])
+                if callee in (["import_module"], ["__import__"]):
+                    first = n.args[0] if n.args else (named[0] if named else None)
+                    prefix = _literal_start(first) if first is not None else ""
+                    if prefix == "" and _starts_with_package_name(first, self.imports):
+                        prefix = None  # the folder of the package it imports is reached through the imports
                     if prefix is not None:
                         self.dynamic_prefixes.append(prefix)
+            # (a name that is the target of `imp = ...` hands nothing on: its context is Store)
+            elif (
+                isinstance(n, (ast.Name, ast.Attribute))
+                and id(n) not in called
+                and not isinstance(n.ctx, ast.Store)
+                and callee in DYNAMIC_IMPORTS
+            ):
+                # the function handed on as a value (`map(importlib.import_module, names)`): it is called somewhere
+                # we cannot see, with names we cannot read
+                self.dynamic = True
+                self.dynamic_prefixes.append("")
 
     def _value(self, names: list[str], value: ast.AST) -> None:
         for name in names:
@@ -371,6 +489,57 @@ class _Module:
         for value in self.values.get(name, []):
             out |= _used(value)
         return sorted(out)
+
+
+def _callee(func: ast.AST, aliases: dict[str, str]) -> list[str]:
+    """The name a call or a reference stands for, as `_dotted(...)[-1:]` gives it, after a local alias is read back to
+    the function it stands for (`imp = importlib.import_module`, `from importlib import import_module as imp`)."""
+    last = _dotted(func)[-1:]
+    if len(last) == 1 and len(_dotted(func)) == 1 and last[0] in aliases:
+        return [aliases[last[0]]]
+    return last
+
+
+def _dynamic_aliases(tree: ast.AST) -> dict[str, str]:
+    """local name -> the function of `DYNAMIC_IMPORTS` it is another name for: a name taken with `from importlib import
+    import_module as imp`, and a name an assignment gives (`imp = importlib.import_module`, also `imp2 = imp`)."""
+    known = {c[0] for c in DYNAMIC_IMPORTS}
+    out: dict[str, str] = {}
+    for _ in range(8):  # an alias of an alias settles in a few passes
+        before = dict(out)
+        for n in ast.walk(tree):
+            if isinstance(n, ast.ImportFrom):
+                out.update({a.asname: a.name for a in n.names if a.asname and a.name in known})
+            elif isinstance(n, (ast.Assign, ast.AnnAssign, ast.NamedExpr)) and n.value is not None:
+                last = _dotted(n.value)[-1:]
+                if not last:
+                    continue
+                target = out.get(last[0], last[0]) if len(_dotted(n.value)) == 1 else last[0]
+                if target in known:
+                    targets = n.targets if isinstance(n, ast.Assign) else [n.target]
+                    out.update({t.id: target for t in targets if isinstance(t, ast.Name)})
+        if out == before:
+            break
+    return out
+
+
+def _starts_with_package_name(
+    a: ast.AST | None, imports: dict[str, tuple[str, str | None]]
+) -> bool:
+    """True when a name built at run time starts with the name of a package of `tests` the file imports
+    (`f"{kinds.__name__}.{x}"`, `kinds.__name__ + "." + x`, `"%s.x" % kinds.__name__` is not one): that text is the
+    package, a folder that `_dynamic_files` already reaches, so it is no unreadable name."""
+    first: ast.AST | None = a
+    if isinstance(a, ast.JoinedStr) and a.values:
+        first = a.values[0]
+        if isinstance(first, ast.FormattedValue):
+            first = first.value
+    elif isinstance(a, ast.BinOp):
+        first = a.left
+        while isinstance(first, ast.BinOp):
+            first = first.left
+    chain = _dotted(first) if first is not None else []
+    return len(chain) == 2 and chain[1] == "__name__" and chain[0] in imports
 
 
 def _literal_start(a: ast.AST) -> str | None:
@@ -411,11 +580,12 @@ def _used(node: ast.AST) -> set[str]:
     parameter)."""
     used: set[str] = set()
     for n in ast.walk(node):
-        if isinstance(n, ast.Call) and _dotted(n.func)[-1:] in FIXTURE_BY_TEXT:
-            # `@pytest.mark.usefixtures("a", "b")` and `request.getfixturevalue("a")` name a fixture as a text
-            used |= {
-                a.value for a in n.args if isinstance(a, ast.Constant) and isinstance(a.value, str)
-            }
+        if isinstance(n, ast.Call) and _dotted(n.func)[-1:] in (*FIXTURE_BY_TEXT, *LAZY_FIXTURES):
+            # `@pytest.mark.usefixtures("a", "b")` and `request.getfixturevalue("a")` name a fixture as a text; a
+            # text that cannot be read (a variable, an f-string) stands for every fixture in reach
+            used |= _text_names([*n.args, *(k.value for k in n.keywords)])
+        elif isinstance(n, ast.Call) and _dotted(n.func)[-1:] == PARAMETRIZE:
+            used |= _parametrize_names(n)
         if isinstance(n, ast.Name):
             used.add(n.id)
         elif isinstance(n, ast.Attribute):
@@ -482,13 +652,19 @@ class _Signatures:
         for stem, taken in m.imports.values():
             folder = stem if taken is None else f"{stem}/{taken}"
             found |= {f for f in self.files if f.startswith(folder + "/") and f.endswith(".py")}
-        # a name built at run time: every module whose dotted name starts with the text the name starts with; a name
-        # that starts with a value reaches the package folders imported above, and, when the file imports none, every
-        # Python file under `tests` (the rule: a name that cannot be read lists every test of the file)
+        # a name built at run time: every module whose dotted name starts with the text the name starts with (a
+        # package, its `__init__.py`, is the module `tests.zz` and the text `tests.zz.` reaches it); a name that
+        # starts with a value cannot be read, whatever else the file imports, so it reaches every Python file under
+        # `tests` (the one rule: a name that cannot be read lists every test of the file)
         for prefix in m.dynamic_prefixes:
             if prefix:
                 found |= {f for f in self.files if _dotted_path(f).startswith(prefix)}
-            elif not any(stem for stem, _ in m.imports.values()):
+                found |= {
+                    f
+                    for f in self.files
+                    if f.endswith("/__init__.py") and f"{_dotted_path(f)}.".startswith(prefix)
+                }
+            else:
                 found |= {f for f in self.files if f.startswith("tests/") and f.endswith(".py")}
         found.discard(m.rel)
         return sorted(found)
@@ -619,6 +795,11 @@ class _Signatures:
                 continue
             seen.add((m.rel, name))
             touch(m)
+            if name == DYNAMIC_FIXTURE:
+                # a fixture named by a text that cannot be read: any fixture of the file or of a conftest above it
+                for scope in (m, *self.conftests(m.rel)):
+                    todo += [(scope, k) for k, v in scope.nodes.items() if _is_fixture(v)]
+                continue
             if name in m.dumps:
                 parts.append(f"|{m.rel}:{name}={m.dumps[name]}")
                 # what the definition of the name uses, and what the values behind an assignment of it use

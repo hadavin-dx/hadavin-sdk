@@ -1562,6 +1562,47 @@ def test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_o
         extra_dirs=(),
         extra_files=("../x.md",),
     )
+    # a link is left out (the docstring says so): a test that wants the name absent passes only when it is
+    (root / "tests" / "test_link.py").write_text(
+        "from pathlib import Path\n\n\ndef test_link_is_absent():\n"
+        "    assert not (Path(__file__).parents[1] / 'LINK.md').exists()\n",
+        encoding="utf-8",
+    )
+    _symlink_or_skip(root / "NOTE.md", root / "LINK.md")
+    try:
+        run_mutants(root, [], ["tests/test_link.py"], extra_files=("LINK.md",), **kwargs)
+    except RuntimeError:
+        raise AssertionError("a link named in extra_files was copied into the copy") from None
+    # a folder that is a link: a file reached through it is left out too
+    (root / "sub").mkdir()
+    (root / "sub" / "DEEP.md").write_text("deep\n", encoding="utf-8")
+    _symlink_or_skip(root / "sub", root / "lnkdir", target_is_directory=True)
+    (root / "tests" / "test_nolinkdir.py").write_text(
+        "from pathlib import Path\n\n\ndef test_link_folder_is_absent():\n"
+        "    assert not (Path(__file__).parents[1] / 'lnkdir').exists()\n",
+        encoding="utf-8",
+    )
+    try:
+        run_mutants(
+            root, [], ["tests/test_nolinkdir.py"], extra_files=("lnkdir/DEEP.md",), **kwargs
+        )
+    except RuntimeError:
+        raise AssertionError(
+            "a file behind a folder link named in extra_files was copied into the copy"
+        ) from None
+    # a file in a folder of the tree reaches the copy of every mutant (the snapshot made the folder, the copy did not)
+    (root / "tests" / "test_deep.py").write_text(
+        "from pathlib import Path\n\n\ndef test_deep():\n"
+        "    assert (Path(__file__).parents[1] / 'sub' / 'DEEP.md').read_text() == 'deep\\n'\n",
+        encoding="utf-8",
+    )
+    try:
+        nested = run_mutants(
+            root, [], ["tests/test_deep.py"], extra_files=("sub/DEEP.md",), **kwargs
+        )
+    except OSError as exc:
+        raise AssertionError(f"a nested extra file made the copy fail: {exc}") from None
+    assert nested == [], "a file in a folder named in extra_files did not reach the copy"
 
 
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin

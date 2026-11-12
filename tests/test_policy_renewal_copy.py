@@ -38,9 +38,13 @@ def _assert_the_copy_follows_the_steps(
         re.findall(r"(?<!python )(?:(?:tests|tools)/\w+\.py|CHANGELOG\.md)", _steps_of(mode))
     )
     assert edited, "the renewal has no edit at all: a plant with nothing to apply passes vacuously"
-    expected = (named - set(NOT_EDITED)) | ({"CHANGELOG.md"} if mode != "names" else set())
+    expected = named - set(NOT_EDITED)
     if mode == "names":
-        expected -= {"CHANGELOG.md"}
+        expected -= {"CHANGELOG.md"}  # step (3): nothing is changed there for the names and claims
+    else:
+        expected |= {
+            "CHANGELOG.md"
+        }  # the steps of the kinds change the sentence that gives their days
     assert set(edited) == expected, (
         f"the {mode} renewal edited {edited}, the printed steps name {sorted(expected)}"
     )
@@ -118,6 +122,34 @@ def _rows_for_the_renewal(copy: Path, base: str, env: dict) -> int:
     return len(rows)
 
 
+def _printed_row_count(mode: str) -> int:
+    """The figure the printed steps give for the rows a renewal of `mode` asks for ('both', 'kinds', 'names')."""
+    from tools import policy_page as pp
+
+    text, pattern = {
+        "both": (pp.RENEWAL_STEPS, r"both lists asked for about (\d+) rows?"),
+        "names": (pp.RENEWAL_STEPS, r"names and claims alone asked for about (\d+) rows?"),
+        "kinds": (pp.KINDS_RENEWAL_STEPS, r"kinds alone asked for about (\d+) rows?"),
+    }[mode]
+    found = re.findall(pattern, text)
+    assert len(found) == 1, (
+        f"the printed steps give {len(found)} figures for the {mode} renewal: {found}"
+    )
+    return int(found[0])
+
+
+def _assert_the_asked_rows_match_the_printed_figure(mode: str, asked: int) -> None:
+    """The printed 'about N rows' is a size that was measured: the count the plant found may be half of it more or
+    less (5 more or less when the figure is 10 or less), and then the printed figure is wrong and must be renewed."""
+    printed = _printed_row_count(mode)
+    tolerance = max(5, printed // 2)
+    assert abs(asked - printed) <= tolerance, (
+        f"the {mode} renewal asked for {asked} rows, the printed steps say about {printed} "
+        f"(allowed difference {tolerance}): measure again and rewrite the figure in tools/policy_page.py "
+        "and in CHANGELOG.md"
+    )
+
+
 def _fast_renewal(mode: str) -> None:
     """The fast part of a renewal plant: the copy is made and edited by the printed steps of `mode`, and its files
     and days are compared with the steps (no tests run in the copy)."""
@@ -161,6 +193,7 @@ def test_the_notes_check_of_a_renewed_copy_asks_for_rows_that_can_be_written_and
         env.update(PYTHONDONTWRITEBYTECODE="1", PYTHONNOUSERSITE="1")
         asked = _rows_for_the_renewal(copy, base, env)
         print(f"the notes check asked for {asked} rows after the full renewal")
+        _assert_the_asked_rows_match_the_printed_figure("both", asked)
         assert asked > 0, (
             "a full renewal changes a day that tests use, so the notes check must ask for rows"
         )

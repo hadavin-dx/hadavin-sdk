@@ -3,9 +3,9 @@
 It speaks the Kubernetes REST API through an injected ``fetch`` (a tool's ``ToolContext.fetch`` with the
 ServiceAccount token bound), so it holds no secret, no client library and no cloud SDK: it works against any
 conformant cluster (EKS, GKE, AKS, k3s, on-premises). Only ``get`` and ``list`` calls are made, plus one
-``SelfSubjectRulesReview`` (a POST that asks what the token may do; the Kubernetes API accepts it as a ``create``
-of a review object that is not kept, which is why the permission page lists it as a ``create`` and the start-up
-check treats that one as harmless). The start-up check refuses write verbs, wildcard verbs, shell resources and
+``SelfSubjectRulesReview`` (a POST that asks what the token may do; the Kubernetes API takes it as a ``create`` of a
+review object, so the page lists it as a ``create`` and the start-up check lets it through; that it changes nothing in
+the cluster was not found in a vendor source, and the page lists it under ``claims_unverified``). The start-up check refuses write verbs, wildcard verbs, shell resources and
 reading secrets; it does not refuse a read of other things (``get`` or ``list`` on configmaps, pods or nodes).
 
 Neutral protocol: the Kubernetes REST API (HTTPS, JSON).
