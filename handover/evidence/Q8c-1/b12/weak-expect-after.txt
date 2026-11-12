@@ -1,0 +1,4 @@
+weak-expect scan after batch 12 (the first-line check: the expect text must be in a direct assert message, match= or what= of the killer). Source: logs/g-pm-real.log, g-pm-1211.log, g-pm-1212.log (final tree).
+g-pm-real: first-line check is weak (the expect text is in no direct assert message, `match=` or `what=` of the killer) for 0 of 235 mutants (exit 1 when any)
+g-pm-1211: first-line check is weak (the expect text is in no direct assert message, `match=` or `what=` of the killer) for 0 of 235 mutants (exit 1 when any)
+g-pm-1212: first-line check is weak (the expect text is in no direct assert message, `match=` or `what=` of the killer) for 0 of 235 mutants (exit 1 when any)

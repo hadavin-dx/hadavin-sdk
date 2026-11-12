@@ -1,0 +1,11 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+E   AssertionError: two rows with the same backticked word were refused
+    assert ['tests/polic...in the notes'] == []
+      
+      Left contains 2 more items, first extra item: 'tests/policy_mutants.py: the test A the setting `path_prefix` is read as one part only is new or changed and has no row of its own in the notes'
+      Use -v to get more diff
+/home/user/build/b12-old/tests/test_notes_lines_check.py:525: AssertionError: two rows with the same backticked word were refused
+=========================== short test summary info ============================
+FAILED tests/test_notes_lines_check.py::test_two_mutant_names_that_hold_the_same_backticked_word_each_need_their_own_row
+1 failed, 21 deselected in 0.07s

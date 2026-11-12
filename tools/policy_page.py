@@ -25,7 +25,10 @@ What this file does:
   out (`review_by` more than `MAX_PENDING_DAYS` after `decided`) or decided in the future is a problem. From
   the day after the earliest `review_by` the dated entries are overdue, so `--write` and `--check` both stop
   until the dates are renewed. This is a reminder, not a check that anyone re-read the names: it stops the
-  page and the tests, and a person must renew it with a dated decision.
+  page and the tests, and a person must renew it with a dated decision. Renew all or none: every dated entry of
+  both lists gets the same new `decided` day, and a test refuses a renewal of only some. The four lists at the
+  head of the sources file may each be written as the one word `none` (nothing listed), which is what an
+  emptied state looks like.
 
 What it does not do: it does not prove that a permission name is right, and it never contacts a server. Some
 checks need this package imported or a server running and so live only in the tests (tests/test_policy_guard.py
@@ -814,6 +817,35 @@ def _review_sentences(day: date | None) -> tuple[str, str]:
     )
 
 
+# The one way a list of the head of the sources file says "nothing is listed" (the end state: every source read by a
+# second person, every claim checked). An empty line is still refused, so that an emptied list is written down on
+# purpose and a deleted text is not mistaken for it. The marker stands alone on its line.
+EMPTY_MARKER = "none"
+
+
+# Said in plain words once, shown in the overdue message and written in the docstring of this file: a renewal moves
+# EVERY dated entry of both lists to one new decision day, or none (a repository test requires that every entry has
+# `decided` equal to `DECIDED`, and its message names the entry that was left behind).
+RENEWAL_RULE = (
+    "Renew all or none: every entry of PENDING_NAMES and PENDING_CLAIMS gets the same new `decided` day "
+    "(`DECIDED`); renewing only some of them is refused."
+)
+# Everything a renewal (a new decision day) or an emptying (every name verified, every claim checked) has to touch,
+# in one list that the overdue message prints and a test compares with the files.
+RENEWAL_STEPS = (
+    "A renewal touches: (1) `DECIDED` and every `decided` and `review_by` in tools/policy_page.py; (2) the pin test "
+    "test_the_tools_decision_day_is_the_day_the_names_and_claims_were_decided in tests/test_policy_guard.py "
+    "(the day written there); (3) the sentence of the changelog entry that names the review day "
+    "(CHANGELOG.md); (4) the page, rewritten with `python tools/policy_page.py --write`; (5) one row for each "
+    "test that changed, in the builder notes of the change (`python tools/notes_lines_check.py --auto`). "
+    "An emptying also touches: (6) `verified` and `claims_unverified` in the kind modules; (7) the four lists "
+    "at the head of the sources file (a list that is now empty is written as the one word "
+    f"`{EMPTY_MARKER}`); (8) NOTE_CLASSES (a note of class claim or pending needs another class once its "
+    "claim or its pending name is gone); (9) the sentences of the page head that name a pending item, "
+    "in `_HEAD` of this tool."
+)
+
+
 def pending_problems(label: str, pending: dict, live: set, today: date) -> list[str]:
     """The one rule for every dated list: an entry whose subject is fixed or gone is stale; an entry past its
     `review_by` is overdue; a `review_by` more than MAX_PENDING_DAYS after `decided` is refused; a `decided` in
@@ -824,7 +856,8 @@ def pending_problems(label: str, pending: dict, live: set, today: date) -> list[
     out += [
         f"{label} {key} is overdue (review_by {p.review_by}): {p.fix_ref}. What to do: finish that work "
         "and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day "
-        f"of the new decision and `review_by` to at most {MAX_PENDING_DAYS} days after it"
+        f"of the new decision and `review_by` to at most {MAX_PENDING_DAYS} days after it. {RENEWAL_RULE} "
+        f"{RENEWAL_STEPS}"
         for key, p in pending.items()
         if key in live and today > p.review_by
     ]
@@ -1259,6 +1292,15 @@ def _head_line(lines: list[str], tag: str) -> str:
     return rows[0].split(":", 1)[1]
 
 
+def _head_items(lines: list[str], tag: str, separator: str) -> tuple[str, ...]:
+    """The items of one list line: `()` for the marker alone, else the items split at `separator` (an empty or
+    marker-mixed item is left for the caller's own refusal)."""
+    raw = _head_line(lines, tag)
+    if raw.strip() == EMPTY_MARKER:
+        return ()
+    return tuple(x.strip() for x in raw.split(separator))
+
+
 def read_marks(root: Path) -> Marks:
     """The four lists of the head of the sources file (`# BUILDER-ONLY:`, `# PARTLY-BUILDER-ONLY:`,
     `# CLAIM-READ-BY-BUILDER:`, `# CLAIM-READ-BY-NOBODY:`), read from ONE place with ONE set of refusals (a
@@ -1269,18 +1311,29 @@ def read_marks(root: Path) -> Marks:
     lines = head_lines(root)
     ids: dict[str, tuple[str, ...]] = {}
     for tag in ("BUILDER-ONLY", "PARTLY-BUILDER-ONLY"):
-        found = tuple(x.strip() for x in _head_line(lines, tag).split(","))
+        found = _head_items(lines, tag, ",")
         if not all(_SOURCE_ID.fullmatch(x) for x in found):
-            raise PolicyError(f"{SOURCES}: the `# {tag}:` line must list source ids")
+            raise PolicyError(
+                f"{SOURCES}: the `# {tag}:` line must list source ids, or the one word `{EMPTY_MARKER}` "
+                "when no source is listed"
+            )
         ids[tag] = found
     known = set(_source_rows(lines))
     if unknown := sorted((set(ids["BUILDER-ONLY"]) | set(ids["PARTLY-BUILDER-ONLY"])) - known):
         raise PolicyError(f"{SOURCES}: builder-only id {unknown[0]} is not a row of the file")
     texts: dict[str, tuple[str, ...]] = {}
     for tag, mark in _CLAIM_LINES:
-        found = tuple(x.strip() for x in _head_line(lines, tag).split(_CLAIM_SEPARATOR))
+        found = _head_items(lines, tag, _CLAIM_SEPARATOR)
         if not all(found):
-            raise PolicyError(f"{SOURCES}: the `# {tag}:` line holds an empty claim text")
+            raise PolicyError(
+                f"{SOURCES}: the `# {tag}:` line holds an empty claim text (write `{EMPTY_MARKER}` when no "
+                "claim has this mark)"
+            )
+        if EMPTY_MARKER in found:
+            raise PolicyError(
+                f"{SOURCES}: the `# {tag}:` line mixes the word `{EMPTY_MARKER}` with claim texts: the word "
+                "stands alone, or is deleted when a claim is listed"
+            )
         if any(";;" in x for x in found):
             raise PolicyError(
                 f"{SOURCES}: the `# {tag}:` line holds `;;` inside a claim text (the separator is a space, "
@@ -1727,12 +1780,39 @@ def head(marks: Marks | None = None) -> str:
         f"{quoted(marks.nobody_read)}."
     )
     trigger, entry = _review_sentences(review_date())
+    weak = (
+        _WEAK_CLAIMS_BULLET if marks.builder_read or marks.nobody_read else _NO_WEAK_CLAIMS_BULLET
+    )
     return (
-        _HEAD.replace("ENGINE_STATE", engine_state())
+        _HEAD.replace("WEAK_CLAIMS_BULLET\n", weak)
+        .replace("ENGINE_STATE", engine_state())
         .replace("CLAIM_MARKS_TEXT", listed)
         .replace("REVIEW_TRIGGER", trigger)
         .replace("REVIEW_ENTRY", entry)
     )
+
+
+_WEAK_CLAIMS_BULLET = """\
+- Some claims are weaker than that. They are statements about how the vendor's server or API behaves that
+  nobody has checked against the vendor's own text. The page lists each under "claims not checked" and, for that
+  reason, gives no copy-ready text for any of the three kinds. Each claim carries one of two marks, taken from
+  the head of the sources file: "builder read the passage" (the builder of a fix read the vendor passage behind
+  the claim; no evidence runner has re-read it) or "nobody has read the passage" (nobody has found a vendor
+  passage for it). CLAIM_MARKS_TEXT A source id marked "(builder only)" was read by the builder of a fix only; one marked "(the
+  passage behind the claim: see claims)" was read by an evidence runner for the permission name, while the
+  passage behind the claim in that row has the mark shown in the claims cell. The same builder-only reading
+  stands behind the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked", as do
+  the three Kubernetes role names `cluster-admin`, `admin` and `edit` (no evidence runner looked for those names
+  in the Kubernetes source).REVIEW_ENTRY The lists of marked ids and claims are read from the head of the
+  sources file, not written in this tool.
+"""
+
+# The bullet above is the page text while any claim is unchecked; with none, `head` puts this one sentence in its place.
+_NO_WEAK_CLAIMS_BULLET = (
+    "- No claim on this page is waiting for a check: every statement about how the vendor's server or API behaves "
+    "was checked against the vendor's own text. No claim carries a mark, and the copy-ready text of a kind is "
+    "offered when every permission of it is found in a vendor source.\n"
+)
 
 
 _HEAD = f"""\
@@ -1785,18 +1865,7 @@ code needs (one reason each), the requests that need no permission, and what the
   carry a 7-character abbreviated commit id, not the full 40 characters, and the OpenBao documentation rows
   sit at a commit whose OpenBao release was not looked up, so the OpenBao claims are not tied to one release.
   The rendered vendor pages were not reachable; the files they are built from were read.
-- Some claims are weaker than that. They are statements about how the vendor's server or API behaves that
-  nobody has checked against the vendor's own text. The page lists each under "claims not checked" and, for that
-  reason, gives no copy-ready text for any of the three kinds. Each claim carries one of two marks, taken from
-  the head of the sources file: "builder read the passage" (the builder of a fix read the vendor passage behind
-  the claim; no evidence runner has re-read it) or "nobody has read the passage" (nobody has found a vendor
-  passage for it). CLAIM_MARKS_TEXT A source id marked "(builder only)" was read by the builder of a fix only; one marked "(the
-  passage behind the claim: see claims)" was read by an evidence runner for the permission name, while the
-  passage behind the claim in that row has the mark shown in the claims cell. The same builder-only reading
-  stands behind the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked", as do
-  the three Kubernetes role names `cluster-admin`, `admin` and `edit` (no evidence runner looked for those names
-  in the Kubernetes source).REVIEW_ENTRY The lists of marked ids and claims are read from the head of the
-  sources file, not written in this tool.
+WEAK_CLAIMS_BULLET
 - Two links the call check does not follow. First, the map from an object attribute to the setting it holds
   (`self.mount` holds the setting `mount`) is written by hand in the test; a test reads each `build` function
   and checks that the setting is stored in that attribute, but nothing follows the value beyond that. Second,

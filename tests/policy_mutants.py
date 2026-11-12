@@ -78,6 +78,7 @@ def message_texts_of(source: str) -> dict[str, list[str]]:
     `def` line is NOT counted: it does not appear in the failing line."""
     tree = ast.parse(source)
     out: dict[str, list[str]] = {}
+    calls: dict[str, set[str]] = {}
     for f in tree.body:
         if not isinstance(f, ast.FunctionDef):
             continue
@@ -101,6 +102,22 @@ def message_texts_of(source: str) -> dict[str, list[str]]:
                     if k.arg == "match":
                         texts += _text_of(k.value)
         out[f.name] = texts
+        calls[f.name] = {
+            n.func.id
+            for n in ast.walk(f)
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+        }
+    # the messages of a helper the test calls (directly or through another helper of the same file) are the test's
+    # own words too: the failing line of the test is the helper's assert
+    own = {name: list(texts) for name, texts in out.items()}
+    for name in out:
+        seen, todo = {name}, list(calls[name])
+        while todo:
+            callee = todo.pop()
+            if callee in own and callee not in seen:
+                seen.add(callee)
+                out[name] += own[callee]
+                todo += calls[callee]
     return out
 
 
@@ -400,6 +417,30 @@ M = [
         "        if key in live and today is None\n",
         "test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far",
         "no overdue entry is reported",
+    ),
+    mutant(
+        "B12 an overdue pending kind is reported one day late",
+        TOOL,
+        "        if key in live and today > p.review_by\n",
+        "        if key in live and today.toordinal() > p.review_by.toordinal() + 1\n",
+        "test_plant_an_overdue_pending_kind_is_caught",
+        "not reported as overdue",
+    ),
+    mutant(
+        "B12 an overdue unchecked claim is reported one day late",
+        TOOL,
+        "        if key in live and today > p.review_by\n",
+        "        if key in live and today.toordinal() > p.review_by.toordinal() + 1\n",
+        "test_every_unchecked_claim_has_a_dated_entry_and_the_suite_goes_red_when_it_is_overdue",
+        "not reported as overdue",
+    ),
+    mutant(
+        "B12 an overdue name or claim of the check command is reported one day late",
+        TOOL,
+        "        if key in live and today > p.review_by\n",
+        "        if key in live and today.toordinal() > p.review_by.toordinal() + 1\n",
+        "test_the_check_command_reports_a_name_or_claim_with_no_dated_entry_and_a_stale_or_overdue_entry",
+        "the entries due the day after the review day are not each reported once",
     ),
     mutant(
         "Dated entries: a date moved further than the cap is accepted",
@@ -983,8 +1024,8 @@ M = [
     mutant(
         "B7 the last id of each id line of the sources file head is dropped",
         TOOL,
-        '        found = tuple(x.strip() for x in _head_line(lines, tag).split(","))\n',
-        '        found = tuple(x.strip() for x in _head_line(lines, tag).split(",")[:-1])\n',
+        "    return tuple(x.strip() for x in raw.split(separator))\n",
+        "    return tuple(x.strip() for x in raw.split(separator)[:-1])\n",
         "test_the_builder_only_marks_are_read_from_the_head_of_the_sources_file_and_match_its_list",
         "'V-ACL', 'V-PARSE'",
     ),
@@ -1159,7 +1200,7 @@ M = [
     mutant(
         "B10 the probe day can be the real day",
         "tests/policy_mutants.py",
-        "    return day - timedelta(days=1) if day == today else day\n",
+        "    if day != today:\n        return day\n",
         "    return day\n",
         "test_the_probe_day_is_never_the_real_day_and_is_never_after_the_review_day",
         "the probe day is the real day",
@@ -1167,8 +1208,8 @@ M = [
     mutant(
         "B10 the probe day is the review day itself",
         "tests/policy_mutants.py",
-        "    day = (review or today) - timedelta(days=1)\n",
-        "    day = review or today\n",
+        "    day = max((review or today) - timedelta(days=1), floor)\n",
+        "    day = max(review or today, floor)\n",
         "test_the_probe_day_is_never_the_real_day_and_is_never_after_the_review_day",
         "is not before the review day",
     ),
@@ -1353,26 +1394,457 @@ M = [
     mutant(
         "B11 the changelog entry ends at a nested bold bullet",
         TEST,
-        '    end = text.find("\\n- **", start + 1)',
-        '    end = text.find("- **", start + 1)',
+        '        r"\\n(?:[-*+] |#)", text[start + 1 :]\n',
+        '        r"(?:[-*+] |#)", text[start + 1 :]\n',
         "test_the_entry_cut_ends_at_a_top_level_bullet_only",
         "a nested bold bullet ended the entry early",
     ),
     mutant(
         "B11 the changelog entry never ends at the next bullet",
         TEST,
-        '    end = text.find("\\n- **", start + 1)',
-        "    end = -1",
+        "    end = start + 1 + stop.start() if stop else len(text)\n",
+        "    end = len(text)\n",
         "test_the_entry_cut_ends_at_a_top_level_bullet_only",
         "the entry runs into the next top-level bullet",
     ),
     mutant(
+        "B12 the changelog entry ends only at a bold bullet",
+        TEST,
+        '        r"\\n(?:[-*+] |#)", text[start + 1 :]\n',
+        '        r"\\n- \\*\\*", text[start + 1 :]\n',
+        "test_the_entry_cut_ends_at_a_plain_bullet_a_star_bullet_a_heading_and_the_end_of_the_file",
+        "the entry runs on into a plain bullet",
+    ),
+    mutant(
+        "B12 the changelog entry does not end at a heading",
+        TEST,
+        '        r"\\n(?:[-*+] |#)", text[start + 1 :]\n',
+        '        r"\\n(?:[-*+] )", text[start + 1 :]\n',
+        "test_the_entry_cut_ends_at_a_plain_bullet_a_star_bullet_a_heading_and_the_end_of_the_file",
+        "the entry runs on into a heading",
+    ),
+    mutant(
+        "B12 the changelog entry does not end at a star bullet",
+        TEST,
+        '        r"\\n(?:[-*+] |#)", text[start + 1 :]\n',
+        '        r"\\n(?:- |#)", text[start + 1 :]\n',
+        "test_the_entry_cut_ends_at_a_plain_bullet_a_star_bullet_a_heading_and_the_end_of_the_file",
+        "the entry runs on into a star bullet",
+    ),
+    mutant(
+        "B12 the changelog entry of the last entry in the file loses its last line",
+        TEST,
+        "    end = start + 1 + stop.start() if stop else len(text)\n",
+        "    end = start + 1 + stop.start() if stop else len(text) - 3\n",
+        "test_the_entry_cut_ends_at_a_plain_bullet_a_star_bullet_a_heading_and_the_end_of_the_file",
+        "the last entry of the file lost its last line",
+    ),
+    mutant(
         "B11 the day scan knows only the ISO form",
         TEST,
+        'DAY_PATTERN = re.compile("|".join(f"(?:{f})" for f in DAY_FORMS), re.IGNORECASE)',
+        'DAY_PATTERN = re.compile("|".join(f"(?:{f})" for f in DAY_FORMS[:1]), re.IGNORECASE)',
+        "test_each_form_of_a_written_day_is_found_and_each_miss_names_its_form",
+        "year-month-day with slashes is not found",
+    ),
+    mutant(
+        "B12 the message scan ignores the messages of a helper the killer calls",
+        RUN,
+        "                out[name] += own[callee]\n",
+        "                pass\n",
+        "test_the_message_scan_counts_the_messages_of_a_helper_the_killer_calls_and_only_that",
+        "the texts the scan counts for a killer that calls a helper",
+    ),
+    mutant(
+        "B12 the runner takes a --day=VALUE before the decision day",
+        RUN,
+        "    if day < floor:\n",
+        '    if day < floor and not rest[i].startswith("--day="):\n',
+        "test_the_runner_takes_day_in_both_written_forms_once_and_not_before_the_decision_day",
+        "takes a --day=VALUE before the decision day (",
+    ),
+    mutant(
+        "B12 the runner takes the first --day=VALUE of two",
+        RUN,
+        '    if len(marks) > 1:\n        raise ArgumentProblem("--day may be given once only")\n',
+        '    if len(marks) > 1 and not rest[marks[0]].startswith("--day="):\n        raise ArgumentProblem("--day may be given once only")\n',
+        "test_the_runner_takes_day_in_both_written_forms_once_and_not_before_the_decision_day",
+        "takes --day twice (the first written --day=VALUE)",
+    ),
+    mutant(
+        "B12 the runner floor is the tool's decision day, not the latest decision day of the lists",
+        RUN,
+        "    return max([pp.DECIDED, *(e.decided for entries in lists for e in entries.values())])\n",
+        "    return pp.DECIDED\n",
+        "test_the_floor_of_a_fixed_day_is_the_latest_decision_day_of_the_lists_and_the_probe_day_keeps_to_it",
+        "the floor ignores a kinds list that was renewed alone",
+    ),
+    mutant(
+        "B12 the probe day goes before the latest decision day",
+        RUN,
+        "    day = max((review or today) - timedelta(days=1), floor)\n",
+        "    day = (review or today) - timedelta(days=1)\n",
+        "test_the_floor_of_a_fixed_day_is_the_latest_decision_day_of_the_lists_and_the_probe_day_keeps_to_it",
+        "the probe day is before the floor",
+    ),
+    mutant(
+        "B12 the --day floor is the tool's decision day only",
+        RUN,
+        "    floor = decided_floor() if floor is None else floor\n    rest = list(argv)",
+        "    floor = pp.DECIDED\n    rest = list(argv)",
+        "test_the_floor_of_a_fixed_day_is_the_latest_decision_day_of_the_lists_and_the_probe_day_keeps_to_it",
+        "a --day before the kinds decision day was taken",
+    ),
+    mutant(
+        "B12 the word none is not read as an empty list",
+        TOOL,
+        "    if raw.strip() == EMPTY_MARKER:\n        return ()\n",
+        "    if False:\n        return ()\n",
+        "test_each_of_the_four_lists_may_be_the_word_none_and_an_empty_line_or_a_mixed_one_is_refused",
+        " written as the word none reads as",
+    ),
+    mutant(
+        "B12 the word none mixed with a claim text is accepted",
+        TOOL,
+        "        if EMPTY_MARKER in found:\n",
+        "        if False:\n",
+        "test_each_of_the_four_lists_may_be_the_word_none_and_an_empty_line_or_a_mixed_one_is_refused",
+        " mixing the word none with a text is accepted",
+    ),
+    mutant(
+        "B12 an empty claim line is accepted",
+        TOOL,
+        "        if not all(found):\n",
+        "        if False:\n",
+        "test_each_of_the_four_lists_may_be_the_word_none_and_an_empty_line_or_a_mixed_one_is_refused",
+        "with nothing after the colon is accepted",
+    ),
+    mutant(
+        "B12 the page head keeps the unchecked-claims text with no claim listed",
+        TOOL,
+        "        _WEAK_CLAIMS_BULLET if marks.builder_read or marks.nobody_read else _NO_WEAK_CLAIMS_BULLET\n",
+        "        _WEAK_CLAIMS_BULLET if True else _NO_WEAK_CLAIMS_BULLET\n",
+        "test_the_page_head_describes_unchecked_claims_only_while_a_claim_mark_is_listed",
+        "with no claim listed the head does not say that no claim is waiting",
+    ),
+    mutant(
+        "B12 the page head drops the unchecked-claims text when only one claim list has a text",
+        TOOL,
+        "        _WEAK_CLAIMS_BULLET if marks.builder_read or marks.nobody_read else _NO_WEAK_CLAIMS_BULLET\n",
+        "        _WEAK_CLAIMS_BULLET if marks.builder_read else _NO_WEAK_CLAIMS_BULLET\n",
+        "test_the_page_head_describes_unchecked_claims_only_while_a_claim_mark_is_listed",
+        "the head drops the description of unchecked claims",
+    ),
+    mutant(
+        "B12 the overdue message does not list what a renewal touches",
+        TOOL,
+        '        f"{RENEWAL_STEPS}"\n',
+        '        ""\n',
+        "test_the_overdue_message_says_renew_all_or_none_and_lists_everything_a_renewal_or_an_emptying_touches",
+        "the overdue message does not print the list of what a renewal touches",
+    ),
+    mutant(
+        "B12 the overdue message does not say renew all or none",
+        TOOL,
+        '. {RENEWAL_RULE} "',
+        '. "',
+        "test_the_overdue_message_says_renew_all_or_none_and_lists_everything_a_renewal_or_an_emptying_touches",
+        "the overdue message does not say to renew all or none",
+    ),
+    mutant(
+        "B12 the renewal list does not name the page head sentences",
+        TOOL,
+        '"in `_HEAD` of this tool."',
+        '"in the page head."',
+        "test_the_overdue_message_says_renew_all_or_none_and_lists_everything_a_renewal_or_an_emptying_touches",
+        "the renewal list does not name",
+    ),
+    mutant(
+        "B12 the docs page body for an empty end state accepts a day",
+        TEST,
+        '    assert "no review date applies now" in docs and "whichever comes first" not in docs, (\n',
+        '    assert "no review date applies now" in docs and "whichever comes first" in docs, (\n',
+        "test_the_date_tests_branches_for_an_empty_list_run_in_the_end_state",
+        "the docs page does not say that no review date applies",
+    ),
+    mutant(
+        "B12 a renewal of only some entries leaves no entry named",
+        TEST,
+        "        if p.decided != decided\n",
+        "        if False\n",
+        "test_plant_a_renewal_of_only_some_entries_names_the_entry_that_was_not_renewed",
+        "the entries left behind when only one name was renewed",
+    ),
+    mutant(
+        "B12 notes check does not follow a from-import of a test module",
+        NTOOL,
+        "                out.update({a.asname or a.name: (stem, a.name) for a in n.names})\n",
+        "                pass\n",
+        "test_a_helper_imported_from_another_tests_module_lists_each_test_that_uses_it",
+        "by a test through a from-import was not listed",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not follow a module import",
+        NTOOL,
+        '        sub = self._file_of(\n            f"{stem}/{taken}"\n        )  # `from tests import taken`: taken is the module tests/taken.py\n        return self.module(sub) if sub else None, attr\n',
+        "        return None, attr\n",
+        "test_a_helper_imported_from_another_tests_module_lists_each_test_that_uses_it",
+        "by a test through a module import was not listed",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not follow an import as",
+        NTOOL,
+        '                    out[a.asname or a.name.split(".")[0]] = (stem, None)\n',
+        "                    pass\n",
+        "test_a_helper_imported_from_another_tests_module_lists_each_test_that_uses_it",
+        "by a test through an import as was not listed",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not follow a relative import",
+        NTOOL,
+        '    if level:\n        here = rel.split("/")[:-1]\n',
+        '    if False:\n        here = rel.split("/")[:-1]\n',
+        "test_a_helper_imported_from_another_tests_module_lists_each_test_that_uses_it",
+        "by a test through a relative import was not listed",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not read an import inside a function",
+        NTOOL,
+        "    for n in ast.walk(tree):\n        if isinstance(n, ast.ImportFrom):",
+        '    for n in getattr(tree, "body", []):\n        if isinstance(n, ast.ImportFrom):',
+        "test_a_helper_imported_from_another_tests_module_lists_each_test_that_uses_it",
+        "by a test through an import inside the test was not listed",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not list the tests of a changed module-level import",
+        NTOOL,
+        "            elif isinstance(n, (ast.Import, ast.ImportFrom)):\n                names = [_bound(a) for a in n.names]\n",
+        "            elif isinstance(n, (ast.Import, ast.ImportFrom)):\n                continue\n",
+        "test_a_changed_module_level_import_or_augmented_assignment_lists_the_tests_that_use_the_name",
+        "a changed module-level import did not list the test",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not see a changed augmented assignment",
+        NTOOL,
+        "(ast.AnnAssign, ast.AugAssign)) and isinstance(n.target, ast.Name):",
+        "(ast.AnnAssign,)) and isinstance(n.target, ast.Name):",
+        "test_a_changed_module_level_import_or_augmented_assignment_lists_the_tests_that_use_the_name",
+        "a changed `+=` of a module-level name did not list the test",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not apply an autouse fixture to every test",
+        NTOOL,
+        "    todo += [(mod, a) for a in mod.autouse]\n",
+        "    todo += []\n",
+        "test_an_autouse_fixture_that_changed_lists_every_test_of_the_file_and_another_fixture_does_not",
+        "a changed autouse fixture did not list every test of the file",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check finds a marker inside another word",
+        NTOOL,
+        'r"\\b(?:killing mutants?|fails? on|fail-before|fails? before|plants?|controls?)\\b"',
+        'r"(?:killing mutants?|fails? on|fail-before|fails? before|plants?|controls?)"',
+        "test_a_marker_is_a_whole_word_and_something_to_look_up_follows_it",
+        "a marker found inside another word was accepted",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check takes passes on as a reason",
+        NTOOL,
+        "|fails? before|plants?|controls?)\\b",
+        "|fails? before|plants?|controls?|passes on)\\b",
+        "test_a_marker_is_a_whole_word_and_something_to_look_up_follows_it",
+        "the phrase `passes on` alone was accepted as a reason",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check needs nothing to look up after the marker",
+        NTOOL,
+        "    if not _IDENTIFIER.search(reason[found.end() :]):\n",
+        "    if False:\n",
+        "test_a_marker_is_a_whole_word_and_something_to_look_up_follows_it",
+        "a reason with no mutant code, test name, file name or commit id after the marker was accepted",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check counts an identifier before the marker",
+        NTOOL,
+        "    if not _IDENTIFIER.search(reason[found.end() :]):\n",
+        "    if not _IDENTIFIER.search(reason):\n",
+        "test_a_marker_is_a_whole_word_and_something_to_look_up_follows_it",
+        "an identifier before the marker was counted as one after it",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not report a fall in the mutant count",
+        NTOOL,
+        "    if counts is not None and counts[1] < counts[0]:\n",
+        "    if False:\n",
+        "test_a_new_altered_or_removed_mutant_and_a_fall_in_the_count_are_seen_in_the_mutant_files",
+        "a fall in the mutant count was not reported",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not read a mutant name that holds a backtick",
+        NTOOL,
+        '            found is None and word == "mutant"\n',
+        "            False\n",
+        "test_two_mutant_names_that_hold_the_same_backticked_word_each_need_their_own_row",
+        "written in one cell were not both found",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not see a change of the mutant builder",
+        NTOOL,
+        '    return {k: v + "|" + builder for k, v in out.items()}\n',
+        "    return out\n",
+        "test_a_new_altered_or_removed_mutant_and_a_fall_in_the_count_are_seen_in_the_mutant_files",
+        "a change of the mutant builder did not list every mutant",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not read the mutant files",
+        NTOOL,
+        '_MUTANT_FILE = re.compile(r"tests/(?:policy_mutants|stage_mutants)\\.py")',
+        '_MUTANT_FILE = re.compile(r"tests/no_such_file\\.py")',
+        "test_a_new_altered_or_removed_mutant_and_a_fall_in_the_count_are_seen_in_the_mutant_files",
+        "an altered mutant was not listed",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not read a conftest",
+        NTOOL,
+        '_CONFTEST = re.compile(r"tests/(?:.+/)?conftest\\.py")',
+        '_CONFTEST = re.compile(r"tests/no_such_file\\.py")',
+        "test_a_conftest_function_and_a_fixture_file_are_units_and_a_file_outside_the_kinds_is_none",
+        "a changed conftest function was not the only unit",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not read the fixture file",
+        NTOOL,
+        '_FIXTURE_FILE = re.compile(r"tests/fixtures/policy_sources_[^/]*\\.txt")',
+        '_FIXTURE_FILE = re.compile(r"tests/fixtures/no_such_file\\.txt")',
+        "test_a_conftest_function_and_a_fixture_file_are_units_and_a_file_outside_the_kinds_is_none",
+        "a changed fixture file was not one unit named by its file name",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check uses the base instead of the merge base",
+        NTOOL,
+        "    mb, head_sha = merged.stdout.strip(), sha.stdout.strip()\n",
+        "    mb, head_sha = base, sha.stdout.strip()\n",
+        "test_auto_diffs_from_the_merge_base_to_the_head_commit_and_reads_blobs_not_the_working_folder",
+        "the merge base is",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check lets git hide a renamed file",
+        NTOOL,
+        '"diff", "--name-only", "--no-renames", "-z"',
+        '"diff", "--name-only", "-z"',
+        "test_auto_lists_both_names_of_a_renamed_test_file_so_the_old_tests_are_not_lost",
+        "a renamed test file lists",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check reads a failed diff as no change",
+        NTOOL,
+        "    if diff.returncode != 0:\n",
+        "    if False:\n",
+        "test_auto_reads_a_failed_diff_or_a_missing_common_ancestor_as_a_problem_never_as_no_change",
+        "a failed diff was read as a result",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check does not say a common ancestor is missing",
+        NTOOL,
+        "    if sha.returncode != 0 or merged.returncode != 0 or not merged.stdout.strip():\n",
+        "    if False:\n",
+        "test_auto_reads_a_failed_diff_or_a_missing_common_ancestor_as_a_problem_never_as_no_change",
+        "no common ancestor was not one problem naming the full fetch",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 notes check reads the working folder instead of the head commit",
+        NTOOL,
+        "        if head is not None:\n            return _show(head, rel)\n",
+        "        if False:\n            return _show(head, rel)\n",
+        "test_auto_diffs_from_the_merge_base_to_the_head_commit_and_reads_blobs_not_the_working_folder",
+        "the check read the working folder, not the blobs of the head commit",
+        test_file=NOTES_TEST,
+    ),
+    mutant(
+        "B12 the day scan is case-sensitive",
+        TEST,
+        'DAY_PATTERN = re.compile("|".join(f"(?:{f})" for f in DAY_FORMS), re.IGNORECASE)',
         'DAY_PATTERN = re.compile("|".join(f"(?:{f})" for f in DAY_FORMS))',
-        'DAY_PATTERN = re.compile("|".join(f"(?:{f})" for f in DAY_FORMS[:1]))',
-        "test_a_day_in_any_written_form_is_found_outside_the_one_allowed_sentence",
-        "was not found",
+        "test_each_form_of_a_written_day_is_found_and_each_miss_names_its_form",
+        "written in capital letters is not found",
+    ),
+    mutant(
+        "B12 the day scan takes any word that starts like a month",
+        TEST,
+        '_MONTH_NAMES = "January|Jan|February|Feb|March|Mar|April|Apr|May|June|Jun|July|Jul|August|Aug|September|Sept|Sep|October|Oct|November|Nov|December|Dec"',
+        '_MONTH_NAMES = "Jan[a-z]*|Feb[a-z]*|Mar[a-z]*|Apr[a-z]*|May[a-z]*|Jun[a-z]*|Jul[a-z]*|Aug[a-z]*|Sep[a-z]*|Oct[a-z]*|Nov[a-z]*|Dec[a-z]*"',
+        "test_a_word_that_only_starts_like_a_month_is_not_a_day",
+        "only starts like a month was found as a written day",
+    ),
+    mutant(
+        "B12 the day scan does not know the year written with dots first",
+        TEST,
+        '    r"(?<!\\d)\\d{4}\\.\\d{2}\\.\\d{2}(?!\\d)",  # 2026.12.12\n',
+        '    r"(?!)",\n',
+        "test_each_form_of_a_written_day_is_found_and_each_miss_names_its_form",
+        "year-month-day with dots is not found",
+    ),
+    mutant(
+        "B12 the day scan does not know a day written with numbers and the year last",
+        TEST,
+        '    r"(?<!\\d)\\d{1,2}[/.]\\d{1,2}[/.]\\d{4}(?!\\d)",  # 12/12/2026, 12.12.2026\n',
+        '    r"(?!)",\n',
+        "test_each_form_of_a_written_day_is_found_and_each_miss_names_its_form",
+        "day-month-year with slashes is not found",
+    ),
+    mutant(
+        "B12 the day scan does not know a day written with hyphens and a month name",
+        TEST,
+        '    r"(?<!\\d)\\d{1,2}-" + _MONTHS + r"-\\d{4}(?!\\d)",  # 12-Dec-2026\n',
+        '    r"(?!)",\n',
+        "test_each_form_of_a_written_day_is_found_and_each_miss_names_its_form",
+        "with hyphens and a month name is not found",
+    ),
+    mutant(
+        "B12 the day scan does not know a day written day first with a month name",
+        TEST,
+        '    r"(?<!\\d)\\d{1,2}(?:st|nd|rd|th)?(?: of)? "\n    + _MONTHS\n    + r"(?: \\d{4})?",  # 12 December, 12th of December, 12 Dec 2026\n',
+        '    r"(?!)",\n',
+        "test_each_form_of_a_written_day_is_found_and_each_miss_names_its_form",
+        "day first with a month name and a year is not found",
+    ),
+    mutant(
+        "B12 the day scan does not know a day written month first",
+        TEST,
+        '    _MONTHS\n    + r" \\d{1,2}(?!\\d)(?:st|nd|rd|th)?\\b(?:,? \\d{4})?",  # Dec 12, Dec. 12, December 12th, December 12, 2026\n',
+        '    r"(?!)",\n',
+        "test_each_form_of_a_written_day_is_found_and_each_miss_names_its_form",
+        "month first is not found",
+    ),
+    mutant(
+        "B12 the day scan does not know a day written day first with no year",
+        TEST,
+        '    + r"(?: \\d{4})?",  # 12 December',
+        '    + r" \\d{4}",  # 12 December',
+        "test_each_form_of_a_written_day_is_found_and_each_miss_names_its_form",
+        "day first with a month name and no year is not found",
     ),
     mutant(
         "B11 the page head names a day with both dated lists empty (OpenBao sentence)",
@@ -1404,15 +1876,15 @@ M = [
         '    if len(marks) > 1:\n        raise ArgumentProblem("--day may be given once only")\n',
         "",
         "test_the_runner_takes_day_in_both_written_forms_once_and_not_before_the_decision_day",
-        "a repeated day, a day before the decision day",
+        "takes --day twice (the second written --day=VALUE)",
     ),
     mutant(
         "B11 the runner takes a day before the decision day",
         RUN,
-        "    if day < pp.DECIDED:",
+        "    if day < floor:",
         "    if False:",
         "test_the_runner_takes_day_in_both_written_forms_once_and_not_before_the_decision_day",
-        "a repeated day, a day before the decision day",
+        "takes a --day before the decision day (",
     ),
     mutant(
         "B11 the runner lets the last failure borrow the text of the summary",
@@ -1457,8 +1929,8 @@ M = [
     mutant(
         "B11 notes check reads the test id from any cell",
         NTOOL,
-        'for name in re.findall(r"`((?:\\w+::)?test_\\w+)`", cells[1]):',
-        'for name in re.findall(r"`((?:\\w+::)?test_\\w+)`", " ".join(cells[1:])):',
+        '        for name in re.findall(r"`([^`]+)`", cells[1]):\n',
+        '        for name in re.findall(r"`([^`]+)`", " ".join(cells[1:])):\n',
         "test_a_name_in_another_rows_reason_cell_or_another_cell_is_no_row_of_its_own",
         "an id found in another cell counted as a row",
         test_file="tests/test_notes_lines_check.py",
@@ -1502,8 +1974,8 @@ M = [
     mutant(
         "B11 notes check does not follow a helper to the next helper",
         NTOOL,
-        "                todo += [u for u in _used(nodes[name]) if u in dumps and u not in seen]",
-        "                todo += []",
+        "                    todo += [(m, u) for u in sorted(_used(m.nodes[name]))]\n",
+        "                    todo += []\n",
         "test_a_changed_helper_constant_or_fixture_lists_each_test_that_uses_it_and_only_those",
         "a change of a helper two steps away lists",
         test_file="tests/test_notes_lines_check.py",
@@ -1538,8 +2010,8 @@ M = [
     mutant(
         "B11 notes check accepts a reason that names no mutant, run, plant or control",
         NTOOL,
-        "    if not any(m in lowered for m in REASON_MARKERS):",
-        "    if False:",
+        "    found = _MARKER.search(reason)\n",
+        '    found = re.search("", reason)\n',
         "test_a_reason_must_be_real_not_just_long",
         "a long reason that names no mutant, run, plant or control was accepted",
         test_file="tests/test_notes_lines_check.py",
@@ -1565,8 +2037,8 @@ M = [
     mutant(
         "B11 notes check with --auto finds no notes file",
         NTOOL,
-        "[n for n in names if _NOTES_FILE.fullmatch(n) and Path(n).is_file()],",
-        "[],",
+        "        sorted(n for n in names if _NOTES_FILE.fullmatch(n) and _show(head_sha, n)),\n",
+        "        [],\n",
         "test_auto_reads_the_changed_test_and_notes_files_and_says_when_there_are_no_notes",
         "a change with all its rows failed",
         test_file="tests/test_notes_lines_check.py",
@@ -1587,6 +2059,15 @@ M = [
         "        if False:\n",
         "test_auto_reads_the_changed_test_and_notes_files_and_says_when_there_are_no_notes",
         "the missing notes were not said",
+        test_file="tests/test_notes_lines_check.py",
+    ),
+    mutant(
+        "B12 notes check lets two mutants that hold the same backticked word share one row",
+        NTOOL,
+        "        out[(file_cell, cells[1])] = (cells[-1], cells[1])\n",
+        "        pass\n",
+        "test_two_mutant_names_that_hold_the_same_backticked_word_each_need_their_own_row",
+        "with the same backticked word were refused",
         test_file="tests/test_notes_lines_check.py",
     ),
     mutant(
@@ -1631,11 +2112,13 @@ class ArgumentProblem(ValueError):
     """A command line the runner refuses; `str()` is the one plain line that is printed (exit code 2)."""
 
 
-def parse_args(argv: list[str]) -> tuple[str | None, list[str]]:
+def parse_args(argv: list[str], floor: date | None = None) -> tuple[str | None, list[str]]:
     """(the fixed day or None, the remaining words that select mutants by name). `--day` is written `--day VALUE`
-    or `--day=VALUE`, at most once; the value is `YYYY-MM-DD`, a real day, and not before the day the dated lists
-    were decided (`pp.DECIDED`: no entry exists before it, so a day before it would show the same red tests as a
-    day past the review day for the wrong reason). Anything else is an `ArgumentProblem`, never an IndexError."""
+    or `--day=VALUE`, at most once; the value is `YYYY-MM-DD`, a real day, and not before `floor`, the latest day
+    any dated entry was decided (`decided_floor()`: no entry exists before it, so a day before it would show the
+    same red tests as a day past the review day for the wrong reason). Anything else is an `ArgumentProblem`,
+    never an IndexError."""
+    floor = decided_floor() if floor is None else floor
     rest = list(argv)
     marks = [i for i, w in enumerate(rest) if w == "--day" or w.startswith("--day=")]
     if not marks:
@@ -1655,22 +2138,36 @@ def parse_args(argv: list[str]) -> tuple[str | None, list[str]]:
         day = date.fromisoformat(value)
     except ValueError:
         raise ArgumentProblem(f"--day {value} is not a real day; write YYYY-MM-DD") from None
-    if day < pp.DECIDED:
+    if day < floor:
         raise ArgumentProblem(
-            f"--day {value} is before {pp.DECIDED}, the day the dated lists were decided: "
+            f"--day {value} is before {floor}, the latest day a dated entry was decided: "
             "give that day or a later one"
         )
     del rest[i : i + width]
     return day.isoformat(), rest
 
 
-def canary_day(today: date, review: date | None) -> date:
+def decided_floor(lists: tuple[dict, dict, dict] | None = None) -> date:
+    """The latest `decided` day over the three lists, and never before the tool's decision day (`pp.DECIDED`): no
+    entry exists before it, so no fixed day (the probe day, or one given with `--day`) may be earlier. A renewal
+    of the kinds list alone gives a later day than the tool's. `lists` is for a made-up state."""
+    lists = date_lists() if lists is None else lists
+    return max([pp.DECIDED, *(e.decided for entries in lists for e in entries.values())])
+
+
+def canary_day(today: date, review: date | None, floor: date | None = None) -> date:
     """The day the probe always runs with: the day before the review day (a day on which the whole file is green),
     or the day before that when that is the real day today; never the real day, so a dropped clock hook cannot
-    hide behind a real clock that shows the same day. With no review day at all (every dated list empty) the
-    day before today."""
-    day = (review or today) - timedelta(days=1)
-    return day - timedelta(days=1) if day == today else day
+    hide behind a real clock that shows the same day; never before `floor` (the latest decision day: see
+    `decided_floor`), so the day before a review day that comes soon after a renewal is not a day before every
+    entry existed (when the day before is the floor itself and is today, the day after it is used). With no
+    review day at all (every dated list empty) the day before today."""
+    floor = decided_floor() if floor is None else floor
+    day = max((review or today) - timedelta(days=1), floor)
+    if day != today:
+        return day
+    earlier = day - timedelta(days=1)
+    return earlier if earlier >= floor else day + timedelta(days=1)
 
 
 def _child_env(day: str | None) -> dict[str, str]:

@@ -302,6 +302,24 @@
     that day `--write` stops too, until the dates are renewed. The date guard is a reminder, not a check that
     anyone re-read the names: it stops the page and the tests, and a person must renew it with a dated
     decision.
+  - **Renewing or emptying the dated lists, and the empty marker.** In `tests/fixtures/policy_sources_*.txt` each of
+    the four head lines (the claims a builder read, the claims nobody read, and the two lists of names) may now hold
+    the single word `none`. It means "no claim of this kind is waiting for a check"; a line that mixes `none` with a
+    claim text, or an empty line, is refused, and the page head then says that no claim on the page is waiting for a
+    check. Renew all or none: when a dated entry is decided again, every entry of the same list is renewed with it
+    (a day decided again, a new `review_by` at most 92 days later), the pin of the kinds sentence in
+    `tests/test_policy_changelog.py` and the sentence in this entry are changed with it, and the day of the last
+    decision in `DECIDED` in `tools/policy_page.py` moves up. When the last unchecked claim is checked, its entries
+    are deleted, its marker line becomes `none`, and its class in `NOTE_CLASSES` is moved off the claim lists. The
+    overdue message prints these steps.
+  - **What the builder-notes check now sees, and what it cannot see.** `tools/notes_lines_check.py` runs on every
+    pull request (`--auto`, from the common ancestor of the base branch and the pull request head, read from the
+    head commit, never from the merge commit). A new or changed test or mutant needs its own row in the notes with a
+    reason that names a killing mutant, a failing run, a plant or a control and something to look up after it. The
+    check follows helpers, fixtures (also ones that apply to every test), module-level names, imports of other test
+    modules, the support files (a conftest, the sources file) and the mutant files, where a fall in the mutant count
+    is a problem. It cannot tell whether a reason is true: that stays with the reviewer and the logs the row names.
+    The step has not yet run on GitHub.
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.
   - It covers AWS, gcloud/gsutil/bq, az, azcopy and PowerShell Az, kubectl/oc, helm, terraform/tofu/pulumi,

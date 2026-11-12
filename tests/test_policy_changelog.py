@@ -5,6 +5,8 @@ Kept apart from tests/test_policy_guard.py because that file is copied alone int
 mutation runner uses, and the changelog is not part of that copy."""
 
 import re
+from collections import Counter
+from datetime import date, timedelta
 from pathlib import Path
 
 from tests.test_policy_guard import (
@@ -17,13 +19,54 @@ from tests.test_policy_guard import (
 ROOT = Path(__file__).resolve().parents[1]
 
 
+KINDS_GROUPS = [(7, "2026-12-12"), (9, "2027-02-01")]
+KINDS_LITERAL = "7 of them from 2026-12-12 and the other 9 from 2027-02-01"
+
+
+def _kinds_pin_problem(pending: dict, built: str, entry: str) -> str:
+    """The pin of the kinds days, for any list, built sentence and changelog entry: '' when all three agree with
+    the groups and the sentence written out above. Two pins that do not follow the list: a change of either (a
+    kind added or removed, a renewal of the kinds list) must change this file and the changelog together."""
+    groups = sorted(Counter(p.review_by for p in pending.values()).items())
+    if [(n, (d + timedelta(days=1)).isoformat()) for d, n in groups] != KINDS_GROUPS:
+        return (
+            "the pending kinds list no longer holds 7 kinds that fail from 2026-12-12 and 9 from 2027-02-01: "
+            "change this pin and the changelog sentence together"
+        )
+    if built != KINDS_LITERAL:
+        return "the sentence built from the kinds list is not the one written in this pin"
+    if KINDS_LITERAL not in entry:
+        return "the changelog does not give the days the kinds list starts to fail"
+    return ""
+
+
 def test_the_changelog_gives_the_days_the_kinds_list_starts_to_fail():
-    # Structural pin only: the changelog holds the sentence built from the list, and the list has entries. No day
-    # and no count is written here; they come from `PENDING_KINDS` (a renewal changes the list and this follows).
-    assert PENDING_KINDS, "the list of pending kinds is empty"
-    assert kinds_sentence() in changelog_entry(), (
-        "the changelog does not give the days the kinds list starts to fail"
+    problem = _kinds_pin_problem(PENDING_KINDS, kinds_sentence(), changelog_entry())
+    assert not problem, problem
+
+
+def test_plant_a_moved_or_regrouped_kinds_list_or_a_changelog_that_follows_it_is_refused():
+    from dataclasses import replace
+
+    first = next(iter(PENDING_KINDS))
+    moved = {**PENDING_KINDS, first: replace(PENDING_KINDS[first], review_by=date(2026, 12, 10))}
+    regrouped = {k: replace(p, review_by=date(2027, 1, 31)) for k, p in PENDING_KINDS.items()}
+    entry = f"text {KINDS_LITERAL} text"
+    assert _kinds_pin_problem(PENDING_KINDS, KINDS_LITERAL, entry) == "", (
+        "the right list was refused"
     )
+    assert "no longer holds 7 kinds" in _kinds_pin_problem(moved, kinds_sentence(moved), entry), (
+        "a kind moved to another day was accepted (a changelog that follows the list)"
+    )
+    assert "no longer holds 7 kinds" in _kinds_pin_problem(
+        regrouped, kinds_sentence(regrouped), entry
+    ), "a list of one group was accepted"
+    assert "not the one written in this pin" in _kinds_pin_problem(
+        PENDING_KINDS, "7 of them from 2026-12-12 and the other 9 from 2027-02-02", entry
+    ), "a built sentence with another day was accepted"
+    assert "does not give the days" in _kinds_pin_problem(
+        PENDING_KINDS, KINDS_LITERAL, "text with no sentence"
+    ), "a changelog without the sentence was accepted"
 
 
 def test_the_changelog_entry_for_the_page_writes_no_day_but_the_kinds_days_read_from_the_list():

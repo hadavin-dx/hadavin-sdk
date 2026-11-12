@@ -121,24 +121,35 @@ def test_plant_a_ci_step_list_without_or_with_a_moved_check_step_is_refused():
     assert "not right after" in _check_step_problem([mutants, "a", check])
 
 
+def _checkout_is_full(steps: list[dict]) -> bool:
+    """True when the step that checks the code out in this job fetches the whole history."""
+    boxes = [s for s in steps if str(s.get("uses", "")).startswith("actions/checkout@")]
+    return len(boxes) == 1 and str(boxes[0].get("with", {}).get("fetch-depth")) == "0"
+
+
 def _notes_step_problem(steps: list[dict]) -> str:
-    """The one rule for the CI step of the notes check: it runs `tools/notes_lines_check.py --auto "$BASE_SHA"`, on
-    pull requests only, with the base taken from the head before the push (or the base of the pull request), and
-    the base is fetched first. '' when the step is right."""
+    """The one rule for the CI step of the notes check: on pull requests only, it runs
+    `tools/notes_lines_check.py --auto "$BASE_SHA" --head "$HEAD_SHA"` with the base and the head commit id of the
+    pull request (never the head before the push, never the merge commit), and the job's checkout has the whole
+    history (without it there is no common ancestor). '' when the step is right."""
     found = [s for s in steps if "tools/notes_lines_check.py" in s.get("run", "")]
     if len(found) != 1:
         return f"ci.yml has {len(found)} steps that run tools/notes_lines_check.py, not one"
     step = found[0]
     run = step["run"]
-    if 'python tools/notes_lines_check.py --auto "$BASE_SHA"' not in run:
-        return "the notes step does not run `--auto` with the base in BASE_SHA"
-    if "git fetch" not in run or run.index("git fetch") > run.index("notes_lines_check"):
-        return "the notes step does not fetch the base before it runs the check"
+    if 'python tools/notes_lines_check.py --auto "$BASE_SHA" --head "$HEAD_SHA"' not in run:
+        return "the notes step does not run `--auto` with the base in BASE_SHA and the head in HEAD_SHA"
     if step.get("if") != "github.event_name == 'pull_request'":
         return "the notes step is not limited to pull requests"
-    base = str(step.get("env", {}).get("BASE_SHA", ""))
-    if "github.event.before" not in base or "github.event.pull_request.base.sha" not in base:
-        return "the notes step does not take the base from the head before the push, then the pull request base"
+    env = step.get("env", {})
+    if str(env.get("BASE_SHA", "")).strip() != "${{ github.event.pull_request.base.sha }}":
+        return "the notes step does not take the base from the base of the pull request"
+    if str(env.get("HEAD_SHA", "")).strip() != "${{ github.event.pull_request.head.sha }}":
+        return "the notes step does not take the head from the head commit id of the pull request"
+    if "github.event.before" in run or "github.event.before" in str(env):
+        return "the notes step reads the head before the push: it must check the whole pull request"
+    if not _checkout_is_full(steps):
+        return "the job's checkout does not fetch the whole history (fetch-depth 0)"
     return ""
 
 
@@ -150,22 +161,87 @@ def test_ci_runs_the_builder_notes_check_on_pull_requests_with_the_base_fetched(
 
 
 def test_plant_a_ci_notes_step_that_is_missing_unfetched_unlimited_or_on_the_wrong_base_is_refused():
+    checkout = {"uses": "actions/checkout@abc", "with": {"fetch-depth": 0}}
     good = {
         "if": "github.event_name == 'pull_request'",
-        "env": {"BASE_SHA": "${{ github.event.before || github.event.pull_request.base.sha }}"},
-        "run": 'git fetch --no-tags --depth=1 origin "$BASE_SHA"\n'
-        'python tools/notes_lines_check.py --auto "$BASE_SHA"',
+        "env": {
+            "BASE_SHA": "${{ github.event.pull_request.base.sha }}",
+            "HEAD_SHA": "${{ github.event.pull_request.head.sha }}",
+        },
+        "run": 'python tools/notes_lines_check.py --auto "$BASE_SHA" --head "$HEAD_SHA"',
     }
-    assert _notes_step_problem([good]) == ""
-    assert "not one" in _notes_step_problem([])
-    assert "not one" in _notes_step_problem([good, good])
-    assert "`--auto`" in _notes_step_problem([{**good, "run": "python tools/notes_lines_check.py"}])
-    assert "fetch the base" in _notes_step_problem(
-        [{**good, "run": 'python tools/notes_lines_check.py --auto "$BASE_SHA"'}]
+    assert _notes_step_problem([checkout, good]) == ""
+    assert "not one" in _notes_step_problem([checkout])
+    assert "not one" in _notes_step_problem([checkout, good, good])
+    assert "`--auto`" in _notes_step_problem(
+        [checkout, {**good, "run": "python tools/notes_lines_check.py"}]
     )
-    assert "pull requests" in _notes_step_problem([{k: v for k, v in good.items() if k != "if"}])
-    assert "take the base" in _notes_step_problem(
-        [{**good, "env": {"BASE_SHA": "${{ github.event.pull_request.base.sha }}"}}]
+    assert "`--auto`" in _notes_step_problem(
+        [checkout, {**good, "run": 'python tools/notes_lines_check.py --auto "$BASE_SHA"'}]
+    )
+    assert "pull requests" in _notes_step_problem(
+        [checkout, {k: v for k, v in good.items() if k != "if"}]
+    )
+    assert "base of the pull request" in _notes_step_problem(
+        [checkout, {**good, "env": {**good["env"], "BASE_SHA": "${{ github.event.before }}"}}]
+    )
+    assert "head commit id" in _notes_step_problem(
+        [checkout, {**good, "env": {**good["env"], "HEAD_SHA": "${{ github.sha }}"}}]
+    )
+    assert "whole history" in _notes_step_problem(
+        [{"uses": "actions/checkout@abc", "with": {"fetch-depth": 1}}, good]
+    )
+    assert "whole history" in _notes_step_problem([{"uses": "actions/checkout@abc"}, good])
+    assert "before the push" in _notes_step_problem(
+        [checkout, {**good, "run": good["run"] + "  # github.event.before"}]
+    )
+
+
+def test_the_notes_check_on_a_made_up_merge_commit_reads_the_pull_request_head_not_the_merge(
+    tmp_path, monkeypatch, capsys
+):
+    """The runner checks out a merge commit; the step must work from the pull request head commit and the common
+    ancestor. Rebuild that shape in a made-up repository and run the command line the workflow step holds (read
+    from ci.yml, with its two environment values filled in), so a change of the step changes this test's input."""
+    import shlex
+
+    from tools import notes_lines_check as nlc
+
+    from tests.test_notes_lines_check import _rev
+
+    steps = _yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))[
+        "jobs"
+    ]["check"]["steps"]
+    (step,) = [s for s in steps if "tools/notes_lines_check.py" in s.get("run", "")]
+    monkeypatch.chdir(tmp_path)
+    _rev(tmp_path, "init", "-q", "-b", "main")
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests/test_one.py").write_text("def test_a():\n    assert 1\n", encoding="utf-8")
+    _rev(tmp_path, "add", "-A")
+    _rev(tmp_path, "commit", "-q", "-m", "base")
+    base_sha = _rev(tmp_path, "rev-parse", "HEAD")
+    _rev(tmp_path, "checkout", "-q", "-b", "pr")
+    (tmp_path / "tests/test_one.py").write_text(
+        "def test_a():\n    assert 1\n\n\ndef test_new():\n    assert 2\n", encoding="utf-8"
+    )
+    _rev(tmp_path, "add", "-A")
+    _rev(tmp_path, "commit", "-q", "-m", "pr head")
+    head_sha = _rev(tmp_path, "rev-parse", "HEAD")
+    _rev(tmp_path, "checkout", "-q", "main")
+    (tmp_path / "other.txt").write_text("main moved on\n", encoding="utf-8")
+    _rev(tmp_path, "add", "-A")
+    _rev(tmp_path, "commit", "-q", "-m", "main moves")
+    _rev(tmp_path, "merge", "-q", "--no-ff", "-m", "merge", "pr")  # the checked-out merge commit
+    words = shlex.split(step["run"].strip())
+    assert words[:2] == ["python", "tools/notes_lines_check.py"], f"the step runs {words[:2]}"
+    argv = [{"$BASE_SHA": base_sha, "$HEAD_SHA": head_sha}.get(w, w) for w in words[2:]]
+    assert nlc.main(argv) == 1, (
+        "the pull request's new test has no row but the check passed on the merge shape"
+    )
+    out = capsys.readouterr().out
+    assert "test_new" in out, f"the new test was not named: {out}"
+    assert "test_a" not in out.replace("test_new", ""), (
+        "a test the pull request did not change was asked for"
     )
 
 
