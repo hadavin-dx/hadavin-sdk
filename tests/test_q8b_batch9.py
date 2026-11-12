@@ -173,13 +173,17 @@ def test_b9_1_a_long_run_of_gaps_and_wrapped_headers_is_read_in_linear_time():
 def test_b9_2_the_second_word_after_a_credential_flag_is_shown_for_every_flag_named_in_limits(flag):
     """The stated cost, pinned (nine flags, `--pass2` included; batch 8 named it and pinned only seven): the first word is
     masked, the second is shown, on a card (the other paths read the same rule)."""
-    assert clean(f"run --{flag} {V} {W} now") == f"run --{flag} <SECRET_1> {W} now"
+    assert clean(f"run --{flag} {V} {W} now") == f"run --{flag} <SECRET_1> {W} now", (
+        f"the second word after the flag --{flag} is not shown"
+    )
     assert V not in "".join(five_paths(f"run --{flag} {V} {W} now").values())
 
 
 def test_b9_2_authorization_with_an_equals_sign_masks_the_first_word_and_shows_the_second():
     out = clean(f"cfg authorization={V} {W} end")
-    assert out == f"cfg authorization=<SECRET_1> {W} end", out
+    assert out == f"cfg authorization=<SECRET_1> {W} end", (
+        f"the second word after authorization= is not shown: {out!r}"
+    )
     assert "authorization=a b" in R.LIMITS and "pass2" in R.LIMITS, (
         "LIMITS does not name the pinned cases"
     )

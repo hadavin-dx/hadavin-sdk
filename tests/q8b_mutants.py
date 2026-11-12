@@ -444,8 +444,8 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
         BATCH8, 'test_b8_8_nine_ten_and_forty_digits_behind_a_bare_credential_word_are_masked_like_the_record_key', 'a bare word with many digits leaves a value readable'),
     mutant('M129 a line break does not end a Digest header value', REDACT, r'''+ r"[ \t]++)([^\r\n]{8,}+"''', r'''+ r"[ \t]*+)([^\r\n]{8,}+"''',
         BATCH8, 'test_b8_10_a_line_break_ends_a_digest_header_and_a_scheme_word', 'a line break after Digest does not end the header value'),
-    mutant('M130 a line break does not end a Basic header value', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})"''',
-        BATCH8, 'test_b8_10_a_line_break_ends_a_digest_header_and_a_scheme_word', 'a line break after Basic does not end the header value'),
+        mutant('M130 a line break is no gap for the Basic rule', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic[ \t]+([a-z0-9+/<>_]{8,}={0,2})"''',
+        B10, 'test_b10_1_the_basic_rule_alone_masks_a_bare_wrapped_value_of_8_to_15_characters', 'a short wrapped Basic value is readable'),
     mutant('M131 a cookie word key in text has no more words', REDACT, r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]|(?-i:(?=[A-Z])))[A-Za-z0-9]+(?:[_.\-][A-Za-z0-9]+){0,5})?"''', r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+"''',
         BATCH8, 'test_b8_12_a_key_with_the_word_cookie_and_more_words_is_masked_in_text_as_the_record_walk_masks_it', 'a cookie word key leaves a value readable in text'),
     mutant('M132 the ordinary look-behind of a bare word need not start a word (a real key turns readable)', REDACT, r'''r"(?<!(?<![a-z0-9])" + w[: -len(ending)] + ")"''', r'''r"(?<!" + w[: -len(ending)] + ")"''',
@@ -518,8 +518,6 @@ def _neutralise(text: str) -> str:
     mutant('M157 planted fault for a control: redact_text: line 528 deleted (guard/runmap.py)', RUNMAP, r'''    mapping.update(current)''', r'''    pass''',
         K5R11, 'test_the_tag_deleted_view_keeps_real_placeholders_and_line_breaks', 'AssertionError: head'),
     # ---- batch 9: one planted fault for each new branch (rounds 9, Issues 1, 4, 5, 6) ----
-    mutant('M159 a same-line gap is a space or a tab only', REDACT, r'''_LINE_SPACE = r"[^\S\r\n]"''', r'''_LINE_SPACE = r"[ \t]"''',
-        BATCH9, 'test_b9_1_a_scheme_word_and_its_token_are_masked_across_every_gap_that_main_read[Basic]', 'leaves its token readable'),
     mutant('M160 a line break is no gap after a scheme word', REDACT, r'''_SCHEME_GAP = r"\s++"''', r'''_SCHEME_GAP = r"[^\S\r\n]++"''',
         B10, 'test_b10_1_a_wrapped_authorization_token_of_8_or_more_characters_is_masked_after_any_line_break[Basic]', 'leaves a token of 8 or more characters readable'),
     mutant('M161 the Basic rule needs a token of 16 characters, not 8', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{16,}={0,2})"''',
@@ -539,7 +537,10 @@ def _neutralise(text: str) -> str:
         BATCH9, 'test_b9_1_every_shape_that_main_masked_is_masked_now_a_differential_against_the_main_rules', 'main masked'),
     mutant('M167 the record walk does not read an ordinary word and its second word as a credential', RED, r'''            or is_ordinary_pair(before, w)''', r'''            or False''',
         B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[bandpass]', 'the record walk shows the key'),
-    mutant('M168 a flag with an ordinary word and a second word of its family is no flag', REDACT, r'''        w + r"(?![a-z]|[0-9]+[a-z])(?![_\-](?:" + "|".join(ordinary_second_words(w)) + r")(?![a-z0-9]))"''', r'''        w + r"(?![a-z]|[0-9]+[a-z])"''',
+        mutant('M168 a flag with an ordinary word and a second word of its family is no flag', REDACT, r'''        w
+        + r"(?![a-z]|[0-9]+[a-z])(?![_\-](?:"
+        + "|".join(ordinary_second_words(w))
+        + r")(?![a-z0-9]))"''', r'''        w + r"(?![a-z]|[0-9]+[a-z])"''',
         B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[bandpass]', 'an ordinary word and a second word of its family is readable'),
     mutant('M169 a protection-bypass key is no text rule', REDACT, r'''    r"protection[_\-]?bypass",
 ''', r'''''',
@@ -582,6 +583,17 @@ def _neutralise(text: str) -> str:
         B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[bandpass]', 'an ordinary word and a second word of its family is readable'),
     mutant('M182 an ordinary word and a second word of its family is read as a pair only for pass words', REDACT, r'''    return second in ordinary_second_words(first)''', r'''    return second in ordinary_second_words(first) and first.endswith("pass")''',
         B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[obsession]', 'the record walk shows the key'),
+    # ---- batch 10: the stated-cost pins and the controls of batch 9 get a killing mutant (round 10, Issue 4) ----
+    mutant('M183 the Basic rule takes a token of 4 characters, not 8 (a short first word after a scheme word is masked)', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{4,}={0,2})"''',
+        BATCH9, 'test_b9_1_a_prose_line_after_a_scheme_word_stays_readable_when_its_first_word_is_short', 'a line after the scheme word was masked'),
+    mutant('M184 the generic Authorization value takes the rest of the line (the second word is masked)', REDACT, r'''            + r"|[^\s\"']{8,})"''', r'''            + r"|[^\"']{8,})"''',
+        BATCH9, 'test_b9_2_authorization_with_an_equals_sign_masks_the_first_word_and_shows_the_second', 'the second word after authorization= is not shown'),
+    mutant('M186 a cookie key needs no boundary in front of the word (the fault of M178, killed by the digits pin)', REDACT, r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]''', r'''r"(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]''',
+        BATCH9, 'test_b9_4_a_word_that_only_holds_cookie_and_digits_inside_is_no_key', 'was masked as text'),
+    mutant('M187 the record walk does not read a key in capitals with cookie and more letters (the fault of M180, killed by the pinned cost)', RED, r'''    if _CAPITALS_COOKIE.search(key):
+        return True
+''', r'''''',
+        BATCH9, 'test_b9_8_a_cookie_jar_name_in_capitals_is_masked_and_in_lower_case_it_is_not', 'the record walk shows COOKIEJAR'),
 ]  # fmt: skip
 
 
