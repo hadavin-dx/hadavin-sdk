@@ -91,32 +91,66 @@ def test_m14_ci_runs_the_policy_mutants_next_to_the_stage_mutants():
     )
 
 
+def _check_step_problem(runs: list[str]) -> str:
+    """The one rule for the CI step list: `--check` is the command people run; only it uses the tool's own
+    clock, so it must also run on its own in CI, right after the policy mutants. '' when the list is right."""
+    if "python tools/policy_page.py --check" not in runs:
+        return "ci.yml has no step `python tools/policy_page.py --check`"
+    if (
+        runs.index("python tools/policy_page.py --check")
+        != runs.index("python tests/policy_mutants.py") + 1
+    ):
+        return (
+            "the step `python tools/policy_page.py --check` is not right after the policy mutants"
+        )
+    return ""
+
+
 def test_ci_runs_the_policy_page_check_right_after_the_policy_mutants():
-    # `--check` is the command people run; only it uses the tool's own clock, so it must also run on its own in CI
     steps = _yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))[
         "jobs"
     ]["check"]["steps"]
     runs = [s.get("run", "") for s in steps]
-    assert "python tools/policy_page.py --check" in runs, (
-        "ci.yml has no step `python tools/policy_page.py --check`"
-    )
-    assert (
-        runs.index("python tools/policy_page.py --check")
-        == runs.index("python tests/policy_mutants.py") + 1
-    ), "the step `python tools/policy_page.py --check` is not right after the policy mutants"
+    assert not _check_step_problem(runs), _check_step_problem(runs)
+
+
+def test_plant_a_ci_step_list_without_or_with_a_moved_check_step_is_refused():
+    # No mutant can edit ci.yml (the mutant runner copies only src, tests, tools and docs), so the rule is a
+    # function and this test feeds it the two wrong lists.
+    mutants, check = "python tests/policy_mutants.py", "python tools/policy_page.py --check"
+    assert _check_step_problem(["a", mutants, check, "b"]) == ""
+    assert "has no step" in _check_step_problem(["a", mutants, "b"])
+    assert "not right after" in _check_step_problem([check, "a", mutants])
+    assert "not right after" in _check_step_problem([mutants, "a", check])
+
+
+def _date_guard_sentence_problem(flat: str) -> str:
+    """The changelog sentences about the date guard: it starts the day after the earliest `review_by`, it is a
+    reminder, and it names no start day of the names and claims guard as text. '' when they hold."""
+    if "fail from the day after the earliest `review_by`" not in flat:
+        return "the changelog entry does not say the date guard starts the day after the earliest review_by"
+    if "is a reminder, not a check that anyone re-read the names" not in flat:
+        return "the changelog entry does not say the date guard is a reminder"
+    if "from 2026-12-12" in flat.replace("7 of them from 2026-12-12", ""):
+        return "the changelog entry hard-codes the start day of the names and claims guard"
+    return ""
 
 
 def test_the_changelog_names_the_start_of_the_date_guard_by_rule_and_calls_it_a_reminder():
     flat = " ".join(_changelog_entry().split())
-    assert "fail from the day after the earliest `review_by`" in flat, (
-        "the changelog entry does not say the date guard starts the day after the earliest review_by"
+    assert not _date_guard_sentence_problem(flat), _date_guard_sentence_problem(flat)
+
+
+def test_plant_a_changelog_entry_that_loses_the_reminder_sentence_or_fixes_a_day_is_refused():
+    # CHANGELOG.md is outside the mutant runner's temp tree, so the rule is a function fed three wrong texts.
+    good = (
+        "fail from the day after the earliest `review_by` and "
+        "is a reminder, not a check that anyone re-read the names, and 7 of them from 2026-12-12"
     )
-    assert "is a reminder, not a check that anyone re-read the names" in flat, (
-        "the changelog entry does not say the date guard is a reminder"
-    )
-    assert "from 2026-12-12" not in flat.replace("7 of them from 2026-12-12", ""), (
-        "the changelog entry hard-codes the start day of the names and claims guard"
-    )
+    assert _date_guard_sentence_problem(good) == ""
+    assert "starts the day after" in _date_guard_sentence_problem(good.replace("the earliest", "a"))
+    assert "is a reminder" in _date_guard_sentence_problem(good.replace("is a reminder", "is"))
+    assert "hard-codes" in _date_guard_sentence_problem(good + " and from 2026-12-12 on")
 
 
 def test_the_changelog_says_seven_rows_are_abbreviated_and_the_openbao_release_is_not_pinned():

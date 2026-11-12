@@ -20,6 +20,7 @@ from __future__ import annotations
 import ast
 import copy
 import dataclasses
+import os
 import re
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
@@ -174,6 +175,7 @@ def test_plant_a_new_kind_on_no_list_is_caught():
     same(
         problems,
         ["kind secrets/new_cloud has no POLICY and is on no list: declare it or add a dated entry"],
+        what="the check reports: is on no list",
     )
 
 
@@ -1003,6 +1005,7 @@ def test_plant_a_new_request_with_no_grant_is_caught():
                 "has no grant and no free entry in POLICY"
             )
         ],
+        what="the check reports: has no grant and no",
     )
 
 
@@ -1016,6 +1019,7 @@ def test_plant_a_grant_whose_request_was_deleted_is_caught():
                 "the module makes no such call"
             )
         ],
+        what="the check reports: makes no such call",
     )
 
 
@@ -1084,6 +1088,7 @@ def test_plant_a_raw_http_request_outside_the_one_sender_is_caught():
     same(
         call_problems(TRANSIT, text, SHAPES[TRANSIT]),
         [f"{TRANSIT}:{line}: raw HTTP call `Request` outside any allowed function"],
+        what="the check reports: raw HTTP call",
     )
 
 
@@ -1104,6 +1109,7 @@ def test_plant_a_stale_allowlist_line_is_caught():
                 "it cannot be compared with the declared list"
             ),
         ],
+        what="the check reports: stale allowlist entry",
     )
     # with the wrapper no longer recognised, its `{mount}/` is not added, so no request matches either
     assert len(problems) == 6 and all(
@@ -1294,6 +1300,7 @@ def test_plant_d1_a_wildcard_in_a_permission_name_is_caught():
             "grant R17: name 're*d' must be one permission name with no * or ?",
             "grant R17: 're*d' is not a Vault capability a grant may hold",
         ],
+        what="the check reports: must be one permission name",
     )
 
 
@@ -1347,6 +1354,7 @@ def test_plant_d2_a_field_that_is_no_setting_is_caught():
     same(
         field_problems("signer/vault_transit", policy, table.VaultTransitSettings),
         ["signer/vault_transit R18: {mount} is not a setting of VaultTransitSettings"],
+        what="the check reports: is not a setting of",
     )
 
 
@@ -1387,6 +1395,7 @@ def test_plant_d5_a_never_action_that_another_kind_needs_is_caught():
         [
             "source/kubernetes: never-list action 'list' is a permission that source/kubernetes needs"
         ],
+        what="the check reports: never-list action",
     )
 
 
@@ -1398,6 +1407,7 @@ def test_plant_a_grant_id_used_by_two_kinds_is_caught():
     same(
         pp.cross_problems(policies),
         ["grant id R17 is used by secrets/vault and by signer/vault_transit"],
+        what="the check reports: is used by",
     )
     raw["grants"] = ({**raw["grants"][0], "id": "R19"}, raw["grants"][1])
     same(pp.problems(raw), ["grant id R19 is used twice"])
@@ -1410,6 +1420,7 @@ def test_plant_d6_a_long_lived_credential_with_no_exception_is_caught():
     same(
         pp.problems(raw),
         ["credential: a long-lived credential needs `exception`: why, and what removes it"],
+        what="the check reports: long-lived credential",
     )
 
 
@@ -1502,6 +1513,7 @@ def test_plant_an_unchecked_claim_with_no_pending_entry_is_caught():
             f"{kind} {gid}: has an unchecked claim (claims_unverified) and no PENDING_CLAIMS entry"
             for kind, gid in sorted(PENDING_CLAIMS)
         ],
+        what="the check reports: has an unchecked claim",
     )
     stale = {**PENDING_CLAIMS, ("secrets/vault", "R99"): PENDING_CLAIMS[("secrets/vault", "R17")]}
     same(
@@ -1583,6 +1595,7 @@ def test_plant_an_unverified_grant_with_no_pending_entry_is_caught():
                 "PENDING_NAMES entry"
             )
         ],
+        what="the check reports: is not found in a vendor source",
     )
     entry = {
         **PENDING_NAMES,
@@ -1600,6 +1613,7 @@ def test_plant_a_source_id_that_does_not_resolve_is_caught():
     same(
         name_problems(policies, PENDING_NAMES, set(source_ids()), DECIDED),
         ["secrets/vault grant R17: source id V-NOPE is not in the sources file"],
+        what="the check reports: is not in the sources file",
     )
 
 
@@ -1804,6 +1818,7 @@ def test_plant_p04b_an_added_request_through_getattr_with_a_literal_name_is_caug
         [
             f"{VAULT}:115: banned `getattr` of `authed`: only no name may be read this way in this module"
         ],
+        what="the check reports: banned `getattr` of `authed`",
     )
 
 
@@ -1814,19 +1829,31 @@ def test_plant_p09a_a_kubernetes_request_with_watch_in_its_query_is_caught():
         + _EVENTS_LINE
     )
     problems = _planted(KUBE, _EVENTS_LINE, planted)
+    carried, listed = (
+        [p for p in problems if "may carry" in p],
+        [p for p in problems if "is written in the module" in p],
+    )
     same(
-        problems,
+        carried,
         [
             (
                 f"{KUBE}:247: query parameter `watch` is not one that `k8s.list_events` may carry (none): it "
                 "could change the verb the request needs"
-            ),
+            )
+        ],
+        what="the check reports: may carry",
+    )
+    same(
+        listed,
+        [
             (
                 f"{KUBE}:247: query parameter `watch` is written in the module and is not on the list "
                 "['continue', 'limit', 'limitBytes', 'sinceTime', 'timestamps']"
-            ),
+            )
         ],
+        what="the check reports: is written in the module",
     )
+    assert len(problems) == 2, f"the planted request gives other lines than these two: {problems}"
 
 
 @pytest.mark.parametrize(
@@ -1907,6 +1934,7 @@ def test_plant_a_local_variable_named_like_a_setting_is_not_taken_for_the_settin
                 "no free entry in POLICY"
             )
         ],
+        what="the check reports: has no grant",
     )
 
 
@@ -2435,6 +2463,7 @@ def test_plant_d1_a_plus_wildcard_with_no_bound_is_caught():
         [
             "grant R18: resource '{transit_mount}/sign/+' holds a wildcard, so `bound` must say what limits it"
         ],
+        what="the check reports: holds a wildcard",
     )
     # for Kubernetes `+` is no wildcard and a plain resource needs no bound
     assert _grant_changed("source/kubernetes", bound="") == []
@@ -2664,6 +2693,7 @@ def test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1(
                 "policy page: PENDING_CLAIMS ('signer/vault_transit', 'R18') is fixed or gone: delete the entry",
             ],
         ),
+        what="the check reports: is used by secrets/vault and by",
     )
     transit.write_text("def broken(:\n", encoding="utf-8")
     same(
@@ -2791,6 +2821,7 @@ def test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far()
                 "2026-11-11: a date may not be moved further than that"
             )
         ],
+        what="the check reports: a date may not be moved further",
     )
     ahead = {
         **PENDING_KINDS,
@@ -3283,6 +3314,7 @@ def test_plant_an_import_of_another_http_library_is_caught():
                 "request must be looked at by a person first"
             )
         ],
+        what="the check reports: is not on this module's import list",
     )
 
 
@@ -3297,12 +3329,17 @@ def test_plant_a_banned_name_that_arrives_through_an_import_alias_is_caught():
                 "way to send a request must be looked at by a person first"
             ),
         ],
+        what="the check reports: (imported)",
     )
 
 
 def test_plant_attrgetter_on_a_sink_is_caught():
     problems, line = _appended(VAULT, "return json.attrgetter('authed')(p)('GET', 'sys/mounts')")
-    same(problems, [f"{VAULT}:{line}: banned indirect call `attrgetter`"])
+    same(
+        problems,
+        [f"{VAULT}:{line}: banned indirect call `attrgetter`"],
+        what="the check reports: banned indirect call `attrgetter`",
+    )
 
 
 def test_plant_the_http_opener_used_outside_the_one_sender_is_caught():
@@ -3310,6 +3347,7 @@ def test_plant_the_http_opener_used_outside_the_one_sender_is_caught():
     same(
         problems,
         [f"{VAULT}:{line}: the HTTP opener `._opener` is used outside ['__init__', 'call']"],
+        what="the check reports: the HTTP opener",
     )
 
 
@@ -3327,6 +3365,7 @@ def test_plant_the_old_star_form_of_the_vault_secrets_grant_is_caught():
                 "serves ('{mount}/data/{path_prefix}+')"
             )
         ],
+        what="the check reports: is not the path of the request",
     )
 
 
@@ -3336,6 +3375,7 @@ def test_plant_a_vault_capability_that_is_not_the_verbs_own_is_caught():
     same(
         call_problems(TRANSIT, text, SHAPES[TRANSIT]),
         [f"{TRANSIT} R18: capability 'read' is not the one a POST request needs ('update')"],
+        what="the check reports: is not the one a POST request needs",
     )
 
 
@@ -3346,6 +3386,7 @@ def test_plant_a_kubernetes_path_that_is_not_the_bound_one_is_caught():
     same(
         _planted(KUBE, _EVENTS_LINE, planted),
         [f"{KUBE}:247: the path does not fit the one bound to `k8s.list_events`"],
+        what="the check reports: the path does not fit",
     )
 
 
@@ -3358,6 +3399,7 @@ def test_plant_a_newline_in_a_reason_is_caught():
                 "it would be copied into the rendered policy text"
             )
         ],
+        what="the check reports: non-printing character",
     )
 
 
@@ -3370,6 +3412,7 @@ def test_plant_a_grant_that_names_no_call_is_caught_with_its_message():
                 "the call it serves"
             )
         ],
+        what="the check reports: operations must be a non-empty",
     )
 
 
@@ -3384,6 +3427,7 @@ def test_plant_a_url_in_verified_is_caught_with_its_message():
                 "or host is never written here)"
             )
         ],
+        what="the check reports: is not a source id",
     )
 
 
@@ -3412,6 +3456,7 @@ def test_plant_another_module_importing_the_vault_client_is_caught():
                 "declared kind modules may, with the listed names"
             )
         ],
+        what="the check reports: from the Vault client module",
     )
 
 
@@ -4136,6 +4181,11 @@ def test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date()
         "the pending kinds do not all stand on the literal day 2026-11-11"
     )
     assert len(PENDING_KINDS) == 16, "the number of pending kinds is not 16"
+    # the 92-day cap compares `review_by` with `decided` (moved here from the changelog test file, where no
+    # mutant could reach it)
+    assert max((p.review_by - p.decided).days for p in PENDING_KINDS.values()) <= 92, (
+        "a pending kind is more than 92 days from its decision to its review day"
+    )
 
 
 def test_the_tool_docstring_holds_no_date_that_is_not_in_the_dated_lists():
@@ -4174,3 +4224,98 @@ def test_the_check_command_uses_the_tools_own_clock_when_no_day_is_given(
         "the check command did not stop on 2026-12-12 by its own clock (no day given)"
     )
     assert "is overdue (review_by 2026-12-11)" in capsys.readouterr().err
+
+
+def test_the_kinds_decision_day_is_a_literal_date_call_not_a_name_of_the_tools_date():
+    tree = ast.parse(Path(__file__).read_text(encoding="utf-8"))
+    value = next(
+        n.value
+        for n in tree.body
+        if isinstance(n, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "KINDS_DECIDED" for t in n.targets)
+    )
+    assert (
+        isinstance(value, ast.Call)
+        and isinstance(value.func, ast.Name)
+        and value.func.id == "date"
+        and all(isinstance(a, ast.Constant) for a in value.args)
+    ), "KINDS_DECIDED is not a literal date(...) call: the 16 kinds would follow the tools date"
+
+
+def test_the_tools_decision_day_is_the_day_the_names_and_claims_were_decided():
+    # `pp.DECIDED` is the decision day of the two dated lists of the tool. It is pinned here apart from the
+    # kinds (their own literal above): a renewal moves this day and the `review_by` days together, on purpose,
+    # in the tool and in this test, and never moves the 16 kinds with it.
+    assert pp.DECIDED == date(2026, 11, 11), "the tool's decision day moved without this test"
+    dated = (*pp.PENDING_NAMES.values(), *pp.PENDING_CLAIMS.values())
+    assert {p.decided for p in dated} == {pp.DECIDED}, (
+        "an entry of the names or claims list has a decision day other than the tool's"
+    )
+
+
+def _renewed(day: date):
+    renewed = pp.Pending("r", "t", pp.DECIDED, day)
+    return {k: renewed for k in pp.PENDING_NAMES}, {k: renewed for k in pp.PENDING_CLAIMS}
+
+
+def test_the_page_names_the_review_day_of_the_dated_lists_and_follows_a_renewal(monkeypatch):
+    marks = pp.read_marks(ROOT)
+    before = pp.head(marks)
+    assert str(pp.review_date()) == "2026-12-11"
+    assert before.count("2026-12-11") == 2, "the page head does not name the review day twice"
+    names, claims = _renewed(date(2027, 1, 20))
+    monkeypatch.setattr(pp, "PENDING_NAMES", names)
+    monkeypatch.setattr(pp, "PENDING_CLAIMS", claims)
+    after = pp.head(marks)
+    assert "2026-12-11" not in after, (
+        "the page head still names the review day from before the renewal"
+    )
+    assert after.count("2027-01-20") == 2, (
+        "the page head does not name the renewed review day twice"
+    )
+    # the earliest day of the two lists is named, not the latest
+    names, _ = _renewed(date(2027, 1, 20))
+    monkeypatch.setattr(pp, "PENDING_NAMES", names)
+    monkeypatch.setattr(
+        pp,
+        "PENDING_CLAIMS",
+        {**claims, ("secrets/vault", "R17"): pp.Pending("r", "t", pp.DECIDED, date(2027, 1, 5))},
+    )
+    assert pp.head(marks).count("2027-01-05") == 2, (
+        "the page head does not name the earliest review day"
+    )
+
+
+def test_the_docs_page_names_the_review_day_of_the_dated_lists_only():
+    docs = " ".join((ROOT / "docs/declared-permissions.md").read_text(encoding="utf-8").split())
+    day = str(pp.review_date())
+    assert f"or the review date {day}, whichever comes first" in docs
+    assert f"(review by {day})" in docs
+    assert docs.count(day) >= 2
+
+
+def _day_the_tool_sees() -> date:
+    return pp.datetime.now(pp.UTC).date()
+
+
+@pytest.fixture(autouse=True)
+def _fixed_day_of_the_run(monkeypatch):
+    """When the run was given a fixed day (`HADAVIN_POLICY_FIXED_DAY`, set by `tests/policy_mutants.py --day`),
+    the tool's clock shows it. Unset: the real clock."""
+    day = os.environ.get("HADAVIN_POLICY_FIXED_DAY")
+    if day:
+        monkeypatch.setattr(pp, "datetime", _fixed_clock(date.fromisoformat(day)))
+
+
+def test_the_day_the_tool_sees_is_the_fixed_day_the_run_was_given():
+    given = os.environ.get("HADAVIN_POLICY_FIXED_DAY")
+    seen = _day_the_tool_sees()
+    if given:
+        assert seen.isoformat() == given, (
+            f"the fixed day {given} did not reach the tool's clock: it shows {seen}"
+        )
+    else:
+        real = datetime.now(UTC).date()
+        assert abs((seen - real).days) <= 1, (
+            f"the tool's clock shows {seen}, the real day is {real}"
+        )

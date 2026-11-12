@@ -25,7 +25,7 @@
 # that commit belongs to was not looked up, so the OpenBao claims are not tied to one release.
 # WHAT A LATER EVIDENCE RUNNER MUST RE-READ (2026-11-11): only the items listed below were read by the builder
 # of a fix alone (the other readings are the evidence runner's, named above). Each has a dated entry in
-# tools/policy_page.py (review by 2026-12-11; `python tools/policy_page.py --check` and the tests run the rule).
+# tools/policy_page.py (review by the earliest review date the page names; `python tools/policy_page.py --check` and the tests run the rule).
 # - V-POL and B-POL: the passage that says `+` matches exactly one path segment in a policy path.
 # - V-ACL and B-ACL: the code that matches a policy path with `+` (a whole path part, nothing deeper, and what
 #   a `+` does to the longest-prefix choice).

@@ -237,7 +237,7 @@
     statements about server behaviour are unchecked and listed the same way: that the exact signing path R18 does
     not also allow Vault's longer sign path that ends in a hash algorithm name, and that the query parameters the
     Kubernetes code sends do not change the verb a request needs (R20 to R22). So the page now gives no copy-ready
-    text for any of the three kinds. Each unchecked claim has a dated test entry (review by 2026-12-11); a source
+    text for any of the three kinds. Each unchecked claim has a dated test entry (review by the earliest review date, which the page names); a source
     id read by the builder of a fix only is marked "(builder only)" wherever the page lists it. Two new checks: no
     never-list line may cover a grant of its own kind (same path or resource and a capability the line forbids;
     Vault paths are compared by whether one concrete path fits both patterns, Kubernetes resources by name), and every note of a kind is

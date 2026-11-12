@@ -780,6 +780,13 @@ PENDING_CLAIMS: dict[tuple[str, str], Pending] = {
 }
 
 
+def review_date() -> date:
+    """The earliest `review_by` of the two dated lists (names and claims): the one day the page text, the docs
+    and the changelog name as the review date. Built here, never written as text, so that renewing an entry
+    changes every sentence that names it."""
+    return min(p.review_by for p in (*PENDING_NAMES.values(), *PENDING_CLAIMS.values()))
+
+
 def pending_problems(label: str, pending: dict, live: set, today: date) -> list[str]:
     """The one rule for every dated list: an entry whose subject is fixed or gone is stale; an entry past its
     `review_by` is overdue; a `review_by` more than MAX_PENDING_DAYS after `decided` is refused; a `decided` in
@@ -1692,7 +1699,11 @@ def head(marks: Marks | None = None) -> str:
         f"mark ({len(marks.nobody_read)}; one text can stand on more than one permission): "
         f"{quoted(marks.nobody_read)}."
     )
-    return _HEAD.replace("ENGINE_STATE", engine_state()).replace("CLAIM_MARKS_TEXT", listed)
+    return (
+        _HEAD.replace("ENGINE_STATE", engine_state())
+        .replace("CLAIM_MARKS_TEXT", listed)
+        .replace("REVIEW_DATE", str(review_date()))
+    )
 
 
 _HEAD = f"""\
@@ -1716,7 +1727,7 @@ code needs (one reason each), the requests that need no permission, and what the
 - Those server tests run against one server image only: `{ENGINE_IMAGE}`, licence: {ENGINE_LICENCE}.
   The open alternative OpenBao (licence MPL-2.0) serves the same API by its own statement; it has not yet been
   run by these tests. Trigger to run them against OpenBao: a deployment chooses OpenBao, or the review date
-  2026-12-11, whichever comes first (ledger row BL-core-q8c1-openbao).
+  REVIEW_DATE, whichever comes first (ledger row BL-core-q8c1-openbao).
 - The test token holds the generated policy and nothing else. That does not represent sign-in through an
   AppRole or a Kubernetes role: there the role's own settings and the identity groups of the signed-in entity
   can add further policies, and the token then may do more than this page lists. Check the role.
@@ -1756,7 +1767,7 @@ code needs (one reason each), the requests that need no permission, and what the
   passage behind the claim in that row has the mark shown in the claims cell. The same builder-only reading
   stands behind the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked", as do
   the three Kubernetes role names `cluster-admin`, `admin` and `edit` (no evidence runner looked for those names
-  in the Kubernetes source). Each of these has a dated entry in the tests (review by 2026-12-11) that turns the
+  in the Kubernetes source). Each of these has a dated entry in the tests (review by REVIEW_DATE) that turns the
   suite red if nobody re-reads it by then. The lists of marked ids and claims are read from the head of the
   sources file, not written in this tool.
 - Two links the call check does not follow. First, the map from an object attribute to the setting it holds

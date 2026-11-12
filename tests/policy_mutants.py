@@ -6,6 +6,7 @@ Each mutant reverts ONE rule in a temp copy (of ``tools/policy_page.py``, or of 
 
     python tests/policy_mutants.py            # all mutants; exit 1 if any is not good
     python tests/policy_mutants.py D1         # only mutants whose name contains the text
+    python tests/policy_mutants.py --day 2026-12-12   # the tool's clock shows that day in every mutant run
 
 How strong the kill check is: the first failing line must hold ``expect``. Where the killer asserts through
 ``same()`` (the run prints how many mutants), that line already holds the expected text, so the check shows only
@@ -24,12 +25,14 @@ What has NO mutant here, and why:
 
 import ast
 import sys
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 sys.path.insert(
     0, str(Path(__file__).resolve().parents[1])
 )  # the repo root: tools.* is not installed
 
+from tools import mutation_runner
 from tools.mutation_runner import Mutant, run_mutants
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,20 +41,60 @@ PIN = "tests/test_policy_guard::"
 TOOL = "tools/policy_page.py"
 
 
-def _killers_using_same() -> set[str]:
-    """Names of the killer tests that assert through `same()`. `same()` writes the EXPECTED text into its
-    failure message, and `expect` is a fragment of that text, so for these killers the first-line check only
-    shows that the test failed at an assertion, not which one: any failing `same()` in that test passes it."""
-    tree = ast.parse((ROOT / TEST).read_text(encoding="utf-8"))
-    return {
-        f.name
-        for f in tree.body
-        if isinstance(f, ast.FunctionDef)
-        and any(
-            isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "same"
-            for n in ast.walk(f)
-        )
-    }
+PYTEST_OWN_TEXT = ("DID NOT RAISE",)  # pytest writes this itself; `same()` never does
+
+
+def _same_calls() -> dict[str, tuple[list[str], str]]:
+    """For every test function of the guard file that asserts through `same()`: the `what` text of each
+    `same()` call ('' when a call gives none) and the source of the function with every `same()` call cut out.
+    `same()` writes the EXPECTED text into its failure message and `expect` is a fragment of that message, so
+    the first-line check shows WHICH `same()` failed only when `expect` is a fragment of a `what`; a fragment of
+    a plain `assert` message outside the `same()` calls names its own assertion."""
+    text = (ROOT / TEST).read_text(encoding="utf-8")
+    tree = ast.parse(text)
+    out: dict[str, tuple[list[str], str]] = {}
+    for f in tree.body:
+        if not isinstance(f, ast.FunctionDef):
+            continue
+        whats: list[str] = []
+        cuts: list[tuple[int, int]] = []
+        for n in ast.walk(f):
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "same":
+                arg = (
+                    n.args[2]
+                    if len(n.args) > 2
+                    else next((k.value for k in n.keywords if k.arg == "what"), None)
+                )
+                whats.append(
+                    arg.value
+                    if isinstance(arg, ast.Constant) and isinstance(arg.value, str)
+                    else ""
+                )
+                cuts.append((n.lineno, n.end_lineno or n.lineno))
+        if whats:
+            lines = text.splitlines()[f.lineno - 1 : f.end_lineno]
+            rest = "\n".join(
+                ln
+                for i, ln in enumerate(lines, start=f.lineno)
+                if not any(a <= i <= z for a, z in cuts)
+            )
+            out[f.name] = (whats, rest)
+    return out
+
+
+def weak_mutants(mutants: list) -> list[tuple[str, str, str]]:
+    """(name, expect, killer) of each mutant whose killer asserts through `same()` and whose `expect` is neither
+    a fragment of one of that killer's `what` texts nor of a plain assertion message outside its `same()`
+    calls: any failing `same()` of that test passes it."""
+    calls = _same_calls()
+    return [
+        (m.name, m.expect, m.only_test)
+        for m in mutants
+        if m.only_test in calls
+        and not any(m.expect in w for w in calls[m.only_test][0] if w)
+        and m.expect not in calls[m.only_test][1]
+        and m.expect not in PYTEST_OWN_TEXT
+    ]
 
 
 def mutant(name, file, old, new, killer, expect):
@@ -952,16 +995,126 @@ M = [
         "test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date",
         "the pending kinds do not all stand on the literal day 2026-11-11",
     ),
+    mutant(
+        "B9 the page head states a fixed review date",
+        TOOL,
+        '        .replace("REVIEW_DATE", str(review_date()))\n',
+        '        .replace("REVIEW_DATE", "2026-12-11")\n',
+        "test_the_page_names_the_review_day_of_the_dated_lists_and_follows_a_renewal",
+        "the page head still names the review day from before the renewal",
+    ),
+    mutant(
+        "B9 the review date is the latest of the dated lists, not the earliest",
+        TOOL,
+        "    return min(p.review_by for p in (*PENDING_NAMES.values(), *PENDING_CLAIMS.values()))\n",
+        "    return max(p.review_by for p in (*PENDING_NAMES.values(), *PENDING_CLAIMS.values()))\n",
+        "test_the_page_names_the_review_day_of_the_dated_lists_and_follows_a_renewal",
+        "the page head does not name the earliest review day",
+    ),
+    mutant(
+        "B9 the tool docstring names a day that is in no dated list",
+        TOOL,
+        "From\n  the day after the earliest `review_by` the dated entries",
+        "From\n  the day after 2026-12-12 the dated entries",
+        "test_the_tool_docstring_holds_no_date_that_is_not_in_the_dated_lists",
+        "holds a date that is in no dated list",
+    ),
+    mutant(
+        "B9 the decision day of the names and claims moves",
+        TOOL,
+        "DECIDED = date(2026, 11, 11)\n",
+        "DECIDED = date(2026, 11, 12)\n",
+        "test_the_tools_decision_day_is_the_day_the_names_and_claims_were_decided",
+        "the tool's decision day moved without this test",
+    ),
+    mutant(
+        "B9 the 16 kinds take the tool's decision day, not a literal of their own",
+        TEST,
+        "KINDS_DECIDED = date(2026, 11, 11)\n",
+        "KINDS_DECIDED = pp.DECIDED\n",
+        "test_the_kinds_decision_day_is_a_literal_date_call_not_a_name_of_the_tools_date",
+        "KINDS_DECIDED is not a literal date(...) call",
+    ),
+    mutant(
+        "B9 a pending kind is more than 92 days from its decision",
+        TEST,
+        '    "llm/gemini": Pending(*_SLICE2, KINDS_DECIDED, date(2027, 1, 31)),\n',
+        '    "llm/gemini": Pending(*_SLICE2, KINDS_DECIDED, date(2027, 3, 31)),\n',
+        "test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date",
+        "a pending kind is more than 92 days from its decision to its review day",
+    ),
+    Mutant(
+        "B9 the docs page names another review date than the dated lists",
+        "docs/declared-permissions.md",
+        "  2026-12-11, whichever comes first (ledger row",
+        "  2026-12-12, whichever comes first (ledger row",
+        "or the review date 2026-12-11, whichever comes first",
+        test_file=TEST,
+        only_test="test_the_docs_page_names_the_review_day_of_the_dated_lists_only",
+        pinned=PIN + "test_the_docs_page_names_the_review_day_of_the_dated_lists_only",
+    ),
+    mutant(
+        "D1 a `?` wildcard with no bound on the Transit grant is accepted",
+        TOOL,
+        '    wildcards = ("*", "?", "+") if platform == "vault" else ("*", "?")\n',
+        '    wildcards = ("*", "+") if platform == "vault" else ("*", "?")\n',
+        "test_plant_d1_a_wildcard_resource_with_no_bound_is_caught",
+        "a wildcard resource with no bound on the Transit signing grant is not reported",
+    ),
+    mutant(
+        "D3 a blank reason on a never-list line is accepted",
+        TOOL,
+        '    if not _is_text(n["reason"]) or not n["reason"].strip():\n',
+        '    if not _is_text(n["reason"]):\n',
+        "test_plant_d3_an_empty_reason_is_caught",
+        "an empty reason on a never-list line is not reported",
+    ),
+    mutant(
+        "D7 an unknown never type is no longer named as unknown",
+        TOOL,
+        '    if n["type"] not in NEVER_TYPES:\n        out.append(f"{where}: unknown never type',
+        '    if False:\n        out.append(f"{where}: unknown never type',
+        "test_plant_d7_unknown_keys_platform_and_never_type_are_refused",
+        "a never-list type outside the list is not reported",
+    ),
+    mutant(
+        "D7 an unknown key on a grant is accepted",
+        TOOL,
+        "        out += _keys(where, g, _GRANT, _GRANT) or _grant_problems(where, g, platform)\n",
+        "        out += _keys(where, g, _GRANT | {'no_wire'}, _GRANT) or _grant_problems(where, g, platform)\n",
+        "test_plant_d7_unknown_keys_platform_and_never_type_are_refused",
+        "an extra key `no_wire` on a grant is not reported",
+    ),
+]
+
+# The probe: the fixed day given to a run must reach the child pytest of every mutant. The unmutated baseline
+# of any run given a day passes only when the tool's clock shows that day (the probe test is in the file);
+# this mutant shows the probe CAN fail: it drops the hook that sets the clock, so it is killed only when a
+# fixed day was given to the child. It is run first, always with a day that is not today.
+PROBE = [
+    mutant(
+        "PROBE the fixed day does not reach the tool's clock in the child pytest",
+        TEST,
+        '        monkeypatch.setattr(pp, "datetime", _fixed_clock(date.fromisoformat(day)))\n',
+        "        pass\n",
+        "test_the_day_the_tool_sees_is_the_fixed_day_the_run_was_given",
+        "did not reach the tool's clock",
+    )
 ]
 
 if __name__ == "__main__":
-    only = sys.argv[1:]
+    argv = sys.argv[1:]
+    day = None
+    if "--day" in argv:
+        i = argv.index("--day")
+        day = date.fromisoformat(argv[i + 1]).isoformat()
+        del argv[i : i + 2]
+    only = argv
     if only and not any(any(o in m.name for o in only) for m in M):
         print(f"no mutant name contains any of {only}; nothing was run", file=sys.stderr)
         sys.exit(2)
     first_lines: dict[str, str] = {}
-    weak_killers = _killers_using_same()
-    weak = [m.name for m in M if m.only_test in weak_killers]
+    weak = weak_mutants(M)
 
     def show(row):
         name, v, test_id, good = row
@@ -972,6 +1125,22 @@ if __name__ == "__main__":
         if not good:
             print("      first line:", first_lines.get(name, "")[:150], flush=True)
 
+    # the probe first: a day that is not today (the canary) is given to the child, and the probe mutant must be killed
+    canary = "2026-12-12" if datetime.now(UTC).date().isoformat() != "2026-12-12" else "2026-12-11"
+    mutation_runner.CHILD_FIXED_ENV["HADAVIN_POLICY_FIXED_DAY"] = day or canary
+    probe = run_mutants(
+        ROOT, PROBE, [TEST], extra_dirs=("tests", "tools", "docs"), first_lines=first_lines
+    )
+    if not all(g for _, _, _, g in probe):
+        print(f"BAD the fixed day {day or canary} did not reach the child pytest: {probe}")
+        sys.exit(1)
+    print(
+        f"probe ok: the fixed day {day or canary} reached the tool's clock in the child pytest (probe mutant killed)"
+    )
+    if day:
+        print(f"every mutant below runs with the tool's clock fixed to {day}")
+    else:
+        mutation_runner.CHILD_FIXED_ENV.pop("HADAVIN_POLICY_FIXED_DAY", None)
     res = run_mutants(
         ROOT,
         M,
@@ -983,8 +1152,10 @@ if __name__ == "__main__":
     )
     bad = [n for n, _, _, g in res if not g]
     print(f"{len(res) - len(bad)} of {len(res)} good; problems: {bad}")
+    for w_name, w_expect, w_killer in weak:
+        print(f"WEAK {w_name} | expect: {w_expect!r} | killer: {w_killer}")
     print(
-        f"first-line check is weak (killer asserts through same()) for {len(weak)} of {len(M)} mutants; "
+        f"first-line check is weak (killer asserts through same(), expect is no `what` text) for {len(weak)} of {len(M)} mutants; "
         f"killer shared by more than one mutant: {sorted({k for k in (m.only_test for m in M) if [m.only_test for m in M].count(k) > 1})}"
     )
     sys.exit(1 if bad else 0)

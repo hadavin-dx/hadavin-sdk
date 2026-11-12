@@ -1,0 +1,112 @@
+# Q8c-1 batch 9, builder notes (not an independent result)
+
+Branch `core/q8c1-b9` from `208a47d5` (batch 8 head). Fixes Issues 1 to 7 of `handover/reviews/Q8c-1/goldfish_review_report-r8.md`. Issue 8 (the 12 Vault engine tests that need a Vault server) is untouched: `ENGINE_RUN` stays `None` and the page still says no run is on record. No grant was added or widened (no change under `src/`). Raw logs are in `/home/user/build/b9-ev/` (outside the repository).
+
+## A. What was done, per issue
+
+**Issue 1, a date written as text in several places (class).** `tools/policy_page.py` now has `review_date()` (the earliest `review_by` of the names list and the claims list) and the page head builds both sentences ("the review date ..." and "(review by ...)") from it through a `REVIEW_DATE` marker. `docs/declared-permissions.md` is generated from the head, so its two lines follow the lists (the page text is unchanged today: the same day). CHANGELOG now says "review by the earliest review date, which the page names" and the sources fixture head (`tests/fixtures/policy_sources_2026-11-11.txt`, a third copy of the day that the review did not list) says the same. Sibling search: `grep -rn "2026-12-1[12]"` over md, py, yml, txt outside `handover`: the remaining hits are test expectations of the dated lists themselves (they pin the data) and the CHANGELOG days on which the 16 kinds start to fail (checked against the kinds list by `test_the_changelog_gives_the_days_the_kinds_list_starts_to_fail`). Tests: `test_the_page_names_the_review_day_of_the_dated_lists_and_follows_a_renewal` plants a renewed `review_by` (and a mixed pair: the earliest is named), `test_the_docs_page_names_the_review_day_of_the_dated_lists_only`, `test_the_changelog_entry_for_the_page_names_no_review_by_day_as_text`. Mutants B9: fixed date in the template, latest instead of earliest, docs file naming another day, docstring naming a stray day.
+
+**Issue 2, weak-expect list.** `tests/policy_mutants.py` now prints one line per weak mutant (`WEAK name | expect | killer`). The list at `208a47d5` (40 of 111, old definition: the killer uses `same()`) is committed as `weak-expect-before.txt` in this folder. Strengthened: for each of the 40 the `same()` call that the mutant guards now has a `what=` text that holds the mutant's `expect`, so the first failing line names the call (30 calls edited by script, 1 test split in two calls, the rest were already specific by a plain assertion message or `pytest.raises`; one is pytest's own text "DID NOT RAISE", listed as an exemption). I did not sort the 40 by what they guard: all of them were strengthened, none was left. After: 0 weak of 121. New mutants: B9 x6 (above and the pins of Issue 3 and 5), the docstring-date test (B9 stray day), and the two other new pins: the CI step test and the CHANGELOG sentence test cannot be reached by a mutant (the runner's temp tree holds only `src`, `tests`, `tools`, `docs`, and its baseline runs the whole copied file), so each rule is now a function (`_check_step_problem`, `_date_guard_sentence_problem`) with a plant test that feeds wrong inputs (see the table).
+
+**Issue 3.** `test_the_tools_decision_day_is_the_day_the_names_and_claims_were_decided` pins `pp.DECIDED` and the dated lists apart from the kinds; mutant "B9 the decision day of the names and claims moves" (tool `DECIDED` moved one day) is killed by it. `test_the_kinds_decision_day_is_a_literal_date_call_not_a_name_of_the_tools_date` (AST) with mutant "B9 the 16 kinds take the tool's decision day" (`KINDS_DECIDED = pp.DECIDED`). Honest limit: moving the tool's day is caught because the tool's day is pinned in a test, so a renewal needs a deliberate edit of the tool, the dated lists and this pin, and never moves the 16 kinds.
+
+**Issue 4.** `weak_mutants()` replaces `_killers_using_same()`: a mutant is weak only when its killer asserts through `same()` and `expect` is neither a `what` text nor part of a plain assertion message of that test. Mutants for the second calls: "D1 a `?` wildcard with no bound on the Transit grant is accepted", "D3 a blank reason on a never-list line is accepted", "D7 an unknown never type is no longer named as unknown", "D7 an unknown key on a grant is accepted". The D7 platform call has no separate mutant: `unknown platform` is returned by the same early return that every later check relies on, and reverting it crashes (KeyError) instead of failing the assertion; stated reason, the call is a plain refusal test.
+
+**Issue 5.** One copy of the "16 decided equal the literal, count 16" pin is kept (guard file, mutant B8 and B9). The 92-day assertion moved into it with mutant "B9 a pending kind is more than 92 days from its decision". The duplicate in `tests/test_policy_changelog.py` is deleted (its assertions are all in the guard test now; nothing was weakened). The changelog test file's docstring now says what it reads.
+
+**Issue 6.** The runner opts a fixed day into the child pytest: `python tests/policy_mutants.py --day YYYY-MM-DD` sets `HADAVIN_POLICY_FIXED_DAY` in `mutation_runner.CHILD_FIXED_ENV` (the tool file is unchanged; the child environment otherwise stays an allowlist). An autouse fixture in the guard file sets the tool's clock from it. `test_the_day_the_tool_sees_is_the_fixed_day_the_run_was_given` is in every baseline run, so a run that is given a day passes only when the day reached the clock. The runner also runs a probe mutant first, always with a day that is not today (2026-12-12): it must be killed, and the line `probe ok: the fixed day 2026-12-12 reached the tool's clock in the child pytest (probe mutant killed)` is printed. Logs: `policy-1211.log`, `policy-1212.log` show `every mutant below runs with the tool's clock fixed to <day>`. Slip found on the way: the previous evidence set the fixed day by a `sitecustomize` shim, but the runner's child environment is an allowlist and `PYTHONPATH` is overwritten, so "no mutant result changes with the date" rested on a shim that may not have reached the children; this batch replaces it with a proof that does.
+
+**Issue 7.** The per-test classification is in section C; the mapping of the ticket's must-fail-on-main items is section D.
+
+## B. Gates (final head, commands and exit codes)
+
+See `GATES.md` in this folder (written from the raw logs).
+
+## C. One line per new or changed test since d598d967 (67 tests)
+
+Method: tests whose function (compared with `ast.dump`) is new or differs between `d598d967` and this head, in `tests/test_policy_guard.py`, `tests/test_policy_docs.py`, `tests/test_policy_changelog.py`. "Old head" for the new tests of this batch is `208a47d5` with these three test files copied in (command: `cd <worktree of 208a47d5> && PYTHONPATH=<worktree> pytest -p no:cacheprovider -q tests/test_policy_guard.py tests/test_policy_docs.py tests/test_policy_changelog.py`): **3 failed, 357 passed** (the three named below). On `d598d967` the new test files do not even import (the tool had no `DECIDED`), so no per-test result can be read there; for the tests changed in the earlier batches the killing mutant is the proof, as in the b7 table. A test that passes on the old head is a plant or a control: its line says which, with the killing mutant or the reason it has none. "changed" often means only a `what` text was added (Issue 2).
+
+| File | Test | New or changed | Fails on the old head, or killing mutant, or control (reason) |
+|---|---|---|---|
+| test_policy_guard.py | `test_plant_a_new_kind_on_no_list_is_caught` | changed | killing mutant(s): Kinds: a kind on no list |
+| test_policy_guard.py | `test_plant_a_new_request_with_no_grant_is_caught` | changed | killing mutant(s): A1 a request with no grant |
+| test_policy_guard.py | `test_plant_a_grant_whose_request_was_deleted_is_caught` | changed | killing mutant(s): A1 a grant whose request is |
+| test_policy_guard.py | `test_plant_a_raw_http_request_outside_the_one_sender_is_caught` | changed | killing mutant(s): M3 a raw HTTP call outside |
+| test_policy_guard.py | `test_plant_a_stale_allowlist_line_is_caught` | changed | killing mutant(s): A1 a stale allowlist entry is |
+| test_policy_guard.py | `test_plant_d1_a_wildcard_in_a_permission_name_is_caught` | changed | killing mutant(s): D1 a wildcard in a permission |
+| test_policy_guard.py | `test_plant_d1_a_wildcard_resource_with_no_bound_is_caught` | changed | killing mutant(s): D1 a wildcard resource with no;D1 a `?` wildcard with no |
+| test_policy_guard.py | `test_plant_d2_a_field_that_is_no_setting_is_caught` | changed | killing mutant(s): D2 a field that is no |
+| test_policy_guard.py | `test_plant_d3_an_empty_reason_is_caught` | changed | killing mutant(s): D3 an empty reason is accepted;D3 a blank reason on a |
+| test_policy_guard.py | `test_plant_d5_a_never_action_that_another_kind_needs_is_caught` | changed | killing mutant(s): D5 a never action that a |
+| test_policy_guard.py | `test_plant_a_grant_id_used_by_two_kinds_is_caught` | changed | killing mutant(s): Ids: a grant id used by |
+| test_policy_guard.py | `test_plant_d6_a_long_lived_credential_with_no_exception_is_caught` | changed | killing mutant(s): D6 a long-lived credential with no |
+| test_policy_guard.py | `test_plant_d7_unknown_keys_platform_and_never_type_are_refused` | changed | killing mutant(s): D7 an unknown key is accepted;D7 an unknown never type is;D7 an unknown key on a |
+| test_policy_guard.py | `test_plant_an_unchecked_claim_with_no_pending_entry_is_caught` | changed | killing mutant(s): B3 a grant with an unchecked |
+| test_policy_guard.py | `test_plant_an_unverified_grant_with_no_pending_entry_is_caught` | changed | killing mutant(s): A4 an unverified grant with no |
+| test_policy_guard.py | `test_plant_a_source_id_that_does_not_resolve_is_caught` | changed | killing mutant(s): A4 a source id that does |
+| test_policy_guard.py | `test_the_committed_page_equals_what_the_data_gives` | changed | control: the only change is the day argument `today=DECIDED` (the page text is compared, the clock is not); live proof is the date-guard runs at the faked days (RESULTS.md of 208a47d5 row 8 and the `--day` runs in this batch) |
+| test_policy_guard.py | `test_plant_a_page_that_differs_from_the_data_fails_the_check` | changed | control: only the day argument `today=DECIDED` changed; the plant itself (a page that differs) is unchanged and was killed before by B7 write/check mutants |
+| test_policy_guard.py | `test_plant_p04b_an_added_request_through_getattr_with_a_literal_name_is_caught` | changed | killing mutant(s): M3 a literal getattr of a |
+| test_policy_guard.py | `test_plant_p09a_a_kubernetes_request_with_watch_in_its_query_is_caught` | changed | killing mutant(s): M3 a query parameter at the;M3 a query parameter written in |
+| test_policy_guard.py | `test_plant_a_local_variable_named_like_a_setting_is_not_taken_for_the_setting` | changed | killing mutant(s): M3 a local name is folded |
+| test_policy_guard.py | `test_plant_d1_a_plus_wildcard_with_no_bound_is_caught` | changed | killing mutant(s): m8 a plus wildcard with no |
+| test_policy_guard.py | `test_the_data_of_this_repository_breaks_no_rule_the_command_line_checks` | changed | control: day argument and a `what` text only; it is a data pin on the real files (no code rule to revert) |
+| test_policy_guard.py | `test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1` | changed | killing mutant(s): m10 the command line skips the |
+| test_policy_guard.py | `test_m10_write_makes_a_missing_docs_folder_and_check_then_passes` | changed | control: day argument and a `what` text only |
+| test_policy_guard.py | `test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far` | changed | killing mutant(s): Dated entries: an overdue entry is;Dated entries: a date moved further |
+| test_policy_guard.py | `test_a_never_path_over_a_grant_is_also_refused_by_the_check_command` | changed | control: only the day argument `today=DECIDED` changed |
+| test_policy_guard.py | `test_plant_an_import_of_another_http_library_is_caught` | changed | killing mutant(s): M3 an import that is not |
+| test_policy_guard.py | `test_plant_a_banned_name_that_arrives_through_an_import_alias_is_caught` | changed | killing mutant(s): M3 a banned name behind an |
+| test_policy_guard.py | `test_plant_attrgetter_on_a_sink_is_caught` | changed | killing mutant(s): M3 a banned name is no |
+| test_policy_guard.py | `test_plant_the_http_opener_used_outside_the_one_sender_is_caught` | changed | killing mutant(s): M3 the opener used outside the |
+| test_policy_guard.py | `test_plant_the_old_star_form_of_the_vault_secrets_grant_is_caught` | changed | killing mutant(s): M2 a Vault grant wider than |
+| test_policy_guard.py | `test_plant_a_vault_capability_that_is_not_the_verbs_own_is_caught` | changed | killing mutant(s): M3 a Vault capability other than |
+| test_policy_guard.py | `test_plant_a_kubernetes_path_that_is_not_the_bound_one_is_caught` | changed | killing mutant(s): M3 a Kubernetes path that is |
+| test_policy_guard.py | `test_plant_a_newline_in_a_reason_is_caught` | changed | killing mutant(s): m7 a control character in a |
+| test_policy_guard.py | `test_plant_a_grant_that_names_no_call_is_caught_with_its_message` | changed | killing mutant(s): D4 a grant that names no |
+| test_policy_guard.py | `test_plant_a_url_in_verified_is_caught_with_its_message` | changed | killing mutant(s): E3 a URL in verified is |
+| test_policy_guard.py | `test_plant_another_module_importing_the_vault_client_is_caught` | changed | killing mutant(s): M3 another module importing the Vault |
+| test_policy_guard.py | `test_a_reason_is_matched_by_its_exact_text_even_when_a_class_key_is_its_unique_prefix` | new | killing mutant(s): B5 a reason is matched by |
+| test_policy_guard.py | `test_a_note_class_with_an_unknown_source_id_is_a_problem_of_the_check_and_the_page_raises_policy_error` | changed | killing mutant(s): B5 the check command does not;B5 the page raises a KeyError |
+| test_policy_guard.py | `test_a_free_note_class_that_lists_a_source_its_entry_does_not_name_is_a_problem_of_the_check` | changed | control: assertion unchanged; the AST differs by the message text only (no behaviour change) |
+| test_policy_guard.py | `test_the_check_command_reports_a_claim_with_no_mark_in_the_sources_file` | changed | killing mutant(s): B5 the check command does not |
+| test_policy_guard.py | `test_a_clause_appended_to_a_claim_is_no_longer_the_listed_claim` | changed | killing mutant(s): B6 a claim with a clause |
+| test_policy_guard.py | `test_the_marks_of_r17_and_r18_swapped_in_the_sources_file_are_reported_by_the_check` | changed | killing mutant(s): B6 a builder-read mark on a;B6 an entry that names a |
+| test_policy_guard.py | `test_a_claim_text_under_both_marks_is_refused` | changed | killing mutant(s): B6 a claim text under both |
+| test_policy_guard.py | `test_a_claim_text_that_ends_in_two_semicolons_or_repeats_is_refused` | changed | killing mutant(s): B6 a claim text that holds |
+| test_policy_guard.py | `test_a_byte_order_mark_is_read_the_same_by_the_row_the_id_and_the_claim_parsers` | changed | killing mutant(s): B6 the byte-order mark is not |
+| test_policy_guard.py | `test_from_the_review_date_the_write_command_stops_and_writes_nothing` | new | killing mutant(s): B7 the write command writes the;B7 the write command judges the |
+| test_policy_guard.py | `test_from_the_review_date_the_check_command_stops` | new | killing mutant(s): B7 the check command judges the |
+| test_policy_guard.py | `test_a_grant_whose_name_is_unchecked_with_no_pending_row_is_reported_by_the_check` | changed | killing mutant(s): B6 the check command does not |
+| test_policy_guard.py | `test_a_new_unchecked_claim_with_no_pending_row_is_reported_by_the_check` | changed | killing mutant(s): B6 the check command does not |
+| test_policy_guard.py | `test_the_page_takes_its_marks_from_the_root_it_is_given` | changed | killing mutant(s): B7 the page takes its marks |
+| test_policy_guard.py | `test_the_page_head_lists_the_claims_of_each_mark_from_the_sources_file_not_from_prose` | changed | killing mutant(s): B7 the page head lists the |
+| test_policy_guard.py | `test_the_fixture_head_names_the_builder_read_claims_as_they_are` | changed | control: data pin on the fixture text; no code rule to revert (b7 table row 15 probes on the fixture) |
+| test_policy_guard.py | `test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date` | new | killing mutant(s): B8 the pending kinds take another;B9 a pending kind is more |
+| test_policy_guard.py | `test_the_tool_docstring_holds_no_date_that_is_not_in_the_dated_lists` | new | killing mutant(s): B9 the tool docstring names a |
+| test_policy_guard.py | `test_the_check_command_uses_the_tools_own_clock_when_no_day_is_given` | new | killing mutant(s): B8 the default clock of the |
+| test_policy_guard.py | `test_the_kinds_decision_day_is_a_literal_date_call_not_a_name_of_the_tools_date` | new | killing mutant(s): B9 the 16 kinds take the |
+| test_policy_guard.py | `test_the_tools_decision_day_is_the_day_the_names_and_claims_were_decided` | new | killing mutant(s): B9 the decision day of the |
+| test_policy_guard.py | `test_the_page_names_the_review_day_of_the_dated_lists_and_follows_a_renewal` | new | fails on old head 208a47d5 (command in section A): AttributeError: module 'tools.policy_page' has no attribute 'review_date'; killing mutant: B9 the page head states a;B9 the review date is the |
+| test_policy_guard.py | `test_the_docs_page_names_the_review_day_of_the_dated_lists_only` | new | fails on old head 208a47d5 (command in section A): AttributeError: module 'tools.policy_page' has no attribute 'review_date'; killing mutant: B9 the docs page names another review date than the dated lists |
+| test_policy_guard.py | `test_the_day_the_tool_sees_is_the_fixed_day_the_run_was_given` | new | killing mutant: PROBE (the hook that sets the clock is dropped), run first by `tests/policy_mutants.py` with a day that is not today; see the line `probe ok` in the mutant log |
+| test_policy_docs.py | `test_ci_runs_the_policy_page_check_right_after_the_policy_mutants` | new | control: reads the real ci.yml (the runner's temp tree has no `.github`); its rule is now `_check_step_problem` and the next line's plant test feeds it wrong lists. Fails on ad588599 (ci.yml has no step): b8 evidence, 3 failed |
+| test_policy_docs.py | `test_plant_a_ci_step_list_without_or_with_a_moved_check_step_is_refused` | new | plant against the rule function: passes on the old head only because the function lives in the test file; the three wrong lists are refused, the right one is accepted (it CAN fail: it asserts the refusals) |
+| test_policy_docs.py | `test_the_changelog_names_the_start_of_the_date_guard_by_rule_and_calls_it_a_reminder` | new | control: reads the real CHANGELOG (outside the runner's temp tree); rule is now `_date_guard_sentence_problem`; failed on ad588599 (b8 evidence) |
+| test_policy_docs.py | `test_plant_a_changelog_entry_that_loses_the_reminder_sentence_or_fixes_a_day_is_refused` | new | plant against the rule function: three wrong texts refused, the right one accepted |
+| test_policy_changelog.py | `test_the_changelog_entry_for_the_page_names_no_review_by_day_as_text` | new | fails on old head 208a47d5 (command in section A): AssertionError: the changelog entry writes a review day as text: ['review by 2026-12-11'] |
+
+## D. Ticket section 6.4, must fail on main (ticket is out of date)
+
+The ticket names ten kinds and `docs/least-privilege-policies.md`; this PR declares three kinds (`vault`, `vault_transit`, `kubernetes`) and the page is `docs/declared-permissions.md`; the policy engine tests need a Vault server and moto is not used here. Run for this table: `origin/main` (2a8c2aac) in a clean detached worktree with these files copied in (`tools/policy_page.py`, `tests/test_policy_guard.py`, `tests/test_policy_docs.py`, `tests/test_policy_changelog.py`, `tests/policy_mutants.py`, `tests/fixtures/policy_sources_2026-11-11.txt`), main's `src` and docs untouched; command `PYTHONPATH=<worktree> pytest -p no:cacheprovider -q` on the three test files: **239 failed, 121 passed** (`main.log`, `main.xml`).
+
+| Ticket item | What replaces it today | Test that covers it | Result on main |
+|---|---|---|---|
+| F1 A1: "no POLICY in" followed by exactly the ten module names | the three module names | `test_every_kind_is_declared_pending_or_holds_no_identity` (3 extra problems, first "kind secrets/vault has no PO...") and `test_the_three_literals_break_no_data_rule` ("no POLICY in src/hadavin_sdk/actions/secrets_vault.py") and `test_no_never_list_line_of_the_three_kinds_covers_a_grant` (lists the three modules) | fails with the message on main |
+| F2 A3: `docs/least-privilege-policies.md` missing | `docs/declared-permissions.md` missing | `test_the_committed_page_equals_what_the_data_gives` | fails: "docs/declared-permissions.md is missing: run `python tools/policy_page.py --write`" |
+| F3 B on Vault and on moto: "no POLICY in actions/secrets_vault.py" / "... audit/anchor_s3.py" | the Vault engine tests (`tests/test_policy_engine.py`) skip without a Vault server; no S3 anchor kind is declared here (it is on the pending list) | not run on main (no server); the "no POLICY in" text for the Vault modules is shown by the F1 tests above | NOT RUN (Issue 8, impossible now: needs a CI run with `HADAVIN_REQUIRE_VAULT_ENGINE=1`) |
+
+## E. Not run, and open
+
+- The 12 Vault engine tests (no Vault server, no network to fetch one): Issue 8, ledger row stays OPEN; next step: one CI run on the branch with `HADAVIN_REQUIRE_VAULT_ENGINE=1` before 2026-12-11, then edit `ENGINE_RUN` and the pinned page test by hand.
+- Perf tests, the timing test `test_the_timing_harness_flags_a_quadratic_stand_in` (not touched), the Python 3.12 job, CodeQL, SonarCloud, CodeRabbit: not run here (CI).

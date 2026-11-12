@@ -1,8 +1,10 @@
-"""The changelog states the days the dated lists start to fail, as the dated lists have them.
+"""The changelog gives the days the lists of kinds start to fail as the list has them, and writes no review day of
+the names and claims as text.
 
 Kept apart from tests/test_policy_guard.py because that file is copied alone into the temporary folder the
 mutation runner uses, and the changelog is not part of that copy."""
 
+import re
 from datetime import date
 from pathlib import Path
 
@@ -26,13 +28,15 @@ def test_the_changelog_gives_the_days_the_kinds_list_starts_to_fail():
     )
 
 
-def test_the_sixteen_pending_kinds_each_stand_on_the_day_they_were_decided():
-    # `decided` is pinned apart from the tool's own date: moving that date to renew the names and claims must
-    # not renew these kinds, and the 92-day cap compares `review_by` with `decided`.
-    assert len(PENDING_KINDS) == 16, "the number of pending kinds is not 16"
-    assert {p.decided for p in PENDING_KINDS.values()} == {date(2026, 11, 11)}, (
-        "a pending kind has a `decided` day other than 2026-11-11"
-    )
-    assert max((p.review_by - p.decided).days for p in PENDING_KINDS.values()) <= 92, (
-        "a pending kind is more than 92 days from its decision to its review day"
+def test_the_changelog_entry_for_the_page_names_no_review_by_day_as_text():
+    # The review day of the names and claims is built by the tool (`review_date()`) and shown on the page; a day
+    # written into the changelog entry would stay after a renewal. The entry says "the earliest review date".
+    # (The days the kinds list starts to fail are checked above against the dated list itself.)
+    text = " ".join((ROOT / "CHANGELOG.md").read_text(encoding="utf-8").split())
+    start = text.index("**Declared permissions for three backend kinds**")
+    entry = text[start : text.find("- **", start + 1)]
+    stray = re.findall(r"review by \d{4}-\d{2}-\d{2}", entry)
+    assert not stray, f"the changelog entry writes a review day as text: {stray}"
+    assert "review by the earliest review date" in entry, (
+        "the changelog entry does not name the review day by rule"
     )

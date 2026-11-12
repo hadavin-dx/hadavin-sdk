@@ -1,0 +1,41 @@
+40 111
+WEAK A1 a request with no grant is no longer reported | expect: 'has no grant and no' | killer: test_plant_a_new_request_with_no_grant_is_caught
+WEAK A1 a grant whose request is gone is no longer reported | expect: 'makes no such call' | killer: test_plant_a_grant_whose_request_was_deleted_is_caught
+WEAK A1 a stale allowlist entry is no longer reported | expect: 'stale allowlist entry' | killer: test_plant_a_stale_allowlist_line_is_caught
+WEAK Kinds: a kind on no list is no longer reported | expect: 'is on no list' | killer: test_plant_a_new_kind_on_no_list_is_caught
+WEAK A4 an unverified grant with no pending entry is no longer reported | expect: 'is not found in a vendor source' | killer: test_plant_an_unverified_grant_with_no_pending_entry_is_caught
+WEAK A4 a source id that does not resolve is no longer reported | expect: 'is not in the sources file' | killer: test_plant_a_source_id_that_does_not_resolve_is_caught
+WEAK D1 a wildcard in a permission name is accepted | expect: 'must be one permission name' | killer: test_plant_d1_a_wildcard_in_a_permission_name_is_caught
+WEAK D1 a wildcard resource with no bound is accepted | expect: 'a blank `bound` on the wildcard resource of the Vault secrets grant is not reported' | killer: test_plant_d1_a_wildcard_resource_with_no_bound_is_caught
+WEAK D3 an empty reason is accepted | expect: 'a blank reason on the Kubernetes grant is not reported' | killer: test_plant_d3_an_empty_reason_is_caught
+WEAK D5 a never action that a kind needs is accepted | expect: 'never-list action' | killer: test_plant_d5_a_never_action_that_another_kind_needs_is_caught
+WEAK D6 a long-lived credential with no exception is accepted | expect: 'long-lived credential' | killer: test_plant_d6_a_long_lived_credential_with_no_exception_is_caught
+WEAK D7 an unknown key is accepted | expect: 'an extra top-level key `deny` of the policy is not reported' | killer: test_plant_d7_unknown_keys_platform_and_never_type_are_refused
+WEAK M3 a literal getattr of a sink is accepted | expect: 'banned `getattr` of `authed`' | killer: test_plant_p04b_an_added_request_through_getattr_with_a_literal_name_is_caught
+WEAK M3 a banned name is no longer reported | expect: 'banned indirect call `attrgetter`' | killer: test_plant_attrgetter_on_a_sink_is_caught
+WEAK M3 a banned name behind an import alias is no longer reported | expect: '(imported)' | killer: test_plant_a_banned_name_that_arrives_through_an_import_alias_is_caught
+WEAK M3 an import that is not on the list is accepted | expect: "is not on this module's import list" | killer: test_plant_an_import_of_another_http_library_is_caught
+WEAK M3 a raw HTTP call outside the sender is accepted | expect: 'raw HTTP call' | killer: test_plant_a_raw_http_request_outside_the_one_sender_is_caught
+WEAK M3 the opener used outside the sender is accepted | expect: 'the HTTP opener' | killer: test_plant_the_http_opener_used_outside_the_one_sender_is_caught
+WEAK M3 a local name is folded like a setting | expect: 'has no grant' | killer: test_plant_a_local_variable_named_like_a_setting_is_not_taken_for_the_setting
+WEAK M3 another module importing the Vault client is accepted | expect: 'from the Vault client module' | killer: test_plant_another_module_importing_the_vault_client_is_caught
+WEAK M3 a query parameter at the call is accepted | expect: 'may carry' | killer: test_plant_p09a_a_kubernetes_request_with_watch_in_its_query_is_caught
+WEAK M3 a query parameter written in the module is accepted | expect: 'is written in the module' | killer: test_plant_p09a_a_kubernetes_request_with_watch_in_its_query_is_caught
+WEAK M3 a Kubernetes path that is not the bound one is accepted | expect: 'the path does not fit' | killer: test_plant_a_kubernetes_path_that_is_not_the_bound_one_is_caught
+WEAK M2 a Vault grant wider than its request is accepted | expect: 'is not the path of the request' | killer: test_plant_the_old_star_form_of_the_vault_secrets_grant_is_caught
+WEAK M3 a Vault capability other than the verb's is accepted | expect: 'is not the one a POST request needs' | killer: test_plant_a_vault_capability_that_is_not_the_verbs_own_is_caught
+WEAK D2 a field that is no setting is accepted | expect: 'is not a setting of' | killer: test_plant_d2_a_field_that_is_no_setting_is_caught
+WEAK Dated entries: an overdue entry is no longer reported | expect: 'no overdue entry is reported' | killer: test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far
+WEAK Dated entries: a date moved further than the cap is accepted | expect: 'a date may not be moved further' | killer: test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far
+WEAK m7 a control character in a text is accepted | expect: 'non-printing character' | killer: test_plant_a_newline_in_a_reason_is_caught
+WEAK m8 a plus wildcard with no bound is accepted | expect: 'holds a wildcard' | killer: test_plant_d1_a_plus_wildcard_with_no_bound_is_caught
+WEAK m9 a placeholder left after filling is put into the text | expect: 'DID NOT RAISE' | killer: test_plant_m9_a_placeholder_left_after_filling_is_refused
+WEAK D4 a grant that names no call is accepted | expect: 'operations must be a non-empty' | killer: test_plant_a_grant_that_names_no_call_is_caught_with_its_message
+WEAK Ids: a grant id used by two kinds is accepted | expect: 'is used by' | killer: test_plant_a_grant_id_used_by_two_kinds_is_caught
+WEAK E3 a URL in verified is accepted | expect: 'is not a source id' | killer: test_plant_a_url_in_verified_is_caught_with_its_message
+WEAK m10 the command line skips the checks across kinds | expect: 'is used by secrets/vault and by' | killer: test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1
+WEAK B3 a grant with an unchecked claim needs no dated entry | expect: 'has an unchecked claim' | killer: test_plant_an_unchecked_claim_with_no_pending_entry_is_caught
+WEAK B5 the two marks of a claim are swapped | expect: 'not exactly the + claim of R17' | killer: test_every_claim_has_one_of_two_marks_taken_from_the_head_of_the_sources_file
+WEAK B5 a reason needs no class | expect: 'classes in NOTE_CLASSES' | killer: test_a_free_reason_that_says_it_creates_nothing_or_changes_nothing_has_no_class_and_is_refused
+WEAK B5 the two paths of a prefix check may hold a different number of parts for the one setting | expect: '{mount}/data/{path_prefix}+/deeper/+' | killer: test_a_never_path_deeper_than_the_prefix_grant_is_not_reported_as_covering_it
+WEAK B5 a `+` reads exactly one character | expect: 'a `+` is read as one character' | killer: test_the_path_prefix_setting_is_read_as_one_or_more_parts_each_ending_in_a_slash
