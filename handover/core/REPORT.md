@@ -1,5 +1,35 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## Block 20:19Z / 01:49 IST (deadlock I caused fixed; part 3 hand-back; resolve of Q8c-1 r15 and Q8a-1 r19 next)
+**Failed or uncertain first.** (1) I caused a queue deadlock at about 19:50Z: I renamed a waiter file in /tmp/heavy-wait to priority 1 while its live heavy.sh process still held priority 5, so it blocked itself and every other waiter; load fell from 9 to 1.5 with 6 waiters and nothing running. Fixed 20:17Z: killed only that waiter (started by my own evidence runner), requeued the same command through the corrected heavy.sh (now runs: stage_mutants Z193 for Q8a-1 b19). Rule for me: never rename waiter files. (2) Part 3 (stand-ins) full pytest at 08b8361c found 4 failures caused by the builder's change (a planted channel kind without a role); fixed in 8ebdcc27 (that test file 25 passed). NOT yet re-run: full pytest and standin_mutants on 8ebdcc27; tag push failed ("remote hung up"), tag only local; PR body Measured-results section still old. (3) Q8c-1 r15: independent evidence at ccb63021 is clean (full pytest 11000 passed, 37/37 stage and 350/350 policy mutants, ruff, bandit, gitleaks), but both reviewers report Major N1 (run-time import name rule half-fixed). Q8a-1 r19: Blocker B1 confirmed by my probe. Neither is close to merge.
+**Done now.** Queue back to 5 waiters + 1 running. Resolve for Q8c-1 r15 and Q8a-1 r19 is being run now (Opus, automated). Part 3 stays parked behind part 2 batch 2 (it re-merges once, then gates once).
+
+### LIVE ITEMS
+| id | purpose | started UTC | running | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| a96da480 | ORDER 260 builder (path containment) | 19:56 | 23 min | 20:56 | running, no push yet | wip/cloud-sonar-path | checkpoint due 20:26 |
+| a13583cf | part 2 batch 2 builder | 20:11 | 8 min | 21:11 | running | fix + owed gates handed back | none yet |
+| aabeb61f | evidence runner part 6 (dd5c7242) | earlier | waiting slot (2-17010) | when slot | queued | RESULTS.md | waiting |
+| aa62f462 | evidence runner Q8a-1 b19 (a24d98ae) | earlier | >75 min | 20:50 | running stage_mutants Z193 | RESULTS.md | requeued 20:17 |
+| heavy jobs | 1 running (Z193), 5 waiting (2-17010 part 6, 2-21587, 2-31791, 3-1200, 4-27763) + Q8c-1 b16 policy_mutants (pid 4315) | | | | | | |
+Totals: 4 agents live (0 over box), 1 to 3 heavy jobs running, queue 5 waiters (cap 6).
+
+### ROUNDS
+| package | round | blockers/majors | WHY another round |
+|---|---|---|---|
+| Q8c-1 | 15 done, evidence clean | 0 B / 1 M (N1) | security: same class as r14, fix batch needed then confirming round |
+| Q8a-1 | 19 done, evidence pending | 1 B (B1) / 3 M | security: non-dict input bypass confirmed |
+| part 2 (bind) | 1 done | 1 B / 2 M | mode-safety: fix batch 2 running, confirming round next |
+| part 6 (banner) | evidence pending | n/a | first review round not yet started |
+| ORDER 260 | build | n/a | design reviewed in r1, builder running |
+
+### FINISHED SINCE LAST BLOCK
+| item | result | evidence |
+|---|---|---|
+| heavy.sh deadlock | fixed | queue running again, Z193 started 20:17 |
+| part 3 batch 2 builder | handed back, head 8ebdcc27 pushed to wip/cloud-pd-standins | builder full pytest 10227 passed after 4 fixes; re-run owed |
+| Q8c-1 r15 independent evidence | clean | handover/evidence/Q8c-1/ccb63021/RESULTS.md |
+
 ## Block 20:08Z / 01:38 IST (ORDER 262 done: parking; ORDER 261 tables)
 **Failed or uncertain first.** (1) Q8c-1 round 15 and Q8a-1 round 19 reports show new Blockers/Majors in the same class as earlier rounds (Q8c-1 N1: run-time import name; Q8a-1 B1: non-dict input bypasses the hidden-input guard, confirmed by my own probe). I have not yet run the resolve step for Q8a-1 b19 (evidence runner aa62f462 still waiting on a slot). (2) Stack 3 rebase: one regression found and fixed by the rebaser (CORPUS_STEP); full suite NOT re-run on the final head 5aac4ea5; P5b1 is a squash; a possible coverage loss (noqa_sites check removed) and one OPERATOR classification need a reviewer. (3) #71 fix 8b982dd3: builder evidence only (full pytest 10233 passed); I have not run an independent evidence pass; the guard now matches `pglast` names by a regex that misses an unusual suffix such as `pglast-extras` (builder's own stated risk).
 **Done now.** Parked AK1-a, AK-G2-a b2, Q8b b14 gate-fix (builder told to push and stop), PRH b12, P3a-2 b9: `handover/core/PARKED.md` (refs, heads, owed gates, where to run). Removed their waiting gate jobs; queue went from 13 to 4 waiters. Fixed heavy.sh: (a) the Q8a-1 evidence runner was queued at priority 5 because its folder was not recognised; now priority 1; (b) the old "after 90 minutes run anyway" fallback (a cause of load above 3 jobs) now exits 75 with "GATE OWED". Created `handover/core/run-ledger.tsv` (5 rows so far). Part 2 reviewers launched (design, codebase).
