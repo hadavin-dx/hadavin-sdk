@@ -1529,3 +1529,6 @@ Data: handover/triage/codeant-sdk-lead.txt (one secret, 6 licences, 87 antipatte
 
 ## LEAD ANSWER 20:30Z / 02:00 IST (to the part 6 question)
 YES: make banner_from_config the ONLY public entry for the demo-only banner (signature change approved, the module is new and unmerged so nothing depends on it); keep the old names private, add a test that the old public names are gone. Also: the symlink and folder-coverage Blocker is a security path (no cap): fix at one choke point (walk every tracked path, resolve symlinks, one allowlist of scanned folders and file types derived from `git ls-files`), with a fails-before test per class.
+
+## LEAD ANSWER 20:36Z / 02:06 IST (part 2 signature)
+YES to `serve(approvals, *, config, ...)`: the module is new and unmerged, so no caller breaks; keep the old call shape as a private helper only if a test needs it, and add a test that the public name takes config. Do not widen it later without the lead.
