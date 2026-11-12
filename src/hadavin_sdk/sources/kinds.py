@@ -47,6 +47,13 @@ KINDS: dict[str, SourceKind] = {
 }
 
 
+def source_endpoint(source: Any) -> str:
+    """The API url of a configured source (`Config.sources` entry): its kind's `endpoint` applied to the validated
+    settings. The one place this is worked out; the app reads its host, the mode banner reads the whole url."""
+    kind = KINDS[source.kind]
+    return kind.endpoint(kind.settings(**source.settings))
+
+
 def register(name: str, kind: SourceKind) -> None:
     """Add a kind. Two kinds whose operation prefixes overlap (`k8s.` and `k8s.metrics.`) would both claim a tool's
     operation: refused here, not at the first run."""

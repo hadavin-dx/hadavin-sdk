@@ -51,7 +51,10 @@ def _b(mode: str, real: list[str] | None = None, pretend: list[str] | None = Non
 def test_demo_with_only_stand_ins_says_made_up_and_lists_the_stand_ins_loudly() -> None:
     b = _b("demo", [], ["crm", "mail"], names=NAMES)
     assert (b.mode, b.tone, b.tag) == ("demo", "demo", "DEMO")
-    assert "made-up demo data" in b.text and "Nothing here is sent to real customers" in b.text
+    assert (
+        "made-up demo data" in b.text
+        and "Nothing here is set up to send data to real customers" in b.text
+    )
     assert (
         b.standins.startswith("MADE-UP STAND-INS IN USE: CRM, mail.")
         and "pretend versions" in b.standins
@@ -72,7 +75,7 @@ def test_a_real_service_is_named_and_made_up_data_is_never_claimed() -> None:
         assert (
             "Real services are connected: CRM, mail." in b.text and "may be sent to them" in b.text
         )
-        assert "made-up" not in b.text and "Nothing here is sent" not in b.text
+        assert "made-up" not in b.text and "Nothing here is set up to send data" not in b.text
         assert b.standins == "Still stand-ins, not connected: AI step."
 
 
@@ -252,8 +255,22 @@ def test_property_the_made_up_claim_never_appears_next_to_a_real_service() -> No
 def _fake_config(environment: str, kinds: list[tuple[str, object]]) -> SimpleNamespace:
     entries = [(c, SimpleNamespace(kind=k)) for c, k in kinds]
     return SimpleNamespace(
-        environment=environment, backends=SimpleNamespace(entries=lambda: entries)
+        environment=environment,
+        backends=SimpleNamespace(entries=lambda: entries),
+        systems={},
+        egress_hosts=frozenset(),
+        sources={},
+        tool_modules=[],
     )
+
+
+def _banner(cfg, tool_specs: object = None, **kw):
+    """banner_from_config with the registry's tools given as 'none declared' unless a test says otherwise."""
+    return mb.banner_from_config(cfg, tool_specs={} if tool_specs is None else tool_specs, **kw)
+
+
+def _services(cfg, tool_specs: object = None):
+    return mb._services_in(cfg, {} if tool_specs is None else tool_specs)
 
 
 NOTHING = {("signer", "none"), ("anchor", "none"), ("detector", "regex")}
@@ -261,23 +278,23 @@ NOTHING = {("signer", "none"), ("anchor", "none"), ("detector", "regex")}
 
 def test_banner_from_config_reads_the_stage_and_both_lists_from_the_config(tmp_path: Path) -> None:
     cfg = load_config(make_cfg(tmp_path))  # the fixture is the demo config and holds fakes
-    real, pretend = mb._services_in(cfg)
+    real, pretend = _services(cfg)
     assert real == () and {"llm", "channel", "secrets", "store"} <= set(pretend)
-    b = mb.banner_from_config(cfg)
+    b = _banner(cfg)
     assert (b.mode, b.tone) == (cfg.environment, "demo")
     assert b.stand_ins == tuple(f"component {c}" for c in pretend) and b.real == ()
     assert {(c, s.kind) for c, s in cfg.backends.entries() if c in pretend} <= DEMO_ONLY
     for named in ("demo", "pilot", "prod"):  # the stage is read from the config, never fixed
-        assert mb.banner_from_config(_fake_config(named, [("llm", "anthropic")])).mode == named
+        assert _banner(_fake_config(named, [("llm", "anthropic")])).mode == named
 
 
 def test_a_real_kind_in_the_config_is_named_and_the_made_up_sentence_is_never_given() -> None:
     cfg = _fake_config("demo", [("llm", "anthropic"), ("store", "memory"), ("signer", "none")])
-    b = mb.banner_from_config(cfg, names={"llm": "AI step"})
+    b = _banner(cfg, names={"llm": "AI step"})
     assert b.tone == "real" and b.real == ("AI step",) and b.stand_ins == ("component store",)
     assert "made-up" not in (b.text + b.standins).lower()
     for stage in STAGES:
-        assert mb.banner_from_config(_fake_config(stage, [("llm", "bedrock")])).tone == "real"
+        assert _banner(_fake_config(stage, [("llm", "bedrock")])).tone == "real"
 
 
 def test_property_every_config_entry_lands_in_exactly_one_group() -> None:
@@ -286,13 +303,13 @@ def test_property_every_config_entry_lands_in_exactly_one_group() -> None:
     for _ in range(400):
         picks = rng.sample(every, rng.randint(0, len(every)))
         cfg = _fake_config(rng.choice(STAGES), picks)
-        real, pretend = mb._services_in(cfg)
+        real, pretend = _services(cfg)
         for component, kind in picks:
             if (component, kind) in DEMO_ONLY:
                 assert component in pretend
             elif (component, kind) not in NOTHING:
                 assert component in real
-        b = mb.banner_from_config(cfg)
+        b = _banner(cfg)
         shown = (b.text + b.standins).lower()
         if real:
             assert b.tone == "real" and "made-up" not in shown
@@ -301,14 +318,14 @@ def test_property_every_config_entry_lands_in_exactly_one_group() -> None:
 def test_an_entry_without_a_kind_is_refused_not_guessed_into_a_list() -> None:
     for bad_kind in (None, "", 3):
         with pytest.raises(ValueError, match="cannot be placed in the banner"):
-            mb.banner_from_config(_fake_config("demo", [("llm", bad_kind)]))
+            _banner(_fake_config("demo", [("llm", bad_kind)]))
     with pytest.raises(ValueError, match="cannot be placed in the banner"):
-        mb.banner_from_config(_fake_config("demo", [("", "fake")]))
+        _banner(_fake_config("demo", [("", "fake")]))
 
 
 def test_the_stage_of_the_config_is_checked_like_any_other_stage() -> None:
     with pytest.raises(ValueError, match="is not one of demo, pilot, prod"):
-        mb.banner_from_config(_fake_config("canary", [("llm", "fake")]))
+        _banner(_fake_config("canary", [("llm", "fake")]))
 
 
 def test_the_old_public_names_are_gone_and_banner_from_config_is_the_only_entry() -> None:
@@ -552,6 +569,22 @@ LEAVES = [
     ("egress_hosts", frozenset({""}), mb.EGRESS_HOSTS),
     ("sources", {"k": _source("https://k8s.example.test")}, mb.READ_SOURCES),
     ("sources", {"k": SimpleNamespace(kind="unknown-kind", settings={})}, mb.READ_SOURCES),
+    (  # a known kind whose settings do not build: the endpoint cannot be worked out
+        "sources",
+        {"k": SimpleNamespace(kind="kubernetes", settings={"api_url": 5})},
+        mb.READ_SOURCES,
+    ),
+    (
+        "systems",
+        {"crm": _system("http://10.0.0.5")},
+        mb.EXTERNAL_SYSTEMS,
+    ),  # an IP literal that is not loopback
+    (
+        "systems",
+        {"crm": _system("http://127.0.0.2")},
+        mb.EXTERNAL_SYSTEMS,
+    ),  # only the three shared names count
+    ("egress_hosts", frozenset({"127.0.0.2"}), mb.EGRESS_HOSTS),
 ]
 THIS_MACHINE = [
     ("systems", {"crm": _system("http://127.0.0.1:8080")}),
@@ -568,17 +601,20 @@ THIS_MACHINE = [
 def test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up() -> None:
     for field, value, key in LEAVES:
         cfg = _with_endpoints(**{field: value})
-        real, _ = mb._services_in(cfg)
+        real, _ = _services(cfg)
         assert real == (key,), (field, value)
-        b = mb.banner_from_config(cfg)
+        b = _banner(cfg)
         assert b.tone == "real" and b.real == (f"component {key}",), (field, value)
         shown = (b.text + b.standins).lower()
-        assert "made-up" not in shown and "nothing here is sent" not in shown, (field, value)
+        assert "made-up" not in shown and "nothing here is set up to send" not in shown, (
+            field,
+            value,
+        )
 
 
 @pytest.mark.parametrize(("field", "value"), THIS_MACHINE)
 def test_endpoints_on_this_machine_keep_the_demo_banner(field, value) -> None:
-    b = mb.banner_from_config(_with_endpoints(**{field: value}))
+    b = _banner(_with_endpoints(**{field: value}))
     assert (b.tone, b.real) == ("demo", ())
 
 
@@ -593,7 +629,7 @@ def test_a_real_loaded_demo_config_with_an_outside_system_gets_the_real_banner(
     data["systems"]["fixture-records"]["base_url"] = "https://records.example.test"
     data["allow_insecure_loopback"] = False
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
-    b = mb.banner_from_config(load_config(d), names={mb.EXTERNAL_SYSTEMS: "Records system"})
+    b = _banner(load_config(d), names={mb.EXTERNAL_SYSTEMS: "Records system"})
     assert b.tone == "real" and b.real == ("Records system",) and "Records system" in b.text
 
 
@@ -615,7 +651,7 @@ def test_property_any_outside_endpoint_in_any_stage_never_gets_the_made_up_sente
             outside |= "h.example.test" in hosts
         cfg = _with_endpoints(**fields)
         cfg.environment = rng.choice(STAGES)
-        b = mb.banner_from_config(cfg)
+        b = _banner(cfg)
         assert (b.tone == "real") == outside
         if outside:
             assert "made-up" not in (b.text + b.standins).lower()
@@ -627,14 +663,14 @@ def test_a_banner_is_checked_against_what_it_claims_before_it_leaves() -> None:
     # a reworded text that forgets to name the real services is refused, not shown
     forgetful = mb.BannerWords(tag_by_mode=tags, real_connected="Real services are connected.")
     with pytest.raises(ValueError, match="does not name every real service"):
-        mb.banner_from_config(_fake_config("pilot", [("llm", "bedrock")]), words=forgetful)
+        _banner(_fake_config("pilot", [("llm", "bedrock")]), words=forgetful)
     # a reworded real note that repeats the made-up sentence is refused in a real and in a quiet banner
     boastful = mb.BannerWords(tag_by_mode=tags, real_data_note=claim.made_up)
     with pytest.raises(ValueError, match="claims made-up data"):
-        mb.banner_from_config(_fake_config("pilot", [("llm", "bedrock")]), words=boastful)
+        _banner(_fake_config("pilot", [("llm", "bedrock")]), words=boastful)
     quiet_boast = mb.BannerWords(tag_by_mode=tags, none_real=claim.made_up)
     with pytest.raises(ValueError, match="claims made-up data"):
-        mb.banner_from_config(_fake_config("prod", []), words=quiet_boast)
+        _banner(_fake_config("prod", []), words=quiet_boast)
     # a demo banner that names a real service is refused (built by hand: banner_from_config never makes one)
     hand_made = mb.ModeBanner(
         "demo", "demo", "DEMO", claim.made_up + " " + claim.nothing_sent, "", ("record",), ()
@@ -652,6 +688,18 @@ def test_the_page_exports_and_the_fallback_cannot_be_changed_by_a_page() -> None
 def test_a_failed_last_resort_write_never_leaves_the_banner_hidden() -> None:
     seen = _paint(GOOD_DEMO, "failing-all-writes")  # appending and then the text write both throw
     assert seen["threw"] == "" and seen["hidden"] is False
+    assert (
+        seen["text"] == "previous banner text"
+    )  # nothing was cleared before the failing write: the old words stay
+
+
+@needs_node
+def test_a_failed_append_leaves_words_on_the_screen_never_an_empty_banner() -> None:
+    seen = _paint(GOOD_DEMO, "failing-append")
+    assert seen["threw"] == "" and seen["hidden"] is False
+    assert seen["text"].strip() != ""  # the fallback text is written, not just the attributes
+    assert seen["text"] == mb.not_confirmed()["tag"] + " " + mb.not_confirmed()["text"]
+    assert seen["tone"] == "unconfirmed"
 
 
 @needs_node
@@ -668,3 +716,224 @@ def test_a_real_name_is_matched_as_a_whole_word_only() -> None:
     _unconfirmed(_paint(real))  # "CRM" is only part of the word "CRMS": not named
     fine = {**real, "text": real["text"].replace("CRMS", "CRM")}
     assert _paint(fine)["tone"] == "real"
+
+
+# --- round 4 ----------------------------------------------------------------------------------------------------------
+from hadavin_sdk.tools import ToolSpec
+
+
+def _spec(*hosts: str) -> ToolSpec:
+    return ToolSpec(
+        name="read_x",
+        function="mod:read_x",
+        description="reads x",
+        input_schema={"type": "object"},
+        side_effect="none",
+        hosts=hosts,
+    )
+
+
+def test_tool_specs_has_no_default_so_forgetting_it_is_an_error() -> None:
+    cfg = _fake_config("demo", [("llm", "fake")])
+    with pytest.raises(TypeError):
+        mb.banner_from_config(cfg)  # type: ignore[call-arg]
+    with pytest.raises(TypeError):
+        mb._services_in(cfg)  # type: ignore[call-arg]
+
+
+def test_a_tool_manifest_host_that_is_not_this_machine_is_a_real_service() -> None:
+    cfg = _fake_config("demo", [("llm", "fake")])
+    specs = {"agent": {"read_x": _spec("api.example.test")}}
+    real, _ = _services(cfg, specs)
+    assert real == (mb.TOOL_HOSTS,)
+    b = _banner(cfg, specs, names={mb.TOOL_HOSTS: "Tool services"})
+    assert b.tone == "real" and b.real == ("Tool services",) and "Tool services" in b.text
+    assert "made-up" not in (b.text + b.standins).lower()
+    for stage in STAGES:
+        assert _banner(_fake_config(stage, []), specs).tone == "real"
+
+
+def test_tool_hosts_on_this_machine_or_none_keep_the_demo_banner() -> None:
+    cfg = _fake_config("demo", [("llm", "fake")])
+    for specs in (
+        {},
+        {"a": {}},
+        {"a": {"t": _spec()}},
+        {"a": {"t": _spec("127.0.0.1", "localhost", "::1")}},
+    ):
+        assert _banner(cfg, specs).tone == "demo", specs
+    mixed = {"a": {"t": _spec("localhost")}, "b": {"u": _spec("api.example.test")}}
+    assert _services(cfg, mixed)[0] == (mb.TOOL_HOSTS,)  # one outside host in any agent is enough
+
+
+def test_tool_modules_without_the_manifests_count_as_one_real_service() -> None:
+    cfg = _fake_config("demo", [("llm", "fake")])
+    cfg.tool_modules = ["some_mod"]
+    assert _services(cfg, None)[0] == ()  # the helper's {} default: manifests read and empty
+    real, _ = mb._services_in(cfg, None)  # None: the caller could not read the manifests
+    assert real == (mb.TOOL_MODULES,)
+    assert mb.banner_from_config(cfg, tool_specs=None).tone == "real"
+    cfg.tool_modules = []
+    assert mb._services_in(cfg, None)[0] == ()  # no module configured: nothing hidden by None
+    with pytest.raises(TypeError, match="tool_specs"):
+        mb._services_in(cfg, ["not", "a", "mapping"])
+
+
+def test_a_real_registry_tools_mapping_is_what_the_banner_reads(tmp_path: Path) -> None:
+    from hadavin_sdk.registry import Registry
+
+    assert "tools" in {f.name for f in __import__("dataclasses").fields(Registry)}
+    cfg = load_config(make_cfg(tmp_path))
+    assert mb.banner_from_config(cfg, tool_specs={}).tone == "demo"
+    assert (
+        mb.banner_from_config(cfg, tool_specs={"a": {"t": _spec("api.example.test")}}).tone
+        == "real"
+    )
+
+
+def test_the_words_state_what_is_checked_and_not_a_false_premise() -> None:
+    sentence = mb.DEFAULT_WORDS.nothing_sent
+    assert "set up to send" in sentence and "reaches only" not in (mb.__doc__ or "")
+    assert "not sandboxed" in (mb.__doc__ or "")  # the in-process limit is stated
+
+
+@needs_node
+def test_a_failed_page_write_keeps_non_empty_text() -> None:
+    assert _paint(GOOD_DEMO, "failing-append")["text"].strip() != ""
+
+
+# -- the URL rules are the ones the tool fetcher uses --------------------------------------------------------------------
+LEAVING_URLS = [
+    "https://evil.example\\@localhost",  # a backslash: browsers read it as a slash
+    "http://127.0.0.1/a\\b",  # a backslash in the path
+    "http://127.0.0.1/a b",
+    "http://127.0.0.1/a\x01b",
+    "http://127.0.0.1/caf\u00e9",
+    "http://127.0.0.1/%2e%2e",
+    "http://localhost%2f.evil.test",
+    "http://user@127.0.0.1/",
+    "http://127.0.0.1@evil.example/",
+    "http://10.0.0.5/",  # an IP literal that is not loopback
+    "http://[2001:db8::1]/",
+    "http://127.0.0.2/",  # only the three shared loopback names are this machine
+    "http://[::2]/",
+    "http://\u2460\u2461\u2467.0.0.1/",
+    "",
+    "localhost",  # no scheme: no host
+]
+
+
+def test_an_odd_url_is_shown_as_leaving_this_machine() -> None:
+    for url in LEAVING_URLS:
+        b = _banner(_with_endpoints(systems={"s": _system(url)}))
+        assert b.tone == "real" and b.real == (f"component {mb.EXTERNAL_SYSTEMS}",), f"url {url!r}"
+
+
+def test_the_shared_normaliser_treats_these_as_this_machine() -> None:
+    for url in ("http://LOCALHOST:80/", "http://localhost./", "http://[::1]/x", "http://127.0.0.1"):
+        assert _banner(_with_endpoints(systems={"s": _system(url)})).tone == "demo", f"url {url!r}"
+
+
+def test_the_banner_uses_the_shared_loopback_names_and_normaliser_not_a_copy() -> None:
+    from hadavin_sdk.guard.egress import normalise_host
+    from hadavin_sdk.guard.http import LOOPBACK as SHARED
+
+    assert mb.LOOPBACK is SHARED and mb.normalise_host is normalise_host
+    assert "ipaddress" not in (Path(mb.__file__).read_text(encoding="utf-8"))
+
+
+def test_the_source_host_the_app_uses_comes_from_the_shared_endpoint_function() -> None:
+    from hadavin_sdk import app
+    from hadavin_sdk.sources.kinds import source_endpoint
+
+    src = _source("https://K8S.example.test:6443")
+    assert source_endpoint(src) == "https://K8S.example.test:6443"
+    assert app._source_host(src) == "k8s.example.test"
+
+
+def test_a_real_config_with_an_outside_egress_host_or_source_gets_the_real_banner(
+    tmp_path: Path,
+) -> None:
+    import yaml
+
+    d = make_cfg(tmp_path / "a")
+    (d / "egress.yaml").write_text(
+        yaml.safe_dump({"hosts": ["api.example.test"]}), encoding="utf-8"
+    )
+    b = _banner(load_config(d))
+    assert b.tone == "real" and b.real == (f"component {mb.EGRESS_HOSTS}",)
+    d2 = make_cfg(tmp_path / "b")
+    data = yaml.safe_load((d2 / "config.yaml").read_text(encoding="utf-8"))
+    data["sources"] = {
+        "k": {
+            "kind": "kubernetes",
+            "settings": {"api_url": "https://k8s.example.test", "namespaces": ["x"]},
+        }
+    }
+    (d2 / "config.yaml").write_text(yaml.safe_dump(data), encoding="utf-8")
+    b2 = _banner(load_config(d2))
+    assert b2.tone == "real" and b2.real == (f"component {mb.READ_SOURCES}",)
+    data["sources"]["k"]["settings"]["api_url"] = "http://127.0.0.1:6443"
+    (d2 / "config.yaml").write_text(yaml.safe_dump(data), encoding="utf-8")
+    assert _banner(load_config(d2)).tone == "demo"
+
+
+def test_a_config_that_lost_an_endpoint_field_raises_and_is_never_read_as_nothing(
+    tmp_path: Path,
+) -> None:
+    real = load_config(make_cfg(tmp_path))
+    fields = ("environment", "backends", "systems", "egress_hosts", "sources", "tool_modules")
+    for missing in ("systems", "egress_hosts", "sources", "tool_modules"):
+        kept = {
+            f: getattr(real, f) for f in fields if f != missing
+        }  # a real Config's values, one field gone
+        with pytest.raises(ValueError, match=missing):
+            _banner(SimpleNamespace(**kept))
+        with pytest.raises(ValueError, match=missing):
+            _banner(SimpleNamespace(**{**kept, missing: None}))
+
+
+def test_an_empty_made_up_sentence_is_an_error_not_a_switched_off_check() -> None:
+    tags = {"demo": "DEMO", "pilot": "PILOT", "prod": "LIVE"}
+    for field in ("made_up", "nothing_sent"):
+        words = mb.BannerWords(tag_by_mode=tags, **{field: "  "})
+        with pytest.raises(ValueError, match="must not be empty"):
+            _banner(_fake_config("demo", [("llm", "fake")]), words=words)
+
+
+NAME_TABLE = [
+    ("Real services are connected: CRM. Data may be sent.", "CRM", True),
+    ("connected: CRMS.", "CRM", False),
+    ("connected: xCRM.", "CRM", False),
+    ("connected: CRM-2.", "CRM", False),
+    ("connected: my-CRM.", "CRM", False),
+    ("connected: CRM_x.", "CRM", False),
+    ("connected: CRM2.", "CRM", False),
+    ("connected: CRM.v2 ", "CRM", False),
+    ("connected: a.CRM ", "CRM", False),
+    ("connected: CRM.", "CRM", True),
+    ("connected: (CRM).", "CRM", True),
+    ("connected: CRM, mail.", "CRM", True),
+    ("connected: CRMS and CRM.", "CRM", True),  # a longer word first, then the whole name
+    ("connected: CRM and CRMS.", "CRM", True),
+    ("connected: CRMS and xCRM.", "CRM", False),
+    ("connected: crm.", "CRM", False),  # the match is case-sensitive in both
+    ("connected: CRM.\u00e9", "CRM", True),  # a non-ASCII letter does not join in either
+]
+
+
+def test_names_in_follows_the_table() -> None:
+    for text, name, expected in NAME_TABLE:
+        assert mb.names_in(text, name) is expected, (text, name)
+    assert mb.names_in("anything", "") is False
+
+
+@needs_node
+def test_the_page_and_python_agree_on_every_row_of_the_name_table() -> None:
+    for text, name, expected in NAME_TABLE:
+        banner = {
+            "mode": "pilot", "tone": "real", "tag": "PILOT", "text": text, "standins": "",
+            "real": [name], "stand_ins": [],
+        }  # fmt: skip
+        page_says_named = _paint(banner)["tone"] == "real"
+        assert page_says_named is expected is mb.names_in(text, name), (text, name)

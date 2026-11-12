@@ -2,7 +2,7 @@
 
 A reader of a demo screen must never mistake pretend services for real ones, and a reader of a real screen must never
 be told its data is made up. This module is the only place the words live. A screen (web page, console, report)
-receives the finished banner from `banner_from_config(config).as_dict()` and only paints it; the ready-made painter for
+receives the finished banner from `banner_from_config(config, tool_specs=registry.tools).as_dict()` and only paints it; the ready-made painter for
 a web page is `templates/mode-banner/mode_banner.js`.
 
 The stage and both lists of services (the real ones and the pretend ones, called stand-ins) are read from the loaded
@@ -15,15 +15,26 @@ names shown to people come from the caller (config), never from this file, and a
 a line break, markup, or a word that would change what the banner says (made-up, demo, real, stand-in, nothing is).
 
 Rules the tests pin:
-  * made-up data is claimed only in the demo stage with no real service connected;
+  * made-up data is claimed only in the demo stage with no real service connected, and "connected" covers every field of
+    the config that can name an endpoint: the backends, `systems`, `egress_hosts`, `sources` and the hosts named by the
+    tool manifests (`tool_specs`, required: a caller that cannot give them passes None and a configured tool module then
+    counts as one real service);
+  * before a banner leaves, one check confirms that it names every real service as a whole word, that a real, pilot or live
+    banner never holds the made-up sentences, and that a demo banner names no real service;
   * every real service that is connected is named in the text, in the order given, once;
   * the stand-ins are listed in every stage (loudly in the demo stage), so a pilot or live system never hides them;
   * a banner is always shown: there is no "hidden" state, so a missing banner can never be read as "all is real".
+
+Limits, stated where the made-up sentence is made: (1) "this machine" means the loopback names of `guard.http.LOOPBACK`; a
+loopback address can still be a port-forward, a tunnel or a sidecar that leads off the machine, and the banner cannot see
+that. (2) Tool code runs in this process and is reviewed, not sandboxed: it could open a socket the manifest does not name;
+the banner counts what the manifests name. (3) The banner is worked out when `banner_from_config` is called; a caller that
+keeps it, or a config whose fields are changed afterwards, can show an out-of-date banner: call it again when the config is
+loaded again.
 """
 
 from __future__ import annotations
 
-import ipaddress
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
@@ -31,17 +42,26 @@ from typing import Any, Protocol
 from urllib.parse import urlsplit
 
 from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD
+from hadavin_sdk.guard.egress import normalise_host
+from hadavin_sdk.guard.http import LOOPBACK
+from hadavin_sdk.sources.kinds import source_endpoint
 from hadavin_sdk.stages import STAGES
 
 # The one way in is `banner_from_config`. The older public names `banner_for`, `services_in` and `stand_ins_in` are
 # gone (the lower-level pieces keep a leading underscore); a test pins that.
 __all__ = [
     "DEFAULT_WORDS",
+    "EGRESS_HOSTS",
+    "EXTERNAL_SYSTEMS",
     "MAX_TEXT_LENGTH",
+    "READ_SOURCES",
     "TONES",
+    "TOOL_HOSTS",
+    "TOOL_MODULES",
     "BannerWords",
     "ModeBanner",
     "banner_from_config",
+    "names_in",
     "not_confirmed",
 ]
 
@@ -81,7 +101,7 @@ class BannerWords:
 
     tag_by_mode: Mapping[str, str]
     made_up: str = "Every record here is made-up demo data."
-    nothing_sent: str = "Nothing here is sent to real customers or real systems."
+    nothing_sent: str = "Nothing here is set up to send data to real customers or real systems."
     real_connected: str = "Real services are connected: {names}."
     real_data_note: str = "Data this system handles may be sent to them."
     standins_loud: str = "MADE-UP STAND-INS IN USE: {names}. These are pretend versions of real services. They are not connected."
@@ -194,18 +214,34 @@ def _banner_for(
     return banner
 
 
+def names_in(text: str, name: str) -> bool:
+    """True when `name` is in `text` as a whole name. A neighbouring letter, digit, "_" or "-" makes it part of a longer
+    word, and so does a "." with a letter or digit beyond it ("CRM.v2", "x.CRM"); a sentence-ending "." does not. The page
+    script (`templates/mode-banner/mode_banner.js`, `hasName`) applies the same rule; a test runs both on one table."""
+    if not name:
+        return False
+    word = "A-Za-z0-9_-"
+    pattern = (
+        rf"(?<![{word}])(?<![A-Za-z0-9]\.)" + re.escape(name) + rf"(?![{word}])(?!\.[A-Za-z0-9])"
+    )
+    return re.search(pattern, text) is not None
+
+
 def _check_what_is_claimed(banner: ModeBanner, words: BannerWords) -> None:
     """The last check before a banner leaves: what it says must agree with what it was built from. A banner that names
-    a real service lists every one of them in its text and never holds the made-up sentences; a quiet banner (pilot or
-    live, nothing real) never holds them either; the made-up claim appears only in a demo banner, which names no real service.
-    A reworded `BannerWords` that breaks one of these raises here, instead of reaching a screen."""
+    a real service lists every one of them in its text (as a whole name) and never holds the made-up sentences; a quiet
+    banner (pilot or live, nothing real) never holds them either; the made-up claim appears only in a demo banner, which
+    names no real service. A reworded `BannerWords` that breaks one of these, or leaves a claim sentence empty (which would
+    switch the check off), raises here instead of reaching a screen."""
     claim = (words.made_up, words.nothing_sent)
+    if not all(isinstance(c, str) and c.strip() for c in claim):
+        raise ValueError("the made-up sentences of the banner words must not be empty")
     said = banner.text + " " + banner.standins
     if banner.real:
-        missing = [n for n in banner.real if n not in banner.text]
+        missing = [n for n in banner.real if not names_in(banner.text, n)]
         if missing:
             raise ValueError(f"the banner text does not name every real service: {missing}")
-    if banner.tone != "demo" and any(c and c in said for c in claim):
+    if banner.tone != "demo" and any(c in said for c in claim):
         raise ValueError(
             "a banner with a real service, or a pilot or live one, claims made-up data"
         )
@@ -224,7 +260,7 @@ class _Backends(Protocol):
 
 class ConfigLike(Protocol):
     """What the banner reads from a loaded `Config`: the stage, the chosen kind of every component, and (when it has them)
-    `systems`, `egress_hosts` and `sources`, the other fields that can name an endpoint."""
+    `systems`, `egress_hosts`, `sources` and `tool_modules`, the other fields that can name an endpoint."""
 
     @property
     def environment(self) -> str: ...
@@ -232,70 +268,110 @@ class ConfigLike(Protocol):
     @property
     def backends(self) -> _Backends: ...
 
+    @property
+    def systems(self) -> Mapping[str, Any]: ...
+
+    @property
+    def egress_hosts(self) -> Iterable[str]: ...
+
+    @property
+    def sources(self) -> Mapping[str, Any]: ...
+
+    @property
+    def tool_modules(self) -> Sequence[str]: ...
+
 
 # The keys of the real services that are not backends. A caller may give each a nicer shown name through `names`.
 EXTERNAL_SYSTEMS = "external-systems"
 EGRESS_HOSTS = "egress-hosts"
 READ_SOURCES = "read-sources"
+TOOL_HOSTS = "tool-hosts"
+TOOL_MODULES = "tool-modules"
 
 
 def _is_this_machine(host: object) -> bool:
-    """True only for "localhost" or a loopback address. An empty, missing or odd host is NOT this machine."""
-    if not isinstance(host, str) or not host:
-        return False
-    if host.rstrip(".").casefold() == "localhost":
-        return True
-    try:
-        return ipaddress.ip_address(host.strip("[]")).is_loopback
-    except ValueError:
-        return False
+    """True only for a host that the connection guard reads as this machine (`guard.http.LOOPBACK`, after the guard's own
+    `normalise_host`: NFKC, lower case, no trailing dot). An empty, missing or odd host is NOT this machine."""
+    return isinstance(host, str) and bool(host) and normalise_host(host) in LOOPBACK
 
 
 def _url_leaves_this_machine(url: object) -> bool:
-    """True when `url` names a host that is not this machine. A value that cannot be read as a url counts as leaving:
-    naming too much is the safe mistake."""
+    """True when `url` names a host that is not this machine. It reads a url the way the tool client does
+    (`tools.py`, `ToolContext.fetch`): a backslash, white space, a control or non-ASCII character, a percent sign or an
+    `@` in the host part, or a value that cannot be read, counts as leaving: naming too much is the safe mistake."""
+    if not isinstance(url, str) or re.search(r"[\\\s\x00-\x1f\x7f]", url) or not url.isascii():
+        return True
     try:
-        return not _is_this_machine(urlsplit(url).hostname) if isinstance(url, str) else True
+        parts = urlsplit(url)
+        host = parts.hostname
     except ValueError:
         return True
+    if "%" in parts.netloc or "%" in parts.path or "@" in parts.netloc:
+        return True
+    return not _is_this_machine(host)
 
 
 def _source_leaves_this_machine(source: object) -> bool:
     """True when a configured read source points at a host that is not this machine, or when its endpoint cannot be
     worked out (a kind this file does not know, settings that do not build)."""
     try:
-        from hadavin_sdk.sources.kinds import KINDS
-
-        kind = KINDS[getattr(source, "kind", None)]
-        return _url_leaves_this_machine(kind.endpoint(kind.settings(**source.settings)))
+        return _url_leaves_this_machine(source_endpoint(source))
     except Exception:  # noqa: BLE001 - any failure means "unknown", and unknown is shown as real
         return True
 
 
-def _outside_endpoints(config: object) -> list[str]:
+def _field(config: object, name: str, kind: type | tuple[type, ...]) -> Any:
+    """A field of the config that can name an endpoint. A config without it, or with a value of the wrong type, raises:
+    a missing field must never read as "empty, so nothing is sent"."""
+    value = getattr(config, name, None)
+    if value is None:
+        raise ValueError(f"the config has no {name}: the banner cannot say what it is connected to")
+    if not isinstance(value, kind):
+        raise TypeError(f"the config's {name} is a {type(value).__name__}, not a usable value")
+    return value
+
+
+def _outside_endpoints(config: object, tool_specs: object) -> list[str]:
     """The keys of the places a config can send data to besides its backends: a system whose base_url is not this
-    machine, any egress host that is not this machine, a read source whose endpoint is not this machine. A tool
-    module can reach only the systems, egress hosts and sources named here (the network guard refuses the rest), so it
-    adds no key of its own. Fields a config does not have are read as empty."""
+    machine, any egress host that is not this machine, a read source whose endpoint is not this machine, a host named by
+    a tool manifest that is not this machine. `tool_specs` is the registry's `tools` (agent -> tool name -> spec); None
+    means the caller cannot give them, and then a configured tool module counts as one real service. Tool code is
+    reviewed, not sandboxed (see the module docstring), so the hosts its manifest names are what can be counted."""
     found: list[str] = []
-    systems = getattr(config, "systems", None) or {}
+    systems = _field(config, "systems", Mapping)
     if any(_url_leaves_this_machine(getattr(s, "base_url", None)) for s in systems.values()):
         found.append(EXTERNAL_SYSTEMS)
-    egress = getattr(config, "egress_hosts", None) or ()
+    egress = _field(config, "egress_hosts", (set, frozenset, list, tuple))
     if any(not _is_this_machine(h) for h in egress):
         found.append(EGRESS_HOSTS)
-    sources = getattr(config, "sources", None) or {}
+    sources = _field(config, "sources", Mapping)
     if any(_source_leaves_this_machine(src) for src in sources.values()):
         found.append(READ_SOURCES)
+    modules = _field(config, "tool_modules", (list, tuple))
+    if tool_specs is None:
+        if modules:
+            found.append(TOOL_MODULES)
+    else:
+        if not isinstance(tool_specs, Mapping):
+            raise TypeError(
+                f"tool_specs must be the registry's tools mapping or None, not {type(tool_specs).__name__}"
+            )
+        if any(
+            not _is_this_machine(host)
+            for by_name in tool_specs.values()
+            for spec in by_name.values()
+            for host in getattr(spec, "hosts", None) or ()
+        ):
+            found.append(TOOL_HOSTS)
     return found
 
 
-def _services_in(config: ConfigLike) -> tuple[tuple[str, ...], tuple[str, ...]]:
+def _services_in(config: ConfigLike, tool_specs: object) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """(real, stand_ins): the component names of a loaded `Config`, sorted by kind. A stand-in is a component whose
     chosen kind is one of the demo-only kinds (`backends.table.DEMO_ONLY`, the same table that makes config refuse those
     kinds outside the demo stage); a component that connects to nothing outside the process is left out; every other
-    component is real. Beside the backends, a system, an egress host or a read source that is not this machine is real
-    too (`_outside_endpoints`): the made-up sentence says nothing is sent to real systems, so it is checked against
+    component is real. Beside the backends, a system, an egress host, a read source or a tool-manifest host that is not
+    this machine is real too (`_outside_endpoints`): the made-up sentence says nothing is sent to real systems, so it is checked against
     every field that can name an endpoint, not the backends alone. An entry without a kind raises ValueError: it is
     not guessed into a list."""
     real: list[str] = []
@@ -310,7 +386,7 @@ def _services_in(config: ConfigLike) -> tuple[tuple[str, ...], tuple[str, ...]]:
             stand_ins.append(component)
         elif (component, kind) not in _NOTHING_CONNECTED:
             real.append(component)
-    real += _outside_endpoints(config)
+    real += _outside_endpoints(config, tool_specs)
     return tuple(real), tuple(stand_ins)
 
 
@@ -318,10 +394,15 @@ def banner_from_config(
     config: ConfigLike,
     names: Mapping[str, str] | None = None,
     words: BannerWords = DEFAULT_WORDS,
+    *,
+    tool_specs: object,
 ) -> ModeBanner:
     """The banner of a loaded `Config`: the stage is `config.environment`, and the real services and stand-ins come
-    from `config.backends.entries()` (see `_services_in`). This is the one place the decision is made."""
-    real, stand_ins = _services_in(config)
+    from `config.backends.entries()`, the endpoint fields and `tool_specs` (see `_services_in`). `tool_specs` has no
+    default, so forgetting it is a TypeError and never a silent "nothing real": pass the registry's `tools` (agent ->
+    tool name -> spec), or None when you cannot (a configured tool module then counts as one real service). This is the
+    one place the decision is made."""
+    real, stand_ins = _services_in(config, tool_specs)
     return _banner_for(
         config.environment, real_services=real, stand_ins=stand_ins, names=names, words=words
     )

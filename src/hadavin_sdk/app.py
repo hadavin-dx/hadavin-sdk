@@ -34,7 +34,7 @@ from hadavin_sdk.registry import Registry, load_registry
 from hadavin_sdk.runtime import evidence
 from hadavin_sdk.runtime.agent_loop import Hooks, Runtime
 from hadavin_sdk.sources import Source
-from hadavin_sdk.sources.kinds import KINDS
+from hadavin_sdk.sources.kinds import KINDS, source_endpoint
 from hadavin_sdk.stages import is_live
 from hadavin_sdk.store import Store
 from hadavin_sdk.store.protocol import missing_methods
@@ -346,8 +346,7 @@ def _build_source(
 
 
 def _source_host(sc) -> str:
-    kind = KINDS[sc.kind]
-    return (urlsplit(kind.endpoint(kind.settings(**sc.settings))).hostname or "").lower()
+    return (urlsplit(source_endpoint(sc)).hostname or "").lower()
 
 
 def _unprobed_tools(cfg: Config, reg: Registry) -> list[str]:

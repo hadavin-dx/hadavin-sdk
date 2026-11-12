@@ -170,8 +170,8 @@ def test_ignored_files_and_binary_endings_are_skipped(tmp_path: Path) -> None:
     repo = _repo(
         tmp_path, {**CLEAN, "src/pkg/__pycache__/x.py": FOLDER, ".gitignore": "__pycache__/\n"}
     )
-    (repo / "src/pkg/logo.png").write_bytes(b"\xff\xfe" + FOLDER.encode())
-    (repo / "src/pkg/LOGO.PNG").write_bytes(b"\xff\xfe" + FOLDER.encode())
+    (repo / "src/pkg/logo.png").write_bytes(b"\xff\xfe" + b"pixels")
+    (repo / "src/pkg/LOGO.PNG").write_bytes(b"\x89PNG\x00\x00 pixels")
     assert g.scan(repo, _cfg()) == []
 
 
@@ -548,7 +548,7 @@ def test_a_listed_phrase_is_matched_in_its_own_case_and_not_beside_a_dash(tmp_pa
         assert g.scan(bad, cfg) == ["src/pkg/c.py:2: names-demo-only-folder"], line
 
 
-def test_a_text_file_renamed_to_a_binary_ending_is_read_but_a_real_binary_is_skipped(
+def test_a_text_file_renamed_to_a_binary_ending_is_read_and_a_real_binary_is_searched_as_bytes(
     tmp_path: Path,
 ) -> None:
     repo = _repo(tmp_path, {**CLEAN, "src/pkg/notes.png": f"see {FOLDER}\n"})
@@ -557,7 +557,13 @@ def test_a_text_file_renamed_to_a_binary_ending_is_read_but_a_real_binary_is_ski
     (real / "src/pkg/logo.png").write_bytes(
         b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR" + FOLDER.encode()
     )
-    assert g.scan(real, _cfg()) == []  # a NUL byte near the start: a real binary, skipped
+    # a NUL byte near the start: a real binary, not read as text; its bytes are searched for the name instead
+    assert g.scan(real, _cfg()) == [
+        "src/pkg/logo.png: names-demo-only-folder (inside a binary file)"
+    ]
+    clean = _repo(tmp_path / "clean", CLEAN)
+    (clean / "src/pkg/logo.png").write_bytes(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR")
+    assert g.scan(clean, _cfg()) == []
     zeroes = _repo(
         tmp_path / "late", CLEAN
     )  # a NUL only after the first 8192 bytes does not make it binary
@@ -579,6 +585,78 @@ def test_a_submodule_under_a_product_root_is_a_hit_and_one_outside_is_not(tmp_pa
     repo = _repo(tmp_path, CLEAN)
     _gitlink(repo, "src/vendored")
     _gitlink(repo, "elsewhere/vendored")
+    assert g.scan(repo, _cfg()) == [
+        "src/vendored: submodule-in-product-root (its files cannot be scanned)"
+    ]
+
+
+# -- round 4 ---------------------------------------------------------------------------------------------------------
+def test_a_full_width_spelling_of_the_name_is_a_hit_in_a_line_and_in_a_path(tmp_path: Path) -> None:
+    wide = "".join(
+        chr(ord(c) + 0xFEE0) if c.isalpha() else c for c in FOLDER
+    )  # full-width letters, ASCII "_"
+    wide_all = wide.replace("_", chr(0xFF3F))  # and the full-width underscore
+    for i, spelling in enumerate((wide, wide_all)):
+        repo = _repo(tmp_path / f"l{i}", {**CLEAN, "src/pkg/a.py": f"from {spelling} import y\n"})
+        assert g.scan(repo, _cfg()) == ["src/pkg/a.py:1: names-demo-only-folder"], spelling
+        path_repo = _repo(tmp_path / f"p{i}", {**CLEAN, f"src/pkg/{spelling}/x.py": "X = 1\n"})
+        assert g.scan(path_repo, _cfg()) == [f"src/pkg/{spelling}: folder-inside-product-root"]
+
+
+def test_a_compiled_or_packed_file_in_a_product_folder_is_refused(tmp_path: Path) -> None:
+    for suffix in (".pyc", ".so", ".zip", ".whl", ".PYC"):
+        repo = _repo(tmp_path / suffix.strip("."), CLEAN)
+        (repo / f"src/pkg/m{suffix}").write_bytes(b"\x00\x01 no name in here")
+        assert g.scan(repo, _cfg()) == [
+            f"src/pkg/m{suffix}: binary-in-product-root (a {suffix.lower()} file cannot be read or hides what it packs)"
+        ]
+
+
+def test_a_binary_is_searched_as_bytes_in_utf8_and_both_utf16_orders(tmp_path: Path) -> None:
+    spellings = {
+        "u8": FOLDER.encode("utf-8"),
+        "le": FOLDER.encode("utf-16-le"),
+        "be": FOLDER.encode("utf-16-be"),
+        "mixed": FOLDER.upper().replace("_", "-").encode("utf-16-le"),
+    }
+    for key, raw in spellings.items():
+        repo = _repo(tmp_path / key, CLEAN)
+        (repo / "src/pkg/blob.gif").write_bytes(b"GIF89a\x00\x01" + raw + b"\x00\x00")
+        assert g.scan(repo, _cfg()) == [
+            "src/pkg/blob.gif: names-demo-only-folder (inside a binary file)"
+        ], key
+
+
+def test_text_written_as_utf16_without_a_mark_is_found_in_a_text_ending(tmp_path: Path) -> None:
+    repo = _repo(tmp_path, CLEAN)
+    (repo / "src/pkg/notes.txt").write_bytes(f"see {FOLDER}\n".encode("utf-16-le"))
+    assert g.scan(repo, _cfg()) == ["src/pkg/notes.txt: names-demo-only-folder (as UTF-16 text)"]
+
+
+def test_a_binary_that_is_not_valid_text_and_has_no_nul_is_searched_not_skipped(
+    tmp_path: Path,
+) -> None:
+    repo = _repo(
+        tmp_path, CLEAN
+    )  # no NUL anywhere: only the "not valid UTF-8" rule marks it as binary
+    (repo / "src/pkg/a.png").write_bytes(b"\xff\xfe" + FOLDER.encode())
+    (repo / "src/pkg/b.png").write_bytes(b"\xff\xfe pixels only")
+    assert g.scan(repo, _cfg()) == ["src/pkg/a.png: names-demo-only-folder (inside a binary file)"]
+
+
+def test_a_submodule_that_is_listed_as_exempt_is_not_a_second_hit(tmp_path: Path) -> None:
+    repo = _repo(tmp_path, CLEAN)
+    _gitlink(repo, "src/vendored")
+    hits = g.scan(repo, _cfg(exempt_files=("src/vendored",)))
+    assert hits == ["src/vendored: stale-exempt-entry (file does not exist)"]
+
+
+def test_a_submodule_whose_folder_is_missing_is_still_a_hit(tmp_path: Path) -> None:
+    repo = _repo(tmp_path, CLEAN)
+    _gitlink(repo, "src/vendored")
+    (repo / "src/vendored").rmdir()
+    _gitlink(repo, "elsewhere/vendored")
+    (repo / "elsewhere/vendored").rmdir()
     assert g.scan(repo, _cfg()) == [
         "src/vendored: submodule-in-product-root (its files cannot be scanned)"
     ]

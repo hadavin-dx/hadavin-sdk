@@ -10,12 +10,18 @@ under the product folders listed in the settings file (a symlink pointing into t
   * the folder inside a product folder, at any depth, or any file or folder name that holds the folder name;
   * a line that names the folder (upper or lower case; "-", "_" and a space count as the same separator);
   * a made-up record id (the patterns are listed in the settings file);
-  * a submodule (a git link, which is a folder, not a file) under a product folder: its files cannot be scanned;
+  * a submodule (a git link) under a product folder, even when its folder is missing: its files cannot be scanned;
+  * a file ending in .pyc, .so, .zip or .whl under a product folder (it cannot be read, or it packs what it holds);
   * a file that is not text and is not on the skip list of known binary endings (it cannot be read, so it is refused);
   * a loader file (the one place that may pick the folder by configuration) that names it more often than the cap;
   * the folder being present while the copy run is not wired (see the marker file in the settings).
-Every other file type is read, including files without an ending. A file with a known binary ending is skipped only
-when its first 8192 bytes hold a NUL byte or it is not valid text; a text file renamed to a picture ending is read like any other.
+Every other file type is read, including files without an ending. A file with another known binary
+ending is not read as text when its first 8192 bytes hold a NUL byte or it is not valid text; its bytes are searched for the
+name instead (as UTF-8, UTF-16 little-endian and UTF-16 big-endian text). A text file renamed to a picture ending is read like
+any other. Every line and every path part is normalised (NFKC) before it is compared, so a full-width spelling of the name,
+which Python reads as the same identifier, is a hit. A file that holds NUL bytes is also searched for the name written as
+UTF-16 without a byte-order mark. A compressed or encrypted file that is not a .zip or .whl (for example a .gz) is searched as
+bytes only: a name inside the compressed data cannot be found (the copy run catches the case where the product needs it).
 Output per hit: path:line: rule (the matched text is
 never printed). Limits: only files git lists are read, so a file the repository ignores (.gitignore) is not checked, and
 only the product folders in the settings are scanned, so the packaging files at the repository root (for example
@@ -42,6 +48,7 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -60,6 +67,9 @@ DEFAULT_SKIP_SUFFIXES = (
     ".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".zip", ".gz", ".whl",
     ".woff", ".woff2", ".pyc", ".so",
 )  # fmt: skip
+# Endings that are never accepted in a product folder: an importable or loadable file that cannot be read (a sourceless
+# .pyc, a compiled .so) or a packed archive (.zip, .whl) that hides what is inside.
+REFUSED_SUFFIXES = (".pyc", ".so", ".zip", ".whl")
 DEFAULT_MARKER = "tools/demo_only_guard.copy_run"
 _SEP = r"[ _-]+"
 
@@ -182,6 +192,30 @@ def tracked_paths(repo: Path) -> list[str]:
     return sorted({p for p in text.split("\0") if p})
 
 
+def _gitlinks(repo: Path) -> set[str]:
+    """The paths git holds as git links (a submodule: mode 160000), whether or not their folder is on the disk."""
+    done = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
+        ["git", "-C", str(repo), "ls-files", "-s", "-z", "--cached"],  # noqa: S607
+        capture_output=True,
+        check=False,
+    )
+    if done.returncode != 0:
+        raise SystemExit(
+            "demo_only_guard: git ls-files -s failed; refusing to scan with an unknown file list"
+        )
+    out = set()
+    for entry in done.stdout.decode("utf-8", errors="surrogateescape").split("\0"):
+        info, _, path = entry.partition("\t")
+        if path and info.startswith("160000 "):
+            out.add(path)
+    return out
+
+
+def _nfkc(text: str) -> str:
+    """The text as Python reads an identifier: NFKC (full-width letters become plain ones)."""
+    return unicodedata.normalize("NFKC", text)
+
+
 def _under(rel: str, roots: tuple[str, ...]) -> str | None:
     for root in roots:
         r = root.strip("/")
@@ -205,7 +239,7 @@ def scan(repo: Path, cfg: GuardConfig) -> list[str]:
             hits.append(
                 f"{root}: product-root-missing (a missing root would make the scan prove nothing)"
             )
-        if any(name.fullmatch(part) for part in Path(root).parts):
+        if any(name.fullmatch(_nfkc(part)) for part in Path(root).parts):
             hits.append(
                 f"{root}: folder-inside-product-root (it would be packaged with the product)"
             )
@@ -213,7 +247,7 @@ def scan(repo: Path, cfg: GuardConfig) -> list[str]:
         f = repo / rel
         if not f.is_file():
             hits.append(f"{rel}: stale-loader-entry (file does not exist)")
-        elif not name.search(f.read_text(encoding="utf-8", errors="replace")):
+        elif not name.search(_nfkc(f.read_text(encoding="utf-8", errors="replace"))):
             hits.append(f"{rel}: stale-loader-entry (file does not name the folder)")
     for rel in sorted(set(cfg.exempt_files)):
         if not (repo / rel).is_file():
@@ -226,8 +260,16 @@ def scan(repo: Path, cfg: GuardConfig) -> list[str]:
     folder_target = (repo / cfg.folder).resolve()
     roots = tuple(r.strip("/") for r in cfg.product_roots)
     seen_dirs: set[str] = set()
-    for rel in tracked_paths(repo):
+    listed = tracked_paths(repo)  # first: it stops the run when this is not a git checkout
+    gitlinks = _gitlinks(repo)
+    for rel in listed:
         full = repo / rel
+        if (
+            rel in gitlinks
+        ):  # a submodule counts whether or not its folder is on the disk (fail closed)
+            if _under(rel, roots) is not None and rel not in exempt:
+                hits.append(f"{rel}: submodule-in-product-root (its files cannot be scanned)")
+            continue
         try:
             is_link = full.is_symlink()
             # git lists a submodule (a git link) as a folder
@@ -254,19 +296,18 @@ def scan(repo: Path, cfg: GuardConfig) -> list[str]:
         parts = rel.split("/")
         for depth in range(len(root.split("/")) + 1, len(parts)):
             d = "/".join(parts[:depth])
-            if d in seen_dirs or d in loaders or not name.search(parts[depth - 1]):
+            part = _nfkc(parts[depth - 1])
+            if d in seen_dirs or d in loaders or not name.search(part):
                 continue
             seen_dirs.add(d)
             same = (
                 "folder-inside-product-root"
-                if name.fullmatch(parts[depth - 1])
+                if name.fullmatch(part)
                 else "path-names-demo-only-folder"
             )
             hits.append(f"{d}: {same}")
-        if rel not in loaders and name.search(parts[-1]):
+        if rel not in loaders and name.search(_nfkc(parts[-1])):
             hits.append(f"{rel}: path-names-demo-only-folder")
-        if full.suffix.lower() in cfg.skip_suffixes and _looks_binary(full):
-            continue
         hits += _scan_file(full, rel, cfg, name, phrases, used, rel in loaders)
     hits += [
         f"tools/demo_only_guard.toml: stale-allowed-phrase ({p})"
@@ -276,13 +317,9 @@ def scan(repo: Path, cfg: GuardConfig) -> list[str]:
     return list(dict.fromkeys(hits))
 
 
-def _looks_binary(path: Path) -> bool:
-    """True when a file with a known binary ending really is not text: a NUL byte in its first 8192 bytes, or bytes that
-    are not valid UTF-8. A text file renamed to a binary ending is read by the scan instead of skipped."""
-    try:
-        data = path.read_bytes()
-    except OSError:
-        return True  # unreadable: the scan cannot read it either, and the ending says binary
+def _looks_binary(data: bytes) -> bool:
+    """True when the bytes of a file with a known binary ending really are not text: a NUL byte in the first 8192 bytes,
+    or bytes that are not valid UTF-8. A text file renamed to a binary ending is read by the scan instead."""
     if b"\0" in data[:8192]:
         return True
     try:
@@ -290,6 +327,17 @@ def _looks_binary(path: Path) -> bool:
     except UnicodeDecodeError:
         return True
     return False
+
+
+def _byte_patterns(folder: str) -> dict[str, re.Pattern[bytes]]:
+    """The folder name as bytes in each spelling a text could hold it: UTF-8, UTF-16 little-endian and UTF-16
+    big-endian (no byte-order mark), in any ASCII case, with "_", "-" and a space as one separator."""
+    parts = [p for p in re.split(_SEP, folder) if p]
+    out = {}
+    for enc in ("utf-8", "utf-16-le", "utf-16-be"):
+        sep = b"(?:" + b"|".join(re.escape(c.encode(enc)) for c in " _-") + b")+"
+        out[enc] = re.compile(sep.join(re.escape(p.encode(enc)) for p in parts), re.IGNORECASE)
+    return out
 
 
 def _scan_file(
@@ -301,13 +349,28 @@ def _scan_file(
     used: set[str],
     is_loader: bool,
 ) -> list[str]:
+    """The hits of one file in a product folder. The file is read once."""
+    suffix = path.suffix.lower()
+    if suffix in REFUSED_SUFFIXES:
+        return [
+            f"{rel}: binary-in-product-root (a {suffix} file cannot be read or hides what it packs)"
+        ]
     try:
-        text = path.read_bytes().decode("utf-8")
-    except (OSError, UnicodeDecodeError):
+        data = path.read_bytes()
+    except OSError:
+        return [f"{rel}: unreadable-file (not text and not on the list of known binary endings)"]
+    byte_names = _byte_patterns(cfg.folder)
+    if suffix in cfg.skip_suffixes and _looks_binary(data):
+        hit = any(rx.search(data) for rx in byte_names.values())
+        return [f"{rel}: names-demo-only-folder (inside a binary file)"] if hit else []
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
         return [f"{rel}: unreadable-file (not text and not on the list of known binary endings)"]
     hits: list[str] = []
     loader_lines = 0
-    for n, line in enumerate(text.splitlines(), 1):
+    for n, raw in enumerate(text.splitlines(), 1):
+        line = _nfkc(raw)
         shown = line
         for phrase, rx in phrases.items():
             shown, count = rx.subn("\0", shown)
@@ -322,6 +385,8 @@ def _scan_file(
                     hits.append(f"{rel}:{n}: loader-names-folder-too-often")
         if any(p.search(line) for p in cfg.fake_id_patterns):
             hits.append(f"{rel}:{n}: fake-record-id")
+    if b"\0" in data and any(byte_names[e].search(data) for e in ("utf-16-le", "utf-16-be")):
+        hits.append(f"{rel}: names-demo-only-folder (as UTF-16 text)")
     return hits
 
 

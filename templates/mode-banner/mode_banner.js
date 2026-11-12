@@ -22,14 +22,21 @@
     for (var i = 0; i < v.length; i++) if (typeof v[i] !== 'string' || v[i].length === 0) return false;
     return true;
   }
-  // True when `name` is in `text` as whole words: the characters beside it are not letters or digits, so a short name
-  // such as "CRM" is not found inside another word. (The names are plain words; the Python side is the real gate.)
+  // True when `name` is in `text` as a whole name (the same rule as hadavin_sdk.mode_banner.names_in, which a test runs
+  // against this function on one table): a neighbouring letter, digit, "_" or "-" makes it part of a longer word, and so
+  // does a "." with a letter or digit beyond it ("CRM.v2", "x.CRM"); a sentence-ending "." does not.
+  function isWordPart(c) { return c !== '' && /[A-Za-z0-9_-]/.test(c); }
+  function isAlnum(c) { return c !== '' && /[A-Za-z0-9]/.test(c); }
   function hasName(text, name) {
+    if (name === '') return false;
     var at = text.indexOf(name);
     while (at >= 0) {
+      var end = at + name.length;
       var before = at === 0 ? '' : text.charAt(at - 1);
-      var after = text.charAt(at + name.length);
-      if (!/[A-Za-z0-9]/.test(before) && !/[A-Za-z0-9]/.test(after)) return true;
+      var after = text.charAt(end);
+      var joinedBefore = isWordPart(before) || (before === '.' && isAlnum(at >= 2 ? text.charAt(at - 2) : ''));
+      var joinedAfter = isWordPart(after) || (after === '.' && isAlnum(text.charAt(end + 1)));
+      if (!joinedBefore && !joinedAfter) return true;
       at = text.indexOf(name, at + 1);
     }
     return false;
@@ -76,14 +83,19 @@
     return nodes;
   }
   function fill(el, b, nodes) {
+    // The words go in first as plain text, so a failure in the steps below never leaves the element blank; if even
+    // this write fails nothing has been cleared and the previous text stays.
+    el.textContent = b.tag + ' ' + b.text;
     el.textContent = '';
     for (var i = 0; i < nodes.length; i++) el.appendChild(nodes[i]);
     el.setAttribute('data-tone', b.tone);
     el.setAttribute('data-mode', b.mode);
     el.hidden = false;
   }
-  // Paints the banner into `el` and returns the banner that was painted. The nodes are built BEFORE `el` is touched,
-  // so a failure never leaves it empty or half old; if painting fails the "not confirmed" text is put in as plain text.
+  // Paints the banner into `el` and returns the banner that was painted. The nodes are built BEFORE `el` is touched, and
+  // the plain words are written before anything is cleared (see fill), so a failure never leaves it empty; if painting
+  // fails the "not confirmed" text is put in as plain text, and if that write fails too the previous text stays and the
+  // element is unhidden.
   function paint(el, banner, doc) {
     var b = NOT_CONFIRMED;
     var nodes = null;
