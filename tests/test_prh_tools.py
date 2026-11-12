@@ -576,6 +576,8 @@ def test_b6_the_backstop_withholds_without_the_piece_check(monkeypatch):
         return out + " leak " + hexkey.upper() if len(calls) >= 2 else out
 
     monkeypatch.setattr(tools, "_scrub_layers", later_calls_leak)
+    # the piece check is off (a 32-character secret is its own stretch at the widest setting, so it is switched off here)
+    monkeypatch.setattr(tools, "_has_piece", lambda *_a, **_k: False)
     out = tools._scrub(
         "auth failed for " + hexkey + " end" + ESC + "[0m",
         [hexkey],

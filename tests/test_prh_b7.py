@@ -306,9 +306,18 @@ def test_b7_i2_a_work_limit_on_a_small_text_gives_the_withheld_note_not_an_error
         raise runmap.RedactionLimit("forced")
 
     monkeypatch.setattr(runmap, "redact_untrusted", refuse)
-    assert tools.redact_layered("a small text", {}) == MARKER + TRUNCATED
-    assert isinstance(tools.prepare_output("a small text", {}, 4000, [HAND]), str)
-    assert isinstance(tools.error_reason(ValueError("a small text"), [HAND]), str)
+    outs = []
+    for call in (
+        lambda: tools.redact_layered("a small text", {}),
+        lambda: tools.prepare_output("a small text", {}, 4000, [HAND]),
+        lambda: tools.error_reason(ValueError("a small text"), [HAND]),
+    ):
+        try:
+            outs.append(call())
+        except runmap.RedactionLimit:
+            outs.append(None)
+    assert None not in outs, outs
+    assert outs[0] == MARKER + TRUNCATED
 
 
 @pytest.mark.parametrize(
@@ -321,7 +330,10 @@ def test_b7_i2_a_work_limit_on_a_small_text_gives_the_withheld_note_not_an_error
 )
 def test_b7_i4_mutant_86_a_whole_and_a_cut_copy_are_both_masked_with_no_error(text):
     """Mutant 86: needed values counted per value, not per copy: the cut copy raised a limit or left its tail (`LE`)."""
-    out = runmap.redact_untrusted(text, {})
+    try:
+        out = runmap.redact_untrusted(text, {})
+    except runmap.RedactionLimit:
+        out = "(refused)"
     assert out.count("<APIKEY_") == 2 and "LE" not in out.replace("<APIKEY_", ""), repr(out)
 
 
@@ -329,8 +341,11 @@ def test_b7_i4_mutant_87_a_remnant_of_a_masked_value_is_refused_not_shown():
     """Mutant 87: `AKIAIO(BSFODNN7EXAMPLE` (the charset sequence ate nothing the key needs, a letter is left) beside a whole
     key: the consuming reading masks one copy and leaves a remnant of the other; the text is refused (`RedactionLimit`)."""
     text = "AKIAIO" + ESC + "(BSFODNN7EXAMPLE " + KEY
-    with pytest.raises(runmap.RedactionLimit):
-        runmap.redact_untrusted(text, {})
+    try:
+        shown = runmap.redact_untrusted(text, {})
+    except runmap.RedactionLimit:
+        shown = None
+    assert shown is None, repr(shown)
     for out in both(text, HAND):
         assert not stands(out, KEY, 8), repr(out)
 
