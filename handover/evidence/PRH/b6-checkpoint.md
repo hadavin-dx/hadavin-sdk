@@ -15,3 +15,8 @@ Blockers: none. Heavy slots all busy at 02:40 UTC.
 Done: H1 per-copy counts, H2 no `return raw`, H3 spaced character reading, d3/d11, errata 8.7, mutants 72-81, floor 81, worst pass count 14. Full pytest 12962 passed at 8d5f41d8.
 Next: final mutant run at the head (42 may still survive), cost compare, full pytest at final head.
 Blockers: heavy slots were busy (queue waits of 15+ minutes).
+
+## Checkpoint 04:04 UTC (resumed 03:44, 45-minute box)
+Done: 81 of 81 mutants good at 931d7396 (rc=0; mutant 42 is killed by the hex-in-capitals test). Next: cost compare (queued), then full pytest at the final head, then light gates and push. Blockers: heavy slots (waited about 18 minutes for the mutant run).
+
+## Final 04:12 UTC: all gates green at 931d7396 (see b6/NOTES.md). Nothing left.

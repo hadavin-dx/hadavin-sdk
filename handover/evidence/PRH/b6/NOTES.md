@@ -6,10 +6,9 @@ Builder run 2026-11-12 from 02:21 UTC (07:51 IST). Worktree `/home/user/build/B-
 
 - Full `pytest -m "not live and not perf"` at head 8d5f41d8: run 1 had 148 failed and 30 errors, all Postgres, caused by my own cluster being created with SQL_ASCII encoding (log kept as `B-PRH-b6-full-run1-pg-sqlascii.log`). Run 2 (UTF8) had 1 failed: `tests/demo_askdata/test_validate_harm.py` (dblink from the server could not find a socket because I had started the server without PGHOST/PGPORT in the SERVER environment; log kept as `B-PRH-b6-full-run2-dblink-fail.log`). Run 3 (server restarted with PGHOST/PGPORT): `12962 passed, 1 skipped, 62 deselected in 346.37s`, exit 0. No PRH test ever failed.
 - Timing flake `test_the_timing_harness_flags_a_quadratic_stand_in`: did not fail in run 3; not touched.
-- gitleaks: see the end of this file.
-- Mutants (`tests/prh_mutants.py`, 81): run at 8d5f41d8 gave 79 of 81 good (42 and 53 survived: the new piece net hid them; logs `B-PRH-b6-mut-run1-2survivors.log`). I pointed 53 and 42 at piece-check-off tests. Run at 3c244d4c: 80 of 81, only 42 survived (log `B-PRH-b6-mut-run2-1survivor.log`). I then changed the 42 twin test to a hex secret leaked in capitals (the backstop reads hex in any case, the piece net does not); that test passes, but the FINAL mutant run at the head was still waiting for a heavy slot when I stopped: NOT VERIFIED that 42 is now killed. Next step: run `python tests/prh_mutants.py` in a detached worktree at the head.
-- Cost compare (`tests/test_prh_perf.py --compare-main`): NOT RUN (no heavy slot in time). Before-numbers from batch 5: 2.78, 3.36, 4.68, 3.28 at 262,144 characters, S1-S5 0.98 to 1.03. Batch 6 adds `_has_piece` (at most 64 windows per form) and a second reading in `redact`; the effect is unmeasured.
-- The full pytest run (12962 passed) was at 8d5f41d8; two test-only commits (mutant re-pointing, two new tests) followed. Those tests pass alone, the full suite was not re-run after them.
+- Mutants: first runs had survivors (79 of 81 at 8d5f41d8; 80 of 81 at 3c244d4c; mutant 42 last). Logs `B-PRH-b6-mut-run1-2survivors.log`, `-run2-1survivor.log`. Final run at head 931d7396: `81 of 81 good; problems: []`, rc=0.
+- Cost compare at 931d7396 vs main 2a8c2aac (`--compare-main`, rc=0), 262,144 characters, ratio head/main: S1 1.00, S2 1.01, S3 1.01, S4 0.94, S5 1.04; H1 2.70, H2 3.26, H3 4.72, H4 3.38. Batch 5 was H 2.78, 3.36, 4.68, 3.28 and S 0.98 to 1.03: no row got worse beyond noise; `_has_piece` adds no measurable cost. The H rows are still about 3 to 5 times main: that is the cost of reading the text several ways, unchanged from batch 5.
+- Full pytest at 931d7396 (gate on exit code): `12963 passed, 1 skipped, 62 deselected in 350.56s`, rc=0.
 - Hostile-mix availability cost: 4000 seeds, 8000 outputs, 0 pieces of 4 or more characters standing, but about 38% of the hostile outputs are withheld (MARKER+TRUNCATED). That is a real loss of availability on hostile mixes only; plain text and single or double copies are unchanged (availability pin in the H1 rows).
 - R5-1 (CONTESTED, 71 of 71): untouched as a claim. Mutants 58 and 59 had to be re-pointed because the code they patch moved (forced by the fix); the contest is not changed by this.
 - Gates at head 8d5f41d8: ruff check exit 0 ("All checks passed!"); ruff format --check exit 0 (339 files already formatted); bandit -ll exit 0 (only the nosec B102 warning at tools.py:389); scan_repo exit 0; stage_mutants "37 of 37 good; problems: []".
@@ -34,7 +33,16 @@ Builder run 2026-11-12 from 02:21 UTC (07:51 IST). Worktree `/home/user/build/B-
 
 New-test fail-before check: 20 of the first 24 b6 tests fail on 3db0d34d; the others are controls (single copy, two plain copies, no-find text, and the H3 guard, which passes before because it protects a path the fix touches). The seeded fuzz fails on old code: 456 pieces left in 400 texts.
 
-## Gate record
+## Gate record at head 931d7396 (builder's own runs, exit codes)
 
-gitleaks: run before the push (see the report).
-
+| Gate | Exit | Last line |
+|---|---|---|
+| ruff check | 0 | All checks passed! |
+| ruff format --check | 0 | 339 files already formatted |
+| bandit -ll (src, via uvx) | 0 | only the nosec B102 warning at tools.py:389 |
+| scan_repo | 0 | |
+| stage_mutants | 0 | 37 of 37 good; problems: [] |
+| prh_mutants (81) | 0 | 81 of 81 good; problems: [] |
+| cost compare | 0 | table above |
+| full pytest -m "not live and not perf" | 0 | 12963 passed, 1 skipped, 62 deselected |
+| gitleaks origin/main..HEAD | 0 | no leaks |
