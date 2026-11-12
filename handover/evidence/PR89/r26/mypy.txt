@@ -1,0 +1,2 @@
+mypy win32 py3.12 errors: 13
+mypy win32 py3.13 errors: 13

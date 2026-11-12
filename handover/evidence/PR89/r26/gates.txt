@@ -1,0 +1,5 @@
+ruff check rc=0
+ruff format rc=0 323 files already formatted
+scan_repo rc=0 
+stage_mutants rc=0 37 of 37 good; problems: []
+bandit -q -r src demos tools -ll rc=0 (tool: venv-bandit-b1)
