@@ -2,35 +2,56 @@
 and never reaches shipped code (src/, demos/, tools/) or a runtime dependency (owner decision
 2026-11-01).
 
-Best effort, not a proof. The code scan reads import statements (including the names in
-`from x import y`) and string literals that are exactly a pglast module name. NOT checked:
-- an import whose name is built at run time (for example `"pg" + "last"` passed to
-  `importlib.import_module` or `__import__`) or in an f-string piece such as `f"pglast.{x}"`;
-- a copy of the pglast code under another name;
-- a single-file `pglast.py` or `pglast.pyi` is scanned only as source (an import inside it is
-  not an import of pglast);
-- compiled `.pyc` files and Cython `.pyx` source (not scanned, not flagged);
-- dependency lists outside pyproject.toml and uv.lock: requirements*.txt, setup.py, Dockerfiles,
-  CI `pip install` lines and `[build-system] requires`; the tables of other build tools (hatch,
-  poetry, pdm) are not read either.
-Names are compared after one normaliser (`_norm`: lower case, runs of `-`, `_`, `.` become one
-`-`, edge separators dropped). A folder, or a packed copy (.whl, .egg, .zip, .tar.gz, .tgz, .a),
-is flagged ("vendored dir", "vendored archive") when its lower-case name is `pglast` or `_pglast`,
-alone or followed by `.libs`, a version or a packing suffix: `pglast.libs`,
-`pglast-8.7.dist-info`, `PGLast-8.7.tar.gz`; not `pglastic` or `pglast_utils`.
-ANY compiled file under src, demos or tools is flagged ("compiled <name>"), whatever its name: its
-name ends in .so, .pyd, .dylib or .dll in any letter case, optionally followed by version numbers
-(`libpg_query-<hash>.so.1`). Python files are .py, .pyi, .pyw and files without a suffix whose
-first line is a python shebang; they are read with a byte order mark allowed. Dependency-group
-names are compared normalised (PEP 735); two names that collide after normalising are reported.
-
-Folders: `.venv` and `node_modules` directly under src, demos or tools are skipped on purpose,
-because they hold other people's code. This IS a bypass: pglast placed there is not seen. The same
-names deeper down ARE scanned (they may be shipped code).
-Symbolic links: a linked folder is listed by its own name (so a link called `pglast` is flagged)
-but is NOT entered, so pglast code behind a link with another name is not scanned (recorded by
-the test `test_symlinked_dir_is_not_entered`). An unreadable folder raises; a .py or .pyi file
-that cannot be parsed is reported as a violation ("cannot parse")."""
+Best effort, not a proof. What it reads: import statements (including the names in
+`from x import y`), string constants that are exactly a pglast module name (so
+`importlib.import_module("pglast.ast")` and `importlib.util.find_spec("pglast")` are caught), PEP 723
+inline script metadata blocks (`# /// script` ... `# ///`: the `dependencies` list and
+`[tool.uv.sources]`; a block that is not valid TOML is reported), the dependency tables of
+pyproject.toml, and uv.lock. The guard walks the working folder with os.walk and does NOT use
+`git ls-files` (design choice kept on purpose: a copy not yet added to git is also seen, and the
+unreadable-folder, symbolic-link and .venv cases are handled here by their own rules and tests).
+What it flags (the "src: ..." line names the tree):
+- "compiled <name>": ANY file under src, demos or tools whose name ends in .so, .pyd, .dylib, .dll,
+  .lib, .o or .bundle in any letter case, optionally followed by version numbers (`.so.1`);
+- "vendored dir <name>": a folder whose lower-case name matches the pattern VENDORED (not `_norm`):
+  `pglast` or `_pglast`, alone or followed by `.libs`, `.dist-info`, `.egg-info`, a packing suffix,
+  or a digit-led tail (`pglast-8.7`, `pglast8`; so an unrelated `pglast8x` is also flagged, which
+  only over-flags); not `pglastic` or `pglast_utils`;
+- "vendored archive <name>": a file whose name matches VENDORED and ends in .whl, .egg, .zip, .a,
+  .7z, .gz, .tgz, .txz, .tbz2, .tar, .tar.gz, .tar.xz or .tar.bz2 (judged by name, never opened);
+- "symlinked dir <name>": ANY symbolic link to a folder under the three trees. A link is never
+  followed, so what it points to is not scanned; the report is the control;
+- "imports pglast": a python file (.py, .pyi, .pyw in any letter case, or a file without a suffix
+  whose first line is a python shebang, read with a byte order mark allowed) that imports pglast or
+  holds a string constant that is a pglast module name. A bare `"pglast"` constant and the piece
+  `"pglast"` of `f"pglast{x}"` are flagged too (over-flags only);
+- "cannot parse": a python file that is not valid python; "script metadata ...": see above;
+- the dependency tables: [project] dependencies and optional-dependencies, every dependency group
+  except `test`, [tool.uv] dev-dependencies, constraint-dependencies, override-dependencies and
+  sources, and in uv.lock every package's dependencies, optional-dependencies, metadata
+  requires-dist, and dev-dependencies or requires-dev groups other than `test`.
+Names are compared after the normaliser `_norm` (lower case, runs of `-`, `_`, `.` become one
+`-`, edge separators dropped; PEP 503 and PEP 735); two group names that collide after
+normalising are reported. Only src must hold at least one python file; demos and tools may be
+absent or empty.
+Limits, stated plainly (each is NOT checked and would pass this guard):
+- an import whose name is built at run time (`"pg" + "last"` given to `__import__`), source text
+  run through `exec(...)`, `python -c` or a subprocess, and `pip install pglast` run from python;
+- a copy of the pglast code under another name; a single-file `pglast.py` is scanned only as source;
+- `.pyc` and Cython `.pyx` files; archives are judged by name, not content;
+- dependency lists outside pyproject.toml, uv.lock and PEP 723 blocks: requirements*.txt,
+  setup.py, Dockerfiles, CI `pip install` lines, `[build-system] requires`, the tables of other
+  build tools (hatch, poetry, pdm), and in pyproject the uv tables `build-constraint-dependencies`,
+  `extra-build-dependencies` and `dependency-metadata`, and the `[manifest]` table of uv.lock;
+- the dependency group named `test` is exempt by name (that is where pglast belongs), in
+  pyproject and, for the top package only, in uv.lock `dev-dependencies`; the uv.lock
+  `requires-dev` group `test` is skipped for every package (safe, but not the same rule);
+- `.venv` and `node_modules` directly under src, demos or tools are skipped on purpose (other
+  people's code): pglast placed there is NOT seen. The same names deeper down ARE scanned;
+- an unreadable or vanished file or folder (permission denied, a broken symbolic link, a
+  folder removed during the scan), a missing pyproject.toml and an invalid uv.lock RAISE; the guard
+  fails loud, it never skips silently.
+"""
 
 import ast
 import os
@@ -42,8 +63,14 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 TREES = ("src", "demos", "tools")
-BINARY = re.compile(r"(?i).*\.(so|pyd|dylib|dll)(\.\d+)*")  # compiled modules, versioned .so.N too
-ARCHIVES = (".whl", ".egg", ".zip", ".tar.gz", ".tgz", ".a")  # packed copies
+BINARY = re.compile(r"(?i).*\.(so|pyd|dylib|dll|lib|o|bundle)(\.\d+)*")  # compiled, .so.N too
+ARCHIVES = (  # packed copies (judged by name, never opened)
+    (".whl", ".egg", ".zip", ".a", ".7z", ".gz", ".tgz", ".txz", ".tbz2")
+    + (".tar", ".tar.gz", ".tar.xz", ".tar.bz2")
+)
+PY_SUFFIXES = (".py", ".pyi", ".pyw")  # compared in lower case
+# PEP 723 inline script metadata: the reference expression from the specification
+SCRIPT_BLOCK = re.compile(r"(?m)^# /// (?P<type>[a-zA-Z0-9-]+)$\s(?P<body>(^#(| .*)$\s)+)^# ///$")
 SKIP_DIRS = {".venv", "node_modules"}  # other people's code, never shipped from here
 
 
@@ -52,7 +79,8 @@ def _norm(name):  # PEP 503 name; edge separators dropped so `_pglast` and `pgla
 
 
 VENDORED = re.compile(  # pglast itself, not pglastic or pglast_utils (`_` and `.` join names alike)
-    r"_?pglast(\.libs|\.dist-info|\.egg-info|[-_.]?\d.*|\.(a|egg|zip|whl|tgz|tar\.gz))?"
+    r"_?pglast(\.libs|\.dist-info|\.egg-info|[-_.]?\d.*"
+    r"|\.(a|egg|zip|whl|7z|gz|tgz|txz|tbz2|tar|tar\.gz|tar\.xz|tar\.bz2))?"
 )
 
 
@@ -104,32 +132,60 @@ def _script(path):  # a file without suffix whose first line is a python shebang
     return first.startswith(b"#!") and b"python" in first
 
 
+def _script_metadata(text):  # the tables of every PEP 723 `script` block; bad TOML raises
+    for m in SCRIPT_BLOCK.finditer(text):
+        if m["type"] == "script":
+            lines = m["body"].splitlines(keepends=True)
+            yield tomllib.loads("".join(ln[2:] if ln.startswith("# ") else ln[1:] for ln in lines))
+
+
+def _script_names_pglast(text):  # a script block that depends on pglast, or cannot be read
+    try:
+        for meta in _script_metadata(text):
+            uv_sources = meta.get("tool", {}).get("uv", {}).get("sources", {})
+            if _hit(meta.get("dependencies", [])) or "pglast" in {_norm(k) for k in uv_sources}:
+                return "script metadata names pglast"
+    except tomllib.TOMLDecodeError:
+        return "script metadata cannot parse"
+    return None
+
+
+def _imports_pglast(nodes):  # import statements and pglast-named string constants
+    for n in nodes:
+        mods = [a.name for a in n.names] if isinstance(n, (ast.Import, ast.ImportFrom)) else []
+        mods += [n.module or ""] if isinstance(n, ast.ImportFrom) else []
+        if isinstance(n, ast.Constant) and isinstance(n.value, str):
+            mods += [n.value] if re.fullmatch(r"(?i)_?pglast(\.\w+)*", n.value) else []
+        if any(_norm(m.split(".")[0]) == "pglast" for m in mods):
+            return True
+    return False
+
+
 def _code(root, tree):
     files, dirs = _walk(root / tree) if (root / tree).is_dir() else ([], [])  # absent: no files
     bad = [f"{tree}: compiled {p.name}" for p in files if BINARY.fullmatch(p.name)]
     bad += [f"{tree}: vendored dir {p.name}" for p in dirs if _vendored(p.name)]
+    bad += [f"{tree}: symlinked dir {p.name}" for p in dirs if p.is_symlink()]  # never followed
     bad += [
         f"{tree}: vendored archive {p.name}"
         for p in files
         if _vendored(p.name) and p.name.lower().endswith(ARCHIVES)
     ]
-    py = [p for p in files if p.suffix in (".py", ".pyi", ".pyw") or _script(p)]
-    if not py:
+    py = [p for p in files if p.suffix.lower() in PY_SUFFIXES or _script(p)]
+    # only src must hold python; demos and tools may be absent or empty
+    if tree == "src" and not py:
         bad.append(f"{tree}: no python file scanned")
     for p in py:
         rel = p.relative_to(root / tree).as_posix()
         try:
-            nodes = list(ast.walk(ast.parse(p.read_text("utf-8-sig"))))
+            text = p.read_text("utf-8-sig")
+            nodes = list(ast.walk(ast.parse(text)))
         except (SyntaxError, ValueError, UnicodeDecodeError):
             bad.append(f"{tree}: {rel} cannot parse")
             continue
-        for n in nodes:
-            mods = [a.name for a in n.names] if isinstance(n, (ast.Import, ast.ImportFrom)) else []
-            mods += [n.module or ""] if isinstance(n, ast.ImportFrom) else []
-            if isinstance(n, ast.Constant) and isinstance(n.value, str):
-                mods += [n.value] if re.fullmatch(r"(?i)_?pglast(\.\w+)*", n.value) else []
-            if any(_norm(m.split(".")[0]) == "pglast" for m in mods):
-                bad.append(f"{tree}: {rel} imports pglast")
+        bad += [f"{tree}: {rel} imports pglast"] * _imports_pglast(nodes)
+        meta_problem = _script_names_pglast(text)
+        bad += [f"{tree}: {rel} {meta_problem}"] * (meta_problem is not None)
     return bad
 
 
@@ -368,18 +424,203 @@ MUTANTS = {
         {"src/venv/m.py": "import pglast\n"},
         ["src: venv/m.py imports pglast"],
     ),
+    # --- review round 3 (P0a-r3-1 to P0a-r3-4): each row below is new or newly pinned
+    "tools tree absent is clean": ({"tools/m.py": None}, []),
+    "demos tree absent is clean": ({"demos/m.py": None}, []),
+    "empty demos and tools trees are clean": (
+        {"demos/m.py": None, "tools/m.py": None, "demos/notes.txt": "", "tools/notes.txt": ""},
+        [],
+    ),
+    "src with data files only still fails": (
+        {"src/m.py": None, "src/notes.txt": ""},
+        ["src: no python file scanned"],
+    ),
+    "src absent while demos and tools are clean still fails": (
+        {"src/m.py": None},
+        ["src: no python file scanned"],
+    ),
+    "tar.xz archive": (
+        {"src/pglast-8.7.tar.xz": "", "src/_pglast.tar.xz": ""},
+        ["src: vendored archive pglast-8.7.tar.xz", "src: vendored archive _pglast.tar.xz"],
+    ),
+    "tar.bz2 archive": (
+        {"src/pglast-8.7.tar.bz2": "", "src/pglast.tar.bz2": ""},
+        ["src: vendored archive pglast-8.7.tar.bz2", "src: vendored archive pglast.tar.bz2"],
+    ),
+    "plain tar and tbz2 and txz archives": (
+        {"demos/pglast.tar": "", "demos/pglast-8.7.tbz2": "", "demos/pglast_8.7.txz": ""},
+        [
+            "demos: vendored archive pglast.tar",
+            "demos: vendored archive pglast-8.7.tbz2",
+            "demos: vendored archive pglast_8.7.txz",
+        ],
+    ),
+    "7z and gz archives": (
+        {"tools/pglast-8.7.7z": "", "tools/_pglast.gz": ""},
+        ["tools: vendored archive pglast-8.7.7z", "tools: vendored archive _pglast.gz"],
+    ),
+    "tgz archive": ({"src/PGLast-8.7.tgz": ""}, ["src: vendored archive PGLast-8.7.tgz"]),
+    "similar name tar.xz is fine": ({"src/pglastic-1.tar.xz": ""}, []),
+    "static library lib": ({"src/_pglast.lib": ""}, ["src: compiled _pglast.lib"]),
+    "object file": ({"tools/query.O": ""}, ["tools: compiled query.O"]),
+    "macOS bundle": ({"demos/q.bundle": ""}, ["demos: compiled q.bundle"]),
+    "suffix lib is not a version": ({"src/mylib.libx": "", "src/o": ""}, []),
+    "symlinked directory with another name": (
+        {"ext/m.py": "import pglast\n", "src/other": ("dir", "ext")},
+        ["src: symlinked dir other"],
+    ),
+    "symlinked directory named pglast": (
+        {"ext/m.py": "x = 1\n", "src/pglast": ("dir", "ext")},
+        ["src: symlinked dir pglast", "src: vendored dir pglast"],
+    ),
+    "symlinked directory deep under tools": (
+        {"ext/m.py": "x = 1\n", "tools/a/b/ln": ("dir", "ext")},
+        ["tools: symlinked dir ln"],
+    ),
+    "symlinked top-level .venv is skipped": (
+        {"ext/m.py": "import pglast\n", "src/.venv": ("dir", "ext")},
+        [],
+    ),
+    "symlinked python file is read through": (
+        {"ext/m.py": "import pglast\n", "src/link.py": ("file", "ext/m.py")},
+        ["src: link.py imports pglast"],
+    ),
+    "upper-case python suffix": ({"src/M.PY": "import pglast\n"}, ["src: M.PY imports pglast"]),
+    "upper-case stub suffix": ({"tools/M.PYI": "import pglast\n"}, ["tools: M.PYI imports pglast"]),
+    "stub file that imports pglast": (
+        {"src/m.pyi": "import pglast\n"},
+        ["src: m.pyi imports pglast"],
+    ),
+    "find_spec with a literal name": (
+        {"src/m.py": "import importlib.util\nimportlib.util.find_spec('pglast')\n"},
+        ["src: m.py imports pglast"],
+    ),
+    "PEP 723 block names pglast": (
+        {
+            "tools/run.py": "# /// script\n# dependencies = [\n#   'pglast>=8',\n# ]\n# ///\nx = 1\n",
+        },
+        ["tools: run.py script metadata names pglast"],
+    ),
+    "PEP 723 block with another name is fine": (
+        {"tools/run.py": "# /// script\n# dependencies = ['requests', 'pglastic']\n# ///\nx = 1\n"},
+        [],
+    ),
+    "PEP 723 block with a source for pglast": (
+        {
+            "tools/run.py": "# /// script\n# [tool.uv.sources]\n"
+            "# pglast = { url = 'https://e.x/p.whl' }\n# ///\nx = 1\n"
+        },
+        ["tools: run.py script metadata names pglast"],
+    ),
+    "PEP 723 block that is not TOML": (
+        {"src/run.py": "# /// script\n# dependencies = [\n# ///\nx = 1\n"},
+        ["src: run.py script metadata cannot parse"],
+    ),
+    "PEP 723 block of another type is not read": (
+        {"src/run.py": "# /// other\n# dependencies = ['pglast']\n# ///\nx = 1\n"},
+        [],
+    ),
+    "lock optional dependency of another package": (
+        {"uv.lock": LOCK + '[package.optional-dependencies]\nfoo=[{name="pglast"}]\n'},
+        ["uv.lock other: extra foo"],
+    ),
+    "lock requires-dist": (
+        {"uv.lock": LOCK + '[package.metadata]\nrequires-dist=[{name="pglast"}]\n'},
+        ["uv.lock other: requires-dist"],
+    ),
+    "lock requires-dev group other than test": (
+        {"uv.lock": LOCK + '[package.metadata.requires-dev]\nci=[{name="pglast"}]\n'},
+        ["uv.lock other: requires-dev ci"],
+    ),
+    "lock requires-dev group test is exempt": (
+        {"uv.lock": LOCK + '[package.metadata.requires-dev]\ntest=[{name="pglast"}]\n'},
+        [],
+    ),
+    "lock edge from the top package": (
+        {"uv.lock": LOCK.replace('name="x"\n', 'name="x"\ndependencies=[{name="pglast"}]\n', 1)},
+        ["uv.lock x: dependencies"],
+    ),
+    "lock test group of another package is not exempt": (
+        {"uv.lock": LOCK + '[package.dev-dependencies]\ntest=[{name="pglast"}]\n'},
+        ["uv.lock other: group test"],
+    ),
+    "tool.uv dev-dependencies": (
+        {"pyproject.toml": PYPROJECT + '[tool.uv]\ndev-dependencies=["pglast"]\n'},
+        ["tool.uv dev-dependencies"],
+    ),
+    "tool.uv override-dependencies": (
+        {"pyproject.toml": PYPROJECT + '[tool.uv]\noverride-dependencies=["pglast==8.7"]\n'},
+        ["tool.uv override-dependencies"],
+    ),
+    "egg-info folder": (
+        {"tools/pglast.egg-info/PKG-INFO": ""},
+        ["tools: vendored dir pglast.egg-info"],
+    ),
+    "folder with a digit tail": ({"src/pglast8/x.txt": ""}, ["src: vendored dir pglast8"]),
+    "folder with a version tail": (
+        {"demos/pglast-8.7/x.txt": "", "demos/pglast_8.7/y.txt": ""},
+        ["demos: vendored dir pglast-8.7", "demos: vendored dir pglast_8.7"],
+    ),
+    "digit-led unrelated folder is flagged too (over-flags only)": (
+        {"src/pglast8x/x.txt": ""},
+        ["src: vendored dir pglast8x"],
+    ),
 }
+
+# Inputs the guard cannot read: it must raise, never pass quietly.
+RAISES = {
+    "invalid uv.lock": ({"uv.lock": "[[package"}, tomllib.TOMLDecodeError),
+    "missing pyproject.toml": ({"pyproject.toml": None}, FileNotFoundError),
+    "dangling link with a python name": ({"src/gone.py": ("file", "nope")}, FileNotFoundError),
+    "dangling link without a suffix": ({"tools/gone": ("file", "nope")}, FileNotFoundError),
+}
+
+
+def _build(tmp_path, extra):  # write the default clean tree, then `extra` (None removes a file)
+    files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+    files |= extra
+    links = {}
+    for rel, text in files.items():
+        if isinstance(text, tuple):  # ("dir" or "file", target path under tmp_path): a link
+            links[rel] = text
+        elif text is not None:
+            (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+            (tmp_path / rel).write_text(text, "utf-8")
+    for rel, (kind, target) in links.items():  # after the files, so a target already exists
+        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+        try:  # Windows without developer mode cannot create links
+            (tmp_path / rel).symlink_to(tmp_path / target, target_is_directory=kind == "dir")
+        except OSError as err:
+            if os.name != "nt":
+                raise
+            pytest.skip(f"cannot create a symbolic link here: {err}")
 
 
 @pytest.mark.parametrize("case", MUTANTS)
 def test_guard_catches(tmp_path, case):
-    files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
-    files |= MUTANTS[case][0]
-    for rel, text in files.items():
-        if text is not None:
-            (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
-            (tmp_path / rel).write_text(text, "utf-8")
+    _build(tmp_path, MUTANTS[case][0])
     assert sorted(violations(tmp_path)) == sorted(MUTANTS[case][1])
+
+
+@pytest.mark.parametrize("case", RAISES)
+def test_guard_raises_when_it_cannot_read(tmp_path, case):
+    _build(tmp_path, RAISES[case][0])
+    with pytest.raises(RAISES[case][1]):
+        violations(tmp_path)
+
+
+def test_unreadable_python_file_raises(tmp_path, monkeypatch):  # root can read any mode: fake it
+    _build(tmp_path, {"src/locked.py": "x = 1\n"})
+    real = Path.read_text
+
+    def deny(self, *args, **kwargs):
+        if self.name == "locked.py":
+            raise PermissionError(13, "denied", str(self))
+        return real(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", deny)
+    with pytest.raises(PermissionError):
+        violations(tmp_path)
 
 
 def test_unreadable_directory_raises(tmp_path, monkeypatch):
@@ -401,19 +642,8 @@ def test_missing_tree_raises(tmp_path):
         _walk(tmp_path / "nope")
 
 
-def test_symlinked_dir_is_not_entered(tmp_path):
-    # Recorded behaviour: a link is listed by name but not entered, so code behind a link with
-    # another name is not scanned; a link named pglast is flagged as a vendored dir.
-    (tmp_path / "ext").mkdir()
-    (tmp_path / "ext" / "m.py").write_text("import pglast\n", "utf-8")
-    (tmp_path / "src").mkdir()
-    (tmp_path / "src" / "m.py").write_text("x = 1\n", "utf-8")
-    try:  # Windows without developer mode cannot create links
-        (tmp_path / "src" / "other").symlink_to(tmp_path / "ext", target_is_directory=True)
-    except OSError as err:
-        if os.name != "nt":
-            raise
-        pytest.skip(f"cannot create a symbolic link here: {err}")
-    assert _code(tmp_path, "src") == []
-    (tmp_path / "src" / "pglast").symlink_to(tmp_path / "ext", target_is_directory=True)
-    assert _code(tmp_path, "src") == ["src: vendored dir pglast"]
+def test_symlinked_dir_is_reported_and_not_entered(tmp_path):
+    # The code behind a link is not scanned (the link is not followed); the link itself is reported,
+    # whatever its name, so it cannot hide a pglast folder.
+    _build(tmp_path, {"ext/m.py": "import pglast\n", "src/other": ("dir", "ext")})
+    assert _code(tmp_path, "src") == ["src: symlinked dir other"]
