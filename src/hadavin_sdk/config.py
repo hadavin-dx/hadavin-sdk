@@ -454,8 +454,13 @@ def _read_yaml(path: Path) -> dict:
 
 def confined(base: Path, relative: str) -> Path:
     """``base / relative``, refused if it resolves outside ``base`` (no ``..`` or absolute escapes)."""
-    root = Path(base).resolve()
-    path = (root / relative).resolve()
+    try:
+        root = Path(base).resolve()
+        path = (root / relative).resolve()
+    except (ValueError, OSError, RuntimeError) as exc:
+        # a NUL character (ValueError) or a symlink loop (OSError, RuntimeError on older Python) is a refused path,
+        # never a crash of another type: every caller catches ConfigError only
+        raise ConfigError(f"path cannot be resolved: {type(exc).__name__}") from exc
     if not path.is_relative_to(root):
         raise ConfigError(f"path escapes its folder: {relative}")
     return path
