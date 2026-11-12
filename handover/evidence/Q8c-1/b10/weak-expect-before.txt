@@ -1,0 +1,23 @@
+weak 22 of 122 (strict reading of the batch-10 rule, run on the c6bd7108 tests)
+WEAK E5 a value that does not match its grammar is put into the text | expect: 'DID NOT RAISE' | killer: test_an_empty_vault_prefix_is_refused_and_the_page_says_so_first
+WEAK m6 a key written twice is accepted | expect: 'DID NOT RAISE' | killer: test_plant_m6_a_key_written_twice_in_the_policy_literal_is_refused
+WEAK m9 a placeholder left after filling is put into the text | expect: 'DID NOT RAISE' | killer: test_plant_m9_a_placeholder_left_after_filling_is_refused
+WEAK Values: a reserved value is put into the text | expect: 'DID NOT RAISE' | killer: test_plant_the_mount_sys_is_refused
+WEAK Values: a value longer than its limit is put into the text | expect: 'DID NOT RAISE' | killer: test_plant_a_300_character_value_is_refused
+WEAK B3 an allowlisted call that stops passing its parameter gives no hint where to fix it | expect: 'move or remove the entry in SHAPES' | killer: test_plant_an_allowlisted_line_that_stops_passing_its_parameter_is_caught
+WEAK B4 a builder-only id that is no row of the sources file is accepted | expect: 'DID NOT RAISE' | killer: test_the_builder_marks_refuse_a_missing_line_an_unknown_id_and_a_second_line
+WEAK B4 a second builder-only line in the sources file is accepted | expect: 'DID NOT RAISE' | killer: test_the_builder_marks_refuse_a_missing_line_an_unknown_id_and_a_second_line
+WEAK B4 an unchecked claim of a free request needs no dated entry | expect: 'the entry free:0 needs no PENDING_CLAIMS' | killer: test_the_pending_claims_of_a_free_and_a_never_entry_are_watched_like_a_grant_claim
+WEAK B4 an unchecked claim of a never line needs no dated entry | expect: 'the entry never:create needs no PENDING_CLAIMS' | killer: test_the_pending_claims_of_a_free_and_a_never_entry_are_watched_like_a_grant_claim
+WEAK B5 the claims cell shows no mark | expect: 'older version of that secret' | killer: test_the_page_shows_the_builder_mark_on_the_plus_claim_of_r17_and_the_nobody_mark_on_every_other_claim
+WEAK B5 a free request with a claim shows its partly read source as a plain checked source | expect: 'k8s.rules_review' | killer: test_a_free_or_never_row_with_a_claim_marks_its_partly_read_sources
+WEAK B5 a never line with a claim shows its partly read source as a plain checked source | expect: '| action | `create` |' | killer: test_a_free_or_never_row_with_a_claim_marks_its_partly_read_sources
+WEAK B5 a reason needs no class | expect: 'classes in NOTE_CLASSES' | killer: test_a_free_reason_that_says_it_creates_nothing_or_changes_nothing_has_no_class_and_is_refused
+WEAK B5 the page raises a KeyError for a source id that is not in the sources file | expect: 'not PolicyError' | killer: test_a_note_class_with_an_unknown_source_id_is_a_problem_of_the_check_and_the_page_raises_policy_error
+WEAK B5 the page head says R17 reads only the one secret it names | expect: 'the page head does not say the prefix scope' | killer: test_the_page_head_and_the_r17_cell_and_reason_state_the_same_hedged_scope
+WEAK B5 the two paths of a prefix check may hold a different number of parts for the one setting | expect: '{mount}/data/{path_prefix}+/deeper/+' | killer: test_a_never_path_deeper_than_the_prefix_grant_is_not_reported_as_covering_it
+WEAK B6 an empty claim text in the head of the sources file is accepted | expect: 'DID NOT RAISE' | killer: test_a_claim_with_no_mark_two_marks_or_a_stale_text_is_a_problem_and_a_bad_line_is_refused
+WEAK B6 a note class of a malformed key is read by the matching code | expect: 'the check raised IndexError' | killer: test_a_malformed_note_class_key_is_one_problem_line_of_the_check_and_no_traceback
+WEAK M1 the page claims a run that is not on record | expect: 'have not run yet' | killer: test_the_page_states_its_limits_and_offers_text_for_the_three_kinds
+WEAK B7 the last id of each id line of the sources file head is dropped | expect: "'V-ACL', 'V-PARSE'" | killer: test_the_builder_only_marks_are_read_from_the_head_of_the_sources_file_and_match_its_list
+WEAK B9 the docs page names another review date than the dated lists | expect: 'or the review date 2026-12-11, whichever comes first' | killer: test_the_docs_page_names_the_review_day_of_the_dated_lists_only

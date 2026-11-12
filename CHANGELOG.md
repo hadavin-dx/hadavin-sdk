@@ -237,8 +237,8 @@
     statements about server behaviour are unchecked and listed the same way: that the exact signing path R18 does
     not also allow Vault's longer sign path that ends in a hash algorithm name, and that the query parameters the
     Kubernetes code sends do not change the verb a request needs (R20 to R22). So the page now gives no copy-ready
-    text for any of the three kinds. Each unchecked claim has a dated test entry (review by the earliest review date, which the page names); a source
-    id read by the builder of a fix only is marked "(builder only)" wherever the page lists it. Two new checks: no
+    text for any of the three kinds. Each unchecked claim has a dated test entry (review by the earliest review date,
+    which the page names); a source id read by the builder of a fix only is marked "(builder only)" wherever the page lists it. Two new checks: no
     never-list line may cover a grant of its own kind (same path or resource and a capability the line forbids;
     Vault paths are compared by whether one concrete path fits both patterns, Kubernetes resources by name), and every note of a kind is
     classed once by a person as "code", "sources" or "claim", so a new statement about server behaviour cannot be
@@ -287,7 +287,7 @@
     query of the Kubernetes list wrapper, the one sending function of the Vault client, the setting-to-attribute
     map through `build`, and every `.call` outside the three modules.
   - What is not shown: no test shows that a permission name is right. The names and path forms were found in the
-    vendors' documentation and source files on 2026-11-11 (`tests/fixtures/policy_sources_2026-11-11.txt`, every
+    vendors' documentation and source files on the day the sources file gives (`tests/fixtures/policy_sources_*.txt`, every
     row pinned to a commit id written in its URL; seven rows carry a 7-character abbreviated id, and the OpenBao
     documentation rows sit at a commit whose release was not looked up, so the OpenBao claims are not tied to one
     release); the rendered vendor pages could not be reached. No policy has been confirmed on a

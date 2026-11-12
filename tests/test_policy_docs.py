@@ -8,6 +8,7 @@ from __future__ import annotations
 import yaml as _yaml
 from tools import policy_page as pp
 
+from tests.test_policy_changelog import kinds_sentence, stray_days
 from tests.test_policy_guard import ROOT, _policies
 
 
@@ -126,13 +127,13 @@ def test_plant_a_ci_step_list_without_or_with_a_moved_check_step_is_refused():
 
 def _date_guard_sentence_problem(flat: str) -> str:
     """The changelog sentences about the date guard: it starts the day after the earliest `review_by`, it is a
-    reminder, and it names no start day of the names and claims guard as text. '' when they hold."""
+    reminder, and it writes no day as text but the kinds list's own (read from the list). '' when they hold."""
     if "fail from the day after the earliest `review_by`" not in flat:
         return "the changelog entry does not say the date guard starts the day after the earliest review_by"
     if "is a reminder, not a check that anyone re-read the names" not in flat:
         return "the changelog entry does not say the date guard is a reminder"
-    if "from 2026-12-12" in flat.replace("7 of them from 2026-12-12", ""):
-        return "the changelog entry hard-codes the start day of the names and claims guard"
+    if stray_days(flat, kinds_sentence()):
+        return "the changelog entry hard-codes a day (not the kinds list's)"
     return ""
 
 
@@ -145,7 +146,7 @@ def test_plant_a_changelog_entry_that_loses_the_reminder_sentence_or_fixes_a_day
     # CHANGELOG.md is outside the mutant runner's temp tree, so the rule is a function fed three wrong texts.
     good = (
         "fail from the day after the earliest `review_by` and "
-        "is a reminder, not a check that anyone re-read the names, and 7 of them from 2026-12-12"
+        f"is a reminder, not a check that anyone re-read the names, and {kinds_sentence()}"
     )
     assert _date_guard_sentence_problem(good) == ""
     assert "starts the day after" in _date_guard_sentence_problem(good.replace("the earliest", "a"))

@@ -8,11 +8,11 @@ Each mutant reverts ONE rule in a temp copy (of ``tools/policy_page.py``, or of 
     python tests/policy_mutants.py D1         # only mutants whose name contains the text
     python tests/policy_mutants.py --day 2026-12-12   # the tool's clock shows that day in every mutant run
 
-How strong the kill check is: the first failing line must hold ``expect``. Where the killer asserts through
-``same()`` (the run prints how many mutants), that line already holds the expected text, so the check shows only
-that the test failed at an assertion, not at which one. Those mutants are WEAK: a revert that makes some other
-``same()`` of the same test fail counts as killed. Two mutants may share one killer (the run prints which). The
-four mutants for the fix-batch-2 rules use killers with their own message and are not weak.
+How strong the kill check is: the first failing line must hold ``expect``. A mutant is WEAK when ``expect`` is
+in none of the killer's own words, counted from the syntax tree: the message of an ``assert``, the ``match=`` of
+``pytest.raises`` and the ``what`` of a ``same()`` call (a comment, a loop literal, a predicate or the ``def`` line
+do not count, and pytest's own "DID NOT RAISE" does not name a call). The run prints the weak mutants. Two
+mutants may share one killer (the run prints which).
 
 What has NO mutant here, and why:
 * the tests that need a Vault server (tests/test_policy_engine.py): a reverted rule there can only be shown on
@@ -24,8 +24,11 @@ What has NO mutant here, and why:
 """
 
 import ast
+import os
+import re
+import subprocess
 import sys
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(
@@ -41,59 +44,65 @@ PIN = "tests/test_policy_guard::"
 TOOL = "tools/policy_page.py"
 
 
-PYTEST_OWN_TEXT = ("DID NOT RAISE",)  # pytest writes this itself; `same()` never does
+def _text_of(node: ast.AST | None) -> list[str]:
+    """The string pieces of a message expression: a plain string, or the constant parts of an f-string."""
+    return (
+        [
+            n.value
+            for n in ast.walk(node)
+            if isinstance(n, ast.Constant) and isinstance(n.value, str)
+        ]
+        if node
+        else []
+    )
 
 
-def _same_calls() -> dict[str, tuple[list[str], str]]:
-    """For every test function of the guard file that asserts through `same()`: the `what` text of each
-    `same()` call ('' when a call gives none) and the source of the function with every `same()` call cut out.
-    `same()` writes the EXPECTED text into its failure message and `expect` is a fragment of that message, so
-    the first-line check shows WHICH `same()` failed only when `expect` is a fragment of a `what`; a fragment of
-    a plain `assert` message outside the `same()` calls names its own assertion."""
-    text = (ROOT / TEST).read_text(encoding="utf-8")
-    tree = ast.parse(text)
-    out: dict[str, tuple[list[str], str]] = {}
+def message_texts() -> dict[str, list[str]]:
+    return message_texts_of((ROOT / TEST).read_text(encoding="utf-8"))
+
+
+def message_texts_of(source: str) -> dict[str, list[str]]:
+    """For every function of the guard file: the texts a failing line can carry by the test's own words, read from
+    the syntax tree and from nothing else: the message of an `assert`, the `match=` of `pytest.raises`, and the
+    `what` of a `same()` call. A string in a comment, a loop literal, a predicate (`any("x" in p ...)`) or the
+    `def` line is NOT counted: it does not appear in the failing line."""
+    tree = ast.parse(source)
+    out: dict[str, list[str]] = {}
     for f in tree.body:
         if not isinstance(f, ast.FunctionDef):
             continue
-        whats: list[str] = []
-        cuts: list[tuple[int, int]] = []
+        texts: list[str] = []
         for n in ast.walk(f):
-            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "same":
-                arg = (
+            if isinstance(n, ast.Assert):
+                texts += _text_of(n.msg)
+            elif isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "same":
+                what = (
                     n.args[2]
                     if len(n.args) > 2
                     else next((k.value for k in n.keywords if k.arg == "what"), None)
                 )
-                whats.append(
-                    arg.value
-                    if isinstance(arg, ast.Constant) and isinstance(arg.value, str)
-                    else ""
-                )
-                cuts.append((n.lineno, n.end_lineno or n.lineno))
-        if whats:
-            lines = text.splitlines()[f.lineno - 1 : f.end_lineno]
-            rest = "\n".join(
-                ln
-                for i, ln in enumerate(lines, start=f.lineno)
-                if not any(a <= i <= z for a, z in cuts)
-            )
-            out[f.name] = (whats, rest)
+                texts += _text_of(what)
+            elif (
+                isinstance(n, ast.Call)
+                and isinstance(n.func, ast.Attribute)
+                and n.func.attr == "raises"
+            ):
+                for k in n.keywords:
+                    if k.arg == "match":
+                        texts += _text_of(k.value)
+        out[f.name] = texts
     return out
 
 
 def weak_mutants(mutants: list) -> list[tuple[str, str, str]]:
-    """(name, expect, killer) of each mutant whose killer asserts through `same()` and whose `expect` is neither
-    a fragment of one of that killer's `what` texts nor of a plain assertion message outside its `same()`
-    calls: any failing `same()` of that test passes it."""
-    calls = _same_calls()
+    """(name, expect, killer) of each mutant whose killer's own words (assert message, `match=` of
+    `pytest.raises`, `what` of `same()`; see `message_texts`) do not hold `expect`: the first-line check then shows
+    only that the killer failed, not at which line."""
+    texts = message_texts()
     return [
         (m.name, m.expect, m.only_test)
         for m in mutants
-        if m.only_test in calls
-        and not any(m.expect in w for w in calls[m.only_test][0] if w)
-        and m.expect not in calls[m.only_test][1]
-        and m.expect not in PYTEST_OWN_TEXT
+        if not any(m.expect in t for t in texts.get(m.only_test, []))
     ]
 
 
@@ -246,7 +255,7 @@ M = [
         '            if not re.fullmatch(grammar, part) or {".", ".."} & set(part.split("/")):\n',
         "            if part is None:\n",
         "test_an_empty_vault_prefix_is_refused_and_the_page_says_so_first",
-        "DID NOT RAISE",
+        "an empty path_prefix is accepted into the text",
     ),
     mutant(
         "M3 a literal getattr of a sink is accepted",
@@ -390,7 +399,7 @@ M = [
         "            if twice := sorted({str(k) for k in keys if keys.count(k) > 1}):\n",
         "            if twice := sorted(set()):\n",
         "test_plant_m6_a_key_written_twice_in_the_policy_literal_is_refused",
-        "DID NOT RAISE",
+        "a key written twice in the policy literal is accepted",
     ),
     mutant(
         "m8 a plus wildcard with no bound is accepted",
@@ -406,7 +415,7 @@ M = [
         '    if re.search(r"[{}<>]", filled):\n',
         "    if filled is None:\n",
         "test_plant_m9_a_placeholder_left_after_filling_is_refused",
-        "DID NOT RAISE",
+        "a placeholder left after filling is accepted into the text",
     ),
     mutant(
         "D4 a grant that names no call is accepted",
@@ -438,7 +447,7 @@ M = [
         "            if why := reserved_problem(key, part):\n",
         "            if why := None:\n",
         "test_plant_the_mount_sys_is_refused",
-        "DID NOT RAISE",
+        "a reserved value (the mount sys) is put into the text",
     ),
     mutant(
         "Values: a value longer than its limit is put into the text",
@@ -446,7 +455,7 @@ M = [
         "            if len(part) > MAX_LENGTH[key]:\n",
         "            if len(part) < 0:\n",
         "test_plant_a_300_character_value_is_refused",
-        "DID NOT RAISE",
+        "a value longer than its limit is put into the text",
     ),
     mutant(
         "m10 the command line skips the checks across kinds",
@@ -615,7 +624,7 @@ M = [
         '    if unknown := sorted((set(ids["BUILDER-ONLY"]) | set(ids["PARTLY-BUILDER-ONLY"])) - known):\n',
         "    if False:\n",
         "test_the_builder_marks_refuse_a_missing_line_an_unknown_id_and_a_second_line",
-        "DID NOT RAISE",
+        "a builder-only id that is no row of the sources file is accepted",
     ),
     mutant(
         "B4 a second builder-only line in the sources file is accepted",
@@ -623,7 +632,7 @@ M = [
         '    rows = [ln for ln in lines if ln.startswith(f"# {tag}:")]\n    if len(rows) != 1:\n',
         '    rows = [ln for ln in lines if ln.startswith(f"# {tag}:")]\n    if len(rows) < 1:\n',
         "test_the_builder_marks_refuse_a_missing_line_an_unknown_id_and_a_second_line",
-        "DID NOT RAISE",
+        "a second builder-only line in the sources file is accepted",
     ),
     mutant(
         "B4 the limit of a dated entry is another number in the tool",
@@ -647,7 +656,7 @@ M = [
         "    claimed = {(k, label) for k, label, e in entries(policies) if e.claims_unverified}\n",
         '    claimed = {(k, label) for k, label, e in entries(policies) if e.claims_unverified and not label.startswith("free:")}\n',
         "test_the_pending_claims_of_a_free_and_a_never_entry_are_watched_like_a_grant_claim",
-        "the entry free:0 needs no PENDING_CLAIMS",
+        "the entry free:0 needs no PENDING_CLAIMS entry",
     ),
     mutant(
         "B4 an unchecked claim of a never line needs no dated entry",
@@ -655,7 +664,7 @@ M = [
         "    claimed = {(k, label) for k, label, e in entries(policies) if e.claims_unverified}\n",
         '    claimed = {(k, label) for k, label, e in entries(policies) if e.claims_unverified and not label.startswith("never:")}\n',
         "test_the_pending_claims_of_a_free_and_a_never_entry_are_watched_like_a_grant_claim",
-        "the entry never:create needs no PENDING_CLAIMS",
+        "the entry never:create needs no PENDING_CLAIMS entry",
     ),
     mutant(
         "B4 a free-entry note may name a source its entry does not list",
@@ -696,7 +705,7 @@ M = [
         '    return f"{claim} ({claim_mark(claim, marks)})"\n',
         "    return claim\n",
         "test_the_page_shows_the_builder_mark_on_the_plus_claim_of_r17_and_the_nobody_mark_on_every_other_claim",
-        "older version of that secret",
+        "the claims cell shows no mark",
     ),
     mutant(
         "B5 a free request with a claim shows its partly read source as a plain checked source",
@@ -825,7 +834,7 @@ M = [
         "        if not all(found):\n",
         "        if False:\n",
         "test_a_claim_with_no_mark_two_marks_or_a_stale_text_is_a_problem_and_a_bad_line_is_refused",
-        "DID NOT RAISE",
+        "an empty claim text in the head of the sources file is accepted",
     ),
     mutant(
         "B6 a claim text that holds two semicolons is accepted",
@@ -998,16 +1007,16 @@ M = [
     mutant(
         "B9 the page head states a fixed review date",
         TOOL,
-        '        .replace("REVIEW_DATE", str(review_date()))\n',
-        '        .replace("REVIEW_DATE", "2026-12-11")\n',
+        '        f", or the review date\\n  {day}, whichever comes first",\n',
+        '        ", or the review date\\n  2026-12-11, whichever comes first",\n',
         "test_the_page_names_the_review_day_of_the_dated_lists_and_follows_a_renewal",
         "the page head still names the review day from before the renewal",
     ),
     mutant(
         "B9 the review date is the latest of the dated lists, not the earliest",
         TOOL,
-        "    return min(p.review_by for p in (*PENDING_NAMES.values(), *PENDING_CLAIMS.values()))\n",
-        "    return max(p.review_by for p in (*PENDING_NAMES.values(), *PENDING_CLAIMS.values()))\n",
+        "    return min(days) if days else None\n",
+        "    return max(days) if days else None\n",
         "test_the_page_names_the_review_day_of_the_dated_lists_and_follows_a_renewal",
         "the page head does not name the earliest review day",
     ),
@@ -1016,8 +1025,160 @@ M = [
         TOOL,
         "From\n  the day after the earliest `review_by` the dated entries",
         "From\n  the day after 2026-12-12 the dated entries",
-        "test_the_tool_docstring_holds_no_date_that_is_not_in_the_dated_lists",
-        "holds a date that is in no dated list",
+        "test_the_tool_docstring_holds_no_literal_date",
+        "the tool docstring holds a literal date",
+    ),
+    mutant(
+        "B10 the tool docstring names a day of a dated entry",
+        TOOL,
+        "From\n  the day after the earliest `review_by` the dated entries",
+        "From\n  the day after 2026-12-11 the dated entries",
+        "test_the_tool_docstring_holds_no_literal_date",
+        "the tool docstring holds a literal date",
+    ),
+    mutant(
+        "B10 the 16 kinds follow the tool's decision day when it moves",
+        TEST,
+        "KINDS_DECIDED = date(2026, 11, 11)\n",
+        "KINDS_DECIDED = pp.DECIDED\n",
+        "test_the_decision_day_of_the_16_kinds_does_not_follow_the_tools_decision_day",
+        "the 16 kinds follow the tool's decision day when it moves",
+    ),
+    mutant(
+        "B10 the clock function of the date tests reads the real day",
+        TEST,
+        "    return pp.datetime.now(pp.UTC).date()\n\n\ndef _kinds_problems_today",
+        "    return datetime.now(UTC).date()\n\n\ndef _kinds_problems_today",
+        "test_the_three_date_tests_read_the_clock_function_and_go_red_after_the_review_day",
+        "it reads another clock",
+    ),
+    mutant(
+        "B10 the kinds date test reads a day written in the test",
+        TEST,
+        "    problems = _kinds_problems_today()\n",
+        "    problems = kind_problems(all_kinds(), declared, PENDING_KINDS, NO_IDENTITY, date(2026, 11, 12))\n",
+        "test_the_clock_readers_of_the_guard_file_include_the_three_date_tests",
+        "a date test does not read the clock function",
+    ),
+    mutant(
+        "B10 the names date test reads a day written in the test",
+        TEST,
+        "    assert _names_problems_today() == []\n",
+        "    assert name_problems(_policies(), PENDING_NAMES, set(source_ids()), date(2026, 11, 12)) == []\n",
+        "test_the_clock_readers_of_the_guard_file_include_the_three_date_tests",
+        "a date test does not read the clock function",
+    ),
+    mutant(
+        "B10 the claims date test reads a day written in the test",
+        TEST,
+        "    assert _claims_problems_today() == []\n",
+        "    assert claim_problems(_policies(), PENDING_CLAIMS, date(2026, 11, 12)) == []\n",
+        "test_the_clock_readers_of_the_guard_file_include_the_three_date_tests",
+        "a date test does not read the clock function",
+    ),
+    mutant(
+        "B10 the fixed day is honoured without the marker of the mutant run",
+        TEST,
+        '    if env.get(MUTANT_RUN_VAR) != "1":\n',
+        "    if False:\n",
+        "test_the_fixed_day_is_honoured_only_with_the_marker_of_the_mutant_run",
+        "a day variable without the marker was honoured",
+    ),
+    mutant(
+        "B10 review_date raises when both dated lists are empty",
+        TOOL,
+        "    return min(days) if days else None\n",
+        "    return min(days)\n",
+        "test_with_both_dated_lists_empty_the_page_names_no_day_and_the_commands_still_report",
+        "review_date() has no answer with both dated lists empty",
+    ),
+    mutant(
+        "B10 the page keeps a sentence with no date for a dated entry when no day is set",
+        TOOL,
+        '            "No permission name or claim is waiting for a check now: the tests hold no dated entry for one.",\n',
+        '            "Each of these has a dated entry in the tests (review by None) that turns the suite red.",\n',
+        "test_with_both_dated_lists_empty_the_page_names_no_day_and_the_commands_still_report",
+        "the page head keeps the sentence about a dated entry with no date to name",
+    ),
+    mutant(
+        "B10 the page names a day when both dated lists are empty",
+        TOOL,
+        "    if day is None:\n        return (\n",
+        "    if False:\n        return (\n",
+        "test_with_both_dated_lists_empty_the_page_names_no_day_and_the_commands_still_report",
+        "the page head does not say plainly that no review date is set",
+    ),
+    mutant(
+        "B10 the review date ignores the claims list",
+        TOOL,
+        "    days = [p.review_by for p in (*PENDING_NAMES.values(), *PENDING_CLAIMS.values())]\n",
+        "    days = [p.review_by for p in PENDING_NAMES.values()]\n",
+        "test_with_one_dated_list_empty_the_page_names_the_review_day_of_the_other",
+        "review_date() ignores the one list that has entries",
+    ),
+    mutant(
+        "B10 --day with no value is an IndexError",
+        "tests/policy_mutants.py",
+        '    value = rest[i + 1] if i + 1 < len(rest) else ""\n',
+        "    value = rest[i + 1]\n",
+        "test_the_runner_refuses_a_day_argument_that_is_missing_or_not_a_day",
+        "a --day with no real day",
+    ),
+    mutant(
+        "B10 --day takes a text that is not written YYYY-MM-DD",
+        "tests/policy_mutants.py",
+        '    if not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}", value):\n',
+        "    if False:\n",
+        "test_the_runner_refuses_a_day_argument_that_is_missing_or_not_a_day",
+        "a --day with no real day",
+    ),
+    mutant(
+        "B10 the probe day can be the real day",
+        "tests/policy_mutants.py",
+        "    return day - timedelta(days=1) if day == today else day\n",
+        "    return day\n",
+        "test_the_probe_day_is_never_the_real_day_and_is_never_after_the_review_day",
+        "the probe day is the real day",
+    ),
+    mutant(
+        "B10 the probe day is the review day itself",
+        "tests/policy_mutants.py",
+        "    day = review - timedelta(days=1)\n",
+        "    day = review\n",
+        "test_the_probe_day_is_never_the_real_day_and_is_never_after_the_review_day",
+        "is not before the review day",
+    ),
+    mutant(
+        "B10 the message scan ignores the message of an assert",
+        "tests/policy_mutants.py",
+        "                texts += _text_of(n.msg)\n",
+        "                pass\n",
+        "test_the_message_scan_counts_only_assert_messages_match_and_what_texts",
+        "the texts the scan counts",
+    ),
+    mutant(
+        "B10 the message scan counts every string of the test",
+        "tests/policy_mutants.py",
+        "        out[f.name] = texts\n",
+        "        out[f.name] = [n.value for n in ast.walk(f) if isinstance(n, ast.Constant) and isinstance(n.value, str)]\n",
+        "test_the_message_scan_counts_only_assert_messages_match_and_what_texts",
+        "the texts the scan counts",
+    ),
+    mutant(
+        "B10 the message scan ignores the match text of pytest.raises",
+        "tests/policy_mutants.py",
+        '                    if k.arg == "match":\n',
+        "                    if False:\n",
+        "test_the_message_scan_counts_only_assert_messages_match_and_what_texts",
+        "the texts the scan counts",
+    ),
+    mutant(
+        "B10 the message scan ignores the what text of same()",
+        "tests/policy_mutants.py",
+        'n.func.id == "same":',
+        'n.func.id == "nothing":',
+        "test_the_message_scan_counts_only_assert_messages_match_and_what_texts",
+        "the texts the scan counts",
     ),
     mutant(
         "B9 the decision day of the names and claims moves",
@@ -1048,7 +1209,7 @@ M = [
         "docs/declared-permissions.md",
         "  2026-12-11, whichever comes first (ledger row",
         "  2026-12-12, whichever comes first (ledger row",
-        "or the review date 2026-12-11, whichever comes first",
+        "in the trigger sentence",
         test_file=TEST,
         only_test="test_the_docs_page_names_the_review_day_of_the_dated_lists_only",
         pinned=PIN + "test_the_docs_page_names_the_review_day_of_the_dated_lists_only",
@@ -1090,26 +1251,136 @@ M = [
 # The probe: the fixed day given to a run must reach the child pytest of every mutant. The unmutated baseline
 # of any run given a day passes only when the tool's clock shows that day (the probe test is in the file);
 # this mutant shows the probe CAN fail: it drops the hook that sets the clock, so it is killed only when a
-# fixed day was given to the child. It is run first, always with a day that is not today.
+# fixed day was given to the child. It is run first, always with the canary day (never the day of the main run).
 PROBE = [
     mutant(
         "PROBE the fixed day does not reach the tool's clock in the child pytest",
         TEST,
-        '        monkeypatch.setattr(pp, "datetime", _fixed_clock(date.fromisoformat(day)))\n',
+        '        monkeypatch.setattr(pp, "datetime", _fixed_clock(day))\n',
         "        pass\n",
         "test_the_day_the_tool_sees_is_the_fixed_day_the_run_was_given",
         "did not reach the tool's clock",
     )
 ]
 
+# The three tests that read "today" (through `_today()` of the guard file): on a day after the review day they are
+# RED by design (the reminder), on every other day green. A baseline that is red only for these three, on a day
+# that is faked or past the review day, is the correct result and is named as such, not a broken tree.
+DATE_TESTS = (
+    "test_every_kind_is_declared_pending_or_holds_no_identity",
+    "test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves",
+    "test_every_unchecked_claim_has_a_dated_entry_and_the_suite_goes_red_when_it_is_overdue",
+)
+FIXED_DAY_VAR = "HADAVIN_POLICY_FIXED_DAY"
+MUTANT_RUN_VAR = "HADAVIN_POLICY_MUTANT_RUN"  # the marker that only this runner sets (the guard file refuses the day without it)
+
+
+class ArgumentProblem(ValueError):
+    """A command line the runner refuses; `str()` is the one plain line that is printed (exit code 2)."""
+
+
+def parse_args(argv: list[str]) -> tuple[str | None, list[str]]:
+    """(the fixed day or None, the remaining words that select mutants by name). `--day` needs a value written
+    `YYYY-MM-DD` that is a real day; anything else is an `ArgumentProblem`, never an IndexError."""
+    rest = list(argv)
+    if "--day" not in rest:
+        return None, rest
+    i = rest.index("--day")
+    value = rest[i + 1] if i + 1 < len(rest) else ""
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        raise ArgumentProblem(
+            "--day needs one day written YYYY-MM-DD, for example --day 2026-12-12"
+        )
+    try:
+        day = date.fromisoformat(value)
+    except ValueError:
+        raise ArgumentProblem(f"--day {value} is not a real day; write YYYY-MM-DD") from None
+    del rest[i : i + 2]
+    return day.isoformat(), rest
+
+
+def canary_day(today: date, review: date) -> date:
+    """The day the probe always runs with: the day before the review day (a day on which the whole file is green),
+    or the day before that when that is the real day today; never the real day, so a dropped clock hook cannot
+    hide behind a real clock that shows the same day."""
+    day = review - timedelta(days=1)
+    return day - timedelta(days=1) if day == today else day
+
+
+def _child_env(day: str | None) -> dict[str, str]:
+    env = {k: os.environ[k] for k in mutation_runner.CHILD_ENV if k in os.environ}
+    env["PYTHONPATH"] = os.pathsep.join([str(ROOT / "src"), str(ROOT)])
+    env["PYTHONNOUSERSITE"] = "1"
+    if day:
+        env[FIXED_DAY_VAR] = day
+        env[MUTANT_RUN_VAR] = "1"
+    return env
+
+
+def failing_date_tests(day: str | None) -> tuple[set[str], str]:
+    """Run the guard file once in this tree (the tool's clock fixed to `day` when given) and return the failing
+    test names and the last output line. Read from pytest's own short summary lines `FAILED <file>::<test>`."""
+    proc = subprocess.run(  # noqa: S603 - argv list, no shell
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            "-p",
+            "no:cacheprovider",
+            "-rf",
+            "--no-header",
+            TEST,
+        ],
+        cwd=ROOT,
+        env=_child_env(day),
+        capture_output=True,
+        text=True,
+        timeout=600,
+        check=False,
+    )
+    failed = set(re.findall(rf"^FAILED {re.escape(TEST)}::(\w+)", proc.stdout, flags=re.MULTILINE))
+    return failed, (proc.stdout.strip().splitlines() or [""])[-1]
+
+
+def clock_readers() -> set[str]:
+    """Names of the functions of the guard file that read the clock function `_today`, directly or through a helper
+    of the same file (an AST read, not a text search)."""
+    tree = ast.parse((ROOT / TEST).read_text(encoding="utf-8"))
+    funcs = {f.name: f for f in tree.body if isinstance(f, ast.FunctionDef)}
+    uses = {
+        name: {n.id for n in ast.walk(f) if isinstance(n, ast.Name)} for name, f in funcs.items()
+    }
+    readers = {name for name, used in uses.items() if "_today" in used and name != "_today"}
+    while True:
+        more = {name for name, used in uses.items() if used & readers and name not in readers}
+        if not more:
+            return readers
+        readers |= more
+
+
+def latest_review_day() -> date:
+    from tests.test_policy_guard import PENDING_CLAIMS, PENDING_KINDS, PENDING_NAMES
+
+    return max(
+        p.review_by for d in (PENDING_KINDS, PENDING_NAMES, PENDING_CLAIMS) for p in d.values()
+    )
+
+
+def earliest_review_day() -> date:
+    from tests.test_policy_guard import PENDING_CLAIMS, PENDING_KINDS, PENDING_NAMES
+
+    return min(
+        p.review_by for d in (PENDING_KINDS, PENDING_NAMES, PENDING_CLAIMS) for p in d.values()
+    )
+
+
 if __name__ == "__main__":
-    argv = sys.argv[1:]
-    day = None
-    if "--day" in argv:
-        i = argv.index("--day")
-        day = date.fromisoformat(argv[i + 1]).isoformat()
-        del argv[i : i + 2]
-    only = argv
+    try:
+        day, only = parse_args(sys.argv[1:])
+    except ArgumentProblem as exc:
+        print(str(exc), file=sys.stderr)
+        sys.exit(2)
     if only and not any(any(o in m.name for o in only) for m in M):
         print(f"no mutant name contains any of {only}; nothing was run", file=sys.stderr)
         sys.exit(2)
@@ -1125,25 +1396,69 @@ if __name__ == "__main__":
         if not good:
             print("      first line:", first_lines.get(name, "")[:150], flush=True)
 
-    # the probe first: a day that is not today (the canary) is given to the child, and the probe mutant must be killed
-    canary = "2026-12-12" if datetime.now(UTC).date().isoformat() != "2026-12-12" else "2026-12-11"
-    mutation_runner.CHILD_FIXED_ENV["HADAVIN_POLICY_FIXED_DAY"] = day or canary
+    real_today = datetime.now(UTC).date()
+    canary = canary_day(real_today, earliest_review_day())
+    # (1) the consumer probe: the day after the LATEST review day is given to the child pytest; the three date tests
+    # must all be red there. They read the clock function, so they show that the fixed day reaches the tests that
+    # read "today", not only the tool.
+    after = latest_review_day() + timedelta(days=1)
+    red, last = failing_date_tests(after.isoformat())
+    if red != set(DATE_TESTS):
+        print(
+            f"BAD the fixed day {after} did not make exactly the three date tests red: red = {sorted(red)} ({last})"
+        )
+        sys.exit(1)
+    print(f"probe ok: at the fixed day {after} exactly the three date tests are red: {sorted(red)}")
+    # (2) the clock-hook probe mutant, always with the canary day (a green day that is not today)
+    mutation_runner.CHILD_FIXED_ENV[FIXED_DAY_VAR] = canary.isoformat()
+    mutation_runner.CHILD_FIXED_ENV[MUTANT_RUN_VAR] = "1"
     probe = run_mutants(
         ROOT, PROBE, [TEST], extra_dirs=("tests", "tools", "docs"), first_lines=first_lines
     )
     if not all(g for _, _, _, g in probe):
-        print(f"BAD the fixed day {day or canary} did not reach the child pytest: {probe}")
+        print(f"BAD the fixed day {canary} did not reach the child pytest: {probe}")
         sys.exit(1)
     print(
-        f"probe ok: the fixed day {day or canary} reached the tool's clock in the child pytest (probe mutant killed)"
+        f"probe ok: the fixed day {canary} reached the tool's clock in the child pytest (probe mutant killed)"
     )
+    # (3) the baseline reading of the main run: which tests are red on the day of this run, and is that right?
+    reading, last = failing_date_tests(day)
+    unexpected = reading - set(DATE_TESTS)
+    if unexpected:
+        print(
+            f"BAD tests other than the date tests are red on {day or 'the real day'}: {sorted(unexpected)} ({last})"
+        )
+        sys.exit(1)
+    skipped_names: set[str] = set()
+    if reading and day is None:
+        print(
+            f"RED BASELINE on the real day {real_today}: {sorted(reading)}. This is the date reminder, not a broken tree: "
+            "renew or finish the dated entries (what to do is in the failure text of the tests). No mutant was run."
+        )
+        sys.exit(1)
+    if reading:
+        print(
+            f"RED BASELINE at the fixed day {day}, as it must be: exactly these date tests report an overdue entry: "
+            f"{sorted(reading)}. That is the reminder working on a faked day, not a broken tree. The mutants run "
+            "with those three tests left out of the child run (deselected there only; they stay in the repository)."
+        )
+        skipped_names = set(reading)
+        mutation_runner.CHILD_FIXED_ENV["PYTEST_ADDOPTS"] = " ".join(
+            f"--deselect {TEST}::{name}" for name in sorted(reading)
+        )
+    mutation_runner.CHILD_FIXED_ENV.pop(FIXED_DAY_VAR, None)
+    mutation_runner.CHILD_FIXED_ENV.pop(MUTANT_RUN_VAR, None)
     if day:
+        mutation_runner.CHILD_FIXED_ENV[FIXED_DAY_VAR] = day
+        mutation_runner.CHILD_FIXED_ENV[MUTANT_RUN_VAR] = "1"
         print(f"every mutant below runs with the tool's clock fixed to {day}")
-    else:
-        mutation_runner.CHILD_FIXED_ENV.pop("HADAVIN_POLICY_FIXED_DAY", None)
+    runnable = [m for m in M if m.only_test not in skipped_names]
+    for m in M:
+        if m.only_test in skipped_names:
+            print(f"not run at {day}: {m.name} (its killer is a date test that is red on that day)")
     res = run_mutants(
         ROOT,
-        M,
+        runnable,
         [TEST],
         extra_dirs=("tests", "tools", "docs"),
         only=only,
@@ -1152,10 +1467,16 @@ if __name__ == "__main__":
     )
     bad = [n for n, _, _, g in res if not g]
     print(f"{len(res) - len(bad)} of {len(res)} good; problems: {bad}")
+    readers = clock_readers()
+    date_killed = [m.name for m in M if m.only_test in readers or m.only_test in DATE_TESTS]
+    print(
+        f"mutants killed ONLY by a test that reads the clock function (a result that can change with the day): "
+        f"{len(date_killed)} of {len(M)}" + (f": {date_killed}" if date_killed else "")
+    )
     for w_name, w_expect, w_killer in weak:
         print(f"WEAK {w_name} | expect: {w_expect!r} | killer: {w_killer}")
     print(
-        f"first-line check is weak (killer asserts through same(), expect is no `what` text) for {len(weak)} of {len(M)} mutants; "
+        f"first-line check is weak (the expect text is in no assert message, `match=` or `what=` of the killer) for {len(weak)} of {len(M)} mutants; "
         f"killer shared by more than one mutant: {sorted({k for k in (m.only_test for m in M) if [m.only_test for m in M].count(k) > 1})}"
     )
     sys.exit(1 if bad else 0)

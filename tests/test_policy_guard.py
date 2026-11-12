@@ -22,8 +22,9 @@ import copy
 import dataclasses
 import os
 import re
+import runpy
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -33,7 +34,7 @@ from tools import policy_page as pp
 from hadavin_sdk.backends import table
 from hadavin_sdk.sources import kinds as source_kinds
 from hadavin_sdk.sources import kubernetes as k8s
-from tests.test_lockin_guard import TODAY, Pending
+from tests.test_lockin_guard import Pending
 
 ROOT = Path(__file__).resolve().parents[1]
 DECIDED = pp.DECIDED
@@ -134,6 +135,16 @@ def same(found: object, expected: object, what: str = "") -> None:
     )
 
 
+def _refused_with(call, exc: type[BaseException], text: str) -> bool:
+    """True when `call()` raises `exc` and the message holds `text`. The caller's `assert` then carries its own words
+    (pytest's "DID NOT RAISE" names no call, so the mutant runner could not tell which refusal was lost)."""
+    try:
+        call()
+    except exc as found:
+        return text in str(found)
+    return False
+
+
 def _marks_for(policy: pp.Policy) -> pp.Marks:
     """The real marks, plus the nobody-read mark for every claim of `policy` that the sources file does not list
     (a planted claim), so that a planted policy can be rendered."""
@@ -154,9 +165,22 @@ def _policies() -> dict[str, pp.Policy]:
     return {k: p for k, p in loaded.items() if p is not None}
 
 
+def _today() -> date:
+    """The ONE source of "today" for every date guard of this file: the tool's own clock (`pp.datetime`), which the
+    fixture `_fixed_day_of_the_run` fixes when a mutant run was given a day. A guard test never reads the real clock
+    by another way (a module-level day taken at import was the slip of batch 9: a fixed day then reached the tool
+    but not these tests)."""
+    return pp.datetime.now(pp.UTC).date()
+
+
+def _kinds_problems_today() -> list[str]:
+    declared = {k for k, p in pp.load_all(ROOT).items() if p is not None}
+    return kind_problems(all_kinds(), declared, PENDING_KINDS, NO_IDENTITY, _today())
+
+
 def test_every_kind_is_declared_pending_or_holds_no_identity():
     declared = {k for k, p in pp.load_all(ROOT).items() if p is not None}
-    problems = kind_problems(all_kinds(), declared, PENDING_KINDS, NO_IDENTITY, TODAY)
+    problems = _kinds_problems_today()
     assert problems == []
     assert set(PENDING_KINDS) == set(pp.NOT_YET_DECLARED), (
         "the page's list differs from PENDING_KINDS"
@@ -1127,6 +1151,8 @@ def test_plant_an_allowlisted_line_that_stops_passing_its_parameter_is_caught():
         f"{TRANSIT}:40: allowlisted call to `.authed` in `_call` does not pass on a parameter of that function. "
         "What to do: the code at that line changed; move or remove the entry in SHAPES (`wrappers`) of "
         "tests/test_policy_guard.py" in problems
+    ), (
+        f"an allowlisted call that stops passing its parameter gives no hint to move or remove the entry in SHAPES: {problems}"
     )
 
 
@@ -1493,15 +1519,23 @@ def name_problems(
     return pp.name_pending_problems(policies, pending, today) + pp.source_problems(policies, known)
 
 
+def _names_problems_today() -> list[str]:
+    return name_problems(_policies(), PENDING_NAMES, set(source_ids()), _today())
+
+
 def test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves():
-    assert name_problems(_policies(), PENDING_NAMES, set(source_ids()), TODAY) == []
+    assert _names_problems_today() == []
 
 
 claim_problems = pp.claim_pending_problems
 
 
+def _claims_problems_today() -> list[str]:
+    return claim_problems(_policies(), PENDING_CLAIMS, _today())
+
+
 def test_every_unchecked_claim_has_a_dated_entry_and_the_suite_goes_red_when_it_is_overdue():
-    assert claim_problems(_policies(), PENDING_CLAIMS, TODAY) == []
+    assert _claims_problems_today() == []
     overdue = claim_problems(_policies(), PENDING_CLAIMS, date(2026, 12, 12))
     assert len(overdue) == len(PENDING_CLAIMS) and all("is overdue" in p for p in overdue)
 
@@ -1702,10 +1736,11 @@ def test_vault_text_in_page_mode_and_with_values():
 
 def test_an_empty_vault_prefix_is_refused_and_the_page_says_so_first():
     policy = _policies()["secrets/vault"]
-    with pytest.raises(
-        ValueError, match="'path_prefix' is empty: an empty prefix means the whole mount"
-    ):
-        pp.render_vault(policy, {**VAULT_VALUES, "path_prefix": ""})
+    assert _refused_with(
+        lambda: pp.render_vault(policy, {**VAULT_VALUES, "path_prefix": ""}),
+        ValueError,
+        "'path_prefix' is empty: an empty prefix means the whole mount",
+    ), "an empty path_prefix is accepted into the text"
     section = pp._kind_section("secrets/vault", VAULT, policy, pp.read_marks(ROOT))
     assert section[2] == pp.WHOLE_MOUNT
     assert "every secret at the top level of the mount" in pp.WHOLE_MOUNT
@@ -1771,6 +1806,9 @@ def test_the_page_states_its_limits_and_offers_text_for_the_three_kinds():
     # no kind has copy-ready text while a claim of it is unchecked (fix batches 2 and 3)
     assert text.count("```hcl") == 0 and text.count("```yaml") == 0
     assert text.count("No copy-ready text: at least one permission or claim") == 3
+    assert "These tests have not run yet" in text, (
+        "the page claims a run that is on record: it does not say these tests have not run yet"
+    )
     for words in (
         "No test shows that a permission NAME is right",
         "No policy on this page has been confirmed on a real account",
@@ -2488,10 +2526,11 @@ def test_plant_m6_a_key_written_twice_in_the_policy_literal_is_refused():
         '            "resource": "{mount}/data/{path_prefix}+",\n',
         '            "resource": "{mount}/data/{path_prefix}+",\n            "resource": "{mount}/data/*",\n',
     )
-    with pytest.raises(
-        pp.PolicyError, match="key 'resource' is written twice in one dict of POLICY"
-    ):
-        pp.parse(text, "planted.py")
+    assert _refused_with(
+        lambda: pp.parse(text, "planted.py"),
+        pp.PolicyError,
+        "key 'resource' is written twice in one dict of POLICY",
+    ), "a key written twice in the policy literal is accepted"
 
 
 @pytest.mark.parametrize("key", ["id", "name", "resource", "reason", "bound", "applies_when"])
@@ -2533,10 +2572,13 @@ def test_plant_m9_a_placeholder_left_after_filling_is_refused():
 
     policy = _policies()["signer/vault_transit"]
     grant = dataclasses.replace(policy.grants[0], resource="{transit_mount}/sign/{key_name}{Odd9}")
-    with pytest.raises(ValueError, match="a placeholder is left unfilled"):
-        pp.render_vault(
+    assert _refused_with(
+        lambda: pp.render_vault(
             dataclasses.replace(policy, grants=(grant, policy.grants[1])), TRANSIT_VALUES
-        )
+        ),
+        ValueError,
+        "a placeholder is left unfilled",
+    ), "a placeholder left after filling is accepted into the text"
     same(
         _grant_changed("signer/vault_transit", resource="{transit_mount}/sign/{nosuch}"),
         ["grant R18: placeholder 'nosuch' in the resource has no grammar, so it is refused"],
@@ -3047,9 +3089,10 @@ def test_the_self_review_create_is_an_unchecked_claim_on_the_page_not_a_checked_
 def test_the_pending_claims_of_a_free_and_a_never_entry_are_watched_like_a_grant_claim():
     found = claim_problems(_policies(), {}, DECIDED)
     for entry in ("free:0", "never:create"):
-        assert any(f"source/kubernetes {entry}: has an unchecked claim" in p for p in found), (
-            f"an unchecked claim of the entry {entry} needs no PENDING_CLAIMS entry: {found}"
-        )
+        assert any(f"source/kubernetes {entry}: has an unchecked claim" in p for p in found), {
+            "free:0": "an unchecked claim of a free request: the entry free:0 needs no PENDING_CLAIMS entry",
+            "never:create": "an unchecked claim of a never line: the entry never:create needs no PENDING_CLAIMS entry",
+        }[entry] + f": {found}"
 
 
 def _never_over(kind: str, name: str, capabilities: tuple[str, ...] = ()) -> list[str]:
@@ -3202,7 +3245,9 @@ def test_a_sources_note_whose_free_entry_does_not_list_the_id_is_caught():
 def test_the_builder_only_marks_are_read_from_the_head_of_the_sources_file_and_match_its_list():
     text = _text(pp.SOURCES)
     marks = pp.read_marks(ROOT)
-    assert marks.builder_only == ("V-ACL", "V-PARSE", "B-ACL")
+    assert marks.builder_only == ("V-ACL", "V-PARSE", "B-ACL"), (
+        f"the builder-only ids read from the head are not 'V-ACL', 'V-PARSE', 'B-ACL': {marks.builder_only}"
+    )
     listed = text.split("# WHAT A LATER EVIDENCE RUNNER MUST RE-READ", 1)[1].split(
         "# After that run", 1
     )[0]
@@ -3225,9 +3270,11 @@ def test_the_builder_marks_refuse_a_missing_line_an_unknown_id_and_a_second_line
     for name, body in cases.items():
         (tmp_path / pp.SOURCES).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / pp.SOURCES).write_text(body, encoding="utf-8")
-        with pytest.raises(pp.PolicyError):
-            pp.read_marks(tmp_path)
-        _ = name
+        assert _refused_with(lambda: pp.read_marks(tmp_path), pp.PolicyError, ""), {
+            "a missing line": "a sources file with no builder-only line is accepted",
+            "an unknown id": "a builder-only id that is no row of the sources file is accepted",
+            "a second line": "a second builder-only line in the sources file is accepted",
+        }[name]
 
 
 _PASSAGE_MARK = "(the passage behind the claim: see claims)"
@@ -3432,15 +3479,21 @@ def test_plant_a_url_in_verified_is_caught_with_its_message():
 
 
 def test_plant_the_mount_sys_is_refused():
-    with pytest.raises(ValueError, match="'mount' is refused: 'sys' starts with Vault's own path"):
-        pp.render_vault(_policies()["secrets/vault"], {**VAULT_VALUES, "mount": "sys"})
+    assert _refused_with(
+        lambda: pp.render_vault(_policies()["secrets/vault"], {**VAULT_VALUES, "mount": "sys"}),
+        ValueError,
+        "'mount' is refused: 'sys' starts with Vault's own path",
+    ), "a reserved value (the mount sys) is put into the text"
 
 
 def test_plant_a_300_character_value_is_refused():
-    with pytest.raises(ValueError, match="'key_name' is longer than 255 characters"):
-        pp.render_vault(
+    assert _refused_with(
+        lambda: pp.render_vault(
             _policies()["signer/vault_transit"], {**TRANSIT_VALUES, "key_name": "k" * 300}
-        )
+        ),
+        ValueError,
+        "'key_name' is longer than 255 characters",
+    ), "a value longer than its limit is put into the text"
 
 
 def test_plant_another_module_importing_the_vault_client_is_caught():
@@ -3513,8 +3566,12 @@ def test_the_page_shows_the_builder_mark_on_the_plus_claim_of_r17_and_the_nobody
     text = pp.page(ROOT)
     rows = {ln.split(" | ")[0].removeprefix("| "): ln for ln in _claim_rows(text)}
     r17 = rows["R17"]
-    assert f"nothing deeper ({pp.MARK_BUILDER_READ})" in r17, r17
-    assert f"older version of that secret ({pp.MARK_NOBODY_READ})" in r17, r17
+    assert f"nothing deeper ({pp.MARK_BUILDER_READ})" in r17, (
+        f"the claims cell shows no mark after nothing deeper: {r17}"
+    )
+    assert f"older version of that secret ({pp.MARK_NOBODY_READ})" in r17, (
+        f"the claims cell shows no mark after the older version of that secret: {r17}"
+    )
     for gid in ("R18", "R20", "R21", "R22"):
         assert pp.MARK_NOBODY_READ in rows[gid] and pp.MARK_BUILDER_READ not in rows[gid], rows[gid]
     free = next(ln for ln in text.splitlines() if ln.startswith("- `k8s.rules_review`"))
@@ -3555,8 +3612,11 @@ def test_a_claim_with_no_mark_two_marks_or_a_stale_text_is_a_problem_and_a_bad_l
         (tmp_path / pp.SOURCES).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / pp.SOURCES).write_text(text, encoding="utf-8")
         why = "holds an empty claim text" if name == "empty text" else "needs exactly one line"
-        with pytest.raises(pp.PolicyError, match=why):
-            pp.read_marks(tmp_path)
+        assert _refused_with(lambda: pp.read_marks(tmp_path), pp.PolicyError, why), {
+            "missing": "a sources file with no claim line is accepted",
+            "second": "a second claim line in the sources file is accepted",
+            "empty text": "an empty claim text in the head of the sources file is accepted",
+        }[name]
 
 
 # ---- C3: free and never rows carry the mark too
@@ -3565,10 +3625,14 @@ def test_a_claim_with_no_mark_two_marks_or_a_stale_text_is_a_problem_and_a_bad_l
 def test_a_free_or_never_row_with_a_claim_marks_its_partly_read_sources():
     text = pp.page(ROOT)
     free = next(ln for ln in text.splitlines() if ln.startswith("- `k8s.rules_review`"))
-    assert f"K-SSRR {_PASSAGE_MARK}" in free and f"K-RBAC {_PASSAGE_MARK}" in free, free
+    assert f"K-SSRR {_PASSAGE_MARK}" in free and f"K-RBAC {_PASSAGE_MARK}" in free, (
+        f"a free request with a claim (k8s.rules_review) shows its partly read source as a plain claim: {free}"
+    )
     assert f"K-SRC {_PASSAGE_MARK}" not in free, free
     never = next(ln for ln in text.splitlines() if ln.startswith("| action | `create` |"))
-    assert f"K-AUTHZ {_PASSAGE_MARK}" in never, never
+    assert f"K-AUTHZ {_PASSAGE_MARK}" in never, (
+        f"a never line with a claim (| action | `create` |) shows its partly read source as a plain claim: {never}"
+    )
     update = next(ln for ln in text.splitlines() if ln.startswith("| action | `update` |"))
     assert _PASSAGE_MARK not in update, update  # no claim: no mark
 
@@ -3588,7 +3652,8 @@ def test_a_free_reason_that_says_it_creates_nothing_or_changes_nothing_has_no_cl
         for claims in (None, ()):
             found = _problems_of(_free_reason(kube, said, claims))
             assert any("has 0 classes in NOTE_CLASSES" in p and "reason:" in p for p in found), (
-                f"the free reason {said!r} (claims {claims}) is not refused: {found}"
+                f"the free reason {said!r} (claims {claims}) needs no class: it has 0 classes in NOTE_CLASSES "
+                f"and is not refused: {found}"
             )
     # a reason that starts like the real one and goes on: refused as well (a reason matches its exact text)
     found = _problems_of(_free_reason(kube, real + " It creates nothing in the cluster."))
@@ -3668,16 +3733,18 @@ def test_a_note_class_with_an_unknown_source_id_is_a_problem_of_the_check_and_th
     assert any("K-NOPE, which is not in the sources file" in p for p in found), (
         f"the check command does not report an unknown source id of a note class: {found}"
     )
+    raised: Exception | None = None
     try:
         pp.page(ROOT)
-    except pp.PolicyError as exc:
-        assert "K-NOPE" in str(exc)
-    except KeyError as exc:  # the old code raised a KeyError here
-        raise AssertionError(
-            f"the page raises {type(exc).__name__}, not PolicyError: {exc}"
-        ) from None
-    else:
-        raise AssertionError("the page accepts a note class with an unknown source id")
+    except (pp.PolicyError, KeyError, IndexError, TypeError, ValueError) as exc:
+        raised = exc
+    assert raised is not None, "the page accepts a note class with an unknown source id"
+    assert isinstance(raised, pp.PolicyError), (
+        f"the page raises {type(raised).__name__}, not PolicyError: {raised}"
+    )  # the old code raised a KeyError here
+    assert "K-NOPE" in str(raised), (
+        "the PolicyError of the page does not name the unknown id K-NOPE"
+    )
 
 
 def test_a_free_note_class_that_lists_a_source_its_entry_does_not_name_is_a_problem_of_the_check(
@@ -3731,6 +3798,9 @@ def test_the_page_head_and_the_r17_cell_and_reason_state_the_same_hedged_scope()
     head = text.split("## vault (secrets)", 1)[0].replace("\n  ", " ")
     r17_row = next(ln for ln in text.splitlines() if ln.startswith("| R17 "))
     r17 = _policies()["secrets/vault"].grants[0]
+    assert "every secret directly under the prefix" in head, (
+        "the page head does not say the prefix scope"
+    )
     for where, said in (
         ("the page head", head),
         ("the R17 cell", r17_row),
@@ -3780,7 +3850,15 @@ def test_a_never_path_deeper_than_the_prefix_grant_is_not_reported_as_covering_i
         "{mount}/data/{path_prefix}+/+",  # the evidence probe P3b
         "{mount}/data/{path_prefix}deeper/+/+",
     ):
-        same(_never_over(vault, name, ("read",)), [])
+        same(
+            _never_over(vault, name, ("read",)),
+            [],
+            {
+                "{mount}/data/{path_prefix}+/deeper/+": "{mount}/data/{path_prefix}+/deeper/+ is reported as covering the prefix grant R17",
+                "{mount}/data/{path_prefix}+/+": "{mount}/data/{path_prefix}+/+ is reported as covering the prefix grant R17",
+                "{mount}/data/{path_prefix}deeper/+/+": "{mount}/data/{path_prefix}deeper/+/+ is reported as covering the prefix grant R17",
+            }[name],
+        )
     for name in ("{mount}/data/{path_prefix}+", "{mount}/data/{path_prefix}*"):
         found = _never_over(vault, name, ("read",))
         assert len(found) == 1 and "grant R17 " in found[0], (name, found)
@@ -4127,7 +4205,9 @@ def test_a_malformed_note_class_key_is_one_problem_line_of_the_check_and_no_trac
         with monkeypatch.context() as m:
             m.setitem(pp.NOTE_CLASSES, key, ("code",))
             code, lines = _check_or_fail(m, capsys)
-        assert code == 1 and len(lines) == 1, f"a malformed key is not one problem line: {lines}"
+        assert code == 1 and len(lines) == 1, (
+            f"a malformed key is not one problem line (the check raised IndexError, or printed more): {lines}"
+        )
         assert "its key is not a tuple of two texts" in lines[0], lines
 
 
@@ -4193,6 +4273,25 @@ def test_the_tool_docstring_holds_no_date_that_is_not_in_the_dated_lists():
     allowed = {str(d) for p in dated for d in (p.decided, p.review_by)}
     stray = set(re.findall(r"\d{4}-\d{2}-\d{2}", pp.__doc__)) - allowed
     assert not stray, f"the tool docstring holds a date that is in no dated list: {sorted(stray)}"
+
+
+def test_the_tool_docstring_holds_no_literal_date():
+    # A day written in the docstring would stay after a renewal and could be another entry's day; the tool's
+    # docstring names the rule (the day after the earliest `review_by`), never a day.
+    stray = re.findall(r"\d{4}-\d{2}-\d{2}", pp.__doc__)
+    assert not stray, f"the tool docstring holds a literal date: {stray}"
+
+
+def test_the_decision_day_of_the_16_kinds_does_not_follow_the_tools_decision_day(monkeypatch):
+    # Behaviour, not syntax: this file is run again with the tool's decision day moved, and its 16 kinds must keep
+    # the day they were decided (a name that takes the tool's day would move them and the 92-day cap with them).
+    monkeypatch.setattr(pp, "DECIDED", pp.DECIDED + timedelta(days=30))
+    again = runpy.run_path(__file__, run_name="b10_kinds_copy")
+    same(
+        {p.decided for p in again["PENDING_KINDS"].values()},
+        {KINDS_DECIDED},
+        "the 16 kinds follow the tool's decision day when it moves (the decision days of the 16 kinds)",
+    )
 
 
 def _fixed_clock(day: date):
@@ -4289,29 +4388,55 @@ def test_the_page_names_the_review_day_of_the_dated_lists_and_follows_a_renewal(
 def test_the_docs_page_names_the_review_day_of_the_dated_lists_only():
     docs = " ".join((ROOT / "docs/declared-permissions.md").read_text(encoding="utf-8").split())
     day = str(pp.review_date())
-    assert f"or the review date {day}, whichever comes first" in docs
-    assert f"(review by {day})" in docs
+    assert f"or the review date {day}, whichever comes first" in docs, (
+        f"the docs page does not name the review date {day} in the trigger sentence"
+    )
+    assert f"(review by {day})" in docs, (
+        f"the docs page does not name the review date {day} in the claims sentence"
+    )
     assert docs.count(day) >= 2
 
 
-def _day_the_tool_sees() -> date:
-    return pp.datetime.now(pp.UTC).date()
+FIXED_DAY_VAR = "HADAVIN_POLICY_FIXED_DAY"
+MUTANT_RUN_VAR = "HADAVIN_POLICY_MUTANT_RUN"
+
+
+def _run_day(env) -> date | None:
+    """The day a mutant run fixed for this pytest run, or None. The day variable is honoured only together with the
+    marker that only `tests/policy_mutants.py` sets: a developer or CI environment that holds the day variable alone
+    must not switch off the date reminder, so that case is refused (the session stops with one line)."""
+    day = env.get(FIXED_DAY_VAR)
+    if day is None:
+        return None
+    if env.get(MUTANT_RUN_VAR) != "1":
+        raise RuntimeError(
+            f"{FIXED_DAY_VAR} is set but this is not a mutant run ({MUTANT_RUN_VAR} is not 1): unset it, "
+            "only tests/policy_mutants.py --day sets it"
+        )
+    return date.fromisoformat(day)
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _fixed_day_needs_the_mutant_run_marker():
+    try:
+        _run_day(os.environ)
+    except RuntimeError as exc:
+        pytest.exit(str(exc), returncode=2)
 
 
 @pytest.fixture(autouse=True)
 def _fixed_day_of_the_run(monkeypatch):
-    """When the run was given a fixed day (`HADAVIN_POLICY_FIXED_DAY`, set by `tests/policy_mutants.py --day`),
-    the tool's clock shows it. Unset: the real clock."""
-    day = os.environ.get("HADAVIN_POLICY_FIXED_DAY")
+    """When a mutant run was given a fixed day, the tool's clock (and so `_today()`) shows it. Unset: the real clock."""
+    day = _run_day(os.environ)
     if day:
-        monkeypatch.setattr(pp, "datetime", _fixed_clock(date.fromisoformat(day)))
+        monkeypatch.setattr(pp, "datetime", _fixed_clock(day))
 
 
 def test_the_day_the_tool_sees_is_the_fixed_day_the_run_was_given():
-    given = os.environ.get("HADAVIN_POLICY_FIXED_DAY")
-    seen = _day_the_tool_sees()
+    given = _run_day(os.environ)
+    seen = _today()
     if given:
-        assert seen.isoformat() == given, (
+        assert seen == given, (
             f"the fixed day {given} did not reach the tool's clock: it shows {seen}"
         )
     else:
@@ -4319,3 +4444,173 @@ def test_the_day_the_tool_sees_is_the_fixed_day_the_run_was_given():
         assert abs((seen - real).days) <= 1, (
             f"the tool's clock shows {seen}, the real day is {real}"
         )
+
+
+def test_the_fixed_day_is_honoured_only_with_the_marker_of_the_mutant_run():
+    assert _run_day({}) is None, "no day variable: the real clock"
+    assert _run_day({FIXED_DAY_VAR: "2026-12-12", MUTANT_RUN_VAR: "1"}) == date(2026, 12, 12), (
+        "day and marker: the fixed day"
+    )
+    assert _refused_with(
+        lambda: _run_day({FIXED_DAY_VAR: "2026-12-12"}), RuntimeError, "not a mutant run"
+    ), "a day variable without the marker was honoured"
+    assert _refused_with(
+        lambda: _run_day({FIXED_DAY_VAR: "2026-12-12", MUTANT_RUN_VAR: "0"}),
+        RuntimeError,
+        "not a mutant run",
+    ), "a day variable with a marker that is not 1 was honoured"
+
+
+def test_the_three_date_tests_read_the_clock_function_and_go_red_after_the_review_day(monkeypatch):
+    # The consumers of `_today()` are the three date tests: a day after the earliest review day must make each
+    # of their helpers report "overdue", the review day itself none. Independent of the day the run was given
+    # (this test sets the clock itself), so a `_today()` that reads the real day is killed on every run.
+    review = min(
+        p.review_by
+        for p in (*PENDING_KINDS.values(), *PENDING_NAMES.values(), *PENDING_CLAIMS.values())
+    )
+    helpers = {
+        "kinds": _kinds_problems_today,
+        "names": _names_problems_today,
+        "claims": _claims_problems_today,
+    }
+    monkeypatch.setattr(pp, "datetime", _fixed_clock(review))
+    for name, helper in helpers.items():
+        same(helper(), [], f"the {name} date test on the review day")
+    monkeypatch.setattr(pp, "datetime", _fixed_clock(review + timedelta(days=1)))
+    for name, helper in helpers.items():
+        found = helper()
+        assert found and all("is overdue" in p for p in found), (
+            f"the {name} date test does not go red the day after the review day: it reads another clock"
+        )
+
+
+# ------------------------------------------------------------------ the runner's own rules (batch 10)
+
+
+def _runner():
+    from tests import policy_mutants
+
+    return policy_mutants
+
+
+def test_the_runner_refuses_a_day_argument_that_is_missing_or_not_a_day():
+    runner = _runner()
+    for argv in (
+        ["--day"],
+        ["x", "--day"],
+        ["--day", ""],
+        ["--day", "tomorrow"],
+        ["--day", "2026-13-01"],
+        ["--day", "2026-12-1"],
+        ["--day", "2026-02-30"],
+        ["--day", "20261212"],
+        ["--day", "2026-W50-5"],
+    ):
+        try:
+            runner.parse_args(argv)
+            raised = None
+        except (runner.ArgumentProblem, KeyError, IndexError, TypeError, ValueError) as exc:
+            raised = exc
+        assert type(raised) is runner.ArgumentProblem, (
+            f"the runner takes the argument list {argv} (a --day with no real day) or fails with {raised!r} "
+            "instead of one plain line"
+        )
+    same(runner.parse_args(["--day", "2026-12-12", "D1"]), ("2026-12-12", ["D1"]), "a good --day")
+    same(runner.parse_args(["B9"]), (None, ["B9"]), "no --day")
+
+
+def test_the_probe_day_is_never_the_real_day_and_is_never_after_the_review_day():
+    runner = _runner()
+    review = date(2026, 12, 11)
+    for offset in range(-400, 400):
+        today = review + timedelta(days=offset)
+        canary = runner.canary_day(today, review)
+        assert canary != today, (
+            f"the probe day is the real day {today}: a dropped clock hook would hide"
+        )
+        assert canary < review, f"the probe day {canary} is not before the review day {review}"
+
+
+def test_the_clock_readers_of_the_guard_file_include_the_three_date_tests():
+    runner = _runner()
+    readers = runner.clock_readers()
+    assert set(runner.DATE_TESTS) <= readers, (
+        f"a date test does not read the clock function `_today` (directly or through a helper): "
+        f"{sorted(set(runner.DATE_TESTS) - readers)}"
+    )
+
+
+def test_the_message_scan_counts_only_assert_messages_match_and_what_texts():
+    runner = _runner()
+    source = (
+        "def killer():\n"
+        "    # needle in a comment\n"
+        "    for word in ('needle in a loop literal',):\n"
+        "        assert any('needle in a predicate' in p for p in []) or True\n"
+        "    assert 1 == 1, 'needle in a message'\n"
+        "    same(1, 1, 'needle in a what')\n"
+        "    with pytest.raises(ValueError, match='needle in a match'):\n"
+        "        pass\n"
+    )
+    found = runner.message_texts_of(source)["killer"]
+    same(
+        sorted(found),
+        ["needle in a match", "needle in a message", "needle in a what"],
+        "the texts the scan counts",
+    )
+
+
+def test_with_both_dated_lists_empty_the_page_names_no_day_and_the_commands_still_report(
+    tmp_path, monkeypatch, capsys
+):
+    # The end state of the ticket: nothing is waiting for a check. `review_date()` has no day then, and the
+    # page, `--write` and `--check` must work and say so (a `min()` of nothing raised ValueError before).
+    monkeypatch.setattr(pp, "PENDING_NAMES", {})
+    monkeypatch.setattr(pp, "PENDING_CLAIMS", {})
+    try:
+        day = pp.review_date()
+    except ValueError as exc:
+        day = f"raised {exc}"
+    assert day is None, f"review_date() has no answer with both dated lists empty: {day}"
+    head = pp.head(pp.read_marks(ROOT))
+    assert not re.search(r"\d{4}-\d{2}-\d{2}", head.split("## ")[0]), (
+        "the page head names a day with both dated lists empty"
+    )
+    assert "no review date is set" in head and "whichever comes first" not in head, (
+        "the page head does not say plainly that no review date is set"
+    )
+    assert "No permission name or claim is waiting for a check now" in head, (
+        "the page head keeps the sentence about a dated entry with no date to name"
+    )
+    root = _tree(tmp_path)
+    monkeypatch.setattr(pp, "ROOT", root)
+    monkeypatch.setattr(pp, "DATA_ROOT", root)
+    # the data rules for unchecked names need the lists, so they are set aside here: the page and both commands
+    # are what is under test
+    monkeypatch.setattr(pp, "data_problems", lambda *a, **k: [])
+    assert pp.main(["--write"], today=DECIDED) == 0, "--write stops with both dated lists empty"
+    assert pp.main(["--check"], today=DECIDED) == 0, "--check stops with both dated lists empty"
+    assert "no review date is set" in (root / pp.PAGE).read_text(encoding="utf-8"), (
+        "the written page does not say that no review date is set"
+    )
+    capsys.readouterr()
+
+
+def test_with_one_dated_list_empty_the_page_names_the_review_day_of_the_other(monkeypatch):
+    marks = pp.read_marks(ROOT)
+    one = pp.Pending("r", "t", pp.DECIDED, date(2027, 1, 20))
+    monkeypatch.setattr(pp, "PENDING_NAMES", {})
+    monkeypatch.setattr(pp, "PENDING_CLAIMS", {("secrets/vault", "R17"): one})
+    assert pp.review_date() == date(2027, 1, 20), (
+        "review_date() ignores the one list that has entries"
+    )
+    head = pp.head(marks)
+    assert head.count("2027-01-20") == 2, (
+        "the page head does not name the day of the one list twice"
+    )
+    monkeypatch.setattr(pp, "PENDING_NAMES", {("secrets/vault", "R17"): one})
+    monkeypatch.setattr(pp, "PENDING_CLAIMS", {})
+    assert pp.head(marks).count("2027-01-20") == 2, (
+        "the page head does not name the day of the names list when the claims list is empty"
+    )
