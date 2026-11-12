@@ -2736,3 +2736,6 @@
 | P3a2-3c-M5 | same report Issue 5 | Major | P3a-2 | MT1/MT2 MAINTAIN retired, no killer | OPEN | fix builder 3d | | 2026-11-12
 | P3a2-3c-C2 | same report Issue 6 | Major | P3a-2 | step-4 REVOKE escape ascii-based for quoted/non-ASCII function names, untested | OPEN | fix builder 3d | | 2026-11-12
 | P3a2-3c-N5 | same report Issue 11 | Major(security) | P3a-2 | empty-ACL objects invisible to Q2 may hide O4/O8 from a hostile file | OPEN | probe + fix in 3d | | 2026-11-12
+| Q8a1-r9-C1-verified | reviews/Q8a-1/goldfish_review_report-r10.md | Major | Q8a-1 | round 9 C1 (configured Kubernetes namespace printed): planted-namespace probe on f4acee28, marker in no message/exception/traceback over 296 rows (112 of 196 and 72 of 100 on f0febfb6) | FIXED-VERIFIED | handover/evidence/Q8a-1/f4acee28/probe-summary.txt | evidence runner a01df54d | 2026-11-12
+| Q8a1-r10-G1 | same report Issue 1 | Minor | Q8a-1 | message guard is a list of spellings; empty-string namespace accepted | OPEN | batch 11 | | 2026-11-12
+| Q8a1-r10-fstr | same report Issue 2 | Minor | Q8a-1 | 11 f-string hits of configured names not traced to messages | OPEN | batch 11 | | 2026-11-12
