@@ -1174,7 +1174,7 @@ M = [
     other_mutant('Z229 round 17: the CHANGELOG handler list counts one handler too many (CHANGELOG.md)', 'CHANGELOG.md',
         '`tools.py` `work` x1', '`tools.py` `work` x2', 'tests/test_changelog_claims.py', 'test_the_handler_list_of_the_changelog_is_the_handlers_of_the_code', 'differs from the handlers of src'),
     other_mutant('Z230 round 17: the CHANGELOG says one handler too few in its counts (CHANGELOG.md)', 'CHANGELOG.md',
-        '@@HANDLERS@@', '@@HANDLERS_WRONG@@', 'tests/test_changelog_claims.py', 'test_the_counts_at_this_head_are_the_counts_of_this_head', 'are not the counts of this head'),
+        '54 handlers marked', '55 handlers marked', 'tests/test_changelog_claims.py', 'test_the_counts_at_this_head_are_the_counts_of_this_head', 'are not the counts of this head'),
 ]  # fmt: skip
 
 
