@@ -1850,3 +1850,5 @@ Measured: the check for an UNKNOWN secret typed with spaces (a run of 10 or more
 ### q-q8b-bare-bypass (2026-11-12, Q8b round 10)
 Question: Should a bare word `bypass` followed by a value, such as `bypass=true`, be hidden as if it were a password? Hiding it also hides harmless switches; showing it could show a real bypass token.
 Default (used now): shown, and pinned by a test row. Main hid it only through an unbounded `pass` match. Names such as `bypass_key` and `bypass_token` stay hidden. The builder must not write "owner decision not needed".
+
+Addendum (2026-11-12, Q8b round 11 resolve): the same default also covers a bare scheme word plus token with no header name (for example `Basic <token>` on its own line): it is hidden only for the characters main hid, and 3207 of 9072 probe cells stay readable, the same as main. Should this class be hidden more widely? Default (used now): as main. Evidence: handover/evidence/Q8b/166d1313/probe-readable-on-head-cells.tsv.
