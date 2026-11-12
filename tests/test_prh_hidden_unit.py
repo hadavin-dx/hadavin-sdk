@@ -339,24 +339,115 @@ def test_strip_consuming():
 
 
 def test_readings_are_the_same_set_everywhere():
-    """`hidden.readings` is the one helper that the redactor and the scrub of tool results both use: no hidden item is the
-    one text five times; a text with an escape sequence has the grammar's, the character and the consuming readings; a
+    """`hidden.readings` is the helper that `redact_text` and the scrub of tool results both take their readings from (a
+    decoded view that holds a hidden item, the result check of the scrub and public `redact()` call `strip` or
+    `sequence_readings` themselves, on the same scan): no hidden item is the one text six times; a text with an escape sequence has the grammar's, the character and the consuming readings; a
     text with a hidden item and no ESC has no consuming reading of its own."""
     esc = "\x1b"
     plain = "no hidden item here"
     r = hidden.readings(plain)
-    assert r == (plain,) * 5 and r.joined is plain
+    assert r == (plain,) * 6 and r.joined is plain
     cut = "AKIA" + esc + "(B" + esc + "[m" + "IOSFODNN7EXAMPLE"
     r = hidden.readings(cut)
     assert r.joined == "AKIA(BIOSFODNN7EXAMPLE"
     assert r.consuming_joined == "AKIAIOSFODNN7EXAMPLE"
     assert r.characters == "AKIA(B[mIOSFODNN7EXAMPLE"
     assert r.distinct() == tuple(
-        dict.fromkeys((r.joined, r.spaced, r.characters, r.consuming_joined, r.consuming_spaced))
+        dict.fromkeys(
+            (
+                r.joined,
+                r.spaced,
+                r.characters,
+                r.characters_spaced,
+                r.consuming_joined,
+                r.consuming_spaced,
+            )
+        )
     )
     zw = "ab\x08cd"
     r = hidden.readings(zw)
     assert r.consuming_joined == r.joined == "abcd" and r.consuming_spaced == r.spaced
+
+
+def _reference_characters(text: str) -> tuple[str, str]:
+    """The character reading by the book, one character at a time: a removed character is deleted, a space-like one is a
+    space; in the spaced copy a run of removed characters with a word character on both sides is one space."""
+    joined, spaced = [], []
+    i, n = 0, len(text)
+    while i < n:
+        c = text[i]
+        if c in hidden.SPACE_LIKE:
+            joined.append(" ")
+            spaced.append(" ")
+            i += 1
+        elif c in hidden.REMOVED_CHARS:
+            j = i
+            while j < n and text[j] in hidden.REMOVED_CHARS:
+                j += 1
+            left = text[i - 1] if i else ""
+            right = text[j] if j < n else ""
+            if left and right and hidden.is_word(left) and hidden.is_word(right):
+                spaced.append(" ")
+            i = j
+        else:
+            joined.append(c)
+            spaced.append(c)
+            i += 1
+    return "".join(joined), "".join(spaced)
+
+
+def test_characters_readings_examples():
+    """`user` + BEL + a key keeps a space in the spaced copy and none in the joined one; the same object twice when they are
+    equal; a space-like character is a space in both and ends a run; ignorable characters are not word characters."""
+    key = "AKIA" + "IOSFODNN7EXAMPLE"
+    assert hidden.characters_readings("user" + BEL + key) == ("user" + key, "user " + key)
+    assert hidden.characters_readings("a" + ESC + "b") == ("ab", "a b")
+    assert hidden.characters_readings("a" + ESC + "[0m" + "b") == (
+        "a[0mb",
+        "a[0mb",
+    )  # `[` is not a word character
+    assert hidden.characters_readings("a." + BEL + "b") == ("a.b", "a.b")
+    assert hidden.characters_readings(BEL + "ab" + BEL) == ("ab", "ab")
+    assert hidden.characters_readings("a\x0cb" + BEL + "\x0b" + BEL + "c") == ("a b c", "a b c")
+    assert hidden.characters_readings("a\u200b" + BEL + "b") == ("a\u200bb", "a\u200bb")
+    joined, spaced = hidden.characters_readings("plain")
+    assert joined is spaced
+    joined, spaced = hidden.characters_readings("a." + BEL + "b")
+    assert joined is spaced
+    assert hidden.characters_readings("a" + BEL + "b" + BEL + "c") == ("abc", "a b c")
+
+
+def test_characters_readings_match_the_reference_on_seeded_texts():
+    """2,000 seeded texts of letters, digits, `_`, `.`, a space, a tab, removed and space-like characters, ESC and an
+    ignorable character: both readings equal the one-character-at-a-time reference, the joined one equals
+    `strip_characters`, and a second pass changes nothing (idempotent)."""
+    alphabet = [
+        "a",
+        "Z",
+        "7",
+        "_",
+        ".",
+        " ",
+        "\t",
+        BEL,
+        ESC,
+        "\x00",
+        "\x7f",
+        "\x0b",
+        "\u2028",
+        "\u200b",
+        "\u00e9",
+        "[",
+        "\x85",
+    ]
+    g = Gen(20261112)
+    for _ in range(2000):
+        text = "".join(alphabet[g.below(len(alphabet))] for _ in range(g.between(0, 14)))
+        joined, spaced = hidden.characters_readings(text)
+        assert (joined, spaced) == _reference_characters(text), repr(text)
+        assert joined == hidden.strip_characters(text), repr(text)
+        assert hidden.characters_readings(joined) == (joined, joined)
+        assert hidden.characters_readings(spaced)[0] == spaced
 
 
 def test_merged_placeholder_is_reused_by_mask_spans():

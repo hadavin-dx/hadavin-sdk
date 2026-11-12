@@ -14,6 +14,7 @@ import re
 import pytest
 
 from hadavin_sdk import tools
+from hadavin_sdk.guard import hidden
 from tests import hidden_oracle as oracle
 from tests.k5_support import TOOL
 
@@ -246,6 +247,111 @@ def test_scrub_two_secrets_found_by_different_readings():
         assert not _pieces_stand(out, HAND), out
     out = tools.prepare_output(text, {}, 4000, [HAND, other])
     assert not _pieces_stand(out, HAND) and not _pieces_stand(out, other), out
+
+
+# ---- batch b5: a joined reading is never handed on (Issues 1 and 2 of round 4) -------------------------------------------
+
+
+BOUNDARIES = {
+    "bel": " ; user" + BEL + KEY,
+    "sgr": " ; INFO user" + ESC + "[0m" + KEY,
+}
+
+
+def _clean_of(out: str, *secrets: str) -> None:
+    assert "IOSFODNN7EXAMPLE" not in out, out
+    for secret in secrets:
+        assert not _pieces_stand(out, secret), out
+
+
+@pytest.mark.parametrize("boundary", sorted(BOUNDARIES))
+def test_scrub_character_reading_keeps_boundary(boundary):
+    """A handed-out secret that only the CHARACTER reading holds whole (`ESC` + `T` + ...: the grammar's reading reads
+    `ESC T` as one escape and eats the `T`), and a hidden item that makes a key a word of its own elsewhere: the secret is
+    masked AND the key is masked. A scrub that returned the character reading with no gap glued `user` to the key, which the
+    redactor does not mask (main masks it: the bell separates them). With a control sequence as the boundary (`ESC [ 0 m`)
+    the character reading would show its body (`[0m`) as text and glue the key to it, so the text is withheld."""
+    text = "a " + ESC + HAND + BOUNDARIES[boundary]
+    rd = hidden.readings(text)
+    assert HAND in rd.characters and HAND not in rd.joined and HAND not in rd.consuming_joined
+    for out in _both_paths(text, HAND):
+        _clean_of(out, HAND)
+
+
+@pytest.mark.parametrize("boundary", sorted(BOUNDARIES))
+def test_mf_scrub_consuming_reading_keeps_boundary(boundary):
+    """The same for a secret that only the CONSUMING reading holds whole (`ESC ( B` + `ESC [ m` cut it: `tput sgr0`)."""
+    text = "a " + _cut_by_sgr0(HAND) + BOUNDARIES[boundary]
+    rd = hidden.readings(text)
+    assert HAND in rd.consuming_joined and HAND not in rd.joined and HAND not in rd.characters
+    for out in _both_paths(text, HAND):
+        _clean_of(out, HAND)
+
+
+def test_scrub_character_reading_with_a_sequence_is_withheld():
+    """The character reading holds the secret, and the text holds a control sequence it would show as text: nothing is
+    shown (never the character reading with `[0m` standing before the key)."""
+    text = "a " + ESC + HAND + BOUNDARIES["sgr"]
+    assert hidden.leaves_text(text)
+    out = tools._scrub(text, [HAND])
+    assert out == tools.MARKER + tools.TRUNCATED, (
+        f"a character reading with a sequence body was shown: {out!r}"
+    )
+
+
+def test_leaves_text():
+    """Only the letter after an ESC is the difference between the character reading and the grammar's reading when no
+    sequence has a body: a lone ESC, ESC and a letter or digit. Every longer item leaves text."""
+    assert not hidden.leaves_text("plain")
+    assert not hidden.leaves_text("a" + ESC + "T" + "b" + BEL + "c" + ESC + "9" + ESC)
+    for item in ("[0m", "(~", "]0;t" + BEL, "P x" + ESC + "\\", " " + "@"):
+        assert hidden.leaves_text("a" + ESC + item + "b"), repr(item)
+    assert hidden.leaves_text("a\x9b31mb")
+
+
+def test_scrub_result_is_the_spaced_copy_of_the_reading_that_holds_the_secret():
+    """The result of a find in the character reading keeps the space the bell made, so the key is a word of its own."""
+    text = "a " + ESC + HAND + " ; user" + BEL + KEY
+    out = tools._scrub(text, [HAND])
+    assert out == "a " + tools.MARKER + " ; user " + KEY, (
+        f"result with no gap before the key: {out!r}"
+    )
+
+
+def test_scrub_two_secrets_that_only_the_character_reading_holds():
+    """Two handed-out secrets, both whole only in the character reading: the union is in ONE reading, so both are masked
+    in its spaced copy and the boundary key stays masked."""
+    first, second = ALNUM, HAND
+    text = "a " + ESC + first + " ; " + ESC + second + BOUNDARIES["bel"]
+    rd = hidden.readings(text)
+    assert first in rd.characters and second in rd.characters
+    assert first not in rd.joined and second not in rd.joined
+    out = tools.prepare_output(text, {}, 4000, [first, second])
+    _clean_of(out, first, second)
+    out = tools.error_reason(ValueError(text), [first, second])
+    _clean_of(out, first, second)
+
+
+@pytest.mark.parametrize("cut", ["(B", "(B" + ESC + "[m"], ids=["nF-only", "sgr0"])
+def test_scrub_two_secrets_one_in_the_character_and_one_in_the_consuming_reading(cut):
+    """HAND1 only whole in the character reading (`ESC` + `Z`...), HAND2 only whole in the consuming reading (`ESC ( B`, with
+    or without `ESC [ m`, cuts it): no reading holds both and the readings cannot be merged, so nothing is shown (the first
+    reading with a find used to be the result and showed the half of HAND2 that its `(B` cut). With `ESC [ m` the character
+    reading would also show the body of a sequence; with `ESC ( B` alone it is the union that is not in one reading."""
+    first, second = ALNUM, HAND
+    text = "a " + ESC + first + " " + second[:9] + ESC + cut + second[9:]
+    rd = hidden.readings(text)
+    assert first in rd.characters and first not in rd.joined and first not in rd.consuming_joined
+    assert second in rd.consuming_joined and second not in rd.characters and second not in rd.joined
+    out = tools._scrub(text, [first, second])
+    assert out == tools.MARKER + tools.TRUNCATED, (
+        f"one reading was shown with a half secret: {out!r}"
+    )
+    for out in (
+        tools.prepare_output(text, {}, 4000, [first, second]),
+        tools.error_reason(ValueError(text), [first, second]),
+    ):
+        _clean_of(out, first, second)
 
 
 # ---- T12 ----------------------------------------------------------------------------------------------------------

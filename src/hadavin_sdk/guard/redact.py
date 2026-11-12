@@ -830,6 +830,7 @@ def strip_ansi(text: str) -> str:
 
 # At most this many values a text may need masked by their gap pattern (a hostile text must not make the search long).
 MAX_DECODED_MASKS = 256
+WITHHELD_NOTE = "(details withheld)"  # what a direct caller is given when a reading cannot be masked (never the joined text)
 
 
 def gap_pattern(value: str) -> re.Pattern[str]:
@@ -937,8 +938,10 @@ class _Redactor:
         * the *spaced* reading (one space where a sequence stood between two word characters): the text the reader is
           given, so values the joined reading found are MASKED in it, by their gap pattern;
 
-        A value found in the joined reading that the spaced reading cannot show whole is not lost: the joined result is
-        returned (the boundaries are lost, the value stays masked)."""
+        A value found in the joined reading that the spaced reading cannot show whole (or more than `MAX_DECODED_MASKS` of
+        them) fails closed: `WITHHELD_NOTE` is returned, never the joined text (it has lost the word boundaries the
+        sequences made, so a key glued to the word before it would read as part of that word). Inside `redact_text` no
+        escape sequence is left, so this is reached only by a direct caller of `redact()` or `redact_many()`."""
         joined, spaced = hidden.sequence_readings(text)
         return self._patterns(spaced) if joined == spaced else self._find_readings(joined, spaced)
 
@@ -955,13 +958,13 @@ class _Redactor:
             if not self.mapping[ph].startswith("\0seed") and self.mapping[ph] not in spaced
         ]
         if len(needed) > MAX_DECODED_MASKS:
-            return found
+            return WITHHELD_NOTE
         spans: list[tuple[int, int, str]] = []
         for ph in held:
             if self.mapping[ph] in needed:
                 matches = list(gap_pattern(self.mapping[ph]).finditer(spaced))
                 if not matches:
-                    return found
+                    return WITHHELD_NOTE
                 spans.extend((m.start(), m.end(), ph) for m in matches)
         masked = mask_spans(spaced, spans, self.mapping, _redactor=self) if spans else spaced
         return self._patterns(masked)

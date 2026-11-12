@@ -18,9 +18,10 @@ The tests carry the marker `perf`: CI runs them in their own step, alone."""
 
 from __future__ import annotations
 
+import asyncio
 import json
+import os
 import statistics
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -28,7 +29,7 @@ from pathlib import Path
 try:
     import pytest
 except ImportError:  # the `__main__` mode needs no test runner
-    pytest = None  # type: ignore[assignment]
+    pytest = None
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard import runmap
@@ -220,16 +221,23 @@ def _child(py_path: str | None) -> dict[str, float]:
         "print(json.dumps({k: P.median_cpu(P.fill(v, P.CAP), 1) for k, v in P.SHAPES.items() if k[0] in 'SH'}))"
     )
     env = {"PYTHONPATH": py_path} if py_path else {}
-    import os
 
-    done = subprocess.run(  # noqa: S603 (fixed argv, no shell)
-        [sys.executable, "-c", code],
-        env={**os.environ, **env},
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return json.loads(done.stdout.strip().splitlines()[-1])
+    async def run() -> tuple[int | None, bytes]:
+        # asyncio starts the child directly, with a fixed argument list and no shell
+        proc = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-c",
+            code,
+            env={**os.environ, **env},
+            stdout=asyncio.subprocess.PIPE,
+        )
+        out, _ = await proc.communicate()
+        return proc.returncode, out
+
+    code_returned, stdout = asyncio.run(run())
+    if code_returned != 0:
+        raise RuntimeError(f"the timing child exited with {code_returned}")
+    return json.loads(stdout.decode().strip().splitlines()[-1])
 
 
 def compare_main(main_root: str) -> None:

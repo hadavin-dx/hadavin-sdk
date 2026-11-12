@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
 
 import pytest
@@ -143,6 +144,10 @@ def verdict(row: dict, path: str) -> str:
     handed = [CONSTS[n] for n in row["handed"]]
     out = run_path(path, text, handed)
     secrets = [CONSTS[n] for n in row["secrets"]]
+    # a refusal shows nothing, but it is not "masked": a row that expects a refusal on a path says so (`refused`), so a
+    # path that starts refusing a row it used to mask is a failure, not a pass
+    if out is None and not row.get("pin") and path not in row.get("refused", ()):
+        return "refused"
     if row.get(
         "pin"
     ):  # an input the promises do not cover: today's exact output shape is the verdict
@@ -173,6 +178,40 @@ def test_regression_row(row):
         assert verdict(row, path) == row["expect"][path], (
             f"{row['id']} [{path}] source {row['source']}"
         )
+
+
+def _row_holds(row_id: str) -> None:
+    row = next(r for r in ROWS if r["id"] == row_id)
+    for path in row["paths"]:
+        assert verdict(row, path) == row["expect"][path], (
+            f"{row['id']} [{path}] source {row['source']}"
+        )
+
+
+# One test per row with a tail after the hidden item, so a mutant that removes the consuming reading can be pinned to each of
+# them (`-x` stops a parametrised test at its first failing row).
+def test_tail_row_trail_is_masked():
+    _row_holds("b4_1_trail")
+
+
+def test_tail_row_on_the_next_line_is_masked():
+    _row_holds("b4_1_nextline")
+
+
+def test_tail_row_long_tail_is_masked():
+    _row_holds("b4_1_longtail")
+
+
+def test_a_refusal_is_not_masked_unless_the_row_says_so(monkeypatch):
+    """`leaked(None)` is False (nothing is shown), so a refusal used to read as "masked". Now it reads as "refused" on every
+    path the row does not list under `refused`."""
+    row = next(r for r in ROWS if r["id"] == "b4_1_trail")
+    assert "refused" not in row and row["expect"]["untrusted"] == "masked"
+    monkeypatch.setattr(sys.modules[__name__], "run_path", lambda path, text, handed: None)
+    assert verdict(row, "untrusted") == "refused"
+    row = next(r for r in ROWS if r["id"] == "b4_1_lost_letter")
+    assert row["refused"] == ["untrusted", "tool"] and row["expect"]["untrusted"] == "masked"
+    assert verdict(row, "untrusted") == "masked" and verdict(row, "error") == "refused"
 
 
 def test_every_row_is_rebuilt_and_sourced():

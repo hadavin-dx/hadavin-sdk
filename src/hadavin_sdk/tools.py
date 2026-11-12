@@ -916,37 +916,58 @@ def _holds(text: str, secret: str, scrub: ScrubSettings) -> bool:
 def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCRUB) -> str:
     """See `_scrub_layers`. A text nested deeper than the layer cap cannot be read: it is not shown at all.
 
-    A text with hidden items (control characters, escape sequences) is searched in its joined reading, where a secret
-    they cut is whole again. When nothing is found the text is returned as written, so the choke point still sees the
-    hidden items and keeps the word boundaries they made. When a secret is found, it is replaced in the spaced reading
-    (a space stands where a run of hidden items stood between two word characters) with the gap pattern, never in the
-    joined text: a key glued to the text before it by a hidden item stays separated. A result that still holds a
-    spelling of a handed-out secret is withheld."""
+    A text with hidden items (control characters, escape sequences) is searched in every reading of it (`hidden.readings`):
+    the grammar's joined reading, the character reading and the consuming reading, where a secret the hidden items cut is
+    whole again. When nothing is found the text is returned as written, so the choke point still sees the hidden items and
+    keeps the word boundaries they made. When a secret is found, it is replaced in the SPACED copy of the reading that holds
+    it (a space stands where a run of hidden items stood between two word characters) with the gap pattern, never in a
+    joined reading: a key glued to the text before it by a hidden item stays separated. No step returns a joined reading.
+
+    The readings cannot be merged: the character reading has the letter after an ESC that the grammar's reading eats, the
+    grammar's reading has the letter after `ESC (` that the consuming reading eats. So the secrets found in ALL readings
+    (the union) must stand whole in ONE reading; when no reading holds the whole union (`ESC e` + `yJ...` next to a secret
+    cut by `ESC ( B`) nothing is shown. The character reading is a result only when the text holds no control sequence
+    whose body it would show as text (`[0m` after a deleted ESC: `hidden.leaves_text`); otherwise a find in it only
+    withholds the text. A result that still holds a spelling of a handed-out secret is withheld too."""
     try:
         rd = hidden.readings(raw)
-        joined, spaced = rd.joined, rd.spaced
-        if joined is raw:
+        if rd.joined is raw:
             return _scrub_layers(raw, long_enough, scrub)
-        found = _scrub_layers(joined, long_enough, scrub)
-        # The other readings: the character reading (every control character deleted on its own, what main saw) can hold a
-        # secret whole that the grammar's reading does not (`ESC` + `T` + `r0ub4dor...` reads `ESC T` as one escape and eats
-        # the `T`); the consuming reading (an escape sequence takes its final byte, a letter too: `ESC ( B`, what `tput sgr0`
-        # writes) holds whole a secret that `ESC ( B` + `ESC [ m` cut, which the grammar's reading cannot (it keeps the
-        # letter `B`). A handed-out secret is an exact string, so a find there is never a false one: when a reading holds a
-        # secret the grammar's reading does not, it is the result. The readings cannot be merged, so when the grammar's
-        # reading holds a secret that the other one does not (`ESC e` + `yJ...` next to a cut one) nothing is shown.
-        for other in dict.fromkeys((rd.characters, rd.consuming_joined)):
-            if other == joined:
-                continue
-            alt = _scrub_layers(other, long_enough, scrub)
-            if alt.count(MARKER) <= other.count(MARKER):
-                continue
-            in_joined = {x for x in long_enough if _holds(joined, x, scrub)}
-            in_other = {x for x in long_enough if _holds(other, x, scrub)}
-            if in_other - in_joined:
-                return MARKER + TRUNCATED if in_joined - in_other else alt
-        if found == joined:
+        # (joined, spaced, is the character reading) of each distinct reading, the grammar's first
+        triples = list(
+            dict.fromkeys(
+                [
+                    (rd.joined, rd.spaced, False),
+                    (rd.characters, rd.characters_spaced, True),
+                    (rd.consuming_joined, rd.consuming_spaced, False),
+                ]
+            )
+        )
+        pairs = [(j, sp) for j, sp, _ in triples]
+        scrubbed = {joined: _scrub_layers(joined, long_enough, scrub) for joined, _ in pairs}
+        if all(found == joined for joined, found in scrubbed.items()):
             return raw
+        marks = {j: f.count(MARKER) - j.count(MARKER) for j, f in scrubbed.items()}
+        # the handed-out secrets each reading holds (an exact string: a find is never a false one); the grammar's reading
+        # first, and the others only when they found more marks than that reading's own text held
+        held = {
+            j: {x for x in long_enough if _holds(j, x, scrub)} if marks[j] > 0 else set()
+            for j, _ in pairs
+        }
+        union = set().union(*held.values())
+        if not union and scrubbed[pairs[0][0]] == pairs[0][0]:
+            return raw  # only a cut tail or a half-written spelling changed in another reading: nothing was found
+        # the character reading shows the body of a control sequence as text (`[0m` after a deleted ESC), so it can hold a
+        # secret but must not be the result when the text holds such a sequence: it stands in for the grammar's reading only
+        # when the one thing they differ in is a letter after an ESC (`hidden.leaves_text`)
+        faithful = not hidden.leaves_text(raw)
+        chosen = next(
+            ((j, sp) for j, sp, chars in triples if held[j] == union and (faithful or not chars)),
+            None,
+        )
+        if chosen is None:
+            return MARKER + TRUNCATED
+        joined, spaced = chosen
         forms = sorted({f for x in long_enough for f in _secret_forms(x)}, key=len, reverse=True)
         plain_markers = spaced.count(MARKER)
         for form in forms:
@@ -956,9 +977,9 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
         decoded = _decoded_readings(left)
         if any(_has_form(left, f) or any(_has_form(d, f) for d in decoded) for f in forms):
             return MARKER + TRUNCATED
-        # a secret found in the joined reading that left no mark in the spaced one (a percent token a hidden item cut:
+        # a secret found in the chosen reading that left no mark in its spaced copy (a percent token a hidden item cut:
         # the spaced copy reads `%7 8`, which no spelling matches) is withheld too, never shown
-        if result.count(MARKER) - plain_markers < found.count(MARKER) - joined.count(MARKER):
+        if result.count(MARKER) - plain_markers < marks[joined]:
             return MARKER + TRUNCATED
         return result
     except runmap.TooDeep:

@@ -51,10 +51,11 @@ MAX_SWALLOWED_CHARS = (
 )
 REDACT_BUDGET_S = 6.0
 # The most passes (one pass = all patterns of `redact` over one reading) one `redact_text` call may make; one more is refused
-# (`InputTooLarge`, nothing shown), counted in `runmap._Work.count_pass`. Measured worst case 2026-11-11: 17 passes (a hill-climb
-# of 60 s over texts mixing ESC ( B, colour codes, percent, entity and backslash-u spellings, non-ASCII, a placeholder look-alike
-# and values; 6,000 random texts reached 16; every row of `tests/fixtures/prh_regressions.json` 7 or fewer); the bound leaves
-# a margin of 7 so no text seen is refused. `tests/test_prh_perf.py` repeats the search and fails if it passes the bound.
+# (`InputTooLarge`, nothing shown), counted in `runmap._Work.count_pass`. Measured once on 2026-11-11 (not repeated by any
+# test): a 60 second hill-climb over texts mixing ESC ( B, colour codes, percent, entity and backslash-u spellings, non-ASCII,
+# a placeholder look-alike and values reached 17 passes. What the tests assert on every run (`tests/test_prh_steps.py`): the
+# 600 seeded texts of `test_pass_bound_holds_for_a_seeded_search` never reach the bound (their worst is 13), and every row of
+# `tests/fixtures/prh_regressions.json` makes 7 passes or fewer on every path of the row.
 MAX_REDACT_PASSES = 24
 
 

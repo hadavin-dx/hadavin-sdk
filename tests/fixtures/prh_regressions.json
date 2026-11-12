@@ -6343,7 +6343,11 @@
     "error": "masked",
     "head": "masked"
    },
-   "mf": true
+   "mf": true,
+   "refused": [
+    "untrusted",
+    "tool"
+   ]
   },
   {
    "id": "b4_3_pct41",
@@ -7285,6 +7289,261 @@
     },
     {
      "lit": " and the rest of it"
+    }
+   ],
+   "secrets": [
+    "KEY"
+   ],
+   "handed": [],
+   "paths": [
+    "untrusted",
+    "tool",
+    "error",
+    "head"
+   ],
+   "expect": {
+    "untrusted": "masked",
+    "tool": "masked",
+    "error": "masked",
+    "head": "masked"
+   },
+   "mf": true
+  },
+  {
+   "id": "b5_1_char_boundary",
+   "source": "handover/reviews/PRH/goldfish_review_report-r4.md:Issue 1",
+   "parts": [
+    {
+     "lit": "a "
+    },
+    {
+     "cp": "1B"
+    },
+    {
+     "const": "HAND",
+     "slice": [
+      null,
+      null
+     ]
+    },
+    {
+     "lit": " ; user"
+    },
+    {
+     "cp": "07"
+    },
+    {
+     "const": "KEY",
+     "slice": [
+      null,
+      null
+     ]
+    }
+   ],
+   "secrets": [
+    "HAND",
+    "KEY"
+   ],
+   "handed": [
+    "HAND"
+   ],
+   "paths": [
+    "tool",
+    "error"
+   ],
+   "expect": {
+    "tool": "masked",
+    "error": "masked"
+   },
+   "mf": false
+  },
+  {
+   "id": "b5_1_consuming_boundary",
+   "source": "handover/reviews/PRH/goldfish_review_report-r4.md:Issue 1",
+   "parts": [
+    {
+     "lit": "a "
+    },
+    {
+     "const": "HAND",
+     "slice": [
+      null,
+      9
+     ]
+    },
+    {
+     "cp": "1B"
+    },
+    {
+     "lit": "(B"
+    },
+    {
+     "cp": "1B"
+    },
+    {
+     "lit": "[m"
+    },
+    {
+     "const": "HAND",
+     "slice": [
+      9,
+      null
+     ]
+    },
+    {
+     "lit": " ; user"
+    },
+    {
+     "cp": "07"
+    },
+    {
+     "const": "KEY",
+     "slice": [
+      null,
+      null
+     ]
+    }
+   ],
+   "secrets": [
+    "HAND",
+    "KEY"
+   ],
+   "handed": [
+    "HAND"
+   ],
+   "paths": [
+    "tool",
+    "error"
+   ],
+   "expect": {
+    "tool": "masked",
+    "error": "masked"
+   },
+   "mf": true
+  },
+  {
+   "id": "b5_1_char_with_sequence",
+   "source": "handover/reviews/PRH/goldfish_review_report-r4.md:Issue 1",
+   "parts": [
+    {
+     "lit": "a "
+    },
+    {
+     "cp": "1B"
+    },
+    {
+     "const": "HAND",
+     "slice": [
+      null,
+      null
+     ]
+    },
+    {
+     "lit": " ; INFO user"
+    },
+    {
+     "cp": "1B"
+    },
+    {
+     "lit": "[0m"
+    },
+    {
+     "const": "KEY",
+     "slice": [
+      null,
+      null
+     ]
+    }
+   ],
+   "secrets": [
+    "HAND",
+    "KEY"
+   ],
+   "handed": [
+    "HAND"
+   ],
+   "paths": [
+    "tool",
+    "error"
+   ],
+   "expect": {
+    "tool": "masked",
+    "error": "masked"
+   },
+   "mf": false
+  },
+  {
+   "id": "b5_4_unterminated_esc_colour",
+   "source": "handover/reviews/PRH/goldfish_review_report-r4.md:Issue 4",
+   "parts": [
+    {
+     "lit": "id "
+    },
+    {
+     "const": "KEY",
+     "slice": [
+      null,
+      4
+     ]
+    },
+    {
+     "lit": "&#27[0m"
+    },
+    {
+     "const": "KEY",
+     "slice": [
+      4,
+      null
+     ]
+    },
+    {
+     "lit": " tail"
+    }
+   ],
+   "secrets": [
+    "KEY"
+   ],
+   "handed": [],
+   "paths": [
+    "untrusted",
+    "tool",
+    "error",
+    "head"
+   ],
+   "expect": {
+    "untrusted": "masked",
+    "tool": "masked",
+    "error": "masked",
+    "head": "masked"
+   },
+   "mf": true
+  },
+  {
+   "id": "b5_4_unterminated_esc_sgr0",
+   "source": "handover/reviews/PRH/goldfish_review_report-r4.md:Issue 4",
+   "parts": [
+    {
+     "lit": "id "
+    },
+    {
+     "const": "KEY",
+     "slice": [
+      null,
+      4
+     ]
+    },
+    {
+     "lit": "&#x1b(B&#x1B[m"
+    },
+    {
+     "const": "KEY",
+     "slice": [
+      4,
+      null
+     ]
+    },
+    {
+     "lit": " tail"
     }
    ],
    "secrets": [

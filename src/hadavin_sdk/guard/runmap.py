@@ -28,6 +28,7 @@ from hadavin_sdk.guard.redact import (
     MAX_DECODED_MASKS,
     PATTERNS,
     SECRET_KINDS,
+    WITHHELD_NOTE,
     gap_pattern,
     kind_of,
     mask_spans,
@@ -148,20 +149,25 @@ def hex_unescape(text: str) -> str:
     return text
 
 
-_CONTROL_REF = re.compile(r"&#(?:[xX]([0-9a-fA-F]{1,2})|([0-9]{1,3}));")
+_CONTROL_REF = re.compile(r"&#(?:[xX]0*([0-9a-fA-F]{1,2})|0*([0-9]{1,3}))(;|(?=[\[(\]]))")
 
 
 def _control_ref(m: re.Match[str]) -> str:
     n = int(m.group(1), 16) if m.group(1) else int(m.group(2))
+    if m.group(3) != ";" and n != 0x1B:  # unterminated: only an ESC that starts a sequence is read
+        return m.group(0)
     c = chr(n) if 0 < n < 0x80 else ""
     return c if c in hidden.REMOVED_CHARS or c in hidden.SPACE_LIKE else m.group(0)
 
 
 def control_refs(text: str) -> str:
-    """Every TERMINATED numeric reference to a control character below U+0080 (`&#27;`, `&#x1b;`) written as that character.
-    `html.unescape` deletes such a reference, and a deleted escape character leaves the rest of its sequence (`(B`, `[m`)
-    in the text as plain letters, so the hidden-item reader could no longer take the sequence out (and an entity it
-    stood inside, `&#6` + `&#27;[0m` + `5;`, was already decoded wrongly). An unterminated reference is left to the decoder."""
+    """Every numeric reference to a control character below U+0080 (`&#27;`, `&#x1b;`, leading zeros allowed) written as that
+    character, and every UNTERMINATED reference to ESC (`&#27`, `&#x1B`, no semicolon) that stands directly before `[`, `(`
+    or `]` (the start of a colour code, a `tput sgr0` sequence or a title string; `html.unescape` reads an unterminated
+    reference too). `html.unescape` deletes such a reference, and a deleted escape character leaves the rest of its sequence
+    (`(B`, `[m`) in the text as plain letters, so the hidden-item reader could no longer take the sequence out (and an entity
+    it stood inside, `&#6` + `&#27;[0m` + `5;`, was already decoded wrongly). Any other unterminated reference is left to the
+    decoder."""
     return _CONTROL_REF.sub(_control_ref, text) if "&#" in text else text
 
 
@@ -780,7 +786,7 @@ def redact_text(
     between two word characters (found in the joined reading, masked in the spaced one); every other reading the same
     (the decoded readings, the character reading, the consuming reading in which an escape sequence takes its final letter,
     each also for every decoded reading that holds a hidden item). The number is COUNTED: a call that would make more than
-    `defaults.MAX_REDACT_PASSES` (24; the worst case found by search is 17) is refused (`InputTooLarge`, nothing shown),
+    `defaults.MAX_REDACT_PASSES` (24; a one-time search found 17, the seeded search and the regression rows of the tests stay at 13 and 7) is refused (`InputTooLarge`, nothing shown),
     and the 6-second budget is checked before every pass.
 
     The one choke point for input size. The cap is on the WORK, not only on the input: the text, the text after
@@ -953,7 +959,7 @@ def redact_text(
     return out
 
 
-SAFE_HEAD_NOTE = "(details withheld)"
+SAFE_HEAD_NOTE = WITHHELD_NOTE
 
 
 def safe_head(text: str, limit: int, mapping: dict[str, str] | None = None) -> str:

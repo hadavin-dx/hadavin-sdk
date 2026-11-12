@@ -294,6 +294,8 @@ def sequence_readings(text: str) -> tuple[str, str]:
 
 
 _CHAR_TABLE = {**dict.fromkeys(map(ord, REMOVED_CHARS)), **dict.fromkeys(map(ord, SPACE_LIKE), " ")}
+_SPACE_TABLE = dict.fromkeys(map(ord, SPACE_LIKE), " ")
+_REMOVED_RUN = re.compile("[" + "".join(re.escape(c) for c in sorted(REMOVED_CHARS)) + "]+")
 
 
 def strip_characters(text: str) -> str:
@@ -304,12 +306,52 @@ def strip_characters(text: str) -> str:
     return text.translate(_CHAR_TABLE) if _ANY.search(text) else text
 
 
+def _gap(m: re.Match[str]) -> str:
+    """One space for a run of removed characters with a word character directly on both sides, else nothing."""
+    s, a, b = m.string, m.start(), m.end()
+    return " " if a and b < len(s) and _is_word(s[a - 1]) and _is_word(s[b]) else ""
+
+
+def characters_readings(text: str) -> tuple[str, str]:
+    """The joined and the spaced *character reading* (see `strip_characters`): the joined one is `strip_characters`; in the
+    spaced one a space stands where a run of removed characters had a word character directly on both sides (the same glue
+    rule as `strip`, so `user` + BEL + a key stays two words). The same object twice when they are equal; idempotent."""
+    if _ANY.search(text) is None:
+        return text, text
+    spread = text.translate(_SPACE_TABLE)
+    joined = _REMOVED_RUN.sub("", spread)
+    spaced = _REMOVED_RUN.sub(_gap, spread)
+    return joined, joined if spaced == joined else spaced
+
+
+def leaves_text(text: str) -> bool:
+    """Does the character reading (`strip_characters`) show text that the grammar's reading removes, other than the one
+    letter or digit after an ESC? True for the body of a control sequence (`[0m`, `]0;title`, `(B`): there the character
+    reading is not a copy of the grammar's reading with a letter put back, so it must not stand in for it as a result. One
+    pass over the escape items, linear."""
+    i, n = 0, len(text)
+    while (m := _SEQ_ANY.search(text, i)) is not None:
+        k = m.start()
+        end = _item_end(text, k)
+        body = text[k + 1 : end]
+        if body and not (len(body) == 1 and body.isalnum()):
+            return True
+        i = max(end, k + 1)
+        if i >= n:
+            break
+    return False
+
+
 class Readings(NamedTuple):
-    """Every reading of one text that a searcher must look in (the ONE place that says which readings there are; the
-    redactor's views and the scrub of handed-out secrets both take them from `readings`):
+    """Every reading of one text that a searcher must look in. `readings` is where the redactor (the original text and
+    each decoded view that holds a hidden item) and the scrub of handed-out secrets (`tools._scrub`) take them from. Three
+    places still read a text with `strip` on their own, for a different purpose: `runmap` strips a decoded view before the
+    pass over it, `tools._scrub` strips its own result once to check it, and `Redactor.find` (public `redact()`) reads only
+    escape sequences (`sequence_readings`); all use the same `_scan`, so they agree:
 
     * `joined`, `spaced`: the grammar's two readings (`strip`);
-    * `characters`: every removed character deleted on its own, no sequence read (`strip_characters`, what main saw);
+    * `characters`, `characters_spaced`: every removed character deleted on its own, no sequence read, without and with the
+      glue space (`characters_readings`, what main saw);
     * `consuming_joined`, `consuming_spaced`: the two readings when every escape sequence takes its final byte, a letter
       or digit too (`strip_consuming`, what a terminal does: `ESC ( B`).
 
@@ -318,6 +360,7 @@ class Readings(NamedTuple):
     joined: str
     spaced: str
     characters: str
+    characters_spaced: str
     consuming_joined: str
     consuming_spaced: str
 
@@ -332,6 +375,7 @@ def readings(text: str) -> Readings:
     pay for a second scan."""
     joined, spaced = strip(text)
     if joined is text:
-        return Readings(text, text, text, text, text)
+        return Readings(text, text, text, text, text, text)
     cj, cs = strip_consuming(text) if _ESC in text else (joined, spaced)
-    return Readings(joined, spaced, strip_characters(text), cj, cs)
+    chars, chars_spaced = characters_readings(text)
+    return Readings(joined, spaced, chars, chars_spaced, cj, cs)
