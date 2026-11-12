@@ -976,7 +976,7 @@ def _ordinary_word(body: str, start: int, end: int, cut_end: bool) -> bool:
 
 
 # a text that holds a hidden item, or a spelled-out one (`%1b`, `\\u001b`, `&#27;`, `%C2%9B`, `\\x1b`)
-_HIDDENISH = re.compile(r"%(?:[01][0-9a-f]|7f|c2)|\\u00[01]|\\x[01]|\\e|&#", re.IGNORECASE)
+_HIDDENISH = re.compile(r"%(?:[01][0-9a-f]|7f|c2)|\\u00[01]|\\x[01]|\\e(?=[\[\]()])|&#", re.IGNORECASE)
 
 
 def _remnant_stands(original: str, out: str, scrub: ScrubSettings) -> bool:
@@ -1266,8 +1266,9 @@ def redact_layered(raw: str, mapping: dict[str, str]) -> str:
     as `redact_text` does for its own views; a text nested deeper than the cap is not shown (fail closed)."""
     try:
         return runmap.redact_untrusted(raw, mapping)
-    except (runmap.TooDeep, runmap.RedactionLimit):
-        # a work limit fired (not the size of the text): the withheld text, never a raised error that drops the run
+    except runmap.RedactionError:
+        # any refusal of the redactor (a work limit, a nesting limit, a size limit, or the plain error that wraps anything else it
+        # raised): nothing is shown, the withheld text, never a raised error that drops the run (batch 10, group 6)
         return MARKER + TRUNCATED
 
 

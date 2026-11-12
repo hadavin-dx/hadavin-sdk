@@ -458,19 +458,28 @@ def test_b9_g1_mutant_114_a_value_only_the_mixed_reading_holds_is_not_returned_a
     its byte next to a charset sequence cuts the value in a way only the mixed reading reads whole; the text must not come back
     as it was written."""
     out = tools._scrub(text, [HAND])
-    assert out != text, (
+    # the exact oracle (batch 10, group 3): the text is withheld, or the value is masked: no 8-character stretch of it stands and the
+    # placeholder or the note is there
+    withheld_or_masked = out == WITHHELD or (
+        not any(HAND[i : i + 8] in out for i in range(len(HAND) - 7)) and MARKER in out
+    )
+    assert withheld_or_masked, (
         f"mutant 114: the text came back as written, with the value readable in one reading: {out!r}"
+    )
+    assert out != text and "Tr0ub4d" not in out, (
+        f"mutant 114: the text came back as written: {out!r}"
     )
 
 
 def test_b9_g1_mutant_31_the_scrub_returns_the_checked_result_not_the_first_scrubbed_reading():
     """Mutant 31 (_scrub returns the scrubbed joined text). The character reading would show `[0m` and the value; the result
     that went through the later steps is the one returned."""
-    text = "a " + ESC + HAND + " ; INFO user" + ESC + "[0m" + KEY
+    # its own witness text (batch 10, group 3: it shared one with the killer of mutant 59 in tests/test_prh_tools.py)
+    text = "b " + ESC + HAND + " | WARN host" + ESC + "[1m" + KEY
     out = tools._scrub(text, [HAND])
-    assert "[0m" not in out, (
+    assert "[1m" not in out, (
         f"mutant 31: a reading that shows a control-sequence body was returned: {out!r}"
     )
-    assert out == "a " + MARKER + " ; INFO user " + MARKER, (
+    assert out == "b " + MARKER + " | WARN host " + MARKER, (
         f"mutant 31: a value stands or the text changed: {out!r}"
     )

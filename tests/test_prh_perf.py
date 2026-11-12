@@ -89,6 +89,38 @@ SHAPES = {
     + ESC
     + "[0m_id 50%25 done\n",
 }
+
+
+def _letters(n: int, seed: int) -> list[str]:
+    """`n` single characters of a made-up run: a fixed order of 12 different letters, shifted by `seed`."""
+    alphabet = "bcdfghjkmnpq"
+    return [alphabet[(i * 5 + seed) % len(alphabet)] for i in range(n)]
+
+
+def _spaced_texts() -> dict[str, str]:
+    """Batch 10, group 1: shapes that hold a spaced-out run (the cost of `redact.spaced_unknown` and `redact.spaced_spans`),
+    each built to the cap. Made-up characters only."""
+    fixed = defaults.MAX_REDACT_CHARS
+    long_run = "key: " + " ".join(_letters(fixed // 2 - 8, 0)) + "\n"
+    medium = "\n".join("n: " + " ".join(_letters(2000, i)) + " end" for i in range(32))
+    shared = "\n".join(
+        "n: " + " ".join(list("sharedprefix") + _letters(1000, i)) + " end" for i in range(32)
+    )
+    prefix = (
+        "commonprefx"  # 11 characters; the map values add one more so that 12 characters are shared
+    )
+    values = [f"{prefix}A{i:04d}" for i in range(defaults.MAX_MAP_ENTRIES)]
+    planted = "\n".join(f"password={v}" for v in values)
+    tail = ("see " + " ".join(prefix + "A") + " end\n") * (fixed // 40)
+    return {
+        "P1 one very long spaced run": long_run[:fixed],
+        "P2 32 medium spaced runs": medium[:fixed],
+        "P3 32 spaced runs sharing a prefix": shared[:fixed],
+        "P4 2000 values sharing 12 characters": (planted + "\n" + tail)[:fixed],
+    }
+
+
+SPACED_SHAPES = list(_spaced_texts())
 HIDDEN_FREE = [k for k in SHAPES if k[0] == "S"]
 SHAPE_H = [k for k in SHAPES if k[0] == "H"]
 SHAPE_W = next(k for k in SHAPES if k[0] == "W")
@@ -215,10 +247,17 @@ if pytest is not None:
         assert cpu(text) < SECONDS_LIMIT
 
 
+def test_spaced_shapes_finish_within_the_limit():
+    """Batch 10, group 1: each spaced shape finishes (shown or withheld) in under 3.0 s of CPU; the very long run is withheld by the
+    work budget, not read in full."""
+    for name, text in _spaced_texts().items():
+        assert cpu(text) < SECONDS_LIMIT, name
+
+
 def _child(py_path: str | None) -> dict[str, float]:
     code = (
         f"import json,sys;sys.path.insert(0,{str(ROOT)!r});from tests import test_prh_perf as P;"
-        "print(json.dumps({k: P.median_cpu(P.fill(v, P.CAP), 1) for k, v in P.SHAPES.items() if k[0] in 'SH'}))"
+        "print(json.dumps({k: P.median_cpu(P.fill(v, P.CAP), 1) for k, v in P.SHAPES.items() if k[0] in 'SH'} | {k: P.cpu(v) for k, v in P._spaced_texts().items()}))"
     )
     env = {"PYTHONPATH": py_path} if py_path else {}
 

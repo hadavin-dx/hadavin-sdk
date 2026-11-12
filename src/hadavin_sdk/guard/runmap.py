@@ -131,9 +131,10 @@ def nfkc(text: str) -> str:
     return canonical(fits_after_nfkc(text))
 
 
-# `\e` is ESC in shell and logging dialects, read like `\x1b` (batch 9, class: a spelled-out ESC the decoder did not know). It only
-# adds a reading: a path such as `C:\env` is returned as written unless the reading finds a value
-_HEX_ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|U([0-9a-fA-F]{8})|([0-3][0-7]{2})|(e))")
+# `\e` is ESC in shell and logging dialects, read like `\x1b` (batch 9, class: a spelled-out ESC the decoder did not know), but only
+# directly before `[`, `]`, `(` or `)` (the characters that start the sequences this reader knows; batch 10, group 6: a Windows path
+# such as `C:\env` is not read as an ESC and takes no heavier path). It only adds a reading
+_HEX_ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|U([0-9a-fA-F]{8})|([0-3][0-7]{2})|(e(?=[\[\]()])))")
 _PCT_U = re.compile(r"%u([0-9a-fA-F]{4})")
 _BRACE_U = re.compile(r"\\u\{([0-9a-fA-F]{1,6})\}")
 
@@ -1026,22 +1027,25 @@ def redact_text(
                     cleaned.append(_no_created_shapes(v, c))
         # an UNKNOWN secret written with a space between its characters (`A K I A ...`): the text with the spaces of such a run
         # taken out is one more view (the check is `redact.spaced_unknown`: a run of ten or more single-character tokens that
-        # the patterns read as a secret once collapsed; it changed 0 of 83,589 ordinary lines, `defaults.READ_SPACED_OUT_UNKNOWN`)
-        try:
-            runs = (
-                spaced_unknown(e_spaced)
-                if defaults.READ_SPACED_OUT_UNKNOWN
-                and len(e_spaced) >= 2 * defaults.SPACED_RUN_MIN_TOKENS - 1
-                else []
-            )
-        except SpacedRunLimit:
-            # too many runs of spaced-out characters to read each one: nothing is shown, never a skip (cost bound, batch 9 group 7)
-            raise RedactionLimit("InputTooLarge") from None
-        if runs:
-            collapsed = collapse_runs(e_spaced, runs)
-            if collapsed not in (e_joined, e_spaced) and collapsed not in cleaned + views:
-                cleaned.append(collapsed)
-                mixed_keys.add(collapsed)  # a soft view: no refusal of its own (see `mixed_keys`)
+        # the patterns read as a secret once collapsed; its measured rate on ordinary text is in SECURITY.md,
+        # `defaults.READ_SPACED_OUT_UNKNOWN`). Batch 10, group 5: also in each DECODED view, so a gap spelled `%20` or `&#32;` is a
+        # gap too (`A%20K%20I%20A...`); the work budget of `spaced_unknown` counts each view's runs on their own
+        for source in dict.fromkeys([e_spaced, *(v for v in views if v not in (e_joined, e_spaced))]):
+            try:
+                runs = (
+                    spaced_unknown(source)
+                    if defaults.READ_SPACED_OUT_UNKNOWN
+                    and len(source) >= 2 * defaults.SPACED_RUN_MIN_TOKENS - 1
+                    else []
+                )
+            except SpacedRunLimit:
+                # too many runs of spaced-out characters to read each one: nothing is shown, never a skip (cost bound)
+                raise RedactionLimit("InputTooLarge") from None
+            if runs:
+                collapsed = collapse_runs(source, runs)
+                if collapsed not in (e_joined, e_spaced) and collapsed not in cleaned + views:
+                    cleaned.append(collapsed)
+                    mixed_keys.add(collapsed)  # a soft view: no refusal of its own (see `mixed_keys`)
         views += [c for c in dict.fromkeys(cleaned) if c not in views]
 
         def make_pairs(cur: dict[str, str], bases: tuple[str, ...]) -> list[tuple[str, str]]:
@@ -1102,7 +1106,13 @@ def redact_text(
                     # a view that found NO value the readings before it did not hold may be dropped (they judge the remnant); a
                     # view that alone found a value must not be dropped: the value would stay readable, so the text is refused
                     # (class: a find dropped silently, PR H batch 9, group 9)
-                    held = [v for v in current.values() if not v.startswith("\0seed")]
+                    # only a held value of a SECRET kind can hold the new value (a secret that is a piece of a held identifier is
+                    # not "already found"; batch 10, group 5)
+                    held = [
+                        v
+                        for ph, v in current.items()
+                        if not v.startswith("\0seed") and kind_of(ph) in SECRET_KINDS
+                    ]
                     if any(
                         not any(v in k for k in held)
                         for v in again_map.values()
@@ -1121,7 +1131,7 @@ def redact_text(
             _refuse_remnant(out, current)
         if neutralise is neutralise_untrusted:
             _refuse_forgery(out, current)
-    except (InputTooLarge, TooDeep):
+    except RedactionError:  # InputTooLarge, RedactionLimit, TooDeep and the plain refusals keep their own type and message
         raise
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
         raise RedactionError(type(exc).__name__) from None

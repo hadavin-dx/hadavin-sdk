@@ -85,6 +85,9 @@ SPACED_VALUE_MIN_CHARS = 12  # the shortest KNOWN secret (a value the run holds,
 SPACED_RUN_MIN_TOKENS = 10  # a run of at least this many single-character tokens, one space apart, is read with its spaces taken out
 SPACED_RUN_MAX_RUNS = 32  # the most candidate runs (10 or more spaced single characters, 6 or more different ones) one text may hold; more and the text is withheld, never skipped (cost bound: each run is read by the patterns)
 SPACED_RUN_MIN_DISTINCT = 6  # and those tokens must hold at least this many different characters (`x x x x ...` is not a secret)
+SPACED_READ_MAX_CHARS = 200_000  # the most characters the pattern reads of ALL spaced runs of one text may scan (a run of 100,000 characters is one read of 100,000 plus the context; more and the text is withheld, never skipped); counted before the reads run, so it bounds work, not seconds
+SPACED_CONTEXT_CHARS = 64  # the text before a spaced run that is read together with it (`password=` + a spaced value)
+SPACED_DROP_MAX = 4  # a run is read as it stands and without its first one, two and three tokens (a one-letter word in front: `a A K I A ...`)
 READ_SPACED_OUT_UNKNOWN = True  # the check that finds an UNKNOWN secret written with spaces between its characters (`redact.spaced_unknown`); shipped ON because it changed 0 of 1,933,591 lines of the Python 3.13 library and only the example key in 86,698 lines of the repository (`handover/evidence/PRH/b9/spaced_rate.py`); set False to turn it off (`q-prh-spaced-secrets`)
 SCRUB_PIECE_MIN = 6  # width of the stretch the piece check looks for (exact; see `tools._has_piece` for what it does not promise)
 SCRUB_PARTIAL_END = 10  # the longest half-written escape a cut can leave; added to the look-back

@@ -848,49 +848,100 @@ def gap_pattern(value: str) -> re.Pattern[str]:
     return re.compile(body if len(value) >= 4 else r"(?<!\w)" + body + r"(?!\w)")
 
 
-def spaced_index(values: Iterable[str]) -> dict[str, list[str]]:
-    """The values `spaced_spans` looks for, indexed by their first `SPACED_VALUE_MIN_CHARS` characters (built once for many
-    texts: a value of fewer characters, or one that holds a space, is not looked for spaced out)."""
-    width = defaults.SPACED_VALUE_MIN_CHARS
-    index: dict[str, list[str]] = {}
-    for v in dict.fromkeys(values):
-        if len(v) >= width and _GAP.search(v) is None:
-            index.setdefault(v[:width], []).append(v)
-    return index
-
-
 _GAP = re.compile(
     r"[\s" + hidden.IGNORABLE_RE.pattern[1:-1] + "]"
 )  # what may stand between the characters of a spaced-out value: any space, tab, line break or ignorable character
 
 
+class _SpacedIndex:
+    """The values `spaced_spans` looks for, as an Aho-Corasick automaton (Aho and Corasick 1975, "Efficient string matching: an
+    aid to bibliographic search"): ONE pass over the compact text finds every value, whatever the values share. The batch 9
+    index (a dictionary keyed by the first 12 characters, then `startswith` on each value of the bucket) cost the text times the
+    bucket size when many values share their first 12 characters (batch 9 review, finding F6). Built once per set of values;
+    `bool(index)` is False when no value is looked for."""
+
+    __slots__ = ("_go", "_fail", "_term", "_link")
+
+    def __init__(self, values: Iterable[str]) -> None:
+        go: list[dict[str, int]] = [{}]
+        term: list[str | None] = [None]
+        for v in dict.fromkeys(values):
+            if len(v) < defaults.SPACED_VALUE_MIN_CHARS or _GAP.search(v) is not None:
+                continue  # a shorter value would match ordinary text; one that holds a space is not looked for here
+            node = 0
+            for c in v:
+                nxt = go[node].get(c)
+                if nxt is None:
+                    go.append({})
+                    term.append(None)
+                    nxt = go[node][c] = len(go) - 1
+                node = nxt
+            term[node] = v
+        fail = [0] * len(go)
+        link = [0] * len(go)  # the nearest proper-suffix node that ends a value (0 = none)
+        queue = list(go[0].values())
+        for node in queue:  # breadth first: a node's failure node is shallower, so it is done already
+            for c, child in go[node].items():
+                f = fail[node]
+                while f and c not in go[f]:
+                    f = fail[f]
+                fail[child] = go[f].get(c, 0)
+                link[child] = fail[child] if term[fail[child]] is not None else link[fail[child]]
+                queue.append(child)
+        self._go, self._fail, self._term, self._link = go, fail, term, link
+
+    def __bool__(self) -> bool:
+        return any(t is not None for t in self._term)
+
+    def longest_ending_at_each_position(self, compact: str) -> list[tuple[int, str]]:
+        """(end, value) for each position of `compact` where at least one value ends: the LONGEST such value. A shorter value
+        that ends at the same place lies inside the longer one's span, and `mask_spans` drops a span inside another (rule 1), so
+        the masked text is the same while the number of results stays at most one per character."""
+        go, fail, term, link = self._go, self._fail, self._term, self._link
+        found: list[tuple[int, str]] = []
+        node = 0
+        for i, c in enumerate(compact):
+            while node and c not in go[node]:
+                node = fail[node]
+            node = go[node].get(c, 0)
+            v = term[node]
+            if v is None and link[node]:
+                v = term[link[node]]
+            if v is not None:
+                found.append((i + 1, v))
+        return found
+
+
+def spaced_index(values: Iterable[str]) -> _SpacedIndex:
+    """The values `spaced_spans` looks for (built once for many texts): a value of fewer than `SPACED_VALUE_MIN_CHARS`
+    characters, or one that holds a space, is not looked for spaced out."""
+    return _SpacedIndex(values)
+
+
 def spaced_spans(
-    text: str, values: Iterable[str], *, index: dict[str, list[str]] | None = None
+    text: str, values: Iterable[str], *, index: _SpacedIndex | None = None
 ) -> list[tuple[int, int, str]]:
     """The copies of each KNOWN value in `text` that are written with a space between characters (`A K I A ...`, a hyphen
     value too): (start, end, value) in `text`. A value is known when the run holds it (the map) or it was handed to a tool, so
     no product choice exists: with the spaces taken out of the text, the only way to hold a value of `SPACED_VALUE_MIN_CHARS`
     or more characters is to be that value. Only copies that hold at least one space are returned (a copy without a space is
-    found by the plain search). The text is compacted once, and ONE pass over the compact text looks each window of
-    `SPACED_VALUE_MIN_CHARS` characters up in `index` (values by their first characters), so the cost is linear in the text
-    plus the values, never the text times the number of values (batch 9, group 7: the old loop was one `str.find` per value
-    and segment). The positions of the compact text are mapped back to `text`. A value that holds a space itself is not
-    looked for here. `index` is `spaced_index(values)` when the caller has built it once for several texts."""
+    found by the plain search). The text is compacted once and searched in ONE pass by the automaton of `_SpacedIndex`: the cost
+    is linear in the text plus the values, whatever the values share (batch 10, group 1: the batch 9 index was quadratic for
+    values that share their first 12 characters). Where several values end at one place the longest is returned (the others lie
+    inside it and the masking drops them). The positions of the compact text are mapped back to `text`. `index` is
+    `spaced_index(values)` when the caller has built it once for several texts."""
     if _GAP.search(text) is None:
         return []
     index = spaced_index(values) if index is None else index
     if not index:
         return []
-    width = defaults.SPACED_VALUE_MIN_CHARS
     pos = [i for i, c in enumerate(text) if _GAP.fullmatch(c) is None]
     compact = "".join(text[i] for i in pos)
     found: list[tuple[int, int, str]] = []
-    for j in range(len(compact) - width + 1):
-        for v in index.get(compact[j : j + width], ()):
-            if compact.startswith(v, j):
-                a, b = pos[j], pos[j + len(v) - 1] + 1
-                if b - a > len(v):  # a space stands inside the copy
-                    found.append((a, b, v))
+    for end, v in index.longest_ending_at_each_position(compact):
+        a, b = pos[end - len(v)], pos[end - 1] + 1
+        if b - a > len(v):  # a space stands inside the copy
+            found.append((a, b, v))
     return found
 
 
@@ -904,9 +955,11 @@ _IGN = hidden.IGNORABLE_RE.pattern[1:-1]  # the body of the class: ranges only
 _TOK = rf"[^\s{_IGN}]"
 _SEP = rf"[\s{_IGN}]+"
 # what may stand right before a run: a separator, the start of the text, or a character that glues a value to its key
-_NOT_BEFORE = rf"[^\s{_IGN}=:\"'(\[,;]"
+# (a wrapper glued to the first character is no part of the value: `\`A K I A ...`, `*A K I A ...`, `<A K I A ...`; batch 10, group 5)
+_WRAPPERS = "`*_~<>{}|"  # what a chat or a document puts around a value: code span, bold, italic, strike, angle, brace, pipe
+_NOT_BEFORE = rf"[^\s{_IGN}=:\"'(\[,;{re.escape(_WRAPPERS)}]"
 # what may follow a run: sentence punctuation, then a separator or the end of the text (never a longer word)
-_RUN_AFTER = rf"(?=[.,;:)\]\"'!?]*(?:[\s{_IGN}]|$))"
+_RUN_AFTER = rf"(?=[.,;:)\]\"'!?{re.escape(_WRAPPERS)}]*(?:[\s{_IGN}]|$))"
 _SPACED_RUN = re.compile(
     rf"(?<!{_NOT_BEFORE}){_TOK}(?:{_SEP}{_TOK}){{{defaults.SPACED_RUN_MIN_TOKENS - 1},}}{_RUN_AFTER}"
 )
@@ -917,9 +970,6 @@ _SPACED_RUN_PUNCT = re.compile(
 )
 _TOKEN_AT = re.compile(_TOK)
 _RUN_END_PUNCT = ".,;:)]\"'!?"
-_CONTEXT_CHARS = (
-    64  # the text before a run that is read together with it (`password=` + a spaced value)
-)
 
 
 def _runs_of(text: str) -> list[tuple[int, int, list[str], list[int]]]:
@@ -947,22 +997,25 @@ def spaced_unknown(text: str) -> list[tuple[int, int, str]]:
     patterns read as a secret of a SECRET kind: (start, end, collapsed text) in `text`. The separator is any white space or
     ignorable character, one or more (two spaces, a tab, a new line, a no-break space, a zero-width character), or a visible
     `- _ . , | / : ;` between letters and digits. A run is read (1) as it stands, (2) together with the up to
-    `_CONTEXT_CHARS` characters before it (`password=` + a spaced value), (3) without its first one, two or three tokens (a
+    `defaults.SPACED_CONTEXT_CHARS` characters before it (`password=` + a spaced value), (3) without its first one, two or three tokens (a
     one-letter word in front: `a A K I A ...`); a value glued to its key (`key=A K I A`) starts the run. Trailing punctuation
     is not part of the run. Only values the patterns READ are found: an unknown value of no pattern's shape written with
     spaces is not (SECURITY.md). A run needs `SPACED_RUN_MIN_DISTINCT` different characters. More than
-    `defaults.SPACED_RUN_MAX_RUNS` candidate runs in one text raise `SpacedRunLimit` (the text is withheld). CHECK-ONLY reading:
-    the caller decides whether to act (`defaults.READ_SPACED_OUT_UNKNOWN`). Linear: one regular-expression pass per spelling,
-    and at most a fixed number of reads of each of the capped runs."""
+    `defaults.SPACED_RUN_MAX_RUNS` candidate runs, or more than `defaults.SPACED_READ_MAX_CHARS` characters to read in all
+    (a run is long, or there are many), in one text raise `SpacedRunLimit` (the text is withheld; batch 10, group 1). CHECK-ONLY reading:
+    the caller decides whether to act (`defaults.READ_SPACED_OUT_UNKNOWN`). Cost: one regular-expression pass per spelling, and
+    at most `defaults.SPACED_DROP_MAX` reads of each run, all counted in characters against the budget BEFORE they run."""
     out: list[tuple[int, int, str]] = []
-    candidates = 0
+    counted: set[int] = set()  # the starts of the candidate runs counted against `SPACED_RUN_MAX_RUNS`
+    work = 0  # characters the pattern reads below will scan (`defaults.SPACED_READ_MAX_CHARS`)
     for start, end, toks, starts in sorted(_runs_of(text)):
         if len(set(toks)) < defaults.SPACED_RUN_MIN_DISTINCT:
             continue
-        candidates += 1
-        if candidates > defaults.SPACED_RUN_MAX_RUNS:
-            raise SpacedRunLimit
-        for drop in range(4):
+        if start not in counted:  # one run that BOTH spellings of the separator match (`A - K - I`) counts once (batch 10, group 6)
+            counted.add(start)
+            if len(counted) > defaults.SPACED_RUN_MAX_RUNS:
+                raise SpacedRunLimit
+        for drop in range(defaults.SPACED_DROP_MAX):
             rest = toks[drop:]
             if (
                 len(rest) < defaults.SPACED_RUN_MIN_TOKENS
@@ -970,7 +1023,13 @@ def spaced_unknown(text: str) -> list[tuple[int, int, str]]:
             ):
                 break
             token = "".join(rest)
-            if _reads_as_secret(token, text[max(0, start - _CONTEXT_CHARS) : start]):
+            context = text[max(0, start - defaults.SPACED_CONTEXT_CHARS) : start]
+            # the work budget counts what the reads below will scan, BEFORE they run: the token alone, and with a context the
+            # context alone and the context plus the token (`_reads_as_secret`); over the budget the text is withheld
+            work += len(token) + (2 * len(context) + len(token) if context else 0)
+            if work > defaults.SPACED_READ_MAX_CHARS:
+                raise SpacedRunLimit
+            if _reads_as_secret(token, context):
                 out.append((starts[drop], end, token))
                 break
     return out
@@ -1001,7 +1060,9 @@ def collapse_runs(text: str, runs: list[tuple[int, int, str]]) -> str:
     out: list[str] = []
     at = 0
     for a, b, token in runs:
-        out += [text[at:a], token]
+        # an underscore next to the run is a word character: glued to the collapsed value it would hide the value from the patterns'
+        # word boundary (`_A K I A ... E_` italic), so a space stands between them in this view (batch 10, group 5)
+        out += [text[at:a], " " if text[a - 1 : a] == "_" else "", token, " " if text[b : b + 1] == "_" else ""]
         at = b
     out.append(text[at:])
     return "".join(out)
@@ -1052,7 +1113,7 @@ def redact(
     """
     r = _Redactor(mapping, _cache)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
-    out = r.find(text, readings=_readings)
+    out = r.find(text, readings=_readings, swept=_sweep_copies)
     if _sweep_copies:  # redact_many's first pass only FINDS values; its second pass masks
         out = r.sweep(out)
     return RedactionResult(text=out, mapping=r.mapping)
@@ -1121,7 +1182,7 @@ class _Redactor:
             text = pattern.sub(lambda m, label=label: self._mask(m, label), text)
         return text
 
-    def find(self, text: str, readings: bool = True) -> str:
+    def find(self, text: str, readings: bool = True, swept: bool = True) -> str:
         """Every value the patterns find, replaced by its placeholder. The one choke point of every caller of `redact` and
         `redact_many`, so the escape sequences in `text` are read here (PR H), in two readings:
 
@@ -1220,16 +1281,21 @@ class _Redactor:
                 continue
             if choice == "conflict":
                 return WITHHELD_NOTE
-            if (rj, rs) == check_only and choice == "second":
+            if (rj, rs) == check_only:
                 # the character reading holds a value the grammar's reading cannot read (an unterminated string sequence
                 # blanked it) and shows the text that reading removed: its output is never the result. The grammar's output
                 # is kept when no stretch of 4 characters of that value stands in it (the value sat only inside the removed
                 # body, which is not shown); a front of the value that stands before the opener (`AKIA` + opener + the rest)
-                # withholds the text (narrowed from "always withhold", batch 9, group 3)
-                if self._stands_in(self._held_values(alt) - self._held_values(verdict), verdict, 4):
+                # withholds the text (narrowed from "always withhold", batch 9, group 3).
+                # Batch 10, group 5: the same test whatever the two readings mask ("same" and "first" too) and for a value of a
+                # SECRET kind that the grammar's reading masks in another copy too: a plain copy of the value elsewhere in the text
+                # made the difference empty, so the front standing before the opener was kept
+                held_alt, held_verdict = self._held_values(alt), self._held_values(verdict)
+                seen_by_both = {
+                    v for v in held_alt & held_verdict if _kind(self.reverse.get(v, "")) in SECRET_KINDS
+                }
+                if self._stands_in((held_alt - held_verdict) | seen_by_both, verdict, 4):
                     return WITHHELD_NOTE
-                continue
-            if (rj, rs) == check_only:
                 continue  # a check only: the character reading's output shows removed text and is never the result
             if choice == "second" or (
                 choice == "same"
@@ -1244,10 +1310,26 @@ class _Redactor:
         # a value ANY reading masked must not stand in the output: two readings can each mask a different copy of one value
         # (`ESC ( B` + `1.2.3.4` next to `1.2` + `ESC .` + `3.4`: the grammar's reading masks the second copy, the consuming
         # reading the first), and neither output holds both (class: a copy the chosen reading could not read, PR H batch 9)
+        # (batch 10, group 4: only a copy the sweep that follows would NOT mask counts. `swept` is False for a caller that does not
+        # sweep. A bare second copy of a secret (`login hunter2 failed`) is masked by the sweep, so it is not a reason to withhold)
         masked_by_any = self._held_values(verdict) | by_any
-        if any(len(v) >= 4 and v in verdict for v in masked_by_any):
+        if any(self._copy_stays(v, verdict, swept) for v in masked_by_any if len(v) >= 4):
             return WITHHELD_NOTE
         return verdict
+
+    def _copy_stays(self, value: str, shown: str, swept: bool) -> bool:
+        """Does a copy of `value` stand in `shown` that the sweep (`_sweep`, `_occurrences`) will not mask? With no sweep every
+        copy stays."""
+        if value not in shown:
+            return False
+        if not swept:
+            return True
+        ph = self.reverse.get(value)
+        rule = _sweep(ph, value) if ph else None
+        if rule is None:
+            return True
+        every = rule is _EVERY_COPY
+        return len(_occurrences(shown, value, ph, True)) > len(_occurrences(shown, value, ph, every))
 
     @staticmethod
     def _stands_in(values: set[str], shown: str, width: int = 8) -> bool:
@@ -1398,7 +1480,7 @@ class _Redactor:
         parts = _PLACEHOLDER.split(
             out
         )  # even indices = free text, odd indices = whole placeholders
-        spaced_index_ = spaced_index(self._secret_values()) if _GAP.search(out) else {}
+        spaced_index_ = spaced_index(self._secret_values() if _GAP.search(out) else ())
         for i in range(0, len(parts), 2):
             segment = parts[i]
             if not segment:

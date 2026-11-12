@@ -1,0 +1,577 @@
+F.F.FF.FFFFFFFFFFFFFFFFF.FFFFFFF........................................ [ 73%]
+..........................                                               [100%]
+=================================== FAILURES ===================================
+_ test_b10_g1_values_that_share_their_first_twelve_characters_cost_linear_work _
+
+    def test_b10_g1_values_that_share_their_first_twelve_characters_cost_linear_work():
+        """Group 1 (class: new work neither counted nor measured; mutants 133, 134). 1,000 known values share their first 12 characters
+        and the text holds 4,000 copies of that prefix with a gap: the batch 9 index scanned the whole bucket for each hit (about 4
+        million `startswith` calls). One pass of the automaton makes work in proportion to the text. The three values written with
+        spaces are found."""
+        prefix = "Zq4nWs8kLpv3"
+        values = [prefix + f"{i:04d}" + "Xy" for i in range(1000)]
+        index = redact_mod.spaced_index(values)
+        copies = " ".join(prefix + "!" for _ in range(4000))
+        wanted = [values[7], values[500], values[999]]
+        text = copies + " " + " ".join(spaced(v) for v in wanted)
+        compact_len = len(text.replace(" ", ""))
+        calls, found = _count_calls(lambda: redact_mod.spaced_spans(text, (), index=index))
+>       assert calls < 12 * compact_len, (
+            f"mutant 133: the index search made {calls} calls for a text of {compact_len} characters (a bucket scan per hit)"
+        )
+E       AssertionError: mutant 133: the index search made 4163220 calls for a text of 52054 characters (a bucket scan per hit)
+E       assert 4163220 < (12 * 52054)
+
+tests/test_prh_b10.py:69: AssertionError
+_____ test_b10_g1_one_very_long_spaced_run_is_withheld_by_the_work_budget ______
+
+    def test_b10_g1_one_very_long_spaced_run_is_withheld_by_the_work_budget():
+        """Group 1 (mutants 135, 136): a run of 60,000 single characters of 8 different ones would be read up to 4 times (240,000
+        characters against a budget of `SPACED_READ_MAX_CHARS`); the budget is counted BEFORE each read and the text is withheld."""
+        text = spaced(CJK * 7500)
+>       with pytest.raises(SpacedRunLimit):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SpacedRunLimit
+
+tests/test_prh_b10.py:119: Failed
+______________ test_b10_g1_the_budget_counts_the_context_read_too ______________
+
+    def test_b10_g1_the_budget_counts_the_context_read_too():
+        """Group 1 (mutant 137): with 64 characters of context before the run a read scans the context twice and the token once more, so
+        the cost of a run with context is above the cost of the same run without it. The text below stays within the budget without
+        context and goes over it with context."""
+>       n = (defaults.SPACED_READ_MAX_CHARS // defaults.SPACED_DROP_MAX) - 100  # tokens: 4 reads of n characters fit, barely
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.defaults' has no attribute 'SPACED_READ_MAX_CHARS'. Did you mean: 'SPACED_RUN_MAX_RUNS'?
+
+tests/test_prh_b10.py:134: AttributeError
+_ test_b10_g4_a_second_bare_copy_of_a_masked_secret_does_not_withhold_the_text _
+
+    def test_b10_g4_a_second_bare_copy_of_a_masked_secret_does_not_withhold_the_text():
+        """Group 4 (mutant 138): colour code, `password=` + value, and the same value standing bare in prose. The sweep masks the bare
+        copy; the batch 9 guard looked at the text before the sweep and withheld it (main masked both)."""
+        text = ESC + "[0m " + PW + VAL + " ok login " + VAL + " failed"
+        for out in (redact(text).text, redact_many([text])[0][0]):
+>           assert out != WITHHELD_NOTE, "mutant 138: ordinary coloured text was withheld by the guard"
+E           AssertionError: mutant 138: ordinary coloured text was withheld by the guard
+E           assert '(details withheld)' != '(details withheld)'
+
+tests/test_prh_b10.py:151: AssertionError
+___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[``] ___
+
+front = '`', back = '`'
+
+    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
+        """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
+        span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
+        key lost its first or last letter. Exact output on the run path; no 8-stretch on the tool path."""
+        text = "key: " + front + spaced(KEY) + back + " end"
+        # an underscore is a word character: the view that reads the value has a space next to it, and the output keeps that space
+        pad = " " if front.startswith("_") or back.startswith("_") else ""
+        want = "key: " + front + pad + "<APIKEY_1>" + pad + back + " end"
+>       assert on_the_run_path(text) == want, (
+            f"mutant 140: a spaced key wrapped in {front!r} {back!r} was not masked whole"
+        )
+E       AssertionError: mutant 140: a spaced key wrapped in '`' '`' was not masked whole
+E       assert 'key: `A K I ... M P L E` end' == 'key: `<APIKEY_1>` end'
+E         
+E         - key: `<APIKEY_1>` end
+E         + key: `A K I A I O S F O D N N 7 E X A M P L E` end
+
+tests/test_prh_b10.py:190: AssertionError
+___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[**] ___
+
+front = '*', back = '*'
+
+    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
+        """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
+        span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
+        key lost its first or last letter. Exact output on the run path; no 8-stretch on the tool path."""
+        text = "key: " + front + spaced(KEY) + back + " end"
+        # an underscore is a word character: the view that reads the value has a space next to it, and the output keeps that space
+        pad = " " if front.startswith("_") or back.startswith("_") else ""
+        want = "key: " + front + pad + "<APIKEY_1>" + pad + back + " end"
+>       assert on_the_run_path(text) == want, (
+            f"mutant 140: a spaced key wrapped in {front!r} {back!r} was not masked whole"
+        )
+E       AssertionError: mutant 140: a spaced key wrapped in '*' '*' was not masked whole
+E       assert 'key: *A K I ... M P L E* end' == 'key: *<APIKEY_1>* end'
+E         
+E         - key: *<APIKEY_1>* end
+E         + key: *A K I A I O S F O D N N 7 E X A M P L E* end
+
+tests/test_prh_b10.py:190: AssertionError
+__ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[****] __
+
+front = '**', back = '**'
+
+    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
+        """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
+        span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
+        key lost its first or last letter. Exact output on the run path; no 8-stretch on the tool path."""
+        text = "key: " + front + spaced(KEY) + back + " end"
+        # an underscore is a word character: the view that reads the value has a space next to it, and the output keeps that space
+        pad = " " if front.startswith("_") or back.startswith("_") else ""
+        want = "key: " + front + pad + "<APIKEY_1>" + pad + back + " end"
+>       assert on_the_run_path(text) == want, (
+            f"mutant 140: a spaced key wrapped in {front!r} {back!r} was not masked whole"
+        )
+E       AssertionError: mutant 140: a spaced key wrapped in '**' '**' was not masked whole
+E       assert 'key: **A K I...M P L E** end' == 'key: **<APIKEY_1>** end'
+E         
+E         - key: **<APIKEY_1>** end
+E         + key: **A K I A I O S F O D N N 7 E X A M P L E** end
+
+tests/test_prh_b10.py:190: AssertionError
+___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[__] ___
+
+front = '_', back = '_'
+
+    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
+        """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
+        span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
+        key lost its first or last letter. Exact output on the run path; no 8-stretch on the tool path."""
+        text = "key: " + front + spaced(KEY) + back + " end"
+        # an underscore is a word character: the view that reads the value has a space next to it, and the output keeps that space
+        pad = " " if front.startswith("_") or back.startswith("_") else ""
+        want = "key: " + front + pad + "<APIKEY_1>" + pad + back + " end"
+>       assert on_the_run_path(text) == want, (
+            f"mutant 140: a spaced key wrapped in {front!r} {back!r} was not masked whole"
+        )
+E       AssertionError: mutant 140: a spaced key wrapped in '_' '_' was not masked whole
+E       assert 'key: _A K I ... M P L E_ end' == 'key: _ <APIKEY_1> _ end'
+E         
+E         - key: _ <APIKEY_1> _ end
+E         + key: _A K I A I O S F O D N N 7 E X A M P L E_ end
+
+tests/test_prh_b10.py:190: AssertionError
+__ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[~~~~] __
+
+front = '~~', back = '~~'
+
+    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
+        """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
+        span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
+        key lost its first or last letter. Exact output on the run path; no 8-stretch on the tool path."""
+        text = "key: " + front + spaced(KEY) + back + " end"
+        # an underscore is a word character: the view that reads the value has a space next to it, and the output keeps that space
+        pad = " " if front.startswith("_") or back.startswith("_") else ""
+        want = "key: " + front + pad + "<APIKEY_1>" + pad + back + " end"
+>       assert on_the_run_path(text) == want, (
+            f"mutant 140: a spaced key wrapped in {front!r} {back!r} was not masked whole"
+        )
+E       AssertionError: mutant 140: a spaced key wrapped in '~~' '~~' was not masked whole
+E       assert 'key: ~~A K I...M P L E~~ end' == 'key: ~~<APIKEY_1>~~ end'
+E         
+E         - key: ~~<APIKEY_1>~~ end
+E         + key: ~~A K I A I O S F O D N N 7 E X A M P L E~~ end
+
+tests/test_prh_b10.py:190: AssertionError
+___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[<>] ___
+
+front = '<', back = '>'
+
+    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
+        """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
+        span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
+        key lost its first or last letter. Exact output on the run path; no 8-stretch on the tool path."""
+        text = "key: " + front + spaced(KEY) + back + " end"
+        # an underscore is a word character: the view that reads the value has a space next to it, and the output keeps that space
+        pad = " " if front.startswith("_") or back.startswith("_") else ""
+        want = "key: " + front + pad + "<APIKEY_1>" + pad + back + " end"
+>       assert on_the_run_path(text) == want, (
+            f"mutant 140: a spaced key wrapped in {front!r} {back!r} was not masked whole"
+        )
+E       AssertionError: mutant 140: a spaced key wrapped in '<' '>' was not masked whole
+E       assert 'key: <A K I ... M P L E> end' == 'key: <<APIKEY_1>> end'
+E         
+E         - key: <<APIKEY_1>> end
+E         + key: <A K I A I O S F O D N N 7 E X A M P L E> end
+
+tests/test_prh_b10.py:190: AssertionError
+___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[{}] ___
+
+front = '{', back = '}'
+
+    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
+        """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
+        span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
+        key lost its first or last letter. Exact output on the run path; no 8-stretch on the tool path."""
+        text = "key: " + front + spaced(KEY) + back + " end"
+        # an underscore is a word character: the view that reads the value has a space next to it, and the output keeps that space
+        pad = " " if front.startswith("_") or back.startswith("_") else ""
+        want = "key: " + front + pad + "<APIKEY_1>" + pad + back + " end"
+>       assert on_the_run_path(text) == want, (
+            f"mutant 140: a spaced key wrapped in {front!r} {back!r} was not masked whole"
+        )
+E       AssertionError: mutant 140: a spaced key wrapped in '{' '}' was not masked whole
+E       assert 'key: {A K I ... M P L E} end' == 'key: {<APIKEY_1>} end'
+E         
+E         - key: {<APIKEY_1>} end
+E         + key: {A K I A I O S F O D N N 7 E X A M P L E} end
+
+tests/test_prh_b10.py:190: AssertionError
+___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[||] ___
+
+front = '|', back = '|'
+
+    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
+        """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
+        span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
+        key lost its first or last letter. Exact output on the run path; no 8-stretch on the tool path."""
+        text = "key: " + front + spaced(KEY) + back + " end"
+        # an underscore is a word character: the view that reads the value has a space next to it, and the output keeps that space
+        pad = " " if front.startswith("_") or back.startswith("_") else ""
+        want = "key: " + front + pad + "<APIKEY_1>" + pad + back + " end"
+>       assert on_the_run_path(text) == want, (
+            f"mutant 140: a spaced key wrapped in {front!r} {back!r} was not masked whole"
+        )
+E       AssertionError: mutant 140: a spaced key wrapped in '|' '|' was not masked whole
+E       assert 'key: |A K I ... M P L E| end' == 'key: |<APIKEY_1>| end'
+E         
+E         - key: |<APIKEY_1>| end
+E         + key: |A K I A I O S F O D N N 7 E X A M P L E| end
+
+tests/test_prh_b10.py:190: AssertionError
+___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[`] ____
+
+front = '`', back = ''
+
+    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
+        """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
+        span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
+        key lost its first or last letter. Exact output on the run path; no 8-stretch on the tool path."""
+        text = "key: " + front + spaced(KEY) + back + " end"
+        # an underscore is a word character: the view that reads the value has a space next to it, and the output keeps that space
+        pad = " " if front.startswith("_") or back.startswith("_") else ""
+        want = "key: " + front + pad + "<APIKEY_1>" + pad + back + " end"
+>       assert on_the_run_path(text) == want, (
+            f"mutant 140: a spaced key wrapped in {front!r} {back!r} was not masked whole"
+        )
+E       AssertionError: mutant 140: a spaced key wrapped in '`' '' was not masked whole
+E       assert 'key: `A K I ...A M P L E end' == 'key: `<APIKEY_1> end'
+E         
+E         - key: `<APIKEY_1> end
+E         + key: `A K I A I O S F O D N N 7 E X A M P L E end
+
+tests/test_prh_b10.py:190: AssertionError
+___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[}] ____
+
+front = '', back = '}'
+
+    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
+        """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
+        span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
+        key lost its first or last letter. Exact output on the run path; no 8-stretch on the tool path."""
+        text = "key: " + front + spaced(KEY) + back + " end"
+        # an underscore is a word character: the view that reads the value has a space next to it, and the output keeps that space
+        pad = " " if front.startswith("_") or back.startswith("_") else ""
+        want = "key: " + front + pad + "<APIKEY_1>" + pad + back + " end"
+>       assert on_the_run_path(text) == want, (
+            f"mutant 140: a spaced key wrapped in {front!r} {back!r} was not masked whole"
+        )
+E       AssertionError: mutant 140: a spaced key wrapped in '' '}' was not masked whole
+E       assert 'key: <APIKEY_1> E} end' == 'key: <APIKEY_1>} end'
+E         
+E         - key: <APIKEY_1>} end
+E         + key: <APIKEY_1> E} end
+E         ?                ++
+
+tests/test_prh_b10.py:190: AssertionError
+___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[>] ____
+
+front = '', back = '>'
+
+    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
+        """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
+        span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
+        key lost its first or last letter. Exact output on the run path; no 8-stretch on the tool path."""
+        text = "key: " + front + spaced(KEY) + back + " end"
+        # an underscore is a word character: the view that reads the value has a space next to it, and the output keeps that space
+        pad = " " if front.startswith("_") or back.startswith("_") else ""
+        want = "key: " + front + pad + "<APIKEY_1>" + pad + back + " end"
+>       assert on_the_run_path(text) == want, (
+            f"mutant 140: a spaced key wrapped in {front!r} {back!r} was not masked whole"
+        )
+E       AssertionError: mutant 140: a spaced key wrapped in '' '>' was not masked whole
+E       assert 'key: <APIKEY_1> E> end' == 'key: <APIKEY_1>> end'
+E         
+E         - key: <APIKEY_1>> end
+E         + key: <APIKEY_1> E> end
+E         ?                ++
+
+tests/test_prh_b10.py:190: AssertionError
+___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[*] ____
+
+front = '', back = '*'
+
+    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
+        """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
+        span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
+        key lost its first or last letter. Exact output on the run path; no 8-stretch on the tool path."""
+        text = "key: " + front + spaced(KEY) + back + " end"
+        # an underscore is a word character: the view that reads the value has a space next to it, and the output keeps that space
+        pad = " " if front.startswith("_") or back.startswith("_") else ""
+        want = "key: " + front + pad + "<APIKEY_1>" + pad + back + " end"
+>       assert on_the_run_path(text) == want, (
+            f"mutant 140: a spaced key wrapped in {front!r} {back!r} was not masked whole"
+        )
+E       AssertionError: mutant 140: a spaced key wrapped in '' '*' was not masked whole
+E       assert 'key: <APIKEY_1> E* end' == 'key: <APIKEY_1>* end'
+E         
+E         - key: <APIKEY_1>* end
+E         + key: <APIKEY_1> E* end
+E         ?                ++
+
+tests/test_prh_b10.py:190: AssertionError
+_____________ test_b10_g5_the_wrapper_list_is_the_one_in_the_code ______________
+
+    def test_b10_g5_the_wrapper_list_is_the_one_in_the_code():
+        """Group 5: the allowlist of wrapper characters is one constant, used by both ends of the run rule."""
+>       assert set(redact_mod._WRAPPERS) == set("`*_~<>{}|")
+                   ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.guard.redact' has no attribute '_WRAPPERS'
+
+tests/test_prh_b10.py:198: AttributeError
+_ test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy[dcs] _
+
+opener = '\x90'
+
+    @pytest.mark.parametrize("opener", ["\x90", "\x9d", ESC + "]0;"], ids=["dcs", "osc_c1", "osc_esc"])
+    def test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy(opener):
+        """Group 5 (mutant 141): a plain copy of a key, then a copy cut by a string opener (`AKIAIO` + opener + the rest). The first copy made
+        the difference of the two readings empty, so the front standing before the opener was kept, one copy or two."""
+        text = "k: " + KEY + " then " + KEY[:6] + opener + KEY[6:] + " tail"
+        out = redact(text).text
+>       assert out == WITHHELD_NOTE, f"mutant 141: the front of a key stood before the opener: {out!r}"
+E       AssertionError: mutant 141: the front of a key stood before the opener: 'k: <APIKEY_1> then AKIAIO'
+E       assert 'k: <APIKEY_1> then AKIAIO' == '(details withheld)'
+E         
+E         - (details withheld)
+E         + k: <APIKEY_1> then AKIAIO
+
+tests/test_prh_b10.py:207: AssertionError
+_ test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy[osc_c1] _
+
+opener = '\x9d'
+
+    @pytest.mark.parametrize("opener", ["\x90", "\x9d", ESC + "]0;"], ids=["dcs", "osc_c1", "osc_esc"])
+    def test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy(opener):
+        """Group 5 (mutant 141): a plain copy of a key, then a copy cut by a string opener (`AKIAIO` + opener + the rest). The first copy made
+        the difference of the two readings empty, so the front standing before the opener was kept, one copy or two."""
+        text = "k: " + KEY + " then " + KEY[:6] + opener + KEY[6:] + " tail"
+        out = redact(text).text
+>       assert out == WITHHELD_NOTE, f"mutant 141: the front of a key stood before the opener: {out!r}"
+E       AssertionError: mutant 141: the front of a key stood before the opener: 'k: <APIKEY_1> then AKIAIO'
+E       assert 'k: <APIKEY_1> then AKIAIO' == '(details withheld)'
+E         
+E         - (details withheld)
+E         + k: <APIKEY_1> then AKIAIO
+
+tests/test_prh_b10.py:207: AssertionError
+_ test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy[osc_esc] _
+
+opener = '\x1b]0;'
+
+    @pytest.mark.parametrize("opener", ["\x90", "\x9d", ESC + "]0;"], ids=["dcs", "osc_c1", "osc_esc"])
+    def test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy(opener):
+        """Group 5 (mutant 141): a plain copy of a key, then a copy cut by a string opener (`AKIAIO` + opener + the rest). The first copy made
+        the difference of the two readings empty, so the front standing before the opener was kept, one copy or two."""
+        text = "k: " + KEY + " then " + KEY[:6] + opener + KEY[6:] + " tail"
+        out = redact(text).text
+>       assert out == WITHHELD_NOTE, f"mutant 141: the front of a key stood before the opener: {out!r}"
+E       AssertionError: mutant 141: the front of a key stood before the opener: 'k: <APIKEY_1> then AKIAIO'
+E       assert 'k: <APIKEY_1> then AKIAIO' == '(details withheld)'
+E         
+E         - (details withheld)
+E         + k: <APIKEY_1> then AKIAIO
+
+tests/test_prh_b10.py:207: AssertionError
+_______ test_b10_g5_a_pattern_shaped_value_with_an_encoded_gap_is_masked _______
+
+    def test_b10_g5_a_pattern_shaped_value_with_an_encoded_gap_is_masked():
+        """Group 5 (mutant 147; class: a gap spelled another way). `A%20K%20I%20A...` and `A&#32;K&#32;...`: the decoded view holds a run of
+        single characters; the reader of unknown spaced values ran on the text as written only, so the key stood readable in every
+        letter."""
+        for gap in ("%20", "&#32;", "%09"):
+            out = on_the_run_path("key: " + gap.join(KEY))
+>           assert out == "key: <APIKEY_1>", f"mutant 147: a key with the gap {gap!r} was not masked: {out!r}"
+E           AssertionError: mutant 147: a key with the gap '%20' was not masked: 'key: A%20K%20I%20A%20I%20O%20S%20F%20O%20D%20N%20N%207%20E%20X%20A%20M%20P%20L%20E'
+E           assert 'key: A%20K%2...M%20P%20L%20E' == 'key: <APIKEY_1>'
+E             
+E             - key: <APIKEY_1>
+E             + key: A%20K%20I%20A%20I%20O%20S%20F%20O%20D%20N%20N%207%20E%20X%20A%20M%20P%20L%20E
+
+tests/test_prh_b10.py:216: AssertionError
+____ test_b10_g6_backslash_e_is_read_only_before_a_bracket_or_a_parenthesis ____
+
+    def test_b10_g6_backslash_e_is_read_only_before_a_bracket_or_a_parenthesis():
+        """Group 6 (mutants 129, 142, 148): a Windows path such as `C:\\env` and prose keep their `\\e` and do not take the heavier scrub
+        path; `\\e[0m` and `\\e(B` are still read as ESC."""
+        path = "C:" + BSL + "env" + BSL + "etc"
+>       assert runmap.hex_unescape(path) == path, "mutant 142: a Windows path was read as an ESC"
+E       AssertionError: mutant 142: a Windows path was read as an ESC
+E       assert 'C:\x1bnv\x1btc' == 'C:\\env\\etc'
+E         
+E         - C:\env\etc
+E         + C:nvtc
+
+tests/test_prh_b10.py:234: AssertionError
+_ test_b10_g6_any_refusal_of_the_redactor_gives_the_withheld_text_on_the_tool_path[exc0] _
+
+exc = RedactionError('x')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3866131220>
+
+    @pytest.mark.parametrize("exc", [runmap.RedactionError("x"), runmap.InputTooLarge("InputTooLarge")])
+    def test_b10_g6_any_refusal_of_the_redactor_gives_the_withheld_text_on_the_tool_path(exc, monkeypatch):
+        """Group 6 (mutant 143): a plain `RedactionError` or `InputTooLarge` from `redact_untrusted` was not caught by `redact_layered`
+        (only `TooDeep` and `RedactionLimit` were) and raised out of `prepare_output`."""
+    
+        def boom(raw, mapping):
+            raise exc
+    
+        monkeypatch.setattr(runmap, "redact_untrusted", boom)
+>       assert tools.redact_layered("anything", {}) == WITHHELD, "mutant 143: a refusal escaped as an error"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_prh_b10.py:250: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/tools.py:1268: in redact_layered
+    return runmap.redact_untrusted(raw, mapping)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+raw = 'anything', mapping = {}
+
+    def boom(raw, mapping):
+>       raise exc
+E       hadavin_sdk.guard.runmap.RedactionError: x
+
+tests/test_prh_b10.py:247: RedactionError
+_ test_b10_g6_any_refusal_of_the_redactor_gives_the_withheld_text_on_the_tool_path[exc1] _
+
+exc = InputTooLarge('InputTooLarge')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f38661308a0>
+
+    @pytest.mark.parametrize("exc", [runmap.RedactionError("x"), runmap.InputTooLarge("InputTooLarge")])
+    def test_b10_g6_any_refusal_of_the_redactor_gives_the_withheld_text_on_the_tool_path(exc, monkeypatch):
+        """Group 6 (mutant 143): a plain `RedactionError` or `InputTooLarge` from `redact_untrusted` was not caught by `redact_layered`
+        (only `TooDeep` and `RedactionLimit` were) and raised out of `prepare_output`."""
+    
+        def boom(raw, mapping):
+            raise exc
+    
+        monkeypatch.setattr(runmap, "redact_untrusted", boom)
+>       assert tools.redact_layered("anything", {}) == WITHHELD, "mutant 143: a refusal escaped as an error"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_prh_b10.py:250: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/tools.py:1268: in redact_layered
+    return runmap.redact_untrusted(raw, mapping)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+raw = 'anything', mapping = {}
+
+    def boom(raw, mapping):
+>       raise exc
+E       hadavin_sdk.guard.runmap.InputTooLarge: InputTooLarge
+
+tests/test_prh_b10.py:247: InputTooLarge
+___________ test_b10_g6_a_run_that_both_spellings_match_counts_once ____________
+
+    def test_b10_g6_a_run_that_both_spellings_match_counts_once():
+        """Group 6 (mutant 144): `a - b - c ...` is matched by the plain spelling and the visible-separator spelling; with 20 such runs the
+        batch 9 count was 40 against a cap of 32 and the text was withheld. Counted once: 20 runs are read and the text is shown."""
+        run = " - ".join("abcdefghijk")
+        text = " ok ".join(run for _ in range(20))
+>       assert tools.prepare_output(text, {}, 40000, []) == text
+E       AssertionError: assert '<SECRET_REDA...\n[truncated]' == 'a - b - c - ...h - i - j - k'
+E         
+E         - a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f - g - h - i ...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_prh_b10.py:258: AssertionError
+_______ test_b10_g6_a_key_word_before_a_spaced_run_is_read_with_the_run ________
+
+    def test_b10_g6_a_key_word_before_a_spaced_run_is_read_with_the_run():
+        """Group 6 (mutant 145): the context width is `defaults.SPACED_CONTEXT_CHARS`; a context of 0 loses `password=` + a spaced value."""
+        secret = "hunter2" + "xyzabc"
+>       assert defaults.SPACED_CONTEXT_CHARS == 64
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.defaults' has no attribute 'SPACED_CONTEXT_CHARS'
+
+tests/test_prh_b10.py:264: AttributeError
+__________ test_b10_g6_a_run_with_a_one_letter_word_in_front_is_read ___________
+
+    def test_b10_g6_a_run_with_a_one_letter_word_in_front_is_read():
+        """Group 6 (mutant 146): the number of reads of a run is `defaults.SPACED_DROP_MAX`; one read loses `a A K I A ...`."""
+>       assert defaults.SPACED_DROP_MAX == 4
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.defaults' has no attribute 'SPACED_DROP_MAX'
+
+tests/test_prh_b10.py:271: AttributeError
+_________ test_b10_g6_a_refusal_keeps_its_own_message_on_the_run_path __________
+
+    def test_b10_g6_a_refusal_keeps_its_own_message_on_the_run_path():
+        """Group 6 (mutant 151; the 2 redaction errors of the fuzz, rand/465 and rand/607): `held value lost` (a value a reading found is
+        gone from the stripped view: fail closed) was wrapped again by the catch-all as a plain `RedactionError("RedactionError")`, so
+        the reason was lost. It keeps its message; on the tool path the text is withheld."""
+        for text in (
+            "x pas" + ESC + ESC + "(Bsword=hu" + "\x90" + "nter2secretXYZ y",
+            "x p" + "\x9c" + "assword=" + "\x9d" + "0;t" + "\x07" + "hunte" + "\x07" + "r2secretXYZ y",
+        ):
+            with pytest.raises(runmap.RedactionError) as why:
+                runmap.redact_untrusted(text, {})
+>           assert str(why.value) == "held value lost", f"mutant 151: the reason was lost: {why.value!r}"
+E           AssertionError: mutant 151: the reason was lost: RedactionError('RedactionError')
+E           assert 'RedactionError' == 'held value lost'
+E             
+E             - held value lost
+E             + RedactionError
+
+tests/test_prh_b10.py:286: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_prh_b10.py::test_b10_g1_values_that_share_their_first_twelve_characters_cost_linear_work
+FAILED tests/test_prh_b10.py::test_b10_g1_one_very_long_spaced_run_is_withheld_by_the_work_budget
+FAILED tests/test_prh_b10.py::test_b10_g1_the_budget_counts_the_context_read_too
+FAILED tests/test_prh_b10.py::test_b10_g4_a_second_bare_copy_of_a_masked_secret_does_not_withhold_the_text
+FAILED tests/test_prh_b10.py::test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[``]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[**]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[****]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[__]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[~~~~]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[<>]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[{}]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[||]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[`]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[}]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[>]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[*]
+FAILED tests/test_prh_b10.py::test_b10_g5_the_wrapper_list_is_the_one_in_the_code
+FAILED tests/test_prh_b10.py::test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy[dcs]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy[osc_c1]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy[osc_esc]
+FAILED tests/test_prh_b10.py::test_b10_g5_a_pattern_shaped_value_with_an_encoded_gap_is_masked
+FAILED tests/test_prh_b10.py::test_b10_g6_backslash_e_is_read_only_before_a_bracket_or_a_parenthesis
+FAILED tests/test_prh_b10.py::test_b10_g6_any_refusal_of_the_redactor_gives_the_withheld_text_on_the_tool_path[exc0]
+FAILED tests/test_prh_b10.py::test_b10_g6_any_refusal_of_the_redactor_gives_the_withheld_text_on_the_tool_path[exc1]
+FAILED tests/test_prh_b10.py::test_b10_g6_a_run_that_both_spellings_match_counts_once
+FAILED tests/test_prh_b10.py::test_b10_g6_a_key_word_before_a_spaced_run_is_read_with_the_run
+FAILED tests/test_prh_b10.py::test_b10_g6_a_run_with_a_one_letter_word_in_front_is_read
+FAILED tests/test_prh_b10.py::test_b10_g6_a_refusal_keeps_its_own_message_on_the_run_path
+28 failed, 70 passed in 3.17s
