@@ -1,6 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## 19:37Z (01:07 IST): status
+- Load 4.1 (was 9). Priority queue holds 9 waiters.
+- Part 6 (banner) final head dd5c7242 pushed; builder gates: full pytest 10115 passed, stage_mutants 37/37, banner mutants 28 (27 rerun after a one-line snippet fix); gitleaks by me on its commits: clean. Independent evidence runner started. Part 2 evidence runner still working.
+- Q8c-1 b16: local commits pushed as wip ref 44f42c64 (work in progress, NOT review-ready: final gates queued, notes check still exits 1 with 42 rows missing).
+- Stack 3 rebase refs now pushed: wip/cloud-rebase-P5a (d2e8c1f5), -P5b1 (423e0be6), -P5b2-main (16604f5a); builder not yet final; unverified. Stack 2 builder still working (nothing pushed).
+- Still no push from #71 fix, #72 nits, part 3 batch 2, Q8b gate-fix.
+
 ## 19:32Z (01:02 IST): status
 - New pushes seen: AK1-a head b95e1853 (wip/cloud-ak1-a; builder not yet final; unverified), part 6 banner head 3c3cb553 (wip/cloud-pd-banner; builder not yet final; unverified). Nothing of these is reviewed.
 - Q8c-1 b16: builder had handed back early with nothing committed; resumed to commit, run all gates once and push (priority 1 in the heavy queue).
