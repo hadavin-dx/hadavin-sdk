@@ -1,5 +1,28 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## Block 20:44Z / 02:14 IST (no new order; part 2 gate queued; nothing finished)
+**Failed or uncertain first.** Nothing new finished. Q8c-1 b16 builder (a70bb036) shows "completed" again (it waits on its own gate driver `b16-gates2.sh`); origin wip/cloud-q8c1-b16 now at 9e85e2a2 (the builder's CHANGELOG-hash fix; the later fix 43be04de is not on origin). The ORDER 260 evidence runner has not written RESULTS.md yet (13 minutes in). No READY item beyond #71 (lead decision).
+**Done now.** Nothing started; no new orders after ORDER 264 (checked 20:43Z). Part 2 gate (full pytest inside a runner shell) is queued in heavy.sh behind a running job; load 2.8.
+**Plan.** Next tick: check part 6 and Q8a-1 b20 builders for hand-back, the part 2 runner, EV-260, Q8c-1 gates; write the next block.
+
+### Table 1: LIVE ITEMS (20:44Z / 02:14 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| aa0cfcdf | part 6 fix builder | 20:27 | 17 min | 21:27 | running | wip/cloud-pd-banner push | wip ref still dd5c7242 (no push yet) |
+| a797f9e1 | Q8a-1 b20 minors builder | 20:29 | 14 min | 21:29 | running | wip/cloud-q8a1-b20 | no push yet |
+| a70bb036 | Q8c-1 b16 builder | 20:35 | 8 min this run | 21:35 | waiting for its gate driver | push, notes check 0 | wip ref at 9e85e2a2 |
+| a0a97309 | part 2 evidence and gate runner | 20:38 | 5 min | 21:50 | waiting for heavy slot (pytest queued) | RESULTS.md | queued at 20:43 |
+| a3aeb8a0 (EV-260 runner) | ORDER 260 independent gates (mid-flight) | 20:32 | 11 min | 21:40 | running | RESULTS.md | not yet |
+| heavy jobs: AK-G2-a pytest (pid 27786, 6.5 min), Q8c-1 policy_mutants (13610), EV-pd-bind pytest (waiting) | gates | 20:36 to 20:43 | minutes | 21:00 | running / waiting | logs | running |
+| AK-G2-a Postgres port 5447, Q8c-1 Postgres 56516 | test databases | hours | hours | after their jobs | running | none | to be stopped by their builders |
+Totals: agents 5, shells 0, load average 2.8, heavy slots 3 of 3 (1 waiter). No item over its time box; none silent over 15 minutes.
+
+### Table 2: ROUNDS
+Unchanged since 20:39Z (ORDER 260 parked at round 1 resolved; Q8a-1 confirming round next after b20; Q8c-1 round 16 gates running; part 6 and part 2 at round 2 fix or gates; CodeAnt parked).
+
+### Table 3: FINISHED SINCE LAST BLOCK
+None (no agent or job ended since 20:39Z).
+
 ## Block 20:39Z / 02:09 IST (ORDER 264: scanner-bug work parked; main work first)
 **Failed or uncertain first.** (1) ORDER 264 applied: ORDER 263 (CodeAnt) builder stopped at wip/cloud-codeant 0b8b390d; ORDER 260 (path traversal) parked after round 1. The CodeAnt branch holds UNREVIEWED changes in a security file (redaction.py except clause) and in 5 demo files; the order for ORDER 263 said "only if behaviour identical" and demos are outside our scope: a reviewer must check both before it is ever used (noted in PARKED.md). (2) ORDER 260 round 1: reviews found 0 Blocker and 6 Major (unrouted config and signer and audit-folder sites, mutants that cannot show a call site fails, replay can leave a half-written folder without FAILED.txt); resolve report and ledger rows SONARPATH-r1-1..8 written; NO fix batch; the independent evidence runner is still mid-flight (not landed). Not independently verified: the 22 mutants. (3) Q8c-1 batch 16: two of the builder's mutant rows were its own regressions (fixed locally 43be04de, not pushed); gates at the new head are running; I stopped the stale gate driver on the old head 44f42c64. (4) AK-G2-a: mutants now 69 of 69 (heavy.sh run on aba26c69, pushed to wip/cloud-ak-g2-a by me); second full pytest still running in its own job. (5) Tags pd-bind and pd-standins cannot be pushed (proxy), branches are on origin.
 **Done now.** Parked ORDER 263 and 260 in PARKED.md with heads and owed steps. Freed capacity went to MAIN WORK item 3(a): one evidence-and-gate runner (a0a97309) for part 2 (bind, head 6e6ae211): full pytest, stage_mutants, all 39 bind mutants, fail-before, hostile inputs (priority 2). Part 6 fix builder aa0cfcdf got the lead answers (banner_from_config only public entry; symlink and folder coverage Blocker is a security path). Q8c-1 b16 builder resumed and running its gates. Q8a-1 b20 builder running.
