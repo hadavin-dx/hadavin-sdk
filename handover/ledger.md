@@ -2785,3 +2785,6 @@
 | Q8c1b8-r8-E2 | Nit | Q8c-1 | Issue 6: fixed day reaching the mutant runner child not proven in-run | OPEN | | | 2026-11-12 |
 | Q8c1b8-r8-E3 | Minor | Q8c-1 | Issue 7: per-test fail-before classification and ticket 6.4 must-fail-on-main mapping (supersedes Q8c1-b8-issue6) | OPEN | | | 2026-11-12 |
 | Q8c1b8-r8-vault | Major | Q8c-1 | Issue 8: 12 Vault engine tests never run here; CI run with HADAVIN_REQUIRE_VAULT_ENGINE=1 before 2026-12-11 | IMPOSSIBLE-NOW | needs CI | | 2026-11-12 |
+| Q8bb7-i1-5 | Major | Q8b | r7 Issues 1-5 (digit-glued flag keys, plural flags, Cookie keys, Authorization scheme words, over-masking of bypass/compass/obsession/author) fixed on wip/cloud-q8b-b7 head b7d7cd18 (builder claim) | FIXED-UNVERIFIED | b7d7cd18 | awaits evidence + r8 reviews | 2026-11-12 |
+| Q8bb7-i6-9 | Minor | Q8b | r7 Issues 6-9 (comments, CHANGELOG wording, drift test count floor 210, path-hygiene mutants M111/M112) fixed at b7d7cd18 (builder claim) | FIXED-UNVERIFIED | b7d7cd18 | awaits evidence + r8 reviews | 2026-11-12 |
+| Q8bb7-i11 | Minor | Q8b | r7 Issue 11: per-test line for the 120 tests that pass on old main (control or mutant; M111-M115 added); notes in reviews/Q8b/q8bb7-builder-notes.md | FIXED-UNVERIFIED | b7d7cd18 | awaits evidence | 2026-11-12 |
