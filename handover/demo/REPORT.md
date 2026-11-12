@@ -12,6 +12,45 @@ FIXED (with proofs): A2 the new test literals built from parts (`_u`, `_j`, `_at
 - Apply: the four codeant2 patches REPLACE the old codeant-gitleaks/-scripts/-n8n-proof/-docs (the old ones conflict with them); order among the four does not matter; apply in both orders with the old codeant-desk/-demo-only/-portal-log/-tests-hardening (those four are being rewritten by 10c-2).
 - Review (fresh, read-only, adversarial, no cap): verifies each claimed fix against the A and C findings; asks whether scanning root-relative in the repo's own test is a legitimate change (what else scans absolute paths), whether the planting test can pass vacuously, ReDoS check of the scrub regexes by reading, the redirect change's default for feed.py/run_real_check.py, the proof.json expression, hygiene flags of the new test literals when tracked, hunk overlap with 10c-2's patches on tests/test_hygiene.py. Report to triage/REVIEW-codeant2-sec.md.
 
+## 2026-11-12 21:41Z / 03:11 IST - 3 BUILDS HANDED BACK + 3 REVIEWS RUNNING; reviews found real problems; NO BATCH 2 READY YET
+FAILED / UNCERTAIN first:
+- CodeAnt security (codeant3, 10c-1b): round-3 review = 0 Blocker, 1 Major, 8 Nits. Major: the scrub keeps the WHOLE URL when the host is localhost for ANY scheme (`file://localhost/home/x/.ssh/id_rsa`, `postgres://localhost:5432/leads`, and the query `?api_key=...` of a localhost web URL stay). Builder 10c-1c is fixing it (+ 7 nits: GITLEAKS_BIN bare name, cross-drive relpath test, n8n_api tracebacks on non-JSON/URLError, proxy env, reset.ps1 alias order, ACTIVE_LINK mutant, scrub limits). Saved: triage/REVIEW-codeant3-sec.md.
+- CodeAnt runtime (10c-2): reviewer A = 0 Blocker, 2 Major: (M1) the `:memory:` refusal leaves a stray `:memory:.lock` file (lock is taken before the refusal) and was left unfixed; (M2) the lead's speed patch test line tests/test_crm_hubspot.py:231 is over 120 characters, CI `ruff check .` fails E501. The desk loop and fake_hubspot locking fixes are confirmed. Core touches (server.py 413/501 body drain ~6 lines; `KnowsBoundAddress` Protocol in loader.py; contract.md :143 :277 edits) are justified but the LEAD must approve them for the PR text. Saved: triage/REVIEW-codeant2-rt-A.md. Reviewer B (tests, log.js) still running.
+- Semgrep (lane 14): builder could NOT reach the Semgrep registry (403 from the sandbox), so there is NO scan result: a clean scan is not claimed; the first live run on the stack head may be red (needs a machine with registry access: LEAD DECISION). Lint-red Blocker fixed in the patch (924 gitleaks findings -> 0), nosemgrep test rewritten (old test missed 11 of 17 bad shapes). Full suite 2426 passed / 115 skipped. Fresh review round 2 running. Summary saved: semgrep/SUMMARY.md.
+- Lane 8 v4: round-4 review 0B/1M/3N; Major (missing counts evidence) fixed by me (evidence-d7); pushed 84b336a0.
+- Lane 13b (layout) has been silent 50 minutes; I asked it for a hand-back now.
+- Pillow: the 10c-2 full run failed 2 sidebar tests only because its venv had no PIL (lane 8 v4 replaces Pillow by in-browser decode): not a code failure, but unproven until INT-2.
+NEEDS FROM LEAD: (1) approve or refuse the two core changes in the CodeAnt runtime set; (2) a registry-reachable Semgrep run; (3) owner: named owner for tightening the browser-lock allowance; Semgrep rules log licence question; PR 89 branch name.
+
+TABLE 1 - LIVE ITEMS (box 60 min; load 0.5 of 4)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| 10c-1c | codeant3 security fixes round 4 | 21:37 | 3 min | 22:25 | running | regenerated codeant3-*.patch + evidence-codeant4-sec | started |
+| rev rt-B | review tests + portal log patches | 21:33 | 8 min | 21:50 | running | report | - |
+| rev sg-2 | review Semgrep PR round 2 | 21:38 | 3 min | 21:55 | running | report | - |
+| 13b | layout siblings + 390px cascade | 20:50 | 51 min | 21:45 | FLAGGED: silent; asked to hand back | layout/*2.patch, mobile-cascade.patch | patches + matrix files exist |
+Totals: agents 4, shells 0, containers 0, processes: 0 heavy pytest now, load 0.5, heavy slots free.
+Not started yet (waiting): 10c-2b fix builder (needs reviewer B first), lane 14 fix round (needs reviewer result), INT-2.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| CodeAnt security | 4 (build) | R1 2B+1M, R2 2M+8N, R3 1M+8N | scrub/test gaps, each round a new hole of the same class (scheme/host rules) | R3 Major is a real data leak path (localhost file:// URL kept) ; security: no cap | no | fresh review clean |
+| CodeAnt runtime | 2 (review of build 1) | R1 B 2M, C 3M; R2 A 0B/2M/5N, B pending | stray lock file, lint line | A's two Majors are real | no | review clean |
+| Semgrep PR | 2 (review) | R1 1B+3M | allowlist, vacuous test | review pending | no | review clean |
+| lane 8 docs-and-deps | 4 done | R4 0B/1M | missing evidence | Major fixed by lead | yes: stop (docs only; fixed; no logic change) | done unless lead wants a confirming read |
+| layout 13b | 2 | R1 2M | cascade, sibling | review not started | no | review clean |
+Waste check: none; but note the security rounds keep finding a NEW hole of the same class each time (anchored-prefix rules): the 10c-1c brief asks to state the scrub's known limits plainly so the loop can end.
+
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| 8e (lane 8 v4 build) | v4 patch applies on 0841f36; measured numbers; guards; evidence d1-d6 |
+| lane 8 round-4 review | 0B/1M/3N; Major fixed (evidence-d7), pushed |
+| 10c-1b build + round-3 review | patches built; review 1M/8N; saved |
+| 10c-2 build + review A | built (5 patches, 1025 focused tests); review A 0B/2M/5N; saved |
+| 14 Semgrep build | patch rebased; no registry scan possible; saved summary |
+
 ## 2026-11-12 21:25Z / 02:55 IST - 8d HANDED BACK EARLY (stopped by me), 8e STARTED; 10c-2 patches appearing; no batch 2 ready yet
 FAILED / UNCERTAIN first:
 - Builder 8d did not finish: it started a wait loop with two full serial runs queued while 4 other pytest processes ran. I killed its script before the full runs (rule: one heavy run at a time). Nothing lost; its tree, guards and evidence are kept. NEW measured numbers on 0841f36 + change, eight browser/node files, no Playwright: node ON 114 passed / 113 skipped; node OFF 92 / 135 (80 s each). No full-suite run without Node exists on this commit; the doc will say so instead of a computed number.
