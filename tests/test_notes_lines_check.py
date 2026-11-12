@@ -388,8 +388,9 @@ def test_a_conftest_function_and_a_fixture_file_are_units_and_a_file_outside_the
         "a changed fixture file was not one unit named by its file name"
     )
     assert nlc.changed_tests("a\n", "a\n", rel) == ([], []), "an unchanged fixture file was listed"
-    assert nlc.kind_of("tests/fixtures/other.txt") is None, (
-        "a fixture of another family is in scope"
+    assert nlc.kind_of("tests/fixtures/other.txt") == "data", (
+        "a data file of another family under tests/ is not in scope (batch 14: any file under tests/ that is "
+        "not Python is one unit named by its file name)"
     )
     assert nlc.kind_of("src/hadavin_sdk/x.py") is None, "a file of src is in scope"
     assert nlc.kind_of("tests/test_x.py") == "test"
@@ -726,7 +727,9 @@ def test_the_refs_of_a_tree_are_its_tests_its_mutant_names_and_the_files_of_its_
         f"the tests of the tree and the names of its test files are {sorted(refs.tests)}"
     )
     assert refs.mutants == {"B1 first"}, f"the mutants of the tree are {sorted(refs.mutants)}"
-    assert refs.logs == {"run.log"}, f"the logs of the tree are {sorted(refs.logs)}"
+    assert refs.logs == {"handover/evidence/x/logs/run.log"}, (
+        f"the logs of the tree are {sorted(refs.logs)}"
+    )
 
 
 def test_auto_refuses_a_row_whose_reason_names_a_test_or_a_log_file_that_is_in_no_file_of_the_commit(

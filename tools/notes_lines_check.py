@@ -63,10 +63,12 @@ import re
 import shutil
 import subprocess
 import sys
+import tomllib
 from collections.abc import Callable
 from pathlib import Path
 
 MIN_WORDS = 4  # words of the reason cell
+CONFTEST_CODE = "conftest module code"  # the unit that holds every top-level statement of a conftest that is no name
 PLACEHOLDERS = frozenset(
     {"ok", "todo", "tbd", "x", "n/a", "na", "same", "none", "-", "...", "later"}
 )
@@ -123,7 +125,34 @@ def _is_declaration(n: ast.stmt) -> bool:
         and isinstance(n.value.value, str)
     ):
         return True
+    if isinstance(n, ast.Assign):
+        return all(_plain_target(t) for t in n.targets)
+    if isinstance(n, (ast.AnnAssign, ast.AugAssign)):
+        return _plain_target(n.target)
     return isinstance(n, _DECLARATIONS)
+
+
+def _plain_target(t: ast.AST) -> bool:
+    """True when an assignment target binds only names (`X`, `A, B`, `[A, *B]`); a subscript or an attribute
+    (`collect_ignore[0] = ...`, `settings.x = ...`) changes something that already exists: module code."""
+    if isinstance(t, ast.Name):
+        return True
+    if isinstance(t, (ast.Tuple, ast.List)):
+        return all(_plain_target(e) for e in t.elts)
+    if isinstance(t, ast.Starred):
+        return _plain_target(t.value)
+    return False
+
+
+def _target_names(t: ast.AST) -> list[str]:
+    """Every name an assignment target binds, tuples and lists included."""
+    if isinstance(t, ast.Name):
+        return [t.id]
+    if isinstance(t, (ast.Tuple, ast.List)):
+        return [n for e in t.elts for n in _target_names(e)]
+    if isinstance(t, ast.Starred):
+        return _target_names(t.value)
+    return []
 
 
 def _bound(alias: ast.alias) -> str:
@@ -172,25 +201,47 @@ def _imports(tree: ast.AST, rel: str) -> dict[str, tuple[str, str | None]]:
     return out
 
 
+# Names that switch tests off or change how they are collected or set up, wherever they are defined in a file: a
+# change to any of them is part of every unit of the file (and, in a conftest, of every test under its folder).
+SWITCH_NAMES = (
+    "__test__",
+    "setup_module",
+    "teardown_module",
+    "setup_function",
+    "teardown_function",
+    "pytest_generate_tests",
+    "pytest_collection_modifyitems",
+    "pytest_configure",
+    "pytest_runtest_setup",
+    "pytest_plugins",
+    "collect_ignore",
+    "collect_ignore_glob",
+)
+
+
 class _Module:
-    """One parsed Python file: the dump of every module-level binding, the nodes of its functions and classes, the
-    imports of the whole file (also inside a function) and its autouse fixtures."""
+    """One parsed Python file: the dump of every module-level binding (every name an assignment binds, tuple targets
+    too), the value nodes behind those names, the nodes of its functions and classes, the imports of the whole file
+    (also inside a function), its autouse fixtures and the module code that runs when the file is collected."""
 
     def __init__(self, rel: str, source: str) -> None:
         self.rel = rel
         self.tree = ast.parse(source)
         self.dumps: dict[str, str] = {}
         self.nodes: dict[str, ast.AST] = {}
+        self.values: dict[str, list[ast.AST]] = {}
         for n in self.tree.body:
             if isinstance(n, (*_FUNCS, ast.ClassDef)):
                 names = [n.name]
                 self.nodes[n.name] = n
-            elif isinstance(n, ast.Assign):
-                names = [t.id for t in n.targets if isinstance(t, ast.Name)]
-            elif isinstance(n, (ast.AnnAssign, ast.AugAssign)) and isinstance(n.target, ast.Name):
-                names = [
-                    n.target.id
-                ]  # `X += ...` changes what X is, so it is joined to the dump of X
+            elif isinstance(n, ast.Assign) and _is_declaration(n):
+                names = [name for t in n.targets for name in _target_names(t)]
+                self._value(names, n.value)
+            elif isinstance(n, (ast.AnnAssign, ast.AugAssign)) and _is_declaration(n):
+                # `X += ...` changes what X is, so it is joined to the dump of X
+                names = _target_names(n.target)
+                if n.value is not None:
+                    self._value(names, n.value)
             elif isinstance(n, (ast.Import, ast.ImportFrom)):
                 names = [_bound(a) for a in n.names]
             else:
@@ -200,10 +251,25 @@ class _Module:
         self.imports = _imports(self.tree, rel)
         self.autouse = [n.name for n in self.tree.body if isinstance(n, _FUNCS) and _is_autouse(n)]
         # module-level statements that bind nothing the table above knows (`if`, `try`, `for`, `with`, a call such
-        # as `pytest.skip(allow_module_level=True)` or `pytest_plugins` set inside an `if`): code that runs when the
-        # file is collected and can switch every test of it off or on, so it is part of every unit of the file
+        # as `pytest.skip(allow_module_level=True)` or `collect_ignore.append(...)`, an assignment to a subscript
+        # or an attribute): code that runs when the file is collected and can switch every test of it off or on,
+        # so it is part of every unit of the file
         self.glue = [n for n in self.tree.body if not _is_declaration(n)]
         self.glue_dump = "".join(ast.dump(n) for n in self.glue)
+
+    def _value(self, names: list[str], value: ast.AST) -> None:
+        for name in names:
+            self.values.setdefault(name, []).append(value)
+
+    def children_of(self, name: str) -> list[str]:
+        """The names the definition of `name` uses: what a function or class uses, and what the values behind an
+        assignment of the name use (`X = _build()`, `B = A + 1`, `pytestmark = pytest.mark.skipif(SKIP)`)."""
+        out: set[str] = set()
+        if name in self.nodes:
+            out |= _used(self.nodes[name])
+        for value in self.values.get(name, []):
+            out |= _used(value)
+        return sorted(out)
 
 
 def _dotted(n: ast.AST) -> list[str]:
@@ -253,6 +319,20 @@ class _Signatures:
             except SyntaxError:
                 self.modules[rel] = None
         return self.modules[rel]
+
+    def conftests(self, rel: str) -> list[_Module]:
+        """The conftests that act on the file `rel`, the one nearest to it LAST: `conftest.py` at the root and
+        one in each folder on the way to the file (a fixture or a hook of any of them reaches the file's tests)."""
+        parts = rel.split("/")[:-1]
+        out = []
+        for i in range(len(parts) + 1):
+            candidate = "/".join([*parts[:i], "conftest.py"])
+            if candidate == rel:
+                continue
+            mod = self.module(candidate)
+            if mod is not None:
+                out.append(mod)
+        return out
 
     def _file_of(self, stem: str) -> str | None:
         return next((c for c in (f"{stem}.py", f"{stem}/__init__.py") if self.module(c)), None)
@@ -307,6 +387,13 @@ class _Signatures:
                     todo.extend((m, u) for u in sorted(_used(g)))
 
         touch(mod)
+        for conf in self.conftests(mod.rel):
+            # a conftest acts on every test under its folder: its collect-time code, its hooks and switches and its
+            # autouse fixtures are part of the unit; a fixture a unit names as a parameter is looked up below
+            touch(conf)
+            todo += [(conf, n) for n in (*SWITCH_NAMES, *conf.autouse) if n in conf.dumps]
+        if kind_of(mod.rel) != "conftest":  # (a conftest's own switches are its own units)
+            todo += [(mod, n) for n in SWITCH_NAMES if n in mod.dumps]
         todo += [(mod, u) for u in sorted(_used(node))]
         for e in extra:
             parts.append(f"|class {mod.rel}={ast.dump(e)}")
@@ -324,8 +411,14 @@ class _Signatures:
             touch(m)
             if name in m.dumps:
                 parts.append(f"|{m.rel}:{name}={m.dumps[name]}")
-                if name in m.nodes:
-                    todo += [(m, u) for u in sorted(_used(m.nodes[name]))]
+                # what the definition of the name uses, and what the values behind an assignment of it use
+                todo += [(m, u) for u in m.children_of(name)]
+            else:
+                # a name the file does not define: a fixture of the nearest conftest that defines it
+                for conf in reversed(self.conftests(m.rel)):
+                    if name in conf.dumps:
+                        todo.append((conf, name))
+                        break
             # (every import of the file, also one inside a function: see `_imports`)
             head, attr = self._head(m.imports, name)
             if head is None:
@@ -343,23 +436,69 @@ class _Signatures:
         return ast.dump(node) + "".join(sorted(parts))
 
 
+def _is_fixture(fn: ast.AST) -> bool:
+    """True for a function decorated `@pytest.fixture` or `@fixture` (with or without a call)."""
+    for d in getattr(fn, "decorator_list", []):
+        target = d.func if isinstance(d, ast.Call) else d
+        name = target.attr if isinstance(target, ast.Attribute) else getattr(target, "id", "")
+        if name == "fixture":
+            return True
+    return False
+
+
+def _is_test_class(n: ast.ClassDef) -> bool:
+    """pytest collects a class whose name starts with `Test` and, whatever its name, a `unittest.TestCase`."""
+    if n.name.startswith("Test"):
+        return True
+    return any(
+        (b.attr if isinstance(b, ast.Attribute) else getattr(b, "id", "")) == "TestCase"
+        for b in n.bases
+    )
+
+
+def _class_extras(cls: ast.ClassDef, method: ast.AST) -> tuple[ast.AST, ...]:
+    """What acts on a test method besides its own body: the decorators and bases of its class, the class-level
+    statements that are no method (`pytestmark`, an attribute), every `setup*` and `teardown*` method and every
+    fixture of the class (they run for every test of it), and each other method the test reaches through
+    `self.name` or `cls.name`, to any depth (a helper method)."""
+    helpers = {
+        m.name: m for m in cls.body if isinstance(m, _FUNCS) and not m.name.startswith("test")
+    }
+    always = [
+        m for m in helpers.values() if m.name.startswith(("setup", "teardown")) or _is_fixture(m)
+    ]
+    reached: list[ast.AST] = []
+    seen: set[str] = set()
+    todo = [method]
+    while todo:
+        for used in _used(todo.pop()):
+            parts = used.split(".")
+            if (
+                len(parts) > 1
+                and parts[0] in ("self", "cls")
+                and parts[1] in helpers
+                and parts[1] not in seen
+            ):
+                seen.add(parts[1])
+                reached.append(helpers[parts[1]])
+                todo.append(helpers[parts[1]])
+    plain = [m for m in cls.body if not isinstance(m, _FUNCS) and not _is_declaration_doc(m)]
+    return (*cls.decorator_list, *cls.bases, *plain, *always, *reached)
+
+
 def _units_of_tests(mod: _Module) -> dict[str, tuple[ast.AST, tuple[ast.AST, ...]]]:
     """key -> (node, extras): `name` for a top-level test function (plain or async), `Class::name` for a method of a
-    top-level `Test*` class. The extras of a method are the decorators and the non-method body statements of its class
-    (a class-level `pytestmark` or `@pytest.mark.skip` switches every method off)."""
+    top-level test class. A test function or method is one whose name starts with `test` (pytest's default), and a
+    test class is one whose name starts with `Test` or that is a `unittest.TestCase`. The extras of a method are
+    those of `_class_extras` (a class-level `pytestmark` or `@pytest.mark.skip` switches every method off)."""
     out: dict[str, tuple[ast.AST, tuple[ast.AST, ...]]] = {}
     for n in mod.tree.body:
-        if isinstance(n, _FUNCS) and n.name.startswith("test_"):
+        if isinstance(n, _FUNCS) and n.name.startswith("test"):
             out[n.name] = (n, ())
-        elif isinstance(n, ast.ClassDef) and n.name.startswith("Test"):
-            extras: tuple[ast.AST, ...] = (
-                *n.decorator_list,
-                *n.bases,
-                *(m for m in n.body if not isinstance(m, _FUNCS) and not _is_declaration_doc(m)),
-            )
+        elif isinstance(n, ast.ClassDef) and _is_test_class(n):
             for m in n.body:
-                if isinstance(m, _FUNCS) and m.name.startswith("test_"):
-                    out[f"{n.name}::{m.name}"] = (m, extras)
+                if isinstance(m, _FUNCS) and m.name.startswith("test"):
+                    out[f"{n.name}::{m.name}"] = (m, _class_extras(n, m))
     return out
 
 
@@ -378,36 +517,53 @@ def _units_of_functions(mod: _Module) -> dict[str, tuple[ast.AST, tuple[ast.AST,
     out: dict[str, tuple[ast.AST, tuple[ast.AST, ...]]] = {
         n.name: (n, ()) for n in mod.tree.body if isinstance(n, (*_FUNCS, ast.ClassDef))
     }
+    if (
+        mod.glue
+    ):  # the module code that runs when the conftest is read: `for`, `if`, `try`, calls, subscripts
+        out[CONFTEST_CODE] = (ast.Module(body=list(mod.glue), type_ignores=[]), ())
     for n in mod.tree.body:
-        if isinstance(n, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
-            targets = (
-                [t for t in n.targets if isinstance(t, ast.Name)]
-                if isinstance(n, ast.Assign)
-                else [n.target]
-            )
-            for t in targets:
-                if isinstance(t, ast.Name) and t.id not in out:
+        if isinstance(n, (ast.Assign, ast.AnnAssign, ast.AugAssign)) and _is_declaration(n):
+            for name in sorted(_assigned_names(n)):
+                if name not in out:
                     group = [
                         g
                         for g in mod.tree.body
                         if isinstance(g, (ast.Assign, ast.AnnAssign, ast.AugAssign))
-                        and t.id in _assigned_names(g)
+                        and name in _assigned_names(g)
                     ]
-                    out[t.id] = (ast.Module(body=group, type_ignores=[]), ())
+                    out[name] = (ast.Module(body=group, type_ignores=[]), ())
     return out
 
 
 def _assigned_names(n: ast.stmt) -> set[str]:
     if isinstance(n, ast.Assign):
-        return {t.id for t in n.targets if isinstance(t, ast.Name)}
+        return {name for t in n.targets for name in _target_names(t)}
     target = getattr(n, "target", None)
-    return {target.id} if isinstance(target, ast.Name) else set()
+    return set(_target_names(target)) if target is not None else set()
+
+
+def _reached(mod: _Module, names: set[str]) -> str:
+    """The dump of everything a mutant call reaches in its own file: each module-level function, class, constant
+    and import the call names, and what those use, to any depth (the helper that builds a search text is part of
+    the mutant, not only the call that names it). The collect-time code of the file is not part of it."""
+    seen: set[str] = set()
+    todo = sorted(names)
+    parts: list[str] = []
+    while todo:
+        name = todo.pop()
+        if name in seen or name not in mod.dumps:
+            continue
+        seen.add(name)
+        parts.append(f"|{name}={mod.dumps[name]}")
+        todo += mod.children_of(name)
+    return "".join(sorted(parts))
 
 
 def _mutant_units(mod: _Module) -> dict[str, str]:
     """name -> dump, for every `mutant(...)` or `Mutant(...)` call with a text as first argument, in the whole file
     (the dumps of the same name are joined). The dump of the builder function `mutant` is part of every one: a change
-    of the builder changes what every mutant is."""
+    of the builder changes what every mutant is; so is a change of a helper, constant or import of the same file
+    that the call names (`_date_call(...)`, `KINDS_DECIDED_LINE`), to any depth."""
     builder = "".join(
         ast.dump(n) for n in mod.tree.body if isinstance(n, _FUNCS) and n.name in _MUTANT_CALLS
     )
@@ -421,19 +577,30 @@ def _mutant_units(mod: _Module) -> dict[str, str]:
             and isinstance(n.args[0], ast.Constant)
             and isinstance(n.args[0].value, str)
         ):
-            out[n.args[0].value] = out.get(n.args[0].value, "") + ast.dump(n)
+            out[n.args[0].value] = (
+                out.get(n.args[0].value, "") + ast.dump(n) + _reached(mod, _used(n))
+            )
     return {k: v + "|" + builder for k, v in out.items()}
 
 
-_TEST_FILE = re.compile(r"tests/(?:.+/)?test_[^/]*\.py")
+_TEST_FILE = re.compile(
+    r"tests/(?:.+/)?(?:test_[^/]*|[^/]*_test)\.py"
+)  # pytest's default file patterns
 _MUTANT_FILE = re.compile(r"tests/(?:policy_mutants|stage_mutants)\.py")
-_CONFTEST = re.compile(r"tests/(?:.+/)?conftest\.py")
+_CONFTEST = re.compile(
+    r"(?:tests/(?:.+/)?)?conftest\.py"
+)  # also the one at the root of the repository
 _FIXTURE_FILE = re.compile(r"tests/fixtures/policy_sources_[^/]*\.txt")
+_CONFIG_FILE = re.compile(r"(?:pyproject\.toml|pytest\.ini|tox\.ini|setup\.cfg)")
+_DATA_FILE = re.compile(
+    r"tests/(?!.*__pycache__).+"
+)  # any other file under tests/ (data, a plugin file, a script)
 _NOTES_FILE = re.compile(r"handover/evidence/.+/NOTES\.md")
 
 
 def kind_of(rel: str) -> str | None:
-    """'test', 'mutants', 'conftest', 'fixture' or None (a file outside the four kinds)."""
+    """'test', 'mutants', 'conftest', 'fixture', 'config' (the pytest settings of the repository) or 'data' (any
+    other file under tests/ that is not Python), or None for a file outside these kinds."""
     if _TEST_FILE.fullmatch(rel):
         return "test"
     if _MUTANT_FILE.fullmatch(rel):
@@ -442,7 +609,23 @@ def kind_of(rel: str) -> str | None:
         return "conftest"
     if _FIXTURE_FILE.fullmatch(rel):
         return "fixture"
+    if _CONFIG_FILE.fullmatch(rel):
+        return "config"
+    if _DATA_FILE.fullmatch(rel) and not rel.endswith(".py"):
+        return "data"
     return None
+
+
+def _config_signature(rel: str, source: str) -> str:
+    """What of a pytest settings file can change a test run: all of `pytest.ini`, `tox.ini` and `setup.cfg` (one
+    text), and of `pyproject.toml` the `[tool.pytest]` tables only (a change of a dependency is no test change)."""
+    if rel.endswith("pyproject.toml"):
+        try:
+            data = tomllib.loads(source)
+        except tomllib.TOMLDecodeError:
+            return source  # a file that does not parse is read whole: a change of it is a change
+        return repr(data.get("tool", {}).get("pytest", {}))
+    return source
 
 
 def units_of(rel: str, source: str, loader: Loader | None = None) -> dict[str, str]:
@@ -452,8 +635,10 @@ def units_of(rel: str, source: str, loader: Loader | None = None) -> dict[str, s
     if not source:
         return {}
     kind = kind_of(rel) or "test"
-    if kind == "fixture":
+    if kind in ("fixture", "data"):
         return {Path(rel).name: source}
+    if kind == "config":
+        return {Path(rel).name: _config_signature(rel, source)}
     sigs = _Signatures(loader)
     mod = sigs.module(rel, source)
     if mod is None:
@@ -514,6 +699,22 @@ def reason_problem(reason: str) -> str:
 _TEST_NAME = re.compile(r"\btest_\w+")
 _LOG_NAME = re.compile(r"[\w.-]+\.log\b")
 _MUTANT_CODE = re.compile(r"[A-Z]{1,3}\d+[a-z]?\s")
+_COMMAND_WORDS = frozenset(
+    {"python", "uv", "git", "pytest", "ruff", "bandit", "pip", "sh", "bash", "gitleaks"}
+)
+
+
+def _looks_like_a_mutant_name(token: str) -> bool:
+    """True for a backticked text that is the name of a mutant: it starts with a mutant code and a space (`B12 `,
+    `m6 `), or it is three words or more of plain words (`Kinds: a kind moved to another day`, `Dated entries:
+    ...`): no path, no command, no code, no brackets or signs. A name of a mutant has no fixed shape, so this is a
+    rule of shape: a plain-word text that names no mutant is read as a wrong name."""
+    if _MUTANT_CODE.match(token):
+        return True
+    words = token.split()
+    if len(words) < 3 or words[0].lower() in _COMMAND_WORDS:
+        return False
+    return not re.search(r"[/\\=()\[\]{}<>*$#@|]|--|\.py\b|\.log\b|\.md\b", token)
 
 
 class Refs:
@@ -521,19 +722,30 @@ class Refs:
     the file names under a `logs/` folder. A reason that names one that is not there is a problem (a lookup that
     leads nowhere is no reason)."""
 
-    def __init__(self, tests: frozenset[str], mutants: frozenset[str], logs: frozenset[str]):
+    def __init__(
+        self,
+        tests: frozenset[str],
+        mutants: frozenset[str],
+        logs: frozenset[str],
+        units: dict[str, frozenset[str]] | None = None,
+    ):
+        """`logs` holds the paths of the files under a `logs/` folder (`handover/evidence/x/b1/logs/a.log`), `units`
+        the unit names of each file in scope of the tree (to check that a row names a unit that exists)."""
         self.tests, self.mutants, self.logs = tests, mutants, logs
+        self.units = units or {}
 
 
-def reference_problems(reason: str, refs: Refs) -> list[str]:
+def reference_problems(reason: str, refs: Refs, folder: str | None = None) -> list[str]:
     """One line per name in the reason (after its marker) that does not exist: a `test_x` that is no test of the tree,
     a `x.log` that is in no `logs/` folder, a backticked mutant name (it starts with a mutant code such as `B12 `)
-    that is no mutant of the mutant files."""
+    that is no mutant of the mutant files. A log is looked up in the `logs/` folder of the notes file that names it
+    (`folder`, the folder of that notes file); with no folder, in any `logs/` folder. A backticked text of three
+    words or more that looks like the name of a mutant (see `_looks_like_a_mutant_name`) must be one."""
     found = _MARKER.search(reason)
     tail = reason[found.start() :] if found else reason
     out = []
     for token in re.findall(r"`([^`]+)`", tail):
-        if _MUTANT_CODE.match(token) and token not in refs.mutants:
+        if _looks_like_a_mutant_name(token) and token not in refs.mutants:
             out.append(f"the mutant `{token}` is in no mutant file")
     bare = re.sub(r"`[^`]+`", " ", tail)
     ticked = " ".join(re.findall(r"`([^`]+)`", tail))
@@ -541,8 +753,15 @@ def reference_problems(reason: str, refs: Refs) -> list[str]:
         if name not in refs.tests:
             out.append(f"the test {name} is in no test file")
     for name in sorted(set(_LOG_NAME.findall(f"{bare} {ticked}"))):
-        if name not in refs.logs:
-            out.append(f"the log file {name} is in no logs/ folder")
+        if folder is None:
+            here = any(path.rsplit("/", 1)[-1] == name for path in refs.logs)
+        else:
+            here = f"{folder}/logs/{name}" in refs.logs
+        if not here:
+            out.append(
+                f"the log file {name} is in no logs/ folder"
+                + (f" of {folder}" if folder is not None else "")
+            )
     return out
 
 
@@ -559,26 +778,72 @@ def _cell_names(cell: str, name: str) -> bool:
     return same(cell) or any(same(i) for i in cell.split(";"))
 
 
-def lines_of(notes: str) -> dict[tuple[str, str], tuple[str, str]]:
-    """(file cell, unit id) -> (the reason cell (the last cell), the second cell), for every table row with at least
-    three cells whose first cell names a file (`*.py` or `*.txt`) and whose second cell holds ids in backticks. Only
-    those two cells are read for the key."""
-    out: dict[tuple[str, str], tuple[str, str]] = {}
+_FOLDER_MARK = "\x00notes-folder:"  # a line `main` puts before the text of each notes file: the folder it is in
+
+
+def rows_of(notes: str) -> list[tuple[str, list[str], str, str, str | None]]:
+    """One entry per table row with at least three cells whose first cell names a file (a name ending in an
+    extension) and whose second cell holds ids in backticks: (file cell, the ids in backticks of the second cell,
+    the reason cell (the last cell), the second cell, the folder of the notes file the row is in or None)."""
+    out = []
+    folder: str | None = None
     for line in notes.splitlines():
+        if line.startswith(_FOLDER_MARK):
+            folder = line[len(_FOLDER_MARK) :] or None
+            continue
         if not line.lstrip().startswith("|"):
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if len(cells) < 3:
             continue
         file_cell = cells[0].strip("`").strip()
-        if not file_cell.endswith((".py", ".txt")):
+        if not re.search(r"\.\w+$", file_cell):
             continue
-        for name in re.findall(r"`([^`]+)`", cells[1]):
-            out[(file_cell, name)] = (cells[-1], cells[1])
+        out.append((file_cell, re.findall(r"`([^`]+)`", cells[1]), cells[-1], cells[1], folder))
+    return out
+
+
+def lines_of(notes: str) -> dict[tuple[str, str], tuple[str, str]]:
+    """(file cell, unit id) -> (the reason cell (the last cell), the second cell), for every row of `rows_of`. Only
+    those two cells are read for the key."""
+    out: dict[tuple[str, str], tuple[str, str]] = {}
+    for file_cell, names, reason, cell, _ in rows_of(notes):
+        for name in names:
+            out[(file_cell, name)] = (reason, cell)
         # the whole cell is a key too: the names of two mutants that hold the same backticked word each keep their
         # own row (the backticked word alone would be one key and the second row would replace the first)
-        out[(file_cell, cells[1])] = (cells[-1], cells[1])
+        out[(file_cell, cell)] = (reason, cell)
     return out
+
+
+def _row_names_a_unit(cell: str, names: list[str], units: frozenset[str]) -> bool:
+    """True when the second cell of a row names a unit: the whole cell, one `;` item of it (a backticked item is read
+    without its backticks), or, when the cell holds backticked ids, every one of them."""
+    for item in (cell, *cell.split(";")):
+        item = item.strip()
+        wrapped = item.startswith("`") and item.endswith("`") and item.count("`") == 2
+        if item in units or (wrapped and item[1:-1] in units):
+            return True
+    return bool(names) and all(n in units for n in names)
+
+
+def stale_row_problems(notes: str, refs: Refs, known: frozenset[str] | None = None) -> list[str]:
+    """One line for each table row whose first cell is a file of the tree in scope and whose second cell names no unit
+    of that file (a mutant or test that does not exist, a typo, a name that was renamed): a row that names nothing
+    is no row. A row whose file is not in scope or not found, or a bare file name that two files share, is not
+    judged."""
+    out = []
+    for file_cell, names, _, cell, folder in rows_of(notes):
+        files = [rel for rel in refs.units if _file_matches(file_cell, rel, known)]
+        if len(files) != 1:
+            continue
+        if not _row_names_a_unit(cell, names, refs.units[files[0]]):
+            where = f" (notes of {folder})" if folder else ""
+            out.append(
+                f"{files[0]}: a row of the notes{where} names `{cell[:90]}`, which is no test, mutant or unit "
+                "of that file"
+            )
+    return sorted(set(out))
 
 
 def _file_matches(file_cell: str, rel: str, known: frozenset[str] | None = None) -> bool:
@@ -608,11 +873,14 @@ def problems(
     mutants: a count that fell is a problem of its own. `known` holds the paths of the tree (a bare file name in a row
     counts only when no other path has it). `refs` (the names of the tests, the mutants and the logs of the tree) is
     given to check that a reason points at something that exists."""
-    rows = {
-        name: (reason, cell)
-        for (file_cell, name), (reason, cell) in lines_of(notes).items()
-        if _file_matches(file_cell, label, known)
-    }
+    rows: dict[str, tuple[str, str, str | None]] = {}
+    for file_cell, names, reason, cell, folder in rows_of(notes):
+        if _file_matches(file_cell, label, known):
+            for name in (
+                *names,
+                cell,
+            ):  # the whole cell is a key too (see `lines_of`); the last row wins
+                rows[name] = (reason, cell, folder)
     word = "mutant" if kind_of(label) == "mutants" else "test"
     out = []
     for n in changed:
@@ -620,7 +888,7 @@ def problems(
         if (
             found is None and word == "mutant"
         ):  # a name with a backtick in it cannot be written in backticks
-            found = next(((r, c) for r, c in rows.values() if _cell_names(c, n)), None)
+            found = next((v for v in rows.values() if _cell_names(v[1], n)), None)
         if found is None:
             out.append(
                 f"{label}: the {word} {n} is new or changed and has no row of its own in the notes"
@@ -632,7 +900,7 @@ def problems(
         elif refs is not None:
             out += [
                 f"{label}: the {word} {n} has a row whose reason points at nothing: {line}"
-                for line in reference_problems(found[0], refs)
+                for line in reference_problems(found[0], refs, found[2])
             ]
     out += [
         f"{label}: the {word} {n} existed in the base commit and is gone (never delete a {word})"
@@ -651,7 +919,7 @@ def _git(*args: str) -> subprocess.CompletedProcess:
     if git is None:
         raise SystemExit("git was not found")
     return subprocess.run(  # noqa: S603 - fixed argument list, no shell
-        [git, *args], capture_output=True, text=True, check=False
+        [git, *args], capture_output=True, text=True, errors="replace", check=False
     )
 
 
@@ -675,8 +943,11 @@ def _refs(tree: list[str], load: Loader) -> Refs:
     """The test names, the mutant names and the log file names of the tree (the text of each file as `load` gives it)."""
     tests: set[str] = set()
     mutants: set[str] = set()
+    units: dict[str, frozenset[str]] = {}
     for rel in tree:
         kind = kind_of(rel)
+        if kind is not None:
+            units[rel] = frozenset(_unit_names(rel, kind, load(rel)))
         if kind == "test":
             tests.update(
                 re.findall(r"^[ \t]*(?:async[ \t]+)?def[ \t]+(test_\w+)", load(rel), re.MULTILINE)
@@ -684,9 +955,24 @@ def _refs(tree: list[str], load: Loader) -> Refs:
             # the name of a test file (`test_policy_guard`) names a file, not a test: a reason may say it
             tests.add(rel.rsplit("/", 1)[-1].removesuffix(".py"))
         elif kind == "mutants":
-            mutants.update(units_of(rel, load(rel), load))
-    logs = {rel.rsplit("/", 1)[-1] for rel in tree if "/logs/" in rel}
-    return Refs(frozenset(tests), frozenset(mutants), frozenset(logs))
+            mutants.update(units[rel])
+    logs = {rel for rel in tree if "/logs/" in rel}
+    return Refs(frozenset(tests), frozenset(mutants), frozenset(logs), units)
+
+
+def _unit_names(rel: str, kind: str, source: str) -> list[str]:
+    """The names of the units of a file in scope, without the signatures (cheap): see `units_of`."""
+    if not source:
+        return []
+    if kind in ("fixture", "data", "config"):
+        return [Path(rel).name]
+    try:
+        mod = _Module(rel, source)
+    except SyntaxError:
+        return []
+    if kind == "mutants":
+        return list(_mutant_units(mod))
+    return list(_units_of_tests(mod) if kind == "test" else _units_of_functions(mod))
 
 
 def check(
@@ -727,6 +1013,8 @@ def check(
         if kind_of(rel) == "mutants":
             counts = (len(units_of(rel, old, old_load)), len(units_of(rel, now, new_load)))
         bad += problems(changed, gone, notes, rel, counts, known, refs)
+    if refs is not None:
+        bad += stale_row_problems(notes, refs, known)
     return bad
 
 
@@ -772,14 +1060,19 @@ def main(argv: list[str]) -> int:
             print(found)
             return 1
         mb, head_sha, files, notes_files, names = found
-        if not any(n.startswith("tests/") for n in names):
-            print("no test file changed in this change (nothing under tests/): nothing to check")
+        if not files and not any(n.startswith("tests/") for n in names):
+            print(
+                "no test file changed in this change (and no mutant file, conftest, pytest setting or "
+                "file under tests/ either): nothing to check"
+            )
             return 0
         # a change to a helper (a file under tests/ that is not a test file) lists the tests that import it, so every
         # test file of the head commit is read, not only the changed ones: the answer for a file that did not change
         # and imports nothing that changed is "no change"
         files = sorted({*files, *(n for n in _tree(head_sha) if kind_of(n) == "test")})
-        notes = "\n".join(_show(head_sha, n) for n in notes_files)
+        notes = "\n".join(
+            f"{_FOLDER_MARK}{n.rsplit('/', 1)[0]}\n{_show(head_sha, n)}" for n in notes_files
+        )
         bad = check(mb, notes, files, head_sha, cross=True)
         if bad and not notes_files:
             bad.insert(0, "the change has no builder notes file (handover/evidence/**/NOTES.md)")

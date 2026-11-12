@@ -28,14 +28,25 @@ KINDS_GROUPS = [(7, "2026-12-12"), (9, "2027-02-01")]
 KINDS_LITERAL = "7 of them from 2026-12-12 and the other 9 from 2027-02-01"
 
 
+def _groups_text(groups: list[tuple[int, str]]) -> str:
+    """The groups as words, built from the pin itself: '7 kinds that fail from D1 and 9 from D2'."""
+    parts = [
+        f"{n} kinds that fail from {d}" if i == 0 else f"{n} from {d}"
+        for i, (n, d) in enumerate(groups)
+    ]
+    return " and ".join(parts)
+
+
 def _kinds_pin_problem(pending: dict, built: str, entry: str) -> str:
     """The pin of the kinds days, for any list, built sentence and changelog entry: '' when all three agree with
     the groups and the sentence written out above. Two pins that do not follow the list: a change of either (a
-    kind added or removed, a renewal of the kinds list) must change this file and the changelog together."""
+    kind added or removed, a renewal of the kinds list) must change this file and the changelog together. The
+    groups are compared as a set of (count, day) pairs, so the order they are listed in does not matter: after a
+    renewal the group that was renewed may fall behind the other one."""
     groups = sorted(Counter(p.review_by for p in pending.values()).items())
-    if [(n, (d + timedelta(days=1)).isoformat()) for d, n in groups] != KINDS_GROUPS:
+    if sorted((n, (d + timedelta(days=1)).isoformat()) for d, n in groups) != sorted(KINDS_GROUPS):
         return (
-            "the pending kinds list no longer holds 7 kinds that fail from 2026-12-12 and 9 from 2027-02-01: "
+            f"the pending kinds list no longer holds {_groups_text(KINDS_GROUPS)}: "
             "change this pin and the changelog sentence together"
         )
     if built != KINDS_LITERAL:
@@ -141,11 +152,37 @@ def test_the_changelog_says_what_a_renewal_renews_in_the_words_of_the_code_and_n
     )
 
 
-def _renewal_edits(old_decided: date, new_decided: date) -> list[tuple[str, str, str]]:
-    """The edits of a full renewal of both dated groups, written the way the renewal list of the tool says (steps
-    1 to 3 of each list), built from the LIVE days: (file, text now, text after). The names and claims move to
-    `new_decided` and a `review_by` 30 days later; the 16 kinds move to `new_decided`, and the kinds that fail first
-    get a `review_by` 30 days after it (the other kinds keep their day, which is inside the 92 days)."""
+def _renewed_kinds(new_decided: date) -> dict:
+    """The kinds list after a renewal of the kinds: every kind gets the new decision day, and the kinds that fail
+    first get a `review_by` 30 days after it (the others keep their day, which stays inside the 92 days)."""
+    from dataclasses import replace
+
+    first = min(p.review_by for p in PENDING_KINDS.values())
+    new_review = new_decided + timedelta(days=30)
+    return {
+        k: replace(
+            p, decided=new_decided, review_by=new_review if p.review_by == first else p.review_by
+        )
+        for k, p in PENDING_KINDS.items()
+    }
+
+
+def _kinds_groups_of(pending: dict) -> list[tuple[int, str]]:
+    return sorted(
+        (n, (d + timedelta(days=1)).isoformat())
+        for d, n in Counter(p.review_by for p in pending.values()).items()
+    )
+
+
+def _renewal_edits(
+    old_decided: date, new_decided: date, names_and_claims: bool = True, kinds: bool = True
+) -> list[tuple[str, str, str]]:
+    """The edits of a renewal, written the way the renewal lists of the tool say (the steps of RENEWAL_STEPS for
+    the names and claims, the steps of KINDS_RENEWAL_STEPS for the 16 kinds), built from the LIVE days: (file, text
+    now, text after). Both groups: the names and claims move to `new_decided` and a `review_by` 30 days later, the
+    kinds to `new_decided` too. Only the kinds (`names_and_claims` False): the kinds list alone. The pin of the
+    kinds days (`KINDS_GROUPS`, `KINDS_LITERAL`, the changelog sentence) is rewritten from the renewed list, whatever
+    order its groups fall in, as step (2) and (3) of the kinds steps say."""
     from tests.test_policy_guard import KINDS_DECIDED, pp
 
     def call(d: date) -> str:
@@ -154,51 +191,53 @@ def _renewal_edits(old_decided: date, new_decided: date) -> list[tuple[str, str,
     new_review = new_decided + timedelta(days=30)
     old_reviews = {p.review_by for p in (*pp.PENDING_NAMES.values(), *pp.PENDING_CLAIMS.values())}
     first_kinds = min(p.review_by for p in PENDING_KINDS.values())
-    old_first_fail, new_first_fail = first_kinds + timedelta(days=1), new_review + timedelta(days=1)
-    guard, tool = "tests/test_policy_guard.py", "tools/policy_page.py"
-    edits = [(tool, f"DECIDED = {call(old_decided)}", f"DECIDED = {call(new_decided)}")]
-    edits += [
-        (tool, f"    {call(d)},\n", f"    {call(new_review)},\n") for d in sorted(old_reviews)
-    ]
-    edits += [
-        (
-            guard,
-            f"assert pp.DECIDED == {call(old_decided)}",
-            f"assert pp.DECIDED == {call(new_decided)}",
-        ),
-        (guard, f"KINDS_DECIDED = {call(KINDS_DECIDED)}", f"KINDS_DECIDED = {call(new_decided)}"),
-        (guard, f"{{{call(KINDS_DECIDED)}}}", f"{{{call(new_decided)}}}"),
-        (guard, f'"Q8c PR 2", {call(first_kinds)})', f'"Q8c PR 2", {call(new_review)})'),
-        (guard, f"on the literal day {KINDS_DECIDED}", f"on the literal day {new_decided}"),
-        (
-            "tests/test_policy_changelog.py",
-            f'(7, "{old_first_fail}")',
-            f'(7, "{new_first_fail}")',
-        ),
-        (
-            "tests/test_policy_changelog.py",
-            f"7 of them from {old_first_fail} and the other 9",
-            f"7 of them from {new_first_fail} and the other 9",
-        ),
-        (
-            "tests/test_policy_changelog.py",
-            f"7 kinds that fail from {old_first_fail} and 9",
-            f"7 kinds that fail from {new_first_fail} and 9",
-        ),
-    ]
+    guard, tool, changelog = (
+        "tests/test_policy_guard.py",
+        "tools/policy_page.py",
+        "tests/test_policy_changelog.py",
+    )
+    edits: list[tuple[str, str, str]] = []
+    if names_and_claims:
+        edits.append((tool, f"DECIDED = {call(old_decided)}", f"DECIDED = {call(new_decided)}"))
+        edits += [
+            (tool, f"    {call(d)},\n", f"    {call(new_review)},\n") for d in sorted(old_reviews)
+        ]
+        edits.append(
+            (
+                guard,
+                f"assert pp.DECIDED == {call(old_decided)}",
+                f"assert pp.DECIDED == {call(new_decided)}",
+            )
+        )
+    if kinds:
+        edits += [
+            (
+                guard,
+                f"KINDS_DECIDED = {call(KINDS_DECIDED)}",
+                f"KINDS_DECIDED = {call(new_decided)}",
+            ),
+            (guard, f"{{{call(KINDS_DECIDED)}}}", f"{{{call(new_decided)}}}"),
+            (guard, f'"Q8c PR 2", {call(first_kinds)})', f'"Q8c PR 2", {call(new_review)})'),
+            (guard, f"on the literal day {KINDS_DECIDED}", f"on the literal day {new_decided}"),
+        ]
+        renewed = _renewed_kinds(new_decided)
+        old_text = Path(ROOT / "tests/test_policy_changelog.py").read_text(encoding="utf-8")
+        old_groups = re.search(r"^KINDS_GROUPS = .*$", old_text, re.MULTILINE)
+        old_literal = re.search(r"^KINDS_LITERAL = .*$", old_text, re.MULTILINE)
+        assert old_groups and old_literal, "the kinds pin lines were not found in this file"
+        edits += [
+            (changelog, old_groups.group(0), f"KINDS_GROUPS = {_kinds_groups_of(renewed)!r}"),
+            (changelog, old_literal.group(0), f"KINDS_LITERAL = {kinds_sentence(renewed)!r}"),
+        ]
     return edits
 
 
-def test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tests_the_page_and_the_mutants_green():
-    """The whole renewal of both dated groups on a temporary copy, by the lists of the overdue messages and nothing
-    else: the guard, changelog, docs and notes tests, the page check and the mutant search texts must all pass on
-    the new decision day, and a sample of the mutants that build their texts from the live days must still be
-    killed. The steps the lists name and this plant are the same steps; a step that is missing from the list shows
-    here as a red test of the copy, not as a surprise on the first overdue day."""
-    from tests.test_policy_guard import pp
-
+def _renew_and_check(mode: str, old_decided: date, new_decided: date, full_mutants: bool) -> None:
+    """Renew a temporary copy of the repository by the printed steps (`mode` 'both' groups or 'kinds' only) and
+    check it on the new decision day and on the day after: the page check, the policy tests, the search texts of
+    the mutants, a sample of the mutants that build their days from the live lists, and, when `full_mutants` is
+    set, the whole mutant list."""
     root = Path(__file__).resolve().parents[1]
-    new_decided = pp.DECIDED + timedelta(days=31)
     with tempfile.TemporaryDirectory() as tmp:
         copy = Path(tmp) / "renewed"
         copy.mkdir()
@@ -208,46 +247,57 @@ def test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tes
             )
         for name in ("CHANGELOG.md", "pyproject.toml", "README.md"):
             shutil.copy(root / name, copy / name)
-        for rel, old, new in _renewal_edits(pp.DECIDED, new_decided):
+        for rel, old, new in _renewal_edits(
+            old_decided, new_decided, mode in ("both", "names"), mode in ("both", "kinds")
+        ):
             text = (copy / rel).read_text(encoding="utf-8")
             assert old in text, f"the renewal step does not apply: {old!r} is not in {rel}"
             (copy / rel).write_text(text.replace(old, new), encoding="utf-8", newline="\n")
         # the changelog sentence that gives the days the kinds fail (CHANGELOG.md; the text may wrap)
-        first = min(p.review_by for p in PENDING_KINDS.values()) + timedelta(days=1)
-        text = (copy / "CHANGELOG.md").read_text(encoding="utf-8")
-        moved, n = re.subn(
-            rf"7 of them from {first}(\s+and\s+the other 9)",
-            f"7 of them from {new_decided + timedelta(days=31)}\\1",
-            text,
-        )
-        assert n == 1, "the changelog sentence of the kinds days was not found exactly once"
-        (copy / "CHANGELOG.md").write_text(moved, encoding="utf-8", newline="\n")
-        env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG", "TMPDIR")}
-        env.update(
-            PYTHONPATH=os.pathsep.join([str(copy / "src"), str(copy)]),
-            PYTHONNOUSERSITE="1",
-            HADAVIN_POLICY_FIXED_DAY=str(new_decided),
-            HADAVIN_POLICY_MUTANT_RUN="1",
-        )
+        if mode != "names":
+            words = re.escape(kinds_sentence()).replace("\\ ", r"\s+")
+            text = (copy / "CHANGELOG.md").read_text(encoding="utf-8")
+            moved, n = re.subn(words, kinds_sentence(_renewed_kinds(new_decided)), text)
+            assert n == 1, "the changelog sentence of the kinds days was not found exactly once"
+            (copy / "CHANGELOG.md").write_text(moved, encoding="utf-8", newline="\n")
+        base_env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG", "TMPDIR")}
 
-        def run(*args: str) -> subprocess.CompletedProcess:
+        def run(day: date, *args: str) -> subprocess.CompletedProcess:
+            env = dict(
+                base_env,
+                PYTHONPATH=os.pathsep.join([str(copy / "src"), str(copy)]),
+                PYTHONNOUSERSITE="1",
+                HADAVIN_POLICY_FIXED_DAY=str(day),
+                HADAVIN_POLICY_MUTANT_RUN="1",
+            )
             return subprocess.run(  # noqa: S603  (argv list of this test, a temporary copy, no shell)
                 [sys.executable, *args],
                 cwd=copy,
                 env=env,
                 capture_output=True,
                 text=True,
-                timeout=900,
+                timeout=1800,
                 check=False,
             )
 
-        write = run(
-            "-c",
-            "import sys; from datetime import date; from tools import policy_page as p; "
-            f"sys.exit(p.main(['--write'], today=date.fromisoformat('{new_decided}')))",
-        )
+        def page(day: date, what: str) -> subprocess.CompletedProcess:
+            return run(
+                day,
+                "-c",
+                "import sys; from datetime import date; from tools import policy_page as p; "
+                f"sys.exit(p.main(['{what}'], today=date.fromisoformat('{day}')))",
+            )
+
+        write = page(new_decided, "--write")
         assert write.returncode == 0, f"the page was not rewritten: {write.stderr[-600:]}"
+        for day in (new_decided, new_decided + timedelta(days=1)):
+            check = page(day, "--check")
+            assert check.returncode == 0, (
+                f"after the {mode} renewal the page check is red on {day}: "
+                f"{(check.stdout + check.stderr)[-800:]}"
+            )
         tests = run(
+            new_decided,
             "-m",
             "pytest",
             "-p",
@@ -258,15 +308,68 @@ def test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tes
             "tests/test_policy_docs.py",
             "tests/test_notes_lines_check.py",
             "--deselect",
-            f"tests/test_policy_changelog.py::{sys._getframe().f_code.co_name}",
+            "tests/test_policy_changelog.py::test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tests_the_page_and_the_mutants_green",
+            "--deselect",
+            "tests/test_policy_changelog.py::test_plant_a_renewal_of_the_kinds_list_alone_keeps_the_tests_the_page_and_the_mutants_green",
+            "--deselect",
+            "tests/test_policy_changelog.py::test_plant_a_renewal_of_the_names_and_claims_alone_keeps_the_tests_the_page_and_the_mutants_green",
         )
-        assert tests.returncode == 0, f"after the renewal the tests are red: {tests.stdout[-1500:]}"
-        snippets = run("tests/policy_mutants.py", "--snippets")
+        assert tests.returncode == 0, (
+            f"after the {mode} renewal the tests are red: {tests.stdout[-1500:]}"
+        )
+        snippets = run(new_decided, "tests/policy_mutants.py", "--snippets")
         assert snippets.returncode == 0, (
             f"a mutant text no longer matches: {snippets.stdout[-800:]}"
         )
-        sample = run("tests/policy_mutants.py", "--day", str(new_decided), "B8", "B9")
-        assert sample.returncode == 0, (
-            f"the mutants that take their days from the live lists are not killed after the renewal: "
-            f"{sample.stdout[-1500:]}"
-        )
+        for day in (new_decided, new_decided + timedelta(days=1)):
+            picked = () if full_mutants else ("B8", "B9")
+            mutants = run(day, "tests/policy_mutants.py", "--day", str(day), *picked)
+            assert mutants.returncode == 0, (
+                f"after the {mode} renewal the mutants are not all killed on {day}: "
+                f"{mutants.stdout[-1500:]}"
+            )
+
+
+FULL_RENEWAL_ENV = (
+    "HADAVIN_POLICY_FULL_RENEWAL_RUN"  # set to 1: the plants run the WHOLE mutant list, twice each
+)
+
+
+def test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tests_the_page_and_the_mutants_green():
+    """The renewal of both dated groups on a temporary copy, by the lists of the overdue messages and nothing else,
+    done once on the tree as it is (also on a tree that was renewed before: the pin of the kinds days does not
+    depend on the order of the groups). On the new decision day and on the day after it the copy must pass: the
+    page check, the guard, changelog, docs and notes tests, the search texts of the mutants and the mutants B8 and
+    B9 (all mutants when `HADAVIN_POLICY_FULL_RENEWAL_RUN` is 1, as the rehearsal does). The steps the lists name and
+    this plant are the same steps; a step that is missing from the list shows here as a red test of the copy."""
+    from tests.test_policy_guard import pp
+
+    _renew_and_check(
+        "both", pp.DECIDED, pp.DECIDED + timedelta(days=31), os.environ.get(FULL_RENEWAL_ENV) == "1"
+    )
+
+
+def test_plant_a_renewal_of_the_kinds_list_alone_keeps_the_tests_the_page_and_the_mutants_green():
+    """The same for a renewal of the 16 kinds alone (the names and claims keep their day): done 20 days after the
+    last decision day of the kinds, a day on which the names and claims are still inside their window."""
+    from tests.test_policy_guard import KINDS_DECIDED, pp
+
+    _renew_and_check(
+        "kinds",
+        pp.DECIDED,
+        KINDS_DECIDED + timedelta(days=20),
+        os.environ.get(FULL_RENEWAL_ENV) == "1",
+    )
+
+
+def test_plant_a_renewal_of_the_names_and_claims_alone_keeps_the_tests_the_page_and_the_mutants_green():
+    """The same for a renewal of the names and claims alone (the 16 kinds keep their day), done 20 days after the
+    last decision day of the names and claims."""
+    from tests.test_policy_guard import pp
+
+    _renew_and_check(
+        "names",
+        pp.DECIDED,
+        pp.DECIDED + timedelta(days=20),
+        os.environ.get(FULL_RENEWAL_ENV) == "1",
+    )

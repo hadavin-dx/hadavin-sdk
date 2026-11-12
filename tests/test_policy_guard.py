@@ -50,6 +50,9 @@ MAX_PENDING_DAYS = pp.MAX_PENDING_DAYS
 # date is the day of the last decision about the names and claims, and renewing that must not silently renew
 # these kinds as well (the 92-day cap compares `review_by` with `decided`, so a shared date could dodge it).
 KINDS_DECIDED = date(2026, 11, 11)
+# The latest decision day of the dated lists: the day a clock must show for every list to exist (a renewal of the
+# kinds alone moves the kinds past the names and claims, and the other way round).
+LATEST_DAY = max(DECIDED, KINDS_DECIDED)
 _PR2 = ("the permission names of this kind are not all checked yet", "Q8c PR 2", date(2026, 12, 11))
 _SLICE2 = ("slice 2 of Q8c: names not checked, owner questions O2 and O3 open", "Q8c slice 2")
 # A kind that signs in to an outside system and has no POLICY yet. Overdue and stale entries fail.
@@ -214,7 +217,7 @@ def test_plant_a_new_kind_on_no_list_is_caught():
         set(pp.KIND_MODULES),
         PENDING_KINDS,
         NO_IDENTITY,
-        DECIDED,
+        LATEST_DAY,
     )
     same(
         problems,
@@ -228,7 +231,7 @@ def test_plant_a_declared_kind_left_on_the_pending_list_is_caught():
         **PENDING_KINDS,
         "secrets/vault": Pending("r", "t", DECIDED, DECIDED + timedelta(days=30)),
     }
-    problems = kind_problems(all_kinds(), set(pp.KIND_MODULES), pending, NO_IDENTITY, DECIDED)
+    problems = kind_problems(all_kinds(), set(pp.KIND_MODULES), pending, NO_IDENTITY, LATEST_DAY)
     same(
         problems,
         [
@@ -2913,7 +2916,9 @@ def test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far()
         "channel/slack": Pending("r", "t", DECIDED, DECIDED + timedelta(days=93)),
     }
     same(
-        kind_problems(all_kinds(), set(pp.KIND_MODULES) - set(moved), moved, NO_IDENTITY, DECIDED),
+        kind_problems(
+            all_kinds(), set(pp.KIND_MODULES) - set(moved), moved, NO_IDENTITY, LATEST_DAY
+        ),
         [
             (
                 f"PENDING_KINDS channel/slack: review_by {DECIDED + timedelta(days=93)} is more than 92 days after "
@@ -2929,7 +2934,9 @@ def test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far()
         ),
     }
     same(
-        kind_problems(all_kinds(), set(pp.KIND_MODULES) - set(ahead), ahead, NO_IDENTITY, DECIDED),
+        kind_problems(
+            all_kinds(), set(pp.KIND_MODULES) - set(ahead), ahead, NO_IDENTITY, LATEST_DAY
+        ),
         [f"PENDING_KINDS channel/slack: decided {DECIDED + timedelta(days=200)} is in the future"],
     )
 
@@ -4576,7 +4583,7 @@ def test_the_docs_page_names_the_review_day_of_the_dated_lists_only():
 def _decided_plus(days: int) -> str:
     """A day written YYYY-MM-DD, `days` after the day the dated lists were decided: the runner tests take their
     days from here, so a renewal (a new decision day) moves them with it and no test holds a day as text."""
-    return (DECIDED + timedelta(days=days)).isoformat()
+    return (LATEST_DAY + timedelta(days=days)).isoformat()
 
 
 FIXED_DAY_VAR = "HADAVIN_POLICY_FIXED_DAY"
@@ -4872,6 +4879,8 @@ DAY_FORMS = (
     r"(?<!\d)(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])(?!\d)",  # 20261212
     r"(?<!\d)\d{1,2}[/.-]\d{1,2}[/.-]\d{4}(?!\d)",  # 12/12/2026, 12.12.2026, 12-12-2026
     r"(?<!\d)\d{1,2}/\d{1,2}/\d{2}(?!\d)",  # 12/12/26 (a two-digit year with slashes only: 12.12.12 is a version)
+    r"(?<!\d)\d{1,2}-\d{1,2}-\d{2}(?!\d)",  # 12-12-26 (hyphens too; a version has dots)
+    r"(?<!\d)\d{1,2} \d{1,2} (?:19|20)\d{2}(?!\d)",  # 12 12 2026 (spaces)
     r"(?<!\d)\d{1,2}(?:st|nd|rd|th)?(?: of)? may(?: of)? \d{4}(?!\d)",  # 12 may 2026 (a lowercase may needs a year)
     _SPELLED + r"(?: of)? " + _MONTHS,  # twelfth of December, twelve December
     _MONTHS + r" (?:the )?" + _SPELLED + r"\b",  # December twelfth
@@ -5433,11 +5442,11 @@ def test_the_runner_takes_day_in_both_written_forms_once_and_not_before_the_deci
         "--day after a name",
     )
     same(
-        runner.parse_args(["--day", DECIDED.isoformat()]),
-        (DECIDED.isoformat(), []),
+        runner.parse_args(["--day", LATEST_DAY.isoformat()]),
+        (LATEST_DAY.isoformat(), []),
         "the decision day itself",
     )
-    before = (DECIDED - timedelta(days=1)).isoformat()
+    before = (LATEST_DAY - timedelta(days=1)).isoformat()
     raised = _parse_problem(runner, ["--day", before])
     assert type(raised) is runner.ArgumentProblem, (
         f"the runner takes a --day before the decision day ({before}) or fails with {raised!r} instead of one plain line"
@@ -5521,79 +5530,202 @@ def test_the_runner_expects_red_only_for_lists_with_entries_and_exits_1_for_a_we
     )
 
 
-def literal_day_problems(source: str, rel: str, decided: date, span: int) -> list[str]:
-    """Every day written as a literal INSIDE a function (a test or a helper) of `source` that lies after `decided`
-    and at most `span` days after it: `date(2026, 12, 11)` and `date.fromisoformat("2026-12-11")`. Such a day is
-    the day of a renewal window, and after a renewal it is wrong with no message that says why: build it from the
-    decision day instead. A literal at the top level of the file is data (the kinds list, `KINDS_DECIDED`) and is
-    named by the renewal steps; the decision day itself (a pin) is not after it."""
+# The functions that keep a day written on purpose, each with the reason (every other function of the policy
+# test files must build a day from `DECIDED`; `test_no_test_writes_a_day_as_a_literal_inside_a_function`):
+_PIN_VERIFIED = "a fixed past day on which the sources were read (data of the sources file, never a renewal day)"
+_PIN_ENGINE = "a made-up day of a sample run record, not a renewal day"
+_PIN_RENEWAL = "the pin of a decision day: a renewal step names it (steps of RENEWAL_STEPS and KINDS_RENEWAL_STEPS)"
+_PIN_SAMPLE = "a day inside a made-up text that only has to differ from the text around it"
+LITERAL_DAY_PINS = {
+    (
+        "tests/test_policy_guard.py",
+        "test_pr1_grants_are_all_named_in_a_source_and_the_grants_with_an_unchecked_claim_are_listed",
+    ): _PIN_VERIFIED,
+    (
+        "tests/test_policy_guard.py",
+        "test_a_builder_only_source_is_marked_wherever_the_page_lists_it",
+    ): _PIN_VERIFIED,
+    (
+        "tests/test_policy_guard.py",
+        "test_plant_a_source_id_that_does_not_resolve_is_caught",
+    ): _PIN_VERIFIED,
+    (
+        "tests/test_policy_guard.py",
+        "test_plant_a_url_or_host_in_verified_is_refused",
+    ): _PIN_VERIFIED,
+    (
+        "tests/test_policy_guard.py",
+        "test_a_source_of_which_only_a_passage_was_read_is_marked_on_a_row_with_a_claim_only",
+    ): _PIN_VERIFIED,
+    (
+        "tests/test_policy_guard.py",
+        "test_plant_a_url_in_verified_is_caught_with_its_message",
+    ): _PIN_VERIFIED,
+    (
+        "tests/test_policy_guard.py",
+        "test_m1_the_page_names_the_run_once_one_is_on_record",
+    ): _PIN_ENGINE,
+    (
+        "tests/test_policy_guard.py",
+        "test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date",
+    ): _PIN_RENEWAL,
+    (
+        "tests/test_policy_guard.py",
+        "test_the_tools_decision_day_is_the_day_the_names_and_claims_were_decided",
+    ): _PIN_RENEWAL,
+    (
+        "tests/test_policy_guard.py",
+        "test_the_entry_cut_ends_at_a_plain_bullet_a_star_bullet_a_heading_and_the_end_of_the_file",
+    ): _PIN_SAMPLE,
+}
+
+
+def _constant_int(node: ast.AST) -> int | None:
+    """The whole number an expression of constants stands for (`12`, `10 + 1`, `-1 + 13`), else None."""
+    try:
+        value = ast.literal_eval(node)
+    except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+        value = None
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value
+    if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub, ast.Mult)):
+        left, right = _constant_int(node.left), _constant_int(node.right)
+        if left is not None and right is not None:
+            return {ast.Add: left + right, ast.Sub: left - right, ast.Mult: left * right}[
+                type(node.op)
+            ]
+    return None
+
+
+def _written_day(call: ast.Call) -> date | None:
+    """The day a call writes with constants: `date(2026, 12, 11)`, `date(2026, 12, 10 + 1)`,
+    `date(year=2026, month=12, day=11)`, `datetime(2026, 12, 11, ...)`, `date.fromisoformat("2026-12-11")`,
+    `datetime.fromisoformat(...)`; None when any part is not a constant or the call is another call."""
+    name = call.func.attr if isinstance(call.func, ast.Attribute) else getattr(call.func, "id", "")
+    try:
+        if name in ("date", "datetime"):
+            parts = [_constant_int(a) for a in call.args[:3]]
+            named = {k.arg: _constant_int(k.value) for k in call.keywords if k.arg}
+            for position, key in enumerate(("year", "month", "day")):
+                if position >= len(call.args) and key in named:
+                    parts.append(named[key])
+            if len(parts) == 3 and None not in parts:
+                return date(*parts)
+        elif name == "fromisoformat" and len(call.args) == 1:
+            text = ast.literal_eval(call.args[0])
+            if isinstance(text, str):
+                return datetime.fromisoformat(text).date()
+    except (TypeError, ValueError, SyntaxError, MemoryError, RecursionError):
+        return None
+    return None
+
+
+_BARE_ISO_DAY = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def literal_day_problems(source: str, rel: str, pins: dict | None = None) -> list[str]:
+    """Every day written as a literal INSIDE a function (a test or a helper) of `source`, wherever it lies
+    against the decision day: a call of `date`, `datetime` or `fromisoformat` made of constants (positions or
+    keywords, `10 + 1` too) and a text that is exactly one ISO day (`"2026-12-11"`). A day before the decision
+    day is as wrong as one after it: after a renewal the old window is behind it and nothing tells why. A
+    literal at the top level of a file is data (the kinds list, `KINDS_DECIDED`) and is named by the renewal
+    steps. `pins` names the functions that keep a day on purpose, as `{(rel, function): reason}`; every such
+    function is named with its reason in this file. What it does not see: a day built from text pieces
+    (`"2026-" + "12-11"`), a day read from a file, a day inside a bigger text (`"on 2026-12-11 it"`, that is
+    `stray_days`' job for the changelog), a day behind a name (`D = 11` then `date(2026, 12, D)`)."""
+    pins = pins or {}
     out = []
-    for fn in (
-        n
-        for n in ast.walk(ast.parse(source))
-        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
-    ):
-        for call in (c for c in ast.walk(fn) if isinstance(c, ast.Call)):
-            name = (
-                call.func.attr
-                if isinstance(call.func, ast.Attribute)
-                else getattr(call.func, "id", "")
-            )
-            args = [a.value for a in call.args if isinstance(a, ast.Constant)]
-            day = None
+
+    def visit(node: ast.AST, fn: str | None) -> None:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            fn = node.name  # the innermost function names the day
+        day = None
+        if fn is not None and isinstance(node, ast.Call):
+            day = _written_day(node)
+        elif (
+            fn is not None
+            and isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+            and _BARE_ISO_DAY.fullmatch(node.value)
+        ):
             try:
-                if name == "date" and len(args) == 3 and len(call.args) == 3:
-                    day = date(*args)
-                elif name == "fromisoformat" and len(args) == 1 and isinstance(args[0], str):
-                    day = date.fromisoformat(args[0])
-            except (TypeError, ValueError):
+                day = date.fromisoformat(node.value)
+            except ValueError:
                 day = None
-            if day is not None and decided < day <= decided + timedelta(days=span):
-                out.append(f"{rel}:{call.lineno}: the day {day} is written in `{fn.name}`")
-    return out
+        if day is not None and (rel, fn) not in pins:
+            out.append(f"{rel}:{node.lineno}: the day {day} is written in `{fn}`")
+        for child in ast.iter_child_nodes(node):
+            visit(child, fn)
+
+    visit(ast.parse(source), None)
+    return sorted(set(out))
 
 
 def test_no_test_writes_a_day_of_the_renewal_window_as_a_literal_inside_a_function():
-    files = (
+    files = sorted(
+        p.relative_to(ROOT).as_posix() for p in (ROOT / "tests").glob("test_policy_*.py")
+    )
+    assert files, "no policy test file was found to scan"
+    assert {
         "tests/test_policy_guard.py",
         "tests/test_policy_changelog.py",
         "tests/test_policy_docs.py",
         "tests/test_policy_engine.py",
-    )
+    } <= set(files), "a policy test file is missing from the day scan"
     found = [
         line
         for rel in files
         for line in literal_day_problems(
-            (ROOT / rel).read_text(encoding="utf-8"), rel, DECIDED, 2 * MAX_PENDING_DAYS
+            (ROOT / rel).read_text(encoding="utf-8"), rel, LITERAL_DAY_PINS
         )
     ]
     assert not found, (
-        "a day of the renewal window is written in a function; build it from the decision day "
-        f"(`DECIDED + timedelta(days=...)`): {found}"
+        "a day is written in a function; build it from the decision day (`DECIDED + timedelta(days=...)`) "
+        f"or name the function with its reason in LITERAL_DAY_PINS: {found}"
     )
 
 
 def test_plant_a_written_day_in_a_function_is_found_and_a_derived_day_a_top_level_day_and_the_pin_are_not():
     d = DECIDED
     w = d + timedelta(days=20)
-    inside = f"def test_x():\n    assert f(date({w.year}, {w.month}, {w.day}))\n"
-    far = f"def test_x():\n    assert f(date({d.year + 5}, 1, 1))\n"
-    assert literal_day_problems(inside, "f.py", d, 60), "a day written in a test was not found"
-    iso = w.isoformat()
-    assert literal_day_problems(
-        f"def test_x():\n    assert f(date.fromisoformat('{iso}'))\n", "f.py", d, 60
-    ), "a day written as an ISO text for `fromisoformat` was not found"
-    assert not literal_day_problems(far, "f.py", d, 60), "a day outside the window was flagged"
-    top = f"X = date({w.year}, {w.month}, {w.day})\n"
-    assert not literal_day_problems(top, "f.py", d, 60), (
+    before = d - timedelta(days=20)
+
+    def body(expr: str) -> str:
+        return f"def test_x():\n    assert f({expr})\n"
+
+    def found(source: str, pins: dict | None = None) -> list[str]:
+        return literal_day_problems(source, "f.py", pins)
+
+    assert found(body(f"date({w.year}, {w.month}, {w.day})")), "a day of the window was not found"
+    assert found(body(f"date({before.year}, {before.month}, {before.day})")), (
+        "a day before the decision day was not found (an old literal after a renewal)"
+    )
+    assert found(body(f"date({d.year + 5}, 1, 1)")), "a day far outside the window was not found"
+    assert found(body(f"date({w.year}, {w.month}, {w.day - 1} + 1)")), (
+        "a day written as a sum of constants was not found"
+    )
+    assert found(body(f"date(year={w.year}, month={w.month}, day={w.day})")), (
+        "a day written with keywords was not found"
+    )
+    assert found(body(f"datetime({w.year}, {w.month}, {w.day}, 12, 0)")), (
+        "a datetime written with constants was not found"
+    )
+    assert found(body(f"date.fromisoformat('{w.isoformat()}')")), (
+        "a day written as an ISO text for `fromisoformat` was not found"
+    )
+    assert found(body(f"'{w.isoformat()}'")), "a bare ISO day text was not found"
+    assert found(f"def outer():\n    def inner():\n        return '{w.isoformat()}'\n"), (
+        "a day inside a nested function was not found"
+    )
+    assert not found(f"X = date({w.year}, {w.month}, {w.day})\nY = '{w.isoformat()}'\n"), (
         "a day written at the top level was flagged"
     )
-    pin = f"def test_x():\n    assert p == date({d.year}, {d.month}, {d.day})\n"
-    assert not literal_day_problems(pin, "f.py", d, 60), (
-        "the decision day itself (a pin) was flagged"
-    )
-    derived = "def test_x():\n    assert f(DECIDED + timedelta(days=20))\n"
-    assert not literal_day_problems(derived, "f.py", d, 60), "a derived day was flagged"
+    assert not found(body("DECIDED + timedelta(days=20)")), "a derived day was flagged"
+    assert not found(body("date(2026, 13, 40)")), "an impossible day was flagged"
+    pin = body(f"date({d.year}, {d.month}, {d.day})")
+    assert found(pin), "a pin that is not named was accepted"
+    assert not found(pin, {("f.py", "test_x"): "a pin"}), "a named pin was flagged"
+    assert not found(body("'on 2026-12-11 it'")), "a day inside a bigger text was flagged"
 
 
 def test_the_message_scan_counts_the_messages_of_a_helper_the_killer_calls_and_only_that():
@@ -5727,6 +5859,25 @@ def test_more_written_forms_of_a_day_are_found_and_an_ordinary_word_is_not_a_day
     ):
         assert stray_days(f"text {plain} text") == [], (
             f"an ordinary word or number was found as a written day: {plain}"
+        )
+
+
+def test_a_two_digit_year_with_hyphens_and_a_day_with_spaces_are_found_and_a_version_is_not():
+    assert stray_days("on 12-12-26 it"), (
+        "the day form with a two-digit year and hyphens is not found"
+    )
+    assert stray_days("on 1-2-26 it"), "the day form with one-digit parts and hyphens is not found"
+    assert stray_days("on 12 12 2026 it"), "the day form with spaces is not found"
+    assert stray_days("on 3 4 1999 it"), "the day form with spaces and one-digit parts is not found"
+    for plain in (
+        "version 12.12.12",
+        "range 12-12-261",
+        "16 12 kinds",
+        "page 12 12 3026",
+        "12 12 20261",
+    ):
+        assert stray_days(f"text {plain} text") == [], (
+            f"an ordinary number was found as a written day: {plain}"
         )
 
 
