@@ -2646,20 +2646,23 @@ def test_a_slot_deleted_with_the_object_level_call_is_answered_503_not_dropped(
 
 
 def test_the_classes_are_pinned_when_the_receiver_is_imported_not_at_the_first_question() -> None:
-    """In a fresh interpreter: after the import and before any question, all seven pins exist."""
+    """In a fresh interpreter: after the import and before any question, six of the seven pins exist (every one but the
+    fake secret provider: the repo rule forbids anything reachable from approvals to import the secret holders, so
+    that one is pinned at the first question unless its module happens to be loaded)."""
     import subprocess
     import sys
 
     code = (
         "import hadavin_sdk.approvals.receiver\n"
         "from hadavin_sdk import standins\n"
-        "assert len(standins._PINNED) == 7, sorted(standins._PINNED)\n"
-        "print('pinned', len(standins._PINNED))\n"
+        "want = set(standins._PINNED_KEYS) - {('hadavin_sdk.actions.secrets', 'FakeSecretProvider')}\n"
+        "assert want <= set(standins._PINNED), sorted(want - set(standins._PINNED))\n"
+        "print('pinned', len(want))\n"
     )
     done = subprocess.run(  # noqa: S603 - our own interpreter, a fixed program
         [sys.executable, "-c", code], capture_output=True, text=True, timeout=120, check=False
     )
-    assert done.returncode == 0 and "pinned 7" in done.stdout, (
+    assert done.returncode == 0 and "pinned 6" in done.stdout, (
         f"the pins were not all taken at import: {done.stderr[-300:]}"
     )
 

@@ -15,15 +15,10 @@ from http.server import BaseHTTPRequestHandler
 from socketserver import BaseServer
 
 from hadavin_sdk import defaults, standins
-from hadavin_sdk.actions import secrets as _secrets_module
-from hadavin_sdk.approvals import channel as _channel_module
 from hadavin_sdk.approvals.requests import Approvals
 from hadavin_sdk.bindguard import BindRefused, listen
 from hadavin_sdk.config import Config
-from hadavin_sdk.guard import injection as _injection_module
-from hadavin_sdk.llm import fake as _llm_fake_module
 from hadavin_sdk.netguard import LOOPBACK_V4, is_loopback_host
-from hadavin_sdk.store import memory as _memory_module
 from hadavin_sdk.store.protocol import NotFound
 
 MAX_BODY = 64 * 1024  # Slack interactive payloads are a few KB
@@ -178,12 +173,4 @@ def serve(
 
 # Pin the classes the guard trusts NOW (at import), not at the first question: a change made after this import is
 # seen. (A test fixture that patches one of them before this module is imported is outside the model.)
-# The five modules are imported above so that their classes exist to be pinned; this tuple uses them.
-_PINNED_MODULES = (
-    _secrets_module,
-    _channel_module,
-    _injection_module,
-    _llm_fake_module,
-    _memory_module,
-)
 standins.pin_all()

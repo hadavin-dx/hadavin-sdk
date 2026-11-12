@@ -37,9 +37,10 @@ Who may be a stand-in is decided HERE, from two literals, never from what a clas
   member must itself be a stand-in (nesting at most ``SCAN_DEPTH`` deep, cycles refused by an id set);
 * any error while asking reads as "not a stand-in".
 
-The pins are taken EAGERLY: ``pin_all`` runs when the approvals receiver is imported (it imports the five classes
-and ``Approvals`` and pins them all), so a change made after that import is seen. A class that could not be
-imported then is pinned at the first question instead (a fail-closed fallback: a change made before that first
+The pins are taken EAGERLY: ``pin_all`` runs when the approvals receiver is imported (it imports the modules of four
+stand-ins and pins them with the detector list and ``Approvals``), so a change made after that import is seen.
+``FakeSecretProvider`` is the exception: the repo's secrets rule does not let anything reachable from approvals
+import the secret holders, so its module is not imported there. A class that is not loaded then is pinned at the first question instead (a fail-closed fallback: a change made before that first
 question is not seen; a test fixture that patches a class before the receiver is imported is outside the model).
 The scan runs at every question and its answer is NOT cached: a cache would have to read the whole structure to see
 that a function was put inside a held container, which costs what the scan costs. The cost is bounded by
@@ -197,8 +198,18 @@ def _class_ok(key: tuple[str, str], cls: type) -> bool:
 
 def pin_all() -> None:
     """Pin the five stand-in classes, the detector list and ``Approvals`` now (called when the approvals receiver
-    is imported, which imports their modules first). A class whose module is not loaded is left for the first
+    is imported). A class whose module is not loaded is left for the first
     question (fail closed: the first question pins it)."""
+    # plain imports (not importlib) so that the modules exist to be pinned; done here, inside the function, because
+    # the approvals package must not import them itself (they are not imported at the top: a circle). The secret
+    # provider's module is NOT imported here: the repo rule says nothing reachable from approvals may import the
+    # secret holders, so ``FakeSecretProvider`` is pinned now only if its module is already loaded, else at the first question
+    from hadavin_sdk.approvals import channel
+    from hadavin_sdk.guard import injection
+    from hadavin_sdk.llm import fake
+    from hadavin_sdk.store import memory
+
+    _ = (channel, injection, fake, memory)  # imported so that their classes exist to be pinned
     for key in _PINNED_KEYS:
         with contextlib.suppress(Exception):  # the lazy path pins it at the first question
             cls = _live_class(key)
