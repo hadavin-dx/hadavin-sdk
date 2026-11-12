@@ -84,6 +84,10 @@ jobs:
         run: python tools/scan_repo.py
       - name: Demo-only folder guard (product code names neither the demo-only folder nor a fake record id)
         run: python tools/demo_only_guard.py
+      - name: Demo-only folder copy run (only when the repository has the folder: tests must pass without it)
+        run: python tools/demo_only_guard.py --without-folder-if-present
+      - name: The node program the mode-banner page tests run in is present (else they would skip silently)
+        run: node --version
       - name: The postgres client the database tests shell out to is present (else they would skip silently)
         run: psql --version
       - name: Tests (no live calls)
@@ -95,6 +99,8 @@ jobs:
         run: pytest -q -m "not live and not perf" -rs
       - name: Stage-rename mutants (each reverted guard must be killed by its named test) (blocks)
         run: python tests/stage_mutants.py
+      - name: Mode-banner and demo-only guard mutants (each reverted guard must be killed by its named test) (blocks)
+        run: python tests/banner_mutants.py
       # Timing tests have their own step and it blocks: the check is a ratio (4x text, limit 12x time) with wall
       # clock, so a noisy runner moves both runs alike; a real super-linear pattern is a merge blocker.
       - name: Performance of the redaction patterns (blocks)

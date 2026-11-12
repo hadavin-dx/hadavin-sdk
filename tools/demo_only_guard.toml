@@ -1,21 +1,37 @@
-# Settings of tools/demo_only_guard.py. The folder that holds everything that exists only for demos (made-up data,
-# example prompts, recorded model replies, fixtures) is named here once; no other file hard-codes the name.
-# Rule (.claude/rules/demo-only-folder-and-secrets.md): product code never names this folder, except the loader files
-# listed below, which pick it by configuration.
+# Settings of tools/demo_only_guard.py. Everything that exists only for demos (made-up data, example prompts, recorded
+# model replies, test fixtures) lives in one folder. The product, meaning the code that is shipped to a client, never
+# depends on it; deleting that folder must leave a build whose tests still pass. The folder name is written here once.
 
 # the folder name, at the repository root
 folder = "demo_only"
 
-# folders whose files are product code (and so are packaged); the demo-only folder must not sit inside any of them
-product_roots = ["src"]
+# folders whose files are product code or ship with it; every file under them is scanned and the demo-only folder must
+# not sit inside any of them. A listed folder that does not exist is a hit (it would make the scan prove nothing).
+product_roots = ["src", "templates", "tools", "demos"]
 
-# the only product files that may name the folder (the config-selected loader). Each entry must exist and must name
-# the folder, otherwise the guard reports it as stale.
+# the only product files that may name the folder (the config-selected loader), each at most `loader_max_lines` lines.
+# Each entry must exist and must name the folder, otherwise the guard reports it as stale. A loader is still checked
+# for made-up record ids.
 loaders = []
+loader_max_lines = 1
 
 # regular expressions of made-up record ids that product code must never contain (one pattern per kind of fake id).
 # Empty in core: core ships no fake records. A demo repository lists its own ids here.
 fake_id_patterns = []
 
-# file endings the scan reads (other files are skipped as not text)
-suffixes = [".py", ".js", ".ts", ".json", ".sql", ".md", ".txt", ".toml", ".yaml", ".yml", ".html", ".css"]
+# files that must hold the folder name because they are the guard itself; they are skipped whole. A test pins this list.
+exempt_files = ["tools/demo_only_guard.py", "tools/demo_only_guard.toml"]
+
+# exact phrases that look like the folder name but are not it: the name of core's table of demo-only kinds, and
+# sentences that say "demo only". Each must occur in the product, otherwise the guard reports it as stale.
+allowed_phrases = ["DEMO_ONLY", "demo-only kinds", "demo only;", "demo only)"]
+
+# packages the copy run (--without-folder) must import from the copy, never from the original checkout
+product_packages = ["hadavin_sdk"]
+
+# a repository that has the folder adds this (empty) file to say its CI runs `--without-folder-if-present`
+copy_run_marker = "tools/demo_only_guard.copy_run"
+
+# endings of files that are known not to be text; every other file is read, and a file that is neither text nor on
+# this list is refused
+skip_suffixes = [".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".zip", ".gz", ".whl", ".woff", ".woff2", ".pyc", ".so"]

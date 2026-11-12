@@ -2,23 +2,28 @@
 
 The words live in hadavin_sdk.mode_banner; the page script (templates/mode-banner/mode_banner.js) only paints them.
 Rows: made-up data is claimed only in the demo stage with nothing real connected; every connected real service is named;
-stand-ins are listed loudly; a value nobody checked (stage, bare string, odd name) is refused; the page script never
-hides a banner, never parses HTML and falls back to the same words as the Python fallback.
+stand-ins are listed (loudly in the demo stage, in every stage); the stage and both lists are read from the config in one
+place and the lists have no default; a value nobody checked (stage, bare string, odd name, name with a reserved word) is
+refused; the page script never hides, half paints or throws, refuses a self-contradicting banner, never parses HTML and
+falls back to the same words as the Python fallback.
 """
 
 from __future__ import annotations
 
+import ast
 import json
 import os
 import random
+import re
 import shutil
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from hadavin_sdk import mode_banner as mb
-from hadavin_sdk.backends.table import DEMO_ONLY
+from hadavin_sdk.backends.table import DEMO_ONLY, TABLE
 from hadavin_sdk.config import load_config
 from hadavin_sdk.stages import STAGES
 from tests.conftest import make_cfg
@@ -35,25 +40,30 @@ needs_node = pytest.mark.skipif(
 
 
 # -- the words and the choice between them ---------------------------------------------------------------------------
+def _b(mode: str, real: list[str] | None = None, pretend: list[str] | None = None, **kw: object):
+    return mb._banner_for(mode, real_services=real or [], stand_ins=pretend or [], **kw)  # type: ignore[arg-type]
+
+
 def test_demo_with_only_stand_ins_says_made_up_and_lists_the_stand_ins_loudly() -> None:
-    b = mb.banner_for("demo", [], ["crm", "mail"], NAMES)
+    b = _b("demo", [], ["crm", "mail"], names=NAMES)
     assert (b.mode, b.tone, b.tag) == ("demo", "demo", "DEMO")
     assert "made-up demo data" in b.text and "Nothing here is sent to real customers" in b.text
     assert (
-        b.standins.startswith("STAND-INS IN USE: CRM, mail.") and "pretend versions" in b.standins
+        b.standins.startswith("MADE-UP STAND-INS IN USE: CRM, mail.")
+        and "pretend versions" in b.standins
     )
     assert b.real == () and b.stand_ins == ("CRM", "mail")
 
 
 def test_demo_with_no_stand_ins_still_says_nothing_real_is_connected() -> None:
-    b = mb.banner_for("demo")
+    b = _b("demo")
     assert b.tone == "demo" and "made-up demo data" in b.text
     assert b.standins == "No real service is connected."
 
 
 def test_a_real_service_is_named_and_made_up_data_is_never_claimed() -> None:
     for mode in STAGES:
-        b = mb.banner_for(mode, ["crm", "mail"], ["ai"], NAMES)
+        b = _b(mode, ["crm", "mail"], ["ai"], names=NAMES)
         assert b.tone == "real" and b.tag == mb.DEFAULT_WORDS.tag_by_mode[mode]
         assert (
             "Real services are connected: CRM, mail." in b.text and "may be sent to them" in b.text
@@ -64,7 +74,7 @@ def test_a_real_service_is_named_and_made_up_data_is_never_claimed() -> None:
 
 def test_pilot_or_live_with_nothing_real_is_quiet_and_not_made_up() -> None:
     for mode, tag in [("pilot", "PILOT"), ("prod", "LIVE")]:
-        b = mb.banner_for(mode, [], ["ai"], NAMES)
+        b = _b(mode, [], [], names=NAMES)
         assert (b.tone, b.tag, b.text, b.standins) == (
             "quiet",
             tag,
@@ -74,103 +84,271 @@ def test_pilot_or_live_with_nothing_real_is_quiet_and_not_made_up() -> None:
         assert "made-up" not in b.text
 
 
+def test_pilot_or_live_still_lists_the_stand_ins_in_the_quiet_tone() -> None:
+    for mode in ("pilot", "prod"):
+        b = _b(mode, [], ["ai", "mail"], names=NAMES)
+        assert b.tone == "quiet" and b.text == "No real service is connected."
+        assert b.standins == "Still stand-ins, not connected: AI step, mail."
+        assert b.stand_ins == ("AI step", "mail")
+        assert "made-up" not in (b.text + b.standins).lower()
+
+
 def test_a_service_that_is_both_real_and_listed_as_stand_in_counts_as_real() -> None:
-    b = mb.banner_for("demo", ["crm"], ["crm", "mail"], NAMES)
+    b = _b("demo", ["crm"], ["crm", "mail"], names=NAMES)
     assert b.real == ("CRM",) and b.stand_ins == ("mail",)
 
 
 def test_names_come_from_the_caller_and_repeats_are_shown_once_in_order() -> None:
-    b = mb.banner_for("pilot", ["b", "a", "b"], names={"a": "Alpha", "b": "Beta"})
+    b = _b("pilot", ["b", "a", "b"], names={"a": "Alpha", "b": "Beta"})
     assert b.real == ("Beta", "Alpha")
-    assert mb.banner_for("pilot", ["Unmapped Name"]).real == ("Unmapped Name",)
+
+
+def test_a_key_without_a_shown_name_is_read_as_component_and_the_key() -> None:
+    assert _b("pilot", ["llm", "store"]).real == ("component llm", "component store")
+    assert _b("pilot", ["llm"], names={"other": "Other"}).real == ("component llm",)
 
 
 def test_the_words_can_be_replaced_without_changing_which_sentence_is_chosen() -> None:
     words = mb.BannerWords(tag_by_mode={"demo": "D", "pilot": "P", "prod": "L"}, made_up="MADE.")
-    b = mb.banner_for("demo", [], [], words=words)
+    b = _b("demo", words=words)
     assert b.tag == "D" and b.text.startswith("MADE.")
-    assert (
-        mb.banner_for("demo", ["x"], words=words).tone == "real"
-    )  # the choice is not in the words
+    assert _b("demo", ["x"], words=words).tone == "real"  # the choice is not in the words
+
+
+def test_the_default_words_have_a_tag_for_every_stage_and_a_missing_one_is_refused() -> None:
+    assert set(mb.DEFAULT_WORDS.tag_by_mode) == set(STAGES)
+    with pytest.raises(ValueError, match="no tag for the stage"):
+        mb.BannerWords(tag_by_mode={"demo": "D"})
+
+
+def test_the_lists_are_required_so_an_unchecked_call_cannot_say_nothing_real() -> None:
+    for call in (
+        lambda: mb._banner_for("demo"),  # type: ignore[call-arg]
+        lambda: mb._banner_for("demo", real_services=[]),  # type: ignore[call-arg]
+        lambda: mb._banner_for("demo", stand_ins=[]),  # type: ignore[call-arg]
+        lambda: mb._banner_for("demo", [], []),  # type: ignore[misc]
+    ):
+        with pytest.raises(TypeError):
+            call()
 
 
 def test_an_unknown_stage_is_refused() -> None:
     for mode in ["", "DEMO", "Demo", "canary", "live", "test", None, 3]:
         with pytest.raises(ValueError, match="is not one of demo, pilot, prod"):
-            mb.banner_for(mode)  # type: ignore[arg-type]
+            _b(mode)  # type: ignore[arg-type]
 
 
-def test_a_bare_string_or_non_list_is_refused_not_read_letter_by_letter() -> None:
-    for bad in ["crm", b"crm", None, 5]:
-        for kwargs in ({"real_services": bad}, {"stand_ins": bad}):
+def test_a_bare_string_dict_set_or_non_list_is_refused_not_read_by_accident() -> None:
+    for bad in ["crm", b"crm", None, 5, {"crm": "CRM"}, {"crm"}, frozenset({"crm"})]:
+        for kwargs in (
+            {"real_services": bad, "stand_ins": []},
+            {"real_services": [], "stand_ins": bad},
+        ):
             with pytest.raises(TypeError, match="must be a list of service names"):
-                mb.banner_for("demo", **kwargs)  # type: ignore[arg-type]
+                mb._banner_for("demo", **kwargs)  # type: ignore[arg-type]
+
+
+def test_names_that_are_not_a_mapping_are_refused_with_a_type_error() -> None:
+    for bad in (["crm", "CRM"], "crm=CRM", 5, ("a",)):
+        with pytest.raises(TypeError, match="names must be a mapping"):
+            _b("pilot", ["crm"], names=bad)
+
+
+HOSTILE_NAMES = [
+    "",
+    "a\nb",
+    "Every record here is real.\nDEMO",
+    "<b>x</b>",
+    'quote"',
+    "x" * 41,
+    " lead",
+    "trail ",
+    "double  space",
+    "a\u202eb",
+    "\u00e9",
+    "Mail. All data is made up",
+    "Mail.",
+    "a. b",
+    "Nothing is real",
+    "made-up",
+    "Made Up CRM",
+    "Demo CRM",
+    "REAL CRM",
+    "Stand-in mail",
+    "standin",
+    "nothing is sent",
+]
 
 
 def test_a_name_that_could_change_the_sentence_is_refused() -> None:
-    for name in [
-        "",
-        "a\nb",
-        "Every record here is real.\nDEMO",
-        "<b>x</b>",
-        'quote"',
-        "x" * 41,
-        " lead",
-        "a\u202eb",
-        "\u00e9",
-    ]:
+    for name in HOSTILE_NAMES:
         with pytest.raises(ValueError, match="plain words|non-empty"):
-            mb.banner_for("pilot", ["k"], names={"k": name})
+            _b("pilot", ["k"], names={"k": name})
         with pytest.raises(ValueError, match="plain words|non-empty"):
-            mb.banner_for("pilot", [name])
+            _b("pilot", [name])
         with pytest.raises(ValueError, match="plain words|non-empty"):
-            mb.banner_for("demo", [], [name])
+            _b("demo", [], [name])
+
+
+def test_a_plain_name_of_the_longest_allowed_length_is_shown_and_one_more_character_is_not() -> (
+    None
+):
+    assert _b("pilot", ["k"], names={"k": "x" * 40}).real == ("x" * 40,)
+    for ok in ("Mail 2", "a-b", "x.y", "z_9", "Mail.com", "AI step"):
+        assert _b("pilot", ["k"], names={"k": ok}).real == (ok,)
+    with pytest.raises(ValueError, match="plain words"):
+        _b("pilot", ["k"], names={"k": "x" * 41})
 
 
 def test_a_service_key_that_is_not_text_is_refused() -> None:
     with pytest.raises(ValueError, match="non-empty text"):
-        mb.banner_for("demo", [3])  # type: ignore[list-item]
+        _b("demo", [3])  # type: ignore[list-item]
 
 
-# -- property test, seeded ------------------------------------------------------------------------------------------
-def test_property_the_banner_never_misleads_for_any_stage_and_services() -> None:
+def test_a_banner_longer_than_the_page_script_accepts_is_refused_in_python() -> None:
+    long_names = {f"k{i}": f"{chr(65 + i)}" * 40 for i in range(20)}
+    with pytest.raises(ValueError, match="too many services"):
+        _b("pilot", list(long_names), names=long_names)
+    with pytest.raises(ValueError, match="too many services"):
+        _b("pilot", [], list(long_names), names=long_names)
+    ok = {f"k{i}": f"{chr(65 + i)}" * 20 for i in range(10)}
+    assert len(_b("pilot", list(ok), names=ok).text) <= mb.MAX_TEXT_LENGTH
+
+
+# -- property test, seeded: only the safety property is asserted, never the rule that produces the text -------------
+def test_property_the_made_up_claim_never_appears_next_to_a_real_service() -> None:
     rng = random.Random(20261112)  # noqa: S311 - a seeded test generator, not a secret
-    pool = ["crm", "mail", "ai", "store", "Chat", "x.y", "a-b", "z_9"]
-    for _ in range(600):
-        mode = rng.choice(STAGES)
-        real = rng.sample(pool, rng.randint(0, 4))
-        pretend = rng.sample(pool, rng.randint(0, 4))
-        b = mb.banner_for(mode, real, pretend)
-        shown = b.text + "\n" + b.standins
-        assert b.tone in mb.TONES and b.tag and b.text
-        assert b.tone == ("real" if real else ("demo" if mode == "demo" else "quiet"))
-        assert ("made-up" in shown) == (mode == "demo" and not real)
-        assert all(n in b.text for n in real), (
-            mode,
-            real,
-            b,
-        )  # every connected real service is named
-        assert set(b.real).isdisjoint(b.stand_ins)
+    good = ["crm", "mail", "ai", "store", "Chat", "x.y", "a-b", "z_9"]
+
+    def pick() -> str:  # mostly plain names, sometimes a hostile one
+        return rng.choice(HOSTILE_NAMES if rng.random() < 0.08 else good)
+
+    refused = shown = 0
+    for _ in range(1500):
+        mode = rng.choice(STAGES if rng.random() < 0.95 else ["dev", "", "DEMO"])
+        real = [pick() for _ in range(rng.randint(0, 3))]
+        pretend = [pick() for _ in range(rng.randint(0, 3))]
+        names = {pick(): pick() for _ in range(rng.randint(0, 2))}
+        try:
+            b = mb._banner_for(mode, real_services=real, stand_ins=pretend, names=names)
+        except (ValueError, TypeError):
+            refused += 1
+            continue
+        shown += 1
+        text = (b.text + "\n" + b.standins).lower()
+        if real:  # a real service was connected: nothing may call the data made up, and the line says "real"
+            assert "made-up" not in text and "made up" not in text, (mode, real, b)
+            assert b.tone == "real"
         assert not any(ord(c) < 32 for c in b.text + b.standins)
         assert json.loads(json.dumps(b.as_dict()))["tone"] == b.tone
-        if mode == "demo" and not real and pretend:
-            assert "STAND-INS IN USE" in b.standins and all(n in b.standins for n in pretend)
+    assert shown > 100 and refused > 100  # the generator reached both outcomes
 
 
-# -- reading the stand-ins from a loaded config ---------------------------------------------------------------------
-def test_stand_ins_in_lists_the_components_whose_kind_is_demo_only(tmp_path: Path) -> None:
+# -- reading the stage and both lists from a loaded config -----------------------------------------------------------
+def _fake_config(environment: str, kinds: list[tuple[str, object]]) -> SimpleNamespace:
+    entries = [(c, SimpleNamespace(kind=k)) for c, k in kinds]
+    return SimpleNamespace(
+        environment=environment, backends=SimpleNamespace(entries=lambda: entries)
+    )
+
+
+NOTHING = {("signer", "none"), ("anchor", "none"), ("detector", "regex")}
+
+
+def test_banner_from_config_reads_the_stage_and_both_lists_from_the_config(tmp_path: Path) -> None:
     cfg = load_config(make_cfg(tmp_path))  # the fixture is the demo config and holds fakes
-    found = mb.stand_ins_in(cfg)
-    assert found and {"llm", "channel", "secrets", "store"} <= set(found)
-    assert {(c, s.kind) for c, s in cfg.backends.entries() if c in found} <= DEMO_ONLY
-    assert mb.banner_for(cfg.environment, [], found).standins.startswith("STAND-INS IN USE")
+    real, pretend = mb._services_in(cfg)
+    assert real == () and {"llm", "channel", "secrets", "store"} <= set(pretend)
+    b = mb.banner_from_config(cfg)
+    assert (b.mode, b.tone) == (cfg.environment, "demo")
+    assert b.stand_ins == tuple(f"component {c}" for c in pretend) and b.real == ()
+    assert {(c, s.kind) for c, s in cfg.backends.entries() if c in pretend} <= DEMO_ONLY
+    for stage in ("demo", "pilot", "prod"):  # the stage is read from the config, never fixed
+        assert mb.banner_from_config(_fake_config(stage, [("llm", "anthropic")])).mode == stage
+
+
+def test_a_real_kind_in_the_config_is_named_and_the_made_up_sentence_is_never_given() -> None:
+    cfg = _fake_config("demo", [("llm", "anthropic"), ("store", "memory"), ("signer", "none")])
+    b = mb.banner_from_config(cfg, names={"llm": "AI step"})
+    assert b.tone == "real" and b.real == ("AI step",) and b.stand_ins == ("component store",)
+    assert "made-up" not in (b.text + b.standins).lower()
+    for stage in STAGES:
+        assert mb.banner_from_config(_fake_config(stage, [("llm", "bedrock")])).tone == "real"
+
+
+def test_property_every_config_entry_lands_in_exactly_one_group() -> None:
+    rng = random.Random(20261112)  # noqa: S311 - a seeded test generator, not a secret
+    every = [(c, k) for c, kinds in TABLE.items() for k in kinds]
+    for _ in range(400):
+        picks = rng.sample(every, rng.randint(0, len(every)))
+        cfg = _fake_config(rng.choice(STAGES), picks)
+        real, pretend = mb._services_in(cfg)
+        for component, kind in picks:
+            if (component, kind) in DEMO_ONLY:
+                assert component in pretend
+            elif (component, kind) not in NOTHING:
+                assert component in real
+        b = mb.banner_from_config(cfg)
+        shown = (b.text + b.standins).lower()
+        if real:
+            assert b.tone == "real" and "made-up" not in shown
+
+
+def test_an_entry_without_a_kind_is_refused_not_guessed_into_a_list() -> None:
+    for bad_kind in (None, "", 3):
+        with pytest.raises(ValueError, match="cannot be placed in the banner"):
+            mb.banner_from_config(_fake_config("demo", [("llm", bad_kind)]))
+    with pytest.raises(ValueError, match="cannot be placed in the banner"):
+        mb.banner_from_config(_fake_config("demo", [("", "fake")]))
+
+
+def test_the_stage_of_the_config_is_checked_like_any_other_stage() -> None:
+    with pytest.raises(ValueError, match="is not one of demo, pilot, prod"):
+        mb.banner_from_config(_fake_config("canary", [("llm", "fake")]))
+
+
+def test_the_old_public_names_are_gone_and_banner_from_config_is_the_only_entry() -> None:
+    for old in ("banner_for", "services_in", "stand_ins_in"):
+        assert not hasattr(mb, old), old
+        assert old not in mb.__all__
+    assert [n for n in mb.__all__ if n.startswith("banner")] == ["banner_from_config"]
+    assert all(hasattr(mb, n) for n in mb.__all__)
+    star: dict = {}
+    exec("from hadavin_sdk.mode_banner import *", star)  # noqa: S102 - the public surface, a fixed string
+    assert "banner_from_config" in star and not any(
+        k.startswith("_") for k in star if k != "__builtins__"
+    )
+
+
+# -- no module of core may grow its own loopback list (the shared one comes with the network-guard promotion) --------
+LOOPBACK = {"127.0.0.1", "localhost", "::1"}
+# The files that already hold their own copy, each to be removed when part 2 (the shared network guard) lands.
+HAVE_OWN_LOOPBACK_LIST = {
+    "actions/secrets_vault.py": "part 2 replaces it with the shared guard",
+    "backends/table.py": "part 2 replaces it with the shared guard",
+    "config.py": "part 2 replaces it with the shared guard",
+    "guard/http.py": "part 2 replaces it with the shared guard",
+    "llm/openai_compat.py": "part 2 replaces it with the shared guard",
+}
+
+
+def test_no_new_module_keeps_its_own_loopback_list() -> None:
+    src = ROOT / "src" / "hadavin_sdk"
+    found: set[str] = set()
+    for path in sorted(src.rglob("*.py")):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, (ast.Set, ast.Tuple, ast.List)):
+                strings = {e.value for e in node.elts if isinstance(e, ast.Constant)}
+                if len(strings & LOOPBACK) >= 2:
+                    found.add(path.relative_to(src).as_posix())
+    assert found == set(HAVE_OWN_LOOPBACK_LIST), sorted(found ^ set(HAVE_OWN_LOOPBACK_LIST))
 
 
 # -- the page script ------------------------------------------------------------------------------------------------
-def _paint(banner: object) -> dict:
+def _paint(banner: object, scenario: str = "") -> dict:
     arg = "undefined" if banner is None else json.dumps(banner)
     out = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
-        ["node", str(PROBE), str(JS), arg],  # noqa: S607
+        ["node", str(PROBE), str(JS), arg, scenario],  # noqa: S607
         capture_output=True,
         text=True,
         timeout=60,
@@ -179,16 +357,26 @@ def _paint(banner: object) -> dict:
     return json.loads(out.stdout.strip().splitlines()[-1])
 
 
+def _unconfirmed(seen: dict) -> None:
+    assert seen["threw"] == "" and seen["htmlWrites"] == []
+    assert seen["hidden"] is False and seen["tone"] == "unconfirmed" and seen["mode"] == ""
+    assert seen["shownTone"] == "unconfirmed"
+    assert seen["lines"][0]["text"] == mb.not_confirmed()["tag"]
+    assert seen["lines"][1]["text"] == " " + mb.not_confirmed()["text"]
+
+
 @needs_node
 def test_the_page_paints_exactly_what_python_wrote() -> None:
     banners = [
-        mb.banner_for("demo", [], ["crm"], NAMES),
-        mb.banner_for("demo", ["crm"], ["mail"], NAMES),
-        mb.banner_for("pilot", [], []),
-        mb.banner_for("prod", ["mail"], []),
+        _b("demo", [], ["crm"], names=NAMES),
+        _b("demo", ["crm"], ["mail"], names=NAMES),
+        _b("pilot", [], []),
+        _b("pilot", [], ["mail"]),
+        _b("prod", ["mail"], []),
     ]
     for banner in banners:
         seen = _paint(banner.as_dict())
+        assert seen["threw"] == "" and seen["htmlWrites"] == []
         assert (
             seen["hidden"] is False and seen["tone"] == banner.tone and seen["mode"] == banner.mode
         )
@@ -197,6 +385,11 @@ def test_the_page_paints_exactly_what_python_wrote() -> None:
         assert len(seen["lines"]) == (3 if banner.standins else 2)
         if banner.standins:
             assert seen["lines"][2] == {"cls": "mode-banner__standins", "text": banner.standins}
+
+
+GOOD_DEMO = {
+    "mode": "demo", "tone": "demo", "tag": "DEMO", "text": "t", "standins": "s", "real": [], "stand_ins": ["a"],
+}  # fmt: skip
 
 
 @needs_node
@@ -212,16 +405,68 @@ def test_a_missing_or_odd_banner_is_never_hidden_it_says_not_confirmed() -> None
         {"tone": "demo", "tag": "T", "text": 5},
         {"tone": "demo", "tag": "T", "text": "x" * 601},
         {"tone": "demo", "tag": "T", "text": "x", "standins": 7},
+        {**GOOD_DEMO, "standins": "x" * 601},
+        {**GOOD_DEMO, "tone": "unconfirmed"},
+        {**GOOD_DEMO, "tone": "fine"},
+        {**GOOD_DEMO, "real": "crm"},
+        {**GOOD_DEMO, "stand_ins": "a"},
+        {**GOOD_DEMO, "stand_ins": [1]},
+        {**GOOD_DEMO, "stand_ins": {"0": "a"}},
+        {k: v for k, v in GOOD_DEMO.items() if k != "real"},
+        {k: v for k, v in GOOD_DEMO.items() if k != "stand_ins"},
     ]
     for bad in bad_banners:
-        seen = _paint(bad)
-        assert (
-            seen["hidden"] is False
-            and seen["tone"] == "unconfirmed"
-            and seen["shownTone"] == "unconfirmed"
-        )
-        assert seen["lines"][0]["text"] == mb.not_confirmed()["tag"]
-        assert seen["lines"][1]["text"] == " " + mb.not_confirmed()["text"]
+        _unconfirmed(_paint(bad))
+    _unconfirmed(_paint(GOOD_DEMO, "throwing-list"))
+    _unconfirmed(_paint(GOOD_DEMO | {"tone": "real", "real": ["x"], "text": "x"}, "throwing-list"))
+
+
+@needs_node
+def test_a_banner_that_contradicts_itself_is_not_painted_as_given() -> None:
+    real = {"mode": "pilot", "tone": "real", "tag": "PILOT", "text": "Real services: CRM.", "standins": "", "real": ["CRM"], "stand_ins": []}  # fmt: skip
+    quiet = {"mode": "pilot", "tone": "quiet", "tag": "PILOT", "text": "None.", "standins": "", "real": [], "stand_ins": []}  # fmt: skip
+    fine = [GOOD_DEMO, real, quiet]
+    for banner in fine:  # the controls: consistent banners ARE painted as given
+        seen = _paint(banner)
+        assert seen["tone"] == banner["tone"] and seen["mode"] == banner["mode"]
+    wrong = [
+        {**GOOD_DEMO, "mode": "prod"},  # tone demo needs mode demo
+        {**GOOD_DEMO, "mode": "pilot"},
+        {**GOOD_DEMO, "real": ["CRM"]},  # tone demo needs no real service
+        {**real, "real": []},  # tone real needs a real service
+        {
+            **real,
+            "text": "Every record here is made-up demo data.",
+        },  # tone real must name every real service
+        {**real, "real": ["CRM", "Mail"]},  # ... all of them
+        {**quiet, "real": ["CRM"]},  # tone quiet needs no real service
+        {**quiet, "mode": "demo"},  # tone quiet is for pilot and prod only
+        {**real, "mode": "dev"},
+        {**real, "mode": ""},
+        {**real, "mode": "DEMO"},
+        {**real, "mode": 3},
+        {**real, "mode": "<b>"},
+    ]
+    for banner in wrong:
+        _unconfirmed(_paint(banner))
+
+
+@needs_node
+def test_the_painter_never_throws_and_never_leaves_the_page_blank() -> None:
+    for scenario in ("throwing-getter", "proxy"):
+        seen = _paint(GOOD_DEMO, scenario)
+        assert seen["usableThrew"] == ""  # usable() called on its own never throws either
+        _unconfirmed(seen)
+    seen = _paint(GOOD_DEMO, "throwing-doc")  # the page cannot make elements at all
+    assert seen["threw"] == "" and seen["tone"] == "unconfirmed" and seen["hidden"] is False
+    assert seen["text"] == f"{mb.not_confirmed()['tag']} {mb.not_confirmed()['text']}"
+    seen = _paint(GOOD_DEMO, "null-el")  # no element to paint into: no throw, nothing to show
+    assert seen["threw"] == "" and seen["lines"] == [] and seen["shownTone"] == "demo"
+    seen = _paint(
+        GOOD_DEMO, "failing-append"
+    )  # painting fails half way: the plain "not confirmed" text is put in
+    assert seen["threw"] == "" and seen["tone"] == "unconfirmed" and seen["hidden"] is False
+    assert seen["text"] == f"{mb.not_confirmed()['tag']} {mb.not_confirmed()['text']}"
 
 
 @needs_node
@@ -230,10 +475,22 @@ def test_the_page_fallback_has_the_same_words_as_the_python_fallback() -> None:
 
 
 @needs_node
+def test_the_page_lists_are_the_python_lists() -> None:
+    seen = _paint(None)
+    assert seen["modes"] == list(STAGES) and seen["tones"] == list(mb.TONES)
+    assert seen["maxText"] == mb.MAX_TEXT_LENGTH
+    assert re.search(rf"var MAX_TEXT = {mb.MAX_TEXT_LENGTH};", JS.read_text(encoding="utf-8"))
+
+
+@needs_node
 def test_markup_in_the_text_is_shown_as_text_never_parsed() -> None:
     evil = "<img src=x onerror=alert(1)>"
-    seen = _paint({"tone": "real", "tag": "<b>", "text": evil, "standins": "<i>"})
-    assert seen["lines"][1]["text"] == " " + evil and seen["lines"][0]["text"] == "<b>"
+    banner = {
+        "mode": "pilot", "tone": "real", "tag": "<b>", "text": evil + " CRM", "standins": "<i>", "real": ["CRM"], "stand_ins": [],
+    }  # fmt: skip
+    seen = _paint(banner)
+    assert seen["htmlWrites"] == []  # no write that would parse HTML, whatever it is called
+    assert seen["lines"][1]["text"] == " " + evil + " CRM" and seen["lines"][0]["text"] == "<b>"
 
 
 def test_the_page_script_has_no_way_to_parse_html_or_load_anything() -> None:
@@ -242,6 +499,8 @@ def test_the_page_script_has_no_way_to_parse_html_or_load_anything() -> None:
         "innerHTML",
         "outerHTML",
         "insertAdjacentHTML",
+        "insertAdjacentElement",
+        "createContextualFragment",
         "document.write",
         "eval(",
         "fetch(",
