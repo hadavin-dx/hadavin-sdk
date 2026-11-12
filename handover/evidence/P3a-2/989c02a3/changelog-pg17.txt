@@ -1,0 +1,8 @@
+15:** On PostgreSQL 17 the right `MAINTAIN` is one more right in the access lists that `verify` reads; there is no version branch for it.
+15: The whole suite is configured to run in CI on PostgreSQL 17.10 (not yet seen: no run on 17 has been observed).
+29: PostgreSQL 17 is UNRUN here: three tests need it (a saved `transaction_timeout` stops the check; a role-saved `transaction_timeout` gives exit 2 at any step; a role-saved `transaction_timeout` that strikes while a file runs, the new error class 25P04), and each s
+29:hows a visible skip on PostgreSQL 16 (`UNRUN: PostgreSQL 17 only`).
+29: The package must not be called done without the PostgreSQL 17 run.
+32: A saved `statement_timeout` or `lock_timeout` of the migration role cannot stop the check; on PostgreSQL 17 and later a saved `transaction_timeout` can end the session at any step, and then `migrate` is refused with exit 2 and keeps nothing, at whichever step after the connection is made (the error of a migration file's own text is the one exception and k
+32: The PostgreSQL 17 case (a role-saved value) has not been run on any server here: only PostgreSQL 16 is available, so the three tests that need 17 are visible skips; the lost-connection tests run on 16 at each step that has one (the step-5 and inline-statement cells o
+58: PostgreSQL 17 is UNRUN on the build machine (the three tests that need it are visible skips; the CI run on 17.10 is configured and is the lead's step); PostgreSQL 18 has not been run.

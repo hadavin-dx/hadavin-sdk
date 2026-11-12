@@ -1,0 +1,52 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+[5a-clean-first ENFORCE=False (as evm_a3adb97e owning schema)] RETURNED 5 versions | ledger_count_after=5
+[5a-then-outsider-owner+pending-file ENFORCE=False] RAISED ConfigError: 'migrations are inconsistent: zz_o8 (table) is created by a migration but is not in GRANTS' | ledger_count_after=5
+[5a-outsider-owns-from-start ENFORCE=False] RETURNED 5 versions | ledger_count_after=5
+[5a-clean-first ENFORCE=True (as evm_140483e7 owning schema)] RAISED ConfigError: 'before any migration file ran, this database already holds rights that the grant map does not give:\n  - schema hadavin_test_e5c5e07222: postgres is owned by postgres, which is not the migration role or a role it belongs to. hand it to the migration role or drop it\nNothing was changed. No file ran. What to do: a da
+[5a-then-outsider-owner+pending-file ENFORCE=True] RAISED ConfigError: 'migrations are inconsistent: zz_o8 (table) is created by a migration but is not in GRANTS' | ledger_count_after=0
+[5a-outsider-owns-from-start ENFORCE=True] RAISED ConfigError: 'before any migration file ran, this database already holds rights that the grant map does not give:\n  - schema hadavin_test_cbe3ad16fd: evo_776e7536 is owned by evo_776e7536, which is not the migration role or a role it belongs to. hand it to the migration role or drop it\nNothing was changed. No file ran. What to do: a database admi
+[5b C10 O13 roles_arg=False] RAISED ConfigError: 'migrations are inconsistent: 0006_c10.sql: GRANT on a place other than a table, view, sequence, column or function (SCHEMA): the guard does not read rights there; 0006_c10.sql: statement the guard does not read: \'CREATE ON SCHEMA "hadavin_test_5d7c2bea4\'' | ledger_count_after=0
+[5b C10 O13 roles_arg=True] RAISED ConfigError: 'migrations are inconsistent: 0006_c10.sql: GRANT on a place other than a table, view, sequence, column or function (SCHEMA): the guard does not read rights there; 0006_c10.sql: statement the guard does not read: \'CREATE ON SCHEMA "hadavin_test_0974b654e\'' | ledger_count_after=0
+[5b C10 O14 roles_arg=False] RAISED ConfigError: 'migrations are inconsistent: 0006_c10.sql: GRANT on a place other than a table, view, sequence, column or function (SCHEMA): the guard does not read rights there' | ledger_count_after=0
+[5b C10 O14 roles_arg=True] RAISED ConfigError: 'migrations are inconsistent: 0006_c10.sql: GRANT on a place other than a table, view, sequence, column or function (SCHEMA): the guard does not read rights there' | ledger_count_after=0
+[5b C10 O15 roles_arg=False] RAISED ConfigError: 'migrations are inconsistent: 0006_c10.sql: GRANT on a place other than a table, view, sequence, column or function (SCHEMA): the guard does not read rights there; 0006_c10.sql: statement the guard does not read: \'CREATE ON SCHEMA "hadavin_test_5837840bd\'' | ledger_count_after=0
+[5b C10 O15 roles_arg=True] RAISED ConfigError: 'migrations are inconsistent: 0006_c10.sql: GRANT on a place other than a table, view, sequence, column or function (SCHEMA): the guard does not read rights there; 0006_c10.sql: statement the guard does not read: \'CREATE ON SCHEMA "hadavin_test_c79dbba63\'' | ledger_count_after=0
+[5b C10 O16 roles_arg=False] RAISED ConfigError: 'migrations are inconsistent: 0006_c10.sql: ALTER DEFAULT PRIVILEGES: the guard cannot read what this statement does or changes' | ledger_count_after=0
+[5b C10 O16 roles_arg=True] RAISED ConfigError: 'migrations are inconsistent: 0006_c10.sql: ALTER DEFAULT PRIVILEGES: the guard cannot read what this statement does or changes' | ledger_count_after=0
+[5c baseline roles_arg=False] RETURNED 5 versions | ledger_count_after=5
+[5c third-role named SELECT on runs roles_arg=False] RAISED ConfigError: 'before any migration file ran, this database already holds rights that the grant map does not give:\n  - table hadavin_test_c87a50808f0c.runs: evthird_b86200c9 has SELECT; only the owner, the migration role and the grant map\'s roles may hold rights here. To remove: REVOKE SELECT ON TABLE "hadavin_test_c87a50808f0c"."runs" F
+[5c baseline roles_arg=True] RETURNED 5 versions | ledger_count_after=5
+[5c third-role named SELECT on runs roles_arg=True] RAISED ConfigError: 'before any migration file ran, this database already holds rights that the grant map does not give:\n  - table hadavin_test_02ec0e006c73.runs: evthird_b86200c9 has SELECT; only the owner, the migration role and the grant map\'s roles may hold rights here. To remove: REVOKE SELECT ON TABLE "hadavin_test_02ec0e006c73"."runs" FR
+[5c baseline roles_arg=False] RETURNED 5 versions | ledger_count_after=5
+[5c third-role named INSERT on runs roles_arg=False] RAISED ConfigError: 'before any migration file ran, this database already holds rights that the grant map does not give:\n  - table hadavin_test_ad2f778754a0.runs: evthird_b86200c9 has INSERT; only the owner, the migration role and the grant map\'s roles may hold rights here. To remove: REVOKE INSERT ON TABLE "hadavin_test_ad2f778754a0"."runs" F
+[5c baseline roles_arg=True] RETURNED 5 versions | ledger_count_after=5
+[5c third-role named INSERT on runs roles_arg=True] RAISED ConfigError: 'before any migration file ran, this database already holds rights that the grant map does not give:\n  - table hadavin_test_e50671291693.runs: evthird_b86200c9 has INSERT; only the owner, the migration role and the grant map\'s roles may hold rights here. To remove: REVOKE INSERT ON TABLE "hadavin_test_e50671291693"."runs" FR
+[5c baseline roles_arg=False] RETURNED 5 versions | ledger_count_after=5
+[5c third-role named UPDATE on runs roles_arg=False] RAISED ConfigError: 'before any migration file ran, this database already holds rights that the grant map does not give:\n  - table hadavin_test_016f80134e75.runs: evthird_b86200c9 has UPDATE; only the owner, the migration role and the grant map\'s roles may hold rights here. To remove: REVOKE UPDATE ON TABLE "hadavin_test_016f80134e75"."runs" F
+[5c baseline roles_arg=True] RETURNED 5 versions | ledger_count_after=5
+[5c third-role named UPDATE on runs roles_arg=True] RAISED ConfigError: 'before any migration file ran, this database already holds rights that the grant map does not give:\n  - table hadavin_test_c3e16ae290d1.runs: evthird_b86200c9 has UPDATE; only the owner, the migration role and the grant map\'s roles may hold rights here. To remove: REVOKE UPDATE ON TABLE "hadavin_test_c3e16ae290d1"."runs" FR
+[5d terminate_backend before _take_the_lock] RAISED ConfigError: 'migrate stopped and kept nothing: while taking the migration lock, the database returned an error (57P01). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[5d terminate_backend before _read_back] RAISED ConfigError: 'migrate stopped and kept nothing: while checking the rights the database already holds, the database returned an error (57P01). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[5d terminate_backend before _check_read_back] RAISED ConfigError: 'migrate stopped and kept nothing: while applying 0001_core.sql, the database returned an error (57P01). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[5d terminate_backend before _apply_grants] RETURNED 5 versions | ledger_count_after=5
+[5d file kills its own backend] RAISED ConfigError: 'migrate stopped and kept nothing: while applying 0006_kill.sql, the database returned an error (57P01). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[5d second extra file kills its backend (first extra ran in same run)] RAISED ConfigError: 'migrations are inconsistent: zz_ok (table) is created by a migration but is not in GRANTS' | ledger_count_after=0
+[5e classifier] sqlstate=25000 usable_conn=True closed_conn=False
+[5e classifier] sqlstate=25001 usable_conn=True closed_conn=False
+[5e classifier] sqlstate=25002 usable_conn=True closed_conn=False
+[5e classifier] sqlstate=25003 usable_conn=True closed_conn=False
+[5e classifier] sqlstate=25004 usable_conn=True closed_conn=False
+[5e classifier] sqlstate=25005 usable_conn=True closed_conn=False
+[5e classifier] sqlstate=25006 usable_conn=True closed_conn=False
+[5e classifier] sqlstate=25007 usable_conn=True closed_conn=False
+[5e classifier] sqlstate=25008 usable_conn=True closed_conn=False
+[5e classifier] sqlstate=25P01 usable_conn=True closed_conn=False
+[5e classifier] sqlstate=25P02 usable_conn=True closed_conn=False
+[5e classifier] sqlstate=25P03 usable_conn=False closed_conn=False
+[5e classifier] sqlstate=25P04 usable_conn=False closed_conn=False
+[5e classifier] sqlstate=08006 usable_conn=False closed_conn=False
+[5e classifier] sqlstate=57P01 usable_conn=False closed_conn=False
+[5e classifier] sqlstate=40001 usable_conn=True closed_conn=False
+[5e classifier] sqlstate=23505 usable_conn=True closed_conn=False
+[5e live 25P03 idle_in_transaction timeout] RAISED ConfigError: 'migrate stopped and kept nothing: while applying 0001_core.sql, the database returned an error (25P03). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+DONE
