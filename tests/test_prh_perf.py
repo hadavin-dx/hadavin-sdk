@@ -117,6 +117,10 @@ def _spaced_texts() -> dict[str, str]:
     multi = encoded + "\nkey: " + " ".join(_letters(fixed // 8, 3)) + "\n"
     # batch 11, group 5: values of PEM size (a private key block of about 1.8 thousand characters) held by the run, then a long
     # text with gaps, so that the automaton of the held values is built and used. Seeded, made-up base64 text only.
+    if (
+        str(ROOT) not in sys.path
+    ):  # the `__main__` mode runs this file as a script, so `tests` is not importable yet
+        sys.path.insert(0, str(ROOT))
     from tests.seeded import rng as seeded
 
     rng = seeded(11)
