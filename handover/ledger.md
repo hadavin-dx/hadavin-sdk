@@ -3049,3 +3049,9 @@
 | Q8c1b15-r15-8 | Minor | Q8c-1 | r15 kubernetes.py:6-9 states an unverified claim as fact | OPEN | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
 | Q8c1b15-r15-9 | Nit | Q8c-1 | r15 nits: dead docstring, redundant expected -=, CLI refusal test covers tick only, stale docstring | OPEN | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
 | Q8c1b15-r15-10 | Minor | Q8c-1 | r15 lead item: re-sync mutation_runner into demos; 12 Vault tests impossible-now; Kubernetes over-broad read owner-only | OWNER-ONLY | reviews/Q8c-1/goldfish_review_report-r15.md | - | 2026-11-12 |
+| PDst-r1-1 | Major | PD-standins | r1 registry rules not enforced at the choke point (name-guessed host rule, loader-only call, NOT_PROD hole, tests-only enforcement) | OPEN | reviews/PD-standins/goldfish_review_report-r1.md | - | 2026-11-12 |
+| PDst-r1-2 | Major | PD-standins | r1 loopback sets not consolidated onto netguard; two definitions of loopback; docstring false | OPEN | reviews/PD-standins/goldfish_review_report-r1.md | - | 2026-11-12 |
+| PDst-r1-3 | Major | PD-standins | r1 weak mutation proof (role flip, empty list, dropped mutants, S6 text test) | OPEN | reviews/PD-standins/goldfish_review_report-r1.md | - | 2026-11-12 |
+| PDst-r1-4 | Major | PD-standins | r1 docs disagree with code (six versus seven stand-ins, pilot refusal sentence, netguard credit) | OPEN | reviews/PD-standins/goldfish_review_report-r1.md | - | 2026-11-12 |
+| PDst-r1-5 | Minor | PD-standins | r1 never-echo claim and loopback limits (name not resolved, port ignored) | OPEN | reviews/PD-standins/goldfish_review_report-r1.md | - | 2026-11-12 |
+| PDst-r1-6 | Nit | PD-standins | r1 nits (dead n != kind, stray docstring, try/except) | OPEN | reviews/PD-standins/goldfish_review_report-r1.md | - | 2026-11-12 |
