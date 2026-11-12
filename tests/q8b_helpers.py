@@ -117,9 +117,15 @@ def shown_records(*records):
     return list(redact_bundle(bundle)[0].deploys)
 
 
-# `(?<!(?<![\w.\-])by)`: batch 14 writes ONE look-behind (a word that starts after no key character); the older two-part form
+# `(?<!(?:(?<![\w.\-])|(?<=(?<![\w.\-])--))by)`: the form of batch 14 (a word that starts after no key character, or after `--`); the older forms
+# `(?<!(?<![\w.\-])by)` and the two-part form
 # `(?<!(?<![\w.])(?<![\w.]-)by)` and the variants of the mutants (`[a-z0-9]`) are read too.
-_ORDINARY_LOOKBEHIND = re.compile(r"\(\?<!\(\?<!\[[^\]]*\]\)(?:\(\?<!\[[^\]]*\]-\))?[a-z]+\)")
+_ORDINARY_LOOKBEHIND = re.compile(
+    r"\(\?<!(?:"
+    r"\(\?:\(\?<!\[[^\]]*\]\)\|\(\?<=\(\?<!\[[^\]]*\]\)--\)\)"  # the form of batch 14: a bare start, or `--` after a bare start
+    r"|\(\?<!\[[^\]]*\]\)(?:\(\?<!\[[^\]]*\]-\))?"  # the older forms
+    r")[a-z]+\)"
+)
 _LOOKAHEAD = re.compile(r"\(\?=[^()]*\)")
 
 
