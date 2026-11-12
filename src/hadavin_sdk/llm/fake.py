@@ -12,12 +12,14 @@ from typing import Any
 
 from hadavin_sdk.config import Route
 from hadavin_sdk.models import Reply
+from hadavin_sdk.standins import stand_in
 
 
 class UnknownRecording(KeyError):
     pass
 
 
+@stand_in
 class FakeLLM:
     def __init__(self, recorded_dir: Path, routes: dict[str, Route]) -> None:
         self.recorded_dir = Path(recorded_dir)

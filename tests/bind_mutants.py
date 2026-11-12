@@ -467,8 +467,8 @@ M = [
     mutant(
         "B46 a reason of one letter is accepted",
         DF,
-        "BIND_REASON_MIN_CHARS = 10",
-        "BIND_REASON_MIN_CHARS = 1",
+        "BIND_REASON_MIN_CHARS = (\n    10  #",
+        "BIND_REASON_MIN_CHARS = (\n    1  #",
         T_BG,
         "test_a_reason_shorter_than_ten_characters_is_refused_and_ten_are_accepted",
         "DID NOT RAISE",
@@ -514,9 +514,9 @@ M = [
     ),
     mutant(
         "B51 a subclass of a stand-in is read as a stand-in",
-        BG,
-        "    if type(obj) in _STAND_IN_CLASSES:\n",
-        "    if isinstance(obj, tuple(_STAND_IN_CLASSES)):\n",
+        "src/hadavin_sdk/standins.py",
+        "    return type(obj) in _CLASSES\n",
+        "    return isinstance(obj, tuple(_CLASSES))\n",
         T_BG,
         "test_only_the_cores_own_stand_in_classes_are_stand_ins_and_a_subclass_is_not",
         "a subclass of a stand-in was read as a stand-in",

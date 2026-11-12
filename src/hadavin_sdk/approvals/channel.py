@@ -10,6 +10,7 @@ from hadavin_sdk.approvals import hmac_v0
 from hadavin_sdk.approvals.gate import sanitise_text, withhold_commands
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.models import ApprovalDecision, ApprovalRequest
+from hadavin_sdk.standins import stand_in
 
 if TYPE_CHECKING:
     from hadavin_sdk.approvals.cards import Card, Delivery
@@ -82,6 +83,7 @@ class Channel(Protocol):
         ...
 
 
+@stand_in
 class FakeChannel:
     """Records what would be sent. Callbacks are verified with the shared ``hmac_v0`` scheme under its own
     ``X-Hadavin-*`` headers and a test secret (with no secret every callback is refused); approvers are

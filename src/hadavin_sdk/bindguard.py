@@ -34,13 +34,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
 from hadavin_sdk import defaults
-from hadavin_sdk.actions.secrets import FakeSecretProvider
-from hadavin_sdk.approvals.channel import FakeChannel
 from hadavin_sdk.backends.table import DEMO_ONLY, IN_PROCESS, NOT_PROD
 from hadavin_sdk.config import Config
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.guard.injection import AnyOf, RegexDetector
-from hadavin_sdk.llm.fake import FakeLLM
+from hadavin_sdk.guard.injection import AnyOf
 from hadavin_sdk.netguard import (
     LOOPBACK_V4,
     is_localhost_name,
@@ -48,7 +45,7 @@ from hadavin_sdk.netguard import (
     is_loopback_literal,
     parse_ip_literal,
 )
-from hadavin_sdk.store.memory import MemoryStore
+from hadavin_sdk.standins import is_registered_stand_in
 
 _LOG = logging.getLogger("hadavin_sdk.bindguard")
 
@@ -63,11 +60,8 @@ def stand_in_kinds() -> frozenset[tuple[str, str]]:
     return DEMO_ONLY | NOT_PROD | IN_PROCESS
 
 
-# The core's own stand-in classes, by exact class (never by name text, never a subclass: a subclass can reach
-# anything). A detector list of stand-ins is a stand-in too (see ``is_stand_in_object``).
-_STAND_IN_CLASSES: frozenset[type] = frozenset(
-    {FakeChannel, FakeLLM, FakeSecretProvider, MemoryStore, RegexDetector}
-)
+# The core's own stand-in classes are listed by ``hadavin_sdk.standins`` (each class marks itself; exact class only,
+# never a name, never a subclass).
 # held services whose emptiness decides: an empty ``tools`` or ``sources`` mapping holds nothing
 _COUNTED_WHEN_NOT_EMPTY = frozenset({"tools", "sources"})
 
@@ -75,7 +69,7 @@ _COUNTED_WHEN_NOT_EMPTY = frozenset({"tools", "sources"})
 def is_stand_in_object(obj: object) -> bool:
     """True only for an object whose exact class is one of the core's own stand-ins, or a detector list
     (``AnyOf``) whose entries all are. Anything else, including a subclass or a class of the same name, is real."""
-    if type(obj) in _STAND_IN_CLASSES:
+    if is_registered_stand_in(obj):
         return True
     if type(obj) is AnyOf:
         return all(is_stand_in_object(d) for d in obj.detectors)

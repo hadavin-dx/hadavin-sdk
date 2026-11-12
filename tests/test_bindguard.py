@@ -846,7 +846,9 @@ def test_a_channel_replaced_after_the_build_is_seen_when_the_server_starts(
 
 def test_only_the_cores_own_stand_in_classes_are_stand_ins_and_a_subclass_is_not() -> None:
     """The list is exact classes, never names or marker attributes."""
-    assert bindguard._STAND_IN_CLASSES == {
+    from hadavin_sdk import standins
+
+    assert standins.registered() == {
         FakeChannel,
         FakeLLM,
         FakeSecretProvider,
