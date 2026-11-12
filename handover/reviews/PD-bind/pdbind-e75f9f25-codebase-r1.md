@@ -1,0 +1,13 @@
+# pdbind-e75f9f25-codebase-r1: PD part 2 (public bind refusal), head e75f9f25, round 1, persona codebase details
+Source: hand-back of the codebase reviewer (agent a4074192), saved by the lead (condensed). Mode-safety path. Snapshot has only the 14 changed files. No Blocker, 3 Major, 5 Minor, 3 Nit.
+- **M1** Refusal opt-in (approvals/receiver.py:42-56): `serve(approvals,"0.0.0.0",8080)` with no `config=` checked by nothing; no caller in snapshot passes config; CHANGELOG headline reads unconditional; host and config are independent arguments (a stand-in config passes). Fix: config required or derived from approvals; at least first sentence of CHANGELOG says "only when you pass config=".
+- **M2** `real_services` (bindguard.py:203-227) counts backends, systems, sources only; Config also has tool_modules, check_modules (custom code in process) and egress_hosts (config.py:332-363), unread: all-stand-in backends plus a tool module and a live egress host bind publicly. Docstring "One place decides it" too strong. Count them or state the exclusion.
+- **M3** "Their answers are unchanged" not shown on old code: 5a all three new test files fail at collection (netguard missing), 5b ran only the no-private-copy test; tests/test_loopback_sites.py (OLD_RULE written independently) never run against old behaviour with a shim.
+- m1: IPv6 spellings cannot be served (ThreadingHTTPServer is AF_INET; gaierror swallowed in tests/test_bindguard.py:811-822); refusal text advises ::1 (bindguard.py:71).
+- m2: "never looks a name up" true of the check, not of the bind (localhost resolved at bind).
+- m3: three loopback meanings (is_loopback_host wide, is_loopback_literal exact, guard/http.py:162 normalised exact); title "one shared check" generous; bindguard mixes two.
+- m4: duplicate-list test (tests/test_bindguard.py:837-853) narrow pattern; exempts all of tools.py by name.
+- m5: mutant gaps: bracket clause (netguard.py:373), isprintable fallback, unreadable-input branch, default host; every-kind test near tautological (:697-708); `hosts is None` assertion (:726) weak.
+- Nits: n1 leading-zero IPv4 depends on Python >= 3.9.5 (only 3.13 run); n2 `shown` (bindguard.py:236) not length-capped; n3 CHANGELOG entry one long paragraph under Upgrade steps.
+- Fine: no remaining private list in changed files (only netguard.py:19); CHANGELOG count 4 copies plus inline matches RESULTS; kinds inventory 31 (DEMO_ONLY 6, IN_PROCESS 5, NOT_PROD 2, real 18) matches; hostile host inputs covered; 18 of 18 mutants; CI step added.
+- Not checked: anything outside the 14 files (other listeners); llm/common.py alias; store/postgres._is_local; tools.py; provenance sha; CI Python matrix; no code run.
