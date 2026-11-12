@@ -287,7 +287,7 @@ def test_class_c_covers_matches_the_kubernetes_rule(entry, target):
 def test_class_c_every_spelling_that_covers_a_shell_subresource_is_refused(target, verb):
     res, _, sub = target.partition("/")
     for entry in (target, "*", f"{res}/*", f"*/{sub}", "*/*"):
-        found = rules_problems("prod", [{"verbs": [verb], "resources": [entry]}])
+        found = rules_problems(1, [{"verbs": [verb], "resources": [entry]}])
         assert found, (entry, verb)
 
 
@@ -296,13 +296,13 @@ def test_class_c_every_spelling_that_covers_a_shell_subresource_is_refused(targe
 )
 @pytest.mark.parametrize("verbs", [["get"], ["get", "list", "watch"]])
 def test_class_c_read_only_grants_that_cover_no_shell_or_secret_pass(entry, verbs):
-    assert rules_problems("prod", [{"verbs": verbs, "resources": [entry]}]) == []
+    assert rules_problems(1, [{"verbs": verbs, "resources": [entry]}]) == []
 
 
 @pytest.mark.parametrize("entry", ["secrets", "*", "*/*"])
 def test_class_c_secrets_are_refused_for_every_read_verb(entry):
     for verb in ("get", "list", "watch"):
-        found = rules_problems("prod", [{"verbs": [verb], "resources": [entry]}])
+        found = rules_problems(1, [{"verbs": [verb], "resources": [entry]}])
         assert found, (entry, verb)
 
 

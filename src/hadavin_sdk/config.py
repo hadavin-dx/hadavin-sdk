@@ -396,7 +396,7 @@ class Config(_Strict):
     def _pins_are_digests(cls, value: dict[str, str]) -> dict[str, str]:
         """A pin is a SHA-256: 64 lower-case hex digits. Anything else (a credential pasted in the wrong place) is
         refused here with a fixed sentence, by position, so no part of it is ever printed."""
-        if bad := [i for i, pin in enumerate(value.values()) if not is_digest(pin)]:
+        if bad := [i for i, pin in enumerate(value.values(), start=1) if not is_digest(pin)]:
             raise ConfigValueError(
                 f"tool_module_hashes: entries {', '.join(str(i) for i in bad)} are not a SHA-256 (64 lower-case hex digits)"
             )

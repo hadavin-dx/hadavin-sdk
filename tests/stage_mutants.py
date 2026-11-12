@@ -65,6 +65,23 @@ def crash_mutant(name, file, old, new, killer, crash_type, param=""):
     )
 
 
+TRACE = "tests/test_q8a1_f_string_trace.py"
+
+
+def trace_mutant(name, file, old, new, killer, expect):
+    """A mutant killed by a test of the round-10 trace file (tests/test_q8a1_f_string_trace.py)."""
+    return Mutant(
+        name,
+        file,
+        old,
+        new,
+        expect,
+        test_file=TRACE,
+        only_test=killer,
+        pinned="tests/test_q8a1_f_string_trace::" + killer,
+    )
+
+
 OBJECT = "test_pilot_and_prod_refuse_a_test_object_handed_to_build"
 VAULT = "test_pilot_and_prod_refuse_a_static_vault_token"
 TICK_TEST = "test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick"
@@ -360,7 +377,7 @@ M = [
         "test_a_name_pasted_where_the_registry_expects_a_known_one_is_not_shown", "Zq9x", "[over0-model_route is not one of the configured routes]"),
     mutant("M16o a pasted scope name is shown again (registry.py)", REGISTRY,
         'f"agent {shown_name(a.id)}: scope_allowed entry {i} has no contract"', 'f"agent {shown_name(a.id)}: no contract for {x}"',
-        "test_a_name_pasted_where_the_registry_expects_a_known_one_is_not_shown", "Zq9x", "[over1-scope_allowed entry 0 has no contract]"),
+        "test_a_name_pasted_where_the_registry_expects_a_known_one_is_not_shown", "Zq9x", "[over1-scope_allowed entry 1 has no contract]"),
     mutant("M16p a schema keyword is shown again (contract.py)", CONTRACT,
         "unsupported keyword {_keyword_shown(k)}", "unsupported keyword {k}",
         "test_a_keyword_or_property_name_in_an_input_schema_is_not_shown", "Zq9x"),
@@ -418,10 +435,10 @@ M = [
         "test_a_right_must_name_an_action_and_approver_of_must_name_a_chain", "DID NOT RAISE"),
     mutant("M17o a chain approver that is a service identity is accepted (registry.py)", REGISTRY,
         'if who not in principals or principals[who].kind != "person"', "if who not in principals",
-        "test_a_chain_approver_must_be_a_person_who_is_in_principals", "approver_ids entry 0"),
+        "test_a_chain_approver_must_be_a_person_who_is_in_principals", "approver_ids entry 1"),
     mutant("M17p a tools_allowed entry with no tool in the manifest is accepted (registry.py)", REGISTRY,
         "                if specs and allowed not in {sp.name for sp in specs}", "                if False",
-        "test_with_a_manifest_a_tools_allowed_entry_with_no_tool_in_it_is_refused", "tools_allowed entry 1"),
+        "test_with_a_manifest_a_tools_allowed_entry_with_no_tool_in_it_is_refused", "tools_allowed entry 2"),
     crash_mutant("M17q a file that cannot be opened lets the OS error through (errors.py)", ERRORS,
         "    except (OSError, UnicodeError, ValueError, TypeError) as exc:\n        raise unreadable(what, exc) from None\n\n\ndef list_configured",
         "    except (UnicodeError, ValueError, TypeError) as exc:\n        raise unreadable(what, exc) from None\n\n\ndef list_configured",
@@ -484,7 +501,7 @@ M = [
         "    except (OSError, ValueError, TypeError):\n        return []\n    return [Path(path)",
         "test_list_configured_reads_a_missing_folder_as_empty_and_an_unlistable_one_as_a_refusal", "DID NOT RAISE"),
     mutant("M18f a pin that is not a SHA-256 is accepted (config.py)", CFG,
-        "        if bad := [i for i, pin in enumerate(value.values()) if not is_digest(pin)]:", "        if False:",
+        "        if bad := [i for i, pin in enumerate(value.values(), start=1) if not is_digest(pin)]:", "        if False:",
         "test_a_tool_module_pin_must_be_a_sha256_and_none_of_it_is_printed", "nothing was refused"),
     mutant("M18g a pasted pin is printed again (errors.py)", ERRORS,
         "def digest_prefix(value: object) -> str:", "def digest_prefix(value: object) -> str:\n    return str(value)[:12]\n\n\ndef _unused_digest_prefix(value: object) -> str:",
@@ -502,8 +519,8 @@ M = [
         "                if specs and allowed not in {sp.name for sp in specs}", "                if allowed not in {sp.name for sp in specs}",
         "test_an_empty_tools_manifest_does_not_refuse_tools_allowed_but_a_manifest_with_tools_does", "ConfigError"),
     crash_mutant("M18l approver_ids are checked for a chain nobody names (registry.py)", REGISTRY,
-        "            continue\n        for i, step in enumerate(c.steps):\n            out += [\n                f\"chain {shown_name(c.id)} step {i}: approver_ids",
-        "            pass\n        for i, step in enumerate(c.steps):\n            out += [\n                f\"chain {shown_name(c.id)} step {i}: approver_ids",
+        "            continue\n        for i, step in enumerate(c.steps, start=1):\n            out += [\n                f\"chain {shown_name(c.id)} step {i}: approver_ids",
+        "            pass\n        for i, step in enumerate(c.steps, start=1):\n            out += [\n                f\"chain {shown_name(c.id)} step {i}: approver_ids",
         "test_a_chain_that_no_principal_names_keeps_channel_native_approver_ids", "ConfigError"),
     mutant("M18m a vault environment variable name is not pattern-checked (table.py)", TBL,
         '    token_env: str = Field(default="VAULT_TOKEN", pattern=_ENV_NAME)', '    token_env: str = Field(default="VAULT_TOKEN")',
@@ -565,19 +582,19 @@ M = [
     crash_mutant("M19j a tool module file is read without the one reader (tools.py)", TOOLS,
         '(n, read_configured(p, "a tool module file (tool_modules)", binary=True))', "(n, p.read_bytes())",
         "test_a_tool_module_file_that_cannot_be_read_is_refused_by_the_one_reader", "IsADirectoryError"),
-    crash_mutant("M19k a folder named as a secret raises a bare OS error again (secrets_file.py)", SF,
+    mutant("M19k a folder named as a secret raises a bare OS error again (secrets_file.py)", SF,
         '        mode = os.fstat(fd).st_mode\n        if not stat.S_ISREG(mode):\n            os.close(fd)\n            raise ConfigError("the secret is not a regular file")\n        with os.fdopen(fd, "rb") as f:\n',
         '        mode = os.fstat(fd).st_mode\n        with os.fdopen(fd, "rb") as f:\n',
-        "test_the_mounted_folder_provider_never_says_a_name_or_the_configured_dir", "IsADirectoryError"),
+        "test_the_mounted_folder_provider_never_says_a_name_or_the_configured_dir", "reading a secret failed"),
     mutant("M19l the guard sees a raw name in a call argument of a message (cli.py)", "src/hadavin_sdk/cli.py",
         'f"tick: {shown_name(agent_id, reg.agents)} is not qualified', 'f"tick: {agent_id} is not qualified',
         "test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter", "tick: {agent_id}"),
     mutant("M19m the guard reports an allowance that matches no site (evals.py)", "src/hadavin_sdk/evals.py",
         'golden_path = confined(cfg.golden_dir, f"{agent_id}.jsonl")', 'golden_path = confined(cfg.golden_dir, "golden.jsonl")',
         "test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter", "stale"),
-    mutant("M20a the rule problems of a namespace are labelled with its configured text again (kubernetes.py)", "src/hadavin_sdk/sources/kubernetes.py",
-        'rules_problems(where, status["resourceRules"])', 'rules_problems(ns, status["resourceRules"])',
-        "test_a_configured_kubernetes_namespace_is_never_printed_only_its_position", "a configured namespace is printed"),
+    mutant("M20a the rule problems of a namespace lose the word entry in their label (kubernetes.py)", "src/hadavin_sdk/sources/kubernetes.py",
+        'where = f"namespace entry {position}"', 'where = f"namespace {position}"',
+        "test_a_configured_kubernetes_namespace_is_never_printed_only_its_position", "namespace 1: a rule is malformed"),
     mutant("M20b the rules-review refusal of a configured namespace names it again (kubernetes.py)", "src/hadavin_sdk/sources/kubernetes.py",
         'problems.append(f"{where}: the rules review is incomplete, scope not proven")', 'problems.append(f"namespace {ns}: the rules review is incomplete, scope not proven")',
         "test_a_configured_kubernetes_namespace_is_never_printed_only_its_position", "a configured namespace is printed"),
@@ -587,6 +604,22 @@ M = [
     mutant("M19n the guard sees a raw root printed in a message (secrets_file.py)", SF,
         '"secrets mounted_file: the configured dir is not a folder"', 'f"secrets mounted_file: {root} is not a folder"',
         "test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter", "{root}"),
+    # Round 11 (the eleven f-string places, Issue 2): each fix has a mutant killed by the trace tests.
+    trace_mutant("M21a a cloud library error is passed on with its text (secrets_cache.py)", "src/hadavin_sdk/actions/secrets_cache.py",
+        'f"secrets: reading a secret failed ({type(exc).__name__})"', 'f"secrets: reading a secret failed ({exc})"',
+        "test_the_aws_and_azure_kinds_say_the_class_of_a_library_error_only", "assert 'secrets: rea"),
+    trace_mutant("M21b the client library's refusal is passed on with its text (anthropic.py)", "src/hadavin_sdk/llm/anthropic.py",
+        '({type(exc).__name__}); a variable such as', '({exc}); a variable such as',
+        "test_a_client_library_error_that_quotes_the_base_url_is_not_passed_on", "the client refused the settings (ValueError)"),
+    trace_mutant("M21c a refused database role is echoed again (migrate.py)", "src/hadavin_sdk/store/migrate.py",
+        'f"{option}: not a plain database role name', 'f"{role!r}: not a plain database role name',
+        "test_a_database_role_option_that_is_not_a_plain_name_is_refused_by_option_never_by_text", "not a plain database role name"),
+    mutant("M21d any text is a legal Kubernetes namespace again (kubernetes.py)", "src/hadavin_sdk/sources/kubernetes.py",
+        "if not _DNS_LABEL.fullmatch(ns)]", "if not ns]",
+        "test_a_kubernetes_namespace_that_is_not_a_dns_label_is_refused_by_position_never_by_text", "DID NOT RAISE"),
+    mutant("M21e rules_problems takes a label again (kubernetes.py)", "src/hadavin_sdk/sources/kubernetes.py",
+        "if not isinstance(position, int) or isinstance(position, bool):", "if False:",
+        "test_the_rules_problems_function_takes_a_position_and_never_a_label", "DID NOT RAISE"),
 ]  # fmt: skip
 
 
@@ -609,7 +642,7 @@ if __name__ == "__main__":
     res = run_mutants(
         ROOT,
         M,
-        [TEST],
+        [TEST, TRACE],
         extra_dirs=("tests", "tools", "demos", "docs"),
         only=only,
         on_result=show,

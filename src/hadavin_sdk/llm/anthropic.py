@@ -53,7 +53,13 @@ def client(settings: Any, key: str | None) -> Any:
             )
         return anthropic.Anthropic(api_key=key, base_url=API_BASE_URL, **common)
     except ValueError as exc:  # e.g. ANTHROPIC_FOUNDRY_RESOURCE set beside our explicit base URL
-        raise ConfigError(f"backend llm 'anthropic' ({settings.platform}): {exc}") from exc
+        # The library's own sentence is not passed on: a client library may quote the base URL, which holds the
+        # configured region or resource. `from None`: the cause is not chained either.
+        raise ConfigError(
+            f"backend llm 'anthropic' ({settings.platform}): the client refused the settings "
+            f"({type(exc).__name__}); a variable such as ANTHROPIC_FOUNDRY_RESOURCE or ANTHROPIC_BASE_URL set beside "
+            "the explicit base URL is the usual cause"
+        ) from None
 
 
 # Claude's moving aliases. Every Claude API id is a pinned snapshot (WARDEN, checked 2026-10-02), dated or not.

@@ -336,7 +336,7 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
             # An empty manifest names no tool and so never narrows `tools_allowed` (checked only `if specs`).
             problems += [
                 f"{where}: tools_allowed entry {i} has no tool in this manifest"
-                for i, allowed in enumerate(agent.tools_allowed)
+                for i, allowed in enumerate(agent.tools_allowed, start=1)
                 if specs and allowed not in {sp.name for sp in specs}
             ]
             problems += [  # grounding checks declared inputs only, so a tooled agent's contracts must be closed
@@ -386,13 +386,13 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
                     )
                 problems += [
                     f"{where}: tool {shown_name(spec.name)}: operations entry {i} is not on the read list of tool_modules"
-                    for i, op in enumerate(spec.operations)
+                    for i, op in enumerate(spec.operations, start=1)
                     if op not in (read_ops or set())
                 ]
                 problems += [  # a POST read (a review, a query body) is named in the config, not only in tool code
                     f"{where}: tool {shown_name(spec.name)}: operations entry {i} is bound to {read_ops[op][0]}; "
                     "list it in evidence.post_read_operations to allow it"
-                    for i, op in enumerate(spec.operations)
+                    for i, op in enumerate(spec.operations, start=1)
                     if read_ops
                     and op in read_ops
                     and read_ops[op][0] != "GET"
@@ -439,12 +439,12 @@ def _principal_problems(principals: dict, chains: dict, contracts: dict) -> list
         name = shown_name(p.id)
         out += [
             f"principal {name}: rights entry {i} names no action"
-            for i, right in enumerate(p.rights)
+            for i, right in enumerate(p.rights, start=1)
             if right not in contracts
         ]
         out += [
             f"principal {name}: approver_of entry {i} names no chain"
-            for i, chain in enumerate(p.approver_of)
+            for i, chain in enumerate(p.approver_of, start=1)
             if chain not in chains
         ]
     # A chain that some principal names in `approver_of` is linked to people: its approver_ids must be persons. A chain no
@@ -454,10 +454,10 @@ def _principal_problems(principals: dict, chains: dict, contracts: dict) -> list
     for c in chains.values():
         if c.id not in linked:
             continue
-        for i, step in enumerate(c.steps):
+        for i, step in enumerate(c.steps, start=1):
             out += [
                 f"chain {shown_name(c.id)} step {i}: approver_ids entry {j} is not a person in principals.yaml"
-                for j, who in enumerate(step.approver_ids)
+                for j, who in enumerate(step.approver_ids, start=1)
                 if who not in principals or principals[who].kind != "person"
             ]
     return out
@@ -494,7 +494,7 @@ def _cross_check(config, agents, chains, contracts) -> list[str]:
             out.append(f"agent {shown_name(a.id)}: model_route is not one of the configured routes")
         out += [  # a value that matched nothing may be a pasted secret: named by its position, never quoted
             f"agent {shown_name(a.id)}: scope_allowed entry {i} has no contract"
-            for i, x in enumerate(a.scope_allowed)
+            for i, x in enumerate(a.scope_allowed, start=1)
             if x not in contracts
         ]
         try:
@@ -505,7 +505,7 @@ def _cross_check(config, agents, chains, contracts) -> list[str]:
     for c in chains.values():
         if not c.steps:
             out.append(f"chain {shown_name(c.id)}: no steps")
-        for i, s in enumerate(c.steps):
+        for i, s in enumerate(c.steps, start=1):
             if not s.approver_ids or s.timeout_s <= 0:
                 out.append(f"chain {shown_name(c.id)} step {i}: needs approvers and timeout_s > 0")
     for c in contracts.values():

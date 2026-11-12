@@ -295,9 +295,17 @@ def migrate(
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database."""
-    for role in (runtime_role, portal_role, purge_role):
+    for option, role in (
+        ("runtime_role", runtime_role),
+        ("portal_role", portal_role),
+        ("purge_role", purge_role),
+    ):
         if role is not None and not _ROLE.fullmatch(role):
-            raise ConfigError(f"not a plain database role name: {role!r}")
+            # said by the option, never by the text: a credential can be pasted where a role name belongs
+            raise ConfigError(
+                f"{option}: not a plain database role name (lower-case letters, digits and '_', "
+                "starting with a letter or '_', at most 63 characters)"
+            )
     named = [r for r in (runtime_role, portal_role, purge_role) if r is not None]
     if len(set(named)) != len(named):
         raise ConfigError("the runtime, portal and purge roles must be different roles")

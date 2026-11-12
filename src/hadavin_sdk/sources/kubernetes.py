@@ -11,15 +11,17 @@ Neutral protocol: the Kubernetes REST API (HTTPS, JSON).
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import quote
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from hadavin_sdk import defaults
 from hadavin_sdk.config_url import ConfigUrl
+from hadavin_sdk.errors import ConfigValueError
 from hadavin_sdk.sources import Record, SourceError
 
 # The operation ids a manifest may list for this source, each bound to one method and one path (design 6.4): a
@@ -31,6 +33,8 @@ READ_OPERATIONS = {
     "k8s.pod_log": ("GET", rf"/api/v1/namespaces/{_NS}/pods/{_NS}/log"),
     "k8s.rules_review": ("POST", r"/apis/authorization\.k8s\.io/v1/selfsubjectrulesreviews"),
 }
+# A namespace is a DNS-1123 label (RFC 1123 section 2.1; the Kubernetes naming rule): 1 to 63 characters.
+_DNS_LABEL = re.compile(r"(?=.{1,63}\Z)[a-z0-9]([-a-z0-9]*[a-z0-9])?")
 REVISION = "deployment.kubernetes.io/revision"
 JSON_HEADERS = {"Content-Type": "application/json", "Accept": "application/json"}
 # Design 6.6 / K5b M20: verbs that change state, and subresources that open a shell or a tunnel.
@@ -60,6 +64,21 @@ class KubernetesSettings(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
     api_url: ConfigUrl = Field(pattern=r"^https?://[^\s/?#]+/?$")
     namespaces: tuple[str, ...] = Field(min_length=1)
+
+    @field_validator("namespaces")
+    @classmethod
+    def _namespaces_are_dns_labels(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        """A Kubernetes namespace is a DNS-1123 label (lower-case letters, digits and `-`, at most 63 characters,
+        starting and ending with a letter or digit). Anything else, an empty text or a credential pasted in the
+        wrong place included, is refused here with a fixed sentence that says the position and never the text."""
+        bad = [i for i, ns in enumerate(value, start=1) if not _DNS_LABEL.fullmatch(ns)]
+        if bad:
+            raise ConfigValueError(
+                f"namespaces: entries {', '.join(str(i) for i in bad)} are not Kubernetes namespace names "
+                "(lower-case letters, digits and '-', at most 63 characters, starting and ending with a letter or digit)"
+            )
+        return value
+
     page_size: int = Field(default=defaults.K8S_PAGE_SIZE, gt=0)
     max_pages: int = Field(default=defaults.K8S_MAX_PAGES, gt=0)
     json_cap_bytes: int = Field(default=defaults.K8S_JSON_CAP_BYTES, gt=0)
@@ -99,10 +118,14 @@ def _only_self_reviews(rule: dict[str, Any]) -> bool:
     )
 
 
-def rules_problems(where: str, rules: list[dict[str, Any]]) -> list[str]:
-    """Problems in one namespace's ``resourceRules`` from a SelfSubjectRulesReview (empty: read-only). `where` is
-    the position label of the configured namespace (for example "namespace entry 2"); the namespace text itself is
-    configuration and is never put in a message."""
+def rules_problems(position: int, rules: list[dict[str, Any]]) -> list[str]:
+    """Problems in one namespace's ``resourceRules`` from a SelfSubjectRulesReview (empty: read-only). `position` is
+    the place of the configured namespace in the `namespaces` list, counted from 1; the problems say "namespace entry
+    <position>". The namespace text itself is configuration and is never put in a message, and a caller cannot hand
+    this function a label: it takes a number."""
+    if not isinstance(position, int) or isinstance(position, bool):
+        raise TypeError("rules_problems takes the position of the namespace as a number")
+    where = f"namespace entry {position}"
     out: list[str] = []
     for rule in rules:
         # The API answers lists of strings; anything else (a string `"create"`) proves nothing.
@@ -329,7 +352,7 @@ class KubernetesSource:
     def _probe_scope(self) -> list[str]:
         problems: list[str] = []
         for i, ns in enumerate(self.namespaces, start=1):
-            where = f"namespace entry {i}"  # position, not the configured text
+            where = f"namespace entry {i}"  # position (from 1), not the configured text
             review = self._get(
                 "/apis/authorization.k8s.io/v1/selfsubjectrulesreviews",
                 "k8s.rules_review",
@@ -352,5 +375,5 @@ class KubernetesSource:
                 problems.append(f"{where}: the rules review reported an evaluation error")
             if status.get("incomplete"):
                 problems.append(f"{where}: the rules review is incomplete, scope not proven")
-            problems += rules_problems(where, status["resourceRules"])
+            problems += rules_problems(i, status["resourceRules"])
         return problems

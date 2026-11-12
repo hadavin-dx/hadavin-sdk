@@ -289,7 +289,7 @@ def test_the_scrub_sees_these_encodings_too(layer):
     ],
 )
 def test_a_malformed_rule_is_not_proven_read_only(rule):
-    assert rules_problems("prod", [rule])
+    assert rules_problems(1, [rule])
 
 
 def test_a_failed_reprobe_switches_the_source_off_until_a_probe_passes():

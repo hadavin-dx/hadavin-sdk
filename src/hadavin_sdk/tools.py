@@ -227,7 +227,7 @@ def spec_problems(
     if not fn or module not in tool_modules:
         out.append(f"tool {shown_name(spec.name)}: its function is outside tool_modules")
     for i, host in enumerate(
-        spec.hosts
+        spec.hosts, start=1
     ):  # a host is a value from the file: named by its position, never quoted
         if not host or host != host.lower() or "/" in host or ":" in host or "@" in host:
             out.append(

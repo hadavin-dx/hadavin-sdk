@@ -225,12 +225,12 @@ def test_kubernetes_needs_a_namespace_and_an_endpoint():
     ],
 )
 def test_the_rules_probe_names_each_forbidden_grant(rules, needle):
-    assert any(needle in p for p in rules_problems("prod", rules)), rules_problems("prod", rules)
+    assert any(needle in p for p in rules_problems(1, rules)), rules_problems("prod", rules)
 
 
 def test_a_read_only_rule_set_passes_the_probe():
     rules = [{"verbs": ["get", "list", "watch"], "resources": ["pods", "pods/log", "deployments"]}]
-    assert rules_problems("prod", rules) == []
+    assert rules_problems(1, rules) == []
     assert k8s(FakeApi(rules)).probe_scope() == []
 
 

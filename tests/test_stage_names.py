@@ -1504,7 +1504,7 @@ def _agent_entry(**over):
     "over, said",
     [
         ({"model_route": PW}, "model_route is not one of the configured routes"),
-        ({"scope_allowed": [PW]}, "scope_allowed entry 0 has no contract"),
+        ({"scope_allowed": [PW]}, "scope_allowed entry 1 has no contract"),
     ],
 )
 def test_a_name_pasted_where_the_registry_expects_a_known_one_is_not_shown(cfg_dir, over, said):
@@ -1589,6 +1589,25 @@ def test_a_name_in_a_tool_manifest_problem_is_not_shown(cfg_dir):
     )  # fmt: skip
     shown = " ".join(spec_problems(spec, ["m"]))
     assert "bare lowercase hostname" in shown and PW not in shown and USER not in shown, shown
+
+
+def test_a_host_of_a_tool_manifest_is_said_by_its_position_counted_from_one(cfg_dir):
+    """Round 10, Issue 6: every position label counts from 1. The second host is "hosts entry 2", the first "entry 1"."""
+    from hadavin_sdk.tools import ToolSpec, spec_problems
+
+    spec = ToolSpec(
+        name="a_tool", function="m:f", description="d", input_schema={"type": "object"},
+        side_effect="none", hosts=("ok.example.invalid", USER + ":" + PW + "@records.example.invalid"),
+    )  # fmt: skip
+    shown = " ".join(spec_problems(spec, ["m"]))
+    assert (
+        "hosts entry 2 must be a bare lowercase hostname" in shown and "hosts entry 0" not in shown
+    ), shown
+    first = ToolSpec(
+        name="a_tool", function="m:f", description="d", input_schema={"type": "object"},
+        side_effect="none", hosts=("Bad Host",),
+    )  # fmt: skip
+    assert "hosts entry 1 " in " ".join(spec_problems(first, ["m"]))
 
 
 def test_a_keyword_or_property_name_in_an_input_schema_is_not_shown():
@@ -2305,10 +2324,10 @@ def test_a_chain_approver_must_be_a_person_who_is_in_principals(cfg_dir):
         load_registry(load_config(cfg_dir))
     msg = str(err.value)
     assert (
-        "chain chain-abc step 0: approver_ids entry 0 is not a person" in msg
+        "chain chain-abc step 1: approver_ids entry 1 is not a person" in msg
     )  # a service identity
     assert (
-        "approver_ids entry 1 is not a person" in msg and MARK not in msg
+        "approver_ids entry 2 is not a person" in msg and MARK not in msg
     )  # one that is not there at all
 
 
@@ -2316,14 +2335,14 @@ def test_a_right_must_name_an_action_and_approver_of_must_name_a_chain(cfg_dir):
     msg = _pilot_principals(
         cfg_dir, lambda d: _setitem(d[0], "rights", ["lookup_record", MARK]) and d
     )
-    assert "principal svc:test-agent: rights entry 1 names no action" in msg and MARK not in msg
+    assert "principal svc:test-agent: rights entry 2 names no action" in msg and MARK not in msg
     _yaml_edit("principals.yaml", lambda d: _setitem(d[0], "rights", ["lookup_record"]) and d)(
         cfg_dir
     )
     msg = _pilot_principals(
         cfg_dir, lambda d: _setitem(d[1], "approver_of", ["chain-abc", MARK]) and d
     )
-    assert "principal user:a: approver_of entry 1 names no chain" in msg and MARK not in msg
+    assert "principal user:a: approver_of entry 2 names no chain" in msg and MARK not in msg
 
 
 def test_with_a_manifest_a_tools_allowed_entry_with_no_tool_in_it_is_refused(cfg_dir):
@@ -2343,7 +2362,7 @@ def test_with_a_manifest_a_tools_allowed_entry_with_no_tool_in_it_is_refused(cfg
     )
     with pytest.raises(ConfigError) as err:
         load_registry(load_config(cfg_dir))
-    assert "tools_allowed entry 1 has no tool in this manifest" in str(err.value)
+    assert "tools_allowed entry 2 has no tool in this manifest" in str(err.value)
     assert MARK not in _everything_shown(err.value)
 
 
@@ -2700,7 +2719,7 @@ def test_a_word_like_loaded_id_prints_as_itself_and_a_reference_that_matched_not
         cfg_dir
     )
     msg = _registry_error(cfg_dir)
-    assert "agent test-agent: scope_allowed entry 1 has no contract" in msg and MARK not in msg
+    assert "agent test-agent: scope_allowed entry 2 has no contract" in msg and MARK not in msg
     _yaml_edit("agents.yaml", lambda d: (d[0].update(scope_allowed=["lookup_record"]), d)[1])(
         cfg_dir
     )
@@ -2708,7 +2727,7 @@ def test_a_word_like_loaded_id_prints_as_itself_and_a_reference_that_matched_not
         cfg_dir
     )
     msg = _registry_error(cfg_dir)
-    assert "principal svc:test-agent: rights entry 1 names no action" in msg and MARK not in msg
+    assert "principal svc:test-agent: rights entry 2 names no action" in msg and MARK not in msg
 
 
 # ---- Issue 2: one reader for every file whose path comes from the configuration -----------------------------------
@@ -2982,7 +3001,7 @@ def test_a_tool_module_pin_must_be_a_sha256_and_none_of_it_is_printed(cfg_dir):
         assert not is_digest(bad) and digest_prefix(bad) == NOT_SHOWN
     _edit(cfg_dir, lambda d: d.update(tool_modules=["m"], tool_module_hashes={"m": MARK + "-pin"}))
     exc = _first_error(lambda: load_config(cfg_dir))
-    assert "tool_module_hashes: entries 0 are not a SHA-256" in str(exc), str(exc)
+    assert "tool_module_hashes: entries 1 are not a SHA-256" in str(exc), str(exc)
     assert MARK not in _everything_shown(exc) and exc.__cause__ is None
 
 
@@ -3095,7 +3114,8 @@ _K8S_ROWS = (
 def test_a_configured_kubernetes_namespace_is_never_printed_only_its_position():
     """C1 of round 9: `options.namespaces` of a tool manifest is configuration text, so no scope-probe message says it
     (a pasted word is a legal namespace name). Every message site of the probe is a row: the entry is said by its
-    position, and neither the word nor a secret-shaped value is in the message, the cause or the traceback."""
+    position, and neither the word nor a secret-shaped value is in the problem strings (what the cause and the traceback
+    hold is traced in tests/test_q8a1_f_string_trace.py)."""
     import json
 
     from hadavin_sdk.sources import scope_problems
@@ -3118,32 +3138,77 @@ def test_a_configured_kubernetes_namespace_is_never_printed_only_its_position():
             _asked.append(json.loads(body)["spec"]["namespace"])
             return json.dumps({"status": _s})
 
+        hexy = SECRET_SHAPES["hex32"]  # a secret-shaped text that is also a legal namespace name
         settings = KubernetesSettings(
-            api_url="https://k8s.example.invalid", namespaces=("calm-ns", PLAIN, PW)
+            api_url="https://k8s.example.invalid", namespaces=("calm-ns", PLAIN, hexy)
         )
         problems = KubernetesSource(fetch, settings).probe_scope()
         assert asked == [
             "calm-ns",
             PLAIN,
-            PW,
+            hexy,
         ]  # each namespace is still asked about, by its real name
         text = "\n".join(problems)
         assert "swordfish" not in text, f"a configured namespace is printed: {text}"
-        assert PW not in text, f"a configured namespace is printed: {text}"
+        assert hexy not in text, f"a configured namespace is printed: {text}"
         assert "calm-ns" not in text, f"a configured namespace is printed: {text}"
         for i in (1, 2, 3):
             assert f"namespace entry {i}: {said}" in problems, (i, said, problems)
         fed = "; ".join(scope_problems({"k8s": KubernetesSource(fetch, settings)}, {}))
-        assert "swordfish" not in fed and PW not in fed, f"a configured namespace is printed: {fed}"
+        assert "swordfish" not in fed and hexy not in fed, (
+            f"a configured namespace is printed: {fed}"
+        )
 
 
-def test_the_rules_problems_label_is_said_as_given_and_holds_no_namespace():
+def test_the_rules_problems_function_takes_a_position_and_never_a_label():
+    """Issue 3 of round 10: the function builds "namespace entry N" itself from a number counted from 1, so no caller
+    can hand it a namespace text (or any other text) to print."""
     from hadavin_sdk.sources.kubernetes import rules_problems
 
-    found = rules_problems(
-        "namespace entry 4", [{"verbs": ["patch"], "resources": ["deployments"]}]
-    )
-    assert found == ["namespace entry 4: write verb patch on ['deployments']"], found
+    rule = {"verbs": ["patch"], "resources": ["deployments"]}
+    assert rules_problems(4, [rule]) == ["namespace entry 4: write verb patch on ['deployments']"]
+    for label in (PW, PLAIN, "namespace prod", None, 1.0, True):
+        with pytest.raises(TypeError) as err:
+            rules_problems(label, [rule])  # type: ignore[arg-type]
+        assert str(err.value) == "rules_problems takes the position of the namespace as a number"
+        assert PW not in str(err.value) and PLAIN not in str(err.value)
+
+
+def test_a_kubernetes_namespace_that_is_not_a_dns_label_is_refused_by_position_never_by_text():
+    """Issue 4 of round 10: `namespaces` entries follow the Kubernetes naming rule (a DNS-1123 label). The refusal
+    is one fixed sentence with the positions (from 1); the text of the entry, a pasted credential or the empty text
+    included, is never in the error."""
+    from pydantic import ValidationError
+
+    from hadavin_sdk.sources.kubernetes import KubernetesSettings
+
+    url = "https://k8s.example.invalid"
+    long = "a" * 64
+    for bad in (
+        PW,
+        "",
+        "Prod",
+        "-x",
+        "x-",
+        "a.b",
+        "a b",
+        "a_b",
+        long,
+        SECRET_SHAPES["long-token"] + "_",
+    ):
+        with pytest.raises(ValidationError) as err:
+            KubernetesSettings(api_url=url, namespaces=("calm-ns", bad))
+        shown = str(
+            err.value
+        )  # (`errors()` holds the input by design; the loader never prints it, see _what)
+        assert "namespaces: entries 2 are not Kubernetes namespace names" in shown, shown
+        assert PW not in shown and long not in shown and "Prod" not in shown, shown
+        assert len(bad) < 8 or bad not in shown, shown  # a long text (a credential) is never echoed
+    for good in ("a", "calm-ns", "a" * 63, "0-9", PLAIN):
+        assert KubernetesSettings(api_url=url, namespaces=(good,)).namespaces == (good,)
+    with pytest.raises(ValidationError) as err:
+        KubernetesSettings(api_url=url, namespaces=(PW, "ok", "", PLAIN))
+    assert "entries 1, 3 are not" in str(err.value) and PW not in str(err.value)
 
 
 def test_a_tool_call_names_no_operation_host_or_method_the_manifest_did_not_define():
@@ -3207,24 +3272,71 @@ def test_the_platform_secret_probe_names_a_secret_by_position_and_never_by_name(
 # the ones in GUARD_EXEMPT_MODULES, each with the reason it holds no text taken from the client's configuration.
 GUARD_EXEMPT_MODULES = {
     "k1b/": "the incident-investigation kernel reads case bundles and cause lists, never the client configuration",
-    "store/migrate.py": "names of SQL files and database objects of this repository, not configuration text",
-    "store/migration_numbers.py": "names of SQL files of this repository, not configuration text",
     "testing/mutation.py": "test tooling that names test cases, not configuration text",
 }
-# Spellings that hold text taken from a configuration file (a name, an id, a key, a path, a value). The scan is a
-# list of KNOWN spellings: a value reached under a spelling not listed here is not seen (see the CHANGELOG).
+# Spellings that hold text taken from a configuration file (a name, an id, a key, a path, a value). Round 11 widened the
+# scan from a list of known spellings to a class: besides these spellings, (1) a variable that a `for` loop or a
+# comprehension binds and (2) an attribute of a settings-like object (`settings.x`, `cfg.x`, `options.x`, `entry.x`),
+# or a plural or `*_secret_name` attribute, are "derived" too. A message site that prints a derived value needs an
+# allowance with its reason, or the value goes through `shown_name`. NOT seen (said in the CHANGELOG): a value that
+# reaches a message through a variable the scan does not know (a plain rename such as `x = name`), and the text of a
+# library error that quotes a value; the open question q-q8a1-hide-ids (a `ConfigName` type) is the class-level fix.
 CONFIG_DERIVED = frozenset(
     {
         "name", "agent_id", "action", "key", "source", "module", "route", "field", "auth_mount",
         "token_env", "secret_id_env", "jwt_path", "role_id", "host", "operation", "method", "pin",
         "named", "ca_file", "ca_cert", "model_id", "path", "root", "case", "input_ref", "ref", "namespace", "ns",
+        "scope", "entry", "schema", "role", "project", "bucket", "region", "cluster", "tenant",
+        "names", "namespaces", "hosts", "keys", "paths", "ids",
     }
 )  # fmt: skip
 CONFIG_DERIVED_ATTRS = frozenset(
-    {"name", "id", "model_id", "field", "auth_mount", "token_env", "secret_id_env", "jwt_path", "role_id", "hostname", "ca_file", "ca_cert", "private_key_path", "pin", "dir", "root", "path", "input_ref"}
+    {"name", "id", "model_id", "field", "auth_mount", "token_env", "secret_id_env", "jwt_path", "role_id", "hostname", "ca_file", "ca_cert", "private_key_path", "pin", "dir", "root", "path", "input_ref", "namespace", "namespaces", "names", "hosts", "keys", "paths", "ids", "project_id", "region", "bucket", "cluster", "tenant", "schema", "role", "address", "mount", "path_prefix"}
 )  # fmt: skip
+CONFIG_DERIVED_SUFFIXES = ("_secret_name", "_secret_names", "_namespace", "_namespaces")
+SETTINGS_LIKE = frozenset(
+    {"settings", "cfg", "config", "options", "opts", "spec", "entry", "params", "conf"}
+)
 CONFIG_DERIVED_KEYS = frozenset({"id", "input_ref", "dir", "name", "path"})  # x["id"], x.get("id")
-LOG_METHODS = frozenset({"warning", "info", "error", "debug", "exception", "warn"})
+# a call of one of these returns (part of) its argument: `sorted(names)`, `str(x)`, `", ".join(names)`
+PASS_THROUGH_CALLS = frozenset(
+    {
+        "sorted",
+        "list",
+        "tuple",
+        "set",
+        "frozenset",
+        "reversed",
+        "min",
+        "max",
+        "str",
+        "repr",
+        "format",
+        "ascii",
+    }
+)
+TEXT_METHODS = frozenset(
+    {
+        "lower",
+        "upper",
+        "strip",
+        "lstrip",
+        "rstrip",
+        "title",
+        "casefold",
+        "replace",
+        "removeprefix",
+        "removesuffix",
+        "decode",
+        "encode",
+        "hex",
+        "join",
+        "format",
+    }
+)
+LOG_METHODS = frozenset(
+    {"warning", "info", "error", "debug", "exception", "warn", "critical", "fatal"}
+)
 # (module, source of the f-string, concatenation or call) pairs that are allowed, each with the reason.
 _FILTERED = "the variable was set from shown_name / _named on an earlier line"
 _CODE_NAME = "the spelling is a constant or a keyword of the code, not a value read from a file"
@@ -3232,6 +3344,35 @@ _NOT_TEXT = "a URL, a dictionary key or a file name being built, never put in a 
 _OPERATOR = "an operator's own command-line key file (not a value read from the configuration file)"
 _HOST = "a hostname the code already resolved or tried to reach: a bare hostname is a defining id (open question q-q8a1-hide-ids), and a login or path in it was refused earlier by safe_url"
 _REQUEST = "text of a request or of the code's own data, not of the configuration"
+_FIELD_NAMES = "the name of a field of an action's own input schema, said as a field name (the CHANGELOG lists names of fields as not covered; question q-q8a1-hide-ids)"
+_LITERAL_KIND = "the kind is a Literal of the contract model (none, manual or http): one of three words written in code"
+_KIND_CODE = "a capability or kind name that was checked against the registered kinds (or a Literal) before this line: a word written in code"
+_CARD = "a button id or a line of an approval card built from the code's own label tables and call ids, sent to the approval channel"
+_CHAR = "one character or a seed string built by the code while it makes a text safe; no configured name"
+_GENERATED_ID = "an approval id, event id or row number that the code generated (a hash or a counter), not text from a file"
+_NUMBER = "a number (a count, a line number, a number of days)"
+_ANCHOR_STORE = "an object name read from the audit anchor store, which only this package writes; not text of the configuration"
+_POSITION = (
+    "a position number (counted from 1) or a list of them; the text of the entry is never said"
+)
+_HOST_LIST = "a host name for the suggested egress list (a returned value, not a message) built from a region or bucket that a pattern checked; tests/test_q8a1_f_string_trace.py; a host name as an id is question q-q8a1-hide-ids"
+_LOADED_AGENT = "the id of an agent the registry loaded and the operator named on the command line, printed to that operator"
+_SENTENCES = "prints or joins sentences the code already built (each went through shown_name, a position or a fixed sentence)"
+_FILTER_ITSELF = "the config error text builder: the one choke point that decides what may be shown"
+_CODE_TABLE = "keys found in a table written in code (the renamed keys), so words of the code"
+_PATTERN = "a regular expression or a placeholder label built by the code from its own tables"
+_MODEL_PROMPT = "text sent to the judge model, not a message to a person; `source` is the code's own label of where the screened text came from"
+_K1B_FILE = "a file name inside the case-bundle output folder of the incident kernel, which the code writes; not the client configuration"
+_FIXED = "a fixed sentence with the error class (round 11): the library's own text is not passed on"
+_URL_BUILD = "a URL for the client library built from a region or resource that a pattern checked; never put in a message (tests/test_q8a1_f_string_trace.py)"
+_FILTERED_LIST = "the name is set from shown_name / _named earlier in the function (checked by reading, round 11)"
+_EVIDENCE_ID = "an evidence id built from the namespace the caller asked for, which must equal a configured namespace the model supplied: a record, not a message or a log (the CHANGELOG says so; question q-q8a1-hide-ids)"
+_ROLE_CLI = "a database role the operator typed on the command line of `migrate`, printed only after the plain-name pattern accepted it, or a name read from the database or the migration files of this repository"
+_REPO_NAMES = "a file, table, column or privilege name of this repository's own migrations, or read from the database; not text of the configuration file"
+_SCHEMA_DB = "the schema is `current_schema()` read from the database inside the transaction, printed in a recipe for a database administrator after a plain-name pattern (tests/test_q8a1_f_string_trace.py)"
+_SQL = (
+    "a SQL statement composed by the database driver (identifiers quoted), never put in a message"
+)
 GUARD_ALLOWED = {
     ("app.py", "f'configure backends.{name} in pilot and prod'"): _CODE_NAME,
     ("app.py", "f'{name}= is for tests; {fix}'"): _CODE_NAME,
@@ -3271,8 +3412,8 @@ GUARD_ALLOWED = {
     ("runtime/tick.py", "_LOG.error('step=%s error_kind=%s message=tick_state not saved', step.name, type(exc).__name__)"): "the step name is written in code",
     ("sources/kubernetes.py", "f'/apis/apps/v1/namespaces/{ns}/deployments'"): _NOT_TEXT,
     ("sources/kubernetes.py", "f'/api/v1/namespaces/{ns}/events'"): _NOT_TEXT,
-    ("sources/kubernetes.py", "f\"deployment/{scope}/{meta.get('name', '?')}\""): "the name of an object in the cluster's own reply, used as an evidence label",
-    ("sources/kubernetes.py", "f\"event/{scope}/{meta.get('name', '?')}\""): "the name of an object in the cluster's own reply, used as an evidence label",
+    ("sources/kubernetes.py", "f\"deployment/{scope}/{meta.get('name', '?')}\""): "an evidence id: the name is the cluster's own reply and `{scope}` is the namespace the caller asked for (it must equal a configured namespace); a record handed to the investigation, not a message (open owner question q-q8a1-hide-ids)",
+    ("sources/kubernetes.py", "f\"event/{scope}/{meta.get('name', '?')}\""): "an evidence id: the name is the cluster's own reply and `{scope}` is the namespace the caller asked for (it must equal a configured namespace); a record handed to the investigation, not a message (open owner question q-q8a1-hide-ids)",
     ("store/memory.py", "NotFound(key)"): _REQUEST,
     ("store/memory.py", "f'decision exists: {key}'"): _REQUEST,
     ("store/postgres.py", "f'{key} = %s'"): "a column name written in code, put in a query, not in a message",
@@ -3280,47 +3421,224 @@ GUARD_ALLOWED = {
     ("tools.py", "f'{where}: key {key!r} is not available until {phase}'"): "key is one of the code's own _DEFERRED_KEYS",
     ("registry.py", "f'{agent_id}.jsonl'"): _NOT_TEXT,
     ("registry.py", "f'{agent_id}.yaml'"): _NOT_TEXT,
-    ("registry.py", "f'principal {name}: rights entry {i} names no action'"): _FILTERED,
-    ("registry.py", "f'principal {name}: approver_of entry {i} names no chain'"): _FILTERED,
     ("config.py", "f'evidence.{name}: {len(bad)} entries are not ports'"): _CODE_NAME,
     ("deferred.py", "f'agent {a_name}: level act for {name} arrives in Phase 4'"): _FILTERED,
     ("deferred.py", "f'agent {a_name}: suggest for {name} cannot load before K6 and K8'"): _FILTERED,
     ("deferred.py", "f'agent {a_name}: {name} is a none contract and can never be suggest'"): _FILTERED,
     ("deferred.py", "f'agent {a_name}: suggest for sign_off action {name} arrives in Phase 3'"): _FILTERED,
+    # --- round 11: the wider guard (loop variables, settings attributes, join, +=, any logger) found these sites
+    ('actions/contract.py', "errs += [f'missing {k}' for k in schema.get('required', []) if k not in value]"): _FIELD_NAMES,
+    ('actions/contract.py', "errs += [f'unexpected {k}' for k in value if k not in props]"): _FIELD_NAMES,
+    ('actions/contract.py', "errs += [f'{k}: {e}' for e in schema_errors(sub, value[k])]"): _FIELD_NAMES,
+    ('actions/executor.py', "f'executor kind {spec.kind} is not run by Hadavin'"): _LITERAL_KIND,
+    ('app.py', 'f"environment {cfg.environment}: refused: {\', \'.join(static)}"'): _CODE_NAME,
+    ('app.py', "f'tool:{n}'"): _NOT_TEXT,
+    ('app.py', "f'{c}: {s.kind} auth token (the default; set auth: kubernetes (recommended) or auth: approle)'"): _KIND_CODE,
+    ('approvals/cards.py', "f'- {c}'"): _CARD,
+    ('approvals/cards.py', "f'label_{k}'"): _CARD,
+    ('approvals/cards.py', "f'label_{x}'"): _CARD,
+    ('approvals/cards.py', "f'label|{plan.run_id}|{x}'"): _CARD,
+    ('approvals/cards.py', "f'label|{run_id}|{k}'"): _CARD,
+    ('approvals/gate.py', "'\\u200b' + c"): _CHAR,
+    ('approvals/gate.py', "'\\u200b' + line"): _CHAR,
+    ('approvals/requests.py', "_LOG.warning('approval %s: expiry follow-up failed (%s)', req.approval_id, type(exc).__name__)"): _GENERATED_ID,
+    ('approvals/requests.py', "f'Approval {req.approval_id} expired with no decision. Nothing was run.'"): _GENERATED_ID,
+    ('approvals/slack_channel.py', "'\\x00seed' + ph"): _CHAR,
+    ('audit/anchor_gcs.py', "f'audit anchor gcs_retention_lock: the bucket needs a retention policy of at least {settings.retain_days} day(s)'"): _NUMBER,
+    ('audit/chain.py', '\'\\nCREATE TABLE audit_entries (seq INTEGER PRIMARY KEY, at TEXT NOT NULL, run_id TEXT NOT NULL,\\n    kind TEXT NOT NULL, body TEXT NOT NULL, prev TEXT NOT NULL, hash TEXT NOT NULL,\\n    event_id TEXT NOT NULL UNIQUE);\\nCREATE TABLE audit_checkpoints (seq INTEGER PRIMARY KEY, hash TEXT NOT NULL, signature TEXT NOT NULL,\\n    alg TEXT, key_label TEXT);\\nCREATE TABLE audit_outbox (event_id TEXT PRIMARY KEY, body TEXT NOT NULL);\\nCREATE INDEX audit_entries_by_run ON audit_entries (run_id, seq);\\n\' + \'\'.join((f"CREATE TRIGGER {t}_no_{op.lower()} BEFORE {op} ON {t} BEGIN SELECT RAISE(ABORT, \'the audit log is append-only\'); END;\\n" for t in (\'audit_entries\', \'audit_checkpoints\') for op in (\'UPDATE\', \'DELETE\')))'): _GENERATED_ID,
+    ('audit/chain.py', "f'anchor object {names[i]!r} holds seq {seq}: the name does not match'"): _ANCHOR_STORE,
+    ('audit/chain.py', "f'anchor {seq} has no checkpoint here: the database lost history'"): _GENERATED_ID,
+    ('audit/chain.py', "f'checkpoint {seq} differs from its anchor: the history was rewritten'"): _GENERATED_ID,
+    ('audit/chain.py', "f'checkpoint {seq} has an invalid signature'"): _GENERATED_ID,
+    ('audit/chain.py', "f'checkpoint {seq} was never anchored'"): _GENERATED_ID,
+    ('audit/chain.py', "f'checkpoint {seq} was signed over a different history'"): _GENERATED_ID,
+    ('backends/factory.py', "f'backend {capability} {settings.kind!r} needs: pip install hadavin-sdk[{entry.extra}]'"): _KIND_CODE,
+    ('backends/factory.py', "f'backend {capability} {settings.kind!r}'"): _KIND_CODE,
+    ('backends/platform_secrets.py', "f'{type(s).__name__}.{k}'"): _POSITION,
+    ('backends/platform_secrets.py', "f'{word} secret {group.index(name) + 1} of {len(group)} (sorted by name)'"): _POSITION,
+    ('backends/table.py', "f'aiplatform.{region}.rep.googleapis.com'"): _HOST_LIST,
+    ('backends/table.py', "f'{region}-aiplatform.googleapis.com'"): _HOST_LIST,
+    ('backends/table.py', "f'{s.bucket}.s3'"): _HOST_LIST,
+    ('backends/table.py', "f'{service}.{region}.amazonaws.com'"): _HOST_LIST,
+    ('cli.py', "f'PROBLEM: {problem}'"): _SENTENCES,
+    ('cli.py', "f'warning: {w}'"): _SENTENCES,
+    ('config.py', "'; '.join([*(str(r) for r in renamed), *others])"): _CODE_TABLE,
+    ('config.py', "ConfigError('; '.join((f'{k} moved to {MOVED[k]}' for k in moved)))"): _CODE_TABLE,
+    ('config.py', 'f"tool_module_hashes: entries {\', \'.join((str(i) for i in bad))} are not a SHA-256 (64 lower-case hex digits)"'): _POSITION,
+    ('config.py', "f'a mapping key must be a plain value (line {key_node.start_mark.line + 1})'"): _NUMBER,
+    ('config.py', "f'backends.detector {d.kind}: its route is not in routes'"): _KIND_CODE,
+    ('config.py', "f'duplicate key (line {key_node.start_mark.line + 1})'"): _NUMBER,
+    ('config.py', "f'{c}: {s.kind}'"): _KIND_CODE,
+    ('config.py', 'lines += [error_where(e), f"  {_what(e)} [type={e[\'type\']}]"]'): _FILTER_ITSELF,
+    ('config.py', "refused += [f'{c}: {s.kind}' for c, s in b.entries() if (c, s.kind) in NOT_PROD]"): _KIND_CODE,
+    ('deferred.py', "f'agent {a_name}: data_class {a.data_class} is not available until Phase 3'"): _KIND_CODE,
+    ('deferred.py', "f'{where}: key {k!r} is not available until {DEFERRED_KEYS[k]}'"): _KIND_CODE,
+    ('evals.py', "f'gate k must be at least 1, got {k}'"): _NUMBER,
+    ('guard/injection.py', "'+'.join((v.backend for v in flagged or verdicts))"): _PATTERN,
+    ('guard/injection.py', "'|'.join((f'(?:{p})' for p in _PATTERNS))"): _PATTERN,
+    ('guard/judge.py', '_ASK.format(source=source)'): _MODEL_PROMPT,
+    ('guard/redact.py', "f'(?:{_SP}*={_SP}*|{_SP}+){_quote}[^{_quote}\\\\n]{{256}}[^{_quote}\\\\n]*{_quote}?'"): _PATTERN,
+    ('guard/redact.py', "f'<{label}_{self.counters[label]}>'"): _PATTERN,
+    ('guard/runmap.py', 'pairs += [(ph, n) for ph, d in pairs if (n := fits_after_nfkc(neutralise(d))) != d and len(n) >= 4]'): _PATTERN,
+    ('hashing.py', "f'cannot read: {rel}'"): _K1B_FILE,
+    ('hashing.py', "f'not a file: {rel}'"): _K1B_FILE,
+    ('llm/anthropic.py', 'f"backend llm \'anthropic\' ({settings.platform}): the client refused the settings ({type(exc).__name__}); a variable such as ANTHROPIC_FOUNDRY_RESOURCE or ANTHROPIC_BASE_URL set beside the explicit base URL is the usual cause"'): _FIXED,
+    ('llm/anthropic.py', "f'https://aiplatform.{region}.rep.googleapis.com/v1'"): _URL_BUILD,
+    ('llm/anthropic.py', "f'https://{region}-aiplatform.googleapis.com/v1'"): _URL_BUILD,
+    ('llm/anthropic.py', "f'https://{settings.resource}.services.ai.azure.com/anthropic/'"): _URL_BUILD,
+    ('registry.py', "f'action {shown_name(c.id)}: {field_name} is outside check_modules'"): _CODE_NAME,
+    ('registry.py', "f'llm_{k}'"): _NOT_TEXT,
+    ('registry.py', "out += [f'action {shown_name(c.id)}: {p}' for p in schema_problems(c.input_schema)]"): _SENTENCES,
+    ('registry.py', "out += [f'principal {name}: approver_of entry {i} names no chain' for i, chain in enumerate(p.approver_of, start=1) if chain not in chains]"): _FILTERED_LIST,
+    ('registry.py', "out += [f'principal {name}: rights entry {i} names no action' for i, right in enumerate(p.rights, start=1) if right not in contracts]"): _FILTERED_LIST,
+    ('registry.py', "problems += [f'{where}: tool {shown_name(spec.name)}: {p}' for p in schema_problems(spec.input_schema)]"): _SENTENCES,
+    ('registry.py', "problems += [f'{where}: {p}' for p in spec_problems(spec, config.tool_modules, config.evidence.cluster_suffixes)]"): _SENTENCES,
+    ('runtime/evidence.py', "'(?:(?<![\\\\w.\\\\-/:@])|(?<=://)|(?<=[A-Za-z]:)|(?<=[A-Za-z]=)' + ''.join((f'|(?<=\\\\b{k}/)' for k in _KUBECTL_KINDS)) + ')'"): _PATTERN,
+    ('runtime/tick.py', "f'stuck {state.value}'"): _CODE_NAME,
+    ('sources/__init__.py', "out += [f'source {shown_name(key, sources)}: {p}' for p in found]"): _SENTENCES,
+    ('sources/kubernetes.py', 'f"namespaces: entries {\', \'.join((str(i) for i in bad))} are not Kubernetes namespace names (lower-case letters, digits and \'-\', at most 63 characters, starting and ending with a letter or digit)"'): _POSITION,
+    ('sources/kubernetes.py', "f'incomplete/{scope}/{kind}'"): _EVIDENCE_ID,
+    ('sources/kubernetes.py', "f'log/{scope}/{pod}#cut'"): _EVIDENCE_ID,
+    ('sources/kubernetes.py', "f'log/{scope}/{pod}#limit'"): _EVIDENCE_ID,
+    ('sources/kubernetes.py', "f'log/{scope}/{pod}#{i}'"): _EVIDENCE_ID,
+    ('sources/kubernetes.py', "f'more than {self._cfg.page_size * self._cfg.max_pages} {kind}; the list is cut'"): _CODE_NAME,
+    ('store/migrate.py', "extra += [f'{name}:{p}' for p in privs if p not in allowed and db.execute(q, (role, name, p)).fetchone()[0]]"): _ROLE_CLI,
+    ('store/migrate.py', 'f"{option}: not a plain database role name (lower-case letters, digits and \'_\', starting with a letter or \'_\', at most 63 characters)"'): _ROLE_CLI,
+    ('store/migrate.py', "f'GRANTS names {name}, which no migration creates'"): _REPO_NAMES,
+    ('store/migrate.py', "f'GRANTS says {name} is a {grant.kind}; the migrations create a {created[name]}'"): _REPO_NAMES,
+    ('store/migrate.py', "f'{name}_{col.lower()}_seq'"): _REPO_NAMES,
+    ('store/migrate.py', "f'{p.name}: not named NNNN_<name>.sql'"): _REPO_NAMES,
+    ('store/migrate.py', "f'{path.name}: statement the guard does not read: {snippet!r}'"): _REPO_NAMES,
+    ('store/migrate.py', "f'{role}: can CREATE in schema {schema}'"): _ROLE_CLI,
+    ('store/migrate.py', "f'{role}: can {p} sequence {name}'"): _ROLE_CLI,
+    ('store/migrate.py', "f'{role}: can {p} {name}'"): _ROLE_CLI,
+    ('store/migrate.py', "f'{role}: can {p} {name}.{col}'"): _ROLE_CLI,
+    ('store/migrate.py', "f'{role}: is a superuser or can create roles or databases or bypass row security'"): _ROLE_CLI,
+    ('store/migrate.py', "f'{role}: owns {name}'"): _ROLE_CLI,
+    ('store/migrate.py', "f'{role}: the role does not exist'"): _ROLE_CLI,
+    ('store/migrate.py', "problems += [f'{n} ({k}) is created by a migration but is not in GRANTS' for n, k in sorted(created.items()) if n not in GRANTS]"): _REPO_NAMES,
+    ('store/migrate.py', "sql.SQL('GRANT SELECT ({}) ON {} TO {}').format(sql.SQL(', ').join((sql.Identifier(c) for c in cols)), rel, role)"): _SQL,
+    ('store/migrate.py', "sql.SQL('GRANT USAGE ON SCHEMA {} TO {}').format(sql.Identifier(schema), role)"): _SQL,
+    ('store/migrate.py', "sql.SQL('GRANT {} ON {} {} TO {}').format(sql.SQL(wanted), what, rel, role)"): _SQL,
+    ('store/migrate.py', "sql.SQL('REVOKE ALL ON {} {} FROM {}').format(what, rel, role)"): _SQL,
+    ('store/migrate.py', "unread += [f'{path.name}: {u.group(0)[:40]!r} is not read by the guard' for u in _UNREAD.finditer(text)]"): _REPO_NAMES,
+    ('store/migration_numbers.py', 'f"{names} {verb} applied out of order: the number is at or below \'{_esc(highest)}\', which this database has already applied. Do not rename the file. What to do: a database administrator applies it by hand, as the database user that runs migrations, while no migrate command is running. "'): _REPO_NAMES,
+    ('store/migration_numbers.py', 'f\'SET search_path TO "{schema}";\''): _SCHEMA_DB,
+    ('store/migration_numbers.py', "f'{name}: not a regular file (a directory, or a link that points nowhere)'"): _REPO_NAMES,
+    ('store/migration_numbers.py', "f'{name}: not named NNNN_<name>.sql'"): _REPO_NAMES,
+    ('store/migration_numbers.py', "f'{name}: number 0000 is not allowed, numbers start at 0001'"): _REPO_NAMES,
+    ('store/postgres.py', "query += sql.SQL(' ON CONFLICT ({}) DO UPDATE SET {}').format(sql.Identifier(upsert_on), sql.SQL(', ').join((sql.SQL('{0} = EXCLUDED.{0}').format(c) for c in cols)))"): _SQL,
+    ('store/postgres.py', "sql.SQL('INSERT INTO kill_switch ({}) VALUES ({}) ON CONFLICT (id) DO UPDATE SET {}').format(sql.SQL(', ').join(cols), sql.SQL(', ').join(sql.Placeholder() * len(row)), sql.SQL(', ').join((sql.SQL('{0} = EXCLUDED.{0}').format(c) for c in cols[1:])))"): _SQL,
 }  # fmt: skip
 
 
-def _config_derived(expr) -> bool:
-    """True when the expression is text from a configuration file under a known spelling: a name or attribute, a
-    subscript or `.get` of one (or with a key such as "id"), `str()` / `repr()` / `format()` of one, a `+` or `%` that
-    holds one. A call of anything else (`shown_name`, `_named`) is the filter and is not derived."""
+def _chain(expr) -> list[str]:
+    """The names along an attribute chain, outermost first: `a.b.c` -> ["c", "b", "a"]; empty if it is not a chain."""
+    import ast
+
+    out = []
+    while isinstance(expr, ast.Attribute):
+        out.append(expr.attr)
+        expr = expr.value
+    if isinstance(expr, ast.Name):
+        out.append(expr.id)
+    return out
+
+
+def _bound_names(fn) -> frozenset[str]:
+    """Names inside one function (or the module body) that a `for` loop or a comprehension binds (not a counter from
+    `enumerate` or `range`): the loop walks a collection, and what it holds may be text from a configuration file."""
+    import ast
+
+    def own(root):  # the nodes of this function, not those of a function defined inside it
+        todo = list(ast.iter_child_nodes(root))
+        while todo:
+            n = todo.pop()
+            yield n
+            if not isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                todo.extend(ast.iter_child_nodes(n))
+
+    names: set[str] = set()
+    for n in own(fn):
+        if isinstance(n, (ast.For, ast.AsyncFor, ast.comprehension)):
+            call = n.iter if isinstance(n.iter, ast.Call) else None
+            counter = (
+                call is not None
+                and isinstance(call.func, ast.Name)
+                and call.func.id in {"range", "enumerate"}
+            )
+            targets = n.target.elts if isinstance(n.target, ast.Tuple) else [n.target]
+            for k, t in enumerate(targets):
+                if isinstance(t, ast.Name) and not (
+                    counter and (call.func.id == "range" or k == 0)
+                ):
+                    names.add(t.id)
+    return frozenset(names)
+
+
+def _config_derived(expr, bound=frozenset()) -> bool:
+    """True when the expression is text from a configuration file: a known spelling, a variable in `bound` (a loop
+    variable), an attribute of a settings-like object or a plural or `*_secret_name` one, a subscript or `.get` of one (or with a key such as "id"),
+    `str()` / `repr()` / `format()` / `sorted()` / `", ".join()` of one, a text method of one, a `+`, `%` or conditional
+    that holds one, a collection or a comprehension of one. A call of anything else (`shown_name`, `_named`) is the
+    filter and is not derived."""
     import ast
 
     if isinstance(expr, ast.FormattedValue):
-        return _config_derived(expr.value)
+        spec = expr.format_spec
+        number = (
+            isinstance(spec, ast.JoinedStr)
+            and len(spec.values) == 1
+            and _is_text(spec.values[0])
+            and re.fullmatch(r"[0-9.,_<>^+ -]*[dfxXeEgGbo%]", spec.values[0].value) is not None
+        )  # `{n:04d}` and `{x:.2f}` can only say a number
+        return not number and _config_derived(expr.value, bound)
+    if isinstance(expr, ast.JoinedStr):
+        return any(_config_derived(p, bound) for p in expr.values)
+    if isinstance(expr, ast.Starred):
+        return _config_derived(expr.value, bound)
     if isinstance(expr, ast.Name):
-        return expr.id in CONFIG_DERIVED
+        return expr.id in CONFIG_DERIVED or expr.id in bound
     if isinstance(expr, ast.Attribute):
-        return expr.attr in CONFIG_DERIVED_ATTRS
+        chain = _chain(expr)
+        return (
+            expr.attr in CONFIG_DERIVED_ATTRS
+            or expr.attr.endswith(CONFIG_DERIVED_SUFFIXES)
+            or any(c in SETTINGS_LIKE for c in chain)
+            or (bool(chain) and chain[-1] in bound)
+            or (not chain and _config_derived(expr.value, bound))
+        )
     if isinstance(expr, ast.Subscript):
         key = expr.slice
-        return _config_derived(expr.value) or (
+        return _config_derived(expr.value, bound) or (
             isinstance(key, ast.Constant) and key.value in CONFIG_DERIVED_KEYS
         )
     if isinstance(expr, ast.Call):
         f = expr.func
-        if isinstance(f, ast.Name) and f.id in {"str", "repr", "format"}:
-            return any(_config_derived(a) for a in expr.args)
+        if isinstance(f, ast.Name) and f.id in PASS_THROUGH_CALLS:
+            return any(_config_derived(a, bound) for a in expr.args)
         if isinstance(f, ast.Attribute) and f.attr == "get":
-            return _config_derived(f.value) or any(
+            return _config_derived(f.value, bound) or any(
                 isinstance(a, ast.Constant) and a.value in CONFIG_DERIVED_KEYS
                 for a in expr.args[:1]
             )
+        if isinstance(f, ast.Attribute) and f.attr in TEXT_METHODS:
+            return _config_derived(f.value, bound) or any(
+                _config_derived(a, bound) for a in expr.args
+            )
         return False
     if isinstance(expr, ast.BinOp):
-        return _config_derived(expr.left) or _config_derived(expr.right)
-    if isinstance(expr, ast.Tuple):
-        return any(_config_derived(e) for e in expr.elts)
+        if not isinstance(
+            expr.op, (ast.Add, ast.Mod)
+        ):  # `-`, `*`, `//` ... make a number, not text
+            return False
+        return _config_derived(expr.left, bound) or _config_derived(expr.right, bound)
+    if isinstance(expr, ast.IfExp):
+        return _config_derived(expr.body, bound) or _config_derived(expr.orelse, bound)
+    if isinstance(expr, (ast.Tuple, ast.List, ast.Set)):
+        return any(_config_derived(e, bound) for e in expr.elts)
+    if isinstance(expr, (ast.GeneratorExp, ast.ListComp, ast.SetComp)):
+        return _config_derived(expr.elt, bound)
     return False
 
 
@@ -3331,38 +3649,79 @@ def _is_text(expr) -> bool:
 
 
 def _message_nodes(tree):
-    """Every place that builds message text: an f-string, `"..." % x`, `"...".format(x)`, `"..." + x`, `raise X(x)`
-    and an argument of a log call. Yields (node, derived_text_found)."""
+    """Every place that builds message text: an f-string, `x % y` and `x.format(y)` (a text or a variable template),
+    `"..." + x`, `msg += x`, a `", ".join(x)`, `raise X(x)` and an argument of a call of a log method on ANY receiver
+    (not only one named `log`). Yields the node of each site that holds derived text; a site inside a site that was
+    already yielded is part of it."""
     import ast
 
+    scopes = [tree] + [
+        n
+        for n in ast.walk(tree)
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda))
+    ]
+    bound_of: dict[int, frozenset[str]] = {}
+    for (
+        scope
+    ) in scopes:  # the outer scope first, so an inner function also sees what its outer loops bind
+        names = _bound_names(scope)
+        for n in ast.walk(scope):
+            bound_of[id(n)] = bound_of.get(id(n), frozenset()) | names
+    inside: set[int] = set()
     for node in ast.walk(tree):
+        if id(node) in inside:
+            continue
+        b = bound_of.get(id(node), frozenset())
         hit, site = False, node
         if isinstance(node, ast.JoinedStr):
-            hit = any(isinstance(p, ast.FormattedValue) and _config_derived(p) for p in node.values)
-        elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mod) and _is_text(node.left):
-            hit = _config_derived(node.right)
+            hit = any(
+                isinstance(p, ast.FormattedValue) and _config_derived(p, b) for p in node.values
+            )
+        elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mod):
+            numeric = isinstance(node.left, ast.Constant) and not _is_text(node.left)
+            hit = not numeric and _config_derived(node.right, b)
         elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
-            hit = (_is_text(node.left) or _is_text(node.right)) and _config_derived(node)
+            hit = (_is_text(node.left) or _is_text(node.right)) and _config_derived(node, b)
+        elif isinstance(node, ast.AugAssign) and isinstance(node.op, ast.Add):
+            hit = _config_derived(node.value, b)
         elif (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Attribute)
             and node.func.attr == "format"
-            and _is_text(node.func.value)
         ):
-            hit = any(_config_derived(a) for a in [*node.args, *(k.value for k in node.keywords)])
+            hit = any(
+                _config_derived(a, b) for a in [*node.args, *(k.value for k in node.keywords)]
+            )
+        elif (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "join"
+        ):
+            hit = (
+                _is_text(node.func.value)
+                and node.func.value.value.strip() != ""
+                and any(_config_derived(a, b) for a in node.args)
+            )
         elif isinstance(node, ast.Raise) and isinstance(node.exc, ast.Call):
             # a `%`, `+` or f-string argument is its own site below; here only the bare value
-            hit = any(_config_derived(a) for a in node.exc.args if not isinstance(a, ast.BinOp))
+            hit = any(
+                _config_derived(a, b)
+                for a in node.exc.args
+                if not isinstance(a, (ast.BinOp, ast.JoinedStr))
+            )
             site = node.exc  # the call is the unit that is allowed by its source text
         elif (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Attribute)
             and node.func.attr in LOG_METHODS
-            and isinstance(node.func.value, ast.Name)
-            and node.func.value.id.lower().endswith("log")
         ):
-            hit = any(_config_derived(a) for a in node.args[1:])
+            hit = any(
+                _config_derived(a, b)
+                for a in node.args
+                if not isinstance(a, (ast.BinOp, ast.JoinedStr))
+            )
         if hit:
+            inside.update(id(n) for n in ast.walk(site) if n is not site)
             yield site
 
 
@@ -3445,6 +3804,64 @@ def test_the_guard_finds_each_way_of_printing_a_configured_name_and_a_stale_allo
     assert stale == ["m.py: A(f'never printed {name}')", "exempt gone/: no such module"], stale
 
 
+_PLANTED_FAULTS = {  # one planted fault per shape (round 10, Issue 1): each alone must be found by the guard
+    "a loop variable in an f-string": 'for entry in options:\n    raise A(f"source {entry} refused")',
+    "a loop variable under a name the list does not know": 'for thing in options:\n    raise A(f"x {thing}")',
+    "a comprehension variable": 'raise A("; ".join(f"{thing} is bad" for thing in options))',
+    "an attribute of a settings object": 'raise A(f"x {settings.region}")',
+    "an attribute of a settings object two levels deep": 'raise A(f"x {self.settings.anything}")',
+    "a plural attribute": 'raise A(f"x {self.namespaces}")',
+    "a secret-name attribute": 'raise A(f"x {self.api_key_secret_name}")',
+    "join of a configured list": 'raise A(", ".join(names))',
+    "join of a sorted configured list": 'msg = "; ".join(sorted(names))',
+    "sorted inside an f-string": 'raise A(f"x {sorted(names)}")',
+    "an augmented assignment": 'msg = "x "\nmsg += name',
+    "a percent with a variable template": 'raise A(template % name)',
+    "format with a variable template": 'raise A(template.format(name))',
+    "a logger not named log": 'lg.warning("x %s", host)',
+    "a logger of another name, with a loop variable": 'for p in options:\n    audit_trail.info("x %s", p)',
+    "a loop variable inside an inner function of a loop": 'for scope in options:\n    raise A(f"x {scope!r}")',
+}  # fmt: skip
+_CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be found
+    "shown_name in a loop": 'for entry in options:\n    raise A(f"source {shown_name(entry)}")',
+    "a position counted by enumerate": 'for i, entry in enumerate(options, start=1):\n    raise A(f"entry {i}")',
+    "a range counter": 'for i in range(3):\n    raise A(f"try {i}")',
+    "a number with a number format": 'for n in options:\n    raise A(f"{n:04d} is missing")',
+    "a loop variable of another function": 'def f():\n    for entry in a:\n        pass\ndef g(entry):\n    raise A("fixed")',
+    "an empty-text join": 'x = "".join(c for c in options)',
+    "a fixed sentence": 'raise A("a fixed sentence")',
+    "the class name of an error": 'raise A(f"failed ({type(exc).__name__})")',
+}  # fmt: skip
+
+
+@pytest.mark.parametrize("shape", sorted(_PLANTED_FAULTS))
+def test_the_guard_finds_each_planted_fault_alone(shape):
+    """One planted fault per shape the round-10 reviewers named as missed (and the shapes of round 8): the guard
+    reports exactly this one site, so a guard that lost a shape fails here by the shape's name."""
+    found, _ = _guard_violations({"m.py": _PLANTED_FAULTS[shape]}, allowed={}, exempt={})
+    assert len(found) == 1, (shape, found)
+
+
+@pytest.mark.parametrize("form", sorted(_CLEAN_FORMS))
+def test_the_guard_passes_the_filtered_and_code_owned_forms(form):
+    found, _ = _guard_violations({"m.py": _CLEAN_FORMS[form]}, allowed={}, exempt={})
+    assert found == [], (form, found)
+
+
+def test_the_guard_reads_the_two_migration_modules_and_every_other_module_but_the_exempt_ones():
+    """Issue 2 of round 10: `store/migrate.py` and `store/migration_numbers.py` were exempt; a configured name
+    printed there fails the guard like anywhere else. Only the incident kernel folder and the mutation test tooling are exempt."""
+    assert not any(e.startswith("store/") for e in GUARD_EXEMPT_MODULES), GUARD_EXEMPT_MODULES
+    assert set(GUARD_EXEMPT_MODULES) == {"k1b/", "testing/mutation.py"}
+    found, _ = _guard_violations(
+        {"store/migrate.py": 'raise A(f"role {role} refused")'}, allowed={}, exempt={}
+    )
+    found_real, _ = _guard_violations(
+        {"store/migrate.py": 'raise A(f"role {role} refused")'}, exempt=GUARD_EXEMPT_MODULES
+    )
+    assert len(found) == 1 and len(found_real) == 1
+
+
 # ---- Issue 7: a library error out of a validator, and a configuration that cannot be read ---------------------------
 def test_a_decimal_error_out_of_a_validator_is_a_fixed_sentence_config_error(cfg_dir, monkeypatch):
     import dataclasses
@@ -3522,7 +3939,7 @@ def test_a_chain_that_no_principal_names_keeps_channel_native_approver_ids(cfg_d
     _yaml_edit("principals.yaml", lambda d: ([p.update(approver_of=[]) for p in d], d)[1])(cfg_dir)
     load_registry(load_config(cfg_dir))  # nothing refused
     _yaml_edit("principals.yaml", lambda d: (d[1].update(approver_of=["chain-abc"]), d)[1])(cfg_dir)
-    assert "approver_ids entry 0 is not a person" in _registry_error(cfg_dir)
+    assert "approver_ids entry 1 is not a person" in _registry_error(cfg_dir)
 
 
 # ---- the run-time opens driven by configured folders go through the same reader ---------------------------------------
@@ -3616,6 +4033,10 @@ def test_the_mounted_folder_provider_never_says_a_name_or_the_configured_dir(tmp
         with pytest.raises(ConfigError) as err:
             provider.get(name)
         assert "swordfish" not in _everything_shown(err.value), str(err.value)
+        if (
+            name == PLAIN
+        ):  # a folder is refused by this kind's own sentence, not by the shared base's class sentence
+            assert str(err.value) == "the secret is not a regular file", str(err.value)
 
 
 def test_a_plain_word_in_a_platform_secret_field_is_named_by_the_field(cfg_dir):

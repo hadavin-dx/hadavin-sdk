@@ -30,7 +30,17 @@ class CachedSecrets:
             hit = self._cache.get(name)
             if hit is not None and now < hit[0]:
                 return hit[1]
-            value = self._fetch(name)
+            try:
+                value = self._fetch(name)
+            except Exception as exc:
+                # A cloud SDK error can quote the path or name it was asked for (a project id and a secret name sit in the resource path of GCP, an ARN in AWS, a URL in Azure), so the
+                # text of the library error is never passed on: its class is enough to find the cause. An error class
+                # of this package (`ConfigError`, `VaultError`) holds a sentence this package wrote and passes as it is.
+                if type(exc).__module__.startswith("hadavin_sdk"):
+                    raise
+                raise ConfigError(
+                    f"secrets: reading a secret failed ({type(exc).__name__})"
+                ) from None
             if not value:  # an empty value would pass the start-up probe and fail at call time
                 raise ConfigError("the secret is empty")
             if self.ttl_s > 0:

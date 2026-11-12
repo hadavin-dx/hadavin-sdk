@@ -78,7 +78,7 @@ def test_bad_unknown_chain(cfg_dir):
 )
 def test_bad_chain_step(cfg_dir, step):
     _edit(cfg_dir / "chains.yaml", lambda d: d[0].update(steps=[step]))
-    with pytest.raises(ConfigError, match="step 0"):
+    with pytest.raises(ConfigError, match="step 1"):
         _reg(cfg_dir)
 
 
