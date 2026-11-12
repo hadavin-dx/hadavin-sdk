@@ -1,6 +1,38 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:47Z / 02:17 IST - LANE 7c DONE (coverage patch v3): the round-2 Major is closed by pip itself; round-3 security review started; 8 agents live
+FAILED / UNVERIFIED first (builder's words; unreviewed):
+- UNVERIFIED: sonar-scanner accepting coverage.xml; the empty `<source/>` entry; that the action SHAs belong to the named actions; the real scan and run time on a hosted runner; the pip version that setup-python ships on the runner.
+- The lead's gitleaks allowlist in 558d37f STILL does not work (without the fix patch `test_hygiene_scan_public` fails with the real binary): the 7c tree used gitleaks-toml-fix-v2 for its proofs.
+- Slips: the first gitleaks `dir` run reported 1, then 23 findings: cache files from the builder's own ruff and pytest runs in the scratch tree; a clean-tree rerun with gitleaks FIRST (as lint.yml does) found 0; the first `--3way` attempts failed because the first patch was not staged: redone.
+RESULTS: (1) **pip detects the drift**: ONE call `pip install --require-hashes --only-binary=:all: -r requirements-dev.txt -r requirements-coverage.txt`: identical pins accepted; a conflict (pytest 9.2.0 vs 9.1.0 with its real hash) is a hard `ResolutionImpossible`, exit 1, in either file order and with pip 24.0 and 26.2.2; `-c requirements-dev.txt` works too; the old two separate installs silently DOWNGRADED pytest with exit 0. So the lock-drift test, its helper and the notes are REMOVED (no code added to the test suite: rule 20 satisfied by a config change). Proof: evidence-r3-pip-A to E. (2) exceptions.txt line 24 is no longer edited; two NEW lines after line 9; `git apply --check` passes alone and in EVERY order with the gitleaks fix v1 and v2, plain and `--3way`. (3) PLAN.md re-read and fixed (failures and UNVERIFIED first, the 'what changed after review 2' table, a rung table naming pip, Dependabot and `uv -c`). (4) ONE full serial run on 558d37f + v3 + gitleaks fix v2: **2349 passed, 116 skipped, 0 failed, 875 s, line coverage 92.53 percent** (load about 1.2 before and after; evidence-r3-full-run.txt); the v1 run gave 1 failed (the .venv-cov artefact), 2348 passed; 558d37f differs from b29bb1f only by 7 lines in .gitleaks.toml, no Python. (5, 6) header now points to the pull request description; **`runs-on` is `ubuntu-24.04` like lint.yml (main's sonar.yml had `ubuntu-latest` with no stated reason): a CHANGE to a file that is on main: your call**; a real install with `--only-binary=:all:` worked (wheels only). (8) gitleaks path regex kept (PLAN notes it also tightens the dev lock's old unanchored entry). Final-tree checks: ruff, mypy linux and win32, bandit, check_schema, literal scan clean; gitleaks `dir` and `git` 0 findings; 19 hygiene tests pass. The patch is 9 files and identical to its working tree.
+- Round-3 security review (fresh reviewer, no cap): checks the pip evidence for the case that MATTERS (dev lock bumped, coverage lock stale: not only a made-up conflict), the runner's pip version (unverified), `--only-binary` risk, the runs-on change, allowlists, the full-run evidence (why 92.53 vs v1's 92.57), stale statements in PLAN.md. Report to coverage/REVIEW-3.md.
+- Batch-2 candidates now: lane 7 (this), lane 8 (8c running), CodeAnt patches (3 reviewers running): after their reviews I extend APPLY-LIST and re-run the integration check (INT-2).
+
+### (1) LIVE ITEMS (now 2026-11-12 20:47Z / 02:17 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a48557818ee7cad44 (agent, sonnet builder) | lane 8c | 20:34 | 13 min | 21:34 | running | docs-and-deps patch v3 | working |
+| ad08257c8fb71e8e6 (agent, sonnet evidence runner) | INT-1 integration check (full suite) | 20:37 | 11 min | 21:20 | running | INT-1.md | 5 evidence files; the full run is its long step |
+| ab29dfe609d71d092 (agent, sonnet evidence runner) | lane 12 hostile text in a browser | 20:42 | 6 min | 21:17 | running | xss/SUMMARY.md | started |
+| a08f78b6fdbcafa02 / a591633581b6ca994 / a32807ac2dbab0268 (3 egm reviewers, read-only) | CodeAnt review A security / B runtime / C classification, docs, tests, overlaps | 20:47 | 1 min | about 20:59 | running | REVIEW-codeant-A/B/C.md | started |
+| (new) egm reviewer, lane 7 round 3 | security review | 20:47 | 0 min | +12 min | running | coverage/REVIEW-3.md | started |
+Totals: agents live 7 (3 + 1 reviewers, 1 builder, 2 evidence runners); shells 0; pytest 1 (INT-1) and soon a browser (lane 12); containers 0; load average 0.69, 1.00, 1.46; nothing past its time box.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| lane 7 Sonar | review 3 running (after fix round 7c) | r1 0B/1M/8N; r2 0B/1M/7N | r1 pre-existing gitleaks failure, design, evidence gaps; r2 a missing rule-20 rung (pip) | r3 is needed because 7c changed the install step, the exceptions edits and removed the test (security path: no cap); a wasted round? r2's Major (an untried pip rung) was not in the builder brief: I added the rung ladder to later briefs | no cap | a fresh review without Major/Blocker |
+| lane 8 browser tests | fix round 8c | v1 0B/3M/8N; v2 0B/3M/8N | proof gaps and a coordination conflict | changed test + new lock | no cap | review 3 without Major/Blocker |
+| CodeAnt (lane 10b) | review 1 (3 reviewers) | n/a | n/a | 10 patches, many REAL fixes | one round then fixes unless a Major | no Major/Blocker |
+| batch 1 | integration check 1: apply parts green; suite running | n/a | n/a | D13 | n/a | suite line, then you apply |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| a6163bda862313baa (lane 7c, sonnet builder) | 19 min (20:31 to about 20:50) | coverage patch v3: pip single-install detects drift; test removed; 2349/116, 92.53 percent | yes |
+
 ## 2026-11-12 20:46Z / 02:16 IST - **BATCH 1: apply parts GREEN** (full suite still running); lane 10b DONE (47 findings, 10 patches), 3 reviewers started; 8 agents live
 **FOR THE LEAD, NOW:** INT-1 partial results (raw files integration/evidence-int1-*.txt, APPLY-LIST.md updated): batch 1 items 1 to 5 apply with PLAIN `git apply` (no --3way) in 3 different orders on **pr-3-tests 558d37f** (24 files, +381 -35); they do NOT apply on pr-1-code d23cf8f or pr-2-demo-folder f31e261 (the patches touch tests/test_portal_mode.py, tests/test_lead_crm_copy.py, demo_only/fake_imap.py, fake_smtp_tls.py that exist only from pr-2/pr-3): **apply batch 1 on pr-3-tests**. On the merged tree: REAL gitleaks 8.30.1 (the CI binary) `dir` 0 findings and `git` 0 findings (14 commits); tests/test_hygiene.py 10 passed with the gitleaks test RUNNING; ruff, ruff format (128 files), mypy linux and win32 (26 files), bandit -ll clean. NOT yet: the full serial suite on the merged tree (running, about 15 minutes; result in integration/INT-1.md and APPLY-LIST.md). Item 6 (limits burst doc) is independent. So the apply is safe to START; push after the suite line lands if you want the stack tests green first (you run the stack tests as your own gate).
 FAILED / UNCERTAIN first (lane 10b, builder; triage/CODEANT-COVERAGE.md; unreviewed; 3 fresh reviewers now running):
