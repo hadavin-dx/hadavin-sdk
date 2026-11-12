@@ -24,8 +24,9 @@ def test_the_executor_error_code_for_a_status_that_is_no_number_is_a_question_ma
         got = _http_code(text)
     except ValueError:  # `int(text)` raises, and the error quotes the text
         got = "raised"
-    assert got == "http_?"
-    assert _http_code(None) == "http_?" and _http_code(True) == "http_?"
+    assert got != "raised", "the executor error code took int() of a text status, and int() raised with the text"
+    assert got == "http_?", "the executor error code for a text status is not http_?"
+    assert _http_code(None) == "http_?" and _http_code(True) == "http_?", "a missing or boolean status is not http_?"
     assert _http_code(404) == "http_404"
 
 
@@ -58,7 +59,8 @@ def test_a_tool_refusal_for_an_answer_with_a_text_status_shows_a_question_mark(m
         got = str(exc)
     except ValueError:  # `int(code)` raises, and the error quotes the text
         got = "raised"
-    assert got == "HTTP ?"
+    assert got != "raised", "the tool refusal took int() of a text status, and int() raised with the text"
+    assert got == "HTTP ?", "the tool refusal for a text status is not 'HTTP ?'"
 
 
 def test_describe_shows_the_number_of_a_status_and_never_the_text_of_an_int_subclass():
@@ -84,9 +86,9 @@ def test_describe_drops_a_detail_that_is_a_run_of_32_letters_and_digits():
         status_code = 429
 
     key = "A1" * 16  # 32 letters and digits in one run: the shape of a key
-    assert describe(Boom("q"), lambda e: key) == "Boom 429"
-    assert describe(Boom("q"), lambda e: "403 " + key) == "Boom 429"
-    assert describe(Boom("q"), lambda e: key[:31]) == "Boom 429 " + key[:31]
+    assert describe(Boom("q"), lambda e: key) == "Boom 429", "describe kept a code that is a run of 32 letters and digits"
+    assert describe(Boom("q"), lambda e: "403 " + key) == "Boom 429", "describe kept a number followed by a key-shaped run"
+    assert describe(Boom("q"), lambda e: key[:31]) == "Boom 429 " + key[:31], "describe dropped a code of 31 characters"
     # a long code cut by separators passes, as in `Route.model_id`
     cut = "a" * 15 + "-" + "b" * 15
     assert describe(Boom("q"), lambda e: cut) == "Boom 429 " + cut
@@ -199,7 +201,7 @@ def test_shown_id_shows_only_the_shape_of_an_id_the_code_makes():
         7,
         b"x",
     ):
-        assert shown_id(bad) == "?", bad
+        assert shown_id(bad) == "?", f"shown_id showed a value that is not an id of the code (b15 case {str(bad)[:6]!r})"
     # a fuzz: whatever comes out is "?" or the shape
     state = 5
     alphabet = "run-0123456789abcdefABCDEF:/ .?\n"
@@ -219,11 +221,12 @@ def test_not_found_keeps_the_id_and_shows_one_fixed_sentence():
 
     text = _marker("notfound")
     err = NotFound(text)
-    assert err.key == text and text not in str(err) and text not in repr(err)
+    assert text not in str(err) and text not in repr(err), "NotFound shows the id it was given (b15 notfound marker)"
+    assert err.key == text, "NotFound did not keep the id as .key"
     with pytest.raises(NotFound) as raised:
         MemoryStore().get_run(text)
-    assert text not in str(raised.value) and text not in repr(raised.value)
-    assert raised.value.key == text
+    assert text not in str(raised.value) and text not in repr(raised.value), "a store NotFound shows the id (b15 notfound marker)"
+    assert raised.value.key == text, "a store NotFound did not keep the id as .key"
 
 
 def test_a_stale_state_message_shows_a_caller_chosen_id_as_a_question_mark():
@@ -236,7 +239,8 @@ def test_a_stale_state_message_shows_a_caller_chosen_id_as_a_question_mark():
     store.create_run(run)
     with pytest.raises(StaleState) as raised:
         store.create_run(run)
-    assert text not in str(raised.value) and "?" in str(raised.value)
+    assert text not in str(raised.value), "a stale-state message shows a caller-chosen id (b15 stale marker)"
+    assert "?" in str(raised.value), "a stale-state message does not show a question mark for the id"
 
 
 def test_an_audit_event_id_is_a_plain_name_so_it_can_be_a_file_name():
@@ -258,5 +262,8 @@ def test_an_audit_event_id_is_a_plain_name_so_it_can_be_a_file_name():
         "a.json",
         "x\n",
     ):
-        with pytest.raises(ValidationError):
+        try:
             AuditEvent(event_id=hostile, **base)
+        except ValidationError:
+            continue
+        raise AssertionError(f"an audit event id that is not a plain file name was accepted ({hostile[:6]!r})")

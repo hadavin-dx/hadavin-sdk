@@ -6,7 +6,8 @@ Before round 12 the guard was a list of spellings that mean "text from a configu
 message text it asks "is every inserted value proven code-owned?". A value is code-owned when it is
 
 * a literal (text, number, bytes), or an UPPER_CASE constant, or a class name (`type(x).__name__`);
-* a number: `len(x)`, `int(x)`, arithmetic, a loop counter (`range`, the first part of `enumerate`), a name or an
+* a number: `len(x)`, arithmetic, `int(x)` or `float(x)` (only when `x` is itself a number or a written value: `int` is a
+  pass-through, not a proof, so `int(text_from_a_file)` is a finding), a loop counter (`range`, the first part of `enumerate`), a name or an
   attribute that is annotated `int`, `float`, `bool` or `Literal[...]`;
 * the result of a filter that hides the text (`shown_name`, `_named`, `error_where` ...);
 * a name or attribute that is only ever bound to code-owned values (checked over the whole scanned tree: every

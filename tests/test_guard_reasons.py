@@ -3,8 +3,8 @@
 A reason written in words only can be wrong and nobody sees it. Here every reason that this round gave (and the sites it
 covers) has a check that reads the code or runs it: a value that the reason calls an `int` is cast to `int` or declared
 `int`, a list that the reason calls "written in code" is a constant in the source, a label that the reason calls "a
-literal at every caller" is a literal at every caller. The reasons of earlier rounds are listed in `UNCHECKED`: the list
-may only get shorter (a test pins its size), and each of them is named in the notes of this batch as not yet checked by code.
+literal at every caller" is a literal at every caller. A reason that has no check is listed in `UNCHECKED`: the list may
+only get shorter (a test pins its size); at round 16 it holds `REDACTED` only, which waits for an owner decision.
 """
 
 from __future__ import annotations
@@ -947,7 +947,7 @@ def check_classnames() -> list[str]:
                 )
     for mod, site in _rows("CLASSNAMES"):
         if not _sites(mod, site):
-            bad.append(f"{mod}: {site[:50]} is not found in the module")
+            bad.append(f"CLASSNAMES row of {mod}: {site[:50]} is not found in the module")
         text = site
         if "str(exc)" in text or "safe_head" in text or "exc.args" in text:
             bad.append(f"{mod}: {site}: prints the text of an error")
@@ -1069,7 +1069,7 @@ def check_fields() -> list[str]:
         return (
             []
             if (marker not in shown and "position 2" in shown and "alpha" in shown)
-            else [f"text: {shown[:200]}"]
+            else [f"FIELDS: an unknown setting shows its key, or the position is missing: {shown[:200]}"]
         )
     return ["an unknown setting was accepted"]
 
