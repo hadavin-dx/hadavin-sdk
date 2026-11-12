@@ -1497,3 +1497,5 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a84305a6190d1191f | Q8b b4 builder | | | 00:39Z | waiting on own job, no report | check at 00:46Z |
 | a147b438068dda7c9 | Q8c-1 light EV on ad588599 | 00:39Z | 50 min | 00:39Z | running | save evidence, then decide on reviewers (behaviour delta small) |
 | a4ca07c5379925d8a | P3a-2 EV on ee831364 | 00:39Z | 50 min | 00:39Z | running | list survivors; then egm reviewers |
+| afa3d00e7ff1aa851 | PR89 r26 EV | | | 00:42Z | CLOSED, evidence saved | |
+| af2ae3ac7ef2af913 | PR89 r27 fix builder (from 916c71ea, wip/cloud-PR89-r27) | 00:42Z | 75 min | 00:42Z | running | snapshot, EV (non-root mutant run), reviewers r27 (Blockers and Majors only) |
