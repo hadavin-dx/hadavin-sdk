@@ -49,3 +49,6 @@ Skill(egm:egm-review-loop) refused again: "cannot be used with Skill tool due to
 
 ### Full dry run, round 1 (2026-11-12T18:23:03Z)
 User typed /egm:egm-review-loop (Skill tool still refuses). Reviewers egm:egm-design and egm:egm-style ran on sonnet; egm-resolve (opus agent) merged 18 findings into 10 PROPOSE FIX; user chose "auto accept"; a second opus agent applied all 10 (3 lines became 34). Round 2 not started (needs user confirm; converge needs two clean rounds, cap 5). Test doc deleted; final copy kept only in scratchpad. Both reviewers reported my brief named wrong persona files (agents/egm-design.md, egm-style.md); they used design_critic.md and style.md.
+
+### Round 2 (2026-11-12T18:26:44Z)
+Reviewers (sonnet) found 3 Major + 3 Nit (design) and 2 Nit (style); round not clean. egm-resolve (opus agent) merged to 8 (7 PROPOSE FIX, 1 DECLINE); user chose auto accept; opus agent applied R2-01..07 (34 to 35 lines). Round 3 not started; convergence count still 0 of 2. Test doc deleted (copy in scratchpad only). Skill tool still refuses egm skills; works only via user-typed /egm:* or agents.
