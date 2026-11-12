@@ -1,6 +1,38 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:51Z / 02:21 IST - LANE 7 DONE AND REVIEWED CLEAN (round 3: 0 Blocker, 0 Major, 9 Nits): sonar-coverage.patch v3 goes into batch 2; 6 agents live
+- coverage/REVIEW-3.md: NO MAJOR. All 9 round-1 items and the round-2 Major (pip itself as the higher rung) verified as resolved. sonar.yml read in full: permissions top-level read-only; trigger pull_request, not pull_request_target; the `if` skips fork and Dependabot PRs; `persist-credentials: false`; SONAR_TOKEN only in the scan step env; no `${ }` in `run:`; checkout and setup-python SHAs identical to lint.yml char by char; timeout 60 = lint.yml; the header comment is true about the shared runner; the two owner decisions (two-job split, `!cancelled()`) described, NOT implemented. Lock: 131 sha256 hashes, only coverage 7.17.2 and pytest-cov 7.1.0 added, the 5 shared pins equal the dev lock in version AND hash. Allowlists: anchored, two NEW exceptions lines after line 9, no existing line edited; apply orders with gitleaks fix v1/v2 all pass (plain and --3way); gitleaks dir+git 0 findings with the CI binary (provenance proven); 19 hygiene tests pass; full run on 558d37f + v3 + gitleaks v2: 2349 passed, 116 skipped, 0 failed, 875 s, line coverage 92.53 percent.
+- NITS worth knowing (none blocks): (1) the pip evidence shows the conflict by editing the COVERAGE copy (9.1.0 vs dev 9.2.0), not a literal 'dev bumped, coverage stale' run: holds by symmetry; the raw files are trimmed excerpts; (2) the hygiene negative-control file lacks its exact command (12 passed vs the control's 10 tests: by static count 12 is right); (3) the 92.53 percent figure sits in the xml-check file, not in the full-run file; (4) 92.57 (v1, b29bb1f) vs 92.53 (v3): 3 lines, not investigated, run-to-run noise suspected (the base moved only in .gitleaks.toml); (5) 'pip downloaded the packages' should read 'used cached packages'; (6) `runs-on: ubuntu-24.04` is a small scope extension to main's file (same as lint.yml and codeql.yml): your call; (7) `--only-binary=:all:` proven on one machine (x86-64 Linux, Python 3.12.3); (8) **a dev-lock bump PR (Dependabot covers only github-actions) surfaces the conflict as a RED SONAR JOB, not in lint** and `cancel-in-progress` with a 15-minute test step cancels main analyses more often than before; (9) the timeout wording differs from lint.yml's ('1.6 times' vs 'about twice').
+- STILL UNVERIFIED (stated first in PLAN.md): sonar-scanner accepting coverage.xml, the empty `<source/>` entry, the cache and scan action SHAs and the real hashes, the runner's pip version, the scan time on a hosted runner.
+- APPLY-LIST.md row 7 updated (batch 2). INT-2 (batch 1 + lane 7 + lane 8 + CodeAnt) runs when lane 8c and the CodeAnt fixes land.
+- Waiting: CodeAnt reviewers A and C; lane 8c; lane 13; INT-1 full suite.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:51Z / 02:21 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a48557818ee7cad44 (agent, sonnet builder) | lane 8c | 20:34 | 20 min | 21:34 | running | docs-and-deps patch v3 | working |
+| ad08257c8fb71e8e6 (agent, sonnet evidence runner) | INT-1 integration check (full suite) | 20:37 | 18 min | 21:20 | running | INT-1.md | its pytest |
+| a08f78b6fdbcafa02 (egm reviewer A, read-only) | CodeAnt security patches | 20:47 | 8 min | about 21:00 | running | REVIEW-codeant-A.md | working |
+| a32807ac2dbab0268 (egm reviewer C, read-only) | CodeAnt classification, docs, tests, overlaps | 20:47 | 8 min | about 21:00 | running | REVIEW-codeant-C.md | working |
+| ae90d2402dcf380a0 (agent, sonnet builder) | lane 13 drawer long-name CSS fix + test | 20:52 | 3 min | 21:32 | running | layout/drawer-long-name.patch | started |
+Totals: agents live 5; shells 0; pytest 1 (INT-1) and lane 13's later; containers 0; load average 1.62, 1.14, 1.39; nothing past its time box. Below my 'at least 3' floor? No: 5.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| lane 7 Sonar | DONE after 3 reviews and 3 builder rounds | r1 0B/1M/8N; r2 0B/1M/7N; r3 0B/0M/9N | r1: pre-existing gitleaks failure, design, evidence gaps; r2: an untried higher rung (pip); r3: evidence-excerpt nits | r2 was needed because the builder was never told to try pip itself (my brief gap: fixed in later briefs); r3 because r2 had a Major (security path: no cap) | YES: reviewed clean | applied by you in batch 2 |
+| CodeAnt | review 1: B done (0B/2M), A and C running | B: 0B/2M/Nits | runtime: a per-lead refusal stopping the whole mirror pass; sibling unlocked reads in the fake server | first review of 10 patches; one fix round follows the three reviews (D5) | one round then fixes | no Major/Blocker after the fix round |
+| lane 8 browser tests | fix round 8c | v1 0B/3M/8N; v2 0B/3M/8N | proof gaps and a coordination conflict | changed test + new lock | no cap | review 3 without Major/Blocker |
+| batch 1 | integration check 1: apply parts green; suite running | n/a | n/a | D13 | n/a | suite line, then you apply |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| a9ea5d0e2f939999a (lane 7 review round 3, sonnet read-only) | about 10 min (20:51 to 20:59) | 0B/0M/9N, saved coverage/REVIEW-3.md | yes |
+| a591633581b6ca994 (CodeAnt reviewer B) | about 5 min | 0B/2M/Nits, saved triage/REVIEW-codeant-B.md (previous block's follow-up message) | yes |
+| a6163bda862313baa (lane 7c) | closed in the previous block | | yes |
+
 ## 2026-11-12 20:47Z / 02:17 IST - LANE 12 DONE: **NO SCRIPT EXECUTED** in a real browser; one layout bug (long names); lane 13 (fix + test) started; 8 agents live
 ANSWER first (EVIDENCE RUNNER, xss/SUMMARY.md; Chromium 153 headless via Playwright 1.63.0 on pr-3-tests 558d37f; pushed): **no script executed.** 24 page visits (2 colour schemes x masking on/off x 6 pages: Overview, Leads, Needs a person, Request log, Data and AI, Demo controls) plus a side panel for each of the 24 leads per combination: 0 dialogs, 0 console errors, 0 page errors, `window.__xss` stayed undefined, and NO parsed `script`, `img[src=x]`, `iframe`, `svg[onload]`, `[onerror]`, `[onload]` element: the hostile strings show as visible TEXT. Headers (all pages and JSON): `X-Content-Type-Options: nosniff`, `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, a strict CSP (`script-src 'self'`, `default-src 'none'`); JSON is `application/json` with no charset. JS sinks (reading, not proof): no innerHTML, outerHTML, insertAdjacentHTML, document.write, eval or new Function; data goes in through text nodes, an attribute allowlist and in-page-only `href`. Not checked: Firefox, WebKit, Windows, the email in a mail client, other fields as hostile (CRM id, request number, phone), search box and hash-route injection, running with the CSP removed.
 FAILED / SURPRISES first:
