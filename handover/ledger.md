@@ -2745,3 +2745,5 @@
 | Q8bb6-r7-auth | reviews/Q8b/goldfish_review_report-r7.md Issue 4 | Major | Q8b | authorization scheme+token second word readable | OPEN | batch 7 | | 2026-11-12
 | Q8bb6-r7-overmask | reviews/Q8b/goldfish_review_report-r7.md Issue 5 | Minor | Q8b | bypass/compass/obsession masked in =value forms | OPEN | batch 7 | | 2026-11-12
 | Q8bb6-r7-passold | reviews/Q8b/goldfish_review_report-r7.md Issue 11 | Minor | Q8b | 3 new tests + 139 ids pass on old code, need mutant or control reason | OPEN | batch 7 | | 2026-11-12
+| Q8bb6-r7-oracle | reviews/Q8b/goldfish_review_report-r7.md addendum (a) | Minor | Q8b | cookie test oracle older.masked_parts never read by a reviewer or EV | OPEN | b7 evidence run | | 2026-11-12
+| Q8bb6-r7-appendix | same addendum (b) | Major | Q8b | ticket appendix A1-A5 and X1-X9 never run in any evidence | OPEN | b7 evidence run | | 2026-11-12

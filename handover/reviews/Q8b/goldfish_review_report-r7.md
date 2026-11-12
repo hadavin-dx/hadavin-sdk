@@ -89,3 +89,6 @@ Still readable on head (all also readable on main): the record key `Cookie` alon
 
 ## Handoff counts
 Accepted (PROPOSE FIX): 10 (Issues 1-9, 11). Declined: 2 (10, 12). Contested: 0. Escalated: 0. Remaining unaddressed: none. Because the path is redaction with no round cap, a batch-7 builder fixes Issues 1-9 and 11, then a fresh evidence run (all five paths, new probe rows for Issues 1-5) and two `egm:*` reviewers read the new head. New findings this round that no reviewer saw: Issue 3 (Cookie) and Issue 5 (over-masking) came from the evidence probe; Issue 4 was narrowed from the design review's accepted decision.
+
+## Addendum 03:40Z (lead, after the owner's order not to push work to later)
+Issues 10 and 12 were marked DECLINE above. That was a deferral of work that is worth doing, so it is reversed: both are now ACCEPTED and become evidence-runner tasks for the Q8b batch 7 evidence run (must be in that brief, not optional): (a) read the `older.masked_parts` oracle (`q8b_older_rule.py`) and the full corpus and say what the cookie test really compares; (b) run the ticket appendix items A1-A5 (200,000 keys, 4,000 texts) and X1-X9 that fit this machine, with raw numbers; list any that cannot run and why. Also the evidence runner reads `handover/evidence/Q8b/b6/` this time.
