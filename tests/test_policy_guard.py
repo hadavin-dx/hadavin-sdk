@@ -23,6 +23,7 @@ import dataclasses
 import os
 import re
 import runpy
+from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -173,6 +174,18 @@ def _today() -> date:
     return pp.datetime.now(pp.UTC).date()
 
 
+def _names_claims_day() -> date | None:
+    """The review day of the names and claims lists together (each from its own entries), None when both are empty."""
+    return pp.review_day(PENDING_NAMES, PENDING_CLAIMS)
+
+
+def _overdue_pair() -> tuple[date, date] | None:
+    """(the review day, the day after it): the last green day and the first overdue day of the names and claims
+    lists; None when both are empty (nothing can be overdue: the end state, run by its own test)."""
+    day = _names_claims_day()
+    return None if day is None else (day, day + timedelta(days=1))
+
+
 def _kinds_problems_today() -> list[str]:
     declared = {k for k, p in pp.load_all(ROOT).items() if p is not None}
     return kind_problems(all_kinds(), declared, PENDING_KINDS, NO_IDENTITY, _today())
@@ -216,10 +229,15 @@ def test_plant_a_declared_kind_left_on_the_pending_list_is_caught():
 
 
 def test_plant_an_overdue_pending_kind_is_caught():
+    first = pp.review_day(PENDING_KINDS)
+    assert first is not None, "the list of pending kinds is empty"
     problems = kind_problems(
-        all_kinds(), set(pp.KIND_MODULES), PENDING_KINDS, NO_IDENTITY, date(2026, 12, 12)
+        all_kinds(), set(pp.KIND_MODULES), PENDING_KINDS, NO_IDENTITY, first + timedelta(days=1)
     )
-    assert len(problems) == 7 and all("is overdue (review_by 2026-12-11)" in p for p in problems)
+    due = sum(1 for p in PENDING_KINDS.values() if p.review_by == first)
+    assert len(problems) == due and all(f"is overdue (review_by {first})" in p for p in problems), (
+        f"the kinds that fall due the day after {first} are not reported as overdue, one line each: {problems}"
+    )
 
 
 # ----------------------------------------------------------------------------------------------- A1: calls
@@ -1536,8 +1554,17 @@ def _claims_problems_today() -> list[str]:
 
 def test_every_unchecked_claim_has_a_dated_entry_and_the_suite_goes_red_when_it_is_overdue():
     assert _claims_problems_today() == []
-    overdue = claim_problems(_policies(), PENDING_CLAIMS, date(2026, 12, 12))
-    assert len(overdue) == len(PENDING_CLAIMS) and all("is overdue" in p for p in overdue)
+    first = pp.review_day(PENDING_CLAIMS)
+    if first is None:  # the end state: no claim is waiting, so nothing can be overdue
+        assert claim_problems(_policies(), PENDING_CLAIMS, DECIDED + timedelta(days=800)) == [], (
+            "an empty claims list reports an overdue claim"
+        )
+        return
+    overdue = claim_problems(_policies(), PENDING_CLAIMS, first + timedelta(days=1))
+    due = sum(1 for p in PENDING_CLAIMS.values() if p.review_by == first)
+    assert len(overdue) == due and all("is overdue" in p for p in overdue), (
+        f"the claims that fall due the day after {first} are not reported as overdue: {overdue}"
+    )
 
 
 def test_plant_an_unchecked_claim_with_no_pending_entry_is_caught():
@@ -2846,7 +2873,11 @@ def test_the_page_and_the_fixture_agree_on_which_rows_are_abbreviated_and_what_i
 
 def test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far():
     problems = kind_problems(
-        all_kinds(), set(pp.KIND_MODULES), PENDING_KINDS, NO_IDENTITY, date(2026, 12, 12)
+        all_kinds(),
+        set(pp.KIND_MODULES),
+        PENDING_KINDS,
+        NO_IDENTITY,
+        pp.review_day(PENDING_KINDS) + timedelta(days=1),
     )
     assert problems, "no overdue entry is reported"
     assert all("What to do: finish that work and delete the entry; or" in p for p in problems)
@@ -3088,11 +3119,17 @@ def test_the_self_review_create_is_an_unchecked_claim_on_the_page_not_a_checked_
 
 def test_the_pending_claims_of_a_free_and_a_never_entry_are_watched_like_a_grant_claim():
     found = claim_problems(_policies(), {}, DECIDED)
-    for entry in ("free:0", "never:create"):
-        assert any(f"source/kubernetes {entry}: has an unchecked claim" in p for p in found), {
-            "free:0": "an unchecked claim of a free request: the entry free:0 needs no PENDING_CLAIMS entry",
-            "never:create": "an unchecked claim of a never line: the entry never:create needs no PENDING_CLAIMS entry",
-        }[entry] + f": {found}"
+    missing = {
+        entry
+        for entry in ("free:0", "never:create")
+        if not any(f"source/kubernetes {entry}: has an unchecked claim" in p for p in found)
+    }
+    assert "free:0" not in missing, (
+        f"an unchecked claim of a free request: the entry free:0 needs no PENDING_CLAIMS entry: {found}"
+    )
+    assert "never:create" not in missing, (
+        f"an unchecked claim of a never line: the entry never:create needs no PENDING_CLAIMS entry: {found}"
+    )
 
 
 def _never_over(kind: str, name: str, capabilities: tuple[str, ...] = ()) -> list[str]:
@@ -3267,14 +3304,19 @@ def test_the_builder_marks_refuse_a_missing_line_an_unknown_id_and_a_second_line
         "an unknown id": base.replace("# BUILDER-ONLY: V-ACL", "# BUILDER-ONLY: V-NOPE, V-ACL"),
         "a second line": base + "\n# BUILDER-ONLY: V-ACL\n",
     }
+    accepted = set()
     for name, body in cases.items():
         (tmp_path / pp.SOURCES).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / pp.SOURCES).write_text(body, encoding="utf-8")
-        assert _refused_with(lambda: pp.read_marks(tmp_path), pp.PolicyError, ""), {
-            "a missing line": "a sources file with no builder-only line is accepted",
-            "an unknown id": "a builder-only id that is no row of the sources file is accepted",
-            "a second line": "a second builder-only line in the sources file is accepted",
-        }[name]
+        if not _refused_with(lambda: pp.read_marks(tmp_path), pp.PolicyError, ""):
+            accepted.add(name)
+    assert "a missing line" not in accepted, "a sources file with no builder-only line is accepted"
+    assert "an unknown id" not in accepted, (
+        "a builder-only id that is no row of the sources file is accepted"
+    )
+    assert "a second line" not in accepted, (
+        "a second builder-only line in the sources file is accepted"
+    )
 
 
 _PASSAGE_MARK = "(the passage behind the claim: see claims)"
@@ -3602,6 +3644,7 @@ def test_a_claim_with_no_mark_two_marks_or_a_stale_text_is_a_problem_and_a_bad_l
     both = dataclasses.replace(marks, builder_read=(*marks.builder_read, r18))
     assert any("has 2 marks" in p for p in pp.claim_mark_problems(policies, both)), "two marks pass"
     body = _text(pp.SOURCES)
+    accepted = set()
     for name, text in {
         "missing": body.replace("# CLAIM-READ-BY-NOBODY:", "# X:"),
         "second": body + "\n# CLAIM-READ-BY-BUILDER: x\n",
@@ -3612,11 +3655,13 @@ def test_a_claim_with_no_mark_two_marks_or_a_stale_text_is_a_problem_and_a_bad_l
         (tmp_path / pp.SOURCES).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / pp.SOURCES).write_text(text, encoding="utf-8")
         why = "holds an empty claim text" if name == "empty text" else "needs exactly one line"
-        assert _refused_with(lambda: pp.read_marks(tmp_path), pp.PolicyError, why), {
-            "missing": "a sources file with no claim line is accepted",
-            "second": "a second claim line in the sources file is accepted",
-            "empty text": "an empty claim text in the head of the sources file is accepted",
-        }[name]
+        if not _refused_with(lambda: pp.read_marks(tmp_path), pp.PolicyError, why):
+            accepted.add(name)
+    assert "missing" not in accepted, "a sources file with no claim line is accepted"
+    assert "second" not in accepted, "a second claim line in the sources file is accepted"
+    assert "empty text" not in accepted, (
+        "an empty claim text in the head of the sources file is accepted"
+    )
 
 
 # ---- C3: free and never rows carry the mark too
@@ -3845,20 +3890,23 @@ def test_a_never_path_deeper_than_the_prefix_grant_is_not_reported_as_covering_i
     # R17 is `{mount}/data/{path_prefix}+`; the setting has ONE value in a deployment, so a never line that
     # writes `{path_prefix}` once and then two more parts is two parts longer than R17 for every value.
     vault = "secrets/vault"
-    for name in (
-        "{mount}/data/{path_prefix}+/deeper/+",  # the evidence probe P3e
-        "{mount}/data/{path_prefix}+/+",  # the evidence probe P3b
-        "{mount}/data/{path_prefix}deeper/+/+",
-    ):
-        same(
-            _never_over(vault, name, ("read",)),
-            [],
-            {
-                "{mount}/data/{path_prefix}+/deeper/+": "{mount}/data/{path_prefix}+/deeper/+ is reported as covering the prefix grant R17",
-                "{mount}/data/{path_prefix}+/+": "{mount}/data/{path_prefix}+/+ is reported as covering the prefix grant R17",
-                "{mount}/data/{path_prefix}deeper/+/+": "{mount}/data/{path_prefix}deeper/+/+ is reported as covering the prefix grant R17",
-            }[name],
-        )
+    same(
+        _never_over(
+            vault, "{mount}/data/{path_prefix}+/deeper/+", ("read",)
+        ),  # the evidence probe P3e
+        [],
+        "{mount}/data/{path_prefix}+/deeper/+ is reported as covering the prefix grant R17",
+    )
+    same(
+        _never_over(vault, "{mount}/data/{path_prefix}+/+", ("read",)),  # the evidence probe P3b
+        [],
+        "{mount}/data/{path_prefix}+/+ is reported as covering the prefix grant R17",
+    )
+    same(
+        _never_over(vault, "{mount}/data/{path_prefix}deeper/+/+", ("read",)),
+        [],
+        "{mount}/data/{path_prefix}deeper/+/+ is reported as covering the prefix grant R17",
+    )
     for name in ("{mount}/data/{path_prefix}+", "{mount}/data/{path_prefix}*"):
         found = _never_over(vault, name, ("read",))
         assert len(found) == 1 and "grant R17 " in found[0], (name, found)
@@ -4030,10 +4078,14 @@ def test_the_check_command_reports_a_name_or_claim_with_no_dated_entry_and_a_sta
         ),
     )
     monkeypatch.setattr(pp, "PENDING_CLAIMS", PENDING_CLAIMS)
-    overdue = pp.data_problems(ROOT, today=date(2026, 12, 12))
-    assert len(overdue) == len(PENDING_NAMES) + len(PENDING_CLAIMS), overdue
-    assert all("is overdue (review_by 2026-12-11)" in p for p in overdue), overdue
-    assert pp.data_problems(ROOT, today=date(2026, 12, 11)) == []
+    pair = _overdue_pair()
+    assert pair is not None, "both dated lists are empty: the end state has its own test"
+    day, after = pair
+    overdue = pp.data_problems(ROOT, today=after)
+    due = sum(1 for p in (*PENDING_NAMES.values(), *PENDING_CLAIMS.values()) if p.review_by == day)
+    assert len(overdue) == due, overdue
+    assert all(f"is overdue (review_by {day})" in p for p in overdue), overdue
+    assert pp.data_problems(ROOT, today=day) == []
 
 
 def test_from_the_review_date_the_write_command_stops_and_writes_nothing(
@@ -4045,7 +4097,9 @@ def test_from_the_review_date_the_write_command_stops_and_writes_nothing(
     root = _tree(tmp_path)
     monkeypatch.setattr(pp, "ROOT", root)
     monkeypatch.setattr(pp, "DATA_ROOT", root)
-    day_before, day_of = date(2026, 12, 11), date(2026, 12, 12)
+    pair = _overdue_pair()
+    assert pair is not None, "both dated lists are empty: the end state has its own test"
+    day_before, day_of = pair
     assert pp.main(["--write"], today=day_before) == 0 and (root / pp.PAGE).is_file(), (
         "the write command did not write the page the day before the review date"
     )
@@ -4058,14 +4112,16 @@ def test_from_the_review_date_the_write_command_stops_and_writes_nothing(
         "`--write` wrote the page although the dated entries are overdue"
     )
     err = capsys.readouterr().err
-    assert "is overdue (review_by 2026-12-11)" in err, err
+    assert f"is overdue (review_by {day_before})" in err, err
 
 
 def test_from_the_review_date_the_check_command_stops(tmp_path, monkeypatch, capsys):
     root = _tree(tmp_path)
     monkeypatch.setattr(pp, "ROOT", root)
     monkeypatch.setattr(pp, "DATA_ROOT", root)
-    day_before, day_of = date(2026, 12, 11), date(2026, 12, 12)
+    pair = _overdue_pair()
+    assert pair is not None, "both dated lists are empty: the end state has its own test"
+    day_before, day_of = pair
     assert pp.main(["--write"], today=day_before) == 0
     assert pp.main(["--check"], today=day_before) == 0, (
         "the check command stopped the day before the review date"
@@ -4075,7 +4131,7 @@ def test_from_the_review_date_the_check_command_stops(tmp_path, monkeypatch, cap
         "the check command did not stop on the review date it was given"
     )
     err = capsys.readouterr().err
-    assert "is overdue (review_by 2026-12-11)" in err, err
+    assert f"is overdue (review_by {day_before})" in err, err
 
 
 def test_a_grant_whose_name_is_unchecked_with_no_pending_row_is_reported_by_the_check(tmp_path):
@@ -4278,7 +4334,7 @@ def test_the_tool_docstring_holds_no_date_that_is_not_in_the_dated_lists():
 def test_the_tool_docstring_holds_no_literal_date():
     # A day written in the docstring would stay after a renewal and could be another entry's day; the tool's
     # docstring names the rule (the day after the earliest `review_by`), never a day.
-    stray = re.findall(r"\d{4}-\d{2}-\d{2}", pp.__doc__)
+    stray = stray_days(pp.__doc__)
     assert not stray, f"the tool docstring holds a literal date: {stray}"
 
 
@@ -4314,15 +4370,18 @@ def test_the_check_command_uses_the_tools_own_clock_when_no_day_is_given(
     root = _tree(tmp_path)
     monkeypatch.setattr(pp, "ROOT", root)
     monkeypatch.setattr(pp, "DATA_ROOT", root)
-    assert pp.main(["--write"], today=date(2026, 12, 11)) == 0
+    pair = _overdue_pair()
+    assert pair is not None, "both dated lists are empty: the end state has its own test"
+    day_before, day_of = pair
+    assert pp.main(["--write"], today=day_before) == 0
     capsys.readouterr()
-    monkeypatch.setattr(pp, "datetime", _fixed_clock(date(2026, 12, 11)))
-    assert pp.main(["--check"]) == 0, "the check command stopped on 2026-12-11 by its own clock"
-    monkeypatch.setattr(pp, "datetime", _fixed_clock(date(2026, 12, 12)))
+    monkeypatch.setattr(pp, "datetime", _fixed_clock(day_before))
+    assert pp.main(["--check"]) == 0, f"the check command stopped on {day_before} by its own clock"
+    monkeypatch.setattr(pp, "datetime", _fixed_clock(day_of))
     assert pp.main(["--check"]) == 1, (
-        "the check command did not stop on 2026-12-12 by its own clock (no day given)"
+        f"the check command did not stop on {day_of} by its own clock (no day given)"
     )
-    assert "is overdue (review_by 2026-12-11)" in capsys.readouterr().err
+    assert f"is overdue (review_by {day_before})" in capsys.readouterr().err
 
 
 def test_the_kinds_decision_day_is_a_literal_date_call_not_a_name_of_the_tools_date():
@@ -4352,49 +4411,71 @@ def test_the_tools_decision_day_is_the_day_the_names_and_claims_were_decided():
     )
 
 
-def _renewed(day: date):
-    renewed = pp.Pending("r", "t", pp.DECIDED, day)
-    return {k: renewed for k in pp.PENDING_NAMES}, {k: renewed for k in pp.PENDING_CLAIMS}
+def _dated(*days: date) -> dict[tuple[str, str], pp.Pending]:
+    """A made-up dated list: one entry per day given, keyed apart, decided on the tool's decision day."""
+    return {
+        ("secrets/vault", f"made-up:{i}"): pp.Pending("r", "t", pp.DECIDED, d)
+        for i, d in enumerate(days)
+    }
+
+
+def test_the_page_names_the_review_day_read_from_the_lists_and_not_a_day_written_in_the_test():
+    expected = min(
+        (p.review_by for p in (*PENDING_NAMES.values(), *PENDING_CLAIMS.values())), default=None
+    )
+    assert pp.review_date() == expected, (
+        f"review_date() is {pp.review_date()}, the earliest day of the two lists is {expected}"
+    )
+    head = pp.head(pp.read_marks(ROOT))
+    if expected is None:
+        assert "no review date applies now" in head, "an empty state: the page does not say so"
+    else:
+        assert head.count(str(expected)) == 2, (
+            f"the page head does not name the review day {expected} twice"
+        )
 
 
 def test_the_page_names_the_review_day_of_the_dated_lists_and_follows_a_renewal(monkeypatch):
+    # State: only the names and claims lists are renewed (made-up lists; the kinds list is not touched).
     marks = pp.read_marks(ROOT)
+    old_day = pp.DECIDED + timedelta(days=30)
+    monkeypatch.setattr(pp, "PENDING_NAMES", _dated(old_day))
+    monkeypatch.setattr(pp, "PENDING_CLAIMS", _dated(old_day))
     before = pp.head(marks)
-    assert str(pp.review_date()) == "2026-12-11"
-    assert before.count("2026-12-11") == 2, "the page head does not name the review day twice"
-    names, claims = _renewed(date(2027, 1, 20))
-    monkeypatch.setattr(pp, "PENDING_NAMES", names)
-    monkeypatch.setattr(pp, "PENDING_CLAIMS", claims)
+    assert before.count(str(old_day)) == 2, "the page head does not name the review day twice"
+    new_day = pp.DECIDED + timedelta(days=60)
+    monkeypatch.setattr(pp, "PENDING_NAMES", _dated(new_day))
+    monkeypatch.setattr(pp, "PENDING_CLAIMS", _dated(new_day))
     after = pp.head(marks)
-    assert "2026-12-11" not in after, (
+    assert str(old_day) not in after, (
         "the page head still names the review day from before the renewal"
     )
-    assert after.count("2027-01-20") == 2, (
+    assert after.count(str(new_day)) == 2, (
         "the page head does not name the renewed review day twice"
     )
     # the earliest day of the two lists is named, not the latest
-    names, _ = _renewed(date(2027, 1, 20))
-    monkeypatch.setattr(pp, "PENDING_NAMES", names)
-    monkeypatch.setattr(
-        pp,
-        "PENDING_CLAIMS",
-        {**claims, ("secrets/vault", "R17"): pp.Pending("r", "t", pp.DECIDED, date(2027, 1, 5))},
-    )
-    assert pp.head(marks).count("2027-01-05") == 2, (
+    early = pp.DECIDED + timedelta(days=45)
+    monkeypatch.setattr(pp, "PENDING_CLAIMS", _dated(new_day, early))
+    assert pp.head(marks).count(str(early)) == 2, (
         "the page head does not name the earliest review day"
     )
 
 
 def test_the_docs_page_names_the_review_day_of_the_dated_lists_only():
     docs = " ".join((ROOT / "docs/declared-permissions.md").read_text(encoding="utf-8").split())
-    day = str(pp.review_date())
+    day = pp.review_date()
+    if day is None:  # the end state: the page says no date applies and names no day
+        assert "no review date applies now" in docs and "whichever comes first" not in docs, (
+            "the docs page does not say that no review date applies"
+        )
+        return
     assert f"or the review date {day}, whichever comes first" in docs, (
         f"the docs page does not name the review date {day} in the trigger sentence"
     )
     assert f"(review by {day})" in docs, (
         f"the docs page does not name the review date {day} in the claims sentence"
     )
-    assert docs.count(day) >= 2
+    assert docs.count(str(day)) >= 2
 
 
 FIXED_DAY_VAR = "HADAVIN_POLICY_FIXED_DAY"
@@ -4461,28 +4542,92 @@ def test_the_fixed_day_is_honoured_only_with_the_marker_of_the_mutant_run():
     ), "a day variable with a marker that is not 1 was honoured"
 
 
-def test_the_three_date_tests_read_the_clock_function_and_go_red_after_the_review_day(monkeypatch):
-    # The consumers of `_today()` are the three date tests: a day after the earliest review day must make each
-    # of their helpers report "overdue", the review day itself none. Independent of the day the run was given
-    # (this test sets the clock itself), so a `_today()` that reads the real day is killed on every run.
-    review = min(
-        p.review_by
-        for p in (*PENDING_KINDS.values(), *PENDING_NAMES.values(), *PENDING_CLAIMS.values())
-    )
-    helpers = {
-        "kinds": _kinds_problems_today,
-        "names": _names_problems_today,
-        "claims": _claims_problems_today,
-    }
+def _date_test_problems(name: str, helper, entries: dict, monkeypatch) -> list[str]:
+    """What is wrong with the date test `name` whose list is `entries` and whose problems come from `helper()`: the
+    review day is the earliest day of THAT list (`pp.review_day`); on it the helper reports nothing, the day after
+    it reports "overdue". A list with no entry has no review day: its helper then reports no overdue line on any
+    day. The clock is set here, so a `_today()` that reads the real day is found on every run."""
+    review = pp.review_day(entries)
+    if review is None:
+        monkeypatch.setattr(pp, "datetime", _fixed_clock(DECIDED + timedelta(days=800)))
+        if any("is overdue" in p for p in helper()):
+            return [f"the {name} date test reports an overdue line although its list is empty"]
+        return []
     monkeypatch.setattr(pp, "datetime", _fixed_clock(review))
-    for name, helper in helpers.items():
-        same(helper(), [], f"the {name} date test on the review day")
+    found = helper()
+    if found:
+        return [
+            f"the {name} date test reports a problem on the review day of its own list: {found}"
+        ]
     monkeypatch.setattr(pp, "datetime", _fixed_clock(review + timedelta(days=1)))
-    for name, helper in helpers.items():
-        found = helper()
-        assert found and all("is overdue" in p for p in found), (
-            f"the {name} date test does not go red the day after the review day: it reads another clock"
+    found = helper()
+    if not (found and all("is overdue" in p for p in found)):
+        return [
+            f"the {name} date test does not go red the day after the review day of its list: it reads another clock"
+        ]
+    return []
+
+
+def test_the_three_date_tests_read_the_clock_function_and_go_red_after_the_review_day(monkeypatch):
+    # The consumers of `_today()` are the three date tests; each is checked by `_date_test_problems` against its
+    # own list. Independent of the day the run was given (the clock is set inside).
+    helpers = {
+        "kinds": (_kinds_problems_today, PENDING_KINDS),
+        "names": (_names_problems_today, PENDING_NAMES),
+        "claims": (_claims_problems_today, PENDING_CLAIMS),
+    }
+    for name, (helper, entries) in helpers.items():
+        found = _date_test_problems(name, helper, entries, monkeypatch)
+        assert found == [], (
+            f"{found} (the date tests do not read the clock function, or a list is wrong)"
         )
+
+
+def test_the_date_test_rule_finds_an_empty_list_that_reports_and_a_list_that_never_goes_red(
+    monkeypatch,
+):
+    # Plants for `_date_test_problems` with made-up lists and stand-in helpers (the real lists are never empty
+    # today, so these branches are shown here).
+    day = pp.DECIDED + timedelta(days=30)
+
+    def overdue_from(review: date):
+        return lambda: ["X is overdue (review_by)"] if _today() > review else []
+
+    assert _date_test_problems("n", overdue_from(day), _dated(day), monkeypatch) == [], (
+        "a helper that is quiet on the review day and overdue after it was refused"
+    )
+    assert _date_test_problems("n", lambda: ["X is overdue"], {}, monkeypatch), (
+        "an empty list whose helper reports an overdue line was accepted"
+    )
+    assert _date_test_problems("n", list, {}, monkeypatch) == [], (
+        "an empty list whose helper reports nothing was refused"
+    )
+    assert _date_test_problems("n", list, _dated(day), monkeypatch), (
+        "a list with an entry whose helper never goes red was accepted"
+    )
+    assert _date_test_problems("n", lambda: ["X is overdue"], _dated(day), monkeypatch), (
+        "a helper that is red on the review day itself was accepted"
+    )
+    assert _date_test_problems("n", lambda: ["another problem"], _dated(day), monkeypatch), (
+        "a helper that reports a problem which is not an overdue line was accepted"
+    )
+    assert _date_test_problems(
+        "n", lambda: ["another problem"] if _today() > day else [], _dated(day), monkeypatch
+    ), (
+        "a helper that is quiet on the review day and then reports a problem that is not an overdue line was accepted"
+    )
+
+
+def test_the_review_day_helper_takes_each_list_from_its_own_entries_and_has_none_for_an_empty_one():
+    early, late = DECIDED + timedelta(days=20), DECIDED + timedelta(days=50)
+    one, two = _dated(late), _dated(early, late)
+    same(pp.review_day({}), None, "the review day of an empty list")
+    same(pp.review_day({}, {}), None, "the review day of two empty lists")
+    same(pp.review_day(one), late, "the review day of the one list")
+    same(pp.review_day(two), early, "the earliest day of a list with two days")
+    same(pp.review_day(two, latest=True), late, "the latest day of a list with two days")
+    same(pp.review_day(one, two), early, "the earliest day over two lists")
+    same(pp.review_day({}, one), late, "an empty list ignored beside a list with a day")
 
 
 # ------------------------------------------------------------------ the runner's own rules (batch 10)
@@ -4561,56 +4706,334 @@ def test_the_message_scan_counts_only_assert_messages_match_and_what_texts():
     )
 
 
+DAY_FORMS = (
+    r"\d{4}-\d{2}-\d{2}",  # 2026-12-12
+    r"\d{4}/\d{2}/\d{2}",  # 2026/12/12
+    r"\d{1,2}(?:st|nd|rd|th)? (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{4}",  # 12 December 2026
+    r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2}(?:st|nd|rd|th)?\b",  # Dec 12, December 12
+)
+DAY_PATTERN = re.compile("|".join(f"(?:{f})" for f in DAY_FORMS))
+
+
+def stray_days(text: str, allowed: str = "") -> list[str]:
+    """Every written day of `text` once the one `allowed` sentence is cut out, in any of the forms of `DAY_FORMS`
+    (ISO, with slashes, "12 December 2026", "Dec 12"): a day written as text stays wrong after a renewal."""
+    flat = " ".join(text.split())
+    return DAY_PATTERN.findall(flat.replace(allowed, "") if allowed else flat)
+
+
+def _cleared(policies: dict[str, pp.Policy]) -> dict[str, pp.Policy]:
+    """The policies of the END state: every name checked, no claim left unchecked. The kind modules of today still
+    hold unchecked names and claims (that is what the dated lists are for), so this is the one thing the end-state
+    test stands in for: it feeds the REAL dated-list rules the policies as they will be once the work is done."""
+
+    def clear(e):
+        changes = {}
+        if e.verified is None:
+            changes["verified"] = (DECIDED.isoformat(),)
+        if e.claims_unverified:
+            changes["claims_unverified"] = ()
+        return dataclasses.replace(e, **changes) if changes else e
+
+    return {
+        k: dataclasses.replace(
+            p,
+            grants=tuple(clear(g) for g in p.grants),
+            free=tuple(clear(f) for f in p.free),
+            never=tuple(clear(n) for n in p.never),
+        )
+        for k, p in policies.items()
+    }
+
+
+def _end_state(monkeypatch) -> None:
+    """Both dated lists empty, and the two dated-list rules (`name_pending_problems`, `claim_pending_problems`) given
+    the cleared policies. Every other rule of `data_problems` runs for real on the real kind modules; `--check` and
+    `--write` are the real commands."""
+    monkeypatch.setattr(pp, "PENDING_NAMES", {})
+    monkeypatch.setattr(pp, "PENDING_CLAIMS", {})
+    real_names, real_claims = pp.name_pending_problems, pp.claim_pending_problems
+    monkeypatch.setattr(
+        pp, "name_pending_problems", lambda pol, pend, today: real_names(_cleared(pol), pend, today)
+    )
+    monkeypatch.setattr(
+        pp,
+        "claim_pending_problems",
+        lambda pol, pend, today: real_claims(_cleared(pol), pend, today),
+    )
+
+
 def test_with_both_dated_lists_empty_the_page_names_no_day_and_the_commands_still_report(
     tmp_path, monkeypatch, capsys
 ):
-    # The end state of the ticket: nothing is waiting for a check. `review_date()` has no day then, and the
-    # page, `--write` and `--check` must work and say so (a `min()` of nothing raised ValueError before).
+    # The end state of the ticket: nothing is waiting for a check. `review_date()` has no day then, and the page,
+    # `--write` and `--check` must work and say so (a `min()` of nothing raised ValueError before). Two parts:
+    # (1) with the kind modules of today (they still hold unchecked names and claims) both commands REFUSE, one
+    # line per unchecked entry: that is the rule working, not a fault; (2) with the dated-list rules given the
+    # policies of the end state (`_end_state`), everything else real, both commands pass on any day.
+    unchecked = {(k, lab) for k, lab, e in pp.entries(_policies()) if e.verified is None}
+    claimed = {(k, lab) for k, lab, e in pp.entries(_policies()) if e.claims_unverified}
+    root = _tree(tmp_path)
+    monkeypatch.setattr(pp, "ROOT", root)
+    monkeypatch.setattr(pp, "DATA_ROOT", root)
     monkeypatch.setattr(pp, "PENDING_NAMES", {})
     monkeypatch.setattr(pp, "PENDING_CLAIMS", {})
+    assert pp.main(["--write"], today=DECIDED) == 1 and not (root / pp.PAGE).exists(), (
+        "--write wrote the page with both dated lists empty although the kind modules hold unchecked entries"
+    )
+    refused = capsys.readouterr().err.splitlines()
+    assert len(refused) == len(unchecked) + len(claimed), refused
+    assert all(
+        "no PENDING_NAMES entry" in ln or "no PENDING_CLAIMS entry" in ln for ln in refused
+    ), refused
+    assert pp.main(["--check"], today=DECIDED) == 1, (
+        "--check passed with both dated lists empty although the kind modules hold unchecked entries"
+    )
+    capsys.readouterr()
+    monkeypatch.undo()
+    monkeypatch.setattr(pp, "ROOT", root)
+    monkeypatch.setattr(pp, "DATA_ROOT", root)
+    _end_state(monkeypatch)
     try:
         day = pp.review_date()
     except ValueError as exc:
         day = f"raised {exc}"
     assert day is None, f"review_date() has no answer with both dated lists empty: {day}"
     head = pp.head(pp.read_marks(ROOT))
-    assert not re.search(r"\d{4}-\d{2}-\d{2}", head.split("## ")[0]), (
+    flat = " ".join(head.split())
+    assert not stray_days(re.sub(r"policy_sources_[\w.-]*\.txt", "", head)), (
         "the page head names a day with both dated lists empty"
     )
-    assert "no review date is set" in head and "whichever comes first" not in head, (
-        "the page head does not say plainly that no review date is set"
+    assert "a deployment chooses OpenBao; no review date applies now" in flat, (
+        "the page head does not state the OpenBao trigger on its own with both dated lists empty"
     )
-    assert "No permission name or claim is waiting for a check now" in head, (
+    assert "whichever comes first" not in head, "the page head still offers a date trigger"
+    assert "No permission name or claim is waiting" not in head, (
+        "the page head keeps a sentence about a dated entry with no date to name"
+    )
+    assert "Each of these has a dated entry" not in head, (
         "the page head keeps the sentence about a dated entry with no date to name"
     )
-    root = _tree(tmp_path)
-    monkeypatch.setattr(pp, "ROOT", root)
-    monkeypatch.setattr(pp, "DATA_ROOT", root)
-    # the data rules for unchecked names need the lists, so they are set aside here: the page and both commands
-    # are what is under test
-    monkeypatch.setattr(pp, "data_problems", lambda *a, **k: [])
-    assert pp.main(["--write"], today=DECIDED) == 0, "--write stops with both dated lists empty"
-    assert pp.main(["--check"], today=DECIDED) == 0, "--check stops with both dated lists empty"
-    assert "no review date is set" in (root / pp.PAGE).read_text(encoding="utf-8"), (
-        "the written page does not say that no review date is set"
+    for today in (DECIDED, DECIDED + timedelta(days=800)):
+        assert pp.main(["--write"], today=today) == 0, (
+            f"--write stops with both dated lists empty on {today}"
+        )
+        assert pp.main(["--check"], today=today) == 0, (
+            f"--check stops with both dated lists empty on {today}"
+        )
+    written = (root / pp.PAGE).read_text(encoding="utf-8")
+    assert "no review date applies now" in written, (
+        "the written page does not say that no review date applies"
     )
     capsys.readouterr()
 
 
 def test_with_one_dated_list_empty_the_page_names_the_review_day_of_the_other(monkeypatch):
     marks = pp.read_marks(ROOT)
-    one = pp.Pending("r", "t", pp.DECIDED, date(2027, 1, 20))
+    day = pp.DECIDED + timedelta(days=50)
     monkeypatch.setattr(pp, "PENDING_NAMES", {})
-    monkeypatch.setattr(pp, "PENDING_CLAIMS", {("secrets/vault", "R17"): one})
-    assert pp.review_date() == date(2027, 1, 20), (
-        "review_date() ignores the one list that has entries"
-    )
+    monkeypatch.setattr(pp, "PENDING_CLAIMS", _dated(day))
+    assert pp.review_date() == day, "review_date() ignores the one list that has entries"
     head = pp.head(marks)
-    assert head.count("2027-01-20") == 2, (
-        "the page head does not name the day of the one list twice"
-    )
-    monkeypatch.setattr(pp, "PENDING_NAMES", {("secrets/vault", "R17"): one})
+    assert head.count(str(day)) == 2, "the page head does not name the day of the one list twice"
+    monkeypatch.setattr(pp, "PENDING_NAMES", _dated(day))
     monkeypatch.setattr(pp, "PENDING_CLAIMS", {})
-    assert pp.head(marks).count("2027-01-20") == 2, (
+    assert pp.head(marks).count(str(day)) == 2, (
         "the page head does not name the day of the names list when the claims list is empty"
+    )
+
+
+ENTRY_START = "- **Declared permissions for three backend kinds**"
+
+
+def kinds_sentence(pending: dict | None = None) -> str:
+    """The one sentence of the changelog that may hold days: how many kinds start to fail from which day, built from
+    the dated list itself (the day a kind fails is the day after its `review_by`), for any number of day groups:
+    none ("none of them"), one ("all 16 of them from D"), two (the form the changelog holds today) or more."""
+    pending = PENDING_KINDS if pending is None else pending
+    groups = sorted(Counter(p.review_by for p in pending.values()).items())
+    shown = [f"{n} of them from {d + timedelta(days=1)}" for d, n in groups]
+    if not groups:
+        return "none of them"
+    if len(groups) == 1:
+        return f"all {shown[0]}"
+    last_n, last_d = groups[-1][1], groups[-1][0] + timedelta(days=1)
+    return ", ".join(shown[:-1]) + f" and the other {last_n} from {last_d}"
+
+
+def changelog_entry(text: str | None = None) -> str:
+    """The entry for this work, whitespace folded: from its heading line to the next TOP-LEVEL bullet (a line that
+    starts with `- **` at the left edge; an indented bullet inside the entry does not end it). The one cut used by
+    every changelog test of this folder (tests/test_policy_docs.py imports it)."""
+    text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8") if text is None else text
+    start = text.index(ENTRY_START)
+    end = text.find("\n- **", start + 1)
+    return " ".join(text[start : end if end != -1 else len(text)].split())
+
+
+def test_the_kinds_sentence_is_built_for_any_number_of_day_groups():
+    day = DECIDED + timedelta(days=30)
+
+    def kinds(*days: date) -> dict:
+        return {f"k{i}": Pending("r", "t", DECIDED, d) for i, d in enumerate(days)}
+
+    def nxt(n: int) -> date:
+        return day + timedelta(days=n + 1)  # the day a kind fails
+
+    assert kinds_sentence(kinds()) == "none of them", "an empty list"
+    assert kinds_sentence(kinds(day, day)) == f"all 2 of them from {nxt(0)}", "one group of days"
+    assert kinds_sentence(kinds(day, day, day + timedelta(days=9))) == (
+        f"2 of them from {nxt(0)} and the other 1 from {nxt(9)}"
+    ), "two groups of days (the form of the changelog)"
+    # a renewal of some kinds only: three groups of days
+    assert kinds_sentence(
+        kinds(day, day + timedelta(days=9), day + timedelta(days=9), day + timedelta(days=40))
+    ) == (f"1 of them from {nxt(0)}, 2 of them from {nxt(9)} and the other 1 from {nxt(40)}"), (
+        "three groups of days after a renewal of some kinds"
+    )
+
+
+def test_a_renewal_of_some_kinds_leaves_the_changelog_rules_working():
+    # State: some kinds are renewed, so the list holds three groups of days. The sentence is built from the list
+    # and is the one allowed place for days; a day anywhere else is still refused.
+    base = DECIDED + timedelta(days=30)
+    renewed = {
+        **PENDING_KINDS,
+        "secrets/aws_secrets_manager": Pending("r", "t", DECIDED, base + timedelta(days=5)),
+        "signer/aws_kms": Pending("r", "t", DECIDED, base + timedelta(days=9)),
+    }
+    sentence = kinds_sentence(renewed)
+    assert len(sentence.split(" of them from ")) >= 3, f"three groups were not written: {sentence}"
+    good = f"fails for {sentence}, unless renewed"
+    assert stray_days(good, sentence) == [], "the allowed sentence of three groups is flagged"
+    assert stray_days(good + " (review date 2026-12-11)", sentence), "a stray day was not flagged"
+
+
+def test_the_entry_cut_ends_at_a_top_level_bullet_only():
+    text = (
+        f"{ENTRY_START} first line\n  - **a nested bold bullet** with 2026-12-11 inside\n  more text\n"
+        "- **Another entry** with 2027-01-01\n"
+    )
+    cut = changelog_entry(text)
+    assert "a nested bold bullet" in cut and "more text" in cut, (
+        f"a nested bold bullet ended the entry early: {cut}"
+    )
+    assert "Another entry" not in cut, f"the entry runs into the next top-level bullet: {cut}"
+
+
+# ------------------------------------------------------------------ the runner's own rules (batch 11)
+
+
+def test_the_runner_takes_day_in_both_written_forms_once_and_not_before_the_decision_day():
+    runner = _runner()
+    same(
+        runner.parse_args(["--day=2026-12-12", "D1"]),
+        ("2026-12-12", ["D1"]),
+        "the --day=VALUE form",
+    )
+    same(
+        runner.parse_args(["D1", "--day", "2026-12-12"]),
+        ("2026-12-12", ["D1"]),
+        "--day after a name",
+    )
+    same(
+        runner.parse_args(["--day", DECIDED.isoformat()]),
+        (DECIDED.isoformat(), []),
+        "the decision day itself",
+    )
+    before = (DECIDED - timedelta(days=1)).isoformat()
+    for argv in (
+        ["--day", before],
+        [f"--day={before}"],
+        ["--day", "2026-12-12", "--day=2026-12-13"],
+        ["--day=2026-12-12", "--day", "2026-12-13"],
+        ["--day="],
+        ["--day=tomorrow"],
+    ):
+        try:
+            runner.parse_args(argv)
+            raised = None
+        except (runner.ArgumentProblem, KeyError, IndexError, TypeError, ValueError) as exc:
+            raised = exc
+        assert type(raised) is runner.ArgumentProblem, (
+            f"the runner takes the argument list {argv} (a repeated day, a day before the decision day, or "
+            f"an empty value) or fails with {raised!r} instead of one plain line"
+        )
+
+
+def test_the_runner_reads_the_failures_the_overdue_text_and_the_error_lines_of_a_pytest_run():
+    runner = _runner()
+    path = runner.TEST
+    out = (
+        "____ test_a ____\nE   AssertionError: X is overdue (review_by 2026-12-11)\n"
+        "____ test_b ____\nE   AssertionError: another problem\n"
+        "==== short test summary info ====\n"
+        f"FAILED {path}::test_a - AssertionError: X is overdue\n"
+        f"FAILED {path}::test_b - AssertionError: another problem\n"
+        f"ERROR {path} - boom\n"
+        "2 failed, 1 error in 0.1s\n"
+    )
+    got = runner.read_run(out)
+    same(got.failed, {"test_a", "test_b"}, "the failed tests of the run")
+    same(
+        got.not_overdue,
+        {"test_b"},
+        "the failed tests with no overdue text (the last test must not borrow the text of the summary)",
+    )
+    same(got.errors, 1, "the number of ERROR lines of the run")
+    same(got.last, "2 failed, 1 error in 0.1s", "the last line of the run")
+    clean = runner.read_run("1 passed in 0.1s\n")
+    same((clean.failed, clean.not_overdue, clean.errors), (set(), set(), 0), "a clean run")
+
+
+def test_the_runner_expects_red_only_for_lists_with_entries_and_exits_1_for_a_weak_mutant():
+    runner = _runner()
+    kinds, names, claims = runner.date_lists()
+    expect = {t for t, e in zip(runner.DATE_TESTS, (kinds, names, claims), strict=True) if e}
+    same(runner.expected_red(), expect, "the date tests that must be red after the review day")
+    one, none = _dated(DECIDED), {}
+    same(
+        runner.expected_red((one, none, one)),
+        {runner.DATE_TESTS[0], runner.DATE_TESTS[2]},
+        "the date tests that must be red when the names list is empty",
+    )
+    same(
+        runner.expected_red((none, none, none)),
+        set(),
+        "the date tests that must be red with every list empty",
+    )
+    same(runner.exit_code([], []), 0, "the exit code of a run with no problem")
+    same(runner.exit_code(["m"], []), 1, "the exit code with a mutant that is not good")
+    same(runner.exit_code([], [("m", "e", "k")]), 1, "the exit code with a weak mutant")
+    today = date(2026, 12, 11)
+    assert runner.canary_day(today, None) < today, (
+        "with no review day the probe day is not before today"
+    )
+    same(
+        runner.canary_day(today, today + timedelta(days=1)),
+        today - timedelta(days=1),
+        "a day that is not today",
+    )
+
+
+def test_a_day_in_any_written_form_is_found_outside_the_one_allowed_sentence():
+    allowed = "all 16 of them from 2027-01-01"
+    for said in (
+        "2026-12-12",
+        "2026/12/12",
+        "12 December 2026",
+        "12th Dec 2026",
+        "Dec 12",
+        "December 12th",
+    ):
+        found = stray_days(f"text {said} text")
+        assert found, f"the day written `{said}` was not found"
+        assert stray_days(f"text {allowed} text {said}", allowed), (
+            f"the day written `{said}` beside the allowed sentence was not found"
+        )
+    assert stray_days(f"text {allowed} text", allowed) == [], (
+        "the allowed sentence alone is flagged"
+    )
+    assert stray_days("no day written here, only 16 kinds and 3 groups") == [], (
+        "a text with no day is flagged"
     )

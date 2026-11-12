@@ -1,0 +1,29 @@
+== 1 CI step control: the policy_page --check step removed from ci.yml
+E       AssertionError: ci.yml has no step `python tools/policy_page.py --check`
+E       assert not 'ci.yml has no step `python tools/policy_page.py --check`'
+E        +  where 'ci.yml has no step `python tools/policy_page.py --check`' = _check_step_problem(['', '', 'uv sync --locked --no-build --all-extras --group test', 'ruff check src tests demos tools', 'ruff format --check src tests demos tools', 'python tools/scan_repo.py', ...])
+1 failed in 0.10s
+exit=0
+== 3 changelog reminder control: the reminder sentence removed
+planted 1
+E       AssertionError: the changelog entry does not say the date guard is a reminder
+E       assert not 'the changelog entry does not say the date guard is a reminder'
+E        +  where 'the changelog entry does not say the date guard is a reminder' = _date_guard_sentence_problem('- **Declared permissions for three backend kinds** (ticket Q8c, part 1): `vault` (secrets), `vault_transit` (signer) ...heck that anyone re-read the names: it stops the page and the tests, and a person must renew it with a dated decision.')
+1 failed in 0.09s
+exit=0
+== 3b changelog control: a start day of the names guard written as text
+E       AssertionError: the changelog entry hard-codes a day (not the kinds list's)
+E       assert not "the changelog entry hard-codes a day (not the kinds list's)"
+E        +  where "the changelog entry hard-codes a day (not the kinds list's)" = _date_guard_sentence_problem('- **Declared permissions for three backend kinds** (ticket Q8c, part 1): `vault` (secrets), `vault_transit` (signer) ...heck that anyone re-read the names: it stops the page and the tests, and a person must renew it with a dated decision.')
+E       AssertionError: the changelog entry writes a day as text that is not the kinds list's: ['2026-12-12']
+exit=0
+== 5 changelog control: 'review date 2026-12-11' written in the entry
+E       AssertionError: the changelog entry writes a day as text that is not the kinds list's: ['2026-12-11']
+E       assert not ['2026-12-11']
+1 failed in 0.07s
+exit=0
+== 2/4 plant tests of the rule functions: the rule functions refuse the wrong inputs (direct call)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+ci wrong lists: [True, True, True, False]
+changelog wrong texts: [True, True, True, False]
+stray rows: [['2026-12-11'], ['2026-12-12'], ['2027-03-03']]

@@ -780,25 +780,37 @@ PENDING_CLAIMS: dict[tuple[str, str], Pending] = {
 }
 
 
+def review_day(*lists: dict, latest: bool = False) -> date | None:
+    """THE one place a review day is worked out: the earliest `review_by` (the latest with `latest=True`) of the
+    entries of the dated lists given, each list from its own entries; `None` when they are all empty. Every reader
+    of "the review day" (the page, the guard tests, the mutant runner) calls this, so none can take the wrong list
+    or fail on an empty one."""
+    days = [p.review_by for pending in lists for p in pending.values()]
+    if not days:
+        return None
+    return max(days) if latest else min(days)
+
+
 def review_date() -> date | None:
     """The earliest `review_by` of the two dated lists (names and claims): the one day the page text, the docs
     and the changelog name as the review date. Built here, never written as text, so that renewing an entry
     changes every sentence that names it. `None` when both lists are empty (the end state: nothing is waiting
     for a check); the page then says so instead of naming a day."""
-    days = [p.review_by for p in (*PENDING_NAMES.values(), *PENDING_CLAIMS.values())]
-    return min(days) if days else None
+    return review_day(PENDING_NAMES, PENDING_CLAIMS)
 
 
 def _review_sentences(day: date | None) -> tuple[str, str]:
-    """The two page pieces that name the review date, for a day or for none (both dated lists empty)."""
+    """The two page pieces that name the review date, for a day or for none (both dated lists empty). With none,
+    the OpenBao trigger stands alone (only the deployment trigger is left) and the Kubernetes bullet gets no
+    sentence about a dated entry."""
     if day is None:
         return (
-            " (no review date is set: no permission name or claim is waiting for a check)",
-            "No permission name or claim is waiting for a check now: the tests hold no dated entry for one.",
+            "; no review date applies now, because no dated entry is waiting for a check",
+            "",
         )
     return (
         f", or the review date\n  {day}, whichever comes first",
-        f"Each of these has a dated entry in the tests (review by {day}) that turns the\n  suite red if nobody re-reads it by then.",
+        f" Each of these has a dated entry in the tests (review by {day}) that turns the\n  suite red if nobody re-reads it by then.",
     )
 
 
@@ -1783,7 +1795,7 @@ code needs (one reason each), the requests that need no permission, and what the
   passage behind the claim in that row has the mark shown in the claims cell. The same builder-only reading
   stands behind the never-list lines `undelete`, `subkeys` and `byok-export`; they show "not yet checked", as do
   the three Kubernetes role names `cluster-admin`, `admin` and `edit` (no evidence runner looked for those names
-  in the Kubernetes source). REVIEW_ENTRY The lists of marked ids and claims are read from the head of the
+  in the Kubernetes source).REVIEW_ENTRY The lists of marked ids and claims are read from the head of the
   sources file, not written in this tool.
 - Two links the call check does not follow. First, the map from an object attribute to the setting it holds
   (`self.mount` holds the setting `mount`) is written by hand in the test; a test reads each `build` function

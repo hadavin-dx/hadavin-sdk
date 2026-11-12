@@ -26,7 +26,7 @@ See `GATES.md` in this folder.
 
 ## C. One line per new or changed test since c6bd7108 (40 tests, 0 deleted)
 
-Method: `python tools/notes_lines_check.py c6bd7108 handover/evidence/Q8c-1/b10/NOTES.md <the four test files>` finds every test whose syntax tree is new or differs from c6bd7108 and fails on a test with no row here or a deleted test (exit 0 on the final head, `GATES.md`). "Old head" for the fail-before run = a clean detached worktree of c6bd7108 with only the changed test files copied in: **3 failed, 368 passed** (`fail-before.log`; the three are the empty-lists test and the two changelog tests, which fail because the old tool and old CHANGELOG are in that tree). A test that passes on the old head is a control or a plant: its row says which, with the killing mutant or the reason.
+Method: `python tools/notes_lines_check.py c6bd7108 handover/evidence/Q8c-1/b10/NOTES.md <the four test files>` finds the test functions whose own syntax tree is new or differs from c6bd7108 (a changed helper, constant or fixture used by a test was NOT followed in batch 10; batch 11 follows them) and fails on a test with no row here or a deleted test. It lists changed tests and checks that a reason was written; it does not show that no test was weakened, that is for the reader of the diff (exit 0 on the final head, `GATES.md`). "Old head" for the fail-before run = a clean detached worktree of c6bd7108 with only the changed test files copied in: **3 failed, 368 passed** for the three test files the builder ran (`fail-before.log`; the three are the empty-lists test and the two changelog tests, which fail because the old tool and old CHANGELOG are in that tree). CORRECTED in batch 11 after the round 10 review: the independent run on the same old tree gave **7 failed, 365 passed, 1 collection error** with the four test files copied in, and **3 failed, 369 passed, 1 collection error** with `tests/policy_mutants.py` also copied (the collection error is `tests/test_notes_lines_check.py`, which needs a tool the old tree does not have). Quote those two numbers, not 3 and 368. A test that passes on the old head is a control or a plant: its row says which, with the killing mutant or the reason.
 
 | File | Test | New or changed | Fails on the old head, or killing mutant, or control (reason) |
 |---|---|---|---|
@@ -71,7 +71,7 @@ Method: `python tools/notes_lines_check.py c6bd7108 handover/evidence/Q8c-1/b10/
 | `test_notes_lines_check.py` | `test_a_test_that_is_gone_is_a_problem_even_with_a_line` | new | new tests of the new notes check, each asserts a refusal or a find (a planted input is refused: see the test body); control: the tool is new, no old code to fail on |
 | `test_notes_lines_check.py` | `test_a_test_with_no_row_or_a_row_with_no_reason_is_a_problem_and_a_full_row_is_not` | new | new tests of the new notes check, each asserts a refusal or a find (a planted input is refused: see the test body); control: the tool is new, no old code to fail on |
 
-### The five tests of round 9 Issue 6 (unchanged in this batch), shown able to fail
+### The tests of round 9 Issue 6 (unchanged in this batch; the table has eight rows, for seven test names and the one probe test), shown able to fail
 
 | Test | Command and output (`plant.log`) |
 |---|---|
@@ -85,7 +85,7 @@ Method: `python tools/notes_lines_check.py c6bd7108 handover/evidence/Q8c-1/b10/
 
 ## D. Tools and not run
 
-- New: `tools/notes_lines_check.py` (the Issue 6 check; four tests in `tests/test_notes_lines_check.py`). It is run in the gates below; it is not in `ci.yml` (a change of the workflow file was not in the task list; next step if wanted: one CI step after the policy page check).
+- New: `tools/notes_lines_check.py` (the Issue 6 check; four tests in `tests/test_notes_lines_check.py`). It is run in the gates below; it was not in `ci.yml` in batch 10 (batch 11 added the step; a change of the workflow file was not in the batch 10 task list; next step if wanted: one CI step after the policy page check).
 - Not run: the 12 Vault engine tests (IMPOSSIBLE-NOW, as in batch 9: needs a CI run with `HADAVIN_REQUIRE_VAULT_ENGINE=1` before 2026-12-11, then `ENGINE_RUN` and the pinned page test edited by hand); the perf step, pip-audit, Semgrep, zizmor, CodeQL, SonarCloud, CodeRabbit (CI); the real ticket 6.4 table (stale, as in batch 9).
 - On a faked day the runner leaves three tests out of the CHILD run only; their results at that day are the red reading, not a mutant result. This is stated in the runner's output.
 - `tools/mutation_runner.py` was not changed.

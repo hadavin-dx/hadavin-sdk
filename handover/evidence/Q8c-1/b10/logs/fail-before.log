@@ -1,0 +1,61 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building hadavin-sdk @ file:///home/user/build/b10-old
+      Built hadavin-sdk @ file:///home/user/build/b10-old
+Installed 76 packages in 1.10s
+........................................................................ [ 19%]
+........................................................................ [ 38%]
+........................................................................ [ 58%]
+........................................................................ [ 77%]
+.....................................................................F.. [ 97%]
+....F...F..                                                              [100%]
+=================================== FAILURES ===================================
+_ test_with_both_dated_lists_empty_the_page_names_no_day_and_the_commands_still_report _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-13298/test_with_both_dated_lists_emp0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fea5618e900>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fea561acc90>
+
+    def test_with_both_dated_lists_empty_the_page_names_no_day_and_the_commands_still_report(
+        tmp_path, monkeypatch, capsys
+    ):
+        # The end state of the ticket: nothing is waiting for a check. `review_date()` has no day then, and the
+        # page, `--write` and `--check` must work and say so (a `min()` of nothing raised ValueError before).
+        monkeypatch.setattr(pp, "PENDING_NAMES", {})
+        monkeypatch.setattr(pp, "PENDING_CLAIMS", {})
+        try:
+            day = pp.review_date()
+        except ValueError as exc:
+            day = f"raised {exc}"
+>       assert day is None, f"review_date() has no answer with both dated lists empty: {day}"
+E       AssertionError: review_date() has no answer with both dated lists empty: raised min() iterable argument is empty
+E       assert 'raised min() iterable argument is empty' is None
+
+tests/test_policy_guard.py:4566: AssertionError
+_ test_the_changelog_names_the_start_of_the_date_guard_by_rule_and_calls_it_a_reminder _
+
+    def test_the_changelog_names_the_start_of_the_date_guard_by_rule_and_calls_it_a_reminder():
+        flat = " ".join(_changelog_entry().split())
+>       assert not _date_guard_sentence_problem(flat), _date_guard_sentence_problem(flat)
+E       AssertionError: the changelog entry hard-codes a day (not the kinds list's)
+E       assert not "the changelog entry hard-codes a day (not the kinds list's)"
+E        +  where "the changelog entry hard-codes a day (not the kinds list's)" = _date_guard_sentence_problem('- **Declared permissions for three backend kinds** (ticket Q8c, part 1): `vault` (secrets), `vault_transit` (signer) ...heck that anyone re-read the names: it stops the page and the tests, and a person must renew it with a dated decision.')
+
+tests/test_policy_docs.py:142: AssertionError
+_ test_the_changelog_entry_for_the_page_writes_no_day_but_the_kinds_days_read_from_the_list _
+
+    def test_the_changelog_entry_for_the_page_writes_no_day_but_the_kinds_days_read_from_the_list():
+        stray = stray_days(_entry(), kinds_sentence())
+>       assert not stray, (
+            f"the changelog entry writes a day as text that is not the kinds list's: {stray}"
+        )
+E       AssertionError: the changelog entry writes a day as text that is not the kinds list's: ['2026-11-11', '2026-11-11']
+E       assert not ['2026-11-11', '2026-11-11']
+
+tests/test_policy_changelog.py:55: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_policy_guard.py::test_with_both_dated_lists_empty_the_page_names_no_day_and_the_commands_still_report
+FAILED tests/test_policy_docs.py::test_the_changelog_names_the_start_of_the_date_guard_by_rule_and_calls_it_a_reminder
+FAILED tests/test_policy_changelog.py::test_the_changelog_entry_for_the_page_writes_no_day_but_the_kinds_days_read_from_the_list
+3 failed, 368 passed in 9.19s

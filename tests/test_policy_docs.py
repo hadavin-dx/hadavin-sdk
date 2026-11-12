@@ -8,16 +8,12 @@ from __future__ import annotations
 import yaml as _yaml
 from tools import policy_page as pp
 
-from tests.test_policy_changelog import kinds_sentence, stray_days
-from tests.test_policy_guard import ROOT, _policies
+from tests.test_policy_guard import ROOT, _policies, changelog_entry, kinds_sentence, stray_days
 
 
 def _changelog_entry() -> str:
-    """The entry for this work: from its heading line to the next top-level bullet."""
-    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    start = changelog.index("- **Declared permissions for three backend kinds**")
-    end = changelog.find("\n- **", start + 1)
-    return changelog[start : end if end != -1 else len(changelog)]
+    """The entry for this work (the one cut of tests/test_policy_changelog.py)."""
+    return changelog_entry()
 
 
 def _readme_paragraph() -> str:
@@ -123,6 +119,54 @@ def test_plant_a_ci_step_list_without_or_with_a_moved_check_step_is_refused():
     assert "has no step" in _check_step_problem(["a", mutants, "b"])
     assert "not right after" in _check_step_problem([check, "a", mutants])
     assert "not right after" in _check_step_problem([mutants, "a", check])
+
+
+def _notes_step_problem(steps: list[dict]) -> str:
+    """The one rule for the CI step of the notes check: it runs `tools/notes_lines_check.py --auto "$BASE_SHA"`, on
+    pull requests only, with the base taken from the head before the push (or the base of the pull request), and
+    the base is fetched first. '' when the step is right."""
+    found = [s for s in steps if "tools/notes_lines_check.py" in s.get("run", "")]
+    if len(found) != 1:
+        return f"ci.yml has {len(found)} steps that run tools/notes_lines_check.py, not one"
+    step = found[0]
+    run = step["run"]
+    if 'python tools/notes_lines_check.py --auto "$BASE_SHA"' not in run:
+        return "the notes step does not run `--auto` with the base in BASE_SHA"
+    if "git fetch" not in run or run.index("git fetch") > run.index("notes_lines_check"):
+        return "the notes step does not fetch the base before it runs the check"
+    if step.get("if") != "github.event_name == 'pull_request'":
+        return "the notes step is not limited to pull requests"
+    base = str(step.get("env", {}).get("BASE_SHA", ""))
+    if "github.event.before" not in base or "github.event.pull_request.base.sha" not in base:
+        return "the notes step does not take the base from the head before the push, then the pull request base"
+    return ""
+
+
+def test_ci_runs_the_builder_notes_check_on_pull_requests_with_the_base_fetched():
+    steps = _yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))[
+        "jobs"
+    ]["check"]["steps"]
+    assert not _notes_step_problem(steps), _notes_step_problem(steps)
+
+
+def test_plant_a_ci_notes_step_that_is_missing_unfetched_unlimited_or_on_the_wrong_base_is_refused():
+    good = {
+        "if": "github.event_name == 'pull_request'",
+        "env": {"BASE_SHA": "${{ github.event.before || github.event.pull_request.base.sha }}"},
+        "run": 'git fetch --no-tags --depth=1 origin "$BASE_SHA"\n'
+        'python tools/notes_lines_check.py --auto "$BASE_SHA"',
+    }
+    assert _notes_step_problem([good]) == ""
+    assert "not one" in _notes_step_problem([])
+    assert "not one" in _notes_step_problem([good, good])
+    assert "`--auto`" in _notes_step_problem([{**good, "run": "python tools/notes_lines_check.py"}])
+    assert "fetch the base" in _notes_step_problem(
+        [{**good, "run": 'python tools/notes_lines_check.py --auto "$BASE_SHA"'}]
+    )
+    assert "pull requests" in _notes_step_problem([{k: v for k, v in good.items() if k != "if"}])
+    assert "take the base" in _notes_step_problem(
+        [{**good, "env": {"BASE_SHA": "${{ github.event.pull_request.base.sha }}"}}]
+    )
 
 
 def _date_guard_sentence_problem(flat: str) -> str:

@@ -1,0 +1,1 @@
+weak 0 of 180 mutants (strict reading: the expect text is in a direct assert message, match= or same(what) of the killer; counted by tests/policy_mutants.py weak_mutants on the b11 head; the run output line is 'first-line check is weak ... for 0 of 180 mutants (exit 1 when any)', see b11/logs/mut-real.log)
