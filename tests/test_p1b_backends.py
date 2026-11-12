@@ -127,7 +127,9 @@ def planted_channel(settings, deps):
 @pytest.fixture
 def planted(monkeypatch, cfg_dir):
     monkeypatch.setitem(
-        TABLE["channel"], "planted", Entry(_Planted, "tests.test_p1b_backends:planted_channel")
+        TABLE["channel"],
+        "planted",
+        Entry(_Planted, "tests.test_p1b_backends:planted_channel", role="real"),
     )
 
     def use(secret_name, reads):
