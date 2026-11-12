@@ -246,6 +246,12 @@ OWN_CODES: Final[Mapping[str, Code]] = MappingProxyType(
         _P + "audit.protocol:AuditUnavailable": Code.audit_unavailable,
         _P + "guard.egress:EgressRefused": Code.egress_refused,
         _P + "runtime.agent_loop:Unqualified": Code.unqualified,
+        # nearest fit: a caller-chosen argument; not a pydantic model (so not validation_failed), not a gate state (so not unqualified)
+        _P + "runtime.agent_loop:InvalidRunId": Code.config_invalid,
+        # A shipped SQL file with an unclosed quote, comment or `$` body is a defect in this package's own data, not an operator mistake
+        # (nothing at run time raises it today; a dev/CI tool does). The row is required so that an own class never falls back to its
+        # ValueError base. `config_invalid` (operator input), `validation_failed` (a pydantic model) and `foreign_exception` are wrong fits.
+        _P + "store.migration_numbers:SqlReadError": Code.internal_bug,
         _P + "k1b.loop:CallTimeout": Code.timeout,
         _P + "tools:ToolRefused": Code.tool_refused,
         _P + "guard.runmap:RedactionError": Code.scan_failed,

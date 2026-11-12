@@ -208,6 +208,8 @@ PINNED = {
     "hadavin_sdk.audit.protocol:AuditUnavailable": "audit_unavailable",
     "hadavin_sdk.guard.egress:EgressRefused": "egress_refused",
     "hadavin_sdk.runtime.agent_loop:Unqualified": "unqualified",
+    "hadavin_sdk.runtime.agent_loop:InvalidRunId": "config_invalid",
+    "hadavin_sdk.store.migration_numbers:SqlReadError": "internal_bug",
     "hadavin_sdk.k1b.loop:CallTimeout": "timeout",
     "hadavin_sdk.tools:ToolRefused": "tool_refused",
     "hadavin_sdk.guard.runmap:RedactionError": "scan_failed",
