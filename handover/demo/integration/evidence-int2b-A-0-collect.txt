@@ -1,0 +1,5 @@
+f5fe824100807535374e69e35017fbdcc2d2ec00
+ 23:06:59 up 1 min,  0 user,  load average: 0.22, 0.07, 0.02
+tests/test_vendor_hosts.py::test_no_vendor_host_name_outside_constants_py
+
+2994 tests collected in 3.36s

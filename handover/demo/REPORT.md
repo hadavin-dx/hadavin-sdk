@@ -1,6 +1,40 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 23:12Z / 04:42 IST - **CORRECTION: my 'full suite hangs on 40d5668' claim is NOT PROVEN (probably wrong)**; D14 hang-fix is a guard patch (root cause unproven) under review; runtime set CLEAN; INT-2b (unbuffered, two full runs) started after a container restart
+FAILED / UNCERTAIN first:
+1. **MY ERROR (22:39Z block): I reported that the full serial suite HUNG at test 867 on 40d5668.** Builder H1's work shows I most probably misread it, and I am correcting it here: (a) pytest's output to a file is BLOCK-BUFFERED, so the progress file stayed stale for minutes while the suite was running (my '29.7%, stuck 5+ minutes at ~0% CPU' came from that stale file); (b) my two py-spy dumps, about a minute apart, showed DIFFERENT places: first `test_restart_same_port_portal_open` at test_portal_api.py:1475 inside `BaseServer.shutdown()`, then (the saved dump file) the `env` fixture teardown at conftest.py:124 -> `serve_in_thread.stop()` (src/lead_desk/server.py:1020): the process was moving, not frozen; (c) H1's prefix run of the first 868 collected tests passed in 210 s, exit 0 (evidence-h-9); (d) `test_restart_same_port_portal_open` is test 1802 of 2922, not 867. So: **no hang on the head has been reproduced by anyone.** 10c-2b's earlier '18-minute hang at 38%' (also read from a buffered file) is equally unproven. I killed the process at about 8 minutes of runtime, which may have been mid-run: the INT-2 run 1 'HUNG' label in integration/ is wrong and I will relabel it. I should have run with unbuffered output before reporting. Sorry for the noise (it cost one builder a wrong premise: H1 correctly says the order's cause guess is wrong).
+2. What stays true and useful: stdlib `BaseServer.shutdown()` has no time limit, the product helper `serve_in_thread.stop()` calls it unbounded, and the old form of a stuck stop DOES hang forever (reproduced with timeout 60 + py-spy, evidence-h-1). Builder H1's `hang/hang-fix.patch` (sha256 2335ae73e618...; 16 files; test-level only, NO core touch) turns any such stuck stop into a fast failure with all thread stacks (`start_serving`, `stop_within(20 s)`, `stop_serving`, conftest `Env.close`, `faulthandler_timeout = 300` in pyproject.toml, 6 new tests); 696 touched-file tests passed; 3x portal files 290 passed each; ruff/mypy/hygiene/gitleaks clean; applies in order after the speed patch + the six runtime patches (I checked: 8 of 8 OK on a fresh f5fe824). It is a GUARD, not a proven fix. A fresh reviewer (told the corrected premise) is reading it now. H1's tool was stopped by the container restart before its hand-back: I read its PLAN.md and evidence from disk.
+3. Container restarted 23:05Z: INT-2 run 2 and H1 died; /tmp/work and the repo checkout survived. INT-2 run 2 had reached 41% with 1198 passed, 0 failed before it died (its file is also stale-buffered: treat as partial).
+4. Still unverified: any COMPLETE full run on f5fe824 (baseline) or on the stack. INT-2b fixes that: run A = pristine f5fe824, run B = f5fe824 + speed patch + six runtime patches + hang-fix; BOTH with `python -u` unbuffered `-v -o faulthandler_timeout=300`, stalls judged by file mtime (5 min) with py-spy dumps, ~20 min each, then lints/hygiene/gitleaks, the restart test 5x, node-off pass.
+5. Never run anywhere: PowerShell/Windows, a real n8n, Python 3.13, Windows lock install.
+READY FOR YOU (unchanged): runtime set (7 patches, speed first; REVIEW-codeant4-rt clean), semgrep/semgrep-on-head.patch, layout/security/nits already applied by you. The hang-fix patch is NOT ready until its review and INT-2b run B pass.
+NEEDS FROM LEAD: (1) the `concurrency:` group yes/no (Semgrep); (2) tell me if you want the 'HUNG' wording removed from anything you already copied.
+
+TABLE 1 - LIVE ITEMS (load 0.0 at start)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| INT-2b runner | two full unbuffered runs (A pristine f5fe824, B stack) + lints + checks | 23:09 | 3 min | 00:30 | running (just started) | integration/INT-2b.md + evidence-int2b-* | started |
+| rev hang-1 | fresh review of hang-fix.patch with the corrected premise | 23:09 | 3 min | 23:40 | running | report | started |
+Totals: agents 2, shells 0, containers 0, heavy pytest 1 (run A soon), load ~0.
+Flags: none. H1 and INT-2 run 2 were stopped by the container restart (not by me).
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| D14 hang-fix (guard) | 1 (review) | - | unbounded shutdown wait in tests/test helper; original 'hang' unproven | not reviewed yet | no | fresh review clean + INT-2b run B completes |
+| CodeAnt runtime | 4 done | R1 5M, R2 4M, R3 3M, R4 0B/0M/5N | refusal overreach, unbounded waits | none | YES: clean | apply (speed first) |
+| Semgrep | 4 done | - | - | - | YES: clean | own PR |
+Waste check: the D14 premise was my misreading; the rest of the loop is real (the guard is still a good change, but it must not be described as a fix of a proven hang).
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (22:54Z)
+| item | result |
+|---|---|
+| runtime review round 4 | 0B/0M/5N: CLEAN (REVIEW-codeant4-rt.md); all 8 patches apply in order on f5fe824 |
+| H1 build (D14) | hang-fix.patch + PLAN + evidence 1-9 on disk (read by me); hand-back lost to the restart |
+| INT-2 run 2 | died at the container restart: 41%, 1198 passed, 0 failed (partial, buffered file) |
+| my correction | the 'hang' is unproven; INT-2b with unbuffered output replaces it |
+
 ## 2026-11-12 22:54Z / 04:24 IST - D14 HANG FIX BUILT (builder H1 nearly done, patch on disk); RUNTIME SET REBUILT (10c-2c) AND UNDER REVIEW; INT-2 RUN 2 AT 41% WITH NO FAILURE YET
 FAILED / UNCERTAIN first:
 - NOTHING IS VERIFIED ON A COMPLETE FULL RUN YET. INT-2 run 2 (40d5668, the hanging test deselected, `faulthandler_timeout=300`, -v): 41% done, 1198 passed, 0 failed/error so far (it is in tests/test_live_claude.py). Run 1 stays recorded as HUNG (evidence-int2-3-run1-HUNG.txt + py-spy dump). INT-2 is on 40d5668, NOT on the new head f5fe824: it must be repeated on f5fe824 + hang fix.

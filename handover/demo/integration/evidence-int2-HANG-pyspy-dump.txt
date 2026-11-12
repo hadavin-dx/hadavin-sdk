@@ -1,3 +1,4 @@
+# NOTE (session lead 23:12Z): the label HUNG was WRONG: this run was killed after ~8 min; the progress file was stale only because pytest output to a file is block-buffered. See REPORT.md block 23:12Z.
 # py-spy dump of the stuck INT-2 full-suite pytest (pid 14325), taken 22:37Z by the session lead; tree 40d5668; tests completed 867 of 2922 collected (index from output dots + collect-only list); no F/E before it
 # $ /tmp/work/pyspy-venv/bin/py-spy dump --pid 14325
 Process 14325: python -m pytest -q -p no:cacheprovider -rs tests
