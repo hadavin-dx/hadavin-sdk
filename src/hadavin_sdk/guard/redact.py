@@ -56,15 +56,25 @@ _SCHEME_GAP = r"\s++"
 # feed, U+0085 (next line), U+2028 and U+2029. A tool that splits on them sees a fold, so the folds below start after any of them, and a
 # line's text stops at any of them. `_FOLD_SPACE` is the white space of the FIRST line of a folded header: all white space except
 # those breaks (`_LINE_SPACE` reads a vertical tab as a space between a scheme word and its parameters, which stays).
-_OTHER_BREAKS = "\x0b\x0c\x85\u2028\u2029"
+_OTHER_BREAKS = "\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029"
 # A scheme word of an Authorization header: letters only, as before batch 12 (`Bearer`, `NTLM`), or a name that starts with a capital letter, with hyphens and
 # digits (`AWS4-HMAC-SHA256`, `SCRAM-SHA-256`: batch 12, group 4). A lower-case token with a hyphen (`ab-xy`) is no scheme word: it is read
 # as the token, so its first part is not left readable as a "scheme" (a bare token is longer, mixed in case and has more digits).
 _ANY_SCHEME_WORD = r"(?:[a-z]+|(?-i:[A-Z][A-Za-z]{1,15}[0-9]{0,2}(?:-[A-Za-z0-9]{1,16}){1,3}))"
 _FOLD_BREAK = r"(?:\r\n|[\r\n" + _OTHER_BREAKS + "])"
 _FOLD_SPACE = r"[^\S\r\n" + _OTHER_BREAKS + "]"
-_LINE_TEXT = r"[^\r\n" + _OTHER_BREAKS + "]*+"
+_LINE_TEXT = r"[^\r\n]*+"
 _FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")++"
+# The folded lines of the rule for ANY first word: they stop at a line that looks like `name:` (or `"name":`), the next entry of a
+# pretty-printed JSON object or of a block of headers written with an indent (batch 13, group 7: the rule masked every indented sibling
+# of an `Authorization` key, to any length). The five named schemes keep the unbounded `_FOLD_LINES`.
+_FOLD_LINES_NO_KEY = (
+    r"(?:" + _FOLD_BREAK + r"[ \t]++(?![\w\-\"']{1,64}+[\"']?[ \t]*+:)" + _LINE_TEXT + ")++"
+)
+# The first word of that rule: any run of characters that are no white space, but it ends where the next `authorization:` starts, so a
+# run of glued headers (`authorization:"x"authorization:"x"...`, minified JSON) is read in time linear in its length: an unbounded `\S++`
+# read the whole rest of the text from every `authorization` (batch 13, group 3: 4.7 s at 204,000 characters, 0.3 s on main).
+_FIRST_WORD = r"(?:(?!authorization[\"']?\s*[:=])\S)++"
 _DIGEST_FOLDS = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")*+"
 # More words on the first line of a folded header after the first word (`Authorization: Bearer <token> x` and then the folded lines): at
 # most this many, so a line of repeated headers is read in linear time (each header reads at most this many words, never to the line's end).
@@ -222,10 +232,11 @@ def is_count_run(prefix: str) -> bool:
 
 def _not_after_ordinary_word(ending: str) -> str:
     """Look-behinds (one per ordinary word that ends in `ending`) that stop a bare ending from matching INSIDE an ordinary word:
-    `by` + `pass` is `bypass`. The ordinary word must start a word (`xbypass` is a credential key, as for the record walk).
+    `by` + `pass` is `bypass`. The ordinary word must start the KEY (`xbypass`, `new_bypass`, `x-bypass`, `my.compass` are credential keys, as on main: a
+    `_`, `.`, a digit, or a `-` that follows a word character in front is no start; a bare flag `--bypass` still starts the word; batch 13, group 5).
     Python has no look-behind of varying width, so each ordinary word gets its own fixed-width one."""
     return "".join(
-        r"(?<!(?<![a-z0-9])" + w[: -len(ending)] + ")"
+        r"(?<!(?<![\w.])(?<![\w.]-)" + w[: -len(ending)] + ")"
         for w in sorted(ORDINARY_WORDS)
         if w.endswith(ending)
     )
@@ -926,13 +937,28 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             + "))"
         ),
     ),
+    # `Authorization: AWS4-HMAC-SHA256 Credential=...` and `Authorization: Custom-Scheme <token>`: a scheme word of a capital letter, hyphens and
+    # digits, and the token behind it on the same line (batch 12, group 4; batch 13, group 2). The next rule reads the scheme word in
+    # the letters-only form of main, so a hyphenated TOKEN (`Ab12-Cd34-Ef56`, a licence-style key) is masked as main masked it; this
+    # rule masks the word BEHIND a hyphenated first word, so the credential behind a hyphenated scheme word is masked too. Both run: a
+    # hyphenated first word is never left readable (the batch 12 rule read it as the scheme and left such a token readable).
+    (
+        "SECRET",
+        re.compile(
+            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?"
+            + _ANY_SCHEME_WORD
+            + _SCHEME_GAP
+            + "("
+            + _KEYED_VALUE
+            + r"|[^\s\"']{8,})"
+        ),
+    ),
     (
         "SECRET",
         re.compile(
             # no boundary before the word: a key glued to a host or an address (`example.comAuthorization=V`,
             # `HTTP_AUTHORIZATION=V`) is a key too, as in the generic key rule below (cost: `reauthorization=...` too)
-            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:"
-            + _ANY_SCHEME_WORD
+            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+"
             + _SCHEME_GAP
             + ")?("
             + _KEYED_VALUE
@@ -976,11 +1002,12 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "SECRET",
         re.compile(
-            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?\S++"
+            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?"
+            + _FIRST_WORD
             + _FIRST_LINE_WORDS
             + _FOLD_SPACE
             + "*+("
-            + _FOLD_LINES
+            + _FOLD_LINES_NO_KEY
             + ")"
         ),
     ),
@@ -1414,8 +1441,10 @@ for _label, _pattern in PATTERNS:
     elif _pattern.pattern.startswith("(?i)(?:authorization|(?:" + KEY_WORDS[:30]):
         _GATES[_pattern] = KEY_GATE_WORDS + ("authorization",)
 for _words in set(_GATES.values()):
+    # A zero-width look-ahead, so EVERY position where a word starts is found, also one inside the word before it (`access` +
+    # `session` glued as `accessession`: a plain `finditer` skips the second hit, a full scan tries it; batch 13, group 1).
     _GATE_FINDERS[_words] = re.compile(
-        "|".join(re.escape(w) for w in sorted(_words, key=len, reverse=True))
+        "(?=" + "|".join(re.escape(w) for w in sorted(_words, key=len, reverse=True)) + ")"
     )
 del _label, _pattern, _words
 

@@ -448,8 +448,10 @@ def test_b7_5_the_ordinary_word_must_start_a_word_to_stay_readable():
         )
     for key in ("x-bypass", "new_bypass", "x_compass"):
         assert not R.sensitive(key), key
-        assert clean(f"cfg {key}={ORDINARY_VALUE} end") == f"cfg {key}={ORDINARY_VALUE} end", (
-            f"an ordinary word of its own was masked: {key}"
+        # Round 13 (group 5): in text, an ordinary word behind `-`, `_` after a word is masked as on `main`; the bare word
+        # (`bypass=`, `--bypass`) stays shown (pinned in test_q8b_batch13).
+        assert V not in clean(f"cfg {key}={V} end"), (
+            f"an ordinary word behind a word and a separator was shown: {key}"
         )
 
 

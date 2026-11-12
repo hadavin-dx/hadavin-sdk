@@ -356,7 +356,7 @@ def test_b12_3_the_prefilter_gives_the_same_text_as_a_full_scan_of_every_rule(mo
 def test_b12_3_every_match_of_a_prefiltered_rule_starts_at_one_of_its_literal_words():
     # The property the prefilter rests on, found by the rules themselves (not by the prefilter): a match start is a word start.
     gated = redact_module._GATES
-    assert len(gated) == 8, (
+    assert len(gated) == 9, (
         f"the number of prefiltered rules changed: {len(gated)} (a new rule needs its own proof below)"
     )
     bad = []

@@ -117,7 +117,7 @@ def shown_records(*records):
     return list(redact_bundle(bundle)[0].deploys)
 
 
-_ORDINARY_LOOKBEHIND = re.compile(r"\(\?<!\(\?<!\[a-z0-9\]\)[a-z]+\)")
+_ORDINARY_LOOKBEHIND = re.compile(r"\(\?<!\(\?<!\[\\w\.\]\)\(\?<!\[\\w\.\]-\)[a-z]+\)")
 _LOOKAHEAD = re.compile(r"\(\?=[^()]*\)")
 
 

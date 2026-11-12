@@ -43,6 +43,7 @@ BATCH9 = "test_q8b_batch9.py"
 B10 = "test_q8b_batch10.py"
 B11 = "test_q8b_batch11.py"
 B12 = "test_q8b_batch12.py"
+B13 = "test_q8b_batch13.py"
 K5R11 = "test_k5_round11.py"
 K5PROD = "test_k5_producers.py"
 META = "test_mutation_runner_meta.py"
@@ -168,9 +169,9 @@ M = [
     mutant("M26 address read without any key guard", REDACT,
         '    + _NOT_GLUED_KEY\n    + r"[A-Za-z0-9.\\-]){1,255}\\.(?:"\n    + _NOT_GLUED_KEY\n    + r"[A-Za-z]){2,}(?:\\b|(?="\n    + GLUED_KEY\n    + "))"', '    + r"[A-Za-z0-9.\\-]){1,255}\\.(?:"\n    + r"[A-Za-z]){2,}\\b"',
         BATCH, "test_a_key_glued_to_an_address_of_any_length_keeps_its_value_masked", "glued to a key is readable"),
-    mutant('M27 Authorization boundary back', REDACT, r'''r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:"
-            + _ANY_SCHEME_WORD''', r'''r"(?i)\bauthorization[\"']?\s*[:=]\s*[\"']?(?:"
-            + _ANY_SCHEME_WORD''',
+    mutant('M27 Authorization boundary back', REDACT, r'''r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+"
+            + _SCHEME_GAP''', r'''r"(?i)\bauthorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+"
+            + _SCHEME_GAP''',
         GLUED_TESTS, 'test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote', 'glued to a credential key is readable'),
     mutant("M28 ARN guard case-sensitive", REDACT, '    r"(?:(?i:(?![\\w.\\-*+@]{0,"', '    r"(?:(?:(?![\\w.\\-*+@]{0,"',
         GLUED_TESTS, "test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote", "glued to a credential key is readable"),
@@ -389,7 +390,7 @@ ORDINARY_WORDS = frozenset(["bypass"])''',
         BATCH7, 'test_b7_5_an_ordinary_word_stays_readable_in_every_form_on_every_path', 'an ordinary word was masked'),
     mutant('M106 the quoted rules have no ordinary-word guard on pass', REDACT, '    + _not_after_ordinary_word("pass")\n    + "pass|pass"', '    + "pass|pass"',
         BATCH7, 'test_b7_5_every_ordinary_word_of_the_one_list_is_readable_as_key_value_and_quoted', 'an ordinary word was masked as key value'),
-    mutant('M107 an ordinary word need not start a word', REDACT, '        r"(?<!(?<![a-z0-9])" + w[: -len(ending)] + ")"', '        r"(?<!" + w[: -len(ending)] + ")"',
+    mutant('M107 an ordinary word need not start a word', REDACT, r'        r"(?<!(?<![\w.])(?<![\w.]-)" + w[: -len(ending)] + ")"', r'        r"(?<!" + w[: -len(ending)] + ")"',
         BATCH7, 'test_b7_5_the_ordinary_word_must_start_a_word_to_stay_readable', 'an ordinary word glued behind letters is no ordinary word'),
     mutant('M108 a flag has two prefix words at most', REDACT, r'''FLAG_PREFIX_WORDS = 6''', r'''FLAG_PREFIX_WORDS = 2''',
         BATCH7, 'test_b7_6_a_flag_with_three_prefix_words_masks_its_value', 'a flag with three prefix words is readable'),
@@ -415,7 +416,7 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
     # ---- batch 7, Issue 11: controls of the batch-7 tests that also pass on 8e8ccbef get a mutant that breaks the thing they guard ----
     mutant('M113 a bare credential word takes letters and digits behind it', REDACT, r'''return guard + word + r"(?=[0-9]*[\"']?\s*[:=])"''', r'''return guard + word + r"(?=[a-z0-9]*[\"']?\s*[:=])"''',
         BATCH7, 'test_b7_1_digits_in_the_middle_or_a_digit_only_neighbour_do_not_make_a_key', 'was masked on the card but not by the record walk'),
-    mutant('M114 the ordinary word need not start a word (a real key turns readable)', REDACT, '        r"(?<!(?<![a-z0-9])" + w[: -len(ending)] + ")"', '        r"(?<!" + w[: -len(ending)] + ")"',
+    mutant('M114 the ordinary word need not start a word (a real key turns readable)', REDACT, r'        r"(?<!(?<![\w.])(?<![\w.]-)" + w[: -len(ending)] + ")"', r'        r"(?<!" + w[: -len(ending)] + ")"',
         BATCH7, 'test_b7_5_a_real_credential_key_never_turns_readable_because_of_the_ordinary_list', 'a credential key became readable'),
     test_file_mutant('M115 the CHANGELOG says any number of letters glued in front', 'CHANGELOG.md', 'up to 40 letters or digits glued in front', 'any letters or digits glued in front',
         BATCH7, 'test_b7_6_the_changelog_says_how_many_letters_may_be_glued_in_front', 'up to 40 letters or digits glued in front'),
@@ -468,7 +469,7 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
         B12, 'test_b12_2_a_digest_header_is_masked_after_any_white_space_character_between_the_scheme_and_the_parameters', 'a vertical tab is no line space'),
     mutant('M131 a cookie word key in text has no more words', REDACT, r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]|(?-i:(?=[A-Z])))[A-Za-z0-9]+(?:[_.\-][A-Za-z0-9]+){0,5})?"''', r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+"''',
         BATCH8, 'test_b8_12_a_key_with_the_word_cookie_and_more_words_is_masked_in_text_as_the_record_walk_masks_it', 'a cookie word key leaves a value readable in text'),
-    mutant('M132 the ordinary look-behind of a bare word need not start a word (a real key turns readable)', REDACT, r'''r"(?<!(?<![a-z0-9])" + w[: -len(ending)] + ")"''', r'''r"(?<!" + w[: -len(ending)] + ")"''',
+    mutant('M132 the ordinary look-behind of a bare word need not start a word (a real key turns readable)', REDACT, r'''r"(?<!(?<![\w.])(?<![\w.]-)" + w[: -len(ending)] + ")"''', r'''r"(?<!" + w[: -len(ending)] + ")"''',
         B10, 'test_b10_6_an_ordinary_word_must_start_a_word_to_stay_readable_so_xcompass_key_is_a_key_as_before', 'an ordinary word that does not start a word'),
     mutant('M158 the curl cookie flag does not take the session spelling', REDACT, r'''FLAG_EXACT_WORDS = (
     r"(?:set[_\-])?cookie",
@@ -484,20 +485,25 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
         reply = self.llm.chat(''',
         K5R11, 'test_only_clean_and_the_slack_block_call_the_card_sanitisers', 'guard/judge.py:'),
     mutant('M135 an aliased import of the bare redactor', CHANNEL, r'''def _neutralise(text: str) -> str:
+    text = _LINE_BREAK_CONTROLS.sub("\n", text)
     return withhold_commands''', r'''from ..guard.redact import redact as _bare
 
 
 def _neutralise(text: str) -> str:
+    text = _LINE_BREAK_CONTROLS.sub("\n", text)
     return withhold_commands''',
         K5R11, 'test_the_bare_redactor_ban_also_catches_an_aliased_import', 'approvals/channel.py:'),
     test_file_mutant('M136 the hook check no longer sees a hook that is None', 'tests/test_k5_round11.py', r'''        return isinstance(n.args[2], ast.Constant) and n.args[2].value is None''', r'''        return False''',
         K5R11, 'test_the_hook_check_itself_catches_a_missing_none_and_an_alias', 'the hook check does not see a hook that is None (positional)'),
     mutant('M137 a module that calls a model is not registered', CHANNEL, r'''def _neutralise(text: str) -> str:
+    text = _LINE_BREAK_CONTROLS.sub("\n", text)
     return withhold_commands''', r'''def _neutralise(text: str) -> str:
+    text = _LINE_BREAK_CONTROLS.sub("\n", text)
     _planted_llm.chat(text)
     return withhold_commands''',
         K5PROD, 'test_every_module_that_calls_a_model_is_registered', 'unregistered model caller'),
     mutant('M138 a message is cut before it is redacted', CHANNEL, r'''def _neutralise(text: str) -> str:
+    text = _LINE_BREAK_CONTROLS.sub("\n", text)
     return withhold_commands''', r'''def _neutralise(text: str) -> str:
     _cut = str(text)[:5]
     return withhold_commands''',
@@ -554,10 +560,8 @@ def _neutralise(text: str) -> str:
         B10, 'test_b10_2_a_digest_header_ends_at_the_first_line_that_does_not_start_with_a_space_or_a_tab', 'a Digest header goes on over a line that does not start'),
     mutant('M165 the Basic rule has no wrapped gap (the batch 8 text)', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic[ \t]+([a-z0-9+/<>_]{8,}={0,2})"''',
         BATCH9, 'test_b9_1_the_basic_rule_alone_masks_a_bare_wrapped_value_as_main_did', 'curl -H Basic'),
-    mutant('M166 the generic Authorization rule has the batch 8 gap', REDACT, r'''[\"']?(?:"
-            + _ANY_SCHEME_WORD
-            + _SCHEME_GAP''', r'''[\"']?(?:"
-            + _ANY_SCHEME_WORD
+    mutant('M166 the generic Authorization rule has the batch 8 gap', REDACT, r'''[\"']?(?:[a-z]+"
+            + _SCHEME_GAP''', r'''[\"']?(?:[a-z]+"
             + r"[ \t]+"''',
         BATCH9, 'test_b9_1_every_shape_that_main_masked_is_masked_now_a_differential_against_the_main_rules', 'main masked'),
     mutant('M167 the record walk does not read an ordinary word and its second word as a credential', RED, r'''            or is_ordinary_pair(before, w)''', r'''            or False''',
@@ -755,12 +759,12 @@ def _neutralise(text: str) -> str:
         B12, 'test_b12_1_the_bare_ordinary_word_in_a_quoted_value_stays_shown_the_stated_owner_question[compass]', 'the owner question q-q8b-bare-bypass was not answered yet'),
     mutant('M237 the generic Authorization rule reads letters only as a scheme word (no hyphen, no digits) [b12]', REDACT, r'''_ANY_SCHEME_WORD = r"(?:[a-z]+|(?-i:[A-Z][A-Za-z]{1,15}[0-9]{0,2}(?:-[A-Za-z0-9]{1,16}){1,3}))"''', r'''_ANY_SCHEME_WORD = r"(?:[a-z]+)"''',
         B12, 'test_b12_4_a_folded_authorization_header_is_masked_for_any_scheme_word_and_every_break_character', 'with a scheme word of the wide class or a rare break is readable'),
-    mutant('M238 the fold rules know the line feed and the carriage return as breaks only [b12]', REDACT, r'''_OTHER_BREAKS = "\x0b\x0c\x85\u2028\u2029"''', r'''_OTHER_BREAKS = ""''',
+    mutant('M238 the fold rules know the line feed and the carriage return as breaks only [b12]', REDACT, r'''_OTHER_BREAKS = "\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029"''', r'''_OTHER_BREAKS = ""''',
         B12, 'test_b12_4_a_folded_authorization_header_is_masked_for_any_scheme_word_and_every_break_character', 'with a scheme word of the wide class or a rare break is readable'),
     mutant('M239 the first line of a folded header holds no extra words [b12]', REDACT, r'''FOLD_FIRST_LINE_WORDS = 8''', r'''FOLD_FIRST_LINE_WORDS = 0''',
         B12, 'test_b12_4_extra_words_on_the_first_line_before_the_fold_are_masked_up_to_the_stated_reach', 'the folded line after extra words on the first line is readable'),
     mutant('M240 the lower-case hyphen token is read as a scheme word [b12]', REDACT, r'''_ANY_SCHEME_WORD = r"(?:[a-z]+|(?-i:[A-Z][A-Za-z]{1,15}[0-9]{0,2}(?:-[A-Za-z0-9]{1,16}){1,3}))"''', r'''_ANY_SCHEME_WORD = r"[a-z]{2,24}[0-9]{0,2}(?:-[a-z0-9]{1,16}){0,3}"''',
-        B12, 'test_b12_4_a_lower_case_hyphen_token_is_not_read_as_a_scheme_word', 'a lower-case hyphen token is left readable as a scheme word'),
+        B13, 'test_b13_2_a_lower_case_hyphen_word_after_a_hyphen_token_is_shown_as_on_main', 'the word behind a lower-case hyphen token is masked as if the token were a scheme word'),
     mutant('M241 the extra words on the first line of a folded header have no upper bound (a read to the line end, not linear) [b12]', REDACT, r'''_FIRST_LINE_WORDS = r"(?:" + _FOLD_SPACE + r"++\S++){0," + str(FOLD_FIRST_LINE_WORDS) + "}+"''', r'''_FIRST_LINE_WORDS = r"(?:" + _FOLD_SPACE + r"++\S++)*+"''',
         B12, 'test_b12_4_a_header_with_many_extra_words_and_folds_is_read_in_linear_time', 'is not linear'),
     mutant('M242 the prefilter words do not hold phpsessid (a key that starts with `php`) [b12]', REDACT, r'''"sessid", "phpsessid",''', r'''"sessid",''',
@@ -775,6 +779,41 @@ def _neutralise(text: str) -> str:
         B12, 'test_b12_3_the_prefilter_gives_the_same_text_as_a_full_scan_of_every_rule', 'the literal prefilter changes'),
     mutant('M246 the prefilter drops the word `token` from its pieces [b12]', REDACT, r'''"credential", "token",''', r'''"credential",''',
         B12, 'test_b12_3_the_prefilter_gives_the_same_text_as_a_full_scan_of_every_rule', 'the literal prefilter changes'),
+    mutant('M195 the folded-header rule does not read Digest (a short first line; a credential-key header name) [b13]', REDACT, r"""_AUTH_SCHEME_NAMES = "|".join(AUTH_SCHEMES)""", r"""_AUTH_SCHEME_NAMES = "|".join(a for a in AUTH_SCHEMES if a != "Digest")""",
+        B13, 'test_b13_6_a_digest_header_folded_under_a_credential_key_name_is_masked_to_the_last_fold[token]', 'a folded Digest header under token leaves its next lines readable'),
+    mutant('M247 the one-line Authorization rule reads a hyphenated word as a scheme word again [b13]', REDACT, r"""r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+"
+            + _SCHEME_GAP""", r"""r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:" + _ANY_SCHEME_WORD
+            + _SCHEME_GAP""",
+        B13, 'test_b13_2_a_hyphenated_token_after_authorization_is_masked_as_on_main', 'a hyphenated token after Authorization is read as a scheme word and left readable'),
+    mutant('M248 the first word of the wide fold rule does not end at the next header (a glued run is read from every header to its end) [b13]', REDACT, r'''_FIRST_WORD = r"(?:(?!authorization[\"']?\s*[:=])\S)++"''', r'''_FIRST_WORD = r"\S++"''',
+        B13, 'test_b13_3_a_glued_run_of_headers_is_read_in_linear_time[authorization:"x"]', 'is read in more than linear time'),
+    mutant('M249 the bare-word exemption reads a word behind a prefix as the bare ordinary word again [b13]', REDACT, r"""        r"(?<!(?<![\w.])(?<![\w.]-)" + w[: -len(ending)] + ")"
+        for w in sorted(ORDINARY_WORDS)""", r"""        r"(?<!(?<![a-z0-9])" + w[: -len(ending)] + ")"
+        for w in sorted(ORDINARY_WORDS)""",
+        B13, 'test_b13_5_an_ordinary_word_behind_a_prefix_is_a_credential_key_in_every_form_as_on_main', 'an ordinary word behind a prefix'),
+    mutant('M250 the prefilter finds the words one after the other, not at every start (a word inside the word before it is skipped) [b13]', REDACT, r'''        "(?=" + "|".join(re.escape(w) for w in sorted(_words, key=len, reverse=True)) + ")"''', r"""        "|".join(re.escape(w) for w in sorted(_words, key=len, reverse=True))""",
+        B13, 'test_b13_1_the_prefilter_gives_the_same_text_as_a_full_scan_for_key_words_that_share_a_character', 'the literal prefilter skips a key word that starts inside the key word before it'),
+    mutant('M251 the folded lines of the any-word rule do not stop at a `name:` line [b13]', REDACT, r'''r"(?:" + _FOLD_BREAK + r"[ \t]++(?![\w\-\"']{1,64}+[\"']?[ \t]*+:)" + _LINE_TEXT + ")++"''', r'''r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")++"''',
+        B13, 'test_b13_7_the_siblings_of_an_authorization_key_stay_shown_in_pretty_printed_json', 'masked the siblings of an Authorization key'),
+    mutant('M252 a rare line break ends the text of a folded line [b13]', REDACT, r'''_LINE_TEXT = r"[^\r\n]*+"''', r'''_LINE_TEXT = r"[^\r\n" + _OTHER_BREAKS + "]*+"''',
+        B13, 'test_b13_7_a_rare_line_break_inside_a_folded_line_does_not_end_the_masked_value[form feed]', 'the second part of a folded line after'),
+    mutant('M253 the fold rules do not know the information separators as line breaks [b13]', REDACT, r'''_OTHER_BREAKS = "\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029"''', r'''_OTHER_BREAKS = "\x0b\x0c\x85\u2028\u2029"''',
+        B13, 'test_b13_8_every_character_that_splitlines_reads_as_a_break_is_known_to_the_fold_rules', 'str.splitlines breaks the fold rules do not know'),
+    mutant('M254 the card path writes a rare line break as a space, not a line feed [b13]', CHANNEL, r"""    text = _LINE_BREAK_CONTROLS.sub("\n", text)
+""", r"""""",
+        B13, 'test_b13_7_a_header_folded_over_a_rare_line_break_is_masked_on_every_path[form feed]', 'leaves the next line readable'),
+    mutant('M256 the folded lines are read again from every line to the end of the text (not in linear time) [b13]', REDACT, r'''_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")++"''', r'''_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")+(?=[\s\S]*QQQ)"''',
+        B11, 'test_b11_8_a_long_run_of_folded_lines_is_read_in_linear_time', 'folded lines are not read in linear time'),
+    mutant('M257 the gap after a scheme word is read again up to 40000 characters ahead (not in linear time) [b13]', REDACT, r'''_SCHEME_GAP = r"\s++"''', r'''_SCHEME_GAP = r"\s+(?=[\s\S]{0,40000}QQQ)"''',
+        B10, 'test_b10_1_a_long_run_of_line_breaks_after_a_scheme_word_is_read_in_linear_time', 'a gap after a scheme word takes far too long'),
+    mutant('M255 the second rule for a hyphenated scheme word is missing (the credential behind the scheme word stays readable) [b13]', REDACT, r"""            + _ANY_SCHEME_WORD
+            + _SCHEME_GAP
+            + "("
+""", r"""            + "(?!)"
+            + _SCHEME_GAP
+            + "("
+""",
+        B13, 'test_b13_2_the_credential_behind_a_hyphenated_scheme_word_is_masked_on_the_same_line[AWS4-HMAC-SHA256]', 'is readable'),
 ]  # fmt: skip
 
 
@@ -812,6 +851,7 @@ if __name__ == "__main__":
             "tests/" + B10,
             "tests/" + B11,
             "tests/" + B12,
+            "tests/" + B13,
             "tests/" + LINES8,
             "tests/" + K5R11,
             "tests/" + K5PROD,

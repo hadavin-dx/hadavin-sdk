@@ -54,9 +54,14 @@ _TAGS = re.compile(r"(?:<(?![A-Z][A-Z0-9]*_\d+>)[^<>]{0,200}>[ \t]*)+")
 # scheme word and a token; main did the same). They are written as a plain space first, so the redactor sees the gap the
 # text had (round 9, Issue 1, a sibling found while fixing). Other controls are still removed.
 _WHITE_SPACE_CONTROLS = re.compile("[\x0b\x0c\x1c-\x1f\x85\u2028\u2029]")
+# Of those, the ones that `str.splitlines` reads as a line break (all but `\x1f`) and that a space or a tab follows (a line fold) are written as a LINE FEED, not a space (batch 13, group 7):
+# a tool that splits on them sees a line break there, and a header folded over one (`Authorization: Bearer <a><VT> <b>`) is a folded header
+# for the rules that read the fold; as a space it was one flat line and the second part stayed readable on the card path.
+_LINE_BREAK_CONTROLS = re.compile("[\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029](?=[ \t])")
 
 
 def _neutralise(text: str) -> str:
+    text = _LINE_BREAK_CONTROLS.sub("\n", text)
     return withhold_commands(sanitise_text(_WHITE_SPACE_CONTROLS.sub(" ", text), defang=False))
 
 

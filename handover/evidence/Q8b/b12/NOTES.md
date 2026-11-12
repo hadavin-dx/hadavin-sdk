@@ -2,7 +2,7 @@
 
 Base 2153ad85. Files here: fail-before of the new tests on the clean 2153ad85 copy (import path printed first line), the 50 batch-11 tests that passed on the old code with one line each, the 15 batch-12 tests that pass on old code with their reason below, probe regress tables (old = 2153ad85, new = this head, against main), cost numbers.
 
-Fail-before (2153ad85): test_q8b_batch12.py 15 failed, 15 passed; test_q8b_batch8.py and test_q8b_batch10.py 16 failed, 75 passed (the changed pins of group 1 expect the main behaviour, so the old code fails them). Probe: pair cells that main masks and 2153ad85 left readable 339 (old-regress file) and 0 on this head; the 15 cells of the bare ordinary word are the owner question q-q8b-bare-bypass (shown).
+Fail-before (2153ad85): test_q8b_batch12.py 15 failed, 15 passed; test_q8b_batch8.py and test_q8b_batch10.py 16 failed, 75 passed (the changed pins of group 1 expect the main behaviour, so the old code fails them). Probe: pair cells that main masks and 2153ad85 left readable 340 (old-regress file; corrected in batch 13: the file has 340 rows, the first text said 339) and 0 on this head; the 15 cells of the bare ordinary word are the owner question q-q8b-bare-bypass (shown).
 
 Batch-12 tests that pass on old code, with the reason:
 - test_b12_1_the_bare_ordinary_word_*_stays_shown (8) and test_b12_1_a_non_ordinary_word_*: controls for the owner decision (the bare word stays shown; the old code showed it too). Killers: M234, M235, M236 change the exemption.
