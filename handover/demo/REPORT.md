@@ -1,6 +1,37 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:22Z / 01:52 IST - gitleaks fix reviewed (security path): 0 Blocker, 1 Major, 2 Minor; v2 builder started; 5 agents live
+FAILED / OPEN first:
+- gitleaks/REVIEW-1.md saved. MAJOR: the exceptions.txt hunk of 10a's fix (line 27) and the lane 7 coverage patch (exceptions.txt lines 9 and 24) sit within each other's diff context, so the second patch applied by plain `git apply` fails on context (same base blob 8a85359); `git apply --3way` or a merge should combine them but NOBODY has run both in sequence. .gitleaks.toml: no line overlap. Lane 8's patch touches neither file. Resolved by lane 10a2 (below) with both orders tested.
+- MINOR: exceptions line 27 is wider than the toml allowlist: it hides ANY `projectKey=hadavin-dx_<lowercase/digit/hyphen>` text in .gitleaks.toml and sonar-project.properties from the git-grep hygiene test (the gitleaks layer would still report a different value). Narrower option: write the exact key bracketed so the literal never appears (the repo already uses this trick in exceptions.txt line 12); untested: 10a2 tests it.
+- NOT PROVEN (reasoning only): the review found no way for the allowlist to permit a DIFFERENT secret, but nobody planted a secret AFTER the exact key on the same line, the exact key on another line, a CRLF line, or the `(?m)` variant with the real binary (the (?m) claim has no raw file; match IS proven). The review's scratch trees were removed (it could only read the patch, SUMMARY and raw files); 10a's SUMMARY said 'not testable (it allows nothing)': wrong, the original allowed a match on line 1 of a file. Binary from an earlier lane; the tarball sha256 not compared with lint.yml's pin.
+- Lane 10a2 (sonnet builder, 30 min box): gitleaks-toml-fix-v2.patch with minimal exceptions hunks placed to avoid line 24 context, the bracketed exact key (negative test: a different project key text or a 40+ lowercase run is NOT suppressed: hygiene must fail with it), the `(?m)` run with the real binary, the narrowness matrix incl. the cases above in dir and git modes (a secret planted AFTER the exact key on the same line is the one that matters: if not reported, that is a hole and is reported first), apply orders with the coverage patch (both orders, --3way) and the merged result run through hygiene and real gitleaks. A fresh review follows (no cap).
+- You still decide whether to apply the fix: it is on origin demo/handover only.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:22Z / 01:52 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a1efeaddf3232ebcb (agent, sonnet evidence runner) | lane 9 hang reproduction + memory | 19:50 | 33 min | 20:50 | running | hang/RESULTS.md | per-run files |
+| ac3a511599cfd9d0d (agent, sonnet builder) | lane 8b | 20:01 | 22 min | 20:50 | running | docs-and-deps.patch v2 | pytest running |
+| ad3dab9715b1335af (agent, sonnet builder) | lane 7b | 20:12 | 11 min | 21:02 | running | coverage patch v2, gitleaks proof, PLAN.md | started |
+| a03bfbfb75bd4ec81 (agent, sonnet builder) | lane 10b CodeAnt triage | 20:15 | 8 min | 21:15 | running | CODEANT-COVERAGE.md | started |
+| (new) lane 10a2 builder, sonnet | gitleaks fix v2 | 20:22 | 0 min | +30 min | running | gitleaks-toml-fix-v2.patch, SUMMARY2.md | started |
+Totals: agents live 5; shells 0; pytest runs 2 to 3; `yes` x2 (lane 9); containers 0; load average 3.20, 3.50, 2.67.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| gitleaks allowlist | fix round 2 (10a2); review 2 follows | lead's 558d37f: failed the real-binary check; v1 review 0B/1M/2m/2N | the lead's allowlist did not work (line break); patch conflict; fix wider than needed; untested narrowness cases | security path: no cap | no cap | a fresh review finds no Major/Blocker and the real binary agrees |
+| lane 7 Sonar | fix round 7b | r1 0B/1M/8N | see earlier | security path | no cap | fresh review without Major/Blocker |
+| lane 8 browser tests | v3 design in build | v1 0B/3M/8N | see earlier | design reversals | none | fresh review without Major/Blocker |
+Waste check: the review's scratch trees were deleted by lane 10a when it ended (I did not keep them: my brief did not ask for them to be kept), so review 1 had to work from patch and raw files only; I fixed this in the 10a2 brief (raw evidence files, and I will keep its trees until the review is done).
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| a8bd1563fdb309626 (gitleaks fix review, sonnet read-only) | about 6 min | 0B/1M/2m/2N, saved gitleaks/REVIEW-1.md | yes |
+
 ## 2026-11-12 20:18Z / 01:48 IST - URGENT FOR THE LEAD: the gitleaks allowlist at pr-3-tests 558d37f DOES NOT WORK (lane 10a, real gitleaks 8.30.1); fix patch ready; 5 agents live
 FAILED first (lane 10a, EVIDENCE RUNNER; files in handover/demo/gitleaks/, SUMMARY.md first; pushed 35c15266):
 - On a fresh full clone of pr-3-tests 558d37fe5372f8c378e7ea07c6193a738f4497ed with the REAL gitleaks 8.30.1 and the exact lint.yml commands: `gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow` exit 1, 1 leak; `gitleaks git . ...` exit 1, 2 leaks (commits 7ec367b and a0b97a4 plus the tree); the leak is generic-api-key on the real `sonar.projectKey` line (sonar-project.properties:4). tests/test_hygiene.py: 1 failed, 9 passed (the gitleaks part ran, not skipped). So lint.yml's gitleaks step stays RED on the PR as it is now.
