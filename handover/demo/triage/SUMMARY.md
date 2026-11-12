@@ -1,4 +1,4 @@
-# Static-analysis triage, lane 3 (in progress; test results filled in at the end)
+# Static-analysis triage, lane 3 (final)
 
 Repo: public demo, branch initial-code, base 43110e7 (read-only clone /tmp/work/ro-clone, never edited). Work copies: /tmp/work/triage-copy (untouched, "before" runs), /tmp/work/apply-check (both patches applied, "after" runs). Nothing committed or pushed. No model call, no spend, no secret, no sub-agent.
 
@@ -7,7 +7,7 @@ Repo: public demo, branch initial-code, base 43110e7 (read-only clone /tmp/work/
 - **No REAL (behaviour-risk) instance was found in either cluster.** Every DeepSource item I could reproduce is STYLE or FALSE POSITIVE. So no behaviour-changing fix and no fails-before/passes-after test exist; I did not invent one. If DeepSource shows an item that is not in the table below, I could not reproduce it from the description (see next point).
 - **I could not see the DeepSource report itself**, only the two cluster descriptions. I matched them to my own tool output. Two descriptions found nothing as worded: (1) "handlers that immediately re-raise ... in desk.py": desk.py has none (every bare `raise` in desk.py sits after an `if` or other statements); the immediate re-raises are in crm_hubspot.py, live_claude.py, smtp_outbox.py, smtp_provider.py. (2) "overlapping exception clauses" in desk.py: none; they are in other files (table). "missing let/const (implicit var)": I found no assignment to an undeclared name (ESLint `no-undef` and `no-global-assign` are clean for that); the only thing matching is the 504 uses of `var` (STYLE, not patched, see J4).
 - **Browser tests did not run** (no Playwright; it is not in the hashed lock file and I did not install from elsewhere). The three portal edits are covered by the node-based portal tests and by an equivalence script, not by a real browser. The `log.js` change (`_open` handler made a named function) is not exercised by any test I could run; it is a mechanical move inside the same scope.
-- `python -m pytest` before/after: see "Test runs" below.
+- Full suite before and after: no failure either time (numbers below). Both runs were serial (1 worker each, two at the same time) on a machine shared with other agents' test runs.
 - Not patched on purpose: the 504 `var` uses (J4), the 29 unused-variable warnings, test-file probes. Reasons in the table.
 - Tools not run: gitleaks, bandit (not part of my findings; bandit 1.9.4 is in the lock file but I did not need it). EGM review was not done by me (lead runs it).
 
@@ -38,7 +38,7 @@ Class: REAL = behaviour risk, STYLE = harmless but worth tidying, FALSE POSITIVE
 | J6 | a | pages/log.js:68 | FALSE POSITIVE | the `_open` function inside the `while` loop uses only `opened` and `render` (outer variables, not loop variables) and takes `k` as a parameter; no stale loop value is captured | yes (named function `openRun` declared once before the loop) | node portal tests (the clickable path itself is only in browser tests, not run) |
 | J7 | a | tests/portal_state_probe.js:100, :124 | FALSE POSITIVE | test probe; an `await` inside the loop body and a synchronous `forEach`; nothing outlives the iteration | no (test file) | n/a |
 | J8 | a | tests/portal_*_probe.js (many lines: `require`, `process`, top-level `function`) | FALSE POSITIVE | these are Node CommonJS scripts: `require`/`process` exist, and top-level functions are module-private there. My config had no node environment on purpose, to see them. | no | n/a |
-| J9 | a | 29 `no-unused-vars` (e.g. portal.js:545 `stopPage`, :661 `demoKnown` written never read, ~20 unused `catch (e)`), 5 `no-shadow` (portal.js:173, 216, 231, 255; log.js:60) | STYLE | dead variable and unused catch bindings; the shadowed names are harmless (each is a local parameter or variable in its own function). Outside the two clusters. | no | n/a |
+| J9 | a | 27 `no-unused-vars` in portal/ and 2 in demo_only (e.g. portal.js:545 `stopPage`, :661 `demoKnown` written never read, ~20 unused `catch (e)`), 5 `no-shadow` (portal.js:173, 216, 231, 255; log.js:60) | STYLE | dead variable and unused catch bindings; the shadowed names are harmless (each is a local parameter or variable in its own function). Outside the two clusters. | no | n/a |
 
 Result of `eslint` for the cluster rules (no-undef, no-use-before-define, no-loop-func, function-in-loop): src before 4 + 13 + 1 + 2 = 20 hits, after 0 (`evidence-eslint-before.txt`, `evidence-eslint-after.txt`). Only the `no-var` and warnings remain.
 
@@ -70,4 +70,15 @@ Result of `eslint` for the cluster rules (no-undef, no-use-before-define, no-loo
 
 ## Test runs
 
-(filled in below)
+Command (both): `python -m pytest -q -x -rs -p no:cacheprovider`, Python 3.13.18, packages from the hashed lock file, one worker each.
+
+| run | tree | result | raw output |
+|---|---|---|---|
+| before | /tmp/work/triage-copy = base 43110e7, unpatched | 2349 passed, 116 skipped, 757 s | `evidence-baseline-full.txt` |
+| after | /tmp/work/apply-check = base + js-portal.patch + py-retry.patch | 2352 passed, 116 skipped, 753 s (the 3 extra are the new pin test) | `evidence-after-full.txt` |
+
+- The skips are the same in both runs: Playwright browser tests (not installed, see above), the Windows-only test, the gitleaks scan (no program), one load-measurement test.
+- The node-based portal tests were NOT skipped (node is installed), so they ran against the edited portal.js, overview.js and log.js in the "after" run. They passed.
+- No test fails on the old code and passes on the new one, because no behaviour was changed (no REAL finding). The one new test file passes on both (`evidence-hierarchy-test.txt`).
+- Other evidence files: `evidence-eslint-before.txt`, `evidence-eslint-after.txt` (cluster rules only; the `no-var`, unused and shadow warnings are filtered out), `equiv-overview-grouping.js` (run it with node; printed "equivalent on 20000 random cases").
+- Not run: Playwright browser tests, gitleaks, bandit, the real-services scripts.

@@ -31,4 +31,29 @@ ss................................................ss..s................. [ 81%]
 ........................................................................ [ 87%]
 ............................s........................................... [ 90%]
 ........................................................................ [ 93%]
-..................................
+........................................................................ [ 96%]
+.............ssssssssssssss..................................s.......... [ 99%]
+.................                                                        [100%]
+============================= slowest 10 durations =============================
+35.33s call     tests/test_clock_steps.py::test_dry_run_survives_a_wall_clock_step[3600.0]
+34.91s call     tests/test_real_check_dry.py::test_a_dry_run_where_every_send_ends_in_doubt_fails
+34.25s call     tests/test_real_check_dry.py::test_dry_fakes_leave_no_certificate_or_key_folder_behind
+34.19s call     tests/test_real_check_dry.py::test_dry_fakes_run_end_to_end
+29.11s call     tests/test_desk_edge_cases.py::test_burst_distinct_emails
+17.33s call     tests/test_desk_http_edge_cases.py::test_startup_50_pending
+15.35s call     tests/test_desk_edge_cases.py::test_startup_fast_reaper_sends
+10.16s call     tests/test_portal_api.py::test_restart_same_port_portal_open
+10.05s call     tests/test_infra.py::test_connection_pragmas_and_busy_503
+10.03s call     tests/test_later_approval.py::test_decision_busy_is_503
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_hygiene.py:128: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [22] tests/test_mode_safety.py:109: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [60] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
+SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
+2349 passed, 116 skipped in 885.03s (0:14:45)
+EXIT=0 WALL=886s

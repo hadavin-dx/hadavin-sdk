@@ -30,4 +30,17 @@ ss................................................ss..s................. [ 81%]
 ........................................................................ [ 87%]
 ............................s........................................... [ 90%]
 ........................................................................ [ 93%]
-...................................
+........................................................................ [ 96%]
+.............ssssssssssssss..................................s.......... [ 99%]
+.................                                                        [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_hygiene.py:128: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [22] tests/test_mode_safety.py:109: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [60] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
+SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
+2349 passed, 116 skipped in 757.00s (0:12:37)
