@@ -275,9 +275,13 @@
     the cell and the rendered comment. The sources file head states that only V-POL and B-POL have a
     builder-read passage and the other 7 sources are nobody-read, and the page head lists the claims of each
     mark from that file. The policy mutants gained 14 mutants for these rules and every B4 and B5 mutant is
-    anchored on text of its own function. One person editing the sources file to move the builder-read mark onto
-    another claim of an entry that already names a builder-only source is not caught by code: only a human
-    re-reading the vendor text can tell who read it.
+    anchored on text of its own function. The last review round added 5 more (108 in all) and a new test that
+    judges a reason by its exact text on planted data; the tool takes the byte-order mark as an escape, not as an
+    invisible character, and its `main` takes a `today` argument so the tests can fix the day. One person editing the sources file to move the builder-read mark onto
+    another claim of an entry that already names a builder-only source is not caught by `--check`, and is caught
+    for R17 only by the pinned test; for any other such entry only a human re-reading the vendor text can tell
+    who read it. The rule "an entry that names a builder-only source needs a builder-read claim" applies to every
+    claim of such an entry, so a new claim added to one makes `--check` ask for a builder-read claim.
   - The page also gained a plain-words legend for its column heads, a sentence that Vault calls signing `update`
     although signing stores nothing, and the two links the call check does not follow. New checks: the paging
     query of the Kubernetes list wrapper, the one sending function of the Vault client, the setting-to-attribute
@@ -294,7 +298,8 @@
     set yet; a dated list in the guard test names them, and that test fails for 7 of them from 2026-12-12 and
     the other 9 from 2027-02-01, unless the second pull request has landed or the dates were decided again (at
     most 92 days at a time). The dated lists of names and claims (13 entries, review by 2026-12-11) fail from
-    2026-12-12 in the tests and in `python tools/policy_page.py --check`.
+    2026-12-12 in the tests and in `python tools/policy_page.py --check`; from that day `--write` stops too,
+    until the dates are renewed.
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.
   - It covers AWS, gcloud/gsutil/bq, az, azcopy and PowerShell Az, kubectl/oc, helm, terraform/tofu/pulumi,

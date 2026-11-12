@@ -16,13 +16,22 @@ What this file does:
   gives. `--check` runs `data_problems`: the rules of each literal, the rules across kinds, every source id
   resolves in the sources file, no module outside `KIND_MODULES` holds a `POLICY`, every note and reason has
   one class (`NOTE_CLASSES`, whose own shape is checked too), every claim has one mark by full-text equality
-  with the head of the sources file, and the dated lists of unchecked names (`PENDING_NAMES`) and unchecked
-  claims (`PENDING_CLAIMS`): an entry is needed, stale, overdue (past `review_by`) or too far out is a problem.
+  with the head of the sources file, the builder-read mark rules, and the dated lists of unchecked names
+  (`PENDING_NAMES`) and unchecked claims (`PENDING_CLAIMS`). The builder-read mark rules: the mark stands only
+  on a claim of an entry that names a source only the builder has read; an entry that names such a source and
+  has ANY claim needs one builder-read claim, so a new claim with no reader added to such an entry makes
+  `--check` ask for a builder-read one; the mark must be on the claim the builder really read, and no code
+  can check that. The dated-list rules: an entry that is missing, stale, overdue (past `review_by`), too far
+  out (`review_by` more than `MAX_PENDING_DAYS` after `decided`) or decided in the future is a problem. From
+  2026-12-12 the dated entries are overdue, so `--write` and `--check` both stop until the dates are renewed.
 
-What it does not do: it does not prove that a permission name is right, and it never contacts a server. Three
-checks need this package imported and so live only in tests/test_policy_guard.py, not in `--check`: the
-requests written in a module equal the declared ones, every kind is declared or on the dated list of kinds
-(`PENDING_KINDS`, which stays in the tests), and every placeholder is a real setting of the kind. Standard library only.
+What it does not do: it does not prove that a permission name is right, and it never contacts a server. Some
+checks need this package imported or a server running and so live only in the tests (tests/test_policy_guard.py
+and tests/test_policy_engine.py), not in `--check`: the call shape (the requests written in a module equal the
+declared ones), the import lists of the kind modules, the sending-function and paging-query rules, the rule that
+only the declared modules use the Vault client, the Kubernetes equalities (never-list, verb and resource per
+path), the placeholder check (every placeholder is a real setting of the kind), the engine tests, and the list
+of kinds with no declared set yet (`PENDING_KINDS`, which stays in the tests). Standard library only.
 """
 
 from __future__ import annotations
@@ -665,7 +674,7 @@ def head_lines(root: Path) -> list[str]:
         text = (root / SOURCES).read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         raise PolicyError(f"{SOURCES}: cannot be read ({type(exc).__name__})") from None
-    return text.removeprefix("﻿").splitlines()
+    return text.removeprefix("\ufeff").splitlines()
 
 
 def source_ids(root: Path) -> dict[str, tuple[str, str, str, str]]:
@@ -723,17 +732,17 @@ class Pending:
     review_by: date  # the check fails after this date
 
 
-_DECIDED = date(2026, 11, 11)
+DECIDED = date(2026, 11, 11)
 _ROLE_NAMES = Pending(
     "the built-in role name was not among the names the evidence runner looked for",
     "an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry",
-    _DECIDED,
+    DECIDED,
     date(2026, 12, 11),
 )
 _BUILDER_ONLY = Pending(
     "the path was read in the vendor source by the builder of a fix only, not by an evidence runner",
     "an evidence run that finds the path in the listed sources, then set `verified` and delete this entry",
-    _DECIDED,
+    DECIDED,
     date(2026, 12, 11),
 )
 # (kind, entry) -> a name not yet found in a vendor source by the evidence runner. The entry is a grant id,
@@ -752,7 +761,7 @@ _CLAIM_PENDING = Pending(
     "the statement about server or API behaviour is not checked by an evidence runner",
     "an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and "
     "delete this entry",
-    _DECIDED,
+    DECIDED,
     date(2026, 12, 11),
 )
 # (kind, grant id | `free:<n>` | `never:<name>`) -> a statement about how the vendor's server or API behaves that
@@ -1269,8 +1278,11 @@ def claim_mark(text: str, marks: Marks | None = None) -> str:
 
 def claim_mark_problems(policies: dict[str, Policy], marks: Marks) -> list[str]:
     """Every claim has one mark by full-text equality; the builder-read mark stands only on an entry that names a
-    source only the builder has read, and such an entry with a claim has one builder-read claim (a mark moved to
-    another claim is refused); every listed text belongs to a claim (a stale text is refused)."""
+    source only the builder has read. The rule applies to EVERY claim of such an entry: an entry that names a
+    builder-only source and has any claim needs one builder-read claim (a mark moved to a claim of an entry
+    that names no such source is refused). Moving the mark between two claims of ONE such entry is not caught
+    here: the mark must name the claim the builder really read, and only the pinned test catches that for R17.
+    Every listed text belongs to a claim (a stale text is refused)."""
     out, used = [], set()
     for kind, label, e in entries(policies):
         got = []
@@ -1830,7 +1842,9 @@ def page(root: Path | None = None) -> str:
     return "\n".join(out)
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, today: date | None = None) -> int:
+    """Run `--write` or `--check`. `today` (default: the current UTC date) is for the tests: the dated lists
+    are judged against it."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--write", action="store_true", help=f"write {PAGE}")
@@ -1839,7 +1853,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     try:
-        bad = data_problems()
+        bad = data_problems(today=today)
         text = "" if bad else page()
     except (PolicyError, ValueError, OSError) as exc:
         bad = [f"{type(exc).__name__}: {exc}"]

@@ -35,7 +35,7 @@ from hadavin_sdk.sources import kubernetes as k8s
 from tests.test_lockin_guard import TODAY, Pending
 
 ROOT = Path(__file__).resolve().parents[1]
-DECIDED = date(2026, 11, 11)
+DECIDED = pp.DECIDED
 # The longest time a dated entry may stand before it is looked at again. An entry can only be kept alive
 # by a new decision (a new `decided` day) with a new `review_by` at most this many days after it. The number
 # lives in the tool (one place); a test below checks this file does not hold a second one.
@@ -1715,7 +1715,7 @@ def test_the_committed_page_equals_what_the_data_gives():
     assert page.read_text(encoding="utf-8") == pp.page(ROOT), (
         f"{pp.PAGE} differs from the data: run `python tools/policy_page.py --write` and commit"
     )
-    assert pp.main(["--check"]) == 0
+    assert pp.main(["--check"], today=DECIDED) == 0
 
 
 def test_the_page_states_its_limits_and_offers_text_for_the_three_kinds():
@@ -1741,9 +1741,9 @@ def test_plant_a_page_that_differs_from_the_data_fails_the_check(tmp_path, monke
     (tmp_path / "docs").mkdir()
     (tmp_path / pp.PAGE).write_text(pp.page(ROOT) + "edited by hand\n", encoding="utf-8")
     monkeypatch.setattr(pp, "ROOT", tmp_path)
-    assert pp.main(["--check"]) == 1
+    assert pp.main(["--check"], today=DECIDED) == 1
     assert "differs from the data" in capsys.readouterr().err
-    assert pp.main(["--write"]) == 0 and pp.main(["--check"]) == 0
+    assert pp.main(["--write"], today=DECIDED) == 0 and pp.main(["--check"], today=DECIDED) == 0
 
 
 # ============================================================ fix batch 1 (result review round 1 of 7af13809)
@@ -2603,19 +2603,19 @@ def _tree(tmp_path: Path) -> Path:
 
 def _check(monkeypatch, capsys, root: Path) -> tuple[int, list[str]]:
     monkeypatch.setattr(pp, "DATA_ROOT", root)
-    code = pp.main(["--check"])
+    code = pp.main(["--check"], today=DECIDED)
     return code, capsys.readouterr().err.splitlines()
 
 
 def test_the_data_of_this_repository_breaks_no_rule_the_command_line_checks():
-    assert pp.data_problems(ROOT) == []
+    assert pp.data_problems(ROOT, today=DECIDED) == []
 
 
 def test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1(
     tmp_path, monkeypatch, capsys
 ):
     root = _tree(tmp_path)
-    assert pp.data_problems(root) == []
+    assert pp.data_problems(root, today=DECIDED) == []
     transit = root / TRANSIT
     transit.write_text(_text(TRANSIT).replace('"id": "R18"', '"id": "R17"'), encoding="utf-8")
     code, lines = _check(monkeypatch, capsys, root)
@@ -2673,7 +2673,7 @@ def test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1(
 def test_m10_write_makes_a_missing_docs_folder_and_check_then_passes(tmp_path, monkeypatch):
     monkeypatch.setattr(pp, "ROOT", tmp_path)
     assert not (tmp_path / "docs").exists()
-    assert pp.main(["--write"]) == 0 and pp.main(["--check"]) == 0
+    assert pp.main(["--write"], today=DECIDED) == 0 and pp.main(["--check"], today=DECIDED) == 0
 
 
 # ------------------------------------------------------------------------- m12: sources are pinned and used
@@ -2861,7 +2861,9 @@ def test_a_never_path_over_a_grant_is_also_refused_by_the_check_command(tmp_path
     (tmp_path / pp.SOURCES).write_text(
         (ROOT / pp.SOURCES).read_text(encoding="utf-8"), encoding="utf-8"
     )
-    assert any("covers the resource and capability" in p for p in pp.data_problems(tmp_path))
+    assert any(
+        "covers the resource and capability" in p for p in pp.data_problems(tmp_path, today=DECIDED)
+    )
 
 
 def test_plant_a_kubernetes_never_resource_that_a_grant_names_is_caught():
@@ -3514,6 +3516,25 @@ def test_a_free_reason_that_says_it_creates_nothing_or_changes_nothing_has_no_cl
     assert any("has 0 classes in NOTE_CLASSES" in p for p in found), found
 
 
+def test_a_reason_is_matched_by_its_exact_text_even_when_a_class_key_is_its_unique_prefix():
+    # Planted on its own data, so it does not depend on which real reason is the prefix of another: the key is
+    # a prefix no real reason has, the reason goes on after it, so the reason has no class.
+    kube = "source/kubernetes"
+    key = "reason:zq planted reason with no look-alike in the data"
+    classes = {**NOTE_CLASSES, (kube, key): ("code",)}
+    for tail in (" and goes on", " "):
+        policies = _free_reason(kube, key.removeprefix("reason:") + tail)
+        found = note_problems(policies, classes, set(source_ids()))
+        assert any(
+            "has 0 classes in NOTE_CLASSES" in p and "zq planted reason" in p for p in found
+        ), (
+            f"a reason that goes on after its unique prefix is read as the class of that prefix: {found}"
+        )
+    exact = _free_reason(kube, key.removeprefix("reason:"))
+    found = note_problems(exact, classes, set(source_ids()))
+    assert not any("zq planted reason" in p and "has 0 classes" in p for p in found), found
+
+
 def test_a_grant_or_never_reason_with_no_class_is_refused_and_a_wrong_class_is_caught():
     vault, kube = "secrets/vault", "source/kubernetes"
 
@@ -3564,7 +3585,7 @@ def test_a_note_class_with_an_unknown_source_id_is_a_problem_of_the_check_and_th
 ):
     key = ("source/kubernetes", "free:a default cluster gives every")
     monkeypatch.setitem(pp.NOTE_CLASSES, key, ("sources", ("K-NOPE",)))
-    found = pp.data_problems(ROOT)
+    found = pp.data_problems(ROOT, today=DECIDED)
     assert any("K-NOPE, which is not in the sources file" in p for p in found), (
         f"the check command does not report an unknown source id of a note class: {found}"
     )
@@ -3585,7 +3606,7 @@ def test_a_free_note_class_that_lists_a_source_its_entry_does_not_name_is_a_prob
 ):
     key = ("source/kubernetes", "free:a default cluster gives every")
     monkeypatch.setitem(pp.NOTE_CLASSES, key, ("sources", ("K-RBAC", "K-SRC", "V-TOK")))
-    found = pp.data_problems(ROOT)
+    found = pp.data_problems(ROOT, today=DECIDED)
     assert any("V-TOK, which is not in `verified` of the same entry" in p for p in found), (
         f"the check command does not report a class source that is not in `verified`: {found}"
     )
@@ -3600,7 +3621,7 @@ def test_a_free_note_class_that_lists_a_source_its_entry_does_not_name_is_a_prob
         ),
         encoding="utf-8",
     )
-    found = pp.data_problems(root)
+    found = pp.data_problems(root, today=DECIDED)
     assert any("K-SSRR, which is not in `verified` of the same entry" in p for p in found), (
         f"the check command does not report a source dropped from `verified`: {found}"
     )
@@ -3613,7 +3634,7 @@ def test_the_check_command_reports_a_claim_with_no_mark_in_the_sources_file(tmp_
         _text(pp.SOURCES).replace("the exact path R18 does not also allow", "no such claim"),
         encoding="utf-8",
     )
-    found = pp.data_problems(root)
+    found = pp.data_problems(root, today=DECIDED)
     assert any("has 0 marks" in p for p in found) and any("matches no claim" in p for p in found), (
         f"the check command does not report a claim with no mark: {found}"
     )
@@ -3748,7 +3769,7 @@ def test_a_clause_appended_to_a_claim_is_no_longer_the_listed_claim(tmp_path):
     for rel, old in ((VAULT, PLUS_CLAIM), (VAULT, OLDER_CLAIM), (TRANSIT, 'algorithm name"')):
         root = _tree(tmp_path / rel.replace("/", "_"))
         _edit(root, rel, old, old.removesuffix('"') + _MORE + ('"' if old.endswith('"') else ""))
-        found = pp.data_problems(root)
+        found = pp.data_problems(root, today=DECIDED)
         assert any("has 0 marks" in p for p in found), f"the longer claim still has a mark: {found}"
         assert any("matches no claim" in p for p in found), f"the listed text is not stale: {found}"
 
@@ -3763,7 +3784,7 @@ def test_the_marks_of_r17_and_r18_swapped_in_the_sources_file_are_reported_by_th
     (root / pp.SOURCES).write_text(
         text.replace(f" ;; {R18_CLAIM}", f" ;; {PLUS_CLAIM}"), encoding="utf-8"
     )
-    found = pp.data_problems(root)
+    found = pp.data_problems(root, today=DECIDED)
     assert any(
         p.startswith("signer/vault_transit R18") and "marked 'builder read the passage'" in p
         for p in found
@@ -3781,7 +3802,7 @@ def test_a_claim_text_under_both_marks_is_refused(tmp_path):
         ),
         encoding="utf-8",
     )
-    assert any("is under both marks" in p for p in pp.data_problems(root)), (
+    assert any("is under both marks" in p for p in pp.data_problems(root, today=DECIDED)), (
         "a text under both marks is not reported"
     )
     with pytest.raises(pp.PolicyError, match="is under both marks"):
@@ -3798,7 +3819,9 @@ def test_a_claim_text_that_ends_in_two_semicolons_or_repeats_is_refused(tmp_path
         (root / pp.SOURCES).write_text(
             _head(_tree(tmp_path)).replace(nobody, line), encoding="utf-8"
         )
-        assert any(why in p for p in pp.data_problems(root)), f"{name} is not refused"
+        assert any(why in p for p in pp.data_problems(root, today=DECIDED)), (
+            f"{name} is not refused"
+        )
         with pytest.raises(pp.PolicyError, match=why):
             pp.read_marks(root)
 
@@ -3812,7 +3835,7 @@ def test_a_byte_order_mark_is_read_the_same_by_the_row_the_id_and_the_claim_pars
         lines.remove(moved)
         (root / pp.SOURCES).write_bytes("\n".join([moved, *lines]).encode("utf-8-sig"))
         assert (root / pp.SOURCES).read_bytes().startswith(b"\xef\xbb\xbf")
-        assert pp.data_problems(root) == [], (
+        assert pp.data_problems(root, today=DECIDED) == [], (
             f"a file with a byte-order mark before `{first}` is refused somewhere"
         )
         assert pp.source_ids(root) == plain_rows
@@ -3856,6 +3879,28 @@ def test_the_check_command_reports_a_name_or_claim_with_no_dated_entry_and_a_sta
     assert pp.data_problems(ROOT, today=date(2026, 12, 11)) == []
 
 
+def test_from_the_review_date_the_write_command_and_the_check_command_both_stop(
+    tmp_path, monkeypatch, capsys
+):
+    # The dated entries are overdue the day after `review_by`: `--write` and `--check` then refuse with the
+    # overdue lines (the red signal that the dates must be renewed); the day before they pass.
+    root = _tree(tmp_path)
+    monkeypatch.setattr(pp, "ROOT", root)
+    monkeypatch.setattr(pp, "DATA_ROOT", root)
+    day_before, day_of = date(2026, 12, 11), date(2026, 12, 12)
+    assert pp.main(["--write"], today=day_before) == 0 and (root / pp.PAGE).is_file()
+    assert pp.main(["--check"], today=day_before) == 0
+    capsys.readouterr()
+    (root / pp.PAGE).unlink()
+    assert pp.main(["--write"], today=day_of) == 1
+    assert not (root / pp.PAGE).exists(), (
+        "`--write` wrote the page although the dated entries are overdue"
+    )
+    assert pp.main(["--check"], today=day_of) == 1
+    err = capsys.readouterr().err
+    assert "is overdue (review_by 2026-12-11)" in err, err
+
+
 def test_a_grant_whose_name_is_unchecked_with_no_pending_row_is_reported_by_the_check(tmp_path):
     root = _tree(tmp_path)
     text = (root / VAULT).read_text(encoding="utf-8")
@@ -3868,7 +3913,7 @@ def test_a_grant_whose_name_is_unchecked_with_no_pending_row_is_reported_by_the_
     )
     assert n == 1
     (root / VAULT).write_text(planted, encoding="utf-8")
-    found = pp.data_problems(root)
+    found = pp.data_problems(root, today=DECIDED)
     assert any(
         p.startswith("secrets/vault R17: the name is not found in a vendor source")
         and "no PENDING_NAMES entry" in p
@@ -3889,7 +3934,7 @@ def test_a_new_unchecked_claim_with_no_pending_row_is_reported_by_the_check(tmp_
         ),
         encoding="utf-8",
     )
-    found = pp.data_problems(root)
+    found = pp.data_problems(root, today=DECIDED)
     assert any(
         p.startswith("signer/vault_transit R19: has an unchecked claim")
         and "no PENDING_CLAIMS entry" in p
@@ -3927,7 +3972,9 @@ def test_the_page_takes_its_marks_from_the_root_it_is_given(tmp_path):
         encoding="utf-8",
     )
     r17 = next(ln for ln in pp.page(root).splitlines() if ln.startswith("| R17 "))
-    assert "V-KV (builder only)" in r17, r17
+    assert "V-KV (builder only)" in r17, (
+        f"the page does not take its marks from the root it is given: {r17}"
+    )
     r17 = next(ln for ln in pp.page(ROOT).splitlines() if ln.startswith("| R17 "))
     assert "V-KV (builder only)" not in r17, r17
 
@@ -3994,7 +4041,9 @@ def test_the_page_head_lists_the_claims_of_each_mark_from_the_sources_file_not_f
         marks, builder_read=("planted builder text",), nobody_read=("planted other text",)
     )
     head = pp.head(planted)
-    assert '"planted builder text"' in head and '"planted other text"' in head, head
+    assert '"planted builder text"' in head and '"planted other text"' in head, (
+        f"the page head does not list the claims of each mark from the lists it is given: {head}"
+    )
     assert PLUS_CLAIM not in head
     real = pp.head(marks)
     for text in (*marks.builder_read, *marks.nobody_read):
@@ -4011,6 +4060,10 @@ def test_the_fixture_head_names_the_builder_read_claims_as_they_are():
     ), "the fixture head does not say which sources have a builder-read passage"
     assert "the other 7" in " ".join(ln.removeprefix("#").strip() for ln in head.splitlines())
     assert len(marks.partly_builder_only) == 9
+    assert "(6 different texts)" in " ".join(
+        ln.removeprefix("#").strip() for ln in head.splitlines()
+    )
+    assert len(set(marks.nobody_read)) == len(marks.nobody_read) == 6
 
 
 def test_a_kind_whose_module_could_not_be_read_adds_no_stale_class_line():
