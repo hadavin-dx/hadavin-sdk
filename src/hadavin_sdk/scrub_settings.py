@@ -9,9 +9,8 @@ from hadavin_sdk import defaults
 from hadavin_sdk.hidden_input import HiddenInputModel
 
 
-class _Strict(
-    HiddenInputModel, BaseModel
-):  # BaseModel is named too so the linter knows these are pydantic models
+# `BaseModel` is named too so the linter knows the class is a pydantic model
+class _Strict(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
 
 

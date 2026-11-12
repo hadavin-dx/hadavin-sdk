@@ -79,9 +79,8 @@ def sha256_hex(obj: Any) -> str:
     return hashlib.sha256(canonical_json(obj).encode("utf-8")).hexdigest()
 
 
-class Shape(
-    HiddenInputModel, BaseModel
-):  # BaseModel is named too so the linter knows this is a pydantic model
+# `BaseModel` is named too so the linter knows the class is a pydantic model
+class Shape(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid")
     schema_version: int = 1
 

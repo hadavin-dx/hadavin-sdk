@@ -67,6 +67,8 @@ def crash_mutant(name, file, old, new, killer, crash_type, param=""):
 
 TRACE = "tests/test_q8a1_f_string_trace.py"
 B = "tests/test_q8a1_b16_fixes.py"
+B17 = "tests/test_q8a1_b17_fixes.py"
+HID = "src/hadavin_sdk/hidden_input.py"
 
 
 def trace_mutant(name, file, old, new, killer, expect):
@@ -1055,8 +1057,8 @@ M = [
         'EVENT_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9_-]{0,127}")', 'EVENT_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9_:-]{0,127}")', B, 'test_an_event_id_with_a_colon_a_capital_or_a_device_name_is_refused_and_a_generated_id_is_not', 'was accepted'),
     other_mutant('Z170 round 16: a device name is allowed as an event id (models.py)', 'src/hadavin_sdk/models.py',
         '        and value not in _RESERVED_NAMES  # no dot is allowed, so a device name is the whole id\n', '', B, 'test_an_event_id_with_a_colon_a_capital_or_a_device_name_is_refused_and_a_generated_id_is_not', 'was accepted'),
-    other_mutant('Z171 round 16: the refusal of an event id quotes the id again (models.py)', 'src/hadavin_sdk/models.py',
-        'model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)', 'model_config = ConfigDict(extra="forbid", hide_input_in_errors=False)', B, 'test_the_refusal_of_a_bad_event_id_does_not_quote_the_id', 'input_value', '[../x]'),
+    other_mutant('Z171 round 17: the rebuilt refusal quotes the id again (hidden_input.py, hide_input)', HID,
+        'hide_input=True', 'hide_input=False', B, 'test_the_refusal_of_a_bad_event_id_does_not_quote_the_id', 'input_value', '[../x]'),
     other_mutant('Z172 round 16: the local audit folder trusts the id of an event (local_dir.py, intent)', 'src/hadavin_sdk/audit/local_dir.py',
         '        if not plain_event_name(event.event_id):', '        if False:', B, 'test_the_local_audit_folder_never_makes_a_file_from_an_event_that_skipped_the_model_check', 'wrote an event'),
     other_mutant('Z173 round 16: the outbox trusts the id of an event (local_dir.py)', 'src/hadavin_sdk/audit/local_dir.py',
@@ -1095,6 +1097,28 @@ M = [
         '                    b in errs\n                    or (isinstance', '                    False\n                    or (isinstance', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R17b', '[R17b a derived error built outside a raise, two classes deep]'),
     other_mutant('Z190 round 17: every argument after a text directive is dropped as a number (guard)', 'tests/_text_guard.py',
         'if j < len(rest) and c in "dixXofeEgG"}', 'if j < len(rest)}', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R16o', '[R16o a log call with a text directive]'),
+    other_mutant('Z191 round 17: init lets the first error through (hidden_input.py)', HID,
+        '        hidden = None\n        try:\n            super().__init__(**data)\n        except ValidationError as exc:\n            hidden = without_input(exc)', '        hidden = None\n        try:\n            super().__init__(**data)\n        except ValidationError as exc:\n            hidden = exc', B17, 'test_a_refused_audit_event_holds_the_id_in_no_channel_constructor', 'still holds the refused id (init)'),
+    other_mutant('Z192 round 17: validate lets the first error through (hidden_input.py)', HID,
+        'return super().model_validate(*args, **kwargs)\n        except ValidationError as exc:\n            hidden = without_input(exc)', 'return super().model_validate(*args, **kwargs)\n        except ValidationError as exc:\n            hidden = exc', B17, 'test_a_refused_audit_event_holds_the_id_in_no_channel_model_validate', 'still holds the refused id (validate)'),
+    other_mutant('Z193 round 17: validate_json lets the first error through (hidden_input.py)', HID,
+        'return super().model_validate_json(*args, **kwargs)\n        except ValidationError as exc:\n            hidden = without_input(exc)', 'return super().model_validate_json(*args, **kwargs)\n        except ValidationError as exc:\n            hidden = exc', B17, 'test_a_refused_audit_event_holds_the_id_in_no_channel_model_validate_json', 'still holds the refused id (validate_json)'),
+    other_mutant('Z194 round 17: validate_strings lets the first error through (hidden_input.py)', HID,
+        'return super().model_validate_strings(*args, **kwargs)\n        except ValidationError as exc:\n            hidden = without_input(exc)', 'return super().model_validate_strings(*args, **kwargs)\n        except ValidationError as exc:\n            hidden = exc', B17, 'test_a_refused_audit_event_holds_the_id_in_no_channel_model_validate_strings', 'still holds the refused id (validate_strings)'),
+    other_mutant('Z195 round 17: the input of a rebuilt line is the refused value (hidden_input.py)', HID,
+        '"loc": e["loc"], "input": HIDDEN, "ctx": ctx})', '"loc": e["loc"], "input": exc.errors()[0]["input"], "ctx": ctx})', B17, 'test_the_fixed_word_replaces_the_input_and_the_title_is_kept', ''),
+    other_mutant('Z196 round 17: shown_id shows a str subclass (errors.py)', 'src/hadavin_sdk/errors.py',
+        'if type(value) is str and _ID_SHAPE', 'if isinstance(value, str) and _ID_SHAPE', B17, 'test_a_str_subclass_is_never_shown_as_an_id_or_a_name', 'shown_id shows a str subclass'),
+    other_mutant('Z197 round 17: shown_name shows a str subclass (errors.py, word_like)', 'src/hadavin_sdk/errors.py',
+        'return type(name) is str and', 'return isinstance(name, str) and', B17, 'test_a_str_subclass_is_never_shown_as_an_id_or_a_name', 'shown_name shows a str subclass'),
+    other_mutant('Z198 round 17: the audit event is a plain pydantic model again (models.py)', 'src/hadavin_sdk/models.py',
+        'class Shape(HiddenInputModel, BaseModel):', 'class Shape(BaseModel):', B17, 'test_a_refused_audit_event_holds_the_id_in_no_channel_constructor', 'still holds the refused id (init)'),
+    other_mutant('Z199 round 17: the settings base of the configuration is a plain pydantic model again (config.py)', 'src/hadavin_sdk/config.py',
+        'class _Strict(HiddenInputModel, BaseModel):', 'class _Strict(BaseModel):', B17, 'test_every_model_of_the_package_that_hides_its_input_is_a_hidden_input_model', 'hide the input in the text only'),
+    other_mutant('Z200 round 17: the scrub settings are a plain pydantic model again (scrub_settings.py)', 'src/hadavin_sdk/scrub_settings.py',
+        'class _Strict(HiddenInputModel, BaseModel):', 'class _Strict(BaseModel):', B17, 'test_every_model_of_the_package_that_hides_its_input_is_a_hidden_input_model', 'hide the input in the text only'),
+    other_mutant('Z201 round 17: the strict settings base is a plain pydantic model again (strict_model.py)', 'src/hadavin_sdk/strict_model.py',
+        'class StrictConfigModel(HiddenInputModel, BaseModel):', 'class StrictConfigModel(BaseModel):', B17, 'test_every_model_of_the_package_that_hides_its_input_is_a_hidden_input_model', 'hide the input in the text only'),
 ]  # fmt: skip
 
 
@@ -1125,6 +1149,7 @@ if __name__ == "__main__":
             "tests/test_q8a1_b14_fixes.py",
             "tests/test_q8a1_b15_fixes.py",
             "tests/test_q8a1_b16_fixes.py",
+            "tests/test_q8a1_b17_fixes.py",
             "tests/test_guard_reasons.py",
         ],
         extra_dirs=("tests", "tools", "demos", "docs"),

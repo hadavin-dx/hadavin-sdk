@@ -41,27 +41,47 @@ def _hostile_ids():
     return ["../" + m, m.upper(), m + " x", m + "\n", "a:" + m, m + "/" + m, "." + m]
 
 
-@pytest.mark.parametrize("how", ["init", "validate", "validate_json", "validate_strings"])
-@pytest.mark.parametrize("hostile", _hostile_ids())
-def test_a_refused_audit_event_holds_the_id_in_no_channel(how, hostile):
+def _refusals(how: str):
     from hadavin_sdk.models import AuditEvent
 
-    data = {**_EVENT, "event_id": hostile}
-    with pytest.raises(ValidationError) as raised:
-        if how == "init":
-            AuditEvent(**data)
-        elif how == "validate":
-            AuditEvent.model_validate(data)
-        elif how == "validate_json":
-            AuditEvent.model_validate_json(json.dumps(data))
-        else:
-            AuditEvent.model_validate_strings(data)
-    seen = _everything_a_caller_can_print(raised.value)
-    assert "zq-b17-id" not in seen.lower(), (
-        f"a refused AuditEvent still holds the refused id ({how}): in str, repr, args, errors(), json() or the chain"
-    )
-    assert "plain file name" in seen, "the refusal lost its fixed sentence"
-    assert raised.value.errors()[0]["loc"] == ("event_id",), "the refusal lost its place line"
+    for hostile in _hostile_ids():
+        data = {**_EVENT, "event_id": hostile}
+        with pytest.raises(ValidationError) as raised:
+            if how == "init":
+                AuditEvent(**data)
+            elif how == "validate":
+                AuditEvent.model_validate(data)
+            elif how == "validate_json":
+                AuditEvent.model_validate_json(json.dumps(data))
+            else:
+                AuditEvent.model_validate_strings(data)
+        yield raised.value
+
+
+def _assert_no_channel_holds_the_id(how: str):
+    for err in _refusals(how):
+        seen = _everything_a_caller_can_print(err)
+        assert "zq-b17-id" not in seen.lower(), (
+            f"a refused AuditEvent still holds the refused id ({how}): in str, repr, args, errors(), json() or the chain"
+        )
+        assert "plain file name" in seen, "the refusal lost its fixed sentence"
+        assert err.errors()[0]["loc"] == ("event_id",), "the refusal lost its place line"
+
+
+def test_a_refused_audit_event_holds_the_id_in_no_channel_constructor():
+    _assert_no_channel_holds_the_id("init")
+
+
+def test_a_refused_audit_event_holds_the_id_in_no_channel_model_validate():
+    _assert_no_channel_holds_the_id("validate")
+
+
+def test_a_refused_audit_event_holds_the_id_in_no_channel_model_validate_json():
+    _assert_no_channel_holds_the_id("validate_json")
+
+
+def test_a_refused_audit_event_holds_the_id_in_no_channel_model_validate_strings():
+    _assert_no_channel_holds_the_id("validate_strings")
 
 
 def test_the_fixed_word_replaces_the_input_and_the_title_is_kept():

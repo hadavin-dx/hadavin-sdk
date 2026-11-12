@@ -20,9 +20,8 @@ from hadavin_sdk.errors import ConfigValueError
 from hadavin_sdk.hidden_input import HiddenInputModel
 
 
-class StrictConfigModel(
-    HiddenInputModel, BaseModel
-):  # BaseModel is named too so the linter knows this is a pydantic model
+# `BaseModel` is named too so the linter knows the class is a pydantic model
+class StrictConfigModel(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
 
     @model_validator(mode="before")

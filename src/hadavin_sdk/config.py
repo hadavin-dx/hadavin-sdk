@@ -81,9 +81,8 @@ def _no_key_shaped_run(value: str) -> str:
     return value
 
 
-class _Strict(
-    HiddenInputModel, BaseModel
-):  # BaseModel is named too so the linter knows these are pydantic models
+# `BaseModel` is named too so the linter knows the class is a pydantic model
+class _Strict(HiddenInputModel, BaseModel):
     # A mistyped key may hold a secret: an error names the field (an unknown key shows as `<unknown key>`), never the
     # value; `config_error_text` is the one place that decides what text of a problem is shown.
     model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
