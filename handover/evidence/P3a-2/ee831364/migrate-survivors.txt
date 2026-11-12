@@ -15,6 +15,7 @@ OW3 | behaviour | a relation that kept the owner it had before the files is refu
 WD1 | behaviour | the refusal blames the file when an earlier run gave the right | SURVIVED | - | 2.0s
 GO4 | behaviour | a function right that may be passed on is accepted | SURVIVED | - | 3.6s
 RA1 | behaviour | the rights of a table are not part of its state (a right given later is not seen) | SURVIVED | - | 2.1s
+RA1b | behaviour | what a right on a column says is not part of the state, only which columns have one | SURVIVED | - | 1.8s
 RA2 | behaviour | only the relations of the schema of the run are read back (for the table rights) | SURVIVED | - | 1.8s
 RK1 | behaviour | a foreign table is not read back (the kind 'f' is left out) | SURVIVED | - | 1.7s
 SC10 | behaviour | a schema that a file changed is not read back unless it is the schema of the run | SURVIVED | - | 1.8s
