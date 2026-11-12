@@ -86,6 +86,7 @@ class Mutant:
     test_file: str = ""  # one of the `tests` files: run ONLY this file for the mutant (its killer is not in the first file)
     pinned: str = ""  # the test id (as ``first_failure_junit`` writes it, ``tests/test_x::test_y``) that must be the one failing; another failing test is OTHER_TEST
     only_test: str = ""  # a test function name: run ONLY that test (of the first test file, or of `test_file`), so the killer never depends on test order or a fuzz seed
+    only_case: str = ""  # the parameter id of ONE case of `only_test` (the text in the brackets of its test id): run ONLY that case, so a fault that slows or breaks several cases is judged on the case the mutant pins and not on the first case pytest meets
 
     def __post_init__(self) -> None:
         _relative(self.file)
@@ -99,6 +100,15 @@ class Mutant:
             raise ValueError("crash_type without allow_crash")
         if self.only_test and not self.only_test.isidentifier():
             raise ValueError("only_test must be a test function name")
+        if self.only_case and not self.only_test:
+            raise ValueError("only_case needs only_test")
+        if self.only_case and (
+            "::" in self.only_case
+            or "\x00" in self.only_case
+            or len(self.only_case) > 200
+            or self.only_case.startswith("[")
+        ):
+            raise ValueError("only_case must be the text inside the brackets of one test id")
         if self.test_file:
             _relative(self.test_file)
 
@@ -554,10 +564,13 @@ def _run_mutants(
                 continue
             p.write_text(text.replace(m.old, m.new), encoding="utf-8", newline="\n")
             junit = tmp / "r.xml"
+            case = f"[{m.only_case}]" if m.only_case else ""
             if m.test_file:
-                operands = [f"{m.test_file}::{m.only_test}" if m.only_test else m.test_file]
+                operands = [f"{m.test_file}::{m.only_test}{case}" if m.only_test else m.test_file]
             else:
-                operands = [f"{tests[0]}::{m.only_test}", *tests[1:]] if m.only_test else tests
+                operands = (
+                    [f"{tests[0]}::{m.only_test}{case}", *tests[1:]] if m.only_test else tests
+                )
             rc = _pytest(tmp, operands, junit, timeout)
             if rc == TIMED_OUT:
                 emit((m.name, Verdict.ERROR, "TIMEOUT", False))

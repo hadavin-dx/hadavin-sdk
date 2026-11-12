@@ -442,11 +442,21 @@ def test_b8_8_nine_ten_and_forty_digits_behind_a_bare_credential_word_are_masked
 
 
 def test_b8_8_a_very_long_run_of_digits_is_read_once():
-    text = ("pass" + "1" * 50_000 + " ") * 4
-    t0 = time.perf_counter()
-    clean(text)
-    assert time.perf_counter() - t0 < 20, (
-        "a very long run of digits after a bare credential word is read many times"
+    # batch 14: a ratio, not a limit of 20 seconds (a quadratic read of 50,000 digits fits in 20 seconds on a fast machine, so the old
+    # limit let it pass). 4 times the digits: linear is 4, quadratic 16; measured on the head 4.0 (best of three each), bound 7.
+    def best(digits: int) -> float:
+        text = ("pass" + "1" * digits + " ") * 4
+        times = []
+        for _ in range(3):
+            t0 = time.perf_counter()
+            clean(text)
+            times.append(time.perf_counter() - t0)
+        return min(times)
+
+    best(1_000)
+    small, large = best(5_000), best(20_000)
+    assert large < max(small, 0.02) * 7, (
+        f"a very long run of digits after a bare credential word is read many times: {small:.3f}s and {large:.3f}s for 4 times the digits"
     )
 
 

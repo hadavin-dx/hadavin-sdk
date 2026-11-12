@@ -129,16 +129,30 @@ def test_b10_1_the_fix_changes_nothing_for_a_text_that_has_no_scheme_word_before
 
 
 def test_b10_1_a_long_run_of_line_breaks_after_a_scheme_word_is_read_in_linear_time():
-    size = 150_000
-    for text in (
-        "Authorization: Token" + "\n" * size + "x",
-        "Authorization: Basic" + "\r\n" * (size // 2) + "short",
-        "Authorization: ApiKey" + "\n \t" * (size // 3) + "x",
-        "Authorization: Token\nab\n" * (size // 24),
-    ):
-        t0 = time.perf_counter()
-        clean(text)
-        assert time.perf_counter() - t0 < 20, "a gap after a scheme word takes far too long"
+    # batch 14: a ratio, not a limit of 20 seconds (a quadratic read of 150,000 characters fits in 20 seconds, so the old limit let it pass).
+    # 4 times the size: linear is 4, quadratic 16; measured on the head 3.7 to 4.5 (best of three each), bound 7.
+    shapes = (
+        lambda size: "Authorization: Token" + "\n" * size + "x",
+        lambda size: "Authorization: Basic" + "\r\n" * (size // 2) + "short",
+        lambda size: "Authorization: ApiKey" + "\n \t" * (size // 3) + "x",
+        lambda size: "Authorization: Token\nab\n" * (size // 24),
+    )
+    for shape in shapes:
+
+        def best(size: int, shape=shape) -> float:
+            text = shape(size)
+            times = []
+            for _ in range(3):
+                t0 = time.perf_counter()
+                clean(text)
+                times.append(time.perf_counter() - t0)
+            return min(times)
+
+        best(5_000)
+        small, large = best(37_500), best(150_000)
+        assert large < max(small, 0.02) * 7, (
+            f"a gap after a scheme word takes far too long: {small:.3f}s and {large:.3f}s for 4 times the size"
+        )
 
 
 def test_b10_1_the_differential_against_main_for_every_generated_token_length_shape_gap_and_scheme():
@@ -224,17 +238,30 @@ def test_b10_2_a_digest_header_ends_at_the_first_line_that_does_not_start_with_a
 
 
 def test_b10_2_a_long_run_of_digest_fold_lines_is_read_in_linear_time():
-    size = 120_000
-    texts = (
-        'Authorization: Digest a="bbbbbbbb"' + ",\n x" * (size // 4),
-        "Authorization: Digest" + "\n" + " x\n" * (size // 3),
-        "Authorization: Digest aaaaaaaa" + "\r\n\t" * (size // 3) + "end",
+    # batch 14: a ratio, not a limit of 20 seconds (a quadratic read of 120,000 characters fits in 20 seconds, so the old limit let it pass).
+    # 4 times the size: linear is 4, quadratic 16; measured on the head 3.8 to 4.7 (best of three each), bound 7.
+    shapes = (
+        lambda size: 'Authorization: Digest a="bbbbbbbb"' + ",\n x" * (size // 4),
+        lambda size: "Authorization: Digest" + "\n" + " x\n" * (size // 3),
+        lambda size: "Authorization: Digest aaaaaaaa" + "\r\n\t" * (size // 3) + "end",
     )
-    for text in texts:
-        t0 = time.perf_counter()
-        out = clean(text)
-        assert time.perf_counter() - t0 < 20, "a folded Digest header takes far too long"
-        assert "bbbbbbbb" not in out
+    for shape in shapes:
+
+        def best(size: int, shape=shape) -> float:
+            times = []
+            for _ in range(3):
+                text = shape(size)
+                t0 = time.perf_counter()
+                out = clean(text)
+                times.append(time.perf_counter() - t0)
+                assert "bbbbbbbb" not in out
+            return min(times)
+
+        best(5_000)
+        small, large = best(30_000), best(120_000)
+        assert large < max(small, 0.02) * 7, (
+            f"a folded Digest header takes far too long: {small:.3f}s and {large:.3f}s for 4 times the size"
+        )
 
 
 # ---- Issue 6: an ordinary word and a second word of its family ---------------------------------------------------------------

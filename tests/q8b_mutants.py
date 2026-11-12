@@ -55,6 +55,11 @@ CARDS = "approvals/cards.py"
 RUNMAP = "guard/runmap.py"
 
 
+def _case(killer: str) -> str:
+    """The parameter id of the killer (`test_x[case]` gives `case`; no brackets gives ``): the runner runs ONLY that case."""
+    return killer.partition("[")[2].removesuffix("]") if "[" in killer else ""
+
+
 def mutant(name, file, old, new, test_file, killer, expect):
     return Mutant(
         name,
@@ -64,6 +69,7 @@ def mutant(name, file, old, new, test_file, killer, expect):
         expect,
         test_file="tests/" + test_file,
         only_test=killer.split("[")[0],
+        only_case=_case(killer),
         pinned=f"tests/{test_file.removesuffix('.py')}::{killer}",
     )
 
@@ -74,6 +80,7 @@ def test_file_mutant(name, file, old, new, test_file, killer, expect):
         name, file, old, new, expect,
         test_file="tests/" + test_file,
         only_test=killer.split("[")[0],
+        only_case=_case(killer),
         pinned=f"tests/{test_file.removesuffix('.py')}::{killer}",
     )  # fmt: skip
 
@@ -803,9 +810,9 @@ def _neutralise(text: str) -> str:
     mutant('M254 the card path writes a rare line break as a space, not a line feed [b13]', CHANNEL, r"""    text = _LINE_BREAK_CONTROLS.sub("\n", text)
 """, r"""""",
         B13, 'test_b13_7_a_header_folded_over_a_rare_line_break_is_masked_on_every_path[file separator]', 'leaves the next line readable'),
-    mutant('M256 the folded lines are read again from every line to the end of the text (not in linear time) [b13]', REDACT, r'''_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")++"''', r'''_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")+(?=[\s\S]*QQQ)"''',
+    mutant('M256 the folded lines are read again from every line to the end of the text (not in linear time) [b13]', REDACT, r'''_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")++"''', r'''_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + r"(?=[\s\S]*QQQ|))++"''',
         B11, 'test_b11_8_a_long_run_of_folded_lines_is_read_in_linear_time', 'folded lines are not read in linear time'),
-    mutant('M257 the gap after a scheme word is read again up to 40000 characters ahead (not in linear time) [b13]', REDACT, r'''_SCHEME_GAP = r"\s++"''', r'''_SCHEME_GAP = r"\s+(?=[\s\S]{0,40000}QQQ)"''',
+    mutant('M257 the gap after a scheme word is read again to the end of the text (not in linear time) [b13]', REDACT, r'''_SCHEME_GAP = r"\s++"''', r'''_SCHEME_GAP = r"\s++(?=[\s\S]*QQQ|)"''',
         B10, 'test_b10_1_a_long_run_of_line_breaks_after_a_scheme_word_is_read_in_linear_time', 'a gap after a scheme word takes far too long'),
     mutant('M255 the second rule for a hyphenated scheme word is missing (the credential behind the scheme word stays readable) [b13]', REDACT, r"""            + _ANY_SCHEME_WORD
             + _SCHEME_GAP
@@ -819,25 +826,25 @@ def _neutralise(text: str) -> str:
         for w in sorted(ORDINARY_WORDS)""", r"""        r"(?<!(?<![\w.])(?<![\w.]-)" + w[: -len(ending)] + ")"
         for w in sorted(ORDINARY_WORDS)""",
         B14, 'test_b14_1_an_ordinary_word_behind_any_key_character_is_a_credential_key_in_every_form_as_on_main', 'an ordinary word behind key characters is read as the bare ordinary word'),
-    mutant('M259 the fold lines of a Digest header are read again to the end of the text after each fold line (not in linear time) [b14]', REDACT, r'''_DIGEST_FOLDS = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")*+"''', r'''_DIGEST_FOLDS = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")*(?=[\s\S]*QQQ)"''',
+    mutant('M259 the fold lines of a Digest header are read again to the end of the text after each fold line (not in linear time) [b14]', REDACT, r'''_DIGEST_FOLDS = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")*+"''', r'''_DIGEST_FOLDS = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + r"(?=[\s\S]*QQQ|))*+"''',
         B10, 'test_b10_2_a_long_run_of_digest_fold_lines_is_read_in_linear_time', 'a folded Digest header takes far too long'),
     mutant('M260 the gap after a scheme word is read again up to 40000 characters ahead, wrapped headers (not in linear time) [b14]', REDACT, r'''_SCHEME_GAP = r"\s++"''', r'''_SCHEME_GAP = r"\s+(?=[\s\S]{0,40000}QQQ)"''',
         BATCH9, 'test_b9_1_a_long_run_of_gaps_and_wrapped_headers_is_read_in_linear_time', 'a gap after a scheme word takes far too long'),
     mutant('M261 the gap after a scheme word is read again up to 40000 characters ahead, white space runs (not in linear time) [b14]', REDACT, r'''_SCHEME_GAP = r"\s++"''', r'''_SCHEME_GAP = r"\s+(?=[\s\S]{0,40000}QQQ)"''',
         BATCH8, 'test_b8_10_a_long_run_of_white_space_after_a_scheme_word_is_read_in_linear_time', 'white space after a scheme word takes far too long'),
-    mutant('M262 the digits behind a bare credential word are read again from each digit (not in linear time), key word run [b14]', REDACT, r'''    return guard + word + r"(?=[0-9]*[\"']?\s*[:=])"''', r'''    return guard + word + r"(?=(?:[0-9](?=[\s\S]*QQQ))*[0-9]*[\"']?\s*[:=])"''',
+    mutant('M262 the rule for AWS resource names looks ahead to the end of the text at every possible start (a very long run of digits after a key word is not read in linear time) [b14]', REDACT, r'''("ARN", re.compile(r"arn:aws''', r'''("ARN", re.compile(r"(?=(?s:.*)QQQ|)arn:aws''',
         BATCH9, 'test_b9_4_a_very_long_run_of_digits_after_a_key_word_is_read_in_linear_time', 'a very long run of digits after the key word'),
-    mutant('M263 the digits behind a bare credential word are read again from each digit (not in linear time), one run [b14]', REDACT, r'''    return guard + word + r"(?=[0-9]*[\"']?\s*[:=])"''', r'''    return guard + word + r"(?=(?:[0-9](?=[\s\S]*QQQ))*[0-9]*[\"']?\s*[:=])"''',
+    mutant('M263 the rule for one kind of key prefix looks ahead to the end of the text at every possible start (a very long run of digits after a bare credential word is not read in linear time) [b14]', REDACT, r'''("APIKEY", re.compile(r"\bSG\.''', r'''("APIKEY", re.compile(r"(?=(?s:.*)QQQ|)\bSG\.''',
         BATCH8, 'test_b8_8_a_very_long_run_of_digits_is_read_once', 'a very long run of digits after a bare credential word is read many times'),
-    mutant('M264 the flag rule looks to the end of the text at every possible start (not in linear time), bound test [b14]', REDACT, r'''_CRED_FLAG = r"(?i)(?<![\w-])(?:--" + FLAG_NAME''', r'''_CRED_FLAG = r"(?i)(?<![\w-])(?=[\s\S]*QQQ)(?:--" + FLAG_NAME''',
+    mutant('M264 the flag rule looks to the end of the text at every possible start (not in linear time), bound test [b14]', REDACT, r'''_CRED_FLAG = r"(?i)(?<![\w-])(?:--" + FLAG_NAME''', r'''_CRED_FLAG = r"(?i)(?<![\w-])(?=[\s\S]*QQQ|)(?:--" + FLAG_NAME''',
         BATCH8, 'test_b8_5_the_timing_of_the_flag_rule_on_hostile_text_is_bounded_and_close_to_the_old_bound', 'the flag rule takes'),
-    mutant('M265 the flag rule looks to the end of the text at every possible start (not in linear time), long flag [b14]', REDACT, r'''_CRED_FLAG = r"(?i)(?<![\w-])(?:--" + FLAG_NAME''', r'''_CRED_FLAG = r"(?i)(?<![\w-])(?=[\s\S]*QQQ)(?:--" + FLAG_NAME''',
+    mutant('M265 the flag rule looks to the end of the text at every possible start (not in linear time), long flag [b14]', REDACT, r'''_CRED_FLAG = r"(?i)(?<![\w-])(?:--" + FLAG_NAME''', r'''_CRED_FLAG = r"(?i)(?<![\w-])(?=[\s\S]*QQQ|)(?:--" + FLAG_NAME''',
         BATCH7, 'test_b7_6_the_third_prefix_group_costs_no_extra_time_on_a_long_flag', 'a long flag takes far too long'),
     mutant('M266 the Authorization flag rule looks to the end of the text at every possible start (not in linear time) [b14]', REDACT, r'''    r"(?i)(?<![\w-])--(?:[a-z0-9]+[_\-]){0,"''', r'''    r"(?i)(?<![\w-])(?=[\s\S]*QQQ)--(?:[a-z0-9]+[_\-]){0,"''',
         BATCH9, 'test_b9_5_the_rules_that_batch_8_added_are_timed_on_hostile_text', 'takes'),
     mutant('M267 the guard of the address pattern looks to the end of the text at every domain character (not in linear time) [b14]', REDACT, r'''    + _NOT_GLUED_KEY
     + r"[A-Za-z0-9.\-]){1,255}''', r'''    + _NOT_GLUED_KEY
-    + r"(?=[\s\S]*QQQ)[A-Za-z0-9.\-]){1,255}''',
+    + r"(?=[\s\S]*QQQ|)[A-Za-z0-9.\-]){1,255}''',
         GLUED_TESTS, 'test_r1_the_guard_in_front_of_the_address_pattern_is_bounded', 'the address pattern is super-linear'),
     mutant('M268 the card path does not write the file separator U+001C as a line feed (a header folded over it stays one flat line, the second part is readable) [b14]', CHANNEL, r'''_LINE_BREAK_CONTROLS = re.compile("[\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029](?=[ \t])")''', r'''_LINE_BREAK_CONTROLS = re.compile("[\x0b\x0c\x1d\x1e\x85\u2028\u2029](?=[ \t])")''',
         B13, 'test_b13_7_a_header_folded_over_a_rare_line_break_is_masked_on_every_path[file separator]', 'leaves the next line readable'),
@@ -847,25 +854,25 @@ def _neutralise(text: str) -> str:
         B13, 'test_b13_7_a_header_folded_over_a_rare_line_break_is_masked_on_every_path[record separator]', 'leaves the next line readable'),
     mutant('M271 the card path does not write the next line U+0085, the line separator U+2028 and the paragraph separator U+2029 as a line feed [b14]', CHANNEL, r'''_LINE_BREAK_CONTROLS = re.compile("[\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029](?=[ \t])")''', r'''_LINE_BREAK_CONTROLS = re.compile("[\x0b\x0c\x1c\x1d\x1e](?=[ \t])")''',
         B13, 'test_b13_7_a_header_folded_over_a_rare_line_break_is_masked_on_every_path[line separator]', 'leaves the next line readable'),
-    mutant('M272 the tail words of a value are read again to the end of the text (a glued run of key=value is not read in linear time) [b14]', REDACT, r'''_VALUE_TAIL = r"(?:[ \t]+(?!" + _FLAG_STOP + "|" + _KEY_STOP + ")" + _VALUE_CHAR + "+)*"''', r'''_VALUE_TAIL = r"(?:[ \t]+(?!" + _FLAG_STOP + "|" + _KEY_STOP + ")" + _VALUE_CHAR + "+)*(?=[^\x00]*)"''',
+    mutant('M272 the rule for AWS resource names looks ahead to the end of the text at every possible start (a glued run of key=value is not read in linear time) [b14]', REDACT, r'''("ARN", re.compile(r"arn:aws''', r'''("ARN", re.compile(r"(?=(?s:.*)QQQ|)arn:aws''',
         B13, r'''test_b13_3_a_glued_run_of_headers_is_read_in_linear_time[authorization=a]''', 'is read in more than linear time'),
     mutant('M273 the keyed value is looked ahead to the end of the text from every key (a glued run of headers with a space after is not read in linear time) [b14]', REDACT, r'''_KEYED_VALUE = (
-''', r'''_KEYED_VALUE = r"(?=[^\x00]*)" + (
+''', r'''_KEYED_VALUE = r"(?=[\s\S]*QQQ|)" + (
 ''',
         B13, r'''test_b13_3_a_glued_run_of_headers_is_read_in_linear_time[Authorization:x ]''', 'is read in more than linear time'),
-    mutant('M274 the first word of the folded-header rule is looked ahead to the end of the text (a quoted value with a comma is not read in linear time) [b14]', REDACT, r'''_FIRST_WORD = r"(?:(?!authorization[\"']?\s*[:=])\S)++"''', r'''_FIRST_WORD = r"(?:(?!authorization[\"']?\s*[:=])\S)++(?=[^\x00]*)"''',
+    mutant('M274 the first word of the folded-header rule is looked ahead to the end of the text (a quoted value with a comma is not read in linear time) [b14]', REDACT, r'''_FIRST_WORD = r"(?:(?!authorization[\"']?\s*[:=])\S)++"''', r'''_FIRST_WORD = r"(?:(?!authorization[\"']?\s*[:=])\S)++(?=[\s\S]*QQQ|)"''',
         B13, r'''test_b13_3_a_glued_run_of_headers_is_read_in_linear_time[authorization: "x",]''', 'is read in more than linear time'),
-    mutant('M275 the start of a word is looked ahead to the end of the text (a glued run of quoted secret values is not read in linear time) [b14]', REDACT, r'''_NOT_IN_WORD = r"(?:(?<![A-Za-z0-9])|(?-i:(?<=[a-z])(?=[A-Z])))"''', r'''_NOT_IN_WORD = r"(?:(?<![A-Za-z0-9])|(?-i:(?<=[a-z])(?=[A-Z])))(?=[^\x00]*)"''',
+    mutant('M275 the start of a word is looked ahead to the end of the text (a glued run of quoted secret values is not read in linear time) [b14]', REDACT, r'''_NOT_IN_WORD = r"(?:(?<![A-Za-z0-9])|(?-i:(?<=[a-z])(?=[A-Z])))"''', r'''_NOT_IN_WORD = r"(?:(?<![A-Za-z0-9])|(?-i:(?<=[a-z])(?=[A-Z])))(?=(?s:.*)QQQ|)"''',
         B13, r'''test_b13_3_a_glued_run_of_headers_is_read_in_linear_time[secret:"x"]''', 'is read in more than linear time'),
     mutant('M276 the value with tail rule is looked ahead to the end of the text (a glued run of token=quoted is not read in linear time) [b14]', REDACT, r'''_VALUE_WITH_TAIL = (
-''', r'''_VALUE_WITH_TAIL = r"(?=[^\x00]*)" + (
+''', r'''_VALUE_WITH_TAIL = r"(?=[\s\S]*QQQ|)" + (
 ''',
         B13, r'''test_b13_3_a_glued_run_of_headers_is_read_in_linear_time[token="x"]''', 'is read in more than linear time'),
-    mutant('M277 the gap after a scheme word is looked ahead to the end of the text (a glued run of a key and a scheme word is not read in linear time) [b14]', REDACT, r'''_SCHEME_GAP = r"\s++"''', r'''_SCHEME_GAP = r"\s++(?=[^\x00]*)"''',
+    mutant('M277 the gap after a scheme word is looked ahead to the end of the text (a glued run of a key and a scheme word is not read in linear time) [b14]', REDACT, r'''_SCHEME_GAP = r"\s++"''', r'''_SCHEME_GAP = r"\s++(?=[\s\S]*QQQ|)"''',
         B13, r'''test_b13_3_a_glued_run_of_headers_is_read_in_linear_time[X-Api-Key:Basic x]''', 'is read in more than linear time'),
-    mutant('M278 the text of a line is looked ahead to the end of the text (a glued run of a key, a scheme word and a folded line is not read in linear time) [b14]', REDACT, r'''_LINE_TEXT = r"[^\r\n]*+"''', r'''_LINE_TEXT = r"[^\r\n]*+(?=[^\x00]*)"''',
+    mutant('M278 the text of a line is looked ahead to the end of the text (a glued run of a key, a scheme word and a folded line is not read in linear time) [b14]', REDACT, r'''_LINE_TEXT = r"[^\r\n]*+"''', r'''_LINE_TEXT = r"[^\r\n]*+(?=[\s\S]*QQQ|)"''',
         B13, r'''test_b13_3_a_glued_run_of_headers_is_read_in_linear_time[token:Basic\n x]''', 'is read in more than linear time'),
-    mutant('M279 a word that looks like a key is looked ahead to the end of the text (a glued run of Digest headers is not read in linear time) [b14]', REDACT, r'''_KEY_STOP = r"[A-Za-z_][\w.\-]*[\"']?\s*[:=]"''', r'''_KEY_STOP = r"[A-Za-z_][\w.\-]*[\"']?\s*[:=](?=[^\x00]*)"''',
+    mutant('M279 the rule for key prefixes looks ahead to the end of the text at every possible start (a glued run of Digest headers is not read in linear time) [b14]', REDACT, r'''("APIKEY", re.compile(r"\b(?:" + "|".join(_KEY_PREFIXES)''', r'''("APIKEY", re.compile(r"(?=(?s:.*)QQQ|)\b(?:" + "|".join(_KEY_PREFIXES)''',
         B13, r'''test_b13_3_a_glued_run_of_headers_is_read_in_linear_time[authorization:Digest a="b",]''', 'is read in more than linear time'),
     mutant('M280 the exemption of the flag `--word` is dropped: the bare flag `--bypass=v` is masked, the owner pin of the bare word breaks [b14]', REDACT, r'''r"(?<!(?:(?<![\w.\-])|(?<=(?<![\w.\-])--))" + w[: -len(ending)] + ")"''', r'''r"(?<!(?<![\w.\-])" + w[: -len(ending)] + ")"''',
         B14, 'test_b14_1_the_bare_flag_shows_the_ordinary_word_and_a_prefixed_flag_is_masked[bandpass]', 'the owner decision is shown (pinned)'),

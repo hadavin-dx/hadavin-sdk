@@ -477,10 +477,23 @@ def test_b7_6_a_flag_with_three_prefix_words_masks_its_value():
 
 def test_b7_6_the_third_prefix_group_costs_no_extra_time_on_a_long_flag():
     """The groups are cut at a separator, so a long run of `a-a-a-` is read once per start (no backtracking blow-up)."""
-    text = "--" + "a-" * 20000 + "x now " + "--a-b-c " * 2000
-    t0 = time.perf_counter()
-    clean(text)
-    assert time.perf_counter() - t0 < 20, "a long flag takes far too long"
+
+    # batch 14: a ratio, not a limit of 20 seconds (a rule that read to the end of the text at each of the 2,000 flags fits in 20 seconds,
+    # so the old limit let it pass). 4 times the size: linear is 4, quadratic 16; measured on the head 4.9 (best of three each), bound 8.
+    def best(n: int) -> float:
+        text = "--" + "a-" * n + "x now " + "--a-b-c " * (n // 10)
+        times = []
+        for _ in range(3):
+            t0 = time.perf_counter()
+            clean(text)
+            times.append(time.perf_counter() - t0)
+        return min(times)
+
+    best(1_000)
+    small, large = best(5_000), best(20_000)
+    assert large < max(small, 0.02) * 8, (
+        f"a long flag takes far too long: {small:.3f}s and {large:.3f}s for 4 times the size"
+    )
     assert "seven or more words joined by `-` or `_`" in R.LIMITS
     # the stated limit is real (pinned): a seventh word in front keeps the value readable (batch 8: the bound is six)
     seven = "-".join("abcdefg") + "-password"

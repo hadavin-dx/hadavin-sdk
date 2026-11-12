@@ -182,7 +182,9 @@ def test_b11_8_a_long_run_of_folded_lines_is_read_in_linear_time():
     took(500)
     small = min(took(5_000) for _ in range(3))
     big = min(took(20_000) for _ in range(3))
-    assert big < small * 12, (
+    # batch 14: the bound is 8 (it was 12, which a rule that is only a little worse than linear in the exponent passed; pure quadratic is 16);
+    # measured on the head 5.3 under the load of another job
+    assert big < small * 8, (
         f"folded lines are not read in linear time: {small:.3f}s for 5000, {big:.3f}s for 20000"
     )
 

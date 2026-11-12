@@ -21,6 +21,7 @@ RUNNER_TESTS = ROOT / "tests" / "test_mutation_runner.py"
 MOVED = (
     "test_mutation_judge_verdicts",
     "test_the_runner_kills_a_mutant_of_a_tiny_package",
+    "test_the_runner_runs_only_the_case_a_mutant_pins",
     "test_a_mutant_path_that_is_absolute_or_names_a_drive_is_refused",
     "test_a_mutant_path_with_a_dotdot_part_is_refused",
     "test_a_mutant_path_with_a_stream_name_is_refused",
@@ -80,7 +81,7 @@ MOVED = (
     "test_an_extra_file_is_copied_into_the_snapshot",
     "test_an_extra_file_is_copied_into_the_temp_tree_the_tests_run_in",
 )
-EXPECTED_MUTANTS = 64
+EXPECTED_MUTANTS = 66
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 

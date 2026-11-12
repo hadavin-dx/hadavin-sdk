@@ -308,6 +308,56 @@ def test_the_runner_kills_a_mutant_of_a_tiny_package(tmp_path):
     )  # an exception is not an assertion kill
 
 
+def test_the_runner_runs_only_the_case_a_mutant_pins(tmp_path):
+    (tmp_path / "src" / "pkg").mkdir(parents=True)
+    (tmp_path / "src" / "pkg" / "__init__.py").write_text(
+        "def guard(x):\n    if x < 0:\n        raise ValueError('negative')\n    return x\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_g.py").write_text(
+        "import pytest\nfrom pkg import guard\n\n"
+        "@pytest.mark.parametrize('n', [-1, -2, -3])\n"
+        "def test_guard_refuses_negative(n):\n    with pytest.raises(ValueError):\n        guard(n)\n",
+        encoding="utf-8",
+    )
+    pin = "tests/test_g::test_guard_refuses_negative"
+
+    def mutant(case, pinned_case):
+        return Mutant(
+            "guard removed", "src/pkg/__init__.py", "if x < 0:", "if False:", "DID NOT RAISE",
+            only_test="test_guard_refuses_negative", only_case=case, pinned=f"{pin}[{pinned_case}]",
+        )  # fmt: skip
+
+    res = run_mutants(
+        tmp_path, [mutant("-3", "-3")], ["tests/test_g.py"], timeout=120
+    )  # the mutant breaks all three cases; the run is judged on the third only
+    assert [(v, good) for _, v, _, good in res] == [(Verdict.KILLED, True)], (
+        f"a mutant that breaks several cases was not judged on the case it pins: {res}"
+    )
+    res = run_mutants(tmp_path, [mutant("", "-3")], ["tests/test_g.py"], timeout=120)
+    assert [v for _, v, _, _ in res] == [Verdict.OTHER_TEST], (
+        f"without a case the first failing case is judged (the control of the case selection): {res}"
+    )
+    for bad in ("a::b", "x\x00y", "z" * 201, "[a]"):
+        _must_refuse(
+            f"the case text {bad!r}",
+            Mutant,
+            "name", "src/pkg/__init__.py", "a", "b", "test_x_assertion",
+            only_test="test_x", only_case=bad,
+        )  # fmt: skip
+    _must_refuse(
+        "a case without a test",
+        Mutant,
+        "name",
+        "src/pkg/__init__.py",
+        "a",
+        "b",
+        "test_x_assertion",
+        only_case="c",
+    )
+
+
 def test_a_mutant_path_that_is_absolute_or_names_a_drive_is_refused():
     for bad in ("/etc/passwd", "C:\\x.py", "\\\\host\\share\\x.py", ""):
         _must_refuse(
