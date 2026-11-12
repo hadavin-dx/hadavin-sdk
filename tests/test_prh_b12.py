@@ -500,3 +500,31 @@ def test_b12_i7_a_long_held_value_still_covers_a_spaced_copy_inside_it():
     assert (
         runmap._only_inside_held("abcdefgh", current, ("a b c d e f g h i j k l m n o p",)) is True
     )
+
+
+# ---- issue 8: the work budget counts CPU time of the thread, not the wall clock ------------------------------------------------
+
+
+def test_b12_i8_waiting_does_not_use_up_the_work_budget(monkeypatch):
+    """Issue 8 (mutant 201; fails on 242dfd66, where the budget was wall time: a call that waited 0.2 seconds was refused against a
+    budget of 0.05). The redactor does no input or output, so its work is CPU time; a slow or busy machine must not refuse an ordinary
+    text."""
+    import time
+
+    monkeypatch.setattr(defaults, "REDACT_BUDGET_S", 0.05)
+    work = runmap._Work()
+    time.sleep(0.2)
+    work.check()  # no RedactionLimit: nothing was computed
+
+
+def test_b12_i8_computing_does_use_up_the_work_budget(monkeypatch):
+    """Issue 8 control (mutant 201). Passes on 242dfd66; the one reason it exists: the budget still stops a call that computes past it."""
+    import time
+
+    monkeypatch.setattr(defaults, "REDACT_BUDGET_S", 0.05)
+    work = runmap._Work()
+    end = time.thread_time() + 0.3
+    while time.thread_time() < end:
+        pass
+    with pytest.raises(runmap.RedactionLimit):
+        work.check()

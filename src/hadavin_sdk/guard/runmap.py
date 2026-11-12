@@ -853,16 +853,21 @@ def _keep_earlier_masks(view: str, pairs: list[tuple[str, str]], mapping: dict[s
     return mask_spans(view, spans, mapping) if spans else view
 
 
+_work_clock = time.thread_time  # CPU time of the calling thread, not wall time (batch 12, issue 8)
+
+
 class _Work:
     """What one `redact_text` call has used: the time since it started and the number of passes (one pass = all patterns of
     `redact` over one reading). Both are bounded, and a call that passes a bound is refused (`InputTooLarge`, nothing shown):
-    a hostile text must not keep the process busy. `defaults.REDACT_BUDGET_S` is checked before every pass, so one call
+    a hostile text must not keep the process busy. `defaults.REDACT_BUDGET_S` is a budget of CPU time of the calling thread (batch 12,
+    issue 8: it was wall time, so a busy or slow machine, or another thread, could refuse an ordinary text; the redactor does no input or output, so
+    CPU time is the work it does) and is checked before every pass, so one call
     overruns it by at most one pass; `defaults.MAX_REDACT_PASSES` is counted in `count_pass`, which every pass goes through."""
 
     __slots__ = ("passes", "spaced_chars", "started")
 
     def __init__(self) -> None:
-        self.started = time.monotonic()
+        self.started = _work_clock()
         self.passes = 0
         self.spaced_chars = (
             0  # characters the reads of spaced-out runs will scan, over every view of the call
@@ -877,7 +882,7 @@ class _Work:
         self.check()
 
     def check(self) -> None:
-        if time.monotonic() - self.started > defaults.REDACT_BUDGET_S:
+        if _work_clock() - self.started > defaults.REDACT_BUDGET_S:
             raise RedactionLimit("InputTooLarge")
 
     def count_pass(self) -> None:

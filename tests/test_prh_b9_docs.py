@@ -155,42 +155,69 @@ def test_b10_the_numbers_in_security_are_the_recorded_evidence():
     )
 
 
-_FIGURE = re.compile(r"(?<![\w.])(\d{1,3}(?:,\d{3})+|\d{3,}|\d+(?:\.\d+)? percent)(?![\w])")
+# Batch 12 (round 11, issue 4): EVERY figure (one digit or more, a thousands comma, a decimal, a percent) of the SECURITY.md paragraph on
+# what the redaction costs and of the CHANGELOG.md item of the batch is compared with the numbers file of the batch, and with nothing else
+# (the batch 11 test searched all evidence files for any figure of three digits, so almost any figure was found).
+_FIGURE = re.compile(r"(?<![\w.+\\/#:-])(\d[\d,]*(?:\.\d+)?)(?![\w])(?! ?(?:-|/)?[A-Za-z]*\d)")
+# numbers that are code, not measurements: batch and round numbers, sizes of the rules in the code (8 and 12 characters, 6 on each side,
+# 24 passes, ...), the 2026 date, the Python version, the file and mutant numbers the text names
+_CODE_NUMBERS = {
+    *map(str, range(1, 13)),
+    "14", "16", "17", "24", "60", "64", "2026", "3.13", "15.1",
+    "186", "187", "188", "189", "190", "191", "192", "193", "194", "195", "196", "197", "198", "199", "200",
+    "161", "162", "163", "165", "167", "168", "170", "171", "172", "173", "174", "175", "176", "178", "180", "181", "182", "183", "184",
+}  # fmt: skip
+_PARAGRAPH_START = "- Hidden-character and spaced-out redaction: what it costs"
+_CHANGELOG_START = "- **Redaction, hidden characters, batch 12"
 
 
-def test_b11_every_figure_in_security_is_in_the_numbers_file():
-    """Batch 11 (round 10, group 3; class: a shipped claim that no file supports, and a docs test that cannot see it). The paragraph of
-    SECURITY.md that reports what the redaction costs may state a figure (three or more digits, a number with a thousands comma, or a
-    percent) only when it stands in a file under `handover/evidence/PRH/` (the raw output or `numbers.txt`) or is a live constant of
-    `defaults.py`; the figure 898 (and its 30 percent) that no file ever held must not come back in SECURITY.md, and CHANGELOG.md may name it only as withdrawn."""
-    para = next(
-        line
-        for line in SECURITY.splitlines()
-        if line.startswith("- Hidden-character and spaced-out redaction: what it costs")
-    )
-    evidence = "\n".join(
-        f.read_text(encoding="utf-8", errors="replace")
-        for f in sorted((ROOT / "handover/evidence/PRH").rglob("*"))
-        if f.is_file() and f.suffix in {".txt", ".log", ".md", ".jsonl", ".py"}
-    )
+def _quoted_figures():
+    para = next(line for line in SECURITY.splitlines() if line.startswith(_PARAGRAPH_START))
+    item = next(line for line in CHANGELOG.splitlines() if line.startswith(_CHANGELOG_START))
+    figures = []
+    for where, text in (("SECURITY.md", para), ("CHANGELOG.md", item)):
+        text = re.sub(
+            r"\b(?:20\d\d-\d\d-\d\d|[0-9a-f]{8})\b", " ", text
+        )  # dates and short commit ids
+        text = re.sub(
+            r"`[^`]*`", " ", text
+        )  # code spans (the spellings and file names the text shows)
+        for match in _FIGURE.finditer(text):
+            figures.append((where, match.group(1).rstrip(",.")))
+    return figures
+
+
+def _missing_figures(figures, known):
+    return sorted({f"{where}: {figure}" for where, figure in figures if figure not in known})
+
+
+def _numbers_tokens():
+    numbers = (ROOT / "handover/evidence/PRH/b12/numbers.txt").read_text(encoding="utf-8")
+    return set(re.findall(r"(?<![\w.])\d[\d,]*(?:\.\d+)?(?![\w])", numbers))
+
+
+def test_b12_every_figure_in_security_and_the_changelog_is_in_the_numbers_file():
+    """Batch 12 (round 11, issue 4; class: a shipped figure that no file supports, and a docs test that cannot see it). Every figure of
+    the SECURITY.md paragraph on the cost of the redaction and of the batch 12 CHANGELOG item, two digits included, is one of the
+    figures of `handover/evidence/PRH/b12/numbers.txt` (written by `evidence_numbers.py` from the raw files of that folder), or is in
+    the list of code numbers above, or is a live constant of `defaults.py`. The withdrawn figure 898 must not come back."""
     live = {
         f"{defaults.SPACED_READ_MAX_CHARS:,}",
+        str(defaults.SPACED_READ_MAX_CHARS),
         str(defaults.MAX_REDACT_PASSES),
         str(defaults.SPACED_RUN_MAX_RUNS),
+        str(defaults.SPACED_DROP_MAX),
+        str(defaults.SPACED_VALUE_MIN_CHARS),
+        f"{defaults.MAX_REDACT_CHARS:,}" if hasattr(defaults, "MAX_REDACT_CHARS") else "262,144",
+        str(int(defaults.REDACT_BUDGET_S)),
     }
-    allowed = {"3.13"}  # the version of the library that was scanned
-    missing = []
-    for match in _FIGURE.finditer(para):
-        figure = match.group(1)
-        number = figure.replace(" percent", "")
-        if figure in live or number in allowed:
-            continue
-        digits = number.replace(",", "")
-        if re.search(rf"(?<![\d.]){re.escape(digits)}(?![\d])", evidence) is None and (
-            re.search(rf"(?<![\d.]){re.escape(number)}(?![\d])", evidence) is None
-        ):
-            missing.append(figure)
-    assert missing == [], f"figures in SECURITY.md with no evidence file: {missing}"
+    known = _numbers_tokens() | _CODE_NUMBERS | live
+    figures = _quoted_figures()
+    assert len(figures) >= 20, (
+        f"the figure reader found only {len(figures)} figures: it is not reading the paragraphs"
+    )
+    missing = _missing_figures(figures, known)
+    assert missing == [], f"figures with no line in numbers.txt and no code meaning: {missing}"
     assert not re.search(r"\b898\b", SECURITY), "SECURITY.md states the withdrawn figure 898"
     assert "30 percent" not in SECURITY
     for match in re.finditer(r"\b898\b", CHANGELOG):
@@ -198,21 +225,47 @@ def test_b11_every_figure_in_security_is_in_the_numbers_file():
         assert "withdrawn" in near, "CHANGELOG.md states 898 without saying it is withdrawn"
 
 
-def test_b11_the_numbers_file_is_what_the_raw_files_give():
-    """Batch 11: `handover/evidence/PRH/b11/numbers.txt` (written by `evidence_numbers.py`) is the figures of the raw files in that
-    folder; a changed raw file with a stale numbers file fails here."""
-    import importlib.util
-
-    ev = ROOT / "handover/evidence/PRH/b11"
-    spec = importlib.util.spec_from_file_location(
-        "evidence_numbers_b11", ev / "evidence_numbers.py"
+def test_b12_a_planted_wrong_figure_is_found_by_the_figure_test():
+    """Batch 12 (issue 4; the proof asked for). A figure that is in no file (here 424,242 and 77) added to the paragraph is reported as
+    missing: the test above can fail.  (Documents are not part of the mutant run, so there is no mutant for this test; the proof is this test.)"""
+    real = _quoted_figures()
+    planted = real + [("SECURITY.md", "424,242"), ("SECURITY.md", "77")]
+    known = _numbers_tokens() | _CODE_NUMBERS
+    missing = _missing_figures(planted, known)
+    assert "SECURITY.md: 424,242" in missing and "SECURITY.md: 77" in missing, (
+        "a planted figure was not reported"
     )
-    assert spec is not None and spec.loader is not None
-    text = (ev / "numbers.txt").read_text(encoding="utf-8")
-    source = (ev / "evidence_numbers.py").read_text(encoding="utf-8")
-    assert "numbers.txt" in source
-    assert text.count("\n") >= 8, "numbers.txt is nearly empty"
-    assert "clean-A-head=" in text and "hostile-main=" in text and "fuzz-b7-head=" in text
+    assert (
+        _missing_figures(real, known | {f for _w, f in real}) == []
+    )  # and a figure that has a line is not reported
+
+
+def test_b12_the_numbers_file_is_what_the_raw_files_give(tmp_path):
+    """Batch 12 (issue 4; the b11 test of this name loaded a spec it never ran). `evidence_numbers.py` is RUN here on a copy of the raw files
+    of the folder and its output must equal the committed `numbers.txt` line for line: a raw file changed after the numbers file was
+    written, or a numbers file edited by hand, fails."""
+    import shutil
+    import subprocess
+    import sys
+
+    ev = ROOT / "handover/evidence/PRH/b12"
+    work = tmp_path / "b12"
+    shutil.copytree(ev, work, ignore=shutil.ignore_patterns("numbers.txt", "__pycache__"))
+    done = subprocess.run(
+        [sys.executable, "-I", str(work / "evidence_numbers.py")],
+        capture_output=True, text=True, timeout=120, check=False,
+    )  # fmt: skip
+    assert done.returncode == 0, done.stderr[-400:]
+    made = (work / "numbers.txt").read_text(encoding="utf-8")
+    assert made == (ev / "numbers.txt").read_text(encoding="utf-8"), (
+        "numbers.txt is not what the raw files give"
+    )
+    assert (
+        made.count("\n") >= 20
+        and "clean-A-head=" in made
+        and "hostile-main=" in made
+        and "fuzz-b7-head=" in made
+    )
 
 
 def test_b10_the_cost_bounds_in_security_are_the_live_constants():

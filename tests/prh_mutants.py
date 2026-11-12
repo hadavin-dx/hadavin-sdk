@@ -1178,8 +1178,8 @@ M = [
     mutant(
         "120 every dropped view raises (a view that found nothing new refuses the text)",
         R,
-        "                    if any(\n                        not _only_inside_held(v, current, (vj, vs))",
-        "                    if True or any(\n                        not _only_inside_held(v, current, (vj, vs))",
+        "                    if any(\n                        not _only_inside_held(v, current, (vj, vs), work)",
+        "                    if True or any(\n                        not _only_inside_held(v, current, (vj, vs), work)",
         B9,
         "test_b9_g1_a_spaced_run_with_a_cut_copy_is_masked_not_refused",
         "AssertionError",
@@ -1622,7 +1622,7 @@ M = [
     mutant(
         "174 a copy outside every held value is not counted",
         R,
-        "            if not all(covered[i : i + len(value)]):\n                return False\n",
+        "            if j < 0 or i + len(value) > merged[j][1]:\n                return False\n",
         "",
         B11,
         "test_b11_g2_a_view_that_alone_found_the_only_spaced_copy_of_a_shorter_secret_is_not_dropped",
@@ -1743,8 +1743,8 @@ M = [
     mutant(
         "190 the approval request hook does not catch a crash of the redactor",
         AL,
-        "            except runmap.RedactorCrash:  # no approval card",
-        "            except KeyError:  # no approval card",
+        "            except (\n                runmap.RedactorCrash\n            ):  # no approval card",
+        "            except (\n                KeyError\n            ):  # no approval card",
         B12,
         "test_b12_i1_a_crash_while_the_card_is_made_stops_the_run_with_no_card",
         "RedactorCrash",
@@ -1817,8 +1817,8 @@ M = [
     mutant(
         "198 the word-class scan stops before the end of CJK Extension J",
         X,
-        "_WORD_PLANES = (range(0x33480),",
-        "_WORD_PLANES = (range(0x32400),",
+        "    range(0x33480),\n",
+        "    range(0x32400),\n",
         B12,
         "test_b12_i11_the_word_class_scan_reaches_the_end_of_cjk_extension_j",
         "AssertionError",
@@ -1840,6 +1840,16 @@ M = [
         B12,
         "test_b12_i7_a_held_value_shorter_than_the_spaced_minimum_does_not_cover_a_copy",
         "AssertionError",
+    ),
+    mutant(
+        "201 the work budget counts wall time again",
+        R,
+        "_work_clock = time.thread_time  #",
+        "_work_clock = time.monotonic  #",
+        B12,
+        "test_b12_i8_waiting_does_not_use_up_the_work_budget",
+        "RedactionLimit",
+        crash="RedactionLimit",
     ),
 ]
 
