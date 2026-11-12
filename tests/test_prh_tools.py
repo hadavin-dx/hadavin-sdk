@@ -559,6 +559,23 @@ def test_b6_the_readings_are_compared_per_copy_without_the_piece_check():
     assert tools._scrub(rows["esc_copy_after_plain"], [HAND], off) == "x " + MARK + " y " + MARK
 
 
+def test_b6_the_backstop_withholds_without_the_piece_check(monkeypatch):
+    """The same leak as `test_scrub_backstop_withholds`, with the piece check off: the whole-form backstop alone refuses."""
+    real = tools._scrub_layers
+    calls: list[int] = []
+
+    def later_calls_leak(raw, long_enough, scrub=tools._DEFAULT_SCRUB):
+        calls.append(1)
+        out = real(raw, long_enough, scrub)
+        return out + " leak " + HAND if len(calls) >= 2 else out
+
+    monkeypatch.setattr(tools, "_scrub_layers", later_calls_leak)
+    out = tools._scrub(
+        "auth failed for " + HAND + " end" + ESC + "[0m", [HAND], tools.ScrubSettings(piece_min=32)
+    )
+    assert HAND not in out and tools.MARKER in out, out
+
+
 def test_b6_the_union_is_the_most_any_reading_holds_without_the_piece_check():
     """Two secrets, one whole only in the character reading and one only in the consuming reading: no reading holds both,
     so nothing is shown, with the piece check off too (the first reading with a find used to be the result)."""

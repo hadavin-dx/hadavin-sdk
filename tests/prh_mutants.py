@@ -445,7 +445,7 @@ M = [
         "if any(_has_form(left, f) or any(_has_form(d, f) for d in decoded) for f in forms):",
         "if False:",
         TOOLS_T,
-        "test_scrub_backstop_withholds",
+        "test_b6_the_backstop_withholds_without_the_piece_check",
         pinned=True,
     ),
     mutant(
@@ -551,8 +551,8 @@ M = [
         "if chosen is None:\n            return MARKER + TRUNCATED",
         "if chosen is None:\n            chosen = next((j, sp) for j, sp, _ in triples if held[j])",
         TOOLS_T,
-        "test_scrub_lost_letter_withholds_the_result",
-        expect="Tr0ub4dor(B-3xyzQ",
+        "test_b6_the_union_is_the_most_any_reading_holds_without_the_piece_check",
+        expect="AssertionError",
         pinned=True,
     ),
     mutant(
