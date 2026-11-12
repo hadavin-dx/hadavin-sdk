@@ -117,7 +117,7 @@ def check_words() -> list[str]:
     allowed = {
         "blocked", "reply", "result", "now_d", "failed", "reason", "why", "disabled", "cfg", "name",
         "sources", "tools_mod", "shown_name", "sorted", "a", "p", "ToolRefused",
-        "repeated", "step", "config", "enumerate", "i", "op", "problems", "read_ops", "spec", "where",
+        "repeated", "step", "missing", "config", "enumerate", "i", "op", "problems", "read_ops", "spec", "where",
     }  # fmt: skip
     # a step name is a constant written in code (the first argument of each built-in `TickStep`)
     steps = next(
@@ -1492,7 +1492,68 @@ def check_migsql() -> list[str]:
     return bad
 
 
+def check_passed() -> list[str]:
+    """Every caller of `_missing_or_stale` hands it a text that is built in the caller (a constant or an f-string, each a
+    site of its own that is read there), so `StaleState(stale)` shows nothing that the caller did not build."""
+    bad = []
+    n_calls = 0
+    for n in ast.walk(_tree("store/postgres.py")):
+        if (
+            isinstance(n, ast.Call)
+            and isinstance(n.func, ast.Attribute)
+            and n.func.attr == "_missing_or_stale"
+        ):
+            n_calls += 1
+            arg = n.args[3] if len(n.args) > 3 else None
+            if not isinstance(arg, ast.Constant | ast.JoinedStr):
+                bad.append(
+                    f"_missing_or_stale line {n.lineno}: the sentence is not built in the caller"
+                )
+    if n_calls < 3:
+        bad.append("fewer callers of _missing_or_stale than expected: the check reads nothing")
+    return bad
+
+
+def check_frames() -> list[str]:
+    """`cli._print_frames` prints frames (from `traceback.extract_tb`) and class names; it never calls `str`, `repr` or
+    `format` on an error and never reads `.args`, `.__cause__` text or `.__notes__`. Run with a canary in the error, its
+    cause and its context: the canary is not in the output."""
+    import contextlib
+    import io
+
+    from hadavin_sdk import cli
+
+    bad = []
+    fn = _fn("cli.py", "_print_frames")
+    for n in ast.walk(fn):
+        if (
+            isinstance(n, ast.Call)
+            and isinstance(n.func, ast.Name)
+            and n.func.id in {"str", "repr", "format", "ascii"}
+        ):
+            bad.append(f"_print_frames calls {n.func.id}")
+        if isinstance(n, ast.Attribute) and n.attr in {"args", "__notes__", "strerror", "message"}:
+            bad.append(f"_print_frames reads .{n.attr}")
+    canary = "zq-frame-" + "Kx7" + "-canary"
+    try:
+        try:
+            raise OSError(canary)
+        except OSError:
+            raise ValueError(canary) from None
+    except ValueError as exc:
+        buf = io.StringIO()
+        with contextlib.redirect_stderr(buf):
+            cli._print_frames(exc)
+        if canary in buf.getvalue():
+            bad.append("the debug frames show an error text")
+        if "ValueError" not in buf.getvalue() or "OSError" not in buf.getvalue():
+            bad.append("the debug frames lost a class name of the chain")
+    return bad
+
+
 CHECKS = {
+    "FRAMES": check_frames,
+    "PASSED": check_passed,
     "WORDS": check_words,
     "SCHEMA": check_schema,
     "LITERAL": check_literal,

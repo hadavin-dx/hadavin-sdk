@@ -67,6 +67,27 @@ def _money(text: str) -> Decimal:
     return d
 
 
+def _print_frames(exc: BaseException) -> None:
+    """Round 15 (Issue 1d): the debug traceback shows where the code failed (file, line, function, and the line of
+    code) and the class of each error in the chain, never an error's text. `traceback.print_exc()` prints the text of
+    the error and of its cause and context, and a library puts configured names (a key id, a host, a path) there."""
+    print(
+        "Traceback (frames and error classes only; error texts are never printed):", file=sys.stderr
+    )
+    seen: set[int] = set()
+    err: BaseException | None = exc
+    while err is not None and id(err) not in seen:
+        seen.add(id(err))
+        for frame in traceback.extract_tb(err.__traceback__):
+            print(
+                f"  File {frame.filename!r}, line {frame.lineno}, in {frame.name}", file=sys.stderr
+            )
+            if frame.line:
+                print(f"    {frame.line}", file=sys.stderr)
+        print(f"{type(err).__name__}", file=sys.stderr)
+        err = err.__cause__ or err.__context__
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the CLI. ConfigError exits 2 and any other uncaught exception exits 3 (never Python's crash code 1)."""
     try:
@@ -79,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
             f"failed: {type(exc).__name__} (set HADAVIN_DEBUG=1 for the traceback)", file=sys.stderr
         )
         if os.environ.get("HADAVIN_DEBUG") == "1":
-            traceback.print_exc()
+            _print_frames(exc)
         return 3
 
 

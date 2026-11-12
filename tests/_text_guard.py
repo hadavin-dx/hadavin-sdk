@@ -23,6 +23,7 @@ dynamic dispatch) and the text a library puts into its own error.
 from __future__ import annotations
 
 import ast
+import builtins
 import re
 
 SAFE_CALLS = frozenset(
@@ -31,6 +32,33 @@ SAFE_CALLS = frozenset(
         "callable", "hasattr", "range", "divmod", "chr", "type", "isfinite",
         "shown_name", "_named", "shown_names", "digest_prefix", "error_where", "word_like", "is_digest", "status_text",
     }
+)  # fmt: skip
+# Round 15 (Issue 1e): these names are filters of this package. A call of one of them is trusted only when the name is the
+# package's own function: not a parameter or a local name, and not imported from outside the scanned tree.
+FILTERS = frozenset(
+    {
+        "shown_name", "_named", "shown_names", "digest_prefix", "error_where", "word_like", "is_digest", "status_text",
+    }
+)  # fmt: skip
+LITERAL_BUILDERS = frozenset(
+    {"frozenset", "tuple", "set", "list", "dict", "sorted", "str", "int", "float", "bytes", "len", "compile",
+     "MappingProxyType", "Template", "Literal", "Decimal", "re", "escape", "range", "max", "min", "sum"}
+)  # fmt: skip
+# calls that build an error object: the object is a message site whether or not it is raised (Round 15, Issue 1b)
+ERROR_SUFFIXES = (
+    "Error",
+    "Refused",
+    "Failed",
+    "Unavailable",
+    "Exception",
+    "Exhausted",
+    "NotFound",
+    "StaleState",
+)
+# `.exception(...)`, `traceback.print_exc()` and `exc_info=True` print the whole chain, including the library text
+CHAIN_PRINTERS = frozenset({"print_exc", "format_exc", "print_exception", "format_exception"})
+MUTATORS = frozenset(
+    {"update", "append", "extend", "add", "insert", "pop", "popitem", "clear", "remove", "discard", "setdefault", "sort", "reverse"}
 )  # fmt: skip
 PASS_CALLS = frozenset(
     {
@@ -171,7 +199,20 @@ class Analysis:
         self.attr_number: set[str] = set()
         self.attr_safe: set[str] = set()
         self._envs: dict[int, frozenset[str]] = {}
+        self.changed_in_function: set[str] = (
+            set()
+        )  # outer names that a function changes (see `_note_changed`)
+        self.upper_assigned: set[str] = (
+            set()
+        )  # UPPER_CASE names bound at least once, always to a written value
+        self.upper_bad: set[str] = (
+            set()
+        )  # UPPER_CASE names filled or changed at run time (Round 15, Issue 1f)
+        self.upper_outside: dict[
+            str, set[str]
+        ] = {}  # module -> UPPER names imported from outside the scanned tree
         self._collect()
+        self._scan_upper()
         self._solve()
 
     # ---- collecting ---------------------------------------------------------------------------------------------
@@ -199,6 +240,172 @@ class Analysis:
                     p = self.parent.get(id(n))
                     if not (isinstance(p, ast.Call) and p.func is n):
                         self.escaped.add(n.attr)
+
+    def _literalish(self, e) -> bool:
+        """A value written in the code: a literal, a collection of literals, a text made of them, another UPPER_CASE name,
+        or a standard conversion of them (`frozenset({...})`, `re.compile("...")`). `{}` and `[]` count: what makes such a
+        name unsafe is a later change (see `_scan_upper`)."""
+        if isinstance(e, ast.Constant):
+            return True
+        if isinstance(e, ast.JoinedStr):
+            return all(self._literalish(v) for v in e.values)
+        if isinstance(e, ast.FormattedValue):
+            return self._literalish(e.value)
+        if isinstance(e, (ast.Tuple, ast.List, ast.Set)):
+            return all(self._literalish(x) for x in e.elts)
+        if isinstance(e, ast.Dict):
+            return all(k is None or self._literalish(k) for k in e.keys) and all(
+                self._literalish(v) for v in e.values
+            )
+        if isinstance(e, ast.UnaryOp):
+            return self._literalish(e.operand)
+        if isinstance(e, ast.BinOp):
+            return self._literalish(e.left) and self._literalish(e.right)
+        if isinstance(e, ast.Lambda):
+            return True  # a function written in the code is not text
+        if isinstance(e, ast.Name):
+            return bool(UPPER.match(e.id)) or e.id in self._code_names
+        if isinstance(e, ast.Attribute):
+            return bool(UPPER.match(e.attr)) or self._literalish(e.value)
+        if isinstance(e, ast.Subscript):
+            return self._literalish(e.value) and self._literalish(e.slice)
+        if isinstance(e, ast.Call):
+            f = e.func
+            # a class or a function of this tree called over written values (`Grant(...)`, `Entry(...)`, `_aws("x")`) at module level is a
+            # table row; a function that reads the environment is the limit the CHANGELOG names
+            ok_name = isinstance(f, ast.Name) and (
+                f.id in LITERAL_BUILDERS or f.id in self._code_names
+            )
+            ok_attr = isinstance(f, ast.Attribute) and (
+                f.attr in LITERAL_BUILDERS or f.attr in TEXT_METHODS
+            )
+            if not (ok_name or ok_attr):
+                return False
+            if (
+                isinstance(f, ast.Attribute)
+                and f.attr in TEXT_METHODS
+                and not self._literalish(f.value)
+            ):
+                return False
+            return all(self._literalish(a) for a in [*e.args, *(k.value for k in e.keywords)])
+        return False
+
+    @property
+    def _code_names(self) -> set[str]:
+        if not hasattr(self, "_code_names_cache"):
+            names = {d["name"] for d in self.defs}
+            for tree in self.trees.values():
+                names |= {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
+            self._code_names_cache = names
+        return self._code_names_cache
+
+    def _scan_upper(self):
+        """Round 15, Issue 1f: an UPPER_CASE name is code-owned only if every place that binds it in the scanned tree
+        binds a written value, nothing changes it (`NAME[k] = v`, `NAME.update(...)`, `NAME += ...`, `global NAME`), and
+        it is not imported from outside the tree. `_LOADED = {}` filled at run time, and `_LOADED.get(k)`, are not."""
+        for module, tree in self.trees.items():
+            for n in ast.walk(tree):
+                self._note_changed(n)
+                if (
+                    isinstance(n, ast.Name)
+                    and UPPER.match(n.id)
+                    and isinstance(n.ctx, (ast.Store, ast.Del))
+                ):
+                    p = self.parent.get(id(n))
+                    value = None
+                    if (isinstance(p, ast.Assign) and n in p.targets) or (
+                        isinstance(p, ast.AnnAssign) and p.target is n
+                    ):
+                        value = p.value
+                    if value is not None and self._literalish(value):
+                        self.upper_assigned.add(n.id)
+                    else:
+                        self.upper_bad.add(n.id)
+                elif isinstance(n, ast.arg) and UPPER.match(n.arg):
+                    self.upper_bad.add(n.arg)
+                elif isinstance(n, (ast.Global, ast.Nonlocal)):
+                    self.upper_bad.update(x for x in n.names if UPPER.match(x))
+                elif isinstance(n, (ast.Subscript, ast.Attribute)) and isinstance(
+                    n.ctx, (ast.Store, ast.Del)
+                ):
+                    r = _root(n)
+                    while isinstance(r, ast.Attribute):
+                        r = r.value
+                        r = _root(r)
+                    if isinstance(r, ast.Name) and UPPER.match(r.id):
+                        self.upper_bad.add(r.id)
+                    if isinstance(n, ast.Attribute) and UPPER.match(n.attr):
+                        self.upper_bad.add(n.attr)
+                elif isinstance(n, ast.AugAssign):
+                    r = _root(n.target)
+                    if isinstance(r, ast.Name) and UPPER.match(r.id):
+                        self.upper_bad.add(r.id)
+                elif (
+                    isinstance(n, ast.Call)
+                    and isinstance(n.func, ast.Attribute)
+                    and n.func.attr in MUTATORS
+                ):
+                    r = _root(n.func.value)
+                    if isinstance(r, ast.Name) and UPPER.match(r.id):
+                        self.upper_bad.add(r.id)
+                elif isinstance(n, ast.ImportFrom):
+                    key = self._module_key(n.module or "", n.level, module)
+                    if key is None:
+                        self.upper_outside.setdefault(module, set()).update(
+                            al.asname or al.name
+                            for al in n.names
+                            if UPPER.match(al.asname or al.name)
+                        )
+                elif isinstance(n, (*FUNCS, ast.ClassDef)) and UPPER.match(n.name):
+                    self.upper_bad.add(n.name)
+
+    def _class_ref(self, e) -> bool:
+        """A name that stands for a class: defined in the scanned tree, or imported at the top of its module with a
+        CapitalWord name, and not rebound by a parameter or a local name. A class is not text from a file."""
+        name = e.id
+        if not name[:1].isupper() or UPPER.match(name) or self._shadowed(e, name):
+            return False
+        if name in self._code_names and any(
+            isinstance(n, ast.ClassDef) and n.name == name
+            for t in self.trees.values()
+            for n in ast.walk(t)
+        ):
+            return True
+        if isinstance(getattr(builtins, name, None), type):
+            return True  # `ValueError`, `KeyError` ...
+        module = self.module_of.get(id(e))
+        return name in self.imports.get(module, {})
+
+    def _note_changed(self, n):
+        """A name of the outer (module) scope that a function changes: `NAME[k] = v`, `NAME.update(...)`, `NAME += x`,
+        `global NAME`. The module-level proof of the name ("only ever bound to written values") does not see these, so such
+        a name is not code-owned (Round 15, Issue 1f). Names that the function binds itself are its own."""
+        root = None
+        if isinstance(n, (ast.Subscript, ast.Attribute)) and isinstance(
+            n.ctx, (ast.Store, ast.Del)
+        ):
+            root = _root(n)
+        elif isinstance(n, ast.AugAssign):
+            root = _root(n.target)
+        elif (
+            isinstance(n, ast.Call)
+            and isinstance(n.func, ast.Attribute)
+            and n.func.attr in MUTATORS
+        ):
+            root = _root(n.func.value)
+        elif isinstance(n, (ast.Global, ast.Nonlocal)):
+            self.changed_in_function.update(n.names)
+            return
+        if isinstance(root, ast.Name) and isinstance(self.scope_of.get(id(n)), FUNCS):
+            if not self._shadowed(n, root.id):
+                self.changed_in_function.add(root.id)
+
+    def _upper_ok(self, name, node) -> bool:
+        """An UPPER_CASE name that is bound only to written values in the tree (see `_scan_upper`)."""
+        module = self.module_of.get(id(node))
+        if name in self.upper_bad or name in self.upper_outside.get(module, ()):
+            return False
+        return name in self.upper_assigned or name in {"TYPE_CHECKING"}
 
     def _walk(self, module, node, scope, cls):
         for ch in ast.iter_child_nodes(node):
@@ -598,6 +805,10 @@ class Analysis:
             elif isinstance(n, (ast.Global, ast.Nonlocal)):
                 unsafe.update(n.names)
         cand = {k for k in bindings if k not in unsafe}
+        if isinstance(scope, ast.Module):
+            cand -= (
+                self.changed_in_function
+            )  # a function changes it: not "only ever a written value"
         env = (set(outer) - set(bindings) - unsafe) | cand
         changed = True
         while changed:
@@ -650,10 +861,17 @@ class Analysis:
             )
             return number or self.safe(e.value, env)
         if isinstance(e, ast.Name):
-            return e.id in env or bool(UPPER.match(e.id)) or e.id in {"__name__", "__file__"}
+            return (
+                e.id in env
+                or (bool(UPPER.match(e.id)) and self._upper_ok(e.id, e))
+                or e.id in {"__name__", "__file__"}
+                or self._class_ref(e)
+            )
         if isinstance(e, ast.Attribute):
-            if e.attr in {"__name__", "__qualname__", "__module__"} or UPPER.match(e.attr):
+            if e.attr in {"__name__", "__qualname__", "__module__"}:
                 return True
+            if UPPER.match(e.attr):
+                return e.attr not in self.upper_bad
             return e.attr in self.attr_safe or (
                 e.attr in self.attr_number and e.attr not in self.attr_unsafe
             )
@@ -723,6 +941,8 @@ class Analysis:
         f = e.func
         args = [*e.args, *(k.value for k in e.keywords)]
         if isinstance(f, ast.Name):
+            if f.id in FILTERS:
+                return self._filter_is_ours(e)
             if f.id in SAFE_CALLS:
                 return True
             if f.id in PASS_CALLS:
@@ -733,6 +953,18 @@ class Analysis:
                 return self.safe(f.value, env) and all(self.safe(a, env) for a in args)
             return self._resolved_safe(e)
         return False
+
+    def _filter_is_ours(self, call) -> bool:
+        """Round 15, Issue 1e: `shown_name(x)` hides the text only when `shown_name` is the package's own function: not a
+        parameter or local name that happens to be called that, and not imported from a library."""
+        name = call.func.id
+        if self._shadowed(call, name):
+            return False
+        module = self.module_of.get(id(call))
+        for key, _orig in self.imports.get(module, {}).get(name, ()):
+            if key is None:
+                return False
+        return True
 
     def _resolved_safe(self, call) -> bool:
         """Every definition the call can reach (by module and class, see `resolve`) returns code-owned text."""
@@ -755,10 +987,13 @@ class Analysis:
             return self.env_of(self.scope_of.get(id(node), tree))
 
         def bare_unsafe(args, env):
+            # `+` and `%` and f-strings are sites of their own; a `/` (a path join) is not, so it is read here
             plain = [
                 a
                 for a in args
-                if not isinstance(a, (ast.BinOp, ast.JoinedStr)) and not self._is_text_call(a)
+                if not (isinstance(a, ast.BinOp) and not isinstance(a.op, ast.Div))
+                and not isinstance(a, ast.JoinedStr)
+                and not self._is_text_call(a)
             ]
             return any(not safe(a, env) for a in plain)
 
@@ -821,6 +1056,40 @@ class Analysis:
                     hit = bare_unsafe(args, env)
                 elif fa in {"dumps", "dump"} and _recv(f.value) == "json":
                     hit = any(not safe(a, env) for a in args)
+                elif fa == "exit" and _recv(f.value) == "sys":
+                    hit = bare_unsafe(args, env)  # `sys.exit(text)` prints the text
+                if not hit and (
+                    fa == "exception"
+                    or fa in CHAIN_PRINTERS
+                    or fn in CHAIN_PRINTERS
+                    or any(
+                        k.arg == "exc_info"
+                        and not (isinstance(k.value, ast.Constant) and not k.value.value)
+                        for k in node.keywords
+                    )
+                ):
+                    hit = True  # these print the whole chain of the error, library text included (Round 15, Issue 1d)
+                if (
+                    not hit
+                    and self._builds_error(fn or fa or "")
+                    and not isinstance(self.parent.get(id(node)), ast.Raise)
+                ):
+                    hit = bare_unsafe(
+                        args, env
+                    )  # an error object built outside a `raise` (Issue 1b)
+                if not hit:
+                    # a keyword that carries made-up text: `Result(error_code=str(exc))` (Issue 1a)
+                    hit = any(
+                        self._is_conversion(k.value) and not safe(k.value, env)
+                        for k in node.keywords
+                        if k.arg not in _PRINT_HOW
+                    )
+            elif isinstance(node, ast.Assign) and any(
+                isinstance(t, ast.Attribute) for t in node.targets
+            ):
+                # an attribute set to text made on the spot: `self.error_code = str(exc)` (Issue 1a)
+                hit = self._is_conversion(node.value) and not safe(node.value, env)
+                site = node
             elif isinstance(node, ast.Raise) and isinstance(node.exc, ast.Call):
                 args = [*node.exc.args, *(k.value for k in node.exc.keywords)]
                 hit = bare_unsafe(args, env)
@@ -834,11 +1103,60 @@ class Analysis:
                 and not isinstance(node.cause, ast.Constant)
             ):
                 out.append((node, "cause"))
+            elif (
+                isinstance(node, ast.Raise)
+                and node.exc is not None
+                and node.cause is None
+                and self._in_handler(node)
+            ):
+                # `raise X("fixed")` inside an `except` with no `from`: the old error stays as `__context__` and the
+                # traceback prints it (Round 15, Issue 1d). `from None` and a raise after the block are not sites.
+                out.append((node, "context"))
         return out
 
-    def _reaches_message(self, call, tree) -> bool:
-        """Is the collection that `call` adds to read, in the same scope, by something that makes or shows text."""
+    def _builds_error(self, name: str) -> bool:
+        """A call of a class whose name says it is an error. A class of the scanned tree that has no base class at all
+        (the context manager `Failed`) is not an error object, whatever its name says."""
+        if not name.endswith(ERROR_SUFFIXES):
+            return False
+        defined = [
+            n
+            for t in self.trees.values()
+            for n in ast.walk(t)
+            if isinstance(n, ast.ClassDef) and n.name == name
+        ]
+        return not (defined and all(not d.bases for d in defined))
+
+    def _in_handler(self, node) -> bool:
+        p = self.parent.get(id(node))
+        while p is not None and not isinstance(p, (*FUNCS, ast.Module, ast.ClassDef, ast.Lambda)):
+            if isinstance(p, ast.ExceptHandler):
+                return True
+            p = self.parent.get(id(p))
+        return False
+
+    def _reaches_message(self, call, tree, depth=0) -> bool:
+        """Is the collection that `call` adds to read, in the same scope, by something that makes or shows text. A list
+        that is a PARAMETER is an out-parameter: the caller's own list is read there (Round 15, Issue 1c)."""
         recv = _root(call.func.value)
+        if isinstance(recv, ast.Name) and depth < 3:
+            fn = self.scope_of.get(id(call), tree)
+            if isinstance(fn, FUNCS):
+                i = next((k for k, d in enumerate(self.defs) if d["node"] is fn), None)
+                if i is not None and recv.id in self.defs[i]["params"]:
+                    pos = self.defs[i]["params"].index(recv.id)
+                    for c, scope in self.callers.get(i, []):
+                        arg = c.args[pos] if pos < len(c.args) else None
+                        if arg is not None and isinstance(arg, ast.Name):
+                            probe = ast.Call(
+                                func=ast.Attribute(value=arg, attr="append", ctx=ast.Load()),
+                                args=[],
+                                keywords=[],
+                            )
+                            self.scope_of[id(probe)] = scope
+                            self.parent[id(probe)] = c
+                            if self._reaches_message(probe, tree, depth + 1):
+                                return True
         if isinstance(recv, ast.Name):
             nodes = _own(self.scope_of.get(id(call), tree))
 
@@ -894,6 +1212,15 @@ class Analysis:
             ):
                 return True
         return False
+
+    @staticmethod
+    def _is_conversion(a) -> bool:
+        """`str(x)`, `repr(x)`, `ascii(x)`, `format(x)`: text made from a value on the spot."""
+        return (
+            isinstance(a, ast.Call)
+            and isinstance(a.func, ast.Name)
+            and a.func.id in {"str", "repr", "format", "ascii"}
+        )
 
     @staticmethod
     def _is_texty(a) -> bool:

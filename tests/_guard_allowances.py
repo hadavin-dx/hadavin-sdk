@@ -52,6 +52,8 @@ REASONS = {
     "CATALOG": "a role problem found by comparing the database catalog with the grant map written in code; names are tables and roles of this package's own schema",
     "REPORT": "a line of the replay report: numbers from int fields, class names of redaction, hashes, the case counts, and words written in code; the model id is refused at load unless it has token shape (`Route.model_id` pattern)",
     "TAGS": "the allowed kind words that pydantic lists for a union (its `expected_tags`, written in code), never the typed one",
+    "PASSED": "a sentence that every caller in this package builds and hands to the error (each caller's sentence is its own site and is read there)",
+    "FRAMES": "the file name, the line number, the function name and the line of code of a stack frame, printed by the debug traceback (`cli._print_frames`); frames describe code, never an error's text (the error text and its cause and context are not printed, only their class names)",
     "PYDANTICTYPE": "the error type word of pydantic (`missing`, `int_parsing`, ...): a library constant, not text from the file",
 }
 
@@ -281,10 +283,6 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
     ("config.py", "ConfigError(config_error_text(exc))"): "PLACE",
     (
         "config.py",
-        "f\"backend {cap}: unknown kind; known: {', '.join(sorted(kinds))}\"",
-    ): "TABLEKEYS",
-    (
-        "config.py",
         "f\"backends.{cap}: {kind!r} needs settings; write backends.{cap}: {{kind: {kind}, {', '.join(required)}}}\"",
     ): "TABLEKEYS",
     ("config.py", "f\"environment {self.environment}: refused: {', '.join(refused)}\""): "LISTED",
@@ -297,7 +295,6 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
     ("config.py", "f'anchor {anchor.kind} needs backends.audit kind chain'"): "KIND",
     ("config.py", "f'anchor {anchor.kind} without retention_ack'"): "KIND",
     ("config.py", "f'backends.{cap} ({kind}): {config_error_text(exc)}'"): "PLACE",
-    ("config.py", "f'backends.{cap}: expected {{kind: <name>, ...settings}}'"): "TABLEKEYS",
     ("config.py", "f'the kind is missing or not one of the known kinds{tail}'"): "TAGS",
     ("config.py", "f'{where}: {_what(e)}'"): "PLACE",
     ("config.py", "refused += _anchor_refusals(self.environment, self.backends)"): "LISTED",
@@ -852,4 +849,9 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
     ("tools.py", "time.monotonic() + timeout_s"): "TIME",
     ("tools.py", "token + '=' * (-len(token) % 4)"): "PROC",
     ("tools.py", "token + '=' * (-len(token) % 8)"): "PROC",
+    ("config.py", "f\"source kind is unknown; known: {', '.join(sorted(KINDS))}\""): "KIND",
+    ("runtime/tick.py", "f\"a built-in tick step is missing: {', '.join(missing)}\""): "WORDS",
+    ("store/postgres.py", "StaleState(stale)"): "PASSED",
+    ("cli.py", "f'  File {frame.filename!r}, line {frame.lineno}, in {frame.name}'"): "FRAMES",
+    ("cli.py", "f'    {frame.line}'"): "FRAMES",
 }

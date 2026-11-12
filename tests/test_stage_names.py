@@ -3698,6 +3698,56 @@ _PLANTED_FAULTS = {
         1,
     ),
     "I3 text plus a text": ("def f(self, name):\n    return name + 'x'", 1),
+    # ---- round 15 (Issue 1): the shapes the round-14 reviewers named that the guard did not see ----
+    "R15a an error object built outside a raise": (
+        "def f(name):\n    err = ConfigError(name)\n    raise err",
+        1,
+    ),
+    "R15b a keyword made from the text of an error": (
+        "def f(exc):\n    return Result(error_code=str(exc))",
+        1,
+    ),
+    "R15c an attribute set to the text of an error": (
+        "def f(self, exc):\n    self.error_code = str(exc)",
+        1,
+    ),
+    "R15d an out-parameter list filled by a helper and joined by the caller": (
+        (
+            "def _put(problems, exc):\n    problems.append(str(exc))\n"
+            "def f(exc):\n    problems = []\n    _put(problems, exc)\n    raise A('; '.join(problems))"
+        ),
+        1,
+    ),
+    "R15e a raise inside an except with no from": (
+        "def f(fn):\n    try:\n        fn()\n    except OSError:\n        raise A('fixed')",
+        1,
+    ),
+    "R15f traceback.print_exc": (
+        "import traceback\ndef f(g):\n    try:\n        g()\n    except OSError:\n        traceback.print_exc()",
+        1,
+    ),
+    "R15g a log call with exc_info": (
+        "def f(g, log):\n    try:\n        g()\n    except OSError:\n        log.warning('failed', exc_info=True)",
+        1,
+    ),
+    "R15h sys.exit with a name": ("import sys\ndef f(name):\n    sys.exit(name)", 1),
+    "R15i a path join handed to an error": ("def f(root, name):\n    raise A(root / name)", 1),
+    "R15j a parameter that is called shown_name": (
+        "def f(shown_name, name):\n    raise A(shown_name(name))",
+        1,
+    ),
+    "R15k a status_text imported from a library": (
+        "from lib import status_text\ndef f(x):\n    raise A(status_text(x))",
+        1,
+    ),
+    "R15l an UPPER_CASE table filled at run time": (
+        "_LOADED = {}\ndef reg(k, v):\n    _LOADED[k] = v\ndef f():\n    raise A(_LOADED.get('a'))",
+        1,
+    ),
+    "R15m an UPPER_CASE name bound to a call": (
+        "import os\nHOME = os.environ.get('X')\ndef f():\n    raise A(HOME)",
+        1,
+    ),
 }
 _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be found
     "R13e a status through status_text": "def f(status):\n    raise A(f'answered {status_text(status)}')",
@@ -3726,6 +3776,24 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
     ),
     "round 14: only code-owned values are appended": (
         "def f(self):\n    alts = []\n    alts.append('x')\n    raise A(alts[0])"
+    ),
+    "R15 the package's own shown_name": (
+        "def shown_name(x):\n    return 'fixed'\ndef f(x):\n    raise A(f'{shown_name(x)}')"
+    ),
+    "R15 a raise after the except block": (
+        "def f(fn):\n    failed = False\n    try:\n        fn()\n    except OSError:\n        failed = True\n    if failed:\n        raise A('fixed')"
+    ),
+    "R15 a raise from None inside an except": (
+        "def f(fn):\n    try:\n        fn()\n    except OSError:\n        raise A('fixed') from None"
+    ),
+    "R15 a context manager that is not an error": (
+        "class Failed:\n    pass\ndef f(c, kinds):\n    with Failed(kinds) as x:\n        c()"
+    ),
+    "R15 a table of written words that nothing changes": (
+        "NAMES = ('a', 'b')\ndef f(i):\n    raise A(NAMES[i])"
+    ),
+    "R15 a class tuple handed to a function": (
+        "def f(c):\n    raise A(f'{(ValueError, KeyError)}')"
     ),
 }
 
