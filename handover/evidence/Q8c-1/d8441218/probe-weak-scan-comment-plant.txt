@@ -1,0 +1,2 @@
+weak count: 1
+WEAK ('A1 a second request or send in the Vault sending function is no longer reported', 'a second send inside `call` is not reported', 'test_plant_a_second_send_in_the_sending_function_is_the_class_caught')
