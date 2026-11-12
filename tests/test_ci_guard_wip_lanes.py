@@ -7,8 +7,10 @@ ci.yml and run as it is (bash -e, like the runner), so a change to the real line
 """
 
 import datetime
+import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -153,6 +155,8 @@ def test_a_head_built_on_a_lane_commit_still_fails_even_if_a_lane_ref_has_it(rep
 
 
 def test_a_lane_ref_pointing_at_another_branchs_commits_cannot_excuse_them_in_head(repo):
+    # This pins a documented weakness: outside HEAD the lane subtraction hides another branch's notes (the repository ruleset is the
+    # control). A later hardening must change this test on purpose.
     keep = _git(repo, "rev-parse", "HEAD")
     other = _commit(repo, HANDOVER_FILE, "note\n", "handover file on another branch")
     _ref(repo, "core/other", other)
@@ -173,7 +177,7 @@ def test_a_missing_core_cloud_handover_ref_is_reported_without_a_git_error(repo)
     _git(repo, "update-ref", "-d", "refs/remotes/origin/core/cloud-handover")
     rc, out = _run_guard(repo)
     assert rc == 1, out
-    assert "outlived branch core/cloud-handover" in out
+    assert "and branch core/cloud-handover is missing" in out
     assert "fatal" not in out
 
 
@@ -296,7 +300,7 @@ def test_a_tag_named_origin_core_cloud_handover_does_not_replace_the_deleted_bra
     _git(repo, "update-ref", "-d", "refs/remotes/origin/core/cloud-handover")
     rc, out = _run_guard(repo)
     assert rc == 1, out
-    assert "outlived branch core/cloud-handover" in out
+    assert "and branch core/cloud-handover is missing" in out
 
 
 def test_a_tag_named_origin_core_cloud_handover_does_not_replace_the_branch_in_the_range(repo):
@@ -459,6 +463,213 @@ def test_the_head_failure_message_names_the_refs_that_hold_the_notes(repo):
     assert f"{HANDOVER_FILE} (on: origin/wip/cloud-x" in out
 
 
+def _own_history_case(repo, main_line, pr_line, tag_main=False):
+    """C is a commit of this pull request that the fixed branch core/P2d-1 also holds. main's .gitleaksignore carries
+    main_line(C), the pull request's carries pr_line(C). Returns the guard result."""
+    base = _git(repo, "rev-parse", "HEAD")
+    c = _commit(repo, "src/a.py", "x = 1\n", "fixture commit")
+    _ref(repo, "core/P2d-1", c)
+    _git(repo, "reset", "-q", "--hard", base)
+    m2 = _commit(repo, ".gitleaksignore", f"{_expires()}{main_line(c)}\n", "main takes the entry")
+    _ref(repo, "main", m2)
+    _git(repo, "merge", "-q", "--no-edit", c)
+    if tag_main:
+        _git(
+            repo, "tag", "origin/main", base
+        )  # the short name origin/main resolves to this older commit
+    _commit(
+        repo, ".gitleaksignore", f"{_expires()}# pull request\n{pr_line(c)}\n", "pull request entry"
+    )
+    return _run_guard(repo)
+
+
+def test_an_entry_must_equal_a_whole_line_of_mains_file(repo):
+    """grep -x: an entry that is only the start of a main line (line 3 against line 33) is not the identical line."""
+    rc, out = _own_history_case(
+        repo,
+        lambda c: f"{c}:src/a.py:generic-api-key:33",
+        lambda c: f"{c}:src/a.py:generic-api-key:3",
+    )
+    assert rc == 1, out
+    assert "own history" in out
+
+
+def test_an_entry_is_compared_as_a_fixed_string_not_a_pattern(repo):
+    """grep -F: the dot in the path of the entry must not match another character in main's line."""
+    rc, out = _own_history_case(
+        repo,
+        lambda c: f"{c}:src/aXpy:generic-api-key:3",
+        lambda c: f"{c}:src/a.py:generic-api-key:3",
+    )
+    assert rc == 1, out
+    assert "own history" in out
+
+
+def test_the_identical_line_is_still_accepted(repo):
+    same = lambda c: f"{c}:src/a.py:generic-api-key:3"
+    rc, out = _own_history_case(repo, same, same)
+    assert rc == 0, out
+
+
+def test_main_is_read_from_the_branch_not_from_a_tag_of_the_same_short_name(repo):
+    same = lambda c: f"{c}:src/a.py:generic-api-key:3"
+    rc, out = _own_history_case(repo, same, same, tag_main=True)
+    assert rc == 0, out  # the tag points at a commit without the line: only the branch has it
+
+
+@pytest.mark.parametrize("name", ["é.md", 'q"uote.md', "a[1].md "])
+def test_a_note_with_an_unusual_file_name_is_listed_by_every_path_check(repo, name):
+    """git quotes such names unless -z is used, and a quoted name no longer starts with handover/."""
+    path = f"handover/reviews/{name}"
+    # range check: the note is on another branch
+    keep = _git(repo, "rev-parse", "HEAD")
+    sha = _commit(repo, path, "note\n", "note on another branch")
+    _ref(repo, "core/other", sha)
+    _git(repo, "reset", "-q", "--hard", keep)
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "a branch other than core/cloud-handover" in out
+    _git(repo, "update-ref", "-d", "refs/remotes/origin/core/other")
+    # tree check
+    _commit(repo, path, "note\n", "note in the tree")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "in this checkout's tree" in out
+    # HEAD history check only: added and deleted, both commits on a lane ref
+    _remove(repo, path, "deleted again")
+    _ref(repo, "wip/cloud-x", _git(repo, "rev-parse", "HEAD"))
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "history of HEAD itself" in out
+
+
+def test_a_note_that_is_only_on_a_tag_is_listed_by_the_range_check(repo):
+    keep = _git(repo, "rev-parse", "HEAD")
+    sha = _commit(repo, HANDOVER_FILE, "note\n", "note under a tag")
+    _git(repo, "tag", "t1", sha)
+    _git(repo, "reset", "-q", "--hard", keep)
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "a branch other than core/cloud-handover" in out
+
+
+def test_a_fixed_name_must_match_whole_and_handover_src_is_accepted(repo):
+    keep = _git(repo, "rev-parse", "HEAD")
+    a = _commit(repo, "notes/a.txt", "a\n", "commit on a look-alike name")
+    _ref(repo, "core/P2d-1-x", a)
+    _git(repo, "reset", "-q", "--hard", keep)
+    b = _commit(repo, "notes/b.txt", "b\n", "commit on handover-src")
+    _ref(repo, "handover-src/c1a-8460813", b)
+    _git(repo, "reset", "-q", "--hard", keep)
+    _commit(
+        repo,
+        ".gitleaksignore",
+        f"{_expires()}{b}:src/a.py:generic-api-key:3\n",
+        "entry on handover-src",
+    )
+    rc, out = _run_guard(repo)
+    assert rc == 0, out  # positive case: a fixed name, not an ancestor of HEAD
+    _commit(
+        repo,
+        ".gitleaksignore",
+        f"{_expires()}{a}:src/a.py:generic-api-key:3\n",
+        "entry on a look-alike",
+    )
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "stale ignore entry" in out
+
+
+def test_the_failure_message_lists_a_file_name_with_glob_characters_and_trailing_space_literally(
+    repo,
+):
+    """show_where must not trim the name (IFS=)."""
+    _lane_branch(repo, "core/other")
+    keep = _git(repo, "rev-parse", "HEAD")
+    sha = _commit(repo, "handover/reviews/a[1].md ", "note\n", "odd name")
+    _ref(repo, "core/other2", sha)
+    _git(repo, "reset", "-q", "--hard", keep)
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "handover/reviews/a[1].md  (on: origin/core/other2" in out
+
+
+def test_the_failure_message_reads_a_file_name_with_a_star_as_a_literal_path(repo):
+    """With a glob pathspec the star name also matches nz.md and the newest commit (the one on core/nzb) would be named."""
+    keep = _git(repo, "rev-parse", "HEAD")
+    star = _commit(repo, "handover/reviews/n*.md", "note\n", "star name")
+    _ref(repo, "core/starb", star)
+    nz = _commit(
+        repo, "handover/reviews/nz.md", "note\n", "newer file that a glob would also match"
+    )
+    _ref(repo, "core/nzb", nz)
+    _git(repo, "reset", "-q", "--hard", keep)
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    line = next(ln for ln in out.splitlines() if ln.startswith("  handover/reviews/n*.md (on:"))
+    assert "origin/core/starb" in line
+
+
+GUARD_PAT = re.compile(r"^\s*pat='([^']+)'$", re.MULTILINE)
+
+
+def _guard_pattern():
+    return re.search(GUARD_PAT, _step(_load(), STEP)["run"]).group(1)
+
+
+def _samples(regex):
+    """Literal sample paths a toml path regex accepts: strip anchors, expand (a|b) groups, drop [^/]+ and escapes."""
+    text = regex.removeprefix("^").removesuffix("$")
+    out = [text]
+    while any("(" in t for t in out):
+        nxt = []
+        for t in out:
+            m = re.search(r"\(([^()]*)\)", t)
+            if not m:
+                nxt.append(t)
+                continue
+            nxt += [t[: m.start()] + alt + t[m.end() :] for alt in m.group(1).split("|")]
+        out = nxt
+    return [t.replace("[^/]+", "x").replace("\\.", ".") for t in out]
+
+
+def _guard_gaps(toml_text):
+    """Problems where an allowlist path regex that mentions handover/ is not covered by the guard pattern."""
+    guard = _guard_pattern()
+    gaps = []
+    for al in tomllib.loads(toml_text).get("allowlists", []):
+        for rx in al.get("paths", []):
+            if "handover/" not in rx:
+                continue
+            if not rx.startswith("^"):
+                gaps.append(f"not anchored: {rx}")
+            gaps += [f"not guarded: {s}" for s in _samples(rx) if not re.search(guard, s)]
+    return gaps
+
+
+def test_the_guard_pattern_covers_every_handover_path_the_real_toml_allows():
+    real = (CI.parents[2] / ".gitleaks.toml").read_text()
+    assert _samples("^handover/(reviews|tickets|evidence)/[^/]+\\.md$") == [
+        "handover/reviews/x.md",
+        "handover/tickets/x.md",
+        "handover/evidence/x.md",
+    ]
+    assert _guard_gaps(real) == []
+
+
+@pytest.mark.parametrize(
+    "regex",
+    [
+        "handover/(reviews|tickets)/[^/]+\\.md$",
+        "^docs/handover/reviews/[^/]+\\.md$",
+        "^handover/notes/[^/]+\\.md$",
+    ],
+)
+def test_a_widened_toml_path_is_reported_as_a_gap(regex):
+    toml = f"[extend]\nuseDefault = true\n[[allowlists]]\ncondition = 'AND'\npaths = ['{regex}']\n"
+    assert _guard_gaps(toml) != []
+
+
 def test_the_old_allowlist_wording_is_gone_and_the_new_rule_is_stated():
     run = _step(_load(), STEP)["run"]
     assert "would hide generic keys" not in run
@@ -472,6 +683,7 @@ def test_the_step_name_is_a_plain_string_that_yaml_cannot_misread():
     assert ": " not in name  # a mapping
     assert " #" not in name  # a comment
     assert name[0] not in "-?:,[]{}#&*!|>'\"%@`", name  # a YAML indicator character
+    assert not name.endswith(":")  # a trailing colon
     assert name == name.strip()
     # the raw text of the line too: " #" would start a YAML comment and silently shorten the parsed name
     raw = [

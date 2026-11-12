@@ -172,7 +172,7 @@ jobs:
         run: uv sync --locked --no-build --only-group scan
       - name: System tools resolve outside the workspace
         run: |
-          for c in sha256sum tar curl git grep date tr cut sort head mktemp rm touch; do p=$(command -v "$c") || exit 1; case "$p" in /*) ;; *) echo "$c is not a file: $p"; exit 1;; esac; case "$p" in "$GITHUB_WORKSPACE"/*) echo "$c resolves inside the workspace: $p"; exit 1;; esac; done
+          for c in sha256sum tar curl git grep date tr cut sort head mktemp rm touch sed; do p=$(command -v "$c") || exit 1; case "$p" in /*) ;; *) echo "$c is not a file: $p"; exit 1;; esac; case "$p" in "$GITHUB_WORKSPACE"/*) echo "$c resolves inside the workspace: $p"; exit 1;; esac; done
       - name: Dependencies with known vulnerabilities (every locked package, hashes required)
         run: |
           uv export --locked --all-extras --all-groups --no-emit-project --format requirements-txt -o "$RUNNER_TEMP/locked.txt"
@@ -227,11 +227,13 @@ jobs:
           # .gitleaks.toml (or .gitleaksignore, or inline gitleaks:allow comments) trustworthy: a pull request can still change them.
           # That is the owner's review of those files (CODEOWNERS with required review, see the lead actions below). Full names
           # refs/remotes/origin/... are used everywhere: a tag called origin/main would otherwise win over the branch.
+          # The test below also fires for an unrelated allowlist whose text has targetRules or handover/ in it: the message names the
+          # pattern that was found, it does not say who owns that allowlist.
           [ -f .gitleaks.toml ] || { echo ".gitleaks.toml is missing"; fail=1; touch .gitleaks.toml; }
           have_branch=1
           git rev-parse --verify -q refs/remotes/origin/core/cloud-handover > /dev/null || have_branch=0
           if grep -qE 'targetRules|handover/' .gitleaks.toml; then
-            [ "$have_branch" = 1 ] || { echo "temporary allowlist in .gitleaks.toml outlived branch core/cloud-handover: delete it"; fail=1; }
+            [ "$have_branch" = 1 ] || { echo "an allowlist mentioning targetRules or handover/ is in .gitleaks.toml and branch core/cloud-handover is missing: delete the allowlist or restore the branch"; fail=1; }
             [ -n "$exp" ] || { echo "temporary allowlist in .gitleaks.toml needs the EXPIRES date in .gitleaksignore"; fail=1; }
           fi
           # Handover notes must live only on core/cloud-handover and its wip/cloud-* lane branches: none may exist in this checkout's tree
@@ -243,8 +245,8 @@ jobs:
           show_where() {
             local f=$1 p c refs
             shift
-            tr '\0' '\n' < "$f" | grep -E "$pat" | sort -u | head -5 | while read -r p; do
-              c=$(git log -m --format=%H -1 "$@" -- "$p" || true)
+            tr '\0' '\n' < "$f" | grep -E "$pat" | sort -u | head -5 | while IFS= read -r p; do
+              c=$(git log -m --format=%H -1 "$@" -- ":(literal)$p" || true)
               refs=$(git branch -r --contains "$c" 2>/dev/null | sed 's/^ *//' | tr '\n' ' ' || true)
               refs=${refs% }; echo "  $p (on: ${refs:-no remote branch})"
             done
