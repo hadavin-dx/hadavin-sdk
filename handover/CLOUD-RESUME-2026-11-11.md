@@ -266,3 +266,12 @@ Nothing merged, nothing spent, no live call, no PR state change. Owner-needed it
 - PR H: round 4 design F1 Blocker (tools._scrub return alt), codebase C1 same, F2/C2 Major; EV running; fix builder next.
 - PR89: round 26 reviews saved (codebase F1/F2 Majors); EV running; resolve next.
 - Q8b b4 builder (core/q8b-partial-mask-and-card-redaction) running. P3a-2 WIP ee831364: EV and reviewers not started.
+
+## Update 2026-11-12 01:34Z (lead session; branch table heads at PULSE top)
+- Q8a-1: r9 reviews saved (C1 Major kubernetes namespace; Minors D1 D2 C2 C3); EV ab996c6e on f0febfb6 still running; next egm-resolve r9, then fix builder b10.
+- Q8b: r5 resolved (F1 Blocker cookie pair tail); b5 builder aca1e828 running (box ends ~02:36Z).
+- PR H: b5 head 3db0d34d on wip/cloud-prh-b5 (builder: C1 fixed at tools._scrub); EV ac4f5786 + 2 reviewers running (round 5).
+- PR89: r27 head cc1f6228 on wip/cloud-PR89-r27 (builder: 10/10 fixed, 329/329 mutants as root and nobody); EV a8b70b47 + 2 reviewers running (Blockers/Majors only).
+- P3a-2: ee831364 is commit 3b WIP (not a finished build). r1 resolved (handover/reviews/P3a-2-ee831364/goldfish_review_report-r1.md); 3c builder a62fbfe6 running (box ends ~02:59Z) on core/p3a2-3c, pushes wip/cloud-p3a2-3c only. q-p3a2-e1-extension-lockout and q-p3a2-o8-schema-owner for the lead. core/P3a-2-clean NOT pushed.
+- Q8c-1: ledger reconciled (20 rows edited, 4 added); no reviewer has read ad588599; Vault engine CI run (12 tests) still outstanding (gate before 2026-12-11).
+- Not started: Q8c PR 2, PR85 variant, Q8a-2 nits, PR77 restart, PR74.
