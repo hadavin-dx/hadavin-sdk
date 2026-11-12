@@ -1,10 +1,10 @@
-"""EVIDENCE RUNNER: clean-corpus withheld share. Usage: python clean_corpus_own.py <tree-root>. Texts: every line of the repository's own
+"""EVIDENCE RUNNER: clean-corpus withheld share. Usage: python clean_corpus_own.py <tree-root> [corpus-root] (the corpus root defaults to the tree root; pass the head tree to compare trees on ONE corpus). Texts: every line of the repository's own
 prose/source in <tree-root> (README, CHANGELOG, SECURITY, docs, src), grouped into texts of 8 lines, plus ordinary hidden items
 (colour codes, tabs, joiners). Each text is run through tools.prepare_output with a handed-out made-up secret that is NOT in the text.
 Counts withheld outputs."""
 import sys
 from pathlib import Path
-root = Path(sys.argv[1]); sys.path.insert(0, str(root / "src"))
+root = Path(sys.argv[2] if len(sys.argv) > 2 else sys.argv[1]); sys.path.insert(0, str(Path(sys.argv[1]) / "src"))
 from hadavin_sdk import tools
 HAND = "Qx7mLp" + "-9vRtzKw2"
 lines = []
@@ -30,3 +30,4 @@ for t in texts:
         bad += 1
         if len(ex) < 5: ex.append(t[:60])
 print("tree", tools.__file__); print(f"texts={n} withheld_or_error={bad} share={bad/max(n,1):.5f}"); print(ex)
+print("corpus", root)

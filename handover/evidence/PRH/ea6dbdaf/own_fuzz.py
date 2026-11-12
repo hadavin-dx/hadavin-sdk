@@ -25,6 +25,10 @@ def windows(secret, o):
     return [secret[i:i+8] for i in range(len(secret)-7) if secret[i:i+8] in o]
 def spaced(s, sep=" "):
     return sep.join(s)
+SEPS = {"sp": " ", "2sp": "  ", "tab": "\t", "nbsp": "\u00a0", "zw": "\u200b ", "mixed": " \t", "dash": " - "}
+def spaced_windows(secret, o, sep):
+    """a spaced-out 8-character stretch of the secret (characters joined by the separator) still readable in the output"""
+    return [secret[i:i+8] for i in range(len(secret)-7) if sep.join(secret[i:i+8]) in o]
 def cases():
     for sname, s in (("hand", HAND), ("key", KEY), ("pw", PW), ("long", LONG)):
         for hn, h in HIDDEN.items():
@@ -58,11 +62,17 @@ def main():
         tot += 1
         cat = name.split("/")[0]
         try:
-            o = tools.prepare_output(t, {}, 4000, [HAND])
+            o = tools.prepare_output(t, {}, 4000, [HAND, LONG])
         except runmap.RedactionError:
             errs += 1; continue
         if s:
-            w = windows(s, o)
+            parts = name.split("/")
+            if parts[0] in ("spaced", "spaced_esc"):
+                w = spaced_windows(s, o, SEPS[parts[2]])
+            elif parts[0] == "spaced_unknown":
+                w = spaced_windows(s, o, " ")
+            else:
+                w = windows(s, o)
             if w:
                 leaks += 1; bysec[cat] = bysec.get(cat, 0) + 1
                 if "--list" in sys.argv: print("LEAK", name, w[:1])
