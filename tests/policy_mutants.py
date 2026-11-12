@@ -1828,18 +1828,14 @@ M = [
         "            if prefix:\n                found |=",
         "            if False:\n                found |=",
         "test_a_module_imported_by_a_name_built_at_run_time_lists_every_test_that_could_reach_it",
-        "a module outside the text the name starts with listed",
+        "a changed module listed",
         test_file=NOTES_TEST,
     ),
-    mutant(
-        "B15 notes check does not reach every module for an unreadable run-time import name",
-        NTOOL,
-        '            else:\n                found |= {f for f in self.files if f.startswith("tests/") and f.endswith(".py")}',
-        "            else:\n                found |= set()",
-        "test_a_module_imported_by_a_name_built_at_run_time_lists_every_test_that_could_reach_it",
-        "an unreadable name: a changed module listed",
-        test_file=NOTES_TEST,
-    ),
+    # (removed in batch 17, equivalent mutant: "B15 notes check does not reach every module for an unreadable
+    # run-time import name" replaced the `else` of the prefix loop by `set()`. Every place that adds an empty prefix
+    # also calls `unresolved_edge`, and one reason lists every test whenever a file under `tests/` changes, so no
+    # test can tell the two apart; the `else` branch was removed from the tool and the rule is pinned by the
+    # `unresolved_edge` mutants and by the assert "an unreadable name" of the killer test above)
     mutant(
         "B15 notes check follows every module for a run-time import name",
         NTOOL,

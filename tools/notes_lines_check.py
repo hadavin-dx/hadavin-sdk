@@ -1232,6 +1232,10 @@ class _Signatures:
                 f for f in self.files if f == folder or f.startswith(folder.rstrip("/") + "/")
             }
         for prefix in m.dynamic_prefixes:
+            # an empty prefix (a name that cannot be read) reaches nothing here: every place that adds one also calls
+            # `unresolved_edge`, and one reason lists every test whenever a file under `tests/` changes (`closure`),
+            # so a branch that listed every Python file here would repeat that rule (batch 17: it was an equivalent
+            # mutant, no test could tell it from the rule)
             if prefix:
                 found |= {f for f in self.files if _dotted_path(f).startswith(prefix)}
                 found |= {
@@ -1239,8 +1243,6 @@ class _Signatures:
                     for f in self.files
                     if f.endswith("/__init__.py") and f"{_dotted_path(f)}.".startswith(prefix)
                 }
-            else:
-                found |= {f for f in self.files if f.startswith("tests/") and f.endswith(".py")}
         found.discard(m.rel)
         return sorted(found)
 
