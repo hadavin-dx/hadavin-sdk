@@ -1,0 +1,4 @@
+$ mypy --platform linux
+Success: no issues found in 26 source files
+exit 0
+elapsed 1s

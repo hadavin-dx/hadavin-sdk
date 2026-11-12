@@ -1,0 +1,8 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.12.3 interpreter at: /usr/bin/python3.12
+Creating virtual environment at: .venv
+Activate with: source .venv/bin/activate
+
+real	0m0.200s
+user	0m0.092s
+sys	0m0.044s

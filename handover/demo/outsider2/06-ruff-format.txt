@@ -1,0 +1,4 @@
+$ ruff format --check .
+127 files already formatted
+exit 0
+elapsed 0s

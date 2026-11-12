@@ -1,0 +1,69 @@
+$ python scripts/check_schema.py
+PASS the unique index statement is present exactly once
+PASS schema loads, user_version=1
+PASS journal_mode is wal
+PASS second init_schema is a no-op
+PASS schema text can be re-run (IF NOT EXISTS): no error, same objects -> 32 objects before and after
+PASS leads: NULL lead_id refused -> IntegrityError: NOT NULL constraint failed: leads.lead_id
+PASS followups: NULL lead_id refused -> IntegrityError: NOT NULL constraint failed: followups.lead_id
+PASS receipts: bad source rejected -> IntegrityError: CHECK constraint failed: source IN ('form','webhook')
+PASS receipts: empty source_ref rejected -> IntegrityError: CHECK constraint failed: length(source_ref) BETWEEN 1 AND 128
+PASS receipts: 129-char source_ref rejected -> IntegrityError: CHECK constraint failed: length(source_ref) BETWEEN 1 AND 128
+PASS receipts: UNIQUE(source, source_ref) -> IntegrityError: UNIQUE constraint failed: receipts.source, receipts.source_ref
+PASS receipts: upsert bumps attempts, receipts_immutable NOT fired, payload untouched -> (2, '{"email":"ada@example.test","name":"Ada Example"}')
+PASS receipts: update payload aborts -> IntegrityError: receipt fields never change
+PASS receipts: update source_ref aborts -> IntegrityError: receipt fields never change
+PASS receipts: update received_at aborts -> IntegrityError: receipt fields never change
+PASS receipts: delete aborts -> IntegrityError: receipts are never deleted
+PASS receipts: INSERT OR REPLACE aborts (delete trigger fires with recursive_triggers=ON) -> IntegrityError: receipts are never deleted
+PASS receipts: bad outcome value rejected -> IntegrityError: CHECK constraint failed: outcome IN ('new','duplicate','review')
+PASS receipts: a `new` verdict without its lead id rejected (no partial verdict) -> IntegrityError: CHECK constraint failed: outcome IS NULL OR outcome <> 'new' OR outcome_lead_id IS NOT NULL
+PASS receipts: first verdict write (one UPDATE, five columns) passes
+PASS receipts: second verdict write aborts -> IntegrityError: a verdict is written once
+PASS receipts: attempts can still be bumped after a verdict
+PASS leads: unique email_key (second lead, same key) -> IntegrityError: UNIQUE constraint failed: leads.email_key
+PASS leads: one lead per receipt (UNIQUE receipt_id) -> IntegrityError: UNIQUE constraint failed: leads.receipt_id
+PASS leads: foreign key to receipts enforced -> IntegrityError: FOREIGN KEY constraint failed
+PASS leads: empty name rejected -> IntegrityError: CHECK constraint failed: length(name) BETWEEN 1 AND 200
+PASS leads: 201-char name rejected -> IntegrityError: CHECK constraint failed: length(name) BETWEEN 1 AND 200
+PASS leads: email_key shorter than 3 rejected -> IntegrityError: CHECK constraint failed: length(email_key) BETWEEN 3 AND 254
+PASS leads: update aborts -> IntegrityError: lead lines are write-once
+PASS leads: delete aborts -> IntegrityError: lead lines are write-once
+PASS leads: INSERT OR REPLACE aborts -> IntegrityError: lead lines are write-once
+PASS followups: bad state rejected -> IntegrityError: CHECK constraint failed: state IN ('pending','sending','sent','failed','unknown')
+PASS followups: delete aborts -> IntegrityError: follow-up lines are never deleted
+PASS followups: INSERT OR REPLACE aborts (delete trigger fires with recursive_triggers=ON) -> IntegrityError: follow-up lines are never deleted
+PASS followups: bad ai_label rejected -> IntegrityError: CHECK constraint failed: ai_label IN ('hot','warm','cold')
+PASS followups: ai_label written once with WHERE ai_label IS NULL (1 row, then 0) -> (1, 0)
+PASS followups: claim changes exactly one row, the second claim changes 0 -> (1, 0)
+PASS followups: sent is final (state) -> IntegrityError: a sent follow-up is final
+PASS followups: sent is final (any column) -> IntegrityError: a sent follow-up is final
+PASS later_decisions: update aborts -> IntegrityError: a decision is never changed
+PASS later_decisions: delete aborts and INSERT OR REPLACE aborts (delete trigger, recursive_triggers=ON) -> IntegrityError: a decision is never deleted
+PASS later_decisions: a second decision for the same receipt writes nothing (the first wins)
+PASS lead_state: negative step_rank rejected -> IntegrityError: CHECK constraint failed: step_rank >= 0
+PASS lead_state: crm_owner_done 2 rejected -> IntegrityError: CHECK constraint failed: crm_owner_done IN (0,1)
+PASS lead_state: owner never changes -> IntegrityError: a lead owner never changes
+PASS lead_state: a step moves forward
+PASS lead_state: a step never moves back -> IntegrityError: a lead stage only moves forward
+PASS lead_state: the same rank with another step id aborts -> IntegrityError: a lead stage only moves forward
+PASS lead_state: the crm_* columns can be updated
+PASS lead_state: delete aborts -> IntegrityError: lead state lines are never deleted
+PASS lead_state: INSERT OR REPLACE aborts (delete trigger fires with recursive_triggers=ON) -> IntegrityError: lead state lines are never deleted
+PASS nudges: a second row for the same lead aborts -> IntegrityError: UNIQUE constraint failed: nudges.lead_id
+PASS nudges: bad state rejected -> IntegrityError: CHECK constraint failed: state IN ('pending','sending','sent','failed','unknown')
+PASS nudges: handled 2 rejected -> IntegrityError: CHECK constraint failed: handled IN (0,1)
+PASS nudges: delete aborts -> IntegrityError: reminder lines are never deleted
+PASS nudges: INSERT OR REPLACE aborts (delete trigger fires with recursive_triggers=ON) -> IntegrityError: reminder lines are never deleted
+PASS nudges: sent is final (state) -> IntegrityError: a sent reminder is final
+PASS nudges: sent is final (any column) -> IntegrityError: a sent reminder is final
+PASS view review_items: R, D, F(unknown) and N(unknown) rows; clean duplicate, sent follow-up and sent reminder absent -> ['D6', 'FL000000000006', 'NL000000000006', 'R5']
+PASS view review_items: the reminder row has kind reminder_to_check and the nudge state as reason -> ('NL000000000006', 'reminder', 'reminder_to_check', 'unknown', 'L000000000006', 1000, 'form')
+PASS view review_items: a reminder marked seen leaves the list
+PASS view review_items has 7 columns
+PASS stalled branches run with a bound :before (open receipts r2, r6; no stalled follow-up) -> [('O4', 'receipt', 'stalled', 'open receipt', None, 1000, 'webhook'), ('O8', 'receipt', 'stalled', 'open receipt', None, 1000, 'form')]
+PASS without the unique index two leads share one email_key
+PASS the unique index is absent in the mutant
+RESULT ALL PASS
+exit 0
+elapsed 0s

@@ -1,6 +1,12 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 19:05Z - ORDER D3 read: lane 5 started, lane 6 draft written; 4 agents running (lanes 1, 3, 4, 5)
+- Lane 5 (core-to-demo reuse check, sonnet, read-only): started; output reuse/CORE-TO-DEMO.md.
+- Lane 6 (machine facts): draft speed/RUNBOOK-INPUTS.md written from measured values (python3 3.13.18 and python3.12 3.12.3, nproc 4, 16 GiB RAM, docker CLI present but no daemon, github and pypi reachable, example.com 403 via proxy). The idle CPU sample is still missing: it needs lanes 1, 3, 4, 5 idle. Your order said lane 6 starts after lane 1 ends; I measured the static facts early because they do not depend on load.
+- Lanes 1, 3, 4 still running; no result claimed yet.
+- Stuck: nothing. Needs: nothing.
+
 ## 19:03Z - lane 2 reviewed: no Blocker/Major; lane 4 started; lanes 1, 3, 4 running (3 agents)
 - Lane 2 review saved: drift/REVIEW-1.md (3 doc-wrong confirmed, 3 Nits: wrong JS line cite, 'BOTH FINE' count is an inference, API default by_email=1; limits.md:108 to check). Review was read-only: it could not run git apply or tests; the lane agent's `git apply --check` passed.
 - Lane 1 (outsider, python3.12 venv): lint, mypy, bandit, schema, hygiene done (9 passed, 1 skipped, no gitleaks); full pytest running.

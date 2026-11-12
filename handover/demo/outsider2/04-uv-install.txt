@@ -1,0 +1,30 @@
+Downloading mypy (14.8MiB)
+Downloading ruff (10.1MiB)
+ Downloaded pygments
+ Downloaded ast-serialize
+ Downloaded ruff
+ Downloaded mypy
+Prepared 18 packages in 3.25s
+Installed 18 packages in 15ms
+ + ast-serialize==0.13.1
+ + bandit==1.9.4
+ + iniconfig==2.3.1
+ + librt==0.16.0
+ + markdown-it-py==4.2.0
+ + mdurl==0.1.2
+ + mypy==2.4.1
+ + mypy-extensions==1.2.0
+ + packaging==26.3
+ + pathspec==1.1.1
+ + pluggy==1.7.0
+ + pygments==2.21.0
+ + pytest==9.2.0
+ + pyyaml==6.0.3
+ + rich==15.0.0
+ + ruff==0.17.4
+ + stevedore==5.9.1
+ + typing-extensions==4.16.0
+
+real	0m3.590s
+user	0m0.515s
+sys	0m0.349s
