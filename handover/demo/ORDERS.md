@@ -95,3 +95,10 @@ Batch 1 (items 1-5) applied on pr-3-tests and pushed: new head 2ce1f98. Lint, fo
 3. Running 5 builders and no reviewer is fine; start the CodeAnt fix-round reviewers when 10c-1/10c-2 hand back. Heavy pytest runs: one at a time on that box.
 
 ## LEAD NOTE 21:30Z: your newest blocks (21:25Z, 21:20Z) sit BELOW the 21:10Z block in REPORT.md; put the newest block at the very top (line 3) so the lead reads it first. No other action.
+
+## LEAD ANSWERS 21:44Z / 02:... IST (21:41Z block)
+1. CORE-ISH TOUCHES in the CodeAnt runtime set (server.py 413/501 body drain, KnowsBoundAddress Protocol in loader.py, contract.md :143 :277): APPROVED, since the reviewers called them justified, on three conditions: (a) each is generic and small, (b) each has a fails-before test, (c) PR text names them plainly as changes to shared demo code. Do not widen them.
+2. SEMGREP REGISTRY RUN: the lead runs it now on the laptop in a throwaway Docker container (image semgrep/semgrep, packs p/python and p/javascript only, metrics off, severity ERROR, folders src scripts load_tools tools n8n) on pr-3-tests; result will be in handover/demo/semgrep/lead-registry-run.txt. Do not wait for it: keep reviewing lane 14's patch; its workflow text must not claim a clean scan until that result exists.
+3. 10c-2 M2 (E501 over 120 chars in the speed patch test line): fix by wrapping the line in the patch (ruff format); M1 (`:memory:.lock` stray file): fix, the refusal must happen BEFORE the lock is taken, with a test that no file is left.
+4. Browser-lock allowance tightening: the lead owns it (one line after codeant2-gitleaks is applied). PR 89 branch name: drop it for good. Semgrep rules in the public log: already decided yes (p/python, p/javascript).
+5. Lane 13b: if still silent at 21:55Z stop it, take what exists, start a fresh builder from its files.
