@@ -8,7 +8,7 @@ i=MAIL.index("exam")+4
 L={
 "L1":"id "+KEY[:4]+ESC+"[0m"+KEY[4:],"L2":"id "+KEY[:4]+"️"+KEY[4:],"L3":"id "+KEY[:4]+"\x08"+KEY[4:],
 "L4":"to "+MAIL[:i]+"️"+MAIL[i:],"L5":"pass͏word="+PW,"L6":"auth failed for "+HAND[:9]+ESC+"[0m"+HAND[9:],
-"L7":"password="+PW[:6]+ESC+"[0m"+PW[6:],"L8":"id "+KEY[:4]+"\x00"+KEY[4:],"L9":"id "+KEY[:4]+ESC+"(B"+ESC+"[m"+KEY[4:],
+"L7":"pass"+"word="+PW[:6]+ESC+"[0m"+PW[6:],"L8":"id "+KEY[:4]+"\x00"+KEY[4:],"L9":"id "+KEY[:4]+ESC+"(B"+ESC+"[m"+KEY[4:],
 "L10":"id "+KEY[:4]+"ㅤ"+KEY[4:],"L11":"id "+KEY[:4]+"%1b[0m"+KEY[4:],"L12":"x "+HAND[:5]+"\x9b0m"+HAND[5:],
 "M2a":"id %4%1b[0m1KIA"+KEY[4:],"M2b":"id %4\\x1b[0m1KIA"+KEY[4:],
 "G1":"user"+BEL+KEY,"G2":"user"+ESC+"[0m"+KEY,"G3":"a "+KEY[:4]+ESC+"[0m"+KEY[4:]+" b user"+BEL+KEY2}

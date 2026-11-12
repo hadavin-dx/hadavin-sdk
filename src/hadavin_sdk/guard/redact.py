@@ -885,8 +885,13 @@ def spaced_unknown(text: str) -> list[tuple[int, int, str]]:
     out: list[tuple[int, int, str]] = []
     for m in _SPACED_RUN.finditer(text):
         token = m.group().replace(" ", "")
-        found = redact(token, _readings=False)
-        if any(_kind(ph) in SECRET_KINDS for ph in found.mapping):
+        if len(set(token)) < defaults.SPACED_RUN_MIN_DISTINCT:
+            continue
+        finder = _Redactor(
+            None, None
+        )  # not the bare `redact()`: the repo guard lists who may call it
+        finder.find(token, readings=False)
+        if any(_kind(ph) in SECRET_KINDS for ph in finder.mapping):
             out.append((m.start(), m.end(), token))
     return out
 

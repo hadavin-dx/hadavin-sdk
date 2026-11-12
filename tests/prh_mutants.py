@@ -1119,7 +1119,7 @@ M = [
         "                (*mixed_reading(source, r), True),\n",
         "",
         B8,
-        "test_b8_i4_seeded_multi_cut_property",
+        "test_b8_i4_the_run_path_reads_the_mixed_cut_of_a_key",
         "AssertionError",
     ),
     mutant(
@@ -1131,6 +1131,15 @@ M = [
         "test_b8_i4_the_lcg_generator_leaves_no_readable_stretch",
         "AssertionError",
         pinned=True,
+    ),
+    mutant(
+        "115 a run of one repeated letter is read as a spaced-out secret",
+        X,
+        "        if len(set(token)) < defaults.SPACED_RUN_MIN_DISTINCT:\n            continue\n",
+        "",
+        B8,
+        "test_b8_i1_a_repeated_letter_run_is_not_read_as_a_spaced_out_secret",
+        "AssertionError",
     ),
 ]
 

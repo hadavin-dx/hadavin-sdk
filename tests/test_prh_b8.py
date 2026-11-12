@@ -10,6 +10,7 @@ import pytest
 
 from hadavin_sdk import tools
 from hadavin_sdk.guard import hidden, runmap
+from hadavin_sdk.guard.redact import spaced_unknown
 
 R = importlib.import_module("hadavin_sdk.guard.redact")
 
@@ -190,6 +191,22 @@ def test_b8_i4_the_mixed_reading_keeps_a_lone_escape_byte_and_drops_a_charset_se
     t = "AK" + ESC + "IAIOSF" + ESC + "(B" + "ODNN7EXAMPLE"
     assert hidden.strip_mixed(t)[0] == KEY
     assert KEY not in (hidden.strip(t)[0], hidden.strip_keeping(t)[0], hidden.strip_consuming(t)[0])
+
+
+def test_b8_i4_the_run_path_reads_the_mixed_cut_of_a_key():
+    """Issue 4 (mutant 113): a key cut by a lone escape plus its byte AND a charset sequence is masked on the run path."""
+    t = "log: AK" + ESC + "IAIOSF" + ESC + "(B" + "ODNN7EXAMPLE end"
+    out = runmap.redact_untrusted(t, {})
+    assert out == "log: <APIKEY_1> end", (
+        "the mixed reading was not read on the run path (mutant 113): " + repr(out)
+    )
+
+
+def test_b8_i1_a_repeated_letter_run_is_not_read_as_a_spaced_out_secret():
+    """Issue 1 (mutant 115): `x x x x ...` collapses to one letter repeated, which the patterns call high entropy by length;
+    full-suite tests `test_k5_truncation_follows_redaction` and `test_m3_bytes_sent...` caught it after the first gate run."""
+    assert spaced_unknown("x " * 5000) == []
+    assert tools.prepare_output("x " * 400, {}, 10000).count("x") > 300
 
 
 # ---- Issue 4: the evidence runner's own generator (seed 777), all 3096 texts -------------------------------------------

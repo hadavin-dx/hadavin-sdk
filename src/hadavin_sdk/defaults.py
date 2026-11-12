@@ -83,6 +83,7 @@ SCRUB_MAX_LAYERS = (
 )
 SPACED_VALUE_MIN_CHARS = 12  # the shortest KNOWN secret (a value the run holds, or one handed to a tool) that is also looked for with a space between its characters (`A K I A ...`); shorter ones would match ordinary text
 SPACED_RUN_MIN_TOKENS = 10  # a run of at least this many single-character tokens, one space apart, is read with its spaces taken out
+SPACED_RUN_MIN_DISTINCT = 6  # and those tokens must hold at least this many different characters (`x x x x ...` is not a secret)
 READ_SPACED_OUT_UNKNOWN = True  # the check that finds an UNKNOWN secret written with spaces between its characters (`redact.spaced_unknown`); shipped ON because it changed 0 of 83,589 ordinary lines (`handover/evidence/PRH/b8/spaced_unknown_rate.py`); set False to turn it off (`q-prh-spaced-secrets`)
 SCRUB_PIECE_MIN = 6  # width of the stretch the piece check looks for (exact; see `tools._has_piece` for what it does not promise)
 SCRUB_PARTIAL_END = 10  # the longest half-written escape a cut can leave; added to the look-back

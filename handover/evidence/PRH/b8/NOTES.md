@@ -46,3 +46,6 @@ New mutants 102 to 114 (101 was taken by batch 7). `python tests/prh_mutants.py`
 
 ## Issue 7 measurement (made-up mojibake, mojibake_loss.py)
 32 made-up lines (capitalised Russian and Greek words read as Latin-1). 13 hold a C1 string opener (U+0090, U+0098, U+009D, U+009E, U+009F) and lose 546 characters beyond the opener in total (all 13 lose more than 5). Lowercase-only text holds none. Outcome: the loss is real for mojibake that contains capital letters; it is the price of reading an unterminated opener as hidden text.
+
+## Perf compare (what ran)
+`perf_compare_b8.py` (this folder) ran ALL shapes S1-S5, H1-H4 and W at 65,536 and 262,144 characters, median CPU of 3 runs per cell, in child processes of three trees (head, main, 5f9df48e), while two other heavy jobs ran on the machine (`perf-compare.log`). Head over main: S rows 0.88 to 1.10; H rows 2.82 to 5.09 (H3 at 65,536: 5.09; the batch 7 note said 2.65 to 4.57, the runner measured 2.83 to 4.62; this run measured 2.82 to 4.82 at 262,144); W 2.53 (65,536) and 2.37 (262,144), 3.741 s at 262,144 on the head (the 3.0 s limit of gate G3 is for the S and H shapes; W must finish or refuse, and it finishes). Head over 5f9df48e: 1.00 to 1.09 on every row (W 3.741 vs 3.441 s). The repository's own perf tests (`pytest -m perf`) are the gate; their result is in the lead report.
