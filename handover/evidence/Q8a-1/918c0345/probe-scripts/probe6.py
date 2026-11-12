@@ -103,7 +103,7 @@ s=AnthropicSettings(kind="anthropic",platform="foundry",resource=LEGAL,api_key_s
 run("11a table:380", "hosts() foundry resource=marker",lambda s=s: hostlist([("llm",s)]))
 s=S3ObjectLockSettings(kind="s3_object_lock",bucket=LEGAL,region="eu-west-1",retention_ack=True)
 run("11b table:394", "hosts() s3 bucket=marker",lambda s=s: hostlist([("anchor",s)]))
-s=S3ObjectLockSettings(kind="s3_object_lock",bucket="b",region=LEGAL,retention_ack=True)
+s=S3ObjectLockSettings(kind="s3_object_lock",bucket="bkt-one",region=LEGAL,retention_ack=True)
 run("11b table:394", "hosts() s3 region=marker",lambda s=s: hostlist([("anchor",s)]))
 print("module:",hadavin_sdk.__file__)
 for r in rows: print(f"{r['hit']:22s} {r['label'][:68]:68s} {r['outcome']:20s} msg/exc/tb={r['in_message_exc_traceback']!s:5s} log={r['in_log']!s:5s} returned={r['in_returned_value']}")
