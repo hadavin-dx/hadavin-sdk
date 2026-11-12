@@ -1,0 +1,7 @@
+COMMAND: (cd /tmp/work/c10c-mA && timeout 120 /tmp/work/int1-venv/bin/python -m pytest -p no:cacheprovider -q tests/test_hygiene.py -k 'bare_gitleaks or folder_part or relative_gitleaks')
+TREE: r4 tree with _gitleaks_exe replaced by the round 3 behaviour: str(Path(exe).resolve())
+DATE: 2026-11-12T21:51:56Z
+----
+FAILED tests/test_hygiene.py::test_a_bare_gitleaks_bin_is_looked_up_on_path_not_in_the_current_folder
+FAILED tests/test_hygiene.py::test_a_gitleaks_bin_with_a_folder_part_is_made_absolute_but_symbolic_links_are_kept
+2 failed, 12 deselected in 0.54s

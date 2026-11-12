@@ -1,0 +1,20 @@
+$ cd /tmp/work/c3-old2 (r1 state but tests/test_portal_demo.py = OLD 0841f36 _demo_module; NEW test_codeant_hygiene.py); pytest -q -rA -k missing_import_inside tests/test_codeant_hygiene.py
+        def broken(name: str) -> object:
+            raise ModuleNotFoundError("No module named 'demo_only.gone'", name="demo_only.gone")
+    
+        monkeypatch.setattr(importlib, "import_module", broken)
+        try:
+            with pytest.raises(ModuleNotFoundError):
+                test_portal_demo._demo_module("demo_only.portal_demo")
+        except pytest.skip.Exception:  # pytest.raises does not catch a skip: without this a skip would only show as SKIPPED
+>           pytest.fail("the missing import inside demo_only was skipped instead of raised")
+E           Failed: the missing import inside demo_only was skipped instead of raised
+
+tests/test_codeant_hygiene.py:44: Failed
+=========================== short test summary info ============================
+FAILED tests/test_codeant_hygiene.py::test_a_missing_import_inside_demo_only_is_an_error_not_a_skip
+1 failed, 5 deselected in 0.17s
+
+--- NEW test_portal_demo (final tree) ---
+.                                                                        [100%]
+1 passed, 5 deselected in 0.15s

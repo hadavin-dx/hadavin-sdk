@@ -1,0 +1,47 @@
+$ eslint v10.1.0 (/opt/node22/bin/eslint) with the triage config (eslint.config.mjs, the lane config, not in the repo) on the three touched JS files, plus the same on the 0841f36 versions for comparison
+   90:9   error    Unexpected var, use let or const instead                           no-var
+   93:9   error    Unexpected var, use let or const instead                           no-var
+   95:9   error    Unexpected var, use let or const instead                           no-var
+  111:11  error    Unexpected var, use let or const instead                           no-var
+  120:13  error    Unexpected var, use let or const instead                           no-var
+  139:7   error    Unexpected var, use let or const instead                           no-var
+  147:7   error    Unexpected var, use let or const instead                           no-var
+  148:7   error    Unexpected var, use let or const instead                           no-var
+  150:7   error    Unexpected var, use let or const instead                           no-var
+
+/tmp/work/c2-work/tests/portal_log_poll_probe.js
+   7:12  error    'require' is not defined                                                                                                                    no-undef
+   7:32  error    'require' is not defined                                                                                                                    no-undef
+   7:54  error    'require' is not defined                                                                                                                    no-undef
+   8:13  error    'process' is not defined                                                                                                                    no-undef
+   8:41  error    'process' is not defined                                                                                                                    no-undef
+  12:1   error    Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  13:1   error    Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  30:1   error    Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  31:1   error    Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  31:10  warning  'textOf' is defined but never used                                                                                                          no-unused-vars
+  32:1   error    Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  47:1   error    Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  69:1   error    Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable  no-implicit-globals
+  70:73  error    function inside loop                                                                                                                        no-restricted-syntax
+  98:3   error    'process' is not defined                                                                                                                    no-undef
+
+✖ 135 problems (129 errors, 6 warnings)
+  115 errors and 0 warnings potentially fixable with the `--fix` option.
+
+exit=0
+--- 0841f36 log.js and portal_demo.js
+
+/tmp/work/c3-js/log.js
+  0:0  warning  File ignored because outside of base path
+
+/tmp/work/c3-js/portal_demo.js
+  0:0  warning  File ignored because outside of base path
+
+✖ 2 problems (0 errors, 2 warnings)
+
+--- error counts, rule by rule, old (0841f36) vs new, same config (the repo pages use var by design: only the DIFFERENCE matters)
+.jscmp/log-old.js: {'no-var': 32, 'no-unused-vars': 2, 'no-shadow': 1}
+src/lead_desk/portal/pages/log.js: {'no-var': 33, 'no-unused-vars': 2, 'no-shadow': 1}
+.jscmp/portal_demo-old.js: {'no-var': 82, 'no-unused-vars': 2}
+demo_only/portal_demo.js: {'no-var': 82, 'no-unused-vars': 2}

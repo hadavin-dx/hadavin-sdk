@@ -1,0 +1,23 @@
+$ cd /tmp/work/c3-final (fresh clone 0841f36 + speed patch + five regenerated codeant2 patches, git add -N for new files)
+$ ruff check .
+All checks passed!
+$ ruff format --check .
+135 files already formatted
+max line length in tests/test_crm_hubspot.py: 119
+$ mypy --platform linux
+Success: no issues found in 26 source files
+$ mypy --platform win32
+Success: no issues found in 26 source files
+$ bandit -ll -r src tools scripts -c pyproject.toml
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 9
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 0
+		High: 9
+Files skipped (0):

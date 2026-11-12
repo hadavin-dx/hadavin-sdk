@@ -1,0 +1,11 @@
+COMMAND: (cd /tmp/work/c10c-mC && timeout 300 /tmp/work/int1-venv/bin/python -m pytest -p no:cacheprovider -q tests/test_scrub_n8n_export.py -k 'linear')
+TREE: r4 tree with ACTIVE_LINK given a leading [A-Za-z0-9.+-]* run (quadratic: every start position rescans the run)
+DATE: 2026-11-12T21:51:58Z
+----
+>           pytest.fail(f"{name} did not finish 1 MB of its worst shapes in {hard_stop:.0f} s: it is not linear")
+E           Failed: ACTIVE_LINK did not finish 1 MB of its worst shapes in 76 s: it is not linear
+>           pytest.fail(f"{name} did not finish 1 MB of its worst shapes in {hard_stop:.0f} s: it is not linear")
+E           Failed: _clean did not finish 1 MB of its worst shapes in 76 s: it is not linear
+FAILED tests/test_scrub_n8n_export.py::test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time[ACTIVE_LINK]
+FAILED tests/test_scrub_n8n_export.py::test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time[_clean]
+2 failed, 2 passed, 210 deselected in 154.50s (0:02:34)

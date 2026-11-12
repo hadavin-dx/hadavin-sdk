@@ -1,0 +1,218 @@
+diff --git a/contract.md b/contract.md
+index 3b9409f..d50aca8 100644
+--- a/contract.md
++++ b/contract.md
+@@ -140,7 +140,7 @@ Pages for a person (the pages only read; the buttons write: Retry and the “I c
+   * The soft limit is raised to exactly the need, not to the hard limit, when the hard limit is unlimited or at least that. The refusal message names the open-file limit in force and what the desk needs.
+ * (2) The lock file (exit 2, "another desk is using this database").
+ * (3) The adapters (exit 1 if `/fake/info` cannot be read).
+-* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s; the message is printed and nothing is served; this code differs from exit 1 on purpose).
++* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s, or a `db_path` of `:memory:` (every request thread opens its own connection, so a private memory book would be empty for every thread but the first); the message is printed and nothing is served; this code differs from exit 1 on purpose).
+ * (5) The bind (retried for `BIND_RETRY_SECONDS`, then exit 5).
+ * (6) The SIGTERM and SIGINT handler is installed, after the bind and before `desk.start_background()`, inside the `try` that holds the shutdown steps.
+ * (7) `desk.start_background()` (starts the reaper).
+@@ -274,7 +274,7 @@ These rules are part of this contract. Where one differs from a table row above,
+   * Backfills for books migrated this way are not corrected afterwards. The table `later_decisions` (approval mode, see Resolve check order step 3a) is created by the same script and is part of the schema; its two triggers are in the repair list.
+ - `crm_done` backfill: a `sending` row gets 2 (a put may have started; the safe path decides); a row whose `last_error` starts with `internal:` (the CRM or AI step broke) keeps 0, so the next try asks the CRM; a `failed` row with a label and any other error gets 1 (older books asked the CRM before the first send); any other row that was tried (`pending` or `unknown`, attempts > 0) gets 2. A `sent` row is never touched.
+ - `ambiguous_prior` backfill: 1 for a `pending` row whose last_error is `crash_while_sending`. `send_started` backfill: 1 for a `sending` row with `crm_done=1` (it may have sent: the safe side), 0 elsewhere.
+-- Journal mode: `db.connect` raises RuntimeError unless the file is in WAL mode (a private `:memory:` book is exempt).
++- Journal mode: `db.connect` raises RuntimeError unless the file is in WAL mode (a private `:memory:` book is exempt in `db.connect` itself, which single-threaded tests use; the desk never accepts one, see step (4) of the start-up list above).
+ - Lock file: the db path is resolved first (symlinks). BlockingIOError means another desk. On Windows only EACCES (locking violation) and EDEADLK mean another desk. Any other OSError, and a lock file that keeps being replaced (3 tries), give `LockUnavailableError` (the lock could not be taken for another reason; still a refusal).
+ - The lead-book path is resolved once in `Desk.__init__` (`Desk._db_path`) and used for the connections and the write gate, so a later chdir cannot send a new thread to another file.
+ 
+diff --git a/docs/limits.md b/docs/limits.md
+index fac9d6c..04c2bb8 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -49,7 +49,7 @@ This page holds the detail behind the short "What is not claimed" list in the RE
+   database waits of 5 s, 30 s with the defaults. One stage must fit inside it: the call budget (9 s) plus the longest write of the stamp that
+   follows (15 s: the 10 s write deadline plus one more database wait) is 24 s, strictly below the smallest grace of 25 s. A constant that does not
+   hold this ends with a Python error (exit code 1) when the program loads. An AI adapter that declares a `timeout_seconds` that is not
+-  a number above 0, or above 9 s, is refused when the desk is built (exit code 4).
++  a number above 0, or above 9 s, is refused when the desk is built (exit code 4). So is a `db_path` of `:memory:`: every request thread opens its own connection, and a private memory book would be empty for all but the first.
+ * **A lock after the model answered.** If the database stays locked when the answer is stamped or its label written, the answer is thrown away
+   and the try stays used up (`internal:ModelAnswerLost`), because the model was really asked; the 5-try limit then bounds how often it is
+   asked again (`test_locked_stamp_cannot_ask_for_ever`, `test_answer_lost_real_lock_keeps_try`). A lock before the model is asked gives the try back.
+diff --git a/docs/settings.md b/docs/settings.md
+index 0417066..29a22bd 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -4,7 +4,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
+ 
+ | Setting | Environment variable | Default | Meaning |
+ |---|---|---|---|
+-| `db_path` | `DESK_DB_PATH` | `./data/desk.sqlite3` | the desk's records |
++| `db_path` | `DESK_DB_PATH` | `./data/desk.sqlite3` | the desk's records: a file path (`:memory:` is refused at start, exit code 4) |
+ | `bind` | `DESK_BIND` | `127.0.0.1` | address the desk listens on. The default is this computer only. Any other address (the all-zeros address above all) lets other computers read every lead: there is no login, and the desk prints a warning at start-up. With any real service set (`DESK_CRM` not `fake`, `DESK_OUTBOX=smtp_provider` or `DESK_QUALIFIER=live_claude`) the desk refuses to start on any address that is not this computer's own, because anyone who could reach the port could write to that service |
+ | `port` | `DESK_PORT` | `8765` | desk port (0 = pick a free one, used by tests) |
+ | `adapters` | `DESK_ADAPTERS` | `demo` | the adapter set; only `demo` exists (the demo CRM, the mail stand-ins and the portal) |
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index c471714..7e0647a 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -360,9 +360,11 @@ class Desk:
+         self._rejected_lock = threading.Lock()
+         self._inflight = FairSemaphore(INFLIGHT_MAX)
+         self._drives = FairSemaphore(DRIVE_MAX)
+-        db_text = str(config.db_path)
++        db_text = str(config.db_path)  # (str(Path("")) is ".", so only ":memory:" can name a private book)
++        if db_text == ":memory:":  # every request thread opens its own connection: a private memory book is empty
++            raise DeskSettingRefused("the lead book must be a file: ':memory:' is empty for every thread but the first")
+         # resolved ONCE here: a later chdir cannot send a new thread's connection to another file
+-        self._db_path: Path | str = db_text if db_text in ("", ":memory:") else Path(db_text).resolve()
++        self._db_path: Path | str = Path(db_text).resolve()
+         self._gate = gate_for(self._db_path)  # one write line per lead book (not re-entrant, see gate.py)
+         self._decide_failures: dict[int, int] = {}  # receipt id -> consecutive non-busy decide failures (in memory)
+         self._decide_lock = threading.Lock()
+@@ -771,7 +773,7 @@ class Desk:
+             )
+             .fetchall()
+         )
+-        for lead_id, email_key, owner_id, step, rank_sent, _tries_before in rows:
++        for lead_id, email_key, owner_id, step, rank_sent, tries_before in rows:
+             if self._stopping() or time.monotonic() - started >= MIRROR_PASS_SECONDS:
+                 return
+             owner_sent = crm_owner_of.get(owner_id, "") if owner_id in json.loads(copyable) else ""
+@@ -785,9 +787,22 @@ class Desk:
+                     self._call_deadline(),
+                     lambda: CrmTimeout("no answer in time"),
+                     tag=f"mirror:{lead_id}",
++                    # Always exclusive, keyed CRM or not: a PATCH of a newer stage is order-sensitive on any CRM, so an
++                    # abandoned older call that may still land must not be overtaken by it (asking again is NOT harmless
++                    # here, unlike a keyed put).
++                    exclusive=True,
+                 )
+             except AdapterBusy:
+-                return  # nothing was asked and nothing is counted
++                with self._worker_lock:
++                    same_lead = self._tagged.get(("crm", f"mirror:{lead_id}"), 0) > 0
++                if not same_lead:
++                    return  # the crm worker cap: nothing was asked, nothing is counted, the pass ends
++                # THIS lead's older call is still running (abandoned): nothing was asked and no try is charged, but
++                # the lead waits like a failed one, so it leaves the selection and the leads behind it are copied in
++                # this same pass. It is tried again when the wait is over (and goes on only once the old call ended).
++                wait = MIRROR_RETRY_WAIT_SECONDS[min(max(tries_before, 1) - 1, len(MIRROR_RETRY_WAIT_SECONDS) - 1)]
++                self._mirror_not_before.set(lead_id, time.monotonic() + wait, rank_sent)
++                continue
+             except Exception as e:  # noqa: BLE001 - one try used; the part stops for this pass
+                 error = type(e).__name__
+ 
+diff --git a/tests/test_codeant_desk.py b/tests/test_codeant_desk.py
+new file mode 100644
+index 0000000..53442d0
+--- /dev/null
++++ b/tests/test_codeant_desk.py
+@@ -0,0 +1,113 @@
++"""Findings of the CodeAnt review about desk.py, as tests: (1) a private in-memory lead book is refused (each request
++thread opens its own connection, so every thread but the first would see no tables); (2) while an abandoned CRM copy
++call for a lead is still running, the next copy for THAT lead is not started (a late old stage must not overtake a
++newer one), and (3) that refusal does not stop the copy of the other leads in the same pass. Made-up data only."""
++
++from __future__ import annotations
++
++import sqlite3
++import threading
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import Clock, CountingCrm, KeyedOutbox, RecordedQualifier, lead
++from test_lead_crm_copy import _flow, _pass
++
++from demo_only.fakes import FakeCrm
++from lead_desk.config import Config
++from lead_desk.desk import Desk, DeskSettingRefused
++
++
++def test_a_private_in_memory_book_is_refused(tmp_path: Path) -> None:
++    replies = tmp_path / "replies.json"
++    replies.write_text("{}", encoding="utf-8")
++    config = Config(db_path=Path(":memory:"), port=0, replies_path=replies)
++    with pytest.raises(DeskSettingRefused, match="must be a file"):
++        Desk(config, FakeCrm(), KeyedOutbox(), RecordedQualifier(replies), now=Clock())
++
++
++class _HangingFirstCrm(CountingCrm):
++    """The first set_fields call (of the lead named in `hang_for`, or of any lead when that is None) blocks until
++    released: an answer that comes back after the desk gave up on it."""
++
++    def __init__(self, hang_for: str | None = None) -> None:
++        super().__init__()
++        self.release = threading.Event()
++        self.started: list[tuple[str, str]] = []  # (lead id, status) of every call that started
++        self.hang_for = hang_for
++        self._guard = threading.Lock()
++        self._hung = False
++
++    def set_fields(self, lead_id: str, email_key: str, crm_owner_id: str, crm_status: str) -> None:
++        with self._guard:
++            self.started.append((lead_id, crm_status))
++            hang = not self._hung and self.hang_for in (None, lead_id)
++            self._hung = self._hung or hang
++        if hang:
++            self.release.wait(10)
++        super().set_fields(lead_id, email_key, crm_owner_id, crm_status)
++
++
++def _wait_until_no_call_runs(rig: Any) -> None:
++    for _ in range(200):
++        if not rig.desk._tagged:
++            return
++        threading.Event().wait(0.05)
++    raise AssertionError("an abandoned call never ended")
++
++
++def _move_on(rig: Any) -> None:
++    con = sqlite3.connect(rig.db_path)
++    con.execute("UPDATE lead_state SET step='qualified', step_rank=3")
++    con.commit()
++    con.close()
++
++
++def test_a_newer_stage_is_not_sent_while_an_abandoned_older_call_still_runs(env: Any) -> None:
++    crm = _HangingFirstCrm()
++    rig = env.rig(leadflow=_flow(), crm=crm, send_timeout_seconds=0.3)
++    assert rig.desk.handle("form", "x-1", lead()).status == 201
++    try:
++        assert _pass(rig)["mirrored"] == 0  # the first call hangs past its 0.3 s: abandoned, one try used
++        _move_on(rig)  # the stage moved on meanwhile
++        _pass(rig)  # the next pass: the first call is still running
++        assert len(crm.started) == 1, crm.started  # the newer stage waits; it never races the older one
++    finally:
++        crm.release.set()
++    _wait_until_no_call_runs(rig)  # once the old call has ended, the newer stage goes through
++    assert _pass(rig)["mirrored"] == 1
++    assert crm.started[-1][1] == "OPEN_DEAL"
++
++
++def test_a_lead_whose_older_call_still_runs_does_not_stop_the_copy_of_the_other_leads(env: Any) -> None:
++    """Lead A is the oldest row and its abandoned call is still running; lead B comes after it. The refusal for A is
++    that lead's own: B is copied in the SAME pass, A is not asked again, no try of A is charged for the refusal, and A
++    waits (it no longer sits at the head of the selection) until its old call has ended."""
++    flow = _flow()
++    crm = _HangingFirstCrm()
++    clock = Clock()
++    rig = env.rig(leadflow=flow, crm=crm, send_timeout_seconds=0.3, clock=clock)
++    a = rig.desk.handle("form", "x-a", lead(email="ada@example.test")).body["lead_id"]
++    clock.advance(5)  # B is a newer row: the copy pass takes the oldest first
++    b = rig.desk.handle("form", "x-b", lead(email="bob@example.test")).body["lead_id"]
++    crm.hang_for = a
++    try:
++        _pass(rig)  # A hangs past its 0.3 s and is abandoned: one try used, the pass ends
++        assert [x for x, _ in crm.started] == [a]
++        tries_a = rig.query("SELECT crm_tries FROM lead_state WHERE lead_id=?", (a,))[0][0]
++        assert tries_a == 1
++        rig.desk._mirror_not_before._d.clear()  # the failed try's wait is not what this test is about
++        done = {"mirrored": 0}
++        rig.desk._mirror_pass(done)  # A is first in line again, its old call still runs
++        assert [x for x, _ in crm.started] == [a, b], crm.started  # A was not asked again; B was asked
++        assert done["mirrored"] == 1  # and B was copied
++        assert rig.query("SELECT crm_tries FROM lead_state WHERE lead_id=?", (a,))[0][0] == tries_a  # no try charged
++        assert a in rig.desk._mirror_not_before  # A waits, so it leaves the selection
++        rig.desk._mirror_pass({"mirrored": 0})  # the wait holds: A is not even looked at
++        assert [x for x, _ in crm.started] == [a, b]
++    finally:
++        crm.release.set()
++    _wait_until_no_call_runs(rig)
++    assert _pass(rig)["mirrored"] == 1  # the old call has ended: A is copied now
++    assert [x for x, _ in crm.started] == [a, b, a]

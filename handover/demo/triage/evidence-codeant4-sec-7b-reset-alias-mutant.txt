@@ -1,0 +1,15 @@
+COMMAND: (cd /tmp/work/c10c-mB && pytest tests/test_reset_ps1_links.py [r3 test file], then the same with the r4 test file)
+TREE: r3 tree with the line 'kill 1' inserted before the refusal in scripts/reset.ps1
+DATE: 2026-11-12T21:51:57Z
+----
+## r3 test file:
+3 passed in 0.09s
+## r4 test file:
+        assert refusal, "no refusal on a failed check"
+            assert after.index(action) > refusal.end(), f"{action} comes before the refusal on a failed check"
+>               assert _first_use(before, name) == -1, f"{name} comes before the refusal on a failed check ({action})"
+E               AssertionError: kill comes before the refusal on a failed check (Stop-Process)
+        assert refusal, "no refusal on a failed check"
+            assert after.index(action) > refusal.end(), f"{action} comes before the refusal on a failed check"
+>               assert _first_use(before, name) == -1, f"{name} comes before the refusal on a failed check ({action})"
+E               AssertionError: kill comes before the refusal on a failed check (Stop-Process)

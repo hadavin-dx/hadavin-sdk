@@ -124,10 +124,10 @@ index 0000000..a37b889
 +})();
 diff --git a/tests/test_portal_log_poll.py b/tests/test_portal_log_poll.py
 new file mode 100644
-index 0000000..49226b1
+index 0000000..e947cd7
 --- /dev/null
 +++ b/tests/test_portal_log_poll.py
-@@ -0,0 +1,44 @@
+@@ -0,0 +1,46 @@
 +"""Request log page: after "Load more", the next poll must not drop the rows that a new request pushed out of page one.
 +The real portal.js and pages/log.js run in node (tests/portal_log_poll_probe.js)."""
 +
@@ -152,7 +152,9 @@ index 0000000..49226b1
 +        timeout=60,
 +        check=False,
 +    )
-+    out = json.loads(done.stdout.strip().splitlines()[-1])
++    lines = done.stdout.strip().splitlines()
++    assert lines, f"node printed nothing (exit {done.returncode}): {done.stderr}"
++    out = json.loads(lines[-1])
 +    assert "error" not in out, out
 +    return out  # type: ignore[no-any-return]
 +

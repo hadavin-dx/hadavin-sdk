@@ -1,0 +1,7 @@
+COMMAND: (cd /tmp/work/c10c-git && /tmp/work/gl/gitleaks git . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow --exit-code 1)   [after a local scratch commit of the four final r4 patches on 0841f36; nothing pushed]
+DATE: 2026-11-12T21:48:19Z
+---
+[90m9:48PM[0m [32mINF[0m [1m12 commits scanned.[0m
+[90m9:48PM[0m [32mINF[0m [1mscanned ~2795515 bytes (2.80 MB) in 416ms[0m
+[90m9:48PM[0m [32mINF[0m [1mno leaks found[0m
+EXIT 0

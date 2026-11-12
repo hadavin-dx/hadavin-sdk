@@ -1,0 +1,10 @@
+$ scratch /tmp/work/c3-old4 = final tree with the OLD helpers put back (old WALL regex in test_clock_steps.py; ast.Assign-only alias loops in test_env_numbers.py), NEW cases kept; pytest -q -p no:cacheprovider tests/test_clock_steps.py tests/test_env_numbers.py
+FAILED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[import time as wall]
+FAILED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[import datetime as dt]
+FAILED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[from datetime import date, datetime as D]
+FAILED tests/test_env_numbers.py::test_the_scan_catches_each_evasive_form_that_a_direct_only_scan_misses[annotated cast alias]
+FAILED tests/test_env_numbers.py::test_the_guard_catches_each_form_the_name_only_guard_misses[annotated assignment alias]
+5 failed, 378 passed in 72.93s (0:01:12)
+--- same two files on the final tree
+.......................                                                  [100%]
+383 passed in 42.66s

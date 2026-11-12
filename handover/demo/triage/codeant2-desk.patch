@@ -1,5 +1,5 @@
 diff --git a/contract.md b/contract.md
-index 3b9409f..d50aca8 100644
+index 3b9409f..0a5b3d0 100644
 --- a/contract.md
 +++ b/contract.md
 @@ -140,7 +140,7 @@ Pages for a person (the pages only read; the buttons write: Retry and the “I c
@@ -7,7 +7,7 @@ index 3b9409f..d50aca8 100644
  * (2) The lock file (exit 2, "another desk is using this database").
  * (3) The adapters (exit 1 if `/fake/info` cannot be read).
 -* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s; the message is printed and nothing is served; this code differs from exit 1 on purpose).
-+* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s, or a `db_path` of `:memory:` (every request thread opens its own connection, so a private memory book would be empty for every thread but the first); the message is printed and nothing is served; this code differs from exit 1 on purpose).
++* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s, or a `db_path` of `:memory:` or a SQLite `file:` name such as `file::memory:` (every request thread opens its own connection, so a private memory book would be empty for every thread but the first; this one check runs at the very start of `main`, BEFORE step (2), so a refused start makes no `.lock` file, and `Desk` repeats it); the message is printed and nothing is served; this code differs from exit 1 on purpose).
  * (5) The bind (retried for `BIND_RETRY_SECONDS`, then exit 5).
  * (6) The SIGTERM and SIGINT handler is installed, after the bind and before `desk.start_background()`, inside the `try` that holds the shutdown steps.
  * (7) `desk.start_background()` (starts the reaper).
@@ -21,20 +21,32 @@ index 3b9409f..d50aca8 100644
  - The lead-book path is resolved once in `Desk.__init__` (`Desk._db_path`) and used for the connections and the write gate, so a later chdir cannot send a new thread to another file.
  
 diff --git a/docs/limits.md b/docs/limits.md
-index fac9d6c..04c2bb8 100644
+index fac9d6c..ea6b9a3 100644
 --- a/docs/limits.md
 +++ b/docs/limits.md
-@@ -49,7 +49,7 @@ This page holds the detail behind the short "What is not claimed" list in the RE
+@@ -43,13 +43,19 @@ This page holds the detail behind the short "What is not claimed" list in the RE
+   `test_full_model_cap_shows_the_row`, `test_blind_call_for_lead_blocks_claim`). `/counts` and the portal summary show
+   `hung_workers`. If four AI calls hang for ever, no follow-up gets past the AI step until one ends or the desk restarts; rows stay visible
+   and nothing is sent or lost. An abandoned call keeps its socket and, with a paid model, may still be charged.
++* **A CRM copy of the lead's stage waits for that lead's own hung call.** While an abandoned copy call for a lead still runs, the next
++  copy for the same lead is not started (a late old stage must not overtake a newer one). That refusal is not a try: the lead waits 10, 60,
++  180, then 420 s between looks (the wait grows with every refusal in a row; it is kept in memory, a restart starts it afresh), the other
++  leads are copied meanwhile, and the lead is copied once the old call ends. A call that never ends keeps that lead's CRM status behind
++  for good (the `crm_error` stays on the lead and the desk never shows "given up"); it also holds one of the 8 CRM places until the desk restarts
++  (`test_a_lead_that_stays_busy_waits_longer_each_time_and_a_copy_resets_it`).
+ * **A person cannot answer `not_sent` while a call for that lead is still running** (409 `call_still_running`): the old call may still
+   land, so "nothing there yet" proves nothing. Wait until `hung_workers` is back to 0, look again, then answer (`test_blind_retry_waits_for_old_send`).
+ * **Time budget.** A `sending` row is put back by the reaper only when it is strictly older than the stuck grace: the send timeout plus 5
    database waits of 5 s, 30 s with the defaults. One stage must fit inside it: the call budget (9 s) plus the longest write of the stamp that
    follows (15 s: the 10 s write deadline plus one more database wait) is 24 s, strictly below the smallest grace of 25 s. A constant that does not
    hold this ends with a Python error (exit code 1) when the program loads. An AI adapter that declares a `timeout_seconds` that is not
 -  a number above 0, or above 9 s, is refused when the desk is built (exit code 4).
-+  a number above 0, or above 9 s, is refused when the desk is built (exit code 4). So is a `db_path` of `:memory:`: every request thread opens its own connection, and a private memory book would be empty for all but the first.
++  a number above 0, or above 9 s, is refused when the desk is built (exit code 4). So is a `db_path` of `:memory:` or a SQLite `file:` name such as `file::memory:` (refused at the very start, before the lock file is made): every request thread opens its own connection, and a private memory book would be empty for all but the first.
  * **A lock after the model answered.** If the database stays locked when the answer is stamped or its label written, the answer is thrown away
    and the try stays used up (`internal:ModelAnswerLost`), because the model was really asked; the 5-try limit then bounds how often it is
    asked again (`test_locked_stamp_cannot_ask_for_ever`, `test_answer_lost_real_lock_keeps_try`). A lock before the model is asked gives the try back.
 diff --git a/docs/settings.md b/docs/settings.md
-index 0417066..29a22bd 100644
+index 0417066..0501687 100644
 --- a/docs/settings.md
 +++ b/docs/settings.md
 @@ -4,7 +4,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
@@ -42,29 +54,61 @@ index 0417066..29a22bd 100644
  | Setting | Environment variable | Default | Meaning |
  |---|---|---|---|
 -| `db_path` | `DESK_DB_PATH` | `./data/desk.sqlite3` | the desk's records |
-+| `db_path` | `DESK_DB_PATH` | `./data/desk.sqlite3` | the desk's records: a file path (`:memory:` is refused at start, exit code 4) |
++| `db_path` | `DESK_DB_PATH` | `./data/desk.sqlite3` | the desk's records: a file path (`:memory:` and SQLite `file:` names are refused at start, exit code 4, before any file is made) |
  | `bind` | `DESK_BIND` | `127.0.0.1` | address the desk listens on. The default is this computer only. Any other address (the all-zeros address above all) lets other computers read every lead: there is no login, and the desk prints a warning at start-up. With any real service set (`DESK_CRM` not `fake`, `DESK_OUTBOX=smtp_provider` or `DESK_QUALIFIER=live_claude`) the desk refuses to start on any address that is not this computer's own, because anyone who could reach the port could write to that service |
  | `port` | `DESK_PORT` | `8765` | desk port (0 = pick a free one, used by tests) |
  | `adapters` | `DESK_ADAPTERS` | `demo` | the adapter set; only `demo` exists (the demo CRM, the mail stand-ins and the portal) |
 diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
-index c471714..7e0647a 100644
+index c471714..73f16d8 100644
 --- a/src/lead_desk/desk.py
 +++ b/src/lead_desk/desk.py
-@@ -360,9 +360,11 @@ class Desk:
+@@ -307,6 +307,24 @@ class Reply:
+ 
+ 
+ class Desk:
++    MEMORY_BOOK_PROBLEM = "the lead book must be a file: ':memory:' is empty for every thread but the first"
++    URI_BOOK_PROBLEM = (
++        "the lead book must be a plain file path: a SQLite 'file:' name (for example 'file::memory:' or "
++        "'file:x?mode=memory') may open a private memory book on some builds of SQLite"
++    )
++
++    @classmethod
++    def book_problem(cls, db_path: Path | str) -> str | None:
++        """Why this lead-book path is refused (None: it is fine). Checked by `main` BEFORE the lock step (the lock file
++        is named after the book, so a refusal after it would leave `<name>.lock` behind) and again when the desk is
++        built. `Path("")` is "." so only these two spellings can name a private memory book."""
++        text = str(db_path)
++        if text == ":memory:":
++            return cls.MEMORY_BOOK_PROBLEM
++        if text[:5].lower() == "file:":
++            return cls.URI_BOOK_PROBLEM
++        return None
++
+     def __init__(
+         self,
+         config: Config,
+@@ -354,15 +372,18 @@ class Desk:
+         self._tagged: dict[tuple[str, str], int] = {}  # (kind, lead id) -> workers still running for that lead
+         self._busy_logged: set[str] = set()  # kinds whose give-back burst has been logged (cleared when a slot frees)
+         self._closed_logged: set[str] = set()  # kinds whose "every slot is hung" error has been logged
++        self._mirror_busy: dict[str, int] = {}  # lead id -> refusals in a row because its OWN old call still runs
+         self._mirror_not_before = _MirrorWait()  # lead id -> (monotonic time, stage rank) the copy waits until
+         self._nudge_pause_until = 0.0  # monotonic time before which the reminder part claims nothing (memory only)
+         self._rejected = 0
          self._rejected_lock = threading.Lock()
          self._inflight = FairSemaphore(INFLIGHT_MAX)
          self._drives = FairSemaphore(DRIVE_MAX)
 -        db_text = str(config.db_path)
 +        db_text = str(config.db_path)  # (str(Path("")) is ".", so only ":memory:" can name a private book)
-+        if db_text == ":memory:":  # every request thread opens its own connection: a private memory book is empty
-+            raise DeskSettingRefused("the lead book must be a file: ':memory:' is empty for every thread but the first")
++        if (book_problem := self.book_problem(db_text)) is not None:  # a private memory book is empty per thread
++            raise DeskSettingRefused(book_problem)
          # resolved ONCE here: a later chdir cannot send a new thread's connection to another file
 -        self._db_path: Path | str = db_text if db_text in ("", ":memory:") else Path(db_text).resolve()
 +        self._db_path: Path | str = Path(db_text).resolve()
          self._gate = gate_for(self._db_path)  # one write line per lead book (not re-entrant, see gate.py)
          self._decide_failures: dict[int, int] = {}  # receipt id -> consecutive non-busy decide failures (in memory)
          self._decide_lock = threading.Lock()
-@@ -771,7 +773,7 @@ class Desk:
+@@ -771,7 +792,7 @@ class Desk:
              )
              .fetchall()
          )
@@ -73,7 +117,7 @@ index c471714..7e0647a 100644
              if self._stopping() or time.monotonic() - started >= MIRROR_PASS_SECONDS:
                  return
              owner_sent = crm_owner_of.get(owner_id, "") if owner_id in json.loads(copyable) else ""
-@@ -785,9 +787,22 @@ class Desk:
+@@ -785,10 +806,28 @@ class Desk:
                      self._call_deadline(),
                      lambda: CrmTimeout("no answer in time"),
                      tag=f"mirror:{lead_id}",
@@ -91,18 +135,47 @@ index c471714..7e0647a 100644
 +                # THIS lead's older call is still running (abandoned): nothing was asked and no try is charged, but
 +                # the lead waits like a failed one, so it leaves the selection and the leads behind it are copied in
 +                # this same pass. It is tried again when the wait is over (and goes on only once the old call ended).
-+                wait = MIRROR_RETRY_WAIT_SECONDS[min(max(tries_before, 1) - 1, len(MIRROR_RETRY_WAIT_SECONDS) - 1)]
++                # The wait grows with every refusal in a row (10, 60, 180, 420 s ...), so a call that hangs for good is
++                # looked at ever less often; a refusal is not a try, so the count is kept in memory only.
++                busy = self._mirror_busy[lead_id] = self._mirror_busy.get(lead_id, 0) + 1
++                step_i = min(max(tries_before, 1) - 1 + busy - 1, len(MIRROR_RETRY_WAIT_SECONDS) - 1)
++                wait = MIRROR_RETRY_WAIT_SECONDS[step_i]
 +                self._mirror_not_before.set(lead_id, time.monotonic() + wait, rank_sent)
 +                continue
              except Exception as e:  # noqa: BLE001 - one try used; the part stops for this pass
++                self._mirror_busy.pop(lead_id, None)
                  error = type(e).__name__
  
+                 tries_now: list[
+@@ -823,6 +862,8 @@ class Desk:
+                     self._mirror_not_before.clear(lead_id)
+                 return
+ 
++            self._mirror_busy.pop(lead_id, None)  # the call went through: the refusals in a row start afresh
++
+             def copied(lead_id: str = lead_id, owner_sent: str = owner_sent, rank_sent: int = rank_sent) -> int:
+                 with self._write(self._conn()):
+                     return (
+diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
+index c2ed0a4..5304783 100644
+--- a/src/lead_desk/server.py
++++ b/src/lead_desk/server.py
+@@ -1108,6 +1108,9 @@ def main(hooks: Hooks | None = None) -> None:
+     if (bind_problem := config.public_bind_problem()) is not None:  # no sign-in: a real service stays on this computer
+         print(f"the desk refuses a setting: {bind_problem}", flush=True)
+         sys.exit(EXIT_DESK_SETTING_REFUSED)
++    if (book_problem := Desk.book_problem(config.db_path)) is not None:  # BEFORE the lock step: no ".lock" file
++        print(f"the desk refuses to start: {book_problem}", flush=True)
++        sys.exit(EXIT_DESK_SETTING_REFUSED)
+     config.db_path.parent.mkdir(parents=True, exist_ok=True)
+     try:
+         lock = lockfile.acquire(config.db_path)
 diff --git a/tests/test_codeant_desk.py b/tests/test_codeant_desk.py
 new file mode 100644
-index 0000000..53442d0
+index 0000000..a94b652
 --- /dev/null
 +++ b/tests/test_codeant_desk.py
-@@ -0,0 +1,113 @@
+@@ -0,0 +1,185 @@
 +"""Findings of the CodeAnt review about desk.py, as tests: (1) a private in-memory lead book is refused (each request
 +thread opens its own connection, so every thread but the first would see no tables); (2) while an abandoned CRM copy
 +call for a lead is still running, the next copy for THAT lead is not started (a late old stage must not overtake a
@@ -112,6 +185,7 @@ index 0000000..53442d0
 +
 +import sqlite3
 +import threading
++import time
 +from pathlib import Path
 +from typing import Any
 +
@@ -120,7 +194,9 @@ index 0000000..53442d0
 +from test_lead_crm_copy import _flow, _pass
 +
 +from demo_only.fakes import FakeCrm
++from lead_desk import server
 +from lead_desk.config import Config
++from lead_desk.constants import EXIT_DESK_SETTING_REFUSED
 +from lead_desk.desk import Desk, DeskSettingRefused
 +
 +
@@ -130,6 +206,50 @@ index 0000000..53442d0
 +    config = Config(db_path=Path(":memory:"), port=0, replies_path=replies)
 +    with pytest.raises(DeskSettingRefused, match="must be a file"):
 +        Desk(config, FakeCrm(), KeyedOutbox(), RecordedQualifier(replies), now=Clock())
++
++
++def test_main_refuses_a_memory_book_before_the_lock_step_and_makes_no_file(
++    monkeypatch: Any, tmp_path: Path, capsys: Any
++) -> None:
++    """The lock file is named after the book (`<path>.lock`): a refusal that came after the lock step left a stray
++    `:memory:.lock` in the working folder at every refused start."""
++    work = tmp_path / "cwd"
++    work.mkdir()
++    monkeypatch.chdir(work)
++    monkeypatch.setenv("DESK_DB_PATH", ":memory:")
++    monkeypatch.setenv("DESK_PORT", "0")
++    with pytest.raises(SystemExit) as info:
++        server.main()
++    assert info.value.code == EXIT_DESK_SETTING_REFUSED
++    assert "must be a file" in capsys.readouterr().out
++    assert sorted(p.name for p in work.iterdir()) == [], "the refusal left files behind"
++    assert sorted(p.name for p in tmp_path.iterdir()) == ["cwd"]
++
++
++@pytest.mark.parametrize("name", ["file::memory:", "file:x?mode=memory", "FILE:y.db?mode=memory&cache=shared"])
++def test_a_sqlite_file_uri_book_is_refused_before_the_lock_step_and_by_the_desk(
++    monkeypatch: Any, tmp_path: Path, capsys: Any, name: str
++) -> None:
++    """On a SQLite built with URI names on (Debian and Ubuntu builds are), `file::memory:` is a private memory book
++    again: refused the same way, before any file is made."""
++    monkeypatch.chdir(tmp_path)
++    monkeypatch.setenv("DESK_DB_PATH", name)
++    monkeypatch.setenv("DESK_PORT", "0")
++    with pytest.raises(SystemExit) as info:
++        server.main()
++    assert info.value.code == EXIT_DESK_SETTING_REFUSED
++    assert "plain file path" in capsys.readouterr().out
++    assert list(tmp_path.iterdir()) == []
++    replies = tmp_path / "r.json"
++    replies.write_text("{}", encoding="utf-8")
++    with pytest.raises(DeskSettingRefused, match="plain file path"):
++        Desk(
++            Config(db_path=Path(name), port=0, replies_path=replies),
++            FakeCrm(),
++            KeyedOutbox(),
++            RecordedQualifier(replies),
++            now=Clock(),
++        )
 +
 +
 +class _HangingFirstCrm(CountingCrm):
@@ -216,3 +336,28 @@ index 0000000..53442d0
 +    _wait_until_no_call_runs(rig)
 +    assert _pass(rig)["mirrored"] == 1  # the old call has ended: A is copied now
 +    assert [x for x, _ in crm.started] == [a, b, a]
++
++
++def test_a_lead_that_stays_busy_waits_longer_each_time_and_a_copy_resets_it(env: Any) -> None:
++    """Refused again and again because its own old call still hangs: the wait grows (10, 60, 180 s ...) instead of
++    staying at the first step, so a call that never ends is looked at ever less often."""
++    crm = _HangingFirstCrm()
++    clock = Clock()
++    rig = env.rig(leadflow=_flow(), crm=crm, send_timeout_seconds=0.3, clock=clock)
++    a = rig.desk.handle("form", "x-a", lead()).body["lead_id"]
++    waits: list[float] = []
++    try:
++        _pass(rig)  # the first call hangs and is abandoned: one try used
++        for _ in range(4):
++            rig.desk._mirror_not_before._d.clear()
++            before = time.monotonic()
++            rig.desk._mirror_pass({"mirrored": 0})  # refused: its own old call still runs
++            waits.append(round(rig.desk._mirror_not_before._d[a][0] - before))
++        assert waits[0] == 10 and waits == sorted(waits) and waits[1] > waits[0] and waits[-1] > waits[1], waits
++        assert len(crm.started) == 1  # never asked again while the old call runs
++    finally:
++        crm.release.set()
++    _wait_until_no_call_runs(rig)
++    rig.desk._mirror_not_before._d.clear()
++    assert _pass(rig)["mirrored"] == 1
++    assert a not in rig.desk._mirror_busy

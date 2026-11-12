@@ -1,5 +1,5 @@
 diff --git a/demo_only/fake_model_server.py b/demo_only/fake_model_server.py
-index 4945383..a467559 100644
+index 4945383..1adc3bb 100644
 --- a/demo_only/fake_model_server.py
 +++ b/demo_only/fake_model_server.py
 @@ -31,6 +31,9 @@ from typing import Any
@@ -22,7 +22,7 @@ index 4945383..a467559 100644
                  if word in MODES:
                      return str(word)
              except (OSError, ValueError, AttributeError):
-@@ -127,13 +131,26 @@ def _handler(state: ModelState) -> type[BaseHTTPRequestHandler]:
+@@ -127,16 +131,28 @@ def _handler(state: ModelState) -> type[BaseHTTPRequestHandler]:
              n = int(self.headers.get("Content-Length") or 0)
              raw = self.rfile.read(n)
              if self.path == "/control":
@@ -37,22 +37,29 @@ index 4945383..a467559 100644
 +                    return
 +                if isinstance(obj.get("mode"), str):
                      obj["mode"] = ALIASES.get(obj["mode"], obj["mode"])
++                keys = [k for k in ("mode", "label", "slow_seconds", "hang_seconds", "retry_after") if k in obj]
++                for k in keys:  # the whole body is checked first: one bad key changes nothing
++                    seconds_bad = k in ("slow_seconds", "hang_seconds") and not (
++                        isinstance(obj[k], int | float)
++                        and not isinstance(obj[k], bool)
++                        and 0 <= obj[k] <= MAX_CONTROL_SECONDS  # False for `Infinity`, `NaN` (both parse) and 10**400
++                    )
++                    if (k == "mode" and obj[k] not in MODES) or seconds_bad:
++                        self._send(400, b"{}")
++                        return
                  with state.lock:
-                     for k in ("mode", "label", "slow_seconds", "hang_seconds", "retry_after"):
-                         if k in obj:
+-                    for k in ("mode", "label", "slow_seconds", "hang_seconds", "retry_after"):
+-                        if k in obj:
 -                            if k == "mode" and obj[k] not in MODES:
-+                            seconds_bad = k in ("slow_seconds", "hang_seconds") and not (
-+                                isinstance(obj[k], int | float)
-+                                and not isinstance(obj[k], bool)
-+                                and 0
-+                                <= obj[k]
-+                                <= MAX_CONTROL_SECONDS  # False for `Infinity`, `NaN` (both parse) and 10**400
-+                            )
-+                            if (k == "mode" and obj[k] not in MODES) or seconds_bad:
-                                 self._send(400, b"{}")
-                                 return
-                             setattr(state, k, obj[k])
-@@ -189,9 +206,11 @@ def _handler(state: ModelState) -> type[BaseHTTPRequestHandler]:
+-                                self._send(400, b"{}")
+-                                return
+-                            setattr(state, k, obj[k])
++                    for k in keys:
++                        setattr(state, k, obj[k])
+                 self._send(200, b"{}")
+                 return
+             if self.path != "/v1/messages":
+@@ -189,9 +205,11 @@ def _handler(state: ModelState) -> type[BaseHTTPRequestHandler]:
              elif mode == "malformed":
                  self._send(200, b"{not json")
              else:
@@ -286,10 +293,10 @@ index 0000000..62766cf
 +    )  # the Promise.all, the summary poll, the state read
 diff --git a/tests/test_codeant_fakes.py b/tests/test_codeant_fakes.py
 new file mode 100644
-index 0000000..bb1dd33
+index 0000000..1b842cf
 --- /dev/null
 +++ b/tests/test_codeant_fakes.py
-@@ -0,0 +1,376 @@
+@@ -0,0 +1,407 @@
 +"""Findings about the stand-in servers of demo_only/ (made-up data, loopback only): the fake HubSpot reads and changes
 +its contacts only under its lock (every handler, not only the search); its fault counters count exactly, also for
 +requests that arrive together; the fake AI server answers a bad control value with a 400 and starts "mixed" with hot."""
@@ -297,6 +304,7 @@ index 0000000..bb1dd33
 +from __future__ import annotations
 +
 +import json
++import socket
 +import sys
 +import threading
 +import urllib.error
@@ -568,23 +576,43 @@ index 0000000..bb1dd33
 +            state.times = 2
 +            took: list[bool] = []
 +            hung: list[bool] = []
-+            gate = threading.Barrier(12)
++            gate = threading.Barrier(16)
 +
 +            def one(state: fh.HubspotState = state, took: list[bool] = took, hung: list[bool] = hung) -> None:
 +                gate.wait()
 +                took.append(state.take_failure())
 +                hung.append(state.take_hang())
 +
-+            threads = [threading.Thread(target=one) for _ in range(12)]
++            threads = [threading.Thread(target=one) for _ in range(16)]
 +            for t in threads:
 +                t.start()
 +            for t in threads:
 +                t.join()
 +            assert took.count(True) == 2 and state.failed == 2
 +            assert hung.count(True) == 1
-+            gate = threading.Barrier(12)
 +    finally:
 +        sys.setswitchinterval(old)
++
++
++@pytest.mark.parametrize("length", ["-1", "-5", "x", "1e3", "99999999999", "1048577", "\u00b2"])
++def test_the_hubspot_fake_refuses_a_content_length_that_is_not_a_usable_count(length: str) -> None:
++    """A negative length used to make the fake read until the client closed, a huge one read for as long as the
++    client sent: both are a 400 now, answered at once, without reading a byte of the body."""
++    state = fh.HubspotState(KEY, "ok")
++    srv, th, url = fh.serve(state, "127.0.0.1")
++    try:
++        head = (
++            f"POST {BASE} HTTP/1.1\r\nHost: x\r\nAuthorization: Bearer {KEY}\r\n"
++            f"Content-Length: {length}\r\nConnection: close\r\n\r\n"
++        ).encode()
++        with socket.create_connection(srv.server_address[:2], timeout=5) as c:
++            c.sendall(head)  # no body follows: a fake that tried to read one would wait until the 5 s run out
++            reply = b""
++            while chunk := c.recv(4096):
++                reply += chunk
++        assert reply.startswith(b"HTTP/1.1 400 "), reply[:60]
++    finally:
++        fh.stop(srv, th, state)
 +
 +
 +def _ai_call(url: str) -> tuple[int, Any]:
@@ -652,6 +680,16 @@ index 0000000..bb1dd33
 +    assert state.slow_seconds == 3.0 and state.hang_seconds == 30.0  # nothing was changed
 +
 +
++@pytest.mark.parametrize("bad", [{"slow_seconds": "x"}, {"hang_seconds": -1}, {"mode": "nonsense"}])
++def test_a_control_body_with_one_bad_key_changes_none_of_its_keys(ai: Any, bad: Any) -> None:
++    """The keys are applied one by one only after every key has been checked: `mode` used to be set before a later bad
++    key made the answer a 400."""
++    url, state, _ = ai
++    before = (state.mode, state.label, state.slow_seconds, state.hang_seconds, state.retry_after)
++    assert _control(url, {"mode": "slow", "label": "changed", "retry_after": 7, **bad}) == 400
++    assert (state.mode, state.label, state.slow_seconds, state.hang_seconds, state.retry_after) == before
++
++
 +def test_the_largest_allowed_wait_is_accepted(ai: Any) -> None:
 +    url, state, _ = ai
 +    assert _control(url, {"hang_seconds": fm.MAX_CONTROL_SECONDS, "slow_seconds": 0}) == 200
@@ -667,7 +705,7 @@ index 0000000..bb1dd33
 +        labels.append(next(c["text"] for c in answer["content"] if c["type"] == "text"))
 +    assert labels == ["hot", "warm", "cold", "hot"]
 diff --git a/demo_only/fake_hubspot.py b/demo_only/fake_hubspot.py
-index 799bacc..42d4e54 100644
+index 799bacc..095f2e8 100644
 --- a/demo_only/fake_hubspot.py
 +++ b/demo_only/fake_hubspot.py
 @@ -26,3 +26,5 @@ a GET of that id answers 404. That is how this demo stand-in behaves (an assumpt
@@ -681,7 +719,7 @@ index 799bacc..42d4e54 100644
      def by_email(self, email: str) -> str | None:
 +        """Call with the lock held (the handlers use the locked methods below)."""
          return next((i for i, c in self.contacts.items() if c["properties"].get("email") == email), None)
-@@ -111,2 +114,63 @@ class HubspotState:
+@@ -111,2 +114,66 @@ class HubspotState:
  
 +    def take_failure(self) -> bool:
 +        """True while fewer than `times` faults were answered; the check and the count are one step under the lock."""
@@ -744,14 +782,41 @@ index 799bacc..42d4e54 100644
 +            self.contacts[cid]["properties"].update(props)
 +            return self._view(cid)
 +
++
++MAX_BODY_BYTES = 1_048_576  # a request body above this (or a Content-Length that is not a plain count) is a 400
++
  
-@@ -147,5 +211,2 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -119,2 +186,8 @@ class _Handler(BaseHTTPRequestHandler):
+ 
++    def _length(self) -> int | None:
++        """The body size the client announced: None for a value that is not a plain count (negative, text) or is above
++        MAX_BODY_BYTES (the fake would read it all, or until the client closes)."""
++        text = self.headers.get("Content-Length") or "0"
++        return int(text) if text.isascii() and text.isdigit() and int(text) <= MAX_BODY_BYTES else None
++
+     def _send(
+@@ -127,3 +200,3 @@ class _Handler(BaseHTTPRequestHandler):
+             self._body_read = True
+-            n = int(self.headers.get("Content-Length") or 0)
++            n = self._length()  # None: not read (the answer is a 400 and the connection closes anyway)
+             if n:
+@@ -143,3 +216,3 @@ class _Handler(BaseHTTPRequestHandler):
+     def _json(self) -> Any:
+-        n = int(self.headers.get("Content-Length") or 0)
++        n = self._length() or 0  # _gate has already refused a length that is not usable
+         self._body_read = True
+@@ -147,7 +220,7 @@ class _Handler(BaseHTTPRequestHandler):
  
 -    def _public(self, cid: str) -> dict[str, Any]:
 -        return {**self.state.contacts[cid], "createdAt": "x", "updatedAt": "x", "archived": False}
 -
      def _gate(self) -> bool:
-@@ -172,9 +233,6 @@ class _Handler(BaseHTTPRequestHandler):
+         st = self.state
++        if self._length() is None:
++            self._send(400, {"status": "error", "message": "bad Content-Length"})
++            return False
+         auth = self.headers.get("Authorization", "")
+@@ -172,9 +245,6 @@ class _Handler(BaseHTTPRequestHandler):
                  return
 -            ids = sorted(st.contacts, key=int)
              limit = min(int((q.get("limit") or ["100"])[0]), st.page_max)
@@ -763,7 +828,7 @@ index 799bacc..42d4e54 100644
 +            rows, next_after = st.contacts_page(limit, after)
 +            self._send(200, {"results": rows, "paging": {"next": {"after": next_after}} if next_after else None})
              return
-@@ -182,5 +240,5 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -182,5 +252,5 @@ class _Handler(BaseHTTPRequestHandler):
              ident = unquote(parts.path[len(_BASE) + 1 :])
 -            cid = st.by_email(ident) if q.get("idProperty") == ["email"] else ident
 -            if cid in st.contacts:
@@ -772,7 +837,7 @@ index 799bacc..42d4e54 100644
 +            if found is not None:
 +                self._send(200, found)
                  return
-@@ -230,10 +288,7 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -230,10 +300,7 @@ class _Handler(BaseHTTPRequestHandler):
                  return
 -        with st.lock:
 -            cid = st.by_email(unquote(parts.path[len(_BASE) + 1 :]))
@@ -786,7 +851,7 @@ index 799bacc..42d4e54 100644
 -            self._send(200, self._public(cid))
 +            self._send(200, changed)
  
-@@ -252,10 +307,4 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -252,10 +319,4 @@ class _Handler(BaseHTTPRequestHandler):
          want = self._json()["filterGroups"][0]["filters"][0]["value"]
 -        now = time.monotonic()
 -        hits = [
@@ -799,27 +864,36 @@ index 799bacc..42d4e54 100644
 +        hits = st.search(want)
 +        self._send(200, {"total": len(hits), "results": hits})
  
-@@ -275,4 +324,3 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -275,4 +336,3 @@ class _Handler(BaseHTTPRequestHandler):
              return
 -        if st.mode in ("r429", "r5xx") and st.failed < st.times:
 -            st.failed += 1
 +        if st.mode in ("r429", "r5xx") and st.take_failure():
              if st.mode == "r429":
-@@ -287,4 +335,3 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -287,4 +347,3 @@ class _Handler(BaseHTTPRequestHandler):
              return
 -        if st.mode == "timeout_after_create" and not st.hung_once:
 -            st.hung_once = True
 +        if st.mode == "timeout_after_create" and st.take_hang():
              st.release.wait(HANG_SECONDS)
-@@ -292,4 +339,3 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -292,4 +351,3 @@ class _Handler(BaseHTTPRequestHandler):
              return
 -        if st.mode == "r5xx_after_store" and st.failed < st.times:
 -            st.failed += 1
 +        if st.mode == "r5xx_after_store" and st.take_failure():
              self._send(500, {"status": "error"})
-@@ -301,3 +347,4 @@ class _Handler(BaseHTTPRequestHandler):
+@@ -301,3 +359,4 @@ class _Handler(BaseHTTPRequestHandler):
              return
 -        self._send(201, self._public(cid))
 +        # a contact deleted by another thread in the meantime still gets its 201 (as a real create that was answered)
 +        self._send(201, st.public(cid, by_email=False) or {"id": cid, "properties": dict(props)})
  
+diff --git a/tests/test_crm_hubspot.py b/tests/test_crm_hubspot.py
+index 2612c7a..b41410a 100644
+--- a/tests/test_crm_hubspot.py
++++ b/tests/test_crm_hubspot.py
+@@ -230,3 +230,3 @@ def test_not_reached_is_stored_nothing(tmp_path: Path) -> None:
+ def test_a_rejected_call_still_gets_its_answer_when_the_body_arrives_after_the_close(rig: Rig) -> None:
+-    """http.client sends the headers first and the body after. The fake answers a rejected call (401) at once and closes;
++    """http.client sends the headers first, the body after. The fake answers a rejected call (401) at once and closes;
+     if the body is then still unread, the system resets the connection and the client loses the answer (Windows:

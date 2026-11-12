@@ -1,0 +1,31 @@
+$ cd /tmp/work/c3-old (r1 state: 0841f36+speed+five r1 patches); NEW tests/test_codeant_desk.py; python -m pytest -q -p no:cacheprovider tests/test_codeant_desk.py
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-309/test_a_sqlite_file_uri_book_is2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f8d7d2daed0>
+name = 'FILE:y.db?mode=memory&cache=shared'
+
+>       assert info.value.code == EXIT_DESK_SETTING_REFUSED
+E       assert 1 == 4
+E        +  where 1 = SystemExit(1).code
+E        +    where SystemExit(1) = <ExceptionInfo SystemExit(1) tblen=2>.value
+
+/tmp/work/c3-old/tests/test_codeant_desk.py:62: AssertionError
+----------------------------- Captured stdout call -----------------------------
+cannot reach the demo servers (are they running? see scripts/start_all)
+___ test_a_lead_that_stays_busy_waits_longer_each_time_and_a_copy_resets_it ____
+
+env = <conftest.Env object at 0x7f8d7d2dbc20>
+
+>           assert waits[0] == 10 and waits == sorted(waits) and waits[1] > waits[0] and waits[-1] > waits[1], waits
+E           AssertionError: [10, 10, 10, 10]
+E           assert (10 == 10 and [10, 10, 10, 10] == [10, 10, 10, 10]
+E             
+E             Use -v to get more diff and 10 > 10)
+
+tests/test_codeant_desk.py:178: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_codeant_desk.py::test_main_refuses_a_memory_book_before_the_lock_step_and_makes_no_file
+FAILED tests/test_codeant_desk.py::test_a_sqlite_file_uri_book_is_refused_before_the_lock_step_and_by_the_desk[file::memory:]
+FAILED tests/test_codeant_desk.py::test_a_sqlite_file_uri_book_is_refused_before_the_lock_step_and_by_the_desk[file:x?mode=memory]
+FAILED tests/test_codeant_desk.py::test_a_sqlite_file_uri_book_is_refused_before_the_lock_step_and_by_the_desk[FILE:y.db?mode=memory&cache=shared]
+FAILED tests/test_codeant_desk.py::test_a_lead_that_stays_busy_waits_longer_each_time_and_a_copy_resets_it
+5 failed, 3 passed in 1.13s

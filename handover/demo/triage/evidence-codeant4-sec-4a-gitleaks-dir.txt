@@ -1,0 +1,7 @@
+COMMAND: (tracked files of /tmp/work/c10c-fin copied to /tmp/work/c10c-tracked, then cd there && /tmp/work/gl/gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow --exit-code 1)   [tracked files only]
+TREE: 0841f36 + r4 codeant3 patches (final)
+DATE: 2026-11-12T21:48:19Z
+---
+[90m9:48PM[0m [32mINF[0m [1mscanned ~2779319 bytes (2.78 MB) in 301ms[0m
+[90m9:48PM[0m [32mINF[0m [1mno leaks found[0m
+EXIT 0

@@ -1,0 +1,13 @@
+$ scratch copy /tmp/work/c3-mut of the final tree; one mutation of src/lead_desk/gate.py at a time; pytest -q tests/test_followup_edge_cases.py (the polling versions)
+--- baseline (no mutation)
+59 passed in 1.72s
+--- MUTANT 1: FairSemaphore.release hands the place to the NEWEST waiter (LIFO, not first-come)
+FAILED tests/test_followup_edge_cases.py::test_inflight_places_go_in_arrival_order
+1 failed, 58 passed in 1.75s
+--- MUTANT 2: FairSemaphore.release also frees a place when it hands one over (a late arrival can barge in)
+FAILED tests/test_followup_edge_cases.py::test_a_late_arrival_cannot_take_a_released_place
+FAILED tests/test_followup_edge_cases.py::test_without_a_reaper_a_drive_waits_for_its_place
+2 failed, 57 passed, 1 warning in 1.72s
+--- MUTANT 3: FairGate.release serves the follow-up drive (low line) before the request
+FAILED tests/test_followup_edge_cases.py::test_a_request_write_is_served_before_a_follow_up_drive
+1 failed, 58 passed in 1.78s

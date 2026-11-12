@@ -1,0 +1,55 @@
+COMMAND: (cd /tmp/work/c10c-r3t && GITLEAKS_BIN=/tmp/work/gl/gitleaks timeout 300 /tmp/work/int1-venv/bin/python -m pytest -p no:cacheprovider -q tests/test_scrub_n8n_export.py tests/test_n8n_api_url.py tests/test_reset_ps1_links.py tests/test_hygiene.py  -k 'not linear')
+TREE: r3 state = 0841f36 + codeant3-*-r3.patch (the previous four patches), with the r4 versions of the four test files copied in (new tests only differ); r3 tools/ and scripts/ unchanged. test_hygiene.py new tests define their helper inside the test file, so they are proven by evidence 7 (mutant), not here
+DATE: 2026-11-12T21:51:23Z
+----
+FAILED tests/test_scrub_n8n_export.py::test_a_localhost_web_address_loses_its_query_and_fragment[http://localhost:5678/webhook/x?api_key=SOMETHING-http://localhost:5678/webhook/x]
+FAILED tests/test_scrub_n8n_export.py::test_a_localhost_web_address_loses_its_query_and_fragment[http://127.0.0.1:5679?x=1-http://127.0.0.1:5679]
+FAILED tests/test_scrub_n8n_export.py::test_a_localhost_web_address_loses_its_query_and_fragment[http://localhost#top-http://localhost]
+FAILED tests/test_scrub_n8n_export.py::test_a_localhost_web_address_loses_its_query_and_fragment[see https://127.0.0.1/p#access_token=abc end-see https://127.0.0.1/p end]
+FAILED tests/test_scrub_n8n_export.py::test_a_localhost_web_address_loses_its_query_and_fragment[ws://localhost:1/a?api_key=SOMETHING#f-ws://localhost:1/a]
+FAILED tests/test_scrub_n8n_export.py::test_a_localhost_web_address_loses_its_query_and_fragment[wss://localhost/s/?api_key=SOMETHING-wss://localhost/s/]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[file://localhost/home/someone/.ssh/id_rsa-must_not_remain0]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[postgres://localhost:5432/leads-must_not_remain1]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[ftp://localhost/in/x.csv-must_not_remain2]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[ssh://127.0.0.1:22/repo.git-must_not_remain3]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[redis://localhost-must_not_remain4]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[file://127.0.0.1/etc/passwd-must_not_remain5]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[https:\\/\\/files.corp.example.org\\/x-must_not_remain6]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http:\\/\\/localhost\\/x?api_key=SOMETHING-must_not_remain7]
+FAILED tests/test_n8n_api_url.py::test_a_200_answer_that_is_not_json_is_a_clean_message_without_the_body
+FAILED tests/test_n8n_api_url.py::test_a_200_answer_with_bytes_that_are_not_text_is_a_clean_message
+FAILED tests/test_n8n_api_url.py::test_an_unreachable_n8n_is_a_clean_message_without_the_key
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[list-0]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[list-1]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[list-2]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[list-3]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[list-4]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[list-5]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[activate-0]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[activate-1]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[activate-2]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[activate-3]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[activate-4]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[activate-5]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[deactivate-0]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[deactivate-1]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[deactivate-2]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[deactivate-3]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[deactivate-4]
+FAILED tests/test_n8n_api_url.py::test_a_list_with_an_odd_entry_is_a_clean_message_not_a_traceback[deactivate-5]
+FAILED tests/test_n8n_api_url.py::test_missing_or_unknown_arguments_print_the_usage_and_exit_2[argv0]
+FAILED tests/test_n8n_api_url.py::test_missing_or_unknown_arguments_print_the_usage_and_exit_2[argv1]
+FAILED tests/test_n8n_api_url.py::test_missing_or_unknown_arguments_print_the_usage_and_exit_2[argv2]
+FAILED tests/test_n8n_api_url.py::test_missing_or_unknown_arguments_print_the_usage_and_exit_2[argv3]
+FAILED tests/test_n8n_api_url.py::test_missing_or_unknown_arguments_print_the_usage_and_exit_2[argv4]
+FAILED tests/test_n8n_api_url.py::test_missing_or_unknown_arguments_print_the_usage_and_exit_2[argv5]
+FAILED tests/test_n8n_api_url.py::test_an_unreadable_workflow_file_is_a_clean_message[no-file]
+FAILED tests/test_n8n_api_url.py::test_an_unreadable_workflow_file_is_a_clean_message[text]
+FAILED tests/test_n8n_api_url.py::test_an_unreadable_workflow_file_is_a_clean_message[list]
+FAILED tests/test_n8n_api_url.py::test_an_unreadable_workflow_file_is_a_clean_message[no-name]
+FAILED tests/test_n8n_api_url.py::test_a_missing_or_unreadable_key_file_is_a_clean_message
+FAILED tests/test_n8n_api_url.py::test_another_success_answer_is_reported_without_its_body[201]
+FAILED tests/test_n8n_api_url.py::test_another_success_answer_is_reported_without_its_body[202]
+FAILED tests/test_n8n_api_url.py::test_another_success_answer_is_reported_without_its_body[204]
+FAILED tests/test_n8n_api_url.py::test_the_key_header_goes_straight_to_this_computer_never_to_a_proxy_of_the_environment
+50 failed, 259 passed, 4 deselected, 1 warning in 32.89s

@@ -1,0 +1,60 @@
+COMMAND: python3 /tmp/work/c10c-time.py   (1,000,000-character strings of 25 worst shapes per regex, and through the whole _clean; time.perf_counter, one run each)
+TREE: /tmp/work/c10c-fin = 0841f36 + the four r4 patches; python Python 3.13.18; machine shared
+DATE: 2026-11-12T21:46:47Z
+---
+URL letters 0.078
+URL dots 0.016
+URL hyphens 0.016
+URL a.a.a. 0.048
+URL a-a-a- 0.048
+URL http no host 0.088
+URL http:/ no host 0.044
+URL http://  0.05
+URL w-run then space 0.076
+URL w-run then @-less 0.047
+URL many @ 0.021
+URL a@a.a.a.a 0.047
+URL @ + long run 0.075
+URL mail example chain 0.071
+URL javascript no colon 0.076
+URL data:  0.035
+URL scheme-ish 0.048
+URL digits 0.016
+URL unicode 0.016
+URL schemes/ 0.003
+URL escaped slashes 0.003
+URL escaped words 0.026
+URL local long path 0.003
+URL local ?# 0.003
+URL many local 0.01
+URL local-like 0.01
+URL WORST 0.088
+MAIL WORST 0.05
+ACTIVE WORST 0.039
+_clean letters 0.126
+_clean dots 0.055
+_clean hyphens 0.055
+_clean a.a.a. 0.096
+_clean a-a-a- 0.09
+_clean http no host 0.133
+_clean http:/ no host 0.089
+_clean http://  0.097
+_clean w-run then space 0.127
+_clean w-run then @-less 0.105
+_clean many @ 0.084
+_clean a@a.a.a.a 0.129
+_clean @ + long run 0.11
+_clean mail example chain 0.111
+_clean javascript no colon 0.128
+_clean data:  0.097
+_clean scheme-ish 0.09
+_clean digits 0.059
+_clean unicode 0.061
+_clean schemes/ 0.003
+_clean escaped slashes 0.003
+_clean escaped words 0.068
+_clean local long path 0.053
+_clean local ?# 0.003
+_clean many local 0.083
+_clean local-like 0.093
+_clean WORST 0.133

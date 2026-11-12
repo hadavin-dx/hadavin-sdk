@@ -1,0 +1,21 @@
+COMMAND: tree = base 0841f36 + codeant3 r4 patches + fixes/docs-and-deps-v4.patch (plain apply, mine first); plant a lock-file hash line in requirements-browser.txt, docs/requirements-browser.txt, sub/requirements-browser-win.txt; gitleaks dir . with the tree's .gitleaks.toml; then change the v4 allowlist path line to anchored and scan again; then the same for semgrep-rebased.patch
+DATE: 2026-11-12T21:49:23Z
+----
+docs-and-deps.patch is byte-identical to docs-and-deps-v4.patch: yes
+== docs-and-deps-v4 after codeant3-gitleaks: line 94 of .gitleaks.toml:
+94:paths = ['''(^|[/\\])requirements-browser(-win)?\.txt$''']
+files reported among the three planted (root, docs/, sub/) with the UNANCHORED line (nested ones should be reported but are NOT = hole):
+[]
+94:paths = ['''^requirements-browser(-win)?\.txt$''']
+ANCHORED (nested ones reported, root one allowed):
+['docs/requirements-browser.txt', 'sub/requirements-browser-win.txt']
+
+== semgrep-rebased: line:
+94:paths = ['''(^|[/\\])requirements-semgrep\.txt$''']
+reported nested/root files with the UNANCHORED line (expected: none reported = hole):
+[]
+94:paths = ['''^requirements-semgrep\.txt$''']
+ANCHORED:
+['docs/requirements-semgrep.txt', 'sub/requirements-semgrep.txt']
+
+CONCLUSION: .codeant/configuration.json lines 16-17 are NOT the allowlist (they only list names the review bot skips; both v4 and semgrep-rebased add a line there at the same place, so those two patches conflict in that file with each other, not with codeant3). The allowlist lines that must change after codeant3-gitleaks are in .gitleaks.toml: v4's `paths = ['''(^|[/\\])requirements-browser(-win)?\.txt$''']` -> `'''^requirements-browser(-win)?\.txt$'''`; semgrep-rebased's `paths = ['''(^|[/\\])requirements-semgrep\.txt$''']` -> `'''^requirements-semgrep\.txt$'''`; and the names requirements-browser.txt, requirements-browser-win.txt, requirements-semgrep.txt go into the `ok` set (nested copies into `bad`) of test_lock_file_hashes_are_allowed_only_at_the_root. Applying v4 or semgrep after codeant3 works as is (plain apply), the unanchored lines then simply stay broader than the others.

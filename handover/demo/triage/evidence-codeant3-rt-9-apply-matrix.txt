@@ -1,0 +1,82 @@
+$ /tmp/work/c3-matrix.sh <patches>: fresh clone of 0841f36 + speed patch (committed), then the patches in the order named. plain = git apply; 3way = git apply --3way.
+"mine(5)" = codeant2 desk, portal-log, demo-only, tests-hardening, fakes-body (regenerated; sha256 below).
+"-r3" = the r3 codeant3 files; the same name without -r3 = the file in triage/ at 21:49 UTC (the regenerated set is still being written by another builder: shas below are what was tested).
+sha256 of the files tested (full):
+e4e227a4167ce6a919a355570d75b5042e189eb423ad579fe976de5b3cf66839  fixes/docs-and-deps.patch
+5622fe3f852223433954112861a0fa98e56d40e9b853b69fce1d07d69dc386f7  triage/codeant3-docs-r3.patch
+6ef5cb0086f611657fc9ee1a8695fc1b2984b047d9638b6b49781eec58d3d6ff  triage/codeant3-docs.patch
+096353487f4c48a489547844532ea7c340899177210e547348acf44150f445cd  triage/codeant3-gitleaks-r3.patch
+ceef4bcfe110d0ad14138f314174f4f4d1f0d5b823f7e12a85070f16bfe85aa5  triage/codeant3-gitleaks.patch
+ef212d9dd222d56926b6c10c16d400993e4686348fa606c6317e59197e88b099  triage/codeant3-n8n-proof-r3.patch
+ef212d9dd222d56926b6c10c16d400993e4686348fa606c6317e59197e88b099  triage/codeant3-n8n-proof.patch
+a7749f7fc618e1f7bcdd7c44731e925249dbb9849fffbb1a76e31d60f80e7962  triage/codeant3-scripts-r3.patch
+56343d9da22732e009d4b2b4410f0c59302049ed741775e24571342d6f6c5117  triage/codeant3-scripts.patch
+dbea8b3e83b0840f4f35ede018d3e0a24b4e078266cc41c96bf5fce0d5267e3b  semgrep/semgrep-rebased.patch
+6fc587b845960de5782b154018a24eb458c2251a24e1249dfa751d8e50060d46  triage/codeant2-desk.patch
+b90e21d24bd7b7f0841b884354fba3ce98f070e3bd972785e45b905afcf23320  triage/codeant2-portal-log.patch
+ea2712db164e8f97af309ecdd3c402f8c3d26e3b9b340a9953052de71e4f98a0  triage/codeant2-demo-only.patch
+363baca0c301d2e6465ea0ed8ccecb488e5212b5ab692bf5ca4ae803be5a4e45  triage/codeant2-tests-hardening.patch
+a82316e28d1cfdb5587d5d8bfc24e1451f61eabb0ec25d6db07f5c46e906b33b  triage/codeant2-fakes-body.patch
+87e06a4d4448871585ee122174f36e09603a4c12a42b31c103abf0ba0fb89559  speed/fake-hubspot-read-body-before-answer.patch
+
+RESULTS (60 lines; any line not OK is a failure):
+docs-and-deps alone                              plain  OK
+docs-and-deps then mine(5)                       plain  OK
+mine(5) then docs-and-deps                       plain  OK
+semgrep-rebased alone                            plain  OK
+semgrep-rebased then mine(5)                     plain  OK
+mine(5) then semgrep-rebased                     plain  OK
+codeant3-docs-r3 alone                           plain  OK
+codeant3-docs-r3 then mine(5)                    plain  OK
+mine(5) then codeant3-docs-r3                    plain  OK
+codeant3-gitleaks-r3 alone                       plain  OK
+codeant3-gitleaks-r3 then mine(5)                plain  OK
+mine(5) then codeant3-gitleaks-r3                plain  OK
+codeant3-n8n-proof-r3 alone                      plain  OK
+codeant3-n8n-proof-r3 then mine(5)               plain  OK
+mine(5) then codeant3-n8n-proof-r3               plain  OK
+codeant3-scripts-r3 alone                        plain  OK
+codeant3-scripts-r3 then mine(5)                 plain  OK
+mine(5) then codeant3-scripts-r3                 plain  OK
+codeant3-docs alone                              plain  OK
+codeant3-docs then mine(5)                       plain  OK
+mine(5) then codeant3-docs                       plain  OK
+codeant3-gitleaks alone                          plain  OK
+codeant3-gitleaks then mine(5)                   plain  OK
+mine(5) then codeant3-gitleaks                   plain  OK
+codeant3-n8n-proof alone                         plain  OK
+codeant3-n8n-proof then mine(5)                  plain  OK
+mine(5) then codeant3-n8n-proof                  plain  OK
+codeant3-scripts alone                           plain  OK
+codeant3-scripts then mine(5)                    plain  OK
+mine(5) then codeant3-scripts                    plain  OK
+docs-and-deps alone                              3way   OK
+docs-and-deps then mine(5)                       3way   OK
+mine(5) then docs-and-deps                       3way   OK
+semgrep-rebased alone                            3way   OK
+semgrep-rebased then mine(5)                     3way   OK
+mine(5) then semgrep-rebased                     3way   OK
+codeant3-docs-r3 alone                           3way   OK
+codeant3-docs-r3 then mine(5)                    3way   OK
+mine(5) then codeant3-docs-r3                    3way   OK
+codeant3-gitleaks-r3 alone                       3way   OK
+codeant3-gitleaks-r3 then mine(5)                3way   OK
+mine(5) then codeant3-gitleaks-r3                3way   OK
+codeant3-n8n-proof-r3 alone                      3way   OK
+codeant3-n8n-proof-r3 then mine(5)               3way   OK
+mine(5) then codeant3-n8n-proof-r3               3way   OK
+codeant3-scripts-r3 alone                        3way   OK
+codeant3-scripts-r3 then mine(5)                 3way   OK
+mine(5) then codeant3-scripts-r3                 3way   OK
+codeant3-docs alone                              3way   OK
+codeant3-docs then mine(5)                       3way   OK
+mine(5) then codeant3-docs                       3way   OK
+codeant3-gitleaks alone                          3way   OK
+codeant3-gitleaks then mine(5)                   3way   OK
+mine(5) then codeant3-gitleaks                   3way   OK
+codeant3-n8n-proof alone                         3way   OK
+codeant3-n8n-proof then mine(5)                  3way   OK
+mine(5) then codeant3-n8n-proof                  3way   OK
+codeant3-scripts alone                           3way   OK
+codeant3-scripts then mine(5)                    3way   OK
+mine(5) then codeant3-scripts                    3way   OK
