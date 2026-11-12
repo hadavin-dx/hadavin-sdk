@@ -893,3 +893,36 @@ def test_ledger_property_only_the_named_error_and_agreement(mn, tmp_path):
     _folder(sub, valid)
     mn.check_migration_numbers(sub)
     assert mn.late_files({"0001_a", "0002_b"}, mn.list_migration_files(sub)) == []
+
+
+# --- the inbound ledger migration (AK-G2-a): file 0006 follows the released files and reads clean -------------------
+
+
+def test_the_inbound_migration_is_the_next_number_and_is_not_yet_released(mn):
+    import json
+
+    manifest = json.loads(
+        (Path(__file__).parent / "fixtures" / "migrations_released.json").read_text("utf-8")
+    )
+    names = [p.name for p in _real(mn)]
+    assert "0006_inbound.sql" in names and "0006_inbound" not in manifest
+    assert (
+        mn.released_problems(mn.MIGRATIONS, manifest) == []
+    )  # a file numbered above the highest released one
+    assert names.index("0006_inbound.sql") == 5 and len(set(n[:4] for n in names)) == len(names)
+
+
+def test_the_inbound_migration_reads_clean_and_holds_the_fifteen_statements_of_the_ticket(mn):
+    path = next(p for p in _real(mn) if p.name == "0006_inbound.sql")
+    text = path.read_text(encoding="utf-8")
+    cleaned, problem = mn.lex(text)
+    assert problem == "" and mn.refused_statements(text) == [] and mn.hidden_character(text) == ""
+    statements = [" ".join(s.split()) for s in cleaned.split(";") if s.strip()]
+    heads = [" ".join(s.split()[:4]) for s in statements]
+    assert sum(h.startswith("CREATE TABLE inbound_key_checks") for h in heads) == 1
+    assert sum(h.startswith("CREATE TABLE inbound_") for h in heads) == 4
+    assert sum(h.startswith("CREATE INDEX") for h in heads) == 2
+    assert sum(h.startswith("CREATE OR REPLACE FUNCTION") for h in heads) == 3
+    assert sum(h.startswith("CREATE OR REPLACE TRIGGER") for h in heads) == 3
+    assert sum(h.startswith("ALTER TABLE") for h in heads) == 3
+    assert len(statements) == 15

@@ -293,7 +293,8 @@ def _modules_in(src: Path, folder: str) -> list[str]:
     ]
 
 
-SECRET_FREE = ["runtime", "approvals", "llm", "sources"]
+# `triggers` (AK-G2-a): the inbound ledger gets its keyed-hash key from the app and never reads a secret itself
+SECRET_FREE = ["runtime", "approvals", "llm", "sources", "triggers"]
 SECRET_FREE_MODULES = [
     "hadavin_sdk.tools",
     "hadavin_sdk.guard.http",

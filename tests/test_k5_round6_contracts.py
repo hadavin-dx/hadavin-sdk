@@ -31,6 +31,17 @@ def test_a_complete_store_lacks_nothing():
     assert missing_methods(MemoryStore()) == []
 
 
+def test_the_inbound_methods_are_a_separate_list_and_never_make_an_old_store_incomplete():
+    """AK-G2-a (L23 (i)): a store written before the inbound ledger still starts; only an app with inbound
+    sources asks `missing_inbound_methods`."""
+    from hadavin_sdk.store.memory import MemoryStore
+    from hadavin_sdk.store.protocol import missing_inbound_methods
+
+    assert not [n for n in missing_methods(OldStore()) if "inbound" in n]
+    assert len(missing_inbound_methods(OldStore())) == 11
+    assert missing_inbound_methods(MemoryStore()) == []
+
+
 def test_overlapping_prefixes_are_refused_and_the_registry_is_unchanged():
     k8s = kinds.KINDS["kubernetes"]
     before = dict(kinds.KINDS)
