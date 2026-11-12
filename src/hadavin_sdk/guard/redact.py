@@ -52,6 +52,7 @@ _SCHEME_GAP = r"\s++"
 # The lines that go on after the first line of a folded header: each starts with a space or a tab (the line fold of RFC 9112
 # section 5.2; `Authorization: Digest username="u",<LF> realm="r",<LF> response="<hash>"` is ONE header). Possessive and
 # linear: a line is read once, and the group ends at the first line that does not start with a space or a tab (round 10, Issue 2).
+_FOLD_LINES = r"(?:" + _LINE_BREAK + r"[ \t]++[^\r\n]*+)++"
 _DIGEST_FOLDS = r"(?:" + _LINE_BREAK + r"[ \t]++[^\r\n]*+)*+"
 
 
@@ -516,6 +517,7 @@ _KEYED_VALUE = (
 # `ApiKey <k>`): after a credential flag and a space the scheme word is taken WITH the word that follows it, so the token is not
 # left readable (`--authorization Token abc123`). The generic second word after a credential flag stays shown (see LIMITS).
 AUTH_SCHEMES = ("Bearer", "Basic", "Token", "Digest", "ApiKey")
+_AUTH_SCHEME_NAMES = "|".join(AUTH_SCHEMES)
 _AUTH_SCHEME_WORD = r"(?:(?:" + "|".join(AUTH_SCHEMES) + r")" + _SP + r"+(?=[^\s\"'-]))"
 # `--authorization` and `--bearer` flags (not the others): up to `FLAG_PREFIX_WORDS` words in front (the same bound as the other flags), exact end, digits allowed behind.
 _AUTH_FLAG = (
@@ -778,7 +780,8 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(r"(?i)\bbearer\s+(" + _KEYED_VALUE + r"|[a-z0-9._~+/\-<>]{12,}=*)"),
     ),
     # HTTP Basic auth: `Authorization: Basic <base64 of user:pass>` - the base64 IS the credential.
-    # The gap is `_SCHEME_GAP`: a line break is a gap only as a line fold or in front of a long token (main read `\s+`, so a wrapped header leaked here in round 8).
+    # The gap is `_SCHEME_GAP`, any white space at all, as on main (`\s+`); the token has 8 or more characters (round 10: a line of
+    # prose that starts with a word of 8 or more characters after `Basic` and a line break is masked, the stated cost).
     ("BASIC", re.compile(r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})")),
     # National ids (owner, 2026-10-21), before CREDITCARD and PHONE, which would take their digits in part: a US Social
     # Security number (never 000, 666 or 9xx first, never 00 or 0000 in the other groups) and an Indian Aadhaar number
@@ -861,12 +864,13 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # GCP and generic (private_key, client_secret, api_key, password, token, credential).
     # Header values and client flags that carry a credential whole (2026-09-27 audit).
     # `Authorization: Digest username="u", response="<hash>"`: the parameters ARE the credential (the response is a hash of the
-    # password), so everything after the scheme word to the end of the line is masked (a cost, named in LIMITS: prose after it too).
+    # password), so everything after the scheme word to the end of the line is masked, and the folded lines after it (each starts with a
+    # space or a tab; there is no upper bound) up to the first line that does not (a cost, named in LIMITS: prose after it too).
     (
         "SECRET",
         # A quoted header value (JSON: `"Authorization": "Digest u=\"x\", response=\"h\""`) is masked to its closing quote; any
         # other is masked to the end of the line, JSON structure behind it included (`{"Authorization": Digest ...}` is no JSON).
-        # `[ \t]+`, not `\s+`: a line break ends the header value, so the next line stays readable.
+        # `[ \t]+`, not `\s+`: a line break ends the header value unless the next line starts with a space or a tab (a fold).
         re.compile(
             r"(?i)authorization[\"']?\s*[:=]\s*(?:\"digest"
             + _LINE_SPACE
@@ -894,6 +898,55 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             + ")?("
             + _KEYED_VALUE
             + r"|[^\s\"']{8,})"
+        ),
+    ),
+    # A folded header whose scheme word is Basic, Token, ApiKey, Bearer or Digest: the lines that go on (each starts with a space or a
+    # tab, RFC 9112 section 5.2) are the rest of the credential, as for the Digest rule above (round 11, Issue 8). The first line is the scheme word and ONE word (a
+    # read to the end of the line would be quadratic on a line of repeated `Authorization: Bearer x`). The header name is
+    # `authorization` (any prefix, as above) or a credential key (`X-Api-Key`, `token`, `secret`, `passwd`). The first line (or, after a
+    # scheme word at the end of its line, the unindented line with the token) is left to the rules above; a line that does not start
+    # with a space or a tab ends the header, and the run of folded lines has no upper bound (both named in LIMITS). Possessive and linear.
+    (
+        "SECRET",
+        re.compile(
+            r"(?i)(?:authorization|(?:"
+            + KEY_WORDS
+            + r")"
+            + KEY_TAIL
+            + r")[\"']?\s*[:=]\s*[\"']?(?:"
+            + _AUTH_SCHEME_NAMES
+            + r")(?:"
+            + _LINE_SPACE
+            + r"++\S*+"
+            + _LINE_SPACE
+            + "*+|"
+            + _LINE_SPACE
+            + "*+"
+            + _LINE_BREAK
+            + r"(?![ \t])\S++"
+            + _LINE_SPACE
+            + "*+)?("
+            + _FOLD_LINES
+            + ")"
+        ),
+    ),
+    # A credential key, a scheme word and the token behind it, in a gap of any white space (one line, or a line break with no indent:
+    # `token=Bearer<LF>abcdefgh`) and with a character the key rule below reads as the start of another `k:v` pair (`token: ApiKey
+    # id:secret`): that rule stopped at the line break and at the `k:` and left the token readable (round 11, Issue 8). The token has 8
+    # or more characters, as for `Basic`, and its own folded lines are part of it (a line of prose that starts with a word of 8 or more
+    # characters, right after a scheme word at the end of its line, is masked: the stated cost).
+    (
+        "SECRET",
+        re.compile(
+            r"(?i)(?:"
+            + KEY_WORDS
+            + r")"
+            + KEY_TAIL
+            + r"[\"']?\s*[:=]\s*[\"']?(?:"
+            + _AUTH_SCHEME_NAMES
+            + r")\s++([^\s\"']{8,}+(?:"
+            + _FOLD_LINES
+            + ")?)"
         ),
     ),
     # The whole cookie value: it may hold placeholders already placed (they are stored restored, see find()).

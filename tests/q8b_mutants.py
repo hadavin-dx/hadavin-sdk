@@ -40,6 +40,7 @@ BATCH8 = "test_q8b_batch8.py"
 LINES8 = "test_q8b_batch8_lines.py"
 BATCH9 = "test_q8b_batch9.py"
 B10 = "test_q8b_batch10.py"
+B11 = "test_q8b_batch11.py"
 K5R11 = "test_k5_round11.py"
 K5PROD = "test_k5_producers.py"
 META = "test_mutation_runner_meta.py"
@@ -594,6 +595,27 @@ def _neutralise(text: str) -> str:
         return True
 ''', r'''''',
         BATCH9, 'test_b9_8_a_cookie_jar_name_in_capitals_is_masked_and_in_lower_case_it_is_not', 'the record walk shows COOKIEJAR'),
+    # ---- batch 11: the continuation lines of a folded header (round 11, Issue 8) ----
+    mutant('M188 the run of folded lines stops after three lines', REDACT, r'''_FOLD_LINES = r"(?:" + _LINE_BREAK + r"[ \t]++[^\r\n]*+)++"''', r'''_FOLD_LINES = r"(?:" + _LINE_BREAK + r"[ \t]++[^\r\n]*+){1,3}+"''',
+        B11, 'test_b11_8_the_fold_run_has_no_upper_bound_so_an_indented_block_after_the_header_is_masked_the_stated_cost', 'the fold run has an upper bound'),
+    mutant('M189 the folded-header rule does not read Bearer', REDACT, r'''_AUTH_SCHEME_NAMES = "|".join(AUTH_SCHEMES)''', r'''_AUTH_SCHEME_NAMES = "|".join(a for a in AUTH_SCHEMES if a != "Bearer")''',
+        B11, 'test_b11_8_the_folded_lines_of_a_header_are_masked_for_every_scheme_and_header_name[Bearer]', 'a folded Bearer header leaves its next lines readable'),
+    mutant('M190 the folded-header rule reads the Authorization name only, no credential key', REDACT, r'''r"(?i)(?:authorization|(?:"''', r'''r"(?i)(?:authorization|(?:(?!)"''',
+        B11, 'test_b11_8_the_folded_lines_of_a_header_are_masked_for_every_scheme_and_header_name[Token]', 'a folded Token header leaves its next lines readable'),
+    mutant('M191 the first line of a folded header is read to its end (quadratic on a line of repeated headers)', REDACT, r'''            + r"++\S*+"''', r'''            + r"++[^\r\n]*+"''',
+        B11, 'test_b11_8_a_line_of_repeated_headers_is_read_in_linear_time', 'a line of repeated headers is not read in linear time'),
+    mutant('M192 a scheme word and a line break is no gap for a credential key', REDACT, r'''r")\s++([^\s\"']{8,}+(?:"''', r'''r")[ \t]++([^\s\"']{8,}+(?:"''',
+        B11, 'test_b11_8_a_credential_key_a_scheme_word_a_break_with_no_indent_and_the_token[Bearer]', 'a token after Bearer and a line break is readable'),
+    mutant('M193 the token behind a scheme word and a line break needs one character, not 8', REDACT, r'''r")\s++([^\s\"']{8,}+(?:"''', r'''r")\s++([^\s\"']{1,}+(?:"''',
+        B11, 'test_b11_8_after_a_scheme_word_and_a_break_a_first_word_of_fewer_than_8_characters_is_shown_the_stated_cost[Bearer]', 'the first word of fewer than 8 characters was masked'),
+    mutant('M194 a scheme word at the end of its line and an unindented token line are not read before the folds', REDACT, r'''r"(?![ \t])\S++"''', r'''r"(?![\s\S])\S++"''',
+        B11, 'test_b11_8_fuzz_a_credential_wrapped_over_folds_is_never_left_readable', 'a folded credential is readable'),
+    mutant('M195 the folded-header rule does not read Digest (a short first line)', REDACT, r'''_AUTH_SCHEME_NAMES = "|".join(AUTH_SCHEMES)''', r'''_AUTH_SCHEME_NAMES = "|".join(a for a in AUTH_SCHEMES if a != "Digest")''',
+        B11, 'test_b11_8_the_digest_header_folded_after_a_first_line_of_fewer_than_8_characters', 'a folded Digest response is readable'),
+    mutant('M196 the token behind a scheme word ends at a colon', REDACT, r'''r")\s++([^\s\"']{8,}+(?:"''', r'''r")\s++([\w.\-]{8,}+(?:"''',
+        B11, 'test_b11_8_a_token_with_a_colon_after_a_scheme_word_on_the_same_line_is_masked[ApiKey]', 'a token with a colon is readable'),
+    mutant('M197 a folded line needs no indent (the next header line is masked too)', REDACT, r'''_FOLD_LINES = r"(?:" + _LINE_BREAK + r"[ \t]++[^\r\n]*+)++"''', r'''_FOLD_LINES = r"(?:" + _LINE_BREAK + r"[ \t]*+[^\r\n]*+)++"''',
+        B11, 'test_b11_8_a_line_that_does_not_start_with_a_space_or_a_tab_ends_the_header[Bearer]', 'a line with no indent after the folds was masked'),
 ]  # fmt: skip
 
 
@@ -629,6 +651,7 @@ if __name__ == "__main__":
             "tests/" + BATCH8,
             "tests/" + BATCH9,
             "tests/" + B10,
+            "tests/" + B11,
             "tests/" + LINES8,
             "tests/" + K5R11,
             "tests/" + K5PROD,
