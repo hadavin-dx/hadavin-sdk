@@ -1,6 +1,37 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:28Z / 01:58 IST - LANE 10a2 DONE (gitleaks fix v2): 0 findings on 558d37f + v2 in dir and git mode; a hole in v1 closed; fresh review round 2 running; 4 agents live
+FAILED / HOLES first (builder's words; unreviewed):
+1. **v1 HOLE, closed in v2:** v1's exceptions.txt line (`projectKey=hadavin-dx_[a-z0-9-]+`) let a DIFFERENT lowercase project key (`projectKey=hadavin-dx_other-project-<22 random made-up letters>`) pass tests/test_hygiene.py when planted in sonar-project.properties OR in .gitleaks.toml (10 passed in both). **gitleaks itself does not report lowercase made-up keys of that shape, even in an unrelated file, so the hygiene exception is the ONLY guard for them**: the v1 exception made that guard blind for those two files. v2 fails on both plants (evidence-v2-3 and evidence-v2-5). This is a real, small hole in a security allowlist that v1 would have shipped.
+2. The first coverage patch (sonar-coverage-v1.patch, 3 context lines) fails plain `git apply` after v2 on exceptions.txt context; the REWRITTEN coverage patch (mtime 20:19) applies in both orders; `--3way` works in all four combinations. Lane 7c is replacing the coverage patch again (v3): I re-check the orders when it lands.
+3. CRLF: a CRLF line ending on the key line is reported in `dir` mode (a safe false positive); `git` mode does not report it because .gitattributes normalises to LF.
+4. NOT checked: CI, the full pytest suite, Windows paths, the tarball hash of the gitleaks binary (lane 7b's report says its tarball SHA matched lint.yml: the reviewer is asked where that evidence is). Gitleaks and hygiene on the merged tree were run with the CURRENT coverage patch only.
+v2 DOES: `gitleaks-toml-fix-v2.patch`, two hunks: .gitleaks.toml unchanged from v1 (`regexTarget = "match"` + the exact key regex, path regex unchanged); exceptions.txt line 27 is now `^(sonar-project\.properties|\.gitleaks\.toml):[0-9]+:projectKey=hadavin-dx_[d]uplicate-proof-lead-desk-n8n$` (the exact key with one bracketed character so the literal never appears; the repo already uses this trick); `git apply --check` passes on a fresh clone. MERGED TREE: v2 + the current coverage patch: `gitleaks dir` 0 and `gitleaks git` 0 findings, hygiene 11 passed; the final exceptions.txt and .gitleaks.toml are shown in SUMMARY2.md and evidence-v2-2. NARROWNESS MATRIX: no hole found in the allowlist: every same-line extra is reported (after a space, `#`, `;`, tab, `"`, and key extensions `-x` and `_x`); a different key on line 4 is reported; the exact key in docs/x.properties is reported; the exact key at line 20, twice in a file, or in sub/sonar-project.properties is allowed by design (it is the public key). The `(?m)` variant run with the real binary works and was as narrow in the cases run; `match` stays shipped. The lane 10a sentence 'allows nothing' is corrected (the original allowed only a first-line match).
+- A fresh security-path review (round 2 of this package) checks: the bracket trick in the way tools/hygiene.py matches exceptions, the hole claim, untested cases (e.g. a base64-looking value after `=`, a longer line with a prefix like `xsonar.projectKey=`), (?m) evidence, apply orders, binary provenance. Report to gitleaks/REVIEW-2.md.
+- DECISION FOR YOU: apply gitleaks-toml-fix-v2.patch to pr-3-tests (after the review) INSTEAD of v1; the lead's 558d37f allowlist stays broken until then.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:28Z / 01:58 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a03bfbfb75bd4ec81 (agent, sonnet builder) | lane 10b CodeAnt triage | 20:15 | 21 min | 21:15 | running | CODEANT-COVERAGE.md, codeant-*.patch | check below |
+| a2963d9e2981958a0 (agent, sonnet egm reviewer) | lane 8b v2 review | 20:27 | 9 min | 20:40 | running | fixes/REVIEW-2.md | working |
+| a6163bda862313baa (agent, sonnet builder) | lane 7c fixes after review 2 | 20:31 | 5 min | 21:11 | running | coverage patch v3, PLAN.md | working |
+| (new) egm reviewer, gitleaks v2 | review round 2 | 20:28 | 0 min | +10 min | running | gitleaks/REVIEW-2.md | started |
+Totals: agents live 4; shells 0; pytest runs 0 to 1; containers 0; load average 1.21, 2.71, 2.69; nothing past its time box.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| gitleaks allowlist | review 2 running (after fix round 10a2) | v1 review 0B/1M/2m/2N | conflict with the coverage patch; fix wider than needed (a real hole); untested narrowness | security path: no cap; round 2 because v2 changes the exception, which is the part that failed review 1 | no cap | fresh review without Major/Blocker |
+| lane 7 Sonar | fix round 7c; review 3 follows | r1 0B/1M/8N; r2 0B/1M/7N | see earlier | security path | no cap | review without Major/Blocker |
+| lane 8 browser tests | review 2 running | v1 0B/3M/8N | design reversals | D10, D11 | none | review without Major/Blocker |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| ab3f938c2486dd690 (lane 10a2, sonnet builder) | 14 min (20:23 to about 20:37) | gitleaks fix v2: closes a v1 hole; 0 findings; narrowness matrix with no hole | yes |
+
 ## 2026-11-12 20:28Z / 01:58 IST - LANE 9 DONE (hang hunt): NOT REPRODUCED in 51 runs; memory NOT the cause; 4 agents live
 ANSWER first (EVIDENCE RUNNER, hang/RESULTS.md, 49 raw files, pushed f32001ae): **NOT REPRODUCED. 0 failures, 0 hangs, 0 faulthandler dumps, 0 early ends in 51 pytest runs on pr-3-tests b29bb1f (SHA verified; Playwright NOT installed).** No root cause, no stack.
 Deviations from your order (plain): only 17 test files sort before test_hung_adapter_calls.py (not 20): ran those 17 + the hung file = 18 files, 880 tests (the hung file is tests 839-880 in that order: the 'near test 840' of lane 1 is its start); 'together' runs: 2 without load + 5 under load, NOT 10 (one run takes 3.4 to 4.8 min); `pytest-randomly` is not installed so `-p no:randomly` changed nothing. Load: 2 `yes` loops on the 4-vCPU VM, which also had lane 7's pytest --cov running; my own full run overlapped the first 3 loaded runs; loops stopped (`pgrep -x yes` empty: confirmed by me).
