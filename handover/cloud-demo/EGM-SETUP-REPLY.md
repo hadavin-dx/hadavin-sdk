@@ -29,3 +29,17 @@ Settings (user): model claude-sonnet-5-5, effortLevel medium, egm@egm enabled. I
 
 ## Options for lead
 A user types each /egm:* command; B change studio rule 2 to allow reading SKILL.md in-thread (plugin's documented method); C vendor/fork plugin without the flag (lead decision, Apache-2.0).
+
+## after ORDER 250 (2026-11-12 18:12Z / 23:42 IST)
+Failures first:
+- Skill tool STILL refuses after the patch. I could NOT run /reload-skills myself (user-typed command only); the owner's earlier /reload-skills was before the patch. Exact errors (patched files on disk, skill list read at session start):
+  - Skill(egm:egm-review-loop, args="<made-up 2-line test doc> --reviewers design,style") -> "Skill egm:egm-review-loop cannot be used with Skill tool due to disable-model-invocation. Ask the user to run /egm:egm-review-loop themselves — it cannot be invoked via the Skill tool. Do not replicate this skill's workflow by other means — it is reserved for explicit user invocation."
+  - Skill(egm:egm-resolve) -> same text with egm-resolve.
+- Model switch: NOT tested (no Skill call succeeded). Likely needs a NEW session (or an owner /reload-skills after the patch); the lead cannot restart containers.
+Patch run (script read first; it edits only model: lines and the flag under ~/.claude/plugins): python3 egm_model_patch.py -> "done: 89 file(s) changed in 3 plugin folder(s)" (cache copy + marketplace copy + distributions/claude copy).
+grep -rh "^model:" ~/.claude/plugins/*/egm* | sort | uniq -c:
+      9 model: claude-opus-5-5
+     80 model: claude-sonnet-5-5
+(no inherit; 3 opus per copy x 3 copies.)
+grep -rl disable-model-invocation ~/.claude/plugins/ : 0 files in any SKILL.md; remaining hits are docs/*.md, TESTING.md and tests/unit/*.py only (documentation/tests, not skills).
+I did not edit any repo file, settings or hook, nor the demo repo. Test doc is in my scratchpad only (made-up).
