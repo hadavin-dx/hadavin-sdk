@@ -1,5 +1,5 @@
 diff --git a/contract.md b/contract.md
-index d5578fe..2bd9699 100644
+index d5578fe..d24f76c 100644
 --- a/contract.md
 +++ b/contract.md
 @@ -140,7 +140,7 @@ Pages for a person (the pages only read; the buttons write: Retry and the “I c
@@ -7,7 +7,7 @@ index d5578fe..2bd9699 100644
  * (2) The lock file (exit 2, "another desk is using this database").
  * (3) The adapters (exit 1 if `/fake/info` cannot be read).
 -* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s; the message is printed and nothing is served; this code differs from exit 1 on purpose).
-+* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s, or a `db_path` of `:memory:` (every request thread opens its own connection, so a private memory book would be empty for every thread but the first; this one check runs at the very start of `main`, BEFORE step (2), so a refused start makes no `.lock` file, and `Desk` repeats it); the message is printed and nothing is served; this code differs from exit 1 on purpose).
++* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s, or a `db_path` of `:memory:` (every request thread opens its own connection, so a private memory book would be empty for every thread but the first; `main` runs this one check after the open-file check, `Config.from_env` and the public-bind check, but BEFORE the folder and lock steps (so a refused start makes no `.lock` file and no folder), and `Desk` repeats it); the message is printed and nothing is served; this code differs from exit 1 on purpose).
  * (5) The bind (retried for `BIND_RETRY_SECONDS`, then exit 5).
  * (6) The SIGTERM and SIGINT handler is installed, after the bind and before `desk.start_background()`, inside the `try` that holds the shutdown steps.
  * (7) `desk.start_background()` (starts the reaper).
@@ -21,7 +21,7 @@ index d5578fe..2bd9699 100644
  - The lead-book path is resolved once in `Desk.__init__` (`Desk._db_path`) and used for the connections and the write gate, so a later chdir cannot send a new thread to another file.
  
 diff --git a/docs/limits.md b/docs/limits.md
-index 55f7aac..33b94a9 100644
+index 55f7aac..f86d013 100644
 --- a/docs/limits.md
 +++ b/docs/limits.md
 @@ -43,13 +43,19 @@ This page holds the detail behind the short "What is not claimed" list in the RE
@@ -41,12 +41,12 @@ index 55f7aac..33b94a9 100644
    follows (15 s: the 10 s write deadline plus one more database wait) is 24 s, strictly below the smallest grace of 25 s. A constant that does not
    hold this ends with a Python error (exit code 1) when the program loads. An AI adapter that declares a `timeout_seconds` that is not
 -  a number above 0, or above 9 s, is refused when the desk is built (exit code 4).
-+  a number above 0, or above 9 s, is refused when the desk is built (exit code 4). So is a `db_path` of exactly `:memory:` (refused at the very start, before the lock file is made): every request thread opens its own connection, and a private memory book would be empty for all but the first. A name such as `file::memory:` is not special: the desk turns every other name into an absolute path first, so it is a plain file with that name.
++  a number above 0, or above 9 s, is refused when the desk is built (exit code 4). So is a `db_path` of exactly `:memory:` (refused right after the settings are read and checked, before the folder and the lock file are made): every request thread opens its own connection, and a private memory book would be empty for all but the first. A name such as `file::memory:` is not special: the desk turns every other name into an absolute path first, so it is a plain file with that name.
  * **A lock after the model answered.** If the database stays locked when the answer is stamped or its label written, the answer is thrown away
    and the try stays used up (`internal:ModelAnswerLost`), because the model was really asked; the 5-try limit then bounds how often it is
    asked again (`test_locked_stamp_cannot_ask_for_ever`, `test_answer_lost_real_lock_keeps_try`). A lock before the model is asked gives the try back.
 diff --git a/docs/settings.md b/docs/settings.md
-index 6f66125..be18f9f 100644
+index a1ad906..95e7942 100644
 --- a/docs/settings.md
 +++ b/docs/settings.md
 @@ -4,7 +4,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
@@ -59,30 +59,32 @@ index 6f66125..be18f9f 100644
  | `port` | `DESK_PORT` | `8765` | desk port (0 = pick a free one, used by tests) |
  | `adapters` | `DESK_ADAPTERS` | `demo` | the adapter set; only `demo` exists (the demo CRM, the mail stand-ins and the portal) |
 diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
-index c471714..9ee615b 100644
+index c471714..7d096a3 100644
 --- a/src/lead_desk/desk.py
 +++ b/src/lead_desk/desk.py
-@@ -307,6 +307,19 @@ class Reply:
+@@ -306,6 +306,21 @@ class Reply:
+     drive_lead_id: str | None = None  # set when the caller must now run the follow-up
  
  
++MEMORY_BOOK_PROBLEM = "the lead book must be a file: ':memory:' is empty for every thread but the first"
++
++
++def book_problem(db_path: Path | str) -> str | None:
++    """Why this lead-book path is refused (None: it is fine). A module-level function (not a `Desk` member) so that
++    `main` can call it by its own name: a test or caller that replaces `server.Desk` cannot take the check away.
++    `main` runs it BEFORE the lock step (the lock file is named after the book, so a refusal after it would leave
++    `<name>.lock` behind) and the desk repeats it when it is built. `Path("")` is "." so only this spelling can name
++    a private memory book. (A `file:` name is NOT refused: the desk resolves every other name to an absolute path
++    before SQLite sees it, so `file::memory:` is a plain file called that, never a memory book.)"""
++    if str(db_path) == ":memory:":
++        return MEMORY_BOOK_PROBLEM
++    return None
++
++
  class Desk:
-+    MEMORY_BOOK_PROBLEM = "the lead book must be a file: ':memory:' is empty for every thread but the first"
-+
-+    @classmethod
-+    def book_problem(cls, db_path: Path | str) -> str | None:
-+        """Why this lead-book path is refused (None: it is fine). Checked by `main` BEFORE the lock step (the lock file
-+        is named after the book, so a refusal after it would leave `<name>.lock` behind) and again when the desk is
-+        built. `Path("")` is "." so only this spelling can name a private memory book. (A `file:` name is NOT
-+        refused: the desk resolves every other name to an absolute path before SQLite sees it, so `file::memory:` is
-+        a plain file called that, never a memory book.)"""
-+        if str(db_path) == ":memory:":
-+            return cls.MEMORY_BOOK_PROBLEM
-+        return None
-+
      def __init__(
          self,
-         config: Config,
-@@ -354,15 +367,18 @@ class Desk:
+@@ -354,15 +369,18 @@ class Desk:
          self._tagged: dict[tuple[str, str], int] = {}  # (kind, lead id) -> workers still running for that lead
          self._busy_logged: set[str] = set()  # kinds whose give-back burst has been logged (cleared when a slot frees)
          self._closed_logged: set[str] = set()  # kinds whose "every slot is hung" error has been logged
@@ -95,15 +97,15 @@ index c471714..9ee615b 100644
          self._drives = FairSemaphore(DRIVE_MAX)
 -        db_text = str(config.db_path)
 +        db_text = str(config.db_path)  # (str(Path("")) is ".", so only ":memory:" can name a private book)
-+        if (book_problem := self.book_problem(db_text)) is not None:  # a private memory book is empty per thread
-+            raise DeskSettingRefused(book_problem)
++        if (problem := book_problem(db_text)) is not None:  # a private memory book is empty per thread
++            raise DeskSettingRefused(problem)
          # resolved ONCE here: a later chdir cannot send a new thread's connection to another file
 -        self._db_path: Path | str = db_text if db_text in ("", ":memory:") else Path(db_text).resolve()
 +        self._db_path: Path | str = Path(db_text).resolve()
          self._gate = gate_for(self._db_path)  # one write line per lead book (not re-entrant, see gate.py)
          self._decide_failures: dict[int, int] = {}  # receipt id -> consecutive non-busy decide failures (in memory)
          self._decide_lock = threading.Lock()
-@@ -771,7 +787,7 @@ class Desk:
+@@ -771,7 +789,7 @@ class Desk:
              )
              .fetchall()
          )
@@ -112,7 +114,7 @@ index c471714..9ee615b 100644
              if self._stopping() or time.monotonic() - started >= MIRROR_PASS_SECONDS:
                  return
              owner_sent = crm_owner_of.get(owner_id, "") if owner_id in json.loads(copyable) else ""
-@@ -785,10 +801,30 @@ class Desk:
+@@ -785,10 +803,30 @@ class Desk:
                      self._call_deadline(),
                      lambda: CrmTimeout("no answer in time"),
                      tag=f"mirror:{lead_id}",
@@ -144,7 +146,7 @@ index c471714..9ee615b 100644
                  error = type(e).__name__
  
                  tries_now: list[
-@@ -823,6 +859,8 @@ class Desk:
+@@ -823,6 +861,8 @@ class Desk:
                      self._mirror_not_before.clear(lead_id)
                  return
  
@@ -154,25 +156,45 @@ index c471714..9ee615b 100644
                  with self._write(self._conn()):
                      return (
 diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
-index c2ed0a4..5304783 100644
+index c2ed0a4..0a374f8 100644
 --- a/src/lead_desk/server.py
 +++ b/src/lead_desk/server.py
-@@ -1108,6 +1108,9 @@ def main(hooks: Hooks | None = None) -> None:
+@@ -31,6 +31,7 @@ from typing import Any, NoReturn, cast
+ from urllib.parse import parse_qs, unquote, urlsplit
+ 
+ from lead_desk import db, lockfile, portal_api
++from lead_desk import desk as desk_module
+ from lead_desk.adapters import FakesUnreachable
+ from lead_desk.config import Config, is_loopback_host, is_unspecified, read_leadflow
+ from lead_desk.constants import (
+@@ -1091,7 +1092,9 @@ def main(hooks: Hooks | None = None) -> None:
+     or from the adapter settings, printed with the setting's name; any other ValueError is a bug and is not
+     turned into 4), or an AI adapter that declares a `timeout_seconds` that
+     is not a number above 0 or is above MODEL_CALL_BUDGET_SECONDS (`DeskSettingRefused`): the message is printed,
+-    nothing is served. The checks of the constants themselves run when the modules are imported,
++    nothing is served. A `db_path` of `:memory:` is refused the same way (exit code 4): the check runs after
++    `ensure_descriptor_budget`, `Config.from_env` and the public-bind check, and before the folder and the lock step.
++    The checks of the constants themselves run when the modules are imported,
+     so an edited constant that does not fit ends with a Python traceback (exit code 1) before `main` runs.
+     SIGTERM stops it like Ctrl+C: the reaper is stopped, then the lock is given back. `hooks` goes to the Desk
+     (the crash launcher and scripts/crash_desk.py pass `FlagFileHooks(path)`)."""
+@@ -1108,6 +1111,10 @@ def main(hooks: Hooks | None = None) -> None:
      if (bind_problem := config.public_bind_problem()) is not None:  # no sign-in: a real service stays on this computer
          print(f"the desk refuses a setting: {bind_problem}", flush=True)
          sys.exit(EXIT_DESK_SETTING_REFUSED)
-+    if (book_problem := Desk.book_problem(config.db_path)) is not None:  # BEFORE the lock step: no ".lock" file
-+        print(f"the desk refuses to start: {book_problem}", flush=True)
++    # by the module, not by `Desk` (the name `Desk` may be replaced); BEFORE the lock step: no ".lock" file
++    if (problem := desk_module.book_problem(config.db_path)) is not None:
++        print(f"the desk refuses to start: {problem}", flush=True)
 +        sys.exit(EXIT_DESK_SETTING_REFUSED)
      config.db_path.parent.mkdir(parents=True, exist_ok=True)
      try:
          lock = lockfile.acquire(config.db_path)
 diff --git a/tests/test_codeant_desk.py b/tests/test_codeant_desk.py
 new file mode 100644
-index 0000000..574717c
+index 0000000..80b2e8c
 --- /dev/null
 +++ b/tests/test_codeant_desk.py
-@@ -0,0 +1,199 @@
+@@ -0,0 +1,222 @@
 +"""Findings of the CodeAnt review about desk.py, as tests: (1) a private in-memory lead book is refused (each request
 +thread opens its own connection, so every thread but the first would see no tables); (2) while an abandoned CRM copy
 +call for a lead is still running, the next copy for THAT lead is not started (a late old stage must not overtake a
@@ -241,6 +263,29 @@ index 0000000..574717c
 +    assert "must be a file" in capsys.readouterr().out
 +    assert sorted(p.name for p in work.iterdir()) == [], "the refusal left files behind"
 +    assert sorted(p.name for p in tmp_path.iterdir()) == ["cwd"]
++
++
++def test_main_refuses_a_memory_book_even_when_server_desk_is_replaced(
++    monkeypatch: Any, tmp_path: Path, capsys: Any
++) -> None:
++    """The refusal must not reach for the name `server.Desk` (a test or a wrapper may replace it): it runs from its
++    own function, before the desk is built, so the refusal still comes (and the stand-in is never called)."""
++    called: list[str] = []
++
++    def stand_in(*a: Any, **k: Any) -> Any:
++        called.append("built")
++        raise ValueError("some other problem")
++
++    work = tmp_path / "cwd"
++    work.mkdir()
++    monkeypatch.chdir(work)
++    monkeypatch.setenv("DESK_DB_PATH", ":memory:")
++    monkeypatch.setenv("DESK_PORT", "0")
++    monkeypatch.setattr(server, "Desk", stand_in)
++    assert _main_within(MAIN_WAIT_SECONDS) == EXIT_DESK_SETTING_REFUSED
++    assert "must be a file" in capsys.readouterr().out
++    assert called == []
++    assert sorted(p.name for p in work.iterdir()) == []
 +
 +
 +class _HangingFirstCrm(CountingCrm):

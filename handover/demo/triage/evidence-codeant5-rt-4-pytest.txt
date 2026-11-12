@@ -1,0 +1,27 @@
+# focused pytest one run; GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1; files: tests/test_clock_steps.py tests/test_codeant_demo_only.py tests/test_codeant_desk.py tests/test_codeant_fakes.py tests/test_codeant_hygiene.py tests/test_crm_hubspot.py tests/test_desk_http_edge_cases.py tests/test_env_numbers.py tests/test_fakes_body_before_answer.py tests/test_followup_edge_cases.py tests/test_hubspot_probe.py tests/test_hygiene.py tests/test_input_edge_cases.py tests/test_lead_crm_copy.py tests/test_load_tools.py tests/test_mode_safety.py tests/test_model_stamp_and_reaper.py tests/test_mutants_more.py tests/test_n8n_api_url.py tests/test_portal_demo.py tests/test_portal_log_poll.py tests/test_reset_scripts.py tests/test_slow_sender.py tests/test_standins_body_before_answer.py tests/test_vendor_hosts.py tests/test_claim_checks_and_crm_mode.py tests/test_server_main_reaper.py tests/test_desk_edge_cases.py  tests/test_later_approval.py tests/test_lead_step_route.py tests/test_portal_api.py tests/test_portal_layout.py tests/test_portal_lead_pages.py tests/test_portal_mode.py tests/test_stall_eviction.py
+........................................................................ [ 49%]
+........................................................................ [ 53%]
+........................................................................ [ 57%]
+...............................................s........................ [ 61%]
+........................................................................ [ 65%]
+........................................................................ [ 69%]
+........................................................................ [ 73%]
+........................................................................ [ 77%]
+........................................................................ [ 81%]
+........................................................................ [ 85%]
+................................................
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/tmp/work/c5-base/src/lead_desk/server.py:1073: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+1559 passed, 1 skipped in 589.92s (0:09:49)
+# focused pytest (siblings not in first run): tests/test_later_approval.py tests/test_lead_step_route.py tests/test_portal_api.py tests/test_portal_layout.py tests/test_portal_lead_pages.py tests/test_portal_mode.py tests/test_stall_eviction.py
+........................................................................ [ 18%]
+........................................................................ [ 37%]
+........................................................................ [ 56%]
+........................................................................ [ 74%]
+........................................................................ [ 93%]
+......................s..                                                [100%]
+384 passed, 1 skipped in 247.61s (0:04:07)
+# focused pytest, the three last files of run 1 (cut by my 590 s timeout)
+...................................................................      [100%]
+67 passed in 57.56s

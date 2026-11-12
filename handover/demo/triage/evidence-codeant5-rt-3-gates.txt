@@ -1,0 +1,18 @@
+== gitleaks dir
+[90m11:31PM[0m [32mINF[0m [1mscanned ~2958118 bytes (2.96 MB) in 370ms[0m
+[90m11:31PM[0m [32mINF[0m [1mno leaks found[0m
+== gitleaks git
+[90m11:31PM[0m [32mINF[0m [1mscanned ~2896915 bytes (2.90 MB) in 513ms[0m
+[90m11:31PM[0m [32mINF[0m [1mno leaks found[0m
+== ruff
+All checks passed!
+144 files already formatted
+== mypy linux
+Success: no issues found in 26 source files
+== mypy win32
+Success: no issues found in 26 source files
+== bandit
+[manager]	WARNING	Test in comment: https is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: or is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: loopback is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: http is not a test name or id, ignoring

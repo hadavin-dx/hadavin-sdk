@@ -1,0 +1,35 @@
+        so an edited constant that does not fit ends with a Python traceback (exit code 1) before `main` runs.
+        SIGTERM stops it like Ctrl+C: the reaper is stopped, then the lock is given back. `hooks` goes to the Desk
+        (the crash launcher and scripts/crash_desk.py pass `FlagFileHooks(path)`)."""
+        try:
+            ensure_descriptor_budget()
+        except DescriptorBudgetError as e:
+            print(str(e), flush=True)
+            sys.exit(EXIT_SETTING_REFUSED)
+        try:
+            config = Config.from_env()
+        except SettingRefused as e:  # a bad setting value: a plain refusal, not a traceback (any other error is a bug)
+            print(f"the desk refuses a setting: {e}", flush=True)
+            sys.exit(EXIT_DESK_SETTING_REFUSED)
+        if (bind_problem := config.public_bind_problem()) is not None:  # no sign-in: a real service stays on this computer
+            print(f"the desk refuses a setting: {bind_problem}", flush=True)
+            sys.exit(EXIT_DESK_SETTING_REFUSED)
+>       if (book_problem := Desk.book_problem(config.db_path)) is not None:  # BEFORE the lock step: no ".lock" file
+                            ^^^^^^^^^^^^^^^^^
+E       AttributeError: 'function' object has no attribute 'book_problem'
+
+src/lead_desk/server.py:1120: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_claim_checks_and_crm_mode.py::test_other_value_error_is_not_exit_4
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.07s
+E       AttributeError: 'function' object has no attribute 'book_problem'
+
+src/lead_desk/server.py:1120: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_later_approval.py::test_main_loads_approvers_and_refuses_bad_ones
+1 failed in 0.85s
+/tmp/work/c5-old/tests/test_codeant_desk.py:50: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_codeant_desk.py::test_main_refuses_a_memory_book_even_when_server_desk_is_replaced
+1 failed, 6 deselected in 0.32s
