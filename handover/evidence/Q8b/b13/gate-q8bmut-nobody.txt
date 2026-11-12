@@ -160,8 +160,7 @@ ok  KILLED       M162 the generic Authorization rule needs a token of 16 charact
 ok  KILLED       M163 a Digest header does not go on over folded lines  [test_b12_2_a_digest_header_and_its_folded_lines_are_one_mask]
 ok  KILLED       M164 a Digest header goes on over a line that does not start with a space or a tab  [test_b10_2_a_digest_header_ends_at_the_first_line_that_does_]
 ok  KILLED       M165 the Basic rule has no wrapped gap (the batch 8 text)  [test_b9_1_the_basic_rule_alone_masks_a_bare_wrapped_value_as]
-BAD SURVIVED     M166 the generic Authorization rule has the batch 8 gap  []
-      first line: 
+ok  KILLED       M166 the generic Authorization rule has the batch 8 gap  [test_b9_1_every_shape_that_main_masked_is_masked_now_a_diffe]
 ok  KILLED       M167 the record walk does not read an ordinary word and its second word as a credential  [test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_]
 ok  KILLED       M168 a flag with an ordinary word and a second word of its family is no flag  [test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_]
 ok  KILLED       M169 a protection-bypass key is no text rule  [test_b9_6_a_bypass_name_that_holds_a_secret_is_masked_in_eve]
@@ -182,8 +181,7 @@ ok  KILLED       M183 the Basic rule takes a token of 4 characters, not 8 (a sho
 ok  KILLED       M184 the generic Authorization value takes the rest of the line (the second word is masked)  [test_b9_2_authorization_with_an_equals_sign_masks_the_first_]
 ok  KILLED       M186 a cookie key needs no boundary in front of the word (the fault of M178, killed by the digits pin)  [test_b9_4_a_word_that_only_holds_cookie_and_digits_inside_is]
 ok  KILLED       M187 the record walk does not read a key in capitals with cookie and more letters (the fault of M180, killed by the pinned cost)  [test_b9_8_a_cookie_jar_name_in_capitals_is_masked_and_in_low]
-BAD SURVIVED     M188 the run of folded lines stops after three lines [b11]  []
-      first line: 
+ok  KILLED       M188 the run of folded lines stops after three lines [b11]  [test_b11_8_the_fold_run_has_no_upper_bound_so_an_indented_bl]
 ok  KILLED       M189 the folded-header rule does not read Bearer [b11]  [test_b11_8_the_folded_lines_of_a_header_are_masked_for_every]
 ok  KILLED       M190 the folded-header rule reads the Authorization name only, no credential key [b11]  [test_b12_2_a_credential_key_a_short_first_word_and_folded_li]
 ok  KILLED       M191 the first line of a folded header is read to its end (quadratic on a line of repeated headers) [b11]  [test_b11_8_a_line_of_repeated_headers_is_read_in_linear_time]
@@ -253,4 +251,4 @@ ok  KILLED       M254 the card path writes a rare line break as a space, not a l
 ok  KILLED       M256 the folded lines are read again from every line to the end of the text (not in linear time) [b13]  [test_b11_8_a_long_run_of_folded_lines_is_read_in_linear_time]
 ok  KILLED       M257 the gap after a scheme word is read again up to 40000 characters ahead (not in linear time) [b13]  [test_b10_1_a_long_run_of_line_breaks_after_a_scheme_word_is_]
 ok  KILLED       M255 the second rule for a hyphenated scheme word is missing (the credential behind the scheme word stays readable) [b13]  [test_b13_2_the_credential_behind_a_hyphenated_scheme_word_is]
-251 of 253 good; problems: ['M166 the generic Authorization rule has the batch 8 gap', 'M188 the run of folded lines stops after three lines [b11]']
+253 of 253 good; problems: []
